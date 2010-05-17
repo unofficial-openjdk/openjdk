@@ -26,6 +26,7 @@
  * @summary Unit test for probeContentType method
  * @library ..
  * @build ContentType SimpleFileTypeDetector
+ * @run main/othervm ContentType
  */
 
 import java.nio.file.*;

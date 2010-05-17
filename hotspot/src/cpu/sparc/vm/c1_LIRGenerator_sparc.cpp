@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,17 +144,17 @@ LIR_Address* LIRGenerator::generate_address(LIR_Opr base, LIR_Opr index,
   if (index->is_register()) {
     // apply the shift and accumulate the displacement
     if (shift > 0) {
-      LIR_Opr tmp = new_register(T_INT);
+      LIR_Opr tmp = new_pointer_register();
       __ shift_left(index, shift, tmp);
       index = tmp;
     }
     if (disp != 0) {
-      LIR_Opr tmp = new_register(T_INT);
+      LIR_Opr tmp = new_pointer_register();
       if (Assembler::is_simm13(disp)) {
-        __ add(tmp, LIR_OprFact::intConst(disp), tmp);
+        __ add(tmp, LIR_OprFact::intptrConst(disp), tmp);
         index = tmp;
       } else {
-        __ move(LIR_OprFact::intConst(disp), tmp);
+        __ move(LIR_OprFact::intptrConst(disp), tmp);
         __ add(tmp, index, tmp);
         index = tmp;
       }
@@ -162,8 +162,8 @@ LIR_Address* LIRGenerator::generate_address(LIR_Opr base, LIR_Opr index,
     }
   } else if (disp != 0 && !Assembler::is_simm13(disp)) {
     // index is illegal so replace it with the displacement loaded into a register
-    index = new_register(T_INT);
-    __ move(LIR_OprFact::intConst(disp), index);
+    index = new_pointer_register();
+    __ move(LIR_OprFact::intptrConst(disp), index);
     disp = 0;
   }
 
@@ -668,7 +668,7 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   __ add(obj.result(), offset.result(), addr);
 
   if (type == objectType) {  // Write-barrier needed for Object fields.
-    pre_barrier(obj.result(), false, NULL);
+    pre_barrier(addr, false, NULL);
   }
 
   if (type == objectType)
@@ -749,6 +749,10 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
 
 void LIRGenerator::do_ArrayCopy(Intrinsic* x) {
   assert(x->number_of_arguments() == 5, "wrong type");
+
+  // Make all state_for calls early since they can emit code
+  CodeEmitInfo* info = state_for(x, x->state());
+
   // Note: spill caller save before setting the item
   LIRItem src     (x->argument_at(0), this);
   LIRItem src_pos (x->argument_at(1), this);
@@ -767,7 +771,6 @@ void LIRGenerator::do_ArrayCopy(Intrinsic* x) {
   ciArrayKlass* expected_type;
   arraycopy_helper(x, &flags, &expected_type);
 
-  CodeEmitInfo* info = state_for(x, x->state());
   __ arraycopy(src.result(), src_pos.result(), dst.result(), dst_pos.result(),
                length.result(), rlock_callee_saved(T_INT),
                expected_type, flags, info);
@@ -878,6 +881,9 @@ void LIRGenerator::do_NewInstance(NewInstance* x) {
 
 
 void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
+  // Evaluate state_for early since it may emit code
+  CodeEmitInfo* info = state_for(x, x->state());
+
   LIRItem length(x->length(), this);
   length.load_item();
 
@@ -890,9 +896,8 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
   LIR_Opr len = length.result();
   BasicType elem_type = x->elt_type();
 
-  __ oop2reg(ciTypeArrayKlass::make(elem_type)->encoding(), klass_reg);
+  __ oop2reg(ciTypeArrayKlass::make(elem_type)->constant_encoding(), klass_reg);
 
-  CodeEmitInfo* info = state_for(x, x->state());
   CodeStub* slow_path = new NewTypeArrayStub(klass_reg, len, reg, info);
   __ allocate_array(reg, len, tmp1, tmp2, tmp3, tmp4, elem_type, klass_reg, slow_path);
 
@@ -902,7 +907,8 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
 
 
 void LIRGenerator::do_NewObjectArray(NewObjectArray* x) {
-  LIRItem length(x->length(), this);
+  // Evaluate state_for early since it may emit code.
+  CodeEmitInfo* info = state_for(x, x->state());
   // in case of patching (i.e., object class is not yet loaded), we need to reexecute the instruction
   // and therefore provide the state before the parameters have been consumed
   CodeEmitInfo* patching_info = NULL;
@@ -910,6 +916,7 @@ void LIRGenerator::do_NewObjectArray(NewObjectArray* x) {
     patching_info = state_for(x, x->state_before());
   }
 
+  LIRItem length(x->length(), this);
   length.load_item();
 
   const LIR_Opr reg = result_register_for(x->type());
@@ -919,7 +926,6 @@ void LIRGenerator::do_NewObjectArray(NewObjectArray* x) {
   LIR_Opr tmp4 = FrameMap::O1_oop_opr;
   LIR_Opr klass_reg = FrameMap::G5_oop_opr;
   LIR_Opr len = length.result();
-  CodeEmitInfo* info = state_for(x, x->state());
 
   CodeStub* slow_path = new NewObjectArrayStub(klass_reg, len, reg, info);
   ciObject* obj = (ciObject*) ciObjArrayKlass::make(x->klass());
@@ -943,25 +949,22 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
     items->at_put(i, size);
   }
 
-  // need to get the info before, as the items may become invalid through item_free
+  // Evaluate state_for early since it may emit code.
   CodeEmitInfo* patching_info = NULL;
   if (!x->klass()->is_loaded() || PatchALot) {
     patching_info = state_for(x, x->state_before());
 
     // cannot re-use same xhandlers for multiple CodeEmitInfos, so
-    // clone all handlers
+    // clone all handlers.  This is handled transparently in other
+    // places by the CodeEmitInfo cloning logic but is handled
+    // specially here because a stub isn't being used.
     x->set_exception_handlers(new XHandlers(x->exception_handlers()));
   }
+  CodeEmitInfo* info = state_for(x, x->state());
 
   i = dims->length();
   while (i-- > 0) {
     LIRItem* size = items->at(i);
-    // if a patching_info was generated above then debug information for the state before
-    // the call is going to be emitted.  The LIRGenerator calls above may have left some values
-    // in registers and that's been recorded in the CodeEmitInfo.  In that case the items
-    // for those values can't simply be freed if they are registers because the values
-    // might be destroyed by store_stack_parameter.  So in the case of patching, delay the
-    // freeing of the items that already were in registers
     size->load_item();
     store_stack_parameter (size->result(),
                            in_ByteSize(STACK_BIAS +
@@ -972,8 +975,6 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
   // This instruction can be deoptimized in the slow path : use
   // O0 as result register.
   const LIR_Opr reg = result_register_for(x->type());
-  CodeEmitInfo* info = state_for(x, x->state());
-
   jobject2reg_with_patching(reg, x->klass(), patching_info);
   LIR_Opr rank = FrameMap::O1_opr;
   __ move(LIR_OprFact::intConst(x->rank()), rank);

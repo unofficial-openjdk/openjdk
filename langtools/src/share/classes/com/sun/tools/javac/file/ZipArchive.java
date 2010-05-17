@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,23 +47,31 @@ import com.sun.tools.javac.file.JavacFileManager.Archive;
 import com.sun.tools.javac.file.RelativePath.RelativeDirectory;
 import com.sun.tools.javac.file.RelativePath.RelativeFile;
 import com.sun.tools.javac.util.List;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 
+/**
+ * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * If you write code that depends on this, you do so at your own risk.
+ * This code and its internal interfaces are subject to change or
+ * deletion without notice.</b>
+ */
 public class ZipArchive implements Archive {
 
-    public ZipArchive(JavacFileManager fm, ZipFile zdir) throws IOException {
-        this(fm, zdir, true);
+    public ZipArchive(JavacFileManager fm, ZipFile zfile) throws IOException {
+        this(fm, zfile, true);
     }
 
-    protected ZipArchive(JavacFileManager fm, ZipFile zdir, boolean initMap) throws IOException {
+    protected ZipArchive(JavacFileManager fm, ZipFile zfile, boolean initMap) throws IOException {
         this.fileManager = fm;
-        this.zdir = zdir;
+        this.zfile = zfile;
         this.map = new HashMap<RelativeDirectory,List<String>>();
         if (initMap)
             initMap();
     }
 
     protected void initMap() throws IOException {
-        for (Enumeration<? extends ZipEntry> e = zdir.entries(); e.hasMoreElements(); ) {
+        for (Enumeration<? extends ZipEntry> e = zfile.entries(); e.hasMoreElements(); ) {
             ZipEntry entry;
             try {
                 entry = e.nextElement();
@@ -104,7 +112,7 @@ public class ZipArchive implements Archive {
     }
 
     public JavaFileObject getFileObject(RelativeDirectory subdirectory, String file) {
-        ZipEntry ze = new RelativeFile(subdirectory, file).getZipEntry(zdir);
+        ZipEntry ze = new RelativeFile(subdirectory, file).getZipEntry(zfile);
         return new ZipFileObject(this, file, ze);
     }
 
@@ -113,16 +121,39 @@ public class ZipArchive implements Archive {
     }
 
     public void close() throws IOException {
-        zdir.close();
+        zfile.close();
     }
 
+    @Override
     public String toString() {
-        return "ZipArchive[" + zdir.getName() + "]";
+        return "ZipArchive[" + zfile.getName() + "]";
     }
 
+    private File getAbsoluteFile() {
+        File absFile = (absFileRef == null ? null : absFileRef.get());
+        if (absFile == null) {
+            absFile = new File(zfile.getName()).getAbsoluteFile();
+            absFileRef = new SoftReference<File>(absFile);
+        }
+        return absFile;
+    }
+
+    /**
+     * The file manager that created this archive.
+     */
     protected JavacFileManager fileManager;
+    /**
+     * The index for the contents of this archive.
+     */
     protected final Map<RelativeDirectory,List<String>> map;
-    protected final ZipFile zdir;
+    /**
+     * The zip file for the archive.
+     */
+    protected final ZipFile zfile;
+    /**
+     * A reference to the absolute filename for the zip file for the archive.
+     */
+    protected Reference<File> absFileRef;
 
     /**
      * A subclass of JavaFileObject representing zip entries.
@@ -140,53 +171,41 @@ public class ZipArchive implements Archive {
             this.entry = entry;
         }
 
-        public InputStream openInputStream() throws IOException {
-            return zarch.zdir.getInputStream(entry);
+        public URI toUri() {
+            File zipFile = new File(zarch.zfile.getName());
+            return createJarUri(zipFile, entry.getName());
         }
 
+        @Override
+        public String getName() {
+            return zarch.zfile.getName() + "(" + entry.getName() + ")";
+        }
+
+        @Override
+        public String getShortName() {
+            return new File(zarch.zfile.getName()).getName() + "(" + entry + ")";
+        }
+
+        @Override
+        public JavaFileObject.Kind getKind() {
+            return getKind(entry.getName());
+        }
+
+        @Override
+        public InputStream openInputStream() throws IOException {
+            return zarch.zfile.getInputStream(entry);
+        }
+
+        @Override
         public OutputStream openOutputStream() throws IOException {
             throw new UnsupportedOperationException();
         }
 
-        protected CharsetDecoder getDecoder(boolean ignoreEncodingErrors) {
-            return fileManager.getDecoder(fileManager.getEncodingName(), ignoreEncodingErrors);
-        }
-
-        public Writer openWriter() throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Deprecated
-        public String getName() {
-            return name;
-        }
-
-        public boolean isNameCompatible(String cn, JavaFileObject.Kind k) {
-            cn.getClass();
-            // null check
-            if (k == Kind.OTHER && getKind() != k) {
-                return false;
-            }
-            return name.equals(cn + k.extension);
-        }
-
-        @Deprecated
-        public String getPath() {
-            return zarch.zdir.getName() + "(" + entry + ")";
-        }
-
-        public long getLastModified() {
-            return entry.getTime();
-        }
-
-        public boolean delete() {
-            throw new UnsupportedOperationException();
-        }
-
+        @Override
         public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
             CharBuffer cb = fileManager.getCachedContent(this);
             if (cb == null) {
-                InputStream in = zarch.zdir.getInputStream(entry);
+                InputStream in = zarch.zfile.getInputStream(entry);
                 try {
                     ByteBuffer bb = fileManager.makeByteBuffer(in);
                     JavaFileObject prev = fileManager.log.useSource(this);
@@ -207,37 +226,62 @@ public class ZipArchive implements Archive {
         }
 
         @Override
-        public boolean equals(Object other) {
-            if (!(other instanceof ZipFileObject)) {
-                return false;
-            }
-            ZipFileObject o = (ZipFileObject) other;
-            return zarch.zdir.equals(o.zarch.zdir) || name.equals(o.name);
+        public Writer openWriter() throws IOException {
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public int hashCode() {
-            return zarch.zdir.hashCode() + name.hashCode();
+        public long getLastModified() {
+            return entry.getTime();
         }
 
-        public String getZipName() {
-            return zarch.zdir.getName();
+        @Override
+        public boolean delete() {
+            throw new UnsupportedOperationException();
         }
 
-        public String getZipEntryName() {
-            return entry.getName();
-        }
-
-        public URI toUri() {
-            String zipName = new File(getZipName()).toURI().normalize().getPath();
-            String entryName = getZipEntryName();
-            return URI.create("jar:" + zipName + "!" + entryName);
+        @Override
+        protected CharsetDecoder getDecoder(boolean ignoreEncodingErrors) {
+            return fileManager.getDecoder(fileManager.getEncodingName(), ignoreEncodingErrors);
         }
 
         @Override
         protected String inferBinaryName(Iterable<? extends File> path) {
-            String entryName = getZipEntryName();
+            String entryName = entry.getName();
             return removeExtension(entryName).replace('/', '.');
+        }
+
+        @Override
+        public boolean isNameCompatible(String cn, JavaFileObject.Kind k) {
+            cn.getClass();
+            // null check
+            if (k == Kind.OTHER && getKind() != k) {
+                return false;
+            }
+            return name.equals(cn + k.extension);
+        }
+
+        /**
+         * Check if two file objects are equal.
+         * Two ZipFileObjects are equal if the absolute paths of the underlying
+         * zip files are equal and if the paths within those zip files are equal.
+         */
+        @Override
+        public boolean equals(Object other) {
+            if (this == other)
+                return true;
+
+            if (!(other instanceof ZipFileObject))
+                return false;
+
+            ZipFileObject o = (ZipFileObject) other;
+            return zarch.getAbsoluteFile().equals(o.zarch.getAbsoluteFile())
+                    && name.equals(o.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return zarch.getAbsoluteFile().hashCode() + name.hashCode();
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
  */
 
 #include <errno.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in_systm.h>
@@ -44,11 +45,6 @@
 /* the initial size of our hostent buffers */
 #define HENT_BUF_SIZE 1024
 #define BIG_HENT_BUF_SIZE 10240  /* a jumbo-sized one */
-
-#ifndef __GLIBC__
-/* gethostname() is in libc.so but I can't find a header file for it */
-extern int gethostname(char *buf, int buf_len);
-#endif
 
 /************************************************************************
  * Inet4AddressImpl

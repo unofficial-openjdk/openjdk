@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 class ReferenceProcessor;
+class DataLayout;
 
 // MarkSweep takes care of global mark-compact garbage collection for a
 // GenCollectedHeap using a four-phase pointer forwarding algorithm.  All
@@ -57,14 +58,14 @@ class MarkSweep : AllStatic {
    public:
     virtual void do_oop(oop* p);
     virtual void do_oop(narrowOop* p);
-    virtual const bool do_nmethods() const { return true; }
   };
 
   class MarkAndPushClosure: public OopClosure {
    public:
     virtual void do_oop(oop* p);
     virtual void do_oop(narrowOop* p);
-    virtual const bool do_nmethods() const { return true; }
+    virtual const bool should_remember_mdo() const { return true; }
+    virtual void remember_mdo(DataLayout* p) { MarkSweep::revisit_mdo(p); }
   };
 
   class FollowStackClosure: public VoidClosure {
@@ -103,15 +104,19 @@ class MarkSweep : AllStatic {
   friend class KeepAliveClosure;
   friend class VM_MarkSweep;
   friend void marksweep_init();
+  friend class DataLayout;
 
   //
   // Vars
   //
  protected:
-  // Traversal stack used during phase1
+  // Traversal stacks used during phase1
   static GrowableArray<oop>*             _marking_stack;
+  static GrowableArray<ObjArrayTask>*    _objarray_stack;
   // Stack for live klasses to revisit at end of marking phase
   static GrowableArray<Klass*>*          _revisit_klass_stack;
+  // Set (stack) of MDO's to revisit at end of marking phase
+  static GrowableArray<DataLayout*>*    _revisit_mdo_stack;
 
   // Space for storing/restoring mark word
   static GrowableArray<markOop>*         _preserved_mark_stack;
@@ -157,12 +162,17 @@ class MarkSweep : AllStatic {
   // Class unloading. Update subklass/sibling/implementor links at end of marking phase.
   static void follow_weak_klass_links();
 
+  // Class unloading. Clear weak refs in MDO's (ProfileData)
+  // at the end of the marking phase.
+  static void follow_mdo_weak_refs();
+
   // Debugging
   static void trace(const char* msg) PRODUCT_RETURN;
 
  public:
   // Public closures
   static FollowRootClosure    follow_root_closure;
+  static CodeBlobToOopClosure follow_code_root_closure; // => follow_root_closure
   static MarkAndPushClosure   mark_and_push_closure;
   static FollowStackClosure   follow_stack_closure;
   static AdjustPointerClosure adjust_root_pointer_closure;
@@ -179,6 +189,7 @@ class MarkSweep : AllStatic {
   template <class T> static inline void mark_and_follow(T* p);
   // Check mark and maybe push on marking stack
   template <class T> static inline void mark_and_push(T* p);
+  static inline void push_objarray(oop obj, size_t index);
 
   static void follow_stack();   // Empty marking stack.
 
@@ -213,7 +224,10 @@ class MarkSweep : AllStatic {
 #endif
 
   // Call backs for class unloading
-  static void revisit_weak_klass_link(Klass* k);  // Update subklass/sibling/implementor links at end of marking.
+  // Update subklass/sibling/implementor links at end of marking.
+  static void revisit_weak_klass_link(Klass* k);
+  // For weak refs clearing in MDO's
+  static void revisit_mdo(DataLayout* p);
 };
 
 class PreservedMark VALUE_OBJ_CLASS_SPEC {

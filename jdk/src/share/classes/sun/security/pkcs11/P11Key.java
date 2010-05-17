@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,8 @@ import sun.security.internal.interfaces.TlsMasterSecret;
 import sun.security.pkcs11.wrapper.*;
 import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
 
+import sun.security.util.DerValue;
+
 /**
  * Key implementation classes.
  *
@@ -83,7 +85,7 @@ abstract class P11Key implements Key {
     // flags indicating whether the key is a token object, sensitive, extractable
     final boolean tokenObject, sensitive, extractable;
 
-    // weak reference notification clean up for session keys
+    // phantom reference notification clean up for session keys
     private final SessionKeyRef sessionKeyRef;
 
     P11Key(String type, Session session, long keyID, String algorithm,
@@ -1000,8 +1002,16 @@ abstract class P11Key implements Key {
             try {
                 params = P11ECKeyFactory.decodeParameters
                             (attributes[1].getByteArray());
+                DerValue wECPoint = new DerValue(attributes[0].getByteArray());
+                if (wECPoint.getTag() != DerValue.tag_OctetString)
+                    throw new IOException("Unexpected tag: " +
+                        wECPoint.getTag());
+                params = P11ECKeyFactory.decodeParameters
+                            (attributes[1].getByteArray());
                 w = P11ECKeyFactory.decodePoint
-                            (attributes[0].getByteArray(), params.getCurve());
+                    (wECPoint.getDataBytes(), params.getCurve());
+
+
             } catch (Exception e) {
                 throw new RuntimeException("Could not parse key values", e);
             }
@@ -1041,7 +1051,12 @@ abstract class P11Key implements Key {
     }
 }
 
-final class SessionKeyRef extends WeakReference<P11Key>
+/*
+ * NOTE: Must use PhantomReference here and not WeakReference
+ * otherwise the key maybe cleared before other objects which
+ * still use these keys during finalization such as SSLSocket.
+ */
+final class SessionKeyRef extends PhantomReference<P11Key>
     implements Comparable<SessionKeyRef> {
     private static ReferenceQueue<P11Key> refQueue =
         new ReferenceQueue<P11Key>();
@@ -1052,14 +1067,11 @@ final class SessionKeyRef extends WeakReference<P11Key>
         return refQueue;
     }
 
-    static final private int MAX_ITERATIONS = 2;
-
     private static void drainRefQueueBounded() {
-        int iterations = 0;
-        while (iterations < MAX_ITERATIONS) {
+        while (true) {
             SessionKeyRef next = (SessionKeyRef) refQueue.poll();
-            if (next != null) next.dispose();
-            ++iterations;
+            if (next == null) break;
+            next.dispose();
         }
     }
 
@@ -1077,7 +1089,7 @@ final class SessionKeyRef extends WeakReference<P11Key>
         drainRefQueueBounded();
     }
 
-    void dispose() {
+    private void dispose() {
         refList.remove(this);
         if (session.token.isValid()) {
             Session newSession = null;
@@ -1087,6 +1099,7 @@ final class SessionKeyRef extends WeakReference<P11Key>
             } catch (PKCS11Exception e) {
                 // ignore
             } finally {
+                this.clear();
                 session.token.releaseSession(newSession);
                 session.removeObject();
             }

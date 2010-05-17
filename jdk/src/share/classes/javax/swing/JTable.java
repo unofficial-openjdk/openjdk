@@ -57,6 +57,7 @@ import sun.swing.SwingUtilities2;
 import sun.swing.SwingUtilities2.Section;
 import static sun.swing.SwingUtilities2.Section.*;
 import sun.swing.PrintingStatus;
+import sun.swing.SwingLazyValue;
 
 /**
  * The <code>JTable</code> is used to display and edit regular two-dimensional tables
@@ -718,16 +719,17 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see #addNotify
      */
     protected void configureEnclosingScrollPane() {
-        Container p = getParent();
-        if (p instanceof JViewport) {
-            Container gp = p.getParent();
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
             if (gp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane)gp;
                 // Make certain we are the viewPort's view and not, for
                 // example, the rowHeaderView of the scrollPane -
                 // an implementor of fixed columns might do this.
                 JViewport viewport = scrollPane.getViewport();
-                if (viewport == null || viewport.getView() != this) {
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
                     return;
                 }
                 scrollPane.setColumnHeaderView(getTableHeader());
@@ -750,16 +752,17 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * from configureEnclosingScrollPane() and updateUI() in a safe manor.
      */
     private void configureEnclosingScrollPaneUI() {
-        Container p = getParent();
-        if (p instanceof JViewport) {
-            Container gp = p.getParent();
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
             if (gp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane)gp;
                 // Make certain we are the viewPort's view and not, for
                 // example, the rowHeaderView of the scrollPane -
                 // an implementor of fixed columns might do this.
                 JViewport viewport = scrollPane.getViewport();
-                if (viewport == null || viewport.getView() != this) {
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
                     return;
                 }
                 //  scrollPane.getViewport().setBackingStoreEnabled(true);
@@ -819,16 +822,17 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @since 1.3
      */
     protected void unconfigureEnclosingScrollPane() {
-        Container p = getParent();
-        if (p instanceof JViewport) {
-            Container gp = p.getParent();
+        JViewport port = SwingUtilities.getParentViewport(this);
+        if (port != null) {
+            Container gp = port.getParent();
             if (gp instanceof JScrollPane) {
                 JScrollPane scrollPane = (JScrollPane)gp;
                 // Make certain we are the viewPort's view and not, for
                 // example, the rowHeaderView of the scrollPane -
                 // an implementor of fixed columns might do this.
                 JViewport viewport = scrollPane.getViewport();
-                if (viewport == null || viewport.getView() != this) {
+                if (viewport == null ||
+                        SwingUtilities.getUnwrappedView(viewport) != this) {
                     return;
                 }
                 scrollPane.setColumnHeaderView(null);
@@ -1333,7 +1337,11 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                 return (TableCellRenderer)renderer;
             }
             else {
-                return getDefaultRenderer(columnClass.getSuperclass());
+                Class c = columnClass.getSuperclass();
+                if (c == null && columnClass != Object.class) {
+                    c = Object.class;
+                }
+                return getDefaultRenderer(c);
             }
         }
     }
@@ -2498,10 +2506,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
         Color old = this.selectionForeground;
         this.selectionForeground = selectionForeground;
         firePropertyChange("selectionForeground", old, selectionForeground);
-        if ( !selectionForeground.equals(old) )
-        {
-            repaint();
-        }
+        repaint();
     }
 
     /**
@@ -2539,10 +2544,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
         Color old = this.selectionBackground;
         this.selectionBackground = selectionBackground;
         firePropertyChange("selectionBackground", old, selectionBackground);
-        if ( !selectionBackground.equals(old) )
-        {
-            repaint();
-        }
+        repaint();
     }
 
     /**
@@ -5215,9 +5217,10 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see #getFillsViewportHeight
      */
     public boolean getScrollableTracksViewportHeight() {
+        JViewport port = SwingUtilities.getParentViewport(this);
         return getFillsViewportHeight()
-               && getParent() instanceof JViewport
-               && (getParent().getHeight() > getPreferredSize().height);
+               && port != null
+               && port.getHeight() > getPreferredSize().height;
     }
 
     /**
@@ -5315,7 +5318,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
     }
 
     private void setLazyValue(Hashtable h, Class c, String s) {
-        h.put(c, new UIDefaults.ProxyLazyValue(s));
+        h.put(c, new SwingLazyValue(s));
     }
 
     private void setLazyRenderer(Class c, String s) {

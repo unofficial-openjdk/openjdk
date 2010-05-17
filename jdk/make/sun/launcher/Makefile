@@ -24,6 +24,7 @@
 #
 
 BUILDDIR = ../..
+MODULE  = base
 PACKAGE = sun.launcher
 PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
@@ -37,7 +38,7 @@ AUTO_FILES_JAVA_DIRS = sun/launcher
 # Resources
 #
 LOCALE_SET_DEFINITION = jre
-NEW_RESOURCE_BUNDLES_COMPILED_PROPERTIES = $(PKGDIR)/resources/launcher.properties
+RESOURCE_BUNDLES_COMPILED_PROPERTIES = $(PKGDIR)/resources/launcher.properties
 
 #
 # Rules

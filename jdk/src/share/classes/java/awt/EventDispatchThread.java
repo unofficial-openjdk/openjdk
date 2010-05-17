@@ -36,7 +36,7 @@ import sun.awt.AWTAutoShutdown;
 import sun.awt.SunToolkit;
 
 import java.util.Vector;
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import sun.awt.dnd.SunDragSourceContextPeer;
 import sun.awt.EventQueueDelegate;
@@ -61,7 +61,7 @@ import sun.awt.EventQueueDelegate;
  * @since 1.1
  */
 class EventDispatchThread extends Thread {
-    private static final Logger eventLog = Logger.getLogger("java.awt.event.EventDispatchThread");
+    private static final PlatformLogger eventLog = PlatformLogger.getLogger("java.awt.event.EventDispatchThread");
 
     private EventQueue theQueue;
     private boolean doDispatch = true;
@@ -104,11 +104,8 @@ class EventDispatchThread extends Thread {
         } else {
             stopEvent.dispatch();
         }
-        synchronized (theQueue) {
-            if (theQueue.getDispatchThread() == this) {
-                theQueue.detachDispatchThread();
-            }
-        }
+
+        theQueue.detachDispatchThread(this, false);
     }
 
     public void stopDispatching() {
@@ -142,35 +139,7 @@ class EventDispatchThread extends Thread {
                 }
             });
         } finally {
-            /*
-             * This synchronized block is to secure that the event dispatch
-             * thread won't die in the middle of posting a new event to the
-             * associated event queue. It is important because we notify
-             * that the event dispatch thread is busy after posting a new event
-             * to its queue, so the EventQueue.dispatchThread reference must
-             * be valid at that point.
-             */
-            synchronized (theQueue) {
-                if (theQueue.getDispatchThread() == this) {
-                    theQueue.detachDispatchThread();
-                }
-                /*
-                 * Event dispatch thread dies in case of an uncaught exception.
-                 * A new event dispatch thread for this queue will be started
-                 * only if a new event is posted to it. In case if no more
-                 * events are posted after this thread died all events that
-                 * currently are in the queue will never be dispatched.
-                 */
-                /*
-                 * Fix for 4648733. Check both the associated java event
-                 * queue and the PostEventQueue.
-                 */
-                if (theQueue.peekEvent() != null ||
-                    !SunToolkit.isPostEventQueueEmpty()) {
-                    theQueue.initDispatchThread();
-                }
-                AWTAutoShutdown.getInstance().notifyThreadFree(this);
-            }
+            theQueue.detachDispatchThread(this, true);
         }
     }
 
@@ -275,8 +244,8 @@ class EventDispatchThread extends Thread {
             }
             while (eventOK == false);
 
-            if (eventLog.isLoggable(Level.FINEST)) {
-                eventLog.log(Level.FINEST, "Dispatching: " + event);
+            if (eventLog.isLoggable(PlatformLogger.FINEST)) {
+                eventLog.finest("Dispatching: " + event);
             }
 
             Object handle = null;
@@ -308,8 +277,8 @@ class EventDispatchThread extends Thread {
     }
 
     private void processException(Throwable e) {
-        if (eventLog.isLoggable(Level.FINE)) {
-            eventLog.log(Level.FINE, "Processing exception: " + e);
+        if (eventLog.isLoggable(PlatformLogger.FINE)) {
+            eventLog.fine("Processing exception: " + e);
         }
         getUncaughtExceptionHandler().uncaughtException(this, e);
         // don't rethrow the exception to avoid EDT recreation

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ void ciObjectFactory::init_shared_objects() {
     for (i = vmSymbols::FIRST_SID; i < vmSymbols::SID_LIMIT; i++) {
       symbolHandle sym_handle = vmSymbolHandles::symbol_handle_at((vmSymbols::SID) i);
       assert(vmSymbols::find_sid(sym_handle()) == i, "1-1 mapping");
-      ciSymbol* sym = new (_arena) ciSymbol(sym_handle);
+      ciSymbol* sym = new (_arena) ciSymbol(sym_handle, (vmSymbols::SID) i);
       init_ident_of(sym);
       _shared_ci_symbols[i] = sym;
     }
@@ -144,30 +144,13 @@ void ciObjectFactory::init_shared_objects() {
   ciEnv::_obj_array_klass_klass_instance =
     get(Universe::objArrayKlassKlassObj())
       ->as_obj_array_klass_klass();
-  ciEnv::_ArrayStoreException =
-    get(SystemDictionary::ArrayStoreException_klass())
-      ->as_instance_klass();
-  ciEnv::_Class =
-    get(SystemDictionary::class_klass())
-      ->as_instance_klass();
-  ciEnv::_ClassCastException =
-    get(SystemDictionary::ClassCastException_klass())
-      ->as_instance_klass();
-  ciEnv::_Object =
-    get(SystemDictionary::object_klass())
-      ->as_instance_klass();
-  ciEnv::_Throwable =
-    get(SystemDictionary::throwable_klass())
-      ->as_instance_klass();
-  ciEnv::_Thread =
-    get(SystemDictionary::thread_klass())
-      ->as_instance_klass();
-  ciEnv::_OutOfMemoryError =
-    get(SystemDictionary::OutOfMemoryError_klass())
-      ->as_instance_klass();
-  ciEnv::_String =
-    get(SystemDictionary::string_klass())
-      ->as_instance_klass();
+
+#define WK_KLASS_DEFN(name, ignore_s, opt)                              \
+  if (SystemDictionary::name() != NULL) \
+    ciEnv::_##name = get(SystemDictionary::name())->as_instance_klass();
+
+  WK_KLASSES_DO(WK_KLASS_DEFN)
+#undef WK_KLASS_DEFN
 
   for (int len = -1; len != _ci_objects->length(); ) {
     len = _ci_objects->length();
@@ -219,24 +202,27 @@ ciObject* ciObjectFactory::get(oop key) {
   ASSERT_IN_VM;
 
 #ifdef ASSERT
-  oop last = NULL;
-  for (int j = 0; j< _ci_objects->length(); j++) {
-    oop o = _ci_objects->at(j)->get_oop();
-    assert(last < o, "out of order");
-    last = o;
+  if (CIObjectFactoryVerify) {
+    oop last = NULL;
+    for (int j = 0; j< _ci_objects->length(); j++) {
+      oop o = _ci_objects->at(j)->get_oop();
+      assert(last < o, "out of order");
+      last = o;
+    }
   }
 #endif // ASSERT
   int len = _ci_objects->length();
   int index = find(key, _ci_objects);
 #ifdef ASSERT
-  for (int i=0; i<_ci_objects->length(); i++) {
-    if (_ci_objects->at(i)->get_oop() == key) {
-      assert(index == i, " bad lookup");
+  if (CIObjectFactoryVerify) {
+    for (int i=0; i<_ci_objects->length(); i++) {
+      if (_ci_objects->at(i)->get_oop() == key) {
+        assert(index == i, " bad lookup");
+      }
     }
   }
 #endif
   if (!is_found_at(index, key, _ci_objects)) {
-
     // Check in the non-perm area before putting it in the list.
     NonPermObject* &bucket = find_non_perm(key);
     if (bucket != NULL) {
@@ -258,12 +244,11 @@ ciObject* ciObjectFactory::get(oop key) {
     ciObject* new_object = create_new_object(keyHandle());
     assert(keyHandle() == new_object->get_oop(), "must be properly recorded");
     init_ident_of(new_object);
-    if (!keyHandle->is_perm()) {
+    if (!new_object->is_perm()) {
       // Not a perm-space object.
       insert_non_perm(bucket, keyHandle(), new_object);
       return new_object;
     }
-    new_object->set_perm();
     if (len != _ci_objects->length()) {
       // creating the new object has recursively entered new objects
       // into the table.  We need to recompute our index.
@@ -288,7 +273,8 @@ ciObject* ciObjectFactory::create_new_object(oop o) {
 
   if (o->is_symbol()) {
     symbolHandle h_o(THREAD, (symbolOop)o);
-    return new (arena()) ciSymbol(h_o);
+    assert(vmSymbols::find_sid(h_o()) == vmSymbols::NO_SID, "");
+    return new (arena()) ciSymbol(h_o, vmSymbols::NO_SID);
   } else if (o->is_klass()) {
     KlassHandle h_k(THREAD, (klassOop)o);
     Klass* k = ((klassOop)o)->klass_part();
@@ -322,13 +308,21 @@ ciObject* ciObjectFactory::create_new_object(oop o) {
     return new (arena()) ciMethodData(h_md);
   } else if (o->is_instance()) {
     instanceHandle h_i(THREAD, (instanceOop)o);
-    return new (arena()) ciInstance(h_i);
+    if (java_dyn_CallSite::is_instance(o))
+      return new (arena()) ciCallSite(h_i);
+    else if (java_dyn_MethodHandle::is_instance(o))
+      return new (arena()) ciMethodHandle(h_i);
+    else
+      return new (arena()) ciInstance(h_i);
   } else if (o->is_objArray()) {
     objArrayHandle h_oa(THREAD, (objArrayOop)o);
     return new (arena()) ciObjArray(h_oa);
   } else if (o->is_typeArray()) {
     typeArrayHandle h_ta(THREAD, (typeArrayOop)o);
     return new (arena()) ciTypeArray(h_ta);
+  } else if (o->is_constantPoolCache()) {
+    constantPoolCacheHandle h_cpc(THREAD, (constantPoolCacheOop) o);
+    return new (arena()) ciCPCache(h_cpc);
   }
 
   // The oop is of some type not supported by the compiler interface.
@@ -539,11 +533,13 @@ void ciObjectFactory::insert(int index, ciObject* obj, GrowableArray<ciObject*>*
     objects->at_put(index, obj);
   }
 #ifdef ASSERT
-  oop last = NULL;
-  for (int j = 0; j< objects->length(); j++) {
-    oop o = objects->at(j)->get_oop();
-    assert(last < o, "out of order");
-    last = o;
+  if (CIObjectFactoryVerify) {
+    oop last = NULL;
+    for (int j = 0; j< objects->length(); j++) {
+      oop o = objects->at(j)->get_oop();
+      assert(last < o, "out of order");
+      last = o;
+    }
   }
 #endif // ASSERT
 }
@@ -563,7 +559,7 @@ ciObjectFactory::NonPermObject* &ciObjectFactory::find_non_perm(oop key) {
   if (key->is_perm() && _non_perm_count == 0) {
     return emptyBucket;
   } else if (key->is_instance()) {
-    if (key->klass() == SystemDictionary::class_klass()) {
+    if (key->klass() == SystemDictionary::Class_klass()) {
       // class mirror instances are always perm
       return emptyBucket;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -178,6 +178,13 @@ public:
 // This provides a way to map the optimized program back into the interpreter,
 // or to let the GC mark the stack.
 class JVMState : public ResourceObj {
+public:
+  typedef enum {
+    Reexecute_Undefined = -1, // not defined -- will be translated into false later
+    Reexecute_False     =  0, // false       -- do not reexecute
+    Reexecute_True      =  1  // true        -- reexecute the bytecode
+  } ReexecuteState; //Reexecute State
+
 private:
   JVMState*         _caller;    // List pointer for forming scope chains
   uint              _depth;     // One mroe than caller depth, or one.
@@ -188,10 +195,12 @@ private:
   uint              _endoff;    // Offset to end of input edge mapping
   uint              _sp;        // Jave Expression Stack Pointer for this state
   int               _bci;       // Byte Code Index of this JVM point
+  ReexecuteState    _reexecute; // Whether this bytecode need to be re-executed
   ciMethod*         _method;    // Method Pointer
   SafePointNode*    _map;       // Map node associated with this scope
 public:
   friend class Compile;
+  friend class PreserveReexecuteState;
 
   // Because JVMState objects live over the entire lifetime of the
   // Compile object, they are allocated into the comp_arena, which
@@ -222,16 +231,18 @@ public:
   bool        is_mon(uint i) const { return i >= _monoff && i < _scloff; }
   bool        is_scl(uint i) const { return i >= _scloff && i < _endoff; }
 
-  uint              sp()     const { return _sp; }
-  int               bci()    const { return _bci; }
-  bool          has_method() const { return _method != NULL; }
-  ciMethod*         method() const { assert(has_method(), ""); return _method; }
-  JVMState*         caller() const { return _caller; }
-  SafePointNode*    map()    const { return _map; }
-  uint              depth()  const { return _depth; }
-  uint        debug_start()  const; // returns locoff of root caller
-  uint        debug_end()    const; // returns endoff of self
-  uint        debug_size()   const {
+  uint                      sp() const { return _sp; }
+  int                      bci() const { return _bci; }
+  bool        should_reexecute() const { return _reexecute==Reexecute_True; }
+  bool  is_reexecute_undefined() const { return _reexecute==Reexecute_Undefined; }
+  bool              has_method() const { return _method != NULL; }
+  ciMethod*             method() const { assert(has_method(), ""); return _method; }
+  JVMState*             caller() const { return _caller; }
+  SafePointNode*           map() const { return _map; }
+  uint                   depth() const { return _depth; }
+  uint             debug_start() const; // returns locoff of root caller
+  uint               debug_end() const; // returns endoff of self
+  uint              debug_size() const {
     return loc_size() + sp() + mon_size() + scl_size();
   }
   uint        debug_depth()  const; // returns sum of debug_size values at all depths
@@ -267,7 +278,9 @@ public:
   }
   void              set_map(SafePointNode *map) { _map = map; }
   void              set_sp(uint sp) { _sp = sp; }
-  void              set_bci(int bci) { _bci = bci; }
+                    // _reexecute is initialized to "undefined" for a new bci
+  void              set_bci(int bci) {if(_bci != bci)_reexecute=Reexecute_Undefined; _bci = bci; }
+  void              set_should_reexecute(bool reexec) {_reexecute = reexec ? Reexecute_True : Reexecute_False;}
 
   // Miscellaneous utility functions
   JVMState* clone_deep(Compile* C) const;    // recursively clones caller chain
@@ -457,6 +470,23 @@ public:
 #endif
 };
 
+
+// Simple container for the outgoing projections of a call.  Useful
+// for serious surgery on calls.
+class CallProjections : public StackObj {
+public:
+  Node* fallthrough_proj;
+  Node* fallthrough_catchproj;
+  Node* fallthrough_memproj;
+  Node* fallthrough_ioproj;
+  Node* catchall_catchproj;
+  Node* catchall_memproj;
+  Node* catchall_ioproj;
+  Node* resproj;
+  Node* exobj;
+};
+
+
 //------------------------------CallNode---------------------------------------
 // Call nodes now subsume the function of debug nodes at callsites, so they
 // contain the functionality of a full scope chain of debug nodes.
@@ -508,6 +538,11 @@ public:
   // or returns NULL if there is no one.
   Node *result_cast();
 
+  // Collect all the interesting edges from a call for use in
+  // replacing the call by something else.  Used by macro expansion
+  // and the late inlining support.
+  void extract_projections(CallProjections* projs, bool separate_io_proj);
+
   virtual uint match_edge(uint idx) const;
 
 #ifndef PRODUCT
@@ -515,6 +550,7 @@ public:
   virtual void        dump_spec(outputStream *st) const;
 #endif
 };
+
 
 //------------------------------CallJavaNode-----------------------------------
 // Make a static or dynamic subroutine call node using Java calling
@@ -526,12 +562,15 @@ protected:
   virtual uint size_of() const; // Size is bigger
 
   bool    _optimized_virtual;
+  bool    _method_handle_invoke;
   ciMethod* _method;            // Method being direct called
 public:
   const int       _bci;         // Byte Code Index of call byte code
   CallJavaNode(const TypeFunc* tf , address addr, ciMethod* method, int bci)
     : CallNode(tf, addr, TypePtr::BOTTOM),
-      _method(method), _bci(bci), _optimized_virtual(false)
+      _method(method), _bci(bci),
+      _optimized_virtual(false),
+      _method_handle_invoke(false)
   {
     init_class_id(Class_CallJava);
   }
@@ -541,6 +580,8 @@ public:
   void  set_method(ciMethod *m)           { _method = m; }
   void  set_optimized_virtual(bool f)     { _optimized_virtual = f; }
   bool  is_optimized_virtual() const      { return _optimized_virtual; }
+  void  set_method_handle_invoke(bool f)  { _method_handle_invoke = f; }
+  bool  is_method_handle_invoke() const   { return _method_handle_invoke; }
 
 #ifndef PRODUCT
   virtual void  dump_spec(outputStream *st) const;

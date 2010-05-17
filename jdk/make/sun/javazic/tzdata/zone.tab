@@ -21,6 +21,9 @@
 # CA 95054 USA or visit www.sun.com if you need additional information or
 # have any questions.
 #
+# <pre>
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 #
 # TZ zone descriptions
 #
@@ -63,6 +66,7 @@ AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
 AQ	-7824+10654	Antarctica/Vostok	Vostok Station, S Magnetic Pole
 AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Terre Adelie
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
+AQ	-5430+15857	Antarctica/Macquarie	Macquarie Island Station, Macquarie Island
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, MN, SE, SF)
 AR	-2447-06525	America/Argentina/Salta	(SA, LP, NQ, RN)
@@ -123,7 +127,7 @@ BR	-0640-06952	America/Eirunepe	W Amazonas
 BR	-0958-06748	America/Rio_Branco	Acre
 BS	+2505-07721	America/Nassau
 BT	+2728+08939	Asia/Thimphu
-BW	-2545+02555	Africa/Gaborone
+BW	-2439+02555	Africa/Gaborone
 BY	+5354+02734	Europe/Minsk
 BZ	+1730-08812	America/Belize
 CA	+4734-05243	America/St_Johns	Newfoundland Time, including SE Labrador
@@ -298,16 +302,19 @@ MW	-1547+03500	Africa/Blantyre
 MX	+1924-09909	America/Mexico_City	Central Time - most locations
 MX	+2105-08646	America/Cancun	Central Time - Quintana Roo
 MX	+2058-08937	America/Merida	Central Time - Campeche, Yucatan
-MX	+2540-10019	America/Monterrey	Central Time - Coahuila, Durango, Nuevo Leon, Tamaulipas
+MX	+2540-10019	America/Monterrey	Mexican Central Time - Coahuila, Durango, Nuevo Leon, Tamaulipas away from US border
+MX	+2550-09730	America/Matamoros	US Central Time - Coahuila, Durango, Nuevo Leon, Tamaulipas near US border
 MX	+2313-10625	America/Mazatlan	Mountain Time - S Baja, Nayarit, Sinaloa
-MX	+2838-10605	America/Chihuahua	Mountain Time - Chihuahua
+MX	+2838-10605	America/Chihuahua	Mexican Mountain Time - Chihuahua away from US border
+MX	+2934-10425	America/Ojinaga	US Mountain Time - Chihuahua near US border
 MX	+2904-11058	America/Hermosillo	Mountain Standard Time - Sonora
-MX	+3232-11701	America/Tijuana	Pacific Time
+MX	+3232-11701	America/Tijuana	US Pacific Time - Baja California near US border
+MX	+3018-11452	America/Santa_Isabel	Mexican Pacific Time - Baja California away from US border
 MY	+0310+10142	Asia/Kuala_Lumpur	peninsular Malaysia
 MY	+0133+11020	Asia/Kuching	Sabah & Sarawak
 MZ	-2558+03235	Africa/Maputo
 NA	-2234+01706	Africa/Windhoek
-NC	-2216+16530	Pacific/Noumea
+NC	-2216+16627	Pacific/Noumea
 NE	+1331+00207	Africa/Niamey
 NF	-2903+16758	Pacific/Norfolk
 NG	+0627+00324	Africa/Lagos
@@ -345,18 +352,19 @@ RS	+4450+02030	Europe/Belgrade
 RU	+5443+02030	Europe/Kaliningrad	Moscow-01 - Kaliningrad
 RU	+5545+03735	Europe/Moscow	Moscow+00 - west Russia
 RU	+4844+04425	Europe/Volgograd	Moscow+00 - Caspian Sea
-RU	+5312+05009	Europe/Samara	Moscow+01 - Samara, Udmurtia
+RU	+5312+05009	Europe/Samara	Moscow - Samara, Udmurtia
 RU	+5651+06036	Asia/Yekaterinburg	Moscow+02 - Urals
 RU	+5500+07324	Asia/Omsk	Moscow+03 - west Siberia
 RU	+5502+08255	Asia/Novosibirsk	Moscow+03 - Novosibirsk
+RU	+5345+08707	Asia/Novokuznetsk	Moscow+03 - Novokuznetsk
 RU	+5601+09250	Asia/Krasnoyarsk	Moscow+04 - Yenisei River
 RU	+5216+10420	Asia/Irkutsk	Moscow+05 - Lake Baikal
 RU	+6200+12940	Asia/Yakutsk	Moscow+06 - Lena River
 RU	+4310+13156	Asia/Vladivostok	Moscow+07 - Amur River
 RU	+4658+14242	Asia/Sakhalin	Moscow+07 - Sakhalin Island
 RU	+5934+15048	Asia/Magadan	Moscow+08 - Magadan
-RU	+5301+15839	Asia/Kamchatka	Moscow+09 - Kamchatka
-RU	+6445+17729	Asia/Anadyr	Moscow+10 - Bering Sea
+RU	+5301+15839	Asia/Kamchatka	Moscow+08 - Kamchatka
+RU	+6445+17729	Asia/Anadyr	Moscow+08 - Bering Sea
 RW	-0157+03004	Africa/Kigali
 SA	+2438+04643	Asia/Riyadh
 SB	-0932+16012	Pacific/Guadalcanal
@@ -387,7 +395,7 @@ TK	-0922-17114	Pacific/Fakaofo
 TL	-0833+12535	Asia/Dili
 TM	+3757+05823	Asia/Ashgabat
 TN	+3648+01011	Africa/Tunis
-TO	-2110+17510	Pacific/Tongatapu
+TO	-2110-17510	Pacific/Tongatapu
 TR	+4101+02858	Europe/Istanbul
 TT	+1039-06131	America/Port_of_Spain
 TV	-0831+17913	Pacific/Funafuti
@@ -431,7 +439,7 @@ US	+211825-1575130	Pacific/Honolulu	Hawaii
 UY	-3453-05611	America/Montevideo
 UZ	+3940+06648	Asia/Samarkand	west Uzbekistan
 UZ	+4120+06918	Asia/Tashkent	east Uzbekistan
-VA	+4154+01227	Europe/Vatican
+VA	+415408+0122711	Europe/Vatican
 VC	+1309-06114	America/St_Vincent
 VE	+1030-06656	America/Caracas
 VG	+1827-06437	America/Tortola

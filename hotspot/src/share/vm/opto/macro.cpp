@@ -316,6 +316,21 @@ static Node *scan_mem_chain(Node *mem, int alias_idx, int offset, Node *start_me
         assert(adr_idx == Compile::AliasIdxRaw, "address must match or be raw");
       }
       mem = mem->in(MemNode::Memory);
+    } else if (mem->is_ClearArray()) {
+      if (!ClearArrayNode::step_through(&mem, alloc->_idx, phase)) {
+        // Can not bypass initialization of the instance
+        // we are looking.
+        debug_only(intptr_t offset;)
+        assert(alloc == AllocateNode::Ideal_allocation(mem->in(3), phase, offset), "sanity");
+        InitializeNode* init = alloc->as_Allocate()->initialization();
+        // We are looking for stored value, return Initialize node
+        // or memory edge from Allocate node.
+        if (init != NULL)
+          return init;
+        else
+          return alloc->in(TypeFunc::Memory); // It will produce zero value (see callers).
+      }
+      // Otherwise skip it (the call updated 'mem' value).
     } else if (mem->Opcode() == Op_SCMemProj) {
       assert(mem->in(0)->is_LoadStore(), "sanity");
       const TypePtr* atype = mem->in(0)->in(MemNode::Address)->bottom_type()->is_ptr();
@@ -823,6 +838,18 @@ void PhaseMacroExpand::process_users_of_allocation(AllocateNode *alloc) {
           Node *n = use->last_out(k);
           uint oc2 = use->outcnt();
           if (n->is_Store()) {
+#ifdef ASSERT
+            // Verify that there is no dependent MemBarVolatile nodes,
+            // they should be removed during IGVN, see MemBarNode::Ideal().
+            for (DUIterator_Fast pmax, p = n->fast_outs(pmax);
+                                       p < pmax; p++) {
+              Node* mb = n->fast_out(p);
+              assert(mb->is_Initialize() || !mb->is_MemBar() ||
+                     mb->req() <= MemBarNode::Precedent ||
+                     mb->in(MemBarNode::Precedent) != n,
+                     "MemBarVolatile should be eliminated for non-escaping object");
+            }
+#endif
             _igvn.replace_node(n, n->in(MemNode::Memory));
           } else {
             eliminate_card_mark(n);
@@ -912,15 +939,29 @@ bool PhaseMacroExpand::eliminate_allocate_node(AllocateNode *alloc) {
     return false;
   }
 
+  CompileLog* log = C->log();
+  if (log != NULL) {
+    Node* klass = alloc->in(AllocateNode::KlassNode);
+    const TypeKlassPtr* tklass = _igvn.type(klass)->is_klassptr();
+    log->head("eliminate_allocation type='%d'",
+              log->identify(tklass->klass()));
+    JVMState* p = alloc->jvms();
+    while (p != NULL) {
+      log->elem("jvms bci='%d' method='%d'", p->bci(), log->identify(p->method()));
+      p = p->caller();
+    }
+    log->tail("eliminate_allocation");
+  }
+
   process_users_of_allocation(alloc);
 
 #ifndef PRODUCT
-if (PrintEliminateAllocations) {
-  if (alloc->is_AllocateArray())
-    tty->print_cr("++++ Eliminated: %d AllocateArray", alloc->_idx);
-  else
-    tty->print_cr("++++ Eliminated: %d Allocate", alloc->_idx);
-}
+  if (PrintEliminateAllocations) {
+    if (alloc->is_AllocateArray())
+      tty->print_cr("++++ Eliminated: %d AllocateArray", alloc->_idx);
+    else
+      tty->print_cr("++++ Eliminated: %d Allocate", alloc->_idx);
+  }
 #endif
 
   return true;
@@ -1446,11 +1487,11 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
                                         Node*& contended_phi_rawmem,
                                         Node* old_eden_top, Node* new_eden_top,
                                         Node* length) {
+   enum { fall_in_path = 1, pf_path = 2 };
    if( UseTLAB && AllocatePrefetchStyle == 2 ) {
       // Generate prefetch allocation with watermark check.
       // As an allocation hits the watermark, we will prefetch starting
       // at a "distance" away from watermark.
-      enum { fall_in_path = 1, pf_path = 2 };
 
       Node *pf_region = new (C, 3) RegionNode(3);
       Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY,
@@ -1529,6 +1570,45 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       needgc_false = pf_region;
       contended_phi_rawmem = pf_phi_rawmem;
       i_o = pf_phi_abio;
+   } else if( UseTLAB && AllocatePrefetchStyle == 3 ) {
+      // Insert a prefetch for each allocation only on the fast-path
+      Node *pf_region = new (C, 3) RegionNode(3);
+      Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY,
+                                                TypeRawPtr::BOTTOM );
+
+      // Generate several prefetch instructions only for arrays.
+      uint lines = (length != NULL) ? AllocatePrefetchLines : 1;
+      uint step_size = AllocatePrefetchStepSize;
+      uint distance = AllocatePrefetchDistance;
+
+      // Next cache address.
+      Node *cache_adr = new (C, 4) AddPNode(old_eden_top, old_eden_top,
+                                            _igvn.MakeConX(distance));
+      transform_later(cache_adr);
+      cache_adr = new (C, 2) CastP2XNode(needgc_false, cache_adr);
+      transform_later(cache_adr);
+      Node* mask = _igvn.MakeConX(~(intptr_t)(step_size-1));
+      cache_adr = new (C, 3) AndXNode(cache_adr, mask);
+      transform_later(cache_adr);
+      cache_adr = new (C, 2) CastX2PNode(cache_adr);
+      transform_later(cache_adr);
+
+      // Prefetch
+      Node *prefetch = new (C, 3) PrefetchWriteNode( contended_phi_rawmem, cache_adr );
+      prefetch->set_req(0, needgc_false);
+      transform_later(prefetch);
+      contended_phi_rawmem = prefetch;
+      Node *prefetch_adr;
+      distance = step_size;
+      for ( uint i = 1; i < lines; i++ ) {
+        prefetch_adr = new (C, 4) AddPNode( cache_adr, cache_adr,
+                                            _igvn.MakeConX(distance) );
+        transform_later(prefetch_adr);
+        prefetch = new (C, 3) PrefetchWriteNode( contended_phi_rawmem, prefetch_adr );
+        transform_later(prefetch);
+        distance += step_size;
+        contended_phi_rawmem = prefetch;
+      }
    } else if( AllocatePrefetchStyle > 0 ) {
       // Insert a prefetch for each allocation only on the fast-path
       Node *prefetch_adr;
@@ -1638,6 +1718,18 @@ bool PhaseMacroExpand::eliminate_locking_node(AbstractLockNode *alock) {
         } // for (uint i = 0; i < oldbox->outcnt();)
       } // if (!oldbox->is_eliminated())
   } // if (alock->is_Lock() && !lock->is_coarsened())
+
+  CompileLog* log = C->log();
+  if (log != NULL) {
+    log->head("eliminate_lock lock='%d'",
+              alock->is_Lock());
+    JVMState* p = alock->jvms();
+    while (p != NULL) {
+      log->elem("jvms bci='%d' method='%d'", p->bci(), log->identify(p->method()));
+      p = p->caller();
+    }
+    log->tail("eliminate_lock");
+  }
 
   #ifndef PRODUCT
   if (PrintEliminateLocks) {

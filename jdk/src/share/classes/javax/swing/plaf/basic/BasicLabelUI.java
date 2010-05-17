@@ -28,6 +28,8 @@ package javax.swing.plaf.basic;
 import sun.swing.SwingUtilities2;
 import sun.swing.DefaultLookup;
 import sun.swing.UIAction;
+import sun.awt.AppContext;
+
 import javax.swing.*;
 import javax.swing.plaf.*;
 import javax.swing.text.View;
@@ -63,7 +65,7 @@ public class BasicLabelUI extends LabelUI implements  PropertyChangeListener
     * name in defaults table under the key "LabelUI".
     */
     protected static BasicLabelUI labelUI = new BasicLabelUI();
-    private final static BasicLabelUI SAFE_BASIC_LABEL_UI = new BasicLabelUI();
+    private static final Object BASIC_LABEL_UI_KEY = new Object();
 
     private Rectangle paintIconR = new Rectangle();
     private Rectangle paintTextR = new Rectangle();
@@ -139,11 +141,10 @@ public class BasicLabelUI extends LabelUI implements  PropertyChangeListener
     }
 
     /**
-     * Paint the label text in the foreground color, if the label
-     * is opaque then paint the entire background with the background
-     * color.  The Label text is drawn by paintEnabledText() or
-     * paintDisabledText().  The locations of the label parts are computed
-     * by layoutCL.
+     * Paints the label text with the foreground color, if the label is opaque
+     * then paints the entire background with the background color. The Label
+     * text is drawn by {@link #paintEnabledText} or {@link #paintDisabledText}.
+     * The locations of the label parts are computed by {@link #layoutCL}.
      *
      * @see #paintEnabledText
      * @see #paintDisabledText
@@ -394,10 +395,16 @@ public class BasicLabelUI extends LabelUI implements  PropertyChangeListener
 
     public static ComponentUI createUI(JComponent c) {
         if (System.getSecurityManager() != null) {
-            return SAFE_BASIC_LABEL_UI;
-        } else {
-            return labelUI;
+            AppContext appContext = AppContext.getAppContext();
+            BasicLabelUI safeBasicLabelUI =
+                    (BasicLabelUI) appContext.get(BASIC_LABEL_UI_KEY);
+            if (safeBasicLabelUI == null) {
+                safeBasicLabelUI = new BasicLabelUI();
+                appContext.put(BASIC_LABEL_UI_KEY, safeBasicLabelUI);
+            }
+            return safeBasicLabelUI;
         }
+        return labelUI;
     }
 
     public void propertyChange(PropertyChangeEvent e) {

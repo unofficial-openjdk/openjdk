@@ -457,7 +457,7 @@ static volatile int max_hrtime_lock = LOCK_FREE;     // Update counter with LSB 
 
 
 void os::Solaris::initialize_system_info() {
-  _processor_count = sysconf(_SC_NPROCESSORS_CONF);
+  set_processor_count(sysconf(_SC_NPROCESSORS_CONF));
   _processors_online = sysconf (_SC_NPROCESSORS_ONLN);
   _physical_memory = (julong)sysconf(_SC_PHYS_PAGES) * (julong)sysconf(_SC_PAGESIZE);
 }
@@ -673,15 +673,6 @@ bool os::have_special_privileges() {
     init = true;
   }
   return privileges;
-}
-
-
-static char* get_property(char* name, char* buffer, int buffer_size) {
-  if (os::getenv(name, buffer, buffer_size)) {
-    return buffer;
-  }
-  static char empty[] = "";
-  return empty;
 }
 
 
@@ -1576,7 +1567,8 @@ int os::allocate_thread_local_storage() {
   //           treat %g2 as a caller-save register, preserving it in a %lN.
   thread_key_t tk;
   if (thr_keycreate( &tk, NULL ) )
-    fatal1("os::allocate_thread_local_storage: thr_keycreate failed (%s)", strerror(errno));
+    fatal(err_msg("os::allocate_thread_local_storage: thr_keycreate failed "
+                  "(%s)", strerror(errno)));
   return int(tk);
 }
 
@@ -1594,7 +1586,8 @@ void os::thread_local_storage_at_put(int index, void* value) {
     if (errno == ENOMEM) {
        vm_exit_out_of_memory(SMALLINT, "thr_setspecific: out of swap space");
     } else {
-      fatal1("os::thread_local_storage_at_put: thr_setspecific failed (%s)", strerror(errno));
+      fatal(err_msg("os::thread_local_storage_at_put: thr_setspecific failed "
+                    "(%s)", strerror(errno)));
     }
   } else {
       ThreadLocalStorage::set_thread_in_slot ((Thread *) value) ;
@@ -1643,7 +1636,8 @@ inline hrtime_t oldgetTimeNanos() {
 inline hrtime_t getTimeNanos() {
   if (VM_Version::supports_cx8()) {
     const hrtime_t now = gethrtime();
-    const hrtime_t prev = max_hrtime;
+    // Use atomic long load since 32-bit x86 uses 2 registers to keep long.
+    const hrtime_t prev = Atomic::load((volatile jlong*)&max_hrtime);
     if (now <= prev)  return prev;   // same or retrograde time;
     const hrtime_t obsv = Atomic::cmpxchg(now, (volatile jlong*)&max_hrtime, prev);
     assert(obsv >= prev, "invariant");   // Monotonicity
@@ -1746,7 +1740,7 @@ jlong getTimeMillis() {
 jlong os::javaTimeMillis() {
   timeval t;
   if (gettimeofday( &t, NULL) == -1)
-    fatal1("os::javaTimeMillis: gettimeofday (%s)", strerror(errno));
+    fatal(err_msg("os::javaTimeMillis: gettimeofday (%s)", strerror(errno)));
   return jlong(t.tv_sec) * 1000  +  jlong(t.tv_usec) / 1000;
 }
 
@@ -1825,7 +1819,10 @@ void os::set_error_file(const char *logfile) {}
 
 const char* os::dll_file_extension() { return ".so"; }
 
-const char* os::get_temp_directory() { return "/tmp/"; }
+const char* os::get_temp_directory() {
+  const char *prop = Arguments::get_property("java.io.tmpdir");
+  return prop == NULL ? "/tmp" : prop;
+}
 
 static bool file_exists(const char* filename) {
   struct stat statbuf;
@@ -2695,6 +2692,14 @@ void os::free_memory(char* addr, size_t bytes) {
     debug_only(warning("MADV_FREE failed."));
     return;
   }
+}
+
+bool os::create_stack_guard_pages(char* addr, size_t size) {
+  return os::commit_memory(addr, size);
+}
+
+bool os::remove_stack_guard_pages(char* addr, size_t size) {
+  return os::uncommit_memory(addr, size);
 }
 
 // Change the page size in a given range.
@@ -4230,7 +4235,8 @@ void os::Solaris::set_signal_handler(int sig, bool set_installed, bool oktochain
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal2("Encountered unexpected pre-existing sigaction handler %#lx for signal %d.", (long)oldhand, sig);
+      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
+                    "%#lx for signal %d.", (long)oldhand, sig));
     }
   }
 
@@ -4761,7 +4767,8 @@ void os::init(void) {
 
   page_size = sysconf(_SC_PAGESIZE);
   if (page_size == -1)
-    fatal1("os_solaris.cpp: os::init: sysconf failed (%s)", strerror(errno));
+    fatal(err_msg("os_solaris.cpp: os::init: sysconf failed (%s)",
+                  strerror(errno)));
   init_page_sizes((size_t) page_size);
 
   Solaris::initialize_system_info();
@@ -4772,7 +4779,7 @@ void os::init(void) {
 
   int fd = open("/dev/zero", O_RDWR);
   if (fd < 0) {
-    fatal1("os::init: cannot open /dev/zero (%s)", strerror(errno));
+    fatal(err_msg("os::init: cannot open /dev/zero (%s)", strerror(errno)));
   } else {
     Solaris::set_dev_zero_fd(fd);
 
@@ -5802,6 +5809,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   if (_counter > 0) {
       _counter = 0 ;
+      OrderAccess::fence();
       return ;
   }
 
@@ -5845,6 +5853,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = os::Solaris::mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    OrderAccess::fence();
     return;
   }
 
@@ -5891,6 +5900,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     jt->java_suspend_self();
   }
 
+  OrderAccess::fence();
 }
 
 void Parker::unpark() {

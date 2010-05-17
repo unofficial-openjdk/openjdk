@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -59,36 +59,37 @@
 #
 # Main Targets (JDK/OPENJDK):
 #
-#     all/clobber/clean		The usual, plus the native libraries.
-#				    If OpenJDK, installs sunpkcs11.jar.
-#				    If JDK, installs prebuilt
-#				    sunpkcs11.jar.
+#     all/clobber/clean        The usual, plus the native libraries.
+#                                  If OpenJDK, installs sunpkcs11.jar.
+#                                  If JDK, installs prebuilt
+#                                      sunpkcs11.jar.
 #
-#     jar			Builds/installs sunpkcs11.jar
-#				    If OpenJDK, does not sign.
-#				    If JDK, tries to sign.
+#     jar                      Builds/installs sunpkcs11.jar
+#                                  If OpenJDK, does not sign.
+#                                  If JDK, tries to sign.
 #
 # Other lesser-used Targets (JDK/OPENJDK):
 #
-#     build-jar			Builds sunpkcs11.jar
-#				    (does not sign/install)
+#     build-jar                Builds sunpkcs11.jar
+#                                  (does not sign/install)
 #
-#     install-jar		Alias for "jar" above.
+#     install-jar              Alias for "jar" above.
 #
 # Other targets (JDK only):
 #
-#     sign			Alias for sign-jar
-#	  sign-jar		Builds/signs sunpkcs11.jar (no install)
+#     sign                     Alias for sign-jar
+#          sign-jar            Builds/signs sunpkcs11.jar (no install)
 #
-#     release			Builds all targets in preparation
-#				for workspace integration.
+#     release                  Builds all targets in preparation
+#                              for workspace integration.
 #
-#     install-prebuilt		Installs the pre-built jar files
+#     install-prebuilt         Installs the pre-built jar files
 #
 # This makefile was written to support parallel target execution.
 #
 
 BUILDDIR = ../../..
+MODULE  = security-sunpkcs11
 PACKAGE = sun.security.pkcs11
 LIBRARY = j2pkcs11
 PRODUCT = sun
@@ -161,6 +162,16 @@ else
   OTHER_LDLIBS = -ldl $(JVMLIB)
 endif
 
+# Other config files
+SUNPKCS11_CFG   =
+
+ifeq ($(PLATFORM), solaris)
+SUNPKCS11_CFG   = sunpkcs11-cfg
+endif # PLATFORM
+
+SUNPKCS11_CFG_SRC   = $(TOPDIR)/src/share/lib/security/sunpkcs11-solaris.cfg
+SUNPKCS11_CFG_BUILD = $(LIBDIR)/security/sunpkcs11-solaris.cfg
+
 #
 # We use a variety of subdirectories in the $(TEMPDIR) depending on what
 # part of the build we're doing.  Both OPENJDK/JDK builds are initially
@@ -174,11 +185,16 @@ UNSIGNED_DIR = $(TEMPDIR)/unsigned
 #
 
 ifdef OPENJDK
-all: build-jar install-jar
+all: $(SUNPKCS11_CFG) build-jar install-jar
 else
-all: build-jar install-prebuilt
+all: $(SUNPKCS11_CFG) build-jar install-prebuilt
 	$(build-warning)
 endif
+
+sunpkcs11-cfg: $(SUNPKCS11_CFG_BUILD)
+
+$(SUNPKCS11_CFG_BUILD): $(SUNPKCS11_CFG_SRC)
+	$(install-file)
 
 include $(BUILDDIR)/javax/crypto/Defs-jce.gmk
 
@@ -271,7 +287,7 @@ $(JAR_DESTFILE): $(UNSIGNED_DIR)/sunpkcs11.jar
 else
 $(JAR_DESTFILE): $(SIGNED_DIR)/sunpkcs11.jar
 endif
-	$(install-file)
+	$(install-non-module-file)
 
 ifndef OPENJDK
 install-prebuilt:
@@ -287,6 +303,7 @@ endif
 
 clobber clean::
 	$(RM) -r $(JAR_DESTFILE) $(TEMPDIR) $(JCE_BUILD_DIR)
+	$(RM) $(SUNPKCS11_CFG_BUILD) 
 
 .PHONY: build-jar jar install-jar
 ifndef OPENJDK

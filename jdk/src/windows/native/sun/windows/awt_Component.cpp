@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -378,7 +378,9 @@ LRESULT CALLBACK AwtComponent::WndProc(HWND hWnd, UINT message,
     TRY;
 
     AwtComponent * self = AwtComponent::GetComponentImpl(hWnd);
-    if (self == NULL || self->GetHWnd() != hWnd) {
+    if (self == NULL || self->GetHWnd() != hWnd ||
+        message == WM_UNDOCUMENTED_CLIENTSHUTDOWN) // handle log-off gracefully
+    {
         return ComCtl32Util::GetInstance().DefWindowProc(NULL, hWnd, message, wParam, lParam);
     } else {
         return self->WindowProc(message, wParam, lParam);
@@ -3705,8 +3707,7 @@ void AwtComponent::SetCompositionWindow(RECT& r)
     if (hIMC == NULL) {
         return;
     }
-    COMPOSITIONFORM cf = {CFS_POINT, {0, r.bottom}, NULL};
-    // Place the composition window right below the client Window
+    COMPOSITIONFORM cf = {CFS_DEFAULT, {0, 0}, {0, 0, 0, 0}};
     ImmSetCompositionWindow(hIMC, &cf);
 }
 
@@ -3739,11 +3740,12 @@ void AwtComponent::SetCandidateWindow(int iCandType, int x, int y)
 
 MsgRouting AwtComponent::WmImeSetContext(BOOL fSet, LPARAM *lplParam)
 {
-    // This message causes native status window shown even it is disabled.  So don't
-    // let DefWindowProc process this message if this IMC is disabled.
+    // If the Windows input context is disabled, do not let Windows
+    // display any UIs.
     HIMC hIMC = ImmGetContext();
     if (hIMC == NULL) {
-        return mrConsume;
+        *lplParam = 0;
+        return mrDoDefault;
     }
 
     if (fSet) {

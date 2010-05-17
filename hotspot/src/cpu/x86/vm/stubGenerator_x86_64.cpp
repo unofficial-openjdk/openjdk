@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -278,11 +278,6 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(c_rarg2, parameters);       // parameter pointer
     __ movl(c_rarg1, c_rarg3);            // parameter counter is in c_rarg1
     __ BIND(loop);
-    if (TaggedStackInterpreter) {
-      __ movl(rax, Address(c_rarg2, 0)); // get tag
-      __ addptr(c_rarg2, wordSize);      // advance to next tag
-      __ push(rax);                      // pass tag
-    }
     __ movptr(rax, Address(c_rarg2, 0));// get parameter
     __ addptr(c_rarg2, wordSize);       // advance to next parameter
     __ decrementl(c_rarg1);             // decrement counter
@@ -466,7 +461,7 @@ class StubGenerator: public StubCodeGenerator {
     BLOCK_COMMENT("call exception_handler_for_return_address");
     __ call_VM_leaf(CAST_FROM_FN_PTR(address,
                          SharedRuntime::exception_handler_for_return_address),
-                    c_rarg0);
+                    r15_thread, c_rarg0);
     __ mov(rbx, rax);
 
     // setup rax & rdx, remove return address & clear pending exception
@@ -871,9 +866,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   address generate_fp_mask(const char *stub_name, int64_t mask) {
+    __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", stub_name);
-
-    __ align(16);
     address start = __ pc();
 
     __ emit_data64( mask, relocInfo::none );
@@ -1172,7 +1166,7 @@ class StubGenerator: public StubCodeGenerator {
             __ movptr(c_rarg0, addr);
             __ movptr(c_rarg1, count);
           }
-          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre)));
+          __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre), 2);
           __ popa();
         }
         break;
@@ -1212,7 +1206,7 @@ class StubGenerator: public StubCodeGenerator {
           __ shrptr(scratch, LogBytesPerHeapOop);  // convert to element count
           __ mov(c_rarg0, start);
           __ mov(c_rarg1, scratch);
-          __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_post)));
+          __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_post), 2);
           __ popa();
         }
         break;
@@ -1268,7 +1262,7 @@ class StubGenerator: public StubCodeGenerator {
                              Label& L_copy_32_bytes, Label& L_copy_8_bytes) {
     DEBUG_ONLY(__ stop("enter at entry label, not here"));
     Label L_loop;
-    __ align(16);
+    __ align(OptoLoopAlignment);
   __ BIND(L_loop);
     if(UseUnalignedLoadStores) {
       __ movdqu(xmm0, Address(end_from, qword_count, Address::times_8, -24));
@@ -1309,7 +1303,7 @@ class StubGenerator: public StubCodeGenerator {
                               Label& L_copy_32_bytes, Label& L_copy_8_bytes) {
     DEBUG_ONLY(__ stop("enter at entry label, not here"));
     Label L_loop;
-    __ align(16);
+    __ align(OptoLoopAlignment);
   __ BIND(L_loop);
     if(UseUnalignedLoadStores) {
       __ movdqu(xmm0, Address(from, qword_count, Address::times_8, 16));
@@ -2229,7 +2223,7 @@ class StubGenerator: public StubCodeGenerator {
     // Loop control:
     //   for (count = -count; count != 0; count++)
     // Base pointers src, dst are biased by 8*(count-1),to last element.
-    __ align(16);
+    __ align(OptoLoopAlignment);
 
     __ BIND(L_store_element);
     __ store_heap_oop(to_element_addr, rax_oop);  // store the oop
@@ -2731,6 +2725,79 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_arrayof_oop_arraycopy             = StubRoutines::_oop_arraycopy;
   }
 
+  void generate_math_stubs() {
+    {
+      StubCodeMark mark(this, "StubRoutines", "log");
+      StubRoutines::_intrinsic_log = (double (*)(double)) __ pc();
+
+      __ subq(rsp, 8);
+      __ movdbl(Address(rsp, 0), xmm0);
+      __ fld_d(Address(rsp, 0));
+      __ flog();
+      __ fstp_d(Address(rsp, 0));
+      __ movdbl(xmm0, Address(rsp, 0));
+      __ addq(rsp, 8);
+      __ ret(0);
+    }
+    {
+      StubCodeMark mark(this, "StubRoutines", "log10");
+      StubRoutines::_intrinsic_log10 = (double (*)(double)) __ pc();
+
+      __ subq(rsp, 8);
+      __ movdbl(Address(rsp, 0), xmm0);
+      __ fld_d(Address(rsp, 0));
+      __ flog10();
+      __ fstp_d(Address(rsp, 0));
+      __ movdbl(xmm0, Address(rsp, 0));
+      __ addq(rsp, 8);
+      __ ret(0);
+    }
+    {
+      StubCodeMark mark(this, "StubRoutines", "sin");
+      StubRoutines::_intrinsic_sin = (double (*)(double)) __ pc();
+
+      __ subq(rsp, 8);
+      __ movdbl(Address(rsp, 0), xmm0);
+      __ fld_d(Address(rsp, 0));
+      __ trigfunc('s');
+      __ fstp_d(Address(rsp, 0));
+      __ movdbl(xmm0, Address(rsp, 0));
+      __ addq(rsp, 8);
+      __ ret(0);
+    }
+    {
+      StubCodeMark mark(this, "StubRoutines", "cos");
+      StubRoutines::_intrinsic_cos = (double (*)(double)) __ pc();
+
+      __ subq(rsp, 8);
+      __ movdbl(Address(rsp, 0), xmm0);
+      __ fld_d(Address(rsp, 0));
+      __ trigfunc('c');
+      __ fstp_d(Address(rsp, 0));
+      __ movdbl(xmm0, Address(rsp, 0));
+      __ addq(rsp, 8);
+      __ ret(0);
+    }
+    {
+      StubCodeMark mark(this, "StubRoutines", "tan");
+      StubRoutines::_intrinsic_tan = (double (*)(double)) __ pc();
+
+      __ subq(rsp, 8);
+      __ movdbl(Address(rsp, 0), xmm0);
+      __ fld_d(Address(rsp, 0));
+      __ trigfunc('t');
+      __ fstp_d(Address(rsp, 0));
+      __ movdbl(xmm0, Address(rsp, 0));
+      __ addq(rsp, 8);
+      __ ret(0);
+    }
+
+    // The intrinsic version of these seem to return the same value as
+    // the strict version.
+    StubRoutines::_intrinsic_exp = SharedRuntime::dexp;
+    StubRoutines::_intrinsic_pow = SharedRuntime::dpow;
+  }
+
 #undef __
 #define __ masm->
 
@@ -2935,6 +3002,8 @@ class StubGenerator: public StubCodeGenerator {
 
     // arraycopy stubs used by compilers
     generate_arraycopy_stubs();
+
+    generate_math_stubs();
   }
 
  public:

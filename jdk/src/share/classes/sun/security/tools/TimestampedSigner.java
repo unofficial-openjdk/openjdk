@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2007-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,11 @@ public final class TimestampedSigner extends ContentSigner {
     private static final String KP_TIMESTAMPING_OID = "1.3.6.1.5.5.7.3.8";
 
     /*
+     * Object identifier for extendedKeyUsage extension
+     */
+    private static final String EXTENDED_KEY_USAGE_OID = "2.5.29.37";
+
+    /*
      * Object identifier for the timestamping access descriptors.
      */
     private static final ObjectIdentifier AD_TIMESTAMPING_Id;
@@ -159,18 +164,10 @@ public final class TimestampedSigner extends ContentSigner {
         //     "<digest>with<encryption>"
         // or  "<digest>with<encryption>and<mgf>"
         String signatureAlgorithm = parameters.getSignatureAlgorithm();
-        String digestAlgorithm = null;
-        String keyAlgorithm = null;
-        int with = signatureAlgorithm.indexOf("with");
-        if (with > 0) {
-            digestAlgorithm = signatureAlgorithm.substring(0, with);
-            int and = signatureAlgorithm.indexOf("and", with + 4);
-            if (and > 0) {
-                keyAlgorithm = signatureAlgorithm.substring(with + 4, and);
-            } else {
-                keyAlgorithm = signatureAlgorithm.substring(with + 4);
-            }
-        }
+        String keyAlgorithm =
+                AlgorithmId.getEncAlgFromSigAlg(signatureAlgorithm);
+        String digestAlgorithm =
+                AlgorithmId.getDigAlgFromSigAlg(signatureAlgorithm);
         AlgorithmId digestAlgorithmId = AlgorithmId.get(digestAlgorithm);
 
         // Examine signer's certificate
@@ -365,33 +362,26 @@ public final class TimestampedSigner extends ContentSigner {
         }
 
         // Examine the TSA's certificate (if present)
-        List<String> keyPurposes = null;
-        X509Certificate[] certs = tsToken.getCertificates();
-        if (certs != null && certs.length > 0) {
-            // Use certficate from the TSP reply
-            // Pick out the cert for the TS server, which is the end-entity
-            // one inside the chain.
-            for (X509Certificate cert: certs) {
-                boolean isSigner = false;
-                for (X509Certificate cert2: certs) {
-                    if (cert != cert2) {
-                        if (cert.getSubjectDN().equals(cert2.getIssuerDN())) {
-                            isSigner = true;
-                            break;
-                        }
-                    }
+        for (SignerInfo si: tsToken.getSignerInfos()) {
+            X509Certificate cert = si.getCertificate(tsToken);
+            if (cert == null) {
+                // Error, we've already set tsRequestCertificate = true
+                throw new CertificateException(
+                "Certificate not included in timestamp token");
+            } else {
+                if (!cert.getCriticalExtensionOIDs().contains(
+                        EXTENDED_KEY_USAGE_OID)) {
+                    throw new CertificateException(
+                    "Certificate is not valid for timestamping");
                 }
-                if (!isSigner) {
-                    keyPurposes = cert.getExtendedKeyUsage();
-                    if (! keyPurposes.contains(KP_TIMESTAMPING_OID)) {
-                        throw new CertificateException(
-                            "Certificate is not valid for timestamping");
-                    }
-                    break;
+                List keyPurposes = cert.getExtendedKeyUsage();
+                if (keyPurposes == null ||
+                        ! keyPurposes.contains(KP_TIMESTAMPING_OID)) {
+                    throw new CertificateException(
+                    "Certificate is not valid for timestamping");
                 }
             }
         }
-
         return tsReply.getEncodedToken();
     }
 }

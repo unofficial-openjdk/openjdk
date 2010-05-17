@@ -25,7 +25,9 @@
 
 package com.sun.tools.classfile;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Iterator;
 
 /**
@@ -38,7 +40,7 @@ import java.util.Iterator;
  */
 public class ConstantPool {
 
-    public class InvalidIndex extends ConstantPoolException {
+    public static class InvalidIndex extends ConstantPoolException {
         private static final long serialVersionUID = -4350294289300939730L;
         InvalidIndex(int index) {
             super(index);
@@ -51,7 +53,7 @@ public class ConstantPool {
         }
     }
 
-    public class UnexpectedEntry extends ConstantPoolException {
+    public static class UnexpectedEntry extends ConstantPoolException {
         private static final long serialVersionUID = 6986335935377933211L;
         UnexpectedEntry(int index, int expected_tag, int found_tag) {
             super(index);
@@ -69,7 +71,7 @@ public class ConstantPool {
         public final int found_tag;
     }
 
-    public class InvalidEntry extends ConstantPoolException {
+    public static class InvalidEntry extends ConstantPoolException {
         private static final long serialVersionUID = 1000087545585204447L;
         InvalidEntry(int index, int tag) {
             super(index);
@@ -85,7 +87,7 @@ public class ConstantPool {
         public final int tag;
     }
 
-    public class EntryNotFound extends ConstantPoolException {
+    public static class EntryNotFound extends ConstantPoolException {
         private static final long serialVersionUID = 2885537606468581850L;
         EntryNotFound(Object value) {
             super(-1);
@@ -177,6 +179,16 @@ public class ConstantPool {
 
     public int size() {
         return pool.length;
+    }
+
+    public int byteLength() {
+        int length = 2;
+        for (int i = 1; i < size(); ) {
+            CPInfo cpInfo = pool[i];
+            length += cpInfo.byteLength();
+            i += cpInfo.size();
+        }
+        return length;
     }
 
     public CPInfo get(int index) throws InvalidIndex {
@@ -291,6 +303,8 @@ public class ConstantPool {
             return 1;
         }
 
+        public abstract int byteLength();
+
         public abstract <R,D> R accept(Visitor<R,D> visitor, D data);
 
         protected final ConstantPool cp;
@@ -313,6 +327,10 @@ public class ConstantPool {
 
         public int getTag() {
             return tag;
+        }
+
+        public int byteLength() {
+            return 5;
         }
 
         public CONSTANT_Class_info getClassInfo() throws ConstantPoolException {
@@ -347,14 +365,37 @@ public class ConstantPool {
             return CONSTANT_Class;
         }
 
+        public int  byteLength() {
+            return 3;
+        }
+
+        /**
+         * Get the raw value of the class referenced by this constant pool entry.
+         * This will either be the name of the class, in internal form, or a
+         * descriptor for an array class.
+         * @return the raw value of the class
+         */
         public String getName() throws ConstantPoolException {
             return cp.getUTF8Value(name_index);
         }
 
+        /**
+         * If this constant pool entry identifies either a class or interface type,
+         * or a possibly multi-dimensional array of a class of interface type,
+         * return the name of the class or interface in internal form. Otherwise,
+         * (i.e. if this is a possibly multi-dimensional array of a primitive type),
+         * return null.
+         * @return the base class or interface name
+         */
         public String getBaseName() throws ConstantPoolException {
             String name = getName();
-            int index = name.indexOf("[L") + 1;
-            return name.substring(index);
+            if (name.startsWith("[")) {
+                int index = name.indexOf("[L");
+                if (index == -1)
+                    return null;
+                return name.substring(index + 2, name.length() - 1);
+            } else
+                return name;
         }
 
         public int getDimensionCount() throws ConstantPoolException {
@@ -388,6 +429,10 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Double;
+        }
+
+        public int  byteLength() {
+            return 9;
         }
 
         @Override
@@ -439,6 +484,10 @@ public class ConstantPool {
             return CONSTANT_Float;
         }
 
+        public int byteLength() {
+            return 5;
+        }
+
         @Override
         public String toString() {
             return "CONSTANT_Float_info[value: " + value + "]";
@@ -462,6 +511,10 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Integer;
+        }
+
+        public int byteLength() {
+            return 5;
         }
 
         @Override
@@ -513,6 +566,10 @@ public class ConstantPool {
             return 2;
         }
 
+        public int byteLength() {
+            return 9;
+        }
+
         @Override
         public String toString() {
             return "CONSTANT_Long_info[value: " + value + "]";
@@ -561,6 +618,10 @@ public class ConstantPool {
             return CONSTANT_NameAndType;
         }
 
+        public int byteLength() {
+            return 5;
+        }
+
         public String getName() throws ConstantPoolException {
             return cp.getUTF8Value(name_index);
         }
@@ -597,6 +658,10 @@ public class ConstantPool {
             return CONSTANT_String;
         }
 
+        public int byteLength() {
+            return 3;
+        }
+
         public String getString() throws ConstantPoolException {
             return cp.getUTF8Value(string_index);
         }
@@ -624,6 +689,20 @@ public class ConstantPool {
 
         public int getTag() {
             return CONSTANT_Utf8;
+        }
+
+        public int byteLength() {
+            class SizeOutputStream extends OutputStream {
+                @Override
+                public void write(int b) {
+                    size++;
+                }
+                int size;
+            }
+            SizeOutputStream sizeOut = new SizeOutputStream();
+            DataOutputStream out = new DataOutputStream(sizeOut);
+            try { out.writeUTF(value); } catch (IOException ignore) { }
+            return 1 + sizeOut.size;
         }
 
         @Override

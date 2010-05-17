@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import java.security.spec.*;
 
 /**
  * This class constitutes the core of HMAC-<MD> algorithms, where
- * <MD> can be SHA1 or MD5, etc.
+ * <MD> can be SHA1 or MD5, etc. See RFC 2104 for spec.
  *
  * It also contains the implementation classes for the SHA-256,
  * SHA-384, and SHA-512 HMACs.
@@ -116,7 +116,7 @@ final class HmacCore implements Cloneable {
         }
 
         byte[] secret = key.getEncoded();
-        if (secret == null || secret.length == 0) {
+        if (secret == null) {
             throw new InvalidKeyException("Missing key data");
         }
 
@@ -241,7 +241,6 @@ final class HmacCore implements Cloneable {
     public static final class HmacSHA256 extends MacSpi implements Cloneable {
         private final HmacCore core;
         public HmacSHA256() throws NoSuchAlgorithmException {
-            SunJCE.ensureIntegrity(getClass());
             core = new HmacCore("SHA-256", 64);
         }
         private HmacSHA256(HmacSHA256 base) throws CloneNotSupportedException {
@@ -278,7 +277,6 @@ final class HmacCore implements Cloneable {
     public static final class HmacSHA384 extends MacSpi implements Cloneable {
         private final HmacCore core;
         public HmacSHA384() throws NoSuchAlgorithmException {
-            SunJCE.ensureIntegrity(getClass());
             core = new HmacCore("SHA-384", 128);
         }
         private HmacSHA384(HmacSHA384 base) throws CloneNotSupportedException {
@@ -315,7 +313,6 @@ final class HmacCore implements Cloneable {
     public static final class HmacSHA512 extends MacSpi implements Cloneable {
         private final HmacCore core;
         public HmacSHA512() throws NoSuchAlgorithmException {
-            SunJCE.ensureIntegrity(getClass());
             core = new HmacCore("SHA-512", 128);
         }
         private HmacSHA512(HmacSHA512 base) throws CloneNotSupportedException {

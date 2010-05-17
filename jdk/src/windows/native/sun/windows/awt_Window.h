@@ -63,8 +63,11 @@ public:
     static jfieldID sysWID;
     static jfieldID sysHID;
 
+    static jfieldID windowTypeID;
+
     static jmethodID getWarningStringMID;
     static jmethodID calculateSecurityWarningPositionMID;
+    static jmethodID windowTypeNameMID;
 
     AwtWindow();
     virtual ~AwtWindow();
@@ -229,6 +232,7 @@ public:
     static void _SetOpaque(void* param);
     static void _UpdateWindow(void* param);
     static void _RepositionSecurityWarning(void* param);
+    static void _SetFullScreenExclusiveModeState(void* param);
 
     inline static BOOL IsResizing() {
         return sm_resizing;
@@ -262,21 +266,16 @@ private:
                                        // from its hierarchy when shown. Currently applied to instances of
                                        // javax/swing/Popup$HeavyWeightWindow class.
 
+    // SetTranslucency() is the setter for the following two fields
     BYTE m_opacity;         // The opacity level. == 0xff by default (when opacity mode is disabled)
     BOOL m_opaque;          // Whether the window uses the perpixel translucency (false), or not (true).
 
     inline BYTE getOpacity() {
         return m_opacity;
     }
-    inline void setOpacity(BYTE opacity) {
-        m_opacity = opacity;
-    }
 
     inline BOOL isOpaque() {
         return m_opaque;
-    }
-    inline void setOpaque(BOOL opaque) {
-        m_opaque = opaque;
     }
 
     CRITICAL_SECTION contentBitmapCS;
@@ -284,10 +283,12 @@ private:
     UINT contentWidth;
     UINT contentHeight;
 
-    void SetTranslucency(BYTE opacity, BOOL opaque);
+    void SetTranslucency(BYTE opacity, BOOL opaque, BOOL setValues = TRUE,
+            BOOL useDefaultForOldValues = FALSE);
     void UpdateWindow(int width, int height, HBITMAP hBitmap);
     void UpdateWindowImpl(int width, int height, HBITMAP hBitmap);
     void RedrawWindow();
+    void DeleteContentBitmap();
 
     static UINT untrustedWindowsCounter;
 
@@ -331,6 +332,19 @@ private:
 
     void RepositionSecurityWarning(JNIEnv *env);
 
+    static void SetLayered(HWND window, bool layered);
+    static bool IsLayered(HWND window);
+
+    BOOL fullScreenExclusiveModeState;
+    inline void setFullScreenExclusiveModeState(BOOL isEntered) {
+        fullScreenExclusiveModeState = isEntered;
+        UpdateSecurityWarningVisibility();
+    }
+    inline BOOL isFullScreenExclusiveMode() {
+        return fullScreenExclusiveModeState;
+    }
+
+
 public:
     void UpdateSecurityWarningVisibility();
     static bool IsWarningWindow(HWND hWnd);
@@ -349,10 +363,30 @@ protected:
 
     UINT currentWmSizeState;
 
+    void EnableTranslucency(BOOL enable);
+
+    // Native representation of the java.awt.Window.Type enum
+    enum Type {
+        NORMAL, UTILITY, POPUP
+    };
+
+    inline Type GetType() { return m_windowType; }
+
 private:
     int m_screenNum;
 
     void InitOwner(AwtWindow *owner);
+
+    Type m_windowType;
+    void InitType(JNIEnv *env, jobject peer);
+
+    // Tweak the style according to the type of the window
+    void TweakStyle(DWORD & style, DWORD & exStyle);
+
+    // Set in _SetAlwaysOnTop()
+    bool m_alwaysOnTop;
+public:
+    inline bool IsAlwaysOnTop() { return m_alwaysOnTop; }
 };
 
 #endif /* AWT_WINDOW_H */

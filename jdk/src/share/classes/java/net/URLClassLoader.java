@@ -306,41 +306,62 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
     }
 
     /*
+     * Retrieve the package using the specified package name.
+     * If non-null, verify the package using the specified code
+     * source and manifest.
+     */
+    private Package getAndVerifyPackage(String pkgname,
+                                        Manifest man, URL url) {
+        Package pkg = getPackage(pkgname);
+        if (pkg != null) {
+            // Package found, so check package sealing.
+            if (pkg.isSealed()) {
+                // Verify that code source URL is the same.
+                if (!pkg.isSealed(url)) {
+                    throw new SecurityException(
+                        "sealing violation: package " + pkgname + " is sealed");
+                }
+            } else {
+                // Make sure we are not attempting to seal the package
+                // at this code source URL.
+                if ((man != null) && isSealed(pkgname, man)) {
+                    throw new SecurityException(
+                        "sealing violation: can't seal package " + pkgname +
+                        ": already loaded");
+                }
+            }
+        }
+        return pkg;
+    }
+
+    /*
      * Defines a Class using the class bytes obtained from the specified
      * Resource. The resulting Class must be resolved before it can be
      * used.
      */
     private Class defineClass(String name, Resource res) throws IOException {
+        long t0 = System.nanoTime();
         int i = name.lastIndexOf('.');
         URL url = res.getCodeSourceURL();
         if (i != -1) {
             String pkgname = name.substring(0, i);
             // Check if package already loaded.
-            Package pkg = getPackage(pkgname);
             Manifest man = res.getManifest();
-            if (pkg != null) {
-                // Package found, so check package sealing.
-                if (pkg.isSealed()) {
-                    // Verify that code source URL is the same.
-                    if (!pkg.isSealed(url)) {
-                        throw new SecurityException(
-                            "sealing violation: package " + pkgname + " is sealed");
+            if (getAndVerifyPackage(pkgname, man, url) == null) {
+                try {
+                    if (man != null) {
+                        definePackage(pkgname, man, url);
+                    } else {
+                        definePackage(pkgname, null, null, null, null, null, null, null);
                     }
-
-                } else {
-                    // Make sure we are not attempting to seal the package
-                    // at this code source URL.
-                    if ((man != null) && isSealed(pkgname, man)) {
-                        throw new SecurityException(
-                            "sealing violation: can't seal package " + pkgname +
-                            ": already loaded");
+                } catch (IllegalArgumentException iae) {
+                    // parallel-capable class loaders: re-verify in case of a
+                    // race condition
+                    if (getAndVerifyPackage(pkgname, man, url) == null) {
+                        // Should never happen
+                        throw new AssertionError("Cannot find package " +
+                                                 pkgname);
                     }
-                }
-            } else {
-                if (man != null) {
-                    definePackage(pkgname, man, url);
-                } else {
-                    definePackage(pkgname, null, null, null, null, null, null, null);
                 }
             }
         }
@@ -350,12 +371,14 @@ public class URLClassLoader extends SecureClassLoader implements Closeable {
             // Use (direct) ByteBuffer:
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
+            sun.misc.PerfCounter.getReadClassBytesTime().addElapsedTimeFrom(t0);
             return defineClass(name, bb, cs);
         } else {
             byte[] b = res.getBytes();
             // must read certificates AFTER reading bytes.
             CodeSigner[] signers = res.getCodeSigners();
             CodeSource cs = new CodeSource(url, signers);
+            sun.misc.PerfCounter.getReadClassBytesTime().addElapsedTimeFrom(t0);
             return defineClass(name, b, 0, b.length, cs);
         }
     }

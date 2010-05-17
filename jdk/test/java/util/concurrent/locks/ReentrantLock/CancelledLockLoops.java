@@ -34,7 +34,7 @@
 /*
  * @test
  * @bug 4486658
- * @compile -source 1.5 CancelledLockLoops.java
+ * @compile CancelledLockLoops.java
  * @run main/timeout=2800 CancelledLockLoops
  * @summary tests lockInterruptibly.
  * Checks for responsiveness of locks to interrupts. Runs under that
@@ -115,7 +115,7 @@ public final class CancelledLockLoops {
             finally {
                 lock.unlock();
             }
-            if (completed != 2)
+            if (c != 2)
                 throw new Error("Completed != 2");
             int r = result;
             if (r == 0) // avoid overoptimization

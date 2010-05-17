@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -201,6 +201,8 @@ public abstract class ShellFolder extends File {
 
     private static ShellFolderManager shellFolderManager;
 
+    private static Invoker invoker;
+
     static {
         String managerClassName = (String)Toolkit.getDefaultToolkit().
                                       getDesktopProperty("Shell.shellFolderManager");
@@ -225,6 +227,8 @@ public abstract class ShellFolder extends File {
             throw new Error ("Could not access Shell Folder Manager: "
             + managerClass.getName());
         }
+
+        invoker = shellFolderManager.createInvoker();
     }
 
     /**
@@ -289,8 +293,8 @@ public abstract class ShellFolder extends File {
 
         // To avoid loads of synchronizations with Invoker and improve performance we
         // synchronize the whole code of the sort method once
-        getInvoker().invoke(new Callable<Void>() {
-            public Void call() throws Exception {
+        invoke(new Callable<Void>() {
+            public Void call() {
                 // Check that we can use the ShellFolder.sortChildren() method:
                 //   1. All files have the same non-null parent
                 //   2. All files is ShellFolders
@@ -330,8 +334,8 @@ public abstract class ShellFolder extends File {
     public void sortChildren(final List<? extends File> files) {
         // To avoid loads of synchronizations with Invoker and improve performance we
         // synchronize the whole code of the sort method once
-        getInvoker().invoke(new Callable<Void>() {
-            public Void call() throws Exception {
+        invoke(new Callable<Void>() {
+            public Void call() {
                 Collections.sort(files, FILE_COMPARATOR);
 
                 return null;
@@ -486,19 +490,48 @@ public abstract class ShellFolder extends File {
         return null;
     }
 
-    private static Invoker invoker;
+    /**
+     * Invokes the {@code task} which doesn't throw checked exceptions
+     * from its {@code call} method. If invokation is interrupted then Thread.currentThread().isInterrupted() will
+     * be set and result will be {@code null}
+     */
+    public static <T> T invoke(Callable<T> task) {
+        try {
+            return invoke(task, RuntimeException.class);
+        } catch (InterruptedException e) {
+            return null;
+        }
+    }
 
     /**
-     * Provides the single access point to the {@link Invoker}. It is guaranteed that the value
-     * returned by this method will be always the same.
-     *
-     * @return the singleton instance of {@link Invoker}
+     * Invokes the {@code task} which throws checked exceptions from its {@code call} method.
+     * If invokation is interrupted then Thread.currentThread().isInterrupted() will
+     * be set and InterruptedException will be thrown as well.
      */
-    public static Invoker getInvoker() {
-        if (invoker == null) {
-            invoker = shellFolderManager.createInvoker();
+    public static <T, E extends Throwable> T invoke(Callable<T> task, Class<E> exceptionClass)
+            throws InterruptedException, E {
+        try {
+            return invoker.invoke(task);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                // Rethrow unchecked exceptions
+                throw (RuntimeException) e;
+            }
+
+            if (e instanceof InterruptedException) {
+                // Set isInterrupted flag for current thread
+                Thread.currentThread().interrupt();
+
+                // Rethrow InterruptedException
+                throw (InterruptedException) e;
+            }
+
+            if (exceptionClass.isInstance(e)) {
+                throw exceptionClass.cast(e);
+            }
+
+            throw new RuntimeException("Unexpected error", e);
         }
-        return invoker;
     }
 
     /**
@@ -506,13 +539,13 @@ public abstract class ShellFolder extends File {
      */
     public static interface Invoker {
         /**
-         * Invokes a callable task. If the {@code task} throws a checked exception,
-         * it will be wrapped into a {@link RuntimeException}
+         * Invokes a callable task.
          *
          * @param task a task to invoke
+         * @throws Exception {@code InterruptedException} or an exception that was thrown from the {@code task}
          * @return the result of {@code task}'s invokation
          */
-        <T> T invoke(Callable<T> task);
+        <T> T invoke(Callable<T> task) throws Exception;
     }
 
     /**

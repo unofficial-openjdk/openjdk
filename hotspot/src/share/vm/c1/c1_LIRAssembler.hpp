@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ class LIR_Assembler: public CompilationResourceObj {
 
   Instruction*       _pending_non_safepoint;
   int                _pending_non_safepoint_offset;
+
+  Label              _unwind_handler_entry;
 
 #ifdef ASSERT
   BlockList          _branch_target_blocks;
@@ -82,7 +84,7 @@ class LIR_Assembler: public CompilationResourceObj {
   Address as_Address_hi(LIR_Address* addr);
 
   // debug information
-  void add_call_info(int pc_offset, CodeEmitInfo* cinfo);
+  void add_call_info(int pc_offset, CodeEmitInfo* cinfo, bool is_method_handle_invoke = false);
   void add_debug_info_for_branch(CodeEmitInfo* info);
   void add_debug_info_for_div0(int pc_offset, CodeEmitInfo* cinfo);
   void add_debug_info_for_div0_here(CodeEmitInfo* info);
@@ -133,9 +135,10 @@ class LIR_Assembler: public CompilationResourceObj {
   void add_call_info_here(CodeEmitInfo* info)                              { add_call_info(code_offset(), info); }
 
   // code patterns
-  void emit_exception_handler();
+  int  emit_exception_handler();
+  int  emit_unwind_handler();
   void emit_exception_entries(ExceptionInfoList* info_list);
-  void emit_deopt_handler();
+  int  emit_deopt_handler();
 
   void emit_code(BlockList* hir);
   void emit_block(BlockBegin* block);
@@ -205,15 +208,20 @@ class LIR_Assembler: public CompilationResourceObj {
   void comp_fl2i(LIR_Code code, LIR_Opr left, LIR_Opr right, LIR_Opr result, LIR_Op2* op);
   void cmove(LIR_Condition code, LIR_Opr left, LIR_Opr right, LIR_Opr result);
 
-  void ic_call(address destination, CodeEmitInfo* info);
-  void vtable_call(int vtable_offset, CodeEmitInfo* info);
-  void call(address entry, relocInfo::relocType rtype, CodeEmitInfo* info);
+  void call(        LIR_OpJavaCall* op, relocInfo::relocType rtype);
+  void ic_call(     LIR_OpJavaCall* op);
+  void vtable_call( LIR_OpJavaCall* op);
+
+  // JSR 292
+  void preserve_SP(LIR_OpJavaCall* op);
+  void restore_SP( LIR_OpJavaCall* op);
 
   void osr_entry();
 
   void build_frame();
 
-  void throw_op(LIR_Opr exceptionPC, LIR_Opr exceptionOop, CodeEmitInfo* info, bool unwind);
+  void throw_op(LIR_Opr exceptionPC, LIR_Opr exceptionOop, CodeEmitInfo* info);
+  void unwind_op(LIR_Opr exceptionOop);
   void monitor_address(int monitor_ix, LIR_Opr dst);
 
   void align_backward_branch_target();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -635,8 +635,15 @@ void ciTypeFlow::StateVector::do_invoke(ciBytecodeStream* str,
   ciMethod* method = str->get_method(will_link);
   if (!will_link) {
     // We weren't able to find the method.
-    ciKlass* unloaded_holder = method->holder();
-    trap(str, unloaded_holder, str->get_method_holder_index());
+    if (str->cur_bc() == Bytecodes::_invokedynamic) {
+      trap(str, NULL,
+           Deoptimization::make_trap_request
+           (Deoptimization::Reason_uninitialized,
+            Deoptimization::Action_reinterpret));
+    } else {
+      ciKlass* unloaded_holder = method->holder();
+      trap(str, unloaded_holder, str->get_method_holder_index());
+    }
   } else {
     ciSignature* signature = method->signature();
     ciSignatureStream sigstr(signature);
@@ -1292,8 +1299,8 @@ bool ciTypeFlow::StateVector::apply_one_bytecode(ciBytecodeStream* str) {
   case Bytecodes::_invokeinterface: do_invoke(str, true);           break;
   case Bytecodes::_invokespecial:   do_invoke(str, true);           break;
   case Bytecodes::_invokestatic:    do_invoke(str, false);          break;
-
   case Bytecodes::_invokevirtual:   do_invoke(str, true);           break;
+  case Bytecodes::_invokedynamic:   do_invoke(str, false);          break;
 
   case Bytecodes::_istore:   store_local_int(str->get_index());     break;
   case Bytecodes::_istore_0: store_local_int(0);                    break;
@@ -2486,8 +2493,13 @@ void ciTypeFlow::build_loop_tree(Block* blk) {
         // Assume irreducible entries need more data flow
         add_to_work_list(succ);
       }
-      lp = lp->parent();
-      assert(lp != NULL, "nested loop must have parent by now");
+      Loop* plp = lp->parent();
+      if (plp == NULL) {
+        // This only happens for some irreducible cases.  The parent
+        // will be updated during a later pass.
+        break;
+      }
+      lp = plp;
     }
 
     // Merge loop tree branch for all successors.

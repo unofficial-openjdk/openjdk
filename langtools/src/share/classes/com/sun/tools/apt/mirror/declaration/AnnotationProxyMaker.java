@@ -49,7 +49,7 @@ import com.sun.tools.javac.util.Pair;
  * <p> The "dynamic proxy return form" of an attribute element value is
  * the form used by sun.reflect.annotation.AnnotationInvocationHandler.
  */
-
+@SuppressWarnings("deprecation")
 class AnnotationProxyMaker {
 
     private final AptEnv env;
@@ -270,7 +270,7 @@ class AnnotationProxyMaker {
      * The toString, hashCode, and equals methods foward to the underlying
      * type.
      */
-    private static class MirroredTypeExceptionProxy extends ExceptionProxy {
+    private static final class MirroredTypeExceptionProxy extends ExceptionProxy {
         private static final long serialVersionUID = 6662035281599933545L;
 
         private MirroredTypeException ex;
@@ -312,7 +312,7 @@ class AnnotationProxyMaker {
      * The toString, hashCode, and equals methods foward to the underlying
      * types.
      */
-    private static class MirroredTypesExceptionProxy extends ExceptionProxy {
+    private static final class MirroredTypesExceptionProxy extends ExceptionProxy {
         private static final long serialVersionUID = -6670822532616693951L;
 
         private MirroredTypesException ex;

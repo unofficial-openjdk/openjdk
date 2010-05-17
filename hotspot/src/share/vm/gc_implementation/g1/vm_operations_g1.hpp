@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,8 +68,9 @@ class VM_G1CollectForAllocation: public VM_GC_Operation {
 
 class VM_G1IncCollectionPause: public VM_GC_Operation {
  public:
-  VM_G1IncCollectionPause(int gc_count_before) :
-    VM_GC_Operation(gc_count_before) {}
+  VM_G1IncCollectionPause(int gc_count_before,
+                          GCCause::Cause gc_cause = GCCause::_g1_inc_collection_pause) :
+    VM_GC_Operation(gc_count_before) { _gc_cause = gc_cause; }
   virtual VMOp_Type type() const { return VMOp_G1IncCollectionPause; }
   virtual void doit();
   virtual const char* name() const {

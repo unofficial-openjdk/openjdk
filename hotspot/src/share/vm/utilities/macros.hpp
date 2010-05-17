@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,7 +187,5 @@
 #define SPARC_ONLY(code)
 #define NOT_SPARC(code) code
 #endif
-
-#define FIX_THIS(code) report_assertion_failure("FIX_THIS",__FILE__, __LINE__, "")
 
 #define define_pd_global(type, name, value) const type pd_##name = value;

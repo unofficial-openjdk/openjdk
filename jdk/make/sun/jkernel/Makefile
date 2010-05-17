@@ -24,6 +24,7 @@
 #
 
 BUILDDIR = ../..
+MODULE  = jkernel
 PACKAGE = sun.jkernel
 LIBRARY = jkernel
 PRODUCT = sun
@@ -34,10 +35,6 @@ include $(BUILDDIR)/common/Defs.gmk
 # Use highest optimization level
 #
 _OPT = $(CC_HIGHEST_OPT)
-
-# This re-directs all the class files to a separate location
-CLASSDESTDIR = $(TEMPDIR)/classes
-
 
 #
 # Java source files

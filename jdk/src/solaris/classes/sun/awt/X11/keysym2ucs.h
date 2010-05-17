@@ -67,8 +67,7 @@ tojava package sun.awt.X11;
 tojava import java.util.Hashtable;
 tojava import sun.misc.Unsafe;
 tojava
-tojava import java.util.logging.Level;
-tojava import java.util.logging.Logger;
+tojava import sun.util.logging.PlatformLogger;
 tojava
 tojava public class XKeysym {
 tojava
@@ -108,7 +107,9 @@ tojava     // Another use for reverse lookup: query keyboard state, for some key
 tojava     static Hashtable<Integer, Long> javaKeycode2KeysymHash = new Hashtable<Integer, Long>();
 tojava     static long keysym_lowercase = unsafe.allocateMemory(Native.getLongSize());
 tojava     static long keysym_uppercase = unsafe.allocateMemory(Native.getLongSize());
-tojava     private static Logger keyEventLog = Logger.getLogger("sun.awt.X11.kye.XKeysym");
+tojava     static Keysym2JavaKeycode kanaLock = new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_KANA_LOCK,
+tojava                                                                 java.awt.event.KeyEvent.KEY_LOCATION_STANDARD);
+tojava     private static PlatformLogger keyEventLog = PlatformLogger.getLogger("sun.awt.X11.kye.XKeysym");
 tojava     public static char convertKeysym( long ks, int state ) {
 tojava
 tojava         /* First check for Latin-1 characters (1:1 mapping) */
@@ -253,12 +254,35 @@ tojava             }
 tojava         }
 tojava         return keysym;
 tojava     }
+tojava
+tojava     /**
+tojava         Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X keysym.
+tojava         Some keysyms maps to more than one keycode, these would require extra processing.
+tojava     */
+tojava     static Keysym2JavaKeycode getJavaKeycode( long keysym ) {
+tojava         if(keysym == XKeySymConstants.XK_Mode_switch){
+tojava            /* XK_Mode_switch on solaris maps either to VK_ALT_GRAPH (default) or VK_KANA_LOCK */
+tojava            if( XToolkit.isKanaKeyboard() ) {
+tojava                return kanaLock;
+tojava            }
+tojava         }else if(keysym == XKeySymConstants.XK_L1){
+tojava            /* if it is Sun keyboard, trick hash to return VK_STOP else VK_F11 (default) */
+tojava            if( XToolkit.isSunKeyboard() ) {
+tojava                keysym = XKeySymConstants.SunXK_Stop;
+tojava            }
+tojava         }else if(keysym == XKeySymConstants.XK_L2) {
+tojava            /* if it is Sun keyboard, trick hash to return VK_AGAIN else VK_F12 (default) */
+tojava            if( XToolkit.isSunKeyboard() ) {
+tojava                keysym = XKeySymConstants.SunXK_Again;
+tojava            }
+tojava         }
+tojava
+tojava         return  keysym2JavaKeycodeHash.get( keysym );
+tojava     }
 tojava     /**
 tojava         Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X Window KeyEvent.
 tojava         Algorithm is, extract via XKeycodeToKeysym  a proper keysym according to Xlib spec rules and
 tojava         err exceptions, then search a java keycode in a table.
-tojava         Some keysyms maps to more than one keycode, these would require extra processing. If someone
-tojava         points me to such a keysym.
 tojava     */
 tojava     static Keysym2JavaKeycode getJavaKeycode( XKeyEvent ev ) {
 tojava         // get from keysym2JavaKeycodeHash.
@@ -273,7 +297,7 @@ tojava             ndx = 0;
 tojava             keysym = xkeycode2keysym(ev, ndx);
 tojava         }
 tojava
-tojava         Keysym2JavaKeycode jkc = keysym2JavaKeycodeHash.get( keysym );
+tojava         Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
 tojava         return jkc;
 tojava     }
 tojava     static int getJavaKeycodeOnly( XKeyEvent ev ) {
@@ -298,7 +322,7 @@ tojava             // we only need primary-layer keysym to derive a java keycode
 tojava             ndx = 0;
 tojava             keysym = xkeycode2keysym_noxkb(ev, ndx);
 tojava         }
-tojava         Keysym2JavaKeycode jkc = keysym2JavaKeycodeHash.get( keysym );
+tojava         Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
 tojava         return jkc == null ? java.awt.event.KeyEvent.VK_UNDEFINED : jkc.getJavaKeycode();
 tojava     }
 tojava     static long javaKeycode2Keysym( int jkey ) {
@@ -649,7 +673,7 @@ SOFTWARE.
 0x0000 #define    XK_ISO_Last_Group                0xFE0E
 0x0000 #define    XK_ISO_Last_Group_Lock                0xFE0F
 
-0x0000 #define    XK_ISO_Left_Tab                    0xFE20
+0x0009 #define    XK_ISO_Left_Tab                    0xFE20
 0x0000 #define    XK_ISO_Move_Line_Up                0xFE21
 0x0000 #define    XK_ISO_Move_Line_Down                0xFE22
 0x0000 #define    XK_ISO_Partial_Line_Up                0xFE23

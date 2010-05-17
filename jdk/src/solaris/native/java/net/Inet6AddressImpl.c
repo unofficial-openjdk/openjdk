@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
  */
 
 #include <errno.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -48,10 +49,6 @@
 #define NI_MAXHOST 1025
 #endif
 
-#ifndef __GLIBC__
-/* gethostname() is in libc.so but I can't find a header file for it */
-extern int gethostname(char *buf, int buf_len);
-#endif
 
 /************************************************************************
  * Inet6AddressImpl
@@ -359,8 +356,6 @@ Java_java_net_Inet6AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
         }
     }
 
-#endif /* AF_INET6 */
-
 cleanupAndReturn:
     {
         struct addrinfo *iterator, *tmp;
@@ -373,7 +368,6 @@ cleanupAndReturn:
         JNU_ReleaseStringPlatformChars(env, host, hostname);
     }
 
-#ifdef AF_INET6
     if (NET_addrtransAvailable())
         (*freeaddrinfo_ptr)(res);
 #endif /* AF_INET6 */

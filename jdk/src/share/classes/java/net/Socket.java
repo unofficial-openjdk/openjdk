@@ -114,9 +114,17 @@ class Socket implements java.io.Closeable {
      * @since   1.5
      */
     public Socket(Proxy proxy) {
-        if (proxy != null && proxy.type() == Proxy.Type.SOCKS) {
+        // Create a copy of Proxy as a security measure
+        if (proxy == null) {
+            throw new IllegalArgumentException("Invalid Proxy");
+        }
+        Proxy p = proxy == Proxy.NO_PROXY ? Proxy.NO_PROXY : sun.net.ApplicationProxy.create(proxy);
+        if (p.type() == Proxy.Type.SOCKS) {
             SecurityManager security = System.getSecurityManager();
-            InetSocketAddress epoint = (InetSocketAddress) proxy.address();
+            InetSocketAddress epoint = (InetSocketAddress) p.address();
+            if (epoint.getAddress() != null) {
+                checkAddress (epoint.getAddress(), "Socket");
+            }
             if (security != null) {
                 if (epoint.isUnresolved())
                     security.checkConnect(epoint.getHostName(),
@@ -125,10 +133,10 @@ class Socket implements java.io.Closeable {
                     security.checkConnect(epoint.getAddress().getHostAddress(),
                                           epoint.getPort());
             }
-            impl = new SocksSocketImpl(proxy);
+            impl = new SocksSocketImpl(p);
             impl.setSocket(this);
         } else {
-            if (proxy == Proxy.NO_PROXY) {
+            if (p == Proxy.NO_PROXY) {
                 if (factory == null) {
                     impl = new PlainSocketImpl();
                     impl.setSocket(this);
@@ -553,15 +561,16 @@ class Socket implements java.io.Closeable {
             throw new IllegalArgumentException("Unsupported address type");
 
         InetSocketAddress epoint = (InetSocketAddress) endpoint;
+        InetAddress addr = epoint.getAddress ();
+        int port = epoint.getPort();
+        checkAddress(addr, "connect");
 
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             if (epoint.isUnresolved())
-                security.checkConnect(epoint.getHostName(),
-                                      epoint.getPort());
+                security.checkConnect(epoint.getHostName(), port);
             else
-                security.checkConnect(epoint.getAddress().getHostAddress(),
-                                      epoint.getPort());
+                security.checkConnect(addr.getHostAddress(), port);
         }
         if (!created)
             createImpl(true);
@@ -569,10 +578,9 @@ class Socket implements java.io.Closeable {
             impl.connect(epoint, timeout);
         else if (timeout == 0) {
             if (epoint.isUnresolved())
-                impl.connect(epoint.getAddress().getHostName(),
-                             epoint.getPort());
+                impl.connect(addr.getHostName(), port);
             else
-                impl.connect(epoint.getAddress(), epoint.getPort());
+                impl.connect(addr, port);
         } else
             throw new UnsupportedOperationException("SocketImpl.connect(addr, timeout)");
         connected = true;
@@ -609,12 +617,23 @@ class Socket implements java.io.Closeable {
         InetSocketAddress epoint = (InetSocketAddress) bindpoint;
         if (epoint != null && epoint.isUnresolved())
             throw new SocketException("Unresolved address");
-        if (bindpoint == null)
-            getImpl().bind(InetAddress.anyLocalAddress(), 0);
-        else
-            getImpl().bind(epoint.getAddress(),
-                           epoint.getPort());
+        if (epoint == null) {
+            epoint = new InetSocketAddress(0);
+        }
+        InetAddress addr = epoint.getAddress();
+        int port = epoint.getPort();
+        checkAddress (addr, "bind");
+        getImpl().bind (addr, port);
         bound = true;
+    }
+
+    private void checkAddress (InetAddress addr, String op) {
+        if (addr == null) {
+            return;
+        }
+        if (!(addr instanceof Inet4Address || addr instanceof Inet6Address)) {
+            throw new IllegalArgumentException(op + ": invalid address type");
+        }
     }
 
     /**

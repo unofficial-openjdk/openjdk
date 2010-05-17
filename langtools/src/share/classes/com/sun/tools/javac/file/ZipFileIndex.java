@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,11 @@ import com.sun.tools.javac.file.RelativePath.RelativeFile;
  * If nonBatchMode option is specified (-XDnonBatchMode) the compiler will use timestamp
  * checking to reindex the zip files if it is needed. In batch mode the timestamps are not checked
  * and the compiler uses the cached indexes.
+ *
+ * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * If you write code that depends on this, you do so at your own risk.
+ * This code and its internal interfaces are subject to change or
+ * deletion without notice.</b>
  */
 public class ZipFileIndex {
     private static final String MIN_CHAR = String.valueOf(Character.MIN_VALUE);
@@ -84,6 +90,7 @@ public class ZipFileIndex {
 
     // ZipFileIndex data entries
     private File zipFile;
+    private Reference<File> absFileRef;
     private long zipFileLastModified = NOT_MODIFIED;
     private RandomAccessFile zipRandomFile;
     private Entry[] entries;
@@ -995,7 +1002,7 @@ public class ZipFileIndex {
                         // Do nothing
                     } finally {
                         try {
-                            if (raf == null) {
+                            if (raf != null) {
                                 raf.close();
                             }
                         } catch (Throwable t) {
@@ -1208,6 +1215,15 @@ public class ZipFileIndex {
 
     public File getZipFile() {
         return zipFile;
+    }
+
+    File getAbsoluteFile() {
+        File absFile = (absFileRef == null ? null : absFileRef.get());
+        if (absFile == null) {
+            absFile = zipFile.getAbsoluteFile();
+            absFileRef = new SoftReference<File>(absFile);
+        }
+        return absFile;
     }
 
     private RelativeDirectory getRelativeDirectory(String path) {

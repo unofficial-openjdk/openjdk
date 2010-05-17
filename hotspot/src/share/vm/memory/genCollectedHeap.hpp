@@ -260,6 +260,24 @@ public:
     return true;
   }
 
+  virtual bool card_mark_must_follow_store() const {
+    return UseConcMarkSweepGC;
+  }
+
+  // We don't need barriers for stores to objects in the
+  // young gen and, a fortiori, for initializing stores to
+  // objects therein. This applies to {DefNew,ParNew}+{Tenured,CMS}
+  // only and may need to be re-examined in case other
+  // kinds of collectors are implemented in the future.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj) {
+    // We wanted to assert that:-
+    // assert(UseParNewGC || UseSerialGC || UseConcMarkSweepGC,
+    //       "Check can_elide_initializing_store_barrier() for this collector");
+    // but unfortunately the flag UseSerialGC need not necessarily always
+    // be set when DefNew+Tenured are being used.
+    return is_in_youngest((void*)new_obj);
+  }
+
   // Can a compiler elide a store barrier when it writes
   // a permanent oop into the heap?  Applies when the compiler
   // is storing x to the heap, where x->is_perm() is true.
@@ -408,16 +426,22 @@ public:
   // "SO_SystemClasses" to all the "system" classes and loaders;
   // "SO_Symbols_and_Strings" applies the closure to all entries in
   // SymbolsTable and StringTable.
-  void gen_process_strong_roots(int level, bool younger_gens_as_roots,
+  void gen_process_strong_roots(int level,
+                                bool younger_gens_as_roots,
+                                // The remaining arguments are in an order
+                                // consistent with SharedHeap::process_strong_roots:
+                                bool activate_scope,
                                 bool collecting_perm_gen,
                                 SharedHeap::ScanningOption so,
-                                OopsInGenClosure* older_gens,
-                                OopsInGenClosure* not_older_gens);
+                                OopsInGenClosure* not_older_gens,
+                                bool do_code_roots,
+                                OopsInGenClosure* older_gens);
 
   // Apply "blk" to all the weak roots of the system.  These include
   // JNI weak roots, the code cache, system dictionary, symbol table,
   // string table, and referents of reachable weak refs.
   void gen_process_weak_roots(OopClosure* root_closure,
+                              CodeBlobClosure* code_roots,
                               OopClosure* non_root_closure);
 
   // Set the saved marks of generations, if that makes sense.

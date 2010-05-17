@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,15 +39,16 @@ void ThreadRootsMarkingTask::do_it(GCTaskManager* manager, uint which) {
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
+  CodeBlobToOopClosure mark_and_push_in_blobs(&mark_and_push_closure, /*do_marking=*/ true);
 
   if (_java_thread != NULL)
-    _java_thread->oops_do(&mark_and_push_closure);
+    _java_thread->oops_do(&mark_and_push_closure, &mark_and_push_in_blobs);
 
   if (_vm_thread != NULL)
-    _vm_thread->oops_do(&mark_and_push_closure);
+    _vm_thread->oops_do(&mark_and_push_closure, &mark_and_push_in_blobs);
 
   // Do the real work
-  cm->drain_marking_stacks(&mark_and_push_closure);
+  cm->follow_marking_stacks();
 }
 
 
@@ -58,9 +59,8 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
     PrintGCDetails && TraceParallelOldGCTasks, true, gclog_or_tty));
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
-  // cm->allocate_stacks();
   assert(cm->stacks_have_been_allocated(),
-    "Stack space has not been allocated");
+         "Stack space has not been allocated");
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
 
   switch (_root_type) {
@@ -79,7 +79,8 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
     case threads:
     {
       ResourceMark rm;
-      Threads::oops_do(&mark_and_push_closure);
+      CodeBlobToOopClosure each_active_code_blob(&mark_and_push_closure, /*do_marking=*/ true);
+      Threads::oops_do(&mark_and_push_closure, &each_active_code_blob);
     }
     break;
 
@@ -107,12 +108,17 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
       vmSymbols::oops_do(&mark_and_push_closure);
       break;
 
+    case code_cache:
+      // Do not treat nmethods as strong roots for mark/sweep, since we can unload them.
+      //CodeCache::scavenge_root_nmethods_do(CodeBlobToOopClosure(&mark_and_push_closure));
+      break;
+
     default:
       fatal("Unknown root type");
   }
 
   // Do the real work
-  cm->drain_marking_stacks(&mark_and_push_closure);
+  cm->follow_marking_stacks();
   // cm->deallocate_stacks();
 }
 
@@ -129,9 +135,8 @@ void RefProcTaskProxy::do_it(GCTaskManager* manager, uint which)
     PrintGCDetails && TraceParallelOldGCTasks, true, gclog_or_tty));
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
-  // cm->allocate_stacks();
   assert(cm->stacks_have_been_allocated(),
-    "Stack space has not been allocated");
+         "Stack space has not been allocated");
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
   PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
   _rp_task.work(_work_id, *PSParallelCompact::is_alive_closure(),
@@ -191,17 +196,19 @@ void StealMarkingTask::do_it(GCTaskManager* manager, uint which) {
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
 
   oop obj = NULL;
+  ObjArrayTask task;
   int random_seed = 17;
-  while(true) {
-    if (ParCompactionManager::steal(which, &random_seed, obj)) {
-      obj->follow_contents(cm);
-      cm->drain_marking_stacks(&mark_and_push_closure);
-    } else {
-      if (terminator()->offer_termination()) {
-        break;
-      }
+  do {
+    while (ParCompactionManager::steal_objarray(which, &random_seed, task)) {
+      objArrayKlass* const k = (objArrayKlass*)task.obj()->blueprint();
+      k->oop_follow_contents(cm, task.obj(), task.index());
+      cm->follow_marking_stacks();
     }
-  }
+    while (ParCompactionManager::steal(which, &random_seed, obj)) {
+      obj->follow_contents(cm);
+      cm->follow_marking_stacks();
+    }
+  } while (!terminator()->offer_termination());
 }
 
 //

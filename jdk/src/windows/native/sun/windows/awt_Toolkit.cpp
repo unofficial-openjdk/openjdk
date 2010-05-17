@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -288,24 +288,6 @@ jmethodID AwtToolkit::displayChangeMID;
 jmethodID AwtToolkit::getDefaultToolkitMID;
 jmethodID AwtToolkit::getFontMetricsMID;
 jmethodID AwtToolkit::insetsMID;
-
-/************************************************************************
- * JavaStringBuffer method
- */
-
-JavaStringBuffer::JavaStringBuffer(JNIEnv *env, jstring jstr) {
-    if (jstr != NULL) {
-        int length = env->GetStringLength(jstr);
-        buffer = new TCHAR[length + 1];
-        LPCTSTR tmp = JNU_GetStringPlatformChars(env, jstr, NULL);
-        _tcscpy(buffer, tmp);
-        JNU_ReleaseStringPlatformChars(env, jstr, tmp);
-    } else {
-        buffer = new TCHAR[1];
-        buffer[0] = _T('\0');
-    }
-}
-
 
 /************************************************************************
  * AwtToolkit methods
@@ -1518,6 +1500,7 @@ HICON AwtToolkit::GetAwtIconSm()
     return defaultIconSm;
 }
 
+// The icon at index 0 must be gray. See AwtWindow::GetSecurityWarningIcon()
 HICON AwtToolkit::GetSecurityWarningIcon(UINT index, UINT w, UINT h)
 {
     //Note: should not exceed 10 because of the current implementation.
@@ -1596,18 +1579,18 @@ void AwtToolkit::RegisterEmbedderProcessId(HWND embedder)
 }
 
 JNIEnv* AwtToolkit::m_env;
-HANDLE AwtToolkit::m_thread;
+DWORD AwtToolkit::m_threadId;
 
 void AwtToolkit::SetEnv(JNIEnv *env) {
     if (m_env != NULL) { // If already cashed (by means of embeddedInit() call).
         return;
     }
-    m_thread = GetCurrentThread();
+    m_threadId = GetCurrentThreadId();
     m_env = env;
 }
 
 JNIEnv* AwtToolkit::GetEnv() {
-    return (m_env == NULL || m_thread != GetCurrentThread()) ?
+    return (m_env == NULL || m_threadId != GetCurrentThreadId()) ?
         (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2) : m_env;
 }
 

@@ -960,20 +960,14 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
     mlib_filter filter;
     unsigned int *dP;
 
-    if ((srcRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
-        JNU_ThrowOutOfMemoryError(env, "Out of memory");
-        return -1;
-    }
-
-    if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
-        JNU_ThrowOutOfMemoryError(env, "Out of memory");
-        free(srcRasterP);
-        return -1;
-    }
-
     /* This function requires a lot of local refs ??? Is 64 enough ??? */
     if ((*env)->EnsureLocalCapacity(env, 64) < 0)
         return 0;
+
+    if (s_nomlib) return 0;
+    if (s_timeIt) {
+        (*start_timer)(3600);
+    }
 
     switch(interpType) {
     case java_awt_image_AffineTransformOp_TYPE_BILINEAR:
@@ -990,9 +984,15 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         return -1;
     }
 
-    if (s_nomlib) return 0;
-    if (s_timeIt) {
-        (*start_timer)(3600);
+    if ((srcRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
+        JNU_ThrowOutOfMemoryError(env, "Out of memory");
+        return -1;
+    }
+
+    if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
+        JNU_ThrowOutOfMemoryError(env, "Out of memory");
+        free(srcRasterP);
+        return -1;
     }
 
     if ((*env)->GetArrayLength(env, jmatrix) < 6) {
@@ -1215,6 +1215,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     }
 
     if (tbl == NULL || table == NULL || jtable == NULL) {
+        if (tbl != NULL) free(tbl);
+        if (table != NULL) free(table);
+        if (jtable != NULL) free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         JNU_ThrowNullPointerException(env, "NULL LUT");
@@ -1224,6 +1227,11 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     for (i=0; i < jlen; i++) {
         jtable[i] = (*env)->GetObjectArrayElement(env, jtableArrays, i);
         if (jtable[i] == NULL) {
+            free(tbl);
+            free(table);
+            free(jtable);
+            awt_freeParsedImage(srcImageP, TRUE);
+            awt_freeParsedImage(dstImageP, TRUE);
             return 0;
         }
     }
@@ -1232,6 +1240,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
                         FALSE, &hint);
     if (nbands < 1) {
         /* Can't handle any custom images */
+        free(tbl);
+        free(table);
+        free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         return 0;
@@ -1240,12 +1251,18 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     /* Allocate the arrays */
     if (allocateArray(env, srcImageP, &src, &sdata, TRUE, FALSE, FALSE) < 0) {
         /* Must be some problem */
+        free(tbl);
+        free(table);
+        free(jtable);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
         return 0;
     }
     if (allocateArray(env, dstImageP, &dst, &ddata, FALSE, FALSE, FALSE) < 0) {
         /* Must be some problem */
+        free(tbl);
+        free(table);
+        free(jtable);
         freeArray(env, srcImageP, src, sdata, NULL, NULL, NULL);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
@@ -1284,6 +1301,9 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
                                                       (jbyte *) table[j],
                                                       JNI_ABORT);
             }
+            free(tbl);
+            free(table);
+            free(jtable);
             freeArray(env, srcImageP, src, sdata, NULL, NULL, NULL);
             awt_freeParsedImage(srcImageP, TRUE);
             awt_freeParsedImage(dstImageP, TRUE);
@@ -1413,12 +1433,15 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
 
     /* Parse the source raster - reject custom images */
     if ((status = awt_parseRaster(env, jsrc, srcRasterP)) <= 0) {
+        free(srcRasterP);
+        free(dstRasterP);
         return 0;
     }
 
     /* Parse the destination image - reject custom images */
     if ((status = awt_parseRaster(env, jdst, dstRasterP)) <= 0) {
         awt_freeParsedRaster(srcRasterP, TRUE);
+        free(dstRasterP);
         return 0;
     }
 
@@ -2216,7 +2239,8 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
     int dataType = BYTE_DATA_TYPE;
     int width;
     int height;
-    int size = rasterP->width * rasterP->height * rasterP->numBands;
+    int dataSize;
+    int offset;
 
     *dataPP = NULL;
 
@@ -2269,6 +2293,22 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
 #endif
     switch (rasterP->type) {
     case sun_awt_image_IntegerComponentRaster_TYPE_INT_8BIT_SAMPLES:
+        if (!((rasterP->chanOffsets[0] == 0 || SAFE_TO_ALLOC_2(rasterP->chanOffsets[0], 4)) &&
+              SAFE_TO_ALLOC_2(width, 4) &&
+              SAFE_TO_ALLOC_3(height, rasterP->scanlineStride, 4)))
+        {
+            return -1;
+        }
+        offset = 4 * rasterP->chanOffsets[0];
+        dataSize = 4 * (*env)->GetArrayLength(env, rasterP->jdata);
+
+        if (offset < 0 || offset >= dataSize ||
+            width > rasterP->scanlineStride ||
+            height * rasterP->scanlineStride * 4 > dataSize - offset)
+        {
+            // raster data buffer is too short
+            return -1;
+        }
         dataP = (void *) (*env)->GetPrimitiveArrayCritical(env, rasterP->jdata,
                                                            NULL);
         if (dataP == NULL) {
@@ -2277,11 +2317,25 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
         *mlibImagePP = (*sMlibSysFns.createStructFP)(MLIB_BYTE, 4,
                                               width, height,
                                               rasterP->scanlineStride*4,
-                                              (unsigned char *)dataP
-                                              + rasterP->chanOffsets[0]*4);
+                                              (unsigned char *)dataP + offset);
         *dataPP = dataP;
         return 0;
     case sun_awt_image_IntegerComponentRaster_TYPE_BYTE_SAMPLES:
+        if (!(SAFE_TO_ALLOC_2(width, rasterP->numBands) &&
+              SAFE_TO_ALLOC_2(height, rasterP->scanlineStride)))
+        {
+            return -1;
+        }
+        offset = rasterP->chanOffsets[0];
+        dataSize = (*env)->GetArrayLength(env, rasterP->jdata);
+
+        if (offset < 0 || offset >= dataSize ||
+            width * rasterP->numBands > rasterP->scanlineStride ||
+            height * rasterP->scanlineStride > dataSize - offset)
+        {
+            // raster data buffer is too short
+            return -1;
+        }
         dataP = (void *) (*env)->GetPrimitiveArrayCritical(env, rasterP->jdata,
                                                            NULL);
         if (dataP == NULL) {
@@ -2290,11 +2344,26 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
         *mlibImagePP = (*sMlibSysFns.createStructFP)(MLIB_BYTE, rasterP->numBands,
                                               width, height,
                                               rasterP->scanlineStride,
-                                              (unsigned char *)dataP
-                                              + rasterP->chanOffsets[0]);
+                                              (unsigned char *)dataP + offset);
         *dataPP = dataP;
         return 0;
     case sun_awt_image_IntegerComponentRaster_TYPE_USHORT_SAMPLES:
+        if (!((rasterP->chanOffsets[0] == 0 || SAFE_TO_ALLOC_2(rasterP->chanOffsets[0], 2)) &&
+              SAFE_TO_ALLOC_3(width, rasterP->numBands, 2) &&
+              SAFE_TO_ALLOC_3(height, rasterP->scanlineStride, 2)))
+        {
+              return -1;
+        }
+        offset = rasterP->chanOffsets[0] * 2;
+        dataSize = 2 * (*env)->GetArrayLength(env, rasterP->jdata);
+
+        if (offset < 0 || offset >= dataSize ||
+            width * rasterP->numBands > rasterP->scanlineStride ||
+            height * rasterP->scanlineStride * 2 > dataSize - offset)
+        {
+            // raster data buffer is too short
+             return -1;
+        }
         dataP = (void *) (*env)->GetPrimitiveArrayCritical(env, rasterP->jdata,
                                                            NULL);
         if (dataP == NULL) {
@@ -2304,8 +2373,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
                                                      rasterP->numBands,
                                                      width, height,
                                                      rasterP->scanlineStride*2,
-                                                     (unsigned char *)dataP
-                                                     + rasterP->chanOffsets[0]*2);
+                                                     (unsigned char *)dataP + offset);
         *dataPP = dataP;
         return 0;
 

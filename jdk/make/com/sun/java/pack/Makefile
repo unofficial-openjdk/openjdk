@@ -28,6 +28,7 @@
 #
 
 BUILDDIR = ../../../..
+MODULE  = pack200
 PACKAGE = com.sun.java.util.jar.pack
 LIBRARY = unpack
 PRODUCT = sun
@@ -67,15 +68,14 @@ ifeq ($(STANDALONE),true)
 	     $(ZIPOBJDIR)/deflate.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/trees.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/zadler32.$(OBJECT_SUFFIX) \
+	     $(ZIPOBJDIR)/compress.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/zutil.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/inflate.$(OBJECT_SUFFIX) \
-	     $(ZIPOBJDIR)/infblock.$(OBJECT_SUFFIX) \
-	     $(ZIPOBJDIR)/infcodes.$(OBJECT_SUFFIX) \
+	     $(ZIPOBJDIR)/infback.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/inftrees.$(OBJECT_SUFFIX) \
-	     $(ZIPOBJDIR)/infutil.$(OBJECT_SUFFIX) \
 	     $(ZIPOBJDIR)/inffast.$(OBJECT_SUFFIX)
 
-  ZINCLUDE=-I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+  ZINCLUDE=-I$(SHARE_SRC)/native/java/util/zip/zlib-$(ZLIB_VERSION)
   OTHER_CXXFLAGS += $(ZINCLUDE)
   LDDFLAGS += $(ZIPOBJS)
 else
@@ -124,10 +124,13 @@ COBJDIR = $(strip $(subst unpack,unpack-cmd,$(OBJDIR)))
 
 all: build
 
-build: prop
+build: prop pack200-tool
 
 prop:
 	$(MAKE) -C prop
+
+pack200-tool:
+	$(call make-launcher, pack200, com.sun.java.util.jar.pack.Driver, , --pack)
 
 unpacker:
 	$(MAKE) $(UNPACK_EXE) STANDALONE=true LDMAPFLAGS_OPT= LDMAPFLAGS_DBG=
@@ -149,9 +152,10 @@ $(UNPACK_EXE): $(UNPACK_EXE_FILES_o) updatefiles winres
 	$(prep-target)
 	$(LINKER)  $(LDDFLAGS) $(UNPACK_EXE_FILES_o) $(RES) $(LIBCXX) $(LDOUTPUT)$(TEMPDIR)/unpack200$(EXE_SUFFIX)
 ifdef MT
-	$(MT) /manifest $(TEMPDIR)/unpack200$(EXE_SUFFIX).manifest /outputresource:$(TEMPDIR)/unpack200$(EXE_SUFFIX);#1
+	$(MT) /manifest $(OBJDIR)/unpack200$(EXE_SUFFIX).manifest /outputresource:$(TEMPDIR)/unpack200$(EXE_SUFFIX);#1
 endif
 	$(CP) $(TEMPDIR)/unpack200$(EXE_SUFFIX) $(UNPACK_EXE)
+	$(install-module-file)
 
 ifeq ($(PLATFORM), windows) 
 $(RES):: $(VERSIONINFO_RESOURCE)

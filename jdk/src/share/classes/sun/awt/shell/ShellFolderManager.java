@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,8 +57,9 @@ class ShellFolderManager {
      *    folders, such as Desktop, Documents, History, Network, Home, etc.
      *    This is used in the shortcut panel of the filechooser on Windows 2000
      *    and Windows Me.
-     *  "fileChooserIcon nn":
-     *    Returns an <code>Image</code> - icon nn from resource 124 in comctl32.dll (Windows only).
+     *  "fileChooserIcon <icon>":
+     *    Returns an <code>Image</code> - icon can be ListView, DetailsView, UpFolder, NewFolder or
+     *    ViewMenu (Windows only).
      *
      * @return An Object matching the key string.
      */
@@ -108,12 +109,8 @@ class ShellFolderManager {
     }
 
     private static class DirectInvoker implements ShellFolder.Invoker {
-        public <T> T invoke(Callable<T> task) {
-            try {
-                return task.call();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        public <T> T invoke(Callable<T> task) throws Exception {
+            return task.call();
         }
     }
 }

@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import java.awt.Point;
 
@@ -42,8 +42,8 @@ import java.awt.Point;
  * @since 1.5
  */
 final class XDropTargetRegistry {
-    private static final Logger logger =
-        Logger.getLogger("sun.awt.X11.xembed.xdnd.XDropTargetRegistry");
+    private static final PlatformLogger logger =
+        PlatformLogger.getLogger("sun.awt.X11.xembed.xdnd.XDropTargetRegistry");
 
     private static final long DELAYED_REGISTRATION_PERIOD = 200;
 
@@ -534,71 +534,71 @@ final class XDropTargetRegistry {
         return entry.getSite(x, y);
     }
 
+    /*
+     * Note: this method should be called under AWT lock.
+     */
     public void registerDropSite(long window) {
+        assert XToolkit.isAWTLockHeldByCurrentThread();
+
         if (window == 0) {
             throw new IllegalArgumentException();
         }
 
         XDropTargetEventProcessor.activate();
 
-        XToolkit.awtLock();
-        try {
-            long toplevel = getToplevelWindow(window);
+        long toplevel = getToplevelWindow(window);
 
-            /*
-             * No window with WM_STATE property is found.
-             * Since the window can be a plugin window reparented to the browser
-             * toplevel, we cannot determine which window will eventually have
-             * WM_STATE property set. So we schedule a timer callback that will
-             * periodically attempt to find an ancestor with WM_STATE and
-             * register the drop site appropriately.
-             */
-            if (toplevel == 0) {
-                addDelayedRegistrationEntry(window);
-                return;
+        /*
+         * No window with WM_STATE property is found.
+         * Since the window can be a plugin window reparented to the browser
+         * toplevel, we cannot determine which window will eventually have
+         * WM_STATE property set. So we schedule a timer callback that will
+         * periodically attempt to find an ancestor with WM_STATE and
+         * register the drop site appropriately.
+         */
+        if (toplevel == 0) {
+            addDelayedRegistrationEntry(window);
+            return;
+        }
+
+        if (toplevel == window) {
+            Iterator dropTargetProtocols =
+                XDragAndDropProtocols.getDropTargetProtocols();
+
+            while (dropTargetProtocols.hasNext()) {
+                XDropTargetProtocol dropTargetProtocol =
+                    (XDropTargetProtocol)dropTargetProtocols.next();
+                dropTargetProtocol.registerDropTarget(toplevel);
             }
-
-            if (toplevel == window) {
-                Iterator dropTargetProtocols =
-                    XDragAndDropProtocols.getDropTargetProtocols();
-
-                while (dropTargetProtocols.hasNext()) {
-                    XDropTargetProtocol dropTargetProtocol =
-                        (XDropTargetProtocol)dropTargetProtocols.next();
-                    dropTargetProtocol.registerDropTarget(toplevel);
-                }
-            } else {
-                registerEmbeddedDropSite(toplevel, window);
-            }
-        } finally {
-            XToolkit.awtUnlock();
+        } else {
+            registerEmbeddedDropSite(toplevel, window);
         }
     }
 
+    /*
+     * Note: this method should be called under AWT lock.
+     */
     public void unregisterDropSite(long window) {
+        assert XToolkit.isAWTLockHeldByCurrentThread();
+
         if (window == 0) {
             throw new IllegalArgumentException();
         }
 
-        XToolkit.awtLock();
-        try {
-            long toplevel = getToplevelWindow(window);
+        long toplevel = getToplevelWindow(window);
 
-            if (toplevel == window) {
-                Iterator dropProtocols =
-                    XDragAndDropProtocols.getDropTargetProtocols();
+        if (toplevel == window) {
+            Iterator dropProtocols =
+                XDragAndDropProtocols.getDropTargetProtocols();
 
-                removeDelayedRegistrationEntry(window);
+            removeDelayedRegistrationEntry(window);
 
-                while (dropProtocols.hasNext()) {
-                    XDropTargetProtocol dropProtocol = (XDropTargetProtocol)dropProtocols.next();
-                    dropProtocol.unregisterDropTarget(window);
-                }
-            } else {
-                unregisterEmbeddedDropSite(toplevel, window);
+            while (dropProtocols.hasNext()) {
+                XDropTargetProtocol dropProtocol = (XDropTargetProtocol)dropProtocols.next();
+                dropProtocol.unregisterDropTarget(window);
             }
-        } finally {
-            XToolkit.awtUnlock();
+        } else {
+            unregisterEmbeddedDropSite(toplevel, window);
         }
     }
 
@@ -614,7 +614,7 @@ final class XDropTargetRegistry {
         if (info != null &&
             info.getProtocolVersion() >= XDnDConstants.XDND_MIN_PROTOCOL_VERSION) {
 
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isLoggable(PlatformLogger.FINE)) {
                 logger.fine("        XEmbed drop site will be registered for " + Long.toHexString(clientWindow));
             }
             registerEmbeddedDropSite(canvasWindow, clientWindow);
@@ -628,14 +628,14 @@ final class XDropTargetRegistry {
                 dropTargetProtocol.registerEmbeddedDropSite(clientWindow);
             }
 
-            if (logger.isLoggable(Level.FINE)) {
+            if (logger.isLoggable(PlatformLogger.FINE)) {
                 logger.fine("        XEmbed drop site has been registered for " + Long.toHexString(clientWindow));
             }
         }
     }
 
     public void unregisterXEmbedClient(long canvasWindow, long clientWindow) {
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isLoggable(PlatformLogger.FINE)) {
             logger.fine("        XEmbed drop site will be unregistered for " + Long.toHexString(clientWindow));
         }
         Iterator dropTargetProtocols =
@@ -649,7 +649,7 @@ final class XDropTargetRegistry {
 
         unregisterEmbeddedDropSite(canvasWindow, clientWindow);
 
-        if (logger.isLoggable(Level.FINE)) {
+        if (logger.isLoggable(PlatformLogger.FINE)) {
             logger.fine("        XEmbed drop site has beed unregistered for " + Long.toHexString(clientWindow));
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -310,7 +310,7 @@ public:
   void dump_nodes_and_types_recur( const Node *n, uint depth, bool only_ctrl, VectorSet &visited);
 
   uint   _count_progress;       // For profiling, count transforms that make progress
-  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification") }
+  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification"); }
   void   clear_progress()      { _count_progress = 0; }
   uint   made_progress() const { return _count_progress; }
 
@@ -345,7 +345,11 @@ public:
   Node  *hash_find(const Node *n) { return _table.hash_find(n); }
 
   // Used after parsing to eliminate values that are no longer in program
-  void   remove_useless_nodes(VectorSet &useful) { _table.remove_useless_nodes(useful); }
+  void   remove_useless_nodes(VectorSet &useful) {
+    _table.remove_useless_nodes(useful);
+    // this may invalidate cached cons so reset the cache
+    init_con_caches();
+  }
 
   virtual ConNode* uncached_makecon(const Type* t);  // override from PhaseTransform
 

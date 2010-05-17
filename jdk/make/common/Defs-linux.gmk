@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -116,8 +116,16 @@ CFLAGS_REQUIRED_sparcv9 += -m64 -mcpu=v9
 LDFLAGS_COMMON_sparcv9  += -m64 -mcpu=v9
 CFLAGS_REQUIRED_sparc   += -m32 -mcpu=v9
 LDFLAGS_COMMON_sparc    += -m32 -mcpu=v9
-CFLAGS_REQUIRED         =  $(CFLAGS_REQUIRED_$(ARCH))
-LDFLAGS_COMMON          += $(LDFLAGS_COMMON_$(ARCH))
+ifeq ($(ZERO_BUILD), true)
+  CFLAGS_REQUIRED       =  $(ZERO_ARCHFLAG)
+  ifeq ($(ZERO_ENDIANNESS), little)
+    CFLAGS_REQUIRED     += -D_LITTLE_ENDIAN
+  endif
+  LDFLAGS_COMMON        += $(ZERO_ARCHFLAG)
+else
+  CFLAGS_REQUIRED       =  $(CFLAGS_REQUIRED_$(ARCH))
+  LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
+endif
 
 # If this is a --hash-style=gnu system, use --hash-style=both
 #   The gnu .hash section won't work on some Linux systems like SuSE 10.
@@ -193,7 +201,7 @@ ifeq ($(ARCH_DATA_MODEL), 64)
 CPPFLAGS_COMMON += -D_LP64=1
 endif
 
-CPPFLAGS_OPT    = 
+CPPFLAGS_OPT    = -DNDEBUG
 CPPFLAGS_DBG    = -DDEBUG
 ifneq ($(PRODUCT), java)
   CPPFLAGS_DBG    += -DLOGGING 
@@ -217,7 +225,7 @@ endif
 
 EXTRA_LIBS += -lc
 
-LDFLAGS_DEFS_OPTION  = -z defs
+LDFLAGS_DEFS_OPTION  = -Xlinker -z -Xlinker defs
 LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
 
 #

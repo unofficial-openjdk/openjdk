@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,8 @@ AbstractAssembler::AbstractAssembler(CodeBuffer* code) {
   _code_pos    = cs->end();
   _oop_recorder= code->oop_recorder();
   if (_code_begin == NULL)  {
-    vm_exit_out_of_memory1(0, "CodeCache: no room for %s", code->name());
+    vm_exit_out_of_memory(0, err_msg("CodeCache: no room for %s",
+                                     code->name()));
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,8 @@
 
 class G1CollectedHeap;
 class CMTask;
-typedef GenericTaskQueue<oop> CMTaskQueue;
-typedef GenericTaskQueueSet<oop> CMTaskQueueSet;
+typedef GenericTaskQueue<oop>            CMTaskQueue;
+typedef GenericTaskQueueSet<CMTaskQueue> CMTaskQueueSet;
 
 // A generic CM bit map.  This is essentially a wrapper around the BitMap
 // class, with one bit per (1<<_shifter) HeapWords.
@@ -252,9 +252,19 @@ public:
   // with other "push" operations (no pops).
   void push(MemRegion mr);
 
+#if 0
+  // This is currently not used. See the comment in the .cpp file.
+
   // Lock-free; assumes that it will only be called in parallel
   // with other "pop" operations (no pushes).
   MemRegion pop();
+#endif // 0
+
+  // These two are the implementations that use a lock. They can be
+  // called concurrently with each other but they should not be called
+  // concurrently with the lock-free versions (push() / pop()).
+  void push_with_lock(MemRegion mr);
+  MemRegion pop_with_lock();
 
   bool isEmpty()    { return _index == 0; }
   bool isFull()     { return _index == _capacity; }
@@ -294,12 +304,6 @@ do {                          \
 do {                          \
 } while (0)
 #endif // _MARKING_STATS_
-
-// Some extra guarantees that I like to also enable in optimised mode
-// when debugging. If you want to enable them, comment out the assert
-// macro and uncomment out the guaratee macro
-// #define tmp_guarantee_CM(expr, str) guarantee(expr, str)
-#define tmp_guarantee_CM(expr, str) assert(expr, str)
 
 typedef enum {
   no_verbose  = 0,   // verbose turned off
@@ -407,8 +411,6 @@ protected:
   // verbose level
   CMVerboseLevel          _verbose_level;
 
-  COTracker               _cleanup_co_tracker;
-
   // These two fields are used to implement the optimisation that
   // avoids pushing objects on the global/region stack if there are
   // no collection set regions above the lowest finger.
@@ -487,15 +489,15 @@ protected:
 
   // Returns the task with the given id
   CMTask* task(int id) {
-    guarantee( 0 <= id && id < (int) _active_tasks, "task id not within "
-               "active bounds" );
+    assert(0 <= id && id < (int) _active_tasks,
+           "task id not within active bounds");
     return _tasks[id];
   }
 
   // Returns the task queue with the given id
   CMTaskQueue* task_queue(int id) {
-    guarantee( 0 <= id && id < (int) _active_tasks, "task queue id not within "
-               "active bounds" );
+    assert(0 <= id && id < (int) _active_tasks,
+           "task queue id not within active bounds");
     return (CMTaskQueue*) _task_queues->queue(id);
   }
 
@@ -548,6 +550,10 @@ public:
 
   // Manipulation of the region stack
   bool region_stack_push(MemRegion mr) {
+    // Currently we only call the lock-free version during evacuation
+    // pauses.
+    assert(SafepointSynchronize::is_at_safepoint(), "world should be stopped");
+
     _regionStack.push(mr);
     if (_regionStack.overflow()) {
       set_has_overflown();
@@ -555,7 +561,33 @@ public:
     }
     return true;
   }
-  MemRegion region_stack_pop()          { return _regionStack.pop(); }
+#if 0
+  // Currently this is not used. See the comment in the .cpp file.
+  MemRegion region_stack_pop() { return _regionStack.pop(); }
+#endif // 0
+
+  bool region_stack_push_with_lock(MemRegion mr) {
+    // Currently we only call the lock-based version during either
+    // concurrent marking or remark.
+    assert(!SafepointSynchronize::is_at_safepoint() || !concurrent(),
+           "if we are at a safepoint it should be the remark safepoint");
+
+    _regionStack.push_with_lock(mr);
+    if (_regionStack.overflow()) {
+      set_has_overflown();
+      return false;
+    }
+    return true;
+  }
+  MemRegion region_stack_pop_with_lock() {
+    // Currently we only call the lock-based version during either
+    // concurrent marking or remark.
+    assert(!SafepointSynchronize::is_at_safepoint() || !concurrent(),
+           "if we are at a safepoint it should be the remark safepoint");
+
+    return _regionStack.pop_with_lock();
+  }
+
   int region_stack_size()               { return _regionStack.size(); }
   bool region_stack_overflow()          { return _regionStack.overflow(); }
   bool region_stack_empty()             { return _regionStack.isEmpty(); }
@@ -620,10 +652,24 @@ public:
   // we do nothing.
   void markAndGrayObjectIfNecessary(oop p);
 
-  // This iterates over the bitmap of the previous marking and prints
-  // out all objects that are marked on the bitmap and indicates
-  // whether what they point to is also marked or not.
-  void print_prev_bitmap_reachable();
+  // It iterates over the heap and for each object it comes across it
+  // will dump the contents of its reference fields, as well as
+  // liveness information for the object and its referents. The dump
+  // will be written to a file with the following name:
+  // G1PrintReachableBaseFile + "." + str. use_prev_marking decides
+  // whether the prev (use_prev_marking == true) or next
+  // (use_prev_marking == false) marking information will be used to
+  // determine the liveness of each object / referent. If all is true,
+  // all objects in the heap will be dumped, otherwise only the live
+  // ones. In the dump the following symbols / abbreviations are used:
+  //   M : an explicitly live object (its bitmap bit is set)
+  //   > : an implicitly live object (over tams)
+  //   O : an object outside the G1 heap (typically: in the perm gen)
+  //   NOT : a reference field whose referent is not live
+  //   AND MARKED : indicates that an object is both explicitly and
+  //   implicitly live (it should be one or the other, not both)
+  void print_reachable(const char* str,
+                       bool use_prev_marking, bool all) PRODUCT_RETURN;
 
   // Clear the next marking bitmap (will be called concurrently).
   void clearNextBitmap();
@@ -687,6 +733,19 @@ public:
   // to determine whether any heap regions are located above the finger.
   void registerCSetRegion(HeapRegion* hr);
 
+  // Registers the maximum region-end associated with a set of
+  // regions with CM. Again this is used to determine whether any
+  // heap regions are located above the finger.
+  void register_collection_set_finger(HeapWord* max_finger) {
+    // max_finger is the highest heap region end of the regions currently
+    // contained in the collection set. If this value is larger than
+    // _min_finger then we need to gray objects.
+    // This routine is like registerCSetRegion but for an entire
+    // collection of regions.
+    if (max_finger > _min_finger)
+      _should_gray_objects = true;
+  }
+
   // Returns "true" if at least one mark has been completed.
   bool at_least_one_mark_complete() { return _at_least_one_mark_complete; }
 
@@ -720,12 +779,12 @@ public:
   // Called to abort the marking cycle after a Full GC takes palce.
   void abort();
 
-  void disable_co_trackers();
-
   // This prints the global/local fingers. It is used for debugging.
   NOT_PRODUCT(void print_finger();)
 
   void print_summary_info();
+
+  void print_worker_threads_on(outputStream* st) const;
 
   // The following indicate whether a given verbose level has been
   // set. Notice that anything above stats is conditional to
@@ -772,9 +831,6 @@ private:
 
   // number of calls to this task
   int                         _calls;
-
-  // concurrent overhead over a single CPU for this task
-  COTracker                   _co_tracker;
 
   // when the virtual timer reaches this time, the marking step should
   // exit
@@ -928,27 +984,6 @@ public:
 
   void set_concurrent(bool concurrent) { _concurrent = concurrent; }
 
-  void enable_co_tracker() {
-    guarantee( !_co_tracker.enabled(), "invariant" );
-    _co_tracker.enable();
-  }
-  void disable_co_tracker() {
-    guarantee( _co_tracker.enabled(), "invariant" );
-    _co_tracker.disable();
-  }
-  bool co_tracker_enabled() {
-    return _co_tracker.enabled();
-  }
-  void reset_co_tracker(double starting_conc_overhead = 0.0) {
-    _co_tracker.reset(starting_conc_overhead);
-  }
-  void start_co_tracker() {
-    _co_tracker.start();
-  }
-  void update_co_tracker(bool force_end = false) {
-    _co_tracker.update(force_end);
-  }
-
   // The main method of this class which performs a marking step
   // trying not to exceed the given duration. However, it might exit
   // prematurely, according to some conditions (i.e. SATB buffers are
@@ -987,8 +1022,7 @@ public:
 
   // It scans an object and visits its children.
   void scan_object(oop obj) {
-    tmp_guarantee_CM( _nextMarkBitMap->isMarked((HeapWord*) obj),
-                      "invariant" );
+    assert(_nextMarkBitMap->isMarked((HeapWord*) obj), "invariant");
 
     if (_cm->verbose_high())
       gclog_or_tty->print_cr("[%d] we're scanning object "PTR_FORMAT,
@@ -1027,14 +1061,13 @@ public:
 
   // moves the local finger to a new location
   inline void move_finger_to(HeapWord* new_finger) {
-    tmp_guarantee_CM( new_finger >= _finger && new_finger < _region_limit,
-                   "invariant" );
+    assert(new_finger >= _finger && new_finger < _region_limit, "invariant");
     _finger = new_finger;
   }
 
   // moves the region finger to a new location
   inline void move_region_finger_to(HeapWord* new_finger) {
-    tmp_guarantee_CM( new_finger < _cm->finger(), "invariant" );
+    assert(new_finger < _cm->finger(), "invariant");
     _region_finger = new_finger;
   }
 

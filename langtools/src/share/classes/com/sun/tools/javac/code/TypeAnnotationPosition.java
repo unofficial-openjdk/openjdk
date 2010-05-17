@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,18 +49,18 @@ public class TypeAnnotationPosition {
     public int offset = -1;
 
     // For locals. arrays same length
-    public int[] lvarOffset = new int[] { -1 };
-    public int[] lvarLength = new int[] { -1 };
-    public int[] lvarIndex = new int[] { -1 };
+    public int[] lvarOffset = null;
+    public int[] lvarLength = null;
+    public int[] lvarIndex = null;
 
     // For type parameter bound
-    public int bound_index = -1;
+    public int bound_index = Integer.MIN_VALUE;
 
     // For type parameter and method parameter
-    public int parameter_index = -1;
+    public int parameter_index = Integer.MIN_VALUE;
 
     // For class extends, implements, and throws classes
-    public int type_index = -2;
+    public int type_index = Integer.MIN_VALUE;
 
     // For wildcards
     public TypeAnnotationPosition wildcard_position = null;
@@ -139,6 +139,7 @@ public class TypeAnnotationPosition {
             sb.append(type_index);
             break;
         case CLASS_LITERAL:
+        case CLASS_LITERAL_GENERIC_OR_ARRAY:
             sb.append(", offset = ");
             sb.append(offset);
             break;

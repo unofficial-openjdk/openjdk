@@ -34,7 +34,7 @@
 /*
  * @test
  * @bug 4486658
- * @compile -source 1.5 SingleProducerMultipleConsumerLoops.java
+ * @compile SingleProducerMultipleConsumerLoops.java
  * @run main/timeout=600 SingleProducerMultipleConsumerLoops
  * @summary  check ordering for blocking queues with 1 producer and multiple consumers
  */
@@ -63,7 +63,8 @@ public class SingleProducerMultipleConsumerLoops {
         print = true;
 
         for (int i = 1; i <= maxConsumers; i += (i+1) >>> 1) {
-            System.out.println("Consumers:" + i);
+            System.out.println("----------------------------------------");
+            System.out.println("Consumers: " + i);
             oneTest(i, iters);
             Thread.sleep(100);
         }
@@ -72,29 +73,40 @@ public class SingleProducerMultipleConsumerLoops {
             throw new Error();
    }
 
+    static final class LTQasSQ<T> extends LinkedTransferQueue<T> {
+        LTQasSQ() { super(); }
+        public void put(T x) {
+            try { super.transfer(x); }
+            catch (InterruptedException ex) { throw new Error(); }
+        }
+        private final static long serialVersionUID = 42;
+    }
+
+    static final class HalfSyncLTQ<T> extends LinkedTransferQueue<T> {
+        HalfSyncLTQ() { super(); }
+        public void put(T x) {
+            if (ThreadLocalRandom.current().nextBoolean())
+                super.put(x);
+            else {
+                try { super.transfer(x); }
+                catch (InterruptedException ex) { throw new Error(); }
+            }
+        }
+        private final static long serialVersionUID = 42;
+    }
+
     static void oneTest(int consumers, int iters) throws Exception {
-        if (print)
-            System.out.print("ArrayBlockingQueue      ");
         oneRun(new ArrayBlockingQueue<Integer>(CAPACITY), consumers, iters);
-
-        if (print)
-            System.out.print("LinkedBlockingQueue     ");
         oneRun(new LinkedBlockingQueue<Integer>(CAPACITY), consumers, iters);
-
-        if (print)
-            System.out.print("PriorityBlockingQueue   ");
+        oneRun(new LinkedBlockingDeque<Integer>(CAPACITY), consumers, iters);
+        oneRun(new LinkedTransferQueue<Integer>(), consumers, iters);
+        oneRun(new LTQasSQ<Integer>(), consumers, iters);
+        oneRun(new HalfSyncLTQ<Integer>(), consumers, iters);
         oneRun(new PriorityBlockingQueue<Integer>(), consumers, iters);
-
-        if (print)
-            System.out.print("SynchronousQueue        ");
         oneRun(new SynchronousQueue<Integer>(), consumers, iters);
-
         if (print)
-            System.out.print("SynchronousQueue(fair)  ");
+            System.out.println("fair implementations:");
         oneRun(new SynchronousQueue<Integer>(true), consumers, iters);
-
-        if (print)
-            System.out.print("ArrayBlockingQueue(fair)");
         oneRun(new ArrayBlockingQueue<Integer>(CAPACITY, true), consumers, iters);
     }
 
@@ -163,6 +175,8 @@ public class SingleProducerMultipleConsumerLoops {
     }
 
     static void oneRun(BlockingQueue<Integer> q, int nconsumers, int iters) throws Exception {
+        if (print)
+            System.out.printf("%-18s", q.getClass().getSimpleName());
         LoopHelpers.BarrierTimer timer = new LoopHelpers.BarrierTimer();
         CyclicBarrier barrier = new CyclicBarrier(nconsumers + 2, timer);
         pool.execute(new Producer(q, barrier, iters * nconsumers));

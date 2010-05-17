@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ void vframeArrayElement::fill_in(compiledVFrame* vf) {
 
   _method = vf->method();
   _bci    = vf->raw_bci();
+  _reexecute = vf->should_reexecute();
 
   int index;
 
@@ -148,16 +149,20 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   // C++ interpreter doesn't need a pc since it will figure out what to do when it
   // begins execution
   address pc;
-  bool use_next_mdp; // true if we should use the mdp associated with the next bci
-                     // rather than the one associated with bcp
+  bool use_next_mdp = false; // true if we should use the mdp associated with the next bci
+                             // rather than the one associated with bcp
   if (raw_bci() == SynchronizationEntryBCI) {
     // We are deoptimizing while hanging in prologue code for synchronized method
     bcp = method()->bcp_from(0); // first byte code
     pc  = Interpreter::deopt_entry(vtos, 0); // step = 0 since we don't skip current bytecode
-    use_next_mdp = false;
+  } else if (should_reexecute()) { //reexecute this bytecode
+    assert(is_top_frame, "reexecute allowed only for the top frame");
+    bcp = method()->bcp_from(bci());
+    pc  = Interpreter::deopt_reexecute_entry(method(), bcp);
   } else {
     bcp = method()->bcp_from(bci());
-    pc  = Interpreter::continuation_for(method(), bcp, callee_parameters, is_top_frame, use_next_mdp);
+    pc  = Interpreter::deopt_continue_after_entry(method(), bcp, callee_parameters, is_top_frame);
+    use_next_mdp = true;
   }
   assert(Bytecodes::is_defined(*bcp), "must be a valid bytecode");
 
@@ -181,7 +186,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   int popframe_preserved_args_size_in_bytes = 0;
   int popframe_preserved_args_size_in_words = 0;
   if (is_top_frame) {
-  JvmtiThreadState *state = thread->jvmti_thread_state();
+    JvmtiThreadState *state = thread->jvmti_thread_state();
     if (JvmtiExport::can_pop_frame() &&
         (thread->has_pending_popframe() || thread->popframe_forcing_deopt_reexecution())) {
       if (thread->has_pending_popframe()) {
@@ -218,7 +223,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
         break;
       case Deoptimization::Unpack_exception:
         // exception is pending
-        pc = SharedRuntime::raw_exception_handler_for_return_address(pc);
+        pc = SharedRuntime::raw_exception_handler_for_return_address(thread, pc);
         // [phh] We're going to end up in some handler or other, so it doesn't
         // matter what mdp we point to.  See exception_handler_for_exception()
         // in interpreterRuntime.cpp.
@@ -304,11 +309,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to the stack
-      iframe()->interpreter_frame_set_expression_stack_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
 
@@ -330,11 +330,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to stack
-      iframe()->interpreter_frame_set_local_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
   if (is_top_frame && JvmtiExport::can_pop_frame() && thread->popframe_forcing_deopt_reexecution()) {
@@ -349,9 +344,8 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       void* saved_args = thread->popframe_preserved_args();
       assert(saved_args != NULL, "must have been saved by interpreter");
 #ifdef ASSERT
-      int stack_words = Interpreter::stackElementWords();
       assert(popframe_preserved_args_size_in_words <=
-             iframe()->interpreter_frame_expression_stack_size()*stack_words,
+             iframe()->interpreter_frame_expression_stack_size()*Interpreter::stackElementWords,
              "expression stack size should have been extended");
 #endif // ASSERT
       int top_element = iframe()->interpreter_frame_expression_stack_size()-1;
@@ -376,7 +370,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
     RegisterMap map(thread);
     vframe* f = vframe::new_vframe(iframe(), &map, thread);
     f->print();
-    iframe()->interpreter_frame_print_on(tty);
 
     tty->print_cr("locals size     %d", locals()->size());
     tty->print_cr("expression size %d", expressions()->size());
@@ -577,7 +570,7 @@ void vframeArray::print_on_2(outputStream* st)  {
 }
 
 void vframeArrayElement::print(outputStream* st) {
-  st->print_cr(" - interpreter_frame -> sp: ", INTPTR_FORMAT, iframe()->sp());
+  st->print_cr(" - interpreter_frame -> sp: " INTPTR_FORMAT, iframe()->sp());
 }
 
 void vframeArray::print_value_on(outputStream* st) const {

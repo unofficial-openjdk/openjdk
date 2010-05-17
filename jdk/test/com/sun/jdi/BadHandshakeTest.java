@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @bug 6306165
+ * @bug 6306165 6432567
  * @summary Check that a bad handshake doesn't cause a debuggee to abort
  *
  * @build VMConnection BadHandshakeTest Exit0
@@ -110,8 +110,11 @@ public class BadHandshakeTest {
         String exe =   System.getProperty("java.home")
                      + File.separator + "bin" + File.separator;
         String arch = System.getProperty("os.arch");
-        if (arch.equals("sparcv9")) {
+        String osname = System.getProperty("os.name");
+        if (osname.equals("SunOS") && arch.equals("sparcv9")) {
             exe += "sparcv9/java";
+        } else if (osname.equals("SunOS") && arch.equals("amd64")) {
+            exe += "amd64/java";
         } else {
             exe += "java";
         }

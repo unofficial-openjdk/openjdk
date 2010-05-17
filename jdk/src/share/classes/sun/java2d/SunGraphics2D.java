@@ -66,6 +66,7 @@ import java.awt.Transparency;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextLayout;
 import sun.font.FontDesignMetrics;
+import sun.font.FontUtilities;
 import sun.java2d.pipe.PixelDrawPipe;
 import sun.java2d.pipe.PixelFillPipe;
 import sun.java2d.pipe.ShapeDrawPipe;
@@ -256,7 +257,6 @@ public final class SunGraphics2D
             font = defaultFont;
         }
 
-        loops = sd.getRenderLoops(this);
         setDevClip(sd.getBounds());
         invalidatePipe();
     }
@@ -366,6 +366,7 @@ public final class SunGraphics2D
         shapepipe = invalidpipe;
         textpipe = invalidpipe;
         imagepipe = invalidpipe;
+        loops = null;
     }
 
     public void validatePipe() {
@@ -592,7 +593,7 @@ public final class SunGraphics2D
             }
         }
 
-        info.font2D = FontManager.getFont2D(font);
+        info.font2D = FontUtilities.getFont2D(font);
 
         int fmhint = fractionalMetricsHint;
         if (fmhint == SunHints.INTVAL_FRACTIONALMETRICS_DEFAULT) {
@@ -741,7 +742,8 @@ public final class SunGraphics2D
                  font.isTransformed() ||
                  fontInfo == null || // Precaution, if true shouldn't get here
                  (fontInfo.aaHint == SunHints.INTVAL_TEXT_ANTIALIAS_ON) !=
-                 FontManager.getFont2D(font).useAAForPtSize(font.getSize()))) {
+                     FontUtilities.getFont2D(font).
+                         useAAForPtSize(font.getSize()))) {
                 textpipe = invalidpipe;
             }
             this.font = font;

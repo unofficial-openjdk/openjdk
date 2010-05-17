@@ -28,6 +28,7 @@
 #
 
 BUILDDIR = ../..
+MODULE  = jconsole
 PACKAGE = sun.tools.jconsole
 PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
@@ -70,7 +71,7 @@ include $(BUILDDIR)/common/Classes.gmk
 build: $(FILES_png) $(FILES_gif) $(TEMPDIR)/manifest $(JARFILE)
 
 $(GENSRCDIR)/sun/tools/jconsole/Version.java: \
-                $(SHARE_SRC)/classes/sun/tools/jconsole/Version-template.java
+                $(SHARE_SRC)/classes/sun/tools/jconsole/Version.java.template
 	$(MKDIR) -p $(@D)
 	$(SED) -e 's/@@jconsole_version@@/$(FULL_VERSION)/g' $< > $@
 
@@ -79,7 +80,7 @@ $(CLASSBINDIR)/$(PKGDIR)/resources/%: $(SHARE_SRC)/classes/$(PKGDIR)/resources/%
 	$(install-file)
 
 $(TEMPDIR)/manifest: $(SHARE_SRC)/classes/$(PKGDIR)/manifest
-	$(install-file)
+	$(install-manifest-file)
 
 #
 # Extra rule to build jconsole.jar

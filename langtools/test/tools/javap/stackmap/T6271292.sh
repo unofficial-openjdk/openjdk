@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ printf 'CLASSPATH="%s"' "${CLASSPATH}" >&2 ; echo >&2
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  CYGWIN* | Windows* )
+  Windows* )
     FS="\\"
     ;;
   * )
@@ -75,7 +75,7 @@ grep "frame_type" "${JAVAPFILE}" > "${OUTFILE}"
 grep "offset_delta" "${JAVAPFILE}" >> "${OUTFILE}"
 grep "stack = " "${JAVAPFILE}" >> "${OUTFILE}"
 grep "locals = " "${JAVAPFILE}" >> "${OUTFILE}"
-diff "${OUTFILE}" "${TESTSRC}${FS}T6271292.out"
+diff -w "${OUTFILE}" "${TESTSRC}${FS}T6271292.out"
 result="$?"
 if [ "$result" -eq 0 ]
 then

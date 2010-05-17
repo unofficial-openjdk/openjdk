@@ -52,10 +52,10 @@ SA_BUILD_VERSION_PROP = "sun.jvm.hotspot.runtime.VM.saBuildVersion=$(SA_BUILD_VE
 SA_PROPERTIES = $(SA_CLASSDIR)/sa.properties
 
 # if $(AGENT_DIR) does not exist, we don't build SA
-# also, we don't build SA on Itanium.
+# also, we don't build SA on Itanium or zero.
 
 all: 
-	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" ] ; then \
+	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" -a "$(SRCARCH)" != "zero" ] ; then \
 	   $(MAKE) -f sa.make $(GENERATED)/sa-jdi.jar; \
 	fi
 
@@ -74,8 +74,8 @@ $(GENERATED)/sa-jdi.jar: $(AGENT_FILES1) $(AGENT_FILES2)
 	  mkdir -p $(SA_CLASSDIR);        \
 	fi
 
-	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES1)
-	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -g -d $(SA_CLASSDIR) $(AGENT_FILES2)
+	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES1)
+	$(QUIETLY) $(REMOTE) $(COMPILE.JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES2)
 
 	$(QUIETLY) $(REMOTE) $(COMPILE.RMIC)  -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	$(QUIETLY) echo "$(SA_BUILD_VERSION_PROP)" > $(SA_PROPERTIES)

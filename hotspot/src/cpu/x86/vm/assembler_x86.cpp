@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2251,6 +2251,7 @@ void Assembler::popf() {
   emit_byte(0x9D);
 }
 
+#ifndef _LP64 // no 32bit push/pop on amd64
 void Assembler::popl(Address dst) {
   // NOTE: this will adjust stack by 8byte on 64bits
   InstructionMark im(this);
@@ -2258,6 +2259,7 @@ void Assembler::popl(Address dst) {
   emit_byte(0x8F);
   emit_operand(rax, dst);
 }
+#endif
 
 void Assembler::prefetch_prefix(Address src) {
   prefix(src);
@@ -2428,6 +2430,7 @@ void Assembler::pushf() {
   emit_byte(0x9C);
 }
 
+#ifndef _LP64 // no 32bit push/pop on amd64
 void Assembler::pushl(Address src) {
   // Note this will push 64bit on 64bit
   InstructionMark im(this);
@@ -2435,6 +2438,7 @@ void Assembler::pushl(Address src) {
   emit_byte(0xFF);
   emit_operand(rsi, src);
 }
+#endif
 
 void Assembler::pxor(XMMRegister dst, Address src) {
   NOT_LP64(assert(VM_Version::supports_sse2(), ""));
@@ -3360,6 +3364,13 @@ void Assembler::shrdl(Register dst, Register src) {
 }
 
 #else // LP64
+
+void Assembler::set_byte_if_not_zero(Register dst) {
+  int enc = prefix_and_encode(dst->encoding(), true);
+  emit_byte(0x0F);
+  emit_byte(0x95);
+  emit_byte(0xE0 | enc);
+}
 
 // 64bit only pieces of the assembler
 // This should only be used by 64bit instructions that can use rip-relative
@@ -5591,7 +5602,12 @@ void MacroAssembler::align(int modulus) {
 }
 
 void MacroAssembler::andpd(XMMRegister dst, AddressLiteral src) {
-  andpd(dst, as_Address(src));
+  if (reachable(src)) {
+    andpd(dst, as_Address(src));
+  } else {
+    lea(rscratch1, src);
+    andpd(dst, Address(rscratch1, 0));
+  }
 }
 
 void MacroAssembler::andptr(Register dst, int32_t imm32) {
@@ -6078,11 +6094,21 @@ void MacroAssembler::cmpxchgptr(Register reg, Address adr) {
 }
 
 void MacroAssembler::comisd(XMMRegister dst, AddressLiteral src) {
-  comisd(dst, as_Address(src));
+  if (reachable(src)) {
+    comisd(dst, as_Address(src));
+  } else {
+    lea(rscratch1, src);
+    comisd(dst, Address(rscratch1, 0));
+  }
 }
 
 void MacroAssembler::comiss(XMMRegister dst, AddressLiteral src) {
-  comiss(dst, as_Address(src));
+  if (reachable(src)) {
+    comiss(dst, as_Address(src));
+  } else {
+    lea(rscratch1, src);
+    comiss(dst, Address(rscratch1, 0));
+  }
 }
 
 
@@ -6466,24 +6492,19 @@ int MacroAssembler::load_unsigned_short(Register dst, Address src) {
 }
 
 void MacroAssembler::load_sized_value(Register dst, Address src,
-                                      int size_in_bytes, bool is_signed) {
-  switch (size_in_bytes ^ (is_signed ? -1 : 0)) {
+                                      size_t size_in_bytes, bool is_signed) {
+  switch (size_in_bytes) {
 #ifndef _LP64
   // For case 8, caller is responsible for manually loading
   // the second word into another register.
-  case ~8:  // fall through:
-  case  8:  movl(                dst, src ); break;
+  case  8: movl(dst, src); break;
 #else
-  case ~8:  // fall through:
-  case  8:  movq(                dst, src ); break;
+  case  8: movq(dst, src); break;
 #endif
-  case ~4:  // fall through:
-  case  4:  movl(                dst, src ); break;
-  case ~2:  load_signed_short(   dst, src ); break;
-  case  2:  load_unsigned_short( dst, src ); break;
-  case ~1:  load_signed_byte(    dst, src ); break;
-  case  1:  load_unsigned_byte(  dst, src ); break;
-  default:  ShouldNotReachHere();
+  case  4: movl(dst, src); break;
+  case  2: is_signed ? load_signed_short(dst, src) : load_unsigned_short(dst, src); break;
+  case  1: is_signed ? load_signed_byte( dst, src) : load_unsigned_byte( dst, src); break;
+  default: ShouldNotReachHere();
   }
 }
 
@@ -7647,7 +7668,7 @@ RegisterOrConstant MacroAssembler::delayed_value_impl(intptr_t* delayed_value_ad
 
 #ifdef ASSERT
   Label L;
-  testl(tmp, tmp);
+  testptr(tmp, tmp);
   jccb(Assembler::notZero, L);
   hlt();
   bind(L);
@@ -7680,6 +7701,7 @@ void MacroAssembler::check_method_handle_type(Register mtype_reg, Register mh_re
 // method handle's MethodType.  This macro hides the distinction.
 void MacroAssembler::load_method_handle_vmslots(Register vmslots_reg, Register mh_reg,
                                                 Register temp_reg) {
+  assert_different_registers(vmslots_reg, mh_reg, temp_reg);
   if (UseCompressedOops)  unimplemented();  // field accesses must decode
   // load mh.type.form.vmslots
   if (java_dyn_MethodHandle::vmslots_offset_in_bytes() != 0) {
@@ -7718,7 +7740,7 @@ void MacroAssembler::jump_to_method_handle_entry(Register mh_reg, Register temp_
 Address MacroAssembler::argument_address(RegisterOrConstant arg_slot,
                                          int extra_slot_offset) {
   // cf. TemplateTable::prepare_invoke(), if (load_receiver).
-  int stackElementSize = Interpreter::stackElementSize();
+  int stackElementSize = Interpreter::stackElementSize;
   int offset = Interpreter::expr_offset_in_bytes(extra_slot_offset+0);
 #ifdef ASSERT
   int offset1 = Interpreter::expr_offset_in_bytes(extra_slot_offset+1);
@@ -7949,7 +7971,7 @@ class FPU_State {
       case 2: return "special";
       case 3: return "empty";
     }
-    ShouldNotReachHere()
+    ShouldNotReachHere();
     return NULL;
   }
 
@@ -8214,6 +8236,15 @@ void MacroAssembler::store_heap_oop(Address dst, Register src) {
   }
 }
 
+// Used for storing NULLs.
+void MacroAssembler::store_heap_oop_null(Address dst) {
+  if (UseCompressedOops) {
+    movl(dst, (int32_t)NULL_WORD);
+  } else {
+    movslq(dst, (int32_t)NULL_WORD);
+  }
+}
+
 // Algorithm must match oop.inline.hpp encode_heap_oop.
 void MacroAssembler::encode_heap_oop(Register r) {
   assert (UseCompressedOops, "should be compressed");
@@ -8335,15 +8366,13 @@ void  MacroAssembler::decode_heap_oop_not_null(Register r) {
   // Cannot assert, unverified entry point counts instructions (see .ad file)
   // vtableStubs also counts instructions in pd_code_size_limit.
   // Also do not verify_oop as this is called by verify_oop.
-  if (Universe::narrow_oop_base() == NULL) {
-    if (Universe::narrow_oop_shift() != 0) {
-      assert (LogMinObjAlignmentInBytes == Universe::narrow_oop_shift(), "decode alg wrong");
-      shlq(r, LogMinObjAlignmentInBytes);
-    }
-  } else {
-      assert (Address::times_8 == LogMinObjAlignmentInBytes &&
-              Address::times_8 == Universe::narrow_oop_shift(), "decode alg wrong");
+  if (Universe::narrow_oop_shift() != 0) {
+    assert (Address::times_8 == LogMinObjAlignmentInBytes &&
+            Address::times_8 == Universe::narrow_oop_shift(), "decode alg wrong");
+    // Don't use Shift since it modifies flags.
     leaq(r, Address(r12_heapbase, r, Address::times_8, 0));
+  } else {
+    assert (Universe::narrow_oop_base() == NULL, "sanity");
   }
 }
 
@@ -8358,6 +8387,7 @@ void  MacroAssembler::decode_heap_oop_not_null(Register dst, Register src) {
             Address::times_8 == Universe::narrow_oop_shift(), "decode alg wrong");
     leaq(dst, Address(r12_heapbase, src, Address::times_8, 0));
   } else if (dst != src) {
+    assert (Universe::narrow_oop_base() == NULL, "sanity");
     movq(dst, src);
   }
 }
@@ -8404,6 +8434,322 @@ void MacroAssembler::reinit_heapbase() {
   }
 }
 #endif // _LP64
+
+// IndexOf substring.
+void MacroAssembler::string_indexof(Register str1, Register str2,
+                                    Register cnt1, Register cnt2, Register result,
+                                    XMMRegister vec, Register tmp) {
+  assert(UseSSE42Intrinsics, "SSE4.2 is required");
+
+  Label RELOAD_SUBSTR, PREP_FOR_SCAN, SCAN_TO_SUBSTR,
+        SCAN_SUBSTR, RET_NOT_FOUND, CLEANUP;
+
+  push(str1); // string addr
+  push(str2); // substr addr
+  push(cnt2); // substr count
+  jmpb(PREP_FOR_SCAN);
+
+  // Substr count saved at sp
+  // Substr saved at sp+1*wordSize
+  // String saved at sp+2*wordSize
+
+  // Reload substr for rescan
+  bind(RELOAD_SUBSTR);
+  movl(cnt2, Address(rsp, 0));
+  movptr(str2, Address(rsp, wordSize));
+  // We came here after the beginninig of the substring was
+  // matched but the rest of it was not so we need to search
+  // again. Start from the next element after the previous match.
+  subptr(str1, result); // Restore counter
+  shrl(str1, 1);
+  addl(cnt1, str1);
+  decrementl(cnt1);
+  lea(str1, Address(result, 2)); // Reload string
+
+  // Load substr
+  bind(PREP_FOR_SCAN);
+  movdqu(vec, Address(str2, 0));
+  addl(cnt1, 8);  // prime the loop
+  subptr(str1, 16);
+
+  // Scan string for substr in 16-byte vectors
+  bind(SCAN_TO_SUBSTR);
+  subl(cnt1, 8);
+  addptr(str1, 16);
+
+  // pcmpestri
+  //   inputs:
+  //     xmm - substring
+  //     rax - substring length (elements count)
+  //     mem - scaned string
+  //     rdx - string length (elements count)
+  //     0xd - mode: 1100 (substring search) + 01 (unsigned shorts)
+  //   outputs:
+  //     rcx - matched index in string
+  assert(cnt1 == rdx && cnt2 == rax && tmp == rcx, "pcmpestri");
+
+  pcmpestri(vec, Address(str1, 0), 0x0d);
+  jcc(Assembler::above, SCAN_TO_SUBSTR);      // CF == 0 && ZF == 0
+  jccb(Assembler::aboveEqual, RET_NOT_FOUND); // CF == 0
+
+  // Fallthrough: found a potential substr
+
+  // Make sure string is still long enough
+  subl(cnt1, tmp);
+  cmpl(cnt1, cnt2);
+  jccb(Assembler::negative, RET_NOT_FOUND);
+  // Compute start addr of substr
+  lea(str1, Address(str1, tmp, Address::times_2));
+  movptr(result, str1); // save
+
+  // Compare potential substr
+  addl(cnt1, 8);     // prime the loop
+  addl(cnt2, 8);
+  subptr(str1, 16);
+  subptr(str2, 16);
+
+  // Scan 16-byte vectors of string and substr
+  bind(SCAN_SUBSTR);
+  subl(cnt1, 8);
+  subl(cnt2, 8);
+  addptr(str1, 16);
+  addptr(str2, 16);
+  movdqu(vec, Address(str2, 0));
+  pcmpestri(vec, Address(str1, 0), 0x0d);
+  jcc(Assembler::noOverflow, RELOAD_SUBSTR); // OF == 0
+  jcc(Assembler::positive, SCAN_SUBSTR);     // SF == 0
+
+  // Compute substr offset
+  subptr(result, Address(rsp, 2*wordSize));
+  shrl(result, 1); // index
+  jmpb(CLEANUP);
+
+  bind(RET_NOT_FOUND);
+  movl(result, -1);
+
+  bind(CLEANUP);
+  addptr(rsp, 3*wordSize);
+}
+
+// Compare strings.
+void MacroAssembler::string_compare(Register str1, Register str2,
+                                    Register cnt1, Register cnt2, Register result,
+                                    XMMRegister vec1, XMMRegister vec2) {
+  Label LENGTH_DIFF_LABEL, POP_LABEL, DONE_LABEL, WHILE_HEAD_LABEL;
+
+  // Compute the minimum of the string lengths and the
+  // difference of the string lengths (stack).
+  // Do the conditional move stuff
+  movl(result, cnt1);
+  subl(cnt1, cnt2);
+  push(cnt1);
+  if (VM_Version::supports_cmov()) {
+    cmovl(Assembler::lessEqual, cnt2, result);
+  } else {
+    Label GT_LABEL;
+    jccb(Assembler::greater, GT_LABEL);
+    movl(cnt2, result);
+    bind(GT_LABEL);
+  }
+
+  // Is the minimum length zero?
+  testl(cnt2, cnt2);
+  jcc(Assembler::zero, LENGTH_DIFF_LABEL);
+
+  // Load first characters
+  load_unsigned_short(result, Address(str1, 0));
+  load_unsigned_short(cnt1, Address(str2, 0));
+
+  // Compare first characters
+  subl(result, cnt1);
+  jcc(Assembler::notZero,  POP_LABEL);
+  decrementl(cnt2);
+  jcc(Assembler::zero, LENGTH_DIFF_LABEL);
+
+  {
+    // Check after comparing first character to see if strings are equivalent
+    Label LSkip2;
+    // Check if the strings start at same location
+    cmpptr(str1, str2);
+    jccb(Assembler::notEqual, LSkip2);
+
+    // Check if the length difference is zero (from stack)
+    cmpl(Address(rsp, 0), 0x0);
+    jcc(Assembler::equal,  LENGTH_DIFF_LABEL);
+
+    // Strings might not be equivalent
+    bind(LSkip2);
+  }
+
+  // Advance to next character
+  addptr(str1, 2);
+  addptr(str2, 2);
+
+  if (UseSSE42Intrinsics) {
+    // With SSE4.2, use double quad vector compare
+    Label COMPARE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_TAIL;
+    // Setup to compare 16-byte vectors
+    movl(cnt1, cnt2);
+    andl(cnt2, 0xfffffff8); // cnt2 holds the vector count
+    andl(cnt1, 0x00000007); // cnt1 holds the tail count
+    testl(cnt2, cnt2);
+    jccb(Assembler::zero, COMPARE_TAIL);
+
+    lea(str2, Address(str2, cnt2, Address::times_2));
+    lea(str1, Address(str1, cnt2, Address::times_2));
+    negptr(cnt2);
+
+    bind(COMPARE_VECTORS);
+    movdqu(vec1, Address(str1, cnt2, Address::times_2));
+    movdqu(vec2, Address(str2, cnt2, Address::times_2));
+    pxor(vec1, vec2);
+    ptest(vec1, vec1);
+    jccb(Assembler::notZero, VECTOR_NOT_EQUAL);
+    addptr(cnt2, 8);
+    jcc(Assembler::notZero, COMPARE_VECTORS);
+    jmpb(COMPARE_TAIL);
+
+    // Mismatched characters in the vectors
+    bind(VECTOR_NOT_EQUAL);
+    lea(str1, Address(str1, cnt2, Address::times_2));
+    lea(str2, Address(str2, cnt2, Address::times_2));
+    movl(cnt1, 8);
+
+    // Compare tail (< 8 chars), or rescan last vectors to
+    // find 1st mismatched characters
+    bind(COMPARE_TAIL);
+    testl(cnt1, cnt1);
+    jccb(Assembler::zero, LENGTH_DIFF_LABEL);
+    movl(cnt2, cnt1);
+    // Fallthru to tail compare
+  }
+
+  // Shift str2 and str1 to the end of the arrays, negate min
+  lea(str1, Address(str1, cnt2, Address::times_2, 0));
+  lea(str2, Address(str2, cnt2, Address::times_2, 0));
+  negptr(cnt2);
+
+    // Compare the rest of the characters
+  bind(WHILE_HEAD_LABEL);
+  load_unsigned_short(result, Address(str1, cnt2, Address::times_2, 0));
+  load_unsigned_short(cnt1, Address(str2, cnt2, Address::times_2, 0));
+  subl(result, cnt1);
+  jccb(Assembler::notZero, POP_LABEL);
+  increment(cnt2);
+  jcc(Assembler::notZero, WHILE_HEAD_LABEL);
+
+  // Strings are equal up to min length.  Return the length difference.
+  bind(LENGTH_DIFF_LABEL);
+  pop(result);
+  jmpb(DONE_LABEL);
+
+  // Discard the stored length difference
+  bind(POP_LABEL);
+  addptr(rsp, wordSize);
+
+  // That's it
+  bind(DONE_LABEL);
+}
+
+// Compare char[] arrays aligned to 4 bytes or substrings.
+void MacroAssembler::char_arrays_equals(bool is_array_equ, Register ary1, Register ary2,
+                                        Register limit, Register result, Register chr,
+                                        XMMRegister vec1, XMMRegister vec2) {
+  Label TRUE_LABEL, FALSE_LABEL, DONE, COMPARE_VECTORS, COMPARE_CHAR;
+
+  int length_offset  = arrayOopDesc::length_offset_in_bytes();
+  int base_offset    = arrayOopDesc::base_offset_in_bytes(T_CHAR);
+
+  // Check the input args
+  cmpptr(ary1, ary2);
+  jcc(Assembler::equal, TRUE_LABEL);
+
+  if (is_array_equ) {
+    // Need additional checks for arrays_equals.
+    testptr(ary1, ary1);
+    jcc(Assembler::zero, FALSE_LABEL);
+    testptr(ary2, ary2);
+    jcc(Assembler::zero, FALSE_LABEL);
+
+    // Check the lengths
+    movl(limit, Address(ary1, length_offset));
+    cmpl(limit, Address(ary2, length_offset));
+    jcc(Assembler::notEqual, FALSE_LABEL);
+  }
+
+  // count == 0
+  testl(limit, limit);
+  jcc(Assembler::zero, TRUE_LABEL);
+
+  if (is_array_equ) {
+    // Load array address
+    lea(ary1, Address(ary1, base_offset));
+    lea(ary2, Address(ary2, base_offset));
+  }
+
+  shll(limit, 1);      // byte count != 0
+  movl(result, limit); // copy
+
+  if (UseSSE42Intrinsics) {
+    // With SSE4.2, use double quad vector compare
+    Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
+    // Compare 16-byte vectors
+    andl(result, 0x0000000e);  //   tail count (in bytes)
+    andl(limit, 0xfffffff0);   // vector count (in bytes)
+    jccb(Assembler::zero, COMPARE_TAIL);
+
+    lea(ary1, Address(ary1, limit, Address::times_1));
+    lea(ary2, Address(ary2, limit, Address::times_1));
+    negptr(limit);
+
+    bind(COMPARE_WIDE_VECTORS);
+    movdqu(vec1, Address(ary1, limit, Address::times_1));
+    movdqu(vec2, Address(ary2, limit, Address::times_1));
+    pxor(vec1, vec2);
+    ptest(vec1, vec1);
+    jccb(Assembler::notZero, FALSE_LABEL);
+    addptr(limit, 16);
+    jcc(Assembler::notZero, COMPARE_WIDE_VECTORS);
+
+    bind(COMPARE_TAIL); // limit is zero
+    movl(limit, result);
+    // Fallthru to tail compare
+  }
+
+  // Compare 4-byte vectors
+  andl(limit, 0xfffffffc); // vector count (in bytes)
+  jccb(Assembler::zero, COMPARE_CHAR);
+
+  lea(ary1, Address(ary1, limit, Address::times_1));
+  lea(ary2, Address(ary2, limit, Address::times_1));
+  negptr(limit);
+
+  bind(COMPARE_VECTORS);
+  movl(chr, Address(ary1, limit, Address::times_1));
+  cmpl(chr, Address(ary2, limit, Address::times_1));
+  jccb(Assembler::notEqual, FALSE_LABEL);
+  addptr(limit, 4);
+  jcc(Assembler::notZero, COMPARE_VECTORS);
+
+  // Compare trailing char (final 2 bytes), if any
+  bind(COMPARE_CHAR);
+  testl(result, 0x2);   // tail  char
+  jccb(Assembler::zero, TRUE_LABEL);
+  load_unsigned_short(chr, Address(ary1, 0));
+  load_unsigned_short(limit, Address(ary2, 0));
+  cmpl(chr, limit);
+  jccb(Assembler::notEqual, FALSE_LABEL);
+
+  bind(TRUE_LABEL);
+  movl(result, 1);   // return true
+  jmpb(DONE);
+
+  bind(FALSE_LABEL);
+  xorl(result, result); // return false
+
+  // That's it
+  bind(DONE);
+}
 
 Assembler::Condition MacroAssembler::negate_condition(Assembler::Condition cond) {
   switch (cond) {

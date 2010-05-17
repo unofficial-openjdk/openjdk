@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ class InlineTree : public ResourceObj {
   // Always between 0.0 and 1.0.  Represents the percentage of the method's
   // total execution time used at this call site.
   const float _site_invoke_ratio;
+  const int   _site_depth_adjust;
   float compute_callee_frequency( int caller_bci ) const;
 
   GrowableArray<InlineTree*> _subtrees;
@@ -50,7 +51,8 @@ protected:
              ciMethod* callee_method,
              JVMState* caller_jvms,
              int caller_bci,
-             float site_invoke_ratio);
+             float site_invoke_ratio,
+             int site_depth_adjust);
   InlineTree *build_inline_tree_for_callee(ciMethod* callee_method,
                                            JVMState* caller_jvms,
                                            int caller_bci);
@@ -61,14 +63,15 @@ protected:
 
   InlineTree *caller_tree()       const { return _caller_tree;  }
   InlineTree* callee_at(int bci, ciMethod* m) const;
-  int         inline_depth()      const { return _caller_jvms ? _caller_jvms->depth() : 0; }
+  int         inline_depth()      const { return stack_depth() + _site_depth_adjust; }
+  int         stack_depth()       const { return _caller_jvms ? _caller_jvms->depth() : 0; }
 
 public:
   static InlineTree* build_inline_tree_root();
   static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee, bool create_if_not_found = false);
 
   // For temporary (stack-allocated, stateless) ilts:
-  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio);
+  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int site_depth_adjust);
 
   // InlineTree enum
   enum InlineStyle {
@@ -427,6 +430,11 @@ class Parse : public GraphKit {
     }
   }
 
+  // Return true if the parser should add a loop predicate
+  bool should_add_predicate(int target_bci);
+  // Insert a loop predicate into the graph
+  void add_predicate();
+
   // Note:  Intrinsic generation routines may be found in library_call.cpp.
 
   // Helper function to setup Ideal Call nodes
@@ -469,7 +477,7 @@ class Parse : public GraphKit {
 
   // loading from a constant field or the constant pool
   // returns false if push failed (non-perm field constants only, not ldcs)
-  bool push_constant(ciConstant con);
+  bool push_constant(ciConstant con, bool require_constant = false);
 
   // implementation of object creation bytecodes
   void do_new();
@@ -488,7 +496,7 @@ class Parse : public GraphKit {
 
   void    do_ifnull(BoolTest::mask btest, Node* c);
   void    do_if(BoolTest::mask btest, Node* c);
-  void    repush_if_args();
+  int     repush_if_args();
   void    adjust_map_after_if(BoolTest::mask btest, Node* c, float prob,
                               Block* path, Block* other_path);
   IfNode* jump_if_fork_int(Node* a, Node* b, BoolTest::mask mask);
@@ -542,9 +550,6 @@ class Parse : public GraphKit {
   // Handle all exceptions thrown by the inlined method.
   // Also handles exceptions for individual bytecodes.
   void catch_inline_exceptions(SafePointNode* ex_map);
-
-  // Bytecode classifier, helps decide to use uncommon_trap vs. rethrow_C.
-  bool can_rerun_bytecode();
 
   // Merge the given map into correct exceptional exit state.
   // Assumes that there is no applicable local handler.

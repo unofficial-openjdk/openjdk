@@ -30,10 +30,9 @@ import java.awt.Insets;
 
 import java.awt.event.ComponentEvent;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import sun.util.logging.PlatformLogger;
 
-import sun.awt.ComponentAccessor;
+import sun.awt.AWTAccessor;
 
 /**
  * This class implements window which serves as content window for decorated frames.
@@ -44,7 +43,7 @@ import sun.awt.ComponentAccessor;
  * decorated window.  So coordinates in it would be the same as java coordinates.
  */
 public final class XContentWindow extends XWindow {
-    private static Logger insLog = Logger.getLogger("sun.awt.X11.insets.XContentWindow");
+    private static PlatformLogger insLog = PlatformLogger.getLogger("sun.awt.X11.insets.XContentWindow");
 
     static XContentWindow createContent(XDecoratedPeer parentFrame) {
         final WindowDimensions dims = parentFrame.getDimensions();
@@ -116,8 +115,8 @@ public final class XContentWindow extends XWindow {
             if (in != null) {
                 newBounds.setLocation(-in.left, -in.top);
             }
-            if (insLog.isLoggable(Level.FINE)) insLog.log(Level.FINE, "Setting content bounds {0}, old bounds {1}",
-                                                          new Object[] {newBounds, getBounds()});
+            if (insLog.isLoggable(PlatformLogger.FINE)) insLog.fine("Setting content bounds {0}, old bounds {1}",
+                                                                    newBounds, getBounds());
             // Fix for 5023533:
             // Change in the size of the content window means, well, change of the size
             // Change in the location of the content window means change in insets
@@ -136,8 +135,7 @@ public final class XContentWindow extends XWindow {
     // NOTE: This method may be called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void handleResize(Rectangle bounds) {
-        ComponentAccessor.setWidth((Component)target, bounds.width);
-        ComponentAccessor.setHeight((Component)target, bounds.height);
+        AWTAccessor.getComponentAccessor().setSize((Component)target, bounds.width, bounds.height);
         postEvent(new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED));
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,9 @@ import java.net.URL;
 import java.net.HttpURLConnection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.Arrays;
 
+import sun.misc.IOUtils;
 import sun.security.pkcs.*;
 
 /**
@@ -137,23 +139,15 @@ public class HttpTimestamper implements Timestamper {
                 }
                 System.out.println();
             }
-            int contentLength = connection.getContentLength();
-            if (contentLength == -1) {
-                contentLength = Integer.MAX_VALUE;
-            }
             verifyMimeType(connection.getContentType());
 
-            replyBuffer = new byte[contentLength];
             int total = 0;
-            int count = 0;
-            while (count != -1 && total < contentLength) {
-                count = input.read(replyBuffer, total,
-                                        replyBuffer.length - total);
-                total += count;
-            }
+            int contentLength = connection.getContentLength();
+            replyBuffer = IOUtils.readFully(input, contentLength, false);
+
             if (DEBUG) {
                 System.out.println("received timestamp response (length=" +
-                        replyBuffer.length + ")");
+                        total + ")");
             }
         } finally {
             if (input != null) {

@@ -70,7 +70,7 @@ ifdef QUIET
 endif
 
 ifdef VERBOSE
-  ANT_OPTIONS += -verbose -diagnostics
+  ANT_OPTIONS += -verbose -debug
 endif
 
 ifdef JDK_VERSION
@@ -133,6 +133,23 @@ ifdef ALT_BOOTDIR
   ANT_JAVA_HOME = JAVA_HOME=$(ALT_BOOTDIR)
 endif
 
+# To facilitate bootstrapping, much of langtools can be compiled with (just)
+# a boot JDK. However, some source files need to be compiled against 
+# new JDK API. In a bootstrap build, an import JDK may not be available,
+# so build.xml can also build against the source files in a jdk repo,
+# in which case it will automatically generate stub files for the new JDK API.
+ifdef JDK_TOPDIR
+  ANT_OPTIONS += -Dimport.jdk=$(JDK_TOPDIR)
+else 
+  ifdef ALT_JDK_TOPDIR
+    ANT_OPTIONS += -Dimport.jdk=$(ALT_JDK_TOPDIR)
+  else 
+    ifdef ALT_JDK_IMPORT_PATH
+      ANT_OPTIONS += -Dimport.jdk=$(ALT_JDK_IMPORT_PATH)
+    endif
+  endif
+endif
+
 ifdef ALT_OUTPUTDIR
   OUTPUTDIR = $(ALT_OUTPUTDIR)
   ANT_OPTIONS += -Dbuild.dir=$(ALT_OUTPUTDIR)/build
@@ -171,10 +188,16 @@ clobber: clean
 # All ant targets of interest
 ANT_TARGETS = build clean sanity post-sanity diagnostics # for now
 
+# Create diagnostics log (careful, ant 1.8.0 -diagnostics always does an exit 1)
+$(OUTPUTDIR)/build/ant-diagnostics.log:
+	@mkdir -p $(OUTPUTDIR)/build $(ANT_TMPDIR)
+	@$(RM) $@
+	$(ANT_JAVA_HOME) $(ANT_OPTS) $(ANT) -diagnostics > $@ ; \
+	  $(ANT_JAVA_HOME) $(ANT_OPTS) $(ANT) -version >> $@
+
 # Create a make target for each
-$(ANT_TARGETS):
+$(ANT_TARGETS): $(OUTPUTDIR)/build/ant-diagnostics.log
 	@ mkdir -p $(OUTPUTDIR)/build $(ANT_TMPDIR)
-	$(ANT_JAVA_HOME) $(ANT_OPTS) $(ANT) -diagnostics > $(OUTPUTDIR)/build/ant-diagnostics.log
 	$(ANT_JAVA_HOME) $(ANT_OPTS) $(ANT) $(ANT_OPTIONS) $@
 
 #-------------------------------------------------------------------

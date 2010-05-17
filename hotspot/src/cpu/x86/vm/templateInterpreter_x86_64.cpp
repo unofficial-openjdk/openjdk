@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,21 +100,26 @@ address TemplateInterpreterGenerator::generate_ClassCastException_handler() {
   return entry;
 }
 
-// Arguments are: required type in rarg1, failing object (or NULL) in rarg2
+// Arguments are: required type at TOS+8, failing object (or NULL) at TOS+4.
 address TemplateInterpreterGenerator::generate_WrongMethodType_handler() {
   address entry = __ pc();
 
   __ pop(c_rarg2);              // failing object is at TOS
   __ pop(c_rarg1);              // required type is at TOS+8
 
-  // expression stack must be empty before entering the VM if an
-  // exception happened
+  __ verify_oop(c_rarg1);
+  __ verify_oop(c_rarg2);
+
+  // Various method handle types use interpreter registers as temps.
+  __ restore_bcp();
+  __ restore_locals();
+
+  // Expression stack must be empty before entering the VM for an exception.
   __ empty_expression_stack();
 
   __ call_VM(noreg,
              CAST_FROM_FN_PTR(address,
-                              InterpreterRuntime::
-                              throw_WrongMethodTypeException),
+                              InterpreterRuntime::throw_WrongMethodTypeException),
              // pass required type, failing object (or NULL)
              c_rarg1, c_rarg2);
   return entry;
@@ -166,8 +171,7 @@ address TemplateInterpreterGenerator::generate_continuation_for(TosState state) 
 
 
 address TemplateInterpreterGenerator::generate_return_entry_for(TosState state,
-                                                                int step, bool unbox) {
-  assert(!unbox, "NYI");//6815692//
+                                                                int step) {
 
   // amd64 doesn't need to do anything special about compiled returns
   // to the interpreter so the code that exists on x86 to place a sentinel
@@ -183,15 +187,28 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state,
   __ restore_bcp();
   __ restore_locals();
 
-  __ get_cache_and_index_at_bcp(rbx, rcx, 1);
+  Label L_got_cache, L_giant_index;
+  if (EnableInvokeDynamic) {
+    __ cmpb(Address(r13, 0), Bytecodes::_invokedynamic);
+    __ jcc(Assembler::equal, L_giant_index);
+  }
+  __ get_cache_and_index_at_bcp(rbx, rcx, 1, false);
+  __ bind(L_got_cache);
   __ movl(rbx, Address(rbx, rcx,
-                       Address::times_8,
+                       Address::times_ptr,
                        in_bytes(constantPoolCacheOopDesc::base_offset()) +
                        3 * wordSize));
   __ andl(rbx, 0xFF);
-  if (TaggedStackInterpreter) __ shll(rbx, 1); // 2 slots per parameter.
   __ lea(rsp, Address(rsp, rbx, Address::times_8));
   __ dispatch_next(state, step);
+
+  // out of the main line of code...
+  if (EnableInvokeDynamic) {
+    __ bind(L_giant_index);
+    __ get_cache_and_index_at_bcp(rbx, rcx, 1, true);
+    __ jmp(L_got_cache);
+  }
+
   return entry;
 }
 
@@ -399,7 +416,7 @@ void InterpreterGenerator::generate_stack_overflow_check(void) {
   // see if the frame is greater than one page in size. If so,
   // then we need to verify there is enough stack space remaining
   // for the additional locals.
-  __ cmpl(rdx, (page_size - overhead_size) / Interpreter::stackElementSize());
+  __ cmpl(rdx, (page_size - overhead_size) / Interpreter::stackElementSize);
   __ jcc(Assembler::belowEqual, after_frame_check);
 
   // compute rsp as if this were going to be the last frame on
@@ -410,7 +427,7 @@ void InterpreterGenerator::generate_stack_overflow_check(void) {
 
   // locals + overhead, in bytes
   __ mov(rax, rdx);
-  __ shlptr(rax, Interpreter::logStackElementSize()); // 2 slots per parameter.
+  __ shlptr(rax, Interpreter::logStackElementSize);  // 2 slots per parameter.
   __ addptr(rax, overhead_size);
 
 #ifdef ASSERT
@@ -431,8 +448,12 @@ void InterpreterGenerator::generate_stack_overflow_check(void) {
   __ addptr(rax, stack_base);
   __ subptr(rax, stack_size);
 
+  // Use the maximum number of pages we might bang.
+  const int max_pages = StackShadowPages > (StackRedPages+StackYellowPages) ? StackShadowPages :
+                                                                              (StackRedPages+StackYellowPages);
+
   // add in the red and yellow zone sizes
-  __ addptr(rax, (StackRedPages + StackYellowPages) * page_size);
+  __ addptr(rax, max_pages * page_size);
 
   // check against the current stack bottom
   __ cmpptr(rsp, rax);
@@ -737,7 +758,6 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   // for natives the size of locals is zero
 
   // compute beginning of parameters (r14)
-  if (TaggedStackInterpreter) __ shll(rcx, 1); // 2 slots per parameter.
   __ lea(r14, Address(rsp, rcx, Address::times_8, -wordSize));
 
   // add 2 zero-initialized slots for native calls
@@ -843,7 +863,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   __ load_unsigned_short(t,
                          Address(method,
                                  methodOopDesc::size_of_parameters_offset()));
-  __ shll(t, Interpreter::logStackElementSize());
+  __ shll(t, Interpreter::logStackElementSize);
 
   __ subptr(rsp, t);
   __ subptr(rsp, frame::arg_reg_save_area_bytes); // windows
@@ -1206,7 +1226,6 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   __ pop(rax);
 
   // compute beginning of parameters (r14)
-  if (TaggedStackInterpreter) __ shll(rcx, 1); // 2 slots per parameter.
   __ lea(r14, Address(rsp, rcx, Address::times_8, -wordSize));
 
   // rdx - # of additional locals
@@ -1217,7 +1236,6 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
     __ testl(rdx, rdx);
     __ jcc(Assembler::lessEqual, exit); // do nothing if rdx <= 0
     __ bind(loop);
-    if (TaggedStackInterpreter) __ push((int) NULL_WORD);  // push tag
     __ push((int) NULL_WORD); // initialize local variables
     __ decrementl(rdx); // until everything initialized
     __ jcc(Assembler::greater, loop);
@@ -1434,6 +1452,23 @@ address AbstractInterpreterGenerator::generate_method_entry(
                                 generate_normal_entry(synchronized);
 }
 
+// These should never be compiled since the interpreter will prefer
+// the compiled version to the intrinsic version.
+bool AbstractInterpreter::can_be_compiled(methodHandle m) {
+  switch (method_kind(m)) {
+    case Interpreter::java_lang_math_sin     : // fall thru
+    case Interpreter::java_lang_math_cos     : // fall thru
+    case Interpreter::java_lang_math_tan     : // fall thru
+    case Interpreter::java_lang_math_abs     : // fall thru
+    case Interpreter::java_lang_math_log     : // fall thru
+    case Interpreter::java_lang_math_log10   : // fall thru
+    case Interpreter::java_lang_math_sqrt    :
+      return false;
+    default:
+      return true;
+  }
+}
+
 // How much stack a method activation needs in words.
 int AbstractInterpreter::size_top_interpreter_activation(methodOop method) {
   const int entry_size = frame::interpreter_frame_monitor_size();
@@ -1447,7 +1482,7 @@ int AbstractInterpreter::size_top_interpreter_activation(methodOop method) {
   const int stub_code = frame::entry_frame_after_call_words;
   const int extra_stack = methodOopDesc::extra_stack_entries();
   const int method_stack = (method->max_locals() + method->max_stack() + extra_stack) *
-                           Interpreter::stackElementWords();
+                           Interpreter::stackElementWords;
   return (overhead_size + method_stack + stub_code);
 }
 
@@ -1468,9 +1503,9 @@ int AbstractInterpreter::layout_activation(methodOop method,
   // It is also guaranteed to be walkable even though it is in a skeletal state
 
   // fixed size of an interpreter frame:
-  int max_locals = method->max_locals() * Interpreter::stackElementWords();
+  int max_locals = method->max_locals() * Interpreter::stackElementWords;
   int extra_locals = (method->max_locals() - method->size_of_parameters()) *
-                     Interpreter::stackElementWords();
+                     Interpreter::stackElementWords;
 
   int overhead = frame::sender_sp_offset -
                  frame::interpreter_frame_initial_sp_offset;
@@ -1479,13 +1514,15 @@ int AbstractInterpreter::layout_activation(methodOop method,
   // for the callee's params we only need to account for the extra
   // locals.
   int size = overhead +
-         (callee_locals - callee_param_count)*Interpreter::stackElementWords() +
+         (callee_locals - callee_param_count)*Interpreter::stackElementWords +
          moncount * frame::interpreter_frame_monitor_size() +
-         tempcount* Interpreter::stackElementWords() + popframe_extra_args;
+         tempcount* Interpreter::stackElementWords + popframe_extra_args;
   if (interpreter_frame != NULL) {
 #ifdef ASSERT
-    assert(caller->unextended_sp() == interpreter_frame->interpreter_frame_sender_sp(),
-           "Frame not properly walkable");
+    if (!EnableMethodHandles)
+      // @@@ FIXME: Should we correct interpreter_frame_sender_sp in the calling sequences?
+      // Probably, since deoptimization doesn't work yet.
+      assert(caller->unextended_sp() == interpreter_frame->interpreter_frame_sender_sp(), "Frame not properly walkable");
     assert(caller->sp() == interpreter_frame->sender_sp(), "Frame not properly walkable(2)");
 #endif
 
@@ -1503,7 +1540,7 @@ int AbstractInterpreter::layout_activation(methodOop method,
 
     // Set last_sp
     intptr_t*  esp = (intptr_t*) monbot -
-                     tempcount*Interpreter::stackElementWords() -
+                     tempcount*Interpreter::stackElementWords -
                      popframe_extra_args;
     interpreter_frame->interpreter_frame_set_last_sp(esp);
 
@@ -1609,7 +1646,7 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
     __ get_method(rax);
     __ load_unsigned_short(rax, Address(rax, in_bytes(methodOopDesc::
                                                 size_of_parameters_offset())));
-    __ shll(rax, Interpreter::logStackElementSize());
+    __ shll(rax, Interpreter::logStackElementSize);
     __ restore_locals(); // XXX do we need this?
     __ subptr(r14, rax);
     __ addptr(r14, wordSize);
@@ -1700,7 +1737,7 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
   __ push(rdx);                                  // save return address
   __ super_call_VM_leaf(CAST_FROM_FN_PTR(address,
                           SharedRuntime::exception_handler_for_return_address),
-                        rdx);
+                        r15_thread, rdx);
   __ mov(rbx, rax);                              // save exception handler
   __ pop(rdx);                                   // restore return address
   __ pop(rax);                                   // restore exception

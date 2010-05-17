@@ -25,54 +25,37 @@
 
 package com.sun.jmx.mbeanserver;
 
-import com.sun.jmx.remote.util.EnvHelp;
-import java.beans.BeanInfo;
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
-import java.util.logging.Level;
-import javax.management.AttributeNotFoundException;
-import javax.management.Description;
+import java.util.WeakHashMap;
 
 import javax.management.Descriptor;
-import javax.management.DescriptorFields;
 import javax.management.DescriptorKey;
 import javax.management.DynamicMBean;
 import javax.management.ImmutableDescriptor;
-import javax.management.MBean;
 import javax.management.MBeanInfo;
-import javax.management.MXBean;
 import javax.management.NotCompliantMBeanException;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.MXBeanMappingFactory;
 
-import static com.sun.jmx.defaults.JmxProperties.MBEANSERVER_LOGGER;
-import com.sun.jmx.mbeanserver.Util;
 import com.sun.jmx.remote.util.EnvHelp;
 import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.management.AttributeNotFoundException;
-import javax.management.JMX;
-import javax.management.ObjectName;
-import javax.management.ObjectNameTemplate;
 import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.MXBeanMappingFactory;
 
 /**
  * This class contains the methods for performing all the tests needed to verify
@@ -82,13 +65,7 @@ import javax.management.openmbean.MXBeanMappingFactory;
  */
 public class Introspector {
 
-    /**
-     * Pattern used to extract Attribute Names from ObjectNameTemplate Annotation
-     * For example, in the following example, the Name attribute value is
-     * retrieved : ":type=MyType, name={Name}"
-     */
-    private static Pattern OBJECT_NAME_PATTERN_TEMPLATE =
-            Pattern.compile("(\\{[^\\}]+\\})|(=\"\\{[^\\}]+\\}\")");
+
      /*
      * ------------------------------------------
      *  PRIVATE CONSTRUCTORS
@@ -164,10 +141,6 @@ public class Introspector {
 
     public static void checkCompliance(Class<?> mbeanClass)
     throws NotCompliantMBeanException {
-
-        // Check that @Resource is used correctly (if it used).
-        MBeanInjector.validate(mbeanClass);
-
         // Is DynamicMBean?
         //
         if (DynamicMBean.class.isAssignableFrom(mbeanClass))
@@ -190,36 +163,16 @@ public class Introspector {
         } catch (NotCompliantMBeanException e) {
             mxbeanException = e;
         }
-        // Is @MBean or @MXBean class?
-        // In fact we find @MBean or @MXBean as a hacky variant of
-        // getStandardMBeanInterface or getMXBeanInterface.  If we get here
-        // then nothing worked.
         final String msg =
             "MBean class " + mbeanClass.getName() + " does not implement " +
-            "DynamicMBean; does not follow the Standard MBean conventions (" +
-            mbeanException.toString() + "); does not follow the MXBean conventions (" +
-            mxbeanException.toString() + "); and does not have or inherit the @" +
-            MBean.class.getSimpleName() + " or @" + MXBean.class.getSimpleName() +
-            " annotation";
+            "DynamicMBean, and neither follows the Standard MBean conventions (" +
+            mbeanException.toString() + ") nor the MXBean conventions (" +
+            mxbeanException.toString() + ")";
         throw new NotCompliantMBeanException(msg);
     }
 
-    /**
-     * <p>Make a DynamicMBean out of the existing MBean object.  The object
-     * may already be a DynamicMBean, or it may be a Standard MBean or
-     * MXBean, possibly defined using {@code @MBean} or {@code @MXBean}.</p>
-     * @param mbean the object to convert to a DynamicMBean.
-     * @param <T> a type parameter defined for implementation convenience
-     * (which would have to be removed if this method were part of the public
-     * API).
-     * @return the converted DynamicMBean.
-     * @throws NotCompliantMBeanException if {@code mbean} is not a compliant
-     * MBean object, including the case where it is null.
-     */
     public static <T> DynamicMBean makeDynamicMBean(T mbean)
-    throws NotCompliantMBeanException {
-        if (mbean == null)
-            throw new NotCompliantMBeanException("Null MBean object");
+        throws NotCompliantMBeanException {
         if (mbean instanceof DynamicMBean)
             return (DynamicMBean) mbean;
         final Class<?> mbeanClass = mbean.getClass();
@@ -240,18 +193,8 @@ public class Introspector {
             // to be an MBean or an MXBean. We will call checkCompliance()
             // to generate the appropriate exception.
         }
-        if (c != null) {
-            MXBeanMappingFactory factory;
-            try {
-                factory = MXBeanMappingFactory.forInterface(c);
-            } catch (IllegalArgumentException e) {
-                NotCompliantMBeanException ncmbe =
-                        new NotCompliantMBeanException(e.getMessage());
-                ncmbe.initCause(e);
-                throw ncmbe;
-            }
-            return new MXBeanSupport(mbean, c, factory);
-        }
+        if (c != null)
+            return new MXBeanSupport(mbean, c);
         checkCompliance(mbeanClass);
         throw new NotCompliantMBeanException("Not compliant"); // not reached
     }
@@ -280,10 +223,9 @@ public class Introspector {
         return testCompliance(baseClass, null);
     }
 
-    public static void testComplianceMXBeanInterface(Class<?> interfaceClass,
-                                                     MXBeanMappingFactory factory)
+    public static void testComplianceMXBeanInterface(Class<?> interfaceClass)
             throws NotCompliantMBeanException {
-        MXBeanIntrospector.getInstance(factory).getAnalyzer(interfaceClass);
+        MXBeanIntrospector.getInstance().getAnalyzer(interfaceClass);
     }
 
     /**
@@ -352,8 +294,6 @@ public class Introspector {
      */
     public static <T> Class<? super T> getStandardMBeanInterface(Class<T> baseClass)
     throws NotCompliantMBeanException {
-        if (baseClass.isAnnotationPresent(MBean.class))
-            return baseClass;
         Class<? super T> current = baseClass;
         Class<? super T> mbeanInterface = null;
         while (current != null) {
@@ -384,57 +324,10 @@ public class Introspector {
      */
     public static <T> Class<? super T> getMXBeanInterface(Class<T> baseClass)
         throws NotCompliantMBeanException {
-        if (hasMXBeanAnnotation(baseClass))
-            return baseClass;
         try {
             return MXBeanSupport.findMXBeanInterface(baseClass);
         } catch (Exception e) {
             throw throwException(baseClass,e);
-        }
-    }
-
-    public static <T> Class<? super T> getStandardOrMXBeanInterface(
-            Class<T> baseClass, boolean mxbean)
-    throws NotCompliantMBeanException {
-        if (mxbean)
-            return getMXBeanInterface(baseClass);
-        else
-            return getStandardMBeanInterface(baseClass);
-    }
-
-    public static ObjectName templateToObjectName(Descriptor descriptor,
-            DynamicMBean mbean)
-            throws NotCompliantMBeanException {
-        String template = (String)
-            descriptor.getFieldValue(JMX.OBJECT_NAME_TEMPLATE);
-        if(template == null) return null;
-        try {
-            Matcher m = OBJECT_NAME_PATTERN_TEMPLATE.matcher(template);
-            while (m.find()){
-                String grp = m.group();
-                System.out.println("GROUP " + grp);
-                String attributeName = null;
-                boolean quote = false;
-                if(grp.startsWith("=\"{")) {
-                    attributeName = grp.substring(3, grp.length() - 2);
-                    quote = true;
-                } else
-                    attributeName = grp.substring(1, grp.length() - 1);
-
-                Object attributeValue = mbean.getAttribute(attributeName);
-                String validValue = quote ?
-                    "=" + ObjectName.quote(attributeValue.toString()) :
-                    attributeValue.toString();
-                template = template.replace(grp, validValue);
-            }
-            return new ObjectName(template);
-        }catch(Exception ex) {
-            NotCompliantMBeanException ncex = new
-                    NotCompliantMBeanException(ObjectNameTemplate.class.
-                    getSimpleName() + " annotation value [" + template + "] " +
-                    "is invalid. " + ex);
-            ncex.initCause(ex);
-            throw ncex;
         }
     }
 
@@ -444,10 +337,6 @@ public class Introspector {
      * ------------------------------------------
      */
 
-    static boolean hasMXBeanAnnotation(Class<?> c) {
-        MXBean m = c.getAnnotation(MXBean.class);
-        return (m != null && m.value());
-    }
 
     /**
      * Try to find the MBean interface corresponding to the class aName
@@ -469,77 +358,11 @@ public class Introspector {
         return null;
     }
 
-    public static String descriptionForElement(AnnotatedElement elmt) {
-        if (elmt == null)
-            return null;
-        Description d = elmt.getAnnotation(Description.class);
-        if (d == null)
-            return null;
-        return d.value();
-    }
-
-    public static String descriptionForParameter(
-            Annotation[] parameterAnnotations) {
-        for (Annotation a : parameterAnnotations) {
-            if (a instanceof Description)
-                return ((Description) a).value();
-        }
-        return null;
-    }
-
-    public static String nameForParameter(
-            Annotation[] parameterAnnotations) {
-        for (Annotation a : parameterAnnotations) {
-            Class<? extends Annotation> ac = a.annotationType();
-            // You'd really have to go out of your way to have more than
-            // one @Name annotation, so we don't check for that.
-            if (ac.getSimpleName().equals("Name")) {
-                try {
-                    Method value = ac.getMethod("value");
-                    if (value.getReturnType() == String.class &&
-                            value.getParameterTypes().length == 0) {
-                        return (String) value.invoke(a);
-                    }
-                } catch (Exception e) {
-                    MBEANSERVER_LOGGER.log(
-                            Level.WARNING,
-                            "Unexpected exception getting @" + ac.getName(),
-                            e);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static Descriptor descriptorForElement(final AnnotatedElement elmt,
-            boolean isSetter) {
+    public static Descriptor descriptorForElement(final AnnotatedElement elmt) {
         if (elmt == null)
             return ImmutableDescriptor.EMPTY_DESCRIPTOR;
         final Annotation[] annots = elmt.getAnnotations();
-        Descriptor descr = descriptorForAnnotations(annots);
-        String[] exceptions = {};
-        if(elmt instanceof Method)
-            exceptions = getAllExceptions(((Method) elmt).getExceptionTypes());
-        else
-            if(elmt instanceof Constructor<?>)
-                exceptions = getAllExceptions(((Constructor<?>) elmt).
-                        getExceptionTypes());
-
-        if(exceptions.length > 0 ) {
-            String fieldName = isSetter ? JMX.SET_EXCEPTIONS_FIELD :
-                JMX.EXCEPTIONS_FIELD;
-
-            String[] fieldNames = {fieldName};
-            Object[] fieldValues = {exceptions};
-            descr = ImmutableDescriptor.union(descr,
-                    new ImmutableDescriptor(fieldNames, fieldValues));
-        }
-
-        return descr;
-    }
-
-    public static Descriptor descriptorForAnnotation(Annotation annot) {
-        return descriptorForAnnotations(new Annotation[] {annot});
+        return descriptorForAnnotations(annots);
     }
 
     public static Descriptor descriptorForAnnotations(Annotation[] annots) {
@@ -547,85 +370,42 @@ public class Introspector {
             return ImmutableDescriptor.EMPTY_DESCRIPTOR;
         Map<String, Object> descriptorMap = new HashMap<String, Object>();
         for (Annotation a : annots) {
-            if (a instanceof DescriptorFields)
-                addDescriptorFieldsToMap(descriptorMap, (DescriptorFields) a);
-            addAnnotationFieldsToMap(descriptorMap, a);
+            Class<? extends Annotation> c = a.annotationType();
+            Method[] elements = c.getMethods();
+            for (Method element : elements) {
+                DescriptorKey key = element.getAnnotation(DescriptorKey.class);
+                if (key != null) {
+                    String name = key.value();
+                    Object value;
+                    try {
+                        value = element.invoke(a);
+                    } catch (RuntimeException e) {
+                        // we don't expect this - except for possibly
+                        // security exceptions?
+                        // RuntimeExceptions shouldn't be "UndeclaredThrowable".
+                        // anyway...
+                        //
+                        throw e;
+                    } catch (Exception e) {
+                        // we don't expect this
+                        throw new UndeclaredThrowableException(e);
+                    }
+                    value = annotationToField(value);
+                    Object oldValue = descriptorMap.put(name, value);
+                    if (oldValue != null && !equals(oldValue, value)) {
+                        final String msg =
+                            "Inconsistent values for descriptor field " + name +
+                            " from annotations: " + value + " :: " + oldValue;
+                        throw new IllegalArgumentException(msg);
+                    }
+                }
+            }
         }
 
         if (descriptorMap.isEmpty())
             return ImmutableDescriptor.EMPTY_DESCRIPTOR;
         else
             return new ImmutableDescriptor(descriptorMap);
-    }
-
-    /**
-     * Array of thrown excepions.
-     * @param exceptions can be null;
-     * @return An Array of Exception class names. Size is 0 if method is null.
-     */
-    private static String[] getAllExceptions(Class<?>[] exceptions) {
-        Set<String> set = new LinkedHashSet<String>();
-        for(Class<?>ex : exceptions)
-            set.add(ex.getName());
-
-        String[] arr = new String[set.size()];
-        return set.toArray(arr);
-    }
-
-    private static void addDescriptorFieldsToMap(
-            Map<String, Object> descriptorMap, DescriptorFields df) {
-        for (String field : df.value()) {
-            int eq = field.indexOf('=');
-            if (eq < 0) {
-                throw new IllegalArgumentException(
-                        "@DescriptorFields string must contain '=': " +
-                        field);
-            }
-            String name = field.substring(0, eq);
-            String value = field.substring(eq + 1);
-            addToMap(descriptorMap, name, value);
-        }
-    }
-
-    private static void addAnnotationFieldsToMap(
-            Map<String, Object> descriptorMap, Annotation a) {
-        Class<? extends Annotation> c = a.annotationType();
-        Method[] elements = c.getMethods();
-        for (Method element : elements) {
-            DescriptorKey key = element.getAnnotation(DescriptorKey.class);
-            if (key != null) {
-                String name = key.value();
-                Object value;
-                try {
-                    value = element.invoke(a);
-                } catch (RuntimeException e) {
-                    // we don't expect this - except for possibly
-                    // security exceptions?
-                    // RuntimeExceptions shouldn't be "UndeclaredThrowable".
-                    // anyway...
-                    throw e;
-                } catch (Exception e) {
-                    // we don't expect this
-                    throw new UndeclaredThrowableException(e);
-                }
-                if (!key.omitIfDefault() ||
-                        !equals(value, element.getDefaultValue())) {
-                    value = annotationToField(value);
-                    addToMap(descriptorMap, name, value);
-                }
-            }
-        }
-    }
-
-    private static void addToMap(
-            Map<String, Object> descriptorMap, String name, Object value) {
-        Object oldValue = descriptorMap.put(name, value);
-        if (oldValue != null && !equals(oldValue, value)) {
-            final String msg =
-                "Inconsistent values for descriptor field " + name +
-                " from annotations: " + value + " :: " + oldValue;
-            throw new IllegalArgumentException(msg);
-        }
     }
 
     /**
@@ -732,11 +512,25 @@ public class Introspector {
             } else {
                 // Java Beans introspection
                 //
-                BeanInfo bi = java.beans.Introspector.getBeanInfo(complex.getClass());
-                PropertyDescriptor[] pds = bi.getPropertyDescriptors();
-                for (PropertyDescriptor pd : pds)
-                    if (pd.getName().equals(element))
-                        return pd.getReadMethod().invoke(complex);
+                Class<?> clazz = complex.getClass();
+                Method readMethod = null;
+                if (BeansHelper.isAvailable()) {
+                    Object bi = BeansHelper.getBeanInfo(clazz);
+                    Object[] pds = BeansHelper.getPropertyDescriptors(bi);
+                    for (Object pd: pds) {
+                        if (BeansHelper.getPropertyName(pd).equals(element)) {
+                            readMethod = BeansHelper.getReadMethod(pd);
+                            break;
+                        }
+                    }
+                } else {
+                    // Java Beans not available so use simple introspection
+                    // to locate method
+                    readMethod = SimpleIntrospector.getReadMethod(clazz, element);
+                }
+                if (readMethod != null)
+                    return readMethod.invoke(complex);
+
                 throw new AttributeNotFoundException(
                     "Could not find the getter method for the property " +
                     element + " using the Java Beans introspector");
@@ -748,6 +542,237 @@ public class Introspector {
         } catch (Exception e) {
             throw EnvHelp.initCause(
                 new AttributeNotFoundException(e.getMessage()), e);
+        }
+    }
+
+    /**
+     * A simple introspector that uses reflection to analyze a class and
+     * identify its "getter" methods. This class is intended for use only when
+     * Java Beans is not present (which implies that there isn't explicit
+     * information about the bean available).
+     */
+    private static class SimpleIntrospector {
+        private SimpleIntrospector() { }
+
+        private static final String GET_METHOD_PREFIX = "get";
+        private static final String IS_METHOD_PREFIX = "is";
+
+        // cache to avoid repeated lookups
+        private static final Map<Class<?>,SoftReference<List<Method>>> cache =
+            Collections.synchronizedMap(
+                new WeakHashMap<Class<?>,SoftReference<List<Method>>> ());
+
+        /**
+         * Returns the list of methods cached for the given class, or {@code null}
+         * if not cached.
+         */
+        private static List<Method> getCachedMethods(Class<?> clazz) {
+            // return cached methods if possible
+            SoftReference<List<Method>> ref = cache.get(clazz);
+            if (ref != null) {
+                List<Method> cached = ref.get();
+                if (cached != null)
+                    return cached;
+            }
+            return null;
+        }
+
+        /**
+         * Returns {@code true} if the given method is a "getter" method (where
+         * "getter" method is a public method of the form getXXX or "boolean
+         * isXXX")
+         */
+        static boolean isReadMethod(Method method) {
+            // ignore static methods
+            int modifiers = method.getModifiers();
+            if (Modifier.isStatic(modifiers))
+                return false;
+
+            String name = method.getName();
+            Class<?>[] paramTypes = method.getParameterTypes();
+            int paramCount = paramTypes.length;
+
+            if (paramCount == 0 && name.length() > 2) {
+                // boolean isXXX()
+                if (name.startsWith(IS_METHOD_PREFIX))
+                    return (method.getReturnType() == boolean.class);
+                // getXXX()
+                if (name.length() > 3 && name.startsWith(GET_METHOD_PREFIX))
+                    return (method.getReturnType() != void.class);
+            }
+            return false;
+        }
+
+        /**
+         * Returns the list of "getter" methods for the given class. The list
+         * is ordered so that isXXX methods appear before getXXX methods - this
+         * is for compatability with the JavaBeans Introspector.
+         */
+        static List<Method> getReadMethods(Class<?> clazz) {
+            // return cached result if available
+            List<Method> cachedResult = getCachedMethods(clazz);
+            if (cachedResult != null)
+                return cachedResult;
+
+            // get list of public methods, filtering out methods that have
+            // been overridden to return a more specific type.
+            List<Method> methods =
+                StandardMBeanIntrospector.getInstance().getMethods(clazz);
+            methods = MBeanAnalyzer.eliminateCovariantMethods(methods);
+
+            // filter out the non-getter methods
+            List<Method> result = new LinkedList<Method>();
+            for (Method m: methods) {
+                if (isReadMethod(m)) {
+                    // favor isXXX over getXXX
+                    if (m.getName().startsWith(IS_METHOD_PREFIX)) {
+                        result.add(0, m);
+                    } else {
+                        result.add(m);
+                    }
+                }
+            }
+
+            // add result to cache
+            cache.put(clazz, new SoftReference<List<Method>>(result));
+
+            return result;
+        }
+
+        /**
+         * Returns the "getter" to read the given property from the given class or
+         * {@code null} if no method is found.
+         */
+        static Method getReadMethod(Class<?> clazz, String property) {
+            // first character in uppercase (compatability with JavaBeans)
+            property = property.substring(0, 1).toUpperCase(Locale.ENGLISH) +
+                property.substring(1);
+            String getMethod = GET_METHOD_PREFIX + property;
+            String isMethod = IS_METHOD_PREFIX + property;
+            for (Method m: getReadMethods(clazz)) {
+                String name = m.getName();
+                if (name.equals(isMethod) || name.equals(getMethod)) {
+                    return m;
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * A class that provides access to the JavaBeans Introspector and
+     * PropertyDescriptors without creating a static dependency on java.beans.
+     */
+    private static class BeansHelper {
+        private static final Class<?> introspectorClass =
+            getClass("java.beans.Introspector");
+        private static final Class<?> beanInfoClass =
+            (introspectorClass == null) ? null : getClass("java.beans.BeanInfo");
+        private static final Class<?> getPropertyDescriptorClass =
+            (beanInfoClass == null) ? null : getClass("java.beans.PropertyDescriptor");
+
+        private static final Method getBeanInfo =
+            getMethod(introspectorClass, "getBeanInfo", Class.class);
+        private static final Method getPropertyDescriptors =
+            getMethod(beanInfoClass, "getPropertyDescriptors");
+        private static final Method getPropertyName =
+            getMethod(getPropertyDescriptorClass, "getName");
+        private static final Method getReadMethod =
+            getMethod(getPropertyDescriptorClass, "getReadMethod");
+
+        private static Class<?> getClass(String name) {
+            try {
+                return Class.forName(name, true, null);
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        private static Method getMethod(Class<?> clazz,
+                                        String name,
+                                        Class<?>... paramTypes)
+        {
+            if (clazz != null) {
+                try {
+                    return clazz.getMethod(name, paramTypes);
+                } catch (NoSuchMethodException e) {
+                    throw new AssertionError(e);
+                }
+            } else {
+                return null;
+            }
+        }
+
+        private BeansHelper() { }
+
+        /**
+         * Returns {@code true} if java.beans is available.
+         */
+        static boolean isAvailable() {
+            return introspectorClass != null;
+        }
+
+        /**
+         * Invokes java.beans.Introspector.getBeanInfo(Class)
+         */
+        static Object getBeanInfo(Class<?> clazz) throws Exception {
+            try {
+                return getBeanInfo.invoke(null, clazz);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof Exception)
+                    throw (Exception)cause;
+                throw new AssertionError(e);
+            } catch (IllegalAccessException iae) {
+                throw new AssertionError(iae);
+            }
+        }
+
+        /**
+         * Invokes java.beans.BeanInfo.getPropertyDescriptors()
+         */
+        static Object[] getPropertyDescriptors(Object bi) {
+            try {
+                return (Object[])getPropertyDescriptors.invoke(bi);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException)
+                    throw (RuntimeException)cause;
+                throw new AssertionError(e);
+            } catch (IllegalAccessException iae) {
+                throw new AssertionError(iae);
+            }
+        }
+
+        /**
+         * Invokes java.beans.PropertyDescriptor.getName()
+         */
+        static String getPropertyName(Object pd) {
+            try {
+                return (String)getPropertyName.invoke(pd);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException)
+                    throw (RuntimeException)cause;
+                throw new AssertionError(e);
+            } catch (IllegalAccessException iae) {
+                throw new AssertionError(iae);
+            }
+        }
+
+        /**
+         * Invokes java.beans.PropertyDescriptor.getReadMethod()
+         */
+        static Method getReadMethod(Object pd) {
+            try {
+                return (Method)getReadMethod.invoke(pd);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException)
+                    throw (RuntimeException)cause;
+                throw new AssertionError(e);
+            } catch (IllegalAccessException iae) {
+                throw new AssertionError(iae);
+            }
         }
     }
 }

@@ -24,12 +24,12 @@
  */
 
 package sun.net.www.http;
+
 import java.io.*;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import sun.net.NetProperties;
 import java.util.regex.*;
+import sun.net.NetProperties;
+import sun.util.logging.PlatformLogger;
 
 /**
  * Main class of the HTTP traffic capture tool.
@@ -115,7 +115,7 @@ public class HttpCapture {
             out = new BufferedWriter(new FileWriter(file, true));
             out.write("URL: " + url + "\n");
         } catch (IOException ex) {
-            Logger.getLogger(HttpCapture.class.getName()).log(Level.SEVERE, null, ex);
+            PlatformLogger.getLogger(HttpCapture.class.getName()).severe(null, ex);
         }
     }
 

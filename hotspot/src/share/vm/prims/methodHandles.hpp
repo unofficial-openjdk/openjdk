@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,7 @@ class MethodHandles: AllStatic {
   // See also  javaClasses for layouts java_dyn_Method{Handle,Type,Type::Form}.
  public:
   enum EntryKind {
-    _check_mtype,               // how a caller calls a MH
-    _wrong_method_type,         // what happens when there is a type mismatch
+    _raise_exception,           // stub for error generation from other stubs
     _invokestatic_mh,           // how a MH emulates invokestatic
     _invokespecial_mh,          // ditto for the other invokes...
     _invokevirtual_mh,
@@ -47,6 +46,7 @@ class MethodHandles: AllStatic {
 
     _adapter_mh_first,     // adapter sequence goes here...
     _adapter_retype_only   = _adapter_mh_first + sun_dyn_AdapterMethodHandle::OP_RETYPE_ONLY,
+    _adapter_retype_raw    = _adapter_mh_first + sun_dyn_AdapterMethodHandle::OP_RETYPE_RAW,
     _adapter_check_cast    = _adapter_mh_first + sun_dyn_AdapterMethodHandle::OP_CHECK_CAST,
     _adapter_prim_to_prim  = _adapter_mh_first + sun_dyn_AdapterMethodHandle::OP_PRIM_TO_PRIM,
     _adapter_ref_to_prim   = _adapter_mh_first + sun_dyn_AdapterMethodHandle::OP_REF_TO_PRIM,
@@ -113,6 +113,12 @@ class MethodHandles: AllStatic {
   static bool _enabled;
   static MethodHandleEntry* _entries[_EK_LIMIT];
   static const char*        _entry_names[_EK_LIMIT+1];
+  static jobject            _raise_exception_method;
+
+  // Adapters.
+  static MethodHandlesAdapterBlob* _adapter_code;
+  static int                       _adapter_code_size;
+
   static bool ek_valid(EntryKind ek)            { return (uint)ek < (uint)_EK_LIMIT; }
   static bool conv_op_valid(int op)             { return (uint)op < (uint)CONV_OP_LIMIT; }
 
@@ -129,6 +135,53 @@ class MethodHandles: AllStatic {
     assert(ek_valid(ek), "oob");
     assert(_entries[ek] == NULL, "no double initialization");
     _entries[ek] = me;
+  }
+
+  // Some adapter helper functions.
+  static void get_ek_bound_mh_info(EntryKind ek, BasicType& arg_type, int& arg_mask, int& arg_slots) {
+    switch (ek) {
+    case _bound_int_mh        : // fall-thru
+    case _bound_int_direct_mh : arg_type = T_INT;    arg_mask = _INSERT_INT_MASK;  break;
+    case _bound_long_mh       : // fall-thru
+    case _bound_long_direct_mh: arg_type = T_LONG;   arg_mask = _INSERT_LONG_MASK; break;
+    case _bound_ref_mh        : // fall-thru
+    case _bound_ref_direct_mh : arg_type = T_OBJECT; arg_mask = _INSERT_REF_MASK;  break;
+    default: ShouldNotReachHere();
+    }
+    arg_slots = type2size[arg_type];
+  }
+
+  static void get_ek_adapter_opt_swap_rot_info(EntryKind ek, int& swap_bytes, int& rotate) {
+    int swap_slots = 0;
+    switch (ek) {
+    case _adapter_opt_swap_1:     swap_slots = 1; rotate =  0; break;
+    case _adapter_opt_swap_2:     swap_slots = 2; rotate =  0; break;
+    case _adapter_opt_rot_1_up:   swap_slots = 1; rotate =  1; break;
+    case _adapter_opt_rot_1_down: swap_slots = 1; rotate = -1; break;
+    case _adapter_opt_rot_2_up:   swap_slots = 2; rotate =  1; break;
+    case _adapter_opt_rot_2_down: swap_slots = 2; rotate = -1; break;
+    default: ShouldNotReachHere();
+    }
+    // Return the size of the stack slots to move in bytes.
+    swap_bytes = swap_slots * Interpreter::stackElementSize;
+  }
+
+  static int get_ek_adapter_opt_spread_info(EntryKind ek) {
+    switch (ek) {
+    case _adapter_opt_spread_0: return  0;
+    case _adapter_opt_spread_1: return  1;
+    default                   : return -1;
+    }
+  }
+
+  static methodOop raise_exception_method() {
+    oop rem = JNIHandles::resolve(_raise_exception_method);
+    assert(rem == NULL || rem->is_method(), "");
+    return (methodOop) rem;
+  }
+  static void set_raise_exception_method(methodOop rem) {
+    assert(_raise_exception_method == NULL, "");
+    _raise_exception_method = JNIHandles::make_global(Handle(rem));
   }
 
   static jint adapter_conversion(int conv_op, BasicType src, BasicType dest,
@@ -163,10 +216,13 @@ class MethodHandles: AllStatic {
     return (conv >> CONV_VMINFO_SHIFT) & CONV_VMINFO_MASK;
   }
 
+  // Bit mask of conversion_op values.  May vary by platform.
+  static int adapter_conversion_ops_supported_mask();
+
   // Offset in words that the interpreter stack pointer moves when an argument is pushed.
   // The stack_move value must always be a multiple of this.
   static int stack_move_unit() {
-    return frame::interpreter_frame_expression_stack_direction() * Interpreter::stackElementWords();
+    return frame::interpreter_frame_expression_stack_direction() * Interpreter::stackElementWords;
   }
 
   enum { CONV_VMINFO_SIGN_FLAG = 0x80 };
@@ -209,8 +265,9 @@ class MethodHandles: AllStatic {
   // working with member names
   static void resolve_MemberName(Handle mname, TRAPS); // compute vmtarget/vmindex from name/type
   static void expand_MemberName(Handle mname, int suppress, TRAPS);  // expand defc/name/type if missing
+  static Handle new_MemberName(TRAPS);  // must be followed by init_MemberName
   static void init_MemberName(oop mname_oop, oop target); // compute vmtarget/vmindex from target
-  static void init_MemberName(oop mname_oop, methodOop m, bool do_dispatch);
+  static void init_MemberName(oop mname_oop, methodOop m, bool do_dispatch = true);
   static void init_MemberName(oop mname_oop, klassOop field_holder, AccessFlags mods, int offset);
   static int find_MemberNames(klassOop k, symbolOop name, symbolOop sig,
                               int mflags, klassOop caller,
@@ -218,7 +275,10 @@ class MethodHandles: AllStatic {
   // bit values for suppress argument to expand_MemberName:
   enum { _suppress_defc = 1, _suppress_name = 2, _suppress_type = 4 };
 
-  // called from InterpreterGenerator and StubGenerator
+  // Generate MethodHandles adapters.
+  static void generate_adapters();
+
+  // Called from InterpreterGenerator and MethodHandlesAdapterGenerator.
   static address generate_method_handle_interpreter_entry(MacroAssembler* _masm);
   static void generate_method_handle_stub(MacroAssembler* _masm, EntryKind ek);
 
@@ -243,7 +303,8 @@ class MethodHandles: AllStatic {
   enum {
     // format of query to getConstant:
     GC_JVM_PUSH_LIMIT = 0,
-    GC_JVM_STACK_MOVE_LIMIT = 1,
+    GC_JVM_STACK_MOVE_UNIT = 1,
+    GC_CONV_OP_IMPLEMENTED_MASK = 2,
 
     // format of result from getTarget / encode_target:
     ETF_HANDLE_OR_METHOD_NAME = 0, // all available data (immediate MH or method)
@@ -255,13 +316,19 @@ class MethodHandles: AllStatic {
   static oop encode_target(Handle mh, int format, TRAPS); // report vmtarget (to Java code)
   static bool class_cast_needed(klassOop src, klassOop dst);
 
+  static instanceKlassHandle resolve_instance_klass(oop    java_mirror_oop, TRAPS);
+  static instanceKlassHandle resolve_instance_klass(jclass java_mirror_jh,  TRAPS) {
+    return resolve_instance_klass(JNIHandles::resolve(java_mirror_jh), THREAD);
+  }
+
  private:
   // These checkers operate on a pair of whole MethodTypes:
   static const char* check_method_type_change(oop src_mtype, int src_beg, int src_end,
                                               int insert_argnum, oop insert_type,
                                               int change_argnum, oop change_type,
                                               int delete_argnum,
-                                              oop dst_mtype, int dst_beg, int dst_end);
+                                              oop dst_mtype, int dst_beg, int dst_end,
+                                              bool raw = false);
   static const char* check_method_type_insertion(oop src_mtype,
                                                  int insert_argnum, oop insert_type,
                                                  oop dst_mtype) {
@@ -278,29 +345,29 @@ class MethodHandles: AllStatic {
                                     change_argnum, change_type,
                                     -1, dst_mtype, 0, -1);
   }
-  static const char* check_method_type_passthrough(oop src_mtype, oop dst_mtype) {
+  static const char* check_method_type_passthrough(oop src_mtype, oop dst_mtype, bool raw) {
     oop no_ref = NULL;
     return check_method_type_change(src_mtype, 0, -1,
                                     -1, no_ref, -1, no_ref, -1,
-                                    dst_mtype, 0, -1);
+                                    dst_mtype, 0, -1, raw);
   }
 
   // These checkers operate on pairs of argument or return types:
   static const char* check_argument_type_change(BasicType src_type, klassOop src_klass,
                                                 BasicType dst_type, klassOop dst_klass,
-                                                int argnum);
+                                                int argnum, bool raw = false);
 
   static const char* check_argument_type_change(oop src_type, oop dst_type,
-                                                int argnum) {
+                                                int argnum, bool raw = false) {
     klassOop src_klass = NULL, dst_klass = NULL;
     BasicType src_bt = java_lang_Class::as_BasicType(src_type, &src_klass);
     BasicType dst_bt = java_lang_Class::as_BasicType(dst_type, &dst_klass);
     return check_argument_type_change(src_bt, src_klass,
-                                      dst_bt, dst_klass, argnum);
+                                      dst_bt, dst_klass, argnum, raw);
   }
 
-  static const char* check_return_type_change(oop src_type, oop dst_type) {
-    return check_argument_type_change(src_type, dst_type, -1);
+  static const char* check_return_type_change(oop src_type, oop dst_type, bool raw = false) {
+    return check_argument_type_change(src_type, dst_type, -1, raw);
   }
 
   static const char* check_return_type_change(BasicType src_type, klassOop src_klass,
@@ -357,9 +424,10 @@ class MethodHandles: AllStatic {
                                               TRAPS);
 
   static bool same_basic_type_for_arguments(BasicType src, BasicType dst,
+                                            bool raw = false,
                                             bool for_return = false);
-  static bool same_basic_type_for_returns(BasicType src, BasicType dst) {
-    return same_basic_type_for_arguments(src, dst, true);
+  static bool same_basic_type_for_returns(BasicType src, BasicType dst, bool raw = false) {
+    return same_basic_type_for_arguments(src, dst, raw, true);
   }
 
   enum {                        // arg_mask values
@@ -371,13 +439,13 @@ class MethodHandles: AllStatic {
   static void insert_arg_slots(MacroAssembler* _masm,
                                RegisterOrConstant arg_slots,
                                int arg_mask,
-                               Register rax_argslot,
-                               Register rbx_temp, Register rdx_temp);
+                               Register argslot_reg,
+                               Register temp_reg, Register temp2_reg, Register temp3_reg = noreg);
 
   static void remove_arg_slots(MacroAssembler* _masm,
                                RegisterOrConstant arg_slots,
-                               Register rax_argslot,
-                               Register rbx_temp, Register rdx_temp);
+                               Register argslot_reg,
+                               Register temp_reg, Register temp2_reg, Register temp3_reg = noreg);
 };
 
 
@@ -433,3 +501,14 @@ class MethodHandleEntry {
 
 address MethodHandles::from_compiled_entry(EntryKind ek) { return entry(ek)->from_compiled_entry(); }
 address MethodHandles::from_interpreted_entry(EntryKind ek) { return entry(ek)->from_interpreted_entry(); }
+
+
+//------------------------------------------------------------------------------
+// MethodHandlesAdapterGenerator
+//
+class MethodHandlesAdapterGenerator : public StubCodeGenerator {
+public:
+  MethodHandlesAdapterGenerator(CodeBuffer* code) : StubCodeGenerator(code) {}
+
+  void generate();
+};

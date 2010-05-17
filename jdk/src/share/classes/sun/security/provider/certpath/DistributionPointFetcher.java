@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,9 @@ import java.security.*;
 import java.security.cert.*;
 import javax.security.auth.x500.X500Principal;
 
-import sun.security.action.GetPropertyAction;
+import sun.security.action.GetBooleanAction;
 import sun.security.util.Debug;
+import sun.security.util.DerOutputStream;
 import sun.security.x509.*;
 
 /**
@@ -61,28 +62,8 @@ class DistributionPointFetcher {
      * extension shall be enabled. Currently disabled by default for
      * compatibility and legal reasons.
      */
-    private final static boolean USE_CRLDP =
-        getBooleanProperty("com.sun.security.enableCRLDP", false);
-
-    /**
-     * Return the value of the boolean System property propName.
-     */
-    public static boolean getBooleanProperty(String propName,
-            boolean defaultValue) {
-        // if set, require value of either true or false
-        String b = AccessController.doPrivileged(
-                new GetPropertyAction(propName));
-        if (b == null) {
-            return defaultValue;
-        } else if (b.equalsIgnoreCase("false")) {
-            return false;
-        } else if (b.equalsIgnoreCase("true")) {
-            return true;
-        } else {
-            throw new RuntimeException("Value of " + propName
-            + " must either be 'true' or 'false'");
-        }
-    }
+    private final static boolean USE_CRLDP = AccessController.doPrivileged
+        (new GetBooleanAction("com.sun.security.enableCRLDP"));
 
     // singleton instance
     private static final DistributionPointFetcher INSTANCE =
@@ -308,6 +289,16 @@ class DistributionPointFetcher {
         X500Name certIssuer = (X500Name) certImpl.getIssuerDN();
         X500Name crlIssuer = (X500Name) crlImpl.getIssuerDN();
 
+        // check the crl signature algorithm
+        try {
+            AlgorithmChecker.check(crl);
+        } catch (CertPathValidatorException cpve) {
+            if (debug != null) {
+                debug.println("CRL signature algorithm check failed: " + cpve);
+            }
+            return false;
+        }
+
         // if crlIssuer is set, verify that it matches the issuer of the
         // CRL and the CRL contains an IDP extension with the indirectCRL
         // boolean asserted. Otherwise, verify that the CRL issuer matches the
@@ -333,7 +324,15 @@ class DistributionPointFetcher {
             if (match == false) {
                 return false;
             }
-            indirectCRL = true;
+
+            // we accept the case that a CRL issuer provide status
+            // information for itself.
+            if (ForwardBuilder.issues(certImpl, crlImpl, provider)) {
+                // reset the public key used to verify the CRL's signature
+                prevKey = certImpl.getPublicKey();
+            } else {
+                indirectCRL = true;
+            }
         } else if (crlIssuer.equals(certIssuer) == false) {
             if (debug != null) {
                 debug.println("crl issuer does not equal cert issuer");
@@ -347,7 +346,14 @@ class DistributionPointFetcher {
                                 PKIXExtensions.AuthorityKey_Id.toString());
 
             if (!Arrays.equals(certAKID, crlAKID)) {
-                indirectCRL = true;
+                // we accept the case that a CRL issuer provide status
+                // information for itself.
+                if (ForwardBuilder.issues(certImpl, crlImpl, provider)) {
+                    // reset the public key used to verify the CRL's signature
+                    prevKey = certImpl.getPublicKey();
+                } else {
+                    indirectCRL = true;
+                }
             }
         }
 
@@ -542,10 +548,80 @@ class DistributionPointFetcher {
             certSel.setSubject(crlIssuer.asX500Principal());
             boolean[] crlSign = {false,false,false,false,false,false,true};
             certSel.setKeyUsage(crlSign);
+
+            // Currently by default, forward builder does not enable
+            // subject/authority key identifier identifying for target
+            // certificate, instead, it only compares the CRL issuer and
+            // the target certificate subject. If the certificate of the
+            // delegated CRL issuer is a self-issued certificate, the
+            // builder is unable to find the proper CRL issuer by issuer
+            // name only, there is a potential dead loop on finding the
+            // proper issuer. It is of great help to narrow the target
+            // scope down to aware of authority key identifiers in the
+            // selector, for the purposes of breaking the dead loop.
+            AuthorityKeyIdentifierExtension akidext =
+                                            crlImpl.getAuthKeyIdExtension();
+            if (akidext != null) {
+                KeyIdentifier akid = (KeyIdentifier)akidext.get(akidext.KEY_ID);
+                if (akid != null) {
+                    DerOutputStream derout = new DerOutputStream();
+                    derout.putOctetString(akid.getIdentifier());
+                    certSel.setSubjectKeyIdentifier(derout.toByteArray());
+                }
+
+                SerialNumber asn =
+                    (SerialNumber)akidext.get(akidext.SERIAL_NUMBER);
+                if (asn != null) {
+                    certSel.setSerialNumber(asn.getNumber());
+                }
+                // the subject criterion will be set by builder automatically.
+            }
+
+            // by far, we have validated the previous certificate, we can
+            // trust it during validating the CRL issuer.
+            // Except the performance improvement, another benefit is to break
+            // the dead loop while looking for the issuer back and forth
+            // between the delegated self-issued certificate and its issuer.
+            Set<TrustAnchor> trustAnchors = new HashSet<TrustAnchor>();
+            if (anchor != null) {
+                trustAnchors.add(anchor);
+            }
+
+            if (prevKey != null) {
+                // if the previous key is of the anchor, don't bother to
+                // duplicate the trust.
+                boolean duplicated = false;
+                PublicKey publicKey = prevKey;
+                X500Principal principal = certImpl.getIssuerX500Principal();
+
+                if (anchor != null) {
+                    X509Certificate trustedCert = anchor.getTrustedCert();
+                    X500Principal trustedPrincipal;
+                    PublicKey trustedPublicKey;
+                    if (trustedCert != null) {
+                        trustedPrincipal = trustedCert.getSubjectX500Principal();
+                        trustedPublicKey = trustedCert.getPublicKey();
+                    } else {
+                        trustedPrincipal = anchor.getCA();
+                        trustedPublicKey = anchor.getCAPublicKey();
+                    }
+
+                    if (principal.equals(trustedPrincipal) &&
+                        publicKey.equals(trustedPublicKey)) {
+                        duplicated = true;
+                    }
+                }
+
+                if (!duplicated) {
+                    TrustAnchor temporary =
+                        new TrustAnchor(principal, publicKey, null);
+                    trustAnchors.add(temporary);
+                }
+            }
+
             PKIXBuilderParameters params = null;
             try {
-                params = new PKIXBuilderParameters
-                    (Collections.singleton(anchor), certSel);
+                params = new PKIXBuilderParameters(trustAnchors, certSel);
             } catch (InvalidAlgorithmParameterException iape) {
                 throw new CRLException(iape);
             }

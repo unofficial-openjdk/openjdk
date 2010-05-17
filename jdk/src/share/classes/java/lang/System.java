@@ -1,5 +1,5 @@
 /*
- * Copyright 1994-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1994-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -620,6 +620,20 @@ public final class System {
     }
 
     /**
+     * Returns the system-dependent line separator string.  It always
+     * returns the same value - the initial value of the {@linkplain
+     * #getProperty(String) system property} {@code line.separator}.
+     *
+     * <p>On UNIX systems, it returns {@code "\n"}; on Microsoft
+     * Windows systems it returns {@code "\r\n"}.
+     */
+    public static String lineSeparator() {
+        return lineSeparator;
+    }
+
+    private static String lineSeparator;
+
+    /**
      * Sets the system properties to the <code>Properties</code>
      * argument.
      * <p>
@@ -1104,6 +1118,7 @@ public final class System {
     private static void initializeSystemClass() {
         props = new Properties();
         initProperties(props);
+        lineSeparator = props.getProperty("line.separator");
         sun.misc.Version.init();
 
         // Workaround until DownloadManager initialization is revisited.
@@ -1192,7 +1207,7 @@ public final class System {
     }
 
     /* returns the class of the caller. */
-    static Class getCallerClass() {
+    static Class<?> getCallerClass() {
         // NOTE use of more generic Reflection.getCallerClass()
         return Reflection.getCallerClass(3);
     }

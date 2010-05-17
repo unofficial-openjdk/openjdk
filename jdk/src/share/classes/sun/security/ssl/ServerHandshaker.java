@@ -39,11 +39,6 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.*;
 
 import javax.security.auth.Subject;
-import javax.security.auth.kerberos.KerberosKey;
-import javax.security.auth.kerberos.KerberosPrincipal;
-import javax.security.auth.kerberos.ServicePermission;
-import sun.security.jgss.krb5.Krb5Util;
-import sun.security.jgss.GSSCaller;
 
 import com.sun.net.ssl.internal.ssl.X509ExtendedTrustManager;
 
@@ -69,10 +64,13 @@ final class ServerHandshaker extends Handshaker {
     private X509Certificate[]   certs;
     private PrivateKey          privateKey;
 
-    private KerberosKey[]       kerberosKeys;
+    private SecretKey[]       kerberosKeys;
 
     // flag to check for clientCertificateVerify message
     private boolean             needClientVerify = false;
+
+    // indicate a renegotiation handshaking
+    private boolean             isRenegotiation = false;
 
     /*
      * For exportable ciphersuites using non-exportable key sizes, we use
@@ -101,20 +99,28 @@ final class ServerHandshaker extends Handshaker {
      * Constructor ... use the keys found in the auth context.
      */
     ServerHandshaker(SSLSocketImpl socket, SSLContextImpl context,
-            ProtocolList enabledProtocols, byte clientAuth) {
+            ProtocolList enabledProtocols, byte clientAuth,
+            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
+
         super(socket, context, enabledProtocols,
                         (clientAuth != SSLEngineImpl.clauth_none), false);
         doClientAuth = clientAuth;
+        this.isRenegotiation = isRenegotiation;
+        this.activeProtocolVersion = activeProtocolVersion;
     }
 
     /*
      * Constructor ... use the keys found in the auth context.
      */
     ServerHandshaker(SSLEngineImpl engine, SSLContextImpl context,
-            ProtocolList enabledProtocols, byte clientAuth) {
+            ProtocolList enabledProtocols, byte clientAuth,
+            boolean isRenegotiation, ProtocolVersion activeProtocolVersion) {
+
         super(engine, context, enabledProtocols,
                         (clientAuth != SSLEngineImpl.clauth_none), false);
         doClientAuth = clientAuth;
+        this.isRenegotiation = isRenegotiation;
+        this.activeProtocolVersion = activeProtocolVersion;
     }
 
     /*
@@ -262,6 +268,45 @@ final class ServerHandshaker extends Handshaker {
         if (debug != null && Debug.isOn("handshake")) {
             mesg.print(System.out);
         }
+
+        // if it is a renegotiation request and renegotiation is not allowed
+        if (isRenegotiation && !renegotiable) {
+            if (activeProtocolVersion.v >= ProtocolVersion.TLS10.v) {
+                // response with a no_negotiation warning,
+                warningSE(Alerts.alert_no_negotiation);
+
+                // invalidate the handshake so that the caller can
+                // dispose this object.
+                invalidated = true;
+
+                // If there is still unread block in the handshake
+                // input stream, it would be truncated with the disposal
+                // and the next handshake message will become incomplete.
+                //
+                // However, according to SSL/TLS specifications, no more
+                // handshake message could immediately follow ClientHello
+                // or HelloRequest. But in case of any improper messages,
+                // we'd better check to ensure there is no remaining bytes
+                // in the handshake input stream.
+                if (input.available() > 0) {
+                    fatalSE(Alerts.alert_unexpected_message,
+                        "ClientHello followed by an unexpected  " +
+                        "handshake message");
+
+                }
+
+                return;
+            } else {
+                // For SSLv3, send the handshake_failure fatal error.
+                // Note that SSLv3 does not define a no_negotiation alert
+                // like TLSv1. However we cannot ignore the message
+                // simply, otherwise the other side was waiting for a
+                // response that would never come.
+                fatalSE(Alerts.alert_handshake_failure,
+                    "renegotiation is not allowed");
+            }
+        }
+
         /*
          * Always make sure this entire record has been digested before we
          * start emitting output, to ensure correct digesting order.
@@ -366,9 +411,8 @@ final class ServerHandshaker extends Handshaker {
                             subject = AccessController.doPrivileged(
                                 new PrivilegedExceptionAction<Subject>() {
                                 public Subject run() throws Exception {
-                                    return Krb5Util.getSubject(
-                                        GSSCaller.CALLER_SSL_SERVER,
-                                        getAccSE());
+                                    return
+                                        Krb5Helper.getServerSubject(getAccSE());
                             }});
                         } catch (PrivilegedActionException e) {
                             subject = null;
@@ -379,8 +423,9 @@ final class ServerHandshaker extends Handshaker {
                         }
 
                         if (subject != null) {
-                            Set<KerberosPrincipal> principals =
-                                subject.getPrincipals(KerberosPrincipal.class);
+                            // Eliminate dependency on KerberosPrincipal
+                            Set<Principal> principals =
+                                subject.getPrincipals(Principal.class);
                             if (!principals.contains(localPrincipal)) {
                                 resumingSession = false;
                                 if (debug != null && Debug.isOn("session")) {
@@ -914,11 +959,11 @@ final class ServerHandshaker extends Handshaker {
         try {
             final AccessControlContext acc = getAccSE();
             kerberosKeys = AccessController.doPrivileged(
-                new PrivilegedExceptionAction<KerberosKey[]>() {
-                public KerberosKey[] run() throws Exception {
+                // Eliminate dependency on KerberosKey
+                new PrivilegedExceptionAction<SecretKey[]>() {
+                public SecretKey[] run() throws Exception {
                     // get kerberos key for the default principal
-                    return Krb5Util.getKeys(
-                        GSSCaller.CALLER_SSL_SERVER, null, acc);
+                    return Krb5Helper.getServerKeys(acc);
                         }});
 
             // check permission to access and use the secret key of the
@@ -931,12 +976,13 @@ final class ServerHandshaker extends Handshaker {
                 }
 
                 String serverPrincipal =
-                    kerberosKeys[0].getPrincipal().getName();
+                    Krb5Helper.getServerPrincipalName(kerberosKeys[0]);
                 SecurityManager sm = System.getSecurityManager();
                 try {
                    if (sm != null) {
-                      sm.checkPermission(new ServicePermission(serverPrincipal,
-                                                "accept"), acc);
+                      // Eliminate dependency on ServicePermission
+                      sm.checkPermission(Krb5Helper.getServicePermission(
+                          serverPrincipal, "accept"), acc);
                    }
                 } catch (SecurityException se) {
                    kerberosKeys = null;
@@ -973,7 +1019,7 @@ final class ServerHandshaker extends Handshaker {
         session.setPeerPrincipal(mesg.getPeerPrincipal());
         session.setLocalPrincipal(mesg.getLocalPrincipal());
 
-        byte[] b = mesg.getPreMasterSecret().getUnencrypted();
+        byte[] b = mesg.getUnencryptedPreMasterSecret();
         return new SecretKeySpec(b, "TlsPremasterSecret");
     }
 

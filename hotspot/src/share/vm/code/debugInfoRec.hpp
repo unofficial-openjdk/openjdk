@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,6 +87,9 @@ class DebugInformationRecorder: public ResourceObj {
   void describe_scope(int         pc_offset,
                       ciMethod*   method,
                       int         bci,
+                      bool        reexecute,
+                      bool        is_method_handle_invoke = false,
+                      bool        return_oop = false,
                       DebugToken* locals      = NULL,
                       DebugToken* expressions = NULL,
                       DebugToken* monitors    = NULL);

@@ -22,6 +22,8 @@
  *
  */
 
+# define __STDC_FORMAT_MACROS
+
 // do not include  precompiled  header file
 # include "incls/_os_linux.cpp.incl"
 
@@ -53,6 +55,8 @@
 # include <sys/ipc.h>
 # include <sys/shm.h>
 # include <link.h>
+# include <stdint.h>
+# include <inttypes.h>
 
 #define MAX_PATH    (2 * K)
 
@@ -176,7 +180,9 @@ bool os::have_special_privileges() {
 #endif
 
 // Cpu architecture string
-#if   defined(IA64)
+#if   defined(ZERO)
+static char cpu_arch[] = ZERO_LIBARCH;
+#elif defined(IA64)
 static char cpu_arch[] = "ia64";
 #elif defined(IA32)
 static char cpu_arch[] = "i386";
@@ -221,8 +227,8 @@ static const char *unstable_chroot_error = "/proc file system not found.\n"
                      "environment on Linux when /proc filesystem is not mounted.";
 
 void os::Linux::initialize_system_info() {
-  _processor_count = sysconf(_SC_NPROCESSORS_CONF);
-  if (_processor_count == 1) {
+  set_processor_count(sysconf(_SC_NPROCESSORS_CONF));
+  if (processor_count() == 1) {
     pid_t pid = os::Linux::gettid();
     char fname[32];
     jio_snprintf(fname, sizeof(fname), "/proc/%d", pid);
@@ -234,7 +240,7 @@ void os::Linux::initialize_system_info() {
     }
   }
   _physical_memory = (julong)sysconf(_SC_PHYS_PAGES) * (julong)sysconf(_SC_PAGESIZE);
-  assert(_processor_count > 0, "linux error");
+  assert(processor_count() > 0, "linux error");
 }
 
 void os::init_system_properties_values() {
@@ -1516,7 +1522,10 @@ int os::current_process_id() {
 
 const char* os::dll_file_extension() { return ".so"; }
 
-const char* os::get_temp_directory() { return "/tmp/"; }
+const char* os::get_temp_directory() {
+  const char *prop = Arguments::get_property("java.io.tmpdir");
+  return prop == NULL ? "/tmp" : prop;
+}
 
 static bool file_exists(const char* filename) {
   struct stat statbuf;
@@ -1743,7 +1752,14 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     {EM_SPARC32PLUS, EM_SPARC,   ELFCLASS32, ELFDATA2MSB, (char*)"Sparc 32"},
     {EM_SPARCV9,     EM_SPARCV9, ELFCLASS64, ELFDATA2MSB, (char*)"Sparc v9 64"},
     {EM_PPC,         EM_PPC,     ELFCLASS32, ELFDATA2MSB, (char*)"Power PC 32"},
-    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"}
+    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"},
+    {EM_ARM,         EM_ARM,     ELFCLASS32,   ELFDATA2LSB, (char*)"ARM"},
+    {EM_S390,        EM_S390,    ELFCLASSNONE, ELFDATA2MSB, (char*)"IBM System/390"},
+    {EM_ALPHA,       EM_ALPHA,   ELFCLASS64, ELFDATA2LSB, (char*)"Alpha"},
+    {EM_MIPS_RS3_LE, EM_MIPS_RS3_LE, ELFCLASS32, ELFDATA2LSB, (char*)"MIPSel"},
+    {EM_MIPS,        EM_MIPS,    ELFCLASS32, ELFDATA2MSB, (char*)"MIPS"},
+    {EM_PARISC,      EM_PARISC,  ELFCLASS32, ELFDATA2MSB, (char*)"PARISC"},
+    {EM_68K,         EM_68K,     ELFCLASS32, ELFDATA2MSB, (char*)"M68k"}
   };
 
   #if  (defined IA32)
@@ -1760,9 +1776,23 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     static  Elf32_Half running_arch_code=EM_PPC64;
   #elif  (defined __powerpc__)
     static  Elf32_Half running_arch_code=EM_PPC;
+  #elif  (defined ARM)
+    static  Elf32_Half running_arch_code=EM_ARM;
+  #elif  (defined S390)
+    static  Elf32_Half running_arch_code=EM_S390;
+  #elif  (defined ALPHA)
+    static  Elf32_Half running_arch_code=EM_ALPHA;
+  #elif  (defined MIPSEL)
+    static  Elf32_Half running_arch_code=EM_MIPS_RS3_LE;
+  #elif  (defined PARISC)
+    static  Elf32_Half running_arch_code=EM_PARISC;
+  #elif  (defined MIPS)
+    static  Elf32_Half running_arch_code=EM_MIPS;
+  #elif  (defined M68K)
+    static  Elf32_Half running_arch_code=EM_68K;
   #else
     #error Method os::dll_load requires that one of following is defined:\
-         IA32, AMD64, IA64, __sparc, __powerpc__
+         IA32, AMD64, IA64, __sparc, __powerpc__, ARM, S390, ALPHA, MIPS, MIPSEL, PARISC, M68K
   #endif
 
   // Identify compatability class for VM's architecture and library's architecture
@@ -1794,10 +1824,12 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     return NULL;
   }
 
+#ifndef S390
   if (lib_arch.elf_class != arch_array[running_arch_index].elf_class) {
     ::snprintf(diag_msg_buf, diag_msg_max_length-1," (Possible cause: architecture word width mismatch)");
     return NULL;
   }
+#endif // !S390
 
   if (lib_arch.compat_class != arch_array[running_arch_index].compat_class) {
     if ( lib_arch.name!=NULL ) {
@@ -2273,10 +2305,11 @@ void linux_wrap_code(char* base, size_t size) {
     return;
   }
 
-  char buf[40];
+  char buf[PATH_MAX+1];
   int num = Atomic::add(1, &cnt);
 
-  sprintf(buf, "/tmp/hs-vm-%d-%d", os::current_process_id(), num);
+  snprintf(buf, sizeof(buf), "%s/hs-vm-%d-%d",
+           os::get_temp_directory(), os::current_process_id(), num);
   unlink(buf);
 
   int fd = open(buf, O_CREAT | O_RDWR, S_IRWXU);
@@ -2467,6 +2500,91 @@ bool os::uncommit_memory(char* addr, size_t size) {
     != MAP_FAILED;
 }
 
+// Linux uses a growable mapping for the stack, and if the mapping for
+// the stack guard pages is not removed when we detach a thread the
+// stack cannot grow beyond the pages where the stack guard was
+// mapped.  If at some point later in the process the stack expands to
+// that point, the Linux kernel cannot expand the stack any further
+// because the guard pages are in the way, and a segfault occurs.
+//
+// However, it's essential not to split the stack region by unmapping
+// a region (leaving a hole) that's already part of the stack mapping,
+// so if the stack mapping has already grown beyond the guard pages at
+// the time we create them, we have to truncate the stack mapping.
+// So, we need to know the extent of the stack mapping when
+// create_stack_guard_pages() is called.
+
+// Find the bounds of the stack mapping.  Return true for success.
+//
+// We only need this for stacks that are growable: at the time of
+// writing thread stacks don't use growable mappings (i.e. those
+// creeated with MAP_GROWSDOWN), and aren't marked "[stack]", so this
+// only applies to the main thread.
+static bool
+get_stack_bounds(uintptr_t *bottom, uintptr_t *top)
+{
+  FILE *f = fopen("/proc/self/maps", "r");
+  if (f == NULL)
+    return false;
+
+  while (!feof(f)) {
+    size_t dummy;
+    char *str = NULL;
+    ssize_t len = getline(&str, &dummy, f);
+    if (len == -1) {
+      fclose(f);
+      return false;
+    }
+
+    if (len > 0 && str[len-1] == '\n') {
+      str[len-1] = 0;
+      len--;
+    }
+
+    static const char *stack_str = "[stack]";
+    if (len > (ssize_t)strlen(stack_str)
+       && (strcmp(str + len - strlen(stack_str), stack_str) == 0)) {
+      if (sscanf(str, "%" SCNxPTR "-%" SCNxPTR, bottom, top) == 2) {
+        uintptr_t sp = (uintptr_t)__builtin_frame_address(0);
+        if (sp >= *bottom && sp <= *top) {
+          free(str);
+          fclose(f);
+          return true;
+        }
+      }
+    }
+    free(str);
+  }
+  fclose(f);
+  return false;
+}
+
+// If the (growable) stack mapping already extends beyond the point
+// where we're going to put our guard pages, truncate the mapping at
+// that point by munmap()ping it.  This ensures that when we later
+// munmap() the guard pages we don't leave a hole in the stack
+// mapping.
+bool os::create_stack_guard_pages(char* addr, size_t size) {
+  uintptr_t stack_extent, stack_base;
+  if (get_stack_bounds(&stack_extent, &stack_base)) {
+    if (stack_extent < (uintptr_t)addr)
+      ::munmap((void*)stack_extent, (uintptr_t)addr - stack_extent);
+  }
+
+  return os::commit_memory(addr, size);
+}
+
+// If this is a growable mapping, remove the guard pages entirely by
+// munmap()ping them.  If not, just call uncommit_memory().
+bool os::remove_stack_guard_pages(char* addr, size_t size) {
+  uintptr_t stack_extent, stack_base;
+  if (get_stack_bounds(&stack_extent, &stack_base)) {
+    return ::munmap(addr, size) == 0;
+  }
+
+  return os::uncommit_memory(addr, size);
+}
+
 static address _highest_vm_reserved_address = NULL;
 
 // If 'fixed' is true, anon_mmap() will attempt to reserve anonymous memory
@@ -2586,7 +2704,9 @@ bool os::large_page_init() {
     // format has been changed), we'll use the largest page size supported by
     // the processor.
 
+#ifndef ZERO
     _large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M);
+#endif // ZERO
 
     FILE *fp = fopen("/proc/meminfo", "r");
     if (fp) {
@@ -3375,7 +3495,8 @@ void os::Linux::set_signal_handler(int sig, bool set_installed) {
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal2("Encountered unexpected pre-existing sigaction handler %#lx for signal %d.", (long)oldhand, sig);
+      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
+                    "%#lx for signal %d.", (long)oldhand, sig));
     }
   }
 
@@ -3697,7 +3818,8 @@ void os::init(void) {
 
   Linux::set_page_size(sysconf(_SC_PAGESIZE));
   if (Linux::page_size() == -1) {
-    fatal1("os_linux.cpp: os::init: sysconf failed (%s)", strerror(errno));
+    fatal(err_msg("os_linux.cpp: os::init: sysconf failed (%s)",
+                  strerror(errno)));
   }
   init_page_sizes((size_t) Linux::page_size());
 
@@ -4656,6 +4778,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   if (_counter > 0) {
       _counter = 0 ;
+      OrderAccess::fence();
       return ;
   }
 
@@ -4698,6 +4821,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = pthread_mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    OrderAccess::fence();
     return;
   }
 
@@ -4738,6 +4862,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     jt->java_suspend_self();
   }
 
+  OrderAccess::fence();
 }
 
 void Parker::unpark() {

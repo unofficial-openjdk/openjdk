@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 import com.sun.beans.finder.ClassFinder;
 import com.sun.beans.finder.ConstructorFinder;
@@ -63,18 +67,26 @@ public class Statement {
         }
     };
 
-    Object target;
-    String methodName;
-    Object[] arguments;
+    private final AccessControlContext acc = AccessController.getContext();
+    private final Object target;
+    private final String methodName;
+    private final Object[] arguments;
+    ClassLoader loader;
 
     /**
-     * Creates a new <code>Statement</code> object with a <code>target</code>,
-     * <code>methodName</code> and <code>arguments</code> as per the parameters.
+     * Creates a new {@link Statement} object
+     * for the specified target object to invoke the method
+     * specified by the name and by the array of arguments.
+     * <p>
+     * The {@code target} and the {@code methodName} values should not be {@code null}.
+     * Otherwise an attempt to execute this {@code Expression}
+     * will result in a {@code NullPointerException}.
+     * If the {@code arguments} value is {@code null},
+     * an empty array is used as the value of the {@code arguments} property.
      *
-     * @param target The target of this statement.
-     * @param methodName The methodName of this statement.
-     * @param arguments The arguments of this statement. If <code>null</code> then an empty array will be used.
-     *
+     * @param target  the target object of this statement
+     * @param methodName  the name of the method to invoke on the specified target
+     * @param arguments  the array of arguments to invoke the specified method
      */
     @ConstructorProperties({"target", "methodName", "arguments"})
     public Statement(Object target, String methodName, Object[] arguments) {
@@ -84,35 +96,44 @@ public class Statement {
     }
 
     /**
-     * Returns the target of this statement.
+     * Returns the target object of this statement.
+     * If this method returns {@code null},
+     * the {@link #execute} method
+     * throws a {@code NullPointerException}.
      *
-     * @return The target of this statement.
+     * @return the target object of this statement
      */
     public Object getTarget() {
         return target;
     }
 
     /**
-     * Returns the name of the method.
+     * Returns the name of the method to invoke.
+     * If this method returns {@code null},
+     * the {@link #execute} method
+     * throws a {@code NullPointerException}.
      *
-     * @return The name of the method.
+     * @return the name of the method
      */
     public String getMethodName() {
         return methodName;
     }
 
     /**
-     * Returns the arguments of this statement.
+     * Returns the arguments for the method to invoke.
+     * The number of arguments and their types
+     * must match the method being  called.
+     * {@code null} can be used as a synonym of an empty array.
      *
-     * @return the arguments of this statement.
+     * @return the array of arguments
      */
     public Object[] getArguments() {
         return arguments;
     }
 
     /**
-     * The execute method finds a method whose name is the same
-     * as the methodName property, and invokes the method on
+     * The {@code execute} method finds a method whose name is the same
+     * as the {@code methodName} property, and invokes the method on
      * the target.
      *
      * When the target's class defines many methods with the given name
@@ -120,7 +141,7 @@ public class Statement {
      * the algorithm specified in the Java Language Specification
      * (15.11). The dynamic class of the target and arguments are used
      * in place of the compile-time type information and, like the
-     * <code>java.lang.reflect.Method</code> class itself, conversion between
+     * {@link java.lang.reflect.Method} class itself, conversion between
      * primitive values and their associated wrapper classes is handled
      * internally.
      * <p>
@@ -131,19 +152,48 @@ public class Statement {
      * <li>
      * The reserved method name "new" may be used to call a class's constructor
      * as if all classes defined static "new" methods. Constructor invocations
-     * are typically considered <code>Expression</code>s rather than <code>Statement</code>s
+     * are typically considered {@code Expression}s rather than {@code Statement}s
      * as they return a value.
      * <li>
-     * The method names "get" and "set" defined in the <code>java.util.List</code>
+     * The method names "get" and "set" defined in the {@link java.util.List}
      * interface may also be applied to array instances, mapping to
-     * the static methods of the same name in the <code>Array</code> class.
+     * the static methods of the same name in the {@code Array} class.
      * </ul>
+     *
+     * @throws NullPointerException if the value of the {@code target} or
+     *                              {@code methodName} property is {@code null}
+     * @throws NoSuchMethodException if a matching method is not found
+     * @throws SecurityException if a security manager exists and
+     *                           it denies the method invocation
+     * @throws Exception that is thrown by the invoked method
+     *
+     * @see java.lang.reflect.Method
      */
     public void execute() throws Exception {
         invoke();
     }
 
     Object invoke() throws Exception {
+        AccessControlContext acc = this.acc;
+        if ((acc == null) && (System.getSecurityManager() != null)) {
+            throw new SecurityException("AccessControlContext is not set");
+        }
+        try {
+            return AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<Object>() {
+                        public Object run() throws Exception {
+                            return invokeInternal();
+                        }
+                    },
+                    acc
+            );
+        }
+        catch (PrivilegedActionException exception) {
+            throw exception.getException();
+        }
+    }
+
+    private Object invokeInternal() throws Exception {
         Object target = getTarget();
         String methodName = getMethodName();
 
@@ -153,11 +203,14 @@ public class Statement {
         }
 
         Object[] arguments = getArguments();
+        if (arguments == null) {
+            arguments = emptyArray;
+        }
         // Class.forName() won't load classes outside
         // of core from a class inside core. Special
         // case this method.
         if (target == Class.class && methodName.equals("forName")) {
-            return ClassFinder.resolveClass((String)arguments[0]);
+            return ClassFinder.resolveClass((String)arguments[0], this.loader);
         }
         Class[] argClasses = new Class[arguments.length];
         for(int i = 0; i < arguments.length; i++) {
@@ -284,7 +337,9 @@ public class Statement {
         Object target = getTarget();
         String methodName = getMethodName();
         Object[] arguments = getArguments();
-
+        if (arguments == null) {
+            arguments = emptyArray;
+        }
         StringBuffer result = new StringBuffer(instanceName(target) + "." + methodName + "(");
         int n = arguments.length;
         for(int i = 0; i < n; i++) {

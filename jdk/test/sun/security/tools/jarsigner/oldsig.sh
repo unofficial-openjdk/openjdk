@@ -1,5 +1,5 @@
 #
-# Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2007-2010 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 # 
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 6543940
+# @bug 6543940 6868865
 # @summary Exception thrown when signing a jarfile in java 1.5
 #
 # @run shell oldsig.sh
@@ -49,6 +49,13 @@ case "$OS" in
     CP="${FS}bin${FS}cp -f"
     TMP=/tmp
     ;;
+  CYGWIN* )
+    NULL=/dev/null
+    PS=";"
+    FS="/"
+    CP="cp -f"
+    TMP=/tmp
+    ;;
   Windows_* )
     NULL=NUL
     PS=";"
@@ -70,5 +77,6 @@ ${TESTJAVA}${FS}bin${FS}jar uvf B.jar B.class
 ${TESTJAVA}${FS}bin${FS}jarsigner \
     -keystore ${TESTSRC}${FS}JarSigning.keystore \
     -storepass bbbbbb \
+    -digestalg SHA1 \
     B.jar c
 ${TESTJAVA}${FS}bin${FS}jarsigner -verify B.jar

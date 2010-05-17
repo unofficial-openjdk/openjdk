@@ -258,6 +258,7 @@ static void clearStreamBuffer(streamBufferPtr sb) {
 
 typedef struct pixelBufferStruct {
     jobject hpixelObject;   // Usually a DataBuffer bank as a byte array
+    unsigned int byteBufferLength;
     union pixptr {
         INT32         *ip;  // Pinned buffer pointer, as 32-bit ints
         unsigned char *bp;  // Pinned buffer pointer, as bytes
@@ -270,6 +271,7 @@ typedef struct pixelBufferStruct {
  */
 static void initPixelBuffer(pixelBufferPtr pb) {
     pb->hpixelObject = NULL;
+    pb->byteBufferLength = 0;
     pb->buf.ip = NULL;
 }
 
@@ -279,13 +281,13 @@ static void initPixelBuffer(pixelBufferPtr pb) {
  */
 static int setPixelBuffer(JNIEnv *env, pixelBufferPtr pb, jobject obj) {
     pb->hpixelObject = (*env)->NewGlobalRef(env, obj);
-
     if (pb->hpixelObject == NULL) {
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Setting Pixel Buffer");
         return NOT_OK;
     }
+    pb->byteBufferLength = (*env)->GetArrayLength(env, pb->hpixelObject);
     return OK;
 }
 
@@ -302,6 +304,7 @@ static void resetPixelBuffer(JNIEnv *env, pixelBufferPtr pb) {
         unpinPixelBuffer(env, pb);
         (*env)->DeleteGlobalRef(env, pb->hpixelObject);
         pb->hpixelObject = NULL;
+        pb->byteBufferLength = 0;
     }
 }
 
@@ -676,6 +679,10 @@ static int setQTables(JNIEnv *env,
 #ifdef DEBUG_IIO_JPEG
     printf("in setQTables, qlen = %d, write is %d\n", qlen, write);
 #endif
+    if (qlen > NUM_QUANT_TBLS) {
+        /* Ignore extra qunterization tables. */
+        qlen = NUM_QUANT_TBLS;
+    }
     for (i = 0; i < qlen; i++) {
         table = (*env)->GetObjectArrayElement(env, qtables, i);
         qdata = (*env)->GetObjectField(env, table, JPEGQTable_tableID);
@@ -727,6 +734,11 @@ static void setHuffTable(JNIEnv *env,
     hlensBody = (*env)->GetShortArrayElements(env,
                                               huffLens,
                                               NULL);
+    if (hlensLen > 16) {
+        /* Ignore extra elements of bits array. Only 16 elements can be
+           stored. 0-th element is not used. (see jpeglib.h, line 107)  */
+        hlensLen = 16;
+    }
     for (i = 1; i <= hlensLen; i++) {
         huff_ptr->bits[i] = (UINT8)hlensBody[i-1];
     }
@@ -743,6 +755,11 @@ static void setHuffTable(JNIEnv *env,
                                               huffValues,
                                               NULL);
 
+    if (hvalsLen > 256) {
+        /* Ignore extra elements of hufval array. Only 256 elements
+           can be stored. (see jpeglib.h, line 109)                  */
+        hlensLen = 256;
+    }
     for (i = 0; i < hvalsLen; i++) {
         huff_ptr->huffval[i] = (UINT8)hvalsBody[i];
     }
@@ -763,6 +780,11 @@ static int setHTables(JNIEnv *env,
     j_compress_ptr comp;
     j_decompress_ptr decomp;
     jsize hlen = (*env)->GetArrayLength(env, DCHuffmanTables);
+
+    if (hlen > NUM_HUFF_TBLS) {
+        /* Ignore extra DC huffman tables. */
+        hlen = NUM_HUFF_TBLS;
+    }
     for (i = 0; i < hlen; i++) {
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
@@ -784,6 +806,10 @@ static int setHTables(JNIEnv *env,
         huff_ptr->sent_table = !write;
     }
     hlen = (*env)->GetArrayLength(env, ACHuffmanTables);
+    if (hlen > NUM_HUFF_TBLS) {
+        /* Ignore extra AC huffman tables. */
+        hlen = NUM_HUFF_TBLS;
+    }
     for (i = 0; i < hlen; i++) {
         if (cinfo->is_decompressor) {
             decomp = (j_decompress_ptr) cinfo;
@@ -1437,6 +1463,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        free(cinfo);
         return 0;
     }
 
@@ -1473,6 +1500,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName(env,
                         "java/lang/OutOfMemoryError",
                         "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     cinfo->src->bytes_in_buffer = 0;
@@ -1489,6 +1517,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_initJPEGImageReader
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Reader");
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;
@@ -1802,6 +1831,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     boolean orderedBands = TRUE;
     imageIODataPtr data = (imageIODataPtr) ptr;
     j_decompress_ptr cinfo;
+    unsigned int numBytes;
 
     /* verify the inputs */
 
@@ -1831,6 +1861,13 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
         JNU_ThrowByName(env, "javax/imageio/IIOException",
                         "Invalid argument to native readImage");
         return JNI_FALSE;
+    }
+
+    if (stepX > cinfo->image_width) {
+        stepX = cinfo->image_width;
+    }
+    if (stepY > cinfo->image_height) {
+        stepY = cinfo->image_height;
     }
 
     /*
@@ -1994,15 +2031,22 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
                 // scanline buffer into the raster.
                 in = scanLinePtr + (sourceXStart * cinfo->output_components);
                 if (pixelLimit > in) {
-                    memcpy(out, in, pixelLimit - in);
+                    numBytes = pixelLimit - in;
+                    if (numBytes > data->pixelBuf.byteBufferLength) {
+                        numBytes = data->pixelBuf.byteBufferLength;
+                    }
+                    memcpy(out, in, numBytes);
                 }
             } else {
+                numBytes = numBands;
                 for (in = scanLinePtr+sourceXStart*cinfo->output_components;
-                     in < pixelLimit;
+                     in < pixelLimit &&
+                       numBytes <= data->pixelBuf.byteBufferLength;
                      in += pixelStride) {
                     for (i = 0; i < numBands; i++) {
                         *out++ = *(in+bands[i]);
                     }
+                    numBytes += numBands;
                 }
             }
 
@@ -2420,8 +2464,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
 
@@ -2439,8 +2482,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_initJPEGImageWriter
         JNU_ThrowByName( env,
                          "java/lang/OutOfMemoryError",
                          "Initializing Writer");
-        free(cinfo);
-        free(jerr);
+        imageio_dispose((j_common_ptr)cinfo);
         return 0;
     }
     return (jlong) ret;

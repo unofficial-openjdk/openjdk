@@ -25,6 +25,58 @@
 # include "incls/_precompiled.incl"
 # include "incls/_instanceKlass.cpp.incl"
 
+#ifdef DTRACE_ENABLED
+
+HS_DTRACE_PROBE_DECL4(hotspot, class__initialization__required,
+  char*, intptr_t, oop, intptr_t);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__recursive,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__concurrent,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__erroneous,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__super__failed,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__clinit,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__error,
+  char*, intptr_t, oop, intptr_t, int);
+HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
+  char*, intptr_t, oop, intptr_t, int);
+
+#define DTRACE_CLASSINIT_PROBE(type, clss, thread_type)          \
+  {                                                              \
+    char* data = NULL;                                           \
+    int len = 0;                                                 \
+    symbolOop name = (clss)->name();                             \
+    if (name != NULL) {                                          \
+      data = (char*)name->bytes();                               \
+      len = name->utf8_length();                                 \
+    }                                                            \
+    HS_DTRACE_PROBE4(hotspot, class__initialization__##type,     \
+      data, len, (clss)->class_loader(), thread_type);           \
+  }
+
+#define DTRACE_CLASSINIT_PROBE_WAIT(type, clss, thread_type, wait) \
+  {                                                              \
+    char* data = NULL;                                           \
+    int len = 0;                                                 \
+    symbolOop name = (clss)->name();                             \
+    if (name != NULL) {                                          \
+      data = (char*)name->bytes();                               \
+      len = name->utf8_length();                                 \
+    }                                                            \
+    HS_DTRACE_PROBE5(hotspot, class__initialization__##type,     \
+      data, len, (clss)->class_loader(), thread_type, wait);     \
+  }
+
+#else //  ndef DTRACE_ENABLED
+
+#define DTRACE_CLASSINIT_PROBE(type, clss, thread_type)
+#define DTRACE_CLASSINIT_PROBE_WAIT(type, clss, thread_type, wait)
+
+#endif //  ndef DTRACE_ENABLED
+
 bool instanceKlass::should_be_initialized() const {
   return !is_initialized();
 }
@@ -110,7 +162,7 @@ bool instanceKlass::verify_code(
   // 1) Verify the bytecodes
   Verifier::Mode mode =
     throw_verifyerror ? Verifier::ThrowException : Verifier::NoException;
-  return Verifier::verify(this_oop, mode, CHECK_false);
+  return Verifier::verify(this_oop, mode, this_oop->should_verify_class(), CHECK_false);
 }
 
 
@@ -292,6 +344,10 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
   // A class could already be verified, since it has been reflected upon.
   this_oop->link_class(CHECK);
 
+  DTRACE_CLASSINIT_PROBE(required, instanceKlass::cast(this_oop()), -1);
+
+  bool wait = false;
+
   // refer to the JVM book page 47 for description of steps
   // Step 1
   { ObjectLocker ol(this_oop, THREAD);
@@ -303,19 +359,25 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
     // we might end up throwing IE from link/symbol resolution sites
     // that aren't expected to throw.  This would wreak havoc.  See 6320309.
     while(this_oop->is_being_initialized() && !this_oop->is_reentrant_initialization(self)) {
+        wait = true;
       ol.waitUninterruptibly(CHECK);
     }
 
     // Step 3
-    if (this_oop->is_being_initialized() && this_oop->is_reentrant_initialization(self))
+    if (this_oop->is_being_initialized() && this_oop->is_reentrant_initialization(self)) {
+      DTRACE_CLASSINIT_PROBE_WAIT(recursive, instanceKlass::cast(this_oop()), -1,wait);
       return;
+    }
 
     // Step 4
-    if (this_oop->is_initialized())
+    if (this_oop->is_initialized()) {
+      DTRACE_CLASSINIT_PROBE_WAIT(concurrent, instanceKlass::cast(this_oop()), -1,wait);
       return;
+    }
 
     // Step 5
     if (this_oop->is_in_error_state()) {
+      DTRACE_CLASSINIT_PROBE_WAIT(erroneous, instanceKlass::cast(this_oop()), -1,wait);
       ResourceMark rm(THREAD);
       const char* desc = "Could not initialize class ";
       const char* className = this_oop->external_name();
@@ -348,6 +410,7 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
         this_oop->set_initialization_state_and_notify(initialization_error, THREAD); // Locks object, set state, and notify all waiting threads
         CLEAR_PENDING_EXCEPTION;   // ignore any exception thrown, superclass initialization error is thrown below
       }
+      DTRACE_CLASSINIT_PROBE_WAIT(super__failed, instanceKlass::cast(this_oop()), -1,wait);
       THROW_OOP(e());
     }
   }
@@ -356,6 +419,7 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
   {
     assert(THREAD->is_Java_thread(), "non-JavaThread in initialize_impl");
     JavaThread* jt = (JavaThread*)THREAD;
+    DTRACE_CLASSINIT_PROBE_WAIT(clinit, instanceKlass::cast(this_oop()), -1,wait);
     // Timer includes any side effects of class initialization (resolution,
     // etc), but not recursive entry into call_class_initializer().
     PerfClassTraceTime timer(ClassLoader::perf_class_init_time(),
@@ -383,7 +447,8 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
       this_oop->set_initialization_state_and_notify(initialization_error, THREAD);
       CLEAR_PENDING_EXCEPTION;   // ignore any exception thrown, class initialization error is thrown below
     }
-    if (e->is_a(SystemDictionary::error_klass())) {
+    DTRACE_CLASSINIT_PROBE_WAIT(error, instanceKlass::cast(this_oop()), -1,wait);
+    if (e->is_a(SystemDictionary::Error_klass())) {
       THROW_OOP(e());
     } else {
       JavaCallArguments args(e);
@@ -392,6 +457,7 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
                 &args);
     }
   }
+  DTRACE_CLASSINIT_PROBE_WAIT(end, instanceKlass::cast(this_oop()), -1,wait);
 }
 
 
@@ -568,7 +634,7 @@ void instanceKlass::check_valid_for_instantiation(bool throwError, TRAPS) {
     THROW_MSG(throwError ? vmSymbols::java_lang_InstantiationError()
               : vmSymbols::java_lang_InstantiationException(), external_name());
   }
-  if (as_klassOop() == SystemDictionary::class_klass()) {
+  if (as_klassOop() == SystemDictionary::Class_klass()) {
     ResourceMark rm(THREAD);
     THROW_MSG(throwError ? vmSymbols::java_lang_IllegalAccessError()
               : vmSymbols::java_lang_IllegalAccessException(), external_name());
@@ -900,7 +966,7 @@ methodOop instanceKlass::find_method(objArrayOop methods, symbolOop name, symbol
       // not found
 #ifdef ASSERT
       int index = linear_search(methods, name, signature);
-      if (index != -1) fatal1("binary search bug: should have found entry %d", index);
+      assert(index == -1, err_msg("binary search should have found entry %d", index));
 #endif
       return NULL;
     } else if (res < 0) {
@@ -911,7 +977,7 @@ methodOop instanceKlass::find_method(objArrayOop methods, symbolOop name, symbol
   }
 #ifdef ASSERT
   int index = linear_search(methods, name, signature);
-  if (index != -1) fatal1("binary search bug: should have found entry %d", index);
+  assert(index == -1, err_msg("binary search should have found entry %d", index));
 #endif
   return NULL;
 }
@@ -967,33 +1033,78 @@ JNIid* instanceKlass::jni_id_for(int offset) {
 
 
 // Lookup or create a jmethodID.
-// This code can be called by the VM thread.  For this reason it is critical that
-// there are no blocking operations (safepoints) while the lock is held -- or a
-// deadlock can occur.
-jmethodID instanceKlass::jmethod_id_for_impl(instanceKlassHandle ik_h, methodHandle method_h) {
+// This code is called by the VMThread and JavaThreads so the
+// locking has to be done very carefully to avoid deadlocks
+// and/or other cache consistency problems.
+//
+jmethodID instanceKlass::get_jmethod_id(instanceKlassHandle ik_h, methodHandle method_h) {
   size_t idnum = (size_t)method_h->method_idnum();
   jmethodID* jmeths = ik_h->methods_jmethod_ids_acquire();
   size_t length = 0;
   jmethodID id = NULL;
-  // array length stored in first element, other elements offset by one
-  if (jmeths == NULL ||                         // If there is no jmethodID array,
-      (length = (size_t)jmeths[0]) <= idnum ||  // or if it is too short,
-      (id = jmeths[idnum+1]) == NULL) {         // or if this jmethodID isn't allocated
 
-    // Do all the safepointing things (allocations) before grabbing the lock.
-    // These allocations will have to be freed if they are unused.
+  // We use a double-check locking idiom here because this cache is
+  // performance sensitive. In the normal system, this cache only
+  // transitions from NULL to non-NULL which is safe because we use
+  // release_set_methods_jmethod_ids() to advertise the new cache.
+  // A partially constructed cache should never be seen by a racing
+  // thread. We also use release_store_ptr() to save a new jmethodID
+  // in the cache so a partially constructed jmethodID should never be
+  // seen either. Cache reads of existing jmethodIDs proceed without a
+  // lock, but cache writes of a new jmethodID requires uniqueness and
+  // creation of the cache itself requires no leaks so a lock is
+  // generally acquired in those two cases.
+  //
+  // If the RedefineClasses() API has been used, then this cache can
+  // grow and we'll have transitions from non-NULL to bigger non-NULL.
+  // Cache creation requires no leaks and we require safety between all
+  // cache accesses and freeing of the old cache so a lock is generally
+  // acquired when the RedefineClasses() API has been used.
 
-    // Allocate a new array of methods.
+  if (jmeths != NULL) {
+    // the cache already exists
+    if (!ik_h->idnum_can_increment()) {
+      // the cache can't grow so we can just get the current values
+      get_jmethod_id_length_value(jmeths, idnum, &length, &id);
+    } else {
+      // cache can grow so we have to be more careful
+      if (Threads::number_of_threads() == 0 ||
+          SafepointSynchronize::is_at_safepoint()) {
+        // we're single threaded or at a safepoint - no locking needed
+        get_jmethod_id_length_value(jmeths, idnum, &length, &id);
+      } else {
+        MutexLocker ml(JmethodIdCreation_lock);
+        get_jmethod_id_length_value(jmeths, idnum, &length, &id);
+      }
+    }
+  }
+  // implied else:
+  // we need to allocate a cache so default length and id values are good
+
+  if (jmeths == NULL ||   // no cache yet
+      length <= idnum ||  // cache is too short
+      id == NULL) {       // cache doesn't contain entry
+
+    // This function can be called by the VMThread so we have to do all
+    // things that might block on a safepoint before grabbing the lock.
+    // Otherwise, we can deadlock with the VMThread or have a cache
+    // consistency issue. These vars keep track of what we might have
+    // to free after the lock is dropped.
+    jmethodID  to_dealloc_id     = NULL;
+    jmethodID* to_dealloc_jmeths = NULL;
+
+    // may not allocate new_jmeths or use it if we allocate it
     jmethodID* new_jmeths = NULL;
     if (length <= idnum) {
-      // A new array will be needed (unless some other thread beats us to it)
+      // allocate a new cache that might be used
       size_t size = MAX2(idnum+1, (size_t)ik_h->idnum_allocated_count());
       new_jmeths = NEW_C_HEAP_ARRAY(jmethodID, size+1);
       memset(new_jmeths, 0, (size+1)*sizeof(jmethodID));
-      new_jmeths[0] =(jmethodID)size;  // array size held in the first element
+      // cache size is stored in element[0], other elements offset by one
+      new_jmeths[0] = (jmethodID)size;
     }
 
-    // Allocate a new method ID.
+    // allocate a new jmethodID that might be used
     jmethodID new_id = NULL;
     if (method_h->is_old() && !method_h->is_obsolete()) {
       // The method passed in is old (but not obsolete), we need to use the current version
@@ -1007,53 +1118,101 @@ jmethodID instanceKlass::jmethod_id_for_impl(instanceKlassHandle ik_h, methodHan
       new_id = JNIHandles::make_jmethod_id(method_h);
     }
 
-    if (Threads::number_of_threads() == 0 || SafepointSynchronize::is_at_safepoint()) {
-      // No need and unsafe to lock the JmethodIdCreation_lock at safepoint.
-      id = get_jmethod_id(ik_h, idnum, new_id, new_jmeths);
+    if (Threads::number_of_threads() == 0 ||
+        SafepointSynchronize::is_at_safepoint()) {
+      // we're single threaded or at a safepoint - no locking needed
+      id = get_jmethod_id_fetch_or_update(ik_h, idnum, new_id, new_jmeths,
+                                          &to_dealloc_id, &to_dealloc_jmeths);
     } else {
       MutexLocker ml(JmethodIdCreation_lock);
-      id = get_jmethod_id(ik_h, idnum, new_id, new_jmeths);
+      id = get_jmethod_id_fetch_or_update(ik_h, idnum, new_id, new_jmeths,
+                                          &to_dealloc_id, &to_dealloc_jmeths);
+    }
+
+    // The lock has been dropped so we can free resources.
+    // Free up either the old cache or the new cache if we allocated one.
+    if (to_dealloc_jmeths != NULL) {
+      FreeHeap(to_dealloc_jmeths);
+    }
+    // free up the new ID since it wasn't needed
+    if (to_dealloc_id != NULL) {
+      JNIHandles::destroy_jmethod_id(to_dealloc_id);
     }
   }
   return id;
 }
 
 
-jmethodID instanceKlass::get_jmethod_id(instanceKlassHandle ik_h, size_t idnum,
-                                        jmethodID new_id, jmethodID* new_jmeths) {
-  // Retry lookup after we got the lock or ensured we are at safepoint
-  jmethodID* jmeths = ik_h->methods_jmethod_ids_acquire();
-  jmethodID  id                = NULL;
-  jmethodID  to_dealloc_id     = NULL;
-  jmethodID* to_dealloc_jmeths = NULL;
-  size_t     length;
+// Common code to fetch the jmethodID from the cache or update the
+// cache with the new jmethodID. This function should never do anything
+// that causes the caller to go to a safepoint or we can deadlock with
+// the VMThread or have cache consistency issues.
+//
+jmethodID instanceKlass::get_jmethod_id_fetch_or_update(
+            instanceKlassHandle ik_h, size_t idnum, jmethodID new_id,
+            jmethodID* new_jmeths, jmethodID* to_dealloc_id_p,
+            jmethodID** to_dealloc_jmeths_p) {
+  assert(new_id != NULL, "sanity check");
+  assert(to_dealloc_id_p != NULL, "sanity check");
+  assert(to_dealloc_jmeths_p != NULL, "sanity check");
+  assert(Threads::number_of_threads() == 0 ||
+         SafepointSynchronize::is_at_safepoint() ||
+         JmethodIdCreation_lock->owned_by_self(), "sanity check");
 
-  if (jmeths == NULL || (length = (size_t)jmeths[0]) <= idnum) {
+  // reacquire the cache - we are locked, single threaded or at a safepoint
+  jmethodID* jmeths = ik_h->methods_jmethod_ids_acquire();
+  jmethodID  id     = NULL;
+  size_t     length = 0;
+
+  if (jmeths == NULL ||                         // no cache yet
+      (length = (size_t)jmeths[0]) <= idnum) {  // cache is too short
     if (jmeths != NULL) {
-      // We have grown the array: copy the existing entries, and delete the old array
+      // copy any existing entries from the old cache
       for (size_t index = 0; index < length; index++) {
         new_jmeths[index+1] = jmeths[index+1];
       }
-      to_dealloc_jmeths = jmeths; // using the new jmeths, deallocate the old one
+      *to_dealloc_jmeths_p = jmeths;  // save old cache for later delete
     }
     ik_h->release_set_methods_jmethod_ids(jmeths = new_jmeths);
   } else {
+    // fetch jmethodID (if any) from the existing cache
     id = jmeths[idnum+1];
-    to_dealloc_jmeths = new_jmeths; // using the old jmeths, deallocate the new one
+    *to_dealloc_jmeths_p = new_jmeths;  // save new cache for later delete
   }
   if (id == NULL) {
+    // No matching jmethodID in the existing cache or we have a new
+    // cache or we just grew the cache. This cache write is done here
+    // by the first thread to win the foot race because a jmethodID
+    // needs to be unique once it is generally available.
     id = new_id;
-    jmeths[idnum+1] = id;  // install the new method ID
-  } else {
-    to_dealloc_id = new_id; // the new id wasn't used, mark it for deallocation
-  }
 
-  // Free up unneeded or no longer needed resources
-  FreeHeap(to_dealloc_jmeths);
-  if (to_dealloc_id != NULL) {
-    JNIHandles::destroy_jmethod_id(to_dealloc_id);
+    // The jmethodID cache can be read while unlocked so we have to
+    // make sure the new jmethodID is complete before installing it
+    // in the cache.
+    OrderAccess::release_store_ptr(&jmeths[idnum+1], id);
+  } else {
+    *to_dealloc_id_p = new_id; // save new id for later delete
   }
   return id;
+}
+
+
+// Common code to get the jmethodID cache length and the jmethodID
+// value at index idnum if there is one.
+//
+void instanceKlass::get_jmethod_id_length_value(jmethodID* cache,
+       size_t idnum, size_t *length_p, jmethodID* id_p) {
+  assert(cache != NULL, "sanity check");
+  assert(length_p != NULL, "sanity check");
+  assert(id_p != NULL, "sanity check");
+
+  // cache size is stored in element[0], other elements offset by one
+  *length_p = (size_t)cache[0];
+  if (*length_p <= idnum) {  // cache is too short
+    *id_p = NULL;
+  } else {
+    *id_p = cache[idnum+1];  // fetch jmethodID (if any)
+  }
 }
 
 
@@ -1063,7 +1222,7 @@ jmethodID instanceKlass::jmethod_id_or_null(methodOop method) {
   jmethodID* jmeths = methods_jmethod_ids_acquire();
   size_t length;                                // length assigned as debugging crumb
   jmethodID id = NULL;
-  if (jmeths != NULL &&                         // If there is a jmethodID array,
+  if (jmeths != NULL &&                         // If there is a cache
       (length = (size_t)jmeths[0]) > idnum) {   // and if it is long enough,
     id = jmeths[idnum+1];                       // Look up the id (may be NULL)
   }
@@ -1074,18 +1233,35 @@ jmethodID instanceKlass::jmethod_id_or_null(methodOop method) {
 // Cache an itable index
 void instanceKlass::set_cached_itable_index(size_t idnum, int index) {
   int* indices = methods_cached_itable_indices_acquire();
-  if (indices == NULL ||                         // If there is no index array,
-      ((size_t)indices[0]) <= idnum) {           // or if it is too short
-    // Lock before we allocate the array so we don't leak
+  int* to_dealloc_indices = NULL;
+
+  // We use a double-check locking idiom here because this cache is
+  // performance sensitive. In the normal system, this cache only
+  // transitions from NULL to non-NULL which is safe because we use
+  // release_set_methods_cached_itable_indices() to advertise the
+  // new cache. A partially constructed cache should never be seen
+  // by a racing thread. Cache reads and writes proceed without a
+  // lock, but creation of the cache itself requires no leaks so a
+  // lock is generally acquired in that case.
+  //
+  // If the RedefineClasses() API has been used, then this cache can
+  // grow and we'll have transitions from non-NULL to bigger non-NULL.
+  // Cache creation requires no leaks and we require safety between all
+  // cache accesses and freeing of the old cache so a lock is generally
+  // acquired when the RedefineClasses() API has been used.
+
+  if (indices == NULL || idnum_can_increment()) {
+    // we need a cache or the cache can grow
     MutexLocker ml(JNICachedItableIndex_lock);
-    // Retry lookup after we got the lock
+    // reacquire the cache to see if another thread already did the work
     indices = methods_cached_itable_indices_acquire();
     size_t length = 0;
-    // array length stored in first element, other elements offset by one
+    // cache size is stored in element[0], other elements offset by one
     if (indices == NULL || (length = (size_t)indices[0]) <= idnum) {
       size_t size = MAX2(idnum+1, (size_t)idnum_allocated_count());
       int* new_indices = NEW_C_HEAP_ARRAY(int, size+1);
-      // Copy the existing entries, if any
+      new_indices[0] = (int)size;
+      // copy any existing entries
       size_t i;
       for (i = 0; i < length; i++) {
         new_indices[i+1] = indices[i+1];
@@ -1095,15 +1271,32 @@ void instanceKlass::set_cached_itable_index(size_t idnum, int index) {
         new_indices[i+1] = -1;
       }
       if (indices != NULL) {
-        FreeHeap(indices);  // delete any old indices
+        // We have an old cache to delete so save it for after we
+        // drop the lock.
+        to_dealloc_indices = indices;
       }
       release_set_methods_cached_itable_indices(indices = new_indices);
+    }
+
+    if (idnum_can_increment()) {
+      // this cache can grow so we have to write to it safely
+      indices[idnum+1] = index;
     }
   } else {
     CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
   }
-  // This is a cache, if there is a race to set it, it doesn't matter
-  indices[idnum+1] = index;
+
+  if (!idnum_can_increment()) {
+    // The cache cannot grow and this JNI itable index value does not
+    // have to be unique like a jmethodID. If there is a race to set it,
+    // it doesn't matter.
+    indices[idnum+1] = index;
+  }
+
+  if (to_dealloc_indices != NULL) {
+    // we allocated a new cache so free the old one
+    FreeHeap(to_dealloc_indices);
+  }
 }
 
 
@@ -1396,18 +1589,18 @@ template <class T> void assert_nothing(T *p) {}
   /* Compute oopmap block range. The common case                         \
      is nonstatic_oop_map_size == 1. */                                  \
   OopMapBlock* map           = start_of_nonstatic_oop_maps();            \
-  OopMapBlock* const end_map = map + nonstatic_oop_map_size();           \
+  OopMapBlock* const end_map = map + nonstatic_oop_map_count();          \
   if (UseCompressedOops) {                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_OOP_ITERATE(narrowOop,                   \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
     }                                                                    \
   } else {                                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_OOP_ITERATE(oop,                         \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
     }                                                                    \
@@ -1417,19 +1610,19 @@ template <class T> void assert_nothing(T *p) {}
 #define InstanceKlass_OOP_MAP_REVERSE_ITERATE(obj, do_oop, assert_fn)    \
 {                                                                        \
   OopMapBlock* const start_map = start_of_nonstatic_oop_maps();          \
-  OopMapBlock* map             = start_map + nonstatic_oop_map_size();   \
+  OopMapBlock* map             = start_map + nonstatic_oop_map_count();  \
   if (UseCompressedOops) {                                               \
     while (start_map < map) {                                            \
       --map;                                                             \
       InstanceKlass_SPECIALIZED_OOP_REVERSE_ITERATE(narrowOop,           \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         do_oop, assert_fn)                                               \
     }                                                                    \
   } else {                                                               \
     while (start_map < map) {                                            \
       --map;                                                             \
       InstanceKlass_SPECIALIZED_OOP_REVERSE_ITERATE(oop,                 \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         do_oop, assert_fn)                                               \
     }                                                                    \
   }                                                                      \
@@ -1443,11 +1636,11 @@ template <class T> void assert_nothing(T *p) {}
      usually non-existent extra overhead of examining                    \
      all the maps. */                                                    \
   OopMapBlock* map           = start_of_nonstatic_oop_maps();            \
-  OopMapBlock* const end_map = map + nonstatic_oop_map_size();           \
+  OopMapBlock* const end_map = map + nonstatic_oop_map_count();          \
   if (UseCompressedOops) {                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(narrowOop,           \
-        obj->obj_field_addr<narrowOop>(map->offset()), map->length(),    \
+        obj->obj_field_addr<narrowOop>(map->offset()), map->count(),     \
         low, high,                                                       \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
@@ -1455,7 +1648,7 @@ template <class T> void assert_nothing(T *p) {}
   } else {                                                               \
     while (map < end_map) {                                              \
       InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(oop,                 \
-        obj->obj_field_addr<oop>(map->offset()), map->length(),          \
+        obj->obj_field_addr<oop>(map->offset()), map->count(),           \
         low, high,                                                       \
         do_oop, assert_fn)                                               \
       ++map;                                                             \
@@ -1773,7 +1966,7 @@ void instanceKlass::release_C_heap_structures() {
   }
 }
 
-char* instanceKlass::signature_name() const {
+const char* instanceKlass::signature_name() const {
   const char* src = (const char*) (name()->as_C_string());
   const int src_length = (int)strlen(src);
   char* dest = NEW_RESOURCE_ARRAY(char, src_length + 3);
@@ -1918,8 +2111,9 @@ bool instanceKlass::is_same_package_member_impl(instanceKlassHandle class1,
     // As we walk along, look for equalities between outer1 and class2.
     // Eventually, the walks will terminate as outer1 stops
     // at the top-level class around the original class.
-    symbolOop ignore_name;
-    klassOop next = outer1->compute_enclosing_class(ignore_name, CHECK_false);
+    bool ignore_inner_is_member;
+    klassOop next = outer1->compute_enclosing_class(&ignore_inner_is_member,
+                                                    CHECK_false);
     if (next == NULL)  break;
     if (next == class2())  return true;
     outer1 = instanceKlassHandle(THREAD, next);
@@ -1928,8 +2122,9 @@ bool instanceKlass::is_same_package_member_impl(instanceKlassHandle class1,
   // Now do the same for class2.
   instanceKlassHandle outer2 = class2;
   for (;;) {
-    symbolOop ignore_name;
-    klassOop next = outer2->compute_enclosing_class(ignore_name, CHECK_false);
+    bool ignore_inner_is_member;
+    klassOop next = outer2->compute_enclosing_class(&ignore_inner_is_member,
+                                                    CHECK_false);
     if (next == NULL)  break;
     // Might as well check the new outer against all available values.
     if (next == class1())  return true;
@@ -2025,7 +2220,7 @@ void instanceKlass::add_osr_nmethod(nmethod* n) {
   // This is a short non-blocking critical region, so the no safepoint check is ok.
   OsrList_lock->lock_without_safepoint_check();
   assert(n->is_osr_method(), "wrong kind of nmethod");
-  n->set_link(osr_nmethods_head());
+  n->set_osr_link(osr_nmethods_head());
   set_osr_nmethods_head(n);
   // Remember to unlock again
   OsrList_lock->unlock();
@@ -2041,17 +2236,17 @@ void instanceKlass::remove_osr_nmethod(nmethod* n) {
   // Search for match
   while(cur != NULL && cur != n) {
     last = cur;
-    cur = cur->link();
+    cur = cur->osr_link();
   }
   if (cur == n) {
     if (last == NULL) {
       // Remove first element
-      set_osr_nmethods_head(osr_nmethods_head()->link());
+      set_osr_nmethods_head(osr_nmethods_head()->osr_link());
     } else {
-      last->set_link(cur->link());
+      last->set_osr_link(cur->osr_link());
     }
   }
-  n->set_link(NULL);
+  n->set_osr_link(NULL);
   // Remember to unlock again
   OsrList_lock->unlock();
 }
@@ -2068,7 +2263,7 @@ nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci) const {
       OsrList_lock->unlock();
       return osr;
     }
-    osr = osr->link();
+    osr = osr->osr_link();
   }
   OsrList_lock->unlock();
   return NULL;
@@ -2096,7 +2291,7 @@ void FieldPrinter::do_field(fieldDescriptor* fd) {
 void instanceKlass::oop_print_on(oop obj, outputStream* st) {
   Klass::oop_print_on(obj, st);
 
-  if (as_klassOop() == SystemDictionary::string_klass()) {
+  if (as_klassOop() == SystemDictionary::String_klass()) {
     typeArrayOop value  = java_lang_String::value(obj);
     juint        offset = java_lang_String::offset(obj);
     juint        length = java_lang_String::length(obj);
@@ -2116,7 +2311,7 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
   FieldPrinter print_nonstatic_field(st, obj);
   do_nonstatic_fields(&print_nonstatic_field);
 
-  if (as_klassOop() == SystemDictionary::class_klass()) {
+  if (as_klassOop() == SystemDictionary::Class_klass()) {
     st->print(BULLET"signature: ");
     java_lang_Class::print_signature(obj, st);
     st->cr();
@@ -2132,14 +2327,20 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
     st->print(BULLET"fake entry for array: ");
     array_klass->print_value_on(st);
     st->cr();
+  } else if (as_klassOop() == SystemDictionary::MethodType_klass()) {
+    st->print(BULLET"signature: ");
+    java_dyn_MethodType::print_signature(obj, st);
+    st->cr();
   }
 }
+
+#endif //PRODUCT
 
 void instanceKlass::oop_print_value_on(oop obj, outputStream* st) {
   st->print("a ");
   name()->print_value_on(st);
   obj->print_address_on(st);
-  if (as_klassOop() == SystemDictionary::string_klass()
+  if (as_klassOop() == SystemDictionary::String_klass()
       && java_lang_String::value(obj) != NULL) {
     ResourceMark rm;
     int len = java_lang_String::length(obj);
@@ -2148,7 +2349,7 @@ void instanceKlass::oop_print_value_on(oop obj, outputStream* st) {
     st->print(" = \"%s\"", str);
     if (len > plen)
       st->print("...[%d]", len);
-  } else if (as_klassOop() == SystemDictionary::class_klass()) {
+  } else if (as_klassOop() == SystemDictionary::Class_klass()) {
     klassOop k = java_lang_Class::as_klassOop(obj);
     st->print(" = ");
     if (k != NULL) {
@@ -2157,13 +2358,14 @@ void instanceKlass::oop_print_value_on(oop obj, outputStream* st) {
       const char* tname = type2name(java_lang_Class::primitive_type(obj));
       st->print("%s", tname ? tname : "type?");
     }
+  } else if (as_klassOop() == SystemDictionary::MethodType_klass()) {
+    st->print(" = ");
+    java_dyn_MethodType::print_signature(obj, st);
   } else if (java_lang_boxing_object::is_instance(obj)) {
     st->print(" = ");
     java_lang_boxing_object::print(obj, st);
   }
 }
-
-#endif // ndef PRODUCT
 
 const char* instanceKlass::internal_name() const {
   return external_name();
@@ -2212,18 +2414,19 @@ void instanceKlass::verify_class_klass_nonstatic_oop_maps(klassOop k) {
 
     // Check that we have the right class
     static bool first_time = true;
-    guarantee(k == SystemDictionary::class_klass() && first_time, "Invalid verify of maps");
+    guarantee(k == SystemDictionary::Class_klass() && first_time, "Invalid verify of maps");
     first_time = false;
     const int extra = java_lang_Class::number_of_fake_oop_fields;
     guarantee(ik->nonstatic_field_size() == extra, "just checking");
-    guarantee(ik->nonstatic_oop_map_size() == 1, "just checking");
+    guarantee(ik->nonstatic_oop_map_count() == 1, "just checking");
     guarantee(ik->size_helper() == align_object_size(instanceOopDesc::header_size() + extra), "just checking");
 
     // Check that the map is (2,extra)
     int offset = java_lang_Class::klass_offset;
 
     OopMapBlock* map = ik->start_of_nonstatic_oop_maps();
-    guarantee(map->offset() == offset && map->length() == extra, "just checking");
+    guarantee(map->offset() == offset && map->count() == (unsigned int) extra,
+              "sanity");
   }
 }
 
@@ -2298,6 +2501,11 @@ void instanceKlass::set_init_state(ClassState state) {
 
 // Add an information node that contains weak references to the
 // interesting parts of the previous version of the_class.
+// This is also where we clean out any unused weak references.
+// Note that while we delete nodes from the _previous_versions
+// array, we never delete the array itself until the klass is
+// unloaded. The has_been_redefined() query depends on that fact.
+//
 void instanceKlass::add_previous_version(instanceKlassHandle ikh,
        BitMap* emcp_methods, int emcp_method_count) {
   assert(Thread::current()->is_VM_thread(),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -755,8 +755,19 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   }
 
   LIR_Opr addr = new_pointer_register();
-  __ move(obj.result(), addr);
-  __ add(addr, offset.result(), addr);
+  LIR_Address* a;
+  if(offset.result()->is_constant()) {
+    a = new LIR_Address(obj.result(),
+                        NOT_LP64(offset.result()->as_constant_ptr()->as_jint()) LP64_ONLY((int)offset.result()->as_constant_ptr()->as_jlong()),
+                        as_BasicType(type));
+  } else {
+    a = new LIR_Address(obj.result(),
+                        offset.result(),
+                        LIR_Address::times_1,
+                        0,
+                        as_BasicType(type));
+  }
+  __ leal(LIR_OprFact::address(a), addr);
 
   if (type == objectType) {  // Write-barrier needed for Object fields.
     // Do the pre-write barrier, if any.
@@ -827,8 +838,8 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
     case vmIntrinsics::_dsin:   __ sin  (calc_input, calc_result, tmp1, tmp2);              break;
     case vmIntrinsics::_dcos:   __ cos  (calc_input, calc_result, tmp1, tmp2);              break;
     case vmIntrinsics::_dtan:   __ tan  (calc_input, calc_result, tmp1, tmp2);              break;
-    case vmIntrinsics::_dlog:   __ log  (calc_input, calc_result, LIR_OprFact::illegalOpr); break;
-    case vmIntrinsics::_dlog10: __ log10(calc_input, calc_result, LIR_OprFact::illegalOpr); break;
+    case vmIntrinsics::_dlog:   __ log  (calc_input, calc_result, tmp1);                    break;
+    case vmIntrinsics::_dlog10: __ log10(calc_input, calc_result, tmp1);                    break;
     default:                    ShouldNotReachHere();
   }
 
@@ -994,7 +1005,7 @@ void LIRGenerator::do_NewTypeArray(NewTypeArray* x) {
   LIR_Opr len = length.result();
   BasicType elem_type = x->elt_type();
 
-  __ oop2reg(ciTypeArrayKlass::make(elem_type)->encoding(), klass_reg);
+  __ oop2reg(ciTypeArrayKlass::make(elem_type)->constant_encoding(), klass_reg);
 
   CodeStub* slow_path = new NewTypeArrayStub(klass_reg, len, reg, info);
   __ allocate_array(reg, len, tmp1, tmp2, tmp3, tmp4, elem_type, klass_reg, slow_path);
@@ -1047,16 +1058,17 @@ void LIRGenerator::do_NewMultiArray(NewMultiArray* x) {
     items->at_put(i, size);
   }
 
-  // need to get the info before, as the items may become invalid through item_free
+  // Evaluate state_for early since it may emit code.
   CodeEmitInfo* patching_info = NULL;
   if (!x->klass()->is_loaded() || PatchALot) {
     patching_info = state_for(x, x->state_before());
 
     // cannot re-use same xhandlers for multiple CodeEmitInfos, so
-    // clone all handlers.
+    // clone all handlers.  This is handled transparently in other
+    // places by the CodeEmitInfo cloning logic but is handled
+    // specially here because a stub isn't being used.
     x->set_exception_handlers(new XHandlers(x->exception_handlers()));
   }
-
   CodeEmitInfo* info = state_for(x, x->state());
 
   i = dims->length();

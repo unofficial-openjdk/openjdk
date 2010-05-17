@@ -24,6 +24,7 @@
 #
 
 BUILDDIR = ../..
+MODULE  = base
 PACKAGE = java.net
 LIBRARY = net
 PRODUCT = sun
@@ -83,7 +84,7 @@ endif
 #
 # Find platform specific native code
 #
-vpath %.c $(PLATFORM_SRC)/native/sun/net/dns $(PLATFORM_SRC)/native/sun/net/www/protocol/http $(PLATFORM_SRC)/native/sun/net/spi
+vpath %.c $(PLATFORM_SRC)/native/sun/net/dns $(PLATFORM_SRC)/native/sun/net/www/protocol/http/ntlm $(PLATFORM_SRC)/native/sun/net/spi
 
 #
 # Include rules
@@ -111,8 +112,7 @@ LOCALE_SET_DEFINITION = jre
 MISC_FILES = $(LIBDIR) $(LIBDIR)/net.properties
 
 $(LIBDIR)/net.properties: $(SHARE_SRC)/lib/net.properties
-	@$(RM) $@
-	$(CP) $< $@
+	$(install-file)
 
 # 
 # SDP configuration template

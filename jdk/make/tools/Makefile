@@ -38,7 +38,6 @@ SUBDIRS =                   \
   compile_properties        \
   dir_diff                  \
   dtdbuilder                \
-  fontchecker               \
   freetypecheck             \
   generate_break_iterator   \
   GenerateCharacter         \
@@ -54,8 +53,10 @@ SUBDIRS =                   \
   CharsetMapping
 
 ifndef DISABLE_NIMBUS
-  SUBDIRS += swing-nimbus
+  SUBDIRS += generate_nimbus
 endif
+
+include $(BUILDDIR)/common/Subdirs.gmk
 
 all build clean clobber::
 	$(SUBDIRS-loop)

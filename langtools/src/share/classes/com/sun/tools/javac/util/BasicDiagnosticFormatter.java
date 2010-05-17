@@ -57,6 +57,11 @@ import static com.sun.tools.javac.util.LayoutCharacters.*;
  * <li>%m: the text or the diagnostic, including any appropriate arguments
  * <li>%_: space delimiter, useful for formatting purposes
  * </ul>
+ *
+ * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * If you write code that depends on this, you do so at your own risk.
+ * This code and its internal interfaces are subject to change or
+ * deletion without notice.</b>
  */
 public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
 
@@ -196,7 +201,7 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
     private String selectFormat(JCDiagnostic d) {
         DiagnosticSource source = d.getDiagnosticSource();
         String format = getConfiguration().getFormat(BasicFormatKind.DEFAULT_NO_POS_FORMAT);
-        if (source != null) {
+        if (source != null && source != DiagnosticSource.NO_SOURCE) {
             if (d.getIntPosition() != Position.NOPOS) {
                 format = getConfiguration().getFormat(BasicFormatKind.DEFAULT_POS_FORMAT);
             } else if (source.getFile() != null &&

@@ -1,5 +1,5 @@
 #
-# Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2007-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,75 +44,77 @@
 # For OpenJDK, the jar files built here are installed directly into the
 # OpenJDK.
 #
-# For JDK, the binaries use pre-built/pre-signed/pre-obfuscated binary
-# files stored in the closed workspace that are not shipped in the
-# OpenJDK workspaces.  We still build the JDK files here to verify the
-# files compile, and in preparation for possible signing and
-# obfuscation.  Developers working on JCE in JDK must sign the JCE files
-# before testing: obfuscation is optional during development.  The JCE
-# signing key is kept separate from the JDK workspace to prevent its
-# disclosure.  The obfuscation tool has not been licensed for general
-# usage.
+# For JDK, the binaries use pre-built/pre-signed binary files stored in
+# the closed workspace that are not shipped in the OpenJDK workspaces.
+# We still build the JDK files here to verify the files compile, and in
+# preparation for possible signing.  Developers working on JCE in JDK
+# must sign the JCE files before testing.  The JCE signing key is kept
+# separate from the JDK workspace to prevent its disclosure.
 #
 # SPECIAL NOTE TO JCE/JDK developers:  The source files must eventually
-# be built, obfuscated, signed, and the resulting jar files *MUST BE
-# CHECKED INTO THE CLOSED PART OF THE WORKSPACE*.  This separate step
-# *MUST NOT BE FORGOTTEN*, otherwise a bug fixed in the source code will
-# not be reflected in the shipped binaries.  The "release" target should
-# be used to generate the required files.
+# be built and signed, and the resulting jar files *MUST BE CHECKED INTO
+# THE CLOSED PART OF THE WORKSPACE*.  This separate step *MUST NOT BE
+# FORGOTTEN*, otherwise a bug fixed in the source code will not be
+# reflected in the shipped binaries.  The "release" target should be
+# used to generate the required files.
 #
 # There are a number of targets to help both JDK/OpenJDK developers.
 #
 # Main Targets (JDK/OPENJDK):
 #
-#     all/clobber/clean		The usual.
-#				    If OpenJDK, installs
-#					jce.jar/limited policy files.
-#				    If JDK, installs prebuilt
-#					jce.jar/limited policy files.
+#     all/clobber/clean        The usual.
+#                                  If OpenJDK: builds/installs the
+#                                      jce.jar/limited policy files.
+#                                  If JDK: builds but does not install.
+#                                     During full tops-down builds,
+#                                     prebuilt/presigned jce.jar &
+#                                     limited policy files are copied
+#                                     in by make/java/redist/Makefile.
+#                                     If you are working in this directory
+#                                     and want to install the prebuilts,
+#                                     use the "install-prebuilt" target.
 #
-#     jar			Builds/installs jce.jar
-#				    If OpenJDK, does not sign
-#				    If JDK, tries to sign
+#     jar                      Builds/installs jce.jar
+#                                  If OpenJDK, does not sign
+#                                  If JDK, tries to sign
 #
 # Other lesser-used Targets (JDK/OPENJDK):
 #
-#     build-jar			Builds jce.jar (does not sign/install)
+#     build-jar                Builds jce.jar (does not sign/install)
 #
-#     build-policy		Builds policy files (does not sign/install)
+#     build-policy             Builds policy files (does not sign/install)
 #
-#     install-jar		Alias for "jar" above
+#     install-jar              Alias for "jar" above
 #
-#     install-limited		Builds/installs limited policy files
-#				    If OpenJDK, does not sign
-#				    If JDK, tries to sign
-#     install-unlimited		Builds/nstalls unlimited policy files
-#				    If OpenJDK, does not sign
-#				    If JDK, tries to sign
+#     install-limited          Builds/installs limited policy files
+#                                  If OpenJDK, does not sign
+#                                  If JDK, tries to sign
+#     install-unlimited        Builds/nstalls unlimited policy files
+#                                  If OpenJDK, does not sign
+#                                  If JDK, tries to sign
 #
 # Other targets (JDK only):
 #
-#     sign			Alias for sign-jar and sign-policy
-#	  sign-jar		Builds/signs jce.jar file (no install)
-#	  sign-policy		Builds/signs policy files (no install)
+#     sign                     Alias for sign-jar and sign-policy
+#          sign-jar            Builds/signs jce.jar file (no install)
+#          sign-policy         Builds/signs policy files (no install)
 #
-#     obfus			Builds/obfuscates/signs jce.jar
+#     release                  Builds all targets in preparation
+#                              for workspace integration.
 #
-#     release			Builds all targets in preparation
-#				for workspace integration.
-#
-#     install-prebuilt		Installs the pre-built jar files
+#     install-prebuilt         Installs the pre-built jar files
 #
 # This makefile was written to support parallel target execution.
 #
 
 BUILDDIR = ../..
+MODULE  = base
 PACKAGE = javax.crypto
 PRODUCT = sun
 
 #
 # The following is for when we need to do postprocessing
-# (signing/obfuscation) against a read-only build.  If the OUTPUTDIR
+# (signing) against a read-only build.  If the OUTPUTDIR
 # isn't writable, the build currently crashes out.
 #
 ifndef OPENJDK
@@ -169,8 +171,8 @@ endif # OPENJDK
 #
 # We use a variety of subdirectories in the $(TEMPDIR) depending on what
 # part of the build we're doing.  Both OPENJDK/JDK builds are initially
-# done in the unsigned area.  When files are signed or obfuscated in JDK,
-# they will be placed in the appropriate areas.
+# done in the unsigned area.  When files are signed in JDK, they will be
+# placed in the appropriate areas.
 #
 UNSIGNED_DIR = $(TEMPDIR)/unsigned
 
@@ -178,7 +180,7 @@ include Defs-jce.gmk
 
 
 # =====================================================
-# Build the unsigned jce.jar file.  Signing/obfuscation comes later.
+# Build the unsigned jce.jar file.  Signing comes later.
 #
 
 JAR_DESTFILE = $(LIBDIR)/jce.jar
@@ -292,7 +294,7 @@ limited: \
 
 $(UNSIGNED_POLICY_BUILDDIR)/limited/US_export_policy.jar:		\
 	    $(UNSIGNED_POLICY_BUILDDIR)/unlimited/US_export_policy.jar
-	$(install-file)
+	$(install-non-module-file)
 
 $(UNSIGNED_POLICY_BUILDDIR)/limited/local_policy.jar:			\
 	    policy/limited/default_local.policy				\
@@ -363,68 +365,13 @@ $(SIGNED_POLICY_BUILDDIR)/limited/local_policy.jar:		\
 
 
 # =====================================================
-# Obfuscate/sign/install the JDK build.  Not needed for OpenJDK.
-#
-
-OBFUS_DIR = $(JCE_BUILD_DIR)/obfus/jce
-
-CLOSED_DIR = $(BUILDDIR)/closed/javax/crypto
-
-obfus: $(OBFUS_DIR)/jce.jar
-	$(release-warning)
-
-ifndef ALT_JCE_BUILD_DIR
-$(OBFUS_DIR)/jce.jar: build-jar $(JCE_MANIFEST_FILE) $(OBFUS_DIR)/framework.dox
-else
-#
-# We have to remove the build dependency, otherwise, we'll try to rebuild it
-# which we can't do on a read-only filesystem.
-#
-$(OBFUS_DIR)/jce.jar: $(JCE_MANIFEST_FILE) $(OBFUS_DIR)/framework.dox
-	@if [ ! -d $(CLASSDESTDIR) ] ; then \
-	    $(ECHO) "Couldn't find $(CLASSDESTDIR)"; \
-	    exit 1; \
-	fi
-endif
-	@$(ECHO) ">>>Obfuscating JCE framework..."
-	$(presign)
-	$(preobfus)
-	$(prep-target)
-	$(CD) $(OBFUS_DIR); \
-	$(OBFUSCATOR) -fv framework.dox
-	@$(CD) $(OBFUS_DIR); $(java-vm-cleanup)
-	@#
-	@# The sun.security.internal classes are currently not obfuscated
-	@# due to an obfus problem. Manually copy them to the build directory
-	@# so that they are included in the jce.jar file.
-	@#
-	$(CP) -r $(CLASSDESTDIR)/sun $(OBFUS_DIR)/build
-	$(BOOT_JAR_CMD) cmf $(JCE_MANIFEST_FILE) $@	\
-	    -C $(OBFUS_DIR)/build javax			\
-	    -C $(OBFUS_DIR)/build sun			\
-	    $(BOOT_JAR_JFLAGS)
-	$(sign-target)
-	@$(java-vm-cleanup)
-
-$(OBFUS_DIR)/framework.dox: $(CLOSED_DIR)/obfus/framework.dox
-	@$(ECHO) ">>>Creating framework.dox"
-	$(prep-target)
-	$(SED) "s:@@TEMPDIR@@:$(ABS_TEMPDIR):" $< > $@
-
-#
-# The current obfuscator has a limitation in that it currently only
-# supports up to v49 class file format.  Force v49 classfiles in our
-# builds for now.
-#
-TARGET_CLASS_VERSION = 5
-
-
-# =====================================================
-# Create the Release Engineering files.  Obfuscated builds,
+# Create the Release Engineering files.  Signed builds,
 # unlimited policy file distribution, etc.
 #
 
-release: $(OBFUS_DIR)/jce.jar sign-policy $(CLOSED_DIR)/doc/COPYRIGHT.html \
+CLOSED_DIR = $(BUILDDIR)/closed/javax/crypto
+
+release: $(SIGNED_DIR)/jce.jar sign-policy $(CLOSED_DIR)/doc/COPYRIGHT.html \
          $(CLOSED_DIR)/doc/README.txt
 	$(RM) -r \
 	    $(JCE_BUILD_DIR)/release/UnlimitedJCEPolicy              \
@@ -433,7 +380,7 @@ release: $(OBFUS_DIR)/jce.jar sign-policy $(CLOSED_DIR)/doc/COPYRIGHT.html \
 	    $(JCE_BUILD_DIR)/release/local_policy.jar                \
 	    $(JCE_BUILD_DIR)/release/UnlimitedJCEPolicy.zip
 	$(MKDIR) -p $(JCE_BUILD_DIR)/release/UnlimitedJCEPolicy
-	$(CP) $(OBFUS_DIR)/jce.jar $(JCE_BUILD_DIR)/release
+	$(CP) $(SIGNED_DIR)/jce.jar $(JCE_BUILD_DIR)/release
 	$(CP) \
 	    $(SIGNED_POLICY_BUILDDIR)/limited/US_export_policy.jar   \
 	    $(SIGNED_POLICY_BUILDDIR)/limited/local_policy.jar       \
@@ -468,7 +415,7 @@ $(JAR_DESTFILE): $(UNSIGNED_DIR)/jce.jar
 else
 $(JAR_DESTFILE): $(SIGNED_DIR)/jce.jar
 endif
-	$(install-file)
+	$(install-non-module-file)
 
 #
 # Install the appropriate policy file, depending on the type of build.
@@ -479,7 +426,7 @@ else
 INSTALL_POLICYDIR = $(SIGNED_POLICY_BUILDDIR)
 endif
 
-install-limited: \
+install-limited-jars: \
 	    $(INSTALL_POLICYDIR)/limited/US_export_policy.jar	\
 	    $(INSTALL_POLICYDIR)/limited/local_policy.jar
 	$(MKDIR) -p $(POLICY_DESTDIR)
@@ -487,24 +434,28 @@ install-limited: \
 	    $(POLICY_DESTDIR)/US_export_policy.jar		\
 	    $(POLICY_DESTDIR)/local_policy.jar
 	$(CP) $^ $(POLICY_DESTDIR)
+
+install-limited: install-limited-jars install-module-files
 ifndef OPENJDK
 	$(release-warning)
 endif
 
-install-unlimited: \
+install-unlimited-jars: \
 	    $(INSTALL_POLICYDIR)/unlimited/US_export_policy.jar	\
-	    $(INSTALL_POLICYDIR)/unlimited/local_policy.jar
+	    $(INSTALL_POLICYDIR)/unlimited/local_policy.jar 
 	$(MKDIR) -p $(POLICY_DESTDIR)
 	$(RM) \
 	    $(POLICY_DESTDIR)/US_export_policy.jar		\
 	    $(POLICY_DESTDIR)/local_policy.jar
 	$(CP) $^ $(POLICY_DESTDIR)
+
+install-unlimited: install-unlimited-jars install-module-files
 ifndef OPENJDK
 	$(release-warning)
 endif
 
 ifndef OPENJDK
-install-prebuilt:
+install-prebuilt-jars:
 	@$(ECHO) "\n>>>Installing prebuilt JCE framework..."
 	$(RM) $(JAR_DESTFILE) \
 	    $(POLICY_DESTDIR)/US_export_policy.jar \
@@ -514,8 +465,16 @@ install-prebuilt:
 	    $(PREBUILT_DIR)/jce/US_export_policy.jar \
 	    $(PREBUILT_DIR)/jce/local_policy.jar \
 	    $(POLICY_DESTDIR)
+
+install-prebuilt: install-prebuilt-jars install-module-files
 endif
 
+install-module-files: \
+	   $(POLICY_DESTDIR)/US_export_policy.jar \
+	   $(POLICY_DESTDIR)/local_policy.jar
+
+$(POLICY_DESTDIR)/%.jar :
+	$(install-module-file)
 
 # =====================================================
 # Support routines.
@@ -529,5 +488,5 @@ clobber clean::
 .PHONY: build-jar jar build-policy unlimited limited install-jar \
 	install-limited install-unlimited
 ifndef OPENJDK
-.PHONY: sign sign-jar sign-policy obfus release install-prebuilt
+.PHONY: sign sign-jar sign-policy release install-prebuilt
 endif

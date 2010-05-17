@@ -29,8 +29,7 @@ package sun.awt.X11;
 import java.util.Hashtable;
 import sun.misc.Unsafe;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import sun.util.logging.PlatformLogger;
 
 public class XKeysym {
 
@@ -70,7 +69,9 @@ public class XKeysym {
     static Hashtable<Integer, Long> javaKeycode2KeysymHash = new Hashtable<Integer, Long>();
     static long keysym_lowercase = unsafe.allocateMemory(Native.getLongSize());
     static long keysym_uppercase = unsafe.allocateMemory(Native.getLongSize());
-    private static Logger keyEventLog = Logger.getLogger("sun.awt.X11.kye.XKeysym");
+    static Keysym2JavaKeycode kanaLock = new Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_KANA_LOCK,
+                                                                java.awt.event.KeyEvent.KEY_LOCATION_STANDARD);
+    private static PlatformLogger keyEventLog = PlatformLogger.getLogger("sun.awt.X11.kye.XKeysym");
     public static char convertKeysym( long ks, int state ) {
 
         /* First check for Latin-1 characters (1:1 mapping) */
@@ -215,12 +216,35 @@ public class XKeysym {
         }
         return keysym;
     }
+
+    /**
+        Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X keysym.
+        Some keysyms maps to more than one keycode, these would require extra processing.
+    */
+    static Keysym2JavaKeycode getJavaKeycode( long keysym ) {
+        if(keysym == XKeySymConstants.XK_Mode_switch){
+           /* XK_Mode_switch on solaris maps either to VK_ALT_GRAPH (default) or VK_KANA_LOCK */
+           if( XToolkit.isKanaKeyboard() ) {
+               return kanaLock;
+           }
+        }else if(keysym == XKeySymConstants.XK_L1){
+           /* if it is Sun keyboard, trick hash to return VK_STOP else VK_F11 (default) */
+           if( XToolkit.isSunKeyboard() ) {
+               keysym = XKeySymConstants.SunXK_Stop;
+           }
+        }else if(keysym == XKeySymConstants.XK_L2) {
+           /* if it is Sun keyboard, trick hash to return VK_AGAIN else VK_F12 (default) */
+           if( XToolkit.isSunKeyboard() ) {
+               keysym = XKeySymConstants.SunXK_Again;
+           }
+        }
+
+        return  keysym2JavaKeycodeHash.get( keysym );
+    }
     /**
         Return java.awt.KeyEvent constant meaning (Java) keycode, derived from X Window KeyEvent.
         Algorithm is, extract via XKeycodeToKeysym  a proper keysym according to Xlib spec rules and
         err exceptions, then search a java keycode in a table.
-        Some keysyms maps to more than one keycode, these would require extra processing. If someone
-        points me to such a keysym.
     */
     static Keysym2JavaKeycode getJavaKeycode( XKeyEvent ev ) {
         // get from keysym2JavaKeycodeHash.
@@ -235,7 +259,7 @@ public class XKeysym {
             keysym = xkeycode2keysym(ev, ndx);
         }
 
-        Keysym2JavaKeycode jkc = keysym2JavaKeycodeHash.get( keysym );
+        Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
         return jkc;
     }
     static int getJavaKeycodeOnly( XKeyEvent ev ) {
@@ -260,7 +284,7 @@ public class XKeysym {
             ndx = 0;
             keysym = xkeycode2keysym_noxkb(ev, ndx);
         }
-        Keysym2JavaKeycode jkc = keysym2JavaKeycodeHash.get( keysym );
+        Keysym2JavaKeycode jkc = getJavaKeycode( keysym );
         return jkc == null ? java.awt.event.KeyEvent.VK_UNDEFINED : jkc.getJavaKeycode();
     }
     static long javaKeycode2Keysym( int jkey ) {
@@ -354,6 +378,7 @@ public class XKeysym {
         keysym2UCSHash.put( (long)0xFFB7, (char)0x0037); // XK_KP_7 --> DIGIT SEVEN
         keysym2UCSHash.put( (long)0xFFB8, (char)0x0038); // XK_KP_8 --> DIGIT EIGHT
         keysym2UCSHash.put( (long)0xFFB9, (char)0x0039); // XK_KP_9 --> DIGIT NINE
+        keysym2UCSHash.put( (long)0xFE20, (char)0x0009); // XK_ISO_Left_Tab --> <control>
         keysym2UCSHash.put( (long)0x1a1, (char)0x0104); // XK_Aogonek --> LATIN CAPITAL LETTER A WITH OGONEK
         keysym2UCSHash.put( (long)0x1a2, (char)0x02d8); // XK_breve --> BREVE
         keysym2UCSHash.put( (long)0x1a3, (char)0x0141); // XK_Lstroke --> LATIN CAPITAL LETTER L WITH STROKE

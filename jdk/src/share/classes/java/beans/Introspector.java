@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,26 +25,25 @@
 
 package java.beans;
 
+import com.sun.beans.WeakCache;
+import com.sun.beans.finder.BeanInfoFinder;
 import com.sun.beans.finder.ClassFinder;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
-import java.util.Collections;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.EventListener;
 import java.util.List;
-import java.util.WeakHashMap;
 import java.util.TreeMap;
+import java.util.WeakHashMap;
+
+import sun.awt.AppContext;
 import sun.reflect.misc.ReflectUtil;
 
 /**
@@ -82,20 +81,7 @@ import sun.reflect.misc.ReflectUtil;
  * patterns to identify property accessors, event sources, or public
  * methods.  We then proceed to analyze the class's superclass and add
  * in the information from it (and possibly on up the superclass chain).
- *
  * <p>
- * Because the Introspector caches BeanInfo classes for better performance,
- * take care if you use it in an application that uses
- * multiple class loaders.
- * In general, when you destroy a <code>ClassLoader</code>
- * that has been used to introspect classes,
- * you should use the
- * {@link #flushCaches <code>Introspector.flushCaches</code>}
- * or
- * {@link #flushFromCaches <code>Introspector.flushFromCaches</code>} method
- * to flush all of the introspected classes out of the cache.
- *
- * <P>
  * For more information about introspection and design patterns, please
  * consult the
  *  <a href="http://java.sun.com/products/javabeans/docs/index.html">JavaBeans specification</a>.
@@ -109,10 +95,10 @@ public class Introspector {
     public final static int IGNORE_ALL_BEANINFO        = 3;
 
     // Static Caches to speed up introspection.
-    private static Map declaredMethodCache =
-        Collections.synchronizedMap(new WeakHashMap());
-    private static Map beanInfoCache =
-        Collections.synchronizedMap(new WeakHashMap());
+    private static WeakCache<Class<?>, Method[]> declaredMethodCache =
+            new WeakCache<Class<?>, Method[]>();
+
+    private static final Object BEANINFO_CACHE = new Object();
 
     private Class beanClass;
     private BeanInfo explicitBeanInfo;
@@ -137,10 +123,6 @@ public class Introspector {
     // events maps from String names to EventSetDescriptors
     private Map events;
 
-    private final static String DEFAULT_INFO_PATH = "sun.beans.infos";
-
-    private static String[] searchPath = { DEFAULT_INFO_PATH };
-
     private final static EventSetDescriptor[] EMPTY_EVENTSETDESCRIPTORS = new EventSetDescriptor[0];
 
     static final String ADD_PREFIX = "add";
@@ -149,7 +131,7 @@ public class Introspector {
     static final String SET_PREFIX = "set";
     static final String IS_PREFIX = "is";
 
-    private static final String BEANINFO_SUFFIX = "BeanInfo";
+    private static final Object FINDER_KEY = new Object();
 
     //======================================================================
     //                          Public methods
@@ -175,12 +157,21 @@ public class Introspector {
         if (!ReflectUtil.isPackageAccessible(beanClass)) {
             return (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
         }
-        BeanInfo bi = (BeanInfo)beanInfoCache.get(beanClass);
-        if (bi == null) {
-            bi = (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
-            beanInfoCache.put(beanClass, bi);
+        synchronized (BEANINFO_CACHE) {
+            Map<Class<?>, BeanInfo> beanInfoCache =
+                    (Map<Class<?>, BeanInfo>) AppContext.getAppContext().get(BEANINFO_CACHE);
+
+            if (beanInfoCache == null) {
+                beanInfoCache = new WeakHashMap<Class<?>, BeanInfo>();
+                AppContext.getAppContext().put(BEANINFO_CACHE, beanInfoCache);
+            }
+            BeanInfo beanInfo = beanInfoCache.get(beanClass);
+            if (beanInfo == null) {
+                beanInfo = (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
+                beanInfoCache.put(beanClass, beanInfo);
+            }
+            return beanInfo;
         }
-        return bi;
     }
 
     /**
@@ -309,13 +300,11 @@ public class Introspector {
      *          Sun implementation initially sets to {"sun.beans.infos"}.
      */
 
-    public static synchronized String[] getBeanInfoSearchPath() {
-        // Return a copy of the searchPath.
-        String result[] = new String[searchPath.length];
-        for (int i = 0; i < searchPath.length; i++) {
-            result[i] = searchPath[i];
+    public static String[] getBeanInfoSearchPath() {
+        BeanInfoFinder finder = getFinder();
+        synchronized (finder) {
+            return finder.getPackages();
         }
-        return result;
     }
 
     /**
@@ -334,12 +323,15 @@ public class Introspector {
      * @see SecurityManager#checkPropertiesAccess
      */
 
-    public static synchronized void setBeanInfoSearchPath(String path[]) {
+    public static void setBeanInfoSearchPath(String[] path) {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPropertiesAccess();
         }
-        searchPath = path;
+        BeanInfoFinder finder = getFinder();
+        synchronized (finder) {
+            finder.setPackages(path);
+        }
     }
 
 
@@ -351,8 +343,13 @@ public class Introspector {
      */
 
     public static void flushCaches() {
-        beanInfoCache.clear();
-        declaredMethodCache.clear();
+        synchronized (BEANINFO_CACHE) {
+            Map beanInfoCache = (Map) AppContext.getAppContext().get(BEANINFO_CACHE);
+            if (beanInfoCache != null) {
+                beanInfoCache.clear();
+            }
+            declaredMethodCache.clear();
+        }
     }
 
     /**
@@ -374,8 +371,13 @@ public class Introspector {
         if (clz == null) {
             throw new NullPointerException();
         }
-        beanInfoCache.remove(clz);
-        declaredMethodCache.remove(clz);
+        synchronized (BEANINFO_CACHE) {
+            Map beanInfoCache = (Map) AppContext.getAppContext().get(BEANINFO_CACHE);
+            if (beanInfoCache != null) {
+                beanInfoCache.put(clz, null);
+            }
+            declaredMethodCache.put(clz, null);
+        }
     }
 
     //======================================================================
@@ -447,67 +449,14 @@ public class Introspector {
      * then it checks to see if the class is its own BeanInfo. Finally,
      * the BeanInfo search path is prepended to the class and searched.
      *
+     * @param beanClass  the class type of the bean
      * @return Instance of an explicit BeanInfo class or null if one isn't found.
      */
-    private static synchronized BeanInfo findExplicitBeanInfo(Class beanClass) {
-        String name = beanClass.getName() + BEANINFO_SUFFIX;
-        try {
-            return (java.beans.BeanInfo)instantiate(beanClass, name);
-        } catch (Exception ex) {
-            // Just drop through
-
+    private static BeanInfo findExplicitBeanInfo(Class beanClass) {
+        BeanInfoFinder finder = getFinder();
+        synchronized (finder) {
+            return finder.find(beanClass);
         }
-        // Now try checking if the bean is its own BeanInfo.
-        try {
-            if (isSubclass(beanClass, java.beans.BeanInfo.class)) {
-                return (java.beans.BeanInfo)beanClass.newInstance();
-            }
-        } catch (Exception ex) {
-            // Just drop through
-        }
-        // Now try looking for <searchPath>.fooBeanInfo
-        name = name.substring(name.lastIndexOf('.')+1);
-
-        for (int i = 0; i < searchPath.length; i++) {
-            // This optimization will only use the BeanInfo search path if is has changed
-            // from the original or trying to get the ComponentBeanInfo.
-            if (!DEFAULT_INFO_PATH.equals(searchPath[i]) ||
-                DEFAULT_INFO_PATH.equals(searchPath[i]) && "ComponentBeanInfo".equals(name)) {
-                try {
-                    String fullName = searchPath[i] + "." + name;
-                    java.beans.BeanInfo bi = (java.beans.BeanInfo)instantiate(beanClass, fullName);
-
-                    // Make sure that the returned BeanInfo matches the class.
-                    if (bi.getBeanDescriptor() != null) {
-                        if (bi.getBeanDescriptor().getBeanClass() == beanClass) {
-                            return bi;
-                        }
-                    } else if (bi.getPropertyDescriptors() != null) {
-                        PropertyDescriptor[] pds = bi.getPropertyDescriptors();
-                        for (int j = 0; j < pds.length; j++) {
-                            Method method = pds[j].getReadMethod();
-                            if (method == null) {
-                                method = pds[j].getWriteMethod();
-                            }
-                            if (method != null && method.getDeclaringClass() == beanClass) {
-                                return bi;
-                            }
-                        }
-                    } else if (bi.getMethodDescriptors() != null) {
-                        MethodDescriptor[] mds = bi.getMethodDescriptors();
-                        for (int j = 0; j < mds.length; j++) {
-                            Method method = mds[j].getMethod();
-                            if (method != null && method.getDeclaringClass() == beanClass) {
-                                return bi;
-                            }
-                        }
-                    }
-                } catch (Exception ex) {
-                    // Silently ignore any errors.
-                }
-            }
-        }
-        return null;
     }
 
     /**
@@ -577,9 +526,9 @@ public class Introspector {
                             pd = new PropertyDescriptor(this.beanClass, name.substring(2), method, null);
                         }
                     } else if (argCount == 1) {
-                        if (argTypes[0] == int.class && name.startsWith(GET_PREFIX)) {
+                        if (int.class.equals(argTypes[0]) && name.startsWith(GET_PREFIX)) {
                             pd = new IndexedPropertyDescriptor(this.beanClass, name.substring(3), null, null, method, null);
-                        } else if (resultType == void.class && name.startsWith(SET_PREFIX)) {
+                        } else if (void.class.equals(resultType) && name.startsWith(SET_PREFIX)) {
                             // Simple setter
                             pd = new PropertyDescriptor(this.beanClass, name.substring(3), null, method);
                             if (throwsException(method, PropertyVetoException.class)) {
@@ -587,7 +536,7 @@ public class Introspector {
                             }
                         }
                     } else if (argCount == 2) {
-                            if (argTypes[0] == int.class && name.startsWith(SET_PREFIX)) {
+                            if (void.class.equals(resultType) && int.class.equals(argTypes[0]) && name.startsWith(SET_PREFIX)) {
                             pd = new IndexedPropertyDescriptor(this.beanClass, name.substring(3), null, null, null, method);
                             if (throwsException(method, PropertyVetoException.class)) {
                                 pd.setConstrained(true);
@@ -1311,41 +1260,26 @@ public class Introspector {
     /*
      * Internal method to return *public* methods within a class.
      */
-    private static synchronized Method[] getPublicDeclaredMethods(Class clz) {
+    private static Method[] getPublicDeclaredMethods(Class clz) {
         // Looking up Class.getDeclaredMethods is relatively expensive,
         // so we cache the results.
-        Method[] result = null;
         if (!ReflectUtil.isPackageAccessible(clz)) {
             return new Method[0];
         }
-        final Class fclz = clz;
-        Reference ref = (Reference)declaredMethodCache.get(fclz);
-        if (ref != null) {
-            result = (Method[])ref.get();
-            if (result != null) {
-                return result;
-            }
-        }
-
-        // We have to raise privilege for getDeclaredMethods
-        result = (Method[]) AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
-                    return fclz.getDeclaredMethods();
+        synchronized (BEANINFO_CACHE) {
+            Method[] result = declaredMethodCache.get(clz);
+            if (result == null) {
+                result = clz.getMethods();
+                for (int i = 0; i < result.length; i++) {
+                    Method method = result[i];
+                    if (!method.getDeclaringClass().equals(clz)) {
+                        result[i] = null;
+                    }
                 }
-            });
-
-
-        // Null out any non-public methods.
-        for (int i = 0; i < result.length; i++) {
-            Method method = result[i];
-            int mods = method.getModifiers();
-            if (!Modifier.isPublic(mods)) {
-                result[i] = null;
+                declaredMethodCache.put(clz, result);
             }
+            return result;
         }
-        // Add it to the cache.
-        declaredMethodCache.put(fclz, new SoftReference(result));
-        return result;
     }
 
     //======================================================================
@@ -1483,6 +1417,16 @@ public class Introspector {
         return false;
     }
 
+    private static BeanInfoFinder getFinder() {
+        AppContext context = AppContext.getAppContext();
+        Object object = context.get(FINDER_KEY);
+        if (object instanceof BeanInfoFinder) {
+            return (BeanInfoFinder) object;
+        }
+        BeanInfoFinder finder = new BeanInfoFinder();
+        context.put(FINDER_KEY, finder);
+        return finder;
+    }
 
     /**
      * Try to create an instance of a named class.
@@ -1517,7 +1461,7 @@ class GenericBeanInfo extends SimpleBeanInfo {
     private PropertyDescriptor[] properties;
     private int defaultProperty;
     private MethodDescriptor[] methods;
-    private BeanInfo targetBeanInfo;
+    private final Reference<BeanInfo> targetBeanInfoRef;
 
     public GenericBeanInfo(BeanDescriptor beanDescriptor,
                 EventSetDescriptor[] events, int defaultEvent,
@@ -1529,7 +1473,7 @@ class GenericBeanInfo extends SimpleBeanInfo {
         this.properties = properties;
         this.defaultProperty = defaultProperty;
         this.methods = methods;
-        this.targetBeanInfo = targetBeanInfo;
+        this.targetBeanInfoRef = new SoftReference<BeanInfo>(targetBeanInfo);
     }
 
     /**
@@ -1568,7 +1512,7 @@ class GenericBeanInfo extends SimpleBeanInfo {
                 methods[i] = new MethodDescriptor(old.methods[i]);
             }
         }
-        targetBeanInfo = old.targetBeanInfo;
+        this.targetBeanInfoRef = old.targetBeanInfoRef;
     }
 
     public PropertyDescriptor[] getPropertyDescriptors() {
@@ -1596,6 +1540,7 @@ class GenericBeanInfo extends SimpleBeanInfo {
     }
 
     public java.awt.Image getIcon(int iconKind) {
+        BeanInfo targetBeanInfo = this.targetBeanInfoRef.get();
         if (targetBeanInfo != null) {
             return targetBeanInfo.getIcon(iconKind);
         }

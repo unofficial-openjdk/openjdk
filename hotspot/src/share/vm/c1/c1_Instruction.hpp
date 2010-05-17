@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1134,17 +1134,18 @@ BASE(StateSplit, Instruction)
 
 LEAF(Invoke, StateSplit)
  private:
-  Bytecodes::Code           _code;
-  Value                     _recv;
-  Values*                   _args;
-  BasicTypeList*            _signature;
-  int                       _vtable_index;
-  ciMethod*                 _target;
+  Bytecodes::Code _code;
+  Value           _recv;
+  Values*         _args;
+  BasicTypeList*  _signature;
+  int             _vtable_index;
+  ciMethod*       _target;
+  ValueStack*     _state_before;  // Required for deoptimization.
 
  public:
   // creation
   Invoke(Bytecodes::Code code, ValueType* result_type, Value recv, Values* args,
-         int vtable_index, ciMethod* target);
+         int vtable_index, ciMethod* target, ValueStack* state_before);
 
   // accessors
   Bytecodes::Code code() const                   { return _code; }
@@ -1155,12 +1156,16 @@ LEAF(Invoke, StateSplit)
   int vtable_index() const                       { return _vtable_index; }
   BasicTypeList* signature() const               { return _signature; }
   ciMethod* target() const                       { return _target; }
+  ValueStack* state_before() const               { return _state_before; }
 
   // Returns false if target is not loaded
   bool target_is_final() const                   { return check_flag(TargetIsFinalFlag); }
   bool target_is_loaded() const                  { return check_flag(TargetIsLoadedFlag); }
   // Returns false if target is not loaded
   bool target_is_strictfp() const                { return check_flag(TargetIsStrictfpFlag); }
+
+  // JSR 292 support
+  bool is_invokedynamic() const                  { return code() == Bytecodes::_invokedynamic; }
 
   // generic
   virtual bool can_trap() const                  { return true; }
@@ -1169,6 +1174,7 @@ LEAF(Invoke, StateSplit)
     if (has_receiver()) f(&_recv);
     for (int i = 0; i < _args->length(); i++) f(_args->adr_at(i));
   }
+  virtual void state_values_do(void f(Value*));
 };
 
 
@@ -1622,11 +1628,10 @@ LEAF(BlockBegin, StateSplit)
     backward_branch_target_flag   = 1 << 4,
     is_on_work_list_flag          = 1 << 5,
     was_visited_flag              = 1 << 6,
-    default_exception_handler_flag = 1 << 8, // identify block which represents the default exception handler
-    parser_loop_header_flag       = 1 << 9,  // set by parser to identify blocks where phi functions can not be created on demand
-    critical_edge_split_flag      = 1 << 10, // set for all blocks that are introduced when critical edges are split
-    linear_scan_loop_header_flag  = 1 << 11, // set during loop-detection for LinearScan
-    linear_scan_loop_end_flag     = 1 << 12  // set during loop-detection for LinearScan
+    parser_loop_header_flag       = 1 << 7,  // set by parser to identify blocks where phi functions can not be created on demand
+    critical_edge_split_flag      = 1 << 8, // set for all blocks that are introduced when critical edges are split
+    linear_scan_loop_header_flag  = 1 << 9, // set during loop-detection for LinearScan
+    linear_scan_loop_end_flag     = 1 << 10  // set during loop-detection for LinearScan
   };
 
   void set(Flag f)                               { _flags |= f; }

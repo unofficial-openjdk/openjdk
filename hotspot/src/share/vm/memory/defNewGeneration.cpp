@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -555,12 +555,14 @@ void DefNewGeneration::collect(bool   full,
          "save marks have not been newly set.");
 
   gch->gen_process_strong_roots(_level,
-                                true, // Process younger gens, if any, as
-                                      // strong roots.
-                                false,// not collecting permanent generation.
+                                true,  // Process younger gens, if any,
+                                       // as strong roots.
+                                true,  // activate StrongRootsScope
+                                false, // not collecting perm generation.
                                 SharedHeap::SO_AllClasses,
-                                &fsc_with_gc_barrier,
-                                &fsc_with_no_gc_barrier);
+                                &fsc_with_no_gc_barrier,
+                                true,   // walk *all* scavengable nmethods
+                                &fsc_with_gc_barrier);
 
   // "evacuate followers".
   evacuate_followers.do_void();
@@ -592,6 +594,10 @@ void DefNewGeneration::collect(bool   full,
     _tenuring_threshold =
       age_table()->compute_tenuring_threshold(to()->capacity()/HeapWordSize);
 
+    // A successful scavenge should restart the GC time limit count which is
+    // for full GC's.
+    AdaptiveSizePolicy* size_policy = gch->gen_policy()->size_policy();
+    size_policy->reset_gc_overhead_limit_count();
     if (PrintGC && !PrintGCDetails) {
       gch->print_heap_change(gch_prev_used);
     }
@@ -607,7 +613,7 @@ void DefNewGeneration::collect(bool   full,
 
     remove_forwarding_pointers();
     if (PrintGCDetails) {
-      gclog_or_tty->print(" (promotion failed)");
+      gclog_or_tty->print(" (promotion failed) ");
     }
     // Add to-space to the list of space to compact
     // when a promotion failure has occurred.  In that
@@ -617,6 +623,9 @@ void DefNewGeneration::collect(bool   full,
     swap_spaces();   // For the sake of uniformity wrt ParNewGeneration::collect().
     from()->set_next_compaction_space(to());
     gch->set_incremental_collection_will_fail();
+
+    // Inform the next generation that a promotion failure occurred.
+    _next_gen->promotion_failure_occurred();
 
     // Reset the PromotionFailureALot counters.
     NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
@@ -677,6 +686,11 @@ void DefNewGeneration::preserve_mark_if_necessary(oop obj, markOop m) {
 
 void DefNewGeneration::handle_promotion_failure(oop old) {
   preserve_mark_if_necessary(old, old->mark());
+  if (!_promotion_failed && PrintPromotionFailure) {
+    gclog_or_tty->print(" (promotion failure size = " SIZE_FORMAT ") ",
+                        old->size());
+  }
+
   // forward to self
   old->forward_to(old);
   _promotion_failed = true;

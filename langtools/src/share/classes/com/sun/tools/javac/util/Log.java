@@ -33,7 +33,6 @@ import java.util.Set;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.api.DiagnosticFormatter;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
@@ -78,6 +77,10 @@ public class Log extends AbstractLog {
      */
     public boolean emitWarnings;
 
+    /** Switch: suppress note messages.
+     */
+    public boolean suppressNotes;
+
     /** Print stack trace on errors?
      */
     public boolean dumpOnError;
@@ -121,6 +124,7 @@ public class Log extends AbstractLog {
         this.dumpOnError = options.get("-doe") != null;
         this.promptOnError = options.get("-prompt") != null;
         this.emitWarnings = options.get("-Xlint:none") == null;
+        this.suppressNotes = options.get("suppressNotes") != null;
         this.MaxErrors = getIntOption(options, "-Xmaxerrs", 100);
         this.MaxWarnings = getIntOption(options, "-Xmaxwarns", 100);
 
@@ -141,7 +145,10 @@ public class Log extends AbstractLog {
         private int getIntOption(Options options, String optionName, int defaultValue) {
             String s = options.get(optionName);
             try {
-                if (s != null) return Integer.parseInt(s);
+                if (s != null) {
+                    int n = Integer.parseInt(s);
+                    return (n <= 0 ? Integer.MAX_VALUE : n);
+                }
             } catch (NumberFormatException e) {
                 // silently ignore ill-formed numbers
             }
@@ -184,6 +191,12 @@ public class Log extends AbstractLog {
     /** The number of warnings encountered so far.
      */
     public int nwarnings = 0;
+
+    /**
+     * Whether or not an unrecoverable error has been seen.
+     * Unrecoverable errors prevent subsequent annotation processing.
+     */
+    public boolean unrecoverableError;
 
     /** A set of all errors generated so far. This is used to avoid printing an
      *  error message more than once. For each error, a pair consisting of the
@@ -324,7 +337,7 @@ public class Log extends AbstractLog {
             // Print out notes only when we are permitted to report warnings
             // Notes are only generated at the end of a compilation, so should be small
             // in number.
-            if (emitWarnings || diagnostic.isMandatory()) {
+            if ((emitWarnings || diagnostic.isMandatory()) && !suppressNotes) {
                 writeDiagnostic(diagnostic);
             }
             break;
@@ -423,7 +436,7 @@ public class Log extends AbstractLog {
             JavaFileObject file = source.getFile();
             if (file != null)
                 printLines(errWriter,
-                           JavacFileManager.getJavacFileName(file) + ":" +
+                           file.getName() + ":" +
                            line + ": " + msg);
             printErrLine(pos, errWriter);
         }

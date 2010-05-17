@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,11 +42,10 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-
-import java.sql.Timestamp;
 
 import java.util.*;
 
@@ -219,7 +218,9 @@ class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
             return new Expression(oldInstance, String.class, "getClass", new Object[]{});
         }
         else {
-            return new Expression(oldInstance, Class.class, "forName", new Object[]{c.getName()});
+            Expression newInstance = new Expression(oldInstance, Class.class, "forName", new Object[] { c.getName() });
+            newInstance.loader = c.getClassLoader();
+            return newInstance;
         }
     }
 }
@@ -288,13 +289,44 @@ class java_util_Date_PersistenceDelegate extends PersistenceDelegate {
  * @author Sergey A. Malenkov
  */
 final class java_sql_Timestamp_PersistenceDelegate extends java_util_Date_PersistenceDelegate {
-    protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
-        Timestamp oldTime = (Timestamp)oldInstance;
-        Timestamp newTime = (Timestamp)newInstance;
+    private static final Method getNanosMethod = getNanosMethod();
 
-        int nanos = oldTime.getNanos();
-        if (nanos != newTime.getNanos()) {
-            out.writeStatement(new Statement(oldTime, "setNanos", new Object[] {nanos}));
+    private static Method getNanosMethod() {
+        try {
+            Class<?> c = Class.forName("java.sql.Timestamp", true, null);
+            return c.getMethod("getNanos");
+        } catch (ClassNotFoundException e) {
+            return null;
+        } catch (NoSuchMethodException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Invoke Timstamp getNanos.
+     */
+    private static int getNanos(Object obj) {
+        if (getNanosMethod == null)
+            throw new AssertionError("Should not get here");
+        try {
+            return (Integer)getNanosMethod.invoke(obj);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException)
+                throw (RuntimeException)cause;
+            if (cause instanceof Error)
+                throw (Error)cause;
+            throw new AssertionError(e);
+        } catch (IllegalAccessException iae) {
+            throw new AssertionError(iae);
+        }
+    }
+
+    protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
+        // assumes oldInstance and newInstance are Timestamps
+        int nanos = getNanos(oldInstance);
+        if (nanos != getNanos(newInstance)) {
+            out.writeStatement(new Statement(oldInstance, "setNanos", new Object[] {nanos}));
         }
     }
 }
@@ -331,31 +363,6 @@ abstract class java_util_Collections extends PersistenceDelegate {
         Collection oldC = (Collection) oldInstance;
         Collection newC = (Collection) newInstance;
         return (oldC.size() == newC.size()) && oldC.containsAll(newC);
-    }
-
-    static Object getPrivateField(final Object instance, final String name) {
-        return AccessController.doPrivileged(
-                new PrivilegedAction() {
-                    public Object run() {
-                        Class type = instance.getClass();
-                        while ( true ) {
-                            try {
-                                Field field = type.getDeclaredField(name);
-                                field.setAccessible(true);
-                                return field.get( instance );
-                            }
-                            catch (NoSuchFieldException exception) {
-                                type = type.getSuperclass();
-                                if (type == null) {
-                                    throw new IllegalStateException("Could not find field " + name, exception);
-                                }
-                            }
-                            catch (Exception exception) {
-                                throw new IllegalStateException("Could not get value " + type.getName() + '.' + name, exception);
-                            }
-                        }
-                    }
-                } );
     }
 
     static final class EmptyList_PersistenceDelegate extends java_util_Collections {
@@ -498,7 +505,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedCollection_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object type = getPrivateField(oldInstance, "type");
+            Object type = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedCollection.type");
             List list = new ArrayList((Collection) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedCollection", new Object[]{list, type});
         }
@@ -506,7 +513,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedList_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object type = getPrivateField(oldInstance, "type");
+            Object type = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedCollection.type");
             List list = new LinkedList((Collection) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedList", new Object[]{list, type});
         }
@@ -514,7 +521,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedRandomAccessList_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object type = getPrivateField(oldInstance, "type");
+            Object type = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedCollection.type");
             List list = new ArrayList((Collection) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedList", new Object[]{list, type});
         }
@@ -522,7 +529,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedSet_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object type = getPrivateField(oldInstance, "type");
+            Object type = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedCollection.type");
             Set set = new HashSet((Set) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedSet", new Object[]{set, type});
         }
@@ -530,7 +537,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedSortedSet_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object type = getPrivateField(oldInstance, "type");
+            Object type = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedCollection.type");
             SortedSet set = new TreeSet((SortedSet) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedSortedSet", new Object[]{set, type});
         }
@@ -538,8 +545,8 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedMap_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object keyType = getPrivateField(oldInstance, "keyType");
-            Object valueType = getPrivateField(oldInstance, "valueType");
+            Object keyType   = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedMap.keyType");
+            Object valueType = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedMap.valueType");
             Map map = new HashMap((Map) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedMap", new Object[]{map, keyType, valueType});
         }
@@ -547,8 +554,8 @@ abstract class java_util_Collections extends PersistenceDelegate {
 
     static final class CheckedSortedMap_PersistenceDelegate extends java_util_Collections {
         protected Expression instantiate(Object oldInstance, Encoder out) {
-            Object keyType = getPrivateField(oldInstance, "keyType");
-            Object valueType = getPrivateField(oldInstance, "valueType");
+            Object keyType   = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedMap.keyType");
+            Object valueType = MetaData.getPrivateFieldValue(oldInstance, "java.util.Collections$CheckedMap.valueType");
             SortedMap map = new TreeMap((SortedMap) oldInstance);
             return new Expression(oldInstance, Collections.class, "checkedSortedMap", new Object[]{map, keyType, valueType});
         }
@@ -570,7 +577,7 @@ class java_util_EnumMap_PersistenceDelegate extends PersistenceDelegate {
     }
 
     private static Object getType(Object instance) {
-        return java_util_Collections.getPrivateField(instance, "keyType");
+        return MetaData.getPrivateFieldValue(instance, "java.util.EnumMap.keyType");
     }
 }
 
@@ -589,7 +596,7 @@ class java_util_EnumSet_PersistenceDelegate extends PersistenceDelegate {
     }
 
     private static Object getType(Object instance) {
-        return java_util_Collections.getPrivateField(instance, "elementType");
+        return MetaData.getPrivateFieldValue(instance, "java.util.EnumSet.elementType");
     }
 }
 
@@ -1280,7 +1287,7 @@ class javax_swing_Box_PersistenceDelegate extends DefaultPersistenceDelegate {
 
     private Integer getAxis(Object object) {
         Box box = (Box) object;
-        return (Integer) java_util_Collections.getPrivateField(box.getLayout(), "axis");
+        return (Integer) MetaData.getPrivateFieldValue(box.getLayout(), "javax.swing.BoxLayout.axis");
     }
 }
 
@@ -1363,6 +1370,7 @@ final class sun_swing_PrintColorUIResource_PersistenceDelegate extends Persisten
 }
 
 class MetaData {
+    private static final Map<String,Field> fields = Collections.synchronizedMap(new WeakHashMap<String, Field>());
     private static Hashtable internalPersistenceDelegates = new Hashtable();
 
     private static PersistenceDelegate nullPersistenceDelegate = new NullPersistenceDelegate();
@@ -1499,6 +1507,37 @@ class MetaData {
             return Introspector.getBeanInfo(type).getBeanDescriptor().getValue(attribute);
         } catch (IntrospectionException exception) {
             return null;
+        }
+    }
+
+    static Object getPrivateFieldValue(Object instance, String name) {
+        Field field = fields.get(name);
+        if (field == null) {
+            int index = name.lastIndexOf('.');
+            final String className = name.substring(0, index);
+            final String fieldName = name.substring(1 + index);
+            field = AccessController.doPrivileged(new PrivilegedAction<Field>() {
+                public Field run() {
+                    try {
+                        Field field = Class.forName(className).getDeclaredField(fieldName);
+                        field.setAccessible(true);
+                        return field;
+                    }
+                    catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException("Could not find class", exception);
+                    }
+                    catch (NoSuchFieldException exception) {
+                        throw new IllegalStateException("Could not find field", exception);
+                    }
+                }
+            });
+            fields.put(name, field);
+        }
+        try {
+            return field.get(instance);
+        }
+        catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Could not get value of the field", exception);
         }
     }
 }

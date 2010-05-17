@@ -48,7 +48,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Arrays;
 
-import java.util.logging.*;
+import sun.util.logging.PlatformLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,6 +57,7 @@ import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 import sun.awt.datatransfer.DataTransferer;
 import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
+import sun.security.util.SecurityConstants;
 
 /**
  * <p>
@@ -99,7 +100,7 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
 
     protected static final Object _globalLock = new Object();
 
-    private static final Logger dndLog = Logger.getLogger("sun.awt.dnd.SunDropTargetContextPeer");
+    private static final PlatformLogger dndLog = PlatformLogger.getLogger("sun.awt.dnd.SunDropTargetContextPeer");
 
     /*
      * a primitive mechanism for advertising intra-JVM Transferables
@@ -216,6 +217,18 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
       throws UnsupportedFlavorException, IOException,
         InvalidDnDOperationException
     {
+
+        SecurityManager sm = System.getSecurityManager();
+        try {
+            if (!dropComplete && sm != null) {
+                sm.checkSystemClipboardAccess();
+            }
+        } catch (Exception e) {
+            Thread currentThread = Thread.currentThread();
+            currentThread.getUncaughtExceptionHandler().uncaughtException(currentThread, e);
+            return null;
+        }
+
         Long lFormat = null;
         Transferable localTransferable = local;
 
@@ -845,8 +858,8 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
 
         void registerEvent(SunDropTargetEvent e) {
             handler.lock();
-            if (!eventSet.add(e) && dndLog.isLoggable(Level.FINE)) {
-                dndLog.log(Level.FINE, "Event is already registered: " + e);
+            if (!eventSet.add(e) && dndLog.isLoggable(PlatformLogger.FINE)) {
+                dndLog.fine("Event is already registered: " + e);
             }
             handler.unlock();
         }

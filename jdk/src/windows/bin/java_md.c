@@ -148,10 +148,17 @@ LoadMSVCRT()
          * assumed to be present in the "JRE path" directory.  If it is not found
          * there (or "JRE path" fails to resolve), skip the explicit load and let
          * nature take its course, which is likely to be a failure to execute.
+         * This is clearly completely specific to the exact compiler version
+         * which isn't very nice, but its hardly the only place.
+         * No attempt to look for compiler versions in between 2003 and 2010
+         * as we aren't supporting building with those.
          */
 #ifdef _MSC_VER
 #if _MSC_VER < 1400
 #define CRT_DLL "msvcr71.dll"
+#endif
+#if _MSC_VER >= 1600
+#define CRT_DLL "msvcr100.dll"
 #endif
 #ifdef CRT_DLL
         if (GetJREPath(crtpath, MAXPATHLEN)) {
@@ -1093,12 +1100,6 @@ void SetJavaLauncherPlatformProps() {}
  */
 static FindClassFromBootLoader_t *findBootClass = NULL;
 
-#ifdef _M_AMD64
-#define JVM_BCLOADER "JVM_FindClassFromClassLoader"
-#else
-#define JVM_BCLOADER "_JVM_FindClassFromClassLoader@20"
-#endif /* _M_AMD64 */
-
 jclass FindBootStrapClass(JNIEnv *env, const char *classname)
 {
    HMODULE hJvm;
@@ -1108,13 +1109,13 @@ jclass FindBootStrapClass(JNIEnv *env, const char *classname)
        if (hJvm == NULL) return NULL;
        /* need to use the demangled entry point */
        findBootClass = (FindClassFromBootLoader_t *)GetProcAddress(hJvm,
-            JVM_BCLOADER);
+            "JVM_FindClassFromBootLoader");
        if (findBootClass == NULL) {
-          JLI_ReportErrorMessage(DLL_ERROR4, JVM_BCLOADER);
+          JLI_ReportErrorMessage(DLL_ERROR4, "JVM_FindClassFromBootLoader");
           return NULL;
        }
    }
-   return findBootClass(env, classname, JNI_FALSE, (jobject)NULL, JNI_FALSE);
+   return findBootClass(env, classname);
 }
 
 void

@@ -51,6 +51,7 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import sun.misc.BootClassLoaderHook;
 import sun.misc.ClassFileTransformer;
 import sun.misc.CompoundEnumeration;
 import sun.misc.Resource;
@@ -58,7 +59,6 @@ import sun.misc.URLClassPath;
 import sun.misc.VM;
 import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
-import sun.jkernel.DownloadManager;
 
 /**
  * A class loader is an object that is responsible for loading classes. The
@@ -175,26 +175,60 @@ import sun.jkernel.DownloadManager;
 public abstract class ClassLoader {
 
     private static native void registerNatives();
-
-    // Set of classes which are registered as parallel capable class loaders
-    private static final Set<Class<? extends ClassLoader>> parallelLoaders
-        = Collections.newSetFromMap(Collections.synchronizedMap
-              (new WeakHashMap<Class<? extends ClassLoader>, Boolean>()));
-
     static {
         registerNatives();
-        parallelLoaders.add(ClassLoader.class);
     }
-
-    // If initialization succeed this is set to true and security checks will
-    // succeed.  Otherwise the object is not initialized and the object is
-    // useless.
-    private final boolean initialized;
 
     // The parent class loader for delegation
     // Note: VM hardcoded the offset of this field, thus all new fields
     // must be added *after* it.
     private final ClassLoader parent;
+
+    /**
+     * Encapsulates the set of parallel capable loader types.
+     */
+    private static class ParallelLoaders {
+        private ParallelLoaders() {}
+
+        // the set of parallel capable loader types
+        private static final Set<Class<? extends ClassLoader>> loaderTypes =
+            Collections.newSetFromMap(
+                new WeakHashMap<Class<? extends ClassLoader>, Boolean>());
+        static {
+            synchronized (loaderTypes) { loaderTypes.add(ClassLoader.class); }
+        }
+
+        /**
+         * Registers the given class loader type as parallel capabale.
+         * Returns {@code true} is successfully registered; {@code false} if
+         * loader's super class is not registered.
+         */
+        static boolean register(Class<? extends ClassLoader> c) {
+            synchronized (loaderTypes) {
+                if (loaderTypes.contains(c.getSuperclass())) {
+                    // register the class loader as parallel capable
+                    // if and only if all of its super classes are.
+                    // Note: given current classloading sequence, if
+                    // the immediate super class is parallel capable,
+                    // all the super classes higher up must be too.
+                    loaderTypes.add(c);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        /**
+         * Returns {@code true} if the given class loader type is
+         * registered as parallel capable.
+         */
+        static boolean isRegistered(Class<? extends ClassLoader> c) {
+            synchronized (loaderTypes) {
+                return loaderTypes.contains(c);
+            }
+        }
+    }
 
     // Maps class name to the corresponding lock object when the current
     // class loader is parallel capable.
@@ -232,6 +266,31 @@ public abstract class ClassLoader {
     private final HashMap<String, Package> packages =
         new HashMap<String, Package>();
 
+    private static Void checkCreateClassLoader() {
+        SecurityManager security = System.getSecurityManager();
+        if (security != null) {
+            security.checkCreateClassLoader();
+        }
+        return null;
+    }
+
+    private ClassLoader(Void unused, ClassLoader parent) {
+        this.parent = parent;
+        if (ParallelLoaders.isRegistered(this.getClass())) {
+            parallelLockMap = new ConcurrentHashMap<String, Object>();
+            package2certs = new ConcurrentHashMap<String, Certificate[]>();
+            domains =
+                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
+            assertionLock = new Object();
+        } else {
+            // no finer-grained lock; lock on the classloader instance
+            parallelLockMap = null;
+            package2certs = new Hashtable<String, Certificate[]>();
+            domains = new HashSet<ProtectionDomain>();
+            assertionLock = this;
+        }
+    }
+
     /**
      * Creates a new class loader using the specified parent class loader for
      * delegation.
@@ -252,25 +311,7 @@ public abstract class ClassLoader {
      * @since  1.2
      */
     protected ClassLoader(ClassLoader parent) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = parent;
-        if (parallelLoaders.contains(this.getClass())) {
-            parallelLockMap = new ConcurrentHashMap<String, Object>();
-            package2certs = new ConcurrentHashMap<String, Certificate[]>();
-            domains =
-                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
-            assertionLock = new Object();
-        } else {
-            // no finer-grained lock; lock on the classloader instance
-            parallelLockMap = null;
-            package2certs = new Hashtable<String, Certificate[]>();
-            domains = new HashSet<ProtectionDomain>();
-            assertionLock = this;
-        }
-        initialized = true;
+        this(checkCreateClassLoader(), parent);
     }
 
     /**
@@ -289,25 +330,7 @@ public abstract class ClassLoader {
      *          of a new class loader.
      */
     protected ClassLoader() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkCreateClassLoader();
-        }
-        this.parent = getSystemClassLoader();
-        if (parallelLoaders.contains(this.getClass())) {
-            parallelLockMap = new ConcurrentHashMap<String, Object>();
-            package2certs = new ConcurrentHashMap<String, Certificate[]>();
-            domains =
-                Collections.synchronizedSet(new HashSet<ProtectionDomain>());
-            assertionLock = new Object();
-        } else {
-            // no finer-grained lock; lock on the classloader instance
-            parallelLockMap = null;
-            package2certs = new Hashtable<String, Certificate[]>();
-            domains = new HashSet<ProtectionDomain>();
-            assertionLock = this;
-        }
-        initialized = true;
+        this(checkCreateClassLoader(), getSystemClassLoader());
     }
 
     // -- Class --
@@ -380,16 +403,28 @@ public abstract class ClassLoader {
             // First, check if the class has already been loaded
             Class c = findLoadedClass(name);
             if (c == null) {
+                long t0 = System.nanoTime();
                 try {
                     if (parent != null) {
                         c = parent.loadClass(name, false);
                     } else {
-                        c = findBootstrapClass0(name);
+                        c = findBootstrapClassOrNull(name);
                     }
                 } catch (ClassNotFoundException e) {
+                    // ClassNotFoundException thrown if class not found
+                    // from the non-null parent class loader
+                }
+
+                if (c == null) {
                     // If still not found, then invoke findClass in order
                     // to find the class.
+                    long t1 = System.nanoTime();
                     c = findClass(name);
+
+                    // this is the defining class loader; record the stats
+                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                    sun.misc.PerfCounter.getFindClasses().increment();
                 }
             }
             if (resolve) {
@@ -742,7 +777,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
         protectionDomain = preDefineClass(name, protectionDomain);
 
         Class c = null;
@@ -826,8 +860,6 @@ public abstract class ClassLoader {
                                          ProtectionDomain protectionDomain)
         throws ClassFormatError
     {
-        check();
-
         int len = b.remaining();
 
         // Use byte[] if not a direct ByteBufer:
@@ -972,7 +1004,6 @@ public abstract class ClassLoader {
      * @see  #defineClass(String, byte[], int, int)
      */
     protected final void resolveClass(Class<?> c) {
-        check();
         resolveClass0(c);
     }
 
@@ -1003,34 +1034,32 @@ public abstract class ClassLoader {
     protected final Class<?> findSystemClass(String name)
         throws ClassNotFoundException
     {
-        check();
         ClassLoader system = getSystemClassLoader();
         if (system == null) {
             if (!checkName(name))
                 throw new ClassNotFoundException(name);
-            return findBootstrapClass(name);
+            Class cls = findBootstrapClass(name);
+            if (cls == null) {
+                throw new ClassNotFoundException(name);
+            }
+            return cls;
         }
         return system.loadClass(name);
     }
 
-    private Class findBootstrapClass0(String name)
-        throws ClassNotFoundException
+    /**
+     * Returns a class loaded by the bootstrap class loader;
+     * or return null if not found.
+     */
+    private Class findBootstrapClassOrNull(String name)
     {
-        check();
-        if (!checkName(name))
-            throw new ClassNotFoundException(name);
+        if (!checkName(name)) return null;
+
         return findBootstrapClass(name);
     }
 
-    private native Class findBootstrapClass(String name)
-        throws ClassNotFoundException;
-
-    // Check to make sure the class loader has been initialized.
-    private void check() {
-        if (!initialized) {
-            throw new SecurityException("ClassLoader object not initialized");
-        }
-    }
+    // return null if not found
+    private native Class findBootstrapClass(String name);
 
     /**
      * Returns the class with the given <a href="#name">binary name</a> if this
@@ -1047,7 +1076,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final Class<?> findLoadedClass(String name) {
-        check();
         if (!checkName(name))
             return null;
         return findLoadedClass0(name);
@@ -1068,7 +1096,6 @@ public abstract class ClassLoader {
      * @since  1.1
      */
     protected final void setSigners(Class<?> c, Object[] signers) {
-        check();
         c.setSigners(signers);
     }
 
@@ -1206,24 +1233,7 @@ public abstract class ClassLoader {
      * @since   1.7
      */
     protected static boolean registerAsParallelCapable() {
-        Class<? extends ClassLoader> caller = getCaller(1);
-        Class superCls = caller.getSuperclass();
-        boolean result = false;
-        // Explicit synchronization needed for composite action
-        synchronized (parallelLoaders) {
-            if (!parallelLoaders.contains(caller)) {
-                if (parallelLoaders.contains(superCls)) {
-                    // register the immediate caller as parallel capable
-                    // if and only if all of its super classes are.
-                    // Note: given current classloading sequence, if
-                    // the immediate super class is parallel capable,
-                    // all the super classes higher up must be too.
-                    result = true;
-                    parallelLoaders.add(caller);
-                }
-            } else result = true;
-        }
-        return result;
+        return ParallelLoaders.register(getCaller(1));
     }
 
     /**
@@ -1281,21 +1291,7 @@ public abstract class ClassLoader {
      * Find resources from the VM's built-in classloader.
      */
     private static URL getBootstrapResource(String name) {
-        try {
-            // If this is a known JRE resource, ensure that its bundle is
-            // downloaded.  If it isn't known, we just ignore the download
-            // failure and check to see if we can find the resource anyway
-            // (which is possible if the boot class path has been modified).
-            if (sun.misc.VM.isBootedKernelVM()) {
-                sun.jkernel.DownloadManager.getBootClassPathEntryForResource(
-                    name);
-            }
-        } catch (NoClassDefFoundError e) {
-            // This happens while Java itself is being compiled; DownloadManager
-            // isn't accessible when this code is first invoked.  It isn't an
-            // issue, as if we can't find DownloadManager, we can safely assume
-            // that additional code is not available for download.
-        }
+        BootClassLoaderHook.preLoadResource(name);
         URLClassPath ucp = getBootstrapClassPath();
         Resource res = ucp.getResource(name);
         return res != null ? res.getURL() : null;
@@ -1812,24 +1808,7 @@ public abstract class ClassLoader {
     // Invoked in the java.lang.Runtime class to implement load and loadLibrary.
     static void loadLibrary(Class fromClass, String name,
                             boolean isAbsolute) {
-        try {
-            if (VM.isBootedKernelVM() && !DownloadManager.isJREComplete() &&
-                    !DownloadManager.isCurrentThreadDownloading()) {
-                DownloadManager.downloadFile("bin/" +
-                    System.mapLibraryName(name));
-                // it doesn't matter if the downloadFile call returns false --
-                // it probably just means that this is a user library, as
-                // opposed to a JRE library
-            }
-        } catch (IOException e) {
-            throw new UnsatisfiedLinkError("Error downloading library " +
-                                                name + ": " + e);
-        } catch (NoClassDefFoundError e) {
-            // This happens while Java itself is being compiled; DownloadManager
-            // isn't accessible when this code is first invoked.  It isn't an
-            // issue, as if we can't find DownloadManager, we can safely assume
-            // that additional code is not available for download.
-        }
+        BootClassLoaderHook.preLoadLibrary(name);
         ClassLoader loader =
             (fromClass == null) ? null : fromClass.getClassLoader();
         if (sys_paths == null) {

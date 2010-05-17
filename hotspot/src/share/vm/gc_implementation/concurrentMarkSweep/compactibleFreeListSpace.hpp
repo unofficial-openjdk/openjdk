@@ -25,8 +25,6 @@
 // Classes in support of keeping track of promotions into a non-Contiguous
 // space, in this case a CompactibleFreeListSpace.
 
-#define CFLS_LAB_REFILL_STATS 0
-
 // Forward declarations
 class CompactibleFreeListSpace;
 class BlkClosure;
@@ -34,134 +32,6 @@ class BlkClosureCareful;
 class UpwardsObjectClosure;
 class ObjectClosureCareful;
 class Klass;
-
-class PromotedObject VALUE_OBJ_CLASS_SPEC {
- private:
-  enum {
-    promoted_mask  = right_n_bits(2),   // i.e. 0x3
-    displaced_mark = nth_bit(2),        // i.e. 0x4
-    next_mask      = ~(right_n_bits(3)) // i.e. ~(0x7)
-  };
-  intptr_t _next;
- public:
-  inline PromotedObject* next() const {
-    return (PromotedObject*)(_next & next_mask);
-  }
-  inline void setNext(PromotedObject* x) {
-    assert(((intptr_t)x & ~next_mask) == 0,
-           "Conflict in bit usage, "
-           " or insufficient alignment of objects");
-    _next |= (intptr_t)x;
-  }
-  inline void setPromotedMark() {
-    _next |= promoted_mask;
-  }
-  inline bool hasPromotedMark() const {
-    return (_next & promoted_mask) == promoted_mask;
-  }
-  inline void setDisplacedMark() {
-    _next |= displaced_mark;
-  }
-  inline bool hasDisplacedMark() const {
-    return (_next & displaced_mark) != 0;
-  }
-  inline void clearNext()        { _next = 0; }
-  debug_only(void *next_addr() { return (void *) &_next; })
-};
-
-class SpoolBlock: public FreeChunk {
-  friend class PromotionInfo;
- protected:
-  SpoolBlock*  nextSpoolBlock;
-  size_t       bufferSize;        // number of usable words in this block
-  markOop*     displacedHdr;      // the displaced headers start here
-
-  // Note about bufferSize: it denotes the number of entries available plus 1;
-  // legal indices range from 1 through BufferSize - 1.  See the verification
-  // code verify() that counts the number of displaced headers spooled.
-  size_t computeBufferSize() {
-    return (size() * sizeof(HeapWord) - sizeof(*this)) / sizeof(markOop);
-  }
-
- public:
-  void init() {
-    bufferSize = computeBufferSize();
-    displacedHdr = (markOop*)&displacedHdr;
-    nextSpoolBlock = NULL;
-  }
-};
-
-class PromotionInfo VALUE_OBJ_CLASS_SPEC {
-  bool            _tracking;      // set if tracking
-  CompactibleFreeListSpace* _space; // the space to which this belongs
-  PromotedObject* _promoHead;     // head of list of promoted objects
-  PromotedObject* _promoTail;     // tail of list of promoted objects
-  SpoolBlock*     _spoolHead;     // first spooling block
-  SpoolBlock*     _spoolTail;     // last  non-full spooling block or null
-  SpoolBlock*     _splice_point;  // when _spoolTail is null, holds list tail
-  SpoolBlock*     _spareSpool;    // free spool buffer
-  size_t          _firstIndex;    // first active index in
-                                  // first spooling block (_spoolHead)
-  size_t          _nextIndex;     // last active index + 1 in last
-                                  // spooling block (_spoolTail)
- private:
-  // ensure that spooling space exists; return true if there is spooling space
-  bool ensure_spooling_space_work();
-
- public:
-  PromotionInfo() :
-    _tracking(0), _space(NULL),
-    _promoHead(NULL), _promoTail(NULL),
-    _spoolHead(NULL), _spoolTail(NULL),
-    _spareSpool(NULL), _firstIndex(1),
-    _nextIndex(1) {}
-
-  bool noPromotions() const {
-    assert(_promoHead != NULL || _promoTail == NULL, "list inconsistency");
-    return _promoHead == NULL;
-  }
-  void startTrackingPromotions();
-  void stopTrackingPromotions();
-  bool tracking() const          { return _tracking;  }
-  void track(PromotedObject* trackOop);      // keep track of a promoted oop
-  // The following variant must be used when trackOop is not fully
-  // initialized and has a NULL klass:
-  void track(PromotedObject* trackOop, klassOop klassOfOop); // keep track of a promoted oop
-  void setSpace(CompactibleFreeListSpace* sp) { _space = sp; }
-  CompactibleFreeListSpace* space() const     { return _space; }
-  markOop nextDisplacedHeader(); // get next header & forward spool pointer
-  void    saveDisplacedHeader(markOop hdr);
-                                 // save header and forward spool
-
-  inline size_t refillSize() const;
-
-  SpoolBlock* getSpoolBlock();   // return a free spooling block
-  inline bool has_spooling_space() {
-    return _spoolTail != NULL && _spoolTail->bufferSize > _nextIndex;
-  }
-  // ensure that spooling space exists
-  bool ensure_spooling_space() {
-    return has_spooling_space() || ensure_spooling_space_work();
-  }
-  #define PROMOTED_OOPS_ITERATE_DECL(OopClosureType, nv_suffix)  \
-    void promoted_oops_iterate##nv_suffix(OopClosureType* cl);
-  ALL_SINCE_SAVE_MARKS_CLOSURES(PROMOTED_OOPS_ITERATE_DECL)
-  #undef PROMOTED_OOPS_ITERATE_DECL
-  void promoted_oops_iterate(OopsInGenClosure* cl) {
-    promoted_oops_iterate_v(cl);
-  }
-  void verify()  const;
-  void reset() {
-    _promoHead = NULL;
-    _promoTail = NULL;
-    _spoolHead = NULL;
-    _spoolTail = NULL;
-    _spareSpool = NULL;
-    _firstIndex = 0;
-    _nextIndex = 0;
-
-  }
-};
 
 class LinearAllocBlock VALUE_OBJ_CLASS_SPEC {
  public:
@@ -243,6 +113,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   mutable Mutex _freelistLock;
   // locking verifier convenience function
   void assert_locked() const PRODUCT_RETURN;
+  void assert_locked(const Mutex* lock) const PRODUCT_RETURN;
 
   // Linear allocation blocks
   LinearAllocBlock _smallLinearAllocBlock;
@@ -281,13 +152,6 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Locks protecting the exact lists during par promotion allocation.
   Mutex* _indexedFreeListParLocks[IndexSetSize];
 
-#if CFLS_LAB_REFILL_STATS
-  // Some statistics.
-  jint  _par_get_chunk_from_small;
-  jint  _par_get_chunk_from_large;
-#endif
-
-
   // Attempt to obtain up to "n" blocks of the size "word_sz" (which is
   // required to be smaller than "IndexSetSize".)  If successful,
   // adds them to "fl", which is required to be an empty free list.
@@ -320,7 +184,7 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Helper function for getChunkFromIndexedFreeList.
   // Replenish the indexed free list for this "size".  Do not take from an
   // underpopulated size.
-  FreeChunk*  getChunkFromIndexedFreeListHelper(size_t size);
+  FreeChunk*  getChunkFromIndexedFreeListHelper(size_t size, bool replenish = true);
 
   // Get a chunk from the indexed free list.  If the indexed free list
   // does not have a free chunk, try to replenish the indexed free list
@@ -429,10 +293,6 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   void initialize_sequential_subtasks_for_rescan(int n_threads);
   void initialize_sequential_subtasks_for_marking(int n_threads,
          HeapWord* low = NULL);
-
-#if CFLS_LAB_REFILL_STATS
-  void print_par_alloc_stats();
-#endif
 
   // Space enquiries
   size_t used() const;
@@ -563,6 +423,12 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // promoted since the most recent call to save_marks() on
   // this generation and has not subsequently been iterated
   // over (using oop_since_save_marks_iterate() above).
+  // This property holds only for single-threaded collections,
+  // and is typically used for Cheney scans; for MT scavenges,
+  // the property holds for all objects promoted during that
+  // scavenge for the duration of the scavenge and is used
+  // by card-scanning to avoid scanning objects (being) promoted
+  // during that scavenge.
   bool obj_allocated_since_save_marks(const oop obj) const {
     assert(is_in_reserved(obj), "Wrong space?");
     return ((PromotedObject*)obj)->hasPromotedMark();
@@ -617,6 +483,12 @@ class CompactibleFreeListSpace: public CompactibleSpace {
   // Do some basic checks on the the free lists.
   void checkFreeListConsistency()         const PRODUCT_RETURN;
 
+  // Printing support
+  void dump_at_safepoint_with_locks(CMSCollector* c, outputStream* st);
+  void print_indexed_free_lists(outputStream* st) const;
+  void print_dictionary_free_lists(outputStream* st) const;
+  void print_promo_info_blocks(outputStream* st) const;
+
   NOT_PRODUCT (
     void initializeIndexedFreeListArrayReturnedBytes();
     size_t sumIndexedFreeListArrayReturnedBytes();
@@ -638,8 +510,9 @@ class CompactibleFreeListSpace: public CompactibleSpace {
 
   // Statistics functions
   // Initialize census for lists before the sweep.
-  void beginSweepFLCensus(float sweep_current,
-                          float sweep_estimate);
+  void beginSweepFLCensus(float inter_sweep_current,
+                          float inter_sweep_estimate,
+                          float intra_sweep_estimate);
   // Set the surplus for each of the free lists.
   void setFLSurplus();
   // Set the hint for each of the free lists.
@@ -730,16 +603,17 @@ class CFLS_LAB : public CHeapObj {
   FreeList _indexedFreeList[CompactibleFreeListSpace::IndexSetSize];
 
   // Initialized from a command-line arg.
-  size_t _blocks_to_claim;
 
-#if CFLS_LAB_REFILL_STATS
-  // Some statistics.
-  int _refills;
-  int _blocksTaken;
-  static int _tot_refills;
-  static int _tot_blocksTaken;
-  static int _next_threshold;
-#endif
+  // Allocation statistics in support of dynamic adjustment of
+  // #blocks to claim per get_from_global_pool() call below.
+  static AdaptiveWeightedAverage
+                 _blocks_to_claim  [CompactibleFreeListSpace::IndexSetSize];
+  static size_t _global_num_blocks [CompactibleFreeListSpace::IndexSetSize];
+  static int    _global_num_workers[CompactibleFreeListSpace::IndexSetSize];
+  size_t        _num_blocks        [CompactibleFreeListSpace::IndexSetSize];
+
+  // Internal work method
+  void get_from_global_pool(size_t word_sz, FreeList* fl);
 
 public:
   CFLS_LAB(CompactibleFreeListSpace* cfls);
@@ -748,7 +622,12 @@ public:
   HeapWord* alloc(size_t word_sz);
 
   // Return any unused portions of the buffer to the global pool.
-  void retire();
+  void retire(int tid);
+
+  // Dynamic OldPLABSize sizing
+  static void compute_desired_plab_size();
+  // When the settings are modified from default static initialization
+  static void modify_initialization(size_t n, unsigned wt);
 };
 
 size_t PromotionInfo::refillSize() const {

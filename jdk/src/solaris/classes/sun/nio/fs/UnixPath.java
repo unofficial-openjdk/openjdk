@@ -65,9 +65,6 @@ class UnixPath
     // array of offsets of elements in path (created lazily)
     private volatile int[] offsets;
 
-    // file permissions (created lazily)
-    private volatile FilePermission[] perms;
-
     UnixPath(UnixFileSystem fs, byte[] path) {
         this.fs = fs;
         this.path = path;
@@ -627,8 +624,11 @@ class UnixPath
     public boolean endsWith(Path other) {
         UnixPath that = checkPath(other);
 
+        int thisLen = path.length;
+        int thatLen = that.path.length;
+
         // other path is longer
-        if (that.path.length > path.length)
+        if (thatLen > thisLen)
             return false;
 
         // other path is absolute so this path must be absolute
@@ -646,10 +646,10 @@ class UnixPath
             if (thatOffsetCount == thisOffsetCount) {
                 if (thisOffsetCount == 0)
                     return true;
-                int expectedLen = path.length;
+                int expectedLen = thisLen;
                 if (this.isAbsolute() && !that.isAbsolute())
                     expectedLen--;
-                if (that.path.length != expectedLen)
+                if (thatLen != expectedLen)
                     return false;
             } else {
                 // this path has more elements so given path must be relative
@@ -661,7 +661,9 @@ class UnixPath
         // compare bytes
         int thisPos = offsets[thisOffsetCount - thatOffsetCount];
         int thatPos = that.offsets[0];
-        while (thatPos < that.path.length) {
+        if ((thatLen - thatPos) != (thisLen - thisPos))
+            return false;
+        while (thatPos < thatLen) {
             if (this.path[thisPos++] != that.path[thatPos++])
                 return false;
         }
@@ -768,45 +770,23 @@ class UnixPath
         }
     }
 
-    // create file permissions used for read and write checks
-    private void checkReadOrWrite(boolean checkRead) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm == null)
-            return;
-        if (perms == null) {
-            synchronized (this) {
-                if (perms == null) {
-                    FilePermission[] p = new FilePermission[2];
-                    String pathForPermCheck = getPathForPermissionCheck();
-                    p[0] = new FilePermission(pathForPermCheck,
-                        SecurityConstants.FILE_READ_ACTION);
-                    p[1] = new FilePermission(pathForPermCheck,
-                        SecurityConstants.FILE_WRITE_ACTION);
-                    perms = p;
-                }
-            }
-        }
-        if (checkRead) {
-            sm.checkPermission(perms[0]);
-        } else {
-            sm.checkPermission(perms[1]);
-        }
-    }
 
     void checkRead() {
-        checkReadOrWrite(true);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkRead(getPathForPermissionCheck());
     }
 
     void checkWrite() {
-        checkReadOrWrite(false);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null)
+            sm.checkWrite(getPathForPermissionCheck());
     }
 
     void checkDelete() {
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            // permission not cached
+        if (sm != null)
             sm.checkDelete(getPathForPermissionCheck());
-        }
     }
 
     @Override

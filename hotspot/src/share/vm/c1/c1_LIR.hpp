@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,9 +85,10 @@ class LIR_Const: public LIR_OprPtr {
 
   void type_check(BasicType t) const   { assert(type() == t, "type check"); }
   void type_check(BasicType t1, BasicType t2) const   { assert(type() == t1 || type() == t2, "type check"); }
+  void type_check(BasicType t1, BasicType t2, BasicType t3) const   { assert(type() == t1 || type() == t2 || type() == t3, "type check"); }
 
  public:
-  LIR_Const(jint i)                              { _value.set_type(T_INT);     _value.set_jint(i); }
+  LIR_Const(jint i, bool is_address=false)       { _value.set_type(is_address?T_ADDRESS:T_INT); _value.set_jint(i); }
   LIR_Const(jlong l)                             { _value.set_type(T_LONG);    _value.set_jlong(l); }
   LIR_Const(jfloat f)                            { _value.set_type(T_FLOAT);   _value.set_jfloat(f); }
   LIR_Const(jdouble d)                           { _value.set_type(T_DOUBLE);  _value.set_jdouble(d); }
@@ -105,7 +106,7 @@ class LIR_Const: public LIR_OprPtr {
   virtual BasicType type()       const { return _value.get_type(); }
   virtual LIR_Const* as_constant()     { return this; }
 
-  jint      as_jint()    const         { type_check(T_INT   ); return _value.get_jint(); }
+  jint      as_jint()    const         { type_check(T_INT, T_ADDRESS); return _value.get_jint(); }
   jlong     as_jlong()   const         { type_check(T_LONG  ); return _value.get_jlong(); }
   jfloat    as_jfloat()  const         { type_check(T_FLOAT ); return _value.get_jfloat(); }
   jdouble   as_jdouble() const         { type_check(T_DOUBLE); return _value.get_jdouble(); }
@@ -120,7 +121,7 @@ class LIR_Const: public LIR_OprPtr {
 #endif
 
 
-  jint      as_jint_bits() const       { type_check(T_FLOAT, T_INT); return _value.get_jint(); }
+  jint      as_jint_bits() const       { type_check(T_FLOAT, T_INT, T_ADDRESS); return _value.get_jint(); }
   jint      as_jint_lo_bits() const    {
     if (type() == T_DOUBLE) {
       return low(jlong_cast(_value.get_jdouble()));
@@ -718,6 +719,7 @@ class LIR_OprFact: public AllStatic {
   static LIR_Opr intptrConst(void* p)            { return (LIR_Opr)(new LIR_Const(p)); }
   static LIR_Opr intptrConst(intptr_t v)         { return (LIR_Opr)(new LIR_Const((void*)v)); }
   static LIR_Opr illegal()                       { return (LIR_Opr)-1; }
+  static LIR_Opr addressConst(jint i)            { return (LIR_Opr)(new LIR_Const(i, true)); }
 
   static LIR_Opr value_type(ValueType* type);
   static LIR_Opr dummy_value_type(ValueType* type);
@@ -799,6 +801,7 @@ enum LIR_Code {
       , lir_monaddr
       , lir_roundfp
       , lir_safepoint
+      , lir_unwind
   , end_op1
   , begin_op2
       , lir_cmp
@@ -828,7 +831,6 @@ enum LIR_Code {
       , lir_ushr
       , lir_alloc_array
       , lir_throw
-      , lir_unwind
       , lir_compare_to
   , end_op2
   , begin_op3
@@ -840,6 +842,7 @@ enum LIR_Code {
       , lir_optvirtual_call
       , lir_icvirtual_call
       , lir_virtual_call
+      , lir_dynamic_call
   , end_opJavaCall
   , begin_opArrayCopy
       , lir_arraycopy
@@ -1051,6 +1054,16 @@ class LIR_OpJavaCall: public LIR_OpCall {
 
   LIR_Opr receiver() const                       { return _receiver; }
   ciMethod* method() const                       { return _method;   }
+
+  // JSR 292 support.
+  bool is_invokedynamic() const                  { return code() == lir_dynamic_call; }
+  bool is_method_handle_invoke() const {
+    return
+      is_invokedynamic()  // An invokedynamic is always a MethodHandle call site.
+      ||
+      (method()->holder()->name() == ciSymbol::java_dyn_MethodHandle() &&
+       methodOopDesc::is_method_handle_invoke_name(method()->name()->sid()));
+  }
 
   intptr_t vtable_offset() const {
     assert(_code == lir_virtual_call, "only have vtable for real vcall");
@@ -1766,6 +1779,10 @@ class LIR_List: public CompilationResourceObj {
                     intptr_t vtable_offset, LIR_OprList* arguments, CodeEmitInfo* info) {
     append(new LIR_OpJavaCall(lir_virtual_call, method, receiver, result, vtable_offset, arguments, info));
   }
+  void call_dynamic(ciMethod* method, LIR_Opr receiver, LIR_Opr result,
+                    address dest, LIR_OprList* arguments, CodeEmitInfo* info) {
+    append(new LIR_OpJavaCall(lir_dynamic_call, method, receiver, result, dest, arguments, info));
+  }
 
   void get_thread(LIR_Opr result)                { append(new LIR_Op0(lir_get_thread, result)); }
   void word_align()                              { append(new LIR_Op0(lir_word_align)); }
@@ -1810,8 +1827,12 @@ class LIR_List: public CompilationResourceObj {
   void logical_xor (LIR_Opr left, LIR_Opr right, LIR_Opr dst) { append(new LIR_Op2(lir_logic_xor,  left, right, dst)); }
 
   void null_check(LIR_Opr opr, CodeEmitInfo* info)         { append(new LIR_Op1(lir_null_check, opr, info)); }
-  void throw_exception(LIR_Opr exceptionPC, LIR_Opr exceptionOop, CodeEmitInfo* info) { append(new LIR_Op2(lir_throw, exceptionPC, exceptionOop, LIR_OprFact::illegalOpr, info)); }
-  void unwind_exception(LIR_Opr exceptionPC, LIR_Opr exceptionOop, CodeEmitInfo* info) { append(new LIR_Op2(lir_unwind, exceptionPC, exceptionOop, LIR_OprFact::illegalOpr, info)); }
+  void throw_exception(LIR_Opr exceptionPC, LIR_Opr exceptionOop, CodeEmitInfo* info) {
+    append(new LIR_Op2(lir_throw, exceptionPC, exceptionOop, LIR_OprFact::illegalOpr, info));
+  }
+  void unwind_exception(LIR_Opr exceptionOop) {
+    append(new LIR_Op1(lir_unwind, exceptionOop));
+  }
 
   void compare_to (LIR_Opr left, LIR_Opr right, LIR_Opr dst) {
     append(new LIR_Op2(lir_compare_to,  left, right, dst));
@@ -1840,8 +1861,8 @@ class LIR_List: public CompilationResourceObj {
 
   void abs (LIR_Opr from, LIR_Opr to, LIR_Opr tmp)                { append(new LIR_Op2(lir_abs , from, tmp, to)); }
   void sqrt(LIR_Opr from, LIR_Opr to, LIR_Opr tmp)                { append(new LIR_Op2(lir_sqrt, from, tmp, to)); }
-  void log (LIR_Opr from, LIR_Opr to, LIR_Opr tmp)                { append(new LIR_Op2(lir_log,  from, tmp, to)); }
-  void log10 (LIR_Opr from, LIR_Opr to, LIR_Opr tmp)              { append(new LIR_Op2(lir_log10, from, tmp, to)); }
+  void log (LIR_Opr from, LIR_Opr to, LIR_Opr tmp)                { append(new LIR_Op2(lir_log,  from, LIR_OprFact::illegalOpr, to, tmp)); }
+  void log10 (LIR_Opr from, LIR_Opr to, LIR_Opr tmp)              { append(new LIR_Op2(lir_log10, from, LIR_OprFact::illegalOpr, to, tmp)); }
   void sin (LIR_Opr from, LIR_Opr to, LIR_Opr tmp1, LIR_Opr tmp2) { append(new LIR_Op2(lir_sin , from, tmp1, to, tmp2)); }
   void cos (LIR_Opr from, LIR_Opr to, LIR_Opr tmp1, LIR_Opr tmp2) { append(new LIR_Op2(lir_cos , from, tmp1, to, tmp2)); }
   void tan (LIR_Opr from, LIR_Opr to, LIR_Opr tmp1, LIR_Opr tmp2) { append(new LIR_Op2(lir_tan , from, tmp1, to, tmp2)); }
@@ -2000,7 +2021,7 @@ class LIR_OpVisitState: public StackObj {
   typedef enum { inputMode, firstMode = inputMode, tempMode, outputMode, numModes, invalidMode = -1 } OprMode;
 
   enum {
-    maxNumberOfOperands = 14,
+    maxNumberOfOperands = 16,
     maxNumberOfInfos = 4
   };
 

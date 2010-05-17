@@ -52,13 +52,13 @@ import static com.sun.tools.javac.code.Kinds.*;
 /**
  * Implementation of Declaration
  */
-
+@SuppressWarnings("deprecation")
 public abstract class DeclarationImpl implements Declaration {
 
     protected final AptEnv env;
     public final Symbol sym;
 
-    protected static DeclarationFilter identityFilter =
+    protected static final DeclarationFilter identityFilter =
             new DeclarationFilter();
 
 
