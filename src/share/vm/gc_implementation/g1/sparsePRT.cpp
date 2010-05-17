@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 
 #define SPARSE_PRT_VERBOSE 0
 
-#define UNROLL_CARD_LOOPS 1
+#define UNROLL_CARD_LOOPS  1
 
 void SparsePRT::init_iterator(SparsePRTIter* sprt_iter) {
     sprt_iter->init(this);
@@ -36,27 +36,32 @@ void SparsePRT::init_iterator(SparsePRTIter* sprt_iter) {
 void SparsePRTEntry::init(RegionIdx_t region_ind) {
   _region_ind = region_ind;
   _next_index = NullEntry;
+
 #if UNROLL_CARD_LOOPS
-  assert(CardsPerEntry == 4, "Assumption.  If changes, un-unroll.");
-  _cards[0] = NullEntry;
-  _cards[1] = NullEntry;
-  _cards[2] = NullEntry;
-  _cards[3] = NullEntry;
+  assert((cards_num() & (UnrollFactor - 1)) == 0, "Invalid number of cards in the entry");
+  for (int i = 0; i < cards_num(); i += UnrollFactor) {
+    _cards[i] = NullEntry;
+    _cards[i + 1] = NullEntry;
+    _cards[i + 2] = NullEntry;
+    _cards[i + 3] = NullEntry;
+  }
 #else
-  for (int i = 0; i < CardsPerEntry; i++)
+  for (int i = 0; i < cards_num(); i++)
     _cards[i] = NullEntry;
 #endif
 }
 
 bool SparsePRTEntry::contains_card(CardIdx_t card_index) const {
 #if UNROLL_CARD_LOOPS
-  assert(CardsPerEntry == 4, "Assumption.  If changes, un-unroll.");
-  if (_cards[0] == card_index) return true;
-  if (_cards[1] == card_index) return true;
-  if (_cards[2] == card_index) return true;
-  if (_cards[3] == card_index) return true;
+  assert((cards_num() & (UnrollFactor - 1)) == 0, "Invalid number of cards in the entry");
+  for (int i = 0; i < cards_num(); i += UnrollFactor) {
+    if (_cards[i] == card_index ||
+        _cards[i + 1] == card_index ||
+        _cards[i + 2] == card_index ||
+        _cards[i + 3] == card_index) return true;
+  }
 #else
-  for (int i = 0; i < CardsPerEntry; i++) {
+  for (int i = 0; i < cards_num(); i++) {
     if (_cards[i] == card_index) return true;
   }
 #endif
@@ -67,14 +72,16 @@ bool SparsePRTEntry::contains_card(CardIdx_t card_index) const {
 int SparsePRTEntry::num_valid_cards() const {
   int sum = 0;
 #if UNROLL_CARD_LOOPS
-  assert(CardsPerEntry == 4, "Assumption.  If changes, un-unroll.");
-  if (_cards[0] != NullEntry) sum++;
-  if (_cards[1] != NullEntry) sum++;
-  if (_cards[2] != NullEntry) sum++;
-  if (_cards[3] != NullEntry) sum++;
+  assert((cards_num() & (UnrollFactor - 1)) == 0, "Invalid number of cards in the entry");
+  for (int i = 0; i < cards_num(); i += UnrollFactor) {
+    sum += (_cards[i] != NullEntry);
+    sum += (_cards[i + 1] != NullEntry);
+    sum += (_cards[i + 2] != NullEntry);
+    sum += (_cards[i + 3] != NullEntry);
+  }
 #else
-  for (int i = 0; i < CardsPerEntry; i++) {
-    if (_cards[i] != NulLEntry) sum++;
+  for (int i = 0; i < cards_num(); i++) {
+    sum += (_cards[i] != NullEntry);
   }
 #endif
   // Otherwise, we're full.
@@ -83,27 +90,27 @@ int SparsePRTEntry::num_valid_cards() const {
 
 SparsePRTEntry::AddCardResult SparsePRTEntry::add_card(CardIdx_t card_index) {
 #if UNROLL_CARD_LOOPS
-  assert(CardsPerEntry == 4, "Assumption.  If changes, un-unroll.");
-  CardIdx_t c = _cards[0];
-  if (c == card_index) return found;
-  if (c == NullEntry) { _cards[0] = card_index; return added; }
-  c = _cards[1];
-  if (c == card_index) return found;
-  if (c == NullEntry) { _cards[1] = card_index; return added; }
-  c = _cards[2];
-  if (c == card_index) return found;
-  if (c == NullEntry) { _cards[2] = card_index; return added; }
-  c = _cards[3];
-  if (c == card_index) return found;
-  if (c == NullEntry) { _cards[3] = card_index; return added; }
+  assert((cards_num() & (UnrollFactor - 1)) == 0, "Invalid number of cards in the entry");
+  CardIdx_t c;
+  for (int i = 0; i < cards_num(); i += UnrollFactor) {
+    c = _cards[i];
+    if (c == card_index) return found;
+    if (c == NullEntry) { _cards[i] = card_index; return added; }
+    c = _cards[i + 1];
+    if (c == card_index) return found;
+    if (c == NullEntry) { _cards[i + 1] = card_index; return added; }
+    c = _cards[i + 2];
+    if (c == card_index) return found;
+    if (c == NullEntry) { _cards[i + 2] = card_index; return added; }
+    c = _cards[i + 3];
+    if (c == card_index) return found;
+    if (c == NullEntry) { _cards[i + 3] = card_index; return added; }
+  }
 #else
-  for (int i = 0; i < CardsPerEntry; i++) {
+  for (int i = 0; i < cards_num(); i++) {
     CardIdx_t c = _cards[i];
     if (c == card_index) return found;
-    if (c == NullEntry) {
-      _cards[i] = card_index;
-      return added;
-    }
+    if (c == NullEntry) { _cards[i] = card_index; return added; }
   }
 #endif
   // Otherwise, we're full.
@@ -112,13 +119,15 @@ SparsePRTEntry::AddCardResult SparsePRTEntry::add_card(CardIdx_t card_index) {
 
 void SparsePRTEntry::copy_cards(CardIdx_t* cards) const {
 #if UNROLL_CARD_LOOPS
-  assert(CardsPerEntry == 4, "Assumption.  If changes, un-unroll.");
-  cards[0] = _cards[0];
-  cards[1] = _cards[1];
-  cards[2] = _cards[2];
-  cards[3] = _cards[3];
+  assert((cards_num() & (UnrollFactor - 1)) == 0, "Invalid number of cards in the entry");
+  for (int i = 0; i < cards_num(); i += UnrollFactor) {
+    cards[i] = _cards[i];
+    cards[i + 1] = _cards[i + 1];
+    cards[i + 2] = _cards[i + 2];
+    cards[i + 3] = _cards[i + 3];
+  }
 #else
-  for (int i = 0; i < CardsPerEntry; i++) {
+  for (int i = 0; i < cards_num(); i++) {
     cards[i] = _cards[i];
   }
 #endif
@@ -133,9 +142,8 @@ void SparsePRTEntry::copy_cards(SparsePRTEntry* e) const {
 RSHashTable::RSHashTable(size_t capacity) :
   _capacity(capacity), _capacity_mask(capacity-1),
   _occupied_entries(0), _occupied_cards(0),
-  _entries(NEW_C_HEAP_ARRAY(SparsePRTEntry, capacity)),
+  _entries((SparsePRTEntry*)NEW_C_HEAP_ARRAY(char, SparsePRTEntry::size() * capacity)),
   _buckets(NEW_C_HEAP_ARRAY(int, capacity)),
-  _next_deleted(NULL), _deleted(false),
   _free_list(NullEntry), _free_region(0)
 {
   clear();
@@ -162,8 +170,8 @@ void RSHashTable::clear() {
                 "_capacity too large");
 
   // This will put -1 == NullEntry in the key field of all entries.
-  memset(_entries, -1, _capacity * sizeof(SparsePRTEntry));
-  memset(_buckets, -1, _capacity * sizeof(int));
+  memset(_entries, NullEntry, _capacity * SparsePRTEntry::size());
+  memset(_buckets, NullEntry, _capacity * sizeof(int));
   _free_list = NullEntry;
   _free_region = 0;
 }
@@ -176,8 +184,8 @@ bool RSHashTable::add_card(RegionIdx_t region_ind, CardIdx_t card_index) {
   if (res == SparsePRTEntry::added) _occupied_cards++;
 #if SPARSE_PRT_VERBOSE
   gclog_or_tty->print_cr("       after add_card[%d]: valid-cards = %d.",
-                pointer_delta(e, _entries, sizeof(SparsePRTEntry)),
-                e->num_valid_cards());
+                         pointer_delta(e, _entries, SparsePRTEntry::size()),
+                         e->num_valid_cards());
 #endif
   assert(e->num_valid_cards() > 0, "Postcondition");
   return res != SparsePRTEntry::overflow;
@@ -198,6 +206,22 @@ bool RSHashTable::get_cards(RegionIdx_t region_ind, CardIdx_t* cards) {
   assert(cur->num_valid_cards() > 0, "Inv");
   cur->copy_cards(cards);
   return true;
+}
+
+SparsePRTEntry* RSHashTable::get_entry(RegionIdx_t region_ind) {
+  int ind = (int) (region_ind & capacity_mask());
+  int cur_ind = _buckets[ind];
+  SparsePRTEntry* cur;
+  while (cur_ind != NullEntry &&
+         (cur = entry(cur_ind))->r_ind() != region_ind) {
+    cur_ind = cur->next_index();
+  }
+
+  if (cur_ind == NullEntry) return NULL;
+  // Otherwise...
+  assert(cur->r_ind() == region_ind, "Postcondition of loop + test above.");
+  assert(cur->num_valid_cards() > 0, "Inv");
+  return cur;
 }
 
 bool RSHashTable::delete_entry(RegionIdx_t region_ind) {
@@ -226,20 +250,8 @@ RSHashTable::entry_for_region_ind(RegionIdx_t region_ind) const {
   int ind = (int) (region_ind & capacity_mask());
   int cur_ind = _buckets[ind];
   SparsePRTEntry* cur;
-  // XXX
-  // int k = 0;
   while (cur_ind != NullEntry &&
          (cur = entry(cur_ind))->r_ind() != region_ind) {
-    /*
-    k++;
-    if (k > 10) {
-      gclog_or_tty->print_cr("RSHashTable::entry_for_region_ind(%d): "
-                    "k = %d, cur_ind = %d.", region_ind, k, cur_ind);
-      if (k >= 1000) {
-        while (1) ;
-      }
-    }
-    */
     cur_ind = cur->next_index();
   }
 
@@ -296,40 +308,6 @@ void RSHashTable::add_entry(SparsePRTEntry* e) {
   assert(e2->num_valid_cards() > 0, "Postcondition.");
 }
 
-RSHashTable* RSHashTable::_head_deleted_list = NULL;
-
-void RSHashTable::add_to_deleted_list(RSHashTable* rsht) {
-  assert(!rsht->deleted(), "Should delete only once.");
-  rsht->set_deleted(true);
-  RSHashTable* hd = _head_deleted_list;
-  while (true) {
-    rsht->_next_deleted = hd;
-    RSHashTable* res =
-      (RSHashTable*)
-      Atomic::cmpxchg_ptr(rsht, &_head_deleted_list, hd);
-    if (res == hd) return;
-    else hd = res;
-  }
-}
-
-RSHashTable* RSHashTable::get_from_deleted_list() {
-  RSHashTable* hd = _head_deleted_list;
-  while (hd != NULL) {
-    RSHashTable* next = hd->next_deleted();
-    RSHashTable* res =
-      (RSHashTable*)
-      Atomic::cmpxchg_ptr(next, &_head_deleted_list, hd);
-    if (res == hd) {
-      hd->set_next_deleted(NULL);
-      hd->set_deleted(false);
-      return hd;
-    } else {
-      hd = res;
-    }
-  }
-  return NULL;
-}
-
 CardIdx_t /* RSHashTable:: */ RSHashTableIter::find_first_card_in_list() {
   CardIdx_t res;
   while (_bl_ind != RSHashTable::NullEntry) {
@@ -347,14 +325,14 @@ CardIdx_t /* RSHashTable:: */ RSHashTableIter::find_first_card_in_list() {
 size_t /* RSHashTable:: */ RSHashTableIter::compute_card_ind(CardIdx_t ci) {
   return
     _heap_bot_card_ind
-    + (_rsht->entry(_bl_ind)->r_ind() * CardsPerRegion)
+    + (_rsht->entry(_bl_ind)->r_ind() * HeapRegion::CardsPerRegion)
     + ci;
 }
 
 bool /* RSHashTable:: */ RSHashTableIter::has_next(size_t& card_index) {
   _card_ind++;
   CardIdx_t ci;
-  if (_card_ind < SparsePRTEntry::CardsPerEntry &&
+  if (_card_ind < SparsePRTEntry::cards_num() &&
       ((ci = _rsht->entry(_bl_ind)->card(_card_ind)) !=
        SparsePRTEntry::NullEntry)) {
     card_index = compute_card_ind(ci);
@@ -394,7 +372,7 @@ bool RSHashTable::contains_card(RegionIdx_t region_index, CardIdx_t card_index) 
 
 size_t RSHashTable::mem_size() const {
   return sizeof(this) +
-    capacity() * (sizeof(SparsePRTEntry) + sizeof(int));
+    capacity() * (SparsePRTEntry::size() + sizeof(int));
 }
 
 // ----------------------------------------------------------------------
@@ -442,15 +420,6 @@ void SparsePRT::cleanup_all() {
     sprt->cleanup();
     sprt = get_from_expanded_list();
   }
-  // Now delete all deleted RSHashTables.
-  RSHashTable* rsht = RSHashTable::get_from_deleted_list();
-  while (rsht != NULL) {
-#if SPARSE_PRT_VERBOSE
-    gclog_or_tty->print_cr("About to delete RSHT " PTR_FORMAT ".", rsht);
-#endif
-    delete rsht;
-    rsht = RSHashTable::get_from_deleted_list();
-  }
 }
 
 
@@ -490,6 +459,10 @@ bool SparsePRT::get_cards(RegionIdx_t region_id, CardIdx_t* cards) {
   return _next->get_cards(region_id, cards);
 }
 
+SparsePRTEntry* SparsePRT::get_entry(RegionIdx_t region_id) {
+  return _next->get_entry(region_id);
+}
+
 bool SparsePRT::delete_entry(RegionIdx_t region_id) {
   return _next->delete_entry(region_id);
 }
@@ -511,8 +484,10 @@ void SparsePRT::clear() {
 }
 
 void SparsePRT::cleanup() {
-  // Make sure that the current and next tables agree.  (Another mechanism
-  // takes care of deleting now-unused tables.)
+  // Make sure that the current and next tables agree.
+  if (_cur != _next) {
+    delete _cur;
+  }
   _cur = _next;
   set_expanded(false);
 }
@@ -535,7 +510,8 @@ void SparsePRT::expand() {
       _next->add_entry(e);
     }
   }
-  if (last != _cur)
-    RSHashTable::add_to_deleted_list(last);
+  if (last != _cur) {
+    delete last;
+  }
   add_to_expanded_list(this);
 }

@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,12 @@
 # Rules to build serviceability agent library, used by vm.make
 
 # libsaproc[_g].so: serviceability agent
-SAPROC = saproc$(G_SUFFIX)
+
+SAPROC = saproc
 LIBSAPROC = lib$(SAPROC).so
+
+SAPROC_G = $(SAPROC)$(G_SUFFIX)
+LIBSAPROC_G = lib$(SAPROC_G).so
 
 AGENT_DIR = $(GAMMADIR)/agent
 
@@ -49,10 +53,10 @@ ifeq ($(DEBUG_BINARIES), true)
 endif
 
 # if $(AGENT_DIR) does not exist, we don't build SA
-# also, we don't build SA on Itanium.
+# also, we don't build SA on Itanium or zero.
 
 checkAndBuildSA:
-	$(QUIETLY) if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" ] ; then \
+	$(QUIETLY) if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" -a "$(SRCARCH)" != "zero" ] ; then \
 	   $(MAKE) -f vm.make $(LIBSAPROC); \
 	fi
 
@@ -75,6 +79,7 @@ $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	           $(SA_DEBUG_CFLAGS)                                   \
 	           -o $@                                                \
 	           -lthread_db
+	$(QUIETLY) [ -f $(LIBSAPROC_G) ] || { ln -s $@ $(LIBSAPROC_G); }
 
 install_saproc: checkAndBuildSA
 	$(QUIETLY) if [ -e $(LIBSAPROC) ] ; then             \

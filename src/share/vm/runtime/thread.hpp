@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,12 @@ class IdealGraphPrinter;
 
 // Class hierarchy
 // - Thread
-//   - VMThread
+//   - NamedThread
+//     - VMThread
+//     - ConcurrentGCThread
+//     - WorkerThread
+//       - GangWorker
+//       - GCTaskThread
 //   - JavaThread
 //   - WatcherThread
 
@@ -249,6 +254,7 @@ class Thread: public ThreadShadow {
   virtual bool is_GC_task_thread() const             { return false; }
   virtual bool is_Watcher_thread() const             { return false; }
   virtual bool is_ConcurrentGC_thread() const        { return false; }
+  virtual bool is_Named_thread() const               { return false; }
 
   virtual char* name() const { return (char*)"Unknown thread"; }
 
@@ -374,7 +380,8 @@ class Thread: public ThreadShadow {
 
   // GC support
   // Apply "f->do_oop" to all root oops in "this".
-  void oops_do(OopClosure* f);
+  // Apply "cf->do_code_blob" (if !NULL) to all code blobs active in frames
+  void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   // Handles the parallel case for the method below.
 private:
@@ -398,7 +405,7 @@ public:
   }
 
   // Sweeper support
-  void nmethods_do();
+  void nmethods_do(CodeBlobClosure* cf);
 
   // Tells if adr belong to this thread. This is used
   // for checking if a lock is owned by the running thread.
@@ -567,12 +574,18 @@ class NamedThread: public Thread {
   };
  private:
   char* _name;
+  // log JavaThread being processed by oops_do
+  JavaThread* _processed_thread;
+
  public:
   NamedThread();
   ~NamedThread();
   // May only be called once per thread.
   void set_name(const char* format, ...);
+  virtual bool is_Named_thread() const { return true; }
   virtual char* name() const { return _name == NULL ? (char*)"Unknown Thread" : _name; }
+  JavaThread *processed_thread() { return _processed_thread; }
+  void set_processed_thread(JavaThread *thread) { _processed_thread = thread; }
 };
 
 // Worker threads are named and have an id of an assigned work.
@@ -683,8 +696,13 @@ class JavaThread: public Thread {
   methodOop     _callee_target;
 
   // Oop results of VM runtime calls
-  oop           _vm_result;                      // Used to pass back an oop result into Java code, GC-preserved
-  oop           _vm_result_2;                    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result;    // Used to pass back an oop result into Java code, GC-preserved
+  oop           _vm_result_2;  // Used to pass back an oop result into Java code, GC-preserved
+
+  // See ReduceInitialCardMarks: this holds the precise space interval of
+  // the most recent slow path allocation for which compiled code has
+  // elided card-marks for performance along the fast-path.
+  MemRegion     _deferred_card_mark;
 
   MonitorChunk* _monitor_chunks;                 // Contains the off stack monitors
                                                  // allocated during deoptimization
@@ -754,6 +772,7 @@ class JavaThread: public Thread {
   volatile address _exception_pc;                // PC where exception happened
   volatile address _exception_handler_pc;        // PC for handler of exception
   volatile int     _exception_stack_size;        // Size of frame where exception happened
+  volatile int     _is_method_handle_return;     // true (== 1) if the current exception PC is a MethodHandle call site.
 
   // support for compilation
   bool    _is_compiling;                         // is true if a compilation is active inthis thread (one compilation per thread possible)
@@ -967,11 +986,6 @@ class JavaThread: public Thread {
     return (_suspend_flags & _ext_suspended) != 0;
   }
 
-  // legacy method that checked for either external suspension or vm suspension
-  bool is_any_suspended() const {
-    return is_ext_suspended();
-  }
-
   bool is_external_suspend_with_lock() const {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
     return is_external_suspend();
@@ -997,10 +1011,6 @@ class JavaThread: public Thread {
     return ret;
   }
 
-  bool is_any_suspended_with_lock() const {
-    MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
-    return is_any_suspended();
-  }
   // utility methods to see if we are doing some kind of suspension
   bool is_being_ext_suspended() const            {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
@@ -1090,16 +1100,21 @@ class JavaThread: public Thread {
   oop  vm_result_2() const                       { return _vm_result_2; }
   void set_vm_result_2  (oop x)                  { _vm_result_2   = x; }
 
+  MemRegion deferred_card_mark() const           { return _deferred_card_mark; }
+  void set_deferred_card_mark(MemRegion mr)      { _deferred_card_mark = mr;   }
+
   // Exception handling for compiled methods
   oop      exception_oop() const                 { return _exception_oop; }
   int      exception_stack_size() const          { return _exception_stack_size; }
   address  exception_pc() const                  { return _exception_pc; }
   address  exception_handler_pc() const          { return _exception_handler_pc; }
+  bool     is_method_handle_return() const       { return _is_method_handle_return == 1; }
 
   void set_exception_oop(oop o)                  { _exception_oop = o; }
   void set_exception_pc(address a)               { _exception_pc = a; }
   void set_exception_handler_pc(address a)       { _exception_handler_pc = a; }
   void set_exception_stack_size(int size)        { _exception_stack_size = size; }
+  void set_is_method_handle_return(bool value)   { _is_method_handle_return = value ? 1 : 0; }
 
   // Stack overflow support
   inline size_t stack_available(address cur_sp);
@@ -1173,10 +1188,14 @@ class JavaThread: public Thread {
   static ByteSize exception_pc_offset()          { return byte_offset_of(JavaThread, _exception_pc        ); }
   static ByteSize exception_handler_pc_offset()  { return byte_offset_of(JavaThread, _exception_handler_pc); }
   static ByteSize exception_stack_size_offset()  { return byte_offset_of(JavaThread, _exception_stack_size); }
+  static ByteSize is_method_handle_return_offset() { return byte_offset_of(JavaThread, _is_method_handle_return); }
   static ByteSize stack_guard_state_offset()     { return byte_offset_of(JavaThread, _stack_guard_state   ); }
   static ByteSize suspend_flags_offset()         { return byte_offset_of(JavaThread, _suspend_flags       ); }
 
   static ByteSize do_not_unlock_if_synchronized_offset() { return byte_offset_of(JavaThread, _do_not_unlock_if_synchronized); }
+  static ByteSize should_post_on_exceptions_flag_offset() {
+    return byte_offset_of(JavaThread, _should_post_on_exceptions_flag);
+  }
 
 #ifndef SERIALGC
   static ByteSize satb_mark_queue_offset()       { return byte_offset_of(JavaThread, _satb_mark_queue); }
@@ -1238,10 +1257,10 @@ class JavaThread: public Thread {
   void frames_do(void f(frame*, const RegisterMap*));
 
   // Memory operations
-  void oops_do(OopClosure* f);
+  void oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   // Sweeper operations
-  void nmethods_do();
+  void nmethods_do(CodeBlobClosure* cf);
 
   // Memory management operations
   void gc_epilogue();
@@ -1415,6 +1434,16 @@ public:
   int get_interp_only_mode()                { return _interp_only_mode; }
   void increment_interp_only_mode()         { ++_interp_only_mode; }
   void decrement_interp_only_mode()         { --_interp_only_mode; }
+
+  // support for cached flag that indicates whether exceptions need to be posted for this thread
+  // if this is false, we can avoid deoptimizing when events are thrown
+  // this gets set to reflect whether jvmtiExport::post_exception_throw would actually do anything
+ private:
+  int    _should_post_on_exceptions_flag;
+
+ public:
+  int   should_post_on_exceptions_flag()  { return _should_post_on_exceptions_flag; }
+  void  set_should_post_on_exceptions_flag(int val)  { _should_post_on_exceptions_flag = val; }
 
  private:
   ThreadStatistics *_thread_stat;
@@ -1629,9 +1658,9 @@ class Threads: AllStatic {
 
   // Apply "f->do_oop" to all root oops in all threads.
   // This version may only be called by sequential code.
-  static void oops_do(OopClosure* f);
+  static void oops_do(OopClosure* f, CodeBlobClosure* cf);
   // This version may be called by sequential or parallel code.
-  static void possibly_parallel_oops_do(OopClosure* f);
+  static void possibly_parallel_oops_do(OopClosure* f, CodeBlobClosure* cf);
   // This creates a list of GCTasks, one per thread.
   static void create_thread_roots_tasks(GCTaskQueue* q);
   // This creates a list of GCTasks, one per thread, for marking objects.
@@ -1639,13 +1668,13 @@ class Threads: AllStatic {
 
   // Apply "f->do_oop" to roots in all threads that
   // are part of compiled frames
-  static void compiled_frame_oops_do(OopClosure* f);
+  static void compiled_frame_oops_do(OopClosure* f, CodeBlobClosure* cf);
 
   static void convert_hcode_pointers();
   static void restore_hcode_pointers();
 
   // Sweeper
-  static void nmethods_do();
+  static void nmethods_do(CodeBlobClosure* cf);
 
   static void gc_epilogue();
   static void gc_prologue();

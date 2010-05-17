@@ -299,7 +299,8 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
     }
   }
   klassOop k = SystemDictionary::resolve_from_stream(class_name, class_loader,
-                                                     Handle(), &st, CHECK_NULL);
+                                                     Handle(), &st, true,
+                                                     CHECK_NULL);
 
   if (TraceClassResolution && k != NULL) {
     trace_class_resolution(k);
@@ -395,11 +396,11 @@ JNI_ENTRY(jmethodID, jni_FromReflectedMethod(JNIEnv *env, jobject method))
   oop mirror     = NULL;
   int slot       = 0;
 
-  if (reflected->klass() == SystemDictionary::reflect_constructor_klass()) {
+  if (reflected->klass() == SystemDictionary::reflect_Constructor_klass()) {
     mirror = java_lang_reflect_Constructor::clazz(reflected);
     slot   = java_lang_reflect_Constructor::slot(reflected);
   } else {
-    assert(reflected->klass() == SystemDictionary::reflect_method_klass(), "wrong type");
+    assert(reflected->klass() == SystemDictionary::reflect_Method_klass(), "wrong type");
     mirror = java_lang_reflect_Method::clazz(reflected);
     slot   = java_lang_reflect_Method::slot(reflected);
   }
@@ -495,7 +496,7 @@ JNI_ENTRY(jclass, jni_GetSuperclass(JNIEnv *env, jclass sub))
   klassOop super = Klass::cast(k)->java_super();
   // super2 is the value computed by the compiler's getSuperClass intrinsic:
   debug_only(klassOop super2 = ( Klass::cast(k)->oop_is_javaArray()
-                                 ? SystemDictionary::object_klass()
+                                 ? SystemDictionary::Object_klass()
                                  : Klass::cast(k)->super() ) );
   assert(super == super2,
          "java_super computation depends on interface, array, other super");
@@ -583,7 +584,7 @@ JNI_ENTRY_NO_PRESERVE(void, jni_ExceptionDescribe(JNIEnv *env))
   if (thread->has_pending_exception()) {
     Handle ex(thread, thread->pending_exception());
     thread->clear_pending_exception();
-    if (ex->is_a(SystemDictionary::threaddeath_klass())) {
+    if (ex->is_a(SystemDictionary::ThreadDeath_klass())) {
       // Don't print anything if we are being killed.
     } else {
       jio_fprintf(defaultStream::error_stream(), "Exception ");
@@ -592,12 +593,12 @@ JNI_ENTRY_NO_PRESERVE(void, jni_ExceptionDescribe(JNIEnv *env))
         jio_fprintf(defaultStream::error_stream(),
         "in thread \"%s\" ", thread->get_thread_name());
       }
-      if (ex->is_a(SystemDictionary::throwable_klass())) {
+      if (ex->is_a(SystemDictionary::Throwable_klass())) {
         JavaValue result(T_VOID);
         JavaCalls::call_virtual(&result,
                                 ex,
                                 KlassHandle(THREAD,
-                                  SystemDictionary::throwable_klass()),
+                                  SystemDictionary::Throwable_klass()),
                                 vmSymbolHandles::printStackTrace_name(),
                                 vmSymbolHandles::void_method_signature(),
                                 THREAD);
@@ -2115,7 +2116,7 @@ JNI_ENTRY(jobject, jni_GetObjectArrayElement(JNIEnv *env, jobjectArray array, js
   DT_RETURN_MARK(GetObjectArrayElement, jobject, (const jobject&)ret);
   objArrayOop a = objArrayOop(JNIHandles::resolve_non_null(array));
   if (a->is_within_bounds(index)) {
-    jobject ret = JNIHandles::make_local(env, a->obj_at(index));
+    ret = JNIHandles::make_local(env, a->obj_at(index));
     return ret;
   } else {
     char buf[jintAsStringSize];
@@ -2149,14 +2150,14 @@ JNI_END
 
 #define DEFINE_NEWSCALARARRAY(Return,Allocator,Result) \
 \
-  DT_RETURN_MARK_DECL_FOR(Result, New##Result##Array, Return);\
+  DT_RETURN_MARK_DECL(New##Result##Array, Return);\
 \
 JNI_ENTRY(Return, \
           jni_New##Result##Array(JNIEnv *env, jsize len)) \
   JNIWrapper("New" XSTR(Result) "Array"); \
   DTRACE_PROBE2(hotspot_jni, New##Result##Array__entry, env, len);\
   Return ret = NULL;\
-  DT_RETURN_MARK_FOR(Result, New##Result##Array, Return, (const Return&)ret);\
+  DT_RETURN_MARK(New##Result##Array, Return, (const Return&)ret);\
 \
   oop obj= oopFactory::Allocator(len, CHECK_0); \
   ret = (Return) JNIHandles::make_local(env, obj); \
@@ -3230,6 +3231,21 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
   jint result = JNI_ERR;
   DT_RETURN_MARK(CreateJavaVM, jint, (const jint&)result);
 
+  // We're about to use Atomic::xchg for synchronization.  Some Zero
+  // platforms use the GCC builtin __sync_lock_test_and_set for this,
+  // but __sync_lock_test_and_set is not guaranteed to do what we want
+  // on all architectures.  So we check it works before relying on it.
+#if defined(ZERO) && defined(ASSERT)
+  {
+    jint a = 0xcafebabe;
+    jint b = Atomic::xchg(0xdeadbeef, &a);
+    void *c = &a;
+    void *d = Atomic::xchg_ptr(&b, &c);
+    assert(a == (jint) 0xdeadbeef && b == (jint) 0xcafebabe, "Atomic::xchg() works");
+    assert(c == &b && d == &a, "Atomic::xchg_ptr() works");
+  }
+#endif // ZERO && ASSERT
+
   // At the moment it's only possible to have one Java VM,
   // since some of the runtime state is in global variables.
 
@@ -3295,6 +3311,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
     OrderAccess::release_store(&vm_created, 0);
   }
 
+  NOT_PRODUCT(test_error_handler(ErrorHandlerTest));
   return result;
 }
 
@@ -3385,12 +3402,16 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
   thread->set_thread_state(_thread_in_vm);
   // Must do this before initialize_thread_local_storage
   thread->record_stack_base_and_size();
+
   thread->initialize_thread_local_storage();
 
   if (!os::create_attached_thread(thread)) {
     delete thread;
     return JNI_ERR;
   }
+  // Enable stack overflow checks
+  thread->create_stack_guard_pages();
+
   thread->initialize_tlab();
 
   // Crucial that we do not have a safepoint check for this thread, since it has
@@ -3435,9 +3456,6 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
   // this uses a fence to push the change through so we don't have
   // to regrab the threads_lock
   thread->set_attached();
-
-  // Enable stack overflow checks
-  thread->create_stack_guard_pages();
 
   // Set java thread status.
   java_lang_Thread::set_thread_status(thread->threadObj(),

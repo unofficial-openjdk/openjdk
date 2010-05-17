@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ static inline Address aaddress(int n) {
 }
 
 static inline Address iaddress(Register r) {
-  return Address(r14, r, Address::times_8, Interpreter::value_offset_in_bytes());
+  return Address(r14, r, Address::times_8);
 }
 
 static inline Address laddress(Register r) {
@@ -139,7 +139,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
         }
         __ g1_write_barrier_pre(rdx, r8, rbx, val != noreg);
         if (val == noreg) {
-          __ store_heap_oop(Address(rdx, 0), NULL_WORD);
+          __ store_heap_oop_null(Address(rdx, 0));
         } else {
           __ store_heap_oop(Address(rdx, 0), val);
           __ g1_write_barrier_post(rdx, val, r8, rbx);
@@ -152,7 +152,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::CardTableExtension:
       {
         if (val == noreg) {
-          __ store_heap_oop(obj, NULL_WORD);
+          __ store_heap_oop_null(obj);
         } else {
           __ store_heap_oop(obj, val);
           // flatten object address if needed
@@ -168,7 +168,7 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
     case BarrierSet::ModRef:
     case BarrierSet::Other:
       if (val == noreg) {
-        __ store_heap_oop(obj, NULL_WORD);
+        __ store_heap_oop_null(obj);
       } else {
         __ store_heap_oop(obj, val);
       }
@@ -203,18 +203,15 @@ void TemplateTable::patch_bytecode(Bytecodes::Code bytecode, Register bc,
     __ jcc(Assembler::notEqual, fast_patch);
     __ get_method(scratch);
     // Let breakpoint table handling rewrite to quicker bytecode
-    __ call_VM(noreg,
-               CAST_FROM_FN_PTR(address,
-                                InterpreterRuntime::set_original_bytecode_at),
-               scratch, r13, bc);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::set_original_bytecode_at), scratch, r13, bc);
 #ifndef ASSERT
     __ jmpb(patch_done);
-    __ bind(fast_patch);
-  }
 #else
     __ jmp(patch_done);
+#endif
     __ bind(fast_patch);
   }
+#ifdef ASSERT
   Label okay;
   __ load_unsigned_byte(scratch, at_bcp(0));
   __ cmpl(scratch, (int) Bytecodes::java_code(bytecode));
@@ -421,7 +418,6 @@ void TemplateTable::ldc2_w() {
 void TemplateTable::locals_index(Register reg, int offset) {
   __ load_unsigned_byte(reg, at_bcp(offset));
   __ negptr(reg);
-  if (TaggedStackInterpreter) __ shlptr(reg, 1);  // index = index*2
 }
 
 void TemplateTable::iload() {
@@ -463,53 +459,45 @@ void TemplateTable::iload() {
   // Get the local value into tos
   locals_index(rbx);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::fast_iload2() {
   transition(vtos, itos);
   locals_index(rbx);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
   __ push(itos);
   locals_index(rbx, 3);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::fast_iload() {
   transition(vtos, itos);
   locals_index(rbx);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::lload() {
   transition(vtos, ltos);
   locals_index(rbx);
   __ movq(rax, laddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagCategory2, rbx));
 }
 
 void TemplateTable::fload() {
   transition(vtos, ftos);
   locals_index(rbx);
   __ movflt(xmm0, faddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::dload() {
   transition(vtos, dtos);
   locals_index(rbx);
   __ movdbl(xmm0, daddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagCategory2, rbx));
 }
 
 void TemplateTable::aload() {
   transition(vtos, atos);
   locals_index(rbx);
   __ movptr(rax, aaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagReference, rbx));
 }
 
 void TemplateTable::locals_index_wide(Register reg) {
@@ -517,42 +505,36 @@ void TemplateTable::locals_index_wide(Register reg) {
   __ bswapl(reg);
   __ shrl(reg, 16);
   __ negptr(reg);
-  if (TaggedStackInterpreter) __ shlptr(reg, 1);  // index = index*2
 }
 
 void TemplateTable::wide_iload() {
   transition(vtos, itos);
   locals_index_wide(rbx);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::wide_lload() {
   transition(vtos, ltos);
   locals_index_wide(rbx);
   __ movq(rax, laddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagCategory2, rbx));
 }
 
 void TemplateTable::wide_fload() {
   transition(vtos, ftos);
   locals_index_wide(rbx);
   __ movflt(xmm0, faddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 }
 
 void TemplateTable::wide_dload() {
   transition(vtos, dtos);
   locals_index_wide(rbx);
   __ movdbl(xmm0, daddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagCategory2, rbx));
 }
 
 void TemplateTable::wide_aload() {
   transition(vtos, atos);
   locals_index_wide(rbx);
   __ movptr(rax, aaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagReference, rbx));
 }
 
 void TemplateTable::index_check(Register array, Register index) {
@@ -657,7 +639,6 @@ void TemplateTable::fast_icaload() {
   // load index out of locals
   locals_index(rbx);
   __ movl(rax, iaddress(rbx));
-  debug_only(__ verify_local_tag(frame::TagValue, rbx));
 
   // eax: index
   // rdx: array
@@ -684,31 +665,26 @@ void TemplateTable::saload() {
 void TemplateTable::iload(int n) {
   transition(vtos, itos);
   __ movl(rax, iaddress(n));
-  debug_only(__ verify_local_tag(frame::TagValue, n));
 }
 
 void TemplateTable::lload(int n) {
   transition(vtos, ltos);
   __ movq(rax, laddress(n));
-  debug_only(__ verify_local_tag(frame::TagCategory2, n));
 }
 
 void TemplateTable::fload(int n) {
   transition(vtos, ftos);
   __ movflt(xmm0, faddress(n));
-  debug_only(__ verify_local_tag(frame::TagValue, n));
 }
 
 void TemplateTable::dload(int n) {
   transition(vtos, dtos);
   __ movdbl(xmm0, daddress(n));
-  debug_only(__ verify_local_tag(frame::TagCategory2, n));
 }
 
 void TemplateTable::aload(int n) {
   transition(vtos, atos);
   __ movptr(rax, aaddress(n));
-  debug_only(__ verify_local_tag(frame::TagReference, n));
 }
 
 void TemplateTable::aload_0() {
@@ -794,36 +770,31 @@ void TemplateTable::istore() {
   transition(itos, vtos);
   locals_index(rbx);
   __ movl(iaddress(rbx), rax);
-  __ tag_local(frame::TagValue, rbx);
 }
 
 void TemplateTable::lstore() {
   transition(ltos, vtos);
   locals_index(rbx);
   __ movq(laddress(rbx), rax);
-  __ tag_local(frame::TagCategory2, rbx);
 }
 
 void TemplateTable::fstore() {
   transition(ftos, vtos);
   locals_index(rbx);
   __ movflt(faddress(rbx), xmm0);
-  __ tag_local(frame::TagValue, rbx);
 }
 
 void TemplateTable::dstore() {
   transition(dtos, vtos);
   locals_index(rbx);
   __ movdbl(daddress(rbx), xmm0);
-  __ tag_local(frame::TagCategory2, rbx);
 }
 
 void TemplateTable::astore() {
   transition(vtos, vtos);
-  __ pop_ptr(rax, rdx);    // will need to pop tag too
+  __ pop_ptr(rax);
   locals_index(rbx);
   __ movptr(aaddress(rbx), rax);
-  __ tag_local(rdx, rbx);  // store tag from stack, might be returnAddr
 }
 
 void TemplateTable::wide_istore() {
@@ -831,7 +802,6 @@ void TemplateTable::wide_istore() {
   __ pop_i();
   locals_index_wide(rbx);
   __ movl(iaddress(rbx), rax);
-  __ tag_local(frame::TagValue, rbx);
 }
 
 void TemplateTable::wide_lstore() {
@@ -839,7 +809,6 @@ void TemplateTable::wide_lstore() {
   __ pop_l();
   locals_index_wide(rbx);
   __ movq(laddress(rbx), rax);
-  __ tag_local(frame::TagCategory2, rbx);
 }
 
 void TemplateTable::wide_fstore() {
@@ -847,7 +816,6 @@ void TemplateTable::wide_fstore() {
   __ pop_f();
   locals_index_wide(rbx);
   __ movflt(faddress(rbx), xmm0);
-  __ tag_local(frame::TagValue, rbx);
 }
 
 void TemplateTable::wide_dstore() {
@@ -855,15 +823,13 @@ void TemplateTable::wide_dstore() {
   __ pop_d();
   locals_index_wide(rbx);
   __ movdbl(daddress(rbx), xmm0);
-  __ tag_local(frame::TagCategory2, rbx);
 }
 
 void TemplateTable::wide_astore() {
   transition(vtos, vtos);
-  __ pop_ptr(rax, rdx);    // will need to pop tag too
+  __ pop_ptr(rax);
   locals_index_wide(rbx);
   __ movptr(aaddress(rbx), rax);
-  __ tag_local(rdx, rbx);  // store tag from stack, might be returnAddr
 }
 
 void TemplateTable::iastore() {
@@ -975,7 +941,7 @@ void TemplateTable::aastore() {
 
   // Pop stack arguments
   __ bind(done);
-  __ addptr(rsp, 3 * Interpreter::stackElementSize());
+  __ addptr(rsp, 3 * Interpreter::stackElementSize);
 }
 
 void TemplateTable::bastore() {
@@ -1013,130 +979,125 @@ void TemplateTable::sastore() {
 void TemplateTable::istore(int n) {
   transition(itos, vtos);
   __ movl(iaddress(n), rax);
-  __ tag_local(frame::TagValue, n);
 }
 
 void TemplateTable::lstore(int n) {
   transition(ltos, vtos);
   __ movq(laddress(n), rax);
-  __ tag_local(frame::TagCategory2, n);
 }
 
 void TemplateTable::fstore(int n) {
   transition(ftos, vtos);
   __ movflt(faddress(n), xmm0);
-  __ tag_local(frame::TagValue, n);
 }
 
 void TemplateTable::dstore(int n) {
   transition(dtos, vtos);
   __ movdbl(daddress(n), xmm0);
-  __ tag_local(frame::TagCategory2, n);
 }
 
 void TemplateTable::astore(int n) {
   transition(vtos, vtos);
-  __ pop_ptr(rax, rdx);
+  __ pop_ptr(rax);
   __ movptr(aaddress(n), rax);
-  __ tag_local(rdx, n);
 }
 
 void TemplateTable::pop() {
   transition(vtos, vtos);
-  __ addptr(rsp, Interpreter::stackElementSize());
+  __ addptr(rsp, Interpreter::stackElementSize);
 }
 
 void TemplateTable::pop2() {
   transition(vtos, vtos);
-  __ addptr(rsp, 2 * Interpreter::stackElementSize());
+  __ addptr(rsp, 2 * Interpreter::stackElementSize);
 }
 
 void TemplateTable::dup() {
   transition(vtos, vtos);
-  __ load_ptr_and_tag(0, rax, rdx);
-  __ push_ptr(rax, rdx);
+  __ load_ptr(0, rax);
+  __ push_ptr(rax);
   // stack: ..., a, a
 }
 
 void TemplateTable::dup_x1() {
   transition(vtos, vtos);
   // stack: ..., a, b
-  __ load_ptr_and_tag(0, rax, rdx);  // load b
-  __ load_ptr_and_tag(1, rcx, rbx);  // load a
-  __ store_ptr_and_tag(1, rax, rdx); // store b
-  __ store_ptr_and_tag(0, rcx, rbx); // store a
-  __ push_ptr(rax, rdx);             // push b
+  __ load_ptr( 0, rax);  // load b
+  __ load_ptr( 1, rcx);  // load a
+  __ store_ptr(1, rax);  // store b
+  __ store_ptr(0, rcx);  // store a
+  __ push_ptr(rax);      // push b
   // stack: ..., b, a, b
 }
 
 void TemplateTable::dup_x2() {
   transition(vtos, vtos);
   // stack: ..., a, b, c
-  __ load_ptr_and_tag(0, rax, rdx);  // load c
-  __ load_ptr_and_tag(2, rcx, rbx);  // load a
-  __ store_ptr_and_tag(2, rax, rdx); // store c in a
-  __ push_ptr(rax, rdx);             // push c
+  __ load_ptr( 0, rax);  // load c
+  __ load_ptr( 2, rcx);  // load a
+  __ store_ptr(2, rax);  // store c in a
+  __ push_ptr(rax);      // push c
   // stack: ..., c, b, c, c
-  __ load_ptr_and_tag(2, rax, rdx);  // load b
-  __ store_ptr_and_tag(2, rcx, rbx); // store a in b
+  __ load_ptr( 2, rax);  // load b
+  __ store_ptr(2, rcx);  // store a in b
   // stack: ..., c, a, c, c
-  __ store_ptr_and_tag(1, rax, rdx); // store b in c
+  __ store_ptr(1, rax);  // store b in c
   // stack: ..., c, a, b, c
 }
 
 void TemplateTable::dup2() {
   transition(vtos, vtos);
   // stack: ..., a, b
-  __ load_ptr_and_tag(1, rax, rdx);  // load a
-  __ push_ptr(rax, rdx);             // push a
-  __ load_ptr_and_tag(1, rax, rdx);  // load b
-  __ push_ptr(rax, rdx);             // push b
+  __ load_ptr(1, rax);  // load a
+  __ push_ptr(rax);     // push a
+  __ load_ptr(1, rax);  // load b
+  __ push_ptr(rax);     // push b
   // stack: ..., a, b, a, b
 }
 
 void TemplateTable::dup2_x1() {
   transition(vtos, vtos);
   // stack: ..., a, b, c
-  __ load_ptr_and_tag(0, rcx, rbx);  // load c
-  __ load_ptr_and_tag(1, rax, rdx);  // load b
-  __ push_ptr(rax, rdx);             // push b
-  __ push_ptr(rcx, rbx);             // push c
+  __ load_ptr( 0, rcx);  // load c
+  __ load_ptr( 1, rax);  // load b
+  __ push_ptr(rax);      // push b
+  __ push_ptr(rcx);      // push c
   // stack: ..., a, b, c, b, c
-  __ store_ptr_and_tag(3, rcx, rbx); // store c in b
+  __ store_ptr(3, rcx);  // store c in b
   // stack: ..., a, c, c, b, c
-  __ load_ptr_and_tag(4, rcx, rbx);  // load a
-  __ store_ptr_and_tag(2, rcx, rbx); // store a in 2nd c
+  __ load_ptr( 4, rcx);  // load a
+  __ store_ptr(2, rcx);  // store a in 2nd c
   // stack: ..., a, c, a, b, c
-  __ store_ptr_and_tag(4, rax, rdx); // store b in a
+  __ store_ptr(4, rax);  // store b in a
   // stack: ..., b, c, a, b, c
 }
 
 void TemplateTable::dup2_x2() {
   transition(vtos, vtos);
   // stack: ..., a, b, c, d
-  __ load_ptr_and_tag(0, rcx, rbx);  // load d
-  __ load_ptr_and_tag(1, rax, rdx);  // load c
-  __ push_ptr(rax, rdx);             // push c
-  __ push_ptr(rcx, rbx);             // push d
+  __ load_ptr( 0, rcx);  // load d
+  __ load_ptr( 1, rax);  // load c
+  __ push_ptr(rax);      // push c
+  __ push_ptr(rcx);      // push d
   // stack: ..., a, b, c, d, c, d
-  __ load_ptr_and_tag(4, rax, rdx);  // load b
-  __ store_ptr_and_tag(2, rax, rdx); // store b in d
-  __ store_ptr_and_tag(4, rcx, rbx); // store d in b
+  __ load_ptr( 4, rax);  // load b
+  __ store_ptr(2, rax);  // store b in d
+  __ store_ptr(4, rcx);  // store d in b
   // stack: ..., a, d, c, b, c, d
-  __ load_ptr_and_tag(5, rcx, rbx);  // load a
-  __ load_ptr_and_tag(3, rax, rdx);  // load c
-  __ store_ptr_and_tag(3, rcx, rbx); // store a in c
-  __ store_ptr_and_tag(5, rax, rdx); // store c in a
+  __ load_ptr( 5, rcx);  // load a
+  __ load_ptr( 3, rax);  // load c
+  __ store_ptr(3, rcx);  // store a in c
+  __ store_ptr(5, rax);  // store c in a
   // stack: ..., c, d, a, b, c, d
 }
 
 void TemplateTable::swap() {
   transition(vtos, vtos);
   // stack: ..., a, b
-  __ load_ptr_and_tag(1, rcx, rbx);  // load a
-  __ load_ptr_and_tag(0, rax, rdx);  // load b
-  __ store_ptr_and_tag(0, rcx, rbx); // store a in b
-  __ store_ptr_and_tag(1, rax, rdx); // store b in a
+  __ load_ptr( 1, rcx);  // load a
+  __ load_ptr( 0, rax);  // load b
+  __ store_ptr(0, rcx);  // store a in b
+  __ store_ptr(1, rax);  // store b in a
   // stack: ..., b, a
 }
 
@@ -1159,12 +1120,12 @@ void TemplateTable::iop2(Operation op) {
 void TemplateTable::lop2(Operation op) {
   transition(ltos, ltos);
   switch (op) {
-  case add  :                    __ pop_l(rdx); __ addptr (rax, rdx); break;
-  case sub  : __ mov(rdx, rax);  __ pop_l(rax); __ subptr (rax, rdx); break;
-  case _and :                    __ pop_l(rdx); __ andptr (rax, rdx); break;
-  case _or  :                    __ pop_l(rdx); __ orptr  (rax, rdx); break;
-  case _xor :                    __ pop_l(rdx); __ xorptr (rax, rdx); break;
-  default : ShouldNotReachHere();
+  case add  :                    __ pop_l(rdx); __ addptr(rax, rdx); break;
+  case sub  : __ mov(rdx, rax);  __ pop_l(rax); __ subptr(rax, rdx); break;
+  case _and :                    __ pop_l(rdx); __ andptr(rax, rdx); break;
+  case _or  :                    __ pop_l(rdx); __ orptr (rax, rdx); break;
+  case _xor :                    __ pop_l(rdx); __ xorptr(rax, rdx); break;
+  default   : ShouldNotReachHere();
   }
 }
 
@@ -1253,7 +1214,7 @@ void TemplateTable::fop2(Operation op) {
   switch (op) {
   case add:
     __ addss(xmm0, at_rsp());
-    __ addptr(rsp, Interpreter::stackElementSize());
+    __ addptr(rsp, Interpreter::stackElementSize);
     break;
   case sub:
     __ movflt(xmm1, xmm0);
@@ -1262,7 +1223,7 @@ void TemplateTable::fop2(Operation op) {
     break;
   case mul:
     __ mulss(xmm0, at_rsp());
-    __ addptr(rsp, Interpreter::stackElementSize());
+    __ addptr(rsp, Interpreter::stackElementSize);
     break;
   case div:
     __ movflt(xmm1, xmm0);
@@ -1285,7 +1246,7 @@ void TemplateTable::dop2(Operation op) {
   switch (op) {
   case add:
     __ addsd(xmm0, at_rsp());
-    __ addptr(rsp, 2 * Interpreter::stackElementSize());
+    __ addptr(rsp, 2 * Interpreter::stackElementSize);
     break;
   case sub:
     __ movdbl(xmm1, xmm0);
@@ -1294,7 +1255,7 @@ void TemplateTable::dop2(Operation op) {
     break;
   case mul:
     __ mulsd(xmm0, at_rsp());
-    __ addptr(rsp, 2 * Interpreter::stackElementSize());
+    __ addptr(rsp, 2 * Interpreter::stackElementSize);
     break;
   case div:
     __ movdbl(xmm1, xmm0);
@@ -2054,26 +2015,28 @@ void TemplateTable::volatile_barrier(Assembler::Membar_mask_bits
   }
 }
 
-void TemplateTable::resolve_cache_and_index(int byte_no,
-                                            Register Rcache,
-                                            Register index) {
+void TemplateTable::resolve_cache_and_index(int byte_no, Register Rcache, Register index) {
   assert(byte_no == 1 || byte_no == 2, "byte_no out of range");
+  bool is_invokedynamic = (bytecode() == Bytecodes::_invokedynamic);
 
   const Register temp = rbx;
   assert_different_registers(Rcache, index, temp);
 
   const int shift_count = (1 + byte_no) * BitsPerByte;
   Label resolved;
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
-  __ movl(temp, Address(Rcache,
-                        index, Address::times_8,
-                        constantPoolCacheOopDesc::base_offset() +
-                        ConstantPoolCacheEntry::indices_offset()));
-  __ shrl(temp, shift_count);
-  // have we resolved this bytecode?
-  __ andl(temp, 0xFF);
-  __ cmpl(temp, (int) bytecode());
-  __ jcc(Assembler::equal, resolved);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
+  if (is_invokedynamic) {
+    // we are resolved if the f1 field contains a non-null CallSite object
+    __ cmpptr(Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::f1_offset()), (int32_t) NULL_WORD);
+    __ jcc(Assembler::notEqual, resolved);
+  } else {
+    __ movl(temp, Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
+    __ shrl(temp, shift_count);
+    // have we resolved this bytecode?
+    __ andl(temp, 0xFF);
+    __ cmpl(temp, (int) bytecode());
+    __ jcc(Assembler::equal, resolved);
+  }
 
   // resolve first time through
   address entry;
@@ -2090,6 +2053,9 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   case Bytecodes::_invokeinterface:
     entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invoke);
     break;
+  case Bytecodes::_invokedynamic:
+    entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_invokedynamic);
+    break;
   default:
     ShouldNotReachHere();
     break;
@@ -2098,7 +2064,7 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   __ call_VM(noreg, entry, temp);
 
   // Update registers with resolved info
-  __ get_cache_and_index_at_bcp(Rcache, index, 1);
+  __ get_cache_and_index_at_bcp(Rcache, index, 1, is_invokedynamic);
   __ bind(resolved);
 }
 
@@ -2780,7 +2746,6 @@ void TemplateTable::fast_xaccess(TosState state) {
 
   // get receiver
   __ movptr(rax, aaddress(0));
-  debug_only(__ verify_local_tag(frame::TagReference, 0));
   // access constant pool cache
   __ get_cache_and_index_at_bcp(rcx, rdx, 2);
   __ movptr(rbx,
@@ -2832,15 +2797,14 @@ void TemplateTable::count_calls(Register method, Register temp) {
   ShouldNotReachHere();
 }
 
-void TemplateTable::prepare_invoke(Register method,
-                                   Register index,
-                                   int byte_no,
-                                   Bytecodes::Code code) {
+void TemplateTable::prepare_invoke(Register method, Register index, int byte_no) {
   // determine flags
+  Bytecodes::Code code = bytecode();
   const bool is_invokeinterface  = code == Bytecodes::_invokeinterface;
+  const bool is_invokedynamic    = code == Bytecodes::_invokedynamic;
   const bool is_invokevirtual    = code == Bytecodes::_invokevirtual;
   const bool is_invokespecial    = code == Bytecodes::_invokespecial;
-  const bool load_receiver       = code != Bytecodes::_invokestatic;
+  const bool load_receiver      = (code != Bytecodes::_invokestatic && code != Bytecodes::_invokedynamic);
   const bool receiver_null_check = is_invokespecial;
   const bool save_flags = is_invokeinterface || is_invokevirtual;
   // setup registers & access constant pool cache
@@ -2857,9 +2821,8 @@ void TemplateTable::prepare_invoke(Register method,
   if (load_receiver) {
     __ movl(recv, flags);
     __ andl(recv, 0xFF);
-    if (TaggedStackInterpreter) __ shll(recv, 1);  // index*2
-    __ movptr(recv, Address(rsp, recv, Address::times_8,
-                                 -Interpreter::expr_offset_in_bytes(1)));
+    Address recv_addr(rsp, recv, Address::times_8, -Interpreter::expr_offset_in_bytes(1));
+    __ movptr(recv, recv_addr);
     __ verify_oop(recv);
   }
 
@@ -2878,10 +2841,14 @@ void TemplateTable::prepare_invoke(Register method,
   ConstantPoolCacheEntry::verify_tosBits();
   // load return address
   {
-    ExternalAddress return_5((address)Interpreter::return_5_addrs_by_index_table());
-    ExternalAddress return_3((address)Interpreter::return_3_addrs_by_index_table());
-    __ lea(rscratch1, (is_invokeinterface ? return_5 : return_3));
-    __ movptr(flags, Address(rscratch1, flags, Address::times_8));
+    address table_addr;
+    if (is_invokeinterface || is_invokedynamic)
+      table_addr = (address)Interpreter::return_5_addrs_by_index_table();
+    else
+      table_addr = (address)Interpreter::return_3_addrs_by_index_table();
+    ExternalAddress table(table_addr);
+    __ lea(rscratch1, table);
+    __ movptr(flags, Address(rscratch1, flags, Address::times_ptr));
   }
 
   // push return address
@@ -2947,7 +2914,7 @@ void TemplateTable::invokevirtual_helper(Register index,
 
 void TemplateTable::invokevirtual(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
 
   // rbx: index
   // rcx: receiver
@@ -2959,7 +2926,7 @@ void TemplateTable::invokevirtual(int byte_no) {
 
 void TemplateTable::invokespecial(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -2969,7 +2936,7 @@ void TemplateTable::invokespecial(int byte_no) {
 
 void TemplateTable::invokestatic(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rbx, noreg, byte_no, bytecode());
+  prepare_invoke(rbx, noreg, byte_no);
   // do the call
   __ verify_oop(rbx);
   __ profile_call(rax);
@@ -2983,7 +2950,7 @@ void TemplateTable::fast_invokevfinal(int byte_no) {
 
 void TemplateTable::invokeinterface(int byte_no) {
   transition(vtos, vtos);
-  prepare_invoke(rax, rbx, byte_no, bytecode());
+  prepare_invoke(rax, rbx, byte_no);
 
   // rax: Interface
   // rbx: index
@@ -3072,7 +3039,24 @@ void TemplateTable::invokedynamic(int byte_no) {
     return;
   }
 
-  __ stop("invokedynamic NYI");//6815692//
+  prepare_invoke(rax, rbx, byte_no);
+
+  // rax: CallSite object (f1)
+  // rbx: unused (f2)
+  // rcx: receiver address
+  // rdx: flags (unused)
+
+  if (ProfileInterpreter) {
+    Label L;
+    // %%% should make a type profile for any invokedynamic that takes a ref argument
+    // profile this call
+    __ profile_call(r13);
+  }
+
+  __ movptr(rcx, Address(rax, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
+  __ null_check(rcx);
+  __ prepare_to_jump_from_interpreted();
+  __ jump_to_method_handle_entry(rcx, rdx);
 }
 
 
@@ -3212,17 +3196,19 @@ void TemplateTable::_new() {
     __ xorl(rcx, rcx); // use zero reg to clear memory (shorter code)
     __ store_klass_gap(rax, rcx);  // zero klass gap for compressed oops
     __ store_klass(rax, rsi);      // store klass last
+
+    {
+      SkipIfEqual skip(_masm, &DTraceAllocProbes, false);
+      // Trigger dtrace event for fastpath
+      __ push(atos); // save the return value
+      __ call_VM_leaf(
+           CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_object_alloc), rax);
+      __ pop(atos); // restore the return value
+
+    }
     __ jmp(done);
   }
 
-  {
-    SkipIfEqual skip(_masm, &DTraceAllocProbes, false);
-    // Trigger dtrace event for fastpath
-    __ push(atos); // save the return value
-    __ call_VM_leaf(
-         CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_object_alloc), rax);
-    __ pop(atos); // restore the return value
-  }
 
   // slow case
   __ bind(slow_case);
@@ -3586,13 +3572,11 @@ void TemplateTable::multianewarray() {
   __ load_unsigned_byte(rax, at_bcp(3)); // get number of dimensions
   // last dim is on top of stack; we want address of first one:
   // first_addr = last_addr + (ndims - 1) * wordSize
-  if (TaggedStackInterpreter) __ shll(rax, 1);  // index*2
   __ lea(c_rarg1, Address(rsp, rax, Address::times_8, -wordSize));
   call_VM(rax,
           CAST_FROM_FN_PTR(address, InterpreterRuntime::multianewarray),
           c_rarg1);
   __ load_unsigned_byte(rbx, at_bcp(3));
-  if (TaggedStackInterpreter) __ shll(rbx, 1);  // index*2
   __ lea(rsp, Address(rsp, rbx, Address::times_8));
 }
 #endif // !CC_INTERP

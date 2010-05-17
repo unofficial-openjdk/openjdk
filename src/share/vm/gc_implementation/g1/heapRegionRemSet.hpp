@@ -179,15 +179,9 @@ private:
 
   OtherRegionsTable _other_regions;
 
-  // One set bit for every region that has an entry for this one.
-  BitMap _outgoing_region_map;
-
-  // Clear entries for the current region in any rem sets named in
-  // the _outgoing_region_map.
-  void clear_outgoing_entries();
-
   enum ParIterState { Unclaimed, Claimed, Complete };
-  ParIterState _iter_state;
+  volatile ParIterState _iter_state;
+  volatile jlong _iter_claimed;
 
   // Unused unless G1RecordHRRSOops is true.
 
@@ -209,6 +203,7 @@ public:
                    HeapRegion* hr);
 
   static int num_par_rem_sets();
+  static void setup_remset_size();
 
   HeapRegion* hr() const {
     return _other_regions.hr();
@@ -241,10 +236,6 @@ public:
     _other_regions.add_reference(from, tid);
   }
 
-  // Records the fact that the current region contains an outgoing
-  // reference into "to_hr".
-  void add_outgoing_reference(HeapRegion* to_hr);
-
   // Removes any entries shown by the given bitmaps to contain only dead
   // objects.
   void scrub(CardTableModRefBS* ctbs, BitMap* region_bm, BitMap* card_bm);
@@ -271,6 +262,19 @@ public:
   void set_iter_complete();
   // Returns "true" iff the region's iteration is complete.
   bool iter_is_complete();
+
+  // Support for claiming blocks of cards during iteration
+  void set_iter_claimed(size_t x) { _iter_claimed = (jlong)x; }
+  size_t iter_claimed() const { return (size_t)_iter_claimed; }
+  // Claim the next block of cards
+  size_t iter_claimed_next(size_t step) {
+    size_t current, next;
+    do {
+      current = iter_claimed();
+      next = current + step;
+    } while (Atomic::cmpxchg((jlong)next, &_iter_claimed, (jlong)current) != (jlong)current);
+    return current;
+  }
 
   // Initialize the given iterator to iterate over this rem set.
   void init_iterator(HeapRegionRemSetIterator* iter) const;

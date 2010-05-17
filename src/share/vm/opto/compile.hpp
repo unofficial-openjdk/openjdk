@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ class Node_Notes;
 class OptoReg;
 class PhaseCFG;
 class PhaseGVN;
+class PhaseIterGVN;
 class PhaseRegAlloc;
 class PhaseCCP;
 class PhaseCCP_DCE;
@@ -145,10 +146,10 @@ class Compile : public Phase {
   int                   _orig_pc_slot_offset_in_bytes;
 
   int                   _major_progress;        // Count of something big happening
-  bool                  _deopt_happens;         // TRUE if de-optimization CAN happen
   bool                  _has_loops;             // True if the method _may_ have some loops
   bool                  _has_split_ifs;         // True if the method _may_ have some split-if
   bool                  _has_unsafe_access;     // True if the method _may_ produce faults in unsafe loads or stores.
+  bool                  _has_stringbuilder;     // True StringBuffers or StringBuilders are allocated
   uint                  _trap_hist[trapHistLength];  // Cumulative traps
   bool                  _trap_can_recompile;    // Have we emitted a recompiling trap?
   uint                  _decompile_count;       // Cumulative decompilation counts.
@@ -164,6 +165,9 @@ class Compile : public Phase {
   bool                  _parsed_irreducible_loop; // True if ciTypeFlow detected irreducible loops during parsing
 #endif
 
+  // JSR 292
+  bool                  _has_method_handle_invokes; // True if this method has MethodHandle invokes.
+
   // Compilation environment.
   Arena                 _comp_arena;            // Arena with lifetime equivalent to Compile
   ciEnv*                _env;                   // CI interface
@@ -171,6 +175,7 @@ class Compile : public Phase {
   const char*           _failure_reason;        // for record_failure/failing pattern
   GrowableArray<CallGenerator*>* _intrinsics;   // List of intrinsics.
   GrowableArray<Node*>* _macro_nodes;           // List of nodes which need to be expanded before matching.
+  GrowableArray<Node*>* _predicate_opaqs;       // List of Opaque1 nodes for the loop predicates.
   ConnectionGraph*      _congraph;
 #ifndef PRODUCT
   IdealGraphPrinter*    _printer;
@@ -218,6 +223,9 @@ class Compile : public Phase {
   PhaseGVN*             _initial_gvn;           // Results of parse-time PhaseGVN
   Unique_Node_List*     _for_igvn;              // Initial work-list for next round of Iterative GVN
   WarmCallInfo*         _warm_calls;            // Sorted work-list for heat-based inlining.
+
+  GrowableArray<CallGenerator*> _late_inlines;  // List of CallGenerators to be revisited after
+                                                // main parsing has finished.
 
   // Matching, CFG layout, allocation, code generation
   PhaseCFG*             _cfg;                   // Results of CFG finding
@@ -291,13 +299,14 @@ class Compile : public Phase {
   void          set_freq_inline_size(int n)     { _freq_inline_size = n; }
   int               freq_inline_size() const    { return _freq_inline_size; }
   void          set_max_inline_size(int n)      { _max_inline_size = n; }
-  bool              deopt_happens() const       { return _deopt_happens; }
   bool              has_loops() const           { return _has_loops; }
   void          set_has_loops(bool z)           { _has_loops = z; }
   bool              has_split_ifs() const       { return _has_split_ifs; }
   void          set_has_split_ifs(bool z)       { _has_split_ifs = z; }
   bool              has_unsafe_access() const   { return _has_unsafe_access; }
   void          set_has_unsafe_access(bool z)   { _has_unsafe_access = z; }
+  bool              has_stringbuilder() const   { return _has_stringbuilder; }
+  void          set_has_stringbuilder(bool z)   { _has_stringbuilder = z; }
   void          set_trap_count(uint r, uint c)  { assert(r < trapHistLength, "oob");        _trap_hist[r] = c; }
   uint              trap_count(uint r) const    { assert(r < trapHistLength, "oob"); return _trap_hist[r]; }
   bool              trap_can_recompile() const  { return _trap_can_recompile; }
@@ -328,6 +337,10 @@ class Compile : public Phase {
   void          set_parsed_irreducible_loop(bool z) { _parsed_irreducible_loop = z; }
 #endif
 
+  // JSR 292
+  bool              has_method_handle_invokes() const { return _has_method_handle_invokes;     }
+  void          set_has_method_handle_invokes(bool z) {        _has_method_handle_invokes = z; }
+
   void begin_method() {
 #ifndef PRODUCT
     if (_printer) _printer->begin_method(this);
@@ -345,7 +358,9 @@ class Compile : public Phase {
   }
 
   int           macro_count()                   { return _macro_nodes->length(); }
+  int           predicate_count()               { return _predicate_opaqs->length();}
   Node*         macro_node(int idx)             { return _macro_nodes->at(idx); }
+  Node*         predicate_opaque1_node(int idx) { return _predicate_opaqs->at(idx);}
   ConnectionGraph* congraph()                   { return _congraph;}
   void add_macro_node(Node * n) {
     //assert(n->is_macro(), "must be a macro node");
@@ -357,7 +372,19 @@ class Compile : public Phase {
     // that the node is in the array before attempting to remove it
     if (_macro_nodes->contains(n))
       _macro_nodes->remove(n);
+    // remove from _predicate_opaqs list also if it is there
+    if (predicate_count() > 0 && _predicate_opaqs->contains(n)){
+      _predicate_opaqs->remove(n);
+    }
   }
+  void add_predicate_opaq(Node * n) {
+    assert(!_predicate_opaqs->contains(n), " duplicate entry in predicate opaque1");
+    assert(_macro_nodes->contains(n), "should have already been in macro list");
+    _predicate_opaqs->append(n);
+  }
+  // remove the opaque nodes that protect the predicates so that the unused checks and
+  // uncommon traps will be eliminated from the graph.
+  void cleanup_loop_predicates(PhaseIterGVN &igvn);
 
   // Compilation environment.
   Arena*            comp_arena()                { return &_comp_arena; }
@@ -475,6 +502,7 @@ class Compile : public Phase {
   // Decide how to build a call.
   // The profile factor is a discount to apply to this site's interp. profile.
   CallGenerator*    call_generator(ciMethod* call_method, int vtable_index, bool call_is_virtual, JVMState* jvms, bool allow_inline, float profile_factor);
+  bool should_delay_inlining(ciMethod* call_method, JVMState* jvms);
 
   // Report if there were too many traps at a current method and bci.
   // Report if a trap was recorded, and/or PerMethodTrapLimit was exceeded.
@@ -495,12 +523,20 @@ class Compile : public Phase {
   void          set_initial_gvn(PhaseGVN *gvn)           { _initial_gvn = gvn; }
   void          set_for_igvn(Unique_Node_List *for_igvn) { _for_igvn = for_igvn; }
 
+  // Replace n by nn using initial_gvn, calling hash_delete and
+  // record_for_igvn as needed.
+  void gvn_replace_by(Node* n, Node* nn);
+
+
   void              identify_useful_nodes(Unique_Node_List &useful);
   void              remove_useless_nodes  (Unique_Node_List &useful);
 
   WarmCallInfo*     warm_calls() const          { return _warm_calls; }
   void          set_warm_calls(WarmCallInfo* l) { _warm_calls = l; }
   WarmCallInfo* pop_warm_call();
+
+  // Record this CallGenerator for inlining at the end of parsing.
+  void              add_late_inline(CallGenerator* cg) { _late_inlines.push(cg); }
 
   // Matching, CFG layout, allocation, code generation
   PhaseCFG*         cfg()                       { return _cfg; }

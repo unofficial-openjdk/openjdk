@@ -799,8 +799,7 @@ class PSParallelCompact : AllStatic {
     FollowRootClosure(ParCompactionManager* cm) : _compaction_manager(cm) { }
     virtual void do_oop(oop* p);
     virtual void do_oop(narrowOop* p);
-    virtual const bool do_nmethods() const { return true; }
-  };
+ };
 
   class FollowStackClosure: public VoidClosure {
    private:
@@ -817,6 +816,8 @@ class PSParallelCompact : AllStatic {
     AdjustPointerClosure(bool is_root) : _is_root(is_root) { }
     virtual void do_oop(oop* p);
     virtual void do_oop(narrowOop* p);
+    // do not walk from thread stacks to the code cache on this phase
+    virtual void do_code_blob(CodeBlob* cb) const { }
   };
 
   // Closure for verifying update of pointers.  Does not
@@ -900,8 +901,8 @@ class PSParallelCompact : AllStatic {
   // Mark live objects
   static void marking_phase(ParCompactionManager* cm,
                             bool maximum_heap_compaction);
-  static void follow_stack(ParCompactionManager* cm);
-  static void follow_weak_klass_links(ParCompactionManager* cm);
+  static void follow_weak_klass_links();
+  static void follow_mdo_weak_refs();
 
   template <class T> static inline void adjust_pointer(T* p, bool is_root);
   static void adjust_root_pointer(oop* p) { adjust_pointer(p, true); }
@@ -1062,7 +1063,6 @@ class PSParallelCompact : AllStatic {
     MarkAndPushClosure(ParCompactionManager* cm) : _compaction_manager(cm) { }
     virtual void do_oop(oop* p);
     virtual void do_oop(narrowOop* p);
-    virtual const bool do_nmethods() const { return true; }
   };
 
   PSParallelCompact();
@@ -1221,6 +1221,9 @@ class PSParallelCompact : AllStatic {
   // Update subklass/sibling/implementor links at end of marking.
   static void revisit_weak_klass_link(ParCompactionManager* cm, Klass* k);
 
+  // Clear unmarked oops in MDOs at the end of marking.
+  static void revisit_mdo(ParCompactionManager* cm, DataLayout* p);
+
 #ifndef PRODUCT
   // Debugging support.
   static const char* space_names[last_space_id];
@@ -1272,7 +1275,7 @@ inline void PSParallelCompact::follow_root(ParCompactionManager* cm, T* p) {
       }
     }
   }
-  follow_stack(cm);
+  cm->follow_marking_stacks();
 }
 
 template <class T>

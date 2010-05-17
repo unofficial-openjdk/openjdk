@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -142,6 +142,9 @@ void os::run_periodic_checks() {
 }
 
 #ifndef _WIN64
+// previous UnhandledExceptionFilter, if there is one
+static LPTOP_LEVEL_EXCEPTION_FILTER prev_uef_handler = NULL;
+
 LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo);
 #endif
 void os::init_system_properties_values() {
@@ -260,7 +263,8 @@ void os::init_system_properties_values() {
   }
 
 #ifndef _WIN64
-  SetUnhandledExceptionFilter(Handle_FLT_Exception);
+  // set our UnhandledExceptionFilter and save any previous one
+  prev_uef_handler = SetUnhandledExceptionFilter(Handle_FLT_Exception);
 #endif
 
   // Done
@@ -720,7 +724,7 @@ jlong offset() {
   java_origin.wMilliseconds  = 0;
   FILETIME jot;
   if (!SystemTimeToFileTime(&java_origin, &jot)) {
-    fatal1("Error = %d\nWindows error", GetLastError());
+    fatal(err_msg("Error = %d\nWindows error", GetLastError()));
   }
   _calculated_offset = jlong_from(jot.dwHighDateTime, jot.dwLowDateTime);
   _has_calculated_offset = 1;
@@ -994,15 +998,16 @@ os::closedir(DIR *dirp)
 
 const char* os::dll_file_extension() { return ".dll"; }
 
-const char * os::get_temp_directory()
-{
-    static char path_buf[MAX_PATH];
-    if (GetTempPath(MAX_PATH, path_buf)>0)
-      return path_buf;
-    else{
-      path_buf[0]='\0';
-      return path_buf;
-    }
+const char* os::get_temp_directory() {
+  const char *prop = Arguments::get_property("java.io.tmpdir");
+  if (prop != 0) return prop;
+  static char path_buf[MAX_PATH];
+  if (GetTempPath(MAX_PATH, path_buf)>0)
+    return path_buf;
+  else{
+    path_buf[0]='\0';
+    return path_buf;
+  }
 }
 
 static bool file_exists(const char* filename) {
@@ -1526,7 +1531,8 @@ void os::print_os_info(outputStream* st) {
     case 5000: st->print(" Windows 2000"); break;
     case 5001: st->print(" Windows XP"); break;
     case 5002:
-    case 6000: {
+    case 6000:
+    case 6001: {
       // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
       // find out whether we are running on 64 bit processor or not.
       SYSTEM_INFO si;
@@ -1549,11 +1555,25 @@ void os::print_os_info(outputStream* st) {
           st->print(" Windows XP x64 Edition");
         else
             st->print(" Windows Server 2003 family");
-      } else { // os_vers == 6000
+      } else if (os_vers == 6000) {
         if (osvi.wProductType == VER_NT_WORKSTATION)
             st->print(" Windows Vista");
         else
             st->print(" Windows Server 2008");
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+            st->print(" , 64 bit");
+      } else if (os_vers == 6001) {
+        if (osvi.wProductType == VER_NT_WORKSTATION) {
+            st->print(" Windows 7");
+        } else {
+            // Unrecognized windows, print out its major and minor versions
+            st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+            st->print(" , 64 bit");
+      } else { // future os
+        // Unrecognized windows, print out its major and minor versions
+        st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
       }
@@ -1954,7 +1974,7 @@ LONG Handle_IDiv_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
 #ifndef  _WIN64
 //-----------------------------------------------------------------------------
 LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
-  // handle exception caused by native mothod modifying control word
+  // handle exception caused by native method modifying control word
   PCONTEXT ctx = exceptionInfo->ContextRecord;
   DWORD exception_code = exceptionInfo->ExceptionRecord->ExceptionCode;
 
@@ -1975,6 +1995,13 @@ LONG WINAPI Handle_FLT_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
         return EXCEPTION_CONTINUE_EXECUTION;
       }
   }
+
+  if (prev_uef_handler != NULL) {
+    // We didn't handle this exception so pass it to the previous
+    // UnhandledExceptionFilter.
+    return (prev_uef_handler)(exceptionInfo);
+  }
+
   return EXCEPTION_CONTINUE_SEARCH;
 }
 #else //_WIN64
@@ -2777,6 +2804,14 @@ bool os::release_memory(char* addr, size_t bytes) {
   return VirtualFree(addr, 0, MEM_RELEASE) != 0;
 }
 
+bool os::create_stack_guard_pages(char* addr, size_t size) {
+  return os::commit_memory(addr, size);
+}
+
+bool os::remove_stack_guard_pages(char* addr, size_t size) {
+  return os::uncommit_memory(addr, size);
+}
+
 // Set protections specified
 bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
                         bool is_committed) {
@@ -3135,7 +3170,7 @@ void os::win32::initialize_system_info() {
   _vm_allocation_granularity = si.dwAllocationGranularity;
   _processor_type  = si.dwProcessorType;
   _processor_level = si.wProcessorLevel;
-  _processor_count = si.dwNumberOfProcessors;
+  set_processor_count(si.dwNumberOfProcessors);
 
   MEMORYSTATUSEX ms;
   ms.dwLength = sizeof(ms);
@@ -4060,7 +4095,7 @@ bool os::check_heap(bool force) {
       }
       int err = GetLastError();
       if (err != ERROR_NO_MORE_ITEMS && err != ERROR_CALL_NOT_IMPLEMENTED) {
-        fatal1("heap walk aborted with error %d", err);
+        fatal(err_msg("heap walk aborted with error %d", err));
       }
       HeapUnlock(heap);
     }

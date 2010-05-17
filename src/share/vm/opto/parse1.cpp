@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,6 +229,8 @@ void Parse::load_interpreter_state(Node* osr_buf) {
     }
   }
 
+  // Use the raw liveness computation to make sure that unexpected
+  // values don't propagate into the OSR frame.
   MethodLivenessResult live_locals = method()->liveness_at_bci(osr_bci());
   if (!live_locals.is_valid()) {
     // Degenerate or breakpointed method.
@@ -278,7 +280,13 @@ void Parse::load_interpreter_state(Node* osr_buf) {
       continue;
     }
     // Construct code to access the appropriate local.
-    Node *value = fetch_interpreter_state(index, type->basic_type(), locals_addr, osr_buf);
+    BasicType bt = type->basic_type();
+    if (type == TypePtr::NULL_PTR) {
+      // Ptr types are mixed together with T_ADDRESS but NULL is
+      // really for T_OBJECT types so correct it.
+      bt = T_OBJECT;
+    }
+    Node *value = fetch_interpreter_state(index, bt, locals_addr, osr_buf);
     set_local(index, value);
   }
 
@@ -303,6 +311,7 @@ void Parse::load_interpreter_state(Node* osr_buf) {
   SafePointNode* bad_type_exit = clone_map();
   bad_type_exit->set_control(new (C, 1) RegionNode(1));
 
+  assert(osr_block->flow()->jsrs()->size() == 0, "should be no jsrs live at osr point");
   for (index = 0; index < max_locals; index++) {
     if (stopped())  break;
     Node* l = local(index);
@@ -313,6 +322,20 @@ void Parse::load_interpreter_state(Node* osr_buf) {
         // skip type check for dead oops
         continue;
       }
+    }
+    if (osr_block->flow()->local_type_at(index)->is_return_address()) {
+      // In our current system it's illegal for jsr addresses to be
+      // live into an OSR entry point because the compiler performs
+      // inlining of jsrs.  ciTypeFlow has a bailout that detect this
+      // case and aborts the compile if addresses are live into an OSR
+      // entry point.  Because of that we can assume that any address
+      // locals at the OSR entry point are dead.  Method liveness
+      // isn't precise enought to figure out that they are dead in all
+      // cases so simply skip checking address locals all
+      // together. Any type check is guaranteed to fail since the
+      // interpreter type is the result of a load which might have any
+      // value and the expected type is a constant.
+      continue;
     }
     set_local(index, check_interpreter_type(l, type, bad_type_exit));
   }
@@ -781,66 +804,6 @@ void Compile::rethrow_exceptions(JVMState* jvms) {
   initial_gvn()->transform_no_reclaim(exit);
 }
 
-bool Parse::can_rerun_bytecode() {
-  switch (bc()) {
-  case Bytecodes::_ldc:
-  case Bytecodes::_ldc_w:
-  case Bytecodes::_ldc2_w:
-  case Bytecodes::_getfield:
-  case Bytecodes::_putfield:
-  case Bytecodes::_getstatic:
-  case Bytecodes::_putstatic:
-  case Bytecodes::_arraylength:
-  case Bytecodes::_baload:
-  case Bytecodes::_caload:
-  case Bytecodes::_iaload:
-  case Bytecodes::_saload:
-  case Bytecodes::_faload:
-  case Bytecodes::_aaload:
-  case Bytecodes::_laload:
-  case Bytecodes::_daload:
-  case Bytecodes::_bastore:
-  case Bytecodes::_castore:
-  case Bytecodes::_iastore:
-  case Bytecodes::_sastore:
-  case Bytecodes::_fastore:
-  case Bytecodes::_aastore:
-  case Bytecodes::_lastore:
-  case Bytecodes::_dastore:
-  case Bytecodes::_irem:
-  case Bytecodes::_idiv:
-  case Bytecodes::_lrem:
-  case Bytecodes::_ldiv:
-  case Bytecodes::_frem:
-  case Bytecodes::_fdiv:
-  case Bytecodes::_drem:
-  case Bytecodes::_ddiv:
-  case Bytecodes::_checkcast:
-  case Bytecodes::_instanceof:
-  case Bytecodes::_athrow:
-  case Bytecodes::_anewarray:
-  case Bytecodes::_newarray:
-  case Bytecodes::_multianewarray:
-  case Bytecodes::_new:
-  case Bytecodes::_monitorenter:  // can re-run initial null check, only
-  case Bytecodes::_return:
-    return true;
-    break;
-
-  case Bytecodes::_invokestatic:
-  case Bytecodes::_invokedynamic:
-  case Bytecodes::_invokespecial:
-  case Bytecodes::_invokevirtual:
-  case Bytecodes::_invokeinterface:
-    return false;
-    break;
-
-  default:
-    assert(false, "unexpected bytecode produced an exception");
-    return true;
-  }
-}
-
 //---------------------------do_exceptions-------------------------------------
 // Process exceptions arising from the current bytecode.
 // Send caught exceptions to the proper handler within this method.
@@ -853,9 +816,6 @@ void Parse::do_exceptions() {
     while (pop_exception_state() != NULL) ;
     return;
   }
-
-  // Make sure we can classify this bytecode if we need to.
-  debug_only(can_rerun_bytecode());
 
   PreserveJVMState pjvms(this, false);
 
@@ -1376,6 +1336,10 @@ void Parse::do_one_block() {
     set_parse_bci(iter().cur_bci());
 
     if (bci() == block()->limit()) {
+      // insert a predicate if it falls through to a loop head block
+      if (should_add_predicate(bci())){
+        add_predicate();
+      }
       // Do not walk into the next block until directed by do_all_blocks.
       merge(bci());
       break;
@@ -2074,6 +2038,37 @@ void Parse::add_safepoint() {
     assert(C->root() != NULL, "Expect parse is still valid");
     C->root()->add_prec(transformed_sfpnt);
   }
+}
+
+//------------------------------should_add_predicate--------------------------
+bool Parse::should_add_predicate(int target_bci) {
+  if (!UseLoopPredicate) return false;
+  Block* target = successor_for_bci(target_bci);
+  if (target != NULL          &&
+      target->is_loop_head()  &&
+      block()->rpo() < target->rpo()) {
+    return true;
+  }
+  return false;
+}
+
+//------------------------------add_predicate---------------------------------
+void Parse::add_predicate() {
+  assert(UseLoopPredicate,"use only for loop predicate");
+  Node *cont    = _gvn.intcon(1);
+  Node* opq     = _gvn.transform(new (C, 2) Opaque1Node(C, cont));
+  Node *bol     = _gvn.transform(new (C, 2) Conv2BNode(opq));
+  IfNode* iff   = create_and_map_if(control(), bol, PROB_MAX, COUNT_UNKNOWN);
+  Node* iffalse = _gvn.transform(new (C, 1) IfFalseNode(iff));
+  C->add_predicate_opaq(opq);
+  {
+    PreserveJVMState pjvms(this);
+    set_control(iffalse);
+    uncommon_trap(Deoptimization::Reason_predicate,
+                  Deoptimization::Action_maybe_recompile);
+  }
+  Node* iftrue = _gvn.transform(new (C, 1) IfTrueNode(iff));
+  set_control(iftrue);
 }
 
 #ifndef PRODUCT

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,10 @@
 #include "incls/_precompiled.incl"
 #include "incls/_markSweep.cpp.incl"
 
-GrowableArray<oop>*     MarkSweep::_marking_stack       = NULL;
-GrowableArray<Klass*>*  MarkSweep::_revisit_klass_stack = NULL;
+GrowableArray<oop>*          MarkSweep::_marking_stack = NULL;
+GrowableArray<ObjArrayTask>* MarkSweep::_objarray_stack = NULL;
+GrowableArray<Klass*>*       MarkSweep::_revisit_klass_stack = NULL;
+GrowableArray<DataLayout*>*  MarkSweep::_revisit_mdo_stack = NULL;
 
 GrowableArray<oop>*     MarkSweep::_preserved_oop_stack = NULL;
 GrowableArray<markOop>* MarkSweep::_preserved_mark_stack= NULL;
@@ -62,13 +64,37 @@ void MarkSweep::revisit_weak_klass_link(Klass* k) {
 void MarkSweep::follow_weak_klass_links() {
   // All klasses on the revisit stack are marked at this point.
   // Update and follow all subklass, sibling and implementor links.
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+    gclog_or_tty->print_cr("Revisit klass stack length = %d", _revisit_klass_stack->length());
+  }
   for (int i = 0; i < _revisit_klass_stack->length(); i++) {
     _revisit_klass_stack->at(i)->follow_weak_klass_links(&is_alive,&keep_alive);
   }
   follow_stack();
 }
 
+void MarkSweep::revisit_mdo(DataLayout* p) {
+  _revisit_mdo_stack->push(p);
+}
+
+void MarkSweep::follow_mdo_weak_refs() {
+  // All strongly reachable oops have been marked at this point;
+  // we can visit and clear any weak references from MDO's which
+  // we memoized during the strong marking phase.
+  assert(_marking_stack->is_empty(), "Marking stack should be empty");
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+    gclog_or_tty->print_cr("Revisit MDO stack length = %d", _revisit_mdo_stack->length());
+  }
+  for (int i = 0; i < _revisit_mdo_stack->length(); i++) {
+    _revisit_mdo_stack->at(i)->follow_weak_refs(&is_alive);
+  }
+  follow_stack();
+}
+
 MarkSweep::FollowRootClosure  MarkSweep::follow_root_closure;
+CodeBlobToOopClosure MarkSweep::follow_code_root_closure(&MarkSweep::follow_root_closure, /*do_marking=*/ true);
 
 void MarkSweep::FollowRootClosure::do_oop(oop* p)       { follow_root(p); }
 void MarkSweep::FollowRootClosure::do_oop(narrowOop* p) { follow_root(p); }
@@ -79,11 +105,19 @@ void MarkSweep::MarkAndPushClosure::do_oop(oop* p)       { mark_and_push(p); }
 void MarkSweep::MarkAndPushClosure::do_oop(narrowOop* p) { mark_and_push(p); }
 
 void MarkSweep::follow_stack() {
-  while (!_marking_stack->is_empty()) {
-    oop obj = _marking_stack->pop();
-    assert (obj->is_gc_marked(), "p must be marked");
-    obj->follow_contents();
-  }
+  do {
+    while (!_marking_stack->is_empty()) {
+      oop obj = _marking_stack->pop();
+      assert (obj->is_gc_marked(), "p must be marked");
+      obj->follow_contents();
+    }
+    // Process ObjArrays one at a time to avoid marking stack bloat.
+    if (!_objarray_stack->is_empty()) {
+      ObjArrayTask task = _objarray_stack->pop();
+      objArrayKlass* const k = (objArrayKlass*)task.obj()->blueprint();
+      k->oop_follow_contents(task.obj(), task.index());
+    }
+  } while (!_marking_stack->is_empty() || !_objarray_stack->is_empty());
 }
 
 MarkSweep::FollowStackClosure MarkSweep::follow_stack_closure;

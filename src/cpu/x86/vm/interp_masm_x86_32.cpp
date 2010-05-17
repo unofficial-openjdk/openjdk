@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -196,6 +196,9 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register reg, int bcp_off
   } else {
     assert(EnableInvokeDynamic, "giant index used only for EnableInvokeDynamic");
     movl(reg, Address(rsi, bcp_offset));
+    // Check if the secondary index definition is still ~x, otherwise
+    // we have to change the following assembler code to calculate the
+    // plain index.
     assert(constantPoolCacheOopDesc::decode_secondary_index(~123) == 123, "else change next line");
     notl(reg);  // convert to plain index
   }
@@ -262,88 +265,29 @@ void InterpreterMacroAssembler::d2ieee() {
 
 // Java Expression Stack
 
-#ifdef ASSERT
-void InterpreterMacroAssembler::verify_stack_tag(frame::Tag t) {
-  if (TaggedStackInterpreter) {
-    Label okay;
-    cmpptr(Address(rsp, wordSize), (int32_t)t);
-    jcc(Assembler::equal, okay);
-    // Also compare if the stack value is zero, then the tag might
-    // not have been set coming from deopt.
-    cmpptr(Address(rsp, 0), 0);
-    jcc(Assembler::equal, okay);
-    stop("Java Expression stack tag value is bad");
-    bind(okay);
-  }
-}
-#endif // ASSERT
-
 void InterpreterMacroAssembler::pop_ptr(Register r) {
-  debug_only(verify_stack_tag(frame::TagReference));
   pop(r);
-  if (TaggedStackInterpreter) addptr(rsp, 1 * wordSize);
-}
-
-void InterpreterMacroAssembler::pop_ptr(Register r, Register tag) {
-  pop(r);
-  // Tag may not be reference for jsr, can be returnAddress
-  if (TaggedStackInterpreter) pop(tag);
 }
 
 void InterpreterMacroAssembler::pop_i(Register r) {
-  debug_only(verify_stack_tag(frame::TagValue));
   pop(r);
-  if (TaggedStackInterpreter) addptr(rsp, 1 * wordSize);
 }
 
 void InterpreterMacroAssembler::pop_l(Register lo, Register hi) {
-  debug_only(verify_stack_tag(frame::TagValue));
   pop(lo);
-  if (TaggedStackInterpreter) addptr(rsp, 1 * wordSize);
-  debug_only(verify_stack_tag(frame::TagValue));
   pop(hi);
-  if (TaggedStackInterpreter) addptr(rsp, 1 * wordSize);
 }
 
 void InterpreterMacroAssembler::pop_f() {
-  debug_only(verify_stack_tag(frame::TagValue));
   fld_s(Address(rsp, 0));
   addptr(rsp, 1 * wordSize);
-  if (TaggedStackInterpreter) addptr(rsp, 1 * wordSize);
 }
 
 void InterpreterMacroAssembler::pop_d() {
-  // Write double to stack contiguously and load into ST0
-  pop_dtos_to_rsp();
   fld_d(Address(rsp, 0));
   addptr(rsp, 2 * wordSize);
 }
 
-
-// Pop the top of the java expression stack to execution stack (which
-// happens to be the same place).
-void InterpreterMacroAssembler::pop_dtos_to_rsp() {
-  if (TaggedStackInterpreter) {
-    // Pop double value into scratch registers
-    debug_only(verify_stack_tag(frame::TagValue));
-    pop(rax);
-    addptr(rsp, 1* wordSize);
-    debug_only(verify_stack_tag(frame::TagValue));
-    pop(rdx);
-    addptr(rsp, 1* wordSize);
-    push(rdx);
-    push(rax);
-  }
-}
-
-void InterpreterMacroAssembler::pop_ftos_to_rsp() {
-  if (TaggedStackInterpreter) {
-    debug_only(verify_stack_tag(frame::TagValue));
-    pop(rax);
-    addptr(rsp, 1 * wordSize);
-    push(rax);  // ftos is at rsp
-  }
-}
 
 void InterpreterMacroAssembler::pop(TosState state) {
   switch (state) {
@@ -362,54 +306,28 @@ void InterpreterMacroAssembler::pop(TosState state) {
 }
 
 void InterpreterMacroAssembler::push_ptr(Register r) {
-  if (TaggedStackInterpreter) push(frame::TagReference);
-  push(r);
-}
-
-void InterpreterMacroAssembler::push_ptr(Register r, Register tag) {
-  if (TaggedStackInterpreter) push(tag);  // tag first
   push(r);
 }
 
 void InterpreterMacroAssembler::push_i(Register r) {
-  if (TaggedStackInterpreter) push(frame::TagValue);
   push(r);
 }
 
 void InterpreterMacroAssembler::push_l(Register lo, Register hi) {
-  if (TaggedStackInterpreter) push(frame::TagValue);
   push(hi);
-  if (TaggedStackInterpreter) push(frame::TagValue);
   push(lo);
 }
 
 void InterpreterMacroAssembler::push_f() {
-  if (TaggedStackInterpreter) push(frame::TagValue);
   // Do not schedule for no AGI! Never write beyond rsp!
   subptr(rsp, 1 * wordSize);
   fstp_s(Address(rsp, 0));
 }
 
 void InterpreterMacroAssembler::push_d(Register r) {
-  if (TaggedStackInterpreter) {
-    // Double values are stored as:
-    //   tag
-    //   high
-    //   tag
-    //   low
-    push(frame::TagValue);
-    subptr(rsp, 3 * wordSize);
-    fstp_d(Address(rsp, 0));
-    // move high word up to slot n-1
-    movl(r, Address(rsp, 1*wordSize));
-    movl(Address(rsp, 2*wordSize), r);
-    // move tag
-    movl(Address(rsp, 1*wordSize), frame::TagValue);
-  } else {
-    // Do not schedule for no AGI! Never write beyond rsp!
-    subptr(rsp, 2 * wordSize);
-    fstp_d(Address(rsp, 0));
-  }
+  // Do not schedule for no AGI! Never write beyond rsp!
+  subptr(rsp, 2 * wordSize);
+  fstp_d(Address(rsp, 0));
 }
 
 
@@ -430,117 +348,14 @@ void InterpreterMacroAssembler::push(TosState state) {
 }
 
 
-// Tagged stack helpers for swap and dup
-void InterpreterMacroAssembler::load_ptr_and_tag(int n, Register val,
-                                                 Register tag) {
+// Helpers for swap and dup
+void InterpreterMacroAssembler::load_ptr(int n, Register val) {
   movptr(val, Address(rsp, Interpreter::expr_offset_in_bytes(n)));
-  if (TaggedStackInterpreter) {
-    movptr(tag, Address(rsp, Interpreter::expr_tag_offset_in_bytes(n)));
-  }
 }
 
-void InterpreterMacroAssembler::store_ptr_and_tag(int n, Register val,
-                                                  Register tag) {
+void InterpreterMacroAssembler::store_ptr(int n, Register val) {
   movptr(Address(rsp, Interpreter::expr_offset_in_bytes(n)), val);
-  if (TaggedStackInterpreter) {
-    movptr(Address(rsp, Interpreter::expr_tag_offset_in_bytes(n)), tag);
-  }
 }
-
-
-// Tagged local support
-void InterpreterMacroAssembler::tag_local(frame::Tag tag, int n) {
-  if (TaggedStackInterpreter) {
-    if (tag == frame::TagCategory2) {
-      movptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n+1)), (int32_t)frame::TagValue);
-      movptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n)), (int32_t)frame::TagValue);
-    } else {
-      movptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n)), (int32_t)tag);
-    }
-  }
-}
-
-void InterpreterMacroAssembler::tag_local(frame::Tag tag, Register idx) {
-  if (TaggedStackInterpreter) {
-    if (tag == frame::TagCategory2) {
-      movptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                  Interpreter::local_tag_offset_in_bytes(1)), (int32_t)frame::TagValue);
-      movptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                    Interpreter::local_tag_offset_in_bytes(0)), (int32_t)frame::TagValue);
-    } else {
-      movptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                               Interpreter::local_tag_offset_in_bytes(0)), (int32_t)tag);
-    }
-  }
-}
-
-void InterpreterMacroAssembler::tag_local(Register tag, Register idx) {
-  if (TaggedStackInterpreter) {
-    // can only be TagValue or TagReference
-    movptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                           Interpreter::local_tag_offset_in_bytes(0)), tag);
-  }
-}
-
-
-void InterpreterMacroAssembler::tag_local(Register tag, int n) {
-  if (TaggedStackInterpreter) {
-    // can only be TagValue or TagReference
-    movptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n)), tag);
-  }
-}
-
-#ifdef ASSERT
-void InterpreterMacroAssembler::verify_local_tag(frame::Tag tag, int n) {
-  if (TaggedStackInterpreter) {
-     frame::Tag t = tag;
-    if (tag == frame::TagCategory2) {
-      Label nbl;
-      t = frame::TagValue;  // change to what is stored in locals
-      cmpptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n+1)), (int32_t)t);
-      jcc(Assembler::equal, nbl);
-      stop("Local tag is bad for long/double");
-      bind(nbl);
-    }
-    Label notBad;
-    cmpptr(Address(rdi, Interpreter::local_tag_offset_in_bytes(n)), (int32_t)t);
-    jcc(Assembler::equal, notBad);
-    // Also compare if the local value is zero, then the tag might
-    // not have been set coming from deopt.
-    cmpptr(Address(rdi, Interpreter::local_offset_in_bytes(n)), 0);
-    jcc(Assembler::equal, notBad);
-    stop("Local tag is bad");
-    bind(notBad);
-  }
-}
-
-void InterpreterMacroAssembler::verify_local_tag(frame::Tag tag, Register idx) {
-  if (TaggedStackInterpreter) {
-    frame::Tag t = tag;
-    if (tag == frame::TagCategory2) {
-      Label nbl;
-      t = frame::TagValue;  // change to what is stored in locals
-      cmpptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                  Interpreter::local_tag_offset_in_bytes(1)), (int32_t)t);
-      jcc(Assembler::equal, nbl);
-      stop("Local tag is bad for long/double");
-      bind(nbl);
-    }
-    Label notBad;
-    cmpl(Address(rdi, idx, Interpreter::stackElementScale(),
-                  Interpreter::local_tag_offset_in_bytes(0)), (int32_t)t);
-    jcc(Assembler::equal, notBad);
-    // Also compare if the local value is zero, then the tag might
-    // not have been set coming from deopt.
-    cmpptr(Address(rdi, idx, Interpreter::stackElementScale(),
-                  Interpreter::local_offset_in_bytes(0)), 0);
-    jcc(Assembler::equal, notBad);
-    stop("Local tag is bad");
-    bind(notBad);
-
-  }
-}
-#endif // ASSERT
 
 void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point) {
   MacroAssembler::call_VM_leaf_base(entry_point, 0);
@@ -1236,17 +1051,19 @@ void InterpreterMacroAssembler::profile_virtual_call(Register receiver, Register
     // If no method data exists, go to profile_continue.
     test_method_data_pointer(mdp, profile_continue);
 
-    // We are making a call.  Increment the count.
-    increment_mdp_data_at(mdp, in_bytes(CounterData::count_offset()));
-
     Label skip_receiver_profile;
     if (receiver_can_be_null) {
+      Label not_null;
       testptr(receiver, receiver);
-      jcc(Assembler::zero, skip_receiver_profile);
+      jccb(Assembler::notZero, not_null);
+      // We are making a call.  Increment the count for null receiver.
+      increment_mdp_data_at(mdp, in_bytes(CounterData::count_offset()));
+      jmp(skip_receiver_profile);
+      bind(not_null);
     }
 
     // Record the receiver type.
-    record_klass_in_profile(receiver, mdp, reg2);
+    record_klass_in_profile(receiver, mdp, reg2, true);
     bind(skip_receiver_profile);
 
     // The method data pointer needs to be updated to reflect the new target.
@@ -1260,8 +1077,15 @@ void InterpreterMacroAssembler::profile_virtual_call(Register receiver, Register
 
 void InterpreterMacroAssembler::record_klass_in_profile_helper(
                                         Register receiver, Register mdp,
-                                        Register reg2,
-                                        int start_row, Label& done) {
+                                        Register reg2, int start_row,
+                                        Label& done, bool is_virtual_call) {
+  if (TypeProfileWidth == 0) {
+    if (is_virtual_call) {
+      increment_mdp_data_at(mdp, in_bytes(CounterData::count_offset()));
+    }
+    return;
+  }
+
   int last_row = VirtualCallData::row_limit() - 1;
   assert(start_row <= last_row, "must be work left to do");
   // Test this row for both the receiver and for null.
@@ -1288,19 +1112,28 @@ void InterpreterMacroAssembler::record_klass_in_profile_helper(
     bind(next_test);
 
     if (row == start_row) {
+      Label found_null;
       // Failed the equality check on receiver[n]...  Test for null.
       testptr(reg2, reg2);
       if (start_row == last_row) {
         // The only thing left to do is handle the null case.
-        jcc(Assembler::notZero, done);
+        if (is_virtual_call) {
+          jccb(Assembler::zero, found_null);
+          // Receiver did not match any saved receiver and there is no empty row for it.
+          // Increment total counter to indicate polymorphic case.
+          increment_mdp_data_at(mdp, in_bytes(CounterData::count_offset()));
+          jmp(done);
+          bind(found_null);
+        } else {
+          jcc(Assembler::notZero, done);
+        }
         break;
       }
       // Since null is rare, make it be the branch-taken case.
-      Label found_null;
       jcc(Assembler::zero, found_null);
 
       // Put all the "Case 3" tests here.
-      record_klass_in_profile_helper(receiver, mdp, reg2, start_row + 1, done);
+      record_klass_in_profile_helper(receiver, mdp, reg2, start_row + 1, done, is_virtual_call);
 
       // Found a null.  Keep searching for a matching receiver,
       // but remember that this is an empty (unused) slot.
@@ -1317,16 +1150,18 @@ void InterpreterMacroAssembler::record_klass_in_profile_helper(
   int count_offset = in_bytes(VirtualCallData::receiver_count_offset(start_row));
   movptr(reg2, (int32_t)DataLayout::counter_increment);
   set_mdp_data_at(mdp, count_offset, reg2);
-  jmp(done);
+  if (start_row > 0) {
+    jmp(done);
+  }
 }
 
 void InterpreterMacroAssembler::record_klass_in_profile(Register receiver,
-                                                        Register mdp,
-                                                        Register reg2) {
+                                                        Register mdp, Register reg2,
+                                                        bool is_virtual_call) {
   assert(ProfileInterpreter, "must be profiling");
   Label done;
 
-  record_klass_in_profile_helper(receiver, mdp, reg2, 0, done);
+  record_klass_in_profile_helper(receiver, mdp, reg2, 0, done, is_virtual_call);
 
   bind (done);
 }
@@ -1419,7 +1254,7 @@ void InterpreterMacroAssembler::profile_typecheck(Register mdp, Register klass, 
       mdp_delta = in_bytes(VirtualCallData::virtual_call_data_size());
 
       // Record the object type.
-      record_klass_in_profile(klass, mdp, reg2);
+      record_klass_in_profile(klass, mdp, reg2, false);
       assert(reg2 == rdi, "we know how to fix this blown reg");
       restore_locals();         // Restore EDI
     }

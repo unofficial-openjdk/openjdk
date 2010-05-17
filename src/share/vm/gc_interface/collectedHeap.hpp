@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ class BarrierSet;
 class ThreadClosure;
 class AdaptiveSizePolicy;
 class Thread;
+class CollectorPolicy;
 
 //
 // CollectedHeap
@@ -51,6 +52,9 @@ class CollectedHeap : public CHeapObj {
   // Used for filler objects (static, but initialized in ctor).
   static size_t _filler_array_max_size;
 
+  // Used in support of ReduceInitialCardMarks; only consulted if COMPILER2 is being used
+  bool _defer_initial_card_mark;
+
  protected:
   MemRegion _reserved;
   BarrierSet* _barrier_set;
@@ -70,12 +74,15 @@ class CollectedHeap : public CHeapObj {
   // Constructor
   CollectedHeap();
 
+  // Do common initializations that must follow instance construction,
+  // for example, those needing virtual calls.
+  // This code could perhaps be moved into initialize() but would
+  // be slightly more awkward because we want the latter to be a
+  // pure virtual.
+  void pre_initialize();
+
   // Create a new tlab
   virtual HeapWord* allocate_new_tlab(size_t size);
-
-  // Fix up tlabs to make the heap well-formed again,
-  // optionally retiring the tlabs.
-  virtual void fill_all_tlabs(bool retire);
 
   // Accumulate statistics on all tlabs.
   virtual void accumulate_statistics_all_tlabs();
@@ -127,14 +134,14 @@ class CollectedHeap : public CHeapObj {
   static inline size_t filler_array_max_size();
 
   DEBUG_ONLY(static void fill_args_check(HeapWord* start, size_t words);)
-  DEBUG_ONLY(static void zap_filler_array(HeapWord* start, size_t words);)
+  DEBUG_ONLY(static void zap_filler_array(HeapWord* start, size_t words, bool zap = true);)
 
   // Fill with a single array; caller must ensure filler_array_min_size() <=
   // words <= filler_array_max_size().
-  static inline void fill_with_array(HeapWord* start, size_t words);
+  static inline void fill_with_array(HeapWord* start, size_t words, bool zap = true);
 
   // Fill with a single object (either an int array or a java.lang.Object).
-  static inline void fill_with_object_impl(HeapWord* start, size_t words);
+  static inline void fill_with_object_impl(HeapWord* start, size_t words, bool zap = true);
 
   // Verification functions
   virtual void check_for_bad_heap_word_value(HeapWord* addr, size_t size)
@@ -239,6 +246,9 @@ class CollectedHeap : public CHeapObj {
     return p == NULL || is_in_closed_subset(p);
   }
 
+  // XXX is_permanent() and is_in_permanent() should be better named
+  // to distinguish one from the other.
+
   // Returns "TRUE" if "p" is allocated as "permanent" data.
   // If the heap does not use "permanent" data, returns the same
   // value is_in_reserved() would return.
@@ -247,13 +257,25 @@ class CollectedHeap : public CHeapObj {
   // space). If you need the more conservative answer use is_permanent().
   virtual bool is_in_permanent(const void *p) const = 0;
 
+  bool is_in_permanent_or_null(const void *p) const {
+    return p == NULL || is_in_permanent(p);
+  }
+
   // Returns "TRUE" if "p" is in the committed area of  "permanent" data.
   // If the heap does not use "permanent" data, returns the same
   // value is_in() would return.
   virtual bool is_permanent(const void *p) const = 0;
 
-  bool is_in_permanent_or_null(const void *p) const {
-    return p == NULL || is_in_permanent(p);
+  bool is_permanent_or_null(const void *p) const {
+    return p == NULL || is_permanent(p);
+  }
+
+  // An object is scavengable if its location may move during a scavenge.
+  // (A scavenge is a GC which is not a full GC.)
+  // Currently, this just means it is not perm (and not null).
+  // This could change if we rethink what's in perm-gen.
+  bool is_scavengable(const void *p) const {
+    return !is_in_permanent_or_null(p);
   }
 
   // Returns "TRUE" if "p" is a method oop in the
@@ -323,14 +345,14 @@ class CollectedHeap : public CHeapObj {
     return size_t(align_object_size(oopDesc::header_size()));
   }
 
-  static void fill_with_objects(HeapWord* start, size_t words);
+  static void fill_with_objects(HeapWord* start, size_t words, bool zap = true);
 
-  static void fill_with_object(HeapWord* start, size_t words);
-  static void fill_with_object(MemRegion region) {
-    fill_with_object(region.start(), region.word_size());
+  static void fill_with_object(HeapWord* start, size_t words, bool zap = true);
+  static void fill_with_object(MemRegion region, bool zap = true) {
+    fill_with_object(region.start(), region.word_size(), zap);
   }
-  static void fill_with_object(HeapWord* start, HeapWord* end) {
-    fill_with_object(start, pointer_delta(end, start));
+  static void fill_with_object(HeapWord* start, HeapWord* end, bool zap = true) {
+    fill_with_object(start, pointer_delta(end, start), zap);
   }
 
   // Some heaps may offer a contiguous region for shared non-blocking
@@ -400,9 +422,14 @@ class CollectedHeap : public CHeapObj {
     guarantee(false, "thread-local allocation buffers not supported");
     return 0;
   }
+
   // Can a compiler initialize a new object without store barriers?
   // This permission only extends from the creation of a new object
-  // via a TLAB up to the first subsequent safepoint.
+  // via a TLAB up to the first subsequent safepoint. If such permission
+  // is granted for this heap type, the compiler promises to call
+  // defer_store_barrier() below on any slow path allocation of
+  // a new object for which such initializing store barriers will
+  // have been elided.
   virtual bool can_elide_tlab_store_barriers() const = 0;
 
   // If a compiler is eliding store barriers for TLAB-allocated objects,
@@ -410,8 +437,30 @@ class CollectedHeap : public CHeapObj {
   // an object allocated anywhere.  The compiler's runtime support
   // promises to call this function on such a slow-path-allocated
   // object before performing initializations that have elided
-  // store barriers.  Returns new_obj, or maybe a safer copy thereof.
-  virtual oop new_store_barrier(oop new_obj);
+  // store barriers. Returns new_obj, or maybe a safer copy thereof.
+  virtual oop new_store_pre_barrier(JavaThread* thread, oop new_obj);
+
+  // Answers whether an initializing store to a new object currently
+  // allocated at the given address doesn't need a store
+  // barrier. Returns "true" if it doesn't need an initializing
+  // store barrier; answers "false" if it does.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj) = 0;
+
+  // If a compiler is eliding store barriers for TLAB-allocated objects,
+  // we will be informed of a slow-path allocation by a call
+  // to new_store_pre_barrier() above. Such a call precedes the
+  // initialization of the object itself, and no post-store-barriers will
+  // be issued. Some heap types require that the barrier strictly follows
+  // the initializing stores. (This is currently implemented by deferring the
+  // barrier until the next slow-path allocation or gc-related safepoint.)
+  // This interface answers whether a particular heap type needs the card
+  // mark to be thus strictly sequenced after the stores.
+  virtual bool card_mark_must_follow_store() const = 0;
+
+  // If the CollectedHeap was asked to defer a store barrier above,
+  // this informs it to flush such a deferred store barrier to the
+  // remembered set.
+  virtual void flush_deferred_store_barrier(JavaThread* thread);
 
   // Can a compiler elide a store barrier when it writes
   // a permanent oop into the heap?  Applies when the compiler
@@ -457,6 +506,9 @@ class CollectedHeap : public CHeapObj {
 
   // Return the AdaptiveSizePolicy for the heap.
   virtual AdaptiveSizePolicy* size_policy() = 0;
+
+  // Return the CollectorPolicy for the heap
+  virtual CollectorPolicy* collector_policy() const = 0;
 
   // Iterate over all the ref-containing fields of all objects, calling
   // "cl.do_oop" on each. This includes objects in permanent memory.

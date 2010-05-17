@@ -103,7 +103,8 @@ class LinkResolver: AllStatic {
   static void lookup_method_in_klasses          (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
   static void lookup_instance_method_in_klasses (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
   static void lookup_method_in_interfaces       (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
-  static void lookup_implicit_method            (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
+  static void lookup_implicit_method            (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature,
+                                                 KlassHandle current_klass, TRAPS);
 
   static int vtable_index_of_miranda_method(KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
 
@@ -133,6 +134,7 @@ class LinkResolver: AllStatic {
 
   // static resolving for all calls except interface calls
   static void resolve_method          (methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
+  static void resolve_dynamic_method  (methodHandle& resolved_method, KlassHandle& resolved_klass, constantPoolHandle pool, int index, TRAPS);
   static void resolve_interface_method(methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
 
   // runtime/static resolving for fields

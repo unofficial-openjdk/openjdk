@@ -1,5 +1,5 @@
 //
-// Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1998-2010 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -193,38 +193,38 @@ reg_def R_F31( SOC, SOC, Op_RegF, 31, F31->as_VMReg());
 // I believe we can't handle callee-save doubles D32 and up until
 // the place in the sparc stack crawler that asserts on the 255 is
 // fixed up.
-reg_def R_D32x(SOC, SOC, Op_RegD,255, F32->as_VMReg());
-reg_def R_D32 (SOC, SOC, Op_RegD,  1, F32->as_VMReg()->next());
-reg_def R_D34x(SOC, SOC, Op_RegD,255, F34->as_VMReg());
-reg_def R_D34 (SOC, SOC, Op_RegD,  3, F34->as_VMReg()->next());
-reg_def R_D36x(SOC, SOC, Op_RegD,255, F36->as_VMReg());
-reg_def R_D36 (SOC, SOC, Op_RegD,  5, F36->as_VMReg()->next());
-reg_def R_D38x(SOC, SOC, Op_RegD,255, F38->as_VMReg());
-reg_def R_D38 (SOC, SOC, Op_RegD,  7, F38->as_VMReg()->next());
-reg_def R_D40x(SOC, SOC, Op_RegD,255, F40->as_VMReg());
-reg_def R_D40 (SOC, SOC, Op_RegD,  9, F40->as_VMReg()->next());
-reg_def R_D42x(SOC, SOC, Op_RegD,255, F42->as_VMReg());
-reg_def R_D42 (SOC, SOC, Op_RegD, 11, F42->as_VMReg()->next());
-reg_def R_D44x(SOC, SOC, Op_RegD,255, F44->as_VMReg());
-reg_def R_D44 (SOC, SOC, Op_RegD, 13, F44->as_VMReg()->next());
-reg_def R_D46x(SOC, SOC, Op_RegD,255, F46->as_VMReg());
-reg_def R_D46 (SOC, SOC, Op_RegD, 15, F46->as_VMReg()->next());
-reg_def R_D48x(SOC, SOC, Op_RegD,255, F48->as_VMReg());
-reg_def R_D48 (SOC, SOC, Op_RegD, 17, F48->as_VMReg()->next());
-reg_def R_D50x(SOC, SOC, Op_RegD,255, F50->as_VMReg());
-reg_def R_D50 (SOC, SOC, Op_RegD, 19, F50->as_VMReg()->next());
-reg_def R_D52x(SOC, SOC, Op_RegD,255, F52->as_VMReg());
-reg_def R_D52 (SOC, SOC, Op_RegD, 21, F52->as_VMReg()->next());
-reg_def R_D54x(SOC, SOC, Op_RegD,255, F54->as_VMReg());
-reg_def R_D54 (SOC, SOC, Op_RegD, 23, F54->as_VMReg()->next());
-reg_def R_D56x(SOC, SOC, Op_RegD,255, F56->as_VMReg());
-reg_def R_D56 (SOC, SOC, Op_RegD, 25, F56->as_VMReg()->next());
-reg_def R_D58x(SOC, SOC, Op_RegD,255, F58->as_VMReg());
-reg_def R_D58 (SOC, SOC, Op_RegD, 27, F58->as_VMReg()->next());
-reg_def R_D60x(SOC, SOC, Op_RegD,255, F60->as_VMReg());
-reg_def R_D60 (SOC, SOC, Op_RegD, 29, F60->as_VMReg()->next());
-reg_def R_D62x(SOC, SOC, Op_RegD,255, F62->as_VMReg());
-reg_def R_D62 (SOC, SOC, Op_RegD, 31, F62->as_VMReg()->next());
+reg_def R_D32 (SOC, SOC, Op_RegD,  1, F32->as_VMReg());
+reg_def R_D32x(SOC, SOC, Op_RegD,255, F32->as_VMReg()->next());
+reg_def R_D34 (SOC, SOC, Op_RegD,  3, F34->as_VMReg());
+reg_def R_D34x(SOC, SOC, Op_RegD,255, F34->as_VMReg()->next());
+reg_def R_D36 (SOC, SOC, Op_RegD,  5, F36->as_VMReg());
+reg_def R_D36x(SOC, SOC, Op_RegD,255, F36->as_VMReg()->next());
+reg_def R_D38 (SOC, SOC, Op_RegD,  7, F38->as_VMReg());
+reg_def R_D38x(SOC, SOC, Op_RegD,255, F38->as_VMReg()->next());
+reg_def R_D40 (SOC, SOC, Op_RegD,  9, F40->as_VMReg());
+reg_def R_D40x(SOC, SOC, Op_RegD,255, F40->as_VMReg()->next());
+reg_def R_D42 (SOC, SOC, Op_RegD, 11, F42->as_VMReg());
+reg_def R_D42x(SOC, SOC, Op_RegD,255, F42->as_VMReg()->next());
+reg_def R_D44 (SOC, SOC, Op_RegD, 13, F44->as_VMReg());
+reg_def R_D44x(SOC, SOC, Op_RegD,255, F44->as_VMReg()->next());
+reg_def R_D46 (SOC, SOC, Op_RegD, 15, F46->as_VMReg());
+reg_def R_D46x(SOC, SOC, Op_RegD,255, F46->as_VMReg()->next());
+reg_def R_D48 (SOC, SOC, Op_RegD, 17, F48->as_VMReg());
+reg_def R_D48x(SOC, SOC, Op_RegD,255, F48->as_VMReg()->next());
+reg_def R_D50 (SOC, SOC, Op_RegD, 19, F50->as_VMReg());
+reg_def R_D50x(SOC, SOC, Op_RegD,255, F50->as_VMReg()->next());
+reg_def R_D52 (SOC, SOC, Op_RegD, 21, F52->as_VMReg());
+reg_def R_D52x(SOC, SOC, Op_RegD,255, F52->as_VMReg()->next());
+reg_def R_D54 (SOC, SOC, Op_RegD, 23, F54->as_VMReg());
+reg_def R_D54x(SOC, SOC, Op_RegD,255, F54->as_VMReg()->next());
+reg_def R_D56 (SOC, SOC, Op_RegD, 25, F56->as_VMReg());
+reg_def R_D56x(SOC, SOC, Op_RegD,255, F56->as_VMReg()->next());
+reg_def R_D58 (SOC, SOC, Op_RegD, 27, F58->as_VMReg());
+reg_def R_D58x(SOC, SOC, Op_RegD,255, F58->as_VMReg()->next());
+reg_def R_D60 (SOC, SOC, Op_RegD, 29, F60->as_VMReg());
+reg_def R_D60x(SOC, SOC, Op_RegD,255, F60->as_VMReg()->next());
+reg_def R_D62 (SOC, SOC, Op_RegD, 31, F62->as_VMReg());
+reg_def R_D62x(SOC, SOC, Op_RegD,255, F62->as_VMReg()->next());
 
 
 // ----------------------------
@@ -470,6 +470,9 @@ extern bool can_branch_register( Node *bol, Node *cmp );
 
 source %{
 #define __ _masm.
+
+// Block initializing store
+#define ASI_BLK_INIT_QUAD_LDD_P    0xE2
 
 // tertiary op of a LoadP or StoreP encoding
 #define REGP_OP true
@@ -918,38 +921,6 @@ void emit_form3_mem_reg(CodeBuffer &cbuf, const MachNode* n, int primary, int te
     }
   }
 #endif
-}
-
-void emit_form3_mem_reg_asi(CodeBuffer &cbuf, const MachNode* n, int primary, int tertiary,
-                        int src1_enc, int disp32, int src2_enc, int dst_enc, int asi) {
-
-  uint instr;
-  instr = (Assembler::ldst_op << 30)
-        | (dst_enc        << 25)
-        | (primary        << 19)
-        | (src1_enc       << 14);
-
-  int disp = disp32;
-  int index    = src2_enc;
-
-  if (src1_enc == R_SP_enc || src1_enc == R_FP_enc)
-    disp += STACK_BIAS;
-
-  // We should have a compiler bailout here rather than a guarantee.
-  // Better yet would be some mechanism to handle variable-size matches correctly.
-  guarantee(Assembler::is_simm13(disp), "Do not match large constant offsets" );
-
-  if( disp != 0 ) {
-    // use reg-reg form
-    // set src2=R_O7 contains offset
-    index = R_O7_enc;
-    emit3_simm13( cbuf, Assembler::arith_op, index, Assembler::or_op3, 0, disp);
-  }
-  instr |= (asi << 5);
-  instr |= index;
-  uint *code = (uint*)cbuf.code_end();
-  *code = instr;
-  cbuf.set_code_end(cbuf.code_end() + BytesPerInstWord);
 }
 
 void emit_call_reloc(CodeBuffer &cbuf, intptr_t entry_point, relocInfo::relocType rtype, bool preserve_g2 = false, bool force_far_call = false) {
@@ -1803,8 +1774,9 @@ void Matcher::pd_implicit_null_fixup(MachNode *node, uint idx) {
 // to implement the UseStrictFP mode.
 const bool Matcher::strict_fp_requires_explicit_rounding = false;
 
-// Do floats take an entire double register or just half?
-const bool Matcher::float_in_double = false;
+// Are floats conerted to double when stored to stack during deoptimization?
+// Sparc does not handle callee-save floats.
+bool Matcher::float_in_double() { return false; }
 
 // Do ints take an entire long register or just half?
 // Note that we if-def off of _LP64.
@@ -1885,6 +1857,10 @@ RegMask Matcher::modL_proj_mask() {
   return RegMask();
 }
 
+const RegMask Matcher::method_handle_invoke_SP_save_mask() {
+  return RegMask();
+}
+
 %}
 
 
@@ -1944,11 +1920,6 @@ encode %{
   enc_class simple_form3_mem_reg( memory mem, iRegI dst ) %{
     emit_form3_mem_reg(cbuf, this, $primary, -1,
                        $mem$$base, $mem$$disp, $mem$$index, $dst$$reg);
-  %}
-
-  enc_class form3_mem_reg_little( memory mem, iRegI dst) %{
-    emit_form3_mem_reg_asi(cbuf, this, $primary, -1,
-                     $mem$$base, $mem$$disp, $mem$$index, $dst$$reg, Assembler::ASI_PRIMARY_LITTLE);
   %}
 
   enc_class form3_mem_prefetch_read( memory mem ) %{
@@ -2838,63 +2809,41 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
   %}
 
 
-  enc_class enc_String_Compare(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result) %{
+  enc_class enc_String_Compare(o0RegP str1, o1RegP str2, g3RegI cnt1, g4RegI cnt2, notemp_iRegI result) %{
     Label Ldone, Lloop;
     MacroAssembler _masm(&cbuf);
 
     Register   str1_reg = reg_to_register_object($str1$$reg);
     Register   str2_reg = reg_to_register_object($str2$$reg);
-    Register   tmp1_reg = reg_to_register_object($tmp1$$reg);
-    Register   tmp2_reg = reg_to_register_object($tmp2$$reg);
+    Register   cnt1_reg = reg_to_register_object($cnt1$$reg);
+    Register   cnt2_reg = reg_to_register_object($cnt2$$reg);
     Register result_reg = reg_to_register_object($result$$reg);
 
-    // Get the first character position in both strings
-    //         [8] char array, [12] offset, [16] count
-    int  value_offset = java_lang_String:: value_offset_in_bytes();
-    int offset_offset = java_lang_String::offset_offset_in_bytes();
-    int  count_offset = java_lang_String:: count_offset_in_bytes();
-
-    // load str1 (jchar*) base address into tmp1_reg
-    __ load_heap_oop(str1_reg, value_offset, tmp1_reg);
-    __ ld(str1_reg, offset_offset, result_reg);
-    __ add(tmp1_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp1_reg);
-    __   ld(str1_reg, count_offset, str1_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __   load_heap_oop(str2_reg, value_offset, tmp2_reg); // hoisted
-    __ add(result_reg, tmp1_reg, tmp1_reg);
-
-    // load str2 (jchar*) base address into tmp2_reg
-    // __ ld_ptr(str2_reg, value_offset, tmp2_reg); // hoisted
-    __ ld(str2_reg, offset_offset, result_reg);
-    __ add(tmp2_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp2_reg);
-    __   ld(str2_reg, count_offset, str2_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __   subcc(str1_reg, str2_reg, O7); // hoisted
-    __ add(result_reg, tmp2_reg, tmp2_reg);
+    assert(result_reg != str1_reg &&
+           result_reg != str2_reg &&
+           result_reg != cnt1_reg &&
+           result_reg != cnt2_reg ,
+           "need different registers");
 
     // Compute the minimum of the string lengths(str1_reg) and the
     // difference of the string lengths (stack)
 
-    // discard string base pointers, after loading up the lengths
-    // __ ld(str1_reg, count_offset, str1_reg); // hoisted
-    // __ ld(str2_reg, count_offset, str2_reg); // hoisted
-
     // See if the lengths are different, and calculate min in str1_reg.
     // Stash diff in O7 in case we need it for a tie-breaker.
     Label Lskip;
-    // __ subcc(str1_reg, str2_reg, O7); // hoisted
-    __ sll(str1_reg, exact_log2(sizeof(jchar)), str1_reg); // scale the limit
+    __ subcc(cnt1_reg, cnt2_reg, O7);
+    __ sll(cnt1_reg, exact_log2(sizeof(jchar)), cnt1_reg); // scale the limit
     __ br(Assembler::greater, true, Assembler::pt, Lskip);
-    // str2 is shorter, so use its count:
-    __ delayed()->sll(str2_reg, exact_log2(sizeof(jchar)), str1_reg); // scale the limit
+    // cnt2 is shorter, so use its count:
+    __ delayed()->sll(cnt2_reg, exact_log2(sizeof(jchar)), cnt1_reg); // scale the limit
     __ bind(Lskip);
 
-    // reallocate str1_reg, str2_reg, result_reg
+    // reallocate cnt1_reg, cnt2_reg, result_reg
     // Note:  limit_reg holds the string length pre-scaled by 2
-    Register limit_reg =   str1_reg;
-    Register  chr2_reg =   str2_reg;
+    Register limit_reg =   cnt1_reg;
+    Register  chr2_reg =   cnt2_reg;
     Register  chr1_reg = result_reg;
-    // tmp{12} are the base pointers
+    // str{12} are the base pointers
 
     // Is the minimum length zero?
     __ cmp(limit_reg, (int)(0 * sizeof(jchar))); // use cast to resolve overloading ambiguity
@@ -2902,8 +2851,8 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ delayed()->mov(O7, result_reg);  // result is difference in lengths
 
     // Load first characters
-    __ lduh(tmp1_reg, 0, chr1_reg);
-    __ lduh(tmp2_reg, 0, chr2_reg);
+    __ lduh(str1_reg, 0, chr1_reg);
+    __ lduh(str2_reg, 0, chr2_reg);
 
     // Compare first characters
     __ subcc(chr1_reg, chr2_reg, chr1_reg);
@@ -2915,7 +2864,7 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
       // Check after comparing first character to see if strings are equivalent
       Label LSkip2;
       // Check if the strings start at same location
-      __ cmp(tmp1_reg, tmp2_reg);
+      __ cmp(str1_reg, str2_reg);
       __ brx(Assembler::notEqual, true, Assembler::pt, LSkip2);
       __ delayed()->nop();
 
@@ -2932,23 +2881,23 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ br(Assembler::equal, true, Assembler::pn, Ldone);
     __ delayed()->mov(O7, result_reg);  // result is difference in lengths
 
-    // Shift tmp1_reg and tmp2_reg to the end of the arrays, negate limit
-    __ add(tmp1_reg, limit_reg, tmp1_reg);
-    __ add(tmp2_reg, limit_reg, tmp2_reg);
+    // Shift str1_reg and str2_reg to the end of the arrays, negate limit
+    __ add(str1_reg, limit_reg, str1_reg);
+    __ add(str2_reg, limit_reg, str2_reg);
     __ neg(chr1_reg, limit_reg);  // limit = -(limit-2)
 
     // Compare the rest of the characters
-    __ lduh(tmp1_reg, limit_reg, chr1_reg);
+    __ lduh(str1_reg, limit_reg, chr1_reg);
     __ bind(Lloop);
-    // __ lduh(tmp1_reg, limit_reg, chr1_reg); // hoisted
-    __ lduh(tmp2_reg, limit_reg, chr2_reg);
+    // __ lduh(str1_reg, limit_reg, chr1_reg); // hoisted
+    __ lduh(str2_reg, limit_reg, chr2_reg);
     __ subcc(chr1_reg, chr2_reg, chr1_reg);
     __ br(Assembler::notZero, false, Assembler::pt, Ldone);
     assert(chr1_reg == result_reg, "result must be pre-placed");
     __ delayed()->inccc(limit_reg, sizeof(jchar));
     // annul LDUH if branch is not taken to prevent access past end of string
     __ br(Assembler::notZero, true, Assembler::pt, Lloop);
-    __ delayed()->lduh(tmp1_reg, limit_reg, chr1_reg); // hoisted
+    __ delayed()->lduh(str1_reg, limit_reg, chr1_reg); // hoisted
 
     // If strings are equal up to min length, return the length difference.
     __ mov(O7, result_reg);
@@ -2957,125 +2906,80 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
     __ bind(Ldone);
   %}
 
-enc_class enc_String_Equals(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result) %{
-    Label Lword, Lword_loop, Lpost_word, Lchar, Lchar_loop, Ldone;
+enc_class enc_String_Equals(o0RegP str1, o1RegP str2, g3RegI cnt, notemp_iRegI result) %{
+    Label Lword_loop, Lpost_word, Lchar, Lchar_loop, Ldone;
     MacroAssembler _masm(&cbuf);
 
     Register   str1_reg = reg_to_register_object($str1$$reg);
     Register   str2_reg = reg_to_register_object($str2$$reg);
-    Register   tmp1_reg = reg_to_register_object($tmp1$$reg);
-    Register   tmp2_reg = reg_to_register_object($tmp2$$reg);
+    Register    cnt_reg = reg_to_register_object($cnt$$reg);
+    Register   tmp1_reg = O7;
     Register result_reg = reg_to_register_object($result$$reg);
 
-    // Get the first character position in both strings
-    //         [8] char array, [12] offset, [16] count
-    int  value_offset = java_lang_String:: value_offset_in_bytes();
-    int offset_offset = java_lang_String::offset_offset_in_bytes();
-    int  count_offset = java_lang_String:: count_offset_in_bytes();
+    assert(result_reg != str1_reg &&
+           result_reg != str2_reg &&
+           result_reg !=  cnt_reg &&
+           result_reg != tmp1_reg ,
+           "need different registers");
 
-    // load str1 (jchar*) base address into tmp1_reg
-    __ load_heap_oop(Address(str1_reg, value_offset), tmp1_reg);
-    __ ld(Address(str1_reg, offset_offset), result_reg);
-    __ add(tmp1_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp1_reg);
-    __    ld(Address(str1_reg, count_offset), str1_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __    load_heap_oop(Address(str2_reg, value_offset), tmp2_reg); // hoisted
-    __ add(result_reg, tmp1_reg, tmp1_reg);
-
-    // load str2 (jchar*) base address into tmp2_reg
-    // __ ld_ptr(Address(str2_reg, value_offset), tmp2_reg); // hoisted
-    __ ld(Address(str2_reg, offset_offset), result_reg);
-    __ add(tmp2_reg, arrayOopDesc::base_offset_in_bytes(T_CHAR), tmp2_reg);
-    __    ld(Address(str2_reg, count_offset), str2_reg); // hoisted
-    __ sll(result_reg, exact_log2(sizeof(jchar)), result_reg);
-    __   cmp(str1_reg, str2_reg); // hoisted
-    __ add(result_reg, tmp2_reg, tmp2_reg);
-
-    __ sll(str1_reg, exact_log2(sizeof(jchar)), str1_reg);
-    __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
-    __ delayed()->mov(G0, result_reg);    // not equal
-
-    __ br_zero(Assembler::equal, true, Assembler::pn, str1_reg, Ldone);
-    __ delayed()->add(G0, 1, result_reg); //equals
-
-    __ cmp(tmp1_reg, tmp2_reg); //same string ?
+    __ cmp(str1_reg, str2_reg); //same char[] ?
     __ brx(Assembler::equal, true, Assembler::pn, Ldone);
     __ delayed()->add(G0, 1, result_reg);
 
+    __ br_on_reg_cond(Assembler::rc_z, true, Assembler::pn, cnt_reg, Ldone);
+    __ delayed()->add(G0, 1, result_reg); // count == 0
+
     //rename registers
-    Register limit_reg =   str1_reg;
-    Register  chr2_reg =   str2_reg;
+    Register limit_reg =    cnt_reg;
     Register  chr1_reg = result_reg;
-    // tmp{12} are the base pointers
+    Register  chr2_reg =   tmp1_reg;
 
     //check for alignment and position the pointers to the ends
-    __ or3(tmp1_reg, tmp2_reg, chr1_reg);
-    __ andcc(chr1_reg, 0x3, chr1_reg); // notZero means at least one not 4-byte aligned
-    __ br(Assembler::notZero, false, Assembler::pn, Lchar);
-    __ delayed()->nop();
+    __ or3(str1_reg, str2_reg, chr1_reg);
+    __ andcc(chr1_reg, 0x3, chr1_reg);
+    // notZero means at least one not 4-byte aligned.
+    // We could optimize the case when both arrays are not aligned
+    // but it is not frequent case and it requires additional checks.
+    __ br(Assembler::notZero, false, Assembler::pn, Lchar); // char by char compare
+    __ delayed()->sll(limit_reg, exact_log2(sizeof(jchar)), limit_reg); // set byte count
 
-    __ bind(Lword);
-    __ and3(limit_reg, 0x2, O7); //remember the remainder (either 0 or 2)
-    __ andn(limit_reg, 0x3, limit_reg);
-    __ br_zero(Assembler::zero, false, Assembler::pn, limit_reg, Lpost_word);
-    __ delayed()->nop();
-
-    __ add(tmp1_reg, limit_reg, tmp1_reg);
-    __ add(tmp2_reg, limit_reg, tmp2_reg);
-    __ neg(limit_reg);
-
-    __ lduw(tmp1_reg, limit_reg, chr1_reg);
-    __ bind(Lword_loop);
-    __ lduw(tmp2_reg, limit_reg, chr2_reg);
-    __ cmp(chr1_reg, chr2_reg);
-    __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
-    __ delayed()->mov(G0, result_reg);
-    __ inccc(limit_reg, 2*sizeof(jchar));
-    // annul LDUW if branch i  s not taken to prevent access past end of string
-    __ br(Assembler::notZero, true, Assembler::pt, Lword_loop); //annul on taken
-    __ delayed()->lduw(tmp1_reg, limit_reg, chr1_reg); // hoisted
-
-    __ bind(Lpost_word);
-    __ br_zero(Assembler::zero, true, Assembler::pt, O7, Ldone);
-    __ delayed()->add(G0, 1, result_reg);
-
-    __ lduh(tmp1_reg, 0, chr1_reg);
-    __ lduh(tmp2_reg, 0, chr2_reg);
-    __ cmp (chr1_reg, chr2_reg);
-    __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
-    __ delayed()->mov(G0, result_reg);
+    // Compare char[] arrays aligned to 4 bytes.
+    __ char_arrays_equals(str1_reg, str2_reg, limit_reg, result_reg,
+                          chr1_reg, chr2_reg, Ldone);
     __ ba(false,Ldone);
     __ delayed()->add(G0, 1, result_reg);
 
+    // char by char compare
     __ bind(Lchar);
-    __ add(tmp1_reg, limit_reg, tmp1_reg);
-    __ add(tmp2_reg, limit_reg, tmp2_reg);
+    __ add(str1_reg, limit_reg, str1_reg);
+    __ add(str2_reg, limit_reg, str2_reg);
     __ neg(limit_reg); //negate count
 
-    __ lduh(tmp1_reg, limit_reg, chr1_reg);
+    __ lduh(str1_reg, limit_reg, chr1_reg);
+    // Lchar_loop
     __ bind(Lchar_loop);
-    __ lduh(tmp2_reg, limit_reg, chr2_reg);
+    __ lduh(str2_reg, limit_reg, chr2_reg);
     __ cmp(chr1_reg, chr2_reg);
     __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
     __ delayed()->mov(G0, result_reg); //not equal
     __ inccc(limit_reg, sizeof(jchar));
     // annul LDUH if branch is not taken to prevent access past end of string
-    __ br(Assembler::notZero, true, Assembler::pt, Lchar_loop); //annul on taken
-    __ delayed()->lduh(tmp1_reg, limit_reg, chr1_reg); // hoisted
+    __ br(Assembler::notZero, true, Assembler::pt, Lchar_loop);
+    __ delayed()->lduh(str1_reg, limit_reg, chr1_reg); // hoisted
 
     __ add(G0, 1, result_reg);  //equal
 
     __ bind(Ldone);
   %}
 
-enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result) %{
+enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, notemp_iRegI result) %{
     Label Lvector, Ldone, Lloop;
     MacroAssembler _masm(&cbuf);
 
     Register   ary1_reg = reg_to_register_object($ary1$$reg);
     Register   ary2_reg = reg_to_register_object($ary2$$reg);
     Register   tmp1_reg = reg_to_register_object($tmp1$$reg);
-    Register   tmp2_reg = reg_to_register_object($tmp2$$reg);
+    Register   tmp2_reg = O7;
     Register result_reg = reg_to_register_object($result$$reg);
 
     int length_offset  = arrayOopDesc::length_offset_in_bytes();
@@ -3083,7 +2987,7 @@ enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, g4RegP tmp2, n
 
     // return true if the same array
     __ cmp(ary1_reg, ary2_reg);
-    __ br(Assembler::equal, true, Assembler::pn, Ldone);
+    __ brx(Assembler::equal, true, Assembler::pn, Ldone);
     __ delayed()->add(G0, 1, result_reg); // equal
 
     __ br_null(ary1_reg, true, Assembler::pn, Ldone);
@@ -3101,7 +3005,7 @@ enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, g4RegP tmp2, n
     __ br(Assembler::notEqual, true, Assembler::pn, Ldone);
     __ delayed()->mov(G0, result_reg);     // not equal
 
-    __ br_zero(Assembler::zero, true, Assembler::pn, tmp1_reg, Ldone);
+    __ br_on_reg_cond(Assembler::rc_z, true, Assembler::pn, tmp1_reg, Ldone);
     __ delayed()->add(G0, 1, result_reg); // zero-length arrays are equal
 
     // load array addresses
@@ -3109,45 +3013,16 @@ enc_class enc_Array_Equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, g4RegP tmp2, n
     __ add(ary2_reg, base_offset, ary2_reg);
 
     // renaming registers
-    Register chr1_reg  =  tmp2_reg;   // for characters in ary1
-    Register chr2_reg  =  result_reg; // for characters in ary2
+    Register chr1_reg  =  result_reg; // for characters in ary1
+    Register chr2_reg  =  tmp2_reg;   // for characters in ary2
     Register limit_reg =  tmp1_reg;   // length
 
     // set byte count
     __ sll(limit_reg, exact_log2(sizeof(jchar)), limit_reg);
-    __ andcc(limit_reg, 0x2, chr1_reg); //trailing character ?
-    __ br(Assembler::zero, false, Assembler::pt, Lvector);
-    __ delayed()->nop();
 
-    //compare the trailing char
-    __ sub(limit_reg, sizeof(jchar), limit_reg);
-    __ lduh(ary1_reg, limit_reg, chr1_reg);
-    __ lduh(ary2_reg, limit_reg, chr2_reg);
-    __ cmp(chr1_reg, chr2_reg);
-    __ br(Assembler::notEqual, true, Assembler::pt, Ldone);
-    __ delayed()->mov(G0, result_reg);     // not equal
-
-    // only one char ?
-    __ br_zero(Assembler::zero, true, Assembler::pn, limit_reg, Ldone);
-    __ delayed()->add(G0, 1, result_reg); // zero-length arrays are equal
-
-    __ bind(Lvector);
-    // Shift ary1_reg and ary2_reg to the end of the arrays, negate limit
-    __ add(ary1_reg, limit_reg, ary1_reg);
-    __ add(ary2_reg, limit_reg, ary2_reg);
-    __ neg(limit_reg, limit_reg);
-
-    __ lduw(ary1_reg, limit_reg, chr1_reg);
-    __ bind(Lloop);
-    __ lduw(ary2_reg, limit_reg, chr2_reg);
-    __ cmp(chr1_reg, chr2_reg);
-    __ br(Assembler::notEqual, false, Assembler::pt, Ldone);
-    __ delayed()->mov(G0, result_reg);     // not equal
-    __ inccc(limit_reg, 2*sizeof(jchar));
-    // annul LDUW if branch is not taken to prevent access past end of string
-    __ br(Assembler::notZero, true, Assembler::pt, Lloop); //annul on taken
-    __ delayed()->lduw(ary1_reg, limit_reg, chr1_reg); // hoisted
-
+    // Compare char[] arrays aligned to 4 bytes.
+    __ char_arrays_equals(ary1_reg, ary2_reg, limit_reg, result_reg,
+                          chr1_reg, chr2_reg, Ldone);
     __ add(G0, 1, result_reg); // equals
 
     __ bind(Ldone);
@@ -4399,8 +4274,8 @@ operand cmpOp_commute() %{
 // instructions for every form of operand when the instruction accepts
 // multiple operand types with the same basic encoding and format.  The classic
 // case of this is memory operands.
-// Indirect is not included since its use is limited to Compare & Swap
 opclass memory( indirect, indOffset13, indIndex );
+opclass indIndexMemory( indIndex );
 
 //----------PIPELINE-----------------------------------------------------------
 pipeline %{
@@ -5707,7 +5582,7 @@ instruct loadUS2L_immI16(iRegL dst, memory mem, immI16 mask, iRegL tmp) %{
   effect(TEMP dst, TEMP tmp);
   ins_cost(MEMORY_REF_COST + 2*DEFAULT_COST);
 
-  size(3*4);
+  size((3+1)*4);  // set may use two instructions.
   format %{ "LDUH   $mem,$dst\t! ushort/char & 16-bit mask -> long\n\t"
             "SET    $mask,$tmp\n\t"
             "AND    $dst,$tmp,$dst" %}
@@ -5851,7 +5726,7 @@ instruct loadI2L_immI(iRegL dst, memory mem, immI mask, iRegL tmp) %{
   effect(TEMP dst, TEMP tmp);
   ins_cost(MEMORY_REF_COST + 2*DEFAULT_COST);
 
-  size(3*4);
+  size((3+1)*4);  // set may use two instructions.
   format %{ "LDUW   $mem,$dst\t! int & 32-bit mask -> long\n\t"
             "SET    $mask,$tmp\n\t"
             "AND    $dst,$tmp,$dst" %}
@@ -6238,6 +6113,7 @@ instruct prefetchr( memory mem ) %{
 %}
 
 instruct prefetchw( memory mem ) %{
+  predicate(AllocatePrefetchStyle != 3 );
   match( PrefetchWrite mem );
   ins_cost(MEMORY_REF_COST);
 
@@ -6247,6 +6123,23 @@ instruct prefetchw( memory mem ) %{
   ins_pipe(iload_mem);
 %}
 
+// Use BIS instruction to prefetch.
+instruct prefetchw_bis( memory mem ) %{
+  predicate(AllocatePrefetchStyle == 3);
+  match( PrefetchWrite mem );
+  ins_cost(MEMORY_REF_COST);
+
+  format %{ "STXA   G0,$mem\t! // Block initializing store" %}
+  ins_encode %{
+     Register base = as_Register($mem$$base);
+     int disp = $mem$$disp;
+     if (disp != 0) {
+       __ add(base, AllocatePrefetchStepSize, base);
+     }
+     __ stxa(G0, base, G0, ASI_BLK_INIT_QUAD_LDD_P);
+  %}
+  ins_pipe(istore_mem_reg);
+%}
 
 //----------Store Instructions-------------------------------------------------
 // Store Byte
@@ -6760,7 +6653,7 @@ instruct cmovII_imm(cmpOp cmp, flagsReg icc, iRegI dst, immI11 src) %{
   ins_pipe(ialu_imm);
 %}
 
-instruct cmovII_U_reg(cmpOpU cmp, flagsRegU icc, iRegI dst, iRegI src) %{
+instruct cmovIIu_reg(cmpOpU cmp, flagsRegU icc, iRegI dst, iRegI src) %{
   match(Set dst (CMoveI (Binary cmp icc) (Binary dst src)));
   ins_cost(150);
   size(4);
@@ -6769,7 +6662,7 @@ instruct cmovII_U_reg(cmpOpU cmp, flagsRegU icc, iRegI dst, iRegI src) %{
   ins_pipe(ialu_reg);
 %}
 
-instruct cmovII_U_imm(cmpOpU cmp, flagsRegU icc, iRegI dst, immI11 src) %{
+instruct cmovIIu_imm(cmpOpU cmp, flagsRegU icc, iRegI dst, immI11 src) %{
   match(Set dst (CMoveI (Binary cmp icc) (Binary dst src)));
   ins_cost(140);
   size(4);
@@ -6815,6 +6708,16 @@ instruct cmovNI_reg(cmpOp cmp, flagsReg icc, iRegN dst, iRegN src) %{
   ins_pipe(ialu_reg);
 %}
 
+// This instruction also works with CmpN so we don't need cmovNN_reg.
+instruct cmovNIu_reg(cmpOpU cmp, flagsRegU icc, iRegN dst, iRegN src) %{
+  match(Set dst (CMoveN (Binary cmp icc) (Binary dst src)));
+  ins_cost(150);
+  size(4);
+  format %{ "MOV$cmp  $icc,$src,$dst" %}
+  ins_encode( enc_cmov_reg(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(ialu_reg);
+%}
+
 instruct cmovNF_reg(cmpOpF cmp, flagsRegF fcc, iRegN dst, iRegN src) %{
   match(Set dst (CMoveN (Binary cmp fcc) (Binary dst src)));
   ins_cost(150);
@@ -6852,7 +6755,27 @@ instruct cmovPI_reg(cmpOp cmp, flagsReg icc, iRegP dst, iRegP src) %{
   ins_pipe(ialu_reg);
 %}
 
+instruct cmovPIu_reg(cmpOpU cmp, flagsRegU icc, iRegP dst, iRegP src) %{
+  match(Set dst (CMoveP (Binary cmp icc) (Binary dst src)));
+  ins_cost(150);
+
+  size(4);
+  format %{ "MOV$cmp  $icc,$src,$dst\t! ptr" %}
+  ins_encode( enc_cmov_reg(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(ialu_reg);
+%}
+
 instruct cmovPI_imm(cmpOp cmp, flagsReg icc, iRegP dst, immP0 src) %{
+  match(Set dst (CMoveP (Binary cmp icc) (Binary dst src)));
+  ins_cost(140);
+
+  size(4);
+  format %{ "MOV$cmp  $icc,$src,$dst\t! ptr" %}
+  ins_encode( enc_cmov_imm(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(ialu_imm);
+%}
+
+instruct cmovPIu_imm(cmpOpU cmp, flagsRegU icc, iRegP dst, immP0 src) %{
   match(Set dst (CMoveP (Binary cmp icc) (Binary dst src)));
   ins_cost(140);
 
@@ -6901,6 +6824,17 @@ instruct cmovFI_reg(cmpOp cmp, flagsReg icc, regF dst, regF src) %{
   ins_pipe(int_conditional_float_move);
 %}
 
+instruct cmovFIu_reg(cmpOpU cmp, flagsRegU icc, regF dst, regF src) %{
+  match(Set dst (CMoveF (Binary cmp icc) (Binary dst src)));
+  ins_cost(150);
+
+  size(4);
+  format %{ "FMOVS$cmp $icc,$src,$dst" %}
+  opcode(0x101);
+  ins_encode( enc_cmovf_reg(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(int_conditional_float_move);
+%}
+
 // Conditional move,
 instruct cmovFF_reg(cmpOpF cmp, flagsRegF fcc, regF dst, regF src) %{
   match(Set dst (CMoveF (Binary cmp fcc) (Binary dst src)));
@@ -6924,6 +6858,17 @@ instruct cmovDP_reg(cmpOpP cmp, flagsRegP pcc, regD dst, regD src) %{
 %}
 
 instruct cmovDI_reg(cmpOp cmp, flagsReg icc, regD dst, regD src) %{
+  match(Set dst (CMoveD (Binary cmp icc) (Binary dst src)));
+  ins_cost(150);
+
+  size(4);
+  format %{ "FMOVD$cmp $icc,$src,$dst" %}
+  opcode(0x102);
+  ins_encode( enc_cmovf_reg(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(int_conditional_double_move);
+%}
+
+instruct cmovDIu_reg(cmpOpU cmp, flagsRegU icc, regD dst, regD src) %{
   match(Set dst (CMoveD (Binary cmp icc) (Binary dst src)));
   ins_cost(150);
 
@@ -6963,6 +6908,17 @@ instruct cmovLP_imm(cmpOpP cmp, flagsRegP pcc, iRegL dst, immI11 src) %{
 %}
 
 instruct cmovLI_reg(cmpOp cmp, flagsReg icc, iRegL dst, iRegL src) %{
+  match(Set dst (CMoveL (Binary cmp icc) (Binary dst src)));
+  ins_cost(150);
+
+  size(4);
+  format %{ "MOV$cmp  $icc,$src,$dst\t! long" %}
+  ins_encode( enc_cmov_reg(cmp,dst,src, (Assembler::icc)) );
+  ins_pipe(ialu_reg);
+%}
+
+
+instruct cmovLIu_reg(cmpOpU cmp, flagsRegU icc, iRegL dst, iRegL src) %{
   match(Set dst (CMoveL (Binary cmp icc) (Binary dst src)));
   ins_cost(150);
 
@@ -9471,33 +9427,33 @@ instruct clear_array(iRegX cnt, iRegP base, iRegX temp, Universe dummy, flagsReg
   ins_pipe(long_memory_op);
 %}
 
-instruct string_compare(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result,
-                        o7RegI tmp3, flagsReg ccr) %{
-  match(Set result (StrComp str1 str2));
-  effect(USE_KILL str1, USE_KILL str2, KILL tmp1, KILL tmp2, KILL ccr, KILL tmp3);
+instruct string_compare(o0RegP str1, o1RegP str2, g3RegI cnt1, g4RegI cnt2, notemp_iRegI result,
+                        o7RegI tmp, flagsReg ccr) %{
+  match(Set result (StrComp (Binary str1 cnt1) (Binary str2 cnt2)));
+  effect(USE_KILL str1, USE_KILL str2, USE_KILL cnt1, USE_KILL cnt2, KILL ccr, KILL tmp);
   ins_cost(300);
-  format %{ "String Compare $str1,$str2 -> $result" %}
-  ins_encode( enc_String_Compare(str1, str2, tmp1, tmp2, result) );
+  format %{ "String Compare $str1,$cnt1,$str2,$cnt2 -> $result   // KILL $tmp" %}
+  ins_encode( enc_String_Compare(str1, str2, cnt1, cnt2, result) );
   ins_pipe(long_memory_op);
 %}
 
-instruct string_equals(o0RegP str1, o1RegP str2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result,
-                       o7RegI tmp3, flagsReg ccr) %{
-  match(Set result (StrEquals str1 str2));
-  effect(USE_KILL str1, USE_KILL str2, KILL tmp1, KILL tmp2, KILL ccr, KILL tmp3);
+instruct string_equals(o0RegP str1, o1RegP str2, g3RegI cnt, notemp_iRegI result,
+                       o7RegI tmp, flagsReg ccr) %{
+  match(Set result (StrEquals (Binary str1 str2) cnt));
+  effect(USE_KILL str1, USE_KILL str2, USE_KILL cnt, KILL tmp, KILL ccr);
   ins_cost(300);
-  format %{ "String Equals $str1,$str2 -> $result" %}
-  ins_encode( enc_String_Equals(str1, str2, tmp1, tmp2, result) );
+  format %{ "String Equals $str1,$str2,$cnt -> $result   // KILL $tmp" %}
+  ins_encode( enc_String_Equals(str1, str2, cnt, result) );
   ins_pipe(long_memory_op);
 %}
 
-instruct array_equals(o0RegP ary1, o1RegP ary2, g3RegP tmp1, g4RegP tmp2, notemp_iRegI result,
-                        flagsReg ccr) %{
+instruct array_equals(o0RegP ary1, o1RegP ary2, g3RegI tmp1, notemp_iRegI result,
+                      o7RegI tmp2, flagsReg ccr) %{
   match(Set result (AryEq ary1 ary2));
   effect(USE_KILL ary1, USE_KILL ary2, KILL tmp1, KILL tmp2, KILL ccr);
   ins_cost(300);
-  format %{ "Array Equals $ary1,$ary2 -> $result" %}
-  ins_encode( enc_Array_Equals(ary1, ary2, tmp1, tmp2, result));
+  format %{ "Array Equals $ary1,$ary2 -> $result   // KILL $tmp1,$tmp2" %}
+  ins_encode( enc_Array_Equals(ary1, ary2, tmp1, result));
   ins_pipe(long_memory_op);
 %}
 
@@ -9515,8 +9471,9 @@ instruct countLeadingZerosI(iRegI dst, iRegI src, iRegI tmp, flagsReg cr) %{
   // x |= (x >> 8);
   // x |= (x >> 16);
   // return (WORDBITS - popc(x));
-  format %{ "SRL     $src,1,$dst\t! count leading zeros (int)\n\t"
-            "OR      $src,$tmp,$dst\n\t"
+  format %{ "SRL     $src,1,$tmp\t! count leading zeros (int)\n\t"
+            "SRL     $src,0,$dst\t! 32-bit zero extend\n\t"
+            "OR      $dst,$tmp,$dst\n\t"
             "SRL     $dst,2,$tmp\n\t"
             "OR      $dst,$tmp,$dst\n\t"
             "SRL     $dst,4,$tmp\n\t"
@@ -9533,7 +9490,8 @@ instruct countLeadingZerosI(iRegI dst, iRegI src, iRegI tmp, flagsReg cr) %{
     Register Rsrc = $src$$Register;
     Register Rtmp = $tmp$$Register;
     __ srl(Rsrc, 1, Rtmp);
-    __ or3(Rsrc, Rtmp, Rdst);
+    __ srl(Rsrc, 0, Rdst);
+    __ or3(Rdst, Rtmp, Rdst);
     __ srl(Rdst, 2, Rtmp);
     __ or3(Rdst, Rtmp, Rdst);
     __ srl(Rdst, 4, Rtmp);
@@ -9561,7 +9519,7 @@ instruct countLeadingZerosL(iRegI dst, iRegL src, iRegL tmp, flagsReg cr) %{
   // x |= (x >> 16);
   // x |= (x >> 32);
   // return (WORDBITS - popc(x));
-  format %{ "SRLX    $src,1,$dst\t! count leading zeros (long)\n\t"
+  format %{ "SRLX    $src,1,$tmp\t! count leading zeros (long)\n\t"
             "OR      $src,$tmp,$dst\n\t"
             "SRLX    $dst,2,$tmp\n\t"
             "OR      $dst,$tmp,$dst\n\t"
@@ -9671,84 +9629,179 @@ instruct popCountL(iRegI dst, iRegL src) %{
 
 instruct bytes_reverse_int(iRegI dst, stackSlotI src) %{
   match(Set dst (ReverseBytesI src));
-  effect(DEF dst, USE src);
 
   // Op cost is artificially doubled to make sure that load or store
   // instructions are preferred over this one which requires a spill
   // onto a stack slot.
   ins_cost(2*DEFAULT_COST + MEMORY_REF_COST);
-  size(8);
   format %{ "LDUWA  $src, $dst\t!asi=primary_little" %}
-  opcode(Assembler::lduwa_op3);
-  ins_encode( form3_mem_reg_little(src, dst) );
+
+  ins_encode %{
+    __ set($src$$disp + STACK_BIAS, O7);
+    __ lduwa($src$$base$$Register, O7, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
   ins_pipe( iload_mem );
 %}
 
 instruct bytes_reverse_long(iRegL dst, stackSlotL src) %{
   match(Set dst (ReverseBytesL src));
-  effect(DEF dst, USE src);
 
   // Op cost is artificially doubled to make sure that load or store
   // instructions are preferred over this one which requires a spill
   // onto a stack slot.
   ins_cost(2*DEFAULT_COST + MEMORY_REF_COST);
-  size(8);
   format %{ "LDXA   $src, $dst\t!asi=primary_little" %}
 
-  opcode(Assembler::ldxa_op3);
-  ins_encode( form3_mem_reg_little(src, dst) );
+  ins_encode %{
+    __ set($src$$disp + STACK_BIAS, O7);
+    __ ldxa($src$$base$$Register, O7, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
+  ins_pipe( iload_mem );
+%}
+
+instruct bytes_reverse_unsigned_short(iRegI dst, stackSlotI src) %{
+  match(Set dst (ReverseBytesUS src));
+
+  // Op cost is artificially doubled to make sure that load or store
+  // instructions are preferred over this one which requires a spill
+  // onto a stack slot.
+  ins_cost(2*DEFAULT_COST + MEMORY_REF_COST);
+  format %{ "LDUHA  $src, $dst\t!asi=primary_little\n\t" %}
+
+  ins_encode %{
+    // the value was spilled as an int so bias the load
+    __ set($src$$disp + STACK_BIAS + 2, O7);
+    __ lduha($src$$base$$Register, O7, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
+  ins_pipe( iload_mem );
+%}
+
+instruct bytes_reverse_short(iRegI dst, stackSlotI src) %{
+  match(Set dst (ReverseBytesS src));
+
+  // Op cost is artificially doubled to make sure that load or store
+  // instructions are preferred over this one which requires a spill
+  // onto a stack slot.
+  ins_cost(2*DEFAULT_COST + MEMORY_REF_COST);
+  format %{ "LDSHA  $src, $dst\t!asi=primary_little\n\t" %}
+
+  ins_encode %{
+    // the value was spilled as an int so bias the load
+    __ set($src$$disp + STACK_BIAS + 2, O7);
+    __ ldsha($src$$base$$Register, O7, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
   ins_pipe( iload_mem );
 %}
 
 // Load Integer reversed byte order
-instruct loadI_reversed(iRegI dst, memory src) %{
+instruct loadI_reversed(iRegI dst, indIndexMemory src) %{
   match(Set dst (ReverseBytesI (LoadI src)));
 
   ins_cost(DEFAULT_COST + MEMORY_REF_COST);
-  size(8);
+  size(4);
   format %{ "LDUWA  $src, $dst\t!asi=primary_little" %}
 
-  opcode(Assembler::lduwa_op3);
-  ins_encode( form3_mem_reg_little( src, dst) );
+  ins_encode %{
+    __ lduwa($src$$base$$Register, $src$$index$$Register, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
   ins_pipe(iload_mem);
 %}
 
 // Load Long - aligned and reversed
-instruct loadL_reversed(iRegL dst, memory src) %{
+instruct loadL_reversed(iRegL dst, indIndexMemory src) %{
   match(Set dst (ReverseBytesL (LoadL src)));
 
-  ins_cost(DEFAULT_COST + MEMORY_REF_COST);
-  size(8);
+  ins_cost(MEMORY_REF_COST);
+  size(4);
   format %{ "LDXA   $src, $dst\t!asi=primary_little" %}
 
-  opcode(Assembler::ldxa_op3);
-  ins_encode( form3_mem_reg_little( src, dst ) );
+  ins_encode %{
+    __ ldxa($src$$base$$Register, $src$$index$$Register, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load unsigned short / char reversed byte order
+instruct loadUS_reversed(iRegI dst, indIndexMemory src) %{
+  match(Set dst (ReverseBytesUS (LoadUS src)));
+
+  ins_cost(MEMORY_REF_COST);
+  size(4);
+  format %{ "LDUHA  $src, $dst\t!asi=primary_little" %}
+
+  ins_encode %{
+    __ lduha($src$$base$$Register, $src$$index$$Register, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
+  ins_pipe(iload_mem);
+%}
+
+// Load short reversed byte order
+instruct loadS_reversed(iRegI dst, indIndexMemory src) %{
+  match(Set dst (ReverseBytesS (LoadS src)));
+
+  ins_cost(MEMORY_REF_COST);
+  size(4);
+  format %{ "LDSHA  $src, $dst\t!asi=primary_little" %}
+
+  ins_encode %{
+    __ ldsha($src$$base$$Register, $src$$index$$Register, Assembler::ASI_PRIMARY_LITTLE, $dst$$Register);
+  %}
   ins_pipe(iload_mem);
 %}
 
 // Store Integer reversed byte order
-instruct storeI_reversed(memory dst, iRegI src) %{
+instruct storeI_reversed(indIndexMemory dst, iRegI src) %{
   match(Set dst (StoreI dst (ReverseBytesI src)));
 
   ins_cost(MEMORY_REF_COST);
-  size(8);
+  size(4);
   format %{ "STWA   $src, $dst\t!asi=primary_little" %}
 
-  opcode(Assembler::stwa_op3);
-  ins_encode( form3_mem_reg_little( dst, src) );
+  ins_encode %{
+    __ stwa($src$$Register, $dst$$base$$Register, $dst$$index$$Register, Assembler::ASI_PRIMARY_LITTLE);
+  %}
   ins_pipe(istore_mem_reg);
 %}
 
 // Store Long reversed byte order
-instruct storeL_reversed(memory dst, iRegL src) %{
+instruct storeL_reversed(indIndexMemory dst, iRegL src) %{
   match(Set dst (StoreL dst (ReverseBytesL src)));
 
   ins_cost(MEMORY_REF_COST);
-  size(8);
+  size(4);
   format %{ "STXA   $src, $dst\t!asi=primary_little" %}
 
-  opcode(Assembler::stxa_op3);
-  ins_encode( form3_mem_reg_little( dst, src) );
+  ins_encode %{
+    __ stxa($src$$Register, $dst$$base$$Register, $dst$$index$$Register, Assembler::ASI_PRIMARY_LITTLE);
+  %}
+  ins_pipe(istore_mem_reg);
+%}
+
+// Store unsighed short/char reversed byte order
+instruct storeUS_reversed(indIndexMemory dst, iRegI src) %{
+  match(Set dst (StoreC dst (ReverseBytesUS src)));
+
+  ins_cost(MEMORY_REF_COST);
+  size(4);
+  format %{ "STHA   $src, $dst\t!asi=primary_little" %}
+
+  ins_encode %{
+    __ stha($src$$Register, $dst$$base$$Register, $dst$$index$$Register, Assembler::ASI_PRIMARY_LITTLE);
+  %}
+  ins_pipe(istore_mem_reg);
+%}
+
+// Store short reversed byte order
+instruct storeS_reversed(indIndexMemory dst, iRegI src) %{
+  match(Set dst (StoreC dst (ReverseBytesS src)));
+
+  ins_cost(MEMORY_REF_COST);
+  size(4);
+  format %{ "STHA   $src, $dst\t!asi=primary_little" %}
+
+  ins_encode %{
+    __ stha($src$$Register, $dst$$base$$Register, $dst$$index$$Register, Assembler::ASI_PRIMARY_LITTLE);
+  %}
   ins_pipe(istore_mem_reg);
 %}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,9 @@ class BytecodeStream;
 // The reader will find many data races in profile gathering code, starting
 // with invocation counter incrementation.  None of these races harm correct
 // execution of the compiled code.
+
+// forward decl
+class ProfileData;
 
 // DataLayout
 //
@@ -231,6 +234,10 @@ public:
     temp._header._struct._flags = byte_constant;
     return temp._header._bits;
   }
+
+  // GC support
+  ProfileData* data_in();
+  void follow_weak_refs(BoolObjectClosure* cl);
 };
 
 
@@ -430,6 +437,7 @@ public:
   virtual void oop_iterate(OopClosure* blk) {}
   virtual void oop_iterate_m(OopClosure* blk, MemRegion mr) {}
   virtual void adjust_pointers() {}
+  virtual void follow_weak_refs(BoolObjectClosure* is_alive_closure) {}
 
 #ifndef SERIALGC
   // Parallel old support
@@ -535,6 +543,10 @@ public:
   }
   static ByteSize counter_data_size() {
     return cell_offset(counter_cell_count);
+  }
+
+  void set_count(uint count) {
+    set_uint_at(count_off, count);
   }
 
 #ifndef PRODUCT
@@ -667,9 +679,42 @@ public:
     return recv;
   }
 
+  void set_receiver(uint row, oop p) {
+    assert((uint)row < row_limit(), "oob");
+    set_oop_at(receiver_cell_index(row), p);
+  }
+
   uint receiver_count(uint row) {
     assert(row < row_limit(), "oob");
     return uint_at(receiver_count_cell_index(row));
+  }
+
+  void set_receiver_count(uint row, uint count) {
+    assert(row < row_limit(), "oob");
+    set_uint_at(receiver_count_cell_index(row), count);
+  }
+
+  void clear_row(uint row) {
+    assert(row < row_limit(), "oob");
+    // Clear total count - indicator of polymorphic call site.
+    // The site may look like as monomorphic after that but
+    // it allow to have more accurate profiling information because
+    // there was execution phase change since klasses were unloaded.
+    // If the site is still polymorphic then MDO will be updated
+    // to reflect it. But it could be the case that the site becomes
+    // only bimorphic. Then keeping total count not 0 will be wrong.
+    // Even if we use monomorphic (when it is not) for compilation
+    // we will only have trap, deoptimization and recompile again
+    // with updated MDO after executing method in Interpreter.
+    // An additional receiver will be recorded in the cleaned row
+    // during next call execution.
+    //
+    // Note: our profiling logic works with empty rows in any slot.
+    // We do sorting a profiling info (ciCallProfile) for compilation.
+    //
+    set_count(0);
+    set_receiver(row, NULL);
+    set_receiver_count(row, 0);
   }
 
   // Code generation support
@@ -688,6 +733,7 @@ public:
   virtual void oop_iterate(OopClosure* blk);
   virtual void oop_iterate_m(OopClosure* blk, MemRegion mr);
   virtual void adjust_pointers();
+  virtual void follow_weak_refs(BoolObjectClosure* is_alive_closure);
 
 #ifndef SERIALGC
   // Parallel old support
@@ -1366,6 +1412,9 @@ public:
   }
   void inc_decompile_count() {
     _nof_decompiles += 1;
+    if (decompile_count() > (uint)PerMethodRecompilationCutoff) {
+      method()->set_not_compilable();
+    }
   }
 
   // Support for code generation

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -231,6 +231,9 @@ public:
   ciKlass*  get_declared_method_holder();
   int       get_method_holder_index();
   int       get_method_signature_index();
+
+  ciCPCache*  get_cpcache();
+  ciCallSite* get_call_site();
 
  private:
   void assert_index_size(int required_size) const {

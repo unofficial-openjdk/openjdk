@@ -275,11 +275,14 @@ class NativeSignatureIterator: public SignatureIterator {
 
   void do_bool  ()                     { pass_int();    _jni_offset++; _offset++;       }
   void do_char  ()                     { pass_int();    _jni_offset++; _offset++;       }
-#ifdef _LP64
+#if defined(_LP64) || defined(ZERO)
   void do_float ()                     { pass_float();  _jni_offset++; _offset++;       }
-  void do_double()                     { pass_double(); _jni_offset++; _offset += 2;    }
 #else
   void do_float ()                     { pass_int();    _jni_offset++; _offset++;       }
+#endif
+#ifdef _LP64
+  void do_double()                     { pass_double(); _jni_offset++; _offset += 2;    }
+#else
   void do_double()                     { pass_double(); _jni_offset += 2; _offset += 2; }
 #endif
   void do_byte  ()                     { pass_int();    _jni_offset++; _offset++;       }
@@ -303,8 +306,10 @@ class NativeSignatureIterator: public SignatureIterator {
   virtual void pass_int()              = 0;
   virtual void pass_long()             = 0;
   virtual void pass_object()           = 0;
-#ifdef _LP64
+#if defined(_LP64) || defined(ZERO)
   virtual void pass_float()            = 0;
+#endif
+#ifdef _LP64
   virtual void pass_double()           = 0;
 #else
   virtual void pass_double()           { pass_long(); }  // may be same as long
@@ -397,6 +402,9 @@ class SignatureStream : public StackObj {
   bool is_array() const;                         // True if this argument is an array
   BasicType type() const                         { return _type; }
   symbolOop as_symbol(TRAPS);
+  enum FailureMode { ReturnNull, CNFException, NCDFError };
+  klassOop as_klass(Handle class_loader, Handle protection_domain, FailureMode failure_mode, TRAPS);
+  oop as_java_mirror(Handle class_loader, Handle protection_domain, FailureMode failure_mode, TRAPS);
 
   // return same as_symbol except allocation of new symbols is avoided.
   symbolOop as_symbol_or_null();

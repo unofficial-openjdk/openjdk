@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -440,7 +440,7 @@ void LIRGenerator::jobject2reg_with_patching(LIR_Opr r, ciObject* obj, CodeEmitI
     __ oop2reg_patch(NULL, r, info);
   } else {
     // no patching needed
-    __ oop2reg(obj->encoding(), r);
+    __ oop2reg(obj->constant_encoding(), r);
   }
 }
 
@@ -831,7 +831,7 @@ void LIRGenerator::profile_branch(If* if_instr, If::Condition cond) {
     int taken_count_offset     = md->byte_offset_of_slot(data, BranchData::taken_offset());
     int not_taken_count_offset = md->byte_offset_of_slot(data, BranchData::not_taken_offset());
     LIR_Opr md_reg = new_register(T_OBJECT);
-    __ move(LIR_OprFact::oopConst(md->encoding()), md_reg);
+    __ move(LIR_OprFact::oopConst(md->constant_encoding()), md_reg);
     LIR_Opr data_offset_reg = new_register(T_INT);
     __ cmove(lir_cond(cond),
              LIR_OprFact::intConst(taken_count_offset),
@@ -1071,7 +1071,7 @@ void LIRGenerator::do_Return(Return* x) {
     LIR_OprList* args = new LIR_OprList();
     args->append(getThreadPointer());
     LIR_Opr meth = new_register(T_OBJECT);
-    __ oop2reg(method()->encoding(), meth);
+    __ oop2reg(method()->constant_encoding(), meth);
     args->append(meth);
     call_runtime(&signature, args, CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit), voidType, NULL);
   }
@@ -1765,35 +1765,17 @@ void LIRGenerator::do_Throw(Throw* x) {
     __ null_check(exception_opr, new CodeEmitInfo(info, true));
   }
 
-  if (compilation()->env()->jvmti_can_post_exceptions() &&
-      !block()->is_set(BlockBegin::default_exception_handler_flag)) {
+  if (compilation()->env()->jvmti_can_post_on_exceptions()) {
     // we need to go through the exception lookup path to get JVMTI
     // notification done
     unwind = false;
-  }
-
-  assert(!block()->is_set(BlockBegin::default_exception_handler_flag) || unwind,
-         "should be no more handlers to dispatch to");
-
-  if (compilation()->env()->dtrace_method_probes() &&
-      block()->is_set(BlockBegin::default_exception_handler_flag)) {
-    // notify that this frame is unwinding
-    BasicTypeList signature;
-    signature.append(T_INT);    // thread
-    signature.append(T_OBJECT); // methodOop
-    LIR_OprList* args = new LIR_OprList();
-    args->append(getThreadPointer());
-    LIR_Opr meth = new_register(T_OBJECT);
-    __ oop2reg(method()->encoding(), meth);
-    args->append(meth);
-    call_runtime(&signature, args, CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_exit), voidType, NULL);
   }
 
   // move exception oop into fixed register
   __ move(exception_opr, exceptionOopOpr());
 
   if (unwind) {
-    __ unwind_exception(LIR_OprFact::illegalOpr, exceptionOopOpr(), info);
+    __ unwind_exception(exceptionOopOpr());
   } else {
     __ throw_exception(exceptionPcOpr(), exceptionOopOpr(), info);
   }
@@ -1855,12 +1837,26 @@ void LIRGenerator::do_UnsafeGetRaw(UnsafeGetRaw* x) {
     addr = new LIR_Address(base_op, index_op->as_jint(), dst_type);
   } else {
 #ifdef X86
+#ifdef _LP64
+    if (!index_op->is_illegal() && index_op->type() == T_INT) {
+      LIR_Opr tmp = new_pointer_register();
+      __ convert(Bytecodes::_i2l, index_op, tmp);
+      index_op = tmp;
+    }
+#endif
     addr = new LIR_Address(base_op, index_op, LIR_Address::Scale(log2_scale), 0, dst_type);
 #else
     if (index_op->is_illegal() || log2_scale == 0) {
+#ifdef _LP64
+      if (!index_op->is_illegal() && index_op->type() == T_INT) {
+        LIR_Opr tmp = new_pointer_register();
+        __ convert(Bytecodes::_i2l, index_op, tmp);
+        index_op = tmp;
+      }
+#endif
       addr = new LIR_Address(base_op, index_op, dst_type);
     } else {
-      LIR_Opr tmp = new_register(T_INT);
+      LIR_Opr tmp = new_pointer_register();
       __ shift_left(index_op, log2_scale, tmp);
       addr = new LIR_Address(base_op, tmp, dst_type);
     }
@@ -1915,10 +1911,25 @@ void LIRGenerator::do_UnsafePutRaw(UnsafePutRaw* x) {
   LIR_Opr index_op = idx.result();
   if (log2_scale != 0) {
     // temporary fix (platform dependent code without shift on Intel would be better)
-    index_op = new_register(T_INT);
-    __ move(idx.result(), index_op);
+    index_op = new_pointer_register();
+#ifdef _LP64
+    if(idx.result()->type() == T_INT) {
+      __ convert(Bytecodes::_i2l, idx.result(), index_op);
+    } else {
+#endif
+      __ move(idx.result(), index_op);
+#ifdef _LP64
+    }
+#endif
     __ shift_left(index_op, log2_scale, index_op);
   }
+#ifdef _LP64
+  else if(!index_op->is_illegal() && index_op->type() == T_INT) {
+    LIR_Opr tmp = new_pointer_register();
+    __ convert(Bytecodes::_i2l, index_op, tmp);
+    index_op = tmp;
+  }
+#endif
 
   LIR_Address* addr = new LIR_Address(base_op, index_op, x->basic_type());
   __ move(value.result(), addr);
@@ -2207,7 +2218,7 @@ void LIRGenerator::do_Base(Base* x) {
     LIR_OprList* args = new LIR_OprList();
     args->append(getThreadPointer());
     LIR_Opr meth = new_register(T_OBJECT);
-    __ oop2reg(method()->encoding(), meth);
+    __ oop2reg(method()->constant_encoding(), meth);
     args->append(meth);
     call_runtime(&signature, args, CAST_FROM_FN_PTR(address, SharedRuntime::dtrace_method_entry), voidType, NULL);
   }
@@ -2216,7 +2227,7 @@ void LIRGenerator::do_Base(Base* x) {
     LIR_Opr obj;
     if (method()->is_static()) {
       obj = new_register(T_OBJECT);
-      __ oop2reg(method()->holder()->java_mirror()->encoding(), obj);
+      __ oop2reg(method()->holder()->java_mirror()->constant_encoding(), obj);
     } else {
       Local* receiver = x->state()->local_at(0)->as_Local();
       assert(receiver != NULL, "must already exist");
@@ -2255,7 +2266,7 @@ void LIRGenerator::do_OsrEntry(OsrEntry* x) {
 
 
 void LIRGenerator::invoke_load_arguments(Invoke* x, LIRItemList* args, const LIR_OprList* arg_list) {
-  int i = x->has_receiver() ? 1 : 0;
+  int i = (x->has_receiver() || x->is_invokedynamic()) ? 1 : 0;
   for (; i < args->length(); i++) {
     LIRItem* param = args->at(i);
     LIR_Opr loc = arg_list->at(i);
@@ -2292,6 +2303,10 @@ LIRItemList* LIRGenerator::invoke_visit_arguments(Invoke* x) {
   if (x->has_receiver()) {
     LIRItem* receiver = new LIRItem(x->receiver(), this);
     argument_items->append(receiver);
+  }
+  if (x->is_invokedynamic()) {
+    // Insert a dummy for the synthetic MethodHandle argument.
+    argument_items->append(NULL);
   }
   int idx = x->has_receiver() ? 1 : 0;
   for (int i = 0; i < x->number_of_arguments(); i++) {
@@ -2342,6 +2357,9 @@ void LIRGenerator::do_Invoke(Invoke* x) {
 
   CodeEmitInfo* info = state_for(x, x->state());
 
+  // invokedynamics can deoptimize.
+  CodeEmitInfo* deopt_info = x->is_invokedynamic() ? state_for(x, x->state_before()) : NULL;
+
   invoke_load_arguments(x, args, arg_list);
 
   if (x->has_receiver()) {
@@ -2378,6 +2396,47 @@ void LIRGenerator::do_Invoke(Invoke* x) {
         __ call_virtual(x->target(), receiver, result_register, vtable_offset, arg_list, info);
       }
       break;
+    case Bytecodes::_invokedynamic: {
+      ciBytecodeStream bcs(x->scope()->method());
+      bcs.force_bci(x->bci());
+      assert(bcs.cur_bc() == Bytecodes::_invokedynamic, "wrong stream");
+      ciCPCache* cpcache = bcs.get_cpcache();
+
+      // Get CallSite offset from constant pool cache pointer.
+      int index = bcs.get_method_index();
+      size_t call_site_offset = cpcache->get_f1_offset(index);
+
+      // If this invokedynamic call site hasn't been executed yet in
+      // the interpreter, the CallSite object in the constant pool
+      // cache is still null and we need to deoptimize.
+      if (cpcache->is_f1_null_at(index)) {
+        // Cannot re-use same xhandlers for multiple CodeEmitInfos, so
+        // clone all handlers.  This is handled transparently in other
+        // places by the CodeEmitInfo cloning logic but is handled
+        // specially here because a stub isn't being used.
+        x->set_exception_handlers(new XHandlers(x->exception_handlers()));
+
+        DeoptimizeStub* deopt_stub = new DeoptimizeStub(deopt_info);
+        __ jump(deopt_stub);
+      }
+
+      // Use the receiver register for the synthetic MethodHandle
+      // argument.
+      receiver = LIR_Assembler::receiverOpr();
+      LIR_Opr tmp = new_register(objectType);
+
+      // Load CallSite object from constant pool cache.
+      __ oop2reg(cpcache->constant_encoding(), tmp);
+      __ load(new LIR_Address(tmp, call_site_offset, T_OBJECT), tmp);
+
+      // Load target MethodHandle from CallSite object.
+      __ load(new LIR_Address(tmp, java_dyn_CallSite::target_offset_in_bytes(), T_OBJECT), receiver);
+
+      __ call_dynamic(x->target(), receiver, result_register,
+                      SharedRuntime::get_resolve_opt_virtual_call_stub(),
+                      arg_list, info);
+      break;
+    }
     default:
       ShouldNotReachHere();
       break;
@@ -2660,7 +2719,7 @@ void LIRGenerator::increment_invocation_counter(CodeEmitInfo* info, bool backedg
     }
 
     LIR_Opr meth = new_register(T_OBJECT);
-    __ oop2reg(method()->encoding(), meth);
+    __ oop2reg(method()->constant_encoding(), meth);
     LIR_Opr result = increment_and_return_counter(meth, offset, InvocationCounter::count_increment);
     __ cmp(lir_cond_aboveEqual, result, LIR_OprFact::intConst(limit));
     CodeStub* overflow = new CounterOverflowStub(info, info->bci());

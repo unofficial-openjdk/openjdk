@@ -280,7 +280,7 @@ void os::signal_init() {
                            string,
                            CHECK);
 
-    KlassHandle group(THREAD, SystemDictionary::threadGroup_klass());
+    KlassHandle group(THREAD, SystemDictionary::ThreadGroup_klass());
     JavaCalls::call_special(&result,
                             thread_group,
                             group,
@@ -406,8 +406,10 @@ char *os::strdup(const char *str) {
 #ifdef ASSERT
 inline size_t get_size(void* obj) {
   size_t size = *size_addr_from_obj(obj);
-  if (size < 0 )
-    fatal2("free: size field of object #%p was overwritten (%lu)", obj, size);
+  if (size < 0) {
+    fatal(err_msg("free: size field of object #" PTR_FORMAT " was overwritten ("
+                  SIZE_FORMAT ")", obj, size));
+  }
   return size;
 }
 

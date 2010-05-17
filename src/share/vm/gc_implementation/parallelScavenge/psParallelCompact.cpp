@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -785,7 +785,7 @@ PSParallelCompact::AdjustPointerClosure PSParallelCompact::_adjust_pointer_closu
 void PSParallelCompact::AdjustPointerClosure::do_oop(oop* p)       { adjust_pointer(p, _is_root); }
 void PSParallelCompact::AdjustPointerClosure::do_oop(narrowOop* p) { adjust_pointer(p, _is_root); }
 
-void PSParallelCompact::FollowStackClosure::do_void() { follow_stack(_compaction_manager); }
+void PSParallelCompact::FollowStackClosure::do_void() { _compaction_manager->follow_marking_stacks(); }
 
 void PSParallelCompact::MarkAndPushClosure::do_oop(oop* p)       { mark_and_push(_compaction_manager, p); }
 void PSParallelCompact::MarkAndPushClosure::do_oop(narrowOop* p) { mark_and_push(_compaction_manager, p); }
@@ -1923,31 +1923,32 @@ void PSParallelCompact::summary_phase(ParCompactionManager* cm,
 //
 // Note that this method should only be called from the vm_thread while at a
 // safepoint.
+//
+// Note that the all_soft_refs_clear flag in the collector policy
+// may be true because this method can be called without intervening
+// activity.  For example when the heap space is tight and full measure
+// are being taken to free space.
 void PSParallelCompact::invoke(bool maximum_heap_compaction) {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(),
          "should be in vm thread");
+
   ParallelScavengeHeap* heap = gc_heap();
   GCCause::Cause gc_cause = heap->gc_cause();
   assert(!heap->is_gc_active(), "not reentrant");
 
   PSAdaptiveSizePolicy* policy = heap->size_policy();
+  IsGCActiveMark mark;
 
-  // Before each allocation/collection attempt, find out from the
-  // policy object if GCs are, on the whole, taking too long. If so,
-  // bail out without attempting a collection.  The exceptions are
-  // for explicitly requested GC's.
-  if (!policy->gc_time_limit_exceeded() ||
-      GCCause::is_user_requested_gc(gc_cause) ||
-      GCCause::is_serviceability_requested_gc(gc_cause)) {
-    IsGCActiveMark mark;
-
-    if (ScavengeBeforeFullGC) {
-      PSScavenge::invoke_no_policy();
-    }
-
-    PSParallelCompact::invoke_no_policy(maximum_heap_compaction);
+  if (ScavengeBeforeFullGC) {
+    PSScavenge::invoke_no_policy();
   }
+
+  const bool clear_all_soft_refs =
+    heap->collector_policy()->should_clear_all_soft_refs();
+
+  PSParallelCompact::invoke_no_policy(clear_all_soft_refs ||
+                                      maximum_heap_compaction);
 }
 
 bool ParallelCompactData::region_contains(size_t region_index, HeapWord* addr) {
@@ -1975,6 +1976,11 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   PSOldGen* old_gen = heap->old_gen();
   PSPermGen* perm_gen = heap->perm_gen();
   PSAdaptiveSizePolicy* size_policy = heap->size_policy();
+
+  // The scope of casr should end after code that can change
+  // CollectorPolicy::_should_clear_all_soft_refs.
+  ClearedAllSoftRefs casr(maximum_heap_compaction,
+                          heap->collector_policy());
 
   if (ZapUnusedHeapArea) {
     // Save information needed to minimize mangling
@@ -2109,7 +2115,8 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
                               old_gen->max_gen_size(),
                               max_eden_size,
                               true /* full gc*/,
-                              gc_cause);
+                              gc_cause,
+                              heap->collector_policy());
 
         heap->resize_old_gen(
           size_policy->calculated_old_free_size_in_bytes());
@@ -2157,19 +2164,6 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     // Track memory usage and detect low memory
     MemoryService::track_memory_usage();
     heap->update_counters();
-
-    if (PrintGCDetails) {
-      if (size_policy->print_gc_time_limit_would_be_exceeded()) {
-        if (size_policy->gc_time_limit_exceeded()) {
-          gclog_or_tty->print_cr("      GC time is exceeding GCTimeLimit "
-            "of %d%%", GCTimeLimit);
-        } else {
-          gclog_or_tty->print_cr("      GC time would exceed GCTimeLimit "
-            "of %d%%", GCTimeLimit);
-        }
-      }
-      size_policy->set_print_gc_time_limit_would_be_exceeded(false);
-    }
   }
 
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
@@ -2322,6 +2316,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   {
     TraceTime tm_m("par mark", print_phases(), true, gclog_or_tty);
+    ParallelScavengeHeap::ParStrongRootsScope psrs;
 
     GCTaskQueue* q = GCTaskQueue::create();
 
@@ -2335,6 +2330,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::system_dictionary));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::jvmti));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::vm_symbols));
+    q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::code_cache));
 
     if (parallel_gc_threads > 1) {
       for (uint j = 0; j < parallel_gc_threads; j++) {
@@ -2374,18 +2370,20 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
   // Follow code cache roots.
   CodeCache::do_unloading(is_alive_closure(), &mark_and_push_closure,
                           purged_class);
-  follow_stack(cm); // Flush marking stack.
+  cm->follow_marking_stacks(); // Flush marking stack.
 
   // Update subklass/sibling/implementor links of live klasses
   // revisit_klass_stack is used in follow_weak_klass_links().
-  follow_weak_klass_links(cm);
+  follow_weak_klass_links();
+
+  // Revisit memoized MDO's and clear any unmarked weak refs
+  follow_mdo_weak_refs();
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(is_alive_closure());
   StringTable::unlink(is_alive_closure());
 
-  assert(cm->marking_stack()->size() == 0, "stack should be empty by now");
-  assert(cm->overflow_stack()->is_empty(), "stack should be empty by now");
+  assert(cm->marking_stacks_empty(), "marking stacks should be empty");
 }
 
 // This should be moved to the shared markSweep code!
@@ -2405,7 +2403,7 @@ void PSParallelCompact::adjust_roots() {
   Universe::oops_do(adjust_root_pointer_closure());
   ReferenceProcessor::oops_do(adjust_root_pointer_closure());
   JNIHandles::oops_do(adjust_root_pointer_closure());   // Global (strong) JNI handles
-  Threads::oops_do(adjust_root_pointer_closure());
+  Threads::oops_do(adjust_root_pointer_closure(), NULL);
   ObjectSynchronizer::oops_do(adjust_root_pointer_closure());
   FlatProfiler::oops_do(adjust_root_pointer_closure());
   Management::oops_do(adjust_root_pointer_closure());
@@ -2704,35 +2702,27 @@ void PSParallelCompact::compact_serial(ParCompactionManager* cm) {
   young_gen->move_and_update(cm);
 }
 
-
-void PSParallelCompact::follow_stack(ParCompactionManager* cm) {
-  while(!cm->overflow_stack()->is_empty()) {
-    oop obj = cm->overflow_stack()->pop();
-    obj->follow_contents(cm);
-  }
-
-  oop obj;
-  // obj is a reference!!!
-  while (cm->marking_stack()->pop_local(obj)) {
-    // It would be nice to assert about the type of objects we might
-    // pop, but they can come from anywhere, unfortunately.
-    obj->follow_contents(cm);
-  }
-}
-
 void
-PSParallelCompact::follow_weak_klass_links(ParCompactionManager* serial_cm) {
+PSParallelCompact::follow_weak_klass_links() {
   // All klasses on the revisit stack are marked at this point.
   // Update and follow all subklass, sibling and implementor links.
-  for (uint i = 0; i < ParallelGCThreads+1; i++) {
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
     ParCompactionManager* cm = ParCompactionManager::manager_array(i);
     KeepAliveClosure keep_alive_closure(cm);
-    for (int i = 0; i < cm->revisit_klass_stack()->length(); i++) {
-      cm->revisit_klass_stack()->at(i)->follow_weak_klass_links(
+    int length = cm->revisit_klass_stack()->length();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit klass stack[%d] length = %d", i, length);
+    }
+    for (int j = 0; j < length; j++) {
+      cm->revisit_klass_stack()->at(j)->follow_weak_klass_links(
         is_alive_closure(),
         &keep_alive_closure);
     }
-    follow_stack(cm);
+    // revisit_klass_stack is cleared in reset()
+    cm->follow_marking_stacks();
   }
 }
 
@@ -2740,6 +2730,33 @@ void
 PSParallelCompact::revisit_weak_klass_link(ParCompactionManager* cm, Klass* k) {
   cm->revisit_klass_stack()->push(k);
 }
+
+void PSParallelCompact::revisit_mdo(ParCompactionManager* cm, DataLayout* p) {
+  cm->revisit_mdo_stack()->push(p);
+}
+
+void PSParallelCompact::follow_mdo_weak_refs() {
+  // All strongly reachable oops have been marked at this point;
+  // we can visit and clear any weak references from MDO's which
+  // we memoized during the strong marking phase.
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
+    ParCompactionManager* cm = ParCompactionManager::manager_array(i);
+    GrowableArray<DataLayout*>* rms = cm->revisit_mdo_stack();
+    int length = rms->length();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit MDO stack[%d] length = %d", i, length);
+    }
+    for (int j = 0; j < length; j++) {
+      rms->at(j)->follow_weak_refs(is_alive_closure());
+    }
+    // revisit_mdo_stack is cleared in reset()
+    cm->follow_marking_stacks();
+  }
+}
+
 
 #ifdef VALIDATE_MARK_SWEEP
 
@@ -3260,7 +3277,7 @@ void PSParallelCompact::fill_region(ParCompactionManager* cm, size_t region_idx)
     if (status == ParMarkBitMap::incomplete) {
       // The last obj that starts in the source region does not end in the
       // region.
-      assert(closure.source() < end_addr, "sanity")
+      assert(closure.source() < end_addr, "sanity");
       HeapWord* const obj_beg = closure.source();
       HeapWord* const range_end = MIN2(obj_beg + closure.words_remaining(),
                                        src_space_top);

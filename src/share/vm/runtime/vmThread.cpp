@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,10 @@
 
 # include "incls/_precompiled.incl"
 # include "incls/_vmThread.cpp.incl"
+
+HS_DTRACE_PROBE_DECL3(hotspot, vmops__request, char *, uintptr_t, int);
+HS_DTRACE_PROBE_DECL3(hotspot, vmops__begin, char *, uintptr_t, int);
+HS_DTRACE_PROBE_DECL3(hotspot, vmops__end, char *, uintptr_t, int);
 
 // Dummy VM operation to act as first element in our circular double-linked list
 class VM_Dummy: public VM_Operation {
@@ -102,7 +106,7 @@ VM_Operation* VMOperationQueue::queue_drain(int prio) {
   // restore queue to empty state
   _queue[prio]->set_next(_queue[prio]);
   _queue[prio]->set_prev(_queue[prio]);
-  assert(queue_empty(prio), "drain corrupted queue")
+  assert(queue_empty(prio), "drain corrupted queue");
 #ifdef DEBUG
   int len = 0;
   VM_Operation* cur;
@@ -132,6 +136,10 @@ void VMOperationQueue::drain_list_oops_do(OopClosure* f) {
 //-----------------------------------------------------------------
 // High-level interface
 bool VMOperationQueue::add(VM_Operation *op) {
+
+  HS_DTRACE_PROBE3(hotspot, vmops__request, op->name(), strlen(op->name()),
+                   op->evaluation_mode());
+
   // Encapsulates VM queue policy. Currently, that
   // only involves putting them on the right list
   if (op->evaluate_at_safepoint()) {
@@ -204,8 +212,8 @@ void VMThread::create() {
 }
 
 
-VMThread::VMThread() : Thread() {
-  // nothing to do
+VMThread::VMThread() : NamedThread() {
+  set_name("VM Thread");
 }
 
 void VMThread::destroy() {
@@ -325,7 +333,11 @@ void VMThread::evaluate_operation(VM_Operation* op) {
 
   {
     PerfTraceTime vm_op_timer(perf_accumulated_vm_operation_time());
+    HS_DTRACE_PROBE3(hotspot, vmops__begin, op->name(), strlen(op->name()),
+                     op->evaluation_mode());
     op->evaluate();
+    HS_DTRACE_PROBE3(hotspot, vmops__end, op->name(), strlen(op->name()),
+                     op->evaluation_mode());
   }
 
   // Last access of info in _cur_vm_operation!
@@ -426,11 +438,6 @@ void VMThread::loop() {
       // follow that also require a safepoint
       if (_cur_vm_operation->evaluate_at_safepoint()) {
 
-        if (PrintGCApplicationConcurrentTime) {
-           gclog_or_tty->print_cr("Application time: %3.7f seconds",
-                                  RuntimeService::last_application_time_sec());
-        }
-
         _vm_queue->set_drain_list(safepoint_ops); // ensure ops can be scanned
 
         SafepointSynchronize::begin();
@@ -476,12 +483,6 @@ void VMThread::loop() {
 
         // Complete safepoint synchronization
         SafepointSynchronize::end();
-
-        if (PrintGCApplicationStoppedTime) {
-          gclog_or_tty->print_cr("Total time for which application threads "
-                                 "were stopped: %3.7f seconds",
-                                 RuntimeService::last_safepoint_time_sec());
-        }
 
       } else {  // not a safepoint operation
         if (TraceLongCompiles) {
@@ -592,7 +593,8 @@ void VMThread::execute(VM_Operation* op) {
       // Check the VM operation allows nested VM operation. This normally not the case, e.g., the compiler
       // does not allow nested scavenges or compiles.
       if (!prev_vm_operation->allow_nested_vm_operations()) {
-        fatal2("Nested VM operation %s requested by operation %s", op->name(), vm_operation()->name());
+        fatal(err_msg("Nested VM operation %s requested by operation %s",
+                      op->name(), vm_operation()->name()));
       }
       op->set_calling_thread(prev_vm_operation->calling_thread(), prev_vm_operation->priority());
     }
@@ -619,8 +621,8 @@ void VMThread::execute(VM_Operation* op) {
 }
 
 
-void VMThread::oops_do(OopClosure* f) {
-  Thread::oops_do(f);
+void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  Thread::oops_do(f, cf);
   _vm_queue->oops_do(f);
 }
 
@@ -652,5 +654,5 @@ void VMOperationQueue::verify_queue(int prio) {
 #endif
 
 void VMThread::verify() {
-  oops_do(&VerifyOopClosure::verify_oop);
+  oops_do(&VerifyOopClosure::verify_oop, NULL);
 }

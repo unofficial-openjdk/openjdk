@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,9 @@
  *
  */
 
-//
 // Sets the default values for platform dependent flags used by the runtime system.
 // (see globals.hpp)
-//
+
 define_pd_global(bool, DontYieldALot,            false);
 
 // Default stack size on Windows is determined by the executable (java.exe
@@ -34,8 +33,6 @@ define_pd_global(bool, DontYieldALot,            false);
 // See comments in os_windows.cpp.
 define_pd_global(intx, ThreadStackSize,          0); // 0 => use system default
 define_pd_global(intx, VMThreadStackSize,        0); // 0 => use system default
-
-define_pd_global(intx, SurvivorRatio,            8);
 
 #ifdef ASSERT
 define_pd_global(intx, CompilerThreadStackSize,  1024);

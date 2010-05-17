@@ -103,15 +103,18 @@ void Exceptions::_throw_oop(Thread* thread, const char* file, int line, oop exce
   _throw(thread, file, line, h_exception);
 }
 
-void Exceptions::_throw(Thread* thread, const char* file, int line, Handle h_exception) {
+void Exceptions::_throw(Thread* thread, const char* file, int line, Handle h_exception, const char* message) {
   assert(h_exception() != NULL, "exception should not be NULL");
 
   // tracing (do this up front - so it works during boot strapping)
   if (TraceExceptions) {
     ttyLocker ttyl;
     ResourceMark rm;
-    tty->print_cr("Exception <%s> (" INTPTR_FORMAT " ) \nthrown [%s, line %d]\nfor thread " INTPTR_FORMAT,
-                      h_exception->print_value_string(), (address)h_exception(), file, line, thread);
+    tty->print_cr("Exception <%s>%s%s (" INTPTR_FORMAT " ) \n"
+                  "thrown [%s, line %d]\nfor thread " INTPTR_FORMAT,
+                  h_exception->print_value_string(),
+                  message ? ": " : "", message ? message : "",
+                  (address)h_exception(), file, line, thread);
   }
   // for AbortVMOnException flag
   NOT_PRODUCT(Exceptions::debug_check_abort(h_exception));
@@ -119,7 +122,7 @@ void Exceptions::_throw(Thread* thread, const char* file, int line, Handle h_exc
   // Check for special boot-strapping/vm-thread handling
   if (special_exception(thread, file, line, h_exception)) return;
 
-  assert(h_exception->is_a(SystemDictionary::throwable_klass()), "exception is not a subclass of java/lang/Throwable");
+  assert(h_exception->is_a(SystemDictionary::Throwable_klass()), "exception is not a subclass of java/lang/Throwable");
 
   // set the pending exception
   thread->set_pending_exception(h_exception(), file, line);
@@ -135,7 +138,7 @@ void Exceptions::_throw_msg(Thread* thread, const char* file, int line, symbolHa
   // Create and throw exception
   Handle h_cause(thread, NULL);
   Handle h_exception = new_exception(thread, h_name, message, h_cause, h_loader, h_protection_domain);
-  _throw(thread, file, line, h_exception);
+  _throw(thread, file, line, h_exception, message);
 }
 
 // Throw an exception with a message and a cause
@@ -144,7 +147,7 @@ void Exceptions::_throw_msg_cause(Thread* thread, const char* file, int line, sy
   if (special_exception(thread, file, line, h_name, message)) return;
   // Create and throw exception and init cause
   Handle h_exception = new_exception(thread, h_name, message, h_cause, h_loader, h_protection_domain);
-  _throw(thread, file, line, h_exception);
+  _throw(thread, file, line, h_exception, message);
 }
 
 // This version creates handles and calls the other version
@@ -252,7 +255,7 @@ Handle Exceptions::new_exception(Thread *thread, symbolHandle h_name,
 
     // Future: object initializer should take a cause argument
     if (h_cause() != NULL) {
-      assert(h_cause->is_a(SystemDictionary::throwable_klass()),
+      assert(h_cause->is_a(SystemDictionary::Throwable_klass()),
           "exception cause is not a subclass of java/lang/Throwable");
       JavaValue result1(T_OBJECT);
       JavaCallArguments args1;
@@ -375,7 +378,7 @@ ExceptionMark::~ExceptionMark() {
 void Exceptions::debug_check_abort(const char *value_string) {
   if (AbortVMOnException != NULL && value_string != NULL &&
       strstr(value_string, AbortVMOnException)) {
-    fatal1("Saw %s, aborting", value_string);
+    fatal(err_msg("Saw %s, aborting", value_string));
   }
 }
 

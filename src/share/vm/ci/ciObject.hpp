@@ -51,9 +51,10 @@ private:
   ciKlass* _klass;
   uint     _ident;
 
-  enum { FLAG_BITS   = 1};
+  enum { FLAG_BITS   = 2 };
   enum {
-         PERM_FLAG    = 1
+         PERM_FLAG        = 1,
+         SCAVENGABLE_FLAG = 2
        };
 protected:
   ciObject();
@@ -68,8 +69,15 @@ protected:
     return JNIHandles::resolve_non_null(_handle);
   }
 
-  void set_perm() {
-    _ident |=  PERM_FLAG;
+  void init_flags_from(oop x) {
+    int flags = 0;
+    if (x != NULL) {
+      if (x->is_perm())
+        flags |= PERM_FLAG;
+      if (x->is_scavengable())
+        flags |= SCAVENGABLE_FLAG;
+    }
+    _ident |= flags;
   }
 
   // Virtual behavior of the print() method.
@@ -91,16 +99,26 @@ public:
   // A hash value for the convenience of compilers.
   int hash();
 
-  // Tells if this oop has an encoding.  (I.e., is it null or perm?)
+  // Tells if this oop has an encoding as a constant.
+  // True if is_scavengable is false.
+  // Also true if ScavengeRootsInCode is non-zero.
   // If it does not have an encoding, the compiler is responsible for
   // making other arrangements for dealing with the oop.
-  // See ciEnv::make_perm_array
-  bool has_encoding();
+  // See ciEnv::make_array
+  bool can_be_constant();
+
+  // Tells if this oop should be made a constant.
+  // True if is_scavengable is false or ScavengeRootsInCode > 1.
+  bool should_be_constant();
 
   // Is this object guaranteed to be in the permanent part of the heap?
   // If so, CollectedHeap::can_elide_permanent_oop_store_barriers is relevant.
   // If the answer is false, no guarantees are made.
   bool is_perm() { return (_ident & PERM_FLAG) != 0; }
+
+  // Might this object possibly move during a scavenge operation?
+  // If the answer is true and ScavengeRootsInCode==0, the oop cannot be embedded in code.
+  bool is_scavengable() { return (_ident & SCAVENGABLE_FLAG) != 0; }
 
   // The address which the compiler should embed into the
   // generated code to represent this oop.  This address
@@ -109,13 +127,16 @@ public:
   //
   // Usage note: no address arithmetic allowed.  Oop must
   // be registered with the oopRecorder.
-  jobject encoding();
+  jobject constant_encoding();
 
   // What kind of ciObject is this?
   virtual bool is_null_object() const       { return false; }
+  virtual bool is_call_site() const         { return false; }
+  virtual bool is_cpcache() const           { return false; }
   virtual bool is_instance()                { return false; }
   virtual bool is_method()                  { return false; }
   virtual bool is_method_data()             { return false; }
+  virtual bool is_method_handle() const     { return false; }
   virtual bool is_array()                   { return false; }
   virtual bool is_obj_array()               { return false; }
   virtual bool is_type_array()              { return false; }
@@ -167,6 +188,14 @@ public:
     assert(is_null_object(), "bad cast");
     return (ciNullObject*)this;
   }
+  ciCallSite*              as_call_site() {
+    assert(is_call_site(), "bad cast");
+    return (ciCallSite*) this;
+  }
+  ciCPCache*               as_cpcache() {
+    assert(is_cpcache(), "bad cast");
+    return (ciCPCache*) this;
+  }
   ciInstance*              as_instance() {
     assert(is_instance(), "bad cast");
     return (ciInstance*)this;
@@ -178,6 +207,10 @@ public:
   ciMethodData*            as_method_data() {
     assert(is_method_data(), "bad cast");
     return (ciMethodData*)this;
+  }
+  ciMethodHandle*          as_method_handle() {
+    assert(is_method_handle(), "bad cast");
+    return (ciMethodHandle*) this;
   }
   ciArray*                 as_array() {
     assert(is_array(), "bad cast");

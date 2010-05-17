@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -247,7 +247,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
 
   enum YoungType {
     NotYoung,                   // a region is not young
-    ScanOnly,                   // a region is young and scan-only
     Young,                      // a region is young
     Survivor                    // a region is young and it contains
                                 // survivor
@@ -292,20 +291,43 @@ class HeapRegion: public G1OffsetTableContigSpace {
     _young_type = new_type;
   }
 
+  // Cached attributes used in the collection set policy information
+
+  // The RSet length that was added to the total value
+  // for the collection set.
+  size_t _recorded_rs_length;
+
+  // The predicted elapsed time that was added to total value
+  // for the collection set.
+  double _predicted_elapsed_time_ms;
+
+  // The predicted number of bytes to copy that was added to
+  // the total value for the collection set.
+  size_t _predicted_bytes_to_copy;
+
  public:
   // If "is_zeroed" is "true", the region "mr" can be assumed to contain zeros.
   HeapRegion(G1BlockOffsetSharedArray* sharedOffsetArray,
              MemRegion mr, bool is_zeroed);
 
-  enum SomePublicConstants {
-    // HeapRegions are GrainBytes-aligned
-    // and have sizes that are multiples of GrainBytes.
-    LogOfHRGrainBytes = 20,
-    LogOfHRGrainWords = LogOfHRGrainBytes - LogHeapWordSize,
-    GrainBytes = 1 << LogOfHRGrainBytes,
-    GrainWords = 1 <<LogOfHRGrainWords,
-    MaxAge = 2, NoOfAges = MaxAge+1
-  };
+  static int LogOfHRGrainBytes;
+  static int LogOfHRGrainWords;
+  // The normal type of these should be size_t. However, they used to
+  // be members of an enum before and they are assumed by the
+  // compilers to be ints. To avoid going and fixing all their uses,
+  // I'm declaring them as ints. I'm not anticipating heap region
+  // sizes to reach anywhere near 2g, so using an int here is safe.
+  static int GrainBytes;
+  static int GrainWords;
+  static int CardsPerRegion;
+
+  // It sets up the heap region size (GrainBytes / GrainWords), as
+  // well as other related fields that are based on the heap region
+  // size (LogOfHRGrainBytes / LogOfHRGrainWords /
+  // CardsPerRegion). All those fields are considered constant
+  // throughout the JVM's execution, therefore they should only be set
+  // up once during initialization time.
+  static void setup_heap_region_size(uintx min_heap_size);
 
   enum ClaimValues {
     InitialClaimValue     = 0,
@@ -560,13 +582,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // ever evacuated into this region.  If we evacuate, allocate, and
   // then evacuate we are in deep doodoo.
   void note_end_of_copying() {
-    assert(top() >= _next_top_at_mark_start,
-           "Increase only");
-    // Survivor regions will be scanned on the start of concurrent
-    // marking.
-    if (!is_survivor()) {
-      _next_top_at_mark_start = top();
-    }
+    assert(top() >= _next_top_at_mark_start, "Increase only");
+    _next_top_at_mark_start = top();
   }
 
   // Returns "false" iff no object in the region was allocated when the
@@ -610,7 +627,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // </PREDICTION>
 
   bool is_young() const     { return _young_type != NotYoung; }
-  bool is_scan_only() const { return _young_type == ScanOnly; }
   bool is_survivor() const  { return _young_type == Survivor; }
 
   int  young_index_in_cset() const { return _young_index_in_cset; }
@@ -623,12 +639,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
     assert( _surv_rate_group != NULL, "pre-condition" );
     assert( _age_index > -1, "pre-condition" );
     return _surv_rate_group->age_in_group(_age_index);
-  }
-
-  void recalculate_age_in_surv_rate_group() {
-    assert( _surv_rate_group != NULL, "pre-condition" );
-    assert( _age_index > -1, "pre-condition" );
-    _age_index = _surv_rate_group->recalculate_age_index(_age_index);
   }
 
   void record_surv_words_in_group(size_t words_survived) {
@@ -671,8 +681,6 @@ class HeapRegion: public G1OffsetTableContigSpace {
   }
 
   void set_young() { set_young_type(Young); }
-
-  void set_scan_only() { set_young_type(ScanOnly); }
 
   void set_survivor() { set_young_type(Survivor); }
 
@@ -771,6 +779,22 @@ class HeapRegion: public G1OffsetTableContigSpace {
     _zero_filler = NULL;
   }
 
+  size_t recorded_rs_length() const        { return _recorded_rs_length; }
+  double predicted_elapsed_time_ms() const { return _predicted_elapsed_time_ms; }
+  size_t predicted_bytes_to_copy() const   { return _predicted_bytes_to_copy; }
+
+  void set_recorded_rs_length(size_t rs_length) {
+    _recorded_rs_length = rs_length;
+  }
+
+  void set_predicted_elapsed_time_ms(double ms) {
+    _predicted_elapsed_time_ms = ms;
+  }
+
+  void set_predicted_bytes_to_copy(size_t bytes) {
+    _predicted_bytes_to_copy = bytes;
+  }
+
 #define HeapRegion_OOP_SINCE_SAVE_MARKS_DECL(OopClosureType, nv_suffix)  \
   virtual void oop_since_save_marks_iterate##nv_suffix(OopClosureType* cl);
   SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES(HeapRegion_OOP_SINCE_SAVE_MARKS_DECL)
@@ -789,7 +813,7 @@ class HeapRegion: public G1OffsetTableContigSpace {
   // use_prev_marking == true. Currently, there is only one case where
   // this is called with use_prev_marking == false, which is to verify
   // the "next" marking information at the end of remark.
-  void verify(bool allow_dirty, bool use_prev_marking) const;
+  void verify(bool allow_dirty, bool use_prev_marking, bool *failures) const;
 
   // Override; it uses the "prev" marking information
   virtual void verify(bool allow_dirty) const;

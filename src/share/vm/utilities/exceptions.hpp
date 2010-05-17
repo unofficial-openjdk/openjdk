@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ class Exceptions {
   } ExceptionMsgToUtf8Mode;
   // Throw exceptions: w/o message, w/ message & with formatted message.
   static void _throw_oop(Thread* thread, const char* file, int line, oop exception);
-  static void _throw(Thread* thread, const char* file, int line, Handle exception);
+  static void _throw(Thread* thread, const char* file, int line, Handle exception, const char* msg = NULL);
   static void _throw_msg(Thread* thread, const char* file, int line,
                          symbolHandle name, const char* message, Handle loader,
                          Handle protection_domain);

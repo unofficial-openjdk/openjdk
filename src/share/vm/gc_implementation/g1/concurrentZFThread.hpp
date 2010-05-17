@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,8 +42,6 @@ class ConcurrentZFThread: public ConcurrentGCThread {
   // Number of regions CFZ thread fills.
   static int _regions_filled;
 
-  COTracker _co_tracker;
-
   double _vtime_start;  // Initial virtual time.
 
   // These are static because the "print_summary_info" method is, and
@@ -63,7 +61,8 @@ class ConcurrentZFThread: public ConcurrentGCThread {
   virtual void run();
 
   // Printing
-  void print();
+  void print_on(outputStream* st) const;
+  void print() const;
 
   // Waits until "r" has been zero-filled.  Requires caller to hold the
   // ZF_mon.

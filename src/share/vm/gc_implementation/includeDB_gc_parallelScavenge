@@ -1,5 +1,5 @@
 //
-// Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -161,8 +161,10 @@ parMarkBitMap.cpp                       psParallelCompact.hpp
 parMarkBitMap.hpp			bitMap.inline.hpp
 parMarkBitMap.hpp			psVirtualspace.hpp
 
+psAdaptiveSizePolicy.cpp                collectorPolicy.hpp
 psAdaptiveSizePolicy.cpp                gcPolicyCounters.hpp
 psAdaptiveSizePolicy.cpp		gcCause.hpp
+psAdaptiveSizePolicy.cpp                generationSizer.hpp
 psAdaptiveSizePolicy.cpp                psAdaptiveSizePolicy.hpp
 psAdaptiveSizePolicy.cpp                psGCAdaptivePolicyCounters.hpp
 psAdaptiveSizePolicy.cpp                psScavenge.hpp
@@ -175,6 +177,7 @@ psAdaptiveSizePolicy.hpp                gcUtil.hpp
 psAdaptiveSizePolicy.hpp		adaptiveSizePolicy.hpp
 
 psCompactionManager.cpp                 gcTaskManager.hpp
+psCompactionManager.cpp                 objArrayKlass.inline.hpp
 psCompactionManager.cpp                 objectStartArray.hpp
 psCompactionManager.cpp                 oop.hpp
 psCompactionManager.cpp                 oop.inline.hpp
@@ -188,6 +191,9 @@ psCompactionManager.cpp                 systemDictionary.hpp
 
 psCompactionManager.hpp                 allocation.hpp
 psCompactionManager.hpp                 taskqueue.hpp
+
+psCompactionManager.inline.hpp		psCompactionManager.hpp
+psCompactionManager.inline.hpp		psParallelCompact.hpp
 
 psGCAdaptivePolicyCounters.hpp		gcAdaptivePolicyCounters.hpp
 psGCAdaptivePolicyCounters.hpp          gcPolicyCounters.hpp
@@ -211,6 +217,7 @@ psMarkSweep.cpp                         events.hpp
 psMarkSweep.cpp                         fprofiler.hpp
 psMarkSweep.cpp                         gcCause.hpp
 psMarkSweep.cpp                         gcLocker.inline.hpp
+psMarkSweep.cpp                         generationSizer.hpp
 psMarkSweep.cpp                         isGCActiveMark.hpp
 psMarkSweep.cpp                         oop.inline.hpp
 psMarkSweep.cpp                         memoryService.hpp
@@ -252,11 +259,13 @@ psParallelCompact.cpp			fprofiler.hpp
 psParallelCompact.cpp			gcCause.hpp
 psParallelCompact.cpp			gcLocker.inline.hpp
 psParallelCompact.cpp                   gcTaskManager.hpp
+psParallelCompact.cpp                   generationSizer.hpp
 psParallelCompact.cpp			isGCActiveMark.hpp
+psParallelCompact.cpp			management.hpp
+psParallelCompact.cpp			memoryService.hpp
+psParallelCompact.cpp			methodDataOop.hpp
 psParallelCompact.cpp			oop.inline.hpp
 psParallelCompact.cpp			oop.pcgc.inline.hpp
-psParallelCompact.cpp			memoryService.hpp
-psParallelCompact.cpp			management.hpp
 psParallelCompact.cpp			parallelScavengeHeap.inline.hpp
 psParallelCompact.cpp			pcTasks.hpp
 psParallelCompact.cpp			psMarkSweep.hpp
@@ -339,10 +348,12 @@ psPromotionLAB.hpp                      objectStartArray.hpp
 psScavenge.cpp                          psAdaptiveSizePolicy.hpp
 psScavenge.cpp                          biasedLocking.hpp
 psScavenge.cpp                          cardTableExtension.hpp
+psScavenge.cpp                          collectorPolicy.hpp
 psScavenge.cpp                          fprofiler.hpp
 psScavenge.cpp                          gcCause.hpp
 psScavenge.cpp                          gcLocker.inline.hpp
 psScavenge.cpp                          gcTaskManager.hpp
+psScavenge.cpp                          generationSizer.hpp
 psScavenge.cpp                          handles.inline.hpp
 psScavenge.cpp                          isGCActiveMark.hpp
 psScavenge.cpp                          oop.inline.hpp
@@ -372,17 +383,18 @@ psScavenge.inline.hpp                   parallelScavengeHeap.hpp
 psScavenge.inline.hpp                   psPromotionManager.hpp
 psScavenge.inline.hpp                   psScavenge.hpp
 
+pcTasks.cpp                             codeCache.hpp
 pcTasks.cpp                             collectedHeap.hpp
 pcTasks.cpp                             fprofiler.hpp
 pcTasks.cpp                             jniHandles.hpp
 pcTasks.cpp                             jvmtiExport.hpp
 pcTasks.cpp                             management.hpp
+pcTasks.cpp                             objArrayKlass.inline.hpp
 pcTasks.cpp                             psParallelCompact.hpp
 pcTasks.cpp                             pcTasks.hpp
 pcTasks.cpp                             oop.inline.hpp
 pcTasks.cpp                             oop.pcgc.inline.hpp
 pcTasks.cpp                             systemDictionary.hpp
-pcTasks.cpp                             taskqueue.hpp
 pcTasks.cpp                             thread.hpp
 pcTasks.cpp                             universe.hpp
 pcTasks.cpp                             vmThread.hpp
@@ -391,6 +403,7 @@ pcTasks.hpp				gcTaskManager.hpp
 pcTasks.hpp				psTasks.hpp
 
 psTasks.cpp                             cardTableExtension.hpp
+psTasks.cpp                             codeCache.hpp
 psTasks.cpp                             fprofiler.hpp
 psTasks.cpp                             gcTaskManager.hpp
 psTasks.cpp                             iterator.hpp

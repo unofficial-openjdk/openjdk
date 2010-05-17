@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1244,7 +1244,9 @@ private:
   void pcmpestri(XMMRegister xmm1, XMMRegister xmm2, int imm8);
   void pcmpestri(XMMRegister xmm1, Address src, int imm8);
 
+#ifndef _LP64 // no 32bit push/pop on amd64
   void popl(Address dst);
+#endif
 
 #ifdef _LP64
   void popq(Address dst);
@@ -1285,7 +1287,9 @@ private:
   // Interleave Low Bytes
   void punpcklbw(XMMRegister dst, XMMRegister src);
 
+#ifndef _LP64 // no 32bit push/pop on amd64
   void pushl(Address src);
+#endif
 
   void pushq(Address src);
 
@@ -1507,7 +1511,7 @@ class MacroAssembler: public Assembler {
   void extend_sign(Register hi, Register lo);
 
   // Loading values by size and signed-ness
-  void load_sized_value(Register dst, Address src, int size_in_bytes, bool is_signed);
+  void load_sized_value(Register dst, Address src, size_t size_in_bytes, bool is_signed);
 
   // Support for inc/dec with optimal instruction selection depending on value
 
@@ -1682,6 +1686,17 @@ class MacroAssembler: public Assembler {
 
   void load_heap_oop(Register dst, Address src);
   void store_heap_oop(Address dst, Register src);
+
+  // This dummy is to prevent a call to store_heap_oop from
+  // converting a zero (like NULL) into a Register by giving
+  // the compiler two choices it can't resolve
+
+  void store_heap_oop(Address dst, void* dummy);
+
+  // Used for storing NULL. All other oop constants should be
+  // stored using routines that take a jobject.
+  void store_heap_oop_null(Address dst);
+
   void encode_heap_oop(Register r);
   void decode_heap_oop(Register r);
   void encode_heap_oop_not_null(Register r);
@@ -2206,6 +2221,20 @@ public:
   void movl2ptr(Register dst, Address src) { LP64_ONLY(movslq(dst, src)) NOT_LP64(movl(dst, src)); }
   void movl2ptr(Register dst, Register src) { LP64_ONLY(movslq(dst, src)) NOT_LP64(if (dst != src) movl(dst, src)); }
 
+  // IndexOf strings.
+  void string_indexof(Register str1, Register str2,
+                      Register cnt1, Register cnt2, Register result,
+                      XMMRegister vec, Register tmp);
+
+  // Compare strings.
+  void string_compare(Register str1, Register str2,
+                      Register cnt1, Register cnt2, Register result,
+                      XMMRegister vec1, XMMRegister vec2);
+
+  // Compare char[] arrays.
+  void char_arrays_equals(bool is_array_equ, Register ary1, Register ary2,
+                          Register limit, Register result, Register chr,
+                          XMMRegister vec1, XMMRegister vec2);
 
 #undef VIRTUAL
 

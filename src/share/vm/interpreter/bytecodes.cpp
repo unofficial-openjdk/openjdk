@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -357,7 +357,7 @@ void Bytecodes::initialize() {
   def(_invokespecial       , "invokespecial"       , "bjj"  , NULL    , T_ILLEGAL, -1, true);
   def(_invokestatic        , "invokestatic"        , "bjj"  , NULL    , T_ILLEGAL,  0, true);
   def(_invokeinterface     , "invokeinterface"     , "bjj__", NULL    , T_ILLEGAL, -1, true);
-  def(_invokedynamic       , "invokedynamic"       , "bjjjj", NULL    , T_ILLEGAL, -1, true );
+  def(_invokedynamic       , "invokedynamic"       , "bjjjj", NULL    , T_ILLEGAL,  0, true );
   def(_new                 , "new"                 , "bii"  , NULL    , T_OBJECT ,  1, true );
   def(_newarray            , "newarray"            , "bc"   , NULL    , T_OBJECT ,  0, true );
   def(_anewarray           , "anewarray"           , "bii"  , NULL    , T_OBJECT ,  0, true );
@@ -426,7 +426,9 @@ void Bytecodes::initialize() {
         if (is_defined(i)) {
           Code code = cast(i);
           Code java = java_code(code);
-          if (can_trap(code) && !can_trap(java)) fatal2("%s can trap => %s can trap, too", name(code), name(java));
+          if (can_trap(code) && !can_trap(java))
+            fatal(err_msg("%s can trap => %s can trap, too", name(code),
+                          name(java)));
         }
       }
     }

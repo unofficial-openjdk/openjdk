@@ -178,14 +178,12 @@ EntryPoint TemplateInterpreter::_trace_code;
 #endif // !PRODUCT
 EntryPoint TemplateInterpreter::_return_entry[TemplateInterpreter::number_of_return_entries];
 EntryPoint TemplateInterpreter::_earlyret_entry;
-EntryPoint TemplateInterpreter::_return_unbox_entry;
 EntryPoint TemplateInterpreter::_deopt_entry [TemplateInterpreter::number_of_deopt_entries ];
 EntryPoint TemplateInterpreter::_continuation_entry;
 EntryPoint TemplateInterpreter::_safept_entry;
 
 address    TemplateInterpreter::_return_3_addrs_by_index[TemplateInterpreter::number_of_return_addrs];
 address    TemplateInterpreter::_return_5_addrs_by_index[TemplateInterpreter::number_of_return_addrs];
-address    TemplateInterpreter::_return_5_unbox_addrs_by_index[TemplateInterpreter::number_of_return_addrs];
 
 DispatchTable TemplateInterpreter::_active_table;
 DispatchTable TemplateInterpreter::_normal_table;
@@ -253,22 +251,6 @@ void TemplateInterpreterGenerator::generate_all() {
     }
   }
 
-  if (EnableInvokeDynamic) {
-    CodeletMark cm(_masm, "unboxing return entry points");
-    Interpreter::_return_unbox_entry =
-      EntryPoint(
-        generate_return_unbox_entry_for(btos, 5),
-        generate_return_unbox_entry_for(ctos, 5),
-        generate_return_unbox_entry_for(stos, 5),
-        generate_return_unbox_entry_for(atos, 5), // cast conversion
-        generate_return_unbox_entry_for(itos, 5),
-        generate_return_unbox_entry_for(ltos, 5),
-        generate_return_unbox_entry_for(ftos, 5),
-        generate_return_unbox_entry_for(dtos, 5),
-        Interpreter::_return_entry[5].entry(vtos) // no unboxing for void
-      );
-  }
-
   { CodeletMark cm(_masm, "earlyret entry points");
     Interpreter::_earlyret_entry =
       EntryPoint(
@@ -319,8 +301,6 @@ void TemplateInterpreterGenerator::generate_all() {
     int index = Interpreter::TosState_as_index(states[j]);
     Interpreter::_return_3_addrs_by_index[index] = Interpreter::return_entry(states[j], 3);
     Interpreter::_return_5_addrs_by_index[index] = Interpreter::return_entry(states[j], 5);
-    if (EnableInvokeDynamic)
-      Interpreter::_return_5_unbox_addrs_by_index[index] = Interpreter::return_unbox_entry(states[j], 5);
   }
 
   { CodeletMark cm(_masm, "continuation entry points");
@@ -477,7 +457,7 @@ void TemplateInterpreterGenerator::set_entry_points(Bytecodes::Code code) {
 
 void TemplateInterpreterGenerator::set_wide_entry_point(Template* t, address& wep) {
   assert(t->is_valid(), "template must exist");
-  assert(t->tos_in() == vtos, "only vtos tos_in supported for wide instructions")
+  assert(t->tos_in() == vtos, "only vtos tos_in supported for wide instructions");
   wep = __ pc(); generate_and_dispatch(t);
 }
 
@@ -485,9 +465,11 @@ void TemplateInterpreterGenerator::set_wide_entry_point(Template* t, address& we
 void TemplateInterpreterGenerator::set_short_entry_points(Template* t, address& bep, address& cep, address& sep, address& aep, address& iep, address& lep, address& fep, address& dep, address& vep) {
   assert(t->is_valid(), "template must exist");
   switch (t->tos_in()) {
-    case btos: vep = __ pc(); __ pop(btos); bep = __ pc(); generate_and_dispatch(t); break;
-    case ctos: vep = __ pc(); __ pop(ctos); sep = __ pc(); generate_and_dispatch(t); break;
-    case stos: vep = __ pc(); __ pop(stos); sep = __ pc(); generate_and_dispatch(t); break;
+    case btos:
+    case ctos:
+    case stos:
+      ShouldNotReachHere();  // btos/ctos/stos should use itos.
+      break;
     case atos: vep = __ pc(); __ pop(atos); aep = __ pc(); generate_and_dispatch(t); break;
     case itos: vep = __ pc(); __ pop(itos); iep = __ pc(); generate_and_dispatch(t); break;
     case ltos: vep = __ pc(); __ pop(ltos); lep = __ pc(); generate_and_dispatch(t); break;
@@ -547,18 +529,6 @@ address TemplateInterpreter::return_entry(TosState state, int length) {
 }
 
 
-address TemplateInterpreter::return_unbox_entry(TosState state, int length) {
-  assert(EnableInvokeDynamic, "");
-  if (state == vtos) {
-    // no unboxing to do, actually
-    return return_entry(state, length);
-  } else {
-    assert(length == 5, "unboxing entries generated for invokedynamic only");
-    return _return_unbox_entry.entry(state);
-  }
-}
-
-
 address TemplateInterpreter::deopt_entry(TosState state, int length) {
   guarantee(0 <= length && length < Interpreter::number_of_deopt_entries, "illegal length");
   return _deopt_entry[length].entry(state);
@@ -605,28 +575,41 @@ void TemplateInterpreter::ignore_safepoints() {
   }
 }
 
-// If deoptimization happens, this method returns the point where to continue in
-// interpreter. For calls (invokexxxx, newxxxx) the continuation is at next
-// bci and the top of stack is in eax/edx/FPU tos.
-// For putfield/getfield, put/getstatic, the continuation is at the same
-// bci and the TOS is on stack.
+//------------------------------------------------------------------------------------------------------------------------
+// Deoptimization support
 
-// Note: deopt_entry(type, 0) means reexecute bytecode
-//       deopt_entry(type, length) means continue at next bytecode
+// If deoptimization happens, this function returns the point of next bytecode to continue execution
+address TemplateInterpreter::deopt_continue_after_entry(methodOop method, address bcp, int callee_parameters, bool is_top_frame) {
+  return AbstractInterpreter::deopt_continue_after_entry(method, bcp, callee_parameters, is_top_frame);
+}
 
-address TemplateInterpreter::continuation_for(methodOop method, address bcp, int callee_parameters, bool is_top_frame, bool& use_next_mdp) {
+// If deoptimization happens, this function returns the point where the interpreter reexecutes
+// the bytecode.
+// Note: Bytecodes::_athrow (C1 only) and Bytecodes::_return are the special cases
+//       that do not return "Interpreter::deopt_entry(vtos, 0)"
+address TemplateInterpreter::deopt_reexecute_entry(methodOop method, address bcp) {
   assert(method->contains(bcp), "just checkin'");
   Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
   if (code == Bytecodes::_return) {
-      // This is used for deopt during registration of finalizers
-      // during Object.<init>.  We simply need to resume execution at
-      // the standard return vtos bytecode to pop the frame normally.
-      // reexecuting the real bytecode would cause double registration
-      // of the finalizable object.
-      assert(is_top_frame, "must be on top");
-      return _normal_table.entry(Bytecodes::_return).entry(vtos);
+    // This is used for deopt during registration of finalizers
+    // during Object.<init>.  We simply need to resume execution at
+    // the standard return vtos bytecode to pop the frame normally.
+    // reexecuting the real bytecode would cause double registration
+    // of the finalizable object.
+    return _normal_table.entry(Bytecodes::_return).entry(vtos);
   } else {
-    return AbstractInterpreter::continuation_for(method, bcp, callee_parameters, is_top_frame, use_next_mdp);
+    return AbstractInterpreter::deopt_reexecute_entry(method, bcp);
+  }
+}
+
+// If deoptimization happens, the interpreter should reexecute this bytecode.
+// This function mainly helps the compilers to set up the reexecute bit.
+bool TemplateInterpreter::bytecode_should_reexecute(Bytecodes::Code code) {
+  if (code == Bytecodes::_return) {
+    //Yes, we consider Bytecodes::_return as a special case of reexecution
+    return true;
+  } else {
+    return AbstractInterpreter::bytecode_should_reexecute(code);
   }
 }
 

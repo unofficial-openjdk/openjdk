@@ -317,6 +317,11 @@ void instanceKlassKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
     pm->claim_or_forward_breadth(sg_addr);
   }
 
+  oop* bsm_addr = ik->adr_bootstrap_method();
+  if (PSScavenge::should_scavenge(bsm_addr)) {
+    pm->claim_or_forward_breadth(bsm_addr);
+  }
+
   klassKlass::oop_copy_contents(pm, obj);
 }
 
@@ -343,6 +348,11 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   oop* sg_addr = ik->adr_signers();
   if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_depth(sg_addr);
+  }
+
+  oop* bsm_addr = ik->adr_bootstrap_method();
+  if (PSScavenge::should_scavenge(bsm_addr)) {
+    pm->claim_or_forward_depth(bsm_addr);
   }
 
   klassKlass::oop_copy_contents(pm, obj);
@@ -402,9 +412,14 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 }
 #endif // SERIALGC
 
-klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len, int static_field_size,
-                                                     int nonstatic_oop_map_size, ReferenceType rt, TRAPS) {
+klassOop
+instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
+                                            int static_field_size,
+                                            unsigned nonstatic_oop_map_count,
+                                            ReferenceType rt, TRAPS) {
 
+  const int nonstatic_oop_map_size =
+    instanceKlass::nonstatic_oop_map_size(nonstatic_oop_map_count);
   int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + static_field_size + nonstatic_oop_map_size);
 
   // Allocation
@@ -615,22 +630,21 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
 
   st->print(BULLET"non-static oop maps: ");
   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
-  OopMapBlock* end_map = map + ik->nonstatic_oop_map_size();
+  OopMapBlock* end_map = map + ik->nonstatic_oop_map_count();
   while (map < end_map) {
-    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->length() - 1));
+    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->count() - 1));
     map++;
   }
   st->cr();
 }
 
+#endif //PRODUCT
 
 void instanceKlassKlass::oop_print_value_on(oop obj, outputStream* st) {
   assert(obj->is_klass(), "must be klass");
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
   ik->name()->print_value_on(st);
 }
-
-#endif // PRODUCT
 
 const char* instanceKlassKlass::internal_name() const {
   return "{instance class}";
@@ -698,10 +712,10 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     int sib_count = 0;
     while (sib != NULL) {
       if (sib == ik) {
-        fatal1("subclass cycle of length %d", sib_count);
+        fatal(err_msg("subclass cycle of length %d", sib_count));
       }
       if (sib_count >= 100000) {
-        fatal1("suspiciously long subclass list %d", sib_count);
+        fatal(err_msg("suspiciously long subclass list %d", sib_count));
       }
       guarantee(sib->as_klassOop()->is_klass(), "should be klass");
       guarantee(sib->as_klassOop()->is_perm(),  "should be in permspace");

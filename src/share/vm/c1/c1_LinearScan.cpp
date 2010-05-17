@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2464,6 +2464,10 @@ int LinearScan::append_scope_value_for_constant(LIR_Opr opr, GrowableArray<Scope
 
     case T_LONG: // fall through
     case T_DOUBLE: {
+#ifdef _LP64
+      scope_values->append(&_int_0_scope_value);
+      scope_values->append(new ConstantLongValue(c->as_jlong_bits()));
+#else
       if (hi_word_offset_in_bytes > lo_word_offset_in_bytes) {
         scope_values->append(new ConstantIntValue(c->as_jint_hi_bits()));
         scope_values->append(new ConstantIntValue(c->as_jint_lo_bits()));
@@ -2471,8 +2475,17 @@ int LinearScan::append_scope_value_for_constant(LIR_Opr opr, GrowableArray<Scope
         scope_values->append(new ConstantIntValue(c->as_jint_lo_bits()));
         scope_values->append(new ConstantIntValue(c->as_jint_hi_bits()));
       }
-
+#endif
       return 2;
+    }
+
+    case T_ADDRESS: {
+#ifdef _LP64
+      scope_values->append(new ConstantLongValue(c->as_jint()));
+#else
+      scope_values->append(new ConstantIntValue(c->as_jint()));
+#endif
+      return 1;
     }
 
     default:
@@ -2503,17 +2516,18 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
   } else if (opr->is_single_cpu()) {
     bool is_oop = opr->is_oop_register();
     int cache_idx = opr->cpu_regnr() * 2 + (is_oop ? 1 : 0);
+    Location::Type int_loc_type = NOT_LP64(Location::normal) LP64_ONLY(Location::int_in_long);
 
     ScopeValue* sv = _scope_value_cache.at(cache_idx);
     if (sv == NULL) {
-      Location::Type loc_type = is_oop ? Location::oop : Location::normal;
+      Location::Type loc_type = is_oop ? Location::oop : int_loc_type;
       VMReg rname = frame_map()->regname(opr);
       sv = new LocationValue(Location::new_reg_loc(loc_type, rname));
       _scope_value_cache.at_put(cache_idx, sv);
     }
 
     // check if cached value is correct
-    DEBUG_ONLY(assert_equal(sv, new LocationValue(Location::new_reg_loc(is_oop ? Location::oop : Location::normal, frame_map()->regname(opr)))));
+    DEBUG_ONLY(assert_equal(sv, new LocationValue(Location::new_reg_loc(is_oop ? Location::oop : int_loc_type, frame_map()->regname(opr)))));
 
     scope_values->append(sv);
     return 1;
@@ -2594,12 +2608,17 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
     } else if (opr->is_double_xmm()) {
       assert(opr->fpu_regnrLo() == opr->fpu_regnrHi(), "assumed in calculation");
       VMReg rname_first  = opr->as_xmm_double_reg()->as_VMReg();
+#  ifdef _LP64
+      first = new LocationValue(Location::new_reg_loc(Location::dbl, rname_first));
+      second = &_int_0_scope_value;
+#  else
       first = new LocationValue(Location::new_reg_loc(Location::normal, rname_first));
       // %%% This is probably a waste but we'll keep things as they were for now
       if (true) {
         VMReg rname_second = rname_first->next();
         second = new LocationValue(Location::new_reg_loc(Location::normal, rname_second));
       }
+#  endif
 #endif
 
     } else if (opr->is_double_fpu()) {
@@ -2625,13 +2644,17 @@ int LinearScan::append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeV
 #endif
 
       VMReg rname_first = frame_map()->fpu_regname(opr->fpu_regnrHi());
-
+#ifdef _LP64
+      first = new LocationValue(Location::new_reg_loc(Location::dbl, rname_first));
+      second = &_int_0_scope_value;
+#else
       first = new LocationValue(Location::new_reg_loc(Location::normal, rname_first));
       // %%% This is probably a waste but we'll keep things as they were for now
       if (true) {
         VMReg rname_second = rname_first->next();
         second = new LocationValue(Location::new_reg_loc(Location::normal, rname_second));
       }
+#endif
 
     } else {
       ShouldNotReachHere();
@@ -2791,9 +2814,6 @@ IRScopeDebugInfo* LinearScan::compute_debug_info_for_scope(int op_id, IRScope* c
 
 
 void LinearScan::compute_debug_info(CodeEmitInfo* info, int op_id) {
-  if (!compilation()->needs_debug_information()) {
-    return;
-  }
   TRACE_LINEAR_SCAN(3, tty->print_cr("creating debug information at op_id %d", op_id));
 
   IRScope* innermost_scope = info->scope();

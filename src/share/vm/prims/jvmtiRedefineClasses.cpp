@@ -933,7 +933,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // description.
       RedefineVerifyMark rvm(&the_class, &scratch_class, state);
       Verifier::verify(
-        scratch_class, Verifier::ThrowException, THREAD);
+        scratch_class, Verifier::ThrowException, true, THREAD);
     }
 
     if (HAS_PENDING_EXCEPTION) {
@@ -959,7 +959,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // verify what we have done during constant pool merging
       {
         RedefineVerifyMark rvm(&the_class, &scratch_class, state);
-        Verifier::verify(scratch_class, Verifier::ThrowException, THREAD);
+        Verifier::verify(scratch_class, Verifier::ThrowException, true, THREAD);
       }
 
       if (HAS_PENDING_EXCEPTION) {
@@ -3214,7 +3214,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
     //  - all instanceKlasses for redefined classes reused & contents updated
     the_class->vtable()->initialize_vtable(false, THREAD);
     the_class->itable()->initialize_itable(false, THREAD);
-    assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::threaddeath_klass())), "redefine exception");
+    assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::ThreadDeath_klass())), "redefine exception");
   }
 
   // Leave arrays of jmethodIDs and itable index cache unchanged

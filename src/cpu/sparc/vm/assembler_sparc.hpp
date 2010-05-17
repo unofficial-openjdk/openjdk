@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -661,9 +661,6 @@ class Assembler : public AbstractAssembler  {
     stx_op3      = 0x0e,
     swap_op3     = 0x0f,
 
-    lduwa_op3    = 0x10,
-    ldxa_op3     = 0x1b,
-
     stwa_op3     = 0x14,
     stxa_op3     = 0x1e,
 
@@ -1065,7 +1062,7 @@ class Assembler : public AbstractAssembler  {
   }
   void assert_not_delayed(const char* msg) {
 #ifdef CHECK_DELAY
-    assert_msg ( delay_state == no_delay, msg);
+    assert(delay_state == no_delay, msg);
 #endif
   }
 
@@ -1279,6 +1276,7 @@ public:
 
   // 171
 
+  inline void ldf(FloatRegisterImpl::Width w, Register s1, RegisterOrConstant s2, FloatRegister d);
   inline void ldf(FloatRegisterImpl::Width w, Register s1, Register s2, FloatRegister d);
   inline void ldf(FloatRegisterImpl::Width w, Register s1, int simm13a, FloatRegister d, RelocationHolder const& rspec = RelocationHolder());
 
@@ -1382,24 +1380,25 @@ public:
 
   // pp 181
 
-  void and3(     Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3               ) | rs1(s1) | rs2(s2) ); }
-  void and3(     Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3               ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
+  void and3(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3              ) | rs1(s1) | rs2(s2) ); }
+  void and3(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3              ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void andcc(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3  | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void andcc(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3  | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void andn(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(andn_op3             ) | rs1(s1) | rs2(s2) ); }
   void andn(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(andn_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
+  void andn(    Register s1, RegisterOrConstant s2, Register d);
   void andncc(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(andn_op3 | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void andncc(  Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(andn_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-  void or3(      Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3               ) | rs1(s1) | rs2(s2) ); }
-  void or3(      Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3               ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
+  void or3(     Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3               ) | rs1(s1) | rs2(s2) ); }
+  void or3(     Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3               ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void orcc(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3   | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void orcc(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(or_op3   | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void orn(     Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(orn_op3) | rs1(s1) | rs2(s2) ); }
   void orn(     Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(orn_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void orncc(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(orn_op3  | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void orncc(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(orn_op3  | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-  void xor3(     Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3              ) | rs1(s1) | rs2(s2) ); }
-  void xor3(     Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3              ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
+  void xor3(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3              ) | rs1(s1) | rs2(s2) ); }
+  void xor3(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3              ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void xorcc(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3  | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void xorcc(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xor_op3  | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void xnor(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xnor_op3             ) | rs1(s1) | rs2(s2) ); }
@@ -1535,7 +1534,8 @@ public:
 
   // pp 222
 
-  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2 );
+  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, RegisterOrConstant s2);
+  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2);
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, int simm13a);
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, const Address& a, int offset = 0);
 
@@ -2027,8 +2027,8 @@ public:
   inline void st_ptr(Register d, Register s1, ByteSize simm13a);
 #endif
 
-  // ld_long will perform ld for 32 bit VM's and ldx for 64 bit VM's
-  // st_long will perform st for 32 bit VM's and stx for 64 bit VM's
+  // ld_long will perform ldd for 32 bit VM's and ldx for 64 bit VM's
+  // st_long will perform std for 32 bit VM's and stx for 64 bit VM's
   inline void ld_long(Register s1, Register s2, Register d);
   inline void ld_long(Register s1, int simm13a, Register d);
   inline void ld_long(Register s1, RegisterOrConstant s2, Register d);
@@ -2039,22 +2039,19 @@ public:
   inline void st_long(Register d, const Address& a, int offset = 0);
 
   // Helpers for address formation.
-  // They update the dest in place, whether it is a register or constant.
-  // They emit no code at all if src is a constant zero.
-  // If dest is a constant and src is a register, the temp argument
-  // is required, and becomes the result.
-  // If dest is a register and src is a non-simm13 constant,
-  // the temp argument is required, and is used to materialize the constant.
-  void regcon_inc_ptr( RegisterOrConstant& dest, RegisterOrConstant src,
-                       Register temp = noreg );
-  void regcon_sll_ptr( RegisterOrConstant& dest, RegisterOrConstant src,
-                       Register temp = noreg );
-  RegisterOrConstant ensure_rs2(RegisterOrConstant rs2, Register sethi_temp) {
-    guarantee(sethi_temp != noreg, "constant offset overflow");
-    if (is_simm13(rs2.constant_or_zero()))
-      return rs2;               // register or short constant
-    set(rs2.as_constant(), sethi_temp);
-    return sethi_temp;
+  // - They emit only a move if s2 is a constant zero.
+  // - If dest is a constant and either s1 or s2 is a register, the temp argument is required and becomes the result.
+  // - If dest is a register and either s1 or s2 is a non-simm13 constant, the temp argument is required and used to materialize the constant.
+  RegisterOrConstant regcon_andn_ptr(RegisterOrConstant s1, RegisterOrConstant s2, RegisterOrConstant d, Register temp = noreg);
+  RegisterOrConstant regcon_inc_ptr( RegisterOrConstant s1, RegisterOrConstant s2, RegisterOrConstant d, Register temp = noreg);
+  RegisterOrConstant regcon_sll_ptr( RegisterOrConstant s1, RegisterOrConstant s2, RegisterOrConstant d, Register temp = noreg);
+
+  RegisterOrConstant ensure_simm13_or_reg(RegisterOrConstant src, Register temp) {
+    if (is_simm13(src.constant_or_zero()))
+      return src;               // register or short constant
+    guarantee(temp != noreg, "constant offset overflow");
+    set(src.as_constant(), temp);
+    return temp;
   }
 
   // --------------------------------------------------
@@ -2303,6 +2300,9 @@ public:
   void lcmp( Register Ra, Register Rb, Register Rresult);
 #endif
 
+  // Loading values by size and signed-ness
+  void load_sized_value(Address src, Register dst, size_t size_in_bytes, bool is_signed);
+
   void float_cmp( bool is_float, int unordered_result,
                   FloatRegister Fa, FloatRegister Fb,
                   Register Rresult);
@@ -2421,12 +2421,16 @@ public:
   void check_method_handle_type(Register mtype_reg, Register mh_reg,
                                 Register temp_reg,
                                 Label& wrong_method_type);
-  void jump_to_method_handle_entry(Register mh_reg, Register temp_reg);
+  void load_method_handle_vmslots(Register vmslots_reg, Register mh_reg,
+                                  Register temp_reg);
+  void jump_to_method_handle_entry(Register mh_reg, Register temp_reg, bool emit_delayed_nop = true);
   // offset relative to Gargs of argument at tos[arg_slot].
   // (arg_slot == 0 means the last argument, not the first).
   RegisterOrConstant argument_offset(RegisterOrConstant arg_slot,
                                      int extra_slot_offset = 0);
-
+  // Address of Gargs and argument_offset.
+  Address            argument_address(RegisterOrConstant arg_slot,
+                                      int extra_slot_offset = 0);
 
   // Stack overflow checking
 
@@ -2454,6 +2458,11 @@ public:
   // Unconditional increment.
   void inc_counter(address counter_addr, Register Rtmp1, Register Rtmp2);
   void inc_counter(int*    counter_addr, Register Rtmp1, Register Rtmp2);
+
+  // Compare char[] arrays aligned to 4 bytes.
+  void char_arrays_equals(Register ary1, Register ary2,
+                          Register limit, Register result,
+                          Register chr1, Register chr2, Label& Ldone);
 
 #undef VIRTUAL
 

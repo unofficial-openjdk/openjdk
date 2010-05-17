@@ -1,5 +1,5 @@
 //
-// Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+// Copyright 1999-2010 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -246,6 +246,7 @@ c1_LIRGenerator.cpp                     c1_LIRAssembler.hpp
 c1_LIRGenerator.cpp                     c1_LIRGenerator.hpp
 c1_LIRGenerator.cpp                     c1_ValueStack.hpp
 c1_LIRGenerator.cpp                     ciArrayKlass.hpp
+c1_LIRGenerator.cpp                     ciCPCache.hpp
 c1_LIRGenerator.cpp                     ciInstance.hpp
 c1_LIRGenerator.cpp                     heapRegion.hpp
 c1_LIRGenerator.cpp                     sharedRuntime.hpp
@@ -409,8 +410,6 @@ codeBlob.cpp                            c1_Runtime1.hpp
 
 compileBroker.cpp                       c1_Compiler.hpp
 
-frame.hpp                               c1_Defs.hpp
-
 frame_<arch>.cpp                        c1_Runtime1.hpp
 
 globals.cpp                             c1_globals.hpp
@@ -432,8 +431,6 @@ oopMap.cpp                              c1_Defs.hpp
 os_<os_family>.cpp                      c1_Runtime1.hpp
 
 os_<os_arch>.cpp                        c1_Runtime1.hpp
-
-registerMap.hpp                         c1_Defs.hpp
 
 safepoint.cpp                           c1_globals.hpp
 

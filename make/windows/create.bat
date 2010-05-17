@@ -1,6 +1,6 @@
 @echo off
 REM
-REM Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+REM Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
 REM DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 REM
 REM This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,9 @@ REM those are changed then MakeDeps is rerun.
 REM
 REM Since we don't have uname and we could be cross-compiling,
 REM Use the compiler to determine which ARCH we are building
+REM 
+REM Note: Running this batch file from the Windows command shell requires
+REM that "grep" be accessible on the PATH. An MKS install does this.
 REM 
 cl 2>&1 | grep "IA-64" >NUL
 if %errorlevel% == 0 goto isia64
