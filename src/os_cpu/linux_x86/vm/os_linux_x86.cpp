@@ -598,7 +598,7 @@ bool os::Linux::supports_variable_stack_size() {
     //
     // Note that %gs is a reserved glibc register since early 2001, so
     // applications are not allowed to change its value (Ulrich Drepper from
-    // Redhat confirmed that all known offenders have been modified to use
+    // Red Hat confirmed that all known offenders have been modified to use
     // either %fs or TSD). In the worst case scenario, when VM is embedded in
     // a native application that plays with %gs, we might see non-zero %gs
     // even LinuxThreads is running in fixed stack mode. As the result, we'll

@@ -22,7 +22,6 @@
 //
 //
 
-
 // archDesc.cpp - Internal format for architecture definition
 #include "adlc.hpp"
 

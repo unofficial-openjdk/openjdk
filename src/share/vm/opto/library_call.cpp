@@ -1172,6 +1172,10 @@ bool LibraryCallKit::inline_string_indexOf() {
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
 
+  Node* alloc = NULL;
+  if (DoEscapeAnalysis && argument->is_Con())
+    alloc = AllocateNode::Ideal_allocation(receiver, &_gvn);
+
   Node* result;
   // Disable the use of pcmpestri until it can be guaranteed that
   // the load doesn't cross in to the uncommited space.
