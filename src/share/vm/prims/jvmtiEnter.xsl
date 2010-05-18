@@ -1,6 +1,6 @@
 <?xml version="1.0"?> 
 <!--
- Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -17,8 +17,8 @@
  2 along with this work; if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 
- Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- CA 95054 USA or visit www.sun.com if you need additional information or
+ Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ CA 94065 USA or visit www.oracle.com if you need additional information or
  have any questions.
   
 -->
@@ -773,7 +773,7 @@ static jvmtiError JNICALL
     </xsl:apply-templates>
     <xsl:text>
     }
-    if (!thread_oop-&gt;is_a(SystemDictionary::thread_klass())) {
+    if (!thread_oop-&gt;is_a(SystemDictionary::Thread_klass())) {
 </xsl:text>
     <xsl:apply-templates select=".." mode="traceError">     
       <xsl:with-param name="err">JVMTI_ERROR_INVALID_THREAD</xsl:with-param>
@@ -857,7 +857,7 @@ static jvmtiError JNICALL
     </xsl:apply-templates>
     <xsl:text>
   }
-  if (!k_mirror->is_a(SystemDictionary::class_klass())) {
+  if (!k_mirror->is_a(SystemDictionary::Class_klass())) {
 </xsl:text>
     <xsl:apply-templates select=".." mode="traceError">     
       <xsl:with-param name="err">JVMTI_ERROR_INVALID_CLASS</xsl:with-param>

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -29,10 +29,11 @@
 // be loaded.
 class ciInstanceKlass : public ciKlass {
   CI_PACKAGE_ACCESS
+  friend class ciBytecodeStream;
   friend class ciEnv;
+  friend class ciExceptionHandler;
   friend class ciMethod;
   friend class ciField;
-  friend class ciBytecodeStream;
 
 private:
   jobject                _loader;
@@ -77,6 +78,8 @@ protected:
   jobject protection_domain_handle();
 
   const char* type_string() { return "ciInstanceKlass"; }
+
+  bool is_in_package_impl(const char* packagename, int len);
 
   void print_impl(outputStream* st);
 
@@ -148,6 +151,7 @@ public:
 
   ciInstanceKlass* get_canonical_holder(int offset);
   ciField* get_field_by_offset(int field_offset, bool is_static);
+  ciField* get_field_by_name(ciSymbol* name, ciSymbol* signature, bool is_static);
 
   GrowableArray<ciField*>* non_static_fields();
 
@@ -194,6 +198,12 @@ public:
   bool uses_default_loader();
 
   bool is_java_lang_Object();
+
+  // Is this klass in the given package?
+  bool is_in_package(const char* packagename) {
+    return is_in_package(packagename, (int) strlen(packagename));
+  }
+  bool is_in_package(const char* packagename, int len);
 
   // What kind of ciObject is this?
   bool is_instance_klass() { return true; }

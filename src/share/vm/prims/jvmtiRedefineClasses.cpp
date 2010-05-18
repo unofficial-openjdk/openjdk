@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -933,7 +933,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // description.
       RedefineVerifyMark rvm(&the_class, &scratch_class, state);
       Verifier::verify(
-        scratch_class, Verifier::ThrowException, THREAD);
+        scratch_class, Verifier::ThrowException, true, THREAD);
     }
 
     if (HAS_PENDING_EXCEPTION) {
@@ -959,7 +959,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       // verify what we have done during constant pool merging
       {
         RedefineVerifyMark rvm(&the_class, &scratch_class, state);
-        Verifier::verify(scratch_class, Verifier::ThrowException, THREAD);
+        Verifier::verify(scratch_class, Verifier::ThrowException, true, THREAD);
       }
 
       if (HAS_PENDING_EXCEPTION) {
@@ -3214,7 +3214,7 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
     //  - all instanceKlasses for redefined classes reused & contents updated
     the_class->vtable()->initialize_vtable(false, THREAD);
     the_class->itable()->initialize_itable(false, THREAD);
-    assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::threaddeath_klass())), "redefine exception");
+    assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::ThreadDeath_klass())), "redefine exception");
   }
 
   // Leave arrays of jmethodIDs and itable index cache unchanged

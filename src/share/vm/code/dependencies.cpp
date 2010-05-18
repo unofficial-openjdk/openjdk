@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -302,7 +302,7 @@ void Dependencies::encode_content_bytes() {
       bytes.write_byte(code_byte);
       for (int j = 0; j < stride; j++) {
         if (j == skipj)  continue;
-        bytes.write_int(_oop_recorder->find_index(deps->at(i+j)->encoding()));
+        bytes.write_int(_oop_recorder->find_index(deps->at(i+j)->constant_encoding()));
       }
     }
   }
@@ -843,13 +843,15 @@ static bool count_find_witness_calls() {
     if (occasional_print || final_stats) {
       // Every now and then dump a little info about dependency searching.
       if (xtty != NULL) {
-        xtty->elem("deps_find_witness calls='%d' steps='%d' recursions='%d' singles='%d'",
+       ttyLocker ttyl;
+       xtty->elem("deps_find_witness calls='%d' steps='%d' recursions='%d' singles='%d'",
                    deps_find_witness_calls,
                    deps_find_witness_steps,
                    deps_find_witness_recursions,
                    deps_find_witness_singles);
       }
       if (final_stats || (TraceDependencies && WizardMode)) {
+        ttyLocker ttyl;
         tty->print_cr("Dependency check (find_witness) "
                       "calls=%d, steps=%d (avg=%.1f), recursions=%d, singles=%d",
                       deps_find_witness_calls,
@@ -1528,19 +1530,23 @@ void DepChange::print() {
   int nsup = 0, nint = 0;
   for (ContextStream str(*this); str.next(); ) {
     klassOop k = str.klass();
-    switch (str._change_type) {
+    switch (str.change_type()) {
     case Change_new_type:
       tty->print_cr("  dependee = %s", instanceKlass::cast(k)->external_name());
       break;
     case Change_new_sub:
-      if (!WizardMode)
-           ++nsup;
-      else tty->print_cr("  context super = %s", instanceKlass::cast(k)->external_name());
+      if (!WizardMode) {
+        ++nsup;
+      } else {
+        tty->print_cr("  context super = %s", instanceKlass::cast(k)->external_name());
+      }
       break;
     case Change_new_impl:
-      if (!WizardMode)
-           ++nint;
-      else tty->print_cr("  context interface = %s", instanceKlass::cast(k)->external_name());
+      if (!WizardMode) {
+        ++nint;
+      } else {
+        tty->print_cr("  context interface = %s", instanceKlass::cast(k)->external_name());
+      }
       break;
     }
   }

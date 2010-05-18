@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -64,6 +64,7 @@
 #define C2_PRODUCT_FLAG_MEMBER(type, name, value, doc)         FLAG_MEMBER(name),
 #define C2_PD_PRODUCT_FLAG_MEMBER(type, name, doc)             FLAG_MEMBER(name),
 #define C2_DIAGNOSTIC_FLAG_MEMBER(type, name, value, doc)      FLAG_MEMBER(name),
+#define C2_EXPERIMENTAL_FLAG_MEMBER(type, name, value, doc)    FLAG_MEMBER(name),
 #ifdef PRODUCT
   #define C2_DEVELOP_FLAG_MEMBER(type, name, value, doc)       /* flag is constant */
   #define C2_PD_DEVELOP_FLAG_MEMBER(type, name, doc)           /* flag is constant */
@@ -84,7 +85,7 @@ typedef enum {
  C1_FLAGS(C1_DEVELOP_FLAG_MEMBER, C1_PD_DEVELOP_FLAG_MEMBER, C1_PRODUCT_FLAG_MEMBER, C1_PD_PRODUCT_FLAG_MEMBER, C1_NOTPRODUCT_FLAG_MEMBER)
 #endif
 #ifdef COMPILER2
- C2_FLAGS(C2_DEVELOP_FLAG_MEMBER, C2_PD_DEVELOP_FLAG_MEMBER, C2_PRODUCT_FLAG_MEMBER, C2_PD_PRODUCT_FLAG_MEMBER, C2_DIAGNOSTIC_FLAG_MEMBER, C2_NOTPRODUCT_FLAG_MEMBER)
+ C2_FLAGS(C2_DEVELOP_FLAG_MEMBER, C2_PD_DEVELOP_FLAG_MEMBER, C2_PRODUCT_FLAG_MEMBER, C2_PD_PRODUCT_FLAG_MEMBER, C2_DIAGNOSTIC_FLAG_MEMBER, C2_EXPERIMENTAL_FLAG_MEMBER, C2_NOTPRODUCT_FLAG_MEMBER)
 #endif
  NUM_CommandLineFlag
 } CommandLineFlag;
@@ -130,6 +131,7 @@ typedef enum {
 #define C2_PRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)         FLAG_MEMBER_WITH_TYPE(name,type),
 #define C2_PD_PRODUCT_FLAG_MEMBER_WITH_TYPE(type, name, doc)             FLAG_MEMBER_WITH_TYPE(name,type),
 #define C2_DIAGNOSTIC_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)      FLAG_MEMBER_WITH_TYPE(name,type),
+#define C2_EXPERIMENTAL_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)      FLAG_MEMBER_WITH_TYPE(name,type),
 #ifdef PRODUCT
   #define C2_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, value, doc)       /* flag is constant */
   #define C2_PD_DEVELOP_FLAG_MEMBER_WITH_TYPE(type, name, doc)           /* flag is constant */
@@ -181,6 +183,7 @@ typedef enum {
           C2_PRODUCT_FLAG_MEMBER_WITH_TYPE,
           C2_PD_PRODUCT_FLAG_MEMBER_WITH_TYPE,
           C2_DIAGNOSTIC_FLAG_MEMBER_WITH_TYPE,
+          C2_EXPERIMENTAL_FLAG_MEMBER_WITH_TYPE,
           C2_NOTPRODUCT_FLAG_MEMBER_WITH_TYPE)
 #endif
  NUM_CommandLineFlagWithType
@@ -202,6 +205,7 @@ class CommandLineFlagsEx : CommandLineFlags {
   static void boolAtPut(CommandLineFlagWithType flag, bool value, FlagValueOrigin origin);
   static void intxAtPut(CommandLineFlagWithType flag, intx value, FlagValueOrigin origin);
   static void uintxAtPut(CommandLineFlagWithType flag, uintx value, FlagValueOrigin origin);
+  static void uint64_tAtPut(CommandLineFlagWithType flag, uint64_t value, FlagValueOrigin origin);
   static void doubleAtPut(CommandLineFlagWithType flag, double value, FlagValueOrigin origin);
   static void ccstrAtPut(CommandLineFlagWithType flag, ccstr value, FlagValueOrigin origin);
 

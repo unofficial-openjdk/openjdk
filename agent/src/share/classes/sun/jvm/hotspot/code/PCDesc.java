@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -36,6 +36,8 @@ import sun.jvm.hotspot.types.*;
 public class PCDesc extends VMObject {
   private static CIntegerField pcOffsetField;
   private static CIntegerField scopeDecodeOffsetField;
+  private static CIntegerField objDecodeOffsetField;
+  private static CIntegerField pcFlagsField;
 
   static {
     VM.registerVMInitializedObserver(new Observer() {
@@ -50,6 +52,8 @@ public class PCDesc extends VMObject {
 
     pcOffsetField          = type.getCIntegerField("_pc_offset");
     scopeDecodeOffsetField = type.getCIntegerField("_scope_decode_offset");
+    objDecodeOffsetField   = type.getCIntegerField("_obj_decode_offset");
+    pcFlagsField           = type.getCIntegerField("_flags");
   }
 
   public PCDesc(Address addr) {
@@ -66,8 +70,18 @@ public class PCDesc extends VMObject {
     return ((int) scopeDecodeOffsetField.getValue(addr));
   }
 
+  public int getObjDecodeOffset() {
+    return ((int) objDecodeOffsetField.getValue(addr));
+  }
+
   public Address getRealPC(NMethod code) {
     return code.instructionsBegin().addOffsetTo(getPCOffset());
+  }
+
+
+  public boolean getReexecute() {
+    int flags = (int)pcFlagsField.getValue(addr);
+    return ((flags & 0x1)== 1); //first is the reexecute bit
   }
 
   public void print(NMethod code) {
@@ -82,6 +96,7 @@ public class PCDesc extends VMObject {
       tty.print(" ");
       sd.getMethod().printValueOn(tty);
       tty.print("  @" + sd.getBCI());
+      tty.print("  reexecute=" + sd.getReexecute());
       tty.println();
     }
   }

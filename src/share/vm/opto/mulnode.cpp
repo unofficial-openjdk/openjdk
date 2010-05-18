@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -608,16 +608,14 @@ Node *AndLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   }
 
   // Are we masking a long that was converted from an int with a mask
-  // that fits in 32-bits?  Commute them and use an AndINode.
-  if (op == Op_ConvI2L && (mask & CONST64(0xFFFFFFFF00000000)) == 0) {
-    // If we are doing an UI2L conversion (i.e. the mask is
-    // 0x00000000FFFFFFFF) we cannot convert the AndL to an AndI
-    // because the AndI would be optimized away later in Identity.
-    if (mask != CONST64(0x00000000FFFFFFFF)) {
-      Node* andi = new (phase->C, 3) AndINode(in1->in(1), phase->intcon(mask));
-      andi = phase->transform(andi);
-      return new (phase->C, 2) ConvI2LNode(andi);
-    }
+  // that fits in 32-bits?  Commute them and use an AndINode.  Don't
+  // convert masks which would cause a sign extension of the integer
+  // value.  This check includes UI2L masks (0x00000000FFFFFFFF) which
+  // would be optimized away later in Identity.
+  if (op == Op_ConvI2L && (mask & CONST64(0xFFFFFFFF80000000)) == 0) {
+    Node* andi = new (phase->C, 3) AndINode(in1->in(1), phase->intcon(mask));
+    andi = phase->transform(andi);
+    return new (phase->C, 2) ConvI2LNode(andi);
   }
 
   // Masking off sign bits?  Dont make them!

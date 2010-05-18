@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -170,11 +170,13 @@ class ReferenceProcessor : public CHeapObj {
   // The caller is responsible for taking care of potential
   // interference with concurrent operations on these lists
   // (or predicates involved) by other threads. Currently
-  // only used by the CMS collector.
+  // only used by the CMS collector.  should_unload_classes is
+  // used to aid assertion checking when classes are collected.
   void preclean_discovered_references(BoolObjectClosure* is_alive,
                                       OopClosure*        keep_alive,
                                       VoidClosure*       complete_gc,
-                                      YieldClosure*      yield);
+                                      YieldClosure*      yield,
+                                      bool               should_unload_classes);
 
   // Delete entries in the discovered lists that have
   // either a null referent or are not active. Such
@@ -261,10 +263,13 @@ class ReferenceProcessor : public CHeapObj {
     int                parallel_gc_threads = 1,
     bool               mt_processing = false,
     bool               discovered_list_needs_barrier = false);
+
   // RefDiscoveryPolicy values
-  enum {
+  enum DiscoveryPolicy {
     ReferenceBasedDiscovery = 0,
-    ReferentBasedDiscovery  = 1
+    ReferentBasedDiscovery  = 1,
+    DiscoveryPolicyMin      = ReferenceBasedDiscovery,
+    DiscoveryPolicyMax      = ReferentBasedDiscovery
   };
 
   static void init_statics();

@@ -1,5 +1,5 @@
 #
-# Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -192,13 +192,14 @@ ifneq ($(OSNAME),windows)
 
   # Use uname output for SRCARCH, but deal with platform differences. If ARCH
   # is not explicitly listed below, it is treated as x86. 
-  SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64,$(ARCH)))
+  SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64 zero,$(ARCH)))
   ARCH/       = x86
   ARCH/sparc  = sparc
   ARCH/sparc64= sparc
   ARCH/ia64   = ia64
   ARCH/amd64  = x86
   ARCH/x86_64 = x86
+  ARCH/zero   = zero
 
   # BUILDARCH is usually the same as SRCARCH, except for sparcv9
   BUILDARCH = $(SRCARCH)
@@ -222,8 +223,9 @@ ifneq ($(OSNAME),windows)
   LIBARCH/sparc   = sparc
   LIBARCH/sparcv9 = sparcv9
   LIBARCH/ia64    = ia64
+  LIBARCH/zero    = $(ZERO_LIBARCH)
 
-  LP64_ARCH = sparcv9 amd64 ia64
+  LP64_ARCH = sparcv9 amd64 ia64 zero
 endif
 
 # Required make macro settings for all platforms
@@ -259,6 +261,7 @@ EXPORT_JRE_LIB_ARCH_DIR = $(EXPORT_JRE_LIB_DIR)/$(LIBARCH)
 
 # Common export list of files
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jvmti.h
+EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jvmticmlr.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jni.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/$(JDK_INCLUDE_SUBDIR)/jni_md.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jmm.h

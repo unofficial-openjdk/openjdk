@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -26,7 +26,7 @@
 // Defines all globals flags used by the server compiler.
 //
 
-#define C2_FLAGS(develop, develop_pd, product, product_pd, diagnostic, notproduct) \
+#define C2_FLAGS(develop, develop_pd, product, product_pd, diagnostic, experimental, notproduct) \
                                                                             \
   notproduct(intx, CompileZapFirst, 0,                                      \
           "If +ZapDeadCompiledLocals, "                                     \
@@ -153,6 +153,12 @@
                                                                             \
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
+                                                                            \
+  product(bool, UseLoopPredicate, false,                                     \
+          "Generate a predicate to select fast/slow loop versions")         \
+                                                                            \
+  develop(bool, TraceLoopPredicate, false,                                  \
+          "Trace generation of loop predicates")                            \
                                                                             \
   develop(bool, OptoCoalesce, true,                                         \
           "Use Conservative Copy Coalescing in the Register Allocator")     \
@@ -394,6 +400,12 @@
   product(bool, UseOptoBiasInlining, true,                                  \
           "Generate biased locking code in C2 ideal graph")                 \
                                                                             \
+  product(bool, OptimizeStringConcat, false,                                \
+          "Optimize the construction of Strings by StringBuilder")          \
+                                                                            \
+  notproduct(bool, PrintOptimizeStringConcat, false,                        \
+          "Print information about transformations performed on Strings")   \
+                                                                            \
   product(intx, ValueSearchLimit, 1000,                                     \
           "Recursion limit in PhaseMacroExpand::value_from_mem_phi")        \
                                                                             \
@@ -413,4 +425,4 @@
   product(bool, BlockLayoutRotateLoops, true,                               \
           "Allow back branches to be fall throughs in the block layour")    \
 
-C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
+C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG)

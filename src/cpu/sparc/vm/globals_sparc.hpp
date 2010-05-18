@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,16 +16,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
 
-//
 // Sets the default values for platform dependent flags used by the runtime system.
 // (see globals.hpp)
-//
 
 // For sparc we do not do call backs when a thread is in the interpreter, because the
 // interpreter dispatch needs at least two instructions - first to load the dispatch address
@@ -41,26 +39,23 @@ define_pd_global(bool, NeedsDeoptSuspend,           true); // register window ma
 define_pd_global(bool, ImplicitNullChecks,          true);  // Generate code for implicit null checks
 define_pd_global(bool, UncommonNullCast,            true);  // Uncommon-trap NULLs past to check cast
 
-define_pd_global(intx,  CodeEntryAlignment,    32);
-define_pd_global(uintx, TLABSize,              0);
-define_pd_global(uintx, NewSize, ScaleForWordSize((2048 * K) + (2 * (64 * K))));
-define_pd_global(intx,  SurvivorRatio,         8);
-define_pd_global(intx,  InlineFrequencyCount,  50);  // we can use more inlining on the SPARC
-define_pd_global(intx,  InlineSmallCode,       1500);
+define_pd_global(intx, CodeEntryAlignment,    32);
+define_pd_global(intx, InlineFrequencyCount,  50);  // we can use more inlining on the SPARC
+define_pd_global(intx, InlineSmallCode,       1500);
 #ifdef _LP64
 // Stack slots are 2X larger in LP64 than in the 32 bit VM.
-define_pd_global(intx,  ThreadStackSize,       1024);
-define_pd_global(intx,  VMThreadStackSize,     1024);
+define_pd_global(intx, ThreadStackSize,       1024);
+define_pd_global(intx, VMThreadStackSize,     1024);
 #else
-define_pd_global(intx,  ThreadStackSize,       512);
-define_pd_global(intx,  VMThreadStackSize,     512);
+define_pd_global(intx, ThreadStackSize,       512);
+define_pd_global(intx, VMThreadStackSize,     512);
 #endif
 
 define_pd_global(intx, StackYellowPages, 2);
 define_pd_global(intx, StackRedPages, 1);
 define_pd_global(intx, StackShadowPages, 3 DEBUG_ONLY(+1));
 
-define_pd_global(intx,  PreInflateSpin,        40);  // Determined by running design center
+define_pd_global(intx, PreInflateSpin,       40);  // Determined by running design center
 
 define_pd_global(bool, RewriteBytecodes,     true);
 define_pd_global(bool, RewriteFrequentPairs, true);

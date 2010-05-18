@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -47,7 +47,7 @@ void os::os_exception_wrapper(java_call_t f, JavaValue* value, methodHandle* met
 #ifndef AMD64
     // We store the current thread in this wrapperthread location
     // and determine how far away this address is from the structured
-    // execption pointer that FS:[0] points to.  This get_thread
+    // exception pointer that FS:[0] points to.  This get_thread
     // code can then get the thread pointer via FS.
     //
     // Warning:  This routine must NEVER be inlined since we'd end up with

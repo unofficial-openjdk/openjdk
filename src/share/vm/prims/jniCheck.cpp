@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -341,7 +341,7 @@ klassOop jniCheck::validate_class(JavaThread* thr, jclass clazz, bool allow_prim
     ReportJNIFatalError(thr, fatal_received_null_class);
   }
 
-  if (mirror->klass() != SystemDictionary::class_klass()) {
+  if (mirror->klass() != SystemDictionary::Class_klass()) {
     ReportJNIFatalError(thr, fatal_class_not_a_class);
   }
 
@@ -358,7 +358,7 @@ void jniCheck::validate_throwable_klass(JavaThread* thr, klassOop klass) {
   assert(klass != NULL, "klass argument must have a value");
 
   if (!Klass::cast(klass)->oop_is_instance() ||
-      !instanceKlass::cast(klass)->is_subclass_of(SystemDictionary::throwable_klass())) {
+      !instanceKlass::cast(klass)->is_subclass_of(SystemDictionary::Throwable_klass())) {
     ReportJNIFatalError(thr, fatal_class_not_a_throwable_class);
   }
 }

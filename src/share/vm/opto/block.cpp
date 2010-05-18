@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -910,7 +910,16 @@ void PhaseCFG::verify( ) const {
               !(b->head()->is_Loop() && n->is_Phi()) &&
               // See (+++) comment in reg_split.cpp
               !(n->jvms() != NULL && n->jvms()->is_monitor_use(k)) ) {
-            assert( b->find_node(def) < j, "uses must follow definitions" );
+            bool is_loop = false;
+            if (n->is_Phi()) {
+              for( uint l = 1; l < def->req(); l++ ) {
+                if (n == def->in(l)) {
+                  is_loop = true;
+                  break; // Some kind of loop
+                }
+              }
+            }
+            assert( is_loop || b->find_node(def) < j, "uses must follow definitions" );
           }
           if( def->is_SafePointScalarObject() ) {
             assert(_bbs[def->_idx] == b, "SafePointScalarObject Node should be at the same block as its SafePoint node");

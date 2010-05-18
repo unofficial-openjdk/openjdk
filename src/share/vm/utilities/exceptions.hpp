@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -103,7 +103,7 @@ class Exceptions {
   } ExceptionMsgToUtf8Mode;
   // Throw exceptions: w/o message, w/ message & with formatted message.
   static void _throw_oop(Thread* thread, const char* file, int line, oop exception);
-  static void _throw(Thread* thread, const char* file, int line, Handle exception);
+  static void _throw(Thread* thread, const char* file, int line, Handle exception, const char* msg = NULL);
   static void _throw_msg(Thread* thread, const char* file, int line,
                          symbolHandle name, const char* message, Handle loader,
                          Handle protection_domain);

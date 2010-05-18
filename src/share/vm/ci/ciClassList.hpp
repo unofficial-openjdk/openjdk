@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -25,6 +25,7 @@
 class ciEnv;
 class ciObjectFactory;
 class ciConstantPoolCache;
+class ciCPCache;
 
 class ciField;
 class ciConstant;
@@ -42,6 +43,8 @@ class ciTypeFlow;
 class ciObject;
 class   ciNullObject;
 class   ciInstance;
+class     ciCallSite;
+class     ciMethodHandle;
 class   ciMethod;
 class   ciMethodData;
 class     ciReceiverTypeData;  // part of ciMethodData
@@ -78,6 +81,7 @@ friend class ciObjectFactory;
 // Any more access must be given explicitly.
 #define CI_PACKAGE_ACCESS_TO           \
 friend class ciObjectFactory;          \
+friend class ciCallSite;               \
 friend class ciConstantPoolCache;      \
 friend class ciField;                  \
 friend class ciConstant;               \
@@ -93,6 +97,7 @@ friend class ciNullObject;             \
 friend class ciInstance;               \
 friend class ciMethod;                 \
 friend class ciMethodData;             \
+friend class ciMethodHandle;           \
 friend class ciReceiverTypeData;       \
 friend class ciSymbol;                 \
 friend class ciArray;                  \

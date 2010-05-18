@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -334,33 +334,6 @@ klassOop LoaderConstraintTable::find_constrained_klass(symbolHandle name,
   return NULL;
 }
 
-
-klassOop LoaderConstraintTable::find_constrained_elem_klass(symbolHandle name,
-                                                            symbolHandle elem_name,
-                                                            Handle loader,
-                                                            TRAPS) {
-  LoaderConstraintEntry *p = *(find_loader_constraint(name, loader));
-  if (p != NULL) {
-    assert(p->klass() == NULL, "Expecting null array klass");
-
-    // The array name has a constraint, but it will not have a class. Check
-    // each loader for an associated elem
-    for (int i = 0; i < p->num_loaders(); i++) {
-      Handle no_protection_domain;
-
-      klassOop k = SystemDictionary::find(elem_name, p->loader(i), no_protection_domain, THREAD);
-      if (k != NULL) {
-        // Return the first elem klass found.
-        return k;
-      }
-    }
-  }
-
-  // No constraints, or else no klass loaded yet.
-  return NULL;
-}
-
-
 void LoaderConstraintTable::ensure_loader_constraint_capacity(
                                                      LoaderConstraintEntry *p,
                                                     int nfree) {
@@ -457,7 +430,8 @@ void LoaderConstraintTable::merge_loader_constraints(
 }
 
 
-void LoaderConstraintTable::verify(Dictionary* dictionary) {
+void LoaderConstraintTable::verify(Dictionary* dictionary,
+                                   PlaceholderTable* placeholders) {
   Thread *thread = Thread::current();
   for (int cindex = 0; cindex < _loader_constraint_size; cindex++) {
     for (LoaderConstraintEntry* probe = bucket(cindex);
@@ -472,7 +446,23 @@ void LoaderConstraintTable::verify(Dictionary* dictionary) {
         unsigned int d_hash = dictionary->compute_hash(name, loader);
         int d_index = dictionary->hash_to_index(d_hash);
         klassOop k = dictionary->find_class(d_index, d_hash, name, loader);
-        guarantee(k == probe->klass(), "klass should be in dictionary");
+        if (k != NULL) {
+          // We found the class in the system dictionary, so we should
+          // make sure that the klassOop matches what we already have.
+          guarantee(k == probe->klass(), "klass should be in dictionary");
+        } else {
+          // If we don't find the class in the system dictionary, it
+          // has to be in the placeholders table.
+          unsigned int p_hash = placeholders->compute_hash(name, loader);
+          int p_index = placeholders->hash_to_index(p_hash);
+          PlaceholderEntry* entry = placeholders->get_entry(p_index, p_hash,
+                                                            name, loader);
+
+          // The instanceKlass might not be on the entry, so the only
+          // thing we can check here is whether we were successful in
+          // finding the class in the placeholders table.
+          guarantee(entry != NULL, "klass should be in the placeholders");
+        }
       }
       for (int n = 0; n< probe->num_loaders(); n++) {
         guarantee(probe->loader(n)->is_oop_or_null(), "should be oop");

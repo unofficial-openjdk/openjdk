@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -270,6 +270,8 @@ void BytecodePrinter::print_constant(int i, outputStream* st) {
     st->print_cr(" %s", constants->resolved_klass_at(i)->klass_part()->external_name());
   } else if (tag.is_unresolved_klass()) {
     st->print_cr(" <unresolved klass at %d>", i);
+  } else if (tag.is_object()) {
+    st->print_cr(" " PTR_FORMAT, constants->object_at(i));
   } else {
     st->print_cr(" bad tag=%d at %d", tag.value(), i);
   }
@@ -282,18 +284,21 @@ void BytecodePrinter::print_field_or_method(int i, outputStream* st) {
   constantPoolOop constants = method()->constants();
   constantTag tag = constants->tag_at(i);
 
+  int nt_index = -1;
+
   switch (tag.value()) {
   case JVM_CONSTANT_InterfaceMethodref:
   case JVM_CONSTANT_Methodref:
   case JVM_CONSTANT_Fieldref:
+  case JVM_CONSTANT_NameAndType:
     break;
   default:
     st->print_cr(" bad tag=%d at %d", tag.value(), i);
     return;
   }
 
-  symbolOop name = constants->name_ref_at(orig_i);
-  symbolOop signature = constants->signature_ref_at(orig_i);
+  symbolOop name = constants->uncached_name_ref_at(i);
+  symbolOop signature = constants->uncached_signature_ref_at(i);
   st->print_cr(" %d <%s> <%s> ", i, name->as_C_string(), signature->as_C_string());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -35,7 +35,7 @@ G1SATBCardTableModRefBS::G1SATBCardTableModRefBS(MemRegion whole_heap,
 
 void G1SATBCardTableModRefBS::enqueue(oop pre_val) {
   assert(pre_val->is_oop_or_null(true), "Error");
-  if (!JavaThread::satb_mark_queue_set().active()) return;
+  if (!JavaThread::satb_mark_queue_set().is_active()) return;
   Thread* thr = Thread::current();
   if (thr->is_Java_thread()) {
     JavaThread* jt = (JavaThread*)thr;
@@ -51,7 +51,7 @@ template <class T> void
 G1SATBCardTableModRefBS::write_ref_field_pre_static(T* field,
                                                     oop new_val,
                                                     JavaThread* jt) {
-  if (!JavaThread::satb_mark_queue_set().active()) return;
+  if (!JavaThread::satb_mark_queue_set().is_active()) return;
   T heap_oop = oopDesc::load_heap_oop(field);
   if (!oopDesc::is_null(heap_oop)) {
     oop pre_val = oopDesc::decode_heap_oop_not_null(heap_oop);
@@ -62,7 +62,7 @@ G1SATBCardTableModRefBS::write_ref_field_pre_static(T* field,
 
 template <class T> void
 G1SATBCardTableModRefBS::write_ref_array_pre_work(T* dst, int count) {
-  if (!JavaThread::satb_mark_queue_set().active()) return;
+  if (!JavaThread::satb_mark_queue_set().is_active()) return;
   T* elem_ptr = dst;
   for (int i = 0; i < count; i++, elem_ptr++) {
     T heap_oop = oopDesc::load_heap_oop(elem_ptr);

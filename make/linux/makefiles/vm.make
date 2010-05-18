@@ -1,5 +1,5 @@
 #
-# Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -40,7 +40,11 @@ GENERATED     = ../generated
 include $(GENERATED)/Dependencies
 
 # read machine-specific adjustments (%%% should do this via buildtree.make?)
-include $(MAKEFILES_DIR)/$(BUILDARCH).make
+ifeq ($(ZERO_BUILD), true)
+  include $(MAKEFILES_DIR)/zeroshark.make
+else
+  include $(MAKEFILES_DIR)/$(BUILDARCH).make
+endif
 
 # set VPATH so make knows where to look for source files
 # Src_Dirs is everything in src/share/vm/*, plus the right os/*/vm and cpu/*/vm
@@ -109,8 +113,9 @@ include $(MAKEFILES_DIR)/dtrace.make
 #----------------------------------------------------------------------
 # JVM
 
-JVM    = jvm$(G_SUFFIX)
-LIBJVM = lib$(JVM).so
+JVM      = jvm
+LIBJVM   = lib$(JVM).so
+LIBJVM_G = lib$(JVM)$(G_SUFFIX).so
 
 JVM_OBJ_FILES = $(Obj_Files)
 
@@ -124,7 +129,11 @@ mapfile_reorder : mapfile $(REORDERFILE)
 	rm -f $@
 	cat $^ > $@
 
-STATIC_CXX = true
+ifeq ($(ZERO_LIBARCH), ppc64)
+  STATIC_CXX = false
+else
+  STATIC_CXX = true
+endif
 
 ifeq ($(LINK_INTO),AOUT)
   LIBJVM.o                 =
@@ -147,6 +156,9 @@ else
   endif
 
   LIBS_VM                  += $(LIBS)
+endif
+ifeq ($(ZERO_BUILD), true)
+  LIBS_VM += $(LIBFFI_LIBS)
 endif
 
 LINK_VM = $(LINK_LIB.c)
@@ -190,6 +202,7 @@ $(LIBJVM): $(LIBJVM.o) $(LIBJVM_MAPFILE) $(LD_SCRIPT)
 		       $(LFLAGS_VM) -o $@ $(LIBJVM.o) $(LIBS_VM);       \
 	    $(LINK_LIB.CC/POST_HOOK)                                    \
 	    rm -f $@.1; ln -s $@ $@.1;                                  \
+	    [ -f $(LIBJVM_G) ] || { ln -s $@ $(LIBJVM_G); ln -s $@.1 $(LIBJVM_G).1; }; \
 	    if [ -x /usr/sbin/selinuxenabled ] ; then                   \
 	      /usr/sbin/selinuxenabled;                                 \
               if [ $$? = 0 ] ; then					\

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -138,6 +138,10 @@ const size_t K                  = 1024;
 const size_t M                  = K*K;
 const size_t G                  = M*K;
 const size_t HWperKB            = K / sizeof(HeapWord);
+
+const size_t LOG_K              = 10;
+const size_t LOG_M              = 2 * LOG_K;
+const size_t LOG_G              = 2 * LOG_M;
 
 const jint min_jint = (jint)1 << (sizeof(jint)*BitsPerByte-1); // 0x80000000 == smallest jint
 const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == largest jint
@@ -598,6 +602,7 @@ inline TosState as_TosState(BasicType type) {
     case T_VOID   : return vtos;
     case T_ARRAY  : // fall through
     case T_OBJECT : return atos;
+    default       : return ilgl; // fixes the -Wall -Werror under gcc 4.5
   }
   return ilgl;
 }

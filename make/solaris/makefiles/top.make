@@ -1,5 +1,5 @@
 #
-# Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,15 +16,15 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
 
 # top.make is included in the Makefile in the build directories.
 # It DOES NOT include the vm dependency info in order to be faster.
-# It's main job is to implement the incremental form of make lists.
+# Its main job is to implement the incremental form of make lists.
 # It also:
 #   -builds and runs adlc via adlc.make
 #   -generates JVMTI source and docs via jvmti.make (JSR-163)
@@ -112,7 +112,7 @@ vm_build_preliminaries:  checks $(Incremental_Lists) $(AD_Files_If_Required) jvm
 # make makeDeps: (and zap the cached db files to force a nonincremental run)
 
 $(GENERATED)/$(MakeDepsClass): $(MakeDepsSources)
-	@$(COMPILE.JAVAC) -classpath $(GAMMADIR)/src/share/tools/MakeDeps -g -d $(GENERATED) $(MakeDepsSources)
+	@$(COMPILE.JAVAC) -classpath $(GAMMADIR)/src/share/tools/MakeDeps -d $(GENERATED) $(MakeDepsSources)
 	@echo Removing $(Incremental_Lists) to force regeneration.
 	@rm -f $(Incremental_Lists)
 	@$(CDG) echo >$(Cached_plat)

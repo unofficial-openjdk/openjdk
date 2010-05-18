@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -35,32 +35,35 @@ inline frame::frame() {
   _deopt_state = unknown;
 }
 
-inline frame:: frame(intptr_t* sp, intptr_t* fp, address pc) {
+inline frame::frame(intptr_t* sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = sp;
   _fp = fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
   _cb = CodeCache::find_blob(pc);
-  _deopt_state = not_deoptimized;
-  if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
-    _pc = (((nmethod*)_cb)->get_original_pc(this));
+
+  address original_pc = nmethod::get_deopt_original_pc(this);
+  if (original_pc != NULL) {
+    _pc = original_pc;
     _deopt_state = is_deoptimized;
   } else {
     _deopt_state = not_deoptimized;
   }
 }
 
-inline frame:: frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
+inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = unextended_sp;
   _fp = fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
   _cb = CodeCache::find_blob(pc);
-  _deopt_state = not_deoptimized;
-  if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
-    _pc = (((nmethod*)_cb)->get_original_pc(this));
+
+  address original_pc = nmethod::get_deopt_original_pc(this);
+  if (original_pc != NULL) {
+    _pc = original_pc;
+    assert(((nmethod*)_cb)->code_contains(_pc), "original PC must be in nmethod");
     _deopt_state = is_deoptimized;
   } else {
     _deopt_state = not_deoptimized;
@@ -86,9 +89,9 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
 
   _cb = CodeCache::find_blob(_pc);
 
-  _deopt_state = not_deoptimized;
-  if (_cb != NULL && _cb->is_nmethod() && ((nmethod*)_cb)->is_deopt_pc(_pc)) {
-    _pc = (((nmethod*)_cb)->get_original_pc(this));
+  address original_pc = nmethod::get_deopt_original_pc(this);
+  if (original_pc != NULL) {
+    _pc = original_pc;
     _deopt_state = is_deoptimized;
   } else {
     _deopt_state = not_deoptimized;
@@ -225,11 +228,13 @@ inline methodOop* frame::interpreter_frame_method_addr() const {
 // top of expression stack
 inline intptr_t* frame::interpreter_frame_tos_address() const {
   intptr_t* last_sp = interpreter_frame_last_sp();
-  if (last_sp == NULL ) {
+  if (last_sp == NULL) {
     return sp();
   } else {
-    // sp() may have been extended by an adapter
-    assert(last_sp < fp() && last_sp >= sp(), "bad tos");
+    // sp() may have been extended or shrunk by an adapter.  At least
+    // check that we don't fall behind the legal region.
+    // For top deoptimized frame last_sp == interpreter_frame_monitor_end.
+    assert(last_sp <= (intptr_t*) interpreter_frame_monitor_end(), "bad tos");
     return last_sp;
   }
 }

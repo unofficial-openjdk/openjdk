@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -63,15 +63,15 @@ GrowableArray<FilteredField*> *FilteredFieldsMap::_filtered_fields =
 void FilteredFieldsMap::initialize() {
   int offset;
   offset = java_lang_Throwable::get_backtrace_offset();
-  _filtered_fields->append(new FilteredField(SystemDictionary::throwable_klass(), offset));
+  _filtered_fields->append(new FilteredField(SystemDictionary::Throwable_klass(), offset));
   // The latest version of vm may be used with old jdk.
   if (JDK_Version::is_gte_jdk16x_version()) {
     // The following class fields do not exist in
     // previous version of jdk.
     offset = sun_reflect_ConstantPool::cp_oop_offset();
-    _filtered_fields->append(new FilteredField(SystemDictionary::reflect_constant_pool_klass(), offset));
+    _filtered_fields->append(new FilteredField(SystemDictionary::reflect_ConstantPool_klass(), offset));
     offset = sun_reflect_UnsafeStaticFieldAccessorImpl::base_offset();
-    _filtered_fields->append(new FilteredField(SystemDictionary::reflect_unsafe_static_field_accessor_impl_klass(), offset));
+    _filtered_fields->append(new FilteredField(SystemDictionary::reflect_UnsafeStaticFieldAccessorImpl_klass(), offset));
   }
 }
 

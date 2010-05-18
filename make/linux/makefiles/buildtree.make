@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -63,20 +63,30 @@ QUIETLY$(MAKE_VERBOSE)	= @
 # For now, until the compiler is less wobbly:
 TESTFLAGS	= -Xbatch -showversion
 
-ifdef USE_SUNCC
-PLATFORM_FILE	= $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH).suncc
+ifeq ($(ZERO_BUILD), true)
+  PLATFORM_FILE = $(shell dirname $(shell dirname $(shell pwd)))/platform_zero
 else
-PLATFORM_FILE   = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH)
+  ifdef USE_SUNCC
+    PLATFORM_FILE = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH).suncc
+  else
+    PLATFORM_FILE = $(GAMMADIR)/make/$(OS_FAMILY)/platform_$(BUILDARCH)
+  endif
+endif
+
+# Allow overriding of the arch part of the directory but default
+# to BUILDARCH if nothing is specified
+ifeq ($(VARIANTARCH),)
+  VARIANTARCH=$(BUILDARCH)
 endif
 
 ifdef FORCE_TIERED
 ifeq		($(VARIANT),tiered)
-PLATFORM_DIR	= $(OS_FAMILY)_$(BUILDARCH)_compiler2
+PLATFORM_DIR	= $(OS_FAMILY)_$(VARIANTARCH)_compiler2
 else
-PLATFORM_DIR	= $(OS_FAMILY)_$(BUILDARCH)_$(VARIANT)
+PLATFORM_DIR	= $(OS_FAMILY)_$(VARIANTARCH)_$(VARIANT)
 endif
 else
-PLATFORM_DIR    = $(OS_FAMILY)_$(BUILDARCH)_$(VARIANT)
+PLATFORM_DIR    = $(OS_FAMILY)_$(VARIANTARCH)_$(VARIANT)
 endif
 
 #
@@ -321,6 +331,7 @@ DATA_MODE/sparc   = 32
 DATA_MODE/sparcv9 = 64
 DATA_MODE/amd64   = 64
 DATA_MODE/ia64    = 64
+DATA_MODE/zero    = $(ARCH_DATA_MODEL)
 
 JAVA_FLAG/32 = -d32
 JAVA_FLAG/64 = -d64

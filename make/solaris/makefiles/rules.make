@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -122,11 +122,19 @@ endif
 endif
 endif
 
+COMPILE.JAVAC += $(BOOTSTRAP_JAVAC_FLAGS)
+
 SUM = /usr/bin/sum
 
 # 'gmake MAKE_VERBOSE=y' gives all the gory details.
 QUIETLY$(MAKE_VERBOSE)  = @
 RUN.JAR$(MAKE_VERBOSE) += >/dev/null
+
+# Settings for javac
+BOOT_SOURCE_LANGUAGE_VERSION = 5
+BOOT_TARGET_CLASS_VERSION = 5
+JAVAC_FLAGS = -g -encoding ascii
+BOOTSTRAP_JAVAC_FLAGS = $(JAVAC_FLAGS) -source $(BOOT_SOURCE_LANGUAGE_VERSION) -target $(BOOT_TARGET_CLASS_VERSION)
 
 # With parallel makes, print a message at the end of compilation.
 ifeq    ($(findstring j,$(MFLAGS)),j)

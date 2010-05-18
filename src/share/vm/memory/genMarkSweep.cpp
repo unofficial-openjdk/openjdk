@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -155,13 +155,6 @@ void GenMarkSweep::allocate_stacks() {
 
   _preserved_marks = (PreservedMark*)scratch;
   _preserved_count = 0;
-  _preserved_mark_stack = NULL;
-  _preserved_oop_stack = NULL;
-
-  _marking_stack       = new (ResourceObj::C_HEAP) GrowableArray<oop>(4000, true);
-
-  int size = SystemDictionary::number_of_classes() * 2;
-  _revisit_klass_stack = new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
 
 #ifdef VALIDATE_MARK_SWEEP
   if (ValidateMarkSweep) {
@@ -197,15 +190,11 @@ void GenMarkSweep::deallocate_stacks() {
     gch->release_scratch();
   }
 
-  if (_preserved_oop_stack) {
-    delete _preserved_mark_stack;
-    _preserved_mark_stack = NULL;
-    delete _preserved_oop_stack;
-    _preserved_oop_stack = NULL;
-  }
-
-  delete _marking_stack;
-  delete _revisit_klass_stack;
+  _preserved_mark_stack.clear(true);
+  _preserved_oop_stack.clear(true);
+  _marking_stack.clear();
+  _revisit_klass_stack.clear(true);
+  _revisit_mdo_stack.clear(true);
 
 #ifdef VALIDATE_MARK_SWEEP
   if (ValidateMarkSweep) {
@@ -240,9 +229,12 @@ void GenMarkSweep::mark_sweep_phase1(int level,
 
   gch->gen_process_strong_roots(level,
                                 false, // Younger gens are not roots.
+                                true,  // activate StrongRootsScope
                                 true,  // Collecting permanent generation.
                                 SharedHeap::SO_SystemClasses,
-                                &follow_root_closure, &follow_root_closure);
+                                &follow_root_closure,
+                                true,   // walk code active on stacks
+                                &follow_root_closure);
 
   // Process reference objects found during marking
   {
@@ -260,13 +252,17 @@ void GenMarkSweep::mark_sweep_phase1(int level,
 
   // Update subklass/sibling/implementor links of live klasses
   follow_weak_klass_links();
-  assert(_marking_stack->is_empty(), "just drained");
+  assert(_marking_stack.is_empty(), "just drained");
+
+  // Visit memoized MDO's and clear any unmarked weak refs
+  follow_mdo_weak_refs();
+  assert(_marking_stack.is_empty(), "just drained");
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(&is_alive);
   StringTable::unlink(&is_alive);
 
-  assert(_marking_stack->is_empty(), "stack should be empty by now");
+  assert(_marking_stack.is_empty(), "stack should be empty by now");
 }
 
 
@@ -330,14 +326,19 @@ void GenMarkSweep::mark_sweep_phase3(int level) {
 
   gch->gen_process_strong_roots(level,
                                 false, // Younger gens are not roots.
+                                true,  // activate StrongRootsScope
                                 true,  // Collecting permanent generation.
                                 SharedHeap::SO_AllClasses,
                                 &adjust_root_pointer_closure,
+                                false, // do not walk code
                                 &adjust_root_pointer_closure);
 
   // Now adjust pointers in remaining weak roots.  (All of which should
   // have been cleared if they pointed to non-surviving objects.)
+  CodeBlobToOopClosure adjust_code_pointer_closure(&adjust_pointer_closure,
+                                                   /*do_marking=*/ false);
   gch->gen_process_weak_roots(&adjust_root_pointer_closure,
+                              &adjust_code_pointer_closure,
                               &adjust_pointer_closure);
 
   adjust_marks();

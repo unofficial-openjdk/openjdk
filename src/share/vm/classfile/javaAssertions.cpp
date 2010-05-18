@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -95,14 +95,14 @@ oop JavaAssertions::createAssertionStatusDirectives(TRAPS) {
   int len;
   typeArrayOop t;
   len = OptionList::count(_packages);
-  objArrayOop pn = oopFactory::new_objArray(SystemDictionary::string_klass(), len, CHECK_NULL);
+  objArrayOop pn = oopFactory::new_objArray(SystemDictionary::String_klass(), len, CHECK_NULL);
   objArrayHandle pkgNames (THREAD, pn);
   t = oopFactory::new_typeArray(T_BOOLEAN, len, CHECK_NULL);
   typeArrayHandle pkgEnabled(THREAD, t);
   fillJavaArrays(_packages, len, pkgNames, pkgEnabled, CHECK_NULL);
 
   len = OptionList::count(_classes);
-  objArrayOop cn = oopFactory::new_objArray(SystemDictionary::string_klass(), len, CHECK_NULL);
+  objArrayOop cn = oopFactory::new_objArray(SystemDictionary::String_klass(), len, CHECK_NULL);
   objArrayHandle classNames (THREAD, cn);
   t = oopFactory::new_typeArray(T_BOOLEAN, len, CHECK_NULL);
   typeArrayHandle classEnabled(THREAD, t);

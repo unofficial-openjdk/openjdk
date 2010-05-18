@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -240,4 +240,34 @@ double TruncatedSeq::predict_next() const {
   double b0 = y_avg - b1 * x_avg;
 
   return b0 + b1 * num;
+}
+
+
+// Printing/Debugging Support
+
+void AbsSeq::dump() { dump_on(gclog_or_tty); }
+
+void AbsSeq::dump_on(outputStream* s) {
+  s->print_cr("\t _num = %d, _sum = %7.3f, _sum_of_squares = %7.3f",
+                  _num,      _sum,         _sum_of_squares);
+  s->print_cr("\t _davg = %7.3f, _dvariance = %7.3f, _alpha = %7.3f",
+                  _davg,         _dvariance,         _alpha);
+}
+
+void NumberSeq::dump_on(outputStream* s) {
+  AbsSeq::dump_on(s);
+  s->print_cr("\t\t _last = %7.3f, _maximum = %7.3f");
+}
+
+void TruncatedSeq::dump_on(outputStream* s) {
+  AbsSeq::dump_on(s);
+  s->print_cr("\t\t _length = %d, _next = %d", _length, _next);
+  for (int i = 0; i < _length; i++) {
+    if (i%5 == 0) {
+      s->cr();
+      s->print("\t");
+    }
+    s->print("\t[%d]=%7.3f", i, _sequence[i]);
+  }
+  s->print_cr("");
 }

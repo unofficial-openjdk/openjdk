@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -93,9 +93,13 @@ void Abstract_VM_Version::initialize() {
 #else // KERNEL
 #ifdef TIERED
   #define VMTYPE "Server"
-#else
-  #define VMTYPE COMPILER1_PRESENT("Client")   \
-                 COMPILER2_PRESENT("Server")
+#else // TIERED
+#ifdef ZERO
+  #define VMTYPE "Zero"
+#else // ZERO
+   #define VMTYPE COMPILER1_PRESENT("Client")   \
+                  COMPILER2_PRESENT("Server")
+#endif // ZERO
 #endif // TIERED
 #endif // KERNEL
 
@@ -142,10 +146,14 @@ const char* Abstract_VM_Version::vm_release() {
                  WINDOWS_ONLY("windows")         \
                  SOLARIS_ONLY("solaris")
 
+#ifdef ZERO
+#define CPU      ZERO_LIBARCH
+#else
 #define CPU      IA32_ONLY("x86")                \
                  IA64_ONLY("ia64")               \
                  AMD64_ONLY("amd64")             \
                  SPARC_ONLY("sparc")
+#endif // ZERO
 
 const char *Abstract_VM_Version::vm_platform_string() {
   return OS "-" CPU;

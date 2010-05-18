@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -109,6 +109,8 @@ class AbstractInterpreter: AllStatic {
 
   static void       print_method_kind(MethodKind kind)          PRODUCT_RETURN;
 
+  static bool       can_be_compiled(methodHandle m);
+
   // Runtime support
 
   // length = invoke bytecode length (to advance to next bytecode)
@@ -122,11 +124,15 @@ class AbstractInterpreter: AllStatic {
   static int        size_top_interpreter_activation(methodOop method);
 
   // Deoptimization support
-  static address    continuation_for(methodOop method,
-                                     address bcp,
-                                     int callee_parameters,
-                                     bool is_top_frame,
-                                     bool& use_next_mdp);
+  // Compute the entry address for continuation after
+  static address deopt_continue_after_entry(methodOop method,
+                                            address bcp,
+                                            int callee_parameters,
+                                            bool is_top_frame);
+  // Compute the entry address for reexecution
+  static address deopt_reexecute_entry(methodOop method, address bcp);
+  // Deoptimization should reexecute this bytecode
+  static bool    bytecode_should_reexecute(Bytecodes::Code code);
 
   // share implementation of size_activation and layout_activation:
   static int        size_activation(methodOop method,

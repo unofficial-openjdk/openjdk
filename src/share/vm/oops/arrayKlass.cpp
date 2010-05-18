@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -43,7 +43,7 @@ klassOop arrayKlass::java_super() const {
   if (super() == NULL)  return NULL;  // bootstrap case
   // Array klasses have primary supertypes which are not reported to Java.
   // Example super chain:  String[][] -> Object[][] -> Object[] -> Object
-  return SystemDictionary::object_klass();
+  return SystemDictionary::Object_klass();
 }
 
 
@@ -82,7 +82,7 @@ const Klass_vtbl& cplusplus_vtbl, int header_size, KlassHandle klass, TRAPS) {
   k = arrayKlassHandle(THREAD, base_klass());
 
   assert(!k()->is_parsable(), "not expecting parsability yet.");
-  k->set_super(Universe::is_bootstrapping() ? (klassOop)NULL : SystemDictionary::object_klass());
+  k->set_super(Universe::is_bootstrapping() ? (klassOop)NULL : SystemDictionary::Object_klass());
   k->set_layout_helper(Klass::_lh_neutral_value);
   k->set_dimension(1);
   k->set_higher_dimension(NULL);
@@ -117,9 +117,9 @@ objArrayOop arrayKlass::compute_secondary_supers(int num_extra_slots, TRAPS) {
 
 bool arrayKlass::compute_is_subtype_of(klassOop k) {
   // An array is a subtype of Serializable, Clonable, and Object
-  return    k == SystemDictionary::object_klass()
-         || k == SystemDictionary::cloneable_klass()
-         || k == SystemDictionary::serializable_klass();
+  return    k == SystemDictionary::Object_klass()
+         || k == SystemDictionary::Cloneable_klass()
+         || k == SystemDictionary::Serializable_klass();
 }
 
 

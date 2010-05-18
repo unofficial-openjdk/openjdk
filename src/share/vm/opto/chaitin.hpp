@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -458,6 +458,16 @@ private:
   // Post-Allocation peephole copy removal
   void post_allocate_copy_removal();
   Node *skip_copies( Node *c );
+  // Replace the old node with the current live version of that value
+  // and yank the old value if it's dead.
+  int replace_and_yank_if_dead( Node *old, OptoReg::Name nreg,
+                                Block *current_block, Node_List& value, Node_List& regnd ) {
+    Node* v = regnd[nreg];
+    assert(v->outcnt() != 0, "no dead values");
+    old->replace_by(v);
+    return yank_if_dead(old, current_block, &value, &regnd);
+  }
+
   int yank_if_dead( Node *old, Block *current_block, Node_List *value, Node_List *regnd );
   int elide_copy( Node *n, int k, Block *current_block, Node_List &value, Node_List &regnd, bool can_change_regs );
   int use_prior_register( Node *copy, uint idx, Node *def, Block *current_block, Node_List &value, Node_List &regnd );

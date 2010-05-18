@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -114,7 +114,8 @@ static Node *transform_int_divide( PhaseGVN *phase, Node *dividend, jint divisor
       if( andconi_t && andconi_t->is_con() ) {
         jint andconi = andconi_t->get_con();
         if( andconi < 0 && is_power_of_2(-andconi) && (-andconi) >= d ) {
-          dividend = dividend->in(1);
+          if( (-andconi) == d ) // Remove AND if it clears bits which will be shifted
+            dividend = dividend->in(1);
           needs_rounding = false;
         }
       }
@@ -356,7 +357,8 @@ static Node *transform_long_divide( PhaseGVN *phase, Node *dividend, jlong divis
       if( andconl_t && andconl_t->is_con() ) {
         jlong andconl = andconl_t->get_con();
         if( andconl < 0 && is_power_of_2_long(-andconl) && (-andconl) >= d ) {
-          dividend = dividend->in(1);
+          if( (-andconl) == d ) // Remove AND if it clears bits which will be shifted
+            dividend = dividend->in(1);
           needs_rounding = false;
         }
       }

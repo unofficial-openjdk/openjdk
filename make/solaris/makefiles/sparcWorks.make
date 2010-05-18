@@ -1,5 +1,5 @@
 #
-# Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -281,8 +281,6 @@ else
 OPT_CFLAGS=-xO4 $(EXTRA_OPT_CFLAGS)
 endif
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_sparc/vm/solaris_sparc.il
-
 endif # sparc
 
 ifeq ("${Platform_arch_model}", "x86_32")
@@ -293,12 +291,13 @@ OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 # [phh] Is this still true for 6.1?
 OPT_CFLAGS+=-xO3
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_x86/vm/solaris_x86_32.il
-
 endif # 32bit x86
 
 # no more exceptions
 CFLAGS/NOEX=-noex
+
+# Inline functions
+CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_${Platform_arch}/vm/solaris_${Platform_arch_model}.il
 
 # Reduce code bloat by reverting back to 5.0 behavior for static initializers
 CFLAGS += -Qoption ccfe -one_static_init
@@ -311,6 +310,15 @@ PICFLAG/DEFAULT = $(PICFLAG)
 #PICFLAG/BETTER  = -pic
 PICFLAG/BETTER  = $(PICFLAG/DEFAULT)
 PICFLAG/BYFILE  = $(PICFLAG/$@)$(PICFLAG/DEFAULT$(PICFLAG/$@))
+
+# Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
+MAPFLAG = -M FILENAME
+
+# Use $(SONAMEFLAG:SONAME=soname) to specify the intrinsic name of a shared obj
+SONAMEFLAG = -h SONAME
+
+# Build shared library
+SHARED_FLAG = -G
 
 # Would be better if these weren't needed, since we link with CC, but
 # at present removing them causes run-time errors
@@ -533,3 +541,4 @@ STRIP_LIB.CC/POST_HOOK = $(STRIP) -x $@ || exit 1;
 # STRIP_LIB.CC/POST_HOOK is incorporated into LINK_LIB.CC/POST_HOOK
 # in certain configurations, such as product.make.  Other configurations,
 # such as debug.make, do not include the strip operation.
+

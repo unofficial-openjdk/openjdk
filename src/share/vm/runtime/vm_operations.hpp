@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -41,6 +41,7 @@
   template(DeoptimizeFrame)                       \
   template(DeoptimizeAll)                         \
   template(ZombieAll)                             \
+  template(HandleFullCodeCache)                   \
   template(Verify)                                \
   template(PrintJNI)                              \
   template(HeapDumper)                            \
@@ -239,6 +240,16 @@ class VM_DeoptimizeFrame: public VM_Operation {
   VMOp_Type type() const                         { return VMOp_DeoptimizeFrame; }
   void doit();
   bool allow_nested_vm_operations() const        { return true;  }
+};
+
+class VM_HandleFullCodeCache: public VM_Operation {
+ private:
+  bool  _is_full;
+ public:
+  VM_HandleFullCodeCache(bool is_full)           { _is_full = is_full; }
+  VMOp_Type type() const                         { return VMOp_HandleFullCodeCache; }
+  void doit();
+  bool allow_nested_vm_operations() const        { return true; }
 };
 
 #ifndef PRODUCT

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -133,6 +133,7 @@ class LinkResolver: AllStatic {
 
   // static resolving for all calls except interface calls
   static void resolve_method          (methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
+  static void resolve_dynamic_method  (methodHandle& resolved_method, KlassHandle& resolved_klass, constantPoolHandle pool, int index, TRAPS);
   static void resolve_interface_method(methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
 
   // runtime/static resolving for fields

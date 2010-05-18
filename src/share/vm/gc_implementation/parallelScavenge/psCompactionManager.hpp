@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -79,7 +79,7 @@ class ParCompactionManager : public CHeapObj {
   static PSOldGen*              _old_gen;
 
   OopTaskQueue                  _marking_stack;
-  GrowableArray<oop>*           _overflow_stack;
+  Stack<oop>                    _overflow_stack;
   // Is there a way to reuse the _marking_stack for the
   // saving empty regions?  For now just create a different
   // type of TaskQueue.
@@ -88,12 +88,12 @@ class ParCompactionManager : public CHeapObj {
   RegionTaskQueueWithOverflow   _region_stack;
 #else
   RegionTaskQueue               _region_stack;
-  GrowableArray<size_t>*        _region_overflow_stack;
+  Stack<size_t>                 _region_overflow_stack;
 #endif
 
-#if 1  // does this happen enough to need a per thread stack?
-  GrowableArray<Klass*>*        _revisit_klass_stack;
-#endif
+  Stack<Klass*>                 _revisit_klass_stack;
+  Stack<DataLayout*>            _revisit_mdo_stack;
+
   static ParMarkBitMap* _mark_bitmap;
 
   Action _action;
@@ -108,14 +108,12 @@ class ParCompactionManager : public CHeapObj {
   // Array of tasks.  Needed by the ParallelTaskTerminator.
   static RegionTaskQueueSet* region_array()      { return _region_array; }
   OopTaskQueue*  marking_stack()                 { return &_marking_stack; }
-  GrowableArray<oop>* overflow_stack()           { return _overflow_stack; }
+  Stack<oop>* overflow_stack()                   { return &_overflow_stack; }
 #ifdef USE_RegionTaskQueueWithOverflow
   RegionTaskQueueWithOverflow* region_stack()    { return &_region_stack; }
 #else
   RegionTaskQueue*  region_stack()               { return &_region_stack; }
-  GrowableArray<size_t>* region_overflow_stack() {
-    return _region_overflow_stack;
-  }
+  Stack<size_t>* region_overflow_stack() { return &_region_overflow_stack; }
 #endif
 
   // Pushes onto the marking stack.  If the marking stack is full,
@@ -135,10 +133,7 @@ class ParCompactionManager : public CHeapObj {
   inline static ParCompactionManager* manager_array(int index);
 
   ParCompactionManager();
-  ~ParCompactionManager();
 
-  void allocate_stacks();
-  void deallocate_stacks();
   ParMarkBitMap* mark_bitmap() { return _mark_bitmap; }
 
   // Take actions in preparation for a compaction.
@@ -151,10 +146,8 @@ class ParCompactionManager : public CHeapObj {
   bool should_verify_only();
   bool should_reset_only();
 
-#if 1
-  // Probably stays as a growable array
-  GrowableArray<Klass*>* revisit_klass_stack() { return _revisit_klass_stack; }
-#endif
+  Stack<Klass*>* revisit_klass_stack() { return &_revisit_klass_stack; }
+  Stack<DataLayout*>* revisit_mdo_stack() { return &_revisit_mdo_stack; }
 
   // Save oop for later processing.  Must not fail.
   void save_for_scanning(oop m);
@@ -185,11 +178,6 @@ class ParCompactionManager : public CHeapObj {
 
   // Process tasks remaining on any stack
   void drain_region_overflow_stack();
-
-  // Debugging support
-#ifdef ASSERT
-  bool stacks_have_been_allocated();
-#endif
 };
 
 inline ParCompactionManager* ParCompactionManager::manager_array(int index) {

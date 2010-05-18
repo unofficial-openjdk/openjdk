@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -37,16 +37,34 @@ inline void Par_MarkRefsIntoAndScanClosure::trim_queue(uint max) {
   }
 }
 
-inline void PushOrMarkClosure::remember_klass(Klass* k) {
-  if (!_revisitStack->push(oop(k))) {
+#ifndef PRODUCT
+void KlassRememberingOopClosure::check_remember_klasses() const {
+  assert(_should_remember_klasses == must_remember_klasses(),
+    "Should remember klasses in this context.");
+}
+#endif
+
+void KlassRememberingOopClosure::remember_klass(Klass* k) {
+  if (!_revisit_stack->push(oop(k))) {
     fatal("Revisit stack overflow in PushOrMarkClosure");
   }
+  check_remember_klasses();
 }
 
-inline void Par_PushOrMarkClosure::remember_klass(Klass* k) {
+inline void PushOrMarkClosure::remember_mdo(DataLayout* v) {
+  // TBD
+}
+
+
+void Par_KlassRememberingOopClosure::remember_klass(Klass* k) {
   if (!_revisit_stack->par_push(oop(k))) {
-    fatal("Revisit stack overflow in PushOrMarkClosure");
+    fatal("Revisit stack overflow in Par_KlassRememberingOopClosure");
   }
+  check_remember_klasses();
+}
+
+inline void Par_PushOrMarkClosure::remember_mdo(DataLayout* v) {
+  // TBD
 }
 
 inline void PushOrMarkClosure::do_yield_check() {

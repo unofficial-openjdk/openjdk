@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -41,7 +41,8 @@ class vframeArrayElement : public _ValueObj {
   private:
 
     frame _frame;                                                // the interpreter frame we will unpack into
-    int _bci;                                                    // raw bci for this vframe
+    int  _bci;                                                   // raw bci for this vframe
+    bool _reexecute;                                             // whether sould we reexecute this bytecode
     methodOop  _method;                                          // the method for this vframe
     MonitorChunk* _monitors;                                     // active monitors for this vframe
     StackValueCollection* _locals;
@@ -54,6 +55,7 @@ class vframeArrayElement : public _ValueObj {
   int bci(void) const;
 
   int raw_bci(void) const            { return _bci; }
+  bool should_reexecute(void) const  { return _reexecute; }
 
   methodOop method(void) const       { return _method; }
 

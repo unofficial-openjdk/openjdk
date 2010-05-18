@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -34,12 +34,12 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                                        Generation* old_gen_,
                                        int thread_num_,
                                        ObjToScanQueueSet* work_queue_set_,
-                                       GrowableArray<oop>**  overflow_stack_set_,
+                                       Stack<oop>* overflow_stacks_,
                                        size_t desired_plab_sz_,
                                        ParallelTaskTerminator& term_) :
   _to_space(to_space_), _old_gen(old_gen_), _young_gen(gen_), _thread_num(thread_num_),
   _work_queue(work_queue_set_->queue(thread_num_)), _to_space_full(false),
-  _overflow_stack(overflow_stack_set_[thread_num_]),
+  _overflow_stack(overflow_stacks_ ? overflow_stacks_ + thread_num_ : NULL),
   _ageTable(false), // false ==> not the global age table, no perf data.
   _to_space_alloc_buffer(desired_plab_sz_),
   _to_space_closure(gen_, this), _old_gen_closure(gen_, this),
@@ -50,6 +50,7 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                       work_queue_set_, &term_),
   _is_alive_closure(gen_), _scan_weak_ref_closure(gen_, this),
   _keep_alive_closure(&_scan_weak_ref_closure),
+  _promotion_failure_size(0),
   _pushes(0), _pops(0), _steals(0), _steal_attempts(0), _term_attempts(0),
   _strong_roots_time(0.0), _term_time(0.0)
 {
@@ -155,11 +156,12 @@ bool ParScanThreadState::take_from_overflow_stack() {
   assert(ParGCUseLocalOverflow, "Else should not call");
   assert(young_gen()->overflow_list() == NULL, "Error");
   ObjToScanQueue* queue = work_queue();
-  GrowableArray<oop>* of_stack = overflow_stack();
-  uint num_overflow_elems = of_stack->length();
-  uint num_take_elems     = MIN2(MIN2((queue->max_elems() - queue->size())/4,
-                                      (juint)ParGCDesiredObjsFromOverflowList),
-                                 num_overflow_elems);
+  Stack<oop>* const of_stack = overflow_stack();
+  const size_t num_overflow_elems = of_stack->size();
+  const size_t space_available = queue->max_elems() - queue->size();
+  const size_t num_take_elems = MIN3(space_available / 4,
+                                     ParGCDesiredObjsFromOverflowList,
+                                     num_overflow_elems);
   // Transfer the most recent num_take_elems from the overflow
   // stack to our work queue.
   for (size_t i = 0; i != num_take_elems; i++) {
@@ -249,6 +251,16 @@ void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
   }
 }
 
+void ParScanThreadState::print_and_clear_promotion_failure_size() {
+  if (_promotion_failure_size != 0) {
+    if (PrintPromotionFailure) {
+      gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
+        _thread_num, _promotion_failure_size);
+    }
+    _promotion_failure_size = 0;
+  }
+}
+
 class ParScanThreadStateSet: private ResourceArray {
 public:
   // Initializes states for the specified number of threads;
@@ -257,14 +269,14 @@ public:
                         ParNewGeneration&       gen,
                         Generation&             old_gen,
                         ObjToScanQueueSet&      queue_set,
-                        GrowableArray<oop>**    overflow_stacks_,
+                        Stack<oop>*             overflow_stacks_,
                         size_t                  desired_plab_sz,
                         ParallelTaskTerminator& term);
-  inline ParScanThreadState& thread_sate(int i);
+  inline ParScanThreadState& thread_state(int i);
   int pushes() { return _pushes; }
   int pops()   { return _pops; }
   int steals() { return _steals; }
-  void reset();
+  void reset(bool promotion_failed);
   void flush();
 private:
   ParallelTaskTerminator& _term;
@@ -280,37 +292,48 @@ private:
 ParScanThreadStateSet::ParScanThreadStateSet(
   int num_threads, Space& to_space, ParNewGeneration& gen,
   Generation& old_gen, ObjToScanQueueSet& queue_set,
-  GrowableArray<oop>** overflow_stack_set_,
+  Stack<oop>* overflow_stacks,
   size_t desired_plab_sz, ParallelTaskTerminator& term)
   : ResourceArray(sizeof(ParScanThreadState), num_threads),
     _gen(gen), _next_gen(old_gen), _term(term),
     _pushes(0), _pops(0), _steals(0)
 {
   assert(num_threads > 0, "sanity check!");
+  assert(ParGCUseLocalOverflow == (overflow_stacks != NULL),
+         "overflow_stack allocation mismatch");
   // Initialize states.
   for (int i = 0; i < num_threads; ++i) {
     new ((ParScanThreadState*)_data + i)
         ParScanThreadState(&to_space, &gen, &old_gen, i, &queue_set,
-                           overflow_stack_set_, desired_plab_sz, term);
+                           overflow_stacks, desired_plab_sz, term);
   }
 }
 
-inline ParScanThreadState& ParScanThreadStateSet::thread_sate(int i)
+inline ParScanThreadState& ParScanThreadStateSet::thread_state(int i)
 {
   assert(i >= 0 && i < length(), "sanity check!");
   return ((ParScanThreadState*)_data)[i];
 }
 
 
-void ParScanThreadStateSet::reset()
+void ParScanThreadStateSet::reset(bool promotion_failed)
 {
   _term.reset_for_reuse();
+  if (promotion_failed) {
+    for (int i = 0; i < length(); ++i) {
+      thread_state(i).print_and_clear_promotion_failure_size();
+    }
+  }
 }
 
 void ParScanThreadStateSet::flush()
 {
+  // Work in this loop should be kept as lightweight as
+  // possible since this might otherwise become a bottleneck
+  // to scaling. Should we add heavy-weight work into this
+  // loop, consider parallelizing the loop into the worker threads.
   for (int i = 0; i < length(); ++i) {
-    ParScanThreadState& par_scan_state = thread_sate(i);
+    ParScanThreadState& par_scan_state = thread_state(i);
 
     // Flush stats related to To-space PLAB activity and
     // retire the last buffer.
@@ -361,6 +384,14 @@ void ParScanThreadStateSet::flush()
                            par_scan_state.term_attempts());
       }
     }
+  }
+  if (UseConcMarkSweepGC && ParallelGCThreads > 0) {
+    // We need to call this even when ResizeOldPLAB is disabled
+    // so as to avoid breaking some asserts. While we may be able
+    // to avoid this by reorganizing the code a bit, I am loathe
+    // to do that unless we find cases where ergo leads to bad
+    // performance.
+    CFLS_LAB::compute_desired_plab_size();
   }
 }
 
@@ -475,17 +506,19 @@ void ParNewGenTask::work(int i) {
 
   Generation* old_gen = gch->next_gen(_gen);
 
-  ParScanThreadState& par_scan_state = _state_set->thread_sate(i);
+  ParScanThreadState& par_scan_state = _state_set->thread_state(i);
   par_scan_state.set_young_old_boundary(_young_old_boundary);
 
   par_scan_state.start_strong_roots();
   gch->gen_process_strong_roots(_gen->level(),
-                                true, // Process younger gens, if any,
-                                      // as strong roots.
-                                false,// not collecting perm generation.
+                                true,  // Process younger gens, if any,
+                                       // as strong roots.
+                                false, // no scope; this is parallel code
+                                false, // not collecting perm generation.
                                 SharedHeap::SO_AllClasses,
-                                &par_scan_state.older_gen_closure(),
-                                &par_scan_state.to_space_root_closure());
+                                &par_scan_state.to_space_root_closure(),
+                                true,   // walk *all* scavengable nmethods
+                                &par_scan_state.older_gen_closure());
   par_scan_state.end_strong_roots();
 
   // "evacuate followers".
@@ -518,14 +551,11 @@ ParNewGeneration(ReservedSpace rs, size_t initial_byte_size, int level)
   for (uint i2 = 0; i2 < ParallelGCThreads; i2++)
     _task_queues->queue(i2)->initialize();
 
-  _overflow_stacks = NEW_C_HEAP_ARRAY(GrowableArray<oop>*, ParallelGCThreads);
-  guarantee(_overflow_stacks != NULL, "Overflow stack set allocation failure");
-  for (uint i = 0; i < ParallelGCThreads; i++) {
-    if (ParGCUseLocalOverflow) {
-      _overflow_stacks[i] = new (ResourceObj::C_HEAP) GrowableArray<oop>(512, true);
-      guarantee(_overflow_stacks[i] != NULL, "Overflow Stack allocation failure.");
-    } else {
-      _overflow_stacks[i] = NULL;
+  _overflow_stacks = NULL;
+  if (ParGCUseLocalOverflow) {
+    _overflow_stacks = NEW_C_HEAP_ARRAY(Stack<oop>, ParallelGCThreads);
+    for (size_t i = 0; i < ParallelGCThreads; ++i) {
+      new (_overflow_stacks + i) Stack<oop>();
     }
   }
 
@@ -657,7 +687,7 @@ void ParNewRefProcTaskProxy::work(int i)
 {
   ResourceMark rm;
   HandleMark hm;
-  ParScanThreadState& par_scan_state = _state_set.thread_sate(i);
+  ParScanThreadState& par_scan_state = _state_set.thread_state(i);
   par_scan_state.set_young_old_boundary(_young_old_boundary);
   _task.work(i, par_scan_state.is_alive_closure(),
              par_scan_state.keep_alive_closure(),
@@ -691,7 +721,7 @@ void ParNewRefProcTaskExecutor::execute(ProcessTask& task)
   ParNewRefProcTaskProxy rp_task(task, _generation, *_generation.next_gen(),
                                  _generation.reserved().end(), _state_set);
   workers->run_task(&rp_task);
-  _state_set.reset();
+  _state_set.reset(_generation.promotion_failed());
 }
 
 void ParNewRefProcTaskExecutor::execute(EnqueueTask& task)
@@ -799,18 +829,19 @@ void ParNewGeneration::collect(bool   full,
   ParNewGenTask tsk(this, _next_gen, reserved().end(), &thread_state_set);
   int n_workers = workers->total_workers();
   gch->set_par_threads(n_workers);
-  gch->change_strong_roots_parity();
   gch->rem_set()->prepare_for_younger_refs_iterate(true);
   // It turns out that even when we're using 1 thread, doing the work in a
   // separate thread causes wide variance in run times.  We can't help this
   // in the multi-threaded case, but we special-case n=1 here to get
   // repeatable measurements of the 1-thread overhead of the parallel code.
   if (n_workers > 1) {
+    GenCollectedHeap::StrongRootsScope srs(gch);
     workers->run_task(&tsk);
   } else {
+    GenCollectedHeap::StrongRootsScope srs(gch);
     tsk.work(0);
   }
-  thread_state_set.reset();
+  thread_state_set.reset(promotion_failed());
 
   if (PAR_STATS_ENABLED && ParallelGCVerbose) {
     gclog_or_tty->print("Thread totals:\n"
@@ -865,12 +896,9 @@ void ParNewGeneration::collect(bool   full,
   } else {
     assert(HandlePromotionFailure,
       "Should only be here if promotion failure handling is on");
-    if (_promo_failure_scan_stack != NULL) {
-      // Can be non-null because of reference processing.
-      // Free stack with its elements.
-      delete _promo_failure_scan_stack;
-      _promo_failure_scan_stack = NULL;
-    }
+    assert(_promo_failure_scan_stack.is_empty(), "post condition");
+    _promo_failure_scan_stack.clear(true); // Clear cached segments.
+
     remove_forwarding_pointers();
     if (PrintGCDetails) {
       gclog_or_tty->print(" (promotion failed)");
@@ -879,6 +907,8 @@ void ParNewGeneration::collect(bool   full,
     swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
     from()->set_next_compaction_space(to());
     gch->set_incremental_collection_will_fail();
+    // Inform the next generation that a promotion failure occurred.
+    _next_gen->promotion_failure_occurred();
 
     // Reset the PromotionFailureALot counters.
     NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
@@ -1026,6 +1056,8 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
       new_obj = old;
 
       preserve_mark_if_necessary(old, m);
+      // Log the size of the maiden promotion failure
+      par_scan_state->log_promotion_failure(sz);
     }
 
     old->forward_to(new_obj);
@@ -1147,6 +1179,8 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
       failed_to_promote = true;
 
       preserve_mark_if_necessary(old, m);
+      // Log the size of the maiden promotion failure
+      par_scan_state->log_promotion_failure(sz);
     }
   } else {
     // Is in to-space; do copying ourselves.
@@ -1316,8 +1350,8 @@ bool ParNewGeneration::take_from_overflow_list_work(ParScanThreadState* par_scan
   size_t objsFromOverflow = MIN2((size_t)(work_q->max_elems() - work_q->size())/4,
                                  (size_t)ParGCDesiredObjsFromOverflowList);
 
-  assert(par_scan_state->overflow_stack() == NULL, "Error");
   assert(!UseCompressedOops, "Error");
+  assert(par_scan_state->overflow_stack() == NULL, "Error");
   if (_overflow_list == NULL) return false;
 
   // Otherwise, there was something there; try claiming the list.

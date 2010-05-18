@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -193,6 +193,9 @@ class CompileBroker: AllStatic {
   static bool _initialized;
   static volatile bool _should_block;
 
+  // This flag can be used to stop compilation or turn it back on
+  static volatile jint _should_compile_new_jobs;
+
   // The installed compiler(s)
   static AbstractCompiler* _compilers[2];
 
@@ -319,6 +322,7 @@ class CompileBroker: AllStatic {
 
   static void compiler_thread_loop();
 
+  static uint get_compilation_id() { return _compilation_id; }
   static bool is_idle();
 
   // Set _should_block.
@@ -327,6 +331,20 @@ class CompileBroker: AllStatic {
 
   // Call this from the compiler at convenient points, to poll for _should_block.
   static void maybe_block();
+
+  enum {
+    // Flags for toggling compiler activity
+    stop_compilation = 0,
+    run_compilation  = 1
+  };
+
+  static bool should_compile_new_jobs() { return UseCompiler && (_should_compile_new_jobs == run_compilation); }
+  static bool set_should_compile_new_jobs(jint new_state) {
+    // Return success if the current caller set it
+    jint old = Atomic::cmpxchg(new_state, &_should_compile_new_jobs, 1-new_state);
+    return (old == (1-new_state));
+  }
+  static void handle_full_code_cache();
 
   // Return total compilation ticks
   static jlong total_compilation_ticks() {

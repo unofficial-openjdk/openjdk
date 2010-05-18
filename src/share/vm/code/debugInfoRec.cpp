@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -280,6 +280,9 @@ int DebugInformationRecorder::find_sharable_decode_offset(int stream_offset) {
 void DebugInformationRecorder::describe_scope(int         pc_offset,
                                               ciMethod*   method,
                                               int         bci,
+                                              bool        reexecute,
+                                              bool        is_method_handle_invoke,
+                                              bool        return_oop,
                                               DebugToken* locals,
                                               DebugToken* expressions,
                                               DebugToken* monitors) {
@@ -291,11 +294,16 @@ void DebugInformationRecorder::describe_scope(int         pc_offset,
   int stream_offset = stream()->position();
   last_pd->set_scope_decode_offset(stream_offset);
 
+  // Record flags into pcDesc.
+  last_pd->set_should_reexecute(reexecute);
+  last_pd->set_is_method_handle_invoke(is_method_handle_invoke);
+  last_pd->set_return_oop(return_oop);
+
   // serialize sender stream offest
   stream()->write_int(sender_stream_offset);
 
   // serialize scope
-  jobject method_enc = (method == NULL)? NULL: method->encoding();
+  jobject method_enc = (method == NULL)? NULL: method->constant_encoding();
   stream()->write_int(oop_recorder()->find_index(method_enc));
   stream()->write_bci(bci);
   assert(method == NULL ||
@@ -352,8 +360,7 @@ void DebugInformationRecorder::end_scopes(int pc_offset, bool is_safepoint) {
     // search forward until it finds last.
     // In addition, it does not matter if the last PcDesc
     // is for a safepoint or not.
-    if (_prev_safepoint_pc < prev->pc_offset() &&
-        prev->scope_decode_offset() == last->scope_decode_offset()) {
+    if (_prev_safepoint_pc < prev->pc_offset() && prev->is_same_info(last)) {
       assert(prev == last-1, "sane");
       prev->set_pc_offset(pc_offset);
       _pcs_length -= 1;

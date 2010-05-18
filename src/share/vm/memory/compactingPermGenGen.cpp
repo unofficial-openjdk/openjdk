@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -352,15 +352,19 @@ void CompactingPermGenGen::post_compact() {
 }
 
 
+// Do not use in time-critical operations due to the possibility of paging
+// in otherwise untouched or previously unread portions of the perm gen,
+// for instance, the shared spaces. NOTE: Because CompactingPermGenGen
+// derives from OneContigSpaceCardGeneration which is supposed to have a
+// single space, and does not override its object_iterate() method,
+// object iteration via that interface does not look at the objects in
+// the shared spaces when using CDS. This should be fixed; see CR 6897798.
 void CompactingPermGenGen::space_iterate(SpaceClosure* blk, bool usedOnly) {
   OneContigSpaceCardGeneration::space_iterate(blk, usedOnly);
   if (spec()->enable_shared_spaces()) {
-#ifdef PRODUCT
     // Making the rw_space walkable will page in the entire space, and
-    // is to be avoided. However, this is required for Verify options.
-    ShouldNotReachHere();
-#endif
-
+    // is to be avoided in the case of time-critical operations.
+    // However, this is required for Verify and heap dump operations.
     blk->do_space(ro_space());
     blk->do_space(rw_space());
   }

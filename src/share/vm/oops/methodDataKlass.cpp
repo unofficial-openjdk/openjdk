@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -214,14 +214,14 @@ void methodDataKlass::oop_print_on(oop obj, outputStream* st) {
   m->print_data_on(st);
 }
 
+#endif //PRODUCT
+
 void methodDataKlass::oop_print_value_on(oop obj, outputStream* st) {
   assert(obj->is_methodData(), "should be method data");
   methodDataOop m = methodDataOop(obj);
   st->print("method data for ");
   m->method()->print_value_on(st);
 }
-
-#endif // !PRODUCT
 
 const char* methodDataKlass::internal_name() const {
   return "{method data}";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -61,9 +61,10 @@ class PSScavenge: AllStatic {
   static HeapWord*           _young_generation_boundary; // The lowest address possible for the young_gen.
                                                          // This is used to decide if an oop should be scavenged,
                                                          // cards should be marked, etc.
-  static GrowableArray<markOop>* _preserved_mark_stack; // List of marks to be restored after failed promotion
-  static GrowableArray<oop>*     _preserved_oop_stack;  // List of oops that need their mark restored.
+  static Stack<markOop>          _preserved_mark_stack; // List of marks to be restored after failed promotion
+  static Stack<oop>              _preserved_oop_stack;  // List of oops that need their mark restored.
   static CollectorCounters*      _counters;         // collector performance counters
+  static bool                    _promotion_failed;
 
   static void clean_up_failed_promotion();
 
@@ -79,8 +80,7 @@ class PSScavenge: AllStatic {
   // Accessors
   static int              tenuring_threshold()  { return _tenuring_threshold; }
   static elapsedTimer*    accumulated_time()    { return &_accumulated_time; }
-  static bool             promotion_failed()
-    { return _preserved_mark_stack != NULL; }
+  static bool             promotion_failed()    { return _promotion_failed; }
   static int              consecutive_skipped_scavenges()
     { return _consecutive_skipped_scavenges; }
 

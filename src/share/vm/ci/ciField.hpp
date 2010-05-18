@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -138,8 +138,16 @@ public:
 
   // Get the constant value of this field.
   ciConstant constant_value() {
-    assert(is_constant(), "illegal call to constant_value()");
+    assert(is_static() && is_constant(), "illegal call to constant_value()");
     return _constant_value;
+  }
+
+  // Get the constant value of non-static final field in the given
+  // object.
+  ciConstant constant_value_of(ciObject* object) {
+    assert(!is_static() && is_constant(), "only if field is non-static constant");
+    assert(object->is_instance(), "must be instance");
+    return object->as_instance()->field_value(this);
   }
 
   // Check for link time errors.  Accessing a field from a

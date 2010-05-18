@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -378,7 +378,7 @@ Node* IdealKit::store(Node* ctl, Node* adr, Node *val, BasicType bt,
 
 // Card mark store. Must be ordered so that it will come after the store of
 // the oop.
-Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store,
+Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store, int oop_adr_idx,
                         BasicType bt,
                         int adr_idx) {
   assert(adr_idx != Compile::AliasIdxTop, "use other store_to_memory factory" );
@@ -388,7 +388,7 @@ Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store,
 
   // Add required edge to oop_store, optimizer does not support precedence edges.
   // Convert required edge to precedence edge before allocation.
-  Node* st = new (C, 5) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store);
+  Node* st = new (C, 5) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store, oop_adr_idx);
 
   st = transform(st);
   set_memory(st, adr_idx);

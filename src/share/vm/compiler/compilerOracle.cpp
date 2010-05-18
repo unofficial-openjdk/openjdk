@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -392,18 +392,18 @@ static const char* patterns[] = {
 };
 
 static MethodMatcher::Mode check_mode(char name[], const char*& error_msg) {
-  if (strcmp(name, "*") == 0) return MethodMatcher::Any;
-
   int match = MethodMatcher::Exact;
-  if (name[0] == '*') {
+  while (name[0] == '*') {
     match |= MethodMatcher::Suffix;
     strcpy(name, name + 1);
   }
 
+  if (strcmp(name, "*") == 0) return MethodMatcher::Any;
+
   size_t len = strlen(name);
-  if (len > 0 && name[len - 1] == '*') {
+  while (len > 0 && name[len - 1] == '*') {
     match |= MethodMatcher::Prefix;
-    name[len - 1] = '\0';
+    name[--len] = '\0';
   }
 
   if (strstr(name, "*") != NULL) {
@@ -610,6 +610,14 @@ void compilerOracle_init() {
   CompilerOracle::parse_from_string(CompileCommand, CompilerOracle::parse_from_line);
   CompilerOracle::parse_from_string(CompileOnly, CompilerOracle::parse_compile_only);
   CompilerOracle::parse_from_file();
+  if (lists[PrintCommand] != NULL) {
+    if (PrintAssembly) {
+      warning("CompileCommand and/or .hotspot_compiler file contains 'print' commands, but PrintAssembly is also enabled");
+    } else if (FLAG_IS_DEFAULT(DebugNonSafepoints)) {
+      warning("printing of assembly code is enabled; turning on DebugNonSafepoints to gain additional output");
+      DebugNonSafepoints = true;
+    }
+  }
 }
 
 

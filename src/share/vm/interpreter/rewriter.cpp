@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -46,16 +46,6 @@ void Rewriter::compute_index_maps() {
   guarantee((int)_cp_cache_map.length()-1 <= (int)((u2)-1),
             "all cp cache indexes fit in a u2");
 }
-
-
-int Rewriter::add_extra_cp_cache_entry(int main_entry) {
-  // Hack: We put it on the map as an encoded value.
-  // The only place that consumes this is ConstantPoolCacheEntry::set_initial_state
-  int encoded = constantPoolCacheOopDesc::encode_secondary_index(main_entry);
-  int plain_secondary_index = _cp_cache_map.append(encoded);
-  return constantPoolCacheOopDesc::encode_secondary_index(plain_secondary_index);
-}
-
 
 
 // Creates a constant pool cache given a CPC map
@@ -127,7 +117,7 @@ void Rewriter::rewrite_invokedynamic(address bcp, int offset, int delete_me) {
   assert(p[-1] == Bytecodes::_invokedynamic, "");
   int cp_index = Bytes::get_Java_u2(p);
   int cpc  = maybe_add_cp_cache_entry(cp_index);  // add lazily
-  int cpc2 = add_extra_cp_cache_entry(cpc);
+  int cpc2 = add_secondary_cp_cache_entry(cpc);
 
   // Replace the trailing four bytes with a CPC index for the dynamic
   // call site.  Unlike other CPC entries, there is one per bytecode,
@@ -137,7 +127,7 @@ void Rewriter::rewrite_invokedynamic(address bcp, int offset, int delete_me) {
   // all these entries.  That is the main reason invokedynamic
   // must have a five-byte instruction format.  (Of course, other JVM
   // implementations can use the bytes for other purposes.)
-  Bytes::put_native_u4(p, cpc2);
+  Bytes::put_native_u4(p, constantPoolCacheOopDesc::encode_secondary_index(cpc2));
   // Note: We use native_u4 format exclusively for 4-byte indexes.
 }
 
@@ -257,15 +247,22 @@ methodHandle Rewriter::rewrite_jsrs(methodHandle method, TRAPS) {
 
 void Rewriter::rewrite(instanceKlassHandle klass, TRAPS) {
   ResourceMark rm(THREAD);
-  Rewriter     rw(klass, CHECK);
+  Rewriter     rw(klass, klass->constants(), klass->methods(), CHECK);
   // (That's all, folks.)
 }
 
-Rewriter::Rewriter(instanceKlassHandle klass, TRAPS)
+
+void Rewriter::rewrite(instanceKlassHandle klass, constantPoolHandle cpool, objArrayHandle methods, TRAPS) {
+  ResourceMark rm(THREAD);
+  Rewriter     rw(klass, cpool, methods, CHECK);
+  // (That's all, folks.)
+}
+
+
+Rewriter::Rewriter(instanceKlassHandle klass, constantPoolHandle cpool, objArrayHandle methods, TRAPS)
   : _klass(klass),
-    // gather starting points
-    _pool(   THREAD, klass->constants()),
-    _methods(THREAD, klass->methods())
+    _pool(cpool),
+    _methods(methods)
 {
   assert(_pool->cache() == NULL, "constant pool cache must not be set yet");
 

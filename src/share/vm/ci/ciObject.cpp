@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -55,6 +55,7 @@ ciObject::ciObject(oop o) {
   }
   _klass = NULL;
   _ident = 0;
+  init_flags_from(o);
 }
 
 // ------------------------------------------------------------------
@@ -69,6 +70,7 @@ ciObject::ciObject(Handle h) {
   }
   _klass = NULL;
   _ident = 0;
+  init_flags_from(h());
 }
 
 // ------------------------------------------------------------------
@@ -158,7 +160,7 @@ int ciObject::hash() {
 }
 
 // ------------------------------------------------------------------
-// ciObject::encoding
+// ciObject::constant_encoding
 //
 // The address which the compiler should embed into the
 // generated code to represent this oop.  This address
@@ -172,16 +174,24 @@ int ciObject::hash() {
 //
 // This method should be changed to return an generified address
 // to discourage use of the JNI handle.
-jobject ciObject::encoding() {
+jobject ciObject::constant_encoding() {
   assert(is_null_object() || handle() != NULL, "cannot embed null pointer");
-  assert(has_encoding(), "oop must be NULL or perm");
+  assert(can_be_constant(), "oop must be NULL or perm");
   return handle();
 }
 
 // ------------------------------------------------------------------
-// ciObject::has_encoding
-bool ciObject::has_encoding() {
-  return handle() == NULL || is_perm();
+// ciObject::can_be_constant
+bool ciObject::can_be_constant() {
+  if (ScavengeRootsInCode >= 1)  return true;  // now everybody can encode as a constant
+  return handle() == NULL || !is_scavengable();
+}
+
+// ------------------------------------------------------------------
+// ciObject::should_be_constant()
+bool ciObject::should_be_constant() {
+  if (ScavengeRootsInCode >= 2)  return true;  // force everybody to be a constant
+  return handle() == NULL || !is_scavengable();
 }
 
 
@@ -195,8 +205,9 @@ bool ciObject::has_encoding() {
 void ciObject::print(outputStream* st) {
   st->print("<%s", type_string());
   GUARDED_VM_ENTRY(print_impl(st);)
-  st->print(" ident=%d %s address=0x%x>", ident(),
+  st->print(" ident=%d %s%s address=0x%x>", ident(),
         is_perm() ? "PERM" : "",
+        is_scavengable() ? "SCAVENGABLE" : "",
         (address)this);
 }
 

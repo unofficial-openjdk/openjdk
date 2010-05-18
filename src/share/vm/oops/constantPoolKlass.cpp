@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -387,8 +387,18 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
   cp->set_cache(cache());
 }
 
-
 #endif
+
+void constantPoolKlass::oop_print_value_on(oop obj, outputStream* st) {
+  assert(obj->is_constantPool(), "must be constantPool");
+  constantPoolOop cp = constantPoolOop(obj);
+  st->print("constant pool [%d]", cp->length());
+  if (cp->has_pseudo_string()) st->print("/pseudo_string");
+  if (cp->has_invokedynamic()) st->print("/invokedynamic");
+  cp->print_address_on(st);
+  st->print(" for ");
+  cp->pool_holder()->print_value_on(st);
+}
 
 const char* constantPoolKlass::internal_name() const {
   return "{constant pool}";

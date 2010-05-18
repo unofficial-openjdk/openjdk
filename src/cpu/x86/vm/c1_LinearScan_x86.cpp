@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -764,8 +764,6 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
       break;
     }
 
-    case lir_log:
-    case lir_log10:
     case lir_abs:
     case lir_sqrt: {
       // Right argument appears to be unused
@@ -782,6 +780,30 @@ void FpuStackAllocator::handle_op2(LIR_Op2* op2) {
       new_res = new_left;
 
       op2->set_fpu_stack_size(sim()->stack_size());
+      break;
+    }
+
+    case lir_log:
+    case lir_log10: {
+      // log and log10 needs one temporary fpu stack slot, so there is ontemporary
+      // registers stored in temp of the operation.
+      // the stack allocator must guarantee that the stack slots are really free,
+      // otherwise there might be a stack overflow.
+      assert(right->is_illegal(), "must be");
+      assert(left->is_fpu_register(), "must be");
+      assert(res->is_fpu_register(), "must be");
+      assert(op2->tmp_opr()->is_fpu_register(), "must be");
+
+      insert_free_if_dead(op2->tmp_opr());
+      insert_free_if_dead(res, left);
+      insert_exchange(left);
+      do_rename(left, res);
+
+      new_left = to_fpu_stack_top(res);
+      new_res = new_left;
+
+      op2->set_fpu_stack_size(sim()->stack_size());
+      assert(sim()->stack_size() <= 7, "at least one stack slot must be free");
       break;
     }
 

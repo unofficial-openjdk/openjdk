@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -169,6 +169,8 @@ class Universe: AllStatic {
   static objArrayOop  _the_empty_system_obj_array;    // Canonicalized system obj array
   static objArrayOop  _the_empty_class_klass_array;   // Canonicalized obj array of type java.lang.Class
   static objArrayOop  _the_array_interfaces_array;    // Canonicalized 2-array of cloneable & serializable klasses
+  static oop          _the_null_string;               // A cache of "null" as a Java string
+  static oop          _the_min_jint_string;          // A cache of "-2147483648" as a Java string
   static LatestMethodOopCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodOopCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
   static ActiveMethodOopsCache* _reflect_invoke_cache;    // method for security checks
@@ -310,6 +312,8 @@ class Universe: AllStatic {
   static objArrayOop  the_empty_system_obj_array ()   { return _the_empty_system_obj_array;    }
   static objArrayOop  the_empty_class_klass_array ()  { return _the_empty_class_klass_array;   }
   static objArrayOop  the_array_interfaces_array()    { return _the_array_interfaces_array;    }
+  static oop          the_null_string()               { return _the_null_string;               }
+  static oop          the_min_jint_string()          { return _the_min_jint_string;          }
   static methodOop    finalizer_register_method()     { return _finalizer_register_cache->get_methodOop(); }
   static methodOop    loader_addClass_method()        { return _loader_addClass_cache->get_methodOop(); }
   static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }

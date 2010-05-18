@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -457,7 +457,7 @@ static volatile int max_hrtime_lock = LOCK_FREE;     // Update counter with LSB 
 
 
 void os::Solaris::initialize_system_info() {
-  _processor_count = sysconf(_SC_NPROCESSORS_CONF);
+  set_processor_count(sysconf(_SC_NPROCESSORS_CONF));
   _processors_online = sysconf (_SC_NPROCESSORS_ONLN);
   _physical_memory = (julong)sysconf(_SC_PHYS_PAGES) * (julong)sysconf(_SC_PAGESIZE);
 }
@@ -1643,7 +1643,8 @@ inline hrtime_t oldgetTimeNanos() {
 inline hrtime_t getTimeNanos() {
   if (VM_Version::supports_cx8()) {
     const hrtime_t now = gethrtime();
-    const hrtime_t prev = max_hrtime;
+    // Use atomic long load since 32-bit x86 uses 2 registers to keep long.
+    const hrtime_t prev = Atomic::load((volatile jlong*)&max_hrtime);
     if (now <= prev)  return prev;   // same or retrograde time;
     const hrtime_t obsv = Atomic::cmpxchg(now, (volatile jlong*)&max_hrtime, prev);
     assert(obsv >= prev, "invariant");   // Monotonicity
@@ -1842,8 +1843,8 @@ void os::dll_build_name(char* buffer, size_t buflen,
 
   // Quietly truncate on buffer overflow.  Should be an error.
   if (pnamelen + strlen(fname) + 10 > (size_t) buflen) {
-      *buffer = '\0';
-      return;
+    *buffer = '\0';
+    return;
   }
 
   if (pnamelen == 0) {
@@ -5802,6 +5803,7 @@ void Parker::park(bool isAbsolute, jlong time) {
   // Return immediately if a permit is available.
   if (_counter > 0) {
       _counter = 0 ;
+      OrderAccess::fence();
       return ;
   }
 
@@ -5845,6 +5847,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = os::Solaris::mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    OrderAccess::fence();
     return;
   }
 
@@ -5891,6 +5894,7 @@ void Parker::park(bool isAbsolute, jlong time) {
     jt->java_suspend_self();
   }
 
+  OrderAccess::fence();
 }
 
 void Parker::unpark() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -54,7 +54,9 @@ public:
     ParNew,
     ConcurrentMarkSweep,
     PSScavenge,
-    PSMarkSweep
+    PSMarkSweep,
+    G1YoungGen,
+    G1OldGen
   };
 
   MemoryManager();
@@ -85,6 +87,8 @@ public:
   static GCMemoryManager* get_cms_memory_manager();
   static GCMemoryManager* get_psScavenge_memory_manager();
   static GCMemoryManager* get_psMarkSweep_memory_manager();
+  static GCMemoryManager* get_g1YoungGen_memory_manager();
+  static GCMemoryManager* get_g1OldGen_memory_manager();
 
 };
 
@@ -230,4 +234,22 @@ public:
 
   MemoryManager::Name kind() { return MemoryManager::PSMarkSweep; }
   const char* name()         { return "PS MarkSweep"; }
+};
+
+class G1YoungGenMemoryManager : public GCMemoryManager {
+private:
+public:
+  G1YoungGenMemoryManager() : GCMemoryManager() {}
+
+  MemoryManager::Name kind() { return MemoryManager::G1YoungGen; }
+  const char* name()         { return "G1 Young Generation"; }
+};
+
+class G1OldGenMemoryManager : public GCMemoryManager {
+private:
+public:
+  G1OldGenMemoryManager() : GCMemoryManager() {}
+
+  MemoryManager::Name kind() { return MemoryManager::G1OldGen; }
+  const char* name()         { return "G1 Old Generation"; }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -1502,7 +1502,7 @@ Node *PhaseCCP::transform_once( Node *n ) {
 //---------------------------------saturate------------------------------------
 const Type* PhaseCCP::saturate(const Type* new_type, const Type* old_type,
                                const Type* limit_type) const {
-  const Type* wide_type = new_type->widen(old_type);
+  const Type* wide_type = new_type->widen(old_type, limit_type);
   if (wide_type != new_type) {          // did we widen?
     // If so, we may have widened beyond the limit type.  Clip it back down.
     new_type = wide_type->filter(limit_type);
@@ -1622,9 +1622,11 @@ void Node::set_req_X( uint i, Node *n, PhaseIterGVN *igvn ) {
   // old goes dead?
   if( old ) {
     switch (old->outcnt()) {
-    case 0:      // Kill all his inputs, and recursively kill other dead nodes.
+    case 0:
+      // Put into the worklist to kill later. We do not kill it now because the
+      // recursive kill will delete the current node (this) if dead-loop exists
       if (!old->is_top())
-        igvn->remove_dead_node( old );
+        igvn->_worklist.push( old );
       break;
     case 1:
       if( old->is_Store() || old->has_special_unique_user() )

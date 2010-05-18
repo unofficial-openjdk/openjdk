@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -70,8 +70,21 @@ class symbolOopDesc : public oopDesc {
 
   void set_utf8_length(int len) { _length = len; }
 
-  // Compares the symbol with a string
+  // Compares the symbol with a string.
   bool equals(const char* str, int len) const;
+  bool equals(const char* str) const { return equals(str, (int) strlen(str)); }
+
+  // Tests if the symbol starts with the given prefix.
+  bool starts_with(const char* prefix, int len) const;
+  bool starts_with(const char* prefix) const {
+    return starts_with(prefix, (int) strlen(prefix));
+  }
+
+  // Tests if the symbol starts with the given prefix.
+  int index_of_at(int i, const char* str, int len) const;
+  int index_of_at(int i, const char* str) const {
+    return index_of_at(i, str, (int) strlen(str));
+  }
 
   // Three-way compare for sorting; returns -1/0/1 if receiver is </==/> than arg
   // note that the ordering is not alfabetical

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -1279,6 +1279,7 @@ public:
 
   // 171
 
+  inline void ldf(FloatRegisterImpl::Width w, Register s1, RegisterOrConstant s2, FloatRegister d);
   inline void ldf(FloatRegisterImpl::Width w, Register s1, Register s2, FloatRegister d);
   inline void ldf(FloatRegisterImpl::Width w, Register s1, int simm13a, FloatRegister d, RelocationHolder const& rspec = RelocationHolder());
 
@@ -1535,7 +1536,8 @@ public:
 
   // pp 222
 
-  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2 );
+  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, RegisterOrConstant s2);
+  inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2);
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, int simm13a);
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, const Address& a, int offset = 0);
 
@@ -2049,12 +2051,13 @@ public:
                        Register temp = noreg );
   void regcon_sll_ptr( RegisterOrConstant& dest, RegisterOrConstant src,
                        Register temp = noreg );
-  RegisterOrConstant ensure_rs2(RegisterOrConstant rs2, Register sethi_temp) {
-    guarantee(sethi_temp != noreg, "constant offset overflow");
-    if (is_simm13(rs2.constant_or_zero()))
-      return rs2;               // register or short constant
-    set(rs2.as_constant(), sethi_temp);
-    return sethi_temp;
+
+  RegisterOrConstant ensure_simm13_or_reg(RegisterOrConstant roc, Register Rtemp) {
+    guarantee(Rtemp != noreg, "constant offset overflow");
+    if (is_simm13(roc.constant_or_zero()))
+      return roc;               // register or short constant
+    set(roc.as_constant(), Rtemp);
+    return RegisterOrConstant(Rtemp);
   }
 
   // --------------------------------------------------
@@ -2454,6 +2457,11 @@ public:
   // Unconditional increment.
   void inc_counter(address counter_addr, Register Rtmp1, Register Rtmp2);
   void inc_counter(int*    counter_addr, Register Rtmp1, Register Rtmp2);
+
+  // Compare char[] arrays aligned to 4 bytes.
+  void char_arrays_equals(Register ary1, Register ary2,
+                          Register limit, Register result,
+                          Register chr1, Register chr2, Label& Ldone);
 
 #undef VIRTUAL
 

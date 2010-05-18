@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -125,10 +125,13 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                        int runtime_invisible_annotations_length, TRAPS);
 
   // Final setup
-  int  compute_oop_map_size(instanceKlassHandle super, int nonstatic_oop_count,
-                            int first_nonstatic_oop_offset);
-  void fill_oop_maps(instanceKlassHandle k, int nonstatic_oop_map_count,
-                     u2* nonstatic_oop_offsets, u2* nonstatic_oop_length);
+  unsigned int compute_oop_map_count(instanceKlassHandle super,
+                                     unsigned int nonstatic_oop_count,
+                                     int first_nonstatic_oop_offset);
+  void fill_oop_maps(instanceKlassHandle k,
+                     unsigned int nonstatic_oop_map_count,
+                     int* nonstatic_oop_offsets,
+                     unsigned int* nonstatic_oop_counts);
   void set_precomputed_flags(instanceKlassHandle k);
   objArrayHandle compute_transitive_interfaces(instanceKlassHandle super,
                                                objArrayHandle local_ifs, TRAPS);
@@ -257,9 +260,10 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                      Handle class_loader,
                                      Handle protection_domain,
                                      symbolHandle& parsed_name,
+                                     bool verify,
                                      TRAPS) {
     KlassHandle no_host_klass;
-    return parseClassFile(name, class_loader, protection_domain, no_host_klass, NULL, parsed_name, THREAD);
+    return parseClassFile(name, class_loader, protection_domain, no_host_klass, NULL, parsed_name, verify, THREAD);
   }
   instanceKlassHandle parseClassFile(symbolHandle name,
                                      Handle class_loader,
@@ -267,6 +271,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                      KlassHandle host_klass,
                                      GrowableArray<Handle>* cp_patches,
                                      symbolHandle& parsed_name,
+                                     bool verify,
                                      TRAPS);
 
   // Verifier checks

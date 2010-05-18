@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -365,7 +365,7 @@ void BlockListBuilder::make_loop_header(BlockBegin* block) {
     if (_next_loop_index < 31) _next_loop_index++;
   } else {
     // block already marked as loop header
-    assert(is_power_of_2(_loop_map.at(block->block_id())), "exactly one bit must be set");
+    assert(is_power_of_2((unsigned int)_loop_map.at(block->block_id())), "exactly one bit must be set");
   }
 }
 
@@ -1442,7 +1442,7 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
         switch (field_type) {
         case T_ARRAY:
         case T_OBJECT:
-          if (field_val.as_object()->has_encoding()) {
+          if (field_val.as_object()->should_be_constant()) {
             constant =  new Constant(as_ValueType(field_val));
           }
           break;

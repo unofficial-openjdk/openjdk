@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -29,8 +29,7 @@ class JavaThread;
 class ObjPtrQueue: public PtrQueue {
 public:
   ObjPtrQueue(PtrQueueSet* qset_, bool perm = false) :
-    PtrQueue(qset_, perm)
-  {}
+    PtrQueue(qset_, perm, qset_->is_active()) { }
   // Apply the closure to all elements, and reset the index to make the
   // buffer empty.
   void apply_closure(ObjectClosure* cl);
@@ -55,19 +54,24 @@ class SATBMarkQueueSet: public PtrQueueSet {
   // is ignored.
   bool apply_closure_to_completed_buffer_work(bool par, int worker);
 
+#ifdef ASSERT
+  void dump_active_values(JavaThread* first, bool expected_active);
+#endif // ASSERT
 
 public:
   SATBMarkQueueSet();
 
   void initialize(Monitor* cbl_mon, Mutex* fl_lock,
-                  int max_completed_queue = 0,
-                  Mutex* lock = NULL);
+                  int process_completed_threshold,
+                  Mutex* lock);
 
   static void handle_zero_index_for_thread(JavaThread* t);
 
-  // Apply "set_active(b)" to all thread tloq's.  Should be called only
-  // with the world stopped.
-  void set_active_all_threads(bool b);
+  // Apply "set_active(b)" to all Java threads' SATB queues. It should be
+  // called only with the world stopped. The method will assert that the
+  // SATB queues of all threads it visits, as well as the SATB queue
+  // set itself, has an active value same as expected_active.
+  void set_active_all_threads(bool b, bool expected_active);
 
   // Register "blk" as "the closure" for all queues.  Only one such closure
   // is allowed.  The "apply_closure_to_completed_buffer" method will apply

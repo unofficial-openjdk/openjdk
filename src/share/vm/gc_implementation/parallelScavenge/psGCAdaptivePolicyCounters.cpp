@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -51,7 +51,7 @@ PSGCAdaptivePolicyCounters::PSGCAdaptivePolicyCounters(const char* name_arg,
 
     cname = PerfDataManager::counter_name(name_space(), "oldCapacity");
     _old_capacity = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Bytes, (jlong) Arguments::initial_heap_size(), CHECK);
+      PerfData::U_Bytes, (jlong) InitialHeapSize, CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "boundaryMoved");
     _boundary_moved = PerfDataManager::create_variable(SUN_GC, cname,

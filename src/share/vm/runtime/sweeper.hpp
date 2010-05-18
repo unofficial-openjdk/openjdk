@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -38,6 +38,11 @@ class NMethodSweeper : public AllStatic {
   static int       _locked_seen;     // Number of locked nmethods encountered during the scan
   static int       _not_entrant_seen_on_stack; // Number of not entrant nmethod were are still on stack
 
+  static bool      _was_full;        // remember if we did emergency unloading
+  static jint      _advise_to_sweep; // flag to indicate code cache getting full
+  static jlong     _last_was_full;   // timestamp of last emergency unloading
+  static uint      _highest_marked;   // highest compile id dumped at last emergency unloading
+  static long      _was_full_traversal;   // trav number at last emergency unloading
 
   static void process_nmethod(nmethod *nm);
  public:
@@ -51,4 +56,10 @@ class NMethodSweeper : public AllStatic {
     // changes to false at safepoint so we can never overwrite it with false.
      _rescan = true;
   }
+
+  static void handle_full_code_cache(bool is_full); // Called by compilers who fail to allocate
+  static void speculative_disconnect_nmethods(bool was_full);   // Called by vm op to deal with alloc failure
+
+  static void set_was_full(bool state) { _was_full = state; }
+  static bool was_full() { return _was_full; }
 };

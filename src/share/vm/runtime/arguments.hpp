@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -254,7 +254,6 @@ class Arguments : AllStatic {
   static bool   _has_profile;
   static bool   _has_alloc_profile;
   static const char*  _gc_log_filename;
-  static uintx  _initial_heap_size;
   static uintx  _min_heap_size;
 
   // -Xrun arguments
@@ -300,8 +299,8 @@ class Arguments : AllStatic {
   static void set_g1_gc_flags();
   // GC ergonomics
   static void set_ergonomics_flags();
-  // Setup heap size for a server platform
-  static void set_server_heap_size();
+  // Setup heap size
+  static void set_heap_size();
   // Based on automatic selection criteria, should the
   // low pause collector be used.
   static bool should_auto_select_low_pause_collector();
@@ -337,11 +336,19 @@ class Arguments : AllStatic {
   static bool is_bad_option(const JavaVMOption* option, jboolean ignore) {
     return is_bad_option(option, ignore, NULL);
   }
+  static bool verify_interval(uintx val, uintx min,
+                              uintx max, const char* name);
   static bool verify_percentage(uintx value, const char* name);
   static void describe_range_error(ArgsRange errcode);
   static ArgsRange check_memory_size(julong size, julong min_size);
   static ArgsRange parse_memory_size(const char* s, julong* long_arg,
                                      julong min_size);
+  // Parse a string for a unsigned integer.  Returns true if value
+  // is an unsigned integer greater than or equal to the minimum
+  // parameter passed and returns the value in uintx_arg.  Returns
+  // false otherwise, with uintx_arg undefined.
+  static bool parse_uintx(const char* value, uintx* uintx_arg,
+                          uintx min_size);
 
   // methods to build strings from individual args
   static void build_jvm_args(const char* arg);
@@ -434,9 +441,7 @@ class Arguments : AllStatic {
   static bool has_profile()                 { return _has_profile; }
   static bool has_alloc_profile()           { return _has_alloc_profile; }
 
-  // -Xms , -Xmx
-  static uintx initial_heap_size()          { return _initial_heap_size; }
-  static void  set_initial_heap_size(uintx v) { _initial_heap_size = v;  }
+  // -Xms, -Xmx
   static uintx min_heap_size()              { return _min_heap_size; }
   static void  set_min_heap_size(uintx v)   { _min_heap_size = v;  }
 

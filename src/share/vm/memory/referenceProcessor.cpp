@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -71,7 +71,7 @@ void ReferenceProcessor::init_statics() {
   assert(_sentinelRef == NULL, "should be initialized precisely once");
   EXCEPTION_MARK;
   _sentinelRef = instanceKlass::cast(
-                    SystemDictionary::reference_klass())->
+                    SystemDictionary::Reference_klass())->
                       allocate_permanent_instance(THREAD);
 
   // Initialize the master soft ref clock.
@@ -299,8 +299,8 @@ void ReferenceProcessor::process_phaseJNI(BoolObjectClosure* is_alive,
 
 
 template <class T>
-static bool enqueue_discovered_ref_helper(ReferenceProcessor* ref,
-                                          AbstractRefProcTaskExecutor* task_executor) {
+bool enqueue_discovered_ref_helper(ReferenceProcessor* ref,
+                                   AbstractRefProcTaskExecutor* task_executor) {
 
   // Remember old value of pending references list
   T* pending_list_addr = (T*)java_lang_ref_Reference::pending_list_addr();
@@ -1227,10 +1227,18 @@ void ReferenceProcessor::preclean_discovered_references(
   BoolObjectClosure* is_alive,
   OopClosure* keep_alive,
   VoidClosure* complete_gc,
-  YieldClosure* yield) {
+  YieldClosure* yield,
+  bool should_unload_classes) {
 
   NOT_PRODUCT(verify_ok_to_handle_reflists());
 
+#ifdef ASSERT
+  bool must_remember_klasses = ClassUnloading && !UseConcMarkSweepGC ||
+                               CMSClassUnloadingEnabled && UseConcMarkSweepGC ||
+                               ExplicitGCInvokesConcurrentAndUnloadsClasses &&
+                                 UseConcMarkSweepGC && should_unload_classes;
+  RememberKlassesChecker mx(must_remember_klasses);
+#endif
   // Soft references
   {
     TraceTime tt("Preclean SoftReferences", PrintGCDetails && PrintReferenceGC,

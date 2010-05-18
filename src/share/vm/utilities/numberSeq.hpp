@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -74,6 +74,10 @@ public:
   double davg() const; // decaying average
   double dvariance() const; // decaying variance
   double dsd() const; // decaying "standard deviation"
+
+  // Debugging/Printing
+  virtual void dump();
+  virtual void dump_on(outputStream* s);
 };
 
 class NumberSeq: public AbsSeq {
@@ -91,6 +95,9 @@ public:
   virtual void add(double val);
   virtual double maximum() const { return _maximum; }
   virtual double last() const { return _last; }
+
+  // Debugging/Printing
+  virtual void dump_on(outputStream* s);
 };
 
 class TruncatedSeq: public AbsSeq {
@@ -114,4 +121,7 @@ public:
 
   double oldest() const; // the oldest valid value in the sequence
   double predict_next() const; // prediction based on linear regression
+
+  // Debugging/Printing
+  virtual void dump_on(outputStream* s);
 };

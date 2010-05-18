@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -101,6 +101,19 @@ template <class T> inline void G1ParScanClosure::do_oop_nv(T* p) {
       _par_scan_state->push_on_queue(p);
     } else {
       _par_scan_state->update_rs(_from, p, _par_scan_state->queue_num());
+    }
+  }
+}
+
+template <class T> inline void G1ParPushHeapRSClosure::do_oop_nv(T* p) {
+  T heap_oop = oopDesc::load_heap_oop(p);
+
+  if (!oopDesc::is_null(heap_oop)) {
+    oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+    if (_g1->in_cset_fast_test(obj)) {
+      Prefetch::write(obj->mark_addr(), 0);
+      Prefetch::read(obj->mark_addr(), (HeapWordSize*2));
+      _par_scan_state->push_on_queue(p);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -35,18 +35,26 @@ class CompactibleFreeListSpace;
 // for that implementation.
 
 class Mutex;
+class TreeList;
 
 class FreeList VALUE_OBJ_CLASS_SPEC {
   friend class CompactibleFreeListSpace;
   friend class VMStructs;
-  friend class printTreeCensusClosure;
-  FreeChunk*    _head;          // List of free chunks
+  friend class PrintTreeCensusClosure;
+
+ protected:
+  TreeList* _parent;
+  TreeList* _left;
+  TreeList* _right;
+
+ private:
+  FreeChunk*    _head;          // Head of list of free chunks
   FreeChunk*    _tail;          // Tail of list of free chunks
-  size_t        _size;          // Size in Heap words of each chunks
+  size_t        _size;          // Size in Heap words of each chunk
   ssize_t       _count;         // Number of entries in list
   size_t        _hint;          // next larger size list with a positive surplus
 
-  AllocationStats _allocation_stats;            // statistics for smart allocation
+  AllocationStats _allocation_stats; // allocation-related statistics
 
 #ifdef ASSERT
   Mutex*        _protecting_lock;
@@ -63,9 +71,12 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
 
   // Initialize the allocation statistics.
  protected:
-  void init_statistics();
+  void init_statistics(bool split_birth = false);
   void set_count(ssize_t v) { _count = v;}
-  void increment_count()    { _count++; }
+  void increment_count()    {
+    _count++;
+  }
+
   void decrement_count() {
     _count--;
     assert(_count >= 0, "Count should not be negative");
@@ -167,11 +178,13 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
     _allocation_stats.set_desired(v);
   }
   void compute_desired(float inter_sweep_current,
-                       float inter_sweep_estimate) {
+                       float inter_sweep_estimate,
+                       float intra_sweep_estimate) {
     assert_proper_lock_protection();
     _allocation_stats.compute_desired(_count,
                                       inter_sweep_current,
-                                      inter_sweep_estimate);
+                                      inter_sweep_estimate,
+                                      intra_sweep_estimate);
   }
   ssize_t coalDesired() const {
     return _allocation_stats.coalDesired();
@@ -305,6 +318,9 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
   // Verify that the chunk is in the list.
   // found.  Return NULL if "fc" is not found.
   bool verifyChunkInFreeLists(FreeChunk* fc) const;
+
+  // Stats verification
+  void verify_stats() const PRODUCT_RETURN;
 
   // Printing support
   static void print_labels_on(outputStream* st, const char* c);

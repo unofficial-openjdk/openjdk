@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -345,7 +345,11 @@ public:
   Node  *hash_find(const Node *n) { return _table.hash_find(n); }
 
   // Used after parsing to eliminate values that are no longer in program
-  void   remove_useless_nodes(VectorSet &useful) { _table.remove_useless_nodes(useful); }
+  void   remove_useless_nodes(VectorSet &useful) {
+    _table.remove_useless_nodes(useful);
+    // this may invalidate cached cons so reset the cache
+    init_con_caches();
+  }
 
   virtual ConNode* uncached_makecon(const Type* t);  // override from PhaseTransform
 

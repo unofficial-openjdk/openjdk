@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -204,8 +204,8 @@ void VMThread::create() {
 }
 
 
-VMThread::VMThread() : Thread() {
-  // nothing to do
+VMThread::VMThread() : NamedThread() {
+  set_name("VM Thread");
 }
 
 void VMThread::destroy() {
@@ -426,11 +426,6 @@ void VMThread::loop() {
       // follow that also require a safepoint
       if (_cur_vm_operation->evaluate_at_safepoint()) {
 
-        if (PrintGCApplicationConcurrentTime) {
-           gclog_or_tty->print_cr("Application time: %3.7f seconds",
-                                  RuntimeService::last_application_time_sec());
-        }
-
         _vm_queue->set_drain_list(safepoint_ops); // ensure ops can be scanned
 
         SafepointSynchronize::begin();
@@ -476,12 +471,6 @@ void VMThread::loop() {
 
         // Complete safepoint synchronization
         SafepointSynchronize::end();
-
-        if (PrintGCApplicationStoppedTime) {
-          gclog_or_tty->print_cr("Total time for which application threads "
-                                 "were stopped: %3.7f seconds",
-                                 RuntimeService::last_safepoint_time_sec());
-        }
 
       } else {  // not a safepoint operation
         if (TraceLongCompiles) {
@@ -619,8 +608,8 @@ void VMThread::execute(VM_Operation* op) {
 }
 
 
-void VMThread::oops_do(OopClosure* f) {
-  Thread::oops_do(f);
+void VMThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+  Thread::oops_do(f, cf);
   _vm_queue->oops_do(f);
 }
 
@@ -652,5 +641,5 @@ void VMOperationQueue::verify_queue(int prio) {
 #endif
 
 void VMThread::verify() {
-  oops_do(&VerifyOopClosure::verify_oop);
+  oops_do(&VerifyOopClosure::verify_oop, NULL);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -240,13 +240,13 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   // as a single huge transform.
   igvn->register_new_node_with_optimizer( region_c );
   igvn->register_new_node_with_optimizer( region_x );
-  phi_x = phase->transform( phi_x );
   // Prevent the untimely death of phi_x.  Currently he has no uses.  He is
   // about to get one.  If this only use goes away, then phi_x will look dead.
   // However, he will be picking up some more uses down below.
   Node *hook = new (igvn->C, 4) Node(4);
   hook->init_req(0, phi_x);
   hook->init_req(1, phi_c);
+  phi_x = phase->transform( phi_x );
 
   // Make the compare
   Node *cmp_c = phase->makecon(t);
@@ -322,6 +322,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
         phi_s = PhiNode::make_blank(region_s,phi);
         phi_s->init_req( 1, phi_c );
         phi_s->init_req( 2, phi_x );
+        hook->add_req(phi_s);
         phi_s = phase->transform(phi_s);
       }
       proj_path_data = phi_s;
@@ -333,6 +334,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
         phi_f = PhiNode::make_blank(region_f,phi);
         phi_f->init_req( 1, phi_c );
         phi_f->init_req( 2, phi_x );
+        hook->add_req(phi_f);
         phi_f = phase->transform(phi_f);
       }
       proj_path_data = phi_f;
@@ -527,6 +529,9 @@ Node* IfNode::up_one_dom(Node *curr, bool linear_only) {
   // Use linear_only if we are still parsing, since we cannot
   // trust the regions to be fully filled in.
   if (linear_only)
+    return NULL;
+
+  if( dom->is_Root() )
     return NULL;
 
   // Else hit a Region.  Check for a loop header

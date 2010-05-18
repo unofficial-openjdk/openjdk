@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -40,7 +40,10 @@ public class NMethod extends CodeBlob {
   /** != InvocationEntryBci if this nmethod is an on-stack replacement method */
   private static CIntegerField entryBCIField;
   /** To support simple linked-list chaining of nmethods */
-  private static AddressField  linkField;
+  private static AddressField  osrLinkField;
+  private static AddressField  scavengeRootLinkField;
+  private static JByteField    scavengeRootStateField;
+
   /** Offsets for different nmethod parts */
   private static CIntegerField exceptionOffsetField;
   private static CIntegerField deoptOffsetField;
@@ -87,7 +90,10 @@ public class NMethod extends CodeBlob {
     zombieInstructionSizeField  = type.getCIntegerField("_zombie_instruction_size");
     methodField                 = type.getOopField("_method");
     entryBCIField               = type.getCIntegerField("_entry_bci");
-    linkField                   = type.getAddressField("_link");
+    osrLinkField                = type.getAddressField("_osr_link");
+    scavengeRootLinkField       = type.getAddressField("_scavenge_root_link");
+    scavengeRootStateField      = type.getJByteField("_scavenge_root_state");
+
     exceptionOffsetField        = type.getCIntegerField("_exception_offset");
     deoptOffsetField            = type.getCIntegerField("_deoptimize_offset");
     origPCOffsetField           = type.getCIntegerField("_orig_pc_offset");
@@ -219,9 +225,18 @@ public class NMethod extends CodeBlob {
     return getEntryBCI();
   }
 
-  public NMethod getLink() {
-    return (NMethod) VMObjectFactory.newObject(NMethod.class, linkField.getValue(addr));
+  public NMethod getOSRLink() {
+    return (NMethod) VMObjectFactory.newObject(NMethod.class, osrLinkField.getValue(addr));
   }
+
+  public NMethod getScavengeRootLink() {
+    return (NMethod) VMObjectFactory.newObject(NMethod.class, scavengeRootLinkField.getValue(addr));
+  }
+
+  public int getScavengeRootState() {
+    return (int) scavengeRootStateField.getValue(addr);
+  }
+
 
   /** Tells whether frames described by this nmethod can be
       deoptimized. Note: native wrappers cannot be deoptimized. */
@@ -259,7 +274,7 @@ public class NMethod extends CodeBlob {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(pd != null, "scope must be present");
     }
-    return new ScopeDesc(this, pd.getScopeDecodeOffset());
+    return new ScopeDesc(this, pd.getScopeDecodeOffset(), pd.getObjDecodeOffset(), pd.getReexecute());
   }
 
   /** This is only for use by the debugging system, and is only
@@ -291,11 +306,11 @@ public class NMethod extends CodeBlob {
   public ScopeDesc getScopeDescNearDbg(Address pc) {
     PCDesc pd = getPCDescNearDbg(pc);
     if (pd == null) return null;
-    return new ScopeDesc(this, pd.getScopeDecodeOffset());
+    return new ScopeDesc(this, pd.getScopeDecodeOffset(), pd.getObjDecodeOffset(), pd.getReexecute());
   }
 
-  public Map/*<Address, PcDesc>*/ getSafepoints() {
-    Map safepoints = new HashMap(); // Map<Address, PcDesc>
+  public Map/*<Address, PCDesc>*/ getSafepoints() {
+    Map safepoints = new HashMap(); // Map<Address, PCDesc>
     sun.jvm.hotspot.debugger.Address p = null;
     for (p = scopesPCsBegin(); p.lessThan(scopesPCsEnd());
          p = p.addOffsetTo(pcDescSize)) {

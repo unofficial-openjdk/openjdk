@@ -1,5 +1,5 @@
 #
-# Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+# CA 94065 USA or visit www.oracle.com if you need additional information or
 # have any questions.
 #  
 #
@@ -56,24 +56,28 @@ i386:: javahomecheck
 	@javah -classpath $(CLASSES_DIR) -jni sun.jvm.hotspot.debugger.proc.ProcDebuggerLocal
 	CC -G -KPIC -I${JAVA_HOME}/include -I${JAVA_HOME}/include/solaris saproc.cpp \
            -M mapfile -o $@/libsaproc.so -ldemangle
+	CC -o $@/libsaproc_audit.so -G -Kpic -z defs saproc_audit.cpp -lmapmalloc -ldl -lc 
 
 amd64:: javahomecheck
 	$(MKDIRS) $@
 	@javah -classpath $(CLASSES_DIR) -jni sun.jvm.hotspot.debugger.proc.ProcDebuggerLocal
 	CC -G -KPIC -xarch=amd64 -I${JAVA_HOME}/include -I${JAVA_HOME}/include/solaris saproc.cpp \
            -M mapfile -o $@/libsaproc.so -ldemangle
+	CC -xarch=amd64 -o $@/libsaproc_audit.so -G -Kpic -z defs saproc_audit.cpp -lmapmalloc -ldl -lc 
 
 sparc:: javahomecheck
 	$(MKDIRS) $@
 	@javah -classpath $(CLASSES_DIR) -jni sun.jvm.hotspot.debugger.proc.ProcDebuggerLocal
 	CC -G -KPIC -xarch=v8  -I${JAVA_HOME}/include -I${JAVA_HOME}/include/solaris saproc.cpp \
            -M mapfile -o $@/libsaproc.so -ldemangle
+	CC -xarch=v8 -o $@/libsaproc_audit.so -G -Kpic -z defs saproc_audit.cpp -lmapmalloc -ldl -lc 
 
 sparcv9:: javahomecheck
 	$(MKDIRS) $@
 	@javah -classpath $(CLASSES_DIR) -jni sun.jvm.hotspot.debugger.proc.ProcDebuggerLocal
 	CC -G -KPIC -xarch=v9 -I${JAVA_HOME}/include -I${JAVA_HOME}/include/solaris saproc.cpp \
            -M mapfile -o $@/libsaproc.so -ldemangle
+	CC -xarch=v9 -o $@/libsaproc_audit.so -G -Kpic -z defs saproc_audit.cpp -lmapmalloc -ldl -lc 
 
 clean::
 	$(RM) -rf sun_jvm_hotspot_debugger_proc_ProcDebuggerLocal.h

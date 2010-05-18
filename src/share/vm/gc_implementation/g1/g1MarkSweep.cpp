@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -96,15 +96,6 @@ void G1MarkSweep::allocate_stacks() {
   GenMarkSweep::_preserved_count_max = 0;
   GenMarkSweep::_preserved_marks = NULL;
   GenMarkSweep::_preserved_count = 0;
-  GenMarkSweep::_preserved_mark_stack = NULL;
-  GenMarkSweep::_preserved_oop_stack = NULL;
-
-  GenMarkSweep::_marking_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<oop>(4000, true);
-
-  size_t size = SystemDictionary::number_of_classes() * 2;
-  GenMarkSweep::_revisit_klass_stack =
-    new (ResourceObj::C_HEAP) GrowableArray<Klass*>((int)size, true);
 }
 
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
@@ -116,9 +107,11 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activeate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_SystemClasses,
                            &GenMarkSweep::follow_root_closure,
+                           &GenMarkSweep::follow_code_root_closure,
                            &GenMarkSweep::follow_root_closure);
 
   // Process reference objects found during marking
@@ -131,7 +124,7 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   // Follow system dictionary roots and unload classes
   bool purged_class = SystemDictionary::do_unloading(&GenMarkSweep::is_alive);
-  assert(GenMarkSweep::_marking_stack->is_empty(),
+  assert(GenMarkSweep::_marking_stack.is_empty(),
          "stack should be empty by now");
 
   // Follow code cache roots (has to be done after system dictionary,
@@ -139,18 +132,23 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   CodeCache::do_unloading(&GenMarkSweep::is_alive,
                                    &GenMarkSweep::keep_alive,
                                    purged_class);
-           GenMarkSweep::follow_stack();
+  GenMarkSweep::follow_stack();
 
   // Update subklass/sibling/implementor links of live klasses
   GenMarkSweep::follow_weak_klass_links();
-  assert(GenMarkSweep::_marking_stack->is_empty(),
+  assert(GenMarkSweep::_marking_stack.is_empty(),
          "stack should be empty by now");
+
+  // Visit memoized MDO's and clear any unmarked weak refs
+  GenMarkSweep::follow_mdo_weak_refs();
+  assert(GenMarkSweep::_marking_stack.is_empty(), "just drained");
+
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(&GenMarkSweep::is_alive);
   StringTable::unlink(&GenMarkSweep::is_alive);
 
-  assert(GenMarkSweep::_marking_stack->is_empty(),
+  assert(GenMarkSweep::_marking_stack.is_empty(),
          "stack should be empty by now");
 }
 
@@ -276,9 +274,11 @@ void G1MarkSweep::mark_sweep_phase3() {
 
   SharedHeap* sh = SharedHeap::heap();
 
-  sh->process_strong_roots(true,  // Collecting permanent generation.
+  sh->process_strong_roots(true,  // activate StrongRootsScope
+                           true,  // Collecting permanent generation.
                            SharedHeap::SO_AllClasses,
                            &GenMarkSweep::adjust_root_pointer_closure,
+                           NULL,  // do not touch code cache here
                            &GenMarkSweep::adjust_pointer_closure);
 
   g1h->ref_processor()->weak_oops_do(&GenMarkSweep::adjust_root_pointer_closure);

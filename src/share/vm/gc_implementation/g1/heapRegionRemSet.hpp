@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -187,7 +187,8 @@ private:
   void clear_outgoing_entries();
 
   enum ParIterState { Unclaimed, Claimed, Complete };
-  ParIterState _iter_state;
+  volatile ParIterState _iter_state;
+  volatile jlong _iter_claimed;
 
   // Unused unless G1RecordHRRSOops is true.
 
@@ -209,6 +210,7 @@ public:
                    HeapRegion* hr);
 
   static int num_par_rem_sets();
+  static void setup_remset_size();
 
   HeapRegion* hr() const {
     return _other_regions.hr();
@@ -271,6 +273,19 @@ public:
   void set_iter_complete();
   // Returns "true" iff the region's iteration is complete.
   bool iter_is_complete();
+
+  // Support for claiming blocks of cards during iteration
+  void set_iter_claimed(size_t x) { _iter_claimed = (jlong)x; }
+  size_t iter_claimed() const { return (size_t)_iter_claimed; }
+  // Claim the next block of cards
+  size_t iter_claimed_next(size_t step) {
+    size_t current, next;
+    do {
+      current = iter_claimed();
+      next = current + step;
+    } while (Atomic::cmpxchg((jlong)next, &_iter_claimed, (jlong)current) != (jlong)current);
+    return current;
+  }
 
   // Initialize the given iterator to iterate over this rem set.
   void init_iterator(HeapRegionRemSetIterator* iter) const;

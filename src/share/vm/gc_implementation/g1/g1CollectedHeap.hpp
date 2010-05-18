@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -167,15 +167,10 @@ class G1CollectedHeap : public SharedHeap {
   friend class G1MarkSweep;
 
 private:
-  enum SomePrivateConstants {
-    VeryLargeInBytes = HeapRegion::GrainBytes/2,
-    VeryLargeInWords = VeryLargeInBytes/HeapWordSize,
-    MinHeapDeltaBytes = 10 * HeapRegion::GrainBytes,      // FIXME
-    NumAPIs = HeapRegion::MaxAge
-  };
-
   // The one and only G1CollectedHeap, so static functions can find it.
   static G1CollectedHeap* _g1h;
+
+  static size_t _humongous_object_threshold_in_words;
 
   // Storage for the G1 heap (excludes the permanent generation).
   VirtualSpace _g1_storage;
@@ -236,6 +231,9 @@ private:
   // A list of the regions that have been set to be alloc regions in the
   // current collection.
   HeapRegion* _gc_alloc_region_list;
+
+  // Determines PLAB size for a particular allocation purpose.
+  static size_t desired_plab_sz(GCAllocPurpose purpose);
 
   // When called by par thread, require par_alloc_during_gc_lock() to be held.
   void push_gc_alloc_region(HeapRegion* hr);
@@ -697,7 +695,7 @@ public:
 
   // Reserved (g1 only; super method includes perm), capacity and the used
   // portion in bytes.
-  size_t g1_reserved_obj_bytes() { return _g1_reserved.byte_size(); }
+  size_t g1_reserved_obj_bytes() const { return _g1_reserved.byte_size(); }
   virtual size_t capacity() const;
   virtual size_t used() const;
   // This should be called when we're not holding the heap lock. The
@@ -859,7 +857,7 @@ public:
     return _g1_committed;
   }
 
-  NOT_PRODUCT( bool is_in_closed_subset(const void* p) const; )
+  NOT_PRODUCT(bool is_in_closed_subset(const void* p) const;)
 
   // Dirty card table entries covering a list of young regions.
   void dirtyCardsForYoungRegions(CardTableModRefBS* ct_bs, HeapRegion* list);
@@ -997,11 +995,50 @@ public:
 
   // Can a compiler initialize a new object without store barriers?
   // This permission only extends from the creation of a new object
-  // via a TLAB up to the first subsequent safepoint.
+  // via a TLAB up to the first subsequent safepoint. If such permission
+  // is granted for this heap type, the compiler promises to call
+  // defer_store_barrier() below on any slow path allocation of
+  // a new object for which such initializing store barriers will
+  // have been elided. G1, like CMS, allows this, but should be
+  // ready to provide a compensating write barrier as necessary
+  // if that storage came out of a non-young region. The efficiency
+  // of this implementation depends crucially on being able to
+  // answer very efficiently in constant time whether a piece of
+  // storage in the heap comes from a young region or not.
+  // See ReduceInitialCardMarks.
   virtual bool can_elide_tlab_store_barriers() const {
-    // Since G1's TLAB's may, on occasion, come from non-young regions
-    // as well. (Is there a flag controlling that? XXX)
-    return false;
+    // 6920090: Temporarily disabled, because of lingering
+    // instabilities related to RICM with G1. In the
+    // interim, the option ReduceInitialCardMarksForG1
+    // below is left solely as a debugging device at least
+    // until 6920109 fixes the instabilities.
+    return ReduceInitialCardMarksForG1;
+  }
+
+  virtual bool card_mark_must_follow_store() const {
+    return true;
+  }
+
+  bool is_in_young(oop obj) {
+    HeapRegion* hr = heap_region_containing(obj);
+    return hr != NULL && hr->is_young();
+  }
+
+  // We don't need barriers for initializing stores to objects
+  // in the young gen: for the SATB pre-barrier, there is no
+  // pre-value that needs to be remembered; for the remembered-set
+  // update logging post-barrier, we don't maintain remembered set
+  // information for young gen objects. Note that non-generational
+  // G1 does not have any "young" objects, should not elide
+  // the rs logging barrier and so should always answer false below.
+  // However, non-generational G1 (-XX:-G1Gen) appears to have
+  // bit-rotted so was not tested below.
+  virtual bool can_elide_initializing_store_barrier(oop new_obj) {
+    // Re 6920090, 6920109 above.
+    assert(ReduceInitialCardMarksForG1, "Else cannot be here");
+    assert(G1Gen || !is_in_young(new_obj),
+           "Non-generational G1 should never return true below");
+    return is_in_young(new_obj);
   }
 
   // Can a compiler elide a store barrier when it writes
@@ -1021,7 +1058,12 @@ public:
 
   // Returns "true" iff the given word_size is "very large".
   static bool isHumongous(size_t word_size) {
-    return word_size >= VeryLargeInWords;
+    // Note this has to be strictly greater-than as the TLABs
+    // are capped at the humongous thresold and we want to
+    // ensure that we don't try to allocate a TLAB as
+    // humongous and that we don't allocate a humongous
+    // object in a TLAB.
+    return word_size > _humongous_object_threshold_in_words;
   }
 
   // Update mod union table with the set of dirty cards.
@@ -1328,12 +1370,18 @@ private:
     return BitsPerWord << shifter();
   }
 
-  static size_t gclab_word_size() {
-    return G1ParallelGCAllocBufferSize / HeapWordSize;
+  size_t gclab_word_size() const {
+    return _gclab_word_size;
   }
 
-  static size_t bitmap_size_in_bits() {
-    size_t bits_in_bitmap = gclab_word_size() >> shifter();
+  // Calculates actual GCLab size in words
+  size_t gclab_real_word_size() const {
+    return bitmap_size_in_bits(pointer_delta(_real_end_word, _start_word))
+           / BitsPerWord;
+  }
+
+  static size_t bitmap_size_in_bits(size_t gclab_word_size) {
+    size_t bits_in_bitmap = gclab_word_size >> shifter();
     // We are going to ensure that the beginning of a word in this
     // bitmap also corresponds to the beginning of a word in the
     // global marking bitmap. To handle the case where a GCLab
@@ -1343,13 +1391,13 @@ private:
     return bits_in_bitmap + BitsPerWord - 1;
   }
 public:
-  GCLabBitMap(HeapWord* heap_start)
-    : BitMap(bitmap_size_in_bits()),
+  GCLabBitMap(HeapWord* heap_start, size_t gclab_word_size)
+    : BitMap(bitmap_size_in_bits(gclab_word_size)),
       _cm(G1CollectedHeap::heap()->concurrent_mark()),
       _shifter(shifter()),
       _bitmap_word_covers_words(bitmap_word_covers_words()),
       _heap_start(heap_start),
-      _gclab_word_size(gclab_word_size()),
+      _gclab_word_size(gclab_word_size),
       _real_start_word(NULL),
       _real_end_word(NULL),
       _start_word(NULL)
@@ -1444,7 +1492,7 @@ public:
       mark_bitmap->mostly_disjoint_range_union(this,
                                 0, // always start from the start of the bitmap
                                 _start_word,
-                                size_in_words());
+                                gclab_real_word_size());
       _cm->grayRegionIfNecessary(MemRegion(_real_start_word, _real_end_word));
 
 #ifndef PRODUCT
@@ -1456,9 +1504,10 @@ public:
     }
   }
 
-  static size_t bitmap_size_in_words() {
-    return (bitmap_size_in_bits() + BitsPerWord - 1) / BitsPerWord;
+  size_t bitmap_size_in_words() const {
+    return (bitmap_size_in_bits(gclab_word_size()) + BitsPerWord - 1) / BitsPerWord;
   }
+
 };
 
 class G1ParGCAllocBuffer: public ParGCAllocBuffer {
@@ -1468,10 +1517,10 @@ private:
   GCLabBitMap _bitmap;
 
 public:
-  G1ParGCAllocBuffer() :
-    ParGCAllocBuffer(G1ParallelGCAllocBufferSize / HeapWordSize),
+  G1ParGCAllocBuffer(size_t gclab_word_size) :
+    ParGCAllocBuffer(gclab_word_size),
     _during_marking(G1CollectedHeap::heap()->mark_in_progress()),
-    _bitmap(G1CollectedHeap::heap()->reserved_region().start()),
+    _bitmap(G1CollectedHeap::heap()->reserved_region().start(), gclab_word_size),
     _retired(false)
   { }
 
@@ -1510,8 +1559,10 @@ protected:
   typedef GrowableArray<StarTask> OverflowQueue;
   OverflowQueue* _overflowed_refs;
 
-  G1ParGCAllocBuffer _alloc_buffers[GCAllocPurposeCount];
-  ageTable           _age_table;
+  G1ParGCAllocBuffer  _surviving_alloc_buffer;
+  G1ParGCAllocBuffer  _tenured_alloc_buffer;
+  G1ParGCAllocBuffer* _alloc_buffers[GCAllocPurposeCount];
+  ageTable            _age_table;
 
   size_t           _alloc_buffer_waste;
   size_t           _undo_waste;
@@ -1580,7 +1631,7 @@ public:
   ageTable*         age_table()       { return &_age_table;       }
 
   G1ParGCAllocBuffer* alloc_buffer(GCAllocPurpose purpose) {
-    return &_alloc_buffers[purpose];
+    return _alloc_buffers[purpose];
   }
 
   size_t alloc_buffer_waste()                    { return _alloc_buffer_waste; }
@@ -1589,7 +1640,7 @@ public:
   template <class T> void push_on_queue(T* ref) {
     assert(ref != NULL, "invariant");
     assert(has_partial_array_mask(ref) ||
-           _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(ref)), "invariant");
+           _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(ref)), "invariant");
 #ifdef ASSERT
     if (has_partial_array_mask(ref)) {
       oop p = clear_partial_array_mask(ref);
@@ -1610,9 +1661,9 @@ public:
       assert((oop*)ref != NULL, "pop_local() returned true");
       assert(UseCompressedOops || !ref.is_narrow(), "Error");
       assert(has_partial_array_mask((oop*)ref) ||
-             _g1h->obj_in_cs(ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)ref)
-                                             : oopDesc::load_decode_heap_oop((oop*)ref)),
-             "invariant");
+             _g1h->is_in_g1_reserved(ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)ref)
+                                                     : oopDesc::load_decode_heap_oop((oop*)ref)),
+              "invariant");
       IF_G1_DETAILED_STATS(note_pop());
     } else {
       StarTask null_task;
@@ -1625,9 +1676,9 @@ public:
     assert((oop*)new_ref != NULL, "pop() from a local non-empty stack");
     assert(UseCompressedOops || !new_ref.is_narrow(), "Error");
     assert(has_partial_array_mask((oop*)new_ref) ||
-           _g1h->obj_in_cs(new_ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)new_ref)
-                                               : oopDesc::load_decode_heap_oop((oop*)new_ref)),
-             "invariant");
+           _g1h->is_in_g1_reserved(new_ref.is_narrow() ? oopDesc::load_decode_heap_oop((narrowOop*)new_ref)
+                                                       : oopDesc::load_decode_heap_oop((oop*)new_ref)),
+           "invariant");
     ref = new_ref;
   }
 
@@ -1645,15 +1696,15 @@ public:
   HeapWord* allocate_slow(GCAllocPurpose purpose, size_t word_sz) {
 
     HeapWord* obj = NULL;
-    if (word_sz * 100 <
-        (size_t)(G1ParallelGCAllocBufferSize / HeapWordSize) *
-                                                  ParallelGCBufferWastePct) {
+    size_t gclab_word_size = _g1h->desired_plab_sz(purpose);
+    if (word_sz * 100 < gclab_word_size * ParallelGCBufferWastePct) {
       G1ParGCAllocBuffer* alloc_buf = alloc_buffer(purpose);
+      assert(gclab_word_size == alloc_buf->word_sz(),
+             "dynamic resizing is not supported");
       add_to_alloc_buffer_waste(alloc_buf->words_remaining());
       alloc_buf->retire(false, false);
 
-      HeapWord* buf =
-        _g1h->par_allocate_during_gc(purpose, G1ParallelGCAllocBufferSize / HeapWordSize);
+      HeapWord* buf = _g1h->par_allocate_during_gc(purpose, gclab_word_size);
       if (buf == NULL) return NULL; // Let caller handle allocation failure.
       // Otherwise.
       alloc_buf->set_buf(buf);
@@ -1747,9 +1798,9 @@ public:
 
   void retire_alloc_buffers() {
     for (int ap = 0; ap < GCAllocPurposeCount; ++ap) {
-      size_t waste = _alloc_buffers[ap].words_remaining();
+      size_t waste = _alloc_buffers[ap]->words_remaining();
       add_to_alloc_buffer_waste(waste);
-      _alloc_buffers[ap].retire(true, false);
+      _alloc_buffers[ap]->retire(true, false);
     }
   }
 
@@ -1791,12 +1842,12 @@ public:
           assert(UseCompressedOops, "Error");
           narrowOop* p = (narrowOop*)ref_to_scan;
           assert(!has_partial_array_mask(p) &&
-                 _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                 _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
           deal_with_reference(p);
         } else {
           oop* p = (oop*)ref_to_scan;
-          assert((has_partial_array_mask(p) && _g1h->obj_in_cs(clear_partial_array_mask(p))) ||
-                 _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+          assert((has_partial_array_mask(p) && _g1h->is_in_g1_reserved(clear_partial_array_mask(p))) ||
+                 _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
           deal_with_reference(p);
         }
       }
@@ -1810,12 +1861,12 @@ public:
             assert(UseCompressedOops, "Error");
             narrowOop* p = (narrowOop*)ref_to_scan;
             assert(!has_partial_array_mask(p) &&
-                   _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                    _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
             deal_with_reference(p);
           } else {
             oop* p = (oop*)ref_to_scan;
             assert((has_partial_array_mask(p) && _g1h->obj_in_cs(clear_partial_array_mask(p))) ||
-                  _g1h->obj_in_cs(oopDesc::load_decode_heap_oop(p)), "sanity");
+                   _g1h->is_in_g1_reserved(oopDesc::load_decode_heap_oop(p)), "sanity");
             deal_with_reference(p);
           }
         }

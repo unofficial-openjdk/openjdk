@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -221,6 +221,14 @@ void Parse::do_new() {
 
   // Push resultant oop onto stack
   push(obj);
+
+  // Keep track of whether opportunities exist for StringBuilder
+  // optimizations.
+  if (OptimizeStringConcat &&
+      (klass == C->env()->StringBuilder_klass() ||
+       klass == C->env()->StringBuffer_klass())) {
+    C->set_has_stringbuilder(true);
+  }
 }
 
 #ifndef PRODUCT
@@ -406,8 +414,6 @@ void Parse::profile_not_taken_branch(bool force_update) {
 void Parse::profile_call(Node* receiver) {
   if (!method_data_update()) return;
 
-  profile_generic_call();
-
   switch (bc()) {
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokeinterface:
@@ -416,6 +422,7 @@ void Parse::profile_call(Node* receiver) {
   case Bytecodes::_invokestatic:
   case Bytecodes::_invokedynamic:
   case Bytecodes::_invokespecial:
+    profile_generic_call();
     break;
   default: fatal("unexpected call bytecode");
   }
@@ -436,13 +443,16 @@ void Parse::profile_generic_call() {
 void Parse::profile_receiver_type(Node* receiver) {
   assert(method_data_update(), "must be generating profile code");
 
-  // Skip if we aren't tracking receivers
-  if (TypeProfileWidth < 1) return;
-
   ciMethodData* md = method()->method_data();
   assert(md != NULL, "expected valid ciMethodData");
   ciProfileData* data = md->bci_to_data(bci());
   assert(data->is_ReceiverTypeData(), "need ReceiverTypeData here");
+
+  // Skip if we aren't tracking receivers
+  if (TypeProfileWidth < 1) {
+    increment_md_counter_at(md, data, CounterData::count_offset());
+    return;
+  }
   ciReceiverTypeData* rdata = (ciReceiverTypeData*)data->as_ReceiverTypeData();
 
   Node* method_data = method_data_addressing(md, rdata, in_ByteSize(0));

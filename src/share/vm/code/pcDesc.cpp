@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -26,9 +26,11 @@
 # include "incls/_pcDesc.cpp.incl"
 
 PcDesc::PcDesc(int pc_offset, int scope_decode_offset, int obj_decode_offset) {
+  assert(sizeof(PcDescFlags) <= 4, "occupies more than a word");
   _pc_offset           = pc_offset;
   _scope_decode_offset = scope_decode_offset;
   _obj_decode_offset   = obj_decode_offset;
+  _flags.word          = 0;
 }
 
 address PcDesc::real_pc(const nmethod* code) const {
@@ -50,6 +52,8 @@ void PcDesc::print(nmethod* code) {
     tty->print("  ");
     sd->method()->print_short_name(tty);
     tty->print("  @%d", sd->bci());
+    if (sd->should_reexecute())
+      tty->print("  reexecute=true");
     tty->cr();
   }
 #endif

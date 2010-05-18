@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -92,9 +92,7 @@ protected:
   int _parallel_gc_threads;
 
   enum SomePrivateConstants {
-    NumPrevPausesForHeuristics = 10,
-    NumPrevGCsForHeuristics = 10,
-    NumAPIs = HeapRegion::MaxAge
+    NumPrevPausesForHeuristics = 10
   };
 
   G1MMUTracker* _mmu_tracker;
@@ -112,7 +110,6 @@ protected:
     return 8*M;
   }
 
-
   double _cur_collection_start_sec;
   size_t _cur_collection_pause_used_at_start_bytes;
   size_t _cur_collection_pause_used_regions_at_start;
@@ -121,6 +118,15 @@ protected:
   double _cur_satb_drain_time_ms;
   double _cur_clear_ct_time_ms;
   bool   _satb_drain_time_set;
+
+#ifndef PRODUCT
+  // Card Table Count Cache stats
+  double _min_clear_cc_time_ms;         // min
+  double _max_clear_cc_time_ms;         // max
+  double _cur_clear_cc_time_ms;         // clearing time during current pause
+  double _cum_clear_cc_time_ms;         // cummulative clearing time
+  jlong  _num_cc_clears;                // number of times the card count cache has been cleared
+#endif
 
   double _cur_CH_strong_roots_end_sec;
   double _cur_CH_strong_roots_dur_ms;
@@ -208,6 +214,8 @@ protected:
   SurvRateGroup*        _short_lived_surv_rate_group;
   SurvRateGroup*        _survivor_surv_rate_group;
   // add here any more surv rate groups
+
+  double                _gc_overhead_perc;
 
   bool during_marking() {
     return _during_marking;
@@ -309,6 +317,10 @@ private:
 #ifndef PRODUCT
   bool verify_young_ages(HeapRegion* head, SurvRateGroup *surv_rate_group);
 #endif // PRODUCT
+
+  void adjust_concurrent_refinement(double update_rs_time,
+                                    double update_rs_processed_buffers,
+                                    double goal_ms);
 
 protected:
   double _pause_time_target_ms;
@@ -712,11 +724,31 @@ protected:
 
   size_t _n_marks_since_last_pause;
 
-  // True iff CM has been initiated.
-  bool _conc_mark_initiated;
+  // At the end of a pause we check the heap occupancy and we decide
+  // whether we will start a marking cycle during the next pause. If
+  // we decide that we want to do that, we will set this parameter to
+  // true. So, this parameter will stay true between the end of a
+  // pause and the beginning of a subsequent pause (not necessarily
+  // the next one, see the comments on the next field) when we decide
+  // that we will indeed start a marking cycle and do the initial-mark
+  // work.
+  volatile bool _initiate_conc_mark_if_possible;
 
-  // True iff CM should be initiated
-  bool _should_initiate_conc_mark;
+  // If initiate_conc_mark_if_possible() is set at the beginning of a
+  // pause, it is a suggestion that the pause should start a marking
+  // cycle by doing the initial-mark work. However, it is possible
+  // that the concurrent marking thread is still finishing up the
+  // previous marking cycle (e.g., clearing the next marking
+  // bitmap). If that is the case we cannot start a new cycle and
+  // we'll have to wait for the concurrent marking thread to finish
+  // what it is doing. In this case we will postpone the marking cycle
+  // initiation decision for the next pause. When we eventually decide
+  // to start a cycle, we will set _during_initial_mark_pause which
+  // will stay true until the end of the initial-mark pause and it's
+  // the condition that indicates that a pause is doing the
+  // initial-mark work.
+  volatile bool _during_initial_mark_pause;
+
   bool _should_revert_to_full_young_gcs;
   bool _last_full_young_gc;
 
@@ -931,6 +963,18 @@ public:
     _cur_aux_times_ms[i] += ms;
   }
 
+#ifndef PRODUCT
+  void record_cc_clear_time(double ms) {
+    if (_min_clear_cc_time_ms < 0.0 || ms <= _min_clear_cc_time_ms)
+      _min_clear_cc_time_ms = ms;
+    if (_max_clear_cc_time_ms < 0.0 || ms >= _max_clear_cc_time_ms)
+      _max_clear_cc_time_ms = ms;
+    _cur_clear_cc_time_ms = ms;
+    _cum_clear_cc_time_ms += ms;
+    _num_cc_clears++;
+  }
+#endif
+
   // Record the fact that "bytes" bytes allocated in a region.
   void record_before_bytes(size_t bytes);
   void record_after_bytes(size_t bytes);
@@ -957,11 +1001,21 @@ public:
   // Add "hr" to the CS.
   void add_to_collection_set(HeapRegion* hr);
 
-  bool should_initiate_conc_mark()      { return _should_initiate_conc_mark; }
-  void set_should_initiate_conc_mark()  { _should_initiate_conc_mark = true; }
-  void unset_should_initiate_conc_mark(){ _should_initiate_conc_mark = false; }
+  bool initiate_conc_mark_if_possible()       { return _initiate_conc_mark_if_possible;  }
+  void set_initiate_conc_mark_if_possible()   { _initiate_conc_mark_if_possible = true;  }
+  void clear_initiate_conc_mark_if_possible() { _initiate_conc_mark_if_possible = false; }
 
-  void checkpoint_conc_overhead();
+  bool during_initial_mark_pause()      { return _during_initial_mark_pause;  }
+  void set_during_initial_mark_pause()  { _during_initial_mark_pause = true;  }
+  void clear_during_initial_mark_pause(){ _during_initial_mark_pause = false; }
+
+  // This is called at the very beginning of an evacuation pause (it
+  // has to be the first thing that the pause does). If
+  // initiate_conc_mark_if_possible() is true, and the concurrent
+  // marking thread has completed its work during the previous cycle,
+  // it will set during_initial_mark_pause() to so that the pause does
+  // the initial-mark work and start a marking cycle.
+  void decide_on_conc_mark_initiation();
 
   // If an expansion would be appropriate, because recent GC overhead had
   // exceeded the desired limit, return an amount to expand by.

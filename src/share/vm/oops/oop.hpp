@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -30,13 +30,12 @@
 // no virtual functions allowed
 
 // store into oop with store check
-template <class T> void oop_store(T* p, oop v);
-template <class T> void oop_store(volatile T* p, oop v);
+template <class T> inline void oop_store(T* p, oop v);
+template <class T> inline void oop_store(volatile T* p, oop v);
 
 // store into oop without store check
-template <class T> void oop_store_without_check(T* p, oop v);
-template <class T> void oop_store_without_check(volatile T* p, oop v);
-
+template <class T> inline void oop_store_without_check(T* p, oop v);
+template <class T> inline void oop_store_without_check(volatile T* p, oop v);
 
 extern bool always_do_update_barrier;
 
@@ -330,6 +329,7 @@ class oopDesc {
 
   bool is_perm() const;
   bool is_perm_or_null() const;
+  bool is_scavengable() const;
   bool is_shared() const;
   bool is_shared_readonly() const;
   bool is_shared_readwrite() const;

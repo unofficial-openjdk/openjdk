@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -63,7 +63,7 @@ public:
   void do_oop(oop* p) {
     if (p != NULL) {
       oop obj = *p;
-      if (obj->klass() == SystemDictionary::string_klass()) {
+      if (obj->klass() == SystemDictionary::String_klass()) {
 
         int hash;
         typeArrayOop value = java_lang_String::value(obj);
@@ -625,11 +625,11 @@ public:
 
     if (obj->is_klass() || obj->is_instance()) {
       if (obj->is_klass() ||
-          obj->is_a(SystemDictionary::class_klass()) ||
-          obj->is_a(SystemDictionary::throwable_klass())) {
+          obj->is_a(SystemDictionary::Class_klass()) ||
+          obj->is_a(SystemDictionary::Throwable_klass())) {
         // Do nothing
       }
-      else if (obj->is_a(SystemDictionary::string_klass())) {
+      else if (obj->is_a(SystemDictionary::String_klass())) {
         // immutable objects.
       } else {
         // someone added an object we hadn't accounted for.

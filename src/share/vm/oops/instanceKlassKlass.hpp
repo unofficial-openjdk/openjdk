@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -39,7 +39,7 @@ class instanceKlassKlass : public klassKlass {
   klassOop allocate_instance_klass(int vtable_len,
                                    int itable_len,
                                    int static_field_size,
-                                   int nonstatic_oop_map_size,
+                                   unsigned int nonstatic_oop_map_count,
                                    ReferenceType rt,
                                    TRAPS);
 
@@ -69,14 +69,13 @@ private:
   // Apply closure to the InstanceKlass oops that are outside the java heap.
   inline void iterate_c_heap_oops(instanceKlass* ik, OopClosure* closure);
 
-#ifndef PRODUCT
  public:
   // Printing
-  void oop_print_on(oop obj, outputStream* st);
   void oop_print_value_on(oop obj, outputStream* st);
+#ifndef PRODUCT
+  void oop_print_on(oop obj, outputStream* st);
 #endif
 
- public:
   // Verification
   const char* internal_name() const;
   void oop_verify_on(oop obj, outputStream* st);

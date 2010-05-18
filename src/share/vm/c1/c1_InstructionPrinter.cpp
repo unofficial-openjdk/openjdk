@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -133,12 +133,12 @@ void InstructionPrinter::print_object(Value obj) {
       ciMethod* m = (ciMethod*)value;
       output()->print("<method %s.%s>", m->holder()->name()->as_utf8(), m->name()->as_utf8());
     } else {
-      output()->print("<object 0x%x>", value->encoding());
+      output()->print("<object 0x%x>", value->constant_encoding());
     }
   } else if (type->as_InstanceConstant() != NULL) {
-    output()->print("<instance 0x%x>", type->as_InstanceConstant()->value()->encoding());
+    output()->print("<instance 0x%x>", type->as_InstanceConstant()->value()->constant_encoding());
   } else if (type->as_ArrayConstant() != NULL) {
-    output()->print("<array 0x%x>", type->as_ArrayConstant()->value()->encoding());
+    output()->print("<array 0x%x>", type->as_ArrayConstant()->value()->constant_encoding());
   } else if (type->as_ClassConstant() != NULL) {
     ciInstanceKlass* klass = type->as_ClassConstant()->value();
     if (!klass->is_loaded()) {

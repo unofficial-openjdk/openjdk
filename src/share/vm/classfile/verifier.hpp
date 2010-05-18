@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -34,16 +34,18 @@ class Verifier : AllStatic {
    * Otherwise, no exception is thrown and the return indicates the
    * error.
    */
-  static bool verify(instanceKlassHandle klass, Mode mode, TRAPS);
+  static bool verify(instanceKlassHandle klass, Mode mode, bool should_verify_class, TRAPS);
 
-  // Return false if the class is loaded by the bootstrap loader.
-  static bool should_verify_for(oop class_loader);
+  // Return false if the class is loaded by the bootstrap loader,
+  // or if defineClass was called requesting skipping verification
+  // -Xverify:all/none override this value
+  static bool should_verify_for(oop class_loader, bool should_verify_class);
 
   // Relax certain verifier checks to enable some broken 1.1 apps to run on 1.2.
   static bool relax_verify_for(oop class_loader);
 
  private:
-  static bool is_eligible_for_verification(instanceKlassHandle klass);
+  static bool is_eligible_for_verification(instanceKlassHandle klass, bool should_verify_class);
   static symbolHandle inference_verify(
     instanceKlassHandle klass, char* msg, size_t msg_len, TRAPS);
 };

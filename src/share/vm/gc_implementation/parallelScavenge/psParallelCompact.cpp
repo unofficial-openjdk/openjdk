@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -2172,6 +2172,16 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     }
   }
 
+#ifdef ASSERT
+  for (size_t i = 0; i < ParallelGCThreads + 1; ++i) {
+    ParCompactionManager* const cm =
+      ParCompactionManager::manager_array(int(i));
+    assert(cm->overflow_stack()->is_empty(),        "should be empty");
+    assert(cm->region_stack()->overflow_is_empty(), "should be empty");
+    assert(cm->revisit_klass_stack()->is_empty(),   "should be empty");
+  }
+#endif // ASSERT
+
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
     gclog_or_tty->print(" VerifyAfterGC:");
@@ -2322,6 +2332,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   {
     TraceTime tm_m("par mark", print_phases(), true, gclog_or_tty);
+    ParallelScavengeHeap::ParStrongRootsScope psrs;
 
     GCTaskQueue* q = GCTaskQueue::create();
 
@@ -2335,6 +2346,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::system_dictionary));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::jvmti));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::vm_symbols));
+    q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::code_cache));
 
     if (parallel_gc_threads > 1) {
       for (uint j = 0; j < parallel_gc_threads; j++) {
@@ -2378,7 +2390,10 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   // Update subklass/sibling/implementor links of live klasses
   // revisit_klass_stack is used in follow_weak_klass_links().
-  follow_weak_klass_links(cm);
+  follow_weak_klass_links();
+
+  // Revisit memoized MDO's and clear any unmarked weak refs
+  follow_mdo_weak_refs();
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(is_alive_closure());
@@ -2405,7 +2420,7 @@ void PSParallelCompact::adjust_roots() {
   Universe::oops_do(adjust_root_pointer_closure());
   ReferenceProcessor::oops_do(adjust_root_pointer_closure());
   JNIHandles::oops_do(adjust_root_pointer_closure());   // Global (strong) JNI handles
-  Threads::oops_do(adjust_root_pointer_closure());
+  Threads::oops_do(adjust_root_pointer_closure(), NULL);
   ObjectSynchronizer::oops_do(adjust_root_pointer_closure());
   FlatProfiler::oops_do(adjust_root_pointer_closure());
   Management::oops_do(adjust_root_pointer_closure());
@@ -2721,17 +2736,26 @@ void PSParallelCompact::follow_stack(ParCompactionManager* cm) {
 }
 
 void
-PSParallelCompact::follow_weak_klass_links(ParCompactionManager* serial_cm) {
+PSParallelCompact::follow_weak_klass_links() {
   // All klasses on the revisit stack are marked at this point.
   // Update and follow all subklass, sibling and implementor links.
-  for (uint i = 0; i < ParallelGCThreads+1; i++) {
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d",
+                           SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
     ParCompactionManager* cm = ParCompactionManager::manager_array(i);
     KeepAliveClosure keep_alive_closure(cm);
-    for (int i = 0; i < cm->revisit_klass_stack()->length(); i++) {
-      cm->revisit_klass_stack()->at(i)->follow_weak_klass_links(
-        is_alive_closure(),
-        &keep_alive_closure);
+    Stack<Klass*>* const rks = cm->revisit_klass_stack();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit klass stack[%u] length = " SIZE_FORMAT,
+                             i, rks->size());
     }
+    while (!rks->is_empty()) {
+      Klass* const k = rks->pop();
+      k->follow_weak_klass_links(is_alive_closure(), &keep_alive_closure);
+    }
+
     follow_stack(cm);
   }
 }
@@ -2740,6 +2764,34 @@ void
 PSParallelCompact::revisit_weak_klass_link(ParCompactionManager* cm, Klass* k) {
   cm->revisit_klass_stack()->push(k);
 }
+
+void PSParallelCompact::revisit_mdo(ParCompactionManager* cm, DataLayout* p) {
+  cm->revisit_mdo_stack()->push(p);
+}
+
+void PSParallelCompact::follow_mdo_weak_refs() {
+  // All strongly reachable oops have been marked at this point;
+  // we can visit and clear any weak references from MDO's which
+  // we memoized during the strong marking phase.
+  if (PrintRevisitStats) {
+    gclog_or_tty->print_cr("#classes in system dictionary = %d",
+                           SystemDictionary::number_of_classes());
+  }
+  for (uint i = 0; i < ParallelGCThreads + 1; i++) {
+    ParCompactionManager* cm = ParCompactionManager::manager_array(i);
+    Stack<DataLayout*>* rms = cm->revisit_mdo_stack();
+    if (PrintRevisitStats) {
+      gclog_or_tty->print_cr("Revisit MDO stack[%u] size = " SIZE_FORMAT,
+                             i, rms->size());
+    }
+    while (!rms->is_empty()) {
+      rms->pop()->follow_weak_refs(is_alive_closure());
+    }
+
+    follow_stack(cm);
+  }
+}
+
 
 #ifdef VALIDATE_MARK_SWEEP
 
@@ -3490,4 +3542,3 @@ void PSParallelCompact::compact_prologue() {
   _updated_int_array_klass_obj = (klassOop)
     summary_data().calc_new_pointer(Universe::intArrayKlassObj());
 }
-

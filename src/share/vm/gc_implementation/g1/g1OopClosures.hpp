@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -51,6 +51,15 @@ protected:
 public:
   G1ParClosureSuper(G1CollectedHeap* g1, G1ParScanThreadState* par_scan_state);
   bool apply_to_weak_ref_discovered_field() { return true; }
+};
+
+class G1ParPushHeapRSClosure : public G1ParClosureSuper {
+public:
+  G1ParPushHeapRSClosure(G1CollectedHeap* g1, G1ParScanThreadState* par_scan_state) :
+    G1ParClosureSuper(g1, par_scan_state) { }
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(oop* p)          { do_oop_nv(p); }
+  virtual void do_oop(narrowOop* p)    { do_oop_nv(p); }
 };
 
 class G1ParScanClosure : public G1ParClosureSuper {
@@ -100,7 +109,7 @@ public:
 };
 
 template<bool do_gen_barrier, G1Barrier barrier,
-         bool do_mark_forwardee, bool skip_cset_test>
+         bool do_mark_forwardee>
 class G1ParCopyClosure : public G1ParCopyHelper {
   G1ParScanClosure _scanner;
   template <class T> void do_oop_work(T* p);
@@ -116,12 +125,13 @@ public:
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
 };
 
-typedef G1ParCopyClosure<false, G1BarrierNone, false, false> G1ParScanExtRootClosure;
-typedef G1ParCopyClosure<true,  G1BarrierNone, false, false> G1ParScanPermClosure;
-typedef G1ParCopyClosure<false, G1BarrierRS,   false, false> G1ParScanHeapRSClosure;
-typedef G1ParCopyClosure<false, G1BarrierNone, true,  false> G1ParScanAndMarkExtRootClosure;
-typedef G1ParCopyClosure<true,  G1BarrierNone, true,  false> G1ParScanAndMarkPermClosure;
-typedef G1ParCopyClosure<false, G1BarrierRS,   true,  false> G1ParScanAndMarkHeapRSClosure;
+typedef G1ParCopyClosure<false, G1BarrierNone, false> G1ParScanExtRootClosure;
+typedef G1ParCopyClosure<true,  G1BarrierNone, false> G1ParScanPermClosure;
+typedef G1ParCopyClosure<false, G1BarrierRS,   false> G1ParScanHeapRSClosure;
+typedef G1ParCopyClosure<false, G1BarrierNone, true> G1ParScanAndMarkExtRootClosure;
+typedef G1ParCopyClosure<true,  G1BarrierNone, true> G1ParScanAndMarkPermClosure;
+typedef G1ParCopyClosure<false, G1BarrierRS,   true> G1ParScanAndMarkHeapRSClosure;
+
 // This is the only case when we set skip_cset_test. Basically, this
 // closure is (should?) only be called directly while we're draining
 // the overflow and task queues. In that case we know that the
@@ -132,7 +142,7 @@ typedef G1ParCopyClosure<false, G1BarrierRS,   true,  false> G1ParScanAndMarkHea
 // We need a separate closure to handle references during evacuation
 // failure processing, as we cannot asume that the reference already
 // points into the collection set (like G1ParScanHeapEvacClosure does).
-typedef G1ParCopyClosure<false, G1BarrierEvac, false, false> G1ParScanHeapEvacFailureClosure;
+typedef G1ParCopyClosure<false, G1BarrierEvac, false> G1ParScanHeapEvacFailureClosure;
 
 class FilterIntoCSClosure: public OopClosure {
   G1CollectedHeap* _g1;

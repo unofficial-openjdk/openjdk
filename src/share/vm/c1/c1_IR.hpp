@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -239,15 +239,22 @@ class IRScopeDebugInfo: public CompilationResourceObj {
   GrowableArray<MonitorValue*>* monitors()    { return _monitors;    }
   IRScopeDebugInfo*             caller()      { return _caller;      }
 
-  void record_debug_info(DebugInformationRecorder* recorder, int pc_offset) {
+  //Whether we should reexecute this bytecode for deopt
+  bool should_reexecute();
+
+  void record_debug_info(DebugInformationRecorder* recorder, int pc_offset, bool topmost) {
     if (caller() != NULL) {
       // Order is significant:  Must record caller first.
-      caller()->record_debug_info(recorder, pc_offset);
+      caller()->record_debug_info(recorder, pc_offset, false/*topmost*/);
     }
     DebugToken* locvals = recorder->create_scope_values(locals());
     DebugToken* expvals = recorder->create_scope_values(expressions());
     DebugToken* monvals = recorder->create_monitor_values(monitors());
-    recorder->describe_scope(pc_offset, scope()->method(), bci(), locvals, expvals, monvals);
+    // reexecute allowed only for the topmost frame
+    bool reexecute = topmost ? should_reexecute() : false;
+    bool is_method_handle_invoke = false;
+    bool return_oop = false; // This flag will be ignored since it used only for C2 with escape analysis.
+    recorder->describe_scope(pc_offset, scope()->method(), bci(), reexecute, is_method_handle_invoke, return_oop, locvals, expvals, monvals);
   }
 };
 

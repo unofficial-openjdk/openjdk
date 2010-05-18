@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -51,10 +51,7 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
   address generate_WrongMethodType_handler();
   address generate_ArrayIndexOutOfBounds_handler(const char* name);
   address generate_continuation_for(TosState state);
-  address generate_return_entry_for(TosState state, int step, bool unbox = false);
-  address generate_return_unbox_entry_for(TosState state, int step) {
-    return generate_return_entry_for(state, step, true);
-  }
+  address generate_return_entry_for(TosState state, int step);
   address generate_earlyret_entry_for(TosState state);
   address generate_deopt_entry_for(TosState state, int step);
   address generate_safept_entry_for(TosState state, address runtime_entry);

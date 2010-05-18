@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -470,7 +470,7 @@ class Dependencies: public ResourceObj {
 // super types can be context types for a relevant dependency, which the
 // new type could invalidate.
 class DepChange : public StackObj {
- private:
+ public:
   enum ChangeType {
     NO_CHANGE = 0,              // an uninvolved klass
     Change_new_type,            // a newly loaded type
@@ -480,6 +480,7 @@ class DepChange : public StackObj {
     Start_Klass = CHANGE_LIMIT  // internal indicator for ContextStream
   };
 
+ private:
   // each change set is rooted in exactly one new type (at present):
   KlassHandle _new_type;
 
@@ -510,15 +511,15 @@ class DepChange : public StackObj {
   // }
   class ContextStream : public StackObj {
    private:
-    DepChange&       _changes;
+    DepChange&  _changes;
     friend class DepChange;
 
     // iteration variables:
-    ChangeType            _change_type;
-    klassOop              _klass;
-    objArrayOop           _ti_base;    // i.e., transitive_interfaces
-    int                   _ti_index;
-    int                   _ti_limit;
+    ChangeType  _change_type;
+    klassOop    _klass;
+    objArrayOop _ti_base;    // i.e., transitive_interfaces
+    int         _ti_index;
+    int         _ti_limit;
 
     // start at the beginning:
     void start() {
@@ -530,11 +531,11 @@ class DepChange : public StackObj {
       _ti_limit = 0;
     }
 
+   public:
     ContextStream(DepChange& changes)
       : _changes(changes)
     { start(); }
 
-   public:
     ContextStream(DepChange& changes, No_Safepoint_Verifier& nsv)
       : _changes(changes)
       // the nsv argument makes it safe to hold oops like _klass
@@ -542,6 +543,7 @@ class DepChange : public StackObj {
 
     bool next();
 
+    ChangeType change_type()     { return _change_type; }
     klassOop   klass()           { return _klass; }
   };
   friend class DepChange::ContextStream;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -210,6 +210,8 @@ private:
   Unique_Node_List  _delayed_worklist; // Nodes to be processed before
                                        // the call build_connection_graph().
 
+  GrowableArray<MergeMemNode *>  _mergemem_worklist; // List of all MergeMem nodes
+
   VectorSet                _processed; // Records which nodes have been
                                        // processed.
 
@@ -289,7 +291,7 @@ private:
   bool split_AddP(Node *addp, Node *base,  PhaseGVN  *igvn);
   PhiNode *create_split_phi(PhiNode *orig_phi, int alias_idx, GrowableArray<PhiNode *>  &orig_phi_worklist, PhaseGVN  *igvn, bool &new_created);
   PhiNode *split_memory_phi(PhiNode *orig_phi, int alias_idx, GrowableArray<PhiNode *>  &orig_phi_worklist, PhaseGVN  *igvn);
-  Node *find_mem(Node *mem, int alias_idx, PhaseGVN  *igvn);
+  void  move_inst_mem(Node* n, GrowableArray<PhiNode *>  &orig_phis, PhaseGVN *igvn);
   Node *find_inst_mem(Node *mem, int alias_idx,GrowableArray<PhiNode *>  &orig_phi_worklist,  PhaseGVN  *igvn);
 
   // Propagate unique types created for unescaped allocated objects
@@ -298,7 +300,6 @@ private:
 
   // manage entries in _node_map
   void  set_map(int idx, Node *n)        { _node_map.map(idx, n); }
-  void  set_map_phi(int idx, PhiNode *p) { _node_map.map(idx, (Node *) p); }
   Node *get_map(int idx)                 { return _node_map[idx]; }
   PhiNode *get_map_phi(int idx) {
     Node *phi = _node_map[idx];
@@ -314,6 +315,9 @@ private:
 
   // Set the escape state of a node
   void set_escape_state(uint ni, PointsToNode::EscapeState es);
+
+  // Search for objects which are not scalar replaceable.
+  void verify_escape_state(int nidx, VectorSet& ptset, PhaseTransform* phase);
 
 public:
   ConnectionGraph(Compile *C);

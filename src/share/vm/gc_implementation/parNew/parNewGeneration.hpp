@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,8 +16,8 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores,
+ * CA 94065 USA or visit www.oracle.com if you need additional information or
  * have any questions.
  *
  */
@@ -55,7 +55,7 @@ class ParScanThreadState {
   friend class ParScanThreadStateSet;
  private:
   ObjToScanQueue *_work_queue;
-  GrowableArray<oop>* _overflow_stack;
+  Stack<oop>* const _overflow_stack;
 
   ParGCAllocBuffer _to_space_alloc_buffer;
 
@@ -97,6 +97,9 @@ class ParScanThreadState {
   int _pushes, _pops, _steals, _steal_attempts, _term_attempts;
   int _overflow_pushes, _overflow_refills, _overflow_refill_objs;
 
+  // Stats for promotion failure
+  size_t _promotion_failure_size;
+
   // Timing numbers.
   double _start;
   double _start_strong_roots;
@@ -117,7 +120,7 @@ class ParScanThreadState {
   ParScanThreadState(Space* to_space_, ParNewGeneration* gen_,
                      Generation* old_gen_, int thread_num_,
                      ObjToScanQueueSet* work_queue_set_,
-                     GrowableArray<oop>** overflow_stack_set_,
+                     Stack<oop>* overflow_stacks_,
                      size_t desired_plab_sz_,
                      ParallelTaskTerminator& term_);
 
@@ -141,7 +144,7 @@ class ParScanThreadState {
   void trim_queues(int max_size);
 
   // Private overflow stack usage
-  GrowableArray<oop>* overflow_stack() { return _overflow_stack; }
+  Stack<oop>* overflow_stack() { return _overflow_stack; }
   bool take_from_overflow_stack();
   void push_on_overflow_stack(oop p);
 
@@ -168,6 +171,15 @@ class ParScanThreadState {
 
   // Undo the most recent allocation ("obj", of "word_sz").
   void undo_alloc_in_to_space(HeapWord* obj, size_t word_sz);
+
+  // Promotion failure stats
+  size_t promotion_failure_size() { return promotion_failure_size(); }
+  void log_promotion_failure(size_t sz) {
+    if (_promotion_failure_size == 0) {
+      _promotion_failure_size = sz;
+    }
+  }
+  void print_and_clear_promotion_failure_size();
 
   int pushes() { return _pushes; }
   int pops()   { return _pops; }
@@ -302,7 +314,7 @@ class ParNewGeneration: public DefNewGeneration {
   ObjToScanQueueSet* _task_queues;
 
   // Per-worker-thread local overflow stacks
-  GrowableArray<oop>** _overflow_stacks;
+  Stack<oop>* _overflow_stacks;
 
   // Desired size of survivor space plab's
   PLABStats _plab_stats;
