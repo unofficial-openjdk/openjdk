@@ -27,7 +27,6 @@
  * @summary Re-test IPv6 (and specifically MulticastSocket) with latest Linux & USAGI code
  */
 import java.net.*;
-import java.util.concurrent.*;
 import java.util.*;
 
 
@@ -70,7 +69,8 @@ public class SetOutgoingIf {
         //
         List<NetworkInterface> nics = new ArrayList<NetworkInterface>();
         for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-            if (!nic.isLoopback())
+            // we should use only network interfaces with multicast support which are in "up" state
+            if (!nic.isLoopback() && nic.supportsMulticast() && nic.isUp())
                 nics.add(nic);
         }
         if (nics.size() <= 1) {
@@ -172,7 +172,7 @@ class Sender implements Runnable {
                 mcastsock.send(packet2);
                 mcastsock.send(packet3);
 
-                Thread.currentThread().sleep(1000);   // sleep 1 second
+                Thread.sleep(1000);   // sleep 1 second
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
