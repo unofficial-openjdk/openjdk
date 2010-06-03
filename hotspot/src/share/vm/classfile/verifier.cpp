@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,14 +16,16 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_verifier.cpp.incl"
+
+#define NOFAILOVER_MAJOR_VERSION 51
 
 // Access to external entry for VerifyClassCodes - old byte code verifier
 
@@ -91,7 +93,8 @@ bool Verifier::verify(instanceKlassHandle klass, Verifier::Mode mode, bool shoul
           klass, message_buffer, message_buffer_len, THREAD);
         split_verifier.verify_class(THREAD);
         exception_name = split_verifier.result();
-      if (FailOverToOldVerifier && !HAS_PENDING_EXCEPTION &&
+      if (klass->major_version() < NOFAILOVER_MAJOR_VERSION &&
+          FailOverToOldVerifier && !HAS_PENDING_EXCEPTION &&
           (exception_name == vmSymbols::java_lang_VerifyError() ||
            exception_name == vmSymbols::java_lang_ClassFormatError())) {
         if (TraceClassInitialization) {
