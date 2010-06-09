@@ -159,6 +159,8 @@ help:
 	@echo "    $(ANT_TARGETS)"
 	@echo " "
 	@echo "  Environment or command line variables (all optional):"
+	$(call helpenvline, ALT_DROPS_DIR,\
+	       "Directory that contains the drop source bundles i.e. drops.dir")
 	$(call helpenvline, ALT_BOOTDIR,\
 	       "JAVA_HOME to use when running ant")
 	$(call helpenvline, ALT_LANGTOOLS_DIST,\
