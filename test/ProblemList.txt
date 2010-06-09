@@ -332,6 +332,9 @@ java/io/StreamTokenizer/Comment.java			 	generic-all
 
 # jdk_lang
 
+# Solaris 10 sparc: main -- Error. Error while cleaning up threads after test
+java/lang/management/ThreadMXBean/ThreadBlockedCount.java	generic-all
+
 # Some of these tests (like java/lang/management) may just need to be marked
 #   othervm, but that is partially speculation.
 
@@ -426,6 +429,9 @@ java/lang/Thread/ThreadStateTest.java				generic-all
 ############################################################################
 
 # jdk_management
+
+# Fails on windows: TEST RESULT: Error. failed to clean up files after test
+javax/management/loading/LibraryLoader/LibraryLoaderTest.java	windows-all
 
 # Fails on Solaris 10 sparc 
 #  NoClassDefFoundError: javax/rmi/GetORBPropertiesFileAction$1
@@ -728,6 +734,18 @@ sun/net/www/protocol/http/DigestTest.java			generic-all
 
 # jdk_nio
 
+# Unused Charset subclass: sun.nio.cs.ext.MS932DB  RuntimeException
+java/nio/charset/Charset/NIOCharsetAvailabilityTest.java	generic-all
+
+# java.io.UnsupportedEncodingException: MS932_0213
+sun/nio/cs/TestSJIS0213.java					generic-all
+
+# Timeout on linux (Fedora 9)
+java/nio/channels/DatagramChannel/Sender.java			generic-all
+
+# Bug was filed on this: 6933622 (rt.jar and charsets.jar overlap?)
+sun/nio/cs/Test4200310.sh					generic-all
+
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
 
@@ -905,6 +923,15 @@ java/rmi/server/UnicastRemoteObject/unexportObject/UnexportLeak.java generic-all
 
 # jdk_security
 
+# java.security.cert.CertificateException: Certificate contains unsupported critical extensions: [2.5.29.17]
+sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java generic-all
+sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPAddressIPIdentities.java generic-all
+sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/IPIdentities.java generic-all
+sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/Identities.java generic-all
+
+# jarsigner: unable to sign jar: java.io.IOException: invalid header field
+sun/security/tools/jarsigner/emptymanifest.sh			generic-all
+
 # Fails almost everywhere: Unexpected exit from test [exit code: 1]
 com/sun/crypto/provider/KeyFactory/TestProviderLeak.java	generic-all
 
@@ -1065,6 +1092,9 @@ java/text/Bidi/Bug6665028.java				 	linux-x64
 #  always be firing up another VM anyway due to the nature of tools testing.
 #  So most if not all tools tests are now being run with "othervm" mode.
 #  Some of these tools tests have a tendency to use fixed ports, bad idea.
+
+# Native allocation errors on windows
+tools/pack200/MemoryAllocatorTest.java				generic-all
 
 # Output of jps differs from expected output.
 #   Invalid argument count on solaris-sparc and x64
