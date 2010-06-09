@@ -173,10 +173,14 @@ endif
 #     The install process needs to know what the DEBUG_NAME is, so
 #     look for INSTALL_DEBUG_NAME in the install rules.
 #
+#   NOTE: On windows, do not use $(ABS_OUTPUTDIR)-$(DEBUG_NAME).
+#         Due to the use of short paths in $(ABS_OUTPUTDIR), this may 
+#         not be the same location.
+#
 
 COMMON_DEBUG_FLAGS= \
 	DEBUG_NAME=$(DEBUG_NAME) \
-	ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)-$(DEBUG_NAME) \
+	ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-$(DEBUG_NAME) \
 	NO_DOCS=true
 
 product_build: setup
