@@ -39,7 +39,7 @@ import static com.sun.tools.javac.code.Flags.*;
  * filtering out unwanted elements such as synthetic ones.
  * This view is most efficiently accessed through its iterator() method.
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.  If
+ * <p><b>This is NOT part of any supported API.
  * you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
  * deletion without notice.</b>

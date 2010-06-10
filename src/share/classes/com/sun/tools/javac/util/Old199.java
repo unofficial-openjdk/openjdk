@@ -37,7 +37,7 @@ import static javax.tools.StandardLocation.SOURCE_PATH;
  * Provides an easy migration to JSR 199 v3.3.  The class is
  * deprecated as we should remove it as soon as possible.
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
