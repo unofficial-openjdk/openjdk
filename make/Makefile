@@ -65,6 +65,11 @@ else
   endif
 endif 
 
+# If downloads are allowed
+ifeq ($(ALLOW_DOWNLOADS),true)
+  ANT_OPTIONS += -Dallow.downloads=true
+endif
+
 # Figure out the platform we are using
 _SYSTEM_UNAME := $(shell uname)
 _PLATFORM_KIND = unix
