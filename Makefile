@@ -494,6 +494,47 @@ boot_cycle:
 	$(MAKE) ALT_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/j2sdk-image product_build
 
 ################################################################
+# rule to test
+################################################################
+
+.NOTPARALLEL: test
+
+test: test_clean test_start test_summary
+
+test_start:
+	@$(ECHO) "Tests started at `$(DATE)`"
+
+test_clean:
+	$(RM) $(OUTPUTDIR)/test_failures.txt $(OUTPUTDIR)/test_log.txt
+
+test_summary: $(OUTPUTDIR)/test_failures.txt
+	@$(ECHO) "#################################################"
+	@$(ECHO) "Tests completed at `$(DATE)`"
+	@( $(EGREP) '^TEST STATS:' $(OUTPUTDIR)/test_log.txt \
+	   || $(ECHO) "No TEST STATS seen in log" )
+	@$(ECHO) "For complete details see: $(OUTPUTDIR)/test_log.txt"
+	@$(ECHO) "#################################################"
+	@if [ -s $< ] ; then                                           \
+	  $(ECHO) "ERROR: Test failure count: `$(CAT) $< | $(WC) -l`"; \
+	  $(CAT) $<;                                                   \
+	  exit 1;                                                      \
+	else							       \
+	  $(ECHO) "Success! No failures detected";		       \
+	fi
+
+# Get failure list from log
+$(OUTPUTDIR)/test_failures.txt: $(OUTPUTDIR)/test_log.txt
+	@$(RM) $@
+	@( $(EGREP) '^FAILED:' $< || $(ECHO) "" ) > $@
+
+# Get log file of all tests run
+$(OUTPUTDIR)/test_log.txt:
+	$(RM) $@
+	( $(CD) test &&                                                   \
+	  $(MAKE) NO_STOPPING=- PRODUCT_HOME=$(ABS_OUTPUTDIR)/j2sdk-image \
+	) | tee $@
+
+################################################################
 # JPRT rule to build
 ################################################################
 
@@ -503,7 +544,7 @@ include ./make/jprt.gmk
 #  PHONY
 ################################################################
 
-.PHONY: all build what clobber insane \
+.PHONY: all build what clobber insane test test_start test_summary test_clean \
 	fastdebug_build debug_build product_build setup \
         dev dev-build dev-sanity dev-clobber
 
