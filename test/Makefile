@@ -54,17 +54,17 @@ LANGTOOLS_TEST_LIST = langtools_jtreg
 
 # Test target list for jdk repository
 JDK_TEST_LIST = \
-	jdk_beans jdk_beans1 jdk_beans2 jdk_beans3  \
+	jdk_beans1 jdk_beans2 jdk_beans3  \
 	jdk_io  \
 	jdk_lang  \
-	jdk_management jdk_management1 jdk_management2  \
+	jdk_management1 jdk_management2  \
 	jdk_math  \
 	jdk_misc  \
 	jdk_net  \
 	jdk_nio  \
-	jdk_security jdk_security1 jdk_security2 jdk_security3  \
+	jdk_security1 jdk_security2 jdk_security3  \
 	jdk_text  \
-	jdk_tools jdk_tools1 jdk_tools2  \
+	jdk_tools1 jdk_tools2  \
 	jdk_util
 
 # These tests need a DISPLAY and can create window interaction complications
