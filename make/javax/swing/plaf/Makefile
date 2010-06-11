@@ -25,10 +25,8 @@
 
 BUILDDIR  = ../../..
 PACKAGE   = javax.swing.plaf
-SUN_PACKAGE = com.sun.java.swing.plaf
 PRODUCT   = com
 SWING_SRC = $(SHARE_SRC)/classes/javax/swing
-SUN_SRC = $(SHARE_SRC)/classes/com/sun/java/swing
 
 include $(BUILDDIR)/common/Defs.gmk
 
@@ -53,9 +51,6 @@ ifneq ($(PLATFORM), windows)
     MISC_FILES += $(MISC_SWING_FILES_UNIX)
 endif
 
-NIMBUS_GENSRC_DIR = $(GENSRCDIR)/com/sun/java/swing/plaf/nimbus
-NIMBUS_SKIN_FILE = $(SUN_SRC)/plaf/nimbus/skin.laf
-NIMBUS_GENERATOR_JAR = $(BUILDTOOLJARDIR)/generatenimbus.jar
 
 FILES_java = $(FILES_SWING_java)
 
@@ -80,24 +75,6 @@ endif
 # Process LOGO_ICONS and Motif Icons first.
 #
 build: $(LOGO_ICONS) $(MISC_SWING_FILES_MOTIF_GIF) $(MISC_SWING_FILES_MOTIF_PNG) other_files
-
-$(NIMBUS_GENSRC_DIR): $(NIMBUS_SKIN_FILE) $(NIMBUS_GENERATOR_JAR)
-	@$(ECHO) "Generating Nimbus source files:"
-	$(RM) -r $(NIMBUS_GENSRC_DIR)
-	$(BOOT_JAVA_CMD) -jar $(NIMBUS_GENERATOR_JAR) \
-	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(GENSRCDIR) \
-	    -packagePrefix $(SUN_PACKAGE).nimbus -lafName Nimbus
-	@$(ECHO) "Finished generating Nimbus source files"
-
-clean:: classes.clean
-	$(RM) -r $(NIMBUS_GENSRC_DIR)
-
-#
-# Include
-#
-ifndef DISABLE_NIMBUS
-    CLASSES_INIT = $(NIMBUS_GENSRC_DIR)
-endif
 
 include $(BUILDDIR)/common/Classes.gmk
 

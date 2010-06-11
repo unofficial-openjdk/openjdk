@@ -25,8 +25,15 @@
 
 BUILDDIR  = ../..
 PACKAGE   = javax.swing
+SUN_PACKAGE = com.sun.java.swing.plaf
 PRODUCT   = com
 SWING_SRC = $(SHARE_SRC)/classes/javax/swing
+SUN_SRC = $(SHARE_SRC)/classes/com/sun/java/swing
+
+NIMBUS_GENSRC_DIR = $(GENSRCDIR)/com/sun/java/swing/plaf/nimbus
+NIMBUS_SKIN_FILE = $(SUN_SRC)/plaf/nimbus/skin.laf
+NIMBUS_GENERATOR_JAR = $(BUILDTOOLJARDIR)/generatenimbus.jar
+
 include $(BUILDDIR)/common/Defs.gmk
 
 #
@@ -38,12 +45,20 @@ AUTO_JAVA_PRUNE = plaf
 
 SUBDIRS = html32dtd plaf
 
+#
+# Include
+#
+ifndef DISABLE_NIMBUS
+    CLASSES_INIT = $(NIMBUS_GENSRC_DIR)
+endif
+
 include $(BUILDDIR)/common/Classes.gmk
 
 build: other_files
 	$(SUBDIRS-loop)
 
 clean clobber::
+	$(RM) -r $(NIMBUS_GENSRC_DIR)
 	$(SUBDIRS-loop)
 
 other_files: $(MISC_FILES)
@@ -63,3 +78,10 @@ $(CLASSBINDIR)/%.bdtd: $(SHARE_SRC)/classes/%.bdtd
 $(CLASSBINDIR)/%.txt: $(SHARE_SRC)/classes/%.txt
 	$(install-file)
 
+$(NIMBUS_GENSRC_DIR): $(NIMBUS_SKIN_FILE) $(NIMBUS_GENERATOR_JAR)
+	@$(ECHO) "Generating Nimbus source files:"
+	$(RM) -r $(NIMBUS_GENSRC_DIR)
+	$(BOOT_JAVA_CMD) -jar $(NIMBUS_GENERATOR_JAR) \
+	    -skinFile $(NIMBUS_SKIN_FILE) -buildDir $(GENSRCDIR) \
+	    -packagePrefix $(SUN_PACKAGE).nimbus -lafName Nimbus
+	@$(ECHO) "Finished generating Nimbus source files"
