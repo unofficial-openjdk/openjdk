@@ -264,6 +264,42 @@ public class NimbusLookAndFeel extends SynthLookAndFeel {
     }
 
     /**
+     * <p>
+     * Returns whether or not the UIs should update their styles when a
+     * particular event occurs.  Returns {@code true} when one of the following
+     * properties change:
+     * </p>
+     * <ul>
+     *   <li>{@code "name"}
+     *   <li>{@code "ancestor"}
+     *   <li>{@code "Nimbus.Overrides"}
+     *   <li>{@code "Nimbus.Overrides.InheritDefaults"}
+     *   <li>{@code "JComponent.sizeVariant"}
+     * </ul>
+     *
+     * @param ev a {@code PropertyChangeEvent}
+     * @return whether or not the UIs should update their styles
+     *
+     */
+    public boolean shouldUpdateStyleOnEvent(PropertyChangeEvent ev) {
+        String eName = ev.getPropertyName();
+
+        // These properties affect style cached inside NimbusDefaults (6860433)
+        if ("name" == eName ||
+            "ancestor" == eName ||
+            "Nimbus.Overrides" == eName ||
+            "Nimbus.Overrides.InheritDefaults" == eName ||
+            "JComponent.sizeVariant" == eName) {
+
+            JComponent c = (JComponent) ev.getSource();
+            defaults.clearOverridesCache(c);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * <p>Registers a third party component with the NimbusLookAndFeel.</p>
      *
      * <p>Regions represent Components and areas within Components that act as
