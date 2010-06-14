@@ -35,9 +35,6 @@ ifndef JDK_MAKE_SHARED_DIR
   JDK_MAKE_SHARED_DIR = $(JDK_TOPDIR)/make/common/shared
 endif
 
-ifndef CONTROL_TOPDIR
-  CONTROL_TOPDIR=$(TOPDIR)/control
-endif
 ifndef HOTSPOT_TOPDIR
   HOTSPOT_TOPDIR=$(TOPDIR)/hotspot
 endif
@@ -56,21 +53,12 @@ endif
 ifndef JDK_TOPDIR
   JDK_TOPDIR=$(TOPDIR)/jdk
 endif
-ifndef INSTALL_TOPDIR
-  INSTALL_TOPDIR=$(TOPDIR)/install
-endif
-ifndef SPONSORS_TOPDIR
-  SPONSORS_TOPDIR=$(TOPDIR)/sponsors
-endif
-ifndef DEPLOY_TOPDIR
-  DEPLOY_TOPDIR=$(TOPDIR)/deploy
-endif
 
 # Get shared platform settings
 include $(JDK_MAKE_SHARED_DIR)/Platform.gmk
 
 # Default output directory
-_OUTPUTDIR=$(CONTROL_TOPDIR)/build/$(PLATFORM)-$(ARCH)
+_OUTPUTDIR=$(TOPDIR)/build/$(PLATFORM)-$(ARCH)
 
 # Get platform specific settings
 include $(JDK_MAKE_SHARED_DIR)/Defs.gmk

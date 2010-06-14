@@ -1456,63 +1456,6 @@ sane-settings:: sane-alsa-versioncheck
 	@$(ECHO)  >> $(MESSAGE_FILE)
 
 ######################################################
-# Check for existence of DEPLOY_MSSDK on windows
-######################################################
-sane-mssdk_path:
-ifeq ($(PLATFORM), windows)
-	@if [ -z "$(DEPLOY_MSSDK)" ]; then \
-	  $(ECHO) "WARNING: Your DEPLOY_MSSDK setting is empty.\n" \
-	    "        It is recommended to set ALT_DEPLOY_MSSDK.\n" \
-	    "" >> $(WARNING_FILE) ; \
-	fi
-	@if [ ! -r "$(DEPLOY_MSSDK)" ]; then \
-	  $(ECHO) "ERROR: You do not have a valid DEPLOY_MSSDK setting. \n" \
-	    "      Please check your access to \n" \
-	    "          $(DEPLOY_MSSDK) \n" \
-	    "      and/or check your value of ALT_DEPLOY_MSSDK. \n" \
-	    "" >> $(ERROR_FILE) ; \
-	fi
-endif
-
-######################################################
-# Check for existence of INSTALL_MSSDK on windows
-######################################################
-sane-install-mssdk_path:
-ifeq ($(PLATFORM), windows)
-	@if [ -z "$(INSTALL_MSSDK)" ]; then \
-	  $(ECHO) "WARNING: Your INSTALL_MSSDK setting is empty.\n" \
-	    "        It is recommended to set ALT_INSTALL_MSSDK.\n" \
-	    "" >> $(WARNING_FILE) ; \
-	fi
-	@if [ ! -r "$(INSTALL_MSSDK)" ]; then \
-	  $(ECHO) "ERROR: You do not have a valid INSTALL_MSSDK setting. \n" \
-	    "      Please check your access to \n" \
-	    "          $(INSTALL_MSSDK) \n" \
-	    "      and/or check your value of ALT_INSTALL_MSSDK. \n" \
-	    "" >> $(ERROR_FILE) ; \
-	fi
-endif
-
-######################################################
-# Check for existence of INSTALL_MSIVAL2 on windows
-######################################################
-sane-install-msival2_path:
-ifeq ($(PLATFORM), windows)
-	@if [ -z "$(INSTALL_MSIVAL2)" ]; then \
-	  $(ECHO) "WARNING: Your INSTALL_MSIVAL2 setting is empty.\n" \
-	    "        It is recommended to set ALT_INSTALL_MSIVAL2.\n" \
-	    "" >> $(WARNING_FILE) ; \
-	fi
-	@if [ ! -r "$(INSTALL_MSIVAL2)" ]; then \
-	  $(ECHO) "ERROR: You do not have a valid INSTALL_MSIVAL2 setting. \n" \
-	    "      Please check your access to \n" \
-	    "          $(INSTALL_MSIVAL2) \n" \
-	    "      and/or check your value of ALT_INSTALL_MSIVAL2. \n" \
-	    "" >> $(ERROR_FILE) ; \
-	fi
-endif
-
-######################################################
 # Check the Solaris GNU c++ compiler for solaris plugin
 ######################################################
 sane-gcc-compiler:
