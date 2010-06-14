@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2009, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -40,22 +40,19 @@ CD        = cd
 CHMOD     = chmod
 CP        = cp
 CUT       = cut
+DIRNAME   = dirname
 ECHO      = echo
 EGREP     = egrep
 EXPAND    = expand
-EXPR      = expr
-KILL      = /usr/bin/kill
+FIND      = find
 MKDIR     = mkdir
-NOHUP     = nohup
 PWD       = pwd
 SED       = sed
-SLEEP     = sleep
 SORT      = sort
 TEE       = tee
 UNAME     = uname
 UNIQ      = uniq
 WC        = wc
-XHOST     = xhost
 ZIP       = zip
 
 # Get OS name from uname
@@ -76,57 +73,95 @@ endif
 ifeq ($(UNAME_S), Linux)
   OS_NAME     = linux
   OS_ARCH    := $(shell $(UNAME) -m)
+  # Check for unknown arch, try uname -p if uname -m says unknown
+  ifeq ($(OS_ARCH),unknown)
+    OS_ARCH    := $(shell $(UNAME) -p)
+  endif
   OS_VERSION := $(shell $(UNAME) -r)
 endif
-ifndef OS_NAME
-  ifneq ($(PROCESSOR_IDENTIFIER), )
-    OS_NAME = windows
-    SLASH_JAVA = J:
-    # A variety of ways to say X64 arch :^(
-    OS_ARCH:=$(word 1, $(PROCESSOR_IDENTIFIER))
-    EXESUFFIX = .exe
-    # These need to be different depending on MKS or CYGWIN
-    ifeq ($(findstring cygdrive,$(shell ($(CD) C:/ && $(PWD)))), )
-      GETMIXEDPATH  = dosname -s
-      OS_VERSION   := $(shell $(UNAME) -r)
-    else
-      GETMIXEDPATH  = cygpath -m -s
-      OS_VERSION   := $(shell $(UNAME) -s | $(CUT) -d'-' -f2)
-    endif
+ifeq ($(OS_NAME),)
+  OS_NAME = windows
+  # GNU Make or MKS overrides $(PROCESSOR_ARCHITECTURE) to always
+  # return "x86". Use the first word of $(PROCESSOR_IDENTIFIER) instead.
+  ifeq ($(PROCESSOR_IDENTIFIER),)
+    PROC_ARCH:=$(shell $(UNAME) -m)
+  else
+    PROC_ARCH:=$(word 1, $(PROCESSOR_IDENTIFIER))
+  endif
+  OS_ARCH:=$(PROC_ARCH)
+  SLASH_JAVA = J:
+  EXESUFFIX = .exe
+  # These need to be different depending on MKS or CYGWIN
+  ifeq ($(findstring cygdrive,$(shell ($(CD) C:/ && $(PWD)))), )
+    GETMIXEDPATH  = dosname -s
+    OS_VERSION   := $(shell $(UNAME) -r)
+  else
+    GETMIXEDPATH  = cygpath -m -s
+    OS_VERSION   := $(shell $(UNAME) -s | $(CUT) -d'-' -f2)
   endif
 endif
 
 # Only want major and minor numbers from os version
 OS_VERSION := $(shell $(ECHO) "$(OS_VERSION)" | $(CUT) -d'.' -f1,2)
 
-# Try and use names i586, x64, and ia64 consistently  
-OS_ARCH:=$(subst X64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst AMD64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst amd64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst x86_64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst EM64T,x64,$(OS_ARCH))
-OS_ARCH:=$(subst em64t,x64,$(OS_ARCH))
-OS_ARCH:=$(subst intel64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst Intel64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst INTEL64,x64,$(OS_ARCH))
-OS_ARCH:=$(subst IA64,ia64,$(OS_ARCH))
-OS_ARCH:=$(subst X86,i586,$(OS_ARCH))
-OS_ARCH:=$(subst x86,i586,$(OS_ARCH))
-OS_ARCH:=$(subst i386,i586,$(OS_ARCH))
-OS_ARCH:=$(subst i486,i586,$(OS_ARCH))
-OS_ARCH:=$(subst i686,i586,$(OS_ARCH))
+# Name to use for x86_64 arch (historically amd64, but should change someday)
+OS_ARCH_X64_NAME:=amd64
+#OS_ARCH_X64_NAME:=x64
 
-# Check for ARCH_DATA_MODEL, adjust OS_ARCH accordingly
+# Alternate arch names (in case this arch is known by a second name)
+#   PROBLEM_LISTS may use either name.
+OS_ARCH2-amd64:=x64
+#OS_ARCH2-x64:=amd64
+
+# Try and use the arch names consistently
+OS_ARCH:=$(patsubst x64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst X64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst AMD64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst amd64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst x86_64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst 8664,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst EM64T,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst em64t,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst intel64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst Intel64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst INTEL64,$(OS_ARCH_X64_NAME),$(OS_ARCH))
+OS_ARCH:=$(patsubst IA64,ia64,$(OS_ARCH))
+OS_ARCH:=$(patsubst X86,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst x86,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst i386,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst i486,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst i686,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst 386,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst 486,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst 586,i586,$(OS_ARCH))
+OS_ARCH:=$(patsubst 686,i586,$(OS_ARCH))
+
+# Default  ARCH_DATA_MODEL settings
+ARCH_DATA_MODEL-i586 = 32
+ARCH_DATA_MODEL-$(OS_ARCH_X64_NAME) = 64
+ARCH_DATA_MODEL-ia64 = 64
+ARCH_DATA_MODEL-sparc = 32
+ARCH_DATA_MODEL-sparcv9 = 64
+
+# If ARCH_DATA_MODEL is not defined, try and pick a reasonable default
+ifndef ARCH_DATA_MODEL
+  ARCH_DATA_MODEL:=$(ARCH_DATA_MODEL-$(OS_ARCH))
+endif
 ifndef ARCH_DATA_MODEL
   ARCH_DATA_MODEL=32
 endif
+
+# Platform directory name
+PLATFORM_OS = $(OS_NAME)-$(OS_ARCH)
+
+# Check ARCH_DATA_MODEL, adjust OS_ARCH accordingly on solaris
 ARCH_DATA_MODEL_ERROR= \
-  ARCH_DATA_MODEL=$(ARCH_DATA_MODEL) cannot be used with $(OS_NAME)-$(ARCH)
+  ARCH_DATA_MODEL=$(ARCH_DATA_MODEL) cannot be used with $(PLATFORM_OS)
 ifeq ($(ARCH_DATA_MODEL),64)
-  ifeq ($(OS_NAME)-$(OS_ARCH),solaris-i586)
-    OS_ARCH=x64
+  ifeq ($(PLATFORM_OS),solaris-i586)
+    OS_ARCH=$(OS_ARCH_X64_NAME)
   endif
-  ifeq ($(OS_NAME)-$(OS_ARCH),solaris-sparc)
+  ifeq ($(PLATFORM_OS),solaris-sparc)
     OS_ARCH=sparcv9
   endif
   ifeq ($(OS_ARCH),i586)
@@ -137,7 +172,7 @@ ifeq ($(ARCH_DATA_MODEL),64)
   endif
 else
   ifeq ($(ARCH_DATA_MODEL),32)
-    ifeq ($(OS_ARCH),x64)
+    ifeq ($(OS_ARCH),$(OS_ARCH_X64_NAME))
       x:=$(warning "WARNING: $(ARCH_DATA_MODEL_ERROR)")
     endif
     ifeq ($(OS_ARCH),ia64)
@@ -151,6 +186,12 @@ else
   endif
 endif
 
+# Alternate OS_ARCH name (defaults to OS_ARCH)
+OS_ARCH2:=$(OS_ARCH2-$(OS_ARCH))
+ifeq ($(OS_ARCH2),)
+  OS_ARCH2:=$(OS_ARCH)
+endif
+
 # Root of this test area (important to use full paths in some places)
 TEST_ROOT := $(shell $(PWD))
 
@@ -158,21 +199,21 @@ TEST_ROOT := $(shell $(PWD))
 ifdef ALT_OUTPUTDIR
   ABS_OUTPUTDIR = $(ALT_OUTPUTDIR)
 else
-  ABS_OUTPUTDIR = $(TEST_ROOT)/../build/$(OS_NAME)-$(OS_ARCH)
+  ABS_OUTPUTDIR = $(TEST_ROOT)/../build/$(PLATFORM_OS)
 endif
-ABS_BUILD_ROOT = $(ABS_OUTPUTDIR)
-ABS_TEST_OUTPUT_DIR := $(ABS_BUILD_ROOT)/testoutput/$(UNIQUE_DIR)
+ABS_PLATFORM_BUILD_ROOT = $(ABS_OUTPUTDIR)
+ABS_TEST_OUTPUT_DIR := $(ABS_PLATFORM_BUILD_ROOT)/testoutput/$(UNIQUE_DIR)
 
 # Expect JPRT to set PRODUCT_HOME (the product or jdk in this case to test)
 ifndef PRODUCT_HOME
   # Try to use j2sdk-image if it exists
-  ABS_JDK_IMAGE = $(ABS_BUILD_ROOT)/j2sdk-image
-  PRODUCT_HOME :=                       \
-    $(shell                             \
-      if [ -d $(ABS_JDK_IMAGE) ] ; then \
-         $(ECHO) "$(ABS_JDK_IMAGE)";    \
-       else                             \
-         $(ECHO) "$(ABS_BUILD_ROOT)";   \
+  ABS_JDK_IMAGE = $(ABS_PLATFORM_BUILD_ROOT)/j2sdk-image
+  PRODUCT_HOME :=                       		\
+    $(shell                             		\
+      if [ -d $(ABS_JDK_IMAGE) ] ; then 		\
+         $(ECHO) "$(ABS_JDK_IMAGE)";    		\
+       else                             		\
+         $(ECHO) "$(ABS_PLATFORM_BUILD_ROOT)";		\
        fi)
   PRODUCT_HOME := $(PRODUCT_HOME)
 endif
@@ -205,6 +246,11 @@ ifeq ($(OS_NAME),solaris)
   endif
 endif
 
+# Macro to run make and set the shared library permissions
+define SharedLibraryPermissions
+$(MAKE) SHARED_LIBRARY_DIR=$1 UNIQUE_DIR=$@ shared_library_permissions
+endef
+
 # Expect JPRT to set JPRT_ARCHIVE_BUNDLE (path to zip bundle for results)
 ARCHIVE_BUNDLE = $(ABS_TEST_OUTPUT_DIR)/ARCHIVE_BUNDLE.zip
 ifdef JPRT_ARCHIVE_BUNDLE
@@ -213,7 +259,7 @@ endif
 
 # How to create the test bundle (pass or fail, we want to create this)
 #   Follow command with ";$(BUNDLE_UP_AND_EXIT)", so it always gets executed.
-ZIP_UP_RESULTS = ( $(MKDIR) -p `dirname $(ARCHIVE_BUNDLE)`     \
+ZIP_UP_RESULTS = ( $(MKDIR) -p `$(DIRNAME) $(ARCHIVE_BUNDLE)`     \
 	           && $(CD) $(ABS_TEST_OUTPUT_DIR)             \
 	           && $(ZIP) -q -r $(ARCHIVE_BUNDLE) . )
 SUMMARY_TXT = $(shell $(GETMIXEDPATH) "$(ABS_TEST_OUTPUT_DIR)")/JTreport/text/summary.txt
@@ -261,7 +307,7 @@ BUNDLE_UP_AND_EXIT = \
     passc="`$(CAT) $(PASSLIST)    | $(WC) -l | $(AWK) '{print $$1;}'`"; \
     failc="`$(CAT) $(FAILLIST)    | $(WC) -l | $(AWK) '{print $$1;}'`"; \
     exclc="`$(CAT) $(EXCLUDELIST) | $(WC) -l | $(AWK) '{print $$1;}'`"; \
-    $(ECHO) "TEST STATS: name=$(UNIQUE_DIR) run=$${runc}  pass=$${passc}  fail=$${failc}  excluded=$${exclc}" \
+    $(ECHO) "TEST STATS: name=$(UNIQUE_DIR)  run=$${runc}  pass=$${passc}  fail=$${failc}  excluded=$${exclc}" \
       >> $(STATS_TXT); \
   else \
     $(ECHO) "Missing file: $${_summary}" >> $(STATS_TXT); \
@@ -280,7 +326,7 @@ all: jtreg_tests
 # Prep for output
 prep: clean
 	@$(MKDIR) -p $(ABS_TEST_OUTPUT_DIR)
-	@$(MKDIR) -p `dirname $(ARCHIVE_BUNDLE)`
+	@$(MKDIR) -p `$(DIRNAME) $(ARCHIVE_BUNDLE)`
 
 # Cleanup
 clean:
@@ -310,7 +356,8 @@ ifndef USE_JTREG_SAMEVM
 endif
 # With samevm, you cannot use -javaoptions?
 ifeq ($(USE_JTREG_SAMEVM),true)
-  EXTRA_JTREG_OPTIONS += -samevm $(JAVA_ARGS) $(JAVA_ARGS:%=-vmoption:%)
+  JTREG_SAMEVM_OPTION = -samevm
+  EXTRA_JTREG_OPTIONS += $(JTREG_SAMEVM_OPTION) $(JAVA_ARGS) $(JAVA_ARGS:%=-vmoption:%)
   JTREG_TEST_OPTIONS = $(JAVA_VM_ARGS:%=-vmoption:%)
 else
   JTREG_TEST_OPTIONS = $(JAVA_ARGS:%=-javaoptions:%) $(JAVA_VM_ARGS:%=-vmoption:%)
@@ -329,9 +376,11 @@ else
 $(EXCLUDELIST): $(PROBLEM_LISTS) $(TESTDIRS)
 	@$(RM) $@ $@.temp1 $@.temp2
 	@(($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- '$(OS_NAME)-all'          ) ;\
-	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- '$(OS_NAME)-$(OS_ARCH)'   ) ;\
+	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- '$(PLATFORM_OS)'          ) ;\
+	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- '$(OS_NAME)-$(OS_ARCH2)'  ) ;\
 	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- '$(OS_NAME)-$(OS_VERSION)') ;\
 	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- 'generic-$(OS_ARCH)'      ) ;\
+	  ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- 'generic-$(OS_ARCH2)'     ) ;\
           ($(CAT) $(PROBLEM_LISTS) | $(EGREP) -- 'generic-all'             ) ;\
           ($(ECHO) "#") ;\
         ) | $(SED) -e 's@^[\ ]*@@' \
@@ -468,6 +517,7 @@ jdk_security2: javax/crypto com/sun/crypto
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_security3
 jdk_security3: com/sun/security lib/security javax/security sun/security
+	$(call SharedLibraryPermissions,sun/security)
 	$(call RunOthervmBatch)
 
 # All security tests
@@ -499,6 +549,7 @@ jdk_tools1: com/sun/jdi
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_tools2
 jdk_tools2: com/sun/tools sun/jvmstat sun/tools tools vm 
+	$(call SharedLibraryPermissions,tools/launcher)
 	$(call RunOthervmBatch)
 
 # All tools tests
@@ -529,16 +580,22 @@ JTREG = $(JT_HOME)/win32/bin/jtreg
 JTREG_BASIC_OPTIONS += $(EXTRA_JTREG_OPTIONS)
 # Only run automatic tests
 JTREG_BASIC_OPTIONS += -a
+# Always turn on assertions
+JTREG_ASSERT_OPTION = -ea -esa
+JTREG_BASIC_OPTIONS += $(JTREG_ASSERT_OPTION)
 # Report details on all failed or error tests, times too
 JTREG_BASIC_OPTIONS += -v:fail,error,time
 # Retain all files for failing tests
 JTREG_BASIC_OPTIONS += -retain:fail,error
 # Ignore tests are not run and completely silent about it
-JTREG_BASIC_OPTIONS += -ignore:quiet
+JTREG_IGNORE_OPTION = -ignore:quiet
+JTREG_BASIC_OPTIONS += $(JTREG_IGNORE_OPTION)
 # Multiple by 4 the timeout numbers
-JTREG_BASIC_OPTIONS += -timeoutFactor:4
+JTREG_TIMEOUT_OPTION =  -timeoutFactor:4
+JTREG_BASIC_OPTIONS += $(JTREG_TIMEOUT_OPTION)
 # Boost the max memory for jtreg to avoid gc thrashing
-JTREG_BASIC_OPTIONS += -J-Xmx512m
+JTREG_MEMORY_OPTION = -J-Xmx512m
+JTREG_BASIC_OPTIONS += $(JTREG_MEMORY_OPTION)
 
 # Make sure jtreg exists
 $(JTREG): $(JT_HOME)
@@ -562,7 +619,26 @@ jtreg_tests: prep $(PRODUCT_HOME) $(JTREG) $(EXCLUDELIST)
 	  ) ; $(BUNDLE_UP_AND_EXIT)                                          \
 	) 2>&1 | $(TEE) $(ABS_TEST_OUTPUT_DIR)/output.txt ; $(TESTEXIT)
 
-PHONY_LIST += jtreg_tests
+# Rule that may change execute permissions on shared library files.
+#  Files in repositories should never have execute permissions, but there
+#  are some tests that have pre-built shared libraries, and these windows
+#  dll files must have execute permission. Adding execute permission
+#  may happen automatically on windows when using certain versions of mercurial
+#  but it cannot be guaranteed. And blindly adding execute permission might
+#  be seen as a mercurial 'change', so we avoid adding execute permission to
+#  repository files. But testing from a plain source tree needs the chmod a+rx.
+#  Used on select directories and applying the chmod to all shared libraries
+#  not just dll files. On windows, this may not work with MKS if the files
+#  were installed with CYGWIN unzip or untar (MKS chmod may not do anything).
+#  And with CYGWIN and sshd service, you may need CYGWIN=ntsec for this to work.
+#
+shared_library_permissions: $(SHARED_LIBRARY_DIR)
+	if [ ! -d $(TEST_ROOT)/../.hg ] ; then                          \
+	  $(FIND) $< \( -name \*.dll -o -name \*.DLL -o -name \*.so \)  \
+	        -exec $(CHMOD) a+rx {} \; ;                             \
+        fi
+
+PHONY_LIST += jtreg_tests shared_library_permissions
 
 ################################################################
 

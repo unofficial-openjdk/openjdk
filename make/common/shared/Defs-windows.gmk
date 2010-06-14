@@ -502,36 +502,9 @@ else
   endif
 endif
 
-# DEPLOY_MSSDK: Microsoft SDK for this platform (for deploy)
-ifdef ALT_DEPLOY_MSSDK
-  xALT_DEPLOY_MSSDK :="$(subst \,/,$(ALT_DEPLOY_MSSDK))"
-  DEPLOY_MSSDK      :=$(call FullPath,$(xALT_DEPLOY_MSSDK))
-else
-  DEPLOY_MSSDK      :=$(_ms_sdk)
-endif
-DEPLOY_MSSDK:=$(call AltCheckSpaces,DEPLOY_MSSDK)
-
-# INSTALL_MSSDK: Microsoft Installer SDK for this platform (for install)
-ifdef ALT_INSTALL_MSSDK
-  xALT_INSTALL_MSSDK :="$(subst \,/,$(ALT_INSTALL_MSSDK))"
-  INSTALL_MSSDK      :=$(call FullPath,$(xALT_INSTALL_MSSDK))
-else
-  INSTALL_MSSDK      :=$(_psdk)
-endif
-INSTALL_MSSDK:=$(call AltCheckSpaces,INSTALL_MSSDK)
-
-# INSTALL_MSIVAL2: Installation of MsiVal2 for this platform (for install)
-ifdef ALT_INSTALL_MSIVAL2
-  xALT_INSTALL_MSIVAL2 :="$(subst \,/,$(ALT_INSTALL_MSIVAL2))"
-  INSTALL_MSIVAL2      :=$(call FullPath,$(xALT_INSTALL_MSIVAL2))
-else
-  INSTALL_MSIVAL2      :=$(_program_files)/MsiVal2
-endif
-INSTALL_MSIVAL2:=$(call AltCheckSpaces,INSTALL_MSIVAL2)
-
 # Windows 32bit only
 ifeq ($(ARCH_DATA_MODEL), 32)
-  
+
   # UNICOWS_DLL_PATH: path to Microsoft Layer for Unicode DLL library
   ifdef ALT_UNICOWS_DLL_PATH
     xALT_UNICOWS_DLL_PATH :="$(subst \,/,$(ALT_UNICOWS_DLL_PATH))"
@@ -544,7 +517,7 @@ ifeq ($(ARCH_DATA_MODEL), 32)
   endif
   UNICOWS_DLL_PATH:=$(call AltCheckSpaces,UNICOWS_DLL_PATH)
   UNICOWS_DLL_PATH:=$(call AltCheckValue,UNICOWS_DLL_PATH)
-  
+
   # UNICOWS_LIB_PATH: path to Microsoft Layer for Unicode LIB library
   ifdef ALT_UNICOWS_LIB_PATH
     xALT_UNICOWS_LIB_PATH :="$(subst \,/,$(ALT_UNICOWS_LIB_PATH))"
@@ -559,72 +532,6 @@ ifeq ($(ARCH_DATA_MODEL), 32)
   UNICOWS_LIB_PATH:=$(call AltCheckValue,UNICOWS_LIB_PATH)
 
 endif
-
-# WSCRIPT: path to wscript.exe (used in creating install bundles)
-ifdef ALT_WSCRIPT
-  xALT_WSCRIPT :="$(subst \,/,$(ALT_WSCRIPT))"
-  WSCRIPT  =$(xALT_WSCRIPT)
-else
-  _WSCRIPT1 :=$(_system_root)/system32/wscript.exe
-  _WSCRIPT2 :=$(DEVTOOLS_PATH)wscript.exe
-  WSCRIPT  :=$(call FileExists,$(_WSCRIPT1),$(_WSCRIPT2))
-endif
-WSCRIPT:=$(call AltCheckSpaces,WSCRIPT)
-
-# CSCRIPT: path to cscript.exe (used in creating install bundles)
-ifdef ALT_CSCRIPT
-  xALT_CSCRIPT :="$(subst \,/,$(ALT_CSCRIPT))"
-  CSCRIPT  =$(xALT_CSCRIPT)
-else
-  _CSCRIPT1 :=$(_system_root)/system32/cscript.exe
-  _CSCRIPT2 :=$(DEVTOOLS_PATH)cscript.exe
-  CSCRIPT  :=$(call FileExists,$(_CSCRIPT1),$(_CSCRIPT2))
-endif
-CSCRIPT:=$(call AltCheckSpaces,CSCRIPT)
-
-# MSIVAL2: path to msival2.exe (used in validating install msi files)
-ifdef ALT_MSIVAL2
-  xALT_MSIVAL2 :="$(subst \,/,$(ALT_MSIVAL2))"
-  MSIVAL2  =$(xALT_MSIVAL2)
-else
-  _MSIVAL2_1 :=$(INSTALL_MSIVAL2)/msival2.exe
-  _MSIVAL2_2 :=$(DEVTOOLS_PATH)msival2.exe
-  MSIVAL2    :=$(call FileExists,$(_MSIVAL2_1),$(_MSIVAL2_2))
-endif
-MSIVAL2:=$(call AltCheckSpaces,MSIVAL2)
-
-# LOGOCUB: path to cub file for (used in validating install msi files)
-ifdef ALT_LOGOCUB
-  xALT_LOGOCUB :="$(subst \,/,$(ALT_LOGOCUB))"
-  LOGOCUB  =$(xALT_LOGOCUB)
-else
-  _LOGOCUB1 :=$(INSTALL_MSIVAL2)/logo.cub
-  _LOGOCUB2 :=$(DEVTOOLS_PATH)logo.cub
-  LOGOCUB   :=$(call FileExists,$(_LOGOCUB1),$(_LOGOCUB2))
-endif
-LOGOCUB:=$(call AltCheckSpaces,LOGOCUB)
-
-# MSITRAN: path to msitran.exe (used in creating install bundles and sponsors)
-ifdef ALT_MSITRAN
-  xALT_MSITRAN :="$(subst \,/,$(ALT_MSITRAN))"
-  MSITRAN  =$(xALT_MSITRAN)
-else
-  _MSITRAN1 :=$(INSTALL_MSSDK)/Bin/msitran.exe
-  _MSITRAN2 :=$(DEVTOOLS_PATH)msitran.exe
-  MSITRAN   :=$(call FileExists,$(_MSITRAN1),$(_MSITRAN2))
-endif
-MSITRAN:=$(call AltCheckSpaces,MSITRAN)
-
-# MSICERT: path to msicert.exe (used in creating install bundles)
-ifdef ALT_MSICERT
-  xALT_MSICERT :="$(subst \,/,$(ALT_MSICERT))"
-  MSICERT  =$(xALT_MSICERT)
-else
-  _MSICERT1 :=$(INSTALL_MSSDK)/Bin/msicert.exe
-  _MSICERT2 :=$(DEVTOOLS_PATH)msicert.exe
-  MSICERT   :=$(call FileExists,$(_MSICERT1),$(_MSICERT2))
-endif
-MSICERT:=$(call AltCheckSpaces,MSICERT)
 
 # Import JDK images allow for partial builds, components not built are
 #    imported (or copied from) these import areas when needed.
