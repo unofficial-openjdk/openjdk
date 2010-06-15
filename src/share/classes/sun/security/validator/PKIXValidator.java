@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public final class PKIXValidator extends Validator {
     private int certPathLength = -1;
 
     // needed only for the validator
-    private Map<X500Principal, X509Certificate> trustedSubjects;
+    private Map<X500Principal, List<PublicKey>> trustedSubjects;
     private CertificateFactory factory;
 
     private boolean plugin = false;
@@ -95,9 +95,17 @@ public final class PKIXValidator extends Validator {
         if (TRY_VALIDATOR == false) {
             return;
         }
-        trustedSubjects = new HashMap<X500Principal, X509Certificate>();
+        trustedSubjects = new HashMap<X500Principal, List<PublicKey>>();
         for (X509Certificate cert : trustedCerts) {
-            trustedSubjects.put(cert.getSubjectX500Principal(), cert);
+            X500Principal dn = cert.getSubjectX500Principal();
+            List<PublicKey> keys;
+            if (trustedSubjects.containsKey(dn)) {
+                keys = trustedSubjects.get(dn);
+            } else {
+                keys = new ArrayList<PublicKey>();
+                trustedSubjects.put(dn, keys);
+            }
+            keys.add(cert.getPublicKey());
         }
         try {
             factory = CertificateFactory.getInstance("X.509");
@@ -152,11 +160,22 @@ public final class PKIXValidator extends Validator {
         if (TRY_VALIDATOR) {
             // check if chain contains trust anchor
             for (int i = 0; i < chain.length; i++) {
-                if (trustedCerts.contains(chain[i])) {
+                X500Principal dn = chain[i].getSubjectX500Principal();
+
+                // Check if chain[i] is already trusted. It may be inside
+                // trustedCerts, or has the same dn and public key as a cert
+                // inside trustedCerts. The latter happens when a CA has
+                // updated its cert with a stronger signature algorithm in JRE
+                // but the weak one is still in circulation.
+
+                if (trustedCerts.contains(chain[i]) ||          // trusted cert
+                        (trustedSubjects.containsKey(dn) &&     // replacing ...
+                         trustedSubjects.get(dn).contains(      // ... weak cert
+                                chain[i].getPublicKey()))) {
                     if (i == 0) {
                         return new X509Certificate[] {chain[0]};
                     }
-                    // Remove and call validator
+                    // Remove and call validator on partial chain [0 .. i-1]
                     X509Certificate[] newChain = new X509Certificate[i];
                     System.arraycopy(chain, 0, newChain, 0, i);
                     return doValidate(newChain);
@@ -205,14 +224,17 @@ public final class PKIXValidator extends Validator {
         return doBuild(chain, otherCerts);
     }
 
-    private boolean isSignatureValid(X509Certificate iss, X509Certificate sub) {
+    private boolean isSignatureValid(List<PublicKey> keys, X509Certificate sub) {
         if (plugin) {
-            try {
-                sub.verify(iss.getPublicKey());
-            } catch (Exception ex) {
-                return false;
+            for (PublicKey key: keys) {
+                try {
+                    sub.verify(key);
+                    return true;
+                } catch (Exception ex) {
+                    continue;
+                }
             }
-            return true;
+            return false;
         }
         return true; // only check if PLUGIN is set
     }
