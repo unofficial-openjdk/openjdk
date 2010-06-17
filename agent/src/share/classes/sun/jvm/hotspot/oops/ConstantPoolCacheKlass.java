@@ -58,5 +58,3 @@ public class ConstantPoolCacheKlass extends Klass {
 
   private static long headerSize;
 }
-
-
