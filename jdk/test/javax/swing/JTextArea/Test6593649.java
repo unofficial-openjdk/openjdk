@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /* @test
@@ -30,60 +30,50 @@
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class Test6593649 extends JFrame {
-  static JTextArea txt;
-  static JPanel innerPanel;
+public class Test6593649 {
+    private static JFrame frame;
 
-  public Test6593649(Dimension d)
-  {
-    super("Word Wrap Testcase");
+    private static JTextArea textArea;
 
-    setSize(d);
+    private static final Timer timer = new Timer(1000, new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+            boolean failed = !textArea.getParent().getSize().equals(textArea.getSize());
 
-    final Container contentPane = getContentPane();
+            frame.dispose();
 
-    innerPanel = new JPanel();
-    innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
+            if (failed) {
+                throw new RuntimeException("The test failed");
+            }
+        }
+    });
 
-    txt = new JTextArea("This is a long line that should wrap, but doesn't...");
-    txt.setLineWrap(true);
-    txt.setWrapStyleWord(true);
+    public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+                frame = new JFrame();
 
-    innerPanel.add(txt);
+                frame.setSize(200, 100);
 
-    contentPane.add(innerPanel, BorderLayout.SOUTH);
-  }
+                textArea = new JTextArea("This is a long line that should wrap, but doesn't...");
 
-  public static void main(String[] args) throws InterruptedException
-  {
-    int size = 100;
-    Dimension d;
-    Test6593649 cp;
-    Dimension txtSize;
-    Dimension innerSize;
-    Dimension cpSize;
+                textArea.setLineWrap(true);
+                textArea.setWrapStyleWord(true);
 
-    while (size <= 600)
-    {
-      d = new Dimension(size, size);
-      cp = new Test6593649(d);
-      cp.setVisible(true);
+                JPanel innerPanel = new JPanel();
 
-      txtSize = txt.getPreferredSize();
-      innerSize = innerPanel.getPreferredSize();
-      cpSize = cp.getSize();
+                innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.LINE_AXIS));
+                innerPanel.add(textArea);
 
-      if (!(txtSize.getWidth() == innerPanel.getWidth() && txtSize.getHeight() == innerPanel.getHeight() &&
-           txtSize.getWidth() <= cpSize.getWidth() && txtSize.getHeight() <= cpSize.getHeight()))
-      {
-        throw new RuntimeException("Test failed: Text area size does not properly match panel and frame sizes");
-      }
+                frame.getContentPane().add(innerPanel, BorderLayout.SOUTH);
 
-      Thread.sleep(2000);
+                frame.setVisible(true);
 
-      cp.hide();
-      size += 50;
+                timer.setRepeats(false);
+                timer.start();
+            }
+        });
     }
-  }
 }

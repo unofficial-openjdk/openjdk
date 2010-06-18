@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,9 +17,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -51,10 +51,7 @@ class StubGenerator: public StubCodeGenerator {
     // Set up the stack if necessary
     bool stack_needs_teardown = false;
     if (stack->needs_setup()) {
-      size_t stack_used = thread->stack_base() - (address) &stack_used;
-      size_t stack_free = thread->stack_size() - stack_used;
-      size_t zero_stack_size = align_size_down(stack_free / 2, wordSize);
-
+      size_t zero_stack_size = stack->suggest_size(thread);
       stack->setup(alloca(zero_stack_size), zero_stack_size);
       stack_needs_teardown = true;
     }

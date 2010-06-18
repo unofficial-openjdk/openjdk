@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.comp;
@@ -677,6 +677,19 @@ public class Check {
         }
     }
 
+    /**
+     * Check that vararg method call is sound
+     * @param pos Position to be used for error reporting.
+     * @param argtypes Actual arguments supplied to vararg method.
+     */
+    void checkVararg(DiagnosticPosition pos, List<Type> argtypes) {
+        Type argtype = argtypes.last();
+        if (!types.isReifiable(argtype))
+            warnUnchecked(pos,
+                              "unchecked.generic.array.creation",
+                              argtype);
+    }
+
     /** Check that given modifiers are legal for given symbol and
      *  return modifiers together with any implicit modififiers for that symbol.
      *  Warning: we can't use flags() here since this method
@@ -873,6 +886,7 @@ public class Check {
     void checkRaw(JCTree tree, Env<AttrContext> env) {
         if (lint.isEnabled(Lint.LintCategory.RAW) &&
             tree.type.tag == CLASS &&
+            !TreeInfo.isDiamond(tree) &&
             !env.enclClass.name.isEmpty() &&  //anonymous or intersection
             tree.type.isRaw()) {
             log.warning(tree.pos(), "raw.class.use", tree.type, tree.type.tsym.type);
@@ -902,7 +916,7 @@ public class Check {
                 List<Type> actuals = tree.type.allparams();
                 List<JCExpression> args = tree.arguments;
                 List<Type> forms = tree.type.tsym.type.getTypeArguments();
-                ListBuffer<TypeVar> tvars_buf = new ListBuffer<TypeVar>();
+                ListBuffer<Type> tvars_buf = new ListBuffer<Type>();
 
                 // For matching pairs of actual argument types `a' and
                 // formal type parameters with declared bound `b' ...
@@ -933,12 +947,15 @@ public class Check {
                 }
 
                 args = tree.arguments;
-                List<TypeVar> tvars = tvars_buf.toList();
+                List<Type> tvars = tvars_buf.toList();
 
                 while (args.nonEmpty() && tvars.nonEmpty()) {
+                    Type actual = types.subst(args.head.type,
+                        tree.type.tsym.type.getTypeArguments(),
+                        tvars_buf.toList());
                     checkExtends(args.head.pos(),
-                                 args.head.type,
-                                 tvars.head);
+                                 actual,
+                                 (TypeVar)tvars.head);
                     args = args.tail;
                     tvars = tvars.tail;
                 }

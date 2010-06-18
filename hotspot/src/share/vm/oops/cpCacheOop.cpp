@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -218,18 +218,19 @@ void ConstantPoolCacheEntry::set_interface_call(methodHandle method, int index) 
 }
 
 
-void ConstantPoolCacheEntry::set_dynamic_call(Handle call_site, int extra_data) {
-  methodOop method = (methodOop) java_dyn_CallSite::vmmethod(call_site());
-  assert(method->is_method(), "must be initialized properly");
-  int param_size = method->size_of_parameters();
+void ConstantPoolCacheEntry::set_dynamic_call(Handle call_site,
+                                              methodHandle signature_invoker) {
+  int param_size = signature_invoker->size_of_parameters();
   assert(param_size >= 1, "method argument size must include MH.this");
   param_size -= 1;              // do not count MH.this; it is not stacked for invokedynamic
   if (Atomic::cmpxchg_ptr(call_site(), &_f1, NULL) == NULL) {
     // racing threads might be trying to install their own favorites
     set_f1(call_site());
   }
-  set_f2(extra_data);
-  set_flags(as_flags(as_TosState(method->result_type()), method->is_final_method(), false, false, false, true) | param_size);
+  //set_f2(0);
+  bool is_final = true;
+  assert(signature_invoker->is_final_method(), "is_final");
+  set_flags(as_flags(as_TosState(signature_invoker->result_type()), is_final, false, false, false, true) | param_size);
   // do not do set_bytecode on a secondary CP cache entry
   //set_bytecode_1(Bytecodes::_invokedynamic);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -2867,12 +2867,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
 #endif // _LP64
 
-  // MethodHandles code does not support TaggedStackInterpreter.
-  if (EnableMethodHandles && TaggedStackInterpreter) {
-    warning("TaggedStackInterpreter is not supported by MethodHandles code.  Disabling TaggedStackInterpreter.");
-    TaggedStackInterpreter = false;
-  }
-
   // Check the GC selections again.
   if (!check_gc_consistency()) {
     return JNI_EINVAL;
@@ -2914,11 +2908,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   FLAG_SET_DEFAULT(UseBiasedLocking, false);
   LP64_ONLY(FLAG_SET_DEFAULT(UseCompressedOops, false));
 #endif // CC_INTERP
-
-#ifdef ZERO
-  // Clear flags not supported by Zero
-  FLAG_SET_DEFAULT(TaggedStackInterpreter, false);
-#endif // ZERO
 
 #ifdef COMPILER2
   if (!UseBiasedLocking || EmitSync != 0) {

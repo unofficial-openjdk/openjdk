@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,9 +17,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -288,7 +288,7 @@ static void current_stack_region(address *bottom, size_t *size) {
       vm_exit_out_of_memory(0, "pthread_getattr_np");
     }
     else {
-      fatal1("pthread_getattr_np failed with errno = %d", res);
+      fatal(err_msg("pthread_getattr_np failed with errno = %d", res));
     }
   }
 
@@ -296,7 +296,7 @@ static void current_stack_region(address *bottom, size_t *size) {
   size_t stack_bytes;
   res = pthread_attr_getstack(&attr, (void **) &stack_bottom, &stack_bytes);
   if (res != 0) {
-    fatal1("pthread_attr_getstack failed with errno = %d", res);
+    fatal(err_msg("pthread_attr_getstack failed with errno = %d", res));
   }
   address stack_top = stack_bottom + stack_bytes;
 
@@ -308,7 +308,7 @@ static void current_stack_region(address *bottom, size_t *size) {
   size_t guard_bytes;
   res = pthread_attr_getguardsize(&attr, &guard_bytes);
   if (res != 0) {
-    fatal1("pthread_attr_getguardsize failed with errno = %d", res);
+    fatal(err_msg("pthread_attr_getguardsize failed with errno = %d", res));
   }
   int guard_pages = align_size_up(guard_bytes, page_bytes) / page_bytes;
   assert(guard_bytes == guard_pages * page_bytes, "unaligned guard");

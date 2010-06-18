@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -326,6 +326,10 @@ class CommandLineFlags {
    * been re-added (see 6401008) */                                         \
   product(bool, UseMembar, false,                                           \
           "(Unstable) Issues membars on thread state transitions")          \
+                                                                            \
+  /* Temporary: See 6948537 */                                             \
+  experimental(bool, UseMemSetInBOT, true,                                  \
+          "(Unstable) uses memset in BOT updates in GC code")               \
                                                                             \
   diagnostic(bool, UnlockDiagnosticVMOptions, trueInDebug,                  \
           "Enable normal processing of flags relating to field diagnostics")\
@@ -651,6 +655,11 @@ class CommandLineFlags {
                                                                             \
   product(bool, PrintGCApplicationStoppedTime, false,                       \
           "Print the time the application has been stopped")                \
+                                                                            \
+  notproduct(uintx, ErrorHandlerTest, 0,                                    \
+          "If > 0, provokes an error after VM initialization; the value"    \
+          "determines which error to provoke.  See test_error_handler()"    \
+          "in debug.cpp.")                                                  \
                                                                             \
   develop(bool, Verbose, false,                                             \
           "Prints additional debugging information from other modes")       \
@@ -1293,6 +1302,10 @@ class CommandLineFlags {
           "A System.gc() request invokes a concurrent collection and "      \
           "also unloads classes during such a concurrent gc cycle "         \
           "(effective only when UseConcMarkSweepGC)")                       \
+                                                                            \
+  product(bool, GCLockerInvokesConcurrent, false,                           \
+          "The exit of a JNI CS necessitating a scavenge also"              \
+          " kicks off a bkgrd concurrent collection")                       \
                                                                             \
   develop(bool, UseCMSAdaptiveFreeLists, true,                              \
           "Use Adaptive Free Lists in the CMS generation")                  \
@@ -2751,6 +2764,9 @@ class CommandLineFlags {
   product(intx, NmethodSweepFraction, 4,                                    \
           "Number of invocations of sweeper to cover all nmethods")         \
                                                                             \
+  product(intx, NmethodSweepCheckInterval, 5,                               \
+          "Compilers wake up every n seconds to possibly sweep nmethods")   \
+                                                                            \
   notproduct(intx, MemProfilingInterval, 500,                               \
           "Time between each invocation of the MemProfiler")                \
                                                                             \
@@ -3496,9 +3512,6 @@ class CommandLineFlags {
                                                                             \
   develop(bool, TraceInvokeDynamic, false,                                  \
           "trace internal invoke dynamic operations")                       \
-                                                                            \
-  product(bool, TaggedStackInterpreter, false,                              \
-          "Insert tags in interpreter execution stack for oopmap generaion")\
                                                                             \
   diagnostic(bool, PauseAtStartup,      false,                              \
           "Causes the VM to pause at startup time and wait for the pause "  \

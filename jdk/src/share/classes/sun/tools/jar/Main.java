@@ -1,12 +1,12 @@
 /*
- * Copyright 1996-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package sun.tools.jar;
@@ -306,28 +306,28 @@ class Main {
             for (int i = 0; i < flags.length(); i++) {
                 switch (flags.charAt(i)) {
                 case 'c':
-                    if (xflag || tflag || uflag) {
+                    if (xflag || tflag || uflag || iflag) {
                         usageError();
                         return false;
                     }
                     cflag = true;
                     break;
                 case 'u':
-                    if (cflag || xflag || tflag) {
+                    if (cflag || xflag || tflag || iflag) {
                         usageError();
                         return false;
                     }
                     uflag = true;
                     break;
                 case 'x':
-                    if (cflag || uflag || tflag) {
+                    if (cflag || uflag || tflag || iflag) {
                         usageError();
                         return false;
                     }
                     xflag = true;
                     break;
                 case 't':
-                    if (cflag || uflag || xflag) {
+                    if (cflag || uflag || xflag || iflag) {
                         usageError();
                         return false;
                     }
@@ -349,6 +349,10 @@ class Main {
                     flag0 = true;
                     break;
                 case 'i':
+                    if (cflag || uflag || xflag || tflag) {
+                        usageError();
+                        return false;
+                    }
                     // do not increase the counter, files will contain rootjar
                     rootjar = args[count++];
                     iflag = true;

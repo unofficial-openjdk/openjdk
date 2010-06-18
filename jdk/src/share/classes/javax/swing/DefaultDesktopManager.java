@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,24 +18,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 
 package javax.swing;
 
-import java.awt.*;
-import java.beans.PropertyVetoException;
-import java.beans.PropertyChangeEvent;
-import javax.swing.border.Border;
-import java.awt.event.ComponentListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-
+import com.sun.awt.AWTUtilities;
 import sun.awt.AWTAccessor;
 import sun.awt.SunToolkit;
+
+import java.awt.*;
+import java.beans.PropertyVetoException;
 
 /** This is an implementation of the <code>DesktopManager</code>.
   * It currently implements the basic behaviors for managing
@@ -318,7 +314,10 @@ public class DefaultDesktopManager implements DesktopManager, java.io.Serializab
         dragMode = DEFAULT_DRAG_MODE;
         if (p != null) {
             String mode = (String)p.getClientProperty("JDesktopPane.dragMode");
-            if (mode != null && mode.equals("outline")) {
+            Window window = SwingUtilities.getWindowAncestor(f);
+            if (window != null && !AWTUtilities.isWindowOpaque(window)) {
+                dragMode = DEFAULT_DRAG_MODE;
+            } else if (mode != null && mode.equals("outline")) {
                 dragMode = OUTLINE_DRAG_MODE;
             } else if (mode != null && mode.equals("faster")
                     && f instanceof JInternalFrame

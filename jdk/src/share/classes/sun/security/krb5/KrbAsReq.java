@@ -1,12 +1,12 @@
 /*
- * Portions Copyright 2000-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /*
@@ -344,16 +344,13 @@ public class KrbAsReq extends KrbKdcReq {
         princName = cname;
 
         EncryptionKey key = null;
-        int[] tktETypes = null;
+        int[] tktETypes = EType.getDefaults("default_tkt_enctypes");
         if (pa_exists && pa_etype != EncryptedData.ETYPE_NULL) {
             if (DEBUG) {
                 System.out.println("Pre-Authenticaton: find key for etype = " + pa_etype);
             }
             key = EncryptionKey.findKey(pa_etype, keys);
-            tktETypes = new int[1];
-            tktETypes[0] = pa_etype;
         } else {
-            tktETypes = EType.getDefaults("default_tkt_enctypes", keys);
             key = EncryptionKey.findKey(tktETypes[0], keys);
         }
 

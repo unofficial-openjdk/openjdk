@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,9 +17,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -29,10 +29,10 @@
 
  public:
   // Method entries
-  static void normal_entry(methodOop method, intptr_t UNUSED, TRAPS);
-  static void native_entry(methodOop method, intptr_t UNUSED, TRAPS);
-  static void accessor_entry(methodOop method, intptr_t UNUSED, TRAPS);
-  static void empty_entry(methodOop method, intptr_t UNUSED, TRAPS);
+  static int normal_entry(methodOop method, intptr_t UNUSED, TRAPS);
+  static int native_entry(methodOop method, intptr_t UNUSED, TRAPS);
+  static int accessor_entry(methodOop method, intptr_t UNUSED, TRAPS);
+  static int empty_entry(methodOop method, intptr_t UNUSED, TRAPS);
 
  public:
   // Main loop of normal_entry

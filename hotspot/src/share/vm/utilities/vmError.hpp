@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -37,6 +37,7 @@ class VMError : public StackObj {
                              //                     0x8xxxxxxx system warnings
 
   const char * _message;
+  const char * _detail_msg;
 
   Thread *     _thread;      // NULL if it's native thread
 
@@ -75,16 +76,19 @@ class VMError : public StackObj {
                                 char* buf, int buflen, bool verbose = false);
 
   // accessor
-  const char* message()         { return _message; }
+  const char* message() const    { return _message; }
+  const char* detail_msg() const { return _detail_msg; }
 
 public:
   // Constructor for crashes
   VMError(Thread* thread, int sig, address pc, void* siginfo, void* context);
   // Constructor for VM internal errors
-  VMError(Thread* thread, const char* message, const char* filename, int lineno);
+  VMError(Thread* thread, const char* filename, int lineno,
+          const char* message, const char * detail_msg);
 
-  // Constructors for VM OOM errors
-  VMError(Thread* thread, size_t size, const char* message, const char* filename, int lineno);
+  // Constructor for VM OOM errors
+  VMError(Thread* thread, const char* filename, int lineno, size_t size,
+          const char* message);
   // Constructor for non-fatal errors
   VMError(const char* message);
 

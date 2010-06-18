@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package javax.swing.plaf.basic;
@@ -98,15 +98,18 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         private Cursor otherCursor = resizeCursor;
 
         public void mouseClicked(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             if (e.getClickCount() % 2 == 1 &&
-                    SwingUtilities.isLeftMouseButton(e)){
+                    SwingUtilities.isLeftMouseButton(e)) {
                 JTable table = header.getTable();
                 RowSorter sorter;
                 if (table != null && (sorter = table.getRowSorter()) != null) {
                     int columnIndex = header.columnAtPoint(e.getPoint());
                     if (columnIndex != -1) {
                         columnIndex = table.convertColumnIndexToModel(
-                                            columnIndex);
+                                columnIndex);
                         sorter.toggleSortOrder(columnIndex);
                     }
                 }
@@ -140,6 +143,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
 
         public void mousePressed(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             header.setDraggedColumn(null);
             header.setResizingColumn(null);
             header.setDraggedDistance(0);
@@ -182,6 +188,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
 
         public void mouseMoved(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             if (canResize(getResizingColumn(e.getPoint()), header) !=
                 (header.getCursor() == resizeCursor)) {
                 swapCursor();
@@ -190,6 +199,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
        }
 
         public void mouseDragged(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             int mouseX = e.getX();
 
             TableColumn resizingColumn  = header.getResizingColumn();
@@ -217,21 +229,23 @@ public class BasicTableHeaderUI extends TableHeaderUI {
                 if (0 <= newColumnIndex && newColumnIndex < cm.getColumnCount()) {
                     int width = cm.getColumn(newColumnIndex).getWidth();
                     if (Math.abs(draggedDistance) > (width / 2)) {
-                        JTable table = header.getTable();
 
                         mouseXOffset = mouseXOffset + direction * width;
                         header.setDraggedDistance(draggedDistance - direction * width);
 
                         //Cache the selected column.
-                        int selectedIndex = table.convertColumnIndexToModel(
-                                                        getSelectedColumnIndex());
+                        int selectedIndex =
+                                SwingUtilities2.convertColumnIndexToModel(
+                                        header.getColumnModel(),
+                                        getSelectedColumnIndex());
 
                         //Now do the move.
                         cm.moveColumn(columnIndex, newColumnIndex);
 
                         //Update the selected index.
                         selectColumn(
-                            table.convertColumnIndexToView(selectedIndex),
+                            SwingUtilities2.convertColumnIndexToView(
+                                    header.getColumnModel(), selectedIndex),
                             false);
 
                         return;
@@ -244,6 +258,9 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
 
         public void mouseReleased(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             setDraggedDistance(0, viewIndexForColumn(header.getDraggedColumn()));
 
             header.setResizingColumn(null);
@@ -253,10 +270,16 @@ public class BasicTableHeaderUI extends TableHeaderUI {
         }
 
         public void mouseEntered(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             updateRolloverColumn(e);
         }
 
         public void mouseExited(MouseEvent e) {
+            if (!header.isEnabled()) {
+                return;
+            }
             int oldRolloverColumn = rolloverColumn;
             rolloverColumn = -1;
             rolloverColumnUpdated(oldRolloverColumn, rolloverColumn);

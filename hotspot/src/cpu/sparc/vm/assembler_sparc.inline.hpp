@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -206,10 +206,15 @@ inline void Assembler::ld(  Register s1, RegisterOrConstant s2, Register d) { ld
 inline void Assembler::ldd( Register s1, RegisterOrConstant s2, Register d) { ldd( Address(s1, s2), d); }
 
 // form effective addresses this way:
-inline void Assembler::add(   Register s1, RegisterOrConstant s2, Register d, int offset) {
-  if (s2.is_register())  add(s1, s2.as_register(), d);
+inline void Assembler::add(Register s1, RegisterOrConstant s2, Register d, int offset) {
+  if (s2.is_register())  add(s1, s2.as_register(),          d);
   else                 { add(s1, s2.as_constant() + offset, d); offset = 0; }
   if (offset != 0)       add(d,  offset,                    d);
+}
+
+inline void Assembler::andn(Register s1, RegisterOrConstant s2, Register d) {
+  if (s2.is_register())  andn(s1, s2.as_register(), d);
+  else                   andn(s1, s2.as_constant(), d);
 }
 
 inline void Assembler::ldstub(  Register s1, Register s2, Register d) { emit_long( op(ldst_op) | rd(d) | op3(ldstub_op3) | rs1(s1) | rs2(s2) ); }
@@ -707,7 +712,7 @@ inline void MacroAssembler::set_oop_constant(jobject obj, Register d) {
 }
 
 
-inline void MacroAssembler::set_oop(AddressLiteral& obj_addr, Register d) {
+inline void MacroAssembler::set_oop(const AddressLiteral& obj_addr, Register d) {
   assert(obj_addr.rspec().type() == relocInfo::oop_type, "must be an oop reloc");
   set(obj_addr, d);
 }

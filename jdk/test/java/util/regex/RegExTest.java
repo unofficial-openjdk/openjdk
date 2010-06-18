@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /**
@@ -32,7 +32,7 @@
  * 4872664 4803179 4892980 4900747 4945394 4938995 4979006 4994840 4997476
  * 5013885 5003322 4988891 5098443 5110268 6173522 4829857 5027748 6376940
  * 6358731 6178785 6284152 6231989 6497148 6486934 6233084 6504326 6635133
- * 6350801 6676425 6878475 6919132 6931676
+ * 6350801 6676425 6878475 6919132 6931676 6948903
  */
 
 import java.util.regex.*;
@@ -135,7 +135,7 @@ public class RegExTest {
         surrogatesInClassTest();
         namedGroupCaptureTest();
         nonBmpClassComplementTest();
-
+        unicodePropertiesTest();
         if (failure)
             throw new RuntimeException("Failure in the RE handling.");
         else
@@ -3515,7 +3515,7 @@ public class RegExTest {
         report("NamedGroupCapture");
     }
 
-    // This is for bug 6919132
+    // This is for bug 6969132
     private static void nonBmpClassComplementTest() throws Exception {
         Pattern p = Pattern.compile("\\P{Lu}");
         Matcher m = p.matcher(new String(new int[] {0x1d400}, 0, 1));
@@ -3539,4 +3539,79 @@ public class RegExTest {
         report("NonBmpClassComplement");
     }
 
+    private static void unicodePropertiesTest() throws Exception {
+        // different forms
+        if (!Pattern.compile("\\p{IsLu}").matcher("A").matches() ||
+            !Pattern.compile("\\p{Lu}").matcher("A").matches() ||
+            !Pattern.compile("\\p{gc=Lu}").matcher("A").matches() ||
+            !Pattern.compile("\\p{general_category=Lu}").matcher("A").matches() ||
+            !Pattern.compile("\\p{IsLatin}").matcher("B").matches() ||
+            !Pattern.compile("\\p{sc=Latin}").matcher("B").matches() ||
+            !Pattern.compile("\\p{script=Latin}").matcher("B").matches() ||
+            !Pattern.compile("\\p{InBasicLatin}").matcher("c").matches() ||
+            !Pattern.compile("\\p{blk=BasicLatin}").matcher("c").matches() ||
+            !Pattern.compile("\\p{block=BasicLatin}").matcher("c").matches())
+            failCount++;
+
+        Matcher common  = Pattern.compile("\\p{script=Common}").matcher("");
+        Matcher unknown = Pattern.compile("\\p{IsUnknown}").matcher("");
+        Matcher lastSM  = common;
+        Character.UnicodeScript lastScript = Character.UnicodeScript.of(0);
+
+        Matcher latin  = Pattern.compile("\\p{block=basic_latin}").matcher("");
+        Matcher greek  = Pattern.compile("\\p{InGreek}").matcher("");
+        Matcher lastBM = latin;
+        Character.UnicodeBlock lastBlock = Character.UnicodeBlock.of(0);
+
+        for (int cp = 1; cp < Character.MAX_CODE_POINT; cp++) {
+            if (cp >= 0x30000 && (cp & 0x70) == 0){
+                continue;  // only pick couple code points, they are the same
+            }
+
+            // Unicode Script
+            Character.UnicodeScript script = Character.UnicodeScript.of(cp);
+            Matcher m;
+            String str = new String(Character.toChars(cp));
+            if (script == lastScript) {
+                 m = lastSM;
+                 m.reset(str);
+            } else {
+                 m  = Pattern.compile("\\p{Is" + script.name() + "}").matcher(str);
+            }
+            if (!m.matches()) {
+                failCount++;
+            }
+            Matcher other = (script == Character.UnicodeScript.COMMON)? unknown : common;
+            other.reset(str);
+            if (other.matches()) {
+                failCount++;
+            }
+            lastSM = m;
+            lastScript = script;
+
+            // Unicode Block
+            Character.UnicodeBlock block = Character.UnicodeBlock.of(cp);
+            if (block == null) {
+                //System.out.printf("Not a Block: cp=%x%n", cp);
+                continue;
+            }
+            if (block == lastBlock) {
+                 m = lastBM;
+                 m.reset(str);
+            } else {
+                 m  = Pattern.compile("\\p{block=" + block.toString() + "}").matcher(str);
+            }
+            if (!m.matches()) {
+                failCount++;
+            }
+            other = (block == Character.UnicodeBlock.BASIC_LATIN)? greek : latin;
+            other.reset(str);
+            if (other.matches()) {
+                failCount++;
+            }
+            lastBM = m;
+            lastBlock = block;
+        }
+        report("unicodeProperties");
+    }
 }

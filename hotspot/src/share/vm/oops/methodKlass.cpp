@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -236,8 +236,10 @@ void methodKlass::oop_print_on(oop obj, outputStream* st) {
   assert(obj->is_method(), "must be method");
   Klass::oop_print_on(obj, st);
   methodOop m = methodOop(obj);
+  // get the effect of PrintOopAddress, always, for methods:
+  st->print   (" - this oop:          "INTPTR_FORMAT, (intptr_t)m);
   st->print   (" - method holder:     ");    m->method_holder()->print_value_on(st); st->cr();
-  st->print   (" - constants:         " INTPTR_FORMAT, " ", (address)m->constants());
+  st->print   (" - constants:         "INTPTR_FORMAT" ", (address)m->constants());
   m->constants()->print_value_on(st); st->cr();
   st->print   (" - access:            0x%x  ", m->access_flags().as_int()); m->access_flags().print_on(st); st->cr();
   st->print   (" - name:              ");    m->name()->print_value_on(st); st->cr();
@@ -246,6 +248,10 @@ void methodKlass::oop_print_on(oop obj, outputStream* st) {
   st->print_cr(" - max locals:        %d",   m->max_locals());
   st->print_cr(" - size of params:    %d",   m->size_of_parameters());
   st->print_cr(" - method size:       %d",   m->method_size());
+  if (m->intrinsic_id() != vmIntrinsics::_none)
+    st->print_cr(" - intrinsic id:      %d %s", m->intrinsic_id(), vmIntrinsics::name_at(m->intrinsic_id()));
+  if (m->highest_tier_compile() != CompLevel_none)
+    st->print_cr(" - highest tier:      %d", m->highest_tier_compile());
   st->print_cr(" - vtable index:      %d",   m->_vtable_index);
   st->print_cr(" - i2i entry:         " INTPTR_FORMAT, m->interpreter_entry());
   st->print_cr(" - adapter:           " INTPTR_FORMAT, m->adapter());

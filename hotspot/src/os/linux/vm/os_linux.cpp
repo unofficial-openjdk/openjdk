@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -2305,7 +2305,7 @@ void linux_wrap_code(char* base, size_t size) {
     return;
   }
 
-  char buf[40];
+  char buf[PATH_MAX+1];
   int num = Atomic::add(1, &cnt);
 
   snprintf(buf, sizeof(buf), "%s/hs-vm-%d-%d",
@@ -2788,7 +2788,7 @@ char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
   }
 
   // attach to the region
-  addr = (char*)shmat(shmid, NULL, 0);
+  addr = (char*)shmat(shmid, req_addr, 0);
   int err = errno;
 
   // Remove shmid. If shmat() is successful, the actual shared memory segment
@@ -3495,7 +3495,8 @@ void os::Linux::set_signal_handler(int sig, bool set_installed) {
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal2("Encountered unexpected pre-existing sigaction handler %#lx for signal %d.", (long)oldhand, sig);
+      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
+                    "%#lx for signal %d.", (long)oldhand, sig));
     }
   }
 
@@ -3817,7 +3818,8 @@ void os::init(void) {
 
   Linux::set_page_size(sysconf(_SC_PAGESIZE));
   if (Linux::page_size() == -1) {
-    fatal1("os_linux.cpp: os::init: sysconf failed (%s)", strerror(errno));
+    fatal(err_msg("os_linux.cpp: os::init: sysconf failed (%s)",
+                  strerror(errno)));
   }
   init_page_sizes((size_t) Linux::page_size());
 

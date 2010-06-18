@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -47,7 +47,8 @@ ThreadCritical::ThreadCritical() {
     thread_t owner = thr_self();
     if (global_mut_owner != owner) {
       if (os::Solaris::mutex_lock(&global_mut))
-        fatal1("ThreadCritical::ThreadCritical: mutex_lock failed (%s)", strerror(errno));
+        fatal(err_msg("ThreadCritical::ThreadCritical: mutex_lock failed (%s)",
+                      strerror(errno)));
       assert(global_mut_count == 0, "must have clean count");
       assert(global_mut_owner == -1, "must have clean owner");
     }
@@ -66,7 +67,8 @@ ThreadCritical::~ThreadCritical() {
     if (global_mut_count == 0) {
       global_mut_owner = -1;
       if (os::Solaris::mutex_unlock(&global_mut))
-        fatal1("ThreadCritical::~ThreadCritical: mutex_unlock failed (%s)", strerror(errno));
+        fatal(err_msg("ThreadCritical::~ThreadCritical: mutex_unlock failed "
+                      "(%s)", strerror(errno)));
     }
   } else {
     assert (Threads::number_of_threads() == 0, "valid only during initialization");

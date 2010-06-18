@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -45,7 +45,9 @@ void* VtableStub::operator new(size_t size, int code_size) {
   if (_chunk == NULL || _chunk + real_size > _chunk_end) {
     const int bytes = chunk_factor * real_size + pd_code_alignment();
     BufferBlob* blob = BufferBlob::create("vtable chunks", bytes);
-    if( blob == NULL ) vm_exit_out_of_memory1(bytes, "CodeCache: no room for %s", "vtable chunks");
+    if (blob == NULL) {
+      vm_exit_out_of_memory(bytes, "CodeCache: no room for vtable chunks");
+    }
     _chunk = blob->instructions_begin();
     _chunk_end = _chunk + bytes;
     VTune::register_stub("vtable stub", _chunk, _chunk_end);
@@ -189,7 +191,9 @@ extern "C" void bad_compiled_vtable_index(JavaThread* thread, oop receiver, int 
   instanceKlass* ik = instanceKlass::cast(klass);
   klassVtable* vt = ik->vtable();
   klass->print();
-  fatal3("bad compiled vtable dispatch: receiver " INTPTR_FORMAT ", index %d (vtable length %d)", (address)receiver, index, vt->length());
+  fatal(err_msg("bad compiled vtable dispatch: receiver " INTPTR_FORMAT ", "
+                "index %d (vtable length %d)",
+                (address)receiver, index, vt->length()));
 }
 
 #endif // Product

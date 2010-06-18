@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package sun.awt;
@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 
 import sun.java2d.opengl.GLXGraphicsConfig;
+import sun.java2d.xr.XRGraphicsConfig;
 import sun.java2d.loops.SurfaceType;
 
 /**
@@ -152,6 +153,8 @@ public class X11GraphicsDevice
             }
 
             boolean glxSupported = X11GraphicsEnvironment.isGLXAvailable();
+            boolean xrenderSupported = X11GraphicsEnvironment.isXRenderAvailable();
+
             boolean dbeSupported = isDBESupported();
             if (dbeSupported && doubleBufferVisuals == null) {
                 doubleBufferVisuals = new HashSet();
@@ -167,9 +170,15 @@ public class X11GraphicsDevice
                     boolean doubleBuffer =
                         (dbeSupported &&
                          doubleBufferVisuals.contains(Integer.valueOf(visNum)));
-                    ret[i] = X11GraphicsConfig.getConfig(this, visNum, depth,
-                            getConfigColormap(i, screen),
-                            doubleBuffer);
+
+                    if (xrenderSupported) {
+                        ret[i] = XRGraphicsConfig.getConfig(this, visNum, depth,                                getConfigColormap(i, screen),
+                                doubleBuffer);
+                    } else {
+                       ret[i] = X11GraphicsConfig.getConfig(this, visNum, depth,
+                              getConfigColormap(i, screen),
+                              doubleBuffer);
+                    }
                 }
             }
             configs = ret;
@@ -243,9 +252,19 @@ public class X11GraphicsDevice
                     doubleBuffer =
                         doubleBufferVisuals.contains(Integer.valueOf(visNum));
                 }
-                defaultConfig = X11GraphicsConfig.getConfig(this, visNum,
-                                                            depth, getConfigColormap(0, screen),
-                                                            doubleBuffer);
+
+                if (X11GraphicsEnvironment.isXRenderAvailable()) {
+                    if (X11GraphicsEnvironment.isXRenderVerbose()) {
+                        System.out.println("XRender pipeline enabled");
+                    }
+                    defaultConfig = XRGraphicsConfig.getConfig(this, visNum,
+                            depth, getConfigColormap(0, screen),
+                            doubleBuffer);
+                } else {
+                    defaultConfig = X11GraphicsConfig.getConfig(this, visNum,
+                                        depth, getConfigColormap(0, screen),
+                                        doubleBuffer);
+                }
             }
         }
     }

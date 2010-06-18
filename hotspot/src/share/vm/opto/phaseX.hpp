@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -310,7 +310,7 @@ public:
   void dump_nodes_and_types_recur( const Node *n, uint depth, bool only_ctrl, VectorSet &visited);
 
   uint   _count_progress;       // For profiling, count transforms that make progress
-  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification") }
+  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification"); }
   void   clear_progress()      { _count_progress = 0; }
   uint   made_progress() const { return _count_progress; }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -807,7 +807,7 @@ void GenerateOopMap::set_var(int localNo, CellTypeState cts) {
 }
 
 CellTypeState GenerateOopMap::get_var(int localNo) {
-  assert(localNo < _max_locals + _nof_refval_conflicts, "variable read error")
+  assert(localNo < _max_locals + _nof_refval_conflicts, "variable read error");
   if (localNo < 0 || localNo > _max_locals) {
     verify_error("variable read error: r%d", localNo);
     return valCTS; // just to pick something;

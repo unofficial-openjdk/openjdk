@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -525,11 +525,16 @@ class methodOopDesc : public oopDesc {
 
   // JSR 292 support
   bool is_method_handle_invoke() const              { return access_flags().is_method_handle_invoke(); }
+  static bool is_method_handle_invoke_name(vmSymbols::SID name_sid);
+  static bool is_method_handle_invoke_name(symbolOop name) {
+    return is_method_handle_invoke_name(vmSymbols::find_sid(name));
+  }
   // Tests if this method is an internal adapter frame from the
   // MethodHandleCompiler.
   bool is_method_handle_adapter() const;
   static methodHandle make_invoke_method(KlassHandle holder,
-                                         symbolHandle signature,
+                                         symbolHandle name, //invokeExact or invokeGeneric
+                                         symbolHandle signature, //anything at all
                                          Handle method_type,
                                          TRAPS);
   // these operate only on invoke methods:

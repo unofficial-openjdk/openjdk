@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -103,7 +103,7 @@ void ciObjectFactory::init_shared_objects() {
     for (i = vmSymbols::FIRST_SID; i < vmSymbols::SID_LIMIT; i++) {
       symbolHandle sym_handle = vmSymbolHandles::symbol_handle_at((vmSymbols::SID) i);
       assert(vmSymbols::find_sid(sym_handle()) == i, "1-1 mapping");
-      ciSymbol* sym = new (_arena) ciSymbol(sym_handle);
+      ciSymbol* sym = new (_arena) ciSymbol(sym_handle, (vmSymbols::SID) i);
       init_ident_of(sym);
       _shared_ci_symbols[i] = sym;
     }
@@ -273,7 +273,8 @@ ciObject* ciObjectFactory::create_new_object(oop o) {
 
   if (o->is_symbol()) {
     symbolHandle h_o(THREAD, (symbolOop)o);
-    return new (arena()) ciSymbol(h_o);
+    assert(vmSymbols::find_sid(h_o()) == vmSymbols::NO_SID, "");
+    return new (arena()) ciSymbol(h_o, vmSymbols::NO_SID);
   } else if (o->is_klass()) {
     KlassHandle h_k(THREAD, (klassOop)o);
     Klass* k = ((klassOop)o)->klass_part();

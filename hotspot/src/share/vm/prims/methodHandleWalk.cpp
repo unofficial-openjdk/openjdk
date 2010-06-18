@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -1173,9 +1173,9 @@ methodHandle MethodHandleCompiler::get_method_oop(TRAPS) const {
   // has no receiver, normal MH calls do.
   int flags_bits;
   if (for_invokedynamic())
-    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_STATIC);
+    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_SYNTHETIC | JVM_ACC_STATIC);
   else
-    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL);
+    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_SYNTHETIC);
 
   bool is_conc_safe = true;
   methodOop m_oop = oopFactory::new_method(bytecode_length(),
@@ -1217,6 +1217,7 @@ methodHandle MethodHandleCompiler::get_method_oop(TRAPS) const {
   }
 #endif //PRODUCT
 
+  assert(m->is_method_handle_adapter(), "must be recognized as an adapter");
   return m;
 }
 

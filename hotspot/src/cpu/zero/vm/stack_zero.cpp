@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,14 +17,19 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_stack_zero.cpp.incl"
+
+int ZeroStack::suggest_size(Thread *thread) const {
+  assert(needs_setup(), "already set up");
+  return align_size_down(abi_stack_available(thread) / 2, wordSize);
+}
 
 void ZeroStack::handle_overflow(TRAPS) {
   JavaThread *thread = (JavaThread *) THREAD;
@@ -32,6 +37,7 @@ void ZeroStack::handle_overflow(TRAPS) {
   // Set up the frame anchor if it isn't already
   bool has_last_Java_frame = thread->has_last_Java_frame();
   if (!has_last_Java_frame) {
+    intptr_t *sp = thread->zero_stack()->sp();
     ZeroFrame *frame = thread->top_zero_frame();
     while (frame) {
       if (frame->is_shark_frame())
@@ -44,13 +50,14 @@ void ZeroStack::handle_overflow(TRAPS) {
           break;
       }
 
+      sp = ((intptr_t *) frame) + 1;
       frame = frame->next();
     }
 
     if (frame == NULL)
       fatal("unrecoverable stack overflow");
 
-    thread->set_last_Java_frame(frame);
+    thread->set_last_Java_frame(frame, sp);
   }
 
   // Throw the exception
@@ -71,3 +78,9 @@ void ZeroStack::handle_overflow(TRAPS) {
   if (!has_last_Java_frame)
     thread->reset_last_Java_frame();
 }
+
+#ifndef PRODUCT
+void ZeroStack::zap(int c) {
+  memset(_base, c, available_words() * wordSize);
+}
+#endif // PRODUCT
