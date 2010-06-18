@@ -381,8 +381,7 @@ public class Main {
                          classnames.toList(),
                          processors);
 
-            if (comp.errorCount() != 0 ||
-                options.get("-Werror") != null && comp.warningCount() != 0)
+            if (comp.errorCount() != 0)
                 return EXIT_ERROR;
         } catch (IOException ex) {
             ioMessage(ex);
