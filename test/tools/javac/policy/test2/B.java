@@ -21,19 +21,7 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6734819
- * @summary Javac performs flows analysis on already translated classes
- * @author Maurizio Cimadamore
- *
- * @compile/ref=T6734819a.out -XDrawDiagnostics -Xlint:all -XDverboseCompilePolicy T6734819a.java
- */
-class Y extends W {}
-class W extends Z {}
-
-class Z {
-    void m(Z z) {
-        W w = (W)z;
+class B {
+    static class Inner {
     }
 }
