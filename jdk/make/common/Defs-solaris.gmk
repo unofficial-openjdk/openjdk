@@ -1,12 +1,12 @@
 #
-# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -639,21 +639,8 @@ AWT_RUNPATH = -R/usr/dt/lib$(ISA_DIR) -R$(OPENWIN_RUNTIME_LIB)
 #    in general this is ok to continue to do.
 LIBCXX = /usr/lib$(ISA_DIR)/libCrun.so.1
 
-# Math Library (libm.so), do not use -lm.
-#    There might be two versions of libm.so on the build system:
-#    libm.so.1 and libm.so.2, and we want libm.so.1.
-#    Depending on the Solaris release being used to build with,
-#    /usr/lib/libm.so could point at a libm.so.2, so we are
-#    explicit here so that the libjvm.so you have built will work on an
-#    older Solaris release that might not have libm.so.2.
-#    This is a critical factor in allowing builds on Solaris 10 or newer
-#    to run on Solaris 8 or 9.
-#
-#    Note: Historically there was also a problem picking up a static version
-#          of libm.a from the compiler area, but that problem has gone away
-#          with the newer compilers. Use of libm.a would cause .so bloat.
-#
-LIBM = /usr/lib$(ISA_DIR)/libm.so.1
+# JDK now requires Solaris 10, so pick up libm.so.2
+LIBM = /usr/lib$(ISA_DIR)/libm.so.2
 
 # Socket library
 LIBSOCKET = -lsocket

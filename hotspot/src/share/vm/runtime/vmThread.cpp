@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -106,7 +106,7 @@ VM_Operation* VMOperationQueue::queue_drain(int prio) {
   // restore queue to empty state
   _queue[prio]->set_next(_queue[prio]);
   _queue[prio]->set_prev(_queue[prio]);
-  assert(queue_empty(prio), "drain corrupted queue")
+  assert(queue_empty(prio), "drain corrupted queue");
 #ifdef DEBUG
   int len = 0;
   VM_Operation* cur;
@@ -593,7 +593,8 @@ void VMThread::execute(VM_Operation* op) {
       // Check the VM operation allows nested VM operation. This normally not the case, e.g., the compiler
       // does not allow nested scavenges or compiles.
       if (!prev_vm_operation->allow_nested_vm_operations()) {
-        fatal2("Nested VM operation %s requested by operation %s", op->name(), vm_operation()->name());
+        fatal(err_msg("Nested VM operation %s requested by operation %s",
+                      op->name(), vm_operation()->name()));
       }
       op->set_calling_thread(prev_vm_operation->calling_thread(), prev_vm_operation->priority());
     }

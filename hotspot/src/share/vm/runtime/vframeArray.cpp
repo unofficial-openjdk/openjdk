@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -309,11 +309,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to the stack
-      iframe()->interpreter_frame_set_expression_stack_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
 
@@ -335,11 +330,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to stack
-      iframe()->interpreter_frame_set_local_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
   if (is_top_frame && JvmtiExport::can_pop_frame() && thread->popframe_forcing_deopt_reexecution()) {
@@ -354,9 +344,8 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       void* saved_args = thread->popframe_preserved_args();
       assert(saved_args != NULL, "must have been saved by interpreter");
 #ifdef ASSERT
-      int stack_words = Interpreter::stackElementWords();
       assert(popframe_preserved_args_size_in_words <=
-             iframe()->interpreter_frame_expression_stack_size()*stack_words,
+             iframe()->interpreter_frame_expression_stack_size()*Interpreter::stackElementWords,
              "expression stack size should have been extended");
 #endif // ASSERT
       int top_element = iframe()->interpreter_frame_expression_stack_size()-1;

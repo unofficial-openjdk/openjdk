@@ -1,12 +1,12 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 #ifndef HEADLESS
@@ -244,6 +244,7 @@ static void
 OGLTR_AddToGlyphCache(GlyphInfo *glyph, jboolean rgbOrder)
 {
     GLenum pixelFormat;
+    CacheCellInfo *ccinfo;
 
     J2dTraceLn(J2D_TRACE_INFO, "OGLTR_AddToGlyphCache");
 
@@ -258,11 +259,12 @@ OGLTR_AddToGlyphCache(GlyphInfo *glyph, jboolean rgbOrder)
     }
 
     AccelGlyphCache_AddGlyph(glyphCache, glyph);
+    ccinfo = (CacheCellInfo *) glyph->cellInfo;
 
-    if (glyph->cellInfo != NULL) {
+    if (ccinfo != NULL) {
         // store glyph image in texture cell
         j2d_glTexSubImage2D(GL_TEXTURE_2D, 0,
-                            glyph->cellInfo->x, glyph->cellInfo->y,
+                            ccinfo->x, ccinfo->y,
                             glyph->width, glyph->height,
                             pixelFormat, GL_UNSIGNED_BYTE, glyph->image);
     }
@@ -668,7 +670,7 @@ OGLTR_DrawGrayscaleGlyphViaCache(OGLContext *oglc,
         }
     }
 
-    cell = ginfo->cellInfo;
+    cell = (CacheCellInfo *) (ginfo->cellInfo);
     cell->timesRendered++;
 
     x1 = (jfloat)x;
@@ -871,7 +873,7 @@ OGLTR_DrawLCDGlyphViaCache(OGLContext *oglc, OGLSDOps *dstOps,
         }
     }
 
-    cell = ginfo->cellInfo;
+    cell = (CacheCellInfo *) (ginfo->cellInfo);
     cell->timesRendered++;
 
     // location of the glyph in the destination's coordinate space

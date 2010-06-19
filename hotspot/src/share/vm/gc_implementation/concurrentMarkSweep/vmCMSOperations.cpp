@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 # include "incls/_precompiled.incl"
@@ -163,6 +163,7 @@ void VM_CMS_Final_Remark::doit() {
 // GenCollectedHeap heap.
 void VM_GenCollectFullConcurrent::doit() {
   assert(Thread::current()->is_VM_thread(), "Should be VM thread");
+  assert(GCLockerInvokesConcurrent || ExplicitGCInvokesConcurrent, "Unexpected");
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   if (_gc_count_before == gch->total_collections()) {
@@ -190,7 +191,7 @@ void VM_GenCollectFullConcurrent::doit() {
     CMSCollector::disable_icms();
     // In case CMS thread was in icms_wait(), wake it up.
     CMSCollector::start_icms();
-    // Nudge the CMS thread to start a concurrent collection
+    // Nudge the CMS thread to start a concurrent collection.
     CMSCollector::request_full_gc(_full_gc_count_before);
   } else {
     FullGCCount_lock->notify_all();  // Inform the Java thread its work is done
@@ -231,7 +232,9 @@ void VM_GenCollectFullConcurrent::doit_epilogue() {
   // e.g. at the rate of 1 full gc per ms, this could
   // overflow in about 1000 years.
   GenCollectedHeap* gch = GenCollectedHeap::heap();
-  if (gch->total_full_collections_completed() <= _full_gc_count_before) {
+  if (_gc_cause != GCCause::_gc_locker &&
+      gch->total_full_collections_completed() <= _full_gc_count_before) {
+    assert(ExplicitGCInvokesConcurrent, "Error");
     // Now, wait for witnessing concurrent gc cycle to complete,
     // but do so in native mode, because we want to lock the
     // FullGCEvent_lock, which may be needed by the VM thread

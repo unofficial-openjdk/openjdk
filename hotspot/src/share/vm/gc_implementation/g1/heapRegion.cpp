@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -290,7 +290,7 @@ void HeapRegion::setup_heap_region_size(uintx min_heap_size) {
   // Recalculate the region size to make sure it's a power of
   // 2. This means that region_size is the largest power of 2 that's
   // <= what we've calculated so far.
-  region_size = 1 << region_size_log;
+  region_size = ((uintx)1 << region_size_log);
 
   // Now make sure that we don't go over or under our limits.
   if (region_size < MIN_REGION_SIZE) {
@@ -554,11 +554,19 @@ HeapWord* HeapRegion::allocate(size_t size) {
 #endif
 
 void HeapRegion::set_zero_fill_state_work(ZeroFillState zfs) {
-  assert(top() == bottom() || zfs == Allocated,
-         "Region must be empty, or we must be setting it to allocated.");
   assert(ZF_mon->owned_by_self() ||
          Universe::heap()->is_gc_active(),
          "Must hold the lock or be a full GC to modify.");
+#ifdef ASSERT
+  if (top() != bottom() && zfs != Allocated) {
+    ResourceMark rm;
+    stringStream region_str;
+    print_on(&region_str);
+    assert(top() == bottom() || zfs == Allocated,
+           err_msg("Region must be empty, or we must be setting it to allocated. "
+                   "_zfs=%d, zfs=%d, region: %s", _zfs, zfs, region_str.as_string()));
+  }
+#endif
   _zfs = zfs;
 }
 

@@ -1,12 +1,12 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -67,7 +67,7 @@ ifeq ($(PLATFORM), windows)
       COMPILER_VERSION=VS2005
       REBASE     = $(COMPILER_PATH)../../Common8/Tools/Bin/rebase
       MTL        = $(COMPILER_PATH)../../Common8/Tools/Bin/midl
-      MT         = $(MSDEVTOOLS_PATH)mt
+      MT         = $(MSDEVTOOLS_PATH)/mt
       ifndef COMPILER_PATH
 	COMPILER_PATH := $(error COMPILER_PATH cannot be empty here)
       endif
@@ -75,6 +75,17 @@ ifeq ($(PLATFORM), windows)
     ifeq ($(CC_MAJORVER), 15)
       COMPILER_NAME=Visual Studio 9
       COMPILER_VERSION=VS2008
+      #rebase and midl moved out of Visual Studio into the SDK:
+      REBASE     = $(MSDEVTOOLS_PATH)/rebase
+      MTL        = $(MSDEVTOOLS_PATH)/midl.exe
+      MT         = $(MSDEVTOOLS_PATH)mt
+      ifndef COMPILER_PATH
+	COMPILER_PATH := $(error COMPILER_PATH cannot be empty here)
+      endif
+    endif
+    ifeq ($(CC_MAJORVER), 16)
+      COMPILER_NAME=Visual Studio 10
+      COMPILER_VERSION=VS2010
       #rebase and midl moved out of Visual Studio into the SDK:
       REBASE     = $(MSDEVTOOLS_PATH)/rebase
       MTL        = $(MSDEVTOOLS_PATH)/midl.exe
@@ -122,6 +133,15 @@ ifeq ($(PLATFORM), windows)
       COMPILER_VERSION=VS2008
       RC = $(MSSDK61)/Bin/X64/rc.exe
       MT = $(MSSDK61)/Bin/X64/mt.exe
+      MTL = $(MSSDK61)/Bin/X64/midl.exe
+    endif
+    ifeq ($(CC_MAJORVER), 16)
+      COMPILER_NAME=Microsoft Visual Studio 10 (16.00.30319.01)
+      COMPILER_VERSION=VS2010
+      RC = $(MSDEVTOOLS_PATH)/Bin/x64/rc.exe
+      RSC = $(MSDEVTOOLS_PATH)/Bin/x64/rc.exe
+      MT = $(MSDEVTOOLS_PATH)/Bin/x64/mt.exe
+      MTL = $(MSDEVTOOLS_PATH)/Bin/X64/midl.exe
     endif
     # This will cause problems if ALT_COMPILER_PATH is defined to ""
     # which is a directive to use the PATH.

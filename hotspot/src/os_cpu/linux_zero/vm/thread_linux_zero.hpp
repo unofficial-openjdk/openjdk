@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,9 +17,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -68,19 +68,30 @@
 
  public:
   void set_last_Java_frame() {
-    set_last_Java_frame(top_zero_frame());
+    set_last_Java_frame(top_zero_frame(), zero_stack()->sp());
   }
   void reset_last_Java_frame() {
-    set_last_Java_frame(NULL);
+    frame_anchor()->zap();
   }
-  void set_last_Java_frame(ZeroFrame* frame) {
-    frame_anchor()->set_last_Java_sp((intptr_t *) frame);
+  void set_last_Java_frame(ZeroFrame* fp, intptr_t* sp) {
+    frame_anchor()->set(sp, NULL, fp);
+  }
+
+ public:
+  ZeroFrame* last_Java_fp() {
+    return frame_anchor()->last_Java_fp();
   }
 
  private:
   frame pd_last_frame() {
     assert(has_last_Java_frame(), "must have last_Java_sp() when suspended");
-    return frame(last_Java_sp(), zero_stack()->sp());
+    return frame(last_Java_fp(), last_Java_sp());
+  }
+
+ public:
+  static ByteSize last_Java_fp_offset() {
+    return byte_offset_of(JavaThread, _anchor) +
+      JavaFrameAnchor::last_Java_fp_offset();
   }
 
  public:

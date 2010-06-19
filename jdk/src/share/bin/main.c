@@ -1,12 +1,12 @@
 /*
- * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 
@@ -33,13 +33,15 @@
 #include "defines.h"
 
 #ifdef _MSC_VER
-#if _MSC_VER > 1400
+#if _MSC_VER > 1400 && _MSC_VER < 1600
 
 /*
  * When building for Microsoft Windows, main has a dependency on msvcr??.dll.
  *
- * When using Visual Studio 2005 or later, that must be recorded in
+ * When using Visual Studio 2005 or 2008, that must be recorded in
  * the [java,javaw].exe.manifest file.
+ *
+ * As of VS2010 (ver=1600), the runtimes again no longer need manifests.
  *
  * Reference:
  *     C:/Program Files/Microsoft SDKs/Windows/v6.1/include/crtdefs.h
@@ -67,7 +69,7 @@
         "publicKeyToken='" _VC_ASSEMBLY_PUBLICKEYTOKEN "'\"")
 
 #endif  /* _M_AMD64 */
-#endif  /* _MSC_VER > 1400 */
+#endif  /* _MSC_VER > 1400 && _MSC_VER < 1600 */
 #endif  /* _MSC_VER */
 
 /*

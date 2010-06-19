@@ -1,6 +1,6 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
- * Copyright 2007, 2008, 2009 Red Hat, Inc.
+ * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -17,25 +17,25 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
 // Constructors
 
 inline frame::frame() {
+  _zeroframe = NULL;
   _sp = NULL;
-  _fp = NULL;
   _pc = NULL;
   _cb = NULL;
   _deopt_state = unknown;
 }
 
-inline frame::frame(intptr_t* sp, intptr_t* fp) {
+inline frame::frame(ZeroFrame* zf, intptr_t* sp) {
+  _zeroframe = zf;
   _sp = sp;
-  _fp = fp;
   switch (zeroframe()->type()) {
   case ZeroFrame::ENTRY_FRAME:
     _pc = StubRoutines::call_stub_return_pc();
@@ -66,7 +66,7 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
 // Accessors
 
 inline intptr_t* frame::sender_sp() const {
-  return (intptr_t *) zeroframe()->next();
+  return fp() + 1;
 }
 
 inline intptr_t* frame::link() const {
@@ -120,7 +120,7 @@ inline jint frame::interpreter_frame_expression_stack_direction() {
 // we can distinguish identity and younger/older relationship. NULL
 // represents an invalid (incomparable) frame.
 inline intptr_t* frame::id() const {
-  return sp();
+  return fp();
 }
 
 inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {

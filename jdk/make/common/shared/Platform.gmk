@@ -1,12 +1,12 @@
 #
-# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1997, 20010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -231,15 +231,35 @@ ifeq ($(PLATFORM), windows)
   # Temporary disk area
   TEMP_DISK=C:/temp
   # GNU Make or MKS overrides $(PROCESSOR_ARCHITECTURE) to always
-  # return "x86". Use the first word of $(PROCESSOR_IDENTIFIER) instead.
-  PROC_ARCH:=$(word 1, $(PROCESSOR_IDENTIFIER))
-  PROC_ARCH:=$(subst x86,X86,$(PROC_ARCH))
-  PROC_ARCH:=$(subst Intel64,X64,$(PROC_ARCH))
-  PROC_ARCH:=$(subst em64t,X64,$(PROC_ARCH))
-  PROC_ARCH:=$(subst EM64T,X64,$(PROC_ARCH))
-  PROC_ARCH:=$(subst amd64,X64,$(PROC_ARCH))
-  PROC_ARCH:=$(subst AMD64,X64,$(PROC_ARCH))
-  PROC_ARCH:=$(subst ia64,IA64,$(PROC_ARCH))
+  #  return "x86". Use the first word of $(PROCESSOR_IDENTIFIER) instead.
+  #  And sometimes PROCESSOR_IDENTIFIER is not defined at all
+  #  (in some restricted shells), so we use uname if we have to.
+  ifeq ($(PROCESSOR_IDENTIFIER),)
+    PROC_ARCH:=$(shell uname -m)
+  else
+    PROC_ARCH:=$(word 1, $(PROCESSOR_IDENTIFIER))
+  endif
+  # Cover all the possibilities, MKS uname, CYGWIN uname, PROCESSOR_IDENTIFIER
+  #    Get: X86, X64, or IA64
+  PROC_ARCH:=$(patsubst 386,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 486,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 586,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 686,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i386,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i486,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i586,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i686,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst x86,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst intel64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst Intel64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst INTEL64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst em64t,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst EM64T,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst amd64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst AMD64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 8664,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst x86_64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst ia64,IA64,$(PROC_ARCH))
   ifndef ARCH_DATA_MODEL
     ifeq ($(PROC_ARCH),IA64)
       ARCH_DATA_MODEL=64
@@ -275,7 +295,12 @@ ifeq ($(PLATFORM), windows)
   endif
   ARCH_FAMILY = $(ARCH)
   # Where is unwanted output to be delivered?
-  DEV_NULL = NUL
+  # MKS uses the special file "NUL", cygwin uses the customary unix file.
+  ifeq ($(USING_CYGWIN),true)
+    DEV_NULL = /dev/null
+  else
+    DEV_NULL = NUL
+  endif
   export DEV_NULL
   # Classpath separator
   CLASSPATH_SEPARATOR = ;

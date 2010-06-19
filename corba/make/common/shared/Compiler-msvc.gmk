@@ -1,12 +1,12 @@
 #
-# Copyright 2005-2009 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -97,6 +97,19 @@ ifeq ($(PLATFORM), windows)
 	COMPILER_PATH := $(error COMPILER_PATH cannot be empty here)
       endif
     endif
+    ifeq ($(CC_MAJORVER), 16)
+      # This should be: CC_VER=16.00.30319.01 LINK_VER=10.00.30319.01
+      REQUIRED_CC_VER = 16.00.30319.01
+      REQUIRED_LINK_VER = 10.00.30319.01
+      COMPILER_NAME=Visual Studio 10
+      COMPILER_VERSION=VS2010
+      #rebase and midl moved out of Visual Studio into the SDK:
+      REBASE     = $(MSDEVTOOLS_PATH)/rebase
+      MTL        = $(MSDEVTOOLS_PATH)/midl.exe
+      ifndef COMPILER_PATH
+	COMPILER_PATH := $(error COMPILER_PATH cannot be empty here)
+      endif
+    endif
   else
     # else ARCH_DATA_MODEL is 64
     ifndef LINK_VER
@@ -144,11 +157,21 @@ ifeq ($(PLATFORM), windows)
       COMPILER_NAME=Windows SDK 6.1 Visual Studio 9
       COMPILER_VERSION=VS2008
       RC = $(MSSDK61)/bin/x64/rc
-      REBASE = $(MSSDK61/bin/x64/rebase
+      REBASE = $(MSSDK61)/bin/x64/rebase
     else
-      # This will cause problems if ALT_COMPILER_PATH is defined to ""
-      # which is a directive to use the PATH.
-      REBASE         = $(COMPILER_PATH)../REBASE
+      ifeq ($(CC_MAJORVER), 16)
+        # This should be: CC_VER=16.00.30319.01 LINK_VER=9.00.30319.01
+        REQUIRED_CC_VER = 16.00.30319.01
+        REQUIRED_LINK_VER = 10.00.30319.01
+        COMPILER_NAME=Microsoft Visual Studio 10
+        COMPILER_VERSION=VS2010
+        RC = $(MSSDK7)/bin/x64/rc
+        REBASE = $(MSSDK7)/bin/x64/rebase
+      else
+        # This will cause problems if ALT_COMPILER_PATH is defined to ""
+        # which is a directive to use the PATH.
+        REBASE         = $(COMPILER_PATH)../REBASE
+      endif
     endif
     ifndef COMPILER_PATH
       COMPILER_PATH := $(error COMPILER_PATH cannot be empty here)

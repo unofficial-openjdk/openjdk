@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.java.swing.plaf.windows;
@@ -35,6 +35,7 @@ import javax.swing.table.*;
 import static com.sun.java.swing.plaf.windows.TMSchema.*;
 import static com.sun.java.swing.plaf.windows.XPStyle.*;
 import sun.swing.table.*;
+import sun.swing.SwingUtilities2;
 
 
 public class WindowsTableHeaderUI extends BasicTableHeaderUI {
@@ -163,18 +164,13 @@ public class WindowsTableHeaderUI extends BasicTableHeaderUI {
             return this;
         }
 
-        private int viewIndexForColumn(TableColumn aColumn) {
-            if (aColumn != null) {
-                return header.getTable().convertColumnIndexToView(
-                        aColumn.getModelIndex());
-            }
-            return -1;
-        }
-
         public void paint(Graphics g) {
             Dimension size = getSize();
             State state = State.NORMAL;
-            if (column == viewIndexForColumn(header.getDraggedColumn())) {
+            TableColumn draggedColumn = header.getDraggedColumn();
+            if (draggedColumn != null &&
+                    column == SwingUtilities2.convertColumnIndexToView(
+                            header.getColumnModel(), draggedColumn.getModelIndex())) {
                 state = State.PRESSED;
             } else if (isSelected || hasFocus || hasRollover) {
                 state = State.HOT;

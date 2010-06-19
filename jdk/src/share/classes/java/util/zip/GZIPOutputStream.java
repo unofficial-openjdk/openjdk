@@ -1,12 +1,12 @@
 /*
- * Copyright 1996-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package java.util.zip;
@@ -54,25 +54,82 @@ class GZIPOutputStream extends DeflaterOutputStream {
 
     /**
      * Creates a new output stream with the specified buffer size.
+     *
+     * <p>The new output stream instance is created as if by invoking
+     * the 3-argument constructor GZIPOutputStream(out, size, false).
+     *
      * @param out the output stream
      * @param size the output buffer size
      * @exception IOException If an I/O error has occurred.
      * @exception IllegalArgumentException if size is <= 0
+
      */
     public GZIPOutputStream(OutputStream out, int size) throws IOException {
-        super(out, new Deflater(Deflater.DEFAULT_COMPRESSION, true), size);
+        this(out, size, false);
+    }
+
+    /**
+     * Creates a new output stream with the specified buffer size and
+     * flush mode.
+     *
+     * @param out the output stream
+     * @param size the output buffer size
+     * @param syncFlush
+     *        if {@code true} invocation of the inherited
+     *        {@link DeflaterOutputStream#flush() flush()} method of
+     *        this instance flushes the compressor with flush mode
+     *        {@link Deflater#SYNC_FLUSH} before flushing the output
+     *        stream, otherwise only flushes the output stream
+     * @exception IOException If an I/O error has occurred.
+     * @exception IllegalArgumentException if size is <= 0
+     *
+     * @since 1.7
+     */
+    public GZIPOutputStream(OutputStream out, int size, boolean syncFlush)
+        throws IOException
+    {
+        super(out, new Deflater(Deflater.DEFAULT_COMPRESSION, true),
+              size,
+              syncFlush);
         usesDefaultDeflater = true;
         writeHeader();
         crc.reset();
     }
 
+
     /**
      * Creates a new output stream with a default buffer size.
+     *
+     * <p>The new output stream instance is created as if by invoking
+     * the 2-argument constructor GZIPOutputStream(out, false).
+     *
      * @param out the output stream
      * @exception IOException If an I/O error has occurred.
      */
     public GZIPOutputStream(OutputStream out) throws IOException {
-        this(out, 512);
+        this(out, 512, false);
+    }
+
+    /**
+     * Creates a new output stream with a default buffer size and
+     * the specified flush mode.
+     *
+     * @param out the output stream
+     * @param syncFlush
+     *        if {@code true} invocation of the inherited
+     *        {@link DeflaterOutputStream#flush() flush()} method of
+     *        this instance flushes the compressor with flush mode
+     *        {@link Deflater#SYNC_FLUSH} before flushing the output
+     *        stream, otherwise only flushes the output stream
+     *
+     * @exception IOException If an I/O error has occurred.
+     *
+     * @since 1.7
+     */
+    public GZIPOutputStream(OutputStream out, boolean syncFlush)
+        throws IOException
+    {
+        this(out, 512, syncFlush);
     }
 
     /**
@@ -122,22 +179,19 @@ class GZIPOutputStream extends DeflaterOutputStream {
     /*
      * Writes GZIP member header.
      */
-
-    private final static byte[] header = {
-        (byte) GZIP_MAGIC,                // Magic number (short)
-        (byte)(GZIP_MAGIC >> 8),          // Magic number (short)
-        Deflater.DEFLATED,                // Compression method (CM)
-        0,                                // Flags (FLG)
-        0,                                // Modification time MTIME (int)
-        0,                                // Modification time MTIME (int)
-        0,                                // Modification time MTIME (int)
-        0,                                // Modification time MTIME (int)
-        0,                                // Extra flags (XFLG)
-        0                                 // Operating system (OS)
-    };
-
     private void writeHeader() throws IOException {
-        out.write(header);
+        out.write(new byte[] {
+                      (byte) GZIP_MAGIC,        // Magic number (short)
+                      (byte)(GZIP_MAGIC >> 8),  // Magic number (short)
+                      Deflater.DEFLATED,        // Compression method (CM)
+                      0,                        // Flags (FLG)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Modification time MTIME (int)
+                      0,                        // Extra flags (XFLG)
+                      0                         // Operating system (OS)
+                  });
     }
 
     /*

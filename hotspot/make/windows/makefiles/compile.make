@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #  
 #
 
@@ -92,6 +92,7 @@ CPP=ARCH_ERROR
 #      1399 is our fake number for the VS2005 compiler that really isn't 1400
 #      1400 is for VS2005
 #      1500 is for VS2008
+#      1600 is for VS2010
 #    Do not confuse this MSC_VER with the predefined macro _MSC_VER that the
 #    compiler provides, when MSC_VER==1399, _MSC_VER will be 1400.
 #    Normally they are the same, but a pre-release of the VS2005 compilers
@@ -120,6 +121,9 @@ COMPILER_NAME=VS2005
 !endif
 !if "$(MSC_VER)" == "1500"
 COMPILER_NAME=VS2008
+!endif
+!if "$(MSC_VER)" == "1600"
+COMPILER_NAME=VS2010
 !endif
 !endif
 
@@ -173,6 +177,17 @@ MT=mt.exe
 !endif
 
 !if "$(COMPILER_NAME)" == "VS2008"
+PRODUCT_OPT_OPTION   = /O2 /Oy-
+FASTDEBUG_OPT_OPTION = /O2 /Oy-
+DEBUG_OPT_OPTION     = /Od
+GX_OPTION = /EHsc
+LINK_FLAGS = /manifest $(LINK_FLAGS)
+# Manifest Tool - used in VS2005 and later to adjust manifests stored
+# as resources inside build artifacts.
+MT=mt.exe
+!endif
+
+!if "$(COMPILER_NAME)" == "VS2010"
 PRODUCT_OPT_OPTION   = /O2 /Oy-
 FASTDEBUG_OPT_OPTION = /O2 /Oy-
 DEBUG_OPT_OPTION     = /Od

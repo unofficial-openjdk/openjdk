@@ -1,14 +1,14 @@
 #!/bin/sh
 
 #
-# Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,9 +20,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 
@@ -174,7 +174,7 @@ else
    
   # Check CYGWIN (should have already been done)
   #   Assumption here is that you are in a shell window via cygwin.
-  proc_arch=`echo "$(PROCESSOR_IDENTIFIER)" | expand | cut -d' ' -f1 | sed -e 's@x86@X86@g' -e 's@Intel64@X64@g' -e 's@em64t@X64@g' -e 's@EM64T@X64@g' -e 's@amd64@X64@g' -e 's@AMD64@X64@g' -e 's@ia64@IA64@g'`
+  proc_arch=`echo "${PROCESSOR_IDENTIFIER}" | expand | cut -d' ' -f1 | sed -e 's@x86@X86@g' -e 's@Intel64@X64@g' -e 's@em64t@X64@g' -e 's@EM64T@X64@g' -e 's@amd64@X64@g' -e 's@AMD64@X64@g' -e 's@ia64@IA64@g'`
   if [ "${proc_arch}" = "X64" ] ; then
     windows_arch=amd64
   else

@@ -1,12 +1,12 @@
 /*
- * Copyright 1998-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package sun.security.provider;
@@ -518,6 +518,7 @@ public class X509Factory extends CertificateFactorySpi {
 
             // Step 2: Read the rest of header, determine the line end
             int end;
+            StringBuffer header = new StringBuffer("-----");
             while (true) {
                 int next = is.read();
                 if (next == -1) {
@@ -540,6 +541,7 @@ public class X509Factory extends CertificateFactorySpi {
                     }
                     break;
                 }
+                header.append((char)next);
             }
 
             // Step 3: Read the data
@@ -559,6 +561,7 @@ public class X509Factory extends CertificateFactorySpi {
             }
 
             // Step 4: Consume the footer
+            StringBuffer footer = new StringBuffer("-");
             while (true) {
                 int next = is.read();
                 // Add next == '\n' for maximum safety, in case endline
@@ -566,10 +569,31 @@ public class X509Factory extends CertificateFactorySpi {
                 if (next == -1 || next == end || next == '\n') {
                     break;
                 }
+                if (next != '\r') footer.append((char)next);
             }
+
+            checkHeaderFooter(header.toString(), footer.toString());
 
             BASE64Decoder decoder = new BASE64Decoder();
             return decoder.decodeBuffer(new String(data, 0, pos));
+        }
+    }
+
+    private static void checkHeaderFooter(String header,
+            String footer) throws IOException {
+        if (header.length() < 16 || !header.startsWith("-----BEGIN ") ||
+                !header.endsWith("-----")) {
+            throw new IOException("Illegal header: " + header);
+        }
+        if (footer.length() < 14 || !footer.startsWith("-----END ") ||
+                !footer.endsWith("-----")) {
+            throw new IOException("Illegal footer: " + footer);
+        }
+        String headerType = header.substring(11, header.length()-5);
+        String footerType = footer.substring(9, footer.length()-5);
+        if (!headerType.equals(footerType)) {
+            throw new IOException("Header and footer do not match: " +
+                    header + " " + footer);
         }
     }
 

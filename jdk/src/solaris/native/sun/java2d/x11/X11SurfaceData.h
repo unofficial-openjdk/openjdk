@@ -1,12 +1,12 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 #include "SurfaceData.h"
@@ -29,6 +29,8 @@
 #include "awt_GraphicsEnv.h"
 
 #include <jdga.h>
+
+#include <X11/extensions/Xrender.h>
 
 /**
  * This include file contains support declarations for loops using the
@@ -110,6 +112,7 @@ struct _X11SDOps {
     jboolean            isBgInitialized; /* whether the bg pixel is valid */
     jint                pmWidth;       /* width, height of the */
     jint                pmHeight;      /* pixmap */
+    Picture             xrPic;
 #ifdef MITSHM
     ShmPixmapData       shmPMData;     /* data for switching between shm/nonshm pixmaps*/
 #endif /* MITSHM */
@@ -135,6 +138,9 @@ void     X11SD_DisposeOrCacheXImage (XImage * image);
 void     X11SD_DisposeXImage(XImage * image);
 void     X11SD_DirectRenderNotify(JNIEnv *env, X11SDOps *xsdo);
 #endif /* !HEADLESS */
+
+jboolean XShared_initIDs(JNIEnv *env, jboolean allowShmPixmaps);
+jboolean XShared_initSurface(JNIEnv *env, X11SDOps *xsdo, jint depth, jint width, jint height, jlong drawable);
 
 /*
  * This function returns a pointer to a native X11SDOps structure

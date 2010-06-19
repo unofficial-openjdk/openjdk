@@ -1,5 +1,5 @@
 #
-# Copyright 2006-2009 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2006, 2009, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #  
 #
 
@@ -27,9 +27,9 @@
 all: checkCL checkLink
 
 checkCL:
-	@ if "$(MSC_VER)" NEQ "1310" if "$(MSC_VER)" NEQ "1399" if "$(MSC_VER)" NEQ "1400" if "$(MSC_VER)" NEQ "1500" \
+	@ if "$(MSC_VER)" NEQ "1310" if "$(MSC_VER)" NEQ "1399" if "$(MSC_VER)" NEQ "1400" if "$(MSC_VER)" NEQ "1500" if "$(MSC_VER)" NEQ "1600" \
 	echo *** WARNING *** unrecognized cl.exe version $(MSC_VER) ($(RAW_MSC_VER)).  Use FORCE_MSC_VER to override automatic detection.
 
 checkLink:
-	@ if "$(LINK_VER)" NEQ "710" if "$(LINK_VER)" NEQ "800" if "$(LINK_VER)" NEQ "900" \
+	@ if "$(LINK_VER)" NEQ "710" if "$(LINK_VER)" NEQ "800" if "$(LINK_VER)" NEQ "900" if "$(LINK_VER)" NEQ "1000" \
 	echo *** WARNING *** unrecognized link.exe version $(LINK_VER) ($(RAW_LINK_VER)).  Use FORCE_LINK_VER to override automatic detection.

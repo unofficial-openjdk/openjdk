@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2010 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  *
  */
 
@@ -118,7 +118,10 @@ void StubRoutines::initialize1() {
     ResourceMark rm;
     TraceTime timer("StubRoutines generation 1", TraceStartupTime);
     _code1 = BufferBlob::create("StubRoutines (1)", code_size1);
-    if( _code1 == NULL) vm_exit_out_of_memory1(code_size1, "CodeCache: no room for %s", "StubRoutines (1)");
+    if (_code1 == NULL) {
+      vm_exit_out_of_memory(code_size1,
+                            "CodeCache: no room for StubRoutines (1)");
+    }
     CodeBuffer buffer(_code1->instructions_begin(), _code1->instructions_size());
     StubGenerator_generate(&buffer, false);
   }
@@ -164,7 +167,10 @@ void StubRoutines::initialize2() {
     ResourceMark rm;
     TraceTime timer("StubRoutines generation 2", TraceStartupTime);
     _code2 = BufferBlob::create("StubRoutines (2)", code_size2);
-    if( _code2 == NULL) vm_exit_out_of_memory1(code_size2, "CodeCache: no room for %s", "StubRoutines (2)");
+    if (_code2 == NULL) {
+      vm_exit_out_of_memory(code_size2,
+                            "CodeCache: no room for StubRoutines (2)");
+    }
     CodeBuffer buffer(_code2->instructions_begin(), _code2->instructions_size());
     StubGenerator_generate(&buffer, true);
   }

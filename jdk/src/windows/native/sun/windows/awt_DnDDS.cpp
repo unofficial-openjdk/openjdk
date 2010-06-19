@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2009 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 #pragma push_macro("bad_alloc")
@@ -29,20 +29,15 @@
 //we need <new> inclusion for STL "new" oprators set.
 #define bad_alloc zbad_alloc
 #include <new>
-#pragma pop_macro("bad_alloc")
-//"bad_alloc" is undefined from here
 
-//we need to include any STL container before <awt.h> inclusion due to
-//"new" re-redefinition that is in conflict with in-place new allocator
-//applied in STL.
 #if defined(_DEBUG) || defined(DEBUG)
-    //forward declaration of "new" operator from <awt.h>
-    extern void * operator new(size_t size, const char * filename, int linenumber);
-    //"new" operator definition that is consistent with re-defined
-    //in <awt.h> "delete" operator
-    void * operator new(size_t size) {return operator new(size, "stl", 1);}
+extern void * operator new(size_t size, const char * filename, int linenumber);
+void * operator new(size_t size) {return operator new(size, "stl", 1);}
 #endif
 #include <map>
+
+#pragma pop_macro("bad_alloc")
+//"bad_alloc" is undefined from here
 
 #include <awt.h>
 #include <shlobj.h>
