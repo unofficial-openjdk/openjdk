@@ -23,17 +23,20 @@
 
 /*
  * @test
- * @bug 6734819
- * @summary Javac performs flows analysis on already translated classes
- * @author Maurizio Cimadamore
- *
- * @compile/ref=T6734819a.out -XDrawDiagnostics -Xlint:all -XDverboseCompilePolicy T6734819a.java
+ * @compile/ref=byfile.AB.out -XDstdout -XDverboseCompilePolicy -XDcompile.policy=byfile A.java B.java
  */
-class Y extends W {}
-class W extends Z {}
 
-class Z {
-    void m(Z z) {
-        W w = (W)z;
-    }
-}
+/*
+ * @test
+ * @compile/ref=byfile.BA.out -XDstdout -XDverboseCompilePolicy -XDcompile.policy=byfile B.java A.java
+ */
+
+/*
+ * @test
+ * @compile/ref=bytodo.AB.out -XDstdout -XDverboseCompilePolicy -XDcompile.policy=bytodo A.java B.java
+ */
+
+/*
+ * @test
+ * @compile/ref=bytodo.BA.out -XDstdout -XDverboseCompilePolicy -XDcompile.policy=bytodo B.java A.java
+ */
