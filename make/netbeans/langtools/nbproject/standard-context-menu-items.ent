@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
      notice, this list of conditions and the following disclaimer in the
      documentation and/or other materials provided with the distribution.
 
-   - Neither the name of Oracle nor the names of its
+   - Neither the name of Sun Microsystems nor the names of its
      contributors may be used to endorse or promote products derived
      from this software without specific prior written permission.
 
@@ -30,34 +30,32 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<!--
- Build file for the documentation tool, javadoc.
- - The basic functionality of the build is imported from make/build.xml.
- - Additional support for NetBeans actions is imported from 
-   make/netbeans/common/shared.xml.
- - This file gives the final customizations.
+<!-- 
+ This file defines the actions that will appear on the project's context
+ menu, in the Projects viewer.
+ It is normally included as an entity into a project's project.xml file.
+
+ For information on these actions, see
+   - NetBeans: Setting Up Projects
+     at http://www.netbeans.org/kb/55/using-netbeans/project_setup.html
+   - NetBeans: Advanced Freeform Project Configuration
+     at http://www.netbeans.org/kb/41/freeform-config.html 
 -->
 
-<project name="javadoc" default="build" basedir="../../..">
-    <property name="tool.name" value="javadoc"/>
-    
-    <import file="../common/shared.xml"/>
-    
-    <!-- 
-      Alias the following imported targets, giving descriptions as appropriate.
-      NetBeans will emphasize targets with descriptions in the Ant Targets list,
-      and will display the targets in the context menu (under Run Target) for 
-      this file in the Projects viewer. 
-    -->
-    
-    <target name="build" depends="build-javadoc" description="Build the documentation tool, javadoc."/>
-    
-    <target name="debug" depends="-debug-nb" description="Debug the documentation tool, javadoc."/>
-    
-    <target name="-javadoc" depends="javadoc-javadoc"/>
-    <target name="javadoc" depends="-javadoc-nb" description="Generate javadoc documentation for the Doclet API."/>
-    
-    <target name="-jtreg" depends="jtreg-javadoc"/>    
-    <target name="jtreg" depends="-jtreg-nb" description="Run the jtreg tests for the documentation tool, javadoc."/>
-    
-</project>
+<ide-action name="select-tool"/>
+
+<separator/>
+  
+<ide-action name="build"/>
+<ide-action name="rebuild"/>
+<ide-action name="clean"/>
+<ide-action name="javadoc"/>
+
+<separator/>
+
+<ide-action name="run"/>
+<ide-action name="debug"/>
+
+<separator/>
+
+<ide-action name="test"/>
