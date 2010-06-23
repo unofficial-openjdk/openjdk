@@ -1,11 +1,11 @@
 /**
- * @test    @(#)T6589361.java   1.1 07/07/18
+ * @test
  * @bug     6589361
  * @summary 6589361:Failing building ct.sym file as part of the control build
  */
 
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.JavacFileManager;
 import java.io.File;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
@@ -23,8 +23,9 @@ public class T6589361 {
             set.add(JavaFileObject.Kind.CLASS);
             Iterable<JavaFileObject> files = fm.list(StandardLocation.PLATFORM_CLASS_PATH, "java.lang", set, false);
             for (JavaFileObject file : files) {
-
-                if (file.toString().startsWith("java" + File.separator + "lang" + File.separator + "Object.class")) {
+                // Note: Zip/Jar entry names use '/', not File.separator, but just to be sure,
+                // we normalize the filename as well.
+                if (file.getName().replace(File.separatorChar, '/').contains("java/lang/Object.class")) {
                     String str = fm.inferBinaryName(StandardLocation.CLASS_PATH, file);
                     if (!str.equals("java.lang.Object")) {
                         throw new AssertionError("Error in JavacFileManager.inferBinaryName method!");

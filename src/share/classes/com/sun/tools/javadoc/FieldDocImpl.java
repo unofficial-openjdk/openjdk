@@ -260,7 +260,7 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      */
     public SourcePosition position() {
         if (sym.enclClass().sourcefile == null) return null;
-        return SourcePositionImpl.make(sym.enclClass().sourcefile.toString(),
+        return SourcePositionImpl.make(sym.enclClass().sourcefile,
                                        (tree==null) ? 0 : tree.pos,
                                        lineMap);
     }

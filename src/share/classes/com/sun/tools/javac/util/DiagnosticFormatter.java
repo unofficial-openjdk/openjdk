@@ -27,6 +27,8 @@ package com.sun.tools.javac.util;
 
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.file.BaseFileObject;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticSource;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
 
@@ -143,8 +145,10 @@ public class DiagnosticFormatter {
                 sb.append(format_raw((JCDiagnostic) arg));
                 sb.append(')');
             }
+            else if (arg instanceof BaseFileObject)
+                sb.append(((BaseFileObject) arg).getShortName());
             else if (arg instanceof JavaFileObject)
-                sb.append(JavacFileManager.getJavacBaseFileName((JavaFileObject) arg));
+                sb.append(BaseFileObject.getSimpleName((JavaFileObject) arg));
             else
                 sb.append(arg);
             sep = ", ";

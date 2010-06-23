@@ -25,12 +25,8 @@
 
 package com.sun.tools.javac.util;
 
-import java.net.URI;
-import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
 
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -341,7 +337,7 @@ public class JCDiagnostic implements Diagnostic<JavaFileObject> {
      */
     public String getSourceName() {
         JavaFileObject s = getSource();
-        return s == null ? null : JavacFileManager.getJavacFileName(s);
+        return s == null ? null : s.getName();
     }
 
     /**
@@ -445,6 +441,8 @@ public class JCDiagnostic implements Diagnostic<JavaFileObject> {
             Object arg = args[i];
             if (arg == null)
                 strings[i] = null;
+            else if (arg instanceof FileObject)
+                strings[i] = ((FileObject) arg).getName();
             else if (arg instanceof JCDiagnostic)
                 strings[i] = ((JCDiagnostic) arg).getMessage(null);
             else

@@ -32,6 +32,7 @@ import java.nio.charset.*;
 import java.nio.channels.*;
 import java.util.regex.*;
 
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.*;
 
 import com.sun.tools.javac.code.Source;

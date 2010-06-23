@@ -25,6 +25,7 @@
 
 package com.sun.tools.javac.jvm;
 
+import java.net.URISyntaxException;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
@@ -42,6 +43,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.file.BaseFileObject;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
@@ -1047,7 +1049,7 @@ public class ClassReader extends ClassFile implements Completer {
     void readClassAttr(ClassSymbol c, Name attrName, int attrLen) {
         if (attrName == names.SourceFile) {
             Name n = readName(nextChar());
-            c.sourcefile = new SourceFileObject(n);
+            c.sourcefile = new SourceFileObject(n, c.flatname);
         } else if (attrName == names.InnerClasses) {
             readInnerClasses(c);
         } else if (allowGenerics && attrName == names.Signature) {
@@ -2212,69 +2214,103 @@ public class ClassReader extends ClassFile implements Completer {
         /** The file's name.
          */
         private Name name;
+        private Name flatname;
 
-        public SourceFileObject(Name name) {
+        public SourceFileObject(Name name, Name flatname) {
+            super(null); // no file manager; never referenced for this file object
             this.name = name;
+            this.flatname = flatname;
         }
 
-        public InputStream openInputStream() {
-            throw new UnsupportedOperationException();
+        //@Override
+        public URI toUri() {
+            try {
+                return new URI(null, name.toString(), null);
+            } catch (URISyntaxException e) {
+                throw new CannotCreateUriError(name.toString(), e);
+            }
         }
 
-        public OutputStream openOutputStream() {
-            throw new UnsupportedOperationException();
-        }
-
-        public Reader openReader() {
-            throw new UnsupportedOperationException();
-        }
-
-        public Writer openWriter() {
-            throw new UnsupportedOperationException();
-        }
-
-        /** @deprecated see bug 6410637 */
-        @Deprecated
+        //@Override
         public String getName() {
             return name.toString();
         }
 
-        public long getLastModified() {
+        //@Override
+        public String getShortName() {
+            return getName();
+        }
+
+        //@Override
+        public JavaFileObject.Kind getKind() {
+            return getKind(getName());
+        }
+
+        //@Override
+        public InputStream openInputStream() {
             throw new UnsupportedOperationException();
         }
 
-        public boolean delete() {
+        //@Override
+        public OutputStream openOutputStream() {
             throw new UnsupportedOperationException();
         }
 
+        //@Override
         public CharBuffer getCharContent(boolean ignoreEncodingErrors) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        //@Override
+        public Reader openReader(boolean ignoreEncodingErrors) {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public Writer openWriter() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public long getLastModified() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public boolean delete() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        protected String inferBinaryName(Iterable<? extends File> path) {
+            return flatname.toString();
+        }
+
+        //@Override
+        public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
+            return true; // fail-safe mode
+        }
+
+        /**
+         * Check if two file objects are equal.
+         * SourceFileObjects are just placeholder objects for the value of a
+         * SourceFile attribute, and do not directly represent specific files.
+         * Two SourceFileObjects are equal if their names are equal.
+         */
+        //@Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
+
             if (!(other instanceof SourceFileObject))
                 return false;
             SourceFileObject o = (SourceFileObject) other;
             return name.equals(o.name);
         }
 
-        @Override
+        //@Override
         public int hashCode() {
             return name.hashCode();
         }
-
-        public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
-            return true; // fail-safe mode
-        }
-
-        public URI toUri() {
-            return URI.create(name.toString());
-        }
-
-        public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
     }
 }

@@ -42,6 +42,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.*;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.*;
 import com.sun.tools.javac.model.*;
 import com.sun.tools.javac.parser.Parser;

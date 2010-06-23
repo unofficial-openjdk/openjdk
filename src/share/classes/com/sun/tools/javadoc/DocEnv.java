@@ -25,23 +25,20 @@
 
 package com.sun.tools.javadoc;
 
-import java.util.*;
 import java.lang.reflect.Modifier;
+import java.util.*;
+import javax.tools.JavaFileManager;
 
 import com.sun.javadoc.*;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
-import com.sun.tools.javac.code.Type.TypeVar;
-import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Position;
-
 
 /**
  * Holds the environment for a run of javadoc.
@@ -75,10 +72,6 @@ public class DocEnv {
     /** Referenced directly in RootDocImpl. */
     JavadocClassReader reader;
 
-    /** The compiler's attribution phase (needed to evaluate
-     *  constant initializers). */
-    Attr attr;
-
     /** Javadoc's own version of the compiler's enter phase. */
     JavadocEnter enter;
 
@@ -93,8 +86,6 @@ public class DocEnv {
     /** Access filter (public, protected, ...).  */
     ModifierFilter showAccess;
 
-    private ClassDocImpl runtimeException;
-
     /** True if we are using a sentence BreakIterator. */
     boolean breakiterator;
 
@@ -105,6 +96,7 @@ public class DocEnv {
 
     Check chk;
     Types types;
+    JavaFileManager fileManager;
 
     /** Allow documenting from class files? */
     boolean docClasses = false;
@@ -130,11 +122,11 @@ public class DocEnv {
         syms = Symtab.instance(context);
         reader = JavadocClassReader.instance0(context);
         enter = JavadocEnter.instance0(context);
-        attr = Attr.instance(context);
         names = Name.Table.instance(context);
         externalizableSym = reader.enterClass(names.fromString("java.io.Externalizable"));
         chk = Check.instance(context);
         types = Types.instance(context);
+        fileManager = context.get(JavaFileManager.class);
 
         // Default.  Should normally be reset with setLocale.
         this.doclocale = new DocLocale(this, "", breakiterator);

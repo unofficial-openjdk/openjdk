@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,20 +26,14 @@
 package com.sun.tools.apt.main;
 
 import java.io.*;
-import java.nio.CharBuffer;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.HashMap;
 
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.parser.*;
-import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.jvm.*;
 
 import com.sun.tools.javac.code.Symbol.*;
@@ -239,6 +233,7 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
 
         ListBuffer<ClassSymbol> classes = new ListBuffer<ClassSymbol>();
         try {
+            JavacFileManager fm = (JavacFileManager)fileManager;
             //parse all files
             ListBuffer<JCCompilationUnit> trees = new ListBuffer<JCCompilationUnit>();
             for (List<String> l = filenames; l.nonEmpty(); l = l.tail) {
@@ -256,7 +251,8 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
                         continue;
                     }
                 }
-                trees.append(parse(l.head));
+                JavaFileObject fo = fm.getJavaFileObjectsFromStrings(List.of(l.head)).iterator().next();
+                trees.append(parse(fo));
             }
 
             //enter symbols for all files

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,36 +23,31 @@
  * questions.
  */
 
-package com.sun.tools.javac.util;
+package com.sun.tools.javac.file;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Iterator;
 import java.util.StringTokenizer;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
-import com.sun.tools.javac.code.Lint;
-import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.Log;
-import com.sun.tools.javac.util.Options;
-import com.sun.tools.javac.util.Position;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import javax.tools.JavaFileManager.Location;
 
-import static com.sun.tools.javac.main.OptionName.*;
+import com.sun.tools.javac.code.Lint;
+import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.ListBuffer;
+import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Options;
+
 import static javax.tools.StandardLocation.*;
+import static com.sun.tools.javac.main.OptionName.*;
 
 /** This class converts command line arguments, environment variables
  *  and system properties (in File.pathSeparator-separated String form)
@@ -70,7 +65,10 @@ public class Paths {
     protected static final Context.Key<Paths> pathsKey =
         new Context.Key<Paths>();
 
-    /** Get the Paths instance for this context. */
+    /** Get the Paths instance for this context.
+     *  @param context the context
+     *  @return the Paths instance for this context
+     */
     public static Paths instance(Context context) {
         Paths instance = context.get(pathsKey);
         if (instance == null)
@@ -87,21 +85,8 @@ public class Paths {
     /** Handler for -Xlint options */
     private Lint lint;
 
-    private static boolean NON_BATCH_MODE = System.getProperty("nonBatchMode") != null;// TODO: Use -XD compiler switch for this.
-    private static Map<File, PathEntry> pathExistanceCache = new ConcurrentHashMap<File, PathEntry>();
-    private static Map<File, java.util.List<File>> manifestEntries = new ConcurrentHashMap<File, java.util.List<File>>();
-    private static Map<File, Boolean> isDirectory = new ConcurrentHashMap<File, Boolean>();
-    private static Lock lock = new ReentrantLock();
-
-    public static void clearPathExistanceCache() {
-            pathExistanceCache.clear();
-    }
-
-    static class PathEntry {
-        boolean exists = false;
-        boolean isFile = false;
-        File cannonicalPath = null;
-    }
+    /** Access to (possibly cached) file info */
+    private FSInfo fsInfo;
 
     protected Paths(Context context) {
         context.put(pathsKey, this);
@@ -113,6 +98,7 @@ public class Paths {
         log = Log.instance(context);
         options = Options.instance(context);
         lint = Lint.instance(context);
+        fsInfo = FSInfo.instance(context);
     }
 
     /** Whether to warn about non-existent path elements */
@@ -217,9 +203,9 @@ public class Paths {
             if (sep == -1)
                 sep = path.length();
             if (start < sep)
-                entries.append(new File(path.substring(start, sep)));
+                entries.add(new File(path.substring(start, sep)));
             else if (emptyPathDefault != null)
-                entries.append(emptyPathDefault);
+                entries.add(emptyPathDefault);
             start = sep + 1;
         }
         return entries;
@@ -286,51 +272,17 @@ public class Paths {
         }
 
         public void addFile(File file, boolean warn) {
-            boolean foundInCache = false;
-            PathEntry pe = null;
-            if (!NON_BATCH_MODE) {
-                    pe = pathExistanceCache.get(file);
-                    if (pe != null) {
-                        foundInCache = true;
-                    }
-                    else {
-                        pe = new PathEntry();
-                    }
-            }
-            else {
-                pe = new PathEntry();
-            }
-
-            File canonFile;
-            try {
-                if (!foundInCache) {
-                    pe.cannonicalPath = file.getCanonicalFile();
-                }
-                else {
-                   canonFile = pe.cannonicalPath;
-                }
-            } catch (IOException e) {
-                pe.cannonicalPath = canonFile = file;
-            }
-
-            if (contains(file) || canonicalValues.contains(pe.cannonicalPath)) {
+            File canonFile = fsInfo.getCanonicalFile(file);
+            if (contains(file) || canonicalValues.contains(canonFile)) {
                 /* Discard duplicates and avoid infinite recursion */
                 return;
             }
 
-            if (!foundInCache) {
-                pe.exists = file.exists();
-                pe.isFile = file.isFile();
-                if (!NON_BATCH_MODE) {
-                    pathExistanceCache.put(file, pe);
-                }
-            }
-
-            if (! pe.exists) {
+            if (! fsInfo.exists(file)) {
                 /* No such file or directory exists */
                 if (warn)
                     log.warning("path.element.not.found", file);
-            } else if (pe.isFile) {
+            } else if (fsInfo.isFile(file)) {
                 /* File is an ordinary file. */
                 if (!isArchive(file)) {
                     /* Not a recognized extension; open it to see if
@@ -352,9 +304,9 @@ public class Paths {
             /* Now what we have left is either a directory or a file name
                confirming to archive naming convention */
             super.add(file);
-            canonicalValues.add(pe.cannonicalPath);
+            canonicalValues.add(canonFile);
 
-            if (expandJarClassPaths && file.exists() && file.isFile())
+            if (expandJarClassPaths && fsInfo.exists(file) && fsInfo.isFile(file))
                 addJarClassPath(file, warn);
         }
 
@@ -364,61 +316,11 @@ public class Paths {
         // filenames, but if we do, we should redo all path-related code.
         private void addJarClassPath(File jarFile, boolean warn) {
             try {
-                java.util.List<File> manifestsList = manifestEntries.get(jarFile);
-                if (!NON_BATCH_MODE) {
-                    lock.lock();
-                    try {
-                        if (manifestsList != null) {
-                            for (File entr : manifestsList) {
-                                addFile(entr, warn);
-                            }
-                            return;
-                        }
-                    }
-                    finally {
-                        lock.unlock();
-                    }
-                }
-
-                if (!NON_BATCH_MODE) {
-                    manifestsList = new ArrayList<File>();
-                    manifestEntries.put(jarFile, manifestsList);
-                }
-
-                String jarParent = jarFile.getParent();
-                JarFile jar = new JarFile(jarFile);
-
-                try {
-                    Manifest man = jar.getManifest();
-                    if (man == null) return;
-
-                    Attributes attr = man.getMainAttributes();
-                    if (attr == null) return;
-
-                    String path = attr.getValue(Attributes.Name.CLASS_PATH);
-                    if (path == null) return;
-
-                    for (StringTokenizer st = new StringTokenizer(path);
-                         st.hasMoreTokens();) {
-                        String elt = st.nextToken();
-                        File f = (jarParent == null ? new File(elt) : new File(jarParent, elt));
-                        addFile(f, warn);
-
-                        if (!NON_BATCH_MODE) {
-                            lock.lock();
-                            try {
-                                manifestsList.add(f);
-                            }
-                            finally {
-                                lock.unlock();
-                            }
-                        }
-                    }
-                } finally {
-                    jar.close();
+                for (File f: fsInfo.getJarClassPath(jarFile)) {
+                    addFile(f, warn);
                 }
             } catch (IOException e) {
-                log.error("error.reading.file", jarFile, e.getLocalizedMessage());
+                log.error("error.reading.file", jarFile, JavacFileManager.getMessage(e));
             }
         }
     }
@@ -545,24 +447,65 @@ public class Paths {
     }
 
     /** Is this the name of an archive file? */
-    private static boolean isArchive(File file) {
+    private boolean isArchive(File file) {
         String n = file.getName().toLowerCase();
-        boolean isFile = false;
-        if (!NON_BATCH_MODE) {
-            Boolean isf = isDirectory.get(file);
-            if (isf == null) {
-                isFile = file.isFile();
-                isDirectory.put(file, isFile);
-            }
-            else {
-                isFile = isf;
-            }
-        }
-        else {
-            isFile = file.isFile();
-        }
-
-        return isFile
+        return fsInfo.isFile(file)
             && (n.endsWith(".jar") || n.endsWith(".zip"));
+    }
+
+    /**
+     * Utility method for converting a search path string to an array
+     * of directory and JAR file URLs.
+     *
+     * Note that this method is called by apt and the DocletInvoker.
+     *
+     * @param path the search path string
+     * @return the resulting array of directory and JAR file URLs
+     */
+    public static URL[] pathToURLs(String path) {
+        StringTokenizer st = new StringTokenizer(path, File.pathSeparator);
+        URL[] urls = new URL[st.countTokens()];
+        int count = 0;
+        while (st.hasMoreTokens()) {
+            URL url = fileToURL(new File(st.nextToken()));
+            if (url != null) {
+                urls[count++] = url;
+            }
+        }
+        if (urls.length != count) {
+            URL[] tmp = new URL[count];
+            System.arraycopy(urls, 0, tmp, 0, count);
+            urls = tmp;
+        }
+        return urls;
+    }
+
+    /**
+     * Returns the directory or JAR file URL corresponding to the specified
+     * local file name.
+     *
+     * @param file the File object
+     * @return the resulting directory or JAR file URL, or null if unknown
+     */
+    private static URL fileToURL(File file) {
+        String name;
+        try {
+            name = file.getCanonicalPath();
+        } catch (IOException e) {
+            name = file.getAbsolutePath();
+        }
+        name = name.replace(File.separatorChar, '/');
+        if (!name.startsWith("/")) {
+            name = "/" + name;
+        }
+        // If the file does not exist, then assume that it's a directory
+        if (!file.isFile()) {
+            name = name + "/";
+        }
+        try {
+            return new URL("file", "", name);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(file.toString());
+        }
     }
 }

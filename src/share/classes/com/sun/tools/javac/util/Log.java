@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
+import com.sun.tools.javac.file.BaseFileObject;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
@@ -233,7 +235,10 @@ public class Log {
                         return name;
                     }
                     public CharSequence getName() {
-                        return JavacFileManager.getJavacBaseFileName(getFile());
+                        if (name instanceof BaseFileObject)
+                            return ((BaseFileObject) name).getShortName();
+                        else
+                            return BaseFileObject.getSimpleName(name);
                     }
                     public int getLineNumber(int pos) {
                         return Log.this.getLineNumber(pos);
@@ -522,7 +527,10 @@ public class Log {
                         return file;
                     }
                     public CharSequence getName() {
-                        return JavacFileManager.getJavacBaseFileName(getFile());
+                        if (file instanceof BaseFileObject)
+                            return ((BaseFileObject) file).getShortName();
+                        else
+                            return BaseFileObject.getSimpleName(file);
                     }
                     public int getLineNumber(int pos) {
                         return Log.this.getLineNumber(pos);
@@ -660,7 +668,7 @@ public class Log {
             JavaFileObject file = currentSource();
             if (file != null)
                 printLines(errWriter,
-                           JavacFileManager.getJavacFileName(file) + ":" +
+                           file.getName() + ":" +
                            line + ": " + msg);
             printErrLine(pos, errWriter);
         }

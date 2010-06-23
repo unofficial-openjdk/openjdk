@@ -25,10 +25,12 @@
 
 package com.sun.tools.doclets.internal.toolkit.util;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.javadoc.*;
 import java.io.*;
 import java.util.*;
+import javax.tools.FileObject;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
 
 /**
  * Converts Java Source Code to HTML.
@@ -123,16 +125,27 @@ public class SourceToHTMLConverter {
         if (cd == null || outputdir == null) {
             return;
         }
-        File file;
-        SourcePosition sp = cd.position();
-        if (sp == null || (file = sp.file()) == null) {
-            return;
-        }
         try {
+            SourcePosition sp = cd.position();
+            if (sp == null)
+                return;
+            Reader r;
+            // temp hack until we can update SourcePosition API.
+            if (sp instanceof com.sun.tools.javadoc.SourcePositionImpl) {
+                FileObject fo = ((com.sun.tools.javadoc.SourcePositionImpl) sp).fileObject();
+                if (fo == null)
+                    return;
+                r = fo.openReader(true);
+            } else {
+                File file = sp.file();
+                if (file == null)
+                    return;
+                r = new FileReader(file);
+            }
+            LineNumberReader reader = new LineNumberReader(r);
             int lineno = 1;
             String line;
             StringBuffer output = new StringBuffer();
-            LineNumberReader reader = new LineNumberReader(new FileReader(file));
             try {
                 while ((line = reader.readLine()) != null) {
                     output.append(formatLine(line, configuration.sourcetab, lineno));
@@ -260,12 +273,12 @@ public class SourceToHTMLConverter {
      * @param docs the array of <code>Doc</code>s to add anchors for.
      * @param hash the <code>HashMap</code> to add to.
      */
-    protected static void addToHash(Doc[] docs, HashMap hash) {
+    protected static void addToHash(Doc[] docs, HashMap<Integer,String> hash) {
         if(docs == null) {
             return;
         }
         for(int i = 0; i < docs.length; i++) {
-            hash.put(new Integer(docs[i].position().line()), getAnchor(docs[i]));
+            hash.put(docs[i].position().line(), getAnchor(docs[i]));
         }
     }
 
