@@ -743,9 +743,6 @@ sun/nio/cs/TestSJIS0213.java					generic-all
 # Timeout on linux (Fedora 9)
 java/nio/channels/DatagramChannel/Sender.java			generic-all
 
-# Bug was filed on this: 6933622 (rt.jar and charsets.jar overlap?)
-sun/nio/cs/Test4200310.sh					generic-all
-
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
 
