@@ -292,7 +292,7 @@ le_int32 LayoutEngine::characterProcessing(const LEUnicode chars[], le_int32 off
         outCharCount = canonGSUBTable->process(glyphStorage, rightToLeft, scriptTag,
             langSysTag, NULL, substitutionFilter, canonFeatureMap, canonFeatureMapCount, FALSE);
 
-        out = (rightToLeft? count - 1 : 0);
+        out = (rightToLeft? outCharCount - 1 : 0);
 
         outChars = LE_NEW_ARRAY(LEUnicode, outCharCount);
         for (i = 0; i < outCharCount; i += 1, out += dir) {
