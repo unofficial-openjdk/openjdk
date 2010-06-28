@@ -35,6 +35,8 @@ NIMBUS_SKIN_FILE = $(SUN_SRC)/plaf/nimbus/skin.laf
 NIMBUS_GENERATOR_JAR = $(BUILDTOOLJARDIR)/generatenimbus.jar
 
 include $(BUILDDIR)/common/Defs.gmk
+LANGUAGE_VERSION = -source 6
+CLASS_VERSION = -target 6
 
 #
 # Files
