@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,33 @@
  * questions.
  */
 
-/* @test
- * @summary test the address returned in socket from accept
+/**
+ * @test
+ * @bug 6958485
+ * @summary fix for 6879921 was insufficient
+ *
+ * @run main/othervm -Xbatch -XX:CompileOnly=Test.init Test
  */
 
-import java.io.*;
-import java.net.*;
-import java.nio.*;
-import java.nio.channels.*;
+public class Test {
 
+    public static void init(Object src[], boolean[] dst) {
+        // initialize the arrays
+        for (int i =0; i<src.length; i++) {
+            dst[i] = src[i] != null ? false : true;
+        }
+    }
 
-public class AcceptAddress {
+    public static void test() {
+        Object[] src = new Object[34];
+        boolean[] dst = new boolean[34];
 
-    public static void main(String[] args) throws Exception {
-        InetAddress local = InetAddress.getLocalHost();
-        InetSocketAddress isa = new InetSocketAddress(local, 5555);
+        init(src, dst);
+    }
 
-        ServerSocketChannel ssc;
-        ssc = ServerSocketChannel.open();
-        ssc.socket().bind(isa);
-
-        SocketChannel sc;
-        sc = SocketChannel.open();
-        sc.connect(isa);
-
-        SocketChannel sc2 = ssc.accept();
-        System.err.println("Socket connected to " + sc2);
+    public static void main(String[] args) {
+        for (int i=0; i< 2000; i++) {
+            test();
+        }
     }
 }
