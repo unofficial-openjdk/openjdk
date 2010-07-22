@@ -24,17 +24,15 @@
 /**
  * @test
  * @bug 6270015
+ * @run main/othervm Test1
  * @summary  Light weight HTTP server
  */
 
 import com.sun.net.httpserver.*;
 
-import java.util.*;
 import java.util.concurrent.*;
 import java.io.*;
 import java.net.*;
-import java.security.*;
-import java.security.cert.*;
 import javax.net.ssl.*;
 
 /* basic http/s connectivity test
@@ -86,9 +84,12 @@ public class Test1 extends Test {
             System.out.println ("OK");
         } finally {
             delay();
-            s1.stop(2);
-            s2.stop(2);
-            executor.shutdown ();
+            if (s1 != null)
+                s1.stop(2);
+            if (s2 != null)
+                s2.stop(2);
+            if (executor != null)
+                executor.shutdown ();
         }
     }
 
