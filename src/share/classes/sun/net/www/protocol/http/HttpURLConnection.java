@@ -422,9 +422,12 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                         "application/x-www-form-urlencoded");
             }
 
+            boolean chunked = false;
+
             if (streaming()) {
                 if (chunkLength != -1) {
                     requests.set ("Transfer-Encoding", "chunked");
+                    chunked = true;
                 } else {
                     requests.set ("Content-Length", String.valueOf(fixedContentLength));
                 }
@@ -435,6 +438,16 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     poster.close();
                     requests.set("Content-Length",
                                  String.valueOf(poster.size()));
+                }
+            }
+
+            if (!chunked) {
+                if (requests.findValue("Transfer-Encoding") != null) {
+                    requests.remove("Transfer-Encoding");
+                    if (logger.isLoggable(Level.WARNING)) {
+                        logger.warning(
+                            "use streaming mode for chunked encoding");
+                    }
                 }
             }
 
@@ -562,7 +575,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         if (instProxy instanceof sun.net.ApplicationProxy) {
             /* Application set Proxies should not have access to cookies
              * in a secure environment unless explicitly allowed. */
-            try { 
+            try {
                 cookieHandler = CookieHandler.getDefault();
             } catch (SecurityException se) { /* swallow exception */ }
         } else {
