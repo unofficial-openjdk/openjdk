@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,7 +127,6 @@ final class P11Cipher extends CipherSpi {
             // XXX change default to PKCS5Padding
             paddingType = PAD_NONE;
         }
-        session = token.getOpSession();
     }
 
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
@@ -654,16 +653,4 @@ final class P11Cipher extends CipherSpi {
                                 (token, key, keyAlgorithm).keyLength();
         return n;
     }
-
-    protected void finalize() throws Throwable {
-        try {
-            if ((session != null) && token.isValid()) {
-                cancelOperation();
-                session = token.releaseSession(session);
-            }
-        } finally {
-            super.finalize();
-        }
-    }
-
 }

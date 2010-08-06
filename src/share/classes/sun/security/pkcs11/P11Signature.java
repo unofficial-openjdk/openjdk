@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,7 +234,6 @@ final class P11Signature extends SignatureSpi {
         default:
             throw new ProviderException("Unknown mechanism: " + mechanism);
         }
-        session = token.getOpSession();
     }
 
     private void ensureInitialized() {
@@ -684,16 +683,4 @@ final class P11Signature extends SignatureSpi {
             throws InvalidParameterException {
         throw new UnsupportedOperationException("getParameter() not supported");
     }
-
-    protected void finalize() throws Throwable {
-        try {
-            if ((session != null) && token.isValid()) {
-                cancelOperation();
-                session = token.releaseSession(session);
-            }
-        } finally {
-            super.finalize();
-        }
-    }
-
 }
