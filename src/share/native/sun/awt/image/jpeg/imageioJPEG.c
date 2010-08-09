@@ -2619,7 +2619,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     JSAMPROW scanLinePtr;
     int i, j;
     int pixelStride;
-    unsigned char *in, *out, *pixelLimit;
+    unsigned char *in, *out, *pixelLimit, *scanLineLimit;
+    unsigned int scanLineSize, pixelBufferSize;
     int targetLine;
     pixelBufferPtr pb;
     sun_jpeg_error_ptr jerr;
@@ -2655,17 +2656,23 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
     }
 
+    scanLineSize = destWidth * numBands;
     if ((inCs < 0) || (inCs > JCS_YCCK) ||
         (outCs < 0) || (outCs > JCS_YCCK) ||
         (numBands < 1) || (numBands > MAX_BANDS) ||
         (srcWidth < 0) ||
         (destWidth < 0) || (destWidth > srcWidth) ||
         (destHeight < 0) ||
-        (stepX < 0) || (stepY < 0))
+        (stepX < 0) || (stepY < 0) ||
+        ((scanLineSize / numBands) < destWidth))  /* destWidth causes an integer overflow */
     {
         JNU_ThrowByName(env, "javax/imageio/IIOException",
                         "Invalid argument to native writeImage");
         return JNI_FALSE;
+    }
+
+    if (stepX > srcWidth) {
+        stepX = srcWidth;
     }
 
     bandSize = (*env)->GetIntArrayElements(env, bandSizes, NULL);
@@ -2707,7 +2714,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     }
 
     // Allocate a 1-scanline buffer
-    scanLinePtr = (JSAMPROW)malloc(destWidth*numBands);
+    scanLinePtr = (JSAMPROW)malloc(scanLineSize);
     if (scanLinePtr == NULL) {
         RELEASE_ARRAYS(env, data, (const JOCTET *)(dest->next_output_byte));
         JNU_ThrowByName( env,
@@ -2715,6 +2722,7 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
                          "Writing JPEG Stream");
         return data->abortFlag;
     }
+    scanLineLimit = scanLinePtr + scanLineSize;
 
     /* Establish the setjmp return context for sun_jpeg_error_exit to use. */
     jerr = (sun_jpeg_error_ptr) cinfo->err;
@@ -2863,6 +2871,8 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
     }
 
     targetLine = 0;
+    pixelBufferSize = srcWidth * numBands;
+    pixelStride = numBands * stepX;
 
     // for each line in destHeight
     while ((data->abortFlag == JNI_FALSE)
@@ -2883,10 +2893,10 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 
         in = data->pixelBuf.buf.bp;
         out = scanLinePtr;
-        pixelLimit = in + srcWidth*numBands;
-        pixelStride = numBands*stepX;
+        pixelLimit = in + ((pixelBufferSize > data->pixelBuf.byteBufferLength) ?
+                           data->pixelBuf.byteBufferLength : pixelBufferSize);
         if (mustScale) {
-            for (; in < pixelLimit; in += pixelStride) {
+          for (; (in < pixelLimit) && (out < scanLineLimit); in += pixelStride) {
                 for (i = 0; i < numBands; i++) {
                     *out++ = data->scale[i][*(in+i)];
 #ifdef DEBUG
@@ -2902,11 +2912,11 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageWriter_writeImage
 #endif
             }
         } else {
-            for (; in < pixelLimit; in += pixelStride) {
+          for (; (in < pixelLimit) && (out < scanLineLimit); in += pixelStride) {
                 for (i = 0; i < numBands; i++) {
                     *out++ = *(in+i);
                 }
-            }
+          }
         }
         // write it out
         jpeg_write_scanlines(cinfo, (JSAMPARRAY)&scanLinePtr, 1);
