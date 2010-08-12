@@ -51,7 +51,7 @@ public class XQueryTree {
         public int execute() {
                 return execute(null);
         }
-        public int execute(XToolkit.XErrorHandler errorHandler) {
+        public int execute(XErrorHandler errorHandler) {
                 XToolkit.awtLock();
                 try {
                     if (isDisposed()) {
