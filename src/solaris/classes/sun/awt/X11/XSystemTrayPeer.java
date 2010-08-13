@@ -55,6 +55,19 @@ public class XSystemTrayPeer implements SystemTrayPeer {
         return new Dimension(XTrayIconPeer.TRAY_ICON_HEIGHT, XTrayIconPeer.TRAY_ICON_WIDTH);
     }
 
+    boolean isAvailable() {
+        boolean available = false;
+        XToolkit.awtLock();
+        try {
+            long selection_owner = XlibWrapper.XGetSelectionOwner(XToolkit.getDisplay(),
+                _NET_SYSTEM_TRAY.getAtom());
+            available = (selection_owner != XConstants.None);
+        } finally {
+            XToolkit.awtUnlock();
+        }
+        return available;
+    }
+
     // ***********************************************************************
     // ***********************************************************************
 
