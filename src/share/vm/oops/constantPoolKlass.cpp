@@ -284,8 +284,6 @@ void constantPoolKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 }
 #endif // SERIALGC
 
-#ifndef PRODUCT
-
 // Printing
 
 void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
@@ -376,8 +374,6 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
   }
   st->cr();
 }
-
-#endif
 
 void constantPoolKlass::oop_print_value_on(oop obj, outputStream* st) {
   assert(obj->is_constantPool(), "must be constantPool");
