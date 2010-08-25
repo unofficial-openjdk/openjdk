@@ -184,6 +184,8 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
   { "DefaultMaxRAM",       JDK_Version::jdk_update(6,18), JDK_Version::jdk(7) },
   { "DefaultInitialRAMFraction",
                            JDK_Version::jdk_update(6,18), JDK_Version::jdk(7) },
+  { "UseDepthFirstScavengeOrder",
+                           JDK_Version::jdk_update(6,22), JDK_Version::jdk(7) },
   { NULL, JDK_Version(0), JDK_Version(0) }
 };
 
@@ -1559,6 +1561,18 @@ bool Arguments::verify_interval(uintx val, uintx min,
   return false;
 }
 
+bool Arguments::verify_min_value(intx val, intx min, const char* name) {
+  // Returns true if given value is greater than specified min threshold
+  // false, otherwise.
+  if (val >= min ) {
+      return true;
+  }
+  jio_fprintf(defaultStream::error_stream(),
+              "%s of " INTX_FORMAT " is invalid; must be greater than " INTX_FORMAT "\n",
+              name, val, min);
+  return false;
+}
+
 bool Arguments::verify_percentage(uintx value, const char* name) {
   if (value <= 100) {
     return true;
@@ -1608,6 +1622,16 @@ bool Arguments::check_gc_consistency() {
     status = false;
   }
 
+  return status;
+}
+
+// Check stack pages settings
+bool Arguments::check_stack_pages()
+{
+  bool status = true;
+  status = status && verify_min_value(StackYellowPages, 1, "StackYellowPages");
+  status = status && verify_min_value(StackRedPages, 1, "StackRedPages");
+  status = status && verify_min_value(StackShadowPages, 1, "StackShadowPages");
   return status;
 }
 
@@ -1723,6 +1747,7 @@ bool Arguments::check_vm_args_consistency() {
   }
 
   status = status && check_gc_consistency();
+  status = status && check_stack_pages();
 
   if (_has_alloc_profile) {
     if (UseParallelGC || UseParallelOldGC) {

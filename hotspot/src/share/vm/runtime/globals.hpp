@@ -1712,7 +1712,7 @@ class CommandLineFlags {
   develop(bool, VerifyBlockOffsetArray, false,                              \
           "Do (expensive!) block offset array verification")                \
                                                                             \
-  product(bool, BlockOffsetArrayUseUnallocatedBlock, trueInDebug,           \
+  product(bool, BlockOffsetArrayUseUnallocatedBlock, false,                 \
           "Maintain _unallocated_block in BlockOffsetArray"                 \
           " (currently applicable only to CMS collector)")                  \
                                                                             \
@@ -3094,10 +3094,6 @@ class CommandLineFlags {
           "before changing safepoint polling page to RO ")                  \
                                                                             \
   product(intx, SafepointSpinBeforeYield, 2000,  "(Unstable)")              \
-                                                                            \
-  product(bool, UseDepthFirstScavengeOrder, true,                           \
-          "true: the scavenge order will be depth-first, "                  \
-          "false: the scavenge order will be breadth-first")                \
                                                                             \
   product(bool, PSChunkLargeArrays, true,                                   \
           "true: process large arrays in chunks")                           \
