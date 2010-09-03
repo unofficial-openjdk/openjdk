@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,18 @@
 
 /*
  * @test
- * @bug 4399129 6980724
- * @summary Check that assertions compile properly when nested in an interface
- * @author gafter
- * @compile InterfaceAssert.java
- * @run main InterfaceAssert
+ * @bug 6979683
+ * @summary Verify that casts can narrow and unbox at the same time
+ * @author jrose
+ *
+ * @compile/fail/ref=TestCast6979683_BAD39.java.errlog -XDrawDiagnostics TestCast6979683_BAD39.java
  */
 
-/*
- * Verify that assertions compile properly within a top-level interface
- */
-
-interface I {
-    class C {
-        C(){}
-        public void test(String s) {
-            assert s == "Yup";
-        }
-    }
-}
-
-public class InterfaceAssert {
-    public static void main(String[] args) {
-        I.C c = new I.C();
-        c.test("Yup");
-    }
+public class TestCast6979683_BAD39 {
+    //...
+    //...
+    //...
+    //...
+    //...
+    static float cconvBAD2(Number o) { return (char)o; } //BAD
 }
