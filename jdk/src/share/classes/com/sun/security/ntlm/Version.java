@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,39 +23,8 @@
  * questions.
  */
 
-package sun.nio.ch;
+package com.sun.security.ntlm;
 
-import java.io.*;
-import java.nio.channels.*;
-import java.nio.channels.spi.*;
-
-
-class PipeImpl
-    extends Pipe
-{
-
-    // Source and sink channels
-    private final SourceChannel source;
-    private final SinkChannel sink;
-
-    PipeImpl(SelectorProvider sp) {
-        long pipeFds = IOUtil.makePipe(true);
-        int readFd = (int) (pipeFds >>> 32);
-        int writeFd = (int) pipeFds;
-        FileDescriptor sourcefd = new FileDescriptor();
-        IOUtil.setfdVal(sourcefd, readFd);
-        source = new SourceChannelImpl(sp, sourcefd);
-        FileDescriptor sinkfd = new FileDescriptor();
-        IOUtil.setfdVal(sinkfd, writeFd);
-        sink = new SinkChannelImpl(sp, sinkfd);
-    }
-
-    public SourceChannel source() {
-        return source;
-    }
-
-    public SinkChannel sink() {
-        return sink;
-    }
-
+enum Version {
+    NTLM, NTLM2, NTLMv2
 }
