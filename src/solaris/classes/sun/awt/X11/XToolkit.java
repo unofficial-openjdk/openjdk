@@ -1073,10 +1073,9 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     }
 
     public boolean isTraySupported() {
-        int wm = XWM.getWMID();
-        if (wm == XWM.METACITY_WM || wm == XWM.KDE2_WM)
-        {
-            return true;
+        XSystemTrayPeer peer = XSystemTrayPeer.getPeerInstance();
+        if (peer != null) {
+            return peer.isAvailable();
         }
         return false;
     }
