@@ -29,7 +29,7 @@
 */
 
 import javax.swing.*;
-import javax.swing.plaf.nimbus.NimbusLookAndFeel;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.synth.SynthLookAndFeel;
 import javax.swing.text.Element;
 import javax.swing.text.html.HTMLDocument;
@@ -43,9 +43,18 @@ public class Test6933784 {
 
         checkImages();
 
-        UIManager.setLookAndFeel(new NimbusLookAndFeel());
+        setNimbusLookAndFeel();
 
         checkImages();
+    }
+
+    private static void setNimbusLookAndFeel() throws Exception {
+        for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+            if ("Nimbus".equals(info.getName())) {
+                UIManager.setLookAndFeel(info.getClassName());
+                break;
+            }
+        }
     }
 
     private static void checkImages() throws Exception {
