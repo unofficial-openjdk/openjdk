@@ -25,12 +25,13 @@
 #include "incls/_precompiled.incl"
 #include "incls/_markSweep.cpp.incl"
 
-Stack<oop>              MarkSweep::_marking_stack;
-Stack<Klass*>           MarkSweep::_revisit_klass_stack;
-Stack<DataLayout*>      MarkSweep::_revisit_mdo_stack;
+GrowableArray<oop>*          MarkSweep::_marking_stack = NULL;
+GrowableArray<ObjArrayTask>* MarkSweep::_objarray_stack = NULL;
+GrowableArray<Klass*>*       MarkSweep::_revisit_klass_stack = NULL;
+GrowableArray<DataLayout*>*  MarkSweep::_revisit_mdo_stack = NULL;
 
-Stack<oop>              MarkSweep::_preserved_oop_stack;
-Stack<markOop>          MarkSweep::_preserved_mark_stack;
+GrowableArray<oop>*     MarkSweep::_preserved_oop_stack = NULL;
+GrowableArray<markOop>* MarkSweep::_preserved_mark_stack= NULL;
 size_t                  MarkSweep::_preserved_count = 0;
 size_t                  MarkSweep::_preserved_count_max = 0;
 PreservedMark*          MarkSweep::_preserved_marks = NULL;
@@ -57,42 +58,37 @@ GrowableArray<size_t>   * MarkSweep::_last_gc_live_oops_size = NULL;
 #endif
 
 void MarkSweep::revisit_weak_klass_link(Klass* k) {
-  _revisit_klass_stack.push(k);
+  _revisit_klass_stack->push(k);
 }
 
 void MarkSweep::follow_weak_klass_links() {
   // All klasses on the revisit stack are marked at this point.
   // Update and follow all subklass, sibling and implementor links.
   if (PrintRevisitStats) {
-    gclog_or_tty->print_cr("#classes in system dictionary = %d",
-                           SystemDictionary::number_of_classes());
-    gclog_or_tty->print_cr("Revisit klass stack size = " SIZE_FORMAT,
-                           _revisit_klass_stack.size());
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+    gclog_or_tty->print_cr("Revisit klass stack length = %d", _revisit_klass_stack->length());
   }
-  while (!_revisit_klass_stack.is_empty()) {
-    Klass* const k = _revisit_klass_stack.pop();
-    k->follow_weak_klass_links(&is_alive, &keep_alive);
+  for (int i = 0; i < _revisit_klass_stack->length(); i++) {
+    _revisit_klass_stack->at(i)->follow_weak_klass_links(&is_alive,&keep_alive);
   }
   follow_stack();
 }
 
 void MarkSweep::revisit_mdo(DataLayout* p) {
-  _revisit_mdo_stack.push(p);
+  _revisit_mdo_stack->push(p);
 }
 
 void MarkSweep::follow_mdo_weak_refs() {
   // All strongly reachable oops have been marked at this point;
   // we can visit and clear any weak references from MDO's which
   // we memoized during the strong marking phase.
-  assert(_marking_stack.is_empty(), "Marking stack should be empty");
+  assert(_marking_stack->is_empty(), "Marking stack should be empty");
   if (PrintRevisitStats) {
-    gclog_or_tty->print_cr("#classes in system dictionary = %d",
-                           SystemDictionary::number_of_classes());
-    gclog_or_tty->print_cr("Revisit MDO stack size = " SIZE_FORMAT,
-                           _revisit_mdo_stack.size());
+    gclog_or_tty->print_cr("#classes in system dictionary = %d", SystemDictionary::number_of_classes());
+    gclog_or_tty->print_cr("Revisit MDO stack length = %d", _revisit_mdo_stack->length());
   }
-  while (!_revisit_mdo_stack.is_empty()) {
-    _revisit_mdo_stack.pop()->follow_weak_refs(&is_alive);
+  for (int i = 0; i < _revisit_mdo_stack->length(); i++) {
+    _revisit_mdo_stack->at(i)->follow_weak_refs(&is_alive);
   }
   follow_stack();
 }
@@ -109,30 +105,42 @@ void MarkSweep::MarkAndPushClosure::do_oop(oop* p)       { mark_and_push(p); }
 void MarkSweep::MarkAndPushClosure::do_oop(narrowOop* p) { mark_and_push(p); }
 
 void MarkSweep::follow_stack() {
-  while (!_marking_stack.is_empty()) {
-    oop obj = _marking_stack.pop();
-    assert (obj->is_gc_marked(), "p must be marked");
-    obj->follow_contents();
-  }
+  do {
+    while (!_marking_stack->is_empty()) {
+      oop obj = _marking_stack->pop();
+      assert (obj->is_gc_marked(), "p must be marked");
+      obj->follow_contents();
+    }
+    // Process ObjArrays one at a time to avoid marking stack bloat.
+    if (!_objarray_stack->is_empty()) {
+      ObjArrayTask task = _objarray_stack->pop();
+      objArrayKlass* const k = (objArrayKlass*)task.obj()->blueprint();
+      k->oop_follow_contents(task.obj(), task.index());
+    }
+  } while (!_marking_stack->is_empty() || !_objarray_stack->is_empty());
 }
 
 MarkSweep::FollowStackClosure MarkSweep::follow_stack_closure;
 
 void MarkSweep::FollowStackClosure::do_void() { follow_stack(); }
 
-// We preserve the mark which should be replaced at the end and the location
-// that it will go.  Note that the object that this markOop belongs to isn't
-// currently at that address but it will be after phase4
+// We preserve the mark which should be replaced at the end and the location that it
+// will go.  Note that the object that this markOop belongs to isn't currently at that
+// address but it will be after phase4
 void MarkSweep::preserve_mark(oop obj, markOop mark) {
-  // We try to store preserved marks in the to space of the new generation since
-  // this is storage which should be available.  Most of the time this should be
-  // sufficient space for the marks we need to preserve but if it isn't we fall
-  // back in using Stacks to keep track of the overflow.
+  // we try to store preserved marks in the to space of the new generation since this
+  // is storage which should be available.  Most of the time this should be sufficient
+  // space for the marks we need to preserve but if it isn't we fall back in using
+  // GrowableArrays to keep track of the overflow.
   if (_preserved_count < _preserved_count_max) {
     _preserved_marks[_preserved_count++].init(obj, mark);
   } else {
-    _preserved_mark_stack.push(mark);
-    _preserved_oop_stack.push(obj);
+    if (_preserved_mark_stack == NULL) {
+      _preserved_mark_stack = new (ResourceObj::C_HEAP) GrowableArray<markOop>(40, true);
+      _preserved_oop_stack = new (ResourceObj::C_HEAP) GrowableArray<oop>(40, true);
+    }
+    _preserved_mark_stack->push(mark);
+    _preserved_oop_stack->push(obj);
   }
 }
 
@@ -143,7 +151,8 @@ void MarkSweep::AdjustPointerClosure::do_oop(oop* p)       { adjust_pointer(p, _
 void MarkSweep::AdjustPointerClosure::do_oop(narrowOop* p) { adjust_pointer(p, _is_root); }
 
 void MarkSweep::adjust_marks() {
-  assert( _preserved_oop_stack.size() == _preserved_mark_stack.size(),
+  assert(_preserved_oop_stack == NULL ||
+         _preserved_oop_stack->length() == _preserved_mark_stack->length(),
          "inconsistent preserved oop stacks");
 
   // adjust the oops we saved earlier
@@ -152,19 +161,21 @@ void MarkSweep::adjust_marks() {
   }
 
   // deal with the overflow stack
-  StackIterator<oop> iter(_preserved_oop_stack);
-  while (!iter.is_empty()) {
-    oop* p = iter.next_addr();
-    adjust_pointer(p);
+  if (_preserved_oop_stack) {
+    for (int i = 0; i < _preserved_oop_stack->length(); i++) {
+      oop* p = _preserved_oop_stack->adr_at(i);
+      adjust_pointer(p);
+    }
   }
 }
 
 void MarkSweep::restore_marks() {
-  assert(_preserved_oop_stack.size() == _preserved_mark_stack.size(),
+  assert(_preserved_oop_stack == NULL ||
+         _preserved_oop_stack->length() == _preserved_mark_stack->length(),
          "inconsistent preserved oop stacks");
   if (PrintGC && Verbose) {
-    gclog_or_tty->print_cr("Restoring %d marks",
-                           _preserved_count + _preserved_oop_stack.size());
+    gclog_or_tty->print_cr("Restoring %d marks", _preserved_count +
+                  (_preserved_oop_stack ? _preserved_oop_stack->length() : 0));
   }
 
   // restore the marks we saved earlier
@@ -173,10 +184,12 @@ void MarkSweep::restore_marks() {
   }
 
   // deal with the overflow
-  while (!_preserved_oop_stack.is_empty()) {
-    oop obj       = _preserved_oop_stack.pop();
-    markOop mark  = _preserved_mark_stack.pop();
-    obj->set_mark(mark);
+  if (_preserved_oop_stack) {
+    for (int i = 0; i < _preserved_oop_stack->length(); i++) {
+      oop obj       = _preserved_oop_stack->at(i);
+      markOop mark  = _preserved_mark_stack->at(i);
+      obj->set_mark(mark);
+    }
   }
 }
 

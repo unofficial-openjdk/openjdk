@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,13 +60,13 @@ MethodHandleEntry* MethodHandleEntry::finish_compiled_entry(MacroAssembler* _mas
 }
 
 #ifdef ASSERT
-static void verify_argslot(MacroAssembler* _masm, Register rax_argslot,
+static void verify_argslot(MacroAssembler* _masm, Register argslot_reg,
                            const char* error_message) {
   // Verify that argslot lies within (rsp, rbp].
   Label L_ok, L_bad;
-  __ cmpptr(rax_argslot, rbp);
+  __ cmpptr(argslot_reg, rbp);
   __ jccb(Assembler::above, L_bad);
-  __ cmpptr(rsp, rax_argslot);
+  __ cmpptr(rsp, argslot_reg);
   __ jccb(Assembler::below, L_ok);
   __ bind(L_bad);
   __ stop(error_message);
@@ -127,7 +127,8 @@ void MethodHandles::insert_arg_slots(MacroAssembler* _masm,
                                      RegisterOrConstant arg_slots,
                                      int arg_mask,
                                      Register rax_argslot,
-                                     Register rbx_temp, Register rdx_temp) {
+                                     Register rbx_temp, Register rdx_temp, Register temp3_reg) {
+  assert(temp3_reg == noreg, "temp3 not required");
   assert_different_registers(rax_argslot, rbx_temp, rdx_temp,
                              (!arg_slots.is_register() ? rsp : arg_slots.as_register()));
 
@@ -178,22 +179,6 @@ void MethodHandles::insert_arg_slots(MacroAssembler* _masm,
 
   // Now move the argslot down, to point to the opened-up space.
   __ lea(rax_argslot, Address(rax_argslot, arg_slots, Address::times_ptr));
-
-  if (TaggedStackInterpreter && arg_mask != _INSERT_NO_MASK) {
-    // The caller has specified a bitmask of tags to put into the opened space.
-    // This only works when the arg_slots value is an assembly-time constant.
-    int constant_arg_slots = arg_slots.as_constant() / stack_move_unit();
-    int tag_offset = Interpreter::tag_offset_in_bytes() - Interpreter::value_offset_in_bytes();
-    for (int slot = 0; slot < constant_arg_slots; slot++) {
-      BasicType slot_type   = ((arg_mask & (1 << slot)) == 0 ? T_OBJECT : T_INT);
-      int       slot_offset = Interpreter::stackElementSize() * slot;
-      Address   tag_addr(rax_argslot, slot_offset + tag_offset);
-      __ movptr(tag_addr, frame::tag_for_basic_type(slot_type));
-    }
-    // Note that the new argument slots are tagged properly but contain
-    // garbage at this point.  The value portions must be initialized
-    // by the caller.  (Especially references!)
-  }
 }
 
 // Helper to remove argument slots from the stack.
@@ -201,23 +186,15 @@ void MethodHandles::insert_arg_slots(MacroAssembler* _masm,
 void MethodHandles::remove_arg_slots(MacroAssembler* _masm,
                                     RegisterOrConstant arg_slots,
                                     Register rax_argslot,
-                                    Register rbx_temp, Register rdx_temp) {
+                                     Register rbx_temp, Register rdx_temp, Register temp3_reg) {
+  assert(temp3_reg == noreg, "temp3 not required");
   assert_different_registers(rax_argslot, rbx_temp, rdx_temp,
                              (!arg_slots.is_register() ? rsp : arg_slots.as_register()));
 
 #ifdef ASSERT
-  {
-    // Verify that [argslot..argslot+size) lies within (rsp, rbp).
-    Label L_ok, L_bad;
-    __ lea(rbx_temp, Address(rax_argslot, arg_slots, Address::times_ptr));
-    __ cmpptr(rbx_temp, rbp);
-    __ jccb(Assembler::above, L_bad);
-    __ cmpptr(rsp, rax_argslot);
-    __ jccb(Assembler::below, L_ok);
-    __ bind(L_bad);
-    __ stop("deleted argument(s) must fall within current frame");
-    __ bind(L_ok);
-  }
+  // Verify that [argslot..argslot+size) lies within (rsp, rbp).
+  __ lea(rbx_temp, Address(rax_argslot, arg_slots, Address::times_ptr));
+  verify_argslot(_masm, rbx_temp, "deleted argument(s) must fall within current frame");
   if (arg_slots.is_register()) {
     Label L_ok, L_bad;
     __ cmpptr(arg_slots.as_register(), (int32_t) NULL_WORD);
@@ -285,6 +262,22 @@ void trace_method_handle_stub(const char* adaptername,
 }
 #endif //PRODUCT
 
+// which conversion op types are implemented here?
+int MethodHandles::adapter_conversion_ops_supported_mask() {
+  return ((1<<sun_dyn_AdapterMethodHandle::OP_RETYPE_ONLY)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_RETYPE_RAW)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_CHECK_CAST)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_PRIM_TO_PRIM)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_REF_TO_PRIM)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_SWAP_ARGS)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_ROT_ARGS)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_DUP_ARGS)
+         |(1<<sun_dyn_AdapterMethodHandle::OP_DROP_ARGS)
+         //|(1<<sun_dyn_AdapterMethodHandle::OP_SPREAD_ARGS) //BUG!
+         );
+  // FIXME: MethodHandlesTest gets a crash if we enable OP_SPREAD_ARGS.
+}
+
 // Generate an "entry" field for a method handle.
 // This determines how the method handle will respond to calls.
 void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHandles::EntryKind ek) {
@@ -320,12 +313,6 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
   Address rcx_amh_argument(   rcx_recv, sun_dyn_AdapterMethodHandle::argument_offset_in_bytes() );
   Address rcx_amh_conversion( rcx_recv, sun_dyn_AdapterMethodHandle::conversion_offset_in_bytes() );
   Address vmarg;                // __ argument_address(vmargslot)
-
-  int tag_offset = -1;
-  if (TaggedStackInterpreter) {
-    tag_offset = Interpreter::tag_offset_in_bytes() - Interpreter::value_offset_in_bytes();
-    assert(tag_offset = wordSize, "stack grows as expected");
-  }
 
   const int java_mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
 
@@ -372,11 +359,8 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       __ mov(rsp, rsi);   // cut the stack back to where the caller started
 
       // Repush the arguments as if coming from the interpreter.
-      if (TaggedStackInterpreter)  __ push(frame::tag_for_basic_type(T_INT));
       __ push(rdx_code);
-      if (TaggedStackInterpreter)  __ push(frame::tag_for_basic_type(T_OBJECT));
       __ push(rcx_fail);
-      if (TaggedStackInterpreter)  __ push(frame::tag_for_basic_type(T_OBJECT));
       __ push(rax_want);
 
       Register rbx_method = rbx_temp;
@@ -397,7 +381,6 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // Do something that is at least causes a valid throw from the interpreter.
       __ bind(no_method);
       __ pop(rax_want);
-      if (TaggedStackInterpreter)  __ pop(rcx_fail);
       __ pop(rcx_fail);
       __ push(rax_want);
       __ push(rcx_fail);
@@ -510,18 +493,10 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
   case _bound_long_direct_mh:
     {
       bool direct_to_method = (ek >= _bound_ref_direct_mh);
-      BasicType arg_type = T_ILLEGAL;
-      if (ek == _bound_long_mh || ek == _bound_long_direct_mh) {
-        arg_type = T_LONG;
-      } else if (ek == _bound_int_mh || ek == _bound_int_direct_mh) {
-        arg_type = T_INT;
-      } else {
-        assert(ek == _bound_ref_mh || ek == _bound_ref_direct_mh, "must be ref");
-        arg_type = T_OBJECT;
-      }
-      int arg_slots = type2size[arg_type];
-      int arg_mask  = (arg_type == T_OBJECT ? _INSERT_REF_MASK :
-                       arg_slots == 1       ? _INSERT_INT_MASK :  _INSERT_LONG_MASK);
+      BasicType arg_type  = T_ILLEGAL;
+      int       arg_mask  = _INSERT_NO_MASK;
+      int       arg_slots = -1;
+      get_ek_bound_mh_info(ek, arg_type, arg_mask, arg_slots);
 
       // make room for the new argument:
       __ movl(rax_argslot, rcx_bmh_vmargslot);
@@ -541,7 +516,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
 #ifndef _LP64
         if (arg_slots == 2) {
           __ movl(rdx_temp, prim_value_addr.plus_disp(wordSize));
-          __ movl(Address(rax_argslot, Interpreter::stackElementSize()), rdx_temp);
+          __ movl(Address(rax_argslot, Interpreter::stackElementSize), rdx_temp);
         }
 #endif //_LP64
       }
@@ -637,7 +612,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
           __ lea(rax_argslot, __ argument_address(rax_argslot, 1));
           remove_arg_slots(_masm, -stack_move_unit(),
                            rax_argslot, rbx_temp, rdx_temp);
-          vmarg = Address(rax_argslot, -Interpreter::stackElementSize());
+          vmarg = Address(rax_argslot, -Interpreter::stackElementSize);
           __ movl(rdx_temp, vmarg);
         }
         break;
@@ -660,13 +635,10 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
         }
         break;
       default:
-        assert(false, "");
+        ShouldNotReachHere();
       }
-      goto finish_int_conversion;
-    }
 
-  finish_int_conversion:
-    {
+      // Do the requested conversion and store the value.
       Register rbx_vminfo = rbx_temp;
       __ movl(rbx_vminfo, rcx_amh_conversion);
       assert(CONV_VMINFO_SHIFT == 0, "preshifted");
@@ -692,7 +664,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       __ shrl(rdx_temp /*, rcx*/);
 
       __ bind(done);
-      __ movl(vmarg, rdx_temp);
+      __ movl(vmarg, rdx_temp);  // Store the value.
       __ xchgptr(rcx, rbx_vminfo);                // restore rcx_recv
 
       __ jump_to_method_handle_entry(rcx_recv, rdx_temp);
@@ -709,15 +681,20 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       __ lea(rax_argslot, __ argument_address(rax_argslot, 1));
       insert_arg_slots(_masm, stack_move_unit(), _INSERT_INT_MASK,
                        rax_argslot, rbx_temp, rdx_temp);
-      Address vmarg1(rax_argslot, -Interpreter::stackElementSize());
-      Address vmarg2 = vmarg1.plus_disp(Interpreter::stackElementSize());
+      Address vmarg1(rax_argslot, -Interpreter::stackElementSize);
+      Address vmarg2 = vmarg1.plus_disp(Interpreter::stackElementSize);
 
       switch (ek) {
       case _adapter_opt_i2l:
         {
+#ifdef _LP64
+          __ movslq(rdx_temp, vmarg1);  // Load sign-extended
+          __ movq(vmarg1, rdx_temp);    // Store into first slot
+#else
           __ movl(rdx_temp, vmarg1);
-          __ sarl(rdx_temp, 31);  // __ extend_sign()
+          __ sarl(rdx_temp, BitsPerInt - 1);  // __ extend_sign()
           __ movl(vmarg2, rdx_temp); // store second word
+#endif
         }
         break;
       case _adapter_opt_unboxl:
@@ -727,14 +704,19 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
           int value_offset = java_lang_boxing_object::value_offset_in_bytes(T_LONG);
           assert(value_offset == java_lang_boxing_object::value_offset_in_bytes(T_DOUBLE), "");
           __ null_check(rdx_temp, value_offset);
+#ifdef _LP64
+          __ movq(rbx_temp, Address(rdx_temp, value_offset));
+          __ movq(vmarg1, rbx_temp);
+#else
           __ movl(rbx_temp, Address(rdx_temp, value_offset + 0*BytesPerInt));
           __ movl(rdx_temp, Address(rdx_temp, value_offset + 1*BytesPerInt));
           __ movl(vmarg1, rbx_temp);
           __ movl(vmarg2, rdx_temp);
+#endif
         }
         break;
       default:
-        assert(false, "");
+        ShouldNotReachHere();
       }
 
       __ movptr(rcx_recv, rcx_mh_vmtarget);
@@ -752,7 +734,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
         insert_arg_slots(_masm, stack_move_unit(), _INSERT_INT_MASK,
                          rax_argslot, rbx_temp, rdx_temp);
       }
-      Address vmarg(rax_argslot, -Interpreter::stackElementSize());
+      Address vmarg(rax_argslot, -Interpreter::stackElementSize);
 
 #ifdef _LP64
       if (ek == _adapter_opt_f2d) {
@@ -768,19 +750,8 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       if (ek == _adapter_opt_f2d) {
         __ fld_s(vmarg);        // load float to ST0
         __ fstp_s(vmarg);       // store single
-      } else if (!TaggedStackInterpreter) {
-        __ fld_d(vmarg);        // load double to ST0
-        __ fstp_s(vmarg);       // store single
       } else {
-        Address vmarg_tag = vmarg.plus_disp(tag_offset);
-        Address vmarg2    = vmarg.plus_disp(Interpreter::stackElementSize());
-        // vmarg2_tag does not participate in this code
-        Register rbx_tag = rbx_temp;
-        __ movl(rbx_tag, vmarg_tag); // preserve tag
-        __ movl(rdx_temp, vmarg2); // get second word of double
-        __ movl(vmarg_tag, rdx_temp); // align with first word
         __ fld_d(vmarg);        // load double to ST0
-        __ movl(vmarg_tag, rbx_tag); // restore tag
         __ fstp_s(vmarg);       // store single
       }
 #endif //_LP64
@@ -812,19 +783,8 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
   case _adapter_opt_rot_2_up:
   case _adapter_opt_rot_2_down:
     {
-      int rotate = 0, swap_slots = 0;
-      switch ((int)ek) {
-      case _adapter_opt_swap_1:     swap_slots = 1; break;
-      case _adapter_opt_swap_2:     swap_slots = 2; break;
-      case _adapter_opt_rot_1_up:   swap_slots = 1; rotate++; break;
-      case _adapter_opt_rot_1_down: swap_slots = 1; rotate--; break;
-      case _adapter_opt_rot_2_up:   swap_slots = 2; rotate++; break;
-      case _adapter_opt_rot_2_down: swap_slots = 2; rotate--; break;
-      default: assert(false, "");
-      }
-
-      // the real size of the move must be doubled if TaggedStackInterpreter:
-      int swap_bytes = (int)( swap_slots * Interpreter::stackElementWords() * wordSize );
+      int swap_bytes = 0, rotate = 0;
+      get_ek_adapter_opt_swap_rot_info(ek, swap_bytes, rotate);
 
       // 'argslot' is the position of the first argument to swap
       __ movl(rax_argslot, rcx_amh_vmargslot);
@@ -925,8 +885,8 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
 
       // 'stack_move' is negative number of words to duplicate
       Register rdx_stack_move = rdx_temp;
-      __ movl(rdx_stack_move, rcx_amh_conversion);
-      __ sarl(rdx_stack_move, CONV_STACK_MOVE_SHIFT);
+      __ movl2ptr(rdx_stack_move, rcx_amh_conversion);
+      __ sarptr(rdx_stack_move, CONV_STACK_MOVE_SHIFT);
 
       int argslot0_num = 0;
       Address argslot0 = __ argument_address(RegisterOrConstant(argslot0_num));
@@ -988,8 +948,8 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
 
       // 'stack_move' is number of words to drop
       Register rdi_stack_move = rdi;
-      __ movl(rdi_stack_move, rcx_amh_conversion);
-      __ sarl(rdi_stack_move, CONV_STACK_MOVE_SHIFT);
+      __ movl2ptr(rdi_stack_move, rcx_amh_conversion);
+      __ sarptr(rdi_stack_move, CONV_STACK_MOVE_SHIFT);
       remove_arg_slots(_masm, rdi_stack_move,
                        rax_argslot, rbx_temp, rdx_temp);
 
@@ -1014,11 +974,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
   case _adapter_opt_spread_more:
     {
       // spread an array out into a group of arguments
-      int length_constant = -1;
-      switch (ek) {
-      case _adapter_opt_spread_0: length_constant = 0; break;
-      case _adapter_opt_spread_1: length_constant = 1; break;
-      }
+      int length_constant = get_ek_adapter_opt_spread_info(ek);
 
       // find the address of the array argument
       __ movl(rax_argslot, rcx_amh_vmargslot);
@@ -1076,11 +1032,11 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // Array length checks out.  Now insert any required stack slots.
       if (length_constant == -1) {
         // Form a pointer to the end of the affected region.
-        __ lea(rdx_argslot_limit, Address(rax_argslot, Interpreter::stackElementSize()));
+        __ lea(rdx_argslot_limit, Address(rax_argslot, Interpreter::stackElementSize));
         // 'stack_move' is negative number of words to insert
         Register rdi_stack_move = rdi;
-        __ movl(rdi_stack_move, rcx_amh_conversion);
-        __ sarl(rdi_stack_move, CONV_STACK_MOVE_SHIFT);
+        __ movl2ptr(rdi_stack_move, rcx_amh_conversion);
+        __ sarptr(rdi_stack_move, CONV_STACK_MOVE_SHIFT);
         Register rsi_temp = rsi_array;  // spill this
         insert_arg_slots(_masm, rdi_stack_move, -1,
                          rax_argslot, rbx_temp, rsi_temp);
@@ -1114,11 +1070,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
         __ movptr(rbx_temp, Address(rsi_source, 0));
         __ movptr(Address(rax_argslot, 0), rbx_temp);
         __ addptr(rsi_source, type2aelembytes(elem_type));
-        if (TaggedStackInterpreter) {
-          __ movptr(Address(rax_argslot, tag_offset),
-                    frame::tag_for_basic_type(elem_type));
-        }
-        __ addptr(rax_argslot, Interpreter::stackElementSize());
+        __ addptr(rax_argslot, Interpreter::stackElementSize);
         __ cmpptr(rax_argslot, rdx_argslot_limit);
         __ jccb(Assembler::less, loop);
       } else if (length_constant == 0) {
@@ -1131,11 +1083,7 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
           __ movptr(rbx_temp, Address(rsi_array, elem_offset));
           __ movptr(Address(rax_argslot, slot_offset), rbx_temp);
           elem_offset += type2aelembytes(elem_type);
-          if (TaggedStackInterpreter) {
-            __ movptr(Address(rax_argslot, slot_offset + tag_offset),
-                      frame::tag_for_basic_type(elem_type));
-          }
-          slot_offset += Interpreter::stackElementSize();
+           slot_offset += Interpreter::stackElementSize;
         }
       }
 

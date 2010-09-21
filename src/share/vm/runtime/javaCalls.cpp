@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -417,17 +417,9 @@ intptr_t* JavaCallArguments::parameters() {
       // Handle conversion
       _value[i] = (intptr_t)Handle::raw_resolve((oop *)_value[i]);
     }
-    // The parameters are moved to the parameters array to include the tags.
-    if (TaggedStackInterpreter) {
-      // Tags are interspersed with arguments.  Tags are first.
-      int tagged_index = i*2;
-      _parameters[tagged_index]   = _is_oop[i] ? frame::TagReference :
-                                                 frame::TagValue;
-      _parameters[tagged_index+1] = _value[i];
-    }
   }
   // Return argument vector
-  return TaggedStackInterpreter ? _parameters : _value;
+  return _value;
 }
 
 

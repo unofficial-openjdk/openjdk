@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,12 +74,12 @@ class CodeBlob_sizes {
     total_size       += cb->size();
     header_size      += cb->header_size();
     relocation_size  += cb->relocation_size();
-    scopes_oop_size  += cb->oops_size();
     if (cb->is_nmethod()) {
-      nmethod *nm = (nmethod*)cb;
+      nmethod* nm = cb->as_nmethod_or_null();
       code_size        += nm->code_size();
       stub_size        += nm->stub_size();
 
+      scopes_oop_size  += nm->oops_size();
       scopes_data_size += nm->scopes_data_size();
       scopes_pcs_size  += nm->scopes_pcs_size();
     } else {
@@ -93,6 +93,8 @@ class CodeBlob_sizes {
 
 CodeHeap * CodeCache::_heap = new CodeHeap();
 int CodeCache::_number_of_blobs = 0;
+int CodeCache::_number_of_adapters = 0;
+int CodeCache::_number_of_nmethods = 0;
 int CodeCache::_number_of_nmethods_with_dependencies = 0;
 bool CodeCache::_needs_cache_clean = false;
 nmethod* CodeCache::_scavenge_root_nmethods = NULL;
@@ -124,6 +126,23 @@ nmethod* CodeCache::alive_nmethod(CodeBlob* cb) {
   return (nmethod*)cb;
 }
 
+nmethod* CodeCache::first_nmethod() {
+  assert_locked_or_safepoint(CodeCache_lock);
+  CodeBlob* cb = first();
+  while (cb != NULL && !cb->is_nmethod()) {
+    cb = next(cb);
+  }
+  return (nmethod*)cb;
+}
+
+nmethod* CodeCache::next_nmethod (CodeBlob* cb) {
+  assert_locked_or_safepoint(CodeCache_lock);
+  cb = next(cb);
+  while (cb != NULL && !cb->is_nmethod()) {
+    cb = next(cb);
+  }
+  return (nmethod*)cb;
+}
 
 CodeBlob* CodeCache::allocate(int size) {
   // Do not seize the CodeCache lock here--if the caller has not
@@ -159,8 +178,14 @@ void CodeCache::free(CodeBlob* cb) {
   verify_if_often();
 
   print_trace("free", cb);
-  if (cb->is_nmethod() && ((nmethod *)cb)->has_dependencies()) {
-    _number_of_nmethods_with_dependencies--;
+  if (cb->is_nmethod()) {
+    _number_of_nmethods--;
+    if (((nmethod *)cb)->has_dependencies()) {
+      _number_of_nmethods_with_dependencies--;
+    }
+  }
+  if (cb->is_adapter_blob()) {
+    _number_of_adapters--;
   }
   _number_of_blobs--;
 
@@ -174,9 +199,16 @@ void CodeCache::free(CodeBlob* cb) {
 void CodeCache::commit(CodeBlob* cb) {
   // this is called by nmethod::nmethod, which must already own CodeCache_lock
   assert_locked_or_safepoint(CodeCache_lock);
-  if (cb->is_nmethod() && ((nmethod *)cb)->has_dependencies()) {
-    _number_of_nmethods_with_dependencies++;
+  if (cb->is_nmethod()) {
+    _number_of_nmethods++;
+    if (((nmethod *)cb)->has_dependencies()) {
+      _number_of_nmethods_with_dependencies++;
+    }
   }
+  if (cb->is_adapter_blob()) {
+    _number_of_adapters++;
+  }
+
   // flush the hardware I-cache
   ICache::invalidate_range(cb->instructions_begin(), cb->instructions_size());
 }
@@ -245,14 +277,14 @@ int CodeCache::alignment_offset() {
 }
 
 
-// Mark code blobs for unloading if they contain otherwise
-// unreachable oops.
+// Mark nmethods for unloading if they contain otherwise unreachable
+// oops.
 void CodeCache::do_unloading(BoolObjectClosure* is_alive,
                              OopClosure* keep_alive,
                              bool unloading_occurred) {
   assert_locked_or_safepoint(CodeCache_lock);
-  FOR_ALL_ALIVE_BLOBS(cb) {
-    cb->do_unloading(is_alive, keep_alive, unloading_occurred);
+  FOR_ALL_ALIVE_NMETHODS(nm) {
+    nm->do_unloading(is_alive, keep_alive, unloading_occurred);
   }
 }
 
@@ -284,9 +316,11 @@ void CodeCache::scavenge_root_nmethods_do(CodeBlobClosure* f) {
       cur->print_on(tty, is_live ? "scavenge root" : "dead scavenge root"); tty->cr();
     }
 #endif //PRODUCT
-    if (is_live)
+    if (is_live) {
       // Perform cur->oops_do(f), maybe just once per nmethod.
       f->do_code_blob(cur);
+      cur->fix_oop_relocations();
+    }
   }
 
   // Check for stray marks.
@@ -412,7 +446,7 @@ nmethod* CodeCache::find_and_remove_saved_code(methodOop m) {
       saved->set_speculatively_disconnected(false);
       saved->set_saved_nmethod_link(NULL);
       if (PrintMethodFlushing) {
-        saved->print_on(tty, " ### nmethod is reconnected");
+        saved->print_on(tty, " ### nmethod is reconnected\n");
       }
       if (LogCompilation && (xtty != NULL)) {
         ttyLocker ttyl;
@@ -430,7 +464,8 @@ nmethod* CodeCache::find_and_remove_saved_code(methodOop m) {
 }
 
 void CodeCache::remove_saved_code(nmethod* nm) {
-  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  // For conc swpr this will be called with CodeCache_lock taken by caller
+  assert_locked_or_safepoint(CodeCache_lock);
   assert(nm->is_speculatively_disconnected(), "shouldn't call for other nmethods");
   nmethod* saved = _saved_nmethods;
   nmethod* prev = NULL;
@@ -461,7 +496,7 @@ void CodeCache::speculatively_disconnect(nmethod* nm) {
   nm->set_saved_nmethod_link(_saved_nmethods);
   _saved_nmethods = nm;
   if (PrintMethodFlushing) {
-    nm->print_on(tty, " ### nmethod is speculatively disconnected");
+    nm->print_on(tty, " ### nmethod is speculatively disconnected\n");
   }
   if (LogCompilation && (xtty != NULL)) {
     ttyLocker ttyl;
@@ -489,9 +524,9 @@ void CodeCache::gc_epilogue() {
       if (needs_cache_clean()) {
         nm->cleanup_inline_caches();
       }
-      debug_only(nm->verify();)
+      DEBUG_ONLY(nm->verify());
+      nm->fix_oop_relocations();
     }
-    cb->fix_oop_relocations();
   }
   set_needs_cache_clean(false);
   prune_scavenge_root_nmethods();

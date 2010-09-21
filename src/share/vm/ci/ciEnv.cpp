@@ -176,7 +176,6 @@ void ciEnv::cache_jvmti_state() {
   // Get Jvmti capabilities under lock to get consistant values.
   MutexLocker mu(JvmtiThreadState_lock);
   _jvmti_can_hotswap_or_post_breakpoint = JvmtiExport::can_hotswap_or_post_breakpoint();
-  _jvmti_can_examine_or_deopt_anywhere  = JvmtiExport::can_examine_or_deopt_anywhere();
   _jvmti_can_access_local_variables     = JvmtiExport::can_access_local_variables();
   _jvmti_can_post_on_exceptions         = JvmtiExport::can_post_on_exceptions();
 }
@@ -512,9 +511,22 @@ ciKlass* ciEnv::get_klass_by_index(constantPoolHandle cpool,
 //
 // Implementation of get_constant_by_index().
 ciConstant ciEnv::get_constant_by_index_impl(constantPoolHandle cpool,
-                                             int index,
+                                             int pool_index, int cache_index,
                                              ciInstanceKlass* accessor) {
+  bool ignore_will_link;
   EXCEPTION_CONTEXT;
+  int index = pool_index;
+  if (cache_index >= 0) {
+    assert(index < 0, "only one kind of index at a time");
+    ConstantPoolCacheEntry* cpc_entry = cpool->cache()->entry_at(cache_index);
+    index = cpc_entry->constant_pool_index();
+    oop obj = cpc_entry->f1();
+    if (obj != NULL) {
+      assert(obj->is_instance(), "must be an instance");
+      ciObject* ciobj = get_object(obj);
+      return ciConstant(T_OBJECT, ciobj);
+    }
+  }
   constantTag tag = cpool->tag_at(index);
   if (tag.is_int()) {
     return ciConstant(T_INT, (jint)cpool->int_at(index));
@@ -541,8 +553,7 @@ ciConstant ciEnv::get_constant_by_index_impl(constantPoolHandle cpool,
     return ciConstant(T_OBJECT, constant);
   } else if (tag.is_klass() || tag.is_unresolved_klass()) {
     // 4881222: allow ldc to take a class type
-    bool ignore;
-    ciKlass* klass = get_klass_by_index_impl(cpool, index, ignore, accessor);
+    ciKlass* klass = get_klass_by_index_impl(cpool, index, ignore_will_link, accessor);
     if (HAS_PENDING_EXCEPTION) {
       CLEAR_PENDING_EXCEPTION;
       record_out_of_memory_failure();
@@ -550,40 +561,30 @@ ciConstant ciEnv::get_constant_by_index_impl(constantPoolHandle cpool,
     }
     assert (klass->is_instance_klass() || klass->is_array_klass(),
             "must be an instance or array klass ");
-    return ciConstant(T_OBJECT, klass);
+    return ciConstant(T_OBJECT, klass->java_mirror());
   } else if (tag.is_object()) {
     oop obj = cpool->object_at(index);
     assert(obj->is_instance(), "must be an instance");
     ciObject* ciobj = get_object(obj);
     return ciConstant(T_OBJECT, ciobj);
+  } else if (tag.is_method_type()) {
+    // must execute Java code to link this CP entry into cache[i].f1
+    ciSymbol* signature = get_object(cpool->method_type_signature_at(index))->as_symbol();
+    ciObject* ciobj = get_unloaded_method_type_constant(signature);
+    return ciConstant(T_OBJECT, ciobj);
+  } else if (tag.is_method_handle()) {
+    // must execute Java code to link this CP entry into cache[i].f1
+    int ref_kind        = cpool->method_handle_ref_kind_at(index);
+    int callee_index    = cpool->method_handle_klass_index_at(index);
+    ciKlass* callee     = get_klass_by_index_impl(cpool, callee_index, ignore_will_link, accessor);
+    ciSymbol* name      = get_object(cpool->method_handle_name_ref_at(index))->as_symbol();
+    ciSymbol* signature = get_object(cpool->method_handle_signature_ref_at(index))->as_symbol();
+    ciObject* ciobj     = get_unloaded_method_handle_constant(callee, name, signature, ref_kind);
+    return ciConstant(T_OBJECT, ciobj);
   } else {
     ShouldNotReachHere();
     return ciConstant();
   }
-}
-
-// ------------------------------------------------------------------
-// ciEnv::is_unresolved_string_impl
-//
-// Implementation of is_unresolved_string().
-bool ciEnv::is_unresolved_string_impl(instanceKlass* accessor, int index) const {
-  EXCEPTION_CONTEXT;
-  assert(accessor->is_linked(), "must be linked before accessing constant pool");
-  constantPoolOop cpool = accessor->constants();
-  constantTag tag = cpool->tag_at(index);
-  return tag.is_unresolved_string();
-}
-
-// ------------------------------------------------------------------
-// ciEnv::is_unresolved_klass_impl
-//
-// Implementation of is_unresolved_klass().
-bool ciEnv::is_unresolved_klass_impl(instanceKlass* accessor, int index) const {
-  EXCEPTION_CONTEXT;
-  assert(accessor->is_linked(), "must be linked before accessing constant pool");
-  constantPoolOop cpool = accessor->constants();
-  constantTag tag = cpool->tag_at(index);
-  return tag.is_unresolved_klass();
 }
 
 // ------------------------------------------------------------------
@@ -593,31 +594,9 @@ bool ciEnv::is_unresolved_klass_impl(instanceKlass* accessor, int index) const {
 //
 // Implementation note: this query is currently in no way cached.
 ciConstant ciEnv::get_constant_by_index(constantPoolHandle cpool,
-                                        int index,
+                                        int pool_index, int cache_index,
                                         ciInstanceKlass* accessor) {
-  GUARDED_VM_ENTRY(return get_constant_by_index_impl(cpool, index, accessor);)
-}
-
-// ------------------------------------------------------------------
-// ciEnv::is_unresolved_string
-//
-// Check constant pool
-//
-// Implementation note: this query is currently in no way cached.
-bool ciEnv::is_unresolved_string(ciInstanceKlass* accessor,
-                                 int index) const {
-  GUARDED_VM_ENTRY(return is_unresolved_string_impl(accessor->get_instanceKlass(), index); )
-}
-
-// ------------------------------------------------------------------
-// ciEnv::is_unresolved_klass
-//
-// Check constant pool
-//
-// Implementation note: this query is currently in no way cached.
-bool ciEnv::is_unresolved_klass(ciInstanceKlass* accessor,
-                                int index) const {
-  GUARDED_VM_ENTRY(return is_unresolved_klass_impl(accessor->get_instanceKlass(), index); )
+  GUARDED_VM_ENTRY(return get_constant_by_index_impl(cpool, pool_index, cache_index, accessor);)
 }
 
 // ------------------------------------------------------------------
@@ -732,26 +711,29 @@ ciMethod* ciEnv::get_method_by_index_impl(constantPoolHandle cpool,
 // ciEnv::get_fake_invokedynamic_method_impl
 ciMethod* ciEnv::get_fake_invokedynamic_method_impl(constantPoolHandle cpool,
                                                     int index, Bytecodes::Code bc) {
+  // Compare the following logic with InterpreterRuntime::resolve_invokedynamic.
   assert(bc == Bytecodes::_invokedynamic, "must be invokedynamic");
 
-  // Get the CallSite from the constant pool cache.
-  ConstantPoolCacheEntry* cpc_entry = cpool->cache()->secondary_entry_at(index);
-  assert(cpc_entry != NULL && cpc_entry->is_secondary_entry(), "sanity");
-  Handle call_site = cpc_entry->f1();
+  bool is_resolved = cpool->cache()->main_entry_at(index)->is_resolved(bc);
+  if (is_resolved && (oop) cpool->cache()->secondary_entry_at(index)->f1() == NULL)
+    // FIXME: code generation could allow for null (unlinked) call site
+    is_resolved = false;
 
-  // Call site might not be linked yet.
-  if (call_site.is_null()) {
+  // Call site might not be resolved yet.  We could create a real invoker method from the
+  // compiler, but it is simpler to stop the code path here with an unlinked method.
+  if (!is_resolved) {
     ciInstanceKlass* mh_klass = get_object(SystemDictionary::MethodHandle_klass())->as_instance_klass();
-    ciSymbol*       sig_sym   = get_object(cpool->signature_ref_at(index))->as_symbol();
-    return get_unloaded_method(mh_klass, ciSymbol::invoke_name(), sig_sym);
+    ciSymbol*        sig_sym  = get_object(cpool->signature_ref_at(index))->as_symbol();
+    return get_unloaded_method(mh_klass, ciSymbol::invokeExact_name(), sig_sym);
   }
 
-  // Get the methodOop from the CallSite.
-  methodOop method_oop = (methodOop) java_dyn_CallSite::vmmethod(call_site());
-  assert(method_oop != NULL, "sanity");
-  assert(method_oop->is_method_handle_invoke(), "consistent");
+  // Get the invoker methodOop from the constant pool.
+  oop f1_value = cpool->cache()->main_entry_at(index)->f1();
+  methodOop signature_invoker = methodOop(f1_value);
+  assert(signature_invoker != NULL && signature_invoker->is_method() && signature_invoker->is_method_handle_invoke(),
+         "correct result from LinkResolver::resolve_invokedynamic");
 
-  return get_object(method_oop)->as_method();
+  return get_object(signature_invoker)->as_method();
 }
 
 
@@ -887,8 +869,6 @@ void ciEnv::register_method(ciMethod* target,
     if (!failing() &&
         ( (!jvmti_can_hotswap_or_post_breakpoint() &&
            JvmtiExport::can_hotswap_or_post_breakpoint()) ||
-          (!jvmti_can_examine_or_deopt_anywhere() &&
-           JvmtiExport::can_examine_or_deopt_anywhere()) ||
           (!jvmti_can_access_local_variables() &&
            JvmtiExport::can_access_local_variables()) ||
           (!jvmti_can_post_on_exceptions() &&

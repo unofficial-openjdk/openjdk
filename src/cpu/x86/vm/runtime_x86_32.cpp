@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,9 +115,9 @@ void OptoRuntime::generate_exception_blob() {
 
   // rax: exception handler for given <exception oop/exception pc>
 
-  // Restore SP from BP if the exception PC is a MethodHandle call.
-  __ cmpl(Address(rcx, JavaThread::is_method_handle_exception_offset()), 0);
-  __ cmovptr(Assembler::notEqual, rsp, rbp);
+  // Restore SP from BP if the exception PC is a MethodHandle call site.
+  __ cmpl(Address(rcx, JavaThread::is_method_handle_return_offset()), 0);
+  __ cmovptr(Assembler::notEqual, rsp, rbp_mh_SP_save);
 
   // We have a handler in rax, (could be deopt blob)
   // rdx - throwing pc, deopt blob will need it.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,8 +130,8 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
   case Bytecodes::_multianewarray : // fall through
   case Bytecodes::_checkcast      : // fall through
   case Bytecodes::_instanceof     : {
-    u2 cpi_old = _s_old->get_index_big();
-    u2 cpi_new = _s_new->get_index_big();
+    u2 cpi_old = _s_old->get_index_u2();
+    u2 cpi_new = _s_new->get_index_u2();
     if ((_old_cp->klass_at_noresolve(cpi_old) != _new_cp->klass_at_noresolve(cpi_new)))
         return false;
     if (c_old == Bytecodes::_multianewarray &&
@@ -147,9 +147,10 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
   case Bytecodes::_invokevirtual   : // fall through
   case Bytecodes::_invokespecial   : // fall through
   case Bytecodes::_invokestatic    : // fall through
+  case Bytecodes::_invokedynamic   : // fall through
   case Bytecodes::_invokeinterface : {
-    u2 cpci_old = _s_old->get_index_int();
-    u2 cpci_new = _s_new->get_index_int();
+    int cpci_old = _s_old->has_index_u4() ? _s_old->get_index_u4() : _s_old->get_index_u2_cpcache();
+    int cpci_new = _s_new->has_index_u4() ? _s_new->get_index_u4() : _s_new->get_index_u2_cpcache();
     // Check if the names of classes, field/method names and signatures at these indexes
     // are the same. Indices which are really into constantpool cache (rather than constant
     // pool itself) are accepted by the constantpool query routines below.
@@ -162,14 +163,10 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
 
   case Bytecodes::_ldc   : // fall through
   case Bytecodes::_ldc_w : {
-    u2 cpi_old, cpi_new;
-    if (c_old == Bytecodes::_ldc) {
-      cpi_old = _s_old->bcp()[1];
-      cpi_new = _s_new->bcp()[1];
-    } else {
-      cpi_old = _s_old->get_index_big();
-      cpi_new = _s_new->get_index_big();
-    }
+    Bytecode_loadconstant* ldc_old = Bytecode_loadconstant_at(_s_old->method(), _s_old->bci());
+    Bytecode_loadconstant* ldc_new = Bytecode_loadconstant_at(_s_new->method(), _s_new->bci());
+    int cpi_old = ldc_old->pool_index();
+    int cpi_new = ldc_new->pool_index();
     constantTag tag_old = _old_cp->tag_at(cpi_old);
     constantTag tag_new = _new_cp->tag_at(cpi_new);
     if (tag_old.is_int() || tag_old.is_float()) {
@@ -179,7 +176,9 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
         if (_old_cp->int_at(cpi_old) != _new_cp->int_at(cpi_new))
           return false;
       } else {
-        if (_old_cp->float_at(cpi_old) != _new_cp->float_at(cpi_new))
+        // Use jint_cast to compare the bits rather than numerical values.
+        // This makes a difference for NaN constants.
+        if (jint_cast(_old_cp->float_at(cpi_old)) != jint_cast(_new_cp->float_at(cpi_new)))
           return false;
       }
     } else if (tag_old.is_string() || tag_old.is_unresolved_string()) {
@@ -188,19 +187,37 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       if (strcmp(_old_cp->string_at_noresolve(cpi_old),
                  _new_cp->string_at_noresolve(cpi_new)) != 0)
         return false;
-    } else { // tag_old should be klass - 4881222
+    } else if (tag_old.is_klass() || tag_old.is_unresolved_klass()) {
+      // tag_old should be klass - 4881222
       if (! (tag_new.is_unresolved_klass() || tag_new.is_klass()))
         return false;
       if (_old_cp->klass_at_noresolve(cpi_old) !=
           _new_cp->klass_at_noresolve(cpi_new))
         return false;
+    } else if (tag_old.is_method_type() && tag_new.is_method_type()) {
+      int mti_old = _old_cp->method_type_index_at(cpi_old);
+      int mti_new = _new_cp->method_type_index_at(cpi_new);
+      if ((_old_cp->symbol_at(mti_old) != _new_cp->symbol_at(mti_new)))
+        return false;
+    } else if (tag_old.is_method_handle() && tag_new.is_method_handle()) {
+      if (_old_cp->method_handle_ref_kind_at(cpi_old) !=
+          _new_cp->method_handle_ref_kind_at(cpi_new))
+        return false;
+      int mhi_old = _old_cp->method_handle_index_at(cpi_old);
+      int mhi_new = _new_cp->method_handle_index_at(cpi_new);
+      if ((_old_cp->uncached_klass_ref_at_noresolve(mhi_old) != _new_cp->uncached_klass_ref_at_noresolve(mhi_new)) ||
+          (_old_cp->uncached_name_ref_at(mhi_old) != _new_cp->uncached_name_ref_at(mhi_new)) ||
+          (_old_cp->uncached_signature_ref_at(mhi_old) != _new_cp->uncached_signature_ref_at(mhi_new)))
+        return false;
+    } else {
+      return false;  // unknown tag
     }
     break;
   }
 
   case Bytecodes::_ldc2_w : {
-    u2 cpi_old = _s_old->get_index_big();
-    u2 cpi_new = _s_new->get_index_big();
+    u2 cpi_old = _s_old->get_index_u2();
+    u2 cpi_new = _s_new->get_index_u2();
     constantTag tag_old = _old_cp->tag_at(cpi_old);
     constantTag tag_new = _new_cp->tag_at(cpi_new);
     if (tag_old.value() != tag_new.value())
@@ -209,7 +226,9 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
       if (_old_cp->long_at(cpi_old) != _new_cp->long_at(cpi_new))
         return false;
     } else {
-      if (_old_cp->double_at(cpi_old) != _new_cp->double_at(cpi_new))
+      // Use jlong_cast to compare the bits rather than numerical values.
+      // This makes a difference for NaN constants.
+      if (jlong_cast(_old_cp->double_at(cpi_old)) != jlong_cast(_new_cp->double_at(cpi_new)))
         return false;
     }
     break;
@@ -221,7 +240,7 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
     break;
 
   case Bytecodes::_sipush    :
-    if (_s_old->get_index_big() != _s_new->get_index_big())
+    if (_s_old->get_index_u2() != _s_new->get_index_u2())
       return false;
     break;
 
@@ -260,8 +279,8 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
   case Bytecodes::_ifnonnull : // fall through
   case Bytecodes::_ifnull    : // fall through
   case Bytecodes::_jsr       : {
-    short old_ofs = (short) _s_old->get_index_big();
-    short new_ofs = (short) _s_new->get_index_big();
+    int old_ofs = _s_old->bytecode()->get_offset_s2(c_old);
+    int new_ofs = _s_new->bytecode()->get_offset_s2(c_new);
     if (_switchable_test) {
       int old_dest = _s_old->bci() + old_ofs;
       int new_dest = _s_new->bci() + new_ofs;
@@ -285,9 +304,11 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
     if (_s_old->is_wide() != _s_new->is_wide())
       return false;
     if (! _s_old->is_wide()) {
-      if (_s_old->get_index_big() != _s_new->get_index_big())
+      // We could use get_index_u1 and get_constant_u1, but it's simpler to grab both bytes at once:
+      if (Bytes::get_Java_u2(_s_old->bcp() + 1) != Bytes::get_Java_u2(_s_new->bcp() + 1))
         return false;
     } else {
+      // We could use get_index_u2 and get_constant_u2, but it's simpler to grab all four bytes at once:
       if (Bytes::get_Java_u4(_s_old->bcp() + 1) != Bytes::get_Java_u4(_s_new->bcp() + 1))
         return false;
     }
@@ -295,8 +316,8 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
 
   case Bytecodes::_goto_w : // fall through
   case Bytecodes::_jsr_w  : {
-    int old_ofs = (int) Bytes::get_Java_u4(_s_old->bcp() + 1);
-    int new_ofs = (int) Bytes::get_Java_u4(_s_new->bcp() + 1);
+    int old_ofs = _s_old->bytecode()->get_offset_s4(c_old);
+    int new_ofs = _s_new->bytecode()->get_offset_s4(c_new);
     if (_switchable_test) {
       int old_dest = _s_old->bci() + old_ofs;
       int new_dest = _s_new->bci() + new_ofs;
@@ -357,8 +378,8 @@ bool MethodComparator::args_same(Bytecodes::Code c_old, Bytecodes::Code c_new) {
         }
       }
     } else { // !_switchable_test, can use fast rough compare
-      int len_old = _s_old->next_bcp() - _s_old->bcp();
-      int len_new = _s_new->next_bcp() - _s_new->bcp();
+      int len_old = _s_old->instruction_size();
+      int len_new = _s_new->instruction_size();
       if (len_old != len_new)
         return false;
       if (memcmp(_s_old->bcp(), _s_new->bcp(), len_old) != 0)

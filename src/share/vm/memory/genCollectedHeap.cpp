@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,9 +179,14 @@ char* GenCollectedHeap::allocate(size_t alignment,
     }
     n_covered_regions += _gen_specs[i]->n_covered_regions();
   }
-  assert(total_reserved % pageSize == 0, "Gen size");
+  assert(total_reserved % pageSize == 0,
+         err_msg("Gen size; total_reserved=" SIZE_FORMAT ", pageSize="
+                 SIZE_FORMAT, total_reserved, pageSize));
   total_reserved += perm_gen_spec->max_size();
-  assert(total_reserved % pageSize == 0, "Perm Gen size");
+  assert(total_reserved % pageSize == 0,
+         err_msg("Perm size; total_reserved=" SIZE_FORMAT ", pageSize="
+                 SIZE_FORMAT ", perm gen max=" SIZE_FORMAT, total_reserved,
+                 pageSize, perm_gen_spec->max_size()));
 
   if (total_reserved < perm_gen_spec->max_size()) {
     vm_exit_during_initialization(overflow_msg);
@@ -410,9 +415,9 @@ bool GenCollectedHeap::must_clear_all_soft_refs() {
 }
 
 bool GenCollectedHeap::should_do_concurrent_full_gc(GCCause::Cause cause) {
-  return (cause == GCCause::_java_lang_system_gc ||
-          cause == GCCause::_gc_locker) &&
-         UseConcMarkSweepGC && ExplicitGCInvokesConcurrent;
+  return UseConcMarkSweepGC &&
+         ((cause == GCCause::_gc_locker && GCLockerInvokesConcurrent) ||
+          (cause == GCCause::_java_lang_system_gc && ExplicitGCInvokesConcurrent));
 }
 
 void GenCollectedHeap::do_collection(bool  full,
@@ -428,13 +433,19 @@ void GenCollectedHeap::do_collection(bool  full,
   assert(my_thread->is_VM_thread() ||
          my_thread->is_ConcurrentGC_thread(),
          "incorrect thread type capability");
-  assert(Heap_lock->is_locked(), "the requesting thread should have the Heap_lock");
+  assert(Heap_lock->is_locked(),
+         "the requesting thread should have the Heap_lock");
   guarantee(!is_gc_active(), "collection is not reentrant");
   assert(max_level < n_gens(), "sanity check");
 
   if (GC_locker::check_active_before_gc()) {
     return; // GC is disabled (e.g. JNI GetXXXCritical operation)
   }
+
+  const bool do_clear_all_soft_refs = clear_all_soft_refs ||
+                          collector_policy()->should_clear_all_soft_refs();
+
+  ClearedAllSoftRefs casr(do_clear_all_soft_refs, collector_policy());
 
   const size_t perm_prev_used = perm_gen()->used();
 
@@ -560,11 +571,11 @@ void GenCollectedHeap::do_collection(bool  full,
           if (rp->discovery_is_atomic()) {
             rp->verify_no_references_recorded();
             rp->enable_discovery();
-            rp->setup_policy(clear_all_soft_refs);
+            rp->setup_policy(do_clear_all_soft_refs);
           } else {
             // collect() below will enable discovery as appropriate
           }
-          _gens[i]->collect(full, clear_all_soft_refs, size, is_tlab);
+          _gens[i]->collect(full, do_clear_all_soft_refs, size, is_tlab);
           if (!rp->enqueuing_is_done()) {
             rp->enqueue_discovered_references();
           } else {
@@ -930,7 +941,9 @@ bool GenCollectedHeap::is_in(const void* p) const {
             VerifyBeforeExit ||
             PrintAssembly    ||
             tty->count() != 0 ||   // already printing
-            VerifyAfterGC, "too expensive");
+            VerifyAfterGC    ||
+    VMError::fatal_error_in_progress(), "too expensive");
+
   #endif
   // This might be sped up with a cache of the last generation that
   // answered yes.

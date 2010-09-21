@@ -310,7 +310,7 @@ public:
   void dump_nodes_and_types_recur( const Node *n, uint depth, bool only_ctrl, VectorSet &visited);
 
   uint   _count_progress;       // For profiling, count transforms that make progress
-  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification") }
+  void   set_progress()        { ++_count_progress; assert( allow_progress(),"No progress allowed during verification"); }
   void   clear_progress()      { _count_progress = 0; }
   uint   made_progress() const { return _count_progress; }
 
@@ -393,6 +393,10 @@ class PhaseIterGVN : public PhaseGVN {
 
   // Idealize old Node 'n' with respect to its inputs and its value
   virtual Node *transform_old( Node *a_node );
+
+  // Subsume users of node 'old' into node 'nn'
+  void subsume_node( Node *old, Node *nn );
+
 protected:
 
   // Idealize new Node 'n' with respect to its inputs and its value
@@ -439,10 +443,6 @@ public:
     remove_globally_dead_node(dead);
   }
 
-  // Subsume users of node 'old' into node 'nn'
-  // If no Def-Use info existed for 'nn' it will after call.
-  void subsume_node( Node *old, Node *nn );
-
   // Add users of 'n' to worklist
   void add_users_to_worklist0( Node *n );
   void add_users_to_worklist ( Node *n );
@@ -450,7 +450,7 @@ public:
   // Replace old node with new one.
   void replace_node( Node *old, Node *nn ) {
     add_users_to_worklist(old);
-    hash_delete(old);
+    hash_delete(old); // Yank from hash before hacking edges
     subsume_node(old, nn);
   }
 

@@ -49,11 +49,6 @@ ifeq ($(DEBUG_BINARIES), true)
   JSIG_DEBUG_CFLAGS = -g
 endif
 
-# DEBUG_BINARIES overrides everything, use full -g debug information
-ifeq ($(DEBUG_BINARIES), true)
-  JSIG_DEBUG_CFLAGS = -g
-endif
-
 $(LIBJSIG): $(JSIGSRCDIR)/jsig.c $(LIBJSIG_MAPFILE)
 	@echo Making signal interposition lib...
 	$(QUIETLY) $(CC) $(SYMFLAG) $(ARCHFLAG) $(SHARED_FLAG) $(PICFLAG) \

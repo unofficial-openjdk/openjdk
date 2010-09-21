@@ -40,6 +40,9 @@ GENERATED = $(TOPDIR)/../generated
 # tools.jar is needed by the JDI - SA binding
 SA_CLASSPATH = $(BOOT_JAVA_HOME)/lib/tools.jar
 
+# TODO: if it's a modules image, check if SA module is installed.
+MODULELIB_PATH= $(BOOT_JAVA_HOME)/lib/modules
+
 # gnumake 3.78.1 does not accept the *s that
 # are in AGENT_FILES1 and AGENT_FILES2, so use the shell to expand them
 AGENT_FILES1 := $(shell /usr/bin/test -d $(AGENT_DIR) && /bin/ls $(AGENT_FILES1))
@@ -52,10 +55,13 @@ SA_BUILD_VERSION_PROP = "sun.jvm.hotspot.runtime.VM.saBuildVersion=$(SA_BUILD_VE
 SA_PROPERTIES = $(SA_CLASSDIR)/sa.properties
 
 # if $(AGENT_DIR) does not exist, we don't build SA
-# also, we don't build SA on Itanium or zero.
+# also, we don't build SA on Itanium, PowerPC, ARM or zero.
 
 all: 
-	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" -a "$(SRCARCH)" != "zero" ] ; then \
+	if [ -d $(AGENT_DIR) -a "$(SRCARCH)" != "ia64" \
+             -a "$(SRCARCH)" != "arm" \
+             -a "$(SRCARCH)" != "ppc" \
+             -a "$(SRCARCH)" != "zero" ] ; then \
 	   $(MAKE) -f sa.make $(GENERATED)/sa-jdi.jar; \
 	fi
 
@@ -65,7 +71,7 @@ $(GENERATED)/sa-jdi.jar: $(AGENT_FILES1) $(AGENT_FILES2)
 	  echo "ALT_BOOTDIR, BOOTDIR or JAVA_HOME needs to be defined to build SA"; \
 	  exit 1; \
 	fi
-	$(QUIETLY) if [ ! -f $(SA_CLASSPATH) ] ; then \
+	$(QUIETLY) if [ ! -f $(SA_CLASSPATH) -a ! -d $(MODULELIB_PATH) ] ; then \
 	  echo "Missing $(SA_CLASSPATH) file. Use 1.6.0 or later version of JDK";\
 	  echo ""; \
 	  exit 1; \

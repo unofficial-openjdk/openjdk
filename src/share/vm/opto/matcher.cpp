@@ -456,6 +456,23 @@ void Matcher::init_first_stack_mask() {
   *idealreg2spillmask[Op_RegP] = *idealreg2regmask[Op_RegP];
    idealreg2spillmask[Op_RegP]->OR(C->FIRST_STACK_mask());
 
+   if (UseFPUForSpilling) {
+     // This mask logic assumes that the spill operations are
+     // symmetric and that the registers involved are the same size.
+     // On sparc for instance we may have to use 64 bit moves will
+     // kill 2 registers when used with F0-F31.
+     idealreg2spillmask[Op_RegI]->OR(*idealreg2regmask[Op_RegF]);
+     idealreg2spillmask[Op_RegF]->OR(*idealreg2regmask[Op_RegI]);
+#ifdef _LP64
+     idealreg2spillmask[Op_RegN]->OR(*idealreg2regmask[Op_RegF]);
+     idealreg2spillmask[Op_RegL]->OR(*idealreg2regmask[Op_RegD]);
+     idealreg2spillmask[Op_RegD]->OR(*idealreg2regmask[Op_RegL]);
+     idealreg2spillmask[Op_RegP]->OR(*idealreg2regmask[Op_RegD]);
+#else
+     idealreg2spillmask[Op_RegP]->OR(*idealreg2regmask[Op_RegF]);
+#endif
+   }
+
   // Make up debug masks.  Any spill slot plus callee-save registers.
   // Caller-save registers are assumed to be trashable by the various
   // inline-cache fixup routines.
@@ -1334,7 +1351,7 @@ static bool match_into_reg( const Node *n, Node *m, Node *control, int i, bool s
       if( j == max_scan )       // No post-domination before scan end?
         return true;            // Then break the match tree up
     }
-    if (m->is_DecodeN() && Matcher::clone_shift_expressions) {
+    if (m->is_DecodeN() && Matcher::narrow_oop_use_complex_address()) {
       // These are commonly used in address expressions and can
       // efficiently fold into them on X64 in some cases.
       return false;
@@ -2110,8 +2127,8 @@ void Matcher::collect_null_checks( Node *proj, Node *orig_proj ) {
         _null_check_tests.push(proj);
         Node* val = cmp->in(1);
 #ifdef _LP64
-        if (UseCompressedOops && !Matcher::clone_shift_expressions &&
-            val->bottom_type()->isa_narrowoop()) {
+        if (val->bottom_type()->isa_narrowoop() &&
+            !Matcher::narrow_oop_use_complex_address()) {
           //
           // Look for DecodeN node which should be pinned to orig_proj.
           // On platforms (Sparc) which can not handle 2 adds
@@ -2127,6 +2144,9 @@ void Matcher::collect_null_checks( Node *proj, Node *orig_proj ) {
             if (d->is_DecodeN() && d->in(1) == val) {
               val = d;
               val->set_req(0, NULL); // Unpin now.
+              // Mark this as special case to distinguish from
+              // a regular case: CmpP(DecodeN, NULL).
+              val = (Node*)(((intptr_t)val) | 1);
               break;
             }
           }
@@ -2146,9 +2166,21 @@ void Matcher::validate_null_checks( ) {
   for( uint i=0; i < cnt; i+=2 ) {
     Node *test = _null_check_tests[i];
     Node *val = _null_check_tests[i+1];
+    bool is_decoden = ((intptr_t)val) & 1;
+    val = (Node*)(((intptr_t)val) & ~1);
     if (has_new_node(val)) {
+      Node* new_val = new_node(val);
+      if (is_decoden) {
+        assert(val->is_DecodeN() && val->in(0) == NULL, "sanity");
+        // Note: new_val may have a control edge if
+        // the original ideal node DecodeN was matched before
+        // it was unpinned in Matcher::collect_null_checks().
+        // Unpin the mach node and mark it.
+        new_val->set_req(0, NULL);
+        new_val = (Node*)(((intptr_t)new_val) | 1);
+      }
       // Is a match-tree root, so replace with the matched value
-      _null_check_tests.map(i+1, new_node(val));
+      _null_check_tests.map(i+1, new_val);
     } else {
       // Yank from candidate list
       _null_check_tests.map(i+1,_null_check_tests[--cnt]);

@@ -3311,6 +3311,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
     OrderAccess::release_store(&vm_created, 0);
   }
 
+  NOT_PRODUCT(test_error_handler(ErrorHandlerTest));
   return result;
 }
 
@@ -3401,13 +3402,19 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
   thread->set_thread_state(_thread_in_vm);
   // Must do this before initialize_thread_local_storage
   thread->record_stack_base_and_size();
+
   thread->initialize_thread_local_storage();
 
   if (!os::create_attached_thread(thread)) {
     delete thread;
     return JNI_ERR;
   }
+  // Enable stack overflow checks
+  thread->create_stack_guard_pages();
+
   thread->initialize_tlab();
+
+  thread->cache_global_variables();
 
   // Crucial that we do not have a safepoint check for this thread, since it has
   // not been added to the Thread list yet.
@@ -3451,9 +3458,6 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
   // this uses a fence to push the change through so we don't have
   // to regrab the threads_lock
   thread->set_attached();
-
-  // Enable stack overflow checks
-  thread->create_stack_guard_pages();
 
   // Set java thread status.
   java_lang_Thread::set_thread_status(thread->threadObj(),

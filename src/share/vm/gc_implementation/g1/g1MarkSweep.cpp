@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
                                       bool clear_all_softrefs) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
 
+  SharedHeap* sh = SharedHeap::heap();
+#ifdef ASSERT
+  if (sh->collector_policy()->should_clear_all_soft_refs()) {
+    assert(clear_all_softrefs, "Policy should have been checked earler");
+  }
+#endif
   // hook up weak ref data so it can be used during Mark-Sweep
   assert(GenMarkSweep::ref_processor() == NULL, "no stomping");
   assert(rp != NULL, "should be non-NULL");
@@ -44,7 +50,6 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
 
   // Increment the invocation count for the permanent generation, since it is
   // implicitly collected whenever we do a full mark sweep collection.
-  SharedHeap* sh = SharedHeap::heap();
   sh->perm_gen()->stat_record()->invocations++;
 
   bool marked_for_unloading = false;
@@ -96,6 +101,22 @@ void G1MarkSweep::allocate_stacks() {
   GenMarkSweep::_preserved_count_max = 0;
   GenMarkSweep::_preserved_marks = NULL;
   GenMarkSweep::_preserved_count = 0;
+  GenMarkSweep::_preserved_mark_stack = NULL;
+  GenMarkSweep::_preserved_oop_stack = NULL;
+
+  GenMarkSweep::_marking_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<oop>(4000, true);
+  GenMarkSweep::_objarray_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<ObjArrayTask>(50, true);
+
+  int size = SystemDictionary::number_of_classes() * 2;
+  GenMarkSweep::_revisit_klass_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
+  // (#klass/k)^2 for k ~ 10 appears a better fit, but this will have to do
+  // for now until we have a chance to work out a more optimal setting.
+  GenMarkSweep::_revisit_mdo_stack =
+    new (ResourceObj::C_HEAP) GrowableArray<DataLayout*>(size*2, true);
+
 }
 
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
@@ -124,7 +145,7 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   // Follow system dictionary roots and unload classes
   bool purged_class = SystemDictionary::do_unloading(&GenMarkSweep::is_alive);
-  assert(GenMarkSweep::_marking_stack.is_empty(),
+  assert(GenMarkSweep::_marking_stack->is_empty(),
          "stack should be empty by now");
 
   // Follow code cache roots (has to be done after system dictionary,
@@ -136,19 +157,19 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   // Update subklass/sibling/implementor links of live klasses
   GenMarkSweep::follow_weak_klass_links();
-  assert(GenMarkSweep::_marking_stack.is_empty(),
+  assert(GenMarkSweep::_marking_stack->is_empty(),
          "stack should be empty by now");
 
   // Visit memoized MDO's and clear any unmarked weak refs
   GenMarkSweep::follow_mdo_weak_refs();
-  assert(GenMarkSweep::_marking_stack.is_empty(), "just drained");
+  assert(GenMarkSweep::_marking_stack->is_empty(), "just drained");
 
 
   // Visit symbol and interned string tables and delete unmarked oops
   SymbolTable::unlink(&GenMarkSweep::is_alive);
   StringTable::unlink(&GenMarkSweep::is_alive);
 
-  assert(GenMarkSweep::_marking_stack.is_empty(),
+  assert(GenMarkSweep::_marking_stack->is_empty(),
          "stack should be empty by now");
 }
 

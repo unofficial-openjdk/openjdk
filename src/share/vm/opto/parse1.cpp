@@ -88,15 +88,16 @@ Node *Parse::fetch_interpreter_state(int index,
                                      Node *local_addrs_base) {
   Node *mem = memory(Compile::AliasIdxRaw);
   Node *adr = basic_plus_adr( local_addrs_base, local_addrs, -index*wordSize );
+  Node *ctl = control();
 
   // Very similar to LoadNode::make, except we handle un-aligned longs and
   // doubles on Sparc.  Intel can handle them just fine directly.
   Node *l;
   switch( bt ) {                // Signature is flattened
-  case T_INT:     l = new (C, 3) LoadINode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
-  case T_FLOAT:   l = new (C, 3) LoadFNode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
-  case T_ADDRESS: l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM  ); break;
-  case T_OBJECT:  l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeInstPtr::BOTTOM ); break;
+  case T_INT:     l = new (C, 3) LoadINode( ctl, mem, adr, TypeRawPtr::BOTTOM ); break;
+  case T_FLOAT:   l = new (C, 3) LoadFNode( ctl, mem, adr, TypeRawPtr::BOTTOM ); break;
+  case T_ADDRESS: l = new (C, 3) LoadPNode( ctl, mem, adr, TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM  ); break;
+  case T_OBJECT:  l = new (C, 3) LoadPNode( ctl, mem, adr, TypeRawPtr::BOTTOM, TypeInstPtr::BOTTOM ); break;
   case T_LONG:
   case T_DOUBLE: {
     // Since arguments are in reverse order, the argument address 'adr'
@@ -104,12 +105,12 @@ Node *Parse::fetch_interpreter_state(int index,
     adr = basic_plus_adr( local_addrs_base, local_addrs, -(index+1)*wordSize );
     if( Matcher::misaligned_doubles_ok ) {
       l = (bt == T_DOUBLE)
-        ? (Node*)new (C, 3) LoadDNode( 0, mem, adr, TypeRawPtr::BOTTOM )
-        : (Node*)new (C, 3) LoadLNode( 0, mem, adr, TypeRawPtr::BOTTOM );
+        ? (Node*)new (C, 3) LoadDNode( ctl, mem, adr, TypeRawPtr::BOTTOM )
+        : (Node*)new (C, 3) LoadLNode( ctl, mem, adr, TypeRawPtr::BOTTOM );
     } else {
       l = (bt == T_DOUBLE)
-        ? (Node*)new (C, 3) LoadD_unalignedNode( 0, mem, adr, TypeRawPtr::BOTTOM )
-        : (Node*)new (C, 3) LoadL_unalignedNode( 0, mem, adr, TypeRawPtr::BOTTOM );
+        ? (Node*)new (C, 3) LoadD_unalignedNode( ctl, mem, adr, TypeRawPtr::BOTTOM )
+        : (Node*)new (C, 3) LoadL_unalignedNode( ctl, mem, adr, TypeRawPtr::BOTTOM );
     }
     break;
   }
@@ -280,7 +281,13 @@ void Parse::load_interpreter_state(Node* osr_buf) {
       continue;
     }
     // Construct code to access the appropriate local.
-    Node *value = fetch_interpreter_state(index, type->basic_type(), locals_addr, osr_buf);
+    BasicType bt = type->basic_type();
+    if (type == TypePtr::NULL_PTR) {
+      // Ptr types are mixed together with T_ADDRESS but NULL is
+      // really for T_OBJECT types so correct it.
+      bt = T_OBJECT;
+    }
+    Node *value = fetch_interpreter_state(index, bt, locals_addr, osr_buf);
     set_local(index, value);
   }
 
@@ -798,67 +805,6 @@ void Compile::rethrow_exceptions(JVMState* jvms) {
   initial_gvn()->transform_no_reclaim(exit);
 }
 
-bool Parse::can_rerun_bytecode() {
-  switch (bc()) {
-  case Bytecodes::_ldc:
-  case Bytecodes::_ldc_w:
-  case Bytecodes::_ldc2_w:
-  case Bytecodes::_getfield:
-  case Bytecodes::_putfield:
-  case Bytecodes::_getstatic:
-  case Bytecodes::_putstatic:
-  case Bytecodes::_arraylength:
-  case Bytecodes::_baload:
-  case Bytecodes::_caload:
-  case Bytecodes::_iaload:
-  case Bytecodes::_saload:
-  case Bytecodes::_faload:
-  case Bytecodes::_aaload:
-  case Bytecodes::_laload:
-  case Bytecodes::_daload:
-  case Bytecodes::_bastore:
-  case Bytecodes::_castore:
-  case Bytecodes::_iastore:
-  case Bytecodes::_sastore:
-  case Bytecodes::_fastore:
-  case Bytecodes::_aastore:
-  case Bytecodes::_lastore:
-  case Bytecodes::_dastore:
-  case Bytecodes::_irem:
-  case Bytecodes::_idiv:
-  case Bytecodes::_lrem:
-  case Bytecodes::_ldiv:
-  case Bytecodes::_frem:
-  case Bytecodes::_fdiv:
-  case Bytecodes::_drem:
-  case Bytecodes::_ddiv:
-  case Bytecodes::_checkcast:
-  case Bytecodes::_instanceof:
-  case Bytecodes::_anewarray:
-  case Bytecodes::_newarray:
-  case Bytecodes::_multianewarray:
-  case Bytecodes::_new:
-  case Bytecodes::_monitorenter:  // can re-run initial null check, only
-  case Bytecodes::_return:
-    return true;
-    break;
-
-  // Don't rerun athrow since it's part of the exception path.
-  case Bytecodes::_athrow:
-  case Bytecodes::_invokestatic:
-  case Bytecodes::_invokedynamic:
-  case Bytecodes::_invokespecial:
-  case Bytecodes::_invokevirtual:
-  case Bytecodes::_invokeinterface:
-    return false;
-    break;
-
-  default:
-    assert(false, "unexpected bytecode produced an exception");
-    return true;
-  }
-}
-
 //---------------------------do_exceptions-------------------------------------
 // Process exceptions arising from the current bytecode.
 // Send caught exceptions to the proper handler within this method.
@@ -871,9 +817,6 @@ void Parse::do_exceptions() {
     while (pop_exception_state() != NULL) ;
     return;
   }
-
-  // Make sure we can classify this bytecode if we need to.
-  debug_only(can_rerun_bytecode());
 
   PreserveJVMState pjvms(this, false);
 

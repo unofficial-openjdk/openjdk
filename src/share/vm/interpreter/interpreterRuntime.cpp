@@ -63,7 +63,7 @@ void InterpreterRuntime::set_bcp_and_mdp(address bcp, JavaThread *thread) {
 IRT_ENTRY(void, InterpreterRuntime::ldc(JavaThread* thread, bool wide))
   // access constant pool
   constantPoolOop pool = method(thread)->constants();
-  int index = wide ? two_byte_index(thread) : one_byte_index(thread);
+  int index = wide ? get_index_u2(thread, Bytecodes::_ldc_w) : get_index_u1(thread, Bytecodes::_ldc);
   constantTag tag = pool->tag_at(index);
 
   if (tag.is_unresolved_klass() || tag.is_klass()) {
@@ -81,6 +81,18 @@ IRT_ENTRY(void, InterpreterRuntime::ldc(JavaThread* thread, bool wide))
     oop s_oop = pool->string_at(index, CHECK);
     thread->set_vm_result(s_oop);
   }
+IRT_END
+
+IRT_ENTRY(void, InterpreterRuntime::resolve_ldc(JavaThread* thread, Bytecodes::Code bytecode)) {
+  assert(bytecode == Bytecodes::_fast_aldc ||
+         bytecode == Bytecodes::_fast_aldc_w, "wrong bc");
+  ResourceMark rm(thread);
+  methodHandle m (thread, method(thread));
+  Bytecode_loadconstant* ldc = Bytecode_loadconstant_at(m, bci(thread));
+  oop result = ldc->resolve_constant(THREAD);
+  DEBUG_ONLY(ConstantPoolCacheEntry* cpce = m->constants()->cache()->entry_at(ldc->cache_index()));
+  assert(result == cpce->f1(), "expected result for assembly code");
+}
 IRT_END
 
 
@@ -135,7 +147,7 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::multianewarray(JavaThread* thread, jint* first_size_address))
   // We may want to pass in more arguments - could make this slightly faster
   constantPoolOop constants = method(thread)->constants();
-  int          i = two_byte_index(thread);
+  int          i = get_index_u2(thread, Bytecodes::_multianewarray);
   klassOop klass = constants->klass_at(i, CHECK);
   int   nof_dims = number_of_dimensions(thread);
   assert(oop(klass)->is_klass(), "not a class");
@@ -169,7 +181,7 @@ IRT_END
 // Quicken instance-of and check-cast bytecodes
 IRT_ENTRY(void, InterpreterRuntime::quicken_io_cc(JavaThread* thread))
   // Force resolving; quicken the bytecode
-  int which = two_byte_index(thread);
+  int which = get_index_u2(thread, Bytecodes::_checkcast);
   constantPoolOop cpool = method(thread)->constants();
   // We'd expect to assert that we're only here to quicken bytecodes, but in a multithreaded
   // program we might have seen an unquick'd bytecode in the interpreter but have another
@@ -328,7 +340,7 @@ IRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
   typeArrayHandle    h_extable  (thread, h_method->exception_table());
   bool               should_repeat;
   int                handler_bci;
-  int                current_bci = bcp(thread) - h_method->code_base();
+  int                current_bci = bci(thread);
 
   // Need to do this check first since when _do_not_unlock_if_synchronized
   // is set, we don't want to trigger any classloading which may make calls
@@ -463,7 +475,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_get_put(JavaThread* thread, Bytecode
 
   {
     JvmtiHideSingleStepping jhss(thread);
-    LinkResolver::resolve_field(info, pool, two_byte_index(thread),
+    LinkResolver::resolve_field(info, pool, get_index_u2_cpcache(thread, bytecode),
                                 bytecode, false, CHECK);
   } // end JvmtiHideSingleStepping
 
@@ -615,8 +627,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes
   if (bytecode == Bytecodes::_invokevirtual || bytecode == Bytecodes::_invokeinterface) {
     ResourceMark rm(thread);
     methodHandle m (thread, method(thread));
-    int bci = m->bci_from(bcp(thread));
-    Bytecode_invoke* call = Bytecode_invoke_at(m, bci);
+    Bytecode_invoke* call = Bytecode_invoke_at(m, bci(thread));
     symbolHandle signature (thread, call->signature());
     receiver = Handle(thread,
                   thread->last_frame().interpreter_callee_receiver(signature));
@@ -634,7 +645,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes
   {
     JvmtiHideSingleStepping jhss(thread);
     LinkResolver::resolve_invoke(info, receiver, pool,
-                                 two_byte_index(thread), bytecode, CHECK);
+                                 get_index_u2_cpcache(thread, bytecode), bytecode, CHECK);
     if (JvmtiExport::can_hotswap_or_post_breakpoint()) {
       int retry_count = 0;
       while (info.resolved_method()->is_old()) {
@@ -645,7 +656,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes
                   "Could not resolve to latest version of redefined method");
         // method is redefined in the middle of resolve so re-try.
         LinkResolver::resolve_invoke(info, receiver, pool,
-                                     two_byte_index(thread), bytecode, CHECK);
+                                     get_index_u2_cpcache(thread, bytecode), bytecode, CHECK);
       }
     }
   } // end JvmtiHideSingleStepping
@@ -691,24 +702,17 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
 
   methodHandle caller_method(thread, method(thread));
 
-  // first determine if there is a bootstrap method
-  {
-    KlassHandle caller_klass(thread, caller_method->method_holder());
-    Handle bootm = SystemDictionary::find_bootstrap_method(caller_klass, KlassHandle(), CHECK);
-    if (bootm.is_null()) {
-      // If there is no bootstrap method, throw IncompatibleClassChangeError.
-      // This is a valid generic error type for resolution (JLS 12.3.3).
-      char buf[200];
-      jio_snprintf(buf, sizeof(buf), "Class %s has not declared a bootstrap method for invokedynamic",
-                   (Klass::cast(caller_klass()))->external_name());
-      THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
-    }
-  }
-
   constantPoolHandle pool(thread, caller_method->constants());
   pool->set_invokedynamic();    // mark header to flag active call sites
 
-  int site_index = four_byte_index(thread);
+  int caller_bci = 0;
+  int site_index = 0;
+  { address caller_bcp = bcp(thread);
+    caller_bci = caller_method->bci_from(caller_bcp);
+    site_index = Bytes::get_native_u4(caller_bcp+1);
+  }
+  assert(site_index == InterpreterRuntime::bytecode(thread)->get_index_u4(bytecode), "");
+  assert(constantPoolCacheOopDesc::is_secondary_index(site_index), "proper format");
   // there is a second CPC entries that is of interest; it caches signature info:
   int main_index = pool->cache()->secondary_entry_at(site_index)->main_entry_index();
 
@@ -718,7 +722,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
     CallInfo info;
     LinkResolver::resolve_invoke(info, Handle(), pool,
                                  site_index, bytecode, CHECK);
-    // The main entry corresponds to a JVM_CONSTANT_NameAndType, and serves
+    // The main entry corresponds to a JVM_CONSTANT_InvokeDynamic, and serves
     // as a common reference point for all invokedynamic call sites with
     // that exact call descriptor.  We will link it in the CP cache exactly
     // as if it were an invokevirtual of MethodHandle.invoke.
@@ -726,29 +730,45 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
       bytecode,
       info.resolved_method(),
       info.vtable_index());
-    assert(pool->cache()->entry_at(main_index)->is_vfinal(), "f2 must be a methodOop");
   }
 
   // The method (f2 entry) of the main entry is the MH.invoke for the
   // invokedynamic target call signature.
-  intptr_t f2_value = pool->cache()->entry_at(main_index)->f2();
-  methodHandle mh_invdyn(THREAD, (methodOop) f2_value);
-  assert(mh_invdyn.not_null() && mh_invdyn->is_method() && mh_invdyn->is_method_handle_invoke(),
+  oop f1_value = pool->cache()->entry_at(main_index)->f1();
+  methodHandle signature_invoker(THREAD, (methodOop) f1_value);
+  assert(signature_invoker.not_null() && signature_invoker->is_method() && signature_invoker->is_method_handle_invoke(),
          "correct result from LinkResolver::resolve_invokedynamic");
 
+  Handle bootm = SystemDictionary::find_bootstrap_method(caller_method, caller_bci,
+                                                         main_index, CHECK);
+  if (bootm.is_null()) {
+    THROW_MSG(vmSymbols::java_lang_IllegalStateException(),
+              "no bootstrap method found for invokedynamic");
+  }
+
+  // Short circuit if CallSite has been bound already:
+  if (!pool->cache()->secondary_entry_at(site_index)->is_f1_null())
+    return;
+
   symbolHandle call_site_name(THREAD, pool->name_ref_at(site_index));
+
+  Handle info;  // NYI: Other metadata from a new kind of CP entry.  (Annotations?)
+
   Handle call_site
-    = SystemDictionary::make_dynamic_call_site(caller_method->method_holder(),
-                                               caller_method->method_idnum(),
-                                               caller_method->bci_from(bcp(thread)),
+    = SystemDictionary::make_dynamic_call_site(bootm,
+                                               // Callee information:
                                                call_site_name,
-                                               mh_invdyn,
+                                               signature_invoker,
+                                               info,
+                                               // Caller information:
+                                               caller_method,
+                                               caller_bci,
                                                CHECK);
 
   // In the secondary entry, the f1 field is the call site, and the f2 (index)
-  // field is some data about the invoke site.
-  int extra_data = 0;
-  pool->cache()->secondary_entry_at(site_index)->set_dynamic_call(call_site(), extra_data);
+  // field is some data about the invoke site.  Currently, it is just the BCI.
+  // Later, it might be changed to help manage inlining dependencies.
+  pool->cache()->secondary_entry_at(site_index)->set_dynamic_call(call_site, signature_invoker);
 }
 IRT_END
 
@@ -1067,7 +1087,7 @@ IRT_ENTRY(void, InterpreterRuntime::post_field_modification(JavaThread *thread,
   jlong_accessor u;
   jint* newval = (jint*)value;
   u.words[0] = newval[0];
-  u.words[1] = newval[Interpreter::stackElementWords()]; // skip if tag
+  u.words[1] = newval[Interpreter::stackElementWords]; // skip if tag
   fvalue.j = u.long_value;
 #endif // _LP64
 
@@ -1251,7 +1271,7 @@ IRT_LEAF(void, InterpreterRuntime::popframe_move_outgoing_args(JavaThread* threa
   Bytecode_invoke* invoke = Bytecode_invoke_at(mh, bci);
   ArgumentSizeComputer asc(invoke->signature());
   int size_of_arguments = (asc.size() + (invoke->has_receiver() ? 1 : 0)); // receiver
-  Copy::conjoint_bytes(src_address, dest_address,
-                       size_of_arguments * Interpreter::stackElementSize());
+  Copy::conjoint_jbytes(src_address, dest_address,
+                       size_of_arguments * Interpreter::stackElementSize);
 IRT_END
 #endif

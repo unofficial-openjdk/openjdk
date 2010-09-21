@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,6 +187,7 @@ struct SharedGlobals {
 static SharedGlobals GVars ;
 static int MonitorScavengeThreshold = 1000000 ;
 static volatile int ForceMonitorScavenge = 0 ; // Scavenge required and pending
+
 
 // Tunables ...
 // The knob* variables are effectively final.  Once set they should
@@ -746,6 +747,8 @@ void Thread::muxRelease (volatile intptr_t * Lock)  {
 
 ObjectMonitor * ObjectSynchronizer::gBlockList = NULL ;
 ObjectMonitor * volatile ObjectSynchronizer::gFreeList  = NULL ;
+ObjectMonitor * volatile ObjectSynchronizer::gOmInUseList  = NULL ;
+int ObjectSynchronizer::gOmInUseCount = 0;
 static volatile intptr_t ListLock = 0 ;      // protects global monitor free-list cache
 static volatile int MonitorFreeCount  = 0 ;      // # on gFreeList
 static volatile int MonitorPopulation = 0 ;      // # Extant -- in circulation
@@ -825,6 +828,22 @@ static void InduceScavenge (Thread * Self, const char * Whence) {
     }
   }
 }
+/* Too slow for general assert or debug
+void ObjectSynchronizer::verifyInUse (Thread *Self) {
+   ObjectMonitor* mid;
+   int inusetally = 0;
+   for (mid = Self->omInUseList; mid != NULL; mid = mid->FreeNext) {
+     inusetally ++;
+   }
+   assert(inusetally == Self->omInUseCount, "inuse count off");
+
+   int freetally = 0;
+   for (mid = Self->omFreeList; mid != NULL; mid = mid->FreeNext) {
+     freetally ++;
+   }
+   assert(freetally == Self->omFreeCount, "free count off");
+}
+*/
 
 ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
     // A large MAXPRIVATE value reduces both list lock contention
@@ -852,6 +871,9 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
              m->FreeNext = Self->omInUseList;
              Self->omInUseList = m;
              Self->omInUseCount ++;
+             // verifyInUse(Self);
+           } else {
+             m->FreeNext = NULL;
            }
            return m ;
         }
@@ -873,13 +895,12 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
                 guarantee (take->object() == NULL, "invariant") ;
                 guarantee (!take->is_busy(), "invariant") ;
                 take->Recycle() ;
-                omRelease (Self, take) ;
+                omRelease (Self, take, false) ;
             }
             Thread::muxRelease (&ListLock) ;
             Self->omFreeProvision += 1 + (Self->omFreeProvision/2) ;
             if (Self->omFreeProvision > MAXPRIVATE ) Self->omFreeProvision = MAXPRIVATE ;
             TEVENT (omFirst - reprovision) ;
-            continue ;
 
             const int mx = MonitorBound ;
             if (mx > 0 && (MonitorPopulation-MonitorFreeCount) > mx) {
@@ -960,11 +981,34 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
 // That is, *not* one-at-a-time.
 
 
-void ObjectSynchronizer::omRelease (Thread * Self, ObjectMonitor * m) {
+void ObjectSynchronizer::omRelease (Thread * Self, ObjectMonitor * m, bool fromPerThreadAlloc) {
     guarantee (m->object() == NULL, "invariant") ;
-    m->FreeNext = Self->omFreeList ;
-    Self->omFreeList = m ;
-    Self->omFreeCount ++ ;
+
+    // Remove from omInUseList
+    if (MonitorInUseLists && fromPerThreadAlloc) {
+      ObjectMonitor* curmidinuse = NULL;
+      for (ObjectMonitor* mid = Self->omInUseList; mid != NULL; ) {
+       if (m == mid) {
+         // extract from per-thread in-use-list
+         if (mid == Self->omInUseList) {
+           Self->omInUseList = mid->FreeNext;
+         } else if (curmidinuse != NULL) {
+           curmidinuse->FreeNext = mid->FreeNext; // maintain the current thread inuselist
+         }
+         Self->omInUseCount --;
+         // verifyInUse(Self);
+         break;
+       } else {
+         curmidinuse = mid;
+         mid = mid->FreeNext;
+      }
+    }
+  }
+
+  // FreeNext is used for both onInUseList and omFreeList, so clear old before setting new
+  m->FreeNext = Self->omFreeList ;
+  Self->omFreeList = m ;
+  Self->omFreeCount ++ ;
 }
 
 // Return the monitors of a moribund thread's local free list to
@@ -973,6 +1017,10 @@ void ObjectSynchronizer::omRelease (Thread * Self, ObjectMonitor * m) {
 // monitors from threads that have not run java code over a few
 // consecutive STW safepoints.  Relatedly, we might decay
 // omFreeProvision at STW safepoints.
+//
+// Also return the monitors of a moribund thread"s omInUseList to
+// a global gOmInUseList under the global list lock so these
+// will continue to be scanned.
 //
 // We currently call omFlush() from the Thread:: dtor _after the thread
 // has been excised from the thread list and is no longer a mutator.
@@ -986,24 +1034,50 @@ void ObjectSynchronizer::omRelease (Thread * Self, ObjectMonitor * m) {
 void ObjectSynchronizer::omFlush (Thread * Self) {
     ObjectMonitor * List = Self->omFreeList ;  // Null-terminated SLL
     Self->omFreeList = NULL ;
-    if (List == NULL) return ;
     ObjectMonitor * Tail = NULL ;
-    ObjectMonitor * s ;
     int Tally = 0;
-    for (s = List ; s != NULL ; s = s->FreeNext) {
-        Tally ++ ;
-        Tail = s ;
-        guarantee (s->object() == NULL, "invariant") ;
-        guarantee (!s->is_busy(), "invariant") ;
-        s->set_owner (NULL) ;   // redundant but good hygiene
-        TEVENT (omFlush - Move one) ;
+    if (List != NULL) {
+      ObjectMonitor * s ;
+      for (s = List ; s != NULL ; s = s->FreeNext) {
+          Tally ++ ;
+          Tail = s ;
+          guarantee (s->object() == NULL, "invariant") ;
+          guarantee (!s->is_busy(), "invariant") ;
+          s->set_owner (NULL) ;   // redundant but good hygiene
+          TEVENT (omFlush - Move one) ;
+      }
+      guarantee (Tail != NULL && List != NULL, "invariant") ;
     }
 
-    guarantee (Tail != NULL && List != NULL, "invariant") ;
+    ObjectMonitor * InUseList = Self->omInUseList;
+    ObjectMonitor * InUseTail = NULL ;
+    int InUseTally = 0;
+    if (InUseList != NULL) {
+      Self->omInUseList = NULL;
+      ObjectMonitor *curom;
+      for (curom = InUseList; curom != NULL; curom = curom->FreeNext) {
+        InUseTail = curom;
+        InUseTally++;
+      }
+// TODO debug
+      assert(Self->omInUseCount == InUseTally, "inuse count off");
+      Self->omInUseCount = 0;
+      guarantee (InUseTail != NULL && InUseList != NULL, "invariant");
+    }
+
     Thread::muxAcquire (&ListLock, "omFlush") ;
-    Tail->FreeNext = gFreeList ;
-    gFreeList = List ;
-    MonitorFreeCount += Tally;
+    if (Tail != NULL) {
+      Tail->FreeNext = gFreeList ;
+      gFreeList = List ;
+      MonitorFreeCount += Tally;
+    }
+
+    if (InUseTail != NULL) {
+      InUseTail->FreeNext = gOmInUseList;
+      gOmInUseList = InUseList;
+      gOmInUseCount += InUseTally;
+    }
+
     Thread::muxRelease (&ListLock) ;
     TEVENT (omFlush) ;
 }
@@ -1165,7 +1239,6 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
           // We do this before the CAS in order to minimize the length of time
           // in which INFLATING appears in the mark.
           m->Recycle();
-          m->FreeNext      = NULL ;
           m->_Responsible  = NULL ;
           m->OwnerIsThread = 0 ;
           m->_recursions   = 0 ;
@@ -1173,7 +1246,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
 
           markOop cmp = (markOop) Atomic::cmpxchg_ptr (markOopDesc::INFLATING(), object->mark_addr(), mark) ;
           if (cmp != mark) {
-             omRelease (Self, m) ;
+             omRelease (Self, m, true) ;
              continue ;       // Interference -- just retry
           }
 
@@ -1261,7 +1334,6 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
       m->set_object(object);
       m->OwnerIsThread = 1 ;
       m->_recursions   = 0 ;
-      m->FreeNext      = NULL ;
       m->_Responsible  = NULL ;
       m->_SpinDuration = Knob_SpinLimit ;       // consider: keep metastats by type/class
 
@@ -1270,7 +1342,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
           m->set_owner  (NULL) ;
           m->OwnerIsThread = 0 ;
           m->Recycle() ;
-          omRelease (Self, m) ;
+          omRelease (Self, m, true) ;
           m = NULL ;
           continue ;
           // interference - the markword changed - just retry.
@@ -1851,6 +1923,10 @@ void ObjectSynchronizer::oops_do(OopClosure* f) {
 // only scans the per-thread inuse lists. omAlloc() puts all
 // assigned monitors on the per-thread list. deflate_idle_monitors()
 // returns the non-busy monitors to the global free list.
+// When a thread dies, omFlush() adds the list of active monitors for
+// that thread to a global gOmInUseList acquiring the
+// global list lock. deflate_idle_monitors() acquires the global
+// list lock to scan for non-busy monitors to the global free list.
 // An alternative could have used a single global inuse list. The
 // downside would have been the additional cost of acquiring the global list lock
 // for every omAlloc().
@@ -1866,48 +1942,83 @@ void ObjectSynchronizer::oops_do(OopClosure* f) {
 // An even better solution would be to deflate on-the-fly, aggressively,
 // at monitorexit-time as is done in EVM's metalock or Relaxed Locks.
 
+
 // Deflate a single monitor if not in use
 // Return true if deflated, false if in use
 bool ObjectSynchronizer::deflate_monitor(ObjectMonitor* mid, oop obj,
                                          ObjectMonitor** FreeHeadp, ObjectMonitor** FreeTailp) {
   bool deflated;
-    // Normal case ... The monitor is associated with obj.
-    guarantee (obj->mark() == markOopDesc::encode(mid), "invariant") ;
-    guarantee (mid == obj->mark()->monitor(), "invariant");
-    guarantee (mid->header()->is_neutral(), "invariant");
+  // Normal case ... The monitor is associated with obj.
+  guarantee (obj->mark() == markOopDesc::encode(mid), "invariant") ;
+  guarantee (mid == obj->mark()->monitor(), "invariant");
+  guarantee (mid->header()->is_neutral(), "invariant");
 
-    if (mid->is_busy()) {
-       if (ClearResponsibleAtSTW) mid->_Responsible = NULL ;
-       deflated = false;
-    } else {
-       // Deflate the monitor if it is no longer being used
-       // It's idle - scavenge and return to the global free list
-       // plain old deflation ...
-       TEVENT (deflate_idle_monitors - scavenge1) ;
-       if (TraceMonitorInflation) {
-         if (obj->is_instance()) {
-           ResourceMark rm;
-             tty->print_cr("Deflating object " INTPTR_FORMAT " , mark " INTPTR_FORMAT " , type %s",
-                  (intptr_t) obj, (intptr_t) obj->mark(), Klass::cast(obj->klass())->external_name());
-         }
+  if (mid->is_busy()) {
+     if (ClearResponsibleAtSTW) mid->_Responsible = NULL ;
+     deflated = false;
+  } else {
+     // Deflate the monitor if it is no longer being used
+     // It's idle - scavenge and return to the global free list
+     // plain old deflation ...
+     TEVENT (deflate_idle_monitors - scavenge1) ;
+     if (TraceMonitorInflation) {
+       if (obj->is_instance()) {
+         ResourceMark rm;
+           tty->print_cr("Deflating object " INTPTR_FORMAT " , mark " INTPTR_FORMAT " , type %s",
+                (intptr_t) obj, (intptr_t) obj->mark(), Klass::cast(obj->klass())->external_name());
        }
+     }
 
-       // Restore the header back to obj
-       obj->release_set_mark(mid->header());
-       mid->clear();
+     // Restore the header back to obj
+     obj->release_set_mark(mid->header());
+     mid->clear();
 
-       assert (mid->object() == NULL, "invariant") ;
+     assert (mid->object() == NULL, "invariant") ;
 
-       // Move the object to the working free list defined by FreeHead,FreeTail.
-       if (*FreeHeadp == NULL) *FreeHeadp = mid;
-       if (*FreeTailp != NULL) {
-         ObjectMonitor * prevtail = *FreeTailp;
-         prevtail->FreeNext = mid;
+     // Move the object to the working free list defined by FreeHead,FreeTail.
+     if (*FreeHeadp == NULL) *FreeHeadp = mid;
+     if (*FreeTailp != NULL) {
+       ObjectMonitor * prevtail = *FreeTailp;
+       assert(prevtail->FreeNext == NULL, "cleaned up deflated?"); // TODO KK
+       prevtail->FreeNext = mid;
+      }
+     *FreeTailp = mid;
+     deflated = true;
+  }
+  return deflated;
+}
+
+// Caller acquires ListLock
+int ObjectSynchronizer::walk_monitor_list(ObjectMonitor** listheadp,
+                                          ObjectMonitor** FreeHeadp, ObjectMonitor** FreeTailp) {
+  ObjectMonitor* mid;
+  ObjectMonitor* next;
+  ObjectMonitor* curmidinuse = NULL;
+  int deflatedcount = 0;
+
+  for (mid = *listheadp; mid != NULL; ) {
+     oop obj = (oop) mid->object();
+     bool deflated = false;
+     if (obj != NULL) {
+       deflated = deflate_monitor(mid, obj, FreeHeadp, FreeTailp);
+     }
+     if (deflated) {
+       // extract from per-thread in-use-list
+       if (mid == *listheadp) {
+         *listheadp = mid->FreeNext;
+       } else if (curmidinuse != NULL) {
+         curmidinuse->FreeNext = mid->FreeNext; // maintain the current thread inuselist
        }
-       *FreeTailp = mid;
-       deflated = true;
+       next = mid->FreeNext;
+       mid->FreeNext = NULL;  // This mid is current tail in the FreeHead list
+       mid = next;
+       deflatedcount++;
+     } else {
+       curmidinuse = mid;
+       mid = mid->FreeNext;
     }
-    return deflated;
+  }
+  return deflatedcount;
 }
 
 void ObjectSynchronizer::deflate_idle_monitors() {
@@ -1927,36 +2038,25 @@ void ObjectSynchronizer::deflate_idle_monitors() {
   Thread::muxAcquire (&ListLock, "scavenge - return") ;
 
   if (MonitorInUseLists) {
-    ObjectMonitor* mid;
-    ObjectMonitor* next;
-    ObjectMonitor* curmidinuse;
+    int inUse = 0;
     for (JavaThread* cur = Threads::first(); cur != NULL; cur = cur->next()) {
-      curmidinuse = NULL;
-      for (mid = cur->omInUseList; mid != NULL; ) {
-        oop obj = (oop) mid->object();
-        deflated = false;
-        if (obj != NULL) {
-          deflated = deflate_monitor(mid, obj, &FreeHead, &FreeTail);
-        }
-        if (deflated) {
-          // extract from per-thread in-use-list
-          if (mid == cur->omInUseList) {
-            cur->omInUseList = mid->FreeNext;
-          } else if (curmidinuse != NULL) {
-            curmidinuse->FreeNext = mid->FreeNext; // maintain the current thread inuselist
-          }
-          next = mid->FreeNext;
-          mid->FreeNext = NULL;  // This mid is current tail in the FreeHead list
-          mid = next;
-          cur->omInUseCount--;
-          nScavenged ++ ;
-        } else {
-          curmidinuse = mid;
-          mid = mid->FreeNext;
-          nInuse ++;
-        }
+      nInCirculation+= cur->omInUseCount;
+      int deflatedcount = walk_monitor_list(cur->omInUseList_addr(), &FreeHead, &FreeTail);
+      cur->omInUseCount-= deflatedcount;
+      // verifyInUse(cur);
+      nScavenged += deflatedcount;
+      nInuse += cur->omInUseCount;
      }
-   }
+
+   // For moribund threads, scan gOmInUseList
+   if (gOmInUseList) {
+     nInCirculation += gOmInUseCount;
+     int deflatedcount = walk_monitor_list((ObjectMonitor **)&gOmInUseList, &FreeHead, &FreeTail);
+     gOmInUseCount-= deflatedcount;
+     nScavenged += deflatedcount;
+     nInuse += gOmInUseCount;
+    }
+
   } else for (ObjectMonitor* block = gBlockList; block != NULL; block = next(block)) {
   // Iterate over all extant monitors - Scavenge all idle monitors.
     assert(block->object() == CHAINMARKER, "must be a block header");
@@ -1976,10 +2076,10 @@ void ObjectSynchronizer::deflate_idle_monitors() {
       deflated = deflate_monitor(mid, obj, &FreeHead, &FreeTail);
 
       if (deflated) {
-         mid->FreeNext = NULL ;
-         nScavenged ++ ;
+        mid->FreeNext = NULL ;
+        nScavenged ++ ;
       } else {
-         nInuse ++;
+        nInuse ++;
       }
     }
   }

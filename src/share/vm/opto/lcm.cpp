@@ -32,7 +32,8 @@
 // with suitable memory ops nearby.  Use the memory op to do the NULL check.
 // I can generate a memory op if there is not one nearby.
 // The proj is the control projection for the not-null case.
-// The val is the pointer being checked for nullness.
+// The val is the pointer being checked for nullness or
+// decodeHeapOop_not_null node if it did not fold into address.
 void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowed_reasons) {
   // Assume if null check need for 0 offset then always needed
   // Intel solaris doesn't support any null checks yet and no
@@ -96,6 +97,13 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     }
   }
 
+  // Check for decodeHeapOop_not_null node which did not fold into address
+  bool is_decoden = ((intptr_t)val) & 1;
+  val = (Node*)(((intptr_t)val) & ~1);
+
+  assert(!is_decoden || (val->in(0) == NULL) && val->is_Mach() &&
+         (val->as_Mach()->ideal_Opcode() == Op_DecodeN), "sanity");
+
   // Search the successor block for a load or store who's base value is also
   // the tested value.  There may be several.
   Node_List *out = new Node_List(Thread::current()->resource_area());
@@ -105,7 +113,8 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     if( !m->is_Mach() ) continue;
     MachNode *mach = m->as_Mach();
     was_store = false;
-    switch( mach->ideal_Opcode() ) {
+    int iop = mach->ideal_Opcode();
+    switch( iop ) {
     case Op_LoadB:
     case Op_LoadUS:
     case Op_LoadD:
@@ -147,8 +156,15 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     default:                    // Also check for embedded loads
       if( !mach->needs_anti_dependence_check() )
         continue;               // Not an memory op; skip it
+      if( must_clone[iop] ) {
+        // Do not move nodes which produce flags because
+        // RA will try to clone it to place near branch and
+        // it will cause recompilation, see clone_node().
+        continue;
+      }
       {
-        // Check that value is used in memory address.
+        // Check that value is used in memory address in
+        // instructions with embedded load (CmpP val1,(val2+off)).
         Node* base;
         Node* index;
         const MachOper* oper = mach->memory_inputs(base, index);
@@ -213,7 +229,11 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     uint vidx = 0;              // Capture index of value into memop
     uint j;
     for( j = mach->req()-1; j > 0; j-- ) {
-      if( mach->in(j) == val ) vidx = j;
+      if( mach->in(j) == val ) {
+        vidx = j;
+        // Ignore DecodeN val which could be hoisted to where needed.
+        if( is_decoden ) continue;
+      }
       // Block of memory-op input
       Block *inb = cfg->_bbs[mach->in(j)->_idx];
       Block *b = this;          // Start from nul check
@@ -270,6 +290,26 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
   extern int implicit_null_checks;
   implicit_null_checks++;
 
+  if( is_decoden ) {
+    // Check if we need to hoist decodeHeapOop_not_null first.
+    Block *valb = cfg->_bbs[val->_idx];
+    if( this != valb && this->_dom_depth < valb->_dom_depth ) {
+      // Hoist it up to the end of the test block.
+      valb->find_remove(val);
+      this->add_inst(val);
+      cfg->_bbs.map(val->_idx,this);
+      // DecodeN on x86 may kill flags. Check for flag-killing projections
+      // that also need to be hoisted.
+      for (DUIterator_Fast jmax, j = val->fast_outs(jmax); j < jmax; j++) {
+        Node* n = val->fast_out(j);
+        if( n->Opcode() == Op_MachProj ) {
+          cfg->_bbs[n->_idx]->find_remove(n);
+          this->add_inst(n);
+          cfg->_bbs.map(n->_idx,this);
+        }
+      }
+    }
+  }
   // Hoist the memory candidate up to the end of the test block.
   Block *old_block = cfg->_bbs[best->_idx];
   old_block->find_remove(best);
@@ -428,7 +468,7 @@ Node *Block::select(PhaseCFG *cfg, Node_List &worklist, int *ready_cnt, VectorSe
       n_choice = 1;
     }
 
-    uint n_latency = cfg->_node_latency.at_grow(n->_idx);
+    uint n_latency = cfg->_node_latency->at_grow(n->_idx);
     uint n_score   = n->req();   // Many inputs get high score to break ties
 
     // Keep best latency found
@@ -705,7 +745,7 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
         Node     *n = _nodes[j];
         int     idx = n->_idx;
         tty->print("#   ready cnt:%3d  ", ready_cnt[idx]);
-        tty->print("latency:%3d  ", cfg->_node_latency.at_grow(idx));
+        tty->print("latency:%3d  ", cfg->_node_latency->at_grow(idx));
         tty->print("%4d: %s\n", idx, n->Name());
       }
     }
@@ -732,7 +772,7 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
 #ifndef PRODUCT
     if (cfg->trace_opto_pipelining()) {
       tty->print("#    select %d: %s", n->_idx, n->Name());
-      tty->print(", latency:%d", cfg->_node_latency.at_grow(n->_idx));
+      tty->print(", latency:%d", cfg->_node_latency->at_grow(n->_idx));
       n->dump();
       if (Verbose) {
         tty->print("#   ready list:");
@@ -924,6 +964,8 @@ void Block::call_catch_cleanup(Block_Array &bbs) {
     Block *sb = _succs[i];
     // Clone the entire area; ignoring the edge fixup for now.
     for( uint j = end; j > beg; j-- ) {
+      // It is safe here to clone a node with anti_dependence
+      // since clones dominate on each path.
       Node *clone = _nodes[j-1]->clone();
       sb->_nodes.insert( 1, clone );
       bbs.map(clone->_idx,sb);

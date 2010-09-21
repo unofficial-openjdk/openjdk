@@ -314,24 +314,24 @@ void objArrayKlass::initialize(TRAPS) {
 
 void objArrayKlass::oop_follow_contents(oop obj) {
   assert (obj->is_array(), "obj must be array");
-  objArrayOop a = objArrayOop(obj);
-  a->follow_header();
-  ObjArrayKlass_OOP_ITERATE( \
-    a, p, \
-    /* we call mark_and_follow here to avoid excessive marking stack usage */ \
-    MarkSweep::mark_and_follow(p))
+  objArrayOop(obj)->follow_header();
+  if (UseCompressedOops) {
+    objarray_follow_contents<narrowOop>(obj, 0);
+  } else {
+    objarray_follow_contents<oop>(obj, 0);
+  }
 }
 
 #ifndef SERIALGC
 void objArrayKlass::oop_follow_contents(ParCompactionManager* cm,
                                         oop obj) {
-  assert (obj->is_array(), "obj must be array");
-  objArrayOop a = objArrayOop(obj);
-  a->follow_header(cm);
-  ObjArrayKlass_OOP_ITERATE( \
-    a, p, \
-    /* we call mark_and_follow here to avoid excessive marking stack usage */ \
-    PSParallelCompact::mark_and_follow(cm, p))
+  assert(obj->is_array(), "obj must be array");
+  objArrayOop(obj)->follow_header(cm);
+  if (UseCompressedOops) {
+    objarray_follow_contents<narrowOop>(cm, obj, 0);
+  } else {
+    objarray_follow_contents<oop>(cm, obj, 0);
+  }
 }
 #endif // SERIALGC
 
@@ -426,18 +426,7 @@ int objArrayKlass::oop_adjust_pointers(oop obj) {
 }
 
 #ifndef SERIALGC
-void objArrayKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
-  assert(!pm->depth_first(), "invariant");
-  assert(obj->is_objArray(), "obj must be obj array");
-  ObjArrayKlass_OOP_ITERATE( \
-    objArrayOop(obj), p, \
-    if (PSScavenge::should_scavenge(p)) { \
-      pm->claim_or_forward_breadth(p); \
-    })
-}
-
 void objArrayKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
-  assert(pm->depth_first(), "invariant");
   assert(obj->is_objArray(), "obj must be obj array");
   ObjArrayKlass_OOP_ITERATE( \
     objArrayOop(obj), p, \

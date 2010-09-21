@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,10 @@
 
 // Implementation of SignatureHandlerGenerator
 void InterpreterRuntime::SignatureHandlerGenerator::pass_int() {
+  move(offset(), jni_offset() + 1);
+}
+
+void InterpreterRuntime::SignatureHandlerGenerator::pass_float() {
   move(offset(), jni_offset() + 1);
 }
 
@@ -86,33 +90,28 @@ class SlowSignatureHandler: public NativeSignatureIterator {
   address   _from;
   intptr_t* _to;
 
-#ifdef ASSERT
-  void verify_tag(frame::Tag t) {
-    assert(!TaggedStackInterpreter ||
-           *(intptr_t*)(_from+Interpreter::local_tag_offset_in_bytes(0)) == t, "wrong tag");
-  }
-#endif // ASSERT
-
   virtual void pass_int() {
     *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0));
-    debug_only(verify_tag(frame::TagValue));
-    _from -= Interpreter::stackElementSize();
+    _from -= Interpreter::stackElementSize;
+  }
+
+  virtual void pass_float() {
+    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0));
+    _from -= Interpreter::stackElementSize;
   }
 
   virtual void pass_long() {
     _to[0] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1));
     _to[1] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(0));
-    debug_only(verify_tag(frame::TagValue));
     _to += 2;
-    _from -= 2*Interpreter::stackElementSize();
+    _from -= 2*Interpreter::stackElementSize;
   }
 
   virtual void pass_object() {
     // pass address of from
     intptr_t from_addr = (intptr_t)(_from + Interpreter::local_offset_in_bytes(0));
     *_to++ = (*(intptr_t*)from_addr == 0) ? NULL_WORD : from_addr;
-    debug_only(verify_tag(frame::TagReference));
-    _from -= Interpreter::stackElementSize();
+    _from -= Interpreter::stackElementSize;
    }
 
  public:

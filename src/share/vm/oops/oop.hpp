@@ -149,10 +149,6 @@ class oopDesc {
   // Need this as public for garbage collection.
   template <class T> T* obj_field_addr(int offset) const;
 
-  // Oop encoding heap max
-  static const uint64_t OopEncodingHeapMax =
-              (uint64_t(max_juint) + 1) << LogMinObjAlignmentInBytes;
-
   static bool is_null(oop obj);
   static bool is_null(narrowOop obj);
 
@@ -310,7 +306,6 @@ class oopDesc {
 
 #ifndef SERIALGC
   // Parallel Scavenge
-  void copy_contents(PSPromotionManager* pm);
   void push_contents(PSPromotionManager* pm);
 
   // Parallel Old

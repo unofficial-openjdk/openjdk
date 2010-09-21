@@ -55,7 +55,6 @@ private:
 
   // Cache Jvmti state
   bool  _jvmti_can_hotswap_or_post_breakpoint;
-  bool  _jvmti_can_examine_or_deopt_anywhere;
   bool  _jvmti_can_access_local_variables;
   bool  _jvmti_can_post_on_exceptions;
 
@@ -117,12 +116,8 @@ private:
                                 bool& is_accessible,
                                 ciInstanceKlass* loading_klass);
   ciConstant get_constant_by_index(constantPoolHandle cpool,
-                                   int constant_index,
+                                   int pool_index, int cache_index,
                                    ciInstanceKlass* accessor);
-  bool       is_unresolved_string(ciInstanceKlass* loading_klass,
-                                   int constant_index) const;
-  bool       is_unresolved_klass(ciInstanceKlass* loading_klass,
-                                   int constant_index) const;
   ciField*   get_field_by_index(ciInstanceKlass* loading_klass,
                                 int field_index);
   ciMethod*  get_method_by_index(constantPoolHandle cpool,
@@ -138,12 +133,8 @@ private:
                                      bool& is_accessible,
                                      ciInstanceKlass* loading_klass);
   ciConstant get_constant_by_index_impl(constantPoolHandle cpool,
-                                        int constant_index,
+                                        int pool_index, int cache_index,
                                         ciInstanceKlass* loading_klass);
-  bool       is_unresolved_string_impl (instanceKlass* loading_klass,
-                                        int constant_index) const;
-  bool       is_unresolved_klass_impl (instanceKlass* loading_klass,
-                                        int constant_index) const;
   ciField*   get_field_by_index_impl(ciInstanceKlass* loading_klass,
                                      int field_index);
   ciMethod*  get_method_by_index_impl(constantPoolHandle cpool,
@@ -189,6 +180,25 @@ private:
   ciKlass* get_unloaded_klass(ciKlass* accessing_klass,
                               ciSymbol* name) {
     return _factory->get_unloaded_klass(accessing_klass, name, true);
+  }
+
+  // Get a ciKlass representing an unloaded klass mirror.
+  // Result is not necessarily unique, but will be unloaded.
+  ciInstance* get_unloaded_klass_mirror(ciKlass* type) {
+    return _factory->get_unloaded_klass_mirror(type);
+  }
+
+  // Get a ciInstance representing an unresolved method handle constant.
+  ciInstance* get_unloaded_method_handle_constant(ciKlass*  holder,
+                                                  ciSymbol* name,
+                                                  ciSymbol* signature,
+                                                  int       ref_kind) {
+    return _factory->get_unloaded_method_handle_constant(holder, name, signature, ref_kind);
+  }
+
+  // Get a ciInstance representing an unresolved method type constant.
+  ciInstance* get_unloaded_method_type_constant(ciSymbol* signature) {
+    return _factory->get_unloaded_method_type_constant(signature);
   }
 
   // See if we already have an unloaded klass for the given name
@@ -257,7 +267,6 @@ public:
   // Cache Jvmti state
   void  cache_jvmti_state();
   bool  jvmti_can_hotswap_or_post_breakpoint() const { return _jvmti_can_hotswap_or_post_breakpoint; }
-  bool  jvmti_can_examine_or_deopt_anywhere()  const { return _jvmti_can_examine_or_deopt_anywhere; }
   bool  jvmti_can_access_local_variables()     const { return _jvmti_can_access_local_variables; }
   bool  jvmti_can_post_on_exceptions()         const { return _jvmti_can_post_on_exceptions; }
 

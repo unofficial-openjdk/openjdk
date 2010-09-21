@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,6 +116,13 @@ class BlockClosure: public CompilationResourceObj {
 };
 
 
+// A simple closure class for visiting the values of an Instruction
+class ValueVisitor: public StackObj {
+ public:
+  virtual void visit(Value* v) = 0;
+};
+
+
 // Some array and list classes
 define_array(BlockBeginArray, BlockBegin*)
 define_stack(_BlockList, BlockBeginArray)
@@ -129,7 +136,7 @@ class BlockList: public _BlockList {
   void iterate_forward(BlockClosure* closure);
   void iterate_backward(BlockClosure* closure);
   void blocks_do(void f(BlockBegin*));
-  void values_do(void f(Value*));
+  void values_do(ValueVisitor* f);
   void print(bool cfg_only = false, bool live_only = false) PRODUCT_RETURN;
 };
 
@@ -264,8 +271,6 @@ class InstructionVisitor: public StackObj {
 
 class Instruction: public CompilationResourceObj {
  private:
-  static int   _next_id;                         // the node counter
-
   int          _id;                              // the unique instruction id
   int          _bci;                             // the instruction bci
   int          _use_count;                       // the number of instructions refering to this value (w/o prev/next); only roots can have use count = 0 or > 1
@@ -283,6 +288,7 @@ class Instruction: public CompilationResourceObj {
 #endif
 
   friend class UseCountComputer;
+  friend class BlockBegin;
 
  protected:
   void set_bci(int bci)                          { assert(bci == SynchronizationEntryBCI || bci >= 0, "illegal bci"); _bci = bci; }
@@ -292,6 +298,13 @@ class Instruction: public CompilationResourceObj {
   }
 
  public:
+  void* operator new(size_t size) {
+    Compilation* c = Compilation::current();
+    void* res = c->arena()->Amalloc(size);
+    ((Instruction*)res)->_id = c->get_next_id();
+    return res;
+  }
+
   enum InstructionFlag {
     NeedsNullCheckFlag = 0,
     CanTrapFlag,
@@ -338,13 +351,13 @@ class Instruction: public CompilationResourceObj {
   static Condition negate(Condition cond);
 
   // initialization
-  static void initialize()                       { _next_id = 0; }
-  static int number_of_instructions()            { return _next_id; }
+  static int number_of_instructions() {
+    return Compilation::current()->number_of_instructions();
+  }
 
   // creation
   Instruction(ValueType* type, bool type_is_constant = false, bool create_hi = true)
-  : _id(_next_id++)
-  , _bci(-99)
+  : _bci(-99)
   , _use_count(0)
   , _pin_state(0)
   , _type(type)
@@ -479,10 +492,10 @@ class Instruction: public CompilationResourceObj {
 
   virtual bool can_trap() const                  { return false; }
 
-  virtual void input_values_do(void f(Value*))   = 0;
-  virtual void state_values_do(void f(Value*))   { /* usually no state - override on demand */ }
-  virtual void other_values_do(void f(Value*))   { /* usually no other - override on demand */ }
-          void       values_do(void f(Value*))   { input_values_do(f); state_values_do(f); other_values_do(f); }
+  virtual void input_values_do(ValueVisitor* f)   = 0;
+  virtual void state_values_do(ValueVisitor* f)   { /* usually no state - override on demand */ }
+  virtual void other_values_do(ValueVisitor* f)   { /* usually no other - override on demand */ }
+          void       values_do(ValueVisitor* f)   { input_values_do(f); state_values_do(f); other_values_do(f); }
 
   virtual ciType* exact_type() const             { return NULL; }
   virtual ciType* declared_type() const          { return NULL; }
@@ -517,9 +530,12 @@ class Instruction: public CompilationResourceObj {
 
 // Debugging support
 
+
 #ifdef ASSERT
-  static void assert_value(Value* x)             { assert((*x) != NULL, "value must exist"); }
-  #define ASSERT_VALUES                          values_do(assert_value);
+class AssertValues: public ValueVisitor {
+  void visit(Value* x)             { assert((*x) != NULL, "value must exist"); }
+};
+  #define ASSERT_VALUES                          { AssertValues assert_value; values_do(&assert_value); }
 #else
   #define ASSERT_VALUES
 #endif // ASSERT
@@ -555,7 +571,7 @@ LEAF(HiWord, Instruction)
   void make_illegal()                            { set_type(illegalType); }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { ShouldNotReachHere(); }
+  virtual void input_values_do(ValueVisitor* f)   { ShouldNotReachHere(); }
 };
 
 
@@ -615,7 +631,7 @@ LEAF(Phi, Instruction)
   }
 
   // generic
-  virtual void input_values_do(void f(Value*)) {
+  virtual void input_values_do(ValueVisitor* f) {
   }
 };
 
@@ -635,7 +651,7 @@ LEAF(Local, Instruction)
   int java_index() const                         { return _java_index; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { /* no values */ }
+  virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
 };
 
 
@@ -663,8 +679,8 @@ LEAF(Constant, Instruction)
 
   // generic
   virtual bool can_trap() const                  { return state() != NULL; }
-  virtual void input_values_do(void f(Value*))   { /* no values */ }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
+  virtual void other_values_do(ValueVisitor* f);
 
   virtual intx hash() const;
   virtual bool is_equal(Value v) const;
@@ -734,8 +750,8 @@ BASE(AccessField, Instruction)
 
   // generic
   virtual bool can_trap() const                  { return needs_null_check() || needs_patching(); }
-  virtual void input_values_do(void f(Value*))   { f(&_obj); }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_obj); }
+  virtual void other_values_do(ValueVisitor* f);
 };
 
 
@@ -776,7 +792,7 @@ LEAF(StoreField, AccessField)
   bool needs_write_barrier() const               { return check_flag(NeedsWriteBarrierFlag); }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { AccessField::input_values_do(f); f(&_value); }
+  virtual void input_values_do(ValueVisitor* f)   { AccessField::input_values_do(f); f->visit(&_value); }
 };
 
 
@@ -804,8 +820,8 @@ BASE(AccessArray, Instruction)
 
   // generic
   virtual bool can_trap() const                  { return needs_null_check(); }
-  virtual void input_values_do(void f(Value*))   { f(&_array); }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_array); }
+  virtual void other_values_do(ValueVisitor* f);
 };
 
 
@@ -857,7 +873,7 @@ BASE(AccessIndexed, AccessArray)
   bool compute_needs_range_check();
 
   // generic
-  virtual void input_values_do(void f(Value*))   { AccessArray::input_values_do(f); f(&_index); if (_length != NULL) f(&_length); }
+  virtual void input_values_do(ValueVisitor* f)   { AccessArray::input_values_do(f); f->visit(&_index); if (_length != NULL) f->visit(&_length); }
 };
 
 
@@ -909,7 +925,7 @@ LEAF(StoreIndexed, AccessIndexed)
   bool needs_store_check() const                 { return check_flag(NeedsStoreCheckFlag); }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { AccessIndexed::input_values_do(f); f(&_value); }
+  virtual void input_values_do(ValueVisitor* f)   { AccessIndexed::input_values_do(f); f->visit(&_value); }
 };
 
 
@@ -927,7 +943,7 @@ LEAF(NegateOp, Instruction)
   Value x() const                                { return _x; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { f(&_x); }
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_x); }
 };
 
 
@@ -956,7 +972,7 @@ BASE(Op2, Instruction)
 
   // generic
   virtual bool is_commutative() const            { return false; }
-  virtual void input_values_do(void f(Value*))   { f(&_x); f(&_y); }
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_x); f->visit(&_y); }
 };
 
 
@@ -982,7 +998,7 @@ LEAF(ArithmeticOp, Op2)
   // generic
   virtual bool is_commutative() const;
   virtual bool can_trap() const;
-  virtual void other_values_do(void f(Value*));
+  virtual void other_values_do(ValueVisitor* f);
   HASHING3(Op2, true, op(), x()->subst(), y()->subst())
 };
 
@@ -1023,7 +1039,7 @@ LEAF(CompareOp, Op2)
 
   // generic
   HASHING3(Op2, true, op(), x()->subst(), y()->subst())
-  virtual void other_values_do(void f(Value*));
+  virtual void other_values_do(ValueVisitor* f);
 };
 
 
@@ -1051,7 +1067,7 @@ LEAF(IfOp, Op2)
   Value fval() const                             { return _fval; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { Op2::input_values_do(f); f(&_tval); f(&_fval); }
+  virtual void input_values_do(ValueVisitor* f)   { Op2::input_values_do(f); f->visit(&_tval); f->visit(&_fval); }
 };
 
 
@@ -1071,7 +1087,7 @@ LEAF(Convert, Instruction)
   Value value() const                            { return _value; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { f(&_value); }
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_value); }
   HASHING2(Convert, true, op(), value()->subst())
 };
 
@@ -1100,8 +1116,8 @@ LEAF(NullCheck, Instruction)
 
   // generic
   virtual bool can_trap() const                  { return check_flag(CanTrapFlag); /* null-check elimination sets to false */ }
-  virtual void input_values_do(void f(Value*))   { f(&_obj); }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_obj); }
+  virtual void other_values_do(ValueVisitor* f);
   HASHING1(NullCheck, true, obj()->subst())
 };
 
@@ -1127,24 +1143,25 @@ BASE(StateSplit, Instruction)
   void set_state(ValueStack* state)              { _state = state; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { /* no values */ }
-  virtual void state_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
+  virtual void state_values_do(ValueVisitor* f);
 };
 
 
 LEAF(Invoke, StateSplit)
  private:
-  Bytecodes::Code           _code;
-  Value                     _recv;
-  Values*                   _args;
-  BasicTypeList*            _signature;
-  int                       _vtable_index;
-  ciMethod*                 _target;
+  Bytecodes::Code _code;
+  Value           _recv;
+  Values*         _args;
+  BasicTypeList*  _signature;
+  int             _vtable_index;
+  ciMethod*       _target;
+  ValueStack*     _state_before;  // Required for deoptimization.
 
  public:
   // creation
   Invoke(Bytecodes::Code code, ValueType* result_type, Value recv, Values* args,
-         int vtable_index, ciMethod* target);
+         int vtable_index, ciMethod* target, ValueStack* state_before);
 
   // accessors
   Bytecodes::Code code() const                   { return _code; }
@@ -1155,6 +1172,7 @@ LEAF(Invoke, StateSplit)
   int vtable_index() const                       { return _vtable_index; }
   BasicTypeList* signature() const               { return _signature; }
   ciMethod* target() const                       { return _target; }
+  ValueStack* state_before() const               { return _state_before; }
 
   // Returns false if target is not loaded
   bool target_is_final() const                   { return check_flag(TargetIsFinalFlag); }
@@ -1162,13 +1180,17 @@ LEAF(Invoke, StateSplit)
   // Returns false if target is not loaded
   bool target_is_strictfp() const                { return check_flag(TargetIsStrictfpFlag); }
 
+  // JSR 292 support
+  bool is_invokedynamic() const                  { return code() == Bytecodes::_invokedynamic; }
+
   // generic
   virtual bool can_trap() const                  { return true; }
-  virtual void input_values_do(void f(Value*)) {
+  virtual void input_values_do(ValueVisitor* f) {
     StateSplit::input_values_do(f);
-    if (has_receiver()) f(&_recv);
-    for (int i = 0; i < _args->length(); i++) f(_args->adr_at(i));
+    if (has_receiver()) f->visit(&_recv);
+    for (int i = 0; i < _args->length(); i++) f->visit(_args->adr_at(i));
   }
+  virtual void state_values_do(ValueVisitor *f);
 };
 
 
@@ -1206,8 +1228,8 @@ BASE(NewArray, StateSplit)
 
   // generic
   virtual bool can_trap() const                  { return true; }
-  virtual void input_values_do(void f(Value*))   { StateSplit::input_values_do(f); f(&_length); }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { StateSplit::input_values_do(f); f->visit(&_length); }
+  virtual void other_values_do(ValueVisitor* f);
 };
 
 
@@ -1256,7 +1278,7 @@ LEAF(NewMultiArray, NewArray)
   int rank() const                               { return dims()->length(); }
 
   // generic
-  virtual void input_values_do(void f(Value*)) {
+  virtual void input_values_do(ValueVisitor* f) {
     // NOTE: we do not call NewArray::input_values_do since "length"
     // is meaningless for a multi-dimensional array; passing the
     // zeroth element down to NewArray as its length is a bad idea
@@ -1264,7 +1286,7 @@ LEAF(NewMultiArray, NewArray)
     // get updated, and the value must not be traversed twice. Was bug
     // - kbr 4/10/2001
     StateSplit::input_values_do(f);
-    for (int i = 0; i < _dims->length(); i++) f(_dims->adr_at(i));
+    for (int i = 0; i < _dims->length(); i++) f->visit(_dims->adr_at(i));
   }
 };
 
@@ -1294,8 +1316,8 @@ BASE(TypeCheck, StateSplit)
 
   // generic
   virtual bool can_trap() const                  { return true; }
-  virtual void input_values_do(void f(Value*))   { StateSplit::input_values_do(f); f(&_obj); }
-  virtual void other_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { StateSplit::input_values_do(f); f->visit(&_obj); }
+  virtual void other_values_do(ValueVisitor* f);
 };
 
 
@@ -1360,7 +1382,7 @@ BASE(AccessMonitor, StateSplit)
   int monitor_no() const                         { return _monitor_no; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { StateSplit::input_values_do(f); f(&_obj); }
+  virtual void input_values_do(ValueVisitor* f)   { StateSplit::input_values_do(f); f->visit(&_obj); }
 };
 
 
@@ -1379,7 +1401,7 @@ LEAF(MonitorEnter, AccessMonitor)
 
   // accessors
   ValueStack* lock_stack_before() const          { return _lock_stack_before; }
-  virtual void state_values_do(void f(Value*));
+  virtual void state_values_do(ValueVisitor* f);
 
   // generic
   virtual bool can_trap() const                  { return true; }
@@ -1448,11 +1470,11 @@ LEAF(Intrinsic, StateSplit)
 
   // generic
   virtual bool can_trap() const                  { return check_flag(CanTrapFlag); }
-  virtual void input_values_do(void f(Value*)) {
+  virtual void input_values_do(ValueVisitor* f) {
     StateSplit::input_values_do(f);
-    for (int i = 0; i < _args->length(); i++) f(_args->adr_at(i));
+    for (int i = 0; i < _args->length(); i++) f->visit(_args->adr_at(i));
   }
-  virtual void state_values_do(void f(Value*));
+  virtual void state_values_do(ValueVisitor* f);
 
 };
 
@@ -1461,8 +1483,6 @@ class LIR_List;
 
 LEAF(BlockBegin, StateSplit)
  private:
-  static int _next_block_id;                     // the block counter
-
   int        _block_id;                          // the unique block id
   int        _depth_first_number;                // number of this block in a depth-first ordering
   int        _linear_scan_number;                // number of this block in linear-scan ordering
@@ -1504,14 +1524,22 @@ LEAF(BlockBegin, StateSplit)
   friend class SuxAndWeightAdjuster;
 
  public:
+   void* operator new(size_t size) {
+    Compilation* c = Compilation::current();
+    void* res = c->arena()->Amalloc(size);
+    ((BlockBegin*)res)->_id = c->get_next_id();
+    ((BlockBegin*)res)->_block_id = c->get_next_block_id();
+    return res;
+  }
+
   // initialization/counting
-  static void initialize()                       { _next_block_id = 0; }
-  static int  number_of_blocks()                 { return _next_block_id; }
+  static int  number_of_blocks() {
+    return Compilation::current()->number_of_blocks();
+  }
 
   // creation
   BlockBegin(int bci)
   : StateSplit(illegalType)
-  , _block_id(_next_block_id++)
   , _depth_first_number(-1)
   , _linear_scan_number(-1)
   , _loop_depth(0)
@@ -1586,7 +1614,7 @@ LEAF(BlockBegin, StateSplit)
   void init_stores_to_locals(int locals_count)   { _stores_to_locals = BitMap(locals_count); _stores_to_locals.clear(); }
 
   // generic
-  virtual void state_values_do(void f(Value*));
+  virtual void state_values_do(ValueVisitor* f);
 
   // successors and predecessors
   int number_of_sux() const;
@@ -1622,11 +1650,10 @@ LEAF(BlockBegin, StateSplit)
     backward_branch_target_flag   = 1 << 4,
     is_on_work_list_flag          = 1 << 5,
     was_visited_flag              = 1 << 6,
-    default_exception_handler_flag = 1 << 8, // identify block which represents the default exception handler
-    parser_loop_header_flag       = 1 << 9,  // set by parser to identify blocks where phi functions can not be created on demand
-    critical_edge_split_flag      = 1 << 10, // set for all blocks that are introduced when critical edges are split
-    linear_scan_loop_header_flag  = 1 << 11, // set during loop-detection for LinearScan
-    linear_scan_loop_end_flag     = 1 << 12  // set during loop-detection for LinearScan
+    parser_loop_header_flag       = 1 << 7,  // set by parser to identify blocks where phi functions can not be created on demand
+    critical_edge_split_flag      = 1 << 8, // set for all blocks that are introduced when critical edges are split
+    linear_scan_loop_header_flag  = 1 << 9, // set during loop-detection for LinearScan
+    linear_scan_loop_end_flag     = 1 << 10  // set during loop-detection for LinearScan
   };
 
   void set(Flag f)                               { _flags |= f; }
@@ -1641,7 +1668,7 @@ LEAF(BlockBegin, StateSplit)
   void iterate_preorder   (BlockClosure* closure);
   void iterate_postorder  (BlockClosure* closure);
 
-  void block_values_do(void f(Value*));
+  void block_values_do(ValueVisitor* f);
 
   // loops
   void set_loop_index(int ix)                    { _loop_index = ix;        }
@@ -1693,7 +1720,7 @@ BASE(BlockEnd, StateSplit)
   void set_begin(BlockBegin* begin);
 
   // generic
-  virtual void other_values_do(void f(Value*));
+  virtual void other_values_do(ValueVisitor* f);
 
   // successors
   int number_of_sux() const                      { return _sux != NULL ? _sux->length() : 0; }
@@ -1782,7 +1809,7 @@ LEAF(If, BlockEnd)
   void set_profiled_bci(int bci)                  { _profiled_bci = bci;       }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { BlockEnd::input_values_do(f); f(&_x); f(&_y); }
+  virtual void input_values_do(ValueVisitor* f)   { BlockEnd::input_values_do(f); f->visit(&_x); f->visit(&_y); }
 };
 
 
@@ -1836,7 +1863,7 @@ LEAF(IfInstanceOf, BlockEnd)
   }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { BlockEnd::input_values_do(f); f(&_obj); }
+  virtual void input_values_do(ValueVisitor* f)   { BlockEnd::input_values_do(f); f->visit(&_obj); }
 };
 
 
@@ -1858,7 +1885,7 @@ BASE(Switch, BlockEnd)
   int length() const                             { return number_of_sux() - 1; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { BlockEnd::input_values_do(f); f(&_tag); }
+  virtual void input_values_do(ValueVisitor* f)   { BlockEnd::input_values_do(f); f->visit(&_tag); }
 };
 
 
@@ -1911,9 +1938,9 @@ LEAF(Return, BlockEnd)
   bool has_result() const                        { return result() != NULL; }
 
   // generic
-  virtual void input_values_do(void f(Value*)) {
+  virtual void input_values_do(ValueVisitor* f) {
     BlockEnd::input_values_do(f);
-    if (has_result()) f(&_result);
+    if (has_result()) f->visit(&_result);
   }
 };
 
@@ -1933,8 +1960,8 @@ LEAF(Throw, BlockEnd)
 
   // generic
   virtual bool can_trap() const                  { return true; }
-  virtual void input_values_do(void f(Value*))   { BlockEnd::input_values_do(f); f(&_exception); }
-  virtual void state_values_do(void f(Value*));
+  virtual void input_values_do(ValueVisitor* f)   { BlockEnd::input_values_do(f); f->visit(&_exception); }
+  virtual void state_values_do(ValueVisitor* f);
 };
 
 
@@ -1966,7 +1993,7 @@ LEAF(OsrEntry, Instruction)
 #endif
 
   // generic
-  virtual void input_values_do(void f(Value*))   { }
+  virtual void input_values_do(ValueVisitor* f)   { }
 };
 
 
@@ -1979,7 +2006,7 @@ LEAF(ExceptionObject, Instruction)
   }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { }
+  virtual void input_values_do(ValueVisitor* f)   { }
 };
 
 
@@ -2003,7 +2030,7 @@ LEAF(RoundFP, Instruction)
   Value input() const                            { return _input; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { f(&_input); }
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_input); }
 };
 
 
@@ -2028,8 +2055,8 @@ BASE(UnsafeOp, Instruction)
   BasicType basic_type()                         { return _basic_type; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { }
-  virtual void other_values_do(void f(Value*))   { }
+  virtual void input_values_do(ValueVisitor* f)   { }
+  virtual void other_values_do(ValueVisitor* f)   { }
 };
 
 
@@ -2073,9 +2100,9 @@ BASE(UnsafeRawOp, UnsafeOp)
   void set_log2_scale(int log2_scale)            { _log2_scale = log2_scale; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { UnsafeOp::input_values_do(f);
-                                                   f(&_base);
-                                                   if (has_index()) f(&_index); }
+  virtual void input_values_do(ValueVisitor* f)   { UnsafeOp::input_values_do(f);
+                                                   f->visit(&_base);
+                                                   if (has_index()) f->visit(&_index); }
 };
 
 
@@ -2123,8 +2150,8 @@ LEAF(UnsafePutRaw, UnsafeRawOp)
   Value value()                                  { return _value; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { UnsafeRawOp::input_values_do(f);
-                                                   f(&_value); }
+  virtual void input_values_do(ValueVisitor* f)   { UnsafeRawOp::input_values_do(f);
+                                                   f->visit(&_value); }
 };
 
 
@@ -2144,9 +2171,9 @@ BASE(UnsafeObjectOp, UnsafeOp)
   Value offset()                                 { return _offset; }
   bool  is_volatile()                            { return _is_volatile; }
   // generic
-  virtual void input_values_do(void f(Value*))   { UnsafeOp::input_values_do(f);
-                                                   f(&_object);
-                                                   f(&_offset); }
+  virtual void input_values_do(ValueVisitor* f)   { UnsafeOp::input_values_do(f);
+                                                   f->visit(&_object);
+                                                   f->visit(&_offset); }
 };
 
 
@@ -2175,8 +2202,8 @@ LEAF(UnsafePutObject, UnsafeObjectOp)
   Value value()                                  { return _value; }
 
   // generic
-  virtual void input_values_do(void f(Value*))   { UnsafeObjectOp::input_values_do(f);
-                                                   f(&_value); }
+  virtual void input_values_do(ValueVisitor* f)   { UnsafeObjectOp::input_values_do(f);
+                                                   f->visit(&_value); }
 };
 
 
@@ -2233,7 +2260,7 @@ LEAF(ProfileCall, Instruction)
   Value recv()            { return _recv; }
   ciKlass* known_holder() { return _known_holder; }
 
-  virtual void input_values_do(void f(Value*))   { if (_recv != NULL) f(&_recv); }
+  virtual void input_values_do(ValueVisitor* f)   { if (_recv != NULL) f->visit(&_recv); }
 };
 
 
@@ -2261,7 +2288,7 @@ LEAF(ProfileCounter, Instruction)
   int offset()     { return _offset; }
   int increment()  { return _increment; }
 
-  virtual void input_values_do(void f(Value*))   { f(&_mdo); }
+  virtual void input_values_do(ValueVisitor* f)   { f->visit(&_mdo); }
 };
 
 

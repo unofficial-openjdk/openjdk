@@ -748,7 +748,7 @@ jint universe_init() {
 // 4Gb
 static const uint64_t NarrowOopHeapMax = (uint64_t(max_juint) + 1);
 // 32Gb
-static const uint64_t OopEncodingHeapMax = NarrowOopHeapMax << LogMinObjAlignmentInBytes;
+// OopEncodingHeapMax == NarrowOopHeapMax << LogMinObjAlignmentInBytes;
 
 char* Universe::preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode) {
   size_t base = 0;
@@ -1045,7 +1045,7 @@ bool universe_post_init() {
   k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_reflect_Method(), true, CHECK_false);
   k_h = instanceKlassHandle(THREAD, k);
   k_h->link_class(CHECK_false);
-  m = k_h->find_method(vmSymbols::invoke_name(), vmSymbols::object_array_object_object_signature());
+  m = k_h->find_method(vmSymbols::invoke_name(), vmSymbols::object_object_array_object_signature());
   if (m == NULL || m->is_static()) {
     THROW_MSG_(vmSymbols::java_lang_NoSuchMethodException(),
       "java.lang.reflect.Method.invoke", false);
@@ -1261,7 +1261,7 @@ static void calculate_verify_data(uintptr_t verify_data[2],
 
   // decide which low-order bits we require to be clear:
   size_t alignSize = MinObjAlignmentInBytes;
-  size_t min_object_size = oopDesc::header_size();
+  size_t min_object_size = CollectedHeap::min_fill_size();
 
   // make an inclusive limit:
   uintptr_t max = (uintptr_t)high_boundary - min_object_size*wordSize;

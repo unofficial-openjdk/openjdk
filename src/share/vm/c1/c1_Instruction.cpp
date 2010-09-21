@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,6 @@
 
 // Implementation of Instruction
 
-
-int Instruction::_next_id = 0;
 
 #ifdef ASSERT
 void Instruction::create_hi_word() {
@@ -193,22 +191,22 @@ ciType* CheckCast::exact_type() const {
 }
 
 
-void ArithmeticOp::other_values_do(void f(Value*)) {
+void ArithmeticOp::other_values_do(ValueVisitor* f) {
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
 
-void NullCheck::other_values_do(void f(Value*)) {
+void NullCheck::other_values_do(ValueVisitor* f) {
   lock_stack()->values_do(f);
 }
 
-void AccessArray::other_values_do(void f(Value*)) {
+void AccessArray::other_values_do(ValueVisitor* f) {
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
 
 
 // Implementation of AccessField
 
-void AccessField::other_values_do(void f(Value*)) {
+void AccessField::other_values_do(ValueVisitor* f) {
   if (state_before() != NULL) state_before()->values_do(f);
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
@@ -270,7 +268,7 @@ bool LogicOp::is_commutative() const {
 
 // Implementation of CompareOp
 
-void CompareOp::other_values_do(void f(Value*)) {
+void CompareOp::other_values_do(ValueVisitor* f) {
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
@@ -302,12 +300,12 @@ IRScope* StateSplit::scope() const {
 }
 
 
-void StateSplit::state_values_do(void f(Value*)) {
+void StateSplit::state_values_do(ValueVisitor* f) {
   if (state() != NULL) state()->values_do(f);
 }
 
 
-void BlockBegin::state_values_do(void f(Value*)) {
+void BlockBegin::state_values_do(ValueVisitor* f) {
   StateSplit::state_values_do(f);
 
   if (is_set(BlockBegin::exception_entry_flag)) {
@@ -318,13 +316,13 @@ void BlockBegin::state_values_do(void f(Value*)) {
 }
 
 
-void MonitorEnter::state_values_do(void f(Value*)) {
+void MonitorEnter::state_values_do(ValueVisitor* f) {
   StateSplit::state_values_do(f);
   _lock_stack_before->values_do(f);
 }
 
 
-void Intrinsic::state_values_do(void f(Value*)) {
+void Intrinsic::state_values_do(ValueVisitor* f) {
   StateSplit::state_values_do(f);
   if (lock_stack() != NULL) lock_stack()->values_do(f);
 }
@@ -334,13 +332,14 @@ void Intrinsic::state_values_do(void f(Value*)) {
 
 
 Invoke::Invoke(Bytecodes::Code code, ValueType* result_type, Value recv, Values* args,
-               int vtable_index, ciMethod* target)
+               int vtable_index, ciMethod* target, ValueStack* state_before)
   : StateSplit(result_type)
   , _code(code)
   , _recv(recv)
   , _args(args)
   , _vtable_index(vtable_index)
   , _target(target)
+  , _state_before(state_before)
 {
   set_flag(TargetIsLoadedFlag,   target->is_loaded());
   set_flag(TargetIsFinalFlag,    target_is_loaded() && target->is_final_method());
@@ -348,19 +347,30 @@ Invoke::Invoke(Bytecodes::Code code, ValueType* result_type, Value recv, Values*
 
   assert(args != NULL, "args must exist");
 #ifdef ASSERT
-  values_do(assert_value);
-#endif // ASSERT
+  AssertValues assert_value;
+  values_do(&assert_value);
+#endif
 
   // provide an initial guess of signature size.
   _signature = new BasicTypeList(number_of_arguments() + (has_receiver() ? 1 : 0));
   if (has_receiver()) {
     _signature->append(as_BasicType(receiver()->type()));
+  } else if (is_invokedynamic()) {
+    // Add the synthetic MethodHandle argument to the signature.
+    _signature->append(T_OBJECT);
   }
   for (int i = 0; i < number_of_arguments(); i++) {
     ValueType* t = argument_at(i)->type();
     BasicType bt = as_BasicType(t);
     _signature->append(bt);
   }
+}
+
+
+void Invoke::state_values_do(ValueVisitor* f) {
+  StateSplit::state_values_do(f);
+  if (state_before() != NULL) state_before()->values_do(f);
+  if (state()        != NULL) state()->values_do(f);
 }
 
 
@@ -489,29 +499,26 @@ BlockBegin* Constant::compare(Instruction::Condition cond, Value right,
 }
 
 
-void Constant::other_values_do(void f(Value*)) {
+void Constant::other_values_do(ValueVisitor* f) {
   if (state() != NULL) state()->values_do(f);
 }
 
 
 // Implementation of NewArray
 
-void NewArray::other_values_do(void f(Value*)) {
+void NewArray::other_values_do(ValueVisitor* f) {
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
 
 // Implementation of TypeCheck
 
-void TypeCheck::other_values_do(void f(Value*)) {
+void TypeCheck::other_values_do(ValueVisitor* f) {
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
 
 // Implementation of BlockBegin
-
-int BlockBegin::_next_block_id = 0;
-
 
 void BlockBegin::set_end(BlockEnd* end) {
   assert(end != NULL, "should not reset block end to NULL");
@@ -727,7 +734,7 @@ void BlockBegin::iterate_postorder(BlockClosure* closure) {
 }
 
 
-void BlockBegin::block_values_do(void f(Value*)) {
+void BlockBegin::block_values_do(ValueVisitor* f) {
   for (Instruction* n = this; n != NULL; n = n->next()) n->values_do(f);
 }
 
@@ -919,7 +926,7 @@ void BlockList::blocks_do(void f(BlockBegin*)) {
 }
 
 
-void BlockList::values_do(void f(Value*)) {
+void BlockList::values_do(ValueVisitor* f) {
   for (int i = length() - 1; i >= 0; i--) at(i)->block_values_do(f);
 }
 
@@ -962,7 +969,7 @@ void BlockEnd::substitute_sux(BlockBegin* old_sux, BlockBegin* new_sux) {
 }
 
 
-void BlockEnd::other_values_do(void f(Value*)) {
+void BlockEnd::other_values_do(ValueVisitor* f) {
   if (state_before() != NULL) state_before()->values_do(f);
 }
 
@@ -1001,6 +1008,6 @@ int Phi::operand_count() const {
 
 // Implementation of Throw
 
-void Throw::state_values_do(void f(Value*)) {
+void Throw::state_values_do(ValueVisitor* f) {
   BlockEnd::state_values_do(f);
 }

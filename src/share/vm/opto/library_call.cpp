@@ -636,6 +636,8 @@ bool LibraryCallKit::try_to_inline() {
 
   case vmIntrinsics::_reverseBytes_i:
   case vmIntrinsics::_reverseBytes_l:
+  case vmIntrinsics::_reverseBytes_s:
+  case vmIntrinsics::_reverseBytes_c:
     return inline_reverseBytes((vmIntrinsics::ID) intrinsic_id());
 
   case vmIntrinsics::_get_AtomicLong:
@@ -807,8 +809,7 @@ Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1, Node* cnt1
   Node* no_ctrl = NULL;
 
   ciInstanceKlass* klass = env()->String_klass();
-  const TypeInstPtr* string_type =
-        TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
+  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
 
   const TypeAryPtr* value_type =
         TypeAryPtr::make(TypePtr::NotNull,
@@ -881,8 +882,7 @@ bool LibraryCallKit::inline_string_compareTo() {
   }
 
   ciInstanceKlass* klass = env()->String_klass();
-  const TypeInstPtr* string_type =
-    TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
+  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
   Node* no_ctrl = NULL;
 
   // Get counts for string and argument
@@ -956,14 +956,16 @@ bool LibraryCallKit::inline_string_equals() {
     }
   }
 
-  const TypeInstPtr* string_type =
-    TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
+  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
 
   Node* no_ctrl = NULL;
   Node* receiver_cnt;
   Node* argument_cnt;
 
   if (!stopped()) {
+    // Properly cast the argument to String
+    argument = _gvn.transform(new (C, 2) CheckCastPPNode(control(), argument, string_type));
+
     // Get counts for string and argument
     Node* receiver_cnta = basic_plus_adr(receiver, receiver, count_offset);
     receiver_cnt  = make_load(no_ctrl, receiver_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
@@ -1088,7 +1090,7 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   const int offset_offset = java_lang_String::offset_offset_in_bytes();
 
   ciInstanceKlass* klass = env()->String_klass();
-  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
+  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
   const TypeAryPtr*  source_type = TypeAryPtr::make(TypePtr::NotNull, TypeAry::make(TypeInt::CHAR,TypeInt::POS), ciTypeArrayKlass::make(T_CHAR), true, 0);
 
   Node* sourceOffseta = basic_plus_adr(string_object, string_object, offset_offset);
@@ -1172,13 +1174,9 @@ bool LibraryCallKit::inline_string_indexOf() {
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
 
-  Node* alloc = NULL;
-  if (DoEscapeAnalysis && argument->is_Con())
-    alloc = AllocateNode::Ideal_allocation(receiver, &_gvn);
-
   Node* result;
   // Disable the use of pcmpestri until it can be guaranteed that
-  // the load doesn't cross in to the uncommited space.
+  // the load doesn't cross into the uncommited space.
   if (false && Matcher::has_match_rule(Op_StrIndexOf) &&
       UseSSE42Intrinsics) {
     // Generate SSE4.2 version of indexOf
@@ -1203,8 +1201,7 @@ bool LibraryCallKit::inline_string_indexOf() {
     Node* no_ctrl  = NULL;
 
     ciInstanceKlass* klass = env()->String_klass();
-    const TypeInstPtr* string_type =
-      TypeInstPtr::make(TypePtr::BotPTR, klass, false, NULL, 0);
+    const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
 
     // Get counts for string and substr
     Node* source_cnta = basic_plus_adr(receiver, receiver, count_offset);
@@ -2016,13 +2013,19 @@ bool LibraryCallKit::inline_bitCount(vmIntrinsics::ID id) {
   return true;
 }
 
-//----------------------------inline_reverseBytes_int/long-------------------
+//----------------------------inline_reverseBytes_int/long/char/short-------------------
 // inline Integer.reverseBytes(int)
 // inline Long.reverseBytes(long)
+// inline Character.reverseBytes(char)
+// inline Short.reverseBytes(short)
 bool LibraryCallKit::inline_reverseBytes(vmIntrinsics::ID id) {
-  assert(id == vmIntrinsics::_reverseBytes_i || id == vmIntrinsics::_reverseBytes_l, "not reverse Bytes");
-  if (id == vmIntrinsics::_reverseBytes_i && !Matcher::has_match_rule(Op_ReverseBytesI)) return false;
-  if (id == vmIntrinsics::_reverseBytes_l && !Matcher::has_match_rule(Op_ReverseBytesL)) return false;
+  assert(id == vmIntrinsics::_reverseBytes_i || id == vmIntrinsics::_reverseBytes_l ||
+         id == vmIntrinsics::_reverseBytes_c || id == vmIntrinsics::_reverseBytes_s,
+         "not reverse Bytes");
+  if (id == vmIntrinsics::_reverseBytes_i && !Matcher::has_match_rule(Op_ReverseBytesI))  return false;
+  if (id == vmIntrinsics::_reverseBytes_l && !Matcher::has_match_rule(Op_ReverseBytesL))  return false;
+  if (id == vmIntrinsics::_reverseBytes_c && !Matcher::has_match_rule(Op_ReverseBytesUS)) return false;
+  if (id == vmIntrinsics::_reverseBytes_s && !Matcher::has_match_rule(Op_ReverseBytesS))  return false;
   _sp += arg_size();        // restore stack pointer
   switch (id) {
   case vmIntrinsics::_reverseBytes_i:
@@ -2030,6 +2033,12 @@ bool LibraryCallKit::inline_reverseBytes(vmIntrinsics::ID id) {
     break;
   case vmIntrinsics::_reverseBytes_l:
     push_pair(_gvn.transform(new (C, 2) ReverseBytesLNode(0, pop_pair())));
+    break;
+  case vmIntrinsics::_reverseBytes_c:
+    push(_gvn.transform(new (C, 2) ReverseBytesUSNode(0, pop())));
+    break;
+  case vmIntrinsics::_reverseBytes_s:
+    push(_gvn.transform(new (C, 2) ReverseBytesSNode(0, pop())));
     break;
   default:
     ;
@@ -3503,8 +3512,7 @@ bool LibraryCallKit::inline_native_hashcode(bool is_virtual, bool is_static) {
 
   // Get the header out of the object, use LoadMarkNode when available
   Node* header_addr = basic_plus_adr(obj, oopDesc::mark_offset_in_bytes());
-  Node* header = make_load(NULL, header_addr, TypeRawPtr::BOTTOM, T_ADDRESS);
-  header = _gvn.transform( new (C, 2) CastP2XNode(NULL, header) );
+  Node* header = make_load(control(), header_addr, TypeX_X, TypeX_X->basic_type());
 
   // Test the header to see if it is unlocked.
   Node *lock_mask      = _gvn.MakeConX(markOopDesc::biased_lock_mask_in_place);
@@ -5193,7 +5201,7 @@ LibraryCallKit::generate_checkcast_arraycopy(const TypePtr* adr_type,
   // super_check_offset, for the desired klass.
   int sco_offset = Klass::super_check_offset_offset_in_bytes() + sizeof(oopDesc);
   Node* p3 = basic_plus_adr(dest_elem_klass, sco_offset);
-  Node* n3 = new(C, 3) LoadINode(NULL, immutable_memory(), p3, TypeRawPtr::BOTTOM);
+  Node* n3 = new(C, 3) LoadINode(NULL, memory(p3), p3, _gvn.type(p3)->is_ptr());
   Node* check_offset = _gvn.transform(n3);
   Node* check_value  = dest_elem_klass;
 

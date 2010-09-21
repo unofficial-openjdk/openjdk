@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,6 +75,16 @@ public:
   virtual void do_oop(narrowOop* p) { do_oop_work(p); }
   virtual void do_oop(      oop* p) { do_oop_work(p); }
 
+  void print_object(outputStream* out, oop obj) {
+#ifdef PRODUCT
+    klassOop k = obj->klass();
+    const char* class_name = instanceKlass::cast(k)->external_name();
+    out->print_cr("class name %s", class_name);
+#else // PRODUCT
+    obj->print_on(out);
+#endif // PRODUCT
+  }
+
   template <class T> void do_oop_work(T* p) {
     assert(_containing_obj != NULL, "Precondition");
     assert(!_g1h->is_obj_dead_cond(_containing_obj, _use_prev_marking),
@@ -90,21 +100,29 @@ public:
           gclog_or_tty->print_cr("----------");
         }
         if (!_g1h->is_in_closed_subset(obj)) {
+          HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
           gclog_or_tty->print_cr("Field "PTR_FORMAT
-                        " of live obj "PTR_FORMAT
-                        " points to obj "PTR_FORMAT
-                        " not in the heap.",
-                        p, (void*) _containing_obj, (void*) obj);
+                                 " of live obj "PTR_FORMAT" in region "
+                                 "["PTR_FORMAT", "PTR_FORMAT")",
+                                 p, (void*) _containing_obj,
+                                 from->bottom(), from->end());
+          print_object(gclog_or_tty, _containing_obj);
+          gclog_or_tty->print_cr("points to obj "PTR_FORMAT" not in the heap",
+                                 (void*) obj);
         } else {
+          HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
+          HeapRegion* to   = _g1h->heap_region_containing((HeapWord*)obj);
           gclog_or_tty->print_cr("Field "PTR_FORMAT
-                        " of live obj "PTR_FORMAT
-                        " points to dead obj "PTR_FORMAT".",
-                        p, (void*) _containing_obj, (void*) obj);
+                                 " of live obj "PTR_FORMAT" in region "
+                                 "["PTR_FORMAT", "PTR_FORMAT")",
+                                 p, (void*) _containing_obj,
+                                 from->bottom(), from->end());
+          print_object(gclog_or_tty, _containing_obj);
+          gclog_or_tty->print_cr("points to dead obj "PTR_FORMAT" in region "
+                                 "["PTR_FORMAT", "PTR_FORMAT")",
+                                 (void*) obj, to->bottom(), to->end());
+          print_object(gclog_or_tty, obj);
         }
-        gclog_or_tty->print_cr("Live obj:");
-        _containing_obj->print_on(gclog_or_tty);
-        gclog_or_tty->print_cr("Bad referent:");
-        obj->print_on(gclog_or_tty);
         gclog_or_tty->print_cr("----------");
         _failures = true;
         failed = true;
@@ -272,7 +290,7 @@ void HeapRegion::setup_heap_region_size(uintx min_heap_size) {
   // Recalculate the region size to make sure it's a power of
   // 2. This means that region_size is the largest power of 2 that's
   // <= what we've calculated so far.
-  region_size = 1 << region_size_log;
+  region_size = ((uintx)1 << region_size_log);
 
   // Now make sure that we don't go over or under our limits.
   if (region_size < MIN_REGION_SIZE) {
@@ -432,7 +450,9 @@ HeapRegion(G1BlockOffsetSharedArray* sharedOffsetArray,
     _young_type(NotYoung), _next_young_region(NULL),
     _next_dirty_cards_region(NULL),
     _young_index_in_cset(-1), _surv_rate_group(NULL), _age_index(-1),
-    _rem_set(NULL), _zfs(NotZeroFilled)
+    _rem_set(NULL), _zfs(NotZeroFilled),
+    _recorded_rs_length(0), _predicted_elapsed_time_ms(0),
+    _predicted_bytes_to_copy(0)
 {
   _orig_end = mr.end();
   // Note that initialize() will set the start of the unmarked area of the
@@ -534,11 +554,19 @@ HeapWord* HeapRegion::allocate(size_t size) {
 #endif
 
 void HeapRegion::set_zero_fill_state_work(ZeroFillState zfs) {
-  assert(top() == bottom() || zfs == Allocated,
-         "Region must be empty, or we must be setting it to allocated.");
   assert(ZF_mon->owned_by_self() ||
          Universe::heap()->is_gc_active(),
          "Must hold the lock or be a full GC to modify.");
+#ifdef ASSERT
+  if (top() != bottom() && zfs != Allocated) {
+    ResourceMark rm;
+    stringStream region_str;
+    print_on(&region_str);
+    assert(top() == bottom() || zfs == Allocated,
+           err_msg("Region must be empty, or we must be setting it to allocated. "
+                   "_zfs=%d, zfs=%d, region: %s", _zfs, zfs, region_str.as_string()));
+  }
+#endif
   _zfs = zfs;
 }
 
@@ -630,7 +658,8 @@ HeapRegion::object_iterate_mem_careful(MemRegion mr,
 HeapWord*
 HeapRegion::
 oops_on_card_seq_iterate_careful(MemRegion mr,
-                                     FilterOutOfRegionClosure* cl) {
+                                 FilterOutOfRegionClosure* cl,
+                                 bool filter_young) {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
   // If we're within a stop-world GC, then we might look at a card in a
@@ -643,6 +672,18 @@ oops_on_card_seq_iterate_careful(MemRegion mr,
   }
   if (mr.is_empty()) return NULL;
   // Otherwise, find the obj that extends onto mr.start().
+
+  // The intersection of the incoming mr (for the card) and the
+  // allocated part of the region is non-empty. This implies that
+  // we have actually allocated into this region. The code in
+  // G1CollectedHeap.cpp that allocates a new region sets the
+  // is_young tag on the region before allocating. Thus we
+  // safely know if this region is young.
+  if (is_young() && filter_young) {
+    return NULL;
+  }
+
+  assert(!is_young(), "check value of filter_young");
 
   // We used to use "block_start_careful" here.  But we're actually happy
   // to update the BOT while we do this...
@@ -715,7 +756,7 @@ void HeapRegion::print_on(outputStream* st) const {
   else
     st->print("   ");
   if (is_young())
-    st->print(is_scan_only() ? " SO" : (is_survivor() ? " SU" : " Y "));
+    st->print(is_survivor() ? " SU" : " Y ");
   else
     st->print("   ");
   if (is_empty())
@@ -723,6 +764,8 @@ void HeapRegion::print_on(outputStream* st) const {
   else
     st->print("  ");
   st->print(" %5d", _gc_time_stamp);
+  st->print(" PTAMS "PTR_FORMAT" NTAMS "PTR_FORMAT,
+            prev_top_at_mark_start(), next_top_at_mark_start());
   G1OffsetTableContigSpace::print_on(st);
 }
 
@@ -747,8 +790,18 @@ void HeapRegion::verify(bool allow_dirty,
   int objs = 0;
   int blocks = 0;
   VerifyLiveClosure vl_cl(g1, use_prev_marking);
+  bool is_humongous = isHumongous();
+  size_t object_num = 0;
   while (p < top()) {
     size_t size = oop(p)->size();
+    if (is_humongous != g1->isHumongous(size)) {
+      gclog_or_tty->print_cr("obj "PTR_FORMAT" is of %shumongous size ("
+                             SIZE_FORMAT" words) in a %shumongous region",
+                             p, g1->isHumongous(size) ? "" : "non-",
+                             size, is_humongous ? "" : "non-");
+       *failures = true;
+    }
+    object_num += 1;
     if (blocks == BLOCK_SAMPLE_INTERVAL) {
       HeapWord* res = block_start_const(p + (size/2));
       if (p != res) {
@@ -812,6 +865,13 @@ void HeapRegion::verify(bool allow_dirty,
         *failures = true;
         return;
     }
+  }
+
+  if (is_humongous && object_num > 1) {
+    gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] is humongous "
+                           "but has "SIZE_FORMAT", objects",
+                           bottom(), end(), object_num);
+    *failures = true;
   }
 
   if (p != top()) {

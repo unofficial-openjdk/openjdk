@@ -48,7 +48,7 @@ void ThreadRootsMarkingTask::do_it(GCTaskManager* manager, uint which) {
     _vm_thread->oops_do(&mark_and_push_closure, &mark_and_push_in_blobs);
 
   // Do the real work
-  cm->drain_marking_stacks(&mark_and_push_closure);
+  cm->follow_marking_stacks();
 }
 
 
@@ -59,6 +59,8 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
     PrintGCDetails && TraceParallelOldGCTasks, true, gclog_or_tty));
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
+  assert(cm->stacks_have_been_allocated(),
+         "Stack space has not been allocated");
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
 
   switch (_root_type) {
@@ -116,7 +118,8 @@ void MarkFromRootsTask::do_it(GCTaskManager* manager, uint which) {
   }
 
   // Do the real work
-  cm->drain_marking_stacks(&mark_and_push_closure);
+  cm->follow_marking_stacks();
+  // cm->deallocate_stacks();
 }
 
 
@@ -132,6 +135,8 @@ void RefProcTaskProxy::do_it(GCTaskManager* manager, uint which)
     PrintGCDetails && TraceParallelOldGCTasks, true, gclog_or_tty));
   ParCompactionManager* cm =
     ParCompactionManager::gc_thread_compaction_manager(which);
+  assert(cm->stacks_have_been_allocated(),
+         "Stack space has not been allocated");
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
   PSParallelCompact::FollowStackClosure follow_stack_closure(cm);
   _rp_task.work(_work_id, *PSParallelCompact::is_alive_closure(),
@@ -191,17 +196,19 @@ void StealMarkingTask::do_it(GCTaskManager* manager, uint which) {
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
 
   oop obj = NULL;
+  ObjArrayTask task;
   int random_seed = 17;
-  while(true) {
-    if (ParCompactionManager::steal(which, &random_seed, obj)) {
-      obj->follow_contents(cm);
-      cm->drain_marking_stacks(&mark_and_push_closure);
-    } else {
-      if (terminator()->offer_termination()) {
-        break;
-      }
+  do {
+    while (ParCompactionManager::steal_objarray(which, &random_seed, task)) {
+      objArrayKlass* const k = (objArrayKlass*)task.obj()->blueprint();
+      k->oop_follow_contents(cm, task.obj(), task.index());
+      cm->follow_marking_stacks();
     }
-  }
+    while (ParCompactionManager::steal(which, &random_seed, obj)) {
+      obj->follow_contents(cm);
+      cm->follow_marking_stacks();
+    }
+  } while (!terminator()->offer_termination());
 }
 
 //

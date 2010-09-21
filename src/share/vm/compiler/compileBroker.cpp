@@ -461,12 +461,25 @@ void CompileQueue::add(CompileTask* task) {
 //
 // Get the next CompileTask from a CompileQueue
 CompileTask* CompileQueue::get() {
+  NMethodSweeper::possibly_sweep();
+
   MutexLocker locker(lock());
 
   // Wait for an available CompileTask.
   while (_first == NULL) {
     // There is no work to be done right now.  Wait.
-    lock()->wait();
+    if (UseCodeCacheFlushing && (!CompileBroker::should_compile_new_jobs() || CodeCache::needs_flushing())) {
+      // During the emergency sweeping periods, wake up and sweep occasionally
+      bool timedout = lock()->wait(!Mutex::_no_safepoint_check_flag, NmethodSweepCheckInterval*1000);
+      if (timedout) {
+        MutexUnlocker ul(lock());
+        // When otherwise not busy, run nmethod sweeping
+        NMethodSweeper::possibly_sweep();
+      }
+    } else {
+      // During normal operation no need to wake up on timer
+      lock()->wait();
+    }
   }
 
   CompileTask* task = _first;
@@ -554,6 +567,14 @@ void CompileBroker::compilation_init() {
   _compilers[0] = _compilers[1];
 #endif
 #endif // COMPILER2
+
+#ifdef SHARK
+#if defined(COMPILER1) || defined(COMPILER2)
+#error "Can't use COMPILER1 or COMPILER2 with shark"
+#endif
+  _compilers[0] = new SharkCompiler();
+  _compilers[1] = _compilers[0];
+#endif
 
   // Initialize the CompileTask free list
   _task_free_list = NULL;
@@ -1414,9 +1435,14 @@ void CompileBroker::init_compiler_thread_log() {
     intx thread_id = os::current_thread_id();
     for (int try_temp_dir = 1; try_temp_dir >= 0; try_temp_dir--) {
       const char* dir = (try_temp_dir ? os::get_temp_directory() : NULL);
-      if (dir == NULL)  dir = "";
-      sprintf(fileBuf, "%shs_c" UINTX_FORMAT "_pid%u.log",
-              dir, thread_id, os::current_process_id());
+      if (dir == NULL) {
+        jio_snprintf(fileBuf, sizeof(fileBuf), "hs_c" UINTX_FORMAT "_pid%u.log",
+                     thread_id, os::current_process_id());
+      } else {
+        jio_snprintf(fileBuf, sizeof(fileBuf),
+                     "%s%shs_c" UINTX_FORMAT "_pid%u.log", dir,
+                     os::file_separator(), thread_id, os::current_process_id());
+      }
       fp = fopen(fileBuf, "at");
       if (fp != NULL) {
         file = NEW_C_HEAP_ARRAY(char, strlen(fileBuf)+1);
@@ -1626,21 +1652,20 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
 void CompileBroker::handle_full_code_cache() {
   UseInterpreter = true;
   if (UseCompiler || AlwaysCompileLoopMethods ) {
-    CompilerThread* thread = CompilerThread::current();
-    CompileLog* log = thread->log();
-    if (log != NULL) {
-      log->begin_elem("code_cache_full");
-      log->stamp();
-      log->end_elem();
+    if (xtty != NULL) {
+      xtty->begin_elem("code_cache_full");
+      xtty->stamp();
+      xtty->end_elem();
     }
-  #ifndef PRODUCT
-    warning("CodeCache is full. Compiler has been disabled");
+    warning("CodeCache is full. Compiler has been disabled.");
+    warning("Try increasing the code cache size using -XX:ReservedCodeCacheSize=");
+#ifndef PRODUCT
     if (CompileTheWorld || ExitOnFullCodeCache) {
       before_exit(JavaThread::current());
       exit_globals(); // will delete tty
       vm_direct_exit(CompileTheWorld ? 0 : 1);
     }
-  #endif
+#endif
     if (UseCodeCacheFlushing) {
       NMethodSweeper::handle_full_code_cache(true);
     } else {

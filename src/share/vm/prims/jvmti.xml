@@ -818,8 +818,8 @@ Agent_OnUnload(JavaVM *vm)</example>
     </ul>
     <p/>
     Sun, Sun Microsystems, the Sun logo, Java, and JVM
-    are trademarks or registered trademarks of Oracle and/or 
-    its affiliates in the U.S. and other countries.
+    are trademarks or registered trademarks of Oracle 
+    and/or its affiliates, in the U.S. and other countries.
   </intro>
 
 

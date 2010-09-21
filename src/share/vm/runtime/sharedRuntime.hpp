@@ -78,6 +78,18 @@ class SharedRuntime: AllStatic {
   static jfloat  frem(jfloat  x, jfloat  y);
   static jdouble drem(jdouble x, jdouble y);
 
+#ifdef __SOFTFP__
+  static jfloat  fadd(jfloat x, jfloat y);
+  static jfloat  fsub(jfloat x, jfloat y);
+  static jfloat  fmul(jfloat x, jfloat y);
+  static jfloat  fdiv(jfloat x, jfloat y);
+
+  static jdouble dadd(jdouble x, jdouble y);
+  static jdouble dsub(jdouble x, jdouble y);
+  static jdouble dmul(jdouble x, jdouble y);
+  static jdouble ddiv(jdouble x, jdouble y);
+#endif // __SOFTFP__
+
   // float conversion (needs to set appropriate rounding mode)
   static jint    f2i (jfloat  x);
   static jlong   f2l (jfloat  x);
@@ -86,6 +98,12 @@ class SharedRuntime: AllStatic {
   static jfloat  d2f (jdouble x);
   static jfloat  l2f (jlong   x);
   static jdouble l2d (jlong   x);
+
+#ifdef __SOFTFP__
+  static jfloat  i2f (jint    x);
+  static jdouble i2d (jint    x);
+  static jdouble f2d (jfloat  x);
+#endif // __SOFTFP__
 
   // double trigonometrics and transcendentals
   static jdouble dsin(jdouble x);
@@ -96,10 +114,35 @@ class SharedRuntime: AllStatic {
   static jdouble dexp(jdouble x);
   static jdouble dpow(jdouble x, jdouble y);
 
+#if defined(__SOFTFP__) || defined(E500V2)
+  static double dabs(double f);
+  static double dsqrt(double f);
+#endif
+
+#ifdef __SOFTFP__
+  // C++ compiler generates soft float instructions as well as passing
+  // float and double in registers.
+  static int  fcmpl(float x, float y);
+  static int  fcmpg(float x, float y);
+  static int  dcmpl(double x, double y);
+  static int  dcmpg(double x, double y);
+
+  static int unordered_fcmplt(float x, float y);
+  static int unordered_dcmplt(double x, double y);
+  static int unordered_fcmple(float x, float y);
+  static int unordered_dcmple(double x, double y);
+  static int unordered_fcmpge(float x, float y);
+  static int unordered_dcmpge(double x, double y);
+  static int unordered_fcmpgt(float x, float y);
+  static int unordered_dcmpgt(double x, double y);
+
+  static float  fneg(float f);
+  static double dneg(double f);
+#endif
 
   // exception handling across interpreter/compiler boundaries
-  static address raw_exception_handler_for_return_address(address return_address);
-  static address exception_handler_for_return_address(address return_address);
+  static address raw_exception_handler_for_return_address(JavaThread* thread, address return_address);
+  static address exception_handler_for_return_address(JavaThread* thread, address return_address);
 
 #ifndef SERIALGC
   // G1 write barriers
@@ -568,9 +611,6 @@ class AdapterHandlerEntry : public BasicHashtableEntry {
   AdapterHandlerEntry();
 
  public:
-  // The name we give all buffer blobs
-  static const char* name;
-
   address get_i2c_entry()            { return _i2c_entry; }
   address get_c2i_entry()            { return _c2i_entry; }
   address get_c2i_unverified_entry() { return _c2i_unverified_entry; }
@@ -589,9 +629,7 @@ class AdapterHandlerEntry : public BasicHashtableEntry {
   bool compare_code(unsigned char* code, int length, int total_args_passed, BasicType* sig_bt);
 #endif
 
-#ifndef PRODUCT
   void print();
-#endif /* PRODUCT */
 };
 
 class AdapterHandlerLibrary: public AllStatic {
@@ -613,9 +651,10 @@ class AdapterHandlerLibrary: public AllStatic {
   static nmethod* create_dtrace_nmethod (methodHandle method);
 #endif // HAVE_DTRACE_H
 
-#ifndef PRODUCT
-  static void print_handler(CodeBlob* b);
+  static void print_handler(CodeBlob* b) { print_handler_on(tty, b); }
+  static void print_handler_on(outputStream* st, CodeBlob* b);
   static bool contains(CodeBlob* b);
+#ifndef PRODUCT
   static void print_statistics();
 #endif /* PRODUCT */
 

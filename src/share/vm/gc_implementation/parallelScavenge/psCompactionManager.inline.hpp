@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,20 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_vtune_solaris.cpp.incl"
+void ParCompactionManager::push_objarray(oop obj, size_t index)
+{
+  ObjArrayTask task(obj, index);
+  assert(task.is_valid(), "bad ObjArrayTask");
+  _objarray_stack.push(task);
+}
 
-// empty implementation
-
-void VTune::start_GC() {}
-void VTune::end_GC() {}
-void VTune::start_class_load() {}
-void VTune::end_class_load() {}
-void VTune::exit() {}
-void VTune::register_stub(const char* name, address start, address end) {}
-
-void VTune::create_nmethod(nmethod* nm) {}
-void VTune::delete_nmethod(nmethod* nm) {}
-
-void vtune_init() {}
+void ParCompactionManager::push_region(size_t index)
+{
+#ifdef ASSERT
+  const ParallelCompactData& sd = PSParallelCompact::summary_data();
+  ParallelCompactData::RegionData* const region_ptr = sd.region(index);
+  assert(region_ptr->claimed(), "must be claimed");
+  assert(region_ptr->_pushed++ == 0, "should only be pushed once");
+#endif
+  region_stack()->push(index);
+}

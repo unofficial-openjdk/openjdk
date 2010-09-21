@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2009 Red Hat, Inc.
+ * Copyright 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,4 +23,14 @@
  *
  */
 
-// This file is intentionally empty
+#include "incls/_precompiled.incl"
+#include "incls/_methodHandles_zero.cpp.incl"
+
+int MethodHandles::adapter_conversion_ops_supported_mask() {
+  ShouldNotCallThis();
+}
+
+void MethodHandles::generate_method_handle_stub(MacroAssembler*          masm,
+                                                MethodHandles::EntryKind ek) {
+  ShouldNotCallThis();
+}

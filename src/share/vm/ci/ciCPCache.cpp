@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,26 @@ size_t ciCPCache::get_f1_offset(int index) {
     ConstantPoolCacheEntry::f1_offset();
 
   return in_bytes(f1_offset);
+}
+
+
+// ------------------------------------------------------------------
+// ciCPCache::is_f1_null_at
+bool ciCPCache::is_f1_null_at(int index) {
+  VM_ENTRY_MARK;
+  oop f1 = entry_at(index)->f1();
+  return (f1 == NULL);
+}
+
+
+// ------------------------------------------------------------------
+// ciCPCache::get_pool_index
+int ciCPCache::get_pool_index(int index) {
+  VM_ENTRY_MARK;
+  ConstantPoolCacheEntry* e = entry_at(index);
+  if (e->is_secondary_entry())
+    e = entry_at(e->main_entry_index());
+  return e->constant_pool_index();
 }
 
 

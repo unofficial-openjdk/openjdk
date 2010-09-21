@@ -51,7 +51,7 @@ extern "C" {
 class Copy : AllStatic {
  public:
   // Block copy methods have four attributes.  We don't define all possibilities.
-  //   alignment: aligned according to minimum Java object alignment (MinObjAlignment)
+  //   alignment: aligned to BytesPerLong
   //   arrayof:   arraycopy operation with both operands aligned on the same
   //              boundary as the first element of an array of the copy unit.
   //              This is currently a HeapWord boundary on all platforms, except
@@ -70,9 +70,12 @@ class Copy : AllStatic {
   //     [ '_atomic' ]
   //
   // Except in the arrayof case, whatever the alignment is, we assume we can copy
-  // whole alignment units.  E.g., if MinObjAlignment is 2x word alignment, an odd
+  // whole alignment units.  E.g., if BytesPerLong is 2x word alignment, an odd
   // count may copy an extra word.  In the arrayof case, we are allowed to copy
   // only the number of copy units specified.
+  //
+  // All callees check count for 0.
+  //
 
   // HeapWords
 
@@ -99,7 +102,6 @@ class Copy : AllStatic {
   // Object-aligned words,  conjoint, not atomic on each word
   static void aligned_conjoint_words(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_aligned(from, to);
-    assert_non_zero(count);
     pd_aligned_conjoint_words(from, to, count);
   }
 
@@ -107,49 +109,42 @@ class Copy : AllStatic {
   static void aligned_disjoint_words(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_aligned(from, to);
     assert_disjoint(from, to, count);
-    assert_non_zero(count);
     pd_aligned_disjoint_words(from, to, count);
   }
 
   // bytes, jshorts, jints, jlongs, oops
 
   // bytes,                 conjoint, not atomic on each byte (not that it matters)
-  static void conjoint_bytes(void* from, void* to, size_t count) {
-    assert_non_zero(count);
+  static void conjoint_jbytes(void* from, void* to, size_t count) {
     pd_conjoint_bytes(from, to, count);
   }
 
   // bytes,                 conjoint, atomic on each byte (not that it matters)
-  static void conjoint_bytes_atomic(void* from, void* to, size_t count) {
-    assert_non_zero(count);
+  static void conjoint_jbytes_atomic(void* from, void* to, size_t count) {
     pd_conjoint_bytes(from, to, count);
   }
 
   // jshorts,               conjoint, atomic on each jshort
   static void conjoint_jshorts_atomic(jshort* from, jshort* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerShort);
-    assert_non_zero(count);
     pd_conjoint_jshorts_atomic(from, to, count);
   }
 
   // jints,                 conjoint, atomic on each jint
   static void conjoint_jints_atomic(jint* from, jint* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerInt);
-    assert_non_zero(count);
     pd_conjoint_jints_atomic(from, to, count);
   }
 
   // jlongs,                conjoint, atomic on each jlong
   static void conjoint_jlongs_atomic(jlong* from, jlong* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerLong);
-    assert_non_zero(count);
     pd_conjoint_jlongs_atomic(from, to, count);
   }
 
   // oops,                  conjoint, atomic on each oop
   static void conjoint_oops_atomic(oop* from, oop* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerHeapOop);
-    assert_non_zero(count);
     pd_conjoint_oops_atomic(from, to, count);
   }
 
@@ -157,7 +152,6 @@ class Copy : AllStatic {
   static void conjoint_oops_atomic(narrowOop* from, narrowOop* to, size_t count) {
     assert(sizeof(narrowOop) == sizeof(jint), "this cast is wrong");
     assert_params_ok(from, to, LogBytesPerInt);
-    assert_non_zero(count);
     pd_conjoint_jints_atomic((jint*)from, (jint*)to, count);
   }
 
@@ -168,36 +162,31 @@ class Copy : AllStatic {
   static void conjoint_memory_atomic(void* from, void* to, size_t size);
 
   // bytes,                 conjoint array, atomic on each byte (not that it matters)
-  static void arrayof_conjoint_bytes(HeapWord* from, HeapWord* to, size_t count) {
-    assert_non_zero(count);
+  static void arrayof_conjoint_jbytes(HeapWord* from, HeapWord* to, size_t count) {
     pd_arrayof_conjoint_bytes(from, to, count);
   }
 
   // jshorts,               conjoint array, atomic on each jshort
   static void arrayof_conjoint_jshorts(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerShort);
-    assert_non_zero(count);
     pd_arrayof_conjoint_jshorts(from, to, count);
   }
 
   // jints,                 conjoint array, atomic on each jint
   static void arrayof_conjoint_jints(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerInt);
-    assert_non_zero(count);
     pd_arrayof_conjoint_jints(from, to, count);
   }
 
   // jlongs,                conjoint array, atomic on each jlong
   static void arrayof_conjoint_jlongs(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerLong);
-    assert_non_zero(count);
     pd_arrayof_conjoint_jlongs(from, to, count);
   }
 
   // oops,                  conjoint array, atomic on each oop
   static void arrayof_conjoint_oops(HeapWord* from, HeapWord* to, size_t count) {
     assert_params_ok(from, to, LogBytesPerHeapOop);
-    assert_non_zero(count);
     pd_arrayof_conjoint_oops(from, to, count);
   }
 
@@ -305,25 +294,17 @@ class Copy : AllStatic {
   }
   static void assert_params_aligned(HeapWord* from, HeapWord* to) {
 #ifdef ASSERT
-    if (mask_bits((uintptr_t)from, MinObjAlignmentInBytes-1) != 0)
-      basic_fatal("not object aligned");
-    if (mask_bits((uintptr_t)to, MinObjAlignmentInBytes-1) != 0)
-      basic_fatal("not object aligned");
+    if (mask_bits((uintptr_t)from, BytesPerLong-1) != 0)
+      basic_fatal("not long aligned");
+    if (mask_bits((uintptr_t)to, BytesPerLong-1) != 0)
+      basic_fatal("not long aligned");
 #endif
   }
 
   static void assert_params_aligned(HeapWord* to) {
 #ifdef ASSERT
-    if (mask_bits((uintptr_t)to, MinObjAlignmentInBytes-1) != 0)
-      basic_fatal("not object aligned");
-#endif
-  }
-
-  static void assert_non_zero(size_t count) {
-#ifdef ASSERT
-    if (count == 0) {
-      basic_fatal("count must be non-zero");
-    }
+    if (mask_bits((uintptr_t)to, BytesPerLong-1) != 0)
+      basic_fatal("not long aligned");
 #endif
   }
 

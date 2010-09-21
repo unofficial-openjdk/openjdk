@@ -37,6 +37,7 @@ class VMError : public StackObj {
                              //                     0x8xxxxxxx system warnings
 
   const char * _message;
+  const char * _detail_msg;
 
   Thread *     _thread;      // NULL if it's native thread
 
@@ -56,6 +57,10 @@ class VMError : public StackObj {
   int          _current_step;
   const char * _current_step_info;
   int          _verbose;
+  // First error, and its thread id. We must be able to handle native thread,
+  // so use thread id instead of Thread* to identify thread.
+  static VMError* volatile first_error;
+  static volatile jlong    first_error_tid;
 
   // used by reporting about OOM
   size_t       _size;
@@ -75,16 +80,19 @@ class VMError : public StackObj {
                                 char* buf, int buflen, bool verbose = false);
 
   // accessor
-  const char* message()         { return _message; }
+  const char* message() const    { return _message; }
+  const char* detail_msg() const { return _detail_msg; }
 
 public:
   // Constructor for crashes
   VMError(Thread* thread, int sig, address pc, void* siginfo, void* context);
   // Constructor for VM internal errors
-  VMError(Thread* thread, const char* message, const char* filename, int lineno);
+  VMError(Thread* thread, const char* filename, int lineno,
+          const char* message, const char * detail_msg);
 
-  // Constructors for VM OOM errors
-  VMError(Thread* thread, size_t size, const char* message, const char* filename, int lineno);
+  // Constructor for VM OOM errors
+  VMError(Thread* thread, const char* filename, int lineno, size_t size,
+          const char* message);
   // Constructor for non-fatal errors
   VMError(const char* message);
 
@@ -104,4 +112,7 @@ public:
   // returns original handler for signal, if it was resetted, or NULL if
   // signal was not changed by error reporter
   static address get_resetted_sighandler(int sig);
+
+  // check to see if fatal error reporting is in progress
+  static bool fatal_error_in_progress() { return first_error != NULL; }
 };

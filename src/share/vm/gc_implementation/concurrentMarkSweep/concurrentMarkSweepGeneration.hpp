@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -507,6 +507,7 @@ class CMSCollector: public CHeapObj {
   friend class VM_CMS_Operation;
   friend class VM_CMS_Initial_Mark;
   friend class VM_CMS_Final_Remark;
+  friend class TraceCMSMemoryManagerStats;
 
  private:
   jlong _time_of_last_gc;
@@ -522,8 +523,8 @@ class CMSCollector: public CHeapObj {
   // The following array-pair keeps track of mark words
   // displaced for accomodating overflow list above.
   // This code will likely be revisited under RFE#4922830.
-  Stack<oop>     _preserved_oop_stack;
-  Stack<markOop> _preserved_mark_stack;
+  GrowableArray<oop>*     _preserved_oop_stack;
+  GrowableArray<markOop>* _preserved_mark_stack;
 
   int*             _hash_seed;
 
@@ -570,10 +571,6 @@ class CMSCollector: public CHeapObj {
   ConcurrentMarkSweepPolicy* _collector_policy;
   ConcurrentMarkSweepPolicy* collector_policy() { return _collector_policy; }
 
-  // Check whether the gc time limit has been
-  // exceeded and set the size policy flag
-  // appropriately.
-  void check_gc_time_limit();
   // XXX Move these to CMSStats ??? FIX ME !!!
   elapsedTimer _inter_sweep_timer;   // time between sweeps
   elapsedTimer _intra_sweep_timer;   // time _in_ sweeps
@@ -1013,10 +1010,10 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
 
   // Non-product stat counters
   NOT_PRODUCT(
-    int _numObjectsPromoted;
-    int _numWordsPromoted;
-    int _numObjectsAllocated;
-    int _numWordsAllocated;
+    size_t _numObjectsPromoted;
+    size_t _numWordsPromoted;
+    size_t _numObjectsAllocated;
+    size_t _numWordsAllocated;
   )
 
   // Used for sizing decisions
@@ -1862,3 +1859,11 @@ public:
     _dead_bit_map(dead_bit_map) {}
   size_t do_blk(HeapWord* addr);
 };
+
+class TraceCMSMemoryManagerStats : public TraceMemoryManagerStats {
+
+ public:
+  TraceCMSMemoryManagerStats(CMSCollector::CollectorState phase);
+  TraceCMSMemoryManagerStats();
+};
+

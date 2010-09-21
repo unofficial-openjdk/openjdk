@@ -239,11 +239,11 @@ oop CollectedHeap::new_store_pre_barrier(JavaThread* thread, oop new_obj) {
 }
 
 size_t CollectedHeap::filler_array_hdr_size() {
-  return size_t(arrayOopDesc::header_size(T_INT));
+  return size_t(align_object_offset(arrayOopDesc::header_size(T_INT))); // align to Long
 }
 
 size_t CollectedHeap::filler_array_min_size() {
-  return align_object_size(filler_array_hdr_size());
+  return align_object_size(filler_array_hdr_size()); // align to MinObjAlignment
 }
 
 size_t CollectedHeap::filler_array_max_size() {
@@ -309,7 +309,7 @@ void CollectedHeap::fill_with_objects(HeapWord* start, size_t words, bool zap)
   DEBUG_ONLY(fill_args_check(start, words);)
   HandleMark hm;  // Free handles before leaving.
 
-#ifdef LP64
+#ifdef _LP64
   // A single array can fill ~8G, so multiple objects are needed only in 64-bit.
   // First fill with arrays, ensuring that any remaining space is big enough to
   // fill.  The remainder is filled with a single object.

@@ -77,10 +77,10 @@ protected:
   // word being overwritten with a self-forwarding-pointer.
   void   preserve_mark_if_necessary(oop obj, markOop m);
 
-  // Together, these keep <object with a preserved mark, mark value> pairs.
-  // They should always contain the same number of elements.
-  Stack<oop>     _objs_with_preserved_marks;
-  Stack<markOop> _preserved_marks_of_objs;
+  // When one is non-null, so is the other.  Together, they each pair is
+  // an object with a preserved mark, and its mark value.
+  GrowableArray<oop>*     _objs_with_preserved_marks;
+  GrowableArray<markOop>* _preserved_marks_of_objs;
 
   // Returns true if the collection can be safely attempted.
   // If this method returns false, a collection is not
@@ -94,7 +94,11 @@ protected:
     _promo_failure_scan_stack_closure = scan_stack_closure;
   }
 
-  Stack<oop> _promo_failure_scan_stack;
+  GrowableArray<oop>* _promo_failure_scan_stack;
+  GrowableArray<oop>* promo_failure_scan_stack() const {
+    return _promo_failure_scan_stack;
+  }
+  void push_on_promo_failure_scan_stack(oop);
   void drain_promo_failure_scan_stack(void);
   bool _promo_failure_drain_in_progress;
 
@@ -180,6 +184,8 @@ protected:
     void do_void();
   };
 
+  class FastEvacuateFollowersClosure;
+  friend class FastEvacuateFollowersClosure;
   class FastEvacuateFollowersClosure: public VoidClosure {
     GenCollectedHeap* _gch;
     int _level;
@@ -329,10 +335,6 @@ protected:
   void print_on(outputStream* st) const;
 
   void verify(bool allow_dirty);
-
-  bool promo_failure_scan_is_complete() const {
-    return _promo_failure_scan_stack.is_empty();
-  }
 
  protected:
   // If clear_space is true, clear the survivor spaces.  Eden is

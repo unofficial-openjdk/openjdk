@@ -328,7 +328,7 @@ void SafepointSynchronize::begin() {
     // Record how much time spend on the above cleanup tasks
     update_statistics_on_cleanup_end(os::javaTimeNanos());
   }
- } // end block containing Safepoint_lock after "RuntimeService::record_safepoint_begin()"
+  }
 }
 
 // Wake up all threads, so they are ready to resume execution after the safepoint
@@ -472,7 +472,7 @@ void SafepointSynchronize::do_cleanup_tasks() {
   }
 
   TraceTime t4("sweeping nmethods", TraceSafepointCleanupTime);
-  NMethodSweeper::sweep();
+  NMethodSweeper::scan_stacks();
 }
 
 
@@ -594,7 +594,7 @@ void SafepointSynchronize::block(JavaThread *thread) {
       break;
 
     default:
-     fatal1("Illegal threadstate encountered: %d", state);
+     fatal(err_msg("Illegal threadstate encountered: %d", state));
   }
 
   // Check for pending. async. exceptions or suspends - except if the
@@ -781,6 +781,9 @@ void ThreadSafepointState::examine_state_of_thread() {
   assert(is_running(), "better be running or just have hit safepoint poll");
 
   JavaThreadState state = _thread->thread_state();
+
+  // Save the state at the start of safepoint processing.
+  _orig_thread_state = state;
 
   // Check for a thread that is suspended. Note that thread resume tries
   // to grab the Threads_lock which we own here, so a thread cannot be

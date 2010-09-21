@@ -270,6 +270,7 @@ class Thread: public ThreadShadow {
   static void interrupt(Thread* thr);
   static bool is_interrupted(Thread* thr, bool clear_interrupted);
 
+  ObjectMonitor** omInUseList_addr()             { return (ObjectMonitor **)&omInUseList; }
   Monitor* SR_lock() const                       { return _SR_lock; }
 
   bool has_async_exception() const { return (_suspend_flags & _has_async_exception) != 0; }
@@ -409,9 +410,6 @@ public:
   // Sweeper support
   void nmethods_do(CodeBlobClosure* cf);
 
-  // Tells if adr belong to this thread. This is used
-  // for checking if a lock is owned by the running thread.
-
   // Used by fast lock support
   virtual bool is_lock_owned(address adr) const;
 
@@ -447,6 +445,11 @@ public:
   size_t  stack_size() const           { return _stack_size; }
   void    set_stack_size(size_t size)  { _stack_size = size; }
   void    record_stack_base_and_size();
+
+  bool    on_local_stack(address adr) const {
+    /* QQQ this has knowledge of direction, ought to be a stack method */
+    return (_stack_base >= adr && adr >= (_stack_base - _stack_size));
+  }
 
   int     lgrp_id() const                 { return _lgrp_id; }
   void    set_lgrp_id(int value)          { _lgrp_id = value; }
@@ -608,7 +611,7 @@ class WatcherThread: public Thread {
  private:
   static WatcherThread* _watcher_thread;
 
-  static bool _should_terminate;
+  volatile static bool _should_terminate; // updated without holding lock
  public:
   enum SomeConstants {
     delay_interval = 10                          // interrupt delay in milliseconds
@@ -773,7 +776,7 @@ class JavaThread: public Thread {
   volatile address _exception_pc;                // PC where exception happened
   volatile address _exception_handler_pc;        // PC for handler of exception
   volatile int     _exception_stack_size;        // Size of frame where exception happened
-  volatile int     _is_method_handle_exception;  // True if the current exception PC is at a MethodHandle call.
+  volatile int     _is_method_handle_return;     // true (== 1) if the current exception PC is a MethodHandle call site.
 
   // support for compilation
   bool    _is_compiling;                         // is true if a compilation is active inthis thread (one compilation per thread possible)
@@ -837,6 +840,10 @@ class JavaThread: public Thread {
   struct JNINativeInterface_* get_jni_functions() {
     return (struct JNINativeInterface_ *)_jni_environment.functions;
   }
+
+  // This function is called at thread creation to allow
+  // platform specific thread variables to be initialized.
+  void cache_global_variables();
 
   // Executes Shutdown.shutdown()
   void invoke_shutdown_hooks();
@@ -1109,13 +1116,13 @@ class JavaThread: public Thread {
   int      exception_stack_size() const          { return _exception_stack_size; }
   address  exception_pc() const                  { return _exception_pc; }
   address  exception_handler_pc() const          { return _exception_handler_pc; }
-  int      is_method_handle_exception() const    { return _is_method_handle_exception; }
+  bool     is_method_handle_return() const       { return _is_method_handle_return == 1; }
 
   void set_exception_oop(oop o)                  { _exception_oop = o; }
   void set_exception_pc(address a)               { _exception_pc = a; }
   void set_exception_handler_pc(address a)       { _exception_handler_pc = a; }
   void set_exception_stack_size(int size)        { _exception_stack_size = size; }
-  void set_is_method_handle_exception(int value) { _is_method_handle_exception = value; }
+  void set_is_method_handle_return(bool value)   { _is_method_handle_return = value ? 1 : 0; }
 
   // Stack overflow support
   inline size_t stack_available(address cur_sp);
@@ -1189,7 +1196,7 @@ class JavaThread: public Thread {
   static ByteSize exception_pc_offset()          { return byte_offset_of(JavaThread, _exception_pc        ); }
   static ByteSize exception_handler_pc_offset()  { return byte_offset_of(JavaThread, _exception_handler_pc); }
   static ByteSize exception_stack_size_offset()  { return byte_offset_of(JavaThread, _exception_stack_size); }
-  static ByteSize is_method_handle_exception_offset() { return byte_offset_of(JavaThread, _is_method_handle_exception); }
+  static ByteSize is_method_handle_return_offset() { return byte_offset_of(JavaThread, _is_method_handle_return); }
   static ByteSize stack_guard_state_offset()     { return byte_offset_of(JavaThread, _stack_guard_state   ); }
   static ByteSize suspend_flags_offset()         { return byte_offset_of(JavaThread, _suspend_flags       ); }
 
@@ -1577,6 +1584,7 @@ class CompilerThread : public JavaThread {
   CompileLog*   _log;
   CompileTask*  _task;
   CompileQueue* _queue;
+  BufferBlob*   _buffer_blob;
 
  public:
 
@@ -1594,6 +1602,9 @@ class CompilerThread : public JavaThread {
   // Get/set the thread's compilation environment.
   ciEnv*        env()                            { return _env; }
   void          set_env(ciEnv* env)              { _env = env; }
+
+  BufferBlob*   get_buffer_blob()                { return _buffer_blob; }
+  void          set_buffer_blob(BufferBlob* b)   { _buffer_blob = b; };
 
   // Get/set the thread's logging information
   CompileLog*   log()                            { return _log; }

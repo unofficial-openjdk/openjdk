@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -226,10 +226,6 @@
           "the number of regions for which we'll print a surv rate "        \
           "summary.")                                                       \
                                                                             \
-  develop(bool, G1UseScanOnlyPrefix, false,                                 \
-          "It determines whether the system will calculate an optimum "     \
-          "scan-only set.")                                                 \
-                                                                            \
   product(intx, G1ReservePercent, 10,                                       \
           "It determines the minimum reserve we should have in the heap "   \
           "to minimize the probability of promotion failure.")              \
@@ -257,9 +253,6 @@
   develop(uintx, G1FixedSurvivorSpaceSize, 0,                               \
           "If non-0 is the size of the G1 survivor space, "                 \
           "otherwise SurvivorRatio is used to determine the size")          \
-                                                                            \
-  product(bool, G1UseFixedWindowMMUTracker, false,                          \
-          "If the MMU tracker's memory is full, forget the oldest entry")   \
                                                                             \
   product(uintx, G1HeapRegionSize, 0,                                       \
           "Size of the G1 regions.")                                        \

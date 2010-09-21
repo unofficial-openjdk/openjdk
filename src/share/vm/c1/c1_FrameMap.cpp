@@ -90,7 +90,7 @@ CallingConvention* FrameMap::java_calling_convention(const BasicTypeArray* signa
 
   if (outgoing) {
     // update the space reserved for arguments.
-    update_reserved_argument_area_size(out_preserve);
+    update_reserved_argument_area_size(out_preserve * BytesPerWord);
   }
   return new CallingConvention(args, out_preserve);
 }
@@ -138,7 +138,7 @@ CallingConvention* FrameMap::c_calling_convention(const BasicTypeArray* signatur
   }
   assert(args->length() == signature->length(), "size mismatch");
   out_preserve += SharedRuntime::out_preserve_stack_slots();
-  update_reserved_argument_area_size(out_preserve);
+  update_reserved_argument_area_size(out_preserve * BytesPerWord);
   return new CallingConvention(args, out_preserve);
 }
 
@@ -153,7 +153,7 @@ int       FrameMap::_cpu_reg2rnr [FrameMap::nof_cpu_regs];
 
 
 FrameMap::FrameMap(ciMethod* method, int monitors, int reserved_argument_area_size) {
-  if (!_init_done) init();
+  assert(_init_done, "should already be completed");
 
   _framesize = -1;
   _num_spills = -1;

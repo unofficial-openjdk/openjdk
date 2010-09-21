@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@
 
 // Forward decls
 class elapsedTimer;
+class GenerationSizer;
 
 class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
  friend class PSGCAdaptivePolicyCounters;
@@ -340,7 +341,8 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
                                      size_t max_old_gen_size,
                                      size_t max_eden_size,
                                      bool   is_full_gc,
-                                     GCCause::Cause gc_cause);
+                                     GCCause::Cause gc_cause,
+                                     CollectorPolicy* collector_policy);
 
   // Calculates new survivor space size;  returns a new tenuring threshold
   // value. Stores new survivor size in _survivor_size.

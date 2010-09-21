@@ -732,12 +732,18 @@ void MethodHandleCompiler::emit_bc(Bytecodes::Code op, int index) {
   case Bytecodes::_dreturn:
   case Bytecodes::_areturn:
   case Bytecodes::_return:
-    assert(strcmp(Bytecodes::format(op), "b") == 0, "wrong bytecode format");
+    assert(Bytecodes::format_bits(op, false) == Bytecodes::_fmt_b, "wrong bytecode format");
     _bytecode.push(op);
     break;
 
   // bi
   case Bytecodes::_ldc:
+    assert(Bytecodes::format_bits(op, false) == (Bytecodes::_fmt_b|Bytecodes::_fmt_has_k), "wrong bytecode format");
+    assert((char) index == index, "index does not fit in 8-bit");
+    _bytecode.push(op);
+    _bytecode.push(index);
+    break;
+
   case Bytecodes::_iload:
   case Bytecodes::_lload:
   case Bytecodes::_fload:
@@ -748,27 +754,28 @@ void MethodHandleCompiler::emit_bc(Bytecodes::Code op, int index) {
   case Bytecodes::_fstore:
   case Bytecodes::_dstore:
   case Bytecodes::_astore:
-    assert(strcmp(Bytecodes::format(op), "bi") == 0, "wrong bytecode format");
+    assert(Bytecodes::format_bits(op, false) == Bytecodes::_fmt_bi, "wrong bytecode format");
     assert((char) index == index, "index does not fit in 8-bit");
     _bytecode.push(op);
     _bytecode.push(index);
     break;
 
-  // bii
+  // bkk
+  case Bytecodes::_ldc_w:
   case Bytecodes::_ldc2_w:
   case Bytecodes::_checkcast:
-    assert(strcmp(Bytecodes::format(op), "bii") == 0, "wrong bytecode format");
+    assert(Bytecodes::format_bits(op, false) == Bytecodes::_fmt_bkk, "wrong bytecode format");
     assert((short) index == index, "index does not fit in 16-bit");
     _bytecode.push(op);
     _bytecode.push(index >> 8);
     _bytecode.push(index);
     break;
 
-  // bjj
+  // bJJ
   case Bytecodes::_invokestatic:
   case Bytecodes::_invokespecial:
   case Bytecodes::_invokevirtual:
-    assert(strcmp(Bytecodes::format(op), "bjj") == 0, "wrong bytecode format");
+    assert(Bytecodes::format_bits(op, false) == Bytecodes::_fmt_bJJ, "wrong bytecode format");
     assert((short) index == index, "index does not fit in 16-bit");
     _bytecode.push(op);
     _bytecode.push(index >> 8);
@@ -1173,9 +1180,9 @@ methodHandle MethodHandleCompiler::get_method_oop(TRAPS) const {
   // has no receiver, normal MH calls do.
   int flags_bits;
   if (for_invokedynamic())
-    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_STATIC);
+    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_SYNTHETIC | JVM_ACC_STATIC);
   else
-    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL);
+    flags_bits = (/*JVM_MH_INVOKE_BITS |*/ JVM_ACC_PUBLIC | JVM_ACC_FINAL | JVM_ACC_SYNTHETIC);
 
   bool is_conc_safe = true;
   methodOop m_oop = oopFactory::new_method(bytecode_length(),
@@ -1217,6 +1224,7 @@ methodHandle MethodHandleCompiler::get_method_oop(TRAPS) const {
   }
 #endif //PRODUCT
 
+  assert(m->is_method_handle_adapter(), "must be recognized as an adapter");
   return m;
 }
 

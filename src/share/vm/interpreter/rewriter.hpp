@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ class Rewriter: public StackObj {
   objArrayHandle      _methods;
   intArray            _cp_map;
   intStack            _cp_cache_map;
+  bool                _have_invoke_dynamic;
 
   void init_cp_map(int length) {
     _cp_map.initialize(length, -1);
@@ -56,6 +57,22 @@ class Rewriter: public StackObj {
     return cache_index;
   }
 
+  // Access the contents of _cp_cache_map to determine CP cache layout.
+  int cp_cache_entry_pool_index(int cache_index) {
+    int cp_index = _cp_cache_map[cache_index];
+    if ((cp_index & _secondary_entry_tag) != 0)
+      return -1;
+    else
+      return cp_index;
+  }
+  int cp_cache_secondary_entry_main_index(int cache_index) {
+    int cp_index = _cp_cache_map[cache_index];
+    if ((cp_index & _secondary_entry_tag) == 0)
+      return -1;
+    else
+      return (cp_index - _secondary_entry_tag);
+  }
+
   // All the work goes in here:
   Rewriter(instanceKlassHandle klass, constantPoolHandle cpool, objArrayHandle methods, TRAPS);
 
@@ -64,8 +81,9 @@ class Rewriter: public StackObj {
   void scan_method(methodOop m);
   methodHandle rewrite_jsrs(methodHandle m, TRAPS);
   void rewrite_Object_init(methodHandle m, TRAPS);
-  int  rewrite_member_reference(address bcp, int offset);
-  void rewrite_invokedynamic(address bcp, int offset, int cp_index);
+  void rewrite_member_reference(address bcp, int offset);
+  void rewrite_invokedynamic(address bcp, int offset);
+  void maybe_rewrite_ldc(address bcp, int offset, bool is_wide);
 
  public:
   // Driver routine:

@@ -48,7 +48,6 @@ class ciMethod : public ciObject {
   ciInstanceKlass* _holder;
   ciSignature*     _signature;
   ciMethodData*    _method_data;
-  BCEscapeAnalyzer* _bcea;
   ciMethodBlocks*   _method_blocks;
 
   // Code attributes.
@@ -71,8 +70,9 @@ class ciMethod : public ciObject {
 
   // Optional liveness analyzer.
   MethodLiveness* _liveness;
-#ifdef COMPILER2
-  ciTypeFlow*     _flow;
+#if defined(COMPILER2) || defined(SHARK)
+  ciTypeFlow*         _flow;
+  BCEscapeAnalyzer*   _bcea;
 #endif
 
   ciMethod(methodHandle h_m);
@@ -141,6 +141,9 @@ class ciMethod : public ciObject {
 
   // Runtime information.
   int           vtable_index();
+#ifdef SHARK
+  int           itable_index();
+#endif // SHARK
   address       native_entry();
   address       interpreter_entry();
 

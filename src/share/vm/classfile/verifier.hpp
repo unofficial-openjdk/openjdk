@@ -25,7 +25,10 @@
 // The verifier class
 class Verifier : AllStatic {
  public:
-  enum { STACKMAP_ATTRIBUTE_MAJOR_VERSION = 50 };
+  enum {
+    STACKMAP_ATTRIBUTE_MAJOR_VERSION    = 50,
+    INVOKEDYNAMIC_MAJOR_VERSION         = 51
+  };
   typedef enum { ThrowException, NoException } Mode;
 
   /**
@@ -157,6 +160,16 @@ class ClassVerifier : public StackObj {
   instanceKlassHandle _klass;  // the class being verified
   methodHandle        _method; // current method being verified
   VerificationType    _this_type; // the verification type of the current class
+
+  // Some recursive calls from the verifier to the name resolver
+  // can cause the current class to be re-verified and rewritten.
+  // If this happens, the original verification should not continue,
+  // because constant pool indexes will have changed.
+  // The rewriter is preceded by the verifier.  If the verifier throws
+  // an error, rewriting is prevented.  Also, rewriting always precedes
+  // bytecode execution or compilation.  Thus, is_rewritten implies
+  // that a class has been verified and prepared for execution.
+  bool was_recursively_verified() { return _klass->is_rewritten(); }
 
  public:
   enum {

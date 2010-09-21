@@ -1,11 +1,10 @@
 
 OPENJDK ASSEMBLY EXCEPTION
 
-The OpenJDK source code made available by Oracle and/or its affiliates
-("Oracle") at openjdk.java.net and openjdk.dev.java.net ("OpenJDK Code") is
-distributed under the terms of the GNU General Public License
-<http://www.gnu.org/copyleft/gpl.html> version 2 only ("GPL2"), with the
-following clarification and special exception.
+The OpenJDK source code made available by Oracle at openjdk.java.net and
+openjdk.dev.java.net ("OpenJDK Code") is distributed under the terms of the
+GNU General Public License <http://www.gnu.org/copyleft/gpl.html> version 2
+only ("GPL2"), with the following clarification and special exception.
 
     Linking this OpenJDK Code statically or dynamically with other code
     is making a combined work based on this library.  Thus, the terms

@@ -724,7 +724,7 @@ jlong offset() {
   java_origin.wMilliseconds  = 0;
   FILETIME jot;
   if (!SystemTimeToFileTime(&java_origin, &jot)) {
-    fatal1("Error = %d\nWindows error", GetLastError());
+    fatal(err_msg("Error = %d\nWindows error", GetLastError()));
   }
   _calculated_offset = jlong_from(jot.dwHighDateTime, jot.dwLowDateTime);
   _has_calculated_offset = 1;
@@ -998,15 +998,16 @@ os::closedir(DIR *dirp)
 
 const char* os::dll_file_extension() { return ".dll"; }
 
-const char * os::get_temp_directory()
-{
-    static char path_buf[MAX_PATH];
-    if (GetTempPath(MAX_PATH, path_buf)>0)
-      return path_buf;
-    else{
-      path_buf[0]='\0';
-      return path_buf;
-    }
+const char* os::get_temp_directory() {
+  const char *prop = Arguments::get_property("java.io.tmpdir");
+  if (prop != 0) return prop;
+  static char path_buf[MAX_PATH];
+  if (GetTempPath(MAX_PATH, path_buf)>0)
+    return path_buf;
+  else{
+    path_buf[0]='\0';
+    return path_buf;
+  }
 }
 
 static bool file_exists(const char* filename) {
@@ -2802,6 +2803,14 @@ bool os::release_memory(char* addr, size_t bytes) {
   return VirtualFree(addr, 0, MEM_RELEASE) != 0;
 }
 
+bool os::create_stack_guard_pages(char* addr, size_t size) {
+  return os::commit_memory(addr, size);
+}
+
+bool os::remove_stack_guard_pages(char* addr, size_t size) {
+  return os::uncommit_memory(addr, size);
+}
+
 // Set protections specified
 bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
                         bool is_committed) {
@@ -3434,6 +3443,9 @@ jint os::init_2(void) {
   return JNI_OK;
 }
 
+void os::init_3(void) {
+  return;
+}
 
 // Mark the polling page as unreadable
 void os::make_polling_page_unreadable(void) {
@@ -4085,7 +4097,7 @@ bool os::check_heap(bool force) {
       }
       int err = GetLastError();
       if (err != ERROR_NO_MORE_ITEMS && err != ERROR_CALL_NOT_IMPLEMENTED) {
-        fatal1("heap walk aborted with error %d", err);
+        fatal(err_msg("heap walk aborted with error %d", err));
       }
       HeapUnlock(heap);
     }
@@ -4095,12 +4107,10 @@ bool os::check_heap(bool force) {
 }
 
 
-#ifndef PRODUCT
-bool os::find(address addr) {
+bool os::find(address addr, outputStream* st) {
   // Nothing yet
   return false;
 }
-#endif
 
 LONG WINAPI os::win32::serialize_fault_filter(struct _EXCEPTION_POINTERS* e) {
   DWORD exception_code = e->ExceptionRecord->ExceptionCode;
@@ -4154,3 +4164,8 @@ static int getLastErrorString(char *buf, size_t len)
     }
     return 0;
 }
+
+
+// We don't build a headless jre for Windows
+bool os::is_headless_jre() { return false; }
+

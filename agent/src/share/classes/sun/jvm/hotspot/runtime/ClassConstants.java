@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,20 @@ public interface ClassConstants
     public static final int JVM_CONSTANT_Methodref          = 10;
     public static final int JVM_CONSTANT_InterfaceMethodref = 11;
     public static final int JVM_CONSTANT_NameAndType        = 12;
+    public static final int JVM_CONSTANT_MethodHandle       = 15;
+    public static final int JVM_CONSTANT_MethodType         = 16;
+    public static final int JVM_CONSTANT_InvokeDynamic      = 17;
+
+    // JVM_CONSTANT_MethodHandle subtypes
+    public static final int JVM_REF_getField                = 1;
+    public static final int JVM_REF_getStatic               = 2;
+    public static final int JVM_REF_putField                = 3;
+    public static final int JVM_REF_putStatic               = 4;
+    public static final int JVM_REF_invokeVirtual           = 5;
+    public static final int JVM_REF_invokeStatic            = 6;
+    public static final int JVM_REF_invokeSpecial           = 7;
+    public static final int JVM_REF_newInvokeSpecial        = 8;
+    public static final int JVM_REF_invokeInterface         = 9;
 
     // HotSpot specific constant pool constant types.
 
@@ -57,6 +71,9 @@ public interface ClassConstants
 
     // Temporary tag while constructing constant pool
     public static final int JVM_CONSTANT_StringIndex        = 103;
+
+    // Temporary tag while constructing constant pool
+    public static final int JVM_CONSTANT_UnresolvedClassInError = 104;
 
     // 1.5 major/minor version numbers from JVM spec. 3rd edition
     public static final short MAJOR_VERSION = 49;

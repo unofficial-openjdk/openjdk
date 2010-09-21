@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,8 +95,10 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
         // list tags
         void beginList()  { beginTag("ul"); nl(); }
-        void li(String s) { wrap("li", s); nl();  }
         void endList()    { endTag("ul"); nl();   }
+        void beginListItem() { beginTag("li"); }
+        void endListItem()   { endTag("li"); nl();   }
+        void li(String s) { wrap("li", s); nl();  }
 
         // table tags
         void beginTable(int border) {
@@ -505,6 +507,11 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                buf.cell(cpool.getSymbolAt(index).asString());
                break;
 
+            case JVM_CONSTANT_UnresolvedClassInError:
+               buf.cell("JVM_CONSTANT_UnresolvedClassInError");
+               buf.cell(cpool.getSymbolAt(index).asString());
+               break;
+
             case JVM_CONSTANT_Class:
                buf.cell("JVM_CONSTANT_Class");
                Klass klass = (Klass) cpool.getObjAt(index);
@@ -564,6 +571,24 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                buf.cell("JVM_CONSTANT_StringIndex");
                buf.cell(Integer.toString(cpool.getIntAt(index)));
                break;
+
+            case JVM_CONSTANT_MethodHandle:
+               buf.cell("JVM_CONSTANT_MethodHandle");
+               buf.cell(genLowHighShort(cpool.getIntAt(index)));
+               break;
+
+            case JVM_CONSTANT_MethodType:
+               buf.cell("JVM_CONSTANT_MethodType");
+               buf.cell(Integer.toString(cpool.getIntAt(index)));
+               break;
+
+            case JVM_CONSTANT_InvokeDynamic:
+               buf.cell("JVM_CONSTANT_InvokeDynamic");
+               buf.cell(genLowHighShort(cpool.getIntAt(index)));
+               break;
+
+            default:
+               throw new InternalError("unknown tag: " + ctag);
          }
 
          buf.endTag("tr");
@@ -671,7 +696,16 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                              buf.cell(Integer.toString(curBci) + spaces);
 
                              buf.beginTag("td");
-                             String instrStr = escapeHTMLSpecialChars(instr.toString());
+                             String instrStr = null;
+                             try {
+                                 instrStr = escapeHTMLSpecialChars(instr.toString());
+                             } catch (RuntimeException re) {
+                                 buf.append("exception during bytecode processing");
+                                 buf.endTag("td");
+                                 buf.endTag("tr");
+                                 re.printStackTrace();
+                                 return;
+                             }
 
                              if (instr instanceof BytecodeNew) {
                                 BytecodeNew newBytecode = (BytecodeNew) instr;
@@ -1396,9 +1430,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          final SymbolFinder symFinder = createSymbolFinder();
          final Disassembler disasm = createDisassembler(startPc, code);
          class NMethodVisitor implements InstructionVisitor {
-            boolean prevWasCall;
             public void prologue() {
-               prevWasCall = false;
             }
 
             public void visit(long currentPc, Instruction instr) {
@@ -1418,8 +1450,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
                PCDesc pcDesc = (PCDesc) safepoints.get(longToAddress(currentPc));
 
-               boolean isSafepoint = (pcDesc != null);
-               if (isSafepoint && prevWasCall) {
+               if (pcDesc != null) {
                   buf.append(genSafepointInfo(nmethod, pcDesc));
                }
 
@@ -1435,11 +1466,6 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                }
 
                buf.br();
-               if (isSafepoint && !prevWasCall) {
-                 buf.append(genSafepointInfo(nmethod, pcDesc));
-               }
-
-               prevWasCall = instr.isCall();
             }
 
             public void epilogue() {
@@ -1783,22 +1809,20 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          buf.h3("Fields");
          buf.beginList();
          for (int f = 0; f < numFields; f += InstanceKlass.NEXT_OFFSET) {
-           int nameIndex = fields.getShortAt(f + InstanceKlass.NAME_INDEX_OFFSET);
-           int sigIndex  = fields.getShortAt(f + InstanceKlass.SIGNATURE_INDEX_OFFSET);
-           int genSigIndex = fields.getShortAt(f + InstanceKlass.GENERIC_SIGNATURE_INDEX_OFFSET);
-           Symbol f_name = cp.getSymbolAt(nameIndex);
-           Symbol f_sig  = cp.getSymbolAt(sigIndex);
-           Symbol f_genSig = (genSigIndex != 0)? cp.getSymbolAt(genSigIndex) : null;
-           AccessFlags acc = new AccessFlags(fields.getShortAt(f + InstanceKlass.ACCESS_FLAGS_OFFSET));
+           sun.jvm.hotspot.oops.Field field = klass.getFieldByIndex(f);
+           String f_name = ((NamedFieldIdentifier)field.getID()).getName();
+           Symbol f_sig  = field.getSignature();
+           Symbol f_genSig = field.getGenericSignature();
+           AccessFlags acc = field.getAccessFlagsObj();
 
-           buf.beginTag("li");
+           buf.beginListItem();
            buf.append(genFieldModifierString(acc));
            buf.append(' ');
            Formatter sigBuf = new Formatter(genHTML);
            new SignatureConverter(f_sig, sigBuf.getBuffer()).dispatchField();
            buf.append(sigBuf.toString().replace('/', '.'));
            buf.append(' ');
-           buf.append(f_name.asString());
+           buf.append(f_name);
            buf.append(';');
            // is it generic?
            if (f_genSig != null) {
@@ -1806,7 +1830,8 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
               buf.append(escapeHTMLSpecialChars(f_genSig.asString()));
               buf.append("] ");
            }
-           buf.endTag("li");
+           buf.append(" (offset = " + field.getOffset() + ")");
+           buf.endListItem();
          }
          buf.endList();
       }

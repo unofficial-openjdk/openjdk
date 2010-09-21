@@ -58,7 +58,6 @@ class JvmtiExport : public AllStatic {
   static int         _field_modification_count;
 
   static bool        _can_access_local_variables;
-  static bool        _can_examine_or_deopt_anywhere;
   static bool        _can_hotswap_or_post_breakpoint;
   static bool        _can_modify_any_class;
   static bool        _can_walk_any_space;
@@ -112,7 +111,6 @@ class JvmtiExport : public AllStatic {
 
   // these should only be called by the friend class
   friend class JvmtiManageCapabilities;
-  inline static void set_can_examine_or_deopt_anywhere(bool on)        { _can_examine_or_deopt_anywhere = (on != 0); }
   inline static void set_can_modify_any_class(bool on)                 { _can_modify_any_class = (on != 0); }
   inline static void set_can_access_local_variables(bool on)           { _can_access_local_variables = (on != 0); }
   inline static void set_can_hotswap_or_post_breakpoint(bool on)       { _can_hotswap_or_post_breakpoint = (on != 0); }
@@ -145,6 +143,9 @@ class JvmtiExport : public AllStatic {
 
   // posts any pending CompiledMethodUnload events.
   static void post_pending_compiled_method_unload_events();
+
+  // Perform the actual notification to interested JvmtiEnvs.
+  static void post_compiled_method_unload_internal(JavaThread* self, jmethodID mid, const void* code_begin);
 
   // posts a DynamicCodeGenerated event (internal/private implementation).
   // The public post_dynamic_code_generated* functions make use of the
@@ -220,7 +221,6 @@ class JvmtiExport : public AllStatic {
   static void enter_live_phase();
 
   // ------ can_* conditions (below) are set at OnLoad and never changed ------------
-  inline static bool can_examine_or_deopt_anywhere()              { return _can_examine_or_deopt_anywhere; }
   inline static bool can_modify_any_class()                       { return _can_modify_any_class; }
   inline static bool can_access_local_variables()                 { return _can_access_local_variables; }
   inline static bool can_hotswap_or_post_breakpoint()             { return _can_hotswap_or_post_breakpoint; }
@@ -302,8 +302,8 @@ class JvmtiExport : public AllStatic {
   static void post_compiled_method_load(nmethod *nm) KERNEL_RETURN;
   static void post_dynamic_code_generated(const char *name, const void *code_begin, const void *code_end) KERNEL_RETURN;
 
-  // used at a safepoint to post a CompiledMethodUnload event
-  static void post_compiled_method_unload_at_safepoint(jmethodID mid, const void *code_begin) KERNEL_RETURN;
+  // used to post a CompiledMethodUnload event
+  static void post_compiled_method_unload(jmethodID mid, const void *code_begin) KERNEL_RETURN;
 
   // similiar to post_dynamic_code_generated except that it can be used to
   // post a DynamicCodeGenerated event while holding locks in the VM. Any event

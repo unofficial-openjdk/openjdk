@@ -65,13 +65,6 @@ void VM_Version::initialize() {
       FLAG_SET_DEFAULT(UseInlineCaches, false);
     }
 #ifdef _LP64
-    // Single issue niagara1 is slower for CompressedOops
-    // but niagaras after that it's fine.
-    if (!is_niagara1_plus()) {
-      if (FLAG_IS_DEFAULT(UseCompressedOops)) {
-        FLAG_SET_ERGO(bool, UseCompressedOops, false);
-      }
-    }
     // 32-bit oops don't make sense for the 64-bit VM on sparc
     // since the 32-bit VM has the same registers and smaller objects.
     Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
@@ -86,14 +79,30 @@ void VM_Version::initialize() {
     if (FLAG_IS_DEFAULT(InteriorEntryAlignment)) {
       FLAG_SET_DEFAULT(InteriorEntryAlignment, 4);
     }
+    if (is_niagara1_plus()) {
+      if (AllocatePrefetchStyle > 0 && FLAG_IS_DEFAULT(AllocatePrefetchStyle)) {
+        // Use BIS instruction for allocation prefetch.
+        FLAG_SET_DEFAULT(AllocatePrefetchStyle, 3);
+        if (FLAG_IS_DEFAULT(AllocatePrefetchDistance)) {
+          // Use smaller prefetch distance on N2 with BIS
+          FLAG_SET_DEFAULT(AllocatePrefetchDistance, 64);
+        }
+      }
+      if (AllocatePrefetchStyle != 3 && FLAG_IS_DEFAULT(AllocatePrefetchDistance)) {
+        // Use different prefetch distance without BIS
+        FLAG_SET_DEFAULT(AllocatePrefetchDistance, 256);
+      }
+    }
+#endif
     if (FLAG_IS_DEFAULT(OptoLoopAlignment)) {
       FLAG_SET_DEFAULT(OptoLoopAlignment, 4);
     }
-    if (is_niagara1_plus() && FLAG_IS_DEFAULT(AllocatePrefetchDistance)) {
-      // Use smaller prefetch distance on N2
-      FLAG_SET_DEFAULT(AllocatePrefetchDistance, 256);
+    // When using CMS, we cannot use memset() in BOT updates because
+    // the sun4v/CMT version in libc_psr uses BIS which exposes
+    // "phantom zeros" to concurrent readers. See 6948537.
+    if (FLAG_IS_DEFAULT(UseMemSetInBOT) && UseConcMarkSweepGC) {
+      FLAG_SET_DEFAULT(UseMemSetInBOT, false);
     }
-#endif
   }
 
   // Use hardware population count instruction if available.
@@ -102,6 +111,11 @@ void VM_Version::initialize() {
       FLAG_SET_DEFAULT(UsePopCountInstruction, true);
     }
   }
+
+#ifdef COMPILER2
+  // Currently not supported anywhere.
+  FLAG_SET_DEFAULT(UseFPUForSpilling, false);
+#endif
 
   char buf[512];
   jio_snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s%s%s%s%s%s",

@@ -40,6 +40,7 @@ public:
                  Exceptions,     // Offset where exception handler lives
                  Deopt,          // Offset where deopt handler lives
                  DeoptMH,        // Offset where MethodHandle deopt handler lives
+                 UnwindHandler,  // Offset to default unwind handler
                  max_Entries };
 
   // special value to note codeBlobs where profile (forte) stack walking is
@@ -59,6 +60,7 @@ public:
     _values[Exceptions    ] = -1;
     _values[Deopt         ] = -1;
     _values[DeoptMH       ] = -1;
+    _values[UnwindHandler ] = -1;
   }
 
   int value(Entries e) { return _values[e]; }
@@ -100,7 +102,7 @@ class CodeSection VALUE_OBJ_CLASS_SPEC {
     _locs_point    = NULL;
     _locs_own      = false;
     _frozen        = false;
-    debug_only(_index = -1);
+    debug_only(_index = (char)-1);
     debug_only(_outer = (CodeBuffer*)badAddress);
   }
 
@@ -276,7 +278,7 @@ class CodeBuffer: public StackObj {
   // special case during expansion which is handled internally.  This
   // is done to guarantee proper cleanup of resources.
   void* operator new(size_t size) { return ResourceObj::operator new(size); }
-  void  operator delete(void* p)  {        ResourceObj::operator delete(p); }
+  void  operator delete(void* p)  { ShouldNotCallThis(); }
 
  public:
   typedef int csize_t;  // code size type; would be size_t except for history
@@ -508,9 +510,9 @@ class CodeBuffer: public StackObj {
     copy_relocations_to(blob);
     copy_code_to(blob);
   }
-  void copy_oops_to(CodeBlob* blob) {
+  void copy_oops_to(nmethod* nm) {
     if (!oop_recorder()->is_unused()) {
-      oop_recorder()->copy_to(blob);
+      oop_recorder()->copy_to(nm);
     }
   }
 

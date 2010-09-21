@@ -135,8 +135,7 @@ CallNode* PhaseMacroExpand::make_slow_call(CallNode *oldcall, const TypeFunc* sl
   if (parm1 != NULL)  call->init_req(TypeFunc::Parms+1, parm1);
   copy_call_debug_info(oldcall, call);
   call->set_cnt(PROB_UNLIKELY_MAG(4));  // Same effect as RC_UNCOMMON.
-  _igvn.hash_delete(oldcall);
-  _igvn.subsume_node(oldcall, call);
+  _igvn.replace_node(oldcall, call);
   transform_later(call);
 
   return call;
@@ -523,8 +522,7 @@ Node *PhaseMacroExpand::value_from_mem(Node *sfpt_mem, BasicType ft, const Type 
         // Kill all new Phis
         while(value_phis.is_nonempty()) {
           Node* n = value_phis.node();
-          _igvn.hash_delete(n);
-          _igvn.subsume_node(n, C->top());
+          _igvn.replace_node(n, C->top());
           value_phis.pop();
         }
       }
@@ -722,7 +720,7 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
       if (basic_elem_type == T_OBJECT || basic_elem_type == T_ARRAY) {
         if (!elem_type->is_loaded()) {
           field_type = TypeInstPtr::BOTTOM;
-        } else if (field != NULL && field->is_constant()) {
+        } else if (field != NULL && field->is_constant() && field->is_static()) {
           // This can happen if the constant oop is non-perm.
           ciObject* con = field->constant_value().as_object();
           // Do not "join" in the previous type; it doesn't add value,
@@ -1311,8 +1309,7 @@ void PhaseMacroExpand::expand_allocate_common(
   if (!always_slow) {
     call->set_cnt(PROB_UNLIKELY_MAG(4));  // Same effect as RC_UNCOMMON.
   }
-  _igvn.hash_delete(alloc);
-  _igvn.subsume_node(alloc, call);
+  _igvn.replace_node(alloc, call);
   transform_later(call);
 
   // Identify the output projections from the allocate node and
@@ -1431,7 +1428,7 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
   Node* mark_node = NULL;
   // For now only enable fast locking for non-array types
   if (UseBiasedLocking && (length == NULL)) {
-    mark_node = make_load(NULL, rawmem, klass_node, Klass::prototype_header_offset_in_bytes() + sizeof(oopDesc), TypeRawPtr::BOTTOM, T_ADDRESS);
+    mark_node = make_load(control, rawmem, klass_node, Klass::prototype_header_offset_in_bytes() + sizeof(oopDesc), TypeRawPtr::BOTTOM, T_ADDRESS);
   } else {
     mark_node = makecon(TypeRawPtr::make((address)markOopDesc::prototype()));
   }
@@ -1487,11 +1484,11 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
                                         Node*& contended_phi_rawmem,
                                         Node* old_eden_top, Node* new_eden_top,
                                         Node* length) {
+   enum { fall_in_path = 1, pf_path = 2 };
    if( UseTLAB && AllocatePrefetchStyle == 2 ) {
       // Generate prefetch allocation with watermark check.
       // As an allocation hits the watermark, we will prefetch starting
       // at a "distance" away from watermark.
-      enum { fall_in_path = 1, pf_path = 2 };
 
       Node *pf_region = new (C, 3) RegionNode(3);
       Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY,
@@ -1570,6 +1567,45 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       needgc_false = pf_region;
       contended_phi_rawmem = pf_phi_rawmem;
       i_o = pf_phi_abio;
+   } else if( UseTLAB && AllocatePrefetchStyle == 3 ) {
+      // Insert a prefetch for each allocation only on the fast-path
+      Node *pf_region = new (C, 3) RegionNode(3);
+      Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY,
+                                                TypeRawPtr::BOTTOM );
+
+      // Generate several prefetch instructions only for arrays.
+      uint lines = (length != NULL) ? AllocatePrefetchLines : 1;
+      uint step_size = AllocatePrefetchStepSize;
+      uint distance = AllocatePrefetchDistance;
+
+      // Next cache address.
+      Node *cache_adr = new (C, 4) AddPNode(old_eden_top, old_eden_top,
+                                            _igvn.MakeConX(distance));
+      transform_later(cache_adr);
+      cache_adr = new (C, 2) CastP2XNode(needgc_false, cache_adr);
+      transform_later(cache_adr);
+      Node* mask = _igvn.MakeConX(~(intptr_t)(step_size-1));
+      cache_adr = new (C, 3) AndXNode(cache_adr, mask);
+      transform_later(cache_adr);
+      cache_adr = new (C, 2) CastX2PNode(cache_adr);
+      transform_later(cache_adr);
+
+      // Prefetch
+      Node *prefetch = new (C, 3) PrefetchWriteNode( contended_phi_rawmem, cache_adr );
+      prefetch->set_req(0, needgc_false);
+      transform_later(prefetch);
+      contended_phi_rawmem = prefetch;
+      Node *prefetch_adr;
+      distance = step_size;
+      for ( uint i = 1; i < lines; i++ ) {
+        prefetch_adr = new (C, 4) AddPNode( cache_adr, cache_adr,
+                                            _igvn.MakeConX(distance) );
+        transform_later(prefetch_adr);
+        prefetch = new (C, 3) PrefetchWriteNode( contended_phi_rawmem, prefetch_adr );
+        transform_later(prefetch);
+        distance += step_size;
+        contended_phi_rawmem = prefetch;
+      }
    } else if( AllocatePrefetchStyle > 0 ) {
       // Insert a prefetch for each allocation only on the fast-path
       Node *prefetch_adr;

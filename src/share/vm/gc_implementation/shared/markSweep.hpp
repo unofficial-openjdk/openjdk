@@ -104,21 +104,23 @@ class MarkSweep : AllStatic {
   friend class KeepAliveClosure;
   friend class VM_MarkSweep;
   friend void marksweep_init();
+  friend class DataLayout;
 
   //
   // Vars
   //
  protected:
-  // Traversal stack used during phase1
-  static Stack<oop>                      _marking_stack;
+  // Traversal stacks used during phase1
+  static GrowableArray<oop>*             _marking_stack;
+  static GrowableArray<ObjArrayTask>*    _objarray_stack;
   // Stack for live klasses to revisit at end of marking phase
-  static Stack<Klass*>                   _revisit_klass_stack;
+  static GrowableArray<Klass*>*          _revisit_klass_stack;
   // Set (stack) of MDO's to revisit at end of marking phase
-  static Stack<DataLayout*>              _revisit_mdo_stack;
+  static GrowableArray<DataLayout*>*    _revisit_mdo_stack;
 
   // Space for storing/restoring mark word
-  static Stack<markOop>                  _preserved_mark_stack;
-  static Stack<oop>                      _preserved_oop_stack;
+  static GrowableArray<markOop>*         _preserved_mark_stack;
+  static GrowableArray<oop>*             _preserved_oop_stack;
   static size_t                          _preserved_count;
   static size_t                          _preserved_count_max;
   static PreservedMark*                  _preserved_marks;
@@ -187,6 +189,7 @@ class MarkSweep : AllStatic {
   template <class T> static inline void mark_and_follow(T* p);
   // Check mark and maybe push on marking stack
   template <class T> static inline void mark_and_push(T* p);
+  static inline void push_objarray(oop obj, size_t index);
 
   static void follow_stack();   // Empty marking stack.
 

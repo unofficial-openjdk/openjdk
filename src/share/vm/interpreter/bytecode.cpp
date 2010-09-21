@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,19 +26,12 @@
 #include "incls/_bytecode.cpp.incl"
 
 // Implementation of Bytecode
-// Should eventually get rid of these functions and use ThisRelativeObj methods instead
 
-void Bytecode::set_code(Bytecodes::Code code) {
-  Bytecodes::check(code);
-  *addr_at(0) = u_char(code);
-}
-
-
-bool Bytecode::check_must_rewrite() const {
-  assert(Bytecodes::can_rewrite(code()), "post-check only");
+bool Bytecode::check_must_rewrite(Bytecodes::Code code) const {
+  assert(Bytecodes::can_rewrite(code), "post-check only");
 
   // Some codes are conditionally rewriting.  Look closely at them.
-  switch (code()) {
+  switch (code) {
   case Bytecodes::_aload_0:
     // Even if RewriteFrequentPairs is turned on,
     // the _aload_0 code might delay its rewrite until
@@ -58,38 +51,109 @@ bool Bytecode::check_must_rewrite() const {
 }
 
 
+#ifdef ASSERT
+
+void Bytecode::assert_same_format_as(Bytecodes::Code testbc, bool is_wide) const {
+  Bytecodes::Code thisbc = Bytecodes::cast(byte_at(0));
+  if (thisbc == Bytecodes::_breakpoint)  return;  // let the assertion fail silently
+  if (is_wide) {
+    assert(thisbc == Bytecodes::_wide, "expected a wide instruction");
+    thisbc = Bytecodes::cast(byte_at(1));
+    if (thisbc == Bytecodes::_breakpoint)  return;
+  }
+  int thisflags = Bytecodes::flags(testbc, is_wide) & Bytecodes::_all_fmt_bits;
+  int testflags = Bytecodes::flags(thisbc, is_wide) & Bytecodes::_all_fmt_bits;
+  if (thisflags != testflags)
+    tty->print_cr("assert_same_format_as(%d) failed on bc=%d%s; %d != %d",
+                  (int)testbc, (int)thisbc, (is_wide?"/wide":""), testflags, thisflags);
+  assert(thisflags == testflags, "expected format");
+}
+
+void Bytecode::assert_index_size(int size, Bytecodes::Code bc, bool is_wide) {
+  int have_fmt = (Bytecodes::flags(bc, is_wide)
+                  & (Bytecodes::_fmt_has_u2 | Bytecodes::_fmt_has_u4 |
+                     Bytecodes::_fmt_not_simple |
+                     // Not an offset field:
+                     Bytecodes::_fmt_has_o));
+  int need_fmt = -1;
+  switch (size) {
+  case 1: need_fmt = 0;                      break;
+  case 2: need_fmt = Bytecodes::_fmt_has_u2; break;
+  case 4: need_fmt = Bytecodes::_fmt_has_u4; break;
+  }
+  if (is_wide)  need_fmt |= Bytecodes::_fmt_not_simple;
+  if (have_fmt != need_fmt) {
+    tty->print_cr("assert_index_size %d: bc=%d%s %d != %d", size, bc, (is_wide?"/wide":""), have_fmt, need_fmt);
+    assert(have_fmt == need_fmt, "assert_index_size");
+  }
+}
+
+void Bytecode::assert_offset_size(int size, Bytecodes::Code bc, bool is_wide) {
+  int have_fmt = Bytecodes::flags(bc, is_wide) & Bytecodes::_all_fmt_bits;
+  int need_fmt = -1;
+  switch (size) {
+  case 2: need_fmt = Bytecodes::_fmt_bo2; break;
+  case 4: need_fmt = Bytecodes::_fmt_bo4; break;
+  }
+  if (is_wide)  need_fmt |= Bytecodes::_fmt_not_simple;
+  if (have_fmt != need_fmt) {
+    tty->print_cr("assert_offset_size %d: bc=%d%s %d != %d", size, bc, (is_wide?"/wide":""), have_fmt, need_fmt);
+    assert(have_fmt == need_fmt, "assert_offset_size");
+  }
+}
+
+void Bytecode::assert_constant_size(int size, int where, Bytecodes::Code bc, bool is_wide) {
+  int have_fmt = Bytecodes::flags(bc, is_wide) & (Bytecodes::_all_fmt_bits
+                                                  // Ignore any 'i' field (for iinc):
+                                                  & ~Bytecodes::_fmt_has_i);
+  int need_fmt = -1;
+  switch (size) {
+  case 1: need_fmt = Bytecodes::_fmt_bc;                          break;
+  case 2: need_fmt = Bytecodes::_fmt_bc | Bytecodes::_fmt_has_u2; break;
+  }
+  if (is_wide)  need_fmt |= Bytecodes::_fmt_not_simple;
+  int length = is_wide ? Bytecodes::wide_length_for(bc) : Bytecodes::length_for(bc);
+  if (have_fmt != need_fmt || where + size != length) {
+    tty->print_cr("assert_constant_size %d @%d: bc=%d%s %d != %d", size, where, bc, (is_wide?"/wide":""), have_fmt, need_fmt);
+  }
+  assert(have_fmt == need_fmt, "assert_constant_size");
+  assert(where + size == length, "assert_constant_size oob");
+}
+
+void Bytecode::assert_native_index(Bytecodes::Code bc, bool is_wide) {
+  assert((Bytecodes::flags(bc, is_wide) & Bytecodes::_fmt_has_nbo) != 0, "native index");
+}
+
+#endif //ASSERT
 
 // Implementation of Bytecode_tableupswitch
 
 int Bytecode_tableswitch::dest_offset_at(int i) const {
-  address x = aligned_addr_at(1);
-  int x2 = aligned_offset(1 + (3 + i)*jintSize);
-  int val = java_signed_word_at(x2);
-  return java_signed_word_at(aligned_offset(1 + (3 + i)*jintSize));
+  return get_Java_u4_at(aligned_offset(1 + (3 + i)*jintSize));
 }
 
 
 // Implementation of Bytecode_invoke
 
 void Bytecode_invoke::verify() const {
-  Bytecodes::Code bc = adjusted_invoke_code();
   assert(is_valid(), "check invoke");
+  assert(method()->constants()->cache() != NULL, "do not call this from verifier or rewriter");
 }
 
 
-symbolOop Bytecode_invoke::signature() const {
+symbolOop Bytecode_member_ref::signature() const {
   constantPoolOop constants = method()->constants();
   return constants->signature_ref_at(index());
 }
 
 
-symbolOop Bytecode_invoke::name() const {
+symbolOop Bytecode_member_ref::name() const {
   constantPoolOop constants = method()->constants();
   return constants->name_ref_at(index());
 }
 
 
-BasicType Bytecode_invoke::result_type(Thread *thread) const {
+BasicType Bytecode_member_ref::result_type(Thread *thread) const {
   symbolHandle sh(thread, signature());
   ResultTypeFinder rts(sh);
   rts.iterate();
@@ -102,9 +166,9 @@ methodHandle Bytecode_invoke::static_target(TRAPS) {
   KlassHandle resolved_klass;
   constantPoolHandle constants(THREAD, _method->constants());
 
-  if (adjusted_invoke_code() == Bytecodes::_invokedynamic) {
+  if (java_code() == Bytecodes::_invokedynamic) {
     LinkResolver::resolve_dynamic_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));
-  } else if (adjusted_invoke_code() != Bytecodes::_invokeinterface) {
+  } else if (java_code() != Bytecodes::_invokeinterface) {
     LinkResolver::resolve_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));
   } else {
     LinkResolver::resolve_interface_method(m, resolved_klass, constants, index(), CHECK_(methodHandle()));
@@ -113,58 +177,68 @@ methodHandle Bytecode_invoke::static_target(TRAPS) {
 }
 
 
-int Bytecode_invoke::index() const {
+int Bytecode_member_ref::index() const {
   // Note:  Rewriter::rewrite changes the Java_u2 of an invokedynamic to a native_u4,
   // at the same time it allocates per-call-site CP cache entries.
-  if (has_giant_index())
-    return Bytes::get_native_u4(bcp() + 1);
+  Bytecodes::Code rawc = code();
+  Bytecode* invoke = bytecode();
+  if (invoke->has_index_u4(rawc))
+    return invoke->get_index_u4(rawc);
   else
-    return Bytes::get_Java_u2(bcp() + 1);
+    return invoke->get_index_u2_cpcache(rawc);
 }
 
-
-// Implementation of Bytecode_static
-
-void Bytecode_static::verify() const {
-  assert(Bytecodes::java_code(code()) == Bytecodes::_putstatic
-      || Bytecodes::java_code(code()) == Bytecodes::_getstatic, "check static");
+int Bytecode_member_ref::pool_index() const {
+  int index = this->index();
+  DEBUG_ONLY({
+      if (!bytecode()->has_index_u4(code()))
+        index -= constantPoolOopDesc::CPCACHE_INDEX_TAG;
+    });
+  return _method->constants()->cache()->entry_at(index)->constant_pool_index();
 }
-
-
-BasicType Bytecode_static::result_type(methodOop method) const {
-  int index = java_hwrd_at(1);
-  constantPoolOop constants = method->constants();
-  symbolOop field_type = constants->signature_ref_at(index);
-  BasicType basic_type = FieldType::basic_type(field_type);
-  return basic_type;
-}
-
 
 // Implementation of Bytecode_field
 
 void Bytecode_field::verify() const {
-  Bytecodes::Code stdc = Bytecodes::java_code(code());
-  assert(stdc == Bytecodes::_putstatic || stdc == Bytecodes::_getstatic ||
-         stdc == Bytecodes::_putfield  || stdc == Bytecodes::_getfield, "check field");
+  assert(is_valid(), "check field");
 }
 
 
-bool Bytecode_field::is_static() const {
-  Bytecodes::Code stdc = Bytecodes::java_code(code());
-  return stdc == Bytecodes::_putstatic || stdc == Bytecodes::_getstatic;
+// Implementation of Bytecode_loadconstant
+
+int Bytecode_loadconstant::raw_index() const {
+  Bytecode* bcp = bytecode();
+  Bytecodes::Code rawc = bcp->code();
+  assert(rawc != Bytecodes::_wide, "verifier prevents this");
+  if (Bytecodes::java_code(rawc) == Bytecodes::_ldc)
+    return bcp->get_index_u1(rawc);
+  else
+    return bcp->get_index_u2(rawc, false);
 }
 
-
-int Bytecode_field::index() const {
-  return java_hwrd_at(1);
+int Bytecode_loadconstant::pool_index() const {
+  int index = raw_index();
+  if (has_cache_index()) {
+    return _method->constants()->cache()->entry_at(index)->constant_pool_index();
+  }
+  return index;
 }
 
+BasicType Bytecode_loadconstant::result_type() const {
+  int index = pool_index();
+  constantTag tag = _method->constants()->tag_at(index);
+  return tag.basic_type();
+}
 
-// Implementation of Bytecodes loac constant
-
-int Bytecode_loadconstant::index() const {
-  Bytecodes::Code stdc = Bytecodes::java_code(code());
-  return stdc == Bytecodes::_ldc ? java_byte_at(1) : java_hwrd_at(1);
+oop Bytecode_loadconstant::resolve_constant(TRAPS) const {
+  assert(_method.not_null(), "must supply method to resolve constant");
+  int index = raw_index();
+  constantPoolOop constants = _method->constants();
+  if (has_cache_index()) {
+    return constants->resolve_cached_constant_at(index, THREAD);
+  } else {
+    return constants->resolve_constant_at(index, THREAD);
+  }
 }
 
 //------------------------------------------------------------------------------

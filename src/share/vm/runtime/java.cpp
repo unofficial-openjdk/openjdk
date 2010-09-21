@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -378,7 +378,8 @@ void before_exit(JavaThread * thread) {
   }
 
   // Terminate watcher thread - must before disenrolling any periodic task
-  WatcherThread::stop();
+  if (PeriodicTask::num_tasks() > 0)
+    WatcherThread::stop();
 
   // Print statistics gathered (profiling ...)
   if (Arguments::has_profile()) {
@@ -432,8 +433,6 @@ void before_exit(JavaThread * thread) {
   print_statistics();
   Universe::heap()->print_tracing_info();
 
-  VTune::exit();
-
   { MutexLocker ml(BeforeExit_lock);
     _before_exit_status = BEFORE_EXIT_DONE;
     BeforeExit_lock->notify_all();
@@ -470,6 +469,7 @@ void vm_exit(int code) {
 void notify_vm_shutdown() {
   // For now, just a dtrace probe.
   HS_DTRACE_PROBE(hotspot, vm__shutdown);
+  HS_DTRACE_WORKAROUND_TAIL_CALL_BUG();
 }
 
 void vm_direct_exit(int code) {

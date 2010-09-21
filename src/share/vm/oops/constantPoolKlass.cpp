@@ -268,21 +268,6 @@ constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
   return cp->object_size();
 }
 
-void constantPoolKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
-  assert(obj->is_constantPool(), "should be constant pool");
-  constantPoolOop cp = (constantPoolOop) obj;
-  if (AnonymousClasses && cp->has_pseudo_string() && cp->tags() != NULL) {
-    oop* base = (oop*)cp->base();
-    for (int i = 0; i < cp->length(); ++i, ++base) {
-      if (cp->tag_at(i).is_string()) {
-        if (PSScavenge::should_scavenge(base)) {
-          pm->claim_or_forward_breadth(base);
-        }
-      }
-    }
-  }
-}
-
 void constantPoolKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   assert(obj->is_constantPool(), "should be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
@@ -299,8 +284,6 @@ void constantPoolKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 }
 #endif // SERIALGC
 
-#ifndef PRODUCT
-
 // Printing
 
 void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
@@ -310,15 +293,12 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
   Klass::oop_print_on(obj, st);
   constantPoolOop cp = constantPoolOop(obj);
   if (cp->flags() != 0) {
-    st->print(" - flags : 0x%x", cp->flags());
+    st->print(" - flags: 0x%x", cp->flags());
     if (cp->has_pseudo_string()) st->print(" has_pseudo_string");
     if (cp->has_invokedynamic()) st->print(" has_invokedynamic");
     st->cr();
   }
-
-  // Temp. remove cache so we can do lookups with original indicies.
-  constantPoolCacheHandle cache (THREAD, cp->cache());
-  cp->set_cache(NULL);
+  st->print_cr(" - cache: " INTPTR_FORMAT, cp->cache());
 
   for (int index = 1; index < cp->length(); index++) {      // Index 0 is unused
     st->print(" - %3d : ", index);
@@ -334,8 +314,8 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
       case JVM_CONSTANT_Fieldref :
       case JVM_CONSTANT_Methodref :
       case JVM_CONSTANT_InterfaceMethodref :
-        st->print("klass_index=%d", cp->klass_ref_index_at(index));
-        st->print(" name_and_type_index=%d", cp->name_and_type_ref_index_at(index));
+        st->print("klass_index=%d", cp->uncached_klass_ref_index_at(index));
+        st->print(" name_and_type_index=%d", cp->uncached_name_and_type_ref_index_at(index));
         break;
       case JVM_CONSTANT_UnresolvedString :
       case JVM_CONSTANT_String :
@@ -375,6 +355,17 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
         entry->print_value_on(st);
         }
         break;
+      case JVM_CONSTANT_MethodHandle :
+        st->print("ref_kind=%d", cp->method_handle_ref_kind_at(index));
+        st->print(" ref_index=%d", cp->method_handle_index_at(index));
+        break;
+      case JVM_CONSTANT_MethodType :
+        st->print("signature_index=%d", cp->method_type_index_at(index));
+        break;
+      case JVM_CONSTANT_InvokeDynamic :
+        st->print("bootstrap_method_index=%d", cp->invoke_dynamic_bootstrap_method_ref_index_at(index));
+        st->print(" name_and_type_index=%d", cp->invoke_dynamic_name_and_type_ref_index_at(index));
+        break;
       default:
         ShouldNotReachHere();
         break;
@@ -382,12 +373,7 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
     st->cr();
   }
   st->cr();
-
-  // Restore cache
-  cp->set_cache(cache());
 }
-
-#endif
 
 void constantPoolKlass::oop_print_value_on(oop obj, outputStream* st) {
   assert(obj->is_constantPool(), "must be constantPool");
@@ -398,6 +384,9 @@ void constantPoolKlass::oop_print_value_on(oop obj, outputStream* st) {
   cp->print_address_on(st);
   st->print(" for ");
   cp->pool_holder()->print_value_on(st);
+  if (cp->cache() != NULL) {
+    st->print(" cache=" PTR_FORMAT, cp->cache());
+  }
 }
 
 const char* constantPoolKlass::internal_name() const {
@@ -440,6 +429,7 @@ void constantPoolKlass::oop_verify_on(oop obj, outputStream* st) {
           // can be non-perm, can be non-instance (array)
         }
       }
+      // FIXME: verify JSR 292 tags JVM_CONSTANT_MethodHandle, etc.
       base++;
     }
     guarantee(cp->tags()->is_perm(),         "should be in permspace");

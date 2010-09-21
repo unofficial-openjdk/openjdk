@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -901,7 +901,6 @@ class PSParallelCompact : AllStatic {
   // Mark live objects
   static void marking_phase(ParCompactionManager* cm,
                             bool maximum_heap_compaction);
-  static void follow_stack(ParCompactionManager* cm);
   static void follow_weak_klass_links();
   static void follow_mdo_weak_refs();
 
@@ -1276,7 +1275,7 @@ inline void PSParallelCompact::follow_root(ParCompactionManager* cm, T* p) {
       }
     }
   }
-  follow_stack(cm);
+  cm->follow_marking_stacks();
 }
 
 template <class T>
@@ -1298,11 +1297,8 @@ inline void PSParallelCompact::mark_and_push(ParCompactionManager* cm, T* p) {
   T heap_oop = oopDesc::load_heap_oop(p);
   if (!oopDesc::is_null(heap_oop)) {
     oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
-    if (mark_bitmap()->is_unmarked(obj)) {
-      if (mark_obj(obj)) {
-        // This thread marked the object and owns the subsequent processing of it.
-        cm->save_for_scanning(obj);
-      }
+    if (mark_bitmap()->is_unmarked(obj) && mark_obj(obj)) {
+      cm->push(obj);
     }
   }
 }
@@ -1415,6 +1411,8 @@ PSParallelCompact::check_new_location(HeapWord* old_addr, HeapWord* new_addr)
 {
   assert(old_addr >= new_addr || space_id(old_addr) != space_id(new_addr),
          "must move left or to a different space");
+  assert(is_object_aligned((intptr_t)old_addr) && is_object_aligned((intptr_t)new_addr),
+         "checking alignment");
 }
 #endif // ASSERT
 

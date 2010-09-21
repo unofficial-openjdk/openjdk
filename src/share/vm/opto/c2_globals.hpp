@@ -52,9 +52,6 @@
           "Code alignment for interior entry points "                       \
           "in generated code (in bytes)")                                   \
                                                                             \
-  product_pd(intx, OptoLoopAlignment,                                       \
-          "Align inner loops to zero relative to this modulus")             \
-                                                                            \
   product(intx, MaxLoopPad, (OptoLoopAlignment-1),                          \
           "Align a loop if padding size in bytes is less or equal to this value") \
                                                                             \
@@ -154,7 +151,7 @@
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
                                                                             \
-  product(bool, UseLoopPredicate, false,                                     \
+  product(bool, UseLoopPredicate, true,                                     \
           "Generate a predicate to select fast/slow loop versions")         \
                                                                             \
   develop(bool, TraceLoopPredicate, false,                                  \
@@ -180,6 +177,9 @@
                                                                             \
   product(bool, ReduceBulkZeroing, true,                                    \
           "When bulk-initializing, try to avoid needless zeroing")          \
+                                                                            \
+  product(bool, UseFPUForSpilling, false,                                   \
+          "Spill integer registers to FPU instead of stack when possible")  \
                                                                             \
   develop_pd(intx, RegisterCostAreaRatio,                                   \
           "Spill selection in reg allocator: scale area by (X/64K) before " \
@@ -284,6 +284,12 @@
   product(bool, InsertMemBarAfterArraycopy, true,                           \
           "Insert memory barrier after arraycopy call")                     \
                                                                             \
+  develop(bool, SubsumeLoads, true,                                         \
+          "Attempt to compile while subsuming loads into machine instructions.") \
+                                                                            \
+  develop(bool, StressRecompilation, false,                                 \
+          "Recompile each compiled method without subsuming loads or escape analysis.") \
+                                                                            \
   /* controls for tier 1 compilations */                                    \
                                                                             \
   develop(bool, Tier1CountInvocations, true,                                \
@@ -382,7 +388,7 @@
   product(intx, AutoBoxCacheMax, 128,                                       \
           "Sets max value cached by the java.lang.Integer autobox cache")   \
                                                                             \
-  product(bool, DoEscapeAnalysis, false,                                    \
+  product(bool, DoEscapeAnalysis, true,                                     \
           "Perform escape analysis")                                        \
                                                                             \
   notproduct(bool, PrintEscapeAnalysis, false,                              \

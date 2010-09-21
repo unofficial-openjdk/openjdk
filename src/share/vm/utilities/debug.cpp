@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ static int         last_line_no   = -1;
 // assert/guarantee/... may happen very early during VM initialization.
 // Don't rely on anything that is initialized by Threads::create_vm(). For
 // example, don't use tty.
-bool assert_is_suppressed(const char* file_name, int line_no) {
+bool error_is_suppressed(const char* file_name, int line_no) {
   // The following 1-element cache requires that passed-in
   // file names are always only constant literals.
   if (file_name == last_file_name && line_no == last_line_no)  return true;
@@ -163,38 +163,30 @@ bool assert_is_suppressed(const char* file_name, int line_no) {
 #else
 
 // Place-holder for non-existent suppression check:
-#define assert_is_suppressed(file_name, line_no) (false)
+#define error_is_suppressed(file_name, line_no) (false)
 
 #endif //PRODUCT
 
-void report_assertion_failure(const char* file_name, int line_no, const char* message) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  VMError err(ThreadLocalStorage::get_thread_slow(), message, file_name, line_no);
+void report_vm_error(const char* file, int line, const char* error_msg,
+                     const char* detail_msg)
+{
+  if (Debugging || error_is_suppressed(file, line)) return;
+  Thread* const thread = ThreadLocalStorage::get_thread_slow();
+  VMError err(thread, file, line, error_msg, detail_msg);
   err.report_and_die();
 }
 
-void report_fatal(const char* file_name, int line_no, const char* message) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  VMError err(ThreadLocalStorage::get_thread_slow(), message, file_name, line_no);
-  err.report_and_die();
+void report_fatal(const char* file, int line, const char* message)
+{
+  report_vm_error(file, line, "fatal error", message);
 }
-
-void report_fatal_vararg(const char* file_name, int line_no, const char* format, ...) {
-  char buffer[256];
-  va_list ap;
-  va_start(ap, format);
-  jio_vsnprintf(buffer, sizeof(buffer), format, ap);
-  va_end(ap);
-  report_fatal(file_name, line_no, buffer);
-}
-
 
 // Used by report_vm_out_of_memory to detect recursion.
 static jint _exiting_out_of_mem = 0;
 
-// Just passing the flow to VMError to handle error
-void report_vm_out_of_memory(const char* file_name, int line_no, size_t size, const char* message) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
+void report_vm_out_of_memory(const char* file, int line, size_t size,
+                             const char* message) {
+  if (Debugging || error_is_suppressed(file, line)) return;
 
   // We try to gather additional information for the first out of memory
   // error only; gathering additional data might cause an allocation and a
@@ -206,46 +198,28 @@ void report_vm_out_of_memory(const char* file_name, int line_no, size_t size, co
 
   if (first_time_here) {
     Thread* thread = ThreadLocalStorage::get_thread_slow();
-    VMError(thread, size, message, file_name, line_no).report_and_die();
+    VMError(thread, file, line, size, message).report_and_die();
   }
 
   // Dump core and abort
   vm_abort(true);
 }
 
-void report_vm_out_of_memory_vararg(const char* file_name, int line_no, size_t size, const char* format, ...) {
-  char buffer[256];
-  va_list ap;
-  va_start(ap, format);
-  jio_vsnprintf(buffer, sizeof(buffer), format, ap);
-  va_end(ap);
-  report_vm_out_of_memory(file_name, line_no, size, buffer);
+void report_should_not_call(const char* file, int line) {
+  report_vm_error(file, line, "ShouldNotCall()");
 }
 
-void report_should_not_call(const char* file_name, int line_no) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  VMError err(ThreadLocalStorage::get_thread_slow(), "ShouldNotCall()", file_name, line_no);
-  err.report_and_die();
+void report_should_not_reach_here(const char* file, int line) {
+  report_vm_error(file, line, "ShouldNotReachHere()");
 }
 
-
-void report_should_not_reach_here(const char* file_name, int line_no) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  VMError err(ThreadLocalStorage::get_thread_slow(), "ShouldNotReachHere()", file_name, line_no);
-  err.report_and_die();
+void report_unimplemented(const char* file, int line) {
+  report_vm_error(file, line, "Unimplemented()");
 }
 
-
-void report_unimplemented(const char* file_name, int line_no) {
-  if (Debugging || assert_is_suppressed(file_name, line_no))  return;
-  VMError err(ThreadLocalStorage::get_thread_slow(), "Unimplemented()", file_name, line_no);
-  err.report_and_die();
-}
-
-
-void report_untested(const char* file_name, int line_no, const char* msg) {
+void report_untested(const char* file, int line, const char* message) {
 #ifndef PRODUCT
-  warning("Untested: %s in %s: %d\n", msg, file_name, line_no);
+  warning("Untested: %s in %s: %d\n", message, file, line);
 #endif // PRODUCT
 }
 
@@ -283,6 +257,51 @@ void set_error_reported() {
 bool is_error_reported() {
     return error_reported;
 }
+
+#ifndef PRODUCT
+#include <signal.h>
+
+void test_error_handler(size_t test_num)
+{
+  if (test_num == 0) return;
+
+  // If asserts are disabled, use the corresponding guarantee instead.
+  size_t n = test_num;
+  NOT_DEBUG(if (n <= 2) n += 2);
+
+  const char* const str = "hello";
+  const size_t      num = (size_t)os::vm_page_size();
+
+  const char* const eol = os::line_separator();
+  const char* const msg = "this message should be truncated during formatting";
+
+  // Keep this in sync with test/runtime/6888954/vmerrors.sh.
+  switch (n) {
+    case  1: assert(str == NULL, "expected null");
+    case  2: assert(num == 1023 && *str == 'X',
+                    err_msg("num=" SIZE_FORMAT " str=\"%s\"", num, str));
+    case  3: guarantee(str == NULL, "expected null");
+    case  4: guarantee(num == 1023 && *str == 'X',
+                       err_msg("num=" SIZE_FORMAT " str=\"%s\"", num, str));
+    case  5: fatal("expected null");
+    case  6: fatal(err_msg("num=" SIZE_FORMAT " str=\"%s\"", num, str));
+    case  7: fatal(err_msg("%s%s#    %s%s#    %s%s#    %s%s#    %s%s#    "
+                           "%s%s#    %s%s#    %s%s#    %s%s#    %s%s#    "
+                           "%s%s#    %s%s#    %s%s#    %s%s#    %s",
+                           msg, eol, msg, eol, msg, eol, msg, eol, msg, eol,
+                           msg, eol, msg, eol, msg, eol, msg, eol, msg, eol,
+                           msg, eol, msg, eol, msg, eol, msg, eol, msg));
+    case  8: vm_exit_out_of_memory(num, "ChunkPool::allocate");
+    case  9: ShouldNotCallThis();
+    case 10: ShouldNotReachHere();
+    case 11: Unimplemented();
+    // This is last because it does not generate an hs_err* file on Windows.
+    case 12: os::signal_raise(SIGSEGV);
+
+    default: ShouldNotReachHere();
+  }
+}
+#endif // #ifndef PRODUCT
 
 // ------ helper functions for debugging go here ------------
 
@@ -533,140 +552,6 @@ static address same_page(address x, address y) {
   }
 }
 
-
-static void find(intptr_t x, bool print_pc) {
-  address addr = (address)x;
-
-  CodeBlob* b = CodeCache::find_blob_unsafe(addr);
-  if (b != NULL) {
-    if (b->is_buffer_blob()) {
-      // the interpreter is generated into a buffer blob
-      InterpreterCodelet* i = Interpreter::codelet_containing(addr);
-      if (i != NULL) {
-        i->print();
-        return;
-      }
-      if (Interpreter::contains(addr)) {
-        tty->print_cr(INTPTR_FORMAT " is pointing into interpreter code (not bytecode specific)", addr);
-        return;
-      }
-      //
-      if (AdapterHandlerLibrary::contains(b)) {
-        AdapterHandlerLibrary::print_handler(b);
-      }
-      // the stubroutines are generated into a buffer blob
-      StubCodeDesc* d = StubCodeDesc::desc_for(addr);
-      if (d != NULL) {
-        d->print();
-        if (print_pc) tty->cr();
-        return;
-      }
-      if (StubRoutines::contains(addr)) {
-        tty->print_cr(INTPTR_FORMAT " is pointing to an (unnamed) stub routine", addr);
-        return;
-      }
-      // the InlineCacheBuffer is using stubs generated into a buffer blob
-      if (InlineCacheBuffer::contains(addr)) {
-        tty->print_cr(INTPTR_FORMAT " is pointing into InlineCacheBuffer", addr);
-        return;
-      }
-      VtableStub* v = VtableStubs::stub_containing(addr);
-      if (v != NULL) {
-        v->print();
-        return;
-      }
-    }
-    if (print_pc && b->is_nmethod()) {
-      ResourceMark rm;
-      tty->print("%#p: Compiled ", addr);
-      ((nmethod*)b)->method()->print_value_on(tty);
-      tty->print("  = (CodeBlob*)" INTPTR_FORMAT, b);
-      tty->cr();
-      return;
-    }
-    if ( b->is_nmethod()) {
-      if (b->is_zombie()) {
-        tty->print_cr(INTPTR_FORMAT " is zombie nmethod", b);
-      } else if (b->is_not_entrant()) {
-        tty->print_cr(INTPTR_FORMAT " is non-entrant nmethod", b);
-      }
-    }
-    b->print();
-    return;
-  }
-
-  if (Universe::heap()->is_in(addr)) {
-    HeapWord* p = Universe::heap()->block_start(addr);
-    bool print = false;
-    // If we couldn't find it it just may mean that heap wasn't parseable
-    // See if we were just given an oop directly
-    if (p != NULL && Universe::heap()->block_is_obj(p)) {
-      print = true;
-    } else if (p == NULL && ((oopDesc*)addr)->is_oop()) {
-      p = (HeapWord*) addr;
-      print = true;
-    }
-    if (print) {
-      oop(p)->print();
-      if (p != (HeapWord*)x && oop(p)->is_constMethod() &&
-          constMethodOop(p)->contains(addr)) {
-        Thread *thread = Thread::current();
-        HandleMark hm(thread);
-        methodHandle mh (thread, constMethodOop(p)->method());
-        if (!mh->is_native()) {
-          tty->print_cr("bci_from(%p) = %d; print_codes():",
-                        addr, mh->bci_from(address(x)));
-          mh->print_codes();
-        }
-      }
-      return;
-    }
-  } else if (Universe::heap()->is_in_reserved(addr)) {
-    tty->print_cr(INTPTR_FORMAT " is an unallocated location in the heap", addr);
-    return;
-  }
-
-  if (JNIHandles::is_global_handle((jobject) addr)) {
-    tty->print_cr(INTPTR_FORMAT " is a global jni handle", addr);
-    return;
-  }
-  if (JNIHandles::is_weak_global_handle((jobject) addr)) {
-    tty->print_cr(INTPTR_FORMAT " is a weak global jni handle", addr);
-    return;
-  }
-  if (JNIHandleBlock::any_contains((jobject) addr)) {
-    tty->print_cr(INTPTR_FORMAT " is a local jni handle", addr);
-    return;
-  }
-
-  for(JavaThread *thread = Threads::first(); thread; thread = thread->next()) {
-    // Check for privilege stack
-    if (thread->privileged_stack_top() != NULL && thread->privileged_stack_top()->contains(addr)) {
-      tty->print_cr(INTPTR_FORMAT " is pointing into the privilege stack for thread: " INTPTR_FORMAT, addr, thread);
-      return;
-    }
-    // If the addr is a java thread print information about that.
-    if (addr == (address)thread) {
-       thread->print();
-       return;
-    }
-  }
-
-  // Try an OS specific find
-  if (os::find(addr)) {
-    return;
-  }
-
-  if (print_pc) {
-    tty->print_cr(INTPTR_FORMAT ": probably in C++ code; check debugger", addr);
-    Disassembler::decode(same_page(addr-40,addr),same_page(addr+40,addr));
-    return;
-  }
-
-  tty->print_cr(INTPTR_FORMAT " is pointing to unknown location", addr);
-}
-
-
 class LookForRefInGenClosure : public OopsInGenClosure {
 public:
   oop target;
@@ -748,7 +633,7 @@ extern "C" void findclass(const char name[]) {
 // Can we someday rename the other find to hsfind?
 extern "C" void hsfind(intptr_t x) {
   Command c("hsfind");
-  find(x, false);
+  os::print_location(tty, x, false);
 }
 
 
@@ -759,13 +644,13 @@ extern "C" void hsfindref(intptr_t x) {
 
 extern "C" void find(intptr_t x) {
   Command c("find");
-  find(x, false);
+  os::print_location(tty, x, false);
 }
 
 
 extern "C" void findpc(intptr_t x) {
   Command c("findpc");
-  find(x, true);
+  os::print_location(tty, x, true);
 }
 
 

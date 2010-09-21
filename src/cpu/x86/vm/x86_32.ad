@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -852,6 +852,39 @@ static int impl_movx_helper( CodeBuffer *cbuf, bool do_size, int src_lo, int dst
   }
 }
 
+static int impl_movgpr2x_helper( CodeBuffer *cbuf, bool do_size, int src_lo, int dst_lo,
+                            int src_hi, int dst_hi, int size, outputStream* st ) {
+  // 32-bit
+  if (cbuf) {
+    emit_opcode(*cbuf, 0x66);
+    emit_opcode(*cbuf, 0x0F);
+    emit_opcode(*cbuf, 0x6E);
+    emit_rm(*cbuf, 0x3, Matcher::_regEncode[dst_lo] & 7, Matcher::_regEncode[src_lo] & 7);
+#ifndef PRODUCT
+  } else if (!do_size) {
+    st->print("movdl   %s, %s\t# spill", Matcher::regName[dst_lo], Matcher::regName[src_lo]);
+#endif
+  }
+  return 4;
+}
+
+
+static int impl_movx2gpr_helper( CodeBuffer *cbuf, bool do_size, int src_lo, int dst_lo,
+                                 int src_hi, int dst_hi, int size, outputStream* st ) {
+  // 32-bit
+  if (cbuf) {
+    emit_opcode(*cbuf, 0x66);
+    emit_opcode(*cbuf, 0x0F);
+    emit_opcode(*cbuf, 0x7E);
+    emit_rm(*cbuf, 0x3, Matcher::_regEncode[src_lo] & 7, Matcher::_regEncode[dst_lo] & 7);
+#ifndef PRODUCT
+  } else if (!do_size) {
+    st->print("movdl   %s, %s\t# spill", Matcher::regName[dst_lo], Matcher::regName[src_lo]);
+#endif
+  }
+  return 4;
+}
+
 static int impl_mov_helper( CodeBuffer *cbuf, bool do_size, int src, int dst, int size, outputStream* st ) {
   if( cbuf ) {
     emit_opcode(*cbuf, 0x8B );
@@ -947,6 +980,12 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
   if( dst_first_rc == rc_int && src_first_rc == rc_stack )
     size = impl_helper(cbuf,do_size,true ,ra_->reg2offset(src_first),dst_first,0x8B,"MOV ",size, st);
 
+  // Check for integer reg-xmm reg copy
+  if( src_first_rc == rc_int && dst_first_rc == rc_xmm ) {
+    assert( (src_second_rc == rc_bad && dst_second_rc == rc_bad),
+            "no 64 bit integer-float reg moves" );
+    return impl_movgpr2x_helper(cbuf,do_size,src_first,dst_first,src_second, dst_second, size, st);
+  }
   // --------------------------------------
   // Check for float reg-reg copy
   if( src_first_rc == rc_float && dst_first_rc == rc_float ) {
@@ -1016,6 +1055,13 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
             (src_first+1 == src_second && dst_first+1 == dst_second),
             "no non-adjacent float-moves" );
     return impl_movx_helper(cbuf,do_size,src_first,dst_first,src_second, dst_second, size, st);
+  }
+
+  // Check for xmm reg-integer reg copy
+  if( src_first_rc == rc_xmm && dst_first_rc == rc_int ) {
+    assert( (src_second_rc == rc_bad && dst_second_rc == rc_bad),
+            "no 64 bit float-integer reg moves" );
+    return impl_movx2gpr_helper(cbuf,do_size,src_first,dst_first,src_second, dst_second, size, st);
   }
 
   // Check for xmm store
@@ -1376,6 +1422,12 @@ const int Matcher::init_array_short_size = 8 * BytesPerLong;
 // be subsumed into complex addressing expressions or compute them into
 // registers?  True for Intel but false for most RISCs
 const bool Matcher::clone_shift_expressions = true;
+
+bool Matcher::narrow_oop_use_complex_address() {
+  ShouldNotCallThis();
+  return true;
+}
+
 
 // Is it better to copy float constants, or load them directly from memory?
 // Intel can load a float constant from a direct address, requiring no
@@ -1841,14 +1893,14 @@ encode %{
     MacroAssembler _masm(&cbuf);
     // RBP is preserved across all calls, even compiled calls.
     // Use it to preserve RSP in places where the callee might change the SP.
-    __ movptr(rbp, rsp);
+    __ movptr(rbp_mh_SP_save, rsp);
     debug_only(int off1 = cbuf.code_size());
     assert(off1 - off0 == preserve_SP_size(), "correct size prediction");
   %}
 
   enc_class restore_SP %{
     MacroAssembler _masm(&cbuf);
-    __ movptr(rsp, rbp);
+    __ movptr(rsp, rbp_mh_SP_save);
   %}
 
   enc_class Java_Static_Call (method meth) %{    // JAVA STATIC CALL
@@ -6270,6 +6322,30 @@ instruct bytes_reverse_long(eRegL dst) %{
   ins_cost(125);
   ins_encode( bswap_long_bytes(dst) );
   ins_pipe( ialu_reg_reg);
+%}
+
+instruct bytes_reverse_unsigned_short(eRegI dst) %{
+  match(Set dst (ReverseBytesUS dst));
+
+  format %{ "BSWAP  $dst\n\t" 
+            "SHR    $dst,16\n\t" %}
+  ins_encode %{
+    __ bswapl($dst$$Register);
+    __ shrl($dst$$Register, 16); 
+  %}
+  ins_pipe( ialu_reg );
+%}
+
+instruct bytes_reverse_short(eRegI dst) %{
+  match(Set dst (ReverseBytesS dst));
+
+  format %{ "BSWAP  $dst\n\t" 
+            "SAR    $dst,16\n\t" %}
+  ins_encode %{
+    __ bswapl($dst$$Register);
+    __ sarl($dst$$Register, 16); 
+  %}
+  ins_pipe( ialu_reg );
 %}
 
 
@@ -13546,7 +13622,7 @@ instruct CallStaticJavaDirect(method meth) %{
 // Call Java Static Instruction (method handle version)
 // Note: If this code changes, the corresponding ret_addr_offset() and
 //       compute_padding() functions will have to be adjusted.
-instruct CallStaticJavaHandle(method meth, eBPRegP ebp) %{
+instruct CallStaticJavaHandle(method meth, eBPRegP ebp_mh_SP_save) %{
   match(CallStaticJava);
   predicate(((CallStaticJavaNode*)n)->is_method_handle_invoke());
   effect(USE meth);

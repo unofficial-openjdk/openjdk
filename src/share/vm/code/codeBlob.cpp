@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,8 +66,6 @@ CodeBlob::CodeBlob(const char* name, int header_size, int size, int frame_comple
   _relocation_size       = locs_size;
   _instructions_offset   = align_code_offset(header_size + locs_size);
   _data_offset           = size;
-  _oops_offset           = size;
-  _oops_length           =  0;
   _frame_size            =  0;
   set_oop_maps(NULL);
 }
@@ -94,9 +92,6 @@ CodeBlob::CodeBlob(
   _relocation_size       = round_to(cb->total_relocation_size(), oopSize);
   _instructions_offset   = align_code_offset(header_size + _relocation_size);
   _data_offset           = _instructions_offset + round_to(cb->total_code_size(), oopSize);
-  _oops_offset           = _size - round_to(cb->total_oop_size(), oopSize);
-  _oops_length           = 0;  // temporary, until the copy_oops handshake
-  assert(_oops_offset >=   _data_offset, "codeBlob is too small");
   assert(_data_offset <= size, "codeBlob is too small");
 
   cb->copy_code_and_locs_to(this);
@@ -131,99 +126,6 @@ void CodeBlob::flush() {
 }
 
 
-// Promote one word from an assembly-time handle to a live embedded oop.
-inline void CodeBlob::initialize_immediate_oop(oop* dest, jobject handle) {
-  if (handle == NULL ||
-      // As a special case, IC oops are initialized to 1 or -1.
-      handle == (jobject) Universe::non_oop_word()) {
-    (*dest) = (oop)handle;
-  } else {
-    (*dest) = JNIHandles::resolve_non_null(handle);
-  }
-}
-
-
-void CodeBlob::copy_oops(GrowableArray<jobject>* array) {
-  assert(_oops_length == 0, "do this handshake just once, please");
-  int length = array->length();
-  assert((address)(oops_begin() + length) <= data_end(), "oops big enough");
-  oop* dest = oops_begin();
-  for (int index = 0 ; index < length; index++) {
-    initialize_immediate_oop(&dest[index], array->at(index));
-  }
-  _oops_length = length;
-
-  // Now we can fix up all the oops in the code.
-  // We need to do this in the code because
-  // the assembler uses jobjects as placeholders.
-  // The code and relocations have already been
-  // initialized by the CodeBlob constructor,
-  // so it is valid even at this early point to
-  // iterate over relocations and patch the code.
-  fix_oop_relocations(NULL, NULL, /*initialize_immediates=*/ true);
-}
-
-
-relocInfo::relocType CodeBlob::reloc_type_for_address(address pc) {
-  RelocIterator iter(this, pc, pc+1);
-  while (iter.next()) {
-    return (relocInfo::relocType) iter.type();
-  }
-  // No relocation info found for pc
-  ShouldNotReachHere();
-  return relocInfo::none; // dummy return value
-}
-
-
-bool CodeBlob::is_at_poll_return(address pc) {
-  RelocIterator iter(this, pc, pc+1);
-  while (iter.next()) {
-    if (iter.type() == relocInfo::poll_return_type)
-      return true;
-  }
-  return false;
-}
-
-
-bool CodeBlob::is_at_poll_or_poll_return(address pc) {
-  RelocIterator iter(this, pc, pc+1);
-  while (iter.next()) {
-    relocInfo::relocType t = iter.type();
-    if (t == relocInfo::poll_return_type || t == relocInfo::poll_type)
-      return true;
-  }
-  return false;
-}
-
-
-void CodeBlob::fix_oop_relocations(address begin, address end,
-                                   bool initialize_immediates) {
-  // re-patch all oop-bearing instructions, just in case some oops moved
-  RelocIterator iter(this, begin, end);
-  while (iter.next()) {
-    if (iter.type() == relocInfo::oop_type) {
-      oop_Relocation* reloc = iter.oop_reloc();
-      if (initialize_immediates && reloc->oop_is_immediate()) {
-        oop* dest = reloc->oop_addr();
-        initialize_immediate_oop(dest, (jobject) *dest);
-      }
-      // Refresh the oop-related bits of this instruction.
-      reloc->fix_oop_relocation();
-    }
-
-    // There must not be any interfering patches or breakpoints.
-    assert(!(iter.type() == relocInfo::breakpoint_type
-             && iter.breakpoint_reloc()->active()),
-           "no active breakpoint");
-  }
-}
-
-void CodeBlob::do_unloading(BoolObjectClosure* is_alive,
-                            OopClosure* keep_alive,
-                            bool unloading_occurred) {
-  ShouldNotReachHere();
-}
-
 OopMap* CodeBlob::oop_map_for_return_address(address return_address) {
   address pc = return_address ;
   assert (oop_maps() != NULL, "nope");
@@ -249,7 +151,6 @@ BufferBlob* BufferBlob::create(const char* name, int buffer_size) {
   size += round_to(buffer_size, oopSize);
   assert(name != NULL, "must provide a name");
   {
-
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     blob = new (size) BufferBlob(name, size);
   }
@@ -271,7 +172,6 @@ BufferBlob* BufferBlob::create(const char* name, CodeBuffer* cb) {
   unsigned int size = allocation_size(cb, sizeof(BufferBlob));
   assert(name != NULL, "must provide a name");
   {
-
     MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     blob = new (size) BufferBlob(name, size, cb);
   }
@@ -298,9 +198,52 @@ void BufferBlob::free( BufferBlob *blob ) {
   MemoryService::track_code_cache_memory_usage();
 }
 
-bool BufferBlob::is_adapter_blob() const {
-  return (strcmp(AdapterHandlerEntry::name, name()) == 0);
+
+//----------------------------------------------------------------------------------------------------
+// Implementation of AdapterBlob
+
+AdapterBlob::AdapterBlob(int size, CodeBuffer* cb) :
+  BufferBlob("I2C/C2I adapters", size, cb) {
+  CodeCache::commit(this);
 }
+
+AdapterBlob* AdapterBlob::create(CodeBuffer* cb) {
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+
+  AdapterBlob* blob = NULL;
+  unsigned int size = allocation_size(cb, sizeof(AdapterBlob));
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    blob = new (size) AdapterBlob(size, cb);
+  }
+  // Track memory usage statistic after releasing CodeCache_lock
+  MemoryService::track_code_cache_memory_usage();
+
+  return blob;
+}
+
+
+//----------------------------------------------------------------------------------------------------
+// Implementation of MethodHandlesAdapterBlob
+
+MethodHandlesAdapterBlob* MethodHandlesAdapterBlob::create(int buffer_size) {
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+
+  MethodHandlesAdapterBlob* blob = NULL;
+  unsigned int size = sizeof(MethodHandlesAdapterBlob);
+  // align the size to CodeEntryAlignment
+  size = align_code_offset(size);
+  size += round_to(buffer_size, oopSize);
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    blob = new (size) MethodHandlesAdapterBlob(size);
+  }
+  // Track memory usage statistic after releasing CodeCache_lock
+  MemoryService::track_code_cache_memory_usage();
+
+  return blob;
+}
+
 
 //----------------------------------------------------------------------------------------------------
 // Implementation of RuntimeStub
@@ -343,7 +286,6 @@ RuntimeStub* RuntimeStub::new_runtime_stub(const char* stub_name,
       tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, stub);
       Disassembler::decode(stub->instructions_begin(), stub->instructions_end());
     }
-    VTune::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());
     Forte::register_stub(stub_id, stub->instructions_begin(), stub->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
@@ -418,7 +360,6 @@ DeoptimizationBlob* DeoptimizationBlob::create(
       tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
       Disassembler::decode(blob->instructions_begin(), blob->instructions_end());
     }
-    VTune::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
     Forte::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
@@ -476,7 +417,6 @@ UncommonTrapBlob* UncommonTrapBlob::create(
       tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
       Disassembler::decode(blob->instructions_begin(), blob->instructions_end());
     }
-    VTune::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
     Forte::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
@@ -536,7 +476,6 @@ ExceptionBlob* ExceptionBlob::create(
       tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
       Disassembler::decode(blob->instructions_begin(), blob->instructions_end());
     }
-    VTune::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
     Forte::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
@@ -595,7 +534,6 @@ SafepointBlob* SafepointBlob::create(
       tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
       Disassembler::decode(blob->instructions_begin(), blob->instructions_end());
     }
-    VTune::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
     Forte::register_stub(blob_id, blob->instructions_begin(), blob->instructions_end());
 
     if (JvmtiExport::should_post_dynamic_code_generated()) {
@@ -626,71 +564,52 @@ void CodeBlob::verify() {
   ShouldNotReachHere();
 }
 
-#ifndef PRODUCT
-
-void CodeBlob::print() const {
-  tty->print_cr("[CodeBlob (" INTPTR_FORMAT ")]", this);
-  tty->print_cr("Framesize: %d", _frame_size);
+void CodeBlob::print_on(outputStream* st) const {
+  st->print_cr("[CodeBlob (" INTPTR_FORMAT ")]", this);
+  st->print_cr("Framesize: %d", _frame_size);
 }
-
 
 void CodeBlob::print_value_on(outputStream* st) const {
   st->print_cr("[CodeBlob]");
 }
 
-#endif
-
 void BufferBlob::verify() {
   // unimplemented
 }
 
-#ifndef PRODUCT
-
-void BufferBlob::print() const {
-  CodeBlob::print();
-  print_value_on(tty);
+void BufferBlob::print_on(outputStream* st) const {
+  CodeBlob::print_on(st);
+  print_value_on(st);
 }
-
 
 void BufferBlob::print_value_on(outputStream* st) const {
   st->print_cr("BufferBlob (" INTPTR_FORMAT  ") used for %s", this, name());
 }
 
-
-#endif
-
 void RuntimeStub::verify() {
   // unimplemented
 }
 
-#ifndef PRODUCT
-
-void RuntimeStub::print() const {
-  CodeBlob::print();
-  tty->print("Runtime Stub (" INTPTR_FORMAT "): ", this);
-  tty->print_cr(name());
-  Disassembler::decode((CodeBlob*)this);
+void RuntimeStub::print_on(outputStream* st) const {
+  CodeBlob::print_on(st);
+  st->print("Runtime Stub (" INTPTR_FORMAT "): ", this);
+  st->print_cr(name());
+  Disassembler::decode((CodeBlob*)this, st);
 }
-
 
 void RuntimeStub::print_value_on(outputStream* st) const {
   st->print("RuntimeStub (" INTPTR_FORMAT "): ", this); st->print(name());
 }
 
-#endif
-
 void SingletonBlob::verify() {
   // unimplemented
 }
 
-#ifndef PRODUCT
-
-void SingletonBlob::print() const {
-  CodeBlob::print();
-  tty->print_cr(name());
-  Disassembler::decode((CodeBlob*)this);
+void SingletonBlob::print_on(outputStream* st) const {
+  CodeBlob::print_on(st);
+  st->print_cr(name());
+  Disassembler::decode((CodeBlob*)this, st);
 }
-
 
 void SingletonBlob::print_value_on(outputStream* st) const {
   st->print_cr(name());
@@ -699,5 +618,3 @@ void SingletonBlob::print_value_on(outputStream* st) const {
 void DeoptimizationBlob::print_value_on(outputStream* st) const {
   st->print_cr("Deoptimization (frame not available)");
 }
-
-#endif // PRODUCT

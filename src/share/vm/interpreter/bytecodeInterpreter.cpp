@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -189,7 +189,7 @@
 
 // JavaStack Implementation
 #define MORE_STACK(count)  \
-    (topOfStack -= ((count) * Interpreter::stackElementWords()))
+    (topOfStack -= ((count) * Interpreter::stackElementWords))
 
 
 #define UPDATE_PC(opsize) {pc += opsize; }
@@ -339,7 +339,8 @@
 #define CHECK_NULL(obj_)                                                 \
     if ((obj_) == NULL) {                                                \
         VM_JAVA_ERROR(vmSymbols::java_lang_NullPointerException(), "");  \
-    }
+    }                                                                    \
+    VERIFY_OOP(obj_)
 
 #define VMdoubleConstZero() 0.0
 #define VMdoubleConstOne() 1.0
@@ -420,7 +421,9 @@ BytecodeInterpreter::run(interpreterState istate) {
 #ifdef ASSERT
   if (istate->_msg != initialize) {
     assert(abs(istate->_stack_base - istate->_stack_limit) == (istate->_method->max_stack() + 1), "bad stack limit");
-  IA32_ONLY(assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1, "wrong"));
+#ifndef SHARK
+    IA32_ONLY(assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1, "wrong"));
+#endif // !SHARK
   }
   // Verify linkages.
   interpreterState l = istate;
@@ -509,7 +512,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 
 /* 0xB0 */ &&opc_areturn,     &&opc_return,         &&opc_getstatic,    &&opc_putstatic,
 /* 0xB4 */ &&opc_getfield,    &&opc_putfield,       &&opc_invokevirtual,&&opc_invokespecial,
-/* 0xB8 */ &&opc_invokestatic,&&opc_invokeinterface,NULL,               &&opc_new,
+/* 0xB8 */ &&opc_invokestatic,&&opc_invokeinterface,&&opc_default,      &&opc_new,
 /* 0xBC */ &&opc_newarray,    &&opc_anewarray,      &&opc_arraylength,  &&opc_athrow,
 
 /* 0xC0 */ &&opc_checkcast,   &&opc_instanceof,     &&opc_monitorenter, &&opc_monitorexit,
@@ -539,6 +542,7 @@ BytecodeInterpreter::run(interpreterState istate) {
   // this will trigger a VERIFY_OOP on entry
   if (istate->msg() != initialize && ! METHOD->is_static()) {
     oop rcvr = LOCALS_OBJECT(0);
+    VERIFY_OOP(rcvr);
   }
 #endif
 // #define HACK
@@ -547,7 +551,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 #endif // HACK
 
   /* QQQ this should be a stack method so we don't know actual direction */
-  assert(istate->msg() == initialize ||
+  guarantee(istate->msg() == initialize ||
          topOfStack >= istate->stack_limit() &&
          topOfStack < istate->stack_base(),
          "Stack top out of range");
@@ -613,6 +617,7 @@ BytecodeInterpreter::run(interpreterState istate) {
             rcvr = METHOD->constants()->pool_holder()->klass_part()->java_mirror();
           } else {
             rcvr = LOCALS_OBJECT(0);
+            VERIFY_OOP(rcvr);
           }
           // The initial monitor is ours for the taking
           BasicObjectLock* mon = &istate->monitor_base()[-1];
@@ -735,6 +740,7 @@ BytecodeInterpreter::run(interpreterState istate) {
     case popping_frame: {
       // returned from a java call to pop the frame, restart the call
       // clear the message so we don't confuse ourselves later
+      ShouldNotReachHere();  // we don't return this.
       assert(THREAD->pop_frame_in_process(), "wrong frame pop state");
       istate->set_msg(no_request);
       THREAD->clr_pop_frame_in_process();
@@ -801,6 +807,7 @@ BytecodeInterpreter::run(interpreterState istate) {
       // continue locking now that we have a monitor to use
       // we expect to find newly allocated monitor at the "top" of the monitor stack.
       oop lockee = STACK_OBJECT(-1);
+      VERIFY_OOP(lockee);
       // derefing's lockee ought to provoke implicit null check
       // find a free monitor
       BasicObjectLock* entry = (BasicObjectLock*) istate->stack_base();
@@ -911,6 +918,7 @@ run:
           /* load from local variable */
 
       CASE(_aload):
+          VERIFY_OOP(LOCALS_OBJECT(pc[1]));
           SET_STACK_OBJECT(LOCALS_OBJECT(pc[1]), 0);
           UPDATE_PC_AND_TOS_AND_CONTINUE(2, 1);
 
@@ -930,6 +938,7 @@ run:
 #undef  OPC_LOAD_n
 #define OPC_LOAD_n(num)                                                 \
       CASE(_aload_##num):                                               \
+          VERIFY_OOP(LOCALS_OBJECT(num));                               \
           SET_STACK_OBJECT(LOCALS_OBJECT(num), 0);                      \
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 1);                         \
                                                                         \
@@ -975,6 +984,7 @@ run:
           opcode = pc[1];
           switch(opcode) {
               case Bytecodes::_aload:
+                  VERIFY_OOP(LOCALS_OBJECT(reg));
                   SET_STACK_OBJECT(LOCALS_OBJECT(reg), 0);
                   UPDATE_PC_AND_TOS_AND_CONTINUE(4, 1);
 
@@ -1099,7 +1109,7 @@ run:
       CASE(_i##opcname):                                                \
           if (test && (STACK_INT(-1) == 0)) {                           \
               VM_JAVA_ERROR(vmSymbols::java_lang_ArithmeticException(), \
-                            "/ by int zero");                           \
+                            "/ by zero");                               \
           }                                                             \
           SET_STACK_INT(VMint##opname(STACK_INT(-2),                    \
                                       STACK_INT(-1)),                   \
@@ -1277,7 +1287,12 @@ run:
           jfloat f;
           jdouble r;
           f = STACK_FLOAT(-1);
+#ifdef IA64
+          // IA64 gcc bug
+          r = ( f == 0.0f ) ? (jdouble) f : (jdouble) f + ia64_double_zero;
+#else
           r = (jdouble) f;
+#endif
           MORE_STACK(-1); // POP
           SET_STACK_DOUBLE(r, 1);
           UPDATE_PC_AND_TOS_AND_CONTINUE(1, 2);
@@ -1471,6 +1486,7 @@ run:
       CASE(_return_register_finalizer): {
 
           oop rcvr = LOCALS_OBJECT(0);
+          VERIFY_OOP(rcvr);
           if (rcvr->klass()->klass_part()->has_finalizer()) {
             CALL_VM(InterpreterRuntime::register_finalizer(THREAD, rcvr), handle_exception);
           }
@@ -1561,6 +1577,7 @@ run:
        */
       CASE(_aastore): {
           oop rhsObject = STACK_OBJECT(-1);
+          VERIFY_OOP(rhsObject);
           ARRAY_INTRO( -3);
           // arrObj, index are set
           if (rhsObject != NULL) {
@@ -1703,6 +1720,7 @@ run:
                 obj = (oop)NULL;
               } else {
                 obj = (oop) STACK_OBJECT(-1);
+                VERIFY_OOP(obj);
               }
               CALL_VM(InterpreterRuntime::post_field_access(THREAD,
                                           obj,
@@ -1728,6 +1746,7 @@ run:
           int field_offset = cache->f2();
           if (cache->is_volatile()) {
             if (tos_type == atos) {
+              VERIFY_OOP(obj->obj_field_acquire(field_offset));
               SET_STACK_OBJECT(obj->obj_field_acquire(field_offset), -1);
             } else if (tos_type == itos) {
               SET_STACK_INT(obj->int_field_acquire(field_offset), -1);
@@ -1748,6 +1767,7 @@ run:
             }
           } else {
             if (tos_type == atos) {
+              VERIFY_OOP(obj->obj_field(field_offset));
               SET_STACK_OBJECT(obj->obj_field(field_offset), -1);
             } else if (tos_type == itos) {
               SET_STACK_INT(obj->int_field(field_offset), -1);
@@ -1799,6 +1819,7 @@ run:
                 } else {
                   obj = (oop) STACK_OBJECT(-2);
                 }
+                VERIFY_OOP(obj);
               }
 
               CALL_VM(InterpreterRuntime::post_field_modification(THREAD,
@@ -1837,6 +1858,7 @@ run:
             if (tos_type == itos) {
               obj->release_int_field_put(field_offset, STACK_INT(-1));
             } else if (tos_type == atos) {
+              VERIFY_OOP(STACK_OBJECT(-1));
               obj->release_obj_field_put(field_offset, STACK_OBJECT(-1));
               OrderAccess::release_store(&BYTE_MAP_BASE[(uintptr_t)obj >> CardTableModRefBS::card_shift], 0);
             } else if (tos_type == btos) {
@@ -1857,6 +1879,7 @@ run:
             if (tos_type == itos) {
               obj->int_field_put(field_offset, STACK_INT(-1));
             } else if (tos_type == atos) {
+              VERIFY_OOP(STACK_OBJECT(-1));
               obj->obj_field_put(field_offset, STACK_OBJECT(-1));
               OrderAccess::release_store(&BYTE_MAP_BASE[(uintptr_t)obj >> CardTableModRefBS::card_shift], 0);
             } else if (tos_type == btos) {
@@ -1950,8 +1973,8 @@ run:
         jint size = STACK_INT(-1);
         // stack grows down, dimensions are up!
         jint *dimarray =
-                   (jint*)&topOfStack[dims * Interpreter::stackElementWords()+
-                                      Interpreter::stackElementWords()-1];
+                   (jint*)&topOfStack[dims * Interpreter::stackElementWords+
+                                      Interpreter::stackElementWords-1];
         //adjust pointer to start of stack element
         CALL_VM(InterpreterRuntime::multianewarray(THREAD, dimarray),
                 handle_exception);
@@ -1961,6 +1984,7 @@ run:
       }
       CASE(_checkcast):
           if (STACK_OBJECT(-1) != NULL) {
+            VERIFY_OOP(STACK_OBJECT(-1));
             u2 index = Bytes::get_Java_u2(pc+1);
             if (ProfileInterpreter) {
               // needs Profile_checkcast QQQ
@@ -1999,6 +2023,7 @@ run:
           if (STACK_OBJECT(-1) == NULL) {
             SET_STACK_INT(0, -1);
           } else {
+            VERIFY_OOP(STACK_OBJECT(-1));
             u2 index = Bytes::get_Java_u2(pc+1);
             // Constant pool may have actual klass or unresolved klass. If it is
             // unresolved we must resolve it
@@ -2044,10 +2069,12 @@ run:
             break;
 
           case JVM_CONSTANT_String:
+            VERIFY_OOP(constants->resolved_string_at(index));
             SET_STACK_OBJECT(constants->resolved_string_at(index), 0);
             break;
 
           case JVM_CONSTANT_Class:
+            VERIFY_OOP(constants->resolved_klass_at(index)->klass_part()->java_mirror());
             SET_STACK_OBJECT(constants->resolved_klass_at(index)->klass_part()->java_mirror(), 0);
             break;
 
@@ -2058,17 +2085,6 @@ run:
             SET_STACK_OBJECT(THREAD->vm_result(), 0);
             THREAD->set_vm_result(NULL);
             break;
-
-#if 0
-          CASE(_fast_igetfield):
-          CASE(_fastagetfield):
-          CASE(_fast_aload_0):
-          CASE(_fast_iaccess_0):
-          CASE(__fast_aaccess_0):
-          CASE(_fast_linearswitch):
-          CASE(_fast_binaryswitch):
-            fatal("unsupported fast bytecode");
-#endif
 
           default:  ShouldNotReachHere();
           }
@@ -2122,6 +2138,7 @@ run:
             // get receiver
             int parms = cache->parameter_size();
             // Same comments as invokevirtual apply here
+            VERIFY_OOP(STACK_OBJECT(-parms));
             instanceKlass* rcvrKlass = (instanceKlass*)
                                  STACK_OBJECT(-parms)->klass()->klass_part();
             callee = (methodOop) rcvrKlass->start_of_vtable()[ cache->f2()];
@@ -2205,6 +2222,7 @@ run:
               // this fails with an assert
               // instanceKlass* rcvrKlass = instanceKlass::cast(STACK_OBJECT(-parms)->klass());
               // but this works
+              VERIFY_OOP(STACK_OBJECT(-parms));
               instanceKlass* rcvrKlass = (instanceKlass*) STACK_OBJECT(-parms)->klass()->klass_part();
               /*
                 Executing this code in java.lang.String:
@@ -2339,8 +2357,8 @@ run:
               goto opcode_switch;
           }
 #endif
-          fatal2("\t*** Unimplemented opcode: %d = %s\n",
-                 opcode, Bytecodes::name((Bytecodes::Code)opcode));
+          fatal(err_msg("Unimplemented opcode %d = %s", opcode,
+                        Bytecodes::name((Bytecodes::Code)opcode)));
           goto finish;
 
       } /* switch(opc) */
@@ -2375,7 +2393,7 @@ run:
     assert(except_oop(), "No exception to process");
     intptr_t continuation_bci;
     // expression stack is emptied
-    topOfStack = istate->stack_base() - Interpreter::stackElementWords();
+    topOfStack = istate->stack_base() - Interpreter::stackElementWords;
     CALL_VM(continuation_bci = (intptr_t)InterpreterRuntime::exception_handler_for_exception(THREAD, except_oop()),
             handle_exception);
 
@@ -2651,14 +2669,14 @@ handle_return:
                                 LOCALS_SLOT(METHOD->size_of_parameters() - 1));
         THREAD->set_popframe_condition_bit(JavaThread::popframe_force_deopt_reexecution_bit);
       }
-      UPDATE_PC_AND_RETURN(1);
-    } else {
-      // Normal return
-      // Advance the pc and return to frame manager
-      istate->set_msg(return_from_method);
-      istate->set_return_kind((Bytecodes::Code)opcode);
-      UPDATE_PC_AND_RETURN(1);
+      THREAD->clr_pop_frame_in_process();
     }
+
+    // Normal return
+    // Advance the pc and return to frame manager
+    istate->set_msg(return_from_method);
+    istate->set_return_kind((Bytecodes::Code)opcode);
+    UPDATE_PC_AND_RETURN(1);
   } /* handle_return: */
 
 // This is really a fatal error return
@@ -2692,219 +2710,141 @@ BytecodeInterpreter::BytecodeInterpreter(messages msg) {
 // The implementations are platform dependent. We have to worry about alignment
 // issues on some machines which can change on the same platform depending on
 // whether it is an LP64 machine also.
-#ifdef ASSERT
-void BytecodeInterpreter::verify_stack_tag(intptr_t *tos, frame::Tag tag, int offset) {
-  if (TaggedStackInterpreter) {
-    frame::Tag t = (frame::Tag)tos[Interpreter::expr_tag_index_at(-offset)];
-    assert(t == tag, "stack tag mismatch");
-  }
-}
-#endif // ASSERT
-
 address BytecodeInterpreter::stack_slot(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset));
   return (address) tos[Interpreter::expr_index_at(-offset)];
 }
 
 jint BytecodeInterpreter::stack_int(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset));
   return *((jint*) &tos[Interpreter::expr_index_at(-offset)]);
 }
 
 jfloat BytecodeInterpreter::stack_float(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset));
   return *((jfloat *) &tos[Interpreter::expr_index_at(-offset)]);
 }
 
 oop BytecodeInterpreter::stack_object(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagReference, offset));
   return (oop)tos [Interpreter::expr_index_at(-offset)];
 }
 
 jdouble BytecodeInterpreter::stack_double(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset));
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset-1));
   return ((VMJavaVal64*) &tos[Interpreter::expr_index_at(-offset)])->d;
 }
 
 jlong BytecodeInterpreter::stack_long(intptr_t *tos, int offset) {
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset));
-  debug_only(verify_stack_tag(tos, frame::TagValue, offset-1));
   return ((VMJavaVal64 *) &tos[Interpreter::expr_index_at(-offset)])->l;
-}
-
-void BytecodeInterpreter::tag_stack(intptr_t *tos, frame::Tag tag, int offset) {
-  if (TaggedStackInterpreter)
-    tos[Interpreter::expr_tag_index_at(-offset)] = (intptr_t)tag;
 }
 
 // only used for value types
 void BytecodeInterpreter::set_stack_slot(intptr_t *tos, address value,
                                                         int offset) {
-  tag_stack(tos, frame::TagValue, offset);
   *((address *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
 void BytecodeInterpreter::set_stack_int(intptr_t *tos, int value,
                                                        int offset) {
-  tag_stack(tos, frame::TagValue, offset);
   *((jint *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
 void BytecodeInterpreter::set_stack_float(intptr_t *tos, jfloat value,
                                                          int offset) {
-  tag_stack(tos, frame::TagValue, offset);
   *((jfloat *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
 void BytecodeInterpreter::set_stack_object(intptr_t *tos, oop value,
                                                           int offset) {
-  tag_stack(tos, frame::TagReference, offset);
   *((oop *)&tos[Interpreter::expr_index_at(-offset)]) = value;
 }
 
 // needs to be platform dep for the 32 bit platforms.
 void BytecodeInterpreter::set_stack_double(intptr_t *tos, jdouble value,
                                                           int offset) {
-  tag_stack(tos, frame::TagValue, offset);
-  tag_stack(tos, frame::TagValue, offset-1);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset)])->d = value;
 }
 
 void BytecodeInterpreter::set_stack_double_from_addr(intptr_t *tos,
                                               address addr, int offset) {
-  tag_stack(tos, frame::TagValue, offset);
-  tag_stack(tos, frame::TagValue, offset-1);
   (((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset)])->d =
                         ((VMJavaVal64*)addr)->d);
 }
 
 void BytecodeInterpreter::set_stack_long(intptr_t *tos, jlong value,
                                                         int offset) {
-  tag_stack(tos, frame::TagValue, offset);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset+1)])->l = 0xdeedbeeb;
-  tag_stack(tos, frame::TagValue, offset-1);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset)])->l = value;
 }
 
 void BytecodeInterpreter::set_stack_long_from_addr(intptr_t *tos,
                                             address addr, int offset) {
-  tag_stack(tos, frame::TagValue, offset);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset+1)])->l = 0xdeedbeeb;
-  tag_stack(tos, frame::TagValue, offset-1);
   ((VMJavaVal64*)&tos[Interpreter::expr_index_at(-offset)])->l =
                         ((VMJavaVal64*)addr)->l;
 }
 
 // Locals
 
-#ifdef ASSERT
-void BytecodeInterpreter::verify_locals_tag(intptr_t *locals, frame::Tag tag,
-                                     int offset) {
-  if (TaggedStackInterpreter) {
-    frame::Tag t = (frame::Tag)locals[Interpreter::local_tag_index_at(-offset)];
-    assert(t == tag, "locals tag mismatch");
-  }
-}
-#endif // ASSERT
 address BytecodeInterpreter::locals_slot(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
   return (address)locals[Interpreter::local_index_at(-offset)];
 }
 jint BytecodeInterpreter::locals_int(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
   return (jint)locals[Interpreter::local_index_at(-offset)];
 }
 jfloat BytecodeInterpreter::locals_float(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
   return (jfloat)locals[Interpreter::local_index_at(-offset)];
 }
 oop BytecodeInterpreter::locals_object(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagReference, offset));
   return (oop)locals[Interpreter::local_index_at(-offset)];
 }
 jdouble BytecodeInterpreter::locals_double(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
   return ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->d;
 }
 jlong BytecodeInterpreter::locals_long(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset+1));
   return ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->l;
 }
 
 // Returns the address of locals value.
 address BytecodeInterpreter::locals_long_at(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset+1));
   return ((address)&locals[Interpreter::local_index_at(-(offset+1))]);
 }
 address BytecodeInterpreter::locals_double_at(intptr_t* locals, int offset) {
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset));
-  debug_only(verify_locals_tag(locals, frame::TagValue, offset+1));
   return ((address)&locals[Interpreter::local_index_at(-(offset+1))]);
-}
-
-void BytecodeInterpreter::tag_locals(intptr_t *locals, frame::Tag tag, int offset) {
-  if (TaggedStackInterpreter)
-    locals[Interpreter::local_tag_index_at(-offset)] = (intptr_t)tag;
 }
 
 // Used for local value or returnAddress
 void BytecodeInterpreter::set_locals_slot(intptr_t *locals,
                                    address value, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
   *((address*)&locals[Interpreter::local_index_at(-offset)]) = value;
 }
 void BytecodeInterpreter::set_locals_int(intptr_t *locals,
                                    jint value, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
   *((jint *)&locals[Interpreter::local_index_at(-offset)]) = value;
 }
 void BytecodeInterpreter::set_locals_float(intptr_t *locals,
                                    jfloat value, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
   *((jfloat *)&locals[Interpreter::local_index_at(-offset)]) = value;
 }
 void BytecodeInterpreter::set_locals_object(intptr_t *locals,
                                    oop value, int offset) {
-  tag_locals(locals, frame::TagReference, offset);
   *((oop *)&locals[Interpreter::local_index_at(-offset)]) = value;
 }
 void BytecodeInterpreter::set_locals_double(intptr_t *locals,
                                    jdouble value, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
-  tag_locals(locals, frame::TagValue, offset+1);
   ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->d = value;
 }
 void BytecodeInterpreter::set_locals_long(intptr_t *locals,
                                    jlong value, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
-  tag_locals(locals, frame::TagValue, offset+1);
   ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->l = value;
 }
 void BytecodeInterpreter::set_locals_double_from_addr(intptr_t *locals,
                                    address addr, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
-  tag_locals(locals, frame::TagValue, offset+1);
   ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->d = ((VMJavaVal64*)addr)->d;
 }
 void BytecodeInterpreter::set_locals_long_from_addr(intptr_t *locals,
                                    address addr, int offset) {
-  tag_locals(locals, frame::TagValue, offset);
-  tag_locals(locals, frame::TagValue, offset+1);
   ((VMJavaVal64*)&locals[Interpreter::local_index_at(-(offset+1))])->l = ((VMJavaVal64*)addr)->l;
 }
 
 void BytecodeInterpreter::astore(intptr_t* tos,    int stack_offset,
                           intptr_t* locals, int locals_offset) {
-  // Copy tag from stack to locals.  astore's operand can be returnAddress
-  // and may not be TagReference
-  if (TaggedStackInterpreter) {
-    frame::Tag t = (frame::Tag) tos[Interpreter::expr_tag_index_at(-stack_offset)];
-    locals[Interpreter::local_tag_index_at(-locals_offset)] = (intptr_t)t;
-  }
   intptr_t value = tos[Interpreter::expr_index_at(-stack_offset)];
   locals[Interpreter::local_index_at(-locals_offset)] = value;
 }
@@ -2912,10 +2852,6 @@ void BytecodeInterpreter::astore(intptr_t* tos,    int stack_offset,
 
 void BytecodeInterpreter::copy_stack_slot(intptr_t *tos, int from_offset,
                                    int to_offset) {
-  if (TaggedStackInterpreter) {
-    tos[Interpreter::expr_tag_index_at(-to_offset)] =
-                      (intptr_t)tos[Interpreter::expr_tag_index_at(-from_offset)];
-  }
   tos[Interpreter::expr_index_at(-to_offset)] =
                       (intptr_t)tos[Interpreter::expr_index_at(-from_offset)];
 }
@@ -2964,16 +2900,9 @@ void BytecodeInterpreter::dup2_x2(intptr_t *tos) {
 void BytecodeInterpreter::swap(intptr_t *tos) {
   // swap top two elements
   intptr_t val = tos[Interpreter::expr_index_at(1)];
-  frame::Tag t;
-  if (TaggedStackInterpreter) {
-    t = (frame::Tag) tos[Interpreter::expr_tag_index_at(1)];
-  }
   // Copy -2 entry to -1
   copy_stack_slot(tos, -2, -1);
   // Store saved -1 entry into -2
-  if (TaggedStackInterpreter) {
-    tos[Interpreter::expr_tag_index_at(2)] = (intptr_t)t;
-  }
   tos[Interpreter::expr_index_at(2)] = val;
 }
 // --------------------------------------------------------------------------------

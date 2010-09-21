@@ -54,11 +54,11 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
   _code               = NULL;
   _exception_handlers = NULL;
   _liveness           = NULL;
-  _bcea = NULL;
   _method_blocks = NULL;
-#ifdef COMPILER2
+#if defined(COMPILER2) || defined(SHARK)
   _flow               = NULL;
-#endif // COMPILER2
+  _bcea               = NULL;
+#endif // COMPILER2 || SHARK
 
   ciEnv *env = CURRENT_ENV;
   if (env->jvmti_can_hotswap_or_post_breakpoint() && _is_compilable) {
@@ -121,12 +121,12 @@ ciMethod::ciMethod(ciInstanceKlass* holder,
   _intrinsic_id = vmIntrinsics::_none;
   _liveness = NULL;
   _can_be_statically_bound = false;
-  _bcea = NULL;
   _method_blocks = NULL;
   _method_data = NULL;
-#ifdef COMPILER2
+#if defined(COMPILER2) || defined(SHARK)
   _flow = NULL;
-#endif // COMPILER2
+  _bcea = NULL;
+#endif // COMPILER2 || SHARK
 }
 
 
@@ -229,6 +229,20 @@ int ciMethod::vtable_index() {
 }
 
 
+#ifdef SHARK
+// ------------------------------------------------------------------
+// ciMethod::itable_index
+//
+// Get the position of this method's entry in the itable, if any.
+int ciMethod::itable_index() {
+  check_is_loaded();
+  assert(holder()->is_linked(), "must be linked");
+  VM_ENTRY_MARK;
+  return klassItable::compute_itable_index(get_methodOop());
+}
+#endif // SHARK
+
+
 // ------------------------------------------------------------------
 // ciMethod::native_entry
 //
@@ -294,34 +308,34 @@ bool ciMethod::has_balanced_monitors() {
 // ------------------------------------------------------------------
 // ciMethod::get_flow_analysis
 ciTypeFlow* ciMethod::get_flow_analysis() {
-#ifdef COMPILER2
+#if defined(COMPILER2) || defined(SHARK)
   if (_flow == NULL) {
     ciEnv* env = CURRENT_ENV;
     _flow = new (env->arena()) ciTypeFlow(env, this);
     _flow->do_flow();
   }
   return _flow;
-#else // COMPILER2
+#else // COMPILER2 || SHARK
   ShouldNotReachHere();
   return NULL;
-#endif // COMPILER2
+#endif // COMPILER2 || SHARK
 }
 
 
 // ------------------------------------------------------------------
 // ciMethod::get_osr_flow_analysis
 ciTypeFlow* ciMethod::get_osr_flow_analysis(int osr_bci) {
-#ifdef COMPILER2
+#if defined(COMPILER2) || defined(SHARK)
   // OSR entry points are always place after a call bytecode of some sort
   assert(osr_bci >= 0, "must supply valid OSR entry point");
   ciEnv* env = CURRENT_ENV;
   ciTypeFlow* flow = new (env->arena()) ciTypeFlow(env, this, osr_bci);
   flow->do_flow();
   return flow;
-#else // COMPILER2
+#else // COMPILER2 || SHARK
   ShouldNotReachHere();
   return NULL;
-#endif // COMPILER2
+#endif // COMPILER2 || SHARK
 }
 
 // ------------------------------------------------------------------
@@ -690,22 +704,25 @@ int ciMethod::scale_count(int count, float prof_factor) {
 
 // ------------------------------------------------------------------
 // invokedynamic support
+
+// ------------------------------------------------------------------
+// ciMethod::is_method_handle_invoke
 //
+// Return true if the method is an instance of one of the two
+// signature-polymorphic MethodHandle methods, invokeExact or invokeGeneric.
 bool ciMethod::is_method_handle_invoke() const {
-  check_is_loaded();
-  bool flag = ((flags().as_int() & JVM_MH_INVOKE_BITS) == JVM_MH_INVOKE_BITS);
-#ifdef ASSERT
-  {
-    VM_ENTRY_MARK;
-    bool flag2 = get_methodOop()->is_method_handle_invoke();
-    assert(flag == flag2, "consistent");
-  }
-#endif //ASSERT
-  return flag;
+  if (!is_loaded())  return false;
+  VM_ENTRY_MARK;
+  return get_methodOop()->is_method_handle_invoke();
 }
 
+// ------------------------------------------------------------------
+// ciMethod::is_method_handle_adapter
+//
+// Return true if the method is a generated MethodHandle adapter.
+// These are built by MethodHandleCompiler.
 bool ciMethod::is_method_handle_adapter() const {
-  check_is_loaded();
+  if (!is_loaded())  return false;
   VM_ENTRY_MARK;
   return get_methodOop()->is_method_handle_adapter();
 }
@@ -1021,10 +1038,15 @@ bool ciMethod::is_accessor    () const {         FETCH_FLAG_FROM_VM(is_accessor)
 bool ciMethod::is_initializer () const {         FETCH_FLAG_FROM_VM(is_initializer); }
 
 BCEscapeAnalyzer  *ciMethod::get_bcea() {
+#ifdef COMPILER2
   if (_bcea == NULL) {
     _bcea = new (CURRENT_ENV->arena()) BCEscapeAnalyzer(this, NULL);
   }
   return _bcea;
+#else // COMPILER2
+  ShouldNotReachHere();
+  return NULL;
+#endif // COMPILER2
 }
 
 ciMethodBlocks  *ciMethod::get_method_blocks() {

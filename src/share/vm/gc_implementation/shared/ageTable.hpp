@@ -22,7 +22,7 @@
  *
  */
 
-/* Copyright 1992-2009 Sun Microsystems, Inc. and Stanford University.
+/* Copyright (c) 1992-2009 Oracle and/or its affiliates, and Stanford University.
    See the LICENSE file for license information. */
 
 // Age table for adaptive feedback-mediated tenuring (scavenging)

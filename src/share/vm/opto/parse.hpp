@@ -480,6 +480,7 @@ class Parse : public GraphKit {
   bool push_constant(ciConstant con, bool require_constant = false);
 
   // implementation of object creation bytecodes
+  void emit_guard_for_new(ciInstanceKlass* klass);
   void do_new();
   void do_newarray(BasicType elemtype);
   void do_anewarray();
@@ -550,9 +551,6 @@ class Parse : public GraphKit {
   // Handle all exceptions thrown by the inlined method.
   // Also handles exceptions for individual bytecodes.
   void catch_inline_exceptions(SafePointNode* ex_map);
-
-  // Bytecode classifier, helps decide to use uncommon_trap vs. rethrow_C.
-  bool can_rerun_bytecode();
 
   // Merge the given map into correct exceptional exit state.
   // Assumes that there is no applicable local handler.

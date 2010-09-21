@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,6 +134,9 @@ REGISTER_DECLARATION(Register, r15_thread, r15); // callee-saved
 #define rscratch1 noreg
 
 #endif // _LP64
+
+// JSR 292 fixed register usages:
+REGISTER_DECLARATION(Register, rbp_mh_SP_save, rbp);
 
 // Address is an abstraction used to represent a memory location
 // using any of the amd64 addressing modes with one object.
@@ -1511,7 +1514,7 @@ class MacroAssembler: public Assembler {
   void extend_sign(Register hi, Register lo);
 
   // Loading values by size and signed-ness
-  void load_sized_value(Register dst, Address src, int size_in_bytes, bool is_signed);
+  void load_sized_value(Register dst, Address src, size_t size_in_bytes, bool is_signed);
 
   // Support for inc/dec with optimal instruction selection depending on value
 
@@ -1711,6 +1714,9 @@ class MacroAssembler: public Assembler {
 
   // if heap base register is used - reinit it with the correct value
   void reinit_heapbase();
+
+  DEBUG_ONLY(void verify_heapbase(const char* msg);)
+
 #endif // _LP64
 
   // Int division/remainder for Java

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,7 @@ public class BytecodeDisassembler {
       addBytecodeClass(Bytecodes._invokestatic, BytecodeInvoke.class);
       addBytecodeClass(Bytecodes._invokespecial, BytecodeInvoke.class);
       addBytecodeClass(Bytecodes._invokeinterface, BytecodeInvoke.class);
+      addBytecodeClass(Bytecodes._invokedynamic, BytecodeInvoke.class);
       addBytecodeClass(Bytecodes._jsr, BytecodeJsr.class);
       addBytecodeClass(Bytecodes._jsr_w, BytecodeJsrW.class);
       addBytecodeClass(Bytecodes._iload, BytecodeLoad.class);
@@ -96,10 +97,6 @@ public class BytecodeDisassembler {
       addBytecodeClass(Bytecodes._dstore, BytecodeStore.class);
       addBytecodeClass(Bytecodes._astore, BytecodeStore.class);
       addBytecodeClass(Bytecodes._tableswitch, BytecodeTableswitch.class);
-
-      // only special fast_xxx cases. others are handled differently.
-      addBytecodeClass(Bytecodes._fast_iaccess_0, BytecodeFastAAccess0.class);
-      addBytecodeClass(Bytecodes._fast_aaccess_0, BytecodeFastIAccess0.class);
    }
 
    public BytecodeDisassembler(Method method) {

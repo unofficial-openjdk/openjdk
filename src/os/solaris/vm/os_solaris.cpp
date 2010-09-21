@@ -676,15 +676,6 @@ bool os::have_special_privileges() {
 }
 
 
-static char* get_property(char* name, char* buffer, int buffer_size) {
-  if (os::getenv(name, buffer, buffer_size)) {
-    return buffer;
-  }
-  static char empty[] = "";
-  return empty;
-}
-
-
 void os::init_system_properties_values() {
   char arch[12];
   sysinfo(SI_ARCHITECTURE, arch, sizeof(arch));
@@ -1576,7 +1567,8 @@ int os::allocate_thread_local_storage() {
   //           treat %g2 as a caller-save register, preserving it in a %lN.
   thread_key_t tk;
   if (thr_keycreate( &tk, NULL ) )
-    fatal1("os::allocate_thread_local_storage: thr_keycreate failed (%s)", strerror(errno));
+    fatal(err_msg("os::allocate_thread_local_storage: thr_keycreate failed "
+                  "(%s)", strerror(errno)));
   return int(tk);
 }
 
@@ -1594,7 +1586,8 @@ void os::thread_local_storage_at_put(int index, void* value) {
     if (errno == ENOMEM) {
        vm_exit_out_of_memory(SMALLINT, "thr_setspecific: out of swap space");
     } else {
-      fatal1("os::thread_local_storage_at_put: thr_setspecific failed (%s)", strerror(errno));
+      fatal(err_msg("os::thread_local_storage_at_put: thr_setspecific failed "
+                    "(%s)", strerror(errno)));
     }
   } else {
       ThreadLocalStorage::set_thread_in_slot ((Thread *) value) ;
@@ -1747,7 +1740,7 @@ jlong getTimeMillis() {
 jlong os::javaTimeMillis() {
   timeval t;
   if (gettimeofday( &t, NULL) == -1)
-    fatal1("os::javaTimeMillis: gettimeofday (%s)", strerror(errno));
+    fatal(err_msg("os::javaTimeMillis: gettimeofday (%s)", strerror(errno)));
   return jlong(t.tv_sec) * 1000  +  jlong(t.tv_usec) / 1000;
 }
 
@@ -1826,7 +1819,10 @@ void os::set_error_file(const char *logfile) {}
 
 const char* os::dll_file_extension() { return ".so"; }
 
-const char* os::get_temp_directory() { return "/tmp/"; }
+const char* os::get_temp_directory() {
+  const char *prop = Arguments::get_property("java.io.tmpdir");
+  return prop == NULL ? "/tmp" : prop;
+}
 
 static bool file_exists(const char* filename) {
   struct stat statbuf;
@@ -2055,7 +2051,8 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     {EM_SPARC32PLUS, EM_SPARC,   ELFCLASS32, ELFDATA2MSB, (char*)"Sparc 32"},
     {EM_SPARCV9,     EM_SPARCV9, ELFCLASS64, ELFDATA2MSB, (char*)"Sparc v9 64"},
     {EM_PPC,         EM_PPC,     ELFCLASS32, ELFDATA2MSB, (char*)"Power PC 32"},
-    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"}
+    {EM_PPC64,       EM_PPC64,   ELFCLASS64, ELFDATA2MSB, (char*)"Power PC 64"},
+    {EM_ARM,         EM_ARM,     ELFCLASS32, ELFDATA2LSB, (char*)"ARM 32"}
   };
 
   #if  (defined IA32)
@@ -2072,9 +2069,11 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen)
     static  Elf32_Half running_arch_code=EM_PPC64;
   #elif  (defined __powerpc__)
     static  Elf32_Half running_arch_code=EM_PPC;
+  #elif (defined ARM)
+    static  Elf32_Half running_arch_code=EM_ARM;
   #else
     #error Method os::dll_load requires that one of following is defined:\
-         IA32, AMD64, IA64, __sparc, __powerpc__
+         IA32, AMD64, IA64, __sparc, __powerpc__, ARM, ARM
   #endif
 
   // Identify compatability class for VM's architecture and library's architecture
@@ -2439,6 +2438,8 @@ void os::jvm_path(char *buf, jint buflen) {
       char* java_home_var = ::getenv("JAVA_HOME");
       if (java_home_var != NULL && java_home_var[0] != 0) {
         char cpu_arch[12];
+        char* jrelib_p;
+        int   len;
         sysinfo(SI_ARCHITECTURE, cpu_arch, sizeof(cpu_arch));
 #ifdef _LP64
         // If we are on sparc running a 64-bit vm, look in jre/lib/sparcv9.
@@ -2454,14 +2455,23 @@ void os::jvm_path(char *buf, jint buflen) {
         p = strstr(p, "_g") ? "_g" : "";
 
         realpath(java_home_var, buf);
-        sprintf(buf + strlen(buf), "/jre/lib/%s", cpu_arch);
+        // determine if this is a legacy image or modules image
+        // modules image doesn't have "jre" subdirectory
+        len = strlen(buf);
+        jrelib_p = buf + len;
+        snprintf(jrelib_p, buflen-len, "/jre/lib/%s", cpu_arch);
+        if (0 != access(buf, F_OK)) {
+          snprintf(jrelib_p, buflen-len, "/lib/%s", cpu_arch);
+        }
+
         if (0 == access(buf, F_OK)) {
           // Use current module name "libjvm[_g].so" instead of
           // "libjvm"debug_only("_g")".so" since for fastdebug version
           // we should have "libjvm.so" but debug_only("_g") adds "_g"!
           // It is used when we are choosing the HPI library's name
           // "libhpi[_g].so" in hpi::initialize_get_interface().
-          sprintf(buf + strlen(buf), "/hotspot/libjvm%s.so", p);
+          len = strlen(buf);
+          snprintf(buf + len, buflen-len, "/hotspot/libjvm%s.so", p);
         } else {
           // Go back to path of .so
           realpath((char *)dlinfo.dli_fname, buf);
@@ -2696,6 +2706,14 @@ void os::free_memory(char* addr, size_t bytes) {
     debug_only(warning("MADV_FREE failed."));
     return;
   }
+}
+
+bool os::create_stack_guard_pages(char* addr, size_t size) {
+  return os::commit_memory(addr, size);
+}
+
+bool os::remove_stack_guard_pages(char* addr, size_t size) {
+  return os::uncommit_memory(addr, size);
 }
 
 // Change the page size in a given range.
@@ -3134,7 +3152,8 @@ bool os::Solaris::ism_sanity_check(bool warn, size_t * page_size) {
   // ISM is only recommended on old Solaris where there is no MPSS support.
   // Simply choose a conservative value as default.
   *page_size = LargePageSizeInBytes ? LargePageSizeInBytes :
-               SPARC_ONLY(4 * M) IA32_ONLY(4 * M) AMD64_ONLY(2 * M);
+               SPARC_ONLY(4 * M) IA32_ONLY(4 * M) AMD64_ONLY(2 * M)
+               ARM_ONLY(2 * M);
 
   // ISM is available on all supported Solaris versions
   return true;
@@ -4231,7 +4250,8 @@ void os::Solaris::set_signal_handler(int sig, bool set_installed, bool oktochain
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal2("Encountered unexpected pre-existing sigaction handler %#lx for signal %d.", (long)oldhand, sig);
+      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
+                    "%#lx for signal %d.", (long)oldhand, sig));
     }
   }
 
@@ -4762,7 +4782,8 @@ void os::init(void) {
 
   page_size = sysconf(_SC_PAGESIZE);
   if (page_size == -1)
-    fatal1("os_solaris.cpp: os::init: sysconf failed (%s)", strerror(errno));
+    fatal(err_msg("os_solaris.cpp: os::init: sysconf failed (%s)",
+                  strerror(errno)));
   init_page_sizes((size_t) page_size);
 
   Solaris::initialize_system_info();
@@ -4773,7 +4794,7 @@ void os::init(void) {
 
   int fd = open("/dev/zero", O_RDWR);
   if (fd < 0) {
-    fatal1("os::init: cannot open /dev/zero (%s)", strerror(errno));
+    fatal(err_msg("os::init: cannot open /dev/zero (%s)", strerror(errno)));
   } else {
     Solaris::set_dev_zero_fd(fd);
 
@@ -4990,6 +5011,9 @@ jint os::init_2(void) {
   return JNI_OK;
 }
 
+void os::init_3(void) {
+  return;
+}
 
 // Mark the polling page as unreadable
 void os::make_polling_page_unreadable(void) {
@@ -5395,7 +5419,6 @@ int os::loadavg(double loadavg[], int nelem) {
 }
 
 //---------------------------------------------------------------------------------
-#ifndef PRODUCT
 
 static address same_page(address x, address y) {
   intptr_t page_bits = -os::vm_page_size();
@@ -5407,28 +5430,28 @@ static address same_page(address x, address y) {
     return (address)(intptr_t(y) & page_bits);
 }
 
-bool os::find(address addr) {
+bool os::find(address addr, outputStream* st) {
   Dl_info dlinfo;
   memset(&dlinfo, 0, sizeof(dlinfo));
   if (dladdr(addr, &dlinfo)) {
 #ifdef _LP64
-    tty->print("0x%016lx: ", addr);
+    st->print("0x%016lx: ", addr);
 #else
-    tty->print("0x%08x: ", addr);
+    st->print("0x%08x: ", addr);
 #endif
     if (dlinfo.dli_sname != NULL)
-      tty->print("%s+%#lx", dlinfo.dli_sname, addr-(intptr_t)dlinfo.dli_saddr);
+      st->print("%s+%#lx", dlinfo.dli_sname, addr-(intptr_t)dlinfo.dli_saddr);
     else if (dlinfo.dli_fname)
-      tty->print("<offset %#lx>", addr-(intptr_t)dlinfo.dli_fbase);
+      st->print("<offset %#lx>", addr-(intptr_t)dlinfo.dli_fbase);
     else
-      tty->print("<absolute address>");
-    if (dlinfo.dli_fname)  tty->print(" in %s", dlinfo.dli_fname);
+      st->print("<absolute address>");
+    if (dlinfo.dli_fname)  st->print(" in %s", dlinfo.dli_fname);
 #ifdef _LP64
-    if (dlinfo.dli_fbase)  tty->print(" at 0x%016lx", dlinfo.dli_fbase);
+    if (dlinfo.dli_fbase)  st->print(" at 0x%016lx", dlinfo.dli_fbase);
 #else
-    if (dlinfo.dli_fbase)  tty->print(" at 0x%08x", dlinfo.dli_fbase);
+    if (dlinfo.dli_fbase)  st->print(" at 0x%08x", dlinfo.dli_fbase);
 #endif
-    tty->cr();
+    st->cr();
 
     if (Verbose) {
       // decode some bytes around the PC
@@ -5441,15 +5464,12 @@ bool os::find(address addr) {
       if (dladdr(end, &dlinfo2) && dlinfo2.dli_saddr != dlinfo.dli_saddr
           && end > dlinfo2.dli_saddr && dlinfo2.dli_saddr > begin)
         end = (address) dlinfo2.dli_saddr;
-      Disassembler::decode(begin, end);
+      Disassembler::decode(begin, end, st);
     }
     return true;
   }
   return false;
 }
-
-#endif
-
 
 // Following function has been added to support HotSparc's libjvm.so running
 // under Solaris production JDK 1.2.2 / 1.3.0.  These came from
@@ -5893,7 +5913,6 @@ void Parker::park(bool isAbsolute, jlong time) {
   if (jt->handle_special_suspend_equivalent_condition()) {
     jt->java_suspend_self();
   }
-
   OrderAccess::fence();
 }
 
@@ -5980,3 +5999,44 @@ int os::fork_and_exec(char* cmd) {
     }
   }
 }
+
+// is_headless_jre()
+//
+// Test for the existence of libmawt in motif21 or xawt directories
+// in order to report if we are running in a headless jre
+//
+bool os::is_headless_jre() {
+    struct stat statbuf;
+    char buf[MAXPATHLEN];
+    char libmawtpath[MAXPATHLEN];
+    const char *xawtstr  = "/xawt/libmawt.so";
+    const char *motifstr = "/motif21/libmawt.so";
+    char *p;
+
+    // Get path to libjvm.so
+    os::jvm_path(buf, sizeof(buf));
+
+    // Get rid of libjvm.so
+    p = strrchr(buf, '/');
+    if (p == NULL) return false;
+    else *p = '\0';
+
+    // Get rid of client or server
+    p = strrchr(buf, '/');
+    if (p == NULL) return false;
+    else *p = '\0';
+
+    // check xawt/libmawt.so
+    strcpy(libmawtpath, buf);
+    strcat(libmawtpath, xawtstr);
+    if (::stat(libmawtpath, &statbuf) == 0) return false;
+
+    // check motif21/libmawt.so
+    strcpy(libmawtpath, buf);
+    strcat(libmawtpath, motifstr);
+    if (::stat(libmawtpath, &statbuf) == 0) return false;
+
+    return true;
+}
+
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,9 @@ bool                       PSScavenge::_survivor_overflow = false;
 int                        PSScavenge::_tenuring_threshold = 0;
 HeapWord*                  PSScavenge::_young_generation_boundary = NULL;
 elapsedTimer               PSScavenge::_accumulated_time;
-Stack<markOop>             PSScavenge::_preserved_mark_stack;
-Stack<oop>                 PSScavenge::_preserved_oop_stack;
+GrowableArray<markOop>*    PSScavenge::_preserved_mark_stack = NULL;
+GrowableArray<oop>*        PSScavenge::_preserved_oop_stack = NULL;
 CollectorCounters*         PSScavenge::_counters = NULL;
-bool                       PSScavenge::_promotion_failed = false;
 
 // Define before use
 class PSIsAliveClosure: public BoolObjectClosure {
@@ -158,10 +157,8 @@ void PSRefProcTaskExecutor::execute(ProcessTask& task)
     q->enqueue(new PSRefProcTaskProxy(task, i));
   }
   ParallelTaskTerminator terminator(
-    ParallelScavengeHeap::gc_task_manager()->workers(),
-    UseDepthFirstScavengeOrder ?
-        (TaskQueueSetSuper*) PSPromotionManager::stack_array_depth()
-      : (TaskQueueSetSuper*) PSPromotionManager::stack_array_breadth());
+                 ParallelScavengeHeap::gc_task_manager()->workers(),
+                 (TaskQueueSetSuper*) PSPromotionManager::stack_array_depth());
   if (task.marks_oops_alive() && ParallelGCThreads > 1) {
     for (uint j=0; j<ParallelGCThreads; j++) {
       q->enqueue(new StealTask(&terminator));
@@ -188,8 +185,7 @@ void PSRefProcTaskExecutor::execute(EnqueueTask& task)
 //
 // Note that this method should only be called from the vm_thread while
 // at a safepoint!
-void PSScavenge::invoke()
-{
+void PSScavenge::invoke() {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(), "should be in vm thread");
   assert(!Universe::heap()->is_gc_active(), "not reentrant");
@@ -198,29 +194,25 @@ void PSScavenge::invoke()
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
 
   PSAdaptiveSizePolicy* policy = heap->size_policy();
+  IsGCActiveMark mark;
 
-  // Before each allocation/collection attempt, find out from the
-  // policy object if GCs are, on the whole, taking too long. If so,
-  // bail out without attempting a collection.
-  if (!policy->gc_time_limit_exceeded()) {
-    IsGCActiveMark mark;
+  bool scavenge_was_done = PSScavenge::invoke_no_policy();
 
-    bool scavenge_was_done = PSScavenge::invoke_no_policy();
-
-    PSGCAdaptivePolicyCounters* counters = heap->gc_policy_counters();
+  PSGCAdaptivePolicyCounters* counters = heap->gc_policy_counters();
+  if (UsePerfData)
+    counters->update_full_follows_scavenge(0);
+  if (!scavenge_was_done ||
+      policy->should_full_GC(heap->old_gen()->free_in_bytes())) {
     if (UsePerfData)
-      counters->update_full_follows_scavenge(0);
-    if (!scavenge_was_done ||
-        policy->should_full_GC(heap->old_gen()->free_in_bytes())) {
-      if (UsePerfData)
-        counters->update_full_follows_scavenge(full_follows_scavenge);
+      counters->update_full_follows_scavenge(full_follows_scavenge);
+    GCCauseSetter gccs(heap, GCCause::_adaptive_size_policy);
+    CollectorPolicy* cp = heap->collector_policy();
+    const bool clear_all_softrefs = cp->should_clear_all_soft_refs();
 
-      GCCauseSetter gccs(heap, GCCause::_adaptive_size_policy);
-      if (UseParallelOldGC) {
-        PSParallelCompact::invoke_no_policy(false);
-      } else {
-        PSMarkSweep::invoke_no_policy(false);
-      }
+    if (UseParallelOldGC) {
+      PSParallelCompact::invoke_no_policy(clear_all_softrefs);
+    } else {
+      PSMarkSweep::invoke_no_policy(clear_all_softrefs);
     }
   }
 }
@@ -230,9 +222,6 @@ void PSScavenge::invoke()
 bool PSScavenge::invoke_no_policy() {
   assert(SafepointSynchronize::is_at_safepoint(), "should be at safepoint");
   assert(Thread::current() == (Thread*)VMThread::vm_thread(), "should be in vm thread");
-
-  assert(_preserved_mark_stack.is_empty(), "should be empty");
-  assert(_preserved_oop_stack.is_empty(), "should be empty");
 
   TimeStamp scavenge_entry;
   TimeStamp scavenge_midpoint;
@@ -384,10 +373,8 @@ bool PSScavenge::invoke_no_policy() {
       q->enqueue(new ScavengeRootsTask(ScavengeRootsTask::code_cache));
 
       ParallelTaskTerminator terminator(
-        gc_task_manager()->workers(),
-        promotion_manager->depth_first() ?
-            (TaskQueueSetSuper*) promotion_manager->stack_array_depth()
-          : (TaskQueueSetSuper*) promotion_manager->stack_array_breadth());
+                  gc_task_manager()->workers(),
+                  (TaskQueueSetSuper*) promotion_manager->stack_array_depth());
       if (ParallelGCThreads>1) {
         for (uint j=0; j<ParallelGCThreads; j++) {
           q->enqueue(new StealTask(&terminator));
@@ -423,7 +410,6 @@ bool PSScavenge::invoke_no_policy() {
     }
 
     // Finally, flush the promotion_manager's labs, and deallocate its stacks.
-    assert(promotion_manager->claimed_stack_empty(), "Sanity");
     PSPromotionManager::post_scavenge();
 
     promotion_failure_occurred = promotion_failed();
@@ -451,6 +437,9 @@ bool PSScavenge::invoke_no_policy() {
       size_t promoted = old_gen->used_in_bytes() - old_gen_used_before;
       size_policy->update_averages(_survivor_overflow, survived, promoted);
 
+      // A successful scavenge should restart the GC time limit count which is
+      // for full GC's.
+      size_policy->reset_gc_overhead_limit_count();
       if (UseAdaptiveSizePolicy) {
         // Calculate the new survivor size and tenuring threshold
 
@@ -527,7 +516,8 @@ bool PSScavenge::invoke_no_policy() {
                                    old_gen->max_gen_size(),
                                    max_eden_size,
                                    false  /* full gc*/,
-                                   gc_cause);
+                                   gc_cause,
+                                   heap->collector_policy());
 
         }
         // Resize the young generation at every collection
@@ -646,20 +636,24 @@ void PSScavenge::clean_up_failed_promotion() {
     young_gen->object_iterate(&unforward_closure);
 
     if (PrintGC && Verbose) {
-      gclog_or_tty->print_cr("Restoring %d marks", _preserved_oop_stack.size());
+      gclog_or_tty->print_cr("Restoring %d marks",
+                              _preserved_oop_stack->length());
     }
 
     // Restore any saved marks.
-    while (!_preserved_oop_stack.is_empty()) {
-      oop obj      = _preserved_oop_stack.pop();
-      markOop mark = _preserved_mark_stack.pop();
+    for (int i=0; i < _preserved_oop_stack->length(); i++) {
+      oop obj       = _preserved_oop_stack->at(i);
+      markOop mark  = _preserved_mark_stack->at(i);
       obj->set_mark(mark);
     }
 
-    // Clear the preserved mark and oop stack caches.
-    _preserved_mark_stack.clear(true);
-    _preserved_oop_stack.clear(true);
-    _promotion_failed = false;
+    // Deallocate the preserved mark and oop stacks.
+    // The stacks were allocated as CHeap objects, so
+    // we must call delete to prevent mem leaks.
+    delete _preserved_mark_stack;
+    _preserved_mark_stack = NULL;
+    delete _preserved_oop_stack;
+    _preserved_oop_stack = NULL;
   }
 
   // Reset the PromotionFailureALot counters.
@@ -667,16 +661,27 @@ void PSScavenge::clean_up_failed_promotion() {
 }
 
 // This method is called whenever an attempt to promote an object
-// fails. Some markOops will need preservation, some will not. Note
+// fails. Some markOops will need preserving, some will not. Note
 // that the entire eden is traversed after a failed promotion, with
 // all forwarded headers replaced by the default markOop. This means
 // it is not neccessary to preserve most markOops.
 void PSScavenge::oop_promotion_failed(oop obj, markOop obj_mark) {
-  _promotion_failed = true;
+  if (_preserved_mark_stack == NULL) {
+    ThreadCritical tc; // Lock and retest
+    if (_preserved_mark_stack == NULL) {
+      assert(_preserved_oop_stack == NULL, "Sanity");
+      _preserved_mark_stack = new (ResourceObj::C_HEAP) GrowableArray<markOop>(40, true);
+      _preserved_oop_stack = new (ResourceObj::C_HEAP) GrowableArray<oop>(40, true);
+    }
+  }
+
+  // Because we must hold the ThreadCritical lock before using
+  // the stacks, we should be safe from observing partial allocations,
+  // which are also guarded by the ThreadCritical lock.
   if (obj_mark->must_be_preserved_for_promotion_failure(obj)) {
     ThreadCritical tc;
-    _preserved_oop_stack.push(obj);
-    _preserved_mark_stack.push(obj_mark);
+    _preserved_oop_stack->push(obj);
+    _preserved_mark_stack->push(obj_mark);
   }
 }
 

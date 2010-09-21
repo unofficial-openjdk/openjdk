@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ void perfMemory_init();
 
 // Initialization done by Java thread in init_globals()
 void management_init();
-void vtune_init();
 void bytecodes_init();
 void classLoader_init();
 void codeCache_init();
@@ -82,7 +81,6 @@ void vm_init_globals() {
 jint init_globals() {
   HandleMark hm;
   management_init();
-  vtune_init();
   bytecodes_init();
   classLoader_init();
   codeCache_init();
@@ -118,6 +116,9 @@ jint init_globals() {
   javaClasses_init();  // must happen after vtable initialization
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
 
+  // Generate MethodHandles adapters.
+  MethodHandles::generate_adapters();
+
   // Although we'd like to, we can't easily do a heap verify
   // here because the main thread isn't yet a JavaThread, so
   // its TLAB may not be made parseable from the usual interfaces.
@@ -125,6 +126,12 @@ jint init_globals() {
       Universe::heap()->total_collections() >= VerifyGCStartAt) {
     Universe::heap()->prepare_for_verify();
     Universe::verify();   // make sure we're starting with a clean slate
+  }
+
+  // All the flags that get adjusted by VM_Version_init and os::init_2
+  // have been set so dump the flags now.
+  if (PrintFlagsFinal) {
+    CommandLineFlags::printFlags();
   }
 
   return JNI_OK;

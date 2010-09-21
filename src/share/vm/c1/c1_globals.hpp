@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -251,9 +251,6 @@
                                                                             \
   develop(bool, BailoutOnExceptionHandlers, false,                          \
           "bailout of compilation for methods with exception handlers")     \
-                                                                            \
-  develop(bool, AlwaysEmitDebugInfo, false,                                 \
-          "always emit debug info")                                         \
                                                                             \
   develop(bool, InstallMethods, true,                                       \
           "Install methods at the end of successful compilations")          \

@@ -223,7 +223,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
         break;
       case Deoptimization::Unpack_exception:
         // exception is pending
-        pc = SharedRuntime::raw_exception_handler_for_return_address(pc);
+        pc = SharedRuntime::raw_exception_handler_for_return_address(thread, pc);
         // [phh] We're going to end up in some handler or other, so it doesn't
         // matter what mdp we point to.  See exception_handler_for_exception()
         // in interpreterRuntime.cpp.
@@ -309,11 +309,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to the stack
-      iframe()->interpreter_frame_set_expression_stack_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
 
@@ -335,11 +330,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       default:
         ShouldNotReachHere();
     }
-    if (TaggedStackInterpreter) {
-      // Write tag to stack
-      iframe()->interpreter_frame_set_local_tag(i,
-                                  frame::tag_for_basic_type(value->type()));
-    }
   }
 
   if (is_top_frame && JvmtiExport::can_pop_frame() && thread->popframe_forcing_deopt_reexecution()) {
@@ -354,9 +344,8 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       void* saved_args = thread->popframe_preserved_args();
       assert(saved_args != NULL, "must have been saved by interpreter");
 #ifdef ASSERT
-      int stack_words = Interpreter::stackElementWords();
       assert(popframe_preserved_args_size_in_words <=
-             iframe()->interpreter_frame_expression_stack_size()*stack_words,
+             iframe()->interpreter_frame_expression_stack_size()*Interpreter::stackElementWords,
              "expression stack size should have been extended");
 #endif // ASSERT
       int top_element = iframe()->interpreter_frame_expression_stack_size()-1;
@@ -366,9 +355,9 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
       } else {
         base = iframe()->interpreter_frame_expression_stack();
       }
-      Copy::conjoint_bytes(saved_args,
-                           base,
-                           popframe_preserved_args_size_in_bytes);
+      Copy::conjoint_jbytes(saved_args,
+                            base,
+                            popframe_preserved_args_size_in_bytes);
       thread->popframe_free_preserved_args();
     }
   }

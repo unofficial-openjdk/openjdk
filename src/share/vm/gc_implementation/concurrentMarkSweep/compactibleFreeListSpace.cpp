@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,23 @@
 
 // highest ranked  free list lock rank
 int CompactibleFreeListSpace::_lockRank = Mutex::leaf + 3;
+
+// Defaults are 0 so things will break badly if incorrectly initialized.
+int CompactibleFreeListSpace::IndexSetStart  = 0;
+int CompactibleFreeListSpace::IndexSetStride = 0;
+
+size_t MinChunkSize = 0;
+
+void CompactibleFreeListSpace::set_cms_values() {
+  // Set CMS global values
+  assert(MinChunkSize == 0, "already set");
+  #define numQuanta(x,y) ((x+y-1)/y)
+  MinChunkSize = numQuanta(sizeof(FreeChunk), MinObjAlignmentInBytes) * MinObjAlignment;
+
+  assert(IndexSetStart == 0 && IndexSetStride == 0, "already set");
+  IndexSetStart  = MinObjAlignment;
+  IndexSetStride = MinObjAlignment;
+}
 
 // Constructor
 CompactibleFreeListSpace::CompactibleFreeListSpace(BlockOffsetSharedArray* bs,
@@ -302,7 +319,7 @@ size_t CompactibleFreeListSpace::sumIndexedFreeListArrayReturnedBytes() {
 
 size_t CompactibleFreeListSpace::totalCountInIndexedFreeLists() const {
   size_t count = 0;
-  for (int i = MinChunkSize; i < IndexSetSize; i++) {
+  for (int i = (int)MinChunkSize; i < IndexSetSize; i++) {
     debug_only(
       ssize_t total_list_count = 0;
       for (FreeChunk* fc = _indexedFreeList[i].head(); fc != NULL;
@@ -383,6 +400,29 @@ size_t CompactibleFreeListSpace::max_alloc_in_words() const {
     }
   }
   return res;
+}
+
+void LinearAllocBlock::print_on(outputStream* st) const {
+  st->print_cr(" LinearAllocBlock: ptr = " PTR_FORMAT ", word_size = " SIZE_FORMAT
+            ", refillsize = " SIZE_FORMAT ", allocation_size_limit = " SIZE_FORMAT,
+            _ptr, _word_size, _refillSize, _allocation_size_limit);
+}
+
+void CompactibleFreeListSpace::print_on(outputStream* st) const {
+  st->print_cr("COMPACTIBLE FREELIST SPACE");
+  st->print_cr(" Space:");
+  Space::print_on(st);
+
+  st->print_cr("promoInfo:");
+  _promoInfo.print_on(st);
+
+  st->print_cr("_smallLinearAllocBlock");
+  _smallLinearAllocBlock.print_on(st);
+
+  // dump_memory_block(_smallLinearAllocBlock->_ptr, 128);
+
+  st->print_cr(" _fitStrategy = %s, _adaptive_freelists = %s",
+               _fitStrategy?"true":"false", _adaptive_freelists?"true":"false");
 }
 
 void CompactibleFreeListSpace::print_indexed_free_lists(outputStream* st)
@@ -540,13 +580,15 @@ size_t CompactibleFreeListSpace::maxChunkSizeInIndexedFreeLists() const {
 void CompactibleFreeListSpace::set_end(HeapWord* value) {
   HeapWord* prevEnd = end();
   assert(prevEnd != value, "unnecessary set_end call");
-  assert(prevEnd == NULL || value >= unallocated_block(), "New end is below unallocated block");
+  assert(prevEnd == NULL || !BlockOffsetArrayUseUnallocatedBlock || value >= unallocated_block(),
+        "New end is below unallocated block");
   _end = value;
   if (prevEnd != NULL) {
     // Resize the underlying block offset table.
     _bt.resize(pointer_delta(value, bottom()));
     if (value <= prevEnd) {
-      assert(value >= unallocated_block(), "New end is below unallocated block");
+      assert(!BlockOffsetArrayUseUnallocatedBlock || value >= unallocated_block(),
+             "New end is below unallocated block");
     } else {
       // Now, take this new chunk and add it to the free blocks.
       // Note that the BOT has not yet been updated for this block.
@@ -921,7 +963,6 @@ HeapWord* CompactibleFreeListSpace::block_start_careful(const void* p) const {
 
 size_t CompactibleFreeListSpace::block_size(const HeapWord* p) const {
   NOT_PRODUCT(verify_objects_initialized());
-  assert(MemRegion(bottom(), end()).contains(p), "p not in space");
   // This must be volatile, or else there is a danger that the compiler
   // will compile the code below into a sometimes-infinite loop, by keeping
   // the value read the first time in a register.
@@ -940,7 +981,7 @@ size_t CompactibleFreeListSpace::block_size(const HeapWord* p) const {
       // must read from what 'p' points to in each loop.
       klassOop k = ((volatile oopDesc*)p)->klass_or_null();
       if (k != NULL) {
-        assert(k->is_oop(true /* ignore mark word */), "Should really be klass oop.");
+        assert(k->is_oop(true /* ignore mark word */), "Should be klass oop");
         oop o = (oop)p;
         assert(o->is_parsable(), "Should be parsable");
         assert(o->is_oop(true /* ignore mark word */), "Should be an oop.");
@@ -1214,7 +1255,6 @@ HeapWord* CompactibleFreeListSpace::allocate_adaptive_freelists(size_t size) {
         // satisfy the request.  This is different that
         // evm.
         // Don't record chunk off a LinAB?  smallSplitBirth(size);
-
     } else {
       // Raid the exact free lists larger than size, even if they are not
       // overpopulated.
@@ -1432,6 +1472,7 @@ CompactibleFreeListSpace::getChunkFromLinearAllocBlock(LinearAllocBlock *blk,
     // Update BOT last so that other (parallel) GC threads see a consistent
     // view of the BOT and free blocks.
     // Above must occur before BOT is updated below.
+    OrderAccess::storestore();
     _bt.split_block(res, blk_size, size);  // adjust block offset table
   }
   return res;
@@ -1460,6 +1501,7 @@ HeapWord*  CompactibleFreeListSpace::getChunkFromLinearAllocBlockRemainder(
     // Update BOT last so that other (parallel) GC threads see a consistent
     // view of the BOT and free blocks.
     // Above must occur before BOT is updated below.
+    OrderAccess::storestore();
     _bt.split_block(res, blk_size, size);  // adjust block offset table
     _bt.allocated(res, size);
   }
@@ -1839,6 +1881,8 @@ CompactibleFreeListSpace::splitChunkAndReturnRemainder(FreeChunk* chunk,
   ffc->linkPrev(NULL); // Mark as a free block for other (parallel) GC threads.
   // Above must occur before BOT is updated below.
   // adjust block offset table
+  OrderAccess::storestore();
+  assert(chunk->isFree() && ffc->isFree(), "Error");
   _bt.split_block((HeapWord*)chunk, chunk->size(), new_size);
   if (rem_size < SmallForDictionary) {
     bool is_par = (SharedHeap::heap()->n_par_threads() > 0);
@@ -1894,8 +1938,7 @@ void CompactibleFreeListSpace::save_marks() {
   // mark the "end" of the used space at the time of this call;
   // note, however, that promoted objects from this point
   // on are tracked in the _promoInfo below.
-  set_saved_mark_word(BlockOffsetArrayUseUnallocatedBlock ?
-                      unallocated_block() : end());
+  set_saved_mark_word(unallocated_block());
   // inform allocator that promotions should be tracked.
   assert(_promoInfo.noPromotions(), "_promoInfo inconsistency");
   _promoInfo.startTrackingPromotions();
@@ -1925,59 +1968,6 @@ oop_since_save_marks_iterate##nv_suffix(OopClosureType* blk) {              \
 }
 
 ALL_SINCE_SAVE_MARKS_CLOSURES(CFLS_OOP_SINCE_SAVE_MARKS_DEFN)
-
-//////////////////////////////////////////////////////////////////////////////
-// We go over the list of promoted objects, removing each from the list,
-// and applying the closure (this may, in turn, add more elements to
-// the tail of the promoted list, and these newly added objects will
-// also be processed) until the list is empty.
-// To aid verification and debugging, in the non-product builds
-// we actually forward _promoHead each time we process a promoted oop.
-// Note that this is not necessary in general (i.e. when we don't need to
-// call PromotionInfo::verify()) because oop_iterate can only add to the
-// end of _promoTail, and never needs to look at _promoHead.
-
-#define PROMOTED_OOPS_ITERATE_DEFN(OopClosureType, nv_suffix)               \
-                                                                            \
-void PromotionInfo::promoted_oops_iterate##nv_suffix(OopClosureType* cl) {  \
-  NOT_PRODUCT(verify());                                                    \
-  PromotedObject *curObj, *nextObj;                                         \
-  for (curObj = _promoHead; curObj != NULL; curObj = nextObj) {             \
-    if ((nextObj = curObj->next()) == NULL) {                               \
-      /* protect ourselves against additions due to closure application     \
-         below by resetting the list.  */                                   \
-      assert(_promoTail == curObj, "Should have been the tail");            \
-      _promoHead = _promoTail = NULL;                                       \
-    }                                                                       \
-    if (curObj->hasDisplacedMark()) {                                       \
-      /* restore displaced header */                                        \
-      oop(curObj)->set_mark(nextDisplacedHeader());                         \
-    } else {                                                                \
-      /* restore prototypical header */                                     \
-      oop(curObj)->init_mark();                                             \
-    }                                                                       \
-    /* The "promoted_mark" should now not be set */                         \
-    assert(!curObj->hasPromotedMark(),                                      \
-           "Should have been cleared by restoring displaced mark-word");    \
-    NOT_PRODUCT(_promoHead = nextObj);                                      \
-    if (cl != NULL) oop(curObj)->oop_iterate(cl);                           \
-    if (nextObj == NULL) { /* start at head of list reset above */          \
-      nextObj = _promoHead;                                                 \
-    }                                                                       \
-  }                                                                         \
-  assert(noPromotions(), "post-condition violation");                       \
-  assert(_promoHead == NULL && _promoTail == NULL, "emptied promoted list");\
-  assert(_spoolHead == _spoolTail, "emptied spooling buffers");             \
-  assert(_firstIndex == _nextIndex, "empty buffer");                        \
-}
-
-// This should have been ALL_SINCE_...() just like the others,
-// but, because the body of the method above is somehwat longer,
-// the MSVC compiler cannot cope; as a workaround, we split the
-// macro into its 3 constituent parts below (see original macro
-// definition in specializedOopClosures.hpp).
-SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES_YOUNG(PROMOTED_OOPS_ITERATE_DEFN)
-PROMOTED_OOPS_ITERATE_DEFN(OopsInGenClosure,_v)
 
 
 void CompactibleFreeListSpace::object_iterate_since_last_GC(ObjectClosure* cl) {
@@ -2274,8 +2264,7 @@ void CompactibleFreeListSpace::split(size_t from, size_t to1) {
 }
 
 void CompactibleFreeListSpace::print() const {
-  tty->print(" CompactibleFreeListSpace");
-  Space::print();
+  Space::print_on(tty);
 }
 
 void CompactibleFreeListSpace::prepare_for_verify() {
@@ -2289,18 +2278,28 @@ class VerifyAllBlksClosure: public BlkClosure {
  private:
   const CompactibleFreeListSpace* _sp;
   const MemRegion                 _span;
+  HeapWord*                       _last_addr;
+  size_t                          _last_size;
+  bool                            _last_was_obj;
+  bool                            _last_was_live;
 
  public:
   VerifyAllBlksClosure(const CompactibleFreeListSpace* sp,
-    MemRegion span) :  _sp(sp), _span(span) { }
+    MemRegion span) :  _sp(sp), _span(span),
+                       _last_addr(NULL), _last_size(0),
+                       _last_was_obj(false), _last_was_live(false) { }
 
   virtual size_t do_blk(HeapWord* addr) {
     size_t res;
+    bool   was_obj  = false;
+    bool   was_live = false;
     if (_sp->block_is_obj(addr)) {
+      was_obj = true;
       oop p = oop(addr);
       guarantee(p->is_oop(), "Should be an oop");
       res = _sp->adjustObjectSize(p->size());
       if (_sp->obj_is_alive(addr)) {
+        was_live = true;
         p->verify();
       }
     } else {
@@ -2311,7 +2310,20 @@ class VerifyAllBlksClosure: public BlkClosure {
                   "Chunk should be on a free list");
       }
     }
-    guarantee(res != 0, "Livelock: no rank reduction!");
+    if (res == 0) {
+      gclog_or_tty->print_cr("Livelock: no rank reduction!");
+      gclog_or_tty->print_cr(
+        " Current:  addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n"
+        " Previous: addr = " PTR_FORMAT ", size = " SIZE_FORMAT ", obj = %s, live = %s \n",
+        addr,       res,        was_obj      ?"true":"false", was_live      ?"true":"false",
+        _last_addr, _last_size, _last_was_obj?"true":"false", _last_was_live?"true":"false");
+      _sp->print_on(gclog_or_tty);
+      guarantee(false, "Seppuku!");
+    }
+    _last_addr = addr;
+    _last_size = res;
+    _last_was_obj  = was_obj;
+    _last_was_live = was_live;
     return res;
   }
 };
@@ -2506,281 +2518,6 @@ void CompactibleFreeListSpace::printFLCensus(size_t sweep_count) const {
   _dictionary->printDictCensus();
 }
 
-// Return the next displaced header, incrementing the pointer and
-// recycling spool area as necessary.
-markOop PromotionInfo::nextDisplacedHeader() {
-  assert(_spoolHead != NULL, "promotionInfo inconsistency");
-  assert(_spoolHead != _spoolTail || _firstIndex < _nextIndex,
-         "Empty spool space: no displaced header can be fetched");
-  assert(_spoolHead->bufferSize > _firstIndex, "Off by one error at head?");
-  markOop hdr = _spoolHead->displacedHdr[_firstIndex];
-  // Spool forward
-  if (++_firstIndex == _spoolHead->bufferSize) { // last location in this block
-    // forward to next block, recycling this block into spare spool buffer
-    SpoolBlock* tmp = _spoolHead->nextSpoolBlock;
-    assert(_spoolHead != _spoolTail, "Spooling storage mix-up");
-    _spoolHead->nextSpoolBlock = _spareSpool;
-    _spareSpool = _spoolHead;
-    _spoolHead = tmp;
-    _firstIndex = 1;
-    NOT_PRODUCT(
-      if (_spoolHead == NULL) {  // all buffers fully consumed
-        assert(_spoolTail == NULL && _nextIndex == 1,
-               "spool buffers processing inconsistency");
-      }
-    )
-  }
-  return hdr;
-}
-
-void PromotionInfo::track(PromotedObject* trackOop) {
-  track(trackOop, oop(trackOop)->klass());
-}
-
-void PromotionInfo::track(PromotedObject* trackOop, klassOop klassOfOop) {
-  // make a copy of header as it may need to be spooled
-  markOop mark = oop(trackOop)->mark();
-  trackOop->clearNext();
-  if (mark->must_be_preserved_for_cms_scavenge(klassOfOop)) {
-    // save non-prototypical header, and mark oop
-    saveDisplacedHeader(mark);
-    trackOop->setDisplacedMark();
-  } else {
-    // we'd like to assert something like the following:
-    // assert(mark == markOopDesc::prototype(), "consistency check");
-    // ... but the above won't work because the age bits have not (yet) been
-    // cleared. The remainder of the check would be identical to the
-    // condition checked in must_be_preserved() above, so we don't really
-    // have anything useful to check here!
-  }
-  if (_promoTail != NULL) {
-    assert(_promoHead != NULL, "List consistency");
-    _promoTail->setNext(trackOop);
-    _promoTail = trackOop;
-  } else {
-    assert(_promoHead == NULL, "List consistency");
-    _promoHead = _promoTail = trackOop;
-  }
-  // Mask as newly promoted, so we can skip over such objects
-  // when scanning dirty cards
-  assert(!trackOop->hasPromotedMark(), "Should not have been marked");
-  trackOop->setPromotedMark();
-}
-
-// Save the given displaced header, incrementing the pointer and
-// obtaining more spool area as necessary.
-void PromotionInfo::saveDisplacedHeader(markOop hdr) {
-  assert(_spoolHead != NULL && _spoolTail != NULL,
-         "promotionInfo inconsistency");
-  assert(_spoolTail->bufferSize > _nextIndex, "Off by one error at tail?");
-  _spoolTail->displacedHdr[_nextIndex] = hdr;
-  // Spool forward
-  if (++_nextIndex == _spoolTail->bufferSize) { // last location in this block
-    // get a new spooling block
-    assert(_spoolTail->nextSpoolBlock == NULL, "tail should terminate spool list");
-    _splice_point = _spoolTail;                   // save for splicing
-    _spoolTail->nextSpoolBlock = getSpoolBlock(); // might fail
-    _spoolTail = _spoolTail->nextSpoolBlock;      // might become NULL ...
-    // ... but will attempt filling before next promotion attempt
-    _nextIndex = 1;
-  }
-}
-
-// Ensure that spooling space exists. Return false if spooling space
-// could not be obtained.
-bool PromotionInfo::ensure_spooling_space_work() {
-  assert(!has_spooling_space(), "Only call when there is no spooling space");
-  // Try and obtain more spooling space
-  SpoolBlock* newSpool = getSpoolBlock();
-  assert(newSpool == NULL ||
-         (newSpool->bufferSize != 0 && newSpool->nextSpoolBlock == NULL),
-        "getSpoolBlock() sanity check");
-  if (newSpool == NULL) {
-    return false;
-  }
-  _nextIndex = 1;
-  if (_spoolTail == NULL) {
-    _spoolTail = newSpool;
-    if (_spoolHead == NULL) {
-      _spoolHead = newSpool;
-      _firstIndex = 1;
-    } else {
-      assert(_splice_point != NULL && _splice_point->nextSpoolBlock == NULL,
-             "Splice point invariant");
-      // Extra check that _splice_point is connected to list
-      #ifdef ASSERT
-      {
-        SpoolBlock* blk = _spoolHead;
-        for (; blk->nextSpoolBlock != NULL;
-             blk = blk->nextSpoolBlock);
-        assert(blk != NULL && blk == _splice_point,
-               "Splice point incorrect");
-      }
-      #endif // ASSERT
-      _splice_point->nextSpoolBlock = newSpool;
-    }
-  } else {
-    assert(_spoolHead != NULL, "spool list consistency");
-    _spoolTail->nextSpoolBlock = newSpool;
-    _spoolTail = newSpool;
-  }
-  return true;
-}
-
-// Get a free spool buffer from the free pool, getting a new block
-// from the heap if necessary.
-SpoolBlock* PromotionInfo::getSpoolBlock() {
-  SpoolBlock* res;
-  if ((res = _spareSpool) != NULL) {
-    _spareSpool = _spareSpool->nextSpoolBlock;
-    res->nextSpoolBlock = NULL;
-  } else {  // spare spool exhausted, get some from heap
-    res = (SpoolBlock*)(space()->allocateScratch(refillSize()));
-    if (res != NULL) {
-      res->init();
-    }
-  }
-  assert(res == NULL || res->nextSpoolBlock == NULL, "postcondition");
-  return res;
-}
-
-void PromotionInfo::startTrackingPromotions() {
-  assert(_spoolHead == _spoolTail && _firstIndex == _nextIndex,
-         "spooling inconsistency?");
-  _firstIndex = _nextIndex = 1;
-  _tracking = true;
-}
-
-#define CMSPrintPromoBlockInfo 1
-
-void PromotionInfo::stopTrackingPromotions(uint worker_id) {
-  assert(_spoolHead == _spoolTail && _firstIndex == _nextIndex,
-         "spooling inconsistency?");
-  _firstIndex = _nextIndex = 1;
-  _tracking = false;
-  if (CMSPrintPromoBlockInfo > 1) {
-    print_statistics(worker_id);
-  }
-}
-
-void PromotionInfo::print_statistics(uint worker_id) const {
-  assert(_spoolHead == _spoolTail && _firstIndex == _nextIndex,
-         "Else will undercount");
-  assert(CMSPrintPromoBlockInfo > 0, "Else unnecessary call");
-  // Count the number of blocks and slots in the free pool
-  size_t slots  = 0;
-  size_t blocks = 0;
-  for (SpoolBlock* cur_spool = _spareSpool;
-       cur_spool != NULL;
-       cur_spool = cur_spool->nextSpoolBlock) {
-    // the first entry is just a self-pointer; indices 1 through
-    // bufferSize - 1 are occupied (thus, bufferSize - 1 slots).
-    guarantee((void*)cur_spool->displacedHdr == (void*)&cur_spool->displacedHdr,
-              "first entry of displacedHdr should be self-referential");
-    slots += cur_spool->bufferSize - 1;
-    blocks++;
-  }
-  if (_spoolHead != NULL) {
-    slots += _spoolHead->bufferSize - 1;
-    blocks++;
-  }
-  gclog_or_tty->print_cr(" [worker %d] promo_blocks = %d, promo_slots = %d ",
-                         worker_id, blocks, slots);
-}
-
-// When _spoolTail is not NULL, then the slot <_spoolTail, _nextIndex>
-// points to the next slot available for filling.
-// The set of slots holding displaced headers are then all those in the
-// right-open interval denoted by:
-//
-//    [ <_spoolHead, _firstIndex>, <_spoolTail, _nextIndex> )
-//
-// When _spoolTail is NULL, then the set of slots with displaced headers
-// is all those starting at the slot <_spoolHead, _firstIndex> and
-// going up to the last slot of last block in the linked list.
-// In this lartter case, _splice_point points to the tail block of
-// this linked list of blocks holding displaced headers.
-void PromotionInfo::verify() const {
-  // Verify the following:
-  // 1. the number of displaced headers matches the number of promoted
-  //    objects that have displaced headers
-  // 2. each promoted object lies in this space
-  debug_only(
-    PromotedObject* junk = NULL;
-    assert(junk->next_addr() == (void*)(oop(junk)->mark_addr()),
-           "Offset of PromotedObject::_next is expected to align with "
-           "  the OopDesc::_mark within OopDesc");
-  )
-  // FIXME: guarantee????
-  guarantee(_spoolHead == NULL || _spoolTail != NULL ||
-            _splice_point != NULL, "list consistency");
-  guarantee(_promoHead == NULL || _promoTail != NULL, "list consistency");
-  // count the number of objects with displaced headers
-  size_t numObjsWithDisplacedHdrs = 0;
-  for (PromotedObject* curObj = _promoHead; curObj != NULL; curObj = curObj->next()) {
-    guarantee(space()->is_in_reserved((HeapWord*)curObj), "Containment");
-    // the last promoted object may fail the mark() != NULL test of is_oop().
-    guarantee(curObj->next() == NULL || oop(curObj)->is_oop(), "must be an oop");
-    if (curObj->hasDisplacedMark()) {
-      numObjsWithDisplacedHdrs++;
-    }
-  }
-  // Count the number of displaced headers
-  size_t numDisplacedHdrs = 0;
-  for (SpoolBlock* curSpool = _spoolHead;
-       curSpool != _spoolTail && curSpool != NULL;
-       curSpool = curSpool->nextSpoolBlock) {
-    // the first entry is just a self-pointer; indices 1 through
-    // bufferSize - 1 are occupied (thus, bufferSize - 1 slots).
-    guarantee((void*)curSpool->displacedHdr == (void*)&curSpool->displacedHdr,
-              "first entry of displacedHdr should be self-referential");
-    numDisplacedHdrs += curSpool->bufferSize - 1;
-  }
-  guarantee((_spoolHead == _spoolTail) == (numDisplacedHdrs == 0),
-            "internal consistency");
-  guarantee(_spoolTail != NULL || _nextIndex == 1,
-            "Inconsistency between _spoolTail and _nextIndex");
-  // We overcounted (_firstIndex-1) worth of slots in block
-  // _spoolHead and we undercounted (_nextIndex-1) worth of
-  // slots in block _spoolTail. We make an appropriate
-  // adjustment by subtracting the first and adding the
-  // second:  - (_firstIndex - 1) + (_nextIndex - 1)
-  numDisplacedHdrs += (_nextIndex - _firstIndex);
-  guarantee(numDisplacedHdrs == numObjsWithDisplacedHdrs, "Displaced hdr count");
-}
-
-void PromotionInfo::print_on(outputStream* st) const {
-  SpoolBlock* curSpool = NULL;
-  size_t i = 0;
-  st->print_cr("start & end indices: [" SIZE_FORMAT ", " SIZE_FORMAT ")",
-               _firstIndex, _nextIndex);
-  for (curSpool = _spoolHead; curSpool != _spoolTail && curSpool != NULL;
-       curSpool = curSpool->nextSpoolBlock) {
-    curSpool->print_on(st);
-    st->print_cr(" active ");
-    i++;
-  }
-  for (curSpool = _spoolTail; curSpool != NULL;
-       curSpool = curSpool->nextSpoolBlock) {
-    curSpool->print_on(st);
-    st->print_cr(" inactive ");
-    i++;
-  }
-  for (curSpool = _spareSpool; curSpool != NULL;
-       curSpool = curSpool->nextSpoolBlock) {
-    curSpool->print_on(st);
-    st->print_cr(" free ");
-    i++;
-  }
-  st->print_cr(SIZE_FORMAT " header spooling blocks", i);
-}
-
-void SpoolBlock::print_on(outputStream* st) const {
-  st->print("[" PTR_FORMAT "," PTR_FORMAT "), " SIZE_FORMAT " HeapWords -> " PTR_FORMAT,
-            this, (HeapWord*)displacedHdr + bufferSize,
-            bufferSize, nextSpoolBlock);
-}
-
 ///////////////////////////////////////////////////////////////////////////
 // CFLS_LAB
 ///////////////////////////////////////////////////////////////////////////
@@ -2832,7 +2569,7 @@ void CFLS_LAB::modify_initialization(size_t n, unsigned wt) {
 
 HeapWord* CFLS_LAB::alloc(size_t word_sz) {
   FreeChunk* res;
-  word_sz = _cfls->adjustObjectSize(word_sz);
+  guarantee(word_sz == _cfls->adjustObjectSize(word_sz), "Error");
   if (word_sz >=  CompactibleFreeListSpace::IndexSetSize) {
     // This locking manages sync with other large object allocations.
     MutexLockerEx x(_cfls->parDictionaryAllocLock(),
@@ -2978,12 +2715,12 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
          (cur_sz < CompactibleFreeListSpace::IndexSetSize) &&
          (CMSSplitIndexedFreeListBlocks || k <= 1);
          k++, cur_sz = k * word_sz) {
-      FreeList* gfl = &_indexedFreeList[cur_sz];
       FreeList fl_for_cur_sz;  // Empty.
       fl_for_cur_sz.set_size(cur_sz);
       {
         MutexLockerEx x(_indexedFreeListParLocks[cur_sz],
                         Mutex::_no_safepoint_check_flag);
+        FreeList* gfl = &_indexedFreeList[cur_sz];
         if (gfl->count() != 0) {
           // nn is the number of chunks of size cur_sz that
           // we'd need to split k-ways each, in order to create
@@ -2996,9 +2733,9 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
             // we increment the split death count by the number of blocks
             // we just took from the cur_sz-size blocks list and which
             // we will be splitting below.
-            ssize_t deaths = _indexedFreeList[cur_sz].splitDeaths() +
+            ssize_t deaths = gfl->splitDeaths() +
                              fl_for_cur_sz.count();
-            _indexedFreeList[cur_sz].set_splitDeaths(deaths);
+            gfl->set_splitDeaths(deaths);
           }
         }
       }
@@ -3014,18 +2751,25 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
             // access the main chunk sees it as a single free block until we
             // change it.
             size_t fc_size = fc->size();
+            assert(fc->isFree(), "Error");
             for (int i = k-1; i >= 0; i--) {
               FreeChunk* ffc = (FreeChunk*)((HeapWord*)fc + i * word_sz);
+              assert((i != 0) ||
+                        ((fc == ffc) && ffc->isFree() &&
+                         (ffc->size() == k*word_sz) && (fc_size == word_sz)),
+                        "Counting error");
               ffc->setSize(word_sz);
-              ffc->linkNext(NULL);
               ffc->linkPrev(NULL); // Mark as a free block for other (parallel) GC threads.
+              ffc->linkNext(NULL);
               // Above must occur before BOT is updated below.
-              // splitting from the right, fc_size == (k - i + 1) * wordsize
-              _bt.mark_block((HeapWord*)ffc, word_sz);
+              OrderAccess::storestore();
+              // splitting from the right, fc_size == i * word_sz
+              _bt.mark_block((HeapWord*)ffc, word_sz, true /* reducing */);
               fc_size -= word_sz;
-              _bt.verify_not_unallocated((HeapWord*)ffc, ffc->size());
+              assert(fc_size == i*word_sz, "Error");
+              _bt.verify_not_unallocated((HeapWord*)ffc, word_sz);
               _bt.verify_single_block((HeapWord*)fc, fc_size);
-              _bt.verify_single_block((HeapWord*)ffc, ffc->size());
+              _bt.verify_single_block((HeapWord*)ffc, word_sz);
               // Push this on "fl".
               fl->returnChunkAtHead(ffc);
             }
@@ -3055,7 +2799,7 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
                                   _dictionary->minSize()),
                                   FreeBlockDictionary::atLeast);
       if (fc != NULL) {
-        _bt.allocated((HeapWord*)fc, fc->size());  // update _unallocated_blk
+        _bt.allocated((HeapWord*)fc, fc->size(), true /* reducing */);  // update _unallocated_blk
         dictionary()->dictCensusUpdate(fc->size(),
                                        true /*split*/,
                                        false /*birth*/);
@@ -3065,8 +2809,10 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
       }
     }
     if (fc == NULL) return;
-    assert((ssize_t)n >= 1, "Control point invariant");
     // Otherwise, split up that block.
+    assert((ssize_t)n >= 1, "Control point invariant");
+    assert(fc->isFree(), "Error: should be a free block");
+    _bt.verify_single_block((HeapWord*)fc, fc->size());
     const size_t nn = fc->size() / word_sz;
     n = MIN2(nn, n);
     assert((ssize_t)n >= 1, "Control point invariant");
@@ -3084,6 +2830,7 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
     // dictionary and return, leaving "fl" empty.
     if (n == 0) {
       returnChunkToDictionary(fc);
+      assert(fl->count() == 0, "We never allocated any blocks");
       return;
     }
 
@@ -3096,11 +2843,14 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
       size_t prefix_size = n * word_sz;
       rem_fc = (FreeChunk*)((HeapWord*)fc + prefix_size);
       rem_fc->setSize(rem);
-      rem_fc->linkNext(NULL);
       rem_fc->linkPrev(NULL); // Mark as a free block for other (parallel) GC threads.
+      rem_fc->linkNext(NULL);
       // Above must occur before BOT is updated below.
       assert((ssize_t)n > 0 && prefix_size > 0 && rem_fc > fc, "Error");
+      OrderAccess::storestore();
       _bt.split_block((HeapWord*)fc, fc->size(), prefix_size);
+      assert(fc->isFree(), "Error");
+      fc->setSize(prefix_size);
       if (rem >= IndexSetSize) {
         returnChunkToDictionary(rem_fc);
         dictionary()->dictCensusUpdate(rem, true /*split*/, true /*birth*/);
@@ -3126,11 +2876,12 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
   for (ssize_t i = n-1; i > 0; i--) {
     FreeChunk* ffc = (FreeChunk*)((HeapWord*)fc + i * word_sz);
     ffc->setSize(word_sz);
-    ffc->linkNext(NULL);
     ffc->linkPrev(NULL); // Mark as a free block for other (parallel) GC threads.
+    ffc->linkNext(NULL);
     // Above must occur before BOT is updated below.
+    OrderAccess::storestore();
     // splitting from the right, fc_size == (n - i + 1) * wordsize
-    _bt.mark_block((HeapWord*)ffc, word_sz);
+    _bt.mark_block((HeapWord*)ffc, word_sz, true /* reducing */);
     fc_size -= word_sz;
     _bt.verify_not_unallocated((HeapWord*)ffc, ffc->size());
     _bt.verify_single_block((HeapWord*)ffc, ffc->size());
@@ -3139,9 +2890,11 @@ void CompactibleFreeListSpace:: par_get_chunk_of_blocks(size_t word_sz, size_t n
     fl->returnChunkAtHead(ffc);
   }
   // First chunk
+  assert(fc->isFree() && fc->size() == n*word_sz, "Error: should still be a free block");
+  // The blocks above should show their new sizes before the first block below
   fc->setSize(word_sz);
+  fc->linkPrev(NULL);    // idempotent wrt free-ness, see assert above
   fc->linkNext(NULL);
-  fc->linkPrev(NULL);
   _bt.verify_not_unallocated((HeapWord*)fc, fc->size());
   _bt.verify_single_block((HeapWord*)fc, fc->size());
   fl->returnChunkAtHead(fc);
