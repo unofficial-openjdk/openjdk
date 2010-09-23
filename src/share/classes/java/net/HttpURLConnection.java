@@ -344,6 +344,12 @@ abstract public class HttpURLConnection extends URLConnection {
 
         for (int i = 0; i < methods.length; i++) {
             if (methods[i].equals(method)) {
+		if (method.equals("TRACE")) {
+		    SecurityManager s = System.getSecurityManager();
+		    if (s != null) {
+		        s.checkPermission(new NetPermission("allowHttpTrace"));
+		    }
+		}
                 this.method = method;
                 return;
             }
