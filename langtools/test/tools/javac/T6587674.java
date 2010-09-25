@@ -21,14 +21,19 @@
  * questions.
  */
 
-// key: compiler.misc.incompatible.types.1
-// key: compiler.misc.infer.no.conforming.instance.exists
-// key: compiler.err.prob.found.req
+/*
+ * @test
+ * @bug 6587674
+ * @summary NoClassdefFound when anonymously extending a class.
+ */
 
-class IncompatibleTypes1<V> {
-    <T extends Integer & Runnable> IncompatibleTypes1<T> m() {
-        return null;
+import java.util.Vector;
+
+public class T6587674 {
+    private static final Vector<String> list =
+        true ? null : new Vector<String>() { };
+
+    public static void main(String[] args) {
+        System.out.println("T6587674 runs fine!");
     }
-
-    IncompatibleTypes1<? super String> o = m();
 }
