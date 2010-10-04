@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -288,8 +288,9 @@ class Arguments : AllStatic {
   static bool _BackgroundCompilation;
   static bool _ClipInlining;
   static bool _CIDynamicCompilePriority;
-  static intx _Tier2CompileThreshold;
 
+  // Tiered
+  static void set_tiered_flags();
   // CMS/ParNew garbage collectors
   static void set_parnew_gc_flags();
   static void set_cms_and_parnew_gc_flags();
@@ -482,6 +483,9 @@ class Arguments : AllStatic {
 
   // System properties
   static void init_system_properties();
+
+  // Update/Initialize System properties after JDK version number is known
+  static void init_version_specific_system_properties();
 
   // Property List manipulation
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
