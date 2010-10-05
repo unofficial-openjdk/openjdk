@@ -30,6 +30,7 @@ package javax.swing;
 
 
 import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 import java.util.concurrent.atomic.AtomicLong;
 import sun.awt.AppContext;
 
@@ -48,7 +49,8 @@ class TimerQueue implements Runnable
     private static final Object sharedInstanceKey = new Object(); // TimerQueue.sharedInstanceKey
 
     private final DelayQueue<DelayedTimer> queue;
-    volatile boolean running;
+    private volatile boolean running;
+    private final Lock runningLock;
 
     /* Lock object used in place of class object for synchronization.
      * (4187686)
@@ -65,7 +67,8 @@ class TimerQueue implements Runnable
         super();
         queue = new DelayQueue<DelayedTimer>();
         // Now start the TimerQueue thread.
-        start();
+        runningLock = new ReentrantLock();
+        startIfNeeded();
     }
 
 
@@ -83,32 +86,29 @@ class TimerQueue implements Runnable
     }
 
 
-    synchronized void start() {
-        if (running) {
-            throw new RuntimeException("Can't start a TimerQueue " +
-                                       "that is already running");
-        }
-        else {
-            final ThreadGroup threadGroup =
-                AppContext.getAppContext().getThreadGroup();
-            java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                public Object run() {
-                    Thread timerThread = new Thread(threadGroup, TimerQueue.this,
-                                                    "TimerQueue");
-                    timerThread.setDaemon(true);
-                    timerThread.setPriority(Thread.NORM_PRIORITY);
-                    timerThread.start();
-                    return null;
-                }
-            });
-            running = true;
+    void startIfNeeded() {
+        if (! running) {
+            runningLock.lock();
+            try {
+                final ThreadGroup threadGroup =
+                    AppContext.getAppContext().getThreadGroup();
+                java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction() {
+                    public Object run() {
+                        Thread timerThread = new Thread(threadGroup, TimerQueue.this,
+                                                        "TimerQueue");
+                        timerThread.setDaemon(true);
+                        timerThread.setPriority(Thread.NORM_PRIORITY);
+                        timerThread.start();
+                        return null;
+                    }
+                });
+                running = true;
+            } finally {
+                runningLock.unlock();
+            }
         }
     }
-
-     synchronized void stop() {
-         running = false;
-     }
 
     void addTimer(Timer timer, long delayMillis) {
         timer.getLock().lock();
@@ -160,6 +160,7 @@ class TimerQueue implements Runnable
 
 
     public void run() {
+        runningLock.lock();
         try {
             while (running) {
                 try {
@@ -191,14 +192,14 @@ class TimerQueue implements Runnable
             }
         }
         catch (ThreadDeath td) {
-            synchronized (this) {
-                running = false;
-                // Mark all the timers we contain as not being queued.
-                for (DelayedTimer delayedTimer : queue) {
-                    delayedTimer.getTimer().cancelEvent();
-                }
-                throw td;
+            // Mark all the timers we contain as not being queued.
+            for (DelayedTimer delayedTimer : queue) {
+                delayedTimer.getTimer().cancelEvent();
             }
+            throw td;
+        } finally {
+            running = false;
+            runningLock.unlock();
         }
     }
 
