@@ -522,7 +522,7 @@ void VMError::report(outputStream* st) {
   STEP(135, "(printing target Java thread stack)" )
 
      // printing Java thread stack trace if it is involved in GC crash
-     if (_verbose && (_thread->is_Named_thread())) {
+     if (_verbose && _thread && (_thread->is_Named_thread())) {
        JavaThread*  jt = ((NamedThread *)_thread)->processed_thread();
        if (jt != NULL) {
          st->print_cr("JavaThread " PTR_FORMAT " (nid = " UINTX_FORMAT ") was being processed", jt, jt->osthread()->thread_id());
