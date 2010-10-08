@@ -1081,6 +1081,8 @@ compilationPolicy.cpp                   nativeLookup.hpp
 compilationPolicy.cpp                   nmethod.hpp
 compilationPolicy.cpp                   oop.inline.hpp
 compilationPolicy.cpp                   rframe.hpp
+compilationPolicy.cpp			scopeDesc.hpp
+compilationPolicy.cpp                   simpleThresholdPolicy.hpp
 compilationPolicy.cpp                   stubRoutines.hpp
 compilationPolicy.cpp                   thread.hpp
 compilationPolicy.cpp                   timer.hpp
@@ -1453,6 +1455,7 @@ defaultStream.hpp                       xmlstream.hpp
 deoptimization.cpp                      allocation.inline.hpp
 deoptimization.cpp                      biasedLocking.hpp
 deoptimization.cpp                      bytecode.hpp
+deoptimization.cpp			compilationPolicy.hpp
 deoptimization.cpp                      debugInfoRec.hpp
 deoptimization.cpp                      deoptimization.hpp
 deoptimization.cpp                      events.hpp
@@ -2174,6 +2177,7 @@ interpreterRT_<arch>.hpp                generate_platform_dependent_include
 
 interpreterRuntime.cpp                  biasedLocking.hpp
 interpreterRuntime.cpp                  collectedHeap.hpp
+interpreterRuntime.cpp                  compileBroker.hpp
 interpreterRuntime.cpp                  compilationPolicy.hpp
 interpreterRuntime.cpp                  constantPoolOop.hpp
 interpreterRuntime.cpp                  cpCacheOop.hpp
@@ -2831,6 +2835,7 @@ methodDataKlass.hpp                     klass.hpp
 
 methodDataOop.cpp                       bytecode.hpp
 methodDataOop.cpp                       bytecodeStream.hpp
+methodDataOop.cpp                       compilationPolicy.hpp
 methodDataOop.cpp                       deoptimization.hpp
 methodDataOop.cpp                       handles.inline.hpp
 methodDataOop.cpp                       linkResolver.hpp
@@ -2843,6 +2848,7 @@ methodDataOop.hpp                       bytecodes.hpp
 methodDataOop.hpp                       oop.hpp
 methodDataOop.hpp                       orderAccess.hpp
 methodDataOop.hpp                       universe.hpp
+methodDataOop.hpp                       methodOop.hpp
 
 methodHandleWalk.hpp                    methodHandles.hpp
 
@@ -2908,6 +2914,7 @@ methodOop.cpp                           bytecodeStream.hpp
 methodOop.cpp                           bytecodeTracer.hpp
 methodOop.cpp                           bytecodes.hpp
 methodOop.cpp                           collectedHeap.inline.hpp
+methodOop.cpp				compilationPolicy.hpp
 methodOop.cpp                           debugInfoRec.hpp
 methodOop.cpp                           frame.inline.hpp
 methodOop.cpp                           gcLocker.hpp
@@ -3658,6 +3665,7 @@ runtimeService.hpp                      timer.hpp
 
 safepoint.cpp                           codeCache.hpp
 safepoint.cpp                           collectedHeap.hpp
+safepoint.cpp                           compilationPolicy.hpp
 safepoint.cpp                           deoptimization.hpp
 safepoint.cpp                           events.hpp
 safepoint.cpp                           frame.inline.hpp
@@ -3801,6 +3809,17 @@ signature.cpp                           typeArrayKlass.hpp
 signature.hpp                           allocation.hpp
 signature.hpp                           methodOop.hpp
 signature.hpp                           top.hpp
+
+simpleThresholdPolicy.cpp               arguments.hpp
+simpleThresholdPolicy.cpp               compileBroker.hpp
+simpleThresholdPolicy.cpp               resourceArea.hpp
+simpleThresholdPolicy.cpp               simpleThresholdPolicy.hpp
+simpleThresholdPolicy.cpp               simpleThresholdPolicy.inline.hpp
+
+simpleThresholdPolicy.hpp               compilationPolicy.hpp
+simpleThresholdPolicy.hpp               globalDefinitions.hpp
+simpleThresholdPolicy.hpp               methodDataOop.hpp
+simpleThresholdPolicy.hpp               nmethod.hpp
 
 sizes.cpp                               sizes.hpp
 
@@ -3984,6 +4003,7 @@ stubs.hpp                               os_<os_family>.inline.hpp
 
 sweeper.cpp                             atomic.hpp
 sweeper.cpp                             codeCache.hpp
+sweeper.cpp				compilationPolicy.hpp
 sweeper.cpp                             compileBroker.hpp
 sweeper.cpp                             events.hpp
 sweeper.cpp                             methodOop.hpp

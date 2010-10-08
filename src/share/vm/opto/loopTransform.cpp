@@ -2417,6 +2417,8 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
       Node* value = n->in(MemNode::ValueIn);
       if (!lpt->is_invariant(value)) {
         msg  = "variant store value";
+      } else if (!_igvn.type(n->in(MemNode::Address))->isa_aryptr()) {
+        msg = "not array address";
       }
       store = n;
       store_value = value;
@@ -2445,6 +2447,13 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
     msg_node = store->in(MemNode::Address);
   }
 
+  if (msg == NULL &&
+      (!store->in(MemNode::Memory)->is_Phi() ||
+       store->in(MemNode::Memory)->in(LoopNode::LoopBackControl) != store)) {
+    msg = "store memory isn't proper phi";
+    msg_node = store->in(MemNode::Memory);
+  }
+
   // Make sure there is an appropriate fill routine
   BasicType t = store->as_Mem()->memory_type();
   const char* fill_name;
@@ -2468,6 +2477,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
   // head->phi * elsize + con.  head->phi might have a ConvI2L.
   Node* elements[4];
   Node* conv = NULL;
+  bool found_index = false;
   int count = store->in(MemNode::Address)->as_AddP()->unpack_offsets(elements, ARRAY_SIZE(elements));
   for (int e = 0; e < count; e++) {
     Node* n = elements[e];
@@ -2484,17 +2494,20 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
       if (value != head->phi()) {
         msg = "unhandled shift in address";
       } else {
+        found_index = true;
         shift = n;
         assert(type2aelembytes(store->as_Mem()->memory_type(), true) == 1 << shift->in(2)->get_int(), "scale should match");
       }
     } else if (n->Opcode() == Op_ConvI2L && conv == NULL) {
       if (n->in(1) == head->phi()) {
+        found_index = true;
         conv = n;
       } else {
         msg = "unhandled input to ConvI2L";
       }
     } else if (n == head->phi()) {
       // no shift, check below for allowed cases
+      found_index = true;
     } else {
       msg = "unhandled node in address";
       msg_node = n;
@@ -2504,6 +2517,10 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
   if (count == -1) {
     msg = "malformed address expression";
     msg_node = store;
+  }
+
+  if (!found_index) {
+    msg = "missing use of index";
   }
 
   // byte sized items won't have a shift
@@ -2560,7 +2577,7 @@ bool PhaseIdealLoop::match_fill_loop(IdealLoopTree* lpt, Node*& store, Node*& st
     Node* n = lpt->_body.at(i);
     // These values can be replaced with other nodes if they are used
     // outside the loop.
-    if (n == store || n == head->loopexit() || n == head->incr()) continue;
+    if (n == store || n == head->loopexit() || n == head->incr() || n == store->in(MemNode::Memory)) continue;
     for (SimpleDUIterator iter(n); iter.has_next(); iter.next()) {
       Node* use = iter.get();
       if (!lpt->_body.contains(use)) {
@@ -2705,6 +2722,10 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
 
   // Redirect the old control and memory edges that are outside the loop.
   Node* exit = head->loopexit()->proj_out(0);
+  // Sometimes the memory phi of the head is used as the outgoing
+  // state of the loop.  It's safe in this case to replace it with the
+  // result_mem.
+  _igvn.replace_node(store->in(MemNode::Memory), result_mem);
   _igvn.replace_node(exit, result_ctrl);
   _igvn.replace_node(store, result_mem);
   // Any uses the increment outside of the loop become the loop limit.

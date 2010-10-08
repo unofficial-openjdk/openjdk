@@ -353,7 +353,8 @@ class NoRefDiscovery: StackObj {
   bool _was_discovering_refs;
  public:
   NoRefDiscovery(ReferenceProcessor* rp) : _rp(rp) {
-    if (_was_discovering_refs = _rp->discovery_enabled()) {
+    _was_discovering_refs = _rp->discovery_enabled();
+    if (_was_discovering_refs) {
       _rp->disable_discovery();
     }
   }
