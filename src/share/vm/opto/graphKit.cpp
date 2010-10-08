@@ -3254,6 +3254,7 @@ void GraphKit::sync_kit(IdealKit& ideal) {
   // Final sync IdealKit and graphKit.
   __ drain_delay_transform();
   set_all_memory(__ merged_memory());
+  set_i_o(__ i_o());
   set_control(__ ctrl());
 }
 
@@ -3301,7 +3302,7 @@ void GraphKit::write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   // Convert the pointer to an int prior to doing math on it
   Node* cast = __ CastPX(__ ctrl(), adr);
@@ -3337,7 +3338,7 @@ void GraphKit::g1_write_barrier_pre(Node* obj,
                                     Node* val,
                                     const TypeOopPtr* val_type,
                                     BasicType bt) {
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 
@@ -3480,7 +3481,7 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 

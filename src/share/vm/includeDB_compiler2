@@ -522,6 +522,7 @@ idealKit.hpp                            addnode.hpp
 idealKit.hpp                            cfgnode.hpp
 idealKit.hpp                            connode.hpp
 idealKit.hpp                            divnode.hpp
+idealKit.hpp                            graphKit.hpp
 idealKit.hpp                            mulnode.hpp
 idealKit.hpp                            phaseX.hpp
 idealKit.hpp                            subnode.hpp
