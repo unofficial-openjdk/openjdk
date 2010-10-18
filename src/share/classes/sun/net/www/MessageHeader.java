@@ -196,6 +196,10 @@ class MessageHeader {
     }
 
     public synchronized Map getHeaders(String[] excludeList) {
+        return filterAndAddHeaders(excludeList, null);
+    }
+
+    public synchronized Map filterAndAddHeaders(String[] excludeList, Map include) {
         boolean skipIt = false;
         Map m = new HashMap();
         for (int i = nkeys; --i >= 0;) {
@@ -220,6 +224,19 @@ class MessageHeader {
             } else {
                 // reset the flag
                 skipIt = false;
+            }
+        }
+
+        if (include != null) {
+            Iterator entries = include.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry entry = (Map.Entry)entries.next();
+                List l = (List)m.get(entry.getKey());
+                if (l == null) {
+                    l = new ArrayList();
+                    m.put((String)entry.getKey(), l);
+                }
+                l.add(entry.getValue());
             }
         }
 

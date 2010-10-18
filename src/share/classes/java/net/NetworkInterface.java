@@ -393,6 +393,10 @@ public final class NetworkInterface {
      * @since 1.6
      */
     public byte[] getHardwareAddress() throws SocketException {
+        if (!getInetAddresses().hasMoreElements()) {
+            // don't have connect permission to any local address
+            return null;
+        }
         for (InetAddress addr : addrs) {
             if (addr instanceof Inet4Address) {
                 return getMacAddr0(((Inet4Address)addr).getAddress(), name, index);
@@ -509,11 +513,10 @@ public final class NetworkInterface {
     }
 
     public int hashCode() {
-        int count = 0;
-        if (addrs != null) {
-            for (int i = 0; i < addrs.length; i++) {
-                count += addrs[i].hashCode();
-            }
+        int count = name == null? 0: name.hashCode();
+        Enumeration<InetAddress> addrs = getInetAddresses();
+        while (addrs.hasMoreElements()) {
+            count += addrs.nextElement().hashCode();
         }
         return count;
     }

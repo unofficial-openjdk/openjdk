@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -173,9 +173,7 @@ abstract class HandshakeMessage {
  * Server can ask the client to initiate a new handshake, e.g. to change
  * session parameters after a connection has been (re)established.
  */
-static final
-class HelloRequest extends HandshakeMessage
-{
+static final class HelloRequest extends HandshakeMessage {
     int messageType() { return ht_hello_request; }
 
     HelloRequest() { }
@@ -211,10 +209,7 @@ class HelloRequest extends HandshakeMessage
  * Until we know how to parse it, we will just read what we know
  * about, and let our caller handle the jumps over unknown data.
  */
-static final
-class ClientHello extends HandshakeMessage
-{
-    int messageType() { return ht_client_hello; }
+static final class ClientHello extends HandshakeMessage {
 
     ProtocolVersion     protocolVersion;
     RandomCookie        clnt_random;
@@ -226,37 +221,20 @@ class ClientHello extends HandshakeMessage
 
     private final static byte[]  NULL_COMPRESSION = new byte[] {0};
 
-    ClientHello(SecureRandom generator, ProtocolVersion protocolVersion) {
+    ClientHello(SecureRandom generator, ProtocolVersion protocolVersion,
+            SessionId sessionId, CipherSuiteList cipherSuites) {
+
         this.protocolVersion = protocolVersion;
-        clnt_random = new RandomCookie(generator);
-        compression_methods = NULL_COMPRESSION;
-        // sessionId, cipher_suites TBS later
-    }
-
-    CipherSuiteList getCipherSuites() {
-        return cipherSuites;
-    }
-
-    // Set the ciphersuites.
-    // This method may only be called once.
-    void setCipherSuites(CipherSuiteList cipherSuites) {
+        this.sessionId = sessionId;
         this.cipherSuites = cipherSuites;
+
         if (cipherSuites.containsEC()) {
             extensions.add(SupportedEllipticCurvesExtension.DEFAULT);
             extensions.add(SupportedEllipticPointFormatsExtension.DEFAULT);
         }
-    }
 
-    int messageLength() {
-        /*
-         * Add fixed size parts of each field...
-         * version + random + session + cipher + compress
-         */
-        return (2 + 32 + 1 + 2 + 1
-            + sessionId.length()                /* ... + variable parts */
-            + (cipherSuites.size() * 2)
-            + compression_methods.length)
-            + extensions.length();
+        clnt_random = new RandomCookie(generator);
+        compression_methods = NULL_COMPRESSION;
     }
 
     ClientHello(HandshakeInStream s, int messageLength) throws IOException {
@@ -270,6 +248,34 @@ class ClientHello extends HandshakeMessage
         }
     }
 
+    CipherSuiteList getCipherSuites() {
+        return cipherSuites;
+    }
+
+    // add renegotiation_info extension
+    void addRenegotiationInfoExtension(byte[] clientVerifyData) {
+        HelloExtension renegotiationInfo = new RenegotiationInfoExtension(
+                    clientVerifyData, new byte[0]);
+        extensions.add(renegotiationInfo);
+    }
+
+    @Override
+    int messageType() { return ht_client_hello; }
+
+    @Override
+    int messageLength() {
+        /*
+         * Add fixed size parts of each field...
+         * version + random + session + cipher + compress
+         */
+        return (2 + 32 + 1 + 2 + 1
+            + sessionId.length()                /* ... + variable parts */
+            + (cipherSuites.size() * 2)
+            + compression_methods.length)
+            + extensions.length();
+    }
+
+    @Override
     void send(HandshakeOutStream s) throws IOException {
         s.putInt8(protocolVersion.major);
         s.putInt8(protocolVersion.minor);
@@ -280,6 +286,7 @@ class ClientHello extends HandshakeMessage
         extensions.send(s);
     }
 
+    @Override
     void print(PrintStream s) throws IOException {
         s.println("*** ClientHello, " + protocolVersion);
 
@@ -316,7 +323,6 @@ class ServerHello extends HandshakeMessage
     CipherSuite         cipherSuite;
     byte                compression_method;
     HelloExtensions extensions = new HelloExtensions();
-    int extensionLength;
 
     ServerHello() {
         // empty
@@ -1427,8 +1433,6 @@ static final class CertificateVerify extends HandshakeMessage {
  */
 static final class Finished extends HandshakeMessage {
 
-    int messageType() { return ht_finished; }
-
     // constant for a Finished message sent by the client
     final static int CLIENT = 1;
 
@@ -1470,7 +1474,7 @@ static final class Finished extends HandshakeMessage {
      * both client and server are fully in sync, and that the handshake
      * computations have been successful.
      */
-     boolean verify(ProtocolVersion protocolVersion,
+    boolean verify(ProtocolVersion protocolVersion,
              HandshakeHash handshakeHash, int sender, SecretKey master) {
         byte[] myFinished = getFinished(protocolVersion, handshakeHash,
                                         sender, master);
@@ -1544,14 +1548,25 @@ static final class Finished extends HandshakeMessage {
         CertificateVerify.updateDigest(md, pad1, pad2, masterSecret);
     }
 
+    // get the verify_data of the finished message
+    byte[] getVerifyData() {
+        return verifyData;
+    }
+
+    @Override
+    int messageType() { return ht_finished; }
+
+    @Override
     int messageLength() {
         return verifyData.length;
     }
 
+    @Override
     void send(HandshakeOutStream out) throws IOException {
         out.write(verifyData);
     }
 
+    @Override
     void print(PrintStream s) throws IOException {
         s.println("*** Finished");
         if (debug != null && Debug.isOn("verbose")) {
@@ -1559,7 +1574,6 @@ static final class Finished extends HandshakeMessage {
             s.println("***");
         }
     }
-
 }
 
 //
