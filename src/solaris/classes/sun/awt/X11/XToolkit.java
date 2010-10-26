@@ -297,13 +297,6 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
                     if (log.isLoggable(Level.FINE)) {
                         dumpPeers();
                     }
-
-                    awtLock();
-                    try {
-                        XlibWrapper.XSetErrorHandler(saved_error_handler);
-                    } finally {
-                        awtUnlock();
-                    }
                 }
             });
         }
