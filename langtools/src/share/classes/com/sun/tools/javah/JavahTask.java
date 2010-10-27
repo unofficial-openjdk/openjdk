@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVisitor;
 import javax.lang.model.util.ElementFilter;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor7;
 import javax.lang.model.util.Types;
 
 import javax.tools.Diagnostic;
@@ -76,7 +76,7 @@ import javax.tools.ToolProvider;
  * Javah generates support files for native methods.
  * Parse commandline options & Invokes javadoc to execute those commands.
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
@@ -526,15 +526,17 @@ public class JavahTask implements NativeHeaderTool.NativeHeaderTask {
     }
 
     private void showVersion(boolean full) {
-        log.println(version(full ? "full" : "release"));
+        log.println(version(full));
     }
 
     private static final String versionRBName = "com.sun.tools.javah.resources.version";
     private static ResourceBundle versionRB;
 
-    private String version(String key) {
-        // key=version:  mm.nn.oo[-milestone]
-        // key=full:     mm.mm.oo[-milestone]-build
+    private String version(boolean full) {
+        String msgKey = (full ? "javah.fullVersion" : "javah.version");
+        String versionKey = (full ? "full" : "release");
+        // versionKey=product:  mm.nn.oo[-milestone]
+        // versionKey=full:     mm.mm.oo[-milestone]-build
         if (versionRB == null) {
             try {
                 versionRB = ResourceBundle.getBundle(versionRBName);
@@ -543,7 +545,7 @@ public class JavahTask implements NativeHeaderTool.NativeHeaderTask {
             }
         }
         try {
-            return versionRB.getString(key);
+            return getMessage(msgKey, "javah", versionRB.getString(versionKey));
         }
         catch (MissingResourceException e) {
             return getMessage("version.unknown", System.getProperty("java.version"));
@@ -705,7 +707,7 @@ public class JavahTask implements NativeHeaderTool.NativeHeaderTask {
         }
 
         private TypeVisitor<Void,Types> checkMethodParametersVisitor =
-                new SimpleTypeVisitor6<Void,Types>() {
+                new SimpleTypeVisitor7<Void,Types>() {
             @Override
             public Void visitArray(ArrayType t, Types types) {
                 visit(t.getComponentType(), types);

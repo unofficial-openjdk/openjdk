@@ -100,7 +100,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * @param   minimumCapacity   the minimum desired capacity.
      */
     public void ensureCapacity(int minimumCapacity) {
-        ensureCapacityInternal(minimumCapacity);
+        if (minimumCapacity > 0)
+            ensureCapacityInternal(minimumCapacity);
     }
 
     /**
@@ -108,6 +109,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      * never synchronized.
      */
     private void ensureCapacityInternal(int minimumCapacity) {
+        // overflow-conscious code
         if (minimumCapacity - value.length > 0)
             expandCapacity(minimumCapacity);
     }
@@ -470,7 +472,7 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
     public AbstractStringBuilder append(CharSequence s, int start, int end) {
         if (s == null)
             s = "null";
-        if ((start < 0) || (end < 0) || (start > end) || (end > s.length()))
+        if ((start < 0) || (start > end) || (end > s.length()))
             throw new IndexOutOfBoundsException(
                 "start " + start + ", end " + end + ", s.length() "
                 + s.length());
@@ -529,7 +531,8 @@ abstract class AbstractStringBuilder implements Appendable, CharSequence {
      *         or {@code offset+len > str.length}
      */
     public AbstractStringBuilder append(char str[], int offset, int len) {
-        ensureCapacityInternal(count + len);
+        if (len > 0)                // let arraycopy report AIOOBE for len < 0
+            ensureCapacityInternal(count + len);
         System.arraycopy(str, offset, value, count, len);
         count += len;
         return this;

@@ -101,8 +101,8 @@ import static com.sun.tools.javac.main.OptionName.*;
  *  <p>To reduce confusion with Path objects, the locations such as "class path",
  *  "source path", etc, are generically referred to here as "search paths".
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -366,11 +366,11 @@ public class JavacPathFileManager extends BaseFileManager implements PathFileMan
 //            }
 //        }
         int maxDepth = (recurse ? Integer.MAX_VALUE : 1);
-        Set<FileVisitOption> opts = EnumSet.of(DETECT_CYCLES, FOLLOW_LINKS);
+        Set<FileVisitOption> opts = EnumSet.of(FOLLOW_LINKS);
         Files.walkFileTree(packageDir, opts, maxDepth,
                 new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir) {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 if (SourceVersion.isIdentifier(dir.getName().toString())) // JSR 292?
                     return FileVisitResult.CONTINUE;
                 else

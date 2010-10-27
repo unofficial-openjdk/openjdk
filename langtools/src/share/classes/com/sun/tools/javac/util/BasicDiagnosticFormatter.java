@@ -58,14 +58,12 @@ import static com.sun.tools.javac.util.LayoutCharacters.*;
  * <li>%_: space delimiter, useful for formatting purposes
  * </ul>
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
  * deletion without notice.</b>
  */
 public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
-
-    protected int currentIndentation = 0;
 
     /**
      * Create a basic formatter based on the supplied options.
@@ -73,7 +71,6 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
      * @param opts list of command-line options
      * @param msgs JavacMessages object used for i18n
      */
-    @SuppressWarnings("fallthrough")
     public BasicDiagnosticFormatter(Options options, JavacMessages msgs) {
         super(msgs, new BasicConfiguration(options));
     }
@@ -108,33 +105,28 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
     }
 
     public String formatMessage(JCDiagnostic d, Locale l) {
-        int prevIndentation = currentIndentation;
-        try {
-            StringBuilder buf = new StringBuilder();
-            Collection<String> args = formatArguments(d, l);
-            String msg = localize(l, d.getCode(), args.toArray());
-            String[] lines = msg.split("\n");
-            if (getConfiguration().getVisible().contains(DiagnosticPart.SUMMARY)) {
-                currentIndentation += getConfiguration().getIndentation(DiagnosticPart.SUMMARY);
-                buf.append(indent(lines[0], currentIndentation)); //summary
+        int currentIndentation = 0;
+        StringBuilder buf = new StringBuilder();
+        Collection<String> args = formatArguments(d, l);
+        String msg = localize(l, d.getCode(), args.toArray());
+        String[] lines = msg.split("\n");
+        if (getConfiguration().getVisible().contains(DiagnosticPart.SUMMARY)) {
+            currentIndentation += getConfiguration().getIndentation(DiagnosticPart.SUMMARY);
+            buf.append(indent(lines[0], currentIndentation)); //summary
+        }
+        if (lines.length > 1 && getConfiguration().getVisible().contains(DiagnosticPart.DETAILS)) {
+            currentIndentation += getConfiguration().getIndentation(DiagnosticPart.DETAILS);
+            for (int i = 1;i < lines.length; i++) {
+                buf.append("\n" + indent(lines[i], currentIndentation));
             }
-            if (lines.length > 1 && getConfiguration().getVisible().contains(DiagnosticPart.DETAILS)) {
-                currentIndentation += getConfiguration().getIndentation(DiagnosticPart.DETAILS);
-                for (int i = 1;i < lines.length; i++) {
-                    buf.append("\n" + indent(lines[i], currentIndentation));
-                }
-            }
-            if (d.isMultiline() && getConfiguration().getVisible().contains(DiagnosticPart.SUBDIAGNOSTICS)) {
-                currentIndentation += getConfiguration().getIndentation(DiagnosticPart.SUBDIAGNOSTICS);
+        }
+        if (d.isMultiline() && getConfiguration().getVisible().contains(DiagnosticPart.SUBDIAGNOSTICS)) {
+            currentIndentation += getConfiguration().getIndentation(DiagnosticPart.SUBDIAGNOSTICS);
                 for (String sub : formatSubdiagnostics(d, l)) {
-                    buf.append("\n" + sub);
-                }
+                    buf.append("\n" + indent(sub, currentIndentation));
             }
-            return buf.toString();
         }
-        finally {
-            currentIndentation = prevIndentation;
-        }
+        return buf.toString();
     }
 
     protected String addSourceLineIfNeeded(JCDiagnostic d, String msg) {
@@ -189,6 +181,8 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
             }
             case 'm':
                 return formatMessage(d, l);
+            case 'L':
+                return formatLintCategory(d, l);
             case '_':
                 return " ";
             case '%':
@@ -244,9 +238,9 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
                         setFormat(BasicFormatKind.DEFAULT_POS_FORMAT, formats[0]);
                 }
             }
-            String sourcePosition = null;
-            if ((((sourcePosition = options.get("sourcePosition")) != null)) &&
-                    sourcePosition.equals("bottom"))
+            String srcPos = null;
+            if ((((srcPos = options.get("sourcePosition")) != null)) &&
+                    srcPos.equals("bottom"))
                     setSourcePosition(SourcePosition.BOTTOM);
             else
                 setSourcePosition(SourcePosition.AFTER_SUMMARY);
@@ -289,9 +283,9 @@ public class BasicDiagnosticFormatter extends AbstractDiagnosticFormatter {
         //where
         private void initFormat() {
             availableFormats = new HashMap<BasicFormatKind, String>();
-            setFormat(BasicFormatKind.DEFAULT_POS_FORMAT, "%f:%l:%_%t%m");
-            setFormat(BasicFormatKind.DEFAULT_NO_POS_FORMAT, "%p%m");
-            setFormat(BasicFormatKind.DEFAULT_CLASS_FORMAT, "%f:%_%t%m");
+            setFormat(BasicFormatKind.DEFAULT_POS_FORMAT, "%f:%l:%_%t%L%m");
+            setFormat(BasicFormatKind.DEFAULT_NO_POS_FORMAT, "%p%L%m");
+            setFormat(BasicFormatKind.DEFAULT_CLASS_FORMAT, "%f:%_%t%L%m");
         }
         //where
         private void initIndentation() {

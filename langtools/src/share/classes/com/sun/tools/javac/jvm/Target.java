@@ -31,10 +31,12 @@ import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.*;
 
+import static com.sun.tools.javac.main.OptionName.*;
+
 /** The classfile version target.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -73,7 +75,7 @@ public enum Target {
         Target instance = context.get(targetKey);
         if (instance == null) {
             Options options = Options.instance(context);
-            String targetString = options.get("-target");
+            String targetString = options.get(TARGET);
             if (targetString != null) instance = lookup(targetString);
             if (instance == null) instance = DEFAULT;
             context.put(targetKey, instance);
@@ -257,6 +259,14 @@ public enum Target {
      */
     public boolean hasInvokedynamic() {
         return compareTo(JDK1_7) >= 0;
+    }
+
+    /** Does the VM support polymorphic method handle invocation?
+     *  Affects the linkage information output to the classfile.
+     *  An alias for {@code hasInvokedynamic}, since all the JSR 292 features appear together.
+     */
+    public boolean hasMethodHandles() {
+        return hasInvokedynamic();
     }
 
     /** Although we may not have support for class literals, should we

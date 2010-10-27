@@ -31,7 +31,7 @@ BUILDDIR = ..
 PRODUCT = demos
 include $(BUILDDIR)/common/Defs.gmk
 
-SUBDIRS            = jni
+SUBDIRS            = jni nio
 SUBDIRS_desktop    = applets jfc
 SUBDIRS_management = management
 SUBDIRS_misc       = scripting
@@ -46,11 +46,11 @@ nbproject:
 	$(RM) -r $(DEMODIR)/nbproject
 	$(MKDIR) -p $(DEMODIR)
 	( $(CD) $(SHARE_SRC)/demo && $(TAR) -cf - \
-	  `find nbproject $(SCM_DIRS_prune) -o -type f -print` ) | \
+	  `$(FIND) nbproject $(SCM_DIRS_prune) -o -type f -print` ) | \
 	  ( $(CD) $(DEMODIR) && $(TAR) -xf - )
 ifndef OPENJDK
 	( $(CD) $(CLOSED_SHARE_SRC)/demo && $(TAR) -cf - \
-	  `find nbproject $(SCM_DIRS_prune) -o -type f -print` ) | \
+	  `$(FIND) nbproject $(SCM_DIRS_prune) -o -type f -print` ) | \
 	  ( $(CD) $(DEMODIR) && $(TAR) -xf - )
 endif
 

@@ -191,14 +191,11 @@ public class IndexedPropertyDescriptor extends PropertyDescriptor {
             }
 
             Class[] args = { int.class };
-
-            indexedReadMethod = Introspector.findMethod(cls, indexedReadMethodName,
-                                                        1, args);
+            indexedReadMethod = Introspector.findMethod(cls, indexedReadMethodName, 1, args);
             if (indexedReadMethod == null) {
                 // no "is" method, so look for a "get" method.
                 indexedReadMethodName = Introspector.GET_PREFIX + getBaseName();
-                indexedReadMethod = Introspector.findMethod(cls, indexedReadMethodName,
-                                                            1, args);
+                indexedReadMethod = Introspector.findMethod(cls, indexedReadMethodName, 1, args);
             }
             setIndexedReadMethod0(indexedReadMethod);
         }
@@ -270,8 +267,9 @@ public class IndexedPropertyDescriptor extends PropertyDescriptor {
             if (indexedWriteMethodName == null) {
                 indexedWriteMethodName = Introspector.SET_PREFIX + getBaseName();
             }
-            indexedWriteMethod = Introspector.findMethod(cls, indexedWriteMethodName,
-                         2, (type == null) ? null : new Class[] { int.class, type });
+
+            Class[] args = (type == null) ? null : new Class[] { int.class, type };
+            indexedWriteMethod = Introspector.findMethod(cls, indexedWriteMethodName, 2, args);
             if (indexedWriteMethod != null) {
                 if (!indexedWriteMethod.getReturnType().equals(void.class)) {
                     indexedWriteMethod = null;

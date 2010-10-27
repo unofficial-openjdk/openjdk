@@ -112,9 +112,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
         // If this class or one of its base classes allow PropertyChangeListener,
         // then we assume that any properties we discover are "bound".
         // See Introspector.getTargetPropertyInfo() method.
-        String name = "addPropertyChangeListener";
-        Class[] args = {PropertyChangeListener.class};
-        this.bound = (null != Introspector.findMethod(beanClass, name, args.length, args));
+        Class[] args = { PropertyChangeListener.class };
+        this.bound = null != Introspector.findMethod(beanClass, "addPropertyChangeListener", args.length, args);
     }
 
     /**
@@ -293,8 +292,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
                 writeMethodName = Introspector.SET_PREFIX + getBaseName();
             }
 
-            writeMethod = Introspector.findMethod(cls, writeMethodName, 1,
-                          (type == null) ? null : new Class[] { type });
+            Class[] args = (type == null) ? null : new Class[] { type };
+            writeMethod = Introspector.findMethod(cls, writeMethodName, 1, args);
             if (writeMethod != null) {
                 if (!writeMethod.getReturnType().equals(void.class)) {
                     writeMethod = null;

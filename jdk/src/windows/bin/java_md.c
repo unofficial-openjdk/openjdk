@@ -105,14 +105,14 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
         exit(1);
     }
 
-    /* Do this before we read jvm.cfg */
-    EnsureJreInstallation(jrepath);
-
     /* Find out where the JRE is that we will be using. */
     if (!GetJREPath(jrepath, so_jrepath)) {
         JLI_ReportErrorMessage(JRE_ERROR1);
         exit(2);
     }
+
+    /* Do this before we read jvm.cfg and after jrepath is initialized */
+    EnsureJreInstallation(jrepath);
 
     /* Find the specified JVM type */
     if (ReadKnownVMs(jrepath, (char*)GetArch(), JNI_FALSE) < 1) {
@@ -162,6 +162,10 @@ LoadMSVCRT()
 #endif
 #ifdef CRT_DLL
         if (GetJREPath(crtpath, MAXPATHLEN)) {
+            if (JLI_StrLen(crtpath) + JLI_StrLen("\\bin\\") + JLI_StrLen(CRT_DLL) >= MAXPATHLEN) {
+                JLI_ReportErrorMessage(JRE_ERROR11);
+                return JNI_FALSE;
+            }
             (void)JLI_StrCat(crtpath, "\\bin\\" CRT_DLL);   /* Add crt dll */
             JLI_TraceLauncher("CRT path is %s\n", crtpath);
             if (_access(crtpath, 0) == 0) {
@@ -204,7 +208,7 @@ EnsureJreInstallation(const char* jrepath)
     struct stat s;
 
     /* Make sure the jrepath contains something */
-    if (jrepath[0] == NULL) {
+    if ((void*)jrepath[0] == NULL) {
         return;
     }
     /* 32 bit windows only please */
@@ -213,6 +217,7 @@ EnsureJreInstallation(const char* jrepath)
     }
     /* Does our bundle directory exist ? */
     JLI_Snprintf(tmpbuf, sizeof(tmpbuf), "%s\\lib\\bundles", jrepath);
+    JLI_TraceLauncher("EnsureJreInstallation: %s\n", tmpbuf);
     if (stat(tmpbuf, &s) != 0) {
         return;
     }
@@ -535,7 +540,7 @@ JLI_ReportErrorMessageSys(const char *fmt, ...)
         /* get the length of the string we need */
         int len = mlen =  _vscprintf(fmt, vl) + 1;
         if (freeit) {
-           mlen += JLI_StrLen(errtext);
+           mlen += (int)JLI_StrLen(errtext);
         }
 
         message = (char *)JLI_MemAlloc(mlen);
@@ -851,8 +856,7 @@ ExecJRE(char *jre, char **argv) {
     /*
      * If this isn't the selected version, exec the selected version.
      */
-    (void)JLI_StrCat(JLI_StrCat(JLI_StrCpy(path, jre), "\\bin\\"), progname);
-    (void)JLI_StrCat(path, ".exe");
+    JLI_Snprintf(path, sizeof(path), "%s\\bin\\%s.exe", jre, progname);
 
     /*
      * Although Windows has an execv() entrypoint, it doesn't actually
@@ -993,7 +997,6 @@ ExecJRE(char *jre, char **argv) {
 
         exit(exitCode);
     }
-
 }
 
 /*

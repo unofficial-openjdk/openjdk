@@ -42,8 +42,8 @@ import static com.sun.tools.javac.code.Flags.*;
  *  fields. This makes it possible to work in multiple concurrent
  *  projects, which might use different class files for library classes.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -74,6 +74,7 @@ public class Symtab {
     public final JCNoType voidType = new JCNoType(TypeTags.VOID);
 
     private final Names names;
+    private final Scope.ScopeCounter scopeCounter;
     private final ClassReader reader;
     private final Target target;
 
@@ -92,6 +93,10 @@ public class Symtab {
     /** The error symbol.
      */
     public final ClassSymbol errSymbol;
+
+    /** The unknown symbol.
+     */
+    public final ClassSymbol unknownSymbol;
 
     /** A value for the errType, with a originalType of noType */
     public final Type errType;
@@ -148,6 +153,7 @@ public class Symtab {
     public final Type inheritedType;
     public final Type proprietaryType;
     public final Type systemType;
+    public final Type autoCloseableType;
 
     /** The symbol representing the length field of an array.
      */
@@ -158,6 +164,9 @@ public class Symtab {
 
     /** The symbol representing the final finalize method on enums */
     public final MethodSymbol enumFinalFinalize;
+
+    /** The symbol representing the close method on TWR AutoCloseable type */
+    public final MethodSymbol autoCloseableClose;
 
     /** The predefined type that belongs to a tag.
      */
@@ -332,6 +341,7 @@ public class Symtab {
         context.put(symtabKey, this);
 
         names = Names.instance(context);
+        scopeCounter = Scope.ScopeCounter.instance(context);
         target = Target.instance(context);
 
         // Create the unknown type
@@ -350,6 +360,7 @@ public class Symtab {
 
         // create the error symbols
         errSymbol = new ClassSymbol(PUBLIC|STATIC|ACYCLIC, names.any, null, rootPackage);
+        unknownSymbol = new ClassSymbol(PUBLIC|STATIC|ACYCLIC, names.fromString("<any?>"), null, rootPackage);
         errType = new ErrorType(errSymbol, Type.noType);
 
         // initialize builtin types
@@ -364,7 +375,7 @@ public class Symtab {
         initType(voidType, "void", "Void");
         initType(botType, "<nulltype>");
         initType(errType, errSymbol);
-        initType(unknownType, "<any?>");
+        initType(unknownType, unknownSymbol);
 
         // the builtin class of all arrays
         arrayClass = new ClassSymbol(PUBLIC|ACYCLIC, names.Array, noSymbol);
@@ -377,7 +388,7 @@ public class Symtab {
 
         // Create class to hold all predefined constants and operations.
         predefClass = new ClassSymbol(PUBLIC|ACYCLIC, names.empty, rootPackage);
-        Scope scope = new Scope(predefClass);
+        Scope scope = new Scope.ClassScope(predefClass, scopeCounter);
         predefClass.members_field = scope;
 
         // Enter symbols for basic types.
@@ -444,6 +455,12 @@ public class Symtab {
         suppressWarningsType = enterClass("java.lang.SuppressWarnings");
         inheritedType = enterClass("java.lang.annotation.Inherited");
         systemType = enterClass("java.lang.System");
+        autoCloseableType = enterClass("java.lang.AutoCloseable");
+        autoCloseableClose = new MethodSymbol(PUBLIC,
+                             names.close,
+                             new MethodType(List.<Type>nil(), voidType,
+                                            List.of(exceptionType), methodClass),
+                             autoCloseableType.tsym);
 
         synthesizeEmptyInterfaceIfMissing(cloneableType);
         synthesizeEmptyInterfaceIfMissing(serializableType);
@@ -452,7 +469,7 @@ public class Symtab {
         synthesizeBoxTypeIfMissing(floatType);
         synthesizeBoxTypeIfMissing(voidType);
 
-        // Enter a synthetic class that is used to mark Sun
+        // Enter a synthetic class that is used to mark internal
         // proprietary classes in ct.sym.  This class does not have a
         // class file.
         ClassType proprietaryType = (ClassType)enterClass("sun.Proprietary+Annotation");
@@ -461,7 +478,7 @@ public class Symtab {
         proprietarySymbol.completer = null;
         proprietarySymbol.flags_field = PUBLIC|ACYCLIC|ANNOTATION|INTERFACE;
         proprietarySymbol.erasure_field = proprietaryType;
-        proprietarySymbol.members_field = new Scope(proprietarySymbol);
+        proprietarySymbol.members_field = new Scope.ClassScope(proprietarySymbol, scopeCounter);
         proprietaryType.typarams_field = List.nil();
         proprietaryType.allparams_field = List.nil();
         proprietaryType.supertype_field = annotationType;
@@ -473,7 +490,7 @@ public class Symtab {
         ClassType arrayClassType = (ClassType)arrayClass.type;
         arrayClassType.supertype_field = objectType;
         arrayClassType.interfaces_field = List.of(cloneableType, serializableType);
-        arrayClass.members_field = new Scope(arrayClass);
+        arrayClass.members_field = new Scope.ClassScope(arrayClass, scopeCounter);
         lengthVar = new VarSymbol(
             PUBLIC | FINAL,
             names.length,

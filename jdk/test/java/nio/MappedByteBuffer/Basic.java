@@ -22,9 +22,8 @@
  */
 
 /* @test
- * @bug 4462336
+ * @bug 4462336 6799037
  * @summary Simple MappedByteBuffer tests
- * @run main/othervm Basic
  */
 
 import java.io.*;
@@ -52,6 +51,12 @@ public class Basic {
         mbb.force();
         if (!mbb.isReadOnly())
             throw new RuntimeException("Incorrect isReadOnly");
+
+        // repeat with unaligned position in file
+        mbb = fc.map(FileChannel.MapMode.READ_ONLY, 1, 10);
+        mbb.load();
+        mbb.isLoaded();
+        mbb.force();
         fc.close();
         fis.close();
 
@@ -70,5 +75,10 @@ public class Basic {
             throw new RuntimeException("Incorrect isReadOnly");
         fc.close();
         raf.close();
+
+        // clean-up
+        mbb = null;
+        System.gc();
+        Thread.sleep(500);
     }
 }

@@ -35,6 +35,8 @@ import sun.util.logging.PlatformLogger;
 import sun.awt.EmbeddedFrame;
 import sun.awt.SunToolkit;
 
+import static sun.awt.X11.XConstants.*;
+
 public class XEmbeddedFramePeer extends XFramePeer {
 
     private static final PlatformLogger xembedLog = PlatformLogger.getLogger("sun.awt.X11.xembed.XEmbeddedFramePeer");
@@ -275,7 +277,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
         Point absoluteLoc = XlibUtil.translateCoordinates(getWindow(),
                                                           XToolkit.getDefaultRootWindow(),
                                                           new Point(0, 0));
-        return absoluteLoc.x;
+        return absoluteLoc != null ? absoluteLoc.x : 0;
     }
 
     public int getAbsoluteY()
@@ -283,7 +285,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
         Point absoluteLoc = XlibUtil.translateCoordinates(getWindow(),
                                                           XToolkit.getDefaultRootWindow(),
                                                           new Point(0, 0));
-        return absoluteLoc.y;
+        return absoluteLoc != null ? absoluteLoc.y : 0;
     }
 
     public int getWidth() {
@@ -304,5 +306,21 @@ public class XEmbeddedFramePeer extends XFramePeer {
 
         EmbeddedFrame frame = (EmbeddedFrame)target;
         frame.notifyModalBlocked(blocker, blocked);
+    }
+
+    public void synthesizeFocusInOut(boolean doFocus) {
+        XFocusChangeEvent xev = new XFocusChangeEvent();
+
+        XToolkit.awtLock();
+        try {
+            xev.set_type(doFocus ? FocusIn : FocusOut);
+            xev.set_window(getFocusProxy().getWindow());
+            xev.set_mode(NotifyNormal);
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(), getFocusProxy().getWindow(), false,
+                                   NoEventMask, xev.pData);
+        } finally {
+            XToolkit.awtUnlock();
+            xev.dispose();
+        }
     }
 }

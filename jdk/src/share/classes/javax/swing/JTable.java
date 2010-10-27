@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -946,7 +946,6 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
 
     /**
      * Returns the height of a table row, in pixels.
-     * The default row height is 16.0.
      *
      * @return  the height in pixels of a table row
      * @see     #setRowHeight
@@ -1048,7 +1047,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
 
     /**
      * Returns the horizontal and vertical space between cells.
-     * The default spacing is (1, 1), which provides room to draw the grid.
+     * The default spacing is look and feel dependent.
      *
      * @return  the horizontal and vertical spacing between cells
      * @see     #setIntercellSpacing
@@ -1155,7 +1154,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
 
     /**
      * Returns true if the table draws horizontal lines between cells, false if it
-     * doesn't. The default is true.
+     * doesn't. The default value is look and feel dependent.
      *
      * @return  true if the table draws horizontal lines between cells, false if it
      *          doesn't
@@ -1167,7 +1166,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
 
     /**
      * Returns true if the table draws vertical lines between cells, false if it
-     * doesn't. The default is true.
+     * doesn't. The default value is look and feel dependent.
      *
      * @return  true if the table draws vertical lines between cells, false if it
      *          doesn't
@@ -4575,9 +4574,8 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see TableColumnModelListener
      */
     public void columnMoved(TableColumnModelEvent e) {
-        // If I'm currently editing, then I should stop editing
-        if (isEditing()) {
-            removeEditor();
+        if (isEditing() && !getCellEditor().stopCellEditing()) {
+            getCellEditor().cancelCellEditing();
         }
         repaint();
     }
@@ -4594,8 +4592,8 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
      * @see TableColumnModelListener
      */
     public void columnMarginChanged(ChangeEvent e) {
-        if (isEditing()) {
-            removeEditor();
+        if (isEditing() && !getCellEditor().stopCellEditing()) {
+            getCellEditor().cancelCellEditing();
         }
         TableColumn resizingColumn = getResizingColumn();
         // Need to do this here, before the parent's
