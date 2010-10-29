@@ -504,7 +504,8 @@ public class TrueTypeFont extends FileFont {
                 break;
 
             default:
-                throw new FontFormatException("Unsupported sfnt " + platName);
+                throw new FontFormatException("Unsupported sfnt " +
+                                              getPublicFileName());
             }
 
             /* Now have the offset of this TT font (possibly within a TTC)
@@ -1369,6 +1370,6 @@ public class TrueTypeFont extends FileFont {
 
     public String toString() {
         return "** TrueType Font: Family="+familyName+ " Name="+fullName+
-            " style="+style+" fileName="+platName;
+            " style="+style+" fileName="+getPublicFileName();
     }
 }
