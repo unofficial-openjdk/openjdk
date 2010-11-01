@@ -2702,13 +2702,15 @@ void ClassFileParser::java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
       // Adjust the field type from byte to an unmanaged pointer.
       assert(fac_ptr->nonstatic_byte_count > 0, "");
       fac_ptr->nonstatic_byte_count -= 1;
-      (*fields_ptr)->ushort_at_put(i + instanceKlass::signature_index_offset,
-                                   word_sig_index);
-      fac_ptr->nonstatic_word_count += 1;
+
+      (*fields_ptr)->ushort_at_put(i + instanceKlass::signature_index_offset, word_sig_index);
+      assert(wordSize == longSize || wordSize == jintSize, "ILP32 or LP64");
+      if (wordSize == longSize)  fac_ptr->nonstatic_double_count += 1;
+      else                       fac_ptr->nonstatic_word_count   += 1;
 
       FieldAllocationType atype = (FieldAllocationType) (*fields_ptr)->ushort_at(i + instanceKlass::low_offset);
       assert(atype == NONSTATIC_BYTE, "");
-      FieldAllocationType new_atype = NONSTATIC_WORD;
+      FieldAllocationType new_atype = (wordSize == longSize) ? NONSTATIC_DOUBLE : NONSTATIC_WORD;
       (*fields_ptr)->ushort_at_put(i + instanceKlass::low_offset, new_atype);
 
       found_vmentry = true;
@@ -4307,20 +4309,21 @@ int ClassFileParser::verify_legal_method_signature(symbolHandle name, symbolHand
 }
 
 
-// Unqualified names may not contain the characters '.', ';', or '/'.
-// Method names also may not contain the characters '<' or '>', unless <init> or <clinit>.
-// Note that method names may not be <init> or <clinit> in this method.
-// Because these names have been checked as special cases before calling this method
-// in verify_legal_method_name.
-bool ClassFileParser::verify_unqualified_name(char* name, unsigned int length, int type) {
+// Unqualified names may not contain the characters '.', ';', '[', or '/'.
+// Method names also may not contain the characters '<' or '>', unless <init>
+// or <clinit>.  Note that method names may not be <init> or <clinit> in this
+// method.  Because these names have been checked as special cases before
+// calling this method in verify_legal_method_name.
+bool ClassFileParser::verify_unqualified_name(
+    char* name, unsigned int length, int type) {
   jchar ch;
 
   for (char* p = name; p != name + length; ) {
     ch = *p;
     if (ch < 128) {
       p++;
-      if (ch == '.' || ch == ';') {
-        return false;   // do not permit '.' or ';'
+      if (ch == '.' || ch == ';' || ch == '[' ) {
+        return false;   // do not permit '.', ';', or '['
       }
       if (type != LegalClass && ch == '/') {
         return false;   // do not permit '/' unless it's class name
