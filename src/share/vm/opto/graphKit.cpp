@@ -1739,6 +1739,7 @@ void GraphKit::replace_call(CallNode* call, Node* result) {
   C->gvn_replace_by(callprojs.fallthrough_catchproj, final_state->in(TypeFunc::Control));
   C->gvn_replace_by(callprojs.fallthrough_memproj,   final_state->in(TypeFunc::Memory));
   C->gvn_replace_by(callprojs.fallthrough_ioproj,    final_state->in(TypeFunc::I_O));
+  Node* final_mem = final_state->in(TypeFunc::Memory);
 
   // Replace the result with the new result if it exists and is used
   if (callprojs.resproj != NULL && result != NULL) {
@@ -1776,6 +1777,21 @@ void GraphKit::replace_call(CallNode* call, Node* result) {
   // Disconnect the call from the graph
   call->disconnect_inputs(NULL);
   C->gvn_replace_by(call, C->top());
+
+  // Clean up any MergeMems that feed other MergeMems since the
+  // optimizer doesn't like that.
+  if (final_mem->is_MergeMem()) {
+    Node_List wl;
+    for (SimpleDUIterator i(final_mem); i.has_next(); i.next()) {
+      Node* m = i.get();
+      if (m->is_MergeMem() && !wl.contains(m)) {
+        wl.push(m);
+      }
+    }
+    while (wl.size()  > 0) {
+      _gvn.transform(wl.pop());
+    }
+  }
 }
 
 
@@ -3254,6 +3270,7 @@ void GraphKit::sync_kit(IdealKit& ideal) {
   // Final sync IdealKit and graphKit.
   __ drain_delay_transform();
   set_all_memory(__ merged_memory());
+  set_i_o(__ i_o());
   set_control(__ ctrl());
 }
 
@@ -3301,7 +3318,7 @@ void GraphKit::write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   // Convert the pointer to an int prior to doing math on it
   Node* cast = __ CastPX(__ ctrl(), adr);
@@ -3337,7 +3354,7 @@ void GraphKit::g1_write_barrier_pre(Node* obj,
                                     Node* val,
                                     const TypeOopPtr* val_type,
                                     BasicType bt) {
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 
@@ -3480,7 +3497,7 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 

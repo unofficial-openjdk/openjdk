@@ -34,15 +34,16 @@
 const uint IdealKit::first_var = TypeFunc::Parms + 1;
 
 //----------------------------IdealKit-----------------------------------------
-IdealKit::IdealKit(PhaseGVN &gvn, Node* control, Node* mem, bool delay_all_transforms, bool has_declarations) :
-  _gvn(gvn), C(gvn.C) {
-  _initial_ctrl = control;
-  _initial_memory = mem;
+IdealKit::IdealKit(GraphKit* gkit, bool delay_all_transforms, bool has_declarations) :
+  _gvn(gkit->gvn()), C(gkit->C) {
+  _initial_ctrl = gkit->control();
+  _initial_memory = gkit->merged_memory();
+  _initial_i_o = gkit->i_o();
   _delay_all_transforms = delay_all_transforms;
   _var_ct = 0;
   _cvstate = NULL;
   // We can go memory state free or else we need the entire memory state
-  assert(mem == NULL || mem->Opcode() == Op_MergeMem, "memory must be pre-split");
+  assert(_initial_memory == NULL || _initial_memory->Opcode() == Op_MergeMem, "memory must be pre-split");
   int init_size = 5;
   _pending_cvstates = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
   _delay_transform  = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
@@ -266,6 +267,7 @@ void IdealKit::declarations_done() {
   _cvstate = new_cvstate();   // initialize current cvstate
   set_ctrl(_initial_ctrl);    // initialize control in current cvstate
   set_all_memory(_initial_memory);// initialize memory in current cvstate
+  set_i_o(_initial_i_o);      // initialize i_o in current cvstate
   DEBUG_ONLY(_state->push(BlockS));
 }
 
@@ -407,6 +409,9 @@ void IdealKit::do_memory_merge(Node* merging, Node* join) {
   // Get the region for the join state
   Node* join_region = join->in(TypeFunc::Control);
   assert(join_region != NULL, "join region must exist");
+  if (join->in(TypeFunc::I_O) == NULL ) {
+    join->set_req(TypeFunc::I_O,  merging->in(TypeFunc::I_O));
+  }
   if (join->in(TypeFunc::Memory) == NULL ) {
     join->set_req(TypeFunc::Memory,  merging->in(TypeFunc::Memory));
     return;
@@ -452,6 +457,20 @@ void IdealKit::do_memory_merge(Node* merging, Node* join) {
       // this updates join_m with the phi
       mms.set_memory(phi);
     }
+  }
+
+  Node* join_io    = join->in(TypeFunc::I_O);
+  Node* merging_io = merging->in(TypeFunc::I_O);
+  if (join_io != merging_io) {
+    PhiNode* phi;
+    if (join_io->is_Phi() && join_io->as_Phi()->region() == join_region) {
+      phi = join_io->as_Phi();
+    } else {
+      phi = PhiNode::make(join_region, join_io, Type::ABIO);
+      phi = (PhiNode*) delay_transform(phi);
+      join->set_req(TypeFunc::I_O, phi);
+    }
+    phi->set_req(slot, merging_io);
   }
 }
 

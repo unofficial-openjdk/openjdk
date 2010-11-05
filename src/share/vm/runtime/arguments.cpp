@@ -1250,7 +1250,8 @@ bool verify_object_alignment() {
 }
 
 inline uintx max_heap_for_compressed_oops() {
-  LP64_ONLY(return OopEncodingHeapMax - MaxPermSize - os::vm_page_size());
+  // Heap should be above HeapBaseMinAddress to get zero based compressed oops.
+  LP64_ONLY(return OopEncodingHeapMax - MaxPermSize - os::vm_page_size() - HeapBaseMinAddress);
   NOT_LP64(ShouldNotReachHere(); return 0);
 }
 
@@ -1512,6 +1513,9 @@ void Arguments::set_aggressive_opts_flags() {
   }
   if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeStringConcat)) {
     FLAG_SET_DEFAULT(OptimizeStringConcat, true);
+  }
+  if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeFill)) {
+    FLAG_SET_DEFAULT(OptimizeFill, true);
   }
 #endif
 
