@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,8 @@ public class CheckCipherSuites {
         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
+
     };
 
     private final static String[] ENABLED_UNLIMITED = {
@@ -73,6 +75,8 @@ public class CheckCipherSuites {
         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
+
     };
 
     // supported ciphersuites using default JCE policy jurisdiction files
@@ -93,6 +97,8 @@ public class CheckCipherSuites {
         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
+
         "SSL_RSA_WITH_NULL_MD5",
         "SSL_RSA_WITH_NULL_SHA",
         "SSL_DH_anon_WITH_RC4_128_MD5",
@@ -110,7 +116,8 @@ public class CheckCipherSuites {
         "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
         "TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
         "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
-        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5"
+        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
+
     };
 
     // supported ciphersuites using unlimited JCE policy jurisdiction files
@@ -134,6 +141,8 @@ public class CheckCipherSuites {
         "SSL_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA",
         "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA",
+        "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
+
         "SSL_RSA_WITH_NULL_MD5",
         "SSL_RSA_WITH_NULL_SHA",
         "SSL_DH_anon_WITH_RC4_128_MD5",
@@ -152,7 +161,8 @@ public class CheckCipherSuites {
         "TLS_KRB5_EXPORT_WITH_RC4_40_SHA",
         "TLS_KRB5_EXPORT_WITH_RC4_40_MD5",
         "TLS_KRB5_EXPORT_WITH_DES_CBC_40_SHA",
-        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5"
+        "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5",
+
     };
 
     private static void showSuites(String[] suites) {

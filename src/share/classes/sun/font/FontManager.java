@@ -431,8 +431,7 @@ public final class FontManager {
      */
     public static FontUIResource getCompositeFontUIResource(Font font) {
 
-        FontUIResource fuir =
-            new FontUIResource(font.getName(),font.getStyle(),font.getSize());
+        FontUIResource fuir = new FontUIResource(font);
         Font2D font2D = getFont2D(font);
 
         if (!(font2D instanceof PhysicalFont)) {
@@ -3269,7 +3268,7 @@ public final class FontManager {
             int fontFormat = FONTFORMAT_NONE;
             int fontRank = Font2D.UNKNOWN_RANK;
 
-            if (ext.equals(".ttf") || isTTC) {
+            if (ext.equals(".ttf") || ext.equals(".otf") || isTTC) {
                 fontFormat = FONTFORMAT_TRUETYPE;
                 fontRank = Font2D.TTF_RANK;
             } else if (ext.equals(".pfa") || ext.equals(".pfb")) {

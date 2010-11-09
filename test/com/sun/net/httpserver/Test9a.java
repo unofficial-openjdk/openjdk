@@ -24,17 +24,15 @@
 /**
  * @test
  * @bug 6270015
+ * @run main/othervm Test9a
  * @summary  Light weight HTTP server
  */
 
 import com.sun.net.httpserver.*;
 
-import java.util.*;
 import java.util.concurrent.*;
 import java.io.*;
 import java.net.*;
-import java.security.*;
-import java.security.cert.*;
 import javax.net.ssl.*;
 
 /* Same as Test1 but requests run in parallel.
@@ -92,8 +90,10 @@ public class Test9a extends Test {
             System.out.println ("OK");
         } finally {
             delay();
-            server.stop(2);
-            executor.shutdown ();
+            if (server != null)
+                server.stop(2);
+            if (executor != null)
+                executor.shutdown();
         }
     }
 
