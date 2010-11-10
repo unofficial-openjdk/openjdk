@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 4851776 4907265 6177836
+ * @bug 4851776 4907265 6177836 6876282
  * @summary Some tests for the divide methods.
  * @author Joseph D. Darcy
  * @compile -source 1.5 DivideTests.java
@@ -281,6 +281,10 @@ public class DivideTests {
         BigDecimal c = new BigDecimal("31425");
         BigDecimal c_minus = c.negate();
 
+         // Ad hoc tests
+        BigDecimal d = new BigDecimal(new BigInteger("-37361671119238118911893939591735"), 10);
+        BigDecimal e = new BigDecimal(new BigInteger("74723342238476237823787879183470"), 15);
+
         BigDecimal[][] testCases = {
             {a,         b,      BigDecimal.valueOf(ROUND_UP, 3),        new BigDecimal("3.142")},
             {a_minus,   b,      BigDecimal.valueOf(ROUND_UP, 3),        new BigDecimal("-3.142")},
@@ -305,6 +309,10 @@ public class DivideTests {
 
             {c,         b,      BigDecimal.valueOf(ROUND_HALF_EVEN, 3), new BigDecimal("3.142")},
             {c_minus,   b,      BigDecimal.valueOf(ROUND_HALF_EVEN, 3), new BigDecimal("-3.142")},
+
+            {d,         e,      BigDecimal.valueOf(ROUND_HALF_UP, -5),   BigDecimal.valueOf(-1, -5)},
+            {d,         e,      BigDecimal.valueOf(ROUND_HALF_DOWN, -5), BigDecimal.valueOf(0, -5)},
+            {d,         e,      BigDecimal.valueOf(ROUND_HALF_EVEN, -5), BigDecimal.valueOf(0, -5)},
         };
 
         for(BigDecimal tc[] : testCases) {
@@ -320,6 +328,35 @@ public class DivideTests {
             }
         }
 
+        // 6876282
+        BigDecimal[][] testCases2 = {
+            // { dividend, divisor, expected quotient }
+            { new BigDecimal(3090), new BigDecimal(7), new BigDecimal(441) },
+            { new BigDecimal("309000000000000000000000"), new BigDecimal("700000000000000000000"),
+              new BigDecimal(441) },
+            { new BigDecimal("962.430000000000"), new BigDecimal("8346463.460000000000"),
+              new BigDecimal("0.000115309916") },
+            { new BigDecimal("18446744073709551631"), new BigDecimal("4611686018427387909"),
+              new BigDecimal(4) },
+            { new BigDecimal("18446744073709551630"), new BigDecimal("4611686018427387909"),
+              new BigDecimal(4) },
+            { new BigDecimal("23058430092136939523"), new BigDecimal("4611686018427387905"),
+              new BigDecimal(5) },
+            { new BigDecimal("-18446744073709551661"), new BigDecimal("-4611686018427387919"),
+              new BigDecimal(4) },
+            { new BigDecimal("-18446744073709551660"), new BigDecimal("-4611686018427387919"),
+              new BigDecimal(4) },
+        };
+
+        for (BigDecimal test[] : testCases2) {
+            BigDecimal quo = test[0].divide(test[1], RoundingMode.HALF_UP);
+            if (!quo.equals(test[2])) {
+                failures++;
+                System.err.println("Unexpected quotient from " + test[0] + " / " + test[1] +
+                                   " rounding mode HALF_UP" +
+                                   "; expected " + test[2] + " got " + quo);
+            }
+        }
         return failures;
     }
 
