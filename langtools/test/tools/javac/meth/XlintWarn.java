@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,15 +21,22 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+/*
+ * @test
+ * @bug 6999067
+ * @summary cast for invokeExact call gets redundant cast to <type> warnings
+ * @author mcimadamore
+ *
+ * @compile -Werror -Xlint:cast XlintWarn.java
+ */
 
-import java.io.*;
+import java.dyn.*;
 
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
-        }
+class XlintWarn {
+    void test(MethodHandle mh) throws Throwable {
+        int i1 = (int)mh.invoke();
+        int i2 = (int)mh.invokeExact();
+        int i3 = (int)mh.invokeVarargs();
+        int i4 = (int)InvokeDynamic.test();
     }
 }

@@ -21,15 +21,19 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+/*
+ * @test
+ * @bug 6996914
+ * @summary  Diamond inference: problem when accessing protected constructor
+ * @compile T6996914b.java
+ */
 
-import java.io.*;
+class Super<X,Y> {
+    private Super(Integer i, Y y, X x) {}
+    public Super(Number n, X x, Y y) {}
+}
 
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
-        }
-    }
+class Test {
+    Super<String,Integer> ssi1 = new Super<>(1, "", 2);
+    Super<String,Integer> ssi2 = new Super<>(1, "", 2) {};
 }

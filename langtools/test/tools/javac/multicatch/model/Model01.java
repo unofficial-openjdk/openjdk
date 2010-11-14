@@ -21,15 +21,28 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+import javax.lang.model.element.ElementKind;
 
-import java.io.*;
+@Check
+class Test {
 
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
+    class A extends Exception {
+        @Member(ElementKind.METHOD)
+        public void m() {};
+        @Member(ElementKind.FIELD)
+        public Object f;
+    }
+
+    class B1 extends A {}
+    class B2 extends A {}
+
+    void test(){
+        try {
+            if (true)
+                throw new B1();
+            else
+                throw new B2();
         }
+        catch(B1 | B2 ex) { }
     }
 }

@@ -21,15 +21,11 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+package pack1;
 
-import java.io.*;
-
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
-        }
-    }
+public class Symbol {
+   public static class CompletionFailure extends RuntimeException { }
 }
+
+
+
