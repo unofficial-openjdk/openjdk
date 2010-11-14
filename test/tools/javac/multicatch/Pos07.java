@@ -21,15 +21,29 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+/*
+ * @test
+ * @bug 6993963
+ * @summary Project Coin: Use precise exception analysis for effectively final catch parameters
+ * @compile Pos07.java
+ */
 
-import java.io.*;
+class Pos07 {
 
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
+    static class A extends Exception { public void m() {}; public Object f;}
+    static class B1 extends A {}
+    static class B2 extends A {}
+
+    void m() throws B1, B2 {
+        try {
+            if (true) {
+                throw new B1();
+            }
+            else {
+                throw new B2();
+            }
+        } catch (Exception ex) { //effectively final analysis
+            throw ex;
         }
     }
 }

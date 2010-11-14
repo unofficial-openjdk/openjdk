@@ -21,15 +21,11 @@
  * questions.
  */
 
-// key: compiler.warn.try.explicit.close.call
-// options: -Xlint:try
+import javax.lang.model.element.ElementKind;
 
-import java.io.*;
-
-class ResourceClosed {
-    void m() throws IOException {
-        try (Writer out = new StringWriter()) {
-            out.close();
-        }
-    }
+/**
+ * Annotation used by ModelChecker to mark a member that is to be checked
+ */
+@interface Member {
+   ElementKind value();
 }
