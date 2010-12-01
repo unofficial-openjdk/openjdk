@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,64 @@
 
 # define __STDC_FORMAT_MACROS
 
-// do not include  precompiled  header file
-# include "incls/_os_linux.cpp.incl"
+// no precompiled headers
+#include "classfile/classLoader.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "code/icBuffer.hpp"
+#include "code/vtableStubs.hpp"
+#include "compiler/compileBroker.hpp"
+#include "interpreter/interpreter.hpp"
+#include "jvm_linux.h"
+#include "memory/allocation.inline.hpp"
+#include "memory/filemap.hpp"
+#include "mutex_linux.inline.hpp"
+#include "oops/oop.inline.hpp"
+#include "os_share_linux.hpp"
+#include "prims/jniFastGetField.hpp"
+#include "prims/jvm.h"
+#include "prims/jvm_misc.hpp"
+#include "runtime/arguments.hpp"
+#include "runtime/extendedPC.hpp"
+#include "runtime/globals.hpp"
+#include "runtime/hpi.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/java.hpp"
+#include "runtime/javaCalls.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/osThread.hpp"
+#include "runtime/perfMemory.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/statSampler.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/threadCritical.hpp"
+#include "runtime/timer.hpp"
+#include "services/attachListener.hpp"
+#include "services/runtimeService.hpp"
+#include "thread_linux.inline.hpp"
+#include "utilities/defaultStream.hpp"
+#include "utilities/events.hpp"
+#include "utilities/growableArray.hpp"
+#include "utilities/vmError.hpp"
+#ifdef TARGET_ARCH_x86
+# include "assembler_x86.inline.hpp"
+# include "nativeInst_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "assembler_sparc.inline.hpp"
+# include "nativeInst_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "assembler_zero.inline.hpp"
+# include "nativeInst_zero.hpp"
+#endif
+#ifdef COMPILER1
+#include "c1/c1_Runtime1.hpp"
+#endif
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
 
 // put OS-includes here
 # include <sys/types.h>
@@ -827,8 +883,10 @@ bool os::create_thread(Thread* thread, ThreadType thr_type, size_t stack_size) {
 
       switch (thr_type) {
       case os::java_thread:
-        // Java threads use ThreadStackSize which default value can be changed with the flag -Xss
-        if (JavaThread::stack_size_at_create() > 0) stack_size = JavaThread::stack_size_at_create();
+        // Java threads use ThreadStackSize which default value can be
+        // changed with the flag -Xss
+        assert (JavaThread::stack_size_at_create() > 0, "this should be set");
+        stack_size = JavaThread::stack_size_at_create();
         break;
       case os::compiler_thread:
         if (CompilerThreadStackSize > 0) {
@@ -3922,12 +3980,21 @@ jint os::init_2(void)
   Linux::signal_sets_init();
   Linux::install_signal_handlers();
 
+  // Check minimum allowable stack size for thread creation and to initialize
+  // the java system classes, including StackOverflowError - depends on page
+  // size.  Add a page for compiler2 recursion in main thread.
+  // Add in 2*BytesPerWord times page size to account for VM stack during
+  // class initialization depending on 32 or 64 bit VM.
+  os::Linux::min_stack_allowed = MAX2(os::Linux::min_stack_allowed,
+            (size_t)(StackYellowPages+StackRedPages+StackShadowPages+
+                    2*BytesPerWord COMPILER2_PRESENT(+1)) * Linux::page_size());
+
   size_t threadStackSizeInBytes = ThreadStackSize * K;
   if (threadStackSizeInBytes != 0 &&
-      threadStackSizeInBytes < Linux::min_stack_allowed) {
+      threadStackSizeInBytes < os::Linux::min_stack_allowed) {
         tty->print_cr("\nThe stack size specified is too small, "
                       "Specify at least %dk",
-                      Linux::min_stack_allowed / K);
+                      os::Linux::min_stack_allowed/ K);
         return JNI_ERR;
   }
 
@@ -4839,7 +4906,7 @@ void Parker::park(bool isAbsolute, jlong time) {
 
   // Next, demultiplex/decode time arguments
   timespec absTime;
-  if (time < 0) { // don't wait at all
+  if (time < 0 || (isAbsolute && time == 0) ) { // don't wait at all
     return;
   }
   if (time > 0) {

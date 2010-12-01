@@ -22,8 +22,13 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_c1_Instruction.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_IR.hpp"
+#include "c1/c1_Instruction.hpp"
+#include "c1/c1_InstructionPrinter.hpp"
+#include "c1/c1_ValueStack.hpp"
+#include "ci/ciObjArrayKlass.hpp"
+#include "ci/ciTypeArrayKlass.hpp"
 
 
 // Implementation of Instruction
@@ -415,28 +420,26 @@ bool Constant::is_equal(Value v) const {
   return false;
 }
 
-
-BlockBegin* Constant::compare(Instruction::Condition cond, Value right,
-                              BlockBegin* true_sux, BlockBegin* false_sux) {
+Constant::CompareResult Constant::compare(Instruction::Condition cond, Value right) const {
   Constant* rc = right->as_Constant();
   // other is not a constant
-  if (rc == NULL) return NULL;
+  if (rc == NULL) return not_comparable;
 
   ValueType* lt = type();
   ValueType* rt = rc->type();
   // different types
-  if (lt->base() != rt->base()) return NULL;
+  if (lt->base() != rt->base()) return not_comparable;
   switch (lt->tag()) {
   case intTag: {
     int x = lt->as_IntConstant()->value();
     int y = rt->as_IntConstant()->value();
     switch (cond) {
-    case If::eql: return x == y ? true_sux : false_sux;
-    case If::neq: return x != y ? true_sux : false_sux;
-    case If::lss: return x <  y ? true_sux : false_sux;
-    case If::leq: return x <= y ? true_sux : false_sux;
-    case If::gtr: return x >  y ? true_sux : false_sux;
-    case If::geq: return x >= y ? true_sux : false_sux;
+    case If::eql: return x == y ? cond_true : cond_false;
+    case If::neq: return x != y ? cond_true : cond_false;
+    case If::lss: return x <  y ? cond_true : cond_false;
+    case If::leq: return x <= y ? cond_true : cond_false;
+    case If::gtr: return x >  y ? cond_true : cond_false;
+    case If::geq: return x >= y ? cond_true : cond_false;
     }
     break;
   }
@@ -444,12 +447,12 @@ BlockBegin* Constant::compare(Instruction::Condition cond, Value right,
     jlong x = lt->as_LongConstant()->value();
     jlong y = rt->as_LongConstant()->value();
     switch (cond) {
-    case If::eql: return x == y ? true_sux : false_sux;
-    case If::neq: return x != y ? true_sux : false_sux;
-    case If::lss: return x <  y ? true_sux : false_sux;
-    case If::leq: return x <= y ? true_sux : false_sux;
-    case If::gtr: return x >  y ? true_sux : false_sux;
-    case If::geq: return x >= y ? true_sux : false_sux;
+    case If::eql: return x == y ? cond_true : cond_false;
+    case If::neq: return x != y ? cond_true : cond_false;
+    case If::lss: return x <  y ? cond_true : cond_false;
+    case If::leq: return x <= y ? cond_true : cond_false;
+    case If::gtr: return x >  y ? cond_true : cond_false;
+    case If::geq: return x >= y ? cond_true : cond_false;
     }
     break;
   }
@@ -459,14 +462,14 @@ BlockBegin* Constant::compare(Instruction::Condition cond, Value right,
     assert(xvalue != NULL && yvalue != NULL, "not constants");
     if (xvalue->is_loaded() && yvalue->is_loaded()) {
       switch (cond) {
-      case If::eql: return xvalue == yvalue ? true_sux : false_sux;
-      case If::neq: return xvalue != yvalue ? true_sux : false_sux;
+      case If::eql: return xvalue == yvalue ? cond_true : cond_false;
+      case If::neq: return xvalue != yvalue ? cond_true : cond_false;
       }
     }
     break;
   }
   }
-  return NULL;
+  return not_comparable;
 }
 
 

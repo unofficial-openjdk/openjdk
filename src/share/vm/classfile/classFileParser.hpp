@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,16 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_CLASSFILE_CLASSFILEPARSER_HPP
+#define SHARE_VM_CLASSFILE_CLASSFILEPARSER_HPP
+
+#include "classfile/classFileStream.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/typeArrayOop.hpp"
+#include "runtime/handles.inline.hpp"
+#include "utilities/accessFlags.hpp"
 
 // Parser for for .class files
 //
@@ -55,6 +65,9 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   void parse_constant_pool_entries(constantPoolHandle cp, int length, TRAPS);
 
   constantPoolHandle parse_constant_pool(TRAPS);
+
+  static int start_operand_group(GrowableArray<int>* &operands, int op_count, TRAPS);
+  static void store_operand_array(GrowableArray<int>* operands, constantPoolHandle cp, TRAPS);
 
   // Interface parsing
   objArrayHandle parse_interfaces(constantPoolHandle cp,
@@ -151,7 +164,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   // Adjust the field allocation counts for java.dyn.MethodHandle to add
   // a fake address (void*) field.
   void java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
-                                     typeArrayHandle* fields_ptr,
+                                     typeArrayHandle fields,
                                      FieldAllocationCount *fac_ptr, TRAPS);
 
   // Format checker methods
@@ -283,3 +296,5 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   static void check_final_method_override(instanceKlassHandle this_klass, TRAPS);
   static void check_illegal_static_method(instanceKlassHandle this_klass, TRAPS);
 };
+
+#endif // SHARE_VM_CLASSFILE_CLASSFILEPARSER_HPP

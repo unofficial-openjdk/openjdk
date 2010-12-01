@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,60 @@
  *
  */
 
-// do not include  precompiled  header file
-# include "incls/_os_solaris.cpp.incl"
+// no precompiled headers
+#include "classfile/classLoader.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "code/icBuffer.hpp"
+#include "code/vtableStubs.hpp"
+#include "compiler/compileBroker.hpp"
+#include "interpreter/interpreter.hpp"
+#include "jvm_solaris.h"
+#include "memory/allocation.inline.hpp"
+#include "memory/filemap.hpp"
+#include "mutex_solaris.inline.hpp"
+#include "oops/oop.inline.hpp"
+#include "os_share_solaris.hpp"
+#include "prims/jniFastGetField.hpp"
+#include "prims/jvm.h"
+#include "prims/jvm_misc.hpp"
+#include "runtime/arguments.hpp"
+#include "runtime/extendedPC.hpp"
+#include "runtime/globals.hpp"
+#include "runtime/hpi.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/java.hpp"
+#include "runtime/javaCalls.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/osThread.hpp"
+#include "runtime/perfMemory.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/statSampler.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/threadCritical.hpp"
+#include "runtime/timer.hpp"
+#include "services/attachListener.hpp"
+#include "services/runtimeService.hpp"
+#include "thread_solaris.inline.hpp"
+#include "utilities/defaultStream.hpp"
+#include "utilities/events.hpp"
+#include "utilities/growableArray.hpp"
+#include "utilities/vmError.hpp"
+#ifdef TARGET_ARCH_x86
+# include "assembler_x86.inline.hpp"
+# include "nativeInst_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "assembler_sparc.inline.hpp"
+# include "nativeInst_sparc.hpp"
+#endif
+#ifdef COMPILER1
+#include "c1/c1_Runtime1.hpp"
+#endif
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
 
 // put OS-includes here
 # include <dlfcn.h>
@@ -3375,7 +3427,12 @@ static int os_sleep(jlong millis, bool interruptible) {
     // INTERRUPTIBLE_NORESTART_VM_ALWAYS returns res == OS_INTRPT for
     // thread.Interrupt.
 
-    if((res == OS_ERR) && (errno == EINTR)) {
+    // See c/r 6751923. Poll can return 0 before time
+    // has elapsed if time is set via clock_settime (as NTP does).
+    // res == 0 if poll timed out (see man poll RETURN VALUES)
+    // using the logic below checks that we really did
+    // sleep at least "millis" if not we'll sleep again.
+    if( ( res == 0 ) || ((res == OS_ERR) && (errno == EINTR))) {
       newtime = getTimeMillis();
       assert(newtime >= prevtime, "time moving backwards");
     /* Doing prevtime and newtime in microseconds doesn't help precision,
@@ -4878,18 +4935,17 @@ jint os::init_2(void) {
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
   // size.  Add a page for compiler2 recursion in main thread.
-  // Add in BytesPerWord times page size to account for VM stack during
+  // Add in 2*BytesPerWord times page size to account for VM stack during
   // class initialization depending on 32 or 64 bit VM.
-  guarantee((Solaris::min_stack_allowed >=
-    (StackYellowPages+StackRedPages+StackShadowPages+BytesPerWord
-     COMPILER2_PRESENT(+1)) * page_size),
-    "need to increase Solaris::min_stack_allowed on this platform");
+  os::Solaris::min_stack_allowed = MAX2(os::Solaris::min_stack_allowed,
+            (size_t)(StackYellowPages+StackRedPages+StackShadowPages+
+                    2*BytesPerWord COMPILER2_PRESENT(+1)) * page_size);
 
   size_t threadStackSizeInBytes = ThreadStackSize * K;
   if (threadStackSizeInBytes != 0 &&
-    threadStackSizeInBytes < Solaris::min_stack_allowed) {
+    threadStackSizeInBytes < os::Solaris::min_stack_allowed) {
     tty->print_cr("\nThe stack size specified is too small, Specify at least %dk",
-                  Solaris::min_stack_allowed/K);
+                  os::Solaris::min_stack_allowed/K);
     return JNI_ERR;
   }
 
@@ -5837,7 +5893,7 @@ void Parker::park(bool isAbsolute, jlong time) {
 
   // First, demultiplex/decode time arguments
   timespec absTime;
-  if (time < 0) { // don't wait at all
+  if (time < 0 || (isAbsolute && time == 0) ) { // don't wait at all
     return;
   }
   if (time > 0) {

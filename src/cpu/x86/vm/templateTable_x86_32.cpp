@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_templateTable_x86_32.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "interpreter/templateTable.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/synchronizer.hpp"
 
 #ifndef CC_INTERP
 #define __ _masm->
@@ -399,6 +409,23 @@ void TemplateTable::fast_aldc(bool wide) {
   if (VerifyOops) {
     __ verify_oop(rax);
   }
+
+  Label L_done, L_throw_exception;
+  const Register con_klass_temp = rcx;  // same as Rcache
+  __ movptr(con_klass_temp, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ cmpptr(con_klass_temp, ExternalAddress((address)Universe::systemObjArrayKlassObj_addr()));
+  __ jcc(Assembler::notEqual, L_done);
+  __ cmpl(Address(rax, arrayOopDesc::length_offset_in_bytes()), 0);
+  __ jcc(Assembler::notEqual, L_throw_exception);
+  __ xorptr(rax, rax);
+  __ jmp(L_done);
+
+  // Load the exception from the system-array which wraps it:
+  __ bind(L_throw_exception);
+  __ movptr(rax, Address(rax, arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
+  __ jump(ExternalAddress(Interpreter::throw_exception_entry()));
+
+  __ bind(L_done);
 }
 
 void TemplateTable::ldc2_w() {

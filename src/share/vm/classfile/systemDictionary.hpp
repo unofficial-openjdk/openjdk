@@ -22,6 +22,17 @@
  *
  */
 
+#ifndef SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+#define SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+
+#include "classfile/classFileStream.hpp"
+#include "classfile/classLoader.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/java.hpp"
+#include "runtime/reflectionUtils.hpp"
+#include "utilities/hashtable.hpp"
+
 // The system dictionary stores all loaded classes and maps:
 //
 //   [class name,class loader] -> class   i.e.  [symbolOop,oop] -> klassOop
@@ -496,6 +507,7 @@ public:
   static Handle    find_bootstrap_method(methodHandle caller_method,
                                          int caller_bci,  // N.B. must be an invokedynamic
                                          int cache_index, // must be corresponding main_entry
+                                         Handle &argument_info_result, // static BSM arguments, if any
                                          TRAPS);
 
   // Utility for printing loader "name" as part of tracing constraints
@@ -671,3 +683,5 @@ public:
 
   static KlassHandle box_klass(BasicType t);
 };
+
+#endif // SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP

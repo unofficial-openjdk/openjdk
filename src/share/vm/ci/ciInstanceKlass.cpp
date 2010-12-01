@@ -22,8 +22,16 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_ciInstanceKlass.cpp.incl"
+#include "precompiled.hpp"
+#include "ci/ciField.hpp"
+#include "ci/ciInstance.hpp"
+#include "ci/ciInstanceKlass.hpp"
+#include "ci/ciUtilities.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "memory/allocation.hpp"
+#include "memory/allocation.inline.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/fieldDescriptor.hpp"
 
 // ciInstanceKlass
 //
@@ -564,7 +572,7 @@ bool ciInstanceKlass::is_leaf_type() {
 // This is OK, since any dependencies we decide to assert
 // will be checked later under the Compile_lock.
 ciInstanceKlass* ciInstanceKlass::implementor(int n) {
-  if (n > implementors_limit) {
+  if (n >= implementors_limit) {
     return NULL;
   }
   ciInstanceKlass* impl = _implementors[n];

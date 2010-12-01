@@ -22,8 +22,24 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_assembler_x86.cpp.incl"
+#include "precompiled.hpp"
+#include "assembler_x86.inline.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "interpreter/interpreter.hpp"
+#include "memory/cardTableModRefBS.hpp"
+#include "memory/resourceArea.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/biasedLocking.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/os.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
+#endif
 
 // Implementation of AddressLiteral
 
@@ -1275,6 +1291,12 @@ void Assembler::idivl(Register src) {
   emit_byte(0xF8 | encode);
 }
 
+void Assembler::divl(Register src) { // Unsigned
+  int encode = prefix_and_encode(src->encoding());
+  emit_byte(0xF7);
+  emit_byte(0xF0 | encode);
+}
+
 void Assembler::imull(Register dst, Register src) {
   int encode = prefix_and_encode(dst->encoding(), src->encoding());
   emit_byte(0x0F);
@@ -1288,7 +1310,7 @@ void Assembler::imull(Register dst, Register src, int value) {
   if (is8bit(value)) {
     emit_byte(0x6B);
     emit_byte(0xC0 | encode);
-    emit_byte(value);
+    emit_byte(value & 0xFF);
   } else {
     emit_byte(0x69);
     emit_byte(0xC0 | encode);
@@ -3903,7 +3925,7 @@ void Assembler::imulq(Register dst, Register src, int value) {
   if (is8bit(value)) {
     emit_byte(0x6B);
     emit_byte(0xC0 | encode);
-    emit_byte(value);
+    emit_byte(value & 0xFF);
   } else {
     emit_byte(0x69);
     emit_byte(0xC0 | encode);
@@ -5516,17 +5538,14 @@ void MacroAssembler::stop(const char* msg) {
 }
 
 void MacroAssembler::warn(const char* msg) {
-  push(r12);
-  movq(r12, rsp);
+  push(rsp);
   andq(rsp, -16);     // align stack as required by push_CPU_state and call
 
   push_CPU_state();   // keeps alignment at 16 bytes
   lea(c_rarg0, ExternalAddress((address) msg));
   call_VM_leaf(CAST_FROM_FN_PTR(address, warning), c_rarg0);
   pop_CPU_state();
-
-  movq(rsp, r12);
-  pop(r12);
+  pop(rsp);
 }
 
 #ifndef PRODUCT
@@ -5838,6 +5857,10 @@ void MacroAssembler::call_VM_base(Register oop_result,
   // debugging support
   assert(number_of_arguments >= 0   , "cannot have negative number of arguments");
   LP64_ONLY(assert(java_thread == r15_thread, "unexpected register"));
+#ifdef ASSERT
+  LP64_ONLY(if (UseCompressedOops) verify_heapbase("call_VM_base");)
+#endif // ASSERT
+
   assert(java_thread != oop_result  , "cannot use the same register for java_thread & oop_result");
   assert(java_thread != last_java_sp, "cannot use the same register for java_thread & last_java_sp");
 

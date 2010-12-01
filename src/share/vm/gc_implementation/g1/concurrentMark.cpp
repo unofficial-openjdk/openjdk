@@ -22,8 +22,21 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_concurrentMark.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
+#include "gc_implementation/g1/concurrentMark.hpp"
+#include "gc_implementation/g1/concurrentMarkThread.inline.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1CollectorPolicy.hpp"
+#include "gc_implementation/g1/g1RemSet.hpp"
+#include "gc_implementation/g1/heapRegionRemSet.hpp"
+#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "memory/genOopClosures.inline.hpp"
+#include "memory/referencePolicy.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/java.hpp"
 
 //
 // CMS Bit Map Wrapper
@@ -2418,6 +2431,8 @@ void ConcurrentMark::clear_marking_state() {
   for (int i = 0; i < (int)_max_task_num; ++i) {
     OopTaskQueue* queue = _task_queues->queue(i);
     queue->set_empty();
+    // Clear any partial regions from the CMTasks
+    _tasks[i]->clear_aborted_region();
   }
 }
 
@@ -2706,7 +2721,6 @@ void ConcurrentMark::abort() {
   clear_marking_state();
   for (int i = 0; i < (int)_max_task_num; ++i) {
     _tasks[i]->clear_region_fields();
-    _tasks[i]->clear_aborted_region();
   }
   _has_aborted = true;
 
@@ -2985,7 +2999,7 @@ void CMTask::reset(CMBitMap* nextMarkBitMap) {
 
   _nextMarkBitMap                = nextMarkBitMap;
   clear_region_fields();
-  clear_aborted_region();
+  assert(_aborted_region.is_empty(), "should have been cleared");
 
   _calls                         = 0;
   _elapsed_time_ms               = 0.0;

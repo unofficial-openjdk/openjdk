@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_templateTable_x86_64.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "interpreter/templateTable.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/synchronizer.hpp"
 
 #ifndef CC_INTERP
 
@@ -413,6 +423,25 @@ void TemplateTable::fast_aldc(bool wide) {
   if (VerifyOops) {
     __ verify_oop(rax);
   }
+
+  Label L_done, L_throw_exception;
+  const Register con_klass_temp = rcx;  // same as cache
+  const Register array_klass_temp = rdx;  // same as index
+  __ movptr(con_klass_temp, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ lea(array_klass_temp, ExternalAddress((address)Universe::systemObjArrayKlassObj_addr()));
+  __ cmpptr(con_klass_temp, Address(array_klass_temp, 0));
+  __ jcc(Assembler::notEqual, L_done);
+  __ cmpl(Address(rax, arrayOopDesc::length_offset_in_bytes()), 0);
+  __ jcc(Assembler::notEqual, L_throw_exception);
+  __ xorptr(rax, rax);
+  __ jmp(L_done);
+
+  // Load the exception from the system-array which wraps it:
+  __ bind(L_throw_exception);
+  __ movptr(rax, Address(rax, arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
+  __ jump(ExternalAddress(Interpreter::throw_exception_entry()));
+
+  __ bind(L_done);
 }
 
 void TemplateTable::ldc2_w() {
@@ -2733,7 +2762,7 @@ void TemplateTable::fast_accessfield(TosState state) {
     // access constant pool cache entry
     __ get_cache_entry_pointer_at_bcp(c_rarg2, rcx, 1);
     __ verify_oop(rax);
-    __ mov(r12, rax);  // save object pointer before call_VM() clobbers it
+    __ push_ptr(rax);  // save object pointer before call_VM() clobbers it
     __ mov(c_rarg1, rax);
     // c_rarg1: object pointer copied above
     // c_rarg2: cache entry pointer
@@ -2741,8 +2770,7 @@ void TemplateTable::fast_accessfield(TosState state) {
                CAST_FROM_FN_PTR(address,
                                 InterpreterRuntime::post_field_access),
                c_rarg1, c_rarg2);
-    __ mov(rax, r12); // restore object pointer
-    __ reinit_heapbase();
+    __ pop_ptr(rax); // restore object pointer
     __ bind(L1);
   }
 
@@ -3336,10 +3364,7 @@ void TemplateTable::checkcast() {
           JVM_CONSTANT_Class);
   __ jcc(Assembler::equal, quicked);
   __ push(atos); // save receiver for result, and for GC
-  __ mov(r12, rcx); // save rcx XXX
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::quicken_io_cc));
-  __ movq(rcx, r12); // restore rcx XXX
-  __ reinit_heapbase();
   __ pop_ptr(rdx); // restore receiver
   __ jmpb(resolved);
 
@@ -3393,11 +3418,9 @@ void TemplateTable::instanceof() {
   __ jcc(Assembler::equal, quicked);
 
   __ push(atos); // save receiver for result, and for GC
-  __ mov(r12, rcx); // save rcx
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::quicken_io_cc));
-  __ movq(rcx, r12); // restore rcx
-  __ reinit_heapbase();
   __ pop_ptr(rdx); // restore receiver
+  __ verify_oop(rdx);
   __ load_klass(rdx, rdx);
   __ jmpb(resolved);
 

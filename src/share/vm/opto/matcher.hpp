@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,15 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_OPTO_MATCHER_HPP
+#define SHARE_VM_OPTO_MATCHER_HPP
+
+#include "libadt/vectset.hpp"
+#include "memory/resourceArea.hpp"
+#include "opto/node.hpp"
+#include "opto/phaseX.hpp"
+#include "opto/regmask.hpp"
 
 class Compile;
 class Node;
@@ -298,6 +307,10 @@ public:
   // Register for MODL projection of divmodL
   static RegMask modL_proj_mask();
 
+  // Use hardware DIV instruction when it is faster than
+  // a code which use multiply for division by constant.
+  static bool use_asm_for_ldiv_by_con( jlong divisor );
+
   static const RegMask method_handle_invoke_SP_save_mask();
 
   // Java-Interpreter calling convention
@@ -443,3 +456,5 @@ public:
   }
 #endif
 };
+
+#endif // SHARE_VM_OPTO_MATCHER_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_MEMORY_HEAP_HPP
+#define SHARE_VM_MEMORY_HEAP_HPP
+
+#include "memory/allocation.hpp"
+#include "runtime/virtualspace.hpp"
 
 // Blocks
 
@@ -140,6 +146,7 @@ class CodeHeap : public CHeapObj {
 
   // Returns reserved area high and low addresses
   char *low_boundary() const                     { return _memory.low_boundary (); }
+  char *high() const                             { return _memory.high(); }
   char *high_boundary() const                    { return _memory.high_boundary(); }
 
   // Iteration
@@ -159,3 +166,5 @@ class CodeHeap : public CHeapObj {
   void verify();
   void print()  PRODUCT_RETURN;
 };
+
+#endif // SHARE_VM_MEMORY_HEAP_HPP

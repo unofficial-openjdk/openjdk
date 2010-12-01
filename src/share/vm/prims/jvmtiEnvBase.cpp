@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,30 @@
  * questions.
  *
  */
-# include "incls/_precompiled.incl"
-# include "incls/_jvmtiEnvBase.cpp.incl"
 
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "jvmtifiles/jvmtiEnv.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/objArrayOop.hpp"
+#include "prims/jvmtiEnvBase.hpp"
+#include "prims/jvmtiEventController.inline.hpp"
+#include "prims/jvmtiExtensions.hpp"
+#include "prims/jvmtiImpl.hpp"
+#include "prims/jvmtiManageCapabilities.hpp"
+#include "prims/jvmtiTagMap.hpp"
+#include "prims/jvmtiThreadState.inline.hpp"
+#include "runtime/biasedLocking.hpp"
+#include "runtime/deoptimization.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/jfieldIDWorkaround.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/objectMonitor.inline.hpp"
+#include "runtime/signature.hpp"
+#include "runtime/vframe.hpp"
+#include "runtime/vframe_hp.hpp"
+#include "runtime/vmThread.hpp"
+#include "runtime/vm_operations.hpp"
 
 ///////////////////////////////////////////////////////////////
 //
@@ -1322,8 +1343,7 @@ JvmtiEnvBase::check_top_frame(JavaThread* current_thread, JavaThread* java_threa
     if (!vf->fr().can_be_deoptimized()) {
       return JVMTI_ERROR_OPAQUE_FRAME;
     }
-    VM_DeoptimizeFrame deopt(java_thread, jvf->fr().id());
-    VMThread::execute(&deopt);
+    Deoptimization::deoptimize_frame(java_thread, jvf->fr().id());
   }
 
   // Get information about method return type

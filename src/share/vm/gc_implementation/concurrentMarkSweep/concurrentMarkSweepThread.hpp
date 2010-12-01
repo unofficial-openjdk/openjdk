@@ -22,6 +22,21 @@
  *
  */
 
+#ifndef SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPTHREAD_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPTHREAD_HPP
+
+#include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.hpp"
+#include "gc_implementation/shared/concurrentGCThread.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
+
 class ConcurrentMarkSweepGeneration;
 class CMSCollector;
 
@@ -120,8 +135,10 @@ class ConcurrentMarkSweepThread: public ConcurrentGCThread {
   }
 
   // Wait on CMS lock until the next synchronous GC
-  // or given timeout, whichever is earlier.
-  void    wait_on_cms_lock(long t); // milliseconds
+  // or given timeout, whichever is earlier. A timeout value
+  // of 0 indicates that there is no upper bound on the wait time.
+  // A concurrent full gc request terminates the wait.
+  void wait_on_cms_lock(long t_millis);
 
   // The CMS thread will yield during the work portion of its cycle
   // only when requested to.  Both synchronous and asychronous requests
@@ -249,3 +266,5 @@ class CMSLoopCountWarn: public StackObj {
     }
   }
 };
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPTHREAD_HPP
