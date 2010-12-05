@@ -21,11 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.unsupported.exotic.id
-// options: -source 6
-
-class UnsupportedExoticID {
-    void m() {
-        Object #"Hello!" = null;
-    }
+public class Test extends p.Base {
+    // overrides Base.m
+    public void m() { }
 }
+
