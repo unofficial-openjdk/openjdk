@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1334,8 +1334,8 @@ public class Dialog extends Window {
         // the insets of the Dialog. If we could, we'd call invalidate()
         // from the peer, but we need to guarantee that we're not holding
         // the Dialog lock when we call invalidate().
-        if (testvalid && valid) {
-            invalidate();
+        if (testvalid) {
+            invalidateIfValid();
         }
     }
 
