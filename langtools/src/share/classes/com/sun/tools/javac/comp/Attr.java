@@ -676,6 +676,7 @@ public class Attr extends JCTree.Visitor {
 
             // If we override any other methods, check that we do so properly.
             // JLS ???
+            chk.checkClashes(tree.pos(), env.enclClass.type, m);
             chk.checkOverride(tree, m);
 
             // Create a new environment with local scope
@@ -1587,13 +1588,26 @@ public class Attr extends JCTree.Visitor {
         } else if (allowDiamondFinder &&
                 clazztype.getTypeArguments().nonEmpty() &&
                 findDiamonds) {
-            Type inferred = attribDiamond(localEnv,
-                    tree,
-                    clazztype,
-                    mapping,
-                    argtypes,
-                    typeargtypes);
-            if (!inferred.isErroneous() &&
+            boolean prevDeferDiags = log.deferDiagnostics;
+            Queue<JCDiagnostic> prevDeferredDiags = log.deferredDiagnostics;
+            Type inferred = null;
+            try {
+                //disable diamond-related diagnostics
+                log.deferDiagnostics = true;
+                log.deferredDiagnostics = ListBuffer.lb();
+                inferred = attribDiamond(localEnv,
+                        tree,
+                        clazztype,
+                        mapping,
+                        argtypes,
+                        typeargtypes);
+            }
+            finally {
+                log.deferDiagnostics = prevDeferDiags;
+                log.deferredDiagnostics = prevDeferredDiags;
+            }
+            if (inferred != null &&
+                    !inferred.isErroneous() &&
                     inferred.tag == CLASS &&
                     types.isAssignable(inferred, pt.tag == NONE ? clazztype : pt, Warner.noWarnings) &&
                     chk.checkDiamond((ClassType)inferred).isEmpty()) {
@@ -2876,8 +2890,15 @@ public class Attr extends JCTree.Visitor {
     }
 
     public void visitTypeDisjunction(JCTypeDisjunction tree) {
-        List<Type> alternatives = attribTypes(tree.alternatives, env);
-        tree.type = result = check(tree, types.lub(alternatives), TYP, pkind, pt);
+        ListBuffer<Type> multicatchTypes = ListBuffer.lb();
+        for (JCExpression typeTree : tree.alternatives) {
+            Type ctype = attribType(typeTree, env);
+            ctype = chk.checkType(typeTree.pos(),
+                          chk.checkClassType(typeTree.pos(), ctype),
+                          syms.throwableType);
+            multicatchTypes.append(ctype);
+        }
+        tree.type = result = check(tree, types.lub(multicatchTypes.toList()), TYP, pkind, pt);
     }
 
     public void visitTypeParameter(JCTypeParameter tree) {

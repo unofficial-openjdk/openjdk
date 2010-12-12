@@ -1033,12 +1033,7 @@ public class Types {
                                 && !disjointTypes(aHigh.allparams(), lowSub.allparams())
                                 && !disjointTypes(aLow.allparams(), highSub.allparams())
                                 && !disjointTypes(aLow.allparams(), lowSub.allparams())) {
-                                if (s.isInterface() &&
-                                        !t.isInterface() &&
-                                        t.isFinal() &&
-                                        !isSubtype(t, s)) {
-                                    return false;
-                                } else if (upcast ? giveWarning(a, b) :
+                                if (upcast ? giveWarning(a, b) :
                                     giveWarning(b, a))
                                     warnStack.head.warnUnchecked();
                                 return true;
@@ -1085,7 +1080,8 @@ public class Types {
                 case CLASS:
                     return isSubtype(t, s);
                 case ARRAY:
-                    if (elemtype(t).tag <= lastBaseTag) {
+                    if (elemtype(t).tag <= lastBaseTag ||
+                            elemtype(s).tag <= lastBaseTag) {
                         return elemtype(t).tag == elemtype(s).tag;
                     } else {
                         return visit(elemtype(t), elemtype(s));
@@ -1320,6 +1316,13 @@ public class Types {
         default:
             return null;
         }
+    }
+
+    public Type elemtypeOrType(Type t) {
+        Type elemtype = elemtype(t);
+        return elemtype != null ?
+            elemtype :
+            t;
     }
 
     /**
@@ -2031,7 +2034,7 @@ public class Types {
                 TypeSymbol c = t.tsym;
                 for (Scope.Entry e = c.members().lookup(ms.name, implFilter);
                      e.scope != null;
-                     e = e.next()) {
+                     e = e.next(implFilter)) {
                     if (e.sym != null &&
                              e.sym.overrides(ms, origin, types, checkResult))
                         return (MethodSymbol)e.sym;
@@ -3377,8 +3380,8 @@ public class Types {
         public Type visitCapturedType(CapturedType t, Void s) {
             Type bound = visitWildcardType(t.wildcard, null);
             return (bound.contains(t)) ?
-                    (high ? syms.objectType : syms.botType) :
-                        bound;
+                    erasure(bound) :
+                    bound;
         }
 
         @Override
@@ -3386,7 +3389,7 @@ public class Types {
             if (rewriteTypeVars) {
                 Type bound = high ?
                     (t.bound.contains(t) ?
-                        syms.objectType :
+                        erasure(t.bound) :
                         visit(t.bound)) :
                     syms.botType;
                 return rewriteAsWildcardType(bound, t);
