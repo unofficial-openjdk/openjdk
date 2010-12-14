@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2010 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,33 +21,26 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-/*
- *
- * (C) Copyright IBM Corp. 1998, 1999, 2000 - All Rights Reserved
- *
- */
+package sun.io;
 
-#ifndef __HEBREWSHAPING_H
-#define __HEBREWSHAPING_H
+import sun.nio.cs.ext.IBM833;
 
-#include "LETypes.h"
-#include "OpenTypeTables.h"
+public class CharToByteCp833 extends CharToByteSingleByte {
 
-class HebrewShaping
-{
-public:
-    static void shape(const LEUnicode *chars, le_int32 offset, le_int32 charCount, le_int32 charMax,
-                      le_bool rightToLeft, const LETag **tags);
+    private final static IBM833 nioCoder = new IBM833();
 
-    static const le_uint8 glyphSubstitutionTable[];
-    static const le_uint8 glyphDefinitionTable[];
+    public String getCharacterEncoding() {
+        return "Cp833";
+    }
 
-private:
-    // forbid instantiation
-    HebrewShaping();
-};
+    public CharToByteCp833() {
+        super.mask1 = 0xFF00;
+        super.mask2 = 0x00FF;
+        super.shift = 8;
+        super.index1 = nioCoder.getEncoderIndex1();
+        super.index2 = nioCoder.getEncoderIndex2();
+    }
+}
 
-#endif

@@ -1,11 +1,10 @@
 /*
+ * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,39 +19,36 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
- *
- * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
- *
+ * @test
+ * @bug 6559589
+ * @summary Memory leak in JScrollPane.updateUI()
+ * @author Alexander Potochkin
+ * @run main bug6559589
  */
 
-#include "LETypes.h"
-#include "OpenTypeTables.h"
-#include "HebrewShaping.h"
+import javax.swing.*;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 
-const LETag ligaFeatureTag  = 0x6C696761; // 'liga'
-const LETag emptyTag        = 0x00000000; // ''
+public class bug6559589 {
 
-const LETag hebrewTags[] =
-{
-    ligaFeatureTag, emptyTag
-};
-
-void HebrewShaping::shape(const LEUnicode * /*chars*/, le_int32 /*offset*/, le_int32 charCount, le_int32 /*charMax*/,
-                          le_bool rightToLeft, const LETag **tags)
-{
-
-    le_int32 count, out = 0, dir = 1;
-
-    if (rightToLeft) {
-        out = charCount - 1;
-        dir = -1;
+    private static void createGui() {
+        JScrollPane sp = new JScrollPane();
+        int listenerCount = sp.getPropertyChangeListeners().length;
+        sp.updateUI();
+        if(listenerCount != sp.getPropertyChangeListeners().length) {
+            throw new RuntimeException("Listeners' leak");
+        }
     }
 
-    for (count = 0; count < charCount; count += 1, out += dir) {
-                tags[out] = hebrewTags;
-        }
+    public static void main(String[] args) throws Exception {
+        UIManager.setLookAndFeel(new MetalLookAndFeel());
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+                bug6559589.createGui();
+            }
+        });
+    }
 }
