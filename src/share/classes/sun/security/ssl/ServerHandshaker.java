@@ -323,7 +323,7 @@ final class ServerHandshaker extends Handshaker {
                 if (!Arrays.equals(clientVerifyData,
                                 clientHelloRI.getRenegotiatedConnection())) {
                     fatalSE(Alerts.alert_handshake_failure,
-                        "Incorrect verify date in ClientHello " +
+                        "Incorrect verify data in ClientHello " +
                         "renegotiation_info message");
                 }
             }
