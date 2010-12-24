@@ -78,7 +78,6 @@
 # Attempts to set these variables for the JDK builds:           
 #    ALT_COMPILER_PATH
 #    ALT_BOOTDIR
-#    ALT_BINARY_PLUGS_PATH
 #    Windows Only:
 #      ALT_UNIXCOMMAND_PATH
 #      ALT_MSDEVTOOLS_PATH

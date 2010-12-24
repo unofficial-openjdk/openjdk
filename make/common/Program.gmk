@@ -108,15 +108,6 @@ FILES_o = \
 	$(OBJDIR)/$(PROGRAM)_md.$(OBJECT_SUFFIX) \
 	$(OBJDIR)/splashscreen_stubs.$(OBJECT_SUFFIX)
 
-# We either need to import (copy) binaries in, or build them
-ifneq ($(IMPORT_NATIVE_BINARIES),true)
-  COMPILE_IT=true
-else
-  COMPILE_IT=false
-endif
-
-ifeq ($(COMPILE_IT),true)
-
 $(ACTUAL_PROGRAM):: classes $(JVMCFG) $(INIT)
 
 #
@@ -187,19 +178,6 @@ $(ACTUAL_PROGRAM):: $(FILES_o)
 	    $(FILES_o) $(THREADLIBS) $(LDLIBS)
 
 endif # PLATFORM
-
-else  # COMPILE_IT
-
-$(ACTUAL_PROGRAM):: $(JVMCFG)
-
-# Copies in the file from the JDK_IMPORT_PATH area
-$(ACTUAL_PROGRAM_DIR)/%: $(JDK_IMPORT_PATH)/jre/bin/%
-	@$(install-import-file)
-$(ACTUAL_PROGRAM_DIR)/%: $(JDK_IMPORT_PATH)/bin/%
-	@$(install-import-file)
-
-endif # COMPILE_IT
-
 
 clean:: 
 ifeq ($(PLATFORM), windows)

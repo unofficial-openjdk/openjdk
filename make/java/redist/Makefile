@@ -255,15 +255,9 @@ endif # windows
 endif # INCLUDE_SA
 
 #
-# Specific to OpenJDK building
+# Specific to non-OpenJDK building
 #
-ifdef OPENJDK
-
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-build: import-binary-plugs
-
-else # !OPENJDK
+ifndef OPENJDK
 
 INTERNAL_IMPORT_LIST += \
             $(LIBDIR)/security/US_export_policy.jar \
