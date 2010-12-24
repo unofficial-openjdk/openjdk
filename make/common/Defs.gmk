@@ -101,17 +101,6 @@ endif # PROGRAM
 
 LDLIBS_COMMON += $(EXTRA_LIBS)
 
-#
-# Default is to build, not import native binaries
-#
-ifndef IMPORT_NATIVE_BINARIES
-  IMPORT_NATIVE_BINARIES=false
-endif
-# If importing libraries in, no incremental builds
-ifeq ($(IMPORT_NATIVE_BINARIES),true)
- INCREMENTAL_BUILD=false
-endif
-
 # for generated libraries
 LIBDIR              = $(OUTPUTDIR)/lib
 ABS_LIBDIR          = $(ABS_OUTPUTDIR)/lib
