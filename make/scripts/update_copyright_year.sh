@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash -f
 
 #
 # Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
@@ -26,6 +26,12 @@
 # Script to update the Copyright YEAR range in Mercurial sources.
 #  (Originally from xdono, Thanks!)
 
+if [ "`uname -s`" = "SunOS" ] ; then
+  awk=nawk
+else
+  awk=awk
+fi
+
 # Stop on any error
 set -e
 
@@ -33,80 +39,141 @@ set -e
 tmp=/tmp/`basename $0`.${USER}.$$
 rm -f -r ${tmp}
 mkdir -p ${tmp}
-log=${tmp}/log
-files=${tmp}/files
-desc=${tmp}/desc
-changesets=${tmp}/changesets
 total=0
 
-maxlines=20
+# This year or supplied year
+if [ "$1" != "" ] ; then
+  year="$1"
+else
+  year=`date +%Y`
+fi
 
-# This year
-year=`date +%Y`
+# Return true if it makes sense to edit this file
+saneFileToCheck()
+{
+  if [ "$1" != "" -a -f $1 ] ; then
+    isText=`file "$1" | egrep -i '(text|source)' | cat`
+    hasCopyright=`grep 'Copyright' "$1" | cat`
+    lastLineCount=`tail -1 "$1" | wc -l`
+    if [ "${isText}" != ""  \
+         -a "${hasCopyright}" != "" \
+	 -a ${lastLineCount} -eq 1 ] ; then
+      echo "true"
+    else
+      echo "false"
+    fi
+  else
+    echo "false"
+  fi
+}
 
-updateFiles() # changeset`
+# Update the copyright year on a file
+updateFile() # file
+{
+  changed="false"
+  if [ `saneFileToCheck "$1"` = "true" ] ; then
+    copyright="Copyright (c)"
+    company="Oracle"
+    rm -f $1.OLD
+    mv $1 $1.OLD
+    cat $1.OLD | \
+      sed -e "s@\(${copyright} [12][0-9][0-9][0-9],\) [12][0-9][0-9][0-9], ${company}@\1 ${year}, ${company}@" | \
+      sed -e "s@\(${copyright} [12][0-9][0-9][0-9],\) ${company}@\1 ${year}, ${company}@" | \
+      sed -e "s@${copyright} ${year}, ${year}, ${company}@${copyright} ${year}, ${company}@"  \
+      > $1
+    if ! diff -b -w $1.OLD $1 > /dev/null ; then \
+      changed="true"
+      rm -f $1.OLD
+    else
+      rm -f $1
+      mv $1.OLD $1
+    fi
+  fi
+  echo "${changed}"
+}
+
+# Update the copyright year on all files changed by this changeset
+updateChangesetFiles() # changeset
 {
   count=0
-  hg log --rev $1 -v --template '{files}\n' \
-    | awk -F' ' '{ for ( i = 1 ; i <= NF ; i++ ) print $i } ' \
+  files=${tmp}/files.$1
+  rm -f ${files}
+  hg log --rev $1 -v --template '{files}\n' | expand \
+    | ${awk} -F' ' '{for(i=1;i<=NF;i++)print $i}' \
     > ${files}
   if [ -f "${files}" -a -s "${files}" ] ; then
     copyright="Copyright (c)"
     company="Oracle"
+    fcount=`cat ${files}| wc -l`
     for i in `cat ${files}` ; do
-      if [ -f "${i}" ] ; then
-        cp ${i} ${i}.orig
-        cat ${i}.orig | \
-          sed -e "s@\(${copyright} [12][0-9][0-9][0-9],\) [12][0-9][0-9][0-9], ${company}@\1 ${year}, ${company}@" \
-              -e "s@\(${copyright} [12][0-9][0-9][0-9],\) ${company}@\1 ${year}, ${company}@" | \
-          sed -e "s@${copyright} ${year}, ${year}, ${company}@${copyright} ${year}, ${company}@"  \
-	  > ${i}
-        if ! diff ${i}.orig ${i} > /dev/null ; then \
-          echo "File updated: ${i}" > ${log}
-	  count=`expr ${count} '+' 1`
-        fi
-        rm -f ${i}.orig
+      if [ `updateFile "${i}"` = "true" ] ; then
+        count=`expr ${count} '+' 1`
       fi
     done
     if [ ${count} -gt 0 ] ; then
-      echo "------------------------------------------------"
-      hg log --rev $1 --template 'Changeset by {author}\n{desc|firstline}\n'
-      fcount=`cat ${files}| wc -l`
-      fc=`printf '%d\n' ${fcount}`
-      echo "Updated year on ${count} files (${fc} files changed in changeset)."
+      printf "  UPDATED year on %d of %d files.\n" ${count} ${fcount}
       total=`expr ${total} '+' ${count}`
+    else
+      printf "  None of the %d files were changed.\n" ${fcount}
     fi
+  else
+    printf "  ERROR: No files changed in the changeset? Must be a mistake.\n"
+    set -x
+    ls -al ${files}
+    hg log --rev $1 -v --template '{files}\n'
+    hg log --rev $1 -v --template '{files}\n' | expand \
+      | ${awk} -F' ' '{for(i=1;i<=NF;i++)print $i}'
+    set +x
+    exit 1
   fi
+  rm -f ${files}
 }
 
+# Check if repository is clean
+previous=`hg status|wc -l`
+if [ ${previous} -ne 0 ] ; then
+  echo "WARNING: This repository contains previously edited working set files."
+  echo "  hg status | wc -l = `hg status | wc -l`"
+fi
+
 # Get all changesets this year
-hg log --no-merges -v -d ">${year}-01-01" --template '{node}\n' > ${changesets}
+all_changesets=${tmp}/all_changesets
+rm -f ${all_changesets}
+hg log --no-merges -v -d "${year}-01-01 to ${year}-12-31" --template '{node}\n' > ${all_changesets}
 
 # Check changeset to see if it is Copyright only changes, filter changesets
-if [ -s ${changesets} ] ; then
-  echo "Changesets made in ${year}: `cat ${changesets} | wc -l`"
-  for c in `cat ${changesets}` ; do
+if [ -s ${all_changesets} ] ; then
+  echo "Changesets made in ${year}: `cat ${all_changesets} | wc -l`"
+  index=0
+  cat ${all_changesets} | while read changeset ; do
+    index=`expr ${index} '+' 1`
+    desc=${tmp}/desc.${changeset}
     rm -f ${desc}
-    hg log --rev ${c} --template '{desc}\n' > ${desc}
+    echo "------------------------------------------------"
+    hg log --rev ${changeset} --template '{desc}\n' > ${desc}
+    printf "%d: %s\n%s\n" ${index} "${changeset}" "`cat ${desc}|head -1`"
     if cat ${desc} | fgrep -i "Added tag" > /dev/null ; then
-      echo "SKIPPING: `cat ${desc}`" > ${log}
-      #hg log --rev ${c}
+      printf "  EXCLUDED tag changeset.\n"
     elif cat ${desc} | fgrep -i rebrand > /dev/null ; then
-      echo "SKIPPING: `cat ${desc}`"  > ${log}
-      #hg log --rev ${c}
+      printf "  EXCLUDED rebrand changeset.\n"
     elif cat ${desc} | fgrep -i copyright > /dev/null ; then
-      echo "SKIPPING: `cat ${desc}`"  > ${log}
-      #hg log --rev ${c}
+      printf "  EXCLUDED copyright changeset.\n"
     else
-      #hg log --rev ${c} -p
-      updateFiles ${c}
+      updateChangesetFiles ${changeset}
     fi
+    rm -f ${desc}
   done
 fi
 
 if [ ${total} -gt 0 ] ; then
    echo "---------------------------------------------"
    echo "Updated the copyright year on a total of ${total} files."
+   if [ ${previous} -eq 0 ] ; then
+     echo "This count should match the count of modified files in the repository: hg status -m"
+   else
+     echo "WARNING: This repository contained previously edited working set files."
+   fi
+   echo "  hg status -m | wc -l = `hg status -m | wc -l`"
 fi
 
 # Cleanup
