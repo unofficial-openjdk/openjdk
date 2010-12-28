@@ -336,16 +336,6 @@ else
 	$(ECHO) "Rule $@ does not apply on $(PLATFORM)-$(ARCH)"
 endif
 
-#
-# Binary Plug rules and macros
-#
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-#
-# Get top level sccs_get rule
-#
-include $(BUILDDIR)/common/Rules-SCCS.gmk
-
 # JPRT rules
 include jprt.gmk
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,6 @@
 # Attempts to set these variables for the JDK builds:           
 #    ALT_COMPILER_PATH
 #    ALT_BOOTDIR
-#    ALT_BINARY_PLUGS_PATH
 #    Windows Only:
 #      ALT_UNIXCOMMAND_PATH
 #      ALT_MSDEVTOOLS_PATH
