@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2621,10 +2621,20 @@ JVM_ENTRY(void, JVM_RegisterMethodHandleMethods(JNIEnv *env, jclass MHN_class)) 
         warning("JSR 292 method handle code is mismatched to this JVM.  Disabling support.");
         enable_MH = false;
       }
+    } else {
+      enable_MH = false;
     }
   }
 
   if (enable_MH) {
+    // We need to link the MethodHandleImpl klass before we generate
+    // the method handle adapters as the _raise_exception adapter uses
+    // one of its methods (and its c2i-adapter).
+    KlassHandle    k  = SystemDictionaryHandles::MethodHandleImpl_klass();
+    instanceKlass* ik = instanceKlass::cast(k());
+    ik->link_class(CHECK);
+
+    MethodHandles::generate_adapters();
     MethodHandles::set_enabled(true);
   }
 

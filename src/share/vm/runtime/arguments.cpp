@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -918,9 +918,7 @@ bool Arguments::add_property(const char* prop) {
   } else if (strcmp(key, "sun.java.command") == 0) {
     _java_command = value;
 
-    // don't add this property to the properties exposed to the java application
-    FreeHeap(key);
-    return true;
+    // Record value in Arguments, but let it get passed to Java.
   } else if (strcmp(key, "sun.java.launcher.pid") == 0) {
     // launcher.pid property is private and is processed
     // in process_sun_java_launcher_properties();
@@ -2297,14 +2295,15 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
     } else if (match_option(option, "-Xoss", &tail)) {
           // HotSpot does not have separate native and Java stacks, ignore silently for compatibility
     // -Xmaxjitcodesize
-    } else if (match_option(option, "-Xmaxjitcodesize", &tail)) {
+    } else if (match_option(option, "-Xmaxjitcodesize", &tail) ||
+               match_option(option, "-XX:ReservedCodeCacheSize=", &tail)) {
       julong long_ReservedCodeCacheSize = 0;
       ArgsRange errcode = parse_memory_size(tail, &long_ReservedCodeCacheSize,
                                             (size_t)InitialCodeCacheSize);
       if (errcode != arg_in_range) {
         jio_fprintf(defaultStream::error_stream(),
-                    "Invalid maximum code cache size: %s\n",
-                    option->optionString);
+                    "Invalid maximum code cache size: %s. Should be greater than InitialCodeCacheSize=%dK\n",
+                    option->optionString, InitialCodeCacheSize/K);
         describe_range_error(errcode);
         return JNI_EINVAL;
       }

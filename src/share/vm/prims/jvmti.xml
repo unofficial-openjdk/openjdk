@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <?xml-stylesheet type="text/xsl" href="jvmti.xsl"?>
 <!--
- Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -10697,7 +10697,7 @@ myInit() {
 	    <internallink id="mUTF">modified UTF-8</internallink> string.
 	  </description>
 	</param>
-        <param id="value">
+        <param id="value_ptr">
 	  <inbuf>
 	    <char/>
 	    <nullok>
@@ -13048,8 +13048,8 @@ myInit() {
   <event label="Garbage Collection Start"
 	 id="GarbageCollectionStart" const="JVMTI_EVENT_GARBAGE_COLLECTION_START" num="81">
     <description>
-      A Garbage Collection Start event is sent when a full cycle
-      garbage collection begins.
+      A Garbage Collection Start event is sent when a 
+      garbage collection pause begins.
       Only stop-the-world collections are reported--that is, collections during
       which all threads cease to modify the state of the Java virtual machine.
       This means that some collectors will never generate these events.
@@ -13075,8 +13075,8 @@ myInit() {
   <event label="Garbage Collection Finish"
 	 id="GarbageCollectionFinish" const="JVMTI_EVENT_GARBAGE_COLLECTION_FINISH" num="82">
     <description>
-      A Garbage Collection Finish event is sent when a full 
-      garbage collection cycle ends.
+      A Garbage Collection Finish event is sent when a
+      garbage collection pause ends.
       This event is sent while the VM is still stopped, thus
       the event handler must not use JNI functions and
       must not use <jvmti/> functions except those which
