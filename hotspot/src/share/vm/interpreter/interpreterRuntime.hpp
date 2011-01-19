@@ -164,7 +164,7 @@ class InterpreterRuntime: AllStatic {
 
   // Interpreter profiling support
   static jint    bcp_to_di(methodOopDesc* method, address cur_bcp);
-  static jint    profile_method(JavaThread* thread, address cur_bcp);
+  static void    profile_method(JavaThread* thread);
   static void    update_mdp_for_ret(JavaThread* thread, int bci);
 #ifdef ASSERT
   static void    verify_mdp(methodOopDesc* method, address bcp, address mdp);
