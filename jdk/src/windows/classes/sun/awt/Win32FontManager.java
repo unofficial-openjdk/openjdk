@@ -63,7 +63,7 @@ public class Win32FontManager extends SunFontManager {
                     if (eudcFile != null) {
                         try {
                             eudcFont = new TrueTypeFont(eudcFile, null, 0,
-                                                        true);
+                                                        false);
                         } catch (FontFormatException e) {
                         }
                     }
@@ -80,6 +80,10 @@ public class Win32FontManager extends SunFontManager {
      * fallback component.
      */
     private static native String getEUDCFontFile();
+
+    public TrueTypeFont getEUDCFont() {
+        return eudcFont;
+    }
 
     public Win32FontManager() {
         super();
@@ -137,6 +141,7 @@ public class Win32FontManager extends SunFontManager {
         try {
             while (!found && parser.hasMoreTokens()) {
                 String newPath = parser.nextToken();
+                boolean isJREFont = newPath.equals(jreFontDirName);
                 File theFile = new File(newPath, fontFileName);
                 if (theFile.canRead()) {
                     found = true;
@@ -144,11 +149,11 @@ public class Win32FontManager extends SunFontManager {
                     if (defer) {
                         registerDeferredFont(fontFileName, path,
                                              nativeNames,
-                                             fontFormat, true,
+                                             fontFormat, isJREFont,
                                              fontRank);
                     } else {
                         registerFontFile(path, nativeNames,
-                                         fontFormat, true,
+                                         fontFormat, isJREFont,
                                          fontRank);
                     }
                     break;
@@ -197,7 +202,7 @@ public class Win32FontManager extends SunFontManager {
                                      familyToFontListMap,
                                  Locale locale);
 
-    public synchronized native String getFontPath(boolean noType1Fonts);
+    protected synchronized native String getFontPath(boolean noType1Fonts);
 
     public String[] getDefaultPlatformFont() {
 
