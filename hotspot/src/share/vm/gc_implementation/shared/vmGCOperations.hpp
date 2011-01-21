@@ -30,6 +30,7 @@
 #include "runtime/jniHandles.hpp"
 #include "runtime/synchronizer.hpp"
 #include "runtime/vm_operations.hpp"
+#include "prims/jvmtiExport.hpp"
 
 // The following class hierarchy represents
 // a set of operations (VM_Operation) related to GC.
@@ -207,6 +208,21 @@ class VM_GenCollectForPermanentAllocation: public VM_GC_Operation {
   virtual VMOp_Type type() const { return VMOp_GenCollectForPermanentAllocation; }
   virtual void doit();
   HeapWord* result() const       { return _res; }
+};
+
+class SvcGCMarker : public StackObj {
+ private:
+  JvmtiGCMarker _jgcm;
+ public:
+  typedef enum { MINOR, FULL, OTHER } reason_type;
+
+  SvcGCMarker(reason_type reason ) {
+    VM_GC_Operation::notify_gc_begin(reason == FULL);
+  }
+
+  ~SvcGCMarker() {
+    VM_GC_Operation::notify_gc_end();
+  }
 };
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_SHARED_VMGCOPERATIONS_HPP

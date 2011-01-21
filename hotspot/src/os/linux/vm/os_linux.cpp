@@ -59,6 +59,7 @@
 #include "services/attachListener.hpp"
 #include "services/runtimeService.hpp"
 #include "thread_linux.inline.hpp"
+#include "utilities/decoder.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
@@ -114,6 +115,7 @@
 # include <link.h>
 # include <stdint.h>
 # include <inttypes.h>
+# include <sys/ioctl.h>
 
 #define MAX_PATH    (2 * K)
 
@@ -1608,10 +1610,9 @@ int os::current_process_id() {
 
 const char* os::dll_file_extension() { return ".so"; }
 
-const char* os::get_temp_directory() {
-  const char *prop = Arguments::get_property("java.io.tmpdir");
-  return prop == NULL ? "/tmp" : prop;
-}
+// This must be hard coded because it's the system's temporary
+// directory not the java application's temp directory, ala java.io.tmpdir.
+const char* os::get_temp_directory() { return "/tmp"; }
 
 static bool file_exists(const char* filename) {
   struct stat statbuf;
@@ -1688,14 +1689,23 @@ bool os::dll_address_to_function_name(address addr, char *buf,
   Dl_info dlinfo;
 
   if (dladdr((void*)addr, &dlinfo) && dlinfo.dli_sname != NULL) {
-    if (buf) jio_snprintf(buf, buflen, "%s", dlinfo.dli_sname);
-    if (offset) *offset = addr - (address)dlinfo.dli_saddr;
+    if (buf != NULL) {
+      if(!Decoder::demangle(dlinfo.dli_sname, buf, buflen)) {
+        jio_snprintf(buf, buflen, "%s", dlinfo.dli_sname);
+      }
+    }
+    if (offset != NULL) *offset = addr - (address)dlinfo.dli_saddr;
     return true;
-  } else {
-    if (buf) buf[0] = '\0';
-    if (offset) *offset = -1;
-    return false;
+  } else if (dlinfo.dli_fname != NULL && dlinfo.dli_fbase != 0) {
+    if (Decoder::decode((address)(addr - (address)dlinfo.dli_fbase),
+       dlinfo.dli_fname, buf, buflen, offset) == Decoder::no_error) {
+       return true;
+    }
   }
+
+  if (buf != NULL) buf[0] = '\0';
+  if (offset != NULL) *offset = -1;
+  return false;
 }
 
 struct _address_to_library_name {
@@ -4421,6 +4431,15 @@ int os::available(int fd, jlong *bytes) {
   }
   *bytes = end - cur;
   return 1;
+}
+
+int os::socket_available(int fd, jint *pbytes) {
+  // Linux doc says EINTR not returned, unlike Solaris
+  int ret = ::ioctl(fd, FIONREAD, pbytes);
+
+  //%% note ioctl can return 0 when successful, JVM_SocketAvailable
+  // is expected to return 0 on failure and 1 on success to the jdk.
+  return (ret < 0) ? 0 : 1;
 }
 
 // Map a block of memory.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ class ServerConfig {
     static final int DEFAULT_CLOCK_TICK = 10000 ; // 10 sec.
 
     /* These values must be a reasonable multiple of clockTick */
-    static final long DEFAULT_IDLE_INTERVAL = 300 ; // 5 min
+    static final long DEFAULT_IDLE_INTERVAL = 30 ; // 5 min
     static final int DEFAULT_MAX_IDLE_CONNECTIONS = 200 ;
 
     static final long DEFAULT_MAX_REQ_TIME = -1; // default: forever

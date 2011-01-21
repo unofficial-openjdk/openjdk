@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,8 +85,7 @@ public class LogRecord implements java.io.Serializable {
     private static final AtomicInteger nextThreadId
         = new AtomicInteger(MIN_SEQUENTIAL_THREAD_ID);
 
-    private static final ThreadLocal<Integer> threadIds
-        = new ThreadLocal<Integer>();
+    private static final ThreadLocal<Integer> threadIds = new ThreadLocal<>();
 
     /**
      * @serial Logging message level

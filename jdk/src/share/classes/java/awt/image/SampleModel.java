@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ public abstract class SampleModel
      */
     public SampleModel(int dataType, int w, int h, int numBands)
     {
-        float size = (float)w*h;
+        long size = (long)w * h;
         if (w <= 0 || h <= 0) {
             throw new IllegalArgumentException("Width ("+w+") and height ("+
                                                h+") must be > 0");

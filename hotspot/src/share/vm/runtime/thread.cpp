@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "compiler/compileBroker.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
+#include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/instanceKlass.hpp"
@@ -177,20 +178,19 @@ void Thread::operator delete(void* p) {
 
 
 Thread::Thread() {
-  // stack
-  _stack_base   = NULL;
-  _stack_size   = 0;
-  _self_raw_id  = 0;
-  _lgrp_id      = -1;
-  _osthread     = NULL;
+  // stack and get_thread
+  set_stack_base(NULL);
+  set_stack_size(0);
+  set_self_raw_id(0);
+  set_lgrp_id(-1);
 
   // allocated data structures
+  set_osthread(NULL);
   set_resource_area(new ResourceArea());
   set_handle_area(new HandleArea(NULL));
   set_active_handles(NULL);
   set_free_handle_block(NULL);
   set_last_handle_mark(NULL);
-  set_osthread(NULL);
 
   // This initial value ==> never claimed.
   _oops_do_parity = 0;
@@ -205,6 +205,7 @@ Thread::Thread() {
   NOT_PRODUCT(_skip_gcalot = false;)
   CHECK_UNHANDLED_OOPS_ONLY(_gc_locked_out_count = 0;)
   _jvmti_env_iteration_count = 0;
+  set_allocated_bytes(0);
   _vm_operation_started_count = 0;
   _vm_operation_completed_count = 0;
   _current_pending_monitor = NULL;
@@ -977,6 +978,19 @@ static void set_jkernel_boot_classloader_hook(TRAPS) {
 }
 #endif // KERNEL
 
+// General purpose hook into Java code, run once when the VM is initialized.
+// The Java library method itself may be changed independently from the VM.
+static void call_postVMInitHook(TRAPS) {
+  klassOop k = SystemDictionary::sun_misc_PostVMInitHook_klass();
+  instanceKlassHandle klass (THREAD, k);
+  if (klass.not_null()) {
+    JavaValue result(T_VOID);
+    JavaCalls::call_static(&result, klass, vmSymbolHandles::run_method_name(),
+                                           vmSymbolHandles::void_method_signature(),
+                                           CHECK);
+  }
+}
+
 static void reset_vm_info_property(TRAPS) {
   // the vm info string
   ResourceMark rm(THREAD);
@@ -1699,7 +1713,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     tlab().make_parsable(true);  // retire TLAB
   }
 
-  if (jvmti_thread_state() != NULL) {
+  if (JvmtiEnv::environments_might_exist()) {
     JvmtiExport::cleanup_thread(this);
   }
 
@@ -3231,7 +3245,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
       warning("java.lang.ArithmeticException has not been initialized");
       warning("java.lang.StackOverflowError has not been initialized");
     }
-  }
+    }
 
   // See        : bugid 4211085.
   // Background : the static initializer of java.lang.Compiler tries to read
@@ -3345,6 +3359,14 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   BiasedLocking::init();
 
+  if (JDK_Version::current().post_vm_init_hook_enabled()) {
+    call_postVMInitHook(THREAD);
+    // The Java side of PostVMInitHook.run must deal with all
+    // exceptions and provide means of diagnosis.
+    if (HAS_PENDING_EXCEPTION) {
+      CLEAR_PENDING_EXCEPTION;
+    }
+  }
 
   // Start up the WatcherThread if there are any periodic tasks
   // NOTE:  All PeriodicTasks should be registered by now. If they

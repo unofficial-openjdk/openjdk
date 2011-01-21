@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@
 #include "services/attachListener.hpp"
 #include "services/runtimeService.hpp"
 #include "thread_solaris.inline.hpp"
+#include "utilities/decoder.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/events.hpp"
 #include "utilities/growableArray.hpp"
@@ -79,6 +80,7 @@
 // put OS-includes here
 # include <dlfcn.h>
 # include <errno.h>
+# include <exception>
 # include <link.h>
 # include <poll.h>
 # include <pthread.h>
@@ -281,7 +283,7 @@ Thread* ThreadLocalStorage::get_thread_via_cache_slowly(uintptr_t raw_id,
                is_error_reported(),
               "sp must be inside of selected thread stack");
 
-    thread->_self_raw_id = raw_id;  // mark for quick retrieval
+    thread->set_self_raw_id(raw_id);  // mark for quick retrieval
     _get_thread_cache[ index ] = thread;
   }
   return thread;
@@ -1474,6 +1476,13 @@ sigset_t* os::Solaris::allowdebug_blocked_signals() {
   return &allowdebug_blocked_sigs;
 }
 
+
+void _handle_uncaught_cxx_exception() {
+  VMError err("An uncaught C++ exception");
+  err.report_and_die();
+}
+
+
 // First crack at OS-specific initialization, from inside the new thread.
 void os::initialize_thread() {
   int r = thr_main() ;
@@ -1563,6 +1572,7 @@ void os::initialize_thread() {
    // use the dynamic check for T2 libthread.
 
   os::Solaris::init_thread_fpu_state();
+  std::set_terminate(_handle_uncaught_cxx_exception);
 }
 
 
@@ -1874,10 +1884,9 @@ void os::set_error_file(const char *logfile) {}
 
 const char* os::dll_file_extension() { return ".so"; }
 
-const char* os::get_temp_directory() {
-  const char *prop = Arguments::get_property("java.io.tmpdir");
-  return prop == NULL ? "/tmp" : prop;
-}
+// This must be hard coded because it's the system's temporary
+// directory not the java application's temp directory, ala java.io.tmpdir.
+const char* os::get_temp_directory() { return "/tmp"; }
 
 static bool file_exists(const char* filename) {
   struct stat statbuf;
@@ -1969,27 +1978,42 @@ bool os::dll_address_to_function_name(address addr, char *buf,
       Sym * info;
       if (dladdr1_func((void *)addr, &dlinfo, (void **)&info,
                        RTLD_DL_SYMENT)) {
-          if (buf) jio_snprintf(buf, buflen, "%s", dlinfo.dli_sname);
-          if (offset) *offset = addr - (address)dlinfo.dli_saddr;
-
-          // check if the returned symbol really covers addr
-          return ((char *)dlinfo.dli_saddr + info->st_size > (char *)addr);
-      } else {
-          if (buf) buf[0] = '\0';
-          if (offset) *offset  = -1;
-          return false;
+        if ((char *)dlinfo.dli_saddr + info->st_size > (char *)addr) {
+          if (buf != NULL) {
+            if (!Decoder::demangle(dlinfo.dli_sname, buf, buflen))
+              jio_snprintf(buf, buflen, "%s", dlinfo.dli_sname);
+            }
+            if (offset != NULL) *offset = addr - (address)dlinfo.dli_saddr;
+            return true;
+        }
       }
+      if (dlinfo.dli_fname != NULL && dlinfo.dli_fbase != 0) {
+        if (Decoder::decode((address)(addr - (address)dlinfo.dli_fbase),
+          dlinfo.dli_fname, buf, buflen, offset) == Decoder::no_error) {
+          return true;
+        }
+      }
+      if (buf != NULL) buf[0] = '\0';
+      if (offset != NULL) *offset  = -1;
+      return false;
   } else {
       // no, only dladdr is available
-      if(dladdr((void *)addr, &dlinfo)) {
-          if (buf) jio_snprintf(buf, buflen, dlinfo.dli_sname);
-          if (offset) *offset = addr - (address)dlinfo.dli_saddr;
+      if (dladdr((void *)addr, &dlinfo)) {
+        if (buf != NULL) {
+          if (!Decoder::demangle(dlinfo.dli_sname, buf, buflen))
+            jio_snprintf(buf, buflen, dlinfo.dli_sname);
+        }
+        if (offset != NULL) *offset = addr - (address)dlinfo.dli_saddr;
+        return true;
+      } else if (dlinfo.dli_fname != NULL && dlinfo.dli_fbase != 0) {
+        if (Decoder::decode((address)(addr - (address)dlinfo.dli_fbase),
+          dlinfo.dli_fname, buf, buflen, offset) == Decoder::no_error) {
           return true;
-      } else {
-          if (buf) buf[0] = '\0';
-          if (offset) *offset  = -1;
-          return false;
+        }
       }
+      if (buf != NULL) buf[0] = '\0';
+      if (offset != NULL) *offset  = -1;
+      return false;
   }
 }
 
@@ -5172,7 +5196,7 @@ int os::open(const char *path, int oflag, int mode) {
   int o_delete = (oflag & O_DELETE);
   oflag = oflag & ~O_DELETE;
 
-  fd = ::open(path, oflag, mode);
+  fd = ::open64(path, oflag, mode);
   if (fd == -1) return -1;
 
   //If the open succeeded, the file might still be a directory

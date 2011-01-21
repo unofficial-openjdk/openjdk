@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -533,7 +533,7 @@ public class TreeMap<K,V>
             // throw NullPointerException
             //
             // compare(key, key); // type check
-            root = new Entry<K,V>(key, value, null);
+            root = new Entry<>(key, value, null);
             size = 1;
             modCount++;
             return null;
@@ -569,7 +569,7 @@ public class TreeMap<K,V>
                     return t.setValue(value);
             } while (t != null);
         }
-        Entry<K,V> e = new Entry<K,V>(key, value, parent);
+        Entry<K,V> e = new Entry<>(key, value, parent);
         if (cmp < 0)
             parent.left = e;
         else
@@ -1056,11 +1056,11 @@ public class TreeMap<K,V>
         public Comparator<? super E> comparator() { return m.comparator(); }
         public E pollFirst() {
             Map.Entry<E,Object> e = m.pollFirstEntry();
-            return e == null? null : e.getKey();
+            return (e == null) ? null : e.getKey();
         }
         public E pollLast() {
             Map.Entry<E,Object> e = m.pollLastEntry();
-            return e == null? null : e.getKey();
+            return (e == null) ? null : e.getKey();
         }
         public boolean remove(Object o) {
             int oldSize = size();
@@ -1069,14 +1069,14 @@ public class TreeMap<K,V>
         }
         public NavigableSet<E> subSet(E fromElement, boolean fromInclusive,
                                       E toElement,   boolean toInclusive) {
-            return new KeySet<E>(m.subMap(fromElement, fromInclusive,
+            return new KeySet<>(m.subMap(fromElement, fromInclusive,
                                           toElement,   toInclusive));
         }
         public NavigableSet<E> headSet(E toElement, boolean inclusive) {
-            return new KeySet<E>(m.headMap(toElement, inclusive));
+            return new KeySet<>(m.headMap(toElement, inclusive));
         }
         public NavigableSet<E> tailSet(E fromElement, boolean inclusive) {
-            return new KeySet<E>(m.tailMap(fromElement, inclusive));
+            return new KeySet<>(m.tailMap(fromElement, inclusive));
         }
         public SortedSet<E> subSet(E fromElement, E toElement) {
             return subSet(fromElement, true, toElement, false);
@@ -1196,7 +1196,7 @@ public class TreeMap<K,V>
      * Test two values for equality.  Differs from o1.equals(o2) only in
      * that it copes with {@code null} o1 properly.
      */
-    final static boolean valEquals(Object o1, Object o2) {
+    static final boolean valEquals(Object o1, Object o2) {
         return (o1==null ? o2==null : o1.equals(o2));
     }
 
@@ -1204,15 +1204,15 @@ public class TreeMap<K,V>
      * Return SimpleImmutableEntry for entry, or null if null
      */
     static <K,V> Map.Entry<K,V> exportEntry(TreeMap.Entry<K,V> e) {
-        return e == null? null :
-            new AbstractMap.SimpleImmutableEntry<K,V>(e);
+        return (e == null) ? null :
+            new AbstractMap.SimpleImmutableEntry<>(e);
     }
 
     /**
      * Return key for entry, or null if null
      */
     static <K,V> K keyOrNull(TreeMap.Entry<K,V> e) {
-        return e == null? null : e.key;
+        return (e == null) ? null : e.key;
     }
 
     /**
@@ -1237,7 +1237,7 @@ public class TreeMap<K,V>
     /**
      * @serial include
      */
-    static abstract class NavigableSubMap<K,V> extends AbstractMap<K,V>
+    abstract static class NavigableSubMap<K,V> extends AbstractMap<K,V>
         implements NavigableMap<K,V>, java.io.Serializable {
         /**
          * The backing map.
@@ -1412,11 +1412,11 @@ public class TreeMap<K,V>
         }
 
         public final V get(Object key) {
-            return !inRange(key)? null :  m.get(key);
+            return !inRange(key) ? null :  m.get(key);
         }
 
         public final V remove(Object key) {
-            return !inRange(key)? null  : m.remove(key);
+            return !inRange(key) ? null : m.remove(key);
         }
 
         public final Map.Entry<K,V> ceilingEntry(K key) {
@@ -1559,7 +1559,8 @@ public class TreeMap<K,V>
                 if (!inRange(key))
                     return false;
                 TreeMap.Entry<K,V> node = m.getEntry(key);
-                if (node!=null && valEquals(node.getValue(),entry.getValue())){
+                if (node!=null && valEquals(node.getValue(),
+                                            entry.getValue())) {
                     m.deleteEntry(node);
                     return true;
                 }
@@ -1724,7 +1725,7 @@ public class TreeMap<K,V>
                                        false,     toKey, inclusive);
         }
 
-        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive){
+        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive) {
             if (!inRange(fromKey, inclusive))
                 throw new IllegalArgumentException("fromKey out of range");
             return new AscendingSubMap(m,
@@ -1805,7 +1806,7 @@ public class TreeMap<K,V>
                                         toEnd, hi,    hiInclusive);
         }
 
-        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive){
+        public NavigableMap<K,V> tailMap(K fromKey, boolean inclusive) {
             if (!inRange(fromKey, inclusive))
                 throw new IllegalArgumentException("fromKey out of range");
             return new DescendingSubMap(m,
@@ -2143,7 +2144,7 @@ public class TreeMap<K,V>
         // If strictly internal, copy successor's element to p and then make p
         // point to successor.
         if (p.left != null && p.right != null) {
-            Entry<K,V> s = successor (p);
+            Entry<K,V> s = successor(p);
             p.key = s.key;
             p.value = s.value;
             p = s;
@@ -2405,7 +2406,7 @@ public class TreeMap<K,V>
             value = (defaultVal != null ? defaultVal : (V) str.readObject());
         }
 
-        Entry<K,V> middle =  new Entry<K,V>(key, value, null);
+        Entry<K,V> middle =  new Entry<>(key, value, null);
 
         // color nodes in non-full bottommost level red
         if (level == redLevel)

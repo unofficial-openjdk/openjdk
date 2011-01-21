@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2490,7 +2490,7 @@ public final class Formatter implements Closeable, Flushable {
      * Finds format specifiers in the format string.
      */
     private FormatString[] parse(String s) {
-        ArrayList<FormatString> al = new ArrayList<FormatString>();
+        ArrayList<FormatString> al = new ArrayList<>();
         Matcher m = fsPattern.matcher(s);
         for (int i = 0, len = s.length(); i < len; ) {
             if (m.find(i)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,7 +145,10 @@ private:
 #define OS_WINXP        (1 << 2)
 #define OS_WINXP_64     (1 << 3)
 #define OS_WINSERV_2003 (1 << 4)
-#define OS_ALL (OS_VISTA|OS_WINSERV_2008|OS_WINXP|OS_WINXP_64|OS_WINSERV_2003)
+#define OS_WINDOWS7     (1 << 5)
+#define OS_WINSERV_2008R2 (1 << 6)
+#define OS_ALL (OS_VISTA|OS_WINSERV_2008|OS_WINXP|OS_WINXP_64|OS_WINSERV_2003|\
+                OS_WINDOWS7|OS_WINSERV_2008R2)
 #define OS_UNKNOWN      (~OS_ALL)
 BOOL D3DPPLM_OsVersionMatches(USHORT osInfo);
 

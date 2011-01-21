@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -547,7 +547,7 @@ public class CopyOnWriteArrayList<E>
      * @param fromIndex index of first element to be removed
      * @param toIndex index after last element to be removed
      * @throws IndexOutOfBoundsException if fromIndex or toIndex out of range
-     *         (@code{fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
+     *         ({@code{fromIndex < 0 || toIndex > size() || toIndex < fromIndex})
      */
     private void removeRange(int fromIndex, int toIndex) {
         final ReentrantLock lock = this.lock;
@@ -989,7 +989,7 @@ public class CopyOnWriteArrayList<E>
     }
 
     private static class COWIterator<E> implements ListIterator<E> {
-        /** Snapshot of the array **/
+        /** Snapshot of the array */
         private final Object[] snapshot;
         /** Index of element to be returned by subsequent call to next.  */
         private int cursor;

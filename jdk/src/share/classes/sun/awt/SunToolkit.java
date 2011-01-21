@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,26 +102,6 @@ public abstract class SunToolkit extends Toolkit
     public final static int MAX_BUTTONS_SUPPORTED = 20;
 
     public SunToolkit() {
-        /* If awt.threadgroup is set to class name the instance of
-         * this class is created (should be subclass of ThreadGroup)
-         * and EventDispatchThread is created inside of it
-         *
-         * If loaded class overrides uncaughtException instance
-         * handles all uncaught exception on EventDispatchThread
-         */
-        ThreadGroup threadGroup = null;
-        String tgName = System.getProperty("awt.threadgroup", "");
-
-        if (tgName.length() != 0) {
-            try {
-                Constructor ctor = Class.forName(tgName).
-                    getConstructor(new Class[] {String.class});
-                threadGroup = (ThreadGroup)ctor.newInstance(new Object[] {"AWT-ThreadGroup"});
-            } catch (Exception e) {
-                System.err.println("Failed loading " + tgName + ": " + e);
-            }
-        }
-
         Runnable initEQ = new Runnable() {
             public void run () {
                 EventQueue eventQueue;
@@ -144,17 +124,7 @@ public abstract class SunToolkit extends Toolkit
             }
         };
 
-        if (threadGroup != null) {
-            Thread eqInitThread = new Thread(threadGroup, initEQ, "EventQueue-Init");
-            eqInitThread.start();
-            try {
-                eqInitThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            initEQ.run();
-        }
+        initEQ.run();
     }
 
     public boolean useBufferPerWindow() {

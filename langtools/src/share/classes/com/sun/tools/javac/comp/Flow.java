@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -886,6 +886,8 @@ public class Flow extends TreeScanner {
         alive = resolveBreaks(tree, prevPendingExits) ||
             tree.cond != null && !tree.cond.type.isTrue();
         nextadr = nextadrPrev;
+        inits.excludeFrom(nextadr);
+        uninits.excludeFrom(nextadr);
     }
 
     public void visitForeachLoop(JCEnhancedForLoop tree) {

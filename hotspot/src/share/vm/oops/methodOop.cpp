@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,17 +150,6 @@ int  methodOopDesc::fast_exception_handler_bci_for(KlassHandle ex_klass, int thr
   return -1;
 }
 
-methodOop methodOopDesc::method_from_bcp(address bcp) {
-  debug_only(static int count = 0; count++);
-  assert(Universe::heap()->is_in_permanent(bcp), "bcp not in perm_gen");
-  // TO DO: this may be unsafe in some configurations
-  HeapWord* p = Universe::heap()->block_start(bcp);
-  assert(Universe::heap()->block_is_obj(p), "must be obj");
-  assert(oop(p)->is_constMethod(), "not a method");
-  return constMethodOop(p)->method();
-}
-
-
 void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
 
   Thread* myThread    = Thread::current();
@@ -309,6 +298,12 @@ void methodOopDesc::print_invocation_count() {
 // Build a methodDataOop object to hold information about this method
 // collected in the interpreter.
 void methodOopDesc::build_interpreter_method_data(methodHandle method, TRAPS) {
+  // Do not profile method if current thread holds the pending list lock,
+  // which avoids deadlock for acquiring the MethodData_lock.
+  if (instanceRefKlass::owns_pending_list_lock((JavaThread*)THREAD)) {
+    return;
+  }
+
   // Grab a lock here to prevent multiple
   // methodDataOops from being created.
   MutexLocker ml(MethodData_lock, THREAD);
@@ -463,11 +458,10 @@ bool methodOopDesc::can_be_statically_bound() const {
 bool methodOopDesc::is_accessor() const {
   if (code_size() != 5) return false;
   if (size_of_parameters() != 1) return false;
-  methodOop m = (methodOop)this;  // pass to code_at() to avoid method_from_bcp
-  if (Bytecodes::java_code_at(code_base()+0, m) != Bytecodes::_aload_0 ) return false;
-  if (Bytecodes::java_code_at(code_base()+1, m) != Bytecodes::_getfield) return false;
-  if (Bytecodes::java_code_at(code_base()+4, m) != Bytecodes::_areturn &&
-      Bytecodes::java_code_at(code_base()+4, m) != Bytecodes::_ireturn ) return false;
+  if (java_code_at(0) != Bytecodes::_aload_0 ) return false;
+  if (java_code_at(1) != Bytecodes::_getfield) return false;
+  if (java_code_at(4) != Bytecodes::_areturn &&
+      java_code_at(4) != Bytecodes::_ireturn ) return false;
   return true;
 }
 
@@ -1408,7 +1402,7 @@ bool CompressedLineNumberReadStream::read_pair() {
 }
 
 
-Bytecodes::Code methodOopDesc::orig_bytecode_at(int bci) {
+Bytecodes::Code methodOopDesc::orig_bytecode_at(int bci) const {
   BreakpointInfo* bp = instanceKlass::cast(method_holder())->breakpoints();
   for (; bp != NULL; bp = bp->next()) {
     if (bp->match(this, bci)) {

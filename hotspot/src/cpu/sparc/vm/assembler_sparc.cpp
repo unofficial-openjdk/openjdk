@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -4102,11 +4102,15 @@ void MacroAssembler::tlab_refill(Label& retry, Label& try_eden, Label& slow_case
   store_klass(t2, top);
   verify_oop(top);
 
+  ld_ptr(G2_thread, in_bytes(JavaThread::tlab_start_offset()), t1);
+  sub(top, t1, t1); // size of tlab's allocated portion
+  incr_allocated_bytes(t1, t2, t3);
+
   // refill the tlab with an eden allocation
   bind(do_refill);
   ld_ptr(G2_thread, in_bytes(JavaThread::tlab_size_offset()), t1);
   sll_ptr(t1, LogHeapWordSize, t1);
-  // add object_size ??
+  // allocate new tlab, address returned in top
   eden_allocate(top, t1, 0, t2, t3, slow_case);
 
   st_ptr(top, G2_thread, in_bytes(JavaThread::tlab_start_offset()));
@@ -4132,6 +4136,17 @@ void MacroAssembler::tlab_refill(Label& retry, Label& try_eden, Label& slow_case
   verify_tlab();
   br(Assembler::always, false, Assembler::pt, retry);
   delayed()->nop();
+}
+
+void MacroAssembler::incr_allocated_bytes(RegisterOrConstant size_in_bytes,
+                                          Register t1, Register t2) {
+  // Bump total bytes allocated by this thread
+  assert(t1->is_global(), "must be global reg"); // so all 64 bits are saved on a context switch
+  assert_different_registers(size_in_bytes.register_or_noreg(), t1, t2);
+  // v8 support has gone the way of the dodo
+  ldx(G2_thread, in_bytes(JavaThread::allocated_bytes_offset()), t1);
+  add(t1, ensure_simm13_or_reg(size_in_bytes, t2), t1);
+  stx(t1, G2_thread, in_bytes(JavaThread::allocated_bytes_offset()));
 }
 
 Assembler::Condition MacroAssembler::negate_condition(Assembler::Condition cond) {

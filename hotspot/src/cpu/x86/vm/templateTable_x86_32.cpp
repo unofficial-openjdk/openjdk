@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1665,16 +1665,9 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
     if (ProfileInterpreter) {
       // Out-of-line code to allocate method data oop.
       __ bind(profile_method);
-      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::profile_method), rsi);
+      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::profile_method));
       __ load_unsigned_byte(rbx, Address(rsi, 0));  // restore target bytecode
-      __ movptr(rcx, Address(rbp, method_offset));
-      __ movptr(rcx, Address(rcx, in_bytes(methodOopDesc::method_data_offset())));
-      __ movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rcx);
-      __ test_method_data_pointer(rcx, dispatch);
-      // offset non-null mdp by MDO::data_offset() + IR::profile_method()
-      __ addptr(rcx, in_bytes(methodDataOopDesc::data_offset()));
-      __ addptr(rcx, rax);
-      __ movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rcx);
+      __ set_method_data_pointer_for_bcp();
       __ jmp(dispatch);
     }
 
@@ -3203,10 +3196,12 @@ void TemplateTable::_new() {
   const bool allow_shared_alloc =
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
 
-  if (UseTLAB) {
-    const Register thread = rcx;
-
+  const Register thread = rcx;
+  if (UseTLAB || allow_shared_alloc) {
     __ get_thread(thread);
+  }
+
+  if (UseTLAB) {
     __ movptr(rax, Address(thread, in_bytes(JavaThread::tlab_top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
     __ cmpptr(rbx, Address(thread, in_bytes(JavaThread::tlab_end_offset())));
@@ -3247,6 +3242,8 @@ void TemplateTable::_new() {
 
     // if someone beat us on the allocation, try again, otherwise continue
     __ jcc(Assembler::notEqual, retry);
+
+    __ incr_allocated_bytes(thread, rdx, 0);
   }
 
   if (UseTLAB || Universe::heap()->supports_inline_contig_alloc()) {
@@ -3256,12 +3253,12 @@ void TemplateTable::_new() {
     __ decrement(rdx, sizeof(oopDesc));
     __ jcc(Assembler::zero, initialize_header);
 
-  // Initialize topmost object field, divide rdx by 8, check if odd and
-  // test if zero.
+    // Initialize topmost object field, divide rdx by 8, check if odd and
+    // test if zero.
     __ xorl(rcx, rcx);    // use zero reg to clear memory (shorter code)
     __ shrl(rdx, LogBytesPerLong); // divide by 2*oopSize and set carry flag if odd
 
-  // rdx must have been multiple of 8
+    // rdx must have been multiple of 8
 #ifdef ASSERT
     // make sure rdx was multiple of 8
     Label L;
