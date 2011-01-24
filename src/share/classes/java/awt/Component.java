@@ -1370,12 +1370,15 @@ public abstract class Component implements ImageObserver, MenuContainer,
             KeyboardFocusManager.clearMostRecentFocusOwner(this);
             synchronized (getTreeLock()) {
                 enabled = false;
-                if (isFocusOwner()) {
+                // A disabled lw container is allowed to contain a focus owner.
+                if ((isFocusOwner() || (containsFocus() && !isLightweight())) &&
+                    KeyboardFocusManager.isAutoFocusTransferEnabled())
+                {
                     // Don't clear the global focus owner. If transferFocus
                     // fails, we want the focus to stay on the disabled
                     // Component so that keyboard traversal, et. al. still
                     // makes sense to the user.
-                    autoTransferFocus(false);
+                    transferFocus(false);
                 }
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
@@ -1536,8 +1539,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
             synchronized (getTreeLock()) {
                 visible = false;
                 mixOnHiding(isLightweight());
-                if (containsFocus()) {
-                    autoTransferFocus(true);
+                if (containsFocus() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                    transferFocus(true);
                 }
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
@@ -6620,12 +6623,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
 
         synchronized (getTreeLock()) {
-            if (isFocusOwner()
-                && KeyboardFocusManager.isAutoFocusTransferEnabled()
-                && !nextFocusHelper())
-            {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().
-                    clearGlobalFocusOwner();
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabledFor(this)) {
+                transferFocus(true);
             }
 
             if (getContainer() != null && isAddNotifyComplete) {
@@ -6760,8 +6759,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
         firePropertyChange("focusable", oldFocusable, focusable);
         if (oldFocusable && !focusable) {
-            if (isFocusOwner()) {
-                autoTransferFocus(true);
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                transferFocus(true);
             }
             KeyboardFocusManager.clearMostRecentFocusOwner(this);
         }
@@ -7415,69 +7414,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
     }
 
-    private void autoTransferFocus(boolean clearOnFailure) {
-        Component toTest = KeyboardFocusManager.
-            getCurrentKeyboardFocusManager().getFocusOwner();
-        if (toTest != this) {
-            if (toTest != null) {
-                toTest.autoTransferFocus(clearOnFailure);
-            }
-            return;
-        }
-
-        // Check if there are pending focus requests.  We shouldn't do
-        // auto-transfer if user has already took care of this
-        // component becoming ineligible to hold focus.
-        if (!KeyboardFocusManager.isAutoFocusTransferEnabled()) {
-            return;
-        }
-
-        // the following code will execute only if this Component is the focus
-        // owner
-
-        if (!(isDisplayable() && isVisible() && isEnabled() && isFocusable())) {
-            doAutoTransfer(clearOnFailure);
-            return;
-        }
-
-        toTest = getParent();
-
-        while (toTest != null && !(toTest instanceof Window)) {
-            if (!(toTest.isDisplayable() && toTest.isVisible() &&
-                  (toTest.isEnabled() || toTest.isLightweight()))) {
-                doAutoTransfer(clearOnFailure);
-                return;
-            }
-            toTest = toTest.getParent();
-        }
-    }
-    private void doAutoTransfer(boolean clearOnFailure) {
-        if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "this = " + this + ", clearOnFailure = " + clearOnFailure);
-        }
-        if (clearOnFailure) {
-            if (!nextFocusHelper()) {
-                if (focusLog.isLoggable(Level.FINER)) {
-                    focusLog.log(Level.FINER, "clear global focus owner");
-                }
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().
-                    clearGlobalFocusOwner();
-            }
-        } else {
-            transferFocus();
-        }
-    }
-
-    /**
-     * Transfers the focus to the next component, as though this Component were
-     * the focus owner.
-     * @see       #requestFocus()
-     * @since     JDK1.1
-     */
-    public void transferFocus() {
-        nextFocus();
-    }
-
     /**
      * Returns the Container which is the focus cycle root of this Component's
      * focus traversal cycle. Each focus traversal cycle has only a single
@@ -7517,31 +7453,51 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return (rootAncestor == container);
     }
 
+    Container getTraversalRoot() {
+        return getFocusCycleRootAncestor();
+    }
+
+    /**
+     * Transfers the focus to the next component, as though this Component were
+     * the focus owner.
+     * @see       #requestFocus()
+     * @since     JDK1.1
+     */
+    public void transferFocus() {
+        nextFocus();
+    }
+
     /**
      * @deprecated As of JDK version 1.1,
      * replaced by transferFocus().
      */
     @Deprecated
     public void nextFocus() {
-        nextFocusHelper();
+        transferFocus(false);
     }
 
-    private boolean nextFocusHelper() {
-        Component toFocus = preNextFocusHelper();
+    boolean transferFocus(boolean clearOnFailure) {
         if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "toFocus = " + toFocus);
+            focusLog.finer("clearOnFailure = " + clearOnFailure);
         }
-        if (isFocusOwner() && toFocus == this) {
-            return false;
+        Component toFocus = getNextFocusCandidate();
+        boolean res = false;
+        if (toFocus != null && !toFocus.isFocusOwner() && toFocus != this) {
+            res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_FORWARD);
         }
-        return postNextFocusHelper(toFocus, CausedFocusEvent.Cause.TRAVERSAL_FORWARD);
+        if (clearOnFailure && !res) {
+            if (focusLog.isLoggable(Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+        }
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
     }
 
-    Container getTraversalRoot() {
-        return getFocusCycleRootAncestor();
-    }
-
-    final Component preNextFocusHelper() {
+    final Component getNextFocusCandidate() {
         Container rootAncestor = getTraversalRoot();
         Component comp = this;
         while (rootAncestor != null &&
@@ -7553,18 +7509,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
             rootAncestor = comp.getFocusCycleRootAncestor();
         }
         if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "comp = " + comp + ", root = " + rootAncestor);
+            focusLog.finer("comp = " + comp + ", root = " + rootAncestor);
         }
+        Component candidate = null;
         if (rootAncestor != null) {
             FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
             Component toFocus = policy.getComponentAfter(rootAncestor, comp);
             if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "component after is " + toFocus);
+                focusLog.finer("component after is " + toFocus);
             }
             if (toFocus == null) {
                 toFocus = policy.getDefaultComponent(rootAncestor);
                 if (focusLog.isLoggable(Level.FINER)) {
-                    focusLog.log(Level.FINER, "default component is " + toFocus);
+                    focusLog.finer("default component is " + toFocus);
                 }
             }
             if (toFocus == null) {
@@ -7573,23 +7530,12 @@ public abstract class Component implements ImageObserver, MenuContainer,
                     toFocus = applet;
                 }
             }
-            return toFocus;
+            candidate = toFocus;
         }
-        return null;
-    }
-
-    static boolean postNextFocusHelper(Component toFocus, CausedFocusEvent.Cause cause) {
-        if (toFocus != null) {
-            if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "Next component " + toFocus);
-            }
-            boolean res = toFocus.requestFocusInWindow(cause);
-            if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "Request focus returned " + res);
-            }
-            return res;
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("Focus transfer candidate: " + candidate);
         }
-        return false;
+        return candidate;
     }
 
     /**
@@ -7599,6 +7545,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @since     1.4
      */
     public void transferFocusBackward() {
+        transferFocusBackward(false);
+    }
+
+    boolean transferFocusBackward(boolean clearOnFailure) {
         Container rootAncestor = getTraversalRoot();
         Component comp = this;
         while (rootAncestor != null &&
@@ -7609,6 +7559,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
             comp = rootAncestor;
             rootAncestor = comp.getFocusCycleRootAncestor();
         }
+        boolean res = false;
         if (rootAncestor != null) {
             FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
             Component toFocus = policy.getComponentBefore(rootAncestor, comp);
@@ -7616,9 +7567,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 toFocus = policy.getDefaultComponent(rootAncestor);
             }
             if (toFocus != null) {
-                toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);
+                res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);
             }
         }
+        if (!res) {
+            if (focusLog.isLoggable(Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+        }
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
     }
 
     /**
@@ -7691,6 +7652,20 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     public boolean isFocusOwner() {
         return hasFocus();
+    }
+
+    /*
+     * Used to disallow auto-focus-transfer on disposal of the focus owner
+     * in the process of disposing its parent container.
+     */
+    private boolean autoFocusTransferOnDisposal = true;
+
+    void setAutoFocusTransferOnDisposal(boolean value) {
+        autoFocusTransferOnDisposal = value;
+    }
+
+    boolean isAutoFocusTransferOnDisposal() {
+        return autoFocusTransferOnDisposal;
     }
 
     /**
