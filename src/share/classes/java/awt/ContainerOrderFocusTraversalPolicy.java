@@ -135,8 +135,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
             found.value = true;
         }
 
-        for (int i = 0; i < aContainer.ncomponents; i++) {
-            Component comp = aContainer.component[i];
+        for (int i = 0; i < aContainer.getComponentCount(); i++) {
+            Component comp = aContainer.getComponent(i);
             if ((comp instanceof Container) &&
                 !((Container)comp).isFocusCycleRoot()) {
                 Component retval = null;
@@ -242,8 +242,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
             return null;
         }
 
-        for (int i = aContainer.ncomponents - 1; i >= 0; i--) {
-            Component comp = aContainer.component[i];
+        for (int i = aContainer.getComponentCount() - 1; i >= 0; i--) {
+            Component comp = aContainer.getComponent(i);
             if (comp == aComponent) {
                 found.value = true;
             } else if ((comp instanceof Container) &&
@@ -321,8 +321,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                 return aContainer;
             }
 
-            for (int i = 0; i < aContainer.ncomponents; i++) {
-                Component comp = aContainer.component[i];
+            for (int i = 0; i < aContainer.getComponentCount(); i++) {
+                Component comp = aContainer.getComponent(i);
                 if (comp instanceof Container &&
                     !((Container)comp).isFocusCycleRoot())
                 {
@@ -370,8 +370,8 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
                 return null;
             }
 
-            for (int i = aContainer.ncomponents - 1; i >= 0; i--) {
-                Component comp = aContainer.component[i];
+            for (int i = aContainer.getComponentCount() - 1; i >= 0; i--) {
+                Component comp = aContainer.getComponent(i);
                 if (comp instanceof Container &&
                     !((Container)comp).isFocusCycleRoot())
                 {
