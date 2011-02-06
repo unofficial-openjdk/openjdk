@@ -33,6 +33,7 @@ import java.io.FileDescriptor;
 import java.io.ByteArrayOutputStream;
 
 import sun.net.ConnectionResetException;
+import sun.net.ResourceManager;
 
 /**
  * Default Socket Implementation. This implementation does
@@ -69,6 +70,10 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     private int resetState;
     private Object resetLock = new Object();
 
+   /* whether this Socket is a stream (TCP) socket or not (UDP)
+    */
+    private boolean stream;
+
     /**
      * Load net library into runtime.
      */
@@ -83,7 +88,19 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      */
     protected synchronized void create(boolean stream) throws IOException {
         fd = new FileDescriptor();
-        socketCreate(stream);
+        this.stream = stream;
+        if (!stream) {
+            ResourceManager.beforeUdpCreate();
+            try {
+                socketCreate(false);
+            } catch (IOException ioe) {
+                ResourceManager.afterUdpClose();
+                fd = null;
+                throw ioe;
+            }
+        } else {
+            socketCreate(true);
+        }
         if (socket != null)
             socket.setCreated();
         if (serverSocket != null)
@@ -458,6 +475,9 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     protected void close() throws IOException {
         synchronized(fdLock) {
             if (fd != null) {
+                if (!stream) {
+                    ResourceManager.afterUdpClose();
+                }
                 if (fdUseCount == 0) {
                     if (closePending) {
                         return;

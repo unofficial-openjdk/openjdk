@@ -484,7 +484,7 @@ CreateExecutionEnvironment(int *_argcp,
        * LD_LIBRARY_PATH.  Note that this prevents any possible infinite
        * loop of execv() because we test for the prefix, above.
        */
-      if (runpath != 0) {
+      if (runpath != 0 && (runpath[0] != '\0')) {
         strcat(new_runpath, ":");
         strcat(new_runpath, runpath);
       }

@@ -58,9 +58,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.AccessControlContext;
 import javax.accessibility.*;
 import java.util.logging.*;
 import java.applet.Applet;
+import sun.awt.AWTAccessor;
 
 import sun.security.action.GetPropertyAction;
 import sun.awt.AppContext;
@@ -451,6 +453,12 @@ public abstract class Component implements ImageObserver, MenuContainer,
     static final Object LOCK = new AWTTreeLock();
     static class AWTTreeLock {}
 
+    /*
+     * The component's AccessControlContext.
+     */
+    private transient volatile AccessControlContext acc =
+        AccessController.getContext();
+
     /**
      * Minimum size.
      * (This field perhaps should have been transient).
@@ -641,6 +649,16 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return changeSupportLock;
     }
 
+    /*
+     * Returns the acc this component was constructed with.
+     */
+    final AccessControlContext getAccessControlContext() {
+        if (acc == null) {
+            throw new SecurityException("Component is missing AccessControlContext");
+        }
+        return acc;
+    }
+
     boolean isPacked = false;
 
     /**
@@ -777,6 +795,16 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 boundsOp = op;
             }
     }
+
+    static {
+        AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
+                public AccessControlContext getAccessControlContext(Component comp) {
+                    return comp.getAccessControlContext();
+                }
+
+            });
+    }
+
 
     /**
      * Constructs a new component. Class <code>Component</code> can be
@@ -8316,6 +8344,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
       throws ClassNotFoundException, IOException
     {
         changeSupportLock = new Object();
+
+        acc = AccessController.getContext();
 
         s.defaultReadObject();
 

@@ -111,7 +111,7 @@ class Net {                                             // package-private
 
     // -- Socket operations --
 
-    static FileDescriptor socket(boolean stream) {
+    static FileDescriptor socket(boolean stream) throws IOException {
         return IOUtil.newFD(socket0(stream, false));
     }
 

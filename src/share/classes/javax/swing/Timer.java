@@ -35,6 +35,10 @@ import java.util.concurrent.locks.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Serializable;
+import java.io.*;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import javax.swing.event.EventListenerList;
 
 
@@ -174,6 +178,23 @@ public class Timer implements Serializable
 
     private transient final Lock lock = new ReentrantLock();
 
+    /*
+     * The timer's AccessControlContext.
+     */
+     private transient volatile AccessControlContext acc =
+            AccessController.getContext();
+
+    /**
+      * Returns the acc this timer was constructed with.
+      */
+     final AccessControlContext getAccessControlContext() {
+       if (acc == null) {
+           throw new SecurityException(
+                   "Timer is missing AccessControlContext");
+       }
+       return acc;
+     }
+
     // This field is maintained by TimerQueue.
     // eventQueued can also be reset by the TimerQueue, but will only ever
     // happen in applet case when TimerQueues thread is destroyed.
@@ -191,7 +212,7 @@ public class Timer implements Serializable
      *
      * @param delay milliseconds for the initial and between-event delay
      * @param listener  an initial listener; can be <code>null</code>
-     *
+
      * @see #addActionListener
      * @see #setInitialDelay
      * @see #setRepeats
@@ -207,7 +228,6 @@ public class Timer implements Serializable
             addActionListener(listener);
         }
     }
-
 
     /**
      * DoPostEvent is a runnable class that fires actionEvents to
@@ -589,7 +609,12 @@ public class Timer implements Serializable
 
     void post() {
         if (notify.compareAndSet(false, true) || !coalesce) {
-            SwingUtilities.invokeLater(doPostEvent);
+            AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
+                    SwingUtilities.invokeLater(doPostEvent);
+                    return null;
+                 }
+            }, getAccessControlContext());
         }
     }
 
@@ -611,4 +636,11 @@ public class Timer implements Serializable
         timer.actionCommand = actionCommand;
         return timer;
     }
+
+     private void readObject(ObjectInputStream in) 
+        throws ClassNotFoundException, IOException
+     {
+        this.acc = AccessController.getContext();
+        in.defaultReadObject();
+     }
 }

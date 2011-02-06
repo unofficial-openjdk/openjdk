@@ -48,6 +48,9 @@ import java.nio.channels.ClosedChannelException;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.awt.Font;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 public abstract class FileFont extends PhysicalFont {
 
@@ -284,4 +287,49 @@ public abstract class FileFont extends PhysicalFont {
             });
         }
     }
+
+    protected String getPublicFileName() {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null) {
+            return platName;
+        }
+        boolean canReadProperty = true;
+
+        try {
+            sm.checkPropertyAccess("java.io.tmpdir");
+        } catch (SecurityException e) {
+            canReadProperty = false;
+        }
+
+        if (canReadProperty) {
+            return platName;
+        }
+
+        final File f = new File(platName);
+
+         Boolean isTmpFile = Boolean.FALSE;
+         try {
+             isTmpFile = AccessController.doPrivileged(
+                 new PrivilegedExceptionAction<Boolean>() {
+                     public Boolean run() {
+                         File tmp = new File(System.getProperty("java.io.tmpdir"));
+                         try {
+                             String tpath = tmp.getCanonicalPath();
+                             String fpath = f.getCanonicalPath();
+
+                             return (fpath == null) || fpath.startsWith(tpath);
+                         } catch (IOException e) {
+                             return Boolean.TRUE;
+                         }
+                     }
+                 }
+             );
+         } catch (PrivilegedActionException e) {
+             // unable to verify whether value of java.io.tempdir will be
+             // exposed, so return only a name of the font file.
+             isTmpFile = Boolean.TRUE;
+         }
+
+         return  isTmpFile ? "temp file" : platName;
+     }
 }

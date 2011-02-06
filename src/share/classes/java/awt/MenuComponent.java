@@ -32,6 +32,9 @@ import sun.awt.AppContext;
 import sun.awt.SunToolkit;
 import javax.accessibility.*;
 
+import java.security.AccessControlContext;
+import java.security.AccessController;
+
 /**
  * The abstract class <code>MenuComponent</code> is the superclass
  * of all menu-related components. In this respect, the class
@@ -97,6 +100,23 @@ public abstract class MenuComponent implements java.io.Serializable {
      * @see #dispatchEvent(AWTEvent)
      */
     boolean newEventsOnly = false;
+
+    /*
+     * The menu's AccessControlContext.
+     */
+    private transient volatile AccessControlContext acc =
+            AccessController.getContext();
+    
+    /*
+     * Returns the acc this menu component was constructed with.
+     */
+    final AccessControlContext getAccessControlContext() {
+        if (acc == null) {
+            throw new SecurityException(
+                    "MenuComponent is missing AccessControlContext");
+        }
+        return acc;
+    }
 
     /*
      * Internal constants for serialization.
@@ -385,6 +405,9 @@ public abstract class MenuComponent implements java.io.Serializable {
         throws ClassNotFoundException, IOException, HeadlessException
     {
         GraphicsEnvironment.checkHeadless();
+
+        acc = AccessController.getContext();
+
         s.defaultReadObject();
 
         appContext = AppContext.getAppContext();

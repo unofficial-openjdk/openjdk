@@ -284,10 +284,7 @@ class EventDispatchThread extends Thread {
                           // Threads in the AppContext
 
         }
-        // Can get and throw only unchecked exceptions
-        catch (RuntimeException e) {
-            processException(e, modalFiltersCount > 0);
-        } catch (Error e) {
+        catch (Throwable e) {
             processException(e, modalFiltersCount > 0);
         }
         return true;
