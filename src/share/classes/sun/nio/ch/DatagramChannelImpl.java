@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.channels.spi.*;
 import java.lang.ref.SoftReference;
+import sun.net.ResourceManager;
 
 
 /**
@@ -98,9 +99,15 @@ class DatagramChannelImpl
         throws IOException
     {
         super(sp);
-        this.fd = Net.socket(false);
-        this.fdVal = IOUtil.fdVal(fd);
-        this.state = ST_UNCONNECTED;
+        ResourceManager.beforeUdpCreate();
+        try {
+            this.fd = Net.socket(false);
+            this.fdVal = IOUtil.fdVal(fd);
+            this.state = ST_UNCONNECTED;
+        } catch (IOException ioe) {
+            ResourceManager.afterUdpClose();
+            throw ioe;
+        }
     }
 
     public DatagramChannelImpl(SelectorProvider sp, FileDescriptor fd)
@@ -587,6 +594,7 @@ class DatagramChannelImpl
     protected void implCloseSelectableChannel() throws IOException {
         synchronized (stateLock) {
             nd.preClose(fd);
+            ResourceManager.afterUdpClose();
             long th;
             if ((th = readerThread) != 0)
                 NativeThread.signal(th);
