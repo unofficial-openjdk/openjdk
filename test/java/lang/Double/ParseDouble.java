@@ -564,7 +564,7 @@ public class ParseDouble {
         // An ulp is the same for all subnormal values
         BigDecimal ulp_BD = new BigDecimal(Double.MIN_VALUE);
 
-        System.out.println("Testing subnormal powers of two.");
+        // Test subnormal powers of two
         for(int i = -1074; i <= -1022; i++) {
             double d = Math.scalb(1.0, i);
 
@@ -578,16 +578,6 @@ public class ParseDouble {
 
             double convertedLowerBound = Double.parseDouble(lowerBound.toString());
             double convertedUpperBound = Double.parseDouble(upperBound.toString());
-
-            if (convertedLowerBound != d) {
-                System.out.printf("Exponent %d, unexpected lower bound converted to %a, not %a.%n",
-                                  i, convertedLowerBound, d);
-            }
-
-            if (convertedUpperBound != d) {
-                System.out.printf("Exponent %d, unexpected upper bound converted to %a, not %a.%n",
-                                  i, convertedUpperBound, d);
-            }
         }
     }
 
