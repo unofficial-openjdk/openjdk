@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,8 @@
  * questions.
  */
 
-// key: compiler.warn.type.parameter.on.polymorphic.signature
-// key: compiler.err.unreported.exception.need.to.catch.or.throw
+// key: compiler.err.operator.cant.be.applied.1
 
-import java.dyn.MethodHandle;
-
-class TypeParameterOnPolymorphicSignature {
-    void test(MethodHandle mh) {
-        mh.<void>invokeExact("",123);
-    }
+class OperatorCantBeApplied1 {
+    String s = ("a" - "b");
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,22 +19,18 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "ci/ciSymbolKlass.hpp"
-#include "ci/ciUtilities.hpp"
+/*
+ * @test
+ * @bug     7013865
+ * @summary varargs: javac crashes during overload resolution with generic varargs
+ * @compile T7013865.java
+ */
 
-// ciSymbolKlass
-//
-// This class represents a klassOop in the HotSpot virtual machine
-// whose Klass part is a symbolKlass.
+class T7013865 {
+    public <X extends Number> void m(X... args) { }
+    public void m(Object... args) { }
 
-// ------------------------------------------------------------------
-// ciSymbolKlass::instance
-//
-// Return the distinguished instance of this class
-ciSymbolKlass* ciSymbolKlass::make() {
-  return CURRENT_ENV->_symbol_klass_instance;
+    { m(null, null); }
 }
