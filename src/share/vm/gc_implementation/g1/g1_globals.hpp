@@ -81,6 +81,11 @@
   product(intx, G1MarkRegionStackSize, 1024 * 1024,                         \
           "Size of the region stack for concurrent marking.")               \
                                                                             \
+  experimental(bool, G1UseConcMarkReferenceProcessing, false,               \
+          "If true, enable reference discovery during concurrent "          \
+          "marking and reference processing at the end of remark "          \
+          "(unsafe).")                                                      \
+                                                                            \
   develop(bool, G1SATBBarrierPrintNullPreVals, false,                       \
           "If true, count frac of ptr writes with null pre-vals.")          \
                                                                             \
