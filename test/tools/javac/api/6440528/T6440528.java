@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /*
@@ -59,9 +59,9 @@ public class T6440528 extends ToolTester {
     }
 
     private File getUnderlyingFile(Object o) throws Exception {
-        Field f = o.getClass().getDeclaredField("f");
-        f.setAccessible(true);
-        return (File)f.get(o);
+        Field file = o.getClass().getDeclaredField("file");
+        file.setAccessible(true);
+        return (File)file.get(o);
     }
 
     public static void main(String... args) throws Exception {

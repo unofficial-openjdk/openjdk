@@ -1,12 +1,12 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.processing;
@@ -28,6 +28,7 @@ package com.sun.tools.javac.processing;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
 import com.sun.tools.javac.api.JavacTaskImpl;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
@@ -73,7 +74,7 @@ import java.net.MalformedURLException;
  * Objects of this class hold and manage the state needed to support
  * annotation processing.
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
  * deletion without notice.</b>
@@ -169,7 +170,6 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     }
 
     private void initProcessorIterator(Context context, Iterable<? extends Processor> processors) {
-        Paths paths = Paths.instance(context);
         Log   log   = Log.instance(context);
         Iterator<? extends Processor> processorIterator;
 
@@ -833,34 +833,29 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
                     JavaFileManager fileManager = currentContext.get(JavaFileManager.class);
 
-                    List<JavaFileObject> fileObjects = List.nil();
-                    for (JavaFileObject jfo : filer.getGeneratedSourceFileObjects() ) {
-                        fileObjects = fileObjects.prepend(jfo);
-                    }
-
-
                     compiler = JavaCompiler.instance(currentContext);
-                    List<JCCompilationUnit> parsedFiles = compiler.parseFiles(fileObjects);
-                    roots = cleanTrees(roots).reverse();
-
-
-                    for (JCCompilationUnit unit : parsedFiles)
-                        roots = roots.prepend(unit);
-                    roots = roots.reverse();
+                    List<JCCompilationUnit> parsedFiles = sourcesToParsedFiles(compiler);
+                    roots = cleanTrees(roots).appendList(parsedFiles);
 
                     // Check for errors after parsing
-                    if (compiler.parseErrors()) {
+                    if (log.unrecoverableError) {
                         errorStatus = true;
                         break runAround;
                     } else {
-                        ListBuffer<ClassSymbol> classes = enterNewClassFiles(currentContext);
+                        List<ClassSymbol> newClasses = enterNewClassFiles(currentContext);
                         compiler.enterTrees(roots);
 
                         // annotationsPresentInSource =
                         // collector.findAnnotations(parsedFiles);
-                        classes.appendList(getTopLevelClasses(parsedFiles));
-                        topLevelClasses  = classes.toList();
-                        packageInfoFiles = getPackageInfoFiles(parsedFiles);
+                        ListBuffer<ClassSymbol> tlc = new ListBuffer<ClassSymbol>();
+                        tlc.appendList(getTopLevelClasses(parsedFiles));
+                        tlc.appendList(getTopLevelClassesFromClasses(newClasses));
+                        topLevelClasses  = tlc.toList();
+
+                        ListBuffer<PackageSymbol> pif = new ListBuffer<PackageSymbol>();
+                        pif.appendList(getPackageInfoFiles(parsedFiles));
+                        pif.appendList(getPackageInfoFilesFromClasses(newClasses));
+                        packageInfoFiles = pif.toList();
 
                         annotationsPresent = new LinkedHashSet<TypeElement>();
                         for (ClassSymbol classSym : topLevelClasses)
@@ -874,11 +869,16 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     break runAround; // No new files
             }
         }
-        runLastRound(xout, roundNumber, errorStatus, taskListener);
+        roots = runLastRound(xout, roundNumber, errorStatus, compiler, roots, taskListener);
+        // Set error status for any files compiled and generated in
+        // the last round
+        if (log.unrecoverableError)
+            errorStatus = true;
 
         compiler.close(false);
         currentContext = contextForNextRound(currentContext, true);
         compiler = JavaCompiler.instance(currentContext);
+
         filer.newRound(currentContext, true);
         filer.warnIfUnclosedFiles();
         warnIfUnmatchedOptions();
@@ -928,10 +928,22 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         return compiler;
     }
 
+    private List<JCCompilationUnit> sourcesToParsedFiles(JavaCompiler compiler)
+        throws IOException {
+        List<JavaFileObject> fileObjects = List.nil();
+        for (JavaFileObject jfo : filer.getGeneratedSourceFileObjects() ) {
+            fileObjects = fileObjects.prepend(jfo);
+        }
+
+       return compiler.parseFiles(fileObjects);
+    }
+
     // Call the last round of annotation processing
-    private void runLastRound(PrintWriter xout,
-                              int roundNumber,
-                              boolean errorStatus,
+    private List<JCCompilationUnit> runLastRound(PrintWriter xout,
+                                                 int roundNumber,
+                                                 boolean errorStatus,
+                                                 JavaCompiler compiler,
+                                                 List<JCCompilationUnit> roots,
                               TaskListener taskListener) throws IOException {
         roundNumber++;
         List<ClassSymbol> noTopLevelClasses = List.nil();
@@ -952,6 +964,15 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             if (taskListener != null)
                 taskListener.finished(new TaskEvent(TaskEvent.Kind.ANNOTATION_PROCESSING_ROUND));
         }
+
+        // Add any sources generated during the last round to the set
+        // of files to be compiled.
+        if (moreToDo()) {
+            List<JCCompilationUnit> parsedFiles = sourcesToParsedFiles(compiler);
+            roots = cleanTrees(roots).appendList(parsedFiles);
+        }
+
+        return roots;
     }
 
     private void updateProcessingState(Context currentContext, boolean lastRound) {
@@ -982,20 +1003,30 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         }
     }
 
-    private ListBuffer<ClassSymbol> enterNewClassFiles(Context currentContext) {
+    private List<ClassSymbol> enterNewClassFiles(Context currentContext) {
         ClassReader reader = ClassReader.instance(currentContext);
         Name.Table names = Name.Table.instance(currentContext);
-        ListBuffer<ClassSymbol> list = new ListBuffer<ClassSymbol>();
+        List<ClassSymbol> list = List.nil();
 
         for (Map.Entry<String,JavaFileObject> entry : filer.getGeneratedClasses().entrySet()) {
             Name name = names.fromString(entry.getKey());
             JavaFileObject file = entry.getValue();
             if (file.getKind() != JavaFileObject.Kind.CLASS)
                 throw new AssertionError(file);
-            ClassSymbol cs = reader.enterClass(name, file);
-            list.append(cs);
+            ClassSymbol cs;
+            if (isPkgInfo(file, JavaFileObject.Kind.CLASS)) {
+                Name packageName = Convert.packagePart(name);
+                PackageSymbol p = reader.enterPackage(packageName);
+                if (p.package_info == null)
+                    p.package_info = reader.enterClass(Convert.shortName(name), p);
+                cs = p.package_info;
+                if (cs.classfile == null)
+                    cs.classfile = file;
+            } else
+                cs = reader.enterClass(name, file);
+            list = list.prepend(cs);
         }
-        return list;
+        return list.reverse();
     }
 
     /**
@@ -1020,16 +1051,42 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         return classes.reverse();
     }
 
+    private List<ClassSymbol> getTopLevelClassesFromClasses(List<? extends ClassSymbol> syms) {
+        List<ClassSymbol> classes = List.nil();
+        for (ClassSymbol sym : syms) {
+            if (!isPkgInfo(sym)) {
+                classes = classes.prepend(sym);
+            }
+        }
+        return classes.reverse();
+    }
+
     private List<PackageSymbol> getPackageInfoFiles(List<? extends JCCompilationUnit> units) {
         List<PackageSymbol> packages = List.nil();
         for (JCCompilationUnit unit : units) {
-            boolean isPkgInfo = unit.sourcefile.isNameCompatible("package-info",
-                                                                 JavaFileObject.Kind.SOURCE);
-            if (isPkgInfo) {
+            if (isPkgInfo(unit.sourcefile, JavaFileObject.Kind.SOURCE)) {
                 packages = packages.prepend(unit.packge);
             }
         }
         return packages.reverse();
+    }
+
+    private List<PackageSymbol> getPackageInfoFilesFromClasses(List<? extends ClassSymbol> syms) {
+        List<PackageSymbol> packages = List.nil();
+        for (ClassSymbol sym : syms) {
+            if (isPkgInfo(sym)) {
+                packages = packages.prepend((PackageSymbol) sym.owner);
+            }
+        }
+        return packages.reverse();
+    }
+
+    private boolean isPkgInfo(JavaFileObject fo, JavaFileObject.Kind kind) {
+        return fo.isNameCompatible("package-info", kind);
+    }
+
+    private boolean isPkgInfo(ClassSymbol sym) {
+        return isPkgInfo(sym.classfile, JavaFileObject.Kind.CLASS) && (sym.packge().package_info == sym);
     }
 
     private Context contextForNextRound(Context context, boolean shareNames)
@@ -1370,7 +1427,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
     }
 
     /**
-     * For internal use by Sun Microsystems only.  This method will be
+     * For internal use only.  This method will be
      * removed without warning.
      */
     public Context getContext() {

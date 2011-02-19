@@ -1,12 +1,12 @@
 /*
- * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,17 +18,18 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
+import java.io.File;
+import javax.tools.FileObject;
+
 import com.sun.javadoc.SourcePosition;
 import com.sun.tools.javac.util.Position;
-
-import java.io.File;
 
 /**
  * A source position: filename, line number, and column number.
@@ -37,15 +38,21 @@ import java.io.File;
  * @author Neal M Gafter
  * @author Michael Van De Vanter (position representation changed to char offsets)
  */
-class SourcePositionImpl implements SourcePosition {
-    String filename;
+public class SourcePositionImpl implements SourcePosition {
+    FileObject filename;
     int position;
     Position.LineMap lineMap;
 
     /** The source file. Returns null if no file information is
      *  available. */
     public File file() {
-        return (filename == null) ? null : new File(filename);
+        return (filename == null) ? null : new File(filename.getName());
+    }
+
+    /** The source file. Returns null if no file information is
+     *  available. */
+    public FileObject fileObject() {
+        return filename;
     }
 
     /** The line in the source file. The first line is numbered 1;
@@ -71,7 +78,7 @@ class SourcePositionImpl implements SourcePosition {
         }
     }
 
-    private SourcePositionImpl(String file, int position,
+    private SourcePositionImpl(FileObject file, int position,
                                Position.LineMap lineMap) {
         super();
         this.filename = file;
@@ -79,16 +86,27 @@ class SourcePositionImpl implements SourcePosition {
         this.lineMap = lineMap;
     }
 
-    public static SourcePosition make(String file, int pos,
+    public static SourcePosition make(FileObject file, int pos,
                                       Position.LineMap lineMap) {
         if (file == null) return null;
         return new SourcePositionImpl(file, pos, lineMap);
     }
 
     public String toString() {
+        // Backwards compatibility hack. ZipFileObjects use the format
+        // zipfile(zipentry) but javadoc has been using zipfile/zipentry
+        String fn = filename.getName();
+        if (fn.endsWith(")")) {
+            int paren = fn.lastIndexOf("(");
+            if (paren != -1)
+                fn = fn.substring(0, paren)
+                        + File.separatorChar
+                        + fn.substring(paren + 1, fn.length() - 1);
+        }
+
         if (position == Position.NOPOS)
-            return filename;
+            return fn;
         else
-            return filename + ":" + line();
+            return fn + ":" + line();
     }
 }

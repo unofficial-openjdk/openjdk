@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,36 +18,29 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
-import com.sun.javadoc.*;
-
-import java.io.File;
 import java.io.InputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipEntry;
+import javax.tools.FileObject;
+
+import com.sun.javadoc.*;
 
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
-import com.sun.tools.javac.comp.AttrContext;
-import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Position;
-
-import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
-
 
 /**
  * Represents a java package.  Provides access to information
@@ -63,14 +56,10 @@ import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 
 public class PackageDocImpl extends DocImpl implements PackageDoc {
 
-    private static final String PACKAGE_HTML_FILE_NAME = "package.html";
-
     protected PackageSymbol sym;
     private JCCompilationUnit tree = null;    // for source position
 
-    public String docPath = null;
-    public String zipDocPath = null;
-    public String zipDocEntry = null;
+    public FileObject docPath = null;
     private boolean foundDoc;   // found a doc comment in either
                                 // package.html or package-info.java
 
@@ -108,30 +97,16 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * Do lazy initialization of "documentation" string.
      */
     String documentation() {
-        if (documentation != null) return documentation;
-        if (zipDocPath != null) {
-            try {
-                ZipFile f = new ZipFile(zipDocPath);
-                ZipEntry entry = f.getEntry(zipDocEntry);
-                if (entry != null) {
-                    InputStream s = f.getInputStream(entry);
-                    return (documentation = readHTMLDocumentation(s,
-                        zipDocPath + File.separatorChar + zipDocEntry));
-                }
-            } catch (IOException exc) {
-                documentation = "";
-                env.error(null, "javadoc.File_Read_Error",
-                          zipDocPath + File.separatorChar + zipDocEntry);
-            }
-        }
+        if (documentation != null)
+            return documentation;
         if (docPath != null) {
             // read from file
             try {
-                InputStream s = new FileInputStream(docPath);
+                InputStream s = docPath.openInputStream();
                 documentation = readHTMLDocumentation(s, docPath);
             } catch (IOException exc) {
                 documentation = "";
-                env.error(null, "javadoc.File_Read_Error", docPath);
+                env.error(null, "javadoc.File_Read_Error", docPath.getName());
             }
         } else {
             // no doc file to be had
@@ -363,24 +338,12 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
     /**
      * set doc path for an unzipped directory
      */
-    public void setDocPath(String path) {
+    public void setDocPath(FileObject path) {
         setDocPath = true;
         if (path == null)
             return;
-        String newDocPath = path + File.separatorChar + PACKAGE_HTML_FILE_NAME;
-        if (!newDocPath.equals(docPath)) {
-            docPath = newDocPath;
-            checkDoc();
-        }
-    }
-
-    /**
-     * set the doc path for zipped directory
-     */
-    public void setDocPath(String path, String entry) {
-        if (!path.equals(zipDocPath)) {
-            zipDocPath = path;
-            zipDocEntry = entry + PACKAGE_HTML_FILE_NAME;
+        if (!path.equals(docPath)) {
+            docPath = path;
             checkDoc();
         }
     }
@@ -409,7 +372,7 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      */
     public SourcePosition position() {
         return (tree != null)
-                ? SourcePositionImpl.make(tree.sourcefile + "", tree.pos, tree.lineMap)
+                ? SourcePositionImpl.make(tree.sourcefile, tree.pos, tree.lineMap)
                 : SourcePositionImpl.make(docPath, Position.NOPOS, null);
     }
 }

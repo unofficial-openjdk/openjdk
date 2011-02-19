@@ -1,12 +1,12 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.api;
@@ -31,7 +31,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
@@ -42,13 +41,13 @@ import javax.lang.model.SourceVersion;
 import javax.tools.*;
 
 import com.sun.source.util.JavacTask;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavacOption.OptionKind;
 import com.sun.tools.javac.main.JavacOption;
 import com.sun.tools.javac.main.Main;
 import com.sun.tools.javac.main.RecognizedOptions.GrumpyHelper;
 import com.sun.tools.javac.main.RecognizedOptions;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.JavacFileManager;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.util.Pair;
@@ -57,7 +56,7 @@ import java.nio.charset.Charset;
 /**
  * TODO: describe com.sun.tools.javac.api.Tool
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>

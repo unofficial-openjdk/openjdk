@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,51 +18,53 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Modifier;
+import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
+import javax.tools.FileObject;
+import javax.tools.JavaFileManager.Location;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 
 import com.sun.javadoc.*;
 
 import static com.sun.javadoc.LanguageVersion.*;
+
+import com.sun.tools.javac.code.Flags;
+import com.sun.tools.javac.code.Kinds;
+import com.sun.tools.javac.code.Scope;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Type.ClassType;
+import com.sun.tools.javac.code.TypeTags;
+
+import com.sun.tools.javac.comp.AttrContext;
+import com.sun.tools.javac.comp.Env;
+
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCClassDecl;
+import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
+import com.sun.tools.javac.tree.JCTree.JCImport;
+import com.sun.tools.javac.tree.TreeInfo;
 
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Position;
 
-import com.sun.tools.javac.code.Flags;
-import com.sun.tools.javac.code.Kinds;
-import com.sun.tools.javac.code.TypeTags;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.Types;
-import com.sun.tools.javac.code.Type.ClassType;
-import com.sun.tools.javac.code.Scope;
-import com.sun.tools.javac.code.Symbol;
-import com.sun.tools.javac.code.Symbol.*;
-
-import com.sun.tools.javac.comp.AttrContext;
-import com.sun.tools.javac.comp.Env;
-
-import com.sun.tools.javac.tree.JCTree;
-import com.sun.tools.javac.tree.JCTree.JCFieldAccess;
-import com.sun.tools.javac.tree.JCTree.JCImport;
-import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.tree.TreeInfo;
-
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
-
-import java.io.File;
-import java.util.Set;
-import java.util.HashSet;
-import java.lang.reflect.Modifier;
 
 /**
  * Represents a java class and provides access to information
@@ -274,16 +276,41 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      */
     public PackageDoc containingPackage() {
         PackageDocImpl p = env.getPackageDoc(tsym.packge());
-        SourcePosition po = position();
-        if (po != null && p.setDocPath == false && p.zipDocPath == null) {
-            //Set the package path if possible
-            File packageDir = po.file().getParentFile();
-            if (packageDir != null
-                && (new File(packageDir, "package.html")).exists()) {
-                p.setDocPath(packageDir.getPath());
-            } else {
-                p.setDocPath(null);
+        if (p.setDocPath == false) {
+            FileObject docPath;
+            try {
+                Location location = env.fileManager.hasLocation(StandardLocation.SOURCE_PATH)
+                    ? StandardLocation.SOURCE_PATH : StandardLocation.CLASS_PATH;
+
+                docPath = env.fileManager.getFileForInput(
+                        location, p.qualifiedName(), "package.html");
+            } catch (IOException e) {
+                docPath = null;
             }
+
+            if (docPath == null) {
+                // fall back on older semantics of looking in same directory as
+                // source file for this class
+                SourcePosition po = position();
+                if (env.fileManager instanceof StandardJavaFileManager &&
+                        po instanceof SourcePositionImpl) {
+                    URI uri = ((SourcePositionImpl) po).filename.toUri();
+                    if ("file".equals(uri.getScheme())) {
+                        File f = new File(uri);
+                        File dir = f.getParentFile();
+                        if (dir != null) {
+                            File pf = new File(dir, "package.html");
+                            if (pf.exists()) {
+                                StandardJavaFileManager sfm = (StandardJavaFileManager) env.fileManager;
+                                docPath = sfm.getJavaFileObjects(pf).iterator().next();
+                            }
+                        }
+
+                    }
+                }
+            }
+
+            p.setDocPath(docPath);
         }
         return p;
     }
@@ -1254,7 +1281,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
      */
     public SourcePosition position() {
         if (tsym.sourcefile == null) return null;
-        return SourcePositionImpl.make(tsym.sourcefile.toString(),
+        return SourcePositionImpl.make(tsym.sourcefile,
                                        (tree==null) ? Position.NOPOS : tree.pos,
                                        lineMap);
     }

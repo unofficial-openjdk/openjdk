@@ -1,12 +1,12 @@
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,22 +18,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
+import java.util.EnumSet;
+import javax.tools.JavaFileObject;
+
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.jvm.ClassReader;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.JavacFileManager;
-import com.sun.tools.javac.util.Old199;
 
-import java.io.File;
-import java.util.EnumSet;
-import javax.tools.JavaFileObject;
 
 /** Javadoc uses an extended class reader that records package.html entries
  *  @author Neal Gafter
@@ -80,32 +78,7 @@ class JavadocClassReader extends ClassReader {
      */
     @Override
     protected void extraFileActions(PackageSymbol pack, JavaFileObject fo) {
-        CharSequence fileName = Old199.getName(fo);
-        if (docenv != null && fileName.equals("package.html")) {
-            if (fo instanceof JavacFileManager.ZipFileObject) {
-                JavacFileManager.ZipFileObject zfo = (JavacFileManager.ZipFileObject) fo;
-                String zipName = zfo.getZipName();
-                String entryName = zfo.getZipEntryName();
-                int lastSep = entryName.lastIndexOf("/");
-                String classPathName = entryName.substring(0, lastSep + 1);
-                docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
-            }
-            else if (fo instanceof JavacFileManager.ZipFileIndexFileObject) {
-                JavacFileManager.ZipFileIndexFileObject zfo = (JavacFileManager.ZipFileIndexFileObject) fo;
-                String zipName = zfo.getZipName();
-                String entryName = zfo.getZipEntryName();
-                if (File.separatorChar != '/') {
-                    entryName = entryName.replace(File.separatorChar, '/');
-                }
-
-                int lastSep = entryName.lastIndexOf("/");
-                String classPathName = entryName.substring(0, lastSep + 1);
-                docenv.getPackageDoc(pack).setDocPath(zipName, classPathName);
-            }
-            else {
-                File fileDir = new File(Old199.getPath(fo)).getParentFile();
-                docenv.getPackageDoc(pack).setDocPath(fileDir.getAbsolutePath());
-            }
-        }
+        if (fo.isNameCompatible("package", JavaFileObject.Kind.HTML))
+            docenv.getPackageDoc(pack).setDocPath(fo);
     }
 }

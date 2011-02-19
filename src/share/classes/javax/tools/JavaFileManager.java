@@ -1,12 +1,12 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package javax.tools;
@@ -256,7 +256,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      *
      * <p>Optionally, this file manager might consider the sibling as
      * a hint for where to place the output.  The exact semantics of
-     * this hint is unspecified.  Sun's compiler, javac, for
+     * this hint is unspecified.  The JDK compiler, javac, for
      * example, will place class files in the same directories as
      * originating source files unless a class file output directory
      * is provided.  To facilitate this behavior, javac might provide
@@ -338,7 +338,7 @@ public interface JavaFileManager extends Closeable, Flushable, OptionChecker {
      *
      * <p>Optionally, this file manager might consider the sibling as
      * a hint for where to place the output.  The exact semantics of
-     * this hint is unspecified.  Sun's compiler, javac, for
+     * this hint is unspecified.  The JDK compiler, javac, for
      * example, will place class files in the same directories as
      * originating source files unless a class file output directory
      * is provided.  To facilitate this behavior, javac might provide

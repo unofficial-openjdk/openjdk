@@ -1,12 +1,12 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,16 +18,18 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.jvm;
 
+import java.net.URISyntaxException;
 import java.io.*;
 import java.net.URI;
 import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +44,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.file.BaseFileObject;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
 
@@ -58,8 +61,8 @@ import static javax.tools.StandardLocation.*;
  *  for all other definitions in the classfile. Top-level Classes themselves
  *  appear as members of the scopes of PackageSymbols.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.  If
- *  you write code that depends on this, you do so at your own risk.
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
@@ -174,6 +177,16 @@ public class ClassReader extends ClassFile implements Completer {
      *  defining section of the entry is found.
      */
     int[] poolIdx;
+
+    /** A table to hold the constant pool indices for method parameter
+     * names, as given in LocalVariableTable attributes.
+     */
+    int[] parameterNameIndices;
+
+    /**
+     * Whether or not any parameter names have been found.
+     */
+    boolean haveParameterNameIndices;
 
     /** Get the ClassReader instance for this invocation. */
     public static ClassReader instance(Context context) {
@@ -888,32 +901,33 @@ public class ClassReader extends ClassFile implements Completer {
         } else if (attrName == names.LocalVariableTable) {
             int newbp = bp + attrLen;
             if (saveParameterNames) {
-                // pick up parameter names from the variable table
-                List<Name> parameterNames = List.nil();
-                int firstParam = ((sym.flags() & STATIC) == 0) ? 1 : 0;
-                int endParam = firstParam + Code.width(sym.type.getParameterTypes());
+                // Pick up parameter names from the variable table.
+                // Parameter names are not explicitly identified as such,
+                // but all parameter name entries in the LocalVariableTable
+                // have a start_pc of 0.  Therefore, we record the name
+                // indicies of all slots with a start_pc of zero in the
+                // parameterNameIndicies array.
+                // Note that this implicitly honors the JVMS spec that
+                // there may be more than one LocalVariableTable, and that
+                // there is no specified ordering for the entries.
                 int numEntries = nextChar();
-                for (int i=0; i<numEntries; i++) {
+                for (int i = 0; i < numEntries; i++) {
                     int start_pc = nextChar();
                     int length = nextChar();
                     int nameIndex = nextChar();
                     int sigIndex = nextChar();
                     int register = nextChar();
-                    if (start_pc == 0 &&
-                        firstParam <= register &&
-                        register < endParam) {
-                        int index = firstParam;
-                        for (Type t : sym.type.getParameterTypes()) {
-                            if (index == register) {
-                                parameterNames = parameterNames.prepend(readName(nameIndex));
-                                break;
-                            }
-                            index += Code.width(t);
+                    if (start_pc == 0) {
+                        // ensure array large enough
+                        if (register >= parameterNameIndices.length) {
+                            int newSize = Math.max(register, parameterNameIndices.length + 8);
+                            parameterNameIndices =
+                                    Arrays.copyOf(parameterNameIndices, newSize);
                         }
+                        parameterNameIndices[register] = nameIndex;
+                        haveParameterNameIndices = true;
                     }
                 }
-                parameterNames = parameterNames.reverse();
-                ((MethodSymbol)sym).savedParameterNames = parameterNames;
             }
             bp = newbp;
         } else if (attrName == names.AnnotationDefault) {
@@ -1047,7 +1061,7 @@ public class ClassReader extends ClassFile implements Completer {
     void readClassAttr(ClassSymbol c, Name attrName, int attrLen) {
         if (attrName == names.SourceFile) {
             Name n = readName(nextChar());
-            c.sourcefile = new SourceFileObject(n);
+            c.sourcefile = new SourceFileObject(n, c.flatname);
         } else if (attrName == names.InnerClasses) {
             readInnerClasses(c);
         } else if (allowGenerics && attrName == names.Signature) {
@@ -1498,6 +1512,8 @@ public class ClassReader extends ClassFile implements Completer {
                                       syms.methodClass);
         }
         MethodSymbol m = new MethodSymbol(flags, name, type, currentOwner);
+        if (saveParameterNames)
+            initParameterNames(m);
         Symbol prevOwner = currentOwner;
         currentOwner = m;
         try {
@@ -1505,7 +1521,88 @@ public class ClassReader extends ClassFile implements Completer {
         } finally {
             currentOwner = prevOwner;
         }
+        if (saveParameterNames)
+            setParameterNames(m, type);
         return m;
+    }
+
+    /**
+     * Init the parameter names array.
+     * Parameter names are currently inferred from the names in the
+     * LocalVariableTable attributes of a Code attribute.
+     * (Note: this means parameter names are currently not available for
+     * methods without a Code attribute.)
+     * This method initializes an array in which to store the name indexes
+     * of parameter names found in LocalVariableTable attributes. It is
+     * slightly supersized to allow for additional slots with a start_pc of 0.
+     */
+    void initParameterNames(MethodSymbol sym) {
+        // make allowance for synthetic parameters.
+        final int excessSlots = 4;
+        int expectedParameterSlots =
+                Code.width(sym.type.getParameterTypes()) + excessSlots;
+        if (parameterNameIndices == null
+                || parameterNameIndices.length < expectedParameterSlots) {
+            parameterNameIndices = new int[expectedParameterSlots];
+        } else
+            Arrays.fill(parameterNameIndices, 0);
+        haveParameterNameIndices = false;
+    }
+
+    /**
+     * Set the parameter names for a symbol from the name index in the
+     * parameterNameIndicies array. The type of the symbol may have changed
+     * while reading the method attributes (see the Signature attribute).
+     * This may be because of generic information or because anonymous
+     * synthetic parameters were added.   The original type (as read from
+     * the method descriptor) is used to help guess the existence of
+     * anonymous synthetic parameters.
+     * On completion, sym.savedParameter names will either be null (if
+     * no parameter names were found in the class file) or will be set to a
+     * list of names, one per entry in sym.type.getParameterTypes, with
+     * any missing names represented by the empty name.
+     */
+    void setParameterNames(MethodSymbol sym, Type jvmType) {
+        // if no names were found in the class file, there's nothing more to do
+        if (!haveParameterNameIndices)
+            return;
+
+        int firstParam = ((sym.flags() & STATIC) == 0) ? 1 : 0;
+        // the code in readMethod may have skipped the first parameter when
+        // setting up the MethodType. If so, we make a corresponding allowance
+        // here for the position of the first parameter.  Note that this
+        // assumes the skipped parameter has a width of 1 -- i.e. it is not
+        // a double width type (long or double.)
+        if (sym.name == names.init && currentOwner.hasOuterInstance()) {
+            // Sometimes anonymous classes don't have an outer
+            // instance, however, there is no reliable way to tell so
+            // we never strip this$n
+            if (!currentOwner.name.isEmpty())
+                firstParam += 1;
+        }
+
+        if (sym.type != jvmType) {
+            // reading the method attributes has caused the symbol's type to
+            // be changed. (i.e. the Signature attribute.)  This may happen if
+            // there are hidden (synthetic) parameters in the descriptor, but
+            // not in the Signature.  The position of these hidden parameters
+            // is unspecified; for now, assume they are at the beginning, and
+            // so skip over them. The primary case for this is two hidden
+            // parameters passed into Enum constructors.
+            int skip = Code.width(jvmType.getParameterTypes())
+                    - Code.width(sym.type.getParameterTypes());
+            firstParam += skip;
+        }
+        List<Name> paramNames = List.nil();
+        int index = firstParam;
+        for (Type t: sym.type.getParameterTypes()) {
+            int nameIdx = (index < parameterNameIndices.length
+                    ? parameterNameIndices[index] : 0);
+            Name name = nameIdx == 0 ? names.empty : readName(nameIdx);
+            paramNames = paramNames.prepend(name);
+            index += Code.width(t);
+        }
+        sym.savedParameterNames = paramNames.reverse();
     }
 
     /** Skip a field or method
@@ -2212,69 +2309,103 @@ public class ClassReader extends ClassFile implements Completer {
         /** The file's name.
          */
         private Name name;
+        private Name flatname;
 
-        public SourceFileObject(Name name) {
+        public SourceFileObject(Name name, Name flatname) {
+            super(null); // no file manager; never referenced for this file object
             this.name = name;
+            this.flatname = flatname;
         }
 
-        public InputStream openInputStream() {
-            throw new UnsupportedOperationException();
+        //@Override
+        public URI toUri() {
+            try {
+                return new URI(null, name.toString(), null);
+            } catch (URISyntaxException e) {
+                throw new CannotCreateUriError(name.toString(), e);
+            }
         }
 
-        public OutputStream openOutputStream() {
-            throw new UnsupportedOperationException();
-        }
-
-        public Reader openReader() {
-            throw new UnsupportedOperationException();
-        }
-
-        public Writer openWriter() {
-            throw new UnsupportedOperationException();
-        }
-
-        /** @deprecated see bug 6410637 */
-        @Deprecated
+        //@Override
         public String getName() {
             return name.toString();
         }
 
-        public long getLastModified() {
+        //@Override
+        public String getShortName() {
+            return getName();
+        }
+
+        //@Override
+        public JavaFileObject.Kind getKind() {
+            return getKind(getName());
+        }
+
+        //@Override
+        public InputStream openInputStream() {
             throw new UnsupportedOperationException();
         }
 
-        public boolean delete() {
+        //@Override
+        public OutputStream openOutputStream() {
             throw new UnsupportedOperationException();
         }
 
+        //@Override
         public CharBuffer getCharContent(boolean ignoreEncodingErrors) {
             throw new UnsupportedOperationException();
         }
 
-        @Override
+        //@Override
+        public Reader openReader(boolean ignoreEncodingErrors) {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public Writer openWriter() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public long getLastModified() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        public boolean delete() {
+            throw new UnsupportedOperationException();
+        }
+
+        //@Override
+        protected String inferBinaryName(Iterable<? extends File> path) {
+            return flatname.toString();
+        }
+
+        //@Override
+        public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
+            return true; // fail-safe mode
+        }
+
+        /**
+         * Check if two file objects are equal.
+         * SourceFileObjects are just placeholder objects for the value of a
+         * SourceFile attribute, and do not directly represent specific files.
+         * Two SourceFileObjects are equal if their names are equal.
+         */
+        //@Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
+
             if (!(other instanceof SourceFileObject))
                 return false;
             SourceFileObject o = (SourceFileObject) other;
             return name.equals(o.name);
         }
 
-        @Override
+        //@Override
         public int hashCode() {
             return name.hashCode();
         }
-
-        public boolean isNameCompatible(String simpleName, JavaFileObject.Kind kind) {
-            return true; // fail-safe mode
-        }
-
-        public URI toUri() {
-            return URI.create(name.toString());
-        }
-
-        public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
     }
 }

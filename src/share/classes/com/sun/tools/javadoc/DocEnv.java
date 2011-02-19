@@ -1,12 +1,12 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,30 +18,27 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
-import java.util.*;
 import java.lang.reflect.Modifier;
+import java.util.*;
+import javax.tools.JavaFileManager;
 
 import com.sun.javadoc.*;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
-import com.sun.tools.javac.code.Type.TypeVar;
-import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.Check;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Position;
-
 
 /**
  * Holds the environment for a run of javadoc.
@@ -75,10 +72,6 @@ public class DocEnv {
     /** Referenced directly in RootDocImpl. */
     JavadocClassReader reader;
 
-    /** The compiler's attribution phase (needed to evaluate
-     *  constant initializers). */
-    Attr attr;
-
     /** Javadoc's own version of the compiler's enter phase. */
     JavadocEnter enter;
 
@@ -93,8 +86,6 @@ public class DocEnv {
     /** Access filter (public, protected, ...).  */
     ModifierFilter showAccess;
 
-    private ClassDocImpl runtimeException;
-
     /** True if we are using a sentence BreakIterator. */
     boolean breakiterator;
 
@@ -105,6 +96,7 @@ public class DocEnv {
 
     Check chk;
     Types types;
+    JavaFileManager fileManager;
 
     /** Allow documenting from class files? */
     boolean docClasses = false;
@@ -130,11 +122,11 @@ public class DocEnv {
         syms = Symtab.instance(context);
         reader = JavadocClassReader.instance0(context);
         enter = JavadocEnter.instance0(context);
-        attr = Attr.instance(context);
         names = Name.Table.instance(context);
         externalizableSym = reader.enterClass(names.fromString("java.io.Externalizable"));
         chk = Check.instance(context);
         types = Types.instance(context);
+        fileManager = context.get(JavaFileManager.class);
 
         // Default.  Should normally be reset with setLocale.
         this.doclocale = new DocLocale(this, "", breakiterator);

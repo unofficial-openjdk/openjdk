@@ -1,12 +1,12 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.code;
@@ -58,7 +58,7 @@ import static com.sun.tools.javac.util.ListBuffer.lb;
  * <dd>A second list of types should be named ss.</dd>
  * </dl>
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own risk.
  * This code and its internal interfaces are subject to change or
  * deletion without notice.</b>
@@ -3072,33 +3072,67 @@ public class Types {
      * quantifiers) only
      */
     private Type rewriteQuantifiers(Type t, boolean high, boolean rewriteTypeVars) {
-        ListBuffer<Type> from = new ListBuffer<Type>();
-        ListBuffer<Type> to = new ListBuffer<Type>();
-        adaptSelf(t, from, to);
-        ListBuffer<Type> rewritten = new ListBuffer<Type>();
-        List<Type> formals = from.toList();
-        boolean changed = false;
-        for (Type arg : to.toList()) {
-            Type bound;
-            if (rewriteTypeVars && arg.tag == TYPEVAR) {
-                TypeVar tv = (TypeVar)arg;
-                bound = high ? tv.bound : syms.botType;
-            } else {
-                bound = high ? upperBound(arg) : lowerBound(arg);
-            }
-            Type newarg = bound;
-            if (arg != bound) {
-                changed = true;
-                newarg = high ? makeExtendsWildcard(bound, (TypeVar)formals.head)
-                              : makeSuperWildcard(bound, (TypeVar)formals.head);
-            }
-            rewritten.append(newarg);
-            formals = formals.tail;
+        return new Rewriter(high, rewriteTypeVars).rewrite(t);
+    }
+
+    class Rewriter extends UnaryVisitor<Type> {
+
+        boolean high;
+        boolean rewriteTypeVars;
+
+        Rewriter(boolean high, boolean rewriteTypeVars) {
+            this.high = high;
+            this.rewriteTypeVars = rewriteTypeVars;
         }
-        if (changed)
-            return subst(t.tsym.type, from.toList(), rewritten.toList());
-        else
-            return t;
+
+        Type rewrite(Type t) {
+            ListBuffer<Type> from = new ListBuffer<Type>();
+            ListBuffer<Type> to = new ListBuffer<Type>();
+            adaptSelf(t, from, to);
+            ListBuffer<Type> rewritten = new ListBuffer<Type>();
+            List<Type> formals = from.toList();
+            boolean changed = false;
+            for (Type arg : to.toList()) {
+                Type bound = visit(arg);
+                if (arg != bound) {
+                    changed = true;
+                    bound = high ? makeExtendsWildcard(bound, (TypeVar)formals.head)
+                              : makeSuperWildcard(bound, (TypeVar)formals.head);
+                }
+                rewritten.append(bound);
+                formals = formals.tail;
+            }
+            if (changed)
+                return subst(t.tsym.type, from.toList(), rewritten.toList());
+            else
+                return t;
+        }
+
+        public Type visitType(Type t, Void s) {
+            return high ? upperBound(t) : lowerBound(t);
+        }
+
+        @Override
+        public Type visitCapturedType(CapturedType t, Void s) {
+            return visitWildcardType(t.wildcard, null);
+        }
+
+        @Override
+        public Type visitTypeVar(TypeVar t, Void s) {
+            if (rewriteTypeVars)
+                return high ? t.bound : syms.botType;
+            else
+                return t;
+        }
+
+        @Override
+        public Type visitWildcardType(WildcardType t, Void s) {
+            Type bound = high ? t.getExtendsBound() :
+                                t.getSuperBound();
+            if (bound == null)
+                bound = high ? syms.objectType : syms.botType;
+            return bound;
+        }
     }
 
     /**

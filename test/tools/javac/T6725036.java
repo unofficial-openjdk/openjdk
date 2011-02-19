@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /*
@@ -34,10 +34,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.util.JavacFileManager;
-import com.sun.tools.javac.zip.ZipFileIndex;
-import com.sun.tools.javac.zip.ZipFileIndexEntry;
-import com.sun.tools.javac.util.JavacFileManager.ZipFileIndexArchive;
+import com.sun.tools.javac.file.JavacFileManager;
+import com.sun.tools.javac.file.RelativePath.RelativeFile;
+import com.sun.tools.javac.file.ZipFileIndex;
+import com.sun.tools.javac.file.ZipFileIndexArchive;
 import com.sun.tools.javac.util.Context;
 
 public class T6725036 {
@@ -46,7 +46,7 @@ public class T6725036 {
     }
 
     void run() throws Exception {
-        String TEST_ENTRY_NAME = "java/lang/String.class";
+        RelativeFile TEST_ENTRY_NAME = new RelativeFile("java/lang/String.class");
 
         File f = new File(System.getProperty("java.home"));
         if (!f.getName().equals("jre"))
@@ -54,23 +54,21 @@ public class T6725036 {
         File rt_jar = new File(new File(f, "lib"), "rt.jar");
 
         JarFile j = new JarFile(rt_jar);
-        JarEntry je = j.getJarEntry(TEST_ENTRY_NAME);
+        JarEntry je = j.getJarEntry(TEST_ENTRY_NAME.getPath());
         long jarEntryTime = je.getTime();
 
         ZipFileIndex zfi =
-                ZipFileIndex.getZipFileIndex(rt_jar, 0, false, null, false);
+                ZipFileIndex.getZipFileIndex(rt_jar, null, false, null, false);
         long zfiTime = zfi.getLastModified(TEST_ENTRY_NAME);
 
-        check(je, jarEntryTime, zfi + ":" + TEST_ENTRY_NAME, zfiTime);
+        check(je, jarEntryTime, zfi + ":" + TEST_ENTRY_NAME.getPath(), zfiTime);
 
         Context context = new Context();
         JavacFileManager fm = new JavacFileManager(context, false, null);
-        ZipFileIndexArchive zfia = 
-            fm.new ZipFileIndexArchive(fm, zfi);
-        int sep = TEST_ENTRY_NAME.lastIndexOf("/");
+        ZipFileIndexArchive zfia = new ZipFileIndexArchive(fm, zfi);
         JavaFileObject jfo =
-                zfia.getFileObject(TEST_ENTRY_NAME.substring(0, sep + 1),
-                    TEST_ENTRY_NAME.substring(sep + 1));
+            zfia.getFileObject(TEST_ENTRY_NAME.dirname(),
+                                   TEST_ENTRY_NAME.basename());
         long jfoTime = jfo.getLastModified();
 
         check(je, jarEntryTime, jfo, jfoTime);

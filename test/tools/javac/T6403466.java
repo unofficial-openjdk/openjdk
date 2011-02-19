@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /*
@@ -41,7 +41,6 @@ import com.sun.tools.javac.api.JavacTool;
 
 @Wrap
 @SupportedAnnotationTypes("Wrap")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class T6403466 extends AbstractProcessor {
 
     static final String testSrcDir = System.getProperty("test.src");
@@ -73,23 +72,30 @@ public class T6403466 extends AbstractProcessor {
     }
 
     public boolean process(Set<? extends TypeElement> annos, RoundEnvironment rEnv) {
-        Filer filer = processingEnv.getFiler();
-        for (TypeElement anno: annos) {
-            Set<? extends Element> elts = rEnv.getElementsAnnotatedWith(anno);
-            System.err.println("anno: " + anno);
-            System.err.println("elts: " + elts);
-            for (TypeElement te: ElementFilter.typesIn(elts)) {
-                try {
-                    Writer out = filer.createSourceFile(te.getSimpleName() + "Wrapper").openWriter();
-                    out.write("class " + te.getSimpleName() + "Wrapper { }");
-                    out.close();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
+        if (!rEnv.processingOver()) {
+            Filer filer = processingEnv.getFiler();
+            for (TypeElement anno: annos) {
+                Set<? extends Element> elts = rEnv.getElementsAnnotatedWith(anno);
+                System.err.println("anno: " + anno);
+                System.err.println("elts: " + elts);
+                for (TypeElement te: ElementFilter.typesIn(elts)) {
+                    try {
+                        Writer out = filer.createSourceFile(te.getSimpleName() + "Wrapper").openWriter();
+                        out.write("class " + te.getSimpleName() + "Wrapper { }");
+                        out.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
-            }
 
+            }
         }
         return true;
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latest();
     }
 }
 

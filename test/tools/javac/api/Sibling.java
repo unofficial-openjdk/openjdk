@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /**
@@ -26,7 +26,6 @@
  * @bug     6399602
  * @summary Verify that files are created relative to sibling
  * @author  Peter von der Ah\u00e9
- * @ignore 6877223 test ignored because of issues with File.toUri on Windows (6877206)
  */
 
 import java.io.File;
@@ -48,10 +47,9 @@ public class Sibling {
                                                             "foo.bar.baz.Test",
                                                             CLASS,
                                                             sibling);
-        String name =
-            new File("Test.class").getAbsolutePath().replace(File.separatorChar, '/');
-        if (!classFile.toUri().getPath().equals(name))
-            throw new AssertionError("Expected " + name + ", got " +
-                                     classFile.toUri().getPath());
+        File file = new File("Test.class").getAbsoluteFile();
+        if (!classFile.toUri().equals(file.toURI()))
+            throw new AssertionError("Expected " + file.toURI() + ", got " +
+                                     classFile.toUri());
     }
 }

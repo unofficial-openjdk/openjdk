@@ -1,12 +1,12 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javac.api;
@@ -42,6 +42,7 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.*;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.*;
 import com.sun.tools.javac.model.*;
 import com.sun.tools.javac.parser.Parser;
@@ -53,9 +54,9 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.main.JavaCompiler;
 
 /**
- * Provides access to functionality specific to the Sun Java Compiler, javac.
+ * Provides access to functionality specific to the JDK Java Compiler, javac.
  *
- * <p><b>This is NOT part of any API supported by Sun Microsystems.
+ * <p><b>This is NOT part of any supported API.
  * If you write code that depends on this, you do so at your own
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
@@ -381,8 +382,8 @@ public class JavacTaskImpl extends JavacTask {
         return results;
     }
     // where
-        private void handleFlowResults(List<Env<AttrContext>> list, ListBuffer<Element> elems) {
-            for (Env<AttrContext> env: list) {
+        private void handleFlowResults(Queue<Env<AttrContext>> queue, ListBuffer<Element> elems) {
+            for (Env<AttrContext> env: queue) {
                 switch (env.tree.getTag()) {
                     case JCTree.CLASSDEF:
                         JCClassDecl cdef = (JCClassDecl) env.tree;
@@ -396,7 +397,7 @@ public class JavacTaskImpl extends JavacTask {
                         break;
                 }
             }
-            genList.appendList(list);
+            genList.addAll(queue);
         }
 
 
@@ -424,13 +425,13 @@ public class JavacTaskImpl extends JavacTask {
             analyze(null);  // ensure all classes have been parsed, entered, and analyzed
 
             if (classes == null) {
-                compiler.generate(compiler.desugar(genList.toList()), results);
+                compiler.generate(compiler.desugar(genList), results);
                 genList.clear();
             }
             else {
                 Filter f = new Filter() {
                         public void process(Env<AttrContext> env) {
-                            compiler.generate(compiler.desugar(List.of(env)), results);
+                            compiler.generate(compiler.desugar(ListBuffer.of(env)), results);
                         }
                     };
                 f.run(genList, classes);
@@ -472,30 +473,29 @@ public class JavacTaskImpl extends JavacTask {
     }
 
     abstract class Filter {
-        void run(ListBuffer<Env<AttrContext>> list, Iterable<? extends TypeElement> classes) {
+        void run(Queue<Env<AttrContext>> list, Iterable<? extends TypeElement> classes) {
             Set<TypeElement> set = new HashSet<TypeElement>();
             for (TypeElement item: classes)
                 set.add(item);
 
-            List<Env<AttrContext>> defer = List.<Env<AttrContext>>nil();
-            while (list.nonEmpty()) {
-                Env<AttrContext> env = list.next();
+            ListBuffer<Env<AttrContext>> defer = ListBuffer.<Env<AttrContext>>lb();
+            while (list.peek() != null) {
+                Env<AttrContext> env = list.remove();
                 ClassSymbol csym = env.enclClass.sym;
                 if (csym != null && set.contains(csym.outermostClass()))
                     process(env);
                 else
-                    defer = defer.prepend(env);
+                    defer = defer.append(env);
             }
 
-            for (List<Env<AttrContext>> l = defer; l.nonEmpty(); l = l.tail)
-                list.prepend(l.head);
+            list.addAll(defer);
         }
 
         abstract void process(Env<AttrContext> env);
     }
 
     /**
-     * For internal use by Sun Microsystems only.  This method will be
+     * For internal use only.  This method will be
      * removed without warning.
      */
     public Context getContext() {
@@ -503,7 +503,7 @@ public class JavacTaskImpl extends JavacTask {
     }
 
     /**
-     * For internal use by Sun Microsystems only.  This method will be
+     * For internal use only.  This method will be
      * removed without warning.
      */
     public void updateContext(Context newContext) {
@@ -511,7 +511,7 @@ public class JavacTaskImpl extends JavacTask {
     }
 
     /**
-     * For internal use by Sun Microsystems only.  This method will be
+     * For internal use only.  This method will be
      * removed without warning.
      */
     public Type parseType(String expr, TypeElement scope) {

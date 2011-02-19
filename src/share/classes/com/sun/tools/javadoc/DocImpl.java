@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,18 +18,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
-import com.sun.javadoc.*;
-
 import java.io.InputStream;
 import java.io.IOException;
 import java.text.CollationKey;
+import javax.tools.FileObject;
+
+import com.sun.javadoc.*;
+
 import com.sun.tools.javac.util.Position;
 
 /**
@@ -43,7 +45,7 @@ import com.sun.tools.javac.util.Position;
  * @author Atul M Dambalkar
  * @author Neal Gafter (rewrite)
  */
-abstract class DocImpl implements Doc, Comparable<Object> {
+public abstract class DocImpl implements Doc, Comparable<Object> {
 
     /**
      * Doc environment
@@ -163,7 +165,7 @@ abstract class DocImpl implements Doc, Comparable<Object> {
     /**
      * Utility for subclasses which read HTML documentation files.
      */
-    String readHTMLDocumentation(InputStream input, String filename) throws IOException {
+    String readHTMLDocumentation(InputStream input, FileObject filename) throws IOException {
         int filesize = input.available();
         byte[] filecontents = new byte[filesize];
         input.read(filecontents, 0, filesize);

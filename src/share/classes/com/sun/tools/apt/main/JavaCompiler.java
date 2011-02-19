@@ -1,12 +1,12 @@
 /*
- * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2004, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,28 +18,22 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.apt.main;
 
 import java.io.*;
-import java.nio.CharBuffer;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.HashMap;
 
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.tree.*;
-import com.sun.tools.javac.parser.*;
-import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.jvm.*;
 
 import com.sun.tools.javac.code.Symbol.*;
@@ -51,7 +45,7 @@ import com.sun.mirror.apt.AnnotationProcessorFactory;
 import com.sun.tools.javac.parser.DocCommentScanner;
 
 /**
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.
+ *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own
  *  risk.  This code and its internal interfaces are subject to change
  *  or deletion without notice.</b>
@@ -239,6 +233,7 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
 
         ListBuffer<ClassSymbol> classes = new ListBuffer<ClassSymbol>();
         try {
+            JavacFileManager fm = (JavacFileManager)fileManager;
             //parse all files
             ListBuffer<JCCompilationUnit> trees = new ListBuffer<JCCompilationUnit>();
             for (List<String> l = filenames; l.nonEmpty(); l = l.tail) {
@@ -256,7 +251,8 @@ public class JavaCompiler extends com.sun.tools.javac.main.JavaCompiler {
                         continue;
                     }
                 }
-                trees.append(parse(l.head));
+                JavaFileObject fo = fm.getJavaFileObjectsFromStrings(List.of(l.head)).iterator().next();
+                trees.append(parse(fo));
             }
 
             //enter symbols for all files

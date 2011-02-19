@@ -1,12 +1,12 @@
 /*
- * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,15 +18,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.apt.main;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -37,14 +36,15 @@ import java.util.StringTokenizer;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
-import java.util.Collection;
 
 import java.net.URLClassLoader;
 import java.net.URL;
-import java.io.File;
 import java.net.MalformedURLException;
 
-import com.sun.tools.javac.util.Paths;
+import javax.tools.JavaFileManager;
+import javax.tools.StandardLocation;
+
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
@@ -56,10 +56,12 @@ import com.sun.tools.apt.comp.UsageMessageNeededException;
 import com.sun.tools.apt.util.Bark;
 import com.sun.mirror.apt.AnnotationProcessorFactory;
 
+import static com.sun.tools.javac.file.Paths.pathToURLs;
+
 /** This class provides a commandline interface to the apt build-time
  *  tool.
  *
- *  <p><b>This is NOT part of any API supported by Sun Microsystems.
+ *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own
  *  risk.  This code and its internal interfaces are subject to change
  *  or deletion without notice.</b>
@@ -766,6 +768,7 @@ public class Main {
         providedFactory = factory;
 
         Context context = new Context();
+        JavacFileManager.preRegister(context);
         options = Options.instance(context);
         Bark bark;
 
@@ -778,7 +781,6 @@ public class Main {
         // For testing: assume all arguments in forcedOpts are
         // prefixed to command line arguments.
         processArgs(forcedOpts);
-
 
         /*
          * A run of apt only gets passed the most recently generated
@@ -862,14 +864,14 @@ public class Main {
             }
             origOptions = Collections.unmodifiableMap(origOptions);
 
+            JavacFileManager fm = (JavacFileManager) context.get(JavaFileManager.class);
             {
                 // Note: it might be necessary to check for an empty
                 // component ("") of the source path or class path
-                Paths paths = Paths.instance(context);
 
                 String sourceDest = options.get("-s");
-                if (paths.sourcePath() != null) {
-                    for(File f: paths.sourcePath())
+                if (fm.hasLocation(StandardLocation.SOURCE_PATH)) {
+                    for(File f: fm.getLocation(StandardLocation.SOURCE_PATH))
                         augmentedSourcePath += (f + File.pathSeparator);
                     augmentedSourcePath += (sourceDest == null)?".":sourceDest;
                 } else {
@@ -880,8 +882,8 @@ public class Main {
                 }
 
                 String classDest = options.get("-d");
-                if (paths.userClassPath() != null) {
-                    for(File f: paths.userClassPath())
+                if (fm.hasLocation(StandardLocation.CLASS_PATH)) {
+                    for(File f: fm.getLocation(StandardLocation.CLASS_PATH))
                         baseClassPath += (f + File.pathSeparator);
                     // put baseClassPath into map to handle any
                     // value needed for the classloader
@@ -908,9 +910,8 @@ public class Main {
              * uses.
              */
                 String aptclasspath = "";
-                Paths paths = Paths.instance(context);
                 String bcp = "";
-                Collection<File> bootclasspath = paths.bootClassPath();
+                Iterable<? extends File> bootclasspath = fm.getLocation(StandardLocation.PLATFORM_CLASS_PATH);
 
                 if (bootclasspath != null) {
                     for(File f: bootclasspath)
@@ -1269,61 +1270,6 @@ public class Main {
                     + "arguments={1}, {2}";
                 return MessageFormat.format(msg, (Object[]) args);
             }
-        }
-    }
-
-    // Borrowed from DocletInvoker
-    /**
-     * Utility method for converting a search path string to an array
-     * of directory and JAR file URLs.
-     *
-     * @param path the search path string
-     * @return the resulting array of directory and JAR file URLs
-     */
-    static URL[] pathToURLs(String path) {
-        StringTokenizer st = new StringTokenizer(path, File.pathSeparator);
-        URL[] urls = new URL[st.countTokens()];
-        int count = 0;
-        while (st.hasMoreTokens()) {
-            URL url = fileToURL(new File(st.nextToken()));
-            if (url != null) {
-                urls[count++] = url;
-            }
-        }
-        if (urls.length != count) {
-            URL[] tmp = new URL[count];
-            System.arraycopy(urls, 0, tmp, 0, count);
-            urls = tmp;
-        }
-        return urls;
-    }
-
-    /**
-     * Returns the directory or JAR file URL corresponding to the specified
-     * local file name.
-     *
-     * @param file the File object
-     * @return the resulting directory or JAR file URL, or null if unknown
-     */
-    static URL fileToURL(File file) {
-        String name;
-        try {
-            name = file.getCanonicalPath();
-        } catch (IOException e) {
-            name = file.getAbsolutePath();
-        }
-        name = name.replace(File.separatorChar, '/');
-        if (!name.startsWith("/")) {
-            name = "/" + name;
-        }
-        // If the file does not exist, then assume that it's a directory
-        if (!file.isFile()) {
-            name = name + "/";
-        }
-        try {
-            return new URL("file", "", name);
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException("file");
         }
     }
 }

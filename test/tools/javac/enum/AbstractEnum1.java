@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -16,9 +16,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 /*
@@ -26,9 +26,6 @@
  * @bug 5054976
  * @summary compiler fails to flag an enum abstract
  * @author gafter
- *
- * @compile -source 1.5 AbstractEnum1.java
- * @run main AbstractEnum1
  */
 
 import java.lang.reflect.Modifier;

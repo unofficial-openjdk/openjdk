@@ -1,12 +1,12 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
+ * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,21 +18,21 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
 package com.sun.tools.javadoc;
 
 import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.File;
+import java.util.Locale;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
 
 import com.sun.javadoc.*;
 
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
-import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Position;
@@ -307,10 +307,13 @@ public class RootDocImpl extends DocImpl implements RootDoc {
      * Return the path of the overview file and null if it does not exist.
      * @return the path of the overview file and null if it does not exist.
      */
-    private String getOverviewPath() {
+    private JavaFileObject getOverviewPath() {
         for (String[] opt : options) {
             if (opt[0].equals("-overview")) {
-                return opt[1];
+                if (env.fileManager instanceof StandardJavaFileManager) {
+                    StandardJavaFileManager fm = (StandardJavaFileManager) env.fileManager;
+                    return fm.getJavaFileObjects(opt[1]).iterator().next();
+                }
             }
         }
         return null;
@@ -322,7 +325,7 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     protected String documentation() {
         if (documentation == null) {
             int cnt = options.length();
-            String overviewPath = getOverviewPath();
+            JavaFileObject overviewPath = getOverviewPath();
             if (overviewPath == null) {
                 // no doc file to be had
                 documentation = "";
@@ -330,11 +333,11 @@ public class RootDocImpl extends DocImpl implements RootDoc {
                 // read from file
                 try {
                     documentation = readHTMLDocumentation(
-                        new FileInputStream(overviewPath),
+                        overviewPath.openInputStream(),
                         overviewPath);
                 } catch (IOException exc) {
                     documentation = "";
-                    env.error(null, "javadoc.File_Read_Error", overviewPath);
+                    env.error(null, "javadoc.File_Read_Error", overviewPath.getName());
                 }
             }
         }
@@ -346,9 +349,16 @@ public class RootDocImpl extends DocImpl implements RootDoc {
      * no position is available.
      */
     public SourcePosition position() {
-        String path;
+        JavaFileObject path;
         return ((path = getOverviewPath()) == null) ?
             null :
             SourcePositionImpl.make(path, Position.NOPOS, null);
+    }
+
+    /**
+     * Return the locale provided by the user or the default locale value.
+     */
+    public Locale getLocale() {
+        return env.doclocale.locale;
     }
 }
