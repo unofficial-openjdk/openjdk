@@ -1,12 +1,12 @@
 #
-# Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 #
@@ -28,17 +28,16 @@
 # not contain rules.
 #
 
+# Always true
+OPENJDK=true
+
 # Define absolute paths to TOPDIRs
-ABS_CONTROL_TOPDIR:=$(call OptFullPath,"$(CONTROL_TOPDIR)")
 ABS_LANGTOOLS_TOPDIR:=$(call OptFullPath,"$(LANGTOOLS_TOPDIR)")
 ABS_CORBA_TOPDIR:=$(call OptFullPath,"$(CORBA_TOPDIR)")
 ABS_JAXP_TOPDIR:=$(call OptFullPath,"$(JAXP_TOPDIR)")
 ABS_JAXWS_TOPDIR:=$(call OptFullPath,"$(JAXWS_TOPDIR)")
 ABS_JDK_TOPDIR:=$(call OptFullPath,"$(JDK_TOPDIR)")
 ABS_HOTSPOT_TOPDIR:=$(call OptFullPath,"$(HOTSPOT_TOPDIR)")
-ABS_INSTALL_TOPDIR:=$(call OptFullPath,"$(INSTALL_TOPDIR)")
-ABS_SPONSORS_TOPDIR:=$(call OptFullPath,"$(SPONSORS_TOPDIR)")
-ABS_DEPLOY_TOPDIR:=$(call OptFullPath,"$(DEPLOY_TOPDIR)")
 
 # Macro to return true or false if a file exists and is readable
 define MkExists
@@ -94,64 +93,19 @@ JDK_SRC_AVAILABLE := $(call MkExists,$(JDK_TOPDIR)/make/Makefile)
 ifndef BUILD_JDK
   BUILD_JDK := $(JDK_SRC_AVAILABLE)
 endif
-ifeq ($(JDK_SRC_AVAILABLE),true)
-  JDK_CLOSED_SRC_AVAILABLE := $(call MkExists,$(JDK_TOPDIR)/src/closed)
-  ifndef OPENJDK
-    ifeq ($(JDK_CLOSED_SRC_AVAILABLE),false)
-      OPENJDK = true
-    endif
-  endif
+
+# These could be over-ridden on the command line or in environment
+ifndef SKIP_PRODUCT_BUILD
+  SKIP_PRODUCT_BUILD = false
 endif
-
-DEPLOY_SRC_AVAILABLE := $(call MkExists,$(DEPLOY_TOPDIR)/make/Makefile)
-ifndef BUILD_DEPLOY
-  BUILD_DEPLOY := $(DEPLOY_SRC_AVAILABLE)
+ifndef SKIP_FASTDEBUG_BUILD
+  SKIP_FASTDEBUG_BUILD = true
 endif
-
-INSTALL_SRC_AVAILABLE := $(call MkExists,$(INSTALL_TOPDIR)/make/Makefile)
-ifndef BUILD_INSTALL
-  ifdef DEV_ONLY
-    BUILD_INSTALL := false
-  else
-    BUILD_INSTALL := $(INSTALL_SRC_AVAILABLE)
-  endif
+ifndef SKIP_DEBUG_BUILD
+  SKIP_DEBUG_BUILD = true
 endif
-
-SPONSORS_SRC_AVAILABLE := $(call MkExists,$(SPONSORS_TOPDIR)/make/Makefile)
-ifndef BUILD_SPONSORS
-  ifdef DEV_ONLY
-    BUILD_SPONSORS := false
-  else
-    BUILD_SPONSORS := $(SPONSORS_SRC_AVAILABLE)
-  endif
-endif
-
-
-# Do we build the source and openjdk binary plug bundles?
-BUNDLE_RULES = $(JDK_TOPDIR)/make/closed/bundles.gmk
-BUNDLE_RULES_AVAILABLE := $(call MkExists,$(BUNDLE_RULES))
-
-# Current things we do NOT build for OPENJDK
-ifdef OPENJDK
-  BUILD_DEPLOY = false
-  BUILD_INSTALL = false
-  BUILD_SPONSORS = false
-  BUNDLE_RULES_AVAILABLE := false
-  # These could be over-ridden on the command line or in environment
-  ifndef SKIP_FASTDEBUG_BUILD
-    SKIP_FASTDEBUG_BUILD = true
-  endif
-  ifndef SKIP_DEBUG_BUILD
-    SKIP_DEBUG_BUILD = true
-  endif
-  ifndef SKIP_COMPARE_IMAGES
-    SKIP_COMPARE_IMAGES = true
-  endif
-  SKIP_OPENJDK_BUILD = true
-else
-  ifndef SKIP_OPENJDK_BUILD
-    SKIP_OPENJDK_BUILD = false
-  endif
+ifndef SKIP_COMPARE_IMAGES
+  SKIP_COMPARE_IMAGES = true
 endif
 
 # Many reasons why we would want to skip the comparison to previous jdk
@@ -159,23 +113,9 @@ ifndef SKIP_COMPARE_IMAGES
   ifeq ($(BUILD_JDK), false)
     SKIP_COMPARE_IMAGES = true
   endif
-  ifeq ($(BUILD_DEPLOY), false)
-    SKIP_COMPARE_IMAGES = true
-  endif
-  ifeq ($(BUILD_INSTALL), false)
-    SKIP_COMPARE_IMAGES = true
-  endif
   ifdef DEV_ONLY
     SKIP_COMPARE_IMAGES = true
   endif
-endif
-
-# Select defaults if these are not set to true or false
-ifndef SKIP_DEBUG_BUILD
-  SKIP_DEBUG_BUILD=true
-endif
-ifndef SKIP_FASTDEBUG_BUILD
-  SKIP_FASTDEBUG_BUILD=false
 endif
 
 # Output directory for hotspot build
@@ -239,9 +179,4 @@ endif
 ifdef ANT_HOME
   COMMON_BUILD_ARGUMENTS += ANT_HOME="$(ANT_HOME)"
 endif
-
-ifdef FINDBUGS_HOME
-  COMMON_BUILD_ARGUMENTS += FINDBUGS_HOME="$(FINDBUGS_HOME)"
-endif
-
 

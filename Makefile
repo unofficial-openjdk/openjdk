@@ -1,12 +1,12 @@
 #
-# Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,40 +18,16 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
+BUILD_PARENT_DIRECTORY=.
+
 ifndef TOPDIR
-  TOPDIR:=$(shell \
-    if [ -r ./j2se/make/Makefile -o -r ./jdk/make/Makefile ]; then \
-      echo "."; \
-    else \
-      echo "../.."; \
-    fi)
+  TOPDIR:=.
 endif
-
-ifndef CONTROL_TOPDIR
-  CONTROL_TOPDIR=$(TOPDIR)/control
-  CONTROL_TOPDIR:=$(shell \
-    if [ -r $(TOPDIR)/control/make/Makefile ]; then \
-      echo "$(TOPDIR)/control"; \
-    else \
-      echo "$(TOPDIR)"; \
-    fi)
-endif
-
-# Openjdk sources (only used if SKIP_OPENJDK_BUILD!=true)
-OPENJDK_SOURCETREE=$(TOPDIR)/openjdk
-OPENJDK_BUILDDIR:=$(shell \
-  if [ -r $(OPENJDK_SOURCETREE)/control/make/Makefile ]; then \
-    echo "$(OPENJDK_SOURCETREE)/control/make"; \
-  elif [ -r $(OPENJDK_SOURCETREE)/Makefile ]; then \
-    echo "$(OPENJDK_SOURCETREE)"; \
-  else \
-    echo "."; \
-  fi)
 
 ifndef JDK_TOPDIR
   JDK_TOPDIR=$(TOPDIR)/jdk
@@ -60,140 +36,29 @@ ifndef JDK_MAKE_SHARED_DIR
   JDK_MAKE_SHARED_DIR=$(JDK_TOPDIR)/make/common/shared
 endif
 
+# For start and finish echo lines
+TITLE_TEXT = Control $(PLATFORM) $(ARCH) $(RELEASE)
+DATE_STAMP = `$(DATE) '+%y-%m-%d %H:%M'`
+START_ECHO  = echo "$(TITLE_TEXT) $@ build started: $(DATE_STAMP)"
+FINISH_ECHO = echo "$(TITLE_TEXT) $@ build finished: $(DATE_STAMP)"
+
+default: all
+
 include $(JDK_MAKE_SHARED_DIR)/Defs-control.gmk
-
 include ./make/Defs-internal.gmk
-
-all::
-	@$(ECHO) $(PLATFORM) $(ARCH) $(RELEASE) build started: `$(DATE) '+%y-%m-%d %H:%M'`
-
-# Rules for sanity checks
 include ./make/sanity-rules.gmk
-
-dev : dev-build
-
-dev-build:
-	$(MAKE) DEV_ONLY=true all
-dev-sanity:
-	$(MAKE) DEV_ONLY=true sanity
-dev-clobber:
-	$(MAKE) DEV_ONLY=true clobber
-
-# Rules for various components
 include ./make/hotspot-rules.gmk
-include ./make/motif-rules.gmk
 include ./make/langtools-rules.gmk
 include ./make/corba-rules.gmk
 include ./make/jaxp-rules.gmk
 include ./make/jaxws-rules.gmk
 include ./make/jdk-rules.gmk
-include ./make/install-rules.gmk
-include ./make/sponsors-rules.gmk
-include ./make/deploy-rules.gmk
 
-all:: setup build
+# What "all" means
+all::
+	@$(START_ECHO)
 
-setup: openjdk_check
-	$(MKDIR) -p $(OUTPUTDIR)/j2sdk-image
-	$(MKDIR) -p $(ABS_OUTPUTDIR)/j2sdk-image
-	$(MKDIR) -p $(OUTPUTDIR)-fastdebug/j2sdk-image
-	$(MKDIR) -p $(ABS_OUTPUTDIR)-fastdebug/j2sdk-image
-
-# Check on whether we really can build the openjdk, need source etc.
-openjdk_check:
-ifneq ($(SKIP_OPENJDK_BUILD), true)
-	@$(ECHO) " "
-	@$(ECHO) "================================================="
-	@if [ ! -r $(OPENJDK_BUILDDIR)/Makefile ] ; then \
-	    $(ECHO) "ERROR: No openjdk source tree available at: $(OPENJDK_BUILDDIR)"; \
-	    exit 1; \
-	else \
-	    $(ECHO) "OpenJDK will be built after JDK is built"; \
-	    $(ECHO) "  OPENJDK_BUILDDIR=$(OPENJDK_BUILDDIR)"; \
-	fi
-	@$(ECHO) "================================================="
-	@$(ECHO) " "
-endif
-
-build:: sanity 
-
-clobber::
-
-ifeq ($(BUILD_LANGTOOLS), true)
-  build:: langtools
-  clobber:: langtools-clobber
-endif
-
-ifeq ($(BUILD_CORBA), true)
-  build:: corba
-  clobber:: corba-clobber
-endif
-
-ifeq ($(BUILD_JAXP), true)
-  build:: jaxp
-  clobber:: jaxp-clobber
-endif
-
-ifeq ($(BUILD_JAXWS), true)
-  build:: jaxws
-  clobber:: jaxws-clobber
-endif
-
-ifeq ($(BUILD_HOTSPOT), true)
-  build:: $(HOTSPOT) 
-  clobber:: hotspot-clobber
-endif
-
-ifeq ($(BUILD_MOTIF), true)
-  build:: $(MOTIF)
-  clobber:: motif-clobber
-endif
-
-ifeq ($(BUILD_JDK), true)
-  build:: $(JDK_JAVA_EXE)
-  clobber:: jdk-clobber
-endif
-
-ifeq ($(BUILD_DEPLOY), true)
-  build:: $(DEPLOY)
-  clobber:: deploy-clobber
-endif
-
-#
-# Generic debug build, fastdebug or debug. Needs special handling.
-#  Note that debug builds do NOT do INSTALL steps, but must be done
-#  after the product build and before the INSTALL step of the product build.
-#
-#   DEBUG_NAME is fastdebug or debug
-#   ALT_OUTPUTDIR is changed to have -debug or -fastdebug suffix
-#   The resulting j2sdk-image is used by the install makefiles to create a
-#     debug install bundle jdk-*-debug-** bundle (tar or zip) 
-#     which will install in the debug or fastdebug subdirectory of the
-#     normal product install area.
-#     The install process needs to know what the DEBUG_NAME is, so
-#     look for INSTALL_DEBUG_NAME in the install rules.
-#
-
-COMMON_DEBUG_FLAGS= \
-	DEBUG_NAME=$(DEBUG_NAME) \
-	ALT_OUTPUTDIR=$(_OUTPUTDIR)-$(DEBUG_NAME) \
-	NO_DOCS=true
-
-product_build: setup
-	@$(ECHO) $@ build started: `$(DATE) '+%y-%m-%d %H:%M'`
-	$(MAKE) SKIP_FASTDEBUG_BUILD=true SKIP_DEBUG_BUILD=true all
-	@$(ECHO) $@ build finished: `$(DATE) '+%y-%m-%d %H:%M'`
-
-generic_debug_build:
-	@$(ECHO) $@ build started: `$(DATE) '+%y-%m-%d %H:%M'`
-	$(MAKE) $(COMMON_DEBUG_FLAGS) setup build
-	@$(ECHO) $@ build finished: `$(DATE) '+%y-%m-%d %H:%M'`
-
-debug_build: setup
-	$(MAKE) DEBUG_NAME=debug generic_debug_build
-
-fastdebug_build: setup
-	$(MAKE) DEBUG_NAME=fastdebug generic_debug_build
+all:: sanity
 
 ifeq ($(SKIP_FASTDEBUG_BUILD), false)
   all:: fastdebug_build
@@ -203,98 +68,186 @@ ifeq ($(SKIP_DEBUG_BUILD), false)
   all:: debug_build
 endif
 
+all:: all_product_build 
+
+all:: 
+	@$(FINISH_ECHO)
+
+# Everything for a full product build
+all_product_build::
+	@$(START_ECHO)
+
+ifeq ($(SKIP_PRODUCT_BUILD), false)
+  
+  all_product_build:: product_build
+
+  ifneq ($(SKIP_COMPARE_IMAGES), true)
+    all_product_build:: compare-image
+  endif
+
+endif
+
+all_product_build:: 
+	@$(FINISH_ECHO)
+
+# Generis build of basic repo series
+generic_build_repo_series::
+	$(MKDIR) -p $(OUTPUTDIR)
+	$(MKDIR) -p $(OUTPUTDIR)/j2sdk-image
+
+ifeq ($(BUILD_LANGTOOLS), true)
+  generic_build_repo_series:: langtools
+  clobber:: langtools-clobber
+endif
+
+ifeq ($(BUILD_CORBA), true)
+  generic_build_repo_series:: corba
+  clobber:: corba-clobber
+endif
+
+ifeq ($(BUILD_JAXP), true)
+  generic_build_repo_series:: jaxp
+  clobber:: jaxp-clobber
+endif
+
+ifeq ($(BUILD_JAXWS), true)
+  generic_build_repo_series:: jaxws
+  clobber:: jaxws-clobber
+endif
+
+ifeq ($(BUILD_HOTSPOT), true)
+  generic_build_repo_series:: $(HOTSPOT) 
+  clobber:: hotspot-clobber
+endif
+
 ifeq ($(BUILD_JDK), true)
-  ifeq ($(BUNDLE_RULES_AVAILABLE), true)
-    all:: openjdk-binary-plugs-bundles
+  generic_build_repo_series:: $(JDK_JAVA_EXE)
+  clobber:: jdk-clobber
+endif
+
+# The debug build, fastdebug or debug. Needs special handling.
+#
+#   DEBUG_NAME is fastdebug or debug
+#   ALT_OUTPUTDIR is changed to have -debug or -fastdebug suffix
+#
+#   NOTE: On windows, do not use $(ABS_BOOTDIR_OUTPUTDIR)-$(DEBUG_NAME).
+#         Due to the use of short paths in $(ABS_OUTPUTDIR), this may 
+#         not be the same location.
+#
+
+# Location of fresh bootdir output
+ABS_BOOTDIR_OUTPUTDIR=$(ABS_OUTPUTDIR)/bootjdk
+FRESH_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/j2sdk-image
+FRESH_DEBUG_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-$(DEBUG_NAME)/j2sdk-image
+  
+create_fresh_product_bootdir: FRC
+	@$(START_ECHO)
+	$(MAKE) ALT_OUTPUTDIR=$(ABS_BOOTDIR_OUTPUTDIR) \
+		GENERATE_DOCS=false \
+		BOOT_CYCLE_SETTINGS= \
+		build_product_image
+	@$(FINISH_ECHO)
+
+create_fresh_debug_bootdir: FRC
+	@$(START_ECHO)
+	$(MAKE) ALT_OUTPUTDIR=$(ABS_BOOTDIR_OUTPUTDIR) \
+		GENERATE_DOCS=false \
+		BOOT_CYCLE_DEBUG_SETTINGS= \
+		build_debug_image
+	@$(FINISH_ECHO)
+
+create_fresh_fastdebug_bootdir: FRC
+	@$(START_ECHO)
+	$(MAKE) ALT_OUTPUTDIR=$(ABS_BOOTDIR_OUTPUTDIR) \
+		GENERATE_DOCS=false \
+		BOOT_CYCLE_DEBUG_SETTINGS= \
+		build_fastdebug_image
+	@$(FINISH_ECHO)
+
+# Create boot image?
+ifeq ($(SKIP_BOOT_CYCLE),false)
+  ifneq ($(PLATFORM)$(ARCH_DATA_MODEL),solaris64)
+    DO_BOOT_CYCLE=true
   endif
 endif
 
-ifeq ($(BUILD_INSTALL), true)
-  all :: $(INSTALL)
-  clobber:: install-clobber
-endif
+ifeq ($(DO_BOOT_CYCLE),true)
+  
+  # Create the bootdir to use in the build
+  product_build:: create_fresh_product_bootdir
+  debug_build:: create_fresh_debug_bootdir
+  fastdebug_build:: create_fresh_fastdebug_bootdir
 
-ifeq ($(BUILD_SPONSORS), true)
-  all :: $(SPONSORS)
-  clobber:: sponsors-clobber
-endif
+  # Define variables to be used now for the boot jdk
+  BOOT_CYCLE_SETTINGS= \
+     ALT_BOOTDIR=$(FRESH_BOOTDIR) \
+     ALT_JDK_IMPORT_PATH=$(FRESH_BOOTDIR)
+  BOOT_CYCLE_DEBUG_SETTINGS= \
+     ALT_BOOTDIR=$(FRESH_DEBUG_BOOTDIR) \
+     ALT_JDK_IMPORT_PATH=$(FRESH_DEBUG_BOOTDIR)
 
-ifneq ($(SKIP_COMPARE_IMAGES), true)
-  all :: compare-image
-endif
-
-ifneq ($(SKIP_OPENJDK_BUILD), true)
-  all :: openjdk_build
-endif
-
-# If we have bundle rules, we have a chance here to do a complete cycle
-#   build, of production and open build.
-# FIXUP: We should create the openjdk source bundle and build that?
-#   But how do we reliable create or get at a formal openjdk source tree?
-#   The one we have needs to be trimmed of built bits and closed dirs.
-#   The repositories might not be available.
-#   The openjdk source bundle is probably not available.
-
-ifneq ($(SKIP_OPENJDK_BUILD), true)
-  ifeq ($(BUILD_JDK), true)
-    ifeq ($(BUNDLE_RULES_AVAILABLE), true)
-
-OPENJDK_PLUGS=$(ABS_OUTPUTDIR)/$(OPENJDK_BINARY_PLUGS_INAME)
-OPENJDK_OUTPUTDIR=$(ABS_OUTPUTDIR)/open-output
-OPENJDK_BUILD_NAME \
-  = openjdk-$(JDK_MINOR_VERSION)-$(BUILD_NUMBER)-$(PLATFORM)-$(ARCH)-$(BUNDLE_DATE)
-OPENJDK_BUILD_BINARY_ZIP=$(ABS_BIN_BUNDLEDIR)/$(OPENJDK_BUILD_NAME).zip
-BUILT_IMAGE=$(ABS_OUTPUTDIR)/j2sdk-image
-ifeq ($(PLATFORM)$(ARCH_DATA_MODEL),solaris64)
-  OPENJDK_BOOTDIR=$(BOOTDIR)
-  OPENJDK_IMPORTJDK=$(JDK_IMPORT_PATH)
 else
-  OPENJDK_BOOTDIR=$(BUILT_IMAGE)
-  OPENJDK_IMPORTJDK=$(BUILT_IMAGE)
+
+  # Use the supplied ALT_BOOTDIR as the boot
+  BOOT_CYCLE_SETTINGS=
+  BOOT_CYCLE_DEBUG_SETTINGS=
+
 endif
 
-openjdk_build:
-	@$(ECHO) " "
-	@$(ECHO) "================================================="
-	@$(ECHO) "Starting openjdk build"
-	@$(ECHO) " Using: ALT_JDK_DEVTOOLS_DIR=$(JDK_DEVTOOLS_DIR)"
-	@$(ECHO) "================================================="
-	@$(ECHO) " "
-	$(RM) -r $(OPENJDK_OUTPUTDIR)
-	$(MKDIR) -p $(OPENJDK_OUTPUTDIR)
-	($(CD) $(OPENJDK_BUILDDIR) && $(MAKE) \
-	  OPENJDK=true \
-	  ALT_JDK_DEVTOOLS_DIR=$(JDK_DEVTOOLS_DIR) \
-	  ALT_OUTPUTDIR=$(OPENJDK_OUTPUTDIR) \
-	  ALT_BINARY_PLUGS_PATH=$(OPENJDK_PLUGS) \
-	  ALT_BOOTDIR=$(OPENJDK_BOOTDIR) \
-	  ALT_JDK_IMPORT_PATH=$(OPENJDK_IMPORTJDK) \
-		product_build )
-	$(RM) $(OPENJDK_BUILD_BINARY_ZIP)
-	( $(CD) $(OPENJDK_OUTPUTDIR)/j2sdk-image && \
-	  $(ZIPEXE) -q -r $(OPENJDK_BUILD_BINARY_ZIP) .)
-	$(RM) -r $(OPENJDK_OUTPUTDIR)
-	@$(ECHO) " "
-	@$(ECHO) "================================================="
-	@$(ECHO) "Finished openjdk build"
-	@$(ECHO) " Binary Bundle: $(OPENJDK_BUILD_BINARY_ZIP)"
-	@$(ECHO) "================================================="
-	@$(ECHO) " "
-    
-    endif
-  endif
-endif
+build_product_image:
+	@$(START_ECHO)
+	$(MAKE) \
+	        SKIP_FASTDEBUG_BUILD=true \
+	        SKIP_DEBUG_BUILD=true \
+	        $(BOOT_CYCLE_SETTINGS) \
+	        generic_build_repo_series
+	@$(FINISH_ECHO)
+
+#   NOTE: On windows, do not use $(ABS_OUTPUTDIR)-$(DEBUG_NAME).
+#         Due to the use of short paths in $(ABS_OUTPUTDIR), this may 
+#         not be the same location.
+
+generic_debug_build:
+	@$(START_ECHO)
+	$(MAKE) \
+		ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-$(DEBUG_NAME) \
+	        DEBUG_NAME=$(DEBUG_NAME) \
+		GENERATE_DOCS=false \
+	        $(BOOT_CYCLE_DEBUG_SETTINGS) \
+		generic_build_repo_series
+	@$(FINISH_ECHO)
+
+build_debug_image:
+	$(MAKE) DEBUG_NAME=debug generic_debug_build
+
+build_fastdebug_image:
+	$(MAKE) DEBUG_NAME=fastdebug generic_debug_build
+
+# Build final image
+product_build:: build_product_image
+debug_build:: build_debug_image
+fastdebug_build:: build_fastdebug_image
 
 clobber::
 	$(RM) -r $(OUTPUTDIR)/*
-	$(RM) -r $(OUTPUTDIR)-debug/*
-	$(RM) -r $(OUTPUTDIR)-fastdebug/*
+	$(RM) -r $(OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-debug/*
+	$(RM) -r $(OUTPUTDIR)/../$(PLATFORM)-$(ARCH)-fastdebug/*
 	-($(RMDIR) -p $(OUTPUTDIR) > $(DEV_NULL) 2>&1; $(TRUE))
 
 clean: clobber
 
-all:: 
-	@$(ECHO) Control build finished: `$(DATE) '+%y-%m-%d %H:%M'`
+#
+# Dev builds
+#
+
+dev : dev-build
+
+dev-build:
+	$(MAKE) DEV_ONLY=true all
+dev-sanity:
+	$(MAKE) DEV_ONLY=true sanity
+dev-clobber:
+	$(MAKE) DEV_ONLY=true clobber
 
 #
 # Quick jdk verification build
@@ -307,24 +260,7 @@ jdk_only:
 # Quick jdk verification fastdebug build
 #
 jdk_fastdebug_only:
-	$(MAKE) DEBUG_NAME=fastdebug BUILD_HOTSPOT=false BUILD_DEPLOY=false \
-	    BUILD_INSTALL=false BUILD_SPONSORS=false generic_debug_build
-
-#
-# Quick deploy verification fastdebug build
-#
-deploy_fastdebug_only:
-	$(MAKE) \
-	    DEBUG_NAME=fastdebug \
-	    BUILD_HOTSPOT=false \
-	    BUILD_JDK=false \
-	    BUILD_LANGTOOLS=false \
-	    BUILD_CORBA=false \
-	    BUILD_JAXP=false \
-	    BUILD_JAXWS=false \
-	    BUILD_INSTALL=false \
-	    BUILD_SPONSORS=false \
-	    generic_debug_build
+	$(MAKE) DEBUG_NAME=fastdebug BUILD_HOTSPOT=false generic_debug_build
 
 #
 # Product build (skip debug builds)
@@ -473,21 +409,64 @@ examples_help:
 "
 
 ################################################################
-# Source and binary plug bundling
-################################################################
-ifeq ($(BUNDLE_RULES_AVAILABLE), true)
-  include $(BUNDLE_RULES)
-endif
-
-################################################################
 # Cycle build. Build the jdk, use it to build the jdk again.
 ################################################################
-  
+
 ABS_BOOTDIR_OUTPUTDIR=$(ABS_OUTPUTDIR)/bootjdk
-  
+
 boot_cycle:
 	$(MAKE) ALT_OUTPUTDIR=$(ABS_BOOTDIR_OUTPUTDIR) product_build
 	$(MAKE) ALT_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/j2sdk-image product_build
+
+################################################################
+# rule to test
+################################################################
+
+.NOTPARALLEL: test
+
+test: test_clean test_start test_summary
+
+test_start:
+	@$(ECHO) "Tests started at `$(DATE)`"
+
+test_clean:
+	$(RM) $(OUTPUTDIR)/test_failures.txt $(OUTPUTDIR)/test_log.txt
+
+test_summary: $(OUTPUTDIR)/test_failures.txt
+	@$(ECHO) "#################################################"
+	@$(ECHO) "Tests completed at `$(DATE)`"
+	@( $(EGREP) '^TEST STATS:' $(OUTPUTDIR)/test_log.txt \
+          || $(ECHO) "No TEST STATS seen in log" )
+	@$(ECHO) "For complete details see: $(OUTPUTDIR)/test_log.txt"
+	@$(ECHO) "#################################################"
+	@if [ -s $< ] ; then                                           \
+          $(ECHO) "ERROR: Test failure count: `$(CAT) $< | $(WC) -l`"; \
+          $(CAT) $<;                                                   \
+          exit 1;                                                      \
+        else                                                           \
+          $(ECHO) "Success! No failures detected";                     \
+        fi
+
+# Get failure list from log
+$(OUTPUTDIR)/test_failures.txt: $(OUTPUTDIR)/test_log.txt
+	@$(RM) $@
+	@( $(EGREP) '^FAILED:' $< || $(ECHO) "" ) > $@
+
+# Get log file of all tests run
+JDK_TO_TEST := $(shell 							\
+  if [ -d "$(ABS_OUTPUTDIR)/j2sdk-image" ] ; then 			\
+    $(ECHO) "$(ABS_OUTPUTDIR)/j2sdk-image"; 				\
+  elif [ -d "$(ABS_OUTPUTDIR)/bin" ] ; then 				\
+    $(ECHO) "$(ABS_OUTPUTDIR)"; 					\
+  elif [ "$(PRODUCT_HOME)" != "" -a -d "$(PRODUCT_HOME)/bin" ] ; then 	\
+    $(ECHO) "$(PRODUCT_HOME)"; 						\
+  fi 									\
+)
+$(OUTPUTDIR)/test_log.txt:
+	$(RM) $@
+	( $(CD) test &&                                     \
+          $(MAKE) NO_STOPPING=- PRODUCT_HOME=$(JDK_TO_TEST) \
+        ) | tee $@
 
 ################################################################
 # JPRT rule to build
@@ -499,11 +478,21 @@ include ./make/jprt.gmk
 #  PHONY
 ################################################################
 
-.PHONY: all build what clobber insane \
-	fastdebug_build debug_build product_build setup \
-        dev dev-build dev-sanity dev-clobber
+.PHONY: all  test test_start test_summary test_clean \
+	generic_build_repo_series \
+	what clobber insane \
+        dev dev-build dev-sanity dev-clobber \
+        product_build \
+        fastdebug_build \
+        debug_build  \
+        build_product_image  \
+        build_debug_image  \
+        build_fastdebug_image \
+        create_fresh_product_bootdir \
+        create_fresh_debug_bootdir \
+        create_fresh_fastdebug_bootdir \
+        generic_debug_build
 
-# FIXUP: Old j2se targets
-j2se_fastdebug_only: jdk_fastdebug_only
-j2se_only: jdk_only
+# Force target
+FRC:
 

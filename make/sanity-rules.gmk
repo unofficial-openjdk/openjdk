@@ -1,12 +1,12 @@
 #
-# Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Sun designates this
+# published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
-# by Sun in the LICENSE file that accompanied this code.
+# by Oracle in the LICENSE file that accompanied this code.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -18,9 +18,9 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
-# CA 95054 USA or visit www.sun.com if you need additional information or
-# have any questions.
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 #
 
 ################################################################
@@ -33,25 +33,8 @@ ifeq ($(BUILD_HOTSPOT), true)
   sanity:: hotspot-sanity
 endif
 
-ifeq ($(BUILD_DEPLOY), true)
-  sanity:: deploy-sanity
-endif
-
 ifeq ($(BUILD_JDK), true)
   sanity:: jdk-sanity 
-endif
-
-# Only need these sanity rules when not doing a debug build
-ifeq ($(DEBUG_NAME),)
-
-  ifeq ($(BUILD_INSTALL), true)
-    sanity:: install-sanity
-  endif
-
-  ifeq ($(BUILD_SPONSORS), true)
-    sanity:: sponsors-sanity
-  endif
-
 endif
 
 sanity:: post-sanity
@@ -67,7 +50,7 @@ purge-sanity: $(ERROR_FILE) $(WARNING_FILE) $(MESSAGE_FILE)
 pre-sanity: purge-sanity 
 
 # this should be the last rule in any target's sanity rule.
-post-sanity post-sanity-hotspot post-sanity-jdk post-sanity-motif post-sanity-install post-sanity-deploy:
+post-sanity post-sanity-hotspot post-sanity-jdk:
 	@if [ -r $(MESSAGE_FILE) ]; then \
 	  $(ECHO) "" ; \
 	  $(CAT) $(MESSAGE_FILE) ; \
@@ -190,36 +173,12 @@ ifeq ($(JDK_SRC_AVAILABLE), true)
 	   "" >> $(WARNING_FILE)
   endif
 endif
-ifeq ($(DEPLOY_SRC_AVAILABLE), true)
-  ifneq ($(BUILD_DEPLOY), true)
-	@$(ECHO) "WARNING: You are not building the DEPLOY sources.\n" \
-	   "        This will result in a development-only\n" \
-	   "        build of the JDK, lacking the plugin and javaws binaries.\n" \
-	   "" >> $(WARNING_FILE)
-  endif
-endif
-ifeq ($(INSTALL_SRC_AVAILABLE), true)
-  ifneq ($(BUILD_INSTALL), true)
-	@$(ECHO) "WARNING: You are not building the INSTALL sources.\n" \
-	   "        This will result in a development-only\n" \
-	   "        build of the JDK, lacking the installation bundles\n" \
-	   "" >> $(WARNING_FILE)
-  endif
-endif
-ifeq ($(SPONSORS_SRC_AVAILABLE), true)
-  ifneq ($(BUILD_SPONSORS), true)
-	@$(ECHO) "WARNING: You are not building the SPONSORS sources.\n" \
-	   "" >> $(WARNING_FILE)
-  endif
-endif
-ifndef OPENJDK
-  ifdef NO_DOCS
+ifdef NO_DOCS
 	@$(ECHO) "WARNING: Your build environment has the variable NO_DOCS\n" \
 	   "        defined. This will result in a development-only\n" \
 	   "        build of the JDK, lacking the documentation\n" \
 	   "        build.\n" \
 	   "" >> $(WARNING_FILE)
-  endif
 endif
 ifdef NO_IMAGES
 	@$(ECHO) "WARNING: Your build environment has the variable NO_IMAGES\n" \
@@ -294,7 +253,6 @@ endif
 	@$(ECHO) "Build Directory Structure:" >> $(MESSAGE_FILE)
 	@$(ECHO) "   CWD = `$(PWD)`" >> $(MESSAGE_FILE)
 	@$(ECHO) "   TOPDIR = $(TOPDIR)"  >> $(MESSAGE_FILE)
-	@$(ECHO) "   CONTROL_TOPDIR = $(CONTROL_TOPDIR)"  >> $(MESSAGE_FILE)
 ifeq ($(LANGTOOLS_SRC_AVAILABLE), true)
 	@$(ECHO) "   LANGTOOLS_TOPDIR = $(LANGTOOLS_TOPDIR)"  >> $(MESSAGE_FILE)
 endif
@@ -315,15 +273,6 @@ ifeq ($(JDK_SRC_AVAILABLE), true)
 endif
 ifeq ($(MOTIF_SRC_AVAILABLE), true)
 	@$(ECHO) "   MOTIF_TOPDIR = $(MOTIF_TOPDIR)"  >> $(MESSAGE_FILE)
-endif
-ifeq ($(DEPLOY_SRC_AVAILABLE), true)
-	@$(ECHO) "   DEPLOY_TOPDIR = $(DEPLOY_TOPDIR)"  >> $(MESSAGE_FILE)
-endif
-ifeq ($(INSTALL_SRC_AVAILABLE), true)
-	@$(ECHO) "   INSTALL_TOPDIR = $(INSTALL_TOPDIR)"  >> $(MESSAGE_FILE)
-endif
-ifeq ($(SPONSORS_SRC_AVAILABLE), true)
-	@$(ECHO) "   SPONSORS_TOPDIR = $(SPONSORS_TOPDIR)"  >> $(MESSAGE_FILE)
 endif
 	@$(ECHO) "" >> $(MESSAGE_FILE)
 ifneq ($(SKIP_COMPARE_IMAGES), true)
@@ -351,20 +300,10 @@ endif
 ifeq ($(JDK_SRC_AVAILABLE), true)
 	@$(ECHO) "   BUILD_JDK    = $(BUILD_JDK) " >> $(MESSAGE_FILE)
 endif
-ifeq ($(DEPLOY_SRC_AVAILABLE), true)
-	@$(ECHO) "   BUILD_DEPLOY  = $(BUILD_DEPLOY) " >> $(MESSAGE_FILE)
-endif
-ifeq ($(INSTALL_SRC_AVAILABLE), true)
-	@$(ECHO) "   BUILD_INSTALL = $(BUILD_INSTALL) " >> $(MESSAGE_FILE)
-endif
-ifeq ($(SPONSORS_SRC_AVAILABLE), true)
-	@$(ECHO) "   BUILD_SPONSORS = $(BUILD_SPONSORS) " >> $(MESSAGE_FILE)
-endif
 	@$(ECHO) "   DEBUG_CLASSFILES = $(DEBUG_CLASSFILES) " >> $(MESSAGE_FILE)
 	@$(ECHO) "   DEBUG_BINARIES = $(DEBUG_BINARIES) " >> $(MESSAGE_FILE)
 	@$(ECHO) "" >> $(MESSAGE_FILE)
 
 .PHONY: sanity settings pre-sanity insane \
-	post-sanity post-sanity-hotspot post-sanity-jdk post-sanity-motif \
-	post-sanity-install post-sanity-deploy \
+	post-sanity post-sanity-hotspot post-sanity-jdk \
 	alt_bootdir bootdir
