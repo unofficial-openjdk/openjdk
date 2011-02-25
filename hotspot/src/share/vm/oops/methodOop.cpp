@@ -934,7 +934,7 @@ methodHandle methodOopDesc::make_invoke_method(KlassHandle holder,
   assert(m->signature() == signature, "");
   assert(m->is_method_handle_invoke(), "");
 #ifdef CC_INTERP
-  ResultTypeFinder rtf(signature());
+  ResultTypeFinder rtf(signature);
   m->set_result_index(rtf.type());
 #endif
   m->compute_size_of_parameters(THREAD);
@@ -1386,7 +1386,7 @@ void CompressedLineNumberWriteStream::write_pair_regular(int bci_delta, int line
 }
 
 // See comment in methodOop.hpp which explains why this exists.
-#if defined(_M_AMD64) && MSC_VER >= 1400
+#if defined(_M_AMD64) && _MSC_VER >= 1400
 #pragma optimize("", off)
 void CompressedLineNumberWriteStream::write_pair(int bci, int line) {
   write_pair_inline(bci, line);
