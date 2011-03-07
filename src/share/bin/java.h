@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,6 +106,7 @@ void SetJavaLauncherPlatformProps(void);
 jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative);
 char *CheckJvmType(int *argc, char ***argv, jboolean speculative);
 void AddOption(char *str, void *info);
+void InitLauncher();
 
 /*
  * Make launcher spit debug output.

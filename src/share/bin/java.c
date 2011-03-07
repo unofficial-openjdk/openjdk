@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -220,7 +220,8 @@ main(int argc, char ** argv)
       }
     }
 
-
+    /* this should be called before anything else */
+    InitLauncher();
 
     /*
      * Make sure the specified version of the JRE is running.
@@ -501,9 +502,9 @@ JavaMain(void * _args)
             const char * format = "Could not find the main class: %s. Program will exit.";
             ReportExceptionDescription(env);
             message = (char *)JLI_MemAlloc((strlen(format) +
-					   strlen(classname)) * sizeof(char));
+                          strlen(classname)) * sizeof(char));
             messageDest = JNI_TRUE;
-	    sprintf(message, format, classname);
+            sprintf(message, format, classname);
             goto leave;
         }
         (*env)->ReleaseStringUTFChars(env, mainClassName, classname);
@@ -1105,7 +1106,7 @@ SelectVersion(int argc, char **argv, char **main_class)
             (void)strcat(env_entry, info.main_class);
         } else {
             ReportErrorMessage("Error: main-class: attribute exceeds system limits\n", JNI_TRUE);
-	    exit(1);
+            exit(1);
         }
     }
     (void)putenv(env_entry);
