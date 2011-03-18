@@ -2606,9 +2606,6 @@ class CommandLineFlags {
   develop(bool, CompileTheWorldPreloadClasses, true,                        \
           "Preload all classes used by a class before start loading")       \
                                                                             \
-  notproduct(bool, CompileTheWorldIgnoreInitErrors, false,                  \
-          "Compile all methods although class initializer failed")          \
-                                                                            \
   notproduct(intx, CompileTheWorldSafepointInterval, 100,                   \
           "Force a safepoint every n compiles so sweeper can keep up")      \
                                                                             \
@@ -3714,6 +3711,13 @@ class CommandLineFlags {
                                                                             \
   experimental(bool, AllowTransitionalJSR292, true,                         \
           "recognize pre-PFD formats of invokedynamic")                     \
+                                                                            \
+  experimental(bool, PreferTransitionalJSR292, false,                       \
+          "prefer pre-PFD APIs on boot class path, if they exist")          \
+                                                                            \
+  experimental(bool, AllowInvokeForInvokeGeneric, false,                    \
+          "accept MethodHandle.invoke and MethodHandle.invokeGeneric "      \
+          "as equivalent methods")                                          \
                                                                             \
   develop(bool, TraceInvokeDynamic, false,                                  \
           "trace internal invoke dynamic operations")                       \

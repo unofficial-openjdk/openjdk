@@ -1005,8 +1005,9 @@ static void no_shared_spaces() {
 }
 
 void Arguments::set_tiered_flags() {
+  // With tiered, set default policy to AdvancedThresholdPolicy, which is 3.
   if (FLAG_IS_DEFAULT(CompilationPolicyChoice)) {
-    FLAG_SET_DEFAULT(CompilationPolicyChoice, 2);
+    FLAG_SET_DEFAULT(CompilationPolicyChoice, 3);
   }
   if (CompilationPolicyChoice < 2) {
     vm_exit_during_initialization(
@@ -2704,10 +2705,6 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
   if (!FLAG_IS_DEFAULT(OptoLoopAlignment) && FLAG_IS_DEFAULT(MaxLoopPad)) {
     FLAG_SET_DEFAULT(MaxLoopPad, OptoLoopAlignment-1);
   }
-  // Temporary disable bulk zeroing reduction with G1. See CR 6627983.
-  if (UseG1GC) {
-    FLAG_SET_DEFAULT(ReduceBulkZeroing, false);
-  }
 #endif
 
   // If we are running in a headless jre, force java.awt.headless property
@@ -3043,7 +3040,11 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   // Turn off biased locking for locking debug mode flags,
   // which are subtlely different from each other but neither works with
   // biased locking.
-  if (!UseFastLocking || UseHeavyMonitors) {
+  if (UseHeavyMonitors
+#ifdef COMPILER1
+      || !UseFastLocking
+#endif // COMPILER1
+    ) {
     if (!FLAG_IS_DEFAULT(UseBiasedLocking) && UseBiasedLocking) {
       // flag set to true on command line; warn the user that they
       // can't enable biased locking here
