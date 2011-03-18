@@ -855,7 +855,7 @@ bool methodOopDesc::is_method_handle_invoke_name(vmSymbols::SID name_sid) {
   case vmSymbols::VM_SYMBOL_ENUM_NAME(invokeGeneric_name):
     return true;
   }
-  if (AllowTransitionalJSR292
+  if ((AllowTransitionalJSR292 || AllowInvokeForInvokeGeneric)
       && name_sid == vmSymbols::VM_SYMBOL_ENUM_NAME(invoke_name))
     return true;
   return false;
@@ -865,7 +865,7 @@ bool methodOopDesc::is_method_handle_invoke_name(vmSymbols::SID name_sid) {
 enum {
   _imcp_invoke_name = 1,        // utf8: 'invokeExact' or 'invokeGeneric'
   _imcp_invoke_signature,       // utf8: (variable Symbol*)
-  _imcp_method_type_value,      // string: (variable java/dyn/MethodType, sic)
+  _imcp_method_type_value,      // string: (variable java/lang/invoke/MethodType, sic)
   _imcp_limit
 };
 
@@ -1091,7 +1091,8 @@ void methodOopDesc::init_intrinsic_id() {
   vmSymbols::SID  name_id = vmSymbols::find_sid(name());
   if (name_id == vmSymbols::NO_SID)  return;
   vmSymbols::SID   sig_id = vmSymbols::find_sid(signature());
-  if (klass_id != vmSymbols::VM_SYMBOL_ENUM_NAME(java_dyn_MethodHandle)
+  if (klass_id != vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_MethodHandle)
+      && !(klass_id == vmSymbols::VM_SYMBOL_ENUM_NAME(java_dyn_MethodHandle) && AllowTransitionalJSR292)
       && sig_id == vmSymbols::NO_SID)  return;
   jshort flags = access_flags().as_short();
 
@@ -1117,7 +1118,8 @@ void methodOopDesc::init_intrinsic_id() {
     break;
 
   // Signature-polymorphic methods: MethodHandle.invoke*, InvokeDynamic.*.
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_dyn_MethodHandle):
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_dyn_MethodHandle):  // AllowTransitionalJSR292 ONLY
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_MethodHandle):
     if (is_static() || !is_native())  break;
     switch (name_id) {
     case vmSymbols::VM_SYMBOL_ENUM_NAME(invokeGeneric_name):
@@ -1127,11 +1129,12 @@ void methodOopDesc::init_intrinsic_id() {
       id = vmIntrinsics::_invokeExact;
       break;
     case vmSymbols::VM_SYMBOL_ENUM_NAME(invoke_name):
-      if (AllowTransitionalJSR292)  id = vmIntrinsics::_invokeExact;
+      if (AllowInvokeForInvokeGeneric)   id = vmIntrinsics::_invokeGeneric;
+      else if (AllowTransitionalJSR292)  id = vmIntrinsics::_invokeExact;
       break;
     }
     break;
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_dyn_InvokeDynamic):
+  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_InvokeDynamic):
     if (!is_static() || !is_native())  break;
     id = vmIntrinsics::_invokeDynamic;
     break;
