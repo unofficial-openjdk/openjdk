@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,11 +21,29 @@
  * questions.
  */
 
-// key: compiler.misc.diamond.invalid.arg
-// key: compiler.misc.diamond
-// key: compiler.err.cant.apply.diamond.1
+/**
+ * @test
+ * @bug     7027667, 7023591
+ *
+ * @summary Verifies that aa clipped rectangles are drawn, not filled.
+ *
+ * @run     main Test7027667
+ */
 
-class DiamondInvalidArg {
-    static class Foo<X extends Number & Comparable<Number>> { }
-    Foo<?> foo = new Foo<>();
+import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.*;
+import static java.awt.RenderingHints.*;
+
+public class Test7027667 {
+    public static void main(String[] args) throws Exception {
+        BufferedImage bImg = new BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = (Graphics2D) bImg.getGraphics();
+        g2d.setRenderingHint(KEY_ANTIALIASING, VALUE_ANTIALIAS_ON);
+        g2d.setClip(new Ellipse2D.Double(0, 0, 100, 100));
+        g2d.drawRect(10, 10, 100, 100);
+        if (new Color(bImg.getRGB(50, 50)).equals(Color.white)) {
+            throw new Exception("Rectangle should be drawn, not filled");
+        }
+    }
 }
