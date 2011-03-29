@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,28 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/*
- * @test
- * @bug 6319046
- * @run main/othervm ParseConfig
- * @summary Problem with parsing krb5.conf
+
+/* @test
+ * @bug 7023056
+ * @summary NPE from sun.security.util.ManifestEntryVerifier.verify during Maven build
  */
+import java.io.*;
+import java.util.jar.*;
 
-import sun.security.krb5.Config;
-
-public class ParseConfig {
+public class MevNPE {
     public static void main(String[] args) throws Exception {
-        System.setProperty("java.security.krb5.conf", System.getProperty("test.src", ".") +"/krb5.conf");
-        Config config = Config.getInstance();
-        config.listTable();
-
-        String sample = "kdc.example.com kdc2.example.com";
-        for ( int i = 0; i < 4; i++ ) {
-            String expected = config.getDefault("kdc", "EXAMPLE_" + i + ".COM");
-            if (!sample.equals(expected)) {
-                throw new Exception("krb5.conf: unexpected kdc value \"" +
-                        expected + "\"");
-            }
+        File f = new File(System.getProperty("test.src", "."), "Signed.jar");
+        try (JarFile jf = new JarFile(f, true)) {
+            try (InputStream s1 = jf.getInputStream(
+                    jf.getJarEntry(JarFile.MANIFEST_NAME))) {
+                s1.read(new byte[10000]);
+            };
+            try (InputStream s2 = jf.getInputStream(
+                    jf.getJarEntry(JarFile.MANIFEST_NAME))) {
+                s2.read(new byte[10000]);
+            };
         }
     }
 }
