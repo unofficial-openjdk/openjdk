@@ -543,7 +543,7 @@ jdk_text: java/text sun/text
 #  This could be a hotspot vm issue. So someday, change this to Samevm.
 JDK_ALL_TARGETS += jdk_tools1
 jdk_tools1: com/sun/jdi
-	$(call RunOthevmBatch)
+	$(call RunOthervmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has serious problems with these tests

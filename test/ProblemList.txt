@@ -332,6 +332,9 @@ java/io/StreamTokenizer/Comment.java			 	generic-all
 
 # jdk_lang
 
+# Fails on OpenSolaris, see 6992968
+java/lang/management/MemoryMXBean/CollectionUsageThresholdConcMarkSweepGC.sh generic-all
+
 # Solaris 10 sparc: main -- Error. Error while cleaning up threads after test
 java/lang/management/ThreadMXBean/ThreadBlockedCount.java	generic-all
 
@@ -583,6 +586,15 @@ javax/print/attribute/MediaMappingsTest.java 			generic-all
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
 
+# Fails on OpenSolaris, see 7032247
+java/net/InetAddress/GetLocalHostWithSM.java			generic-all
+
+# Fails on OpenSolaris, see 6935199
+java/net/CookieHandler/TestHttpCookie.java			generic-all
+
+# Fails on OpenSolaris, see 6423396
+com/sun/net/httpserver/bugs/B6373555.java			generic-all
+
 # Fails on Linux Fedora 9, 32bit and 64bit, Windows 2000 & 2003/X64
 #   samevm "cleaning up threads" issue, kind of passes,
 #   then jtreg says: Error while cleaning up threads after test
@@ -733,6 +745,9 @@ sun/net/www/protocol/http/DigestTest.java			generic-all
 ############################################################################
 
 # jdk_nio
+
+# Fails on OpenSolaris, see 6983794
+java/nio/channels/Selector/ConnectWrite.java			generic-all
 
 # Unused Charset subclass: sun.nio.cs.ext.MS932DB  RuntimeException
 java/nio/charset/Charset/NIOCharsetAvailabilityTest.java	generic-all
@@ -919,6 +934,16 @@ java/rmi/server/UnicastRemoteObject/unexportObject/UnexportLeak.java generic-all
 ############################################################################
 
 # jdk_security
+
+# Fails on OpenSolaris, see 7032257
+sun/security/pkcs11/ec/ReadCertificates.java			generic-all
+sun/security/pkcs11/ec/ReadPKCS12.java				generic-all
+sun/security/pkcs11/ec/TestCurves.java				generic-all
+sun/security/pkcs11/ec/TestECDSA.java				generic-all
+sun/security/pkcs11/ec/TestECGenSpec.java			generic-all
+sun/security/pkcs11/ec/TestKeyFactory.java			generic-all
+sun/security/ssl/com/sun/net/ssl/internal/www/protocol/https/HttpsURLConnection/CriticalSubjectAltName.java generic-all
+sun/security/validator/CertReplace.java				generic-all
 
 # java.security.cert.CertificateException: Certificate contains unsupported critical extensions: [2.5.29.17]
 sun/security/ssl/sun/net/www/protocol/https/HttpsURLConnection/DNSIdentities.java generic-all
@@ -1148,6 +1173,9 @@ com/sun/tools/extcheck/TestExtcheckArgs.java			generic-all
 ############################################################################
 
 # jdk_util
+
+# Fails on OpenSolaris, see 6876961
+java/util/ResourceBundle/Test4300693.java			generic-all
 
 # Fails Windows 2000, AssertionError: Some tests failed at Basic.java:96
 java/util/concurrent/TimeUnit/Basic.java			generic-all
