@@ -50,7 +50,7 @@ fi
 endef
 
 # Test target list for langtools repository
-LANGTOOLS_TEST_LIST = langtools_jtreg
+LANGTOOLS_TEST_LIST = all
 
 # Test target list for jdk repository
 JDK_TEST_LIST = \
@@ -78,9 +78,9 @@ all: $(JDK_TEST_LIST) $(LANGTOOLS_TEST_LIST)
 
 # Test targets
 $(LANGTOOLS_TEST_LIST):
-	@$(NO_STOPPING)$(call SUBDIR_TEST, $(LANGTOOLS_DIR), $(subst langtools_,,$@))
+	@$(NO_STOPPING)$(call SUBDIR_TEST, $(LANGTOOLS_DIR), $@ PRODUCT_HOME=$(LANGTOOLS_PRODUCT_HOME))
 $(JDK_TEST_LIST):
-	@$(NO_STOPPING)$(call SUBDIR_TEST, $(JDK_DIR), $@)
+	@$(NO_STOPPING)$(call SUBDIR_TEST, $(JDK_DIR), $@ PRODUCT_HOME=$(PRODUCT_HOME))
 
 clean:
 

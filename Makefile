@@ -450,7 +450,7 @@ test_summary: $(OUTPUTDIR)/test_failures.txt
 # Get failure list from log
 $(OUTPUTDIR)/test_failures.txt: $(OUTPUTDIR)/test_log.txt
 	@$(RM) $@
-	@( $(EGREP) '^FAILED:' $< || $(ECHO) "" ) > $@
+	@( $(EGREP) '^FAILED:' $< || $(ECHO) "" ) | $(NAWK) 'length>0' > $@
 
 # Get log file of all tests run
 JDK_TO_TEST := $(shell 							\
@@ -464,8 +464,12 @@ JDK_TO_TEST := $(shell 							\
 )
 $(OUTPUTDIR)/test_log.txt:
 	$(RM) $@
-	( $(CD) test &&                                     \
-          $(MAKE) NO_STOPPING=- PRODUCT_HOME=$(JDK_TO_TEST) \
+	( $(CD) test &&                                     		\
+          $(MAKE) NO_STOPPING=- 					\
+	          ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)			\
+		  ALT_JDK_IMPORT_PATH=$(JDK_TO_TEST) 			\
+		  PRODUCT_HOME=$(JDK_TO_TEST) 				\
+	          LANGTOOLS_PRODUCT_HOME=$(ABS_OUTPUTDIR)/langtools 	\
         ) | tee $@
 
 ################################################################
