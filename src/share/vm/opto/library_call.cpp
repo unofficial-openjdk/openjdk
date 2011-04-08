@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "compiler/compileBroker.hpp"
 #include "compiler/compileLog.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "opto/addnode.hpp"
@@ -403,19 +404,7 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
 
   if (kit.try_to_inline()) {
     if (PrintIntrinsics || PrintInlining NOT_PRODUCT( || PrintOptoInlining) ) {
-      if (jvms->has_method()) {
-        // Not a root compile.
-        tty->print("Inlining intrinsic %s%s at bci:%d in",
-                   vmIntrinsics::name_at(intrinsic_id()),
-                   (is_virtual() ? " (virtual)" : ""), kit.bci());
-        kit.caller()->print_short_name(tty);
-        tty->print_cr(" (%d bytes)", kit.caller()->code_size());
-      } else {
-        // Root compile
-        tty->print_cr("Generating intrinsic %s%s at bci:%d",
-                       vmIntrinsics::name_at(intrinsic_id()),
-                       (is_virtual() ? " (virtual)" : ""), kit.bci());
-      }
+      CompileTask::print_inlining(kit.callee(), jvms->depth() - 1, kit.bci(), is_virtual() ? "(intrinsic, virtual)" : "(intrinsic)");
     }
     C->gather_intrinsic_statistics(intrinsic_id(), is_virtual(), Compile::_intrinsic_worked);
     if (C->log()) {
