@@ -646,7 +646,9 @@ class WindowsPath extends AbstractPath {
 
     @Override
     public boolean startsWith(Path obj) {
-        WindowsPath other = toWindowsPath(obj);
+        if (!(Objects.requireNonNull(obj) instanceof WindowsPath))
+            return false;
+        WindowsPath other = (WindowsPath)obj;
 
         // if this path has a root component the given path's root must match
         if (!this.root.equalsIgnoreCase(other.root)) {
@@ -675,7 +677,9 @@ class WindowsPath extends AbstractPath {
 
     @Override
     public boolean endsWith(Path obj) {
-        WindowsPath other = toWindowsPath(obj);
+        if (!(Objects.requireNonNull(obj) instanceof WindowsPath))
+            return false;
+        WindowsPath other = (WindowsPath)obj;
 
         // other path is longer
         if (other.path.length() > this.path.length()) {
@@ -827,9 +831,9 @@ class WindowsPath extends AbstractPath {
     }
 
     @Override
-    public WindowsPath toRealPath(boolean resolveLinks) throws IOException {
+    public WindowsPath toRealPath(LinkOption... options) throws IOException {
         checkRead();
-        String rp = WindowsLinkSupport.getRealPath(this, resolveLinks);
+        String rp = WindowsLinkSupport.getRealPath(this, Util.followLinks(options));
         return createFromNormalizedPath(getFileSystem(), rp);
     }
 
