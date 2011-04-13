@@ -44,8 +44,17 @@ $(MAKE) -f Makefile.launcher \
 endef
 
 # Run MAKE $@ for all generic launchers
-define make-all-launchers
+ifndef BUILD_HEADLESS_ONLY
+define make-appletviewer
 $(call make-launcher, appletviewer, sun.applet.Main, , )
+endef
+else
+define make-appletviewer
+endef
+endif
+
+define make-all-launchers
+$(make-appletviewer)
 $(call make-launcher, apt, com.sun.tools.apt.Main, , )
 $(call make-launcher, extcheck, com.sun.tools.extcheck.Main, , )
 $(call make-launcher, idlj, com.sun.tools.corba.se.idl.toJavaPortable.Compile, , )

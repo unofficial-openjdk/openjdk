@@ -50,7 +50,10 @@ FILES_export = \
 	java/util/jar/JarFile.java
 
 ifneq ($(PLATFORM), windows)
-OTHER_CFLAGS += -DUSE_MMAP
+  # Use mmap unless explicitly disallowed
+  ifneq ($(LIBZIP_CAN_USE_MMAP),false)
+    OTHER_CFLAGS += -DUSE_MMAP
+  endif
 endif
 
 #

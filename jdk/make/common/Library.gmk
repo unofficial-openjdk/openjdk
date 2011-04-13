@@ -78,7 +78,7 @@ LINKER=$(LINK.c)
 endif
 
 $(ACTUAL_LIBRARY):: $(INIT) $(TEMPDIR) $(LIBDIR) $(BINDIR) $(EXTDIR) classheaders
-
+	@$(ECHO) Building lib:$(ACTUAL_LIBRARY) 
 #
 # COMPILE_APPROACH: Different approaches to compile up the native object
 #   files as quickly as possible.

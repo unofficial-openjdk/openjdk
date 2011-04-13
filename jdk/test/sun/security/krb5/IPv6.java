@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 6877357 6885166
+ * @run main/othervm IPv6
  * @summary IPv6 address does not work
  */
 

@@ -46,5 +46,7 @@ include $(BUILDDIR)/common/Classes.gmk
 
 build:
 	$(call make-launcher, keytool, sun.security.tools.KeyTool, , )
+ifndef BUILD_HEADLESS_ONLY
 	$(call make-launcher, policytool, sun.security.tools.policytool.PolicyTool, , )
+endif
 
