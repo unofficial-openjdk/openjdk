@@ -249,6 +249,7 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
                            JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
   { "UseParallelOldGCDensePrefix",
                            JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
+  { "AllowTransitionalJSR292",       JDK_Version::jdk(7), JDK_Version::jdk(8) },
   { NULL, JDK_Version(0), JDK_Version(0) }
 };
 
@@ -963,6 +964,16 @@ void Arguments::set_mode_flags(Mode mode) {
   UseInterpreter             = true;
   UseCompiler                = true;
   UseLoopCounter             = true;
+
+#ifndef ZERO
+  // Turn these off for mixed and comp.  Leave them on for Zero.
+  if (FLAG_IS_DEFAULT(UseFastAccessorMethods)) {
+    UseFastAccessorMethods = mode == _int;
+  }
+  if (FLAG_IS_DEFAULT(UseFastEmptyMethods)) {
+    UseFastEmptyMethods = mode == _int;
+  }
+#endif
 
   // Default values may be platform/compiler dependent -
   // use the saved values
