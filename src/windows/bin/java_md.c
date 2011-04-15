@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,19 +60,6 @@ GetArch()
 #endif
 }
 
-typedef BOOL (WINAPI *pfn_SetDllDirectory)(LPCTSTR);
-
-void
-InitLauncher() {
-    // Launcher links with kernel32
-    HMODULE hKernel32 = GetModuleHandle(TEXT("kernel32.dll"));
-    pfn_SetDllDirectory fn = (pfn_SetDllDirectory) GetProcAddress(hKernel32,
-                                "SetDllDirectory");
-    if (fn != NULL) {
-        // Exclude CWD from Dll search path
-        fn("");
-    }
-}
 
 /*
  *
