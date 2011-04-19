@@ -557,4 +557,3 @@ void JavaCallArguments::verify(methodHandle method, BasicType return_type,
   sc.check_doing_return(true);
   sc.iterate_returntype();
 }
-

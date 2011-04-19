@@ -1308,8 +1308,8 @@ void instanceKlass::set_cached_itable_index(size_t idnum, int index) {
     if (indices == NULL || (length = (size_t)indices[0]) <= idnum) {
       size_t size = MAX2(idnum+1, (size_t)idnum_allocated_count());
       int* new_indices = NEW_C_HEAP_ARRAY(int, size+1);
-      new_indices[0] = (int)size;
-      // copy any existing entries
+      new_indices[0] =(int)size;  // array size held in the first element
+      // Copy the existing entries, if any
       size_t i;
       for (i = 0; i < length; i++) {
         new_indices[i+1] = indices[i+1];

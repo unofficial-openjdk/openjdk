@@ -409,7 +409,7 @@ recompute:
 
 /*
  * ====================================================
- * Copyright (c) 1993 Oracle and/or its affilates. All rights reserved.
+ * Copyright (c) 1993, Oracle and/or its affiliates. All rights reserved.
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this

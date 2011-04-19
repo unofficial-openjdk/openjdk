@@ -63,7 +63,7 @@ double copysign(double x, double y) {
 
 /*
  * ====================================================
- * Copyright (c) 1998 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
  *
  * Developed at SunSoft, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this

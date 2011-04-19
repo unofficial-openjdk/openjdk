@@ -1938,7 +1938,7 @@ SWPointer::SWPointer(MemNode* mem, SuperWord* slp) :
   }
   // Match AddP(base, AddP(ptr, k*iv [+ invariant]), constant)
   Node* base = adr->in(AddPNode::Base);
-  //unsafe reference could not be aligned appropriately without runtime checking
+  // Unsafe reference could not be aligned appropriately without runtime checking
   if (base == NULL || base->bottom_type() == Type::TOP) {
     assert(!valid(), "unsafe access");
     return;

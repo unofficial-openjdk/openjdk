@@ -2258,15 +2258,15 @@ bool SystemDictionary::add_loader_constraint(symbolHandle class_name,
   unsigned int d_hash2 = dictionary()->compute_hash(constraint_name, class_loader2);
   int d_index2 = dictionary()->hash_to_index(d_hash2);
   {
-  MutexLocker mu_s(SystemDictionary_lock, THREAD);
+    MutexLocker mu_s(SystemDictionary_lock, THREAD);
 
-  // Better never do a GC while we're holding these oops
-  No_Safepoint_Verifier nosafepoint;
+    // Better never do a GC while we're holding these oops
+    No_Safepoint_Verifier nosafepoint;
 
-  klassOop klass1 = find_class(d_index1, d_hash1, constraint_name, class_loader1);
-  klassOop klass2 = find_class(d_index2, d_hash2, constraint_name, class_loader2);
-  return constraints()->add_entry(constraint_name, klass1, class_loader1,
-                                  klass2, class_loader2);
+    klassOop klass1 = find_class(d_index1, d_hash1, constraint_name, class_loader1);
+    klassOop klass2 = find_class(d_index2, d_hash2, constraint_name, class_loader2);
+    return constraints()->add_entry(constraint_name, klass1, class_loader1,
+                                    klass2, class_loader2);
   }
 }
 
