@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -254,6 +254,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   // sethi.  This only does the sethi.  The disp field (bottom 10 bits)
   // must be handled separately.
   static void set_data64_sethi(address instaddr, intptr_t x);
+  static void verify_data64_sethi(address instaddr, intptr_t x);
 
   // combine the fields of a sethi/simm13 pair (simm13 = or, add, jmpl, ld/st)
   static int data32(int sethi_insn, int arith_insn) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,6 +122,7 @@ class CodeCache : AllStatic {
   // GC support
   static void gc_epilogue();
   static void gc_prologue();
+  static void verify_oops();
   // If "unloading_occurred" is true, then unloads (i.e., breaks root links
   // to) any unmarked codeBlobs in the cache.  Sets "marked_for_unloading"
   // to "true" iff some code got unloaded.

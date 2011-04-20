@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -794,6 +794,14 @@ void oop_Relocation::fix_oop_relocation() {
   if (!oop_is_immediate()) {
     // get the oop from the pool, and re-insert it into the instruction:
     set_value(value());
+  }
+}
+
+
+void oop_Relocation::verify_oop_relocation() {
+  if (!oop_is_immediate()) {
+    // get the oop from the pool, and re-insert it into the instruction:
+    verify_value(value());
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "opto/cfgnode.hpp"
 #include "opto/connode.hpp"
 #include "opto/divnode.hpp"
+#include "opto/graphKit.hpp"
 #include "opto/mulnode.hpp"
 #include "opto/phaseX.hpp"
 #include "opto/subnode.hpp"
@@ -160,7 +161,7 @@ class IdealKit: public StackObj {
                bool push_new_state = true);
   void else_();
   void end_if();
-  void loop(IdealVariable& iv, Node* init, BoolTest::mask cmp, Node* limit,
+  void loop(GraphKit* gkit, int nargs, IdealVariable& iv, Node* init, BoolTest::mask cmp, Node* limit,
             float prob = PROB_LIKELY(0.9), float cnt = COUNT_UNKNOWN);
   void end_loop();
   Node* make_label(int goto_ct);

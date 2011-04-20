@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,21 +44,15 @@ public class StringTable extends sun.jvm.hotspot.utilities.Hashtable {
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("StringTable");
     theTableField  = type.getAddressField("_the_table");
-    stringTableSize = db.lookupIntConstant("StringTable::string_table_size").intValue();
   }
 
   // Fields
   private static AddressField theTableField;
-  private static int stringTableSize;
 
   // Accessors
   public static StringTable getTheTable() {
     Address tmp = theTableField.getValue();
     return (StringTable) VMObjectFactory.newObject(StringTable.class, tmp);
-  }
-
-  public static int getStringTableSize() {
-    return stringTableSize;
   }
 
   public StringTable(Address addr) {

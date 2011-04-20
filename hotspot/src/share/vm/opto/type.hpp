@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -988,8 +988,8 @@ public:
 
   static const TypeNarrowOop *make( const TypePtr* type);
 
-  static const TypeNarrowOop* make_from_constant(ciObject* con) {
-    return make(TypeOopPtr::make_from_constant(con));
+  static const TypeNarrowOop* make_from_constant(ciObject* con, bool require_constant = false) {
+    return make(TypeOopPtr::make_from_constant(con, require_constant));
   }
 
   // returns the equivalent ptr type for this compressed pointer

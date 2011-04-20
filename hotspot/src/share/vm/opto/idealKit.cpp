@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,8 +154,18 @@ void IdealKit::end_if() {
 //
 // Pushes the loop top cvstate first, then the else (loop exit) cvstate
 // onto the stack.
-void IdealKit::loop(IdealVariable& iv, Node* init, BoolTest::mask relop, Node* limit, float prob, float cnt) {
+void IdealKit::loop(GraphKit* gkit, int nargs, IdealVariable& iv, Node* init, BoolTest::mask relop, Node* limit, float prob, float cnt) {
   assert((state() & (BlockS|LoopS|IfThenS|ElseS)), "bad state for new loop");
+
+  // Sync IdealKit and graphKit.
+  gkit->set_all_memory(this->merged_memory());
+  gkit->set_control(this->ctrl());
+  // Add loop predicate.
+  gkit->add_predicate(nargs);
+  // Update IdealKit memory.
+  this->set_all_memory(gkit->merged_memory());
+  this->set_ctrl(gkit->control());
+
   set(iv, init);
   Node* head = make_label(1);
   bind(head);

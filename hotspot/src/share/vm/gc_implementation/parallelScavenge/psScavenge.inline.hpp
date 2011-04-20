@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,5 +85,22 @@ inline void PSScavenge::copy_and_push_safe_barrier(PSPromotionManager* pm,
     }
   }
 }
+
+class PSScavengeRootsClosure: public OopClosure {
+ private:
+  PSPromotionManager* _promotion_manager;
+
+ protected:
+  template <class T> void do_oop_work(T *p) {
+    if (PSScavenge::should_scavenge(p)) {
+      // We never card mark roots, maybe call a func without test?
+      PSScavenge::copy_and_push_safe_barrier(_promotion_manager, p);
+    }
+  }
+ public:
+  PSScavengeRootsClosure(PSPromotionManager* pm) : _promotion_manager(pm) { }
+  void do_oop(oop* p)       { PSScavengeRootsClosure::do_oop_work(p); }
+  void do_oop(narrowOop* p) { PSScavengeRootsClosure::do_oop_work(p); }
+};
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_PARALLELSCAVENGE_PSSCAVENGE_INLINE_HPP
