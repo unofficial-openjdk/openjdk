@@ -311,7 +311,8 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
                 DistributionPointFetcher.getInstance();
             // all CRLs returned by the DP Fetcher have also been verified
             mApprovedCRLs.addAll(store.getCRLs(sel, signFlag, prevKey,
-                mSigProvider, mStores, reasonsMask, trustAnchors));
+                mSigProvider, mStores, reasonsMask, trustAnchors,
+                mParams.getDate()));
         } catch (Exception e) {
             if (debug != null) {
                 debug.println("CrlRevocationChecker.verifyRevocationStatus() "
@@ -788,7 +789,7 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
                 for (X509CRL crl : crls) {
                     if (dpf.verifyCRL(certImpl, point, crl, reasonsMask,
                             signFlag, prevKey, mSigProvider,
-                            trustAnchors, mStores)) {
+                            trustAnchors, mStores, mParams.getDate())) {
                         results.add(crl);
                     }
                 }
