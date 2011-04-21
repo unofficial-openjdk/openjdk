@@ -2120,7 +2120,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 }
             }
             text = (isplaintext) ?
-                refMemName : getCode() + refMemName + getCodeEnd();
+                refMemName : getCode() + Util.escapeHtmlChars(refMemName) + getCodeEnd();
 
             result.append(getDocLink(LinkInfoImpl.CONTEXT_SEE_TAG, containing,
                 refMem, (label.length() == 0)? text: label, false));
@@ -2523,8 +2523,9 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     }
 
     /**
-     * According to the Java Language Specifications, all the outer classes
-     * and static nested classes are core classes.
+     * According to
+     * <cite>The Java&trade; Language Specification</cite>,
+     * all the outer classes and static nested classes are core classes.
      */
     public boolean isCoreClass(ClassDoc cd) {
         return cd.containingClass() == null || cd.isStatic();
