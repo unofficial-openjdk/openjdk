@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,38 +23,21 @@
  * questions.
  */
 
-package java.lang;
+package sun.misc;
+
+import javax.security.auth.kerberos.KeyTab;
+import sun.security.krb5.EncryptionKey;
+import sun.security.krb5.PrincipalName;
 
 /**
- * Thrown when the Java Virtual Machine cannot allocate an object
- * because it is out of memory, and no more memory could be made
- * available by the garbage collector.
- *
- * {@code OutOfMemoryError} objects may be constructed by the virtual
- * machine as if {@linkplain Throwable#Throwable(String, Throwable,
- * boolean, boolean) suppression were disabled and/or the stack trace was not
- * writable}.
- *
- * @author  unascribed
- * @since   JDK1.0
+ * An unsafe tunnel to get non-public access to classes in the
+ * javax.security.auth.kerberos package.
  */
-public class OutOfMemoryError extends VirtualMachineError {
-    private static final long serialVersionUID = 8228564086184010517L;
-
+public interface JavaxSecurityAuthKerberosAccess {
     /**
-     * Constructs an {@code OutOfMemoryError} with no detail message.
+     * Returns keys for a principal in a keytab.
+     * @return the keys, never null, can be empty.
      */
-    public OutOfMemoryError() {
-        super();
-    }
-
-    /**
-     * Constructs an {@code OutOfMemoryError} with the specified
-     * detail message.
-     *
-     * @param   s   the detail message.
-     */
-    public OutOfMemoryError(String s) {
-        super(s);
-    }
+    public EncryptionKey[] keyTabGetEncryptionKeys(
+            KeyTab ktab, PrincipalName principal);
 }
