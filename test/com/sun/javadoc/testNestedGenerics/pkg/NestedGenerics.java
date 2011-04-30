@@ -21,20 +21,11 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 7030150
- * @summary Type inference for generic instance creation failed for formal type parameter
- *          check that diamond in return context works w/o problems
- * @compile Pos02.java
- */
+package pkg;
 
-class Pos02<X> {
+import java.util.Map;
 
-    Pos02(X x) {}
-
-
-    Pos02<X> test(X x) {
-        return new Pos02<>(x);
-    }
+/** Contains {@link #foo} */
+public class NestedGenerics {
+  public static <A> void foo(Map<A, Map<A, A>> map) {}
 }

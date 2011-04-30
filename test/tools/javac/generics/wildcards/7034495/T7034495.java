@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,22 @@
  * questions.
  */
 
-import javax.lang.model.element.ElementKind;
+/*
+ * @test
+ * @bug     7034495
+ * @summary Javac asserts on usage of wildcards in bounds
+ * @compile/fail/ref=T7034495.out -XDrawDiagnostics T7034495.java
+ */
+class T7034495 {
 
-@Check
-class Test {
-
-    class A extends Exception {
-        @Member(ElementKind.METHOD)
-        public void m() {};
-        @Member(ElementKind.FIELD)
-        public Object f;
+    interface A<T> {
+        T foo();
     }
 
-    class B1 extends A {}
-    class B2 extends A {}
-
-    void test(){
-        try {
-            if (true)
-                throw new B1();
-            else
-                throw new B2();
-        }
-        catch(@UnionTypeInfo({"Test.B1", "Test.B2"}) B1 | B2 ex) { }
+    interface B<T> {
+        T foo();
     }
+
+    interface C<T extends A<?> & B<?>> { }
+
 }

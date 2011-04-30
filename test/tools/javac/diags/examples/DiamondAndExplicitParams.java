@@ -21,24 +21,14 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 7030150
- * @summary Type inference for generic instance creation failed for formal type parameter
- *          check that redundant type-arguments on non-generic constructor are accepted
- * @compile Pos01.java
- */
+// key: compiler.misc.diamond.and.explicit.params
+// key: compiler.err.cant.apply.diamond.1
 
-class Pos01 {
-
+class DiamondAndAnonClass {
     static class Foo<X> {
-        Foo(X t) {}
+        <Z> Foo() {}
     }
-
-    Foo<Integer> fi1 = new Foo<>(1);
-    Foo<Integer> fi2 = new Foo<Integer>(1);
-    Foo<Integer> fi3 = new <String> Foo<>(1);
-    Foo<Integer> fi4 = new <String> Foo<Integer>(1);
-    Foo<Integer> fi5 = new <String, String> Foo<>(1);
-    Foo<Integer> fi6 = new <String, String> Foo<Integer>(1);
+    void m() {
+        Foo<String> foo = new <Integer> Foo<>();
+    }
 }

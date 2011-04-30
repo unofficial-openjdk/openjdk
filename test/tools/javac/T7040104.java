@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,52 @@
  * questions.
  */
 
-import javax.lang.model.element.ElementKind;
+/*
+ * @test
+ * @bug 7040104
+ * @summary javac NPE on Object a[]; Object o = (a=null)[0];
+ */
 
-@Check
-class Test {
-
-    class A extends Exception {
-        @Member(ElementKind.METHOD)
-        public void m() {};
-        @Member(ElementKind.FIELD)
-        public Object f;
+public class T7040104 {
+    public static void main(String[] args) {
+        T7040104 t = new T7040104();
+        t.test1();
+        t.test2();
+        t.test3();
+        if (t.npeCount != 3) {
+            throw new AssertionError();
+        }
     }
 
-    class B1 extends A {}
-    class B2 extends A {}
+    int npeCount = 0;
 
-    void test(){
+    void test1() {
+        Object a[];
         try {
-            if (true)
-                throw new B1();
-            else
-                throw new B2();
+            Object o = (a = null)[0];
         }
-        catch(@UnionTypeInfo({"Test.B1", "Test.B2"}) B1 | B2 ex) { }
+        catch (NullPointerException npe) {
+            npeCount++;
+        }
+    }
+
+    void test2() {
+        Object a[][];
+        try {
+            Object o = (a = null)[0][0];
+        }
+        catch (NullPointerException npe) {
+            npeCount++;
+        }
+    }
+
+    void test3() {
+        Object a[][][];
+        try {
+            Object o = (a = null)[0][0][0];
+        }
+        catch (NullPointerException npe) {
+            npeCount++;
+        }
     }
 }
