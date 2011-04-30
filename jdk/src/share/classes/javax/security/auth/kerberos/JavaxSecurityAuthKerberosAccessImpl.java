@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,27 +23,16 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6708550
- * @summary Tests File encoding
- * @author Sergey Malenkov
- */
+package javax.security.auth.kerberos;
 
-import java.io.File;
+import sun.misc.JavaxSecurityAuthKerberosAccess;
+import sun.security.krb5.EncryptionKey;
+import sun.security.krb5.PrincipalName;
 
-public final class java_io_File extends AbstractTest<File> {
-    public static void main(String[] args) {
-        new java_io_File().test(true);
-    }
-
-    @Override
-    protected File getObject() {
-        return new File("test.txt"); // NON-NLS: local file
-    }
-
-    @Override
-    protected File getAnotherObject() {
-        return new File("/pub/demo/"); // NON-NLS: path
+class JavaxSecurityAuthKerberosAccessImpl
+        implements JavaxSecurityAuthKerberosAccess {
+    public EncryptionKey[] keyTabGetEncryptionKeys(
+            KeyTab ktab, PrincipalName principal) {
+        return ktab.getEncryptionKeys(principal);
     }
 }
