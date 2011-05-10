@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,17 @@
 
 // JvmtiTagMap
 
-#ifndef _JAVA_JVMTI_TAG_MAP_H_
-#define _JAVA_JVMTI_TAG_MAP_H_
+#ifndef SHARE_VM_PRIMS_JVMTITAGMAP_HPP
+#define SHARE_VM_PRIMS_JVMTITAGMAP_HPP
+
+#ifndef JVMTI_KERNEL
+#include "gc_interface/collectedHeap.hpp"
+#include "jvmtifiles/jvmti.h"
+#include "jvmtifiles/jvmtiEnv.hpp"
+#include "memory/allocation.hpp"
+#include "memory/genCollectedHeap.hpp"
+#include "memory/universe.hpp"
+#endif
 
 // forward references
 class JvmtiTagHashmap;
@@ -36,17 +45,12 @@ class JvmtiTagMap :  public CHeapObj {
  private:
 
   enum{
-    n_hashmaps = 2,                                 // encapsulates 2 hashmaps
-    max_free_entries = 4096                         // maximum number of free entries per env
+    max_free_entries = 4096         // maximum number of free entries per env
   };
-
-  // memory region for young generation
-  static MemRegion _young_gen;
-  static void get_young_generation();
 
   JvmtiEnv*             _env;                       // the jvmti environment
   Mutex                 _lock;                      // lock for this tag map
-  JvmtiTagHashmap*      _hashmap[n_hashmaps];       // the hashmaps
+  JvmtiTagHashmap*      _hashmap;                   // the hashmap
 
   JvmtiTagHashmapEntry* _free_entries;              // free list for this environment
   int _free_entries_count;                          // number of entries on the free list
@@ -58,11 +62,7 @@ class JvmtiTagMap :  public CHeapObj {
   inline Mutex* lock()                      { return &_lock; }
   inline JvmtiEnv* env() const              { return _env; }
 
-  // rehash tags maps for generation start to end
-  void rehash(int start, int end);
-
-  // indicates if the object is in the young generation
-  static bool is_in_young(oop o);
+  void do_weak_oops(BoolObjectClosure* is_alive, OopClosure* f);
 
   // iterate over all entries in this tag map
   void entry_iterate(JvmtiTagHashmapEntryClosure* closure);
@@ -72,11 +72,10 @@ class JvmtiTagMap :  public CHeapObj {
   // indicates if this tag map is locked
   bool is_locked()                          { return lock()->is_locked(); }
 
-  // return the appropriate hashmap for a given object
-  JvmtiTagHashmap* hashmap_for(oop o);
+  JvmtiTagHashmap* hashmap() { return _hashmap; }
 
   // create/destroy entries
-  JvmtiTagHashmapEntry* create_entry(jweak ref, jlong tag);
+  JvmtiTagHashmapEntry* create_entry(oop ref, jlong tag);
   void destroy_entry(JvmtiTagHashmapEntry* entry);
 
   // returns true if the hashmaps are empty
@@ -125,11 +124,8 @@ class JvmtiTagMap :  public CHeapObj {
                                    jint* count_ptr, jobject** object_result_ptr,
                                    jlong** tag_result_ptr);
 
-  // call post-GC to rehash the tag maps.
-  static void gc_epilogue(bool full);
-
-  // call after referencing processing has completed (CMS)
-  static void cms_ref_processing_epilogue();
+  static void weak_oops_do(
+      BoolObjectClosure* is_alive, OopClosure* f) KERNEL_RETURN;
 };
 
-#endif   /* _JAVA_JVMTI_TAG_MAP_H_ */
+#endif // SHARE_VM_PRIMS_JVMTITAGMAP_HPP

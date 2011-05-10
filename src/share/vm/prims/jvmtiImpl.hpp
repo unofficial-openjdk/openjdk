@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,25 @@
  *
  */
 
+#ifndef SHARE_VM_PRIMS_JVMTIIMPL_HPP
+#define SHARE_VM_PRIMS_JVMTIIMPL_HPP
+
+#ifndef JVMTI_KERNEL
+
+#include "classfile/systemDictionary.hpp"
+#include "jvmtifiles/jvmti.h"
+#include "oops/objArrayOop.hpp"
+#include "prims/jvmtiEnvThreadState.hpp"
+#include "prims/jvmtiEventController.hpp"
+#include "prims/jvmtiTrace.hpp"
+#include "prims/jvmtiUtil.hpp"
+#include "runtime/stackValueCollection.hpp"
+#include "runtime/vm_operations.hpp"
+
 //
 // Forward Declarations
 //
 
-class JvmtiRawMonitor;
 class JvmtiBreakpoint;
 class JvmtiBreakpoints;
 
@@ -103,6 +117,7 @@ public:
   void clear();
   // apply f to every element and update the cache
   void oops_do(OopClosure* f);
+  // update the cache after a full gc
   void gc_epilogue();
 };
 
@@ -264,13 +279,13 @@ public:
 
   int length();
   void oops_do(OopClosure* f);
-  void gc_epilogue();
   void print();
 
   int  set(JvmtiBreakpoint& bp);
   int  clear(JvmtiBreakpoint& bp);
   void clearall_in_class_at_safepoint(klassOop klass);
   void clearall();
+  void gc_epilogue();
 };
 
 
@@ -327,76 +342,6 @@ bool JvmtiCurrentBreakpoints::is_breakpoint(address bcp) {
     return false;
 }
 
-
-///////////////////////////////////////////////////////////////
-//
-// class JvmtiRawMonitor
-//
-// Used by JVMTI methods: All RawMonitor methods (CreateRawMonitor, EnterRawMonitor, etc.)
-//
-// Wrapper for ObjectMonitor class that saves the Monitor's name
-//
-
-class JvmtiRawMonitor : public ObjectMonitor  {
-private:
-  int           _magic;
-  char *        _name;
-  // JVMTI_RM_MAGIC is set in contructor and unset in destructor.
-  enum { JVMTI_RM_MAGIC = (int)(('T' << 24) | ('I' << 16) | ('R' << 8) | 'M') };
-
-public:
-  JvmtiRawMonitor(const char *name);
-  ~JvmtiRawMonitor();
-  int            magic()   { return _magic;  }
-  const char *get_name()   { return _name; }
-  bool        is_valid();
-};
-
-// Onload pending raw monitors
-// Class is used to cache onload or onstart monitor enter
-// which will transition into real monitor when
-// VM is fully initialized.
-class JvmtiPendingMonitors : public AllStatic {
-
-private:
-  static GrowableArray<JvmtiRawMonitor*> *_monitors; // Cache raw monitor enter
-
-  inline static GrowableArray<JvmtiRawMonitor*>* monitors() { return _monitors; }
-
-  static void dispose() {
-    delete monitors();
-  }
-
-public:
-  static void enter(JvmtiRawMonitor *monitor) {
-    monitors()->append(monitor);
-  }
-
-  static int count() {
-    return monitors()->length();
-  }
-
-  static void destroy(JvmtiRawMonitor *monitor) {
-    while (monitors()->contains(monitor)) {
-      monitors()->remove(monitor);
-    }
-  }
-
-  // Return false if monitor is not found in the list.
-  static bool exit(JvmtiRawMonitor *monitor) {
-    if (monitors()->contains(monitor)) {
-      monitors()->remove(monitor);
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  static void transition_raw_monitors();
-};
-
-
-
 ///////////////////////////////////////////////////////////////
 // The get/set local operations must only be done by the VM thread
 // because the interpreter version needs to access oop maps, which can
@@ -411,7 +356,7 @@ public:
 // to the thread simultaneously.
 //
 class VM_GetOrSetLocal : public VM_Operation {
-private:
+ protected:
   JavaThread* _thread;
   JavaThread* _calling_thread;
   jint        _depth;
@@ -420,6 +365,10 @@ private:
   jvalue      _value;
   javaVFrame* _jvf;
   bool        _set;
+
+  // It is possible to get the receiver out of a non-static native wrapper
+  // frame.  Use VM_GetReceiver to do this.
+  virtual bool getting_receiver() const { return false; }
 
   jvmtiError  _result;
 
@@ -451,6 +400,15 @@ public:
   static bool is_assignable(const char* ty_sign, Klass* klass, Thread* thread);
 };
 
+class VM_GetReceiver : public VM_GetOrSetLocal {
+ protected:
+  virtual bool getting_receiver() const { return true; }
+
+ public:
+  VM_GetReceiver(JavaThread* thread, JavaThread* calling_thread, jint depth);
+  const char* name() const                       { return "get receiver"; }
+};
+
 
 ///////////////////////////////////////////////////////////////
 //
@@ -473,5 +431,9 @@ public:
   static void print();
 };
 
+#endif // !JVMTI_KERNEL
+
 // Utility macro that checks for NULL pointers:
 #define NULL_CHECK(X, Y) if ((X) == NULL) { return (Y); }
+
+#endif // SHARE_VM_PRIMS_JVMTIIMPL_HPP

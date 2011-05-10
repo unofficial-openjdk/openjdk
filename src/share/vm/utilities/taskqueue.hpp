@@ -22,6 +22,32 @@
  *
  */
 
+#ifndef SHARE_VM_UTILITIES_TASKQUEUE_HPP
+#define SHARE_VM_UTILITIES_TASKQUEUE_HPP
+
+#include "memory/allocation.hpp"
+#include "memory/allocation.inline.hpp"
+#include "runtime/mutex.hpp"
+#include "utilities/stack.hpp"
+#ifdef TARGET_OS_ARCH_linux_x86
+# include "orderAccess_linux_x86.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_sparc
+# include "orderAccess_linux_sparc.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_zero
+# include "orderAccess_linux_zero.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_solaris_x86
+# include "orderAccess_solaris_x86.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_solaris_sparc
+# include "orderAccess_solaris_sparc.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_windows_x86
+# include "orderAccess_windows_x86.inline.hpp"
+#endif
+
 // Simple TaskQueue stats that are collected by default in debug builds.
 
 #if !defined(TASKQUEUE_STATS) && defined(ASSERT)
@@ -305,6 +331,12 @@ bool GenericTaskQueue<E, N>::push_slow(E t, uint dirty_n_elems) {
   return false;
 }
 
+// pop_local_slow() is done by the owning thread and is trying to
+// get the last task in the queue.  It will compete with pop_global()
+// that will be used by other threads.  The tag age is incremented
+// whenever the queue goes empty which it will do here if this thread
+// gets the last task or in pop_global() if the queue wraps (top == 0
+// and pop_global() succeeds, see pop_global()).
 template<class E, unsigned int N>
 bool GenericTaskQueue<E, N>::pop_local_slow(uint localBot, Age oldAge) {
   // This queue was observed to contain exactly one element; either this
@@ -609,6 +641,9 @@ public:
   // in an MT-safe manner, once the previous round of use of
   // the terminator is finished.
   void reset_for_reuse();
+  // Same as above but the number of parallel threads is set to the
+  // given number.
+  void reset_for_reuse(int n_threads);
 
 #ifdef TRACESPINNING
   static uint total_yields() { return _total_yields; }
@@ -754,3 +789,6 @@ typedef GenericTaskQueueSet<OopStarTaskQueue> OopStarTaskQueueSet;
 
 typedef OverflowTaskQueue<size_t>             RegionTaskQueue;
 typedef GenericTaskQueueSet<RegionTaskQueue>  RegionTaskQueueSet;
+
+
+#endif // SHARE_VM_UTILITIES_TASKQUEUE_HPP

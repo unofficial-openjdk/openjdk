@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,13 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_binaryTreeDictionary.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/concurrentMarkSweep/binaryTreeDictionary.hpp"
+#include "gc_implementation/shared/allocationStats.hpp"
+#include "gc_implementation/shared/spaceDecorator.hpp"
+#include "memory/space.inline.hpp"
+#include "runtime/globals.hpp"
+#include "utilities/ostream.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // A binary tree based search structure for free blocks.
@@ -256,7 +261,7 @@ TreeChunk* TreeList::head_as_TreeChunk() {
 }
 
 TreeChunk* TreeList::first_available() {
-  guarantee(head() != NULL, "The head of the list cannot be NULL");
+  assert(head() != NULL, "The head of the list cannot be NULL");
   FreeChunk* fc = head()->next();
   TreeChunk* retTC;
   if (fc == NULL) {
@@ -272,7 +277,7 @@ TreeChunk* TreeList::first_available() {
 // those in the list for this size; potentially slow and expensive,
 // use with caution!
 TreeChunk* TreeList::largest_address() {
-  guarantee(head() != NULL, "The head of the list cannot be NULL");
+  assert(head() != NULL, "The head of the list cannot be NULL");
   FreeChunk* fc = head()->next();
   TreeChunk* retTC;
   if (fc == NULL) {

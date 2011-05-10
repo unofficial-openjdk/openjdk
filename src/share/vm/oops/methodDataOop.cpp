@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,17 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_methodDataOop.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "gc_implementation/shared/markSweep.inline.hpp"
+#include "interpreter/bytecode.hpp"
+#include "interpreter/bytecodeStream.hpp"
+#include "interpreter/linkResolver.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/compilationPolicy.hpp"
+#include "runtime/deoptimization.hpp"
+#include "runtime/handles.inline.hpp"
 
 // ==================================================================
 // DataLayout
@@ -283,11 +292,17 @@ void ReceiverTypeData::print_receiver_data_on(outputStream* st) {
     if (receiver(row) != NULL)  entries++;
   }
   st->print_cr("count(%u) entries(%u)", count(), entries);
+  int total = count();
+  for (row = 0; row < row_limit(); row++) {
+    if (receiver(row) != NULL) {
+      total += receiver_count(row);
+    }
+  }
   for (row = 0; row < row_limit(); row++) {
     if (receiver(row) != NULL) {
       tab(st);
       receiver(row)->print_value_on(st);
-      st->print_cr("(%u)", receiver_count(row));
+      st->print_cr("(%u %4.2f)", receiver_count(row), (float) receiver_count(row) / (float) total);
     }
   }
 }
@@ -402,11 +417,11 @@ void BranchData::print_data_on(outputStream* st) {
 int MultiBranchData::compute_cell_count(BytecodeStream* stream) {
   int cell_count = 0;
   if (stream->code() == Bytecodes::_tableswitch) {
-    Bytecode_tableswitch* sw = Bytecode_tableswitch_at(stream->bcp());
-    cell_count = 1 + per_case_cell_count * (1 + sw->length()); // 1 for default
+    Bytecode_tableswitch sw(stream->method()(), stream->bcp());
+    cell_count = 1 + per_case_cell_count * (1 + sw.length()); // 1 for default
   } else {
-    Bytecode_lookupswitch* sw = Bytecode_lookupswitch_at(stream->bcp());
-    cell_count = 1 + per_case_cell_count * (sw->number_of_pairs() + 1); // 1 for default
+    Bytecode_lookupswitch sw(stream->method()(), stream->bcp());
+    cell_count = 1 + per_case_cell_count * (sw.number_of_pairs() + 1); // 1 for default
   }
   return cell_count;
 }
@@ -419,35 +434,35 @@ void MultiBranchData::post_initialize(BytecodeStream* stream,
   int target_di;
   int offset;
   if (stream->code() == Bytecodes::_tableswitch) {
-    Bytecode_tableswitch* sw = Bytecode_tableswitch_at(stream->bcp());
-    int len = sw->length();
+    Bytecode_tableswitch sw(stream->method()(), stream->bcp());
+    int len = sw.length();
     assert(array_len() == per_case_cell_count * (len + 1), "wrong len");
     for (int count = 0; count < len; count++) {
-      target = sw->dest_offset_at(count) + bci();
+      target = sw.dest_offset_at(count) + bci();
       my_di = mdo->dp_to_di(dp());
       target_di = mdo->bci_to_di(target);
       offset = target_di - my_di;
       set_displacement_at(count, offset);
     }
-    target = sw->default_offset() + bci();
+    target = sw.default_offset() + bci();
     my_di = mdo->dp_to_di(dp());
     target_di = mdo->bci_to_di(target);
     offset = target_di - my_di;
     set_default_displacement(offset);
 
   } else {
-    Bytecode_lookupswitch* sw = Bytecode_lookupswitch_at(stream->bcp());
-    int npairs = sw->number_of_pairs();
+    Bytecode_lookupswitch sw(stream->method()(), stream->bcp());
+    int npairs = sw.number_of_pairs();
     assert(array_len() == per_case_cell_count * (npairs + 1), "wrong len");
     for (int count = 0; count < npairs; count++) {
-      LookupswitchPair *pair = sw->pair_at(count);
-      target = pair->offset() + bci();
+      LookupswitchPair pair = sw.pair_at(count);
+      target = pair.offset() + bci();
       my_di = mdo->dp_to_di(dp());
       target_di = mdo->bci_to_di(target);
       offset = target_di - my_di;
       set_displacement_at(count, offset);
     }
-    target = sw->default_offset() + bci();
+    target = sw.default_offset() + bci();
     my_di = mdo->dp_to_di(dp());
     target_di = mdo->bci_to_di(target);
     offset = target_di - my_di;
@@ -743,9 +758,18 @@ void methodDataOopDesc::post_initialize(BytecodeStream* stream) {
 // Initialize the methodDataOop corresponding to a given method.
 void methodDataOopDesc::initialize(methodHandle method) {
   ResourceMark rm;
-
   // Set the method back-pointer.
   _method = method();
+
+  if (TieredCompilation) {
+    _invocation_counter.init();
+    _backedge_counter.init();
+    _num_loops = 0;
+    _num_blocks = 0;
+    _highest_comp_level = 0;
+    _highest_osr_comp_level = 0;
+    _would_profile = false;
+  }
   set_creation_mileage(mileage_of(method()));
 
   // Initialize flags and trap history.
@@ -798,32 +822,25 @@ void methodDataOopDesc::initialize(methodHandle method) {
 // Get a measure of how much mileage the method has on it.
 int methodDataOopDesc::mileage_of(methodOop method) {
   int mileage = 0;
-  int iic = method->interpreter_invocation_count();
-  if (mileage < iic)  mileage = iic;
-
-  InvocationCounter* ic = method->invocation_counter();
-  InvocationCounter* bc = method->backedge_counter();
-
-  int icval = ic->count();
-  if (ic->carry()) icval += CompileThreshold;
-  if (mileage < icval)  mileage = icval;
-  int bcval = bc->count();
-  if (bc->carry()) bcval += CompileThreshold;
-  if (mileage < bcval)  mileage = bcval;
+  if (TieredCompilation) {
+    mileage = MAX2(method->invocation_count(), method->backedge_count());
+  } else {
+    int iic = method->interpreter_invocation_count();
+    if (mileage < iic)  mileage = iic;
+    InvocationCounter* ic = method->invocation_counter();
+    InvocationCounter* bc = method->backedge_counter();
+    int icval = ic->count();
+    if (ic->carry()) icval += CompileThreshold;
+    if (mileage < icval)  mileage = icval;
+    int bcval = bc->count();
+    if (bc->carry()) bcval += CompileThreshold;
+    if (mileage < bcval)  mileage = bcval;
+  }
   return mileage;
 }
 
 bool methodDataOopDesc::is_mature() const {
-  uint current = mileage_of(_method);
-  uint initial = creation_mileage();
-  if (current < initial)
-    return true;  // some sort of overflow
-  uint target;
-  if (ProfileMaturityPercentage <= 0)
-    target = (uint) -ProfileMaturityPercentage;  // absolute value
-  else
-    target = (uint)( (ProfileMaturityPercentage * CompileThreshold) / 100 );
-  return (current >= initial + target);
+  return CompilationPolicy::policy()->is_mature(_method);
 }
 
 // Translate a bci to its corresponding data index (di).

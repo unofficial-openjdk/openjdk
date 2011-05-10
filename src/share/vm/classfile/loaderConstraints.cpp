@@ -22,8 +22,13 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_loaderConstraints.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/loaderConstraints.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/safepoint.hpp"
+#include "utilities/hashtable.inline.hpp"
 
 LoaderConstraintTable::LoaderConstraintTable(int nof_buckets)
   : Hashtable(nof_buckets, sizeof(LoaderConstraintEntry)) {};

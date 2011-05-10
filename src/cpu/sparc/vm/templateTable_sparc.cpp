@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_templateTable_sparc.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "interpreter/templateTable.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/synchronizer.hpp"
 
 #ifndef CC_INTERP
 #define __ _masm->
@@ -341,6 +351,26 @@ void TemplateTable::fast_aldc(bool wide) {
   resolve_cache_and_index(f1_oop, Otos_i, Rcache, Rscratch, wide ? sizeof(u2) : sizeof(u1));
 
   __ verify_oop(Otos_i);
+
+  Label L_done;
+  const Register Rcon_klass = G3_scratch;  // same as Rcache
+  const Register Rarray_klass = G4_scratch;  // same as Rscratch
+  __ load_klass(Otos_i, Rcon_klass);
+  AddressLiteral array_klass_addr((address)Universe::systemObjArrayKlassObj_addr());
+  __ load_contents(array_klass_addr, Rarray_klass);
+  __ cmp(Rarray_klass, Rcon_klass);
+  __ brx(Assembler::notEqual, false, Assembler::pt, L_done);
+  __ delayed()->nop();
+  __ ld(Address(Otos_i, arrayOopDesc::length_offset_in_bytes()), Rcon_klass);
+  __ tst(Rcon_klass);
+  __ brx(Assembler::zero, true, Assembler::pt, L_done);
+  __ delayed()->clr(Otos_i);    // executed only if branch is taken
+
+  // Load the exception from the system-array which wraps it:
+  __ load_heap_oop(Otos_i, arrayOopDesc::base_offset_in_bytes(T_OBJECT), Otos_i);
+  __ throw_if_not_x(Assembler::never, Interpreter::throw_exception_entry(), G3_scratch);
+
+  __ bind(L_done);
 }
 
 void TemplateTable::ldc2_w() {
@@ -1580,6 +1610,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
   const Register O0_cur_bcp = O0;
   __ mov( Lbcp, O0_cur_bcp );
 
+
   bool increment_invocation_counter_for_backward_branches = UseCompiler && UseLoopCounter;
   if ( increment_invocation_counter_for_backward_branches ) {
     Label Lforward;
@@ -1588,17 +1619,84 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
     // Bump bytecode pointer by displacement (take the branch)
     __ delayed()->add( O1_disp, Lbcp, Lbcp );     // add to bc addr
 
-    // Update Backedge branch separately from invocations
-    const Register G4_invoke_ctr = G4;
-    __ increment_backedge_counter(G4_invoke_ctr, G1_scratch);
-    if (ProfileInterpreter) {
-      __ test_invocation_counter_for_mdp(G4_invoke_ctr, Lbcp, G3_scratch, Lforward);
-      if (UseOnStackReplacement) {
-        __ test_backedge_count_for_osr(O2_bumped_count, O0_cur_bcp, G3_scratch);
+    if (TieredCompilation) {
+      Label Lno_mdo, Loverflow;
+      int increment = InvocationCounter::count_increment;
+      int mask = ((1 << Tier0BackedgeNotifyFreqLog) - 1) << InvocationCounter::count_shift;
+      if (ProfileInterpreter) {
+        // If no method data exists, go to profile_continue.
+        __ ld_ptr(Lmethod, methodOopDesc::method_data_offset(), G4_scratch);
+        __ br_null(G4_scratch, false, Assembler::pn, Lno_mdo);
+        __ delayed()->nop();
+
+        // Increment backedge counter in the MDO
+        Address mdo_backedge_counter(G4_scratch, in_bytes(methodDataOopDesc::backedge_counter_offset()) +
+                                                 in_bytes(InvocationCounter::counter_offset()));
+        __ increment_mask_and_jump(mdo_backedge_counter, increment, mask, G3_scratch, Lscratch,
+                                   Assembler::notZero, &Lforward);
+        __ ba(false, Loverflow);
+        __ delayed()->nop();
       }
+
+      // If there's no MDO, increment counter in methodOop
+      __ bind(Lno_mdo);
+      Address backedge_counter(Lmethod, in_bytes(methodOopDesc::backedge_counter_offset()) +
+                                        in_bytes(InvocationCounter::counter_offset()));
+      __ increment_mask_and_jump(backedge_counter, increment, mask, G3_scratch, Lscratch,
+                                 Assembler::notZero, &Lforward);
+      __ bind(Loverflow);
+
+      // notify point for loop, pass branch bytecode
+      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::frequency_counter_overflow), O0_cur_bcp);
+
+      // Was an OSR adapter generated?
+      // O0 = osr nmethod
+      __ br_null(O0, false, Assembler::pn, Lforward);
+      __ delayed()->nop();
+
+      // Has the nmethod been invalidated already?
+      __ ld(O0, nmethod::entry_bci_offset(), O2);
+      __ cmp(O2, InvalidOSREntryBci);
+      __ br(Assembler::equal, false, Assembler::pn, Lforward);
+      __ delayed()->nop();
+
+      // migrate the interpreter frame off of the stack
+
+      __ mov(G2_thread, L7);
+      // save nmethod
+      __ mov(O0, L6);
+      __ set_last_Java_frame(SP, noreg);
+      __ call_VM_leaf(noreg, CAST_FROM_FN_PTR(address, SharedRuntime::OSR_migration_begin), L7);
+      __ reset_last_Java_frame();
+      __ mov(L7, G2_thread);
+
+      // move OSR nmethod to I1
+      __ mov(L6, I1);
+
+      // OSR buffer to I0
+      __ mov(O0, I0);
+
+      // remove the interpreter frame
+      __ restore(I5_savedSP, 0, SP);
+
+      // Jump to the osr code.
+      __ ld_ptr(O1, nmethod::osr_entry_point_offset(), O2);
+      __ jmp(O2, G0);
+      __ delayed()->nop();
+
     } else {
-      if (UseOnStackReplacement) {
-        __ test_backedge_count_for_osr(G4_invoke_ctr, O0_cur_bcp, G3_scratch);
+      // Update Backedge branch separately from invocations
+      const Register G4_invoke_ctr = G4;
+      __ increment_backedge_counter(G4_invoke_ctr, G1_scratch);
+      if (ProfileInterpreter) {
+        __ test_invocation_counter_for_mdp(G4_invoke_ctr, G3_scratch, Lforward);
+        if (UseOnStackReplacement) {
+          __ test_backedge_count_for_osr(O2_bumped_count, O0_cur_bcp, G3_scratch);
+        }
+      } else {
+        if (UseOnStackReplacement) {
+          __ test_backedge_count_for_osr(G4_invoke_ctr, O0_cur_bcp, G3_scratch);
+        }
       }
     }
 
@@ -3205,7 +3303,7 @@ void TemplateTable::invokedynamic(int byte_no) {
   __ sll(Rret, LogBytesPerWord, Rret);
   __ ld_ptr(Rtemp, Rret, Rret);  // get return address
 
-  __ ld_ptr(G5_callsite, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, Rscratch), G3_method_handle);
+  __ load_heap_oop(G5_callsite, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, Rscratch), G3_method_handle);
   __ null_check(G3_method_handle);
 
   // Adjust Rret first so Llast_SP can be same as Rret
@@ -3295,21 +3393,21 @@ void TemplateTable::_new() {
     __ delayed()->st_ptr(RnewTopValue, G2_thread, in_bytes(JavaThread::tlab_top_offset()));
 
     if (allow_shared_alloc) {
-    // Check if tlab should be discarded (refill_waste_limit >= free)
-    __ ld_ptr(G2_thread, in_bytes(JavaThread::tlab_refill_waste_limit_offset()), RtlabWasteLimitValue);
-    __ sub(RendValue, RoldTopValue, RfreeValue);
+      // Check if tlab should be discarded (refill_waste_limit >= free)
+      __ ld_ptr(G2_thread, in_bytes(JavaThread::tlab_refill_waste_limit_offset()), RtlabWasteLimitValue);
+      __ sub(RendValue, RoldTopValue, RfreeValue);
 #ifdef _LP64
-    __ srlx(RfreeValue, LogHeapWordSize, RfreeValue);
+      __ srlx(RfreeValue, LogHeapWordSize, RfreeValue);
 #else
-    __ srl(RfreeValue, LogHeapWordSize, RfreeValue);
+      __ srl(RfreeValue, LogHeapWordSize, RfreeValue);
 #endif
-    __ cmp(RtlabWasteLimitValue, RfreeValue);
-    __ brx(Assembler::greaterEqualUnsigned, false, Assembler::pt, slow_case); // tlab waste is small
-    __ delayed()->nop();
+      __ cmp(RtlabWasteLimitValue, RfreeValue);
+      __ brx(Assembler::greaterEqualUnsigned, false, Assembler::pt, slow_case); // tlab waste is small
+      __ delayed()->nop();
 
-    // increment waste limit to prevent getting stuck on this slow path
-    __ add(RtlabWasteLimitValue, ThreadLocalAllocBuffer::refill_waste_limit_increment(), RtlabWasteLimitValue);
-    __ st_ptr(RtlabWasteLimitValue, G2_thread, in_bytes(JavaThread::tlab_refill_waste_limit_offset()));
+      // increment waste limit to prevent getting stuck on this slow path
+      __ add(RtlabWasteLimitValue, ThreadLocalAllocBuffer::refill_waste_limit_increment(), RtlabWasteLimitValue);
+      __ st_ptr(RtlabWasteLimitValue, G2_thread, in_bytes(JavaThread::tlab_refill_waste_limit_offset()));
     } else {
       // No allocation in the shared eden.
       __ br(Assembler::always, false, Assembler::pt, slow_case);
@@ -3347,6 +3445,10 @@ void TemplateTable::_new() {
     __ cmp(RoldTopValue, RnewTopValue);
     __ brx(Assembler::notEqual, false, Assembler::pn, retry);
     __ delayed()->nop();
+
+    // bump total bytes allocated by this thread
+    // RoldTopValue and RtopAddr are dead, so can use G1 and G3
+    __ incr_allocated_bytes(Roffset, G1_scratch, G3_scratch);
   }
 
   if (UseTLAB || Universe::heap()->supports_inline_contig_alloc()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,11 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
+#define SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
+
+#include "oops/symbolOop.hpp"
 
 // The classes vmSymbols and vmSymbolHandles are a name spaces for fast lookup of
 // symbols commonly used in the VM. The first class return a symbolOop, while the
@@ -106,6 +111,7 @@
   template(sun_jkernel_DownloadManager,               "sun/jkernel/DownloadManager")              \
   template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
   template(setBootClassLoaderHook_name,               "setBootClassLoaderHook")                   \
+  template(sun_misc_PostVMInitHook,                   "sun/misc/PostVMInitHook")                  \
                                                                                                   \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \
@@ -127,6 +133,7 @@
   template(tag_runtime_invisible_parameter_annotations,"RuntimeInvisibleParameterAnnotations")    \
   template(tag_annotation_default,                    "AnnotationDefault")                        \
   template(tag_enclosing_method,                      "EnclosingMethod")                          \
+  template(tag_bootstrap_methods,                     "BootstrapMethods")                         \
                                                                                                   \
   /* exception klasses: at least all exceptions thrown by the VM have entries here */             \
   template(java_lang_ArithmeticException,             "java/lang/ArithmeticException")            \
@@ -246,6 +253,8 @@
   /* internal up-calls made only by the JVM, via class sun.dyn.MethodHandleNatives: */            \
   template(findMethodHandleType_name,                 "findMethodHandleType")                     \
   template(findMethodHandleType_signature, "(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/dyn/MethodType;") \
+  template(notifyGenericMethodType_name,              "notifyGenericMethodType")                  \
+  template(notifyGenericMethodType_signature,         "(Ljava/dyn/MethodType;)V")                 \
   template(linkMethodHandleConstant_name,             "linkMethodHandleConstant")                 \
   template(linkMethodHandleConstant_signature, "(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Ljava/dyn/MethodHandle;") \
   template(makeDynamicCallSite_name,                  "makeDynamicCallSite")                      \
@@ -345,6 +354,7 @@
   template(ptypes_name,                               "ptypes")                                   \
   template(form_name,                                 "form")                                     \
   template(erasedType_name,                           "erasedType")                               \
+  template(genericInvoker_name,                       "genericInvoker")                           \
   template(append_name,                               "append")                                   \
                                                                                                   \
   /* non-intrinsic name/signature pairs: */                                                       \
@@ -1109,3 +1119,5 @@ public:
   // Raw conversion:
   static ID for_raw_conversion(BasicType src, BasicType dest);
 };
+
+#endif // SHARE_VM_CLASSFILE_VMSYMBOLS_HPP

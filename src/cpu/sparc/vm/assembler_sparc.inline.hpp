@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,14 @@
  * questions.
  *
  */
+
+#ifndef CPU_SPARC_VM_ASSEMBLER_SPARC_INLINE_HPP
+#define CPU_SPARC_VM_ASSEMBLER_SPARC_INLINE_HPP
+
+#include "asm/assembler.inline.hpp"
+#include "asm/codeBuffer.hpp"
+#include "code/codeCache.hpp"
+#include "runtime/handles.inline.hpp"
 
 inline void MacroAssembler::pd_patch_instruction(address branch, address target) {
   jint& stub_inst = *(jint*) branch;
@@ -206,6 +214,11 @@ inline void Assembler::ld(  Register s1, RegisterOrConstant s2, Register d) { ld
 inline void Assembler::ldd( Register s1, RegisterOrConstant s2, Register d) { ldd( Address(s1, s2), d); }
 
 // form effective addresses this way:
+inline void Assembler::add(const Address& a, Register d, int offset) {
+  if (a.has_index())   add(a.base(), a.index(),         d);
+  else               { add(a.base(), a.disp() + offset, d, a.rspec(offset)); offset = 0; }
+  if (offset != 0)     add(d,        offset,            d);
+}
 inline void Assembler::add(Register s1, RegisterOrConstant s2, Register d, int offset) {
   if (s2.is_register())  add(s1, s2.as_register(),          d);
   else                 { add(s1, s2.as_constant() + offset, d); offset = 0; }
@@ -315,6 +328,11 @@ inline void Assembler::stcsr(  int crd, Register s1, int simm13a) { v8_only();  
 inline void Assembler::stdcq(  int crd, Register s1, Register s2) { v8_only();  emit_long( op(ldst_op) | fcn(crd) | op3(stdcq_op3) | rs1(s1) | rs2(s2) ); }
 inline void Assembler::stdcq(  int crd, Register s1, int simm13a) { v8_only();  emit_data( op(ldst_op) | fcn(crd) | op3(stdcq_op3) | rs1(s1) | immed(true) | simm(simm13a, 13)); }
 
+inline void Assembler::sub(Register s1, RegisterOrConstant s2, Register d, int offset) {
+  if (s2.is_register())  sub(s1, s2.as_register(),          d);
+  else                 { sub(s1, s2.as_constant() + offset, d); offset = 0; }
+  if (offset != 0)       sub(d,  offset,                    d);
+}
 
 // pp 231
 
@@ -570,10 +588,13 @@ inline void MacroAssembler::fbp( Condition c, bool a, CC cc, Predict p, Label& L
 inline void MacroAssembler::jmp( Register s1, Register s2 ) { jmpl( s1, s2, G0 ); }
 inline void MacroAssembler::jmp( Register s1, int simm13a, RelocationHolder const& rspec ) { jmpl( s1, simm13a, G0, rspec); }
 
+inline bool MacroAssembler::is_far_target(address d) {
+  return !is_in_wdisp30_range(d, CodeCache::low_bound()) || !is_in_wdisp30_range(d, CodeCache::high_bound());
+}
+
 // Call with a check to see if we need to deal with the added
 // expense of relocation and if we overflow the displacement
-// of the quick call instruction./
-// Check to see if we have to deal with relocations
+// of the quick call instruction.
 inline void MacroAssembler::call( address d, relocInfo::relocType rt ) {
 #ifdef _LP64
   intptr_t disp;
@@ -585,14 +606,12 @@ inline void MacroAssembler::call( address d, relocInfo::relocType rt ) {
 
   // Is this address within range of the call instruction?
   // If not, use the expensive instruction sequence
-  disp = (intptr_t)d - (intptr_t)pc();
-  if ( disp != (intptr_t)(int32_t)disp ) {
+  if (is_far_target(d)) {
     relocate(rt);
     AddressLiteral dest(d);
     jumpl_to(dest, O7, O7);
-  }
-  else {
-    Assembler::call( d, rt );
+  } else {
+    Assembler::call(d, rt);
   }
 #else
   Assembler::call( d, rt );
@@ -817,3 +836,5 @@ inline void MacroAssembler::membar( Membar_mask_bits const7a ) {
     Assembler::ldstub(SP, 0, G0);
   }
 }
+
+#endif // CPU_SPARC_VM_ASSEMBLER_SPARC_INLINE_HPP

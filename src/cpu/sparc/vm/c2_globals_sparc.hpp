@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,12 @@
  *
  */
 
+#ifndef CPU_SPARC_VM_C2_GLOBALS_SPARC_HPP
+#define CPU_SPARC_VM_C2_GLOBALS_SPARC_HPP
+
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/macros.hpp"
+
 // Sets the default values for platform dependent flags used by the server compiler.
 // (see c2_globals.hpp).  Alpha-sorted.
 
@@ -37,21 +43,8 @@ define_pd_global(bool, ProfileInterpreter,           false);
 define_pd_global(bool, ProfileInterpreter,           true);
 #endif // CC_INTERP
 define_pd_global(bool, TieredCompilation,            false);
-#ifdef TIERED
-define_pd_global(intx, CompileThreshold,             1000);
-define_pd_global(intx, BackEdgeThreshold,            14000);
-#else
 define_pd_global(intx, CompileThreshold,             10000);
 define_pd_global(intx, BackEdgeThreshold,            140000);
-#endif // TIERED
-
-define_pd_global(intx, Tier2CompileThreshold,        10000); // unused level
-define_pd_global(intx, Tier3CompileThreshold,        10000);
-define_pd_global(intx, Tier4CompileThreshold,        40000);
-
-define_pd_global(intx, Tier2BackEdgeThreshold,       100000);
-define_pd_global(intx, Tier3BackEdgeThreshold,       100000);
-define_pd_global(intx, Tier4BackEdgeThreshold,       100000);
 
 define_pd_global(intx, OnStackReplacePercentage,     140);
 define_pd_global(intx, ConditionalMoveLimit,         4);
@@ -101,3 +94,5 @@ define_pd_global(uintx,MaxPermSize, ScaleForWordSize(64*M));
 
 // Ergonomics related flags
 define_pd_global(bool, NeverActAsServerClassMachine, false);
+
+#endif // CPU_SPARC_VM_C2_GLOBALS_SPARC_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  *
  */
 
+#ifndef SHARE_VM_UTILITIES_DEBUG_HPP
+#define SHARE_VM_UTILITIES_DEBUG_HPP
+
+#include "utilities/globalDefinitions.hpp"
+
 #include <stdarg.h>
 
 // Simple class to format the ctor arguments into a fixed-sized buffer.
@@ -29,6 +34,7 @@ template <size_t bufsz = 256>
 class FormatBuffer {
 public:
   inline FormatBuffer(const char * format, ...);
+  inline void append(const char* format, ...);
   operator const char *() const { return _buf; }
 
 private:
@@ -43,6 +49,19 @@ FormatBuffer<bufsz>::FormatBuffer(const char * format, ...) {
   va_list argp;
   va_start(argp, format);
   vsnprintf(_buf, bufsz, format, argp);
+  va_end(argp);
+}
+
+template <size_t bufsz>
+void FormatBuffer<bufsz>::append(const char* format, ...) {
+  // Given that the constructor does a vsnprintf we can assume that
+  // _buf is already initialized.
+  size_t len = strlen(_buf);
+  char* buf_end = _buf + len;
+
+  va_list argp;
+  va_start(argp, format);
+  vsnprintf(buf_end, bufsz - len, format, argp);
   va_end(argp);
 }
 
@@ -169,3 +188,5 @@ NOT_PRODUCT(void test_error_handler(size_t test_num);)
 
 void pd_ps(frame f);
 void pd_obfuscate_location(char *buf, size_t buflen);
+
+#endif // SHARE_VM_UTILITIES_DEBUG_HPP

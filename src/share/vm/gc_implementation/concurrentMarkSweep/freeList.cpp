@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,13 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_freeList.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
+#include "gc_implementation/concurrentMarkSweep/freeList.hpp"
+#include "memory/sharedHeap.hpp"
+#include "runtime/globals.hpp"
+#include "runtime/mutex.hpp"
+#include "runtime/vmThread.hpp"
 
 // Free list.  A FreeList is used to access a linked list of chunks
 // of space in the heap.  The head and tail are maintained so that
@@ -165,13 +170,8 @@ void FreeList::removeChunk(FreeChunk*fc) {
        "Next of tail should be NULL");
    }
    decrement_count();
-#define TRAP_CODE 1
-#if TRAP_CODE
-   if (head() == NULL) {
-     guarantee(tail() == NULL, "INVARIANT");
-     guarantee(count() == 0, "INVARIANT");
-   }
-#endif
+   assert(((head() == NULL) + (tail() == NULL) + (count() == 0)) % 3 == 0,
+          "H/T/C Inconsistency");
    // clear next and prev fields of fc, debug only
    NOT_PRODUCT(
      fc->linkPrev(NULL);

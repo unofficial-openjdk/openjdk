@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,26 @@
  *
  */
 
+#ifndef SHARE_VM_INTERPRETER_INTERPRETERRUNTIME_HPP
+#define SHARE_VM_INTERPRETER_INTERPRETERRUNTIME_HPP
+
+#include "interpreter/bytecode.hpp"
+#include "interpreter/linkResolver.hpp"
+#include "memory/universe.hpp"
+#include "oops/methodOop.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/signature.hpp"
+#include "utilities/top.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
+
 // The InterpreterRuntime is called by the interpreter for everything
 // that cannot/should not be dealt with in assembly and needs C support.
 
@@ -38,16 +58,16 @@ class InterpreterRuntime: AllStatic {
   static void      set_bcp_and_mdp(address bcp, JavaThread*thread);
   static Bytecodes::Code code(JavaThread *thread)    {
     // pass method to avoid calling unsafe bcp_to_method (partial fix 4926272)
-    return Bytecodes::code_at(bcp(thread), method(thread));
+    return Bytecodes::code_at(method(thread), bcp(thread));
   }
   static bool      already_resolved(JavaThread *thread) { return cache_entry(thread)->is_resolved(code(thread)); }
-  static Bytecode* bytecode(JavaThread *thread)      { return Bytecode_at(bcp(thread)); }
+  static Bytecode  bytecode(JavaThread *thread)      { return Bytecode(method(thread), bcp(thread)); }
   static int       get_index_u1(JavaThread *thread, Bytecodes::Code bc)
-                                                        { return bytecode(thread)->get_index_u1(bc); }
+                                                        { return bytecode(thread).get_index_u1(bc); }
   static int       get_index_u2(JavaThread *thread, Bytecodes::Code bc)
-                                                        { return bytecode(thread)->get_index_u2(bc); }
+                                                        { return bytecode(thread).get_index_u2(bc); }
   static int       get_index_u2_cpcache(JavaThread *thread, Bytecodes::Code bc)
-                                                        { return bytecode(thread)->get_index_u2_cpcache(bc); }
+                                                        { return bytecode(thread).get_index_u2_cpcache(bc); }
   static int       number_of_dimensions(JavaThread *thread)  { return bcp(thread)[3]; }
 
   static ConstantPoolCacheEntry* cache_entry_at(JavaThread *thread, int i)  { return method(thread)->constants()->cache()->entry_at(i); }
@@ -128,14 +148,23 @@ class InterpreterRuntime: AllStatic {
 #endif
 
   // Platform dependent stuff
-  #include "incls/_interpreterRT_pd.hpp.incl"
+#ifdef TARGET_ARCH_x86
+# include "interpreterRT_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "interpreterRT_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "interpreterRT_zero.hpp"
+#endif
+
 
   // Interpreter's frequency counter overflow
   static nmethod* frequency_counter_overflow(JavaThread* thread, address branch_bcp);
 
   // Interpreter profiling support
   static jint    bcp_to_di(methodOopDesc* method, address cur_bcp);
-  static jint    profile_method(JavaThread* thread, address cur_bcp);
+  static void    profile_method(JavaThread* thread);
   static void    update_mdp_for_ret(JavaThread* thread, int bci);
 #ifdef ASSERT
   static void    verify_mdp(methodOopDesc* method, address bcp, address mdp);
@@ -163,3 +192,5 @@ class SignatureHandlerLibrary: public AllStatic {
  public:
   static void add(methodHandle method);
 };
+
+#endif // SHARE_VM_INTERPRETER_INTERPRETERRUNTIME_HPP

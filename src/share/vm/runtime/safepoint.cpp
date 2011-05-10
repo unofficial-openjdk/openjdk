@@ -22,8 +22,61 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_safepoint.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "code/codeCache.hpp"
+#include "code/icBuffer.hpp"
+#include "code/nmethod.hpp"
+#include "code/pcDesc.hpp"
+#include "code/scopeDesc.hpp"
+#include "gc_interface/collectedHeap.hpp"
+#include "interpreter/interpreter.hpp"
+#include "memory/resourceArea.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/compilationPolicy.hpp"
+#include "runtime/deoptimization.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/osThread.hpp"
+#include "runtime/safepoint.hpp"
+#include "runtime/signature.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/sweeper.hpp"
+#include "runtime/synchronizer.hpp"
+#include "services/runtimeService.hpp"
+#include "utilities/events.hpp"
+#ifdef TARGET_ARCH_x86
+# include "nativeInst_x86.hpp"
+# include "vmreg_x86.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "nativeInst_sparc.hpp"
+# include "vmreg_sparc.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "nativeInst_zero.hpp"
+# include "vmreg_zero.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
+#ifndef SERIALGC
+#include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepThread.hpp"
+#include "gc_implementation/shared/concurrentGCThread.hpp"
+#endif
+#ifdef COMPILER1
+#include "c1/c1_globals.hpp"
+#endif
 
 // --------------------------------------------------------------------------------------------------
 // Implementation of Safepoint begin/end
@@ -430,29 +483,7 @@ bool SafepointSynchronize::is_cleanup_needed() {
   return false;
 }
 
-jlong CounterDecay::_last_timestamp = 0;
 
-static void do_method(methodOop m) {
-  m->invocation_counter()->decay();
-}
-
-void CounterDecay::decay() {
-  _last_timestamp = os::javaTimeMillis();
-
-  // This operation is going to be performed only at the end of a safepoint
-  // and hence GC's will not be going on, all Java mutators are suspended
-  // at this point and hence SystemDictionary_lock is also not needed.
-  assert(SafepointSynchronize::is_at_safepoint(), "can only be executed at a safepoint");
-  int nclasses = SystemDictionary::number_of_classes();
-  double classes_per_tick = nclasses * (CounterDecayMinIntervalLength * 1e-3 /
-                                        CounterHalfLifeTime);
-  for (int i = 0; i < classes_per_tick; i++) {
-    klassOop k = SystemDictionary::try_get_next_class();
-    if (k != NULL && k->klass_part()->oop_is_instance()) {
-      instanceKlass::cast(k)->methods_do(do_method);
-    }
-  }
-}
 
 // Various cleaning tasks that should be done periodically at safepoints
 void SafepointSynchronize::do_cleanup_tasks() {
@@ -465,10 +496,9 @@ void SafepointSynchronize::do_cleanup_tasks() {
     TraceTime t2("updating inline caches", TraceSafepointCleanupTime);
     InlineCacheBuffer::update_inline_caches();
   }
-
-  if(UseCounterDecay && CounterDecay::is_decay_needed()) {
-    TraceTime t3("decaying counter", TraceSafepointCleanupTime);
-    CounterDecay::decay();
+  {
+    TraceTime t3("compilation policy safepoint handler", TraceSafepointCleanupTime);
+    CompilationPolicy::policy()->do_safepoint_work();
   }
 
   TraceTime t4("sweeping nmethods", TraceSafepointCleanupTime);
@@ -963,8 +993,7 @@ void ThreadSafepointState::handle_polling_page_exception() {
     // as otherwise we may never deliver it.
     if (thread()->has_async_condition()) {
       ThreadInVMfromJavaNoAsyncException __tiv(thread());
-      VM_DeoptimizeFrame deopt(thread(), caller_fr.id());
-      VMThread::execute(&deopt);
+      Deoptimization::deoptimize_frame(thread(), caller_fr.id());
     }
 
     // If an exception has been installed we must check for a pending deoptimization

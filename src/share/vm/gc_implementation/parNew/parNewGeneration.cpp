@@ -22,8 +22,33 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_parNewGeneration.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.hpp"
+#include "gc_implementation/parNew/parGCAllocBuffer.hpp"
+#include "gc_implementation/parNew/parNewGeneration.hpp"
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
+#include "gc_implementation/shared/adaptiveSizePolicy.hpp"
+#include "gc_implementation/shared/ageTable.hpp"
+#include "gc_implementation/shared/spaceDecorator.hpp"
+#include "memory/defNewGeneration.inline.hpp"
+#include "memory/genCollectedHeap.hpp"
+#include "memory/genOopClosures.inline.hpp"
+#include "memory/generation.hpp"
+#include "memory/generation.inline.hpp"
+#include "memory/referencePolicy.hpp"
+#include "memory/resourceArea.hpp"
+#include "memory/sharedHeap.hpp"
+#include "memory/space.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.pcgc.inline.hpp"
+#include "runtime/handles.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/java.hpp"
+#include "runtime/thread.hpp"
+#include "utilities/copy.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/workgroup.hpp"
 
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -846,7 +871,7 @@ void ParNewGeneration::collect(bool   full,
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
-    gch->set_incremental_collection_will_fail();
+    gch->set_incremental_collection_failed();  // slight lie, in that we did not even attempt one
     return;
   }
   assert(to()->is_empty(), "Else not collection_attempt_is_safe");
@@ -935,8 +960,6 @@ void ParNewGeneration::collect(bool   full,
 
     assert(to()->is_empty(), "to space should be empty now");
   } else {
-    assert(HandlePromotionFailure,
-      "Should only be here if promotion failure handling is on");
     assert(_promo_failure_scan_stack.is_empty(), "post condition");
     _promo_failure_scan_stack.clear(true); // Clear cached segments.
 
@@ -947,7 +970,7 @@ void ParNewGeneration::collect(bool   full,
     // All the spaces are in play for mark-sweep.
     swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
     from()->set_next_compaction_space(to());
-    gch->set_incremental_collection_will_fail();
+    gch->set_incremental_collection_failed();
     // Inform the next generation that a promotion failure occurred.
     _next_gen->promotion_failure_occurred();
 
@@ -1035,10 +1058,11 @@ bool ParNewGeneration::is_legal_forward_ptr(oop p) {
 #endif
 
 void ParNewGeneration::preserve_mark_if_necessary(oop obj, markOop m) {
-  if ((m != markOopDesc::prototype()) &&
-      (!UseBiasedLocking || (m != markOopDesc::biased_locking_prototype()))) {
+  if (m->must_be_preserved_for_promotion_failure(obj)) {
+    // We should really have separate per-worker stacks, rather
+    // than use locking of a common pair of stacks.
     MutexLocker ml(ParGCRareEvent_lock);
-    DefNewGeneration::preserve_mark_if_necessary(obj, m);
+    preserve_mark(obj, m);
   }
 }
 
@@ -1092,11 +1116,6 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
                                        old, m, sz);
 
     if (new_obj == NULL) {
-      if (!HandlePromotionFailure) {
-        // A failed promotion likely means the MaxLiveObjectEvacuationRatio flag
-        // is incorrectly set. In any case, its seriously wrong to be here!
-        vm_exit_out_of_memory(sz*wordSize, "promotion");
-      }
       // promotion failed, forward to self
       _promotion_failed = true;
       new_obj = old;
@@ -1206,12 +1225,6 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
                                        old, m, sz);
 
     if (new_obj == NULL) {
-      if (!HandlePromotionFailure) {
-        // A failed promotion likely means the MaxLiveObjectEvacuationRatio
-        // flag is incorrectly set. In any case, its seriously wrong to be
-        // here!
-        vm_exit_out_of_memory(sz*wordSize, "promotion");
-      }
       // promotion failed, forward to self
       forward_ptr = old->forward_to_atomic(old);
       new_obj = old;
@@ -1529,4 +1542,8 @@ void ParNewGeneration::ref_processor_init()
 
 const char* ParNewGeneration::name() const {
   return "par new generation";
+}
+
+bool ParNewGeneration::in_use() {
+  return UseParNewGC && ParallelGCThreads > 0;
 }

@@ -22,8 +22,12 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_c1_Canonicalizer.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_Canonicalizer.hpp"
+#include "c1/c1_InstructionPrinter.hpp"
+#include "c1/c1_ValueStack.hpp"
+#include "ci/ciArray.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 
 class PrintValueVisitor: public ValueVisitor {
@@ -205,7 +209,7 @@ void Canonicalizer::do_StoreField     (StoreField*      x) {
     // limit this optimization to current block
     if (value != NULL && in_current_block(conv)) {
       set_canonical(new StoreField(x->obj(), x->offset(), x->field(), value, x->is_static(),
-                                       x->lock_stack(), x->state_before(), x->is_loaded(), x->is_initialized()));
+                                       x->state_before(), x->is_loaded(), x->is_initialized()));
       return;
     }
   }
@@ -256,7 +260,7 @@ void Canonicalizer::do_StoreIndexed   (StoreIndexed*    x) {
     // limit this optimization to current block
     if (value != NULL && in_current_block(conv)) {
       set_canonical(new StoreIndexed(x->array(), x->index(), x->length(),
-                                     x->elt_type(), value, x->lock_stack()));
+                                     x->elt_type(), value, x->state_before()));
       return;
     }
   }
@@ -652,17 +656,29 @@ void Canonicalizer::do_If(If* x) {
         else if (lss_sux == gtr_sux) { cond = If::neq; tsux = lss_sux; fsux = eql_sux; }
         else if (eql_sux == gtr_sux) { cond = If::geq; tsux = eql_sux; fsux = lss_sux; }
         else                         { ShouldNotReachHere();                           }
-           If* canon = new If(cmp->x(), cond, nan_sux == tsux, cmp->y(), tsux, fsux, cmp->state_before(), x->is_safepoint());
+        If* canon = new If(cmp->x(), cond, nan_sux == tsux, cmp->y(), tsux, fsux, cmp->state_before(), x->is_safepoint());
         if (cmp->x() == cmp->y()) {
           do_If(canon);
         } else {
+          if (compilation()->profile_branches()) {
+            // TODO: If profiling, leave floating point comparisons unoptimized.
+            // We currently do not support profiling of the unordered case.
+            switch(cmp->op()) {
+              case Bytecodes::_fcmpl: case Bytecodes::_fcmpg:
+              case Bytecodes::_dcmpl: case Bytecodes::_dcmpg:
+                set_canonical(x);
+                return;
+            }
+          }
           set_canonical(canon);
-          set_bci(cmp->bci());
+          set_bci(cmp->state_before()->bci());
         }
       }
     } else if (l->as_InstanceOf() != NULL) {
       // NOTE: Code permanently disabled for now since it leaves the old InstanceOf
       //       instruction in the graph (it is pinned). Need to fix this at some point.
+      //       It should also be left in the graph when generating a profiled method version or Goto
+      //       has to know that it was an InstanceOf.
       return;
       // pattern: If ((obj instanceof klass) cond rc) => simplify to: IfInstanceOf or: Goto
       InstanceOf* inst = l->as_InstanceOf();
@@ -673,7 +689,7 @@ void Canonicalizer::do_If(If* x) {
         set_canonical(new Goto(is_inst_sux, x->state_before(), x->is_safepoint()));
       } else {
         // successors differ => simplify to: IfInstanceOf
-        set_canonical(new IfInstanceOf(inst->klass(), inst->obj(), true, inst->bci(), is_inst_sux, no_inst_sux));
+        set_canonical(new IfInstanceOf(inst->klass(), inst->obj(), true, inst->state_before()->bci(), is_inst_sux, no_inst_sux));
       }
     }
   } else if (rt == objectNull && (l->as_NewInstance() || l->as_NewArray())) {
@@ -881,4 +897,5 @@ void Canonicalizer::do_UnsafePutObject(UnsafePutObject* x) {}
 void Canonicalizer::do_UnsafePrefetchRead (UnsafePrefetchRead*  x) {}
 void Canonicalizer::do_UnsafePrefetchWrite(UnsafePrefetchWrite* x) {}
 void Canonicalizer::do_ProfileCall(ProfileCall* x) {}
-void Canonicalizer::do_ProfileCounter(ProfileCounter* x) {}
+void Canonicalizer::do_ProfileInvoke(ProfileInvoke* x) {}
+

@@ -22,6 +22,22 @@
  *
  */
 
+#ifndef SHARE_VM_OPTO_GRAPHKIT_HPP
+#define SHARE_VM_OPTO_GRAPHKIT_HPP
+
+#include "ci/ciEnv.hpp"
+#include "ci/ciMethodData.hpp"
+#include "opto/addnode.hpp"
+#include "opto/callnode.hpp"
+#include "opto/cfgnode.hpp"
+#include "opto/compile.hpp"
+#include "opto/divnode.hpp"
+#include "opto/mulnode.hpp"
+#include "opto/phaseX.hpp"
+#include "opto/subnode.hpp"
+#include "opto/type.hpp"
+#include "runtime/deoptimization.hpp"
+
 class FastLockNode;
 class FastUnlockNode;
 class IdealKit;
@@ -340,6 +356,14 @@ class GraphKit : public Phase {
   // The cast is not valid along the null path; keep a copy of the original.
   Node* null_check_oop(Node* value, Node* *null_control,
                        bool never_see_null = false);
+
+  // Check the null_seen bit.
+  bool seems_never_null(Node* obj, ciProfileData* data);
+
+  // Use the type profile to narrow an object type.
+  Node* maybe_cast_profiled_receiver(Node* not_null_obj,
+                                     ciProfileData* data,
+                                     ciKlass* require_klass);
 
   // Cast obj to not-null on this path
   Node* cast_not_null(Node* obj, bool do_replace_in_map = true);
@@ -816,3 +840,5 @@ class PreserveReexecuteState: public StackObj {
   PreserveReexecuteState(GraphKit* kit);
   ~PreserveReexecuteState();
 };
+
+#endif // SHARE_VM_OPTO_GRAPHKIT_HPP

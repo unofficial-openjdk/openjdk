@@ -22,8 +22,39 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_psParallelCompact.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "code/codeCache.hpp"
+#include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
+#include "gc_implementation/parallelScavenge/generationSizer.hpp"
+#include "gc_implementation/parallelScavenge/parallelScavengeHeap.inline.hpp"
+#include "gc_implementation/parallelScavenge/pcTasks.hpp"
+#include "gc_implementation/parallelScavenge/psAdaptiveSizePolicy.hpp"
+#include "gc_implementation/parallelScavenge/psCompactionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psMarkSweep.hpp"
+#include "gc_implementation/parallelScavenge/psMarkSweepDecorator.hpp"
+#include "gc_implementation/parallelScavenge/psOldGen.hpp"
+#include "gc_implementation/parallelScavenge/psParallelCompact.hpp"
+#include "gc_implementation/parallelScavenge/psPermGen.hpp"
+#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.hpp"
+#include "gc_implementation/parallelScavenge/psYoungGen.hpp"
+#include "gc_implementation/shared/isGCActiveMark.hpp"
+#include "gc_interface/gcCause.hpp"
+#include "memory/gcLocker.inline.hpp"
+#include "memory/referencePolicy.hpp"
+#include "memory/referenceProcessor.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.pcgc.inline.hpp"
+#include "runtime/fprofiler.hpp"
+#include "runtime/safepoint.hpp"
+#include "runtime/vmThread.hpp"
+#include "services/management.hpp"
+#include "services/memoryService.hpp"
+#include "utilities/events.hpp"
+#include "utilities/stack.inline.hpp"
 
 #include <math.h>
 
@@ -1023,6 +1054,7 @@ void PSParallelCompact::post_compact()
 
   Threads::gc_epilogue();
   CodeCache::gc_epilogue();
+  JvmtiExport::gc_epilogue();
 
   COMPILER2_PRESENT(DerivedPointerTable::update_pointers());
 
@@ -2459,7 +2491,7 @@ void PSParallelCompact::enqueue_region_draining_tasks(GCTaskQueue* q,
 
   const unsigned int task_count = MAX2(parallel_gc_threads, 1U);
   for (unsigned int j = 0; j < task_count; j++) {
-    q->enqueue(new DrainStacksCompactionTask());
+    q->enqueue(new DrainStacksCompactionTask(j));
   }
 
   // Find all regions that are available (can be filled immediately) and

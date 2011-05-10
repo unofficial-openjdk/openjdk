@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,19 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_vtableStubs_x86_64.cpp.incl"
+#include "precompiled.hpp"
+#include "asm/assembler.hpp"
+#include "assembler_x86.inline.hpp"
+#include "code/vtableStubs.hpp"
+#include "interp_masm_x86_64.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/klassVtable.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "vmreg_x86.inline.hpp"
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
 
 // machine-dependent part of VtableStubs: create VtableStub of correct size and
 // initialize its code
@@ -209,7 +220,7 @@ int VtableStub::pd_code_size_limit(bool is_vtable_stub) {
            (UseCompressedOops ? 16 : 0);  // 1 leaq can be 3 bytes + 1 long
   } else {
     // Itable stub size
-    return (DebugVtables ? 512 : 72) + (CountCompiledCalls ? 13 : 0) +
+    return (DebugVtables ? 512 : 74) + (CountCompiledCalls ? 13 : 0) +
            (UseCompressedOops ? 32 : 0);  // 2 leaqs
   }
   // In order to tune these parameters, run the JVM with VM options

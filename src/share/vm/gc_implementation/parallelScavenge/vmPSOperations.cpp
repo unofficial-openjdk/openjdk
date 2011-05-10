@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,14 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_vmPSOperations.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/parallelScavenge/parallelScavengeHeap.inline.hpp"
+#include "gc_implementation/parallelScavenge/psMarkSweep.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "gc_implementation/parallelScavenge/vmPSOperations.hpp"
+#include "memory/gcLocker.inline.hpp"
+#include "utilities/dtrace.hpp"
 
 // The following methods are used by the parallel scavenge collector
 VM_ParallelGCFailedAllocation::VM_ParallelGCFailedAllocation(size_t size,
@@ -36,8 +42,7 @@ VM_ParallelGCFailedAllocation::VM_ParallelGCFailedAllocation(size_t size,
 }
 
 void VM_ParallelGCFailedAllocation::doit() {
-  JvmtiGCForAllocationMarker jgcm;
-  notify_gc_begin(false);
+  SvcGCMarker sgcm(SvcGCMarker::MINOR);
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "must be a ParallelScavengeHeap");
@@ -48,8 +53,6 @@ void VM_ParallelGCFailedAllocation::doit() {
   if (_result == NULL && GC_locker::is_active_and_needs_gc()) {
     set_gc_locked();
   }
-
-  notify_gc_end();
 }
 
 VM_ParallelGCFailedPermanentAllocation::VM_ParallelGCFailedPermanentAllocation(size_t size,
@@ -61,8 +64,7 @@ VM_ParallelGCFailedPermanentAllocation::VM_ParallelGCFailedPermanentAllocation(s
 }
 
 void VM_ParallelGCFailedPermanentAllocation::doit() {
-  JvmtiGCFullMarker jgcm;
-  notify_gc_begin(true);
+  SvcGCMarker sgcm(SvcGCMarker::FULL);
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "must be a ParallelScavengeHeap");
@@ -72,7 +74,6 @@ void VM_ParallelGCFailedPermanentAllocation::doit() {
   if (_result == NULL && GC_locker::is_active_and_needs_gc()) {
     set_gc_locked();
   }
-  notify_gc_end();
 }
 
 // Only used for System.gc() calls
@@ -85,8 +86,7 @@ VM_ParallelGCSystemGC::VM_ParallelGCSystemGC(unsigned int gc_count,
 }
 
 void VM_ParallelGCSystemGC::doit() {
-  JvmtiGCFullMarker jgcm;
-  notify_gc_begin(true);
+  SvcGCMarker sgcm(SvcGCMarker::FULL);
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap,
@@ -100,5 +100,4 @@ void VM_ParallelGCSystemGC::doit() {
   } else {
     heap->invoke_full_gc(false);
   }
-  notify_gc_end();
 }

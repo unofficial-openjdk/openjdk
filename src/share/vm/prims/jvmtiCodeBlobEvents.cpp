@@ -22,8 +22,17 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_jvmtiCodeBlobEvents.cpp.incl"
+#include "precompiled.hpp"
+#include "code/codeBlob.hpp"
+#include "code/codeCache.hpp"
+#include "code/scopeDesc.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/jvmtiCodeBlobEvents.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "runtime/handles.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/vmThread.hpp"
 
 // Support class to collect a list of the non-nmethod CodeBlobs in
 // the CodeCache.
@@ -114,7 +123,7 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
   // check if this starting address has been seen already - the
   // assumption is that stubs are inserted into the list before the
   // enclosing BufferBlobs.
-  address addr = cb->instructions_begin();
+  address addr = cb->code_begin();
   for (int i=0; i<_global_code_blobs->length(); i++) {
     JvmtiCodeBlobDesc* scb = _global_code_blobs->at(i);
     if (addr == scb->code_begin()) {
@@ -123,8 +132,7 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
   }
 
   // record the CodeBlob details as a JvmtiCodeBlobDesc
-  JvmtiCodeBlobDesc* scb = new JvmtiCodeBlobDesc(cb->name(), cb->instructions_begin(),
-                                                 cb->instructions_end());
+  JvmtiCodeBlobDesc* scb = new JvmtiCodeBlobDesc(cb->name(), cb->code_begin(), cb->code_end());
   _global_code_blobs->append(scb);
 }
 

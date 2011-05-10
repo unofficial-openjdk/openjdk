@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,16 @@
  * questions.
  *
  */
+
+#include "precompiled.hpp"
+#include "interpreter/bytecodeStream.hpp"
+#include "oops/generateOopMap.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/java.hpp"
+#include "runtime/relocator.hpp"
+#include "utilities/bitMap.inline.hpp"
 
 //
 //
@@ -84,9 +94,6 @@
 //  returns to).
 //
 // (Note this comment is borrowed form the original author of the algorithm)
-
-#include "incls/_precompiled.incl"
-#include "incls/_generateOopMap.cpp.incl"
 
 // ComputeCallStack
 //
@@ -528,23 +535,23 @@ bool GenerateOopMap::jump_targets_do(BytecodeStream *bcs, jmpFct_t jmpFct, int *
       (*jmpFct)(this, bcs->dest_w(), data);
       break;
     case Bytecodes::_tableswitch:
-      { Bytecode_tableswitch *tableswitch = Bytecode_tableswitch_at(bcs->bcp());
-        int len = tableswitch->length();
+      { Bytecode_tableswitch tableswitch(method(), bcs->bcp());
+        int len = tableswitch.length();
 
-        (*jmpFct)(this, bci + tableswitch->default_offset(), data); /* Default. jump address */
+        (*jmpFct)(this, bci + tableswitch.default_offset(), data); /* Default. jump address */
         while (--len >= 0) {
-          (*jmpFct)(this, bci + tableswitch->dest_offset_at(len), data);
+          (*jmpFct)(this, bci + tableswitch.dest_offset_at(len), data);
         }
         break;
       }
 
     case Bytecodes::_lookupswitch:
-      { Bytecode_lookupswitch *lookupswitch = Bytecode_lookupswitch_at(bcs->bcp());
-        int npairs = lookupswitch->number_of_pairs();
-        (*jmpFct)(this, bci + lookupswitch->default_offset(), data); /* Default. */
+      { Bytecode_lookupswitch lookupswitch(method(), bcs->bcp());
+        int npairs = lookupswitch.number_of_pairs();
+        (*jmpFct)(this, bci + lookupswitch.default_offset(), data); /* Default. */
         while(--npairs >= 0) {
-          LookupswitchPair *pair = lookupswitch->pair_at(npairs);
-          (*jmpFct)(this, bci + pair->offset(), data);
+          LookupswitchPair pair = lookupswitch.pair_at(npairs);
+          (*jmpFct)(this, bci + pair.offset(), data);
         }
         break;
       }
@@ -981,7 +988,7 @@ void GenerateOopMap::init_basic_blocks() {
 #ifdef ASSERT
     if (blockNum + 1 < bbNo) {
       address bcp = _method->bcp_from(bb->_end_bci);
-      int bc_len = Bytecodes::java_length_at(bcp);
+      int bc_len = Bytecodes::java_length_at(_method(), bcp);
       assert(bb->_end_bci + bc_len == bb[1]._bci, "unmatched bci info in basicblock");
     }
 #endif
@@ -989,7 +996,7 @@ void GenerateOopMap::init_basic_blocks() {
 #ifdef ASSERT
   { BasicBlock *bb = &_basic_blocks[bbNo-1];
     address bcp = _method->bcp_from(bb->_end_bci);
-    int bc_len = Bytecodes::java_length_at(bcp);
+    int bc_len = Bytecodes::java_length_at(_method(), bcp);
     assert(bb->_end_bci + bc_len == _method->code_size(), "wrong end bci");
   }
 #endif
@@ -1265,7 +1272,7 @@ void GenerateOopMap::print_current_state(outputStream   *os,
       case Bytecodes::_invokestatic:
       case Bytecodes::_invokedynamic:
       case Bytecodes::_invokeinterface:
-        int idx = currentBC->has_index_u4() ? currentBC->get_index_u4() : currentBC->get_index_u2();
+        int idx = currentBC->has_index_u4() ? currentBC->get_index_u4() : currentBC->get_index_u2_cpcache();
         constantPoolOop cp    = method()->constants();
         int nameAndTypeIdx    = cp->name_and_type_ref_index_at(idx);
         int signatureIdx      = cp->signature_ref_index_at(nameAndTypeIdx);
@@ -1297,7 +1304,7 @@ void GenerateOopMap::print_current_state(outputStream   *os,
       case Bytecodes::_invokestatic:
       case Bytecodes::_invokedynamic:
       case Bytecodes::_invokeinterface:
-        int idx = currentBC->has_index_u4() ? currentBC->get_index_u4() : currentBC->get_index_u2();
+        int idx = currentBC->has_index_u4() ? currentBC->get_index_u4() : currentBC->get_index_u2_cpcache();
         constantPoolOop cp    = method()->constants();
         int nameAndTypeIdx    = cp->name_and_type_ref_index_at(idx);
         int signatureIdx      = cp->signature_ref_index_at(nameAndTypeIdx);
@@ -1367,8 +1374,8 @@ void GenerateOopMap::interp1(BytecodeStream *itr) {
 
     case Bytecodes::_ldc2_w:            ppush(vvCTS);               break;
 
-    case Bytecodes::_ldc:               do_ldc(itr->get_index(),    itr->bci()); break;
-    case Bytecodes::_ldc_w:             do_ldc(itr->get_index_u2(), itr->bci()); break;
+    case Bytecodes::_ldc:               // fall through:
+    case Bytecodes::_ldc_w:             do_ldc(itr->bci());         break;
 
     case Bytecodes::_iload:
     case Bytecodes::_fload:             ppload(vCTS, itr->get_index()); break;
@@ -1840,9 +1847,16 @@ void GenerateOopMap::do_jsr(int targ_bci) {
 
 
 
-void GenerateOopMap::do_ldc(int idx, int bci) {
+void GenerateOopMap::do_ldc(int bci) {
+  Bytecode_loadconstant ldc(method(), bci);
   constantPoolOop cp  = method()->constants();
-  CellTypeState   cts = cp->is_pointer_entry(idx) ? CellTypeState::make_line_ref(bci) : valCTS;
+  BasicType       bt  = ldc.result_type();
+  CellTypeState   cts = (bt == T_OBJECT) ? CellTypeState::make_line_ref(bci) : valCTS;
+  // Make sure bt==T_OBJECT is the same as old code (is_pointer_entry).
+  // Note that CONSTANT_MethodHandle entries are u2 index pairs, not pointer-entries,
+  // and they are processed by _fast_aldc and the CP cache.
+  assert((ldc.has_cache_index() || cp->is_pointer_entry(ldc.pool_index()))
+         ? (bt == T_OBJECT) : true, "expected object type");
   ppush1(cts);
 }
 
@@ -2340,7 +2354,7 @@ bool GenerateOopMap::rewrite_refval_conflict_inst(BytecodeStream *itr, int from,
 bool GenerateOopMap::rewrite_load_or_store(BytecodeStream *bcs, Bytecodes::Code bcN, Bytecodes::Code bc0, unsigned int varNo) {
   assert(bcN == Bytecodes::_astore   || bcN == Bytecodes::_aload,   "wrong argument (bcN)");
   assert(bc0 == Bytecodes::_astore_0 || bc0 == Bytecodes::_aload_0, "wrong argument (bc0)");
-  int ilen = Bytecodes::length_at(bcs->bcp());
+  int ilen = Bytecodes::length_at(_method(), bcs->bcp());
   int newIlen;
 
   if (ilen == 4) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,20 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_mutexLocker.cpp.incl"
+#include "precompiled.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/safepoint.hpp"
+#include "runtime/threadLocalStorage.hpp"
+#include "runtime/vmThread.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
 
 // Mutexes used in the VM (see comment in mutexLocker.hpp):
 //
@@ -68,8 +80,6 @@ Monitor* SLT_lock                     = NULL;
 Monitor* iCMS_lock                    = NULL;
 Monitor* FullGCCount_lock             = NULL;
 Monitor* CMark_lock                   = NULL;
-Monitor* ZF_mon                       = NULL;
-Monitor* Cleanup_mon                  = NULL;
 Mutex*   CMRegionStack_lock           = NULL;
 Mutex*   SATB_Q_FL_lock               = NULL;
 Monitor* SATB_Q_CBL_mon               = NULL;
@@ -110,6 +120,9 @@ Mutex*   PerfDataMemAlloc_lock        = NULL;
 Mutex*   PerfDataManager_lock         = NULL;
 Mutex*   OopMapCacheAlloc_lock        = NULL;
 
+Mutex*   FreeList_lock                = NULL;
+Monitor* SecondaryFreeList_lock       = NULL;
+Mutex*   OldSets_lock                 = NULL;
 Mutex*   MMUTracker_lock              = NULL;
 Mutex*   HotCardCache_lock            = NULL;
 
@@ -165,8 +178,6 @@ void mutex_init() {
   }
   if (UseG1GC) {
     def(CMark_lock                 , Monitor, nonleaf,     true ); // coordinate concurrent mark thread
-    def(ZF_mon                     , Monitor, leaf,        true );
-    def(Cleanup_mon                , Monitor, nonleaf,     true );
     def(CMRegionStack_lock         , Mutex,   leaf,        true );
     def(SATB_Q_FL_lock             , Mutex  , special,     true );
     def(SATB_Q_CBL_mon             , Monitor, nonleaf,     true );
@@ -176,6 +187,9 @@ void mutex_init() {
     def(DirtyCardQ_CBL_mon         , Monitor, nonleaf,     true );
     def(Shared_DirtyCardQ_lock     , Mutex,   nonleaf,     true );
 
+    def(FreeList_lock              , Mutex,   leaf     ,   true );
+    def(SecondaryFreeList_lock     , Monitor, leaf     ,   true );
+    def(OldSets_lock               , Mutex  , leaf     ,   true );
     def(MMUTracker_lock            , Mutex  , leaf     ,   true );
     def(HotCardCache_lock          , Mutex  , special  ,   true );
     def(EvacFailureStack_lock      , Mutex  , nonleaf  ,   true );

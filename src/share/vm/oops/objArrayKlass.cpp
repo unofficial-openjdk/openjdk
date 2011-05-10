@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,36 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_objArrayKlass.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "gc_implementation/shared/markSweep.inline.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "memory/genOopClosures.inline.hpp"
+#include "memory/resourceArea.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/objArrayKlass.inline.hpp"
+#include "oops/objArrayKlassKlass.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.inline2.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "utilities/copy.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1OopClosures.inline.hpp"
+#include "gc_implementation/g1/g1RemSet.inline.hpp"
+#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
+#include "gc_implementation/parallelScavenge/psCompactionManager.hpp"
+#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "oops/oop.pcgc.inline.hpp"
+#endif
 
 int objArrayKlass::oop_size(oop obj) const {
   assert(obj->is_objArray(), "must be object array");
@@ -207,8 +235,9 @@ klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_n
           objArrayKlassKlass::cast(Universe::objArrayKlassKlassObj())->
           allocate_objArray_klass(dimension + 1, this_oop, CHECK_NULL);
         ak = objArrayKlassHandle(THREAD, new_klass);
-        this_oop->set_higher_dimension(ak());
         ak->set_lower_dimension(this_oop());
+        OrderAccess::storestore();
+        this_oop->set_higher_dimension(ak());
         assert(ak->oop_is_objArray(), "incorrect initialization of objArrayKlass");
       }
     }

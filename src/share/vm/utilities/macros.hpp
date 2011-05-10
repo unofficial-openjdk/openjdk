@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef SHARE_VM_UTILITIES_MACROS_HPP
+#define SHARE_VM_UTILITIES_MACROS_HPP
+
 // Use this to mark code that needs to be cleaned up (for development only)
 #define NEEDS_CLEANUP
 
@@ -71,17 +74,27 @@
 #define NOT_COMPILER2(code) code
 #endif // COMPILER2
 
+#ifdef TIERED
+#define TIERED_ONLY(code) code
+#define NOT_TIERED(code)
+#else
+#define TIERED_ONLY(code)
+#define NOT_TIERED(code) code
+#endif // TIERED
+
 
 // PRODUCT variant
 #ifdef PRODUCT
 #define PRODUCT_ONLY(code) code
 #define NOT_PRODUCT(code)
+#define NOT_PRODUCT_ARG(arg)
 #define PRODUCT_RETURN  {}
 #define PRODUCT_RETURN0 { return 0; }
 #define PRODUCT_RETURN_(code) { code }
 #else // PRODUCT
 #define PRODUCT_ONLY(code)
 #define NOT_PRODUCT(code) code
+#define NOT_PRODUCT_ARG(arg) arg,
 #define PRODUCT_RETURN  /*next token must be ;*/
 #define PRODUCT_RETURN0 /*next token must be ;*/
 #define PRODUCT_RETURN_(code)  /*next token must be ;*/
@@ -224,3 +237,5 @@
 #endif
 
 #define define_pd_global(type, name, value) const type pd_##name = value;
+
+#endif // SHARE_VM_UTILITIES_MACROS_HPP

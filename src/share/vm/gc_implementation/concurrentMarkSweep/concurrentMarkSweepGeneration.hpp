@@ -22,6 +22,22 @@
  *
  */
 
+#ifndef SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
+
+#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
+#include "gc_implementation/shared/gSpaceCounters.hpp"
+#include "gc_implementation/shared/gcStats.hpp"
+#include "gc_implementation/shared/generationCounters.hpp"
+#include "memory/generation.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/virtualspace.hpp"
+#include "services/memoryService.hpp"
+#include "utilities/bitMap.inline.hpp"
+#include "utilities/stack.inline.hpp"
+#include "utilities/taskqueue.hpp"
+#include "utilities/yieldingWorkgroup.hpp"
+
 // ConcurrentMarkSweepGeneration is in support of a concurrent
 // mark-sweep old generation in the Detlefs-Printezis--Boehm-Demers-Schenker
 // style. We assume, for now, that this generation is always the
@@ -252,12 +268,13 @@ class ModUnionClosurePar: public ModUnionClosure {
 class ChunkArray: public CHeapObj {
   size_t _index;
   size_t _capacity;
+  size_t _overflows;
   HeapWord** _array;   // storage for array
 
  public:
-  ChunkArray() : _index(0), _capacity(0), _array(NULL) {}
+  ChunkArray() : _index(0), _capacity(0), _overflows(0), _array(NULL) {}
   ChunkArray(HeapWord** a, size_t c):
-    _index(0), _capacity(c), _array(a) {}
+    _index(0), _capacity(c), _overflows(0), _array(a) {}
 
   HeapWord** array() { return _array; }
   void set_array(HeapWord** a) { _array = a; }
@@ -266,7 +283,9 @@ class ChunkArray: public CHeapObj {
   void set_capacity(size_t c) { _capacity = c; }
 
   size_t end() {
-    assert(_index < capacity(), "_index out of bounds");
+    assert(_index <= capacity(),
+           err_msg("_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT "): out of bounds",
+                   _index, _capacity));
     return _index;
   }  // exclusive
 
@@ -277,12 +296,23 @@ class ChunkArray: public CHeapObj {
 
   void reset() {
     _index = 0;
+    if (_overflows > 0 && PrintCMSStatistics > 1) {
+      warning("CMS: ChunkArray[" SIZE_FORMAT "] overflowed " SIZE_FORMAT " times",
+              _capacity, _overflows);
+    }
+    _overflows = 0;
   }
 
   void record_sample(HeapWord* p, size_t sz) {
     // For now we do not do anything with the size
     if (_index < _capacity) {
       _array[_index++] = p;
+    } else {
+      ++_overflows;
+      assert(_index == _capacity,
+             err_msg("_index (" SIZE_FORMAT ") > _capacity (" SIZE_FORMAT
+                     "): out of bounds at overflow#" SIZE_FORMAT,
+                     _index, _capacity, _overflows));
     }
   }
 };
@@ -715,7 +745,9 @@ class CMSCollector: public CHeapObj {
 
   // Support for marking stack overflow handling
   bool take_from_overflow_list(size_t num, CMSMarkStack* to_stack);
-  bool par_take_from_overflow_list(size_t num, OopTaskQueue* to_work_q);
+  bool par_take_from_overflow_list(size_t num,
+                                   OopTaskQueue* to_work_q,
+                                   int no_of_gc_threads);
   void push_on_overflow_list(oop p);
   void par_push_on_overflow_list(oop p);
   // the following is, obviously, not, in general, "MT-stable"
@@ -754,7 +786,7 @@ class CMSCollector: public CHeapObj {
   void abortable_preclean(); // Preclean while looking for possible abort
   void initialize_sequential_subtasks_for_young_gen_rescan(int i);
   // Helper function for above; merge-sorts the per-thread plab samples
-  void merge_survivor_plab_arrays(ContiguousSpace* surv);
+  void merge_survivor_plab_arrays(ContiguousSpace* surv, int no_of_gc_threads);
   // Resets (i.e. clears) the per-thread plab sample vectors
   void reset_survivor_plab_arrays();
 
@@ -1169,8 +1201,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   virtual void par_promote_alloc_done(int thread_num);
   virtual void par_oop_since_save_marks_iterate_done(int thread_num);
 
-  virtual bool promotion_attempt_is_safe(size_t promotion_in_bytes,
-    bool younger_handles_promotion_failure) const;
+  virtual bool promotion_attempt_is_safe(size_t promotion_in_bytes) const;
 
   // Inform this (non-young) generation that a promotion failure was
   // encountered during a collection of a younger generation that
@@ -1670,7 +1701,9 @@ class SweepClosure: public BlkClosureCareful {
   CMSCollector*                  _collector;  // collector doing the work
   ConcurrentMarkSweepGeneration* _g;    // Generation being swept
   CompactibleFreeListSpace*      _sp;   // Space being swept
-  HeapWord*                      _limit;
+  HeapWord*                      _limit;// the address at which the sweep should stop because
+                                        // we do not expect blocks eligible for sweeping past
+                                        // that address.
   Mutex*                         _freelistLock; // Free list lock (in space)
   CMSBitMap*                     _bitMap;       // Marking bit map (in
                                                 // generation)
@@ -1714,14 +1747,13 @@ class SweepClosure: public BlkClosureCareful {
  private:
   // Code that is common to a free chunk or garbage when
   // encountered during sweeping.
-  void doPostIsFreeOrGarbageChunk(FreeChunk *fc,
-                                  size_t chunkSize);
+  void do_post_free_or_garbage_chunk(FreeChunk *fc, size_t chunkSize);
   // Process a free chunk during sweeping.
-  void doAlreadyFreeChunk(FreeChunk *fc);
+  void do_already_free_chunk(FreeChunk *fc);
   // Process a garbage chunk during sweeping.
-  size_t doGarbageChunk(FreeChunk *fc);
+  size_t do_garbage_chunk(FreeChunk *fc);
   // Process a live chunk during sweeping.
-  size_t doLiveChunk(FreeChunk* fc);
+  size_t do_live_chunk(FreeChunk* fc);
 
   // Accessors.
   HeapWord* freeFinger() const          { return _freeFinger; }
@@ -1738,7 +1770,7 @@ class SweepClosure: public BlkClosureCareful {
   // Initialize a free range.
   void initialize_free_range(HeapWord* freeFinger, bool freeRangeInFreeLists);
   // Return this chunk to the free lists.
-  void flushCurFreeChunk(HeapWord* chunk, size_t size);
+  void flush_cur_free_chunk(HeapWord* chunk, size_t size);
 
   // Check if we should yield and do so when necessary.
   inline void do_yield_check(HeapWord* addr);
@@ -1867,3 +1899,5 @@ class TraceCMSMemoryManagerStats : public TraceMemoryManagerStats {
   TraceCMSMemoryManagerStats();
 };
 
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP

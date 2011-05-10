@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,28 @@
  *
  */
 
-// Optimization - Graph Style
+#include "precompiled.hpp"
+#include "memory/allocation.inline.hpp"
+#include "opto/block.hpp"
+#include "opto/c2compiler.hpp"
+#include "opto/callnode.hpp"
+#include "opto/cfgnode.hpp"
+#include "opto/machnode.hpp"
+#include "opto/runtime.hpp"
+#ifdef TARGET_ARCH_MODEL_x86_32
+# include "adfiles/ad_x86_32.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_x86_64
+# include "adfiles/ad_x86_64.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_sparc
+# include "adfiles/ad_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_zero
+# include "adfiles/ad_zero.hpp"
+#endif
 
-#include "incls/_precompiled.incl"
-#include "incls/_lcm.cpp.incl"
+// Optimization - Graph Style
 
 //------------------------------implicit_null_check----------------------------
 // Detect implicit-null-check opportunities.  Basically, find NULL checks
@@ -72,8 +90,7 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     for (uint i1 = 0; i1 < null_block->_nodes.size(); i1++) {
       Node* nn = null_block->_nodes[i1];
       if (nn->is_MachCall() &&
-          nn->as_MachCall()->entry_point() ==
-          SharedRuntime::uncommon_trap_blob()->instructions_begin()) {
+          nn->as_MachCall()->entry_point() == SharedRuntime::uncommon_trap_blob()->entry_point()) {
         const Type* trtype = nn->in(TypeFunc::Parms)->bottom_type();
         if (trtype->isa_int() && trtype->is_int()->is_con()) {
           jint tr_con = trtype->is_int()->get_con();

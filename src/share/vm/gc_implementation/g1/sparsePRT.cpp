@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,14 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_sparsePRT.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
+#include "gc_implementation/g1/heapRegionRemSet.hpp"
+#include "gc_implementation/g1/sparsePRT.hpp"
+#include "memory/allocation.inline.hpp"
+#include "memory/cardTableModRefBS.hpp"
+#include "memory/space.inline.hpp"
+#include "runtime/mutexLocker.hpp"
 
 #define SPARSE_PRT_VERBOSE 0
 
@@ -308,7 +314,7 @@ void RSHashTable::add_entry(SparsePRTEntry* e) {
   assert(e2->num_valid_cards() > 0, "Postcondition.");
 }
 
-CardIdx_t /* RSHashTable:: */ RSHashTableIter::find_first_card_in_list() {
+CardIdx_t RSHashTableIter::find_first_card_in_list() {
   CardIdx_t res;
   while (_bl_ind != RSHashTable::NullEntry) {
     res = _rsht->entry(_bl_ind)->card(0);
@@ -322,14 +328,11 @@ CardIdx_t /* RSHashTable:: */ RSHashTableIter::find_first_card_in_list() {
   return SparsePRTEntry::NullEntry;
 }
 
-size_t /* RSHashTable:: */ RSHashTableIter::compute_card_ind(CardIdx_t ci) {
-  return
-    _heap_bot_card_ind
-    + (_rsht->entry(_bl_ind)->r_ind() * HeapRegion::CardsPerRegion)
-    + ci;
+size_t RSHashTableIter::compute_card_ind(CardIdx_t ci) {
+  return (_rsht->entry(_bl_ind)->r_ind() * HeapRegion::CardsPerRegion) + ci;
 }
 
-bool /* RSHashTable:: */ RSHashTableIter::has_next(size_t& card_index) {
+bool RSHashTableIter::has_next(size_t& card_index) {
   _card_ind++;
   CardIdx_t ci;
   if (_card_ind < SparsePRTEntry::cards_num() &&
@@ -412,6 +415,38 @@ SparsePRT* SparsePRT::get_from_expanded_list() {
   return NULL;
 }
 
+void SparsePRT::reset_for_cleanup_tasks() {
+  _head_expanded_list = NULL;
+}
+
+void SparsePRT::do_cleanup_work(SparsePRTCleanupTask* sprt_cleanup_task) {
+  if (should_be_on_expanded_list()) {
+    sprt_cleanup_task->add(this);
+  }
+}
+
+void SparsePRT::finish_cleanup_task(SparsePRTCleanupTask* sprt_cleanup_task) {
+  assert(ParGCRareEvent_lock->owned_by_self(), "pre-condition");
+  SparsePRT* head = sprt_cleanup_task->head();
+  SparsePRT* tail = sprt_cleanup_task->tail();
+  if (head != NULL) {
+    assert(tail != NULL, "if head is not NULL, so should tail");
+
+    tail->set_next_expanded(_head_expanded_list);
+    _head_expanded_list = head;
+  } else {
+    assert(tail == NULL, "if head is NULL, so should tail");
+  }
+}
+
+bool SparsePRT::should_be_on_expanded_list() {
+  if (_expanded) {
+    assert(_cur != _next, "if _expanded is true, cur should be != _next");
+  } else {
+    assert(_cur == _next, "if _expanded is false, cur should be == _next");
+  }
+  return expanded();
+}
 
 void SparsePRT::cleanup_all() {
   // First clean up all expanded tables so they agree on next and cur.
@@ -481,6 +516,7 @@ void SparsePRT::clear() {
     _cur->clear();
   }
   _next = _cur;
+  _expanded = false;
 }
 
 void SparsePRT::cleanup() {
@@ -514,4 +550,16 @@ void SparsePRT::expand() {
     delete last;
   }
   add_to_expanded_list(this);
+}
+
+void SparsePRTCleanupTask::add(SparsePRT* sprt) {
+  assert(sprt->should_be_on_expanded_list(), "pre-condition");
+
+  sprt->set_next_expanded(NULL);
+  if (_tail != NULL) {
+    _tail->set_next_expanded(sprt);
+  } else {
+    _head = sprt;
+  }
+  _tail = sprt;
 }

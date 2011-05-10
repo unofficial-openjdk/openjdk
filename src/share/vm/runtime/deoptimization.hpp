@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_RUNTIME_DEOPTIMIZATION_HPP
+#define SHARE_VM_RUNTIME_DEOPTIMIZATION_HPP
+
+#include "memory/allocation.hpp"
+#include "runtime/frame.inline.hpp"
 
 class ProfileData;
 class vframeArray;
@@ -216,6 +222,10 @@ class Deoptimization : AllStatic {
   // Only called from VMDeoptimizeFrame
   // @argument thread.     Thread where stub_frame resides.
   // @argument id.         id of frame that should be deoptimized.
+  static void deoptimize_frame_internal(JavaThread* thread, intptr_t* id);
+
+  // If thread is not the current thread then execute
+  // VM_DeoptimizeFrame otherwise deoptimize directly.
   static void deoptimize_frame(JavaThread* thread, intptr_t* id);
 
   // Statistics
@@ -311,12 +321,6 @@ class Deoptimization : AllStatic {
   static void popframe_preserve_args(JavaThread* thread, int bytes_to_save, void* start_address);
 
  private:
-  enum {
-    _no_count = -1
-  };
-
-  static void reset_invocation_counter(ScopeDesc* trap_scope, jint count = _no_count);
-
   static methodDataOop get_method_data(JavaThread* thread, methodHandle m, bool create_if_missing);
   // Update the mdo's count and per-BCI reason bits, returning previous state:
   static ProfileData* query_update_method_data(methodDataHandle trap_mdo,
@@ -350,3 +354,5 @@ public:
   ~DeoptimizationMarker() { _is_active = false; }
   static bool is_active() { return _is_active; }
 };
+
+#endif // SHARE_VM_RUNTIME_DEOPTIMIZATION_HPP

@@ -22,9 +22,35 @@
  *
  */
 
+#include "precompiled.hpp"
+#include "gc_implementation/parallelScavenge/cardTableExtension.hpp"
+#include "gc_implementation/parallelScavenge/gcTaskManager.hpp"
+#include "gc_implementation/parallelScavenge/generationSizer.hpp"
+#include "gc_implementation/parallelScavenge/parallelScavengeHeap.hpp"
+#include "gc_implementation/parallelScavenge/psAdaptiveSizePolicy.hpp"
+#include "gc_implementation/parallelScavenge/psMarkSweep.hpp"
+#include "gc_implementation/parallelScavenge/psParallelCompact.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "gc_implementation/parallelScavenge/psTasks.hpp"
+#include "gc_implementation/shared/isGCActiveMark.hpp"
+#include "gc_implementation/shared/spaceDecorator.hpp"
+#include "gc_interface/gcCause.hpp"
+#include "memory/collectorPolicy.hpp"
+#include "memory/gcLocker.inline.hpp"
+#include "memory/referencePolicy.hpp"
+#include "memory/referenceProcessor.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.psgc.inline.hpp"
+#include "runtime/biasedLocking.hpp"
+#include "runtime/fprofiler.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/threadCritical.hpp"
+#include "runtime/vmThread.hpp"
+#include "runtime/vm_operations.hpp"
+#include "services/memoryService.hpp"
+#include "utilities/stack.inline.hpp"
 
-# include "incls/_precompiled.incl"
-# include "incls/_psScavenge.cpp.incl"
 
 HeapWord*                  PSScavenge::_to_space_top_before_gc = NULL;
 int                        PSScavenge::_consecutive_skipped_scavenges = 0;
@@ -668,6 +694,8 @@ void PSScavenge::clean_up_failed_promotion() {
 void PSScavenge::oop_promotion_failed(oop obj, markOop obj_mark) {
   _promotion_failed = true;
   if (obj_mark->must_be_preserved_for_promotion_failure(obj)) {
+    // Should use per-worker private stakcs hetre rather than
+    // locking a common pair of stacks.
     ThreadCritical tc;
     _preserved_oop_stack.push(obj);
     _preserved_mark_stack.push(obj_mark);

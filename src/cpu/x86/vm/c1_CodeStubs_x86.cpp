@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_c1_CodeStubs_x86.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_CodeStubs.hpp"
+#include "c1/c1_FrameMap.hpp"
+#include "c1/c1_LIRAssembler.hpp"
+#include "c1/c1_MacroAssembler.hpp"
+#include "c1/c1_Runtime1.hpp"
+#include "nativeInst_x86.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "vmreg_x86.inline.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#endif
 
 
 #define __ ce->masm()->
@@ -68,26 +78,23 @@ void ConversionStub::emit_code(LIR_Assembler* ce) {
   __ jmp(_continuation);
 }
 
-#ifdef TIERED
 void CounterOverflowStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
+  ce->store_parameter(_method->as_register(), 1);
   ce->store_parameter(_bci, 0);
   __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::counter_overflow_id)));
   ce->add_call_info_here(_info);
   ce->verify_oop_map(_info);
-
   __ jmp(_continuation);
 }
-#endif // TIERED
-
-
 
 RangeCheckStub::RangeCheckStub(CodeEmitInfo* info, LIR_Opr index,
                                bool throw_index_out_of_bounds_exception)
   : _throw_index_out_of_bounds_exception(throw_index_out_of_bounds_exception)
   , _index(index)
 {
-  _info = info == NULL ? NULL : new CodeEmitInfo(info);
+  assert(info != NULL, "must have info");
+  _info = new CodeEmitInfo(info);
 }
 
 
@@ -476,7 +483,7 @@ void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
 
   Register pre_val_reg = pre_val()->as_register();
 
-  ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false);
+  ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false /*wide*/, false /*unaligned*/);
 
   __ cmpptr(pre_val_reg, (int32_t) NULL_WORD);
   __ jcc(Assembler::equal, _continuation);
@@ -502,7 +509,7 @@ void G1PostBarrierStub::emit_code(LIR_Assembler* ce) {
   Register new_val_reg = new_val()->as_register();
   __ cmpptr(new_val_reg, (int32_t) NULL_WORD);
   __ jcc(Assembler::equal, _continuation);
-  ce->store_parameter(addr()->as_register(), 0);
+  ce->store_parameter(addr()->as_pointer_register(), 0);
   __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::g1_post_barrier_slow_id)));
   __ jmp(_continuation);
 }

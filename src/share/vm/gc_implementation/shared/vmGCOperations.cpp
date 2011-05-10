@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,24 @@
  * questions.
  *
  */
-# include "incls/_precompiled.incl"
-# include "incls/_vmGCOperations.cpp.incl"
+
+#include "precompiled.hpp"
+#include "classfile/classLoader.hpp"
+#include "classfile/javaClasses.hpp"
+#include "gc_implementation/shared/vmGCOperations.hpp"
+#include "memory/gcLocker.inline.hpp"
+#include "memory/genCollectedHeap.hpp"
+#include "memory/oopFactory.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/instanceRefKlass.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/init.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "utilities/dtrace.hpp"
+#include "utilities/preserveException.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#endif
 
 HS_DTRACE_PROBE_DECL1(hotspot, gc__begin, bool);
 HS_DTRACE_PROBE_DECL(hotspot, gc__end);
@@ -142,8 +158,7 @@ void VM_GC_HeapInspection::doit() {
 
 
 void VM_GenCollectForAllocation::doit() {
-  JvmtiGCForAllocationMarker jgcm;
-  notify_gc_begin(false);
+  SvcGCMarker sgcm(SvcGCMarker::MINOR);
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   GCCauseSetter gccs(gch, _gc_cause);
@@ -153,22 +168,19 @@ void VM_GenCollectForAllocation::doit() {
   if (_res == NULL && GC_locker::is_active_and_needs_gc()) {
     set_gc_locked();
   }
-  notify_gc_end();
 }
 
 void VM_GenCollectFull::doit() {
-  JvmtiGCFullMarker jgcm;
-  notify_gc_begin(true);
+  SvcGCMarker sgcm(SvcGCMarker::FULL);
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   GCCauseSetter gccs(gch, _gc_cause);
   gch->do_full_collection(gch->must_clear_all_soft_refs(), _max_level);
-  notify_gc_end();
 }
 
 void VM_GenCollectForPermanentAllocation::doit() {
-  JvmtiGCForAllocationMarker jgcm;
-  notify_gc_begin(true);
+  SvcGCMarker sgcm(SvcGCMarker::FULL);
+
   SharedHeap* heap = (SharedHeap*)Universe::heap();
   GCCauseSetter gccs(heap, _gc_cause);
   switch (heap->kind()) {
@@ -193,5 +205,4 @@ void VM_GenCollectForPermanentAllocation::doit() {
   if (_res == NULL && GC_locker::is_active_and_needs_gc()) {
     set_gc_locked();
   }
-  notify_gc_end();
 }

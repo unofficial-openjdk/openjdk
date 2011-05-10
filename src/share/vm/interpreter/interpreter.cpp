@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,25 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_interpreter.cpp.incl"
+#include "precompiled.hpp"
+#include "asm/assembler.hpp"
+#include "interpreter/bytecodeHistogram.hpp"
+#include "interpreter/bytecodeInterpreter.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "interpreter/templateTable.hpp"
+#include "memory/allocation.inline.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/arrayOop.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/forte.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/timer.hpp"
 
 # define __ _masm->
 
@@ -220,10 +237,9 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
 // Return true if the interpreter can prove that the given bytecode has
 // not yet been executed (in Java semantics, not in actual operation).
 bool AbstractInterpreter::is_not_reached(methodHandle method, int bci) {
-  address bcp = method->bcp_from(bci);
-  Bytecodes::Code code = Bytecodes::code_at(bcp, method());
+  Bytecodes::Code code = method()->code_at(bci);
 
-  if (!Bytecode_at(bcp)->must_rewrite(code)) {
+  if (!Bytecodes::must_rewrite(code)) {
     // might have been reached
     return false;
   }
@@ -269,12 +285,12 @@ void AbstractInterpreter::print_method_kind(MethodKind kind) {
 // If deoptimization happens, this function returns the point of next bytecode to continue execution
 address AbstractInterpreter::deopt_continue_after_entry(methodOop method, address bcp, int callee_parameters, bool is_top_frame) {
   assert(method->contains(bcp), "just checkin'");
-  Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+  Bytecodes::Code code   = Bytecodes::java_code_at(method, bcp);
   assert(!Interpreter::bytecode_should_reexecute(code), "should not reexecute");
   int             bci    = method->bci_from(bcp);
   int             length = -1; // initial value for debugging
   // compute continuation length
-  length = Bytecodes::length_at(bcp);
+  length = Bytecodes::length_at(method, bcp);
   // compute result type
   BasicType type = T_ILLEGAL;
 
@@ -286,7 +302,7 @@ address AbstractInterpreter::deopt_continue_after_entry(methodOop method, addres
       Thread *thread = Thread::current();
       ResourceMark rm(thread);
       methodHandle mh(thread, method);
-      type = Bytecode_invoke_at(mh, bci)->result_type(thread);
+      type = Bytecode_invoke(mh, bci).result_type(thread);
       // since the cache entry might not be initialized:
       // (NOT needed for the old calling convension)
       if (!is_top_frame) {
@@ -300,7 +316,7 @@ address AbstractInterpreter::deopt_continue_after_entry(methodOop method, addres
       Thread *thread = Thread::current();
       ResourceMark rm(thread);
       methodHandle mh(thread, method);
-      type = Bytecode_invoke_at(mh, bci)->result_type(thread);
+      type = Bytecode_invoke(mh, bci).result_type(thread);
       // since the cache entry might not be initialized:
       // (NOT needed for the old calling convension)
       if (!is_top_frame) {
@@ -317,7 +333,7 @@ address AbstractInterpreter::deopt_continue_after_entry(methodOop method, addres
         Thread *thread = Thread::current();
         ResourceMark rm(thread);
         methodHandle mh(thread, method);
-        type = Bytecode_loadconstant_at(mh, bci)->result_type();
+        type = Bytecode_loadconstant(mh, bci).result_type();
         break;
       }
 
@@ -339,7 +355,7 @@ address AbstractInterpreter::deopt_continue_after_entry(methodOop method, addres
 //       Interpreter::deopt_entry(vtos, 0) like others
 address AbstractInterpreter::deopt_reexecute_entry(methodOop method, address bcp) {
   assert(method->contains(bcp), "just checkin'");
-  Bytecodes::Code code   = Bytecodes::java_code_at(bcp);
+  Bytecodes::Code code   = Bytecodes::java_code_at(method, bcp);
 #ifdef COMPILER1
   if(code == Bytecodes::_athrow ) {
     return Interpreter::rethrow_exception_entry();

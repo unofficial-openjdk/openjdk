@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,17 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+#define SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+
+#include "classfile/classFileStream.hpp"
+#include "classfile/classLoader.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/java.hpp"
+#include "runtime/reflectionUtils.hpp"
+#include "utilities/hashtable.hpp"
 
 // The system dictionary stores all loaded classes and maps:
 //
@@ -145,8 +156,7 @@ class SymbolPropertyTable;
   template(WrongMethodTypeException_klass, java_dyn_WrongMethodTypeException, Opt) \
   template(Linkage_klass,                java_dyn_Linkage,               Opt) \
   template(CallSite_klass,               java_dyn_CallSite,              Opt) \
-  template(InvokeDynamic_klass,          java_dyn_InvokeDynamic,         Opt) \
-  /* Note: MethodHandle must be first, and InvokeDynamic last in group */     \
+  /* Note: MethodHandle must be first, and CallSite last in group */          \
                                                                               \
   template(StringBuffer_klass,           java_lang_StringBuffer,         Pre) \
   template(StringBuilder_klass,          java_lang_StringBuilder,        Pre) \
@@ -161,6 +171,8 @@ class SymbolPropertyTable;
   template(sun_misc_AtomicLongCSImpl_klass, sun_misc_AtomicLongCSImpl,   Opt) \
                                                                               \
   template(sun_jkernel_DownloadManager_klass, sun_jkernel_DownloadManager, Opt_Kernel) \
+                                                                              \
+  template(sun_misc_PostVMInitHook_klass, sun_misc_PostVMInitHook, Opt)       \
                                                                               \
   /* Preload boxing klasses */                                                \
   template(Boolean_klass,                java_lang_Boolean,              Pre) \
@@ -471,6 +483,7 @@ public:
   // ask Java to compute a java.dyn.MethodType object for a given signature
   static Handle    find_method_handle_type(symbolHandle signature,
                                            KlassHandle accessing_klass,
+                                           bool for_invokeGeneric,
                                            bool& return_bcp_flag,
                                            TRAPS);
   // ask Java to compute a java.dyn.MethodHandle object for a given CP entry
@@ -495,6 +508,7 @@ public:
   static Handle    find_bootstrap_method(methodHandle caller_method,
                                          int caller_bci,  // N.B. must be an invokedynamic
                                          int cache_index, // must be corresponding main_entry
+                                         Handle &argument_info_result, // static BSM arguments, if any
                                          TRAPS);
 
   // Utility for printing loader "name" as part of tracing constraints
@@ -670,3 +684,5 @@ public:
 
   static KlassHandle box_klass(BasicType t);
 };
+
+#endif // SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP

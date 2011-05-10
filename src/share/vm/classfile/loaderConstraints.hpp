@@ -22,6 +22,13 @@
  *
  */
 
+#ifndef SHARE_VM_CLASSFILE_LOADERCONSTRAINTS_HPP
+#define SHARE_VM_CLASSFILE_LOADERCONSTRAINTS_HPP
+
+#include "classfile/dictionary.hpp"
+#include "classfile/placeholders.hpp"
+#include "utilities/hashtable.hpp"
+
 class LoaderConstraintEntry;
 
 class LoaderConstraintTable : public Hashtable {
@@ -130,3 +137,5 @@ public:
   void set_loader(int i, oop p) { _loaders[i] = p; }
 
 };
+
+#endif // SHARE_VM_CLASSFILE_LOADERCONSTRAINTS_HPP

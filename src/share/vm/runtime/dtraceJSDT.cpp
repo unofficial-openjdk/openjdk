@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,17 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_dtraceJSDT.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/javaClasses.hpp"
+#include "code/codeBlob.hpp"
+#include "memory/allocation.hpp"
+#include "prims/jvm.h"
+#include "runtime/dtraceJSDT.hpp"
+#include "runtime/jniHandles.hpp"
+#include "runtime/os.hpp"
+#include "utilities/exceptions.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/utf8.hpp"
 
 #ifdef HAVE_DTRACE_H
 
@@ -65,7 +74,7 @@ jlong DTraceJSDT::activate(
         THROW_MSG_0(vmSymbols::java_lang_RuntimeException(),
           "Unable to register DTrace probes (CodeCache: no room for DTrace nmethods).");
       }
-      h_method()->set_not_compilable(CompLevel_highest_tier);
+      h_method()->set_not_compilable();
       h_method()->set_code(h_method, nm);
       probes->nmethod_at_put(count++, nm);
     }

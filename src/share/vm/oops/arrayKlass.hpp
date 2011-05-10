@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,22 @@
  *
  */
 
+#ifndef SHARE_VM_OOPS_ARRAYKLASS_HPP
+#define SHARE_VM_OOPS_ARRAYKLASS_HPP
+
+#include "memory/universe.hpp"
+#include "oops/klass.hpp"
+#include "oops/klassOop.hpp"
+#include "oops/klassVtable.hpp"
+
 // arrayKlass is the abstract baseclass for all array classes
 
 class arrayKlass: public Klass {
   friend class VMStructs;
  private:
   int      _dimension;         // This is n'th-dimensional array.
-  klassOop _higher_dimension;  // Refers the (n+1)'th-dimensional array (if present).
-  klassOop _lower_dimension;   // Refers the (n-1)'th-dimensional array (if present).
+  volatile klassOop _higher_dimension;  // Refers the (n+1)'th-dimensional array (if present).
+  volatile klassOop _lower_dimension;   // Refers the (n-1)'th-dimensional array (if present).
   int      _vtable_len;        // size of vtable for this klass
   juint    _alloc_size;        // allocation profiling support
   oop      _component_mirror;  // component type, as a java/lang/Class
@@ -127,3 +135,5 @@ class arrayKlass: public Klass {
   // Verification
   void oop_verify_on(oop obj, outputStream* st);
 };
+
+#endif // SHARE_VM_OOPS_ARRAYKLASS_HPP

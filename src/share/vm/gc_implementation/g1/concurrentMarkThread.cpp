@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,14 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_concurrentMarkThread.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/g1/concurrentMarkThread.inline.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1CollectorPolicy.hpp"
+#include "gc_implementation/g1/g1MMUTracker.hpp"
+#include "gc_implementation/g1/vm_operations_g1.hpp"
+#include "memory/resourceArea.hpp"
+#include "runtime/vmThread.hpp"
 
 // ======= Concurrent Mark Thread ========
 
@@ -89,8 +95,8 @@ void ConcurrentMarkThread::run() {
   _vtime_start = os::elapsedVTime();
   wait_for_universe_init();
 
-  G1CollectedHeap* g1 = G1CollectedHeap::heap();
-  G1CollectorPolicy* g1_policy = g1->g1_policy();
+  G1CollectedHeap* g1h = G1CollectedHeap::heap();
+  G1CollectorPolicy* g1_policy = g1h->g1_policy();
   G1MMUTracker *mmu_tracker = g1_policy->mmu_tracker();
   Thread *current_thread = Thread::current();
 
@@ -113,7 +119,7 @@ void ConcurrentMarkThread::run() {
       if (!g1_policy->in_young_gc_mode()) {
         // this ensures the flag is not set if we bail out of the marking
         // cycle; normally the flag is cleared immediately after cleanup
-        g1->set_marking_complete();
+        g1h->set_marking_complete();
 
         if (g1_policy->adaptive_young_list_length()) {
           double now = os::elapsedTime();
@@ -222,10 +228,20 @@ void ConcurrentMarkThread::run() {
         VM_CGC_Operation op(&cl_cl, verbose_str);
         VMThread::execute(&op);
       } else {
-        G1CollectedHeap::heap()->set_marking_complete();
+        g1h->set_marking_complete();
       }
 
-      if (!cm()->has_aborted()) {
+      // Check if cleanup set the free_regions_coming flag. If it
+      // hasn't, we can just skip the next step.
+      if (g1h->free_regions_coming()) {
+        // The following will finish freeing up any regions that we
+        // found to be empty during cleanup. We'll do this part
+        // without joining the suspendible set. If an evacuation pause
+        // takes places, then we would carry on freeing regions in
+        // case they are needed by the pause. If a Full GC takes
+        // places, it would wait for us to process the regions
+        // reclaimed by cleanup.
+
         double cleanup_start_sec = os::elapsedTime();
         if (PrintGC) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
@@ -234,23 +250,29 @@ void ConcurrentMarkThread::run() {
         }
 
         // Now do the remainder of the cleanup operation.
-        _sts.join();
         _cm->completeCleanup();
-        if (!cm()->has_aborted()) {
-          g1_policy->record_concurrent_mark_cleanup_completed();
+        // Notify anyone who's waiting that there are no more free
+        // regions coming. We have to do this before we join the STS,
+        // otherwise we might deadlock: a GC worker could be blocked
+        // waiting for the notification whereas this thread will be
+        // blocked for the pause to finish while it's trying to join
+        // the STS, which is conditional on the GC workers finishing.
+        g1h->reset_free_regions_coming();
 
-          double cleanup_end_sec = os::elapsedTime();
-          if (PrintGC) {
-            gclog_or_tty->date_stamp(PrintGCDateStamps);
-            gclog_or_tty->stamp(PrintGCTimeStamps);
-            gclog_or_tty->print_cr("[GC concurrent-cleanup-end, %1.7lf]",
-                                   cleanup_end_sec - cleanup_start_sec);
-          }
-        }
+        _sts.join();
+        g1_policy->record_concurrent_mark_cleanup_completed();
         _sts.leave();
+
+        double cleanup_end_sec = os::elapsedTime();
+        if (PrintGC) {
+          gclog_or_tty->date_stamp(PrintGCDateStamps);
+          gclog_or_tty->stamp(PrintGCTimeStamps);
+          gclog_or_tty->print_cr("[GC concurrent-cleanup-end, %1.7lf]",
+                                 cleanup_end_sec - cleanup_start_sec);
+        }
       }
-      // We're done: no more unclean regions coming.
-      G1CollectedHeap::heap()->set_unclean_regions_coming(false);
+      guarantee(cm()->cleanup_list_is_empty(),
+                "at this point there should be no regions on the cleanup list");
 
       if (cm()->has_aborted()) {
         if (PrintGC) {
@@ -271,7 +293,9 @@ void ConcurrentMarkThread::run() {
     // completed. This will also notify the FullGCCount_lock in case a
     // Java thread is waiting for a full GC to happen (e.g., it
     // called System.gc() with +ExplicitGCInvokesConcurrent).
-    g1->increment_full_collections_completed(true /* outer */);
+    _sts.join();
+    g1h->increment_full_collections_completed(true /* concurrent */);
+    _sts.leave();
   }
   assert(_should_terminate, "just checking");
 
@@ -303,9 +327,10 @@ void ConcurrentMarkThread::print_on(outputStream* st) const {
 }
 
 void ConcurrentMarkThread::sleepBeforeNextCycle() {
-  clear_in_progress();
   // We join here because we don't want to do the "shouldConcurrentMark()"
   // below while the world is otherwise stopped.
+  assert(!in_progress(), "should have been cleared");
+
   MutexLockerEx x(CGC_lock, Mutex::_no_safepoint_check_flag);
   while (!started()) {
     CGC_lock->wait(Mutex::_no_safepoint_check_flag);

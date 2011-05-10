@@ -22,8 +22,28 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_disassembler.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/javaClasses.hpp"
+#include "code/codeCache.hpp"
+#include "compiler/disassembler.hpp"
+#include "gc_interface/collectedHeap.hpp"
+#include "memory/cardTableModRefBS.hpp"
+#include "runtime/fprofiler.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "runtime/stubRoutines.hpp"
+#ifdef TARGET_ARCH_x86
+# include "depChecker_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "depChecker_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "depChecker_zero.hpp"
+#endif
+#ifdef SHARK
+#include "shark/sharkEntry.hpp"
+#endif
 
 void*       Disassembler::_library               = NULL;
 bool        Disassembler::_tried_to_load_library = false;
@@ -63,17 +83,17 @@ bool Disassembler::load_library() {
     // Find the disassembler next to libjvm.so.
     strcpy(&buf[jvm_offset], hsdis_library_name);
     strcat(&buf[jvm_offset], os::dll_file_extension());
-    _library = hpi::dll_load(buf, ebuf, sizeof ebuf);
+    _library = os::dll_load(buf, ebuf, sizeof ebuf);
   }
   if (_library == NULL) {
     // Try a free-floating lookup.
     strcpy(&buf[0], hsdis_library_name);
     strcat(&buf[0], os::dll_file_extension());
-    _library = hpi::dll_load(buf, ebuf, sizeof ebuf);
+    _library = os::dll_load(buf, ebuf, sizeof ebuf);
   }
   if (_library != NULL) {
     _decode_instructions = CAST_TO_FN_PTR(Disassembler::decode_func,
-                                          hpi::dll_lookup(_library, decode_instructions_name));
+                                          os::dll_lookup(_library, decode_instructions_name));
   }
   _tried_to_load_library = true;
   if (_decode_instructions == NULL) {
@@ -407,7 +427,7 @@ void Disassembler::decode(CodeBlob* cb, outputStream* st) {
   if (!load_library())  return;
   decode_env env(cb, st);
   env.output()->print_cr("Decoding CodeBlob " INTPTR_FORMAT, cb);
-  env.decode_instructions(cb->instructions_begin(), cb->instructions_end());
+  env.decode_instructions(cb->code_begin(), cb->code_end());
 }
 
 
@@ -424,12 +444,12 @@ void Disassembler::decode(nmethod* nm, outputStream* st) {
   env.output()->print_cr("Code:");
 
 #ifdef SHARK
-  SharkEntry* entry = (SharkEntry *) nm->instructions_begin();
-  unsigned char* p = entry->code_start();
+  SharkEntry* entry = (SharkEntry *) nm->code_begin();
+  unsigned char* p   = entry->code_start();
   unsigned char* end = entry->code_limit();
 #else
-  unsigned char* p = nm->instructions_begin();
-  unsigned char* end = nm->instructions_end();
+  unsigned char* p   = nm->code_begin();
+  unsigned char* end = nm->code_end();
 #endif // SHARK
 
   // If there has been profiling, print the buckets.
@@ -444,6 +464,19 @@ void Disassembler::decode(nmethod* nm, outputStream* st) {
         total_bucket_count += FlatProfiler::bucket_count_for(p0);
     }
     env.set_total_ticks(total_bucket_count);
+  }
+
+  // Print constant table.
+  if (nm->consts_size() > 0) {
+    nm->print_nmethod_labels(env.output(), nm->consts_begin());
+    int offset = 0;
+    for (address p = nm->consts_begin(); p < nm->consts_end(); p += 4, offset += 4) {
+      if ((offset % 8) == 0) {
+        env.output()->print_cr("  " INTPTR_FORMAT " (offset: %4d): " PTR32_FORMAT "   " PTR64_FORMAT, (intptr_t) p, offset, *((int32_t*) p), *((int64_t*) p));
+      } else {
+        env.output()->print_cr("  " INTPTR_FORMAT " (offset: %4d): " PTR32_FORMAT,                    (intptr_t) p, offset, *((int32_t*) p));
+      }
+    }
   }
 
   env.decode_instructions(p, end);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,36 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_frame.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/oopMapCache.hpp"
+#include "memory/resourceArea.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/markOop.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.inline2.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/javaCalls.hpp"
+#include "runtime/monitorChunk.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/signature.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "utilities/decoder.hpp"
+
+#ifdef TARGET_ARCH_x86
+# include "nativeInst_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "nativeInst_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "nativeInst_zero.hpp"
+#endif
 
 RegisterMap::RegisterMap(JavaThread *thread, bool update_map) {
   _thread         = thread;
@@ -537,8 +565,8 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
     st->cr();
 #ifndef PRODUCT
     if (end == NULL) {
-      begin = _cb->instructions_begin();
-      end = _cb->instructions_end();
+      begin = _cb->code_begin();
+      end   = _cb->code_end();
     }
 #endif
   }
@@ -626,7 +654,7 @@ static void print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
   // names if pc is within jvm.dll or libjvm.so, because JVM only has
   // JVM_xxxx and a few other symbols in the dynamic symbol table. Do this
   // only for native libraries.
-  if (!in_vm) {
+  if (!in_vm || Decoder::can_decode_C_frame_in_vm()) {
     found = os::dll_address_to_function_name(pc, buf, buflen, &offset);
 
     if (found) {
@@ -902,10 +930,10 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   // This is used sometimes for calling into the VM, not for another
   // interpreted or compiled frame.
   if (!m->is_native()) {
-    Bytecode_invoke *call = Bytecode_invoke_at_check(m, bci);
-    if (call != NULL) {
-      signature = symbolHandle(thread, call->signature());
-      has_receiver = call->has_receiver();
+    Bytecode_invoke call = Bytecode_invoke_check(m, bci);
+    if (call.is_valid()) {
+      signature = symbolHandle(thread, call.signature());
+      has_receiver = call.has_receiver();
       if (map->include_argument_oops() &&
           interpreter_frame_expression_stack_size() > 0) {
         ResourceMark rm(thread);  // is this right ???
@@ -1045,28 +1073,20 @@ oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {
   }
 }
 
-BasicLock* frame::compiled_synchronized_native_monitor(nmethod* nm) {
-  if (nm == NULL) {
-    assert(_cb != NULL && _cb->is_nmethod() &&
-           nm->method()->is_native() &&
-           nm->method()->is_synchronized(),
-           "should not call this otherwise");
-    nm = (nmethod*) _cb;
-  }
-  int byte_offset = in_bytes(nm->compiled_synchronized_native_basic_lock_sp_offset());
+BasicLock* frame::get_native_monitor() {
+  nmethod* nm = (nmethod*)_cb;
+  assert(_cb != NULL && _cb->is_nmethod() && nm->method()->is_native(),
+         "Should not call this unless it's a native nmethod");
+  int byte_offset = in_bytes(nm->native_basic_lock_sp_offset());
   assert(byte_offset >= 0, "should not see invalid offset");
   return (BasicLock*) &sp()[byte_offset / wordSize];
 }
 
-oop frame::compiled_synchronized_native_monitor_owner(nmethod* nm) {
-  if (nm == NULL) {
-    assert(_cb != NULL && _cb->is_nmethod() &&
-           nm->method()->is_native() &&
-           nm->method()->is_synchronized(),
-           "should not call this otherwise");
-    nm = (nmethod*) _cb;
-  }
-  int byte_offset = in_bytes(nm->compiled_synchronized_native_basic_lock_owner_sp_offset());
+oop frame::get_native_receiver() {
+  nmethod* nm = (nmethod*)_cb;
+  assert(_cb != NULL && _cb->is_nmethod() && nm->method()->is_native(),
+         "Should not call this unless it's a native nmethod");
+  int byte_offset = in_bytes(nm->native_receiver_sp_offset());
   assert(byte_offset >= 0, "should not see invalid offset");
   oop owner = ((oop*) sp())[byte_offset / wordSize];
   assert( Universe::heap()->is_in(owner), "bad receiver" );

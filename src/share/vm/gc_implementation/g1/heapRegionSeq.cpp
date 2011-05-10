@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,10 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_heapRegionSeq.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/heapRegionSeq.hpp"
+#include "memory/allocation.hpp"
 
 // Local to this file.
 
@@ -62,68 +64,6 @@ HeapRegionSeq::HeapRegionSeq(const size_t max_size) :
 {}
 
 // Private methods.
-
-HeapWord*
-HeapRegionSeq::alloc_obj_from_region_index(int ind, size_t word_size) {
-  assert(G1CollectedHeap::isHumongous(word_size),
-         "Allocation size should be humongous");
-  int cur = ind;
-  int first = cur;
-  size_t sumSizes = 0;
-  while (cur < _regions.length() && sumSizes < word_size) {
-    // Loop invariant:
-    //  For all i in [first, cur):
-    //       _regions.at(i)->is_empty()
-    //    && _regions.at(i) is contiguous with its predecessor, if any
-    //  && sumSizes is the sum of the sizes of the regions in the interval
-    //       [first, cur)
-    HeapRegion* curhr = _regions.at(cur);
-    if (curhr->is_empty()
-        && (first == cur
-            || (_regions.at(cur-1)->end() ==
-                curhr->bottom()))) {
-      sumSizes += curhr->capacity() / HeapWordSize;
-    } else {
-      first = cur + 1;
-      sumSizes = 0;
-    }
-    cur++;
-  }
-  if (sumSizes >= word_size) {
-    _alloc_search_start = cur;
-    // Mark the allocated regions as allocated.
-    bool zf = G1CollectedHeap::heap()->allocs_are_zero_filled();
-    HeapRegion* first_hr = _regions.at(first);
-    for (int i = first; i < cur; i++) {
-      HeapRegion* hr = _regions.at(i);
-      if (zf)
-        hr->ensure_zero_filled();
-      {
-        MutexLockerEx x(ZF_mon, Mutex::_no_safepoint_check_flag);
-        hr->set_zero_fill_allocated();
-      }
-      size_t sz = hr->capacity() / HeapWordSize;
-      HeapWord* tmp = hr->allocate(sz);
-      assert(tmp != NULL, "Humongous allocation failure");
-      MemRegion mr = MemRegion(tmp, sz);
-      CollectedHeap::fill_with_object(mr);
-      hr->declare_filled_region_to_BOT(mr);
-      if (i == first) {
-        first_hr->set_startsHumongous();
-      } else {
-        assert(i > first, "sanity");
-        hr->set_continuesHumongous(first_hr);
-      }
-    }
-    HeapWord* first_hr_bot = first_hr->bottom();
-    HeapWord* obj_end = first_hr_bot + word_size;
-    first_hr->set_top(obj_end);
-    return first_hr_bot;
-  } else {
-    // If we started from the beginning, we want to know why we can't alloc.
-    return NULL;
-  }
-}
 
 void HeapRegionSeq::print_empty_runs() {
   int empty_run = 0;
@@ -198,13 +138,67 @@ size_t HeapRegionSeq::free_suffix() {
   return res;
 }
 
-HeapWord* HeapRegionSeq::obj_allocate(size_t word_size) {
-  int cur = _alloc_search_start;
-  // Make sure "cur" is a valid index.
-  assert(cur >= 0, "Invariant.");
-  HeapWord* res = alloc_obj_from_region_index(cur, word_size);
-  if (res == NULL)
-    res = alloc_obj_from_region_index(0, word_size);
+int HeapRegionSeq::find_contiguous_from(int from, size_t num) {
+  assert(num > 1, "pre-condition");
+  assert(0 <= from && from <= _regions.length(),
+         err_msg("from: %d should be valid and <= than %d",
+                 from, _regions.length()));
+
+  int curr = from;
+  int first = -1;
+  size_t num_so_far = 0;
+  while (curr < _regions.length() && num_so_far < num) {
+    HeapRegion* curr_hr = _regions.at(curr);
+    if (curr_hr->is_empty()) {
+      if (first == -1) {
+        first = curr;
+        num_so_far = 1;
+      } else {
+        num_so_far += 1;
+      }
+    } else {
+      first = -1;
+      num_so_far = 0;
+    }
+    curr += 1;
+  }
+
+  assert(num_so_far <= num, "post-condition");
+  if (num_so_far == num) {
+    // we find enough space for the humongous object
+    assert(from <= first && first < _regions.length(), "post-condition");
+    assert(first < curr && (curr - first) == (int) num, "post-condition");
+    for (int i = first; i < first + (int) num; ++i) {
+      assert(_regions.at(i)->is_empty(), "post-condition");
+    }
+    return first;
+  } else {
+    // we failed to find enough space for the humongous object
+    return -1;
+  }
+}
+
+int HeapRegionSeq::find_contiguous(size_t num) {
+  assert(num > 1, "otherwise we should not be calling this");
+  assert(0 <= _alloc_search_start && _alloc_search_start <= _regions.length(),
+         err_msg("_alloc_search_start: %d should be valid and <= than %d",
+                 _alloc_search_start, _regions.length()));
+
+  int start = _alloc_search_start;
+  int res = find_contiguous_from(start, num);
+  if (res == -1 && start != 0) {
+    // Try starting from the beginning. If _alloc_search_start was 0,
+    // no point in doing this again.
+    res = find_contiguous_from(0, num);
+  }
+  if (res != -1) {
+    assert(0 <= res && res < _regions.length(),
+           err_msg("res: %d should be valid", res));
+    _alloc_search_start = res + (int) num;
+    assert(0 < _alloc_search_start && _alloc_search_start <= _regions.length(),
+           err_msg("_alloc_search_start: %d should be valid",
+                   _alloc_search_start));
+  }
   return res;
 }
 
@@ -290,6 +284,10 @@ void HeapRegionSeq::iterate_from(int idx, HeapRegionClosure* blk) {
 
 MemRegion HeapRegionSeq::shrink_by(size_t shrink_bytes,
                                    size_t& num_regions_deleted) {
+  // Reset this in case it's currently pointing into the regions that
+  // we just removed.
+  _alloc_search_start = 0;
+
   assert(shrink_bytes % os::vm_page_size() == 0, "unaligned");
   assert(shrink_bytes % HeapRegion::GrainBytes == 0, "unaligned");
 
@@ -309,7 +307,6 @@ MemRegion HeapRegionSeq::shrink_by(size_t shrink_bytes,
     }
     assert(cur == _regions.top(), "Should be top");
     if (!cur->is_empty()) break;
-    cur->reset_zero_fill();
     shrink_bytes -= cur->capacity();
     num_regions_deleted++;
     _regions.pop();
@@ -323,7 +320,6 @@ MemRegion HeapRegionSeq::shrink_by(size_t shrink_bytes,
   }
   return MemRegion(last_start, end);
 }
-
 
 class PrintHeapRegionClosure : public  HeapRegionClosure {
 public:

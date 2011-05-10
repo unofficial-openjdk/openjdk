@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,15 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_C1_C1_RUNTIME1_HPP
+#define SHARE_VM_C1_C1_RUNTIME1_HPP
+
+#include "c1/c1_FrameMap.hpp"
+#include "code/stubs.hpp"
+#include "interpreter/interpreter.hpp"
+#include "memory/allocation.hpp"
+#include "runtime/deoptimization.hpp"
 
 class StubAssembler;
 
@@ -123,9 +132,7 @@ class Runtime1: public AllStatic {
   static void new_object_array(JavaThread* thread, klassOopDesc* klass, jint length);
   static void new_multi_array (JavaThread* thread, klassOopDesc* klass, int rank, jint* dims);
 
-#ifdef TIERED
-  static void counter_overflow(JavaThread* thread, int bci);
-#endif // TIERED
+  static address counter_overflow(JavaThread* thread, int bci, methodOopDesc* method);
 
   static void unimplemented_entry   (JavaThread* thread, StubID id);
 
@@ -155,7 +162,7 @@ class Runtime1: public AllStatic {
 
   // stubs
   static CodeBlob* blob_for (StubID id);
-  static address   entry_for(StubID id)          { return blob_for(id)->instructions_begin(); }
+  static address   entry_for(StubID id)          { return blob_for(id)->code_begin(); }
   static const char* name_for (StubID id);
   static const char* name_for_address(address entry);
 
@@ -176,3 +183,5 @@ class Runtime1: public AllStatic {
 
   static void print_statistics()                 PRODUCT_RETURN;
 };
+
+#endif // SHARE_VM_C1_C1_RUNTIME1_HPP

@@ -22,8 +22,11 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_c1_FrameMap_sparc.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_FrameMap.hpp"
+#include "c1/c1_LIR.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "vmreg_sparc.inline.hpp"
 
 
 const int FrameMap::pd_c_runtime_reserved_arg_size = 7;
@@ -73,6 +76,7 @@ FloatRegister FrameMap::_fpu_regs [FrameMap::nof_fpu_regs];
 // some useful constant RInfo's:
 LIR_Opr FrameMap::in_long_opr;
 LIR_Opr FrameMap::out_long_opr;
+LIR_Opr FrameMap::g1_long_single_opr;
 
 LIR_Opr FrameMap::F0_opr;
 LIR_Opr FrameMap::F0_double_opr;
@@ -238,6 +242,7 @@ void FrameMap::initialize() {
 
   in_long_opr    = as_long_opr(I0);
   out_long_opr   = as_long_opr(O0);
+  g1_long_single_opr    = as_long_single_opr(G1);
 
   G0_opr = as_opr(G0);
   G1_opr = as_opr(G1);

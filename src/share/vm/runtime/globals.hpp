@@ -22,6 +22,86 @@
  *
  */
 
+#ifndef SHARE_VM_RUNTIME_GLOBALS_HPP
+#define SHARE_VM_RUNTIME_GLOBALS_HPP
+
+#include "utilities/debug.hpp"
+#ifdef TARGET_ARCH_x86
+# include "globals_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "globals_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_zero
+# include "globals_zero.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_linux
+# include "globals_linux.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "globals_solaris.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "globals_windows.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_x86
+# include "globals_linux_x86.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_sparc
+# include "globals_linux_sparc.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_zero
+# include "globals_linux_zero.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_solaris_x86
+# include "globals_solaris_x86.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_solaris_sparc
+# include "globals_solaris_sparc.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_windows_x86
+# include "globals_windows_x86.hpp"
+#endif
+#ifdef COMPILER1
+#ifdef TARGET_ARCH_x86
+# include "c1_globals_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "c1_globals_sparc.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_linux
+# include "c1_globals_linux.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "c1_globals_solaris.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "c1_globals_windows.hpp"
+#endif
+#endif
+#ifdef COMPILER2
+#ifdef TARGET_ARCH_x86
+# include "c2_globals_x86.hpp"
+#endif
+#ifdef TARGET_ARCH_sparc
+# include "c2_globals_sparc.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_linux
+# include "c2_globals_linux.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "c2_globals_solaris.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "c2_globals_windows.hpp"
+#endif
+#endif
+#ifdef SHARK
+#ifdef TARGET_ARCH_zero
+# include "shark_globals_zero.hpp"
+#endif
+#endif
+
 #if !defined(COMPILER1) && !defined(COMPILER2) && !defined(SHARK)
 define_pd_global(bool, BackgroundCompilation,        false);
 define_pd_global(bool, UseTLAB,                      false);
@@ -35,14 +115,7 @@ define_pd_global(bool, ProfileTraps,                 false);
 define_pd_global(bool, TieredCompilation,            false);
 
 define_pd_global(intx, CompileThreshold,             0);
-define_pd_global(intx, Tier2CompileThreshold,        0);
-define_pd_global(intx, Tier3CompileThreshold,        0);
-define_pd_global(intx, Tier4CompileThreshold,        0);
-
 define_pd_global(intx, BackEdgeThreshold,            0);
-define_pd_global(intx, Tier2BackEdgeThreshold,       0);
-define_pd_global(intx, Tier3BackEdgeThreshold,       0);
-define_pd_global(intx, Tier4BackEdgeThreshold,       0);
 
 define_pd_global(intx, OnStackReplacePercentage,     0);
 define_pd_global(bool, ResizeTLAB,                   false);
@@ -90,6 +163,9 @@ struct Flag {
   const char *type;
   const char *name;
   void*       addr;
+
+  NOT_PRODUCT(const char *doc;)
+
   const char *kind;
   FlagValueOrigin origin;
 
@@ -131,7 +207,7 @@ struct Flag {
   bool is_writeable() const;
   bool is_external() const;
 
-  void print_on(outputStream* st);
+  void print_on(outputStream* st, bool withComments = false );
   void print_as_flag(outputStream* st);
 };
 
@@ -211,7 +287,7 @@ class CommandLineFlags {
   static bool wasSetOnCmdline(const char* name, bool* value);
   static void printSetFlags();
 
-  static void printFlags();
+  static void printFlags(bool withComments = false );
 
   static void verify() PRODUCT_RETURN;
 };
@@ -277,6 +353,10 @@ class CommandLineFlags {
 //    UnlockExperimentalVMOptions flag, which allows the control and
 //    modification of the experimental flags.
 //
+// Nota bene: neither diagnostic nor experimental options should be used casually,
+//    and they are not supported on production loads, except under explicit
+//    direction from support engineers.
+//
 // manageable flags are writeable external product flags.
 //    They are dynamically writeable through the JDK management interface
 //    (com.sun.management.HotSpotDiagnosticMXBean API) and also through JConsole.
@@ -327,10 +407,10 @@ class CommandLineFlags {
   /* UseMembar is theoretically a temp flag used for memory barrier         \
    * removal testing.  It was supposed to be removed before FCS but has     \
    * been re-added (see 6401008) */                                         \
-  product(bool, UseMembar, false,                                           \
+  product_pd(bool, UseMembar,                                               \
           "(Unstable) Issues membars on thread state transitions")          \
                                                                             \
-  /* Temporary: See 6948537 */                                             \
+  /* Temporary: See 6948537 */                                              \
   experimental(bool, UseMemSetInBOT, true,                                  \
           "(Unstable) uses memset in BOT updates in GC code")               \
                                                                             \
@@ -822,6 +902,9 @@ class CommandLineFlags {
   develop(bool, PrintJVMWarnings, false,                                    \
           "Prints warnings for unimplemented JVM functions")                \
                                                                             \
+  product(bool, PrintWarnings, true,                                        \
+          "Prints JVM warnings to output stream")                           \
+                                                                            \
   notproduct(uintx, WarnOnStalledSpinLock, 0,                               \
           "Prints warnings for stalled SpinLocks")                          \
                                                                             \
@@ -1115,9 +1198,6 @@ class CommandLineFlags {
   product(ccstr, TraceJVMTI, NULL,                                          \
           "Trace flags for JVMTI functions and events")                     \
                                                                             \
-  product(bool, ForceFullGCJVMTIEpilogues, false,                           \
-          "Force 'Full GC' was done semantics for JVMTI GC epilogues")      \
-                                                                            \
   /* This option can change an EMCP method into an obsolete method. */      \
   /* This can affect tests that except specific methods to be EMCP. */      \
   /* This option should be used with caution. */                            \
@@ -1196,9 +1276,6 @@ class CommandLineFlags {
                                                                             \
   develop(bool, TraceStartupTime, false,                                    \
           "Trace setup time")                                               \
-                                                                            \
-  develop(bool, TraceHPI, false,                                            \
-          "Trace Host Porting Interface (HPI)")                             \
                                                                             \
   product(ccstr, HPILibPath, NULL,                                          \
           "Specify alternate path to HPI library")                          \
@@ -1319,6 +1396,10 @@ class CommandLineFlags {
   product(bool, GCLockerInvokesConcurrent, false,                           \
           "The exit of a JNI CS necessitating a scavenge also"              \
           " kicks off a bkgrd concurrent collection")                       \
+                                                                            \
+  product(uintx, GCLockerEdenExpansionPercent, 5,                           \
+          "How much the GC can expand the eden by while the GC locker  "    \
+          "is active (as a percentage)")                                    \
                                                                             \
   develop(bool, UseCMSAdaptiveFreeLists, true,                              \
           "Use Adaptive Free Lists in the CMS generation")                  \
@@ -1544,13 +1625,13 @@ class CommandLineFlags {
           "Use BinaryTreeDictionary as default in the CMS generation")      \
                                                                             \
   product(uintx, CMSIndexedFreeListReplenish, 4,                            \
-          "Replenish and indexed free list with this number of chunks")     \
+          "Replenish an indexed free list with this number of chunks")     \
                                                                             \
   product(bool, CMSReplenishIntermediate, true,                             \
           "Replenish all intermediate free-list caches")                    \
                                                                             \
   product(bool, CMSSplitIndexedFreeListBlocks, true,                        \
-          "When satisfying batched demand, splot blocks from the "          \
+          "When satisfying batched demand, split blocks from the "          \
           "IndexedFreeList whose size is a multiple of requested size")     \
                                                                             \
   product(bool, CMSLoopWarn, false,                                         \
@@ -1585,7 +1666,7 @@ class CommandLineFlags {
           "(Temporary, subject to experimentation)"                         \
           "Nominal minimum work per abortable preclean iteration")          \
                                                                             \
-  product(intx, CMSAbortablePrecleanWaitMillis, 100,                        \
+  manageable(intx, CMSAbortablePrecleanWaitMillis, 100,                     \
           "(Temporary, subject to experimentation)"                         \
           " Time that we sleep between iterations when not given"           \
           " enough work per iteration")                                     \
@@ -1677,7 +1758,7 @@ class CommandLineFlags {
   product(uintx, CMSWorkQueueDrainThreshold, 10,                            \
           "Don't drain below this size per parallel worker/thief")          \
                                                                             \
-  product(intx, CMSWaitDuration, 2000,                                      \
+  manageable(intx, CMSWaitDuration, 2000,                                   \
           "Time in milliseconds that CMS thread waits for young GC")        \
                                                                             \
   product(bool, CMSYield, true,                                             \
@@ -1786,10 +1867,6 @@ class CommandLineFlags {
   notproduct(bool, GCALotAtAllSafepoints, false,                            \
           "Enforce ScavengeALot/GCALot at all potential safepoints")        \
                                                                             \
-  product(bool, HandlePromotionFailure, true,                               \
-          "The youngest generation collection does not require "            \
-          "a guarantee of full promotion of all live objects.")             \
-                                                                            \
   product(bool, PrintPromotionFailure, false,                               \
           "Print additional diagnostic information following "              \
           " promotion failure")                                             \
@@ -1806,17 +1883,17 @@ class CommandLineFlags {
   develop(uintx, PromotionFailureALotInterval, 5,                           \
           "Total collections between promotion failures alot")              \
                                                                             \
-  develop(intx, WorkStealingSleepMillis, 1,                                 \
+  experimental(intx, WorkStealingSleepMillis, 1,                            \
           "Sleep time when sleep is used for yields")                       \
                                                                             \
-  develop(uintx, WorkStealingYieldsBeforeSleep, 1000,                       \
+  experimental(uintx, WorkStealingYieldsBeforeSleep, 1000,                  \
           "Number of yields before a sleep is done during workstealing")    \
                                                                             \
-  develop(uintx, WorkStealingHardSpins, 4096,                               \
+  experimental(uintx, WorkStealingHardSpins, 4096,                          \
           "Number of iterations in a spin loop between checks on "          \
           "time out of hard spin")                                          \
                                                                             \
-  develop(uintx, WorkStealingSpinToYieldRatio, 10,                          \
+  experimental(uintx, WorkStealingSpinToYieldRatio, 10,                     \
           "Ratio of hard spins to calls to yield")                          \
                                                                             \
   product(uintx, PreserveMarkStackSize, 1024,                               \
@@ -1974,7 +2051,7 @@ class CommandLineFlags {
   product(uintx, TenuredGenerationSizeSupplementDecay, 2,                   \
           "Decay factor to TenuredGenerationSizeIncrement")                 \
                                                                             \
-  product(uintx, MaxGCPauseMillis, max_uintx,                               \
+  product(uintx, MaxGCPauseMillis, max_uintx,                           \
           "Adaptive size policy maximum GC pause time goal in msec, "       \
           "or (G1 Only) the max. GC time per MMU time slice")               \
                                                                             \
@@ -2369,9 +2446,6 @@ class CommandLineFlags {
   develop(bool, EagerInitialization, false,                                 \
           "Eagerly initialize classes if possible")                         \
                                                                             \
-  product(bool, Tier1UpdateMethodData, trueInTiered,                        \
-          "Update methodDataOops in Tier1-generated code")                  \
-                                                                            \
   develop(bool, TraceMethodReplacement, false,                              \
           "Print when methods are replaced do to recompilation")            \
                                                                             \
@@ -2408,6 +2482,9 @@ class CommandLineFlags {
                                                                             \
   product(bool, PrintFlagsFinal, false,                                     \
          "Print all VM flags after argument and ergonomic processing")      \
+                                                                            \
+  notproduct(bool, PrintFlagsWithComments, false,                           \
+         "Print all VM flags with default values and descriptions and exit")\
                                                                             \
   diagnostic(bool, SerializeVMOutput, true,                                 \
          "Use a mutex to serialize output to tty and hotspot.log")          \
@@ -2478,6 +2555,9 @@ class CommandLineFlags {
                                                                             \
   develop(bool, MonomorphicArrayCheck, true,                                \
           "Uncommon-trap array store checks that require full type check")  \
+                                                                            \
+  diagnostic(bool, ProfileDynamicTypes, true,                               \
+          "do extra type profiling and use it more aggressively")           \
                                                                             \
   develop(bool, DelayCompilationDuringStartup, true,                        \
           "Delay invoking the compiler until main application class is "    \
@@ -2898,7 +2978,7 @@ class CommandLineFlags {
           "if non-zero, start verifying C heap after Nth call to "          \
           "malloc/realloc/free")                                            \
                                                                             \
-  product(intx, TypeProfileWidth,      2,                                   \
+  product(intx, TypeProfileWidth,     2,                                   \
           "number of receiver types to record in call/cast profile")        \
                                                                             \
   develop(intx, BciProfileWidth,      2,                                    \
@@ -2999,9 +3079,6 @@ class CommandLineFlags {
                                                                             \
   product(intx, NewRatio, 2,                                                \
           "Ratio of new/old generation sizes")                              \
-                                                                            \
-  product(uintx, MaxLiveObjectEvacuationRatio, 100,                         \
-          "Max percent of eden objects that will be live at scavenge")      \
                                                                             \
   product_pd(uintx, NewSizeThreadIncrease,                                  \
           "Additional size added to desired new generation size per "       \
@@ -3306,30 +3383,98 @@ class CommandLineFlags {
   product_pd(intx, BackEdgeThreshold,                                       \
           "Interpreter Back edge threshold at which an OSR compilation is invoked")\
                                                                             \
-  product(intx, Tier1BytecodeLimit,      10,                                \
-          "Must have at least this many bytecodes before tier1"             \
-          "invocation counters are used")                                   \
+  product(intx, Tier0InvokeNotifyFreqLog, 7,                                \
+          "Interpreter (tier 0) invocation notification frequency.")        \
                                                                             \
-  product_pd(intx, Tier2CompileThreshold,                                   \
-          "threshold at which a tier 2 compilation is invoked")             \
+  product(intx, Tier2InvokeNotifyFreqLog, 11,                               \
+          "C1 without MDO (tier 2) invocation notification frequency.")     \
                                                                             \
-  product_pd(intx, Tier2BackEdgeThreshold,                                  \
-          "Back edge threshold at which a tier 2 compilation is invoked")   \
+  product(intx, Tier3InvokeNotifyFreqLog, 10,                               \
+          "C1 with MDO profiling (tier 3) invocation notification "         \
+          "frequency.")                                                     \
                                                                             \
-  product_pd(intx, Tier3CompileThreshold,                                   \
-          "threshold at which a tier 3 compilation is invoked")             \
+  product(intx, Tier0BackedgeNotifyFreqLog, 10,                             \
+          "Interpreter (tier 0) invocation notification frequency.")        \
                                                                             \
-  product_pd(intx, Tier3BackEdgeThreshold,                                  \
-          "Back edge threshold at which a tier 3 compilation is invoked")   \
+  product(intx, Tier2BackedgeNotifyFreqLog, 14,                             \
+          "C1 without MDO (tier 2) invocation notification frequency.")     \
                                                                             \
-  product_pd(intx, Tier4CompileThreshold,                                   \
-          "threshold at which a tier 4 compilation is invoked")             \
+  product(intx, Tier3BackedgeNotifyFreqLog, 13,                             \
+          "C1 with MDO profiling (tier 3) invocation notification "         \
+          "frequency.")                                                     \
                                                                             \
-  product_pd(intx, Tier4BackEdgeThreshold,                                  \
-          "Back edge threshold at which a tier 4 compilation is invoked")   \
+  product(intx, Tier2CompileThreshold, 0,                                   \
+          "threshold at which tier 2 compilation is invoked")               \
+                                                                            \
+  product(intx, Tier2BackEdgeThreshold, 0,                                  \
+          "Back edge threshold at which tier 2 compilation is invoked")     \
+                                                                            \
+  product(intx, Tier3InvocationThreshold, 200,                              \
+          "Compile if number of method invocations crosses this "           \
+          "threshold")                                                      \
+                                                                            \
+  product(intx, Tier3MinInvocationThreshold, 100,                           \
+          "Minimum invocation to compile at tier 3")                        \
+                                                                            \
+  product(intx, Tier3CompileThreshold, 2000,                                \
+          "Threshold at which tier 3 compilation is invoked (invocation "   \
+          "minimum must be satisfied.")                                     \
+                                                                            \
+  product(intx, Tier3BackEdgeThreshold,  7000,                              \
+          "Back edge threshold at which tier 3 OSR compilation is invoked") \
+                                                                            \
+  product(intx, Tier4InvocationThreshold, 5000,                             \
+          "Compile if number of method invocations crosses this "           \
+          "threshold")                                                      \
+                                                                            \
+  product(intx, Tier4MinInvocationThreshold, 600,                           \
+          "Minimum invocation to compile at tier 4")                        \
+                                                                            \
+  product(intx, Tier4CompileThreshold, 15000,                               \
+          "Threshold at which tier 4 compilation is invoked (invocation "   \
+          "minimum must be satisfied.")                                     \
+                                                                            \
+  product(intx, Tier4BackEdgeThreshold, 40000,                              \
+          "Back edge threshold at which tier 4 OSR compilation is invoked") \
+                                                                            \
+  product(intx, Tier3DelayOn, 5,                                            \
+          "If C2 queue size grows over this amount per compiler thread "    \
+          "stop compiling at tier 3 and start compiling at tier 2")         \
+                                                                            \
+  product(intx, Tier3DelayOff, 2,                                           \
+          "If C2 queue size is less than this amount per compiler thread "  \
+          "allow methods compiled at tier 2 transition to tier 3")          \
+                                                                            \
+  product(intx, Tier3LoadFeedback, 5,                                       \
+          "Tier 3 thresholds will increase twofold when C1 queue size "     \
+          "reaches this amount per compiler thread")                        \
+                                                                            \
+  product(intx, Tier4LoadFeedback, 3,                                       \
+          "Tier 4 thresholds will increase twofold when C2 queue size "     \
+          "reaches this amount per compiler thread")                        \
+                                                                            \
+  product(intx, TieredCompileTaskTimeout, 50,                               \
+          "Kill compile task if method was not used within "                \
+          "given timeout in milliseconds")                                  \
+                                                                            \
+  product(intx, TieredStopAtLevel, 4,                                       \
+          "Stop at given compilation level")                                \
+                                                                            \
+  product(intx, Tier0ProfilingStartPercentage, 200,                         \
+          "Start profiling in interpreter if the counters exceed tier 3"    \
+          "thresholds by the specified percentage")                         \
+                                                                            \
+  product(intx, TieredRateUpdateMinTime, 1,                                 \
+          "Minimum rate sampling interval (in milliseconds)")               \
+                                                                            \
+  product(intx, TieredRateUpdateMaxTime, 25,                                \
+          "Maximum rate sampling interval (in milliseconds)")               \
                                                                             \
   product_pd(bool, TieredCompilation,                                       \
-          "Enable two-tier compilation")                                    \
+          "Enable tiered compilation")                                      \
+                                                                            \
+  product(bool, PrintTieredEvents, false,                                   \
+          "Print tiered events notifications")                              \
                                                                             \
   product(bool, StressTieredRuntime, false,                                 \
           "Alternate client and server compiler on compile requests")       \
@@ -3457,9 +3602,6 @@ class CommandLineFlags {
   product(bool, RequireSharedSpaces, false,                                 \
           "Require shared spaces in the permanent generation")              \
                                                                             \
-  product(bool, ForceSharedSpaces, false,                                   \
-          "Require shared spaces in the permanent generation")              \
-                                                                            \
   product(bool, DumpSharedSpaces, false,                                    \
            "Special mode: JVM reads a class list, loads classes, builds "   \
             "shared spaces, and dumps the shared spaces to a file to be "   \
@@ -3471,7 +3613,7 @@ class CommandLineFlags {
   product(uintx, SharedDummyBlockSize, 512*M,                               \
           "Size of dummy block used to shift heap addresses (in bytes)")    \
                                                                             \
-  product(uintx, SharedReadWriteSize,  12*M,                                \
+  product(uintx, SharedReadWriteSize,  NOT_LP64(12*M) LP64_ONLY(13*M),      \
           "Size of read-write space in permanent generation (in bytes)")    \
                                                                             \
   product(uintx, SharedReadOnlySize,   10*M,                                \
@@ -3609,3 +3751,5 @@ class CommandLineFlags {
 RUNTIME_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG, DECLARE_LP64_PRODUCT_FLAG)
 
 RUNTIME_OS_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
+
+#endif // SHARE_VM_RUNTIME_GLOBALS_HPP

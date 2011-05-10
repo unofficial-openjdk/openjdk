@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef CPU_X86_VM_C1_LIRASSEMBLER_X86_HPP
+#define CPU_X86_VM_C1_LIRASSEMBLER_X86_HPP
+
  private:
 
   Address::ScaleFactor array_element_size(BasicType type) const;
@@ -42,7 +45,10 @@
   // method.
   Address as_Address(LIR_Address* addr, Register tmp);
 
-
+  // Record the type of the receiver in ReceiverTypeData
+  void type_profile_helper(Register mdo,
+                           ciMethodData *md, ciProfileData *data,
+                           Register recv, Label* update_done);
 public:
 
   void store_parameter(Register r, int offset_from_esp_in_words);
@@ -53,3 +59,5 @@ public:
          exception_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(175),
          deopt_handler_size = NOT_LP64(10) LP64_ONLY(17)
        };
+
+#endif // CPU_X86_VM_C1_LIRASSEMBLER_X86_HPP

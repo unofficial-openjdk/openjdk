@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,23 @@
  *
  */
 
+#include "precompiled.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "memory/allocation.inline.hpp"
+#include "prims/jni.h"
+#include "prims/jvm.h"
+#include "runtime/globals.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/reflection.hpp"
+#include "runtime/reflectionCompat.hpp"
+#include "runtime/synchronizer.hpp"
+#include "services/threadService.hpp"
+#include "utilities/copy.hpp"
+#include "utilities/dtrace.hpp"
+
 /*
  *      Implementation of class sun.misc.Unsafe
  */
-
-#include "incls/_precompiled.incl"
-#include "incls/_unsafe.cpp.incl"
 
 HS_DTRACE_PROBE_DECL3(hotspot, thread__park__begin, uintptr_t, int, long long);
 HS_DTRACE_PROBE_DECL1(hotspot, thread__park__end, uintptr_t);
@@ -143,12 +154,11 @@ jint Unsafe_invocation_key_to_method_slot(jint key) {
 
 #define GET_FIELD_VOLATILE(obj, offset, type_name, v) \
   oop p = JNIHandles::resolve(obj); \
-  volatile type_name v = *(volatile type_name*)index_oop_from_field_offset_long(p, offset)
+  volatile type_name v = OrderAccess::load_acquire((volatile type_name*)index_oop_from_field_offset_long(p, offset));
 
 #define SET_FIELD_VOLATILE(obj, offset, type_name, x) \
   oop p = JNIHandles::resolve(obj); \
-  *(volatile type_name*)index_oop_from_field_offset_long(p, offset) = x; \
-  OrderAccess::fence();
+  OrderAccess::release_store_fence((volatile type_name*)index_oop_from_field_offset_long(p, offset), x);
 
 // Macros for oops that check UseCompressedOops
 
@@ -170,7 +180,8 @@ jint Unsafe_invocation_key_to_method_slot(jint key) {
     v = oopDesc::decode_heap_oop(n);                               \
   } else {                            \
     v = *(volatile oop*)index_oop_from_field_offset_long(p, offset);       \
-  }
+  } \
+  OrderAccess::acquire();
 
 
 // Get/SetObject must be special-cased, since it works with handles.
@@ -237,13 +248,21 @@ UNSAFE_ENTRY(void, Unsafe_SetObjectVolatile(JNIEnv *env, jobject unsafe, jobject
   UnsafeWrapper("Unsafe_SetObjectVolatile");
   oop x = JNIHandles::resolve(x_h);
   oop p = JNIHandles::resolve(obj);
+  void* addr = index_oop_from_field_offset_long(p, offset);
+  OrderAccess::release();
   if (UseCompressedOops) {
-    oop_store((narrowOop*)index_oop_from_field_offset_long(p, offset), x);
+    oop_store((narrowOop*)addr, x);
   } else {
-    oop_store((oop*)index_oop_from_field_offset_long(p, offset), x);
+    oop_store((oop*)addr, x);
   }
   OrderAccess::fence();
 UNSAFE_END
+
+#if defined(SPARC) || defined(X86)
+// Sparc and X86 have atomic jlong (8 bytes) instructions
+
+#else
+// Keep old code for platforms which may not have atomic jlong (8 bytes) instructions
 
 // Volatile long versions must use locks if !VM_Version::supports_cx8().
 // support_cx8 is a surrogate for 'supports atomic long memory ops'.
@@ -280,6 +299,7 @@ UNSAFE_ENTRY(void, Unsafe_SetLongVolatile(JNIEnv *env, jobject unsafe, jobject o
   }
 UNSAFE_END
 
+#endif // not SPARC and not X86
 
 #define DEFINE_GETSETOOP(jboolean, Boolean) \
  \
@@ -309,6 +329,16 @@ UNSAFE_END \
  \
 // END DEFINE_GETSETOOP.
 
+DEFINE_GETSETOOP(jboolean, Boolean)
+DEFINE_GETSETOOP(jbyte, Byte)
+DEFINE_GETSETOOP(jshort, Short);
+DEFINE_GETSETOOP(jchar, Char);
+DEFINE_GETSETOOP(jint, Int);
+DEFINE_GETSETOOP(jlong, Long);
+DEFINE_GETSETOOP(jfloat, Float);
+DEFINE_GETSETOOP(jdouble, Double);
+
+#undef DEFINE_GETSETOOP
 
 #define DEFINE_GETSETOOP_VOLATILE(jboolean, Boolean) \
  \
@@ -325,47 +355,49 @@ UNSAFE_END \
  \
 // END DEFINE_GETSETOOP_VOLATILE.
 
-DEFINE_GETSETOOP(jboolean, Boolean)
-DEFINE_GETSETOOP(jbyte, Byte)
-DEFINE_GETSETOOP(jshort, Short);
-DEFINE_GETSETOOP(jchar, Char);
-DEFINE_GETSETOOP(jint, Int);
-DEFINE_GETSETOOP(jlong, Long);
-DEFINE_GETSETOOP(jfloat, Float);
-DEFINE_GETSETOOP(jdouble, Double);
-
 DEFINE_GETSETOOP_VOLATILE(jboolean, Boolean)
 DEFINE_GETSETOOP_VOLATILE(jbyte, Byte)
 DEFINE_GETSETOOP_VOLATILE(jshort, Short);
 DEFINE_GETSETOOP_VOLATILE(jchar, Char);
 DEFINE_GETSETOOP_VOLATILE(jint, Int);
-// no long -- handled specially
 DEFINE_GETSETOOP_VOLATILE(jfloat, Float);
 DEFINE_GETSETOOP_VOLATILE(jdouble, Double);
 
-#undef DEFINE_GETSETOOP
+#if defined(SPARC) || defined(X86)
+// Sparc and X86 have atomic jlong (8 bytes) instructions
+DEFINE_GETSETOOP_VOLATILE(jlong, Long);
+#endif
+
+#undef DEFINE_GETSETOOP_VOLATILE
 
 // The non-intrinsified versions of setOrdered just use setVolatile
 
-UNSAFE_ENTRY(void, Unsafe_SetOrderedInt(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jint x)) \
-  UnsafeWrapper("Unsafe_SetOrderedInt"); \
-  SET_FIELD_VOLATILE(obj, offset, jint, x); \
+UNSAFE_ENTRY(void, Unsafe_SetOrderedInt(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jint x))
+  UnsafeWrapper("Unsafe_SetOrderedInt");
+  SET_FIELD_VOLATILE(obj, offset, jint, x);
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_SetOrderedObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject x_h))
   UnsafeWrapper("Unsafe_SetOrderedObject");
   oop x = JNIHandles::resolve(x_h);
   oop p = JNIHandles::resolve(obj);
+  void* addr = index_oop_from_field_offset_long(p, offset);
+  OrderAccess::release();
   if (UseCompressedOops) {
-    oop_store((narrowOop*)index_oop_from_field_offset_long(p, offset), x);
+    oop_store((narrowOop*)addr, x);
   } else {
-    oop_store((oop*)index_oop_from_field_offset_long(p, offset), x);
+    oop_store((oop*)addr, x);
   }
   OrderAccess::fence();
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_SetOrderedLong(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jlong x))
   UnsafeWrapper("Unsafe_SetOrderedLong");
+#if defined(SPARC) || defined(X86)
+  // Sparc and X86 have atomic jlong (8 bytes) instructions
+  SET_FIELD_VOLATILE(obj, offset, jlong, x);
+#else
+  // Keep old code for platforms which may not have atomic long (8 bytes) instructions
   {
     if (VM_Version::supports_cx8()) {
       SET_FIELD_VOLATILE(obj, offset, jlong, x);
@@ -377,6 +409,7 @@ UNSAFE_ENTRY(void, Unsafe_SetOrderedLong(JNIEnv *env, jobject unsafe, jobject ob
       *addr = x;
     }
   }
+#endif
 UNSAFE_END
 
 ////// Data in the C heap.

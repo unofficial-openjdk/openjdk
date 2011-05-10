@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  *
  */
+
+#ifndef CPU_SPARC_VM_INTERP_MASM_SPARC_HPP
+#define CPU_SPARC_VM_INTERP_MASM_SPARC_HPP
+
+#include "assembler_sparc.inline.hpp"
+#include "interpreter/invocationCounter.hpp"
 
 // This file specializes the assember with interpreter-specific macros
 
@@ -263,12 +269,11 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
 #ifndef CC_INTERP
   // Interpreter profiling operations
-  void set_method_data_pointer() { set_method_data_pointer_offset(noreg); }
+  void set_method_data_pointer();
   void set_method_data_pointer_for_bcp();
-  void set_method_data_pointer_offset(Register mdi_reg);
   void test_method_data_pointer(Label& zero_continue);
   void verify_method_data_pointer();
-  void test_invocation_counter_for_mdp(Register invocation_count, Register cur_bcp, Register Rtmp, Label &profile_continue);
+  void test_invocation_counter_for_mdp(Register invocation_count, Register Rtmp, Label &profile_continue);
 
   void set_mdp_data_at(int constant, Register value);
   void increment_mdp_data_at(Address counter, Register bumped_count,
@@ -278,6 +283,10 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void increment_mdp_data_at(Register reg, int constant,
                              Register bumped_count, Register scratch2,
                              bool decrement = false);
+  void increment_mask_and_jump(Address counter_addr,
+                               int increment, int mask,
+                               Register scratch1, Register scratch2,
+                               Condition cond, Label *where);
   void set_mdp_flag_at(int flag_constant, Register scratch);
   void test_mdp_data_at(int offset, Register value, Label& not_equal_continue,
                         Register scratch);
@@ -321,4 +330,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
   void save_return_value(TosState state, bool is_native_call);
   void restore_return_value(TosState state, bool is_native_call);
+
 };
+
+#endif // CPU_SPARC_VM_INTERP_MASM_SPARC_HPP

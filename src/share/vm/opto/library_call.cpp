@@ -22,8 +22,21 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_library_call.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "compiler/compileLog.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "opto/addnode.hpp"
+#include "opto/callGenerator.hpp"
+#include "opto/cfgnode.hpp"
+#include "opto/idealKit.hpp"
+#include "opto/mulnode.hpp"
+#include "opto/parse.hpp"
+#include "opto/runtime.hpp"
+#include "opto/subnode.hpp"
+#include "prims/nativeLookup.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 class LibraryIntrinsic : public InlineCallGenerator {
   // Extend the set of intrinsics known to the runtime:
@@ -906,7 +919,8 @@ bool LibraryCallKit::inline_string_equals() {
   const int count_offset = java_lang_String::count_offset_in_bytes();
   const int offset_offset = java_lang_String::offset_offset_in_bytes();
 
-  _sp += 2;
+  int nargs = 2;
+  _sp += nargs;
   Node* argument = pop();  // pop non-receiver first:  it was pushed second
   Node* receiver = pop();
 
@@ -914,11 +928,11 @@ bool LibraryCallKit::inline_string_equals() {
   // null check technically happens in the wrong place, which can lead to
   // invalid stack traces when string compare is inlined into a method
   // which handles NullPointerExceptions.
-  _sp += 2;
+  _sp += nargs;
   receiver = do_null_check(receiver, T_OBJECT);
   //should not do null check for argument for String.equals(), because spec
   //allows to specify NULL as argument.
-  _sp -= 2;
+  _sp -= nargs;
 
   if (stopped()) {
     return true;
@@ -943,7 +957,9 @@ bool LibraryCallKit::inline_string_equals() {
   ciInstanceKlass* klass = env()->String_klass();
 
   if (!stopped()) {
+    _sp += nargs;          // gen_instanceof might do an uncommon trap
     Node* inst = gen_instanceof(argument, makecon(TypeKlassPtr::make(klass)));
+    _sp -= nargs;
     Node* cmp  = _gvn.transform(new (C, 3) CmpINode(inst, intcon(1)));
     Node* bol  = _gvn.transform(new (C, 2) BoolNode(cmp, BoolTest::ne));
 
@@ -1105,7 +1121,7 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   const TypeAry* target_array_type = TypeAry::make(TypeInt::CHAR, TypeInt::make(0, target_length, Type::WidenMin));
   const TypeAryPtr* target_type = TypeAryPtr::make(TypePtr::BotPTR, target_array_type, target_array->klass(), true, Type::OffsetBot);
 
-  IdealKit kit(this, false, true);
+  IdealKit kit(gvn(), control(), merged_memory(), false, true);
 #define __ kit.
   Node* zero             = __ ConI(0);
   Node* one              = __ ConI(1);
@@ -2292,7 +2308,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
         // of it. So we need to emit code to conditionally do the proper type of
         // store.
 
-        IdealKit ideal(this);
+        IdealKit ideal(gvn(), control(),  merged_memory());
 #define __ ideal.
         // QQQ who knows what probability is here??
         __ if_then(heap_base_oop, BoolTest::ne, null(), PROB_UNLIKELY(0.999)); {
@@ -2935,7 +2951,9 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
   switch (id) {
   case vmIntrinsics::_isInstance:
     // nothing is an instance of a primitive type
+    _sp += nargs;          // gen_instanceof might do an uncommon trap
     query_value = gen_instanceof(obj, kls);
+    _sp -= nargs;
     break;
 
   case vmIntrinsics::_getModifiers:
@@ -4957,8 +4975,7 @@ LibraryCallKit::tightly_coupled_allocation(Node* ptr,
       for (DUIterator_Fast jmax, j = not_ctl->fast_outs(jmax); j < jmax; j++) {
         Node* obs = not_ctl->fast_out(j);
         if (obs->in(0) == not_ctl && obs->is_Call() &&
-            (obs->as_Call()->entry_point() ==
-             SharedRuntime::uncommon_trap_blob()->instructions_begin())) {
+            (obs->as_Call()->entry_point() == SharedRuntime::uncommon_trap_blob()->entry_point())) {
           found_trap = true; break;
         }
       }

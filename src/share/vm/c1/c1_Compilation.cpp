@@ -22,8 +22,16 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_c1_Compilation.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_CFGPrinter.hpp"
+#include "c1/c1_Compilation.hpp"
+#include "c1/c1_IR.hpp"
+#include "c1/c1_LIRAssembler.hpp"
+#include "c1/c1_LinearScan.hpp"
+#include "c1/c1_MacroAssembler.hpp"
+#include "c1/c1_ValueMap.hpp"
+#include "c1/c1_ValueStack.hpp"
+#include "code/debugInfoRec.hpp"
 
 
 typedef enum {
@@ -237,7 +245,7 @@ void Compilation::emit_code_epilog(LIR_Assembler* assembler) {
 }
 
 
-void Compilation::setup_code_buffer(CodeBuffer* code, int call_stub_estimate) {
+bool Compilation::setup_code_buffer(CodeBuffer* code, int call_stub_estimate) {
   // Preinitialize the consts section to some large size:
   int locs_buffer_size = 20 * (relocInfo::length_limit + sizeof(relocInfo));
   char* locs_buffer = NEW_RESOURCE_ARRAY(char, locs_buffer_size);
@@ -245,15 +253,20 @@ void Compilation::setup_code_buffer(CodeBuffer* code, int call_stub_estimate) {
                                         locs_buffer_size / sizeof(relocInfo));
   code->initialize_consts_size(Compilation::desired_max_constant_size());
   // Call stubs + two deopt handlers (regular and MH) + exception handler
-  code->initialize_stubs_size((call_stub_estimate * LIR_Assembler::call_stub_size) +
-                              LIR_Assembler::exception_handler_size +
-                              2 * LIR_Assembler::deopt_handler_size);
+  int stub_size = (call_stub_estimate * LIR_Assembler::call_stub_size) +
+                   LIR_Assembler::exception_handler_size +
+                   (2 * LIR_Assembler::deopt_handler_size);
+  if (stub_size >= code->insts_capacity()) return false;
+  code->initialize_stubs_size(stub_size);
+  return true;
 }
 
 
 int Compilation::emit_code_body() {
   // emit code
-  setup_code_buffer(code(), allocator()->num_calls());
+  if (!setup_code_buffer(code(), allocator()->num_calls())) {
+    BAILOUT_("size requested greater than avail code buffer size", 0);
+  }
   code()->initialize_oop_recorder(env()->oop_recorder());
 
   _masm = new C1_MacroAssembler(code());
@@ -290,9 +303,13 @@ int Compilation::compile_java_method() {
 
   CHECK_BAILOUT_(no_frame_size);
 
+  if (is_profiling() && !method()->ensure_method_data()) {
+    BAILOUT_("mdo allocation failed", no_frame_size);
+  }
+
   {
     PhaseTraceTime timeit(_t_buildIR);
-  build_hir();
+    build_hir();
   }
   if (BailoutAfterHIR) {
     BAILOUT_("Bailing out because of -XX:+BailoutAfterHIR", no_frame_size);
@@ -447,6 +464,7 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
 , _masm(NULL)
 , _has_exception_handlers(false)
 , _has_fpu_code(true)   // pessimistic assumption
+, _would_profile(false)
 , _has_unsafe_access(false)
 , _has_method_handle_invokes(false)
 , _bailout_msg(NULL)
@@ -454,20 +472,30 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
 , _allocator(NULL)
 , _next_id(0)
 , _next_block_id(0)
-, _code(buffer_blob->instructions_begin(),
-        buffer_blob->instructions_size())
+, _code(buffer_blob)
 , _current_instruction(NULL)
 #ifndef PRODUCT
 , _last_instruction_printed(NULL)
 #endif // PRODUCT
 {
   PhaseTraceTime timeit(_t_compile);
-
   _arena = Thread::current()->resource_area();
   _env->set_compiler_data(this);
   _exception_info_list = new ExceptionInfoList();
   _implicit_exception_table.set_size(0);
   compile_method();
+  if (bailed_out()) {
+    _env->record_method_not_compilable(bailout_msg(), !TieredCompilation);
+    if (is_profiling()) {
+      // Compilation failed, create MDO, which would signal the interpreter
+      // to start profiling on its own.
+      _method->ensure_method_data();
+    }
+  } else if (is_profiling() && _would_profile) {
+    ciMethodData *md = method->method_data_or_null();
+    assert(md != NULL, "Sanity");
+    md->set_would_profile(_would_profile);
+  }
 }
 
 Compilation::~Compilation() {

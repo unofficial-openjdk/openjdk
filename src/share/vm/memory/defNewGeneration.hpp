@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,15 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_MEMORY_DEFNEWGENERATION_HPP
+#define SHARE_VM_MEMORY_DEFNEWGENERATION_HPP
+
+#include "gc_implementation/shared/ageTable.hpp"
+#include "gc_implementation/shared/cSpaceCounters.hpp"
+#include "gc_implementation/shared/generationCounters.hpp"
+#include "memory/generation.inline.hpp"
+#include "utilities/stack.hpp"
 
 class EdenSpace;
 class ContiguousSpace;
@@ -76,17 +85,12 @@ protected:
   // Preserve the mark of "obj", if necessary, in preparation for its mark
   // word being overwritten with a self-forwarding-pointer.
   void   preserve_mark_if_necessary(oop obj, markOop m);
+  void   preserve_mark(oop obj, markOop m);    // work routine used by the above
 
   // Together, these keep <object with a preserved mark, mark value> pairs.
   // They should always contain the same number of elements.
   Stack<oop>     _objs_with_preserved_marks;
   Stack<markOop> _preserved_marks_of_objs;
-
-  // Returns true if the collection can be safely attempted.
-  // If this method returns false, a collection is not
-  // guaranteed to fail but the system may not be able
-  // to recover from the failure.
-  bool collection_attempt_is_safe();
 
   // Promotion failure handling
   OopClosure *_promo_failure_scan_stack_closure;
@@ -304,6 +308,14 @@ protected:
 
   // GC support
   virtual void compute_new_size();
+
+  // Returns true if the collection is likely to be safely
+  // completed. Even if this method returns true, a collection
+  // may not be guaranteed to succeed, and the system should be
+  // able to safely unwind and recover from that failure, albeit
+  // at some additional cost. Override superclass's implementation.
+  virtual bool collection_attempt_is_safe();
+
   virtual void collect(bool   full,
                        bool   clear_all_soft_refs,
                        size_t size,
@@ -344,3 +356,5 @@ protected:
   // Scavenge support
   void swap_spaces();
 };
+
+#endif // SHARE_VM_MEMORY_DEFNEWGENERATION_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,16 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_GC_IMPLEMENTATION_G1_SPARSEPRT_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_G1_SPARSEPRT_HPP
+
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
+#include "memory/allocation.hpp"
+#include "memory/cardTableModRefBS.hpp"
+#include "runtime/mutex.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 // Sparse remembered set for a heap region (the "owning" region).  Maps
 // indices of other regions to short sequences of cards in the other region
@@ -169,7 +179,6 @@ class RSHashTableIter VALUE_OBJ_CLASS_SPEC {
   int _bl_ind;          // [-1, 0.._rsht->_capacity)
   short _card_ind;      // [0..SparsePRTEntry::cards_num())
   RSHashTable* _rsht;
-  size_t _heap_bot_card_ind;
 
   // If the bucket list pointed to by _bl_ind contains a card, sets
   // _bl_ind to the index of that entry, and returns the card.
@@ -183,13 +192,11 @@ class RSHashTableIter VALUE_OBJ_CLASS_SPEC {
   size_t compute_card_ind(CardIdx_t ci);
 
 public:
-  RSHashTableIter(size_t heap_bot_card_ind) :
+  RSHashTableIter() :
     _tbl_ind(RSHashTable::NullEntry),
     _bl_ind(RSHashTable::NullEntry),
     _card_ind((SparsePRTEntry::cards_num() - 1)),
-    _rsht(NULL),
-    _heap_bot_card_ind(heap_bot_card_ind)
-  {}
+    _rsht(NULL) {}
 
   void init(RSHashTable* rsht) {
     _rsht = rsht;
@@ -205,8 +212,11 @@ public:
 // mutex.
 
 class SparsePRTIter;
+class SparsePRTCleanupTask;
 
 class SparsePRT VALUE_OBJ_CLASS_SPEC {
+  friend class SparsePRTCleanupTask;
+
   //  Iterations are done on the _cur hash table, since they only need to
   //  see entries visible at the start of a collection pause.
   //  All other operations are done using the _next hash table.
@@ -230,6 +240,8 @@ class SparsePRT VALUE_OBJ_CLASS_SPEC {
 
   SparsePRT* next_expanded() { return _next_expanded; }
   void set_next_expanded(SparsePRT* nxt) { _next_expanded = nxt; }
+
+  bool should_be_on_expanded_list();
 
   static SparsePRT* _head_expanded_list;
 
@@ -277,23 +289,38 @@ public:
   static void add_to_expanded_list(SparsePRT* sprt);
   static SparsePRT* get_from_expanded_list();
 
+  // The purpose of these three methods is to help the GC workers
+  // during the cleanup pause to recreate the expanded list, purging
+  // any tables from it that belong to regions that are freed during
+  // cleanup (if we don't purge those tables, there is a race that
+  // causes various crashes; see CR 7014261).
+  //
+  // We chose to recreate the expanded list, instead of purging
+  // entries from it by iterating over it, to avoid this serial phase
+  // at the end of the cleanup pause.
+  //
+  // The three methods below work as follows:
+  // * reset_for_cleanup_tasks() : Nulls the expanded list head at the
+  //   start of the cleanup pause.
+  // * do_cleanup_work() : Called by the cleanup workers for every
+  //   region that is not free / is being freed by the cleanup
+  //   pause. It creates a list of expanded tables whose head / tail
+  //   are on the thread-local SparsePRTCleanupTask object.
+  // * finish_cleanup_task() : Called by the cleanup workers after
+  //   they complete their cleanup task. It adds the local list into
+  //   the global expanded list. It assumes that the
+  //   ParGCRareEvent_lock is being held to ensure MT-safety.
+  static void reset_for_cleanup_tasks();
+  void do_cleanup_work(SparsePRTCleanupTask* sprt_cleanup_task);
+  static void finish_cleanup_task(SparsePRTCleanupTask* sprt_cleanup_task);
+
   bool contains_card(RegionIdx_t region_id, CardIdx_t card_index) const {
     return _next->contains_card(region_id, card_index);
   }
-
-#if 0
-  void verify_is_cleared();
-  void print();
-#endif
 };
 
-
-class SparsePRTIter: public /* RSHashTable:: */RSHashTableIter {
+class SparsePRTIter: public RSHashTableIter {
 public:
-  SparsePRTIter(size_t heap_bot_card_ind) :
-    /* RSHashTable:: */RSHashTableIter(heap_bot_card_ind)
-  {}
-
   void init(const SparsePRT* sprt) {
     RSHashTableIter::init(sprt->cur());
   }
@@ -301,3 +328,23 @@ public:
     return RSHashTableIter::has_next(card_index);
   }
 };
+
+// This allows each worker during a cleanup pause to create a
+// thread-local list of sparse tables that have been expanded and need
+// to be processed at the beginning of the next GC pause. This lists
+// are concatenated into the single expanded list at the end of the
+// cleanup pause.
+class SparsePRTCleanupTask VALUE_OBJ_CLASS_SPEC {
+private:
+  SparsePRT* _head;
+  SparsePRT* _tail;
+
+public:
+  SparsePRTCleanupTask() : _head(NULL), _tail(NULL) { }
+
+  void add(SparsePRT* sprt);
+  SparsePRT* head() { return _head; }
+  SparsePRT* tail() { return _tail; }
+};
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_G1_SPARSEPRT_HPP

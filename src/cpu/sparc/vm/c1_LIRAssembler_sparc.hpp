@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef CPU_SPARC_VM_C1_LIRASSEMBLER_SPARC_HPP
+#define CPU_SPARC_VM_C1_LIRASSEMBLER_SPARC_HPP
+
  private:
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,33 +40,11 @@
   //       and then a load or store is emitted with ([O7] + [d]).
   //
 
-  // some load/store variants return the code_offset for proper positioning of debug info for null checks
+  int store(LIR_Opr from_reg, Register base, int offset, BasicType type, bool wide, bool unaligned);
+  int store(LIR_Opr from_reg, Register base, Register disp, BasicType type, bool wide);
 
-  // load/store with 32 bit displacement
-  int load(Register s, int disp, Register d, BasicType ld_type, CodeEmitInfo* info = NULL);
-  void store(Register value, Register base, int offset, BasicType type, CodeEmitInfo *info = NULL);
-
-  // loadf/storef with 32 bit displacement
-  void load(Register s, int disp, FloatRegister d, BasicType ld_type, CodeEmitInfo* info = NULL);
-  void store(FloatRegister d, Register s1, int disp, BasicType st_type, CodeEmitInfo* info = NULL);
-
-  // convienence methods for calling load/store with an Address
-  void load(const Address& a, Register d, BasicType ld_type, CodeEmitInfo* info = NULL, int offset = 0);
-  void store(Register d, const Address& a, BasicType st_type, CodeEmitInfo* info = NULL, int offset = 0);
-  void load(const Address& a, FloatRegister d, BasicType ld_type, CodeEmitInfo* info = NULL, int offset = 0);
-  void store(FloatRegister d, const Address& a, BasicType st_type, CodeEmitInfo* info = NULL, int offset = 0);
-
-  // convienence methods for calling load/store with an LIR_Address
-  void load(LIR_Address* a, Register d, BasicType ld_type, CodeEmitInfo* info = NULL);
-  void store(Register d, LIR_Address* a, BasicType st_type, CodeEmitInfo* info = NULL);
-  void load(LIR_Address* a, FloatRegister d, BasicType ld_type, CodeEmitInfo* info = NULL);
-  void store(FloatRegister d, LIR_Address* a, BasicType st_type, CodeEmitInfo* info = NULL);
-
-  int store(LIR_Opr from_reg, Register base, int offset, BasicType type, bool unaligned = false);
-  int store(LIR_Opr from_reg, Register base, Register disp, BasicType type);
-
-  int load(Register base, int offset, LIR_Opr to_reg, BasicType type, bool unaligned = false);
-  int load(Register base, Register disp, LIR_Opr to_reg, BasicType type);
+  int load(Register base, int offset, LIR_Opr to_reg, BasicType type, bool wide, bool unaligned);
+  int load(Register base, Register disp, LIR_Opr to_reg, BasicType type, bool wide);
 
   void monitorexit(LIR_Opr obj_opr, LIR_Opr lock_opr, Register hdr, int monitor_no);
 
@@ -71,9 +52,16 @@
 
   static bool is_single_instruction(LIR_Op* op);
 
+  // Record the type of the receiver in ReceiverTypeData
+  void type_profile_helper(Register mdo, int mdo_offset_bias,
+                           ciMethodData *md, ciProfileData *data,
+                           Register recv, Register tmp1, Label* update_done);
+  // Setup pointers to MDO, MDO slot, also compute offset bias to access the slot.
+  void setup_md_access(ciMethod* method, int bci,
+                       ciMethodData*& md, ciProfileData*& data, int& mdo_offset_bias);
  public:
-  void pack64( Register rs, Register rd );
-  void unpack64( Register rd );
+  void   pack64(LIR_Opr src, LIR_Opr dst);
+  void unpack64(LIR_Opr src, LIR_Opr dst);
 
 enum {
 #ifdef _LP64
@@ -83,3 +71,5 @@ enum {
 #endif // _LP64
          exception_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4),
          deopt_handler_size = DEBUG_ONLY(1*K) NOT_DEBUG(10*4) };
+
+#endif // CPU_SPARC_VM_C1_LIRASSEMBLER_SPARC_HPP

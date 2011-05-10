@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,17 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_rewriter.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/bytecodes.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/rewriter.hpp"
+#include "memory/gcLocker.hpp"
+#include "memory/oopFactory.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/generateOopMap.hpp"
+#include "oops/objArrayOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/methodComparator.hpp"
 
 // Computes a CPC map (new_index -> original_index) for constant pool entries
 // that are referred to by the interpreter at runtime via the constant pool cache.
@@ -43,6 +52,7 @@ void Rewriter::compute_index_maps() {
       case JVM_CONSTANT_MethodHandle      : // fall through
       case JVM_CONSTANT_MethodType        : // fall through
       case JVM_CONSTANT_InvokeDynamic     : // fall through
+      case JVM_CONSTANT_InvokeDynamicTrans: // fall through
         add_cp_cache_entry(i);
         break;
     }
@@ -52,6 +62,7 @@ void Rewriter::compute_index_maps() {
             "all cp cache indexes fit in a u2");
 
   _have_invoke_dynamic = ((tag_mask & (1 << JVM_CONSTANT_InvokeDynamic)) != 0);
+  _have_invoke_dynamic |= ((tag_mask & (1 << JVM_CONSTANT_InvokeDynamicTrans)) != 0);
 }
 
 
@@ -65,7 +76,7 @@ void Rewriter::make_constant_pool_cache(TRAPS) {
       oopFactory::new_constantPoolCache(length, methodOopDesc::IsUnsafeConc, CHECK);
   cache->initialize(_cp_cache_map);
 
-  // Don't bother to the next pass if there is no JVM_CONSTANT_InvokeDynamic.
+  // Don't bother with the next pass if there is no JVM_CONSTANT_InvokeDynamic.
   if (_have_invoke_dynamic) {
     for (int i = 0; i < length; i++) {
       int pool_index = cp_cache_entry_pool_index(i);
@@ -210,7 +221,7 @@ void Rewriter::scan_method(methodOop method) {
       // call to calculate the length.
       bc_length = Bytecodes::length_for(c);
       if (bc_length == 0) {
-        bc_length = Bytecodes::length_at(bcp);
+        bc_length = Bytecodes::length_at(method, bcp);
 
         // length_at will put us at the bytecode after the one modified
         // by 'wide'. We don't currently examine any of the bytecodes
@@ -226,9 +237,9 @@ void Rewriter::scan_method(methodOop method) {
       switch (c) {
         case Bytecodes::_lookupswitch   : {
 #ifndef CC_INTERP
-          Bytecode_lookupswitch* bc = Bytecode_lookupswitch_at(bcp);
+          Bytecode_lookupswitch bc(method, bcp);
           (*bcp) = (
-            bc->number_of_pairs() < BinarySwitchThreshold
+            bc.number_of_pairs() < BinarySwitchThreshold
             ? Bytecodes::_fast_linearswitch
             : Bytecodes::_fast_binaryswitch
           );

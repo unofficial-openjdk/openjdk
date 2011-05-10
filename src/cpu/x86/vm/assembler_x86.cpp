@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,24 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_assembler_x86.cpp.incl"
+#include "precompiled.hpp"
+#include "assembler_x86.inline.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "interpreter/interpreter.hpp"
+#include "memory/cardTableModRefBS.hpp"
+#include "memory/resourceArea.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/biasedLocking.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/os.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#include "gc_implementation/g1/heapRegion.hpp"
+#endif
 
 // Implementation of AddressLiteral
 
@@ -804,7 +820,20 @@ void Assembler::emit_farith(int b1, int b2, int i) {
 }
 
 
-// Now the Assembler instruction (identical for 32/64 bits)
+// Now the Assembler instructions (identical for 32/64 bits)
+
+void Assembler::adcl(Address dst, int32_t imm32) {
+  InstructionMark im(this);
+  prefix(dst);
+  emit_arith_operand(0x81, rdx, dst, imm32);
+}
+
+void Assembler::adcl(Address dst, Register src) {
+  InstructionMark im(this);
+  prefix(dst, src);
+  emit_byte(0x11);
+  emit_operand(src, dst);
+}
 
 void Assembler::adcl(Register dst, int32_t imm32) {
   prefix(dst);
@@ -1275,6 +1304,12 @@ void Assembler::idivl(Register src) {
   emit_byte(0xF8 | encode);
 }
 
+void Assembler::divl(Register src) { // Unsigned
+  int encode = prefix_and_encode(src->encoding());
+  emit_byte(0xF7);
+  emit_byte(0xF0 | encode);
+}
+
 void Assembler::imull(Register dst, Register src) {
   int encode = prefix_and_encode(dst->encoding(), src->encoding());
   emit_byte(0x0F);
@@ -1288,7 +1323,7 @@ void Assembler::imull(Register dst, Register src, int value) {
   if (is8bit(value)) {
     emit_byte(0x6B);
     emit_byte(0xC0 | encode);
-    emit_byte(value);
+    emit_byte(value & 0xFF);
   } else {
     emit_byte(0x69);
     emit_byte(0xC0 | encode);
@@ -2173,9 +2208,7 @@ void Assembler::notl(Register dst) {
 void Assembler::orl(Address dst, int32_t imm32) {
   InstructionMark im(this);
   prefix(dst);
-  emit_byte(0x81);
-  emit_operand(rcx, dst, 4);
-  emit_long(imm32);
+  emit_arith_operand(0x81, rcx, dst, imm32);
 }
 
 void Assembler::orl(Register dst, int32_t imm32) {
@@ -2183,14 +2216,12 @@ void Assembler::orl(Register dst, int32_t imm32) {
   emit_arith(0x81, 0xC8, dst, imm32);
 }
 
-
 void Assembler::orl(Register dst, Address src) {
   InstructionMark im(this);
   prefix(src, dst);
   emit_byte(0x0B);
   emit_operand(dst, src);
 }
-
 
 void Assembler::orl(Register dst, Register src) {
   (void) prefix_and_encode(dst->encoding(), src->encoding());
@@ -2316,6 +2347,17 @@ void Assembler::prefetchw(Address src) {
 
 void Assembler::prefix(Prefix p) {
   a_byte(p);
+}
+
+void Assembler::por(XMMRegister dst, XMMRegister src) {
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+
+  emit_byte(0x66);
+  int  encode = prefix_and_encode(dst->encoding(), src->encoding());
+  emit_byte(0x0F);
+
+  emit_byte(0xEB);
+  emit_byte(0xC0 | encode);
 }
 
 void Assembler::pshufd(XMMRegister dst, XMMRegister src, int mode) {
@@ -2627,6 +2669,37 @@ void Assembler::sqrtsd(XMMRegister dst, XMMRegister src) {
   emit_byte(0xC0 | encode);
 }
 
+void Assembler::sqrtsd(XMMRegister dst, Address src) {
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  InstructionMark im(this);
+  emit_byte(0xF2);
+  prefix(src, dst);
+  emit_byte(0x0F);
+  emit_byte(0x51);
+  emit_operand(dst, src);
+}
+
+void Assembler::sqrtss(XMMRegister dst, XMMRegister src) {
+  // HMM Table D-1 says sse2
+  // NOT_LP64(assert(VM_Version::supports_sse(), ""));
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  emit_byte(0xF3);
+  int encode = prefix_and_encode(dst->encoding(), src->encoding());
+  emit_byte(0x0F);
+  emit_byte(0x51);
+  emit_byte(0xC0 | encode);
+}
+
+void Assembler::sqrtss(XMMRegister dst, Address src) {
+  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
+  InstructionMark im(this);
+  emit_byte(0xF3);
+  prefix(src, dst);
+  emit_byte(0x0F);
+  emit_byte(0x51);
+  emit_operand(dst, src);
+}
+
 void Assembler::stmxcsr( Address dst) {
   NOT_LP64(assert(VM_Version::supports_sse(), ""));
   InstructionMark im(this);
@@ -2639,20 +2712,7 @@ void Assembler::stmxcsr( Address dst) {
 void Assembler::subl(Address dst, int32_t imm32) {
   InstructionMark im(this);
   prefix(dst);
-  if (is8bit(imm32)) {
-    emit_byte(0x83);
-    emit_operand(rbp, dst, 1);
-    emit_byte(imm32 & 0xFF);
-  } else {
-    emit_byte(0x81);
-    emit_operand(rbp, dst, 4);
-    emit_long(imm32);
-  }
-}
-
-void Assembler::subl(Register dst, int32_t imm32) {
-  prefix(dst);
-  emit_arith(0x81, 0xE8, dst, imm32);
+  emit_arith_operand(0x81, rbp, dst, imm32);
 }
 
 void Assembler::subl(Address dst, Register src) {
@@ -2660,6 +2720,11 @@ void Assembler::subl(Address dst, Register src) {
   prefix(dst, src);
   emit_byte(0x29);
   emit_operand(src, dst);
+}
+
+void Assembler::subl(Register dst, int32_t imm32) {
+  prefix(dst);
+  emit_arith(0x81, 0xE8, dst, imm32);
 }
 
 void Assembler::subl(Register dst, Address src) {
@@ -3903,7 +3968,7 @@ void Assembler::imulq(Register dst, Register src, int value) {
   if (is8bit(value)) {
     emit_byte(0x6B);
     emit_byte(0xC0 | encode);
-    emit_byte(value);
+    emit_byte(value & 0xFF);
   } else {
     emit_byte(0x69);
     emit_byte(0xC0 | encode);
@@ -4280,6 +4345,7 @@ void Assembler::sarq(Register dst) {
   emit_byte(0xD3);
   emit_byte(0xF8 | encode);
 }
+
 void Assembler::sbbq(Address dst, int32_t imm32) {
   InstructionMark im(this);
   prefixq(dst);
@@ -4336,33 +4402,10 @@ void Assembler::shrq(Register dst) {
   emit_byte(0xE8 | encode);
 }
 
-void Assembler::sqrtsd(XMMRegister dst, Address src) {
-  NOT_LP64(assert(VM_Version::supports_sse2(), ""));
-  InstructionMark im(this);
-  emit_byte(0xF2);
-  prefix(src, dst);
-  emit_byte(0x0F);
-  emit_byte(0x51);
-  emit_operand(dst, src);
-}
-
 void Assembler::subq(Address dst, int32_t imm32) {
   InstructionMark im(this);
   prefixq(dst);
-  if (is8bit(imm32)) {
-    emit_byte(0x83);
-    emit_operand(rbp, dst, 1);
-    emit_byte(imm32 & 0xFF);
-  } else {
-    emit_byte(0x81);
-    emit_operand(rbp, dst, 4);
-    emit_long(imm32);
-  }
-}
-
-void Assembler::subq(Register dst, int32_t imm32) {
-  (void) prefixq_and_encode(dst->encoding());
-  emit_arith(0x81, 0xE8, dst, imm32);
+  emit_arith_operand(0x81, rbp, dst, imm32);
 }
 
 void Assembler::subq(Address dst, Register src) {
@@ -4370,6 +4413,11 @@ void Assembler::subq(Address dst, Register src) {
   prefixq(dst, src);
   emit_byte(0x29);
   emit_operand(src, dst);
+}
+
+void Assembler::subq(Register dst, int32_t imm32) {
+  (void) prefixq_and_encode(dst->encoding());
+  emit_arith(0x81, 0xE8, dst, imm32);
 }
 
 void Assembler::subq(Register dst, Address src) {
@@ -4907,10 +4955,6 @@ void MacroAssembler::movptr(Address dst, intptr_t src) {
 }
 
 
-void MacroAssembler::movsd(XMMRegister dst, AddressLiteral src) {
-  movsd(dst, as_Address(src));
-}
-
 void MacroAssembler::pop_callee_saved_registers() {
   pop(rcx);
   pop(rdx);
@@ -4993,19 +5037,22 @@ void MacroAssembler::debug32(int rdi, int rsi, int rbp, int rsp, int rbx, int rd
       ttyLocker ttyl;
       tty->print_cr("eip = 0x%08x", eip);
 #ifndef PRODUCT
-      tty->cr();
-      findpc(eip);
-      tty->cr();
+      if ((WizardMode || Verbose) && PrintMiscellaneous) {
+        tty->cr();
+        findpc(eip);
+        tty->cr();
+      }
 #endif
-      tty->print_cr("rax, = 0x%08x", rax);
-      tty->print_cr("rbx, = 0x%08x", rbx);
+      tty->print_cr("rax = 0x%08x", rax);
+      tty->print_cr("rbx = 0x%08x", rbx);
       tty->print_cr("rcx = 0x%08x", rcx);
       tty->print_cr("rdx = 0x%08x", rdx);
       tty->print_cr("rdi = 0x%08x", rdi);
       tty->print_cr("rsi = 0x%08x", rsi);
-      tty->print_cr("rbp, = 0x%08x", rbp);
+      tty->print_cr("rbp = 0x%08x", rbp);
       tty->print_cr("rsp = 0x%08x", rsp);
       BREAKPOINT;
+      assert(false, "start up GDB");
     }
   } else {
     ttyLocker ttyl;
@@ -5513,17 +5560,14 @@ void MacroAssembler::stop(const char* msg) {
 }
 
 void MacroAssembler::warn(const char* msg) {
-  push(r12);
-  movq(r12, rsp);
+  push(rsp);
   andq(rsp, -16);     // align stack as required by push_CPU_state and call
 
   push_CPU_state();   // keeps alignment at 16 bytes
   lea(c_rarg0, ExternalAddress((address) msg));
   call_VM_leaf(CAST_FROM_FN_PTR(address, warning), c_rarg0);
   pop_CPU_state();
-
-  movq(rsp, r12);
-  pop(r12);
+  pop(rsp);
 }
 
 #ifndef PRODUCT
@@ -5835,6 +5879,10 @@ void MacroAssembler::call_VM_base(Register oop_result,
   // debugging support
   assert(number_of_arguments >= 0   , "cannot have negative number of arguments");
   LP64_ONLY(assert(java_thread == r15_thread, "unexpected register"));
+#ifdef ASSERT
+  LP64_ONLY(if (UseCompressedOops) verify_heapbase("call_VM_base");)
+#endif // ASSERT
+
   assert(java_thread != oop_result  , "cannot use the same register for java_thread & oop_result");
   assert(java_thread != last_java_sp, "cannot use the same register for java_thread & last_java_sp");
 
@@ -7093,9 +7141,9 @@ void MacroAssembler::tlab_allocate(Register obj,
 }
 
 // Preserves rbx, and rdx.
-void MacroAssembler::tlab_refill(Label& retry,
-                                 Label& try_eden,
-                                 Label& slow_case) {
+Register MacroAssembler::tlab_refill(Label& retry,
+                                     Label& try_eden,
+                                     Label& slow_case) {
   Register top = rax;
   Register t1  = rcx;
   Register t2  = rsi;
@@ -7142,7 +7190,7 @@ void MacroAssembler::tlab_refill(Label& retry,
 
   // if tlab is currently allocated (top or end != null) then
   // fill [top, end + alignment_reserve) with array object
-  testptr (top, top);
+  testptr(top, top);
   jcc(Assembler::zero, do_refill);
 
   // set up the mark word
@@ -7154,16 +7202,20 @@ void MacroAssembler::tlab_refill(Label& retry,
   movl(Address(top, arrayOopDesc::length_offset_in_bytes()), t1);
   // set klass to intArrayKlass
   // dubious reloc why not an oop reloc?
-  movptr(t1, ExternalAddress((address) Universe::intArrayKlassObj_addr()));
+  movptr(t1, ExternalAddress((address)Universe::intArrayKlassObj_addr()));
   // store klass last.  concurrent gcs assumes klass length is valid if
   // klass field is not null.
   store_klass(top, t1);
+
+  movptr(t1, top);
+  subptr(t1, Address(thread_reg, in_bytes(JavaThread::tlab_start_offset())));
+  incr_allocated_bytes(thread_reg, t1, 0);
 
   // refill the tlab with an eden allocation
   bind(do_refill);
   movptr(t1, Address(thread_reg, in_bytes(JavaThread::tlab_size_offset())));
   shlptr(t1, LogHeapWordSize);
-  // add object_size ??
+  // allocate new tlab, address returned in top
   eden_allocate(top, t1, 0, t2, slow_case);
 
   // Check that t1 was preserved in eden_allocate.
@@ -7191,6 +7243,34 @@ void MacroAssembler::tlab_refill(Label& retry,
   movptr(Address(thread_reg, in_bytes(JavaThread::tlab_end_offset())), top);
   verify_tlab();
   jmp(retry);
+
+  return thread_reg; // for use by caller
+}
+
+void MacroAssembler::incr_allocated_bytes(Register thread,
+                                          Register var_size_in_bytes,
+                                          int con_size_in_bytes,
+                                          Register t1) {
+#ifdef _LP64
+  if (var_size_in_bytes->is_valid()) {
+    addq(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), var_size_in_bytes);
+  } else {
+    addq(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), con_size_in_bytes);
+  }
+#else
+  if (!thread->is_valid()) {
+    assert(t1->is_valid(), "need temp reg");
+    thread = t1;
+    get_thread(thread);
+  }
+
+  if (var_size_in_bytes->is_valid()) {
+    addl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), var_size_in_bytes);
+  } else {
+    addl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())), con_size_in_bytes);
+  }
+  adcl(Address(thread, in_bytes(JavaThread::allocated_bytes_offset())+4), 0);
+#endif
 }
 
 static const double     pi_4 =  0.7853981633974483;
@@ -7677,11 +7757,19 @@ RegisterOrConstant MacroAssembler::delayed_value_impl(intptr_t* delayed_value_ad
   movptr(tmp, ExternalAddress((address) delayed_value_addr));
 
 #ifdef ASSERT
-  Label L;
-  testptr(tmp, tmp);
-  jccb(Assembler::notZero, L);
-  hlt();
-  bind(L);
+  { Label L;
+    testptr(tmp, tmp);
+    if (WizardMode) {
+      jcc(Assembler::notZero, L);
+      char* buf = new char[40];
+      sprintf(buf, "DelayedValue="INTPTR_FORMAT, delayed_value_addr[1]);
+      stop(buf);
+    } else {
+      jccb(Assembler::notZero, L);
+      hlt();
+    }
+    bind(L);
+  }
 #endif
 
   if (offset != 0)
@@ -7698,9 +7786,14 @@ RegisterOrConstant MacroAssembler::delayed_value_impl(intptr_t* delayed_value_ad
 void MacroAssembler::check_method_handle_type(Register mtype_reg, Register mh_reg,
                                               Register temp_reg,
                                               Label& wrong_method_type) {
-  if (UseCompressedOops)  unimplemented();  // field accesses must decode
+  Address type_addr(mh_reg, delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg));
   // compare method type against that of the receiver
-  cmpptr(mtype_reg, Address(mh_reg, delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)));
+  if (UseCompressedOops) {
+    load_heap_oop(temp_reg, type_addr);
+    cmpptr(mtype_reg, temp_reg);
+  } else {
+    cmpptr(mtype_reg, type_addr);
+  }
   jcc(Assembler::notEqual, wrong_method_type);
 }
 
@@ -7712,15 +7805,14 @@ void MacroAssembler::check_method_handle_type(Register mtype_reg, Register mh_re
 void MacroAssembler::load_method_handle_vmslots(Register vmslots_reg, Register mh_reg,
                                                 Register temp_reg) {
   assert_different_registers(vmslots_reg, mh_reg, temp_reg);
-  if (UseCompressedOops)  unimplemented();  // field accesses must decode
   // load mh.type.form.vmslots
   if (java_dyn_MethodHandle::vmslots_offset_in_bytes() != 0) {
     // hoist vmslots into every mh to avoid dependent load chain
     movl(vmslots_reg, Address(mh_reg, delayed_value(java_dyn_MethodHandle::vmslots_offset_in_bytes, temp_reg)));
   } else {
     Register temp2_reg = vmslots_reg;
-    movptr(temp2_reg, Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)));
-    movptr(temp2_reg, Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)));
+    load_heap_oop(temp2_reg, Address(mh_reg,    delayed_value(java_dyn_MethodHandle::type_offset_in_bytes, temp_reg)));
+    load_heap_oop(temp2_reg, Address(temp2_reg, delayed_value(java_dyn_MethodType::form_offset_in_bytes, temp_reg)));
     movl(vmslots_reg, Address(temp2_reg, delayed_value(java_dyn_MethodTypeForm::vmslots_offset_in_bytes, temp_reg)));
   }
 }
@@ -7734,9 +7826,8 @@ void MacroAssembler::jump_to_method_handle_entry(Register mh_reg, Register temp_
   assert(mh_reg == rcx, "caller must put MH object in rcx");
   assert_different_registers(mh_reg, temp_reg);
 
-  if (UseCompressedOops)  unimplemented();  // field accesses must decode
-
   // pick out the interpreted side of the handler
+  // NOTE: vmentry is not an oop!
   movptr(temp_reg, Address(mh_reg, delayed_value(java_dyn_MethodHandle::vmentry_offset_in_bytes, temp_reg)));
 
   // off we go...
@@ -8227,39 +8318,45 @@ void MacroAssembler::store_klass(Register dst, Register src) {
     movptr(Address(dst, oopDesc::klass_offset_in_bytes()), src);
 }
 
+void MacroAssembler::load_heap_oop(Register dst, Address src) {
+#ifdef _LP64
+  if (UseCompressedOops) {
+    movl(dst, src);
+    decode_heap_oop(dst);
+  } else
+#endif
+    movptr(dst, src);
+}
+
+void MacroAssembler::store_heap_oop(Address dst, Register src) {
+#ifdef _LP64
+  if (UseCompressedOops) {
+    assert(!dst.uses(src), "not enough registers");
+    encode_heap_oop(src);
+    movl(dst, src);
+  } else
+#endif
+    movptr(dst, src);
+}
+
+// Used for storing NULLs.
+void MacroAssembler::store_heap_oop_null(Address dst) {
+#ifdef _LP64
+  if (UseCompressedOops) {
+    movl(dst, (int32_t)NULL_WORD);
+  } else {
+    movslq(dst, (int32_t)NULL_WORD);
+  }
+#else
+  movl(dst, (int32_t)NULL_WORD);
+#endif
+}
+
 #ifdef _LP64
 void MacroAssembler::store_klass_gap(Register dst, Register src) {
   if (UseCompressedOops) {
     // Store to klass gap in destination
     movl(Address(dst, oopDesc::klass_gap_offset_in_bytes()), src);
-  }
-}
-
-void MacroAssembler::load_heap_oop(Register dst, Address src) {
-  if (UseCompressedOops) {
-    movl(dst, src);
-    decode_heap_oop(dst);
-  } else {
-    movq(dst, src);
-  }
-}
-
-void MacroAssembler::store_heap_oop(Address dst, Register src) {
-  if (UseCompressedOops) {
-    assert(!dst.uses(src), "not enough registers");
-    encode_heap_oop(src);
-    movl(dst, src);
-  } else {
-    movq(dst, src);
-  }
-}
-
-// Used for storing NULLs.
-void MacroAssembler::store_heap_oop_null(Address dst) {
-  if (UseCompressedOops) {
-    movl(dst, (int32_t)NULL_WORD);
-  } else {
-    movslq(dst, (int32_t)NULL_WORD);
   }
 }
 
@@ -8550,7 +8647,7 @@ void MacroAssembler::string_indexof(Register str1, Register str2,
 // Compare strings.
 void MacroAssembler::string_compare(Register str1, Register str2,
                                     Register cnt1, Register cnt2, Register result,
-                                    XMMRegister vec1, XMMRegister vec2) {
+                                    XMMRegister vec1) {
   Label LENGTH_DIFF_LABEL, POP_LABEL, DONE_LABEL, WHILE_HEAD_LABEL;
 
   // Compute the minimum of the string lengths and the
@@ -8597,62 +8694,85 @@ void MacroAssembler::string_compare(Register str1, Register str2,
     bind(LSkip2);
   }
 
-  // Advance to next character
-  addptr(str1, 2);
-  addptr(str2, 2);
+  Address::ScaleFactor scale = Address::times_2;
+  int stride = 8;
+
+  // Advance to next element
+  addptr(str1, 16/stride);
+  addptr(str2, 16/stride);
 
   if (UseSSE42Intrinsics) {
-    // With SSE4.2, use double quad vector compare
-    Label COMPARE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_TAIL;
+    Label COMPARE_WIDE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_TAIL;
+    int pcmpmask = 0x19;
     // Setup to compare 16-byte vectors
-    movl(cnt1, cnt2);
-    andl(cnt2, 0xfffffff8); // cnt2 holds the vector count
-    andl(cnt1, 0x00000007); // cnt1 holds the tail count
-    testl(cnt2, cnt2);
+    movl(result, cnt2);
+    andl(cnt2, ~(stride - 1));   // cnt2 holds the vector count
     jccb(Assembler::zero, COMPARE_TAIL);
 
-    lea(str2, Address(str2, cnt2, Address::times_2));
-    lea(str1, Address(str1, cnt2, Address::times_2));
-    negptr(cnt2);
+    lea(str1, Address(str1, result, scale));
+    lea(str2, Address(str2, result, scale));
+    negptr(result);
 
-    bind(COMPARE_VECTORS);
-    movdqu(vec1, Address(str1, cnt2, Address::times_2));
-    movdqu(vec2, Address(str2, cnt2, Address::times_2));
-    pxor(vec1, vec2);
-    ptest(vec1, vec1);
-    jccb(Assembler::notZero, VECTOR_NOT_EQUAL);
-    addptr(cnt2, 8);
-    jcc(Assembler::notZero, COMPARE_VECTORS);
-    jmpb(COMPARE_TAIL);
+    // pcmpestri
+    //   inputs:
+    //     vec1- substring
+    //     rax - negative string length (elements count)
+    //     mem - scaned string
+    //     rdx - string length (elements count)
+    //     pcmpmask - cmp mode: 11000 (string compare with negated result)
+    //               + 00 (unsigned bytes) or  + 01 (unsigned shorts)
+    //   outputs:
+    //     rcx - first mismatched element index
+    assert(result == rax && cnt2 == rdx && cnt1 == rcx, "pcmpestri");
+
+    bind(COMPARE_WIDE_VECTORS);
+    movdqu(vec1, Address(str1, result, scale));
+    pcmpestri(vec1, Address(str2, result, scale), pcmpmask);
+    // After pcmpestri cnt1(rcx) contains mismatched element index
+
+    jccb(Assembler::below, VECTOR_NOT_EQUAL);  // CF==1
+    addptr(result, stride);
+    subptr(cnt2, stride);
+    jccb(Assembler::notZero, COMPARE_WIDE_VECTORS);
+
+    // compare wide vectors tail
+    testl(result, result);
+    jccb(Assembler::zero, LENGTH_DIFF_LABEL);
+
+    movl(cnt2, stride);
+    movl(result, stride);
+    negptr(result);
+    movdqu(vec1, Address(str1, result, scale));
+    pcmpestri(vec1, Address(str2, result, scale), pcmpmask);
+    jccb(Assembler::aboveEqual, LENGTH_DIFF_LABEL);
 
     // Mismatched characters in the vectors
     bind(VECTOR_NOT_EQUAL);
-    lea(str1, Address(str1, cnt2, Address::times_2));
-    lea(str2, Address(str2, cnt2, Address::times_2));
-    movl(cnt1, 8);
+    addptr(result, cnt1);
+    movptr(cnt2, result);
+    load_unsigned_short(result, Address(str1, cnt2, scale));
+    load_unsigned_short(cnt1, Address(str2, cnt2, scale));
+    subl(result, cnt1);
+    jmpb(POP_LABEL);
 
-    // Compare tail (< 8 chars), or rescan last vectors to
-    // find 1st mismatched characters
-    bind(COMPARE_TAIL);
-    testl(cnt1, cnt1);
-    jccb(Assembler::zero, LENGTH_DIFF_LABEL);
-    movl(cnt2, cnt1);
+    bind(COMPARE_TAIL); // limit is zero
+    movl(cnt2, result);
     // Fallthru to tail compare
   }
 
   // Shift str2 and str1 to the end of the arrays, negate min
-  lea(str1, Address(str1, cnt2, Address::times_2, 0));
-  lea(str2, Address(str2, cnt2, Address::times_2, 0));
+  lea(str1, Address(str1, cnt2, scale, 0));
+  lea(str2, Address(str2, cnt2, scale, 0));
   negptr(cnt2);
 
-    // Compare the rest of the characters
+  // Compare the rest of the elements
   bind(WHILE_HEAD_LABEL);
-  load_unsigned_short(result, Address(str1, cnt2, Address::times_2, 0));
-  load_unsigned_short(cnt1, Address(str2, cnt2, Address::times_2, 0));
+  load_unsigned_short(result, Address(str1, cnt2, scale, 0));
+  load_unsigned_short(cnt1, Address(str2, cnt2, scale, 0));
   subl(result, cnt1);
   jccb(Assembler::notZero, POP_LABEL);
   increment(cnt2);
-  jcc(Assembler::notZero, WHILE_HEAD_LABEL);
+  jccb(Assembler::notZero, WHILE_HEAD_LABEL);
 
   // Strings are equal up to min length.  Return the length difference.
   bind(LENGTH_DIFF_LABEL);
@@ -8661,7 +8781,7 @@ void MacroAssembler::string_compare(Register str1, Register str2,
 
   // Discard the stored length difference
   bind(POP_LABEL);
-  addptr(rsp, wordSize);
+  pop(cnt1);
 
   // That's it
   bind(DONE_LABEL);
@@ -8709,6 +8829,7 @@ void MacroAssembler::char_arrays_equals(bool is_array_equ, Register ary1, Regist
   if (UseSSE42Intrinsics) {
     // With SSE4.2, use double quad vector compare
     Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
+
     // Compare 16-byte vectors
     andl(result, 0x0000000e);  //   tail count (in bytes)
     andl(limit, 0xfffffff0);   // vector count (in bytes)
@@ -8722,10 +8843,22 @@ void MacroAssembler::char_arrays_equals(bool is_array_equ, Register ary1, Regist
     movdqu(vec1, Address(ary1, limit, Address::times_1));
     movdqu(vec2, Address(ary2, limit, Address::times_1));
     pxor(vec1, vec2);
+
     ptest(vec1, vec1);
     jccb(Assembler::notZero, FALSE_LABEL);
     addptr(limit, 16);
     jcc(Assembler::notZero, COMPARE_WIDE_VECTORS);
+
+    testl(result, result);
+    jccb(Assembler::zero, TRUE_LABEL);
+
+    movdqu(vec1, Address(ary1, result, Address::times_1, -16));
+    movdqu(vec2, Address(ary2, result, Address::times_1, -16));
+    pxor(vec1, vec2);
+
+    ptest(vec1, vec1);
+    jccb(Assembler::notZero, FALSE_LABEL);
+    jmpb(TRUE_LABEL);
 
     bind(COMPARE_TAIL); // limit is zero
     movl(limit, result);

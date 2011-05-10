@@ -22,8 +22,17 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_parseHelper.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "compiler/compileLog.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "opto/addnode.hpp"
+#include "opto/memnode.hpp"
+#include "opto/mulnode.hpp"
+#include "opto/parse.hpp"
+#include "opto/rootnode.hpp"
+#include "opto/runtime.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 //------------------------------make_dtrace_method_entry_exit ----------------
 // Dtrace -- record entry or exit of a method if compiled with dtrace support
@@ -119,7 +128,11 @@ void Parse::do_instanceof() {
   }
 
   // Push the bool result back on stack
-  push( gen_instanceof( pop(), makecon(TypeKlassPtr::make(klass)) ) );
+  Node* res = gen_instanceof(peek(), makecon(TypeKlassPtr::make(klass)));
+
+  // Pop from stack AFTER gen_instanceof because it can uncommon trap.
+  pop();
+  push(res);
 }
 
 //------------------------------array_store_check------------------------------

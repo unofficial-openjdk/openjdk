@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,13 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_RUNTIME_ARGUMENTS_HPP
+#define SHARE_VM_RUNTIME_ARGUMENTS_HPP
+
+#include "runtime/java.hpp"
+#include "runtime/perfData.hpp"
+#include "utilities/top.hpp"
 
 // Arguments parses the command line and recognizes options
 
@@ -288,8 +295,9 @@ class Arguments : AllStatic {
   static bool _BackgroundCompilation;
   static bool _ClipInlining;
   static bool _CIDynamicCompilePriority;
-  static intx _Tier2CompileThreshold;
 
+  // Tiered
+  static void set_tiered_flags();
   // CMS/ParNew garbage collectors
   static void set_parnew_gc_flags();
   static void set_cms_and_parnew_gc_flags();
@@ -299,6 +307,7 @@ class Arguments : AllStatic {
   static void set_g1_gc_flags();
   // GC ergonomics
   static void set_ergonomics_flags();
+  static void set_shared_spaces_flags();
   // Setup heap size
   static void set_heap_size();
   // Based on automatic selection criteria, should the
@@ -338,6 +347,7 @@ class Arguments : AllStatic {
   }
   static bool verify_interval(uintx val, uintx min,
                               uintx max, const char* name);
+  static bool verify_min_value(intx val, intx min, const char* name);
   static bool verify_percentage(uintx value, const char* name);
   static void describe_range_error(ArgsRange errcode);
   static ArgsRange check_memory_size(julong size, julong min_size);
@@ -400,6 +410,8 @@ class Arguments : AllStatic {
   static bool check_gc_consistency();
   // Check consistecy or otherwise of VM argument settings
   static bool check_vm_args_consistency();
+  // Check stack pages settings
+  static bool check_stack_pages();
   // Used by os_solaris
   static bool process_settings_file(const char* file_name, bool should_exist, jboolean ignore_unrecognized);
 
@@ -480,6 +492,9 @@ class Arguments : AllStatic {
   // System properties
   static void init_system_properties();
 
+  // Update/Initialize System properties after JDK version number is known
+  static void init_version_specific_system_properties();
+
   // Property List manipulation
   static void PropertyList_add(SystemProperty** plist, SystemProperty *element);
   static void PropertyList_add(SystemProperty** plist, const char* k, char* v);
@@ -523,3 +538,5 @@ class Arguments : AllStatic {
   static char *get_kernel_properties();
 #endif // KERNEL
 };
+
+#endif // SHARE_VM_RUNTIME_ARGUMENTS_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,29 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_interp_masm_x86_32.cpp.incl"
+#include "precompiled.hpp"
+#include "interp_masm_x86_32.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "oops/arrayOop.hpp"
+#include "oops/markOop.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/methodOop.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiRedefineClassesTrace.hpp"
+#include "prims/jvmtiThreadState.hpp"
+#include "runtime/basicLock.hpp"
+#include "runtime/biasedLocking.hpp"
+#include "runtime/sharedRuntime.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
 
 
 // Implementation of InterpreterMacroAssembler
@@ -798,7 +819,7 @@ void InterpreterMacroAssembler::test_method_data_pointer(Register mdp, Label& ze
 // Set the method data pointer for the current bcp.
 void InterpreterMacroAssembler::set_method_data_pointer_for_bcp() {
   assert(ProfileInterpreter, "must be profiling interpreter");
-  Label zero_continue;
+  Label set_mdp;
   push(rax);
   push(rbx);
 
@@ -806,21 +827,17 @@ void InterpreterMacroAssembler::set_method_data_pointer_for_bcp() {
   // Test MDO to avoid the call if it is NULL.
   movptr(rax, Address(rbx, in_bytes(methodOopDesc::method_data_offset())));
   testptr(rax, rax);
-  jcc(Assembler::zero, zero_continue);
-
+  jcc(Assembler::zero, set_mdp);
   // rbx,: method
   // rsi: bcp
   call_VM_leaf(CAST_FROM_FN_PTR(address, InterpreterRuntime::bcp_to_di), rbx, rsi);
   // rax,: mdi
-
+  // mdo is guaranteed to be non-zero here, we checked for it before the call.
   movptr(rbx, Address(rbx, in_bytes(methodOopDesc::method_data_offset())));
-  testptr(rbx, rbx);
-  jcc(Assembler::zero, zero_continue);
   addptr(rbx, in_bytes(methodDataOopDesc::data_offset()));
-  addptr(rbx, rax);
-  movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rbx);
-
-  bind(zero_continue);
+  addptr(rax, rbx);
+  bind(set_mdp);
+  movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rax);
   pop(rbx);
   pop(rax);
 }
@@ -1396,4 +1413,18 @@ void InterpreterMacroAssembler::notify_method_exit(
       rbx, rcx);
     NOT_CC_INTERP(pop(state));
   }
+}
+
+// Jump if ((*counter_addr += increment) & mask) satisfies the condition.
+void InterpreterMacroAssembler::increment_mask_and_jump(Address counter_addr,
+                                                        int increment, int mask,
+                                                        Register scratch, bool preloaded,
+                                                        Condition cond, Label* where) {
+  if (!preloaded) {
+    movl(scratch, counter_addr);
+  }
+  incrementl(scratch, increment);
+  movl(counter_addr, scratch);
+  andl(scratch, mask);
+  jcc(cond, *where);
 }

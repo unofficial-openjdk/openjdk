@@ -22,8 +22,20 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_sweeper.cpp.incl"
+#include "precompiled.hpp"
+#include "code/codeCache.hpp"
+#include "code/nmethod.hpp"
+#include "compiler/compileBroker.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/methodOop.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/compilationPolicy.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/os.hpp"
+#include "runtime/sweeper.hpp"
+#include "runtime/vm_operations.hpp"
+#include "utilities/events.hpp"
+#include "utilities/xmlstream.hpp"
 
 long      NMethodSweeper::_traversals = 0;   // No. of stack traversals performed
 nmethod*  NMethodSweeper::_current = NULL;   // Current nmethod
@@ -368,8 +380,7 @@ void NMethodSweeper::speculative_disconnect_nmethods(bool is_full) {
         disconnected++;
       } else if (nm->is_speculatively_disconnected()) {
         // This method was previously considered for preemptive unloading and was not called since then
-        nm->method()->invocation_counter()->decay();
-        nm->method()->backedge_counter()->decay();
+        CompilationPolicy::policy()->delay_compilation(nm->method());
         nm->make_not_entrant();
         made_not_entrant++;
       }

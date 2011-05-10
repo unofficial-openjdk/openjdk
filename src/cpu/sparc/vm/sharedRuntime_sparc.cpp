@@ -22,8 +22,28 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_sharedRuntime_sparc.cpp.incl"
+#include "precompiled.hpp"
+#include "asm/assembler.hpp"
+#include "assembler_sparc.inline.hpp"
+#include "code/debugInfoRec.hpp"
+#include "code/icBuffer.hpp"
+#include "code/vtableStubs.hpp"
+#include "interpreter/interpreter.hpp"
+#include "oops/compiledICHolderOop.hpp"
+#include "prims/jvmtiRedefineClassesTrace.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/vframeArray.hpp"
+#include "vmreg_sparc.inline.hpp"
+#ifdef COMPILER1
+#include "c1/c1_Runtime1.hpp"
+#endif
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
+#ifdef SHARK
+#include "compiler/compileBroker.hpp"
+#include "shark/sharkCompiler.hpp"
+#endif
 
 #define __ masm->
 
@@ -3331,10 +3351,8 @@ void SharedRuntime::generate_deopt_blob() {
   __ stf(FloatRegisterImpl::D, Freturn0, saved_Freturn0_addr);
 #if !defined(_LP64)
 #if defined(COMPILER2)
-  if (!TieredCompilation) {
-    // 32-bit 1-register longs return longs in G1
-    __ stx(Greturn1, saved_Greturn1_addr);
-  }
+  // 32-bit 1-register longs return longs in G1
+  __ stx(Greturn1, saved_Greturn1_addr);
 #endif
   __ set_last_Java_frame(SP, noreg);
   __ call_VM_leaf(L7_thread_cache, CAST_FROM_FN_PTR(address, Deoptimization::unpack_frames), G2_thread, G4deopt_mode);
@@ -3347,24 +3365,15 @@ void SharedRuntime::generate_deopt_blob() {
   __ reset_last_Java_frame();
   __ ldf(FloatRegisterImpl::D, saved_Freturn0_addr, Freturn0);
 
-  // In tiered we never use C2 to compile methods returning longs so
-  // the result is where we expect it already.
-
 #if !defined(_LP64) && defined(COMPILER2)
   // In 32 bit, C2 returns longs in G1 so restore the saved G1 into
-  // I0/I1 if the return value is long.  In the tiered world there is
-  // a mismatch between how C1 and C2 return longs compiles and so
-  // currently compilation of methods which return longs is disabled
-  // for C2 and so is this code.  Eventually C1 and C2 will do the
-  // same thing for longs in the tiered world.
-  if (!TieredCompilation) {
-    Label not_long;
-    __ cmp(O0,T_LONG);
-    __ br(Assembler::notEqual, false, Assembler::pt, not_long);
-    __ delayed()->nop();
-    __ ldd(saved_Greturn1_addr,I0);
-    __ bind(not_long);
-  }
+  // I0/I1 if the return value is long.
+  Label not_long;
+  __ cmp(O0,T_LONG);
+  __ br(Assembler::notEqual, false, Assembler::pt, not_long);
+  __ delayed()->nop();
+  __ ldd(saved_Greturn1_addr,I0);
+  __ bind(not_long);
 #endif
   __ ret();
   __ delayed()->restore();

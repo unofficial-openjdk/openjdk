@@ -22,6 +22,12 @@
  *
  */
 
+#ifndef SHARE_VM_CODE_NMETHOD_HPP
+#define SHARE_VM_CODE_NMETHOD_HPP
+
+#include "code/codeBlob.hpp"
+#include "code/pcDesc.hpp"
+
 // This class is used internally by nmethods, to cache
 // exception/pc/handler information.
 
@@ -143,8 +149,8 @@ class nmethod : public CodeBlob {
 #ifdef HAVE_DTRACE_H
   int _trap_offset;
 #endif // def HAVE_DTRACE_H
-  int _stub_offset;
   int _consts_offset;
+  int _stub_offset;
   int _oops_offset;                       // offset to where embedded oop table begins (inside data)
   int _scopes_data_offset;
   int _scopes_pcs_offset;
@@ -204,7 +210,7 @@ class nmethod : public CodeBlob {
   ExceptionCache *_exception_cache;
   PcDescCache     _pc_desc_cache;
 
-  // These are only used for compiled synchronized native methods to
+  // These are used for compiled synchronized native methods to
   // locate the owner and stack slot for the BasicLock so that we can
   // properly revoke the bias of the owner if necessary. They are
   // needed because there is no debug information for compiled native
@@ -214,8 +220,10 @@ class nmethod : public CodeBlob {
   // sharing between platforms. Note that currently biased locking
   // will never cause Class instances to be biased but this code
   // handles the static synchronized case as well.
-  ByteSize _compiled_synchronized_native_basic_lock_owner_sp_offset;
-  ByteSize _compiled_synchronized_native_basic_lock_sp_offset;
+  // JVMTI's GetLocalInstance() also uses these offsets to find the receiver
+  // for non-static native wrapper frames.
+  ByteSize _native_receiver_sp_offset;
+  ByteSize _native_basic_lock_sp_offset;
 
   friend class nmethodLocker;
 
@@ -312,7 +320,7 @@ class nmethod : public CodeBlob {
                                      int frame_size);
 
   int trap_offset() const      { return _trap_offset; }
-  address trap_address() const { return code_begin() + _trap_offset; }
+  address trap_address() const { return insts_begin() + _trap_offset; }
 
 #endif // def HAVE_DTRACE_H
 
@@ -336,16 +344,16 @@ class nmethod : public CodeBlob {
   bool is_compiled_by_shark() const;
 
   // boundaries for different parts
-  address code_begin            () const          { return _entry_point; }
-  address code_end              () const          { return           header_begin() + _stub_offset          ; }
+  address consts_begin          () const          { return           header_begin() + _consts_offset        ; }
+  address consts_end            () const          { return           header_begin() +  code_offset()        ; }
+  address insts_begin           () const          { return           header_begin() +  code_offset()        ; }
+  address insts_end             () const          { return           header_begin() + _stub_offset          ; }
+  address stub_begin            () const          { return           header_begin() + _stub_offset          ; }
+  address stub_end              () const          { return           header_begin() + _oops_offset          ; }
   address exception_begin       () const          { return           header_begin() + _exception_offset     ; }
   address deopt_handler_begin   () const          { return           header_begin() + _deoptimize_offset    ; }
   address deopt_mh_handler_begin() const          { return           header_begin() + _deoptimize_mh_offset ; }
   address unwind_handler_begin  () const          { return _unwind_handler_offset != -1 ? (header_begin() + _unwind_handler_offset) : NULL; }
-  address stub_begin            () const          { return           header_begin() + _stub_offset          ; }
-  address stub_end              () const          { return           header_begin() + _consts_offset        ; }
-  address consts_begin          () const          { return           header_begin() + _consts_offset        ; }
-  address consts_end            () const          { return           header_begin() + _oops_offset          ; }
   oop*    oops_begin            () const          { return (oop*)   (header_begin() + _oops_offset)         ; }
   oop*    oops_end              () const          { return (oop*)   (header_begin() + _scopes_data_offset)  ; }
 
@@ -361,9 +369,9 @@ class nmethod : public CodeBlob {
   address nul_chk_table_end     () const          { return           header_begin() + _nmethod_end_offset   ; }
 
   // Sizes
-  int code_size         () const                  { return            code_end         () -            code_begin         (); }
-  int stub_size         () const                  { return            stub_end         () -            stub_begin         (); }
   int consts_size       () const                  { return            consts_end       () -            consts_begin       (); }
+  int insts_size        () const                  { return            insts_end        () -            insts_begin        (); }
+  int stub_size         () const                  { return            stub_end         () -            stub_begin         (); }
   int oops_size         () const                  { return (address)  oops_end         () - (address)  oops_begin         (); }
   int scopes_data_size  () const                  { return            scopes_data_end  () -            scopes_data_begin  (); }
   int scopes_pcs_size   () const                  { return (intptr_t) scopes_pcs_end   () - (intptr_t) scopes_pcs_begin   (); }
@@ -374,9 +382,9 @@ class nmethod : public CodeBlob {
   int total_size        () const;
 
   // Containment
-  bool code_contains         (address addr) const { return code_begin         () <= addr && addr < code_end         (); }
-  bool stub_contains         (address addr) const { return stub_begin         () <= addr && addr < stub_end         (); }
   bool consts_contains       (address addr) const { return consts_begin       () <= addr && addr < consts_end       (); }
+  bool insts_contains        (address addr) const { return insts_begin        () <= addr && addr < insts_end        (); }
+  bool stub_contains         (address addr) const { return stub_begin         () <= addr && addr < stub_end         (); }
   bool oops_contains         (oop*    addr) const { return oops_begin         () <= addr && addr < oops_end         (); }
   bool scopes_data_contains  (address addr) const { return scopes_data_begin  () <= addr && addr < scopes_data_end  (); }
   bool scopes_pcs_contains   (PcDesc* addr) const { return scopes_pcs_begin   () <= addr && addr < scopes_pcs_end   (); }
@@ -506,7 +514,7 @@ public:
   void clear_inline_caches();
   void cleanup_inline_caches();
   bool inlinecache_check_contains(address addr) const {
-    return (addr >= instructions_begin() && addr < verified_entry_point());
+    return (addr >= code_begin() && addr < verified_entry_point());
   }
 
   // unlink and deallocate this nmethod
@@ -559,7 +567,7 @@ public:
 
   PcDesc* find_pc_desc(address pc, bool approximate) {
     PcDesc* desc = _pc_desc_cache.last_pc_desc();
-    if (desc != NULL && desc->pc_offset() == pc - instructions_begin()) {
+    if (desc != NULL && desc->pc_offset() == pc - code_begin()) {
       return desc;
     }
     return find_pc_desc_internal(pc, approximate);
@@ -598,6 +606,10 @@ public:
   void verify();
   void verify_scopes();
   void verify_interrupt_point(address interrupt_point);
+
+  // print compilation helper
+  static void print_compilation(outputStream *st, const char *method_name, const char *title,
+                                methodOop method, bool is_blocking, int compile_id, int bci, int comp_level);
 
   // printing support
   void print()                          const;
@@ -666,11 +678,11 @@ public:
   bool is_patchable_at(address instr_address);
 
   // UseBiasedLocking support
-  ByteSize compiled_synchronized_native_basic_lock_owner_sp_offset() {
-    return _compiled_synchronized_native_basic_lock_owner_sp_offset;
+  ByteSize native_receiver_sp_offset() {
+    return _native_receiver_sp_offset;
   }
-  ByteSize compiled_synchronized_native_basic_lock_sp_offset() {
-    return _compiled_synchronized_native_basic_lock_sp_offset;
+  ByteSize native_basic_lock_sp_offset() {
+    return _native_basic_lock_sp_offset;
   }
 
   // support for code generation
@@ -700,3 +712,5 @@ class nmethodLocker : public StackObj {
     lock_nmethod(_nm);
   }
 };
+
+#endif // SHARE_VM_CODE_NMETHOD_HPP

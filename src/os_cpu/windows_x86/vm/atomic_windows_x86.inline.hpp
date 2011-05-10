@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,14 @@
  * questions.
  *
  */
+
+#ifndef OS_CPU_WINDOWS_X86_VM_ATOMIC_WINDOWS_X86_INLINE_HPP
+#define OS_CPU_WINDOWS_X86_VM_ATOMIC_WINDOWS_X86_INLINE_HPP
+
+#include "orderAccess_windows_x86.inline.hpp"
+#include "runtime/atomic.hpp"
+#include "runtime/os.hpp"
+#include "vm_version_x86.hpp"
 
 // The following alternative implementations are needed because
 // Windows 95 doesn't support (some of) the corresponding Windows NT
@@ -129,10 +137,10 @@ inline void*    Atomic::cmpxchg_ptr(void*    exchange_value, volatile void*     
   return (void*)cmpxchg((jlong)exchange_value, (volatile jlong*)dest, (jlong)compare_value);
 }
 
+inline jlong Atomic::load(volatile jlong* src) { return *src; }
+
 #else // !AMD64
 
-//inline void Atomic::store    (jlong    store_value, jlong*    dest) { *dest = store_value; }
-//inline void Atomic::store  (jlong    store_value, volatile jlong*    dest) { *dest = store_value; }
 inline jint     Atomic::add    (jint     add_value, volatile jint*     dest) {
   int mp = os::is_MP();
   __asm {
@@ -246,6 +254,35 @@ inline intptr_t Atomic::cmpxchg_ptr(intptr_t exchange_value, volatile intptr_t* 
 inline void*    Atomic::cmpxchg_ptr(void*    exchange_value, volatile void*     dest, void*    compare_value) {
   return (void*)cmpxchg((jint)exchange_value, (volatile jint*)dest, (jint)compare_value);
 }
+
+inline jlong Atomic::load(volatile jlong* src) {
+  volatile jlong dest;
+  volatile jlong* pdest = &dest;
+  __asm {
+    mov eax, src
+    fild     qword ptr [eax]
+    mov eax, pdest
+    fistp    qword ptr [eax]
+  }
+  return dest;
+}
+
+inline void Atomic::store(jlong store_value, volatile jlong* dest) {
+  volatile jlong* src = &store_value;
+  __asm {
+    mov eax, src
+    fild     qword ptr [eax]
+    mov eax, dest
+    fistp    qword ptr [eax]
+  }
+}
+
+inline void Atomic::store(jlong store_value, jlong* dest) {
+  Atomic::store(store_value, (volatile jlong*)dest);
+}
+
 #endif // AMD64
 
 #pragma warning(default: 4035) // Enables warnings reporting missing return statement
+
+#endif // OS_CPU_WINDOWS_X86_VM_ATOMIC_WINDOWS_X86_INLINE_HPP

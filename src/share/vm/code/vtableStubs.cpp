@@ -22,8 +22,22 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_vtableStubs.cpp.incl"
+#include "precompiled.hpp"
+#include "code/vtableStubs.hpp"
+#include "compiler/disassembler.hpp"
+#include "memory/allocation.inline.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/klassVtable.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/forte.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "runtime/sharedRuntime.hpp"
+#ifdef COMPILER2
+#include "opto/matcher.hpp"
+#endif
 
 // -----------------------------------------------------------------------------------------
 // Implementation of VtableStub
@@ -48,7 +62,7 @@ void* VtableStub::operator new(size_t size, int code_size) {
     if (blob == NULL) {
       vm_exit_out_of_memory(bytes, "CodeCache: no room for vtable chunks");
     }
-    _chunk = blob->instructions_begin();
+    _chunk = blob->content_begin();
     _chunk_end = _chunk + bytes;
     Forte::register_stub("vtable stub", _chunk, _chunk_end);
     // Notify JVMTI about this stub. The event will be recorded by the enclosing

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,14 @@
  *
  */
 
+#include "precompiled.hpp"
+#include "interpreter/rewriter.hpp"
+#include "memory/oopFactory.hpp"
+#include "prims/methodHandleWalk.hpp"
+
 /*
  * JSR 292 reference implementation: method handle structure analysis
  */
-
-#include "incls/_precompiled.incl"
-#include "incls/_methodHandleWalk.cpp.incl"
 
 
 // -----------------------------------------------------------------------------
@@ -135,7 +137,6 @@ BasicType MethodHandleChain::compute_bound_arg_type(oop target, methodOop m, int
 
 
 void MethodHandleChain::lose(const char* msg, TRAPS) {
-  assert(false, "lose");
   _lose_message = msg;
   if (!THREAD->is_Java_thread() || ((JavaThread*)THREAD)->thread_state() != _thread_in_vm) {
     // throw a preallocated exception
@@ -333,8 +334,7 @@ MethodHandleWalker::walk(TRAPS) {
         ArgToken arglist[2];
         arglist[0] = arg;         // outgoing value
         arglist[1] = ArgToken();  // sentinel
-        assert(false, "I think the argument count must be 1 instead of 0");
-        arg = make_invoke(NULL, boxer, Bytecodes::_invokevirtual, false, 0, &arglist[0], CHECK_(empty));
+        arg = make_invoke(NULL, boxer, Bytecodes::_invokevirtual, false, 1, &arglist[0], CHECK_(empty));
         change_argument(src, arg_slot, T_OBJECT, arg);
         break;
       }
@@ -967,19 +967,14 @@ MethodHandleCompiler::make_invoke(methodOop m, vmIntrinsics::ID iid,
 
   if (tailcall) {
     // Actually, in order to make these methods more recognizable,
-    // let's put them in holder classes MethodHandle and InvokeDynamic.
-    // That way stack walkers and compiler heuristics can recognize them.
-    _target_klass = (for_invokedynamic()
-                     ? SystemDictionary::InvokeDynamic_klass()
-                     : SystemDictionary::MethodHandle_klass());
+    // let's put them in holder class MethodHandle.  That way stack
+    // walkers and compiler heuristics can recognize them.
+    _target_klass = SystemDictionary::MethodHandle_klass();
   }
-
-  // instanceKlass* ik = instanceKlass::cast(klass);
-  // tty->print_cr("MethodHandleCompiler::make_invoke: %s %s.%s%s", Bytecodes::name(op), ik->external_name(), name->as_C_string(), signature->as_C_string());
 
   // Inline the method.
   InvocationCounter* ic = m->invocation_counter();
-  ic->set_carry();
+  ic->set_carry_flag();
 
   for (int i = 0; i < argc; i++) {
     ArgToken arg = argv[i];
@@ -1209,7 +1204,7 @@ methodHandle MethodHandleCompiler::get_method_oop(TRAPS) const {
   // Set the carry bit of the invocation counter to force inlining of
   // the adapter.
   InvocationCounter* ic = m->invocation_counter();
-  ic->set_carry();
+  ic->set_carry_flag();
 
   // Rewrite the method and set up the constant pool cache.
   objArrayOop m_array = oopFactory::new_system_objArray(1, CHECK_(nullHandle));
@@ -1398,7 +1393,9 @@ public:
 
 extern "C"
 void print_method_handle(oop mh) {
-  if (java_dyn_MethodHandle::is_instance(mh)) {
+  if (!mh->is_oop()) {
+    tty->print_cr("*** not a method handle: "INTPTR_FORMAT, (intptr_t)mh);
+  } else if (java_dyn_MethodHandle::is_instance(mh)) {
     //MethodHandlePrinter::print(mh);
   } else {
     tty->print("*** not a method handle: ");

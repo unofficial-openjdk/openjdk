@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,20 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_OOPS_INSTANCEKLASS_HPP
+#define SHARE_VM_OOPS_INSTANCEKLASS_HPP
+
+#include "oops/constMethodOop.hpp"
+#include "oops/constantPoolOop.hpp"
+#include "oops/instanceOop.hpp"
+#include "oops/klassOop.hpp"
+#include "oops/klassVtable.hpp"
+#include "oops/objArrayOop.hpp"
+#include "runtime/handles.hpp"
+#include "runtime/os.hpp"
+#include "utilities/accessFlags.hpp"
+#include "utilities/bitMap.inline.hpp"
 
 // An instanceKlass is the VM level representation of a Java class.
 // It contains all information needed for at class at execution runtime.
@@ -588,7 +602,7 @@ class instanceKlass: public Klass {
   void set_osr_nmethods_head(nmethod* h)     { _osr_nmethods_head = h; };
   void add_osr_nmethod(nmethod* n);
   void remove_osr_nmethod(nmethod* n);
-  nmethod* lookup_osr_nmethod(const methodOop m, int bci) const;
+  nmethod* lookup_osr_nmethod(const methodOop m, int bci, int level, bool match_level) const;
 
   // Breakpoint support (see methods on methodOop for details)
   BreakpointInfo* breakpoints() const       { return _breakpoints; };
@@ -1017,3 +1031,5 @@ class PreviousVersionWalker : public StackObj {
   // of the klass. Returns NULL if there are no more previous versions.
   PreviousVersionInfo* next_previous_version();
 };
+
+#endif // SHARE_VM_OOPS_INSTANCEKLASS_HPP

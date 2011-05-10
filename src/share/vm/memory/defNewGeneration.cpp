@@ -22,8 +22,32 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_defNewGeneration.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/shared/collectorCounters.hpp"
+#include "gc_implementation/shared/gcPolicyCounters.hpp"
+#include "gc_implementation/shared/spaceDecorator.hpp"
+#include "memory/defNewGeneration.inline.hpp"
+#include "memory/gcLocker.inline.hpp"
+#include "memory/genCollectedHeap.hpp"
+#include "memory/genOopClosures.inline.hpp"
+#include "memory/generationSpec.hpp"
+#include "memory/iterator.hpp"
+#include "memory/referencePolicy.hpp"
+#include "memory/space.inline.hpp"
+#include "oops/instanceRefKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/java.hpp"
+#include "utilities/copy.hpp"
+#include "utilities/stack.inline.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
 
 //
 // DefNewGeneration functions.
@@ -459,16 +483,17 @@ void DefNewGeneration::space_iterate(SpaceClosure* blk,
 // so we try to allocate the from-space, too.
 HeapWord* DefNewGeneration::allocate_from_space(size_t size) {
   HeapWord* result = NULL;
-  if (PrintGC && Verbose) {
+  if (Verbose && PrintGCDetails) {
     gclog_or_tty->print("DefNewGeneration::allocate_from_space(%u):"
-                  "  will_fail: %s"
-                  "  heap_lock: %s"
-                  "  free: " SIZE_FORMAT,
-                  size,
-               GenCollectedHeap::heap()->incremental_collection_will_fail() ? "true" : "false",
-               Heap_lock->is_locked() ? "locked" : "unlocked",
-               from()->free());
-    }
+                        "  will_fail: %s"
+                        "  heap_lock: %s"
+                        "  free: " SIZE_FORMAT,
+                        size,
+                        GenCollectedHeap::heap()->incremental_collection_will_fail(false /* don't consult_young */) ?
+                          "true" : "false",
+                        Heap_lock->is_locked() ? "locked" : "unlocked",
+                        from()->free());
+  }
   if (should_allocate_from_space() || GC_locker::is_active_and_needs_gc()) {
     if (Heap_lock->owned_by_self() ||
         (SafepointSynchronize::is_at_safepoint() &&
@@ -510,7 +535,10 @@ void DefNewGeneration::collect(bool   full,
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
-    gch->set_incremental_collection_will_fail();
+    if (Verbose && PrintGCDetails) {
+      gclog_or_tty->print(" :: Collection attempt not safe :: ");
+    }
+    gch->set_incremental_collection_failed(); // Slight lie: we did not even attempt one
     return;
   }
   assert(to()->is_empty(), "Else not collection_attempt_is_safe");
@@ -596,9 +624,8 @@ void DefNewGeneration::collect(bool   full,
     if (PrintGC && !PrintGCDetails) {
       gch->print_heap_change(gch_prev_used);
     }
+    assert(!gch->incremental_collection_failed(), "Should be clear");
   } else {
-    assert(HandlePromotionFailure,
-      "Should not be here unless promotion failure handling is on");
     assert(_promo_failure_scan_stack.is_empty(), "post condition");
     _promo_failure_scan_stack.clear(true); // Clear cached segments.
 
@@ -613,7 +640,7 @@ void DefNewGeneration::collect(bool   full,
     // and from-space.
     swap_spaces();   // For uniformity wrt ParNewGeneration.
     from()->set_next_compaction_space(to());
-    gch->set_incremental_collection_will_fail();
+    gch->set_incremental_collection_failed();
 
     // Inform the next generation that a promotion failure occurred.
     _next_gen->promotion_failure_occurred();
@@ -657,23 +684,28 @@ void DefNewGeneration::remove_forwarding_pointers() {
   _preserved_marks_of_objs.clear(true);
 }
 
+void DefNewGeneration::preserve_mark(oop obj, markOop m) {
+  assert(promotion_failed() && m->must_be_preserved_for_promotion_failure(obj),
+         "Oversaving!");
+  _objs_with_preserved_marks.push(obj);
+  _preserved_marks_of_objs.push(m);
+}
+
 void DefNewGeneration::preserve_mark_if_necessary(oop obj, markOop m) {
   if (m->must_be_preserved_for_promotion_failure(obj)) {
-    _objs_with_preserved_marks.push(obj);
-    _preserved_marks_of_objs.push(m);
+    preserve_mark(obj, m);
   }
 }
 
 void DefNewGeneration::handle_promotion_failure(oop old) {
-  preserve_mark_if_necessary(old, old->mark());
-  if (!_promotion_failed && PrintPromotionFailure) {
+  if (PrintPromotionFailure && !_promotion_failed) {
     gclog_or_tty->print(" (promotion failure size = " SIZE_FORMAT ") ",
                         old->size());
   }
-
+  _promotion_failed = true;
+  preserve_mark_if_necessary(old, old->mark());
   // forward to self
   old->forward_to(old);
-  _promotion_failed = true;
 
   _promo_failure_scan_stack.push(old);
 
@@ -700,12 +732,6 @@ oop DefNewGeneration::copy_to_survivor_space(oop old) {
   if (obj == NULL) {
     obj = _next_gen->promote(old, s);
     if (obj == NULL) {
-      if (!HandlePromotionFailure) {
-        // A failed promotion likely means the MaxLiveObjectEvacuationRatio flag
-        // is incorrectly set. In any case, its seriously wrong to be here!
-        vm_exit_out_of_memory(s*wordSize, "promotion");
-      }
-
       handle_promotion_failure(old);
       return old;
     }
@@ -804,6 +830,9 @@ void DefNewGeneration::reset_scratch() {
 
 bool DefNewGeneration::collection_attempt_is_safe() {
   if (!to()->is_empty()) {
+    if (Verbose && PrintGCDetails) {
+      gclog_or_tty->print(" :: to is not empty :: ");
+    }
     return false;
   }
   if (_next_gen == NULL) {
@@ -812,47 +841,62 @@ bool DefNewGeneration::collection_attempt_is_safe() {
     assert(_next_gen != NULL,
            "This must be the youngest gen, and not the only gen");
   }
-
-  // Decide if there's enough room for a full promotion
-  // When using extremely large edens, we effectively lose a
-  // large amount of old space.  Use the "MaxLiveObjectEvacuationRatio"
-  // flag to reduce the minimum evacuation space requirements. If
-  // there is not enough space to evacuate eden during a scavenge,
-  // the VM will immediately exit with an out of memory error.
-  // This flag has not been tested
-  // with collectors other than simple mark & sweep.
-  //
-  // Note that with the addition of promotion failure handling, the
-  // VM will not immediately exit but will undo the young generation
-  // collection.  The parameter is left here for compatibility.
-  const double evacuation_ratio = MaxLiveObjectEvacuationRatio / 100.0;
-
-  // worst_case_evacuation is based on "used()".  For the case where this
-  // method is called after a collection, this is still appropriate because
-  // the case that needs to be detected is one in which a full collection
-  // has been done and has overflowed into the young generation.  In that
-  // case a minor collection will fail (the overflow of the full collection
-  // means there is no space in the old generation for any promotion).
-  size_t worst_case_evacuation = (size_t)(used() * evacuation_ratio);
-
-  return _next_gen->promotion_attempt_is_safe(worst_case_evacuation,
-                                              HandlePromotionFailure);
+  return _next_gen->promotion_attempt_is_safe(used());
 }
 
 void DefNewGeneration::gc_epilogue(bool full) {
+  DEBUG_ONLY(static bool seen_incremental_collection_failed = false;)
+
+  assert(!GC_locker::is_active(), "We should not be executing here");
   // Check if the heap is approaching full after a collection has
   // been done.  Generally the young generation is empty at
   // a minimum at the end of a collection.  If it is not, then
   // the heap is approaching full.
   GenCollectedHeap* gch = GenCollectedHeap::heap();
-  clear_should_allocate_from_space();
-  if (collection_attempt_is_safe()) {
-    gch->clear_incremental_collection_will_fail();
-  } else {
-    gch->set_incremental_collection_will_fail();
-    if (full) { // we seem to be running out of space
-      set_should_allocate_from_space();
+  if (full) {
+    DEBUG_ONLY(seen_incremental_collection_failed = false;)
+    if (!collection_attempt_is_safe() && !_eden_space->is_empty()) {
+      if (Verbose && PrintGCDetails) {
+        gclog_or_tty->print("DefNewEpilogue: cause(%s), full, not safe, set_failed, set_alloc_from, clear_seen",
+                            GCCause::to_string(gch->gc_cause()));
+      }
+      gch->set_incremental_collection_failed(); // Slight lie: a full gc left us in that state
+      set_should_allocate_from_space(); // we seem to be running out of space
+    } else {
+      if (Verbose && PrintGCDetails) {
+        gclog_or_tty->print("DefNewEpilogue: cause(%s), full, safe, clear_failed, clear_alloc_from, clear_seen",
+                            GCCause::to_string(gch->gc_cause()));
+      }
+      gch->clear_incremental_collection_failed(); // We just did a full collection
+      clear_should_allocate_from_space(); // if set
     }
+  } else {
+#ifdef ASSERT
+    // It is possible that incremental_collection_failed() == true
+    // here, because an attempted scavenge did not succeed. The policy
+    // is normally expected to cause a full collection which should
+    // clear that condition, so we should not be here twice in a row
+    // with incremental_collection_failed() == true without having done
+    // a full collection in between.
+    if (!seen_incremental_collection_failed &&
+        gch->incremental_collection_failed()) {
+      if (Verbose && PrintGCDetails) {
+        gclog_or_tty->print("DefNewEpilogue: cause(%s), not full, not_seen_failed, failed, set_seen_failed",
+                            GCCause::to_string(gch->gc_cause()));
+      }
+      seen_incremental_collection_failed = true;
+    } else if (seen_incremental_collection_failed) {
+      if (Verbose && PrintGCDetails) {
+        gclog_or_tty->print("DefNewEpilogue: cause(%s), not full, seen_failed, will_clear_seen_failed",
+                            GCCause::to_string(gch->gc_cause()));
+      }
+      assert(gch->gc_cause() == GCCause::_scavenge_alot ||
+             (gch->gc_cause() == GCCause::_java_lang_system_gc && UseConcMarkSweepGC && ExplicitGCInvokesConcurrent) ||
+             !gch->incremental_collection_failed(),
+             "Twice in a row");
+      seen_incremental_collection_failed = false;
+    }
+#endif // ASSERT
   }
 
   if (ZapUnusedHeapArea) {

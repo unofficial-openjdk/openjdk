@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_templateTable_x86_32.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "interpreter/interpreterRuntime.hpp"
+#include "interpreter/templateTable.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/methodHandles.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/synchronizer.hpp"
 
 #ifndef CC_INTERP
 #define __ _masm->
@@ -399,6 +409,23 @@ void TemplateTable::fast_aldc(bool wide) {
   if (VerifyOops) {
     __ verify_oop(rax);
   }
+
+  Label L_done, L_throw_exception;
+  const Register con_klass_temp = rcx;  // same as Rcache
+  __ movptr(con_klass_temp, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ cmpptr(con_klass_temp, ExternalAddress((address)Universe::systemObjArrayKlassObj_addr()));
+  __ jcc(Assembler::notEqual, L_done);
+  __ cmpl(Address(rax, arrayOopDesc::length_offset_in_bytes()), 0);
+  __ jcc(Assembler::notEqual, L_throw_exception);
+  __ xorptr(rax, rax);
+  __ jmp(L_done);
+
+  // Load the exception from the system-array which wraps it:
+  __ bind(L_throw_exception);
+  __ movptr(rax, Address(rax, arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
+  __ jump(ExternalAddress(Interpreter::throw_exception_entry()));
+
+  __ bind(L_done);
 }
 
 void TemplateTable::ldc2_w() {
@@ -1558,47 +1585,68 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
     __ testl(rdx, rdx);             // check if forward or backward branch
     __ jcc(Assembler::positive, dispatch); // count only if backward branch
 
-    // increment counter
-    __ movl(rax, Address(rcx, be_offset));        // load backedge counter
-    __ incrementl(rax, InvocationCounter::count_increment); // increment counter
-    __ movl(Address(rcx, be_offset), rax);        // store counter
-
-    __ movl(rax, Address(rcx, inv_offset));    // load invocation counter
-    __ andl(rax, InvocationCounter::count_mask_value);     // and the status bits
-    __ addl(rax, Address(rcx, be_offset));        // add both counters
-
-    if (ProfileInterpreter) {
-      // Test to see if we should create a method data oop
-      __ cmp32(rax,
-               ExternalAddress((address) &InvocationCounter::InterpreterProfileLimit));
-      __ jcc(Assembler::less, dispatch);
-
-      // if no method data exists, go to profile method
-      __ test_method_data_pointer(rax, profile_method);
-
-      if (UseOnStackReplacement) {
-        // check for overflow against rbx, which is the MDO taken count
-        __ cmp32(rbx,
-                 ExternalAddress((address) &InvocationCounter::InterpreterBackwardBranchLimit));
-        __ jcc(Assembler::below, dispatch);
-
-        // When ProfileInterpreter is on, the backedge_count comes from the
-        // methodDataOop, which value does not get reset on the call to
-        // frequency_counter_overflow().  To avoid excessive calls to the overflow
-        // routine while the method is being compiled, add a second test to make
-        // sure the overflow function is called only once every overflow_frequency.
-        const int overflow_frequency = 1024;
-        __ andptr(rbx, overflow_frequency-1);
-        __ jcc(Assembler::zero, backedge_counter_overflow);
-
+    if (TieredCompilation) {
+      Label no_mdo;
+      int increment = InvocationCounter::count_increment;
+      int mask = ((1 << Tier0BackedgeNotifyFreqLog) - 1) << InvocationCounter::count_shift;
+      if (ProfileInterpreter) {
+        // Are we profiling?
+        __ movptr(rbx, Address(rcx, in_bytes(methodOopDesc::method_data_offset())));
+        __ testptr(rbx, rbx);
+        __ jccb(Assembler::zero, no_mdo);
+        // Increment the MDO backedge counter
+        const Address mdo_backedge_counter(rbx, in_bytes(methodDataOopDesc::backedge_counter_offset()) +
+                                                in_bytes(InvocationCounter::counter_offset()));
+        __ increment_mask_and_jump(mdo_backedge_counter, increment, mask,
+                                   rax, false, Assembler::zero, &backedge_counter_overflow);
+        __ jmp(dispatch);
       }
+      __ bind(no_mdo);
+      // Increment backedge counter in methodOop
+      __ increment_mask_and_jump(Address(rcx, be_offset), increment, mask,
+                                 rax, false, Assembler::zero, &backedge_counter_overflow);
     } else {
-      if (UseOnStackReplacement) {
-        // check for overflow against rax, which is the sum of the counters
-        __ cmp32(rax,
-                 ExternalAddress((address) &InvocationCounter::InterpreterBackwardBranchLimit));
-        __ jcc(Assembler::aboveEqual, backedge_counter_overflow);
+      // increment counter
+      __ movl(rax, Address(rcx, be_offset));        // load backedge counter
+      __ incrementl(rax, InvocationCounter::count_increment); // increment counter
+      __ movl(Address(rcx, be_offset), rax);        // store counter
 
+      __ movl(rax, Address(rcx, inv_offset));    // load invocation counter
+      __ andl(rax, InvocationCounter::count_mask_value);     // and the status bits
+      __ addl(rax, Address(rcx, be_offset));        // add both counters
+
+      if (ProfileInterpreter) {
+        // Test to see if we should create a method data oop
+        __ cmp32(rax,
+                 ExternalAddress((address) &InvocationCounter::InterpreterProfileLimit));
+        __ jcc(Assembler::less, dispatch);
+
+        // if no method data exists, go to profile method
+        __ test_method_data_pointer(rax, profile_method);
+
+        if (UseOnStackReplacement) {
+          // check for overflow against rbx, which is the MDO taken count
+          __ cmp32(rbx,
+                   ExternalAddress((address) &InvocationCounter::InterpreterBackwardBranchLimit));
+          __ jcc(Assembler::below, dispatch);
+
+          // When ProfileInterpreter is on, the backedge_count comes from the
+          // methodDataOop, which value does not get reset on the call to
+          // frequency_counter_overflow().  To avoid excessive calls to the overflow
+          // routine while the method is being compiled, add a second test to make
+          // sure the overflow function is called only once every overflow_frequency.
+          const int overflow_frequency = 1024;
+          __ andptr(rbx, overflow_frequency-1);
+          __ jcc(Assembler::zero, backedge_counter_overflow);
+        }
+      } else {
+        if (UseOnStackReplacement) {
+          // check for overflow against rax, which is the sum of the counters
+          __ cmp32(rax,
+                   ExternalAddress((address) &InvocationCounter::InterpreterBackwardBranchLimit));
+          __ jcc(Assembler::aboveEqual, backedge_counter_overflow);
+
+        }
       }
     }
     __ bind(dispatch);
@@ -1617,16 +1665,9 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
     if (ProfileInterpreter) {
       // Out-of-line code to allocate method data oop.
       __ bind(profile_method);
-      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::profile_method), rsi);
+      __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::profile_method));
       __ load_unsigned_byte(rbx, Address(rsi, 0));  // restore target bytecode
-      __ movptr(rcx, Address(rbp, method_offset));
-      __ movptr(rcx, Address(rcx, in_bytes(methodOopDesc::method_data_offset())));
-      __ movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rcx);
-      __ test_method_data_pointer(rcx, dispatch);
-      // offset non-null mdp by MDO::data_offset() + IR::profile_method()
-      __ addptr(rcx, in_bytes(methodDataOopDesc::data_offset()));
-      __ addptr(rcx, rax);
-      __ movptr(Address(rbp, frame::interpreter_frame_mdx_offset * wordSize), rcx);
+      __ set_method_data_pointer_for_bcp();
       __ jmp(dispatch);
     }
 
@@ -3090,19 +3131,22 @@ void TemplateTable::invokedynamic(int byte_no) {
 
   // rax: CallSite object (f1)
   // rbx: unused (f2)
+  // rcx: receiver address
   // rdx: flags (unused)
 
+  Register rax_callsite      = rax;
+  Register rcx_method_handle = rcx;
+
   if (ProfileInterpreter) {
-    Label L;
     // %%% should make a type profile for any invokedynamic that takes a ref argument
     // profile this call
     __ profile_call(rsi);
   }
 
-  __ movptr(rcx, Address(rax, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
-  __ null_check(rcx);
+  __ movptr(rcx_method_handle, Address(rax_callsite, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
+  __ null_check(rcx_method_handle);
   __ prepare_to_jump_from_interpreted();
-  __ jump_to_method_handle_entry(rcx, rdx);
+  __ jump_to_method_handle_entry(rcx_method_handle, rdx);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -3152,10 +3196,12 @@ void TemplateTable::_new() {
   const bool allow_shared_alloc =
     Universe::heap()->supports_inline_contig_alloc() && !CMSIncrementalMode;
 
-  if (UseTLAB) {
-    const Register thread = rcx;
-
+  const Register thread = rcx;
+  if (UseTLAB || allow_shared_alloc) {
     __ get_thread(thread);
+  }
+
+  if (UseTLAB) {
     __ movptr(rax, Address(thread, in_bytes(JavaThread::tlab_top_offset())));
     __ lea(rbx, Address(rax, rdx, Address::times_1));
     __ cmpptr(rbx, Address(thread, in_bytes(JavaThread::tlab_end_offset())));
@@ -3196,6 +3242,8 @@ void TemplateTable::_new() {
 
     // if someone beat us on the allocation, try again, otherwise continue
     __ jcc(Assembler::notEqual, retry);
+
+    __ incr_allocated_bytes(thread, rdx, 0);
   }
 
   if (UseTLAB || Universe::heap()->supports_inline_contig_alloc()) {
@@ -3205,12 +3253,12 @@ void TemplateTable::_new() {
     __ decrement(rdx, sizeof(oopDesc));
     __ jcc(Assembler::zero, initialize_header);
 
-  // Initialize topmost object field, divide rdx by 8, check if odd and
-  // test if zero.
+    // Initialize topmost object field, divide rdx by 8, check if odd and
+    // test if zero.
     __ xorl(rcx, rcx);    // use zero reg to clear memory (shorter code)
     __ shrl(rdx, LogBytesPerLong); // divide by 2*oopSize and set carry flag if odd
 
-  // rdx must have been multiple of 8
+    // rdx must have been multiple of 8
 #ifdef ASSERT
     // make sure rdx was multiple of 8
     Label L;

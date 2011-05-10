@@ -22,8 +22,21 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_vm_version_x86.cpp.incl"
+#include "precompiled.hpp"
+#include "assembler_x86.inline.hpp"
+#include "memory/resourceArea.hpp"
+#include "runtime/java.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "vm_version_x86.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "os_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "os_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "os_windows.inline.hpp"
+#endif
 
 
 int VM_Version::_cpu;
@@ -595,8 +608,7 @@ void VM_Version::initialize() {
   if (stub_blob == NULL) {
     vm_exit_during_initialization("Unable to allocate getPsrInfo_stub");
   }
-  CodeBuffer c(stub_blob->instructions_begin(),
-               stub_blob->instructions_size());
+  CodeBuffer c(stub_blob);
   VM_Version_StubGenerator g(&c);
   getPsrInfo_stub = CAST_TO_FN_PTR(getPsrInfo_stub_t,
                                    g.generate_getPsrInfo());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,17 @@
  * questions.
  *
  */
+
+#ifndef SHARE_VM_CI_CIMETHOD_HPP
+#define SHARE_VM_CI_CIMETHOD_HPP
+
+#include "ci/ciFlags.hpp"
+#include "ci/ciInstanceKlass.hpp"
+#include "ci/ciObject.hpp"
+#include "ci/ciSignature.hpp"
+#include "compiler/methodLiveness.hpp"
+#include "prims/methodHandles.hpp"
+#include "utilities/bitMap.hpp"
 
 class ciMethodBlocks;
 class MethodLiveness;
@@ -61,7 +72,8 @@ class ciMethod : public ciObject {
 
   bool _uses_monitors;
   bool _balanced_monitors;
-  bool _is_compilable;
+  bool _is_c1_compilable;
+  bool _is_c2_compilable;
   bool _can_be_statically_bound;
 
   // Lazy fields, filled in on demand
@@ -94,7 +106,7 @@ class ciMethod : public ciObject {
 
   void check_is_loaded() const                   { assert(is_loaded(), "not loaded"); }
 
-  void build_method_data(methodHandle h_m);
+  bool ensure_method_data(methodHandle h_m);
 
   void code_at_put(int bci, Bytecodes::Code code) {
     Bytecodes::check(code);
@@ -109,6 +121,7 @@ class ciMethod : public ciObject {
   ciSymbol* name() const                         { return _name; }
   ciInstanceKlass* holder() const                { return _holder; }
   ciMethodData* method_data();
+  ciMethodData* method_data_or_null();
 
   // Signature information.
   ciSignature* signature() const                 { return _signature; }
@@ -127,9 +140,11 @@ class ciMethod : public ciObject {
   int interpreter_invocation_count() const       { check_is_loaded(); return _interpreter_invocation_count; }
   int interpreter_throwout_count() const         { check_is_loaded(); return _interpreter_throwout_count; }
 
+  int comp_level();
+
   Bytecodes::Code java_code_at_bci(int bci) {
     address bcp = code() + bci;
-    return Bytecodes::java_code_at(bcp);
+    return Bytecodes::java_code_at(NULL, bcp);
   }
   BCEscapeAnalyzer  *get_bcea();
   ciMethodBlocks    *get_method_blocks();
@@ -209,14 +224,14 @@ class ciMethod : public ciObject {
   bool can_be_osr_compiled(int entry_bci);
   void set_not_compilable();
   bool has_compiled_code();
-  int  instructions_size();
+  int  instructions_size(int comp_level = CompLevel_any);
   void log_nmethod_identity(xmlStream* log);
   bool is_not_reached(int bci);
   bool was_executed_more_than(int times);
   bool has_unloaded_classes_in_signature();
   bool is_klass_loaded(int refinfo_index, bool must_be_resolved) const;
   bool check_call(int refinfo_index, bool is_static) const;
-  void build_method_data();  // make sure it exists in the VM also
+  bool ensure_method_data();  // make sure it exists in the VM also
   int scale_count(int count, float prof_factor = 1.);  // make MDO count commensurate with IIC
 
   // JSR 292 support
@@ -266,3 +281,5 @@ class ciMethod : public ciObject {
     return MethodHandles::decode_method(get_oop(), receiver_limit_oop, flags);
   }
 };
+
+#endif // SHARE_VM_CI_CIMETHOD_HPP

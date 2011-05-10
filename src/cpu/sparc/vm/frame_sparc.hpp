@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,12 @@
  * questions.
  *
  */
+
+#ifndef CPU_SPARC_VM_FRAME_SPARC_HPP
+#define CPU_SPARC_VM_FRAME_SPARC_HPP
+
+#include "runtime/synchronizer.hpp"
+#include "utilities/top.hpp"
 
 // A frame represents a physical stack frame (an activation).  Frames can be
 // C or Java frames, and the Java frames can be interpreted or compiled.
@@ -263,8 +269,7 @@
   };
 
  private:
-
-  constantPoolCacheOop* frame::interpreter_frame_cpoolcache_addr() const;
+  constantPoolCacheOop* interpreter_frame_cpoolcache_addr() const;
 
 #ifndef CC_INTERP
 
@@ -310,3 +315,5 @@
     return reg->is_out() || reg->is_global();
 #endif
   }
+
+#endif // CPU_SPARC_VM_FRAME_SPARC_HPP

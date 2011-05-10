@@ -22,8 +22,44 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_ciEnv.cpp.incl"
+#include "precompiled.hpp"
+#include "ci/ciConstant.hpp"
+#include "ci/ciEnv.hpp"
+#include "ci/ciField.hpp"
+#include "ci/ciInstance.hpp"
+#include "ci/ciInstanceKlass.hpp"
+#include "ci/ciInstanceKlassKlass.hpp"
+#include "ci/ciMethod.hpp"
+#include "ci/ciNullObject.hpp"
+#include "ci/ciObjArrayKlassKlass.hpp"
+#include "ci/ciTypeArrayKlassKlass.hpp"
+#include "ci/ciUtilities.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "code/scopeDesc.hpp"
+#include "compiler/compileBroker.hpp"
+#include "compiler/compileLog.hpp"
+#include "compiler/compilerOracle.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "interpreter/linkResolver.hpp"
+#include "memory/allocation.inline.hpp"
+#include "memory/oopFactory.hpp"
+#include "memory/universe.inline.hpp"
+#include "oops/methodDataOop.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/oop.inline2.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "runtime/init.hpp"
+#include "runtime/reflection.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "utilities/dtrace.hpp"
+#ifdef COMPILER1
+#include "c1/c1_Runtime1.hpp"
+#endif
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
 
 // ciEnv
 //
@@ -373,15 +409,15 @@ ciKlass* ciEnv::get_klass_by_name_impl(ciKlass* accessing_klass,
   } else {
     fail_type = _unloaded_ciinstance_klass;
   }
-  klassOop found_klass;
+  KlassHandle found_klass;
   if (!require_local) {
-    found_klass =
-      SystemDictionary::find_constrained_instance_or_array_klass(sym, loader,
-                                                                 KILL_COMPILE_ON_FATAL_(fail_type));
+    klassOop kls = SystemDictionary::find_constrained_instance_or_array_klass(
+        sym, loader, KILL_COMPILE_ON_FATAL_(fail_type));
+    found_klass = KlassHandle(THREAD, kls);
   } else {
-    found_klass =
-      SystemDictionary::find_instance_or_array_klass(sym, loader, domain,
-                                                     KILL_COMPILE_ON_FATAL_(fail_type));
+    klassOop kls = SystemDictionary::find_instance_or_array_klass(
+        sym, loader, domain, KILL_COMPILE_ON_FATAL_(fail_type));
+    found_klass = KlassHandle(THREAD, kls);
   }
 
   // If we fail to find an array klass, look again for its element type.
@@ -408,9 +444,9 @@ ciKlass* ciEnv::get_klass_by_name_impl(ciKlass* accessing_klass,
     }
   }
 
-  if (found_klass != NULL) {
+  if (found_klass() != NULL) {
     // Found it.  Build a CI handle.
-    return get_object(found_klass)->as_klass();
+    return get_object(found_klass())->as_klass();
   }
 
   if (require_local)  return NULL;
@@ -956,18 +992,18 @@ void ciEnv::register_method(ciMethod* target,
       if (task() != NULL)  task()->set_code(nm);
 
       if (entry_bci == InvocationEntryBci) {
-#ifdef TIERED
-        // If there is an old version we're done with it
-        nmethod* old = method->code();
-        if (TraceMethodReplacement && old != NULL) {
-          ResourceMark rm;
-          char *method_name = method->name_and_sig_as_C_string();
-          tty->print_cr("Replacing method %s", method_name);
+        if (TieredCompilation) {
+          // If there is an old version we're done with it
+          nmethod* old = method->code();
+          if (TraceMethodReplacement && old != NULL) {
+            ResourceMark rm;
+            char *method_name = method->name_and_sig_as_C_string();
+            tty->print_cr("Replacing method %s", method_name);
+          }
+          if (old != NULL ) {
+            old->make_not_entrant();
+          }
         }
-        if (old != NULL ) {
-          old->make_not_entrant();
-        }
-#endif // TIERED
         if (TraceNMethodInstalls ) {
           ResourceMark rm;
           char *method_name = method->name_and_sig_as_C_string();
@@ -1011,7 +1047,7 @@ ciKlass* ciEnv::find_system_klass(ciSymbol* klass_name) {
 // ------------------------------------------------------------------
 // ciEnv::comp_level
 int ciEnv::comp_level() {
-  if (task() == NULL)  return CompLevel_full_optimization;
+  if (task() == NULL)  return CompLevel_highest_tier;
   return task()->comp_level();
 }
 

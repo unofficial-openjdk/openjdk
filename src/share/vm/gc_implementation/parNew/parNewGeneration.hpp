@@ -22,6 +22,13 @@
  *
  */
 
+#ifndef SHARE_VM_GC_IMPLEMENTATION_PARNEW_PARNEWGENERATION_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_PARNEW_PARNEWGENERATION_HPP
+
+#include "gc_implementation/parNew/parGCAllocBuffer.hpp"
+#include "memory/defNewGeneration.hpp"
+#include "utilities/taskqueue.hpp"
+
 class ChunkArray;
 class ParScanWithoutBarrierClosure;
 class ParScanWithBarrierClosure;
@@ -350,6 +357,8 @@ class ParNewGeneration: public DefNewGeneration {
     delete _task_queues;
   }
 
+  static bool in_use();
+
   virtual void ref_processor_init();
   virtual Generation::Name kind()        { return Generation::ParNew; }
   virtual const char* name() const;
@@ -420,3 +429,5 @@ class ParNewGeneration: public DefNewGeneration {
 
   DEBUG_ONLY(static bool is_legal_forward_ptr(oop p);)
 };
+
+#endif // SHARE_VM_GC_IMPLEMENTATION_PARNEW_PARNEWGENERATION_HPP

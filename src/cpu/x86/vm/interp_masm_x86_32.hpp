@@ -22,6 +22,12 @@
  *
  */
 
+#ifndef CPU_X86_VM_INTERP_MASM_X86_32_HPP
+#define CPU_X86_VM_INTERP_MASM_X86_32_HPP
+
+#include "assembler_x86.inline.hpp"
+#include "interpreter/invocationCounter.hpp"
+
 // This file specializes the assember with interpreter-specific macros
 
 
@@ -185,6 +191,10 @@ class InterpreterMacroAssembler: public MacroAssembler {
                              bool decrement = false);
   void increment_mdp_data_at(Register mdp_in, Register reg, int constant,
                              bool decrement = false);
+  void increment_mask_and_jump(Address counter_addr,
+                               int increment, int mask,
+                               Register scratch, bool preloaded,
+                               Condition cond, Label* where);
   void set_mdp_flag_at(Register mdp_in, int flag_constant);
   void test_mdp_data_at(Register mdp_in, int offset, Register value,
                         Register test_value_out,
@@ -223,3 +233,5 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void notify_method_exit(TosState state, NotifyMethodExitMode mode);
 
 };
+
+#endif // CPU_X86_VM_INTERP_MASM_X86_32_HPP

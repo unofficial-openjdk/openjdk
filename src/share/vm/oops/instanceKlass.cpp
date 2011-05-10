@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,56 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_instanceKlass.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/javaClasses.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "classfile/verifier.hpp"
+#include "classfile/vmSymbols.hpp"
+#include "compiler/compileBroker.hpp"
+#include "gc_implementation/shared/markSweep.inline.hpp"
+#include "gc_interface/collectedHeap.inline.hpp"
+#include "interpreter/oopMapCache.hpp"
+#include "interpreter/rewriter.hpp"
+#include "jvmtifiles/jvmti.h"
+#include "memory/genOopClosures.inline.hpp"
+#include "memory/oopFactory.hpp"
+#include "memory/permGen.hpp"
+#include "oops/instanceKlass.hpp"
+#include "oops/instanceOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/objArrayKlassKlass.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/symbolOop.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiRedefineClassesTrace.hpp"
+#include "runtime/fieldDescriptor.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/javaCalls.hpp"
+#include "runtime/mutexLocker.hpp"
+#include "services/threadService.hpp"
+#include "utilities/dtrace.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/g1OopClosures.inline.hpp"
+#include "gc_implementation/g1/g1RemSet.inline.hpp"
+#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
+#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "oops/oop.pcgc.inline.hpp"
+#endif
+#ifdef COMPILER1
+#include "c1/c1_Compiler.hpp"
+#endif
 
 #ifdef DTRACE_ENABLED
 
@@ -2200,8 +2248,23 @@ void instanceKlass::add_osr_nmethod(nmethod* n) {
   assert(n->is_osr_method(), "wrong kind of nmethod");
   n->set_osr_link(osr_nmethods_head());
   set_osr_nmethods_head(n);
+  // Raise the highest osr level if necessary
+  if (TieredCompilation) {
+    methodOop m = n->method();
+    m->set_highest_osr_comp_level(MAX2(m->highest_osr_comp_level(), n->comp_level()));
+  }
   // Remember to unlock again
   OsrList_lock->unlock();
+
+  // Get rid of the osr methods for the same bci that have lower levels.
+  if (TieredCompilation) {
+    for (int l = CompLevel_limited_profile; l < n->comp_level(); l++) {
+      nmethod *inv = lookup_osr_nmethod(n->method(), n->osr_entry_bci(), l, true);
+      if (inv != NULL && inv->is_in_use()) {
+        inv->make_not_entrant();
+      }
+    }
+  }
 }
 
 
@@ -2211,39 +2274,79 @@ void instanceKlass::remove_osr_nmethod(nmethod* n) {
   assert(n->is_osr_method(), "wrong kind of nmethod");
   nmethod* last = NULL;
   nmethod* cur  = osr_nmethods_head();
+  int max_level = CompLevel_none;  // Find the max comp level excluding n
+  methodOop m = n->method();
   // Search for match
   while(cur != NULL && cur != n) {
+    if (TieredCompilation) {
+      // Find max level before n
+      max_level = MAX2(max_level, cur->comp_level());
+    }
     last = cur;
     cur = cur->osr_link();
   }
+  nmethod* next = NULL;
   if (cur == n) {
+    next = cur->osr_link();
     if (last == NULL) {
       // Remove first element
-      set_osr_nmethods_head(osr_nmethods_head()->osr_link());
+      set_osr_nmethods_head(next);
     } else {
-      last->set_osr_link(cur->osr_link());
+      last->set_osr_link(next);
     }
   }
   n->set_osr_link(NULL);
+  if (TieredCompilation) {
+    cur = next;
+    while (cur != NULL) {
+      // Find max level after n
+      max_level = MAX2(max_level, cur->comp_level());
+      cur = cur->osr_link();
+    }
+    m->set_highest_osr_comp_level(max_level);
+  }
   // Remember to unlock again
   OsrList_lock->unlock();
 }
 
-nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci) const {
+nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci, int comp_level, bool match_level) const {
   // This is a short non-blocking critical region, so the no safepoint check is ok.
   OsrList_lock->lock_without_safepoint_check();
   nmethod* osr = osr_nmethods_head();
+  nmethod* best = NULL;
   while (osr != NULL) {
     assert(osr->is_osr_method(), "wrong kind of nmethod found in chain");
+    // There can be a time when a c1 osr method exists but we are waiting
+    // for a c2 version. When c2 completes its osr nmethod we will trash
+    // the c1 version and only be able to find the c2 version. However
+    // while we overflow in the c1 code at back branches we don't want to
+    // try and switch to the same code as we are already running
+
     if (osr->method() == m &&
         (bci == InvocationEntryBci || osr->osr_entry_bci() == bci)) {
-      // Found a match - return it.
-      OsrList_lock->unlock();
-      return osr;
+      if (match_level) {
+        if (osr->comp_level() == comp_level) {
+          // Found a match - return it.
+          OsrList_lock->unlock();
+          return osr;
+        }
+      } else {
+        if (best == NULL || (osr->comp_level() > best->comp_level())) {
+          if (osr->comp_level() == CompLevel_highest_tier) {
+            // Found the best possible - return it.
+            OsrList_lock->unlock();
+            return osr;
+          }
+          best = osr;
+        }
+      }
     }
     osr = osr->osr_link();
   }
   OsrList_lock->unlock();
+  if (best != NULL && best->comp_level() >= comp_level && match_level == false) {
+    return best;
+  }
   return NULL;
 }
 

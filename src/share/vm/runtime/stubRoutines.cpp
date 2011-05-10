@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_stubRoutines.cpp.incl"
+#include "precompiled.hpp"
+#include "asm/codeBuffer.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "runtime/timer.hpp"
+#include "utilities/copy.hpp"
+#ifdef COMPILER2
+#include "opto/runtime.hpp"
+#endif
 
 
 // Implementation of StubRoutines - for a description
@@ -128,10 +138,9 @@ void StubRoutines::initialize1() {
     TraceTime timer("StubRoutines generation 1", TraceStartupTime);
     _code1 = BufferBlob::create("StubRoutines (1)", code_size1);
     if (_code1 == NULL) {
-      vm_exit_out_of_memory(code_size1,
-                            "CodeCache: no room for StubRoutines (1)");
+      vm_exit_out_of_memory(code_size1, "CodeCache: no room for StubRoutines (1)");
     }
-    CodeBuffer buffer(_code1->instructions_begin(), _code1->instructions_size());
+    CodeBuffer buffer(_code1);
     StubGenerator_generate(&buffer, false);
   }
 }
@@ -181,10 +190,9 @@ void StubRoutines::initialize2() {
     TraceTime timer("StubRoutines generation 2", TraceStartupTime);
     _code2 = BufferBlob::create("StubRoutines (2)", code_size2);
     if (_code2 == NULL) {
-      vm_exit_out_of_memory(code_size2,
-                            "CodeCache: no room for StubRoutines (2)");
+      vm_exit_out_of_memory(code_size2, "CodeCache: no room for StubRoutines (2)");
     }
-    CodeBuffer buffer(_code2->instructions_begin(), _code2->instructions_size());
+    CodeBuffer buffer(_code2);
     StubGenerator_generate(&buffer, true);
   }
 

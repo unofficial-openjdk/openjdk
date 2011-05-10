@@ -22,8 +22,24 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_frame_x86.cpp.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/markOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/handles.inline.hpp"
+#include "runtime/javaCalls.hpp"
+#include "runtime/monitorChunk.hpp"
+#include "runtime/signature.hpp"
+#include "runtime/stubCodeGenerator.hpp"
+#include "runtime/stubRoutines.hpp"
+#include "vmreg_x86.inline.hpp"
+#ifdef COMPILER1
+#include "c1/c1_Runtime1.hpp"
+#include "runtime/vframeArray.hpp"
+#endif
 
 #ifdef ASSERT
 void RegisterMap::check_location_valid() {
@@ -141,12 +157,12 @@ bool frame::safe_for_sender(JavaThread *thread) {
     }
 
     // Could just be some random pointer within the codeBlob
-
-    if (!sender_blob->instructions_contains(sender_pc)) return false;
+    if (!sender_blob->code_contains(sender_pc)) {
+      return false;
+    }
 
     // We should never be able to see an adapter if the current frame is something from code cache
-
-    if ( sender_blob->is_adapter_blob()) {
+    if (sender_blob->is_adapter_blob()) {
       return false;
     }
 
@@ -340,7 +356,7 @@ void frame::verify_deopt_original_pc(nmethod* nm, intptr_t* unextended_sp, bool 
   fr._unextended_sp = unextended_sp;
 
   address original_pc = nm->get_original_pc(&fr);
-  assert(nm->code_contains(original_pc), "original PC must be in nmethod");
+  assert(nm->insts_contains(original_pc), "original PC must be in nmethod");
   assert(nm->is_method_handle_return(original_pc) == is_method_handle_return, "must be");
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,15 @@
  *
  */
 
-# include "incls/_precompiled.incl"
+#include "precompiled.hpp"
+#include "interpreter/interpreter.hpp"
+#include "oops/oop.inline.hpp"
+#include "oops/symbolOop.hpp"
+#include "runtime/frame.inline.hpp"
+#include "runtime/rframe.hpp"
+#include "runtime/vframe.hpp"
+#include "runtime/vframe_hp.hpp"
 
-#include "incls/_rframe.cpp.incl"
 
 static RFrame*const  noCaller    = (RFrame*) 0x1;               // no caller (i.e., initial frame)
 static RFrame*const  noCallerYet = (RFrame*) 0x0;               // caller not yet computed
@@ -120,7 +126,7 @@ int InterpretedRFrame::cost() const {
 int CompiledRFrame::cost() const {
   nmethod* nm = top_method()->code();
   if (nm != NULL) {
-    return nm->code_size();
+    return nm->insts_size();
   } else {
     return top_method()->code_size();
   }

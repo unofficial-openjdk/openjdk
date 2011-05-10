@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,21 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_jniHandles.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "runtime/jniHandles.hpp"
+#include "runtime/mutexLocker.hpp"
+#ifdef TARGET_OS_FAMILY_linux
+# include "thread_linux.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_solaris
+# include "thread_solaris.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_windows
+# include "thread_windows.inline.hpp"
+#endif
 
 
 JNIHandleBlock* JNIHandles::_global_handles       = NULL;
@@ -416,6 +429,12 @@ void JNIHandleBlock::weak_oops_do(BoolObjectClosure* is_alive,
       break;
     }
   }
+
+  /*
+   * JVMTI data structures may also contain weak oops.  The iteration of them
+   * is placed here so that we don't need to add it to each of the collectors.
+   */
+  JvmtiExport::weak_oops_do(is_alive, f);
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,12 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_jniFastGetField_sparc.cpp.incl"
+#include "precompiled.hpp"
+#include "assembler_sparc.inline.hpp"
+#include "memory/resourceArea.hpp"
+#include "prims/jniFastGetField.hpp"
+#include "prims/jvm_misc.hpp"
+#include "runtime/safepoint.hpp"
 
 // TSO ensures that loads are blocking and ordered with respect to
 // to earlier loads, so we don't need LoadLoad membars.
@@ -50,10 +54,10 @@ address JNI_FastGetField::generate_fast_get_int_field0(BasicType type) {
     default:        ShouldNotReachHere();
   }
   ResourceMark rm;
-  BufferBlob* b = BufferBlob::create(name, BUFFER_SIZE*wordSize);
-  address fast_entry = b->instructions_begin();
-  CodeBuffer cbuf(fast_entry, b->instructions_size());
+  BufferBlob* blob = BufferBlob::create(name, BUFFER_SIZE*wordSize);
+  CodeBuffer cbuf(blob);
   MacroAssembler* masm = new MacroAssembler(&cbuf);
+  address fast_entry = __ pc();
 
   Label label1, label2;
 
@@ -129,10 +133,10 @@ address JNI_FastGetField::generate_fast_get_int_field() {
 address JNI_FastGetField::generate_fast_get_long_field() {
   const char *name = "jni_fast_GetLongField";
   ResourceMark rm;
-  BufferBlob* b = BufferBlob::create(name, BUFFER_SIZE*wordSize);
-  address fast_entry = b->instructions_begin();
-  CodeBuffer cbuf(fast_entry, b->instructions_size());
+  BufferBlob* blob = BufferBlob::create(name, BUFFER_SIZE*wordSize);
+  CodeBuffer cbuf(blob);
   MacroAssembler* masm = new MacroAssembler(&cbuf);
+  address fast_entry = __ pc();
 
   Label label1, label2;
 
@@ -201,10 +205,10 @@ address JNI_FastGetField::generate_fast_get_float_field0(BasicType type) {
     default:       ShouldNotReachHere();
   }
   ResourceMark rm;
-  BufferBlob* b = BufferBlob::create(name, BUFFER_SIZE*wordSize);
-  address fast_entry = b->instructions_begin();
-  CodeBuffer cbuf(fast_entry, b->instructions_size());
+  BufferBlob* blob = BufferBlob::create(name, BUFFER_SIZE*wordSize);
+  CodeBuffer cbuf(blob);
   MacroAssembler* masm = new MacroAssembler(&cbuf);
+  address fast_entry = __ pc();
 
   Label label1, label2;
 

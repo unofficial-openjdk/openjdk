@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,20 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_c1_Runtime1_sparc.cpp.incl"
+#include "precompiled.hpp"
+#include "c1/c1_Defs.hpp"
+#include "c1/c1_MacroAssembler.hpp"
+#include "c1/c1_Runtime1.hpp"
+#include "interpreter/interpreter.hpp"
+#include "nativeInst_sparc.hpp"
+#include "oops/compiledICHolderOop.hpp"
+#include "oops/oop.inline.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "register_sparc.hpp"
+#include "runtime/sharedRuntime.hpp"
+#include "runtime/signature.hpp"
+#include "runtime/vframeArray.hpp"
+#include "vmreg_sparc.inline.hpp"
 
 // Implementation of StubAssembler
 
@@ -331,9 +343,10 @@ OopMapSet* Runtime1::generate_patching(StubAssembler* sasm, address target) {
   // returned.
 
   restore_live_registers(sasm);
-  __ restore();
-  __ br(Assembler::always, false, Assembler::pt, deopt_blob->unpack_with_reexecution(), relocInfo::runtime_call_type);
-  __ delayed()->nop();
+
+  AddressLiteral dest(deopt_blob->unpack_with_reexecution());
+  __ jump_to(dest, O0);
+  __ delayed()->restore();
 
   __ bind(no_deopt);
   restore_live_registers(sasm);
@@ -436,7 +449,9 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
           // get the instance size
           __ ld(G5_klass, klassOopDesc::header_size() * HeapWordSize + Klass::layout_helper_offset_in_bytes(), G1_obj_size);
+
           __ tlab_allocate(O0_obj, G1_obj_size, 0, G3_t1, slow_path);
+
           __ initialize_object(O0_obj, G5_klass, G1_obj_size, 0, G3_t1, G4_t2);
           __ verify_oop(O0_obj);
           __ mov(O0, I0);
@@ -447,6 +462,8 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           // get the instance size
           __ ld(G5_klass, klassOopDesc::header_size() * HeapWordSize + Klass::layout_helper_offset_in_bytes(), G1_obj_size);
           __ eden_allocate(O0_obj, G1_obj_size, 0, G3_t1, G4_t2, slow_path);
+          __ incr_allocated_bytes(G1_obj_size, G3_t1, G4_t2);
+
           __ initialize_object(O0_obj, G5_klass, G1_obj_size, 0, G3_t1, G4_t2);
           __ verify_oop(O0_obj);
           __ mov(O0, I0);
@@ -465,12 +482,10 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
       break;
 
-#ifdef TIERED
     case counter_overflow_id:
-        // G4 contains bci
-      oop_maps = generate_stub_call(sasm, noreg, CAST_FROM_FN_PTR(address, counter_overflow), G4);
+        // G4 contains bci, G5 contains method
+      oop_maps = generate_stub_call(sasm, noreg, CAST_FROM_FN_PTR(address, counter_overflow), G4, G5);
       break;
-#endif // TIERED
 
     case new_type_array_id:
     case new_object_array_id:
@@ -563,6 +578,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ and3(G1_arr_size, ~MinObjAlignmentInBytesMask, G1_arr_size);
 
           __ eden_allocate(O0_obj, G1_arr_size, 0, G3_t1, O1_t2, slow_path);  // preserves G1_arr_size
+          __ incr_allocated_bytes(G1_arr_size, G3_t1, O1_t2);
 
           __ initialize_header(O0_obj, G5_klass, G4_length, G3_t1, O1_t2);
           __ ldub(klass_lh, G3_t1, klass_lh_header_size_offset);
@@ -602,7 +618,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         // load the klass and check the has finalizer flag
         Label register_finalizer;
         Register t = O1;
-        __ ld_ptr(O0, oopDesc::klass_offset_in_bytes(), t);
+        __ load_klass(O0, t);
         __ ld(t, Klass::access_flags_offset_in_bytes() + sizeof(oopDesc), t);
         __ set(JVM_ACC_HAS_FINALIZER, G3);
         __ andcc(G3, t, G0);

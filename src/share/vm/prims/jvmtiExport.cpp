@@ -22,8 +22,37 @@
  *
  */
 
-# include "incls/_precompiled.incl"
-# include "incls/_jvmtiExport.cpp.incl"
+#include "precompiled.hpp"
+#include "classfile/systemDictionary.hpp"
+#include "code/nmethod.hpp"
+#include "code/pcDesc.hpp"
+#include "code/scopeDesc.hpp"
+#include "interpreter/interpreter.hpp"
+#include "jvmtifiles/jvmtiEnv.hpp"
+#include "memory/resourceArea.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/objArrayOop.hpp"
+#include "prims/jvmtiCodeBlobEvents.hpp"
+#include "prims/jvmtiEventController.hpp"
+#include "prims/jvmtiEventController.inline.hpp"
+#include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiImpl.hpp"
+#include "prims/jvmtiManageCapabilities.hpp"
+#include "prims/jvmtiRawMonitor.hpp"
+#include "prims/jvmtiTagMap.hpp"
+#include "prims/jvmtiThreadState.inline.hpp"
+#include "runtime/arguments.hpp"
+#include "runtime/handles.hpp"
+#include "runtime/interfaceSupport.hpp"
+#include "runtime/objectMonitor.hpp"
+#include "runtime/objectMonitor.inline.hpp"
+#include "runtime/thread.hpp"
+#include "runtime/vframe.hpp"
+#include "services/attachListener.hpp"
+#include "services/serviceUtil.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/parallelScavenge/psMarkSweep.hpp"
+#endif
 
 #ifdef JVMTI_TRACE
 #define EVT_TRACE(evt,out) if ((JvmtiTrace::event_trace_flags(evt) & JvmtiTrace::SHOW_EVENT_SENT) != 0) { SafeResourceMark rm; tty->print_cr out; }
@@ -325,18 +354,18 @@ JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
   // micro version doesn't matter here (yet?)
   decode_version_values(version, &major, &minor, &micro);
   switch (major) {
-  case 1:
+    case 1:
       switch (minor) {
-      case 0:  // version 1.0.<micro> is recognized
-      case 1:  // version 1.1.<micro> is recognized
+        case 0:  // version 1.0.<micro> is recognized
+        case 1:  // version 1.1.<micro> is recognized
+        case 2:  // version 1.2.<micro> is recognized
           break;
 
-      default:
+        default:
           return JNI_EVERSION;  // unsupported minor version number
       }
       break;
-
-  default:
+    default:
       return JNI_EVERSION;  // unsupported major version number
   }
 
@@ -687,8 +716,8 @@ class JvmtiCompiledMethodLoadEventMark : public JvmtiMethodEventMark {
  public:
   JvmtiCompiledMethodLoadEventMark(JavaThread *thread, nmethod *nm, void* compile_info_ptr = NULL)
           : JvmtiMethodEventMark(thread,methodHandle(thread, nm->method())) {
-    _code_data = nm->code_begin();
-    _code_size = nm->code_size();
+    _code_data = nm->insts_begin();
+    _code_size = nm->insts_size();
     _compile_info = compile_info_ptr; // Set void pointer of compiledMethodLoad Event. Default value is NULL.
     JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nm, &_map, &_map_length);
   }
@@ -2224,17 +2253,27 @@ void JvmtiExport::post_vm_object_alloc(JavaThread *thread,  oop object) {
 
 void JvmtiExport::cleanup_thread(JavaThread* thread) {
   assert(JavaThread::current() == thread, "thread is not current");
+  MutexLocker mu(JvmtiThreadState_lock);
 
-
-  // This has to happen after the thread state is removed, which is
-  // why it is not in post_thread_end_event like its complement
-  // Maybe both these functions should be rolled into the posts?
-  JvmtiEventController::thread_ended(thread);
+  if (thread->jvmti_thread_state() != NULL) {
+    // This has to happen after the thread state is removed, which is
+    // why it is not in post_thread_end_event like its complement
+    // Maybe both these functions should be rolled into the posts?
+    JvmtiEventController::thread_ended(thread);
+  }
 }
 
 void JvmtiExport::oops_do(OopClosure* f) {
   JvmtiCurrentBreakpoints::oops_do(f);
   JvmtiVMObjectAllocEventCollector::oops_do_for_all_threads(f);
+}
+
+void JvmtiExport::weak_oops_do(BoolObjectClosure* is_alive, OopClosure* f) {
+  JvmtiTagMap::weak_oops_do(is_alive, f);
+}
+
+void JvmtiExport::gc_epilogue() {
+  JvmtiCurrentBreakpoints::gc_epilogue();
 }
 
 // Onload raw monitor transition.
@@ -2269,16 +2308,16 @@ jint JvmtiExport::load_agent_library(AttachOperation* op, outputStream* st) {
   // load it from the standard dll directory.
 
   if (is_absolute_path) {
-    library = hpi::dll_load(agent, ebuf, sizeof ebuf);
+    library = os::dll_load(agent, ebuf, sizeof ebuf);
   } else {
     // Try to load the agent from the standard dll directory
-    hpi::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), agent);
-    library = hpi::dll_load(buffer, ebuf, sizeof ebuf);
+    os::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), agent);
+    library = os::dll_load(buffer, ebuf, sizeof ebuf);
     if (library == NULL) {
       // not found - try local path
       char ns[1] = {0};
-      hpi::dll_build_name(buffer, sizeof(buffer), ns, agent);
-      library = hpi::dll_load(buffer, ebuf, sizeof ebuf);
+      os::dll_build_name(buffer, sizeof(buffer), ns, agent);
+      library = os::dll_load(buffer, ebuf, sizeof ebuf);
     }
   }
 
@@ -2291,13 +2330,13 @@ jint JvmtiExport::load_agent_library(AttachOperation* op, outputStream* st) {
     const char *on_attach_symbols[] = AGENT_ONATTACH_SYMBOLS;
     for (uint symbol_index = 0; symbol_index < ARRAY_SIZE(on_attach_symbols); symbol_index++) {
       on_attach_entry =
-        CAST_TO_FN_PTR(OnAttachEntry_t, hpi::dll_lookup(library, on_attach_symbols[symbol_index]));
+        CAST_TO_FN_PTR(OnAttachEntry_t, os::dll_lookup(library, on_attach_symbols[symbol_index]));
       if (on_attach_entry != NULL) break;
     }
 
     if (on_attach_entry == NULL) {
       // Agent_OnAttach missing - unload library
-      hpi::dll_unload(library);
+      os::dll_unload(library);
     } else {
       // Invoke the Agent_OnAttach function
       JavaThread* THREAD = JavaThread::current();
@@ -2328,15 +2367,6 @@ jint JvmtiExport::load_agent_library(AttachOperation* op, outputStream* st) {
   return result;
 }
 #endif // SERVICES_KERNEL
-
-// CMS has completed referencing processing so may need to update
-// tag maps.
-void JvmtiExport::cms_ref_processing_epilogue() {
-  if (JvmtiEnv::environments_might_exist()) {
-    JvmtiTagMap::cms_ref_processing_epilogue();
-  }
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2507,36 +2537,20 @@ NoJvmtiVMObjectAllocMark::~NoJvmtiVMObjectAllocMark() {
   }
 };
 
-JvmtiGCMarker::JvmtiGCMarker(bool full) : _full(full), _invocation_count(0) {
-  assert(Thread::current()->is_VM_thread(), "wrong thread");
-
+JvmtiGCMarker::JvmtiGCMarker() {
   // if there aren't any JVMTI environments then nothing to do
   if (!JvmtiEnv::environments_might_exist()) {
     return;
   }
 
-  if (ForceFullGCJVMTIEpilogues) {
-    // force 'Full GC' was done semantics for JVMTI GC epilogues
-    _full = true;
-  }
-
-  // GarbageCollectionStart event posted from VM thread - okay because
-  // JVMTI is clear that the "world is stopped" and callback shouldn't
-  // try to call into the VM.
   if (JvmtiExport::should_post_garbage_collection_start()) {
     JvmtiExport::post_garbage_collection_start();
   }
 
-  // if "full" is false it probably means this is a scavenge of the young
-  // generation. However it could turn out that a "full" GC is required
-  // so we record the number of collections so that it can be checked in
-  // the destructor.
-  if (!_full) {
-    _invocation_count = Universe::heap()->total_full_collections();
+  if (SafepointSynchronize::is_at_safepoint()) {
+    // Do clean up tasks that need to be done at a safepoint
+    JvmtiEnvBase::check_for_periodic_clean_up();
   }
-
-  // Do clean up tasks that need to be done at a safepoint
-  JvmtiEnvBase::check_for_periodic_clean_up();
 }
 
 JvmtiGCMarker::~JvmtiGCMarker() {
@@ -2549,21 +2563,5 @@ JvmtiGCMarker::~JvmtiGCMarker() {
   if (JvmtiExport::should_post_garbage_collection_finish()) {
     JvmtiExport::post_garbage_collection_finish();
   }
-
-  // we might have initially started out doing a scavenge of the young
-  // generation but could have ended up doing a "full" GC - check the
-  // GC count to see.
-  if (!_full) {
-    _full = (_invocation_count != Universe::heap()->total_full_collections());
-  }
-
-  // Full collection probably means the perm generation has been GC'ed
-  // so we clear the breakpoint cache.
-  if (_full) {
-    JvmtiCurrentBreakpoints::gc_epilogue();
-  }
-
-  // Notify heap/object tagging support
-  JvmtiTagMap::gc_epilogue(_full);
 }
 #endif // JVMTI_KERNEL

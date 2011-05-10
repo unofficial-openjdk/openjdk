@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef CPU_SPARC_VM_C1_FRAMEMAP_SPARC_HPP
+#define CPU_SPARC_VM_C1_FRAMEMAP_SPARC_HPP
+
  public:
 
   enum {
@@ -103,6 +106,7 @@
 
   static LIR_Opr in_long_opr;
   static LIR_Opr out_long_opr;
+  static LIR_Opr g1_long_single_opr;
 
   static LIR_Opr F0_opr;
   static LIR_Opr F0_double_opr;
@@ -113,18 +117,25 @@
  private:
   static FloatRegister  _fpu_regs [nof_fpu_regs];
 
+  static LIR_Opr as_long_single_opr(Register r) {
+    return LIR_OprFact::double_cpu(cpu_reg2rnr(r), cpu_reg2rnr(r));
+  }
+  static LIR_Opr as_long_pair_opr(Register r) {
+    return LIR_OprFact::double_cpu(cpu_reg2rnr(r->successor()), cpu_reg2rnr(r));
+  }
+
  public:
 
 #ifdef _LP64
   static LIR_Opr as_long_opr(Register r) {
-    return LIR_OprFact::double_cpu(cpu_reg2rnr(r), cpu_reg2rnr(r));
+    return as_long_single_opr(r);
   }
   static LIR_Opr as_pointer_opr(Register r) {
-    return LIR_OprFact::double_cpu(cpu_reg2rnr(r), cpu_reg2rnr(r));
+    return as_long_single_opr(r);
   }
 #else
   static LIR_Opr as_long_opr(Register r) {
-    return LIR_OprFact::double_cpu(cpu_reg2rnr(r->successor()), cpu_reg2rnr(r));
+    return as_long_pair_opr(r);
   }
   static LIR_Opr as_pointer_opr(Register r) {
     return as_opr(r);
@@ -143,3 +154,8 @@
 
   static bool is_caller_save_register (LIR_Opr  reg);
   static bool is_caller_save_register (Register r);
+
+  static int nof_caller_save_cpu_regs() { return pd_nof_caller_save_cpu_regs_frame_map; }
+  static int last_cpu_reg()             { return pd_last_cpu_reg;  }
+
+#endif // CPU_SPARC_VM_C1_FRAMEMAP_SPARC_HPP

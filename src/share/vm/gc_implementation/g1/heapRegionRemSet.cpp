@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,16 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_heapRegionRemSet.cpp.incl"
+#include "precompiled.hpp"
+#include "gc_implementation/g1/concurrentG1Refine.hpp"
+#include "gc_implementation/g1/g1BlockOffsetTable.inline.hpp"
+#include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
+#include "gc_implementation/g1/heapRegionRemSet.hpp"
+#include "gc_implementation/g1/heapRegionSeq.inline.hpp"
+#include "memory/allocation.hpp"
+#include "memory/space.inline.hpp"
+#include "utilities/bitMap.inline.hpp"
+#include "utilities/globalDefinitions.hpp"
 
 #define HRRS_VERBOSE 0
 
@@ -455,7 +463,6 @@ public:
   }
 
   static void par_contract_all();
-
 };
 
 void PosParPRT::par_contract_all() {
@@ -1062,6 +1069,11 @@ bool OtherRegionsTable::contains_reference_locked(OopOrNarrowOopStar from) const
 
 }
 
+void
+OtherRegionsTable::do_cleanup_work(HRRSCleanupTask* hrrs_cleanup_task) {
+  _sparse_table.do_cleanup_work(hrrs_cleanup_task);
+}
+
 // Determines how many threads can add records to an rset in parallel.
 // This can be done by either mutator threads together with the
 // concurrent refinement threads or GC threads.
@@ -1159,9 +1171,7 @@ HeapRegionRemSetIterator() :
   _hrrs(NULL),
   _g1h(G1CollectedHeap::heap()),
   _bosa(NULL),
-  _sparse_iter(size_t(G1CollectedHeap::heap()->reserved_region().start())
-               >> CardTableModRefBS::card_shift)
-{}
+  _sparse_iter() { }
 
 void HeapRegionRemSetIterator::initialize(const HeapRegionRemSet* hrrs) {
   _hrrs = hrrs;
@@ -1376,6 +1386,19 @@ void HeapRegionRemSet::print_recorded() {
                         _recorded_cards[i], _recorded_regions[i]->bottom(),
                         _recorded_oops[i]);
   }
+}
+
+void HeapRegionRemSet::reset_for_cleanup_tasks() {
+  SparsePRT::reset_for_cleanup_tasks();
+}
+
+void HeapRegionRemSet::do_cleanup_work(HRRSCleanupTask* hrrs_cleanup_task) {
+  _other_regions.do_cleanup_work(hrrs_cleanup_task);
+}
+
+void
+HeapRegionRemSet::finish_cleanup_task(HRRSCleanupTask* hrrs_cleanup_task) {
+  SparsePRT::finish_cleanup_task(hrrs_cleanup_task);
 }
 
 #ifndef PRODUCT

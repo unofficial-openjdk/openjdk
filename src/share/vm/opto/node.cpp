@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,18 @@
  *
  */
 
-#include "incls/_precompiled.incl"
-#include "incls/_node.cpp.incl"
+#include "precompiled.hpp"
+#include "libadt/vectset.hpp"
+#include "memory/allocation.inline.hpp"
+#include "opto/cfgnode.hpp"
+#include "opto/connode.hpp"
+#include "opto/machnode.hpp"
+#include "opto/matcher.hpp"
+#include "opto/node.hpp"
+#include "opto/opcodes.hpp"
+#include "opto/regmask.hpp"
+#include "opto/type.hpp"
+#include "utilities/copy.hpp"
 
 class RegMask;
 // #include "phase.hpp"
@@ -733,6 +743,9 @@ void Node::add_req_batch( Node *n, uint m ) {
 //------------------------------del_req----------------------------------------
 // Delete the required edge and compact the edge array
 void Node::del_req( uint idx ) {
+  assert( idx < _cnt, "oob");
+  assert( !VerifyHashTableKeys || _hash_lock == 0,
+          "remove node from hash table before modifying it");
   // First remove corresponding def-use edge
   Node *n = in(idx);
   if (n != NULL) n->del_out((Node *)this);
