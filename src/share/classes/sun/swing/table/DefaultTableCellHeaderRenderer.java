@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@
  */
 package sun.swing.table;
 
+import sun.swing.DefaultLookup;
+
 import java.awt.Component;
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -31,12 +33,11 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.Serializable;
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import javax.swing.border.Border;
 import javax.swing.table.*;
-import sun.swing.DefaultLookup;
-
 
 public class DefaultTableCellHeaderRenderer extends DefaultTableCellRenderer
         implements UIResource {
@@ -186,7 +187,7 @@ public class DefaultTableCellHeaderRenderer extends DefaultTableCellRenderer
         return new Point(x, y);
     }
 
-    private class EmptyIcon implements Icon {
+    private class EmptyIcon implements Icon, Serializable {
         int width = 0;
         int height = 0;
         public void paintIcon(Component c, Graphics g, int x, int y) {}
