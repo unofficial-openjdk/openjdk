@@ -70,8 +70,7 @@ public abstract class SunToolkit extends Toolkit
 
     /* Load debug settings for native code */
     static {
-        String nativeDebug = System.getProperty("sun.awt.nativedebug");
-        if ("true".equalsIgnoreCase(nativeDebug)) {
+        if (AccessController.doPrivileged(new GetBooleanAction("sun.awt.nativedebug"))) {
             DebugSettings.init();
         }
     };
