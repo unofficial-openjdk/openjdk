@@ -46,8 +46,6 @@ YOU_ARE_USING=You appear to be using
 # Settings and rules to validate the JDK build environment.
 
 ifeq ($(PLATFORM), solaris)
-  FREE_SPACE := $(shell $(DF) -b $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$2;}')
-  TEMP_FREE_SPACE := $(shell $(DF) -b $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$2;}')
   REQ_PATCH_LIST = $(JDK_TOPDIR)/make/PatchList.solaris
   ifeq ($(ARCH_FAMILY), sparc)
     PATCH_POSITION = $$4
@@ -57,8 +55,6 @@ ifeq ($(PLATFORM), solaris)
 endif
 
 ifeq ($(PLATFORM), linux)
-  FREE_SPACE := $(shell $(DF) --sync -kP $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
-  TEMP_FREE_SPACE := $(shell $(DF) --sync -kP $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
   ifeq ($(ARCH), amd64)
     LINUX_VERSION := $(shell \
         if [ -r "$(LINUX_VERSION_INFO)" ] ; then \
@@ -82,8 +78,6 @@ ifeq ($(PLATFORM), linux)
 endif
 
 ifeq ($(PLATFORM), windows)
-  FREE_SPACE := $(shell $(DF) -kP $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
-  TEMP_FREE_SPACE := $(shell $(DF) -kP $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
   # Localized systeminfo has localized labels, but not localized values.
   _WINDOWS_VERSION := \
     $(shell systeminfo 2> $(DEV_NULL) | grep 'Microsoft' | grep 'Windows' | \
@@ -674,18 +668,6 @@ sane-outputdir:
 	    "          $(OUTPUTDIR) \n" \
 	    "      Either obtain these permissions or set ALT_OUTPUTDIR. \n" \
 	    "" >> $(ERROR_FILE) ; \
-	fi
-	@#
-	@# OUTPUTDIR must have enough free space...
-	@#
-	@if [ $(FREE_SPACE) -lt $(REQUIRED_FREE_SPACE) ]; then \
-	  $(ECHO) "WARNING: You may not have enough free space in your OUTPUTDIR. The \n" \
-	    "        current value of OUTPUTDIR is \n" \
-	    "            $(OUTPUTDIR) \n" \
-	    "        You need "$(REQUIRED_FREE_SPACE)" Kbytes free on this device to build \n" \
-	    "        and it appears that only "$(FREE_SPACE)" Kbytes are free. \n" \
-	    "        Either obtain more space or set ALT_OUTPUTDIR to a larger disk. \n" \
-	    "" >> $(WARNING_FILE) ; \
 	fi
 
 ######################################################

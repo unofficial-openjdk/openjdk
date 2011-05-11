@@ -189,8 +189,6 @@ ifeq ($(PLATFORM),linux)
 endif
 ALL_SETTINGS+=$(call addRequiredVersionSetting,OS_VERSION)
 ALL_SETTINGS+=$(call addRequiredSetting,OS_NAME)
-ALL_SETTINGS+=$(call addRequiredSetting,TEMP_FREE_SPACE)
-ALL_SETTINGS+=$(call addRequiredSetting,FREE_SPACE)
 ALL_SETTINGS+=$(call addRequiredSetting,MB_OF_MEMORY)
 
 

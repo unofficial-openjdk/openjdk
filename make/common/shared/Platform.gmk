@@ -75,7 +75,6 @@ PLATFORM_SHARED=done
 #     USING_CYGWIN                windows only: true or false
 #     WINDOWS_NT_VERSION_STRING   windows only: long version name
 #     REQUIRED_OS_VERSION         required OS version, e.g. 5.10, 2.4
-#     REQUIRED_FREE_SPACE         minimum disk space needed for outputdir
 #     ISHIELD_TEMP_MIN            windows only: minimum disk space in temp area
 #     REQUIRED_ZIP_VER            required version of zip
 #     REQUIRED_UNZIP_VER          required version of unzip
@@ -171,13 +170,6 @@ ifeq ($(SYSTEM_UNAME), SunOS)
   else
     REQUIRED_OS_VERSION = 5.8
   endif
-  # Minimum disk space needed as determined by running 'du -sk' on 
-  #    a fully built workspace.
-  ifeq ($(ARCH_FAMILY), sparc)
-    REQUIRED_FREE_SPACE=1300000
-  else
-    REQUIRED_FREE_SPACE=1040000
-  endif
   # How much RAM does this machine have:
   MB_OF_MEMORY=$(shell /etc/prtconf | fgrep 'Memory size:' | expand | cut -d' ' -f3)
 endif
@@ -247,9 +239,6 @@ ifeq ($(SYSTEM_UNAME), Linux)
 
   # Suffix for file bundles used in previous release
   BUNDLE_FILE_SUFFIX=.tar.gz
-  # Minimum disk space needed as determined by running 'du -sk' on 
-  #    a fully built workspace.
-  REQUIRED_FREE_SPACE=1460000
   LINUX_VERSION_INFO = /etc/redhat-release
   ifeq ($(ARCH_DATA_MODEL), 32)
     REQUIRED_LINUX_VER = Advanced Server
@@ -371,9 +360,6 @@ ifeq ($(PLATFORM), windows)
   ARCH_VM_SUBDIR=jre/bin
   # Suffix for file bundles used in previous release
   BUNDLE_FILE_SUFFIX=.tar
-  # Minimum disk space needed as determined by running 'du -sk' on 
-  #    a fully built workspace.
-  REQUIRED_FREE_SPACE=500000
   # ISHIELD_TEMP_MIN is the difference of an empty C:\TEMP vs. one after a
   #     bundles build on windows.
   ISHIELD_TEMP_MIN=250000
