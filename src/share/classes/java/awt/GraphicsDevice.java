@@ -243,8 +243,10 @@ public abstract class GraphicsDevice {
      * a non-client of the input method framework.
      * </ul>
      * <p>
-     * Simulated full-screen mode resizes
-     * the window to the size of the screen and positions it at (0,0).
+     * The simulated full-screen mode places and resizes the window to the maximum
+     * possible visible area of the screen. However, the native windowing system
+     * may modify the requested geometry-related data, so that the {@code Window} object
+     * is placed and sized in a way that corresponds closely to the desktop settings.
      * <p>
      * When entering full-screen mode, if the window to be used as a
      * full-screen window is not visible, this method will make it visible.
@@ -254,6 +256,11 @@ public abstract class GraphicsDevice {
      * the window. Its shape is set to {@code null}, the opacity value is set to
      * 1.0f, and the background color alpha is set to 255 (completely opaque).
      * These values are not restored when returning to windowed mode.
+     * <p>
+     * It is unspecified and platform-dependent how decorated windows operate
+     * in full-screen mode. For this reason, it is recommended to turn off
+     * the decorations in a {@code Frame} or {@code Dialog} object by using the
+     * {@code setUndecorated} method.
      * <p>
      * When returning to windowed mode from an exclusive full-screen window,
      * any display changes made by calling {@code setDisplayMode} are
@@ -270,6 +277,8 @@ public abstract class GraphicsDevice {
      * @see #setDisplayMode
      * @see Component#enableInputMethods
      * @see Component#setVisible
+     * @see Frame#setUndecorated
+     * @see Dialog#setUndecorated
      *
      * @since 1.4
      */

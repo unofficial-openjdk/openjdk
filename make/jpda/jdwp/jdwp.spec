@@ -519,9 +519,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         "Both the JNI signature and the generic signature are "
         "returned for each class.  "
 	"Generic signatures are described in the signature attribute "
-        "section in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec\">
-        "Java Virtual Machine Specification, 3rd Edition.</a>  "
+        "section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "Since JDWP version 1.5."
 	(Out 
         )
@@ -623,8 +622,8 @@ JDWP "Java(tm) Debug Wire Protocol"
             (referenceType refType "The reference type ID.")
         )
         (Reply
-            (int modBits "Modifier bits as defined in the "
-	                 "<a href=\"http://java.sun.com/docs/books/vmspec/html/ClassFile.doc.html\">VM Specification</a>")
+            (int modBits "Modifier bits as defined in Chapter 4 of "
+	                 "<cite>The Java&trade; Virtual Machine Specification</cite>")
         )
         (ErrorSet
             (Error INVALID_CLASS     "refType is not the ID of a reference "
@@ -651,8 +650,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (int modBits "The modifier bit flags (also known as access flags) "
 		                 "which provide additional information on the  "
                                  "field declaration. Individual flag values are "
-				 "defined in the "
- 	                         "<a href=\"http://java.sun.com/docs/books/vmspec/html/ClassFile.doc.html\">VM Specification</a>."
+				 "defined in Chapter 4 of "
+ 	                         "<cite>The Java&trade; Virtual Machine Specification</cite>. "
 				 "In addition, The <code>0xf0000000</code> bit identifies "
 				 "the field as synthetic, if the synthetic attribute "
 				 "<a href=\"#JDWP_VirtualMachine_Capabilities\">capability</a> is available.")
@@ -686,8 +685,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (int modBits "The modifier bit flags (also known as access flags) "
 		                 "which provide additional information on the  "
                                  "method declaration. Individual flag values are "
-				 "defined in the "
- 	                         "<a href=\"http://java.sun.com/docs/books/vmspec/html/ClassFile.doc.html\">VM Specification</a>."
+				 "defined in Chapter 4 of "
+ 	                         "<cite>The Java&trade; Virtual Machine Specification</cite>. "
 				 "In addition, The <code>0xf0000000</code> bit identifies "
 				 "the method as synthetic, if the synthetic attribute "
 				 "<a href=\"#JDWP_VirtualMachine_Capabilities\">capability</a> is available.")
@@ -773,8 +772,8 @@ JDWP "Java(tm) Debug Wire Protocol"
     (Command Status=9
         "Returns the current status of the reference type. The status "
 	"indicates the extent to which the reference type has been "
-	"initialized, as described in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec/html/Concepts.doc.html#16491\">VM specification</a>. "
+	"initialized, as described in section 2.1.6 of "
+	"<cite>The Java&trade; Virtual Machine Specification</cite>. "
 	"If the class is linked the PREPARED and VERIFIED bits in the returned status bits "
 	"will be set. If the class is initialized the INITIALIZED bit in the returned "
 	"status bits will be set. If an error occured during initialization then the "
@@ -852,9 +851,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         "Returns the JNI signature of a reference type along with the "
         "generic signature if there is one.  "
 	"Generic signatures are described in the signature attribute "
-        "section in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec\">
-        "Java Virtual Machine Specification, 3rd Edition.</a>  "
+        "section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "Since JDWP version 1.5."
 	"<p>
 	(Out
@@ -882,9 +880,8 @@ JDWP "Java(tm) Debug Wire Protocol"
 	"by the compiler. "
         "Fields are returned in the order they occur in the class file.  "
 	"Generic signatures are described in the signature attribute "
-        "section in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec\">
-        "Java Virtual Machine Specification, 3rd Edition.</a>  "
+        "section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "Since JDWP version 1.5."
         (Out
             (referenceType refType "The reference type ID.")
@@ -900,8 +897,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (int modBits "The modifier bit flags (also known as access flags) "
 		                 "which provide additional information on the  "
                                  "field declaration. Individual flag values are "
-				 "defined in the "
- 	                         "<a href=\"http://java.sun.com/docs/books/vmspec/html/ClassFile.doc.html\">VM Specification</a>."
+				 "defined in Chapter 4 of "
+ 	                         "<cite>The Java&trade; Virtual Machine Specification</cite>. "
 				 "In addition, The <code>0xf0000000</code> bit identifies "
 				 "the field as synthetic, if the synthetic attribute "
 				 "<a href=\"#JDWP_VirtualMachine_Capabilities\">capability</a> is available.")
@@ -925,9 +922,8 @@ JDWP "Java(tm) Debug Wire Protocol"
 	"if present, and any synthetic methods created by the compiler. "
         "Methods are returned in the order they occur in the class file.  "
 	"Generic signatures are described in the signature attribute "
-        "section in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec\">
-        "Java Virtual Machine Specification, 3rd Edition.</a>  "
+        "section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "Since JDWP version 1.5."
         (Out
             (referenceType refType "The reference type ID.")
@@ -943,8 +939,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (int modBits "The modifier bit flags (also known as access flags) "
 		                 "which provide additional information on the  "
                                  "method declaration. Individual flag values are "
-				 "defined in the "
- 	                         "<a href=\"http://java.sun.com/docs/books/vmspec/html/ClassFile.doc.html\">VM Specification</a>."
+				 "defined in Chapter 4 of "
+ 	                         "<cite>The Java&trade; Virtual Machine Specification</cite>. "
 				 "In addition, The <code>0xf0000000</code> bit identifies "
 				 "the method as synthetic, if the synthetic attribute "
 				 "<a href=\"#JDWP_VirtualMachine_Capabilities\">capability</a> is available.")
@@ -1006,8 +1002,8 @@ JDWP "Java(tm) Debug Wire Protocol"
     )
     (Command ConstantPool=18
         "Return the raw bytes of the constant pool in the format of the "
-        "constant_pool item of the Class File Format in the "
-        "Java Virtual Machine Specification. "
+        "constant_pool item of the Class File Format in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "<p>Since JDWP version 1.6. Requires canGetConstantPool capability - see "
 	"<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>.""
         (Out
@@ -1016,7 +1012,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         (Reply
             (int count "Total number of constant pool entries plus one. This "
                        "corresponds to the constant_pool_count item of the "
-                       "Class File Format in the Java Virtual Machine Specification. ")
+                       "Class File Format in "
+                       "<cite>The Java&trade; Virtual Machine Specification</cite>. ")
             (Repeat bytes
                 (byte cpbytes "Raw bytes of constant pool")
             )
@@ -1324,7 +1321,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         )
     )
     (Command Bytecodes=3
-        "Retrieve the method's bytecodes as defined in the JVM Specification."
+        "Retrieve the method's bytecodes as defined in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
 	"Requires canGetBytecodes capability - see "
 	"<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>."
         (Out
@@ -1379,9 +1377,8 @@ JDWP "Java(tm) Debug Wire Protocol"
 	"instance methods, the \"this\" reference is included in the "
 	"table. Also, synthetic variables may be present. "
 	"Generic signatures are described in the signature attribute "
-        "section in the "
-	"<a href=\"http://java.sun.com/docs/books/vmspec\">
-        "Java Virtual Machine Specification, 3rd Edition.</a>  "
+        "section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>. "
         "Since JDWP version 1.5."
         (Out
             (referenceType refType "The class.")
@@ -1970,8 +1967,9 @@ JDWP "Java(tm) Debug Wire Protocol"
 	"<p>"
         "The method which will return early is referred to as the "
         "called method. The called method is the current method (as "
-        "defined by the Frames section in the Java Virtual Machine "
-        "Specification) for the specified thread at the time this command "
+        "defined by the Frames section in "
+        "<cite>The Java&trade; Virtual Machine Specification</cite>) "
+        "for the specified thread at the time this command "
         "is received. "
 	"<p>"
         "The specified thread must be suspended. "
@@ -2192,7 +2190,8 @@ JDWP "Java(tm) Debug Wire Protocol"
         (Out
             (byte eventKind "Event kind to request. "
                       "See <a href=\"#JDWP_EventKind\">JDWP.EventKind</a> "
-		      "for a complete list of events that can be requested. "
+		      "for a complete list of events that can be requested; "
+                      "some events may require a capability in order to be requested. "
 		      )
             (byte suspendPolicy 
                       "What threads are suspended when this event occurs? "
@@ -2734,6 +2733,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (Alt MonitorContendedEnter=JDWP.EventKind.MONITOR_CONTENDED_ENTER		    
 			 "Notification that a thread in the target VM is attempting "
 			 "to enter a monitor that is already acquired by another thread. "
+			 "Requires canRequestMonitorEvents capability - see "
+			 "<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>. "
 			 "<p>Since JDWP version 1.6. "
 
                         (int requestID 
@@ -2745,6 +2746,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     (Alt MonitorContendedEntered=JDWP.EventKind.MONITOR_CONTENDED_ENTERED		    
  			 "Notification of a thread in the target VM is entering a monitor "
 		         "after waiting for it to be released by another thread. "
+			 "Requires canRequestMonitorEvents capability - see "
+			 "<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>. "
 			 "<p>Since JDWP version 1.6. "
 
                         (int requestID 
@@ -2755,6 +2758,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     )
                     (Alt MonitorWait=JDWP.EventKind.MONITOR_WAIT		    
                          "Notification of a thread about to wait on a monitor object. "
+			 "Requires canRequestMonitorEvents capability - see "
+			 "<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>. "
 			 "<p>Since JDWP version 1.6. "
  
                         (int requestID 
@@ -2766,6 +2771,8 @@ JDWP "Java(tm) Debug Wire Protocol"
                     )
                     (Alt MonitorWaited=JDWP.EventKind.MONITOR_WAITED		
 			 "Notification that a thread in the target VM has finished waiting on "
+			 "Requires canRequestMonitorEvents capability - see "
+			 "<a href=\"#JDWP_VirtualMachine_CapabilitiesNew\">CapabilitiesNew</a>. "
 		         "a monitor object. "
 			 "<p>Since JDWP version 1.6. "
 
@@ -3052,9 +3059,9 @@ JDWP "Java(tm) Debug Wire Protocol"
     (Constant METHOD_EXIT            =41  )
     (Constant METHOD_EXIT_WITH_RETURN_VALUE =42  )
     (Constant MONITOR_CONTENDED_ENTER          =43  )
-    (Constant MONITOR_CONTENDED_ENTERED        =44  )
-    (Constant MONITOR_WAIT           =45  )
-    (Constant MONITOR_WAITED         =46  )
+    (Constant MONITOR_CONTENDED_ENTERED        =44 )
+    (Constant MONITOR_WAIT           =45 )
+    (Constant MONITOR_WAITED         =46 )
     (Constant VM_START               =90  )
     (Constant VM_INIT                =90  "obsolete - was used in jvmdi")
     (Constant VM_DEATH               =99  )

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,25 +23,15 @@
 
 /*
  * @test
- * @bug 6708550
- * @summary Tests File encoding
- * @author Sergey Malenkov
+ * @bug 7002839
+ * @summary Static init deadlock Win32GraphicsEnvironment and WToolkit
+ * @run main GE_init1
  */
 
-import java.io.File;
+import java.awt.Toolkit;
 
-public final class java_io_File extends AbstractTest<File> {
+public class GE_init1 {
     public static void main(String[] args) {
-        new java_io_File().test(true);
-    }
-
-    @Override
-    protected File getObject() {
-        return new File("test.txt"); // NON-NLS: local file
-    }
-
-    @Override
-    protected File getAnotherObject() {
-        return new File("/pub/demo/"); // NON-NLS: path
+        Toolkit.getDefaultToolkit();
     }
 }

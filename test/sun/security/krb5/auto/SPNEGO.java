@@ -1,11 +1,10 @@
 /*
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,50 +19,38 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
- *
- * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
- *
+ * @test
+ * @bug 7040151
+ * @summary SPNEGO GSS code does not parse tokens in accordance to RFC 2478
+ * @compile -XDignore.symbol.file SPNEGO.java
+ * @run main/othervm SPNEGO
  */
 
-#ifndef __FEATURES_H
-#define __FEATURES_H
+import sun.security.jgss.GSSUtil;
 
-/**
- * \file
- * \internal
- */
+// The basic krb5 test skeleton you can copy from
+public class SPNEGO {
 
-#include "LETypes.h"
-#include "OpenTypeTables.h"
+    public static void main(String[] args) throws Exception {
 
-U_NAMESPACE_BEGIN
+        new OneKDC(null).writeJAASConf();
 
-struct FeatureRecord
-{
-    ATag        featureTag;
-    Offset      featureTableOffset;
-};
+        Context c, s;
+        c = Context.fromJAAS("client");
+        s = Context.fromJAAS("server");
 
-struct FeatureTable
-{
-    Offset      featureParamsOffset;
-    le_uint16   lookupCount;
-    le_uint16   lookupListIndexArray[ANY_NUMBER];
-};
+        c.startAsClient(OneKDC.SERVER, GSSUtil.GSS_SPNEGO_MECH_OID);
+        s.startAsServer(GSSUtil.GSS_SPNEGO_MECH_OID);
 
-struct FeatureListTable
-{
-    le_uint16           featureCount;
-    FeatureRecord       featureRecordArray[ANY_NUMBER];
+        Context.handshake(c, s);
 
-    const FeatureTable  *getFeatureTable(le_uint16 featureIndex, LETag *featureTag) const;
+        Context.transmit("i say high --", c, s);
+        Context.transmit("   you say low", s, c);
 
-    const FeatureTable *getFeatureTable(LETag featureTag) const;
-};
-
-U_NAMESPACE_END
-#endif
+        s.dispose();
+        c.dispose();
+    }
+}

@@ -239,8 +239,7 @@ public class FloatingDecimal{
      * More difficult if subtracting and the argument
      * is a normalized a power of 2, as the ULP changes at these points.
      */
-    private static double
-    ulp( double dval, boolean subtracting ){
+    private static double ulp( double dval, boolean subtracting ){
         long lbits = Double.doubleToLongBits( dval ) & ~signMask;
         int binexp = (int)(lbits >>> expShift);
         double ulpval;
@@ -1251,8 +1250,7 @@ public class FloatingDecimal{
      * for a single-precision float.
      */
 
-    public double
-    doubleValue(){
+    public strictfp double doubleValue(){
         int     kDigits = Math.min( nDigits, maxDecimalDigits+1 );
         long    lValue;
         double  dValue;
@@ -1611,8 +1609,7 @@ public class FloatingDecimal{
      * ( because of the preference to a zero low-order bit ).
      */
 
-    public float
-        floatValue(){
+    public strictfp float floatValue(){
         int     kDigits = Math.min( nDigits, singleMaxDecimalDigits+1 );
         int     iValue;
         float   fValue;

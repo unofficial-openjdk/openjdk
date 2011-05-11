@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -562,8 +562,11 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         clientVerifyData = new byte[0];
         serverVerifyData = new byte[0];
 
-        enabledCipherSuites = CipherSuiteList.getDefault();
-        enabledProtocols = ProtocolList.getDefault(roleIsServer);
+        enabledCipherSuites =
+                sslContext.getDefaultCipherSuiteList(roleIsServer);
+        enabledProtocols =
+                sslContext.getDefaultProtocolList(roleIsServer);
+
         inrec = null;
 
         // save the acc
@@ -1450,6 +1453,21 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         }
     }
 
+    private void closeSocket(boolean selfInitiated) throws IOException {
+        if ((debug != null) && Debug.isOn("ssl")) {
+            System.out.println(threadName() + ", called closeSocket(selfInitiated)");
+        }
+        if (self == this) {
+            super.close();
+        } else if (autoClose) {
+            self.close();
+        } else if (selfInitiated) {
+            // layered && non-autoclose
+            // read close_notify alert to clear input stream
+            waitForClose(false);
+        }
+    }
+
     /*
      * Closing the connection is tricky ... we can't officially close the
      * connection until we know the other end is ready to go away too,
@@ -1488,6 +1506,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         }
 
         int state = getConnectionState();
+        boolean closeSocketCalled = false;
+        Throwable cachedThrowable = null;
         try {
             switch (state) {
             /*
@@ -1528,8 +1548,18 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
                         return;  // connection was closed while we waited
                     }
                     if (state != cs_SENT_CLOSE) {
-                        warning(Alerts.alert_close_notify);
-                        connectionState = cs_SENT_CLOSE;
+                        try {
+                            warning(Alerts.alert_close_notify);
+                            connectionState = cs_SENT_CLOSE;
+                        } catch (Throwable th) {
+                            // we need to ensure socket is closed out
+                            // if we encounter any errors.
+                            connectionState = cs_ERROR;
+                            // cache this for later use
+                            cachedThrowable = th;
+                            closeSocketCalled = true;
+                            closeSocket(selfInitiated);
+                        }
                     }
                 }
                 // If state was cs_SENT_CLOSE before, we don't do the actual
@@ -1566,21 +1596,10 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
                     return;
                 }
 
-                if (self == this) {
-                    super.close();
-                } else if (autoClose) {
-                    self.close();
-                } else if (selfInitiated) {
-                    // layered && non-autoclose
-                    // read close_notify alert to clear input stream
-                    waitForClose(false);
+                if (!closeSocketCalled)  {
+                    closeSocketCalled = true;
+                    closeSocket(selfInitiated);
                 }
-
-                // See comment in changeReadCiphers()
-                readCipher.dispose();
-                writeCipher.dispose();
-
-                // state will be set to cs_CLOSED in the finally block below
 
                 break;
             }
@@ -1591,6 +1610,20 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
                                 ? cs_APP_CLOSED : cs_CLOSED;
                 // notify any threads waiting for the closing to finish
                 this.notifyAll();
+            }
+            if (closeSocketCalled) {
+                // Dispose of ciphers since we've closed socket
+                disposeCiphers();
+            }
+            if (cachedThrowable != null) {
+               /*
+                * Rethrow the error to the calling method
+                * The Throwable caught can only be an Error or RuntimeException
+                */
+                if (cachedThrowable instanceof Error)
+                    throw (Error) cachedThrowable;
+                if (cachedThrowable instanceof RuntimeException)
+                    throw (RuntimeException) cachedThrowable;
             }
         }
     }
@@ -1635,6 +1668,24 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             if (rethrow) {
                 throw e; // pass exception up
             }
+        }
+    }
+
+    /**
+     * Called by closeInternal() only. Be sure to consider the
+     * synchronization locks carefully before calling it elsewhere.
+     */
+    private void disposeCiphers() {
+        // See comment in changeReadCiphers()
+        synchronized (readLock) {
+            readCipher.dispose();
+        }
+        // See comment in changeReadCiphers()
+        writeLock.lock();
+        try {
+            writeCipher.dispose();
+        } finally {
+            writeLock.unlock();
         }
     }
 
@@ -1758,7 +1809,9 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         }
 
         int oldState = connectionState;
-        connectionState = cs_ERROR;
+        if (connectionState < cs_ERROR) {
+            connectionState = cs_ERROR;
+        }
 
         /*
          * Has there been an error received yet?  If not, remember it.
@@ -1789,13 +1842,17 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
          * Clean up our side.
          */
         closeSocket();
+        // Another thread may have disposed the ciphers during closing
+        if (connectionState < cs_CLOSED) {
+            connectionState = (oldState == cs_APP_CLOSED) ? cs_APP_CLOSED
+                                                              : cs_CLOSED;
 
-        // See comment in changeReadCiphers()
-        readCipher.dispose();
-        writeCipher.dispose();
+            // We should lock readLock and writeLock if no deadlock risks.
+            // See comment in changeReadCiphers()
+            readCipher.dispose();
+            writeCipher.dispose();
+        }
 
-        connectionState = (oldState == cs_APP_CLOSED) ? cs_APP_CLOSED
-                                                      : cs_CLOSED;
         throw closeReason;
     }
 
@@ -2170,8 +2227,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
              * change them to the corresponding default ones.
              */
             if (roleIsServer != (!flag) &&
-                    ProtocolList.isDefaultProtocolList(enabledProtocols)) {
-                enabledProtocols = ProtocolList.getDefault(!flag);
+                    sslContext.isDefaultProtocolList(enabledProtocols)) {
+                enabledProtocols = sslContext.getDefaultProtocolList(!flag);
             }
             roleIsServer = !flag;
             break;
@@ -2192,8 +2249,8 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
                  * change them to the corresponding default ones.
                  */
                 if (roleIsServer != (!flag) &&
-                        ProtocolList.isDefaultProtocolList(enabledProtocols)) {
-                    enabledProtocols = ProtocolList.getDefault(!flag);
+                        sslContext.isDefaultProtocolList(enabledProtocols)) {
+                    enabledProtocols = sslContext.getDefaultProtocolList(!flag);
                 }
                 roleIsServer = !flag;
                 connectionState = cs_START;
@@ -2230,8 +2287,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
      * @return an array of cipher suite names
      */
     public String[] getSupportedCipherSuites() {
-        CipherSuiteList.clearAvailableCache();
-        return CipherSuiteList.getSupported().toStringArray();
+        return sslContext.getSuportedCipherSuiteList().toStringArray();
     }
 
     /**
@@ -2271,7 +2327,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
      * @return an array of protocol names.
      */
     public String[] getSupportedProtocols() {
-        return ProtocolList.getSupported().toStringArray();
+        return sslContext.getSuportedProtocolList().toStringArray();
     }
 
     /**

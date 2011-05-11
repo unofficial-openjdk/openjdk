@@ -51,9 +51,10 @@ DEV_DOCS_URL-5 = http://java.sun.com/j2se/1.5.0/docs/index.html
 DEV_DOCS_URL-6 = http://download.oracle.com/javase/6/docs/index.html
 DEV_DOCS_URL-7 = http://download.oracle.com/javase/7/docs/index.html
 DEV_DOCS_URL = $(DEV_DOCS_URL-$(JDK_MINOR_VERSION))
+DOCS_BASE_URL = http://download.oracle.com/javase/7/docs
 
 # Url to Java Language Spec
-JLS3_URL = http://java.sun.com/docs/books/jls/
+#JLS3_URL = http://java.sun.com/docs/books/jls/
 
 # Common Java trademark line
 JAVA_TRADEMARK_LINE = Java is a trademark or registered trademark of \
@@ -205,7 +206,13 @@ COMMON_JAVADOCFLAGS =					\
                 -use					\
                 -keywords				\
 		$(ADDITIONAL_JAVADOCFLAGS)
-ADDITIONAL_JAVADOCFLAGS =
+
+ifdef OPENJDK
+  ADDITIONAL_JAVADOCFLAGS =				\
+                -Xdocrootparent $(DOCS_BASE_URL)
+else
+  ADDITIONAL_JAVADOCFLAGS =
+endif
 
 # Draft used for non-fcs documents
 JDK_IS_FCS = false
@@ -293,8 +300,8 @@ COREAPI_HEADER = \
 <strong>Java$(TRADEMARK)&nbsp;Platform<br>Standard&nbsp;Ed.&nbsp;$(JDK_MINOR_VERSION)</strong>
 
 # Java language specification cite
-TAG_JLS3 = jls3:a:See <cite><a href="$(JLS3_URL)"> \
-The Java Language Specification, Third Edition</a></cite>:
+TAG_JLS = jls:a:See <cite> \
+The Java&trade; Language Specification</cite>:
 
 # Overview file for core apis
 COREAPI_OVERVIEW = $(SHARE_SRC)/classes/overview-core.html
@@ -329,7 +336,7 @@ $(COREAPI_OPTIONS_FILE): $(COREAPI_OVERVIEW)
 	  $(call OptionPair,-tag,specdefault:X)				; \
 	  $(call OptionPair,-tag,Note:X)				; \
 	  $(call OptionPair,-tag,ToDo:X)				; \
-          $(call OptionPair,-tag,$(TAG_JLS3)) 				; \
+          $(call OptionPair,-tag,$(TAG_JLS)) 				; \
 	  $(call OptionOnly,-splitIndex)				; \
 	  $(call OptionPair,-overview,$(COREAPI_OVERVIEW))		; \
 	  $(call OptionPair,-doctitle,$(COREAPI_DOCTITLE))		; \
@@ -1081,6 +1088,7 @@ $(TREEAPI_OPTIONS_FILE):
 	  $(call OptionPair,-doctitle,$(TREEAPI_DOCTITLE))		; \
 	  $(call OptionPair,-windowtitle,$(TREEAPI_WINDOWTITLE) $(DRAFT_WINTITLE));\
 	  $(call OptionPair,-header,$(TREEAPI_HEADER)$(DRAFT_HEADER))	; \
+          $(call OptionPair,-tag,$(TAG_JLS)) 				; \
 	  $(call OptionPair,-bottom,$(TREEAPI_BOTTOM)$(DRAFT_BOTTOM))	; \
 	  $(call OptionTrip,-group,$(TREEAPI_GROUPNAME),$(TREEAPI_REGEXP)); \
 	  $(call OptionTrip,-linkoffline,$(TREEAPI2COREAPI),$(COREAPI_DOCSDIR)/); \
@@ -1140,56 +1148,6 @@ $(SCTPAPI_OPTIONS_FILE):
 $(SCTPAPI_PACKAGES_FILE): $(DIRECTORY_CACHE) $(call PackageDependencies,$(SCTPAPI_PKGS))
 	$(prep-target)
 	$(call PackageFilter,$(SCTPAPI_PKGS))
-
-#############################################################
-#
-# tracingdocs
-#
-
-ALL_OTHER_TARGETS += tracingdocs
-
-TRACING_DOCDIR      := $(JRE_API_DOCSDIR)/tracing
-TRACING2COREAPI     := ../$(JDKJRE2COREAPI)
-TRACING_DOCTITLE    := Java$(TRADEMARK) Platform Tracing
-TRACING_WINDOWTITLE := Platform Tracing
-TRACING_HEADER      := <strong>Platform Tracing</strong>
-TRACING_BOTTOM      := $(call CommonBottom,$(TRACING_FIRST_COPYRIGHT_YEAR))
-# TRACING_PKGS is located in NON_CORE_PKGS.gmk
-
-TRACING_INDEX_HTML    = $(TRACING_DOCDIR)/index.html
-TRACING_OPTIONS_FILE  = $(DOCSTMPDIR)/tracing.options
-TRACING_PACKAGES_FILE = $(DOCSTMPDIR)/tracing.packages
-
-tracingdocs: $(TRACING_INDEX_HTML)
-
-# Set relative location to core api document root
-$(TRACING_INDEX_HTML): GET2DOCSDIR=$(TRACING2COREAPI)/..
-
-# Run javadoc if the index file is out of date or missing
-$(TRACING_INDEX_HTML): $(TRACING_OPTIONS_FILE) $(TRACING_PACKAGES_FILE)
-	$(prep-javadoc)
-	$(call JavadocSummary,$(TRACING_OPTIONS_FILE),$(TRACING_PACKAGES_FILE))
-	$(JAVADOC_CMD) $(JAVADOC_VM_MEMORY_FLAGS) -d $(@D) \
-	  @$(TRACING_OPTIONS_FILE) @$(TRACING_PACKAGES_FILE)
-
-# Create file with javadoc options in it
-$(TRACING_OPTIONS_FILE):
-	$(prep-target)
-	@($(call OptionOnly,$(COMMON_JAVADOCFLAGS))			; \
-	  $(call OptionPair,-sourcepath,$(RELEASEDOCS_SOURCEPATH))	; \
-	  $(call OptionPair,-encoding,ascii)				; \
-	  $(call OptionOnly,-nodeprecatedlist)				; \
-	  $(call OptionPair,-doctitle,$(TRACING_DOCTITLE))		; \
-	  $(call OptionPair,-windowtitle,$(TRACING_WINDOWTITLE) $(DRAFT_WINTITLE));\
-	  $(call OptionPair,-header,$(TRACING_HEADER)$(DRAFT_HEADER))	; \
-	  $(call OptionPair,-bottom,$(TRACING_BOTTOM)$(DRAFT_BOTTOM))	; \
-	  $(call OptionTrip,-linkoffline,$(TRACING2COREAPI),$(COREAPI_DOCSDIR)/); \
-        ) >> $@
-
-# Create a file with the package names in it
-$(TRACING_PACKAGES_FILE): $(DIRECTORY_CACHE) $(call PackageDependencies,$(TRACING_PKGS))
-	$(prep-target)
-	$(call PackageFilter,$(TRACING_PKGS))
 
 #############################################################
 #
