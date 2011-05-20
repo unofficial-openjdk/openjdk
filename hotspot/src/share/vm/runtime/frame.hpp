@@ -60,6 +60,7 @@
 typedef class BytecodeInterpreter* interpreterState;
 
 class CodeBlob;
+class FrameValues;
 class vframeArray;
 
 
@@ -134,6 +135,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool is_interpreted_frame()    const;
   bool is_java_frame()           const;
   bool is_entry_frame()          const;             // Java frame called from C?
+  bool is_ricochet_frame()       const;
   bool is_native_frame()         const;
   bool is_runtime_frame()        const;
   bool is_compiled_frame()       const;
@@ -174,6 +176,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // Helper methods for better factored code in frame::sender
   frame sender_for_compiled_frame(RegisterMap* map) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
+  frame sender_for_ricochet_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
 
@@ -381,6 +384,8 @@ class frame VALUE_OBJ_CLASS_SPEC {
  private:
   const char* print_name() const;
 
+  void describe_pd(FrameValues& values, int frame_no);
+
  public:
   void print_value() const { print_value_on(tty,NULL); }
   void print_value_on(outputStream* st, JavaThread *thread) const;
@@ -388,12 +393,16 @@ class frame VALUE_OBJ_CLASS_SPEC {
   void interpreter_frame_print_on(outputStream* st) const;
   void print_on_error(outputStream* st, char* buf, int buflen, bool verbose = false) const;
 
+  // Add annotated descriptions of memory locations belonging to this frame to values
+  void describe(FrameValues& values, int frame_no);
+
   // Conversion from an VMReg to physical stack location
   oop* oopmapreg_to_location(VMReg reg, const RegisterMap* regmap) const;
 
   // Oops-do's
   void oops_compiled_arguments_do(Symbol* signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f);
   void oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool query_oop_map_cache = true);
+  void oops_ricochet_do(OopClosure* f, const RegisterMap* map);
 
  private:
   void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
@@ -472,6 +481,41 @@ class frame VALUE_OBJ_CLASS_SPEC {
 
 };
 
+#ifdef ASSERT
+// A simple class to describe a location on the stack
+class FrameValue VALUE_OBJ_CLASS_SPEC {
+ public:
+  intptr_t* location;
+  char* description;
+  int owner;
+  int priority;
+};
+
+
+// A collection of described stack values that can print a symbolic
+// description of the stack memory.  Interpreter frame values can be
+// in the caller frames so all the values are collected first and then
+// sorted before being printed.
+class FrameValues {
+ private:
+  GrowableArray<FrameValue> _values;
+
+  static int compare(FrameValue* a, FrameValue* b) {
+    if (a->location == b->location) {
+      return a->priority - b->priority;
+    }
+    return a->location - b->location;
+  }
+
+ public:
+  // Used by frame functions to describe locations.
+  void describe(int owner, intptr_t* location, const char* description, int priority = 0);
+
+  void validate();
+  void print();
+};
+
+#endif
 
 //
 // StackFrameStream iterates through the frames of a thread starting from

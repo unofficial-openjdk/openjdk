@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,33 @@ else
 SA_LFLAGS += -mt -xnolib -norunpath
 endif
 
+# The libproc Pstack_iter() interface changed in Nevada-B159.
+# Use 'uname -r -v' to determine the Solaris version as per
+# Solaris Nevada team request. This logic needs to match:
+# agent/src/os/solaris/proc/saproc.cpp: set_has_newer_Pstack_iter():
+#   - skip SunOS 4 or older
+#   - skip Solaris 10 or older
+#   - skip two digit internal Nevada builds
+#   - skip three digit internal Nevada builds thru 149
+#   - skip internal Nevada builds 150-158
+#   - if not skipped, print define for Nevada-B159 or later
+SOLARIS_11_B159_OR_LATER := \
+$(shell uname -r -v \
+    | sed -n \
+          -e '/^[0-4]\. /b' \
+          -e '/^5\.[0-9] /b' \
+          -e '/^5\.10 /b' \
+          -e '/ snv_[0-9][0-9]$/b' \
+          -e '/ snv_[01][0-4][0-9]$/b' \
+          -e '/ snv_15[0-8]$/b' \
+          -e 's/.*/-DSOLARIS_11_B159_OR_LATER/' \
+          -e 'p' \
+          )
+
+# Uncomment the following to simulate building on Nevada-B159 or later
+# when actually building on Nevada-B158 or earlier:
+#SOLARIS_11_B159_OR_LATER=-DSOLARIS_11_B159_OR_LATER
+
 $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	$(QUIETLY) if [ "$(BOOT_JAVA_HOME)" = "" ]; then \
 	  echo "ALT_BOOTDIR, BOOTDIR or JAVA_HOME needs to be defined to build SA"; \
@@ -68,6 +95,7 @@ $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	           -I$(GENERATED)                                       \
 	           -I$(BOOT_JAVA_HOME)/include                          \
 	           -I$(BOOT_JAVA_HOME)/include/$(Platform_os_family)    \
+	           $(SOLARIS_11_B159_OR_LATER)                          \
 	           $(SASRCFILES)                                        \
 	           $(SA_LFLAGS)                                         \
 	           -o $@                                                \

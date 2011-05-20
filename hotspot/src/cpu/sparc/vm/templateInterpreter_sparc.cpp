@@ -1623,6 +1623,7 @@ int AbstractInterpreter::layout_activation(methodOop method,
                                            int tempcount,
                                            int popframe_extra_args,
                                            int moncount,
+                                           int caller_actual_parameters,
                                            int callee_param_count,
                                            int callee_local_count,
                                            frame* caller,
@@ -1698,7 +1699,6 @@ int AbstractInterpreter::layout_activation(methodOop method,
                      popframe_extra_args;
 
     int local_words = method->max_locals() * Interpreter::stackElementWords;
-    int parm_words  = method->size_of_parameters() * Interpreter::stackElementWords;
     NEEDS_CLEANUP;
     intptr_t* locals;
     if (caller->is_interpreted_frame()) {
@@ -1706,6 +1706,7 @@ int AbstractInterpreter::layout_activation(methodOop method,
       intptr_t* Lesp_ptr = caller->interpreter_frame_tos_address() - 1;
       // Note that this computation means we replace size_of_parameters() values from the caller
       // interpreter frame's expression stack with our argument locals
+      int parm_words  = caller_actual_parameters * Interpreter::stackElementWords;
       locals = Lesp_ptr + parm_words;
       int delta = local_words - parm_words;
       int computed_sp_adjustment = (delta > 0) ? round_to(delta, WordsPerLong) : 0;
