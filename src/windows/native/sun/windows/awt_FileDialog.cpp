@@ -231,11 +231,12 @@ AwtFileDialog::Show(void *p)
         JavaStringBuffer directoryBuffer(env, directory);
 
         fileBuffer = new TCHAR[MAX_PATH+1];
+        memset(fileBuffer, 0, (MAX_PATH+1) * sizeof(TCHAR));
 
         file = (jstring)env->GetObjectField(target, AwtFileDialog::fileID);
         if (file != NULL) {
             LPCTSTR tmp = JNU_GetStringPlatformChars(env, file, NULL);
-            _tcscpy(fileBuffer, tmp);
+            _tcsncpy(fileBuffer, tmp, MAX_PATH-1); // the fileBuffer is double null terminated string
             JNU_ReleaseStringPlatformChars(env, file, tmp);
         } else {
             fileBuffer[0] = _T('\0');

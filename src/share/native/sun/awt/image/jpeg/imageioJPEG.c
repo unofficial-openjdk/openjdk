@@ -40,6 +40,7 @@
 #include <setjmp.h>
 #include <assert.h>
 #include <string.h>
+#include <limits.h>
 
 
 /* java native interface headers */
@@ -1921,6 +1922,14 @@ Java_com_sun_imageio_plugins_jpeg_JPEGImageReader_readImage
     }
 
     // Allocate a 1-scanline buffer
+    if (cinfo->num_components <= 0 ||
+        cinfo->image_width > (UINT_MAX / (unsigned int)cinfo->num_components))
+    {
+        RELEASE_ARRAYS(env, data, src->next_input_byte);
+        JNU_ThrowByName(env, "javax/imageio/IIOException",
+                        "Invalid number of color components");
+        return data->abortFlag;
+    }
     scanLinePtr = (JSAMPROW)malloc(cinfo->image_width*cinfo->num_components);
     if (scanLinePtr == NULL) {
         RELEASE_ARRAYS(env, data, src->next_input_byte);
