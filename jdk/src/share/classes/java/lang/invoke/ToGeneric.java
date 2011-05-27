@@ -96,7 +96,7 @@ class ToGeneric {
             ToGeneric va2 = ToGeneric.of(primsAtEnd);
             this.adapter = va2.adapter;
             if (true) throw new UnsupportedOperationException("NYI: primitive parameters must follow references; entryType = "+entryType);
-            this.entryPoint = MethodHandleImpl.convertArguments(
+            this.entryPoint = MethodHandleImpl.permuteArguments(
                     va2.entryPoint, primsAtEnd, entryType, primsAtEndOrder);
             // example: for entryType of (int,Object,Object), the reordered
             // type is (Object,Object,int) and the order is {1,2,0},
@@ -128,7 +128,7 @@ class ToGeneric {
                         assert(eptWithInts.parameterType(i) == int.class);
                         MethodType nextType = midType.changeParameterType(i, int.class);
                         rawEntryPoint = MethodHandleImpl.convertArguments(
-                                rawEntryPoint, nextType, midType, null);
+                                rawEntryPoint, nextType, midType, 0);
                         midType = nextType;
                     }
                 }
@@ -152,6 +152,10 @@ class ToGeneric {
         this.invoker = makeRawArgumentFilter(invoker0, rawEntryTypeInit, entryType);
     }
 
+    static {
+        assert(MethodHandleNatives.workaroundWithoutRicochetFrames());  // this class is deprecated
+    }
+
     /** A generic argument list will be created by a call of type 'raw'.
      *  The values need to be reboxed for to match 'cooked'.
      *  Do this on the fly.
@@ -171,7 +175,7 @@ class ToGeneric {
                             invoker.type().generic(), invoker, 0, MethodHandle.class);
                 if (filteredInvoker == null)  throw new UnsupportedOperationException("NYI");
             }
-            MethodHandle reboxer = ValueConversions.rebox(dst, false);
+            MethodHandle reboxer = ValueConversions.rebox(dst);
             filteredInvoker = FilterGeneric.makeArgumentFilter(1+i, reboxer, filteredInvoker);
             if (filteredInvoker == null)  throw new InternalError();
         }
@@ -199,13 +203,13 @@ class ToGeneric {
             assert(!rret.isPrimitive());
             if (rret == Object.class && !mustCast)
                 return null;
-            return ValueConversions.cast(tret, false);
+            return ValueConversions.cast(tret);
         } else if (tret == rret) {
-            return ValueConversions.unbox(tret, false);
+            return ValueConversions.unbox(tret);
         } else {
             assert(rret.isPrimitive());
             assert(tret == double.class ? rret == long.class : rret == int.class);
-            return ValueConversions.unboxRaw(tret, false);
+            return ValueConversions.unboxRaw(tret);
         }
     }
 
@@ -254,7 +258,7 @@ class ToGeneric {
         return toGen;
     }
 
-    public String toString() {
+    String debugString() {
         return "ToGeneric"+entryType
                 +(primsAtEndOrder!=null?"[reorder]":"");
     }
@@ -311,7 +315,7 @@ class ToGeneric {
     }
 
     static Adapter buildAdapterFromBytecodes(MethodType entryPointType) {
-        throw new UnsupportedOperationException("NYI");
+        throw new UnsupportedOperationException("NYI: "+entryPointType);
     }
 
     /**
@@ -336,7 +340,7 @@ class ToGeneric {
         protected final MethodHandle convert;  // Object -> R
 
         @Override
-        public String toString() {
+        String debugString() {
             return target == null ? "prototype:"+convert : addTypeString(target, this);
         }
 

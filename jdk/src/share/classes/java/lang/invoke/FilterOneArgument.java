@@ -41,7 +41,7 @@ class FilterOneArgument extends BoundMethodHandle {
     protected final MethodHandle target;  // Object -> Object
 
     @Override
-    public String toString() {
+    String debugString() {
         return target.toString();
     }
 
@@ -65,6 +65,10 @@ class FilterOneArgument extends BoundMethodHandle {
         super(INVOKE);
         this.filter = filter;
         this.target = target;
+    }
+
+    static {
+        assert(MethodHandleNatives.workaroundWithoutRicochetFrames());  // this class is deprecated
     }
 
     public static MethodHandle make(MethodHandle filter, MethodHandle target) {

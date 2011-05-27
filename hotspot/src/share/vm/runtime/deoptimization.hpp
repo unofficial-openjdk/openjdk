@@ -56,6 +56,7 @@ class Deoptimization : AllStatic {
     Reason_div0_check,            // a null_check due to division by zero
     Reason_age,                   // nmethod too old; tier threshold reached
     Reason_predicate,             // compiler generated predicate failed
+    Reason_loop_limit_check,      // compiler generated loop limits check failed
     Reason_LIMIT,
     // Note:  Keep this enum in sync. with _trap_reason_name.
     Reason_RECORDED_LIMIT = Reason_bimorphic  // some are not recorded per bc
@@ -78,7 +79,7 @@ class Deoptimization : AllStatic {
 
   enum {
     _action_bits = 3,
-    _reason_bits = 4,
+    _reason_bits = 5,
     _action_shift = 0,
     _reason_shift = _action_shift+_action_bits,
     BC_CASE_LIMIT = PRODUCT_ONLY(1) NOT_PRODUCT(4) // for _deoptimization_hist
@@ -137,6 +138,9 @@ class Deoptimization : AllStatic {
     intptr_t* _register_block;            // Block for storing callee-saved registers.
     BasicType _return_type;               // Tells if we have to restore double or long return value
     intptr_t  _initial_fp;                // FP of the sender frame
+    int       _caller_actual_parameters;  // The number of actual arguments at the
+                                          // interpreted caller of the deoptimized frame
+
     // The following fields are used as temps during the unpacking phase
     // (which is tight on registers, especially on x86). They really ought
     // to be PD variables but that involves moving this class into its own
@@ -148,6 +152,7 @@ class Deoptimization : AllStatic {
     // Constructor
     UnrollBlock(int  size_of_deoptimized_frame,
                 int  caller_adjustment,
+                int  caller_actual_parameters,
                 int  number_of_frames,
                 intptr_t* frame_sizes,
                 address* frames_pcs,
@@ -166,6 +171,8 @@ class Deoptimization : AllStatic {
     int size_of_frames() const;
 
     void set_initial_fp(intptr_t fp) { _initial_fp = fp; }
+
+    int caller_actual_parameters() const { return _caller_actual_parameters; }
 
     // Accessors used by the code generator for the unpack stub.
     static int size_of_deoptimized_frame_offset_in_bytes() { return offset_of(UnrollBlock, _size_of_deoptimized_frame); }

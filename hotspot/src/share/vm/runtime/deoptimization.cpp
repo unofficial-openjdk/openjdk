@@ -90,12 +90,14 @@ bool DeoptimizationMarker::_is_active = false;
 
 Deoptimization::UnrollBlock::UnrollBlock(int  size_of_deoptimized_frame,
                                          int  caller_adjustment,
+                                         int  caller_actual_parameters,
                                          int  number_of_frames,
                                          intptr_t* frame_sizes,
                                          address* frame_pcs,
                                          BasicType return_type) {
   _size_of_deoptimized_frame = size_of_deoptimized_frame;
   _caller_adjustment         = caller_adjustment;
+  _caller_actual_parameters  = caller_actual_parameters;
   _number_of_frames          = number_of_frames;
   _frame_sizes               = frame_sizes;
   _frame_pcs                 = frame_pcs;
@@ -188,6 +190,10 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // Set the deoptee nmethod
   assert(thread->deopt_nmethod() == NULL, "Pending deopt!");
   thread->set_deopt_nmethod(deoptee.cb()->as_nmethod_or_null());
+
+  if (VerifyStack) {
+    thread->validate_frame_layout();
+  }
 
   // Create a growable array of VFrames where each VFrame represents an inlined
   // Java frame.  This storage is allocated with the usual system arena.
@@ -369,6 +375,28 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     popframe_extra_args = in_words(thread->popframe_preserved_args_size_in_words());
   }
 
+  // Find the current pc for sender of the deoptee. Since the sender may have been deoptimized
+  // itself since the deoptee vframeArray was created we must get a fresh value of the pc rather
+  // than simply use array->sender.pc(). This requires us to walk the current set of frames
+  //
+  frame deopt_sender = stub_frame.sender(&dummy_map); // First is the deoptee frame
+  deopt_sender = deopt_sender.sender(&dummy_map);     // Now deoptee caller
+
+  // It's possible that the number of paramters at the call site is
+  // different than number of arguments in the callee when method
+  // handles are used.  If the caller is interpreted get the real
+  // value so that the proper amount of space can be added to it's
+  // frame.
+  int caller_actual_parameters = callee_parameters;
+  if (deopt_sender.is_interpreted_frame()) {
+    methodHandle method = deopt_sender.interpreter_frame_method();
+    Bytecode_invoke cur = Bytecode_invoke_check(method,
+                                                deopt_sender.interpreter_frame_bci());
+    Symbol* signature = method->constants()->signature_ref_at(cur.index());
+    ArgumentSizeComputer asc(signature);
+    caller_actual_parameters = asc.size() + (cur.has_receiver() ? 1 : 0);
+  }
+
   //
   // frame_sizes/frame_pcs[0] oldest frame (int or c2i)
   // frame_sizes/frame_pcs[1] next oldest frame (int)
@@ -387,7 +415,13 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     // frame[number_of_frames - 1 ] = on_stack_size(youngest)
     // frame[number_of_frames - 2 ] = on_stack_size(sender(youngest))
     // frame[number_of_frames - 3 ] = on_stack_size(sender(sender(youngest)))
-    frame_sizes[number_of_frames - 1 - index] = BytesPerWord * array->element(index)->on_stack_size(callee_parameters,
+    int caller_parms = callee_parameters;
+    if (index == array->frames() - 1) {
+      // Use the value from the interpreted caller
+      caller_parms = caller_actual_parameters;
+    }
+    frame_sizes[number_of_frames - 1 - index] = BytesPerWord * array->element(index)->on_stack_size(caller_parms,
+                                                                                                    callee_parameters,
                                                                                                     callee_locals,
                                                                                                     index == 0,
                                                                                                     popframe_extra_args);
@@ -414,13 +448,6 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // Compute information for handling adapters and adjusting the frame size of the caller.
   int caller_adjustment = 0;
 
-  // Find the current pc for sender of the deoptee. Since the sender may have been deoptimized
-  // itself since the deoptee vframeArray was created we must get a fresh value of the pc rather
-  // than simply use array->sender.pc(). This requires us to walk the current set of frames
-  //
-  frame deopt_sender = stub_frame.sender(&dummy_map); // First is the deoptee frame
-  deopt_sender = deopt_sender.sender(&dummy_map);     // Now deoptee caller
-
   // Compute the amount the oldest interpreter frame will have to adjust
   // its caller's stack by. If the caller is a compiled frame then
   // we pretend that the callee has no parameters so that the
@@ -435,13 +462,12 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   if (deopt_sender.is_compiled_frame()) {
     caller_adjustment = last_frame_adjust(0, callee_locals);
-  } else if (callee_locals > callee_parameters) {
+  } else if (callee_locals > caller_actual_parameters) {
     // The caller frame may need extending to accommodate
     // non-parameter locals of the first unpacked interpreted frame.
     // Compute that adjustment.
-    caller_adjustment = last_frame_adjust(callee_parameters, callee_locals);
+    caller_adjustment = last_frame_adjust(caller_actual_parameters, callee_locals);
   }
-
 
   // If the sender is deoptimized the we must retrieve the address of the handler
   // since the frame will "magically" show the original pc before the deopt
@@ -455,6 +481,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   UnrollBlock* info = new UnrollBlock(array->frame_size() * BytesPerWord,
                                       caller_adjustment * BytesPerWord,
+                                      caller_actual_parameters,
                                       number_of_frames,
                                       frame_sizes,
                                       frame_pcs,
@@ -552,7 +579,7 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
   UnrollBlock* info = array->unroll_block();
 
   // Unpack the interpreter frames and any adapter frame (c2 only) we might create.
-  array->unpack_to_stack(stub_frame, exec_mode);
+  array->unpack_to_stack(stub_frame, exec_mode, info->caller_actual_parameters());
 
   BasicType bt = info->return_type();
 
@@ -568,6 +595,8 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
 #ifndef PRODUCT
   if (VerifyStack) {
     ResourceMark res_mark;
+
+    thread->validate_frame_layout();
 
     // Verify that the just-unpacked frames match the interpreter's
     // notions of expression stack and locals
@@ -1753,7 +1782,8 @@ const char* Deoptimization::_trap_reason_name[Reason_LIMIT] = {
   "constraint",
   "div0_check",
   "age",
-  "predicate"
+  "predicate",
+  "loop_limit_check"
 };
 const char* Deoptimization::_trap_action_name[Action_LIMIT] = {
   // Note:  Keep this in sync. with enum DeoptAction.
