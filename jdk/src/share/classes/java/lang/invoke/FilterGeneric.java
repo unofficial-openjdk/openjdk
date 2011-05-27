@@ -61,6 +61,10 @@ class FilterGeneric {
         return ad;
     }
 
+    static {
+        assert(MethodHandleNatives.workaroundWithoutRicochetFrames());  // this class is deprecated
+    }
+
     Adapter makeInstance(Kind kind, int pos, MethodHandle filter, MethodHandle target) {
         Adapter ad = getAdapter(kind, pos);
         return ad.makeInstance(ad.prototypeEntryPoint(), filter, target);
@@ -230,7 +234,7 @@ class FilterGeneric {
         protected final MethodHandle target; // ultimate target
 
         @Override
-        public String toString() {
+        String debugString() {
             return addTypeString(target, this);
         }
 
