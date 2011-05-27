@@ -66,6 +66,10 @@ class SpreadGeneric {
         this.entryPoint = ep[0];
     }
 
+    static {
+        assert(MethodHandleNatives.workaroundWithoutRicochetFrames());  // this class is deprecated
+    }
+
     /** From targetType remove the last spreadCount arguments, and instead
      *  append a simple Object argument.
      */
@@ -122,7 +126,7 @@ class SpreadGeneric {
         return spreadGen;
     }
 
-    public String toString() {
+    String debugString() {
         return getClass().getSimpleName()+targetType+"["+spreadCount+"]";
     }
 
@@ -220,7 +224,7 @@ class SpreadGeneric {
         protected final MethodHandle target;   // (any**N) => R
 
         @Override
-        public String toString() {
+        String debugString() {
             return addTypeString(target, this);
         }
 

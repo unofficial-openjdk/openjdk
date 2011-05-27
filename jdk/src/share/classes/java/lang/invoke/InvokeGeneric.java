@@ -29,12 +29,12 @@ import sun.invoke.util.*;
 import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
 
 /**
- * Adapters which manage MethodHandle.invokeGeneric calls.
+ * Adapters which manage inexact MethodHandle.invoke calls.
  * The JVM calls one of these when the exact type match fails.
  * @author jrose
  */
 class InvokeGeneric {
-    // erased type for the call, which originates from an invokeGeneric site
+    // erased type for the call, which originates from an inexact invoke site
     private final MethodType erasedCallerType;
     // an invoker of type (MT, MH; A...) -> R
     private final MethodHandle initialInvoker;
@@ -56,7 +56,7 @@ class InvokeGeneric {
     }
 
     /** Return the adapter information for this type's erasure. */
-    /*non-public*/ static MethodHandle genericInvokerOf(MethodType erasedCallerType) throws ReflectiveOperationException {
+    /*non-public*/ static MethodHandle generalInvokerOf(MethodType erasedCallerType) throws ReflectiveOperationException {
         InvokeGeneric gen = new InvokeGeneric(erasedCallerType);
         return gen.initialInvoker;
     }
@@ -129,20 +129,17 @@ class InvokeGeneric {
         if (needType == erasedCallerType.returnType())
             return false;  // no conversions possible, since must be primitive or Object
         Class<?> haveType = target.type().returnType();
-        if (VerifyType.isNullConversion(haveType, needType))
+        if (VerifyType.isNullConversion(haveType, needType) && !needType.isInterface())
             return false;
         return true;
     }
-    private MethodHandle addReturnConversion(MethodHandle target, Class<?> type) {
-        if (true) throw new RuntimeException("NYI");
+    private MethodHandle addReturnConversion(MethodHandle finisher, Class<?> type) {
         // FIXME: This is slow because it creates a closure node on every call that requires a return cast.
-        MethodType targetType = target.type();
+        MethodType finisherType = finisher.type();
         MethodHandle caster = ValueConversions.identity(type);
-        caster = caster.asType(MethodType.methodType(type, targetType.returnType()));
-        // Drop irrelevant arguments, because we only care about the return value:
-        caster = MethodHandles.dropArguments(caster, 1, targetType.parameterList());
-        MethodHandle result = MethodHandles.foldArguments(caster, target);
-        return result.asType(target.type());
+        caster = caster.asType(caster.type().changeParameterType(0, finisherType.returnType()));
+        finisher = MethodHandles.filterReturnValue(finisher, caster);
+        return finisher.asType(finisherType);
     }
 
     public String toString() {
