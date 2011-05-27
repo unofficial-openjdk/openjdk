@@ -2887,11 +2887,12 @@ public abstract class Component implements ImageObserver, MenuContainer,
     /**
      * Invalidates this component and its ancestors.
      * <p>
-     * All the ancestors of this component up to the nearest validate root are
-     * marked invalid also. If there is no a validate root container for this
-     * component, all of its ancestors up to the root of the hierarchy are
-     * marked invalid as well. Marking a container <i>invalid</i> indicates
-     * that the container needs to be laid out.
+     * By default, all the ancestors of the component up to the top-most
+     * container of the hierarchy are marked invalid. If the {@code
+     * java.awt.smartInvalidate} system property is set to {@code true},
+     * invalidation stops on the nearest validate root of this component.
+     * Marking a container <i>invalid</i> indicates that the container needs to
+     * be laid out.
      * <p>
      * This method is called automatically when any layout-related information
      * changes (e.g. setting the bounds of the component, or adding the
@@ -2941,6 +2942,46 @@ public abstract class Component implements ImageObserver, MenuContainer,
     final void invalidateIfValid() {
         if (isValid()) {
             invalidate();
+        }
+    }
+
+    /**
+     * Revalidates the component hierarchy up to the nearest validate root.
+     * <p>
+     * This method first invalidates the component hierarchy starting from this
+     * component up to the nearest validate root. Afterwards, the component
+     * hierarchy is validated starting from the nearest validate root.
+     * <p>
+     * This is a convenience method supposed to help application developers
+     * avoid looking for validate roots manually. Basically, it's equivalent to
+     * first calling the {@link #invalidate()} method on this component, and
+     * then calling the {@link #validate()} method on the nearest validate
+     * root.
+     *
+     * @see Container#isValidateRoot
+     * @since 1.7
+     */
+    public void revalidate() {
+        synchronized (getTreeLock()) {
+            invalidate();
+
+            Container root = getContainer();
+            if (root == null) {
+                // There's no parents. Just validate itself.
+                validate();
+            } else {
+                while (!root.isValidateRoot()) {
+                    if (root.getContainer() == null) {
+                        // If there's no validate roots, we'll validate the
+                        // topmost container
+                        break;
+                    }
+
+                    root = root.getContainer();
+                }
+
+                root.validate();
+            }
         }
     }
 

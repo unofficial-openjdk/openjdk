@@ -35,6 +35,8 @@ package java.lang.invoke;
 
     private MethodHandleStatics() { }  // do not instantiate
 
+    static final boolean DEBUG_METHOD_HANDLE_NAMES = Boolean.getBoolean("java.lang.invoke.MethodHandle.DEBUG_NAMES");
+
     /*non-public*/ static String getNameString(MethodHandle target, MethodType type) {
         if (type == null)
             type = target.type();
@@ -63,8 +65,17 @@ package java.lang.invoke;
     }
 
     static void checkSpreadArgument(Object av, int n) {
-        if (av == null ? n != 0 : ((Object[])av).length != n)
-            throw newIllegalArgumentException("Array is not of length "+n);
+        if (av == null) {
+            if (n == 0)  return;
+        } else if (av instanceof Object[]) {
+            int len = ((Object[])av).length;
+            if (len == n)  return;
+        } else {
+            int len = java.lang.reflect.Array.getLength(av);
+            if (len == n)  return;
+        }
+        // fall through to error:
+        throw newIllegalArgumentException("Array is not of length "+n);
     }
 
     // handy shared exception makers (they simplify the common case code)
@@ -80,6 +91,9 @@ package java.lang.invoke;
     /*non-public*/ static RuntimeException newIllegalArgumentException(String message, Object obj) {
         return new IllegalArgumentException(message(message, obj));
     }
+    /*non-public*/ static RuntimeException newIllegalArgumentException(String message, Object obj, Object obj2) {
+        return new IllegalArgumentException(message(message, obj, obj2));
+    }
     /*non-public*/ static Error uncaughtException(Exception ex) {
         Error err = new InternalError("uncaught exception");
         err.initCause(ex);
@@ -87,6 +101,10 @@ package java.lang.invoke;
     }
     private static String message(String message, Object obj) {
         if (obj != null)  message = message + ": " + obj;
+        return message;
+    }
+    private static String message(String message, Object obj, Object obj2) {
+        if (obj != null || obj2 != null)  message = message + ": " + obj + ", " + obj2;
         return message;
     }
 }
