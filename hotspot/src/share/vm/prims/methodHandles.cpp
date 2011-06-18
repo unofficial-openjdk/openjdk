@@ -160,8 +160,7 @@ const char*        MethodHandles::_entry_names[_EK_LIMIT+1] = {
 };
 
 // Adapters.
-MethodHandlesAdapterBlob* MethodHandles::_adapter_code      = NULL;
-int                       MethodHandles::_adapter_code_size = StubRoutines::method_handles_adapters_code_size;
+MethodHandlesAdapterBlob* MethodHandles::_adapter_code = NULL;
 
 jobject MethodHandles::_raise_exception_method;
 
@@ -200,9 +199,9 @@ void MethodHandles::generate_adapters() {
 
   ResourceMark rm;
   TraceTime timer("MethodHandles adapters generation", TraceStartupTime);
-  _adapter_code = MethodHandlesAdapterBlob::create(_adapter_code_size);
+  _adapter_code = MethodHandlesAdapterBlob::create(adapter_code_size);
   if (_adapter_code == NULL)
-    vm_exit_out_of_memory(_adapter_code_size, "CodeCache: no room for MethodHandles adapters");
+    vm_exit_out_of_memory(adapter_code_size, "CodeCache: no room for MethodHandles adapters");
   CodeBuffer code(_adapter_code);
   MethodHandlesAdapterGenerator g(&code);
   g.generate();
@@ -1721,6 +1720,7 @@ void MethodHandles::init_BoundMethodHandle_with_receiver(Handle mh,
 
 void MethodHandles::verify_BoundMethodHandle(Handle mh, Handle target, int argnum,
                                              bool direct_to_method, TRAPS) {
+  ResourceMark rm;
   Handle ptype_handle(THREAD,
                            java_lang_invoke_MethodType::ptype(java_lang_invoke_MethodHandle::type(target()), argnum));
   KlassHandle ptype_klass;
@@ -1884,6 +1884,7 @@ static void throw_InternalError_for_bad_conversion(int conversion, const char* e
 }
 
 void MethodHandles::verify_AdapterMethodHandle(Handle mh, int argnum, TRAPS) {
+  ResourceMark rm;
   jint conversion = java_lang_invoke_AdapterMethodHandle::conversion(mh());
   int  argslot    = java_lang_invoke_AdapterMethodHandle::vmargslot(mh());
 
@@ -1976,52 +1977,77 @@ void MethodHandles::verify_AdapterMethodHandle(Handle mh, int argnum, TRAPS) {
       }
       break;
     case _adapter_swap_args:
-    case _adapter_rot_args:
       {
-        if (!src || src != dest) {
+        if (!src || !dest) {
           err = "adapter requires src/dest conversion subfields for swap"; break;
         }
-        int swap_size = type2size[src];
+        int src_size  = type2size[src];
+        if (src_size != type2size[dest]) {
+          err = "adapter requires equal sizes for src/dest"; break;
+        }
         int src_slot   = argslot;
         int dest_slot  = vminfo;
-        bool rotate_up = (src_slot > dest_slot); // upward rotation
         int src_arg    = argnum;
-        int dest_arg   = argument_slot_to_argnum(dst_mtype(), dest_slot);
+        int dest_arg   = argument_slot_to_argnum(src_mtype(), dest_slot);
         verify_vmargslot(mh, dest_arg, dest_slot, CHECK);
-        if (!(dest_slot >= src_slot + swap_size) &&
-            !(src_slot >= dest_slot + swap_size)) {
-          err = "source, destination slots must be distinct";
-        } else if (ek == _adapter_swap_args && !(src_slot > dest_slot)) {
-          err = "source of swap must be deeper in stack";
-        } else if (ek == _adapter_swap_args) {
-          err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), dest_arg),
-                                           java_lang_invoke_MethodType::ptype(dst_mtype(), src_arg),
-                                           dest_arg);
-        } else if (ek == _adapter_rot_args) {
-          if (rotate_up) {
-            assert((src_slot > dest_slot) && (src_arg < dest_arg), "");
-            // rotate up: [dest_slot..src_slot-ss] --> [dest_slot+ss..src_slot]
-            // that is:   [src_arg+1..dest_arg] --> [src_arg..dest_arg-1]
-            for (int i = src_arg+1; i <= dest_arg && err == NULL; i++) {
-              err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), i),
-                                               java_lang_invoke_MethodType::ptype(dst_mtype(), i-1),
-                                               i);
-            }
-          } else { // rotate down
-            assert((src_slot < dest_slot) && (src_arg > dest_arg), "");
-            // rotate down: [src_slot+ss..dest_slot] --> [src_slot..dest_slot-ss]
-            // that is:     [dest_arg..src_arg-1] --> [dst_arg+1..src_arg]
-            for (int i = dest_arg; i <= src_arg-1 && err == NULL; i++) {
-              err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), i),
-                                               java_lang_invoke_MethodType::ptype(dst_mtype(), i+1),
-                                               i);
-            }
-          }
+        if (!(dest_slot >= src_slot + src_size) &&
+            !(src_slot >= dest_slot + src_size)) {
+          err = "source, destination slots must be distinct"; break;
+        } else if (!(src_slot > dest_slot)) {
+          err = "source of swap must be deeper in stack"; break;
         }
+        err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), dest_arg),
+                                         java_lang_invoke_MethodType::ptype(dst_mtype(), src_arg),
+                                         dest_arg);
         if (err == NULL)
           err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), src_arg),
                                            java_lang_invoke_MethodType::ptype(dst_mtype(), dest_arg),
                                            src_arg);
+        break;
+      }
+    case _adapter_rot_args:
+      {
+        if (!src || !dest) {
+          err = "adapter requires src/dest conversion subfields for rotate"; break;
+        }
+        int src_slot   = argslot;
+        int limit_raw  = vminfo;
+        bool rot_down  = (src_slot < limit_raw);
+        int limit_bias = (rot_down ? MethodHandles::OP_ROT_ARGS_DOWN_LIMIT_BIAS : 0);
+        int limit_slot = limit_raw - limit_bias;
+        int src_arg    = argnum;
+        int limit_arg  = argument_slot_to_argnum(src_mtype(), limit_slot);
+        verify_vmargslot(mh, limit_arg, limit_slot, CHECK);
+        if (src_slot == limit_slot) {
+          err = "source, destination slots must be distinct"; break;
+        }
+        if (!rot_down) {  // rotate slots up == shift arguments left
+          // limit_slot is an inclusive lower limit
+          assert((src_slot > limit_slot) && (src_arg < limit_arg), "");
+          // rotate up: [limit_slot..src_slot-ss] --> [limit_slot+ss..src_slot]
+          // that is:   [src_arg+1..limit_arg] --> [src_arg..limit_arg-1]
+          for (int i = src_arg+1; i <= limit_arg && err == NULL; i++) {
+            err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), i),
+                                             java_lang_invoke_MethodType::ptype(dst_mtype(), i-1),
+                                             i);
+          }
+        } else { // rotate slots down == shfit arguments right
+          // limit_slot is an exclusive upper limit
+          assert((src_slot < limit_slot - limit_bias) && (src_arg > limit_arg + limit_bias), "");
+          // rotate down: [src_slot+ss..limit_slot) --> [src_slot..limit_slot-ss)
+          // that is:     (limit_arg..src_arg-1] --> (dst_arg+1..src_arg]
+          for (int i = limit_arg+1; i <= src_arg-1 && err == NULL; i++) {
+            err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), i),
+                                             java_lang_invoke_MethodType::ptype(dst_mtype(), i+1),
+                                             i);
+          }
+        }
+        if (err == NULL) {
+          int dest_arg = (rot_down ? limit_arg+1 : limit_arg);
+          err = check_argument_type_change(java_lang_invoke_MethodType::ptype(src_mtype(), src_arg),
+                                           java_lang_invoke_MethodType::ptype(dst_mtype(), dest_arg),
+                                           src_arg);
+        }
       }
       break;
     case _adapter_spread_args:
@@ -2563,7 +2589,7 @@ void MethodHandles::init_AdapterMethodHandle(Handle mh, Handle target, int argnu
   }
 
   if (err != NULL) {
-    throw_InternalError_for_bad_conversion(conversion, err, THREAD);
+    throw_InternalError_for_bad_conversion(conversion, err_msg("%s: conv_op %d ek_opt %d", err, conv_op, ek_opt), THREAD);
     return;
   }
 
@@ -2809,6 +2835,8 @@ JVM_ENTRY(jint, MHN_getConstant(JNIEnv *env, jobject igcls, jint which)) {
     return MethodHandles::stack_move_unit();
   case MethodHandles::GC_CONV_OP_IMPLEMENTED_MASK:
     return MethodHandles::adapter_conversion_ops_supported_mask();
+  case MethodHandles::GC_OP_ROT_ARGS_DOWN_LIMIT_BIAS:
+    return MethodHandles::OP_ROT_ARGS_DOWN_LIMIT_BIAS;
   }
   return 0;
 }
@@ -2820,6 +2848,8 @@ JVM_END
   /* template(MethodHandles,GC_JVM_PUSH_LIMIT) */  \
   /* hold back this one until JDK stabilizes */ \
   /* template(MethodHandles,GC_JVM_STACK_MOVE_UNIT) */ \
+  /* hold back this one until JDK stabilizes */ \
+  /* template(MethodHandles,GC_OP_ROT_ARGS_DOWN_LIMIT_BIAS) */ \
     template(MethodHandles,ETF_HANDLE_OR_METHOD_NAME) \
     template(MethodHandles,ETF_DIRECT_HANDLE) \
     template(MethodHandles,ETF_METHOD_NAME) \

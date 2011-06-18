@@ -178,6 +178,12 @@ static const char* adapter_op_to_string(int op) {
   return "unknown_op";
 }
 
+void MethodHandleChain::print(oopDesc* m) {
+  HandleMark hm;
+  ResourceMark rm;
+  Handle mh(m);
+  print(mh);
+}
 
 void MethodHandleChain::print(Handle mh) {
   EXCEPTION_MARK;
@@ -230,8 +236,12 @@ void MethodHandleChain::print_impl(TRAPS) {
         case java_lang_invoke_AdapterMethodHandle::OP_CHECK_CAST:
         case java_lang_invoke_AdapterMethodHandle::OP_PRIM_TO_PRIM:
         case java_lang_invoke_AdapterMethodHandle::OP_REF_TO_PRIM:
-        case java_lang_invoke_AdapterMethodHandle::OP_PRIM_TO_REF:
           break;
+
+        case java_lang_invoke_AdapterMethodHandle::OP_PRIM_TO_REF: {
+          tty->print(" src_type = %s", type2name(chain.adapter_conversion_src_type()));
+          break;
+        }
 
         case java_lang_invoke_AdapterMethodHandle::OP_SWAP_ARGS:
         case java_lang_invoke_AdapterMethodHandle::OP_ROT_ARGS: {
@@ -414,8 +424,7 @@ MethodHandleWalker::walk(TRAPS) {
         assert(dest == T_OBJECT, "");
         ArgToken arg = _outgoing.at(arg_slot);
         assert(dest == arg.basic_type(), "");
-        ArgToken new_arg = make_conversion(T_OBJECT, dest_klass, Bytecodes::_checkcast, arg, CHECK_(empty));
-        assert(!arg.has_index() || arg.index() == new_arg.index(), "should be the same index");
+        arg = make_conversion(T_OBJECT, dest_klass, Bytecodes::_checkcast, arg, CHECK_(empty));
         debug_only(dest_klass = (klassOop)badOop);
         break;
       }
@@ -498,25 +507,28 @@ MethodHandleWalker::walk(TRAPS) {
       }
 
       case java_lang_invoke_AdapterMethodHandle::OP_ROT_ARGS: {
-        int dest_arg_slot = chain().adapter_conversion_vminfo();
-        if (!has_argument(dest_arg_slot) || arg_slot == dest_arg_slot) {
+        int limit_raw  = chain().adapter_conversion_vminfo();
+        bool rot_down  = (arg_slot < limit_raw);
+        int limit_bias = (rot_down ? MethodHandles::OP_ROT_ARGS_DOWN_LIMIT_BIAS : 0);
+        int limit_slot = limit_raw - limit_bias;
+        if ((uint)limit_slot > (uint)_outgoing.length()) {
           lose("bad rotate index", CHECK_(empty));
         }
         // Rotate the source argument (plus following N slots) into the
         // position occupied by the dest argument (plus following N slots).
         int rotate_count = type2size[chain().adapter_conversion_src_type()];
         // (no other rotate counts are currently supported)
-        if (arg_slot < dest_arg_slot) {
+        if (rot_down) {
           for (int i = 0; i < rotate_count; i++) {
             ArgToken temp = _outgoing.at(arg_slot);
             _outgoing.remove_at(arg_slot);
-            _outgoing.insert_before(dest_arg_slot + rotate_count - 1, temp);
+            _outgoing.insert_before(limit_slot - 1, temp);
           }
-        } else { // arg_slot > dest_arg_slot
+        } else { // arg_slot > limit_slot => rotate_up
           for (int i = 0; i < rotate_count; i++) {
             ArgToken temp = _outgoing.at(arg_slot + rotate_count - 1);
             _outgoing.remove_at(arg_slot + rotate_count - 1);
-            _outgoing.insert_before(dest_arg_slot, temp);
+            _outgoing.insert_before(limit_slot, temp);
           }
         }
         assert(_outgoing_argc == argument_count_slow(), "empty slots under control");
@@ -1248,8 +1260,9 @@ MethodHandleCompiler::make_conversion(BasicType type, klassOop tk, Bytecodes::Co
       index = src.index();
     }
     emit_bc(op, cpool_klass_put(tk));
-    if (index == -1)
-      index = new_local_index(type);
+    // Allocate a new local for the type so that we don't hide the
+    // previous type from the verifier.
+    index = new_local_index(type);
     emit_store(srctype, index);
     break;
 
@@ -1410,8 +1423,9 @@ MethodHandleCompiler::make_invoke(methodOop m, vmIntrinsics::ID iid,
     case T_DOUBLE: emit_bc(Bytecodes::_dreturn); break;
     case T_VOID:   emit_bc(Bytecodes::_return);  break;
     case T_OBJECT:
-      if (_rklass.not_null() && _rklass() != SystemDictionary::Object_klass())
+      if (_rklass.not_null() && _rklass() != SystemDictionary::Object_klass() && !Klass::cast(_rklass())->is_interface()) {
         emit_bc(Bytecodes::_checkcast, cpool_klass_put(_rklass()));
+      }
       emit_bc(Bytecodes::_areturn);
       break;
     default: ShouldNotReachHere();
