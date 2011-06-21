@@ -27,6 +27,7 @@ package com.sun.script.javascript;
 
 import sun.org.mozilla.javascript.internal.*;
 import javax.script.*;
+import java.security.AccessControlContext;
 
 /**
  * This class serves as top level scope for Rhino. This class adds
@@ -38,9 +39,11 @@ import javax.script.*;
  */
 public final class RhinoTopLevel extends ImporterTopLevel {
     RhinoTopLevel(Context cx, RhinoScriptEngine engine) {
-        super(cx);
+        // second boolean parameter to super constructor tells whether
+        // to seal standard JavaScript objects or not. If security manager
+        // is present, we seal the standard objects.
+        super(cx, System.getSecurityManager() != null);
         this.engine = engine;
-
 
         // initialize JSAdapter lazily. Reduces footprint & startup time.
         new LazilyLoadedCtor(this, "JSAdapter",
@@ -150,6 +153,10 @@ public final class RhinoTopLevel extends ImporterTopLevel {
 
     RhinoScriptEngine getScriptEngine() {
         return engine;
+    }
+
+    AccessControlContext getAccessContext() {
+        return engine.getAccessContext();
     }
 
     private RhinoScriptEngine engine;
