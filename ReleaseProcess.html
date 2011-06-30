@@ -1,0 +1,129 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+    <title>OpenJDK6 Release Process</title>
+
+    <body>
+        <h1>OpenJDK6 Release Process</h1>
+
+        <p>
+            Project page:
+            <a href="http://openjdk.java.net/projects/jdk6/">
+                http://openjdk.java.net/projects/jdk6/</a>
+        </p>
+
+        <h2>Acknowledgements</h2>
+
+        <p>
+            Much of this information comes from Joe Darcy's informal notes
+            with edits from Lana Steuck.
+        </p>
+
+        <h2>Sources</h2>
+
+        <p>
+            Sources are kept in Mercurial repositories at:
+            <a href="http://hg.openjdk.java.net/jdk6/jdk6">
+                http://hg.openjdk.java.net/jdk6/jdk6</a>.
+            Mercurial tags are used to mark the state of each repository with a
+            name <b>jdk6-b<i>NN</i></b> where <b><i>NN</i></b> is a 2 or 3
+            digit build number.
+            <br>
+            Once the process is final, source bundles will be made available
+            at <a href="http://download.java.net/openjdk/jdk6/">
+                http://download.java.net/openjdk/jdk6/
+            </a>
+
+        </p>
+
+        <h2>Release Steps</h2>
+
+        <p>
+            The following steps represent the current process that should be
+            followed prior to tagging the repositories.
+            <br>
+            <b>NOTE:</b> Some steps may be done in parallel.
+        </p>
+        <ol>
+            <li>
+                Send out email to "jdk6-dev at openjdk.java.net"
+                requesting any additional changes for this release
+                and announcing the start of the release process.
+            </li>
+            <li>
+                Perform full build and test on Linux, e.g. <tt>make all &amp;&amp; make test</tt>.
+                <br>
+                Resolve test failures and repeat as necessary.
+            </li>
+            <li>
+                <i>Recommended:</i> Perform same full build and test for all
+                supported platforms and architectures.
+                Leverage any available Build and Test systems.
+            </li>
+            <li>
+                <i>Recommended:</i> Run TCK tests.
+                Posting results is limited to saying:
+                "all the tests pass so the build in question is Java(TM) compatible."
+            </li>
+            <li>
+                Request that formal builds be done by Oracle Release
+                Engineering as a verification, but also to have the
+                official source bundles created and posted.
+            </li>
+            <li>
+                Tag all the OpenJDK6 repositories and push those changesets
+                into the public repositories as soon as the source bundles
+                from Release Engineering are publicly posted.
+                The tags can be created with the following command:
+                <blockquote>
+                    <tt>sh ./make/scripts/hgforest.sh tag -f jdk6-b<i>NN</i></tt>
+                </blockquote>
+            </li>
+            <li>
+                Generate a Change Summary page.
+            </li>
+            <li>
+                Send out official email
+                to "jdk6-dev at openjdk.java.net"
+                on this OpenJDK6 release, including test results,
+                source bundle location, and the Change Summary page.
+            </li>
+            <li>
+                Post a blog entry
+                summarizing all release information.
+            </li>
+        </ol>
+
+        <h2>References</h2>
+
+        <ul>
+            <li>
+                OpenJDK6 Build 21 Blog Examples:
+                <a href="http://blogs.sun.com/darcy/entry/openjdk_6_b21_regression_test">
+                    Regression Test Results</a>,
+                <a href="http://blogs.sun.com/darcy/entry/openjdk_6_b21_source_bundle">
+                    Source Bundle Availability</a>,
+                <a href="http://blogs.sun.com/darcy/resource/OpenJDK_6/openjdk6-b21-changes-summary.html">
+                    Change Summary</a>
+            </li>
+            <li>
+                Scripts needed should all be located at:
+                <a href="http://hg.openjdk.java.net/jdk6/jdk6/file/tip/make/scripts/">
+		http://hg.openjdk.java.net/jdk6/jdk6/file/tip/make/scripts/</a>
+            </li>
+            <li>
+                Joe Darcy's talk about OpenJDK 6 at FOSDEM
+                <a href="http://blogs.sun.com/darcy/tags/openjdk6">
+		http://blogs.sun.com/darcy/tags/openjdk6</a>
+                and slides
+                <a href="http://blogs.sun.com/darcy/resource/FOSDEM/FOSDEM-2011-OpenJDK6.pdf">
+		http://blogs.sun.com/darcy/resource/FOSDEM/FOSDEM-2011-OpenJDK6.pdf</a>
+            </li>
+        </ul>
+
+    </body>
+
+</html>
