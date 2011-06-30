@@ -179,6 +179,9 @@ java/beans/Introspector/Test4144543.java			generic-all
 # Many of these tests have a tendency to leave input streams open, which
 #  will cause following tests to be failures when used in samevm mode.
 
+# Fails on Windows, not closing a file?: 7059970
+javax/imageio/plugins/png/ITXtTest.java 			generic-all
+
 # Fails on Windows 2000 & 2003/x64
 #   Exception: .\x.SetAccessPermission.dir: setWritable(false, true) Failed
 #	at SetAccess.doTest(SetAccess.java:144)
@@ -586,6 +589,18 @@ javax/print/attribute/MediaMappingsTest.java 			generic-all
 # Suspect many of these tests auffer from using fixed ports, no concrete 
 #   evidence.
 
+# Failing 7060203 SocketException: maximum number of DatagramSockets reached
+java/net/DatagramSocket/BindFailTest.java			windows-all
+java/net/DatagramSocket/ImplicitBind.java			windows-all
+java/net/DatagramSocket/InheritHandle.java			windows-all
+java/net/DatagramSocket/PortUnreachable.java			windows-all
+java/net/DatagramSocket/ReportSocketClosed.java			windows-all
+java/net/DatagramSocket/Send12k.java				windows-all
+java/net/DatagramSocket/SendDatagramToBadAddress.java		windows-all
+java/net/DatagramSocket/SetReceiveBufferSize.java		windows-all
+java/net/DatagramSocketImpl/CheckDiscard.java			windows-all
+java/net/InetAddress/IsReachable.java				windows-all
+
 # Fails on OpenSolaris, see 7032247
 java/net/InetAddress/GetLocalHostWithSM.java			generic-all
 
@@ -745,6 +760,9 @@ sun/net/www/protocol/http/DigestTest.java			generic-all
 ############################################################################
 
 # jdk_nio
+
+# Fails on Windows: 7012823
+java/nio/MappedByteBuffer/Force.java				windows-all 
 
 # Fails on OpenSolaris, see 6983794
 java/nio/channels/Selector/ConnectWrite.java			generic-all
@@ -935,6 +953,10 @@ java/rmi/server/UnicastRemoteObject/unexportObject/UnexportLeak.java generic-all
 
 # jdk_security
 
+# Lost provider? 7052537: 
+#  java.security.NoSuchAlgorithmException: RSA KeyPairGenerator not available
+java/security/SignedObject/Correctness.java			generic-all
+
 # Fails on OpenSolaris, see 7032257
 sun/security/pkcs11/ec/ReadCertificates.java			generic-all
 sun/security/pkcs11/ec/ReadPKCS12.java				generic-all
@@ -1115,6 +1137,9 @@ java/text/Bidi/Bug6665028.java				 	linux-x64
 #  So most if not all tools tests are now being run with "othervm" mode.
 #  Some of these tools tests have a tendency to use fixed ports, bad idea.
 
+# Failed 6963102, unreliable testcase
+sun/tools/jstatd/jstatdDefaults.sh				generic-all
+
 # Native allocation errors on windows
 tools/pack200/MemoryAllocatorTest.java				generic-all
 
@@ -1173,6 +1198,9 @@ com/sun/tools/extcheck/TestExtcheckArgs.java			generic-all
 ############################################################################
 
 # jdk_util
+
+# Fails unpredictably: 6633113
+java/util/concurrent/SynchronousQueue/Fairness.java 		generic-all
 
 # Fails on OpenSolaris, see 6876961
 java/util/ResourceBundle/Test4300693.java			generic-all

@@ -354,9 +354,10 @@ endif
 ifndef USE_JTREG_SAMEVM
   USE_JTREG_SAMEVM=false
 endif
-# With samevm, you cannot use -javaoptions?
+# With samevm, you cannot use -javaoptions? (-agentvm is more reliable -samevm)
 ifeq ($(USE_JTREG_SAMEVM),true)
-  JTREG_SAMEVM_OPTION = -samevm
+  #JTREG_SAMEVM_OPTION = -samevm
+  JTREG_SAMEVM_OPTION = -agentvm
   EXTRA_JTREG_OPTIONS += $(JTREG_SAMEVM_OPTION) $(JAVA_ARGS) $(JAVA_ARGS:%=-vmoption:%)
   JTREG_TEST_OPTIONS = $(JAVA_VM_ARGS:%=-vmoption:%)
 else
