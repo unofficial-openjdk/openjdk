@@ -89,7 +89,7 @@ span.newmarker {
     font-weight: bold;
 }
 span.removed {
-    color: brown;
+    color: #A52A2A; /*brown*/
 }
 span.changed {
     color: blue;
@@ -509,7 +509,8 @@ function framed_sdiff
 	RTOP=$(relative_dir $TPATH $WDIR)
 
 	# Make the rhs/lhs files and output the frameset file.
-	print "$HTML<head>$STDHEAD" > $WDIR/$DIR/$TNAME.lhs.html
+	print "$HTML<head>$STDHEAD <title>$WNAME rhs/lhs "\
+		"$TPATH/$TNAME</title>" > $WDIR/$DIR/$TNAME.lhs.html
 
 	cat >> $WDIR/$DIR/$TNAME.lhs.html <<-EOF
 	    <script type="text/javascript" src="$RTOP/ancnav.js"></script>
@@ -662,7 +663,7 @@ function insert_anchors
 		printf "--- EOF ---</b>"
         	for(i=0;i<8;i++) printf "\n\n\n\n\n\n\n\n\n\n";
 		printf "</pre>"
-		printf "<form name=\"eof\">";
+		printf "<form name=\"eof\" action=\"#\">";
 		printf "<input name=\"value\" value=\"%d\" type=\"hidden\" />",
 		    anc - 1;
 		printf "</form>";
@@ -926,44 +927,44 @@ EOF
 	      <table border="0" align="center">
                   <tr>
 		    <td>
-		      <a onMouseDown="handlePress(1);return true;"
-			 onMouseUp="handleRelease(1);return true;"
-			 onMouseOut="handleRelease(1);return true;"
-			 onClick="return false;"
+		      <a onmousedown="handlePress(1);return true;"
+			 onmouseup="handleRelease(1);return true;"
+			 onmouseout="handleRelease(1);return true;"
+			 onclick="return false;"
 			 title="Go to Beginning Of file">BOF</a></td>
 		    <td>
-		      <a onMouseDown="handlePress(3);return true;"
-			 onMouseUp="handleRelease(3);return true;"
-			 onMouseOut="handleRelease(3);return true;"
+		      <a onmousedown="handlePress(3);return true;"
+			 onmouseup="handleRelease(3);return true;"
+			 onmouseout="handleRelease(3);return true;"
 			 title="Scroll Up: Press and Hold to accelerate"
-			 onClick="return false;">Scroll Up</a></td>
+			 onclick="return false;">Scroll Up</a></td>
 		    <td>
-		      <a onMouseDown="handlePress(2);return true;"
-			 onMouseUp="handleRelease(2);return true;"
-			 onMouseOut="handleRelease(2);return true;"
+		      <a onmousedown="handlePress(2);return true;"
+			 onmouseup="handleRelease(2);return true;"
+			 onmouseout="handleRelease(2);return true;"
 			 title="Go to previous Diff"
-			 onClick="return false;">Prev Diff</a>
+			 onclick="return false;">Prev Diff</a>
 		    </td></tr>
 
 		  <tr>
 		    <td>
-		      <a onMouseDown="handlePress(6);return true;"
-			 onMouseUp="handleRelease(6);return true;"
-			 onMouseOut="handleRelease(6);return true;"
-			 onClick="return false;"
+		      <a onmousedown="handlePress(6);return true;"
+			 onmouseup="handleRelease(6);return true;"
+			 onmouseout="handleRelease(6);return true;"
+			 onclick="return false;"
 			 title="Go to End Of File">EOF</a></td>
 		    <td>
-		      <a onMouseDown="handlePress(4);return true;"
-			 onMouseUp="handleRelease(4);return true;"
-			 onMouseOut="handleRelease(4);return true;"
+		      <a onmousedown="handlePress(4);return true;"
+			 onmouseup="handleRelease(4);return true;"
+			 onmouseout="handleRelease(4);return true;"
 			 title="Scroll Down: Press and Hold to accelerate"
-			 onClick="return false;">Scroll Down</a></td>
+			 onclick="return false;">Scroll Down</a></td>
 		    <td>
-		      <a onMouseDown="handlePress(5);return true;"
-			 onMouseUp="handleRelease(5);return true;"
-			 onMouseOut="handleRelease(5);return true;"
+		      <a onmousedown="handlePress(5);return true;"
+			 onmouseup="handleRelease(5);return true;"
+			 onmouseout="handleRelease(5);return true;"
 			 title="Go to next Diff"
-			 onClick="return false;">Next Diff</a></td>
+			 onclick="return false;">Next Diff</a></td>
 		  </tr>
               </table>
 	    </div>
@@ -1023,7 +1024,7 @@ EOF
 			  printf "<span class=\"newmarker\">%s</span>\n", $0;
 			  next}
 
-	/^\*\*\*/	{ printf "<hr /><span class=\"oldmarker\">%s</span>\n", $0;
+	/^\*\*\*/	{ printf "</pre><hr /><pre><span class=\"oldmarker\">%s</span>\n", $0;
 			  next}
 	/^---/		{ printf "<span class=\"newmarker\">%s</span>\n", $0;
 			  next}
@@ -1049,7 +1050,7 @@ source_to_html()
 
 	print "$HTML<head>$STDHEAD"
 	print "<title>$WHICH $TNAME</title>"
-	print "<body id=\"SUNWwebrev\">"
+	print "</head><body id=\"SUNWwebrev\">"
 	print "<pre>"
 	html_quote | $AWK '{line += 1 ; printf "%4d %s\n", line, $0 }'
 	print "</pre></body></html>"
@@ -3020,7 +3021,7 @@ if [[ -n $CRID ]]; then
     done
 fi
 print "<tr><th>Legend:</th><td>"
-print "<b>Modified file</b><br><font color=red><b>Deleted file</b></font><br><font color=green><b>New file</b></font></td></tr>"
+print "<b>Modified file</b><br /><font color=\"red\"><b>Deleted file</b></font><br /><font color=\"green\"><b>New file</b></font></td></tr>"
 print "</table>"
 print "</div>"
 
@@ -3160,7 +3161,7 @@ print
 print "<hr />"
 print "<p style=\"font-size: small\">"
 print "This code review page was prepared using <b>$0</b>"
-print "(vers $WEBREV_UPDATED)."
+print "(vers $WEBREV_UPDATED).</p>"
 print "</body>"
 print "</html>"
 
