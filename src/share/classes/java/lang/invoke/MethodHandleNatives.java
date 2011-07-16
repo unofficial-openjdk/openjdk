@@ -394,15 +394,6 @@ class MethodHandleNatives {
     }
 
     /**
-     * This assertion marks code which was written before ricochet frames were implemented.
-     * Such code will go away when the ports catch up.
-     */
-    static boolean workaroundWithoutRicochetFrames() {
-        assert(!HAVE_RICOCHET_FRAMES) : "this code should not be executed if `-XX:+UseRicochetFrames is enabled";
-        return true;
-    }
-
-    /**
      * Is this method a caller-sensitive method?
      * I.e., does it call Reflection.getCallerClass or a similer method
      * to ask about the identity of its caller?
