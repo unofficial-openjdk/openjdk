@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import javax.script.*;
 import sun.org.mozilla.javascript.internal.*;
 import java.lang.reflect.Method;
 import java.io.*;
+import java.security.*;
 import java.util.*;
 
 
@@ -44,6 +45,8 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
         implements  Invocable, Compilable {
 
     private static final boolean DEBUG = false;
+
+    private AccessControlContext accCtxt;
 
     /* Scope where standard JavaScript objects and our
      * extensions to it are stored. Note that these are not
@@ -63,11 +66,50 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
 
     static {
         ContextFactory.initGlobal(new ContextFactory() {
+            /**
+             * Create new Context instance to be associated with the current thread.
+             */
+            @Override
             protected Context makeContext() {
                 Context cx = super.makeContext();
                 cx.setClassShutter(RhinoClassShutter.getInstance());
                 cx.setWrapFactory(RhinoWrapFactory.getInstance());
                 return cx;
+            }
+
+
+            /**
+             * Execute top call to script or function. When the runtime is about to 
+             * execute a script or function that will create the first stack frame 
+             * with scriptable code, it calls this method to perform the real call. 
+             * In this way execution of any script happens inside this function.
+             */
+            @Override
+            protected Object doTopCall(final Callable callable,
+                               final Context cx, final Scriptable scope,
+                               final Scriptable thisObj, final Object[] args) {
+                AccessControlContext accCtxt = null;
+                Scriptable global = ScriptableObject.getTopLevelScope(scope);
+                Scriptable globalProto = global.getPrototype();
+                if (globalProto instanceof RhinoTopLevel) {
+                    accCtxt = ((RhinoTopLevel)globalProto).getAccessContext();
+                }
+
+                if (accCtxt != null) {
+                    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
+                        public Object run() {
+                            return superDoTopCall(callable, cx, scope, thisObj, args);
+                        }
+                    }, accCtxt);
+                } else {
+                    return superDoTopCall(callable, cx, scope, thisObj, args);
+                }
+            }
+
+            private  Object superDoTopCall(Callable callable,
+                               Context cx, Scriptable scope,
+                               Scriptable thisObj, Object[] args) {
+                return super.doTopCall(callable, cx, scope, thisObj, args);
             }
 
             public boolean hasFeature(Context cx, int feature) {
@@ -86,6 +128,10 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
      * Creates a new instance of RhinoScriptEngine
      */
     public RhinoScriptEngine() {
+
+        if (System.getSecurityManager() != null) {
+            accCtxt = AccessController.getContext();
+        }
 
         Context cx = enterContext();
         try {
@@ -312,6 +358,10 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
 
     void setEngineFactory(ScriptEngineFactory fac) {
         factory = fac;
+    }
+
+    AccessControlContext getAccessContext() {
+        return accCtxt;
     }
 
     Object[] wrapArguments(Object[] args) {
