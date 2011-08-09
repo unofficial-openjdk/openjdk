@@ -815,7 +815,7 @@ public:
   bool is_scaled_iv_plus_offset(Node* exp, Node* iv, int* p_scale, Node** p_offset, int depth = 0);
 
   // Return true if proj is for "proj->[region->..]call_uct"
-  bool is_uncommon_trap_proj(ProjNode* proj, bool must_reason_predicate = false);
+  static bool is_uncommon_trap_proj(ProjNode* proj, bool must_reason_predicate = false);
   // Return true for    "if(test)-> proj -> ...
   //                          |
   //                          V
@@ -936,7 +936,7 @@ public:
   Node *has_local_phi_input( Node *n );
   // Mark an IfNode as being dominated by a prior test,
   // without actually altering the CFG (and hence IDOM info).
-  void dominated_by( Node *prevdom, Node *iff );
+  void dominated_by( Node *prevdom, Node *iff, bool exclude_loop_predicate = false );
 
   // Split Node 'n' through merge point
   Node *split_thru_region( Node *n, Node *region );
