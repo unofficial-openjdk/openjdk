@@ -1263,16 +1263,10 @@ public:
   // in the young gen: for the SATB pre-barrier, there is no
   // pre-value that needs to be remembered; for the remembered-set
   // update logging post-barrier, we don't maintain remembered set
-  // information for young gen objects. Note that non-generational
-  // G1 does not have any "young" objects, should not elide
-  // the rs logging barrier and so should always answer false below.
-  // However, non-generational G1 (-XX:-G1Gen) appears to have
-  // bit-rotted so was not tested below.
+  // information for young gen objects.
   virtual bool can_elide_initializing_store_barrier(oop new_obj) {
     // Re 6920090, 6920109 above.
     assert(ReduceInitialCardMarksForG1, "Else cannot be here");
-    assert(G1Gen || !is_in_young(new_obj),
-           "Non-generational G1 should never return true below");
     return is_in_young(new_obj);
   }
 
@@ -1388,9 +1382,6 @@ public:
   // This performs a concurrent marking of the live objects in a
   // bitmap off to the side.
   void doConcurrentMark();
-
-  // Do a full concurrent marking, synchronously.
-  void do_sync_mark();
 
   bool isMarkedPrev(oop obj) const;
   bool isMarkedNext(oop obj) const;
@@ -1724,26 +1715,22 @@ public:
 class G1ParGCAllocBuffer: public ParGCAllocBuffer {
 private:
   bool        _retired;
-  bool        _during_marking;
+  bool        _should_mark_objects;
   GCLabBitMap _bitmap;
 
 public:
-  G1ParGCAllocBuffer(size_t gclab_word_size) :
-    ParGCAllocBuffer(gclab_word_size),
-    _during_marking(G1CollectedHeap::heap()->mark_in_progress()),
-    _bitmap(G1CollectedHeap::heap()->reserved_region().start(), gclab_word_size),
-    _retired(false)
-  { }
+  G1ParGCAllocBuffer(size_t gclab_word_size);
 
   inline bool mark(HeapWord* addr) {
     guarantee(use_local_bitmaps, "invariant");
-    assert(_during_marking, "invariant");
+    assert(_should_mark_objects, "invariant");
     return _bitmap.mark(addr);
   }
 
   inline void set_buf(HeapWord* buf) {
-    if (use_local_bitmaps && _during_marking)
+    if (use_local_bitmaps && _should_mark_objects) {
       _bitmap.set_buffer(buf);
+    }
     ParGCAllocBuffer::set_buf(buf);
     _retired = false;
   }
@@ -1751,7 +1738,7 @@ public:
   inline void retire(bool end_of_gc, bool retain) {
     if (_retired)
       return;
-    if (use_local_bitmaps && _during_marking) {
+    if (use_local_bitmaps && _should_mark_objects) {
       _bitmap.retire();
     }
     ParGCAllocBuffer::retire(end_of_gc, retain);
