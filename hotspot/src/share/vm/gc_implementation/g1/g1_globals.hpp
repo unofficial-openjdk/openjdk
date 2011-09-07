@@ -39,8 +39,6 @@
   develop(intx, G1MarkingOverheadPercent, 0,                                \
           "Overhead of concurrent marking")                                 \
                                                                             \
-  develop(bool, G1Gen, true,                                                \
-          "If true, it will enable the generational G1")                    \
                                                                             \
   develop(intx, G1PolicyVerbose, 0,                                         \
           "The verbosity level on G1 policy decisions")                     \
@@ -125,9 +123,6 @@
                                                                             \
   develop(bool, G1RSBarrierNullFilter, true,                                \
           "If true, generate null-pointer filtering code in RS barrier")    \
-                                                                            \
-  develop(bool, G1PrintCTFilterStats, false,                                \
-          "If true, print stats on RS filtering effectiveness")             \
                                                                             \
   develop(bool, G1DeferredRSUpdate, true,                                   \
           "If true, use deferred RS updates")                               \
@@ -250,16 +245,6 @@
   develop(bool, G1FailOnFPError, false,                                     \
           "When set, G1 will fail when it encounters an FP 'error', "       \
           "so as to allow debugging")                                       \
-                                                                            \
-  develop(bool, G1FixedTenuringThreshold, false,                            \
-          "When set, G1 will not adjust the tenuring threshold")            \
-                                                                            \
-  develop(bool, G1FixedEdenSize, false,                                     \
-          "When set, G1 will not allocate unused survivor space regions")   \
-                                                                            \
-  develop(uintx, G1FixedSurvivorSpaceSize, 0,                               \
-          "If non-0 is the size of the G1 survivor space, "                 \
-          "otherwise SurvivorRatio is used to determine the size")          \
                                                                             \
   product(uintx, G1HeapRegionSize, 0,                                       \
           "Size of the G1 regions.")                                        \
