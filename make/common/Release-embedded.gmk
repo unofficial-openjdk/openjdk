@@ -161,6 +161,9 @@ reduced-image-jre::
 	$(RM) -r $(JRE_REDUCED_IMAGE_DIR)/man
 	$(RM) -f $(JRE_REDUCED_IMAGE_DIR)/CHANGES
 
+	@# Copy back in the attach library
+	$(CP) $(JDK_IMAGE_DIR)/jre/lib/$(LIBARCH)/$(LIB_PREFIX)attach.$(LIB_SUFFIX) $(JRE_REDUCED_IMAGE_DIR)/lib/$(LIBARCH)
+
 	@$(ECHO) Done Creating Reduced JRE
 
 #
