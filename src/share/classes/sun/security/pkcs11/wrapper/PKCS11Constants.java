@@ -413,6 +413,9 @@ public interface PKCS11Constants {
 
     public static final long  CKA_VENDOR_DEFINED     = 0x80000000L;
 
+    /* Only the raw encoding for an EC point is supported */
+    public static final long CKA_ENABLE_RAW_EC_POINT = (CKA_VENDOR_DEFINED | 1);
+
     /* the following mechanism types are defined: */
     public static final long  CKM_RSA_PKCS_KEY_PAIR_GEN      = 0x00000000L;
     public static final long  CKM_RSA_PKCS                   = 0x00000001L;
