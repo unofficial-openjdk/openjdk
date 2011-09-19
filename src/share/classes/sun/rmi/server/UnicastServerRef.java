@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -390,6 +390,12 @@ public class UnicastServerRef extends UnicastRef
             ObjectInput in;
             try {
                 in = call.getInputStream();
+                try {
+                    Class<?> clazz = Class.forName("sun.rmi.transport.DGCImpl_Skel");
+                    if (clazz.isAssignableFrom(skel.getClass())) {
+                        ((MarshalInputStream)in).useCodebaseOnly();
+                    }
+                } catch (ClassNotFoundException ignore) { }
                 hash = in.readLong();
             } catch (Exception readEx) {
                 throw new UnmarshalException("error unmarshalling call header",
