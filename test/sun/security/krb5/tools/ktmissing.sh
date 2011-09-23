@@ -1,12 +1,10 @@
 #
-# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
-# published by the Free Software Foundation.  Oracle designates this
-# particular file as subject to the "Classpath" exception as provided
-# by Oracle in the LICENSE file that accompanied this code.
+# published by the Free Software Foundation.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,17 +21,31 @@
 # questions.
 #
 
-BUILDDIR = ../../..
-PRODUCT = oracle
-include $(BUILDDIR)/common/Defs.gmk
+# @test
+# @bug 7043737
+# @summary klist does not detect non-existing keytab
+# @run shell ktmissing.sh
+#
 
-#
-# Files to compile
-#
-AUTO_FILES_JAVA_DIRS = com/oracle/net
+OS=`uname -s`
+case "$OS" in
+  CYGWIN* )
+    FS="/"
+    ;;
+  Windows_* )
+    FS="\\"
+    ;;
+  * )
+    FS="/"
+    echo "Unsupported system!"
+    exit 0;
+    ;;
+esac
 
-#
-# Rules
-#
-include $(BUILDDIR)/common/Classes.gmk
+${TESTJAVA}${FS}bin${FS}klist -k this_file_does_not_exist && exit 1
 
+echo ABC > this_is_not_a_keytab
+
+${TESTJAVA}${FS}bin${FS}klist -k this_is_not_a_keytab && exit 2
+
+exit 0
