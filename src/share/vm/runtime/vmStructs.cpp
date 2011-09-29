@@ -695,6 +695,12 @@ static inline uint64_t cast_uint64_t(size_t x)
       static_field(SystemDictionary,            _box_klasses[0],                               klassOop)                             \
       static_field(SystemDictionary,            _java_system_loader,                           oop)                                  \
                                                                                                                                      \
+  /*************/                                                                                                                    \
+  /* vmSymbols */                                                                                                                    \
+  /*************/                                                                                                                    \
+                                                                                                                                     \
+      static_field(vmSymbols,                   _symbols[0],                                  Symbol*)                               \
+                                                                                                                                     \
   /*******************/                                                                                                              \
   /* HashtableBucket */                                                                                                              \
   /*******************/                                                                                                              \
@@ -1540,6 +1546,7 @@ static inline uint64_t cast_uint64_t(size_t x)
     declare_type(LoaderConstraintEntry, HashtableEntry<klassOop>)         \
   declare_toplevel_type(HashtableBucket)                                  \
   declare_toplevel_type(SystemDictionary)                                 \
+  declare_toplevel_type(vmSymbols)                                        \
   declare_toplevel_type(ProtectionDomainEntry)                            \
                                                                           \
   declare_toplevel_type(GenericGrowableArray)                             \
@@ -2521,6 +2528,13 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                           \
   X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset))      \
   declare_constant(frame::pc_return_offset)                               \
+                                                                          \
+  /*************/                                                         \
+  /* vmSymbols */                                                         \
+  /*************/                                                         \
+                                                                          \
+  declare_constant(vmSymbols::FIRST_SID)                                  \
+  declare_constant(vmSymbols::SID_LIMIT)                                  \
                                                                           \
   /********************************/                                      \
   /* Calling convention constants */                                      \
