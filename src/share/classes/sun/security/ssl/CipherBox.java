@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,11 +76,17 @@ final class CipherBox {
     private int blockSize;
 
     /**
+     * Is the cipher of CBC mode?
+     */
+     private final boolean isCBCMode;
+
+    /**
      * NULL cipherbox. Identity operation, no encryption.
      */
     private CipherBox() {
         this.protocolVersion = ProtocolVersion.DEFAULT;
         this.cipher = null;
+        this.isCBCMode = false;
     }
 
     /**
@@ -96,6 +102,7 @@ final class CipherBox {
             this.protocolVersion = protocolVersion;
             this.cipher = JsseJce.getCipher(bulkCipher.transformation);
             int mode = encrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
+            this.isCBCMode = bulkCipher.isCBCMode;
             cipher.init(mode, key, iv);
             // do not call getBlockSize until after init()
             // otherwise we would disrupt JCE delayed provider selection
@@ -485,5 +492,14 @@ final class CipherBox {
         bb.limit(offset + newlen);
 
         return newlen;
+    }
+
+    /*
+     * Does the cipher use CBC mode?
+     *
+     * @return true if the cipher use CBC mode, false otherwise.
+     */
+    boolean isCBCMode() {
+        return isCBCMode;
     }
 }

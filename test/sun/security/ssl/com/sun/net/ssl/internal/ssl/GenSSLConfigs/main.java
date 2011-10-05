@@ -1,12 +1,12 @@
 /*
  * @test
  * @build TestThread Traffic Handler ServerHandler ServerThread ClientThread
- * @run main/timeout=140 main
+ * @run main/othervm -Djsse.enableCBCProtection=false main
  * @summary Make sure that different configurations of SSL sockets work
  */
 
 /*
- * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it

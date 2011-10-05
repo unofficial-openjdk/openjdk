@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -357,6 +357,11 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
 
     /* Class and subclass dynamic debugging support */
     private static final Debug debug = Debug.getInstance("ssl");
+
+    /*
+     * Is it the first application record to write?
+     */
+    private boolean isFirstAppOutputRecord = true;
 
     //
     // CONSTRUCTORS AND INITIALIZATION CODE
@@ -761,8 +766,35 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
         r.addMAC(writeMAC);
         r.encrypt(writeCipher);
         r.write(sockOutput);
-    }
 
+        // turn off the flag of the first application record
+        if (isFirstAppOutputRecord &&
+                r.contentType() == Record.ct_application_data) {
+            isFirstAppOutputRecord = false;
+        }
+    }
+  
+    /*
+     * Need to split the payload except the following cases:
+     *
+     * 1. protocol version is TLS 1.1 or later;
+     * 2. bulk cipher does not use CBC mode, including null bulk cipher suites.
+     * 3. the payload is the first application record of a freshly
+     *    negotiated TLS session.
+     * 4. the CBC protection is disabled;
+     *
+     * More details, please refer to AppOutputStream.write(byte[], int, int).
+     */
+    boolean needToSplitPayload() {
+        writeLock.lock();
+        try {
+            return (protocolVersion.v <= ProtocolVersion.TLS10.v) &&
+                    writeCipher.isCBCMode() && !isFirstAppOutputRecord && 
+                    Record.enableCBCProtection;
+        } finally {
+            writeLock.unlock();
+        }
+    }
 
     /*
      * Read an application data record.  Alerts and handshake
@@ -1829,6 +1861,9 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
             throw (SSLException)new SSLException
                                 ("Algorithm missing:  ").initCause(e);
         }
+
+        // reset the flag of the first application record
+        isFirstAppOutputRecord = true;
     }
 
     /*
