@@ -885,7 +885,6 @@ public class Functions {
         addAttribute(CKA_MODIFIABLE,            "CKA_MODIFIABLE");
         addAttribute(CKA_EC_PARAMS,             "CKA_EC_PARAMS");
         addAttribute(CKA_EC_POINT,              "CKA_EC_POINT");
-        addAttribute(CKA_ENABLE_RAW_EC_POINT,   "CKA_ENABLE_RAW_EC_POINT");
         addAttribute(CKA_SECONDARY_AUTH,        "CKA_SECONDARY_AUTH");
         addAttribute(CKA_AUTH_PIN_FLAGS,        "CKA_AUTH_PIN_FLAGS");
         addAttribute(CKA_HW_FEATURE_TYPE,       "CKA_HW_FEATURE_TYPE");
