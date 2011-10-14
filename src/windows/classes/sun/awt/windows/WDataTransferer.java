@@ -205,7 +205,7 @@ public class WDataTransferer extends DataTransferer {
                 bytes = null;
             }
 
-            str = new HTMLCodec(str,  EHTMLReadMode.HTML_READ_SELECTION);
+            str = new HTMLCodec(str,  EHTMLReadMode.HTML_READ_ALL);
         }
 
         if (format == CF_FILEGROUPDESCRIPTORA || format == CF_FILEGROUPDESCRIPTORW) {
