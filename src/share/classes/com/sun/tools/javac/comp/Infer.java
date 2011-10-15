@@ -249,6 +249,13 @@ public class Infer {
         }
     };
 
+    private final Filter<Type> botFilter = new Filter<Type>() {
+        @Override
+        public boolean accepts(Type t) {
+            return t.tag != BOT;
+        }
+    };
+
     /** Instantiate undetermined type variable to the lub of all its lower bounds.
      *  Throw a NoInstanceException if this not possible.
      */
@@ -470,7 +477,8 @@ public class Infer {
                         UndetVar uv = (UndetVar)t;
                         if (uv.qtype == tv) {
                             switch (ck) {
-                                case EXTENDS: return uv.hibounds.appendList(types.subst(types.getBounds(tv), all_tvars, inferredTypes));
+                                case EXTENDS: return Type.filter(uv.hibounds, botFilter)
+                                        .appendList(types.subst(types.getBounds(tv), all_tvars, inferredTypes));
                                 case SUPER: return uv.lobounds;
                                 case EQUAL: return uv.inst != null ? List.of(uv.inst) : List.<Type>nil();
                             }
