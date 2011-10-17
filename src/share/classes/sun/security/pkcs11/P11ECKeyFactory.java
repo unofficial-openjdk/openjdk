@@ -203,16 +203,20 @@ final class P11ECKeyFactory extends P11KeyFactory {
 
     private PublicKey generatePublic(ECPoint point, ECParameterSpec params) throws PKCS11Exception {
         byte[] encodedParams = ECParameters.encodeParameters(params);
-        byte[] rawPoint = ECParameters.encodePoint(point, params.getCurve());
-        byte[] encodedPoint = null;
+        byte[] encodedPoint =
+            ECParameters.encodePoint(point, params.getCurve());
 
-        // Wrap the EC point in a DER OCTET STRING
-        DerValue pkECPoint = new DerValue(DerValue.tag_OctetString, rawPoint);
-
-        try {
-            encodedPoint = pkECPoint.toByteArray();
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Could not DER encode point", e);
+        // Check whether the X9.63 encoding of an EC point shall be wrapped
+        // in an ASN.1 OCTET STRING
+        if (!token.config.getUseEcX963Encoding()) {
+            try {
+                encodedPoint =
+                    new DerValue(DerValue.tag_OctetString, encodedPoint)
+                        .toByteArray();
+            } catch (IOException e) {
+                throw new
+                    IllegalArgumentException("Could not DER encode point", e);
+            }
         }
 
         CK_ATTRIBUTE[] attributes = new CK_ATTRIBUTE[] {
@@ -223,26 +227,6 @@ final class P11ECKeyFactory extends P11KeyFactory {
         };
         attributes = token.getAttributes
                 (O_IMPORT, CKO_PUBLIC_KEY, CKK_EC, attributes);
-
-        // Check whether DER-encoded EC points are supported by the PKCS11 token
-        // (Some tokens support only the raw encoding for an EC point.)
-        for (int i = 0; i < attributes.length; i++) {
-            if (attributes[i].type == CKA_ENABLE_RAW_EC_POINT &&
-                attributes[i].getBoolean()) {
-                // Must use the raw encoding for the EC point
-                for (int j = 0; j < attributes.length; j++) {
-                    if (attributes[j].type == CKA_EC_POINT) {
-                        attributes[j].pValue = rawPoint;
-                        // Overwrite the CKA_ENABLE_RAW_EC_POINT attribute too
-                        attributes[i].type = CKA_EC_POINT;
-                        attributes[i].pValue = rawPoint;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-
         Session session = null;
         try {
             session = token.getObjSession();
