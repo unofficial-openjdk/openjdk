@@ -63,12 +63,21 @@ class FileOutputStream extends OutputStream
     private final boolean append;
 
     /**
-     * The associated channel, initialized lazily.
+     * The associated channel, initalized lazily.
      */
     private FileChannel channel;
 
     private final Object closeLock = new Object();
     private volatile boolean closed = false;
+    private static final ThreadLocal<Boolean> runningFinalize =
+        new ThreadLocal<>();
+
+    private static boolean isRunningFinalize() {
+        Boolean val;
+        if ((val = runningFinalize.get()) != null)
+            return val.booleanValue();
+        return false;
+    }
 
     /**
      * Creates a file output stream to write to the file with the
@@ -346,10 +355,10 @@ class FileOutputStream extends OutputStream
         int useCount = fd.decrementAndGetUseCount();
 
         /*
-         * If FileDescriptor is still in use by another stream, we
+         * If FileDescriptor is still in use by another stream, the finalizer
          * will not close it.
          */
-        if (useCount <= 0) {
+        if ((useCount <= 0) || !isRunningFinalize()) {
             close0();
         }
     }
@@ -415,7 +424,18 @@ class FileOutputStream extends OutputStream
             if (fd == FileDescriptor.out || fd == FileDescriptor.err) {
                 flush();
             } else {
+
+                /*
+                 * Finalizer should not release the FileDescriptor if another
+                 * stream is still using it. If the user directly invokes
+                 * close() then the FileDescriptor is also released.
+                 */
+                runningFinalize.set(Boolean.TRUE);
+                try {
                     close();
+                } finally {
+                    runningFinalize.set(Boolean.FALSE);
+                }
             }
         }
     }

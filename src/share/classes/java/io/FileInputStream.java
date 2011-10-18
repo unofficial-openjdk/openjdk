@@ -56,6 +56,16 @@ class FileInputStream extends InputStream
     private final Object closeLock = new Object();
     private volatile boolean closed = false;
 
+    private static final ThreadLocal<Boolean> runningFinalize =
+        new ThreadLocal<>();
+
+    private static boolean isRunningFinalize() {
+        Boolean val;
+        if ((val = runningFinalize.get()) != null)
+            return val.booleanValue();
+        return false;
+    }
+
     /**
      * Creates a <code>FileInputStream</code> by
      * opening a connection to an actual file,
@@ -309,10 +319,10 @@ class FileInputStream extends InputStream
         int useCount = fd.decrementAndGetUseCount();
 
         /*
-         * If FileDescriptor is still in use by another stream, we
+         * If FileDescriptor is still in use by another stream, the finalizer
          * will not close it.
          */
-        if (useCount <= 0) {
+        if ((useCount <= 0) || !isRunningFinalize()) {
             close0();
         }
     }
@@ -381,7 +391,18 @@ class FileInputStream extends InputStream
      */
     protected void finalize() throws IOException {
         if ((fd != null) &&  (fd != FileDescriptor.in)) {
+
+            /*
+             * Finalizer should not release the FileDescriptor if another
+             * stream is still using it. If the user directly invokes
+             * close() then the FileDescriptor is also released.
+             */
+            runningFinalize.set(Boolean.TRUE);
+            try {
                 close();
+            } finally {
+                runningFinalize.set(Boolean.FALSE);
+            }
         }
     }
 }
