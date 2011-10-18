@@ -584,7 +584,6 @@ sun/security/ssl/javax/net/ssl/NewAPIs/SessionTimeOutTests.java	generic-all
 sun/security/tools/jarsigner/concise_jarsigner.sh		generic-all
 
 # Various failures on Linux Fedora 9 X64, othervm mode
-lib/security/cacerts/VerifyCACerts.java				generic-all
 sun/security/ssl/javax/net/ssl/NewAPIs/SSLEngine/TestAllSuites.java generic-all
 sun/security/ssl/sanity/ciphersuites/CheckCipherSuites.java	generic-all
 sun/security/tools/jarsigner/oldsig.sh				generic-all
