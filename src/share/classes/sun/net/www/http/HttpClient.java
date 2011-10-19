@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -599,7 +599,9 @@ public class HttpClient extends NetworkClient {
             cachedHttpClient = false;
             if (!failedOnce && requests != null) {
                 failedOnce = true;
-                if (httpuc.getRequestMethod().equals("POST") && (!retryPostProp || streaming)) {
+                if (getRequestMethod().equals("CONNECT") ||
+                    (httpuc.getRequestMethod().equals("POST") &&
+                    (!retryPostProp || streaming))) {
                     // do not retry the request
                 }  else {
                     // try once more
@@ -706,7 +708,9 @@ public class HttpClient extends NetworkClient {
             } else if (nread != 8) {
                 if (!failedOnce && requests != null) {
                     failedOnce = true;
-                    if (httpuc.getRequestMethod().equals("POST") && (!retryPostProp || streaming)) {
+                    if (getRequestMethod().equals("CONNECT") ||
+                        (httpuc.getRequestMethod().equals("POST") &&
+                        (!retryPostProp || streaming))) {
                         // do not retry the request
                     } else {
                         closeServer();
@@ -889,6 +893,16 @@ public class HttpClient extends NetworkClient {
 
     CacheRequest getCacheRequest() {
         return cacheRequest;
+    }
+
+    String getRequestMethod() {
+        if (requests != null) {
+            String requestLine = requests.getKey(0);
+            if (requestLine != null) {
+                return requestLine.split("\\s+")[0];
+            }
+        }
+        return "";
     }
 
     @Override
