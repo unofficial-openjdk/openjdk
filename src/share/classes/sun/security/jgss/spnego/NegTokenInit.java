@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,11 +66,11 @@ public class NegTokenInit extends SpNegoToken {
     private byte[] mechTypes = null;
     private Oid[] mechTypeList = null;
 
-    private byte[] reqFlags = null;
+    private BitArray reqFlags = null;
     private byte[] mechToken = null;
     private byte[] mechListMIC = null;
 
-    NegTokenInit(byte[] mechTypes, byte[] flags,
+    NegTokenInit(byte[] mechTypes, BitArray flags,
                 byte[] token, byte[] mechListMIC)
     {
         super(NEG_TOKEN_INIT_ID);
@@ -101,7 +101,7 @@ public class NegTokenInit extends SpNegoToken {
             // write context flags with CONTEXT 01
             if (reqFlags != null) {
                 DerOutputStream flags = new DerOutputStream();
-                flags.putBitString(reqFlags);
+                flags.putUnalignedBitString(reqFlags);
                 initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
                                                 true, (byte) 0x01), flags);
             }
@@ -237,7 +237,7 @@ public class NegTokenInit extends SpNegoToken {
         return mechTypeList;
     }
 
-    byte[] getReqFlags() {
+    BitArray getReqFlags() {
         return reqFlags;
     }
 
