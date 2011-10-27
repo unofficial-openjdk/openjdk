@@ -133,6 +133,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 #ifdef TARGET_OS_ARCH_linux_x86
 # include "vmStructs_linux_x86.hpp"
 #endif
@@ -157,6 +160,12 @@
 #ifdef TARGET_OS_ARCH_linux_ppc
 # include "vmStructs_linux_ppc.hpp"
 #endif
+#ifdef TARGET_OS_ARCH_bsd_x86
+# include "vmStructs_bsd_x86.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_bsd_zero
+# include "vmStructs_bsd_zero.hpp"
+#endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/cmsPermGen.hpp"
 #include "gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.hpp"
@@ -173,6 +182,7 @@
 #include "gc_implementation/parallelScavenge/psVirtualspace.hpp"
 #include "gc_implementation/parallelScavenge/psYoungGen.hpp"
 #include "gc_implementation/parallelScavenge/vmStructs_parallelgc.hpp"
+#include "gc_implementation/g1/vmStructs_g1.hpp"
 #endif
 #ifdef COMPILER2
 #include "opto/addnode.hpp"
@@ -693,6 +703,12 @@ static inline uint64_t cast_uint64_t(size_t x)
       static_field(SystemDictionary,            WK_KLASS(MethodHandle_klass),                  klassOop)                             \
       static_field(SystemDictionary,            _box_klasses[0],                               klassOop)                             \
       static_field(SystemDictionary,            _java_system_loader,                           oop)                                  \
+                                                                                                                                     \
+  /*************/                                                                                                                    \
+  /* vmSymbols */                                                                                                                    \
+  /*************/                                                                                                                    \
+                                                                                                                                     \
+      static_field(vmSymbols,                   _symbols[0],                                  Symbol*)                               \
                                                                                                                                      \
   /*******************/                                                                                                              \
   /* HashtableBucket */                                                                                                              \
@@ -1539,6 +1555,7 @@ static inline uint64_t cast_uint64_t(size_t x)
     declare_type(LoaderConstraintEntry, HashtableEntry<klassOop>)         \
   declare_toplevel_type(HashtableBucket)                                  \
   declare_toplevel_type(SystemDictionary)                                 \
+  declare_toplevel_type(vmSymbols)                                        \
   declare_toplevel_type(ProtectionDomainEntry)                            \
                                                                           \
   declare_toplevel_type(GenericGrowableArray)                             \
@@ -2521,6 +2538,13 @@ static inline uint64_t cast_uint64_t(size_t x)
   X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset))      \
   declare_constant(frame::pc_return_offset)                               \
                                                                           \
+  /*************/                                                         \
+  /* vmSymbols */                                                         \
+  /*************/                                                         \
+                                                                          \
+  declare_constant(vmSymbols::FIRST_SID)                                  \
+  declare_constant(vmSymbols::SID_LIMIT)                                  \
+                                                                          \
   /********************************/                                      \
   /* Calling convention constants */                                      \
   /********************************/                                      \
@@ -2855,6 +2879,9 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
   VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
                  GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
                  GENERATE_STATIC_VM_STRUCT_ENTRY)
+
+  VM_STRUCTS_G1(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
+                GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif // SERIALGC
 
   VM_STRUCTS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
@@ -2898,6 +2925,9 @@ VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
                GENERATE_TOPLEVEL_VM_TYPE_ENTRY)
 
   VM_TYPES_PARNEW(GENERATE_VM_TYPE_ENTRY)
+
+  VM_TYPES_G1(GENERATE_VM_TYPE_ENTRY,
+              GENERATE_TOPLEVEL_VM_TYPE_ENTRY)
 #endif // SERIALGC
 
   VM_TYPES_CPU(GENERATE_VM_TYPE_ENTRY,
@@ -2997,6 +3027,9 @@ VMStructs::init() {
   VM_STRUCTS_CMS(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
              CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
              CHECK_STATIC_VM_STRUCT_ENTRY);
+
+  VM_STRUCTS_G1(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
+                CHECK_STATIC_VM_STRUCT_ENTRY);
 #endif // SERIALGC
 
   VM_STRUCTS_CPU(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3037,6 +3070,9 @@ VMStructs::init() {
                CHECK_SINGLE_ARG_VM_TYPE_NO_OP);
 
   VM_TYPES_PARNEW(CHECK_VM_TYPE_ENTRY)
+
+  VM_TYPES_G1(CHECK_VM_TYPE_ENTRY,
+              CHECK_SINGLE_ARG_VM_TYPE_NO_OP);
 #endif // SERIALGC
 
   VM_TYPES_CPU(CHECK_VM_TYPE_ENTRY,
@@ -3102,6 +3138,8 @@ VMStructs::init() {
   debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT, \
                             ENSURE_FIELD_TYPE_PRESENT, \
                             ENSURE_FIELD_TYPE_PRESENT));
+  debug_only(VM_STRUCTS_G1(ENSURE_FIELD_TYPE_PRESENT, \
+                           ENSURE_FIELD_TYPE_PRESENT));
 #endif // SERIALGC
   debug_only(VM_STRUCTS_CPU(ENSURE_FIELD_TYPE_PRESENT, \
                             ENSURE_FIELD_TYPE_PRESENT, \

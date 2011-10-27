@@ -669,6 +669,11 @@ static bool assign_distribution(processorid_t* id_array,
   return true;
 }
 
+void os::set_native_thread_name(const char *name) {
+  // Not yet implemented.
+  return;
+}
+
 bool os::distribute_processes(uint length, uint* distribution) {
   bool result = false;
   // Find the processor id's of all the available CPUs.
@@ -4592,14 +4597,19 @@ void os::Solaris::install_signal_handlers() {
   }
 
   // We don't activate signal checker if libjsig is in place, we trust ourselves
-  // and if UserSignalHandler is installed all bets are off
+  // and if UserSignalHandler is installed all bets are off.
+  // Log that signal checking is off only if -verbose:jni is specified.
   if (CheckJNICalls) {
     if (libjsig_is_loaded) {
-      tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+      if (PrintJNIResolving) {
+        tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+      }
       check_signals = false;
     }
     if (AllowUserSignalHandlers) {
-      tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+      if (PrintJNIResolving) {
+        tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+      }
       check_signals = false;
     }
   }

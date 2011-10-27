@@ -58,6 +58,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 
 #define INJECTED_FIELD_COMPUTE_OFFSET(klass, name, signature, may_be_java)    \
   klass::_##name##_offset = JavaClasses::compute_injected_offset(JavaClasses::klass##_##name##_enum);
@@ -500,12 +503,8 @@ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
   if (SystemDictionary::Class_klass_loaded() && (k->oop_is_instance() || k->oop_is_javaArray())) {
     // Allocate mirror (java.lang.Class instance)
     Handle mirror = instanceMirrorKlass::cast(SystemDictionary::Class_klass())->allocate_instance(k, CHECK_0);
-    // Setup indirections
-    mirror->obj_field_put(_klass_offset,  k());
-    k->set_java_mirror(mirror());
 
     instanceMirrorKlass* mk = instanceMirrorKlass::cast(mirror->klass());
-    java_lang_Class::set_oop_size(mirror(), mk->instance_size(k));
     java_lang_Class::set_static_oop_field_count(mirror(), mk->compute_static_oop_field_count(mirror()));
 
     // It might also have a component mirror.  This mirror must already exist.
@@ -568,9 +567,10 @@ oop java_lang_Class::create_basic_type_mirror(const char* basic_type_name, Basic
     assert(aklass != NULL, "correct bootstrap");
     set_array_klass(java_class, aklass);
   }
+#ifdef ASSERT
   instanceMirrorKlass* mk = instanceMirrorKlass::cast(SystemDictionary::Class_klass());
-  java_lang_Class::set_oop_size(java_class, mk->instance_size(oop(NULL)));
-  java_lang_Class::set_static_oop_field_count(java_class, 0);
+  assert(java_lang_Class::static_oop_field_count(java_class) == 0, "should have been zeroed by allocation");
+#endif
   return java_class;
 }
 
@@ -581,6 +581,12 @@ klassOop java_lang_Class::as_klassOop(oop java_class) {
   klassOop k = klassOop(java_class->obj_field(_klass_offset));
   assert(k == NULL || k->is_klass(), "type check");
   return k;
+}
+
+
+void java_lang_Class::set_klass(oop java_class, klassOop klass) {
+  assert(java_lang_Class::is_instance(java_class), "must be a Class object");
+  java_class->obj_field_put(_klass_offset, klass);
 }
 
 
@@ -1145,7 +1151,7 @@ char* java_lang_Throwable::print_stack_element_to_buffer(methodOop method, int b
     }
     nmethod* nm = method->code();
     if (WizardMode && nm != NULL) {
-      sprintf(buf + (int)strlen(buf), "(nmethod " PTR_FORMAT ")", (intptr_t)nm);
+      sprintf(buf + (int)strlen(buf), "(nmethod " INTPTR_FORMAT ")", (intptr_t)nm);
     }
   }
 

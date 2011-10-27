@@ -35,6 +35,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "jvm_windows.h"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "jvm_bsd.h"
+#endif
 
 #ifndef _JAVASOFT_JVM_H_
 #define _JAVASOFT_JVM_H_
@@ -287,6 +290,9 @@ JVM_DumpAllStacks(JNIEnv *env, jclass unused);
 
 JNIEXPORT jobjectArray JNICALL
 JVM_GetAllThreads(JNIEnv *env, jclass dummy);
+
+JNIEXPORT void JNICALL
+JVM_SetNativeThreadName(JNIEnv *env, jobject jthread, jstring name);
 
 /* getStackTrace() and getAllStackTraces() method */
 JNIEXPORT jobjectArray JNICALL
