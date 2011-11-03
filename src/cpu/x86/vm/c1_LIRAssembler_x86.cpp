@@ -1415,7 +1415,7 @@ void LIR_Assembler::prefetchr(LIR_Opr src) {
       default:
         ShouldNotReachHere(); break;
     }
-  } else if (VM_Version::supports_3dnow()) {
+  } else if (VM_Version::supports_3dnow_prefetch()) {
     __ prefetchr(from_addr);
   }
 }
@@ -1438,7 +1438,7 @@ void LIR_Assembler::prefetchw(LIR_Opr src) {
       default:
         ShouldNotReachHere(); break;
     }
-  } else if (VM_Version::supports_3dnow()) {
+  } else if (VM_Version::supports_3dnow_prefetch()) {
     __ prefetchw(from_addr);
   }
 }
