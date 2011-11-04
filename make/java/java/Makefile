@@ -34,6 +34,7 @@ LIBRARY = java
 PRODUCT = java
 SUBDIRS_MAKEFLAGS += JAVAC_MAX_WARNINGS=true
 SUBDIRS_MAKEFLAGS += JAVAC_WARNINGS_FATAL=true
+JAVAC_MAX_WARNINGS=true
 include $(BUILDDIR)/common/Defs.gmk
 
 # windows compiler flags
@@ -207,7 +208,7 @@ OTHER_LDLIBS += $(JVMLIB) -libpath:$(OBJDIR)/../../../fdlibm/$(OBJDIRNAME) fdlib
 		       -libpath:$(OBJDIR)/../../../verify/$(OBJDIRNAME) verify.lib \
 		       shell32.lib delayimp.lib /DELAYLOAD:shell32.dll
 else
-OTHER_LDLIBS += $(JVMLIB) -lverify $(LIBSOCKET) $(LIBNSL) -ldl \
+OTHER_LDLIBS += $(JVMLIB) -lverify $(LIBSOCKET) $(LIBNSL) $(LIBSCF) -ldl \
 		-L$(OBJDIR)/../../../fdlibm/$(OBJDIRNAME) -lfdlibm.$(ARCH)
 endif
 
