@@ -223,6 +223,8 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	echo "$(call gamma-path,commonsrc,share/vm/prims) \\"; \
 	echo "$(call gamma-path,altsrc,share/vm) \\"; \
 	echo "$(call gamma-path,commonsrc,share/vm) \\"; \
+	echo "$(call gamma-path,altsrc,share/vm/precompiled) \\"; \
+	echo "$(call gamma-path,commonsrc,share/vm/precompiled) \\"; \
 	echo "$(call gamma-path,altsrc,cpu/$(SRCARCH)/vm) \\"; \
 	echo "$(call gamma-path,commonsrc,cpu/$(SRCARCH)/vm) \\"; \
 	echo "$(call gamma-path,altsrc,os_cpu/$(OS_FAMILY)_$(SRCARCH)/vm) \\"; \
@@ -233,6 +235,10 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	echo "$(call gamma-path,commonsrc,os/posix/vm)"; \
 	[ -n "$(CFLAGS_BROWSE)" ] && \
 	    echo && echo "CFLAGS_BROWSE = $(CFLAGS_BROWSE)"; \
+	[ -n "$(OBJCOPY)" ] && \
+	    echo && echo "OBJCOPY = $(OBJCOPY)"; \
+	[ -n "$(STRIP_POLICY)" ] && \
+	    echo && echo "STRIP_POLICY = $(STRIP_POLICY)"; \
 	[ -n "$(HOTSPOT_EXTRA_SYSDEFS)" ] && \
 	    echo && \
 	    echo "HOTSPOT_EXTRA_SYSDEFS\$$(HOTSPOT_EXTRA_SYSDEFS) = $(HOTSPOT_EXTRA_SYSDEFS)" && \
