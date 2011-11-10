@@ -577,8 +577,8 @@ class CommandLineFlags {
   develop(bool, VerifyStack, false,                                         \
           "Verify stack of each thread when it is entering a runtime call") \
                                                                             \
-  develop(bool, ForceUnreachable, false,                                    \
-          "(amd64) Make all non code cache addresses to be unreachable with rip-rel forcing use of 64bit literal fixups") \
+  diagnostic(bool, ForceUnreachable, false,                                 \
+          "Make all non code cache addresses to be unreachable with forcing use of 64bit literal fixups") \
                                                                             \
   notproduct(bool, StressDerivedPointers, false,                            \
           "Force scavenge when a derived pointers is detected on stack "    \
@@ -904,7 +904,7 @@ class CommandLineFlags {
   product(bool, AlwaysRestoreFPU, false,                                    \
           "Restore the FPU control word after every JNI call (expensive)")  \
                                                                             \
-  notproduct(bool, PrintCompilation2, false,                                \
+  diagnostic(bool, PrintCompilation2, false,                                \
           "Print additional statistics per compilation")                    \
                                                                             \
   diagnostic(bool, PrintAdapterHandlers, false,                             \
@@ -3364,7 +3364,7 @@ class CommandLineFlags {
   notproduct(bool, ExitOnFullCodeCache, false,                              \
           "Exit the VM if we fill the code cache.")                         \
                                                                             \
-  product(bool, UseCodeCacheFlushing, false,                                \
+  product(bool, UseCodeCacheFlushing, true,                                 \
           "Attempt to clean the code cache before shutting off compiler")   \
                                                                             \
   product(intx,  MinCodeCacheFlushingInterval, 30,                          \
