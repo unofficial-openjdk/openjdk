@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,29 +23,37 @@
 
 /*
  * @test
- * @bug 6669869
- * @summary Tests GuiAvailable property in different application contexts
+ * @bug 7087876
+ * @summary Tests spec of the createPropertyEditor method
  * @author Sergey Malenkov
  */
 
-import java.awt.GraphicsEnvironment;
-import java.beans.Beans;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.beans.PropertyEditorSupport;
 
-public class TestGuiAvailable implements Runnable {
-    public static void main(String[] args) throws InterruptedException {
-        if (Beans.isGuiAvailable() == GraphicsEnvironment.isHeadless()) {
-            throw new Error("unexpected GuiAvailable property");
-        }
-        Beans.setGuiAvailable(!Beans.isGuiAvailable());
-        ThreadGroup group = new ThreadGroup("$$$");
-        Thread thread = new Thread(group, new TestGuiAvailable());
-        thread.start();
-        thread.join();
+public class Test7087876 {
+
+    public static void main(String[] args) throws IntrospectionException {
+        PropertyDescriptor pd = new PropertyDescriptor("value", Bean.class);
+        pd.setPropertyEditorClass(Editor.class);
+        pd.createPropertyEditor(new Bean());
     }
 
-    public void run() {
-        if (Beans.isGuiAvailable() == GraphicsEnvironment.isHeadless()) {
-            throw new Error("shared GuiAvailable property");
+    public static class Bean {
+        private String value;
+
+        public String getValue() {
+            return this.value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
+
+    public static class Editor extends PropertyEditorSupport {
+        private Editor() {
         }
     }
 }

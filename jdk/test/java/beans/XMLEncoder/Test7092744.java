@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,7 +21,46 @@
  * questions.
  */
 
-/* methodsIDs for MPopupMenuPeer methods that may be accessed from C */
-struct MPopupMenuPeerIDs {
-  jmethodID destroyNativeWidgetAfterGettingTreeLock;
-};
+/*
+ * @test
+ * @bug 7092744
+ * @summary Tests for ambiguous methods
+ * @author Sergey Malenkov
+ */
+
+public class Test7092744 extends AbstractTest {
+
+    public static void main(String[] args) {
+        new Test7092744().test(true);
+    }
+
+    protected Object getObject() {
+        return new Bean();
+    }
+
+    protected Object getAnotherObject() {
+        Bean bean = new Bean();
+        bean.setValue(99);
+        return bean;
+    }
+
+    public static interface I<T extends Number> {
+
+        T getValue();
+
+        void setValue(T value);
+    }
+
+    public static class Bean implements I<Integer> {
+
+        private Integer value;
+
+        public Integer getValue() {
+            return this.value;
+        }
+
+        public void setValue(Integer value) {
+            this.value = value;
+        }
+    }
+}

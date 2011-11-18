@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -24,18 +22,24 @@
  */
 
 /*
+ * @test
+ * @bug 7087429
+ * @summary Tests IllegalArgumentException from the PropertyChangeEvent constructor
+ * @author Sergey Malenkov
  */
-#ifndef _TOPLEVEL_H_
-#define _TOPLEVEL_H_
-#ifndef HEADLESS
 
-extern Widget findFocusProxy(Widget widget);
-extern Widget findTopLevelByShell(Widget widget);
-extern jobject findTopLevel(jobject peer, JNIEnv *env);
-extern void shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch);
-extern Boolean isFocusableWindowByShell(JNIEnv * env, Widget shell);
-extern Boolean isFocusableWindowByPeer(JNIEnv * env, jobject peer);
-extern Widget getShellWidget(Widget child);
-extern Boolean isFocusableComponentTopLevelByWidget(JNIEnv * env, Widget child);
-#endif /* !HEADLESS */
-#endif           /* _TOPLEVEL_H_ */
+import java.beans.PropertyChangeEvent;
+
+public final class Test7087429 {
+    public static void main(String[] args) {
+        try {
+            new PropertyChangeEvent(null, null, null, null);
+        }
+        catch (IllegalArgumentException exception) {
+            if (exception.getMessage().equals("null source")) {
+                return;
+            }
+        }
+        throw new Error("IllegalArgumentException expected");
+    }
+}

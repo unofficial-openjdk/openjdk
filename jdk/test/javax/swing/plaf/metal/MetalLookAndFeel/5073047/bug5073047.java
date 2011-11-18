@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -24,14 +22,32 @@
  */
 
 /*
+ * @test
+ * @bug 5073407
+ * @summary Tests 5073407
+ * @author Scott Violet
  */
 
-#ifndef _XDrawingArea_h_
-#define _XDrawingArea_h_
+import javax.swing.*;
+import javax.swing.plaf.*;
+import javax.swing.plaf.metal.*;
 
-extern WidgetClass xDrawingAreaClass;
+public class bug5073047 {
 
-typedef struct _XDrawingAreaClassRec    *XDrawingAreaWidgetClass;
-typedef struct _XDrawingAreaRec         *XDrawingAreaWidget;
+    public static void main(String[] args) throws Exception{
+        MyTheme theme = new MyTheme();
+        MetalLookAndFeel.setCurrentTheme(theme);
+        UIManager.setLookAndFeel(new MetalLookAndFeel());
+        if (UIManager.get("Button.font") != theme.ctf) {
+            throw new RuntimeException("Unexpected font");
+        }
+    }
 
-#endif /* !_VDrawingArea_h_ */
+    private static class MyTheme extends DefaultMetalTheme {
+        public final FontUIResource ctf = new FontUIResource(
+                super.getControlTextFont().deriveFont(40.0f));
+        public FontUIResource getControlTextFont() {
+            return ctf;
+        }
+    }
+}

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,19 +20,32 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef _MTOOLKIT_H_
-#define _MTOOLKIT_H_
-#ifndef HEADLESS
-extern void *findPeer(Widget * pwidget);
-extern Widget findWindowsProxy(jobject window, JNIEnv *env);
-extern struct WidgetInfo *findWidgetInfo(Widget widget);
-extern Boolean isAncestor(Window ancestor, Window child);
-extern void clearFocusPath(Widget shell);
-extern void globalClearFocusPath(Widget focusOwnerShell);
-extern Boolean isFrameOrDialog(jobject target, JNIEnv * env);
-extern jobject getOwningFrameOrDialog(jobject target, JNIEnv *env);
 
-#define SPECIAL_KEY_EVENT 2
+/*
+ * Portions Copyright (c) 2011 IBM Corporation
+ */
 
-#endif /* !HEADLESS */
-#endif           /* _MTOOLKIT_H_ */
+/*
+ * @test
+ * @bug 6938583
+ * @summary Unexpected NullPointerException when use CodeIM demo on windows
+ * @author LittleE
+ */
+
+import javax.swing.*;
+import javax.swing.text.DefaultCaret;
+import java.awt.event.MouseEvent;
+
+public class bug6938583 {
+    public static void main(String[] args) throws Exception {
+        SwingUtilities.invokeAndWait(new Runnable() {
+            public void run() {
+                JTextArea jta = new JTextArea();
+                DefaultCaret dc = new DefaultCaret();
+                jta.setCaret(dc);
+                dc.deinstall(jta);
+                dc.mouseClicked(new MouseEvent(jta, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 0, false));
+            }
+        });
+    }
+}
