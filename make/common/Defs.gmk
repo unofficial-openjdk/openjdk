@@ -53,6 +53,28 @@ endif
 
 _OUTPUTDIR=$(TOPDIR)/build/$(PLATFORM)-$(ARCH)
 
+ifneq ($(PLATFORM), windows)
+  ifdef ALT_X11_PATH
+    X11_PATH = $(ALT_X11_PATH)
+  else
+    X11_PATH = /usr/X11R6
+  endif
+
+  ifdef ALT_PACKAGE_PATH
+    PACKAGE_PATH = $(ALT_PACKAGE_PATH)
+  else
+    ifeq ($(PLATFORM), linux)
+      PACKAGE_PATH = /usr
+    else
+      ifeq ($(OS_VENDOR), Apple)
+        PACKAGE_PATH = /opt/local
+      else
+        PACKAGE_PATH = /usr/local
+      endif
+    endif
+  endif
+endif
+
 #
 # Get platform definitions
 #
@@ -101,10 +123,10 @@ DOCSDIRSUFFIX       =
 
 # An attempt is made to generate unique enough directories for the
 # generated files to not have name collisisons. Most build units
-# defines PRODUCT (except Release.gmk), but then they may or may 
-# not define PACKAGE, THREADIR (only HPI uses this), PROGRAM, and 
-# LIBRARY. This code chunk attempts to generate a unique 
-# OBJDIR/CLASSHDRDIR for each build unit based on which of those 
+# defines PRODUCT (except Release.gmk), but then they may or may
+# not define PACKAGE, THREADIR (only HPI uses this), PROGRAM, and
+# LIBRARY. This code chunk attempts to generate a unique
+# OBJDIR/CLASSHDRDIR for each build unit based on which of those
 # values are set within each build unit.
 
 UNIQUE_LOCATION_STRING = tmp
@@ -133,7 +155,7 @@ ifneq ($(THREADDIR),)
   UNIQUE_LOCATION_STRING += /$(THREADDIR)
 endif
 
-# the use of += above makes a space separated list which we need to 
+# the use of += above makes a space separated list which we need to
 # remove for filespecs.
 #
 NULLSTRING :=
@@ -176,9 +198,9 @@ vpath %.class $(CLASSBINDIR)
 # Classpath seen by javac (different from the one seen by the VM
 # running javac), and useful variables.
 #
-SOURCEPATH	= $(VPATH.java)
-PKG		= $(shell $(EXPR) $(PACKAGE) : '\([a-z]*\)')
-PKGDIR		= $(subst .,/,$(PACKAGE))
+SOURCEPATH      = $(VPATH.java)
+PKG             = $(shell $(EXPR) $(PACKAGE) : '\([a-z]*\)')
+PKGDIR          = $(subst .,/,$(PACKAGE))
 
 #
 # The java/javac/jdk variables (JAVAC_CMD, JAVA_CMD, etc.)
