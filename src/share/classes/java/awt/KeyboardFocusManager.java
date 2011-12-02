@@ -522,9 +522,6 @@ public abstract class KeyboardFocusManager
      * <code>getFocusOwner()</code>. Use <code>Component.requestFocus()</code>
      * or <code>Component.requestFocusInWindow()</code> to change the focus
      * owner, subject to platform limitations.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's context.
      *
      * @param focusOwner the focus owner
      * @see #getFocusOwner
@@ -532,14 +529,10 @@ public abstract class KeyboardFocusManager
      * @see Component#requestFocus()
      * @see Component#requestFocusInWindow()
      * @see Component#isFocusable
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      * @beaninfo
      *       bound: true
      */
-    protected void setGlobalFocusOwner(Component focusOwner)
-        throws SecurityException
-    {
+    protected void setGlobalFocusOwner(Component focusOwner) {
         Component oldFocusOwner = null;
         boolean shouldFire = false;
 
@@ -591,18 +584,11 @@ public abstract class KeyboardFocusManager
      * a new Component to receive focus, or a Component is given focus
      * explicitly via a call to <code>requestFocus()</code>. This operation
      * does not change the focused or active Windows.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's context.
      *
      * @see Component#requestFocus()
      * @see java.awt.event.FocusEvent#FOCUS_LOST
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      */
-    public void clearGlobalFocusOwner()
-        throws SecurityException
-    {
+    public void clearGlobalFocusOwner() {
         synchronized (KeyboardFocusManager.class) {
             checkCurrentKFMSecurity();
         }
@@ -705,10 +691,6 @@ public abstract class KeyboardFocusManager
      * <code>Component.requestFocus()</code> or
      * <code>Component.requestFocusInWindow()</code> to change the focus owner,
      * subject to platform limitations.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's
-     * context.
      *
      * @param permanentFocusOwner the permanent focus owner
      * @see #getPermanentFocusOwner
@@ -716,14 +698,10 @@ public abstract class KeyboardFocusManager
      * @see Component#requestFocus()
      * @see Component#requestFocusInWindow()
      * @see Component#isFocusable
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      * @beaninfo
      *       bound: true
      */
-    protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner)
-        throws SecurityException
-    {
+    protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner) {
         Component oldPermanentFocusOwner = null;
         boolean shouldFire = false;
 
@@ -812,9 +790,6 @@ public abstract class KeyboardFocusManager
      * <code>Component.requestFocus()</code> or
      * <code>Component.requestFocusInWindow()</code> to change the focused
      * Window, subject to platform limitations.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's context.
      *
      * @param focusedWindow the focused Window
      * @see #getFocusedWindow
@@ -822,14 +797,10 @@ public abstract class KeyboardFocusManager
      * @see Component#requestFocus()
      * @see Component#requestFocusInWindow()
      * @see Window#isFocusableWindow
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      * @beaninfo
      *       bound: true
      */
-    protected void setGlobalFocusedWindow(Window focusedWindow)
-        throws SecurityException
-    {
+    protected void setGlobalFocusedWindow(Window focusedWindow) {
         Window oldFocusedWindow = null;
         boolean shouldFire = false;
 
@@ -921,23 +892,16 @@ public abstract class KeyboardFocusManager
      * <code>Component.requestFocus()</code> or
      * <code>Component.requestFocusInWindow()</code>to change the active
      * Window, subject to platform limitations.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's context.
      *
      * @param activeWindow the active Window
      * @see #getActiveWindow
      * @see #getGlobalActiveWindow
      * @see Component#requestFocus()
      * @see Component#requestFocusInWindow()
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      * @beaninfo
      *       bound: true
      */
-    protected void setGlobalActiveWindow(Window activeWindow)
-        throws SecurityException
-    {
+    protected void setGlobalActiveWindow(Window activeWindow) {
         Window oldActiveWindow;
         synchronized (KeyboardFocusManager.class) {
             checkCurrentKFMSecurity();
@@ -1250,22 +1214,14 @@ public abstract class KeyboardFocusManager
      * <p>
      * This method is intended to be used only by KeyboardFocusManagers and
      * focus implementations. It is not for general client use.
-     * <p>
-     * This method will throw a SecurityException if this KeyboardFocusManager
-     * is not the current KeyboardFocusManager for the calling thread's
-     * context.
      *
      * @param newFocusCycleRoot the new focus cycle root
      * @see #getCurrentFocusCycleRoot
      * @see #getGlobalCurrentFocusCycleRoot
-     * @throws SecurityException if this KeyboardFocusManager is not the
-     *         current KeyboardFocusManager for the calling thread's context
      * @beaninfo
      *       bound: true
      */
-    public void setGlobalCurrentFocusCycleRoot(Container newFocusCycleRoot)
-        throws SecurityException
-    {
+    public void setGlobalCurrentFocusCycleRoot(Container newFocusCycleRoot) {
         Container oldFocusCycleRoot;
 
         synchronized (KeyboardFocusManager.class) {
