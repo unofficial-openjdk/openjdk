@@ -44,14 +44,16 @@ MS_RUNTIME_STATIC = true
 
 include $(BUILDDIR)/common/Defs.gmk
 
+ifneq ($(SYSTEM_ZLIB),true)
 ZIP_SRC = $(SHARE_SRC)/native/java/util/zip/zlib-$(ZLIB_VERSION)
+endif
 LAUNCHER_SHARE_SRC = $(SHARE_SRC)/bin
 LAUNCHER_PLATFORM_SRC = $(PLATFORM_SRC)/bin
 
 ifeq ($(ZERO_BUILD), true)
 ERGO_FAMILY=zero
 else
-ifeq ($(ARCH_FAMILY), amd64)
+ifneq (,$(findstring $(ARCH_FAMILY), amd64 x86_64))
 ERGO_FAMILY=i586
 else
 ERGO_FAMILY=$(ARCH_FAMILY)
@@ -69,13 +71,17 @@ FILES_c = \
 	parse_manifest.c \
 	version_comp.c \
 	wildcard.c \
-	jli_util.c \
+	jli_util.c
+
+ifneq ($(SYSTEM_ZLIB),true)
+FILES_c += \
 	inflate.c \
 	inftrees.c \
 	inffast.c \
 	zadler32.c \
 	zcrc32.c \
 	zutil.c
+endif
 
 ifneq ($(PLATFORM), windows)
   FILES_c += ergo.c 
@@ -96,10 +102,15 @@ ifeq ($(PLATFORM), solaris)
   LIBARCH_DEFINES += -DLIBARCH64NAME='"$(LIBARCH64)"'
 endif
 
-OTHER_CPPFLAGS += $(LIBARCH_DEFINES)
+ifeq ($(PLATFORM), macosx)
+  OTHER_CPPFLAGS += $(LIBARCH_DEFINES) -DPACKAGE_PATH=\"$(PACKAGE_PATH)\"
+else
+  OTHER_CPPFLAGS += $(LIBARCH_DEFINES)
+endif
 
 
 ifneq ($(PLATFORM), windows)	# UNIX systems
+ifneq ($(PLATFORM), macosx)
         LD_RUNPATH_EXTRAS += ..
 	LIB_LOCATION = $(LIBDIR)/$(LIBARCH)/jli
 	# Note: its important to keep this order meaning -lc is the
@@ -110,6 +121,11 @@ ifeq ($(USE_PTHREADS),true)
 	LDLIBS += -lpthread
 endif # USE_PTHREADS 
 endif # PLATFORM
+endif # PLATFORM
+
+ifeq ($(PLATFORM), macosx)
+	LIB_LOCATION = $(LIBDIR)/jli
+endif
 
 ifeq ($(PLATFORM), windows)
 	EXTRA_LIBS = advapi32.lib \
@@ -129,7 +145,11 @@ endif
 
 OTHER_INCLUDES += -I$(LAUNCHER_SHARE_SRC)
 OTHER_INCLUDES += -I$(LAUNCHER_PLATFORM_SRC)
-OTHER_INCLUDES += -I$(ZIP_SRC)
+ifneq ($(SYSTEM_ZLIB),true)
+  OTHER_INCLUDES += -I$(ZIP_SRC)
+else
+  LDLIBS += -lz
+endif
 
 #
 # Library to compile.
@@ -161,7 +181,33 @@ library:: $(STATIC_LIBRARY)
 
 endif	# PLATFORM
 
+ifeq ($(PLATFORM), macosx)
+# Some Obj-C code is embedded in java_md.c, so need to inform compiler
+CFLAGS_$(VARIANT)/java_md.o = -Os -x objective-c
+# Needed for linking the various launchers
+LDFLAGS += -framework Cocoa -framework Security -framework ApplicationServices
+endif
+
+STATIC_LIBRARY_DIR = $(OBJDIR)/static
+STATIC_LIBRARY_NAME = lib$(LIBRARY).a
+STATIC_LIBRARY = $(STATIC_LIBRARY_DIR)/$(STATIC_LIBRARY_NAME)
+
+$(STATIC_LIBRARY_DIR): | $(OBJDIR)
+	@$(MKDIR) $(STATIC_LIBRARY_DIR)
+
+$(STATIC_LIBRARY): $(STATIC_LIBRARY_DIR)
+	@$(prep-target)
+	$(AR) $(ARFLAGS) $@ $(FILES_o)
+
+library:: $(STATIC_LIBRARY)
+
+vpath %.c $(LAUNCHER_SHARE_SRC) $(LAUNCHER_PLATFORM_SRC)
+ifneq ($(SYSTEM_ZLIB),true)
+  vpath %.c $(ZIP_SRC)
+
+else 
 #
 # Add to ambient vpath so we pick up the library files
 #
 vpath %.c $(LAUNCHER_SHARE_SRC) $(ZIP_SRC) $(LAUNCHER_PLATFORM_SRC)
+endif

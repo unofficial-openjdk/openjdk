@@ -63,8 +63,9 @@
 extern JavaVM *jvm;
 
 #ifndef HEADLESS
-#ifdef __linux__
+#if defined(__linux__) || defined(MACOSX)
 extern void statusWindowEventHandler(XEvent event);
+Boolean awt_dnd_process_event(XEvent* event);
 #endif
 #endif /* !HEADLESS */
 
@@ -1642,7 +1643,7 @@ processOneEvent(XtInputMask iMask) {
               */
               Widget widget=XtWindowToWidget(awt_display, xev.xany.window);
               eventNumber++;
-#ifdef __linux__
+#if defined(__linux__) || defined(MACOSX)
               statusWindowEventHandler(xev);
 #endif
               xembed_eventHandler(&xev);

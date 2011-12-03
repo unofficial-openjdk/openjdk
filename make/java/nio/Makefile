@@ -260,12 +260,91 @@ FILES_gen += \
 	sun/nio/fs/UnixConstants.java
 endif # PLATFORM = linux
 
+ifeq ($(PLATFORM), macosx)
+FILES_java += \
+        sun/nio/ch/AbstractPollSelectorImpl.java \
+	sun/nio/ch/InheritedChannel.java \
+        sun/nio/ch/PollSelectorProvider.java \
+        sun/nio/ch/PollSelectorImpl.java \
+	sun/nio/ch/Port.java \
+	sun/nio/ch/SimpleAsynchronousFileChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/BsdFileStore.java \
+	sun/nio/fs/BsdFileSystem.java \
+	sun/nio/fs/BsdFileSystemProvider.java \
+	sun/nio/fs/BsdNativeDispatcher.java \
+	sun/nio/fs/PollingWatchService.java \
+	sun/nio/fs/UnixChannelFactory.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixDirectoryStream.java \
+	sun/nio/fs/UnixException.java \
+	sun/nio/fs/UnixFileAttributeViews.java \
+	sun/nio/fs/UnixFileAttributes.java \
+	sun/nio/fs/UnixFileKey.java \
+	sun/nio/fs/UnixFileModeAttribute.java \
+	sun/nio/fs/UnixFileStore.java \
+	sun/nio/fs/UnixFileStoreAttributes.java \
+	sun/nio/fs/UnixFileSystem.java \
+	sun/nio/fs/UnixFileSystemProvider.java \
+	sun/nio/fs/UnixMountEntry.java \
+	sun/nio/fs/UnixNativeDispatcher.java \
+	sun/nio/fs/UnixPath.java \
+	sun/nio/fs/UnixSecureDirectoryStream.java \
+	sun/nio/fs/UnixUriUtils.java \
+	sun/nio/fs/UnixUserPrincipals.java
+
+FILES_c += \
+	InheritedChannel.c \
+	NativeThread.c \
+        PollArrayWrapper.c \
+	UnixAsynchronousServerSocketChannelImpl.c \
+	UnixAsynchronousSocketChannelImpl.c \
+	\
+	GnomeFileTypeDetector.c \
+	BsdNativeDispatcher.c \
+	UnixCopyFile.c \
+	UnixNativeDispatcher.c
+
+FILES_export += \
+	sun/nio/ch/InheritedChannel.java \
+	sun/nio/ch/NativeThread.java \
+	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
+	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
+	\
+	sun/nio/fs/GnomeFileTypeDetector.java \
+	sun/nio/fs/BsdNativeDispatcher.java \
+	sun/nio/fs/UnixCopyFile.java \
+	sun/nio/fs/UnixNativeDispatcher.java
+	
+FILES_gen += \
+	sun/nio/fs/UnixConstants.java
+endif # PLATFORM = bsd, macosx
+
+ifeq ($(PLATFORM), macosx)
+FILES_java += \
+    sun/nio/ch/KQueueSelectorProvider.java \
+    sun/nio/ch/KQueueSelectorImpl.java \
+    sun/nio/ch/KQueueArrayWrapper.java
+
+FILES_c += \
+    KQueueArrayWrapper.c
+
+vpath %.c $(call NativeSrcDirList,,native/sun/nio/fs)
+vpath %.c $(call NativeSrcDirList,,native/sun/nio/ch)
+
+else
+
 #
 # Find platform-specific C source files
 #
 vpath %.c $(PLATFORM_SRC)/native/sun/nio/fs
 vpath %.c $(PLATFORM_SRC)/native/sun/nio/ch
 vpath %.c $(SHARE_SRC)/native/sun/nio/ch
+
+endif # PLATFORM = macosx
 
 #
 # Various variables
@@ -292,10 +371,13 @@ ifeq ($(PLATFORM),windows)
      $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/FileDescriptor_md.obj
 endif
 ifeq ($(PLATFORM), linux)
-OTHER_LDLIBS += -L$(LIBDIR)/$(LIBARCH) -ljava -lnet -lpthread -ldl
+OTHER_LDLIBS += -L$(LIBDIR)/$(LIBARCH) -ljava -lnet -lpthread $(LIBDL)
+endif
+ifeq ($(PLATFORM), macosx)
+OTHER_LDLIBS += -L$(LIBDIR) -ljava -lnet -pthread
 endif
 ifeq ($(PLATFORM), solaris)
-OTHER_LDLIBS += $(JVMLIB) $(LIBSOCKET) -lposix4 -ldl -lsendfile \
+OTHER_LDLIBS += $(JVMLIB) $(LIBSOCKET) -lposix4 $(LIBDL) -lsendfile \
 		-L$(LIBDIR)/$(LIBARCH) -ljava -lnet
 endif # PLATFORM
 
@@ -315,6 +397,9 @@ FILES_m = mapfile-solaris
 endif
 ifeq ($(PLATFORM), linux)
 FILES_m = mapfile-linux
+endif
+ifeq ($(PLATFORM), macosx)
+FILES_m = mapfile-bsd
 endif
 include $(BUILDDIR)/common/Mapfile-vers.gmk
 include $(BUILDDIR)/common/Library.gmk
@@ -818,9 +903,15 @@ SOR_COPYRIGHT_YEARS = $(shell $(CAT) $(GENSOR_SRC) | \
 $(TEMPDIR)/$(GENSOR_SRC) : $(GENSOR_SRC)
 	$(install-file)
 
+ifeq ($(PLATFORM), macosx)
+  NIO_CC=$(HOST_CC)
+else
+  NIO_CC=$(CC)
+endif
+
 $(GENSOR_EXE) : $(TEMPDIR)/$(GENSOR_SRC)
 	$(prep-target)
-	($(CD) $(TEMPDIR); $(CC) $(CPPFLAGS) $(LDDFLAGS) \
+	($(CD) $(TEMPDIR); $(NIO_CC) $(CPPFLAGS) $(LDDFLAGS) \
 	   -o genSocketOptionRegistry$(EXE_SUFFIX) $(GENSOR_SRC))
 
 ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
@@ -856,7 +947,7 @@ GENUC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENUC_SRC) | \
 
 $(GENUC_EXE) : $(GENUC_SRC)
 	$(prep-target)
-	$(CC) $(CPPFLAGS) -o $@ $(GENUC_SRC)
+	$(NIO_CC) $(CPPFLAGS) -o $@ $(GENUC_SRC)
 
 ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
 $(SFS_GEN)/UnixConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/UnixConstants-$(PLATFORM)-$(ARCH).java
@@ -878,7 +969,7 @@ GENSC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENSC_SRC) | \
 
 $(GENSC_EXE) : $(GENSC_SRC)
 	$(prep-target)
-	$(CC) $(CPPFLAGS) -o $@ $(GENSC_SRC)
+	$(NIO_CC) $(CPPFLAGS) -o $@ $(GENSC_SRC)
 
 ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
 $(SFS_GEN)/SolarisConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/SolarisConstants-$(PLATFORM)-$(ARCH).java

@@ -33,6 +33,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
+#ifdef _ALLBSD_SOURCE
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
 
 #include "java.h"
 
