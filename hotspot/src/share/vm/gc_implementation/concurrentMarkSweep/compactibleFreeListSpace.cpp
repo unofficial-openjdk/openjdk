@@ -50,8 +50,8 @@
 int CompactibleFreeListSpace::_lockRank = Mutex::leaf + 3;
 
 // Defaults are 0 so things will break badly if incorrectly initialized.
-int CompactibleFreeListSpace::IndexSetStart  = 0;
-int CompactibleFreeListSpace::IndexSetStride = 0;
+size_t CompactibleFreeListSpace::IndexSetStart  = 0;
+size_t CompactibleFreeListSpace::IndexSetStride = 0;
 
 size_t MinChunkSize = 0;
 
@@ -62,7 +62,7 @@ void CompactibleFreeListSpace::set_cms_values() {
   MinChunkSize = numQuanta(sizeof(FreeChunk), MinObjAlignmentInBytes) * MinObjAlignment;
 
   assert(IndexSetStart == 0 && IndexSetStride == 0, "already set");
-  IndexSetStart  = (int) MinChunkSize;
+  IndexSetStart  = MinChunkSize;
   IndexSetStride = MinObjAlignment;
 }
 
@@ -250,7 +250,7 @@ void CompactibleFreeListSpace::initializeIndexedFreeListArray() {
 }
 
 void CompactibleFreeListSpace::resetIndexedFreeListArray() {
-  for (int i = 1; i < IndexSetSize; i++) {
+  for (size_t i = 1; i < IndexSetSize; i++) {
     assert(_indexedFreeList[i].size() == (size_t) i,
       "Indexed free list sizes are incorrect");
     _indexedFreeList[i].reset(IndexSetSize);
@@ -337,7 +337,7 @@ size_t CompactibleFreeListSpace::sumIndexedFreeListArrayReturnedBytes() {
 
 size_t CompactibleFreeListSpace::totalCountInIndexedFreeLists() const {
   size_t count = 0;
-  for (int i = (int)MinChunkSize; i < IndexSetSize; i++) {
+  for (size_t i = IndexSetStart; i < IndexSetSize; i++) {
     debug_only(
       ssize_t total_list_count = 0;
       for (FreeChunk* fc = _indexedFreeList[i].head(); fc != NULL;
@@ -668,12 +668,16 @@ public:
 
 // We de-virtualize the block-related calls below, since we know that our
 // space is a CompactibleFreeListSpace.
+
 #define FreeListSpace_DCTOC__walk_mem_region_with_cl_DEFN(ClosureType)          \
 void FreeListSpace_DCTOC::walk_mem_region_with_cl(MemRegion mr,                 \
                                                  HeapWord* bottom,              \
                                                  HeapWord* top,                 \
                                                  ClosureType* cl) {             \
-   if (SharedHeap::heap()->n_par_threads() > 0) {                               \
+   bool is_par = SharedHeap::heap()->n_par_threads() > 0;                       \
+   if (is_par) {                                                                \
+     assert(SharedHeap::heap()->n_par_threads() ==                              \
+            SharedHeap::heap()->workers()->active_workers(), "Mismatch");       \
      walk_mem_region_with_cl_par(mr, bottom, top, cl);                          \
    } else {                                                                     \
      walk_mem_region_with_cl_nopar(mr, bottom, top, cl);                        \
@@ -1925,6 +1929,9 @@ CompactibleFreeListSpace::splitChunkAndReturnRemainder(FreeChunk* chunk,
   if (rem_size < SmallForDictionary) {
     bool is_par = (SharedHeap::heap()->n_par_threads() > 0);
     if (is_par) _indexedFreeListParLocks[rem_size]->lock();
+    assert(!is_par ||
+           (SharedHeap::heap()->n_par_threads() ==
+            SharedHeap::heap()->workers()->active_workers()), "Mismatch");
     returnChunkToFreeList(ffc);
     split(size, rem_size);
     if (is_par) _indexedFreeListParLocks[rem_size]->unlock();
@@ -2200,7 +2207,7 @@ void CompactibleFreeListSpace::setFLHints() {
 
 void CompactibleFreeListSpace::clearFLCensus() {
   assert_locked();
-  int i;
+  size_t i;
   for (i = IndexSetStart; i < IndexSetSize; i += IndexSetStride) {
     FreeList *fl = &_indexedFreeList[i];
     fl->set_prevSweep(fl->count());
@@ -2494,7 +2501,7 @@ void CompactibleFreeListSpace::verifyFreeLists() const {
 
 void CompactibleFreeListSpace::verifyIndexedFreeLists() const {
   size_t i = 0;
-  for (; i < MinChunkSize; i++) {
+  for (; i < IndexSetStart; i++) {
     guarantee(_indexedFreeList[i].head() == NULL, "should be NULL");
   }
   for (; i < IndexSetSize; i++) {
@@ -2507,7 +2514,7 @@ void CompactibleFreeListSpace::verifyIndexedFreeList(size_t size) const {
   FreeChunk* tail =  _indexedFreeList[size].tail();
   size_t    num = _indexedFreeList[size].count();
   size_t      n = 0;
-  guarantee(((size >= MinChunkSize) && (size % IndexSetStride == 0)) || fc == NULL,
+  guarantee(((size >= IndexSetStart) && (size % IndexSetStride == 0)) || fc == NULL,
             "Slot should have been empty");
   for (; fc != NULL; fc = fc->next(), n++) {
     guarantee(fc->size() == size, "Size inconsistency");
@@ -2527,7 +2534,7 @@ void CompactibleFreeListSpace::check_free_list_consistency() const {
     "else MIN_TREE_CHUNK_SIZE is wrong");
   assert((IndexSetStride == 2 && IndexSetStart == 4) ||                   // 32-bit
          (IndexSetStride == 1 && IndexSetStart == 3), "just checking");   // 64-bit
-  assert((IndexSetStride != 2) || (MinChunkSize % 2 == 0),
+  assert((IndexSetStride != 2) || (IndexSetStart % 2 == 0),
       "Some for-loops may be incorrectly initialized");
   assert((IndexSetStride != 2) || (IndexSetSize % 2 == 1),
       "For-loops that iterate over IndexSet with stride 2 may be wrong");

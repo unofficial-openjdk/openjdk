@@ -243,6 +243,9 @@ struct Flag {
   bool is_writeable() const;
   bool is_external() const;
 
+  bool is_unlocker_ext() const;
+  bool is_unlocked_ext() const;
+
   void print_on(outputStream* st, bool withComments = false );
   void print_as_flag(outputStream* st);
 };
@@ -1416,6 +1419,21 @@ class CommandLineFlags {
   product(uintx, ParallelGCThreads, 0,                                      \
           "Number of parallel threads parallel gc will use")                \
                                                                             \
+  product(bool, UseDynamicNumberOfGCThreads, false,                         \
+          "Dynamically choose the number of parallel threads "              \
+          "parallel gc will use")                                           \
+                                                                            \
+  diagnostic(bool, ForceDynamicNumberOfGCThreads, false,                    \
+          "Force dynamic selection of the number of"                        \
+          "parallel threads parallel gc will use to aid debugging")         \
+                                                                            \
+  product(uintx, HeapSizePerGCThread, ScaleForWordSize(64*M),               \
+          "Size of heap (bytes) per GC thread used in calculating the "     \
+          "number of GC threads")                                           \
+                                                                            \
+  product(bool, TraceDynamicGCThreads, false,                               \
+          "Trace the dynamic GC thread usage")                              \
+                                                                            \
   develop(bool, ParallelOldGCSplitALot, false,                              \
           "Provoke splitting (copying data from a young gen space to"       \
           "multiple destination spaces)")                                   \
@@ -2357,7 +2375,7 @@ class CommandLineFlags {
   develop(bool, TraceGCTaskQueue, false,                                    \
           "Trace actions of the GC task queues")                            \
                                                                             \
-  develop(bool, TraceGCTaskThread, false,                                   \
+  diagnostic(bool, TraceGCTaskThread, false,                                   \
           "Trace actions of the GC task threads")                           \
                                                                             \
   product(bool, PrintParallelOldGCPhaseTimes, false,                        \
@@ -2580,7 +2598,7 @@ class CommandLineFlags {
   diagnostic(bool, DebugInlinedCalls, true,                                 \
          "If false, restricts profiled locations to the root method only")  \
                                                                             \
-  product(bool, PrintVMOptions, NOT_EMBEDDED(trueInDebug) EMBEDDED_ONLY(false),\
+  product(bool, PrintVMOptions, false,                                      \
          "Print flags that appeared on the command line")                   \
                                                                             \
   product(bool, IgnoreUnrecognizedVMOptions, false,                         \
@@ -3906,5 +3924,9 @@ class CommandLineFlags {
 RUNTIME_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG, DECLARE_LP64_PRODUCT_FLAG)
 
 RUNTIME_OS_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
+
+// Extensions
+
+#include "runtime/globals_ext.hpp"
 
 #endif // SHARE_VM_RUNTIME_GLOBALS_HPP
