@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +22,35 @@
  *
  */
 
-/**
- * @test
- * @bug 6792161
- * @summary assert("No dead instructions after post-alloc")
- *
- * @run main/othervm/timeout=300 -Xcomp -XX:MaxInlineSize=120 Test6792161
- */
+#ifndef SHARE_VM_RUNTIME_GLOBALS_EXT_HPP
+#define SHARE_VM_RUNTIME_GLOBALS_EXT_HPP
 
-import java.lang.reflect.Constructor;
-public class Test6792161 {
-    static Constructor test(Class cls) throws Exception {
-        Class[] args= { String.class };
-        try {
-            return cls.getConstructor(args);
-        } catch (NoSuchMethodException e) {}
-        return cls.getConstructor(new Class[0]);
-    }
-    public static void main(final String[] args) throws Exception {
-        try {
-            for (int i = 0; i < 100000; i++) {
-                Constructor ctor = test(Class.forName("Test6792161"));
-            }
-        } catch (NoSuchMethodException e) {}
-    }
+// globals_extension.hpp extension
+
+// Additional CommandLineFlags enum values
+#define COMMANDLINEFLAG_EXT
+
+// Additional CommandLineFlagsWithType enum values
+#define COMMANDLINEFLAGWITHTYPE_EXT
+
+
+// globals.cpp extension
+
+// Additional flag definitions
+#define MATERIALIZE_FLAGS_EXT
+
+// Additional flag descriptors: see flagTable definition
+#define FLAGTABLE_EXT
+
+
+// Default method implementations
+
+inline bool Flag::is_unlocker_ext() const {
+  return false;
 }
+
+inline bool Flag::is_unlocked_ext() const {
+  return true;
+}
+
+#endif // SHARE_VM_RUNTIME_GLOBALS_EXT_HPP
