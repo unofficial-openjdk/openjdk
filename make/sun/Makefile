@@ -63,8 +63,11 @@ ifeq ($(PLATFORM), macosx)
 endif
 
 ifndef OPENJDK
+ifneq ($(PLATFORM), macosx)
   JDBC_SUBDIR = jdbc
 endif
+endif
+
 ifdef OPENJDK
   RENDER_SUBDIR = pisces
 else
