@@ -591,7 +591,7 @@ public abstract class SunToolkit extends Toolkit
         postEvent(targetToAppContext(e.getSource()), pe);
     }
 
-    private static final Lock flushLock = new ReentrantLock();
+    protected static final Lock flushLock = new ReentrantLock();
     private static boolean isFlushingPendingEvents = false;
 
     /*

@@ -41,7 +41,14 @@
 #define JNI_ONUNLOAD_SYMBOLS {"JNI_OnUnload"}
 
 #define JNI_LIB_PREFIX "lib"
+#ifdef __APPLE__
+#define JNI_LIB_SUFFIX ".dylib"
+#define VERSIONED_JNI_LIB_NAME(NAME, VERSION) JNI_LIB_PREFIX NAME "." VERSION JNI_LIB_SUFFIX
+#else
 #define JNI_LIB_SUFFIX ".so"
+#define VERSIONED_JNI_LIB_NAME(NAME, VERSION) JNI_LIB_PREFIX NAME JNI_LIB_SUFFIX "." VERSION
+#endif
+#define JNI_LIB_NAME(NAME) JNI_LIB_PREFIX NAME JNI_LIB_SUFFIX
 
 #define JVM_MAXPATHLEN MAXPATHLEN
 
@@ -68,7 +75,11 @@
 #define JVM_O_O_APPEND   O_APPEND
 #define JVM_O_EXCL       O_EXCL
 #define JVM_O_CREAT      O_CREAT
+#ifdef __APPLE__
+#define JVM_O_DELETE     0x10000000
+#else
 #define JVM_O_DELETE     0x10000
+#endif
 
 /* Signals */
 

@@ -337,11 +337,11 @@ void handlePeerAddrChange
             break;
         case SCTP_ADDR_MADE_PRIM :
             event = sun_nio_ch_SctpPeerAddrChange_SCTP_ADDR_MADE_PRIM;
-#ifdef __linux__  /* Solaris currently doesn't support SCTP_ADDR_CONFIRMED */
+#ifndef __solaris__  /* Solaris currently doesn't support SCTP_ADDR_CONFIRMED */
             break;
         case SCTP_ADDR_CONFIRMED :
             event = sun_nio_ch_SctpPeerAddrChange_SCTP_ADDR_CONFIRMED;
-#endif  /* __linux__ */
+#endif  /* __solaris__ */
     }
 
     addressObj = SockAddrToInetSocketAddress(env, (struct sockaddr*)&spc->spc_aaddr);

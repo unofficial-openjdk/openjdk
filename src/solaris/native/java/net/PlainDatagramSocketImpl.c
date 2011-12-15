@@ -331,7 +331,7 @@ Java_java_net_PlainDatagramSocketImpl_disconnect0(JNIEnv *env, jobject this, jin
     /* The fdObj'fd */
     jint fd;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
     SOCKADDR addr;
     int len;
 #endif
@@ -341,11 +341,13 @@ Java_java_net_PlainDatagramSocketImpl_disconnect0(JNIEnv *env, jobject this, jin
     }
     fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
 
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
 #ifdef __linux__
     if (isOldKernel) {
         int t = 1;
         setsockopt(fd, SOL_SOCKET, SO_BSDCOMPAT, (char*) &t, sizeof(int));
     } else {
+#endif /* __linux__ */
         memset(&addr, 0, sizeof(addr));
 #ifdef AF_INET6
         if (ipv6_available()) {
@@ -361,6 +363,7 @@ Java_java_net_PlainDatagramSocketImpl_disconnect0(JNIEnv *env, jobject this, jin
         }
         JVM_Connect(fd, (struct sockaddr *)&addr, len);
 
+#ifdef __linux__
         // After disconnecting a UDP socket, Linux kernel will set
         // local port to zero if the port number comes from implicit
         // bind. Successive send/recv on the same socket will fail.
@@ -383,6 +386,7 @@ Java_java_net_PlainDatagramSocketImpl_disconnect0(JNIEnv *env, jobject this, jin
             NET_Bind(fd, (struct sockaddr *)&addr, len);
         }
     }
+#endif
 #else
     JVM_Connect(fd, 0, 0);
 #endif
@@ -2400,18 +2404,30 @@ static void mcast_join_leave(JNIEnv *env, jobject this,
             mname6.ipv6mr_interface = idx;
         }
 
+#if defined(_ALLBSD_SOURCE)
+#define ADD_MEMBERSHIP          IPV6_JOIN_GROUP
+#define DRP_MEMBERSHIP          IPV6_LEAVE_GROUP
+#define S_ADD_MEMBERSHIP        "IPV6_JOIN_GROUP"
+#define S_DRP_MEMBERSHIP        "IPV6_LEAVE_GROUP"
+#else
+#define ADD_MEMBERSHIP          IPV6_ADD_MEMBERSHIP
+#define DRP_MEMBERSHIP          IPV6_DROP_MEMBERSHIP
+#define S_ADD_MEMBERSHIP        "IPV6_ADD_MEMBERSHIP"
+#define S_DRP_MEMBERSHIP        "IPV6_DROP_MEMBERSHIP"
+#endif
+
         /* Join the multicast group */
-        if (JVM_SetSockOpt(fd, IPPROTO_IPV6, (join ? IPV6_ADD_MEMBERSHIP : IPV6_DROP_MEMBERSHIP),
+        if (JVM_SetSockOpt(fd, IPPROTO_IPV6, (join ? ADD_MEMBERSHIP : DRP_MEMBERSHIP),
                            (char *) &mname6, sizeof (mname6)) < 0) {
 
             if (join) {
-                NET_ThrowCurrent(env, "setsockopt IPV6_ADD_MEMBERSHIP failed");
+                NET_ThrowCurrent(env, "setsockopt " S_ADD_MEMBERSHIP " failed");
             } else {
                 if (errno == ENOENT) {
                    JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException",
                         "Not a member of the multicast group");
                 } else {
-                    NET_ThrowCurrent(env, "setsockopt IPV6_DROP_MEMBERSHIP failed");
+                    NET_ThrowCurrent(env, "setsockopt " S_DRP_MEMBERSHIP " failed");
                 }
             }
         }

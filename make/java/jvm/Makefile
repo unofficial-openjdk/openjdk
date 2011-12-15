@@ -43,7 +43,12 @@ $(INCLUDEDIR)/%.h: $(SHARE_SRC)/javavm/export/%.h
 $(PLATFORM_INCLUDE)/%.h: $(PLATFORM_SRC)/javavm/export/%.h
 	$(install-file)
 
-JVMCFG_DIR = $(LIBDIR)/$(LIBARCH)
+ifeq ($(PLATFORM),macosx)
+  JVMCFG_DIR = $(LIBDIR)
+else
+  JVMCFG_DIR = $(LIBDIR)/$(LIBARCH)
+endif
+
 JVMCFG = $(JVMCFG_DIR)/jvm.cfg
 
 #

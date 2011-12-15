@@ -116,6 +116,47 @@ struct my_group_source_req {
 
 #endif   /* __linux__ */
 
+#ifdef _ALLBSD_SOURCE
+
+#ifndef IP_BLOCK_SOURCE
+
+#define IP_ADD_SOURCE_MEMBERSHIP        70   /* join a source-specific group */
+#define IP_DROP_SOURCE_MEMBERSHIP       71   /* drop a single source */
+#define IP_BLOCK_SOURCE                 72   /* block a source */
+#define IP_UNBLOCK_SOURCE               73   /* unblock a source */
+
+#endif  /* IP_BLOCK_SOURCE */
+
+#ifndef MCAST_BLOCK_SOURCE
+
+#define MCAST_JOIN_SOURCE_GROUP         82   /* join a source-specific group */
+#define MCAST_LEAVE_SOURCE_GROUP        83   /* leave a single source */
+#define MCAST_BLOCK_SOURCE              84   /* block a source */
+#define MCAST_UNBLOCK_SOURCE            85   /* unblock a source */
+
+#endif /* MCAST_BLOCK_SOURCE */
+
+#ifndef IPV6_ADD_MEMBERSHIP
+
+#define IPV6_ADD_MEMBERSHIP     IPV6_JOIN_GROUP
+#define IPV6_DROP_MEMBERSHIP    IPV6_LEAVE_GROUP
+
+#endif /* IPV6_ADD_MEMBERSHIP */
+
+struct my_ip_mreq_source {
+        struct in_addr  imr_multiaddr;
+        struct in_addr  imr_interface;
+        struct in_addr  imr_sourceaddr;
+};
+
+struct my_group_source_req {
+        uint32_t                gsr_interface;  /* interface index */
+        struct sockaddr_storage gsr_group;      /* group address */
+        struct sockaddr_storage gsr_source;     /* source address */
+};
+
+#endif   /* _ALLBSD_SOURCE */
+
 
 #define COPY_INET6_ADDRESS(env, source, target) \
     (*env)->GetByteArrayRegion(env, source, 0, 16, target)
@@ -287,8 +328,30 @@ Java_sun_nio_ch_Net_localPort(JNIEnv *env, jclass clazz, jobject fdo)
     SOCKADDR sa;
     socklen_t sa_len = SOCKADDR_LEN;
     if (getsockname(fdval(env, fdo), (struct sockaddr *)&sa, &sa_len) < 0) {
+#ifdef _ALLBSD_SOURCE
+        /*
+         * XXXBSD:
+         * ECONNRESET is specific to the BSDs. We can not return an error,
+         * as the calling Java code with raise a java.lang.Error given the expectation
+         * that getsockname() will never fail. According to the Single UNIX Specification,
+         * it shouldn't fail. As such, we just fill in generic Linux-compatible values.
+         */
+        if (errno == ECONNRESET) {
+            struct sockaddr_in *sin;
+            sin = (struct sockaddr_in *) &sa;
+            bzero(sin, sizeof(*sin));
+            sin->sin_len  = sizeof(struct sockaddr_in);
+            sin->sin_family = AF_INET;
+            sin->sin_port = htonl(0);
+            sin->sin_addr.s_addr = INADDR_ANY;
+        } else {
+            handleSocketError(env, errno);
+            return -1;
+        }
+#else /* _ALLBSD_SOURCE */
         handleSocketError(env, errno);
         return -1;
+#endif /* _ALLBSD_SOURCE */
     }
     return NET_GetPortFromSockaddr((struct sockaddr *)&sa);
 }
@@ -300,8 +363,30 @@ Java_sun_nio_ch_Net_localInetAddress(JNIEnv *env, jclass clazz, jobject fdo)
     socklen_t sa_len = SOCKADDR_LEN;
     int port;
     if (getsockname(fdval(env, fdo), (struct sockaddr *)&sa, &sa_len) < 0) {
+#ifdef _ALLBSD_SOURCE
+        /*
+         * XXXBSD:
+         * ECONNRESET is specific to the BSDs. We can not return an error,
+         * as the calling Java code with raise a java.lang.Error with the expectation
+         * that getsockname() will never fail. According to the Single UNIX Specification,
+         * it shouldn't fail. As such, we just fill in generic Linux-compatible values.
+         */
+        if (errno == ECONNRESET) {
+            struct sockaddr_in *sin;
+            sin = (struct sockaddr_in *) &sa;
+            bzero(sin, sizeof(*sin));
+            sin->sin_len  = sizeof(struct sockaddr_in);
+            sin->sin_family = AF_INET;
+            sin->sin_port = htonl(0);
+            sin->sin_addr.s_addr = INADDR_ANY;
+        } else {
+            handleSocketError(env, errno);
+            return NULL;
+        }
+#else /* _ALLBSD_SOURCE */
         handleSocketError(env, errno);
         return NULL;
+#endif /* _ALLBSD_SOURCE */
     }
     return NET_SockaddrToInetAddress(env, (struct sockaddr *)&sa, &port);
 }
@@ -365,7 +450,8 @@ Java_sun_nio_ch_Net_setIntOption0(JNIEnv *env, jclass clazz, jobject fdo,
     struct linger linger;
     u_char carg;
     void *parg;
-    int arglen, n;
+    socklen_t arglen;
+    int n;
 
     /* Option value is an int except for a few specific cases */
 
@@ -528,7 +614,7 @@ JNIEXPORT void JNICALL
 Java_sun_nio_ch_Net_setInterface4(JNIEnv* env, jobject this, jobject fdo, jint interf)
 {
     struct in_addr in;
-    int arglen = sizeof(struct in_addr);
+    socklen_t arglen = sizeof(struct in_addr);
     int n;
 
     in.s_addr = htonl(interf);
@@ -559,7 +645,7 @@ JNIEXPORT void JNICALL
 Java_sun_nio_ch_Net_setInterface6(JNIEnv* env, jobject this, jobject fdo, jint index)
 {
     int value = (jint)index;
-    int arglen = sizeof(value);
+    socklen_t arglen = sizeof(value);
     int n;
 
     n = setsockopt(fdval(env, fdo), IPPROTO_IPV6, IPV6_MULTICAST_IF,
@@ -602,9 +688,11 @@ handleSocketError(JNIEnv *env, jint errorValue)
     switch (errorValue) {
         case EINPROGRESS:       /* Non-blocking connect */
             return 0;
+#ifdef EPROTO
         case EPROTO:
             xn = JNU_JAVANETPKG "ProtocolException";
             break;
+#endif
         case ECONNREFUSED:
             xn = JNU_JAVANETPKG "ConnectException";
             break;

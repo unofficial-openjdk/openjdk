@@ -24,6 +24,7 @@
  */
 
 #include "java.h"
+#include "jvm_md.h"
 #include <dirent.h>
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -34,20 +35,47 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
+#if defined(_ALLBSD_SOURCE)
+#include <sys/time.h>
+#endif
+
 #include "manifest_info.h"
 #include "version_comp.h"
 
-#ifdef __linux__
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
 #include <pthread.h>
 #else
 #include <thread.h>
 #endif
 
+#ifdef MACOSX
+/* Support Cocoa event loop on the main thread */
+#include <Cocoa/Cocoa.h>
+#include <objc/objc-runtime.h>
+#include <objc/objc-auto.h>
+#include <errno.h>
+#include <spawn.h>
+
+struct NSAppArgs {
+    int argc;
+    char **argv;
+};
+#endif
+
+#ifdef MACOSX
+#define JVM_DLL "libjvm.dylib"
+#define JAVA_DLL "libjava.dylib"
+/* FALLBACK avoids naming conflicts with system libraries
+ * (eg, ImageIO's libJPEG.dylib) */
+#define LD_LIBRARY_PATH "DYLD_FALLBACK_LIBRARY_PATH"
+#else
 #define JVM_DLL "libjvm.so"
 #define JAVA_DLL "libjava.so"
+#define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
+#endif
 
 /* help jettison the LD_LIBRARY_PATH settings in the future */
-#ifndef SETENV_REQUIRED
+#if !defined(SETENV_REQUIRED) && !defined(MACOSX)
 #define SETENV_REQUIRED
 #endif
 /*
@@ -75,18 +103,26 @@
 #endif
 
 /* pointer to environment */
+#ifdef MACOSX
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#else
 extern char **environ;
+#endif
 
 /*
  *      A collection of useful strings. One should think of these as #define
  *      entries, but actual strings can be more efficient (with many compilers).
  */
-#ifdef __linux__
+#if defined(__linux__)
 static const char *system_dir   = "/usr/java";
 static const char *user_dir     = "/java";
-#else /* Solaris */
+#elif defined (__solaris__)
 static const char *system_dir   = "/usr/jdk";
 static const char *user_dir     = "/jdk";
+#elif defined(__APPLE__)
+static const char *system_dir  = PACKAGE_PATH "/openjdk7";
+static const char *user_dir    = "/java";
 #endif
 
 /* Store the name of the executable once computed */
@@ -212,7 +248,7 @@ static char *execname = NULL;
 
 static const char * SetExecname(char **argv);
 static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
-                           char *jvmpath, jint jvmpathsize, const char * arch);
+                           char *jvmpath, jint jvmpathsize, const char * arch, int bitsWanted);
 static jboolean GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative);
 
 
@@ -233,6 +269,176 @@ GetArchPath(int nbits)
     }
 }
 
+#ifdef MACOSX
+
+/*
+ * Exports the JNI interface from libjli
+ *
+ * This allows client code to link against the .jre/.jdk bundles,
+ * and not worry about trying to pick a HotSpot to link against.
+ *
+ * Switching architectures is unsupported, since client code has
+ * made that choice before the JVM was requested.
+ */
+
+static InvocationFunctions *sExportedJNIFunctions = NULL;
+static char *sPreferredJVMType = NULL;
+
+static InvocationFunctions *GetExportedJNIFunctions() {
+    if (sExportedJNIFunctions != NULL) return sExportedJNIFunctions;
+
+    char jrePath[PATH_MAX];
+    jboolean gotJREPath = GetJREPath(jrePath, sizeof(jrePath), GetArch(), JNI_FALSE);
+    if (!gotJREPath) {
+        JLI_ReportErrorMessage("Failed to GetJREPath()");
+        return NULL;
+    }
+
+    char *preferredJVM = sPreferredJVMType;
+    if (preferredJVM == NULL) {
+#if defined(__i386__)
+        preferredJVM = "client";
+#elif defined(__x86_64__)
+        preferredJVM = "server";
+#else
+#error "Unknown architecture - needs definition"
+#endif
+    }
+
+    char jvmPath[PATH_MAX];
+    jboolean gotJVMPath = GetJVMPath(jrePath, preferredJVM, jvmPath, sizeof(jvmPath), GetArch(), CURRENT_DATA_MODEL);
+    if (!gotJVMPath) {
+        JLI_ReportErrorMessage("Failed to GetJVMPath()");
+        return NULL;
+    }
+
+    InvocationFunctions *fxns = malloc(sizeof(InvocationFunctions));
+    jboolean vmLoaded = LoadJavaVM(jvmPath, fxns);
+    if (!vmLoaded) {
+        JLI_ReportErrorMessage("Failed to LoadJavaVM()");
+        return NULL;
+    }
+
+    return sExportedJNIFunctions = fxns;
+}
+
+JNIEXPORT jint JNICALL
+JNI_GetDefaultJavaVMInitArgs(void *args) {
+    InvocationFunctions *ifn = GetExportedJNIFunctions();
+    if (ifn == NULL) return JNI_ERR;
+    return ifn->GetDefaultJavaVMInitArgs(args);
+}
+
+JNIEXPORT jint JNICALL
+JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *args) {
+    InvocationFunctions *ifn = GetExportedJNIFunctions();
+    if (ifn == NULL) return JNI_ERR;
+    return ifn->CreateJavaVM(pvm, penv, args);
+}
+
+JNIEXPORT jint JNICALL
+JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs) {
+    InvocationFunctions *ifn = GetExportedJNIFunctions();
+    if (ifn == NULL) return JNI_ERR;
+    return ifn->GetCreatedJavaVMs(vmBuf, bufLen, nVMs);
+}
+
+/*
+ * Allow JLI-aware launchers to specify a client/server preference
+ */
+JNIEXPORT void JNICALL
+JLI_SetPreferredJVM(const char *prefJVM) {
+    if (sPreferredJVMType != NULL) {
+        free(sPreferredJVMType);
+        sPreferredJVMType = NULL;
+    }
+
+    if (prefJVM == NULL) return;
+    sPreferredJVMType = strdup(prefJVM);
+}
+
+static BOOL awtLoaded = NO;
+static pthread_mutex_t awtLoaded_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  awtLoaded_cv = PTHREAD_COND_INITIALIZER;
+
+JNIEXPORT void JNICALL
+JLI_NotifyAWTLoaded()
+{
+    pthread_mutex_lock(&awtLoaded_mutex);
+    awtLoaded = YES;
+    pthread_cond_signal(&awtLoaded_cv);
+    pthread_mutex_unlock(&awtLoaded_mutex);
+}
+
+static int (*main_fptr)(int argc, char **argv) = NULL;
+
+/*
+ * Unwrap the arguments and re-run main()
+ */
+static void *apple_main (void *arg)
+{
+    objc_registerThreadWithCollector();
+
+    if (main_fptr == NULL) {
+        main_fptr = (int (*)())dlsym(RTLD_DEFAULT, "main");
+        if (main_fptr == NULL) {
+            JLI_ReportErrorMessageSys("error locating main entrypoint\n");
+            exit(1);
+        }
+    }
+
+    struct NSAppArgs *args = (struct NSAppArgs *) arg;
+    exit(main_fptr(args->argc, args->argv));
+}
+
+static void dummyTimer(CFRunLoopTimerRef timer, void *info) {}
+
+static void ParkEventLoop() {
+    // RunLoop needs at least one source, and 1e20 is pretty far into the future
+    CFRunLoopTimerRef t = CFRunLoopTimerCreate(kCFAllocatorDefault, 1.0e20, 0.0, 0, 0, dummyTimer, NULL);
+    CFRunLoopAddTimer(CFRunLoopGetCurrent(), t, kCFRunLoopDefaultMode);
+    CFRelease(t);
+
+    // Park this thread in the main run loop.
+    int32_t result;
+    do {
+        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1.0e20, false);
+    } while (result != kCFRunLoopRunFinished);
+}
+
+/*
+ * Mac OS X mandates that the GUI event loop run on very first thread of
+ * an application. This requires that we re-call Java's main() on a new
+ * thread, reserving the 'main' thread for Cocoa.
+ */
+static void MacOSXStartup(int argc, char *argv[]) {
+    // Thread already started?
+    static jboolean started = false;
+    if (started) {
+        return;
+    }
+    started = true;
+
+    // Hand off arguments
+    struct NSAppArgs args;
+    args.argc = argc;
+    args.argv = argv;
+
+    // Fire up the main thread
+    pthread_t main_thr;
+    if (pthread_create(&main_thr, NULL, &apple_main, &args) != 0) {
+        JLI_ReportErrorMessageSys("Could not create main thread: %s\n", strerror(errno));
+        exit(1);
+    }
+    if (pthread_detach(main_thr)) {
+        JLI_ReportErrorMessageSys("pthread_detach() failed: %s\n", strerror(errno));
+        exit(1);
+    }
+
+    ParkEventLoop();
+}
+
+#endif
 #ifdef SETENV_REQUIRED
 static jboolean
 JvmExists(const char *path) {
@@ -479,10 +685,19 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
             exit(4);
         }
 
-        if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch )) {
+        if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch, wanted)) {
           JLI_ReportErrorMessage(CFG_ERROR8, jvmtype, jvmpath);
           exit(4);
         }
+
+#ifdef MACOSX
+        /*
+         * Mac OS X requires the Cocoa event loop to be run on the "main"
+         * thread. Spawn off a new thread to run main() and pass
+         * this thread off to the Cocoa event loop.
+         */
+        MacOSXStartup(argc, argv);
+#endif
         /*
          * we seem to have everything we need, so without further ado
          * we return back, otherwise proceed to set the environment.
@@ -498,7 +713,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
         return;
 #endif /* SETENV_REQUIRED */
       } else {  /* do the same speculatively or exit */
-#ifdef DUAL_MODE
+#if defined(DUAL_MODE) || defined(MACOSX)
         if (running != wanted) {
           /* Find out where the JRE is that we will be using. */
           if (!GetJREPath(jrepath, so_jrepath, GetArchPath(wanted), JNI_TRUE)) {
@@ -524,7 +739,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
           }
 
           /* exec child can do error checking on the existence of the path */
-          jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, GetArchPath(wanted));
+          jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, GetArchPath(wanted), wanted);
 #ifdef SETENV_REQUIRED
           mustsetenv = RequiresSetenv(wanted, jvmpath);
 #endif /* SETENV_REQUIRED */
@@ -739,11 +954,38 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
                 execv(newexec, argv);
             }
 #else
+#ifdef MACOSX
+            /*
+            * Use posix_spawn() instead of execv() on Mac OS X.
+            * This allows us to choose which architecture the child process
+            * should run as.
+            */
+            {
+                posix_spawnattr_t attr;
+                size_t unused_size;
+                pid_t  unused_pid;
+
+#if defined(__i386__) || defined(__x86_64__)
+                cpu_type_t cpu_type[] = { (wanted == 64) ? CPU_TYPE_X86_64 : CPU_TYPE_X86,
+                                    (running== 64) ? CPU_TYPE_X86_64 : CPU_TYPE_X86 };
+#else
+                cpu_type_t cpu_type[] = { CPU_TYPE_ANY };
+#endif
+
+                posix_spawnattr_init(&attr);
+                posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETEXEC);
+                posix_spawnattr_setbinpref_np(&attr, sizeof(cpu_type) / sizeof(cpu_type_t),
+                                            cpu_type, &unused_size);
+
+                posix_spawn(&unused_pid, newexec, NULL, &attr, argv, environ);
+            }
+#else
             execv(newexec, argv);
+#endif
 #endif /* SETENV_REQUIRED */
             JLI_ReportErrorMessageSys(JRE_ERROR4, newexec);
 
-#ifdef DUAL_MODE
+#if defined(DUAL_MODE) || defined(MACOSX)
             if (running != wanted) {
                 JLI_ReportErrorMessage(JRE_ERROR5, wanted, running);
 #ifdef __solaris__
@@ -752,8 +994,8 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
 #else
                 JLI_ReportErrorMessage(JRE_ERROR7);
 #endif  /* __sparc */
-            }
 #endif /* __solaris__ */
+            }
 #endif /* DUAL_MODE */
 
         }
@@ -766,14 +1008,20 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
  */
 static jboolean
 GetJVMPath(const char *jrepath, const char *jvmtype,
-           char *jvmpath, jint jvmpathsize, const char * arch)
+           char *jvmpath, jint jvmpathsize, const char * arch, int bitsWanted)
 {
     struct stat s;
 
     if (JLI_StrChr(jvmtype, '/')) {
         JLI_Snprintf(jvmpath, jvmpathsize, "%s/" JVM_DLL, jvmtype);
     } else {
+#ifdef MACOSX
+        // macosx client library is built thin, i386 only.  64 bit client requests must load server library
+        const char *jvmtypeUsed = ((bitsWanted == 64) && (strcmp(jvmtype, "client") == 0)) ? "server" : jvmtype;
+        JLI_Snprintf(jvmpath, jvmpathsize, "%s/lib/%s/" JVM_DLL, jrepath, jvmtypeUsed);
+#else
         JLI_Snprintf(jvmpath, jvmpathsize, "%s/lib/%s/%s/" JVM_DLL, jrepath, arch, jvmtype);
+#endif
     }
 
     JLI_TraceLauncher("Does `%s' exist ... ", jvmpath);
@@ -796,6 +1044,22 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
     char libjava[MAXPATHLEN];
 
     if (GetApplicationHome(path, pathsize)) {
+
+#ifdef MACOSX
+        /* Is JRE co-located with the application? */
+        JLI_Snprintf(libjava, sizeof(libjava), "%s/lib/" JAVA_DLL, path);
+        if (access(libjava, F_OK) == 0) {
+            return JNI_TRUE;
+        }
+
+        /* Does the app ship a private JRE in <apphome>/jre directory? */
+        JLI_Snprintf(libjava, sizeof(libjava), "%s/jre/lib/" JAVA_DLL, path);
+        if (access(libjava, F_OK) == 0) {
+            JLI_StrCat(path, "/jre");
+            JLI_TraceLauncher("JRE path is %s\n", path);
+            return JNI_TRUE;
+        }
+#else
         /* Is JRE co-located with the application? */
         JLI_Snprintf(libjava, sizeof(libjava), "%s/lib/%s/" JAVA_DLL, path, arch);
         if (access(libjava, F_OK) == 0) {
@@ -810,7 +1074,38 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
             JLI_TraceLauncher("JRE path is %s\n", path);
             return JNI_TRUE;
         }
+#endif
     }
+
+#ifdef MACOSX
+
+    /* try to find ourselves instead */
+    Dl_info selfInfo;
+    dladdr(&GetJREPath, &selfInfo);
+
+    char *realPathToSelf = realpath(selfInfo.dli_fname, path);
+    if (realPathToSelf != path) {
+        return JNI_FALSE;
+    }
+
+    size_t pathLen = strlen(realPathToSelf);
+    if (pathLen == 0) {
+        return JNI_FALSE;
+    }
+
+    const char lastPathComponent[] = "/lib/jli/libjli.dylib";
+    size_t sizeOfLastPathComponent = sizeof(lastPathComponent) - 1;
+    if (pathLen < sizeOfLastPathComponent) {
+        return JNI_FALSE;
+    }
+
+    size_t indexOfLastPathComponent = pathLen - sizeOfLastPathComponent;
+    if (0 == strncmp(realPathToSelf + indexOfLastPathComponent, lastPathComponent, sizeOfLastPathComponent - 1)) {
+        realPathToSelf[indexOfLastPathComponent + 1] = '\0';
+        return JNI_TRUE;
+    }
+
+#endif
 
     if (!speculative)
       JLI_ReportErrorMessage(JRE_ERROR8 JAVA_DLL);
@@ -887,6 +1182,13 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
     ifn->GetDefaultJavaVMInitArgs = (GetDefaultJavaVMInitArgs_t)
         dlsym(libjvm, "JNI_GetDefaultJavaVMInitArgs");
     if (ifn->GetDefaultJavaVMInitArgs == NULL) {
+        JLI_ReportErrorMessage(DLL_ERROR2, jvmpath, dlerror());
+        return JNI_FALSE;
+    }
+
+    ifn->GetCreatedJavaVMs = (GetCreatedJavaVMs_t)
+    dlsym(libjvm, "JNI_GetCreatedJavaVMs");
+    if (ifn->GetCreatedJavaVMs == NULL) {
         JLI_ReportErrorMessage(DLL_ERROR2, jvmpath, dlerror());
         return JNI_FALSE;
     }
@@ -1028,7 +1330,7 @@ static const char*
 SetExecname(char **argv)
 {
     char* exec_path = NULL;
-#if defined(__solaris__)
+#if defined(__solaris__) || defined(__APPLE__)
     {
         Dl_info dlinfo;
         int (*fptr)();
@@ -1059,7 +1361,7 @@ SetExecname(char **argv)
             exec_path = JLI_StringDup(buf);
         }
     }
-#else /* !__solaris__ && !__linux */
+#else /* !__solaris__ && !__APPLE__ && !__linux__ */
     {
         /* Not implemented */
     }
@@ -1397,9 +1699,23 @@ UnsetEnv(char *name)
     return(borrowed_unsetenv(name));
 }
 
+#if defined(_ALLBSD_SOURCE)
+/*
+ * BSD's implementation of CounterGet()
+ */
+int64_t
+CounterGet()
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000) + tv.tv_usec;
+}
+#endif
+
+
 /* --- Splash Screen shared library support --- */
 
-static const char* SPLASHSCREEN_SO = "libsplashscreen.so";
+static const char* SPLASHSCREEN_SO = JNI_LIB_NAME("splashscreen");
 
 static void* hSplashLib = NULL;
 
@@ -1435,7 +1751,7 @@ jlong_format_specifier() {
 int
 ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void * args) {
     int rslt;
-#ifdef __linux__
+#if defined(__linux__) || defined(_ALLBSD_SOURCE) || defined(__APPLE__)
     pthread_t tid;
     pthread_attr_t attr;
     pthread_attr_init(&attr);

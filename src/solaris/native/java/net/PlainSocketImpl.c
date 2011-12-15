@@ -483,9 +483,11 @@ Java_java_net_PlainSocketImpl_socketConnect(JNIEnv *env, jobject this,
         if (connect_rv == JVM_IO_INTR) {
             JNU_ThrowByName(env, JNU_JAVAIOPKG "InterruptedIOException",
                             "operation interrupted");
+#if defined(EPROTO)
         } else if (errno == EPROTO) {
             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ProtocolException",
                            "Protocol error");
+#endif
         } else if (errno == ECONNREFUSED) {
             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
                            "Connection refused");

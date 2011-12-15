@@ -75,7 +75,7 @@ endif # PLATFORM
 ifeq ($(PLATFORM), windows)
   OTHER_LDLIBS = $(JVMLIB)
 else
-  OTHER_LDLIBS = -ldl $(JVMLIB)
+  OTHER_LDLIBS = $(LIBDL) $(JVMLIB)
 endif
 
 build:

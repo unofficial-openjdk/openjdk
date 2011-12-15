@@ -100,14 +100,39 @@ ServerClassMachineImpl(void) {
 /* Compute physical memory by asking the OS */
 uint64_t
 physical_memory(void) {
+  uint64_t result;
+
+# define UINT64_FORMAT "%" PRIu64
+
+#if defined(_ALLBSD_SOURCE)
+#ifdef HW_PHYSMEM64
+  int64_t physmem;
+  int name[2] = { CTL_HW, HW_PHYSMEM64 };
+#else
+  unsigned long physmem;
+  int name[2] = { CTL_HW, HW_PHYSMEM };
+#endif
+  size_t physmem_len = sizeof(physmem);
+
+  if (sysctl(name, 2, &physmem, &physmem_len, NULL, 0) == -1)
+        physmem = 256 * MB;
+
+  result = (uint64_t)physmem;
+
+  JLI_TraceLauncher("physical memory: " UINT64_FORMAT " (%.3fGB)\n",
+           result, result / (double) GB);
+  return result;
+
+#else /* !_ALLBSD_SOURCE */
+
   const uint64_t pages     = (uint64_t) sysconf(_SC_PHYS_PAGES);
   const uint64_t page_size = (uint64_t) sysconf(_SC_PAGESIZE);
-  const uint64_t result    = pages * page_size;
-# define UINT64_FORMAT "%" PRIu64
+  result    = pages * page_size;
 
   JLI_TraceLauncher("pages: " UINT64_FORMAT
           "  page_size: " UINT64_FORMAT
           "  physical memory: " UINT64_FORMAT " (%.3fGB)\n",
            pages, page_size, result, result / (double) GB);
   return result;
+#endif /* _ALLBSD_SOURCE */
 }
