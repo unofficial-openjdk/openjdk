@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,44 +23,11 @@
  * questions.
  */
 
-/*
- * Native method support for java.util.zip.Adler32
- */
+package sun.misc;
 
-#include "jni.h"
-#include "jni_util.h"
-#include "zlib.h"
+import java.util.zip.Adler32;
+import java.nio.ByteBuffer;
 
-#include "java_util_zip_Adler32.h"
-
-JNIEXPORT jint JNICALL
-Java_java_util_zip_Adler32_update(JNIEnv *env, jclass cls, jint adler, jint b)
-{
-    Bytef buf[1];
-
-    buf[0] = (Bytef)b;
-    return adler32(adler, buf, 1);
-}
-
-JNIEXPORT jint JNICALL
-Java_java_util_zip_Adler32_updateBytes(JNIEnv *env, jclass cls, jint adler,
-                                       jarray b, jint off, jint len)
-{
-    Bytef *buf = (*env)->GetPrimitiveArrayCritical(env, b, 0);
-    if (buf) {
-        adler = adler32(adler, buf + off, len);
-        (*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
-    }
-    return adler;
-}
-
-JNIEXPORT jint JNICALL
-Java_java_util_zip_Adler32_updateByteBuffer(JNIEnv *env, jclass cls, jint adler,
-                                            jlong address, jint off, jint len)
-{
-    Bytef *buf = (Bytef *)jlong_to_ptr(address);
-    if (buf) {
-        adler = adler32(adler, buf + off, len);
-    }
-    return adler;
+public interface JavaUtilZipAccess {
+    public void update(Adler32 adler32, ByteBuffer buf);
 }

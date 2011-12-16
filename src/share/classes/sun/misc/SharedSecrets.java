@@ -29,6 +29,7 @@ import java.util.jar.JarFile;
 import java.io.Console;
 import java.io.FileDescriptor;
 import java.security.ProtectionDomain;
+import java.util.zip.Adler32;
 import javax.security.auth.kerberos.KeyTab;
 
 import java.security.AccessController;
@@ -53,6 +54,7 @@ public class SharedSecrets {
     private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaxSecurityAuthKerberosAccess javaxSecurityAuthKerberosAccess;
+    private static JavaUtilZipAccess javaUtilZipAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
         if (javaUtilJarAccess == null) {
@@ -152,5 +154,16 @@ public class SharedSecrets {
         if (javaxSecurityAuthKerberosAccess == null)
             unsafe.ensureClassInitialized(KeyTab.class);
         return javaxSecurityAuthKerberosAccess;
+    }
+
+    public static void setJavaUtilZipAccess(JavaUtilZipAccess access) {
+        javaUtilZipAccess = access;
+    }
+
+    public static JavaUtilZipAccess getJavaUtilZipAccess() {
+        if (javaUtilZipAccess == null) {
+            unsafe.ensureClassInitialized(Adler32.class);
+        }
+        return javaUtilZipAccess;
     }
 }
