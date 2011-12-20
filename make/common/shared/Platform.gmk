@@ -228,7 +228,8 @@ ifeq ($(SYSTEM_UNAME), Darwin)
   PLATFORM = macosx
   OS_NAME = darwin
   OS_VENDOR = Apple
-  REQUIRED_OS_VERSION = 8.0
+  GB_OF_MEMORY := $(shell system_profiler SPHardwareDataType | fgrep Memory: | awk '{print $$2}')
+  MB_OF_MEMORY := $(shell expr ${GB_OF_MEMORY} '*' 1024)
 endif
 
 # Platform settings specific to BSD/Mac OS X
@@ -294,9 +295,6 @@ ifeq ($(PLATFORM), macosx)
 
   # Suffix for file bundles used in previous release
   BUNDLE_FILE_SUFFIX=.tar.gz
-  # Minimum disk space needed as determined by running 'du -sk' on 
-  #    a fully built workspace.
-  REQUIRED_FREE_SPACE=1500000
   # How much RAM does this machine have:
 endif
 

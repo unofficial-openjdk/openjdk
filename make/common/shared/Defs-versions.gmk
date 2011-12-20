@@ -172,8 +172,12 @@ endif
 # Mac specific
 ifeq ($(PLATFORM), macosx)
   REQUIRED_OS_NAME            = Darwin
-  REQUIRED_OS_VERSION         = 10.6
-  REQUIRED_FREE_SPACE         = 1460000
+  REQUIRED_OS_VERSION         = 11.2
+  REQUIRED_OS_VARIANT_NAME    = MacOSX
+  REQUIRED_OS_VARIANT_VERSION = 10.7.2
+  REQUIRED_COMPILER_NAME      = GCC4
+  REQUIRED_COMPILER_VERSION   = GCC4
+  REQUIRED_CC_VER             = 4.2.1
 endif
 
 # Windows specific

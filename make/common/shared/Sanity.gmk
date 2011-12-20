@@ -113,6 +113,13 @@ ifeq ($(PLATFORM), linux)
   ALSA_VERSION := $(call GetVersion,$(_ALSA_VERSION))
 endif
 
+ifeq ($(PLATFORM), macosx)
+  # What kind of system we are using
+  OS_VERSION := $(shell uname -r)
+  OS_VARIANT_NAME := MacOSX
+  OS_VARIANT_VERSION := $(shell sw_vers -productVersion)
+endif
+
 ifeq ($(PLATFORM), windows)
   # Windows 2000 is 5.0, Windows XP is 5.1, Windows 2003 is 5.2
   #    Assume 5.0 (Windows 2000) if systeminfo does not help

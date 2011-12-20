@@ -243,9 +243,11 @@ ifeq ($(PLATFORM), macosx)
   TOUCH        = $(UTILS_USR_BIN_PATH)touch
   TRUE         = $(UTILS_USR_BIN_PATH)true
   UNAME        = $(UTILS_USR_BIN_PATH)uname
-  NAWK       = $(UTILS_USR_BIN_PATH)awk
-  UNZIPSFX   = $(UTILS_USR_BIN_PATH)unzipsfx
-  ZIPEXE     = $(UTILS_USR_BIN_PATH)zip
-  CPIO       = $(UTILS_USR_BIN_PATH)cpio
-  TAR        = $(UTILS_USR_BIN_PATH)tar
+  NAWK         = $(UTILS_USR_BIN_PATH)awk
+  UNZIPSFX     = $(UTILS_USR_BIN_PATH)unzipsfx
+  ZIPEXE       = $(UTILS_USR_BIN_PATH)zip
+  CPIO         = $(UTILS_USR_BIN_PATH)cpio
+  TAR          = $(UTILS_USR_BIN_PATH)tar
+  # Builtin shell command, no -e option needed
+  ECHO         = echo
 endif
