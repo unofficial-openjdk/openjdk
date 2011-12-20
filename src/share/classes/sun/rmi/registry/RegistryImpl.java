@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.io.FilePermission;
 import java.io.IOException;
 import java.net.*;
 import java.rmi.*;
@@ -41,12 +42,12 @@ import java.rmi.server.RMIServerSocketFactory;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.CodeSource;
-import java.security.Policy; 
+import java.security.Policy;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.PermissionCollection;
 import java.security.Permissions;
-import java.security.ProtectionDomain; 
+import java.security.ProtectionDomain;
 import java.text.MessageFormat;
 import sun.rmi.server.LoaderHandler;
 import sun.rmi.server.UnicastServerRef;
@@ -54,7 +55,6 @@ import sun.rmi.server.UnicastServerRef2;
 import sun.rmi.transport.LiveRef;
 import sun.rmi.transport.ObjectTable;
 import sun.rmi.transport.Target;
-import sun.security.action.GetPropertyAction;
 
 /**
  * A "registry" exists on every node that allows RMI connections to
@@ -76,8 +76,10 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
 
     /* indicate compatibility with JDK 1.1.x version of class */
     private static final long serialVersionUID = 4666870661827494597L;
-    private Hashtable bindings = new Hashtable(101);
-    private static Hashtable allowedAccessCache = new Hashtable(3);
+    private Hashtable<String, Remote> bindings
+        = new Hashtable<String, Remote>(101);
+    private static Hashtable<InetAddress, InetAddress> allowedAccessCache
+        = new Hashtable<InetAddress, InetAddress>(3);
     private static RegistryImpl registry;
     private static ObjID id = new ObjID(ObjID.REGISTRY_ID);
 
@@ -129,7 +131,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
         throws RemoteException, NotBoundException
     {
         synchronized (bindings) {
-            Remote obj = (Remote)bindings.get(name);
+            Remote obj = bindings.get(name);
             if (obj == null)
                 throw new NotBoundException(name);
             return obj;
@@ -146,7 +148,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
     {
         checkAccess("Registry.bind");
         synchronized (bindings) {
-            Remote curr = (Remote)bindings.get(name);
+            Remote curr = bindings.get(name);
             if (curr != null)
                 throw new AlreadyBoundException(name);
             bindings.put(name, obj);
@@ -163,7 +165,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
     {
         checkAccess("Registry.unbind");
         synchronized (bindings) {
-            Remote obj = (Remote)bindings.get(name);
+            Remote obj = bindings.get(name);
             if (obj == null)
                 throw new NotBoundException(name);
             bindings.remove(name);
@@ -213,10 +215,9 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
             InetAddress clientHost;
 
             try {
-                clientHost = (InetAddress)
-                    java.security.AccessController.doPrivileged(
-                        new java.security.PrivilegedExceptionAction() {
-                        public Object run()
+                clientHost = java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedExceptionAction<InetAddress>() {
+                        public InetAddress run()
                             throws java.net.UnknownHostException
                         {
                             return InetAddress.getByName(clientHostName);
@@ -238,8 +239,8 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
                     final InetAddress finalClientHost = clientHost;
 
                     java.security.AccessController.doPrivileged(
-                        new java.security.PrivilegedExceptionAction() {
-                            public Object run() throws java.io.IOException {
+                        new java.security.PrivilegedExceptionAction<Void>() {
+                            public Void run() throws java.io.IOException {
                                 /*
                                  * if a ServerSocket can be bound to the client's
                                  * address then that address must be local
@@ -334,19 +335,6 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
             URL[] urls = sun.misc.URLClassPath.pathToURLs(envcp);
             ClassLoader cl = new URLClassLoader(urls);
 
-            String codebaseProperty = null;
-            String prop = java.security.AccessController.doPrivileged(
-                new GetPropertyAction("java.rmi.server.codebase"));
-                if (prop != null && prop.trim().length() > 0) {
-                    codebaseProperty = prop;
-                }
-            URL[] codebaseURLs = null;
-            if (codebaseProperty != null) {
-                codebaseURLs = sun.misc.URLClassPath.pathToURLs(codebaseProperty);
-            } else {
-                codebaseURLs = new URL[0];
-            }
-
             /*
              * Fix bugid 4242317: Classes defined by this class loader should
              * be annotated with the value of the "java.rmi.server.codebase"
@@ -364,7 +352,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
                         public RegistryImpl run() throws RemoteException {
                             return new RegistryImpl(regPort);
                         }
-                    }, getAccessControlContext(codebaseURLs));
+                    }, getAccessControlContext());
             } catch (PrivilegedActionException ex) {
                 throw (RemoteException) ex.getException();
             }
@@ -390,11 +378,11 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
     }
 
     /**
-     * Generates an AccessControlContext from several URLs.
+     * Generates an AccessControlContext with minimal permissions.
      * The approach used here is taken from the similar method
      * getAccessControlContext() in the sun.applet.AppletPanel class.
      */
-    private static AccessControlContext getAccessControlContext(URL[] urls) {
+    private static AccessControlContext getAccessControlContext() {
         // begin with permissions granted to all code in current policy
         PermissionCollection perms = AccessController.doPrivileged(
             new java.security.PrivilegedAction<PermissionCollection>() {
@@ -419,17 +407,15 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
 
         perms.add(new RuntimePermission("accessClassInPackage.sun.*"));
 
-        // add permissions required to load from codebase URL path
-        LoaderHandler.addPermissionsForURLs(urls, perms, false);
+        perms.add(new FilePermission("<<ALL FILES>>", "read"));
 
         /*
          * Create an AccessControlContext that consists of a single
          * protection domain with only the permissions calculated above.
          */
         ProtectionDomain pd = new ProtectionDomain(
-            new CodeSource((urls.length > 0 ? urls[0] : null),
-                (java.security.cert.Certificate[]) null),
-            perms);
+            new CodeSource(null,
+                (java.security.cert.Certificate[]) null), perms);
         return new AccessControlContext(new ProtectionDomain[] { pd });
     }
 }

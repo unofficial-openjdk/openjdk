@@ -1028,7 +1028,7 @@ public final class LoaderHandler {
      * loader.  A given permission is only added to the collection if
      * it is not already implied by the collection.
      */
-    public static void addPermissionsForURLs(URL[] urls,
+    private static void addPermissionsForURLs(URL[] urls,
                                               PermissionCollection perms,
                                               boolean forLoader)
     {
