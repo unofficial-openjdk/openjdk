@@ -90,7 +90,8 @@ class AppOutputStream extends OutputStream {
             do {
                 int howmuch;
                 if (isFirstRecordOfThePayload && c.needToSplitPayload()) {
-                    howmuch = Math.min(0x01, r.availableDataBytes());
+                    howmuch = (len == 0) ? 0 : Math.min(
+                        0x01, r.availableDataBytes());
                 } else {
                     howmuch = Math.min(len, r.availableDataBytes());
                 }
