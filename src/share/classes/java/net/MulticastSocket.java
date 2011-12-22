@@ -164,6 +164,15 @@ class MulticastSocket extends DatagramSocket {
         if (bindaddr != null) {
             bind(bindaddr);
         }
+        /**
+         * required for some platforms where it's not possible to join
+         * a group without setting the interface first.
+         */
+        NetworkInterface defaultInterface = NetworkInterface.getDefault();
+
+        if (defaultInterface != null) {
+            setNetworkInterface(defaultInterface);
+        }
     }
 
     /**

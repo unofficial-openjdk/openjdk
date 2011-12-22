@@ -85,6 +85,22 @@ getnameinfo_f getnameinfo_ptr = NULL;
 #define UDP_EXCLBIND            0x0101
 #endif
 
+extern jclass ni_class;
+extern jfieldID ni_defaultIndexID;
+
+void setDefaultScopeID(JNIEnv *env, struct sockaddr *him)
+{
+#ifdef MACOSX
+    int defaultIndex;
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)him;
+    if (sin6->sin6_family == AF_INET6 && (sin6->sin6_scope_id == 0)) {
+        defaultIndex = (*env)->GetStaticIntField(env, ni_class,
+                                                 ni_defaultIndexID);
+        sin6->sin6_scope_id = defaultIndex;
+    }
+#endif
+}
+
 #ifdef __solaris__
 static int init_tcp_max_buf, init_udp_max_buf;
 static int tcp_max_buf;
@@ -1221,6 +1237,15 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
     }
 #endif
 
+/* Workaround for Mac OS treating linger value as
+ *  signed integer
+ */
+#ifdef MACOSX
+    if (level == SOL_SOCKET && opt == SO_LINGER) {
+        struct linger* to_cast = (struct linger*)result;
+        to_cast->l_linger = (unsigned short)to_cast->l_linger;
+    }
+#endif
     return rv;
 }
 
@@ -1438,19 +1463,6 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
         }
     }
 
-    /*
-     * Don't allow SO_LINGER value to be too big.
-     * Current max value (240) is empiric value based on tcp_timer.h's
-     * constant TCP_LINGERTIME, which was doubled.
-     *
-     * XXXBSD: maybe we should step it down to 120 ?
-     */
-    if (level == SOL_SOCKET && opt == SO_LINGER) {
-        ling = (struct linger *)arg;
-       if (ling->l_linger > 240 || ling->l_linger < 0) {
-           ling->l_linger = 240;
-       }
-    }
 #endif
 
     return setsockopt(fd, level, opt, arg, len);

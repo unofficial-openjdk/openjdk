@@ -83,6 +83,8 @@ static jfieldID pdsi_loopbackID;
 static jfieldID pdsi_ttlID;
 #endif
 
+extern void setDefaultScopeID(JNIEnv *env, struct sockaddr *him);
+
 /*
  * Returns a java.lang.Integer based on 'i'
  */
@@ -240,6 +242,7 @@ Java_java_net_PlainDatagramSocketImpl_bind0(JNIEnv *env, jobject this,
     if (NET_InetAddressToSockaddr(env, iaObj, localport, (struct sockaddr *)&him, &len, JNI_TRUE) != 0) {
       return;
     }
+    setDefaultScopeID(env, (struct sockaddr *)&him);
 
     if (NET_Bind(fd, (struct sockaddr *)&him, len) < 0)  {
         if (errno == EADDRINUSE || errno == EADDRNOTAVAIL ||
@@ -310,6 +313,7 @@ Java_java_net_PlainDatagramSocketImpl_connect0(JNIEnv *env, jobject this,
         setsockopt(fd, SOL_SOCKET, SO_BSDCOMPAT, (char*) &t, sizeof(int));
     } else
 #endif
+    setDefaultScopeID(env, (struct sockaddr *)&rmtaddr);
     {
         if (JVM_Connect(fd, (struct sockaddr *)&rmtaddr, len) == -1) {
             NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
@@ -457,6 +461,7 @@ Java_java_net_PlainDatagramSocketImpl_send(JNIEnv *env, jobject this,
           return;
         }
     }
+    setDefaultScopeID(env, (struct sockaddr *)&rmtaddr);
 
     if (packetBufferLen > MAX_BUFFER_LEN) {
         /* When JNI-ifying the JDK's IO routines, we turned
@@ -1328,7 +1333,7 @@ static void setMulticastInterface(JNIEnv *env, jobject this, int fd,
          * value is an InetAddress.
          */
 #ifdef AF_INET6
-#ifdef __solaris__
+#if defined(__solaris__) || defined(MACOSX)
         if (ipv6_available()) {
             mcast_set_if_by_addr_v6(env, this, fd, value);
         } else {
@@ -1351,7 +1356,7 @@ static void setMulticastInterface(JNIEnv *env, jobject this, int fd,
          * value is a NetworkInterface.
          */
 #ifdef AF_INET6
-#ifdef __solaris__
+#if defined(__solaris__) || defined(MACOSX)
         if (ipv6_available()) {
             mcast_set_if_by_if_v6(env, this, fd, value);
         } else {
@@ -1434,7 +1439,7 @@ static void mcast_set_loop_v6(JNIEnv *env, jobject this, int fd, jobject value) 
 static void setMulticastLoopbackMode(JNIEnv *env, jobject this, int fd,
                                   jint opt, jobject value) {
 #ifdef AF_INET6
-#ifdef __solaris__
+#if defined(__solaris__) || defined(MACOSX)
     if (ipv6_available()) {
         mcast_set_loop_v6(env, this, fd, value);
     } else {
@@ -2008,7 +2013,7 @@ Java_java_net_PlainDatagramSocketImpl_setTimeToLive(JNIEnv *env, jobject this,
     }
     /* setsockopt to be correct ttl */
 #ifdef AF_INET6
-#ifdef __solaris__
+#if defined(__solaris__) || defined(MACOSX)
     if (ipv6_available()) {
         setHopLimit(env, fd, ttl);
     } else {

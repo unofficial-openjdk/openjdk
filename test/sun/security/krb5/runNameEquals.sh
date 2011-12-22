@@ -48,12 +48,7 @@ NATIVE=false
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS )
-    PATHSEP=":"
-    FILESEP="/"
-    NATIVE=true
-    ;;
-  Linux )
+  SunOS | Linux | Darwin )
     PATHSEP=":"
     FILESEP="/"
     NATIVE=true

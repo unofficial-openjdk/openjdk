@@ -732,6 +732,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
 
     memset((char *) caddr, 0, sizeof(caddr));
     memset((char *) &him, 0, sizeof(him));
+    memset((char *) &inf, 0, sizeof(inf));
     sz = (*env)->GetArrayLength(env, addrArray);
     if (sz != 4) {
       return JNI_FALSE;
