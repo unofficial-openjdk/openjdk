@@ -26,6 +26,9 @@
 #import "CGLGraphicsConfig.h"
 #import "CGLLayer.h"
 #import "ThreadUtilities.h"
+#import "LWCToolkit.h"
+#import "CGLSurfaceData.h"
+
 
 extern NSOpenGLPixelFormat *sharedPixelFormat;
 extern NSOpenGLContext *sharedContext;
@@ -42,13 +45,15 @@ extern NSOpenGLContext *sharedContext;
 @synthesize jrsRemoteLayer;
 #endif
 
-- (id)init
+- (id) initWithJavaLayer:(jobject)layer;
 {
 AWT_ASSERT_APPKIT_THREAD;
     // Initialize ourselves
     self = [super init];
     if (self == nil) return self;
 
+    javaLayer = layer;
+    
     // NOTE: async=YES means that the layer is re-cached periodically
     self.asynchronous = FALSE;
     self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
@@ -58,6 +63,14 @@ AWT_ASSERT_APPKIT_THREAD;
     target = 0;
 
     return self;
+}
+
+- (void) dealloc {
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    (*env)->DeleteGlobalRef(env, javaLayer);
+    javaLayer = NULL;
+    
+    [super dealloc];
 }
 
 - (CGLPixelFormatObj)copyCGLPixelFormatForDisplayMask:(uint32_t)mask {
@@ -71,7 +84,7 @@ AWT_ASSERT_APPKIT_THREAD;
 }
 
 // use texture (intermediate buffer) as src and blit it to the layer
-- (void) _blitTexture
+- (void) blitTexture
 {
     if (textureID == 0) {
         return;
@@ -107,7 +120,10 @@ AWT_ASSERT_APPKIT_THREAD;
 
     glViewport(0, 0, textureWidth, textureHeight);
 
-    [self _blitTexture];
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    static JNF_CLASS_CACHE(jc_JavaLayer, "sun/java2d/opengl/CGLLayer");
+    static JNF_MEMBER_CACHE(jm_drawInCGLContext, jc_JavaLayer, "drawInCGLContext", "()V");
+    JNFCallVoidMethod(env, javaLayer, jm_drawInCGLContext);
 
     // Call super to finalize the drawing. By default all it does is call glFlush().
     [super drawInCGLContext:glContext pixelFormat:pixelFormat forLayerTime:timeInterval displayTime:timeStamp];
@@ -131,14 +147,43 @@ Java_sun_java2d_opengl_CGLLayer_nativeCreateLayer
 JNF_COCOA_ENTER(env);
 AWT_ASSERT_NOT_APPKIT_THREAD;
 
+    jobject javaLayer = (*env)->NewGlobalRef(env, obj);
+    
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         AWT_ASSERT_APPKIT_THREAD;
 
-        layer = [CGLLayer layer];
-        CFRetain(layer);
+        layer = [[CGLLayer alloc] initWithJavaLayer: javaLayer];
     }];
 
 JNF_COCOA_EXIT(env);
 
     return ptr_to_jlong(layer);
+}
+
+// Must be called under the RQ lock.
+JNIEXPORT void JNICALL
+Java_sun_java2d_opengl_CGLLayer_validate
+(JNIEnv *env, jobject obj, jlong layerPtr, jobject surfaceData)
+{
+    CGLLayer *layer = OBJC(layerPtr);
+
+    if (surfaceData != NULL) {
+        OGLSDOps *oglsdo = (OGLSDOps*) SurfaceData_GetOps(env, surfaceData);
+        layer.textureID = oglsdo->textureID;
+        layer.target = GL_TEXTURE_2D;
+        layer.textureWidth = oglsdo->width;
+        layer.textureHeight = oglsdo->height;
+    } else {
+        layer.textureID = 0;            
+    }
+}    
+
+// Must be called on the AppKit thread and under the RQ lock.
+JNIEXPORT void JNICALL
+Java_sun_java2d_opengl_CGLLayer_blitTexture
+(JNIEnv *env, jobject obj, jlong layerPtr)
+{
+    CGLLayer *layer = jlong_to_ptr(layerPtr);
+
+    [layer blitTexture];
 }

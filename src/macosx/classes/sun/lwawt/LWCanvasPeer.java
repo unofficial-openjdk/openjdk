@@ -97,11 +97,6 @@ final class LWCanvasPeer
         }
 
         @Override
-        public boolean isOpaque() {
-            return true;
-        }
-
-        @Override
         protected void paintComponent(final Graphics g) {
             if (isOpaque()) {
                 g.setColor(getBackground());

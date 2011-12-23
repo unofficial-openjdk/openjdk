@@ -66,7 +66,7 @@ abstract class AquaPainter <T extends JRSUIState> {
         return new AquaNineSlicingImagePainter<T>(state, metricsProvider);
     }
 
-    abstract void paint(final SunGraphics2D g, final T stateToPaint, final Component c);
+    abstract void paint(final Graphics2D g, final T stateToPaint, final Component c);
 
     final Rectangle boundsRect = new Rectangle();
     final JRSUIControl control;
@@ -85,7 +85,7 @@ abstract class AquaPainter <T extends JRSUIState> {
         boundsRect.setBounds(x, y, w, h);
 
         final T nextState = (T)state.derive();
-        final SunGraphics2D g2d = getGraphics2D(g);
+        final Graphics2D g2d = getGraphics2D(g);
         if (g2d != null) paint(g2d, nextState, c);
         state = nextState;
     }
@@ -105,7 +105,7 @@ abstract class AquaPainter <T extends JRSUIState> {
         }
 
         @Override
-        void paint(final SunGraphics2D g, final T stateToPaint, final Component c) {
+        void paint(final Graphics2D g, final T stateToPaint, final Component c) {
             if (metricsProvider == null) {
                 AquaSingleImagePainter.paintFromSingleCachedImage(g, control, stateToPaint, c, boundsRect);
                 return;
@@ -132,11 +132,11 @@ abstract class AquaPainter <T extends JRSUIState> {
         }
 
         @Override
-        void paint(SunGraphics2D g, T stateToPaint, Component c) {
+        void paint(Graphics2D g, T stateToPaint, Component c) {
             paintFromSingleCachedImage(g, control, stateToPaint, c, boundsRect);
         }
 
-        static void paintFromSingleCachedImage(final SunGraphics2D g, final JRSUIControl control, final JRSUIState controlState, final Component c, final Rectangle boundsRect) {
+        static void paintFromSingleCachedImage(final Graphics2D g, final JRSUIControl control, final JRSUIState controlState, final Component c, final Rectangle boundsRect) {
             Rectangle clipRect = g.getClipBounds();
             Rectangle intersection = boundsRect.intersection(clipRect);
             if (intersection.width <= 0 || intersection.height <= 0) return;
@@ -195,7 +195,7 @@ abstract class AquaPainter <T extends JRSUIState> {
         }
     }
 
-    protected SunGraphics2D getGraphics2D(final Graphics g) {
+    protected Graphics2D getGraphics2D(final Graphics g) {
         try {
             return (SunGraphics2D)g; // doing a blind try is faster than checking instanceof
         } catch (Exception e) {
@@ -206,6 +206,8 @@ abstract class AquaPainter <T extends JRSUIState> {
                 final ProxyGraphics2D pg = (ProxyGraphics2D)g;
                 final Graphics2D g2d = pg.getDelegate();
                 if (g2d instanceof SunGraphics2D) { return (SunGraphics2D)g2d; }
+            } else if (g instanceof Graphics2D) {
+                return (Graphics2D) g;
             }
         }
 

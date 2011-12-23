@@ -79,7 +79,7 @@ JNF_COCOA_ENTER(env);
     }
 
     JNF_MEMBER_CACHE(newDataMethod, jc_CDropTargetContextPeer, "newData", "(J[B)V");
-    if (!(*env)->ExceptionOccurred(env) || !newDataMethod) {
+    if ((*env)->ExceptionOccurred(env) || !newDataMethod) {
         DLog2(@"[CDropTargetContextPeer startTransfer]: couldn't get newData method for %d.\n", (NSInteger) jdroptarget);
         TransferFailed(env, jthis, jdroptarget, (jlong) 0L, jformat);
         return result;

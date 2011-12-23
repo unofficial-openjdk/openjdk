@@ -134,18 +134,40 @@ public class CGraphicsEnvironment extends SunGraphicsEnvironment {
      * @return
      */
     private synchronized void initDevices() {
+        devices.clear();
+
+        int mainID = getMainDisplayID();
+
+        // initialization of the graphics device may change
+        // list of displays on hybrid systems via an activation
+        // of discrete video.
+        // So, we initialize the main display first, and then
+        // retrieve actual list of displays.
+        CGraphicsDevice mainDevice = new CGraphicsDevice(mainID);
+
         final int[] displayIDs = getDisplayIDs();
 
-        devices.clear();
         for (int displayID : displayIDs) {
-            devices.put(displayID, new CGraphicsDevice(displayID));
+            if (displayID != mainID) {
+                devices.put(displayID, new CGraphicsDevice(displayID));
+            } else {
+                devices.put(mainID, mainDevice);
+            }
         }
     }
 
     @Override
     public synchronized GraphicsDevice getDefaultScreenDevice() throws HeadlessException {
         final int mainDisplayID = getMainDisplayID();
-        return devices.get(mainDisplayID);
+        CGraphicsDevice d = devices.get(mainDisplayID);
+        if (d == null) {
+            // we do not exepct that this may happen, the only responce
+            // is to re-initialize the list of devices
+            initDevices();
+
+            d = devices.get(mainDisplayID);
+        }
+        return d;
     }
 
     @Override

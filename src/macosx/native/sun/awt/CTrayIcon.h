@@ -36,13 +36,14 @@
 extern "C" {
 #endif
 
+@class AWTTrayIconView;
+
 /*
  * AWTTrayIcon
  */
 @interface AWTTrayIcon : NSObject {
     jobject peer;
-    NSButton *button;
-    // May still be required for representation of the button
+    AWTTrayIconView *view;
     NSStatusItem *theItem;
 }
 
@@ -50,22 +51,25 @@ extern "C" {
 - (void) setTooltip:(NSString *)tooltip;
 - (NSStatusItem *)theItem;
 - (jobject) peer;
-- (NSButton *) button;
 - (void) setImage:(NSImage *) imagePtr sizing:(BOOL)autosize;
+- (NSPoint) getLocationOnScreen;
 
 @end //AWTTrayIcon
 
 //==================================================================================
 /*
- * AWTNSButton
- */
-@interface AWTNSButton : NSButton {
+ * AWTTrayIconView */
+@interface AWTTrayIconView : NSView <NSMenuDelegate> {
 @public
     AWTTrayIcon *trayIcon;
+    NSImage* image;
+    BOOL isHighlighted;
 }
 -(id)initWithTrayIcon:(AWTTrayIcon *)theTrayIcon;
+-(void)setHighlighted:(BOOL)aFlag;
+-(void)setImage:(NSImage*)anImage;
 
-@end //AWTNSButton
+@end //AWTTrayIconView
 
 #ifdef __cplusplus
 }

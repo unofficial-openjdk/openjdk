@@ -28,6 +28,9 @@
 #import <Cocoa/Cocoa.h>
 #import <objc/objc-auto.h>
 
+#import <JavaNativeFoundation/JavaNativeFoundation.h>
+#import "NSApplicationAWT.h"
+
 #include <sys/time.h>
 #include <pthread.h>
 #include <iconv.h>
@@ -42,14 +45,7 @@
 #include <dlfcn.h>
 
 
-#define NSWIN(p) ((NSWindow*)(p))
-
-@interface AppKitThreadHelper : NSObject { }
-@end
-
-@implementation AppKitThreadHelper
-
-- (void)splashCenter: (Splash *)splash
+static void SplashCenter(Splash * splash)
 {
     // otherwise could use screens[0] to select the menu-bar screen
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
@@ -57,104 +53,6 @@
     splash->x = (screenFrame.size.width - splash->width) / 2;
     splash->y = (screenFrame.size.height - splash->height) / 2 + screenFrame.origin.y;
 }
-
-- (void)createSplashWindow: (NSValue *)value
-{
-    Splash* splash = [value pointerValue];
-
-    [self splashCenter: splash];
-
-    //TODO: [NSApp performSelectorOnMainThread: @selector(setApplicationIconImage:) withObject: image waitUntilDone: NO];
-
-    splash->window = (void*) [[NSWindow alloc]
-        initWithContentRect: NSMakeRect(splash->x, splash->y, splash->width, splash->height)
-                  styleMask: NSBorderlessWindowMask
-                    backing: NSBackingStoreBuffered
-                      defer: NO];
-
-    [NSWIN(splash->window) setOpaque: NO];
-    [NSWIN(splash->window) setBackgroundColor: [NSColor clearColor]];
-}
-
-- (void)showSplashWindow: (NSValue *)value
-{
-    Splash* splash = [value pointerValue];
-
-    [NSWIN(splash->window) orderFrontRegardless];
-}
-
-- (void)reconfigureSplashWindow: (NSValue *)value
-{
-    Splash* splash = [value pointerValue];
-
-    [self splashCenter: splash];
-
-    if (!NSWIN(splash->window)) {
-        return;
-    }
-
-    [NSWIN(splash->window) orderOut:nil];
-    [NSWIN(splash->window) setFrame: NSMakeRect(splash->x, splash->y, splash->width, splash->height)
-                     display: NO];
-}
-
-- (void)redrawSplashWindow: (NSValue *)value
-{
-    Splash* splash = [value pointerValue];
-
-    // NSDeviceRGBColorSpace vs. NSCalibratedRGBColorSpace ?
-    NSBitmapImageRep * rep = [[NSBitmapImageRep alloc]
-        initWithBitmapDataPlanes: (unsigned char**)&splash->screenData
-                      pixelsWide: splash->width
-                      pixelsHigh: splash->height
-                   bitsPerSample: 8
-                 samplesPerPixel: 4
-                        hasAlpha: YES
-                        isPlanar: NO
-                  colorSpaceName: NSDeviceRGBColorSpace
-                    bitmapFormat: NSAlphaFirstBitmapFormat | NSAlphaNonpremultipliedBitmapFormat
-                     bytesPerRow: splash->width * 4
-                    bitsPerPixel: 32];
-
-    NSImage * image = [[NSImage alloc]
-        initWithSize: NSMakeSize(splash->width, splash->height)];
-    [image setBackgroundColor: [NSColor clearColor]];
-
-    [image addRepresentation: rep];
-
-    NSImageView * view = [[NSImageView alloc] init];
-
-    [view setImage: image];
-    [view setEditable: NO];
-    //NOTE: we don't set a 'wait cursor' for the view because:
-    //      1. The Cocoa GUI guidelines suggest to avoid it, and use a progress
-    //         bar instead.
-    //      2. There simply isn't an instance of NSCursor that represent
-    //         the 'wait cursor'. So that is undoable.
-
-    //TODO: only the first image in an animated gif preserves transparency.
-    //      Loos like the splash->screenData contains inappropriate data
-    //      for all but the first frame.
-
-    [image release];
-    [rep release];
-
-    [NSWIN(splash->window) setContentView: view];
-    [NSWIN(splash->window) orderFrontRegardless];
-}
-
-- (void)releaseSplash: (NSValue *)value
-{
-    Splash* splash = [value pointerValue];
-
-    if (NSWIN(splash->window)) {
-        [NSWIN(splash->window) orderOut:nil];
-        [NSWIN(splash->window) release];
-    }
-}
-@end
-
-static AppKitThreadHelper * appKitThreadHelper;
 
 unsigned
 SplashTime(void) {
@@ -224,26 +122,6 @@ void
 SplashInitPlatform(Splash * splash) {
     pthread_mutex_init(&splash->lock, NULL);
 
-    // Start Cocoa event-loop
-    void *handle = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
-    if (handle != NULL) {
-        void (*fptr)();
-        fptr = dlsym(handle, "JLI_NotifyAWTLoaded");
-        if (fptr != NULL) {
-            fptr();
-        } else {
-            fprintf(stderr, "dlsym failed\n");
-            splash->isVisible = -1;
-            return;
-        }
-    } else {
-        fprintf(stderr, "dlopen failed\n");
-        splash->isVisible = -1;
-        return;
-    }
-
-    appKitThreadHelper = [[AppKitThreadHelper alloc] init];
-
     splash->maskRequired = 0;
 
 
@@ -255,6 +133,11 @@ SplashInitPlatform(Splash * splash) {
             0xff << 16, 0xff << 24, 0xff << 0);
     splash->screenFormat.byteOrder = 1 ?  BYTE_ORDER_LSBFIRST : BYTE_ORDER_MSBFIRST;
     splash->screenFormat.depthBytes = 4;
+
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+            NSApplication * app = [NSApplicationAWT sharedApplication];
+            [NSApplicationAWT runAWTLoopWithApp: app];
+    });
 }
 
 void
@@ -267,14 +150,13 @@ SplashDonePlatform(Splash * splash) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
     pthread_mutex_destroy(&splash->lock);
-    [appKitThreadHelper performSelectorOnMainThread:
-                       @selector(releaseSplash:)
-                                    withObject: [NSValue valueWithPointer: splash]
-                                 waitUntilDone: YES];
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        if (splash->window) {
+            [splash->window orderOut:nil];
+            [splash->window release];
+        }
+    }];
     [pool drain];
-
-    [appKitThreadHelper release];
-    appKitThreadHelper = NULL;
 }
 
 void
@@ -309,20 +191,66 @@ SplashRedrawWindow(Splash * splash) {
 
     SplashUpdateScreenData(splash);
 
-    [appKitThreadHelper performSelectorOnMainThread:
-                         @selector(redrawSplashWindow:)
-                                           withObject: [NSValue valueWithPointer: splash]
-                                        waitUntilDone: YES];
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        // NSDeviceRGBColorSpace vs. NSCalibratedRGBColorSpace ?
+        NSBitmapImageRep * rep = [[NSBitmapImageRep alloc]
+            initWithBitmapDataPlanes: (unsigned char**)&splash->screenData
+                          pixelsWide: splash->width
+                          pixelsHigh: splash->height
+                       bitsPerSample: 8
+                     samplesPerPixel: 4
+                            hasAlpha: YES
+                            isPlanar: NO
+                      colorSpaceName: NSDeviceRGBColorSpace
+                        bitmapFormat: NSAlphaFirstBitmapFormat | NSAlphaNonpremultipliedBitmapFormat
+                         bytesPerRow: splash->width * 4
+                        bitsPerPixel: 32];
+
+        NSImage * image = [[NSImage alloc]
+            initWithSize: NSMakeSize(splash->width, splash->height)];
+        [image setBackgroundColor: [NSColor clearColor]];
+
+        [image addRepresentation: rep];
+
+        NSImageView * view = [[NSImageView alloc] init];
+
+        [view setImage: image];
+        [view setEditable: NO];
+        //NOTE: we don't set a 'wait cursor' for the view because:
+        //      1. The Cocoa GUI guidelines suggest to avoid it, and use a progress
+        //         bar instead.
+        //      2. There simply isn't an instance of NSCursor that represent
+        //         the 'wait cursor'. So that is undoable.
+
+        //TODO: only the first image in an animated gif preserves transparency.
+        //      Loos like the splash->screenData contains inappropriate data
+        //      for all but the first frame.
+
+        [image release];
+        [rep release];
+
+        [splash->window setContentView: view];
+        [splash->window orderFrontRegardless];
+    }];
+
     [pool drain];
 }
 
 void SplashReconfigureNow(Splash * splash) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    [appKitThreadHelper performSelectorOnMainThread:
-                         @selector(reconfigureSplashWindow:)
-                                                withObject: [NSValue valueWithPointer: splash]
-                                             waitUntilDone: YES];
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        SplashCenter(splash);
+
+        if (!splash->window) {
+            return;
+        }
+
+        [splash->window orderOut:nil];
+        [splash->window setFrame: NSMakeRect(splash->x, splash->y, splash->width, splash->height)
+                         display: NO];
+    }];
+
     [pool drain];
 
     SplashRedrawWindow(splash);
@@ -402,16 +330,23 @@ SplashScreenThread(void *param) {
         fcntl(splash->controlpipe[0], F_GETFL, 0) | O_NONBLOCK);
     splash->time = SplashTime();
     splash->currentFrame = 0;
-    [appKitThreadHelper performSelectorOnMainThread:
-                       @selector(createSplashWindow:)
-                                         withObject: [NSValue valueWithPointer: splash]
-                                      waitUntilDone: YES];
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        SplashCenter(splash);
+
+        splash->window = (void*) [[NSWindow alloc]
+            initWithContentRect: NSMakeRect(splash->x, splash->y, splash->width, splash->height)
+                      styleMask: NSBorderlessWindowMask
+                        backing: NSBackingStoreBuffered
+                          defer: NO];
+
+        [splash->window setOpaque: NO];
+        [splash->window setBackgroundColor: [NSColor clearColor]];
+    }];
     fflush(stdout);
-    if (NSWIN(splash->window)) {
-        [appKitThreadHelper performSelectorOnMainThread:
-                           @selector(showSplashWindow:)
-                                           withObject: [NSValue valueWithPointer: splash]
-                                        waitUntilDone: YES];
+    if (splash->window) {
+        [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+            [splash->window orderFrontRegardless];
+        }];
         SplashRedrawWindow(splash);
         SplashEventLoop(splash);
     }

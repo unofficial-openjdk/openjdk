@@ -25,9 +25,12 @@
 
 package sun.lwawt.macosx;
 
-import java.awt.Component;
+import java.awt.*;
 
 import sun.awt.dnd.SunDropTargetContextPeer;
+import sun.awt.dnd.SunDropTargetEvent;
+
+import javax.swing.*;
 
 
 final class CDropTargetContextPeer extends SunDropTargetContextPeer {
@@ -35,6 +38,7 @@ final class CDropTargetContextPeer extends SunDropTargetContextPeer {
     private long    fNativeDropTransfer = 0;
     private long    fNativeDataAvailable = 0;
     private Object  fNativeData    = null;
+    private boolean insideTarget = false;
 
     Object awtLockAccess = new Object();
 
@@ -82,6 +86,42 @@ final class CDropTargetContextPeer extends SunDropTargetContextPeer {
         }
 
         return fNativeData;
+    }
+
+    // We need to take care of dragExit message because for some reason it is not being
+    // generated for lightweight components
+    @Override
+    protected void processMotionMessage(SunDropTargetEvent event, boolean operationChanged) {
+        Component eventSource = (Component)event.getComponent();
+        Component rootComponent = SwingUtilities.getRoot(eventSource);
+        Point screenPoint = event.getPoint();
+        SwingUtilities.convertPointToScreen(screenPoint, rootComponent);
+        Rectangle screenBounds = new Rectangle(eventSource.getLocationOnScreen().x,
+                eventSource.getLocationOnScreen().y,
+                eventSource.getWidth(), eventSource.getHeight());
+        if(insideTarget) {
+            if(!screenBounds.contains(screenPoint)) {
+                processExitMessage(event);
+                insideTarget = false;
+                return;
+            }
+            super.processMotionMessage(event, operationChanged);
+        }
+        insideTarget = screenBounds.contains(screenPoint);
+    }
+
+    @Override
+    protected void processDropMessage(SunDropTargetEvent event) {
+        Component eventSource = (Component)event.getComponent();
+        Component rootComponent = SwingUtilities.getRoot(eventSource);
+        Point screenPoint = event.getPoint();
+        SwingUtilities.convertPointToScreen(screenPoint, rootComponent);
+        Rectangle screenBounds = new Rectangle(eventSource.getLocationOnScreen().x,
+                eventSource.getLocationOnScreen().y,
+                eventSource.getWidth(), eventSource.getHeight());
+        if(!screenBounds.contains(screenPoint)) {
+            super.processDropMessage(event);
+        }
     }
 
     // Signal drop complete:

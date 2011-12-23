@@ -142,4 +142,6 @@ __attribute__((visibility("default")))
 
 @end
 
+void OSXAPP_SetJavaVM(JavaVM *vm);
+
 #endif /* __THREADUTILITIES_H */

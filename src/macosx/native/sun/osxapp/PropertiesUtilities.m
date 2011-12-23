@@ -23,25 +23,21 @@
  * questions.
  */
 
-#import <Cocoa/Cocoa.h>
-#import <JavaNativeFoundation/JavaNativeFoundation.h>
+#import "PropertiesUtilities.h"
 
+@implementation PropertiesUtilities
 
-@interface NSApplicationAWT : NSApplication {
-    NSString *fApplicationName;
-    BOOL fUseDefaultIcon;
-    NSWindow *eventTransparentWindow;
++ (NSString *) javaSystemPropertyForKey:(NSString *)key withEnv:(JNIEnv *)env {
+    static JNF_CLASS_CACHE(jc_System, "java/lang/System");
+    static JNF_STATIC_MEMBER_CACHE(jm_getProperty, jc_System, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
+    
+    jstring jKey = JNFNSToJavaString(env, key);
+    jstring jValue = JNFCallStaticObjectMethod(env, jm_getProperty, jKey);
+    (*env)->DeleteLocalRef(env, jKey);
+    
+    NSString *value = JNFJavaToNSString(env, jValue);
+    (*env)->DeleteLocalRef(env, jValue);
+    return value;
 }
-
-- (void) finishLaunching;
-- (void) registerWithProcessManager;
-- (void) setDockIconWithEnv:(JNIEnv *)env;
-
-@end
-
-@interface NSApplication (CustomNIBAdditions)
-
-// Returns whether or not application is using its default NIB
-- (BOOL)usingDefaultNib;
 
 @end

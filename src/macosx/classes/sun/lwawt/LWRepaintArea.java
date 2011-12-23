@@ -23,39 +23,49 @@
  * questions.
  */
 
-/* platform-dependent definitions */
 
-#ifndef SPLASHSCREEN_CONFIG_H
-#define SPLASHSCREEN_CONFIG_H
+package sun.lwawt;
 
-#include <sys/types.h>
-#include <sys/unistd.h>
-#include <signal.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <pthread.h>
-#include <Cocoa/Cocoa.h>
+import sun.awt.RepaintArea;
 
-typedef uint32_t rgbquad_t;
-typedef uint16_t word_t;
-typedef uint8_t byte_t;
+import java.awt.Component;
+import java.awt.Graphics;
 
+/**
+ * @author Sergey Bylokhov
+ */
+final class LWRepaintArea extends RepaintArea {
 
-// Actually the following Rect machinery is unused since we don't use shapes
-typedef int RECT_T;
+    @Override
+    protected void updateComponent(final Component comp, final Graphics g) {
+        if (comp != null) {
+            final LWComponentPeer peer = (LWComponentPeer) comp.getPeer();
+            if (peer != null) {
+                peer.paintPeer(g);
+            }
+            super.updateComponent(comp, g);
+            flushBuffers(peer);
+        }
+    }
 
-#define RECT_EQ_X(r1,r2)        ((r1) == (r2))
-#define RECT_SET(r,xx,yy,ww,hh) ;
-#define RECT_INC_HEIGHT(r)      ;
+    @Override
+    protected void paintComponent(final Component comp, final Graphics g) {
+        if (comp != null) {
+            final LWComponentPeer peer = (LWComponentPeer) comp.getPeer();
+            if (peer != null) {
+                peer.paintPeer(g);
+            }
+            super.paintComponent(comp, g);
+            flushBuffers(peer);
+        }
+    }
 
-#define SPLASHCTL_QUIT          'Q'
-#define SPLASHCTL_UPDATE        'U'
-#define SPLASHCTL_RECONFIGURE   'R'
-
-#define INLINE static
-
-#define SPLASHEXPORT
-
-#endif
+    private static void flushBuffers(final LWComponentPeer peer) {
+        if (peer != null) {
+            if (!peer.getWindowPeerOrSelf().isOpaque()) {
+                peer.flushOffscreenGraphics();
+            }
+            peer.flushOnscreenGraphics();
+        }
+    }
+}

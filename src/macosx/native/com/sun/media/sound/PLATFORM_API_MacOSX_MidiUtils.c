@@ -44,7 +44,7 @@
 
 #if (USE_PLATFORM_MIDI_IN == TRUE) || (USE_PLATFORM_MIDI_OUT == TRUE)
 
-#include "PLATFORM_API_MacOS_MidiUtils.h"
+#include "PLATFORM_API_MacOSX_MidiUtils.h"
 #include <pthread.h>
 #include <assert.h>
 
@@ -409,7 +409,6 @@ static void processMessagesForPacket(const MIDIPacket* packet, MacMidiDeviceHand
             MIDI_QueueAddShort(handle->h.queue, packedMsg, (INT64) (AudioConvertHostTimeToNanos(ts) + 500) / 1000, TRUE);
         }
     }
-
 }
 
 static void midiReadProc(const MIDIPacketList* packetList, void* refCon, void* connRefCon) {

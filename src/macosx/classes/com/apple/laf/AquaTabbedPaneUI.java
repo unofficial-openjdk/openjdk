@@ -35,7 +35,6 @@ import javax.swing.event.*;
 import javax.swing.plaf.*;
 import javax.swing.text.View;
 
-import sun.java2d.SunGraphics2D;
 import sun.swing.SwingUtilities2;
 import apple.laf.*;
 import apple.laf.JRSUIConstants.*;
@@ -306,11 +305,11 @@ public class AquaTabbedPaneUI extends AquaTabbedPaneCopyFromBasicUI {
         }
 
         // from super.paintText - its normal text painting is totally wrong for the Mac
-        if (!(g instanceof SunGraphics2D)) {
+        if (!(g instanceof Graphics2D)) {
             g.setClip(temp);
             return;
         }
-        final SunGraphics2D g2d = (SunGraphics2D)g;
+        final Graphics2D g2d = (Graphics2D) g;
 
         AffineTransform savedAT = null;
         if (isVertical) {

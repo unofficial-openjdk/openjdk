@@ -35,6 +35,8 @@ import javax.swing.*;
 
 import sun.awt.*;
 import sun.java2d.*;
+import sun.java2d.loops.Blit;
+import sun.java2d.loops.CompositeType;
 
 public class LWWindowPeer
     extends LWContainerPeer<Window, JComponent>
@@ -57,6 +59,9 @@ public class LWWindowPeer
     private int sysY;
     private int sysW;
     private int sysH;
+
+    private static final int MINIMUM_WIDTH = 1;
+    private static final int MINIMUM_HEIGHT = 1;
 
     private Insets insets = new Insets(0, 0, 0, 0);
 
@@ -99,11 +104,13 @@ public class LWWindowPeer
 
     private volatile boolean cachedFocusableWindow;
 
-    private final static Font DEFAULT_FONT = new Font(Font.DIALOG, Font.PLAIN, 12);
+    private static final Font DEFAULT_FONT = new Font(Font.DIALOG, Font.PLAIN, 12);
 
     private Color background;
     private Color foreground;
     private Font font;
+
+    private volatile boolean isOpaque = true;
 
     /**
      * Current modal blocker or null.
@@ -152,6 +159,7 @@ public class LWWindowPeer
         cachedFocusableWindow = getTarget().isFocusableWindow();
 
         setOpacity(getTarget().getOpacity());
+        setOpaque(getTarget().isOpaque());
 
         // Create surface data and back buffer
         replaceSurfaceData(1, null);
@@ -230,7 +238,7 @@ public class LWWindowPeer
 
     @Override
     protected void disposeImpl() {
-        SurfaceData oldData = surfaceData;
+        SurfaceData oldData = getSurfaceData();
         surfaceData = null;
         if (oldData != null) {
             oldData.invalidate();
@@ -240,27 +248,32 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setVisible(final boolean visible) {
-        if (isVisible() == visible) {
+    public void setVisible(final boolean v) {
+        if (getSurfaceData() == null) {
+            replaceSurfaceData();
+        }
+
+        if (isVisible() == v) {
             return;
         }
-        super.setVisible(visible);
+        super.setVisible(v);
+
         // TODO: update graphicsConfig, see 4868278
         // TODO: don't notify the delegate if our visibility is unchanged
 
         // it is important to call this method on EDT
-        // to prevent the deadlocks duruing the painting of the lightweight delegates
+        // to prevent the deadlocks during the painting of the lightweight delegates
         //TODO: WHY? This is a native-system related call. Perhaps NOT calling
-        // the painiting procedure right from the setVisible(), but rather relying
-        // on the native Expose event (or, scheduling the repainiting asynchronously)
+        // the painting procedure right from the setVisible(), but rather relying
+        // on the native Expose event (or, scheduling the repainting asynchronously)
         // is better?
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                platformWindow.setVisible(visible);
+                platformWindow.setVisible(v);
                 if (isSimpleWindow()) {
                     updateFocusableWindowState();
-                    changeFocusedWindow(visible, visible);
+                    changeFocusedWindow(v, v);
                 }
             }
         });
@@ -277,8 +290,10 @@ public class LWWindowPeer
         return false;
     }
 
-    @Override
-    protected Graphics getGraphics(Color fg, Color bg, Font f) {
+    protected final synchronized Graphics getOnscreenGraphics(Color fg, Color bg, Font f) {
+        if (getSurfaceData() == null) {
+            return null;
+        }
         if (fg == null) {
             fg = SystemColor.windowText;
         }
@@ -288,11 +303,7 @@ public class LWWindowPeer
         if (f == null) {
             f = DEFAULT_FONT;
         }
-        if (surfaceData == null) {
-            replaceSurfaceData();
-        }
-
-        return platformWindow.transformGraphics(new SunGraphics2D(surfaceData, fg, bg, f));
+        return platformWindow.transformGraphics(new SunGraphics2D(getSurfaceData(), fg, bg, f));
     }
 
     @Override
@@ -339,20 +350,19 @@ public class LWWindowPeer
             op |= SET_SIZE;
         }
 
-        Rectangle oldBounds = getBounds();
+        if (w < MINIMUM_WIDTH) {
+            w = MINIMUM_WIDTH;
+        }
+        if (h < MINIMUM_HEIGHT) {
+            h = MINIMUM_HEIGHT;
+        }
 
         // Don't post ComponentMoved/Resized and Paint events
         // until we've got a notification from the delegate
-        setBounds(x, y, w, h, op, false);
+        setBounds(x, y, w, h, op, false, false);
         // Get updated bounds, so we don't have to handle 'op' here manually
         Rectangle r = getBounds();
         platformWindow.setBounds(r.x, r.y, r.width, r.height);
-
-        // TODO: this replaceSurfaceData should be called upon
-        // the notification about the top-level size from the underlying system
-        if (oldBounds.height != r.height || oldBounds.width != r.width) {
-               replaceSurfaceData();
-        }
     }
 
     @Override
@@ -360,7 +370,7 @@ public class LWWindowPeer
         return platformWindow.getLocationOnScreen();
     }
 
-    /*
+    /**
      * Overridden from LWContainerPeer to return the correct insets.
      * Insets are queried from the delegate and are kept up to date by
      * requiering when needed (i.e. when the window geometry is changed).
@@ -418,9 +428,9 @@ public class LWWindowPeer
             d = getTarget().getMinimumSize();
         }
         if (d == null) {
-            d = new Dimension(1, 1);
+            d = new Dimension(MINIMUM_WIDTH, MINIMUM_HEIGHT);
         }
-        platformWindow.setMinimumSize(d.height, d.width);
+        platformWindow.setMinimumSize(d.width, d.height);
     }
 
     @Override
@@ -435,13 +445,20 @@ public class LWWindowPeer
 
     @Override
     public void setOpaque(boolean isOpaque) {
-        // TODO: not implemented
-//        throw new RuntimeException("not implemented");
+        if (this.isOpaque != isOpaque) {
+            this.isOpaque = isOpaque;
+            getPlatformWindow().setOpaque(isOpaque);
+            replaceSurfaceData();
+        }
+    }
+
+    public boolean isOpaque() {
+        return isOpaque;
     }
 
     @Override
     public void updateWindow() {
-        throw new RuntimeException("not implemented");
+        flushOffscreenGraphics();
     }
 
     @Override
@@ -535,7 +552,7 @@ public class LWWindowPeer
         postWindowStateChangedEvent(newWindowState);
     }
 
-    /*
+    /**
      * Called by the delegate when any part of the window should be repainted.
      */
     public void notifyExpose(final int x, final int y, final int w, final int h) {
@@ -547,28 +564,16 @@ public class LWWindowPeer
         // and override that part which is only called after if
         // createPaintEvent() returned non-null value and flush the buffer
         // from the overridden method
-
-        // First, restore the window contents from the back buffer, just
-        // like SwingPaintEventDispatcher does
-        //flushOffscreenGraphics(new Rectangle(x, y, w, h));
-
-        // Second, refresh the back buffer contents and flush it onto
-        // the screen - on EDT
-        //paintPeerDirtyRectOnEDT(new Rectangle(x, y, w, h));
-
-        // Last, post the paint events for all the subcomponents. As paint
-        // events are of lower priority, the runnable above will be executed
-        // before any of them are handled
-        //handleExpose(x, y, w, h);
-        repaintPeer(x, y, w, h);
+        flushOnscreenGraphics();
+        repaintPeer(new Rectangle(x, y, w, h));
     }
 
-    /*
+    /**
      * Called by the delegate when this window is moved/resized by user.
      * There's no notifyReshape() in LWComponentPeer as the only
      * components which could be resized by user are top-level windows.
      */
-    public void notifyReshape(int x, int y, int w, int h) {
+    public final void notifyReshape(int x, int y, int w, int h) {
         boolean moved = false;
         boolean resized = false;
         synchronized (getStateLock()) {
@@ -585,26 +590,33 @@ public class LWWindowPeer
             return;
         }
         // First, update peer's bounds
-        setBounds(x, y, w, h, SET_BOUNDS, false);
+        setBounds(x, y, w, h, SET_BOUNDS, false, false);
 
         // Second, update the graphics config and surface data
         checkIfOnNewScreen();
         if (resized) {
             replaceSurfaceData();
-            flushOffscreenGraphics(new Rectangle(0, 0, w, h));
+            flushOnscreenGraphics();
         }
 
-        // Third, update target's bounds
-        AWTAccessor.getComponentAccessor().setLocation(getTarget(), x, y);
-        AWTAccessor.getComponentAccessor().setSize(getTarget(), w, h);
-
-        // Fourth, post COMPONENT_MOVED/COMPONENT_RESIZED events
-        // TODO: is it worth reusing handleMove/handleResize methods here?
+        // Third, COMPONENT_MOVED/COMPONENT_RESIZED events
         if (moved) {
-            postEvent(new ComponentEvent(getTarget(), ComponentEvent.COMPONENT_MOVED));
+            handleMove(x, y, true);
         }
         if (resized) {
-            postEvent(new ComponentEvent(getTarget(), ComponentEvent.COMPONENT_RESIZED));
+            handleResize(w, h,true);
+        }
+    }
+
+    private void clearBackground(final int w, final int h) {
+        final Graphics g = getOnscreenGraphics(getForeground(), getBackground(),
+                                               getFont());
+        if (g != null) {
+            try {
+                g.clearRect(0, 0, w, h);
+            } finally {
+                g.dispose();
+            }
         }
     }
 
@@ -804,7 +816,8 @@ public class LWWindowPeer
                                  int keyCode, char keyChar, int keyLocation)
     {
         LWComponentPeer focusOwner =
-            getLWToolkit().getKeyboardFocusManagerPeer().getFocusOwner();
+            LWKeyboardFocusManagerPeer.getInstance(getAppContext()).
+                getFocusOwner();
 
         // Null focus owner may receive key event when
         // application hides the focused window upon ESC press
@@ -826,7 +839,7 @@ public class LWWindowPeer
             AWTAccessor.getFrameAccessor().setExtendedState(
                     (Frame)getTarget(), newWindowState);
         }
-        WindowEvent stateChangedEvent = new WindowEvent((Window)getTarget(),
+        WindowEvent stateChangedEvent = new WindowEvent(getTarget(),
                 WindowEvent.WINDOW_STATE_CHANGED,
                 windowState, newWindowState);
         postEvent(stateChangedEvent);
@@ -901,13 +914,13 @@ public class LWWindowPeer
         });
     }
 
-    /*
+    /**
      * This method returns a back buffer Graphics to render all the
      * peers to. After the peer is painted, the back buffer contents
      * should be flushed to the screen. All the target painting
      * (Component.paint() method) should be done directly to the screen.
      */
-    protected Graphics getOffscreenGraphics(Color fg, Color bg, Font f) {
+    protected final Graphics getOffscreenGraphics(Color fg, Color bg, Font f) {
         final Image bb = getBackBuffer();
         if (bb == null) {
             return null;
@@ -931,16 +944,9 @@ public class LWWindowPeer
     }
 
     /*
-    private boolean checkBackBufferingEnabled() {
-        LWToolkit tk = (LWToolkit)Toolkit.getDefaultToolkit();
-        return tk.isNativeDoubleBufferingEnabled();
-    }
-    */
-
-    /*
      * May be called by delegate to provide SD to Java2D code.
      */
-    public SurfaceData getSurfaceData() {
+    public synchronized SurfaceData getSurfaceData() {
         //TODO: synchronize access to the surfaceData.
         return surfaceData;
     }
@@ -949,25 +955,31 @@ public class LWWindowPeer
         replaceSurfaceData(backBufferCount, backBufferCaps);
     }
 
-    private void replaceSurfaceData(int newBackBufferCount,
-                                    BufferCapabilities newBackBufferCaps)
-    {
+    private synchronized void replaceSurfaceData(int newBackBufferCount,
+                                                 BufferCapabilities newBackBufferCaps) {
         // TODO: need some kind of synchronization here?
-        SurfaceData oldData = surfaceData;
+        final SurfaceData oldData = getSurfaceData();
         surfaceData = platformWindow.replaceSurfaceData();
         // TODO: volatile image
 //        VolatileImage oldBB = backBuffer;
         BufferedImage oldBB = backBuffer;
         backBufferCount = newBackBufferCount;
         backBufferCaps = newBackBufferCaps;
-        if ((oldData != null) && (oldData != surfaceData)) {
+        final Rectangle size = getSize();
+        if (getSurfaceData() != null && oldData != getSurfaceData()) {
+            clearBackground(size.width, size.height);
+        }
+        blitSurfaceData(oldData, getSurfaceData());
+
+        if (oldData != null && oldData != getSurfaceData()) {
             // TODO: drop oldData for D3D/WGL pipelines
             // This can only happen when this peer is being created
             oldData.flush();
         }
+
         // TODO: volatile image
 //        backBuffer = (VolatileImage)delegate.createBackBuffer();
-        backBuffer = (BufferedImage)platformWindow.createBackBuffer();
+        backBuffer = (BufferedImage) platformWindow.createBackBuffer();
         if (backBuffer != null) {
             Graphics g = backBuffer.getGraphics();
             try {
@@ -981,6 +993,23 @@ public class LWWindowPeer
                 }
             } finally {
                 g.dispose();
+            }
+        }
+    }
+
+    private void blitSurfaceData(final SurfaceData src, final SurfaceData dst) {
+        //TODO blit. proof-of-concept
+        if (src != dst && src != null && dst != null
+            && !(dst instanceof NullSurfaceData)
+            && !(src instanceof NullSurfaceData)
+            && src.getSurfaceType().equals(dst.getSurfaceType())) {
+            final Rectangle size = getSize();
+            final Blit blit = Blit.locate(src.getSurfaceType(),
+                                          CompositeType.Src,
+                                          dst.getSurfaceType());
+            if (blit != null) {
+                blit.Blit(src, dst, ((Graphics2D) getGraphics()).getComposite(),
+                          getRegion(), 0, 0, 0, 0, size.width, size.height);
             }
         }
     }
@@ -1056,7 +1085,8 @@ public class LWWindowPeer
             }
         }
 
-        LWKeyboardFocusManagerPeer manager = getLWToolkit().getKeyboardFocusManagerPeer();
+        LWKeyboardFocusManagerPeer manager = LWKeyboardFocusManagerPeer.
+            getInstance(getAppContext());
 
         Window oppositeWindow = becomesFocused ? manager.getCurrentFocusedWindow() : null;
         // TODO: ungrab

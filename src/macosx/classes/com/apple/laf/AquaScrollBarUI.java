@@ -303,6 +303,13 @@ public class AquaScrollBarUI extends ScrollBarUI {
                 mouseDraggedInTrack(e);
             } else {
                 // In pageup/down zones
+
+                // check that thumb has not been scrolled under the mouse cursor
+                final Hit previousPart = getPartHit(fCurrentMouseX, fCurrentMouseY);
+                if (!HitUtil.isTrack(previousPart)) {
+                    fStillInTrack = false;
+                }
+
                 fCurrentMouseX = e.getX();
                 fCurrentMouseY = e.getY();
 

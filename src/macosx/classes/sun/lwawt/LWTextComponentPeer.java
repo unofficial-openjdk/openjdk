@@ -49,19 +49,11 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
      * Character with reasonable value between the minimum width and maximum.
      */
     protected static final char WIDE_CHAR = 'w';
-
     private volatile boolean firstChangeSkipped;
 
     LWTextComponentPeer(final T target,
                         final PlatformComponent platformComponent) {
         super(target, platformComponent);
-    }
-
-    /**
-     * Returns height of the line in textarea or textfield.
-     */
-    protected static int getItemHeight(final FontMetrics metrics) {
-        return metrics.getHeight();
     }
 
     @Override
@@ -96,7 +88,7 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
         final int borderWidth = insets.left + insets.right;
         final FontMetrics fm = getFontMetrics(getFont());
         final int charWidth = (fm != null) ? fm.charWidth(WIDE_CHAR) : 10;
-        final int itemHeight = (fm != null) ? getItemHeight(fm) : 10;
+        final int itemHeight = (fm != null) ? fm.getHeight() : 10;
         return new Dimension(columns * charWidth + borderWidth,
                              rows * itemHeight + borderHeight);
     }

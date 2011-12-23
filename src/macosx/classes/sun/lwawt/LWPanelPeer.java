@@ -26,7 +26,8 @@
 
 package sun.lwawt;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Panel;
 import java.awt.peer.PanelPeer;
 
 import javax.swing.JPanel;
@@ -34,7 +35,7 @@ import javax.swing.JPanel;
 final class LWPanelPeer extends LWContainerPeer<Panel, JPanel>
         implements PanelPeer {
 
-    LWPanelPeer(final Panel target, PlatformComponent platformComponent) {
+    LWPanelPeer(final Panel target, final PlatformComponent platformComponent) {
         super(target, platformComponent);
     }
 
@@ -43,6 +44,7 @@ final class LWPanelPeer extends LWContainerPeer<Panel, JPanel>
         return new JPanel();
     }
 
+    @Override
     public Dimension getMinimumSize() {
         return getTarget().getSize();
     }

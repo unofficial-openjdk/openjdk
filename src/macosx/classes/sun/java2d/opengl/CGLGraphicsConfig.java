@@ -289,6 +289,15 @@ public class CGLGraphicsConfig extends CGraphicsConfig
     }
 
     /**
+     * Creates a new SurfaceData that will be associated with the given
+     * CGLLayer.
+     */
+    @Override
+    public SurfaceData createSurfaceData(CGLLayer layer) {
+        return CGLSurfaceData.createData(layer);
+    }
+
+    /**
      * Creates a new hidden-acceleration image of the given width and height
      * that is associated with the target Component.
      */

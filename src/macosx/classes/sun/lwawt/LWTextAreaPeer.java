@@ -101,15 +101,17 @@ final class LWTextAreaPeer
 
     @Override
     public void insert(final String text, final int pos) {
+        final ScrollableJTextArea pane = getDelegate();
         synchronized (getDelegateLock()) {
-            final JTextArea area = getDelegate().getView();
+            final JTextArea area = pane.getView();
             final boolean doScroll = pos >= area.getDocument().getLength()
                                      && area.getDocument().getLength() != 0;
             area.insert(text, pos);
+            pane.validate();
             if (doScroll) {
-                final JScrollBar bar = getDelegate().getVerticalScrollBar();
-                if (bar != null) {
-                    bar.setValue(bar.getMaximum() - bar.getVisibleAmount());
+                final JScrollBar vbar = pane.getVerticalScrollBar();
+                if (vbar != null) {
+                    vbar.setValue(vbar.getMaximum() - vbar.getVisibleAmount());
                 }
             }
         }

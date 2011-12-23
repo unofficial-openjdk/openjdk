@@ -61,7 +61,27 @@ JAVALIB=
 
 CFLAGS += -DSPLASHSCREEN
 
-ifneq ($(PLATFORM), windows)
+ifeq ($(PLATFORM), macosx)
+  CFLAGS += -DWITH_MACOSX
+
+  # CFLAGS and CPPFLAGS are added when linking as well, so we use VARIANT
+  # instead to specify that we're actually compiling objective-c code here
+  CFLAGS_$(VARIANT)/java_awt_SplashScreen.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_gfx_impl.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_gif.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_impl.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_jpeg.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_png.o = -x objective-c
+  CFLAGS_$(VARIANT)/splashscreen_sys.o = -x objective-c
+
+  OTHER_CFLAGS += -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks
+  CPPFLAGS += -I/System/Library/Frameworks/AppKit.framework/Versions/C/Headers
+  OTHER_LDLIBS += $(LIBM) -lpthread -liconv -losxapp \
+				  -framework ApplicationServices \
+				  -framework Foundation \
+				  -framework Cocoa \
+				  -framework JavaNativeFoundation
+else ifneq ($(PLATFORM), windows)
   CFLAGS += -DWITH_X11
   ifeq ($(PLATFORM), macosx))
     OTHER_LDLIBS += -liconv
@@ -89,9 +109,19 @@ ifneq ($(SYSTEM_ZLIB),true)
 endif
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/libpng
 vpath %.c   $(SHARE_SRC)/native/$(PKGDIR)/image/jpeg
-vpath %.c   $(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen
+ifneq ($(PLATFORM), macosx)
+  vpath %.c   $(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen
+else
+  vpath %.m   $(call NativeSrcDirList,,native/$(PKGDIR)/splashscreen)
+endif
 
-CPPFLAGS += -I$(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen -I$(SHARE_SRC)/native/$(PKGDIR)/splashscreen
+ifneq ($(PLATFORM), macosx)
+  CPPFLAGS += -I$(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen
+else
+  CPPFLAGS += $(call NativeSrcDirList,-I,native/$(PKGDIR)/splashscreen)
+  CPPFLAGS += $(call NativeSrcDirList,-I,/native/sun/osxapp)
+endif
+CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/splashscreen
 CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/image/jpeg
 ifneq ($(SYSTEM_ZLIB),true)
   CPPFLAGS += -I$(SHARE_SRC)/native/java/util/zip/zlib-$(ZLIB_VERSION)

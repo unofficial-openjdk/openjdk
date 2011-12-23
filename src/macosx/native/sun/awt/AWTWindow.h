@@ -57,6 +57,7 @@
                     frameRect:(NSRect)frameRect
                   contentView:(NSView *)contentView;
 
+- (void) adjustGrowBoxWindow;
 @end
 
 #endif _AWTWINDOW_H

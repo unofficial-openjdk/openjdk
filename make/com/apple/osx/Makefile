@@ -78,9 +78,11 @@ vpath %.m   $(call NativeSrcDirList,,native/java/util)
 CPPFLAGS += \
 	$(call NativeSrcDirList,-I,native/com/apple/laf) \
 	$(call NativeSrcDirList,-I,native/apple/awt) \
-	$(call NativeSrcDirList,-I,native/sun/awt)
+	$(call NativeSrcDirList,-I,native/sun/awt) \
+	$(call NativeSrcDirList,-I,native/sun/osxapp)
 
 OTHER_LDLIBS = \
+    -losxapp \
     -framework Cocoa \
     -framework ApplicationServices \
     -framework JavaNativeFoundation \

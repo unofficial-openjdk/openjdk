@@ -27,7 +27,6 @@
 package sun.lwawt;
 
 import java.awt.Button;
-import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.peer.ButtonPeer;
@@ -36,10 +35,6 @@ import javax.swing.JButton;
 
 final class LWButtonPeer extends LWComponentPeer<Button, JButton>
         implements ButtonPeer, ActionListener {
-
-    // We don't support background and foreground colors for button
-    // since AquaButtonUI doesn't do it
-    private Color background, foreground;
 
     LWButtonPeer(final Button target,
                  final PlatformComponent platformComponent) {
@@ -58,22 +53,6 @@ final class LWButtonPeer extends LWComponentPeer<Button, JButton>
         synchronized (getDelegateLock()) {
             getDelegate().addActionListener(this);
         }
-    }
-
-    public Color getBackground() {
-        return background;
-    }
-
-    public void setBackground(Color background) {
-        this.background = background;
-    }
-
-    public Color getForeground() {
-        return foreground;
-    }
-
-    public void setForeground(Color foreground) {
-        this.foreground = foreground;
     }
 
     @Override

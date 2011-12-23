@@ -42,8 +42,9 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
 
     protected JScrollPane createDelegate() {
         final JScrollPane sp = new JScrollPane();
-        JPanel panel = new JPanel();
+        final JPanel panel = new JPanel();
         panel.setOpaque(false);
+        panel.setVisible(false);
         sp.getViewport().setView(panel);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.getViewport().addChangeListener(this);
@@ -51,14 +52,18 @@ final class LWScrollPanePeer extends LWContainerPeer<ScrollPane, JScrollPane>
     }
 
     @Override
-    public void stateChanged(ChangeEvent e) {
+    public void stateChanged(final ChangeEvent e) {
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
-                synchronized (getDelegateLock()) {
-                    LWComponentPeer viewPeer = getViewPeer();
-                    if (viewPeer != null) {
-                        viewPeer.setBounds(getDelegate().getViewport().getView().getBounds());
+                final LWComponentPeer viewPeer = getViewPeer();
+                if (viewPeer != null) {
+                    final Rectangle r;
+                    synchronized (getDelegateLock()) {
+                        r = getDelegate().getViewport().getView().getBounds();
                     }
+                    viewPeer.setBounds(r.x, r.y, r.width, r.height, SET_BOUNDS,
+                                       true, true);
                 }
             }
         });

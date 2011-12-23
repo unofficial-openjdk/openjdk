@@ -130,6 +130,13 @@ static jboolean RemovableOption(char *option);
 static void SetMainClassForAWT(JNIEnv *env, jclass mainClass);
 static void SetXDockArgForAWT(const char *arg);
 static void SetXStartOnFirstThreadArg();
+
+static JavaVM* jvmInstance = NULL;
+
+JavaVM* JLI_GetJavaVMInstance()
+{
+    return jvmInstance;
+}
 #endif
 
 /* Maximum supported entries from jvm.cfg. */
@@ -324,8 +331,12 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
     /* set the -Dsun.java.launcher.* platform properties */
     SetJavaLauncherPlatformProps();
 
+#ifndef MACOSX
+    // On MacOSX the splash screen is shown from JavaMain
+    // after the JVM is initialized.
     /* Show the splash screen if needed */
     ShowSplashScreen();
+#endif
 
 #ifdef MACOSX
     if (continueInSameThread == JNI_TRUE) {
@@ -477,8 +488,10 @@ JavaMain(void * _args)
     mainClass = LoadMainClass(env, mode, what);
     CHECK_EXCEPTION_NULL_LEAVE(mainClass);
 #ifdef MACOSX
-    // if we got here, we know that "what" is a main class, and it has been loaded
+    // if we got here, we know what the main class is, and it has been loaded
     SetMainClassForAWT(env, mainClass);
+    jvmInstance = vm;
+    ShowSplashScreen();
 #endif
 
     /*

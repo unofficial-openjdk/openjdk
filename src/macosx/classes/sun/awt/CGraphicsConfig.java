@@ -30,6 +30,7 @@ import java.awt.geom.*;
 import java.awt.image.*;
 
 import sun.java2d.SurfaceData;
+import sun.java2d.opengl.CGLLayer;
 import sun.lwawt.macosx.CPlatformView;
 
 public class CGraphicsConfig extends GraphicsConfiguration {
@@ -97,6 +98,14 @@ public class CGraphicsConfig extends GraphicsConfiguration {
      * LWWindowPeer.
      */
     public SurfaceData createSurfaceData(CPlatformView pView) {
+        throw new UnsupportedOperationException("not implemented");
+    }
+
+    /**
+     * Creates a new SurfaceData that will be associated with the given
+     * CGLLayer.
+     */
+    public SurfaceData createSurfaceData(CGLLayer layer) {
         throw new UnsupportedOperationException("not implemented");
     }
 

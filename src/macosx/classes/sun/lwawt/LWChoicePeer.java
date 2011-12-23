@@ -37,7 +37,15 @@ import javax.swing.JComboBox;
 final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
         implements ChoicePeer, ItemListener {
 
-    LWChoicePeer(final Choice target, PlatformComponent platformComponent) {
+    /**
+     * According to Choice specification item events are sent in response to
+     * user input, but not in response to calls to select(). But JComboBox are
+     * sent item events in both cases. Should be used under delegateLock.
+     */
+    private boolean skipPostMessage;
+
+    LWChoicePeer(final Choice target,
+                 final PlatformComponent platformComponent) {
         super(target, platformComponent);
     }
 
@@ -65,15 +73,18 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     }
 
     @Override
-    public void itemStateChanged(final ItemEvent event) {
+    public void itemStateChanged(final ItemEvent e) {
         // AWT Choice sends SELECTED event only whereas JComboBox
         // sends both SELECTED and DESELECTED.
-        if (event.getStateChange() == ItemEvent.SELECTED) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
             synchronized (getDelegateLock()) {
+                if (skipPostMessage) {
+                    return;
+                }
                 getTarget().select(getDelegate().getSelectedIndex());
             }
             postEvent(new ItemEvent(getTarget(), ItemEvent.ITEM_STATE_CHANGED,
-                                    event.getItem(), ItemEvent.SELECTED));
+                                    e.getItem(), ItemEvent.SELECTED));
         }
     }
 
@@ -87,7 +98,10 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     @Override
     public void remove(final int index) {
         synchronized (getDelegateLock()) {
+            // We shouldn't post event, if selected item was removed.
+            skipPostMessage = true;
             getDelegate().removeItemAt(index);
+            skipPostMessage = false;
         }
     }
 
@@ -101,7 +115,11 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
     @Override
     public void select(final int index) {
         synchronized (getDelegateLock()) {
-            getDelegate().setSelectedIndex(index);
+            if (index != getDelegate().getSelectedIndex()) {
+                skipPostMessage = true;
+                getDelegate().setSelectedIndex(index);
+                skipPostMessage = false;
+            }
         }
     }
 
@@ -127,6 +145,19 @@ final class LWChoicePeer extends LWComponentPeer<Choice, JComboBox<String>>
         @Override
         public Point getLocationOnScreen() {
             return LWChoicePeer.this.getLocationOnScreen();
+        }
+
+        /**
+         * We should post ITEM_STATE_CHANGED event when the same element is
+         * reselected.
+         */
+        @Override
+        public void setSelectedItem(final Object anObject) {
+            final Object oldSelection = selectedItemReminder;
+            if (oldSelection != null && oldSelection.equals(anObject)) {
+                selectedItemChanged();
+            }
+            super.setSelectedItem(anObject);
         }
     }
 }

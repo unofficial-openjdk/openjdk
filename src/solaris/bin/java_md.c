@@ -1715,13 +1715,100 @@ CounterGet()
 
 /* --- Splash Screen shared library support --- */
 
+#ifdef MACOSX
+static JavaVM* SetJavaVMValue()
+{
+    JavaVM * jvm = NULL;
+
+    // The handle is good for both the launcher and the libosxapp.dylib
+    void * handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
+    if (handle) {
+        typedef JavaVM* (*JLI_GetJavaVMInstance_t)();
+
+        JLI_GetJavaVMInstance_t JLI_GetJavaVMInstance =
+            (JLI_GetJavaVMInstance_t)dlsym(handle,
+                    "JLI_GetJavaVMInstance");
+        if (JLI_GetJavaVMInstance) {
+            jvm = JLI_GetJavaVMInstance();
+        }
+
+        if (jvm) {
+            typedef void (*OSXAPP_SetJavaVM_t)(JavaVM*);
+
+            OSXAPP_SetJavaVM_t OSXAPP_SetJavaVM =
+                (OSXAPP_SetJavaVM_t)dlsym(handle, "OSXAPP_SetJavaVM");
+            if (OSXAPP_SetJavaVM) {
+                OSXAPP_SetJavaVM(jvm);
+            } else {
+                jvm = NULL;
+            }
+        }
+
+        dlclose(handle);
+    }
+
+    return jvm;
+}
+#endif
+
 static const char* SPLASHSCREEN_SO = JNI_LIB_NAME("splashscreen");
 
 static void* hSplashLib = NULL;
 
 void* SplashProcAddress(const char* name) {
     if (!hSplashLib) {
-        hSplashLib = dlopen(SPLASHSCREEN_SO, RTLD_LAZY | RTLD_GLOBAL);
+        const char * splashLibPath;
+
+#ifndef MACOSX
+        splashLibPath = SPLASHSCREEN_SO;
+#else
+        char path[PATH_MAX];
+        Dl_info dli;
+
+        path[0] = 0;
+        if (dladdr(&SplashProcAddress, &dli)) {
+            // This is always reported as <path>/bin/java* (java or javaw, whatever)
+            char * realPath = realpath(dli.dli_fname, path);
+
+            if (realPath != path) {
+                path[0] = 0;
+            } else {
+                // chop off the "/bin/java*" part...
+                char * c = strrchr(path, '/');
+
+                if (!c) {
+                    path[0] = 0;
+                } else {
+                    *c = 0;
+                    c = strrchr(path, '/');
+
+                    if (!c) {
+                        path[0] = 0;
+                    } else {
+                        *c = 0;
+                        // ...and add the lib path instead
+                        snprintf(c, sizeof(path)-strlen(path), "/lib/%s", SPLASHSCREEN_SO);
+                    }
+                }
+            }
+        }
+
+        if (path[0]) {
+            splashLibPath = path;
+        } else {
+            // try our best, but most probably this will fail to load
+            splashLibPath = SPLASHSCREEN_SO;
+        }
+#endif
+        hSplashLib = dlopen(splashLibPath, RTLD_LAZY | RTLD_GLOBAL);
+#ifdef MACOSX
+        if (hSplashLib) {
+            if (!SetJavaVMValue()) {
+                dlclose(hSplashLib);
+                hSplashLib = NULL;
+            }
+        }
+#endif
     }
     if (hSplashLib) {
         void* sym = dlsym(hSplashLib, name);

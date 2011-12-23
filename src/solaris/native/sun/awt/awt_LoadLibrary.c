@@ -145,11 +145,15 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     }
 
     /* Calculate library name to load */
+#ifndef MACOSX
     if (AWTIsHeadless()) {
         strcpy(p, "/headless/libmawt");
     } else if (tk) {
+#endif
         strcpy(p, tk);
+#ifndef MACOSX
     }
+#endif
 
     if (toolkit) {
         (*env)->DeleteLocalRef(env, toolkit);

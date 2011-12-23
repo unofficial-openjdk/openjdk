@@ -48,6 +48,15 @@ public class CCursorManager extends LWCursorManager {
 
     @Override
     protected Point getCursorPosition() {
+        synchronized(this) {
+            if (isDragging) {
+                // during the drag operation, the appkit thread is blocked,
+                // so nativeGetCursorPosition invocation may cause a deadlock.
+                // In order to avoid this, we returns last know cursor position.
+                return new Point(dragPos);
+            }
+        }
+
         final Point2D nativePosition = nativeGetCursorPosition();
         return new Point((int)nativePosition.getX(), (int)nativePosition.getY());
     }
@@ -90,5 +99,34 @@ public class CCursorManager extends LWCursorManager {
         final CPlatformWindow platformWindow = (CPlatformWindow)window.getPlatformWindow();
         if (platformWindow == null) return 0;
         return platformWindow.getNSWindowPtr();
+    }
+
+    // package private methods to handle cursor change during drag-and-drop
+    private boolean isDragging = false;
+    private Point dragPos = null;
+
+    synchronized void startDrag(int x, int y) {
+        if (isDragging) {
+            throw new RuntimeException("Invalid Drag state in CCursorManager!");
+        }
+
+        isDragging = true;
+
+        dragPos = new Point(x, y);
+    }
+
+    synchronized void updateDragPosition(int x, int y) {
+        if (!isDragging) {
+            throw new RuntimeException("Invalid Drag state in CCursorManager!");
+        }
+        dragPos.move(x, y);
+    }
+
+    synchronized void stopDrag() {
+        if (!isDragging) {
+            throw new RuntimeException("Invalid Drag state in CCursorManager!");
+        }
+        isDragging = false;
+        dragPos = null;
     }
 }

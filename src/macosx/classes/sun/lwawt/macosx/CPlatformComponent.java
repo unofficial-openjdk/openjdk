@@ -56,8 +56,8 @@ public class CPlatformComponent extends CFRetainedResource implements PlatformCo
         this.peer = peer;
         this.platformWindow = (CPlatformWindow)platformWindow;
 
-        long windowLayer = this.platformWindow.getContentView().getWindowLayer();
-        setPtr(nativeCreateComponent(windowLayer));
+        long windowLayerPtr = this.platformWindow.getContentView().getWindowLayerPtr();
+        setPtr(nativeCreateComponent(windowLayerPtr));
     }
 
     // TODO: visibility, z-order

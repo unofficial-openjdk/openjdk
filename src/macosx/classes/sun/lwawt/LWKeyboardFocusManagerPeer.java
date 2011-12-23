@@ -32,6 +32,8 @@ import java.awt.Window;
 import java.util.Map;
 import java.util.HashMap;
 
+import sun.awt.AWTAccessor;
+import sun.awt.AppContext;
 import sun.awt.KeyboardFocusManagerPeerImpl;
 
 public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
@@ -42,6 +44,11 @@ public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
 
     private static Map<KeyboardFocusManager, LWKeyboardFocusManagerPeer> instances =
         new HashMap<KeyboardFocusManager, LWKeyboardFocusManagerPeer>();
+
+    public static synchronized LWKeyboardFocusManagerPeer getInstance(AppContext ctx) {
+        return getInstance(AWTAccessor.getKeyboardFocusManagerAccessor().
+                           getCurrentKeyboardFocusManager(ctx));
+    }
 
     public static synchronized LWKeyboardFocusManagerPeer getInstance(KeyboardFocusManager manager) {
         LWKeyboardFocusManagerPeer instance = instances.get(manager);

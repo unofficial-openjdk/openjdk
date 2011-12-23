@@ -23,21 +23,11 @@
  * questions.
  */
 
-// Directly reading the framebuffer via CGDisplayAddressForPosition()
-// is discouraged, and may not work well for all pointer sizes on some machines.
-// CoreGraphics recommends using a more abstract yet faster mechanisms to
-// read framebuffer content.  The use of OpenGL to read back pixels is
-// generally a good idea.
-
-#import <Carbon/Carbon.h>
 #import <JavaNativeFoundation/JavaNativeFoundation.h>
 #import <ApplicationServices/ApplicationServices.h>
-#import <OpenGL/OpenGL.h>
-#import <OpenGL/gl.h>
-#import <OpenGL/glu.h>
+
 
 #import "LWCToolkit.h"
-
 #import "sun_lwawt_macosx_CRobot.h"
 
 // Theoretically, Quarts works with up to 32 buttons.
@@ -48,14 +38,22 @@
 #define kCGBitmapByteOrder32Host 0
 #endif
 
+// In OS X, left and right mouse button share the same click count.
+// That is, if one starts clicking the left button rapidly and then
+// switches to the right button, then the click count will continue
+// increasing, without dropping to 1 in between. The middle button,
+// however, has its own click count.
+// For robot, we aren't going to emulate all that complexity. All our
+// synhtetic clicks share the same click count.
+static int gsClickCount;
+static NSTimeInterval gsLastClickTime;
+
 static inline CGKeyCode GetCGKeyCode(jint javaKeyCode);
 
-static void SwizzleBitmap(void* data, int rowBytes, int height);
-static void cleanContext(CGLContextObj glContextObj);
-static CGLContextObj InitContext(CGDirectDisplayID display);
+static void postMouseEvent(const CGPoint point, CGMouseButton button, 
+                           CGEventType type, int clickCount);
 
-static void postMouseEvent(const CGPoint point, CGMouseButton button,
-                           CGEventType type);
+static int GetClickCount(BOOL isDown);
 
 static void
 CreateJavaException(JNIEnv* env, CGError err)
@@ -78,7 +76,7 @@ Java_sun_lwawt_macosx_CRobot_initRobot
     // Set things up to let our app act like a synthetic keyboard and mouse.
     // Always set all states, in case Apple ever changes default behaviors.
     static int setupDone = 0;
-    if (!setupDone) {
+    if (!setupDone) {        
         setupDone = 1;
         // Don't block local events after posting ours
         CGSetLocalEventsSuppressionInterval(0.0);
@@ -93,6 +91,9 @@ Java_sun_lwawt_macosx_CRobot_initRobot
         CGSetLocalEventsFilterDuringSupressionState(
                                     kCGEventFilterMaskPermitAllEvents,
                                     kCGEventSupressionStateRemoteMouseDrag);
+        
+        gsClickCount = 0;
+        gsLastClickTime = 0;
     }
 }
 
@@ -162,8 +163,10 @@ Java_sun_lwawt_macosx_CRobot_mouseEvent
     point.x = mouseLastX + globalDeviceBounds.origin.x;
     point.y = mouseLastY + globalDeviceBounds.origin.y;
 
+    BOOL isDown = NO;
     CGMouseButton button = kCGMouseButtonLeft;
     CGEventType type = kCGEventMouseMoved;
+    int clickCount = 0;
 
     // When moving, the buttons aren't changed from their current state.
     if (mouseMoveAction == JNI_FALSE) {
@@ -174,6 +177,7 @@ Java_sun_lwawt_macosx_CRobot_mouseEvent
             button = kCGMouseButtonLeft;
             if (mouse1State == sun_lwawt_macosx_CRobot_BUTTON_STATE_DOWN) {
                 type = kCGEventLeftMouseDown;
+                isDown = YES;
             } else {
                 type = kCGEventLeftMouseUp;
             }
@@ -184,6 +188,7 @@ Java_sun_lwawt_macosx_CRobot_mouseEvent
             button = kCGMouseButtonCenter;
             if (mouse2State == sun_lwawt_macosx_CRobot_BUTTON_STATE_DOWN) {
                 type = kCGEventOtherMouseDown;
+                isDown = YES;
             } else {
                 type = kCGEventOtherMouseUp;
             }
@@ -194,10 +199,13 @@ Java_sun_lwawt_macosx_CRobot_mouseEvent
             button = kCGMouseButtonRight;
             if (mouse3State == sun_lwawt_macosx_CRobot_BUTTON_STATE_DOWN) {
                 type = kCGEventRightMouseDown;
+                isDown = YES;
             } else {
                 type = kCGEventRightMouseUp;
             }
         }
+        
+        clickCount = GetClickCount(isDown);        
     } else {
         // could be mouse moved or mouse dragged
         if (mouse1State == sun_lwawt_macosx_CRobot_BUTTON_STATE_DOWN) {
@@ -211,7 +219,7 @@ Java_sun_lwawt_macosx_CRobot_mouseEvent
         }
     }
 
-    postMouseEvent(point, button, type);
+    postMouseEvent(point, button, type, clickCount);    
 
     JNF_COCOA_EXIT(env);
 }
@@ -244,12 +252,26 @@ JNIEXPORT void JNICALL
 Java_sun_lwawt_macosx_CRobot_keyEvent
 (JNIEnv *env, jobject peer, jint javaKeyCode, jboolean keyPressed)
 {
+    /*
+     * Well, using CGEventCreateKeyboardEvent/CGEventPost would have been 
+     * a better solution, however, it gives me all kinds of trouble and I have
+     * no idea how to solve them without inserting delays between simulated 
+     * events. So, I've ended up disabling it and opted for another approach 
+     * that uses Accessibility API instead. 
+     */
     CGKeyCode keyCode = GetCGKeyCode(javaKeyCode);
+    AXUIElementRef elem = AXUIElementCreateSystemWide();    
+    AXUIElementPostKeyboardEvent(elem, (CGCharCode)0, keyCode, keyPressed);
+    CFRelease(elem);
+
+    
+#if 0
     CGEventRef event = CGEventCreateKeyboardEvent(NULL, keyCode, keyPressed);
     if (event != NULL) {
         CGEventPost(kCGSessionEventTap, event);
         CFRelease(event);
     }
+#endif
 }
 
 /*
@@ -314,10 +336,11 @@ Java_sun_lwawt_macosx_CRobot_nativeGetScreenPixels
  ****************************************************/
 
 static void postMouseEvent(const CGPoint point, CGMouseButton button,
-                           CGEventType type)
-{
+                           CGEventType type, int clickCount)
+{ 
     CGEventRef mouseEvent = CGEventCreateMouseEvent(NULL, type, point, button);
     if (mouseEvent != NULL) {
+        CGEventSetIntegerValueField(mouseEvent, kCGMouseEventClickState, clickCount); 
         CGEventPost(kCGSessionEventTap, mouseEvent);
         CFRelease(mouseEvent);
     }
@@ -558,4 +581,29 @@ static inline CGKeyCode GetCGKeyCode(jint javaKeyCode)
     } else {
         return javaToMacKeyCode[javaKeyCode];
     }
+}
+
+static int GetClickCount(BOOL isDown) {    
+    NSTimeInterval now = [[NSDate date] timeIntervalSinceReferenceDate];
+    NSTimeInterval clickInterval = now - gsLastClickTime;
+    BOOL isWithinTreshold = clickInterval < [NSEvent doubleClickInterval]; 
+    
+    if (isDown) {
+        if (isWithinTreshold) {
+            gsClickCount++;
+        } else {
+            gsClickCount = 1;        
+        }
+        
+        gsLastClickTime = now;
+    } else { 
+        // In OS X, a mouse up has the click count of the last mouse down 
+        // if an interval between up and down is within the double click
+        // threshold, and 0 otherwise.
+        if (!isWithinTreshold) {
+            gsClickCount = 0;
+        }
+    }
+    
+    return gsClickCount;
 }

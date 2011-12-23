@@ -23,21 +23,30 @@
  * questions.
  */
 
+
 package sun.lwawt;
 
-import java.awt.*;
-import java.awt.event.ItemListener;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ItemEvent;
-import java.awt.event.AWTEventListener;
+import java.awt.event.ItemListener;
 import java.awt.peer.CheckboxPeer;
 import java.beans.Transient;
 
-import javax.swing.*;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JRadioButton;
+import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
-class LWCheckboxPeer
+final class LWCheckboxPeer
         extends LWComponentPeer<Checkbox, LWCheckboxPeer.CheckboxDelegate>
         implements CheckboxPeer, ItemListener {
-    LWCheckboxPeer(Checkbox target, PlatformComponent platformComponent) {
+
+    LWCheckboxPeer(final Checkbox target,
+                   final PlatformComponent platformComponent) {
         super(target, platformComponent);
     }
 
@@ -51,23 +60,24 @@ class LWCheckboxPeer
         return getDelegate().getCurrentButton();
     }
 
+    @Override
     public void initialize() {
         super.initialize();
-        getDelegate().setRadioButton(getTarget().getCheckboxGroup() != null);
-        getDelegate().getCurrentButton().setText(getTarget().getLabel());
-        getDelegate().getCurrentButton().setSelected(getTarget().getState());
-        getDelegate().getCurrentButton().addItemListener(this);
+        setLabel(getTarget().getLabel());
+        setState(getTarget().getState());
+        setCheckboxGroup(getTarget().getCheckboxGroup());
     }
 
-
+    @Override
     public void itemStateChanged(final ItemEvent e) {
         // group.setSelectedCheckbox() will repaint the component
         // to let LWCheckboxPeer correctly handle it we should call it
         // after the current event is processed
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 boolean postEvent = true;
-                CheckboxGroup group = getTarget().getCheckboxGroup();
+                final CheckboxGroup group = getTarget().getCheckboxGroup();
                 if (group != null) {
                     if (e.getStateChange() == ItemEvent.SELECTED) {
                         if (group.getSelectedCheckbox() != getTarget()) {
@@ -78,38 +88,46 @@ class LWCheckboxPeer
                     } else {
                         postEvent = false;
                         if (group.getSelectedCheckbox() == getTarget()) {
-                            // don't want to leave the group with no selected checkbox
+                            // Don't want to leave the group with no selected
+                            // checkbox.
                             getTarget().setState(true);
                         }
                     }
                 } else {
-                    getTarget().setState(e.getStateChange() == ItemEvent.SELECTED);
+                    getTarget().setState(e.getStateChange()
+                                         == ItemEvent.SELECTED);
                 }
-                if(postEvent) {
-                    postEvent(new ItemEvent(getTarget(), ItemEvent.ITEM_STATE_CHANGED,
-                            getTarget().getLabel(), e.getStateChange()));
+                if (postEvent) {
+                    postEvent(new ItemEvent(getTarget(),
+                                            ItemEvent.ITEM_STATE_CHANGED,
+                                            getTarget().getLabel(),
+                                            e.getStateChange()));
                 }
             }
         });
     }
 
-    public void setCheckboxGroup(CheckboxGroup g) {
+    @Override
+    public void setCheckboxGroup(final CheckboxGroup g) {
         synchronized (getDelegateLock()) {
-            initialize();
+            getDelegate().getCurrentButton().removeItemListener(this);
+            getDelegate().setRadioButton(g != null);
+            getDelegate().getCurrentButton().addItemListener(this);
         }
         repaintPeer();
     }
 
-    public void setLabel(String label) {
+    @Override
+    public void setLabel(final String label) {
         synchronized (getDelegateLock()) {
-            getDelegate().getCurrentButton().setText(label);
+            getDelegate().setText(label);
         }
-        repaintPeer();
     }
 
-    public void setState(boolean state) {
+    @Override
+    public void setState(final boolean state) {
         synchronized (getDelegateLock()) {
-            getDelegate().getCurrentButton().setSelected(state);
+            getDelegate().setSelected(state);
         }
         repaintPeer();
     }
@@ -120,61 +138,77 @@ class LWCheckboxPeer
     }
 
     final class CheckboxDelegate extends JComponent {
-        private JCheckBox cb;
-        private JRadioButton rb;
+
+        private final JCheckBox cb;
+        private final JRadioButton rb;
 
         CheckboxDelegate() {
+            super();
             cb = new JCheckBox() {
+                @Override
                 public boolean hasFocus() {
                     return getTarget().hasFocus();
                 }
             };
-            cb.setOpaque(false);
             rb = new JRadioButton() {
+                @Override
                 public boolean hasFocus() {
                     return getTarget().hasFocus();
                 }
             };
-            rb.setOpaque(false);
+            setLayout(null);
+            setRadioButton(false);
+            add(rb);
             add(cb);
-        }
-
-        public boolean isRadioButton() {
-            return getCurrentButton() == rb;
-        }
-
-        public void setRadioButton(boolean b) {
-            AWTEventListener toolkitListener = getToolkitAWTEventListener();
-            synchronized (Toolkit.getDefaultToolkit()) {
-                try {
-                    remove(getCurrentButton());
-                    add(b ? rb : cb);
-                } finally {
-                    setToolkitAWTEventListener(toolkitListener);
-                }
-            }
-        }
-
-        private JToggleButton getCurrentButton() {
-            return (JToggleButton) getComponent(0);
         }
 
         @Override
         public void setEnabled(final boolean enabled) {
+            super.setEnabled(enabled);
             rb.setEnabled(enabled);
             cb.setEnabled(enabled);
         }
 
-        @Deprecated
-        public void reshape(int x, int y, int w, int h) {
-            super.reshape(x, y, w, h);
-            getCurrentButton().setBounds(0, 0, w, h);
+        @Override
+        public void setOpaque(final boolean isOpaque) {
+            super.setOpaque(isOpaque);
+            rb.setOpaque(isOpaque);
+            cb.setOpaque(isOpaque);
         }
 
+        @Override
+        @Deprecated
+        public void reshape(final int x, final int y, final int w,
+                            final int h) {
+            super.reshape(x, y, w, h);
+            cb.setBounds(0, 0, w, h);
+            rb.setBounds(0, 0, w, h);
+        }
+
+        @Override
         @Transient
         public Dimension getMinimumSize() {
             return getCurrentButton().getMinimumSize();
         }
+
+        void setRadioButton(final boolean showRadioButton) {
+            rb.setVisible(showRadioButton);
+            cb.setVisible(!showRadioButton);
+        }
+
+        @Transient
+        JToggleButton getCurrentButton() {
+            return cb.isVisible() ? cb : rb;
+        }
+
+        void setText(final String label) {
+            cb.setText(label);
+            rb.setText(label);
+        }
+
+        void setSelected(final boolean state) {
+            cb.setSelected(state);
+            rb.setSelected(state);
+        }
     }
 }
-

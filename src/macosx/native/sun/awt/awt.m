@@ -34,12 +34,13 @@
 #import "PropertiesUtilities.h"
 #import "ThreadUtilities.h"
 #import "AWT_debug.h"
+#import "ApplicationDelegate.h"
 
 #define DEBUG 0
 
 
-// The following must be named "jvm", as there is extern reference to it in "libsun_awt.a".
-JavaVM *jvm = NULL;
+// The symbol is defined in libosxapp.dylib (ThreadUtilities.m)
+extern JavaVM *jvm;
 
 static bool ShouldPrintVerboseDebugging() {
     static int debug = -1;
@@ -200,6 +201,7 @@ static void AWT_NSUncaughtExceptionHandler(NSException *exception) {
 // This is an empty Obj-C object just so that -peformSelectorOnMainThread can be used.
 @interface AWTStarter : NSObject { }
 + (void)start:(BOOL)headless swtMode:(BOOL)swtMode swtModeForWebStart:(BOOL)swtModeForWebStart;
+- (void)starter:(NSArray*)args;
 + (void)appKitIsRunning:(id)arg;
 @end
 
@@ -262,8 +264,6 @@ AWT_ASSERT_APPKIT_THREAD;
 
     if (!headless)
     {
-AWT_ASSERT_NOT_APPKIT_THREAD;
-
         // Listen for the NSApp to start. This indicates that JNI_OnLoad can proceed.
         //  It must wait because there is a chance that another java thread will grab
         //  the AppKit lock before the +[NSApplication sharedApplication] returns.
@@ -276,74 +276,20 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
         if (verbose) NSLog(@"+[AWTStarter start:::]: registered NSApplicationDidFinishLaunchingNotification");
     }
 
-    void (^starter)() = ^() {
-        NSAutoreleasePool *pool = [NSAutoreleasePool new];
+    id st = [[AWTStarter alloc] init];
 
-        BOOL wasOnMainThread = onMainThread;
-
-        setUpAWTAppKit(swtMode, headless);
-
-        // Headless mode trumps either ordinary AWT or SWT-in-AWT mode.  Declare us a daemon and return.
-        if (headless) {
-            BOOL didBecomeDaemon = [AWTStarter markAppAsDaemon];
-            return;
-        }
-
-        if (swtMode || swtModeForWebStart) {
-            if (verbose) NSLog(@"in SWT or SWT/WebStart mode");
-
-            // The SWT should call NSApplicationLoad, but they don't know a priori that they will be using the AWT, so they don't.
-            NSApplicationLoad();
-        }
-
-        // This will create a NSApplicationAWT for standalone AWT programs, unless there is
-        //  already a NSApplication instance. If there is already a NSApplication instance,
-        //  and -[NSApplication isRunning] returns YES, AWT is embedded inside another
-        //  AppKit Application.
-        NSApplication *app = [NSApplicationAWT sharedApplication];
-
-        // AWT gets to this point BEFORE NSApplicationDidFinishLaunchingNotification is sent.
-        if (![app isRunning]) {
-            if (verbose) AWT_DEBUG_LOG(@"+[AWTStarter startAWT]: ![app isRunning]");
-
-            // Make sure that when we run in AWTRunLoopMode we don't exit randomly
-            [[NSRunLoop currentRunLoop] addPort:[NSPort port] forMode:[JNFRunLoop javaRunLoopMode]];
-
-            // This is where the AWT AppKit thread parks itself to process events.
-            do {
-                @try {
-                    [app run];
-                } @catch (NSException* e) {
-                    NSLog(@"Apple AWT Startup Exception: %@", [e description]);
-                    NSLog(@"Apple AWT Restarting Native Event Thread");
-
-                    [app stop:self];
-                }
-            } while (YES);
-        } else {
-            if (verbose) AWT_DEBUG_LOG(@"running embedded");
-
-            // Since we're embedded, no need to be swamping the runloop with the observers.
-            CFRunLoopRef runLoop = [[NSRunLoop currentRunLoop] getCFRunLoop];
-            CFRunLoopRemoveObserver(runLoop, busyObserver, kCFRunLoopDefaultMode);
-            CFRunLoopRemoveObserver(runLoop, notBusyObserver, kCFRunLoopDefaultMode);
-
-            busyObserver = NULL;
-            notBusyObserver = NULL;
-
-            // AWT is embedded in another application. Signal so that JNI_OnLoad can proceed.
-            if (!wasOnMainThread) [AWTStarter appKitIsRunning:nil];
-
-            // Proceed to exit this call as there is no reason to run the NSApplication event loop.
-        }
-
-        [pool drain];
-    };
+    NSArray * args = [NSArray arrayWithObjects:
+                      [NSNumber numberWithBool: onMainThread],
+                      [NSNumber numberWithBool: swtMode],
+                      [NSNumber numberWithBool: headless],
+                      [NSNumber numberWithBool: swtModeForWebStart],
+                      [NSNumber numberWithBool: verbose],
+                      nil];
 
     if (onMainThread) {
-        starter();
+        [st starter:args];
     } else {
-        dispatch_async(dispatch_get_main_queue(), (dispatch_block_t)starter);
+        [st performSelectorOnMainThread: @selector(starter:) withObject:args waitUntilDone:NO];
     }
 
     if (!headless && !onMainThread) {
@@ -362,6 +308,73 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
     }
 }
 
+- (void)starter:(NSArray*)args {
+    NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+    BOOL onMainThread = [[args objectAtIndex:0] boolValue];
+    BOOL swtMode = [[args objectAtIndex:1] boolValue];
+    BOOL headless = [[args objectAtIndex:2] boolValue];
+    BOOL swtModeForWebStart = [[args objectAtIndex:3] boolValue];
+    BOOL verbose = [[args objectAtIndex:4] boolValue];
+
+    BOOL wasOnMainThread = onMainThread;
+
+    setUpAWTAppKit(swtMode, headless);
+
+    // Headless mode trumps either ordinary AWT or SWT-in-AWT mode.  Declare us a daemon and return.
+    if (headless) {
+        BOOL didBecomeDaemon = [AWTStarter markAppAsDaemon];
+        return;
+    }
+
+    if (swtMode || swtModeForWebStart) {
+        if (verbose) NSLog(@"in SWT or SWT/WebStart mode");
+
+        // The SWT should call NSApplicationLoad, but they don't know a priori that they will be using the AWT, so they don't.
+        NSApplicationLoad();
+    }
+
+    // This will create a NSApplicationAWT for standalone AWT programs, unless there is
+    //  already a NSApplication instance. If there is already a NSApplication instance,
+    //  and -[NSApplication isRunning] returns YES, AWT is embedded inside another
+    //  AppKit Application.
+    NSApplication *app = [NSApplicationAWT sharedApplication];
+
+    // Don't set the delegate until the NSApplication has been created.
+    //  ApplicationDelegate is the support code for com.apple.eawt.
+    OSXAPP_SetApplicationDelegate([ApplicationDelegate sharedDelegate]);
+
+    // AWT gets to this point BEFORE NSApplicationDidFinishLaunchingNotification is sent.        
+    if (![app isRunning]) {
+        if (verbose) AWT_DEBUG_LOG(@"+[AWTStarter startAWT]: ![app isRunning]");
+
+        // This is where the AWT AppKit thread parks itself to process events.
+        [NSApplicationAWT runAWTLoopWithApp: app];
+    } else {
+        // We're either embedded, or showing a splash screen
+        if (![NSApp isKindOfClass:[NSApplicationAWT class]]) {
+            if (verbose) AWT_DEBUG_LOG(@"running embedded");
+
+            // Since we're embedded, no need to be swamping the runloop with the observers.
+            CFRunLoopRef runLoop = [[NSRunLoop currentRunLoop] getCFRunLoop];
+            CFRunLoopRemoveObserver(runLoop, busyObserver, kCFRunLoopDefaultMode);
+            CFRunLoopRemoveObserver(runLoop, notBusyObserver, kCFRunLoopDefaultMode);
+
+            busyObserver = NULL;
+            notBusyObserver = NULL;
+        } else {
+            if (verbose) AWT_DEBUG_LOG(@"running after showing a splash screen");
+        }
+
+        // Signal so that JNI_OnLoad can proceed.
+        if (!wasOnMainThread) [AWTStarter appKitIsRunning:nil];
+
+        // Proceed to exit this call as there is no reason to run the NSApplication event loop.
+    }
+
+    [pool drain];
+}
+    
 @end
 
 
@@ -375,7 +388,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     //  Caller: JavaVM classloader
 
     // Keep a static reference for other archives.
-    jvm = vm;
+    OSXAPP_SetJavaVM(vm);
 
     JNIEnv *env = NULL;
 
@@ -388,7 +401,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     // The following is true when AWT is attempting to connect to the window server
     // when it isn't set up properly to do so.
-    BOOL AWTLoadFailure = YES;
+    // BOOL AWTLoadFailure = YES;    For now we are skipping this check so i'm commenting out this variable as unused
 JNF_COCOA_ENTER(env);
 
     // If -XstartOnFirstThread was used at invocation time, an environment variable will be set.
@@ -418,14 +431,17 @@ JNF_COCOA_ENTER(env);
         [NSThread detachNewThreadSelector:nil toTarget:nil withObject:nil];
     }
 
-    if (swt_compatible_mode || headless || [AWTStarter isConnectedToWindowServer]) {
-        AWTLoadFailure = NO;
-        [AWTStarter start:headless swtMode:swt_compatible_mode swtModeForWebStart:swt_in_webstart];
-    }
+//    if (swt_compatible_mode || headless || [AWTStarter isConnectedToWindowServer] || [AWTStarter isRemoteSession]) {
+// No need in this check - we will try to launch AWTStarter anyways - to be able to run GUI application remotely
+//        AWTLoadFailure = NO;
 
-    if (AWTLoadFailure) {
+    [AWTStarter start:headless swtMode:swt_compatible_mode swtModeForWebStart:swt_in_webstart];
+
+//    }
+
+/*    if (AWTLoadFailure) { // We will not reach this code anyways
         [JNFException raise:env as:kInternalError reason:"Can't connect to window server - not enough permissions."];
-    }
+    } */
 
 JNF_COCOA_EXIT(env);
 

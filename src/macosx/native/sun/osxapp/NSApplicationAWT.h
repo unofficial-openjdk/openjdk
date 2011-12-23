@@ -23,39 +23,29 @@
  * questions.
  */
 
-/* platform-dependent definitions */
+#import <Cocoa/Cocoa.h>
+#import <JavaNativeFoundation/JavaNativeFoundation.h>
 
-#ifndef SPLASHSCREEN_CONFIG_H
-#define SPLASHSCREEN_CONFIG_H
+@interface NSApplicationAWT : NSApplication {
+    NSString *fApplicationName;
+    BOOL fUseDefaultIcon;
+    NSWindow *eventTransparentWindow;
+}
 
-#include <sys/types.h>
-#include <sys/unistd.h>
-#include <signal.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <pthread.h>
-#include <Cocoa/Cocoa.h>
+- (void) finishLaunching;
+- (void) registerWithProcessManager;
+- (void) setDockIconWithEnv:(JNIEnv *)env;
 
-typedef uint32_t rgbquad_t;
-typedef uint16_t word_t;
-typedef uint8_t byte_t;
++ (void) runAWTLoopWithApp:(NSApplication*)app;
 
+@end
 
-// Actually the following Rect machinery is unused since we don't use shapes
-typedef int RECT_T;
+@interface NSApplication (CustomNIBAdditions)
 
-#define RECT_EQ_X(r1,r2)        ((r1) == (r2))
-#define RECT_SET(r,xx,yy,ww,hh) ;
-#define RECT_INC_HEIGHT(r)      ;
+// Returns whether or not application is using its default NIB
+- (BOOL)usingDefaultNib;
 
-#define SPLASHCTL_QUIT          'Q'
-#define SPLASHCTL_UPDATE        'U'
-#define SPLASHCTL_RECONFIGURE   'R'
+@end
 
-#define INLINE static
+void OSXAPP_SetApplicationDelegate(id <NSApplicationDelegate> delegate);
 
-#define SPLASHEXPORT
-
-#endif

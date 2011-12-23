@@ -118,7 +118,7 @@ public class CInputMethod extends InputMethodAdapter {
      *     returns a non-null value.
      * </ul>
      *
-     * @param locale locale to input
+     * @param lang locale to input
      * @return whether the specified locale is supported
      * @exception NullPointerException if <code>locale</code> is null
      */
@@ -196,7 +196,7 @@ public class CInputMethod extends InputMethodAdapter {
     }
 
     /**
-        * Dispatches the event to the input method. If input method support is
+     * Dispatches the event to the input method. If input method support is
      * enabled for the focussed component, incoming events of certain types
      * are dispatched to the current input method for this component before
      * they are dispatched to the component's methods or event listeners.
@@ -214,7 +214,7 @@ public class CInputMethod extends InputMethodAdapter {
      * @param event the event being dispatched to the input method
      * @exception NullPointerException if <code>event</code> is null
      */
-    public void dispatchEvent(AWTEvent e) {
+    public void dispatchEvent(final AWTEvent event) {
         // No-op for Mac OS X.
     }
 

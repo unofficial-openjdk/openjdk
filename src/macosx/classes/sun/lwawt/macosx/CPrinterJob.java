@@ -178,14 +178,17 @@ public class CPrinterJob extends RasterPrinterJob {
     public void print(PrintRequestAttributeSet attributes) throws PrinterException {
         // NOTE: Some of this code is copied from RasterPrinterJob.
 
-/*
+
         // this code uses javax.print APIs
         // this will make it print directly to the printer
         // this will not work if the user clicks on the "Preview" button
+        // However if the printer is a StreamPrintService, its the right path.
         PrintService psvc = getPrintService();
-        spoolToService(psvc, attributes);
-        return;
-*/
+        if (psvc instanceof StreamPrintService) {
+            spoolToService(psvc, attributes);
+            return;
+        }
+
 
         setAttributes(attributes);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,147 +25,404 @@
 
 //#define USE_ERROR
 //#define USE_TRACE
+//#define USE_VERBOSE_TRACE
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreServices/CoreServices.h>
-#include <CoreAudio/CoreAudio.h>
-#include <libkern/OSAtomic.h>
-#include <algorithm>
+#include <pthread.h>
+/*
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+#include <CoreAudio/CoreAudioTypes.h>
+#else
+#include <CoreAudioTypes.h>
+#endif
+*/
 
-#include <CABitOperations.h>
-#include "CARingBuffer.h"
+#include "PLATFORM_API_MacOSX_Utils.h"
 
 extern "C" {
+#include "Utilities.h"
 #include "DirectAudio.h"
-#include "PLATFORM_API_MacOSX_Utils.h"
 }
 
 #if USE_DAUDIO == TRUE
 
-typedef struct OSXDirectAudioDevice {
-    AudioUnit    unit;
-    CARingBuffer buffer;
-    AudioStreamBasicDescription asbd;
-    SInt64       lastReadSampleTime;
-    int          bufferSizeInFrames;
 
-    int        inputBufferSize;
-    pthread_mutex_t inputMutex;
-    pthread_cond_t  inputCond;
-    int             isDraining;
+#ifdef USE_TRACE
+static void PrintStreamDesc(AudioStreamBasicDescription *inDesc) {
+    TRACE4("ID='%c%c%c%c'", (char)(inDesc->mFormatID >> 24), (char)(inDesc->mFormatID >> 16), (char)(inDesc->mFormatID >> 8), (char)(inDesc->mFormatID));
+    TRACE2(", %f Hz, flags=0x%lX", (float)inDesc->mSampleRate, (long unsigned)inDesc->mFormatFlags);
+    TRACE2(", %ld channels, %ld bits", (long)inDesc->mChannelsPerFrame, (long)inDesc->mBitsPerChannel);
+    TRACE1(", %ld bytes per frame\n", (long)inDesc->mBytesPerFrame);
+}
+#else
+static inline void PrintStreamDesc(AudioStreamBasicDescription *inDesc) { }
+#endif
 
-    OSXDirectAudioDevice() : unit(NULL), asbd(), lastReadSampleTime(0), bufferSizeInFrames(0),
-                             inputMutex((pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER), inputCond((pthread_cond_t)PTHREAD_COND_INITIALIZER),
-                             isDraining(0) {}
 
-    ~OSXDirectAudioDevice() {
-        pthread_cond_destroy(&inputCond);
-        pthread_mutex_destroy(&inputMutex);
-        buffer.Deallocate();
-        CloseComponent(unit);
-    }
-} OSXDirectAudioDevice;
+#define MAX(x, y)   ((x) >= (y) ? (x) : (y))
+#define MIN(x, y)   ((x) <= (y) ? (x) : (y))
+
+
+// =======================================
+// MixerProvider functions implementation
+
+static DeviceList deviceCache;
 
 INT32 DAUDIO_GetDirectAudioDeviceCount() {
-    int count = 1 + GetAudioDeviceCount();
-    TRACE1("< DAUDIO_GetDirectAudioDeviceCount = %d\n", count);
-
+    deviceCache.Refresh();
+    int count = deviceCache.GetCount();
+    if (count > 0) {
+        // add "default" device
+        count++;
+        TRACE1("DAUDIO_GetDirectAudioDeviceCount: returns %d devices\n", count);
+    } else {
+        TRACE0("DAUDIO_GetDirectAudioDeviceCount: no devices found\n");
+    }
     return count;
 }
 
-INT32 DAUDIO_GetDirectAudioDeviceDescription(INT32 mixerIndex, DirectAudioDeviceDescription* daudioDescription) {
-    AudioDeviceDescription description;
-
-    description.strLen = DAUDIO_STRING_LENGTH;
-    description.name   = daudioDescription->name;
-    description.vendor = daudioDescription->vendor;
-    description.description = daudioDescription->description;
-
-    /*
-     We can't fill out the version field.
-     */
-
-    int err = GetAudioDeviceDescription(mixerIndex - 1, &description);
-
-    daudioDescription->deviceID = description.deviceID;
-    daudioDescription->maxSimulLines = description.numInputStreams + description.numOutputStreams;
-
-    TRACE1("< DAUDIO_GetDirectAudioDeviceDescription = %d lines\n", (int)daudioDescription->maxSimulLines);
-
-    return err == noErr;
+INT32 DAUDIO_GetDirectAudioDeviceDescription(INT32 mixerIndex, DirectAudioDeviceDescription *desc) {
+    bool result = true;
+    desc->deviceID = 0;
+    if (mixerIndex == 0) {
+        // default device
+        strncpy(desc->name, "Default Audio Device", DAUDIO_STRING_LENGTH);
+        strncpy(desc->description, "Default Audio Device", DAUDIO_STRING_LENGTH);
+        desc->maxSimulLines = -1;
+    } else {
+        AudioDeviceID deviceID;
+        result = deviceCache.GetDeviceInfo(mixerIndex-1, &deviceID, DAUDIO_STRING_LENGTH,
+            desc->name, desc->vendor, desc->description, desc->version);
+        if (result) {
+            desc->deviceID = (INT32)deviceID;
+            desc->maxSimulLines = -1;
+        }
+    }
+    return result ? TRUE : FALSE;
 }
 
-/*
- Philosophical differences here -
-
- Sample rate -
- Audio Output Unit has a current sample rate, but will accept any sample rate for output.
- For input, the sample rate of the unit must be the current hardware sample rate.
- It is possible for the user to change this, but there is no way to notify Java of it
- happening, so this is not handled.
-
- Integer format -
- Core Audio uses floats. Audio Output Unit will accept anything.
- The best Direct Audio can do is 16-bit signed.
- */
 
 void DAUDIO_GetFormats(INT32 mixerIndex, INT32 deviceID, int isSource, void* creator) {
-        TRACE3("> DAUDIO_GetFormats mixer=%d deviceID=%#x isSource=%d\n", (int)mixerIndex, (int)deviceID, isSource);
-    AudioDeviceDescription description = {0};
-    OSStatus err = noErr;
-    Float64 sampleRate;
-    int numStreams, numChannels;
-    UInt32 size;
+    TRACE3(">>DAUDIO_GetFormats mixerIndex=%d deviceID=0x%x isSource=%d\n", (int)mixerIndex, (int)deviceID, isSource);
 
-    GetAudioDeviceDescription(mixerIndex - 1, &description);
+    AudioDeviceID audioDeviceID = deviceID == 0 ? GetDefaultDevice(isSource) : (AudioDeviceID)deviceID;
 
-    numChannels = isSource ? description.numOutputChannels : description.numInputChannels;
-
-    int channels[] = {1, 2, numChannels};
-    int i;
-
-    numStreams = isSource ? description.numOutputStreams : description.numInputStreams;
-
-    if (numStreams == 0) {
-        goto exit;
+    if (audioDeviceID == 0) {
+        return;
     }
 
-    /*
-     For output, register 16-bit for any sample rate with either 1ch/2ch.
-     For input, we must use the real sample rate.
-     */
+    int totalChannels = GetChannelCount(audioDeviceID, isSource);
 
-    int maxChannelIndex;
+    if (totalChannels == 0) {
+        TRACE0("<<DAUDIO_GetFormats, no streams!\n");
+        return;
+    }
 
-    if (!isSource && numChannels == 1)
-        maxChannelIndex = 0;
-    else if (numChannels <= 2)
-        maxChannelIndex = 1;
-    else
-        maxChannelIndex = 2;
+    if (isSource && totalChannels < 2) {
+        // report 2 channels even if only mono is supported
+        totalChannels = 2;
+    }
 
-    sampleRate = isSource ? -1 : description.inputSampleRate;
+    int channels[] = {1, 2, totalChannels};
+    int channelsCount = MIN(totalChannels, 3);
 
-    for (i = 0; i <= maxChannelIndex; i++) {
+    float hardwareSampleRate = GetSampleRate(audioDeviceID, isSource);
+    TRACE2("  DAUDIO_GetFormats: got %d channels, sampleRate == %f\n", totalChannels, hardwareSampleRate);
+
+    // target lines support only current sample rate!
+    float sampleRate = isSource ? -1 : hardwareSampleRate;
+
+    static int sampleBits[] = {8, 16, 24};
+    static int sampleBitsCount = sizeof(sampleBits)/sizeof(sampleBits[0]);
+
+    // the last audio format is the default one (used by DataLine.open() if format is not specified)
+    // consider as default 16bit PCM stereo (mono is stereo is not supported) with the current sample rate
+    int defBits = 16;
+    int defChannels = MIN(2, channelsCount);
+    float defSampleRate = hardwareSampleRate;
+    // don't add default format is sample rate is not specified
+    bool addDefault = defSampleRate > 0;
+
+    // TODO: CoreAudio can handle signed/unsigned, little-endian/big-endian
+    // TODO: register the formats (to prevent DirectAudio software conversion) - need to fix DirectAudioDevice.createDataLineInfo
+    // to avoid software conversions if both signed/unsigned or big-/little-endian are supported
+    for (int channelIndex = 0; channelIndex < channelsCount; channelIndex++) {
+        for (int bitIndex = 0; bitIndex < sampleBitsCount; bitIndex++) {
+            int bits = sampleBits[bitIndex];
+            if (addDefault && bits == defBits && channels[channelIndex] != defChannels && sampleRate == defSampleRate) {
+                // the format is the default one, don't add it now
+                continue;
+            }
+            DAUDIO_AddAudioFormat(creator,
+                bits,                       // sample size in bits
+                -1,                         // frame size (auto)
+                channels[channelIndex],     // channels
+                sampleRate,                 // sample rate
+                DAUDIO_PCM,                 // only accept PCM
+                bits == 8 ? FALSE : TRUE,   // signed
+                bits == 8 ? FALSE           // little-endian for 8bit
+                    : UTIL_IsBigEndianPlatform());
+        }
+    }
+    // add default format
+    if (addDefault) {
         DAUDIO_AddAudioFormat(creator,
-                              16,           /* 16-bit */
-                              -1,           /* frame size (auto) */
-                              channels[i],  /* channels */
-                              sampleRate,   /* sample rate (any for output) */
-                              DAUDIO_PCM,   /* only accept PCM */
-                              1,            /* signed (for 16-bit) */
-                              BYTE_ORDER == BIG_ENDIAN);
+            defBits,                        // 16 bits
+            -1,                             // automatically calculate frame size
+            defChannels,                    // channels
+            defSampleRate,                  // sample rate
+            DAUDIO_PCM,                     // PCM
+            TRUE,                           // signed
+            UTIL_IsBigEndianPlatform());    // native endianess
     }
 
-exit:
-    if (err) {
-        ERROR1("DAUDIO_GetFormats err %.4s\n", &err);
-    }
+    TRACE0("<<DAUDIO_GetFormats\n");
 }
+
+
+// =======================================
+// Source/Target DataLine functions implementation
+
+// ====
+/* 1writer-1reader ring buffer class with flush() support */
+class RingBuffer {
+public:
+    RingBuffer() : pBuffer(NULL), nBufferSize(0) {
+        pthread_mutex_init(&lockMutex, NULL);
+    }
+    ~RingBuffer() {
+        Deallocate();
+        pthread_mutex_destroy(&lockMutex);
+    }
+
+    // extraBytes: number of additionally allocated bytes to prevent data
+    // overlapping when almost whole buffer is filled
+    // (required only if Write() can override the buffer)
+    bool Allocate(int requestedBufferSize, int extraBytes) {
+        int fullBufferSize = requestedBufferSize + extraBytes;
+        int powerOfTwo = 1;
+        while (powerOfTwo < fullBufferSize) {
+            powerOfTwo <<= 1;
+        }
+        pBuffer = (Byte*)malloc(powerOfTwo);
+        if (pBuffer == NULL) {
+            ERROR0("RingBuffer::Allocate: OUT OF MEMORY\n");
+            return false;
+        }
+
+        nBufferSize = requestedBufferSize;
+        nAllocatedBytes = powerOfTwo;
+        nPosMask = powerOfTwo - 1;
+        nWritePos = 0;
+        nReadPos = 0;
+        nFlushPos = -1;
+
+        TRACE2("RingBuffer::Allocate: OK, bufferSize=%d, allocated:%d\n", nBufferSize, nAllocatedBytes);
+        return true;
+    }
+
+    void Deallocate() {
+        if (pBuffer) {
+            free(pBuffer);
+            pBuffer = NULL;
+            nBufferSize = 0;
+        }
+    }
+
+    inline int GetBufferSize() {
+        return nBufferSize;
+    }
+
+    inline int GetAllocatedSize() {
+        return nAllocatedBytes;
+    }
+
+    // gets number of bytes available for reading
+    int GetValidByteCount() {
+        lock();
+        INT64 result = nWritePos - (nFlushPos >= 0 ? nFlushPos : nReadPos);
+        unlock();
+        return result > (INT64)nBufferSize ? nBufferSize : (int)result;
+    }
+
+    int Write(void *srcBuffer, int len, bool preventOverflow) {
+        lock();
+        TRACE2("RingBuffer::Write (%d bytes, preventOverflow=%d)\n", len, preventOverflow ? 1 : 0);
+        TRACE2("  writePos = %lld (%d)", (long long)nWritePos, Pos2Offset(nWritePos));
+        TRACE2("  readPos=%lld (%d)", (long long)nReadPos, Pos2Offset(nReadPos));
+        TRACE2("  flushPos=%lld (%d)\n", (long long)nFlushPos, Pos2Offset(nFlushPos));
+
+        INT64 writePos = nWritePos;
+        if (preventOverflow) {
+            INT64 avail_read = writePos - (nFlushPos >= 0 ? nFlushPos : nReadPos);
+            if (avail_read >= (INT64)nBufferSize) {
+                // no space
+                TRACE0("  preventOverlow: OVERFLOW => len = 0;\n");
+                len = 0;
+            } else {
+                int avail_write = nBufferSize - (int)avail_read;
+                if (len > avail_write) {
+                    TRACE2("  preventOverlow: desrease len: %d => %d\n", len, avail_write);
+                    len = avail_write;
+                }
+            }
+        }
+        unlock();
+
+        if (len > 0) {
+
+            write((Byte *)srcBuffer, Pos2Offset(writePos), len);
+
+            lock();
+            TRACE4("--RingBuffer::Write writePos: %lld (%d) => %lld, (%d)\n",
+                (long long)nWritePos, Pos2Offset(nWritePos), (long long)nWritePos + len, Pos2Offset(nWritePos + len));
+            nWritePos += len;
+            unlock();
+        }
+        return len;
+    }
+
+    int Read(void *dstBuffer, int len) {
+        lock();
+        TRACE1("RingBuffer::Read (%d bytes)\n", len);
+        TRACE2("  writePos = %lld (%d)", (long long)nWritePos, Pos2Offset(nWritePos));
+        TRACE2("  readPos=%lld (%d)", (long long)nReadPos, Pos2Offset(nReadPos));
+        TRACE2("  flushPos=%lld (%d)\n", (long long)nFlushPos, Pos2Offset(nFlushPos));
+
+        applyFlush();
+        INT64 avail_read = nWritePos - nReadPos;
+        // check for overflow
+        if (avail_read > (INT64)nBufferSize) {
+            nReadPos = nWritePos - nBufferSize;
+            avail_read = nBufferSize;
+            TRACE0("  OVERFLOW\n");
+        }
+        INT64 readPos = nReadPos;
+        unlock();
+
+        if (len > (int)avail_read) {
+            TRACE2("  RingBuffer::Read - don't have enough data, len: %d => %d\n", len, (int)avail_read);
+            len = (int)avail_read;
+        }
+
+        if (len > 0) {
+
+            read((Byte *)dstBuffer, Pos2Offset(readPos), len);
+
+            lock();
+            if (applyFlush()) {
+                // just got flush(), results became obsolete
+                TRACE0("--RingBuffer::Read, got Flush, return 0\n");
+                len = 0;
+            } else {
+                TRACE4("--RingBuffer::Read readPos: %lld (%d) => %lld (%d)\n",
+                    (long long)nReadPos, Pos2Offset(nReadPos), (long long)nReadPos + len, Pos2Offset(nReadPos + len));
+                nReadPos += len;
+            }
+            unlock();
+        } else {
+            // underrun!
+        }
+        return len;
+    }
+
+    // returns number of the flushed bytes
+    int Flush() {
+        lock();
+        INT64 flushedBytes = nWritePos - (nFlushPos >= 0 ? nFlushPos : nReadPos);
+        nFlushPos = nWritePos;
+        unlock();
+        return flushedBytes > (INT64)nBufferSize ? nBufferSize : (int)flushedBytes;
+    }
+
+private:
+    Byte *pBuffer;
+    int nBufferSize;
+    int nAllocatedBytes;
+    INT64 nPosMask;
+
+    pthread_mutex_t lockMutex;
+
+    volatile INT64 nWritePos;
+    volatile INT64 nReadPos;
+    // Flush() sets nFlushPos value to nWritePos;
+    // next Read() sets nReadPos to nFlushPos and resests nFlushPos to -1
+    volatile INT64 nFlushPos;
+
+    inline void lock() {
+        pthread_mutex_lock(&lockMutex);
+    }
+    inline void unlock() {
+        pthread_mutex_unlock(&lockMutex);
+    }
+
+    inline bool applyFlush() {
+        if (nFlushPos >= 0) {
+            nReadPos = nFlushPos;
+            nFlushPos = -1;
+            return true;
+        }
+        return false;
+    }
+
+    inline int Pos2Offset(INT64 pos) {
+        return (int)(pos & nPosMask);
+    }
+
+    void write(Byte *srcBuffer, int dstOffset, int len) {
+        int dstEndOffset = dstOffset + len;
+
+        int lenAfterWrap = dstEndOffset - nAllocatedBytes;
+        if (lenAfterWrap > 0) {
+            // dest.buffer does wrap
+            len = nAllocatedBytes - dstOffset;
+            memcpy(pBuffer+dstOffset, srcBuffer, len);
+            memcpy(pBuffer, srcBuffer+len, lenAfterWrap);
+        } else {
+            // dest.buffer does not wrap
+            memcpy(pBuffer+dstOffset, srcBuffer, len);
+        }
+    }
+
+    void read(Byte *dstBuffer, int srcOffset, int len) {
+        int srcEndOffset = srcOffset + len;
+
+        int lenAfterWrap = srcEndOffset - nAllocatedBytes;
+        if (lenAfterWrap > 0) {
+            // need to unwrap data
+            len = nAllocatedBytes - srcOffset;
+            memcpy(dstBuffer, pBuffer+srcOffset, len);
+            memcpy(dstBuffer+len, pBuffer, lenAfterWrap);
+        } else {
+            // source buffer is not wrapped
+            memcpy(dstBuffer, pBuffer+srcOffset, len);
+        }
+    }
+};
+
+
+struct OSX_DirectAudioDevice {
+    AudioUnit   audioUnit;
+    RingBuffer  ringBuffer;
+    AudioStreamBasicDescription asbd;
+
+    // only for target lines
+    UInt32      inputBufferSizeInBytes;
+
+    OSX_DirectAudioDevice() : audioUnit(NULL), asbd() {
+    }
+
+    ~OSX_DirectAudioDevice() {
+        if (audioUnit) {
+            CloseComponent(audioUnit);
+        }
+    }
+};
 
 static AudioUnit CreateOutputUnit(AudioDeviceID deviceID, int isSource)
 {
-    OSStatus err = noErr;
+    OSStatus err;
     AudioUnit unit;
     UInt32 size;
 
@@ -180,132 +437,116 @@ static AudioUnit CreateOutputUnit(AudioDeviceID deviceID, int isSource)
         err = OpenAComponent(comp, &unit);
 
     if (err) {
-        ERROR1("OpenComponent err %d\n", err);
-        goto exit;
+        OS_ERROR0(err, "CreateOutputUnit:OpenAComponent");
+        return NULL;
     }
 
     if (!isSource) {
         int enableIO = 0;
         err = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output,
-                             0, &enableIO, sizeof(enableIO));
-        if (err) ERROR1("SetProperty 1 err %d\n", err);
+                                    0, &enableIO, sizeof(enableIO));
+        if (err) {
+            OS_ERROR0(err, "SetProperty (output EnableIO)");
+        }
         enableIO = 1;
         err = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input,
-                             1, &enableIO, sizeof(enableIO));
-        if (err) ERROR1("SetProperty 2 err %d\n", err);
+                                    1, &enableIO, sizeof(enableIO));
+        if (err) {
+            OS_ERROR0(err, "SetProperty (input EnableIO)");
+        }
+
+        if (!deviceID) {
+            // get real AudioDeviceID for default input device (macosx current input device)
+            deviceID = GetDefaultDevice(isSource);
+            if (!deviceID) {
+                CloseComponent(unit);
+                return NULL;
+            }
+        }
     }
 
-    if (deviceID || !isSource) {
-        UInt32 inputDeviceID;
-
-        /* There is no "default input unit", so get the current input device. */
-        GetAudioObjectProperty(kAudioObjectSystemObject, kAudioObjectPropertyScopeGlobal, kAudioHardwarePropertyDefaultInputDevice,
-                               sizeof(inputDeviceID), &inputDeviceID, 1);
-
+    if (deviceID) {
         err = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global,
-                                   0, deviceID ? &deviceID : &inputDeviceID, sizeof(deviceID));
+                                    0, &deviceID, sizeof(deviceID));
         if (err) {
-            ERROR1("SetProperty 3 err %d\n", err);
-            goto exit;
+            OS_ERROR0(err, "SetProperty (CurrentDevice)");
+            CloseComponent(unit);
+            return NULL;
         }
     }
 
     return unit;
-
-exit:
-
-    if (unit)
-        CloseComponent(unit);
-
-    return NULL;
 }
 
-static void ClearAudioBufferList(AudioBufferList *list, int start, int end, int sampleSize)
+static OSStatus OutputCallback(void                         *inRefCon,
+                               AudioUnitRenderActionFlags   *ioActionFlags,
+                               const AudioTimeStamp         *inTimeStamp,
+                               UInt32                       inBusNumber,
+                               UInt32                       inNumberFrames,
+                               AudioBufferList              *ioData)
 {
-    for (int channel = 0; channel < list->mNumberBuffers; channel++)
-        memset((char*)list->mBuffers[channel].mData + start*sampleSize, 0, (end - start)*sampleSize);
-}
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)inRefCon;
 
-static OSStatus AudioOutputCallback(void                    *inRefCon,
-                             AudioUnitRenderActionFlags         *ioActionFlags,
-                             const AudioTimeStamp           *inTimeStamp,
-                             UInt32                                             inBusNumber,
-                             UInt32                                             inNumberFrames,
-                             AudioBufferList                *ioData)
-{
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)inRefCon;
-    CARingBufferError err;
+    int nchannels = ioData->mNumberBuffers; // should be always == 1 (interleaved channels)
+    AudioBuffer *audioBuffer = ioData->mBuffers;
 
-    SInt64 readTime = device->lastReadSampleTime;
-    SInt64 startTime, endTime;
-    int underran = 0;
-    err = device->buffer.GetTimeBounds(startTime, endTime);
+    TRACE3(">>OutputCallback: busNum=%d, requested %d frames (%d bytes)\n",
+        (int)inBusNumber, (int)inNumberFrames, (int)(inNumberFrames * device->asbd.mBytesPerFrame));
+    TRACE3("  abl: %d buffers, buffer[0].channels=%d, buffer.size=%d\n",
+        nchannels, (int)audioBuffer->mNumberChannels, (int)audioBuffer->mDataByteSize);
 
-    if (err) goto exit;
-    if (endTime < readTime) goto exit; // endTime can go backwards upon DAUDIO_Flush
-    if (readTime + inNumberFrames >= endTime) {
-        ClearAudioBufferList(ioData, endTime - readTime, inNumberFrames, device->asbd.mBytesPerFrame);
-        inNumberFrames = endTime - readTime;
-        underran = 1;
+    int bytesToRead = inNumberFrames * device->asbd.mBytesPerFrame;
+    if (bytesToRead > (int)audioBuffer->mDataByteSize) {
+        TRACE0("--OutputCallback: !!! audioBuffer IS TOO SMALL!!!\n");
+        bytesToRead = audioBuffer->mDataByteSize / device->asbd.mBytesPerFrame * device->asbd.mBytesPerFrame;
+    }
+    int bytesRead = device->ringBuffer.Read(audioBuffer->mData, bytesToRead);
+    if (bytesRead < bytesToRead) {
+        // no enough data (underrun)
+        TRACE2("--OutputCallback: !!! UNDERRUN (read %d bytes of %d)!!!\n", bytesRead, bytesToRead);
+        // silence the rest
+        memset((Byte*)audioBuffer->mData + bytesRead, 0, bytesToRead-bytesRead);
+        bytesRead = bytesToRead;
     }
 
-    err = device->buffer.Fetch(ioData, inNumberFrames, readTime);
-
-    if (err) goto exit;
-
-    if (underran) {
-        TRACE4("< Underrun, only fetched %d frames (%lld %lld %lld)\n", inNumberFrames, startTime, readTime, endTime);
+    audioBuffer->mDataByteSize = (UInt32)bytesRead;
+    // SAFETY: set mDataByteSize for all other AudioBuffer in the AudioBufferList to zero
+    while (--nchannels > 0) {
+        audioBuffer++;
+        audioBuffer->mDataByteSize = 0;
     }
+    TRACE1("<<OutputCallback (returns %d)\n", bytesRead);
 
-    OSAtomicCompareAndSwap64Barrier(readTime, readTime + inNumberFrames, &device->lastReadSampleTime);
-
-    return noErr;
-
-exit:
-    ClearAudioBufferList(ioData, 0, inNumberFrames, device->asbd.mBytesPerFrame);
     return noErr;
 }
 
-static OSStatus AudioInputCallback(void                    *inRefCon,
-                            AudioUnitRenderActionFlags     *ioActionFlags,
-                            const AudioTimeStamp           *inTimeStamp,
-                            UInt32                         inBusNumber,
-                            UInt32                         inNumberFrames,
-                            AudioBufferList                *ioData)
+static OSStatus InputCallback(void                          *inRefCon,
+                              AudioUnitRenderActionFlags    *ioActionFlags,
+                              const AudioTimeStamp          *inTimeStamp,
+                              UInt32                        inBusNumber,
+                              UInt32                        inNumberFrames,
+                              AudioBufferList               *ioData)
 {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)inRefCon;
-    AudioBufferList abl;
-    SInt64 sampleTime = inTimeStamp->mSampleTime;
-    SInt64 startTime, endTime;
-    CARingBufferError err;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)inRefCon;
 
-    if (device->isDraining) goto exit;
+    TRACE4(">>InputCallback: busNum=%d, timeStamp=%lld, %d frames (%d bytes)\n",
+        (int)inBusNumber, (long long)inTimeStamp->mSampleTime, (int)inNumberFrames, (int)(inNumberFrames * device->asbd.mBytesPerFrame));
 
-    err = device->buffer.GetTimeBounds(startTime, endTime);
-    if (err) goto exit;
-
+    AudioBufferList abl;    // by default it contains 1 AudioBuffer
     abl.mNumberBuffers = 1;
     abl.mBuffers[0].mNumberChannels = device->asbd.mChannelsPerFrame;
-    abl.mBuffers[0].mDataByteSize   = device->inputBufferSize * device->asbd.mBytesPerFrame;
-    abl.mBuffers[0].mData           = NULL;
+    abl.mBuffers[0].mDataByteSize   = device->inputBufferSizeInBytes;   // assume this is == (inNumberFrames * device->asbd.mBytesPerFrame)
+    abl.mBuffers[0].mData           = NULL;     // request for the audioUnit's buffer
 
-    err = AudioUnitRender(device->unit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, &abl);
+    // TODO: is it possible device->inputBufferSizeInBytes != inNumberFrames * device->asbd.mBytesPerFrame??
+
+    OSStatus err = AudioUnitRender(device->audioUnit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, &abl);
     if (err) {
-        ERROR1("AudioUnitRender err %d\n", err);
-        goto exit;
+        OS_ERROR0(err, "<<InputCallback: AudioUnitRender");
+    } else {
+        int bytesWritten = device->ringBuffer.Write(abl.mBuffers[0].mData, (int)abl.mBuffers[0].mDataByteSize, false);
+        TRACE2("<<InputCallback (saved %d bytes of %d)\n", bytesWritten, (int)abl.mBuffers[0].mDataByteSize);
     }
-
-    err = device->buffer.Store(&abl, inNumberFrames, sampleTime);
-    if (err) goto exit;
-
-    pthread_cond_broadcast(&device->inputCond);
-
-    return noErr;
-
-exit:
-    device->isDraining = 1;
-
-    pthread_cond_broadcast(&device->inputCond);
 
     return noErr;
 }
@@ -315,254 +556,213 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
                   int frameSize, int channels,
                   int isSigned, int isBigEndian, int bufferSizeInBytes)
 {
-        TRACE2("> DAUDIO_Open mixerIndex=%d deviceID=%#x\n", mixerIndex, deviceID);
+    TRACE3(">>DAUDIO_Open: mixerIndex=%d deviceID=0x%x isSource=%d\n", (int)mixerIndex, (unsigned int)deviceID, isSource);
+    TRACE3("  sampleRate=%d sampleSizeInBits=%d channels=%d\n", (int)sampleRate, sampleSizeInBits, channels);
+#ifdef USE_TRACE
+    {
+        AudioDeviceID audioDeviceID = deviceID;
+        if (audioDeviceID == 0) {
+            // default device
+            audioDeviceID = GetDefaultDevice(isSource);
+        }
+        char name[256];
+        OSStatus err = GetAudioObjectProperty(audioDeviceID, kAudioUnitScope_Global, kAudioDevicePropertyDeviceName, 256, &name, 0);
+        if (err != noErr) {
+            OS_ERROR1(err, "  audioDeviceID=0x%x, name is N/A:", (int)audioDeviceID);
+        } else {
+            TRACE2("  audioDeviceID=0x%x, name=%s\n", (int)audioDeviceID, name);
+        }
+    }
+#endif
+
+    if (encoding != DAUDIO_PCM) {
+        ERROR1("<<DAUDIO_Open: ERROR: unsupported encoding (%d)\n", encoding);
+        return NULL;
+    }
+
+    // TODO: for target lines we should ensure that sampleRate == current device sample rate
+    // (othewise we get error -10863 (kAudioUnitErr_CannotDoInCurrentContext in AUComponent.h) from AudioUnitRender(in InputCallback))
+
+    OSX_DirectAudioDevice *device = new OSX_DirectAudioDevice();
 
     AudioUnitScope scope = isSource ? kAudioUnitScope_Input : kAudioUnitScope_Output;
     int element = isSource ? 0 : 1;
-    OSXDirectAudioDevice *device = new OSXDirectAudioDevice;
-    int bufferSizeInFrames = bufferSizeInBytes / frameSize;
     OSStatus err = noErr;
+    int extraBufferBytes = 0;
 
-#ifdef USE_TRACE
-    if (deviceID) AudioObjectShow(deviceID);
-#endif
+    device->audioUnit = CreateOutputUnit(deviceID, isSource);
 
-    device->unit = CreateOutputUnit(deviceID, isSource);
-
-    if (!device->unit)
-        goto exit;
+    if (!device->audioUnit) {
+        delete device;
+        return NULL;
+    }
 
     FillOutASBDForLPCM(device->asbd, sampleRate, channels, sampleSizeInBits, sampleSizeInBits, 0, isBigEndian);
+    // Workaround for FillOutASBDForLPCM - it always set kAudioFormatFlagIsSignedInteger for non-float formats
+    if (!isSigned) {
+        device->asbd.mFormatFlags &= ~(UInt32)kAudioFormatFlagIsSignedInteger;
+    }
 
-    err = AudioUnitSetProperty(device->unit, kAudioUnitProperty_StreamFormat, scope, element, &device->asbd, sizeof(device->asbd));
+    err = AudioUnitSetProperty(device->audioUnit, kAudioUnitProperty_StreamFormat, scope, element, &device->asbd, sizeof(device->asbd));
     if (err) {
-        ERROR1("Setting stream format err %d\n", err);
-        goto exit;
+        OS_ERROR0(err, "<<DAUDIO_Open set StreamFormat");
+        delete device;
+        return NULL;
     }
 
     AURenderCallbackStruct output;
-    output.inputProc       = isSource ? AudioOutputCallback : AudioInputCallback;
+    output.inputProc       = isSource ? OutputCallback : InputCallback;
     output.inputProcRefCon = device;
 
-    err = AudioUnitSetProperty(device->unit, isSource ? kAudioUnitProperty_SetRenderCallback : kAudioOutputUnitProperty_SetInputCallback,
-                               kAudioUnitScope_Global, 0, &output, sizeof(output));
-    if (err) goto exit;
+    err = AudioUnitSetProperty(device->audioUnit,
+                                isSource
+                                    ? (AudioUnitPropertyID)kAudioUnitProperty_SetRenderCallback
+                                    : (AudioUnitPropertyID)kAudioOutputUnitProperty_SetInputCallback,
+                                kAudioUnitScope_Global, 0, &output, sizeof(output));
+    if (err) {
+        OS_ERROR0(err, "<<DAUDIO_Open set RenderCallback");
+        delete device;
+        return NULL;
+    }
 
-    err = AudioUnitInitialize(device->unit);
-    if (err) goto exit;
+    err = AudioUnitInitialize(device->audioUnit);
+    if (err) {
+        OS_ERROR0(err, "<<DAUDIO_Open UnitInitialize");
+        delete device;
+        return NULL;
+    }
 
     if (!isSource) {
+        // for target lines we need extra bytes in the buffer
+        // to prevent collisions when InputCallback overrides data on overflow
         UInt32 size;
         OSStatus err;
 
-        size = sizeof(device->inputBufferSize);
-        err  = AudioUnitGetProperty(device->unit, kAudioDevicePropertyBufferFrameSize, kAudioUnitScope_Global, 0, &device->inputBufferSize, &size);
+        size = sizeof(device->inputBufferSizeInBytes);
+        err  = AudioUnitGetProperty(device->audioUnit, kAudioDevicePropertyBufferFrameSize, kAudioUnitScope_Global,
+                                    0, &device->inputBufferSizeInBytes, &size);
+        if (err) {
+            OS_ERROR0(err, "<<DAUDIO_Open (TargetDataLine)GetBufferSize\n");
+            delete device;
+            return NULL;
+        }
+        device->inputBufferSizeInBytes *= device->asbd.mBytesPerFrame;  // convert frames by bytes
+        extraBufferBytes = (int)device->inputBufferSizeInBytes;
     }
 
-    device->buffer.Allocate(channels, frameSize, bufferSizeInFrames);
-    device->bufferSizeInFrames = NextPowerOfTwo(bufferSizeInFrames);
+    if (!device->ringBuffer.Allocate(bufferSizeInBytes, extraBufferBytes)) {
+        ERROR0("<<DAUDIO_Open: Ring buffer allocation error\n");
+        delete device;
+        return NULL;
+    }
 
+    TRACE0("<<DAUDIO_Open: OK\n");
     return device;
-
-exit:
-    if (err) {
-        ERROR1("DAUDIO_Open err %d\n", err);
-    }
-
-    delete device;
-    return NULL;
 }
 
 int DAUDIO_Start(void* id, int isSource) {
-    TRACE0("> DAUDIO_Start\n");
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    OSStatus err;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE0("DAUDIO_Start\n");
 
-    device->isDraining = 0;
-    err = AudioOutputUnitStart(device->unit);
+    OSStatus err = AudioOutputUnitStart(device->audioUnit);
+
+    if (err != noErr) {
+        OS_ERROR0(err, "DAUDIO_Start");
+    }
 
     return err == noErr ? TRUE : FALSE;
 }
 
 int DAUDIO_Stop(void* id, int isSource) {
-    TRACE0("> DAUDIO_Stop\n");
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    OSStatus err;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE0("DAUDIO_Stop\n");
 
-    device->isDraining = 1;
-    err = AudioOutputUnitStop(device->unit);
+    OSStatus err = AudioOutputUnitStop(device->audioUnit);
 
     return err == noErr ? TRUE : FALSE;
 }
 
 void DAUDIO_Close(void* id, int isSource) {
-    TRACE0("> DAUDIO_Close\n");
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE0("DAUDIO_Close\n");
 
     delete device;
 }
 
-static SInt64 GetLastSampleTime(CARingBuffer *buffer)
-{
-    SInt64 startTime, endTime;
-    OSStatus err = buffer->GetTimeBounds(startTime, endTime);
-
-    return endTime;
-}
-
 int DAUDIO_Write(void* id, char* data, int byteSize) {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    AudioBufferList bufferList;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE1(">>DAUDIO_Write: %d bytes to write\n", byteSize);
 
-    bufferList.mNumberBuffers = 1;
-    bufferList.mBuffers[0].mNumberChannels= device->asbd.mChannelsPerFrame;
-    bufferList.mBuffers[0].mDataByteSize  = byteSize;
-    bufferList.mBuffers[0].mData          = data;
+    int result = device->ringBuffer.Write(data, byteSize, true);
 
-    SInt64 firstAvailableSampleTime, lastWrittenSampleTime, lastReadSampleTime, newLastSampleTime;
-    device->buffer.GetTimeBounds(firstAvailableSampleTime, lastWrittenSampleTime);
-    lastReadSampleTime = device->lastReadSampleTime;
-
-    int numAvailableFrames = byteSize / device->asbd.mBytesPerFrame;
-    int numUsedFrames      = lastWrittenSampleTime - firstAvailableSampleTime;
-    int numFreeFrames      = (lastReadSampleTime - firstAvailableSampleTime) /* already-written samples */
-                           + (device->bufferSizeInFrames - numUsedFrames);   /* space at the end of the buffer */
-    int numFrames          = std::min(numAvailableFrames, numFreeFrames);
-
-    if (numFrames == 0)
-        return 0;
-
-    TRACE4("> DAUDIO_Write %d frames (%d %d %d)\n", numFrames,
-                                                    numFreeFrames,
-                                                    numAvailableFrames,
-                                                    lastWrittenSampleTime - lastReadSampleTime);
-
-    int err = device->buffer.Store(&bufferList, numFrames, lastWrittenSampleTime);
-
-    if (err) {
-        TRACE1("Store err %d\n", err);
-    }
-
-    return err == kCARingBufferError_OK ? numFrames * device->asbd.mBytesPerFrame /* bytes written */
-                                        : -1;                                     /* error */
+    TRACE1("<<DAUDIO_Write: %d bytes written\n", result);
+    return result;
 }
 
 int DAUDIO_Read(void* id, char* data, int byteSize) {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE1(">>DAUDIO_Read: %d bytes to read\n", byteSize);
 
-    SInt64 firstAvailableSampleTime, lastWrittenSampleTime, lastReadSampleTime = device->lastReadSampleTime;
-    int numRequestedFrames = byteSize / device->asbd.mBytesPerFrame, numAvailableFrames = 0;
-    int waits = 0;
+    int result = device->ringBuffer.Read(data, byteSize);
 
-    while (1) {
-        device->buffer.GetTimeBounds(firstAvailableSampleTime, lastWrittenSampleTime);
-
-        numAvailableFrames = lastWrittenSampleTime - lastReadSampleTime;
-
-        if (numRequestedFrames <= numAvailableFrames || device->isDraining) {
-            break;
-        }
-
-        pthread_mutex_lock(&device->inputMutex);
-        pthread_cond_wait(&device->inputCond, &device->inputMutex);
-        pthread_mutex_unlock(&device->inputMutex);
-        waits++;
-    }
-
-    AudioBufferList bufferList;
-
-    bufferList.mNumberBuffers = 1;
-    bufferList.mBuffers[0].mNumberChannels = device->asbd.mChannelsPerFrame;
-    bufferList.mBuffers[0].mDataByteSize   = byteSize;
-    bufferList.mBuffers[0].mData           = data;
-
-    SInt64 timeToRead = std::max(lastReadSampleTime, firstAvailableSampleTime);
-    int numFrames = device->isDraining ? numAvailableFrames : numRequestedFrames;
-
-    CARingBufferError err = device->buffer.Fetch(&bufferList, numRequestedFrames, timeToRead);
-    device->lastReadSampleTime = timeToRead + numRequestedFrames;
-
-    TRACE4("> DAUDIO_Read read %d frames (%lld-%lld), waited %d times\n", numRequestedFrames, lastReadSampleTime, device->lastReadSampleTime, waits);
-
-    return err == kCARingBufferError_OK ? numRequestedFrames * device->asbd.mBytesPerFrame : -1;
+    TRACE1("<<DAUDIO_Read: %d bytes has been read\n", result);
+    return result;
 }
 
 int DAUDIO_GetBufferSize(void* id, int isSource) {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    int bufferSizeInBytes = device->bufferSizeInFrames * device->asbd.mBytesPerFrame;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
 
-    TRACE1("< DAUDIO_GetBufferSize %d\n", bufferSizeInBytes);
+    int bufferSizeInBytes = device->ringBuffer.GetBufferSize();
+
+    TRACE1("DAUDIO_GetBufferSize returns %d\n", bufferSizeInBytes);
     return bufferSizeInBytes;
 }
 
 int DAUDIO_StillDraining(void* id, int isSource) {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    SInt64 startTime, endTime;
-    int draining;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
 
-    device->buffer.GetTimeBounds(startTime, endTime);
+    int draining = device->ringBuffer.GetValidByteCount() > 0 ? TRUE : FALSE;
 
-    draining = device->lastReadSampleTime < endTime;
-
-    TRACE1("< DAUDIO_StillDraining %d\n", draining);
+    TRACE1("DAUDIO_StillDraining returns %d\n", draining);
     return draining;
 }
 
 int DAUDIO_Flush(void* id, int isSource) {
-    TRACE0("> DAUDIO_Flush\n");
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    SInt64 startTime, endTime;
-    CARingBufferError err;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
+    TRACE0("DAUDIO_Flush\n");
 
-    err = device->buffer.GetTimeBounds(startTime, endTime);
-    if (err)
-        return FALSE;
+    device->ringBuffer.Flush();
 
-    device->buffer.Store(NULL, 0, startTime);
-
-    return 0;
+    return TRUE;
 }
 
 int DAUDIO_GetAvailable(void* id, int isSource) {
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
-    SInt64 firstAvailableSampleTime, lastWrittenSampleTime, lastReadSampleTime = device->lastReadSampleTime;
-    CARingBufferError err;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
 
-    err = device->buffer.GetTimeBounds(firstAvailableSampleTime, lastWrittenSampleTime);
-    if (err)
-        return FALSE;
-
-    int numUsedFrames = lastWrittenSampleTime - firstAvailableSampleTime;
-    int numFreeFrames = (lastReadSampleTime - firstAvailableSampleTime) + (device->bufferSizeInFrames - numUsedFrames);
-
+    int bytesInBuffer = device->ringBuffer.GetValidByteCount();
     if (isSource) {
-        // free bytes in the output buffer
-        return numFreeFrames * device->asbd.mBytesPerFrame;
+        return device->ringBuffer.GetBufferSize() - bytesInBuffer;
     } else {
-        // used bytes in the input buffer
-        return numUsedFrames * device->asbd.mBytesPerFrame;
+        return bytesInBuffer;
     }
 }
 
 INT64 DAUDIO_GetBytePosition(void* id, int isSource, INT64 javaBytePos) {
-    //TRACE0("> DAUDIO_GetBytePosition\n");
-    OSXDirectAudioDevice *device = (OSXDirectAudioDevice*)id;
+    OSX_DirectAudioDevice *device = (OSX_DirectAudioDevice*)id;
     INT64 position;
 
-    if (isSource) { // output
-        position = javaBytePos - (device->lastReadSampleTime * device->asbd.mBytesPerFrame);
-    } else { // input
-        SInt64 startTime, endTime;
-        CARingBufferError err = device->buffer.GetTimeBounds(startTime, endTime);
-        if (err) return FALSE;
-        position = (endTime * device->asbd.mBytesPerFrame) - javaBytePos;
+    if (isSource) {
+        position = javaBytePos - device->ringBuffer.GetValidByteCount();
+    } else {
+        position = javaBytePos + device->ringBuffer.GetValidByteCount();
     }
 
-    TRACE1("< DAUDIO_GetBytePosition %lld\n", position);
+    TRACE2("DAUDIO_GetBytePosition returns %lld (javaBytePos = %lld)\n", (long long)position, (long long)javaBytePos);
     return position;
 }
 
 void DAUDIO_SetBytePosition(void* id, int isSource, INT64 javaBytePos) {
+    // no need javaBytePos (it's available in DAUDIO_GetBytePosition)
 }
 
 int DAUDIO_RequiresServicing(void* id, int isSource) {
@@ -570,6 +770,7 @@ int DAUDIO_RequiresServicing(void* id, int isSource) {
 }
 
 void DAUDIO_Service(void* id, int isSource) {
+    // unreachable
 }
 
-#endif
+#endif  // USE_DAUDIO == TRUE

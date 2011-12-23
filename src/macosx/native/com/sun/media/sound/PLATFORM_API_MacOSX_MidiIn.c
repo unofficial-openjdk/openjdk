@@ -28,7 +28,7 @@
 
 #if USE_PLATFORM_MIDI_IN == TRUE
 
-#include "PLATFORM_API_MacOS_MidiUtils.h"
+#include "PLATFORM_API_MacOSX_MidiUtils.h"
 
 char* MIDI_IN_GetErrorStr(INT32 err) {
     return (char *) MIDI_Utils_GetErrorMsg((int) err);

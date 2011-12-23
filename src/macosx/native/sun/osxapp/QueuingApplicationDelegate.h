@@ -23,21 +23,22 @@
  * questions.
  */
 
-#import "PropertiesUtilities.h"
+#import <Cocoa/Cocoa.h>
 
-@implementation PropertiesUtilities
+@interface QueuingApplicationDelegate : NSObject<NSApplicationDelegate>
+{
+    BOOL fHandlesDocumentTypes;
+    BOOL fHandlesURLTypes;
 
-+ (NSString *) javaSystemPropertyForKey:(NSString *)key withEnv:(JNIEnv *)env {
-    static JNF_CLASS_CACHE(jc_System, "java/lang/System");
-    static JNF_STATIC_MEMBER_CACHE(jm_getProperty, jc_System, "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
-
-    jstring jKey = JNFNSToJavaString(env, key);
-    jstring jValue = JNFCallStaticObjectMethod(env, jm_getProperty, jKey);
-    (*env)->DeleteLocalRef(env, jKey);
-
-    NSString *value = JNFJavaToNSString(env, jValue);
-    (*env)->DeleteLocalRef(env, jValue);
-    return value;
+    NSMutableArray* queue;
 }
 
++ (QueuingApplicationDelegate*) sharedDelegate;
+
+- (id) init;
+- (void) dealloc;
+
+- (void)processQueuedEventsWithTargetDelegate:(id <NSApplicationDelegate>)delegate;
+
 @end
+

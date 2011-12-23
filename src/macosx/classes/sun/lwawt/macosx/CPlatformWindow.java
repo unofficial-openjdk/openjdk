@@ -36,6 +36,7 @@ import javax.swing.*;
 
 import sun.awt.*;
 import sun.java2d.SurfaceData;
+import sun.java2d.opengl.CGLSurfaceData;
 import sun.lwawt.*;
 import sun.lwawt.LWWindowPeer.PeerType;
 import sun.util.logging.PlatformLogger;
@@ -62,8 +63,11 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     private static native int nativeGetScreenNSWindowIsOn_AppKitThread(long nsWindowPtr);
 
+    private static native boolean nativeIsApplicationActive();
+
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
+    private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.lwawt.macosx.focus.CPlatformWindow");
 
     // for client properties
     public static final String WINDOW_BRUSH_METAL_LOOK = "apple.awt.brushMetalLook";
@@ -167,6 +171,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         }},
         new Property<CPlatformWindow>(WINDOW_ZOOMABLE) { public void applyProperty(final CPlatformWindow c, final Object value) {
             c.setStyleBits(ZOOMABLE, Boolean.parseBoolean(value.toString()));
+        }},
+        new Property<CPlatformWindow>(WINDOW_FULLSCREENABLE) { public void applyProperty(final CPlatformWindow c, final Object value) {
+            c.setStyleBits(FULLSCREENABLE, Boolean.parseBoolean(value.toString()));
         }},
         new Property<CPlatformWindow>(WINDOW_SHADOW_REVALIDATE_NOW) { public void applyProperty(final CPlatformWindow c, final Object value) {
             nativeRevalidateNSWindowShadow(c.getNSWindowPtr());
@@ -570,6 +577,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public void setMinimumSize(int width, int height) {
+        //TODO width, height should be used
         final long nsWindowPtr = getNSWindowPtr();
         final Dimension min = target.getMinimumSize();
         final Dimension max = target.getMaximumSize();
@@ -578,7 +586,16 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public boolean requestWindowFocus(boolean isMouseEventCause) {
-        // TODO: ask if the native system is to assign focus on the NSWindow.
+        if (!isMouseEventCause && !nativeIsApplicationActive()) {
+            focusLog.fine("the app is inactive, so the window activation is rejected");
+            // Cross-app activation requests are not allowed.
+            return false;
+        }
+        long ptr = getNSWindowPtr();
+        if (CWrapper.NSWindow.canBecomeMainWindow(ptr)) {
+            CWrapper.NSWindow.makeMainWindow(ptr);
+        }
+        CWrapper.NSWindow.makeKeyAndOrderFront(ptr);
         return true;
     }
 
@@ -602,6 +619,15 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public void setOpacity(float opacity) {
         CWrapper.NSWindow.setAlphaValue(getNSWindowPtr(), opacity);
+    }
+
+    @Override
+    public void setOpaque(boolean isOpaque) {
+        CWrapper.NSWindow.setOpaque(getNSWindowPtr(), isOpaque);
+        if (!isOpaque) {
+            long clearColor = CWrapper.NSColor.clearColor();
+            CWrapper.NSWindow.setBackgroundColor(getNSWindowPtr(), clearColor);
+        }
     }
 
     @Override
@@ -720,13 +746,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     private void validateSurface() {
-        // on other platforms we create a new SurfaceData for every
-        // live resize step, but on Mac OS X we just resize the onscreen
-        // surface directly
-        //TODO: by the time we come here first time we don't have surface yet
         SurfaceData surfaceData = getSurfaceData();
-        if (surfaceData != null) {
-            ((sun.java2d.opengl.CGLSurfaceData)surfaceData).setBounds();
+        if (surfaceData instanceof CGLSurfaceData) {
+            ((CGLSurfaceData)surfaceData).validate();
         }
     }
 
@@ -746,6 +768,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         nativeBounds = new Rectangle(x, y, width, height);
         peer.notifyReshape(x, y, width, height);
+        //TODO validateSurface already called from notifyReshape
         validateSurface();
     }
 

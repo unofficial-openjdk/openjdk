@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,53 @@
 # questions.
 #
 
-FILES_c = \
-	Utilities.c \
-	Platform.c
+BUILDDIR = ../..
+LIBRARY = osxapp
+PRODUCT = sun
+include $(BUILDDIR)/common/Defs.gmk
 
-FILES_solaris = \
-	PLATFORM_API_SolarisOS_Utils.c \
-	PLATFORM_API_SolarisOS_Ports.c \
-	PLATFORM_API_SolarisOS_PCM.c
+#
+# Files
+#
+FILES_objc = \
+	NSApplicationAWT.m \
+	QueuingApplicationDelegate.m \
+	PropertiesUtilities.m \
+	ThreadUtilities.m
 
-FILES_linux = 
+#
+# Rules.
+#
+include $(BUILDDIR)/common/Library.gmk
 
-FILES_bsd =
+#
+# Add to the ambient vpath to pick up files in subdirectories
+#
+vpath %.m   $(call NativeSrcDirList,,native/sun/osxapp)
 
-FILES_macosx = \
-    PLATFORM_API_MacOSX_MidiIn.c \
-    PLATFORM_API_MacOSX_MidiOut.c \
-    PLATFORM_API_MacOSX_MidiUtils.c
+# TODO: perhaps not all of the below frameworks are required
+OTHER_LDLIBS += \
+	-framework Accelerate \
+	-framework ApplicationServices \
+	-framework AudioToolbox \
+	-framework Carbon \
+	-framework Cocoa \
+	-framework Security \
+	-framework ExceptionHandling \
+	-framework JavaNativeFoundation \
+	-framework JavaRuntimeSupport \
+	-framework OpenGL \
+	-framework IOSurface \
+	-framework QuartzCore
 
-FILES_cpp_macosx = \
-    PLATFORM_API_MacOSX_Utils.cpp \
-    PLATFORM_API_MacOSX_PCM.cpp \
-    PLATFORM_API_MacOSX_Ports.cpp
+CPPFLAGS += \
+        $(call NativeSrcDirList,-I,/native/sun/osxapp)
 
-FILES_windows = \
-	PLATFORM_API_WinOS_MidiIn.c \
-	PLATFORM_API_WinOS_MidiOut.c \
-	PLATFORM_API_WinOS_Util.c \
-	PLATFORM_API_WinOS_Ports.c
 
-FILES_export = \
-	com/sun/media/sound/Platform.java
+ifeq ($(MILESTONE), internal)
+  CPPFLAGS += -DINTERNAL_BUILD
+endif
 
+clean clobber::
+
+.PHONY:

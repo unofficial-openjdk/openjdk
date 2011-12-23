@@ -28,7 +28,28 @@
 
 #import "CTrayIcon.h"
 #import "ThreadUtilities.h"
+#include "GeomUtilities.h"
 
+#define kImageInset 4.0
+
+/**
+ * If the image of the specified size won't fit into the status bar,
+ * then scale it down proprtionally. Otherwise, leave it as is.
+ */
+static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
+    NSRect imageRect = NSMakeRect(0.0, 0.0, imageSize.width, imageSize.height);
+    
+    // There is a black line at the bottom of the status bar  
+    // that we don't want to cover with image pixels.
+    CGFloat desiredHeight = [[NSStatusBar systemStatusBar] thickness] - 1.0;
+    CGFloat scaleFactor = MIN(1.0, desiredHeight/imageSize.height);
+    
+    imageRect.size.width *= scaleFactor;
+    imageRect.size.height *= scaleFactor;
+    imageRect = NSIntegralRect(imageRect);
+    
+    return imageRect.size;
+}
 
 @implementation AWTTrayIcon
 
@@ -37,14 +58,11 @@
 
     peer = thePeer;
 
-    theItem = [[NSStatusBar systemStatusBar] statusItemWithLength:30.0];
+    theItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];  
     [theItem retain];
 
-    [theItem setTitle: NSLocalizedString(@"123", @"")];
-    [theItem setHighlightMode:YES];
-
-    button = [[AWTNSButton alloc] initWithTrayIcon:self];
-    [theItem setView:button];
+    view = [[AWTTrayIconView alloc] initWithTrayIcon:self];
+    [theItem setView:view];
 
     return self;
 }
@@ -53,17 +71,14 @@
     JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
     JNFDeleteGlobalRef(env, peer);
 
-    [button release];
+    [view release];    
     [theItem release];
 
     [super dealloc];
 }
 
 - (void) setTooltip:(NSString *) tooltip{
-    [[self button] setToolTip:tooltip];
-}
-
-- (void) menuDidClose:(NSMenu *)menu {
+    [view setToolTip:tooltip];
 }
 
 -(NSStatusItem *) theItem{
@@ -74,38 +89,92 @@
     return peer;
 }
 
-
--(NSButton *)button{
-    return button;
+- (void) setImage:(NSImage *) imagePtr sizing:(BOOL)autosize{
+    NSSize imageSize = [imagePtr size];
+    NSSize scaledSize = ScaledImageSizeForStatusBar(imageSize);
+    if (imageSize.width != scaledSize.width || 
+        imageSize.height != scaledSize.height) {
+        [imagePtr setSize: scaledSize];
+    }
+    
+    [view setImage:imagePtr];
 }
 
-- (void) setImage:(NSImage *) imagePtr sizing:(BOOL)autosize{
-    //TODO: get rid of hardcoded constants.
-    [imagePtr setSize:NSMakeSize(20, 20)];
-    [button setImage:imagePtr];
+- (NSPoint) getLocationOnScreen {
+    return [[view window] convertBaseToScreen: NSZeroPoint];
 }
 
 @end //AWTTrayIcon
 //================================================
 
-@implementation AWTNSButton
+@implementation AWTTrayIconView
 
--(id)initWithTrayIcon:(AWTTrayIcon *)theTrayIcon {
-    NSRect rect;
-    rect.origin.x = 0;
-    rect.origin.y = 0;
-    rect.size.width = 30;
-    rect.size.height = 30;
-
-    self = [super initWithFrame:rect];
+-(id)initWithTrayIcon:(AWTTrayIcon *)theTrayIcon {    
+    self = [super initWithFrame:NSMakeRect(0, 0, 1, 1)];
 
     trayIcon = theTrayIcon;
-
-    [self setBordered:NO];
-
-    //if this line is missed then the tooltip doesn't appear
-    [self setToolTip:@""];
+    isHighlighted = NO;
+    image = nil;    
+        
     return self;
+}
+
+-(void) dealloc {
+    [image release];
+    [super dealloc];
+}
+
+- (void)setHighlighted:(BOOL)aFlag 
+{
+    if (isHighlighted != aFlag) {
+        isHighlighted = aFlag;
+        [self setNeedsDisplay:YES];
+    }
+}
+
+- (void)setImage:(NSImage*)anImage {
+    [anImage retain];
+    [image release];   
+    image = anImage;
+
+    CGFloat itemLength = [anImage size].width + 2.0*kImageInset;   
+    [trayIcon.theItem setLength:itemLength];
+
+    [self setNeedsDisplay:YES];
+}
+
+- (void)menuWillOpen:(NSMenu *)menu 
+{
+    [self setHighlighted:YES];
+}
+
+- (void)menuDidClose:(NSMenu *)menu 
+{
+    [menu setDelegate:nil];
+    [self setHighlighted:NO];
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    NSRect bounds = [self bounds];
+    NSSize imageSize = [image size];
+
+    NSRect drawRect = {{ (bounds.size.width - imageSize.width) / 2.0, 
+        (bounds.size.height - imageSize.height) / 2.0 }, imageSize};
+
+    // don't cover bottom pixels of the status bar with the image 
+    if (drawRect.origin.y < 1.0) {
+        drawRect.origin.y = 1.0;
+    }
+    drawRect = NSIntegralRect(drawRect);    
+    
+    [trayIcon.theItem drawStatusBarBackgroundInRect:bounds
+                                withHighlight:isHighlighted];       
+    [image drawInRect:drawRect 
+             fromRect:NSZeroRect 
+            operation:NSCompositeSourceOver 
+             fraction:1.0
+     ];
 }
 
 - (void) mouseDown:(NSEvent *)e {
@@ -117,11 +186,13 @@
     jlong res = JNFCallLongMethod(env, trayIcon.peer, jm_getPopupMenuModel);
     if (res != 0) {
         CPopupMenu *cmenu = jlong_to_ptr(res);
-        [trayIcon.theItem popUpStatusItemMenu:[cmenu menu]];
+        NSMenu* menu = [cmenu menu];
+        [menu setDelegate:self];
+        [trayIcon.theItem popUpStatusItemMenu:menu];
+        [self setNeedsDisplay:YES];        
     } else {
         JNFCallVoidMethod(env, trayIcon.peer, jm_performAction);
     }
-    [super mouseDown:e];
 }
 
 - (void) rightMouseDown:(NSEvent *)e {
@@ -130,23 +201,10 @@
     static JNF_CLASS_CACHE(jc_CTrayIcon, "sun/lwawt/macosx/CTrayIcon");
     static JNF_MEMBER_CACHE(jm_performAction, jc_CTrayIcon, "performAction", "()V");
     JNFCallVoidMethod(env, trayIcon.peer, jm_performAction);
-    [super rightMouseDown:e];
 }
 
-- (void) otherMouseDown:(NSEvent *)e { }
 
-- (void) mouseUp:(NSEvent *)e{
-    [super mouseUp:e];
-}
-- (void) rightMouseUp:(NSEvent *)e { }
-
-- (void) otherMouseUp:(NSEvent *)e { }
-
-- (void) mouseEntered:(NSEvent *)e { }
-
-- (void) mouseExited:(NSEvent *)e { }
-
-@end //AWTNSButton
+@end //AWTTrayIconView
 //================================================
 
 /*
@@ -219,3 +277,26 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
 JNF_COCOA_EXIT(env);
 }
 
+JNIEXPORT jobject JNICALL
+Java_sun_lwawt_macosx_CTrayIcon_nativeGetIconLocation
+(JNIEnv *env, jobject self, jlong model) {
+    jobject jpt = NULL;
+
+JNF_COCOA_ENTER(env);
+AWT_ASSERT_NOT_APPKIT_THREAD;
+  
+    __block NSPoint pt = NSZeroPoint;
+    AWTTrayIcon *icon = jlong_to_ptr(model);
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        AWT_ASSERT_APPKIT_THREAD;
+    
+        NSPoint loc = [icon getLocationOnScreen];        
+        pt = ConvertNSScreenPoint(env, loc);
+    }];
+
+    jpt = NSToJavaPoint(env, pt);
+   
+JNF_COCOA_EXIT(env);
+    
+    return jpt;
+}

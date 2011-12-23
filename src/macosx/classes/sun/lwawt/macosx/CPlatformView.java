@@ -35,6 +35,7 @@ import sun.lwawt.macosx.event.NSEvent;
 
 import sun.java2d.SurfaceData;
 import sun.java2d.opengl.CGLLayer;
+import sun.java2d.opengl.CGLSurfaceData;
 
 public class CPlatformView extends CFRetainedResource {
     private native long nativeCreateView(int x, int y, int width, int height, long windowLayerPtr);
@@ -49,12 +50,19 @@ public class CPlatformView extends CFRetainedResource {
 
     public void initialize(LWWindowPeer peer) {
         this.peer = peer;
-        this.windowLayer = new CGLLayer();
-        setPtr(nativeCreateView(0, 0, 0, 0, windowLayer.getPointer()));
+
+        if (!LWCToolkit.getSunAwtDisableCALayers()) {
+            this.windowLayer = new CGLLayer(peer);
+        }
+        setPtr(nativeCreateView(0, 0, 0, 0, getWindowLayerPtr()));
     }
 
     public long getAWTView() {
         return ptr;
+    }
+
+    public boolean isOpaque() {
+        return peer.isOpaque();
     }
 
     /*
@@ -120,28 +128,29 @@ public class CPlatformView extends CFRetainedResource {
         Rectangle r = peer.getBounds();
         Image im = null;
         if (!r.isEmpty()) {
-            im = peer.getGraphicsConfiguration().createCompatibleImage(r.width, r.height);
+            int transparency = (isOpaque() ? Transparency.OPAQUE : Transparency.TRANSLUCENT);
+            im = peer.getGraphicsConfiguration().createCompatibleImage(r.width, r.height, transparency);
         }
         return im;
     }
 
     public SurfaceData replaceSurfaceData() {
-        if (surfaceData == null) {
-            CGraphicsConfig graphicsConfig = (CGraphicsConfig)peer.getGraphicsConfiguration();
-            surfaceData = graphicsConfig.createSurfaceData(this);
+        if (!LWCToolkit.getSunAwtDisableCALayers()) {
+            surfaceData = windowLayer.replaceSurfaceData();
         } else {
-            validateSurface();
+            if (surfaceData == null) {
+                CGraphicsConfig graphicsConfig = (CGraphicsConfig)peer.getGraphicsConfiguration();
+                surfaceData = graphicsConfig.createSurfaceData(this);
+            } else {
+                validateSurface();
+            }
         }
         return surfaceData;
     }
 
     private void validateSurface() {
-        // on other platforms we create a new SurfaceData for every
-        // live resize step, but on Mac OS X we just resize the onscreen
-        // surface directly
-        // TODO: by the time we come here first time we don't have surface yet
         if (surfaceData != null) {
-            ((sun.java2d.opengl.CGLSurfaceData)surfaceData).setBounds();
+            ((CGLSurfaceData)surfaceData).validate();
         }
     }
 
@@ -155,12 +164,18 @@ public class CPlatformView extends CFRetainedResource {
 
     @Override
     public void dispose() {
-        windowLayer.dispose();
+        if (!LWCToolkit.getSunAwtDisableCALayers()) {
+            windowLayer.dispose();
+        }
         super.dispose();
     }
 
-    public long getWindowLayer() {
-        return windowLayer.getPointer();
+    public long getWindowLayerPtr() {
+        if (!LWCToolkit.getSunAwtDisableCALayers()) {
+            return windowLayer.getPointer();
+        } else {
+            return 0;
+        }
     }
 
     // ----------------------------------------------------------------------
@@ -176,7 +191,7 @@ public class CPlatformView extends CFRetainedResource {
         int jY = getBounds().height - event.getY();
         int jAbsX = event.getAbsX();
         int jAbsY = event.getAbsY();
-        int jButton = NSEvent.nsButtonToJavaButton(event.getButton());
+        int jButton = NSEvent.nsButtonToJavaButton(event);
         int jClickCount = event.getClickCount();
         double wheelDeltaY = event.getScrollDeltaY();
         double wheelDeltaX = event.getScrollDeltaX();

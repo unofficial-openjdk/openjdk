@@ -40,7 +40,11 @@
 // codepath that uses a FBO backed with a texture as an intermediate buffer.
 // Java2D OpenGL rendering pipe performs rendering to the intermediate buffer
 // and CAOpenGLLayer copies the entire intermediate buffer to layer.
-#define USE_INTERMEDIATE_BUFFER 1
+
+// The prototype implementation creates a CAOpenGLLayer tied to a NSView/NSWindow.
+// To provide purely offscreen CAOpenGLLayer, disable the prototype and
+// enable the alternative codepath implemented as a part of MACOSX_PORT-766.
+//#define USE_INTERMEDIATE_BUFFER 1
 
 // Uncomment the next line to enable using IO Surface based drawing.
 // It has to be used *in conjunction* with USE_INTERMEDIATE_BUFFERS

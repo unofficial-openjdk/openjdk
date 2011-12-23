@@ -26,12 +26,12 @@
 package sun.lwawt;
 
 import sun.awt.SunGraphicsCallback;
+import sun.java2d.pipe.Region;
 
 import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.event.PaintEvent;
 import java.awt.peer.ContainerPeer;
 import java.util.LinkedList;
 import java.util.List;
@@ -133,39 +133,32 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
         }
     }
 
-    /*
-     * Called by the container when any part of this peer or child
-     * peers should be repainted
-     */
     @Override
-    public void handleExpose(int x, int y, int w, int h) {
-        // First, post the PaintEvent for this peer
-        super.handleExpose(x, y, w, h);
-
-        // Second, handle all the children
-        // Use the straight order of children, so the bottom
-        // ones are painted first
-        for (LWComponentPeer child : getChildren()) {
-            Rectangle r = child.getBounds();
-            int paintX = Math.max(0, x - r.x);
-            int paintY = Math.max(0, y - r.y);
-            int paintW = Math.min(w, r.width - paintX);
-            int paintH = Math.min(h, r.height - paintY);
-            child.handleExpose(paintX, paintY, paintW, paintH);
-        }
+    public final Region getVisibleRegion() {
+        return cutChildren(super.getVisibleRegion(), null);
     }
 
-    /*
-     * Handler for PAINT and UPDATE PaintEvents.
+    /**
+     * Removes bounds of children above specific child from the region. If above
+     * is null removes all bounds of children.
      */
-    protected void handleJavaPaintEvent(PaintEvent e) {
-        super.handleJavaPaintEvent(e);
-        // Now this peer and its target are painted. However, when
-        // the target painting may have corrupted some children, so
-        // we should restore them from the window back buffer.
-        for (LWComponentPeer child : getChildren()) {
-            child.restorePeer();
+    protected final Region cutChildren(Region r, final LWComponentPeer above) {
+        boolean aboveFound = above == null;
+        for (final LWComponentPeer child : getChildren()) {
+            if (!aboveFound && child == above) {
+                aboveFound = true;
+                continue;
+            }
+            if (aboveFound) {
+                if(child.isVisible()){
+                    final Rectangle cb = child.getBounds();
+                    final Region cr = child.getRegion();
+                    final Region tr = cr.getTranslatedRegion(cb.x, cb.y);
+                    r = r.getDifference(tr.getIntersection(getContentSize()));
+                }
+            }
         }
+        return r;
     }
 
     // ---- UTILITY METHODS ---- //
@@ -196,44 +189,40 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     /*
-     * Overrides peerPaint() to paint all the children.
-     */
+    * Called by the container when any part of this peer or child
+    * peers should be repainted
+    */
     @Override
-    protected void peerPaint(Graphics g, Rectangle r) {
-        Rectangle b = getBounds();
-        if (!isShowing() || r.isEmpty() ||
-                !r.intersects(new Rectangle(0, 0, b.width, b.height))) {
+    public final void repaintPeer(final Rectangle r) {
+        final Rectangle toPaint = getSize().intersection(r);
+        if (!isShowing() || toPaint.isEmpty()) {
             return;
         }
-        // First, paint myself
-        super.peerPaint(g, r);
-        // Second, paint all the children
-        peerPaintChildren(r);
+        // First, post the PaintEvent for this peer
+        super.repaintPeer(toPaint);
+        // Second, handle all the children
+        // Use the straight order of children, so the bottom
+        // ones are painted first
+        repaintChildren(toPaint);
     }
 
     /*
-     * Paints all the child peers in the straight z-order, so the
-     * bottom-most ones are painted first.
-     */
-    protected void peerPaintChildren(Rectangle r) {
-        for (LWComponentPeer child : getChildren()) {
-            Graphics cg = child.getOffscreenGraphics();
-            try {
-                Rectangle toPaint = new Rectangle(r);
-                Rectangle childBounds = child.getBounds();
-                toPaint = toPaint.intersection(childBounds);
-                toPaint = toPaint.intersection(getContentSize());
-                toPaint.translate(-childBounds.x, -childBounds.y);
-                child.peerPaint(cg, toPaint);
-            } finally {
-                cg.dispose();
-            }
+    * Paints all the child peers in the straight z-order, so the
+    * bottom-most ones are painted first.
+    */
+    private void repaintChildren(final Rectangle r) {
+        final Rectangle content = getContentSize();
+        for (final LWComponentPeer child : getChildren()) {
+            final Rectangle childBounds = child.getBounds();
+            Rectangle toPaint = r.intersection(childBounds);
+            toPaint = toPaint.intersection(content);
+            toPaint.translate(-childBounds.x, -childBounds.y);
+            child.repaintPeer(toPaint);
         }
     }
 
     protected Rectangle getContentSize() {
-        Rectangle r = getBounds();
-        return new Rectangle(r.width, r.height);
+        return getSize();
     }
 
     @Override
@@ -245,7 +234,7 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void paint(final Graphics g) {
+    public final void paint(final Graphics g) {
         super.paint(g);
         SunGraphicsCallback.PaintHeavyweightComponentsCallback.getInstance().
             runComponents(getTarget().getComponents(), g,
@@ -254,7 +243,7 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
-    public void print(final Graphics g) {
+    public final void print(final Graphics g) {
         super.print(g);
         SunGraphicsCallback.PrintHeavyweightComponentsCallback.getInstance().
             runComponents(getTarget().getComponents(), g,

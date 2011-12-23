@@ -81,6 +81,15 @@ AWT_ASSERT_APPKIT_THREAD;
     fInPressAndHold = NO;
     fPAHNeedsToSelect = NO;
 
+    if (windowLayer != nil) { 
+        self.cglLayer = windowLayer;
+        [self setWantsLayer: YES];
+        [self.layer addSublayer: (CALayer *)cglLayer];
+        [self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
+        [self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
+        [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];    
+    }
+    
 #if USE_INTERMEDIATE_BUFFER
     self.cglLayer = windowLayer;
     [self setWantsLayer: YES];
@@ -115,6 +124,7 @@ AWT_ASSERT_APPKIT_THREAD;
 - (void) dealloc {
 AWT_ASSERT_APPKIT_THREAD;
 
+    self.cglLayer = nil;
 #if USE_INTERMEDIATE_BUFFER
     self.cglLayer = nil;
 #endif
@@ -298,6 +308,7 @@ AWT_ASSERT_APPKIT_THREAD;
     NSPoint eventLocation = [event locationInWindow];
     NSPoint localPoint = [self convertPoint: eventLocation fromView: nil];
     NSPoint absP = [NSEvent mouseLocation];
+    NSEventType type = [event type];
 
     // Convert global numbers between Cocoa's coordinate system and Java.
     // TODO: need consitent way for doing that both with global as well as with local coordinates.
@@ -307,19 +318,20 @@ AWT_ASSERT_APPKIT_THREAD;
     absP.y = screenRect.size.height - absP.y;
     jint clickCount;
 
-    if ([event type] == NSMouseEntered ||
-    [event type] == NSMouseExited ||
-    [event type] == NSScrollWheel) {
+    if (type == NSMouseEntered || 
+        type == NSMouseExited || 
+        type == NSScrollWheel ||
+        type == NSMouseMoved) {
         clickCount = 0;
     } else {
         clickCount = [event clickCount];
     }
-
+    
     jint modifiers = GetJavaMouseModifiers(event);
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
     static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IIIIIIIIDD)V");
     jobject jEvent = JNFNewObject(env, jctor_NSEvent,
-                                  [event type],
+                                  type, 
                                   modifiers,
                                   clickCount,
                                   [event buttonNumber],

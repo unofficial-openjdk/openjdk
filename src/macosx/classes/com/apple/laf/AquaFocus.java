@@ -41,7 +41,7 @@ import com.apple.laf.AquaUtils.Painter;
 
 public class AquaFocus {
     interface Drawable {
-        public void draw(final SunGraphics2D sg2d);
+        public void draw(final Graphics2D sg2d);
     }
 
     static boolean paintFocus(final Graphics g, final Drawable drawable) {

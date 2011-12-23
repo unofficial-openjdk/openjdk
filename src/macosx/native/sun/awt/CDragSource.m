@@ -563,6 +563,8 @@ static BOOL                sNeedsEnter;
         JNF_MEMBER_CACHE(dragDropFinishedMethod, CDragSourceContextPeerClass, "dragDropFinished", "(ZIII)V");
         DLog3(@"  -> posting dragDropFinished, point %f, %f", point.x, point.y);
         JNFCallVoidMethod(env, fDragSourceContextPeer, dragDropFinishedMethod, success, dragOp, (jint) point.x, (jint) point.y); // AWT_THREADING Safe (event)
+		JNF_MEMBER_CACHE(resetHoveringMethod, CDragSourceContextPeerClass, "resetHovering", "()V");
+        JNFCallVoidMethod(env, fDragSourceContextPeer, resetHoveringMethod); // Hust reset static variable
     } @finally {
         // Clear the current DragSource
         sCurrentDragSource = nil;

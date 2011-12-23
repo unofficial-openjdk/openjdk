@@ -142,9 +142,13 @@ static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
     if (IS(mask, DOCUMENT_MODIFIED)) {
         [self setDocumentEdited:IS(bits, DOCUMENT_MODIFIED)];
     }
-
-    if ([self respondsToSelector:@selector(toggleFullScreen:)] && IS(mask, FULLSCREENABLE)) {
-        [self setCollectionBehavior:(1 << 7) /*NSWindowCollectionBehaviorFullScreenPrimary*/];
+    
+    if ([self respondsToSelector:@selector(toggleFullScreen:)]) {
+        if (IS(mask, FULLSCREENABLE)) {
+            [self setCollectionBehavior:(1 << 7) /*NSWindowCollectionBehaviorFullScreenPrimary*/];
+        } else {
+            [self setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+        }
     }
 
 }
@@ -928,16 +932,30 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow__1toggleFullScreenM
 JNF_COCOA_ENTER(env);
 
     AWTWindow *window = OBJC(windowPtr);
-    if (![window respondsToSelector:@selector(toggleFullScreen:)]) return;
+    SEL toggleFullScreenSelector = @selector(toggleFullScreen:);
+    if (![window respondsToSelector:toggleFullScreenSelector]) return;
 
-        [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
-                [window toggleFullScreen:nil];
-        }];
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+        [window performSelector:toggleFullScreenSelector withObject:nil];
+    }];
 
 JNF_COCOA_EXIT(env);
 }
 
+/*
+ * Class:     sun_lwawt_macosx_CPlatformWindow
+ * Method:    isApplicationActive
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeIsApplicationActive
+(JNIEnv *env, jclass clazz)
+{
+JNF_COCOA_ENTER(env);
 
+    return (jboolean)[NSRunningApplication currentApplication].active;
+
+JNF_COCOA_EXIT(env);
+}
 
 JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CMouseInfoPeer_nativeIsWindowUnderMouse
 (JNIEnv *env, jclass clazz, jlong windowPtr)

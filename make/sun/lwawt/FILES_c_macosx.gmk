@@ -25,7 +25,6 @@
 
 FILES_objc = \
         awt.m \
-        NSApplicationAWT.m \
         ApplicationDelegate.m \
         CFRetainedResource.m \
         CGLGraphicsConfig.m \
@@ -72,9 +71,7 @@ FILES_objc = \
         JavaComponentAccessibility.m \
         JavaTextAccessibility.m \
         LWCToolkit.m \
-        ThreadUtilities.m \
         GeomUtilities.m \
-        PropertiesUtilities.m \
         CPrinterJob.m \
         PrintModel.m \
         PrinterSurfaceData.m \

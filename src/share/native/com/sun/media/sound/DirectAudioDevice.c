@@ -27,8 +27,8 @@
  * - move all the conversion code into an own file
  */
 
-#define USE_TRACE
-#define USE_ERROR
+//#define USE_TRACE
+//#define USE_ERROR
 
 
 #include <jni.h>

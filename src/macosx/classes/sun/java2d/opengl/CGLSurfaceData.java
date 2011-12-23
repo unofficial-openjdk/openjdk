@@ -44,16 +44,16 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
     protected CPlatformView pView;
     private CGLGraphicsConfig graphicsConfig;
 
-    // Mac OS X specific - we never recreate surfaces, just resize them
-    native void resize(int xoff, int yoff, int width, int height);
+    native void validate(int xoff, int yoff, int width, int height, boolean isOpaque);
 
-    private native void initOps(long pConfigInfo, long pPeerData, int xoff, int yoff);
+    private native void initOps(long pConfigInfo, long pPeerData, long layerPtr,
+                                int xoff, int yoff, boolean isOpaque);
 
     protected native boolean initPbuffer(long pData, long pConfigInfo,
             boolean isOpaque, int width, int height);
 
     protected CGLSurfaceData(CPlatformView pView, CGLGraphicsConfig gc,
-            ColorModel cm, int type)
+                             ColorModel cm, int type)
     {
         super(gc, cm, type);
         this.pView = pView;
@@ -61,10 +61,28 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
 
         long pConfigInfo = gc.getNativeConfigInfo();
         long pPeerData = 0L;
+        boolean isOpaque = true;
         if (pView != null) {
             pPeerData = pView.getAWTView();
+            isOpaque = pView.isOpaque();
         }
-        initOps(pConfigInfo, pPeerData, 0, 0);
+        initOps(pConfigInfo, pPeerData, 0, 0, 0, isOpaque);
+    }
+
+    protected CGLSurfaceData(CGLLayer layer, CGLGraphicsConfig gc,
+                             ColorModel cm, int type)
+    {
+        super(gc, cm, type);
+        this.graphicsConfig = gc;
+
+        long pConfigInfo = gc.getNativeConfigInfo();
+        long layerPtr = 0L;
+        boolean isOpaque = true;
+        if (layer != null) {
+            layerPtr = layer.getPointer();
+            isOpaque = layer.isOpaque();
+        }
+        initOps(pConfigInfo, 0, layerPtr, 0, 0, isOpaque);
     }
 
     @Override //SurfaceData
@@ -79,6 +97,16 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
     public static CGLWindowSurfaceData createData(CPlatformView pView) {
         CGLGraphicsConfig gc = getGC(pView);
         return new CGLWindowSurfaceData(pView, gc);
+    }
+
+    /**
+     * Creates a SurfaceData object representing the intermediate buffer
+     * between the Java2D flusher thread and the AppKit thread.
+     */
+    public static CGLLayerSurfaceData createData(CGLLayer layer) {
+        CGLGraphicsConfig gc = getGC(layer);
+        Rectangle r = layer.getBounds();
+        return new CGLLayerSurfaceData(layer, gc, r.width, r.height);
     }
 
     /**
@@ -115,13 +143,17 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
             // REMIND: this should rarely (never?) happen, but what if
             // default config is not CGL?
             GraphicsEnvironment env = GraphicsEnvironment
-                    .getLocalGraphicsEnvironment();
+                .getLocalGraphicsEnvironment();
             GraphicsDevice gd = env.getDefaultScreenDevice();
             return (CGLGraphicsConfig) gd.getDefaultConfiguration();
         }
     }
 
-    public void setBounds() {
+    public static CGLGraphicsConfig getGC(CGLLayer layer) {
+        return (CGLGraphicsConfig)layer.getGraphicsConfiguration();
+    }
+
+    public void validate() {
         // Overridden in CGLWindowSurfaceData below
     }
 
@@ -153,21 +185,74 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
             return pView.getDestination();
         }
 
-        // Mac OS X specific - we never recreate surfaces, just resize them
-        public void setBounds() {
+        public void validate() {
             OGLRenderQueue rq = OGLRenderQueue.getInstance();
             rq.lock();
             try {
                 rq.flushAndInvokeNow(new Runnable() {
                     public void run() {
-                        // Component c = peer.getTarget();
                         Rectangle peerBounds = pView.getBounds();
-                        resize(0, 0, peerBounds.width, peerBounds.height);
+                        validate(0, 0, peerBounds.width, peerBounds.height, pView.isOpaque());
                     }
                 });
             } finally {
                 rq.unlock();
             }
+        }
+
+        @Override
+        public void invalidate() {
+            super.invalidate();
+            clearWindow();
+        }
+    }
+
+    /**
+     * A surface which implements an intermediate buffer between
+     * the Java2D flusher thread and the AppKit thread.
+     *
+     * This surface serves as a buffer attached to a CGLLayer and
+     * the layer redirects all painting to the buffer's graphics.
+     */
+    public static class CGLLayerSurfaceData extends CGLSurfaceData {
+
+        private CGLLayer layer;
+        private int width, height;
+
+        public CGLLayerSurfaceData(CGLLayer layer, CGLGraphicsConfig gc,
+                                   int width, int height) {
+            super(layer, gc, gc.getColorModel(), FBOBJECT);
+
+            this.width = width;
+            this.height = height;
+            this.layer = layer;
+
+            initSurface(width, height);
+        }
+
+        @Override
+        public SurfaceData getReplacement() {
+            return layer.getSurfaceData();
+        }
+
+        @Override
+        boolean isOnScreen() {
+            return true;
+        }
+
+        @Override
+        public Rectangle getBounds() {
+            return new Rectangle(width, height);
+        }
+
+        @Override
+        public Object getDestination() {
+            return layer.getDestination();
+        }
+
+        @Override
+        public int getTransparency() {
+            return layer.getTransparency();
         }
 
         @Override
@@ -214,8 +299,8 @@ public abstract class CGLSurfaceData extends OGLSurfaceData {
         private int width, height;
 
         public CGLOffScreenSurfaceData(CPlatformView pView,
-                CGLGraphicsConfig gc, int width, int height, Image image,
-                ColorModel cm, int type) {
+                                       CGLGraphicsConfig gc, int width, int height, Image image,
+                                       ColorModel cm, int type) {
             super(pView, gc, cm, type);
 
             this.width = width;

@@ -59,6 +59,7 @@ ifneq ($(PLATFORM), windows)
 endif
 
 ifeq ($(PLATFORM), macosx)
+  LWAWT_PRE_SUBDIR = osxapp
   LWAWT_SUBDIR = lwawt
 endif
 
@@ -85,7 +86,7 @@ else
   DISPLAY_TOOLS = applet
 endif
 SUBDIRS_desktop    = audio $(RENDER_SUBDIR) image \
-                     $(DISPLAY_LIBS) $(DGA_SUBDIR) $(LWAWT_SUBDIR) \
+                     $(LWAWT_PRE_SUBDIR) $(DISPLAY_LIBS) $(DGA_SUBDIR) $(LWAWT_SUBDIR) \
                      jawt font jpeg cmm $(DISPLAY_TOOLS) beans
 SUBDIRS_management = management
 SUBDIRS_misc       = $(ORG_SUBDIR) rmi $(JDBC_SUBDIR) tracing

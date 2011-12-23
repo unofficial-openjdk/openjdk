@@ -188,7 +188,7 @@ public class StructOffsetResolver {
     protected static String compileObjC(String nativeSrc, Width arch) throws Exception {
         String execPath = nativeSrc.replace(".mm", "");
         Process p = Runtime.getRuntime().exec(new String[]{
-                "g++", "-Wall", gccFlag.get(arch), "-ObjC++", "-framework", "Foundation", "-o", execPath, nativeSrc
+                "llvm-g++", "-Wall", gccFlag.get(arch), "-ObjC++", "-framework", "Foundation", "-o", execPath, nativeSrc
         });
         BufferedReader stdout = new BufferedReader(new InputStreamReader(p.getInputStream()));
         BufferedReader stderr = new BufferedReader(new InputStreamReader(p.getErrorStream()));

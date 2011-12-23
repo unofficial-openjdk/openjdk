@@ -23,9 +23,11 @@
  * questions.
  */
 
+
 package sun.lwawt;
 
-import java.awt.AWTEvent;
+import java.awt.Adjustable;
+import java.awt.Dimension;
 import java.awt.Scrollbar;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
@@ -33,42 +35,46 @@ import java.awt.peer.ScrollbarPeer;
 
 import javax.swing.JScrollBar;
 
-public class LWScrollBarPeer
-    extends LWComponentPeer<Scrollbar, JScrollBar>
-    implements ScrollbarPeer, AdjustmentListener
-{
+final class LWScrollBarPeer extends LWComponentPeer<Scrollbar, JScrollBar>
+        implements ScrollbarPeer, AdjustmentListener {
+
     //JScrollBar fires two changes with firePropertyChange (one for old value
     // and one for new one.
     // We save the last value and don't fire event if not changed.
     private int currentValue;
 
-    public LWScrollBarPeer(Scrollbar target, PlatformComponent platformComponent) {
+    LWScrollBarPeer(final Scrollbar target,
+                    final PlatformComponent platformComponent) {
         super(target, platformComponent);
-        this.currentValue = target.getValue();
-
-        synchronized (getDelegateLock()) {
-            getDelegate().setOrientation(
-                            target.getOrientation() == Scrollbar.HORIZONTAL ? JScrollBar.HORIZONTAL
-                                    : JScrollBar.VERTICAL);
-            getDelegate().setValue(target.getValue());
-            getDelegate().setMinimum(target.getMinimum());
-            getDelegate().setMaximum(target.getMaximum());
-            getDelegate().setVisibleAmount(target.getVisibleAmount());
-            getDelegate().addAdjustmentListener(this);
-        }
     }
 
     @Override
     protected JScrollBar createDelegate() {
-        JScrollBar delegate = new JScrollBar();
-        delegate.setBackground(getTarget().getBackground());
-        delegate.setForeground(getTarget().getForeground());
-        return delegate;
+        return new JScrollBar();
     }
 
-    public void setValues(int value, int visible, int minimum, int maximum) {
+    @Override
+    public void initialize() {
+        super.initialize();
+        final Scrollbar target = getTarget();
+        setValues(target.getValue(), target.getVisibleAmount(),
+                  target.getMinimum(), target.getMaximum());
+
+        final int orientation = target.getOrientation();
+        final JScrollBar delegate = getDelegate();
         synchronized (getDelegateLock()) {
-            this.currentValue = value;
+            delegate.setOrientation(orientation == Scrollbar.HORIZONTAL
+                                    ? Adjustable.HORIZONTAL
+                                    : Adjustable.VERTICAL);
+            delegate.addAdjustmentListener(this);
+        }
+    }
+
+    @Override
+    public void setValues(final int value, final int visible, final int minimum,
+                          final int maximum) {
+        synchronized (getDelegateLock()) {
+            currentValue = value;
             getDelegate().setValue(value);
             getDelegate().setVisibleAmount(visible);
             getDelegate().setMinimum(minimum);
@@ -76,25 +82,36 @@ public class LWScrollBarPeer
         }
     }
 
-    public void setLineIncrement(int l) {
+    @Override
+    public void setLineIncrement(final int l) {
         synchronized (getDelegateLock()) {
             getDelegate().setUnitIncrement(l);
         }
     }
 
-    public void setPageIncrement(int l) {
+    @Override
+    public void setPageIncrement(final int l) {
         synchronized (getDelegateLock()) {
             getDelegate().setBlockIncrement(l);
         }
     }
 
+    @Override
+    public Dimension getPreferredSize() {
+        synchronized (getDelegateLock()) {
+            return getDelegate().getPreferredSize();
+        }
+    }
+
     // Peer also registered as a listener for ComponentDelegate component
     @Override
-    public void adjustmentValueChanged(AdjustmentEvent e) {
-        if (this.currentValue == e.getValue()) {
-            return;
+    public void adjustmentValueChanged(final AdjustmentEvent e) {
+        synchronized (getDelegateLock()) {
+            if (currentValue == e.getValue()) {
+                return;
+            }
+            currentValue = e.getValue();
         }
-        this.currentValue = e.getValue();
 
         // TODO: we always get event with the TRACK adj. type.
         // Could we check if we are over the ArrowButton and send event there?
@@ -102,5 +119,4 @@ public class LWScrollBarPeer
                                       e.getAdjustmentType(), e.getValue(),
                                       e.getValueIsAdjusting()));
     }
-
 }

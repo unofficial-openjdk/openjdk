@@ -93,10 +93,11 @@ CPPFLAGS += \
 	$(call NativeSrcDirList,-I,native/com/apple/laf) \
 	$(call NativeSrcDirList,-I,native/apple/awt) \
 	$(call NativeSrcDirList,-I,native/sun/awt) \
+	$(call NativeSrcDirList,-I,native/sun/osxapp) \
 	-I$(TEMPDIR)/../../sun.awt/awt/CClassHeaders
 
 OTHER_LDLIBS = \
-    -lawt \
+    -lawt -losxapp \
     -llwawt -L$(LIBDIR)/lwawt -Xlinker -rpath -Xlinker @loader_path/lwawt \
     -framework Cocoa \
     -framework Carbon \

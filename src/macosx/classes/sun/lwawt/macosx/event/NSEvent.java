@@ -25,6 +25,8 @@
 
 package sun.lwawt.macosx.event;
 
+import sun.lwawt.macosx.CocoaConstants;
+
 import java.awt.event.*;
 
 /*
@@ -114,15 +116,18 @@ public final class NSEvent {
     /*
      * Converts an NSEvent button number to a MouseEvent constant.
      */
-    public static int nsButtonToJavaButton(int nsButtonNumber) {
+    public static int nsButtonToJavaButton(NSEvent event) {
+        int nsButtonNumber = event.getButton();
         int jbutton = MouseEvent.NOBUTTON;
 
-        if (nsButtonNumber == 0) { // left
-            jbutton = MouseEvent.BUTTON1;
-        } else if (nsButtonNumber == 1) { // right
-            jbutton = MouseEvent.BUTTON3;
-        } else if (nsButtonNumber == 2) { // middle
-            jbutton = MouseEvent.BUTTON2;
+        if (event.getType() != CocoaConstants.NSMouseMoved) {
+            if (nsButtonNumber == 0) { // left
+                jbutton = MouseEvent.BUTTON1;
+            } else if (nsButtonNumber == 1) { // right
+                jbutton = MouseEvent.BUTTON3;
+            } else if (nsButtonNumber == 2) { // middle
+                jbutton = MouseEvent.BUTTON2;
+            }
         }
 
         return jbutton;

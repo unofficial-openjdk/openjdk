@@ -25,75 +25,96 @@
 
 package sun.lwawt;
 
-import java.awt.*;
-import java.awt.peer.ListPeer;
-
 import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.peer.ListPeer;
+import java.util.Arrays;
 
 final class LWListPeer
         extends LWComponentPeer<List, LWListPeer.ScrollableJList>
         implements ListPeer {
 
-    LWListPeer(List target, PlatformComponent platformComponent) {
+    LWListPeer(final List target, final PlatformComponent platformComponent) {
         super(target, platformComponent);
     }
 
+    @Override
     protected ScrollableJList createDelegate() {
         return new ScrollableJList();
+    }
+
+    public void initialize() {
+        super.initialize();
+        setMultipleMode(getTarget().isMultipleMode());
+        final int[] selectedIndices = getTarget().getSelectedIndexes();
+        synchronized (getDelegateLock()) {
+            getDelegate().getView().setSelectedIndices(selectedIndices);
+        }
     }
 
     public boolean isFocusable() {
         return true;
     }
 
+    @Override
     protected Component getDelegateFocusOwner() {
         return getDelegate().getView();
     }
 
+    @Override
     public int[] getSelectedIndexes() {
         synchronized (getDelegateLock()) {
             return getDelegate().getView().getSelectedIndices();
         }
     }
 
-    public void add(String item, int index) {
+    @Override
+    public void add(final String item, final int index) {
         synchronized (getDelegateLock()) {
-            getDelegate().getModel().addElement(item);
+            getDelegate().getModel().add(index, item);
         }
     }
 
-    public void delItems(int start, int end) {
+    @Override
+    public void delItems(final int start, final int end) {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().removeRange(start, end);
         }
     }
 
+    @Override
     public void removeAll() {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().removeAllElements();
         }
     }
 
-    public void select(int index) {
+    @Override
+    public void select(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().setSelectedIndex(index);
         }
     }
 
-    public void deselect(int index) {
+    @Override
+    public void deselect(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().getSelectionModel().
                     removeSelectionInterval(index, index);
         }
     }
 
-    public void makeVisible(int index) {
+    @Override
+    public void makeVisible(final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().ensureIndexIsVisible(index);
         }
     }
 
-    public void setMultipleMode(boolean m) {
+    @Override
+    public void setMultipleMode(final boolean m) {
         synchronized (getDelegateLock()) {
             getDelegate().getView().setSelectionMode(m ?
                     ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
@@ -101,29 +122,33 @@ final class LWListPeer
         }
     }
 
-    public Dimension getPreferredSize(int rows) {
+    @Override
+    public Dimension getPreferredSize(final int rows) {
         return getMinimumSize(rows);
     }
 
-    public Dimension getMinimumSize(int rows) {
+    @Override
+    public Dimension getMinimumSize(final int rows) {
         synchronized (getDelegateLock()) {
             final int margin = 2;
             final int space = 1;
 
             // TODO: count ScrollPane's scrolling elements if any.
-            FontMetrics fm = getFontMetrics(getFont());
-            int itemHeight = (fm.getHeight() - fm.getLeading()) + (2 * space);
+            final FontMetrics fm = getFontMetrics(getFont());
+            final int itemHeight = (fm.getHeight() - fm.getLeading()) + (2 * space);
 
-            return new Dimension(20 + (fm == null ? 10*15 : fm.stringWidth("0123456789abcde")),
+            return new Dimension(20 + (fm == null ? 10 * 15 : fm.stringWidth("0123456789abcde")),
                     (fm == null ? 10 : itemHeight) * rows + (2 * margin));
         }
     }
 
-    final class ScrollableJList extends JScrollPane {
+
+    final class ScrollableJList extends JScrollPane implements ListSelectionListener {
 
         private DefaultListModel<Object> model =
                 new DefaultListModel<Object>() {
-                    public void add(int index, Object element) {
+                    @Override
+                    public void add(final int index, final Object element) {
                         if (index == -1) {
                             addElement(element);
                         } else {
@@ -132,19 +157,41 @@ final class LWListPeer
                     }
                 };
 
+        private int[] oldSelectedIndices = new int[0];
+
         ScrollableJList() {
             getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-            JList<Object> list = new JList<Object>(model) {
-                public boolean hasFocus() {
-                    return getTarget().hasFocus();
-                }
-            };
+            final JList<Object> list = new JListDelegate();
+            list.addListSelectionListener(this);
+
             getViewport().setView(list);
 
             // Pull the items from the target.
-            String[] items = getTarget().getItems();
+            final String[] items = getTarget().getItems();
             for (int i = 0; i < items.length; i++) {
                 model.add(i, items[i]);
+            }
+        }
+
+        @Override
+        public void valueChanged(final ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+                final JList source = (JList) e.getSource();
+                for(int i = 0 ; i < source.getModel().getSize(); i++) {
+
+                    final boolean wasSelected = Arrays.binarySearch(oldSelectedIndices, i) >= 0;
+                    final boolean isSelected = source.isSelectedIndex(i);
+
+                    if (wasSelected == isSelected) {
+                        continue;
+                    }
+
+                    final int state = !wasSelected && isSelected ? ItemEvent.SELECTED: ItemEvent.DESELECTED;
+
+                    LWListPeer.this.postEvent(new ItemEvent(getTarget(), ItemEvent.ITEM_STATE_CHANGED,
+                            i, state));
+                }
+                oldSelectedIndices = source.getSelectedIndices();
             }
         }
 
@@ -158,28 +205,77 @@ final class LWListPeer
 
         @Override
         public void setEnabled(final boolean enabled) {
-            getViewport().getView().setEnabled(enabled);
+            getView().setEnabled(enabled);
             super.setEnabled(enabled);
         }
 
-        public void setBackground(Color bg) {
+        @Override
+        public void setBackground(final Color bg) {
             super.setBackground(bg);
             if (getView() != null) {
                 getView().setBackground(bg);
             }
         }
 
-        public void setForeground(Color fg) {
+        @Override
+        public void setForeground(final Color fg) {
             super.setForeground(fg);
             if (getView() != null) {
                 getView().setForeground(fg);
             }
         }
 
-        public void setFont(Font font) {
+        @Override
+        public void setFont(final Font font) {
             super.setFont(font);
             if (getView() != null) {
                 getView().setFont(font);
+            }
+        }
+
+        @Override
+        public void setOpaque(final boolean isOpaque) {
+            super.setOpaque(isOpaque);
+            if (getView() != null) {
+                getView().setOpaque(isOpaque);
+            }
+        }
+
+        private final class JListDelegate extends JList<Object> {
+
+            JListDelegate() {
+                super(ScrollableJList.this.model);
+            }
+
+            @Override
+            public boolean hasFocus() {
+                return getTarget().hasFocus();
+            }
+
+            @Override
+            protected void processMouseEvent(final MouseEvent e) {
+                super.processMouseEvent(e);
+                if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 2) {
+                    final int index = locationToIndex(e.getPoint());
+                    LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
+                            getModel().getElementAt(index).toString(), e.getWhen(), e.getModifiers()));
+                }
+            }
+
+            @Override
+            protected void processKeyEvent(final KeyEvent e) {
+                super.processKeyEvent(e);
+                if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    final int index = getSelectedIndex();
+                    LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
+                            getModel().getElementAt(index).toString(), e.getWhen(), e.getModifiers()));
+                }
+            }
+
+            //Needed for Autoscroller.
+            @Override
+            public Point getLocationOnScreen() {
+                return LWListPeer.this.getLocationOnScreen();
             }
         }
     }

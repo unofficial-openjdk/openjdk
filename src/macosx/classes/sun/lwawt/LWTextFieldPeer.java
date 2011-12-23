@@ -49,9 +49,7 @@ final class LWTextFieldPeer
 
     @Override
     protected JPasswordField createDelegate() {
-        final JPasswordField delegate = new JTextAreaDelegate();
-        delegate.setOpaque(true);
-        return delegate;
+        return new JTextAreaDelegate();
     }
 
     @Override

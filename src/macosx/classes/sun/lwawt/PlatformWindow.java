@@ -136,6 +136,8 @@ public interface PlatformWindow {
 
     public void setOpacity(float opacity);
 
+    public void setOpaque(boolean isOpaque);
+
     public void enterFullScreenMode();
 
     public void exitFullScreenMode();

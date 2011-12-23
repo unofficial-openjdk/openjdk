@@ -3300,22 +3300,8 @@ public class AquaTabbedPaneCopyFromBasicUI extends TabbedPaneUI implements Swing
             } else if (name == "displayedMnemonicIndexAt") {
                 pane.repaint();
             } else if (name == "indexForTitle") {
-                final int index = ((Integer)e.getNewValue()).intValue();
-                final String title = tabPane.getTitleAt(index);
-                if (BasicHTML.isHTMLString(title)) {
-                    if (htmlViews == null) { // Initialize vector
-                        htmlViews = createHTMLVector();
-                    } else { // Vector already exists
-                        final View v = BasicHTML.createHTMLView(tabPane, title);
-                        htmlViews.setElementAt(v, index);
-                    }
-                } else {
-                    if (htmlViews != null && htmlViews.elementAt(index) != null) {
-                        htmlViews.setElementAt(null, index);
-                    }
-                }
                 calculatedBaseline = false;
-                updateMnemonics();
+                updateHtmlViews((Integer) e.getNewValue());
             } else if (name == "tabLayoutPolicy") {
                 AquaTabbedPaneCopyFromBasicUI.this.uninstallUI(pane);
                 AquaTabbedPaneCopyFromBasicUI.this.installUI(pane);
@@ -3351,6 +3337,9 @@ public class AquaTabbedPaneCopyFromBasicUI extends TabbedPaneUI implements Swing
                 tabPane.revalidate();
                 tabPane.repaint();
                 calculatedBaseline = false;
+            } else if (name == "indexForNullComponent") {
+                isRunsDirty = true;
+                updateHtmlViews((Integer) e.getNewValue());
             } else if (name == "font") {
                 calculatedBaseline = false;
             }
@@ -3468,14 +3457,18 @@ public class AquaTabbedPaneCopyFromBasicUI extends TabbedPaneUI implements Swing
             if (child instanceof UIResource) {
                 return;
             }
-            final int index = tp.indexOfComponent(child);
-            final String title = tp.getTitleAt(index);
+            isRunsDirty = true;
+            updateHtmlViews(tp.indexOfComponent(child));
+        }
+
+        private void updateHtmlViews(int index) {
+            final String title = tabPane.getTitleAt(index);
             final boolean isHTML = BasicHTML.isHTMLString(title);
             if (isHTML) {
                 if (htmlViews == null) { // Initialize vector
                     htmlViews = createHTMLVector();
                 } else { // Vector already exists
-                    final View v = BasicHTML.createHTMLView(tp, title);
+                    final View v = BasicHTML.createHTMLView(tabPane, title);
                     htmlViews.insertElementAt(v, index);
                 }
             } else { // Not HTML
@@ -3483,7 +3476,6 @@ public class AquaTabbedPaneCopyFromBasicUI extends TabbedPaneUI implements Swing
                     htmlViews.insertElementAt(null, index);
                 } // else nada!
             }
-            isRunsDirty = true;
             updateMnemonics();
         }
 

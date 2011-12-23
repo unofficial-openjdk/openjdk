@@ -71,7 +71,7 @@ vpath %.m   $(call NativeSrcDirList,,native/sun/java2d)
 vpath %.m   $(call NativeSrcDirList,,native/sun/java2d/opengl)
 
 OTHER_LDLIBS += \
-	-lawt -lmlib_image $(JVMLIB) $(LIBM) \
+	-lawt -lmlib_image -losxapp $(JVMLIB) $(LIBM) \
 	-framework Accelerate \
 	-framework ApplicationServices \
 	-framework AudioToolbox \
@@ -101,6 +101,7 @@ CPPFLAGS += \
         -I$(SHARE_SRC)/native/sun/awt/medialib \
         -I$(SHARE_SRC)/native/sun/awt \
         $(call NativeSrcDirList,-I,/native/sun/awt) \
+        $(call NativeSrcDirList,-I,/native/sun/osxapp) \
         $(call NativeSrcDirList,-I,/native/sun/font) \
 	$(call NativeSrcDirList,-I,/native/sun/java2d) \
 	$(call NativeSrcDirList,-I,/native/sun/java2d/opengl)

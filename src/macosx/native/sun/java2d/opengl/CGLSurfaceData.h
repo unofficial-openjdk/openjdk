@@ -31,6 +31,7 @@
 #import "OGLSurfaceData.h"
 #import "CGLGraphicsConfig.h"
 #import "AWTWindow.h"
+#import "CGLLayer.h"
 
 /**
  * The CGLSDOps structure contains the CGL-specific information for a given
@@ -38,6 +39,7 @@
  */
 typedef struct _CGLSDOps {
     AWTView               *peerData;
+    CGLLayer              *layer;
     GLclampf              argb[4]; // background clear color
     NSOpenGLPixelBuffer   *pbuffer;
     CGLGraphicsConfigInfo *configInfo;

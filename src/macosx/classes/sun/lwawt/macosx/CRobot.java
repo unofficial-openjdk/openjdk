@@ -165,10 +165,10 @@ class CRobot implements RobotPeer {
      * peer implementations will throw an exception for other bogus
      * values e.g. -1, 999999
      *
-     * @param keyCode the key to press (e.g. <code>KeyEvent.VK_A</code>)
+     * @param keycode the key to press (e.g. <code>KeyEvent.VK_A</code>)
      */
     @Override
-    public void keyPress(int keycode) {
+    public void keyPress(final int keycode) {
         keyEvent(keycode, true);
     }
 
@@ -183,10 +183,10 @@ class CRobot implements RobotPeer {
      * peer implementations will throw an exception for other bogus
      * values e.g. -1, 999999
      *
-     * @param keyCode the key to release (e.g. <code>KeyEvent.VK_A</code>)
+     * @param keycode the key to release (e.g. <code>KeyEvent.VK_A</code>)
      */
     @Override
-    public void keyRelease(int keycode) {
+    public void keyRelease(final int keycode) {
         keyEvent(keycode, false);
     }
 
@@ -205,11 +205,11 @@ class CRobot implements RobotPeer {
 
     /**
      * Creates an image containing pixels read from the screen.
-     * @param screenRect the rect to capture in screen coordinates
+     * @param bounds the rect to capture in screen coordinates
      * @return the array of pixels
      */
     @Override
-    public int [] getRGBPixels(Rectangle bounds) {
+    public int [] getRGBPixels(final Rectangle bounds) {
         Rectangle screenBounds = fDevice.getDefaultConfiguration().getBounds();
         // screenBounds is in the coordinates of the primary device
         // but bounds is in the coordinates of fDevice
