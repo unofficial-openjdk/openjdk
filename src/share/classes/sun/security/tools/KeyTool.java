@@ -52,6 +52,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.lang.reflect.Constructor;
 import java.math.BigInteger;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -84,6 +85,7 @@ import sun.security.util.DerValue;
 import sun.security.x509.*;
 
 import static java.security.KeyStore.*;
+import javax.net.ssl.*;
 import static sun.security.tools.KeyTool.Command.*;
 import static sun.security.tools.KeyTool.Option.*;
 
@@ -2321,18 +2323,31 @@ public final class KeyTool {
             SSLContext sc = SSLContext.getInstance("SSL");
             final boolean[] certPrinted = new boolean[1];
             sc.init(null, new TrustManager[] {
-                new X509TrustManager() {
-
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return null;
+                new X509ExtendedTrustManager() {
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
                     }
-
+                    @Override
                     public void checkClientTrusted(
-                        java.security.cert.X509Certificate[] certs, String authType) {
+                            X509Certificate[] certs, String authType) {
+                        throw new UnsupportedOperationException();
                     }
-
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] chain,
+                            String authType, Socket socket)
+                            throws CertificateException {
+                        throw new UnsupportedOperationException();
+                    }
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] chain,
+                            String authType, SSLEngine engine) throws
+                            CertificateException {
+                        throw new UnsupportedOperationException();
+                    }
+                    @Override
                     public void checkServerTrusted(
-                            java.security.cert.X509Certificate[] certs, String authType) {
+                            X509Certificate[] certs, String authType) {
                         for (int i=0; i<certs.length; i++) {
                             X509Certificate cert = certs[i];
                             try {
@@ -2355,6 +2370,18 @@ public final class KeyTool {
                         if (certs.length > 0) {
                             certPrinted[0] = true;
                         }
+                    }
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] chain,
+                            String authType, Socket socket)
+                            throws CertificateException {
+                        checkServerTrusted(chain, authType);
+                    }
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] chain,
+                            String authType, SSLEngine engine)
+                            throws CertificateException {
+                        checkServerTrusted(chain, authType);
                     }
                 }
             }, null);
