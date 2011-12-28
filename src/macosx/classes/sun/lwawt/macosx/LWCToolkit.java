@@ -707,4 +707,9 @@ public class LWCToolkit extends LWToolkit {
     public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
         return true;
     }
+
+    @Override
+    public boolean enableInputMethodsForTextComponent() {
+        return true;
+    }
 }
