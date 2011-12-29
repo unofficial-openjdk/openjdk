@@ -85,8 +85,8 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(vm, JNI_VERSION_1_2);
     void *v;
     char *envvar;
-    jstring toolkit = NULL, grenv = NULL, fmanager = NULL;
-    jstring tkProp = NULL, geProp = NULL, fmProp = NULL;
+    jstring fmanager = NULL;
+    jstring fmProp = NULL;
 
     if (awtHandle != NULL) {
         /* Avoid several loading attempts */
@@ -102,42 +102,24 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     p = strrchr(buf, '/');
 
     /*
-     * The code below is responsible for:
-     * 1. Loading appropriate awt library, i.e. xawt/libmawt or headless/libwawt
-     * 2. Setting "awt.toolkit" system property to use the appropriate Java toolkit class,
-     *    (if user has specified the toolkit in env varialble)
+     * 1. Set the "sun.font.fontmanager" system property,
+     * 2. Choose the library image name.
      */
 
-    tkProp = (*env)->NewStringUTF(env, "awt.toolkit");
-    geProp = (*env)->NewStringUTF(env, "java.awt.graphicsenv");
     fmProp = (*env)->NewStringUTF(env, "sun.font.fontmanager");
     /* Check if toolkit is specified in env variable */
 #ifdef MACOSX
     envvar = getenv("AWT_TOOLKIT");
     if (envvar && strstr(envvar, "XToolkit")) {
 #endif
-    toolkit = (*env)->NewStringUTF(env, "sun.awt.X11.XToolkit");
-        grenv = (*env)->NewStringUTF(env, "sun.awt.X11GraphicsEnvironment");
         fmanager = (*env)->NewStringUTF(env, "sun.awt.X11FontManager");
         tk = "/xawt/libmawt";
 #ifdef MACOSX
     } else {
-    toolkit = (*env)->NewStringUTF(env, "sun.lwawt.macosx.LWCToolkit");
-        grenv = (*env)->NewStringUTF(env, "sun.awt.CGraphicsEnvironment");
         fmanager = (*env)->NewStringUTF(env, "sun.font.CFontManager");
         tk = "/lwawt/liblwawt";
     }
 #endif
-    if (toolkit && tkProp) {
-        JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "setProperty",
-                                   "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-                                   tkProp, toolkit);
-    }
-    if (grenv && geProp) {
-        JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "setProperty",
-                                   "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-                                   geProp, grenv);
-    }
     if (fmanager && fmProp) {
         JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "setProperty",
                                    "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
@@ -154,19 +136,6 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
 #ifndef MACOSX
     }
 #endif
-
-    if (toolkit) {
-        (*env)->DeleteLocalRef(env, toolkit);
-    }
-    if (tkProp) {
-        (*env)->DeleteLocalRef(env, tkProp);
-    }
-    if (grenv) {
-        (*env)->DeleteLocalRef(env, grenv);
-    }
-    if (geProp) {
-        (*env)->DeleteLocalRef(env, geProp);
-    }
 
 #ifdef MACOSX
     strcat(p, ".dylib");

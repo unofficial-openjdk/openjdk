@@ -426,7 +426,7 @@ GetJavaProperties(JNIEnv *env)
 #ifdef MACOSX
                 break;
             default:
-                sprops.graphics_env = "sun.awt.HToolkit";
+                sprops.awt_toolkit = "sun.awt.HToolkit";
                 break;
         }
 #endif
