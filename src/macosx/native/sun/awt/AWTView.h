@@ -32,7 +32,6 @@
 @interface AWTView : NSView<NSTextInputClient> {
 @private
     jobject m_cPlatformView;
-    NSMenu * popupMenu;
 
     // Handler for the tracking rect needed for Enter/Exit events management.
     NSTrackingRectTag rolloverTrackingRectTag;
@@ -61,7 +60,6 @@
 - (void) deliverJavaMouseEvent: (NSEvent *) event;
 - (void) resetTrackingRect;
 - (void) deliverJavaKeyEventHelper: (NSEvent *) event;
-- (void) setContextMenu:(NSMenu *)aMenu;
 - (jobject) awtComponent:(JNIEnv *)env;
 
 - (void) setDragSource:(CDragSource *)source;

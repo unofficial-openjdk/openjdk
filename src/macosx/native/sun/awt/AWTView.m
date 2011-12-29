@@ -377,19 +377,6 @@ AWT_ASSERT_APPKIT_THREAD;
     DeliverJavaKeyEvent(env, event, m_cPlatformView);
 }
 
-- (void) setContextMenu:(NSMenu *)aMenu{
-    // TODO?: release the old reference before setting new one.
-    popupMenu = aMenu;
-}
-
-// a callback invoked by Cocoa
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent {
-    if (popupMenu != nil) {
-        return popupMenu;
-    }
-    return nil;
-}
-
 - (void) drawRect:(NSRect)dirtyRect {
 AWT_ASSERT_APPKIT_THREAD;
 

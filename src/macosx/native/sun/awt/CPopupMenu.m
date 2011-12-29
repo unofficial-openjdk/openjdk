@@ -31,7 +31,7 @@
 #import "CPopupMenu.h"
 #import "ThreadUtilities.h"
 #import "LWCToolkit.h"
-
+#import "GeomUtilities.h"
 
 @implementation CPopupMenu
 
@@ -56,13 +56,11 @@
    * Signature: (JII)J
    */
 JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CPopupMenu_nativeCreatePopupMenu
-(JNIEnv *env, jobject peer, jlong awtWindowPtr, jint x, jint y) {
+(JNIEnv *env, jobject peer) {
 
     __block CPopupMenu *aCPopupMenu = nil;
 
 JNF_COCOA_ENTER(env);
-
-    AWTWindow *awtWindow = (AWTWindow *)jlong_to_ptr(awtWindowPtr);
 
     jobject cPeerObjGlobal = JNFNewGlobalRef(env, peer);
 
@@ -70,11 +68,29 @@ JNF_COCOA_ENTER(env);
         aCPopupMenu = [[CPopupMenu alloc] initWithPeer:cPeerObjGlobal];
         CFRetain(aCPopupMenu);
         [aCPopupMenu release];
-
-        [((AWTView *)[awtWindow contentView]) setContextMenu:[aCPopupMenu menu]];
     }];
 
 JNF_COCOA_EXIT(env);
 
     return ptr_to_jlong(aCPopupMenu);
 }
+
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPopupMenu_nativeShowPopupMenu
+(JNIEnv *env, jobject peer, jlong menuPtr, jint x, jint y) {
+
+    JNF_COCOA_ENTER(env);
+
+    CPopupMenu* cPopupMenu = (CPopupMenu*)jlong_to_ptr(menuPtr);
+
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+        NSPoint loc = ConvertNSScreenPoint(env, NSMakePoint(x, y));
+
+        [[cPopupMenu menu] popUpMenuPositioningItem: nil
+                                         atLocation: loc
+                                             inView: nil];
+    }];
+
+    JNF_COCOA_EXIT(env);
+
+}
+

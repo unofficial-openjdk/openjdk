@@ -37,35 +37,20 @@ public class CPopupMenu extends CMenu implements PopupMenuPeer {
 
     @Override
     protected long createModel() {
-        // Find toplevel class to get access to delegate.
-        // We need windowManagerPtr from the delegate to assign PopupMenu to.
-        Component comp = (Component) getTarget().getParent();
-        while (comp != null && comp.getParent() != null) {
-            comp = comp.getParent();
-        }
-        Window toplevel = (Window) comp;
-        if (toplevel == null) {
-             //TrayIcon???
-             toplevel = new Frame("Fake frame");
-             toplevel.addNotify();
-        }
-        LWWindowPeer lwPeer = (LWWindowPeer) toplevel.getPeer();
-        CPlatformWindow pWindow = (CPlatformWindow)lwPeer.getPlatformWindow();
-
-        if (pWindow != null) {
-            return nativeCreatePopupMenu(pWindow.getNSWindowPtr());
-        }
-
-        throw new InternalError("Platform window for PopupMenu peer shouldn't be null.");
+        return nativeCreatePopupMenu();
     }
 
-    private native long nativeCreatePopupMenu(long managerPtr);
+    private native long nativeCreatePopupMenu();
+    private native long nativeShowPopupMenu(long modelPtr, int x, int y);
 
     @Override
     public void show(Event e) {
-        // TODO: should trigger popupmenu on right mouse click too.
-        // Only CMD+leftclick triggers popup menu now.
-        // Use this method is to be invoked on the popup-trigger Java event so
-        // might be used to show the menu on the screen with right-mouse click.
+        Component origin = (Component)e.target;
+        if (origin != null) {
+            Point loc = origin.getLocationOnScreen();
+            e.x += loc.x;
+            e.y += loc.y;
+            nativeShowPopupMenu(getModel(), e.x, e.y);
+        }
     }
 }
