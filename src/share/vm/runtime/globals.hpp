@@ -245,6 +245,8 @@ struct Flag {
 
   bool is_unlocker_ext() const;
   bool is_unlocked_ext() const;
+  bool is_writeable_ext() const;
+  bool is_external_ext() const;
 
   void print_on(outputStream* st, bool withComments = false );
   void print_as_flag(outputStream* st);
@@ -1554,7 +1556,7 @@ class CommandLineFlags {
   product(uintx, ParGCDesiredObjsFromOverflowList, 20,                      \
           "The desired number of objects to claim from the overflow list")  \
                                                                             \
-  diagnostic(intx, ParGCStridesPerThread, 2,                                \
+  diagnostic(uintx, ParGCStridesPerThread, 2,                               \
           "The number of strides per worker thread that we divide up the "  \
           "card table scanning work into")                                  \
                                                                             \
