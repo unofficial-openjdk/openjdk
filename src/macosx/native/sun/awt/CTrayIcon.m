@@ -71,7 +71,15 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
     JNFDeleteGlobalRef(env, peer);
 
-    [view release];    
+    [[NSStatusBar systemStatusBar] removeStatusItem: theItem];
+
+    // Its a bad idea to force the item to release our view by setting
+    // the item's view to nil: it can lead to a crash in some scenarios.
+    // The item will release the view later on, so just set the view's image
+    // to nil since we are done with it.
+    [view setImage: nil];
+    [view release];
+
     [theItem release];
 
     [super dealloc];
@@ -97,6 +105,9 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
         [imagePtr setSize: scaledSize];
     }
     
+    CGFloat itemLength = scaledSize.width + 2.0*kImageInset;
+    [theItem setLength:itemLength];
+
     [view setImage:imagePtr];
 }
 
@@ -137,10 +148,9 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     [image release];   
     image = anImage;
 
-    CGFloat itemLength = [anImage size].width + 2.0*kImageInset;   
-    [trayIcon.theItem setLength:itemLength];
-
-    [self setNeedsDisplay:YES];
+    if (image != nil) {
+        [self setNeedsDisplay:YES];
+    }
 }
 
 - (void)menuWillOpen:(NSMenu *)menu 
@@ -156,6 +166,10 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
 
 - (void)drawRect:(NSRect)dirtyRect
 {
+    if (image == nil) {
+        return;
+    }
+
     NSRect bounds = [self bounds];
     NSSize imageSize = [image size];
 
@@ -270,7 +284,7 @@ JNF_COCOA_ENTER(env);
 AWT_ASSERT_NOT_APPKIT_THREAD;
 
     AWTTrayIcon *icon = jlong_to_ptr(model);
-    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         [icon setImage:jlong_to_ptr(imagePtr) sizing:autosize];
     }];
 
