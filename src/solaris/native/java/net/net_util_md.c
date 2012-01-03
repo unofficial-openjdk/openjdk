@@ -85,12 +85,20 @@ getnameinfo_f getnameinfo_ptr = NULL;
 #define UDP_EXCLBIND            0x0101
 #endif
 
-extern jclass ni_class;
-extern jfieldID ni_defaultIndexID;
-
 void setDefaultScopeID(JNIEnv *env, struct sockaddr *him)
 {
 #ifdef MACOSX
+    static jclass ni_class = NULL;
+    static jfieldID ni_defaultIndexID;
+    if (ni_class == NULL) {
+        jclass c = (*env)->FindClass(env, "java/net/NetworkInterface");
+        CHECK_NULL(c);
+        c = (*env)->NewGlobalRef(env, c);
+        CHECK_NULL(c);
+        ni_defaultIndexID = (*env)->GetStaticFieldID(
+            env, c, "defaultIndex", "I");
+        ni_class = c;
+    }
     int defaultIndex;
     struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)him;
     if (sin6->sin6_family == AF_INET6 && (sin6->sin6_scope_id == 0)) {
