@@ -943,6 +943,16 @@ protected:
   // discovery.
   G1CMIsAliveClosure _is_alive_closure_cm;
 
+  // Cache used by G1CollectedHeap::start_cset_region_for_worker().
+  HeapRegion** _worker_cset_start_region;
+
+  // Time stamp to validate the regions recorded in the cache
+  // used by G1CollectedHeap::start_cset_region_for_worker().
+  // The heap region entry for a given worker is valid iff
+  // the associated time stamp value matches the current value
+  // of G1CollectedHeap::_gc_time_stamp.
+  unsigned int* _worker_cset_start_region_time_stamp;
+
   enum G1H_process_strong_roots_tasks {
     G1H_PS_mark_stack_oops_do,
     G1H_PS_refProcessor_oops_do,
@@ -985,7 +995,7 @@ public:
   // Initialize weak reference processing.
   virtual void ref_processing_init();
 
-  void set_par_threads(int t) {
+  void set_par_threads(uint t) {
     SharedHeap::set_par_threads(t);
     // Done in SharedHeap but oddly there are
     // two _process_strong_tasks's in a G1CollectedHeap
@@ -1030,6 +1040,9 @@ public:
   void reset_gc_time_stamp() {
     _gc_time_stamp = 0;
     OrderAccess::fence();
+    // Clear the cached CSet starting regions and time stamps.
+    // Their validity is dependent on the GC timestamp.
+    clear_cset_start_regions();
   }
 
   void increment_gc_time_stamp() {
@@ -1196,7 +1209,7 @@ public:
                                        HumongousRegionSet* humongous_proxy_set,
                                        bool par);
 
-  // Returns "TRUE" iff "p" points into the allocated area of the heap.
+  // Returns "TRUE" iff "p" points into the committed areas of the heap.
   virtual bool is_in(const void* p) const;
 
   // Return "TRUE" iff the given object address is within the collection
@@ -1285,8 +1298,8 @@ public:
   // chunk.)  For now requires that "doHeapRegion" always returns "false",
   // i.e., that a closure never attempt to abort a traversal.
   void heap_region_par_iterate_chunked(HeapRegionClosure* blk,
-                                       int worker,
-                                       int no_of_par_workers,
+                                       uint worker,
+                                       uint no_of_par_workers,
                                        jint claim_value);
 
   // It resets all the region claim values to the default.
@@ -1300,9 +1313,12 @@ public:
   bool check_cset_heap_region_claim_values(jint claim_value);
 #endif // ASSERT
 
-  // Given the id of a worker, calculate a suitable
-  // starting region for iterating over the current
-  // collection set.
+  // Clear the cached cset start regions and (more importantly)
+  // the time stamps. Called when we reset the GC time stamp.
+  void clear_cset_start_regions();
+
+  // Given the id of a worker, obtain or calculate a suitable
+  // starting region for iterating over the current collection set.
   HeapRegion* start_cset_region_for_worker(int worker_i);
 
   // Iterate over the regions (if any) in the current collection set.
