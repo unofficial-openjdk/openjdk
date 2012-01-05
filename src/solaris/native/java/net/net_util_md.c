@@ -33,7 +33,17 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+
+#ifndef _ALLBSD_SOURCE
 #include <values.h>
+#else
+#include <limits.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#ifndef MAXINT
+#define MAXINT INT_MAX
+#endif
+#endif
 
 #ifdef __solaris__
 #include <sys/sockio.h>
@@ -74,6 +84,30 @@ getnameinfo_f getnameinfo_ptr = NULL;
 #if defined(__solaris__) && !defined(UDP_EXCLBIND)
 #define UDP_EXCLBIND            0x0101
 #endif
+
+void setDefaultScopeID(JNIEnv *env, struct sockaddr *him)
+{
+#ifdef MACOSX
+    static jclass ni_class = NULL;
+    static jfieldID ni_defaultIndexID;
+    if (ni_class == NULL) {
+        jclass c = (*env)->FindClass(env, "java/net/NetworkInterface");
+        CHECK_NULL(c);
+        c = (*env)->NewGlobalRef(env, c);
+        CHECK_NULL(c);
+        ni_defaultIndexID = (*env)->GetStaticFieldID(
+            env, c, "defaultIndex", "I");
+        ni_class = c;
+    }
+    int defaultIndex;
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)him;
+    if (sin6->sin6_family == AF_INET6 && (sin6->sin6_scope_id == 0)) {
+        defaultIndex = (*env)->GetStaticIntField(env, ni_class,
+                                                 ni_defaultIndexID);
+        sin6->sin6_scope_id = defaultIndex;
+    }
+#endif
+}
 
 #ifdef __solaris__
 static int init_tcp_max_buf, init_udp_max_buf;
@@ -272,6 +306,14 @@ NET_GetFileDescriptorID(JNIEnv *env)
     return (*env)->GetFieldID(env, cls, "fd", "I");
 }
 
+#if defined(DONT_ENABLE_IPV6)
+jint  IPv6_supported()
+{
+    return JNI_FALSE;
+}
+
+#else /* !DONT_ENABLE_IPV6 */
+
 jint  IPv6_supported()
 {
 #ifndef AF_INET6
@@ -410,6 +452,7 @@ jint  IPv6_supported()
     return JNI_TRUE;
 #endif /* AF_INET6 */
 }
+#endif /* DONT_ENABLE_IPV6 */
 
 void ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
                                            const char* hostname,
@@ -771,6 +814,11 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
         memcpy((void *)&(him6->sin6_addr), caddr, sizeof(struct in6_addr) );
         him6->sin6_family = AF_INET6;
         *len = sizeof(struct sockaddr_in6) ;
+
+#if defined(_ALLBSD_SOURCE) && defined(_AF_INET6)
+// XXXBSD: should we do something with scope id here ? see below linux comment
+/* MMM: Come back to this! */
+#endif
 
         /*
          * On Linux if we are connecting to a link-local address
@@ -1197,6 +1245,15 @@ NET_GetSockOpt(int fd, int level, int opt, void *result,
     }
 #endif
 
+/* Workaround for Mac OS treating linger value as
+ *  signed integer
+ */
+#ifdef MACOSX
+    if (level == SOL_SOCKET && opt == SO_LINGER) {
+        struct linger* to_cast = (struct linger*)result;
+        to_cast->l_linger = (unsigned short)to_cast->l_linger;
+    }
+#endif
     return rv;
 }
 
@@ -1222,6 +1279,24 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
 #endif
 #ifndef IPTOS_PREC_MASK
 #define IPTOS_PREC_MASK 0xe0
+#endif
+
+#if defined(_ALLBSD_SOURCE)
+#if defined(KIPC_MAXSOCKBUF)
+    int mib[3];
+    size_t rlen;
+#endif
+
+    int *bufsize;
+
+#ifdef __APPLE__
+    static int maxsockbuf = -1;
+#else
+    static long maxsockbuf = -1;
+#endif
+
+    int addopt;
+    struct linger *ling;
 #endif
 
     /*
@@ -1255,6 +1330,10 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
         iptos = (int *)arg;
         *iptos &= (IPTOS_TOS_MASK | IPTOS_PREC_MASK);
     }
+
+#if defined(AF_INET6) && defined(_ALLBSD_SOURCE)
+// XXXBSD: to be implemented ?
+#endif
 
     /*
      * SOL_SOCKET/{SO_SNDBUF,SO_RCVBUF} - On Solaris we may need to clamp
@@ -1327,6 +1406,71 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
             *bufsize = 1024;
         }
     }
+#endif
+
+#if defined(_ALLBSD_SOURCE)
+    /*
+     * SOL_SOCKET/{SO_SNDBUF,SO_RCVBUF} - On FreeBSD need to
+     * ensure that value is <= kern.ipc.maxsockbuf as otherwise we get
+     * an ENOBUFS error.
+     */
+    if (level == SOL_SOCKET) {
+        if (opt == SO_SNDBUF || opt == SO_RCVBUF) {
+#ifdef KIPC_MAXSOCKBUF
+            if (maxsockbuf == -1) {
+               mib[0] = CTL_KERN;
+               mib[1] = KERN_IPC;
+               mib[2] = KIPC_MAXSOCKBUF;
+               rlen = sizeof(maxsockbuf);
+               if (sysctl(mib, 3, &maxsockbuf, &rlen, NULL, 0) == -1)
+                   maxsockbuf = 1024;
+
+#if 1
+               /* XXXBSD: This is a hack to workaround mb_max/mb_max_adj
+                  problem.  It should be removed when kern.ipc.maxsockbuf
+                  will be real value. */
+               maxsockbuf = (maxsockbuf/5)*4;
+#endif
+           }
+#elif defined(__OpenBSD__)
+           maxsockbuf = SB_MAX;
+#else
+           maxsockbuf = 64 * 1024;      /* XXX: NetBSD */
+#endif
+
+           bufsize = (int *)arg;
+           if (*bufsize > maxsockbuf) {
+               *bufsize = maxsockbuf;
+           }
+
+           if (opt == SO_RCVBUF && *bufsize < 1024) {
+                *bufsize = 1024;
+           }
+
+        }
+    }
+
+    /*
+     * On Solaris, SO_REUSEADDR will allow multiple datagram
+     * sockets to bind to the same port.  The network jck tests
+     * for this "feature", so we need to emulate it by turning on
+     * SO_REUSEPORT as well for that combination.
+     */
+    if (level == SOL_SOCKET && opt == SO_REUSEADDR) {
+        int sotype;
+        socklen_t arglen;
+
+        arglen = sizeof(sotype);
+        if (getsockopt(fd, SOL_SOCKET, SO_TYPE, (void *)&sotype, &arglen) < 0) {
+            return -1;
+        }
+
+        if (sotype == SOCK_DGRAM) {
+            addopt = SO_REUSEPORT;
+            setsockopt(fd, level, addopt, arg, len);
+        }
+    }
+
 #endif
 
     return setsockopt(fd, level, opt, arg, len);

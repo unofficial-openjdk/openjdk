@@ -49,11 +49,11 @@ public class Zombies {
         } catch (IOException _) {/* OK */}
 
         try {
-            rt.exec("/bin/true", null, new File("no-such-dir"));
+            rt.exec("/usr/bin/true", null, new File("no-such-dir"));
             throw new Error("expected IOException not thrown");
         } catch (IOException _) {/* OK */}
 
-        rt.exec("/bin/true").waitFor();
+        rt.exec("/usr/bin/true").waitFor();
 
         // Count all the zombies that are children of this Java process
         final String[] zombieCounter = {

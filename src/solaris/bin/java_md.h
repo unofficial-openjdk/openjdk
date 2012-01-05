@@ -47,10 +47,14 @@
 #include <sys/time.h>
 #define CounterGet()              (gethrtime()/1000)
 #define Counter2Micros(counts)    (counts)
+#elif defined(_ALLBSD_SOURCE)
+/* CounterGet() is implemented in java_md.c */
+int64_t CounterGet(void);
+#define Counter2Micros(counts)    (counts)
 #else
 #define CounterGet()              (0)
 #define Counter2Micros(counts)    (1)
-#endif /* HAVE_GETHRTIME */
+#endif /* HAVE_GETHRTIME || _ALLBSD_SOURCE */
 
 /*
  * Function prototypes.

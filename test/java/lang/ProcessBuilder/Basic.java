@@ -1632,6 +1632,14 @@ public class Basic {
             } else {
                 envp = envpOth;
             }
+            System.out.println ("cmdp");
+            for (int i=0; i<cmdp.length; i++) {
+                System.out.printf ("cmdp %d: %s\n", i, cmdp[i]);
+            }
+            System.out.println ("envp");
+            for (int i=0; i<envp.length; i++) {
+                System.out.printf ("envp %d: %s\n", i, envp[i]);
+            }
             Process p = Runtime.getRuntime().exec(cmdp, envp);
             check(commandOutput(p).equals(Windows.is() ? "SystemRoot="+systemRoot+",LC_ALL=C," : "LC_ALL=C,"),
                   "Incorrect handling of envstrings containing NULs");

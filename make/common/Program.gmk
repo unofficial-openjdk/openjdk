@@ -78,6 +78,17 @@ endif
 # On Windows, this is done by using the same directory as the executable
 # itself, as with all the Windows libraries.
 #
+ifeq ($(PLATFORM), macosx)
+  ifneq ($(ARCH), universal)
+    LDFLAGS += -Wl,-all_load
+  endif
+  LDFLAGS += $(OUTPUTDIR)/tmp/java/jli/$(OBJDIRNAME)/static/libjli.a
+
+  ifeq ($(SYSTEM_ZLIB),true)
+    OTHER_LDLIBS += -lz
+  endif
+endif
+
 ifneq (,$(findstring $(PLATFORM), linux solaris))	# UNIX systems
     LDFLAGS += -L $(LIBDIR)/$(LIBARCH)/jli
     OTHER_LDLIBS += -ljli
@@ -183,6 +194,22 @@ else # USE_PTHREADS
   THREADLIBS = $(LIBTHREAD)
 endif # USE_PTHREADS
 
+ifeq ($(PLATFORM), macosx)
+THREADLIBS = -pthread
+# Needed for linking the various launchers
+LDFLAGS += -framework Cocoa -framework Security -framework ApplicationServices
+
+# Default Info.plist file for the command line tools. This gets overridden by
+# some of the jvmstat tools so that they have task_for_pid() privileges
+ifndef INFO_PLIST_FILE
+    INFO_PLIST_FILE=Info-cmdline.plist
+endif
+
+LDFLAGS += -sectcreate __TEXT __info_plist $(LAUNCHER_PLATFORM_SRC)/lib/$(INFO_PLIST_FILE)
+else # macosx
+INFO_PLIST_FILE=
+endif # macosx
+
 #
 # This rule only applies on unix.  It supports quantify and its ilk.
 #
@@ -193,6 +220,9 @@ $(ACTUAL_PROGRAM):: $(FILES_o)
 	@$(MKDIR) -p $(TEMPDIR)
 	$(LINK_PRE_CMD) $(CC) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LDFLAGS) \
 	    $(FILES_o) $(THREADLIBS) $(LDLIBS)
+ifeq ($(findstring privileged, $(INFO_PLIST_FILE)), privileged)
+	-codesign -s openjdk_codesign $@
+endif
 	@$(call binary_file_verification,$@)
 
 endif # PLATFORM
@@ -247,7 +277,13 @@ OTHER_CPPFLAGS += -DHAVE_GETHRTIME
 endif
 
 OTHER_INCLUDES += -I$(LAUNCHER_SHARE_SRC)/bin -I$(LAUNCHER_PLATFORM_SRC)/bin
-OTHER_INCLUDES += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+ifeq ($(PLATFORM), macosx)
+  ifneq ($(SYSTEM_ZLIB), true)
+    OTHER_INCLUDES += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+  endif
+else 
+  OTHER_INCLUDES += -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+endif
 
 OTHER_CPPFLAGS += -DPROGNAME='"$(PROGRAM)"'
 VERSION_DEFINES += -DFULL_VERSION='"$(FULL_VERSION)"'

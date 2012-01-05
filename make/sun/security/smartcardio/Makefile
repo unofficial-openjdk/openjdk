@@ -75,6 +75,6 @@ include $(BUILDDIR)/common/Library.gmk
 ifeq ($(PLATFORM), windows)
   OTHER_LDLIBS = $(JVMLIB) winscard.lib
 else
-  OTHER_LDLIBS = -ldl $(JVMLIB)
+  OTHER_LDLIBS = $(LIBDL) $(JVMLIB)
   OTHER_CFLAGS = -D__sun_jdk
 endif

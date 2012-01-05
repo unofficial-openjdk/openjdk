@@ -31,7 +31,7 @@
 #include <Xm/XmP.h>
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #ifdef DEBUG
 #include <jvm.h>  /* To get jio_fprintf() */

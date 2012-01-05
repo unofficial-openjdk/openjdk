@@ -70,6 +70,12 @@ static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static char     *showSettings = NULL;      /* print but continue */
 
+#ifdef MACOSX
+#include <objc/objc-auto.h>
+#include <dispatch/dispatch.h>
+static jboolean continueInSameThread = JNI_FALSE; /* start VM in current thread */
+#endif
+
 static const char *_program_name;
 static const char *_launcher_name;
 static jboolean _is_java_args = JNI_FALSE;
@@ -119,6 +125,19 @@ static void SetPaths(int argc, char **argv);
 
 static void DumpState();
 static jboolean RemovableOption(char *option);
+
+#ifdef MACOSX
+static void SetMainClassForAWT(JNIEnv *env, jclass mainClass);
+static void SetXDockArgForAWT(const char *arg);
+static void SetXStartOnFirstThreadArg();
+
+static JavaVM* jvmInstance = NULL;
+
+JavaVM* JLI_GetJavaVMInstance()
+{
+    return jvmInstance;
+}
+#endif
 
 /* Maximum supported entries from jvm.cfg. */
 #define INIT_MAX_KNOWN_VMS      10
@@ -312,9 +331,30 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
     /* set the -Dsun.java.launcher.* platform properties */
     SetJavaLauncherPlatformProps();
 
+#ifndef MACOSX
+    // On MacOSX the splash screen is shown from JavaMain
+    // after the JVM is initialized.
     /* Show the splash screen if needed */
     ShowSplashScreen();
+#endif
 
+#ifdef MACOSX
+    if (continueInSameThread == JNI_TRUE) {
+        // need to block this thread against the main thread
+        // so signals get caught correctly
+        __block int rslt;
+        dispatch_sync(dispatch_get_main_queue(), ^(void){
+            JavaMainArgs args;
+            args.argc = argc;
+            args.argv = argv;
+            args.mode = mode;
+            args.what = what;
+            args.ifn = ifn;
+            rslt = JavaMain((void*)&args);
+        });
+        return rslt;
+    }
+#endif
     return ContinueInNewThread(&ifn, argc, argv, mode, what, ret);
 
 }
@@ -374,6 +414,10 @@ JavaMain(void * _args)
     jobjectArray mainArgs;
     int ret = 0;
     jlong start, end;
+
+#ifdef MACOSX
+    objc_registerThreadWithCollector();
+#endif
 
     /* Initialize the virtual machine */
     start = CounterGet();
@@ -443,6 +487,12 @@ JavaMain(void * _args)
      */
     mainClass = LoadMainClass(env, mode, what);
     CHECK_EXCEPTION_NULL_LEAVE(mainClass);
+#ifdef MACOSX
+    // if we got here, we know what the main class is, and it has been loaded
+    SetMainClassForAWT(env, mainClass);
+    jvmInstance = vm;
+    ShowSplashScreen();
+#endif
 
     /*
      * The LoadMainClass not only loads the main class, it will also ensure
@@ -1006,6 +1056,12 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-X") == 0) {
             printXUsage = JNI_TRUE;
             return JNI_TRUE;
+#ifdef MACOSX
+        } else if (JLI_StrCmp(arg, "-XstartOnFirstThread") == 0) {
+            SetXStartOnFirstThreadArg();
+        } else if (JLI_StrCCmp(arg, "-Xdock:") == 0) {
+            SetXDockArgForAWT(arg);
+#endif
 /*
  * The following case checks for -XshowSettings OR -XshowSetting:SUBOPT.
  * In the latter case, any SUBOPT value not recognized will default to "all"
@@ -1621,7 +1677,12 @@ ReadKnownVMs(const char *jrepath, const char * arch, jboolean speculative)
         start = CounterGet();
     }
     JLI_Snprintf(jvmCfgName, sizeof(jvmCfgName), "%s%slib%s%s%sjvm.cfg",
-        jrepath, FILESEP, FILESEP, arch, FILESEP);
+        jrepath, FILESEP, FILESEP,
+#ifdef MACOSX
+        "", "");
+#else
+        arch, FILESEP);
+#endif
 
     jvmCfg = fopen(jvmCfgName, "r");
     if (jvmCfg == NULL) {
@@ -1896,6 +1957,57 @@ ContinueInNewThread(InvocationFunctions* ifn, int argc, char **argv,
       return (ret != 0) ? ret : rslt;
     }
 }
+
+#ifdef MACOSX
+static void SetMainClassForAWT(JNIEnv *env, jclass mainClass) {
+    jclass classClass = NULL;
+    NULL_CHECK(classClass = FindBootStrapClass(env, "java/lang/Class"));
+
+    jmethodID getCanonicalNameMID = NULL;
+    NULL_CHECK(getCanonicalNameMID = (*env)->GetMethodID(env, classClass, "getCanonicalName", "()Ljava/lang/String;"));
+
+    jstring mainClassString = NULL;
+    NULL_CHECK(mainClassString = (*env)->CallObjectMethod(env, mainClass, getCanonicalNameMID));
+
+    const char *mainClassName = NULL;
+    NULL_CHECK(mainClassName = (*env)->GetStringUTFChars(env, mainClassString, NULL));
+
+    char envVar[80];
+    snprintf(envVar, sizeof(envVar), "JAVA_MAIN_CLASS_%d", getpid());
+    setenv(envVar, mainClassName, 1);
+
+    (*env)->ReleaseStringUTFChars(env, mainClassString, mainClassName);
+}
+
+static void SetXDockArgForAWT(const char *arg) {
+    char envVar[80];
+    if (strstr(arg, "-Xdock:name=") == arg) {
+        snprintf(envVar, sizeof(envVar), "APP_NAME_%d", getpid());
+        setenv(envVar, (arg + 12), 1);
+    }
+
+    if (strstr(arg, "-Xdock:icon=") == arg) {
+        snprintf(envVar, sizeof(envVar), "APP_ICON_%d", getpid());
+        setenv(envVar, (arg + 12), 1);
+    }
+}
+
+static void SetXStartOnFirstThreadArg() {
+// XXX: BEGIN HACK
+    // short circuit hack for <https://bugs.eclipse.org/bugs/show_bug.cgi?id=211625>
+    // need a way to get AWT/Swing apps launched when spawned from Eclipse,
+    // which currently has no UI to not pass the -XstartOnFirstThread option
+    if (getenv("HACK_IGNORE_START_ON_FIRST_THREAD") != NULL) return;
+// XXX: END HACK
+
+    continueInSameThread = JNI_TRUE;
+    // Set a variable that tells us we started on the main thread.
+    // This is used by the AWT during startup. (See awt.m)
+    char envVar[80];
+    snprintf(envVar, sizeof(envVar), "JAVA_STARTED_ON_FIRST_THREAD_%d", getpid());
+    setenv(envVar, "1", 1);
+}
+#endif
 
 static void
 DumpState()
