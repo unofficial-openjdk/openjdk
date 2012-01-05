@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,8 @@ public enum TestHelper {
     static final boolean debug = Boolean.getBoolean("TestHelper.Debug");
     static final boolean isWindows =
             System.getProperty("os.name", "unknown").startsWith("Windows");
+    static final boolean isMacOSX =
+            System.getProperty("os.name", "unknown").startsWith("Mac");
     static final boolean is64Bit =
             System.getProperty("sun.arch.data.model").equals("64");
     static final boolean is32Bit =
