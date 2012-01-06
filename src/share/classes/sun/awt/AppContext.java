@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -766,6 +766,27 @@ public final class AppContext {
             return new PropertyChangeListener[0];
         }
         return changeSupport.getPropertyChangeListeners(propertyName);
+    }
+
+    // Set up JavaAWTAccess in SharedSecrets
+    static {
+        sun.misc.SharedSecrets.setJavaAWTAccess(new sun.misc.JavaAWTAccess() {
+            public Object get(Object key) {
+                return getAppContext().get(key);
+            }
+            public void put(Object key, Object value) {
+                getAppContext().put(key, value);
+            }
+            public void remove(Object key) {
+                getAppContext().remove(key);
+            }
+            public boolean isDisposed() {
+                return getAppContext().isDisposed();
+            }
+            public boolean isMainAppContext() {
+                return (numAppContexts == 1);
+            }
+        });
     }
 }
 
