@@ -3350,7 +3350,7 @@ void TemplateTable::_new() {
   __ ld_ptr(Rscratch, Roffset, RinstanceKlass);
 
   // make sure klass is fully initialized:
-  __ ld(RinstanceKlass, in_bytes(instanceKlass::init_state_offset()), G3_scratch);
+  __ ldub(RinstanceKlass, in_bytes(instanceKlass::init_state_offset()), G3_scratch);
   __ cmp(G3_scratch, instanceKlass::fully_initialized);
   __ br(Assembler::notEqual, false, Assembler::pn, slow_case);
   __ delayed()->ld(RinstanceKlass, in_bytes(Klass::layout_helper_offset()), Roffset);
