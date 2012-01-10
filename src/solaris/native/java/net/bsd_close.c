@@ -87,6 +87,7 @@ static void __attribute((constructor)) init() {
     struct rlimit nbr_files;
     sigset_t sigset;
     struct sigaction sa;
+    int i;
 
     /*
      * Allocate table based on the maximum number of
@@ -103,6 +104,9 @@ static void __attribute((constructor)) init() {
         fprintf(stderr, "library initialization failed - "
                 "unable to allocate file descriptor table - out of memory");
         abort();
+    }
+    for (i=0; i<fdCount; i++) {
+        pthread_mutex_init(&fdTable[i].lock, NULL);
     }
 
     /*
@@ -293,7 +297,8 @@ int NET_ReadV(int s, const struct iovec * vector, int count) {
 
 int NET_RecvFrom(int s, void *buf, int len, unsigned int flags,
        struct sockaddr *from, int *fromlen) {
-    BLOCKING_IO_RETURN_INT( s, recvfrom(s, buf, len, flags, from, fromlen) );
+    /* casting int *fromlen -> socklen_t* Both are ints */
+    BLOCKING_IO_RETURN_INT( s, recvfrom(s, buf, len, flags, from, (socklen_t *)fromlen) );
 }
 
 int NET_Send(int s, void *msg, int len, unsigned int flags) {
