@@ -286,12 +286,45 @@ ifeq ($(PLATFORM), windows)
   # Temporary disk area
   TEMP_DISK=C:/temp
   # GNU Make or MKS overrides $(PROCESSOR_ARCHITECTURE) to always
-  # return "x86". Use the first word of $(PROCESSOR_IDENTIFIER) instead.
+  #  return "x86". Use the first word of $(PROCESSOR_IDENTIFIER) instead.
+  #  And sometimes PROCESSOR_IDENTIFIER is not defined at all
+  #  (in some restricted shells), so we use uname if we have to.
+  ifeq ($(PROCESSOR_IDENTIFIER),)
+    # Only run uname -m once in this make session.
+    ifndef SYSTEM_UNAME_M
+      SYSTEM_UNAME_M := $(shell uname -m)
+      export SYSTEM_UNAME_M
+    endif
+    PROC_ARCH:=$(SYSTEM_UNAME_M)
+  else
+    PROC_ARCH:=$(word 1, $(PROCESSOR_IDENTIFIER))
+  endif
+  # Cover all the possibilities, MKS uname, CYGWIN uname, PROCESSOR_IDENTIFIER
+  #    Get: X86, X64, or IA64
+  PROC_ARCH:=$(patsubst 386,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 486,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 586,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 686,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i386,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i486,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i586,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst i686,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst x86,X86,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst intel64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst Intel64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst INTEL64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst em64t,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst EM64T,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst amd64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst AMD64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst 8664,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst x86_64,X64,$(PROC_ARCH))
+  PROC_ARCH:=$(patsubst ia64,IA64,$(PROC_ARCH))
   ifndef ARCH_DATA_MODEL
-    ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)),ia64)
+    ifeq ($(PROC_ARCH),IA64)
       ARCH_DATA_MODEL=64
     else
-      ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)),AMD64)
+      ifeq ($(PROC_ARCH),X64)
         ARCH_DATA_MODEL=64
       else
         ARCH_DATA_MODEL=32
@@ -312,7 +345,7 @@ ifeq ($(PLATFORM), windows)
     #      + set ARCH to ia64 or amd64, or
     REQUIRED_WINDOWS_NAME=Windows Server 2003
     REQUIRED_WINDOWS_VERSION=5 2 Service Pack 1
-    ifeq ($(word 1, $(PROCESSOR_IDENTIFIER)), AMD64)
+    ifeq ($(PROC_ARCH),X64)
       ARCH=amd64
     else
       ARCH=ia64
