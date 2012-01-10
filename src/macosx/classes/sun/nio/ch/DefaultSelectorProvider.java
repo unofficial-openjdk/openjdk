@@ -24,9 +24,6 @@
 package sun.nio.ch;
 
 import java.nio.channels.spi.SelectorProvider;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import sun.security.action.GetPropertyAction;
 
 /**
  * Creates this platform's default SelectorProvider
@@ -43,14 +40,7 @@ public class DefaultSelectorProvider {
      * Returns the default SelectorProvider.
      */
     public static SelectorProvider create() {
-        // Mac OS X supports selectors implemented with select() and kqueue().
-        // Prefer kqueue() unless otherwise requested.
-        boolean preferSelect = ((Boolean)java.security.AccessController.doPrivileged(new sun.security.action.GetBooleanAction("java.nio.preferSelect"))).booleanValue();
-        if (!preferSelect) {
-            return new sun.nio.ch.KQueueSelectorProvider();
-        } else {
             return new sun.nio.ch.PollSelectorProvider();
-        }
     }
 
 }
