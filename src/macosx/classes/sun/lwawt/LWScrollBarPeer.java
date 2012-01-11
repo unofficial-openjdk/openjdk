@@ -75,10 +75,7 @@ final class LWScrollBarPeer extends LWComponentPeer<Scrollbar, JScrollBar>
                           final int maximum) {
         synchronized (getDelegateLock()) {
             currentValue = value;
-            getDelegate().setValue(value);
-            getDelegate().setVisibleAmount(visible);
-            getDelegate().setMinimum(minimum);
-            getDelegate().setMaximum(maximum);
+            getDelegate().setValues(value, visible, minimum, maximum);
         }
     }
 
