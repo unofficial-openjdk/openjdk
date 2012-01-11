@@ -106,17 +106,17 @@ final class LWScrollBarPeer extends LWComponentPeer<Scrollbar, JScrollBar>
     // Peer also registered as a listener for ComponentDelegate component
     @Override
     public void adjustmentValueChanged(final AdjustmentEvent e) {
+        final int value = e.getValue();
         synchronized (getDelegateLock()) {
-            if (currentValue == e.getValue()) {
+            if (currentValue == value) {
                 return;
             }
-            currentValue = e.getValue();
+            currentValue = value;
         }
-
-        // TODO: we always get event with the TRACK adj. type.
-        // Could we check if we are over the ArrowButton and send event there?
+        getTarget().setValueIsAdjusting(e.getValueIsAdjusting());
+        getTarget().setValue(value);
         postEvent(new AdjustmentEvent(getTarget(), e.getID(),
-                                      e.getAdjustmentType(), e.getValue(),
-                                      e.getValueIsAdjusting()));
+                e.getAdjustmentType(), value,
+                e.getValueIsAdjusting()));
     }
 }
