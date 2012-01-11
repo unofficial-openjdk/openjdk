@@ -626,6 +626,10 @@ GetDeadKeyCharacter(NSEvent *event)
 }
 */
 
+
+// REMIND: The fix for MACOSX_PORT-539 introduces Java-level implementation
+// of the function below (see CPlatformResponder). Consider removing this code.
+
 void
 DeliverJavaKeyEvent(JNIEnv *env, NSEvent *event, jobject peer)
 {
@@ -704,17 +708,16 @@ NsMouseModifiersToJavaModifiers(NSEvent *event)
     }
 }
 
-jint GetJavaMouseModifiers(NSEvent *event)
+jint GetJavaMouseModifiers(NSInteger button, NSUInteger modifierFlags)
 {
     static NSInteger sMaxMouseButton = 2;
 
-    NSInteger button = [event buttonNumber];
     if (button > sMaxMouseButton) {
         sMaxMouseButton = button;
     }
 
     // Mousing needs the key modifiers
-    jint modifiers = NsKeyModifiersToJavaModifiers([event modifierFlags]);
+    jint modifiers = NsKeyModifiersToJavaModifiers(modifierFlags);
 
 
     /*
@@ -776,7 +779,7 @@ DeliverMouseClickedEvent(JNIEnv *env, NSEvent *event, jobject peer)
     NSPoint pt = [event locationInWindow];
     NSPoint pOnScreen = [NSEvent mouseLocation];
     jint etype = java_awt_event_MouseEvent_MOUSE_CLICKED;
-    jint modifiers = GetJavaMouseModifiers(event);
+    jint modifiers = GetJavaMouseModifiers([event buttonNumber], [event modifierFlags]);
     jint clickCount = [event clickCount];
     jint button = NSButtonToJavaButton([event buttonNumber]);
 
@@ -972,4 +975,118 @@ JNIEXPORT void JNICALL
 Java_java_awt_AWTEvent_nativeSetSource
     (JNIEnv *env, jobject self, jobject newSource)
 {
+}
+
+/*
+ * Class:     sun_lwawt_macosx_event_NSEvent
+ * Method:    nsMouseModifiersToJavaMouseModifiers
+ * Signature: (II)I
+ */
+JNIEXPORT jint JNICALL
+Java_sun_lwawt_macosx_event_NSEvent_nsMouseModifiersToJavaMouseModifiers
+(JNIEnv *env, jclass cls, jint buttonNumber, jint modifierFlags)
+{
+    jint jmodifiers = 0;
+
+JNF_COCOA_ENTER(env);
+    
+    jmodifiers = GetJavaMouseModifiers(buttonNumber, modifierFlags);
+    
+JNF_COCOA_EXIT(env);
+
+    return jmodifiers;
+}
+
+/*
+ * Class:     sun_lwawt_macosx_event_NSEvent
+ * Method:    nsKeyModifiersToJavaKeyModifiers
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL
+Java_sun_lwawt_macosx_event_NSEvent_nsKeyModifiersToJavaKeyModifiers
+(JNIEnv *env, jclass cls, jint modifierFlags)
+{
+    jint jmodifiers = 0;
+
+JNF_COCOA_ENTER(env);
+    
+    jmodifiers = NsKeyModifiersToJavaModifiers(modifierFlags);
+    
+JNF_COCOA_EXIT(env);
+    
+    return jmodifiers;
+}
+
+/*
+ * Class:     sun_lwawt_macosx_event_NSEvent
+ * Method:    nsKeyInfoToJavaKeyInfo
+ * Signature: ([I[I)Z
+ */
+JNIEXPORT jboolean JNICALL
+Java_sun_lwawt_macosx_event_NSEvent_nsKeyInfoToJavaKeyInfo
+(JNIEnv *env, jclass cls, jintArray inData, jintArray outData)
+{
+    BOOL postsTyped = NO;
+    
+JNF_COCOA_ENTER(env);
+    
+    jboolean copy = JNI_FALSE;
+    jint *data = (*env)->GetIntArrayElements(env, inData, &copy);
+
+    // in  = [testChar, testDeadChar, modifierFlags, keyCode]
+    jchar testChar = (jchar)data[0];
+    jchar testDeadChar = (jchar)data[1];
+    jint modifierFlags = data[2];
+    jshort keyCode = (jshort)data[3];
+
+    jint jkeyCode = java_awt_event_KeyEvent_VK_UNDEFINED;
+    jint jkeyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
+    
+    NsCharToJavaVirtualKeyCode((unichar)testChar, (unichar)testDeadChar,
+                               (NSUInteger)modifierFlags, (unsigned short)keyCode,
+                               &jkeyCode, &jkeyLocation, &postsTyped);    
+
+    // out = [jkeyCode, jkeyLocation];
+    (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
+    (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
+    
+JNF_COCOA_EXIT(env);
+
+    return postsTyped;
+}
+
+/*
+ * Class:     sun_lwawt_macosx_event_NSEvent
+ * Method:    nsKeyModifiersToJavaKeyInfo
+ * Signature: ([I[I)V
+ */
+JNIEXPORT void JNICALL
+Java_sun_lwawt_macosx_event_NSEvent_nsKeyModifiersToJavaKeyInfo
+(JNIEnv *env, jclass cls, jintArray inData, jintArray outData)
+{
+JNF_COCOA_ENTER(env);
+    
+    jboolean copy = JNI_FALSE;
+    jint *data = (*env)->GetIntArrayElements(env, inData, &copy);
+    
+    // in  = [modifierFlags, keyCode]
+    jint modifierFlags = data[0];
+    jshort keyCode = (jshort)data[1];
+
+    jint jkeyCode = java_awt_event_KeyEvent_VK_UNDEFINED;
+    jint jkeyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
+    jint jkeyType = java_awt_event_KeyEvent_KEY_PRESSED;
+    
+    NsKeyModifiersToJavaKeyInfo(modifierFlags,
+                                keyCode,
+                                &jkeyCode,
+                                &jkeyLocation,
+                                &jkeyType);
+
+    // out = [jkeyCode, jkeyLocation, jkeyType];
+    (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
+    (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);    
+    (*env)->SetIntArrayRegion(env, outData, 2, 1, &jkeyType);
+    
+JNF_COCOA_EXIT(env);
 }

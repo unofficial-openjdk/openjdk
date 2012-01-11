@@ -145,6 +145,9 @@ FILES_export = \
         sun/lwawt/macosx/CPlatformView.java \
         sun/lwawt/macosx/CPlatformWindow.java \
         sun/lwawt/macosx/CPlatformComponent.java \
+        sun/lwawt/macosx/CEmbeddedFrame.java \
+        sun/lwawt/macosx/CPlatformEmbeddedFrame.java \
+        sun/lwawt/macosx/CPlatformResponder.java \
         sun/lwawt/macosx/CPopupMenu.java \
         sun/lwawt/macosx/CRobot.java \
         sun/lwawt/macosx/CSystemTray.java \

@@ -38,7 +38,7 @@ public class CPlatformComponent extends CFRetainedResource implements PlatformCo
 
     Component target;
     LWComponentPeer peer;
-    CPlatformWindow platformWindow;
+    PlatformWindow platformWindow;
 
     private native long nativeCreateComponent(long windowLayer);
     private native long nativeSetBounds(long ptr, int x, int y, int width, int height);
@@ -54,9 +54,9 @@ public class CPlatformComponent extends CFRetainedResource implements PlatformCo
     public void initialize(Component target, LWComponentPeer peer, PlatformWindow platformWindow) {
         this.target = target;
         this.peer = peer;
-        this.platformWindow = (CPlatformWindow)platformWindow;
+        this.platformWindow = platformWindow;
 
-        long windowLayerPtr = this.platformWindow.getContentView().getWindowLayerPtr();
+        long windowLayerPtr = platformWindow.getLayerPtr();
         setPtr(nativeCreateComponent(windowLayerPtr));
     }
 

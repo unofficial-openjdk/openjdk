@@ -143,4 +143,8 @@ public interface PlatformWindow {
     public void exitFullScreenMode();
 
     public void setWindowState(int windowState);
+
+    public long getLayerPtr();
+
+    public LWWindowPeer getPeer();
 }

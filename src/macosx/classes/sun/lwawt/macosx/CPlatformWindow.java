@@ -222,8 +222,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     public void initialize(Window _target, LWWindowPeer _peer, PlatformWindow _owner) {
         this.peer = _peer;
         this.target = _target;
-        this.owner = (CPlatformWindow)_owner;
-
+        if (_owner instanceof CPlatformWindow) {
+            this.owner = (CPlatformWindow)_owner;
+        }
         final Font font = target.getFont();
         if (font == null) {
             target.setFont(DEFAULT_FONT);
@@ -737,12 +738,18 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     /*
      * Returns LWWindowPeer associated with this delegate.
      */
+    @Override
     public LWWindowPeer getPeer() {
         return peer;
     }
 
     public CPlatformView getContentView() {
         return contentView;
+    }
+
+    @Override
+    public long getLayerPtr() {
+        return contentView.getWindowLayerPtr();
     }
 
     private void validateSurface() {

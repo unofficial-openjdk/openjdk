@@ -500,7 +500,7 @@ public class LWWindowPeer
 
     @Override
     public void setBoundsPrivate(int x, int y, int width, int height) {
-        throw new RuntimeException("not implemented");
+        setBounds(x, y, width, height, SET_BOUNDS | NO_EMBEDDED_CHECK);
     }
 
     @Override
@@ -1121,5 +1121,9 @@ public class LWWindowPeer
 
     public void exitFullScreenMode() {
         platformWindow.exitFullScreenMode();
+    }
+
+    public long getLayerPtr() {
+        return getPlatformWindow().getLayerPtr();
     }
 }

@@ -148,8 +148,11 @@ public class LWCToolkit extends LWToolkit {
 
     @Override
     protected PlatformWindow createPlatformWindow(PeerType peerType) {
-        // TODO: window type
-        return new CPlatformWindow(peerType);
+        if (peerType == PeerType.EMBEDDEDFRAME) {
+            return new CPlatformEmbeddedFrame();
+        } else {
+            return new CPlatformWindow(peerType);
+        }
     }
 
     @Override

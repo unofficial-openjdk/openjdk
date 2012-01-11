@@ -78,4 +78,27 @@ public final class CocoaConstants {
     NSEventTypeBeginGesture = 19,
     NSEventTypeEndGesture   = 20
     */
+
+    // See http://developer.apple.com/library/mac/#documentation/Carbon/Reference/QuartzEventServicesRef/Reference/reference.html
+
+    public final static int kCGMouseButtonLeft   = 0;
+    public final static int kCGMouseButtonRight  = 1;
+    public final static int kCGMouseButtonCenter = 2;
+
+    // See https://wiki.mozilla.org/NPAPI:CocoaEventModel
+
+    public final static int NPCocoaEventDrawRect           = 1;
+    public final static int NPCocoaEventMouseDown          = 2;
+    public final static int NPCocoaEventMouseUp            = 3;
+    public final static int NPCocoaEventMouseMoved         = 4;
+    public final static int NPCocoaEventMouseEntered       = 5;
+    public final static int NPCocoaEventMouseExited        = 6;
+    public final static int NPCocoaEventMouseDragged       = 7;
+    public final static int NPCocoaEventKeyDown            = 8;
+    public final static int NPCocoaEventKeyUp              = 9;
+    public final static int NPCocoaEventFlagsChanged       = 10;
+    public final static int NPCocoaEventFocusChanged       = 11;
+    public final static int NPCocoaEventWindowFocusChanged = 12;
+    public final static int NPCocoaEventScrollWheel        = 13;
+    public final static int NPCocoaEventTextInput          = 14;
 }

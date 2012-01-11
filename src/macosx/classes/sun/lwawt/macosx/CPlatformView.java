@@ -43,6 +43,7 @@ public class CPlatformView extends CFRetainedResource {
     private LWWindowPeer peer;
     private SurfaceData surfaceData;
     private CGLLayer windowLayer;
+    private CPlatformResponder responder;
 
     public CPlatformView() {
         super(0, true);
@@ -50,6 +51,7 @@ public class CPlatformView extends CFRetainedResource {
 
     public void initialize(LWWindowPeer peer) {
         this.peer = peer;
+        this.responder = new CPlatformResponder(peer, false);
 
         if (!LWCToolkit.getSunAwtDisableCALayers()) {
             this.windowLayer = new CGLLayer(peer);
@@ -182,92 +184,22 @@ public class CPlatformView extends CFRetainedResource {
     // NATIVE CALLBACKS
     // ----------------------------------------------------------------------
 
-    // This code uses peer's API which is a no-no on the AppKit thread.
-    // TODO: post onto the EDT.
     private void deliverMouseEvent(NSEvent event) {
-        int jModifiers = event.getModifiers();
-        int jX = event.getX();
-        // a difference in coordinate systems
-        int jY = getBounds().height - event.getY();
-        int jAbsX = event.getAbsX();
-        int jAbsY = event.getAbsY();
-        int jButton = NSEvent.nsButtonToJavaButton(event);
-        int jClickCount = event.getClickCount();
-        double wheelDeltaY = event.getScrollDeltaY();
-        double wheelDeltaX = event.getScrollDeltaX();
-        boolean isPopupTrigger = event.isPopupTrigger();
+        int x = event.getX();
+        int y = getBounds().height - event.getY();
 
-        int jEventType;
-        switch (event.getType()) {
-            case CocoaConstants.NSLeftMouseDown:
-            case CocoaConstants.NSRightMouseDown:
-            case CocoaConstants.NSOtherMouseDown:
-                jEventType = MouseEvent.MOUSE_PRESSED;
-                break;
-            case CocoaConstants.NSLeftMouseUp:
-            case CocoaConstants.NSRightMouseUp:
-            case CocoaConstants.NSOtherMouseUp:
-                jEventType = MouseEvent.MOUSE_RELEASED;
-                break;
-            case CocoaConstants.NSMouseMoved:
-                jEventType = MouseEvent.MOUSE_MOVED;
-                break;
-
-            case CocoaConstants.NSLeftMouseDragged:
-            case CocoaConstants.NSRightMouseDragged:
-            case CocoaConstants.NSOtherMouseDragged:
-                jEventType = MouseEvent.MOUSE_DRAGGED;
-                break;
-            case CocoaConstants.NSMouseEntered:
-                jEventType = MouseEvent.MOUSE_ENTERED;
-                break;
-            case CocoaConstants.NSMouseExited:
-                jEventType = MouseEvent.MOUSE_EXITED;
-                break;
-            case CocoaConstants.NSScrollWheel:
-                jEventType = MouseEvent.MOUSE_WHEEL;
-                double wheelDelta = wheelDeltaY;
-
-                // shift+vertical wheel scroll produces horizontal scroll
-                // we convert it to vertical
-                if ((jModifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
-                    wheelDelta = wheelDeltaX;
-                }
-
-                // Wheel amount "oriented" inside out
-                wheelDelta = -wheelDelta;
-                peer.dispatchMouseWheelEvent(System.currentTimeMillis(), jX, jY, jModifiers, MouseWheelEvent.WHEEL_UNIT_SCROLL, 3, // WHEEL_SCROLL_AMOUNT
-                        (int)wheelDelta, wheelDelta, null);
-                return;
-            default:
-                return;
+        if (event.getType() == CocoaConstants.NSScrollWheel) {
+            responder.handleScrollEvent(x, y, event.getModifierFlags(),
+                                        event.getScrollDeltaX(), event.getScrollDeltaY());
+        } else {
+            responder.handleMouseEvent(event.getType(), event.getModifierFlags(), event.getButtonNumber(),
+                                       event.getClickCount(), x, y, event.getAbsX(), event.getAbsY());
         }
-        peer.dispatchMouseEvent(jEventType, System.currentTimeMillis(), jButton, jX, jY, jAbsX, jAbsY, jModifiers, jClickCount, isPopupTrigger, null);
     }
 
-    private void deliverKeyEvent(final int javaKeyType, final int javaModifiers, final char testChar, final int javaKeyCode, final int javaKeyLocation) {
-        // TODO: there is no focus owner installed now, get back to this once we assign it properly.
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                peer.dispatchKeyEvent(javaKeyType, System.currentTimeMillis(), javaModifiers, javaKeyCode, testChar, javaKeyLocation);
-
-                // That's the reaction on the PRESSED (not RELEASED) event as it comes to
-                // appear in MacOSX.
-                // Modifier keys (shift, etc) don't want to send TYPED events.
-                // On the other hand we don't want to generate keyTyped events
-                // for clipboard related shortcuts like Meta + [CVX]
-                boolean isMetaDown = (javaModifiers & KeyEvent.META_DOWN_MASK) != 0;
-                if (!isMetaDown && javaKeyType == KeyEvent.KEY_PRESSED && testChar != KeyEvent.CHAR_UNDEFINED) {
-                    boolean isCtrlDown = (javaModifiers & KeyEvent.CTRL_DOWN_MASK) != 0;
-                    boolean isShiftDown = (javaModifiers & KeyEvent.SHIFT_DOWN_MASK) != 0;
-                    // emulating the codes from the ASCII table
-                    int shift = isCtrlDown ? isShiftDown ? 64 : 96 : 0;
-                    peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, System.currentTimeMillis(), javaModifiers,
-                            KeyEvent.VK_UNDEFINED, (char) (testChar - shift), KeyEvent.KEY_LOCATION_UNKNOWN);
-                }
-            }
-        });
+    private void deliverKeyEvent(NSEvent event) {
+        responder.handleKeyEvent(event.getType(), event.getModifierFlags(),
+                                 event.getCharactersIgnoringModifiers(), event.getKeyCode());
     }
 
     private void deliverWindowDidExposeEvent() {

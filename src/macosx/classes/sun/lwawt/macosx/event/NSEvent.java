@@ -36,13 +36,11 @@ import java.awt.event.*;
 
 public final class NSEvent {
     private int type;
+    private int modifierFlags;
 
-    /*
-     * Java-level modifiers
-     */
-    private int modifiers;
+    // Mouse event information
     private int clickCount;
-    private int button;
+    private int buttonNumber;
     private int x;
     private int y;
     private double scrollDeltaY;
@@ -50,14 +48,24 @@ public final class NSEvent {
     private int absX;
     private int absY;
 
-    public NSEvent(int type, int modifiers, int clickCount, int button,
-            int x, int y,
-            int absX, int absY,
-            double scrollDeltaY, double scrollDeltaX) {
+    // Key event information
+    private short keyCode;
+    private String charactersIgnoringModifiers;
+
+    public NSEvent(int type, int modifierFlags, short keyCode, String charactersIgnoringModifiers) {
         this.type = type;
-        this.modifiers = modifiers;
+        this.modifierFlags = modifierFlags;
+        this.keyCode = keyCode;
+        this.charactersIgnoringModifiers = charactersIgnoringModifiers;
+    }
+
+    public NSEvent(int type, int modifierFlags, int clickCount, int buttonNumber,
+                   int x, int y, int absX, int absY,
+                   double scrollDeltaY, double scrollDeltaX) {
+        this.type = type;
+        this.modifierFlags = modifierFlags;
         this.clickCount = clickCount;
-        this.button = button;
+        this.buttonNumber = buttonNumber;
         this.x = x;
         this.y = y;
         this.absX = absX;
@@ -70,16 +78,16 @@ public final class NSEvent {
         return type;
     }
 
-    public int getModifiers() {
-        return modifiers;
+    public int getModifierFlags() {
+        return modifierFlags;
     }
 
     public int getClickCount() {
         return clickCount;
     }
 
-    public int getButton() {
-        return button;
+    public int getButtonNumber() {
+        return buttonNumber;
     }
 
     public int getX() {
@@ -106,40 +114,143 @@ public final class NSEvent {
         return absY;
     }
 
+    public short getKeyCode() {
+        return keyCode;
+    }
+
+    public String getCharactersIgnoringModifiers() {
+        return charactersIgnoringModifiers;
+    }
+
     @Override
     public String toString() {
-        return "NSEvent[" + getType() + " ," + getModifiers() + " ,"
-                + getClickCount() + " ," + getButton() + " ," + getX() + " ,"
-                + getY() + " ," + absX + " ," + absY+ "]";
+        return "NSEvent[" + getType() + " ," + getModifierFlags() + " ,"
+                + getClickCount() + " ," + getButtonNumber() + " ," + getX() + " ,"
+                + getY() + " ," + getAbsX() + " ," + getAbsY()+ " ," + getKeyCode() + " ,"
+                + getCharactersIgnoringModifiers() + "]";
     }
 
     /*
      * Converts an NSEvent button number to a MouseEvent constant.
      */
-    public static int nsButtonToJavaButton(NSEvent event) {
-        int nsButtonNumber = event.getButton();
-        int jbutton = MouseEvent.NOBUTTON;
-
-        if (event.getType() != CocoaConstants.NSMouseMoved) {
-            if (nsButtonNumber == 0) { // left
-                jbutton = MouseEvent.BUTTON1;
-            } else if (nsButtonNumber == 1) { // right
-                jbutton = MouseEvent.BUTTON3;
-            } else if (nsButtonNumber == 2) { // middle
-                jbutton = MouseEvent.BUTTON2;
-            }
+    public static int nsButtonToJavaButton(int buttonNumber) {
+        int jbuttonNumber = MouseEvent.NOBUTTON;
+        switch (buttonNumber) {
+            case CocoaConstants.kCGMouseButtonLeft:
+                jbuttonNumber = MouseEvent.BUTTON1;
+                break;
+            case CocoaConstants.kCGMouseButtonRight:
+                jbuttonNumber = MouseEvent.BUTTON3;
+                break;
+            case CocoaConstants.kCGMouseButtonCenter:
+                jbuttonNumber = MouseEvent.BUTTON2;
+                break;
         }
-
-        return jbutton;
+        return jbuttonNumber;
     }
 
-    // utility methods
+    /*
+     * Converts NPCocoaEvent types to AWT event types.
+     */
+    public static int npEventTypeToJavaEventType(int npEventType) {
+        int jeventType = 0;
+        switch (npEventType) {
+            case CocoaConstants.NPCocoaEventMouseDown:
+                jeventType = MouseEvent.MOUSE_PRESSED;
+                break;
+            case CocoaConstants.NPCocoaEventMouseUp:
+                jeventType = MouseEvent.MOUSE_RELEASED;
+                break;
+            case CocoaConstants.NPCocoaEventMouseMoved:
+                jeventType = MouseEvent.MOUSE_MOVED;
+                break;
+            case CocoaConstants.NPCocoaEventMouseEntered:
+                jeventType = MouseEvent.MOUSE_ENTERED;
+                break;
+            case CocoaConstants.NPCocoaEventMouseExited:
+                jeventType = MouseEvent.MOUSE_EXITED;
+                break;
+            case CocoaConstants.NPCocoaEventMouseDragged:
+                jeventType = MouseEvent.MOUSE_DRAGGED;
+                break;
+            case CocoaConstants.NPCocoaEventKeyDown:
+                jeventType = KeyEvent.KEY_PRESSED;
+                break;
+            case CocoaConstants.NPCocoaEventKeyUp:
+                jeventType = KeyEvent.KEY_RELEASED;
+                break;
+        }
+        return jeventType;
+    }
 
-    public boolean isPopupTrigger() {
-        final int mods = getModifiers();
-        final boolean isRightButtonDown = ((mods & InputEvent.BUTTON3_DOWN_MASK) != 0);
-        final boolean isLeftButtonDown = ((mods & InputEvent.BUTTON1_DOWN_MASK) != 0);
-        final boolean isControlDown = ((mods & InputEvent.CTRL_DOWN_MASK) != 0);
+    /*
+     * Converts NSEvent types to AWT event types.
+     */
+    public static int nsEventTypeToJavaEventType(int nsEventType) {
+        int jeventType = 0;
+        switch (nsEventType) {
+            case CocoaConstants.NSLeftMouseDown:
+            case CocoaConstants.NSRightMouseDown:
+            case CocoaConstants.NSOtherMouseDown:
+                jeventType = MouseEvent.MOUSE_PRESSED;
+                break;
+            case CocoaConstants.NSLeftMouseUp:
+            case CocoaConstants.NSRightMouseUp:
+            case CocoaConstants.NSOtherMouseUp:
+                jeventType = MouseEvent.MOUSE_RELEASED;
+                break;
+            case CocoaConstants.NSMouseMoved:
+                jeventType = MouseEvent.MOUSE_MOVED;
+                break;
+            case CocoaConstants.NSLeftMouseDragged:
+            case CocoaConstants.NSRightMouseDragged:
+            case CocoaConstants.NSOtherMouseDragged:
+                jeventType = MouseEvent.MOUSE_DRAGGED;
+                break;
+            case CocoaConstants.NSMouseEntered:
+                jeventType = MouseEvent.MOUSE_ENTERED;
+                break;
+            case CocoaConstants.NSMouseExited:
+                jeventType = MouseEvent.MOUSE_EXITED;
+                break;
+            case CocoaConstants.NSScrollWheel:
+                jeventType = MouseEvent.MOUSE_WHEEL;
+                break;
+            case CocoaConstants.NSKeyDown:
+                jeventType = KeyEvent.KEY_PRESSED;
+                break;
+            case CocoaConstants.NSKeyUp:
+                jeventType = KeyEvent.KEY_RELEASED;
+                break;
+        }
+        return jeventType;
+    }
+
+    /*
+     * Converts NSEvent mouse modifiers to AWT mouse modifiers.
+     */
+    public static native int nsMouseModifiersToJavaMouseModifiers(int buttonNumber,
+                                                                  int modifierFlags);
+
+    /*
+     * Converts NSEvent key modifiers to AWT key modifiers.
+     */
+    public static native int nsKeyModifiersToJavaKeyModifiers(int modifierFlags);
+
+    /*
+     * Converts NSEvent key info to AWT key info.
+     */
+    public static native boolean nsKeyInfoToJavaKeyInfo(int[] in, int[] out);
+
+    /*
+     * Converts NSEvent key modifiers to AWT key info.
+     */
+    public static native void nsKeyModifiersToJavaKeyInfo(int[] in, int[] out);
+
+    public static boolean isPopupTrigger(int jmodifiers) {
+        final boolean isRightButtonDown = ((jmodifiers & InputEvent.BUTTON3_DOWN_MASK) != 0);
+        final boolean isLeftButtonDown = ((jmodifiers & InputEvent.BUTTON1_DOWN_MASK) != 0);
+        final boolean isControlDown = ((jmodifiers & InputEvent.CTRL_DOWN_MASK) != 0);
         return isRightButtonDown || (isControlDown && isLeftButtonDown);
     }
 }

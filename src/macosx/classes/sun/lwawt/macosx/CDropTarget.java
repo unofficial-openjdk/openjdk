@@ -56,13 +56,16 @@ public final class CDropTarget {
 
         // Get model pointer (CButton.m and such) and its native peer:
         LWComponentPeer model = (LWComponentPeer) peer;
-        CPlatformWindow platformWindow = (CPlatformWindow) model.getPlatformWindow();
-        long nativePeer = platformWindow.getNSWindowPtr();
+        if (model.getPlatformWindow() instanceof CPlatformWindow) {
+            CPlatformWindow platformWindow = (CPlatformWindow) model.getPlatformWindow();
+            long nativePeer = platformWindow.getNSWindowPtr();
 
-        // Create native dragging destination:
-        fNativeDropTarget = this.createNativeDropTarget(dropTarget, component, peer, nativePeer);
-        if (fNativeDropTarget == 0)
-            throw new IllegalStateException("CDropTarget.createNativeDropTarget() failed.");
+            // Create native dragging destination:
+            fNativeDropTarget = this.createNativeDropTarget(dropTarget, component, peer, nativePeer);
+            if (fNativeDropTarget == 0) {
+                throw new IllegalStateException("CDropTarget.createNativeDropTarget() failed.");
+            }
+        }
     }
 
     public DropTarget getDropTarget() {

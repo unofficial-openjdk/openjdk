@@ -236,6 +236,11 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
         return createDelegatedPeer(target, platformComponent, platformWindow);
     }
 
+    public LWWindowPeer createEmbeddedFrame(CEmbeddedFrame target) {
+        PlatformComponent platformComponent = createPlatformComponent();
+        PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.EMBEDDEDFRAME);
+        return createDelegatedPeer(target, platformComponent, platformWindow);
+    }
 
     CPrinterDialogPeer createCPrinterDialog(CPrinterDialog target) {
         PlatformComponent platformComponent = createPlatformComponent();

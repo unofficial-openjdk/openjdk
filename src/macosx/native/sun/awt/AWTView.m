@@ -198,7 +198,7 @@ AWT_ASSERT_APPKIT_THREAD;
         [self deliverJavaMouseEvent: event];
     }
 }
-
+    
 - (void) mouseUp: (NSEvent *)event {
     [self deliverJavaMouseEvent: event];
 }
@@ -326,13 +326,12 @@ AWT_ASSERT_APPKIT_THREAD;
     } else {
         clickCount = [event clickCount];
     }
-    
-    jint modifiers = GetJavaMouseModifiers(event);
+
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
     static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IIIIIIIIDD)V");
     jobject jEvent = JNFNewObject(env, jctor_NSEvent,
-                                  type, 
-                                  modifiers,
+                                  [event type], 
+                                  [event modifierFlags],
                                   clickCount,
                                   [event buttonNumber],
                                   (jint)localPoint.x, (jint)localPoint.y,
@@ -373,8 +372,28 @@ AWT_ASSERT_APPKIT_THREAD;
 -(void) deliverJavaKeyEventHelper: (NSEvent *) event {
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
-    // Pulled as-is as it's highly-depend on native code.
-    DeliverJavaKeyEvent(env, event, m_cPlatformView);
+
+    jstring charactersIgnoringModifiers = NULL;
+    if ([event type] != NSFlagsChanged) {
+        charactersIgnoringModifiers = JNFNSToJavaString(env, [event charactersIgnoringModifiers]);    
+    }
+
+    static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
+    static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IISLjava/lang/String;)V");
+    jobject jevent = JNFNewObject(env, jctor_NSEvent,
+                                  [event type],
+                                  [event modifierFlags],
+                                  [event keyCode],
+                                  charactersIgnoringModifiers);
+
+    static JNF_CLASS_CACHE(jc_PlatformView, "sun/lwawt/macosx/CPlatformView");
+    static JNF_MEMBER_CACHE(jm_deliverKeyEvent, jc_PlatformView,
+                            "deliverKeyEvent", "(Lsun/lwawt/macosx/event/NSEvent;)V");
+    JNFCallVoidMethod(env, m_cPlatformView, jm_deliverKeyEvent, jevent);
+    
+    if (charactersIgnoringModifiers != NULL) {
+        (*env)->DeleteLocalRef(env, charactersIgnoringModifiers);
+    }
 }
 
 - (void) drawRect:(NSRect)dirtyRect {

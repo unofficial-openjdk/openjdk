@@ -32,6 +32,6 @@ jlong UTC(NSEvent *event);
 void DeliverJavaKeyEvent(JNIEnv *env, NSEvent *event, jobject peer);
 void DeliverJavaMouseEvent(JNIEnv *env, NSEvent *event, jobject peer);
 void SendAdditionalJavaEvents(JNIEnv *env, NSEvent *nsEvent, jobject peer);
-jint GetJavaMouseModifiers(NSEvent *event);
+jint GetJavaMouseModifiers(NSInteger button, NSUInteger modifierFlags);
 
 #endif /* __AWTEVENT_H */

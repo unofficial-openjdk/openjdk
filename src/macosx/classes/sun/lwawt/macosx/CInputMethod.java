@@ -243,9 +243,13 @@ public class CInputMethod extends InputMethodAdapter {
     }
 
     long getNativeViewPtr(LWComponentPeer peer) {
-        CPlatformWindow platformWindow = (CPlatformWindow) peer.getPlatformWindow();
-        CPlatformView platformView = platformWindow.getContentView();
-        return platformView.getAWTView();
+        if (peer.getPlatformWindow() instanceof CPlatformWindow) {
+            CPlatformWindow platformWindow = (CPlatformWindow) peer.getPlatformWindow();
+            CPlatformView platformView = platformWindow.getContentView();
+            return platformView.getAWTView();
+        } else {
+            return 0;
+        }
     }
 
     /**
