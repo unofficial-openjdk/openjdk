@@ -2628,8 +2628,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         if (filteredHeaders != null)
             return filteredHeaders;
 
-        filteredHeaders = new HashMap<>();
-        Map<String, List<String>> headers;
+        Map<String, List<String>> headers, tmpMap = new HashMap<>();
 
         if (cachedHeaders != null)
             headers = cachedHeaders.getHeaders();
@@ -2645,11 +2644,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                     filteredVals.add(fVal);
             }
             if (!filteredVals.isEmpty())
-                filteredHeaders.put(key,
-                                    Collections.unmodifiableList(filteredVals));
+                tmpMap.put(key, Collections.unmodifiableList(filteredVals));
         }
 
-        return filteredHeaders;
+        return filteredHeaders = Collections.unmodifiableMap(tmpMap);
     }
 
     /**
