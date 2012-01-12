@@ -290,10 +290,16 @@ AWT_ASSERT_APPKIT_THREAD;
 }
 
 - (void) keyUp: (NSEvent *)event {
-    [self deliverJavaKeyEventHelper: event];}
+    [self deliverJavaKeyEventHelper: event];
+}
 
 - (void) flagsChanged: (NSEvent *)event {
     [self deliverJavaKeyEventHelper: event];
+}
+
+- (BOOL) performKeyEquivalent: (NSEvent *) event {
+    [self deliverJavaKeyEventHelper: event];        
+    return TRUE;
 }
 
 /**
