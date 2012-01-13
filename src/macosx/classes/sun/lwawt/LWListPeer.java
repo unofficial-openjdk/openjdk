@@ -257,8 +257,10 @@ final class LWListPeer
                 super.processMouseEvent(e);
                 if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getClickCount() == 2) {
                     final int index = locationToIndex(e.getPoint());
-                    LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
+                    if (0 <= index && index < getModel().getSize()) {
+                        LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
                             getModel().getElementAt(index).toString(), e.getWhen(), e.getModifiers()));
+                    }
                 }
             }
 
@@ -266,9 +268,11 @@ final class LWListPeer
             protected void processKeyEvent(final KeyEvent e) {
                 super.processKeyEvent(e);
                 if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    final int index = getSelectedIndex();
-                    LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
-                            getModel().getElementAt(index).toString(), e.getWhen(), e.getModifiers()));
+                    final Object selectedValue = getSelectedValue();
+                    if(selectedValue != null){
+                        LWListPeer.this.postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
+                            selectedValue.toString(), e.getWhen(), e.getModifiers()));
+                    }
                 }
             }
 
