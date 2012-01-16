@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,8 @@ class ServerConfig {
     static long defaultIdleInterval = 300 ; // 5 min
     static long defaultSelCacheTimeout = 120 ;  // seconds
     static int defaultMaxIdleConnections = 200 ;
+    static int defaultMaxReqHeaders = 200 ;
+
 
     static long defaultDrainAmount = 64 * 1024;
 
@@ -54,6 +56,9 @@ class ServerConfig {
     static long selCacheTimeout;
     static long drainAmount;    // max # of bytes to drain from an inputstream
     static int maxIdleConnections;
+    // The maximum number of request headers allowable
+    private static int maxReqHeaders;
+
     static boolean debug = false;
 
     static {
@@ -93,6 +98,11 @@ class ServerConfig {
                 "sun.net.httpserver.drainAmount",
                 defaultDrainAmount))).longValue();
 
+        maxReqHeaders = ((Integer)java.security.AccessController.doPrivileged(
+                new sun.security.action.GetIntegerAction(
+                "sun.net.httpserver.maxReqHeaders",
+                defaultMaxReqHeaders))).intValue();
+
         debug = ((Boolean)java.security.AccessController.doPrivileged(
                 new sun.security.action.GetBooleanAction(
                 "sun.net.httpserver.debug"))).booleanValue();
@@ -128,5 +138,9 @@ class ServerConfig {
 
     static long getDrainAmount () {
         return drainAmount;
+    }
+
+    static int getMaxReqHeaders() {
+        return maxReqHeaders;
     }
 }
