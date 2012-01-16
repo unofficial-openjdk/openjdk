@@ -2898,6 +2898,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         return readTimeout < 0 ? 0 : readTimeout;
     }
 
+    public CookieHandler getCookieHandler() {
+        return cookieHandler;
+    }
+
     String getMethod() {
         return method;
     }
