@@ -31,6 +31,7 @@ import java.awt.dnd.*;
 import java.awt.dnd.peer.DragSourceContextPeer;
 import java.awt.event.InputEvent;
 import java.awt.event.InvocationEvent;
+import java.awt.event.KeyEvent;
 import java.awt.im.InputMethodHighlight;
 import java.awt.peer.*;
 import java.lang.reflect.*;
@@ -376,11 +377,31 @@ public class LWCToolkit extends LWToolkit {
         return new CRobot(target, (CGraphicsDevice)screen);
     }
 
+    private native boolean isCapsLockOn();
+
     /*
-     * TODO: take a look at the Cocoa API for this method, return false for now.
+     * NOTE: Among the keys this method is supposed to check,
+     * only Caps Lock works as a true locking key with OS X.
+     * There is no Scroll Lock key on modern Apple keyboards,
+     * and with a PC keyboard plugged in Scroll Lock is simply
+     * ignored: no LED lights up if you press it.
+     * The key located at the same position on Apple keyboards
+     * as Num Lock on PC keyboards is called Clear, doesn't lock
+     * anything and is used for entirely different purpose.
      */
     public boolean getLockingKeyState(int keyCode) throws UnsupportedOperationException {
-        return false;
+        switch (keyCode) {
+            case KeyEvent.VK_NUM_LOCK:
+            case KeyEvent.VK_SCROLL_LOCK:
+            case KeyEvent.VK_KANA_LOCK:
+                throw new UnsupportedOperationException("Toolkit.getLockingKeyState");
+
+            case KeyEvent.VK_CAPS_LOCK:
+                return isCapsLockOn();
+
+            default:
+                throw new IllegalArgumentException("invalid key for Toolkit.getLockingKeyState");
+        }
     }
 
     /*

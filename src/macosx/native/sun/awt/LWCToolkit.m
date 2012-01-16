@@ -352,6 +352,23 @@ JNF_COCOA_EXIT(env);
 }
 
 /*
+ * Class:     sun_lwawt_macosx_LWCToolkit
+ * Method:    isCapsLockOn
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_LWCToolkit_isCapsLockOn
+(JNIEnv *env, jobject self)
+{
+    __block jboolean isOn = JNI_FALSE;
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        NSUInteger modifiers = [NSEvent modifierFlags];
+        isOn = (modifiers & NSAlphaShiftKeyMask) != 0;
+    }];
+
+    return isOn;
+}
+
+/*
  * Class:     sun_awt_SunToolkit
  * Method:    closeSplashScreen
  * Signature: ()V
