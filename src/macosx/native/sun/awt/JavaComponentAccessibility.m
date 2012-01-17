@@ -575,7 +575,7 @@ static NSObject *sAttributeNamesLOCK = nil;
     }
 
 #ifdef JAVA_AX_DEBUG
-    NSLog(@"Warning in %s: could not find attribute names for role: %@", __FUNCTION__, javaRole);
+    NSLog(@"Warning in %s: could not find attribute names for role: %@", __FUNCTION__, [self javaRole]);
 #endif
 
     return nil;

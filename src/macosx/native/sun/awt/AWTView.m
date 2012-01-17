@@ -150,7 +150,9 @@ AWT_ASSERT_APPKIT_THREAD;
 
     [AWTToolkit eventCountPlusPlus];
 
-    [[self window] makeFirstResponder: self];
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^() {
+        [[self window] makeFirstResponder: self];
+    }];
     if ([self window] != NULL) {
         [self resetTrackingRect];
     }
