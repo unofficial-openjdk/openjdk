@@ -195,6 +195,9 @@ java/beans/XMLEncoder/6329581/Test6329581.java		 	generic-all
 
 # jdk_lang
 
+# 7123972
+java/lang/annotation/loaderLeak/Main.java                       generic-all
+
 # Times out on solaris 10 sparc
 java/lang/ClassLoader/Assert.java				generic-all
 
@@ -291,6 +294,9 @@ javax/management/monitor/AttributeArbitraryDataTypeTest.java	generic-all
 ############################################################################
 
 # jdk_misc
+
+# 6988950
+demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
 
 # Need to be marked othervm, or changed to be samevm safe
 com/sun/jndi/ldap/ReadTimeoutTest.java				generic-all
