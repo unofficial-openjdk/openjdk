@@ -793,6 +793,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         peer.notifyZoom(isZoomed);
     }
 
+    private void deliverNCMouseDown() {
+        peer.notifyNCMouseDown();
+    }
+
     /*
      * Our focus model is synthetic and only non-simple window
      * may become natively focusable window.

@@ -112,6 +112,8 @@ public class LWWindowPeer
 
     private volatile boolean isOpaque = true;
 
+    private static LWWindowPeer grabbingWindow;
+
     /**
      * Current modal blocker or null.
      *
@@ -242,6 +244,9 @@ public class LWWindowPeer
         surfaceData = null;
         if (oldData != null) {
             oldData.invalidate();
+        }
+        if (isGrabbing()) {
+            ungrab();
         }
         platformWindow.dispose();
         super.disposeImpl();
@@ -628,6 +633,16 @@ public class LWWindowPeer
         changeFocusedWindow(activation, false);
     }
 
+    // MouseDown in non-client area
+    public void notifyNCMouseDown() {
+        // Ungrab except for a click on a Dialog with the grabbing owner
+        if (grabbingWindow != null &&
+            grabbingWindow.getTarget() != getOwnerFrameDialog(this))
+        {
+            grabbingWindow.ungrab();
+        }
+    }
+
     // ---- EVENTS ---- //
 
     /*
@@ -716,6 +731,13 @@ public class LWWindowPeer
             // based on initial targetPeer value and only then recalculate targetPeer
             // for MOUSE_DRAGGED/RELEASED events
             if (id == MouseEvent.MOUSE_PRESSED) {
+
+                // Ungrab only if this window is not an owned window of the grabbing one.
+                if (!isGrabbing() && grabbingWindow != null &&
+                    grabbingWindow.getTarget() != getOwnerFrameDialog(this))
+                {
+                    grabbingWindow.ungrab();
+                }
                 changeFocusedWindow(true, false);
 
                 if (otherButtonsPressed == 0) {
@@ -1089,7 +1111,17 @@ public class LWWindowPeer
             getInstance(getAppContext());
 
         Window oppositeWindow = becomesFocused ? manager.getCurrentFocusedWindow() : null;
-        // TODO: ungrab
+
+        // Note, the method is not called:
+        // - when the opposite (gaining focus) window is an owned/owner window.
+        // - for a simple window in any case.
+        if (!becomesFocused &&
+            (isGrabbing() || getOwnerFrameDialog(grabbingWindow) == getTarget()))
+        {
+            // ungrab a simple window if its owner looses activation.
+            grabbingWindow.ungrab();
+        }
+
         manager.setFocusedWindow(becomesFocused ? LWWindowPeer.this : null);
 
         int eventID = becomesFocused ? WindowEvent.WINDOW_GAINED_FOCUS : WindowEvent.WINDOW_LOST_FOCUS;
@@ -1097,6 +1129,14 @@ public class LWWindowPeer
 
         // TODO: wrap in SequencedEvent
         postEvent(windowEvent);
+    }
+
+    private static Window getOwnerFrameDialog(LWWindowPeer peer) {
+        Window owner = (peer != null ? peer.getTarget().getOwner() : null);
+        while (owner != null && !(owner instanceof Frame || owner instanceof Dialog)) {
+            owner = owner.getOwner();
+        }
+        return owner;
     }
 
     /**
@@ -1125,5 +1165,23 @@ public class LWWindowPeer
 
     public long getLayerPtr() {
         return getPlatformWindow().getLayerPtr();
+    }
+
+    void grab() {
+        if (grabbingWindow != null && !isGrabbing()) {
+            grabbingWindow.ungrab();
+        }
+        grabbingWindow = this;
+    }
+
+    void ungrab() {
+        if (isGrabbing()) {
+            grabbingWindow = null;
+            postEvent(new UngrabEvent(getTarget()));
+        }
+    }
+
+    private boolean isGrabbing() {
+        return this == grabbingWindow;
     }
 }

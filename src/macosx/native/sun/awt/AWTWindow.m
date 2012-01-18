@@ -495,6 +495,25 @@ AWT_ASSERT_APPKIT_THREAD;
 
         [self _notifyFullScreenOp:com_apple_eawt_FullScreenHandler_FULLSCREEN_DID_EXIT withEnv:env];
 }
+
+- (void)sendEvent:(NSEvent *)event {
+        if ([event type] == NSLeftMouseDown || [event type] == NSRightMouseDown || [event type] == NSOtherMouseDown) {
+			
+            NSPoint p = [NSEvent mouseLocation];
+            NSRect frame = [self frame];
+            NSRect contentRect = [self contentRectForFrameRect:frame];
+			
+            // Check if the click happened in the non-client area (title bar) 
+            if (p.y >= (frame.origin.y + contentRect.size.height)) {				
+                JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
+                jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+                // Currently, no need to deliver the whole NSEvent.
+                static JNF_MEMBER_CACHE(jm_deliverNCMouseDown, jc_CPlatformWindow, "deliverNCMouseDown", "()V");
+                JNFCallVoidMethod(env, platformWindow, jm_deliverNCMouseDown);
+            }
+        }
+        [super sendEvent:event];
+}
 @end // AWTWindow
 
 

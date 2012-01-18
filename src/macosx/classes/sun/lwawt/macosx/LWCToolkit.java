@@ -359,19 +359,6 @@ public class LWCToolkit extends LWToolkit {
 
     }
 
-
-    @Override
-    public void grab(Window w) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void ungrab(Window w) {
-        // TODO Auto-generated method stub
-
-    }
-
     @Override
     public RobotPeer createRobot(Robot target, GraphicsDevice screen) {
         return new CRobot(target, (CGraphicsDevice)screen);

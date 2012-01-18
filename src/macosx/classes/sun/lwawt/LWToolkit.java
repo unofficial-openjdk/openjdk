@@ -539,4 +539,18 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     public boolean needUpdateWindow() {
         return true;
     }
+
+    @Override
+    public void grab(Window w) {
+        if (w.getPeer() != null) {
+            ((LWWindowPeer)w.getPeer()).grab();
+        }
+    }
+
+    @Override
+    public void ungrab(Window w) {
+        if (w.getPeer() != null) {
+            ((LWWindowPeer)w.getPeer()).ungrab();
+        }
+    }
 }
