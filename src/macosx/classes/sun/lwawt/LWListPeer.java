@@ -50,7 +50,9 @@ final class LWListPeer
         setMultipleMode(getTarget().isMultipleMode());
         final int[] selectedIndices = getTarget().getSelectedIndexes();
         synchronized (getDelegateLock()) {
+            getDelegate().setSkipStateChangedEvent(true);
             getDelegate().getView().setSelectedIndices(selectedIndices);
+            getDelegate().setSkipStateChangedEvent(false);
         }
     }
 
@@ -94,7 +96,9 @@ final class LWListPeer
     @Override
     public void select(final int index) {
         synchronized (getDelegateLock()) {
+            getDelegate().setSkipStateChangedEvent(true);
             getDelegate().getView().setSelectedIndex(index);
+            getDelegate().setSkipStateChangedEvent(false);
         }
     }
 
@@ -145,6 +149,8 @@ final class LWListPeer
 
     final class ScrollableJList extends JScrollPane implements ListSelectionListener {
 
+        private boolean skipStateChangedEvent;
+
         private DefaultListModel<Object> model =
                 new DefaultListModel<Object>() {
                     @Override
@@ -173,9 +179,17 @@ final class LWListPeer
             }
         }
 
+        public boolean isSkipStateChangedEvent() {
+            return skipStateChangedEvent;
+        }
+
+        public void setSkipStateChangedEvent(boolean skipStateChangedEvent) {
+            this.skipStateChangedEvent = skipStateChangedEvent;
+        }
+
         @Override
         public void valueChanged(final ListSelectionEvent e) {
-            if (!e.getValueIsAdjusting()) {
+            if (!e.getValueIsAdjusting() && !isSkipStateChangedEvent()) {
                 final JList source = (JList) e.getSource();
                 for(int i = 0 ; i < source.getModel().getSize(); i++) {
 
