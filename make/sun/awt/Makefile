@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -367,7 +367,8 @@ else
 FONTCONFIGS_SRC	= $(CLOSED_SRC)/solaris/classes/sun/awt/fontconfigs
 _FONTCONFIGS	= \
 	fontconfig.properties				\
-	fontconfig.RedHat.5.5.properties		\
+	fontconfig.RedHat.5.properties			\
+	fontconfig.RedHat.6.properties			\
 	fontconfig.Turbo.properties			\
 	fontconfig.SuSE.10.properties                   \
 	fontconfig.SuSE.11.properties
