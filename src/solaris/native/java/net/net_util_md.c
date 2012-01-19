@@ -1301,9 +1301,9 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
 
     /*
      * IPPROTO/IP_TOS :-
-     * 1. IPv6 on Solaris: no-op and will be set in flowinfo
-     *    field when connecting TCP socket, or sending
-     *    UDP packet.
+     * 1. IPv6 on Solaris/Mac OS: no-op and will be set
+     *    in flowinfo field when connecting TCP socket,
+     *    or sending UDP packet.
      * 2. IPv6 on Linux: By default Linux ignores flowinfo
      *    field so enable IPV6_FLOWINFO_SEND so that flowinfo
      *    will be examined.
@@ -1313,7 +1313,7 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
     if (level == IPPROTO_IP && opt == IP_TOS) {
         int *iptos;
 
-#if defined(AF_INET6) && defined(__solaris__)
+#if defined(AF_INET6) && (defined(__solaris__) || defined(MACOSX))
         if (ipv6_available()) {
             return 0;
         }
@@ -1330,10 +1330,6 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
         iptos = (int *)arg;
         *iptos &= (IPTOS_TOS_MASK | IPTOS_PREC_MASK);
     }
-
-#if defined(AF_INET6) && defined(_ALLBSD_SOURCE)
-// XXXBSD: to be implemented ?
-#endif
 
     /*
      * SOL_SOCKET/{SO_SNDBUF,SO_RCVBUF} - On Solaris we may need to clamp
