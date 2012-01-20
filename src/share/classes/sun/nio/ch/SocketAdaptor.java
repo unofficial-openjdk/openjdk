@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,13 +57,17 @@ public class SocketAdaptor
     // Timeout "option" value for reads
     private volatile int timeout = 0;
 
-    // ## super will create a useless impl
-    private SocketAdaptor(SocketChannelImpl sc) {
+    private SocketAdaptor(SocketChannelImpl sc) throws SocketException {
+        super((SocketImpl) null);
         this.sc = sc;
     }
 
     public static Socket create(SocketChannelImpl sc) {
-        return new SocketAdaptor(sc);
+        try {
+            return new SocketAdaptor(sc);
+        } catch (SocketException e) {
+            throw new InternalError("Should not reach here");
+        }
     }
 
     public SocketChannel getChannel() {
