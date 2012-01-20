@@ -50,7 +50,8 @@ public class CPlatformResponder {
      * Handles mouse events.
      */
     public void handleMouseEvent(int eventType, int modifierFlags, int buttonNumber,
-                                 int clickCount, int x, int y, int absoluteX, int absoluteY) {
+                                 int clickCount, int x, int y, int absoluteX, int absoluteY)
+    {
         int jeventType = isNpapiCallback ? NSEvent.npEventTypeToJavaEventType(eventType) :
                                            NSEvent.nsEventTypeToJavaEventType(eventType);
 
@@ -77,7 +78,8 @@ public class CPlatformResponder {
      * Handles scroll events.
      */
     public void handleScrollEvent(int x, int y, int modifierFlags,
-                                  double deltaX, double deltaY) {
+                                  double deltaX, double deltaY)
+    {
         int buttonNumber = CocoaConstants.kCGMouseButtonCenter;
         int jmodifiers = NSEvent.nsMouseModifiersToJavaMouseModifiers(buttonNumber, modifierFlags);
 
@@ -99,7 +101,8 @@ public class CPlatformResponder {
      * Handles key events.
      */
     public void handleKeyEvent(int eventType, int modifierFlags, String charsIgnoringMods,
-                               short keyCode) {
+                               short keyCode)
+    {
         boolean isFlagsChangedEvent =
             isNpapiCallback ? (eventType == CocoaConstants.NPCocoaEventFlagsChanged) :
                               (eventType == CocoaConstants.NSFlagsChanged);
@@ -138,8 +141,9 @@ public class CPlatformResponder {
         }
 
         int jmodifiers = NSEvent.nsKeyModifiersToJavaKeyModifiers(modifierFlags);
+        long when = System.currentTimeMillis();
 
-        peer.dispatchKeyEvent(jeventType, System.currentTimeMillis(), jmodifiers,
+        peer.dispatchKeyEvent(jeventType, when, jmodifiers,
                               jkeyCode, testChar, jkeyLocation);
 
         // That's the reaction on the PRESSED (not RELEASED) event as it comes to
@@ -154,7 +158,7 @@ public class CPlatformResponder {
 
             // emulating the codes from the ASCII table
             int shift = isCtrlDown ? isShiftDown ? 64 : 96 : 0;
-            peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, System.currentTimeMillis(), jmodifiers,
+            peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, when, jmodifiers,
                                   KeyEvent.VK_UNDEFINED, (char) (testChar - shift),
                                   KeyEvent.KEY_LOCATION_UNKNOWN);
         }
