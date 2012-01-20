@@ -133,6 +133,9 @@ public class CPlatformResponder {
             int[] out = new int[2]; // [jkeyCode, jkeyLocation]
 
             postsTyped = NSEvent.nsKeyInfoToJavaKeyInfo(in, out);
+            if (!postsTyped) {
+                testChar = KeyEvent.CHAR_UNDEFINED;
+            }
 
             jkeyCode = out[0];
             jkeyLocation = out[1];
