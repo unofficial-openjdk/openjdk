@@ -134,10 +134,10 @@ public class CGLGraphicsConfig extends CGraphicsConfig
             // surfaces/contexts, so we should first invalidate the current
             // Java-level context and flush the queue...
             OGLContext.invalidateCurrentContext();
-            CGLGetConfigInfo action =
-                new CGLGetConfigInfo(device.getCoreGraphicsScreen(), pixfmt);
-            rq.flushAndInvokeNow(action);
-            cfginfo = action.getConfigInfo();
+
+            cfginfo = getCGLConfigInfo(device.getCoreGraphicsScreen(), pixfmt,
+                                       kOpenGLSwapInterval);
+
             OGLContext.setScratchSurface(cfginfo);
             rq.flushAndInvokeNow(new Runnable() {
                 public void run() {
@@ -155,26 +155,6 @@ public class CGLGraphicsConfig extends CGraphicsConfig
         ContextCapabilities caps = new OGLContextCaps(oglCaps, ids[0]);
 
         return new CGLGraphicsConfig(device, pixfmt, cfginfo, caps);
-    }
-
-    /**
-     * This is a small helper class that allows us to execute
-     * getCGLConfigInfo() on the queue flushing thread.
-     */
-    private static class CGLGetConfigInfo implements Runnable {
-        private int screen;
-        private int pixfmt;
-        private long cfginfo;
-        private CGLGetConfigInfo(int screen, int pixfmt) {
-            this.screen = screen;
-            this.pixfmt = pixfmt;
-        }
-        public void run() {
-            cfginfo = getCGLConfigInfo(screen, pixfmt, kOpenGLSwapInterval);
-        }
-        public long getConfigInfo() {
-            return cfginfo;
-        }
     }
 
     public static boolean isCGLAvailable() {

@@ -198,7 +198,11 @@ Java_sun_java2d_opengl_CGLGraphicsConfig_getCGLConfigInfo
   [retArray addObject: [NSNumber numberWithInt: (int)screennum]];
   [retArray addObject: [NSNumber numberWithInt: (int)pixfmt]];
   [retArray addObject: [NSNumber numberWithInt: (int)swapInterval]];
-  [GraphicsConfigUtil performSelectorOnMainThread: @selector(_getCGLConfigInfo:) withObject: retArray waitUntilDone: YES];
+  if ([NSThread isMainThread]) {
+      [GraphicsConfigUtil _getCGLConfigInfo: retArray];
+  } else {
+      [GraphicsConfigUtil performSelectorOnMainThread: @selector(_getCGLConfigInfo:) withObject: retArray waitUntilDone: YES];
+  }
   NSNumber * num = (NSNumber *)[retArray objectAtIndex: 0];
   ret = (jlong)[num longValue];
   JNF_COCOA_EXIT(env);

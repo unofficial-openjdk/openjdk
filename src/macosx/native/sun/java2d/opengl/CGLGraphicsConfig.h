@@ -33,6 +33,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface GraphicsConfigUtil : NSObject {}
++ (void) _getCGLConfigInfo: (NSMutableArray *)argValue;
 @end
 
 // Prototyped CAOpenGLLayer drawing directly from Java2D OpenGL rendering
