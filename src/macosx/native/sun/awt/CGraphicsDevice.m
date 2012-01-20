@@ -26,7 +26,7 @@
 #include "LWCToolkit.h"
 
 /*
- * Class:     apple_awt_CGraphicsDevice
+ * Class:     sun_awt_CGraphicsDevice
  * Method:    nativeGetXResolution
  * Signature: (I)D
  */

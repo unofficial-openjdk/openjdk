@@ -363,7 +363,7 @@ JNF_COCOA_EXIT(env);
 }
 
 /*
- * Class:     apple_awt_CMenuItem
+ * Class:     sun_lwawt_macosx_CMenuItem
  * Method:    nativeSetImage
  * Signature: (JJ)V
  */

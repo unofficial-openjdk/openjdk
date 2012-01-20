@@ -238,11 +238,11 @@ static BOOL JavaAccessibilityIsSupportedAttribute(id element, NSString *attribut
 }
 
 /*
- * Class:     apple_awt_CAccessibility
+ * Class:     sun_lwawt_macosx_CAccessibility
  * Method:    roleKey
  * Signature: (Ljavax/accessibility/AccessibleRole;)Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_apple_awt_CAccessibility_roleKey
+JNIEXPORT jstring JNICALL Java_sun_lwawt_macosx_CAccessibility_roleKey
 (JNIEnv *env, jclass clz, jobject axRole)
 {
     return JNFGetObjectField(env, axRole, sjf_key);
