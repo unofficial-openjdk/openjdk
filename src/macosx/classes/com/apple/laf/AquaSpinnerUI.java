@@ -208,6 +208,9 @@ public class AquaSpinnerUI extends SpinnerUI {
         }
 
         final JFormattedTextField editorTextField = ((DefaultEditor)editor).getTextField();
+        if (editorTextField.getFont() instanceof UIResource) {
+            editorTextField.setFont(spinner.getFont());
+        }
         final InputMap spinnerInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         final InputMap editorInputMap = editorTextField.getInputMap();
         final KeyStroke[] keys = spinnerInputMap.keys();
