@@ -75,11 +75,7 @@
 #define JVM_O_O_APPEND   O_APPEND
 #define JVM_O_EXCL       O_EXCL
 #define JVM_O_CREAT      O_CREAT
-#ifdef __APPLE__
-#define JVM_O_DELETE     0x10000000
-#else
 #define JVM_O_DELETE     0x10000
-#endif
 
 /* Signals */
 
