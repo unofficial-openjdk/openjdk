@@ -60,15 +60,6 @@ public class AquaCaret extends DefaultCaret implements UIResource, PropertyChang
         super.setVisible(e);
     }
 
-    public void setSelectionVisible(final boolean vis) {
-        if (isMultiLineEditor) {
-            super.setSelectionVisible(true);
-            c.repaint();
-            return;
-        }
-        super.setSelectionVisible(vis);
-    }
-
     protected void fireStateChanged() {
         // If we have focus the caret should only flash if the range length is zero
         if (mFocused) setVisible(getComponent().isEditable());
@@ -133,7 +124,12 @@ public class AquaCaret extends DefaultCaret implements UIResource, PropertyChang
     public void focusLost(final FocusEvent e) {
         mFocused = false;
         shouldSelectAllOnFocus = true;
-        super.focusLost(e);
+        if (isMultiLineEditor) {
+            setVisible(false);
+            c.repaint();
+        } else {
+            super.focusLost(e);
+        }
     }
 
     // This fixes the problem where when on the mac you have to ctrl left click to
