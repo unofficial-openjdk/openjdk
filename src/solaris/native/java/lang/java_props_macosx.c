@@ -348,37 +348,3 @@ void setProxyProperties(java_props_t *sProps) {
 
     CFRelease(dict);
 }
-
-
-void freeProps(java_props_t *sprops) {
-    if (sprops->httpProxyEnabled) {
-        free(sprops->httpHost);
-        free(sprops->httpPort);
-    }
-
-    if (sprops->httpsProxyEnabled) {
-        free(sprops->httpsHost);
-        free(sprops->httpsPort);
-    }
-
-    if (sprops->ftpProxyEnabled) {
-        free(sprops->ftpHost);
-        free(sprops->ftpPort);
-    }
-
-    if (sprops->socksProxyEnabled) {
-        free(sprops->socksHost);
-        free(sprops->socksPort);
-    }
-
-    if (sprops->gopherProxyEnabled) {
-        free(sprops->gopherHost);
-        free(sprops->gopherPort);
-    }
-    if (sprops->exceptionList) {
-        free(sprops->exceptionList);
-    }
-
-    free(sprops->os_name);
-    free(sprops->os_version);
-}

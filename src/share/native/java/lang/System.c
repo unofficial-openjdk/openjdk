@@ -165,10 +165,6 @@ jobject fillI18nProps(JNIEnv *env, jobject props, char *baseKey,
     return NULL;
 }
 
-#ifdef MACOSX
-extern void freeProps(java_props_t *sProps);
-#endif
-
 JNIEXPORT jobject JNICALL
 Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
 {
@@ -395,10 +391,6 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
         (*env)->DeleteLocalRef(env, jVMVal);
     }
 
-#ifdef MACOSX
-    // Free malloced memory.
-    freeProps(sprops);
-#endif
     return ret;
 }
 
