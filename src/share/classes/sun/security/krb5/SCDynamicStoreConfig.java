@@ -25,6 +25,7 @@
 
 package sun.security.krb5;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -81,13 +82,13 @@ public class SCDynamicStoreConfig {
      * graph to the one that Kerberos Config in Java expects
      *
      * @return
-     * @throws KrbException
+     * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    public static Hashtable<String, Object> getConfig() throws KrbException {
+    public static Hashtable<String, Object> getConfig() throws IOException {
         Hashtable<String, Object> stanzaTable = getKerberosConfig();
         if (stanzaTable == null) {
-            throw(new KrbException("Could not load configuration from SCDynamicStore"));
+            throw new IOException("Could not load configuration from SCDynamicStore");
         }
         //System.out.println("Raw map from JNI: " + stanzaTable);
 
