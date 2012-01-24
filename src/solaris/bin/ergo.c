@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,39 +100,14 @@ ServerClassMachineImpl(void) {
 /* Compute physical memory by asking the OS */
 uint64_t
 physical_memory(void) {
-  uint64_t result;
-
-# define UINT64_FORMAT "%" PRIu64
-
-#if defined(_ALLBSD_SOURCE)
-#ifdef HW_PHYSMEM64
-  int64_t physmem;
-  int name[2] = { CTL_HW, HW_PHYSMEM64 };
-#else
-  unsigned long physmem;
-  int name[2] = { CTL_HW, HW_PHYSMEM };
-#endif
-  size_t physmem_len = sizeof(physmem);
-
-  if (sysctl(name, 2, &physmem, &physmem_len, NULL, 0) == -1)
-        physmem = 256 * MB;
-
-  result = (uint64_t)physmem;
-
-  JLI_TraceLauncher("physical memory: " UINT64_FORMAT " (%.3fGB)\n",
-           result, result / (double) GB);
-  return result;
-
-#else /* !_ALLBSD_SOURCE */
-
   const uint64_t pages     = (uint64_t) sysconf(_SC_PHYS_PAGES);
   const uint64_t page_size = (uint64_t) sysconf(_SC_PAGESIZE);
-  result    = pages * page_size;
+  const uint64_t result    = pages * page_size;
+# define UINT64_FORMAT "%" PRIu64
 
   JLI_TraceLauncher("pages: " UINT64_FORMAT
           "  page_size: " UINT64_FORMAT
           "  physical memory: " UINT64_FORMAT " (%.3fGB)\n",
            pages, page_size, result, result / (double) GB);
   return result;
-#endif /* _ALLBSD_SOURCE */
 }

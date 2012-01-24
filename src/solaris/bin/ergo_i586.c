@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,7 +106,7 @@ ServerClassMachineImpl(void) {
 
 #endif /* __solaris__ */
 
-#if defined(__linux__) || defined(_ALLBSD_SOURCE)
+#ifdef __linux__
 
 /*
  * A utility method for asking the CPU about itself.
@@ -170,9 +170,7 @@ get_cpuid(uint32_t arg,
   *edxp = value_of_edx;
 #endif /* _LP64 */
 }
-#endif /* __linux__ || _ALLBSD_SOURCE */
 
-#ifdef __linux__
 /* The definition of a server-class machine for linux-i586 */
 jboolean
 ServerClassMachineImpl(void) {
@@ -200,37 +198,6 @@ ServerClassMachineImpl(void) {
   return result;
 }
 #endif /* __linux__ */
-
-#if defined(_ALLBSD_SOURCE)
-
-/* The definition of a server-class machine for bsd-i586 */
-jboolean
-ServerClassMachineImpl(void) {
-  jboolean            result            = JNI_FALSE;
-  /* How big is a server class machine? */
-  const unsigned long server_processors = 2UL;
-  const uint64_t      server_memory     = 2UL * GB;
-  /*
-   * We seem not to get our full complement of memory.
-   *     We allow some part (1/8?) of the memory to be "missing",
-   *     based on the sizes of DIMMs, and maybe graphics cards.
-   */
-  const uint64_t      missing_memory    = 256UL * MB;
-  const uint64_t      actual_memory     = physical_memory();
-
-  /* Is this a server class machine? */
-  if (actual_memory >= (server_memory - missing_memory)) {
-    const unsigned long actual_processors = physical_processors();
-    if (actual_processors >= server_processors) {
-      result = JNI_TRUE;
-    }
-  }
-  JLI_TraceLauncher("bsd_" LIBARCHNAME "_ServerClassMachine: %s\n",
-           (result == JNI_TRUE ? "true" : "false"));
-  return result;
-}
-
-#endif /* _ALLBSD_SOURCE */
 
 /*
  * Routines shared by solaris-i586 and linux-i586.
@@ -341,14 +308,6 @@ logical_processors_per_package(void) {
 /* Compute the number of physical processors, not logical processors */
 static unsigned long
 physical_processors(void) {
-#if defined(_ALLBSD_SOURCE)
-  unsigned long result;
-  int name[2] = { CTL_HW, HW_NCPU };
-  size_t rlen = sizeof(result);
-
-  if (sysctl(name, 2, &result, &rlen, NULL, 0) == -1)
-        result = 1;
-#else /* !_ALLBSD_SOURCE */
   const long sys_processors = sysconf(_SC_NPROCESSORS_CONF);
   unsigned long result      = sys_processors;
 
@@ -359,7 +318,6 @@ physical_processors(void) {
       result = (unsigned long) sys_processors / logical_processors;
     }
   }
-#endif /* _ALLBSD_SOURCE */
   JLI_TraceLauncher("physical processors: %lu\n", result);
   return result;
 }

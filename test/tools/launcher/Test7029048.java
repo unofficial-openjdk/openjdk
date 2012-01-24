@@ -286,7 +286,7 @@ public class Test7029048 {
 
     public static void main(String... args) throws Exception {
         if (TestHelper.isWindows || TestHelper.isMacOSX) {
-            System.out.println("Note: not applicable on Windows and MacOSX");
+            System.out.println("Note: applicable on neither Windows nor MacOSX");
             return;
         }
         // create our test jar first

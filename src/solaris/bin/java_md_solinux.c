@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,47 +35,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/types.h>
-#if defined(_ALLBSD_SOURCE)
-#include <sys/time.h>
-#endif
-
 #include "manifest_info.h"
 #include "version_comp.h"
 
-#if defined(__linux__) || defined(_ALLBSD_SOURCE)
-#include <pthread.h>
-#else
-#include <thread.h>
-#endif
 
-#ifdef MACOSX
-/* Support Cocoa event loop on the main thread */
-#include <Cocoa/Cocoa.h>
-#include <objc/objc-runtime.h>
-#include <objc/objc-auto.h>
-#include <errno.h>
-#include <spawn.h>
-
-struct NSAppArgs {
-    int argc;
-    char **argv;
-};
-#endif
-
-#ifdef MACOSX
-#define JVM_DLL "libjvm.dylib"
-#define JAVA_DLL "libjava.dylib"
-/* FALLBACK avoids naming conflicts with system libraries
- * (eg, ImageIO's libJPEG.dylib) */
-#define LD_LIBRARY_PATH "DYLD_FALLBACK_LIBRARY_PATH"
-#else
 #define JVM_DLL "libjvm.so"
 #define JAVA_DLL "libjava.so"
 #define LD_LIBRARY_PATH "LD_LIBRARY_PATH"
-#endif
 
 /* help jettison the LD_LIBRARY_PATH settings in the future */
-#if !defined(SETENV_REQUIRED) && !defined(MACOSX)
+#ifndef SETENV_REQUIRED
 #define SETENV_REQUIRED
 #endif
 /*
@@ -101,32 +70,6 @@ struct NSAppArgs {
 #  include <sys/elf.h>
 #  include <stdio.h>
 #endif
-
-/* pointer to environment */
-#ifdef MACOSX
-#include <crt_externs.h>
-#define environ (*_NSGetEnviron())
-#else
-extern char **environ;
-#endif
-
-/*
- *      A collection of useful strings. One should think of these as #define
- *      entries, but actual strings can be more efficient (with many compilers).
- */
-#if defined(__linux__)
-static const char *system_dir   = "/usr/java";
-static const char *user_dir     = "/java";
-#elif defined (__solaris__)
-static const char *system_dir   = "/usr/jdk";
-static const char *user_dir     = "/jdk";
-#elif defined(__APPLE__)
-static const char *system_dir  = PACKAGE_PATH "/openjdk7";
-static const char *user_dir    = "/java";
-#endif
-
-/* Store the name of the executable once computed */
-static char *execname = NULL;
 
 /*
  * Flowchart of launcher execs and options processing on unix
@@ -246,13 +189,18 @@ static char *execname = NULL;
  * Main
  */
 
-static const char * SetExecname(char **argv);
-static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
-                           char *jvmpath, jint jvmpathsize, const char * arch, int bitsWanted);
-static jboolean GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative);
-
-
 #define GetArch() GetArchPath(CURRENT_DATA_MODEL)
+
+/* Store the name of the executable once computed */
+static char *execname = NULL;
+
+/*
+ * execname accessor from other parts of platform dependent logic
+ */
+const char *
+GetExecName() {
+    return execname;
+}
 
 const char *
 GetArchPath(int nbits)
@@ -269,176 +217,6 @@ GetArchPath(int nbits)
     }
 }
 
-#ifdef MACOSX
-
-/*
- * Exports the JNI interface from libjli
- *
- * This allows client code to link against the .jre/.jdk bundles,
- * and not worry about trying to pick a HotSpot to link against.
- *
- * Switching architectures is unsupported, since client code has
- * made that choice before the JVM was requested.
- */
-
-static InvocationFunctions *sExportedJNIFunctions = NULL;
-static char *sPreferredJVMType = NULL;
-
-static InvocationFunctions *GetExportedJNIFunctions() {
-    if (sExportedJNIFunctions != NULL) return sExportedJNIFunctions;
-
-    char jrePath[PATH_MAX];
-    jboolean gotJREPath = GetJREPath(jrePath, sizeof(jrePath), GetArch(), JNI_FALSE);
-    if (!gotJREPath) {
-        JLI_ReportErrorMessage("Failed to GetJREPath()");
-        return NULL;
-    }
-
-    char *preferredJVM = sPreferredJVMType;
-    if (preferredJVM == NULL) {
-#if defined(__i386__)
-        preferredJVM = "client";
-#elif defined(__x86_64__)
-        preferredJVM = "server";
-#else
-#error "Unknown architecture - needs definition"
-#endif
-    }
-
-    char jvmPath[PATH_MAX];
-    jboolean gotJVMPath = GetJVMPath(jrePath, preferredJVM, jvmPath, sizeof(jvmPath), GetArch(), CURRENT_DATA_MODEL);
-    if (!gotJVMPath) {
-        JLI_ReportErrorMessage("Failed to GetJVMPath()");
-        return NULL;
-    }
-
-    InvocationFunctions *fxns = malloc(sizeof(InvocationFunctions));
-    jboolean vmLoaded = LoadJavaVM(jvmPath, fxns);
-    if (!vmLoaded) {
-        JLI_ReportErrorMessage("Failed to LoadJavaVM()");
-        return NULL;
-    }
-
-    return sExportedJNIFunctions = fxns;
-}
-
-JNIEXPORT jint JNICALL
-JNI_GetDefaultJavaVMInitArgs(void *args) {
-    InvocationFunctions *ifn = GetExportedJNIFunctions();
-    if (ifn == NULL) return JNI_ERR;
-    return ifn->GetDefaultJavaVMInitArgs(args);
-}
-
-JNIEXPORT jint JNICALL
-JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *args) {
-    InvocationFunctions *ifn = GetExportedJNIFunctions();
-    if (ifn == NULL) return JNI_ERR;
-    return ifn->CreateJavaVM(pvm, penv, args);
-}
-
-JNIEXPORT jint JNICALL
-JNI_GetCreatedJavaVMs(JavaVM **vmBuf, jsize bufLen, jsize *nVMs) {
-    InvocationFunctions *ifn = GetExportedJNIFunctions();
-    if (ifn == NULL) return JNI_ERR;
-    return ifn->GetCreatedJavaVMs(vmBuf, bufLen, nVMs);
-}
-
-/*
- * Allow JLI-aware launchers to specify a client/server preference
- */
-JNIEXPORT void JNICALL
-JLI_SetPreferredJVM(const char *prefJVM) {
-    if (sPreferredJVMType != NULL) {
-        free(sPreferredJVMType);
-        sPreferredJVMType = NULL;
-    }
-
-    if (prefJVM == NULL) return;
-    sPreferredJVMType = strdup(prefJVM);
-}
-
-static BOOL awtLoaded = NO;
-static pthread_mutex_t awtLoaded_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  awtLoaded_cv = PTHREAD_COND_INITIALIZER;
-
-JNIEXPORT void JNICALL
-JLI_NotifyAWTLoaded()
-{
-    pthread_mutex_lock(&awtLoaded_mutex);
-    awtLoaded = YES;
-    pthread_cond_signal(&awtLoaded_cv);
-    pthread_mutex_unlock(&awtLoaded_mutex);
-}
-
-static int (*main_fptr)(int argc, char **argv) = NULL;
-
-/*
- * Unwrap the arguments and re-run main()
- */
-static void *apple_main (void *arg)
-{
-    objc_registerThreadWithCollector();
-
-    if (main_fptr == NULL) {
-        main_fptr = (int (*)())dlsym(RTLD_DEFAULT, "main");
-        if (main_fptr == NULL) {
-            JLI_ReportErrorMessageSys("error locating main entrypoint\n");
-            exit(1);
-        }
-    }
-
-    struct NSAppArgs *args = (struct NSAppArgs *) arg;
-    exit(main_fptr(args->argc, args->argv));
-}
-
-static void dummyTimer(CFRunLoopTimerRef timer, void *info) {}
-
-static void ParkEventLoop() {
-    // RunLoop needs at least one source, and 1e20 is pretty far into the future
-    CFRunLoopTimerRef t = CFRunLoopTimerCreate(kCFAllocatorDefault, 1.0e20, 0.0, 0, 0, dummyTimer, NULL);
-    CFRunLoopAddTimer(CFRunLoopGetCurrent(), t, kCFRunLoopDefaultMode);
-    CFRelease(t);
-
-    // Park this thread in the main run loop.
-    int32_t result;
-    do {
-        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1.0e20, false);
-    } while (result != kCFRunLoopRunFinished);
-}
-
-/*
- * Mac OS X mandates that the GUI event loop run on very first thread of
- * an application. This requires that we re-call Java's main() on a new
- * thread, reserving the 'main' thread for Cocoa.
- */
-static void MacOSXStartup(int argc, char *argv[]) {
-    // Thread already started?
-    static jboolean started = false;
-    if (started) {
-        return;
-    }
-    started = true;
-
-    // Hand off arguments
-    struct NSAppArgs args;
-    args.argc = argc;
-    args.argv = argv;
-
-    // Fire up the main thread
-    pthread_t main_thr;
-    if (pthread_create(&main_thr, NULL, &apple_main, &args) != 0) {
-        JLI_ReportErrorMessageSys("Could not create main thread: %s\n", strerror(errno));
-        exit(1);
-    }
-    if (pthread_detach(main_thr)) {
-        JLI_ReportErrorMessageSys("pthread_detach() failed: %s\n", strerror(errno));
-        exit(1);
-    }
-
-    ParkEventLoop();
-}
-
-#endif
 #ifdef SETENV_REQUIRED
 static jboolean
 JvmExists(const char *path) {
@@ -566,7 +344,8 @@ RequiresSetenv(int wanted, const char *jvmpath) {
 void
 CreateExecutionEnvironment(int *pargc, char ***pargv,
                            char jrepath[], jint so_jrepath,
-                           char jvmpath[], jint so_jvmpath) {
+                           char jvmpath[], jint so_jvmpath,
+                           char jvmcfg[],  jint so_jvmcfg) {
   /*
    * First, determine if we are running the desired data model.  If we
    * are running the desired data model, all the error messages
@@ -671,9 +450,10 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
           JLI_ReportErrorMessage(JRE_ERROR1);
           exit(2);
         }
-
+        JLI_Snprintf(jvmcfg, so_jvmcfg, "%s%slib%s%s%sjvm.cfg",
+                     jrepath, FILESEP, FILESEP,  arch, FILESEP);
         /* Find the specified JVM type */
-        if (ReadKnownVMs(jrepath, arch, JNI_FALSE) < 1) {
+        if (ReadKnownVMs(jvmcfg, JNI_FALSE) < 1) {
           JLI_ReportErrorMessage(CFG_ERROR7);
           exit(1);
         }
@@ -685,19 +465,10 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
             exit(4);
         }
 
-        if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch, wanted)) {
+        if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, arch, 0 )) {
           JLI_ReportErrorMessage(CFG_ERROR8, jvmtype, jvmpath);
           exit(4);
         }
-
-#ifdef MACOSX
-        /*
-         * Mac OS X requires the Cocoa event loop to be run on the "main"
-         * thread. Spawn off a new thread to run main() and pass
-         * this thread off to the Cocoa event loop.
-         */
-        MacOSXStartup(argc, argv);
-#endif
         /*
          * we seem to have everything we need, so without further ado
          * we return back, otherwise proceed to set the environment.
@@ -713,7 +484,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
         return;
 #endif /* SETENV_REQUIRED */
       } else {  /* do the same speculatively or exit */
-#if defined(DUAL_MODE) || defined(MACOSX)
+#ifdef DUAL_MODE
         if (running != wanted) {
           /* Find out where the JRE is that we will be using. */
           if (!GetJREPath(jrepath, so_jrepath, GetArchPath(wanted), JNI_TRUE)) {
@@ -721,12 +492,13 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
             JLI_ReportErrorMessage(JRE_ERROR2, wanted);
             exit(1);
           }
-
+          JLI_Snprintf(jvmcfg, so_jvmcfg, "%s%slib%s%s%sjvm.cfg",
+                       jrepath, FILESEP, FILESEP, GetArchPath(wanted), FILESEP);
           /*
            * Read in jvm.cfg for target data model and process vm
            * selection options.
            */
-          if (ReadKnownVMs(jrepath, GetArchPath(wanted), JNI_TRUE) < 1) {
+          if (ReadKnownVMs(jvmcfg, JNI_TRUE) < 1) {
             /* give up and let other code report error message */
             JLI_ReportErrorMessage(JRE_ERROR2, wanted);
             exit(1);
@@ -739,15 +511,15 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
           }
 
           /* exec child can do error checking on the existence of the path */
-          jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, GetArchPath(wanted), wanted);
+          jvmpathExists = GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath, GetArchPath(wanted), 0);
 #ifdef SETENV_REQUIRED
           mustsetenv = RequiresSetenv(wanted, jvmpath);
 #endif /* SETENV_REQUIRED */
         }
-#else
+#else /* ! DUALMODE */
         JLI_ReportErrorMessage(JRE_ERROR2, wanted);
         exit(1);
-#endif
+#endif /* DUAL_MODE */
         }
 #ifdef SETENV_REQUIRED
         if (mustsetenv) {
@@ -820,7 +592,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
             } else {
                 runpath = dmpath;
             }
-#else
+#else /* ! __solaris__ */
             /*
              * If not on Solaris, assume only a single LD_LIBRARY_PATH
              * variable.
@@ -854,10 +626,10 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
 #ifdef DUAL_MODE
                         jrepath, GetArchPath(wanted),
                         jrepath, GetArchPath(wanted)
-#else
+#else /* !DUAL_MODE */
                         jrepath, arch,
                         jrepath, arch
-#endif
+#endif /* DUAL_MODE */
                         );
 
 
@@ -873,7 +645,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
                         (running == wanted) /* data model does not have to be changed */
 #ifdef __solaris__
                         && (dmpath == NULL) /* data model specific variables not set  */
-#endif
+#endif /* __solaris__ */
                         ) {
 
                     return;
@@ -909,7 +681,7 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
              */
             if (dmpath != NULL)
                 (void)UnsetEnv((wanted == 32) ? "LD_LIBRARY_PATH_32" : "LD_LIBRARY_PATH_64");
-#endif
+#endif /* __solaris */
 
             newenvp = environ;
         }
@@ -953,45 +725,18 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
             } else {
                 execv(newexec, argv);
             }
-#else
-#ifdef MACOSX
-            /*
-            * Use posix_spawn() instead of execv() on Mac OS X.
-            * This allows us to choose which architecture the child process
-            * should run as.
-            */
-            {
-                posix_spawnattr_t attr;
-                size_t unused_size;
-                pid_t  unused_pid;
-
-#if defined(__i386__) || defined(__x86_64__)
-                cpu_type_t cpu_type[] = { (wanted == 64) ? CPU_TYPE_X86_64 : CPU_TYPE_X86,
-                                    (running== 64) ? CPU_TYPE_X86_64 : CPU_TYPE_X86 };
-#else
-                cpu_type_t cpu_type[] = { CPU_TYPE_ANY };
-#endif
-
-                posix_spawnattr_init(&attr);
-                posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETEXEC);
-                posix_spawnattr_setbinpref_np(&attr, sizeof(cpu_type) / sizeof(cpu_type_t),
-                                            cpu_type, &unused_size);
-
-                posix_spawn(&unused_pid, newexec, NULL, &attr, argv, environ);
-            }
-#else
+#else /* !SETENV_REQUIRED */
             execv(newexec, argv);
-#endif
 #endif /* SETENV_REQUIRED */
             JLI_ReportErrorMessageSys(JRE_ERROR4, newexec);
 
-#if defined(DUAL_MODE) || defined(MACOSX)
+#ifdef DUAL_MODE
             if (running != wanted) {
                 JLI_ReportErrorMessage(JRE_ERROR5, wanted, running);
 #ifdef __solaris__
 #ifdef __sparc
                 JLI_ReportErrorMessage(JRE_ERROR6);
-#else
+#else  /* ! __sparc__ */
                 JLI_ReportErrorMessage(JRE_ERROR7);
 #endif  /* __sparc */
 #endif /* __solaris__ */
@@ -1004,7 +749,9 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
 }
 
 /*
- * On Solaris VM choosing is done by the launcher (java.c).
+ * On Solaris VM choosing is done by the launcher (java.c),
+ * bitsWanted is used by MacOSX,  on Solaris and Linux this.
+ * parameter is unused.
  */
 static jboolean
 GetJVMPath(const char *jrepath, const char *jvmtype,
@@ -1015,13 +762,7 @@ GetJVMPath(const char *jrepath, const char *jvmtype,
     if (JLI_StrChr(jvmtype, '/')) {
         JLI_Snprintf(jvmpath, jvmpathsize, "%s/" JVM_DLL, jvmtype);
     } else {
-#ifdef MACOSX
-        // macosx client library is built thin, i386 only.  64 bit client requests must load server library
-        const char *jvmtypeUsed = ((bitsWanted == 64) && (strcmp(jvmtype, "client") == 0)) ? "server" : jvmtype;
-        JLI_Snprintf(jvmpath, jvmpathsize, "%s/lib/%s/" JVM_DLL, jrepath, jvmtypeUsed);
-#else
         JLI_Snprintf(jvmpath, jvmpathsize, "%s/lib/%s/%s/" JVM_DLL, jrepath, arch, jvmtype);
-#endif
     }
 
     JLI_TraceLauncher("Does `%s' exist ... ", jvmpath);
@@ -1044,22 +785,6 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
     char libjava[MAXPATHLEN];
 
     if (GetApplicationHome(path, pathsize)) {
-
-#ifdef MACOSX
-        /* Is JRE co-located with the application? */
-        JLI_Snprintf(libjava, sizeof(libjava), "%s/lib/" JAVA_DLL, path);
-        if (access(libjava, F_OK) == 0) {
-            return JNI_TRUE;
-        }
-
-        /* Does the app ship a private JRE in <apphome>/jre directory? */
-        JLI_Snprintf(libjava, sizeof(libjava), "%s/jre/lib/" JAVA_DLL, path);
-        if (access(libjava, F_OK) == 0) {
-            JLI_StrCat(path, "/jre");
-            JLI_TraceLauncher("JRE path is %s\n", path);
-            return JNI_TRUE;
-        }
-#else
         /* Is JRE co-located with the application? */
         JLI_Snprintf(libjava, sizeof(libjava), "%s/lib/%s/" JAVA_DLL, path, arch);
         if (access(libjava, F_OK) == 0) {
@@ -1074,38 +799,7 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
             JLI_TraceLauncher("JRE path is %s\n", path);
             return JNI_TRUE;
         }
-#endif
     }
-
-#ifdef MACOSX
-
-    /* try to find ourselves instead */
-    Dl_info selfInfo;
-    dladdr(&GetJREPath, &selfInfo);
-
-    char *realPathToSelf = realpath(selfInfo.dli_fname, path);
-    if (realPathToSelf != path) {
-        return JNI_FALSE;
-    }
-
-    size_t pathLen = strlen(realPathToSelf);
-    if (pathLen == 0) {
-        return JNI_FALSE;
-    }
-
-    const char lastPathComponent[] = "/lib/jli/libjli.dylib";
-    size_t sizeOfLastPathComponent = sizeof(lastPathComponent) - 1;
-    if (pathLen < sizeOfLastPathComponent) {
-        return JNI_FALSE;
-    }
-
-    size_t indexOfLastPathComponent = pathLen - sizeOfLastPathComponent;
-    if (0 == strncmp(realPathToSelf + indexOfLastPathComponent, lastPathComponent, sizeOfLastPathComponent - 1)) {
-        realPathToSelf[indexOfLastPathComponent + 1] = '\0';
-        return JNI_TRUE;
-    }
-
-#endif
 
     if (!speculative)
       JLI_ReportErrorMessage(JRE_ERROR8 JAVA_DLL);
@@ -1187,7 +881,7 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
     }
 
     ifn->GetCreatedJavaVMs = (GetCreatedJavaVMs_t)
-    dlsym(libjvm, "JNI_GetCreatedJavaVMs");
+        dlsym(libjvm, "JNI_GetCreatedJavaVMs");
     if (ifn->GetCreatedJavaVMs == NULL) {
         JLI_ReportErrorMessage(DLL_ERROR2, jvmpath, dlerror());
         return JNI_FALSE;
@@ -1195,123 +889,6 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
 
     return JNI_TRUE;
 }
-
-/*
- * If app is "/foo/bin/javac", or "/foo/bin/sparcv9/javac" then put
- * "/foo" into buf.
- */
-jboolean
-GetApplicationHome(char *buf, jint bufsize)
-{
-    if (execname != NULL) {
-        JLI_Snprintf(buf, bufsize, "%s", execname);
-        buf[bufsize-1] = '\0';
-    } else {
-        return JNI_FALSE;
-    }
-
-    if (JLI_StrRChr(buf, '/') == 0) {
-        buf[0] = '\0';
-        return JNI_FALSE;
-    }
-    *(JLI_StrRChr(buf, '/')) = '\0';    /* executable file      */
-    if (JLI_StrLen(buf) < 4 || JLI_StrRChr(buf, '/') == 0) {
-        buf[0] = '\0';
-        return JNI_FALSE;
-    }
-    if (JLI_StrCmp("/bin", buf + JLI_StrLen(buf) - 4) != 0)
-        *(JLI_StrRChr(buf, '/')) = '\0';        /* sparcv9 or amd64     */
-    if (JLI_StrLen(buf) < 4 || JLI_StrCmp("/bin", buf + JLI_StrLen(buf) - 4) != 0) {
-        buf[0] = '\0';
-        return JNI_FALSE;
-    }
-    *(JLI_StrRChr(buf, '/')) = '\0';    /* bin                  */
-
-    return JNI_TRUE;
-}
-
-
-/*
- * Return true if the named program exists
- */
-static int
-ProgramExists(char *name)
-{
-    struct stat sb;
-    if (stat(name, &sb) != 0) return 0;
-    if (S_ISDIR(sb.st_mode)) return 0;
-    return (sb.st_mode & S_IEXEC) != 0;
-}
-
-
-/*
- * Find a command in a directory, returning the path.
- */
-static char *
-Resolve(char *indir, char *cmd)
-{
-    char name[PATH_MAX + 2], *real;
-
-    if ((JLI_StrLen(indir) + JLI_StrLen(cmd) + 1)  > PATH_MAX) return 0;
-    JLI_Snprintf(name, sizeof(name), "%s%c%s", indir, FILE_SEPARATOR, cmd);
-    if (!ProgramExists(name)) return 0;
-    real = JLI_MemAlloc(PATH_MAX + 2);
-    if (!realpath(name, real))
-        JLI_StrCpy(real, name);
-    return real;
-}
-
-
-/*
- * Find a path for the executable
- */
-static char *
-FindExecName(char *program)
-{
-    char cwdbuf[PATH_MAX+2];
-    char *path;
-    char *tmp_path;
-    char *f;
-    char *result = NULL;
-
-    /* absolute path? */
-    if (*program == FILE_SEPARATOR ||
-        (FILE_SEPARATOR=='\\' && JLI_StrRChr(program, ':')))
-        return Resolve("", program+1);
-
-    /* relative path? */
-    if (JLI_StrRChr(program, FILE_SEPARATOR) != 0) {
-        char buf[PATH_MAX+2];
-        return Resolve(getcwd(cwdbuf, sizeof(cwdbuf)), program);
-    }
-
-    /* from search path? */
-    path = getenv("PATH");
-    if (!path || !*path) path = ".";
-    tmp_path = JLI_MemAlloc(JLI_StrLen(path) + 2);
-    JLI_StrCpy(tmp_path, path);
-
-    for (f=tmp_path; *f && result==0; ) {
-        char *s = f;
-        while (*f && (*f != PATH_SEPARATOR)) ++f;
-        if (*f) *f++ = 0;
-        if (*s == FILE_SEPARATOR)
-            result = Resolve(s, program);
-        else {
-            /* relative path element */
-            char dir[2*PATH_MAX];
-            JLI_Snprintf(dir, sizeof(dir), "%s%c%s", getcwd(cwdbuf, sizeof(cwdbuf)),
-                    FILE_SEPARATOR, s);
-            result = Resolve(dir, program);
-        }
-        if (result != 0) break;
-    }
-
-    JLI_MemFree(tmp_path);
-    return result;
-}
-
-
 
 /*
  * Compute the name of the executable
@@ -1326,11 +903,11 @@ FindExecName(char *program)
  * As a fallback, and for platforms other than Solaris and Linux,
  * we use FindExecName to compute the executable name.
  */
-static const char*
+const char*
 SetExecname(char **argv)
 {
     char* exec_path = NULL;
-#if defined(__solaris__) || defined(__APPLE__)
+#if defined(__solaris__)
     {
         Dl_info dlinfo;
         int (*fptr)();
@@ -1361,7 +938,7 @@ SetExecname(char **argv)
             exec_path = JLI_StringDup(buf);
         }
     }
-#else /* !__solaris__ && !__APPLE__ && !__linux__ */
+#else /* !__solaris__ && !__linux__ */
     {
         /* Not implemented */
     }
@@ -1374,441 +951,15 @@ SetExecname(char **argv)
     return exec_path;
 }
 
-void JLI_ReportErrorMessage(const char* fmt, ...) {
-    va_list vl;
-    va_start(vl, fmt);
-    vfprintf(stderr, fmt, vl);
-    fprintf(stderr, "\n");
-    va_end(vl);
-}
-
-void JLI_ReportErrorMessageSys(const char* fmt, ...) {
-    va_list vl;
-    char *emsg;
-
-    /*
-     * TODO: its safer to use strerror_r but is not available on
-     * Solaris 8. Until then....
-     */
-    emsg = strerror(errno);
-    if (emsg != NULL) {
-        fprintf(stderr, "%s\n", emsg);
-    }
-
-    va_start(vl, fmt);
-    vfprintf(stderr, fmt, vl);
-    fprintf(stderr, "\n");
-    va_end(vl);
-}
-
-void  JLI_ReportExceptionDescription(JNIEnv * env) {
-  (*env)->ExceptionDescribe(env);
-}
-
-/*
- *      Since using the file system as a registry is a bit risky, perform
- *      additional sanity checks on the identified directory to validate
- *      it as a valid jre/sdk.
- *
- *      Return 0 if the tests fail; otherwise return non-zero (true).
- *
- *      Note that checking for anything more than the existence of an
- *      executable object at bin/java relative to the path being checked
- *      will break the regression tests.
- */
-static int
-CheckSanity(char *path, char *dir)
-{
-    char    buffer[PATH_MAX];
-
-    if (JLI_StrLen(path) + JLI_StrLen(dir) + 11 > PATH_MAX)
-        return (0);     /* Silently reject "impossibly" long paths */
-
-    JLI_Snprintf(buffer, sizeof(buffer), "%s/%s/bin/java", path, dir);
-    return ((access(buffer, X_OK) == 0) ? 1 : 0);
-}
-
-/*
- *      Determine if there is an acceptable JRE in the directory dirname.
- *      Upon locating the "best" one, return a fully qualified path to
- *      it. "Best" is defined as the most advanced JRE meeting the
- *      constraints contained in the manifest_info. If no JRE in this
- *      directory meets the constraints, return NULL.
- *
- *      Note that we don't check for errors in reading the directory
- *      (which would be done by checking errno).  This is because it
- *      doesn't matter if we get an error reading the directory, or
- *      we just don't find anything interesting in the directory.  We
- *      just return NULL in either case.
- *
- *      The historical names of j2sdk and j2re were changed to jdk and
- *      jre respecively as part of the 1.5 rebranding effort.  Since the
- *      former names are legacy on Linux, they must be recognized for
- *      all time.  Fortunately, this is a minor cost.
- */
-static char
-*ProcessDir(manifest_info *info, char *dirname)
-{
-    DIR     *dirp;
-    struct dirent *dp;
-    char    *best = NULL;
-    int     offset;
-    int     best_offset = 0;
-    char    *ret_str = NULL;
-    char    buffer[PATH_MAX];
-
-    if ((dirp = opendir(dirname)) == NULL)
-        return (NULL);
-
-    do {
-        if ((dp = readdir(dirp)) != NULL) {
-            offset = 0;
-            if ((JLI_StrNCmp(dp->d_name, "jre", 3) == 0) ||
-                (JLI_StrNCmp(dp->d_name, "jdk", 3) == 0))
-                offset = 3;
-            else if (JLI_StrNCmp(dp->d_name, "j2re", 4) == 0)
-                offset = 4;
-            else if (JLI_StrNCmp(dp->d_name, "j2sdk", 5) == 0)
-                offset = 5;
-            if (offset > 0) {
-                if ((JLI_AcceptableRelease(dp->d_name + offset,
-                    info->jre_version)) && CheckSanity(dirname, dp->d_name))
-                    if ((best == NULL) || (JLI_ExactVersionId(
-                      dp->d_name + offset, best + best_offset) > 0)) {
-                        if (best != NULL)
-                            JLI_MemFree(best);
-                        best = JLI_StringDup(dp->d_name);
-                        best_offset = offset;
-                    }
-            }
-        }
-    } while (dp != NULL);
-    (void) closedir(dirp);
-    if (best == NULL)
-        return (NULL);
-    else {
-        ret_str = JLI_MemAlloc(JLI_StrLen(dirname) + JLI_StrLen(best) + 2);
-        sprintf(ret_str, "%s/%s", dirname, best);
-        JLI_MemFree(best);
-        return (ret_str);
-    }
-}
-
-/*
- *      This is the global entry point. It examines the host for the optimal
- *      JRE to be used by scanning a set of directories.  The set of directories
- *      is platform dependent and can be overridden by the environment
- *      variable JAVA_VERSION_PATH.
- *
- *      This routine itself simply determines the set of appropriate
- *      directories before passing control onto ProcessDir().
- */
-char*
-LocateJRE(manifest_info* info)
-{
-    char        *path;
-    char        *home;
-    char        *target = NULL;
-    char        *dp;
-    char        *cp;
-
-    /*
-     * Start by getting JAVA_VERSION_PATH
-     */
-    if (info->jre_restrict_search) {
-        path = JLI_StringDup(system_dir);
-    } else if ((path = getenv("JAVA_VERSION_PATH")) != NULL) {
-        path = JLI_StringDup(path);
-    } else {
-        if ((home = getenv("HOME")) != NULL) {
-            path = (char *)JLI_MemAlloc(JLI_StrLen(home) + \
-                        JLI_StrLen(system_dir) + JLI_StrLen(user_dir) + 2);
-            sprintf(path, "%s%s:%s", home, user_dir, system_dir);
-        } else {
-            path = JLI_StringDup(system_dir);
-        }
-    }
-
-    /*
-     * Step through each directory on the path. Terminate the scan with
-     * the first directory with an acceptable JRE.
-     */
-    cp = dp = path;
-    while (dp != NULL) {
-        cp = JLI_StrChr(dp, (int)':');
-        if (cp != NULL)
-            *cp = '\0';
-        if ((target = ProcessDir(info, dp)) != NULL)
-            break;
-        dp = cp;
-        if (dp != NULL)
-            dp++;
-    }
-    JLI_MemFree(path);
-    return (target);
-}
-
-/*
- * Given a path to a jre to execute, this routine checks if this process
- * is indeed that jre.  If not, it exec's that jre.
- *
- * We want to actually check the paths rather than just the version string
- * built into the executable, so that given version specification (and
- * JAVA_VERSION_PATH) will yield the exact same Java environment, regardless
- * of the version of the arbitrary launcher we start with.
- */
-void
-ExecJRE(char *jre, char **argv)
-{
-    char    wanted[PATH_MAX];
-    const char* progname = GetProgramName();
-
-    /*
-     * Resolve the real path to the directory containing the selected JRE.
-     */
-    if (realpath(jre, wanted) == NULL) {
-        JLI_ReportErrorMessage(JRE_ERROR9, jre);
-        exit(1);
-    }
-
-    /*
-     * Resolve the real path to the currently running launcher.
-     */
-    SetExecname(argv);
-    if (execname == NULL) {
-        JLI_ReportErrorMessage(JRE_ERROR10);
-        exit(1);
-    }
-
-    /*
-     * If the path to the selected JRE directory is a match to the initial
-     * portion of the path to the currently executing JRE, we have a winner!
-     * If so, just return.
-     */
-    if (JLI_StrNCmp(wanted, execname, JLI_StrLen(wanted)) == 0)
-        return;                 /* I am the droid you were looking for */
-
-
-    /*
-     * This should never happen (because of the selection code in SelectJRE),
-     * but check for "impossibly" long path names just because buffer overruns
-     * can be so deadly.
-     */
-    if (JLI_StrLen(wanted) + JLI_StrLen(progname) + 6 > PATH_MAX) {
-        JLI_ReportErrorMessage(JRE_ERROR11);
-        exit(1);
-    }
-
-    /*
-     * Construct the path and exec it.
-     */
-    (void)JLI_StrCat(JLI_StrCat(wanted, "/bin/"), progname);
-    argv[0] = JLI_StringDup(progname);
-    if (JLI_IsTraceLauncher()) {
-        int i;
-        printf("ReExec Command: %s (%s)\n", wanted, argv[0]);
-        printf("ReExec Args:");
-        for (i = 1; argv[i] != NULL; i++)
-            printf(" %s", argv[i]);
-        printf("\n");
-    }
-    JLI_TraceLauncher("TRACER_MARKER:About to EXEC\n");
-    (void)fflush(stdout);
-    (void)fflush(stderr);
-    execv(wanted, argv);
-    JLI_ReportErrorMessageSys(JRE_ERROR12, wanted);
-    exit(1);
-}
-
-/*
- * "Borrowed" from Solaris 10 where the unsetenv() function is being added
- * to libc thanks to SUSv3 (Standard Unix Specification, version 3). As
- * such, in the fullness of time this will appear in libc on all relevant
- * Solaris/Linux platforms and maybe even the Windows platform.  At that
- * time, this stub can be removed.
- *
- * This implementation removes the environment locking for multithreaded
- * applications.  (We don't have access to these mutexes within libc and
- * the launcher isn't multithreaded.)  Note that what remains is platform
- * independent, because it only relies on attributes that a POSIX environment
- * defines.
- *
- * Returns 0 on success, -1 on failure.
- *
- * Also removed was the setting of errno.  The only value of errno set
- * was EINVAL ("Invalid Argument").
- */
-
-/*
- * s1(environ) is name=value
- * s2(name) is name(not the form of name=value).
- * if names match, return value of 1, else return 0
- */
-static int
-match_noeq(const char *s1, const char *s2)
-{
-        while (*s1 == *s2++) {
-                if (*s1++ == '=')
-                        return (1);
-        }
-        if (*s1 == '=' && s2[-1] == '\0')
-                return (1);
-        return (0);
-}
-
-/*
- * added for SUSv3 standard
- *
- * Delete entry from environ.
- * Do not free() memory!  Other threads may be using it.
- * Keep it around forever.
- */
-static int
-borrowed_unsetenv(const char *name)
-{
-        long    idx;            /* index into environ */
-
-        if (name == NULL || *name == '\0' ||
-            JLI_StrChr(name, '=') != NULL) {
-                return (-1);
-        }
-
-        for (idx = 0; environ[idx] != NULL; idx++) {
-                if (match_noeq(environ[idx], name))
-                        break;
-        }
-        if (environ[idx] == NULL) {
-                /* name not found but still a success */
-                return (0);
-        }
-        /* squeeze up one entry */
-        do {
-                environ[idx] = environ[idx+1];
-        } while (environ[++idx] != NULL);
-
-        return (0);
-}
-/* --- End of "borrowed" code --- */
-
-/*
- * Wrapper for unsetenv() function.
- */
-int
-UnsetEnv(char *name)
-{
-    return(borrowed_unsetenv(name));
-}
-
-#if defined(_ALLBSD_SOURCE)
-/*
- * BSD's implementation of CounterGet()
- */
-int64_t
-CounterGet()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (tv.tv_sec * 1000) + tv.tv_usec;
-}
-#endif
-
-
 /* --- Splash Screen shared library support --- */
-
-#ifdef MACOSX
-static JavaVM* SetJavaVMValue()
-{
-    JavaVM * jvm = NULL;
-
-    // The handle is good for both the launcher and the libosxapp.dylib
-    void * handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
-    if (handle) {
-        typedef JavaVM* (*JLI_GetJavaVMInstance_t)();
-
-        JLI_GetJavaVMInstance_t JLI_GetJavaVMInstance =
-            (JLI_GetJavaVMInstance_t)dlsym(handle,
-                    "JLI_GetJavaVMInstance");
-        if (JLI_GetJavaVMInstance) {
-            jvm = JLI_GetJavaVMInstance();
-        }
-
-        if (jvm) {
-            typedef void (*OSXAPP_SetJavaVM_t)(JavaVM*);
-
-            OSXAPP_SetJavaVM_t OSXAPP_SetJavaVM =
-                (OSXAPP_SetJavaVM_t)dlsym(handle, "OSXAPP_SetJavaVM");
-            if (OSXAPP_SetJavaVM) {
-                OSXAPP_SetJavaVM(jvm);
-            } else {
-                jvm = NULL;
-            }
-        }
-
-        dlclose(handle);
-    }
-
-    return jvm;
-}
-#endif
-
 static const char* SPLASHSCREEN_SO = JNI_LIB_NAME("splashscreen");
-
 static void* hSplashLib = NULL;
 
 void* SplashProcAddress(const char* name) {
     if (!hSplashLib) {
         const char * splashLibPath;
-
-#ifndef MACOSX
         splashLibPath = SPLASHSCREEN_SO;
-#else
-        char path[PATH_MAX];
-        Dl_info dli;
-
-        path[0] = 0;
-        if (dladdr(&SplashProcAddress, &dli)) {
-            // This is always reported as <path>/bin/java* (java or javaw, whatever)
-            char * realPath = realpath(dli.dli_fname, path);
-
-            if (realPath != path) {
-                path[0] = 0;
-            } else {
-                // chop off the "/bin/java*" part...
-                char * c = strrchr(path, '/');
-
-                if (!c) {
-                    path[0] = 0;
-                } else {
-                    *c = 0;
-                    c = strrchr(path, '/');
-
-                    if (!c) {
-                        path[0] = 0;
-                    } else {
-                        *c = 0;
-                        // ...and add the lib path instead
-                        snprintf(c, sizeof(path)-strlen(path), "/lib/%s", SPLASHSCREEN_SO);
-                    }
-                }
-            }
-        }
-
-        if (path[0]) {
-            splashLibPath = path;
-        } else {
-            // try our best, but most probably this will fail to load
-            splashLibPath = SPLASHSCREEN_SO;
-        }
-#endif
         hSplashLib = dlopen(splashLibPath, RTLD_LAZY | RTLD_GLOBAL);
-#ifdef MACOSX
-        if (hSplashLib) {
-            if (!SetJavaVMValue()) {
-                dlclose(hSplashLib);
-                hSplashLib = NULL;
-            }
-        }
-#endif
     }
     if (hSplashLib) {
         void* sym = dlsym(hSplashLib, name);
@@ -1825,20 +976,13 @@ void SplashFreeLibrary() {
     }
 }
 
-const char *
-jlong_format_specifier() {
-    return "%lld";
-}
-
-
-
 /*
  * Block current thread and continue execution in a new thread
  */
 int
 ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void * args) {
     int rslt;
-#if defined(__linux__) || defined(_ALLBSD_SOURCE) || defined(__APPLE__)
+#ifdef __linux__
     pthread_t tid;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -1863,7 +1007,7 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
     }
 
     pthread_attr_destroy(&attr);
-#else
+#else /* ! __linux__ */
     thread_t tid;
     long flags = 0;
     if (thr_create(NULL, stack_size, (void *(*)(void *))continuation, args, flags, &tid) == 0) {
@@ -1874,7 +1018,7 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
       /* See above. Continue in current thread if thr_create() failed */
       rslt = continuation(args);
     }
-#endif
+#endif /* __linux__ */
     return rslt;
 }
 
@@ -1888,39 +1032,35 @@ void SetJavaLauncherPlatformProps() {
     char *pid_prop_str = (char *)JLI_MemAlloc(JLI_StrLen(substr) + MAX_PID_STR_SZ + 1);
     sprintf(pid_prop_str, "%s%d", substr, getpid());
     AddOption(pid_prop_str, NULL);
-#endif
+#endif /* __linux__ */
 }
 
-jboolean
-IsJavaw()
+int
+JVMInit(InvocationFunctions* ifn, jlong threadStackSize,
+        int argc, char **argv,
+        int mode, char *what, int ret)
 {
-    /* noop on UNIX */
-    return JNI_FALSE;
+    ShowSplashScreen();
+    return ContinueInNewThread(ifn, threadStackSize, argc, argv, mode, what, ret);
 }
 
 void
-InitLauncher(jboolean javaw)
+PostJVMInit(JNIEnv *env, jstring mainClass, JavaVM *vm)
 {
-    JLI_SetTraceLauncher();
+    // stubbed out for windows and *nixes.
+}
+
+void
+RegisterThread()
+{
+    // stubbed out for windows and *nixes.
 }
 
 /*
- * The implementation for finding classes from the bootstrap
- * class loader, refer to java.h
+ * on unix, we return a false to indicate this option is not applicable
  */
-static FindClassFromBootLoader_t *findBootClass = NULL;
-
-jclass
-FindBootStrapClass(JNIEnv *env, const char* classname)
+jboolean
+ProcessPlatformOption(const char *arg)
 {
-   if (findBootClass == NULL) {
-       findBootClass = (FindClassFromBootLoader_t *)dlsym(RTLD_DEFAULT,
-          "JVM_FindClassFromBootLoader");
-       if (findBootClass == NULL) {
-           JLI_ReportErrorMessage(DLL_ERROR4,
-               "JVM_FindClassFromBootLoader");
-           return NULL;
-       }
-   }
-   return findBootClass(env, classname);
+    return JNI_FALSE;
 }
