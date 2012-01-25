@@ -69,6 +69,7 @@ public class LWWindowPeer
     private GraphicsConfiguration graphicsConfig;
 
     private SurfaceData surfaceData;
+    private final Object surfaceDataLock = new Object();
 
     private int backBufferCount;
     private BufferCapabilities backBufferCaps;
@@ -241,7 +242,9 @@ public class LWWindowPeer
     @Override
     protected void disposeImpl() {
         SurfaceData oldData = getSurfaceData();
-        surfaceData = null;
+        synchronized (surfaceDataLock){
+            surfaceData = null;
+        }
         if (oldData != null) {
             oldData.invalidate();
         }
@@ -295,7 +298,7 @@ public class LWWindowPeer
         return false;
     }
 
-    protected final synchronized Graphics getOnscreenGraphics(Color fg, Color bg, Font f) {
+    protected final Graphics getOnscreenGraphics(Color fg, Color bg, Font f) {
         if (getSurfaceData() == null) {
             return null;
         }
@@ -968,53 +971,55 @@ public class LWWindowPeer
     /*
      * May be called by delegate to provide SD to Java2D code.
      */
-    public synchronized SurfaceData getSurfaceData() {
-        //TODO: synchronize access to the surfaceData.
-        return surfaceData;
+    public SurfaceData getSurfaceData() {
+        synchronized (surfaceDataLock) {
+            return surfaceData;
+        }
     }
 
     private void replaceSurfaceData() {
         replaceSurfaceData(backBufferCount, backBufferCaps);
     }
 
-    private synchronized void replaceSurfaceData(int newBackBufferCount,
+    private void replaceSurfaceData(int newBackBufferCount,
                                                  BufferCapabilities newBackBufferCaps) {
-        // TODO: need some kind of synchronization here?
-        final SurfaceData oldData = getSurfaceData();
-        surfaceData = platformWindow.replaceSurfaceData();
-        // TODO: volatile image
-//        VolatileImage oldBB = backBuffer;
-        BufferedImage oldBB = backBuffer;
-        backBufferCount = newBackBufferCount;
-        backBufferCaps = newBackBufferCaps;
-        final Rectangle size = getSize();
-        if (getSurfaceData() != null && oldData != getSurfaceData()) {
-            clearBackground(size.width, size.height);
-        }
-        blitSurfaceData(oldData, getSurfaceData());
+        synchronized (surfaceDataLock) {
+            final SurfaceData oldData = getSurfaceData();
+            surfaceData = platformWindow.replaceSurfaceData();
+            // TODO: volatile image
+    //        VolatileImage oldBB = backBuffer;
+            BufferedImage oldBB = backBuffer;
+            backBufferCount = newBackBufferCount;
+            backBufferCaps = newBackBufferCaps;
+            final Rectangle size = getSize();
+            if (getSurfaceData() != null && oldData != getSurfaceData()) {
+                clearBackground(size.width, size.height);
+            }
+            blitSurfaceData(oldData, getSurfaceData());
 
-        if (oldData != null && oldData != getSurfaceData()) {
-            // TODO: drop oldData for D3D/WGL pipelines
-            // This can only happen when this peer is being created
-            oldData.flush();
-        }
+            if (oldData != null && oldData != getSurfaceData()) {
+                // TODO: drop oldData for D3D/WGL pipelines
+                // This can only happen when this peer is being created
+                oldData.flush();
+            }
 
-        // TODO: volatile image
-//        backBuffer = (VolatileImage)delegate.createBackBuffer();
-        backBuffer = (BufferedImage) platformWindow.createBackBuffer();
-        if (backBuffer != null) {
-            Graphics g = backBuffer.getGraphics();
-            try {
-                Rectangle r = getBounds();
-                g.setColor(getBackground());
-                g.fillRect(0, 0, r.width, r.height);
-                if (oldBB != null) {
-                    // Draw the old back buffer to the new one
-                    g.drawImage(oldBB, 0, 0, null);
-                    oldBB.flush();
+            // TODO: volatile image
+    //        backBuffer = (VolatileImage)delegate.createBackBuffer();
+            backBuffer = (BufferedImage) platformWindow.createBackBuffer();
+            if (backBuffer != null) {
+                Graphics g = backBuffer.getGraphics();
+                try {
+                    Rectangle r = getBounds();
+                    g.setColor(getBackground());
+                    g.fillRect(0, 0, r.width, r.height);
+                    if (oldBB != null) {
+                        // Draw the old back buffer to the new one
+                        g.drawImage(oldBB, 0, 0, null);
+                        oldBB.flush();
+                    }
+                } finally {
+                    g.dispose();
                 }
-            } finally {
-                g.dispose();
             }
         }
     }

@@ -124,6 +124,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     private D delegate = null;
     private Container delegateContainer;
     private Component delegateDropTarget;
+    private final Object dropTargetLock = new Object();
 
     private int fNumDropTargets = 0;
     private CDropTarget fDropTarget = null;
@@ -445,7 +446,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public final synchronized Graphics getGraphics() {
+    public final Graphics getGraphics() {
         Graphics g = getWindowPeerOrSelf().isOpaque() ? getOnscreenGraphics()
                                                       : getOffscreenGraphics();
         if (g != null) {
@@ -990,31 +991,37 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     // DropTargetPeer Method
-    public synchronized void addDropTarget(DropTarget dt) {
-        // 10-14-02 VL: Windows WComponentPeer would add (or remove) the drop target only
-        // if it's the first (or last) one for the component. Otherwise this call is a no-op.
-        if (++fNumDropTargets == 1) {
-            // Having a non-null drop target would be an error but let's check just in case:
-            if (fDropTarget != null)
-                System.err.println("CComponent.addDropTarget(): current drop target is non-null.");
+    @Override
+    public void addDropTarget(DropTarget dt) {
+        synchronized (dropTargetLock){
+            // 10-14-02 VL: Windows WComponentPeer would add (or remove) the drop target only
+            // if it's the first (or last) one for the component. Otherwise this call is a no-op.
+            if (++fNumDropTargets == 1) {
+                // Having a non-null drop target would be an error but let's check just in case:
+                if (fDropTarget != null)
+                    System.err.println("CComponent.addDropTarget(): current drop target is non-null.");
 
-            // Create a new drop target:
-            fDropTarget = CDropTarget.createDropTarget(dt, target, this);
+                // Create a new drop target:
+                fDropTarget = CDropTarget.createDropTarget(dt, target, this);
+            }
         }
     }
 
     // DropTargetPeer Method
-    public synchronized void removeDropTarget(DropTarget dt) {
-        // 10-14-02 VL: Windows WComponentPeer would add (or remove) the drop target only
-        // if it's the first (or last) one for the component. Otherwise this call is a no-op.
-        if (--fNumDropTargets == 0) {
-            // Having a null drop target would be an error but let's check just in case:
-            if (fDropTarget != null) {
-                // Dispose of the drop target:
-                fDropTarget.dispose();
-                fDropTarget = null;
-            } else
-                System.err.println("CComponent.removeDropTarget(): current drop target is null.");
+    @Override
+    public void removeDropTarget(DropTarget dt) {
+        synchronized (dropTargetLock){
+            // 10-14-02 VL: Windows WComponentPeer would add (or remove) the drop target only
+            // if it's the first (or last) one for the component. Otherwise this call is a no-op.
+            if (--fNumDropTargets == 0) {
+                // Having a null drop target would be an error but let's check just in case:
+                if (fDropTarget != null) {
+                    // Dispose of the drop target:
+                    fDropTarget.dispose();
+                    fDropTarget = null;
+                } else
+                    System.err.println("CComponent.removeDropTarget(): current drop target is null.");
+            }
         }
     }
 
