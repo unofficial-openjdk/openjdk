@@ -210,31 +210,8 @@ class CRobot implements RobotPeer {
      */
     @Override
     public int [] getRGBPixels(final Rectangle bounds) {
-        Rectangle screenBounds = fDevice.getDefaultConfiguration().getBounds();
-        // screenBounds is in the coordinates of the primary device
-        // but bounds is in the coordinates of fDevice
-        // so we fix screenbounds at 0,0 origin
-        screenBounds.x = screenBounds.y = 0;
-        Rectangle intersection = screenBounds.intersection(bounds);
-
-        int c[] = new int[intersection.width * intersection.height];
-        getScreenPixels(intersection, c);
-
-        if (!intersection.equals(bounds)) {
-            // Since we are returning a smaller array than the code expects,
-            // we have to copy our existing array into an array of the
-            // "correct" size
-            int c2[] = new int[bounds.width * bounds.height];
-            for (int h=0; h<bounds.height; h++) {
-                int boundsRow = h+bounds.y;
-                if (boundsRow>=intersection.y && boundsRow<intersection.height) {
-                    int srcPos = (boundsRow-intersection.y)*intersection.width;
-                    int destPos = (h*bounds.width) + (intersection.x-bounds.x);
-                    System.arraycopy(c, srcPos, c2, destPos, intersection.width);
-                }
-            }
-            c = c2;
-        }
+        int c[] = new int[bounds.width * bounds.height];
+        getScreenPixels(bounds, c);
 
         return c;
     }
