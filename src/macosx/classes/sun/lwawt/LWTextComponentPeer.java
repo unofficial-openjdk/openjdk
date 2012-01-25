@@ -32,8 +32,11 @@ import java.awt.Insets;
 import java.awt.SystemColor;
 import java.awt.TextComponent;
 import java.awt.event.TextEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.InputMethodEvent;
 import java.awt.im.InputMethodRequests;
 import java.awt.peer.TextComponentPeer;
+import sun.awt.AWTAccessor;
 
 import javax.swing.JComponent;
 import javax.swing.event.DocumentEvent;
@@ -43,7 +46,7 @@ import javax.swing.text.JTextComponent;
 
 abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent>
         extends LWComponentPeer<T, D>
-        implements DocumentListener, TextComponentPeer {
+        implements DocumentListener, TextComponentPeer, InputMethodListener {
 
     /**
      * Character with reasonable value between the minimum width and maximum.
@@ -68,6 +71,7 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
         }
         setEditable(getTarget().isEditable());
         setText(getTarget().getText());
+        getTarget().addInputMethodListener(this);
         final int start = getTarget().getSelectionStart();
         final int end = getTarget().getSelectionEnd();
         if (end > start) {
@@ -165,7 +169,9 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
 
     @Override
     public final InputMethodRequests getInputMethodRequests() {
-        return null;
+        synchronized (getDelegateLock()) {
+            return getTextComponent().getInputMethodRequests();
+        }
     }
 
     @Override
@@ -194,5 +200,19 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
     @Override
     public final void removeUpdate(final DocumentEvent e) {
         sendTextEvent(e);
+    }
+
+    @Override
+    public void inputMethodTextChanged(InputMethodEvent event) {
+        synchronized (getDelegateLock()) {
+            AWTAccessor.getComponentAccessor().processEvent(getTextComponent(), event);
+        }
+    }
+
+    @Override
+    public void caretPositionChanged(InputMethodEvent event) {
+        synchronized (getDelegateLock()) {
+            AWTAccessor.getComponentAccessor().processEvent(getTextComponent(), event);
+        }
     }
 }
