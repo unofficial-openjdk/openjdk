@@ -81,6 +81,7 @@ final class LWListPeer
     public void add(final String item, final int index) {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().add(index, item);
+            revalidate();
         }
     }
 
@@ -88,6 +89,7 @@ final class LWListPeer
     public void delItems(final int start, final int end) {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().removeRange(start, end);
+            revalidate();
         }
     }
 
@@ -95,6 +97,7 @@ final class LWListPeer
     public void removeAll() {
         synchronized (getDelegateLock()) {
             getDelegate().getModel().removeAllElements();
+            revalidate();
         }
     }
 
@@ -151,6 +154,12 @@ final class LWListPeer
         }
     }
 
+    private void revalidate() {
+        synchronized (getDelegateLock()) {
+            getDelegate().getView().invalidate();
+            getDelegate().validate();
+        }
+    }
 
     final class ScrollableJList extends JScrollPane implements ListSelectionListener {
 
