@@ -263,21 +263,23 @@ AWT_ASSERT_APPKIT_THREAD;
 
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    if (platformWindow == NULL) return; // shouldn't occur
+    if (platformWindow != NULL) {
+        // extract the target AWT Window object out of the CPlatformWindow
+        static JNF_MEMBER_CACHE(jf_target, jc_CPlatformWindow, "target", "Ljava/awt/Window;");
+        jobject awtWindow = JNFGetObjectField(env, platformWindow, jf_target);
+        if (awtWindow != NULL) {
+            // translate the point into Java coordinates
+            NSPoint loc = [event locationInWindow];
+            loc.y = [self frame].size.height - loc.y;
 
-    // extract the target AWT Window object out of the CPlatformWindow
-    static JNF_MEMBER_CACHE(jf_target, jc_CPlatformWindow, "target", "Ljava/awt/Window;");
-    jobject awtWindow = JNFGetObjectField(env, platformWindow, jf_target);
-    if (awtWindow == NULL) return; // shouldn't occur
-
-    // translate the point into Java coordinates
-    NSPoint loc = [event locationInWindow];
-    loc.y = [self frame].size.height - loc.y;
-
-    // send up to the GestureHandler to recursively dispatch on the AWT event thread
-    static JNF_CLASS_CACHE(jc_GestureHandler, "com/apple/eawt/event/GestureHandler");
-    static JNF_STATIC_MEMBER_CACHE(sjm_handleGestureFromNative, jc_GestureHandler, "handleGestureFromNative", "(Ljava/awt/Window;IDDDD)V");
-    JNFCallStaticVoidMethod(env, sjm_handleGestureFromNative, awtWindow, type, (jdouble)loc.x, (jdouble)loc.y, (jdouble)a, (jdouble)b);
+            // send up to the GestureHandler to recursively dispatch on the AWT event thread
+            static JNF_CLASS_CACHE(jc_GestureHandler, "com/apple/eawt/event/GestureHandler");
+            static JNF_STATIC_MEMBER_CACHE(sjm_handleGestureFromNative, jc_GestureHandler, "handleGestureFromNative", "(Ljava/awt/Window;IDDDD)V");
+            JNFCallStaticVoidMethod(env, sjm_handleGestureFromNative, awtWindow, type, (jdouble)loc.x, (jdouble)loc.y, (jdouble)a, (jdouble)b);
+            (*env)->DeleteLocalRef(env, awtWindow); 
+        }
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)beginGestureWithEvent:(NSEvent *)event {
@@ -349,6 +351,7 @@ AWT_ASSERT_APPKIT_THREAD;
                       (jint)frame.origin.y,
                       (jint)frame.size.width,
                       (jint)frame.size.height);
+    (*env)->DeleteLocalRef(env, platformWindow);
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
@@ -377,9 +380,11 @@ AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    static JNF_MEMBER_CACHE(jm_deliverZoom, jc_CPlatformWindow, "deliverZoom", "(Z)V");
-    JNFCallVoidMethod(env, platformWindow, jm_deliverZoom, ![window isZoomed]);
-
+    if (platformWindow != NULL) {
+        static JNF_MEMBER_CACHE(jm_deliverZoom, jc_CPlatformWindow, "deliverZoom", "(Z)V");
+        JNFCallVoidMethod(env, platformWindow, jm_deliverZoom, ![window isZoomed]);
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
     return YES;
 }
 
@@ -389,8 +394,11 @@ AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    static JNF_MEMBER_CACHE(jm_deliverIconify, jc_CPlatformWindow, "deliverIconify", "(Z)V");
-    JNFCallVoidMethod(env, platformWindow, jm_deliverIconify, iconify);
+    if (platformWindow != NULL) {
+        static JNF_MEMBER_CACHE(jm_deliverIconify, jc_CPlatformWindow, "deliverIconify", "(Z)V");
+        JNFCallVoidMethod(env, platformWindow, jm_deliverIconify, iconify);
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification {
@@ -410,8 +418,11 @@ AWT_ASSERT_APPKIT_THREAD;
 
     JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    static JNF_MEMBER_CACHE(jm_deliverWindowFocusEvent, jc_CPlatformWindow, "deliverWindowFocusEvent", "(Z)V");
-    JNFCallVoidMethod(env, platformWindow, jm_deliverWindowFocusEvent, (jboolean)focused);
+    if (platformWindow != NULL) {
+        static JNF_MEMBER_CACHE(jm_deliverWindowFocusEvent, jc_CPlatformWindow, "deliverWindowFocusEvent", "(Z)V");
+        JNFCallVoidMethod(env, platformWindow, jm_deliverWindowFocusEvent, (jboolean)focused);
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 
@@ -436,8 +447,11 @@ AWT_ASSERT_APPKIT_THREAD;
 
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    static JNF_MEMBER_CACHE(jm_windowDidBecomeMain, jc_CPlatformWindow, "windowDidBecomeMain", "()V");
-    JNFCallVoidMethod(env, platformWindow, jm_windowDidBecomeMain);
+    if (platformWindow != NULL) {
+        static JNF_MEMBER_CACHE(jm_windowDidBecomeMain, jc_CPlatformWindow, "windowDidBecomeMain", "()V");
+        JNFCallVoidMethod(env, platformWindow, jm_windowDidBecomeMain);
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (BOOL)windowShouldClose:(id)sender {
@@ -445,55 +459,74 @@ AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
-    static JNF_MEMBER_CACHE(jm_deliverWindowClosingEvent, jc_CPlatformWindow, "deliverWindowClosingEvent", "()V");
-    JNFCallVoidMethod(env, platformWindow, jm_deliverWindowClosingEvent);
-
+    if (platformWindow != NULL) {
+        static JNF_MEMBER_CACHE(jm_deliverWindowClosingEvent, jc_CPlatformWindow, "deliverWindowClosingEvent", "()V");
+        JNFCallVoidMethod(env, platformWindow, jm_deliverWindowClosingEvent);    
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
     // The window will be closed (if allowed) as result of sending Java event
     return NO;
 }
 
 
 - (void)_notifyFullScreenOp:(jint)op withEnv:(JNIEnv *)env {
-        static JNF_CLASS_CACHE(jc_FullScreenHandler, "com/apple/eawt/FullScreenHandler");
+    static JNF_CLASS_CACHE(jc_FullScreenHandler, "com/apple/eawt/FullScreenHandler");
     static JNF_STATIC_MEMBER_CACHE(jm_notifyFullScreenOperation, jc_FullScreenHandler, "handleFullScreenEventFromNative", "(Ljava/awt/Window;I)V");
     static JNF_MEMBER_CACHE(jf_target, jc_CPlatformWindow, "target", "Ljava/awt/Window;");
-    jobject awtWindow = JNFGetObjectField(env, [self.javaPlatformWindow jObjectWithEnv:env], jf_target);
-    if (awtWindow == NULL) return; // shouldn't occur
-
-    JNFCallStaticVoidMethod(env, jm_notifyFullScreenOperation, awtWindow, op);
+    jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+    if (platformWindow != NULL) {
+        jobject awtWindow = JNFGetObjectField(env, platformWindow, jf_target);
+        if (awtWindow != NULL) {
+            JNFCallStaticVoidMethod(env, jm_notifyFullScreenOperation, awtWindow, op);
+            (*env)->DeleteLocalRef(env, awtWindow);
+        }
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
-        static JNF_MEMBER_CACHE(jm_windowWillEnterFullScreen, jc_CPlatformWindow, "windowWillEnterFullScreen", "()V");
-        JNIEnv *env = [ThreadUtilities getJNIEnv];
-    JNFCallVoidMethod(env, [self.javaPlatformWindow jObjectWithEnv:env], jm_windowWillEnterFullScreen);
-
+    static JNF_MEMBER_CACHE(jm_windowWillEnterFullScreen, jc_CPlatformWindow, "windowWillEnterFullScreen", "()V");
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+    if (platformWindow != NULL) {
+        JNFCallVoidMethod(env, platformWindow, jm_windowWillEnterFullScreen);
         [self _notifyFullScreenOp:com_apple_eawt_FullScreenHandler_FULLSCREEN_WILL_ENTER withEnv:env];
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
-        static JNF_MEMBER_CACHE(jm_windowDidEnterFullScreen, jc_CPlatformWindow, "windowDidEnterFullScreen", "()V");
-        JNIEnv *env = [ThreadUtilities getJNIEnv];
-        JNFCallVoidMethod(env, [self.javaPlatformWindow jObjectWithEnv:env], jm_windowDidEnterFullScreen);
-
+    static JNF_MEMBER_CACHE(jm_windowDidEnterFullScreen, jc_CPlatformWindow, "windowDidEnterFullScreen", "()V");
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+    if (platformWindow != NULL) {
+        JNFCallVoidMethod(env, platformWindow, jm_windowDidEnterFullScreen);
         [self _notifyFullScreenOp:com_apple_eawt_FullScreenHandler_FULLSCREEN_DID_ENTER withEnv:env];
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification {
-        static JNF_MEMBER_CACHE(jm_windowWillExitFullScreen, jc_CPlatformWindow, "windowWillExitFullScreen", "()V");
-        JNIEnv *env = [ThreadUtilities getJNIEnv];
-        JNFCallVoidMethod(env, [self.javaPlatformWindow jObjectWithEnv:env], jm_windowWillExitFullScreen);
-
+    static JNF_MEMBER_CACHE(jm_windowWillExitFullScreen, jc_CPlatformWindow, "windowWillExitFullScreen", "()V");
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+    if (platformWindow != NULL) {
+        JNFCallVoidMethod(env, platformWindow, jm_windowWillExitFullScreen);
         [self _notifyFullScreenOp:com_apple_eawt_FullScreenHandler_FULLSCREEN_WILL_EXIT withEnv:env];
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-        static JNF_MEMBER_CACHE(jm_windowDidExitFullScreen, jc_CPlatformWindow, "windowDidExitFullScreen", "()V");
-        JNIEnv *env = [ThreadUtilities getJNIEnv];
-        JNFCallVoidMethod(env, [self.javaPlatformWindow jObjectWithEnv:env], jm_windowDidExitFullScreen);
-
+    static JNF_MEMBER_CACHE(jm_windowDidExitFullScreen, jc_CPlatformWindow, "windowDidExitFullScreen", "()V");
+    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
+    if (platformWindow != NULL) {
+        JNFCallVoidMethod(env, platformWindow, jm_windowDidExitFullScreen);
         [self _notifyFullScreenOp:com_apple_eawt_FullScreenHandler_FULLSCREEN_DID_EXIT withEnv:env];
+        (*env)->DeleteLocalRef(env, platformWindow);
+    }
 }
 
 - (void)sendEvent:(NSEvent *)event {

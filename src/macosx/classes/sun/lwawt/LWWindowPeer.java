@@ -214,6 +214,7 @@ public class LWWindowPeer
         if (isGrabbing()) {
             ungrab();
         }
+        destroyBuffers();
         platformWindow.dispose();
         super.disposeImpl();
     }
@@ -295,8 +296,10 @@ public class LWWindowPeer
     }
 
     @Override
-    public Image getBackBuffer() {
-        return backBuffer;
+    public final Image getBackBuffer() {
+        synchronized (getStateLock()) {
+            return backBuffer;
+        }
     }
 
     @Override
@@ -307,8 +310,14 @@ public class LWWindowPeer
     }
 
     @Override
-    public void destroyBuffers() {
-        replaceSurfaceData(1, null);
+    public final void destroyBuffers() {
+        final Image oldBB = getBackBuffer();
+        synchronized (getStateLock()) {
+            backBuffer = null;
+        }
+        if (oldBB != null) {
+            oldBB.flush();
+        }
     }
 
     @Override

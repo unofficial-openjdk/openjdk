@@ -53,9 +53,6 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     private Clipboard clipboard;
     private MouseInfoPeer mouseInfoPeer;
 
-    private static Map<PlatformWindow, LWWindowPeer> delegateMap =
-        new HashMap<PlatformWindow, LWWindowPeer>();
-
     public LWToolkit() {
     }
 
@@ -217,7 +214,6 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     {
         LWWindowPeer peer = new LWWindowPeer(target, platformComponent, platformWindow);
         targetCreatedPeer(target, peer);
-        targetDelegate(platformWindow, peer);
         peer.initialize();
         return peer;
     }
@@ -500,14 +496,6 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     protected abstract PlatformComponent createPlatformComponent();
 
     protected abstract FileDialogPeer createFileDialogPeer(FileDialog target);
-
-    public static void targetDelegate(PlatformWindow delegate, LWWindowPeer peer) {
-        delegateMap.put(delegate, peer);
-    }
-
-    public static LWWindowPeer delegateToPeer(PlatformWindow delegate) {
-        return delegateMap.get(delegate);
-    }
 
     // ---- UTILITY METHODS ---- //
 
