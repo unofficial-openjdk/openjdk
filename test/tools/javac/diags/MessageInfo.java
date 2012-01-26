@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,13 @@
 
 /**
  * @test
- * @bug 7013272
+ * @bug 7013272 7127924
  * @summary Automatically generate info about how compiler resource keys are used
  * @build Example ArgTypeCompilerFactory MessageFile MessageInfo
- * @run main MessageInfo
+ * @run main/othervm MessageInfo
+ */
+/*
+ *      See CR 7127924 for info on why othervm is used.
  */
 
 import java.io.*;
