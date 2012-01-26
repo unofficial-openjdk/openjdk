@@ -121,6 +121,7 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
             final Document document = getTextComponent().getDocument();
             document.removeDocumentListener(this);
             getTextComponent().setText(l);
+            revalidate();
             if (firstChangeSkipped) {
                 postEvent(new TextEvent(getTarget(),
                                         TextEvent.TEXT_VALUE_CHANGED));
@@ -179,11 +180,17 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
         return getTarget().isFocusable();
     }
 
+    protected final void revalidate() {
+        synchronized (getDelegateLock()) {
+            getTextComponent().invalidate();
+            getDelegate().validate();
+        }
+    }
+
     private void sendTextEvent(final DocumentEvent e) {
         postEvent(new TextEvent(getTarget(), TextEvent.TEXT_VALUE_CHANGED));
         synchronized (getDelegateLock()) {
-            getDelegate().invalidate();
-            getDelegate().validate();
+            revalidate();
         }
     }
 

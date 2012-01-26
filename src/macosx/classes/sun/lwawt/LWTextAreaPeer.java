@@ -107,7 +107,7 @@ final class LWTextAreaPeer
             final boolean doScroll = pos >= area.getDocument().getLength()
                                      && area.getDocument().getLength() != 0;
             area.insert(text, pos);
-            pane.validate();
+            revalidate();
             if (doScroll) {
                 final JScrollBar vbar = pane.getVerticalScrollBar();
                 if (vbar != null) {
@@ -139,6 +139,7 @@ final class LWTextAreaPeer
             final Document document = getTextComponent().getDocument();
             document.removeDocumentListener(this);
             getDelegate().getView().replaceRange(text, start, end);
+            revalidate();
             postEvent(new TextEvent(getTarget(), TextEvent.TEXT_VALUE_CHANGED));
             document.addDocumentListener(this);
         }
