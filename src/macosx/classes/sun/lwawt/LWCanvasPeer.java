@@ -23,30 +23,23 @@
  * questions.
  */
 
+
 package sun.lwawt;
 
 import java.awt.BufferCapabilities;
 import java.awt.Canvas;
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.Image;
 import java.awt.peer.CanvasPeer;
 
 import javax.swing.JComponent;
 
-final class LWCanvasPeer
-    extends LWComponentPeer<Component, JComponent>
-    implements CanvasPeer
-{
+final class LWCanvasPeer extends LWComponentPeer<Component, JComponent>
+        implements CanvasPeer {
+
     LWCanvasPeer(final Canvas target, PlatformComponent platformComponent) {
         super(target, platformComponent);
-    }
-
-    @Override
-    public JComponent createDelegate() {
-        return new JCanvasDelegate();
     }
 
     // ---- PEER METHODS ---- //
@@ -64,8 +57,7 @@ final class LWCanvasPeer
 
     @Override
     public void flip(int x1, int y1, int x2, int y2,
-                     BufferCapabilities.FlipContents flipAction)
-    {
+                     BufferCapabilities.FlipContents flipAction) {
         // TODO
     }
 
@@ -80,29 +72,5 @@ final class LWCanvasPeer
     {
         // TODO
         return gc;
-    }
-
-    class JCanvasDelegate
-        extends JComponent
-    {
-
-        @Override
-        public Dimension getMinimumSize() {
-            return getTarget().getSize();
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            return getTarget().getSize();
-        }
-
-        @Override
-        protected void paintComponent(final Graphics g) {
-            if (isOpaque()) {
-                g.setColor(getBackground());
-                g.fillRect(0, 0, getWidth(), getHeight());
-                g.setColor(getForeground());
-            }
-        }
     }
 }

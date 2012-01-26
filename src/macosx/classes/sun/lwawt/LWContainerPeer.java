@@ -28,7 +28,9 @@ package sun.lwawt;
 import sun.awt.SunGraphicsCallback;
 import sun.java2d.pipe.Region;
 
+import java.awt.Color;
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -234,20 +236,50 @@ abstract class LWContainerPeer<T extends Container, D extends JComponent>
     }
 
     @Override
+    public void setBackground(final Color c) {
+        for (final LWComponentPeer child : getChildren()) {
+            if (!child.getTarget().isBackgroundSet()) {
+                child.setBackground(c);
+            }
+        }
+        super.setBackground(c);
+    }
+
+    @Override
+    public void setForeground(final Color c) {
+        for (final LWComponentPeer child : getChildren()) {
+            if (!child.getTarget().isForegroundSet()) {
+                child.setForeground(c);
+            }
+        }
+        super.setForeground(c);
+    }
+
+    @Override
+    public void setFont(final Font f) {
+        for (final LWComponentPeer child : getChildren()) {
+            if (!child.getTarget().isFontSet()) {
+                child.setFont(f);
+            }
+        }
+        super.setFont(f);
+    }
+
+    @Override
     public final void paint(final Graphics g) {
         super.paint(g);
-        SunGraphicsCallback.PaintHeavyweightComponentsCallback.getInstance().
-            runComponents(getTarget().getComponents(), g,
-                          SunGraphicsCallback.LIGHTWEIGHTS
-                          | SunGraphicsCallback.HEAVYWEIGHTS);
+        SunGraphicsCallback.PaintHeavyweightComponentsCallback.getInstance()
+                .runComponents(getTarget().getComponents(), g,
+                               SunGraphicsCallback.LIGHTWEIGHTS
+                               | SunGraphicsCallback.HEAVYWEIGHTS);
     }
 
     @Override
     public final void print(final Graphics g) {
         super.print(g);
-        SunGraphicsCallback.PrintHeavyweightComponentsCallback.getInstance().
-            runComponents(getTarget().getComponents(), g,
-                          SunGraphicsCallback.LIGHTWEIGHTS
-                          | SunGraphicsCallback.HEAVYWEIGHTS);
+        SunGraphicsCallback.PrintHeavyweightComponentsCallback.getInstance()
+                .runComponents(getTarget().getComponents(), g,
+                               SunGraphicsCallback.LIGHTWEIGHTS
+                               | SunGraphicsCallback.HEAVYWEIGHTS);
     }
 }

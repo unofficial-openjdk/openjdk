@@ -195,8 +195,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         }
     };
 
-    private static final Font DEFAULT_FONT = new Font("Lucida Grande", Font.PLAIN, 13);
-
     // Bounds of the native widget but in the Java coordinate system.
     // In order to keep it up-to-date we will update them on
     // 1) setting native bounds via nativeSetBounds() call
@@ -224,29 +222,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         this.target = _target;
         if (_owner instanceof CPlatformWindow) {
             this.owner = (CPlatformWindow)_owner;
-        }
-        final Font font = target.getFont();
-        if (font == null) {
-            target.setFont(DEFAULT_FONT);
-        }
-
-        final Color background = target.getBackground();
-        if (background == null) {
-            target.setBackground(SystemColor.window);
-        } else {
-            // first we check if user provided alpha for background. This is
-            // similar to what Apple's Java do.
-            // Since JDK7 we should rely on setOpacity() only.
-            // this.opacity = c.getAlpha();
-            // System.out.println("Delegate assigns alpha (we ignore setOpacity()):"
-            // +this.opacity);
-        }
-
-        Color foreground = target.getForeground();
-        if (foreground == null) {
-            target.setForeground(SystemColor.windowText);
-            // we should not call setForeground because it will call a repaint
-            // which the peer may not be ready to do yet.
         }
 
         final int styleBits = getInitialStyleBits();

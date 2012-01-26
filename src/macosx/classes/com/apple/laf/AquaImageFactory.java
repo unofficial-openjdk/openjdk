@@ -453,7 +453,8 @@ public class AquaImageFactory {
     }
 
     public static Color getWindowBackgroundColorUIResource() {
-        return AquaNativeResources.getWindowBackgroundColorUIResource();
+        //return AquaNativeResources.getWindowBackgroundColorUIResource();
+        return new SystemColorProxy(SystemColor.window);
     }
 
     public static Color getTextSelectionBackgroundColorUIResource() {

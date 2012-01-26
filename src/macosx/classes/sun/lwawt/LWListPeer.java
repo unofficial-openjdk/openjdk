@@ -38,6 +38,9 @@ final class LWListPeer
 
     LWListPeer(final List target, final PlatformComponent platformComponent) {
         super(target, platformComponent);
+        if (!getTarget().isBackgroundSet()) {
+            getTarget().setBackground(SystemColor.text);
+        }
     }
 
     @Override
@@ -45,6 +48,7 @@ final class LWListPeer
         return new ScrollableJList();
     }
 
+    @Override
     public void initialize() {
         super.initialize();
         setMultipleMode(getTarget().isMultipleMode());
@@ -56,6 +60,7 @@ final class LWListPeer
         }
     }
 
+    @Override
     public boolean isFocusable() {
         return true;
     }
@@ -221,30 +226,6 @@ final class LWListPeer
         public void setEnabled(final boolean enabled) {
             getView().setEnabled(enabled);
             super.setEnabled(enabled);
-        }
-
-        @Override
-        public void setBackground(final Color bg) {
-            super.setBackground(bg);
-            if (getView() != null) {
-                getView().setBackground(bg);
-            }
-        }
-
-        @Override
-        public void setForeground(final Color fg) {
-            super.setForeground(fg);
-            if (getView() != null) {
-                getView().setForeground(fg);
-            }
-        }
-
-        @Override
-        public void setFont(final Font font) {
-            super.setFont(font);
-            if (getView() != null) {
-                getView().setFont(font);
-            }
         }
 
         @Override

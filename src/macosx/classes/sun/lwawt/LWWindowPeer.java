@@ -105,13 +105,9 @@ public class LWWindowPeer
 
     private volatile boolean cachedFocusableWindow;
 
-    private static final Font DEFAULT_FONT = new Font(Font.DIALOG, Font.PLAIN, 12);
-
-    private Color background;
-    private Color foreground;
-    private Font font;
-
     private volatile boolean isOpaque = true;
+
+    private static final Font DEFAULT_FONT = new Font("Lucida Grande", Font.PLAIN, 13);
 
     private static LWWindowPeer grabbingWindow;
 
@@ -140,6 +136,27 @@ public class LWWindowPeer
             this.graphicsConfig = gc;
         }
 
+        if (!target.isFontSet()) {
+            target.setFont(DEFAULT_FONT);
+        }
+
+        if (!target.isBackgroundSet()) {
+            target.setBackground(SystemColor.window);
+        } else {
+            // first we check if user provided alpha for background. This is
+            // similar to what Apple's Java do.
+            // Since JDK7 we should rely on setOpacity() only.
+            // this.opacity = c.getAlpha();
+            // System.out.println("Delegate assigns alpha (we ignore setOpacity()):"
+            // +this.opacity);
+        }
+
+        if (!target.isForegroundSet()) {
+            target.setForeground(SystemColor.windowText);
+            // we should not call setForeground because it will call a repaint
+            // which the peer may not be ready to do yet.
+        }
+
         platformWindow.initialize(target, this, ownerDelegate);
     }
 
@@ -166,60 +183,6 @@ public class LWWindowPeer
 
         // Create surface data and back buffer
         replaceSurfaceData(1, null);
-    }
-
-    public void setBackground(Color c) {
-        final boolean changed;
-        synchronized (getStateLock()) {
-            changed = ((background != null) ? !background.equals(c) :
-                    ((c != null) && !c.equals(background)));
-                background = c;
-        }
-        if (changed) {
-            repaintPeer();
-        }
-    }
-
-    protected Color getBackground() {
-        synchronized (getStateLock()) {
-            return background;
-        }
-    }
-
-    public void setForeground(Color c) {
-        final boolean changed;
-        synchronized (getStateLock()) {
-            changed = ((foreground != null) ? !foreground.equals(c) :
-                    ((c != null) && !c.equals(foreground)));
-            foreground = c;
-        }
-        if (changed) {
-            repaintPeer();
-        }
-    }
-
-    protected Color getForeground() {
-        synchronized (getStateLock()) {
-            return foreground;
-        }
-    }
-
-    public void setFont(Font f) {
-        final boolean changed;
-        synchronized (getStateLock()) {
-            changed = ((font != null) ? !font.equals(f) :
-                    ((f != null) && !f.equals(font)));
-            font = f;
-        }
-        if (changed) {
-            repaintPeer();
-        }
-    }
-
-    protected Font getFont() {
-        synchronized (getStateLock()) {
-            return font == null ? DEFAULT_FONT : font;
-        }
     }
 
     // Just a helper method

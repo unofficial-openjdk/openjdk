@@ -46,6 +46,6 @@ final class LWPanelPeer extends LWContainerPeer<Panel, JPanel>
 
     @Override
     public Dimension getMinimumSize() {
-        return getTarget().getSize();
+        return getBounds().getSize();
     }
 }

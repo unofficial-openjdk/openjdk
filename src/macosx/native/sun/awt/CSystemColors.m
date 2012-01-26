@@ -81,7 +81,8 @@ static JNF_STATIC_MEMBER_CACHE(jm_systemColorsChanged, jc_LWCToolkit, "systemCol
     sColors[java_awt_SystemColor_INACTIVE_CAPTION] =        [NSColor grayColor];
     sColors[java_awt_SystemColor_INACTIVE_CAPTION_TEXT] =    [NSColor grayColor];
     sColors[java_awt_SystemColor_INACTIVE_CAPTION_BORDER] =    [NSColor grayColor];
-    sColors[java_awt_SystemColor_WINDOW] =                    [NSColor grayColor];
+    const CGFloat color = (CGFloat)0xEE/(CGFloat)0xFF;
+    sColors[java_awt_SystemColor_WINDOW] = [NSColor colorWithCalibratedRed:color green:color blue:color alpha:1.0f];
     sColors[java_awt_SystemColor_WINDOW_BORDER] =            [NSColor windowFrameColor];
     sColors[java_awt_SystemColor_WINDOW_TEXT] =                [NSColor windowFrameTextColor];
     sColors[java_awt_SystemColor_MENU] =                    [NSColor controlBackgroundColor];

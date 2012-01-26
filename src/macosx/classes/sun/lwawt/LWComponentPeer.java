@@ -41,7 +41,6 @@ import java.awt.peer.ComponentPeer;
 import java.awt.peer.ContainerPeer;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.beans.Transient;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -114,6 +113,10 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     private boolean visible = false;
     private boolean enabled = true;
 
+    private Color background;
+    private Color foreground;
+    private Font font;
+
     // Paint area to coalesce all the paint events and store
     // the target dirty area
     private RepaintArea targetPaintArea;
@@ -164,24 +167,6 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         public int getY() {
             return getLocation().y;
         }
-
-        @Override
-        @Transient
-        public Color getBackground() {
-            return getTarget().getBackground();
-        }
-
-        @Override
-        @Transient
-        public Color getForeground() {
-            return getTarget().getForeground();
-        }
-
-        @Override
-        @Transient
-        public Font getFont() {
-            return getTarget().getFont();
-        }
     }
 
     public LWComponentPeer(T target, PlatformComponent platformComponent) {
@@ -228,10 +213,13 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
             SwingUtilities3.setDelegateRepaintManager(delegate, new RepaintManager() {
                 @Override
                 public void addDirtyRegion(final JComponent c, final int x, final int y, final int w, final int h) {
-                    // Repainting in Swing is asynchronous, so it is emulated here by using invokeLater()
-                    // to extract the painting call from the event's processing routine
-                    //TODO: so why exactly do we have to emulate this in lwawt? We use a back-buffer anyway,
-                    //why not paint the components synchronously into the buffer?
+                    if (SunToolkit.isDispatchThreadForAppContext(getTarget())) {
+                        synchronized (getDelegateLock()) {
+                            if (getDelegate().isPaintingForPrint()) {
+                                return;
+                            }
+                        }
+                    }
                     Rectangle res = SwingUtilities.convertRectangle(
                             c, new Rectangle(x, y, w, h), getDelegate());
                     repaintPeer(res);
@@ -302,24 +290,15 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     public void initialize() {
         platformComponent.initialize(target, this, getPlatformWindow());
         targetPaintArea = new LWRepaintArea();
-        synchronized (getDelegateLock()) {
-            if (getDelegate() != null) {
-                getDelegate().setOpaque(true);
+        if (getDelegate() != null) {
+            synchronized (getDelegateLock()) {
                 resetColorsAndFont(delegate);
-                // we must explicitly set the font here
-                // see Component.getFont_NoClientCode() for details
-                delegateContainer.setFont(target.getFont());
+                getDelegate().setOpaque(true);
             }
         }
-        if (target.isBackgroundSet()) {
-            setBackground(target.getBackground());
-        }
-        if (target.isForegroundSet()) {
-            setForeground(target.getForeground());
-        }
-        if (target.isFontSet()) {
-            setFont(target.getFont());
-        }
+        setBackground(target.getBackground());
+        setForeground(target.getForeground());
+        setFont(target.getFont());
         setBounds(target.getBounds());
         setEnabled(target.isEnabled());
         setVisible(target.isVisible());
@@ -638,71 +617,81 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void setBackground(Color c) {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
+    public void setBackground(final Color c) {
+        final Color oldBg = getBackground();
+        if (oldBg == c || (oldBg != null && oldBg.equals(c))) {
+            return;
+        }
+        synchronized (getStateLock()) {
+            background = c;
+        }
+        final D delegate = getDelegate();
+        if (delegate != null) {
+            synchronized (getDelegateLock()) {
                 // delegate will repaint the target
                 delegate.setBackground(c);
             }
+        } else {
+            repaintPeer();
         }
     }
 
-    protected Color getBackground() {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
-                return delegate.getBackground();
-            }
+    protected final Color getBackground() {
+        synchronized (getStateLock()) {
+            return background;
         }
-        return null;
     }
 
     @Override
-    public void setForeground(Color c) {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
+    public void setForeground(final Color c) {
+        final Color oldFg = getForeground();
+        if (oldFg == c || (oldFg != null && oldFg.equals(c))) {
+            return;
+        }
+        synchronized (getStateLock()) {
+            foreground = c;
+        }
+        final D delegate = getDelegate();
+        if (delegate != null) {
+            synchronized (getDelegateLock()) {
                 // delegate will repaint the target
                 delegate.setForeground(c);
             }
+        } else {
+            repaintPeer();
         }
     }
 
-    protected Color getForeground() {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
-                return delegate.getForeground();
-            }
+    protected final Color getForeground() {
+        synchronized (getStateLock()) {
+            return foreground;
         }
-        return null;
     }
 
     @Override
-    public void setFont(Font f) {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
+    public void setFont(final Font f) {
+        final Font oldF = getFont();
+        if (oldF == f || (oldF != null && oldF.equals(f))) {
+            return;
+        }
+        synchronized (getStateLock()) {
+            font = f;
+        }
+        final D delegate = getDelegate();
+        if (delegate != null) {
+            synchronized (getDelegateLock()) {
                 // delegate will repaint the target
                 delegate.setFont(f);
-                if (f == null) {
-                    // we must explicitly set the font here
-                    // see Component.getFont_NoClientCode() for details
-                    delegateContainer.setFont(getTarget().getFont());
-                }
             }
+        } else {
+            repaintPeer();
         }
     }
 
-    protected Font getFont() {
-        synchronized (getDelegateLock()) {
-            D delegate = getDelegate();
-            if (delegate != null) {
-                return delegate.getFont();
-            }
+    protected final Font getFont() {
+        synchronized (getStateLock()) {
+            return font;
         }
-        return null;
     }
 
     @Override
@@ -754,7 +743,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     // Helper method
-    public boolean isEnabled() {
+    public final boolean isEnabled() {
         synchronized (getStateLock()) {
             return enabled;
         }
@@ -784,7 +773,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     // Helper method
-    public boolean isVisible() {
+    public final boolean isVisible() {
         synchronized (getStateLock()) {
             return visible;
         }
@@ -1322,7 +1311,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * Paints the peer. Overridden in subclasses to delegate the actual painting
      * to Swing components.
      */
-    protected void paintPeer(final Graphics g) {
+    protected final void paintPeer(final Graphics g) {
         final D delegate = getDelegate();
         if (delegate != null) {
             if (!SwingUtilities.isEventDispatchThread()) {

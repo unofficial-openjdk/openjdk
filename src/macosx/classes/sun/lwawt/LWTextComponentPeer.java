@@ -57,14 +57,14 @@ abstract class LWTextComponentPeer<T extends TextComponent, D extends JComponent
     LWTextComponentPeer(final T target,
                         final PlatformComponent platformComponent) {
         super(target, platformComponent);
+        if (!getTarget().isBackgroundSet()) {
+            getTarget().setBackground(SystemColor.text);
+        }
     }
 
     @Override
     public void initialize() {
         super.initialize();
-        if (!getTarget().isBackgroundSet()) {
-            getTarget().setBackground(SystemColor.text);
-        }
         synchronized (getDelegateLock()) {
             // This listener should be added before setText().
             getTextComponent().getDocument().addDocumentListener(this);
