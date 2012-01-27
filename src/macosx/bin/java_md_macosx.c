@@ -795,45 +795,29 @@ static void* hSplashLib = NULL;
 
 void* SplashProcAddress(const char* name) {
     if (!hSplashLib) {
-        const char * splashLibPath;
-        char path[PATH_MAX];
-        Dl_info dli;
-
-        path[0] = 0;
-        if (dladdr(&SplashProcAddress, &dli)) {
-            // This is always reported as <path>/bin/java* (java or javaw, whatever)
-            char * realPath = realpath(dli.dli_fname, path);
-
-            if (realPath != path) {
-                path[0] = 0;
-            } else {
-                // chop off the "/bin/java*" part...
-                char * c = strrchr(path, '/');
-
-                if (!c) {
-                    path[0] = 0;
-                } else {
-                    *c = 0;
-                    c = strrchr(path, '/');
-
-                    if (!c) {
-                        path[0] = 0;
-                    } else {
-                        *c = 0;
-                        // ...and add the lib path instead
-                        snprintf(c, sizeof(path)-strlen(path), "/lib/%s", SPLASHSCREEN_SO);
-                    }
-                }
-            }
+        char jrePath[PATH_MAX];
+        if (!GetJREPath(jrePath, sizeof(jrePath), GetArch(), JNI_FALSE)) {
+            JLI_ReportErrorMessage(JRE_ERROR1);
+            return NULL;
         }
 
-        if (path[0]) {
-            splashLibPath = path;
-        } else {
-            // try our best, but most probably this will fail to load
-            splashLibPath = SPLASHSCREEN_SO;
+        char splashPath[PATH_MAX];
+        const int ret = JLI_Snprintf(splashPath, sizeof(splashPath),
+                "%s/lib/%s", jrePath, SPLASHSCREEN_SO);
+        if (ret >= (int)sizeof(splashPath)) {
+            JLI_ReportErrorMessage(JRE_ERROR11);
+            return NULL;
         }
-        hSplashLib = dlopen(splashLibPath, RTLD_LAZY | RTLD_GLOBAL);
+        if (ret < 0) {
+            JLI_ReportErrorMessage(JRE_ERROR13);
+            return NULL;
+        }
+
+        hSplashLib = dlopen(splashPath, RTLD_LAZY | RTLD_GLOBAL);
+        // It's OK if dlopen() fails. The splash screen library binary file
+        // might have been stripped out from the JRE image to reduce its size
+        // (e.g. on embedded platforms).
+
         if (hSplashLib) {
             if (!SetJavaVMValue()) {
                 dlclose(hSplashLib);
