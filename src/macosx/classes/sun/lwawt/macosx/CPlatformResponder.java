@@ -100,7 +100,7 @@ public class CPlatformResponder {
     /*
      * Handles key events.
      */
-    public void handleKeyEvent(int eventType, int modifierFlags, String charsIgnoringMods,
+    public void handleKeyEvent(int eventType, int modifierFlags, String chars,
                                short keyCode)
     {
         boolean isFlagsChangedEvent =
@@ -125,8 +125,8 @@ public class CPlatformResponder {
             jkeyLocation = out[1];
             jeventType = out[2];
         } else {
-            if (charsIgnoringMods != null && charsIgnoringMods.length() > 0) {
-                testChar = charsIgnoringMods.charAt(0);
+            if (chars != null && chars.length() > 0) {
+                testChar = chars.charAt(0);
             }
 
             int[] in = new int[] {testChar, testDeadChar, modifierFlags, keyCode};
@@ -156,13 +156,8 @@ public class CPlatformResponder {
         // for clipboard related shortcuts like Meta + [CVX]
         boolean isMetaDown = (jmodifiers & KeyEvent.META_DOWN_MASK) != 0;
         if (jeventType == KeyEvent.KEY_PRESSED && postsTyped && !isMetaDown) {
-            boolean isCtrlDown = (jmodifiers & KeyEvent.CTRL_DOWN_MASK) != 0;
-            boolean isShiftDown = (jmodifiers & KeyEvent.SHIFT_DOWN_MASK) != 0;
-
-            // emulating the codes from the ASCII table
-            int shift = isCtrlDown ? isShiftDown ? 64 : 96 : 0;
             peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, when, jmodifiers,
-                                  KeyEvent.VK_UNDEFINED, (char) (testChar - shift),
+                                  KeyEvent.VK_UNDEFINED, testChar,
                                   KeyEvent.KEY_LOCATION_UNKNOWN);
         }
     }

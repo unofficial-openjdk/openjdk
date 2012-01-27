@@ -381,9 +381,9 @@ AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
 
-    jstring charactersIgnoringModifiers = NULL;
+    jstring characters = NULL;
     if ([event type] != NSFlagsChanged) {
-        charactersIgnoringModifiers = JNFNSToJavaString(env, [event charactersIgnoringModifiers]);    
+        characters = JNFNSToJavaString(env, [event characters]);    
     }
 
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
@@ -392,15 +392,15 @@ AWT_ASSERT_APPKIT_THREAD;
                                   [event type],
                                   [event modifierFlags],
                                   [event keyCode],
-                                  charactersIgnoringModifiers);
+                                  characters);
 
     static JNF_CLASS_CACHE(jc_PlatformView, "sun/lwawt/macosx/CPlatformView");
     static JNF_MEMBER_CACHE(jm_deliverKeyEvent, jc_PlatformView,
                             "deliverKeyEvent", "(Lsun/lwawt/macosx/event/NSEvent;)V");
     JNFCallVoidMethod(env, m_cPlatformView, jm_deliverKeyEvent, jevent);
     
-    if (charactersIgnoringModifiers != NULL) {
-        (*env)->DeleteLocalRef(env, charactersIgnoringModifiers);
+    if (characters != NULL) {
+        (*env)->DeleteLocalRef(env, characters);
     }
 }
 
