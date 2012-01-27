@@ -32,6 +32,7 @@
 #import "GeomUtilities.h"
 #import "ThreadUtilities.h"
 
+#import "sun_lwawt_macosx_CWrapper_NSWindow.h"
 
 /*
  * Class:     sun_lwawt_macosx_CWrapper$NSObject
@@ -105,10 +106,10 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_canBecomeMainWindow
     __block jboolean canBecomeMainWindow = JNI_FALSE;
 
 JNF_COCOA_ENTER(env);
-    
+
     NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
     [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
-	canBecomeMainWindow = [window canBecomeMainWindow];
+    canBecomeMainWindow = [window canBecomeMainWindow];
     }];
 
 JNF_COCOA_EXIT(env);
@@ -219,6 +220,42 @@ JNF_COCOA_ENTER(env);
 JNF_COCOA_EXIT(env);
 }
 
+// Used for CWrapper.NSWindow.setLevel() (and level() which isn't implemented yet)
+static NSInteger LEVELS[sun_lwawt_macosx_CWrapper_NSWindow_MAX_WINDOW_LEVELS];
+static void initLevels()
+{
+    static dispatch_once_t pred;
+
+    dispatch_once(&pred, ^{
+        LEVELS[sun_lwawt_macosx_CWrapper_NSWindow_NSNormalWindowLevel] = NSNormalWindowLevel;
+        LEVELS[sun_lwawt_macosx_CWrapper_NSWindow_NSFloatingWindowLevel] = NSFloatingWindowLevel;
+    });
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CWrapper$NSWindow
+ * Method:    setLevel
+ * Signature: (JI)V
+ */
+JNIEXPORT void JNICALL
+Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setLevel
+(JNIEnv *env, jclass cls, jlong windowPtr, jint level)
+{
+JNF_COCOA_ENTER(env);
+
+    if (level >= 0 && level < sun_lwawt_macosx_CWrapper_NSWindow_MAX_WINDOW_LEVELS) {
+        initLevels();
+
+        NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
+        [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+            [window setLevel: LEVELS[level]];
+        }];
+    } else {
+        [JNFException raise:env as:kIllegalArgumentException reason:"unknown level"];
+    }
+
+JNF_COCOA_EXIT(env);
+}
 
 /*
  * Class:     sun_lwawt_macosx_CWrapper$NSWindow
@@ -310,7 +347,7 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setOpaque
 (JNIEnv *env, jclass cls, jlong windowPtr, jboolean opaque)
 {
 JNF_COCOA_ENTER(env);
-    
+
     AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
     [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
         [window setOpaque:(BOOL)opaque];
@@ -329,13 +366,13 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_setBackgroundColor
 (JNIEnv *env, jclass cls, jlong windowPtr, jlong colorPtr)
 {
 JNF_COCOA_ENTER(env);
-    
+
     AWTWindow *window = (AWTWindow *)jlong_to_ptr(windowPtr);
     NSColor *color = (NSColor *)jlong_to_ptr(colorPtr);
     [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
         [window setBackgroundColor:color];
     }];
-    
+
 JNF_COCOA_EXIT(env);
 }
 
@@ -688,15 +725,15 @@ Java_sun_lwawt_macosx_CWrapper_00024NSColor_clearColor
 (JNIEnv *env, jclass cls)
 {
     __block jlong clearColorPtr = 0L;
-    
+
 JNF_COCOA_ENTER(env);
-    
+
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         clearColorPtr = ptr_to_jlong([NSColor clearColor]);
     }];
-    
+
 JNF_COCOA_EXIT(env);
-    
+
     return clearColorPtr;
 }
 

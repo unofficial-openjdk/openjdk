@@ -36,6 +36,16 @@ public final class CWrapper {
         public static final int NSWindowBelow = -1;
         public static final int NSWindowOut = 0;
 
+        // Window level constants
+        // The number of supported levels: (we'll use more in the future)
+        public static final int MAX_WINDOW_LEVELS = 2;
+        // The levels: (these are NOT real constants, these are keys. See native code.)
+        public static final int NSNormalWindowLevel = 0;
+        public static final int NSFloatingWindowLevel = 1;
+
+        // 'level' is one of the keys defined above
+        public static native void setLevel(long window, int level);
+
         public static native void makeKeyAndOrderFront(long window);
         public static native void makeMainWindow(long window);
         public static native boolean canBecomeMainWindow(long window);

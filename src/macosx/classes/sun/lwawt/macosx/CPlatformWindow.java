@@ -496,6 +496,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (owner != null) {
             if (visible) {
                 CWrapper.NSWindow.addChildWindow(owner.getNSWindowPtr(), getNSWindowPtr(), CWrapper.NSWindow.NSWindowAbove);
+                if (target.isAlwaysOnTop()) {
+                    CWrapper.NSWindow.setLevel(getNSWindowPtr(), CWrapper.NSWindow.NSFloatingWindowLevel);
+                }
             }
         }
 
@@ -822,6 +825,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         final long nsWindowOwnerPtr = owner.getNSWindowPtr();
         CWrapper.NSWindow.removeChildWindow(nsWindowOwnerPtr, nsWindowSelfPtr);
         CWrapper.NSWindow.addChildWindow(nsWindowOwnerPtr, nsWindowSelfPtr, CWrapper.NSWindow.NSWindowAbove);
+        if (target.isAlwaysOnTop()) {
+            CWrapper.NSWindow.setLevel(getNSWindowPtr(), CWrapper.NSWindow.NSFloatingWindowLevel);
+        }
     }
 
     // ----------------------------------------------------------------------
