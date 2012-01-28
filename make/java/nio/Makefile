@@ -263,7 +263,10 @@ endif # PLATFORM = linux
 ifeq ($(PLATFORM), macosx)
 FILES_java += \
         sun/nio/ch/AbstractPollSelectorImpl.java \
+	sun/nio/ch/BsdAsynchronousChannelProvider.java \
 	sun/nio/ch/InheritedChannel.java \
+	sun/nio/ch/KQueue.java \
+	sun/nio/ch/KQueuePort.java \
         sun/nio/ch/PollSelectorProvider.java \
         sun/nio/ch/PollSelectorImpl.java \
 	sun/nio/ch/Port.java \
@@ -306,10 +309,15 @@ FILES_c += \
 	GnomeFileTypeDetector.c \
 	BsdNativeDispatcher.c \
 	UnixCopyFile.c \
-	UnixNativeDispatcher.c
+	UnixNativeDispatcher.c \
+	\
+	KQueue.c \
+	KQueuePort.c
 
 FILES_export += \
 	sun/nio/ch/InheritedChannel.java \
+	sun/nio/ch/KQueue.java \
+	sun/nio/ch/KQueuePort.java \
 	sun/nio/ch/NativeThread.java \
 	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
 	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
