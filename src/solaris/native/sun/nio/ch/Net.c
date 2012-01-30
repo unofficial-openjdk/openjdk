@@ -198,7 +198,12 @@ Java_sun_nio_ch_Net_isIPv6Available0(JNIEnv* env, jclass cl)
 JNIEXPORT jboolean JNICALL
 Java_sun_nio_ch_Net_canIPv6SocketJoinIPv4Group0(JNIEnv* env, jclass cl)
 {
+#ifdef MACOSX
+    /* for now IPv6 sockets cannot join IPv4 multicast groups */
+    return JNI_FALSE;
+#else
     return JNI_TRUE;
+#endif
 }
 
 JNIEXPORT jboolean JNICALL
@@ -505,12 +510,17 @@ Java_sun_nio_ch_Net_joinOrDrop4(JNIEnv *env, jobject this, jboolean join, jobjec
         optval = (void*)&mreq;
         optlen = sizeof(mreq);
     } else {
+#ifdef MACOSX
+        /* no IPv4 include-mode filtering for now */
+        return IOS_UNAVAILABLE;
+#else
         mreq_source.imr_multiaddr.s_addr = htonl(group);
         mreq_source.imr_sourceaddr.s_addr = htonl(source);
         mreq_source.imr_interface.s_addr = htonl(interf);
         opt = (join) ? IP_ADD_SOURCE_MEMBERSHIP : IP_DROP_SOURCE_MEMBERSHIP;
         optval = (void*)&mreq_source;
         optlen = sizeof(mreq_source);
+#endif
     }
 
     n = setsockopt(fdval(env,fdo), IPPROTO_IP, opt, optval, optlen);
@@ -526,6 +536,10 @@ JNIEXPORT jint JNICALL
 Java_sun_nio_ch_Net_blockOrUnblock4(JNIEnv *env, jobject this, jboolean block, jobject fdo,
                                     jint group, jint interf, jint source)
 {
+#ifdef MACOSX
+    /* no IPv4 exclude-mode filtering for now */
+    return IOS_UNAVAILABLE;
+#else
     struct my_ip_mreq_source mreq_source;
     int n;
     int opt = (block) ? IP_BLOCK_SOURCE : IP_UNBLOCK_SOURCE;
@@ -542,6 +556,7 @@ Java_sun_nio_ch_Net_blockOrUnblock4(JNIEnv *env, jobject this, jboolean block, j
         handleSocketError(env, errno);
     }
     return 0;
+#endif
 }
 
 JNIEXPORT jint JNICALL
@@ -561,8 +576,8 @@ Java_sun_nio_ch_Net_joinOrDrop6(JNIEnv *env, jobject this, jboolean join, jobjec
         optval = (void*)&mreq6;
         optlen = sizeof(mreq6);
     } else {
-#ifdef __linux__
-        /* Include-mode filtering broken on Linux at least to 2.6.24 */
+#if defined (__linux__) || defined(MACOSX)
+        /* Include-mode filtering broken on Mac OS & Linux at least to 2.6.24 */
         return IOS_UNAVAILABLE;
 #else
         initGroupSourceReq(env, group, index, source, &req);
@@ -590,6 +605,10 @@ Java_sun_nio_ch_Net_blockOrUnblock6(JNIEnv *env, jobject this, jboolean block, j
                                     jbyteArray group, jint index, jbyteArray source)
 {
 #ifdef AF_INET6
+  #ifdef MACOSX
+    /* no IPv6 exclude-mode filtering for now */
+    return IOS_UNAVAILABLE;
+  #else
     struct my_group_source_req req;
     int n;
     int opt = (block) ? MCAST_BLOCK_SOURCE : MCAST_UNBLOCK_SOURCE;
@@ -604,6 +623,7 @@ Java_sun_nio_ch_Net_blockOrUnblock6(JNIEnv *env, jobject this, jboolean block, j
         handleSocketError(env, errno);
     }
     return 0;
+  #endif
 #else
     JNU_ThrowInternalError(env, "Should not get here");
     return IOS_THROWN;
