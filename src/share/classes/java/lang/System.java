@@ -1098,26 +1098,6 @@ public final class System {
      */
     public static native String mapLibraryName(String libname);
 
-    static boolean systemUsesJnilib;
-    /**
-     * On platforms which have a different legacy name for libraries
-     * (such that mapLibraryName is inappropriate, because it can't tell
-     * which to use), returns an array of possible alternate library names.
-     *
-     * This exists entirely for the benefit of ClassLoader and should not
-     * be used directly.
-     */
-    static String []mapLegacyLibraryNames(String libname) {
-        if (!systemUsesJnilib)
-            return new String[0];
-
-        String mappedName = mapLibraryName(libname);
-        String names[] = new String[1];
-        names[0] = mappedName.substring(0, mappedName.lastIndexOf("dylib")) + "jnilib";
-
-        return names;
-    }
-
     /**
      * Initialize the system class.  Called after thread initialization.
      */
@@ -1182,12 +1162,6 @@ public final class System {
         // way as other threads; we must do it ourselves here.
         Thread current = Thread.currentThread();
         current.getThreadGroup().add(current);
-
-        // Cache systemUsesJnilib, which needs to be set after initProperties
-        // is called. This is done to avoid slowing down mapLegacyLibraryNames
-        // for the uncommon case of it having to return something.
-        String osName = System.getProperty("os.name");
-        systemUsesJnilib = osName.startsWith("Mac OS X") || osName.startsWith("Darwin");
 
         // register shared secrets
         setJavaLangAccess();
