@@ -473,31 +473,70 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override // PlatformWindow
     public void setVisible(boolean visible) {
+        final long nsWindowPtr = getNSWindowPtr();
+
         if (owner != null) {
             if (!visible) {
-                CWrapper.NSWindow.removeChildWindow(owner.getNSWindowPtr(), getNSWindowPtr());
+                CWrapper.NSWindow.removeChildWindow(owner.getNSWindowPtr(), nsWindowPtr);
             }
         }
 
         updateIconImages();
         updateFocusabilityForAutoRequestFocus(false);
 
+        if (!visible) {
+            // Cancel out the current native state of the window
+            switch (peer.getState()) {
+                case Frame.ICONIFIED:
+                    CWrapper.NSWindow.deminiaturize(nsWindowPtr);
+                    break;
+                case Frame.MAXIMIZED_BOTH:
+                    CWrapper.NSWindow.zoom(nsWindowPtr);
+                    break;
+            }
+        }
+
         LWWindowPeer blocker = peer.getBlocker();
         if (blocker == null || !visible) {
             // If it ain't blocked, or is being hidden, go regular way
-            setVisibleHelper(visible);
+            if (visible) {
+                CWrapper.NSWindow.makeFirstResponder(nsWindowPtr, contentView.getAWTView());
+                boolean isKeyWindow = CWrapper.NSWindow.isKeyWindow(nsWindowPtr);
+                if (!isKeyWindow) {
+                    CWrapper.NSWindow.makeKeyAndOrderFront(nsWindowPtr);
+                } else {
+                    CWrapper.NSWindow.orderFront(nsWindowPtr);
+                }
+            } else {
+                CWrapper.NSWindow.orderOut(nsWindowPtr);
+            }
         } else {
             // otherwise, put it in a proper z-order
-            CWrapper.NSWindow.orderWindow(getNSWindowPtr(), CWrapper.NSWindow.NSWindowBelow,
+            CWrapper.NSWindow.orderWindow(nsWindowPtr, CWrapper.NSWindow.NSWindowBelow,
                     ((CPlatformWindow)blocker.getPlatformWindow()).getNSWindowPtr());
         }
+
+        if (visible) {
+            // Re-apply the extended state as expected in shared code
+            if (target instanceof Frame) {
+                switch (((Frame)target).getExtendedState()) {
+                    case Frame.ICONIFIED:
+                        CWrapper.NSWindow.miniaturize(nsWindowPtr);
+                        break;
+                    case Frame.MAXIMIZED_BOTH:
+                        CWrapper.NSWindow.zoom(nsWindowPtr);
+                        break;
+                }
+            }
+        }
+
         updateFocusabilityForAutoRequestFocus(true);
 
         if (owner != null) {
             if (visible) {
-                CWrapper.NSWindow.addChildWindow(owner.getNSWindowPtr(), getNSWindowPtr(), CWrapper.NSWindow.NSWindowAbove);
+                CWrapper.NSWindow.addChildWindow(owner.getNSWindowPtr(), nsWindowPtr, CWrapper.NSWindow.NSWindowAbove);
                 if (target.isAlwaysOnTop()) {
-                    CWrapper.NSWindow.setLevel(getNSWindowPtr(), CWrapper.NSWindow.NSFloatingWindowLevel);
+                    CWrapper.NSWindow.setLevel(nsWindowPtr, CWrapper.NSWindow.NSFloatingWindowLevel);
                 }
             }
         }
@@ -623,17 +662,17 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public void setWindowState(int windowState) {
+        if (!peer.isVisible()) {
+            // setVisible() applies the state
+            return;
+        }
+
         int prevWindowState = peer.getState();
         if (prevWindowState == windowState) return;
 
         final long nsWindowPtr = getNSWindowPtr();
         switch (windowState) {
             case Frame.ICONIFIED:
-                if (!peer.isVisible()) {
-                    // later on the setVisible will minimize itself
-                    // otherwise, orderFront will deminiaturize window
-                   return;
-                }
                 if (prevWindowState == Frame.MAXIMIZED_BOTH) {
                     // let's return into the normal states first
                     // the zoom call toggles between the normal and the max states
@@ -667,33 +706,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     // ----------------------------------------------------------------------
     //                          UTILITY METHODS
     // ----------------------------------------------------------------------
-
-    private void setVisibleHelper(boolean visible) {
-        final long nsWindowPtr = getNSWindowPtr();
-        if (visible) {
-            CWrapper.NSWindow.makeFirstResponder(nsWindowPtr, contentView.getAWTView());
-            boolean isKeyWindow = CWrapper.NSWindow.isKeyWindow(nsWindowPtr);
-            if (!isKeyWindow) {
-                CWrapper.NSWindow.makeKeyAndOrderFront(nsWindowPtr);
-            } else {
-                CWrapper.NSWindow.orderFront(nsWindowPtr);
-            }
-            if (target instanceof Frame) {
-                if (((Frame)target).getExtendedState() == Frame.ICONIFIED) {
-                    CWrapper.NSWindow.miniaturize(nsWindowPtr);
-                }
-            }
-            return;
-        }
-
-        if (target instanceof Frame) {
-            if (((Frame)target).getExtendedState() == Frame.ICONIFIED) {
-                CWrapper.NSWindow.deminiaturize(nsWindowPtr);
-            }
-        }
-
-        CWrapper.NSWindow.orderOut(nsWindowPtr);
-    }
 
     /*
      * Find image to install into Title or into Application icon.
