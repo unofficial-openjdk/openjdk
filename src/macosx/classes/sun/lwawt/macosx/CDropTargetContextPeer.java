@@ -93,9 +93,8 @@ final class CDropTargetContextPeer extends SunDropTargetContextPeer {
     @Override
     protected void processMotionMessage(SunDropTargetEvent event, boolean operationChanged) {
         Component eventSource = (Component)event.getComponent();
-        Component rootComponent = SwingUtilities.getRoot(eventSource);
         Point screenPoint = event.getPoint();
-        SwingUtilities.convertPointToScreen(screenPoint, rootComponent);
+        SwingUtilities.convertPointToScreen(screenPoint, eventSource);
         Rectangle screenBounds = new Rectangle(eventSource.getLocationOnScreen().x,
                 eventSource.getLocationOnScreen().y,
                 eventSource.getWidth(), eventSource.getHeight());
@@ -105,21 +104,26 @@ final class CDropTargetContextPeer extends SunDropTargetContextPeer {
                 insideTarget = false;
                 return;
             }
-            super.processMotionMessage(event, operationChanged);
+        } else {
+            if(screenBounds.contains(screenPoint)) {
+                processEnterMessage(event);
+                insideTarget = true;
+            } else {
+                return;
+            }
         }
-        insideTarget = screenBounds.contains(screenPoint);
+        super.processMotionMessage(event, operationChanged);
     }
 
     @Override
     protected void processDropMessage(SunDropTargetEvent event) {
         Component eventSource = (Component)event.getComponent();
-        Component rootComponent = SwingUtilities.getRoot(eventSource);
         Point screenPoint = event.getPoint();
-        SwingUtilities.convertPointToScreen(screenPoint, rootComponent);
+        SwingUtilities.convertPointToScreen(screenPoint, eventSource);
         Rectangle screenBounds = new Rectangle(eventSource.getLocationOnScreen().x,
                 eventSource.getLocationOnScreen().y,
                 eventSource.getWidth(), eventSource.getHeight());
-        if(!screenBounds.contains(screenPoint)) {
+        if(screenBounds.contains(screenPoint)) {
             super.processDropMessage(event);
         }
     }
