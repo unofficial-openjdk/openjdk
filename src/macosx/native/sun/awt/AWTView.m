@@ -300,8 +300,8 @@ AWT_ASSERT_APPKIT_THREAD;
 }
 
 - (BOOL) performKeyEquivalent: (NSEvent *) event {
-    [self deliverJavaKeyEventHelper: event];        
-    return TRUE;
+    [self deliverJavaKeyEventHelper: event];
+    return NO;
 }
 
 /**
