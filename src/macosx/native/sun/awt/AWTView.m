@@ -362,6 +362,11 @@ AWT_ASSERT_APPKIT_THREAD;
                                        assumeInside:NO];
 }
 
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+    [self resetTrackingRect];
+}
+
 - (void) resetCursorRects {
     [super resetCursorRects];
     [self resetTrackingRect];
