@@ -386,6 +386,11 @@ java/io/File/BlockIsDirectory.java                              solaris-all
 # 6963118
 java/nio/channels/Selector/Wakeup.java                          windows-all
 
+# 7133499, 7133497
+java/nio/channels/AsyncCloseAndInterrupt.java 			macosx-all
+java/nio/channels/AsynchronousFileChannel/Lock.java 		macosx-all
+java/nio/channels/FileChannel/Transfer.java 			macosx-all
+
 ############################################################################
 
 # jdk_rmi
@@ -667,6 +672,9 @@ sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
 ############################################################################
 
 # jdk_util
+
+# Need 7094995 back-ported from jdk8
+java/util/zip/ZipFile/ClearStaleZipFileInputStreams.java	macosx-all
 
 # Filed 7027061
 java/util/Locale/Bug6989440.java                                windows-all
