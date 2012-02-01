@@ -225,15 +225,15 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setVisible(final boolean v) {
+    public void setVisible(final boolean visible) {
         if (getSurfaceData() == null) {
             replaceSurfaceData();
         }
 
-        if (isVisible() == v) {
+        if (isVisible() == visible) {
             return;
         }
-        super.setVisible(v);
+        super.setVisible(visible);
 
         // TODO: update graphicsConfig, see 4868278
         // TODO: don't notify the delegate if our visibility is unchanged
@@ -247,10 +247,23 @@ public class LWWindowPeer
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                platformWindow.setVisible(v);
+                platformWindow.setVisible(visible);
                 if (isSimpleWindow()) {
-                    updateFocusableWindowState();
-                    changeFocusedWindow(v, v);
+                    LWKeyboardFocusManagerPeer manager = LWKeyboardFocusManagerPeer.
+                        getInstance(getAppContext());
+
+                    if (visible) {
+                        updateFocusableWindowState();
+                        changeFocusedWindow(true, true);
+
+                    // Focus the owner in case this window is focused.
+                    } else if (manager.getCurrentFocusedWindow() == getTarget()) {
+                        LWWindowPeer owner = getOwnerFrameDialog(LWWindowPeer.this);
+                        if (owner != null) {
+                            // KFM will do all the rest.
+                            owner.changeFocusedWindow(true, false);
+                        }
+                    }
                 }
             }
         });
@@ -617,7 +630,7 @@ public class LWWindowPeer
     public void notifyNCMouseDown() {
         // Ungrab except for a click on a Dialog with the grabbing owner
         if (grabbingWindow != null &&
-            grabbingWindow.getTarget() != getOwnerFrameDialog(this))
+            grabbingWindow != getOwnerFrameDialog(this))
         {
             grabbingWindow.ungrab();
         }
@@ -714,7 +727,7 @@ public class LWWindowPeer
 
                 // Ungrab only if this window is not an owned window of the grabbing one.
                 if (!isGrabbing() && grabbingWindow != null &&
-                    grabbingWindow.getTarget() != getOwnerFrameDialog(this))
+                    grabbingWindow != getOwnerFrameDialog(this))
                 {
                     grabbingWindow.ungrab();
                 }
@@ -1073,14 +1086,13 @@ public class LWWindowPeer
 
         // Make the owner active window.
         if (isSimpleWindow()) {
-            Window owner = getOwnerFrameDialog(this);
-            LWWindowPeer ownerPeer = (owner != null ? (LWWindowPeer)owner.getPeer() : null);
+            LWWindowPeer owner = getOwnerFrameDialog(this);
 
             // If owner is not natively active, request native
             // activation on it w/o sending events up to java.
-            if (ownerPeer != null && !ownerPeer.platformWindow.isActive()) {
+            if (owner != null && !owner.platformWindow.isActive()) {
                 if (focusLog.isLoggable(PlatformLogger.FINE)) {
-                    focusLog.fine("requesting native focus to the owner " + ownerPeer);
+                    focusLog.fine("requesting native focus to the owner " + owner);
                 }
                 LWWindowPeer currentActivePeer = (currentActive != null ?
                     (LWWindowPeer)currentActive.getPeer() : null);
@@ -1092,9 +1104,9 @@ public class LWWindowPeer
                     }
                     currentActivePeer.skipNextFocusChange = true;
                 }
-                ownerPeer.skipNextFocusChange = true;
+                owner.skipNextFocusChange = true;
 
-                ownerPeer.platformWindow.requestWindowFocus();
+                owner.platformWindow.requestWindowFocus();
             }
 
             // DKFM will synthesize all the focus/activation events correctly.
@@ -1158,7 +1170,7 @@ public class LWWindowPeer
         // - when the opposite (gaining focus) window is an owned/owner window.
         // - for a simple window in any case.
         if (!becomesFocused &&
-            (isGrabbing() || getOwnerFrameDialog(grabbingWindow) == getTarget()))
+            (isGrabbing() || getOwnerFrameDialog(grabbingWindow) == this))
         {
             focusLog.fine("ungrabbing on " + grabbingWindow);
             // ungrab a simple window if its owner looses activation.
@@ -1174,12 +1186,12 @@ public class LWWindowPeer
         postEvent(windowEvent);
     }
 
-    private static Window getOwnerFrameDialog(LWWindowPeer peer) {
+    private static LWWindowPeer getOwnerFrameDialog(LWWindowPeer peer) {
         Window owner = (peer != null ? peer.getTarget().getOwner() : null);
         while (owner != null && !(owner instanceof Frame || owner instanceof Dialog)) {
             owner = owner.getOwner();
         }
-        return owner;
+        return owner != null ? (LWWindowPeer)owner.getPeer() : null;
     }
 
     /**
