@@ -365,11 +365,6 @@ protected static final String PARSER_SETTINGS =
 
     // shared context
 
-    /** Shared declared entities.
-     * XXX understand it more deeply, why are we doing this ?? Is it really required ?
-     */
-    protected Hashtable fDeclaredEntities;
-
     protected XMLEntityStorage fEntityStorage ;
 
     protected final Object [] defaultEncoding = new Object[]{"UTF-8", null};
@@ -407,24 +402,6 @@ protected static final String PARSER_SETTINGS =
         fEntityScanner = new XMLEntityScanner(propertyManager, this) ;
         reset(propertyManager);
     } // <init>()
-
-    /**
-     * Constructs an entity manager that shares the specified entity
-     * declarations during each parse.
-     * <p>
-     * <strong>REVISIT:</strong> We might want to think about the "right"
-     * way to expose the list of declared entities. For now, the knowledge
-     * how to access the entity declarations is implicit.
-     */
-    public XMLEntityManager(XMLEntityManager entityManager) {
-
-
-        // save shared entity declarations
-        fDeclaredEntities = entityManager != null
-                          ? entityManager.getEntityStore().getDeclaredEntities() : null;
-
-        setScannerVersion(Constants.XML_VERSION_1_0);
-    } // <init>(XMLEntityManager)
 
     /**
      * Adds an internal entity declaration.
@@ -1111,7 +1088,7 @@ protected static final String PARSER_SETTINGS =
     throws IOException, XNIException {
 
         // was entity declared?
-        Entity entity = (Entity)fEntityStorage.getDeclaredEntities().get(entityName);
+        Entity entity = (Entity)fEntityStorage.getEntity(entityName);
         if (entity == null) {
             if (fEntityHandler != null) {
                 String encoding = null;
@@ -1533,15 +1510,6 @@ protected static final String PARSER_SETTINGS =
             }
         }
 
-        // copy declared entities
-        if (fDeclaredEntities != null) {
-            java.util.Enumeration keys = fDeclaredEntities.keys();
-            while (keys.hasMoreElements()) {
-                Object key = keys.nextElement();
-                Object value = fDeclaredEntities.get(key);
-                fEntities.put(key, value);
-            }
-        }
         fEntityHandler = null;
 
         // reset scanner

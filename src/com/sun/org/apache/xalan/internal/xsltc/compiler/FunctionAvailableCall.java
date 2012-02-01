@@ -100,6 +100,7 @@ final class FunctionAvailableCall extends FunctionCall {
      * the specified method is found in the specifed class.
      */
     private boolean hasMethods() {
+        LiteralExpr arg = (LiteralExpr)_arg;
 
         // Get the class name from the namespace uri
         String className = getClassNameFromUri(_namespaceOfFunct);

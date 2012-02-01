@@ -94,6 +94,7 @@ public final class StringValueHandler extends EmptySerializer {
     // Override the setEscaping method just to indicate that this class is
     // aware that that method might be called.
     public boolean setEscaping(boolean bool) {
+        boolean oldEscaping = m_escaping;
         m_escaping = bool;
 
         return bool;

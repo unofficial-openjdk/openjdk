@@ -25,16 +25,13 @@
 
 package javax.xml.transform;
 
-import java.io.File;
-import java.io.FileInputStream;
-
-import java.util.Properties;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.net.URL;
+import java.util.Properties;
 
 /**
  * <p>Implements pluggable Datatypes.</p>
@@ -43,6 +40,7 @@ import java.net.URL;
  * sync.  It is package private for secure class loading.</p>
  *
  * @author Santiago.PericasGeertsen@sun.com
+ * @author Huizhe.Wang@oracle.com
  */
 class FactoryFinder {
 
@@ -96,18 +94,24 @@ class FactoryFinder {
      * If the class loader supplied is <code>null</code>, first try using the
      * context class loader followed by the current (i.e. bootstrap) class
      * loader.
+     *
+     * Use bootstrap classLoader if cl = null and useBSClsLoader is true
      */
     static private Class getProviderClass(String className, ClassLoader cl,
-            boolean doFallback) throws ClassNotFoundException
+            boolean doFallback, boolean useBSClsLoader) throws ClassNotFoundException
     {
         try {
             if (cl == null) {
-                cl = ss.getContextClassLoader();
-                if (cl == null) {
-                    throw new ClassNotFoundException();
-                }
-                else {
-                    return cl.loadClass(className);
+                if (useBSClsLoader) {
+                    return Class.forName(className, true, FactoryFinder.class.getClassLoader());
+                } else {
+                    cl = ss.getContextClassLoader();
+                    if (cl == null) {
+                        throw new ClassNotFoundException();
+                    }
+                    else {
+                        return cl.loadClass(className);
+                    }
                 }
             }
             else {
@@ -132,8 +136,8 @@ class FactoryFinder {
      * @param className Name of the concrete class corresponding to the
      * service provider
      *
-     * @param cl ClassLoader to use to load the class, null means to use
-     * the bootstrap ClassLoader
+     * @param cl <code>ClassLoader</code> used to load the factory class. If <code>null</code>
+     * current <code>Thread</code>'s context classLoader is used to load the factory class.
      *
      * @param doFallback True if the current ClassLoader should be tried as
      * a fallback if the class is not found using cl
@@ -141,13 +145,32 @@ class FactoryFinder {
     static Object newInstance(String className, ClassLoader cl, boolean doFallback)
         throws ConfigurationError
     {
-        return newInstance(className, cl, doFallback, false);
+        return newInstance(className, cl, doFallback, false, false);
     }
-    static Object newInstance(String className, ClassLoader cl, boolean doFallback, boolean useServicesMechanism)
+
+    /**
+     * Create an instance of a class. Delegates to method
+     * <code>getProviderClass()</code> in order to load the class.
+     *
+     * @param className Name of the concrete class corresponding to the
+     * service provider
+     *
+     * @param cl <code>ClassLoader</code> used to load the factory class. If <code>null</code>
+     * current <code>Thread</code>'s context classLoader is used to load the factory class.
+     *
+     * @param doFallback True if the current ClassLoader should be tried as
+     * a fallback if the class is not found using cl
+     *
+     * @param useBSClsLoader True if cl=null actually meant bootstrap classLoader. This parameter
+     * is needed since DocumentBuilderFactory/SAXParserFactory defined null as context classLoader.
+     *
+     * @param useServicesMechanism True use services mechanism
+     */
+    static Object newInstance(String className, ClassLoader cl, boolean doFallback, boolean useBSClsLoader, boolean useServicesMechanism)
         throws ConfigurationError
     {
         try {
-            Class providerClass = getProviderClass(className, cl, doFallback);
+            Class providerClass = getProviderClass(className, cl, doFallback, useBSClsLoader);
             Object instance = null;
             if (!useServicesMechanism) {
                 instance = newInstanceNoServiceLoader(providerClass);
@@ -215,7 +238,7 @@ class FactoryFinder {
             String systemProp = ss.getSystemProperty(factoryId);
             if (systemProp != null) {
                 dPrint("found system property, value=" + systemProp);
-                return newInstance(systemProp, null, true, true);
+                return newInstance(systemProp, null, true, false, true);
             }
         }
         catch (SecurityException se) {
@@ -243,7 +266,7 @@ class FactoryFinder {
 
             if (factoryClassName != null) {
                 dPrint("found in $java.home/jaxp.properties, value=" + factoryClassName);
-                return newInstance(factoryClassName, null, true, true);
+                return newInstance(factoryClassName, null, true, false, true);
             }
         }
         catch (Exception ex) {
@@ -261,7 +284,7 @@ class FactoryFinder {
         }
 
         dPrint("loaded from fallback value: " + fallbackClassName);
-        return newInstance(fallbackClassName, null, true, true);
+        return newInstance(fallbackClassName, null, true, false, true);
     }
 
     /*
@@ -277,6 +300,7 @@ class FactoryFinder {
 
         // First try the Context ClassLoader
         ClassLoader cl = ss.getContextClassLoader();
+        boolean useBSClsLoader = false;
         if (cl != null) {
             is = ss.getResourceAsStream(cl, serviceId);
 
@@ -284,11 +308,13 @@ class FactoryFinder {
             if (is == null) {
                 cl = FactoryFinder.class.getClassLoader();
                 is = ss.getResourceAsStream(cl, serviceId);
-            }
+                useBSClsLoader = true;
+           }
         } else {
             // No Context ClassLoader, try the current ClassLoader
             cl = FactoryFinder.class.getClassLoader();
             is = ss.getResourceAsStream(cl, serviceId);
+            useBSClsLoader = true;
         }
 
         if (is == null) {
@@ -326,7 +352,7 @@ class FactoryFinder {
             // ClassLoader because we want to avoid the case where the
             // resource file was found using one ClassLoader and the
             // provider class was instantiated using a different one.
-            return newInstance(factoryClassName, cl, false, true);
+            return newInstance(factoryClassName, cl, false, useBSClsLoader, true);
         }
 
         // No provider found
