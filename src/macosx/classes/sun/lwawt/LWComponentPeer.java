@@ -1108,13 +1108,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                 handleJavaPaintEvent();
                 break;
             case MouseEvent.MOUSE_PRESSED:
-                Component target = getTarget();
-                if ((e.getSource() == target) && !target.isFocusOwner() &&
-                        LWKeyboardFocusManagerPeer.shouldFocusOnClick(target)) {
-                    LWKeyboardFocusManagerPeer.requestFocusFor(target,
-                            CausedFocusEvent.Cause.MOUSE_EVENT);
-                }
-                break;
+                handleJavaMouseEvent((MouseEvent)e);
         }
 
         sendEventToDelegate(e);
@@ -1180,6 +1174,18 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
             delegateEvent = new FocusEvent(getDelegateFocusOwner(), fe.getID(), fe.isTemporary());
         }
         return delegateEvent;
+    }
+
+    protected void handleJavaMouseEvent(MouseEvent e) {
+        Component target = getTarget();
+        assert (e.getSource() == target);
+
+        if (!target.isFocusOwner() && LWKeyboardFocusManagerPeer.shouldFocusOnClick(target)) {
+            LWKeyboardFocusManagerPeer.requestFocusFor(target, CausedFocusEvent.Cause.MOUSE_EVENT);
+        } else {
+            // Anyway request focus to the toplevel.
+            getWindowPeerOrSelf().requestWindowFocus(CausedFocusEvent.Cause.MOUSE_EVENT);
+        }
     }
 
     /**

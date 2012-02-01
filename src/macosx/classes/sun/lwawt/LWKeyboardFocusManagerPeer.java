@@ -90,6 +90,12 @@ public class LWKeyboardFocusManagerPeer extends KeyboardFocusManagerPeerImpl {
         }
     }
 
+    LWWindowPeer getFocusedWindow() {
+        synchronized (lock) {
+            return focusedWindow;
+        }
+    }
+
     void setFocusOwner(LWComponentPeer peer) {
         synchronized (lock) {
             focusOwner = peer;

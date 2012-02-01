@@ -63,11 +63,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     private static native int nativeGetScreenNSWindowIsOn_AppKitThread(long nsWindowPtr);
 
-    private static native boolean nativeIsApplicationActive();
-
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
-    private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.lwawt.macosx.focus.CPlatformWindow");
 
     // for client properties
     public static final String WINDOW_BRUSH_METAL_LOOK = "apple.awt.brushMetalLook";
@@ -603,18 +600,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     @Override
-    public boolean requestWindowFocus(boolean isMouseEventCause) {
-        if (!isMouseEventCause && !nativeIsApplicationActive()) {
-            focusLog.fine("the app is inactive, so the window activation is rejected");
-            // Cross-app activation requests are not allowed.
-            return false;
-        }
+    public boolean requestWindowFocus() {
         long ptr = getNSWindowPtr();
         if (CWrapper.NSWindow.canBecomeMainWindow(ptr)) {
             CWrapper.NSWindow.makeMainWindow(ptr);
         }
         CWrapper.NSWindow.makeKeyAndOrderFront(ptr);
         return true;
+    }
+
+    @Override
+    public boolean isActive() {
+        long ptr = getNSWindowPtr();
+        return CWrapper.NSWindow.isKeyWindow(ptr);
     }
 
     @Override

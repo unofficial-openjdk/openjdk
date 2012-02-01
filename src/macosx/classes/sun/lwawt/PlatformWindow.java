@@ -117,7 +117,12 @@ public interface PlatformWindow {
 
     public void updateFocusableWindowState();
 
-    public boolean requestWindowFocus(boolean isMouseEventCause);
+    public boolean requestWindowFocus();
+
+    /*
+     * Returns true only when called on a frame/dialog when it's natively focused.
+     */
+    public boolean isActive();
 
     public void setResizable(boolean resizable);
 

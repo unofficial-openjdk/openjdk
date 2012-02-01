@@ -37,6 +37,7 @@ import sun.awt.*;
 import sun.java2d.*;
 import sun.java2d.loops.Blit;
 import sun.java2d.loops.CompositeType;
+import sun.util.logging.PlatformLogger;
 
 public class LWWindowPeer
     extends LWContainerPeer<Window, JComponent>
@@ -48,6 +49,8 @@ public class LWWindowPeer
         DIALOG,
         EMBEDDEDFRAME
     }
+
+    private static final sun.util.logging.PlatformLogger focusLog = PlatformLogger.getLogger("sun.lwawt.focus.LWWindowPeer");
 
     private PlatformWindow platformWindow;
 
@@ -110,6 +113,8 @@ public class LWWindowPeer
     private static final Font DEFAULT_FONT = new Font("Lucida Grande", Font.PLAIN, 13);
 
     private static LWWindowPeer grabbingWindow;
+
+    private volatile boolean skipNextFocusChange;
 
     /**
      * Current modal blocker or null.
@@ -713,8 +718,6 @@ public class LWWindowPeer
                 {
                     grabbingWindow.ungrab();
                 }
-                changeFocusedWindow(true, false);
-
                 if (otherButtonsPressed == 0) {
                     mouseClickButtons = eventButtonMask;
                 } else {
@@ -1048,10 +1051,64 @@ public class LWWindowPeer
     }
 
     public boolean requestWindowFocus(CausedFocusEvent.Cause cause) {
+        if (focusLog.isLoggable(PlatformLogger.FINE)) {
+            focusLog.fine("requesting native focus to " + this);
+        }
+
         if (!focusAllowedFor()) {
+            focusLog.fine("focus is not allowed");
             return false;
         }
-        return platformWindow.requestWindowFocus(cause == CausedFocusEvent.Cause.MOUSE_EVENT);
+
+        // Cross-app activation requests are not allowed.
+        if (cause != CausedFocusEvent.Cause.MOUSE_EVENT &&
+            !((LWToolkit)Toolkit.getDefaultToolkit()).isApplicationActive())
+        {
+            focusLog.fine("the app is inactive, so the request is rejected");
+            return false;
+        }
+
+        Window currentActive = KeyboardFocusManager.
+            getCurrentKeyboardFocusManager().getActiveWindow();
+
+        // Make the owner active window.
+        if (isSimpleWindow()) {
+            Window owner = getOwnerFrameDialog(this);
+            LWWindowPeer ownerPeer = (owner != null ? (LWWindowPeer)owner.getPeer() : null);
+
+            // If owner is not natively active, request native
+            // activation on it w/o sending events up to java.
+            if (ownerPeer != null && !ownerPeer.platformWindow.isActive()) {
+                if (focusLog.isLoggable(PlatformLogger.FINE)) {
+                    focusLog.fine("requesting native focus to the owner " + ownerPeer);
+                }
+                LWWindowPeer currentActivePeer = (currentActive != null ?
+                    (LWWindowPeer)currentActive.getPeer() : null);
+
+                // Ensure the opposite is natively active and suppress sending events.
+                if (currentActivePeer != null && currentActivePeer.platformWindow.isActive()) {
+                    if (focusLog.isLoggable(PlatformLogger.FINE)) {
+                        focusLog.fine("the opposite is " + currentActivePeer);
+                    }
+                    currentActivePeer.skipNextFocusChange = true;
+                }
+                ownerPeer.skipNextFocusChange = true;
+
+                ownerPeer.platformWindow.requestWindowFocus();
+            }
+
+            // DKFM will synthesize all the focus/activation events correctly.
+            changeFocusedWindow(true, false);
+            return true;
+
+        // In case the toplevel is active but not focused, change focus directly,
+        // as requesting native focus on it will not have effect.
+        } else if (getTarget() == currentActive && !getTarget().hasFocus()) {
+
+            changeFocusedWindow(true, false);
+            return true;
+        }
+        return platformWindow.requestWindowFocus();
     }
 
     private boolean focusAllowedFor() {
@@ -1069,7 +1126,12 @@ public class LWWindowPeer
      * "Delegates" the responsibility of managing focus to keyboard focus manager.
      */
     private void changeFocusedWindow(boolean becomesFocused, boolean isShowing) {
-        if (isShowing && !getTarget().isAutoRequestFocus()) {
+        if (focusLog.isLoggable(PlatformLogger.FINE)) {
+            focusLog.fine((becomesFocused?"gaining":"loosing") + " focus window: " + this);
+        }
+        if (isShowing && !getTarget().isAutoRequestFocus() || skipNextFocusChange) {
+            focusLog.fine("skipping focus change");
+            skipNextFocusChange = false;
             return;
         }
 
@@ -1079,6 +1141,9 @@ public class LWWindowPeer
         if (becomesFocused) {
             synchronized (getPeerTreeLock()) {
                 if (blocker != null) {
+                    if (focusLog.isLoggable(PlatformLogger.FINEST)) {
+                        focusLog.finest("the window is blocked by " + blocker);
+                    }
                     return;
                 }
             }
@@ -1095,6 +1160,7 @@ public class LWWindowPeer
         if (!becomesFocused &&
             (isGrabbing() || getOwnerFrameDialog(grabbingWindow) == getTarget()))
         {
+            focusLog.fine("ungrabbing on " + grabbingWindow);
             // ungrab a simple window if its owner looses activation.
             grabbingWindow.ungrab();
         }
@@ -1160,5 +1226,10 @@ public class LWWindowPeer
 
     private boolean isGrabbing() {
         return this == grabbingWindow;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + " [target is " + getTarget() + "]";
     }
 }

@@ -108,8 +108,8 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_canBecomeMainWindow
 JNF_COCOA_ENTER(env);
 
     NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
-    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
-    canBecomeMainWindow = [window canBecomeMainWindow];
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+        canBecomeMainWindow = [window canBecomeMainWindow];
     }];
 
 JNF_COCOA_EXIT(env);
@@ -131,7 +131,7 @@ Java_sun_lwawt_macosx_CWrapper_00024NSWindow_isKeyWindow
 JNF_COCOA_ENTER(env);
 
     NSWindow *window = (NSWindow *)jlong_to_ptr(windowPtr);
-    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         isKeyWindow = [window isKeyWindow];
     }];
 

@@ -369,6 +369,29 @@ JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_LWCToolkit_isCapsLockOn
 }
 
 /*
+ * Class:     sun_lwawt_macosx_LWCToolkit
+ * Method:    isApplicationActive
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_LWCToolkit_isApplicationActive
+(JNIEnv *env, jclass clazz)
+{
+	__block jboolean active = JNI_FALSE;
+
+AWT_ASSERT_NOT_APPKIT_THREAD;
+JNF_COCOA_ENTER(env);
+	
+	[JNFRunLoop performOnMainThreadWaiting:YES withBlock:^() {
+		active = (jboolean)[NSRunningApplication currentApplication].active;
+	}];
+	
+JNF_COCOA_EXIT(env);
+	
+	return active;
+}
+
+
+/*
  * Class:     sun_awt_SunToolkit
  * Method:    closeSplashScreen
  * Signature: ()V

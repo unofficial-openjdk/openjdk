@@ -672,6 +672,9 @@ public class LWCToolkit extends LWToolkit {
         return sunAwtDisableCALayers.booleanValue();
     }
 
+    @Override
+    public native boolean isApplicationActive();
+
     /************************
      * Native methods section
      ************************/

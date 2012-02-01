@@ -427,7 +427,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
 
 - (void) windowDidBecomeKey: (NSNotification *) notification {
-AWT_ASSERT_APPKIT_THREAD;
+AWT_ASSERT_APPKIT_THREAD;	
     [AWTToolkit eventCountPlusPlus];
     [CMenuBar activate:self.javaMenuBar modallyDisabled:NO];
     [self _deliverWindowFocusEvent:YES];
@@ -990,21 +990,6 @@ JNF_COCOA_ENTER(env);
     [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
         [window performSelector:toggleFullScreenSelector withObject:nil];
     }];
-
-JNF_COCOA_EXIT(env);
-}
-
-/*
- * Class:     sun_lwawt_macosx_CPlatformWindow
- * Method:    isApplicationActive
- * Signature: ()Z
- */
-JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeIsApplicationActive
-(JNIEnv *env, jclass clazz)
-{
-JNF_COCOA_ENTER(env);
-
-    return (jboolean)[NSRunningApplication currentApplication].active;
 
 JNF_COCOA_EXIT(env);
 }

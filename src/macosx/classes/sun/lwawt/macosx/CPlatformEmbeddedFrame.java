@@ -149,7 +149,12 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
     public void updateFocusableWindowState() {}
 
     @Override
-    public boolean requestWindowFocus(boolean isMouseEventCause) {
+    public boolean requestWindowFocus() {
+        return true;
+    }
+
+    @Override
+    public boolean isActive() {
         return true;
     }
 
