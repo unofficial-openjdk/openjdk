@@ -82,7 +82,6 @@ OTHER_LDLIBS += \
 	-framework JavaNativeFoundation \
 	-framework JavaRuntimeSupport \
 	-framework OpenGL \
-	-framework IOSurface \
         -framework QuartzCore
 CPPFLAGS += \
         -I$(CLASSHDRDIR) \

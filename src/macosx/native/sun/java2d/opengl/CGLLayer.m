@@ -35,6 +35,7 @@ extern NSOpenGLContext *sharedContext;
 
 @implementation CGLLayer
 
+@synthesize javaLayer;
 @synthesize textureID;
 @synthesize target;
 @synthesize textureWidth;
@@ -45,14 +46,14 @@ extern NSOpenGLContext *sharedContext;
 @synthesize jrsRemoteLayer;
 #endif
 
-- (id) initWithJavaLayer:(jobject)layer;
+- (id) initWithJavaLayer:(JNFJObjectWrapper *)layer;
 {
 AWT_ASSERT_APPKIT_THREAD;
     // Initialize ourselves
     self = [super init];
     if (self == nil) return self;
 
-    javaLayer = layer;
+    self.javaLayer = layer;
     
     // NOTE: async=YES means that the layer is re-cached periodically
     self.asynchronous = FALSE;
@@ -65,11 +66,8 @@ AWT_ASSERT_APPKIT_THREAD;
     return self;
 }
 
-- (void) dealloc {
-    JNIEnv *env = [ThreadUtilities getJNIEnv];
-    (*env)->DeleteGlobalRef(env, javaLayer);
-    javaLayer = NULL;
-    
+- (void) dealloc {    
+    self.javaLayer = nil;
     [super dealloc];
 }
 
@@ -114,7 +112,7 @@ AWT_ASSERT_APPKIT_THREAD;
 -(void)drawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp
 {
     AWT_ASSERT_APPKIT_THREAD;
-
+    
     // Set the current context to the one given to us.
     CGLSetCurrentContext(glContext);
 
@@ -123,7 +121,10 @@ AWT_ASSERT_APPKIT_THREAD;
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     static JNF_CLASS_CACHE(jc_JavaLayer, "sun/java2d/opengl/CGLLayer");
     static JNF_MEMBER_CACHE(jm_drawInCGLContext, jc_JavaLayer, "drawInCGLContext", "()V");
-    JNFCallVoidMethod(env, javaLayer, jm_drawInCGLContext);
+
+    jobject javaLayerLocalRef = [self.javaLayer jObjectWithEnv:env];
+    JNFCallVoidMethod(env, javaLayerLocalRef, jm_drawInCGLContext);
+    (*env)->DeleteLocalRef(env, javaLayerLocalRef);
 
     // Call super to finalize the drawing. By default all it does is call glFlush().
     [super drawInCGLContext:glContext pixelFormat:pixelFormat forLayerTime:timeInterval displayTime:timeStamp];
@@ -147,7 +148,7 @@ Java_sun_java2d_opengl_CGLLayer_nativeCreateLayer
 JNF_COCOA_ENTER(env);
 AWT_ASSERT_NOT_APPKIT_THREAD;
 
-    jobject javaLayer = (*env)->NewGlobalRef(env, obj);
+    JNFJObjectWrapper *javaLayer = [JNFJObjectWrapper wrapperWithJObject:obj withEnv:env];
     
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         AWT_ASSERT_APPKIT_THREAD;

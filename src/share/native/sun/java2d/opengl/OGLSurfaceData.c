@@ -396,16 +396,6 @@ Java_sun_java2d_opengl_OGLSurfaceData_initFBObject
      jboolean texNonPow2, jboolean texRect,
      jint width, jint height)
 {
-    return OGLSurfaceData_initFBObject(env, oglsd, pData, isOpaque,
-                                       texNonPow2, texRect, width, height);
-}
-
-jboolean OGLSurfaceData_initFBObject
-    (JNIEnv *env, jobject oglsd,
-     jlong pData, jboolean isOpaque,
-     jboolean texNonPow2, jboolean texRect,
-     jint width, jint height)
-{
     OGLSDOps *oglsdo = (OGLSDOps *)jlong_to_ptr(pData);
     GLuint fbobjectID, depthID;
 

@@ -87,37 +87,30 @@ AWT_ASSERT_APPKIT_THREAD;
         [self.layer addSublayer: (CALayer *)cglLayer];
         [self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
         [self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
-        [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];    
-    }
-    
-#if USE_INTERMEDIATE_BUFFER
-    self.cglLayer = windowLayer;
-    [self setWantsLayer: YES];
-    [self.layer addSublayer: (CALayer *)cglLayer];
-    [self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
-    [self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
-    [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
+        [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
+        
 #ifdef REMOTELAYER
-    CGLLayer *parentLayer = (CGLLayer*)self.cglLayer;
-    parentLayer.parentLayer = NULL;
-    parentLayer.remoteLayer = NULL;
-    if (JRSRemotePort != 0 && remoteSocketFD > 0) {
-        CGLLayer *remoteLayer = [CGLLayer layer];
-        remoteLayer.target = GL_TEXTURE_2D;
-        NSLog(@"Creating Parent=%p, Remote=%p", parentLayer, remoteLayer);
-        parentLayer.remoteLayer = remoteLayer;
-        remoteLayer.parentLayer = parentLayer;
-        remoteLayer.remoteLayer = NULL;
-        remoteLayer.jrsRemoteLayer = [remoteLayer createRemoteLayerBoundTo:JRSRemotePort];
-        CFRetain(remoteLayer);  // REMIND
-        remoteLayer.frame = CGRectMake(0, 0, 720, 500); // REMIND
-        CFRetain(remoteLayer.jrsRemoteLayer); // REMIND
-        int layerID = [remoteLayer.jrsRemoteLayer layerID];
-        NSLog(@"layer id to send = %d", layerID);
-        sendLayerID(layerID);
+        CGLLayer *parentLayer = (CGLLayer*)self.cglLayer;
+        parentLayer.parentLayer = NULL;
+        parentLayer.remoteLayer = NULL;
+        if (JRSRemotePort != 0 && remoteSocketFD > 0) {
+            CGLLayer *remoteLayer = [[CGLLayer alloc] initWithJavaLayer: parentLayer.javaLayer];
+            remoteLayer.target = GL_TEXTURE_2D;
+            NSLog(@"Creating Parent=%p, Remote=%p", parentLayer, remoteLayer);
+            parentLayer.remoteLayer = remoteLayer;
+            remoteLayer.parentLayer = parentLayer;
+            remoteLayer.remoteLayer = NULL;
+            remoteLayer.jrsRemoteLayer = [remoteLayer createRemoteLayerBoundTo:JRSRemotePort];
+            CFRetain(remoteLayer);  // REMIND
+            remoteLayer.frame = CGRectMake(0, 0, 720, 500); // REMIND
+            CFRetain(remoteLayer.jrsRemoteLayer); // REMIND
+            int layerID = [remoteLayer.jrsRemoteLayer layerID];
+            NSLog(@"layer id to send = %d", layerID);
+            sendLayerID(layerID);
+        }
+#endif /* REMOTELAYER */        
     }
-#endif /* REMOTELAYER */
-#endif
+
     return self;
 }
 
@@ -125,9 +118,6 @@ AWT_ASSERT_APPKIT_THREAD;
 AWT_ASSERT_APPKIT_THREAD;
 
     self.cglLayer = nil;
-#if USE_INTERMEDIATE_BUFFER
-    self.cglLayer = nil;
-#endif
 
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     (*env)->DeleteGlobalRef(env, m_cPlatformView);

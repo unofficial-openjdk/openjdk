@@ -291,11 +291,5 @@ jint OGLSD_NextPowerOfTwo(jint val, jint max);
 jboolean OGLSD_InitFBObject(GLuint *fbobjectID, GLuint *depthID,
                             GLuint textureID, GLenum textureTarget,
                             jint textureWidth, jint textureHeight);
-// needed by Mac OS X port
-jboolean OGLSurfaceData_initFBObject(JNIEnv *env, jobject oglsd,
-                                     jlong pData, jboolean isOpaque,
-                                     jboolean texNonPow2, jboolean texRect,
-                                     jint width, jint height);
-void OGLSD_SetNativeDimensions(JNIEnv *env, OGLSDOps *oglsdo, jint w, jint h);
 
 #endif /* OGLSurfaceData_h_Included */
