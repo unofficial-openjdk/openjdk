@@ -256,19 +256,16 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         return map;
     }
 
-    public Dimension minimumLayoutSize(final Container c) {
-        // The minimum size of the internal frame only takes into account the
-        // title pane since you are allowed to resize the frames to the point
-        // where just the title pane is visible.
-        Dimension result = new Dimension();
-        if (getNorthPane() != null) {
-            result = new Dimension(getNorthPane().getMinimumSize());
+    public Dimension getPreferredSize(JComponent x) {
+        Dimension preferredSize = super.getMinimumSize(x);
+        Dimension minimumSize = frame.getMinimumSize();
+        if (preferredSize.width < minimumSize.width) {
+            preferredSize.width = minimumSize.width;
         }
-        final Insets i = frame.getInsets();
-        result.width += i.left + i.right;
-        result.height += i.top + i.bottom;
-
-        return result;
+        if (preferredSize.height < minimumSize.height) {
+            preferredSize.height = minimumSize.height;
+        }
+        return preferredSize;
     }
 
     public void setNorthPane(final JComponent c) {
