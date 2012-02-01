@@ -81,14 +81,14 @@ AWT_ASSERT_APPKIT_THREAD;
     fInPressAndHold = NO;
     fPAHNeedsToSelect = NO;
 
-    if (windowLayer != nil) { 
+    if (windowLayer != nil) {
         self.cglLayer = windowLayer;
         [self setWantsLayer: YES];
         [self.layer addSublayer: (CALayer *)cglLayer];
         [self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
         [self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
         [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
-        
+
 #ifdef REMOTELAYER
         CGLLayer *parentLayer = (CGLLayer*)self.cglLayer;
         parentLayer.parentLayer = NULL;
@@ -108,7 +108,7 @@ AWT_ASSERT_APPKIT_THREAD;
             NSLog(@"layer id to send = %d", layerID);
             sendLayerID(layerID);
         }
-#endif /* REMOTELAYER */        
+#endif /* REMOTELAYER */
     }
 
     return self;
@@ -190,7 +190,7 @@ AWT_ASSERT_APPKIT_THREAD;
         [self deliverJavaMouseEvent: event];
     }
 }
-    
+
 - (void) mouseUp: (NSEvent *)event {
     [self deliverJavaMouseEvent: event];
 }
@@ -316,8 +316,8 @@ AWT_ASSERT_APPKIT_THREAD;
     absP.y = screenRect.size.height - absP.y;
     jint clickCount;
 
-    if (type == NSMouseEntered || 
-        type == NSMouseExited || 
+    if (type == NSMouseEntered ||
+        type == NSMouseExited ||
         type == NSScrollWheel ||
         type == NSMouseMoved) {
         clickCount = 0;
@@ -328,7 +328,7 @@ AWT_ASSERT_APPKIT_THREAD;
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
     static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IIIIIIIIDD)V");
     jobject jEvent = JNFNewObject(env, jctor_NSEvent,
-                                  [event type], 
+                                  [event type],
                                   [event modifierFlags],
                                   clickCount,
                                   [event buttonNumber],
@@ -378,7 +378,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
     jstring characters = NULL;
     if ([event type] != NSFlagsChanged) {
-        characters = JNFNSToJavaString(env, [event characters]);    
+        characters = JNFNSToJavaString(env, [event characters]);
     }
 
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/event/NSEvent");
@@ -393,7 +393,7 @@ AWT_ASSERT_APPKIT_THREAD;
     static JNF_MEMBER_CACHE(jm_deliverKeyEvent, jc_PlatformView,
                             "deliverKeyEvent", "(Lsun/lwawt/macosx/event/NSEvent;)V");
     JNFCallVoidMethod(env, m_cPlatformView, jm_deliverKeyEvent, jevent);
-    
+
     if (characters != NULL) {
         (*env)->DeleteLocalRef(env, characters);
     }

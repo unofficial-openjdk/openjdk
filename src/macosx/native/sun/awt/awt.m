@@ -344,7 +344,7 @@ AWT_ASSERT_APPKIT_THREAD;
     //  ApplicationDelegate is the support code for com.apple.eawt.
     OSXAPP_SetApplicationDelegate([ApplicationDelegate sharedDelegate]);
 
-    // AWT gets to this point BEFORE NSApplicationDidFinishLaunchingNotification is sent.        
+    // AWT gets to this point BEFORE NSApplicationDidFinishLaunchingNotification is sent.
     if (![app isRunning]) {
         if (verbose) AWT_DEBUG_LOG(@"+[AWTStarter startAWT]: ![app isRunning]");
 
@@ -374,7 +374,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
     [pool drain];
 }
-    
+
 @end
 
 

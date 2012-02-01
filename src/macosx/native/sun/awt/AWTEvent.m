@@ -989,9 +989,9 @@ Java_sun_lwawt_macosx_event_NSEvent_nsMouseModifiersToJavaMouseModifiers
     jint jmodifiers = 0;
 
 JNF_COCOA_ENTER(env);
-    
+
     jmodifiers = GetJavaMouseModifiers(buttonNumber, modifierFlags);
-    
+
 JNF_COCOA_EXIT(env);
 
     return jmodifiers;
@@ -1009,11 +1009,11 @@ Java_sun_lwawt_macosx_event_NSEvent_nsKeyModifiersToJavaKeyModifiers
     jint jmodifiers = 0;
 
 JNF_COCOA_ENTER(env);
-    
+
     jmodifiers = NsKeyModifiersToJavaModifiers(modifierFlags);
-    
+
 JNF_COCOA_EXIT(env);
-    
+
     return jmodifiers;
 }
 
@@ -1027,9 +1027,9 @@ Java_sun_lwawt_macosx_event_NSEvent_nsKeyInfoToJavaKeyInfo
 (JNIEnv *env, jclass cls, jintArray inData, jintArray outData)
 {
     BOOL postsTyped = NO;
-    
+
 JNF_COCOA_ENTER(env);
-    
+
     jboolean copy = JNI_FALSE;
     jint *data = (*env)->GetIntArrayElements(env, inData, &copy);
 
@@ -1041,15 +1041,15 @@ JNF_COCOA_ENTER(env);
 
     jint jkeyCode = java_awt_event_KeyEvent_VK_UNDEFINED;
     jint jkeyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
-    
+
     NsCharToJavaVirtualKeyCode((unichar)testChar, (unichar)testDeadChar,
                                (NSUInteger)modifierFlags, (unsigned short)keyCode,
-                               &jkeyCode, &jkeyLocation, &postsTyped);    
+                               &jkeyCode, &jkeyLocation, &postsTyped);
 
     // out = [jkeyCode, jkeyLocation];
     (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
     (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
-    
+
 JNF_COCOA_EXIT(env);
 
     return postsTyped;
@@ -1065,10 +1065,10 @@ Java_sun_lwawt_macosx_event_NSEvent_nsKeyModifiersToJavaKeyInfo
 (JNIEnv *env, jclass cls, jintArray inData, jintArray outData)
 {
 JNF_COCOA_ENTER(env);
-    
+
     jboolean copy = JNI_FALSE;
     jint *data = (*env)->GetIntArrayElements(env, inData, &copy);
-    
+
     // in  = [modifierFlags, keyCode]
     jint modifierFlags = data[0];
     jshort keyCode = (jshort)data[1];
@@ -1076,7 +1076,7 @@ JNF_COCOA_ENTER(env);
     jint jkeyCode = java_awt_event_KeyEvent_VK_UNDEFINED;
     jint jkeyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
     jint jkeyType = java_awt_event_KeyEvent_KEY_PRESSED;
-    
+
     NsKeyModifiersToJavaKeyInfo(modifierFlags,
                                 keyCode,
                                 &jkeyCode,
@@ -1085,8 +1085,8 @@ JNF_COCOA_ENTER(env);
 
     // out = [jkeyCode, jkeyLocation, jkeyType];
     (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
-    (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);    
+    (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
     (*env)->SetIntArrayRegion(env, outData, 2, 1, &jkeyType);
-    
+
 JNF_COCOA_EXIT(env);
 }

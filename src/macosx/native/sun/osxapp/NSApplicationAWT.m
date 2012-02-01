@@ -53,11 +53,11 @@ BOOL postEventDuringEventSynthesis = NO;
 AWT_ASSERT_APPKIT_THREAD;
     fApplicationName = nil;
     fUseDefaultIcon = NO;
-    
+
     // NSApplication will call _RegisterApplication with the application's bundle, but there may not be one.
     // So, we need to call it ourselves to ensure the app is set up properly.
     [self registerWithProcessManager];
-    
+
     return [super init];
 }
 
@@ -75,7 +75,7 @@ AWT_ASSERT_APPKIT_THREAD;
 AWT_ASSERT_APPKIT_THREAD;
 
     JNIEnv *env = [ThreadUtilities getJNIEnv];
-    
+
     // Get default nib file location
     // NOTE: This should learn about the current java.version. Probably best thru
     //  the Makefile system's -DFRAMEWORK_VERSION define. Need to be able to pass this
@@ -87,44 +87,44 @@ AWT_ASSERT_APPKIT_THREAD;
     } else {
         sUsingDefaultNIB = NO;
     }
-    
+
     [NSBundle loadNibFile:defaultNibFile externalNameTable: [NSDictionary dictionaryWithObject:self forKey:@"NSOwner"] withZone:nil];
-    
+
     // Set user defaults to not try to parse application arguments.
     NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
     NSDictionary * noOpenDict = [NSDictionary dictionaryWithObject:@"NO" forKey:@"NSTreatUnknownArgumentsAsOpen"];
     [defs registerDefaults:noOpenDict];
-    
+
     // Fix up the dock icon now that we are registered with CAS and the Dock.
     [self setDockIconWithEnv:env];
-    
+
     // If we are using our nib (the default application NIB) we need to put the app name into
     // the application menu, which has placeholders for the name.
     if (sUsingDefaultNIB) {
         NSUInteger i, itemCount;
         NSMenu *theMainMenu = [NSApp mainMenu];
-        
+
         // First submenu off the main menu is the application menu.
         NSMenuItem *appMenuItem = [theMainMenu itemAtIndex:0];
         NSMenu *appMenu = [appMenuItem submenu];
         itemCount = [appMenu numberOfItems];
-        
+
         for (i = 0; i < itemCount; i++) {
             NSMenuItem *anItem = [appMenu itemAtIndex:i];
             NSString *oldTitle = [anItem title];
             [anItem setTitle:[NSString stringWithFormat:oldTitle, fApplicationName]];
         }
     }
-    
+
     if (applicationDelegate) {
         [self setDelegate:applicationDelegate];
     } else {
         qad = [QueuingApplicationDelegate sharedDelegate];
         [self setDelegate:qad];
     }
-    
+
     [super finishLaunching];
-    
+
     // inform any interested parties that the AWT has arrived and is pumping
     [[NSNotificationCenter defaultCenter] postNotificationName:JNFRunLoopDidStartNotification object:self];
 }
@@ -135,29 +135,29 @@ AWT_ASSERT_APPKIT_THREAD;
     // Embedded: NO
     // Multiple Calls: NO
     //  Caller: -[NSApplicationAWT init]
-    
+
 AWT_ASSERT_APPKIT_THREAD;
     JNIEnv *env = [ThreadUtilities getJNIEnv];
-    
+
     char envVar[80];
-    
+
     // The following environment variable is set from the -Xdock:name param. It should be UTF8.
     snprintf(envVar, sizeof(envVar), "APP_NAME_%d", getpid());
     char *appName = getenv(envVar);
     if (appName != NULL) {
         fApplicationName = [NSString stringWithUTF8String:appName];
         unsetenv(envVar);
-        
+
         // If this environment variable was set we were launched from the command line, so we
         // should use a generic app icon if one wasn't set.
         fUseDefaultIcon = YES;
     }
-    
+
     // If it wasn't specified as an argument, see if it was specified as a system property.
     if (fApplicationName == nil) {
         fApplicationName = [PropertiesUtilities javaSystemPropertyForKey:@"apple.awt.application.name" withEnv:env];
     }
-    
+
     // If we STILL don't have it, the app name is retrieved from an environment variable (set in java.c) It should be UTF8.
     if (fApplicationName == nil) {
         char mainClassEnvVar[80];
@@ -166,7 +166,7 @@ AWT_ASSERT_APPKIT_THREAD;
         if (mainClass != NULL) {
             fApplicationName = [NSString stringWithUTF8String:mainClass];
             unsetenv(mainClassEnvVar);
-            
+
             NSRange lastPeriod = [fApplicationName rangeOfString:@"." options:NSBackwardsSearch];
             if (lastPeriod.location != NSNotFound) {
                 fApplicationName = [fApplicationName substringFromIndex:lastPeriod.location + 1];
@@ -176,24 +176,24 @@ AWT_ASSERT_APPKIT_THREAD;
             fUseDefaultIcon = YES;
         }
     }
-    
+
     // The dock name is nil for double-clickable Java apps (bundled and Web Start apps)
     // When that happens get the display name, and if that's not available fall back to
     // CFBundleName.
     NSBundle *mainBundle = [NSBundle mainBundle];
     if (fApplicationName == nil) {
         fApplicationName = (NSString *)[mainBundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
-        
+
         if (fApplicationName == nil) {
             fApplicationName = (NSString *)[mainBundle objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
-            
+
             if (fApplicationName == nil) {
                 fApplicationName = (NSString *)[mainBundle objectForInfoDictionaryKey: (NSString *)kCFBundleExecutableKey];
-                
+
                 if (fApplicationName == nil) {
                     // Name of last resort is the last part of the applicatoin name without the .app (consistent with CopyProcessName)
                     fApplicationName = [[mainBundle bundlePath] lastPathComponent];
-                    
+
                     if ([fApplicationName hasSuffix:@".app"]) {
                         fApplicationName = [fApplicationName stringByDeletingPathExtension];
                     }
@@ -201,38 +201,38 @@ AWT_ASSERT_APPKIT_THREAD;
             }
         }
     }
-    
+
     // We're all done trying to determine the app name.  Hold on to it.
     [fApplicationName retain];
-    
+
     NSDictionary *registrationOptions = [NSMutableDictionary dictionaryWithObject:fApplicationName forKey:@"JRSAppNameKey"];
-    
+
     NSString *launcherType = [PropertiesUtilities javaSystemPropertyForKey:@"sun.java.launcher" withEnv:env];
     if ([@"SUN_STANDARD" isEqualToString:launcherType]) {
         [registrationOptions setValue:[NSNumber numberWithBool:YES] forKey:@"JRSAppIsCommandLineKey"];
     }
-    
+
     NSString *uiElementProp = [PropertiesUtilities javaSystemPropertyForKey:@"apple.awt.UIElement" withEnv:env];
     if ([@"true" isCaseInsensitiveLike:uiElementProp]) {
         [registrationOptions setValue:[NSNumber numberWithBool:YES] forKey:@"JRSAppIsUIElementKey"];
     }
-    
+
     NSString *backgroundOnlyProp = [PropertiesUtilities javaSystemPropertyForKey:@"apple.awt.BackgroundOnly" withEnv:env];
     if ([@"true" isCaseInsensitiveLike:backgroundOnlyProp]) {
         [registrationOptions setValue:[NSNumber numberWithBool:YES] forKey:@"JRSAppIsBackgroundOnlyKey"];
     }
-    
+
     // TODO replace with direct call
     // [JRSAppKitAWT registerAWTAppWithOptions:registrationOptions];
     // and remove below transform/activate/run hack
-    
+
     id jrsAppKitAWTClass = objc_getClass("JRSAppKitAWT");
     SEL registerSel = @selector(registerAWTAppWithOptions:);
     if ([jrsAppKitAWTClass respondsToSelector:registerSel]) {
         [jrsAppKitAWTClass performSelector:registerSel withObject:registrationOptions];
         return;
     }
-    
+
 // HACK BEGIN
     // The following is necessary to make the java process behave like a
     // proper foreground application...
@@ -240,7 +240,7 @@ AWT_ASSERT_APPKIT_THREAD;
         ProcessSerialNumber psn;
         GetCurrentProcess(&psn);
         TransformProcessType(&psn, kProcessTransformToForegroundApplication);
-        
+
         [NSApp activateIgnoringOtherApps:YES];
         [NSApp run];
     }];
@@ -249,7 +249,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
 - (void) setDockIconWithEnv:(JNIEnv *)env {
     NSString *theIconPath = nil;
-    
+
     // The following environment variable is set in java.c. It is probably UTF8.
     char envVar[80];
     snprintf(envVar, sizeof(envVar), "APP_ICON_%d", getpid());
@@ -258,27 +258,27 @@ AWT_ASSERT_APPKIT_THREAD;
         theIconPath = [NSString stringWithUTF8String:appIcon];
         unsetenv(envVar);
     }
-    
+
     if (theIconPath == nil) {
         theIconPath = [PropertiesUtilities javaSystemPropertyForKey:@"apple.awt.application.icon" withEnv:env];
     }
-    
+
     // If the icon file wasn't specified as an argument and we need to get an icon
     // we'll use the generic java app icon.
     NSString *defaultIconPath = [NSString stringWithFormat:@"%@%@", SHARED_FRAMEWORK_BUNDLE, @"/Resources/GenericApp.icns"];
     if (fUseDefaultIcon && (theIconPath == nil)) {
         theIconPath = defaultIconPath;
     }
-    
+
     // Set up the dock icon if we have an icon name.
     if (theIconPath != nil) {
         NSImage *iconImage = [[NSImage alloc] initWithContentsOfFile:theIconPath];
-        
+
         // If we failed for some reason fall back to the default icon.
         if (iconImage == nil) {
             iconImage = [[NSImage alloc] initWithContentsOfFile:defaultIconPath];
         }
-        
+
         [NSApp setApplicationIconImage:iconImage];
         [iconImage release];
     }
@@ -316,7 +316,7 @@ AWT_ASSERT_APPKIT_THREAD;
             [optionsDictionary setValue:[NSApp applicationIconImage] forKey:@"ApplicationIcon"];
         }
     }
-    
+
     [super orderFrontStandardAboutPanelWithOptions:optionsDictionary];
 }
 
@@ -326,10 +326,10 @@ AWT_ASSERT_APPKIT_THREAD;
     if (mask == DRAGMASK && [((NSString *)kCFRunLoopDefaultMode) isEqual:mode]) {
         postEventDuringEventSynthesis = YES;
     }
-    
+
     NSEvent *event = [super nextEventMatchingMask:mask untilDate:expiration inMode:mode dequeue: deqFlag];
     postEventDuringEventSynthesis = NO;
-    
+
     return event;
 }
 
@@ -340,7 +340,7 @@ void OSXAPP_SetApplicationDelegate(id <NSApplicationDelegate> delegate)
 {
 AWT_ASSERT_APPKIT_THREAD;
     applicationDelegate = delegate;
-    
+
     if (NSApp != nil) {
         [NSApp setDelegate: applicationDelegate];
 

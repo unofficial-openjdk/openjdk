@@ -142,7 +142,7 @@ static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
     if (IS(mask, DOCUMENT_MODIFIED)) {
         [self setDocumentEdited:IS(bits, DOCUMENT_MODIFIED)];
     }
-    
+
     if ([self respondsToSelector:@selector(toggleFullScreen:)]) {
         if (IS(mask, FULLSCREENABLE)) {
             [self setCollectionBehavior:(1 << 7) /*NSWindowCollectionBehaviorFullScreenPrimary*/];
@@ -276,7 +276,7 @@ AWT_ASSERT_APPKIT_THREAD;
             static JNF_CLASS_CACHE(jc_GestureHandler, "com/apple/eawt/event/GestureHandler");
             static JNF_STATIC_MEMBER_CACHE(sjm_handleGestureFromNative, jc_GestureHandler, "handleGestureFromNative", "(Ljava/awt/Window;IDDDD)V");
             JNFCallStaticVoidMethod(env, sjm_handleGestureFromNative, awtWindow, type, (jdouble)loc.x, (jdouble)loc.y, (jdouble)a, (jdouble)b);
-            (*env)->DeleteLocalRef(env, awtWindow); 
+            (*env)->DeleteLocalRef(env, awtWindow);
         }
         (*env)->DeleteLocalRef(env, platformWindow);
     }
@@ -427,7 +427,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
 
 - (void) windowDidBecomeKey: (NSNotification *) notification {
-AWT_ASSERT_APPKIT_THREAD;	
+AWT_ASSERT_APPKIT_THREAD;
     [AWTToolkit eventCountPlusPlus];
     [CMenuBar activate:self.javaMenuBar modallyDisabled:NO];
     [self _deliverWindowFocusEvent:YES];
@@ -461,7 +461,7 @@ AWT_ASSERT_APPKIT_THREAD;
     jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
     if (platformWindow != NULL) {
         static JNF_MEMBER_CACHE(jm_deliverWindowClosingEvent, jc_CPlatformWindow, "deliverWindowClosingEvent", "()V");
-        JNFCallVoidMethod(env, platformWindow, jm_deliverWindowClosingEvent);    
+        JNFCallVoidMethod(env, platformWindow, jm_deliverWindowClosingEvent);
         (*env)->DeleteLocalRef(env, platformWindow);
     }
     // The window will be closed (if allowed) as result of sending Java event
@@ -531,13 +531,13 @@ AWT_ASSERT_APPKIT_THREAD;
 
 - (void)sendEvent:(NSEvent *)event {
         if ([event type] == NSLeftMouseDown || [event type] == NSRightMouseDown || [event type] == NSOtherMouseDown) {
-			
+
             NSPoint p = [NSEvent mouseLocation];
             NSRect frame = [self frame];
             NSRect contentRect = [self contentRectForFrameRect:frame];
-			
-            // Check if the click happened in the non-client area (title bar) 
-            if (p.y >= (frame.origin.y + contentRect.size.height)) {				
+
+            // Check if the click happened in the non-client area (title bar)
+            if (p.y >= (frame.origin.y + contentRect.size.height)) {
                 JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
                 jobject platformWindow = [self.javaPlatformWindow jObjectWithEnv:env];
                 // Currently, no need to deliver the whole NSEvent.

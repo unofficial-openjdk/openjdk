@@ -363,9 +363,9 @@ extern JNFClassInfo jc_CDropTargetContextPeer;
 
     // In case of an error make sure to return nil:
     if ((*env)->ExceptionOccurred(env)) {
-		(*env)->ExceptionDescribe(env);
+                (*env)->ExceptionDescribe(env);
         gbyteArray = nil;
-	}
+        }
 
     return gbyteArray;
 }
@@ -570,8 +570,8 @@ extern JNFClassInfo jc_CDropTargetContextPeer;
     // Should we notify Java things have changed?
     if (sDraggingError == FALSE && notifyJava) {
         NSPoint javaLocation = [fView convertPoint:sDraggingLocation fromView:nil];
-		// For some reason even after the convertPoint drag events come with the y coordinate reverted
-		javaLocation.y = fView.window.frame.size.height - javaLocation.y;
+                // For some reason even after the convertPoint drag events come with the y coordinate reverted
+                javaLocation.y = fView.window.frame.size.height - javaLocation.y;
         //DLog5(@"  : dragMoved: loc native %f, %f, java %f, %f\n", sDraggingLocation.x, sDraggingLocation.y, javaLocation.x, javaLocation.y);
 
         jlongArray formats = sDraggingFormats;

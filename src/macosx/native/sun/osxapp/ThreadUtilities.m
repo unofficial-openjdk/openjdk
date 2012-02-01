@@ -112,7 +112,7 @@ NSUInteger sPerformCount = 0;
     if (fWait) {
         sInPerformFromJava = YES;
     }
-    
+
     sPerformCount++;
 
     // Actually do the work (cheat to avoid a method call)
@@ -148,20 +148,20 @@ NSUInteger sPerformCount = 0;
         // Do an asynchronous perform to the main thread.
         [self performSelectorOnMainThread:@selector(_performCompatible:)
               withObject:resultLock waitUntilDone:NO modes:sAWTPerformModes];
-        
+
         // Wait for a little bit for it to finish
         [resultLock lockWhenCondition:READY beforeDate:[NSDate dateWithTimeIntervalSinceNow:sCocoaComponentCompatibilityTimeout]];
-        
+
         // If the _performCompatible is actually in progress,
         // we should let it finish
         if ([resultLock condition] == IN_PROGRESS) {
             [resultLock lockWhenCondition:READY];
         }
-        
+
         if ([resultLock condition] == NOT_READY && sLoggingEnabled) {
             NSLog(@"[Java CocoaComponent compatibility mode]: Operation timed out due to possible deadlock: selector '%@' on target '%@' with args '%@'", NSStringFromSelector(fSelector), fTarget, fArg);
         }
-        
+
         [resultLock unlock];
         [resultLock autorelease];
     }
@@ -171,9 +171,9 @@ NSUInteger sPerformCount = 0;
     // notify that the perform is in progress!
     [resultLock lock];
     [resultLock unlockWithCondition:IN_PROGRESS];
-    
+
     sPerformCount++;
-    
+
     // Actually do the work.
     @try {
         [fTarget performSelector:fSelector withObject:fArg];
@@ -183,7 +183,7 @@ NSUInteger sPerformCount = 0;
         // notify done!
         [resultLock lock];
         [resultLock unlockWithCondition:READY];
-        
+
         // Clean up after ourselves
         [resultLock autorelease];
         [fTarget autorelease];
@@ -223,7 +223,7 @@ AWT_ASSERT_APPKIT_THREAD;
         // ModalPanel, and EventTracking modes
         sPerformModes =    [[NSArray alloc] initWithObjects:NSDefaultRunLoopMode, NSModalPanelRunLoopMode, nil];
         sAWTPerformModes = [[NSArray alloc] initWithObjects:NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode, [JNFRunLoop javaRunLoopMode], nil];
-        
+
 #ifdef AWT_THREAD_ASSERTS_ENV_ASSERT
         sAWTThreadAsserts = (getenv("COCOA_AWT_DISABLE_THREAD_ASSERTS") == NULL);
 #endif /* AWT_THREAD_ASSERTS_ENV_ASSERT */

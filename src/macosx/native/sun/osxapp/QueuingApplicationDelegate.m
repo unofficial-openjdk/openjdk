@@ -67,7 +67,7 @@ static id <NSApplicationDelegate> realDelegate = nil;
     // If the java application has a bundle with an Info.plist file with
     //  a CFBundleDocumentTypes entry, then it is set up to handle Open Doc
     //  and Print Doc commands for these files. Therefore java AWT will
-    //  cache Open Doc and Print Doc events that are sent prior to a 
+    //  cache Open Doc and Print Doc events that are sent prior to a
     //  listener being installed by the client java application.
     NSBundle *bundle = [NSBundle mainBundle];
     fHandlesDocumentTypes = [bundle objectForInfoDictionaryKey:@"CFBundleDocumentTypes"] != nil || [bundle _hasEAWTOverride:@"DocumentHandler"];
@@ -130,7 +130,7 @@ static id <NSApplicationDelegate> realDelegate = nil;
     [self->queue addObject:^(){
         [realDelegate application:application printFiles:fileNames withSettings:printSettings showPrintPanels:showPrintPanels];
     }];
-    
+
     // well, a bit premature, but what else can we do?..
     return NSPrintingSuccess;
 }

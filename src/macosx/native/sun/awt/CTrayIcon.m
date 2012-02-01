@@ -38,16 +38,16 @@
  */
 static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     NSRect imageRect = NSMakeRect(0.0, 0.0, imageSize.width, imageSize.height);
-    
-    // There is a black line at the bottom of the status bar  
+
+    // There is a black line at the bottom of the status bar
     // that we don't want to cover with image pixels.
     CGFloat desiredHeight = [[NSStatusBar systemStatusBar] thickness] - 1.0;
     CGFloat scaleFactor = MIN(1.0, desiredHeight/imageSize.height);
-    
+
     imageRect.size.width *= scaleFactor;
     imageRect.size.height *= scaleFactor;
     imageRect = NSIntegralRect(imageRect);
-    
+
     return imageRect.size;
 }
 
@@ -58,7 +58,7 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
 
     peer = thePeer;
 
-    theItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];  
+    theItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     [theItem retain];
 
     view = [[AWTTrayIconView alloc] initWithTrayIcon:self];
@@ -100,11 +100,11 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
 - (void) setImage:(NSImage *) imagePtr sizing:(BOOL)autosize{
     NSSize imageSize = [imagePtr size];
     NSSize scaledSize = ScaledImageSizeForStatusBar(imageSize);
-    if (imageSize.width != scaledSize.width || 
+    if (imageSize.width != scaledSize.width ||
         imageSize.height != scaledSize.height) {
         [imagePtr setSize: scaledSize];
     }
-    
+
     CGFloat itemLength = scaledSize.width + 2.0*kImageInset;
     [theItem setLength:itemLength];
 
@@ -120,13 +120,13 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
 
 @implementation AWTTrayIconView
 
--(id)initWithTrayIcon:(AWTTrayIcon *)theTrayIcon {    
+-(id)initWithTrayIcon:(AWTTrayIcon *)theTrayIcon {
     self = [super initWithFrame:NSMakeRect(0, 0, 1, 1)];
 
     trayIcon = theTrayIcon;
     isHighlighted = NO;
-    image = nil;    
-        
+    image = nil;
+
     return self;
 }
 
@@ -135,7 +135,7 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     [super dealloc];
 }
 
-- (void)setHighlighted:(BOOL)aFlag 
+- (void)setHighlighted:(BOOL)aFlag
 {
     if (isHighlighted != aFlag) {
         isHighlighted = aFlag;
@@ -145,7 +145,7 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
 
 - (void)setImage:(NSImage*)anImage {
     [anImage retain];
-    [image release];   
+    [image release];
     image = anImage;
 
     if (image != nil) {
@@ -153,12 +153,12 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     }
 }
 
-- (void)menuWillOpen:(NSMenu *)menu 
+- (void)menuWillOpen:(NSMenu *)menu
 {
     [self setHighlighted:YES];
 }
 
-- (void)menuDidClose:(NSMenu *)menu 
+- (void)menuDidClose:(NSMenu *)menu
 {
     [menu setDelegate:nil];
     [self setHighlighted:NO];
@@ -173,20 +173,20 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
     NSRect bounds = [self bounds];
     NSSize imageSize = [image size];
 
-    NSRect drawRect = {{ (bounds.size.width - imageSize.width) / 2.0, 
+    NSRect drawRect = {{ (bounds.size.width - imageSize.width) / 2.0,
         (bounds.size.height - imageSize.height) / 2.0 }, imageSize};
 
-    // don't cover bottom pixels of the status bar with the image 
+    // don't cover bottom pixels of the status bar with the image
     if (drawRect.origin.y < 1.0) {
         drawRect.origin.y = 1.0;
     }
-    drawRect = NSIntegralRect(drawRect);    
-    
+    drawRect = NSIntegralRect(drawRect);
+
     [trayIcon.theItem drawStatusBarBackgroundInRect:bounds
-                                withHighlight:isHighlighted];       
-    [image drawInRect:drawRect 
-             fromRect:NSZeroRect 
-            operation:NSCompositeSourceOver 
+                                withHighlight:isHighlighted];
+    [image drawInRect:drawRect
+             fromRect:NSZeroRect
+            operation:NSCompositeSourceOver
              fraction:1.0
      ];
 }
@@ -203,7 +203,7 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize) {
         NSMenu* menu = [cmenu menu];
         [menu setDelegate:self];
         [trayIcon.theItem popUpStatusItemMenu:menu];
-        [self setNeedsDisplay:YES];        
+        [self setNeedsDisplay:YES];
     } else {
         JNFCallVoidMethod(env, trayIcon.peer, jm_performAction);
     }
@@ -298,19 +298,19 @@ Java_sun_lwawt_macosx_CTrayIcon_nativeGetIconLocation
 
 JNF_COCOA_ENTER(env);
 AWT_ASSERT_NOT_APPKIT_THREAD;
-  
+
     __block NSPoint pt = NSZeroPoint;
     AWTTrayIcon *icon = jlong_to_ptr(model);
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         AWT_ASSERT_APPKIT_THREAD;
-    
-        NSPoint loc = [icon getLocationOnScreen];        
+
+        NSPoint loc = [icon getLocationOnScreen];
         pt = ConvertNSScreenPoint(env, loc);
     }];
 
     jpt = NSToJavaPoint(env, pt);
-   
+
 JNF_COCOA_EXIT(env);
-    
+
     return jpt;
 }

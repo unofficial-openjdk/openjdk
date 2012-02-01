@@ -348,7 +348,7 @@ JNF_COCOA_ENTER(env);
 JNF_COCOA_EXIT(env);
 
     J2dTraceLn2(J2D_TRACE_VERBOSE, "  created window: w=%d h=%d", oglsdo->width, oglsdo->height);
-    
+
     return JNI_TRUE;
 }
 
@@ -389,7 +389,7 @@ OGLSD_Flush(JNIEnv *env)
                     remoteLayer.textureHeight = layer.textureHeight;
                     [remoteLayer setNeedsDisplay];
                 }
-#endif /* REMOTELAYER */                
+#endif /* REMOTELAYER */
             }];
         }
     }
@@ -436,9 +436,9 @@ Java_sun_java2d_opengl_CGLSurfaceData_initOps
     oglsdo->isOpaque = isOpaque;
 
     cglsdo->peerData = (AWTView *)jlong_to_ptr(pPeerData);
-    cglsdo->layer = (CGLLayer *)jlong_to_ptr(layerPtr);    
+    cglsdo->layer = (CGLLayer *)jlong_to_ptr(layerPtr);
     cglsdo->configInfo = (CGLGraphicsConfigInfo *)jlong_to_ptr(pConfigInfo);
-    
+
     if (cglsdo->configInfo == NULL) {
         free(cglsdo);
         JNU_ThrowNullPointerException(env, "Config info is null in initOps");

@@ -54,7 +54,7 @@ AWT_ASSERT_APPKIT_THREAD;
     if (self == nil) return self;
 
     self.javaLayer = layer;
-    
+
     // NOTE: async=YES means that the layer is re-cached periodically
     self.asynchronous = FALSE;
     self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
@@ -66,7 +66,7 @@ AWT_ASSERT_APPKIT_THREAD;
     return self;
 }
 
-- (void) dealloc {    
+- (void) dealloc {
     self.javaLayer = nil;
     [super dealloc];
 }
@@ -112,7 +112,7 @@ AWT_ASSERT_APPKIT_THREAD;
 -(void)drawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp
 {
     AWT_ASSERT_APPKIT_THREAD;
-    
+
     // Set the current context to the one given to us.
     CGLSetCurrentContext(glContext);
 
@@ -149,7 +149,7 @@ JNF_COCOA_ENTER(env);
 AWT_ASSERT_NOT_APPKIT_THREAD;
 
     JNFJObjectWrapper *javaLayer = [JNFJObjectWrapper wrapperWithJObject:obj withEnv:env];
-    
+
     [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
         AWT_ASSERT_APPKIT_THREAD;
 
@@ -175,9 +175,9 @@ Java_sun_java2d_opengl_CGLLayer_validate
         layer.textureWidth = oglsdo->width;
         layer.textureHeight = oglsdo->height;
     } else {
-        layer.textureID = 0;            
+        layer.textureID = 0;
     }
-}    
+}
 
 // Must be called on the AppKit thread and under the RQ lock.
 JNIEXPORT void JNICALL
