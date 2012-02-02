@@ -34,6 +34,14 @@ ifeq ($(OSNAME), Linux)
     ARCH=i586
   endif
 endif
+ifeq ($(OSNAME), Darwin)
+  PLATFORM = bsd
+  JT_PLATFORM = linux
+  ARCH = $(shell uname -m)
+  ifeq ($(ARCH), i386)
+    ARCH=i586
+  endif
+endif
 ifeq ($(OSNAME), Windows_NT)
   PLATFORM = windows
   JT_PLATFORM = win32
@@ -240,6 +248,7 @@ javap:		JTREG_TESTDIRS = tools/javap
 # JTREG_REFERENCE
 #	(Optional) reference results (e.g. work, report or summary.txt)
 #
+jtreg_tests: jtreg-tests
 jtreg-tests: check-jtreg FRC
 	@rm -f -r $(JTREG_OUTPUT_DIR)/JTwork $(JTREG_OUTPUT_DIR)/JTreport \
 	    $(JTREG_OUTPUT_DIR)/diff.html $(JTREG_OUTPUT_DIR)/status.txt
