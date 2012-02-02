@@ -33,6 +33,11 @@
 
 #define DEBUG 1
 
+// number of mouse buttons supported
+extern int gNumberOfButtons;
+
+// InputEvent mask array
+extern jint* gButtonDownMasks;
 
 @interface AWTToolkit : NSObject { }
 + (long) getEventCount;

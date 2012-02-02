@@ -26,30 +26,21 @@
 package sun.lwawt.macosx;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.peer.*;
 
 import sun.awt.CGraphicsDevice;
 
 class CRobot implements RobotPeer {
-
     private static final int MOUSE_LOCATION_UNKNOWN      = -1;
-    private static final int BUTTON_STATE_UNKNOWN        = 0;
-    private static final int BUTTON_STATE_DOWN           = 1;
-    private static final int BUTTON_STATE_UP             = 2;
-    private static final int MODIFIER_PREVIOUSLY_UNKNOWN = 0;
-    private static final int MODIFIER_PREVIOUSLY_UP      = 1;
-    private static final int MODIFIER_PREVIOUSLY_DOWN    = 2;
 
     private final CGraphicsDevice fDevice;
-    private int fMouseLastX             = MOUSE_LOCATION_UNKNOWN;
-    private int fMouseLastY             = MOUSE_LOCATION_UNKNOWN;
-    private int fMouse1DesiredState     = BUTTON_STATE_UNKNOWN;
-    private int fMouse2DesiredState     = BUTTON_STATE_UNKNOWN;
-    private int fMouse3DesiredState     = BUTTON_STATE_UNKNOWN;
-    private int fMouse2KeyModifierState = MODIFIER_PREVIOUSLY_UNKNOWN;
-    private int fMouse3KeyModifierState = MODIFIER_PREVIOUSLY_UNKNOWN;
-    private boolean fMouseMoveAction;
+    private int mouseLastX = MOUSE_LOCATION_UNKNOWN;
+    private int mouseLastY = MOUSE_LOCATION_UNKNOWN;
+
+    // OS X doesn't generate dragged event as a result of button press and
+    // mouse move events. This means that we have to track buttons state
+    // in order to generate dragged events ourselves.
+    private int mouseButtonsState = 0;
 
     /**
      * Uses the given GraphicsDevice as the coordinate system for subsequent
@@ -71,12 +62,11 @@ class CRobot implements RobotPeer {
      */
     @Override
     public void mouseMove(int x, int y) {
-        fMouseLastX = x;
-        fMouseLastY = y;
-        fMouseMoveAction = true;
-        mouseEvent(fDevice.getCoreGraphicsScreen(), fMouseLastX, fMouseLastY,
-                   fMouse1DesiredState, fMouse2DesiredState,
-                   fMouse3DesiredState, fMouseMoveAction);
+        mouseLastX = x;
+        mouseLastY = y;
+
+        mouseEvent(fDevice.getCoreGraphicsScreen(), mouseLastX, mouseLastY,
+                   mouseButtonsState, true, true);
     }
 
     /**
@@ -87,32 +77,10 @@ class CRobot implements RobotPeer {
      */
     @Override
     public void mousePress(int buttons) {
-        if ((buttons & InputEvent.BUTTON1_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-            fMouse1DesiredState = BUTTON_STATE_DOWN;
-        } else {
-            fMouse1DesiredState = BUTTON_STATE_UNKNOWN;
-        }
+        mouseButtonsState |= buttons;
 
-        if ((buttons & InputEvent.BUTTON2_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON2_DOWN_MASK) != 0) {
-            fMouse2DesiredState = BUTTON_STATE_DOWN;
-        } else {
-            fMouse2DesiredState = BUTTON_STATE_UNKNOWN;
-        }
-
-        if ((buttons & InputEvent.BUTTON3_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON3_DOWN_MASK) != 0) {
-            fMouse3DesiredState = BUTTON_STATE_DOWN;
-        } else {
-            fMouse3DesiredState = BUTTON_STATE_UNKNOWN;
-        }
-
-        fMouseMoveAction = false;
-
-        mouseEvent(fDevice.getCoreGraphicsScreen(), fMouseLastX, fMouseLastY,
-                   fMouse1DesiredState, fMouse2DesiredState,
-                   fMouse3DesiredState, fMouseMoveAction);
+        mouseEvent(fDevice.getCoreGraphicsScreen(), mouseLastX, mouseLastY,
+                   buttons, true, false);
     }
 
     /**
@@ -123,32 +91,10 @@ class CRobot implements RobotPeer {
      */
     @Override
     public void mouseRelease(int buttons) {
-        if ((buttons & InputEvent.BUTTON1_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-            fMouse1DesiredState = BUTTON_STATE_UP;
-        } else {
-            fMouse1DesiredState = BUTTON_STATE_UNKNOWN;
-        }
+        mouseButtonsState &= ~buttons;
 
-        if ((buttons & InputEvent.BUTTON2_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON2_DOWN_MASK) != 0) {
-            fMouse2DesiredState = BUTTON_STATE_UP;
-        } else {
-            fMouse2DesiredState = BUTTON_STATE_UNKNOWN;
-        }
-
-        if ((buttons & InputEvent.BUTTON3_MASK) != 0 ||
-                (buttons & InputEvent.BUTTON3_DOWN_MASK) != 0) {
-            fMouse3DesiredState = BUTTON_STATE_UP;
-        } else {
-            fMouse3DesiredState = BUTTON_STATE_UNKNOWN;
-        }
-
-        fMouseMoveAction = false;
-
-        mouseEvent(fDevice.getCoreGraphicsScreen(), fMouseLastX, fMouseLastY,
-                   fMouse1DesiredState, fMouse2DesiredState,
-                   fMouse3DesiredState, fMouseMoveAction);
+        mouseEvent(fDevice.getCoreGraphicsScreen(), mouseLastX, mouseLastY,
+                   buttons, false, false);
     }
 
     @Override
@@ -218,10 +164,9 @@ class CRobot implements RobotPeer {
 
     private native void initRobot();
     private native void mouseEvent(int screen, int lastX, int lastY,
-                                   int button1DesiredState,
-                                   int button2DesiredState,
-                                   int button3DesiredState,
-                                   boolean moveAction);
+                                   int buttonsState,
+                                   boolean isButtonsDownState,
+                                   boolean isMouseMove);
     private native void keyEvent(int javaKeyCode, boolean keydown);
     private void getScreenPixels(Rectangle r, int[] pixels){
         nativeGetScreenPixels(r.x, r.y, r.width, r.height, pixels);

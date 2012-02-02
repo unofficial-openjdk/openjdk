@@ -26,7 +26,6 @@
 package sun.lwawt.macosx.event;
 
 import sun.lwawt.macosx.CocoaConstants;
-
 import java.awt.event.*;
 
 /*
@@ -134,7 +133,7 @@ public final class NSEvent {
      * Converts an NSEvent button number to a MouseEvent constant.
      */
     public static int nsButtonToJavaButton(int buttonNumber) {
-        int jbuttonNumber = MouseEvent.NOBUTTON;
+        int jbuttonNumber = buttonNumber + 1;
         switch (buttonNumber) {
             case CocoaConstants.kCGMouseButtonLeft:
                 jbuttonNumber = MouseEvent.BUTTON1;

@@ -690,32 +690,8 @@ DeliverJavaKeyEvent(JNIEnv *env, NSEvent *event, jobject peer)
     }
 }
 
-/*
- * Converts the NSEvent type to a Java mouse button mask.
- */
-static jint
-NsMouseModifiersToJavaModifiers(NSEvent *event)
-{
-    switch ([event type]) {
-    case NSLeftMouseDown:
-        return java_awt_event_InputEvent_BUTTON1_DOWN_MASK;
-    case NSRightMouseDown:
-        return java_awt_event_InputEvent_BUTTON3_DOWN_MASK;
-    case NSOtherMouseDown:
-        return java_awt_event_InputEvent_BUTTON2_DOWN_MASK;
-    default:
-        return 0;
-    }
-}
-
 jint GetJavaMouseModifiers(NSInteger button, NSUInteger modifierFlags)
 {
-    static NSInteger sMaxMouseButton = 2;
-
-    if (button > sMaxMouseButton) {
-        sMaxMouseButton = button;
-    }
-
     // Mousing needs the key modifiers
     jint modifiers = NsKeyModifiersToJavaModifiers(modifierFlags);
 
@@ -739,12 +715,11 @@ jint GetJavaMouseModifiers(NSInteger button, NSUInteger modifierFlags)
         modifiers |= java_awt_event_InputEvent_BUTTON2_DOWN_MASK;
     }
 
-    // like JDK 1.6, we pretend that additional buttons are BUTTON2
-    NSInteger otherButton = 3;
-    for (; otherButton <= sMaxMouseButton; otherButton++) {
+    NSInteger extraButton = 3;
+    for (; extraButton < gNumberOfButtons; extraButton++) {
         if (CGEventSourceButtonState(kCGEventSourceStateCombinedSessionState,
-                                 otherButton)) {
-            modifiers |= java_awt_event_InputEvent_BUTTON2_DOWN_MASK;
+                                 extraButton)) {
+            modifiers |= gButtonDownMasks[extraButton];
         }
     }
 
@@ -1049,7 +1024,9 @@ JNF_COCOA_ENTER(env);
     // out = [jkeyCode, jkeyLocation];
     (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
     (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
-
+    
+    (*env)->ReleaseIntArrayElements(env, inData, data, 0);
+    
 JNF_COCOA_EXIT(env);
 
     return postsTyped;
@@ -1088,5 +1065,7 @@ JNF_COCOA_ENTER(env);
     (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
     (*env)->SetIntArrayRegion(env, outData, 2, 1, &jkeyType);
 
+    (*env)->ReleaseIntArrayElements(env, inData, data, 0);
+    
 JNF_COCOA_EXIT(env);
 }

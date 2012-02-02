@@ -25,9 +25,10 @@
 
 package sun.lwawt.macosx;
 
+import sun.awt.SunToolkit;
 import sun.lwawt.LWWindowPeer;
 import sun.lwawt.macosx.event.NSEvent;
-
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
@@ -52,6 +53,12 @@ public class CPlatformResponder {
     public void handleMouseEvent(int eventType, int modifierFlags, int buttonNumber,
                                  int clickCount, int x, int y, int absoluteX, int absoluteY)
     {
+        final SunToolkit tk = (SunToolkit)Toolkit.getDefaultToolkit();
+        if ((buttonNumber > 2 && !tk.areExtraMouseButtonsEnabled())
+                || buttonNumber > tk.getNumberOfButtons() - 1) {
+            return;
+        }
+
         int jeventType = isNpapiCallback ? NSEvent.npEventTypeToJavaEventType(eventType) :
                                            NSEvent.nsEventTypeToJavaEventType(eventType);
 

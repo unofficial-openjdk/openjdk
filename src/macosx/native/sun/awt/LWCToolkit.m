@@ -26,6 +26,7 @@
 #import <dlfcn.h>
 #import <JavaNativeFoundation/JavaNativeFoundation.h>
 
+#include "jni_util.h"
 #import "CMenuBar.h"
 #import "InitIDs.h"
 #import "LWCToolkit.h"
@@ -35,6 +36,8 @@
 
 #import "sun_lwawt_macosx_LWCToolkit.h"
 
+int gNumberOfButtons;
+jint* gButtonDownMasks;
 
 @implementation AWTToolkit
 
@@ -214,6 +217,28 @@ Java_sun_lwawt_macosx_LWCToolkit_initIDs
         static JNF_STATIC_MEMBER_CACHE(jsm_installToolkitThreadNameInJava, jc_LWCToolkit, "installToolkitThreadNameInJava", "()V");
         JNFCallStaticVoidMethod(env, jsm_installToolkitThreadNameInJava);
     });
+    
+    gNumberOfButtons = sun_lwawt_macosx_LWCToolkit_BUTTONS;
+    
+    jclass inputEventClazz = (*env)->FindClass(env, "java/awt/event/InputEvent");
+    jmethodID getButtonDownMasksID = (*env)->GetStaticMethodID(env, inputEventClazz, "getButtonDownMasks", "()[I");
+    jintArray obj = (jintArray)(*env)->CallStaticObjectMethod(env, inputEventClazz, getButtonDownMasksID);
+    jint * tmp = (*env)->GetIntArrayElements(env, obj, JNI_FALSE);
+    
+    gButtonDownMasks = (jint*)malloc(sizeof(jint) * gNumberOfButtons);
+    if (gButtonDownMasks == NULL) {
+        gNumberOfButtons = 0;
+        JNU_ThrowOutOfMemoryError(env, NULL);
+        return;
+    }
+    
+    int i;
+    for (i = 0; i < gNumberOfButtons; i++) {
+        gButtonDownMasks[i] = tmp[i];
+    }
+    
+    (*env)->ReleaseIntArrayElements(env, obj, tmp, 0);
+    (*env)->DeleteLocalRef(env, obj);
 }
 
 static UInt32 RGB(NSColor *c) {

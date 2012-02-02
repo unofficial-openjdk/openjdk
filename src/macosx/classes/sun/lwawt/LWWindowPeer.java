@@ -96,11 +96,6 @@ public class LWWindowPeer
     // depending on what mouse button is being dragged according to Cocoa
     private static LWComponentPeer mouseDownTarget[] = new LWComponentPeer[3];
 
-    private static final int ButtonsDownMask = InputEvent.BUTTON1_DOWN_MASK |
-                                               InputEvent.BUTTON2_DOWN_MASK |
-                                               InputEvent.BUTTON3_DOWN_MASK;
-
-
     // A bitmask that indicates what mouse buttons produce MOUSE_CLICKED events
     // on MOUSE_RELEASE. Click events are only generated if there were no drag
     // events between MOUSE_PRESSED and MOUSE_RELEASED for particular button
@@ -711,13 +706,12 @@ public class LWWindowPeer
             }
             // TODO: fill "bdata" member of AWTEvent
 
-            // For pressed/dragged/released events JDK 1.6 treats other
+            int eventButtonMask = (button > 0)? MouseEvent.getMaskForButton(button) : 0;
+            int otherButtonsPressed = modifiers & ~eventButtonMask;
+
+            // For pressed/dragged/released events OS X treats other
             // mouse buttons as if they were BUTTON2, so we do the same
-            int eventButtonMask = (button == 0) ? MouseEvent.BUTTON2_DOWN_MASK :
-                                                  MouseEvent.getMaskForButton(button);
-            int mouseButtonsPressed = modifiers & ButtonsDownMask;
-            int otherButtonsPressed = mouseButtonsPressed & ~eventButtonMask;
-            int targetIdx = (button == 0) ? MouseEvent.BUTTON2 - 1 : button - 1;
+            int targetIdx = (button > 3) ? MouseEvent.BUTTON2 - 1 : button - 1;
 
             // MOUSE_ENTERED/EXITED are generated for the components strictly under
             // mouse even when dragging. That's why we first update lastMouseEventPeer
@@ -743,7 +737,7 @@ public class LWWindowPeer
                 // button is being dragged. Use it to determine the peer that
                 // should receive the dragged event.
                 targetPeer = mouseDownTarget[targetIdx];
-                mouseClickButtons &= ~mouseButtonsPressed;
+                mouseClickButtons &= ~modifiers;
             } else if (id == MouseEvent.MOUSE_RELEASED) {
                 // TODO: currently, mouse released event goes to the same component
                 // that received corresponding mouse pressed event. For most cases,
@@ -752,7 +746,7 @@ public class LWWindowPeer
                 // hidden/removed in between of mouse pressed/released events.
                 targetPeer = mouseDownTarget[targetIdx];
 
-                if ((mouseButtonsPressed & eventButtonMask) == 0) {
+                if ((modifiers & eventButtonMask) == 0) {
                     mouseDownTarget[targetIdx] = null;
                 }
 

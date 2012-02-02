@@ -54,7 +54,12 @@ class NamedCursor extends Cursor {
  * Mac OS X Cocoa-based AWT Toolkit.
  */
 public class LWCToolkit extends LWToolkit {
-    private static final Integer BUTTONS = 3; // number of available mouse buttons
+    // While it is possible to enumerate all mouse devices
+    // and query them for the number of buttons, the code
+    // that does it is rather complex. Instead, we opt for
+    // the easy way and just support up to 5 mouse buttons,
+    // like Windows.
+    private static final int BUTTONS = 5;
 
     private static native void initIDs();
 
@@ -84,6 +89,10 @@ public class LWCToolkit extends LWToolkit {
 
     public LWCToolkit() {
         SunToolkit.setDataTransfererClassName("sun.lwawt.macosx.CDataTransferer");
+
+        areExtraMouseButtonsEnabled = Boolean.parseBoolean(System.getProperty("sun.awt.enableExtraMouseButtons", "true"));
+        //set system property if not yet assigned
+        System.setProperty("sun.awt.enableExtraMouseButtons", ""+areExtraMouseButtonsEnabled);
     }
 
     /*
@@ -391,13 +400,18 @@ public class LWCToolkit extends LWToolkit {
         }
     }
 
-    /*
-     * TODO: take a look on pointer API for Cocoa. For now, suppress extra-button
-     * mouse events.
-     */
+    //Is it allowed to generate events assigned to extra mouse buttons.
+    //Set to true by default.
+    private static boolean areExtraMouseButtonsEnabled = true;
+
     public boolean areExtraMouseButtonsEnabled() throws HeadlessException {
-        return false;
+        return areExtraMouseButtonsEnabled;
     }
+
+    public int getNumberOfButtons(){
+        return BUTTONS;
+    }
+
 
     @Override
     public boolean isTraySupported() {
