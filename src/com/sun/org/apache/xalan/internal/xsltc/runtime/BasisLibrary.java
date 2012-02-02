@@ -53,6 +53,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import com.sun.org.apache.xml.internal.serializer.NamespaceMappings;
 import com.sun.org.apache.xml.internal.serializer.SerializationHandler;
 import com.sun.org.apache.xml.internal.utils.XML11Char;
 
@@ -1473,7 +1474,18 @@ public final class BasisLibrary {
 
                 // Handle case when prefix is not known at compile time
                 if (namespace == null || namespace.length() == 0) {
-                    runTimeError(NAMESPACE_PREFIX_ERR,prefix);
+                    try {
+                        // not sure if this line of code ever works
+                        namespace = dom.lookupNamespace(node, prefix);
+                    }
+                    catch(RuntimeException e) {
+                        handler.flushPending();  // need to flush or else can't get namespacemappings
+                        NamespaceMappings nm = handler.getNamespaceMappings();
+                        namespace = nm.lookupNamespace(prefix);
+                        if (namespace == null) {
+                            runTimeError(NAMESPACE_PREFIX_ERR,prefix);
+                        }
+                    }
                 }
 
                 handler.startElement(namespace, qname.substring(index+1),
@@ -1498,141 +1510,6 @@ public final class BasisLibrary {
         }
 
         return qname;
-    }
-
-    /**
-     * <p>Look up the namespace for a lexical QName using the namespace
-     * declarations available at a particular location in the stylesheet.</p>
-     * <p>See {@link org.apache.xalan.xsltc.compiler.Stylesheet#compileStaticInitializer(org.apache.xalan.xsltc.compiler.util.ClassGenerator)}
-     * for more information about the <code>ancestorNodeIDs</code>,
-     * <code>prefixURIsIndex</code> and <code>prefixURIPairs</code arrays.</p>
-     *
-     * @param lexicalQName The QName as a <code>java.lang.String</code>
-     * @param stylesheetNodeID An <code>int</code> representing the element in
-     *                     the stylesheet relative to which the namespace of
-     *                     the lexical QName is to be determined
-     * @param ancestorNodeIDs An <code>int</code> array, indexed by stylesheet
-     *                     node IDs, containing the ID of the nearest ancestor
-     *                     node in the stylesheet that has namespace
-     *                     declarations, or <code>-1</code> if there is no
-     *                     such ancestor
-     * @param prefixURIsIndex An <code>int</code> array, indexed by stylesheet
-     *                     node IDs, containing the index into the
-     *                     <code>prefixURIPairs</code> array of the first
-     *                     prefix declared on that stylesheet node
-     * @param prefixURIPairs A <code>java.lang.String</code> array that contains
-     *                     pairs of
-     * @param ignoreDefault A <code>boolean</code> indicating whether any
-     *                     default namespace decarlation should be considered
-     * @return The namespace of the lexical QName or a zero-length string if
-     *         the QName is in no namespace or no namespace declaration for the
-     *         prefix of the QName was found
-     */
-    public static String lookupStylesheetQNameNamespace(String lexicalQName,
-                                                        int stylesheetNodeID,
-                                                        int[] ancestorNodeIDs,
-                                                        int[] prefixURIsIndex,
-                                                        String[] prefixURIPairs,
-                                                        boolean ignoreDefault) {
-        String prefix = getPrefix(lexicalQName);
-        String uri = "";
-
-        if (prefix == null && !ignoreDefault) {
-            prefix = "";
-        }
-
-        if (prefix != null) {
-            // Loop from current node in the stylesheet to its ancestors
-            nodeLoop:
-            for (int currentNodeID = stylesheetNodeID;
-                 currentNodeID >= 0;
-                 currentNodeID = ancestorNodeIDs[currentNodeID]) {
-                // Look at all declarations on the current stylesheet node
-                // The prefixURIsIndex is an array of indices into the
-                // prefixURIPairs array that are stored in ascending order.
-                // The declarations for a node I are in elements
-                // prefixURIsIndex[I] to prefixURIsIndex[I+1]-1 (or
-                // prefixURIPairs.length-1 if I is the last node)
-                int prefixStartIdx = prefixURIsIndex[currentNodeID];
-                int prefixLimitIdx = (currentNodeID+1 < prefixURIsIndex.length)
-                                         ? prefixURIsIndex[currentNodeID + 1]
-                                         : prefixURIPairs.length;
-
-                for (int prefixIdx = prefixStartIdx;
-                     prefixIdx < prefixLimitIdx;
-                     prefixIdx = prefixIdx + 2) {
-                    // Did we find the declaration of our prefix
-                    if (prefix.equals(prefixURIPairs[prefixIdx])) {
-                        uri = prefixURIPairs[prefixIdx+1];
-                        break nodeLoop;
-                    }
-                }
-            }
-        }
-
-        return uri;
-    }
-
-     /**
-     * <p>Look up the namespace for a lexical QName using the namespace
-     * declarations available at a particular location in the stylesheet and
-     * return the expanded QName</p>
-     * <p>See {@link org.apache.xalan.xsltc.compiler.Stylesheet#compileStaticInitializer(org.apache.xalan.xsltc.compiler.util.ClassGenerator)}
-     * for more information about the <code>ancestorNodeIDs</code>,
-     * <code>prefixURIsIndex</code> and <code>prefixURIPairs</code arrays.</p>
-     *
-     * @param lexicalQName The QName as a <code>java.lang.String</code>
-     * @param stylesheetNodeID An <code>int</code> representing the element in
-     *                     the stylesheet relative to which the namespace of
-     *                     the lexical QName is to be determined
-     * @param ancestorNodeIDs An <code>int</code> array, indexed by stylesheet
-     *                     node IDs, containing the ID of the nearest ancestor
-     *                     node in the stylesheet that has namespace
-     *                     declarations, or <code>-1</code> if there is no
-     *                     such ancestor
-     * @param prefixURIsIndex An <code>int</code> array, indexed by stylesheet
-     *                     node IDs, containing the index into the
-     *                     <code>prefixURIPairs</code> array of the first
-     *                     prefix declared on that stylesheet node
-     * @param prefixURIPairs A <code>java.lang.String</code> array that contains
-     *                     pairs of
-     * @param ignoreDefault A <code>boolean</code> indicating whether any
-     *                     default namespace decarlation should be considered
-     * @return The expanded QName in the form "uri:localName" or just
-     *         "localName" if the QName is in no namespace or no namespace
-     *         declaration for the prefix of the QName was found
-     */
-    public static String expandStylesheetQNameRef(String lexicalQName,
-                                                  int stylesheetNodeID,
-                                                  int[] ancestorNodeIDs,
-                                                  int[] prefixURIsIndex,
-                                                  String[] prefixURIPairs,
-                                                  boolean ignoreDefault) {
-        String expandedQName;
-        String prefix = getPrefix(lexicalQName);
-        String localName = (prefix != null)
-                               ? lexicalQName.substring(prefix.length()+1)
-                               : lexicalQName;
-        String uri = lookupStylesheetQNameNamespace(lexicalQName,
-                                                    stylesheetNodeID,
-                                                    ancestorNodeIDs,
-                                                    prefixURIsIndex,
-                                                    prefixURIPairs,
-                                                    ignoreDefault);
-
-        // Handle case when prefix is not resolved
-        if (prefix != null && prefix.length() != 0
-               && (uri == null || uri.length() == 0)) {
-            runTimeError(NAMESPACE_PREFIX_ERR, prefix);
-        }
-
-        if (uri.length() == 0) {
-            expandedQName = localName;
-        } else {
-            expandedQName = uri + ':' + localName;
-        }
-
-        return expandedQName;
     }
 
     /**

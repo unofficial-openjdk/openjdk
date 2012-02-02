@@ -157,8 +157,7 @@ final class Whitespace extends TopLevelElement {
             if (col != -1) {
                 namespace = lookupNamespace(token.substring(0,col));
                 if (namespace != null) {
-                    elements.append(namespace+":"+
-                                    token.substring(col+1,token.length()));
+                    elements.append(namespace).append(':').append(token.substring(col + 1));
                 } else {
                     elements.append(token);
                 }

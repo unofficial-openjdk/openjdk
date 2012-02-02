@@ -422,6 +422,7 @@ public class FastStringBuffer
 
     // We may have preallocated chunks. If so, all but last should
     // be at full size.
+    boolean lastchunk = (m_lastChunk + 1 == m_array.length);
 
     if (m_firstFree < m_chunkSize)  // Simplified test single-character-fits
       chunk = m_array[m_lastChunk];
@@ -1135,7 +1136,8 @@ public class FastStringBuffer
      boolean processingLeadingWhitespace =
                        ((edgeTreatmentFlags & SUPPRESS_LEADING_WS) != 0);
      boolean seenWhitespace = ((edgeTreatmentFlags & CARRY_WS) != 0);
-
+     boolean suppressTrailingWhitespace =
+                       ((edgeTreatmentFlags & SUPPRESS_TRAILING_WS) != 0);
      int currPos = start;
      int limit = start+length;
 

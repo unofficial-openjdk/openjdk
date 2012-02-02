@@ -160,7 +160,7 @@ final class SymbolTable {
     private int _nsCounter = 0;
 
     public String generateNamespacePrefix() {
-        return(new String("ns"+(_nsCounter++)));
+        return("ns"+(_nsCounter++));
     }
 
     /**

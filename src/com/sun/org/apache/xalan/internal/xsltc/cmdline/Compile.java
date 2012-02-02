@@ -55,11 +55,10 @@ public final class Compile {
 
 
     public static void printUsage() {
-        StringBuffer vers = new StringBuffer("XSLTC version " +
-            VERSION_MAJOR + "." + VERSION_MINOR +
-            ((VERSION_DELTA > 0) ? ("."+VERSION_DELTA) : ("")));
-        System.err.println(vers + "\n" +
-                new ErrorMsg(ErrorMsg.COMPILE_USAGE_STR));
+      System.err.println("XSLTC version " +
+              VERSION_MAJOR + "." + VERSION_MINOR +
+              ((VERSION_DELTA > 0) ? ("." + VERSION_DELTA) : ("")) + "\n" +
+              new ErrorMsg(ErrorMsg.COMPILE_USAGE_STR));
         if (_allowExit) System.exit(-1);
     }
 
