@@ -3114,4 +3114,9 @@ public final
     AnnotationType getAnnotationType() {
         return annotationType;
     }
+
+    /* Backing store of user-defined values pertaining to this class.
+     * Maintained by the ClassValue class.
+     */
+    transient ClassValue.ClassValueMap classValueMap;
 }

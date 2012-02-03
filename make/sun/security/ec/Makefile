@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -156,7 +156,7 @@ ifeq ($(NATIVE_ECC_AVAILABLE), true)
       $(PKGDIR)/ECDSASignature.java \
       $(PKGDIR)/ECKeyPairGenerator.java
 
-  JAVAHFLAGS += -classpath $(CLASSDESTDIR)
+  JAVAHFLAGS = -bootclasspath "$(CLASSDESTDIR)$(CLASSPATH_SEPARATOR)$(CLASSBINDIR)"
 
   #
   # C and C++ files
