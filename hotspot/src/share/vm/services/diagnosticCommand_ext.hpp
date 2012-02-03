@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved. DO
+ * NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -22,26 +22,9 @@
  *
  */
 
-#ifndef SHARE_VM_TRACE_TRACE_MACRO_HPP
-#define SHARE_VM_TRACE_TRACE_MACRO_HPP
+#ifndef SHARE_VM_SERVICES_DIAGNOSTICCOMMAND_EXT_HPP
+#define SHARE_VM_SERVICES_DIAGNOSTICCOMMAND_EXT_HPP
 
-#define EVENT_BEGIN(type, name)
-#define EVENT_SET(name, field, value)
-#define EVENT_COMMIT(name, ...)
-#define EVENT_STARTED(name, time)
-#define EVENT_ENDED(name, time)
-#define EVENT_THREAD_EXIT(thread)
+#undef HAVE_EXTRA_DCMD
 
-#define TRACE_ENABLED 0
-
-#define TRACE_INIT_ID(k)
-#define TRACE_BUFFER void*
-
-#define TRACE_START() true
-#define TRACE_INITIALIZE() 0
-
-#define TRACE_SET_KLASS_TRACE_ID(x1, x2) do { } while (0)
-#define TRACE_DEFINE_KLASS_METHODS typedef int ___IGNORED_hs_trace_type1
-#define TRACE_DEFINE_KLASS_TRACE_ID typedef int ___IGNORED_hs_trace_type2
-
-#endif
+#endif // SHARE_VM_SERVICES_DIAGNOSTICCOMMAND_HPP

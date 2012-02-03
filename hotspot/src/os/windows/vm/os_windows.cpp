@@ -3294,7 +3294,7 @@ void os::yield_all(int attempts) {
 // so we compress Java's ten down to seven.  It would be better
 // if we dynamically adjusted relative priorities.
 
-int os::java_to_os_priority[MaxPriority + 1] = {
+int os::java_to_os_priority[CriticalPriority + 1] = {
   THREAD_PRIORITY_IDLE,                         // 0  Entry should never be used
   THREAD_PRIORITY_LOWEST,                       // 1  MinPriority
   THREAD_PRIORITY_LOWEST,                       // 2
@@ -3305,10 +3305,11 @@ int os::java_to_os_priority[MaxPriority + 1] = {
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 7
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 8
   THREAD_PRIORITY_HIGHEST,                      // 9  NearMaxPriority
-  THREAD_PRIORITY_HIGHEST                       // 10 MaxPriority
+  THREAD_PRIORITY_HIGHEST,                      // 10 MaxPriority
+  THREAD_PRIORITY_HIGHEST                       // 11 CriticalPriority
 };
 
-int prio_policy1[MaxPriority + 1] = {
+int prio_policy1[CriticalPriority + 1] = {
   THREAD_PRIORITY_IDLE,                         // 0  Entry should never be used
   THREAD_PRIORITY_LOWEST,                       // 1  MinPriority
   THREAD_PRIORITY_LOWEST,                       // 2
@@ -3319,16 +3320,20 @@ int prio_policy1[MaxPriority + 1] = {
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 7
   THREAD_PRIORITY_HIGHEST,                      // 8
   THREAD_PRIORITY_HIGHEST,                      // 9  NearMaxPriority
-  THREAD_PRIORITY_TIME_CRITICAL                 // 10 MaxPriority
+  THREAD_PRIORITY_TIME_CRITICAL,                // 10 MaxPriority
+  THREAD_PRIORITY_TIME_CRITICAL                 // 11 CriticalPriority
 };
 
 static int prio_init() {
   // If ThreadPriorityPolicy is 1, switch tables
   if (ThreadPriorityPolicy == 1) {
     int i;
-    for (i = 0; i < MaxPriority + 1; i++) {
+    for (i = 0; i < CriticalPriority + 1; i++) {
       os::java_to_os_priority[i] = prio_policy1[i];
     }
+  }
+  if (UseCriticalJavaThreadPriority) {
+    os::java_to_os_priority[MaxPriority] = os::java_to_os_priority[CriticalPriority] ;
   }
   return 0;
 }

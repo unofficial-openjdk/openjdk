@@ -1052,6 +1052,9 @@ class CommandLineFlags {
   notproduct(bool, PrintSystemDictionaryAtExit, false,                      \
           "Prints the system dictionary at exit")                           \
                                                                             \
+  experimental(intx, PredictedLoadedClassCount, 0,                          \
+          "Experimental: Tune loaded class cache starting size.")           \
+                                                                            \
   diagnostic(bool, UnsyncloadClass, false,                                  \
           "Unstable: VM calls loadClass unsynchronized. Custom "            \
           "class loader  must call VM synchronized for findClass "          \
@@ -3487,16 +3490,19 @@ class CommandLineFlags {
           "    Linux this policy requires root privilege.")                 \
                                                                             \
   product(bool, ThreadPriorityVerbose, false,                               \
-          "print priority changes")                                         \
+          "Print priority changes")                                         \
                                                                             \
   product(intx, DefaultThreadPriority, -1,                                  \
-          "what native priority threads run at if not specified elsewhere (-1 means no change)") \
+          "The native priority at which threads run if not elsewhere "      \
+          "specified (-1 means no change)")                                 \
                                                                             \
   product(intx, CompilerThreadPriority, -1,                                 \
-          "what priority should compiler threads run at (-1 means no change)") \
+          "The native priority at which compiler threads should run "       \
+          "(-1 means no change)")                                           \
                                                                             \
   product(intx, VMThreadPriority, -1,                                       \
-          "what priority should VM threads run at (-1 means no change)")    \
+          "The native priority at which the VM thread should run "          \
+          "(-1 means no change)")                                           \
                                                                             \
   product(bool, CompilerThreadHintNoPreempt, true,                          \
           "(Solaris only) Give compiler threads an extra quanta")           \
@@ -3514,6 +3520,15 @@ class CommandLineFlags {
   product(intx, JavaPriority8_To_OSPriority, -1, "Map Java priorities to OS priorities") \
   product(intx, JavaPriority9_To_OSPriority, -1, "Map Java priorities to OS priorities") \
   product(intx, JavaPriority10_To_OSPriority,-1, "Map Java priorities to OS priorities") \
+                                                                            \
+  experimental(bool, UseCriticalJavaThreadPriority, false,                  \
+          "Java thread priority 10 maps to critical scheduling priority")   \
+                                                                            \
+  experimental(bool, UseCriticalCompilerThreadPriority, false,              \
+          "Compiler thread(s) run at critical scheduling priority")         \
+                                                                            \
+  experimental(bool, UseCriticalCMSThreadPriority, false,                   \
+          "ConcurrentMarkSweep thread runs at critical scheduling priority")\
                                                                             \
   /* compiler debugging */                                                  \
   notproduct(intx, CompileTheWorldStartAt,     1,                           \
@@ -3881,7 +3896,7 @@ class CommandLineFlags {
   product(bool, UseVMInterruptibleIO, false,                                \
           "(Unstable, Solaris-specific) Thread interrupt before or with "   \
           "EINTR for I/O operations results in OS_INTRPT. The default value"\
-          " of this flag is true for JDK 6 and earliers")
+          " of this flag is true for JDK 6 and earlier")
 
 /*
  *  Macros for factoring of globals
