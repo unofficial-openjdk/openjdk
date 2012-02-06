@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -734,7 +734,7 @@ final public class SSLEngineImpl extends SSLEngine {
              * Our days of consuming are now over anyway.
              */
             fatal(Alerts.alert_internal_error,
-                "problem unwrapping net record", e);
+                "problem wrapping app data", e);
             return null;  // make compiler happy
         } finally {
             /*
