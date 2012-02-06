@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -142,6 +142,7 @@ EXPORT_LIST += $(EXPORT_DOCS_DIR)/platform/jvmti/jvmti.html
 # client and server subdirectories have symbolic links to ../libjsig.so
 EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.$(LIBRARY_SUFFIX)
 EXPORT_SERVER_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/server
+EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
 
 ifndef BUILD_CLIENT_ONLY
 EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
@@ -150,7 +151,6 @@ endif
 
 ifneq ($(ZERO_BUILD), true)
   ifeq ($(ARCH_DATA_MODEL), 32)
-    EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
     EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
     EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.$(LIBRARY_SUFFIX)
   endif
@@ -171,10 +171,33 @@ ADD_SA_BINARIES/zero  =
 
 EXPORT_LIST += $(ADD_SA_BINARIES/$(HS_ARCH))
 
-UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/libjsig.$(LIBRARY_SUFFIX)
-UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/libsaproc.$(LIBRARY_SUFFIX)
-UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/server/libjvm.$(LIBRARY_SUFFIX)
+# Universal build settings
+ifeq ($(OS_VENDOR), Darwin)
+  # Build universal binaries by default on Mac OS X
+  MACOSX_UNIVERSAL = true
+  ifneq ($(ALT_MACOSX_UNIVERSAL),)
+    MACOSX_UNIVERSAL = $(ALT_MACOSX_UNIVERSAL)
+  endif
+  MAKE_ARGS += MACOSX_UNIVERSAL=$(MACOSX_UNIVERSAL)
 
-UNIVERSAL_COPY_LIST += $(EXPORT_JRE_LIB_DIR)/server/Xusage.txt
-UNIVERSAL_COPY_LIST += $(EXPORT_JRE_LIB_DIR)/client/Xusage.txt
-UNIVERSAL_COPY_LIST += $(EXPORT_JRE_LIB_DIR)/client/libjvm.$(LIBRARY_SUFFIX)
+  # Universal settings
+  ifeq ($(MACOSX_UNIVERSAL), true)
+
+    # Set universal export path but avoid using ARCH or PLATFORM subdirs
+    EXPORT_PATH=$(OUTPUTDIR)/export-universal$(EXPORT_SUBDIR)
+
+    # Set universal image dir
+    JDK_IMAGE_DIR=$(OUTPUTDIR)/jdk-universal$(EXPORT_SUBDIR)
+
+    # Binaries to 'universalize' if built
+    UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/libjsig.$(LIBRARY_SUFFIX)
+    UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/libsaproc.$(LIBRARY_SUFFIX)
+    UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/server/libjvm.$(LIBRARY_SUFFIX)
+    UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/client/libjvm.$(LIBRARY_SUFFIX)
+
+    # Files to simply copy in place
+    UNIVERSAL_COPY_LIST += $(EXPORT_JRE_LIB_DIR)/server/Xusage.txt
+    UNIVERSAL_COPY_LIST += $(EXPORT_JRE_LIB_DIR)/client/Xusage.txt
+
+  endif
+endif
