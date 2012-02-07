@@ -688,6 +688,7 @@ public class MethodGenerator extends MethodGen
 
         // Get the current number of local variable slots
         int maxLocals = super.getMaxLocals();
+        int prevLocals = maxLocals;
 
         // Get numer of actual variables
         final LocalVariableGen[] localVars = super.getLocalVariables();

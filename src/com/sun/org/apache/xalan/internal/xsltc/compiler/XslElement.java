@@ -26,7 +26,6 @@ package com.sun.org.apache.xalan.internal.xsltc.compiler;
 import com.sun.org.apache.bcel.internal.generic.ALOAD;
 import com.sun.org.apache.bcel.internal.generic.ASTORE;
 import com.sun.org.apache.bcel.internal.generic.ConstantPoolGen;
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 import com.sun.org.apache.bcel.internal.generic.ICONST;
 import com.sun.org.apache.bcel.internal.generic.INVOKESTATIC;
 import com.sun.org.apache.bcel.internal.generic.InstructionList;
@@ -141,9 +140,6 @@ final class XslElement extends Instruction {
             }
         }
         else {
-            // name attribute contains variable parts.  If there is no namespace
-            // attribute, the generated code needs to be prepared to look up
-            // any prefix in the stylesheet at run-time.
             _namespace = (namespace == EMPTYSTRING) ? null :
                          new AttributeValueTemplate(namespace, parser, this);
         }
@@ -255,34 +251,7 @@ final class XslElement extends Instruction {
                 _namespace.translate(classGen, methodGen);
             }
             else {
-                // If name is an AVT and namespace is not specified, need to
-                // look up any prefix in the stylesheet by calling
-                //   BasisLibrary.lookupStylesheetQNameNamespace(
-                //                name, stylesheetNode, ancestorsArray,
-                //                prefixURIsIndexArray, prefixURIPairsArray,
-                //                !ignoreDefaultNamespace)
-                String transletClassName = getXSLTC().getClassName();
-                il.append(DUP);
-                il.append(new PUSH(cpg, getNodeIDForStylesheetNSLookup()));
-                il.append(new GETSTATIC(cpg.addFieldref(
-                                             transletClassName,
-                                             STATIC_NS_ANCESTORS_ARRAY_FIELD,
-                                             NS_ANCESTORS_INDEX_SIG)));
-                il.append(new GETSTATIC(cpg.addFieldref(
-                                             transletClassName,
-                                             STATIC_PREFIX_URIS_IDX_ARRAY_FIELD,
-                                             PREFIX_URIS_IDX_SIG)));
-                il.append(new GETSTATIC(cpg.addFieldref(
-                                             transletClassName,
-                                             STATIC_PREFIX_URIS_ARRAY_FIELD,
-                                             PREFIX_URIS_ARRAY_SIG)));
-                // Default namespace is significant
-                il.append(ICONST_0);
-                il.append(
-                    new INVOKESTATIC(
-                        cpg.addMethodref(BASIS_LIBRARY_CLASS,
-                                           LOOKUP_STYLESHEET_QNAME_NS_REF,
-                                           LOOKUP_STYLESHEET_QNAME_NS_SIG)));
+                il.append(ACONST_NULL);
             }
 
             // Push additional arguments

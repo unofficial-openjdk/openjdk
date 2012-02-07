@@ -384,6 +384,8 @@ public final class XMLStreamWriterImpl extends AbstractMap implements XMLStreamW
         fElementStack.clear();
         fInternalNamespaceContext.reset();
         fReuse = true;
+        fStartTagOpened = false;
+        fNamespaceContext.userContext = null;
     }
 
     /**

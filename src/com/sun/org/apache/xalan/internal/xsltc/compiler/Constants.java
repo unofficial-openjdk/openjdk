@@ -378,12 +378,6 @@ public interface Constants extends InstructionConstants {
         = "namespaceArray";
     public static final String NAMESPACE_INDEX_SIG
         = "[" + STRING_SIG;
-    public static final String NS_ANCESTORS_INDEX_SIG
-        = "[I";
-    public static final String PREFIX_URIS_IDX_SIG
-        = "[I";
-    public static final String PREFIX_URIS_ARRAY_SIG
-        = "[" + STRING_SIG;
     public static final String HASIDCALL_INDEX
         = "_hasIdCall";
     public static final String HASIDCALL_INDEX_SIG
@@ -392,24 +386,6 @@ public interface Constants extends InstructionConstants {
         = "transletVersion";
     public static final String TRANSLET_VERSION_INDEX_SIG
         = "I";
-    public static final String LOOKUP_STYLESHEET_QNAME_NS_REF
-        = "lookupStylesheetQNameNamespace";
-    public static final String LOOKUP_STYLESHEET_QNAME_NS_SIG
-        = "(" + STRING_SIG
-              + "I"
-              + NS_ANCESTORS_INDEX_SIG
-              + PREFIX_URIS_IDX_SIG
-              + PREFIX_URIS_ARRAY_SIG
-              + "Z)" + STRING_SIG;
-    public static final String EXPAND_STYLESHEET_QNAME_REF
-        = "expandStylesheetQNameRef";
-    public static final String EXPAND_STYLESHEET_QNAME_SIG
-        = "(" + STRING_SIG
-              + "I"
-              + NS_ANCESTORS_INDEX_SIG
-              + PREFIX_URIS_IDX_SIG
-              + PREFIX_URIS_ARRAY_SIG
-              + "Z)" + STRING_SIG;
 
     public static final String DOM_FIELD
         = "_dom";
@@ -421,12 +397,6 @@ public interface Constants extends InstructionConstants {
         = "_sTypesArray";
     public static final String STATIC_NAMESPACE_ARRAY_FIELD
         = "_sNamespaceArray";
-    public static final String STATIC_NS_ANCESTORS_ARRAY_FIELD
-        = "_sNamespaceAncestorsArray";
-    public static final String STATIC_PREFIX_URIS_IDX_ARRAY_FIELD
-        = "_sPrefixURIsIdxArray";
-    public static final String STATIC_PREFIX_URIS_ARRAY_FIELD
-        = "_sPrefixURIPairsArray";
     public static final String STATIC_CHAR_DATA_FIELD
         = "_scharData";
     public static final String STATIC_CHAR_DATA_FIELD_SIG

@@ -78,6 +78,7 @@ public class SelfIteratorNoPredicate extends LocPathIterator
       return DTM.NULL;
 
     int next;
+    DTM dtm = m_cdtm;
 
     m_lastFetched = next = (DTM.NULL == m_lastFetched)
                            ? m_context

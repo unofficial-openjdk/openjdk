@@ -269,7 +269,7 @@ public final class ErrorMsg {
      */
     public String toString() {
         String suffix = (_params == null) ?
-            (null != _code ? new String(getErrorMessage()) : _message)
+            (null != _code ? getErrorMessage() : _message)
             : MessageFormat.format(getErrorMessage(), _params);
         return formatLine() + suffix;
     }
