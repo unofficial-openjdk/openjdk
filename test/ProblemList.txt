@@ -391,6 +391,15 @@ java/nio/channels/AsyncCloseAndInterrupt.java 			macosx-all
 java/nio/channels/AsynchronousFileChannel/Lock.java 		macosx-all
 java/nio/channels/FileChannel/Transfer.java 			macosx-all
 
+# 7141822
+java/nio/channels/DatagramChannel/ChangingAddress.java		macosx-all
+
+# 7132677
+java/nio/channels/Selector/OutOfBand.java			macosx-all
+
+# 7133488
+sun/nio/cs/TestCompoundTest.java				macosx-all
+
 ############################################################################
 
 # jdk_rmi
@@ -663,11 +672,17 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 # Filed 6952105
 com/sun/jdi/SuspendThreadTest.java                              generic-all
 
+# Filed 6987312
+com/sun/jdi/DoubleAgentTest.java                                generic-all
+
 # Filed 6986875
 sun/tools/jps/jps-Vvml.sh                                       generic-all
 
 # Filed 6979016
 sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
+
+# 7132203
+sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
 
 ############################################################################
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,9 @@
 
 #include <AudioUnit/AudioUnit.h>
 #include <CoreServices/CoreServices.h>
+#include <AudioToolbox/AudioConverter.h>
 #include <pthread.h>
+#include <math.h>
 /*
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 #include <CoreAudio/CoreAudioTypes.h>
@@ -49,14 +51,14 @@ extern "C" {
 
 
 #ifdef USE_TRACE
-static void PrintStreamDesc(AudioStreamBasicDescription *inDesc) {
+static void PrintStreamDesc(const AudioStreamBasicDescription *inDesc) {
     TRACE4("ID='%c%c%c%c'", (char)(inDesc->mFormatID >> 24), (char)(inDesc->mFormatID >> 16), (char)(inDesc->mFormatID >> 8), (char)(inDesc->mFormatID));
     TRACE2(", %f Hz, flags=0x%lX", (float)inDesc->mSampleRate, (long unsigned)inDesc->mFormatFlags);
     TRACE2(", %ld channels, %ld bits", (long)inDesc->mChannelsPerFrame, (long)inDesc->mBitsPerChannel);
     TRACE1(", %ld bytes per frame\n", (long)inDesc->mBytesPerFrame);
 }
 #else
-static inline void PrintStreamDesc(AudioStreamBasicDescription *inDesc) { }
+static inline void PrintStreamDesc(const AudioStreamBasicDescription *inDesc) { }
 #endif
 
 
@@ -130,8 +132,8 @@ void DAUDIO_GetFormats(INT32 mixerIndex, INT32 deviceID, int isSource, void* cre
     float hardwareSampleRate = GetSampleRate(audioDeviceID, isSource);
     TRACE2("  DAUDIO_GetFormats: got %d channels, sampleRate == %f\n", totalChannels, hardwareSampleRate);
 
-    // target lines support only current sample rate!
-    float sampleRate = isSource ? -1 : hardwareSampleRate;
+    // any sample rates are supported
+    float sampleRate = -1;
 
     static int sampleBits[] = {8, 16, 24};
     static int sampleBitsCount = sizeof(sampleBits)/sizeof(sampleBits[0]);
@@ -402,6 +404,202 @@ private:
 };
 
 
+class Resampler {
+private:
+    enum {
+        kResamplerEndOfInputData = 1 // error to interrupt conversion (end of input data)
+    };
+public:
+    Resampler() : converter(NULL), outBuffer(NULL) { }
+    ~Resampler() {
+        if (converter != NULL) {
+            AudioConverterDispose(converter);
+        }
+        if (outBuffer != NULL) {
+            free(outBuffer);
+        }
+    }
+
+    // inFormat & outFormat must be interleaved!
+    bool Init(const AudioStreamBasicDescription *inFormat, const AudioStreamBasicDescription *outFormat,
+            int inputBufferSizeInBytes)
+    {
+        TRACE0(">>Resampler::Init\n");
+        TRACE0("  inFormat: ");
+        PrintStreamDesc(inFormat);
+        TRACE0("  outFormat: ");
+        PrintStreamDesc(outFormat);
+        TRACE1("  inputBufferSize: %d bytes\n", inputBufferSizeInBytes);
+        OSStatus err;
+
+        if ((outFormat->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0 && outFormat->mChannelsPerFrame != 1) {
+            ERROR0("Resampler::Init ERROR: outFormat is non-interleaved\n");
+            return false;
+        }
+        if ((inFormat->mFormatFlags & kAudioFormatFlagIsNonInterleaved) != 0 && inFormat->mChannelsPerFrame != 1) {
+            ERROR0("Resampler::Init ERROR: inFormat is non-interleaved\n");
+            return false;
+        }
+
+        memcpy(&asbdIn, inFormat, sizeof(AudioStreamBasicDescription));
+        memcpy(&asbdOut, outFormat, sizeof(AudioStreamBasicDescription));
+
+        err = AudioConverterNew(inFormat, outFormat, &converter);
+
+        if (err || converter == NULL) {
+            OS_ERROR1(err, "Resampler::Init (AudioConverterNew), converter=%p", converter);
+            return false;
+        }
+
+        // allocate buffer for output data
+        int maximumInFrames = inputBufferSizeInBytes / inFormat->mBytesPerFrame;
+        // take into account trailingFrames
+        AudioConverterPrimeInfo primeInfo = {0, 0};
+        UInt32 sizePrime = sizeof(primeInfo);
+        err = AudioConverterGetProperty(converter, kAudioConverterPrimeInfo, &sizePrime, &primeInfo);
+        if (err) {
+            OS_ERROR0(err, "Resampler::Init (get kAudioConverterPrimeInfo)");
+            // ignore the error
+        } else {
+            // the default primeMethod is kConverterPrimeMethod_Normal, so we need only trailingFrames
+            maximumInFrames += primeInfo.trailingFrames;
+        }
+        float outBufferSizeInFrames = (outFormat->mSampleRate / inFormat->mSampleRate) * ((float)maximumInFrames);
+        // to avoid complex calculation just set outBufferSize as double of the calculated value
+        outBufferSize = (int)outBufferSizeInFrames * outFormat->mBytesPerFrame * 2;
+        // safety check - consider 256 frame as the minimum input buffer
+        int minOutSize = 256 * outFormat->mBytesPerFrame;
+        if (outBufferSize < minOutSize) {
+            outBufferSize = minOutSize;
+        }
+
+        outBuffer = malloc(outBufferSize);
+
+        if (outBuffer == NULL) {
+            ERROR1("Resampler::Init ERROR: malloc failed (%d bytes)\n", outBufferSize);
+            AudioConverterDispose(converter);
+            converter = NULL;
+            return false;
+        }
+
+        TRACE1("  allocated: %d bytes for output buffer\n", outBufferSize);
+
+        TRACE0("<<Resampler::Init: OK\n");
+        return true;
+    }
+
+    // returns size of the internal output buffer
+    int GetOutBufferSize() {
+        return outBufferSize;
+    }
+
+    // process next part of data (writes resampled data to the ringBuffer without overflow check)
+    int Process(void *srcBuffer, int len, RingBuffer *ringBuffer) {
+        int bytesWritten = 0;
+        TRACE2(">>Resampler::Process: %d bytes, converter = %p\n", len, converter);
+        if (converter == NULL) {    // sanity check
+            bytesWritten = ringBuffer->Write(srcBuffer, len, false);
+        } else {
+            InputProcData data;
+            data.pThis = this;
+            data.data = (Byte *)srcBuffer;
+            data.dataSize = len;
+
+            OSStatus err;
+            do {
+                AudioBufferList abl;    // by default it contains 1 AudioBuffer
+                abl.mNumberBuffers = 1;
+                abl.mBuffers[0].mNumberChannels = asbdOut.mChannelsPerFrame;
+                abl.mBuffers[0].mDataByteSize   = outBufferSize;
+                abl.mBuffers[0].mData           = outBuffer;
+
+                UInt32 packets = (UInt32)outBufferSize / asbdOut.mBytesPerPacket;
+
+                TRACE2(">>AudioConverterFillComplexBuffer: request %d packets, provide %d bytes buffer\n",
+                    (int)packets, (int)abl.mBuffers[0].mDataByteSize);
+
+                err = AudioConverterFillComplexBuffer(converter, ConverterInputProc, &data, &packets, &abl, NULL);
+
+                TRACE2("<<AudioConverterFillComplexBuffer: got %d packets (%d bytes)\n",
+                    (int)packets, (int)abl.mBuffers[0].mDataByteSize);
+                if (packets > 0) {
+                    int bytesToWrite = (int)(packets * asbdOut.mBytesPerPacket);
+                    bytesWritten += ringBuffer->Write(abl.mBuffers[0].mData, bytesToWrite, false);
+                }
+
+                // if outputBuffer is small to store all available frames,
+                // we get noErr here. In the case just continue the conversion
+            } while (err == noErr);
+
+            if (err != kResamplerEndOfInputData) {
+                // unexpected error
+                OS_ERROR0(err, "Resampler::Process (AudioConverterFillComplexBuffer)");
+            }
+        }
+        TRACE2("<<Resampler::Process: written %d bytes (converted from %d bytes)\n", bytesWritten, len);
+
+        return bytesWritten;
+    }
+
+    // resets internal bufferes
+    void Discontinue() {
+        TRACE0(">>Resampler::Discontinue\n");
+        if (converter != NULL) {
+            AudioConverterReset(converter);
+        }
+        TRACE0("<<Resampler::Discontinue\n");
+    }
+
+private:
+    AudioConverterRef converter;
+
+    // buffer for output data
+    // note that there is no problem if the buffer is not big enough to store
+    // all converted data - it's only performance issue
+    void *outBuffer;
+    int outBufferSize;
+
+    AudioStreamBasicDescription asbdIn;
+    AudioStreamBasicDescription asbdOut;
+
+    struct InputProcData {
+        Resampler *pThis;
+        Byte *data;     // data == NULL means we handle Discontinue(false)
+        int dataSize;   // == 0 if all data was already provided to the converted of we handle Discontinue(false)
+    };
+
+    static OSStatus ConverterInputProc(AudioConverterRef inAudioConverter, UInt32 *ioNumberDataPackets,
+            AudioBufferList *ioData, AudioStreamPacketDescription **outDataPacketDescription, void *inUserData)
+    {
+        InputProcData *data = (InputProcData *)inUserData;
+
+        TRACE3("  >>ConverterInputProc: requested %d packets, data contains %d bytes (%d packets)\n",
+            (int)*ioNumberDataPackets, (int)data->dataSize, (int)(data->dataSize / data->pThis->asbdIn.mBytesPerPacket));
+        if (data->dataSize == 0) {
+            // already called & provided all input data
+            // interrupt conversion by returning error
+            *ioNumberDataPackets = 0;
+            TRACE0("  <<ConverterInputProc: returns kResamplerEndOfInputData\n");
+            return kResamplerEndOfInputData;
+        }
+
+        ioData->mNumberBuffers = 1;
+        ioData->mBuffers[0].mNumberChannels = data->pThis->asbdIn.mChannelsPerFrame;
+        ioData->mBuffers[0].mDataByteSize   = data->dataSize;
+        ioData->mBuffers[0].mData           = data->data;
+
+        *ioNumberDataPackets = data->dataSize / data->pThis->asbdIn.mBytesPerPacket;
+
+        // all data has been provided to the converter
+        data->dataSize = 0;
+
+        TRACE1("  <<ConverterInputProc: returns %d packets\n", (int)(*ioNumberDataPackets));
+        return noErr;
+    }
+
+};
+
+
 struct OSX_DirectAudioDevice {
     AudioUnit   audioUnit;
     RingBuffer  ringBuffer;
@@ -409,13 +607,20 @@ struct OSX_DirectAudioDevice {
 
     // only for target lines
     UInt32      inputBufferSizeInBytes;
+    Resampler   *resampler;
+    // to detect discontinuity (to reset resampler)
+    SInt64      lastWrittenSampleTime;
 
-    OSX_DirectAudioDevice() : audioUnit(NULL), asbd() {
+
+    OSX_DirectAudioDevice() : audioUnit(NULL), asbd(), resampler(NULL), lastWrittenSampleTime(0) {
     }
 
     ~OSX_DirectAudioDevice() {
         if (audioUnit) {
             CloseComponent(audioUnit);
+        }
+        if (resampler) {
+            delete resampler;
         }
     }
 };
@@ -426,15 +631,15 @@ static AudioUnit CreateOutputUnit(AudioDeviceID deviceID, int isSource)
     AudioUnit unit;
     UInt32 size;
 
-        ComponentDescription desc;
-        desc.componentType         = kAudioUnitType_Output;
-        desc.componentSubType      = (deviceID == 0 && isSource) ? kAudioUnitSubType_DefaultOutput : kAudioUnitSubType_HALOutput;
-        desc.componentManufacturer = kAudioUnitManufacturer_Apple;
-        desc.componentFlags        = 0;
-        desc.componentFlagsMask    = 0;
+    ComponentDescription desc;
+    desc.componentType         = kAudioUnitType_Output;
+    desc.componentSubType      = (deviceID == 0 && isSource) ? kAudioUnitSubType_DefaultOutput : kAudioUnitSubType_HALOutput;
+    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    desc.componentFlags        = 0;
+    desc.componentFlagsMask    = 0;
 
     Component comp = FindNextComponent(NULL, &desc);
-        err = OpenAComponent(comp, &unit);
+    err = OpenAComponent(comp, &unit);
 
     if (err) {
         OS_ERROR0(err, "CreateOutputUnit:OpenAComponent");
@@ -538,17 +743,52 @@ static OSStatus InputCallback(void                          *inRefCon,
     abl.mBuffers[0].mDataByteSize   = device->inputBufferSizeInBytes;   // assume this is == (inNumberFrames * device->asbd.mBytesPerFrame)
     abl.mBuffers[0].mData           = NULL;     // request for the audioUnit's buffer
 
-    // TODO: is it possible device->inputBufferSizeInBytes != inNumberFrames * device->asbd.mBytesPerFrame??
-
     OSStatus err = AudioUnitRender(device->audioUnit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, &abl);
     if (err) {
         OS_ERROR0(err, "<<InputCallback: AudioUnitRender");
     } else {
-        int bytesWritten = device->ringBuffer.Write(abl.mBuffers[0].mData, (int)abl.mBuffers[0].mDataByteSize, false);
-        TRACE2("<<InputCallback (saved %d bytes of %d)\n", bytesWritten, (int)abl.mBuffers[0].mDataByteSize);
+        if (device->resampler != NULL) {
+            // test for discontinuity
+            // AUHAL starts timestamps at zero, so test if the current timestamp less then the last written
+            SInt64 sampleTime = inTimeStamp->mSampleTime;
+            if (sampleTime < device->lastWrittenSampleTime) {
+                // discontinuity, reset the resampler
+                TRACE2("  InputCallback (RESAMPLED), DISCONTINUITY (%f -> %f)\n",
+                    (float)device->lastWrittenSampleTime, (float)sampleTime);
+
+                device->resampler->Discontinue();
+            } else {
+                TRACE2("  InputCallback (RESAMPLED), continuous: lastWrittenSampleTime = %f, sampleTime=%f\n",
+                    (float)device->lastWrittenSampleTime, (float)sampleTime);
+            }
+            device->lastWrittenSampleTime = sampleTime + inNumberFrames;
+
+            int bytesWritten = device->resampler->Process(abl.mBuffers[0].mData, (int)abl.mBuffers[0].mDataByteSize, &device->ringBuffer);
+            TRACE2("<<InputCallback (RESAMPLED, saved %d bytes of %d)\n", bytesWritten, (int)abl.mBuffers[0].mDataByteSize);
+        } else {
+            int bytesWritten = device->ringBuffer.Write(abl.mBuffers[0].mData, (int)abl.mBuffers[0].mDataByteSize, false);
+            TRACE2("<<InputCallback (saved %d bytes of %d)\n", bytesWritten, (int)abl.mBuffers[0].mDataByteSize);
+        }
     }
 
     return noErr;
+}
+
+
+static void FillASBDForNonInterleavedPCM(AudioStreamBasicDescription& asbd,
+    float sampleRate, int channels, int sampleSizeInBits, bool isFloat, int isSigned, bool isBigEndian)
+{
+    // FillOutASBDForLPCM cannot produce unsigned integer format
+    asbd.mSampleRate = sampleRate;
+    asbd.mFormatID = kAudioFormatLinearPCM;
+    asbd.mFormatFlags = (isFloat ? kAudioFormatFlagIsFloat : (isSigned ? kAudioFormatFlagIsSignedInteger : 0))
+        | (isBigEndian ? (kAudioFormatFlagIsBigEndian) : 0)
+        | kAudioFormatFlagIsPacked;
+    asbd.mBytesPerPacket = channels * ((sampleSizeInBits + 7) / 8);
+    asbd.mFramesPerPacket = 1;
+    asbd.mBytesPerFrame = asbd.mBytesPerPacket;
+    asbd.mChannelsPerFrame = channels;
+    asbd.mBitsPerChannel = sampleSizeInBits;
 }
 
 void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
@@ -580,9 +820,6 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
         return NULL;
     }
 
-    // TODO: for target lines we should ensure that sampleRate == current device sample rate
-    // (othewise we get error -10863 (kAudioUnitErr_CannotDoInCurrentContext in AUComponent.h) from AudioUnitRender(in InputCallback))
-
     OSX_DirectAudioDevice *device = new OSX_DirectAudioDevice();
 
     AudioUnitScope scope = isSource ? kAudioUnitScope_Input : kAudioUnitScope_Output;
@@ -597,10 +834,24 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
         return NULL;
     }
 
-    FillOutASBDForLPCM(device->asbd, sampleRate, channels, sampleSizeInBits, sampleSizeInBits, 0, isBigEndian);
-    // Workaround for FillOutASBDForLPCM - it always set kAudioFormatFlagIsSignedInteger for non-float formats
-    if (!isSigned) {
-        device->asbd.mFormatFlags &= ~(UInt32)kAudioFormatFlagIsSignedInteger;
+    if (!isSource) {
+        AudioDeviceID actualDeviceID = deviceID != 0 ? deviceID : GetDefaultDevice(isSource);
+        float hardwareSampleRate = GetSampleRate(actualDeviceID, isSource);
+        TRACE2("--DAUDIO_Open: sampleRate = %f, hardwareSampleRate=%f\n", sampleRate, hardwareSampleRate);
+
+        if (fabs(sampleRate - hardwareSampleRate) > 1) {
+            device->resampler = new Resampler();
+
+            // request HAL for Float32 with native endianess
+            FillASBDForNonInterleavedPCM(device->asbd, hardwareSampleRate, channels, 32, true, false, kAudioFormatFlagsNativeEndian != 0);
+        } else {
+            sampleRate = hardwareSampleRate;    // in case sample rates are not exactly equal
+        }
+    }
+
+    if (device->resampler == NULL) {
+        // no resampling, request HAL for the requested format
+        FillASBDForNonInterleavedPCM(device->asbd, sampleRate, channels, sampleSizeInBits, false, isSigned, isBigEndian);
     }
 
     err = AudioUnitSetProperty(device->audioUnit, kAudioUnitProperty_StreamFormat, scope, element, &device->asbd, sizeof(device->asbd));
@@ -633,7 +884,7 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
     }
 
     if (!isSource) {
-        // for target lines we need extra bytes in the buffer
+        // for target lines we need extra bytes in the ringBuffer
         // to prevent collisions when InputCallback overrides data on overflow
         UInt32 size;
         OSStatus err;
@@ -646,8 +897,23 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
             delete device;
             return NULL;
         }
-        device->inputBufferSizeInBytes *= device->asbd.mBytesPerFrame;  // convert frames by bytes
+        device->inputBufferSizeInBytes *= device->asbd.mBytesPerFrame;  // convert frames to bytes
         extraBufferBytes = (int)device->inputBufferSizeInBytes;
+    }
+
+    if (device->resampler != NULL) {
+        // resampler output format is a user requested format (== ringBuffer format)
+        AudioStreamBasicDescription asbdOut; // ringBuffer format
+        FillASBDForNonInterleavedPCM(asbdOut, sampleRate, channels, sampleSizeInBits, false, isSigned, isBigEndian);
+
+        // set resampler input buffer size to the HAL buffer size
+        if (!device->resampler->Init(&device->asbd, &asbdOut, (int)device->inputBufferSizeInBytes)) {
+            ERROR0("<<DAUDIO_Open: resampler.Init() FAILED.\n");
+            delete device;
+            return NULL;
+        }
+        // extra bytes in the ringBuffer (extraBufferBytes) should be equal resampler output buffer size
+        extraBufferBytes = device->resampler->GetOutBufferSize();
     }
 
     if (!device->ringBuffer.Allocate(bufferSizeInBytes, extraBufferBytes)) {
