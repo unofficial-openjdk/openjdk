@@ -70,7 +70,7 @@ if [ $# -gt 0 ]; then
     L="$1"
     shift
     s=`uname -s`
-    if [ $s != Linux -a $s != SunOS ]; then
+    if [ $s != Linux -a $s != SunOS -a $s != Darwin ]; then
       echo "$L: Locales not supported on this system, skipping..."
       exit 0
     fi
@@ -85,7 +85,7 @@ TMP=${TMP:-$TEMP}; TMP=${TMP:-/tmp}
 cd $TMP
 
 case `uname` in
-  SunOS | Linux ) CPS=':' ;;
+  SunOS | Linux | Darwin ) CPS=':' ;;
   Windows* )      CPS=';' ;;
   *)              echo "Unknown platform: `uname`"; exit 1 ;;
 esac

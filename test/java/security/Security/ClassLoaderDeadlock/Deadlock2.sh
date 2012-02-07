@@ -58,6 +58,10 @@ case "$OS" in
     PATHSEP=":"
     FILESEP="/"
     ;;
+  Darwin )
+    PATHSEP=":"
+    FILESEP="/"
+    ;;
   Windows* )
     PATHSEP=";"
     FILESEP="\\"

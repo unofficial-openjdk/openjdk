@@ -67,7 +67,7 @@ typedef int sctp_peeloff_func(int sock, sctp_assoc_t id);
 
 
 
-#else /* __linux__ */
+#elif __linux__
 #include <stdint.h>
 #include <linux/types.h>
 #include <sys/socket.h>

@@ -84,10 +84,6 @@ public class bug6489130 {
                 new bug6489130().run();
             }
         });
-
-        if (!MUX.await(10, TimeUnit.SECONDS)) {
-            throw new RuntimeException("Timeout");
-        }
     }
 
     private void run() {
