@@ -45,10 +45,14 @@
 #include <dlfcn.h>
 
 
+static NSScreen* SplashNSScreen()
+{
+    return [[NSScreen screens] objectAtIndex: 0];
+}
+
 static void SplashCenter(Splash * splash)
 {
-    // otherwise could use screens[0] to select the menu-bar screen
-    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSRect screenFrame = [SplashNSScreen() frame];
 
     splash->x = (screenFrame.size.width - splash->width) / 2;
     splash->y = (screenFrame.size.height - splash->height) / 2 + screenFrame.origin.y;
@@ -337,7 +341,8 @@ SplashScreenThread(void *param) {
             initWithContentRect: NSMakeRect(splash->x, splash->y, splash->width, splash->height)
                       styleMask: NSBorderlessWindowMask
                         backing: NSBackingStoreBuffered
-                          defer: NO];
+                          defer: NO
+                         screen: SplashNSScreen()];
 
         [splash->window setOpaque: NO];
         [splash->window setBackgroundColor: [NSColor clearColor]];
