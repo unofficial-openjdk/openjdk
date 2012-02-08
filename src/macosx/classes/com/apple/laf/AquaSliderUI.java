@@ -344,6 +344,12 @@ public class AquaSliderUI extends BasicSliderUI implements Sizeable {
         public void mousePressed(final MouseEvent e) {
             if (!slider.isEnabled()) return;
 
+            // We should recalculate geometry just before
+            // calculation of the thumb movement direction.
+            // It is important for the case, when JSlider
+            // is a cell editor in JTable. See 6348946.
+            calculateGeometry();
+
             final boolean firstClick = (currentMouseX == -1) && (currentMouseY == -1);
 
             currentMouseX = e.getX();
