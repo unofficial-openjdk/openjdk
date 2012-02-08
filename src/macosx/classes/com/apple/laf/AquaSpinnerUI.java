@@ -161,6 +161,33 @@ public class AquaSpinnerUI extends SpinnerUI {
         return b;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    public int getBaseline(JComponent c, int width, int height) {
+        super.getBaseline(c, width, height);
+        JComponent editor = spinner.getEditor();
+        Insets insets = spinner.getInsets();
+        width = width - insets.left - insets.right;
+        height = height - insets.top - insets.bottom;
+        if (width >= 0 && height >= 0) {
+            int baseline = editor.getBaseline(width, height);
+            if (baseline >= 0) {
+                return insets.top + baseline;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public Component.BaselineResizeBehavior getBaselineResizeBehavior(
+            JComponent c) {
+        super.getBaselineResizeBehavior(c);
+        return spinner.getEditor().getBaselineResizeBehavior();
+    }
+
     class TransparentButton extends JButton implements SwingConstants {
         boolean interceptRepaints = false;
 
