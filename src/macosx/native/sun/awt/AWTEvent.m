@@ -954,11 +954,11 @@ Java_java_awt_AWTEvent_nativeSetSource
 
 /*
  * Class:     sun_lwawt_macosx_event_NSEvent
- * Method:    nsMouseModifiersToJavaMouseModifiers
+ * Method:    nsToJavaMouseModifiers
  * Signature: (II)I
  */
 JNIEXPORT jint JNICALL
-Java_sun_lwawt_macosx_event_NSEvent_nsMouseModifiersToJavaMouseModifiers
+Java_sun_lwawt_macosx_event_NSEvent_nsToJavaMouseModifiers
 (JNIEnv *env, jclass cls, jint buttonNumber, jint modifierFlags)
 {
     jint jmodifiers = 0;
@@ -974,11 +974,11 @@ JNF_COCOA_EXIT(env);
 
 /*
  * Class:     sun_lwawt_macosx_event_NSEvent
- * Method:    nsKeyModifiersToJavaKeyModifiers
+ * Method:    nsToJavaKeyModifiers
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL
-Java_sun_lwawt_macosx_event_NSEvent_nsKeyModifiersToJavaKeyModifiers
+Java_sun_lwawt_macosx_event_NSEvent_nsToJavaKeyModifiers
 (JNIEnv *env, jclass cls, jint modifierFlags)
 {
     jint jmodifiers = 0;
@@ -994,11 +994,11 @@ JNF_COCOA_EXIT(env);
 
 /*
  * Class:     sun_lwawt_macosx_event_NSEvent
- * Method:    nsKeyInfoToJavaKeyInfo
+ * Method:    nsToJavaKeyInfo
  * Signature: ([I[I)Z
  */
 JNIEXPORT jboolean JNICALL
-Java_sun_lwawt_macosx_event_NSEvent_nsKeyInfoToJavaKeyInfo
+Java_sun_lwawt_macosx_event_NSEvent_nsToJavaKeyInfo
 (JNIEnv *env, jclass cls, jintArray inData, jintArray outData)
 {
     BOOL postsTyped = NO;

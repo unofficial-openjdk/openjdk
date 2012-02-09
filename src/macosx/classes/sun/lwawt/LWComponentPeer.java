@@ -1141,9 +1141,9 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                     me.getModifiers(),
                     me.getX(), me.getY(),
                     me.getClickCount(),
-                    false,                       // popupTrigger
-                    MouseWheelEvent.WHEEL_UNIT_SCROLL,
-                    3, // TODO: wheel scroll amount
+                    me.isPopupTrigger(),
+                    me.getScrollType(),
+                    me.getScrollAmount(),
                     me.getWheelRotation());
         } else if (e instanceof MouseEvent) {
             MouseEvent me = (MouseEvent) e;
