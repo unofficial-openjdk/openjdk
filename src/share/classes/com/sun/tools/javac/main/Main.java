@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.MissingResourceException;
@@ -205,6 +206,10 @@ public class Main {
      *  @param flags    The array of command line arguments.
      */
     public Collection<File> processArgs(String[] flags) { // XXX sb protected
+        return processArgs(flags, null);
+    }
+
+    public Collection<File> processArgs(String[] flags, String[] classNames) { // XXX sb protected
         int ac = 0;
         while (ac < flags.length) {
             String flag = flags[ac];
@@ -243,6 +248,10 @@ public class Main {
                 if (option.process(options, flag))
                     return null;
             }
+        }
+
+        if (this.classnames != null && classNames != null) {
+            this.classnames.addAll(Arrays.asList(classNames));
         }
 
         if (!checkDirectory(D))
@@ -341,6 +350,15 @@ public class Main {
                        List<JavaFileObject> fileObjects,
                        Iterable<? extends Processor> processors)
     {
+        return compile(args,  null, context, fileObjects, processors);
+    }
+
+    public int compile(String[] args,
+                       String[] classNames,
+                       Context context,
+                       List<JavaFileObject> fileObjects,
+                       Iterable<? extends Processor> processors)
+    {
         if (options == null)
             options = Options.instance(context); // creates a new one
 
@@ -353,14 +371,16 @@ public class Main {
          * into account.
          */
         try {
-            if (args.length == 0 && fileObjects.isEmpty()) {
+            if (args.length == 0
+                && (classNames == null || classNames.length == 0)
+                && fileObjects.isEmpty()) {
                 help();
                 return EXIT_CMDERR;
             }
 
             Collection<File> files;
             try {
-                files = processArgs(CommandLine.parse(args));
+                files = processArgs(CommandLine.parse(args), classNames);
                 if (files == null) {
                     // null signals an error in options, abort
                     return EXIT_CMDERR;
