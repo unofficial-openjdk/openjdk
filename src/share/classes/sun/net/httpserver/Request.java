@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,6 +190,13 @@ class Request {
                 v = new String();
             else
                 v = String.copyValueOf(s, keyend, len - keyend);
+
+            if (hdrs.size() >= ServerConfig.getMaxReqHeaders()) {
+                throw new IOException("Maximum number of request headers (" +
+                        "sun.net.httpserver.maxReqHeaders) exceeded, " +
+                        ServerConfig.getMaxReqHeaders() + ".");
+            }
+
             hdrs.add (k,v);
         }
         return hdrs;
