@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,7 +132,7 @@ public class VersionCheck {
         StringBuilder out = new StringBuilder();
         // remove the HotSpot line
         for (String x : alist) {
-            if (!x.contains("HotSpot")) {
+            if (!x.contains("HotSpot") && !x.contains("VM")) {
                 out = out.append(x + "\n");
             }
         }

@@ -30,8 +30,12 @@
 BUILDDIR = ../../..
 include $(BUILDDIR)/common/Defs.gmk
 
-SUBDIRS = sctp
+# MMM: disable for now
+ifneq ($(PLATFORM), macosx)
 include $(BUILDDIR)/common/Subdirs.gmk
+SUBDIRS = sctp
+endif
+
 
 all build clean clobber::
 	$(SUBDIRS-loop)

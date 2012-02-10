@@ -82,6 +82,13 @@ import java.util.Enumeration;
  */
 public
 class MulticastSocket extends DatagramSocket {
+
+    /**
+     * Used on some platforms to record if an outgoing interface
+     * has been set for this socket.
+     */
+    private boolean interfaceSet;
+
     /**
      * Create a multicast socket.
      *
@@ -299,6 +306,16 @@ class MulticastSocket extends DatagramSocket {
             throw new SocketException("Not a multicast address");
         }
 
+        /**
+         * required for some platforms where it's not possible to join
+         * a group without setting the interface first.
+         */
+        NetworkInterface defaultInterface = NetworkInterface.getDefault();
+
+        if (!interfaceSet && defaultInterface != null) {
+            setNetworkInterface(defaultInterface);
+        }
+
         getImpl().join(mcastaddr);
     }
 
@@ -449,6 +466,7 @@ class MulticastSocket extends DatagramSocket {
         synchronized (infLock) {
             getImpl().setOption(SocketOptions.IP_MULTICAST_IF, inf);
             infAddress = inf;
+            interfaceSet = true;
         }
     }
 
@@ -531,6 +549,7 @@ class MulticastSocket extends DatagramSocket {
         synchronized (infLock) {
             getImpl().setOption(SocketOptions.IP_MULTICAST_IF2, netIf);
             infAddress = null;
+            interfaceSet = true;
         }
     }
 

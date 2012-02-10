@@ -28,7 +28,12 @@ HEADLESS = true
 NO_ROBOT = true
 MOTIF_VERSION = none
 MOTIF_VERSION_STRING=none
+
+ifeq ($(PLATFORM), macosx)
+LIB_LOCATION = $(LIBDIR)/headless
+else
 LIB_LOCATION = $(LIBDIR)/$(LIBARCH)/headless
+endif
 
 PACKAGE = sun.awt
 LIBRARY = mawt

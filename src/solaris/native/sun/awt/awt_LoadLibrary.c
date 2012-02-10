@@ -79,16 +79,14 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     Dl_info dlinfo;
     char buf[MAXPATHLEN];
     int32_t len;
-    char *p;
+    char *p, *tk = 0;
     JNI_OnLoad_type *JNI_OnLoad_ptr;
     struct utsname name;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(vm, JNI_VERSION_1_2);
     void *v;
     char *envvar;
-    int xt_before_xm = 0;
-    int XAWT = 0;
-    jstring toolkit = NULL;
-    jstring propname = NULL;
+    jstring fmanager = NULL;
+    jstring fmProp = NULL;
 
     if (awtHandle != NULL) {
         /* Avoid several loading attempts */
@@ -104,50 +102,53 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     p = strrchr(buf, '/');
 
     /*
-     * The code below is responsible for:
-     * 1. Loading appropriate awt library, i.e. xawt/libmawt or headless/libwawt
-     * 2. Setting "awt.toolkit" system property to use the appropriate Java toolkit class,
-     *    (if user has specified the toolkit in env varialble)
+     * 1. Set the "sun.font.fontmanager" system property,
+     * 2. Choose the library image name.
      */
 
-    propname = (*env)->NewStringUTF(env, "awt.toolkit");
+    fmProp = (*env)->NewStringUTF(env, "sun.font.fontmanager");
     /* Check if toolkit is specified in env variable */
+#ifdef MACOSX
     envvar = getenv("AWT_TOOLKIT");
-    if (envvar) {
-        if (strstr(envvar, "XToolkit")) {
-            toolkit = (*env)->NewStringUTF(env, "sun.awt.X11.XToolkit");
-        }
-        /* If user specified toolkit then set java system property */
-        if (toolkit && propname) {
-            JNU_CallStaticMethodByName (env,
-                                        NULL,
-                                        "java/lang/System",
-                                        "setProperty",
-                                        "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-                                        propname,toolkit);
-        }
+    if (envvar && strstr(envvar, "XToolkit")) {
+#endif
+        fmanager = (*env)->NewStringUTF(env, "sun.awt.X11FontManager");
+        tk = "/xawt/libmawt";
+#ifdef MACOSX
+    } else {
+        fmanager = (*env)->NewStringUTF(env, "sun.font.CFontManager");
+        tk = "/lwawt/liblwawt";
+    }
+#endif
+    if (fmanager && fmProp) {
+        JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "setProperty",
+                                   "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                                   fmProp, fmanager);
     }
 
     /* Calculate library name to load */
+#ifndef MACOSX
     if (AWTIsHeadless()) {
-        strncpy(p, "/headless/libmawt.so", MAXPATHLEN-len-1);
-    } else {
-        /* Default AWT Toolkit on Linux and Solaris is XAWT. */
-        strncpy(p, "/xawt/libmawt.so", MAXPATHLEN-len-1);
+        strcpy(p, "/headless/libmawt");
+    } else if (tk) {
+#endif
+        strcpy(p, tk);
+#ifndef MACOSX
     }
+#endif
 
-    if (toolkit) {
-        (*env)->DeleteLocalRef(env, toolkit);
+#ifdef MACOSX
+    strcat(p, ".dylib");
+#else
+    strcat(p, ".so");
+#endif
+
+    if (tk) {
+        JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "load",
+                                   "(Ljava/lang/String;)V",
+                                   JNU_NewStringPlatform(env, buf));
+            awtHandle = dlopen(buf, RTLD_LAZY | RTLD_GLOBAL);
     }
-    if (propname) {
-        (*env)->DeleteLocalRef(env, propname);
-    }
-
-    JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "load",
-                               "(Ljava/lang/String;)V",
-                               JNU_NewStringPlatform(env, buf));
-
-    awtHandle = dlopen(buf, RTLD_LAZY | RTLD_GLOBAL);
 
     return JNI_VERSION_1_2;
 }
@@ -251,6 +252,10 @@ return_type name arglist                                                \
 /*
  * These entry point must remain in libawt.so ***for Java Plugin ONLY***
  * Reflect this call over to the correct libmawt.so.
+ */
+
+/*
+ * TODO: implement for LWCToolkit, MacOSX
  */
 
 REFLECT_VOID_FUNCTION(getAwtLockFunctions,

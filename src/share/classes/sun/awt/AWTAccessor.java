@@ -26,6 +26,7 @@
 package sun.awt;
 
 import java.awt.*;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.InputEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
@@ -399,6 +400,11 @@ public final class AWTAccessor {
          * Sets the most recent focus owner in the window.
          */
         void setMostRecentFocusOwner(Window window, Component component);
+
+        /*
+         * Returns current KFM of the specified AppContext.
+         */
+        KeyboardFocusManager getCurrentKeyboardFocusManager(AppContext ctx);
     }
 
     /*

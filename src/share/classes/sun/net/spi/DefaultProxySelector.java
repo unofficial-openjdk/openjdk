@@ -249,6 +249,12 @@ public class DefaultProxySelector extends ProxySelector {
                                             nprop.hostsSource = null;
                                             nprop.hostsPool = null;
                                         }
+                                    } else if (nphosts.length() != 0) {
+                                        // add the required default patterns
+                                        // but only if property no set. If it
+                                        // is empty, leave empty.
+                                        nphosts += "|" + NonProxyInfo
+                                                         .defStringVal;
                                     }
                                     if (nphosts != null) {
                                         if (!nphosts.equals(nprop.hostsSource)) {

@@ -27,6 +27,11 @@ BUILDDIR = ../..
 PACKAGE = javax.sound
 LIBRARY = jsound
 PRODUCT = sun
+
+ifeq ($(PLATFORM),macosx)
+CPLUSPLUSLIBRARY = true
+endif
+
 include $(BUILDDIR)/common/Defs.gmk
 
 # include defines for sound
@@ -77,6 +82,7 @@ FILES_copydirs = \
 	$(FILES_mkdirs)
 
 FILES_c += $(FILES_$(PLATFORM))
+FILES_cpp += $(FILES_cpp_$(PLATFORM))
 
 
 #
@@ -104,6 +110,22 @@ ifeq ($(PLATFORM), linux)
   EXTRA_SOUND_JNI_LIBS += jsoundalsa
   #MXSPP_ADD = $(PLATFORM)-$(ARCH)/
 endif # PLATFORM linux
+
+ifeq ($(PLATFORM), macosx)
+  CPPFLAGS += -DUSE_PORTS=TRUE \
+              -DUSE_DAUDIO=TRUE \
+              -DUSE_PLATFORM_MIDI_OUT=TRUE \
+              -DUSE_PLATFORM_MIDI_IN=TRUE
+
+  INCLUDE_PORTS = TRUE
+  INCLUDE_DAUDIO = TRUE
+  INCLUDE_MIDI = TRUE
+
+  LDFLAGS += -framework CoreAudio -framework CoreFoundation \
+             -framework CoreServices -framework AudioUnit -lstdc++ \
+             -framework CoreMIDI
+  CXXFLAGS += -I`xcode-select -print-path`/Extras/CoreAudio/PublicUtility
+endif
 
 ifeq ($(PLATFORM), solaris)
   # build with ports and direct audio
@@ -144,6 +166,11 @@ endif
 CPPFLAGS += \
 	-I$(SHARE_SRC)/native/com/sun/media/sound
 
+ifeq ($(PLATFORM), macosx)
+vpath %.c   $(call NativeSrcDirList,,native/com/sun/media/sound)
+vpath %.cpp $(call NativeSrcDirList,,native/com/sun/media/sound)
+
+else
 #
 # Add to the ambient VPATH.
 #
@@ -151,6 +178,7 @@ vpath %.c $(SHARE_SRC)/native/com/sun/media/sound
 vpath %.c $(PLATFORM_SRC)/native/com/sun/media/sound
 vpath %.cpp $(PLATFORM_SRC)/native/com/sun/media/sound
 
+endif
 
 #
 # Include rules

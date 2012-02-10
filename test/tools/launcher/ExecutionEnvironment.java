@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,9 @@ import java.util.Map;
 
 
 public class ExecutionEnvironment {
-    static final String LD_LIBRARY_PATH    = "LD_LIBRARY_PATH";
+    static final String LD_LIBRARY_PATH    = TestHelper.isMacOSX
+            ? "DYLD_LIBRARY_PATH"
+            : "LD_LIBRARY_PATH";
     static final String LD_LIBRARY_PATH_32 = LD_LIBRARY_PATH + "_32";
     static final String LD_LIBRARY_PATH_64 = LD_LIBRARY_PATH + "_64";
 
@@ -84,7 +86,9 @@ public class ExecutionEnvironment {
     static int errors = 0;
     static int passes = 0;
 
-    static final String LIBJVM = TestHelper.isWindows ? "jvm.dll" : "libjvm.so";
+    static final String LIBJVM = TestHelper.isWindows
+            ? "jvm.dll"
+            : "libjvm" + (TestHelper.isMacOSX ? ".dylib" : ".so");
 
     static void createTestJar() {
         try {
@@ -180,7 +184,7 @@ public class ExecutionEnvironment {
 
         Map<String, String> env = new HashMap<String, String>();
 
-        if (TestHelper.isLinux) {
+        if (TestHelper.isLinux || TestHelper.isMacOSX) {
             for (String x : LD_PATH_STRINGS) {
                 String pairs[] = x.split("=");
                 env.put(pairs[0], pairs[1]);
@@ -299,7 +303,7 @@ public class ExecutionEnvironment {
 
         if (TestHelper.is32Bit) {
             tr = TestHelper.doExec(TestHelper.javaCmd, "-client", "-version");
-            if (!tr.matches("Java.*Client VM.*")) {
+            if (!tr.matches(".*Client VM.*")) {
                 System.out.println("FAIL: the expected vm -client did launch");
                 System.out.println(tr);
                 errors++;
@@ -308,7 +312,7 @@ public class ExecutionEnvironment {
             }
         }
         tr = TestHelper.doExec(TestHelper.javaCmd, "-server", "-version");
-        if (!tr.matches("Java.*Server VM.*")) {
+        if (!tr.matches(".*Server VM.*")) {
             System.out.println("FAIL: the expected vm -server did launch");
             System.out.println(tr);
             errors++;

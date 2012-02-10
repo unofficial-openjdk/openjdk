@@ -187,15 +187,20 @@ JNU_GetCharField(JNIEnv *env, jobject self, const char *name);
 #ifdef __solaris__
 extern Widget awt_util_getXICStatusAreaWindow(Widget w);
 #else
+#if defined(MACOSX)
+int32_t awt_util_getIMStatusHeight(Widget vw);
+Widget awt_util_getXICStatusAreaWindow(Widget w);
+#else
 int32_t awt_util_getIMStatusHeight(Widget vw);
 XVaNestedList awt_util_getXICStatusAreaList(Widget w);
 Widget awt_util_getXICStatusAreaWindow(Widget w);
+#endif
 #endif
 
 
 
 
-#ifdef __linux__
+#if defined(__linux__) || defined(MACOSX)
 typedef struct _XmImRefRec {
   Cardinal      num_refs;       /* Number of referencing widgets. */
   Cardinal      max_refs;       /* Maximum length of refs array. */

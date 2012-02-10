@@ -1,21 +1,21 @@
-# 
+#
 # Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-# 
+#
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
 # published by the Free Software Foundation.
-# 
+#
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # version 2 for more details (a copy is included in the LICENSE file that
 # accompanied this code).
-# 
+#
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-# 
+#
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
@@ -72,7 +72,7 @@ case "`uname`" in
 Windows* | CYGWIN* )
     DEL=";"
     ;;
-SunOS)
+SunOS | Darwin)
     DEL=":"
     ;;
 Linux)
@@ -103,11 +103,11 @@ createProperties() {
 
 createJar() {
     if [ "$FORMAT" = "properties" ]; then
-	createProperties
-	F="${DATA}*.properties"
+        createProperties
+        F="${DATA}*.properties"
     else
-	createClasses
-	F="-C classes ${ROOT}.class -C classes ${JA}.class -C classes ${DE}.class"
+        createClasses
+        F="-C classes ${ROOT}.class -C classes ${JA}.class -C classes ${DE}.class"
     fi
     ${TESTJAVA}/bin/jar cf $JARFILE $F
     ${TESTJAVA}/bin/jar tvf $JARFILE
@@ -132,12 +132,12 @@ import java.util.*;
 
 public class $1 extends ListResourceBundle {
     public Object[][] getContents() {
-	return new Object[][] {
-	    { \"data\", \"$2\" },"
+        return new Object[][] {
+            { \"data\", \"$2\" },"
     if [ "x$3" != "x" ]; then
-	echo "	    { \"january\", \"$3\" },"
+        echo "      { \"january\", \"$3\" },"
     fi
-echo "	};
+echo "  };
     }
 }") >$1.java
 }
@@ -161,11 +161,11 @@ updateClassDEaddClassAT() {
 
 updateJar() {
     if [ "$FORMAT" = "properties" ]; then
-	updateDEaddAT
-	F="$DE $AT"
+        updateDEaddAT
+        F="$DE $AT"
     else
-	updateClassDEaddClassAT
-	F="-C classes ${DE}.class -C classes ${AT}.class"
+        updateClassDEaddClassAT
+        F="-C classes ${DE}.class -C classes ${AT}.class"
     fi
     ${TESTJAVA}/bin/jar uf $JARFILE $F
     rm -f $DE $AT
@@ -175,12 +175,12 @@ updateJar() {
 
 getSeconds() {
     if [ "$HAS_S" = "YES" ]; then
-	date '+%s'
+        date '+%s'
     else
-	# Returns an approximation of the offset from the Epoch in
-	# seconds.
-	date -u '+%Y %j %H %M %S' | \
-	awk '{d=($1-1970)*365.2425; print int(((((((d+$2-1)*24)+$3)*60)+$3)*60)+$5);}'
+        # Returns an approximation of the offset from the Epoch in
+        # seconds.
+        date -u '+%Y %j %H %M %S' | \
+        awk '{d=($1-1970)*365.2425; print int(((((((d+$2-1)*24)+$3)*60)+$3)*60)+$5);}'
     fi
 }
 
@@ -196,9 +196,9 @@ timedExec() {
     # If this machine is too slow, give up the further testing.
     #
     if [ "$D" -gt $2 ]; then
-	1>&2 echo "This machine took $D seconds to prepare test data," \
-		  "which is too slow to proceed. Exiting..."
-	exit 0
+        1>&2 echo "This machine took $D seconds to prepare test data," \
+                  "which is too slow to proceed. Exiting..."
+        exit 0
     fi
     unset S
     unset E
@@ -207,13 +207,13 @@ timedExec() {
 
 checkStatus() {
     if [ $1 = 0 ]; then
-	echo "$2: PASSED"
+        echo "$2: PASSED"
     elif [ $1 != 2 ]; then
-	echo "$2: FAILED"
-	exit 1
+        echo "$2: FAILED"
+        exit 1
     else
-	# Just we should't proceed to avoid timing issues.
-	exit 0
+        # Just we should't proceed to avoid timing issues.
+        exit 0
     fi
 }
 
