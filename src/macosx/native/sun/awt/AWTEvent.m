@@ -308,6 +308,9 @@ const nsKeyToJavaModifierTable[] =
  * Almost all unicode characters just go from NS to Java with no translation.
  *  For the few exceptions, we handle it here with this small table.
  */
+#define ALL_NS_KEY_MODIFIERS_MASK \
+    (NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask)
+
 static struct _char {
     NSUInteger modifier;
     unichar nsChar;
@@ -315,17 +318,17 @@ static struct _char {
 }
 const charTable[] = {
     // map enter on keypad to same as return key
-    {0,              NSEnterCharacter,          NSNewlineCharacter},
+    {0,                         NSEnterCharacter,          NSNewlineCharacter},
 
     // [3134616] return newline instead of carriage return
-    {0,              NSCarriageReturnCharacter, NSNewlineCharacter},
+    {0,                         NSCarriageReturnCharacter, NSNewlineCharacter},
 
     // "delete" means backspace in Java
-    {0,              NSDeleteCharacter,         NSBackspaceCharacter},
-    {0,              NSDeleteFunctionKey,     NSDeleteCharacter},
+    {ALL_NS_KEY_MODIFIERS_MASK, NSDeleteCharacter,         NSBackspaceCharacter},
+    {ALL_NS_KEY_MODIFIERS_MASK, NSDeleteFunctionKey,       NSDeleteCharacter},
 
     // back-tab is only differentiated from tab by Shift flag
-    {NSShiftKeyMask, NSBackTabCharacter,     NSTabCharacter},
+    {NSShiftKeyMask,            NSBackTabCharacter,        NSTabCharacter},
 
     {0, 0, 0}
 };
@@ -334,12 +337,8 @@ static unichar
 NsCharToJavaChar(unichar nsChar, NSUInteger modifiers)
 {
     const struct _char *cur;
-    NSUInteger keyModifierFlags =
-        NSShiftKeyMask | NSControlKeyMask |
-        NSAlternateKeyMask | NSCommandKeyMask;
-
     // Mask off just the keyboard modifiers from the event modifier mask.
-    NSUInteger testableFlags = (modifiers & keyModifierFlags);
+    NSUInteger testableFlags = (modifiers & ALL_NS_KEY_MODIFIERS_MASK);
 
     // walk through table & find the match
     for (cur = charTable; cur->nsChar != 0 ; cur++) {
@@ -1068,4 +1067,24 @@ JNF_COCOA_ENTER(env);
     (*env)->ReleaseIntArrayElements(env, inData, data, 0);
     
 JNF_COCOA_EXIT(env);
+}
+
+/*
+ * Class:     sun_lwawt_macosx_event_NSEvent
+ * Method:    nsToJavaChar
+ * Signature: (CI)C
+ */
+JNIEXPORT jint JNICALL
+Java_sun_lwawt_macosx_event_NSEvent_nsToJavaChar
+(JNIEnv *env, jclass cls, char nsChar, jint modifierFlags)
+{
+    jchar javaChar = 0;
+    
+JNF_COCOA_ENTER(env);
+    
+    javaChar = NsCharToJavaChar(nsChar, modifierFlags);
+
+JNF_COCOA_EXIT(env);
+    
+    return javaChar;
 }
