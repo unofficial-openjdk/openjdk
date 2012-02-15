@@ -26,11 +26,17 @@
 
 package sun.lwawt;
 
+import sun.awt.CGraphicsConfig;
+
 import java.awt.BufferCapabilities;
+import java.awt.BufferCapabilities.FlipContents;
 import java.awt.Canvas;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.image.VolatileImage;
 import java.awt.peer.CanvasPeer;
 
 import javax.swing.JComponent;
@@ -38,32 +44,69 @@ import javax.swing.JComponent;
 final class LWCanvasPeer extends LWComponentPeer<Component, JComponent>
         implements CanvasPeer {
 
-    LWCanvasPeer(final Canvas target, PlatformComponent platformComponent) {
+    /**
+     * The back buffer provide user with a BufferStrategy.
+     */
+    private VolatileImage backBuffer;
+
+    LWCanvasPeer(final Canvas target,
+                 final PlatformComponent platformComponent) {
         super(target, platformComponent);
     }
 
-    // ---- PEER METHODS ---- //
-
     @Override
-    public void createBuffers(int numBuffers, BufferCapabilities caps) {
-        // TODO
+    public void createBuffers(final int numBuffers,
+                              final BufferCapabilities caps) {
+        //TODO parameters should be used.
+        final CGraphicsConfig gc = (CGraphicsConfig) getGraphicsConfiguration();
+        final VolatileImage buffer = gc.createBackBufferImage(getTarget(), 0);
+        synchronized (getStateLock()) {
+            backBuffer = buffer;
+        }
     }
 
     @Override
     public Image getBackBuffer() {
-        // TODO
-        return null;
+        synchronized (getStateLock()) {
+            return backBuffer;
+        }
     }
 
     @Override
-    public void flip(int x1, int y1, int x2, int y2,
-                     BufferCapabilities.FlipContents flipAction) {
-        // TODO
+    public void flip(final int x1, final int y1, final int x2, final int y2,
+                     final FlipContents flipAction) {
+        final VolatileImage buffer = (VolatileImage) getBackBuffer();
+        if (buffer == null) {
+            throw new IllegalStateException("Buffers have not been created");
+        }
+        final Graphics g = getGraphics();
+        try {
+            g.drawImage(buffer, x1, y1, x2, y2, x1, y1, x2, y2, null);
+        } finally {
+            g.dispose();
+        }
+        if (flipAction == FlipContents.BACKGROUND) {
+            final Graphics2D bg = (Graphics2D) buffer.getGraphics();
+            try {
+                bg.setBackground(getBackground());
+                bg.clearRect(0, 0, buffer.getWidth(), buffer.getHeight());
+            } finally {
+                bg.dispose();
+            }
+        }
     }
 
     @Override
     public void destroyBuffers() {
-        // TODO
+        final Image buffer = getBackBuffer();
+        if (buffer != null) {
+            synchronized (getStateLock()) {
+                if (buffer == backBuffer) {
+                    backBuffer = null;
+                }
+            }
+            buffer.flush();
+        }
     }
 
     @Override
