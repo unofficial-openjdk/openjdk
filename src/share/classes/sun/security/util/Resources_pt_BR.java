@@ -47,8 +47,7 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [Op\u00E7\u00E3o]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "Op\u00E7\u00F5es:"},
         {"Use.keytool.help.for.all.available.commands",
                  "Use \"keytool -help\" para todos os comandos dispon\u00EDveis"},
@@ -68,9 +67,8 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
                 "Exporta o certificado"}, //-exportcert
         {"Generates.a.key.pair",
                 "Gera um par de chaves"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
-                "Gera uma chave Secreta"}, //-genseckey
+                "Gera uma chave secreta"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
                 "Gera um certificado de uma solicita\u00E7\u00E3o de certificado"}, //-gencert
         {"Generates.CRL", "Gera CRL"}, //-gencrl
@@ -305,14 +303,14 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
         {"Entry.type.type.", "Tipo de entrada: {0}"},
         {"Certificate.chain.length.", "Comprimento da cadeia de certificados: "},
         {"Certificate.i.1.", "Certificado[{0,number,integer}]:"},
-        {"Certificate.fingerprint.SHA1.", "Fingerprint (MD5) do certificado: "},
+        {"Certificate.fingerprint.SHA1.", "Fingerprint (SHA1) do certificado: "},
         {"Keystore.type.", "Tipo de \u00E1rea de armazenamento de chaves: "},
         {"Keystore.provider.", "Fornecedor da \u00E1rea de armazenamento de chaves: "},
         {"Your.keystore.contains.keyStore.size.entry",
                 "Sua \u00E1rea de armazenamento de chaves cont\u00E9m {0,number,integer} entrada"},
         {"Your.keystore.contains.keyStore.size.entries",
                 "Sua \u00E1rea de armazenamento de chaves cont\u00E9m {0,number,integer} entradas"},
-        {"Failed.to.parse.input", "Falha durante o parse da entrada"},
+        {"Failed.to.parse.input", "Falha durante o parsing da entrada"},
         {"Empty.input", "Entrada vazia"},
         {"Not.X.509.certificate", "N\u00E3o \u00E9 um certificado X.509"},
         {"alias.has.no.public.key", "{0} n\u00E3o tem chave p\u00FAblica"},
@@ -331,7 +329,7 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
         {"Do.you.still.want.to.add.it.to.your.own.keystore.no.",
                 "Ainda deseja adicion\u00E1-lo \u00E0 sua \u00E1rea de armazenamento de chaves? [n\u00E3o]:  "},
         {"Trust.this.certificate.no.", "Confiar neste certificado? [n\u00E3o]:  "},
-        {"YES", "Sim"},
+        {"YES", "SIM"},
         {"New.prompt.", "Nova {0}: "},
         {"Passwords.must.differ", "As senhas devem ser diferentes"},
         {"Re.enter.new.prompt.", "Informe novamente a nova {0}: "},
@@ -368,7 +366,7 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
                  "O alias <{0}> faz refer\u00EAncia a um tipo de entrada que n\u00E3o \u00E9 uma entrada de chave privada. O comando -keyclone oferece suporte somente \u00E0 clonagem de entradas de chave privada"},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  Advert\u00EAncia Advert\u00EAncia Advert\u00EAncia  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "Signat\u00E1rio #%d:"},
         {"Timestamp.", "Timestamp:"},
         {"Signature.", "Assinatura:"},
@@ -393,7 +391,7 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
                 "Certificado de n\u00EDvel superior na resposta:\n"},
         {".is.not.trusted.", "... n\u00E3o \u00E9 confi\u00E1vel. "},
         {"Install.reply.anyway.no.", "Instalar resposta assim mesmo? [n\u00E3o]:  "},
-        {"NO", "N\u00E3o"},
+        {"NO", "N\u00C3O"},
         {"Public.keys.in.reply.and.keystore.don.t.match",
                 "As chaves p\u00FAblicas da resposta e da \u00E1rea de armazenamento de chaves n\u00E3o correspondem"},
         {"Certificate.reply.and.certificate.in.keystore.are.identical",
@@ -599,7 +597,7 @@ public class Resources_pt_BR extends java.util.ListResourceBundle {
         // sun.security.provider.PolicyFile
 
         {"java.security.policy.error.parsing.policy.message",
-                "java.security.policy: erro durante o parse de {0}:\n\t{1}"},
+                "java.security.policy: erro durante o parsing de {0}:\n\t{1}"},
         {"java.security.policy.error.adding.Permission.perm.message",
                 "java.security.policy: erro ao adicionar a permiss\u00E3o, {0}:\n\t{1}"},
         {"java.security.policy.error.adding.Entry.message",

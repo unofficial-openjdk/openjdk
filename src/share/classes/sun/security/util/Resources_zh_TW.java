@@ -47,8 +47,7 @@ public class Resources_zh_TW extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [\u9078\u9805]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "\u9078\u9805:"},
         {"Use.keytool.help.for.all.available.commands",
                  "\u4F7F\u7528 \"keytool -help\" \u53D6\u5F97\u6240\u6709\u53EF\u7528\u7684\u547D\u4EE4"},
@@ -68,7 +67,6 @@ public class Resources_zh_TW extends java.util.ListResourceBundle {
                 "\u532F\u51FA\u6191\u8B49"}, //-exportcert
         {"Generates.a.key.pair",
                 "\u7522\u751F\u91D1\u9470\u7D44"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "\u7522\u751F\u79D8\u5BC6\u91D1\u9470"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -368,7 +366,7 @@ public class Resources_zh_TW extends java.util.ListResourceBundle {
                  "\u5225\u540D <{0}> \u6240\u53C3\u7167\u7684\u9805\u76EE\u4E0D\u662F\u79C1\u5BC6\u91D1\u9470\u985E\u578B\u3002-keyclone \u547D\u4EE4\u50C5\u652F\u63F4\u79C1\u5BC6\u91D1\u9470\u9805\u76EE\u7684\u8907\u88FD"},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  \u8B66\u544A \u8B66\u544A \u8B66\u544A  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "\u7C3D\u7F72\u8005 #%d:"},
         {"Timestamp.", "\u6642\u6233:"},
         {"Signature.", "\u7C3D\u7AE0:"},
