@@ -47,8 +47,7 @@ public class Resources_ja extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [\u30AA\u30D7\u30B7\u30E7\u30F3]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "\u30AA\u30D7\u30B7\u30E7\u30F3:"},
         {"Use.keytool.help.for.all.available.commands",
                  "\u4F7F\u7528\u53EF\u80FD\u306A\u3059\u3079\u3066\u306E\u30B3\u30DE\u30F3\u30C9\u306B\u3064\u3044\u3066\u306F\"keytool -help\"\u3092\u4F7F\u7528\u3057\u3066\u304F\u3060\u3055\u3044"},
@@ -68,7 +67,6 @@ public class Resources_ja extends java.util.ListResourceBundle {
                 "\u8A3C\u660E\u66F8\u3092\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u3057\u307E\u3059"}, //-exportcert
         {"Generates.a.key.pair",
                 "\u9375\u30DA\u30A2\u3092\u751F\u6210\u3057\u307E\u3059"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "\u79D8\u5BC6\u9375\u3092\u751F\u6210\u3057\u307E\u3059"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -368,7 +366,7 @@ public class Resources_ja extends java.util.ListResourceBundle {
                  "\u5225\u540D<{0}>\u304C\u53C2\u7167\u3057\u3066\u3044\u308B\u30A8\u30F3\u30C8\u30EA\u30FB\u30BF\u30A4\u30D7\u306F\u79D8\u5BC6\u9375\u30A8\u30F3\u30C8\u30EA\u3067\u306F\u3042\u308A\u307E\u305B\u3093\u3002-keyclone\u30B3\u30DE\u30F3\u30C9\u306F\u79D8\u5BC6\u9375\u30A8\u30F3\u30C8\u30EA\u306E\u30AF\u30ED\u30FC\u30F3\u4F5C\u6210\u306E\u307F\u3092\u30B5\u30DD\u30FC\u30C8\u3057\u307E\u3059"},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************\u8B66\u544A \u8B66\u544A \u8B66\u544A*****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "\u7F72\u540D\u8005\u756A\u53F7%d:"},
         {"Timestamp.", "\u30BF\u30A4\u30E0\u30B9\u30BF\u30F3\u30D7:"},
         {"Signature.", "\u7F72\u540D:"},

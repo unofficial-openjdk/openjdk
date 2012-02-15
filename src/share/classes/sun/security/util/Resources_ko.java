@@ -47,8 +47,7 @@ public class Resources_ko extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [\uC635\uC158]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "\uC635\uC158:"},
         {"Use.keytool.help.for.all.available.commands",
                  "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uBAA8\uB4E0 \uBA85\uB839\uC5D0 \"keytool -help\" \uC0AC\uC6A9"},
@@ -68,7 +67,6 @@ public class Resources_ko extends java.util.ListResourceBundle {
                 "\uC778\uC99D\uC11C\uB97C \uC775\uC2A4\uD3EC\uD2B8\uD569\uB2C8\uB2E4."}, //-exportcert
         {"Generates.a.key.pair",
                 "\uD0A4 \uC30D\uC744 \uC0DD\uC131\uD569\uB2C8\uB2E4."}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "\uBCF4\uC548 \uD0A4\uB97C \uC0DD\uC131\uD569\uB2C8\uB2E4."}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -368,7 +366,7 @@ public class Resources_ko extends java.util.ListResourceBundle {
                  "<{0}> \uBCC4\uCE6D\uC740 \uC804\uC6A9 \uD0A4 \uD56D\uBAA9\uC774 \uC544\uB2CC \uD56D\uBAA9 \uC720\uD615\uC744 \uCC38\uC870\uD569\uB2C8\uB2E4. -keyclone \uBA85\uB839\uC740 \uC804\uC6A9 \uD0A4 \uD56D\uBAA9\uC758 \uBCF5\uC81C\uB9CC \uC9C0\uC6D0\uD569\uB2C8\uB2E4."},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  \uACBD\uACE0 \uACBD\uACE0 \uACBD\uACE0  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "\uC11C\uBA85\uC790 #%d:"},
         {"Timestamp.", "\uC2DC\uAC04 \uAE30\uB85D:"},
         {"Signature.", "\uC11C\uBA85:"},

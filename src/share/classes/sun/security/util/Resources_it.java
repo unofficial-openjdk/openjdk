@@ -47,8 +47,7 @@ public class Resources_it extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [Opzione]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "Opzioni:"},
         {"Use.keytool.help.for.all.available.commands",
                  "Utilizzare \"keytool -help\" per visualizzare tutti i comandi disponibili"},
@@ -68,7 +67,6 @@ public class Resources_it extends java.util.ListResourceBundle {
                 "Esporta il certificato"}, //-exportcert
         {"Generates.a.key.pair",
                 "Genera una coppia di chiavi"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "Genera una chiave segreta"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -368,7 +366,7 @@ public class Resources_it extends java.util.ListResourceBundle {
                  "L''alias <{0}> fa riferimento a un tipo di voce che non \u00E8 una voce di chiave privata. Il comando -keyclone supporta solo la copia delle voci di chiave private."},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  Avvertenza Avvertenza Avvertenza  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "Firmatario #%d:"},
         {"Timestamp.", "Indicatore orario:"},
         {"Signature.", "Firma:"},
@@ -393,7 +391,7 @@ public class Resources_it extends java.util.ListResourceBundle {
                 "Certificato di primo livello nella risposta:\n"},
         {".is.not.trusted.", "...non \u00E8 considerato sicuro. "},
         {"Install.reply.anyway.no.", "Installare la risposta? [no]:  "},
-        {"NO", "No"},
+        {"NO", "NO"},
         {"Public.keys.in.reply.and.keystore.don.t.match",
                 "Le chiavi pubbliche nella risposta e nel keystore non corrispondono"},
         {"Certificate.reply.and.certificate.in.keystore.are.identical",
@@ -430,7 +428,7 @@ public class Resources_it extends java.util.ListResourceBundle {
                 "Avvertenza: argomento o argomenti non validi per il costruttore {0}"},
         {"Illegal.Principal.Type.type", "Tipo principal non valido: {0}"},
         {"Illegal.option.option", "Opzione non valida: {0}"},
-        {"Usage.policytool.options.", "Utilizzo: policytool [opzioni]"},
+        {"Usage.policytool.options.", "Uso: policytool [opzioni]"},
         {".file.file.policy.file.location",
                 "  [-file <file>]    posizione del file dei criteri"},
         {"New", "Nuovo"},

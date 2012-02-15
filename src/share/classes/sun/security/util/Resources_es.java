@@ -47,8 +47,7 @@ public class Resources_es extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [Opci\u00F3n]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "Opciones:"},
         {"Use.keytool.help.for.all.available.commands",
                  "Utilice\"keytool -help\" para todos los comandos disponibles"},
@@ -68,7 +67,6 @@ public class Resources_es extends java.util.ListResourceBundle {
                 "Exporta el certificado"}, //-exportcert
         {"Generates.a.key.pair",
                 "Genera un par de claves"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "Genera un clave secreta"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -331,7 +329,7 @@ public class Resources_es extends java.util.ListResourceBundle {
         {"Do.you.still.want.to.add.it.to.your.own.keystore.no.",
                 "\u00BFA\u00FAn desea agregarlo a su propio almac\u00E9n de claves? [no]:  "},
         {"Trust.this.certificate.no.", "\u00BFConfiar en este certificado? [no]:  "},
-        {"YES", "S\u00ED"},
+        {"YES", "S\u00CD"},
         {"New.prompt.", "Nuevo {0}: "},
         {"Passwords.must.differ", "Las contrase\u00F1as deben ser distintas"},
         {"Re.enter.new.prompt.", "Vuelva a escribir el nuevo {0}: "},
@@ -368,7 +366,7 @@ public class Resources_es extends java.util.ListResourceBundle {
                  "El alias <{0}> hace referencia a un tipo de entrada que no es una clave privada. El comando -keyclone s\u00F3lo permite la clonaci\u00F3n de entradas de claves privadas"},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  Advertencia Advertencia Advertencia  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "#%d de Firmante:"},
         {"Timestamp.", "Registro de Hora:"},
         {"Signature.", "Firma:"},
@@ -393,7 +391,7 @@ public class Resources_es extends java.util.ListResourceBundle {
                 "Certificado de nivel superior en la respuesta:\n"},
         {".is.not.trusted.", "... no es de confianza. "},
         {"Install.reply.anyway.no.", "\u00BFInstalar respuesta de todos modos? [no]:  "},
-        {"NO", "No"},
+        {"NO", "NO"},
         {"Public.keys.in.reply.and.keystore.don.t.match",
                 "Las claves p\u00FAblicas en la respuesta y en el almac\u00E9n de claves no coinciden"},
         {"Certificate.reply.and.certificate.in.keystore.are.identical",
@@ -640,7 +638,7 @@ public class Resources_es extends java.util.ListResourceBundle {
 
         // sun.security.pkcs11.SunPKCS11
         {"PKCS11.Token.providerName.Password.",
-                "Contrase\u00F1a del Elemento PKCS11 [{0}]: "},
+                "Contrase\u00F1a del Token PKCS11 [{0}]: "},
 
         /* --- DEPRECATED --- */
         // javax.security.auth.Policy
