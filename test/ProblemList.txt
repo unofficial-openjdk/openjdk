@@ -369,15 +369,22 @@ javax/print/attribute/MediaMappingsTest.java                    generic-all
 
 # jdk_net
 
+# 7122846
+java/net/MulticastSocket/NoLoopbackPackets.java                  macosx-all
+java/net/MulticastSocket/SetLoopbackMode.java                    macosx-all
+
+# 7145658
+java/net/MulticastSocket/Test.java                               macosx-all
+
+#7143960
+java/net/DatagramSocket/SendDatagramToBadAddress.java            macosx-all
+
 ############################################################################
 
 # jdk_io
 
 # 6962637
 java/io/File/MaxPathLength.java                                 windows-all
-
-# 6671616
-java/io/File/BlockIsDirectory.java                              solaris-all
 
 ############################################################################
 
