@@ -407,7 +407,11 @@ public class LWWindowPeer
     @Override
     public void setModalBlocked(Dialog blocker, boolean blocked) {
         synchronized (getPeerTreeLock()) {
-            this.blocker = blocked ? (LWWindowPeer)blocker.getPeer() : null;
+            if(blocked && blocker.getPeer() instanceof LWWindowPeer) {
+                this.blocker = (LWWindowPeer)blocker.getPeer();
+            } else {
+                this.blocker = null;
+            }
         }
     }
 
