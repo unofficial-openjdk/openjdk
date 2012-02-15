@@ -316,6 +316,7 @@ public class LWWindowPeer
     public void flip(int x1, int y1, int x2, int y2,
                      BufferCapabilities.FlipContents flipAction)
     {
+        //Note: constraints must be applied. see applyConstrain().
         platformWindow.flip(x1, y1, x2, y2, flipAction);
     }
 
