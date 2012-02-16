@@ -448,7 +448,9 @@ public class TransformerFactoryImpl
             return;
         }
         else if (name.equals(XalanConstants.ORACLE_FEATURE_SERVICE_MECHANISM)) {
-            _useServicesMechanism = value;
+            //in secure mode, let _useServicesMechanism be determined by the constructor
+            if (!_isSecureMode)
+                _useServicesMechanism = value;
         }
         else {
             // unknown feature

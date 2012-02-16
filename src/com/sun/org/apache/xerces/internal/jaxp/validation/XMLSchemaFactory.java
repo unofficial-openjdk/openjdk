@@ -351,6 +351,10 @@ public final class XMLSchemaFactory extends SchemaFactory {
             fSecurityManager = value ? new SecurityManager() : null;
             fXMLSchemaLoader.setProperty(SECURITY_MANAGER, fSecurityManager);
             return;
+        } else if (name.equals(Constants.ORACLE_FEATURE_SERVICE_MECHANISM)) {
+            //in secure mode, let _useServicesMechanism be determined by the constructor
+            if (System.getSecurityManager() != null)
+                return;
         }
         try {
             fXMLSchemaLoader.setFeature(name, value);
