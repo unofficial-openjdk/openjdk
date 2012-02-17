@@ -62,7 +62,7 @@ define_pd_global(intx, StackRedPages, 1);
 // due to lack of optimization caused by C++ compiler bugs
 define_pd_global(intx, StackShadowPages, NOT_WIN64(20) WIN64_ONLY(6) DEBUG_ONLY(+2));
 #else
-define_pd_global(intx, StackShadowPages, 3 DEBUG_ONLY(+5));
+define_pd_global(intx, StackShadowPages, 4 DEBUG_ONLY(+5));
 #endif // AMD64
 
 define_pd_global(intx, PreInflateSpin,           10);
