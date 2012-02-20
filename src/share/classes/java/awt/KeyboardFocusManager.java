@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -506,14 +506,8 @@ public abstract class KeyboardFocusManager
      */
     protected Component getGlobalFocusOwner() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-            if (this == getCurrentKeyboardFocusManager()) {
-                return focusOwner;
-            } else {
-                if (focusLog.isLoggable(PlatformLogger.FINER)) {
-                    focusLog.finer("This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
-                }
-                throw new SecurityException(notPrivileged);
-            }
+            checkCurrentKFMSecurity();
+            return focusOwner;
         }
     }
 
@@ -547,6 +541,8 @@ public abstract class KeyboardFocusManager
 
         if (focusOwner == null || focusOwner.isFocusable()) {
             synchronized (KeyboardFocusManager.class) {
+                checkCurrentKFMSecurity();
+
                 oldFocusOwner = getFocusOwner();
 
                 try {
@@ -596,6 +592,9 @@ public abstract class KeyboardFocusManager
      * @see java.awt.event.FocusEvent#FOCUS_LOST
      */
     public void clearGlobalFocusOwner() {
+        synchronized (KeyboardFocusManager.class) {
+            checkCurrentKFMSecurity();
+        }
         if (!GraphicsEnvironment.isHeadless()) {
             // Toolkit must be fully initialized, otherwise
             // _clearGlobalFocusOwner will crash or throw an exception
@@ -675,14 +674,8 @@ public abstract class KeyboardFocusManager
         throws SecurityException
     {
         synchronized (KeyboardFocusManager.class) {
-            if (this == getCurrentKeyboardFocusManager()) {
-                return permanentFocusOwner;
-            } else {
-                if (focusLog.isLoggable(PlatformLogger.FINER)) {
-                    focusLog.finer("This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
-                }
-                throw new SecurityException(notPrivileged);
-            }
+            checkCurrentKFMSecurity();
+            return permanentFocusOwner;
         }
     }
 
@@ -711,13 +704,14 @@ public abstract class KeyboardFocusManager
      * @beaninfo
      *       bound: true
      */
-    protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner)
-    {
+    protected void setGlobalPermanentFocusOwner(Component permanentFocusOwner) {
         Component oldPermanentFocusOwner = null;
         boolean shouldFire = false;
 
         if (permanentFocusOwner == null || permanentFocusOwner.isFocusable()) {
             synchronized (KeyboardFocusManager.class) {
+                checkCurrentKFMSecurity();
+
                 oldPermanentFocusOwner = getPermanentFocusOwner();
 
                 try {
@@ -783,14 +777,8 @@ public abstract class KeyboardFocusManager
      */
     protected Window getGlobalFocusedWindow() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-            if (this == getCurrentKeyboardFocusManager()) {
-               return focusedWindow;
-            } else {
-                if (focusLog.isLoggable(PlatformLogger.FINER)) {
-                    focusLog.finer("This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
-                }
-                throw new SecurityException(notPrivileged);
-            }
+            checkCurrentKFMSecurity();
+            return focusedWindow;
         }
     }
 
@@ -821,6 +809,8 @@ public abstract class KeyboardFocusManager
 
         if (focusedWindow == null || focusedWindow.isFocusableWindow()) {
             synchronized (KeyboardFocusManager.class) {
+                checkCurrentKFMSecurity();
+
                 oldFocusedWindow = getFocusedWindow();
 
                 try {
@@ -887,14 +877,8 @@ public abstract class KeyboardFocusManager
      */
     protected Window getGlobalActiveWindow() throws SecurityException {
         synchronized (KeyboardFocusManager.class) {
-            if (this == getCurrentKeyboardFocusManager()) {
-               return activeWindow;
-            } else {
-                if (focusLog.isLoggable(PlatformLogger.FINER)) {
-                    focusLog.finer("This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
-                }
-                throw new SecurityException(notPrivileged);
-            }
+            checkCurrentKFMSecurity();
+            return activeWindow;
         }
     }
 
@@ -923,6 +907,8 @@ public abstract class KeyboardFocusManager
     protected void setGlobalActiveWindow(Window activeWindow) {
         Window oldActiveWindow;
         synchronized (KeyboardFocusManager.class) {
+            checkCurrentKFMSecurity();
+
             oldActiveWindow = getActiveWindow();
             if (focusLog.isLoggable(PlatformLogger.FINER)) {
                 focusLog.finer("Setting global active window to " + activeWindow + ", old active " + oldActiveWindow);
@@ -1217,14 +1203,8 @@ public abstract class KeyboardFocusManager
         throws SecurityException
     {
         synchronized (KeyboardFocusManager.class) {
-            if (this == getCurrentKeyboardFocusManager()) {
-                return currentFocusCycleRoot;
-            } else {
-                if (focusLog.isLoggable(PlatformLogger.FINER)) {
-                    focusLog.finer("This manager is " + this + ", current is " + getCurrentKeyboardFocusManager());
-                }
-                throw new SecurityException(notPrivileged);
-            }
+            checkCurrentKFMSecurity();
+            return currentFocusCycleRoot;
         }
     }
 
@@ -1248,6 +1228,8 @@ public abstract class KeyboardFocusManager
         Container oldFocusCycleRoot;
 
         synchronized (KeyboardFocusManager.class) {
+            checkCurrentKFMSecurity();
+
             oldFocusCycleRoot  = getCurrentFocusCycleRoot();
             currentFocusCycleRoot = newFocusCycleRoot;
         }
@@ -3063,6 +3045,16 @@ public abstract class KeyboardFocusManager
             return (heavyweightRequests.size() > 0)
                 ? heavyweightRequests.getFirst()
                 : null;
+        }
+    }
+
+    private void checkCurrentKFMSecurity() {
+        if (this != getCurrentKeyboardFocusManager()) {
+            if (focusLog.isLoggable(PlatformLogger.FINER)) {
+                focusLog.finer("This manager is " + this +
+                               ", current is " + getCurrentKeyboardFocusManager());
+            }
+            throw new SecurityException(notPrivileged);
         }
     }
 }

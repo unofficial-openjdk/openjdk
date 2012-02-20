@@ -46,13 +46,14 @@ class ServerConfig {
     static final long DEFAULT_MAX_REQ_TIME = -1; // default: forever
     static final long DEFAULT_MAX_RSP_TIME = -1; // default: forever
     static final long DEFAULT_TIMER_MILLIS = 1000;
-
+    static final int  DEFAULT_MAX_REQ_HEADERS = 200;
     static final long DEFAULT_DRAIN_AMOUNT = 64 * 1024;
 
     static long idleInterval;
     static long drainAmount;    // max # of bytes to drain from an inputstream
     static int maxIdleConnections;
-
+    // The maximum number of request headers allowable
+    private static int maxReqHeaders;
     // max time a request or response is allowed to take
     static long maxReqTime;
     static long maxRspTime;
@@ -79,6 +80,10 @@ class ServerConfig {
 
                     drainAmount = Long.getLong("sun.net.httpserver.drainAmount",
                             DEFAULT_DRAIN_AMOUNT);
+
+                    maxReqHeaders = Integer.getInteger(
+                            "sun.net.httpserver.maxReqHeaders",
+                            DEFAULT_MAX_REQ_HEADERS);
 
                     maxReqTime = Long.getLong("sun.net.httpserver.maxReqTime",
                             DEFAULT_MAX_REQ_TIME);
@@ -155,6 +160,10 @@ class ServerConfig {
 
     static long getDrainAmount () {
         return drainAmount;
+    }
+
+    static int getMaxReqHeaders() {
+        return maxReqHeaders;
     }
 
     static long getMaxReqTime () {
