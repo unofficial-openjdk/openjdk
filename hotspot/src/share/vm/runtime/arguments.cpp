@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,15 +37,6 @@
 #include "services/management.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/taskqueue.hpp"
-#ifdef TARGET_ARCH_x86
-# include "vm_version_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "vm_version_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "vm_version_zero.hpp"
-#endif
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
 #endif
@@ -54,6 +45,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
 #endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.hpp"
@@ -251,6 +245,11 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
   { "UseParallelOldGCDensePrefix",
                            JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
   { "AllowTransitionalJSR292",       JDK_Version::jdk(7), JDK_Version::jdk(8) },
+  { "UseCompressedStrings",          JDK_Version::jdk(7), JDK_Version::jdk(8) },
+#ifdef PRODUCT
+  { "DesiredMethodLimit",
+                           JDK_Version::jdk_update(7, 2), JDK_Version::jdk(8) },
+#endif // PRODUCT
   { NULL, JDK_Version(0), JDK_Version(0) }
 };
 
@@ -1001,6 +1000,13 @@ void Arguments::set_mode_flags(Mode mode) {
     UseInterpreter           = false;
     BackgroundCompilation    = false;
     ClipInlining             = false;
+    // Be much more aggressive in tiered mode with -Xcomp and exercise C2 more.
+    // We will first compile a level 3 version (C1 with full profiling), then do one invocation of it and
+    // compile a level 4 (C2) and then continue executing it.
+    if (TieredCompilation) {
+      Tier3InvokeNotifyFreqLog = 0;
+      Tier4InvocationThreshold = 0;
+    }
     break;
   }
 }
@@ -1034,6 +1040,16 @@ void Arguments::set_tiered_flags() {
 }
 
 #ifndef KERNEL
+static void disable_adaptive_size_policy(const char* collector_name) {
+  if (UseAdaptiveSizePolicy) {
+    if (FLAG_IS_CMDLINE(UseAdaptiveSizePolicy)) {
+      warning("disabling UseAdaptiveSizePolicy; it is incompatible with %s.",
+              collector_name);
+    }
+    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
+  }
+}
+
 // If the user has chosen ParallelGCThreads > 0, we set UseParNewGC
 // if it's not explictly set or unset. If the user has chosen
 // UseParNewGC and not explicitly set ParallelGCThreads we
@@ -1043,11 +1059,8 @@ void Arguments::set_parnew_gc_flags() {
          "control point invariant");
   assert(UseParNewGC, "Error");
 
-  // Turn off AdaptiveSizePolicy by default for parnew until it is
-  // complete.
-  if (FLAG_IS_DEFAULT(UseAdaptiveSizePolicy)) {
-    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
-  }
+  // Turn off AdaptiveSizePolicy for parnew until it is complete.
+  disable_adaptive_size_policy("UseParNewGC");
 
   if (ParallelGCThreads == 0) {
     FLAG_SET_DEFAULT(ParallelGCThreads,
@@ -1104,11 +1117,8 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     FLAG_SET_ERGO(bool, UseParNewGC, true);
   }
 
-  // Turn off AdaptiveSizePolicy by default for cms until it is
-  // complete.
-  if (FLAG_IS_DEFAULT(UseAdaptiveSizePolicy)) {
-    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
-  }
+  // Turn off AdaptiveSizePolicy for CMS until it is complete.
+  disable_adaptive_size_policy("UseConcMarkSweepGC");
 
   // In either case, adjust ParallelGCThreads and/or UseParNewGC
   // as needed.
@@ -1360,9 +1370,12 @@ void Arguments::set_ergonomics_flags() {
   // by ergonomics.
   if (MaxHeapSize <= max_heap_for_compressed_oops()) {
 #if !defined(COMPILER1) || defined(TIERED)
+// disable UseCompressedOops by default on MacOS X until 7118647 is fixed
+#ifndef __APPLE__
     if (FLAG_IS_DEFAULT(UseCompressedOops)) {
       FLAG_SET_ERGO(bool, UseCompressedOops, true);
     }
+#endif // !__APPLE__
 #endif
 #ifdef _WIN64
     if (UseLargePages && UseCompressedOops) {
@@ -1387,16 +1400,17 @@ void Arguments::set_ergonomics_flags() {
 
 void Arguments::set_parallel_gc_flags() {
   assert(UseParallelGC || UseParallelOldGC, "Error");
-  // If parallel old was requested, automatically enable parallel scavenge.
-  if (UseParallelOldGC && !UseParallelGC && FLAG_IS_DEFAULT(UseParallelGC)) {
-    FLAG_SET_DEFAULT(UseParallelGC, true);
+  // Enable ParallelOld unless it was explicitly disabled (cmd line or rc file).
+  if (FLAG_IS_DEFAULT(UseParallelOldGC)) {
+    FLAG_SET_DEFAULT(UseParallelOldGC, true);
   }
+  FLAG_SET_DEFAULT(UseParallelGC, true);
 
   // If no heap maximum was requested explicitly, use some reasonable fraction
   // of the physical memory, up to a maximum of 1GB.
   if (UseParallelGC) {
-    FLAG_SET_ERGO(uintx, ParallelGCThreads,
-                  Abstract_VM_Version::parallel_worker_threads());
+    FLAG_SET_DEFAULT(ParallelGCThreads,
+                     Abstract_VM_Version::parallel_worker_threads());
 
     // If InitialSurvivorRatio or MinSurvivorRatio were not specified, but the
     // SurvivorRatio has been set, reset their default values to SurvivorRatio +
@@ -1427,6 +1441,9 @@ void Arguments::set_parallel_gc_flags() {
     if (FLAG_IS_DEFAULT(MinHeapDeltaBytes)) {
       FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
     }
+    // For those collectors or operating systems (eg, Windows) that do
+    // not support full UseNUMA, we will map to UseNUMAInterleaving for now
+    UseNUMAInterleaving = true;
   }
 }
 
@@ -1575,17 +1592,8 @@ void Arguments::set_aggressive_opts_flags() {
     sprintf(buffer, "java.lang.Integer.IntegerCache.high=" INTX_FORMAT, AutoBoxCacheMax);
     add_property(buffer);
   }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
-    FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
-  }
   if (AggressiveOpts && FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
     FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeStringConcat)) {
-    FLAG_SET_DEFAULT(OptimizeStringConcat, true);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeFill)) {
-    FLAG_SET_DEFAULT(OptimizeFill, true);
   }
 #endif
 
@@ -1680,8 +1688,33 @@ static bool verify_serial_gc_flags() {
           UseParallelGC || UseParallelOldGC));
 }
 
+// check if do gclog rotation
+// +UseGCLogFileRotation is a must,
+// no gc log rotation when log file not supplied or
+// NumberOfGCLogFiles is 0, or GCLogFileSize is 0
+void check_gclog_consistency() {
+  if (UseGCLogFileRotation) {
+    if ((Arguments::gc_log_filename() == NULL) ||
+        (NumberOfGCLogFiles == 0)  ||
+        (GCLogFileSize == 0)) {
+      jio_fprintf(defaultStream::output_stream(),
+                  "To enable GC log rotation, use -Xloggc:<filename> -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=<num_of_files> -XX:GCLogFileSize=<num_of_size>\n"
+                  "where num_of_file > 0 and num_of_size > 0\n"
+                  "GC log rotation is turned off\n");
+      UseGCLogFileRotation = false;
+    }
+  }
+
+  if (UseGCLogFileRotation && GCLogFileSize < 8*K) {
+        FLAG_SET_CMDLINE(uintx, GCLogFileSize, 8*K);
+        jio_fprintf(defaultStream::output_stream(),
+                    "GCLogFileSize changed to minimum 8K\n");
+  }
+}
+
 // Check consistency of GC selection
 bool Arguments::check_gc_consistency() {
+  check_gclog_consistency();
   bool status = true;
   // Ensure that the user has not selected conflicting sets
   // of collectors. [Note: this check is merely a user convenience;
@@ -2302,7 +2335,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 #ifndef PRODUCT
     // -Xprintflags
     } else if (match_option(option, "-Xprintflags", &tail)) {
-      CommandLineFlags::printFlags();
+      CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
 #endif
     // -D
@@ -2575,16 +2608,16 @@ SOLARIS_ONLY(
       FLAG_SET_CMDLINE(bool, DisplayVMOutputToStderr, false);
       FLAG_SET_CMDLINE(bool, DisplayVMOutputToStdout, true);
     } else if (match_option(option, "-XX:+ExtendedDTraceProbes", &tail)) {
-#ifdef SOLARIS
+#if defined(DTRACE_ENABLED)
       FLAG_SET_CMDLINE(bool, ExtendedDTraceProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceMethodProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceAllocProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceMonitorProbes, true);
-#else // ndef SOLARIS
+#else // defined(DTRACE_ENABLED)
       jio_fprintf(defaultStream::error_stream(),
-                  "ExtendedDTraceProbes flag is only applicable on Solaris\n");
+                  "ExtendedDTraceProbes flag is not applicable for this configuration\n");
       return JNI_EINVAL;
-#endif // ndef SOLARIS
+#endif // defined(DTRACE_ENABLED)
 #ifdef ASSERT
     } else if (match_option(option, "-XX:+FullGCALot", &tail)) {
       FLAG_SET_CMDLINE(bool, FullGCALot, true);
@@ -2672,6 +2705,7 @@ SOLARIS_ONLY(
       return JNI_ERR;
     }
   }
+
   // Change the default value for flags  which have different default values
   // when working with older JDKs.
   if (JDK_Version::current().compare_major(6) <= 0 &&
@@ -2886,6 +2920,18 @@ void Arguments::set_shared_spaces_flags() {
   }
 }
 
+// Disable options not supported in this release, with a warning if they
+// were explicitly requested on the command-line
+#define UNSUPPORTED_OPTION(opt, description)                    \
+do {                                                            \
+  if (opt) {                                                    \
+    if (FLAG_IS_CMDLINE(opt)) {                                 \
+      warning(description " is disabled in this release.");     \
+    }                                                           \
+    FLAG_SET_DEFAULT(opt, false);                               \
+  }                                                             \
+} while(0)
+
 // Parse entry point called from JNI_CreateJavaVM
 
 jint Arguments::parse(const JavaVMInitArgs* args) {
@@ -2937,13 +2983,13 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       IgnoreUnrecognizedVMOptions = false;
     }
     if (match_option(option, "-XX:+PrintFlagsInitial", &tail)) {
-      CommandLineFlags::printFlags();
+      CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
 
 #ifndef PRODUCT
     if (match_option(option, "-XX:+PrintFlagsWithComments", &tail)) {
-      CommandLineFlags::printFlags(true);
+      CommandLineFlags::printFlags(tty, true);
       vm_exit(0);
     }
 #endif
@@ -2982,6 +3028,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   if (result != JNI_OK) {
     return result;
   }
+
+#ifdef JAVASE_EMBEDDED
+  UNSUPPORTED_OPTION(UseG1GC, "G1 GC");
+#endif
 
 #ifndef PRODUCT
   if (TraceBytecodesAt != 0) {
@@ -3115,6 +3165,9 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   if (!UseBiasedLocking || EmitSync != 0) {
     UseOptoBiasInlining = false;
   }
+  if (!EliminateLocks) {
+    EliminateNestedLocks = false;
+  }
 #endif
 
   if (PrintAssembly && FLAG_IS_DEFAULT(DebugNonSafepoints)) {
@@ -3132,7 +3185,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 #endif
 
   if (PrintCommandLineFlags) {
-    CommandLineFlags::printSetFlags();
+    CommandLineFlags::printSetFlags(tty);
   }
 
   // Apply CPU specific policy for the BiasedLocking

@@ -70,6 +70,7 @@ public class JavacTaskImpl extends JavacTask {
     private JavaCompiler compiler;
     private Locale locale;
     private String[] args;
+    private String[] classNames;
     private Context context;
     private List<JavaFileObject> fileObjects;
     private Map<JavaFileObject, JCCompilationUnit> notYetEntered;
@@ -78,15 +79,17 @@ public class JavacTaskImpl extends JavacTask {
     private AtomicBoolean used = new AtomicBoolean();
     private Iterable<? extends Processor> processors;
 
-    private Integer result = null;
+    private Main.Result result = null;
 
     JavacTaskImpl(Main compilerMain,
                 String[] args,
+                String[] classNames,
                 Context context,
                 List<JavaFileObject> fileObjects) {
         this.ccw = ClientCodeWrapper.instance(context);
         this.compilerMain = compilerMain;
         this.args = args;
+        this.classNames = classNames;
         this.context = context;
         this.fileObjects = fileObjects;
         setLocale(Locale.getDefault());
@@ -101,17 +104,14 @@ public class JavacTaskImpl extends JavacTask {
                 Context context,
                 Iterable<String> classes,
                 Iterable<? extends JavaFileObject> fileObjects) {
-        this(compilerMain, toArray(flags, classes), context, toList(fileObjects));
+        this(compilerMain, toArray(flags), toArray(classes), context, toList(fileObjects));
     }
 
-    static private String[] toArray(Iterable<String> flags, Iterable<String> classes) {
+    static private String[] toArray(Iterable<String> iter) {
         ListBuffer<String> result = new ListBuffer<String>();
-        if (flags != null)
-            for (String flag : flags)
-                result.append(flag);
-        if (classes != null)
-            for (String cls : classes)
-                result.append(cls);
+        if (iter != null)
+            for (String s : iter)
+                result.append(s);
         return result.toArray(new String[result.length()]);
     }
 
@@ -129,9 +129,9 @@ public class JavacTaskImpl extends JavacTask {
             initContext();
             notYetEntered = new HashMap<JavaFileObject, JCCompilationUnit>();
             compilerMain.setAPIMode(true);
-            result = compilerMain.compile(args, context, fileObjects, processors);
+            result = compilerMain.compile(args, classNames, context, fileObjects, processors);
             cleanup();
-            return result == 0;
+            return result.isOK();
         } else {
             throw new IllegalStateException("multiple calls to method 'call'");
         }
@@ -158,10 +158,10 @@ public class JavacTaskImpl extends JavacTask {
         } else {
             initContext();
             compilerMain.setOptions(Options.instance(context));
-            compilerMain.filenames = new ListBuffer<File>();
-            List<File> filenames = compilerMain.processArgs(CommandLine.parse(args));
+            compilerMain.filenames = new LinkedHashSet<File>();
+            Collection<File> filenames = compilerMain.processArgs(CommandLine.parse(args), classNames);
             if (!filenames.isEmpty())
-                throw new IllegalArgumentException("Malformed arguments " + filenames.toString(" "));
+                throw new IllegalArgumentException("Malformed arguments " + toString(filenames, " "));
             compiler = JavaCompiler.instance(context);
             compiler.keepComments = true;
             compiler.genEndPos = true;
@@ -174,7 +174,19 @@ public class JavacTaskImpl extends JavacTask {
             // endContext will be called when all classes have been generated
             // TODO: should handle the case after each phase if errors have occurred
             args = null;
+            classNames = null;
         }
+    }
+
+    <T> String toString(Iterable<T> items, String sep) {
+        String currSep = "";
+        StringBuilder sb = new StringBuilder();
+        for (T item: items) {
+            sb.append(currSep);
+            sb.append(item.toString());
+            currSep = sep;
+        }
+        return sb.toString();
     }
 
     private void initContext() {
@@ -193,6 +205,7 @@ public class JavacTaskImpl extends JavacTask {
         compiler = null;
         compilerMain = null;
         args = null;
+        classNames = null;
         context = null;
         fileObjects = null;
         notYetEntered = null;
@@ -263,6 +276,9 @@ public class JavacTaskImpl extends JavacTask {
     public Iterable<? extends TypeElement> enter(Iterable<? extends CompilationUnitTree> trees)
         throws IOException
     {
+        if (trees == null && notYetEntered != null && notYetEntered.isEmpty())
+            return List.nil();
+
         prepareCompiler();
 
         ListBuffer<JCCompilationUnit> roots = null;
@@ -311,7 +327,7 @@ public class JavacTaskImpl extends JavacTask {
             ListBuffer<TypeElement> elements = new ListBuffer<TypeElement>();
             for (JCCompilationUnit unit : units) {
                 for (JCTree node : unit.defs) {
-                    if (node.getTag() == JCTree.CLASSDEF) {
+                    if (node.hasTag(JCTree.Tag.CLASSDEF)) {
                         JCClassDecl cdef = (JCClassDecl) node;
                         if (cdef.sym != null) // maybe null if errors in anno processing
                             elements.append(cdef.sym);
@@ -369,12 +385,12 @@ public class JavacTaskImpl extends JavacTask {
         private void handleFlowResults(Queue<Env<AttrContext>> queue, ListBuffer<Element> elems) {
             for (Env<AttrContext> env: queue) {
                 switch (env.tree.getTag()) {
-                    case JCTree.CLASSDEF:
+                    case CLASSDEF:
                         JCClassDecl cdef = (JCClassDecl) env.tree;
                         if (cdef.sym != null)
                             elems.append(cdef.sym);
                         break;
-                    case JCTree.TOPLEVEL:
+                    case TOPLEVEL:
                         JCCompilationUnit unit = (JCCompilationUnit) env.tree;
                         if (unit.packge != null)
                             elems.append(unit.packge);

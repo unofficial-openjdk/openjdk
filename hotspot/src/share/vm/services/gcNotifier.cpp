@@ -44,7 +44,8 @@ void GCNotifier::pushNotification(GCMemoryManager *mgr, const char *action, cons
   // Make a copy of the last GC statistics
   // GC may occur between now and the creation of the notification
   int num_pools = MemoryService::num_memory_pools();
-  GCStatInfo* stat = new GCStatInfo(num_pools);
+  // stat is deallocated inside GCNotificationRequest
+  GCStatInfo* stat = new(ResourceObj::C_HEAP) GCStatInfo(num_pools);
   mgr->get_last_gc_stat(stat);
   GCNotificationRequest *request = new GCNotificationRequest(os::javaTimeMillis(),mgr,action,cause,stat);
   addRequest(request);
@@ -92,7 +93,6 @@ static Handle getGcInfoBuilder(GCMemoryManager *gcManager,TRAPS) {
                           &args,
                           CHECK_NH);
   return Handle(THREAD,(oop)result.get_jobject());
-
 }
 
 static Handle createGcInfo(GCMemoryManager *gcManager, GCStatInfo *gcStatInfo,TRAPS) {
@@ -100,9 +100,16 @@ static Handle createGcInfo(GCMemoryManager *gcManager, GCStatInfo *gcStatInfo,TR
   // Fill the arrays of MemoryUsage objects with before and after GC
   // per pool memory usage
 
-  klassOop muKlass = Management::java_lang_management_MemoryUsage_klass(CHECK_NH);   objArrayOop bu = oopFactory::new_objArray( muKlass,MemoryService::num_memory_pools(), CHECK_NH);
+  klassOop mu_klass = Management::java_lang_management_MemoryUsage_klass(CHECK_NH);
+  instanceKlassHandle mu_kh(THREAD, mu_klass);
+
+  // The array allocations below should use a handle containing mu_klass
+  // as the first allocation could trigger a GC, causing the actual
+  // klass oop to move, and leaving mu_klass pointing to the old
+  // location.
+  objArrayOop bu = oopFactory::new_objArray(mu_kh(), MemoryService::num_memory_pools(), CHECK_NH);
   objArrayHandle usage_before_gc_ah(THREAD, bu);
-  objArrayOop au = oopFactory::new_objArray(muKlass,MemoryService::num_memory_pools(), CHECK_NH);
+  objArrayOop au = oopFactory::new_objArray(mu_kh(), MemoryService::num_memory_pools(), CHECK_NH);
   objArrayHandle usage_after_gc_ah(THREAD, au);
 
   for (int i = 0; i < MemoryService::num_memory_pools(); i++) {
@@ -126,7 +133,7 @@ static Handle createGcInfo(GCMemoryManager *gcManager, GCStatInfo *gcStatInfo,TR
   // The type is 'I'
   objArrayOop extra_args_array = oopFactory::new_objArray(SystemDictionary::Integer_klass(), 1, CHECK_NH);
   objArrayHandle extra_array (THREAD, extra_args_array);
-  klassOop itKlass= SystemDictionary::Integer_klass();
+  klassOop itKlass = SystemDictionary::Integer_klass();
   instanceKlassHandle intK(THREAD, itKlass);
 
   instanceHandle extra_arg_val = intK->allocate_instance_handle(CHECK_NH);
@@ -147,7 +154,7 @@ static Handle createGcInfo(GCMemoryManager *gcManager, GCStatInfo *gcStatInfo,TR
   extra_array->obj_at_put(0,extra_arg_val());
 
   klassOop gcInfoklass = Management::com_sun_management_GcInfo_klass(CHECK_NH);
-  instanceKlassHandle ik (THREAD,gcInfoklass);
+  instanceKlassHandle ik(THREAD, gcInfoklass);
 
   Handle gcInfo_instance = ik->allocate_instance_handle(CHECK_NH);
 

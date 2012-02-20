@@ -952,7 +952,7 @@ public final class SunGraphics2D
                 }
             }
         }
-        Class paintClass = paint.getClass();
+        Class<? extends Paint> paintClass = paint.getClass();
         if (paintClass == GradientPaint.class) {
             paintState = PAINT_GRADIENT;
         } else if (paintClass == LinearGradientPaint.class) {
@@ -1291,7 +1291,7 @@ public final class SunGraphics2D
         interpolationHint = -1;
         interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
         boolean customHintPresent = false;
-        Iterator iter = hints.keySet().iterator();
+        Iterator<?> iter = hints.keySet().iterator();
         while (iter.hasNext()) {
             Object key = iter.next();
             if (key == SunHints.KEY_RENDERING ||
@@ -1322,7 +1322,7 @@ public final class SunGraphics2D
      */
     public void addRenderingHints(Map<?,?> hints) {
         boolean customHintPresent = false;
-        Iterator iter = hints.keySet().iterator();
+        Iterator<?> iter = hints.keySet().iterator();
         while (iter.hasNext()) {
             Object key = iter.next();
             if (key == SunHints.KEY_RENDERING ||

@@ -233,17 +233,16 @@ public final class ConnectorBootstrap {
                         "the access file [" + accessFile + "] as the " +
                         "authenticated Subject is null");
             }
-            final Set principals = subject.getPrincipals();
-            for (Iterator i = principals.iterator(); i.hasNext();) {
-                final Principal p = (Principal) i.next();
-                if (properties.containsKey(p.getName())) {
+            final Set<Principal> principals = subject.getPrincipals();
+            for (Principal p1: principals) {
+                if (properties.containsKey(p1.getName())) {
                     return;
                 }
             }
-            final Set<String> principalsStr = new HashSet<String>();
-            for (Iterator i = principals.iterator(); i.hasNext();) {
-                final Principal p = (Principal) i.next();
-                principalsStr.add(p.getName());
+
+            final Set<String> principalsStr = new HashSet<>();
+            for (Principal p2: principals) {
+                principalsStr.add(p2.getName());
             }
             throw new SecurityException(
                     "Access denied! No entries found in the access file [" +
@@ -257,9 +256,9 @@ public final class ConnectorBootstrap {
             if (fname == null) {
                 return p;
             }
-            FileInputStream fin = new FileInputStream(fname);
-            p.load(fin);
-            fin.close();
+            try (FileInputStream fin = new FileInputStream(fname)) {
+                p.load(fin);
+            }
             return p;
         }
         private final Map<String, Object> environment;
@@ -432,7 +431,7 @@ public final class ConnectorBootstrap {
         try {
             // Export remote connector address and associated configuration
             // properties to the instrumentation buffer.
-            Map<String, String> properties = new HashMap<String, String>();
+            Map<String, String> properties = new HashMap<>();
             properties.put("remoteAddress", url.toString());
             properties.put("authenticate", useAuthenticationStr);
             properties.put("ssl", useSslStr);
@@ -458,7 +457,7 @@ public final class ConnectorBootstrap {
         System.setProperty("java.rmi.server.randomIDs", "true");
 
         // This RMI server should not keep the VM alive
-        Map<String, Object> env = new HashMap<String, Object>();
+        Map<String, Object> env = new HashMap<>();
         env.put(RMIExporter.EXPORTER_ATTRIBUTE, new PermanentExporter());
 
         // The local connector server need only be available via the
@@ -601,12 +600,9 @@ public final class ConnectorBootstrap {
             try {
                 // Load the SSL keystore properties from the config file
                 Properties p = new Properties();
-                InputStream in = new FileInputStream(sslConfigFileName);
-                try {
+                try (InputStream in = new FileInputStream(sslConfigFileName)) {
                     BufferedInputStream bin = new BufferedInputStream(in);
                     p.load(bin);
-                } finally {
-                    in.close();
                 }
                 String keyStore =
                         p.getProperty("javax.net.ssl.keyStore");
@@ -630,11 +626,8 @@ public final class ConnectorBootstrap {
                 KeyStore ks = null;
                 if (keyStore != null) {
                     ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                    FileInputStream ksfis = new FileInputStream(keyStore);
-                    try {
+                    try (FileInputStream ksfis = new FileInputStream(keyStore)) {
                         ks.load(ksfis, keyStorePasswd);
-                    } finally {
-                        ksfis.close();
                     }
                 }
                 KeyManagerFactory kmf = KeyManagerFactory.getInstance(
@@ -644,16 +637,13 @@ public final class ConnectorBootstrap {
                 KeyStore ts = null;
                 if (trustStore != null) {
                     ts = KeyStore.getInstance(KeyStore.getDefaultType());
-                    FileInputStream tsfis = new FileInputStream(trustStore);
-                    try {
+                    try (FileInputStream tsfis = new FileInputStream(trustStore)) {
                         ts.load(tsfis, trustStorePasswd);
-                    } finally {
-                        tsfis.close();
                     }
                 }
                 TrustManagerFactory tmf = TrustManagerFactory.getInstance(
                         TrustManagerFactory.getDefaultAlgorithm());
-                tmf.init((KeyStore) ts);
+                tmf.init(ts);
 
                 SSLContext ctx = SSLContext.getInstance("SSL");
                 ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
@@ -691,7 +681,7 @@ public final class ConnectorBootstrap {
 
         JMXServiceURL url = new JMXServiceURL("rmi", null, 0);
 
-        Map<String, Object> env = new HashMap<String, Object>();
+        Map<String, Object> env = new HashMap<>();
 
         PermanentExporter exporter = new PermanentExporter();
 

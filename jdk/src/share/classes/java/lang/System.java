@@ -632,6 +632,7 @@ public final class System {
      *
      * <p>On UNIX systems, it returns {@code "\n"}; on Microsoft
      * Windows systems it returns {@code "\r\n"}.
+     * @since 1.7
      */
     public static String lineSeparator() {
         return lineSeparator;
@@ -1031,7 +1032,7 @@ public final class System {
      */
     @Deprecated
     public static void runFinalizersOnExit(boolean value) {
-        Runtime.getRuntime().runFinalizersOnExit(value);
+        Runtime.runFinalizersOnExit(value);
     }
 
     /**
@@ -1170,13 +1171,13 @@ public final class System {
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
         sun.misc.SharedSecrets.setJavaLangAccess(new sun.misc.JavaLangAccess(){
-            public sun.reflect.ConstantPool getConstantPool(Class klass) {
+            public sun.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
-            public void setAnnotationType(Class klass, AnnotationType type) {
+            public void setAnnotationType(Class<?> klass, AnnotationType type) {
                 klass.setAnnotationType(type);
             }
-            public AnnotationType getAnnotationType(Class klass) {
+            public AnnotationType getAnnotationType(Class<?> klass) {
                 return klass.getAnnotationType();
             }
             public <E extends Enum<E>>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,10 +55,13 @@ RUNTIME_OS_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PD_DEVELOPER_FLAG, \
                  MATERIALIZE_PRODUCT_FLAG, MATERIALIZE_PD_PRODUCT_FLAG, \
                  MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_NOTPRODUCT_FLAG)
 
+MATERIALIZE_FLAGS_EXT
+
+
 bool Flag::is_unlocker() const {
   return strcmp(name, "UnlockDiagnosticVMOptions") == 0     ||
-         strcmp(name, "UnlockExperimentalVMOptions") == 0;
-
+         strcmp(name, "UnlockExperimentalVMOptions") == 0   ||
+         is_unlocker_ext();
 }
 
 bool Flag::is_unlocked() const {
@@ -74,20 +77,23 @@ bool Flag::is_unlocked() const {
              strcmp(kind, "{C2 experimental}") == 0) {
     return UnlockExperimentalVMOptions;
   } else {
-    return true;
+    return is_unlocked_ext();
   }
 }
 
 bool Flag::is_writeable() const {
-  return (strcmp(kind, "{manageable}") == 0 || strcmp(kind, "{product rw}") == 0);
+  return strcmp(kind, "{manageable}") == 0 ||
+         strcmp(kind, "{product rw}") == 0 ||
+         is_writeable_ext();
 }
 
-// All flags except "manageable" are assumed internal flags.
+// All flags except "manageable" are assumed to be internal flags.
 // Long term, we need to define a mechanism to specify which flags
 // are external/stable and change this function accordingly.
 bool Flag::is_external() const {
-  return (strcmp(kind, "{manageable}") == 0);
+  return strcmp(kind, "{manageable}") == 0 || is_external_ext();
 }
+
 
 // Length of format string (e.g. "%.1234s") for printing ccstr below
 #define FORMAT_BUFFER_LEN 16
@@ -241,6 +247,7 @@ static Flag flagTable[] = {
 #ifdef SHARK
  SHARK_FLAGS(SHARK_DEVELOP_FLAG_STRUCT, SHARK_PD_DEVELOP_FLAG_STRUCT, SHARK_PRODUCT_FLAG_STRUCT, SHARK_PD_PRODUCT_FLAG_STRUCT, SHARK_DIAGNOSTIC_FLAG_STRUCT, SHARK_NOTPRODUCT_FLAG_STRUCT)
 #endif
+ FLAGTABLE_EXT
  {0, NULL, NULL}
 };
 
@@ -481,7 +488,7 @@ extern "C" {
   }
 }
 
-void CommandLineFlags::printSetFlags() {
+void CommandLineFlags::printSetFlags(outputStream* out) {
   // Print which flags were set on the command line
   // note: this method is called before the thread structure is in place
   //       which means resource allocation cannot be used.
@@ -500,11 +507,11 @@ void CommandLineFlags::printSetFlags() {
   // Print
   for (int i = 0; i < length; i++) {
     if (array[i]->origin /* naked field! */) {
-      array[i]->print_as_flag(tty);
-      tty->print(" ");
+      array[i]->print_as_flag(out);
+      out->print(" ");
     }
   }
-  tty->cr();
+  out->cr();
   FREE_C_HEAP_ARRAY(Flag*, array);
 }
 
@@ -517,7 +524,7 @@ void CommandLineFlags::verify() {
 
 #endif // PRODUCT
 
-void CommandLineFlags::printFlags(bool withComments) {
+void CommandLineFlags::printFlags(outputStream* out, bool withComments) {
   // Print the flags sorted by name
   // note: this method is called before the thread structure is in place
   //       which means resource allocation cannot be used.
@@ -534,10 +541,10 @@ void CommandLineFlags::printFlags(bool withComments) {
   qsort(array, length, sizeof(Flag*), compare_flags);
 
   // Print
-  tty->print_cr("[Global flags]");
+  out->print_cr("[Global flags]");
   for (int i = 0; i < length; i++) {
     if (array[i]->is_unlocked()) {
-      array[i]->print_on(tty, withComments);
+      array[i]->print_on(out, withComments);
     }
   }
   FREE_C_HEAP_ARRAY(Flag*, array);

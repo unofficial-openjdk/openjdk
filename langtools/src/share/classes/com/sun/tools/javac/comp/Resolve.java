@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,29 +25,36 @@
 
 package com.sun.tools.javac.comp;
 
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
-import com.sun.tools.javac.code.*;
-import com.sun.tools.javac.jvm.*;
-import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.api.Formattable.LocalizedString;
-import static com.sun.tools.javac.comp.Resolve.MethodResolutionPhase.*;
-
+import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.jvm.*;
+import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
-
-import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
+import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
-import javax.lang.model.element.ElementVisitor;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import javax.lang.model.element.ElementVisitor;
+
+import static com.sun.tools.javac.code.Flags.*;
+import static com.sun.tools.javac.code.Flags.BLOCK;
+import static com.sun.tools.javac.code.Kinds.*;
+import static com.sun.tools.javac.code.Kinds.ERRONEOUS;
+import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.comp.Resolve.MethodResolutionPhase.*;
+import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** Helper class for name resolution, used mostly by the attribution phase.
  *
@@ -73,8 +80,44 @@ public class Resolve {
     public final boolean varargsEnabled; // = source.allowVarargs();
     public final boolean allowMethodHandles;
     private final boolean debugResolve;
+    final EnumSet<VerboseResolutionMode> verboseResolutionMode;
 
     Scope polymorphicSignatureScope;
+
+    enum VerboseResolutionMode {
+        SUCCESS("success"),
+        FAILURE("failure"),
+        APPLICABLE("applicable"),
+        INAPPLICABLE("inapplicable"),
+        DEFERRED_INST("deferred-inference"),
+        PREDEF("predef"),
+        OBJECT_INIT("object-init"),
+        INTERNAL("internal");
+
+        String opt;
+
+        private VerboseResolutionMode(String opt) {
+            this.opt = opt;
+        }
+
+        static EnumSet<VerboseResolutionMode> getVerboseResolutionMode(Options opts) {
+            String s = opts.get("verboseResolution");
+            EnumSet<VerboseResolutionMode> res = EnumSet.noneOf(VerboseResolutionMode.class);
+            if (s == null) return res;
+            if (s.contains("all")) {
+                res = EnumSet.allOf(VerboseResolutionMode.class);
+            }
+            Collection<String> args = Arrays.asList(s.split(","));
+            for (VerboseResolutionMode mode : values()) {
+                if (args.contains(mode.opt)) {
+                    res.add(mode);
+                } else if (args.contains("-" + mode.opt)) {
+                    res.remove(mode);
+                }
+            }
+            return res;
+        }
+    }
 
     public static Resolve instance(Context context) {
         Resolve instance = context.get(resolveKey);
@@ -111,6 +154,7 @@ public class Resolve {
         varargsEnabled = source.allowVarargs();
         Options options = Options.instance(context);
         debugResolve = options.isSet("debugresolve");
+        verboseResolutionMode = VerboseResolutionMode.getVerboseResolutionMode(options);
         Target target = Target.instance(context);
         allowMethodHandles = target.hasMethodHandles();
         polymorphicSignatureScope = new Scope(syms.noSymbol);
@@ -430,52 +474,126 @@ public class Resolve {
             return false;
         }
     }
+    /**
+     * A check handler is used by the main method applicability routine in order
+     * to handle specific method applicability failures. It is assumed that a class
+     * implementing this interface should throw exceptions that are a subtype of
+     * InapplicableMethodException (see below). Such exception will terminate the
+     * method applicability check and propagate important info outwards (for the
+     * purpose of generating better diagnostics).
+     */
+    interface MethodCheckHandler {
+        /* The number of actuals and formals differ */
+        InapplicableMethodException arityMismatch();
+        /* An actual argument type does not conform to the corresponding formal type */
+        InapplicableMethodException argumentMismatch(boolean varargs, Type found, Type expected);
+        /* The element type of a varargs is not accessible in the current context */
+        InapplicableMethodException inaccessibleVarargs(Symbol location, Type expected);
+    }
+
+    /**
+     * Basic method check handler used within Resolve - all methods end up
+     * throwing InapplicableMethodException; a diagnostic fragment that describes
+     * the cause as to why the method is not applicable is set on the exception
+     * before it is thrown.
+     */
+    MethodCheckHandler resolveHandler = new MethodCheckHandler() {
+            public InapplicableMethodException arityMismatch() {
+                return inapplicableMethodException.setMessage("arg.length.mismatch");
+            }
+            public InapplicableMethodException argumentMismatch(boolean varargs, Type found, Type expected) {
+                String key = varargs ?
+                        "varargs.argument.mismatch" :
+                        "no.conforming.assignment.exists";
+                return inapplicableMethodException.setMessage(key,
+                        found, expected);
+            }
+            public InapplicableMethodException inaccessibleVarargs(Symbol location, Type expected) {
+                return inapplicableMethodException.setMessage("inaccessible.varargs.type",
+                        expected, Kinds.kindName(location), location);
+            }
+    };
+
     void checkRawArgumentsAcceptable(Env<AttrContext> env,
                                 List<Type> argtypes,
                                 List<Type> formals,
                                 boolean allowBoxing,
                                 boolean useVarargs,
                                 Warner warn) {
+        checkRawArgumentsAcceptable(env, List.<Type>nil(), argtypes, formals,
+                allowBoxing, useVarargs, warn, resolveHandler);
+    }
+
+    /**
+     * Main method applicability routine. Given a list of actual types A,
+     * a list of formal types F, determines whether the types in A are
+     * compatible (by method invocation conversion) with the types in F.
+     *
+     * Since this routine is shared between overload resolution and method
+     * type-inference, it is crucial that actual types are converted to the
+     * corresponding 'undet' form (i.e. where inference variables are replaced
+     * with undetvars) so that constraints can be propagated and collected.
+     *
+     * Moreover, if one or more types in A is a poly type, this routine calls
+     * Infer.instantiateArg in order to complete the poly type (this might involve
+     * deferred attribution).
+     *
+     * A method check handler (see above) is used in order to report errors.
+     */
+    List<Type> checkRawArgumentsAcceptable(Env<AttrContext> env,
+                                List<Type> undetvars,
+                                List<Type> argtypes,
+                                List<Type> formals,
+                                boolean allowBoxing,
+                                boolean useVarargs,
+                                Warner warn,
+                                MethodCheckHandler handler) {
         Type varargsFormal = useVarargs ? formals.last() : null;
+        ListBuffer<Type> checkedArgs = ListBuffer.lb();
+
         if (varargsFormal == null &&
                 argtypes.size() != formals.size()) {
-            throw inapplicableMethodException.setMessage("arg.length.mismatch"); // not enough args
+            throw handler.arityMismatch(); // not enough args
         }
 
         while (argtypes.nonEmpty() && formals.head != varargsFormal) {
-            boolean works = allowBoxing
-                ? types.isConvertible(argtypes.head, formals.head, warn)
-                : types.isSubtypeUnchecked(argtypes.head, formals.head, warn);
-            if (!works)
-                throw inapplicableMethodException.setMessage("no.conforming.assignment.exists",
-                        argtypes.head,
-                        formals.head);
+            Type undetFormal = infer.asUndetType(formals.head, undetvars);
+            Type capturedActual = types.capture(argtypes.head);
+            boolean works = allowBoxing ?
+                    types.isConvertible(capturedActual, undetFormal, warn) :
+                    types.isSubtypeUnchecked(capturedActual, undetFormal, warn);
+            if (!works) {
+                throw handler.argumentMismatch(false, argtypes.head, formals.head);
+            }
+            checkedArgs.append(capturedActual);
             argtypes = argtypes.tail;
             formals = formals.tail;
         }
 
-        if (formals.head != varargsFormal)
-            throw inapplicableMethodException.setMessage("arg.length.mismatch"); // not enough args
+        if (formals.head != varargsFormal) {
+            throw handler.arityMismatch(); // not enough args
+        }
 
         if (useVarargs) {
+            //note: if applicability check is triggered by most specific test,
+            //the last argument of a varargs is _not_ an array type (see JLS 15.12.2.5)
             Type elt = types.elemtype(varargsFormal);
+            Type eltUndet = infer.asUndetType(elt, undetvars);
             while (argtypes.nonEmpty()) {
-                if (!types.isConvertible(argtypes.head, elt, warn))
-                    throw inapplicableMethodException.setMessage("varargs.argument.mismatch",
-                            argtypes.head,
-                            elt);
+                Type capturedActual = types.capture(argtypes.head);
+                if (!types.isConvertible(capturedActual, eltUndet, warn)) {
+                    throw handler.argumentMismatch(true, argtypes.head, elt);
+                }
+                checkedArgs.append(capturedActual);
                 argtypes = argtypes.tail;
             }
             //check varargs element type accessibility
-            if (!isAccessible(env, elt)) {
+            if (undetvars.isEmpty() && !isAccessible(env, elt)) {
                 Symbol location = env.enclClass.sym;
-                throw inapplicableMethodException.setMessage("inaccessible.varargs.type",
-                            elt,
-                            Kinds.kindName(location),
-                            location);
+                throw handler.inaccessibleVarargs(location, elt);
             }
         }
-        return;
+        return checkedArgs.toList();
     }
     // where
         public static class InapplicableMethodException extends RuntimeException {
@@ -684,13 +802,16 @@ public class Resolve {
         if (!sym.isInheritedIn(site.tsym, types)) return bestSoFar;
         Assert.check(sym.kind < AMBIGUOUS);
         try {
-            rawInstantiate(env, site, sym, argtypes, typeargtypes,
+            Type mt = rawInstantiate(env, site, sym, argtypes, typeargtypes,
                                allowBoxing, useVarargs, Warner.noWarnings);
+            if (!operator) addVerboseApplicableCandidateDiag(sym ,mt);
         } catch (InapplicableMethodException ex) {
+            if (!operator) addVerboseInapplicableCandidateDiag(sym, ex.getDiagnostic());
             switch (bestSoFar.kind) {
             case ABSENT_MTH:
                 return wrongMethod.setWrongSym(sym, ex.getDiagnostic());
             case WRONG_MTH:
+                if (operator) return bestSoFar;
                 wrongMethods.addCandidate(currentStep, wrongMethod.sym, wrongMethod.explanation);
             case WRONG_MTHS:
                 return wrongMethods.addCandidate(currentStep, sym, ex.getDiagnostic());
@@ -708,6 +829,34 @@ public class Resolve {
             : mostSpecific(sym, bestSoFar, env, site,
                            allowBoxing && operator, useVarargs);
     }
+    //where
+        void addVerboseApplicableCandidateDiag(Symbol sym, Type inst) {
+            if (!verboseResolutionMode.contains(VerboseResolutionMode.APPLICABLE))
+                return;
+
+            JCDiagnostic subDiag = null;
+            if (inst.getReturnType().tag == FORALL) {
+                Type diagType = types.createMethodTypeWithReturn(inst.asMethodType(),
+                                                                ((ForAll)inst.getReturnType()).qtype);
+                subDiag = diags.fragment("partial.inst.sig", diagType);
+            } else if (sym.type.tag == FORALL) {
+                subDiag = diags.fragment("full.inst.sig", inst.asMethodType());
+            }
+
+            String key = subDiag == null ?
+                    "applicable.method.found" :
+                    "applicable.method.found.1";
+
+            verboseResolutionCandidateDiags.put(sym,
+                    diags.fragment(key, verboseResolutionCandidateDiags.size(), sym, subDiag));
+        }
+
+        void addVerboseInapplicableCandidateDiag(Symbol sym, JCDiagnostic subDiag) {
+            if (!verboseResolutionMode.contains(VerboseResolutionMode.INAPPLICABLE))
+                return;
+            verboseResolutionCandidateDiags.put(sym,
+                    diags.fragment("not.applicable.method.found", verboseResolutionCandidateDiags.size(), sym, subDiag));
+        }
 
     /* Return the most specific of the two methods for a call,
      *  given that both are accessible and applicable.
@@ -767,16 +916,13 @@ public class Resolve {
                                        m2.erasure(types).getParameterTypes()))
                     return ambiguityError(m1, m2);
                 // both abstract, neither overridden; merge throws clause and result type
-                Symbol mostSpecific;
-                if (types.returnTypeSubstitutable(mt1, mt2))
-                    mostSpecific = m1;
-                else if (types.returnTypeSubstitutable(mt2, mt1))
-                    mostSpecific = m2;
-                else {
+                Type mst = mostSpecificReturnType(mt1, mt2);
+                if (mst == null) {
                     // Theoretically, this can't happen, but it is possible
                     // due to error recovery or mixing incompatible class files
                     return ambiguityError(m1, m2);
                 }
+                Symbol mostSpecific = mst == mt1 ? m1 : m2;
                 List<Type> allThrown = chk.intersect(mt1.getThrownTypes(), mt2.getThrownTypes());
                 Type newSig = types.createMethodTypeWithThrown(mostSpecific.type, allThrown);
                 MethodSymbol result = new MethodSymbol(
@@ -859,6 +1005,28 @@ public class Resolve {
         }
     }
     //where
+    Type mostSpecificReturnType(Type mt1, Type mt2) {
+        Type rt1 = mt1.getReturnType();
+        Type rt2 = mt2.getReturnType();
+
+        if (mt1.tag == FORALL && mt2.tag == FORALL) {
+            //if both are generic methods, adjust return type ahead of subtyping check
+            rt1 = types.subst(rt1, mt1.getTypeArguments(), mt2.getTypeArguments());
+        }
+        //first use subtyping, then return type substitutability
+        if (types.isSubtype(rt1, rt2)) {
+            return mt1;
+        } else if (types.isSubtype(rt2, rt1)) {
+            return mt2;
+        } else if (types.returnTypeSubstitutable(mt1, mt2)) {
+            return mt1;
+        } else if (types.returnTypeSubstitutable(mt2, mt1)) {
+            return mt2;
+        } else {
+            return null;
+        }
+    }
+    //where
     Symbol ambiguityError(Symbol m1, Symbol m2) {
         if (((m1.flags() | m2.flags()) & CLASH) != 0) {
             return (m1.flags() & CLASH) == 0 ? m1 : m2;
@@ -886,8 +1054,9 @@ public class Resolve {
                       boolean allowBoxing,
                       boolean useVarargs,
                       boolean operator) {
+        verboseResolutionCandidateDiags.clear();
         Symbol bestSoFar = methodNotFound;
-        return findMethod(env,
+        bestSoFar = findMethod(env,
                           site,
                           name,
                           argtypes,
@@ -899,6 +1068,8 @@ public class Resolve {
                           useVarargs,
                           operator,
                           new HashSet<TypeSymbol>());
+        reportVerboseResolutionDiagnostic(env.tree.pos(), name, site, argtypes, typeargtypes, bestSoFar);
+        return bestSoFar;
     }
     // where
     private Symbol findMethod(Env<AttrContext> env,
@@ -956,6 +1127,37 @@ public class Resolve {
         }
         return bestSoFar;
     }
+    //where
+        void reportVerboseResolutionDiagnostic(DiagnosticPosition dpos, Name name, Type site, List<Type> argtypes, List<Type> typeargtypes, Symbol bestSoFar) {
+            boolean success = bestSoFar.kind < ERRONEOUS;
+
+            if (success && !verboseResolutionMode.contains(VerboseResolutionMode.SUCCESS)) {
+                return;
+            } else if (!success && !verboseResolutionMode.contains(VerboseResolutionMode.FAILURE)) {
+                return;
+            }
+
+            if (bestSoFar.name == names.init &&
+                    bestSoFar.owner == syms.objectType.tsym &&
+                    !verboseResolutionMode.contains(VerboseResolutionMode.OBJECT_INIT)) {
+                return; //skip diags for Object constructor resolution
+            } else if (site == syms.predefClass.type && !verboseResolutionMode.contains(VerboseResolutionMode.PREDEF)) {
+                return; //skip spurious diags for predef symbols (i.e. operators)
+            } else if (internalResolution && !verboseResolutionMode.contains(VerboseResolutionMode.INTERNAL)) {
+                return;
+            }
+
+            int pos = 0;
+            for (Symbol s : verboseResolutionCandidateDiags.keySet()) {
+                if (s == bestSoFar) break;
+                pos++;
+            }
+            String key = success ? "verbose.resolve.multi" : "verbose.resolve.multi.1";
+            JCDiagnostic main = diags.note(log.currentSource(), dpos, key, name, site.tsym, pos, currentStep,
+                    methodArguments(argtypes), methodArguments(typeargtypes));
+            JCDiagnostic d = new JCDiagnostic.MultilineDiagnostic(main, List.from(verboseResolutionCandidateDiags.values().toArray(new JCDiagnostic[verboseResolutionCandidateDiags.size()])));
+            log.report(d);
+        }
 
     /** Find unqualified method matching given name, type and value arguments.
      *  @param env       The current environment.
@@ -1144,7 +1346,7 @@ public class Resolve {
                 staticOnly = true;
         }
 
-        if (env.tree.getTag() != JCTree.IMPORT) {
+        if (!env.tree.hasTag(IMPORT)) {
             sym = findGlobalType(env, env.toplevel.namedImportScope, name);
             if (sym.exists()) return sym;
             else if (sym.kind < bestSoFar.kind) bestSoFar = sym;
@@ -1524,12 +1726,19 @@ public class Resolve {
                                         Type site, Name name,
                                         List<Type> argtypes,
                                         List<Type> typeargtypes) {
-        Symbol sym = resolveQualifiedMethod(
-            pos, env, site.tsym, site, name, argtypes, typeargtypes);
-        if (sym.kind == MTH) return (MethodSymbol)sym;
-        else throw new FatalError(
-                 diags.fragment("fatal.err.cant.locate.meth",
-                                name));
+        boolean prevInternal = internalResolution;
+        try {
+            internalResolution = true;
+            Symbol sym = resolveQualifiedMethod(
+                pos, env, site.tsym, site, name, argtypes, typeargtypes);
+            if (sym.kind == MTH) return (MethodSymbol)sym;
+            else throw new FatalError(
+                     diags.fragment("fatal.err.cant.locate.meth",
+                                    name));
+        }
+        finally {
+            internalResolution = prevInternal;
+        }
     }
 
     /** Resolve constructor.
@@ -1664,8 +1873,9 @@ public class Resolve {
      *  @param env       The environment current at the operation.
      *  @param argtypes  The types of the operands.
      */
-    Symbol resolveOperator(DiagnosticPosition pos, int optag,
+    Symbol resolveOperator(DiagnosticPosition pos, JCTree.Tag optag,
                            Env<AttrContext> env, List<Type> argtypes) {
+        startResolution();
         Name name = treeinfo.operatorName(optag);
         Symbol sym = findMethod(env, syms.predefClass.type, name, argtypes,
                                 null, false, false, true);
@@ -1682,7 +1892,7 @@ public class Resolve {
      *  @param env       The environment current at the operation.
      *  @param arg       The type of the operand.
      */
-    Symbol resolveUnaryOperator(DiagnosticPosition pos, int optag, Env<AttrContext> env, Type arg) {
+    Symbol resolveUnaryOperator(DiagnosticPosition pos, JCTree.Tag optag, Env<AttrContext> env, Type arg) {
         return resolveOperator(pos, optag, env, List.of(arg));
     }
 
@@ -1694,7 +1904,7 @@ public class Resolve {
      *  @param right     The types of the right operand.
      */
     Symbol resolveBinaryOperator(DiagnosticPosition pos,
-                                 int optag,
+                                 JCTree.Tag optag,
                                  Env<AttrContext> env,
                                  Type left,
                                  Type right) {
@@ -1809,7 +2019,7 @@ public class Resolve {
     private final LocalizedString noArgs = new LocalizedString("compiler.misc.no.args");
 
     public Object methodArguments(List<Type> argtypes) {
-        return argtypes.isEmpty() ? noArgs : argtypes;
+        return argtypes == null || argtypes.isEmpty() ? noArgs : argtypes;
     }
 
     /**
@@ -2356,9 +2566,14 @@ public class Resolve {
     private Map<MethodResolutionPhase, Symbol> methodResolutionCache =
         new HashMap<MethodResolutionPhase, Symbol>(MethodResolutionPhase.values().length);
 
+    private Map<Symbol, JCDiagnostic> verboseResolutionCandidateDiags =
+        new LinkedHashMap<Symbol, JCDiagnostic>();
+
     final List<MethodResolutionPhase> methodResolutionSteps = List.of(BASIC, BOX, VARARITY);
 
     private MethodResolutionPhase currentStep = null;
+
+    private boolean internalResolution = false;
 
     private MethodResolutionPhase firstErroneousResolutionPhase() {
         MethodResolutionPhase bestSoFar = BASIC;

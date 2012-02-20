@@ -42,10 +42,13 @@ import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
 
 import static com.sun.tools.javac.code.Flags.*;
+import static com.sun.tools.javac.code.Flags.ANNOTATION;
+import static com.sun.tools.javac.code.Flags.SYNCHRONIZED;
 import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.code.TypeTags.WILDCARD;
 
-import static com.sun.tools.javac.main.OptionName.*;
+import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** Type checking helper class for the attribution phase.
  *
@@ -106,7 +109,7 @@ public class Check {
         allowAnnotations = source.allowAnnotations();
         allowCovariantReturns = source.allowCovariantReturns();
         allowSimplifiedVarargs = source.allowSimplifiedVarargs();
-        complexInference = options.isSet(COMPLEXINFERENCE);
+        complexInference = options.isSet("complexinference");
         skipAnnotations = options.isSet("skipAnnotations");
         warnOnSyntheticConflicts = options.isSet("warnOnSyntheticConflicts");
         suppressAbortOnBadClassFile = options.isSet("suppressAbortOnBadClassFile");
@@ -306,7 +309,16 @@ public class Check {
      */
     void duplicateError(DiagnosticPosition pos, Symbol sym) {
         if (!sym.type.isErroneous()) {
-            log.error(pos, "already.defined", sym, sym.location());
+            Symbol location = sym.location();
+            if (location.kind == MTH &&
+                    ((MethodSymbol)location).isStaticOrInstanceInit()) {
+                log.error(pos, "already.defined.in.clinit", kindName(sym), sym,
+                        kindName(sym.location()), kindName(sym.location().enclClass()),
+                        sym.location().enclClass());
+            } else {
+                log.error(pos, "already.defined", kindName(sym), sym,
+                        kindName(sym.location()), sym.location());
+            }
         }
     }
 
@@ -978,7 +990,7 @@ public class Check {
      *  <i>not</i> final.
      */
     private long implicitEnumFinalFlag(JCTree tree) {
-        if (tree.getTag() != JCTree.CLASSDEF) return 0;
+        if (!tree.hasTag(CLASSDEF)) return 0;
         class SpecialTreeVisitor extends JCTree.Visitor {
             boolean specialized;
             SpecialTreeVisitor() {
@@ -1090,7 +1102,7 @@ public class Check {
                 // not parameterized at all.
                 if (tree.type.getEnclosingType().isRaw())
                     log.error(tree.pos(), "improperly.formed.type.inner.raw.param");
-                if (tree.clazz.getTag() == JCTree.SELECT)
+                if (tree.clazz.hasTag(SELECT))
                     visitSelectInternal((JCFieldAccess)tree.clazz);
             }
         }
@@ -1160,11 +1172,16 @@ public class Check {
             if (lint.isEnabled(LintCategory.RAW) &&
                 tree.type.tag == CLASS &&
                 !TreeInfo.isDiamond(tree) &&
-                !env.enclClass.name.isEmpty() &&  //anonymous or intersection
+                !withinAnonConstr(env) &&
                 tree.type.isRaw()) {
                 log.warning(LintCategory.RAW,
                         tree.pos(), "raw.class.use", tree.type, tree.type.tsym.type);
             }
+        }
+
+        boolean withinAnonConstr(Env<AttrContext> env) {
+            return env.enclClass.name.isEmpty() &&
+                    env.enclMethod != null && env.enclMethod.name == names.init;
         }
     }
 
@@ -2399,7 +2416,7 @@ public class Check {
 
         // count them off as they're annotated
         for (JCTree arg : a.args) {
-            if (arg.getTag() != JCTree.ASSIGN) continue; // recovery
+            if (!arg.hasTag(ASSIGN)) continue; // recovery
             JCAssign assign = (JCAssign) arg;
             Symbol m = TreeInfo.symbol(assign.lhs);
             if (m == null || m.type.isErroneous()) continue;
@@ -2428,12 +2445,12 @@ public class Check {
             a.args.tail == null)
             return;
 
-        if (a.args.head.getTag() != JCTree.ASSIGN) return; // error recovery
+        if (!a.args.head.hasTag(ASSIGN)) return; // error recovery
         JCAssign assign = (JCAssign) a.args.head;
         Symbol m = TreeInfo.symbol(assign.lhs);
         if (m.name != names.value) return;
         JCTree rhs = assign.rhs;
-        if (rhs.getTag() != JCTree.NEWARRAY) return;
+        if (!rhs.hasTag(NEWARRAY)) return;
         JCNewArray na = (JCNewArray) rhs;
         Set<Symbol> targets = new HashSet<Symbol>();
         for (JCTree elem : na.elems) {
@@ -2464,7 +2481,7 @@ public class Check {
                     warnDeprecated(pos, s);
                 }
             });
-        };
+        }
     }
 
     void checkSunAPI(final DiagnosticPosition pos, final Symbol s) {
@@ -2492,7 +2509,7 @@ public class Check {
         try {
             tree.sym.flags_field |= LOCKED;
             for (JCTree def : tree.defs) {
-                if (def.getTag() != JCTree.METHODDEF) continue;
+                if (!def.hasTag(METHODDEF)) continue;
                 JCMethodDecl meth = (JCMethodDecl)def;
                 checkAnnotationResType(meth.pos(), meth.restype.type);
             }
@@ -2600,7 +2617,7 @@ public class Check {
      */
     int checkOperator(DiagnosticPosition pos,
                        OperatorSymbol operator,
-                       int tag,
+                       JCTree.Tag tag,
                        Type left,
                        Type right) {
         if (operator.opcode == ByteCodes.error) {
@@ -2636,7 +2653,8 @@ public class Check {
      * Check for empty statements after if
      */
     void checkEmptyIf(JCIf tree) {
-        if (tree.thenpart.getTag() == JCTree.SKIP && tree.elsepart == null && lint.isEnabled(LintCategory.EMPTY))
+        if (tree.thenpart.hasTag(SKIP) && tree.elsepart == null &&
+                lint.isEnabled(LintCategory.EMPTY))
             log.warning(LintCategory.EMPTY, tree.thenpart.pos(), "empty.if");
     }
 
@@ -2740,7 +2758,7 @@ public class Check {
     }
         // where
         private boolean isCanonical(JCTree tree) {
-            while (tree.getTag() == JCTree.SELECT) {
+            while (tree.hasTag(SELECT)) {
                 JCFieldAccess s = (JCFieldAccess) tree;
                 if (s.sym.owner != TreeInfo.symbol(s.selected))
                     return false;

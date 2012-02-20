@@ -23,19 +23,19 @@
 #
 
 #------------------------------------------------------------------------
-# CC, CPP & AS
+# CC, CXX & AS
 
 # When cross-compiling the ALT_COMPILER_PATH points
 # to the cross-compilation toolset
 ifdef CROSS_COMPILE_ARCH
-CPP = $(ALT_COMPILER_PATH)/g++
+CXX = $(ALT_COMPILER_PATH)/g++
 CC  = $(ALT_COMPILER_PATH)/gcc
-HOSTCPP = g++
+HOSTCXX = g++
 HOSTCC  = gcc
 else
-CPP = g++
+CXX = g++
 CC  = gcc
-HOSTCPP = $(CPP)
+HOSTCXX = $(CXX)
 HOSTCC  = $(CC)
 endif
 
@@ -50,9 +50,8 @@ CC_VER_MINOR := $(shell $(CC) -dumpversion | sed 's/egcs-//' | cut -d'.' -f2)
 ifneq "$(shell expr \( $(CC_VER_MAJOR) \> 3 \) \| \( \( $(CC_VER_MAJOR) = 3 \) \& \( $(CC_VER_MINOR) \>= 4 \) \))" "0"
 # Allow the user to turn off precompiled headers from the command line.
 ifneq ($(USE_PRECOMPILED_HEADER),0)
-USE_PRECOMPILED_HEADER=1
 PRECOMPILED_HEADER_DIR=.
-PRECOMPILED_HEADER_SRC=$(GAMMADIR)/src/share/vm/precompiled.hpp
+PRECOMPILED_HEADER_SRC=$(GAMMADIR)/src/share/vm/precompiled/precompiled.hpp
 PRECOMPILED_HEADER=$(PRECOMPILED_HEADER_DIR)/precompiled.hpp.gch
 endif
 endif
@@ -165,7 +164,7 @@ DEPFLAGS = -MMD -MP -MF $(DEP_DIR)/$(@:%=%.d)
 endif
 
 # -DDONT_USE_PRECOMPILED_HEADER will exclude all includes in precompiled.hpp.
-ifneq ($(USE_PRECOMPILED_HEADER),1)
+ifeq ($(USE_PRECOMPILED_HEADER),0)
 CFLAGS += -DDONT_USE_PRECOMPILED_HEADER
 endif
 
@@ -225,6 +224,26 @@ ifeq ($(DEBUG_CFLAGS/$(BUILDARCH)),)
 DEBUG_CFLAGS += -gstabs
 endif
 
+ifneq ($(OBJCOPY),)
+  FASTDEBUG_CFLAGS/ia64  = -g
+  FASTDEBUG_CFLAGS/amd64 = -g
+  FASTDEBUG_CFLAGS/arm   = -g
+  FASTDEBUG_CFLAGS/ppc   = -g
+  FASTDEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
+  ifeq ($(FASTDEBUG_CFLAGS/$(BUILDARCH)),)
+    FASTDEBUG_CFLAGS += -gstabs
+  endif
+
+  OPT_CFLAGS/ia64  = -g
+  OPT_CFLAGS/amd64 = -g
+  OPT_CFLAGS/arm   = -g
+  OPT_CFLAGS/ppc   = -g
+  OPT_CFLAGS += $(OPT_CFLAGS/$(BUILDARCH))
+  ifeq ($(OPT_CFLAGS/$(BUILDARCH)),)
+    OPT_CFLAGS += -gstabs
+  endif
+endif
+
 # DEBUG_BINARIES overrides everything, use full -g debug information
 ifeq ($(DEBUG_BINARIES), true)
   DEBUG_CFLAGS = -g
@@ -241,4 +260,10 @@ endif
 # favor code space over speed
 ifdef MINIMIZE_RAM_USAGE
 CFLAGS += -DMINIMIZE_RAM_USAGE
+endif
+
+ifdef CROSS_COMPILE_ARCH
+  STRIP = $(ALT_COMPILER_PATH)/strip
+else
+  STRIP = strip
 endif

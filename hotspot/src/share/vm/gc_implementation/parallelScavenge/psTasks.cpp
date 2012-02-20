@@ -55,7 +55,6 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
   switch (_root_type) {
     case universe:
       Universe::oops_do(&roots_closure);
-      ReferenceProcessor::oops_do(&roots_closure);
       break;
 
     case jni_handles:
@@ -203,7 +202,8 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
                                            _gen->object_space(),
                                            _gen_top,
                                            pm,
-                                           _stripe_number);
+                                           _stripe_number,
+                                           _stripe_total);
 
     // Do the real work
     pm->drain_stacks(false);

@@ -501,6 +501,7 @@ class Instruction: public CompilationResourceObj {
   virtual RoundFP*          as_RoundFP()         { return NULL; }
   virtual ExceptionObject*  as_ExceptionObject() { return NULL; }
   virtual UnsafeOp*         as_UnsafeOp()        { return NULL; }
+  virtual ProfileInvoke*    as_ProfileInvoke()   { return NULL; }
 
   virtual void visit(InstructionVisitor* v)      = 0;
 
@@ -1601,6 +1602,7 @@ LEAF(BlockBegin, StateSplit)
   void set_depth_first_number(int dfn)           { _depth_first_number = dfn; }
   void set_linear_scan_number(int lsn)           { _linear_scan_number = lsn; }
   void set_end(BlockEnd* end);
+  void clear_end();
   void disconnect_from_graph();
   static void disconnect_edge(BlockBegin* from, BlockBegin* to);
   BlockBegin* insert_block_between(BlockBegin* sux);

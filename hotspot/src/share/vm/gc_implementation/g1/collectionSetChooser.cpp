@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include "gc_implementation/g1/collectionSetChooser.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
+#include "gc_implementation/g1/g1ErgoVerbose.hpp"
 #include "memory/space.inline.hpp"
 
 CSetChooserCache::CSetChooserCache() {
@@ -117,30 +118,6 @@ HeapRegion *CSetChooserCache::remove_first() {
   }
 }
 
-// this is a bit expensive... but we expect that it should not be called
-// to often.
-void CSetChooserCache::remove(HeapRegion *hr) {
-  assert(_occupancy > 0, "cache should not be empty");
-  assert(hr->sort_index() < -1, "should already be in the cache");
-  int index = get_index(hr->sort_index());
-  assert(_cache[index] == hr, "index should be correct");
-  int next_index = trim_index(index + 1);
-  int last_index = trim_index(_first + _occupancy - 1);
-  while (index != last_index) {
-    assert(_cache[next_index] != NULL, "should not be null");
-    _cache[index] = _cache[next_index];
-    _cache[index]->set_sort_index(get_sort_index(index));
-
-    index = next_index;
-    next_index = trim_index(next_index+1);
-  }
-  assert(index == last_index, "should have reached the last one");
-  _cache[index] = NULL;
-  hr->set_sort_index(-1);
-  --_occupancy;
-  assert(verify(), "cache should be consistent");
-}
-
 static inline int orderRegions(HeapRegion* hr1, HeapRegion* hr2) {
   if (hr1 == NULL) {
     if (hr2 == NULL) return 0;
@@ -196,43 +173,34 @@ bool CollectionSetChooser::verify() {
   HeapRegion *prev = NULL;
   while (index < _numMarkedRegions) {
     HeapRegion *curr = _markedRegions.at(index++);
-    if (curr != NULL) {
-      int si = curr->sort_index();
-      guarantee(!curr->is_young(), "should not be young!");
-      guarantee(si > -1 && si == (index-1), "sort index invariant");
-      if (prev != NULL) {
-        guarantee(orderRegions(prev, curr) != 1, "regions should be sorted");
-      }
-      prev = curr;
+    guarantee(curr != NULL, "Regions in _markedRegions array cannot be NULL");
+    int si = curr->sort_index();
+    guarantee(!curr->is_young(), "should not be young!");
+    guarantee(si > -1 && si == (index-1), "sort index invariant");
+    if (prev != NULL) {
+      guarantee(orderRegions(prev, curr) != 1, "regions should be sorted");
     }
+    prev = curr;
   }
   return _cache.verify();
 }
 #endif
 
-bool
-CollectionSetChooser::addRegionToCache() {
-  assert(!_cache.is_full(), "cache should not be full");
-
-  HeapRegion *hr = NULL;
-  while (hr == NULL && _curMarkedIndex < _numMarkedRegions) {
-    hr = _markedRegions.at(_curMarkedIndex++);
-  }
-  if (hr == NULL)
-    return false;
-  assert(!hr->is_young(), "should not be young!");
-  assert(hr->sort_index() == _curMarkedIndex-1, "sort_index invariant");
-  _markedRegions.at_put(hr->sort_index(), NULL);
-  _cache.insert(hr);
-  assert(!_cache.is_empty(), "cache should not be empty");
-  assert(verify(), "cache should be consistent");
-  return false;
-}
-
 void
 CollectionSetChooser::fillCache() {
-  while (!_cache.is_full() && addRegionToCache()) {
+  while (!_cache.is_full() && (_curMarkedIndex < _numMarkedRegions)) {
+    HeapRegion* hr = _markedRegions.at(_curMarkedIndex);
+    assert(hr != NULL,
+           err_msg("Unexpected NULL hr in _markedRegions at index %d",
+                   _curMarkedIndex));
+    _curMarkedIndex += 1;
+    assert(!hr->is_young(), "should not be young!");
+    assert(hr->sort_index() == _curMarkedIndex-1, "sort_index invariant");
+    _markedRegions.at_put(hr->sort_index(), NULL);
+    _cache.insert(hr);
+    assert(!_cache.is_empty(), "cache should not be empty");
   }
+  assert(verify(), "cache should be consistent");
 }
 
 void
@@ -287,7 +255,18 @@ void
 CollectionSetChooser::
 prepareForAddMarkedHeapRegionsPar(size_t n_regions, size_t chunkSize) {
   _first_par_unreserved_idx = 0;
-  size_t max_waste = ParallelGCThreads * chunkSize;
+  int n_threads = ParallelGCThreads;
+  if (UseDynamicNumberOfGCThreads) {
+    assert(G1CollectedHeap::heap()->workers()->active_workers() > 0,
+      "Should have been set earlier");
+    // This is defensive code. As the assertion above says, the number
+    // of active threads should be > 0, but in case there is some path
+    // or some improperly initialized variable with leads to no
+    // active threads, protect against that in a product build.
+    n_threads = MAX2(G1CollectedHeap::heap()->workers()->active_workers(),
+                     1U);
+  }
+  size_t max_waste = n_threads * chunkSize;
   // it should be aligned with respect to chunkSize
   size_t aligned_n_regions =
                      (n_regions + (chunkSize - 1)) / chunkSize * chunkSize;
@@ -297,6 +276,11 @@ prepareForAddMarkedHeapRegionsPar(size_t n_regions, size_t chunkSize) {
 
 jint
 CollectionSetChooser::getParMarkedHeapRegionChunk(jint n_regions) {
+  // Don't do this assert because this can be called at a point
+  // where the loop up stream will not execute again but might
+  // try to claim more chunks (loop test has not been done yet).
+  // assert(_markedRegions.length() > _first_par_unreserved_idx,
+  //  "Striding beyond the marked regions");
   jint res = Atomic::add(n_regions, &_first_par_unreserved_idx);
   assert(_markedRegions.length() > res + n_regions - 1,
          "Should already have been expanded");
@@ -333,20 +317,6 @@ CollectionSetChooser::updateAfterFullCollection() {
   clearMarkedHeapRegions();
 }
 
-void CollectionSetChooser::removeRegion(HeapRegion *hr) {
-  int si = hr->sort_index();
-  assert(si == -1 || hr->is_marked(), "Sort index not valid.");
-  if (si > -1) {
-    assert(_markedRegions.at(si) == hr, "Sort index not valid." );
-    _markedRegions.at_put(si, NULL);
-  } else if (si < -1) {
-    assert(_cache.region_in_cache(hr), "should be in the cache");
-    _cache.remove(hr);
-    assert(hr->sort_index() == -1, "sort index invariant");
-  }
-  hr->set_sort_index(-1);
-}
-
 // if time_remaining < 0.0, then this method should try to return
 // a region, whether it fits within the remaining time or not
 HeapRegion*
@@ -358,6 +328,9 @@ CollectionSetChooser::getNextMarkedRegion(double time_remaining,
   if (_cache.is_empty()) {
     assert(_curMarkedIndex == _numMarkedRegions,
            "if cache is empty, list should also be empty");
+    ergo_verbose0(ErgoCSetConstruction,
+                  "stop adding old regions to CSet",
+                  ergo_format_reason("cache is empty"));
     return NULL;
   }
 
@@ -368,10 +341,23 @@ CollectionSetChooser::getNextMarkedRegion(double time_remaining,
   if (g1p->adaptive_young_list_length()) {
     if (time_remaining - predicted_time < 0.0) {
       g1h->check_if_region_is_too_expensive(predicted_time);
+      ergo_verbose2(ErgoCSetConstruction,
+                    "stop adding old regions to CSet",
+                    ergo_format_reason("predicted old region time higher than remaining time")
+                    ergo_format_ms("predicted old region time")
+                    ergo_format_ms("remaining time"),
+                    predicted_time, time_remaining);
       return NULL;
     }
   } else {
-    if (predicted_time > 2.0 * avg_prediction) {
+    double threshold = 2.0 * avg_prediction;
+    if (predicted_time > threshold) {
+      ergo_verbose2(ErgoCSetConstruction,
+                    "stop adding old regions to CSet",
+                    ergo_format_reason("predicted old region time higher than threshold")
+                    ergo_format_ms("predicted old region time")
+                    ergo_format_ms("threshold"),
+                    predicted_time, threshold);
       return NULL;
     }
   }

@@ -139,8 +139,12 @@ static int     getMTU(JNIEnv *env, int sock, const char *ifname);
 #ifdef __solaris__
 static netif *enumIPvXInterfaces(JNIEnv *env, int sock, netif *ifs, int family);
 static int    getMacFromDevice(JNIEnv *env, const char* ifname, unsigned char* retbuf);
+
+#ifndef SIOCGLIFHWADDR
+#define SIOCGLIFHWADDR  _IOWR('i', 192, struct lifreq)
 #endif
 
+#endif
 
 /******************* Java entry points *****************************/
 
@@ -1105,7 +1109,7 @@ static netif *enumIPv6Interfaces(JNIEnv *env, int sock, netif *ifs) {
     uint8_t ipv6addr[16];
 
     if ((f = fopen(_PATH_PROCNET_IFINET6, "r")) != NULL) {
-        while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+        while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %08x %02x %02x %02x %20s\n",
                          addr6p[0], addr6p[1], addr6p[2], addr6p[3], addr6p[4], addr6p[5], addr6p[6], addr6p[7],
                          &if_idx, &plen, &scope, &dad_status, devname) != EOF) {
 
@@ -1567,6 +1571,20 @@ static int getMacAddress(JNIEnv *env, int sock, const char *ifname,  const struc
     struct sockaddr_in* sin;
     struct sockaddr_in ipAddr;
     int len, i;
+    struct lifreq lif;
+
+    /* First, try the new (S11) SIOCGLIFHWADDR ioctl(). If that fails
+     * try the old way.
+     */
+    memset(&lif, 0, sizeof(lif));
+    strlcpy(lif.lifr_name, ifname, sizeof(lif.lifr_name));
+
+    if (ioctl(sock, SIOCGLIFHWADDR, &lif) != -1) {
+        struct sockaddr_dl *sp;
+        sp = (struct sockaddr_dl *)&lif.lifr_addr;
+        memcpy(buf, &sp->sdl_data[0], sp->sdl_alen);
+        return sp->sdl_alen;
+    }
 
    /**
     * On Solaris we have to use DLPI, but it will only work if we have
@@ -1576,34 +1594,29 @@ static int getMacAddress(JNIEnv *env, int sock, const char *ifname,  const struc
     if ((len = getMacFromDevice(env, ifname, buf))  == 0) {
         /*DLPI failed - trying to do arp lookup*/
 
-       if (addr == NULL) {
-          /**
-           * No IPv4 address for that interface, so can't do an ARP lookup.
-           */
-           return -1;
-      }
+        if (addr == NULL) {
+            /**
+             * No IPv4 address for that interface, so can't do an ARP lookup.
+             */
+             return -1;
+         }
 
-      len = 6; //???
+         len = 6; //???
 
-      sin = (struct sockaddr_in *) &arpreq.arp_pa;
-      memset((char *) &arpreq, 0, sizeof(struct arpreq));
-      ipAddr.sin_port = 0;
-      ipAddr.sin_family = AF_INET;
-      memcpy(&ipAddr.sin_addr, addr, sizeof(struct in_addr));
-      memcpy(&arpreq.arp_pa, &ipAddr, sizeof(struct sockaddr_in));
-      arpreq.arp_flags= ATF_PUBL;
+         sin = (struct sockaddr_in *) &arpreq.arp_pa;
+         memset((char *) &arpreq, 0, sizeof(struct arpreq));
+         ipAddr.sin_port = 0;
+         ipAddr.sin_family = AF_INET;
+         memcpy(&ipAddr.sin_addr, addr, sizeof(struct in_addr));
+         memcpy(&arpreq.arp_pa, &ipAddr, sizeof(struct sockaddr_in));
+         arpreq.arp_flags= ATF_PUBL;
 
-      if (ioctl(sock, SIOCGARP, &arpreq) < 0) {
-          if (errno != ENXIO) {
-              // "No such device or address" means no hardware address, so it's
-              // normal don't throw an exception
-              NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "SocketException", "IOCTL failed");
-              return -1;
-          }
-     }
+         if (ioctl(sock, SIOCGARP, &arpreq) < 0) {
+             return -1;
+         }
 
-     memcpy(buf, &arpreq.arp_ha.sa_data[0], len );
-  }
+         memcpy(buf, &arpreq.arp_ha.sa_data[0], len );
+    }
 
     /*
      * All bytes to 0 means no hardware address.

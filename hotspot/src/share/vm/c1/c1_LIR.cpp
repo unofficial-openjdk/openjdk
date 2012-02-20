@@ -142,7 +142,8 @@ void LIR_Address::verify() const {
 #endif
 #ifdef ARM
   assert(disp() == 0 || index()->is_illegal(), "can't have both");
-  assert(-4096 < disp() && disp() < 4096, "architecture constraint");
+  // Note: offsets higher than 4096 must not be rejected here. They can
+  // be handled by the back-end or will be rejected if not.
 #endif
 #ifdef _LP64
   assert(base()->is_cpu_register(), "wrong base operand");
@@ -853,6 +854,9 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       if (opTypeCheck->_info_for_exception)       do_info(opTypeCheck->_info_for_exception);
       if (opTypeCheck->_info_for_patch)           do_info(opTypeCheck->_info_for_patch);
       if (opTypeCheck->_object->is_valid())       do_input(opTypeCheck->_object);
+      if (op->code() == lir_store_check && opTypeCheck->_object->is_valid()) {
+        do_temp(opTypeCheck->_object);
+      }
       if (opTypeCheck->_array->is_valid())        do_input(opTypeCheck->_array);
       if (opTypeCheck->_tmp1->is_valid())         do_temp(opTypeCheck->_tmp1);
       if (opTypeCheck->_tmp2->is_valid())         do_temp(opTypeCheck->_tmp2);
@@ -1393,8 +1397,15 @@ void LIR_List::instanceof(LIR_Opr result, LIR_Opr object, ciKlass* klass, LIR_Op
 }
 
 
-void LIR_List::store_check(LIR_Opr object, LIR_Opr array, LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3, CodeEmitInfo* info_for_exception) {
-  append(new LIR_OpTypeCheck(lir_store_check, object, array, tmp1, tmp2, tmp3, info_for_exception));
+void LIR_List::store_check(LIR_Opr object, LIR_Opr array, LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3,
+                           CodeEmitInfo* info_for_exception, ciMethod* profiled_method, int profiled_bci) {
+  LIR_OpTypeCheck* c = new LIR_OpTypeCheck(lir_store_check, object, array, tmp1, tmp2, tmp3, info_for_exception);
+  if (profiled_method != NULL) {
+    c->set_profiled_method(profiled_method);
+    c->set_profiled_bci(profiled_bci);
+    c->set_should_profile(true);
+  }
+  append(c);
 }
 
 

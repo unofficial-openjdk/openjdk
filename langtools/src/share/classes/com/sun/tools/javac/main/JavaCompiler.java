@@ -48,20 +48,21 @@ import javax.tools.DiagnosticListener;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
 
-import com.sun.tools.javac.file.JavacFileManager;
-import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.comp.*;
+import com.sun.tools.javac.file.JavacFileManager;
+import com.sun.tools.javac.jvm.*;
+import com.sun.tools.javac.parser.*;
+import com.sun.tools.javac.processing.*;
 import com.sun.tools.javac.tree.*;
 import com.sun.tools.javac.tree.JCTree.*;
-import com.sun.tools.javac.parser.*;
-import com.sun.tools.javac.comp.*;
-import com.sun.tools.javac.jvm.*;
-import com.sun.tools.javac.processing.*;
+import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.Log.WriterKind;
 
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
-import static com.sun.tools.javac.main.OptionName.*;
+import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
 import static com.sun.tools.javac.util.ListBuffer.lb;
 
@@ -488,6 +489,10 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      */
     public Todo todo;
 
+    /** A list of items to be closed when the compilation is complete.
+     */
+    public List<Closeable> closeables = List.nil();
+
     /** Ordered list of compiler phases for each compilation unit. */
     public enum CompileState {
         PARSE(1),
@@ -812,8 +817,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
 
         // forcibly set the equivalent of -Xlint:-options, so that no further
         // warnings about command line options are generated from this point on
-        options.put(XLINT_CUSTOM + "-" + LintCategory.OPTIONS.option, "true");
-        options.remove(XLINT_CUSTOM + LintCategory.OPTIONS.option);
+        options.put(XLINT_CUSTOM.text + "-" + LintCategory.OPTIONS.option, "true");
+        options.remove(XLINT_CUSTOM.text + LintCategory.OPTIONS.option);
 
         start_msec = now();
 
@@ -1502,20 +1507,20 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                     for (List<JCTree> it = tree.defs; it.tail != null; it = it.tail) {
                         JCTree t = it.head;
                         switch (t.getTag()) {
-                        case JCTree.CLASSDEF:
+                        case CLASSDEF:
                             if (isInterface ||
                                 (((JCClassDecl) t).mods.flags & (Flags.PROTECTED|Flags.PUBLIC)) != 0 ||
                                 (((JCClassDecl) t).mods.flags & (Flags.PRIVATE)) == 0 && ((JCClassDecl) t).sym.packge().getQualifiedName() == names.java_lang)
                                 newdefs.append(t);
                             break;
-                        case JCTree.METHODDEF:
+                        case METHODDEF:
                             if (isInterface ||
                                 (((JCMethodDecl) t).mods.flags & (Flags.PROTECTED|Flags.PUBLIC)) != 0 ||
                                 ((JCMethodDecl) t).sym.name == names.init ||
                                 (((JCMethodDecl) t).mods.flags & (Flags.PRIVATE)) == 0 && ((JCMethodDecl) t).sym.packge().getQualifiedName() == names.java_lang)
                                 newdefs.append(t);
                             break;
-                        case JCTree.VARDEF:
+                        case VARDEF:
                             if (isInterface || (((JCVariableDecl) t).mods.flags & (Flags.PROTECTED|Flags.PUBLIC)) != 0 ||
                                 (((JCVariableDecl) t).mods.flags & (Flags.PRIVATE)) == 0 && ((JCVariableDecl) t).sym.packge().getQualifiedName() == names.java_lang)
                                 newdefs.append(t);
@@ -1581,11 +1586,24 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             if (names != null && disposeNames)
                 names.dispose();
             names = null;
+
+            for (Closeable c: closeables) {
+                try {
+                    c.close();
+                } catch (IOException e) {
+                    // When javac uses JDK 7 as a baseline, this code would be
+                    // better written to set any/all exceptions from all the
+                    // Closeables as suppressed exceptions on the FatalError
+                    // that is thrown.
+                    JCDiagnostic msg = diagFactory.fragment("fatal.err.cant.close");
+                    throw new FatalError(msg, e);
+                }
+            }
         }
     }
 
     protected void printNote(String lines) {
-        Log.printLines(log.noticeWriter, lines);
+        log.printRawLines(Log.WriterKind.NOTICE, lines);
     }
 
     /** Print numbers of errors and warnings.
@@ -1597,8 +1615,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                 key = "count." + kind;
             else
                 key = "count." + kind + ".plural";
-            log.printErrLines(key, String.valueOf(count));
-            log.errWriter.flush();
+            log.printLines(WriterKind.ERROR, key, String.valueOf(count));
+            log.flush(Log.WriterKind.ERROR);
         }
     }
 
@@ -1615,6 +1633,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
         keepComments = prev.keepComments;
         start_msec = prev.start_msec;
         hasBeenUsed = true;
+        closeables = prev.closeables;
+        prev.closeables = List.nil();
     }
 
     public static void enableLogging() {

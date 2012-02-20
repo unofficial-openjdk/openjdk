@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 
 /**
@@ -64,7 +64,12 @@ int main(int argc, const char* argv[]) {
     DEFX(O_TRUNC);
     DEFX(O_SYNC);
     DEFX(O_DSYNC);
+#ifdef O_NOFOLLOW
     DEFX(O_NOFOLLOW);
+#else
+    // not supported (dummy values will not be used at runtime).
+    emitX("O_NOFOLLOW", 0x0);
+#endif
 
     // mode masks
     emitX("S_IAMB",
@@ -108,6 +113,7 @@ int main(int argc, const char* argv[]) {
     DEF(EROFS);
     DEF(ENODATA);
     DEF(ERANGE);
+    DEF(EMFILE);
 
     // flags used with openat/unlinkat/etc.
 #if defined(AT_SYMLINK_NOFOLLOW) && defined(AT_REMOVEDIR)

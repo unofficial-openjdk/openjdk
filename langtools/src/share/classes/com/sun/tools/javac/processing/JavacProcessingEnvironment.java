@@ -82,7 +82,7 @@ import com.sun.tools.javac.util.Options;
 
 import static javax.tools.StandardLocation.*;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
-import static com.sun.tools.javac.main.OptionName.*;
+import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.code.Lint.LintCategory.PROCESSING;
 
 /**
@@ -225,6 +225,11 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                     ? fileManager.getClassLoader(ANNOTATION_PROCESSOR_PATH)
                     : fileManager.getClassLoader(CLASS_PATH);
 
+                if (processorClassLoader != null && processorClassLoader instanceof Closeable) {
+                    JavaCompiler compiler = JavaCompiler.instance(context);
+                    compiler.closeables = compiler.closeables.prepend((Closeable) processorClassLoader);
+                }
+
                 /*
                  * If the "-processor" option is used, search the appropriate
                  * path for the named class.  Otherwise, use a service
@@ -295,59 +300,24 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
     /**
      * Use a service loader appropriate for the platform to provide an
-     * iterator over annotations processors.  If
-     * java.util.ServiceLoader is present use it, otherwise, use
-     * sun.misc.Service, otherwise fail if a loader is needed.
+     * iterator over annotations processors; fails if a loader is
+     * needed but unavailable.
      */
     private class ServiceIterator implements Iterator<Processor> {
-        // The to-be-wrapped iterator.
-        private Iterator<?> iterator;
+        private Iterator<Processor> iterator;
         private Log log;
-        private Class<?> loaderClass;
-        private boolean jusl;
-        private Object loader;
+        private ServiceLoader<Processor> loader;
 
         ServiceIterator(ClassLoader classLoader, Log log) {
-            String loadMethodName;
-
             this.log = log;
             try {
                 try {
-                    loaderClass = Class.forName("java.util.ServiceLoader");
-                    loadMethodName = "load";
-                    jusl = true;
-                } catch (ClassNotFoundException cnfe) {
-                    try {
-                        loaderClass = Class.forName("sun.misc.Service");
-                        loadMethodName = "providers";
-                        jusl = false;
-                    } catch (ClassNotFoundException cnfe2) {
-                        // Fail softly if a loader is not actually needed.
-                        this.iterator = handleServiceLoaderUnavailability("proc.no.service",
-                                                                          null);
-                        return;
-                    }
+                    loader = ServiceLoader.load(Processor.class, classLoader);
+                    this.iterator = loader.iterator();
+                } catch (Exception e) {
+                    // Fail softly if a loader is not actually needed.
+                    this.iterator = handleServiceLoaderUnavailability("proc.no.service", null);
                 }
-
-                // java.util.ServiceLoader.load or sun.misc.Service.providers
-                Method loadMethod = loaderClass.getMethod(loadMethodName,
-                                                          Class.class,
-                                                          ClassLoader.class);
-
-                Object result = loadMethod.invoke(null,
-                                                  Processor.class,
-                                                  classLoader);
-
-                // For java.util.ServiceLoader, we have to call another
-                // method to get the iterator.
-                if (jusl) {
-                    loader = result; // Store ServiceLoader to call reload later
-                    Method m = loaderClass.getMethod("iterator");
-                    result = m.invoke(result); // serviceLoader.iterator();
-                }
-
-                // The result should now be an iterator.
-                this.iterator = (Iterator<?>) result;
             } catch (Throwable t) {
                 log.error("proc.service.problem");
                 throw new Abort(t);
@@ -357,25 +327,21 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         public boolean hasNext() {
             try {
                 return iterator.hasNext();
+            } catch(ServiceConfigurationError sce) {
+                log.error("proc.bad.config.file", sce.getLocalizedMessage());
+                throw new Abort(sce);
             } catch (Throwable t) {
-                if ("ServiceConfigurationError".
-                    equals(t.getClass().getSimpleName())) {
-                    log.error("proc.bad.config.file", t.getLocalizedMessage());
-                }
                 throw new Abort(t);
             }
         }
 
         public Processor next() {
             try {
-                return (Processor)(iterator.next());
+                return iterator.next();
+            } catch (ServiceConfigurationError sce) {
+                log.error("proc.bad.config.file", sce.getLocalizedMessage());
+                throw new Abort(sce);
             } catch (Throwable t) {
-                if ("ServiceConfigurationError".
-                    equals(t.getClass().getSimpleName())) {
-                    log.error("proc.bad.config.file", t.getLocalizedMessage());
-                } else {
-                    log.error("proc.processor.constructor.error", t.getLocalizedMessage());
-                }
                 throw new Abort(t);
             }
         }
@@ -385,11 +351,9 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         }
 
         public void close() {
-            if (jusl) {
+            if (loader != null) {
                 try {
-                    // Call java.util.ServiceLoader.reload
-                    Method reloadMethod = loaderClass.getMethod("reload");
-                    reloadMethod.invoke(loader);
+                    loader.reload();
                 } catch(Exception e) {
                     ; // Ignore problems during a call to reload.
                 }
@@ -724,7 +688,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
                 ps.removeSupportedOptions(unmatchedProcessorOptions);
 
                 if (printProcessorInfo || verbose) {
-                    log.printNoteLines("x.print.processor.info",
+                    log.printLines("x.print.processor.info",
                             ps.processor.getClass().getName(),
                             matchedNames.toString(),
                             processingResult);
@@ -761,7 +725,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
      * Leave class public for external testing purposes.
      */
     public static class ComputeAnnotationSet extends
-        ElementScanner7<Set<TypeElement>, Set<TypeElement>> {
+        ElementScanner8<Set<TypeElement>, Set<TypeElement>> {
         final Elements elements;
 
         public ComputeAnnotationSet(Elements elements) {
@@ -1050,7 +1014,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             if (printRounds || verbose) {
                 List<ClassSymbol> tlc = lastRound ? List.<ClassSymbol>nil() : topLevelClasses;
                 Set<TypeElement> ap = lastRound ? Collections.<TypeElement>emptySet() : annotationsPresent;
-                log.printNoteLines("x.print.rounds",
+                log.printLines("x.print.rounds",
                         number,
                         "{" + tlc.toString(", ") + "}",
                         ap,
@@ -1069,12 +1033,10 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             Assert.checkNonNull(options);
             next.put(Options.optionsKey, options);
 
-            PrintWriter out = context.get(Log.outKey);
-            Assert.checkNonNull(out);
-            next.put(Log.outKey, out);
             Locale locale = context.get(Locale.class);
             if (locale != null)
                 next.put(Locale.class, locale);
+
             Assert.checkNonNull(messages);
             next.put(JavacMessages.messagesKey, messages);
 
@@ -1108,9 +1070,12 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
             Assert.checkNonNull(names);
             next.put(Names.namesKey, names);
 
-            Keywords keywords = Keywords.instance(context);
-            Assert.checkNonNull(keywords);
-            next.put(Keywords.keywordsKey, keywords);
+            Tokens tokens = Tokens.instance(context);
+            Assert.checkNonNull(tokens);
+            next.put(Tokens.tokensKey, tokens);
+
+            // propogate the log's writers directly, instead of going through context
+            Log.instance(next).setWriters(log);
 
             JavaCompiler oldCompiler = JavaCompiler.instance(context);
             JavaCompiler nextCompiler = JavaCompiler.instance(next);
@@ -1252,21 +1217,13 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         if (discoveredProcs != null) // Make calling close idempotent
             discoveredProcs.close();
         discoveredProcs = null;
-        if (processorClassLoader != null && processorClassLoader instanceof Closeable) {
-            try {
-                ((Closeable) processorClassLoader).close();
-            } catch (IOException e) {
-                JCDiagnostic msg = diags.fragment("fatal.err.cant.close.loader");
-                throw new FatalError(msg, e);
-            }
-        }
     }
 
     private List<ClassSymbol> getTopLevelClasses(List<? extends JCCompilationUnit> units) {
         List<ClassSymbol> classes = List.nil();
         for (JCCompilationUnit unit : units) {
             for (JCTree node : unit.defs) {
-                if (node.getTag() == JCTree.CLASSDEF) {
+                if (node.hasTag(JCTree.Tag.CLASSDEF)) {
                     ClassSymbol sym = ((JCClassDecl) node).sym;
                     Assert.checkNonNull(sym);
                     classes = classes.prepend(sym);
