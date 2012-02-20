@@ -25,7 +25,6 @@
 
 package java.lang;
 import java.util.Random;
-import sun.misc.FpUtils;
 import sun.misc.DoubleConsts;
 
 /**
@@ -162,6 +161,8 @@ public final class StrictMath {
      *          in radians.
      */
     public static strictfp double toRadians(double angdeg) {
+        // Do not delegate to Math.toRadians(angdeg) because
+        // this method has the strictfp modifier.
         return angdeg / 180.0 * PI;
     }
 
@@ -177,6 +178,8 @@ public final class StrictMath {
      *          in degrees.
      */
     public static strictfp double toDegrees(double angrad) {
+        // Do not delegate to Math.toDegrees(angrad) because
+        // this method has the strictfp modifier.
         return angrad * 180.0 / PI;
     }
 
@@ -428,7 +431,7 @@ public final class StrictMath {
          * 1.0, which is exact too.
          */
         double twoToThe52 = (double)(1L << 52); // 2^52
-        double sign = FpUtils.rawCopySign(1.0, a); // preserve sign info
+        double sign = Math.copySign(1.0, a); // preserve sign info
         a = Math.abs(a);
 
         if (a < twoToThe52) { // E_min <= ilogb(a) <= 51
@@ -709,7 +712,7 @@ public final class StrictMath {
      * @return  the absolute value of the argument.
      */
     public static int abs(int a) {
-        return (a < 0) ? -a : a;
+        return Math.abs(a);
     }
 
     /**
@@ -726,7 +729,7 @@ public final class StrictMath {
      * @return  the absolute value of the argument.
      */
     public static long abs(long a) {
-        return (a < 0) ? -a : a;
+        return Math.abs(a);
     }
 
     /**
@@ -745,7 +748,7 @@ public final class StrictMath {
      * @return  the absolute value of the argument.
      */
     public static float abs(float a) {
-        return (a <= 0.0F) ? 0.0F - a : a;
+        return Math.abs(a);
     }
 
     /**
@@ -764,7 +767,7 @@ public final class StrictMath {
      * @return  the absolute value of the argument.
      */
     public static double abs(double a) {
-        return (a <= 0.0D) ? 0.0D - a : a;
+        return Math.abs(a);
     }
 
     /**
@@ -778,7 +781,7 @@ public final class StrictMath {
      * @return  the larger of {@code a} and {@code b}.
      */
     public static int max(int a, int b) {
-        return (a >= b) ? a : b;
+        return Math.max(a, b);
     }
 
     /**
@@ -792,12 +795,8 @@ public final class StrictMath {
      * @return  the larger of {@code a} and {@code b}.
         */
     public static long max(long a, long b) {
-        return (a >= b) ? a : b;
+        return Math.max(a, b);
     }
-
-    // Use raw bit-wise conversions on guaranteed non-NaN arguments.
-    private static long negativeZeroFloatBits  = Float.floatToRawIntBits(-0.0f);
-    private static long negativeZeroDoubleBits = Double.doubleToRawLongBits(-0.0d);
 
     /**
      * Returns the greater of two {@code float} values.  That is,
@@ -814,15 +813,7 @@ public final class StrictMath {
      * @return  the larger of {@code a} and {@code b}.
      */
     public static float max(float a, float b) {
-        if (a != a)
-            return a;   // a is NaN
-        if ((a == 0.0f) &&
-            (b == 0.0f) &&
-            (Float.floatToRawIntBits(a) == negativeZeroFloatBits)) {
-            // Raw conversion ok since NaN can't map to -0.0.
-            return b;
-        }
-        return (a >= b) ? a : b;
+        return Math.max(a, b);
     }
 
     /**
@@ -840,15 +831,7 @@ public final class StrictMath {
      * @return  the larger of {@code a} and {@code b}.
      */
     public static double max(double a, double b) {
-        if (a != a)
-            return a;   // a is NaN
-        if ((a == 0.0d) &&
-            (b == 0.0d) &&
-            (Double.doubleToRawLongBits(a) == negativeZeroDoubleBits)) {
-            // Raw conversion ok since NaN can't map to -0.0.
-            return b;
-        }
-        return (a >= b) ? a : b;
+        return Math.max(a, b);
     }
 
     /**
@@ -862,7 +845,7 @@ public final class StrictMath {
      * @return  the smaller of {@code a} and {@code b}.
      */
     public static int min(int a, int b) {
-        return (a <= b) ? a : b;
+        return Math.min(a, b);
     }
 
     /**
@@ -876,7 +859,7 @@ public final class StrictMath {
      * @return  the smaller of {@code a} and {@code b}.
      */
     public static long min(long a, long b) {
-        return (a <= b) ? a : b;
+        return Math.min(a, b);
     }
 
     /**
@@ -894,15 +877,7 @@ public final class StrictMath {
      * @return  the smaller of {@code a} and {@code b.}
      */
     public static float min(float a, float b) {
-        if (a != a)
-            return a;   // a is NaN
-        if ((a == 0.0f) &&
-            (b == 0.0f) &&
-            (Float.floatToRawIntBits(b) == negativeZeroFloatBits)) {
-            // Raw conversion ok since NaN can't map to -0.0.
-            return b;
-        }
-        return (a <= b) ? a : b;
+        return Math.min(a, b);
     }
 
     /**
@@ -920,23 +895,15 @@ public final class StrictMath {
      * @return  the smaller of {@code a} and {@code b}.
      */
     public static double min(double a, double b) {
-        if (a != a)
-            return a;   // a is NaN
-        if ((a == 0.0d) &&
-            (b == 0.0d) &&
-            (Double.doubleToRawLongBits(b) == negativeZeroDoubleBits)) {
-            // Raw conversion ok since NaN can't map to -0.0.
-            return b;
-        }
-        return (a <= b) ? a : b;
+        return Math.min(a, b);
     }
 
     /**
-     * Returns the size of an ulp of the argument.  An ulp of a
-     * {@code double} value is the positive distance between this
-     * floating-point value and the {@code double} value next
-     * larger in magnitude.  Note that for non-NaN <i>x</i>,
-     * <code>ulp(-<i>x</i>) == ulp(<i>x</i>)</code>.
+     * Returns the size of an ulp of the argument.  An ulp, unit in
+     * the last place, of a {@code double} value is the positive
+     * distance between this floating-point value and the {@code
+     * double} value next larger in magnitude.  Note that for non-NaN
+     * <i>x</i>, <code>ulp(-<i>x</i>) == ulp(<i>x</i>)</code>.
      *
      * <p>Special Cases:
      * <ul>
@@ -955,15 +922,15 @@ public final class StrictMath {
      * @since 1.5
      */
     public static double ulp(double d) {
-        return sun.misc.FpUtils.ulp(d);
+        return Math.ulp(d);
     }
 
     /**
-     * Returns the size of an ulp of the argument.  An ulp of a
-     * {@code float} value is the positive distance between this
-     * floating-point value and the {@code float} value next
-     * larger in magnitude.  Note that for non-NaN <i>x</i>,
-     * <code>ulp(-<i>x</i>) == ulp(<i>x</i>)</code>.
+     * Returns the size of an ulp of the argument.  An ulp, unit in
+     * the last place, of a {@code float} value is the positive
+     * distance between this floating-point value and the {@code
+     * float} value next larger in magnitude.  Note that for non-NaN
+     * <i>x</i>, <code>ulp(-<i>x</i>) == ulp(<i>x</i>)</code>.
      *
      * <p>Special Cases:
      * <ul>
@@ -982,7 +949,7 @@ public final class StrictMath {
      * @since 1.5
      */
     public static float ulp(float f) {
-        return sun.misc.FpUtils.ulp(f);
+        return Math.ulp(f);
     }
 
     /**
@@ -1003,7 +970,7 @@ public final class StrictMath {
      * @since 1.5
      */
     public static double signum(double d) {
-        return sun.misc.FpUtils.signum(d);
+        return Math.signum(d);
     }
 
     /**
@@ -1024,7 +991,7 @@ public final class StrictMath {
      * @since 1.5
      */
     public static float signum(float f) {
-        return sun.misc.FpUtils.signum(f);
+        return Math.signum(f);
     }
 
     /**
@@ -1202,7 +1169,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static double copySign(double magnitude, double sign) {
-        return sun.misc.FpUtils.copySign(magnitude, sign);
+        return Math.copySign(magnitude, (Double.isNaN(sign)?1.0d:sign));
     }
 
     /**
@@ -1218,7 +1185,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static float copySign(float magnitude, float sign) {
-        return sun.misc.FpUtils.copySign(magnitude, sign);
+        return Math.copySign(magnitude, (Float.isNaN(sign)?1.0f:sign));
     }
     /**
      * Returns the unbiased exponent used in the representation of a
@@ -1234,7 +1201,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static int getExponent(float f) {
-        return sun.misc.FpUtils.getExponent(f);
+        return Math.getExponent(f);
     }
 
     /**
@@ -1251,7 +1218,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static int getExponent(double d) {
-        return sun.misc.FpUtils.getExponent(d);
+        return Math.getExponent(d);
     }
 
     /**
@@ -1294,7 +1261,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static double nextAfter(double start, double direction) {
-        return sun.misc.FpUtils.nextAfter(start, direction);
+        return Math.nextAfter(start, direction);
     }
 
     /**
@@ -1336,7 +1303,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static float nextAfter(float start, double direction) {
-        return sun.misc.FpUtils.nextAfter(start, direction);
+        return Math.nextAfter(start, direction);
     }
 
     /**
@@ -1365,7 +1332,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static double nextUp(double d) {
-        return sun.misc.FpUtils.nextUp(d);
+        return Math.nextUp(d);
     }
 
     /**
@@ -1394,9 +1361,66 @@ public final class StrictMath {
      * @since 1.6
      */
     public static float nextUp(float f) {
-        return sun.misc.FpUtils.nextUp(f);
+        return Math.nextUp(f);
     }
 
+    /**
+     * Returns the floating-point value adjacent to {@code d} in
+     * the direction of negative infinity.  This method is
+     * semantically equivalent to {@code nextAfter(d,
+     * Double.NEGATIVE_INFINITY)}; however, a
+     * {@code nextDown} implementation may run faster than its
+     * equivalent {@code nextAfter} call.
+     *
+     * <p>Special Cases:
+     * <ul>
+     * <li> If the argument is NaN, the result is NaN.
+     *
+     * <li> If the argument is negative infinity, the result is
+     * negative infinity.
+     *
+     * <li> If the argument is zero, the result is
+     * {@code -Double.MIN_VALUE}
+     *
+     * </ul>
+     *
+     * @param d  starting floating-point value
+     * @return The adjacent floating-point value closer to negative
+     * infinity.
+     * @since 1.8
+     */
+    public static double nextDown(double d) {
+        return Math.nextDown(d);
+    }
+
+    /**
+     * Returns the floating-point value adjacent to {@code f} in
+     * the direction of negative infinity.  This method is
+     * semantically equivalent to {@code nextAfter(f,
+     * Float.NEGATIVE_INFINITY)}; however, a
+     * {@code nextDown} implementation may run faster than its
+     * equivalent {@code nextAfter} call.
+     *
+     * <p>Special Cases:
+     * <ul>
+     * <li> If the argument is NaN, the result is NaN.
+     *
+     * <li> If the argument is negative infinity, the result is
+     * negative infinity.
+     *
+     * <li> If the argument is zero, the result is
+     * {@code -Float.MIN_VALUE}
+     *
+     * </ul>
+     *
+     * @param f  starting floating-point value
+     * @return The adjacent floating-point value closer to negative
+     * infinity.
+     * @since 1.8
+     */
+    public static float nextDown(float f) {
+        return Math.nextDown(f);
+    }
 
     /**
      * Return {@code d} &times;
@@ -1429,7 +1453,7 @@ public final class StrictMath {
      * @since 1.6
      */
     public static double scalb(double d, int scaleFactor) {
-        return sun.misc.FpUtils.scalb(d, scaleFactor);
+        return Math.scalb(d, scaleFactor);
     }
 
     /**
@@ -1463,6 +1487,6 @@ public final class StrictMath {
      * @since 1.6
      */
     public static float scalb(float f, int scaleFactor) {
-        return sun.misc.FpUtils.scalb(f, scaleFactor);
+        return Math.scalb(f, scaleFactor);
     }
 }

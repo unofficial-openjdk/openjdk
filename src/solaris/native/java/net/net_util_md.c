@@ -377,37 +377,12 @@ jint  IPv6_supported()
      *  we should also check if the APIs are available.
      */
     ipv6_fn = JVM_FindLibraryEntry(RTLD_DEFAULT, "inet_pton");
-    if (ipv6_fn == NULL ) {
-        close(fd);
-        return JNI_FALSE;
-    }
-
-    /*
-     * We've got the library, let's get the pointers to some
-     * IPV6 specific functions. We have to do that because, at least
-     * on Solaris we may build on a system without IPV6 networking
-     * libraries, therefore we can't have a hard link to these
-     * functions.
-     */
-    getaddrinfo_ptr = (getaddrinfo_f)
-        JVM_FindLibraryEntry(RTLD_DEFAULT, "getaddrinfo");
-
-    freeaddrinfo_ptr = (freeaddrinfo_f)
-        JVM_FindLibraryEntry(RTLD_DEFAULT, "freeaddrinfo");
-
-    gai_strerror_ptr = (gai_strerror_f)
-        JVM_FindLibraryEntry(RTLD_DEFAULT, "gai_strerror");
-
-    getnameinfo_ptr = (getnameinfo_f)
-        JVM_FindLibraryEntry(RTLD_DEFAULT, "getnameinfo");
-
-    if (freeaddrinfo_ptr == NULL || getnameinfo_ptr == NULL) {
-        /* We need all 3 of them */
-        getaddrinfo_ptr = NULL;
-    }
-
     close(fd);
-    return JNI_TRUE;
+    if (ipv6_fn == NULL ) {
+        return JNI_FALSE;
+    } else {
+        return JNI_TRUE;
+    }
 #endif /* AF_INET6 */
 }
 
@@ -613,7 +588,7 @@ static void initLoopbackRoutes() {
         int plen, scope, dad_status, if_idx;
 
         if ((f = fopen("/proc/net/if_inet6", "r")) != NULL) {
-            while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+            while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %08x %02x %02x %02x %20s\n",
                       addr6p[0], addr6p[1], addr6p[2], addr6p[3],
                       addr6p[4], addr6p[5], addr6p[6], addr6p[7],
                   &if_idx, &plen, &scope, &dad_status, devname) == 13) {
@@ -920,10 +895,6 @@ NET_IsEqual(jbyte* caddr1, jbyte* caddr2) {
     return 1;
 }
 
-jboolean NET_addrtransAvailable() {
-    return (jboolean)(getaddrinfo_ptr != NULL);
-}
-
 /*
  * Map the Java level socket option to the platform specific
  * level and option name.
@@ -1107,7 +1078,7 @@ int getDefaultIPv6Interface(struct in6_addr *target_addr) {
         int plen, scope, dad_status, if_idx;
 
         if ((f = fopen("/proc/net/if_inet6", "r")) != NULL) {
-            while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+            while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %08x %02x %02x %02x %20s\n",
                       addr6p[0], addr6p[1], addr6p[2], addr6p[3],
                       addr6p[4], addr6p[5], addr6p[6], addr6p[7],
                   &if_idx, &plen, &scope, &dad_status, devname) == 13) {
