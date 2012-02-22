@@ -185,9 +185,15 @@ ifeq ($(OS_VENDOR), Darwin)
 
     # Set universal export path but avoid using ARCH or PLATFORM subdirs
     EXPORT_PATH=$(OUTPUTDIR)/export-universal$(EXPORT_SUBDIR)
+    ifneq ($(ALT_EXPORT_PATH),)
+      EXPORT_PATH=$(ALT_EXPORT_PATH)
+    endif
 
     # Set universal image dir
     JDK_IMAGE_DIR=$(OUTPUTDIR)/jdk-universal$(EXPORT_SUBDIR)
+    ifneq ($(ALT_JDK_IMAGE_DIR),)
+      JDK_IMAGE_DIR=$(ALT_JDK_IMAGE_DIR)
+    endif
 
     # Binaries to 'universalize' if built
     UNIVERSAL_LIPO_LIST += $(EXPORT_JRE_LIB_DIR)/libjsig.$(LIBRARY_SUFFIX)
