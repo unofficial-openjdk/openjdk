@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,14 @@ import java.util.Properties;
  * Bsd implementation of HotSpotVirtualMachine
  */
 public class BsdVirtualMachine extends HotSpotVirtualMachine {
-    // temp directory for socket file
-    private static final String tmpdir = System.getProperty("java.io.tmpdir");
+    // "tmpdir" is used as a global well-known location for the files
+    // .java_pid<pid>. and .attach_pid<pid>. It is important that this
+    // location is the same for all processes, otherwise the tools
+    // will not be able to find all Hotspot processes.
+    // This is intentionally not the same as java.io.tmpdir, since
+    // the latter can be changed by the user.
+    // Any changes to this needs to be synchronized with HotSpot.
+    private static final String tmpdir;
 
     // The patch to the socket file created by the target VM
     String path;
@@ -243,11 +249,8 @@ public class BsdVirtualMachine extends HotSpotVirtualMachine {
     }
 
     // Return the socket file for the given process.
-    // Checks working directory of process for .java_pid<pid>. If not
-    // found it looks in temp directory.
+    // Checks temp directory for .java_pid<pid>.
     private String findSocketFile(int pid) {
-        // First check for a .java_pid<pid> file in the working directory
-        // of the target process
         String fn = ".java_pid" + pid;
         File f = new File(tmpdir, fn);
         return f.exists() ? f.getPath() : null;
@@ -291,7 +294,10 @@ public class BsdVirtualMachine extends HotSpotVirtualMachine {
 
     static native void createAttachFile(String path);
 
+    static native String getTempDir();
+
     static {
         System.loadLibrary("attach");
+        tmpdir = getTempDir();
     }
 }

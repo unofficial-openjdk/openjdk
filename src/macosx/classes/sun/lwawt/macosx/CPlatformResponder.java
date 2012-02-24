@@ -34,33 +34,33 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.KeyEvent;
 
-/*
+/**
  * Translates NSEvents/NPCocoaEvents into AWT events.
  */
-public class CPlatformResponder {
+final class CPlatformResponder {
 
-    private LWWindowPeer peer;
-    private boolean isNpapiCallback;
+    private final LWWindowPeer peer;
+    private final boolean isNpapiCallback;
 
-    public CPlatformResponder(LWWindowPeer peer, boolean isNpapiCallback) {
+    CPlatformResponder(final LWWindowPeer peer, final boolean isNpapiCallback) {
         this.peer = peer;
         this.isNpapiCallback = isNpapiCallback;
     }
 
-    /*
+    /**
      * Handles mouse events.
      */
-    public void handleMouseEvent(int eventType, int modifierFlags, int buttonNumber,
-                                 int clickCount, int x, int y, int absoluteX, int absoluteY)
-    {
+    void handleMouseEvent(int eventType, int modifierFlags, int buttonNumber,
+                          int clickCount, int x, int y, int absoluteX,
+                          int absoluteY) {
         final SunToolkit tk = (SunToolkit)Toolkit.getDefaultToolkit();
         if ((buttonNumber > 2 && !tk.areExtraMouseButtonsEnabled())
                 || buttonNumber > tk.getNumberOfButtons() - 1) {
             return;
         }
 
-        int jeventType = isNpapiCallback ? NSEvent.npEventTypeToJavaEventType(eventType) :
-                                           NSEvent.nsEventTypeToJavaEventType(eventType);
+        int jeventType = isNpapiCallback ? NSEvent.npToJavaEventType(eventType) :
+                                           NSEvent.nsToJavaEventType(eventType);
 
         int jbuttonNumber = MouseEvent.NOBUTTON;
         int jclickCount = 0;
@@ -69,11 +69,12 @@ public class CPlatformResponder {
             jeventType != MouseEvent.MOUSE_ENTERED &&
             jeventType != MouseEvent.MOUSE_EXITED)
         {
-            jbuttonNumber = NSEvent.nsButtonToJavaButton(buttonNumber);
+            jbuttonNumber = NSEvent.nsToJavaButton(buttonNumber);
             jclickCount = clickCount;
         }
 
-        int jmodifiers = NSEvent.nsMouseModifiersToJavaMouseModifiers(buttonNumber, modifierFlags);
+        int jmodifiers = NSEvent.nsToJavaMouseModifiers(buttonNumber,
+                                                        modifierFlags);
         boolean jpopupTrigger = NSEvent.isPopupTrigger(jmodifiers);
 
         peer.dispatchMouseEvent(jeventType, System.currentTimeMillis(), jbuttonNumber,
@@ -81,35 +82,48 @@ public class CPlatformResponder {
                                 jpopupTrigger, null);
     }
 
-    /*
+    /**
      * Handles scroll events.
      */
-    public void handleScrollEvent(int x, int y, int modifierFlags,
-                                  double deltaX, double deltaY)
-    {
-        int buttonNumber = CocoaConstants.kCGMouseButtonCenter;
-        int jmodifiers = NSEvent.nsMouseModifiersToJavaMouseModifiers(buttonNumber, modifierFlags);
+    void handleScrollEvent(final int x, final int y, final int modifierFlags,
+                           final double deltaX, final double deltaY) {
+        final int buttonNumber = CocoaConstants.kCGMouseButtonCenter;
+        int jmodifiers = NSEvent.nsToJavaMouseModifiers(buttonNumber,
+                                                        modifierFlags);
+        final boolean isShift = (jmodifiers & InputEvent.SHIFT_DOWN_MASK) != 0;
 
-        double wheelDelta = deltaY;
-
-        // Shirt+vertical wheel scroll produces horizontal scroll
-        if ((jmodifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
-            wheelDelta = deltaX;
+        // Vertical scroll.
+        if (!isShift && deltaY != 0.0) {
+            dispatchScrollEvent(x, y, jmodifiers, deltaY);
         }
-        // Wheel amount "oriented" inside out
-        wheelDelta = -wheelDelta;
-
-        peer.dispatchMouseWheelEvent(System.currentTimeMillis(), x, y, jmodifiers,
-                                     MouseWheelEvent.WHEEL_UNIT_SCROLL, 3, // WHEEL_SCROLL_AMOUNT
-                                     (int)wheelDelta, wheelDelta, null);
+        // Horizontal scroll or shirt+vertical scroll.
+        final double delta = isShift && deltaY != 0.0 ? deltaY : deltaX;
+        if (delta != 0.0) {
+            jmodifiers |= InputEvent.SHIFT_DOWN_MASK;
+            dispatchScrollEvent(x, y, jmodifiers, delta);
+        }
     }
 
-    /*
+    private void dispatchScrollEvent(final int x, final int y,
+                                     final int modifiers, final double delta) {
+        final long when = System.currentTimeMillis();
+        final int scrollType = MouseWheelEvent.WHEEL_UNIT_SCROLL;
+        final int scrollAmount = 1;
+        int wheelRotation = (int) delta;
+        int signum = (int) Math.signum(delta);
+        if (signum * delta < 1) {
+            wheelRotation = signum;
+        }
+        // invert the wheelRotation for the peer
+        peer.dispatchMouseWheelEvent(when, x, y, modifiers, scrollType,
+                                     scrollAmount, -wheelRotation, -delta, null);
+    }
+
+    /**
      * Handles key events.
      */
-    public void handleKeyEvent(int eventType, int modifierFlags, String chars,
-                               short keyCode)
-    {
+    void handleKeyEvent(int eventType, int modifierFlags, String chars,
+                        short keyCode) {
         boolean isFlagsChangedEvent =
             isNpapiCallback ? (eventType == CocoaConstants.NPCocoaEventFlagsChanged) :
                               (eventType == CocoaConstants.NSFlagsChanged);
@@ -139,22 +153,31 @@ public class CPlatformResponder {
             int[] in = new int[] {testChar, testDeadChar, modifierFlags, keyCode};
             int[] out = new int[2]; // [jkeyCode, jkeyLocation]
 
-            postsTyped = NSEvent.nsKeyInfoToJavaKeyInfo(in, out);
+            postsTyped = NSEvent.nsToJavaKeyInfo(in, out);
             if (!postsTyped) {
                 testChar = KeyEvent.CHAR_UNDEFINED;
             }
 
             jkeyCode = out[0];
             jkeyLocation = out[1];
-            jeventType = isNpapiCallback ? NSEvent.npEventTypeToJavaEventType(eventType) :
-                                           NSEvent.nsEventTypeToJavaEventType(eventType);
+            jeventType = isNpapiCallback ? NSEvent.npToJavaEventType(eventType) :
+                                           NSEvent.nsToJavaEventType(eventType);
         }
 
-        int jmodifiers = NSEvent.nsKeyModifiersToJavaKeyModifiers(modifierFlags);
+        char javaChar = NSEvent.nsToJavaChar(testChar, modifierFlags);
+        // Some keys may generate a KEY_TYPED, but we can't determine
+        // what that character is. That's likely a bug, but for now we
+        // just check for CHAR_UNDEFINED.
+        if (javaChar == KeyEvent.CHAR_UNDEFINED) {
+            postsTyped = false;
+        }
+
+
+        int jmodifiers = NSEvent.nsToJavaKeyModifiers(modifierFlags);
         long when = System.currentTimeMillis();
 
         peer.dispatchKeyEvent(jeventType, when, jmodifiers,
-                              jkeyCode, testChar, jkeyLocation);
+                              jkeyCode, javaChar, jkeyLocation);
 
         // That's the reaction on the PRESSED (not RELEASED) event as it comes to
         // appear in MacOSX.
@@ -164,7 +187,7 @@ public class CPlatformResponder {
         boolean isMetaDown = (jmodifiers & KeyEvent.META_DOWN_MASK) != 0;
         if (jeventType == KeyEvent.KEY_PRESSED && postsTyped && !isMetaDown) {
             peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, when, jmodifiers,
-                                  KeyEvent.VK_UNDEFINED, testChar,
+                                  KeyEvent.VK_UNDEFINED, javaChar,
                                   KeyEvent.KEY_LOCATION_UNKNOWN);
         }
     }

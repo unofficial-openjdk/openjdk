@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005, 2012, Oracle and/or its affiliates. All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/syslimits.h>
 #include <sys/un.h>
 #include <fcntl.h>
 
@@ -276,4 +277,31 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_BsdVirtualMachine_createAttachFile(
     if (isCopy) {
         JNU_ReleaseStringPlatformChars(env, path, _path);
     }
+}
+
+/*
+ * Class:     sun_tools_attach_BSDVirtualMachine
+ * Method:    getTempDir
+ * Signature: (V)Ljava.lang.String;
+ */
+JNIEXPORT jstring JNICALL Java_sun_tools_attach_BsdVirtualMachine_getTempDir(JNIEnv *env, jclass cls)
+{
+    // This must be hard coded because it's the system's temporary
+    // directory not the java application's temp directory, ala java.io.tmpdir.
+
+#ifdef __APPLE__
+    // macosx has a secure per-user temporary directory
+    static char *temp_path = NULL;
+    char temp_path_storage[PATH_MAX];
+    if (temp_path == NULL) {
+        int pathSize = confstr(_CS_DARWIN_USER_TEMP_DIR, temp_path_storage, PATH_MAX);
+        if (pathSize == 0 || pathSize > PATH_MAX) {
+            strlcpy(temp_path_storage, "/tmp", sizeof(temp_path_storage));
+        }
+        temp_path = temp_path_storage;
+    }
+    return JNU_NewStringPlatform(env, temp_path);
+#else /* __APPLE__ */
+    return (*env)->NewStringUTF(env, "/tmp");
+#endif /* __APPLE__ */
 }

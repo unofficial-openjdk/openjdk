@@ -40,6 +40,7 @@
 #import "ThreadUtilities.h"
 #import "OSVersion.h"
 
+static const float GROW_BOX_SIZE = 12.f;
 
 #define MASK(KEY) \
     (sun_lwawt_macosx_CPlatformWindow_ ## KEY)
@@ -49,7 +50,6 @@
 
 #define SET(BITS, KEY, VALUE) \
     BITS = VALUE ? BITS | MASK(KEY) : BITS & ~MASK(KEY)
-
 
 static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
 
@@ -158,13 +158,13 @@ static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
 }
 
 - (NSImage *) createGrowBoxImage {
-    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(12, 12)];
+    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(GROW_BOX_SIZE, GROW_BOX_SIZE)];
     JRSUIControlRef growBoxWidget = JRSUIControlCreate(FALSE);
     JRSUIControlSetWidget(growBoxWidget, kJRSUI_Widget_growBoxTextured);
     JRSUIControlSetWindowType(growBoxWidget, kJRSUI_WindowType_utility);
     JRSUIRendererRef renderer = JRSUIRendererCreate();
     [image lockFocus]; // sets current graphics context to that of the image
-    JRSUIControlDraw(renderer, growBoxWidget, [[NSGraphicsContext currentContext] graphicsPort], CGRectMake(0, 1, 11, 11));
+    JRSUIControlDraw(renderer, growBoxWidget, [[NSGraphicsContext currentContext] graphicsPort], CGRectMake(0, 1, GROW_BOX_SIZE - 1, GROW_BOX_SIZE - 1));
     [image unlockFocus];
     JRSUIRendererRelease(renderer);
     JRSUIControlRelease(growBoxWidget);
@@ -547,6 +547,36 @@ AWT_ASSERT_APPKIT_THREAD;
         }
         [super sendEvent:event];
 }
+
+- (void)constrainSize:(NSSize*)size {
+    float minWidth = 0.f, minHeight = 0.f;
+
+    if (IS(self.styleBits, DECORATED)) {
+        NSRect frame = [self frame];
+        NSRect contentRect = [NSWindow contentRectForFrameRect:frame styleMask:[self styleMask]];
+
+        float top = frame.size.height - contentRect.size.height;
+        float left = contentRect.origin.x - frame.origin.x;
+        float bottom = contentRect.origin.y - frame.origin.y;
+        float right = frame.size.width - (contentRect.size.width + left);
+
+        // Speculative estimation: 80 - enough for window decorations controls
+        minWidth += left + right + 80;
+        minHeight += top + bottom;
+    }
+
+    if ([self shouldShowGrowBox]) {
+        minWidth = MAX(minWidth, GROW_BOX_SIZE);
+        minHeight += GROW_BOX_SIZE;
+    }
+
+    minWidth = MAX(1.f, minWidth);
+    minHeight = MAX(1.f, minHeight);
+
+    size->width = MAX(size->width, minWidth);
+    size->height = MAX(size->height, minHeight);
+}
+
 @end // AWTWindow
 
 
@@ -702,6 +732,8 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
         AWT_ASSERT_APPKIT_THREAD;
 
         NSRect rect = ConvertNSScreenRect(NULL, jrect);
+        [window constrainSize:&rect.size];
+
         [window setFrame:rect display:YES];
 
         // only start tracking events if pointer is above the toplevel
@@ -733,12 +765,15 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
     if (maxW < 1) maxW = 1;
     if (maxH < 1) maxH = 1;
 
-    NSSize min = { minW, minH };
-    NSSize max = { maxW, maxH };
-
     AWTWindow *window = OBJC(windowPtr);
     [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
         AWT_ASSERT_APPKIT_THREAD;
+
+        NSSize min = { minW, minH };
+        NSSize max = { maxW, maxH };
+
+        [window constrainSize:&min];
+        [window constrainSize:&max];
 
         window.javaMinSize = min;
         window.javaMaxSize = max;

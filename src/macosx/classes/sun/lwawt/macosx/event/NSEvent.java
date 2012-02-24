@@ -28,11 +28,10 @@ package sun.lwawt.macosx.event;
 import sun.lwawt.macosx.CocoaConstants;
 import java.awt.event.*;
 
-/*
- * A class representing Cocoa NSEvent class with
- * the fields only necessary for JDK functionality.
+/**
+ * A class representing Cocoa NSEvent class with the fields only necessary for
+ * JDK functionality.
  */
-
 public final class NSEvent {
     private int type;
     private int modifierFlags;
@@ -132,7 +131,7 @@ public final class NSEvent {
     /*
      * Converts an NSEvent button number to a MouseEvent constant.
      */
-    public static int nsButtonToJavaButton(int buttonNumber) {
+    public static int nsToJavaButton(int buttonNumber) {
         int jbuttonNumber = buttonNumber + 1;
         switch (buttonNumber) {
             case CocoaConstants.kCGMouseButtonLeft:
@@ -151,7 +150,7 @@ public final class NSEvent {
     /*
      * Converts NPCocoaEvent types to AWT event types.
      */
-    public static int npEventTypeToJavaEventType(int npEventType) {
+    public static int npToJavaEventType(int npEventType) {
         int jeventType = 0;
         switch (npEventType) {
             case CocoaConstants.NPCocoaEventMouseDown:
@@ -185,7 +184,7 @@ public final class NSEvent {
     /*
      * Converts NSEvent types to AWT event types.
      */
-    public static int nsEventTypeToJavaEventType(int nsEventType) {
+    public static int nsToJavaEventType(int nsEventType) {
         int jeventType = 0;
         switch (nsEventType) {
             case CocoaConstants.NSLeftMouseDown:
@@ -228,23 +227,29 @@ public final class NSEvent {
     /*
      * Converts NSEvent mouse modifiers to AWT mouse modifiers.
      */
-    public static native int nsMouseModifiersToJavaMouseModifiers(int buttonNumber,
-                                                                  int modifierFlags);
+    public static native int nsToJavaMouseModifiers(int buttonNumber,
+                                                    int modifierFlags);
 
     /*
      * Converts NSEvent key modifiers to AWT key modifiers.
      */
-    public static native int nsKeyModifiersToJavaKeyModifiers(int modifierFlags);
+    public static native int nsToJavaKeyModifiers(int modifierFlags);
 
     /*
      * Converts NSEvent key info to AWT key info.
      */
-    public static native boolean nsKeyInfoToJavaKeyInfo(int[] in, int[] out);
+    public static native boolean nsToJavaKeyInfo(int[] in, int[] out);
 
     /*
      * Converts NSEvent key modifiers to AWT key info.
      */
     public static native void nsKeyModifiersToJavaKeyInfo(int[] in, int[] out);
+
+    /*
+     * There is a small number of NS characters that need to be converted
+     * into other characters before we pass them to AWT.
+     */
+    public static native char nsToJavaChar(char nsChar, int modifierFlags);
 
     public static boolean isPopupTrigger(int jmodifiers) {
         final boolean isRightButtonDown = ((jmodifiers & InputEvent.BUTTON3_DOWN_MASK) != 0);

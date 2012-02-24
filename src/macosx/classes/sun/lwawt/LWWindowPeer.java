@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,10 +162,6 @@ public class LWWindowPeer
 
     @Override
     public void initialize() {
-        super.initialize();
-
-        updateInsets(platformWindow.getInsets());
-
         if (getTarget() instanceof Frame) {
             setTitle(((Frame)getTarget()).getTitle());
             setState(((Frame)getTarget()).getExtendedState());
@@ -181,8 +177,9 @@ public class LWWindowPeer
         setOpacity(getTarget().getOpacity());
         setOpaque(getTarget().isOpaque());
 
-        // Create surface data and back buffer
-        replaceSurfaceData(1, null);
+        super.initialize();
+
+        updateInsets(platformWindow.getInsets());
     }
 
     // Just a helper method
@@ -319,6 +316,7 @@ public class LWWindowPeer
     public void flip(int x1, int y1, int x2, int y2,
                      BufferCapabilities.FlipContents flipAction)
     {
+        //Note: constraints must be applied. see applyConstrain().
         platformWindow.flip(x1, y1, x2, y2, flipAction);
     }
 
@@ -410,7 +408,11 @@ public class LWWindowPeer
     @Override
     public void setModalBlocked(Dialog blocker, boolean blocked) {
         synchronized (getPeerTreeLock()) {
-            this.blocker = blocked ? (LWWindowPeer)blocker.getPeer() : null;
+            if(blocked && blocker.getPeer() instanceof LWWindowPeer) {
+                this.blocker = (LWWindowPeer)blocker.getPeer();
+            } else {
+                this.blocker = null;
+            }
         }
     }
 
@@ -434,18 +436,20 @@ public class LWWindowPeer
     @Override
     public void setOpacity(float opacity) {
         getPlatformWindow().setOpacity(opacity);
+        repaintPeer();
     }
 
     @Override
-    public void setOpaque(boolean isOpaque) {
+    public final void setOpaque(final boolean isOpaque) {
         if (this.isOpaque != isOpaque) {
             this.isOpaque = isOpaque;
             getPlatformWindow().setOpaque(isOpaque);
             replaceSurfaceData();
+            repaintPeer();
         }
     }
 
-    public boolean isOpaque() {
+    public final boolean isOpaque() {
         return isOpaque;
     }
 
@@ -1048,6 +1052,7 @@ public class LWWindowPeer
 
         if (changed) {
             replaceSurfaceData();
+            repaintPeer();
         }
 
         return changed;

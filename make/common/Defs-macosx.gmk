@@ -53,6 +53,8 @@ ifndef PLATFORM_SRC
   PLATFORM_SRC = $(BUILDDIR)/../src/solaris
 endif # PLATFORM_SRC
 
+PLATFORM_SRC_MACOS = $(BUILDDIR)/../src/macosx
+
 # BSD build pulls its platform sources from the solaris tree.
 JAVA_SRCDIR_LIST = src/$(PLATFORM) src/solaris src/share
 NATIVE_SRCDIR_LIST = src/$(PLATFORM) src/solaris src/share

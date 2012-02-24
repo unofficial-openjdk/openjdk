@@ -47,8 +47,7 @@ public class Resources_fr extends java.util.ListResourceBundle {
                 "*******************************************\n\n"},
 
         // keytool: Help part
-// "Option" should be translated.
-        {".OPTION.", " [Option]..."},
+        {".OPTION.", " [OPTION]..."},
         {"Options.", "Options :"},
         {"Use.keytool.help.for.all.available.commands",
                  "Utiliser \"keytool -help\" pour toutes les commandes disponibles"},
@@ -68,7 +67,6 @@ public class Resources_fr extends java.util.ListResourceBundle {
                 "Exporte le certificat"}, //-exportcert
         {"Generates.a.key.pair",
                 "G\u00E9n\u00E8re une paire de cl\u00E9s"}, //-genkeypair
-// translation of "secret" key should be different to "private" key.
         {"Generates.a.secret.key",
                 "G\u00E9n\u00E8re une cl\u00E9 secr\u00E8te"}, //-genseckey
         {"Generates.certificate.from.a.certificate.request",
@@ -331,7 +329,7 @@ public class Resources_fr extends java.util.ListResourceBundle {
         {"Do.you.still.want.to.add.it.to.your.own.keystore.no.",
                 "Voulez-vous toujours l'ajouter \u00E0 votre fichier de cl\u00E9s ? [non] :  "},
         {"Trust.this.certificate.no.", "Faire confiance \u00E0 ce certificat ? [non] :  "},
-        {"YES", "Oui"},
+        {"YES", "OUI"},
         {"New.prompt.", "Nouveau {0} : "},
         {"Passwords.must.differ", "Les mots de passe doivent diff\u00E9rer"},
         {"Re.enter.new.prompt.", "Indiquez encore le nouveau {0} : "},
@@ -368,7 +366,7 @@ public class Resources_fr extends java.util.ListResourceBundle {
                  "L''entr\u00E9e \u00E0 laquelle l''alias <{0}> fait r\u00E9f\u00E9rence n''est pas une entr\u00E9e de type cl\u00E9 priv\u00E9e. La commande -keyclone prend uniquement en charge le clonage des cl\u00E9s priv\u00E9es"},
 
         {".WARNING.WARNING.WARNING.",
-            "*****************  Avertissement Avertissement Avertissement  *****************"},
+            "*****************  WARNING WARNING WARNING  *****************"},
         {"Signer.d.", "Signataire n\u00B0%d :"},
         {"Timestamp.", "Horodatage :"},
         {"Signature.", "Signature :"},
@@ -393,7 +391,7 @@ public class Resources_fr extends java.util.ListResourceBundle {
                 "Certificat de niveau sup\u00E9rieur dans la r\u00E9ponse :\n"},
         {".is.not.trusted.", "... non s\u00E9curis\u00E9. "},
         {"Install.reply.anyway.no.", "Installer la r\u00E9ponse quand m\u00EAme ? [non] :  "},
-        {"NO", "Non"},
+        {"NO", "NON"},
         {"Public.keys.in.reply.and.keystore.don.t.match",
                 "Les cl\u00E9s publiques de la r\u00E9ponse et du fichier de cl\u00E9s ne concordent pas"},
         {"Certificate.reply.and.certificate.in.keystore.are.identical",

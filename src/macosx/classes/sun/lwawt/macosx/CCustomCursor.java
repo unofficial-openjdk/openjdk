@@ -36,6 +36,7 @@ public class CCustomCursor extends Cursor {
     }
 
     Image fImage;
+    private boolean isImageOk = false;
     Point fHotspot;
 
     public CCustomCursor(final Image cursor, final Point hotSpot, final String name) throws IndexOutOfBoundsException, HeadlessException {
@@ -64,6 +65,9 @@ public class CCustomCursor extends Cursor {
         // but we need to set the hotspot inside the image here.
         if (tracker.isErrorAny() || width < 0 || height < 0) {
             fHotspot.x = fHotspot.y = 0;
+            isImageOk = false;
+        } else {
+            isImageOk = true;
         }
 
         // Scale image to nearest supported size
@@ -110,9 +114,20 @@ public class CCustomCursor extends Cursor {
     // Returns long array of [NSImage ptr, x hotspot, y hotspot]
     CImage fCImage;
     long getImageData() {
-        if (fCImage == null) {
+        if (fCImage != null) {
+            return fCImage.ptr;
+        }
+
+        if (isImageOk) {
             try {
                 fCImage = CImage.getCreator().createFromImage(fImage);
+
+                if (fCImage == null) {
+                    isImageOk = false;
+                    return 0L;
+                } else {
+                    return fCImage.ptr;
+                }
             } catch (IllegalArgumentException iae) {
                 // Silently return null - we want to hide cursor by providing an empty
                 // ByteArray or just null
@@ -120,7 +135,7 @@ public class CCustomCursor extends Cursor {
             }
         }
 
-        return fCImage.ptr;
+        return 0L;
     }
 
     Point getHotSpot() {

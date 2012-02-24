@@ -38,16 +38,16 @@ BUNDLE_ID ?= net.java.openjdk
 BUNLDE_ID_JRE ?= $(BUNDLE_ID).jre
 BUNLDE_ID_JDK ?= $(BUNDLE_ID).jdk
 
-BUNDLE_NAME ?= OpenJDK 7
+BUNDLE_NAME ?= OpenJDK $(JDK_MINOR_VERSION)
 BUNDLE_NAME_JRE ?= $(BUNDLE_NAME)
 BUNDLE_NAME_JDK ?= $(BUNDLE_NAME)
 
-BUNDLE_INFO ?= OpenJDK (1.7.0)
+BUNDLE_INFO ?= OpenJDK ($(JDK_VERSION))
 BUNDLE_INFO_JRE ?= $(BUNDLE_INFO)
 BUNDLE_INFO_JDK ?= $(BUNDLE_INFO)
 
-BUNDLE_PLATFORM_VERSION ?= 1.7
-BUNDLE_VERSION ?= 1.7.0
+BUNDLE_PLATFORM_VERSION ?= $(JDK_MAJOR_VERSION).$(JDK_MINOR_VERSION)
+BUNDLE_VERSION ?= $(JDK_VERSION)
 BUNDLE_VENDOR ?= UNDEFINED
 
 jre-bundle-setup:
@@ -59,18 +59,16 @@ jdk-bundle-setup:
 jre-bundle-files:
 	$(MKDIR) -p $(JRE_BUNDLE_DIR)/MacOS
 	ln -s ../Home/lib/jli/libjli.dylib $(JRE_BUNDLE_DIR)/MacOS/
-	$(MV) $(JRE_IMAGE_DIR) $(JRE_BUNDLE_DIR)/Home
+	$(CP) -r $(JRE_IMAGE_DIR) $(JRE_BUNDLE_DIR)/Home
 	$(SED) -e "s/@@ID@@/$(BUNDLE_ID_JRE)/g" -e "s/@@NAME@@/$(BUNDLE_NAME_JRE)/g" -e "s/@@INFO@@/$(BUNDLE_INFO_JRE)/g" -e "s/@@PLATFORM_VERSION@@/$(BUNDLE_PLATFORM_VERSION)/g" -e "s/@@VERSION@@/$(BUNDLE_VERSION)/g" -e "s/@@VENDOR@@/$(BUNDLE_VENDOR)/g" < $(MACOSX_SRC)/bundle/JRE-Info.plist > $(JRE_BUNDLE_DIR)/Info.plist
 	/usr/bin/SetFile -a B $(JRE_BUNDLE_DIR)/../
-	$(MV) $(ABS_OUTPUTDIR)/j2re-bundle $(JRE_IMAGE_DIR)
 
 jdk-bundle-files:
 	$(MKDIR) -p $(JDK_BUNDLE_DIR)/MacOS
 	ln -s ../Home/jre/lib/jli/libjli.dylib $(JDK_BUNDLE_DIR)/MacOS/
-	$(MV) $(JDK_IMAGE_DIR) $(JDK_BUNDLE_DIR)/Home
+	$(CP) -r $(JDK_IMAGE_DIR) $(JDK_BUNDLE_DIR)/Home
 	$(SED) -e "s/@@ID@@/$(BUNDLE_ID_JDK)/g" -e "s/@@NAME@@/$(BUNDLE_NAME_JDK)/g" -e "s/@@INFO@@/$(BUNDLE_INFO_JDK)/g" -e "s/@@PLATFORM_VERSION@@/$(BUNDLE_PLATFORM_VERSION)/g" -e "s/@@VERSION@@/$(BUNDLE_VERSION)/g" -e "s/@@VENDOR@@/$(BUNDLE_VENDOR)/g" < $(MACOSX_SRC)/bundle/JDK-Info.plist > $(JDK_BUNDLE_DIR)/Info.plist
 	/usr/bin/SetFile -a B $(JDK_BUNDLE_DIR)/../
-	$(MV) $(ABS_OUTPUTDIR)/j2sdk-bundle $(JDK_IMAGE_DIR)
 
 EXTRA_IMAGE_TARGETS += jre-bundle-setup jdk-bundle-setup jre-bundle-files jdk-bundle-files
 
