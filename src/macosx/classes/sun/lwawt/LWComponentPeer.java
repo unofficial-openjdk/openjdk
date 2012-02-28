@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1141,9 +1141,9 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                     me.getModifiers(),
                     me.getX(), me.getY(),
                     me.getClickCount(),
-                    false,                       // popupTrigger
-                    MouseWheelEvent.WHEEL_UNIT_SCROLL,
-                    3, // TODO: wheel scroll amount
+                    me.isPopupTrigger(),
+                    me.getScrollType(),
+                    me.getScrollAmount(),
                     me.getWheelRotation());
         } else if (e instanceof MouseEvent) {
             MouseEvent me = (MouseEvent) e;
@@ -1199,15 +1199,14 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     /**
-     * Peers with null delegates should clear background before paint.
+     * All peers should clear background before paint.
      *
      * @return false on components that DO NOT require a clearRect() before
      *         painting.
      */
     protected final boolean shouldClearRectBeforePaint() {
-        // By default, just fill the entire bounds with a bg color
         // TODO: sun.awt.noerasebackground
-        return getDelegate() == null;
+        return true;
     }
 
     /**

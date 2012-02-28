@@ -45,6 +45,7 @@ public final class JObjCRuntime {
         if("ppc".equals(arch)) return Arch.ppc;
         if("i386".equals(arch)) return Arch.i386;
         if("x86_64".equals(arch)) return Arch.x86_64;
+        if("amd64".equals(arch)) return Arch.x86_64;
         if("universal".equals(arch)) return Arch.x86_64;
         throw new RuntimeException("Did not recognize os.arch system property: '" + arch + "'");
     }
