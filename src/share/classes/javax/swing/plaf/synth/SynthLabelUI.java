@@ -94,9 +94,9 @@ class SynthLabelUI extends BasicLabelUI implements SynthUI {
 
     private int getComponentState(JComponent c) {
         int state = SynthLookAndFeel.getComponentState(c);
-        if (SynthLookAndFeel.selectedUI == this &&
+        if (SynthLookAndFeel.getSelectedUI() == this &&
                         state == SynthConstants.ENABLED) {
-            state = SynthLookAndFeel.selectedUIState | SynthConstants.ENABLED;
+            state = SynthLookAndFeel.getSelectedUIState() | SynthConstants.ENABLED;
         }
         return state;
     }
