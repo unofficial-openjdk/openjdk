@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,7 +229,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
             throw new NullPointerException();
         }
         fd = new FileDescriptor();
-        fd.incrementAndGetUseCount();
+        fd.attach(this);
         open(name, imode);
     }
 
@@ -242,7 +242,9 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @see        java.io.FileDescriptor
      */
     public final FileDescriptor getFD() throws IOException {
-        if (fd != null) return fd;
+        if (fd != null) {
+            return fd;
+        }
         throw new IOException();
     }
 
@@ -268,17 +270,6 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
         synchronized (this) {
             if (channel == null) {
                 channel = FileChannelImpl.open(fd, true, rw, this);
-
-                /*
-                 * FileDescriptor could be shared by FileInputStream or
-                 * FileOutputStream.
-                 * Ensure that FD is GC'ed only when all the streams/channels
-                 * are done using it.
-                 * Increment fd's use count. Invoking the channel's close()
-                 * method will result in decrementing the use count set for
-                 * the channel.
-                 */
-                fd.incrementAndGetUseCount();
             }
             return channel;
         }
@@ -577,21 +568,13 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
             closed = true;
         }
         if (channel != null) {
-            /*
-             * Decrement FD use count associated with the channel. The FD use
-             * count is incremented whenever a new channel is obtained from
-             * this stream.
-             */
-            fd.decrementAndGetUseCount();
             channel.close();
         }
-
-        /*
-         * Decrement FD use count associated with this stream.
-         * The count got incremented by FileDescriptor during its construction.
-         */
-        fd.decrementAndGetUseCount();
-        close0();
+        fd.closeAll(new Closeable() {
+            public void close() throws IOException {
+               close0();
+           }
+        });
     }
 
     //
