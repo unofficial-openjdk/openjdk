@@ -1114,7 +1114,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         sendEventToDelegate(e);
     }
 
-    private void sendEventToDelegate(final AWTEvent e) {
+    protected void sendEventToDelegate(final AWTEvent e) {
         synchronized (getDelegateLock()) {
             if (getDelegate() == null || !isShowing() || !isEnabled()) {
                 return;
