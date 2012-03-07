@@ -210,6 +210,9 @@ java/lang/ThreadLocal/MemoryLeak.java                           solaris-all
 # Windows X64, RuntimeException: MyThread expected to have RUNNABLE but got WAITING
 java/lang/Thread/ThreadStateTest.java                           generic-all
 
+# 7148492
+java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
+
 ############################################################################
 
 # jdk_management
@@ -379,6 +382,10 @@ java/net/MulticastSocket/Test.java                               macosx-all
 #7143960
 java/net/DatagramSocket/SendDatagramToBadAddress.java            macosx-all
 
+# 7148829
+sun/net/InetAddress/nameservice/simple/CacheTest.java		generic-all
+sun/net/InetAddress/nameservice/simple/DefaultCaching.java	generic-all
+
 ############################################################################
 
 # jdk_io
@@ -427,6 +434,9 @@ java/rmi/Naming/legalRegistryNames/LegalRegistryNames.java      generic-all
 
 # Fails on Linux 32 and 64bit -server?, impl not garbage collected???
 java/rmi/transport/pinLastArguments/PinLastArguments.java       generic-all
+
+# 7146541
+java/rmi/transport/rapidExportUnexport/RapidExportUnexport.java	linux-all
 
 # Times out on solaris sparc
 java/rmi/server/RemoteServer/AddrInUse.java                     generic-all
