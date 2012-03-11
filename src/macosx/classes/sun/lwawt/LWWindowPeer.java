@@ -316,8 +316,25 @@ public class LWWindowPeer
     public void flip(int x1, int y1, int x2, int y2,
                      BufferCapabilities.FlipContents flipAction)
     {
-        //Note: constraints must be applied. see applyConstrain().
-        platformWindow.flip(x1, y1, x2, y2, flipAction);
+        final BufferedImage buffer = (BufferedImage)getBackBuffer();
+        if (buffer == null) {
+            throw new IllegalStateException("Buffers have not been created");
+        }
+        final Graphics g = getGraphics();
+        try {
+            g.drawImage(buffer, x1, y1, x2, y2, x1, y1, x2, y2, null);
+        } finally {
+            g.dispose();
+        }
+        if (flipAction == BufferCapabilities.FlipContents.BACKGROUND) {
+            final Graphics2D bg = (Graphics2D) buffer.getGraphics();
+            try {
+                bg.setBackground(getBackground());
+                bg.clearRect(0, 0, buffer.getWidth(), buffer.getHeight());
+            } finally {
+                bg.dispose();
+            }
+        }
     }
 
     @Override
