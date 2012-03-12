@@ -691,7 +691,7 @@ public class AquaLookAndFeel extends BasicLookAndFeel {
             "Panel.foreground", black,
             "Panel.opaque", useOpaqueComponents,
 
-            "PasswordField.focusInputMap", aquaKeyBindings.getTextFieldInputMap(),
+            "PasswordField.focusInputMap", aquaKeyBindings.getPasswordFieldInputMap(),
             "PasswordField.font", controlFont,
             "PasswordField.background", textBackground,
             "PasswordField.foreground", textForeground,
