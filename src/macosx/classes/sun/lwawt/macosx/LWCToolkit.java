@@ -184,9 +184,9 @@ public class LWCToolkit extends LWToolkit {
 
     @Override
     public MenuBarPeer createMenuBar(MenuBar target) {
-         MenuBarPeer peer = new CMenuBar(target);
-         targetCreatedPeer(target, peer);
-             return peer;
+        MenuBarPeer peer = new CMenuBar(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     @Override
