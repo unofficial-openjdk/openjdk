@@ -725,9 +725,17 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             return null;
         }
 
-        // TODO: need a walk-through to find the best image.
-        // The best mean with higher resolution. Otherwise an icon looks bad.
-        final Image image = icons.get(0);
+        // Choose the best (largest) image
+        Image image = icons.get(0);
+        // Assume images are square, so check their widths only
+        int width = image.getWidth(null);
+        for (Image img : icons) {
+            final int w = img.getWidth(null);
+            if (w > width) {
+                image = img;
+                width = w;
+            }
+        }
         return CImage.getCreator().createFromImage(image);
     }
 
