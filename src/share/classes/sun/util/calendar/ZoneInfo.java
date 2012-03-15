@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,12 +80,17 @@ public class ZoneInfo extends TimeZone {
     private static final int TRANSITION_NSHIFT = 12;
 
     // Flag for supporting JDK backward compatible IDs, such as "EST".
-    private static final boolean USE_OLDMAPPING;
+    static final boolean USE_OLDMAPPING;
     static {
       String oldmapping = AccessController.doPrivileged(
           new sun.security.action.GetPropertyAction("sun.timezone.ids.oldmapping", "false")).toLowerCase(Locale.ROOT);
       USE_OLDMAPPING = (oldmapping.equals("yes") || oldmapping.equals("true"));
     }
+
+    // IDs having conflicting data between Olson and JDK 1.1
+    static final String[] conflictingIDs = {
+        "EST", "MST", "HST"
+    };
 
     private static final CalendarSystem gcal = CalendarSystem.getGregorianCalendar();
 
@@ -807,7 +812,17 @@ public class ZoneInfo extends TimeZone {
         return (checksum == ((ZoneInfo)other).checksum);
     }
 
-    private static SoftReference<Map> aliasTable;
+    private static SoftReference<Map<String, String>> aliasTable;
+
+    static Map<String, String> getCachedAliasTable() {
+        Map<String, String> aliases = null;
+
+        SoftReference<Map<String, String>> cache = aliasTable;
+        if (cache != null) {
+            aliases = cache.get();
+        }
+        return aliases;
+    }
 
     /**
      * Returns a Map from alias time zone IDs to their standard
@@ -818,19 +833,18 @@ public class ZoneInfo extends TimeZone {
      *    <code>ZoneInfoMappings</code> file is not available.
      */
     public synchronized static Map<String, String> getAliasTable() {
-        Map<String, String> aliases = null;
-
-        SoftReference<Map> cache = aliasTable;
-        if (cache != null) {
-            aliases = cache.get();
+        Map<String, String> aliases = getCachedAliasTable();
+        if (aliases == null) {
+            aliases = ZoneInfoFile.getZoneAliases();
             if (aliases != null) {
-                return aliases;
+                if (!USE_OLDMAPPING) {
+                    // Remove the conflicting IDs from the alias table.
+                    for (String key : conflictingIDs) {
+                        aliases.remove(key);
+                    }
+                }
+                aliasTable = new SoftReference<Map<String, String>>(aliases);
             }
-        }
-
-        aliases = ZoneInfoFile.getZoneAliases();
-        if (aliases != null) {
-            aliasTable = new SoftReference<Map>(aliases);
         }
         return aliases;
     }
