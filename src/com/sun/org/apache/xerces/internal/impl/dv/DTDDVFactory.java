@@ -45,7 +45,7 @@ public abstract class DTDDVFactory {
      * @exception DVFactoryException  cannot create an instance of the specified
      *                                class name or the default class name
      */
-    public static synchronized final DTDDVFactory getInstance() throws DVFactoryException {
+    public static final DTDDVFactory getInstance() throws DVFactoryException {
         return getInstance(DEFAULT_FACTORY_CLASS);
     }
 
@@ -57,19 +57,19 @@ public abstract class DTDDVFactory {
      * @exception DVFactoryException  cannot create an instance of the specified
      *                                class name or the default class name
      */
-    public static synchronized final DTDDVFactory getInstance(String factoryClass) throws DVFactoryException {
-
+    public static final DTDDVFactory getInstance(String factoryClass) throws DVFactoryException {
         try {
             // if the class name is not specified, use the default one
             return (DTDDVFactory)
                 (ObjectFactory.newInstance(factoryClass, true));
-        } catch (ClassCastException e) {
+        }
+        catch (ClassCastException e) {
             throw new DVFactoryException("DTD factory class " + factoryClass + " does not extend from DTDDVFactory.");
         }
     }
 
     // can't create a new object of this class
-    protected DTDDVFactory(){}
+    protected DTDDVFactory() {}
 
     /**
      * return a dtd type of the given name
