@@ -40,6 +40,7 @@ import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
 import java.util.Vector;
 
 import javax.print.CancelablePrintJob;
@@ -936,7 +937,7 @@ public class UnixPrintJob implements CancelablePrintJob {
                      * is not removed for some reason, request that it is
                      * removed when the VM exits.
                      */
-                    spoolFile = File.createTempFile("javaprint", ".ps", null);
+                    spoolFile = Files.createTempFile("javaprint", ".ps").toFile();
                     spoolFile.deleteOnExit();
                 }
                 result = new FileOutputStream(spoolFile);
