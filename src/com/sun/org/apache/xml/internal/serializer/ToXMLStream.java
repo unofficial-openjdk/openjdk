@@ -163,7 +163,8 @@ public final class ToXMLStream extends ToStream
                     if (m_doIndent) {
                         if (m_standaloneWasSpecified
                                 || getDoctypePublic() != null
-                                || getDoctypeSystem() != null) {
+                                || getDoctypeSystem() != null
+                                || m_isStandalone) {
                             // We almost never put a newline after the XML
                             // header because this XML could be used as
                             // an extenal general parsed entity
@@ -325,6 +326,13 @@ public final class ToXMLStream extends ToStream
 
                 writer.write('?');
                 writer.write('>');
+
+                /**
+                 * Before Xalan 1497, a newline char was printed out if not inside of an
+                 * element. The whitespace is not significant if the output is standalone
+                */
+                if (m_elemContext.m_currentElemDepth <= 0 && m_isStandalone)
+                    writer.write(m_lineSep, 0, m_lineSepLen);
 
                 /*
                  * Don't write out any indentation whitespace now,
