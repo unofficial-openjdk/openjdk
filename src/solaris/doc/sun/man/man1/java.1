@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH java 1 "16 Mar 2012"
+.TH java 1 "20 Mar 2012"
 
 .LP
 .SH "Name"
@@ -334,7 +334,7 @@ Report on each garbage collection event, as with \-verbose:gc, but log this data
 Always use a local file system for storage of this file to avoid stalling the JVM due to network latency. The file may be truncated in the case of a full file system and logging will continue on the truncated file. This option overrides \f2\-verbose:gc\fP if both are given on the command line. 
 .TP 3
 \-Xmnsize or \-XX:NewSize 
-Sets the size of the young generation (nursery). Similar to the \f3\-Xns\fP flag of JRockit. 
+Sets the size of the young generation (nursery). 
 .TP 3
 \-Xmsn 
 Specify the initial size, in bytes, of the memory allocation pool. This value must be a multiple of 1024 greater than 1MB. Append the letter \f2k\fP or \f2K\fP to indicate kilobytes, or \f2m\fP or \f2M\fP to indicate megabytes. The default value is chosen at runtime based on system configuration. For more information, see 
@@ -418,12 +418,10 @@ Set thread stack size.
 \-XX:AllocationPrefetchStyle=n 
 Sets the style of prefetch used during allocation. default=2.
 .br
-This option is similar to the \f3\-XX:+UseAllocPrefetch\fP flag of JRockit. 
 .TP 3
 \-XX:+AggressiveOpts 
 Enables aggressive optimization.
 .br
-This option is similar to the \f3\-XXaggressive\fP flag of JRockit. The type and level of optimization varies between Jrockit and HotSpot, and between releases. Therefore it is not directly comparable between JVMs. 
 .TP 3
 \-XX:+|\-DisableAttachMechanism 
 This option specifies whether tools (such as \f2jmap\fP and \f2jconsole\fP) are allowed to attach to the JVM. By default, this feature is disabled. That is, attaching is enabled. Example usage: 
@@ -436,14 +434,12 @@ This option specifies whether tools (such as \f2jmap\fP and \f2jconsole\fP) are 
 .fi
 .TP 3
 \-XXLargePageSizeInBytes=n 
-This option is similar to the \f3\-XX:MaxLargePageSize\fP flag of JRockit. 
+This option specifies the maximum size for large pages. 
 .TP 3
 \-XX:MaxGCPauseMillis=n 
 Sets a target for the maximum GC pause time.
 .br
-This option is similar to the \f3\-Xpausetarget\fP flag of JRockit. This is a soft goal, and the JVMs will both do their best effort to achieve it.
-.br
-In Jrockit, the default value is 500ms. In HotSpot, there is no maximum value set by default. 
+This is a soft goal, and the JVM will make its best effort to achieve it. 
 .TP 3
 \-XX:NewSize 
 Sets the size of the young generation (nursery). Sames as \f3\-Xmn\fP\f4size\fP. 
@@ -451,7 +447,6 @@ Sets the size of the young generation (nursery). Sames as \f3\-Xmn\fP\f4size\fP.
 \-XX:ParallelGCThreads=n 
 Sets the number of GC threads in the parallel collectors.
 .br
-This option is similar to the \f3\-Xxgcthreads=n\fP flag of JRockit. 
 .TP 3
 \-XX:PredictedClassLoadCount=n 
 This option requires that the \f3UnlockExperimentalVMOptions\fP flag be set first. Use the \f3PredictedClassLoadCount\fP flag if your application loads a lot of classes, and especially if \f3class.forName()\fP is used heavily. The recommended value is the number of classes loaded as shown in the output from \f3\-verbose:class\fP.
@@ -468,36 +463,17 @@ Example usage:
 \-XX:+PrintCompilation 
 Prints verbose output from the HotSpot dynamic runtime compiler.
 .br
-This option is similar to the \f3\-Xverbose:opt\fP flag of JRockit. 
 .TP 3
 \-XX:+PrintGCDetails \-XX:+PrintGCTimeStamps 
 Prints garbage collection output along with time stamps.
 .br
-This option is similar to the \f3\-Xverbose:gcpause\fP flag of JRockit. 
 .TP 3
 \-XX:SoftRefLRUPolicyMSPerMB=0 
 This flag enables aggressive processing of software references. Use this flag if HotSpot GC is impacted by the software reference count. 
 .TP 3
 \-XX:TLABSize=n 
-Thread local allocation buffers (TLAB) are enabled by default in HotSpot and JRockit. HotSpot automatically sizes TLABs based on allocation patterns. The \f3\-XX:TLABSize\fP option allows fine\-tuning the size of TLABs.
+Thread local allocation buffers (TLAB) are enabled by default in HotSpot. HotSpot automatically sizes TLABs based on allocation patterns. The \f3\-XX:TLABSize\fP option allows fine\-tuning the size of TLABs.
 .br
-In JRockit, TLAB sizes are set with the \f3\-XX:tlasize:min=\fP\f2n\fP\f3,preferred=\fP\f2nn\fP flag. For example, 
-.nf
-\f3
-.fl
-      \-XX:tlasize:min=4k,preferred=2048k
-.fl
-\fP
-.fi
-.TP 3
-\-XX:+UnlockCommercialFeatures 
-Use this flag to actively unlock the use of commercial features. Commercial features are the products "Oracle Java SE Advanced", or "Oracle Java SE Suite", as defined at 
-.na
-\f2the Oracle Java SE Products web page\fP @
-.fi
-http://www.oracle.com/technetwork/java/javase/terms/products/index.html.
-.br
-If this flag is not specified, the default is to run the Java virtual machine without the commercial features being available. Once they are enabled, it is not possible to disable their use at runtime. 
 .TP 3
 \-XX:+UseAltSigs 
 The VM uses \f2SIGUSR1\fP and \f2SIGUSR2\fP by default, which can sometimes conflict with applications that signal\-chain \f2SIGUSR1\fP and \f2SIGUSR2\fP. The \f2\-XX:+UseAltSigs\fP option will cause the VM to use signals other than \f2SIGUSR1\fP and \f2SIGUSR2\fP as the default. 
@@ -507,22 +483,18 @@ Enables compressed references in 64\-bit JVMs.
 .br
 This option is true by default.
 .br
-This option is similar to the \f3\-XxcompressedRefs\fP flag of JRockit. 
 .TP 3
 \-XX:+UseConcMarkSweepGC or \-XX:+UseG1GC 
 These flags enable either the Concurrent Mark Sweep (CMS) or the G1 garbage collectors.
 .br
-These options are similar to the \f3\-XgcPrio:pausetime\fP flag of JRockit. 
 .TP 3
 \-XX:+|\-UseLargePages 
 Use this flag to enable large page support. Large pages are enabled by default on Solaris.
 .br
-This option is similar to the \f3\-Xlargepages\fP flag of JRockit. 
 .TP 3
 \-XX:+UseParallelOldGC 
 Enables the parallel garbage collectors, which are optimized for throughput and average response time.
 .br
-This option is similar to the \f3\-Xgc:genpar\fP flag of JRockit. 
 .SH "NOTES" 
 .LP
 The \f3\-version:\fP\f2release\fP command line option places no restrictions on the complexity of the release specification. However, only a restricted subset of the possible release specifications represent sound policy and only these are fully supported. These policies are: 
