@@ -990,6 +990,11 @@ public final class TransformerImpl extends Transformer
                     }
                 }
             }
+            else if (name.equals(OutputPropertiesFactory.ORACLE_IS_STANDALONE)) {
+                 if (value != null && value.equals("yes")) {
+                     translet._isStandalone = true;
+                 }
+            }
         }
     }
 
@@ -1047,6 +1052,11 @@ public final class TransformerImpl extends Transformer
             else if (name.equals(OutputPropertiesFactory.S_BUILTIN_EXTENSIONS_UNIVERSAL +"indent-amount")) {
                 if (value != null) {
                     handler.setIndentAmount(Integer.parseInt(value));
+                }
+            }
+            else if (name.equals(OutputPropertiesFactory.ORACLE_IS_STANDALONE)) {
+                if (value != null && value.equals("yes")) {
+                    handler.setIsStandalone(true);
                 }
             }
             else if (name.equals(OutputKeys.CDATA_SECTION_ELEMENTS)) {
@@ -1162,6 +1172,7 @@ public final class TransformerImpl extends Transformer
                 name.equals(OutputKeys.OMIT_XML_DECLARATION)   ||
                 name.equals(OutputKeys.STANDALONE) ||
                 name.equals(OutputKeys.VERSION) ||
+                name.equals(OutputPropertiesFactory.ORACLE_IS_STANDALONE) ||
                 name.charAt(0) == '{');
     }
 
