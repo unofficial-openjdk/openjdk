@@ -1,4 +1,4 @@
-." Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+." Copyright (c) 1998-2011 keytool tool, Oracle and/or its affiliates. All rights reserved.
 ." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 ."
 ." This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH keytool 1 "10 May 2011"
+.TH keytool 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -202,7 +202,7 @@ Please consult the
 .na
 \f2Java Cryptography Architecture API Specification & Reference\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA for a full list of \f2\-keyalg\fP and \f2\-sigalg\fP you can choose from.
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA for a full list of \f2\-keyalg\fP and \f2\-sigalg\fP you can choose from.
 .LP
 .SS 
 Common Options
@@ -278,6 +278,7 @@ Denotes an X.509 certificate extension. The option can be used in \-genkeypair a
 Currently keytool supports these named extensions (case\-insensitive):
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -678,11 +679,12 @@ same as SubjectInfoAccess. method can be "ocsp","caIssuers" or any OID.
 .rm h+
 .rm i+
 .rm j+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-38
 
 .LP
 .LP
-For name as OID, value is the HEX dumped DER encoding of the extnValue for the extension excluding the OCTET STRING type and length bytes. Any extra character other than standard HEX numbers (0\-9, a\-f, A\-F) are ignored in the HEX string. Therefore, both \f2"01:02:03:04"\fP and \f2"01020304"\fP are accepted as identical values. If there's no value, the extension has an empty value field then.
+For name as OID, value is the HEX dumped DER encoding of the extnValue for the extension excluding the OCTET STRING type and length bytes. Any extra character other than standard HEX numbers (0\-9, a\-f, A\-F) are ignored in the HEX string. Therefore, both \f2"01:02:03:04"\fP and \f2"01020304"\fP are accepted as identical values. If there is no value, the extension has an empty value field then.
 .LP
 .LP
 A special name \f2'honored'\fP, used in \f2\-gencert\fP only, denotes how the extensions included in the certificate request should be honored. The value for this name is a comma separated list of \f2"all"\fP (all requested extensions are honored), \f2"name{:[critical|non\-critical]}"\fP (the named extension is honored, but using a different isCritical attribute) and \f2"\-name"\fP (used with all, denotes an exception). Requested extensions are not honored by default.
@@ -929,7 +931,7 @@ If the SSL server is behind a firewall, \f2\-J\-Dhttps.proxyHost=proxyhost\fP an
 .na
 \f2JSSE Reference Guide\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/jsse/JSSERefGuide.html for more information. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/jsse/JSSERefGuide.html for more information. 
 .LP
 \f3Note\fP: This option can be used independently of a keystore.  
 .TP 3
@@ -1106,7 +1108,7 @@ This creates a "trusted certificate" entry in the keystore, with the data from t
 Importing the Certificate Reply from the CA
 .LP
 .LP
-Once you've imported a certificate authenticating the public key of the CA you submitted your certificate signing request to (or there's already such a certificate in the "cacerts" file), you can import the certificate reply and thereby replace your self\-signed certificate with a certificate chain. This chain is the one returned by the CA in response to your request (if the CA reply is a chain), or one constructed (if the CA reply is a single certificate) using the certificate reply and trusted certificates that are already available in the keystore where you import the reply or in the "cacerts" keystore file.
+Once you've imported a certificate authenticating the public key of the CA you submitted your certificate signing request to (or there is already such a certificate in the "cacerts" file), you can import the certificate reply and thereby replace your self\-signed certificate with a certificate chain. This chain is the one returned by the CA in response to your request (if the CA reply is a chain), or one constructed (if the CA reply is a single certificate) using the certificate reply and trusted certificates that are already available in the keystore where you import the reply or in the "cacerts" keystore file.
 .LP
 .LP
 For example, suppose you sent your certificate signing request to VeriSign. You can then import the reply via the following, which assumes the returned certificate is named "VSMarkJ.cer":
@@ -1289,7 +1291,7 @@ Keystore implementations are provider\-based. More specifically, the application
 .na
 \f2How to Implement a Provider for the Java Cryptography Architecture\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/crypto/HowToImplAProvider.html. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/HowToImplAProvider.html. 
 .LP
 Applications can choose different \f2types\fP of keystore implementations from different providers, using the "getInstance" factory method supplied in the \f2KeyStore\fP class. A keystore type defines the storage and data format of the keystore information, and the algorithms used to protect private/secret keys in the keystore and the integrity of the keystore itself. Keystore implementations of different types are not compatible. 
 .LP
@@ -1702,11 +1704,11 @@ the
 .na
 \f4Security\fP @
 .fi
-http://download.oracle.com/javase/tutorial/security/index.html trail of the 
+http://docs.oracle.com/javase/tutorial/security/index.html trail of the 
 .na
 \f4Java Tutorial\fP @
 .fi
-http://download.oracle.com/javase/tutorial/ for examples of the use of \f3keytool\fP 
+http://docs.oracle.com/javase/tutorial/ for examples of the use of \f3keytool\fP 
 .RE
 
 .LP

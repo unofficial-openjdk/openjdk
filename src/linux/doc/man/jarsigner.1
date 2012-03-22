@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jarsigner 1 "10 May 2011"
+.TH jarsigner 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -147,7 +147,7 @@ Keystore implementations are provider\-based. More specifically, the application
 .na
 \f2How to Implement a Provider for the Java Cryptography Architecture\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/crypto/HowToImplAProvider.html.
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/HowToImplAProvider.html.
 .LP
 .LP
 Applications can choose different \f2types\fP of keystore implementations from different providers, using the "getInstance" factory method supplied in the \f2KeyStore\fP class. A keystore type defines the storage and data format of the keystore information, and the algorithms used to protect private keys in the keystore and the integrity of the keystore itself. Keystore implementations of different types are not compatible.
@@ -208,7 +208,7 @@ Note that if you us the PKCS#11 provider package, you should refer to the
 .na
 \f2KeyTool and JarSigner\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/p11guide.html#KeyToolJarSigner section of the Java PKCS#11 Reference Guide for details.
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/p11guide.html#KeyToolJarSigner section of the Java PKCS#11 Reference Guide for details.
 .LP
 .SS 
 Supported Algorithms
@@ -513,7 +513,7 @@ See
 .na
 \f2Appendix A\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA of the Java Cryptography Architecture for a list of standard signature algorithm names. This algorithm must be compatible with the private key used to sign the JAR file. If this option is not specified, SHA1withDSA, SHA256withRSA, or SHA256withECDSA will be used depending on the type of private key. There must either be a statically installed provider supplying an implementation of the specified algorithm or the user must specify one with the \f2\-providerClass\fP option, otherwise the command will not succeed. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA of the Java Cryptography Architecture for a list of standard signature algorithm names. This algorithm must be compatible with the private key used to sign the JAR file. If this option is not specified, SHA1withDSA, SHA256withRSA, or SHA256withECDSA will be used depending on the type of private key. There must either be a statically installed provider supplying an implementation of the specified algorithm or the user must specify one with the \f2\-providerClass\fP option, otherwise the command will not succeed. 
 .TP 3
 \-digestalg algorithm 
 Specifies the name of the message digest algorithm to use when digesting the entries of a jar file.
@@ -523,7 +523,7 @@ See
 .na
 \f2Appendix A\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA of the Java Cryptography Architecture for a list of standard message digest algorithm names. If this option is not specified, SHA256 will be used. There must either be a statically installed provider supplying an implementation of the specified algorithm or the user must specify one with the \f2\-providerClass\fP option, otherwise the command will not succeed. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#AppA of the Java Cryptography Architecture for a list of standard message digest algorithm names. If this option is not specified, SHA256 will be used. There must either be a statically installed provider supplying an implementation of the specified algorithm or the user must specify one with the \f2\-providerClass\fP option, otherwise the command will not succeed. 
 .TP 3
 \-signedjar file 
 Specifies the name to be used for the signed JAR file.
@@ -608,7 +608,7 @@ For the Sun PKCS#11 provider, \f2providerName\fP is of the form \f2SunPKCS11\-\f
 .na
 \f2configuration attributes table\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/security/p11guide.html#ATTRS. For example, the following command lists the contents of the PKCS#11 keystore provider instance with name suffix \f2SmartCard\fP: 
+http://docs.oracle.com/javase/7/docs/technotes/guides/security/p11guide.html#ATTRS. For example, the following command lists the contents of the PKCS#11 keystore provider instance with name suffix \f2SmartCard\fP: 
 .nf
 \f3
 .fl
@@ -1037,6 +1037,7 @@ o
 The following table explains how JAR files that were signed in JDK 1.1.x are treated in the Java 2 platform.
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -1519,6 +1520,7 @@ Default privileges granted to all code plus privileges granted in policy file. (
 .rm g+
 .rm h+
 .rm i+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-42
 
 .LP
@@ -1556,11 +1558,11 @@ the
 .na
 \f4Security\fP @
 .fi
-http://download.oracle.com/javase/tutorial/security/index.html trail of the 
+http://docs.oracle.com/javase/tutorial/security/index.html trail of the 
 .na
 \f4Java Tutorial\fP @
 .fi
-http://download.oracle.com/javase/tutorial/index.html for examples of the use of the \f3jarsigner\fP tool 
+http://docs.oracle.com/javase/tutorial/index.html for examples of the use of the \f3jarsigner\fP tool 
 .RE
 
 .LP
