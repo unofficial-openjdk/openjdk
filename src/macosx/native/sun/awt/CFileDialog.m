@@ -117,13 +117,15 @@
         fPanelResult = [thePanel runModalForDirectory:fDirectory file:fFile];
         [thePanel setDelegate:nil];
 
-        if (fMode == java_awt_FileDialog_LOAD) {
-            NSOpenPanel *openPanel = (NSOpenPanel *)thePanel;
-            fURLs = [openPanel URLs];
-        } else {
-            fURLs = [NSArray arrayWithObject:[thePanel URL]];
+        if ([self userClickedOK]) {
+            if (fMode == java_awt_FileDialog_LOAD) {
+                NSOpenPanel *openPanel = (NSOpenPanel *)thePanel;
+                fURLs = [openPanel URLs];
+            } else {
+                fURLs = [NSArray arrayWithObject:[thePanel URL]];
+            }
+            [fURLs retain];
         }
-        [fURLs retain];
     }
 
     [self disposer];
@@ -213,12 +215,11 @@ JNF_COCOA_ENTER(env);
         returnValue = (*env)->NewObjectArray(env, count, stringClass, NULL);
         (*env)->DeleteLocalRef(env, stringClass);
 
-        NSUInteger i;
-        for (i = 0; i < count; i++) {
-            jstring filename = JNFNSToJavaString(env, [[urls objectAtIndex:i] absoluteString]);
-            (*env)->SetObjectArrayElement(env, returnValue, i, filename);
+        [urls enumerateObjectsUsingBlock:^(id url, NSUInteger index, BOOL *stop) {
+            jstring filename = JNFNormalizedJavaStringForPath(env, [url path]);
+            (*env)->SetObjectArrayElement(env, returnValue, index, filename);
             (*env)->DeleteLocalRef(env, filename);
-        }
+        }];
     }
 
     [dialogDelegate release];
