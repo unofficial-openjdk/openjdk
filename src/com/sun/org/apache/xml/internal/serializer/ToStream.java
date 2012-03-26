@@ -2393,12 +2393,15 @@ abstract public class ToStream extends SerializerBase
 
         try
         {
+            if (shouldIndent() && m_isStandalone)
+                indent();
+
             final int limit = start + length;
             boolean wasDash = false;
             if (m_cdataTagOpen)
                 closeCDATA();
 
-            if (shouldIndent())
+            if (shouldIndent() && !m_isStandalone)
                 indent();
 
             final java.io.Writer writer = m_writer;
@@ -2690,7 +2693,7 @@ abstract public class ToStream extends SerializerBase
      */
     protected boolean shouldIndent()
     {
-        return m_doIndent && (!m_ispreserve && !m_isprevtext) && m_elemContext.m_currentElemDepth > 0;
+        return m_doIndent && (!m_ispreserve && !m_isprevtext) && (m_elemContext.m_currentElemDepth > 0 || m_isStandalone);
     }
 
     /**
