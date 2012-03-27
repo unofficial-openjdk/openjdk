@@ -437,7 +437,8 @@ JDK_ALL_TARGETS =
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has problems, and doesn't help performance as much as others.
 JDK_ALL_TARGETS += jdk_awt
-jdk_awt: $(call TestDirs, com/sun/awt java/awt sun/awt)
+jdk_awt: $(call TestDirs, com/sun/awt java/awt sun/awt \
+         javax/imageio javax/print sun/pisces)
 	$(call RunOthervmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
@@ -500,9 +501,8 @@ jdk_math: $(call TestDirs, java/math)
 # Stable samevm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_misc
 jdk_misc: $(call TestDirs, \
-          demo javax/imageio javax/naming javax/print javax/script \
-          javax/smartcardio javax/sound com/sun/java com/sun/jndi \
-	  com/sun/org com/sun/xml sun/misc sun/pisces)
+          demo/jvmti demo/zipfs javax/naming javax/script \
+          javax/smartcardio com/sun/jndi com/sun/xml sun/misc)
 	$(call RunAgentvmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
@@ -557,6 +557,7 @@ jdk_security2: $(call TestDirs, javax/crypto com/sun/crypto)
 JDK_ALL_TARGETS += jdk_security3
 jdk_security3: $(call TestDirs, com/sun/security lib/security \
                javax/security sun/security \
+               com/sun/org/apache/xml/internal/security \
                com/oracle/security/ucrypto)
 	$(call SharedLibraryPermissions,sun/security)
 	$(call RunOthervmBatch)
@@ -565,10 +566,16 @@ jdk_security3: $(call TestDirs, com/sun/security lib/security \
 jdk_security: jdk_security1 jdk_security2 jdk_security3
 	@$(SummaryInfo)
 
+# Stable samevm testruns (minus items from PROBLEM_LIST)
+JDK_ALL_TARGETS += jdk_sound
+jdk_sound: $(call TestDirs, javax/sound)
+	$(call RunAgentvmBatch)
+
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has problems, and doesn't help performance as much as others.
 JDK_ALL_TARGETS += jdk_swing
-jdk_swing: $(call TestDirs, javax/swing sun/java2d)
+jdk_swing: $(call TestDirs, javax/swing sun/java2d \
+           demo/jfc com/sun/java/swing)
 	$(call RunOthervmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
