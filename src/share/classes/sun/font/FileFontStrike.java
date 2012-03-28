@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public class FileFontStrike extends PhysicalStrike {
     private static final int SEGINTARRAY   = 3;
     private static final int SEGLONGARRAY  = 4;
 
-    private int glyphCacheFormat = UNINITIALISED;
+    private volatile int glyphCacheFormat = UNINITIALISED;
 
     /* segmented arrays are blocks of 256 */
     private static final int SEGSHIFT = 8;
@@ -426,32 +426,34 @@ public class FileFontStrike extends PhysicalStrike {
     }
 
     /* Called only from synchronized code or constructor */
-    private void initGlyphCache() {
+    private synchronized void initGlyphCache() {
 
         int numGlyphs = mapper.getNumGlyphs();
+        int tmpFormat = UNINITIALISED;
 
         if (segmentedCache) {
             int numSegments = (numGlyphs + SEGSIZE-1)/SEGSIZE;
             if (FontManager.longAddresses) {
-                glyphCacheFormat = SEGLONGARRAY;
+                tmpFormat = SEGLONGARRAY;
                 segLongGlyphImages = new long[numSegments][];
                 this.disposer.segLongGlyphImages = segLongGlyphImages;
              } else {
-                 glyphCacheFormat = SEGINTARRAY;
+                 tmpFormat = SEGINTARRAY;
                  segIntGlyphImages = new int[numSegments][];
                  this.disposer.segIntGlyphImages = segIntGlyphImages;
              }
         } else {
             if (FontManager.longAddresses) {
-                glyphCacheFormat = LONGARRAY;
+                tmpFormat = LONGARRAY;
                 longGlyphImages = new long[numGlyphs];
                 this.disposer.longGlyphImages = longGlyphImages;
             } else {
-                glyphCacheFormat = INTARRAY;
+                tmpFormat = INTARRAY;
                 intGlyphImages = new int[numGlyphs];
                 this.disposer.intGlyphImages = intGlyphImages;
             }
         }
+        glyphCacheFormat = tmpFormat;
     }
 
     /* Metrics info is always retrieved. If the GlyphInfo address is non-zero
