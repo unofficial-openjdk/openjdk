@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -262,7 +262,8 @@ Java_java_io_Win32FileSystem_getLength(JNIEnv *env, jobject this,
 
 JNIEXPORT jboolean JNICALL
 Java_java_io_Win32FileSystem_createFileExclusively(JNIEnv *env, jclass cls,
-                                                   jstring pathname)
+                                                   jstring pathname,
+                                                   jboolean restrictive)
 {
     jboolean rv = JNI_FALSE;
     DWORD a;

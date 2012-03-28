@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -897,7 +897,7 @@ public class File
     public boolean createNewFile() throws IOException {
         SecurityManager security = System.getSecurityManager();
         if (security != null) security.checkWrite(path);
-        return fs.createFileExclusively(path);
+        return fs.createFileExclusively(path, false);
     }
 
     /**
@@ -1700,7 +1700,8 @@ public class File
         return new File(dir, prefix + Long.toString(n) + suffix);
     }
 
-    private static boolean checkAndCreate(String filename, SecurityManager sm)
+    private static boolean checkAndCreate(String filename, SecurityManager sm,
+                                          boolean restrictive)
         throws IOException
     {
         if (sm != null) {
@@ -1713,7 +1714,29 @@ public class File
                 throw new SecurityException("Unable to create temporary file");
             }
         }
-        return fs.createFileExclusively(filename);
+        return fs.createFileExclusively(filename, restrictive);
+    }
+    
+    // The resulting temporary file may have more restrictive access permission
+    // on some platforms, if restrictive is true.
+    private static File createTempFile0(String prefix, String suffix,
+                                        File directory, boolean restrictive)
+        throws IOException
+    {
+        if (prefix == null) throw new NullPointerException();
+        if (prefix.length() < 3)
+            throw new IllegalArgumentException("Prefix string too short");
+        String s = (suffix == null) ? ".tmp" : suffix;
+        if (directory == null) {
+            String tmpDir = LazyInitialization.temporaryDirectory();
+            directory = new File(tmpDir, fs.prefixLength(tmpDir));
+        }
+        SecurityManager sm = System.getSecurityManager();
+        File f;
+        do {
+            f = generateFile(prefix, s, directory);
+        } while (!checkAndCreate(f.getPath(), sm, restrictive));
+        return f;
     }
 
     /**
@@ -1789,20 +1812,7 @@ public class File
                                       File directory)
         throws IOException
     {
-        if (prefix == null) throw new NullPointerException();
-        if (prefix.length() < 3)
-            throw new IllegalArgumentException("Prefix string too short");
-        String s = (suffix == null) ? ".tmp" : suffix;
-        if (directory == null) {
-            String tmpDir = LazyInitialization.temporaryDirectory();
-            directory = new File(tmpDir, fs.prefixLength(tmpDir));
-        }
-        SecurityManager sm = System.getSecurityManager();
-        File f;
-        do {
-            f = generateFile(prefix, s, directory);
-        } while (!checkAndCreate(f.getPath(), sm));
-        return f;
+        return createTempFile0(prefix, suffix, directory, false);
     }
 
     /**
@@ -1837,7 +1847,7 @@ public class File
     public static File createTempFile(String prefix, String suffix)
         throws IOException
     {
-        return createTempFile(prefix, suffix, null);
+        return createTempFile0(prefix, suffix, null, false);
     }
 
 
@@ -1959,6 +1969,15 @@ public class File
             }
         );
     }
-
-
+    
+    // Set up JavaIOAccess in SharedSecrets
+    static {
+        sun.misc.SharedSecrets.setJavaIOFileAccess(new sun.misc.JavaIOFileAccess() {
+            public File createTempFile(String prefix, String suffix, File directory)
+                throws IOException
+            {
+                return createTempFile0(prefix, suffix, directory, true);
+            }
+        });
+    }
 }

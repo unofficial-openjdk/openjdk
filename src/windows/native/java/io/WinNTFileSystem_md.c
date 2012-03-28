@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -349,7 +349,8 @@ Java_java_io_WinNTFileSystem_getLength(JNIEnv *env, jobject this, jobject file)
 
 JNIEXPORT jboolean JNICALL
 Java_java_io_WinNTFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
-                                                   jstring path)
+                                                   jstring path,
+                                                   jboolean restrictive)
 {
     HANDLE h = NULL;
     WCHAR *pathbuf = pathToNTPath(env, path, JNI_FALSE);
