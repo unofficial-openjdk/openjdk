@@ -43,6 +43,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.file.Files;
 import java.nio.channels.Channel;
 import java.nio.channels.ServerSocketChannel;
 import java.rmi.AccessException;
@@ -1937,7 +1938,7 @@ public class Activation implements Serializable {
                     new PrivilegedExceptionAction<Void>() {
                         public Void run() throws IOException {
                             File file =
-                                File.createTempFile("rmid-err", null, null);
+                                Files.createTempFile("rmid-err", null).toFile();
                             PrintStream errStream =
                                 new PrintStream(new FileOutputStream(file));
                             System.setErr(errStream);
