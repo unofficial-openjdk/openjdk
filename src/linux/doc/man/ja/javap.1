@@ -19,14 +19,14 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH javap 1 "07 May 2011"
+.TH javap 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-javap \- Java クラスファイル逆アセンブラ
+javap \- Javaクラス・ファイル逆アセンブラ
 .LP
 .LP
-クラスファイルを逆アセンブルします。
+クラス・ファイルを逆アセンブルします。
 .LP
 .SH "形式"
 .LP
@@ -42,15 +42,15 @@ javap [ \fP\f3options\fP\f3 ] classes
 .SH "説明"
 .LP
 .LP
-\f3javap\fP コマンドは、1 つまたは複数のクラスファイルを逆アセンブルします。その出力は指定するオプションにより異なります。オプションを指定しない場合、\f3javap\fP は、そのパッケージ、渡されたクラスの protected および public のフィールドとメソッドを出力します。\f3javap\fP はその出力を標準出力に表示します。
+\f3javap\fPコマンドは、1つまたは複数のクラス・ファイルを逆アセンブルします。その出力は指定するオプションにより異なります。オプションを指定しない場合、\f3javap\fPは、そのパッケージ、渡されたクラスのprotectedおよびpublicのフィールドとメソッドを出力します。\f3javap\fPはその出力を標準出力に表示します。
 .LP
 .RS 3
 .TP 3
 options 
-コマンド行オプション。 
+コマンドライン・オプション。 
 .TP 3
 classes 
-注釈の処理対象となる 1 つ以上のクラス \f2DocFooter.class\fP など) のリスト (空白区切り)。クラスパスで見つかるクラスは、ファイル名 ( \f2/home/user/myproject/src/DocFooter.class\fP など) または URL ( \f2file:///home/user/myproject/src/DocFooter.class\fP など) で指定できます。 
+注釈の処理対象となる1つ以上のクラス\f2DocFooter.class\fPなどのリスト(空白区切り)。クラス・パスで見つかるクラスは、ファイル名(\f2/home/user/myproject/src/DocFooter.class\fPなど)またはURL(\f2file:///home/user/myproject/src/DocFooter.class\fPなど)で指定できます。 
 .RE
 
 .LP
@@ -101,7 +101,7 @@ public class DocFooter extends Applet {
 
 .LP
 .LP
-\f3javap DocFooter.class\fP がもたらす出力は次のようになります。
+\f3javap DocFooter.class\fPがもたらす出力は次のようになります。
 .LP
 .nf
 \f3
@@ -127,7 +127,7 @@ public class DocFooter extends java.applet.Applet {
 
 .LP
 .LP
-\f3javap \-c DocFooter.class\fP がもたらす出力は次のようになります。
+\f3javap \-c DocFooter.class\fPがもたらす出力は次のようになります。
 .LP
 .nf
 \f3
@@ -247,28 +247,28 @@ public class DocFooter extends java.applet.Applet {
 .RS 3
 .TP 3
 \-help \-\-help \-? 
-\f3javap\fP のヘルプメッセージを出力します。 
+\f3javap\fPのヘルプ・メッセージを出力します。 
 .TP 3
 \-version 
-バージョン情報を表示します。 
+バージョン情報を出力します。 
 .TP 3
 \-l 
-行番号と局所変数テーブルを表示します。 
+行番号とローカル変数表を出力します。 
 .TP 3
 \-public 
-public クラスおよびメンバーだけを表示します。 
+publicクラスおよびメンバーのみ表示します。 
 .TP 3
 \-protected 
-protected および public のクラスとメンバーだけを表示します。 
+protectedおよびpublicのクラスとメンバーのみを表示します。 
 .TP 3
 \-package 
-package、protected、および public のクラスとメンバーだけを表示します。これはデフォルトの設定です。 
+package、protected、およびpublicのクラスとメンバーのみ表示します。これがデフォルトです。 
 .TP 3
 \-private \-p 
 すべてのクラスとメンバーを表示します。 
 .TP 3
 \-Jflag 
-ランタイムシステムに直接 \f2flag\fP を渡します。使用例を次に示します。 
+ランタイム・システムに直接\f2flag\fPを渡します。使用例を次に示します。 
 .nf
 \f3
 .fl
@@ -280,32 +280,32 @@ javap \-J\-Djava.security.manager \-J\-Djava.security.policy=MyPolicy MyClassNam
 .fi
 .TP 3
 \-s 
-内部の型シグニチャーを出力します。 
+内部の型シグニチャを出力します。 
 .TP 3
 \-sysinfo 
-処理中のクラスのシステム情報 (パス、サイズ、日付、MD5 ハッシュ) を表示します。 
+処理中のクラスのシステム情報(パス、サイズ、日付、MD5ハッシュ)を表示します。 
 .TP 3
 \-constants 
-static final 定数を表示します。 
+static final定数を表示します。 
 .TP 3
 \-c 
-クラスの各メソッドのために逆アセンブルされるコード、すなわち Java バイトコードから成る命令を表示します。これらは
+クラスの各メソッドのために逆アセンブルされるコード、すなわちJavaバイトコードからなる命令を表示します。これらは
 .na
-\f2「Java Virtual Machine Specification」\fP @
+\f2Java Virtual Machine Specification\fP @
 .fi
 http://java.sun.com/docs/books/vmspec/にドキュメント化されています。 
 .TP 3
 \-verbose 
-メソッドのスタックサイズ、および \f2locals\fP と \f2args\fP の数を出力します。 
+メソッドのスタック・サイズ、および\f2locals\fPと\f2args\fPの数を出力します。 
 .TP 3
 \-classpath path 
-\f3javap\fP がクラスを探すために使用するパスを指定します。デフォルトまたは CLASSPATH 環境変数設定を上書きします。 
+\f3javap\fPがクラスを探すために使用するパスを指定します。デフォルトまたはCLASSPATH環境変数設定を上書きします。 
 .TP 3
 \-bootclasspath path 
-ブートストラップクラスをロードするパスを指定します。ブートストラップクラスは、デフォルトでは \f2jre/lib/rt.jar\fP および他のいくつかの JAR ファイル にある、コア Java 2 プラットフォームを実装するクラスです。 
+ブートストラップ・クラスをロードするパスを指定します。ブートストラップ・クラスは、デフォルトでは\f2jre/lib/rt.jar\fPおよび他のいくつかのJARファイルにある、コアJavaプラットフォームを実装するクラスです。 
 .TP 3
 \-extdirs dirs 
-インストールされた拡張機能を検索する場所をオーバーライドします。拡張機能は、デフォルトでは \f2java.ext.dirs\fP にあります。 
+インストールされた拡張機能を検索する場所をオーバーライドします。拡張機能のデフォルト位置は\f2java.ext.dirs\fPです。 
 .RE
 
 .LP

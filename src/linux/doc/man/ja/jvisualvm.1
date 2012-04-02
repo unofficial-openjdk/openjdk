@@ -19,11 +19,11 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jvisualvm 1 "07 May 2011"
+.TH jvisualvm 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-\f2jvisualvm\fP \- Java 仮想マシンの監視、トラブルシューティング、およびプロファイリングツール
+\f2jvisualvm\fP \- Java仮想マシンの監視、トラブルシューティングおよびプロファイリング・ツール
 .LP
 .RS 3
 .TP 2
@@ -60,35 +60,35 @@ o
 .SH "パラメータ"
 .LP
 .LP
-オプションを使用する場合、コマンド名の直後に記述してください。オプションの指定順序に決まりはありません。特定のオプションに適用されるパラメータについては、このあとの「オプション」を参照してください。
+オプションを使用する場合、コマンド名の直後に記述してください。オプションの指定順序に決まりはありません。特定のオプションに適用されるパラメータについては、次のオプションを参照してください。
 .LP
-.SH " 説明"
-.LP
-.LP
-Java VisualVM は、指定された Java 仮想マシン (JVM(*)) で Java テクノロジベースのアプリケーション (Java アプリケーション) が実行されているときに、その Java アプリケーションに関する詳細な情報を提供する直感的なグラフィカルユーザーインタフェースです。Java VisualVM という名前は、Java VisualVM が JVM ソフトウェアに関する情報を「視覚的に」提供するという事実に由来しています。
+.SH "説明"
 .LP
 .LP
-Java VisualVM は、いくつかの監視、トラブルシューティング、およびプロファイリングユーティリティーを 1 つのツールに統合します。たとえば、スタンドアロンツール \f2jmap\fP、 \f2jinfo\fP、 \f2jstat\fP 、および \f2jstack\fP で提供されている機能のほとんどが、Java VisualVM に組み込まれています。JConsole ツールによって提供される一部の機能など、ほかの機能はオプションのプラグインとして追加できます。
+Java VisualVMは、指定されたJava仮想マシン(JVM(*))でJavaテクノロジ・ベースのアプリケーション(Javaアプリケーション)が実行されているときに、そのJavaアプリケーションに関する詳細な情報を提供する直感的なグラフィカル・ユーザー・インタフェースです。Java VisualVMという名前は、Java VisualVMがJVMソフトウェアに関する情報を\f2視覚的に\fP提供するという事実に由来しています。
+.LP
+.LP
+Java VisualVMは、いくつかの監視、トラブルシューティングおよびプロファイリング・ユーティリティを1つのツールに統合します。たとえば、スタンドアロン・ツール\f2jmap\fP、\f2jinfo\fP、\f2jstat\fPおよび\f2jstack\fPで提供されている機能のほとんどが、Java VisualVMに組み込まれています。JConsoleツールによって提供される一部の機能など、他の機能はオプションのプラグインとして追加できます。
 .LP
 .SH "オプション"
 .LP
 .LP
-次のオプションは、Java VisualVM を起動したときに実行可能になります。
+次のオプションは、Java VisualVMを起動したときに実行可能になります。
 .LP
 .RS 3
 .TP 3
 \-J<jvm_option>\  
-この \f2<jvm_option>\fP を JVM ソフトウェアに渡します。 
+この\f2<jvm_option>\fPをJVMソフトウェアに渡します。 
 .RE
 
 .LP
 .SH "使用方法"
 .LP
 .LP
-Java VisualVM は、Java アプリケーションの開発者がアプリケーションのトラブルシューティングを行なったり、アプリケーションのパフォーマンスを監視および改善したりするのに役立ちます。Java VisualVM を使用すると、開発者はヒープダンプの生成および解析、メモリーリークの特定、ガベージコレクションの実行および監視、およびメモリーと CPU の簡易プロファイリングの実行が可能になります。Java VisualVM の機能を拡張するプラグインもいくつかあります。たとえば、JConsole ツールのほとんどの機能は、MBeans タブおよび JConsole Plug\-in Wrapper プラグインを介して使用できます。標準の Java VisualVM プラグインのカタログから選択するには、Java VisualVM メニューの「ツール」>「プラグイン」を選択します。
+Java VisualVMは、Javaアプリケーションの開発者がアプリケーションのトラブルシューティングを行ったり、アプリケーションのパフォーマンスを監視および改善したりするのに役立ちます。Java VisualVMを使用すると、開発者はヒープ・ダンプの生成および解析、メモリー・リークの特定、ガベージ・コレクションの実行および監視、およびメモリーとCPUの簡易プロファイリングの実行が可能になります。Java VisualVMの機能を拡張するプラグインもいくつかあります。たとえば、JConsoleツールのほとんどの機能は、「MBeans」タブおよびJConsole Plug\-in Wrapperプラグインを介して使用できます。標準のJava VisualVMプラグインのカタログから選択するには、Java VisualVMメニューの「ツール」→「プラグイン」を選択します。
 .LP
 .LP
-Java VisualVM を起動するには、次のコマンドを実行します。
+Java VisualVMを起動するには、次のコマンドを実行します。
 .LP
 .nf
 \f3
@@ -102,25 +102,25 @@ Java VisualVM を起動するには、次のコマンドを実行します。
 .SH "関連項目"
 .LP
 .LP
-Java VisualVM の詳細は、次のページを参照してください。
+Java VisualVMの詳細は、次のページを参照してください。
 .LP
 .RS 3
 .TP 2
 o
 .na
-\f2Java VisualVM 開発者のサイト\fP @
+\f2Java VisualVM開発者のサイト\fP @
 .fi
 http://visualvm.java.net 
 .TP 2
 o
 .na
-\f2Java SE プラットフォームでの Java VisualVM のドキュメント\fP @
+\f2Java SEプラットフォームでのJava VisualVMのドキュメント\fP @
 .fi
-http://java.sun.com/javase/6/docs/technotes/guides/visualvm/index.html 
+http://download.oracle.com/javase/7/docs/technotes/guides/visualvm/index.html 
 .RE
 
 .LP
 .LP
-\f2(* 「Java 仮想マシン」と「JVM」という用語は、Java プラットフォームの仮想マシンを意味しています。)\fP
+\f2(*「Java仮想マシン」と「JVM」という用語は、Javaプラットフォームの仮想マシンを意味しています。)\fP
 .LP
  
