@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH javadoc 1 "10 May 2011"
+.TH javadoc 1 "16 Mar 2012"
 .SH "Name"
 javadoc \- The Java API Documentation Generator
 .LP
@@ -111,7 +111,7 @@ When the Javadoc tool builds its internal structure for the documentation, it lo
 .na
 \f2How Classes Are Found\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/findingclasses.html. Generally speaking, classes you create must either be loaded as an extension or in the Javadoc tool's class path.
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html. Generally speaking, classes you create must either be loaded as an extension or in the Javadoc tool's class path.
 .SS 
 Javadoc Doclets
 .LP
@@ -122,7 +122,7 @@ o
 .na
 \f2Javadoc Doclets\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html 
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html 
 .TP 2
 o
 The \f2\-doclet\fP command\-line option 
@@ -137,7 +137,7 @@ o
 .na
 \f2Javadoc Enhancements\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html for details about improvements added in Javadoc. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/index.html for details about improvements added in Javadoc. 
 .TP 2
 o
 .na
@@ -206,7 +206,7 @@ The classes and interfaces that are explicitly referred to in the definition (im
 .na
 \f21.3\fP @
 .fi
-http://download.oracle.com/javase/1.3/docs/tooldocs/solaris/javadoc.html#referencedclasses.) When the Javadoc tool is run, it should load into memory all of the referenced classes in javadoc's bootclasspath and classpath. (The Javadoc tool prints a "Class not found" warning for referenced classes not found.) The Javadoc tool can derive enough information from the .class files to determine their existence and the fully\-qualified names of their members. 
+http://docs.oracle.com/javase/1.3/docs/tooldocs/solaris/javadoc.html#referencedclasses.) When the Javadoc tool is run, it should load into memory all of the referenced classes in javadoc's bootclasspath and classpath. (The Javadoc tool prints a "Class not found" warning for referenced classes not found.) The Javadoc tool can derive enough information from the .class files to determine their existence and the fully\-qualified names of their members. 
 .LP
 .TP 3
 external referenced classes 
@@ -338,14 +338,14 @@ Inserts the processed text at the bottom of the package summary page it generate
 .na
 \f2Package Summary\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/java/applet/package\-summary.html. 
+http://docs.oracle.com/javase/7/docs/api/java/applet/package\-summary.html. 
 .TP 2
 o
 Copies the first sentence of the package comment to the top of the package summary page. It also adds the package name and this first sentence to the list of packages on the overview page, as shown in 
 .na
 \f2Overview Summary\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/overview\-summary.html. The end\-of\-sentence is determined by the same rules used for the end of the first sentence of class and member main descriptions. 
+http://docs.oracle.com/javase/7/docs/api/overview\-summary.html. The end\-of\-sentence is determined by the same rules used for the end of the first sentence of class and member main descriptions. 
 .RE
 .SS 
 Overview Comment File
@@ -372,7 +372,7 @@ Inserts the processed text at the bottom of the overview page it generates, as s
 .na
 \f2Overview Summary\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/overview\-summary.html. 
+http://docs.oracle.com/javase/7/docs/api/overview\-summary.html. 
 .TP 2
 o
 Copies the first sentence of the overview comment to the top of the overview summary page. 
@@ -1093,7 +1093,7 @@ For more about deprecation, see
 .na
 \f2The @deprecated tag\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javadoc/deprecation/index.html.
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/deprecation/index.html.
 .LP
 .RS 3
 .TP 3
@@ -2166,7 +2166,7 @@ For more information about how to use these tags, along with an example, see "
 .na
 \f2Documenting Serializable Fields and Data for a Class\fP @
 .fi
-http://download.oracle.com/javase/7/docs/platform/serialization/spec/serial\-arch.html," Section 1.6 of the \f2Java Object Serialization Specification\fP. Also see the 
+http://docs.oracle.com/javase/7/docs/platform/serialization/spec/serial\-arch.html," Section 1.6 of the \f2Java Object Serialization Specification\fP. Also see the 
 .na
 \f2Serialization FAQ\fP @
 .fi
@@ -2259,7 +2259,7 @@ These values of these constants are also displayed on the
 .na
 \f2Constant Field Values\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/constant\-values.html page. 
+http://docs.oracle.com/javase/7/docs/api/constant\-values.html page. 
 .LP
 .TP 3
 @version\  version\-text 
@@ -2954,7 +2954,7 @@ Specifies the paths where javadoc will look for referenced classes (\f2.class\fP
 .na
 \f2class path\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/index.html#general documentation for specifying \f2classpathlist\fP.
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#general documentation for specifying \f2classpathlist\fP.
 .br
 .br
 If \f2\-sourcepath\fP is omitted, the Javadoc tool uses \f2\-classpath\fP to find the source files as well as class files (for backward compatibility). Therefore, if you want to search for source and class files in separate paths, use both \f2\-sourcepath\fP and \f2\-classpath\fP.
@@ -2974,7 +2974,7 @@ For an in\-depth description of how the Javadoc tool uses \f2\-classpath\fP to f
 .na
 \f2How Classes Are Found\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/findingclasses.html.  
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html.  
 .br
 .br
 As a special convenience, a class path element containing a basename of \f2*\fP is considered equivalent to specifying a list of all the files in the directory with the extension \f2.jar\fP or \f2.JAR\fP (a Java program cannot tell the difference between the two invocations).
@@ -3013,7 +3013,7 @@ Specifies the paths where the boot classes reside. These are nominally the Java 
 .na
 \f2How Classes Are Found\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfiles. for more details. Separate directories in \f2classpathlist\fP with colons (:).  
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfiles. for more details. Separate directories in \f2classpathlist\fP with colons (:).  
 .TP 3
 \-extdirs\  dirlist 
 Specifies the directories where extension classes reside. These are any classes that use the Java Extension mechanism. The extdirs is part of the search path the Javadoc tool will use to look up source and class files. See \f2\-classpath\fP (above) for more details. Separate directories in \f2dirlist\fP with colons (:).  
@@ -3029,7 +3029,7 @@ Uses the internationalized sentence boundary of
 .na
 \f2java.text.BreakIterator\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/java/text/BreakIterator.html to determine the end of the first sentence for English (all other locales already use \f2BreakIterator\fP), rather than an English language, locale\-specific algorithm. By \f2first sentence\fP, we mean the first sentence in the main description of a package, class or member. This sentence is copied to the package, class or member summary, and to the alphabetic index.
+http://docs.oracle.com/javase/7/docs/api/java/text/BreakIterator.html to determine the end of the first sentence for English (all other locales already use \f2BreakIterator\fP), rather than an English language, locale\-specific algorithm. By \f2first sentence\fP, we mean the first sentence in the main description of a package, class or member. This sentence is copied to the package, class or member summary, and to the alphabetic index.
 .br
 .br
 From JDK 1.2 forward, the BreakIterator class is already used to determine the end of sentence for all languages but English. Therefore, the \f2\-breakiterator\fP option has no effect except for English from 1.2 forward. English has its own default algorithm: 
@@ -3211,13 +3211,13 @@ when using an absolute URL to the external API document, if your shell \f2does n
 .br
 \f3Example using absolute links to the external docs\fP \- Let us say you want to link to the \f2java.lang\fP, \f2java.io\fP and other Java Platform packages at 
 .na
-\f2http://download.oracle.com/javase/7/docs/api/\fP @
+\f2http://docs.oracle.com/javase/7/docs/api/\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/. The following command generates documentation for the package \f2com.mypackage\fP with links to the Java SE Platform packages. The generated documentation will contain links to the \f2Object\fP class, for example, in the class trees. (Other options, such as \f2\-sourcepath\fP and \f2\-d\fP, are not shown.) 
+http://docs.oracle.com/javase/7/docs/api/. The following command generates documentation for the package \f2com.mypackage\fP with links to the Java SE Platform packages. The generated documentation will contain links to the \f2Object\fP class, for example, in the class trees. (Other options, such as \f2\-sourcepath\fP and \f2\-d\fP, are not shown.) 
 .nf
 \f3
 .fl
-  % \fP\f3javadoc \-link http://download.oracle.com/javase/7/docs/api/ com.mypackage\fP
+  % \fP\f3javadoc \-link http://docs.oracle.com/javase/7/docs/api/ com.mypackage\fP
 .fl
 .fi
 \f3Example using relative links to the external docs\fP \- Let us say you have two packages whose docs are generated in different runs of the Javadoc tool, and those docs are separated by a relative path. In this example, the packages are \f2com.apipackage\fP, an API, and \f2com.spipackage\fP, an SPI (Service Provide Interface). You want the documentation to reside in \f2docs/api/com/apipackage\fP and \f2docs/spi/com/spipackage\fP. Assuming the API package documentation is already generated, and that \f2docs\fP is the current directory, you would document the SPI package with links to the API documentation by running: 
@@ -3267,9 +3267,9 @@ An important corollary is that when you use the \f2\-link\fP option, there may b
 .br
 For example, the package list for the Java SE 6 API is located at 
 .na
-\f2http://download.oracle.com/javase/7/docs/api/package\-list\fP @
+\f2http://docs.oracle.com/javase/7/docs/api/package\-list\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/package\-list. and starts as follows: 
+http://docs.oracle.com/javase/7/docs/api/package\-list. and starts as follows: 
 .nf
 \f3
 .fl
@@ -3336,15 +3336,15 @@ o
 You can specify multiple \f2\-linkoffline\fP options in a given javadoc run. (Prior to 1.2.2, it could be specified only once.)
 .br
 .br
-\f3Example using absolute links to the external docs\fP \- Let us say you want to link to the \f2java.lang\fP, \f2java.io\fP and other Java SE Platform packages at \f2http://download.oracle.com/javase/7/docs/api/\fP, but your shell does not have web access. You could open the \f2package\-list\fP file in a browser at 
+\f3Example using absolute links to the external docs\fP \- Let us say you want to link to the \f2java.lang\fP, \f2java.io\fP and other Java SE Platform packages at \f2http://docs.oracle.com/javase/7/docs/api/\fP, but your shell does not have web access. You could open the \f2package\-list\fP file in a browser at 
 .na
-\f2http://download.oracle.com/javase/7/docs/api/package\-list\fP @
+\f2http://docs.oracle.com/javase/7/docs/api/package\-list\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/package\-list, save it to a local directory, and point to this local copy with the second argument, \f2packagelistLoc\fP. In this example, the package list file has been saved to the current directory "\f2.\fP" . The following command generates documentation for the package \f2com.mypackage\fP with links to the Java SE Platform packages. The generated documentation will contain links to the \f2Object\fP class, for example, in the class trees. (Other necessary options, such as \f2\-sourcepath\fP, are not shown.) 
+http://docs.oracle.com/javase/7/docs/api/package\-list, save it to a local directory, and point to this local copy with the second argument, \f2packagelistLoc\fP. In this example, the package list file has been saved to the current directory "\f2.\fP" . The following command generates documentation for the package \f2com.mypackage\fP with links to the Java SE Platform packages. The generated documentation will contain links to the \f2Object\fP class, for example, in the class trees. (Other necessary options, such as \f2\-sourcepath\fP, are not shown.) 
 .nf
 \f3
 .fl
-% \fP\f3javadoc \-linkoffline http://download.oracle.com/javase/7/docs/api/ . com.mypackage\fP
+% \fP\f3javadoc \-linkoffline http://docs.oracle.com/javase/7/docs/api/ . com.mypackage\fP
 .fl
 .fi
 \f3Example using relative links to the external docs\fP \- It's not very common to use \f2\-linkoffline\fP with relative paths, for the simple reason that \f2\-link\fP usually suffices. When using \f2\-linkoffline\fP, the \f2package\-list\fP file is generally local, and when using relative links, the file you are linking to is also generally local. So it is usually unnecessary to give a different path for the two arguments to \f2\-linkoffline\fP. When the two arguments are identical, you can use \f2\-link\fP. See the \f2\-link\fP relative example.
@@ -3695,7 +3695,7 @@ o
 .na
 \f2Taglet Overview\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javadoc/taglet/overview.html 
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/taglet/overview.html 
 .RE
 Taglets are useful for block or inline tags. They can have any number of arguments and implement custom behavior, such as making text bold, formatting bullets, writing out the text to a file, or starting other processes.
 .br
@@ -3908,7 +3908,7 @@ Running
 .na
 \f2Standard Doclet\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javadoc/standard\-doclet.html#runningprogrammatically.
+http://docs.oracle.com/javase/7/docs/technotes/guides/javadoc/standard\-doclet.html#runningprogrammatically.
 .LP
 \f3Running Doclets\fP \- The instructions given below are for invoking the standard HTML doclet. To invoke a custom doclet, use the \-doclet and \-docletpath options. For full, working examples of running a particular doclet, see the 
 .na
@@ -4223,12 +4223,12 @@ o
 .na
 \f2Setting the Class Path\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/index.html#general 
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#general 
 .TP 2
 o
 .na
 \f2How Javac and Javadoc Find Classes\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfiles (tools.jar) 
+http://docs.oracle.com/javase/7/docs/technotes/tools/findingclasses.html#srcfiles (tools.jar) 
 .RE
  

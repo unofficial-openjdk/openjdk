@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jstat 1 "10 May 2011"
+.TH jstat 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -160,6 +160,7 @@ Determines the statistics information that \f3jstat\fP displays. The following t
 .br
 .br
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -667,6 +668,7 @@ HotSpot compilation method statistics.
 .rm j+
 .rm k+
 .rm l+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-52
 .TP 3
 \-h n 
@@ -692,6 +694,7 @@ The following tables summarize the columns that \f3jstat\fP outputs for each \f2
 \-class Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -888,6 +891,7 @@ Time spent performing class load and unload operations.
 .rm a+
 .rm b+
 .rm c+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-21
 
 .LP
@@ -895,6 +899,7 @@ Time spent performing class load and unload operations.
 \-compiler Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -1186,6 +1191,7 @@ Class name and method for the last failed compilation.
 .rm d+
 .rm e+
 .rm f+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-29
 
 .LP
@@ -1193,6 +1199,7 @@ Class name and method for the last failed compilation.
 \-gc Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -1788,6 +1795,7 @@ Total garbage collection time.
 .rm l+
 .rm m+
 .rm n+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-63
 
 .LP
@@ -1795,6 +1803,7 @@ Total garbage collection time.
 \-gccapacity Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -2427,6 +2436,7 @@ Number of Young generation GC Events.
 .rm m+
 .rm n+
 .rm o+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-67
 
 .LP
@@ -2437,6 +2447,7 @@ Number of Young generation GC Events.
 This option displays the same summary of garbage collection statistics as the \f3\-gcutil\fP option, but includes the causes of the last garbage collection event and (if applicable) the current garbage collection event. In addition to the columns listed for \f3\-gcutil\fP, this option adds the following columns:
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -2580,6 +2591,7 @@ Cause of current Garbage Collection.
 .35
 .rm a+
 .rm b+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-13
 
 .LP
@@ -2587,6 +2599,7 @@ Cause of current Garbage Collection.
 \-gcnew Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -3034,6 +3047,7 @@ Young generation garbage collection time.
 .rm h+
 .rm i+
 .rm j+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-47
 
 .LP
@@ -3041,6 +3055,7 @@ Young generation garbage collection time.
 \-gcnewcapacity Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -3488,6 +3503,7 @@ Number of young generation GC events.
 .rm h+
 .rm i+
 .rm j+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-47
 
 .LP
@@ -3495,6 +3511,7 @@ Number of young generation GC events.
 \-gcold Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -3831,6 +3848,7 @@ Total garbage collection time.
 .rm e+
 .rm f+
 .rm g+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-35
 
 .LP
@@ -3838,6 +3856,7 @@ Total garbage collection time.
 \-gcoldcapacity Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -4174,6 +4193,7 @@ Total garbage collection time.
 .rm e+
 .rm f+
 .rm g+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-35
 
 .LP
@@ -4181,6 +4201,7 @@ Total garbage collection time.
 \-gcpermcapacity Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -4517,6 +4538,7 @@ Total garbage collection time.
 .rm e+
 .rm f+
 .rm g+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-35
 
 .LP
@@ -4524,6 +4546,7 @@ Total garbage collection time.
 \-gcutil Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -4934,6 +4957,7 @@ Total garbage collection time.
 .rm g+
 .rm h+
 .rm i+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-43
 
 .LP
@@ -4941,6 +4965,7 @@ Total garbage collection time.
 \-printcompilation Option
 .LP
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -5129,6 +5154,7 @@ Class name and method name identifying the compiled method. Class name uses "/" 
 .rm a+
 .rm b+
 .rm c+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-19
 
 .LP

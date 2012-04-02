@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH javac 1 "10 May 2011"
+.TH javac 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -190,25 +190,25 @@ Specifies the version of source code accepted. The following values for \f2relea
 .RS 3
 .TP 3
 1.3 
-The compiler does \f2not\fP support assertions, generics, or other language features introduced after JDK 1.3. 
+The compiler does \f2not\fP support assertions, generics, or other language features introduced after Java SE 1.3. 
 .TP 3
 1.4 
-The compiler accepts code containing assertions, which were introduced in JDK 1.4. 
+The compiler accepts code containing assertions, which were introduced in Java SE 1.4. 
 .TP 3
 1.5 
-The compiler accepts code containing generics and other language features introduced in JDK 5. 
+The compiler accepts code containing generics and other language features introduced in Java SE 5. 
 .TP 3
 5 
 Synonym for 1.5. 
 .TP 3
 1.6 
-This is the default value. No language changes were introduced in Java SE 6. However, encoding errors in source files are now reported as errors, instead of warnings, as previously. 
+No language changes were introduced in Java SE 6. However, encoding errors in source files are now reported as errors instead of warnings as in previous releases of Java SE. 
 .TP 3
 6 
 Synonym for 1.6. 
 .TP 3
 1.7 
-The compiler accepts code with features introduced in JDK 7. 
+This is the default value. The compiler accepts code with features introduced in Java SE 7. 
 .TP 3
 7 
 Synonym for 1.7. 
@@ -243,9 +243,8 @@ By default, classes are compiled against the bootstrap and extension classes of 
 .RS 3
 .TP 3
 \-target version 
-Generate class files that target a specified version of the VM. Class files will run on the specified target and on later versions, but not on earlier versions of the VM. Valid targets are \f31.1\fP \f31.2\fP \f31.3\fP \f31.4\fP \f31.5\fP (also \f35\fP) \f31.6\fP (also \f36\fP) and \f31.7\fP (also \f37\fP).
-.br
-.br
+Generate class files that target a specified version of the VM. Class files will run on the specified target and on later versions, but not on earlier versions of the VM. Valid targets are \f31.1\fP, \f31.2\fP, \f31.3\fP, \f31.4\fP, \f31.5\fP (also \f35\fP), \f31.6\fP (also \f36\fP), and \f31.7\fP (also \f37\fP). 
+.LP
 The default for \f3\-target\fP depends on the value of \f3\-source\fP: 
 .RS 3
 .TP 2
@@ -257,6 +256,12 @@ If \-source is \f31.2\fP, the value of \-target is \f31.4\fP
 .TP 2
 o
 If \-source is \f31.3\fP, the value of \-target is \f31.4\fP 
+.TP 2
+o
+If \-source is \f31.5\fP, the value of \-target is \f31.7\fP 
+.TP 2
+o
+If \-source is \f31.6\fP, the value of \-target is \f31.7\fP 
 .TP 2
 o
 For \f3all other values\fP of \-source, the value of \f3\-target\fP is the value of \f3\-source\fP. 
@@ -563,11 +568,10 @@ The following commands compile the annotation processor \f2AnnoProc\fP, then run
 .nf
 \f3
 .fl
-% javac AnnoProc.java
+% \fP\f3javac AnnoProc.java\fP
 .fl
-% javac \-cp . \-Xlint:processing \-processor AnnoProc \-proc:only AnnosWithoutProcessors.java
+% \f3javac \-cp . \-Xlint:processing \-processor AnnoProc \-proc:only AnnosWithoutProcessors.java\fP
 .fl
-\fP
 .fi
 When the compiler runs the annotation processor against the source file \f2AnnosWithoutProcessors.java\fP, it generates the following warning:
 .br
@@ -1135,7 +1139,7 @@ Base.class      GoodBye.class
 Cross\-Compilation Example
 .LP
 .LP
-Here we use \f3javac\fP to compile code that will run on a 1.6 VM.
+The following example uses \f3javac\fP to compile code that will run on a 1.6 VM.
 .LP
 .nf
 \f3
@@ -1174,7 +1178,7 @@ o
 .na
 \f2The javac Guide\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/javac/index.html 
+http://docs.oracle.com/javase/7/docs/technotes/guides/javac/index.html 
 .TP 2
 o
 java(1) \- the Java Application Launcher 
@@ -1198,7 +1202,7 @@ o
 .na
 \f2The Java Extensions Framework\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/extensions/index.html 
+http://docs.oracle.com/javase/7/docs/technotes/guides/extensions/index.html 
 .RE
 
 .LP
