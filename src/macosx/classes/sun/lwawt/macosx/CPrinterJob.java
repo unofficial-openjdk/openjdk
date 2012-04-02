@@ -33,6 +33,7 @@ import java.awt.print.*;
 
 import javax.print.*;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.PageRanges;
 
 import sun.java2d.*;
 import sun.print.*;
@@ -145,6 +146,17 @@ public class CPrinterJob extends RasterPrinterJob {
     }
 
     protected void setAttributes(PrintRequestAttributeSet attributes) throws PrinterException {
+        if (attributes != null) {
+            PageRanges pageRangesAttr =
+                (PageRanges)attributes.get(PageRanges.class);
+            if (pageRangesAttr != null) {
+                SunPageSelection psel = (SunPageSelection)attributes.get(SunPageSelection.class);
+                if (psel == null) {
+                    attributes.add(SunPageSelection.RANGE);
+                }
+            }
+        }
+
         super.setAttributes(attributes);
 
         if (attributes == null) {
