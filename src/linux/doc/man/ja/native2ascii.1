@@ -19,14 +19,14 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH native2ascii 1 "07 May 2011"
+.TH native2ascii 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-native2ascii \- ネイティブ \- ASCII コンバータ
+native2ascii \- ネイティブ \- ASCIIコンバータ
 .LP
 .LP
-サポートされる文字エンコーディングの文字のファイルを ASCII または Unicode エスケープあるいはその両方のファイルに変換します。その逆の変換も行います。
+サポートされる文字エンコーディングの文字のファイルをASCIIまたはUnicodeエスケープあるいはその両方のファイルに変換します。その逆の変換も行います。
 .LP
 .SH "形式"
 .LP
@@ -41,31 +41,31 @@ native2ascii \- ネイティブ \- ASCII コンバータ
 .SH "説明"
 .LP
 .LP
-\f2native2ascii\fP Java 実行環境でサポートされる文字エンコーディングにエンコードされたファイルを、ASCII でエンコードされたファイルに変換します。ASCII 文字セットの一部でないすべての文字で Unicode エスケープ (「\\uxxxx」の表記) を使用します。このプロセスは、ISO\-8859\-1 文字セットに含まれない文字が含まれているプロパティーファイルで必要です。このツールは、その逆の変換を実行することもできます。
+\f2native2ascii\fP Java実行環境でサポートされる文字エンコーディングにエンコードされたファイルを、ASCIIでエンコードされたファイルに変換します。ASCII文字セットの一部でないすべての文字でUnicodeエスケープ(「\\uxxxx」の表記)を使用します。このプロセスは、ISO\-8859\-1文字セットに含まれない文字が含まれているプロパティ・ファイルで必要です。このツールは、その逆の変換を実行することもできます。
 .LP
 .LP
-\f2outputfile\fP を省略した場合、標準出力に出力されます。さらに、 \f2inputfile\fP を省略した場合、標準入力から入力されます。
+\f2outputfile\fPを省略した場合、標準出力に出力されます。さらに、\f2inputfile\fPを省略した場合、標準入力から入力されます。
 .LP
 .SH "オプション"
 .LP
 .RS 3
 .TP 3
 \-reverse 
-逆の処理を行います。つまり、ISO\-8859\-1 で Unicode エスケープを使ってエンコードされたファイルを、Java 実行環境でサポートされる文字エンコーディングのファイルに変換します。
+逆の処理を行います。つまり、ISO\-8859\-1でUnicodeエスケープを使用してエンコードされたファイルを、Java実行環境でサポートされる文字エンコーディングのファイルに変換します。
 .br
 .br
 .TP 3
 \-encoding encoding_name 
-変換処理で使用する文字エンコーディングの名前を指定します。このオプションが存在しない場合は、デフォルトの文字エンコーディング ( \f2java.nio.charset.Charset.defaultCharset\fP メソッドで定義される) が使用されます。 \f2encoding_name\fP 文字列は、
+変換処理で使用する文字エンコーディングの名前を指定します。このオプションが存在しない場合は、デフォルトの文字エンコーディング(\f2java.nio.charset.Charset.defaultCharset\fPメソッドで定義される)が使用されます。\f2encoding_name\fP文字列は、
 .na
-\f4「サポートされている文字列エンコーディング」\fP @
+\f4サポートされている文字列エンコーディング\fP @
 .fi
-http://java.sun.com/javase/6/docs/technotes/guides/intl/encoding.doc.htmlドキュメントに示されている、Java 実行環境でサポートされる文字エンコーディングの名前にする必要があります。
+http://download.oracle.com/javase/7/docs/technotes/guides/intl/encoding.doc.html・ドキュメントに示されている、Java実行環境でサポートされる文字エンコーディングの名前にする必要があります。
 .br
 .br
 .TP 3
 \-Joption 
-Java 仮想マシンに \f2option\fP を渡します。\f2option\fP には、java(1)のリファレンスページに記載されているオプションを 1 つ指定します。たとえば、\f3\-J\-Xms48m\fP と指定すると、スタートアップメモリーは 48M バイトに設定されます。 
+Java仮想マシンに\f2option\fPを渡します。\f2option\fPには、java(1)のリファレンス・ページに記載されているオプションを1つ指定します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。 
 .RE
 
 .LP

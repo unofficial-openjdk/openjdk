@@ -19,11 +19,11 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jstat 1 "07 May 2011"
+.TH jstat 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-jstat \- Java 仮想マシン統計データ監視ツール
+jstat \- Java仮想マシン統計データ監視ツール
 .LP
 .RS 3
 .TP 2
@@ -73,36 +73,36 @@ o
 .RS 3
 .TP 3
 generalOption 
-単独で使用する一般的なコマンド行オプションです (\-help、\-options、または \-version)。 
+単独で使用する一般的なコマンドライン・オプションです(\-help、\-optionsまたは\-version)。 
 .TP 3
 outputOptions 
-単一の \f2statOption\fP と、\-t、\-h、および \-J オプションのいずれかを組み合わせた、1 つまたは複数の出力オプションです。 
+単一の\f2statOption\fPと、\-t、\-hおよび\-Jオプションのいずれかを組み合せた、1つまたは複数の出力オプションです。 
 .TP 3
 vmid 
-ターゲットの Java 仮想マシン (JVM) を示す文字列である仮想マシン識別子です。一般的な構文は次のようになります。 
+ターゲットのJava仮想マシン(JVM)を示す文字列である仮想マシン識別子です。一般的な構文は次のようになります。 
 .nf
 \f3
 .fl
 [\fP\f4protocol\fP\f3:][//]\fP\f4lvmid\fP[@\f2hostname\fP[:\f2port\fP]/\f2servername\fP]
 .fl
 .fi
-vmid 文字列の構文の大部分は、URI の構文に対応しています。\f2vmid\fP は、ローカル JVM を表す単純な整数から、通信プロトコル、ポート番号、および他の実装固有の値を示す複雑な構造まで、さまざまに異なります。詳細は、「仮想マシン識別子」を参照してください。 
+vmid文字列の構文の大部分は、URIの構文に対応しています。\f2vmid\fPは、ローカルJVMを表す単純な整数から、通信プロトコル、ポート番号、および他の実装固有の値を示す複雑な構造まで、様々に異なります。詳細は、仮想マシン識別子を参照してください。 
 .TP 3
 interval[s|ms] 
-秒 (s) またはミリ秒 (ms) のうち指定した単位でのサンプリング間隔です。デフォルトの単位はミリ秒です。正の整数でなければなりません。これが指定された場合、\f3jstat\fP は interval ごとに出力を生成します。 
+秒(s)またはミリ秒(ms)のうち指定した単位でのサンプリング間隔です。デフォルトの単位はミリ秒です。正の整数にする必要があります。これが指定された場合、\f3jstat\fPはintervalごとに出力を生成します。 
 .TP 3
 count 
-表示するサンプル数です。デフォルト値は無限です。つまり、\f3jstat\fP は、ターゲット JVM が終了するまで、または \f3jstat\fP コマンドが終了するまで、統計データを表示します。正の整数でなければなりません。 
+表示するサンプル数です。デフォルト値は無限です。つまり、\f3jstat\fPは、ターゲットJVMが終了するまで、または\f3jstat\fPコマンドが終了するまで、統計データを表示します。正の整数にする必要があります。 
 .RE
 
 .LP
-.SH " 説明"
+.SH "説明"
 .LP
 .LP
-\f3jstat\fP ツールは、設置されている HotSpot Java 仮想マシン (JVM) のパフォーマンス統計データを表示します。ターゲット JVM は、仮想マシン識別子、つまり下記の \f2vmid\fP オプションによって識別されます。
+\f3jstat\fPツールは、設置されているHotSpot Java仮想マシン(JVM)のパフォーマンス統計データを表示します。ターゲットJVMは、仮想マシン識別子、つまり下記の\f2vmid\fPオプションによって識別されます。
 .LP
 .LP
-\f3注\fP: このユーティリティーはサポート対象外であり、将来の JDK のバージョンでは利用できなくなる可能性があります。現在、Windows 98 および Windows Me プラットフォームでは使用できません。
+\f3注意\fP: このユーティリティはサポート対象外であり、将来のJDKのバージョンでは利用できなくなる可能性があります。現在、Windows 98およびWindows MEプラットフォームでは使用できません。
 .br
 
 .LP
@@ -110,7 +110,7 @@ count
 仮想マシン識別子
 .LP
 .LP
-\f2vmid\fP 文字列の構文の大部分は、URI の構文に対応しています。
+\f2vmid\fP文字列の構文の大部分は、URIの構文に対応しています。
 .LP
 .nf
 \f3
@@ -123,31 +123,31 @@ count
 .RS 3
 .TP 3
 protocol 
-通信プロトコルです。\f2protocol\fP が省略され、\f2hostname\fP が指定されていない場合、デフォルトのプロトコルが、プラットフォーム固有の最適化されたローカルプロトコルになります。\f2protocol\fP が省略され、\f2hostname\fP が指定されている場合は、デフォルトプロトコルは \f3rmi\fP になります。 
+通信プロトコルです。\f2protocol\fPが省略され、\f2hostname\fPが指定されていない場合、デフォルトのプロトコルが、プラットフォーム固有の最適化されたローカル・プロトコルになります。\f2protocol\fPが省略され、\f2hostname\fPが指定されている場合は、デフォルト・プロトコルは\f3rmi\fPになります。 
 .TP 3
 lvmid 
-ターゲット JVM のローカル仮想マシン識別子です。\f2lvmid\fP は、システム上の JVM を一意に識別するプラットフォーム固有の値です。\f2lvmid\fP は、仮想マシン識別子の唯一の必須要素です。\f2lvmid\fP は、絶対というわけではありませんが、一般的にはターゲット JVM プロセスに対するオペレーティングシステムのプロセス識別子です。jps(1) コマンドを使用して、\f2lvmid\fP を指定できます。また、Unix プラットフォームでは\f3ps\fP コマンドを使用して、Windows では Windows タスクマネージャーを使用して、\f2lvmid\fP を指定できます。 
+ターゲットJVMのローカル仮想マシン識別子です。\f2lvmid\fPは、システム上のJVMを一意に識別するプラットフォーム固有の値です。\f2lvmid\fPは、仮想マシン識別子の唯一の必須要素です。\f2lvmid\fPは、一般的にはターゲットJVMプロセスに対するオペレーティング・システムのプロセス識別子ですが、必ずしもそうであるとは限りません。jps(1)コマンドを使用して、\f2lvmid\fPを特定できます。また、Unixプラットフォームでは\f3ps\fPコマンドを使用して、WindowsではWindowsタスク・マネージャを使用して、\f2lvmid\fPを特定できます。 
 .TP 3
 hostname 
-ターゲットホストを示すホスト名または IP アドレスです。\f2hostname\fP が省略されている場合は、ターゲットホストはローカルホストになります。 
+ターゲット・ホストを示すホスト名またはIPアドレスです。\f2hostname\fPが省略されている場合は、ターゲット・ホストはローカル・ホストになります。 
 .TP 3
 port 
-リモートサーバーと通信するためのデフォルトポートです。\f2hostname\fP が省略されているか、\f2protocol\fP で最適化されたローカルプロトコルが指定されている場合、\f2port\fP は無視されます。そうでなければ、\f2port\fP パラメータの扱いは、実装によって異なります。デフォルトの \f3rmi\fP プロトコルの場合、\f2port\fP は、リモートホスト上の rmiregistry のポート番号を示します。\f2port\fP が省略され、\f2protocol\fP で \f3rmi\fP が指定されている場合、デフォルトの rmiregistry ポート (1099) が使用されます。 
+リモート・サーバーと通信するためのデフォルト・ポートです。\f2hostname\fPが省略されているか、最適化されたローカル・プロトコルが\f2protocol\fPに指定されている場合、\f2port\fPは無視されます。それ以外の場合、\f2port\fPパラメータの扱いは、実装によって異なります。デフォルトの\f3rmi\fPプロトコルの場合、\f2port\fPは、リモート・ホスト上のrmiregistryのポート番号を示します。\f2port\fPが省略され、\f2protocol\fPで\f3rmi\fPが指定されている場合、デフォルトのrmiregistryポート(1099)が使用されます。 
 .TP 3
 servername 
-このパラメータの扱いは、実装によって異なります。最適化されたローカルプロトコルの場合、このフィールドは無視されます。\f3rmi\fP プロトコルの場合は、このパラメータは、リモートホスト上の RMI リソースオブジェクトの名前を示します。 
+このパラメータの扱いは、実装によって異なります。最適化されたローカル・プロトコルの場合、このフィールドは無視されます。\f3rmi\fPプロトコルの場合、これは、リモート・ホスト上のRMIリソース・オブジェクトの名前を表します。 
 .RE
 
 .LP
 .SH "オプション"
 .LP
 .LP
-\f3jstat\fP コマンドは、一般的なオプションと出力オプションの 2 つのタイプのオプションをサポートしています。一般的なオプションを使用した場合、\f3jstat\fP は簡単な使用率およびバージョン情報を表示します。出力オプションでは、統計データ出力の内容と形式を指定します。
+\f3jstat\fPコマンドは、一般的なオプションと出力オプションの2つのタイプのオプションをサポートしています。一般的なオプションを使用した場合、\f3jstat\fPは簡単な使用率およびバージョン情報を表示します。出力オプションによって、統計データ出力の内容と形式が決まります。
 .br
 
 .LP
 .LP
-\f3注\fP: すべてのオプションとその機能は、将来のリリースで変更または廃止される可能性があります。
+\f3注意\fP: すべてのオプションとその機能は、将来のリリースで変更または廃止される可能性があります。
 .LP
 .SS 
 一般的なオプション
@@ -158,13 +158,13 @@ servername
 .RS 3
 .TP 3
 \-help 
-ヘルプメッセージを表示します。 
+ヘルプ・メッセージを表示します。 
 .TP 3
 \-version 
 バージョン情報を表示します。 
 .TP 3
 \-options 
-統計データオプションを一覧表示します。下記の「出力オプション」の節を参照してください。 
+統計データ・オプションを一覧表示します。下記の出力オプションの項を参照してください。 
 .RE
 
 .LP
@@ -172,24 +172,24 @@ servername
 出力オプション
 .LP
 .LP
-一般的なオプションを指定しない場合に、出力オプションを指定できます。出力オプションは、\f3jstat\fP の出力の内容および形式を指定し、単一の \f2statOption\fP と、他のいずれかの出力オプション (\-h、\-t、および \-J) とで構成されます。\f2statOption\fP は最初に記述する必要があります。
+一般的なオプションを指定しない場合に、出力オプションを指定できます。出力オプションは、\f3jstat\fPの出力の内容および形式を決定し、単一の\f2statOption\fPと、他のいずれかの出力オプション(\-h、\-tおよび\-J)で構成されます。\f2statOption\fPは最初に記述する必要があります。
 .LP
 .LP
-出力は、各列が空白で区切られたテーブルの形式で構成されます。タイトルを含むヘッダー行によって、各列の意味がわかります。ヘッダーの表示頻度を設定するには、\f3\-h\fP オプションを使用します。列のヘッダー名は一般に、オプション間で一貫性が保たれています。一般に、2 つのオプションで同じ名前の列が使用されていれば、2 つの列のデータソースは同じになります。
+出力は、各列が空白で区切られた表の形式になります。タイトルを含むヘッダー行によって、各列の意味がわかります。ヘッダーの表示頻度を設定するには、\f3\-h\fPオプションを使用します。列のヘッダー名は、様々なオプション間でおおむね一貫性が保たれています。一般に、2つのオプションで同じ名前の列が使用されていれば、2つの列のデータ・ソースは同じです。
 .LP
 .LP
-\f3\-t\fP オプションを使用すると、 \f2Timestamp というラベルの付いたタイムスタンプの列が、\fP 出力の最初の列として表示されます。 \f2Timestamp\fP 列には、ターゲット JVM の起動からの経過時間が、秒単位で表示されます。タイムスタンプの精度は、さまざまな要因によって異なり、大量の負荷のかかったシステムでのスレッドスケジュールの遅延により変動します。
+\f3\-t\fPオプションを使用すると、\f2Timestamp\fPというラベルの付いたタイムスタンプの列が、出力の最初の列として表示されます。\f2Timestamp\fP列には、ターゲットJVMの起動からの経過時間が、秒単位で表示されます。タイムスタンプの精度は、様々な要因によって異なり、大量の負荷のかかったシステムでのスレッド・スケジュールの遅延により変動します。
 .LP
 .LP
-\f2interval\fP および \f2count\fP パラメータを使用して、\f3jstat\fP がその出力を表示する頻度と回数をそれぞれ指定します。
+\f2interval\fPおよび\f2count\fPパラメータを使用して、\f3jstat\fPがその出力を表示する頻度と回数をそれぞれ指定します。
 .LP
 .LP
-\f3注\fP: 将来のリリースでこの形式は変更される可能性があるため、\f3jstat\fP の出力を解析するスクリプトは作成しないことをお勧めします。\f3jstat\fP 出力を解析するスクリプトを作成する場合は、このツールの将来のリリースで、そのスクリプトを変更しなければならないことに留意してください。
+\f3注意\fP: 将来のリリースでこの形式は変更される可能性があるため、\f3jstat\fPの出力を解析するスクリプトは作成しないことをお薦めします。\f3jstat\fP出力を解析するスクリプトを作成する場合は、このツールの将来のリリースで、そのスクリプトを変更する必要があることに留意してください。
 .LP
 .RS 3
 .TP 3
 \-statOption 
-\f3jstat\fP が表示する統計データ情報を指定します。次の表に、利用可能なオプションの一覧を示します。ある特定のプラットフォームインストールのオプションを一覧表示するには、一般的なオプションの \f3\-options\fP を使用します。
+\f3jstat\fPが表示する統計データ情報を指定します。次の表に、利用可能なオプションの一覧を示します。特定のプラットフォーム・インストールのオプションを一覧表示するには、一般的なオプションの\f3\-options\fPを使用します。
 .br
 .br
 .LP
@@ -221,7 +221,7 @@ servername
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-クラスローダーの動作に関する統計データ
+クラス・ローダーの動作に関する統計データ
 .br
 .di
 .nr a| \n(dn
@@ -237,7 +237,7 @@ servername
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-HotSpot Just\-in\-Time コンパイラの動作に関する統計データ
+HotSpot Just\-in\-Timeコンパイラの動作に関する統計データ
 .br
 .di
 .nr b| \n(dn
@@ -253,7 +253,7 @@ HotSpot Just\-in\-Time コンパイラの動作に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクトされたヒープの動作に関する統計データ
+ガベージ・コレクトされたヒープの動作に関する統計データ
 .br
 .di
 .nr c| \n(dn
@@ -285,7 +285,7 @@ HotSpot Just\-in\-Time コンパイラの動作に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクション統計データの概要 (\f3\-gcutil\fP と同じ) と、直前および現在 (適用可能な場合) のガベージコレクションイベントの原因
+ガベージ・コレクション統計データの概要(\f3\-gcutil\fPと同じ)と、直前および現在(適用可能な場合)のガベージ・コレクション・イベントの原因
 .br
 .di
 .nr e| \n(dn
@@ -301,7 +301,7 @@ HotSpot Just\-in\-Time コンパイラの動作に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の動作に関する統計データ
+New世代の動作に関する統計データ
 .br
 .di
 .nr f| \n(dn
@@ -317,7 +317,7 @@ New 世代の動作に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代のサイズと対応する領域に関する統計データ
+New世代のサイズと対応する領域に関する統計データ
 .br
 .di
 .nr g| \n(dn
@@ -333,7 +333,7 @@ New 世代のサイズと対応する領域に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代および Permanent 世代の動作に関する統計データ
+Old世代およびPermanent世代の動作に関する統計データ
 .br
 .di
 .nr h| \n(dn
@@ -349,7 +349,7 @@ Old 世代および Permanent 世代の動作に関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代のサイズに関する統計データ
+Old世代のサイズに関する統計データ
 .br
 .di
 .nr i| \n(dn
@@ -365,7 +365,7 @@ Old 世代のサイズに関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代のサイズに関する統計データ
+Permanent世代のサイズに関する統計データ
 .br
 .di
 .nr j| \n(dn
@@ -381,7 +381,7 @@ Permanent 世代のサイズに関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクション統計データの概要
+ガベージ・コレクション統計データの概要
 .br
 .di
 .nr k| \n(dn
@@ -397,7 +397,7 @@ Permanent 世代のサイズに関する統計データ
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-HotSpot コンパイル方法の統計データ
+HotSpotコンパイル方法の統計データ
 .br
 .di
 .nr l| \n(dn
@@ -705,26 +705,26 @@ HotSpot コンパイル方法の統計データ
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-52
 .TP 3
 \-h n 
-\f2n\fP サンプル (出力行) ごとに列ヘッダーを表示。 ただし、\f2n\fP は正の整数値。デフォルト値は 0。 このとき、データの最初の行の上に列ヘッダーが表示される 
+\f2n\fPサンプル(出力行)ごとに列ヘッダーを表示します。ここで、\f2n\fPは正の整数値です。デフォルト値は0です。この場合、データの最初の行の上に列ヘッダーが表示されます。 
 .TP 3
 \-t n 
-タイムスタンプ列を出力の最初の列として表示。タイムスタンプは、ターゲット JVM の起動時からの経過時間 
+タイムスタンプ列を出力の最初の列として表示します。タイムスタンプは、ターゲットJVMの起動時からの経過時間です。 
 .TP 3
 \-JjavaOption 
-\f2javaOption\fP を \f3java\fP アプリケーション起動ツールへ渡す。たとえば、\f3\-J\-Xms48m\fP と指定すると、スタートアップメモリーは 48M バイトに設定されます。オプションの完全なリストについては、「java(1)」のドキュメントを参照してください。 
+\f2javaOption\fPを\f3java\fPアプリケーション起動ツールに渡します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。オプションの完全なリストについては、java(1)を参照してください。 
 .RE
 
 .LP
 .SS 
-statOption と出力
+statOptionと出力
 .LP
 .LP
-以降の表では、\f3jstat\fP が \f2statOption\fP ごとに出力する列について概要を示します。
+以降の表では、\f3jstat\fPが\f2statOption\fPごとに出力する列について概要を示します。
 .br
 
 .LP
 .SS 
-\-class オプション
+\-classオプション
 .LP
 .LP
 .TS
@@ -771,7 +771,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ロードされた K バイト数
+アンロードされたクラスの数
 .br
 .di
 .nr b| \n(dn
@@ -787,7 +787,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-アンロードされたクラスの数
+アンロードされたKB数
 .br
 .di
 .nr c| \n(dn
@@ -803,34 +803,18 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-アンロードされた K バイト数
+クラスのロードやアンロード処理に要した時間
 .br
 .di
 .nr d| \n(dn
 .nr d- \n(dl
 ..
 .ec \
-.eo
-.am 81
-.br
-.di e+
-.35
-.ft \n(.f
-.ll \n(34u*1u/3u
-.if \n(.l<\n(81 .ll \n(81u
-.in 0
-クラスのロードやアンロード処理に要した時間
-.br
-.di
-.nr e| \n(dn
-.nr e- \n(dl
-..
-.ec \
 .35
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wクラスローダーの統計データ
+.nr 38 \wクラス・ローダーの統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -849,6 +833,8 @@ statOption と出力
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \wロードされたKB数
+.if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
 .nr 38 \n(a-
@@ -858,8 +844,6 @@ statOption と出力
 .nr 38 \n(c-
 .if \n(81<\n(38 .nr 81 \n(38
 .nr 38 \n(d-
-.if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \n(e-
 .if \n(81<\n(38 .nr 81 \n(38
 .35
 .nf
@@ -871,7 +855,7 @@ statOption と出力
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 298 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 296 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -888,7 +872,7 @@ statOption と出力
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'クラスローダーの統計データ\h'|\n(41u'
+\&\h'|\n(40u'クラス・ローダーの統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -909,12 +893,16 @@ statOption と出力
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'Bytes\h'|\n(41u'ロードされたKB数
 .ne \n(b|u+\n(.Vu
 .if (\n(b|+\n(#^-1v)>\n(#- .nr #- +(\n(b|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Bytes\h'|\n(41u'
+\&\h'|\n(40u'Unloaded\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -930,7 +918,7 @@ statOption と出力
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Unloaded\h'|\n(41u'
+\&\h'|\n(40u'Bytes\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -946,29 +934,13 @@ statOption と出力
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Bytes\h'|\n(41u'
-.mk ##
-.nr 31 \n(##
-.sp |\n(##u-1v
-.nr 37 \n(41u
-.in +\n(37u
-.d+
-.in -\n(37u
-.mk 32
-.if \n(32>\n(31 .nr 31 \n(32
-.sp |\n(31u
-.ne \n(e|u+\n(.Vu
-.if (\n(e|+\n(#^-1v)>\n(#- .nr #- +(\n(e|+\n(#^-\n(#--1v)
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
 \&\h'|\n(40u'Time\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
 .nr 37 \n(41u
 .in +\n(37u
-.e+
+.d+
 .in -\n(37u
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
@@ -981,13 +953,12 @@ statOption と出力
 .rm b+
 .rm c+
 .rm d+
-.rm e+
 .TE
-.if \n-(b.=0 .nr c. \n(.c-\n(d.-25
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-23
 
 .LP
 .SS 
-\-compiler オプション
+\-compilerオプション
 .LP
 .LP
 .TS
@@ -1018,7 +989,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-実行されたコンパイルタスクの数
+実行されたコンパイル・タスクの数
 .br
 .di
 .nr a| \n(dn
@@ -1034,7 +1005,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-失敗したコンパイルタスクの数
+失敗したコンパイル・タスクの数
 .br
 .di
 .nr b| \n(dn
@@ -1050,7 +1021,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-無効にされたコンパイルタスクの数
+無効にされたコンパイル・タスクの数
 .br
 .di
 .nr c| \n(dn
@@ -1066,7 +1037,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-コンパイルタスクの実行に要した時間
+コンパイル・タスクの実行に要した時間
 .br
 .di
 .nr d| \n(dn
@@ -1082,7 +1053,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-最後に失敗したコンパイルのコンパイルタイプ
+最後に失敗したコンパイルのコンパイル・タイプ
 .br
 .di
 .nr e| \n(dn
@@ -1109,7 +1080,7 @@ statOption と出力
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wHotSpot Just\-In\-Time コンパイラの統計データ
+.nr 38 \wHotSpot Just\-In\-Timeコンパイラの統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -1154,7 +1125,7 @@ statOption と出力
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 334 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 332 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -1171,7 +1142,7 @@ statOption と出力
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'HotSpot Just\-In\-Time コンパイラの統計データ\h'|\n(41u'
+\&\h'|\n(40u'HotSpot Just\-In\-Timeコンパイラの統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -1287,7 +1258,7 @@ statOption と出力
 
 .LP
 .SS 
-\-gc オプション
+\-gcオプション
 .LP
 .LP
 .TS
@@ -1318,7 +1289,7 @@ statOption と出力
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の現在の容量 (KB)
+Survivor領域0の現在の容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -1334,7 +1305,7 @@ Survivor 領域 0 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の現在の容量 (KB)
+Survivor領域1の現在の容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -1350,7 +1321,7 @@ Survivor 領域 1 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の使用率 (KB)
+Survivor領域0の使用率(KB)
 .br
 .di
 .nr c| \n(dn
@@ -1366,7 +1337,7 @@ Survivor 領域 0 の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の使用率 (KB)
+Survivor領域1の使用率(KB)
 .br
 .di
 .nr d| \n(dn
@@ -1382,7 +1353,7 @@ Survivor 領域 1 の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の現在の容量 (KB)
+Eden領域の現在の容量(KB)
 .br
 .di
 .nr e| \n(dn
@@ -1398,7 +1369,7 @@ Eden 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の使用率 (KB)
+Eden領域の使用率(KB)
 .br
 .di
 .nr f| \n(dn
@@ -1414,7 +1385,7 @@ Eden 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の現在の容量 (KB)
+Old領域の現在の容量(KB)
 .br
 .di
 .nr g| \n(dn
@@ -1430,7 +1401,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の使用率 (KB)
+Permanent領域の現在の容量(KB)
 .br
 .di
 .nr h| \n(dn
@@ -1446,7 +1417,7 @@ Old 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の現在の容量 (KB)
+Permanent領域の使用率(KB)
 .br
 .di
 .nr i| \n(dn
@@ -1462,7 +1433,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の使用率 (KB)
+若い世代のGCイベント数
 .br
 .di
 .nr j| \n(dn
@@ -1478,7 +1449,7 @@ Permanent 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のガベージ・コレクション時間
 .br
 .di
 .nr k| \n(dn
@@ -1494,7 +1465,7 @@ Permanent 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代のガベージコレクション時間
+フルガベージ・コレクション時間
 .br
 .di
 .nr l| \n(dn
@@ -1510,34 +1481,18 @@ Permanent 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-フルガベージコレクション時間
+ガベージ・コレクション総時間
 .br
 .di
 .nr m| \n(dn
 .nr m- \n(dl
 ..
 .ec \
-.eo
-.am 81
-.br
-.di n+
-.35
-.ft \n(.f
-.ll \n(34u*1u/3u
-.if \n(.l<\n(81 .ll \n(81u
-.in 0
-ガベージコレクション総時間
-.br
-.di
-.nr n| \n(dn
-.nr n- \n(dl
-..
-.ec \
 .35
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wガベージコレクトされたヒープの統計データ
+.nr 38 \wガベージ・コレクトされたヒープの統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -1576,7 +1531,9 @@ Permanent 領域の使用率 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wOld領域の使用率(KB)
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -1606,8 +1563,6 @@ Permanent 領域の使用率 (KB)
 .if \n(81<\n(38 .nr 81 \n(38
 .nr 38 \n(m-
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \n(n-
-.if \n(81<\n(38 .nr 81 \n(38
 .35
 .nf
 .ll \n(34u
@@ -1618,7 +1573,7 @@ Permanent 領域の使用率 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 404 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 400 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -1635,7 +1590,7 @@ Permanent 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'ガベージコレクトされたヒープの統計データ\h'|\n(41u'
+\&\h'|\n(40u'ガベージ・コレクトされたヒープの統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -1752,12 +1707,16 @@ Permanent 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'OU\h'|\n(41u'Old領域の使用率(KB)
 .ne \n(h|u+\n(.Vu
 .if (\n(h|+\n(#^-1v)>\n(#- .nr #- +(\n(h|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'OU\h'|\n(41u'
+\&\h'|\n(40u'PC\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -1773,7 +1732,7 @@ Permanent 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'PC\h'|\n(41u'
+\&\h'|\n(40u'PU\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -1789,7 +1748,7 @@ Permanent 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'PU\h'|\n(41u'
+\&\h'|\n(40u'YGC\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -1805,7 +1764,7 @@ Permanent 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'YGC\h'|\n(41u'
+\&\h'|\n(40u'YGCT\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -1816,12 +1775,16 @@ Permanent 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .ne \n(l|u+\n(.Vu
 .if (\n(l|+\n(#^-1v)>\n(#- .nr #- +(\n(l|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'YGCT\h'|\n(41u'
+\&\h'|\n(40u'FGCT\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -1832,28 +1795,8 @@ Permanent 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
 .ne \n(m|u+\n(.Vu
 .if (\n(m|+\n(#^-1v)>\n(#- .nr #- +(\n(m|+\n(#^-\n(#--1v)
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
-\&\h'|\n(40u'FGCT\h'|\n(41u'
-.mk ##
-.nr 31 \n(##
-.sp |\n(##u-1v
-.nr 37 \n(41u
-.in +\n(37u
-.m+
-.in -\n(37u
-.mk 32
-.if \n(32>\n(31 .nr 31 \n(32
-.sp |\n(31u
-.ne \n(n|u+\n(.Vu
-.if (\n(n|+\n(#^-1v)>\n(#- .nr #- +(\n(n|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -1863,7 +1806,7 @@ Permanent 領域の使用率 (KB)
 .sp |\n(##u-1v
 .nr 37 \n(41u
 .in +\n(37u
-.n+
+.m+
 .in -\n(37u
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
@@ -1885,13 +1828,12 @@ Permanent 領域の使用率 (KB)
 .rm k+
 .rm l+
 .rm m+
-.rm n+
 .TE
-.if \n-(b.=0 .nr c. \n(.c-\n(d.-63
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-61
 
 .LP
 .SS 
-\-gccapacity オプション
+\-gccapacityオプション
 .LP
 .LP
 .TS
@@ -1922,7 +1864,7 @@ Permanent 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の最小容量 (KB)
+New世代の最小容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -1938,7 +1880,7 @@ New 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の最大容量 (KB)
+New世代の最大容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -1954,7 +1896,7 @@ New 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の現在の容量 (KB)
+New世代の現在の容量(KB)
 .br
 .di
 .nr c| \n(dn
@@ -1970,7 +1912,7 @@ New 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の現在の容量 (KB)
+Survivor領域0の現在の容量(KB)
 .br
 .di
 .nr d| \n(dn
@@ -1986,7 +1928,7 @@ Survivor 領域 0 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の現在の容量 (KB)
+Survivor領域1の現在の容量(KB)
 .br
 .di
 .nr e| \n(dn
@@ -2002,7 +1944,7 @@ Survivor 領域 1 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の現在の容量 (KB)
+Eden領域の現在の容量(KB)
 .br
 .di
 .nr f| \n(dn
@@ -2018,7 +1960,7 @@ Eden 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の最小容量 (KB)
+Old世代の最小容量(KB)
 .br
 .di
 .nr g| \n(dn
@@ -2034,7 +1976,7 @@ Old 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の最大容量 (KB)
+Old世代の最大容量(KB)
 .br
 .di
 .nr h| \n(dn
@@ -2050,7 +1992,7 @@ Old 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の現在の容量 (KB)
+Old世代の現在の容量(KB)
 .br
 .di
 .nr i| \n(dn
@@ -2066,7 +2008,7 @@ Old 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の現在の容量 (KB)
+Old領域の現在の容量(KB)
 .br
 .di
 .nr j| \n(dn
@@ -2082,7 +2024,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の最小容量 (KB)
+Permanent世代の最小容量(KB)
 .br
 .di
 .nr k| \n(dn
@@ -2098,7 +2040,7 @@ Permanent 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の最大容量 (KB)
+Permanent世代の最大容量(KB)
 .br
 .di
 .nr l| \n(dn
@@ -2114,7 +2056,7 @@ Permanent 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の現在の容量 (KB)
+Permanent世代の現在の容量(KB)
 .br
 .di
 .nr m| \n(dn
@@ -2130,7 +2072,7 @@ Permanent 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の現在の容量 (KB)
+Permanent領域の現在の容量(KB)
 .br
 .di
 .nr n| \n(dn
@@ -2146,7 +2088,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr o| \n(dn
@@ -2157,7 +2099,7 @@ Permanent 領域の現在の容量 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wメモリープール世代および領域容量
+.nr 38 \wメモリー・プール世代および領域容量
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -2198,7 +2140,7 @@ Permanent 領域の現在の容量 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -2242,7 +2184,7 @@ Permanent 領域の現在の容量 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 478 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 474 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -2259,7 +2201,7 @@ Permanent 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'メモリープール世代および領域容量\h'|\n(41u'
+\&\h'|\n(40u'メモリー・プール世代および領域容量\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -2507,7 +2449,7 @@ Permanent 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .fc
 .nr T. 1
 .T# 1
@@ -2532,10 +2474,10 @@ Permanent 領域の現在の容量 (KB)
 
 .LP
 .SS 
-\-gccause オプション
+\-gccauseオプション
 .LP
 .LP
-このオプションは、\f3\-gcutil\fP オプションと同じガベージコレクション統計データの概要を表示しますが、最後のガベージコレクションイベントと (適用可能な場合は) 現在のガベージコレクションイベントの原因が含まれます。\f3\-gcutil\fP で一覧表示される列の他に、このオプションでは次の列が追加されます。
+このオプションは、\f3\-gcutil\fPオプションと同じガベージ・コレクション統計データの概要を表示しますが、最後のガベージ・コレクション・イベントと(適用可能な場合は)現在のガベージ・コレクション・イベントの原因が含まれます。\f3\-gcutil\fPで一覧表示される列のほか、このオプションでは次の列が追加されます。
 .LP
 .LP
 .TS
@@ -2566,7 +2508,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-最後のガベージコレクションの原因
+最後のガベージ・コレクションの原因
 .br
 .di
 .nr a| \n(dn
@@ -2582,7 +2524,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-現在のガベージコレクションの原因
+現在のガベージ・コレクションの原因
 .br
 .di
 .nr b| \n(dn
@@ -2593,7 +2535,7 @@ Permanent 領域の現在の容量 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wGC イベントを含むガベージコレクション統計データ
+.nr 38 \wGCイベントを含むガベージ・コレクション統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -2622,7 +2564,7 @@ Permanent 領域の現在の容量 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 501 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 497 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -2639,7 +2581,7 @@ Permanent 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'GC イベントを含むガベージコレクション統計データ\h'|\n(41u'
+\&\h'|\n(40u'GCイベントを含むガベージ・コレクション統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -2687,7 +2629,7 @@ Permanent 領域の現在の容量 (KB)
 
 .LP
 .SS 
-\-gcnew オプション
+\-gcnewオプション
 .LP
 .LP
 .TS
@@ -2718,7 +2660,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の現在の容量 (KB)
+Survivor領域0の現在の容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -2734,7 +2676,7 @@ Survivor 領域 0 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の現在の容量 (KB)
+Survivor領域1の現在の容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -2750,7 +2692,7 @@ Survivor 領域 1 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の使用率 (KB)
+Survivor領域0の使用率(KB)
 .br
 .di
 .nr c| \n(dn
@@ -2766,7 +2708,7 @@ Survivor 領域 0 の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の使用率 (KB)
+Survivor領域1の使用率(KB)
 .br
 .di
 .nr d| \n(dn
@@ -2798,7 +2740,7 @@ Survivor 領域 1 の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-適切な Survivor サイズ (KB)
+適切なSurvivorサイズ(KB)
 .br
 .di
 .nr f| \n(dn
@@ -2814,7 +2756,7 @@ Survivor 領域 1 の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の現在の容量 (KB)
+Eden領域の現在の容量(KB)
 .br
 .di
 .nr g| \n(dn
@@ -2830,7 +2772,7 @@ Eden 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の使用率 (KB)
+Eden領域の使用率(KB)
 .br
 .di
 .nr h| \n(dn
@@ -2846,7 +2788,7 @@ Eden 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr i| \n(dn
@@ -2862,7 +2804,7 @@ Eden 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代のガベージコレクション時間
+若い世代のガベージ・コレクション時間
 .br
 .di
 .nr j| \n(dn
@@ -2873,7 +2815,7 @@ Eden 領域の使用率 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wNew 世代の統計データ
+.nr 38 \wNew世代の統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -2938,7 +2880,7 @@ Eden 領域の使用率 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 555 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 551 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -2955,7 +2897,7 @@ Eden 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'New 世代の統計データ\h'|\n(41u'
+\&\h'|\n(40u'New世代の統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -3143,7 +3085,7 @@ Eden 領域の使用率 (KB)
 
 .LP
 .SS 
-\-gcnewcapacity オプション
+\-gcnewcapacityオプション
 .LP
 .LP
 .TS
@@ -3174,7 +3116,7 @@ Eden 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の最小容量 (KB)
+New世代の最小容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -3190,7 +3132,7 @@ New 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の最大容量 (KB)
+New世代の最大容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -3206,7 +3148,7 @@ New 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-New 世代の現在の容量 (KB)
+New世代の現在の容量(KB)
 .br
 .di
 .nr c| \n(dn
@@ -3222,7 +3164,7 @@ New 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の最大容量 (KB)
+Survivor領域0の最大容量(KB)
 .br
 .di
 .nr d| \n(dn
@@ -3238,7 +3180,7 @@ Survivor 領域 0 の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の現在の容量 (KB)
+Survivor領域0の現在の容量(KB)
 .br
 .di
 .nr e| \n(dn
@@ -3254,7 +3196,7 @@ Survivor 領域 0 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の最大容量 (KB)
+Survivor領域1の最大容量(KB)
 .br
 .di
 .nr f| \n(dn
@@ -3270,7 +3212,7 @@ Survivor 領域 1 の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の現在の容量 (KB)
+Survivor領域1の現在の容量(KB)
 .br
 .di
 .nr g| \n(dn
@@ -3286,7 +3228,7 @@ Survivor 領域 1 の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の最大容量 (KB)
+Eden領域の最大容量(KB)
 .br
 .di
 .nr h| \n(dn
@@ -3302,7 +3244,7 @@ Eden 領域の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の現在の容量 (KB)
+Eden領域の現在の容量(KB)
 .br
 .di
 .nr i| \n(dn
@@ -3318,7 +3260,7 @@ Eden 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr j| \n(dn
@@ -3329,7 +3271,7 @@ Eden 領域の現在の容量 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wNew 世代領域サイズの統計データ
+.nr 38 \wNew世代領域サイズの統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -3360,7 +3302,7 @@ Eden 領域の現在の容量 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -3394,7 +3336,7 @@ Eden 領域の現在の容量 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 609 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 605 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -3411,7 +3353,7 @@ Eden 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'New 世代領域サイズの統計データ\h'|\n(41u'
+\&\h'|\n(40u'New世代領域サイズの統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -3579,7 +3521,7 @@ Eden 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .fc
 .nr T. 1
 .T# 1
@@ -3599,7 +3541,7 @@ Eden 領域の現在の容量 (KB)
 
 .LP
 .SS 
-\-gcold オプション
+\-gcoldオプション
 .LP
 .LP
 .TS
@@ -3630,7 +3572,7 @@ Eden 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の現在の容量 (KB)
+Permanent領域の現在の容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -3646,7 +3588,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の使用率 (KB)
+Permanent領域の使用率(KB)
 .br
 .di
 .nr b| \n(dn
@@ -3662,7 +3604,7 @@ Permanent 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の現在の容量 (KB)
+Old領域の現在の容量(KB)
 .br
 .di
 .nr c| \n(dn
@@ -3678,7 +3620,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の使用率 (KB)
+若い世代のGCイベント数
 .br
 .di
 .nr d| \n(dn
@@ -3694,7 +3636,7 @@ Old 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+フルガベージ・コレクション時間
 .br
 .di
 .nr e| \n(dn
@@ -3710,34 +3652,18 @@ Old 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-フルガベージコレクション時間
+ガベージ・コレクション総時間
 .br
 .di
 .nr f| \n(dn
 .nr f- \n(dl
 ..
 .ec \
-.eo
-.am 81
-.br
-.di g+
-.35
-.ft \n(.f
-.ll \n(34u*1u/3u
-.if \n(.l<\n(81 .ll \n(81u
-.in 0
-ガベージコレクション総時間
-.br
-.di
-.nr g| \n(dn
-.nr g- \n(dl
-..
-.ec \
 .35
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wOld および Permanent 世代の統計データ
+.nr 38 \wOldおよびPermanent世代の統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -3762,7 +3688,9 @@ Old 領域の使用率 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wOld領域の使用率(KB)
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -3778,8 +3706,6 @@ Old 領域の使用率 (KB)
 .if \n(81<\n(38 .nr 81 \n(38
 .nr 38 \n(f-
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \n(g-
-.if \n(81<\n(38 .nr 81 \n(38
 .35
 .nf
 .ll \n(34u
@@ -3790,7 +3716,7 @@ Old 領域の使用率 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 651 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 645 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -3807,7 +3733,7 @@ Old 領域の使用率 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Old および Permanent 世代の統計データ\h'|\n(41u'
+\&\h'|\n(40u'OldおよびPermanent世代の統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -3860,12 +3786,16 @@ Old 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'OU\h'|\n(41u'Old領域の使用率(KB)
 .ne \n(d|u+\n(.Vu
 .if (\n(d|+\n(#^-1v)>\n(#- .nr #- +(\n(d|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'OU\h'|\n(41u'
+\&\h'|\n(40u'YGC\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -3876,12 +3806,16 @@ Old 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .ne \n(e|u+\n(.Vu
 .if (\n(e|+\n(#^-1v)>\n(#- .nr #- +(\n(e|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'YGC\h'|\n(41u'
+\&\h'|\n(40u'FGCT\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -3892,28 +3826,8 @@ Old 領域の使用率 (KB)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
 .ne \n(f|u+\n(.Vu
 .if (\n(f|+\n(#^-1v)>\n(#- .nr #- +(\n(f|+\n(#^-\n(#--1v)
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
-\&\h'|\n(40u'FGCT\h'|\n(41u'
-.mk ##
-.nr 31 \n(##
-.sp |\n(##u-1v
-.nr 37 \n(41u
-.in +\n(37u
-.f+
-.in -\n(37u
-.mk 32
-.if \n(32>\n(31 .nr 31 \n(32
-.sp |\n(31u
-.ne \n(g|u+\n(.Vu
-.if (\n(g|+\n(#^-1v)>\n(#- .nr #- +(\n(g|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -3923,7 +3837,7 @@ Old 領域の使用率 (KB)
 .sp |\n(##u-1v
 .nr 37 \n(41u
 .in +\n(37u
-.g+
+.f+
 .in -\n(37u
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
@@ -3938,13 +3852,12 @@ Old 領域の使用率 (KB)
 .rm d+
 .rm e+
 .rm f+
-.rm g+
 .TE
-.if \n-(b.=0 .nr c. \n(.c-\n(d.-35
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-33
 
 .LP
 .SS 
-\-gcoldcapacity オプション
+\-gcoldcapacityオプション
 .LP
 .LP
 .TS
@@ -3975,7 +3888,7 @@ Old 領域の使用率 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の最小容量 (KB)
+Old世代の最小容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -3991,7 +3904,7 @@ Old 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の最大容量 (KB)
+Old世代の最大容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -4007,7 +3920,7 @@ Old 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 世代の現在の容量 (KB)
+Old世代の現在の容量(KB)
 .br
 .di
 .nr c| \n(dn
@@ -4023,7 +3936,7 @@ Old 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の現在の容量 (KB)
+Old領域の現在の容量(KB)
 .br
 .di
 .nr d| \n(dn
@@ -4039,7 +3952,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr e| \n(dn
@@ -4055,7 +3968,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-フルガベージコレクション時間
+フルガベージ・コレクション時間
 .br
 .di
 .nr f| \n(dn
@@ -4071,7 +3984,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクション総時間
+ガベージ・コレクション総時間
 .br
 .di
 .nr g| \n(dn
@@ -4082,7 +3995,7 @@ Old 領域の現在の容量 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wOld 世代の統計データ
+.nr 38 \wOld世代の統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -4107,7 +4020,7 @@ Old 領域の現在の容量 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -4135,7 +4048,7 @@ Old 領域の現在の容量 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 693 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 687 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -4152,7 +4065,7 @@ Old 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Old 世代の統計データ\h'|\n(41u'
+\&\h'|\n(40u'Old世代の統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -4240,7 +4153,7 @@ Old 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .ne \n(f|u+\n(.Vu
 .if (\n(f|+\n(#^-1v)>\n(#- .nr #- +(\n(f|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
@@ -4289,7 +4202,7 @@ Old 領域の現在の容量 (KB)
 
 .LP
 .SS 
-\-gcpermcapacity オプション
+\-gcpermcapacityオプション
 .LP
 .LP
 .TS
@@ -4320,7 +4233,7 @@ Old 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の最小容量 (KB)
+Permanent世代の最小容量(KB)
 .br
 .di
 .nr a| \n(dn
@@ -4336,7 +4249,7 @@ Permanent 世代の最小容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の最大容量 (KB)
+Permanent世代の最大容量(KB)
 .br
 .di
 .nr b| \n(dn
@@ -4352,7 +4265,7 @@ Permanent 世代の最大容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 世代の現在の容量 (KB)
+Permanent世代の現在の容量(KB)
 .br
 .di
 .nr c| \n(dn
@@ -4368,7 +4281,7 @@ Permanent 世代の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の現在の容量 (KB)
+Permanent領域の現在の容量(KB)
 .br
 .di
 .nr d| \n(dn
@@ -4384,7 +4297,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr e| \n(dn
@@ -4400,7 +4313,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-フルガベージコレクション時間
+フルガベージ・コレクション時間
 .br
 .di
 .nr f| \n(dn
@@ -4416,7 +4329,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクション総時間
+ガベージ・コレクション総時間
 .br
 .di
 .nr g| \n(dn
@@ -4427,7 +4340,7 @@ Permanent 領域の現在の容量 (KB)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wPermanent 世代の統計データ
+.nr 38 \wPermanent世代の統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -4452,7 +4365,7 @@ Permanent 領域の現在の容量 (KB)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -4480,7 +4393,7 @@ Permanent 領域の現在の容量 (KB)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 735 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 729 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -4497,7 +4410,7 @@ Permanent 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'Permanent 世代の統計データ\h'|\n(41u'
+\&\h'|\n(40u'Permanent世代の統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -4585,7 +4498,7 @@ Permanent 領域の現在の容量 (KB)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .ne \n(f|u+\n(.Vu
 .if (\n(f|+\n(#^-1v)>\n(#- .nr #- +(\n(f|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
@@ -4634,7 +4547,7 @@ Permanent 領域の現在の容量 (KB)
 
 .LP
 .SS 
-\-gcutil オプション
+\-gcutilオプション
 .LP
 .LP
 .TS
@@ -4665,7 +4578,7 @@ Permanent 領域の現在の容量 (KB)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 0 の使用率 (現在の容量に対するパーセンテージ)
+Survivor領域0の使用率(現在の容量に対するパーセンテージ)
 .br
 .di
 .nr a| \n(dn
@@ -4681,7 +4594,7 @@ Survivor 領域 0 の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Survivor 領域 1 の使用率 (現在の容量に対するパーセンテージ)
+Survivor領域1の使用率(現在の容量に対するパーセンテージ)
 .br
 .di
 .nr b| \n(dn
@@ -4697,7 +4610,7 @@ Survivor 領域 1 の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Eden 領域の使用率 (現在の容量に対するパーセンテージ)
+Eden領域の使用率(現在の容量に対するパーセンテージ)
 .br
 .di
 .nr c| \n(dn
@@ -4713,7 +4626,7 @@ Eden 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Old 領域の使用率 (現在の容量に対するパーセンテージ)
+Old領域の使用率(現在の容量に対するパーセンテージ)
 .br
 .di
 .nr d| \n(dn
@@ -4729,7 +4642,7 @@ Old 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
+Permanent領域の使用率(現在の容量に対するパーセンテージ)
 .br
 .di
 .nr e| \n(dn
@@ -4745,7 +4658,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代の GC イベント数
+若い世代のGCイベント数
 .br
 .di
 .nr f| \n(dn
@@ -4761,7 +4674,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-若い世代のガベージコレクション時間
+若い世代のガベージ・コレクション時間
 .br
 .di
 .nr g| \n(dn
@@ -4777,7 +4690,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-フルガベージコレクション時間
+フルガベージ・コレクション時間
 .br
 .di
 .nr h| \n(dn
@@ -4793,7 +4706,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ガベージコレクション総時間
+ガベージ・コレクション総時間
 .br
 .di
 .nr i| \n(dn
@@ -4804,7 +4717,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wガベージコレクション統計データの概要
+.nr 38 \wガベージ・コレクション統計データの概要
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
@@ -4833,7 +4746,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .nr 81 0
 .nr 38 \w\f3説明\fP
 .if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wフル GC イベント数
+.nr 38 \wフルGCイベント数
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -4865,7 +4778,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 785 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 779 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -4882,7 +4795,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'ガベージコレクション統計データの概要\h'|\n(41u'
+\&\h'|\n(40u'ガベージ・コレクション統計データの概要\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -5002,7 +4915,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'FGC\h'|\n(41u'フル GC イベント数
+\&\h'|\n(40u'FGC\h'|\n(41u'フルGCイベント数
 .ne \n(h|u+\n(.Vu
 .if (\n(h|+\n(#^-1v)>\n(#- .nr #- +(\n(h|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
@@ -5053,7 +4966,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 
 .LP
 .SS 
-\-printcompilation オプション
+\-printcompilationオプション
 .LP
 .LP
 .TS
@@ -5084,7 +4997,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-実行されたコンパイルタスクの数
+実行されたコンパイル・タスクの数
 .br
 .di
 .nr a| \n(dn
@@ -5116,35 +5029,49 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-コンパイル方法を特定するクラス名とメソッド名。クラス名では、名前空間の区切り文字として、「.」の代わりに「/」が使用される。メソッド名は、指定されたクラス内のメソッドである。これらの 2 つのフィールドの形式は、HotSpot \- \f3XX:+PrintComplation\fP オプションと対応している
+コンパイル・タイプ
 .br
 .di
 .nr c| \n(dn
 .nr c- \n(dl
 ..
 .ec \
+.eo
+.am 81
+.br
+.di d+
+.35
+.ft \n(.f
+.ll \n(34u*1u/3u
+.if \n(.l<\n(81 .ll \n(81u
+.in 0
+コンパイル方法を特定するクラス名とメソッド名。クラス名では、名前空間の区切り文字として、「.」のかわりに「/」が使用されます。メソッド名は、指定されたクラス内のメソッドです。これらの2つのフィールドの形式は、HotSpot \- \f3XX:+PrintComplation\fPオプションと対応しています。
+.br
+.di
+.nr d| \n(dn
+.nr d- \n(dl
+..
+.ec \
 .35
 .nf
 .ll \n(34u
 .nr 80 0
-.nr 38 \wHotSpot コンパイル方法の統計データ
+.nr 38 \wHotSpotコンパイル方法の統計データ
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \w\f3列\fP
 .if \n(80<\n(38 .nr 80 \n(38
 .nr 38 \wCompiled
 .if \n(80<\n(38 .nr 80 \n(38
-.nr 38 \wサイズ
+.nr 38 \wSize
 .if \n(80<\n(38 .nr 80 \n(38
-.nr 38 \w型
+.nr 38 \wType
 .if \n(80<\n(38 .nr 80 \n(38
-.nr 38 \wメソッド
+.nr 38 \wMethod
 .if \n(80<\n(38 .nr 80 \n(38
 .80
 .rm 80
 .nr 81 0
 .nr 38 \w\f3説明\fP
-.if \n(81<\n(38 .nr 81 \n(38
-.nr 38 \wコンパイルタイプ
 .if \n(81<\n(38 .nr 81 \n(38
 .81
 .rm 81
@@ -5153,6 +5080,8 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .nr 38 \n(b-
 .if \n(81<\n(38 .nr 81 \n(38
 .nr 38 \n(c-
+.if \n(81<\n(38 .nr 81 \n(38
+.nr 38 \n(d-
 .if \n(81<\n(38 .nr 81 \n(38
 .35
 .nf
@@ -5164,7 +5093,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .nr 41 \n(80+(3*\n(38)
 .nr 81 +\n(41
 .nr TW \n(81
-.if t .if \n(TW>\n(.li .tm Table at line 811 file Input is too wide - \n(TW units
+.if t .if \n(TW>\n(.li .tm Table at line 807 file Input is too wide - \n(TW units
 .fc  
 .nr #T 0-1
 .nr #a 0-1
@@ -5181,7 +5110,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'HotSpot コンパイル方法の統計データ\h'|\n(41u'
+\&\h'|\n(40u'HotSpotコンパイル方法の統計データ\h'|\n(41u'
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
@@ -5207,7 +5136,7 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'サイズ\h'|\n(41u'
+\&\h'|\n(40u'Size\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
@@ -5218,22 +5147,34 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
 .sp |\n(31u
-.ta \n(80u \n(81u 
-.nr 31 \n(.f
-.nr 35 1m
-\&\h'|\n(40u'型\h'|\n(41u'コンパイルタイプ
 .ne \n(c|u+\n(.Vu
 .if (\n(c|+\n(#^-1v)>\n(#- .nr #- +(\n(c|+\n(#^-\n(#--1v)
 .ta \n(80u \n(81u 
 .nr 31 \n(.f
 .nr 35 1m
-\&\h'|\n(40u'メソッド\h'|\n(41u'
+\&\h'|\n(40u'Type\h'|\n(41u'
 .mk ##
 .nr 31 \n(##
 .sp |\n(##u-1v
 .nr 37 \n(41u
 .in +\n(37u
 .c+
+.in -\n(37u
+.mk 32
+.if \n(32>\n(31 .nr 31 \n(32
+.sp |\n(31u
+.ne \n(d|u+\n(.Vu
+.if (\n(d|+\n(#^-1v)>\n(#- .nr #- +(\n(d|+\n(#^-\n(#--1v)
+.ta \n(80u \n(81u 
+.nr 31 \n(.f
+.nr 35 1m
+\&\h'|\n(40u'Method\h'|\n(41u'
+.mk ##
+.nr 31 \n(##
+.sp |\n(##u-1v
+.nr 37 \n(41u
+.in +\n(37u
+.d+
 .in -\n(37u
 .mk 32
 .if \n(32>\n(31 .nr 31 \n(32
@@ -5245,20 +5186,21 @@ Permanent 領域の使用率 (現在の容量に対するパーセンテージ)
 .rm a+
 .rm b+
 .rm c+
+.rm d+
 .TE
-.if \n-(b.=0 .nr c. \n(.c-\n(d.-19
+.if \n-(b.=0 .nr c. \n(.c-\n(d.-21
 
 .LP
 .SH "例"
 .LP
 .LP
-この項では、21891 の \f2lvmid\fP を持つローカル JVM を監視する例を示します。
+この項では、21891の\f2lvmid\fPを持つローカルJVMを監視する例を示します。
 .LP
 .SS 
-gcutil オプションの使用
+gcutilオプションの使用
 .LP
 .LP
-この例は、\f2lvmid\fP 21891 に接続して、250 ミリ秒間隔で 7 つのサンプルを取得し、\f3\-gcutil\fP オプションでの指定に従って出力を表示します。
+この例では、\f2lvmid\fP 21891に接続して、250ミリ秒間隔で7つのサンプルを取得し、\f3\-gcutil\fPオプションでの指定に従って出力を表示します。
 .LP
 .nf
 \f3
@@ -5303,13 +5245,13 @@ gcutil オプションの使用
 
 .LP
 .LP
-この例の出力は、若い世代のコレクションが 3 番目と 4 番目のサンプル間で行われたことを示しています。コレクションには 0.001 秒かかっており、オブジェクトが Eden 領域 (E) から Old 領域 (O) に昇格したため、Old 領域の使用率は 9.49% から 9.51% に増加しています。Survivor 領域は、コレクション前は 12.44% が使用されていましたが、コレクション後は 7.74% しか使用されていません。
+この例の出力は、若い世代のコレクションが3番目と4番目のサンプル間で行われたことを示しています。コレクションには0.001秒かかっており、オブジェクトがEden領域(E)からOld領域(O)に昇格したため、Old領域の使用率は9.49%から9.51%に増加しています。Survivor領域は、コレクション前は12.44%が使用されていましたが、コレクション後の使用は7.74%のみです。
 .LP
 .SS 
 列ヘッダー文字列の繰り返し
 .LP
 .LP
-この例は、\f2lvmid\fP 21891 に接続して、250 ミリ秒間隔でサンプルを取得し、\f3\-gcutil\fP オプションでの指定に従って出力を表示します。さらに、\f3\-h3\fP オプションを使用して、データが 3 行表示されるごとに列ヘッダーを出力します。
+この例では、\f2lvmid\fP 21891に接続して、250ミリ秒間隔でサンプルを取得し、\f3\-gcutil\fPオプションでの指定に従って出力を表示します。さらに、\f3\-h3\fPオプションを使用して、データが3行表示されるごとに列ヘッダーを出力します。
 .LP
 .nf
 \f3
@@ -5362,16 +5304,16 @@ gcutil オプションの使用
 
 .LP
 .LP
-この例では、ヘッダー文字列の繰り返しが見られるほかにも、2 番目と 3 番目のサンプル間で Young GC が行われたことがわかります。この継続時間は 0.001 秒でした。このコレクションでは、Survivor 領域 0 の使用率 (S0U) が適切な Survivor サイズ (DSS) を超過することになるライブデータが検出されました。この結果、オブジェクトは、Old 世代 (この出力には非表示) へ昇格され、殿堂入りしきい値 (TT) が、31 から 2 へ降格されました。
+この例では、ヘッダー文字列の繰返しが表示されているほか、2番目と3番目のサンプル間でYoung GCが行われたことがわかります。この継続時間は0.001秒でした。このコレクションでは、Survivor領域0の使用率(S0U)が適切なSurvivorサイズ(DSS)を超過することになるライブ・データが検出されました。この結果、オブジェクトは、Old世代(この出力には非表示)へ昇格され、殿堂入りしきい値(TT)が、31から2へ降格されました。
 .LP
 .LP
-別のコレクションが、5 番目と 6 番目のサンプル間で行われています。このコレクションでは、Survivor がほとんど見られず、殿堂入りしきい値を 31 に戻しました。
+別のコレクションが、5番目と6番目のサンプル間で行われています。このコレクションでは、Survivorがほとんど見られず、殿堂入りしきい値を31に戻しました。
 .LP
 .SS 
 サンプルごとのタイムスタンプの挿入
 .LP
 .LP
-この例は、\f2lvmid\fP 21891 へ接続し、250 ミリ秒間隔で 3 つのサンプルを取得しています。\f3\-t\fP オプションを使用して、最初の列にサンプルごとのタイムスタンプを表示しています。
+この例では、\f2lvmid\fP 21891へ接続し、250ミリ秒間隔で3つのサンプルを取得しています。\f3\-t\fPオプションを使用して、最初の列にサンプルごとのタイムスタンプを表示しています。
 .LP
 .nf
 \f3
@@ -5400,13 +5342,13 @@ Timestamp          OGCMN        OGCMX         OGC           OC       YGC   FGC  
 
 .LP
 .LP
-\f2Timestamp\fP 列には、ターゲット JVM の起動時からの経過時間が、秒単位でレポートされています。さらに、\f3\-gcoldcapacity\fP 出力では、割り当て要求または昇格要求あるいはその両方を満たすためにヒープが拡張するごとに、Old 世代の容量 (OGC) と Old 領域の容量 (OC) とが増加していることがわかります。Old 世代の容量 (OGC) は、81 番目のフル GC (FGC) 後に、11696 KB から 13820 KB へ増加しています。Old 世代 (および領域) の最大容量は、60544 KB (OGCMX) なので、まだ拡張できる余裕が残されています。
+\f2Timestamp\fP列には、ターゲットJVMの起動時からの経過時間が、秒単位でレポートされています。さらに、\f3\-gcoldcapacity\fP出力では、割当リクエストまたは昇格リクエストあるいはその両方を満たすためにヒープが拡張するたびに、Old世代の容量(OGC)とOld領域の容量(OC)とが増加していることがわかります。Old世代の容量(OGC)は、81番目のフルGC(FGC)後に、11696 KBから13820 KBへ増加しています。この世代(および領域)の最大容量は、60544 KB(OGCMX)なので、まだ拡張できる余裕が残されています。
 .LP
 .SS 
-リモート JVM のインストゥルメンテーションの監視
+リモートJVMのインストゥルメンテーションの監視
 .LP
 .LP
-この例は、\f3\-gcutil\fP オプションを使用して、\f2remote.domain\fP というシステム上の \f2lvmid\fP 40496 に接続し、サンプルを秒単位で無期限に取得しています。
+この例は、\f3\-gcutil\fPオプションを使用して、\f2remote.domain\fPというシステム上の\f2lvmid\fP 40496に接続し、サンプルを秒単位で無期限に取得しています。
 .LP
 .nf
 \f3
@@ -5423,23 +5365,23 @@ Timestamp          OGCMN        OGCMX         OGC           OC       YGC   FGC  
 
 .LP
 .LP
-\f2lvmid\fP は、リモートホストの名前と結合されて、\f240496@remote.domain\fP の \f2vmid\fP を構成しています。結果として、この \f2vmid\fP は、\f3rmi\fP プロトコルを使用して、リモートホスト上のデフォルトの \f3jstatd\fP サーバーと通信します。\f3jstatd\fP サーバーは、\f3rmiregistry\fP を使用して、デフォルトの \f3rmiregistry\fP ポート (ポート 1099) にバインドされた \f2remote.domain\fP に配置されれます。
+\f2lvmid\fPは、リモート・ホストの名前と結合されて、\f240496@remote.domain\fPの\f2vmid\fPを構成しています。結果として、この\f2vmid\fPは、\f3rmi\fPプロトコルを使用して、リモート・ホスト上のデフォルトの\f3jstatd\fPサーバーと通信します。\f3jstatd\fPサーバーは、\f3rmiregistry\fPを使用して、デフォルトの\f3rmiregistry\fPポート(ポート1099)にバインドされた\f2remote.domain\fPに配置されます。
 .LP
 .SH "関連項目"
 .LP
 .RS 3
 .TP 2
 o
-「java(1) \- Java アプリケーション起動ツール」 
+java(1) \- Javaアプリケーション起動ツール 
 .TP 2
 o
-「jps(1) \- Java 仮想マシンプロセスステータスツール」 
+jps(1) \- Java仮想マシン・プロセス・ステータス・ツール 
 .TP 2
 o
-「jstatd(1) \- 仮想マシン jstat デーモン」 
+jstatd(1) \- jvmstatデーモン 
 .TP 2
 o
-「rmiregistry(1) \- Java リモートオブジェクトレジストリ」 
+rmiregistry(1) \- Javaリモート・オブジェクト・レジストリ 
 .RE
 
 .LP

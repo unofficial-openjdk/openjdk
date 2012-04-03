@@ -19,11 +19,11 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jhat 1 "07 May 2011"
+.TH jhat 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-jhat \- Java ヒープ解析ツール
+jhat \- Javaヒープ解析ツール
 .LP
 .RS 3
 .TP 2
@@ -64,77 +64,77 @@ options
 オプションを使用する場合、コマンド名の直後に記述してください。 
 .TP 3
 heap\-dump\-file 
-ブラウズ対象となる Java バイナリヒープダンプファイル。複数のヒープダンプを含むダンプファイルの場合、「foo.hprof#3」のようにファイル名の後に「#<number>」を付加することで、ファイル内の特定のダンプを指定できます。 
+ブラウズ対象となるJavaバイナリ・ヒープ・ダンプ・ファイル。複数のヒープ・ダンプを含むダンプ・ファイルの場合、「foo.hprof#3」のようにファイル名の後に「#<number>」を付加することで、ファイル内の特定のダンプを指定できます。 
 .RE
 
 .LP
 .SH "説明"
 .LP
 .LP
-\f3jhat\fP コマンドは、java ヒープダンプファイルを解析し、Web サーバーを起動します。jhat を使えば、お好みの Web ブラウザを使ってヒープダンプをブラウズできます。jhat は、「ある既知のクラス「Foo」のすべてのインスタンスを表示する」といった、事前に設計されたクエリのほか、\f3OQL\fP (\f3O\fPbject \f3Q\fPuery \f3L\fPanguage) もサポートします。OQL のヘルプには、jhat によって表示される OQL ヘルプページからアクセスできます。デフォルトポートを使用する場合、OQL のヘルプは http://localhost:7000/oqlhelp/ で利用可能です。
+\f3jhat\fPコマンドは、javaヒープ・ダンプ・ファイルを解析し、Webサーバーを起動します。jhatを使用すれば、使い慣れたWebブラウザを使用してヒープ・ダンプをブラウズできます。jhatは、「既知のクラス「Foo」のすべてのインスタンスを表示する」といった、事前に設計されたクエリーの他、ヒープ・ダンプをクエリーするSQLに似たクエリー言語である\f3OQL\fP(\f3O\fPbject\f3Q\fPuery\f3L\fPanguage)もサポートします。OQLのヘルプには、jhatによって表示されるOQLヘルプ・ページからアクセスできます。デフォルト・ポートを使用する場合、OQLのヘルプはhttp://localhost:7000/oqlhelp/で利用可能です。
 .LP
 .LP
-Java のヒープダンプを生成するには、いくつかの方法があります。
+Javaのヒープ・ダンプを生成するには、次のいくつかの方法があります。
 .LP
 .RS 3
 .TP 2
 o
-jmap(1) の \-dump オプションを使って実行時にヒープダンプを取得する。 
+jmap(1)の\-dumpオプションを使用して実行時にヒープ・ダンプを取得する方法 
 .TP 2
 o
-jconsole(1) のオプションを使って 
+jconsole(1)のオプションを使用して
 .na
 \f2HotSpotDiagnosticMXBean\fP @
 .fi
-http://java.sun.com/javase/6/docs/jre/api/management/extension/com/sun/management/HotSpotDiagnosticMXBean.html 経由で実行時にヒープダンプを取得する。 
+http://download.oracle.com/javase/7/docs/jre/api/management/extension/com/sun/management/HotSpotDiagnosticMXBean.html経由で実行時にヒープ・ダンプを取得する方法 
 .TP 2
 o
-\-XX:+HeapDumpOnOutOfMemoryError VM オプションを指定すると、OutOfMemoryError のスロー時にヒープダンプが生成される。 
+\-XX:+HeapDumpOnOutOfMemoryError VMオプションを指定して、OutOfMemoryErrorのスロー時にヒープ・ダンプを生成する方法 
 .TP 2
 o
 .na
 \f2hprof\fP @
 .fi
-http://java.sun.com/developer/technicalArticles/Programming/HPROF.html を使用する。 
+http://java.sun.com/developer/technicalArticles/Programming/HPROF.htmlを使用する方法 
 .RE
 
 .LP
 .LP
-\f3注:\fP このツールは\f3試験的なもの\fPであり、将来の JDK のバージョンでは\f3利用できなくなる\fP可能性があります。
+\f3注意:\fP このツールは\f3試験的なもの\fPであり、将来のJDKのバージョンでは利用\f3できなくなる\fP可能性があります。
 .LP
 .SH "オプション"
 .LP
 .RS 3
 .TP 3
 \-stack false/true 
-オブジェクト割り当て呼び出しスタックの追跡を無効にします。ヒープダンプ内で割り当てサイト情報が使用できない場合、このフラグを false に設定する必要があります。デフォルトは true です。 
+オブジェクト割当呼出しスタックの追跡を無効にします。ヒープ・ダンプ内で割当サイト情報が使用できない場合、このフラグをfalseに設定する必要があります。デフォルトはtrueです。 
 .TP 3
 \-refs false/true 
-オブジェクトへの参照の追跡を無効にします。デフォルトは true です。デフォルトでは、ヒープ内のすべてのオブジェクトについて、バックポインタ (指定されたオブジェクトをポイントしているオブジェクト。参照者または受信参照とも呼ばれる) が計算されます。 
+オブジェクトへの参照の追跡を無効にします。デフォルトはtrueです。デフォルトでは、ヒープ内のすべてのオブジェクトについて、バックポインタ(指定されたオブジェクトをポイントしているオブジェクト。参照者または受信参照とも呼ばれる)が計算されます。 
 .TP 3
 \-port port\-number 
-jhat の HTTP サーバーのポートを設定します。デフォルトは 7000 です。 
+jhatのHTTPサーバーのポートを設定します。デフォルトは7000です。 
 .TP 3
 \-exclude exclude\-file 
-「到達可能なオブジェクト」のクエリから除外すべきデータメンバーの一覧を含むファイルを指定します。たとえば、このファイルに \f2java.lang.String.value\fP が含まれていた場合、特定のオブジェクト「o」から到達可能なオブジェクトのリストを計算する際に、\f2java.lang.String.value\fP フィールドに関連する参照パスが考慮されなくなります。 
+「到達可能なオブジェクト」のクエリーから除外する必要があるデータ・メンバーの一覧を含むファイルを指定します。たとえば、このファイルに\f2java.lang.String.value\fPが含まれていた場合、特定のオブジェクト「o」から到達可能なオブジェクトのリストを計算する際に、\f2java.lang.String.value\fPフィールドに関連する参照パスが考慮されなくなります。 
 .TP 3
 \-baseline baseline\-dump\-file 
-ベースラインとなるヒープダンプを指定します。両方のヒープダンプ内で同じオブジェクト ID を持つオブジェクトは「新規ではない」としてマークされます。その他のオブジェクトは「新規」としてマークされます。これは、異なる 2 つのヒープダンプを比較する際に役立ちます。 
+ベースラインとなるヒープ・ダンプを指定します。両方のヒープ・ダンプ内で同じオブジェクトIDを持つオブジェクトは「新規ではない」としてマークされます。その他のオブジェクトは「新規」としてマークされます。これは、異なる2つのヒープ・ダンプを比較する際に役立ちます。 
 .TP 3
 \-debug int 
-このツールのデバッグレベルを設定します。0 は「デバッグ出力なし」を意味します。より大きな値を設定すると、より冗長なモードになります。 
+このツールのデバッグ・レベルを設定します。0は「デバッグ出力なし」を意味します。より大きな値を設定すると、より冗長なモードになります。 
 .TP 3
 \-version 
 バージョン番号を報告したあと、終了します。 
 .TP 3
 \-h 
-ヘルプメッセージを出力して終了します。 
+ヘルプ・メッセージを出力して終了します。 
 .TP 3
 \-help 
-ヘルプメッセージを出力して終了します。 
+ヘルプ・メッセージを出力して終了します。 
 .TP 3
 \-J<flag> 
-jhat が実行されている Java 仮想マシンに <flag> を渡します。たとえば、512M バイトの最大ヒープサイズを使用するには、\-J\-Xmx512m とします。 
+jhatが実行されているJava仮想マシンに<flag>を渡します。たとえば、512Mバイトの最大ヒープ・サイズを使用するには、\-J\-Xmx512mとします。 
 .RE
 
 .LP
@@ -150,7 +150,7 @@ jconsole(1)
 .TP 2
 o
 .na
-\f2hprof \- ヒープおよび CPU プロファイリングツール\fP @
+\f2hprof \- ヒープおよびCPUプロファイリング・ツール\fP @
 .fi
 http://java.sun.com/developer/technicalArticles/Programming/HPROF.html 
 .RE
