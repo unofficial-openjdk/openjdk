@@ -202,6 +202,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private LWWindowPeer peer;
     private CPlatformView contentView;
     private CPlatformWindow owner;
+    private CPlatformResponder responder;
 
     public CPlatformWindow(final PeerType peerType) {
         super(0, true);
@@ -226,8 +227,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         final long parentNSWindowPtr = (owner != null ? owner.getNSWindowPtr() : 0);
         String warningString = target.getWarningString();
 
+        responder = new CPlatformResponder(peer, false);
         contentView = new CPlatformView();
-        contentView.initialize(peer);
+        contentView.initialize(peer, responder);
 
         final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), styleBits, 0, 0, 0, 0);
         setPtr(nativeWindowPtr);
@@ -782,7 +784,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             focusLogger.fine("the app is inactive, so the notification is ignored");
             return;
         }
-        peer.notifyActivation(gained);
+        responder.handleWindowFocusEvent(gained);
     }
 
     private void deliverMoveResizeEvent(int x, int y, int width, int height) {
