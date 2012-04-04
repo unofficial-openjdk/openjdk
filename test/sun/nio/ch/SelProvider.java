@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public class SelProvider {
             } else {
                 throw new RuntimeException("Test does not recognize this operating system");
             }
-        } else if (osname.startsWith("Mac OS")) {
+        } else if (osname.contains("OS X")) {
             expected = "sun.nio.ch.PollSelectorProvider";
         } else
             return;
