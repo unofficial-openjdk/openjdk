@@ -727,8 +727,11 @@ void JvmtiClassFileReconstituter::copy_bytecodes(methodHandle mh,
       case Bytecodes::_invokestatic    :  // fall through
       case Bytecodes::_invokedynamic   :  // fall through
       case Bytecodes::_invokeinterface :
-        assert(len == 3 || (code == Bytecodes::_invokeinterface && len ==5),
+        assert(len == 3 ||
+               (code == Bytecodes::_invokeinterface && len ==5) ||
+               (code == Bytecodes::_invokedynamic   && len ==5),
                "sanity check");
+
         int cpci = Bytes::get_native_u2(bcp+1);
         bool is_invokedynamic = (EnableInvokeDynamic && code == Bytecodes::_invokedynamic);
         if (is_invokedynamic)
