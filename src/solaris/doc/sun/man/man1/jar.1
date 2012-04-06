@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jar 1 "10 May 2011"
+.TH jar 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -98,7 +98,7 @@ In this example, all the class files in the current directory are placed into th
 .na
 \f2JAR file specification\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR%20Manifest for details explaining how the jar tool stores meta\-information in the manifest file. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR%20Manifest for details explaining how the jar tool stores meta\-information in the manifest file. 
 .LP
 If a jar file should include \f2name\ :\ value\fP pairs contained in an existing manifest file, specify that file using the \f2\-m\fP option:
 .LP
@@ -158,7 +158,7 @@ Beginning with version 1.3 of the JDK, the \f2jar\fP utility supports
 .na
 \f2JarIndex\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR_Index, which allows application class loaders to load classes more efficiently from jar files. If an application or applet is bundled into multiple jar files,\  only the necessary jar files will be downloaded and opened to load classes. This performance optimization is enabled by running \f2jar\fP with the \f2\-i\fPoption. It will generate package location information for the specified main jar file and all the jar files it depends on, which need to be specified in the \f2Class\-Path\fP attribute of the main jar file's manifest.
+http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR_Index, which allows application class loaders to load classes more efficiently from jar files. If an application or applet is bundled into multiple jar files,\  only the necessary jar files will be downloaded and opened to load classes. This performance optimization is enabled by running \f2jar\fP with the \f2\-i\fPoption. It will generate package location information for the specified main jar file and all the jar files it depends on, which need to be specified in the \f2Class\-Path\fP attribute of the main jar file's manifest.
 .LP
 .nf
 \f3
@@ -192,7 +192,7 @@ To review command samples which use \f2jar\fP to opeate on jar files and jar fil
 .na
 \f2Java Tutorial\fP @
 .fi
-http://download.oracle.com/javase/tutorial/deployment/jar.
+http://docs.oracle.com/javase/tutorial/deployment/jar.
 .LP
 .SH "OPTIONS"
 .LP
@@ -266,7 +266,7 @@ You can add special\-purpose \f2name\ :\ value\fP attribute pairs to the manifes
 .na
 \f2JAR Files\fP @
 .fi
-http://download.oracle.com/javase/tutorial/deployment/jar/ trail in the Java Tutorial  for examples of using the \f4\-m\fP option. 
+http://docs.oracle.com/javase/tutorial/deployment/jar/ trail in the Java Tutorial  for examples of using the \f4\-m\fP option. 
 .TP 3
 e 
 Sets \f2entrypoint\fP as the application entry point for stand\-alone applications bundled into executable jar file. The use of this option creates or overrides the \f2Main\-Class\fP attribute value in the manifest file. This option can be used during creation of jar file or while updating the jar file. This option specifies the application entry point without editing or creating the manifest file.
@@ -553,25 +553,25 @@ An \f2INDEX.LIST\fP file is inserted to the \f2META\-INF\fP directory. This enab
 .na
 \f2The Jar Overview\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/jar/jarGuide.html
+http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jarGuide.html
 .LP
 .LP
 .na
 \f2The Jar File Specification\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/jar/jar.html
+http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html
 .LP
 .LP
 .na
 \f2The JarIndex Spec\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR_Index
+http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html#JAR_Index
 .LP
 .LP
 .na
 \f2Jar Tutorial\fP @
 .fi
-http://download.oracle.com/javase/tutorial/deployment/jar/index.html
+http://docs.oracle.com/javase/tutorial/deployment/jar/index.html
 .LP
 .LP
 pack200(1)
