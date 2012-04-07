@@ -71,6 +71,7 @@ import java.text.MessageFormat;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.file.Files;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.UnsupportedCharsetException;
 import sun.tools.native2ascii.A2NFilter;
@@ -240,9 +241,7 @@ public class Main {
             if (tempDir == null)
                 tempDir = new File(System.getProperty("user.dir"));
 
-            tempFile = File.createTempFile("_N2A",
-                                           ".TMP",
-                                            tempDir);
+            tempFile = Files.createTempFile(tempDir.toPath(), "_N2A", ".TMP").toFile();
             tempFile.deleteOnExit();
 
             try {
@@ -292,9 +291,7 @@ public class Main {
             File tempDir = f.getParentFile();
             if (tempDir == null)
                 tempDir = new File(System.getProperty("user.dir"));
-            tempFile =  File.createTempFile("_N2A",
-                                            ".TMP",
-                                            tempDir);
+            tempFile =  Files.createTempFile(tempDir.toPath(), "_N2A", ".TMP").toFile();
             tempFile.deleteOnExit();
 
             try {

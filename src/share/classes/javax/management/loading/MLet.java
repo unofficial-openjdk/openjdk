@@ -44,6 +44,7 @@ import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLStreamHandlerFactory;
+import java.nio.file.Files;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -1160,8 +1161,9 @@ public class MLet extends java.net.URLClassLoader
                  try {
                      File directory = new File(libraryDirectory);
                      directory.mkdirs();
-                     File file = File.createTempFile(libname + ".", null,
-                             directory);
+                     File file = Files.createTempFile(directory.toPath(),
+                                                      libname + ".", null)
+                                      .toFile();
                      file.deleteOnExit();
                      FileOutputStream fileOutput = new FileOutputStream(file);
                      try {
