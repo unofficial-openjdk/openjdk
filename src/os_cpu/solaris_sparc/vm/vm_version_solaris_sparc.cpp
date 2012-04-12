@@ -202,7 +202,11 @@ int VM_Version::platform_features(int features) {
                 features |= T1_model_m;
               }
             } else {
-              assert(strstr(impl, "SPARC") != NULL, "should be sparc");
+#ifndef PRODUCT
+              if (strstr(impl, "SPARC") == NULL) {
+                 warning("WARNING: cpu implementation = '%s', should contain SPARC", impl);
+              }
+#endif
             }
             free((void*)impl);
             break;
