@@ -1861,6 +1861,17 @@ public abstract class ClassLoader {
     }
 
     private static boolean loadLibrary0(Class fromClass, final File file) {
+        if (loadLibrary1(fromClass, file)) {
+            return true;
+        }
+        final File libfile = ClassLoaderHelper.mapAlternativeName(file);
+        if (libfile != null && loadLibrary1(fromClass, libfile)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean loadLibrary1(Class fromClass, final File file) {
         boolean exists = AccessController.doPrivileged(
             new PrivilegedAction<Object>() {
                 public Object run() {

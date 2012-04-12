@@ -312,7 +312,10 @@ Java_sun_java2d_opengl_CGLGraphicsConfig_getCGLConfigInfo
 
     GLint contextVirtualScreen = [context currentVirtualScreen];
 #if USE_NSVIEW_FOR_SCRATCH
-    [context setView: scratchSurface];
+    /* the scratch surface will be set to the view
+     * later on the flusher thread by OGLSD_SetScratchSurface.
+     */
+    //[context setView: scratchSurface];
 #else
     [context
         setPixelBuffer: scratchSurface

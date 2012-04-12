@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package java.lang;
 
-package sun.nio.ch;
+import java.io.File;
 
-import java.nio.channels.spi.AsynchronousChannelProvider;
-import java.security.AccessController;
-import sun.security.action.GetPropertyAction;
+class ClassLoaderHelper {
 
-/**
- * Creates this platform's default asynchronous channel provider
- */
-
-public class DefaultAsynchronousChannelProvider {
+    private ClassLoaderHelper() {}
 
     /**
-     * Prevent instantiation.
+     * Returns an alternate path name for the given file
+     * such that if the original pathname did not exist, then the
+     * file may be located at the alternate location.
+     * For most platforms, this behavior is not supported and returns null.
      */
-    private DefaultAsynchronousChannelProvider() { }
-
-    /**
-     * Returns the default AsynchronousChannelProvider.
-     */
-    public static AsynchronousChannelProvider create() {
-        String osname = AccessController
-            .doPrivileged(new GetPropertyAction("os.name"));
-        if (osname.equals("SunOS"))
-            return new SolarisAsynchronousChannelProvider();
-        if (osname.equals("Linux"))
-            return new LinuxAsynchronousChannelProvider();
-        if (osname.contains("OS X"))
-            return new BsdAsynchronousChannelProvider();
-        throw new InternalError("platform not recognized");
+    static File mapAlternativeName(File lib) {
+        return null;
     }
-
 }
