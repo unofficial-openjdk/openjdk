@@ -67,6 +67,8 @@ public abstract class AbstractTranslet implements Translet {
     public String  _encoding = "UTF-8";
     public boolean _omitHeader = false;
     public String  _standalone = null;
+    //see OutputPropertiesFactory.ORACLE_IS_STANDALONE
+    public boolean  _isStandalone = false;
     public String  _doctypePublic = null;
     public String  _doctypeSystem = null;
     public boolean _indent = false;
@@ -671,6 +673,7 @@ public abstract class AbstractTranslet implements Translet {
                 if (_doctypeSystem != null) {
                     handler.setDoctype(_doctypeSystem, _doctypePublic);
                 }
+                handler.setIsStandalone(_isStandalone);
             }
             else if (_method.equals("html")) {
                 handler.setIndent(_indent);
@@ -693,6 +696,7 @@ public abstract class AbstractTranslet implements Translet {
             }
             handler.setIndent(_indent);
             handler.setDoctype(_doctypeSystem, _doctypePublic);
+            handler.setIsStandalone(_isStandalone);
         }
     }
 
