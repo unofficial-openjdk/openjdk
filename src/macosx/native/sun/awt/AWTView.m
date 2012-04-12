@@ -372,13 +372,14 @@ AWT_ASSERT_APPKIT_THREAD;
 }
 
 -(void) deliverJavaKeyEventHelper: (NSEvent *) event {
-    static id sUnretainedLastKeyEvent = nil;    
-    if (event == sUnretainedLastKeyEvent) {
+    static NSEvent* sLastKeyEvent = nil;
+    if (event == sLastKeyEvent) {
         // The event is repeatedly delivered by keyDown: after performKeyEquivalent:
         return;
     }
-    sUnretainedLastKeyEvent = event;	
-	
+    [sLastKeyEvent release];
+    sLastKeyEvent = [event retain];
+
     [AWTToolkit eventCountPlusPlus];
     JNIEnv *env = [ThreadUtilities getJNIEnv];
 
@@ -818,7 +819,7 @@ JNF_CLASS_CACHE(jc_CInputMethod, "sun/lwawt/macosx/CInputMethod");
     // Unicode value.
     NSUInteger utf8Length = [aString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 
-    if ([self hasMarkedText] || !fProcessingKeystroke || (utf8Length > 2)) {
+    if ([self hasMarkedText] || !fProcessingKeystroke || (utf8Length > 1)) {
         JNIEnv *env = [ThreadUtilities getJNIEnv];
 
         static JNF_MEMBER_CACHE(jm_selectPreviousGlyph, jc_CInputMethod, "selectPreviousGlyph", "()V");

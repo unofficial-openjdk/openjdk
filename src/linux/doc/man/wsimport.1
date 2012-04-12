@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH wsimport 1 "10 May 2011"
+.TH wsimport 1 "16 Mar 2012"
 .SH "Name"
 wsimport \- Java(TM) API for XML Web Services (JAX\-WS) 2.0
 .LP
@@ -88,6 +88,7 @@ wsimport [options] <wsdl>
 .LP
 The following table lists the \f2wsimport\fP options.
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -675,6 +676,7 @@ Generate code as per the given JAX\-WS specification version. version 2.0 will g
 .rm l+
 .rm m+
 .rm n+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-66
 .LP
 Multiple JAX\-WS and JAXB binding files can be specified using \f2\-b\fP option and they can be used to customize various things like package names, bean names, etc. More information on JAX\-WS and JAXB binding files can be found in the 
@@ -685,6 +687,7 @@ https://jax\-ws.dev.java.net/nonav/2.1.1/docs/customizations.html.
 .LP
 The following table lists \f2wsimport\fP non\-standard options:
 .LP
+.TS
 .if \n+(b.=1 .nr d. \n(.c-\n(c.-1
 .de 35
 .ps \n(.s
@@ -959,6 +962,7 @@ Do not compile generated Java files.
 .rm d+
 .rm e+
 .rm f+
+.TE
 .if \n-(b.=0 .nr c. \n(.c-\n(d.-26
 
 .LP

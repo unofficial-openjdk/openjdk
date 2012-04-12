@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH tnameserv 1 "10 May 2011"
+.TH tnameserv 1 "16 Mar 2012"
 
 .LP
 .SH "Name"
@@ -30,7 +30,7 @@ This document discusses using the Java IDL Transient Naming Service, \f2tnameser
 .na
 \f2Java IDL Naming Service Included with ORBD\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/idl/jidlNaming.html topic.
+http://docs.oracle.com/javase/7/docs/technotes/guides/idl/jidlNaming.html topic.
 .LP
 .LP
 Topics in this section include:
@@ -120,11 +120,11 @@ For the client and server to find the Naming Service, they must be made aware of
 .na
 \f2The Hello World Example Using RMI\-IIOP\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/rmi\-iiop/rmiiiopexample.html. You could also use the command line options \f2\-ORBInitialPort\fP \f2nameserverport#\fP and \f2\-ORBInitialHost\fP \f2nameserverhostname\fP to tell the client and server where to find the Naming Service. 
+http://docs.oracle.com/javase/7/docs/technotes/guides/rmi\-iiop/rmiiiopexample.html. You could also use the command line options \f2\-ORBInitialPort\fP \f2nameserverport#\fP and \f2\-ORBInitialHost\fP \f2nameserverhostname\fP to tell the client and server where to find the Naming Service. 
 .na
 \f2Java IDL: Running the Hello World Example on TWO Machines\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/idl/tutorial/jidl2machines.html shows one way of doing this using the command line option.
+http://docs.oracle.com/javase/7/docs/technotes/guides/idl/tutorial/jidl2machines.html shows one way of doing this using the command line option.
 .LP
 .LP
 For example, suppose the Transient Naming Service, \f2tnameserv\fP is running on port 1050 on host \f2nameserverhost\fP. The client is running on host \f2clienthost\fP and the server is running on host \f2serverhost\fP.
@@ -279,7 +279,7 @@ This code creates a name "plans" of type "text" and binds it to our dummy object
 .fl
         ctx.rebind(name1, objref);
 .fl
-        System.out.println("plans rebind sucessful!");
+        System.out.println("plans rebind successful!");
 .fl
 
 .fl
@@ -315,7 +315,7 @@ The remainder of the code binds the dummy object reference using the names "sche
 .fl
         ctx2.rebind(name3, objref);
 .fl
-        System.out.println("schedule rebind sucessful!");
+        System.out.println("schedule rebind successful!");
 .fl
 
 .fl
@@ -325,7 +325,7 @@ The remainder of the code binds the dummy object reference using the names "sche
 .fl
         ctx2.rebind(name4, objref);
 .fl
-        System.out.println("calender rebind sucessful!");
+        System.out.println("calender rebind successful!");
 .fl
 
 .fl
@@ -395,7 +395,7 @@ In the above section, Starting the Java IDL Transient Naming Service, the namese
 .fi
 
 .LP
-The following code obtains the intial naming context. 
+The following code obtains the initial naming context. 
 .nf
 \f3
 .fl

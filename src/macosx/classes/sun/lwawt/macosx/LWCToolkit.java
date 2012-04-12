@@ -184,9 +184,9 @@ public class LWCToolkit extends LWToolkit {
 
     @Override
     public MenuBarPeer createMenuBar(MenuBar target) {
-         MenuBarPeer peer = new CMenuBar(target);
-         targetCreatedPeer(target, peer);
-             return peer;
+        MenuBarPeer peer = new CMenuBar(target);
+        targetCreatedPeer(target, peer);
+        return peer;
     }
 
     @Override
@@ -645,6 +645,15 @@ public class LWCToolkit extends LWToolkit {
     @Override
     public int getFocusAcceleratorKeyMask() {
         return InputEvent.CTRL_MASK | InputEvent.ALT_MASK;
+    }
+
+    /**
+     * Tests whether specified key modifiers mask can be used to enter a printable
+     * character.
+     */
+    @Override
+    public boolean isPrintableCharacterModifiersMask(int mods) {
+        return ((mods & (InputEvent.META_MASK | InputEvent.CTRL_MASK)) == 0);
     }
 
     // Extends PeerEvent because we want to pass long an ObjC mediator object and because we want these events to be posted early
