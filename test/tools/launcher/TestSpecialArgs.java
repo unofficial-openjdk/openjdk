@@ -23,23 +23,25 @@
 
 /*
  * @test
- * @bug 7124089
- * @summary Checks for MacOSX specific flags are accepted or rejected
- * @compile -XDignore.symbol.file TestHelper.java TestSpecialArgs.java
+ * @bug 7124089 7131021
+ * @summary Checks for MacOSX specific flags are accepted or rejected, and
+ *          MacOSX platforms specific environment is consistent.
+ * @compile -XDignore.symbol.file TestSpecialArgs.java EnvironmentVariables.java
  * @run main TestSpecialArgs
  */
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-public class TestSpecialArgs {
+public class TestSpecialArgs extends TestHelper {
 
     public static void main(String... args) {
         final Map<String, String> envMap = new HashMap<>();
         envMap.put("_JAVA_LAUNCHER_DEBUG", "true");
 
-        TestHelper.TestResult tr = TestHelper.doExec(envMap,
-                TestHelper.javaCmd, "-XstartOnFirstThread", "-version");
-        if (TestHelper.isMacOSX) {
+        TestResult tr = doExec(envMap, javaCmd, "-XstartOnFirstThread", "-version");
+        if (isMacOSX) {
             if (!tr.contains("In same thread")) {
                 System.out.println(tr);
                 throw new RuntimeException("Error: not running in the same thread ?");
@@ -55,9 +57,8 @@ public class TestSpecialArgs {
             }
         }
 
-        tr = TestHelper.doExec(TestHelper.javaCmd, "-Xdock:/tmp/not-available",
-                "-version");
-        if (TestHelper.isMacOSX) {
+        tr = doExec(javaCmd, "-Xdock:/tmp/not-available", "-version");
+        if (isMacOSX) {
             if (!tr.isOK()) {
                 System.out.println(tr);
                 throw new RuntimeException("Error: arg was rejected ????");
@@ -67,6 +68,37 @@ public class TestSpecialArgs {
                 System.out.println(tr);
                 throw new RuntimeException("Error: argument was accepted ????");
             }
+        }
+        // MacOSX specific tests ensue......
+        if (!isMacOSX)
+            return;
+        Set<String> envToRemove = new HashSet<>();
+        Map<String, String> map = System.getenv();
+        for (String s : map.keySet()) {
+            if (s.startsWith("JAVA_MAIN_CLASS_")
+                    || s.startsWith("APP_NAME_")
+                    || s.startsWith("APP_ICON_")) {
+                envToRemove.add(s);
+            }
+        }
+        runTest(envToRemove, javaCmd, "-cp", TEST_CLASSES_DIR.getAbsolutePath(),
+                "EnvironmentVariables", "JAVA_MAIN_CLASS_*",
+                "EnvironmentVariables");
+
+        runTest(envToRemove, javaCmd, "-cp", TEST_CLASSES_DIR.getAbsolutePath(),
+                "-Xdock:name=TestAppName", "EnvironmentVariables",
+                "APP_NAME_*", "TestAppName");
+
+        runTest(envToRemove, javaCmd, "-cp", TEST_CLASSES_DIR.getAbsolutePath(),
+                "-Xdock:icon=TestAppIcon", "EnvironmentVariables",
+                "APP_ICON_*", "TestAppIcon");
+    }
+
+    static void runTest(Set<String> envToRemove, String... args) {
+        TestResult tr = doExec(null, envToRemove, args);
+        if (!tr.isOK()) {
+            System.err.println(tr.toString());
+            throw new RuntimeException("Test Fails");
         }
     }
 }
