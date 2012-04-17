@@ -49,9 +49,9 @@ public class CPlatformView extends CFRetainedResource {
         super(0, true);
     }
 
-    public void initialize(LWWindowPeer peer) {
+    public void initialize(LWWindowPeer peer, CPlatformResponder responder) {
         this.peer = peer;
-        this.responder = new CPlatformResponder(peer, false);
+        this.responder = responder;
 
         if (!LWCToolkit.getSunAwtDisableCALayers()) {
             this.windowLayer = new CGLLayer(peer);
@@ -199,7 +199,7 @@ public class CPlatformView extends CFRetainedResource {
 
     private void deliverKeyEvent(NSEvent event) {
         responder.handleKeyEvent(event.getType(), event.getModifierFlags(),
-                                 event.getCharactersIgnoringModifiers(), event.getKeyCode());
+                                 event.getCharactersIgnoringModifiers(), event.getKeyCode(), true);
     }
 
     private void deliverWindowDidExposeEvent() {
