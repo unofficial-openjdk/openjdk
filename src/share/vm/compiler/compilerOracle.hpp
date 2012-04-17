@@ -38,6 +38,10 @@ class CompilerOracle : AllStatic {
   static bool _quiet;
 
  public:
+
+  // True if the command file has been specified or is implicit
+  static bool has_command_file();
+
   // Reads from file and adds to lists
   static void parse_from_file();
 
