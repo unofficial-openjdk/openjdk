@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -371,9 +371,8 @@ public class CodeSource implements java.io.Serializable {
      */
     private boolean matchLocation(CodeSource that)
         {
-            if (location == null) {
+            if (location == null)
                 return true;
-            }
 
             if ((that == null) || (that.location == null))
                 return false;
@@ -381,31 +380,8 @@ public class CodeSource implements java.io.Serializable {
             if (location.equals(that.location))
                 return true;
 
-            if (!location.getProtocol().equals(that.location.getProtocol()))
+            if (!location.getProtocol().equalsIgnoreCase(that.location.getProtocol()))
                 return false;
-
-            String thisHost = location.getHost();
-            String thatHost = that.location.getHost();
-
-            if (thisHost != null) {
-                if (("".equals(thisHost) || "localhost".equals(thisHost)) &&
-                    ("".equals(thatHost) || "localhost".equals(thatHost))) {
-                    // ok
-                } else if (!thisHost.equals(thatHost)) {
-                    if (thatHost == null) {
-                        return false;
-                    }
-                    if (this.sp == null) {
-                        this.sp = new SocketPermission(thisHost, "resolve");
-                    }
-                    if (that.sp == null) {
-                        that.sp = new SocketPermission(thatHost, "resolve");
-                    }
-                    if (!this.sp.implies(that.sp)) {
-                        return false;
-                    }
-                }
-            }
 
             if (location.getPort() != -1) {
                 if (location.getPort() != that.location.getPort())
@@ -443,10 +419,34 @@ public class CodeSource implements java.io.Serializable {
                 }
             }
 
-            if (location.getRef() == null)
-                return true;
-            else
-                return location.getRef().equals(that.location.getRef());
+            if (location.getRef() != null) {
+                if (!location.getRef().equals(that.location.getRef()))
+                    return false;
+            }
+
+            String thisHost = location.getHost();
+            String thatHost = that.location.getHost();
+            if (thisHost != null) {
+                if (("".equals(thisHost) || "localhost".equals(thisHost)) &&
+                    ("".equals(thatHost) || "localhost".equals(thatHost))) {
+                    // ok
+                } else if (!thisHost.equalsIgnoreCase(thatHost)) {
+                    if (thatHost == null) {
+                        return false;
+                    }
+                    if (this.sp == null) {
+                        this.sp = new SocketPermission(thisHost, "resolve");
+                    }
+                    if (that.sp == null) {
+                        that.sp = new SocketPermission(thatHost, "resolve");
+                    }
+                    if (!this.sp.implies(that.sp)) {
+                        return false;
+                    }
+                }
+            }
+            // everything matches
+            return true;
         }
 
     /**
