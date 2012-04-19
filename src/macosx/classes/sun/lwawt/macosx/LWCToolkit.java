@@ -656,6 +656,14 @@ public class LWCToolkit extends LWToolkit {
         return ((mods & (InputEvent.META_MASK | InputEvent.CTRL_MASK)) == 0);
     }
 
+    /**
+     * Returns whether popup is allowed to be shown above the task bar.
+     */
+    @Override
+    public boolean canPopupOverlapTaskBar() {
+        return false;
+    }
+
     // Extends PeerEvent because we want to pass long an ObjC mediator object and because we want these events to be posted early
     // Typically, rather than relying on the notifier to call notifyAll(), we use the mediator to stop the runloop
     public static class CPeerEvent extends PeerEvent {

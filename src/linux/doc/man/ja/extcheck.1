@@ -19,14 +19,14 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH extcheck 1 "07 May 2011"
+.TH extcheck 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-extcheck \- jar の競合検出ユーティリティー
+extcheck \- jarの競合検出ユーティリティ
 .LP
 .LP
-\f3extcheck\fP は、ターゲットの jar ファイルと現在インストールされている拡張機能の jar ファイル間のバージョンの競合を検出します。
+\f3extcheck\fPは、ターゲットのjarファイルと現在インストールされている拡張機能のjarファイル間のバージョンの競合を検出します。
 .LP
 .SH "形式"
 .LP
@@ -42,26 +42,26 @@ extcheck [ \-verbose ] targetfile.jar
 .SH "説明"
 .LP
 .LP
-\f3extcheck\fP ユーティリティーは、指定された Jar ファイルのタイトルおよびバージョンが Java(TM) 2 SDK にインストールされている拡張機能と競合していないかをチェックします。拡張機能をインストールする前に、このユーティリティーを使って、バージョンが同じか、より新しい拡張機能がすでにインストールされていないかどうかを調べることができます。
+\f3extcheck\fPユーティリティは、指定されたJarファイルのタイトルおよびバージョンがJava(tm) SDKにインストールされている拡張機能と競合していないかをチェックします。拡張機能をインストールする前に、このユーティリティを使用して、同じバージョンまたはより新しいバージョンの拡張機能がすでにインストールされていないかどうかを調べることができます。
 .LP
 .LP
-\f3extcheck\fP ユーティリティーは、targetfile.jar ファイルのマニフェスト内のヘッダー \f2Specification\-title\fP および \f2Specification\-version\fP を、拡張機能ディレクトリ内に現在インストールされている \f2すべての Jar ファイル内の\fP 対応するヘッダーと比較します。デフォルトでは、拡張機能ディレクトリは、\f2jre/lib/ext\fP です。\f3extcheck\fP ユーティリティーは、\f2java.lang.Package.isCompatibleWith\fP メソッドと同様の方法でバージョン番号を比較します。
+\f3extcheck\fPユーティリティは、\f2targetfile.jar\fPファイルのマニフェスト内のヘッダー\f2Specification\-title\fPおよび\f2Specification\-version\fPを、拡張機能ディレクトリ内に現在インストールされているすべてのJarファイル内の対応するヘッダーと比較します。(デフォルトでは、拡張機能ディレクトリは、\f2jre/lib/ext\fPです。)\f3extcheck\fPユーティリティは、\f2java.lang.Package.isCompatibleWith\fPメソッドと同様の方法でバージョン番号を比較します。
 .LP
 .LP
-競合が検出されない場合のリターンコードは \f20\fP です。
+競合が検出されない場合のリターン・コードは\f20\fPです。
 .LP
 .LP
-拡張機能ディレクトリ内のいずれかの jar ファイルのマニフェストに、同一の \f2Specification\-title\fP 、および同一またはより新しい \f2Specification\-version\fP 番号がある場合は、ゼロでないエラーコードが返されます。 \f2targetfile.jar\fP のマニフェストに \f2Specification\-title\fP または \f2Specification\-version\fP 属性がない場合も、ゼロでないエラーコードが返されます。
+拡張機能ディレクトリ内のいずれかのjarファイルのマニフェストに、同一の\f2Specification\-title\fP、および同一またはより新しい\f2Specification\-version\fP番号がある場合は、ゼロでないエラー・コードが返されます。\f2targetfile.jar\fPのマニフェストに\f2Specification\-title\fPまたは\f2Specification\-version\fP属性がない場合も、ゼロでないエラー・コードが返されます。
 .LP
 .SH "オプション"
 .LP
 .RS 3
 .TP 3
 \-verbose 
-拡張機能ディレクトリ内の Jar ファイルを、チェック時に一覧表示します。また、ターゲット jar ファイルのマニフェストの属性、および競合する jar ファイルについても報告します。 
+拡張機能ディレクトリ内のJarファイルを、チェック時に一覧表示します。また、ターゲットjarファイルのマニフェストの属性、および競合するjarファイルについても報告します。 
 .TP 3
 \-Joption 
-Java 仮想マシンに \f2option\fP を渡します。\f2option\fP には、java(1)のリファレンスページに記載されているオプションを 1 つ指定します。たとえば、\f3\-J\-Xms48m\fP と指定すると、スタートアップメモリーは 48M バイトに設定されます。 
+Java仮想マシンに\f2option\fPを渡します。\f2option\fPには、java(1)のリファレンス・ページに記載されているオプションを1つ指定します。たとえば、\f3\-J\-Xms48m\fPと指定すると、スタートアップ・メモリーは48Mバイトに設定されます。 
 .RE
 
 .LP

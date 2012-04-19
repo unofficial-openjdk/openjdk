@@ -19,24 +19,24 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH wsgen 1 "07 May 2011"
+.TH wsgen 1 "21 Mar 2012"
 .SH "名前"
-wsgen \- XML Web Services (JAX\-WS) 2.0 のための Java(TM) API
+wsgen \- XML Web Services(JAX\-WS)2.0のためのJava(tm)API
 .LP
 \f3仕様バージョン:\fP 2.1
 .br
 \f3実装バージョン:\fP 2.1.1
 .LP
-\f2wsgen\fP ツールは、JAX\-WS Web サービスで使用される JAX\-WS ポータブルアーティファクトを生成します。このツールは、Web サービスのエンドポイント実装クラス (SEI) を読み取り、Web サービスの配備と呼び出しに必要なすべてのアーティファクトを生成します。
+\f2wsgen\fPツールは、JAX\-WS Webサービスで使用されるJAX\-WSポータブル・アーティファクトを生成します。このツールは、Webサービスのエンドポイント実装クラス(SEI)を読取り、Webサービスのデプロイメントと呼出しに必要なすべてのアーティファクトを生成します。
 .SH "概要"
 .LP
-\f2wsgen\fP ツールは、JAX\-WS Web サービスで使用される JAX\-WS ポータブルアーティファクトを生成します。このツールは、Web サービスのエンドポイントクラスを読み取り、Web サービスの配備と呼び出しに必要なすべてのアーティファクトを生成します。JAXWS 2.1.1 RI には wsgen Ant タスクも用意されています。詳細は、
+\f2wsgen\fPツールは、JAX\-WS Webサービスで使用されるJAX\-WSポータブル・アーティファクトを生成します。このツールは、Webサービスのエンドポイント・クラスを読取り、Webサービスのデプロイメントと呼出しに必要なすべてのアーティファクトを生成します。JAXWS 2.1.1 RIにはwsgen Antタスクも用意されています。詳細は、
 .na
-\f2Wsgen Ant タスク\fP @
+\f2Wsgen Antタスク\fP @
 .fi
 https://jax\-ws.dev.java.net/nonav/2.1.1/docs/wsgenant.htmlを参照してください。
 .LP
-.SH "wsgen の起動"
+.SH "wsgenの起動"
 .RS 3
 .TP 2
 o
@@ -74,7 +74,7 @@ wsgen [options] <SEI>\fP
 \fP
 .fi
 .LP
-次の表に、 \f2wsgen\fP のオプションを示します。
+次の表に、\f2wsgen\fPのオプションを示します。
 .br
 .LP
 .TS
@@ -105,7 +105,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-入力クラスファイルの検索場所を指定します
+入力クラス・ファイルの検索場所を指定します
 .br
 .di
 .nr a| \n(dn
@@ -121,7 +121,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-\-classpath <path> \f2と同じです\fP
+\f2\-classpath<path>\fPと同じです
 .br
 .di
 .nr b| \n(dn
@@ -153,7 +153,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-ベンダー拡張 (仕様で規定されていない機能) を許可します。拡張を使用すると、アプリケーションの移植性が失われたり、ほかの実装との相互運用が行えなくなる可性があります
+ベンダー拡張(仕様で規定されていない機能)を許可します。拡張を使用すると、アプリケーションの移植性が失われたり、他の実装との相互運用が行えなくなる可能性があります
 .br
 .di
 .nr d| \n(dn
@@ -201,7 +201,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-常に \-wsdl オプションと組み合わせて使用します。WSDL などの生成されたリソースファイルの格納場所を指定します
+常に \-wsdlオプションと組み合わて使用します。WSDLなどの生成されたリソース・ファイルの格納場所を指定します
 .br
 .di
 .nr g| \n(dn
@@ -217,7 +217,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-生成されるソースファイルを格納する場所を指定する
+生成されるソース・ファイルを格納する場所を指定します
 .br
 .di
 .nr h| \n(dn
@@ -249,7 +249,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-バージョン情報を出力します。このオプションを使用した場合、バージョン情報が出力されるだけです。通常の処理は実行されません。
+バージョン情報を出力します。このオプションを使用すると、バージョン情報のみが出力されます。通常の処理は実行されません。
 .br
 .di
 .nr j| \n(dn
@@ -265,7 +265,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-デフォルトでは \f2wsgen\fP は WSDL ファイルを生成しません。このフラグは省略可能ですが、指定した場合は \f2wsgen\fP が WSDL ファイルを生成するようになります。このフラグは通常、エンドポイントの配備前に開発者が WSDL を参照できるようにするためだけに使用されます。 \f2protocol\fP は省略可能であり、wsdl:binding で使用すべきプロトコルを指定するために \f2使用されます\fP。有効なプロトコルは次のとおりです。 \f2soap1.1\fP と \f2Xsoap1.2\fP。デフォルトは \f2soap1.1\fP です。 \f2Xsoap1.2\fP は標準ではないため、 \f2\-extension\fP オプションと組み合わせないと使用できません。
+デフォルトでは\f2wsgen\fPはWSDLファイルを生成しません。このフラグは省略可能ですが、指定した場合は\f2wsgen\fPがWSDLファイルを生成するようになります。このフラグは通常、エンドポイントのデプロイ前に開発者がWSDLを参照できるようにするためにのみ使用します。\f2protocol\fPは省略可能であり、\f2wsdl:binding\fPで使用するプロトコルを指定するために使用されます。有効なプロトコルは\f2soap1.1\fPおよび\f2Xsoap1.2\fPなどです。デフォルトは\f2soap1.1\fPです。\f2Xsoap1.2\fPは標準ではないため、\f2\-extension\fPオプションと組み合せないと使用できません。
 .br
 .di
 .nr k| \n(dn
@@ -281,7 +281,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-常に \f2\-wsdl\fP オプションと組み合わせて使用します。WSDL 内で生成されるべき \f2wsdl:service\fP の名前を指定するために使用します。例: \f2\-servicename "{http://mynamespace/}MyService"\fP
+常に\f2\-wsdl\fPオプションと組み合せて使用します。WSDL内で生成される\f2wsdl:service\fPの名前を指定するために使用します。例: \f2\-servicename "{http://mynamespace/}MyService"\fP
 .br
 .di
 .nr l| \n(dn
@@ -297,7 +297,7 @@ wsgen [options] <SEI>\fP
 .ll \n(34u*1u/3u
 .if \n(.l<\n(81 .ll \n(81u
 .in 0
-常に \f2\-wsdl\fP オプションと組み合わせて使用します。WSDL 内で生成されるべき \f2wsdl:port\fP の名前を指定するために使用します。例: \f2\-portname "{http://mynamespace/}MyPort"\fP
+常に\f2\-wsdl\fPオプションと組み合せて使用します。WSDL内で生成される\f2wsdl:port\fPの名前を指定するために使用します。例: \f2\-portname "{http://mynamespace/}MyPort"\fP
 .br
 .br
 .di
@@ -635,7 +635,7 @@ wsgen [options] <SEI>\fP
 .fl
 .fi
 .LP
-\f3stock\fP ディレクトリ内に @WebService 注釈が付けられた、StockService に必要なラッパークラスが生成されます。
+\f3stock\fPディレクトリ内に@WebService注釈が付けられた、StockServiceに必要なラッパー・クラスが生成されます。
 .nf
 \f3
 .fl
@@ -643,7 +643,7 @@ wsgen [options] <SEI>\fP
 .fl
 .fi
 .LP
-SOAP 1.1 WSDL と、@WebService 注釈が付けられた Java クラス stock.StockService のスキーマが生成されます。
+SOAP 1.1 WSDLと、@WebService注釈が付けられたJavaクラスstock.StockServiceのスキーマが生成されます。
 .nf
 \f3
 .fl
@@ -651,6 +651,6 @@ SOAP 1.1 WSDL と、@WebService 注釈が付けられた Java クラス stock.StockService の
 .fl
 .fi
 .LP
-SOAP 1.2 WSDL が生成されます。
+SOAP 1.2 WSDLが生成されます。
 .LP
-サービスを配備するときに JAXWS ランタイムによって自動的に WSDL が生成されるため、開発時に WSDL を生成する必要はありません。 
+サービスをデプロイするときにJAXWSランタイムによって自動的にWSDLが生成されるため、開発時にWSDLを生成する必要はありません。 

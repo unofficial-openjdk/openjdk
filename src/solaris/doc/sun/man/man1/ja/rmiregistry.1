@@ -19,14 +19,14 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH rmiregistry 1 "07 May 2011"
+.TH rmiregistry 1 "21 Mar 2012"
 
 .LP
 .SH "名前"
-rmiregistry \- Java リモートオブジェクトレジストリ
+rmiregistry \- Javaリモート・オブジェクト・レジストリ
 .LP
 .RS 3
-\f3rmiregistry\fP コマンドは、現在のホストの指定したポート上にリモートオブジェクトレジストリを開始します。 
+\f3rmiregistry\fPコマンドは、現在のホストの指定したポート上にリモート・オブジェクト・レジストリを開始します。 
 .RE
 
 .LP
@@ -44,29 +44,29 @@ rmiregistry [\fP\f4port\fP\f3]
 .SH "説明"
 .LP
 .LP
-\f3rmiregistry\fP コマンドは、現在のホストの指定 \f2port\fP 上にリモートオブジェクトレジストリを作成し、開始します。\f2port\fP の指定を省略した場合、レジストリはポート 1099 で開始します。\f3rmiregistry\fP コマンドに、出力機能はありません。通常、これはバックグラウンドで実行されます。例を示します。
+\f3rmiregistry\fPコマンドは、現在のホストの指定\f2port\fP上にリモート・オブジェクト・レジストリを作成し、開始します。\f2port\fPの指定を省略した場合、レジストリはポート1099で開始します。\f3rmiregistry\fPコマンドに、出力機能はありません。通常、これはバックグラウンドで実行されます。次に例を示します。
 .LP
 .LP
-\f2rmiregistry&\fP
+\f2rmiregistry &\fP
 .LP
 .LP
-リモートオブジェクトレジストリは、ブートストラップのネームサービスです。同一ホストの RMI サーバーが、リモートオブジェクトを名前にバインドするために使用されます。次に、ローカルおよびリモートホストのクライアントはリモートオブジェクトを検索し、リモートメソッドの呼び出しを行います。
+リモート・オブジェクト・レジストリは、ブートストラップのネーム・サービスです。同一ホストのRMIサーバーが、リモート・オブジェクトを名前にバインドするために使用されます。次に、ローカルおよびリモート・ホストのクライアントはリモート・オブジェクトを検索し、リモート・メソッドの呼出しを行います。
 .LP
 .LP
-レジストリは、一般的に、最初のリモートオブジェクトの位置を指定します。 そこで、アプリケーションはメソッドを呼び出す必要があります。代わって、そのオブジェクトはアプリケーション指定のサポートを提供し、他のオブジェクトを探します。
+レジストリは、一般的に、最初のリモート・オブジェクトの位置を指定します。そこで、アプリケーションはメソッドを呼び出す必要があります。かわって、そのオブジェクトはアプリケーション指定のサポートを提供し、他のオブジェクトを探します。
 .LP
 .LP
-\f2java.rmi.registry.LocateRegistry\fP クラスのメソッドは、ローカルホスト、またはローカルホストとポートで動作するレジストリを取得するために使用されます。
+\f2java.rmi.registry.LocateRegistry\fPクラスのメソッドは、ローカル・ホスト、またはローカル・ホストとポートで動作するレジストリを取得するために使用されます。
 .LP
 .LP
-\f2java.rmi.Naming\fP クラスの URL ベースのメソッドは、レジストリで動作し、任意のホストおよびローカルホスト上のリモートオブジェクトの検索に使用されます。リモートオブジェクトに単純な (文字列) 名前をバインドしたり、新しい名前をリバインド (古いバインドにオーバーライド) します。またリモートオブジェクトをアンバインドしたり、レジストリにバインドされた URL を出力します。
+\f2java.rmi.Naming\fPクラスのURLベースのメソッドは、レジストリで動作し、任意のホストおよびローカル・ホスト上のリモート・オブジェクトの検索に使用されます。リモート・オブジェクトに単純な(文字列)名前をバインドしたり、新しい名前をリバインド(古いバインドにオーバーライド)します。またリモート・オブジェクトをアンバインドしたり、レジストリにバインドされたURLを出力します。
 .LP
 .SH "オプション"
 .LP
 .RS 3
 .TP 3
 \-J 
-\f2\-J\fP の後ろに続くオプションを \f2java\fP インタプリタに引き渡します。 \f2java\fP オプションと組み合わせて使います (\-J と java オプションの間にスペースは入れない)。 
+\f2\-J\fPの後ろに続くオプションを\f2java\fPインタプリタに引き渡します。\f2java\fPオプションと組み合せて使用します(\-Jとjavaオプションの間にスペースは入れない)。 
 .RE
 
 .LP
@@ -76,8 +76,8 @@ java(1)、
 .na
 \f2java.rmi.registry.LocateRegistry\fP @
 .fi
-http://java.sun.com/javase/6/docs/api/java/rmi/registry/LocateRegistry.html、および 
+http://download.oracle.com/javase/7/docs/api/java/rmi/registry/LocateRegistry.htmlおよび
 .na
 \f2java.rmi.Naming\fP @
 .fi
-http://java.sun.com/javase/6/docs/api/java/rmi/Naming.html  
+http://download.oracle.com/javase/7/docs/api/java/rmi/Naming.html  
