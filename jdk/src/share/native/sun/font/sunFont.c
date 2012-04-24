@@ -24,13 +24,12 @@
  */
 
 #include "stdlib.h"
-#include "malloc.h"
 #include "string.h"
 #include "gdefs.h"
 #include "jlong.h"
 #include "sunfontids.h"
 #include "fontscalerdefs.h"
-#include "sun_font_FontManager.h"
+#include "sun_font_SunFontManager.h"
 #include "sun_font_NullFontScaler.h"
 #include "sun_font_StrikeCache.h"
 

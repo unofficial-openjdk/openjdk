@@ -51,6 +51,7 @@ JAVA_JAVA_java = \
     java/lang/SuppressWarnings.java \
     java/lang/AbstractStringBuilder.java \
     java/lang/ClassLoader.java \
+    java/lang/ClassLoaderHelper.java \
     java/lang/AssertionStatusDirectives.java \
     java/lang/Enum.java \
     java/lang/StrictMath.java \
@@ -474,6 +475,7 @@ JAVA_JAVA_java = \
     sun/misc/MessageUtils.java \
     sun/misc/GC.java \
     sun/misc/Service.java \
+    sun/misc/JavaAWTAccess.java \
     sun/misc/JavaLangAccess.java \
     sun/misc/JavaIOAccess.java \
     sun/misc/JavaIOFileDescriptorAccess.java \

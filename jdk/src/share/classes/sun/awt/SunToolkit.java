@@ -35,6 +35,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.*;
 import java.awt.TrayIcon;
 import java.awt.SystemTray;
+import java.awt.event.InputEvent;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -578,7 +579,7 @@ public abstract class SunToolkit extends Toolkit
         postEvent(targetToAppContext(e.getSource()), pe);
     }
 
-    private static final Lock flushLock = new ReentrantLock();
+    protected static final Lock flushLock = new ReentrantLock();
     private static boolean isFlushingPendingEvents = false;
 
     /*
@@ -1115,6 +1116,23 @@ public abstract class SunToolkit extends Toolkit
             c = AWTAccessor.getComponentAccessor().getParent(c);
         }
         return c;
+    }
+
+    /**
+     * Returns key modifiers used by Swing to set up a focus accelerator key stroke.
+     */
+    public int getFocusAcceleratorKeyMask() {
+        return InputEvent.ALT_MASK;
+    }
+
+    /**
+     * Tests whether specified key modifiers mask can be used to enter a printable
+     * character. This is a default implementation of this method, which reflects
+     * the way things work on Windows: here, pressing ctrl + alt allows user to enter
+     * characters from the extended character set (like euro sign or math symbols)
+     */
+    public boolean isPrintableCharacterModifiersMask(int mods) {
+        return ((mods & InputEvent.ALT_MASK) == (mods & InputEvent.CTRL_MASK));
     }
 
     /**

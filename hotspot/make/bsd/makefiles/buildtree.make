@@ -58,6 +58,7 @@
 # needs to be set here since this Makefile doesn't include defs.make
 OS_VENDOR:=$(shell uname -s)
 
+-include $(SPEC)
 include $(GAMMADIR)/make/scm.make
 include $(GAMMADIR)/make/altsrc.make
 
@@ -68,7 +69,7 @@ QUIETLY$(MAKE_VERBOSE)	= @
 # For now, until the compiler is less wobbly:
 TESTFLAGS	= -Xbatch -showversion
 
-ifeq ($(ZERO_BUILD), true)
+ifeq ($(findstring true, $(JVM_VARIANT_ZERO) $(JVM_VARIANT_ZEROSHARK)), true)
   PLATFORM_FILE = $(shell dirname $(shell dirname $(shell pwd)))/platform_zero
 else
   ifdef USE_SUNCC
@@ -247,6 +248,8 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	    echo "HOTSPOT_EXTRA_SYSDEFS\$$(HOTSPOT_EXTRA_SYSDEFS) = $(HOTSPOT_EXTRA_SYSDEFS)" && \
 	    echo "SYSDEFS += \$$(HOTSPOT_EXTRA_SYSDEFS)"; \
 	echo; \
+	[ -n "$(SPEC)" ] && \
+	    echo "include $(SPEC)"; \
 	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(VARIANT).make"; \
 	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(COMPILER).make"; \
 	) > $@

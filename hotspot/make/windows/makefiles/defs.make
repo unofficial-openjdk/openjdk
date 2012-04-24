@@ -151,6 +151,19 @@ MAKE_ARGS += ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)
 MAKE_ARGS += RM="$(RM)"
 MAKE_ARGS += ZIPEXE=$(ZIPEXE)
 
+# On 32 bit windows we build server, client and kernel, on 64 bit just server.
+ifeq ($(JVM_VARIANTS),)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+    JVM_VARIANTS:=client,server,kernel
+    JVM_VARIANT_CLIENT:=true
+    JVM_VARIANT_SERVER:=true
+    JVM_VARIANT_KERNEL:=true
+  else
+    JVM_VARIANTS:=server
+    JVM_VARIANT_SERVER:=true
+  endif
+endif
+
 JDK_INCLUDE_SUBDIR=win32
 
 # Library suffix
@@ -221,18 +234,20 @@ EXPORT_SERVER_DIR = $(EXPORT_JRE_BIN_DIR)/server
 EXPORT_CLIENT_DIR = $(EXPORT_JRE_BIN_DIR)/client
 EXPORT_KERNEL_DIR = $(EXPORT_JRE_BIN_DIR)/kernel
 
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.$(LIBRARY_SUFFIX)
-ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-  ifeq ($(ZIP_DEBUGINFO_FILES),1)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.diz
-  else
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.pdb
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.map
+ifeq ($(JVM_VARIANT_SERVER),true)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.$(LIBRARY_SUFFIX)
+  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+    ifeq ($(ZIP_DEBUGINFO_FILES),1)
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.diz
+    else
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.pdb
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.map
+    endif
   endif
+  EXPORT_LIST += $(EXPORT_LIB_DIR)/jvm.lib
 endif
-EXPORT_LIST += $(EXPORT_LIB_DIR)/jvm.lib
-ifeq ($(ARCH_DATA_MODEL), 32)
+ifeq ($(JVM_VARIANT_CLIENT),true)
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.$(LIBRARY_SUFFIX)
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
@@ -243,7 +258,8 @@ ifeq ($(ARCH_DATA_MODEL), 32)
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.map
     endif
   endif
-  # kernel vm
+endif
+ifeq ($(JVM_VARIANT_KERNEL),true)
   EXPORT_LIST += $(EXPORT_KERNEL_DIR)/Xusage.txt
   EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.$(LIBRARY_SUFFIX)
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
@@ -255,6 +271,8 @@ ifeq ($(ARCH_DATA_MODEL), 32)
     endif
   endif
 endif
+
+EXPORT_LIST += $(EXPORT_JRE_LIB_DIR)/wb.jar
 
 ifeq ($(BUILD_WIN_SA), 1)
   EXPORT_LIST += $(EXPORT_JRE_BIN_DIR)/sawindbg.$(LIBRARY_SUFFIX)
@@ -269,4 +287,20 @@ ifeq ($(BUILD_WIN_SA), 1)
   EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar
   # Must pass this down to nmake.
   MAKE_ARGS += BUILD_WIN_SA=1
+endif
+
+# Propagate compiler and tools paths from configure to nmake. 
+# Need to make sure they contain \\ and not /.
+ifneq ($(SPEC),)
+  ifeq ($(USING_CYGWIN), true)
+    MAKE_ARGS += CXX="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(CXX)))"
+    MAKE_ARGS += LD="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(LD)))"
+    MAKE_ARGS += RC="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(RC)))"
+    MAKE_ARGS += MT="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(MT)))"
+  else
+    MAKE_ARGS += CXX="$(subst /,\\,$(CXX))"
+    MAKE_ARGS += LD="$(subst /,\\,$(LD))"
+    MAKE_ARGS += RC="$(subst /,\\,$(RC))"
+    MAKE_ARGS += MT="$(subst /,\\,$(MT))"
+  endif
 endif

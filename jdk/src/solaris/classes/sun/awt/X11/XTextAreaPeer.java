@@ -105,7 +105,6 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         this.target = target;
 
         //ComponentAccessor.enableEvents(target,AWTEvent.MOUSE_WHEEL_EVENT_MASK);
-        target.enableInputMethods(true);
 
         firstChangeSkipped = false;
         String text = ((TextArea)target).getText();
@@ -113,7 +112,6 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         jtext.setWrapStyleWord(true);
         jtext.getDocument().addDocumentListener(jtext);
         XToolkit.specialPeerMap.put(jtext,this);
-        jtext.enableInputMethods(true);
         textPane = new AWTTextPane(jtext,this, target.getParent());
 
         setBounds(x, y, width, height, SET_BOUNDS);
@@ -170,6 +168,8 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
     public void dispose() {
         XToolkit.specialPeerMap.remove(jtext);
+        // visible caret has a timer thread which must be stopped
+        jtext.getCaret().setVisible(false);
         jtext.removeNotify();
         textPane.removeNotify();
         super.dispose();
