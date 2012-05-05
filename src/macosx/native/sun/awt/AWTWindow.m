@@ -78,6 +78,7 @@ static JNF_CLASS_CACHE(jc_CPlatformWindow, "sun/lwawt/macosx/CPlatformWindow");
 @synthesize javaMinSize;
 @synthesize javaMaxSize;
 @synthesize styleBits;
+@synthesize isEnabled;
 
 - (void) updateMinMaxSize:(BOOL)resizable {
     if (resizable) {
@@ -195,6 +196,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
     if (self == nil) return nil; // no hope
 
+    self.isEnabled = YES;
     self.javaPlatformWindow = platformWindow;
     self.styleBits = bits;
     [self setPropertiesForStyleBits:styleBits mask:MASK(_METHOD_PROP_BITMASK)];
@@ -240,16 +242,15 @@ AWT_ASSERT_APPKIT_THREAD;
     [super dealloc];
 }
 
-
 // NSWindow overrides
 - (BOOL) canBecomeKeyWindow {
 AWT_ASSERT_APPKIT_THREAD;
-    return IS(self.styleBits, SHOULD_BECOME_KEY);
+    return self.isEnabled && IS(self.styleBits, SHOULD_BECOME_KEY);
 }
 
 - (BOOL) canBecomeMainWindow {
 AWT_ASSERT_APPKIT_THREAD;
-    return IS(self.styleBits, SHOULD_BECOME_MAIN);
+    return self.isEnabled && IS(self.styleBits, SHOULD_BECOME_MAIN);
 }
 
 - (BOOL) worksWhenModal {
@@ -576,6 +577,27 @@ AWT_ASSERT_APPKIT_THREAD;
 
     size->width = MAX(size->width, minWidth);
     size->height = MAX(size->height, minHeight);
+}
+
+- (void) setEnabled: (BOOL)flag {
+    self.isEnabled = flag;
+
+    if (IS(self.styleBits, CLOSEABLE)) {
+        [[self standardWindowButton:NSWindowCloseButton] setEnabled: flag];
+    }
+
+    if (IS(self.styleBits, MINIMIZABLE)) {        
+        [[self standardWindowButton:NSWindowMiniaturizeButton] setEnabled: flag];
+    }
+
+    if (IS(self.styleBits, ZOOMABLE)) {
+        [[self standardWindowButton:NSWindowZoomButton] setEnabled: flag];
+    }
+
+    if (IS(self.styleBits, RESIZABLE)) {
+        [self updateMinMaxSize:flag];
+        [self setShowsResizeIndicator:flag];
+    }
 }
 
 @end // AWTWindow
@@ -1050,3 +1072,17 @@ JNF_COCOA_EXIT(env);
 
     return underMouse;
 }
+
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSetEnabled
+(JNIEnv *env, jclass clazz, jlong windowPtr, jboolean isEnabled)
+{
+JNF_COCOA_ENTER(env);
+
+    AWTWindow *window = OBJC(windowPtr);
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+        [window setEnabled: isEnabled];
+    }];
+
+JNF_COCOA_EXIT(env);
+}
+
