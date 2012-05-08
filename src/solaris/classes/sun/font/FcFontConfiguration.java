@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
@@ -387,7 +388,7 @@ public class FcFontConfiguration extends FontConfiguration {
             File fcInfoFile = getFcInfoFile();
             File dir = fcInfoFile.getParentFile();
             dir.mkdirs();
-            File tempFile = File.createTempFile("fcinfo", null, dir);
+            File tempFile = Files.createTempFile(dir.toPath(), "fcinfo", null).toFile();
             FileOutputStream fos = new FileOutputStream(tempFile);
             props.store(fos,
                       "JDK Font Configuration Generated File: *Do Not Edit*");

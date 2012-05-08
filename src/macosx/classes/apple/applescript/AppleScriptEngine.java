@@ -26,6 +26,7 @@
 package apple.applescript;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -297,7 +298,7 @@ public class AppleScriptEngine implements ScriptEngine {
         File tmpfile;
         FileWriter tmpwrite;
         try {
-            tmpfile = File.createTempFile("AppleScriptEngine.", ".scpt");
+            tmpfile = Files.createTempFile("AppleScriptEngine.", ".scpt").toFile();
             tmpwrite = new FileWriter(tmpfile);
 
             // read in our input and write directly to tmpfile
