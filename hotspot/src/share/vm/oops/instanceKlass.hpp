@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,8 +56,6 @@
 //    [methods                    ]
 //    [local interfaces           ]
 //    [transitive interfaces      ]
-//    [number of implementors     ]
-//    [implementors               ] klassOop[2]
 //    [fields                     ]
 //    [constants                  ]
 //    [class loader               ]
@@ -77,9 +75,10 @@
 //    [oop map cache (stack maps) ]
 //    [EMBEDDED Java vtable             ] size in words = vtable_len
 //    [EMBEDDED nonstatic oop-map blocks] size in words = nonstatic_oop_map_size
-//
-//    The embedded nonstatic oop-map blocks are short pairs (offset, length) indicating
-//    where oops are located in instances of this klass.
+//      The embedded nonstatic oop-map blocks are short pairs (offset, length)
+//      indicating where oops are located in instances of this klass.
+//    [EMBEDDED implementor of the interface] only exist for interface
+//    [EMBEDDED host klass        ] only exist for an anonymous class (JSR 292 enabled)
 
 
 // forward declaration for class -- see below for definition
@@ -153,10 +152,6 @@ class instanceKlass: public Klass {
   oop* oop_block_beg() const { return adr_array_klasses(); }
   oop* oop_block_end() const { return adr_methods_default_annotations() + 1; }
 
-  enum {
-    implementors_limit = 2              // how many implems can we track?
-  };
-
  protected:
   //
   // The oop block.  See comment in klass.hpp before making changes.
@@ -182,10 +177,6 @@ class instanceKlass: public Klass {
   oop             _class_loader;
   // Protection domain.
   oop             _protection_domain;
-  // Host class, which grants its access privileges to this class also.
-  // This is only non-null for an anonymous class (JSR 292 enabled).
-  // The host class is either named, or a previously loaded anonymous class.
-  klassOop        _host_klass;
   // Class signers.
   objArrayOop     _signers;
   // The InnerClasses attribute and EnclosingMethod attribute. The
@@ -200,8 +191,6 @@ class instanceKlass: public Klass {
   // and EnclosingMethod attributes the _inner_classes array length is
   // number_of_inner_classes * 4 + enclosing_method_attribute_size.
   typeArrayOop    _inner_classes;
-  // Implementors of this interface (not valid if it overflows)
-  klassOop        _implementors[implementors_limit];
   // Annotations for this class, or null if none.
   typeArrayOop    _class_annotations;
   // Annotation objects (byte arrays) for fields, or null if no annotations.
@@ -242,9 +231,13 @@ class instanceKlass: public Klass {
   int             _nonstatic_oop_map_size;// size in words of nonstatic oop map blocks
 
   bool            _is_marked_dependent;  // used for marking during flushing and deoptimization
-  bool            _rewritten;            // methods rewritten.
-  bool            _has_nonstatic_fields; // for sizing with UseCompressedOops
-  bool            _should_verify_class;  // allow caching of preverification
+  enum {
+    _misc_rewritten            = 1 << 0, // methods rewritten.
+    _misc_has_nonstatic_fields = 1 << 1, // for sizing with UseCompressedOops
+    _misc_should_verify_class  = 1 << 2, // allow caching of preverification
+    _misc_is_anonymous         = 1 << 3  // has embedded _inner_classes field
+  };
+  u2              _misc_flags;
   u2              _minor_version;        // minor version number of class file
   u2              _major_version;        // major version number of class file
   Thread*         _init_thread;          // Pointer to current thread doing initialization (to handle recusive initialization)
@@ -257,7 +250,6 @@ class instanceKlass: public Klass {
   nmethodBucket*  _dependencies;         // list of dependent nmethods
   nmethod*        _osr_nmethods_head;    // Head of list of on-stack replacement nmethods for this class
   BreakpointInfo* _breakpoints;          // bpt lists, managed by methodOop
-  int             _nof_implementors;     // No of implementors of this interface (zero if not an interface)
   // Array of interesting part(s) of the previous version(s) of this
   // instanceKlass. See PreviousVersionWalker below.
   GrowableArray<PreviousVersionNode *>* _previous_versions;
@@ -278,13 +270,36 @@ class instanceKlass: public Klass {
   // embedded Java itables follows here
   // embedded static fields follows here
   // embedded nonstatic oop-map blocks follows here
+  // embedded implementor of this interface follows here
+  //   The embedded implementor only exists if the current klass is an
+  //   iterface. The possible values of the implementor fall into following
+  //   three cases:
+  //     NULL: no implementor.
+  //     A klassOop that's not itself: one implementor.
+  //     Itsef: more than one implementors.
+  // embedded host klass follows here
+  //   The embedded host klass only exists in an anonymous class for
+  //   dynamic language support (JSR 292 enabled). The host class grants
+  //   its access privileges to this class also. The host class is either
+  //   named, or a previously loaded anonymous class. A non-anonymous class
+  //   or an anonymous class loaded through normal classloading does not
+  //   have this embedded field.
+  //
 
   friend class instanceKlassKlass;
   friend class SystemDictionary;
 
  public:
-  bool has_nonstatic_fields() const        { return _has_nonstatic_fields; }
-  void set_has_nonstatic_fields(bool b)    { _has_nonstatic_fields = b; }
+  bool has_nonstatic_fields() const        {
+    return (_misc_flags & _misc_has_nonstatic_fields) != 0;
+  }
+  void set_has_nonstatic_fields(bool b)    {
+    if (b) {
+      _misc_flags |= _misc_has_nonstatic_fields;
+    } else {
+      _misc_flags &= ~_misc_has_nonstatic_fields;
+    }
+  }
 
   // field sizes
   int nonstatic_field_size() const         { return _nonstatic_field_size; }
@@ -398,11 +413,19 @@ class instanceKlass: public Klass {
   bool is_in_error_state() const           { return _init_state == initialization_error; }
   bool is_reentrant_initialization(Thread *thread)  { return thread == _init_thread; }
   ClassState  init_state()                 { return (ClassState)_init_state; }
-  bool is_rewritten() const                { return _rewritten; }
+  bool is_rewritten() const                { return (_misc_flags & _misc_rewritten) != 0; }
 
   // defineClass specified verification
-  bool should_verify_class() const         { return _should_verify_class; }
-  void set_should_verify_class(bool value) { _should_verify_class = value; }
+  bool should_verify_class() const         {
+    return (_misc_flags & _misc_should_verify_class) != 0;
+  }
+  void set_should_verify_class(bool value) {
+    if (value) {
+      _misc_flags |= _misc_should_verify_class;
+    } else {
+      _misc_flags &= ~_misc_should_verify_class;
+    }
+  }
 
   // marking
   bool is_marked_dependent() const         { return _is_marked_dependent; }
@@ -471,9 +494,30 @@ class instanceKlass: public Klass {
   void set_protection_domain(oop pd)       { oop_store((oop*) &_protection_domain, pd); }
 
   // host class
-  oop host_klass() const                   { return _host_klass; }
-  void set_host_klass(oop host)            { oop_store((oop*) &_host_klass, host); }
-  bool is_anonymous() const                { return _host_klass != NULL; }
+  oop host_klass() const                   {
+    oop* hk = adr_host_klass();
+    if (hk == NULL) {
+      return NULL;
+    } else {
+      return *hk;
+    }
+  }
+  void set_host_klass(oop host)            {
+    assert(is_anonymous(), "not anonymous");
+    oop* addr = adr_host_klass();
+    assert(addr != NULL, "no reversed space");
+    oop_store(addr, host);
+  }
+  bool is_anonymous() const                {
+    return (_misc_flags & _misc_is_anonymous) != 0;
+  }
+  void set_is_anonymous(bool value)        {
+    if (value) {
+      _misc_flags |= _misc_is_anonymous;
+    } else {
+      _misc_flags &= ~_misc_is_anonymous;
+    }
+  }
 
   // signers
   objArrayOop signers() const              { return _signers; }
@@ -644,19 +688,40 @@ class instanceKlass: public Klass {
 
   // support for stub routines
   static ByteSize init_state_offset()  { return in_ByteSize(sizeof(klassOopDesc) + offset_of(instanceKlass, _init_state)); }
+  TRACE_DEFINE_OFFSET;
   static ByteSize init_thread_offset() { return in_ByteSize(sizeof(klassOopDesc) + offset_of(instanceKlass, _init_thread)); }
 
   // subclass/subinterface checks
   bool implements_interface(klassOop k) const;
 
-  // Access to implementors of an interface. We only store the count
-  // of implementors, and in case, there are only a few
-  // implementors, we store them in a short list.
-  // This accessor returns NULL if we walk off the end of the list.
-  klassOop implementor(int i) const {
-    return (i < implementors_limit)? _implementors[i]: (klassOop) NULL;
+  // Access to the implementor of an interface.
+  klassOop implementor() const
+  {
+    klassOop* k = (klassOop*)adr_implementor();
+    if (k == NULL) {
+      return NULL;
+    } else {
+      return *k;
+    }
   }
-  int  nof_implementors() const       { return _nof_implementors; }
+
+  void set_implementor(klassOop k) {
+    assert(is_interface(), "not interface");
+    oop* addr = adr_implementor();
+    oop_store_without_check(addr, k);
+  }
+
+  int  nof_implementors() const       {
+    klassOop k = implementor();
+    if (k == NULL) {
+      return 0;
+    } else if (k != this->as_klassOop()) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+
   void add_implementor(klassOop k);  // k is a new class that implements this interface
   void init_implementor();           // initialize
 
@@ -693,7 +758,17 @@ class instanceKlass: public Klass {
 
   // Sizing (in words)
   static int header_size()            { return align_object_offset(oopDesc::header_size() + sizeof(instanceKlass)/HeapWordSize); }
-  int object_size() const             { return object_size(align_object_offset(vtable_length()) + align_object_offset(itable_length()) + nonstatic_oop_map_size()); }
+
+  int object_size() const
+  {
+    return object_size(align_object_offset(vtable_length()) +
+                       align_object_offset(itable_length()) +
+                       ((is_interface() || is_anonymous()) ?
+                         align_object_offset(nonstatic_oop_map_size()) :
+                         nonstatic_oop_map_size()) +
+                       (is_interface() ? (int)sizeof(klassOop)/HeapWordSize : 0) +
+                       (is_anonymous() ? (int)sizeof(klassOop)/HeapWordSize : 0));
+  }
   static int vtable_start_offset()    { return header_size(); }
   static int vtable_length_offset()   { return oopDesc::header_size() + offset_of(instanceKlass, _vtable_len) / HeapWordSize; }
   static int object_size(int extra)   { return align_object_size(header_size() + extra); }
@@ -708,6 +783,29 @@ class instanceKlass: public Klass {
 
   OopMapBlock* start_of_nonstatic_oop_maps() const {
     return (OopMapBlock*)(start_of_itable() + align_object_offset(itable_length()));
+  }
+
+  oop* adr_implementor() const {
+    if (is_interface()) {
+      return (oop*)(start_of_nonstatic_oop_maps() +
+                    nonstatic_oop_map_count());
+    } else {
+      return NULL;
+    }
+  };
+
+  oop* adr_host_klass() const {
+    if (is_anonymous()) {
+      oop* adr_impl = adr_implementor();
+      if (adr_impl != NULL) {
+        return adr_impl + 1;
+      } else {
+        return (oop*)(start_of_nonstatic_oop_maps() +
+                      nonstatic_oop_map_count());
+      }
+    } else {
+      return NULL;
+    }
   }
 
   // Allocation profiling support
@@ -783,7 +881,7 @@ private:
 #else
   void set_init_state(ClassState state) { _init_state = (u1)state; }
 #endif
-  void set_rewritten()                  { _rewritten = true; }
+  void set_rewritten()                  { _misc_flags |= _misc_rewritten; }
   void set_init_thread(Thread *thread)  { _init_thread = thread; }
 
   u2 idnum_allocated_count() const      { return _idnum_allocated_count; }
@@ -816,10 +914,8 @@ private:
   oop* adr_constants() const         { return (oop*)&this->_constants;}
   oop* adr_class_loader() const      { return (oop*)&this->_class_loader;}
   oop* adr_protection_domain() const { return (oop*)&this->_protection_domain;}
-  oop* adr_host_klass() const        { return (oop*)&this->_host_klass;}
   oop* adr_signers() const           { return (oop*)&this->_signers;}
   oop* adr_inner_classes() const     { return (oop*)&this->_inner_classes;}
-  oop* adr_implementors() const      { return (oop*)&this->_implementors[0];}
   oop* adr_methods_jmethod_ids() const             { return (oop*)&this->_methods_jmethod_ids;}
   oop* adr_methods_cached_itable_indices() const   { return (oop*)&this->_methods_cached_itable_indices;}
   oop* adr_class_annotations() const   { return (oop*)&this->_class_annotations;}

@@ -3354,7 +3354,9 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     klassOop ik = oopFactory::new_instanceKlass(name, vtable_size, itable_size,
                                                 static_field_size,
                                                 total_oop_map_count,
-                                                rt, CHECK_(nullHandle));
+                                                access_flags,
+                                                rt, host_klass,
+                                                CHECK_(nullHandle));
     instanceKlassHandle this_klass (THREAD, ik);
 
     assert(this_klass->static_field_size() == static_field_size, "sanity");
@@ -3362,7 +3364,6 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
            "sanity");
 
     // Fill in information already parsed
-    this_klass->set_access_flags(access_flags);
     this_klass->set_should_verify_class(verify);
     jint lh = Klass::instance_layout_helper(instance_size, false);
     this_klass->set_layout_helper(lh);

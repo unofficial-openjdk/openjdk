@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,10 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
 #include "gc_implementation/shared/gSpaceCounters.hpp"
 #include "gc_implementation/shared/gcStats.hpp"
 #include "gc_implementation/shared/generationCounters.hpp"
+#include "memory/freeBlockDictionary.hpp"
 #include "memory/generation.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/virtualspace.hpp"
@@ -988,7 +988,7 @@ class CMSCollector: public CHeapObj {
   CMSGCAdaptivePolicyCounters* gc_adaptive_policy_counters();
 
   // debugging
-  void verify(bool);
+  void verify();
   bool verify_after_remark();
   void verify_ok_to_terminate() const PRODUCT_RETURN;
   void verify_work_stacks_empty() const PRODUCT_RETURN;
@@ -1106,7 +1106,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   ConcurrentMarkSweepGeneration(ReservedSpace rs, size_t initial_byte_size,
                                 int level, CardTableRS* ct,
                                 bool use_adaptive_freelists,
-                                FreeBlockDictionary::DictionaryChoice);
+                                FreeBlockDictionary<FreeChunk>::DictionaryChoice);
 
   // Accessors
   CMSCollector* collector() const { return _collector; }
@@ -1279,7 +1279,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
 
   // Debugging
   void prepare_for_verify();
-  void verify(bool allow_dirty);
+  void verify();
   void print_statistics()               PRODUCT_RETURN;
 
   // Performance Counters support
@@ -1328,7 +1328,7 @@ class ASConcurrentMarkSweepGeneration : public ConcurrentMarkSweepGeneration {
   ASConcurrentMarkSweepGeneration(ReservedSpace rs, size_t initial_byte_size,
                                   int level, CardTableRS* ct,
                                   bool use_adaptive_freelists,
-                                  FreeBlockDictionary::DictionaryChoice
+                                  FreeBlockDictionary<FreeChunk>::DictionaryChoice
                                     dictionaryChoice) :
     ConcurrentMarkSweepGeneration(rs, initial_byte_size, level, ct,
       use_adaptive_freelists, dictionaryChoice) {}
