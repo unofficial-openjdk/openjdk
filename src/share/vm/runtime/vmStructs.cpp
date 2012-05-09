@@ -44,7 +44,6 @@
 #include "code/vmreg.hpp"
 #include "compiler/oopMap.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
 #include "gc_implementation/shared/immutableSpace.hpp"
 #include "gc_implementation/shared/markSweep.hpp"
 #include "gc_implementation/shared/mutableSpace.hpp"
@@ -55,6 +54,7 @@
 #include "memory/cardTableRS.hpp"
 #include "memory/compactPermGen.hpp"
 #include "memory/defNewGeneration.hpp"
+#include "memory/freeBlockDictionary.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/generation.hpp"
 #include "memory/generationSpec.hpp"
@@ -292,8 +292,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(instanceKlass,               _method_ordering,                              typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _local_interfaces,                             objArrayOop)                           \
   nonstatic_field(instanceKlass,               _transitive_interfaces,                        objArrayOop)                           \
-  nonstatic_field(instanceKlass,               _nof_implementors,                             int)                                   \
-  nonstatic_field(instanceKlass,               _implementors[0],                              klassOop)                              \
   nonstatic_field(instanceKlass,               _fields,                                       typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _java_fields_count,                            u2)                                    \
   nonstatic_field(instanceKlass,               _constants,                                    constantPoolOop)                       \
@@ -2343,7 +2341,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* instanceKlass enum                */                                 \
   /*************************************/                                 \
                                                                           \
-  declare_constant(instanceKlass::implementors_limit)                     \
                                                                           \
   /*************************************/                                 \
   /* FieldInfo FieldOffset enum        */                                 \
