@@ -104,7 +104,7 @@ final class LWTextFieldPeer
     @Override
     public void actionPerformed(final ActionEvent e) {
         postEvent(new ActionEvent(getTarget(), ActionEvent.ACTION_PERFORMED,
-                                  getText(), e.getWhen(), e.getModifiers()));
+                getText(), e.getWhen(), e.getModifiers()));
     }
 
     /**
@@ -128,6 +128,15 @@ final class LWTextFieldPeer
         // class shouldn't be emulated by a synthetic accessor method.
         JPasswordFieldDelegate() {
             super();
+        }
+
+        @Override
+        public void replaceSelection(String content) {
+            getDocument().removeDocumentListener(LWTextFieldPeer.this);
+            super.replaceSelection(content);
+            // post only one text event in this case
+            postTextEvent();
+            getDocument().addDocumentListener(LWTextFieldPeer.this);
         }
 
         @Override
