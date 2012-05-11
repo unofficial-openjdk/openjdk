@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,8 @@ ifeq ($(PLATFORM), linux)
   endif
 endif
 
+endif # JAVASE_EMBEDDED
+ifeq ($(ZERO_BUILD), )
 # NIO Platform specific source file location
 ifdef CROSS_COMPILE_ARCH
   NIO_PLATFORM_CLASSES_ROOT_DIR = $(CLOSED_PLATFORM_SRC)/classes/
@@ -71,6 +73,5 @@ endif
 ifeq ($(CROSS_COMPILE_ARCH), arm)
   EXTRA_LIBS += $(EXT_LIBS_PATH)/sflt_glibc_jdk.a -Xlinker -z -Xlinker muldefs
 endif 
-
-endif # JAVASE_EMBEDDED
+endif
 
