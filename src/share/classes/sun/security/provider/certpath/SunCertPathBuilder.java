@@ -319,7 +319,9 @@ public final class SunCertPathBuilder extends CertPathBuilderSpi {
             }
 
             // break out of loop if search is successful
-            break;
+            if (pathCompleted) {
+                break;
+            }
         }
 
         if (debug != null) {
