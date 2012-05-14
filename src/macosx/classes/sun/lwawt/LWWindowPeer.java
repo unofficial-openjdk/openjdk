@@ -427,6 +427,8 @@ public class LWWindowPeer
                 this.blocker = null;
             }
         }
+
+        platformWindow.setModalBlocked(blocked);
     }
 
     @Override
