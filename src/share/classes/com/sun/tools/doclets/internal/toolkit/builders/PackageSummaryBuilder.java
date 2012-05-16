@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,13 @@
 
 package com.sun.tools.doclets.internal.toolkit.builders;
 
-import java.io.*;
 import com.sun.javadoc.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Builds the summary for a given package.
@@ -173,6 +176,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.interfaces()
                         : configuration.classDocCatalog.interfaces(
                                 Util.getPackageName(packageDoc));
+        interfaces = filterOutPrivateClasses(interfaces);
         if (interfaces.length > 0) {
             packageWriter.addClassesSummary(
                     interfaces,
@@ -202,6 +206,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.ordinaryClasses()
                         : configuration.classDocCatalog.ordinaryClasses(
                                 Util.getPackageName(packageDoc));
+        classes = filterOutPrivateClasses(classes);
         if (classes.length > 0) {
             packageWriter.addClassesSummary(
                     classes,
@@ -231,6 +236,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.enums()
                         : configuration.classDocCatalog.enums(
                                 Util.getPackageName(packageDoc));
+        enums = filterOutPrivateClasses(enums);
         if (enums.length > 0) {
             packageWriter.addClassesSummary(
                     enums,
@@ -260,6 +266,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.exceptions()
                         : configuration.classDocCatalog.exceptions(
                                 Util.getPackageName(packageDoc));
+        exceptions = filterOutPrivateClasses(exceptions);
         if (exceptions.length > 0) {
             packageWriter.addClassesSummary(
                     exceptions,
@@ -289,6 +296,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.errors()
                         : configuration.classDocCatalog.errors(
                                 Util.getPackageName(packageDoc));
+        errors = filterOutPrivateClasses(errors);
         if (errors.length > 0) {
             packageWriter.addClassesSummary(
                     errors,
@@ -318,6 +326,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
                         ? packageDoc.annotationTypes()
                         : configuration.classDocCatalog.annotationTypes(
                                 Util.getPackageName(packageDoc));
+        annotationTypes = filterOutPrivateClasses(annotationTypes);
         if (annotationTypes.length > 0) {
             packageWriter.addClassesSummary(
                     annotationTypes,
@@ -353,4 +362,25 @@ public class PackageSummaryBuilder extends AbstractBuilder {
         }
         packageWriter.addPackageTags(packageContentTree);
     }
+
+    static public ClassDoc[] filterOutPrivateClasses(final ClassDoc[] classes) {
+        if (!Configuration.getJavafxJavadoc()) {
+            return classes;
+        }
+        final List<ClassDoc> filteredOutClasses =
+                new ArrayList<ClassDoc>(classes.length);
+        for (ClassDoc classDoc : classes) {
+            if (classDoc.isPrivate() || classDoc.isPackagePrivate()) {
+                continue;
+            }
+            Tag[] aspTags = classDoc.tags("treatAsPrivate");
+            if (aspTags != null && aspTags.length > 0) {
+                continue;
+            }
+            filteredOutClasses.add(classDoc);
+        }
+
+        return filteredOutClasses.toArray(new ClassDoc[0]);
+    }
+
 }

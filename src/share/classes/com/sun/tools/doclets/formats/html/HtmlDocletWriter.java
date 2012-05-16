@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -703,7 +703,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             }
             HtmlTree navList = new HtmlTree(HtmlTag.UL);
             navList.addStyle(HtmlStyle.navList);
-            navList.addAttr(HtmlAttr.TITLE, "Navigation");
+            navList.addAttr(HtmlAttr.TITLE,
+                            configuration.getText("doclet.Navigation"));
             if (configuration.createoverview) {
                 navList.addContent(getNavLinkContents());
             }
@@ -1986,7 +1987,24 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public void printDocLink(int context, ClassDoc classDoc, MemberDoc doc,
             String label, boolean strong) {
-        print(getDocLink(context, classDoc, doc, label, strong));
+        printDocLink(context, classDoc, doc, label, strong, false);
+    }
+
+    /**
+     * Print the link for the given member.
+     *
+     * @param context the id of the context where the link will be printed.
+     * @param classDoc the classDoc that we should link to.  This is not
+     *                 necessarily equal to doc.containingClass().  We may be
+     *                 inheriting comments.
+     * @param doc the member being linked to.
+     * @param label the label for the link.
+     * @param strong true if the link should be strong.
+     * @param isProperty true if the doc parameter is a JavaFX property.
+     */
+    public void printDocLink(int context, ClassDoc classDoc, MemberDoc doc,
+            String label, boolean strong, boolean isProperty) {
+        print(getDocLink(context, classDoc, doc, label, strong, isProperty));
     }
 
     /**
@@ -2017,13 +2035,31 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      */
     public String getDocLink(int context, ClassDoc classDoc, MemberDoc doc,
         String label, boolean strong) {
+        return getDocLink(context, classDoc, doc, label, strong, false);
+    }
+
+        /**
+     * Return the link for the given member.
+     *
+     * @param context the id of the context where the link will be printed.
+     * @param classDoc the classDoc that we should link to.  This is not
+     *                 necessarily equal to doc.containingClass().  We may be
+     *                 inheriting comments.
+     * @param doc the member being linked to.
+     * @param label the label for the link.
+     * @param strong true if the link should be strong.
+     * @param isProperty true if the doc parameter is a JavaFX property.
+     * @return the link for the given member.
+     */
+    public String getDocLink(int context, ClassDoc classDoc, MemberDoc doc,
+        String label, boolean strong, boolean isProperty) {
         if (! (doc.isIncluded() ||
             Util.isLinkable(classDoc, configuration()))) {
             return label;
         } else if (doc instanceof ExecutableMemberDoc) {
             ExecutableMemberDoc emd = (ExecutableMemberDoc)doc;
             return getLink(new LinkInfoImpl(context, classDoc,
-                getAnchor(emd), label, strong));
+                getAnchor(emd, isProperty), label, strong));
         } else if (doc instanceof MemberDoc) {
             return getLink(new LinkInfoImpl(context, classDoc,
                 doc.name(), label, strong));
@@ -2065,6 +2101,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     }
 
     public String getAnchor(ExecutableMemberDoc emd) {
+        return getAnchor(emd, false);
+    }
+
+    public String getAnchor(ExecutableMemberDoc emd, boolean isProperty) {
+        if (isProperty) {
+            return emd.name();
+        }
         StringBuilder signature = new StringBuilder(emd.signature());
         StringBuilder signatureParsed = new StringBuilder();
         int counter = 0;
@@ -2177,6 +2220,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                     refMemName += ((ExecutableMemberDoc)refMem).signature();
                 }
             }
+            if (Configuration.getJavafxJavadoc()) {
+                int index;
+                if ((index = refMemName.indexOf("<")) != -1 ) {
+                    refMemName = refMemName.substring(0, index) + ")";
+                }
+            }
+
             text = (isplaintext) ?
                 refMemName : getCode() + Util.escapeHtmlChars(refMemName) + getCodeEnd();
 

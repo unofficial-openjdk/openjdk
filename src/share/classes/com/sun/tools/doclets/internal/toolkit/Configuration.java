@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -221,6 +221,19 @@ public abstract class Configuration {
     public final Extern extern = new Extern(this);
 
     /**
+     * Returns true if the user wants to generate JavaFX documentation.
+     */
+    public static boolean getJavafxJavadoc() {
+        return Boolean.getBoolean("javafx.javadoc");
+    }
+
+    /**
+     * Location of doclet properties file.
+     */
+    public static final String DOCLETS_RESOURCE
+            = "com.sun.tools.doclets.internal.toolkit.resources.doclets";
+
+    /**
      * Return the build date for the doclet.
      */
     public abstract String getDocletSpecificBuildDate();
@@ -253,8 +266,7 @@ public abstract class Configuration {
      */
     public Configuration() {
         message =
-            new MessageRetriever(this,
-            "com.sun.tools.doclets.internal.toolkit.resources.doclets");
+            new MessageRetriever(this, DOCLETS_RESOURCE);
         excludedDocFileDirs = new HashSet<String>();
         excludedQualifiers = new HashSet<String>();
     }

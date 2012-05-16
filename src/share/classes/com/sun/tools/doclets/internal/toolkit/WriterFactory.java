@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,6 +143,16 @@ public interface WriterFactory {
      * writer is not supported by the doclet.
      */
     public abstract FieldWriter getFieldWriter(ClassWriter classWriter)
+            throws Exception;
+
+    /**
+     * Return the property writer for a given class.
+     *
+     * @param classWriter the writer for the class being documented.
+     * @return the property writer for the give class.  Return null if this
+     * writer is not supported by the doclet.
+     */
+    public abstract PropertyWriter getPropertyWriter(ClassWriter classWriter)
             throws Exception;
 
     /**
