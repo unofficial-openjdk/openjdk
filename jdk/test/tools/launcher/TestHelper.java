@@ -54,6 +54,7 @@ public class TestHelper {
     static final File TEST_SOURCES_DIR;
 
     static final String JAVAHOME = System.getProperty("java.home");
+    static final String JAVA_BIN;
     static final boolean isSDK = JAVAHOME.endsWith("jre");
     static final String javaCmd;
     static final String javawCmd;
@@ -64,6 +65,8 @@ public class TestHelper {
     static final boolean debug = Boolean.getBoolean("TestHelper.Debug");
     static final boolean isWindows =
             System.getProperty("os.name", "unknown").startsWith("Windows");
+    static final boolean isMacOSX =
+            System.getProperty("os.name", "unknown").startsWith("Mac");
     static final boolean is64Bit =
             System.getProperty("sun.arch.data.model").equals("64");
     static final boolean is32Bit =
@@ -81,6 +84,7 @@ public class TestHelper {
     static final String JAVA_FILE_EXT  = ".java";
     static final String CLASS_FILE_EXT = ".class";
     static final String JAR_FILE_EXT   = ".jar";
+    static final String EXE_FILE_EXT   = ".exe";
     static final String JLDEBUG_KEY     = "_JAVA_LAUNCHER_DEBUG";
     static final String EXPECTED_MARKER = "TRACER_MARKER:About to EXEC";
 
@@ -108,6 +112,7 @@ public class TestHelper {
         compiler = ToolProvider.getSystemJavaCompiler();
         File binDir = (isSDK) ? new File((new File(JAVAHOME)).getParentFile(), "bin")
             : new File(JAVAHOME, "bin");
+        JAVA_BIN = binDir.getAbsolutePath();
         File javaCmdFile = (isWindows)
                 ? new File(binDir, "java.exe")
                 : new File(binDir, "java");

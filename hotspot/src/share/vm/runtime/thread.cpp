@@ -247,6 +247,10 @@ Thread::Thread() {
   omInUseList = NULL ;
   omInUseCount = 0 ;
 
+#ifdef ASSERT
+  _visited_for_critical_count = false;
+#endif
+
   _SR_lock = new Monitor(Mutex::suspend_resume, "SR_lock", true);
   _suspend_flags = 0;
 
@@ -3464,12 +3468,12 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     create_vm_init_libraries();
   }
 
+  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
+  JvmtiExport::post_vm_initialized();
+
   if (!TRACE_START()) {
     vm_exit_during_initialization(Handle(THREAD, PENDING_EXCEPTION));
   }
-
-  // Notify JVMTI agents that VM initialization is complete - nop if no agents.
-  JvmtiExport::post_vm_initialized();
 
   if (CleanChunkPoolAsync) {
     Chunk::start_chunk_pool_cleaner_task();

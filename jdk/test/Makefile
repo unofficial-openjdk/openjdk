@@ -79,6 +79,15 @@ ifeq ($(UNAME_S), Linux)
   endif
   OS_VERSION := $(shell $(UNAME) -r)
 endif
+ifeq ($(UNAME_S), Darwin)
+  OS_NAME     = macosx
+  OS_ARCH    := $(shell $(UNAME) -m)
+  # Check for unknown arch, try uname -p if uname -m says unknown
+  ifeq ($(OS_ARCH),unknown)
+    OS_ARCH    := $(shell $(UNAME) -p)
+  endif
+  OS_VERSION := $(shell $(UNAME) -r)
+endif
 ifeq ($(OS_NAME),)
   OS_NAME = windows
   # GNU Make or MKS overrides $(PROCESSOR_ARCHITECTURE) to always
@@ -432,14 +441,14 @@ jdk_awt: $(call TestDirs, com/sun/awt java/awt sun/awt \
          javax/imageio javax/print sun/pisces)
 	$(call RunOthervmBatch)
 
-# Stable agentvm testruns (minus items from PROBLEM_LIST)
+# Stable othervm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_beans1
 JDK_DEFAULT_TARGETS += jdk_beans1
 jdk_beans1: $(call TestDirs, \
             java/beans/beancontext java/beans/PropertyChangeSupport \
             java/beans/Introspector java/beans/Performance \
             java/beans/VetoableChangeSupport java/beans/Statement)
-	$(call RunAgentvmBatch)
+	$(call RunOthervmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using agentvm has serious problems with these tests

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,9 @@ class oopFactory: AllStatic {
                                            int vtable_len, int itable_len,
                                            int static_field_size,
                                            unsigned int nonstatic_oop_map_count,
-                                           ReferenceType rt, TRAPS);
+                                           AccessFlags access_flags,
+                                           ReferenceType rt,
+                                           KlassHandle host_klass, TRAPS);
 
   // Methods
 private:

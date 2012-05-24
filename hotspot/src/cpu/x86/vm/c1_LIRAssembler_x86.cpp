@@ -1462,7 +1462,11 @@ void LIR_Assembler::emit_opConvert(LIR_OpConvert* op) {
       break;
 
     case Bytecodes::_l2i:
+#ifdef _LP64
+      __ movl(dest->as_register(), src->as_register_lo());
+#else
       move_regs(src->as_register_lo(), dest->as_register());
+#endif
       break;
 
     case Bytecodes::_i2b:
@@ -3711,6 +3715,25 @@ void LIR_Assembler::membar_acquire() {
 void LIR_Assembler::membar_release() {
   // No x86 machines currently require store fences
   // __ store_fence();
+}
+
+void LIR_Assembler::membar_loadload() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::loadload));
+}
+
+void LIR_Assembler::membar_storestore() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::storestore));
+}
+
+void LIR_Assembler::membar_loadstore() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::loadstore));
+}
+
+void LIR_Assembler::membar_storeload() {
+  __ membar(Assembler::Membar_mask_bits(Assembler::StoreLoad));
 }
 
 void LIR_Assembler::get_thread(LIR_Opr result_reg) {

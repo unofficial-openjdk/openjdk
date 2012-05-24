@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+
+LIBRARY_SUPPORTS_FULL_DEBUG_SYMBOLS=1
 
 BUILDDIR = ../..
 
@@ -65,6 +67,11 @@ JAVALIB=
 # Add -export options to explicitly spell exported symbols
 ifeq ($(PLATFORM), windows)
   OTHER_LCF += -export:nptInitialize -export:nptTerminate
+endif
+
+# Add location of iconv header
+ifeq ($(PLATFORM), macosx)
+  OTHER_LDLIBS += -liconv
 endif
 
 #
