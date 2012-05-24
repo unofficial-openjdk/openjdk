@@ -377,7 +377,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     @Override
-    public void dispose() {
+    public final void dispose() {
         if (disposed.compareAndSet(false, true)) {
             disposeImpl();
         }
