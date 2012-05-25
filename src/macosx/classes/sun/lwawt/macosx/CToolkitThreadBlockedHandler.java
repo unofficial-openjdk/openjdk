@@ -41,10 +41,12 @@ final class CToolkitThreadBlockedHandler implements ToolkitThreadBlockedHandler 
     }
 
     public void enter() {
+        // Despite the naming of this method, on MacOS only one
+        // event is read and dispatched before this method returns.
+        // This call is non-blocking and does not wait for an event
         toolkit.startNativeNestedEventLoop();
     }
 
     public void exit() {
-        toolkit.stopNativeNestedEventLoop();
     }
 }
