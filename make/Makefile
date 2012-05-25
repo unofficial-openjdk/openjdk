@@ -236,6 +236,9 @@ SUBDIRS       = tools java javax sun com
 ifeq ($(PLATFORM), macosx)
   SUBDIRS += apple
 endif
+ifeq ($(PLATFORM), windows)
+  SUBDIRS += bridge
+endif
 SUBDIRS_tools = launchers
 SUBDIRS_misc  = org sunw jpda mkdemo mksample
 

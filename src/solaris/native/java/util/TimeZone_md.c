@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -646,7 +646,7 @@ findJavaTZ_md(const char *java_home_dir, const char *country)
     }
 
 #ifdef __solaris__
-    if (strcmp(tz, "localtime") == 0) {
+    if (tz != NULL && strcmp(tz, "localtime") == 0) {
         tz = getSolarisDefaultZoneID();
         freetz = tz;
     }
