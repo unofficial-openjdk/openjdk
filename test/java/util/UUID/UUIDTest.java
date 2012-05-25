@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,10 @@ public class UUIDTest {
         List list = new LinkedList();
         for (int i=0; i<100; i++) {
             UUID u1 = UUID.randomUUID();
+            if(4 != u1.version())
+                throw new Exception("bad version");
+            if(2 != u1.variant())
+                throw new Exception("bad variant");
             if (list.contains(u1))
                 throw new Exception("random UUID collision very unlikely");
             list.add(u1);
@@ -72,10 +76,14 @@ public class UUIDTest {
         List list = new LinkedList();
         for (int i=0; i<100; i++) {
             byteSource.nextBytes(someBytes);
-            UUID test = UUID.nameUUIDFromBytes(someBytes);
-            if (list.contains(test))
+            UUID u1 = UUID.nameUUIDFromBytes(someBytes);
+            if(3 != u1.version())
+                throw new Exception("bad version");
+            if(2 != u1.variant())
+                throw new Exception("bad variant");
+            if (list.contains(u1))
                 throw new Exception("byte UUID collision very unlikely");
-            list.add(test);
+            list.add(u1);
         }
     }
 
