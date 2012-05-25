@@ -7007,3 +7007,8 @@ CurrencyNames/es_VE/VEF=Bs.F.
 CurrencyNames/zh_TW/cuc=\u53e4\u5df4\u53ef\u8f49\u63db\u62ab\u7d22
 CurrencyNames/zh_TW/tmt=\u571f\u5eab\u66fc\u65b0\u99ac\u7d0d\u7279
 CurrencyNames/zh_TW/zwl=\u8f9b\u5df4\u5a01\u5143 (2009)
+
+# bug 7171028
+FormatData/sl/DateTimePatterns/4=EEEE, dd. MMMM y
+FormatData/sl/DateTimePatterns/5=dd. MMMM y
+
