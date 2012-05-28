@@ -652,7 +652,7 @@ AWT_ASSERT_APPKIT_THREAD;
         [[self.nsWindow standardWindowButton:NSWindowCloseButton] setEnabled: flag];
     }
 
-    if (IS(self.styleBits, MINIMIZABLE)) {        
+    if (IS(self.styleBits, MINIMIZABLE)) {
         [[self.nsWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled: flag];
     }
 
@@ -1073,38 +1073,28 @@ JNF_COCOA_EXIT(env);
 
 /*
  * Class:     sun_lwawt_macosx_CPlatformWindow
- * Method:    nativeGetScreenNSWindowIsOn_AppKitThread
+ * Method:    nativeGetDisplayID_AppKitThread
  * Signature: (J)I
  */
-JNIEXPORT jint JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeGetScreenNSWindowIsOn_1AppKitThread
+JNIEXPORT jint JNICALL
+Java_sun_lwawt_macosx_CPlatformWindow_nativeGetNSWindowDisplayID_1AppKitThread
 (JNIEnv *env, jclass clazz, jlong windowPtr)
 {
-    jint index = -1;
+    jint ret; // CGDirectDisplayID
 
 JNF_COCOA_ENTER(env);
 AWT_ASSERT_APPKIT_THREAD;
 
-    NSWindow *nsWindow = OBJC(windowPtr);
-    NSScreen* screen = [nsWindow screen];
-
-    //+++gdb NOTE: This is using a linear search of the screens. If it should
-    //  prove to be a bottleneck, this can definitely be improved. However,
-    //  many screens should prove to be the exception, rather than the rule.
-    NSArray* screens = [NSScreen screens];
-    NSUInteger i;
-    for (i = 0; i < [screens count]; i++)
-    {
-        if ([[screens objectAtIndex:i] isEqualTo:screen])
-        {
-            index = i;
-            break;
-        }
-    }
+    NSWindow *window = OBJC(windowPtr);
+    NSScreen *screen = [window screen];
+    NSDictionary *deviceDescription = [screen deviceDescription];
+    NSNumber *displayID = [deviceDescription objectForKey:@"NSScreenNumber"];
+    ret = (jint)[displayID intValue];
 
 JNF_COCOA_EXIT(env);
-    return 1;
-}
 
+    return ret;
+}
 
 /*
  * Class:     sun_lwawt_macosx_CPlatformWindow
