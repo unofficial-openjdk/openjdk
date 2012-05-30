@@ -35,6 +35,7 @@ include $(BUILDDIR)/common/Defs.gmk
 CPLUSPLUSLIBRARY=true
 
 VERSIONINFO_RESOURCE = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/AccessBridgeStatusWindow.rc
+VERSIONRES = $(TEMPDIR)/AccessBridgeStatusWindow.res
 
 JAB_EXE= $(TEMPDIR)/jabswitch.exe
 
@@ -43,15 +44,16 @@ JAB_SRC = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/jabswitch.cpp
 JAB_MANIFEST_INP = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/jabswitch.manifest
 JAB_MANIFEST_OUT = $(TEMPDIR)/jabswitch.exe.intermediate.manifest
 
-RC_FLAGS += -d "JAB_MANIFEST_EMBED=$(JAB_MANIFEST_EMBED)" 
-OTHER_CPPFLAGS += /Fo"$(TEMPDIR)/" /Fd"$(TEMPDIR)/" 
-LDDFLAGS +=/manifest /ManifestFile:$(JAB_MANIFEST_INP) /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'" 
+RC_FLAGS += /fo "$(VERSIONRES)"
+OTHER_CPPFLAGS += /Fo"$(TEMPDIR)/" /Fd"$(TEMPDIR)/" /analyze- /Od /Gd /nologo /MDd /Gm /D "WIN32" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /RTC1 /W3 /ZI /Zc:wchar_t /EHsc 
+LDDFLAGS += Advapi32.lib Version.lib User32.lib
 
 all: buildexe copyfilejab
 
 buildexe : 
 	$(CD) $(TEMPDIR)  
-	$(CC) $(CPPFLAGS) $(JAB_SRC) $(LDDFLAGS) -o $(JAB_EXE) 
+	$(RC) $(RC_FLAGS) $(VERSIONINFO_RESOURCE) 
+	$(CC) $(CPPFLAGS) $(JAB_SRC) $(LDDFLAGS) $(VERSIONRES) -o $(JAB_EXE) 
 	$(MT) /nologo /verbose /manifest $(JAB_MANIFEST_INP) /outputresource:$(JAB_EXE)  
 
 copyfilejab : 
