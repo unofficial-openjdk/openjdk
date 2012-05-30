@@ -63,8 +63,15 @@ public class LWCToolkit extends LWToolkit {
 
     private static native void initIDs();
 
+    // On Mac OS we don't need to actually start the new event loop since there is
+    // a mechanic that allows us to just reschedule the next event in a native event loop
+    // for immediate execution and because this method is being called repeatedly we just
+    // executing one such event every time we call this method
     static native void startNativeNestedEventLoop();
 
+    // Since we don't start an additional event loop this method is a no-op
+    // and shouldn't be called, left only for the better understanding of the concept on
+    // other OS'es
     static native void stopNativeNestedEventLoop();
 
     private static CInputMethodDescriptor sInputMethodDescriptor;

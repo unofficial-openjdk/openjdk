@@ -42,7 +42,6 @@ jint* gButtonDownMasks;
 @implementation AWTToolkit
 
 static long eventCount;
-static bool shouldKeepRunningNestedLoop = NO;
 
 + (long) getEventCount{
     return eventCount;
@@ -466,17 +465,13 @@ Java_sun_font_FontManager_populateFontFileNameMap
 JNIEXPORT void JNICALL Java_sun_lwawt_macosx_LWCToolkit_startNativeNestedEventLoop
 (JNIEnv *env, jclass cls)
 {
-    if(!shouldKeepRunningNestedLoop) {
-        NSRunLoop *theRL = [NSRunLoop currentRunLoop];
-        NSApplication * app = [NSApplication sharedApplication];
-        shouldKeepRunningNestedLoop = YES;
-        while (shouldKeepRunningNestedLoop && [theRL runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]])
-        {
-            NSEvent * event = [app nextEventMatchingMask: 0xFFFFFFFF untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
-            if (event != nil) {
-                [app sendEvent: event];
-            }
-        }
+    // Simply get the next event in native loop and pass it to execution
+    // We'll be called repeatedly so there's no need to block here
+    NSRunLoop *theRL = [NSRunLoop currentRunLoop];
+    NSApplication * app = [NSApplication sharedApplication];
+    NSEvent * event = [app nextEventMatchingMask: 0xFFFFFFFF untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES];
+    if (event != nil) {
+        [app sendEvent: event];
     }
 }
 
@@ -488,5 +483,5 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_LWCToolkit_startNativeNestedEventLo
 JNIEXPORT void JNICALL Java_sun_lwawt_macosx_LWCToolkit_stopNativeNestedEventLoop
 (JNIEnv *env, jclass cls)
 {
-    shouldKeepRunningNestedLoop = NO;
+//    At this moment it seems that this method should be no-op
 }
