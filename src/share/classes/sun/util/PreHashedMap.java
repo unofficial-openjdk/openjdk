@@ -126,7 +126,7 @@ public abstract class PreHashedMap<V>
      */
     protected abstract void init(Object[] ht);
 
-    // @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     private V toV(Object x) {
         return (V)x;
     }
@@ -254,6 +254,7 @@ public abstract class PreHashedMap<V>
                                            ? 0
                                            : v.hashCode()));
                             }
+                            @SuppressWarnings("unchecked")
                             public boolean equals(Object ob) {
                                 if (ob == this)
                                     return true;

@@ -108,8 +108,7 @@ import java.util.regex.PatternSyntaxException;
  */
 
 public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence
-{
+    implements java.io.Serializable, Comparable<String>, CharSequence {
     /** The value is used for character storage. */
     private final char value[];
 
@@ -3073,5 +3072,79 @@ public final class String
      *          guaranteed to be from a pool of unique strings.
      */
     public native String intern();
+
+    /**
+     * Seed value used for each alternative hash calculated.
+     */
+    private static final int HASHING_SEED;
+
+    static {
+        long nanos = System.nanoTime();
+        long now = System.currentTimeMillis();
+        int SEED_MATERIAL[] = {
+                System.identityHashCode(String.class),
+                System.identityHashCode(System.class),
+                (int) (nanos >>> 32),
+                (int) nanos,
+                (int) (now >>> 32),
+                (int) now,
+                (int) (System.nanoTime() >>> 2)
+        };
+
+        // Use murmur3 to scramble the seeding material.
+        // Inline implementation to avoid loading classes
+        int h1 = 0;
+
+        // body
+        for (int k1 : SEED_MATERIAL) {
+            k1 *= 0xcc9e2d51;
+            k1 = (k1 << 15) | (k1 >>> 17);
+            k1 *= 0x1b873593;
+
+            h1 ^= k1;
+            h1 = (h1 << 13) | (h1 >>> 19);
+            h1 = h1 * 5 + 0xe6546b64;
+        }
+
+        // tail (always empty, as body is always 32-bit chunks)
+
+        // finalization
+
+        h1 ^= SEED_MATERIAL.length * 4;
+
+        // finalization mix force all bits of a hash block to avalanche
+        h1 ^= h1 >>> 16;
+        h1 *= 0x85ebca6b;
+        h1 ^= h1 >>> 13;
+        h1 *= 0xc2b2ae35;
+        h1 ^= h1 >>> 16;
+
+        HASHING_SEED = h1;
+    }
+
+    /**
+     * Cached value of the alternative hashing algorithm result
+     */
+    private transient int hash32 = 0;
+
+    /**
+     * Calculates a 32-bit hash value for this string.
+     *
+     * @return a 32-bit hash value for this string.
+     */
+    int hash32() {
+        int h = hash32;
+        if (0 == h) {
+           // harmless data race on hash32 here.
+           h = sun.misc.Hashing.murmur3_32(HASHING_SEED, value, offset, count);
+
+           // ensure result is not zero to avoid recalcing
+           h = (0 != h) ? h : 1;
+
+           hash32 = h;
+        }
+
+        return h;
+    }
 
 }
