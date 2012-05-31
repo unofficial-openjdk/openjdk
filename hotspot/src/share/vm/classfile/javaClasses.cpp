@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -143,7 +143,27 @@ compute_optional_offset(int& dest_offset,
 }
 
 
+int java_lang_String::value_offset  = 0;
+int java_lang_String::offset_offset = 0;
+int java_lang_String::count_offset  = 0;
+int java_lang_String::hash_offset   = 0;
+
+bool java_lang_String::initialized  = false;
+
+void java_lang_String::compute_offsets() {
+  assert(!initialized, "offsets should be initialized only once");
+
+  klassOop k = SystemDictionary::String_klass();
+  compute_offset(value_offset,           k, vmSymbols::value_name(),  vmSymbols::char_array_signature());
+  compute_optional_offset(offset_offset, k, vmSymbols::offset_name(), vmSymbols::int_signature());
+  compute_optional_offset(count_offset,  k, vmSymbols::count_name(),  vmSymbols::int_signature());
+  compute_optional_offset(hash_offset,   k, vmSymbols::hash_name(),   vmSymbols::int_signature());
+
+  initialized = true;
+}
+
 Handle java_lang_String::basic_create(int length, bool tenured, TRAPS) {
+  assert(initialized, "Must be initialized");
   // Create the String object first, so there's a chance that the String
   // and the char array it points to end up in the same cache line.
   oop obj;
@@ -1347,7 +1367,13 @@ class BacktraceBuilder: public StackObj {
     return _backtrace();
   }
 
-  inline void push(methodOop method, short bci, TRAPS) {
+  inline void push(methodOop method, int bci, TRAPS) {
+    // Smear the -1 bci to 0 since the array only holds unsigned
+    // shorts.  The later line number lookup would just smear the -1
+    // to a 0 even if it could be recorded.
+    if (bci == SynchronizationEntryBCI) bci = 0;
+    assert(bci == (jushort)bci, "doesn't fit");
+
     if (_index >= trace_chunk_size) {
       methodHandle mhandle(THREAD, method);
       expand(CHECK);
@@ -1574,8 +1600,13 @@ void java_lang_Throwable::fill_in_stack_trace_of_preallocated_backtrace(Handle t
   int chunk_count = 0;
 
   for (;!st.at_end(); st.next()) {
-    // add element
-    bcis->ushort_at_put(chunk_count, st.bci());
+    // Add entry and smear the -1 bci to 0 since the array only holds
+    // unsigned shorts.  The later line number lookup would just smear
+    // the -1 to a 0 even if it could be recorded.
+    int bci = st.bci();
+    if (bci == SynchronizationEntryBCI) bci = 0;
+    assert(bci == (jushort)bci, "doesn't fit");
+    bcis->ushort_at_put(chunk_count, bci);
     methods->obj_at_put(chunk_count, st.method());
 
     chunk_count++;
@@ -2826,10 +2857,6 @@ int java_lang_System::err_offset_in_bytes() {
 
 
 
-int java_lang_String::value_offset;
-int java_lang_String::offset_offset;
-int java_lang_String::count_offset;
-int java_lang_String::hash_offset;
 int java_lang_Class::_klass_offset;
 int java_lang_Class::_array_klass_offset;
 int java_lang_Class::_resolved_constructor_offset;
@@ -2988,12 +3015,6 @@ oop java_util_concurrent_locks_AbstractOwnableSynchronizer::get_owner_threadObj(
 void JavaClasses::compute_hard_coded_offsets() {
   const int x = heapOopSize;
   const int header = instanceOopDesc::base_offset_in_bytes();
-
-  // Do the String Class
-  java_lang_String::value_offset  = java_lang_String::hc_value_offset  * x + header;
-  java_lang_String::offset_offset = java_lang_String::hc_offset_offset * x + header;
-  java_lang_String::count_offset  = java_lang_String::offset_offset + sizeof (jint);
-  java_lang_String::hash_offset   = java_lang_String::count_offset + sizeof (jint);
 
   // Throwable Class
   java_lang_Throwable::backtrace_offset  = java_lang_Throwable::hc_backtrace_offset  * x + header;
@@ -3189,9 +3210,13 @@ void JavaClasses::check_offsets() {
   // java.lang.String
 
   CHECK_OFFSET("java/lang/String", java_lang_String, value, "[C");
-  CHECK_OFFSET("java/lang/String", java_lang_String, offset, "I");
-  CHECK_OFFSET("java/lang/String", java_lang_String, count, "I");
-  CHECK_OFFSET("java/lang/String", java_lang_String, hash, "I");
+  if (java_lang_String::has_offset_field()) {
+    CHECK_OFFSET("java/lang/String", java_lang_String, offset, "I");
+    CHECK_OFFSET("java/lang/String", java_lang_String, count, "I");
+  }
+  if (java_lang_String::has_hash_field()) {
+    CHECK_OFFSET("java/lang/String", java_lang_String, hash, "I");
+  }
 
   // java.lang.Class
 

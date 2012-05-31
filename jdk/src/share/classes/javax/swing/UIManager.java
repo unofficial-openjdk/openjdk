@@ -191,6 +191,7 @@ public class UIManager implements Serializable
         private UIDefaults[] tables = new UIDefaults[2];
 
         boolean initialized = false;
+        boolean focusPolicyInitialized = false;
         MultiUIDefaults multiUIDefaults = new MultiUIDefaults(tables);
         LookAndFeel lookAndFeel;
         LookAndFeel multiLookAndFeel = null;
@@ -378,6 +379,9 @@ public class UIManager implements Serializable
                 iLAFs.add(new LookAndFeelInfo("Windows Classic",
                  "com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel"));
             }
+        }
+        else if (osType == OSInfo.OSType.MACOSX) {
+            iLAFs.add(new LookAndFeelInfo("Mac OS X", "com.apple.laf.AquaLookAndFeel"));
         }
         else {
             // GTK is not shipped on Windows.
@@ -607,6 +611,12 @@ public class UIManager implements Serializable
                     ((SunToolkit) toolkit).isNativeGTKAvailable()) {
                 // May be set on Linux and Solaris boxs.
                 return "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+            }
+            if (osType == OSInfo.OSType.MACOSX) {
+                if (toolkit.getClass() .getName()
+                                       .equals("sun.lwawt.macosx.LWCToolkit")) {
+                    return "com.apple.laf.AquaLookAndFeel";
+                }
             }
             if (osType == OSInfo.OSType.SOLARIS) {
                 return "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
@@ -991,6 +1001,7 @@ public class UIManager implements Serializable
      */
     public static ComponentUI getUI(JComponent target) {
         maybeInitialize();
+        maybeInitializeFocusPolicy(target);
         ComponentUI ui = null;
         LookAndFeel multiLAF = getLAFState().multiLookAndFeel;
         if (multiLAF != null) {
@@ -1214,6 +1225,11 @@ public class UIManager implements Serializable
             java.security.AccessController.doPrivileged(
                 new java.security.PrivilegedAction<Object>() {
                 public Object run() {
+                    OSInfo.OSType osType = AccessController.doPrivileged(OSInfo.getOSTypeAction());
+                    if (osType == OSInfo.OSType.MACOSX) {
+                        props.put(defaultLAFKey, getSystemLookAndFeelClassName());
+                    }
+
                     try {
                         File file = new File(makeSwingPropertiesFilename());
 
@@ -1408,6 +1424,27 @@ public class UIManager implements Serializable
         }
     }
 
+    /*
+     * Sets default swing focus traversal policy.
+     */
+    private static void maybeInitializeFocusPolicy(JComponent comp) {
+        // Check for JRootPane which indicates that a swing toplevel
+        // is coming, in which case a swing default focus policy
+        // should be instatiated. See 7125044.
+        if (comp instanceof JRootPane) {
+            synchronized (classLock) {
+                if (!getLAFState().focusPolicyInitialized) {
+                    getLAFState().focusPolicyInitialized = true;
+
+                    if (FocusManager.isFocusManagerEnabled()) {
+                        KeyboardFocusManager.getCurrentKeyboardFocusManager().
+                            setDefaultFocusTraversalPolicy(
+                                new LayoutFocusTraversalPolicy());
+                    }
+                }
+            }
+        }
+    }
 
     /*
      * Only called by maybeInitialize().
@@ -1418,17 +1455,6 @@ public class UIManager implements Serializable
         initializeDefaultLAF(swingProps);
         initializeAuxiliaryLAFs(swingProps);
         initializeInstalledLAFs(swingProps);
-
-        // Enable the Swing default LayoutManager.
-        String toolkitName = Toolkit.getDefaultToolkit().getClass().getName();
-        // don't set default policy if this is XAWT.
-        if (!"sun.awt.X11.XToolkit".equals(toolkitName)) {
-            if (FocusManager.isFocusManagerEnabled()) {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().
-                    setDefaultFocusTraversalPolicy(
-                        new LayoutFocusTraversalPolicy());
-            }
-        }
 
         // Install Swing's PaintEventDispatcher
         if (RepaintManager.HANDLE_TOP_LEVEL_PAINT) {

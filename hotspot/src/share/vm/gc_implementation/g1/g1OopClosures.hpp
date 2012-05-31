@@ -51,6 +51,7 @@ protected:
   G1RemSet* _g1_rem;
   ConcurrentMark* _cm;
   G1ParScanThreadState* _par_scan_state;
+  uint _worker_id;
   bool _during_initial_mark;
   bool _mark_in_progress;
 public:
@@ -117,9 +118,11 @@ public:
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
 };
 
+template <bool do_gen_barrier, G1Barrier barrier, bool do_mark_object>
+class G1ParCopyClosure : public G1ParClosureSuper {
+  G1ParScanClosure _scanner;
+  template <class T> void do_oop_work(T* p);
 
-class G1ParCopyHelper : public G1ParClosureSuper {
-  G1ParScanClosure *_scanner;
 protected:
   // Mark the object if it's not already marked. This is used to mark
   // objects pointed to by roots that are guaranteed not to move
@@ -134,22 +137,10 @@ protected:
   oop copy_to_survivor_space(oop obj);
 
 public:
-  G1ParCopyHelper(G1CollectedHeap* g1, G1ParScanThreadState* par_scan_state,
-                  G1ParScanClosure *scanner) :
-    G1ParClosureSuper(g1, par_scan_state), _scanner(scanner) { }
-};
-
-template <bool do_gen_barrier, G1Barrier barrier, bool do_mark_object>
-class G1ParCopyClosure : public G1ParCopyHelper {
-  G1ParScanClosure _scanner;
-
-  template <class T> void do_oop_work(T* p);
-
-public:
   G1ParCopyClosure(G1CollectedHeap* g1, G1ParScanThreadState* par_scan_state,
                    ReferenceProcessor* rp) :
       _scanner(g1, par_scan_state, rp),
-      G1ParCopyHelper(g1, par_scan_state, &_scanner) {
+      G1ParClosureSuper(g1, par_scan_state) {
     assert(_ref_processor == NULL, "sanity");
   }
 
@@ -219,6 +210,7 @@ public:
 
 // Closure for iterating over object fields during concurrent marking
 class G1CMOopClosure : public OopClosure {
+private:
   G1CollectedHeap*   _g1h;
   ConcurrentMark*    _cm;
   CMTask*            _task;
@@ -227,6 +219,94 @@ public:
   template <class T> void do_oop_nv(T* p);
   virtual void do_oop(      oop* p) { do_oop_nv(p); }
   virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
+};
+
+// Closure to scan the root regions during concurrent marking
+class G1RootRegionScanClosure : public OopClosure {
+private:
+  G1CollectedHeap* _g1h;
+  ConcurrentMark*  _cm;
+  uint _worker_id;
+public:
+  G1RootRegionScanClosure(G1CollectedHeap* g1h, ConcurrentMark* cm,
+                          uint worker_id) :
+    _g1h(g1h), _cm(cm), _worker_id(worker_id) { }
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(      oop* p) { do_oop_nv(p); }
+  virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
+};
+
+// Closure that applies the given two closures in sequence.
+// Used by the RSet refinement code (when updating RSets
+// during an evacuation pause) to record cards containing
+// pointers into the collection set.
+
+class G1Mux2Closure : public OopClosure {
+  OopClosure* _c1;
+  OopClosure* _c2;
+public:
+  G1Mux2Closure(OopClosure *c1, OopClosure *c2);
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(oop* p)        { do_oop_nv(p); }
+  virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
+};
+
+// A closure that returns true if it is actually applied
+// to a reference
+
+class G1TriggerClosure : public OopClosure {
+  bool _triggered;
+public:
+  G1TriggerClosure();
+  bool triggered() const { return _triggered; }
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(oop* p)        { do_oop_nv(p); }
+  virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
+};
+
+// A closure which uses a triggering closure to determine
+// whether to apply an oop closure.
+
+class G1InvokeIfNotTriggeredClosure: public OopClosure {
+  G1TriggerClosure* _trigger_cl;
+  OopClosure* _oop_cl;
+public:
+  G1InvokeIfNotTriggeredClosure(G1TriggerClosure* t, OopClosure* oc);
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(oop* p)        { do_oop_nv(p); }
+  virtual void do_oop(narrowOop* p)  { do_oop_nv(p); }
+};
+
+class G1UpdateRSOrPushRefOopClosure: public OopClosure {
+  G1CollectedHeap* _g1;
+  G1RemSet* _g1_rem_set;
+  HeapRegion* _from;
+  OopsInHeapRegionClosure* _push_ref_cl;
+  bool _record_refs_into_cset;
+  int _worker_i;
+
+public:
+  G1UpdateRSOrPushRefOopClosure(G1CollectedHeap* g1h,
+                                G1RemSet* rs,
+                                OopsInHeapRegionClosure* push_ref_cl,
+                                bool record_refs_into_cset,
+                                int worker_i = 0);
+
+  void set_from(HeapRegion* from) {
+    assert(from != NULL, "from region must be non-NULL");
+    _from = from;
+  }
+
+  bool self_forwarded(oop obj) {
+    bool result = (obj->is_forwarded() && (obj->forwardee()== obj));
+    return result;
+  }
+
+  bool apply_to_weak_ref_discovered_field() { return true; }
+
+  template <class T> void do_oop_nv(T* p);
+  virtual void do_oop(narrowOop* p) { do_oop_nv(p); }
+  virtual void do_oop(oop* p)       { do_oop_nv(p); }
 };
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_G1OOPCLOSURES_HPP

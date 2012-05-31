@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,16 +89,15 @@ class G1CollectedHeap;
 //
 // * Min Capacity
 //
-//    We set this to 0 for all spaces. We could consider setting the old
-//    min capacity to the min capacity of the heap (see 7078465).
+//    We set this to 0 for all spaces.
 //
 // * Max Capacity
 //
 //    For jstat, we set the max capacity of all spaces to heap_capacity,
-//    given that we don't always have a reasonably upper bound on how big
-//    each space can grow. For the memory pools, we actually make the max
-//    capacity undefined. We could consider setting the old max capacity
-//    to the max capacity of the heap (see 7078465).
+//    given that we don't always have a reasonable upper bound on how big
+//    each space can grow. For the memory pools, we make the max
+//    capacity undefined with the exception of the old memory pool for
+//    which we make the max capacity same as the max heap capacity.
 //
 // If we had more accurate occupancy / capacity information per
 // region set the above calculations would be greatly simplified and
@@ -148,7 +147,7 @@ class G1MonitoringSupport : public CHeapObj {
   size_t _overall_committed;
   size_t _overall_used;
 
-  size_t _young_region_num;
+  uint   _young_region_num;
   size_t _young_gen_committed;
   size_t _eden_committed;
   size_t _eden_used;

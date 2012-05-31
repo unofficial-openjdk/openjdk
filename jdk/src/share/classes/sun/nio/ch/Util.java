@@ -40,7 +40,7 @@ import sun.misc.Cleaner;
 import sun.security.action.GetPropertyAction;
 
 
-class Util {
+public class Util {
 
     // -- Caches --
 
@@ -158,7 +158,7 @@ class Util {
     /**
      * Returns a temporary buffer of at least the given size
      */
-    static ByteBuffer getTemporaryDirectBuffer(int size) {
+    public static ByteBuffer getTemporaryDirectBuffer(int size) {
         BufferCache cache = bufferCache.get();
         ByteBuffer buf = cache.get(size);
         if (buf != null) {
@@ -178,7 +178,7 @@ class Util {
     /**
      * Releases a temporary buffer by returning to the cache or freeing it.
      */
-    static void releaseTemporaryDirectBuffer(ByteBuffer buf) {
+    public static void releaseTemporaryDirectBuffer(ByteBuffer buf) {
         offerFirstTemporaryDirectBuffer(buf);
     }
 
@@ -467,15 +467,20 @@ class Util {
 
     private static boolean loaded = false;
 
-    static void load() {
+    public static void load() {
         synchronized (Util.class) {
             if (loaded)
                 return;
             loaded = true;
-            java.security.AccessController
-                .doPrivileged(new sun.security.action.LoadLibraryAction("net"));
-            java.security.AccessController
-                .doPrivileged(new sun.security.action.LoadLibraryAction("nio"));
+            java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<Void>() {
+                    public Void run() {
+                        System.loadLibrary("net");
+                        System.loadLibrary("nio");
+                        return null;
+                    }
+                });
+
             // IOUtil must be initialized; Its native methods are called from
             // other places in native nio code so they must be set up.
             IOUtil.initIDs();

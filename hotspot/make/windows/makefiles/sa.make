@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -91,16 +91,22 @@ SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN
 !if "$(COMPILER_NAME)" == "VS2005"
 # On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
 # otherwise we get missing __security_check_cookie externals at link time. 
-SA_LINK_FLAGS = bufferoverflowU.lib
+SA_LD_FLAGS = bufferoverflowU.lib
 !endif
 !else
-SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /ZI /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+SA_CFLAGS = $(SA_CFLAGS) /ZI
+!endif
 !endif
 !if "$(MT)" != ""
-SA_LINK_FLAGS = /manifest $(SA_LINK_FLAGS)
+SA_LD_FLAGS = /manifest $(SA_LD_FLAGS)
 !endif
 SASRCFILE = $(AGENT_DIR)/src/os/win32/windbg/sawindbg.cpp
-SA_LFLAGS = $(SA_LINK_FLAGS) /nologo /subsystem:console /map /debug /machine:$(MACHINE)
+SA_LFLAGS = $(SA_LD_FLAGS) /nologo /subsystem:console /machine:$(MACHINE)
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+SA_LFLAGS = $(SA_LFLAGS) /map /debug
+!endif
 
 # Note that we do not keep sawindbj.obj around as it would then
 # get included in the dumpbin command in build_vm_def.sh
@@ -110,18 +116,24 @@ SA_LFLAGS = $(SA_LINK_FLAGS) /nologo /subsystem:console /map /debug /machine:$(M
 # Use ";#2" for .dll and ";#1" for .exe in the MT command below:
 $(SAWINDBG): $(SASRCFILE)
 	set INCLUDE=$(SA_INCLUDE)$(INCLUDE)
-	$(CPP) @<<
+	$(CXX) @<<
 	  /I"$(BootStrapDir)/include" /I"$(BootStrapDir)/include/win32" 
 	  /I"$(GENERATED)" $(SA_CFLAGS)
 	  $(SASRCFILE)
-	  /out:sawindbg.obj
+	  /out:$*.obj
 <<
 	set LIB=$(SA_LIB)$(LIB)
-	$(LINK) /out:$@ /DLL sawindbg.obj dbgeng.lib $(SA_LFLAGS)
+	$(LD) /out:$@ /DLL $*.obj dbgeng.lib $(SA_LFLAGS)
 !if "$(MT)" != ""
 	$(MT) /manifest $(@F).manifest /outputresource:$(@F);#2
 !endif
-	-@rm -f sawindbg.obj
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+!if "$(ZIP_DEBUGINFO_FILES)" == "1"
+	$(ZIPEXE) -q $*.diz $*.map $*.pdb
+	$(RM) $*.map $*.pdb
+!endif
+!endif
+	-@rm -f $*.obj
 
 cleanall :
 	rm -rf $(GENERATED:\=/)/saclasses

@@ -49,10 +49,25 @@ public final class NetworkInterface {
     private NetworkInterface childs[];
     private NetworkInterface parent = null;
     private boolean virtual = false;
+    private static final NetworkInterface defaultInterface;
+    private static final int defaultIndex; /* index of defaultInterface */
 
     static {
-        AccessController.doPrivileged(new LoadLibraryAction("net"));
+        AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
+                    System.loadLibrary("net");
+                    return null;
+                }
+            });
+
         init();
+        defaultInterface = DefaultInterface.getDefault();
+        if (defaultInterface != null) {
+            defaultIndex = defaultInterface.getIndex();
+        } else {
+            defaultIndex = 0;
+        }
     }
 
     /**
@@ -551,4 +566,13 @@ public final class NetworkInterface {
     }
 
     private static native void init();
+
+    /**
+     * Returns the default network interface of this system
+     *
+     * @return the default interface
+     */
+    static NetworkInterface getDefault() {
+        return defaultInterface;
+    }
 }

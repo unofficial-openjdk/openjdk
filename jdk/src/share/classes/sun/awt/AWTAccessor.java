@@ -28,10 +28,13 @@ package sun.awt;
 import sun.misc.Unsafe;
 
 import java.awt.*;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.InputEvent;
 import java.awt.geom.Point2D;
 import java.awt.peer.ComponentPeer;
 import java.security.AccessControlContext;
+
+import java.io.File;
 
 /**
  * The AWTAccessor utility class.
@@ -396,6 +399,11 @@ public final class AWTAccessor {
          * Sets the most recent focus owner in the window.
          */
         void setMostRecentFocusOwner(Window window, Component component);
+
+        /*
+         * Returns current KFM of the specified AppContext.
+         */
+        KeyboardFocusManager getCurrentKeyboardFocusManager(AppContext ctx);
     }
 
     /*
@@ -449,7 +457,7 @@ public final class AWTAccessor {
         /*
          * Sets the files the user selects
          */
-        void setFiles(FileDialog fileDialog, String directory, String files[]);
+        void setFiles(FileDialog fileDialog, File files[]);
 
         /*
          * Sets the file the user selects

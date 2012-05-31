@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,11 @@ public class GetSystemLoadAverage {
         System.out.println("Test passed.");
     }
 
-    private static String LOAD_AVERAGE_TEXT = "load average:";
+    private static String LOAD_AVERAGE_TEXT
+            = System.getProperty("os.name").contains("OS X")
+                ? "load averages:"
+                : "load average:";
+
     private static void checkLoadAvg() throws Exception {
         // Obtain load average from OS command
         ProcessBuilder pb = new ProcessBuilder("/usr/bin/uptime");
@@ -91,11 +95,13 @@ public class GetSystemLoadAverage {
 
         // verify if two values are close
         output = output.substring(output.lastIndexOf(LOAD_AVERAGE_TEXT) +
-                                  LOAD_AVERAGE_TEXT.length());
+                                  LOAD_AVERAGE_TEXT.length() + 1);
         System.out.println("Load average returned from uptime = " + output);
         System.out.println("getSystemLoadAverage() returned " + loadavg);
 
-        String[] lavg = output.split(",");
+        String[] lavg = System.getProperty("os.name").contains("OS X")
+                ? output.split(" ")
+                : output.split(",");
         double expected = Double.parseDouble(lavg[0]);
         double lowRange = expected * (1 - DELTA);
         double highRange = expected * (1 + DELTA);

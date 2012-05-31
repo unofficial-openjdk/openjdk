@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -322,16 +322,6 @@ void os::breakpoint() {
 // Invoked from the BREAKPOINT Macro
 extern "C" void breakpoint() {
   os::breakpoint();
-}
-
-// Returns an estimate of the current stack pointer. Result must be guaranteed
-// to point into the calling threads stack, and be no lower than the current
-// stack pointer.
-
-address os::current_stack_pointer() {
-  int dummy;
-  address sp = (address)&dummy;
-  return sp;
 }
 
 // os::current_stack_base()
@@ -1391,7 +1381,7 @@ bool os::dll_address_to_library_name(address addr, char* buf,
 
 bool os::dll_address_to_function_name(address addr, char *buf,
                                       int buflen, int *offset) {
-  if (Decoder::decode(addr, buf, buflen, offset) == Decoder::no_error) {
+  if (Decoder::decode(addr, buf, buflen, offset)) {
     return true;
   }
   if (offset != NULL)  *offset  = -1;
@@ -2088,7 +2078,6 @@ LONG Handle_IDiv_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
 #elif _M_AMD64
   PCONTEXT ctx = exceptionInfo->ContextRecord;
   address pc = (address)ctx->Rip;
-  NOT_PRODUCT(Events::log("idiv overflow exception at " INTPTR_FORMAT , pc));
   assert(pc[0] == 0xF7, "not an idiv opcode");
   assert((pc[1] & ~0x7) == 0xF8, "cannot handle non-register operands");
   assert(ctx->Rax == min_jint, "unexpected idiv exception");
@@ -2100,7 +2089,6 @@ LONG Handle_IDiv_Exception(struct _EXCEPTION_POINTERS* exceptionInfo) {
 #else
   PCONTEXT ctx = exceptionInfo->ContextRecord;
   address pc = (address)ctx->Eip;
-  NOT_PRODUCT(Events::log("idiv overflow exception at " INTPTR_FORMAT , pc));
   assert(pc[0] == 0xF7, "not an idiv opcode");
   assert((pc[1] & ~0x7) == 0xF8, "cannot handle non-register operands");
   assert(ctx->Eax == min_jint, "unexpected idiv exception");
@@ -3296,7 +3284,7 @@ void os::yield_all(int attempts) {
 // so we compress Java's ten down to seven.  It would be better
 // if we dynamically adjusted relative priorities.
 
-int os::java_to_os_priority[MaxPriority + 1] = {
+int os::java_to_os_priority[CriticalPriority + 1] = {
   THREAD_PRIORITY_IDLE,                         // 0  Entry should never be used
   THREAD_PRIORITY_LOWEST,                       // 1  MinPriority
   THREAD_PRIORITY_LOWEST,                       // 2
@@ -3307,10 +3295,11 @@ int os::java_to_os_priority[MaxPriority + 1] = {
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 7
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 8
   THREAD_PRIORITY_HIGHEST,                      // 9  NearMaxPriority
-  THREAD_PRIORITY_HIGHEST                       // 10 MaxPriority
+  THREAD_PRIORITY_HIGHEST,                      // 10 MaxPriority
+  THREAD_PRIORITY_HIGHEST                       // 11 CriticalPriority
 };
 
-int prio_policy1[MaxPriority + 1] = {
+int prio_policy1[CriticalPriority + 1] = {
   THREAD_PRIORITY_IDLE,                         // 0  Entry should never be used
   THREAD_PRIORITY_LOWEST,                       // 1  MinPriority
   THREAD_PRIORITY_LOWEST,                       // 2
@@ -3321,16 +3310,20 @@ int prio_policy1[MaxPriority + 1] = {
   THREAD_PRIORITY_ABOVE_NORMAL,                 // 7
   THREAD_PRIORITY_HIGHEST,                      // 8
   THREAD_PRIORITY_HIGHEST,                      // 9  NearMaxPriority
-  THREAD_PRIORITY_TIME_CRITICAL                 // 10 MaxPriority
+  THREAD_PRIORITY_TIME_CRITICAL,                // 10 MaxPriority
+  THREAD_PRIORITY_TIME_CRITICAL                 // 11 CriticalPriority
 };
 
 static int prio_init() {
   // If ThreadPriorityPolicy is 1, switch tables
   if (ThreadPriorityPolicy == 1) {
     int i;
-    for (i = 0; i < MaxPriority + 1; i++) {
+    for (i = 0; i < CriticalPriority + 1; i++) {
       os::java_to_os_priority[i] = prio_policy1[i];
     }
+  }
+  if (UseCriticalJavaThreadPriority) {
+    os::java_to_os_priority[MaxPriority] = os::java_to_os_priority[CriticalPriority] ;
   }
   return 0;
 }
@@ -4827,99 +4820,92 @@ struct hostent* os::get_host_by_name(char* name) {
   return (struct hostent*)os::WinSock2Dll::gethostbyname(name);
 }
 
-
 int os::socket_close(int fd) {
-  ShouldNotReachHere();
-  return 0;
+  return ::closesocket(fd);
 }
 
 int os::socket_available(int fd, jint *pbytes) {
-  ShouldNotReachHere();
-  return 0;
+  int ret = ::ioctlsocket(fd, FIONREAD, (u_long*)pbytes);
+  return (ret < 0) ? 0 : 1;
 }
 
 int os::socket(int domain, int type, int protocol) {
-  ShouldNotReachHere();
-  return 0;
+  return ::socket(domain, type, protocol);
 }
 
 int os::listen(int fd, int count) {
-  ShouldNotReachHere();
-  return 0;
+  return ::listen(fd, count);
 }
 
 int os::connect(int fd, struct sockaddr* him, socklen_t len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::connect(fd, him, len);
 }
 
 int os::accept(int fd, struct sockaddr* him, socklen_t* len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::accept(fd, him, len);
 }
 
 int os::sendto(int fd, char* buf, size_t len, uint flags,
                struct sockaddr* to, socklen_t tolen) {
-  ShouldNotReachHere();
-  return 0;
+
+  return ::sendto(fd, buf, (int)len, flags, to, tolen);
 }
 
 int os::recvfrom(int fd, char *buf, size_t nBytes, uint flags,
                  sockaddr* from, socklen_t* fromlen) {
-  ShouldNotReachHere();
-  return 0;
+
+  return ::recvfrom(fd, buf, (int)nBytes, flags, from, fromlen);
 }
 
 int os::recv(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::recv(fd, buf, (int)nBytes, flags);
 }
 
 int os::send(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::send(fd, buf, (int)nBytes, flags);
 }
 
 int os::raw_send(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::send(fd, buf, (int)nBytes, flags);
 }
 
 int os::timeout(int fd, long timeout) {
-  ShouldNotReachHere();
-  return 0;
+  fd_set tbl;
+  struct timeval t;
+
+  t.tv_sec  = timeout / 1000;
+  t.tv_usec = (timeout % 1000) * 1000;
+
+  tbl.fd_count    = 1;
+  tbl.fd_array[0] = fd;
+
+  return ::select(1, &tbl, 0, 0, &t);
 }
 
 int os::get_host_name(char* name, int namelen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::gethostname(name, namelen);
 }
 
 int os::socket_shutdown(int fd, int howto) {
-  ShouldNotReachHere();
-  return 0;
+  return ::shutdown(fd, howto);
 }
 
 int os::bind(int fd, struct sockaddr* him, socklen_t len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::bind(fd, him, len);
 }
 
 int os::get_sock_name(int fd, struct sockaddr* him, socklen_t* len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::getsockname(fd, him, len);
 }
 
 int os::get_sock_opt(int fd, int level, int optname,
                      char* optval, socklen_t* optlen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::getsockopt(fd, level, optname, optval, optlen);
 }
 
 int os::set_sock_opt(int fd, int level, int optname,
                      const char* optval, socklen_t optlen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::setsockopt(fd, level, optname, optval, optlen);
 }
 
 
@@ -5331,4 +5317,3 @@ BOOL os::Advapi32Dll::AdvapiAvailable() {
 }
 
 #endif
-

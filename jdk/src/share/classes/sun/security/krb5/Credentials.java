@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -285,10 +285,11 @@ public class Credentials {
         throws KrbException, IOException {
 
         if (ticketCache == null) {
-            // The default ticket cache on Windows is not a file.
+            // The default ticket cache on Windows and Mac is not a file.
             String os = java.security.AccessController.doPrivileged(
                         new sun.security.action.GetPropertyAction("os.name"));
-            if (os.toUpperCase(Locale.ENGLISH).startsWith("WINDOWS")) {
+            if (os.toUpperCase(Locale.ENGLISH).startsWith("WINDOWS") ||
+                    os.toUpperCase(Locale.ENGLISH).contains("OS X")) {
                 Credentials creds = acquireDefaultCreds();
                 if (creds == null) {
                     if (DEBUG) {
@@ -329,11 +330,16 @@ public class Credentials {
         CredentialsCache ccache =
             CredentialsCache.getInstance(princ, ticketCache);
 
-        if (ccache == null)
+        if (ccache == null) {
             return null;
+        }
 
         sun.security.krb5.internal.ccache.Credentials tgtCred  =
             ccache.getDefaultCreds();
+
+        if (tgtCred == null) {
+            return null;
+        }
 
         if (EType.isSupported(tgtCred.getEType())) {
             return tgtCred.setKrbCreds();
@@ -374,19 +380,21 @@ public class Credentials {
             cache = CredentialsCache.getInstance();
         }
         if (cache != null) {
-            if (DEBUG) {
-                System.out.println(">>> KrbCreds found the default ticket " +
-                                   "granting ticket in credential cache.");
-            }
             sun.security.krb5.internal.ccache.Credentials temp =
                 cache.getDefaultCreds();
-            if (EType.isSupported(temp.getEType())) {
-                result = temp.setKrbCreds();
-            } else {
+            if (temp != null) {
                 if (DEBUG) {
-                    System.out.println(
-                        ">>> unsupported key type found the default TGT: " +
-                        temp.getEType());
+                    System.out.println(">>> KrbCreds found the default ticket"
+                            + " granting ticket in credential cache.");
+                }
+                if (EType.isSupported(temp.getEType())) {
+                    result = temp.setKrbCreds();
+                } else {
+                    if (DEBUG) {
+                        System.out.println(
+                            ">>> unsupported key type found the default TGT: " +
+                            temp.getEType());
+                    }
                 }
             }
         }
@@ -470,7 +478,11 @@ public class Credentials {
         java.security.AccessController.doPrivileged(
                 new java.security.PrivilegedAction<Void> () {
                         public Void run() {
-                                System.loadLibrary("w2k_lsa_auth");
+                                if (System.getProperty("os.name").contains("OS X")) {
+                                    System.loadLibrary("osxkrb5");
+                                } else {
+                                    System.loadLibrary("w2k_lsa_auth");
+                                }
                                 return null;
                         }
                 });

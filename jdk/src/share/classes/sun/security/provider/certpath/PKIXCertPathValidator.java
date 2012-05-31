@@ -167,6 +167,7 @@ public final class PKIXCertPathValidator extends CertPathValidatorSpi {
         // create PKIXCertPathCheckers
         List<PKIXCertPathChecker> certPathCheckers = new ArrayList<>();
         // add standard checkers that we will be using
+        certPathCheckers.add(new UntrustedChecker());
         certPathCheckers.add(new AlgorithmChecker(anchor));
         certPathCheckers.add(new KeyChecker(certPathLen,
                                             params.targetCertConstraints()));

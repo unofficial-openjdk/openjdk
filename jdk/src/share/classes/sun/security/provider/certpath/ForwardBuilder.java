@@ -665,7 +665,10 @@ class ForwardBuilder extends Builder {
                 + "\n  Subject: " + cert.getSubjectX500Principal() + ")");
         }
 
-        ForwardState currState = (ForwardState) currentState;
+        ForwardState currState = (ForwardState)currentState;
+
+        // Don't bother to verify untrusted certificate more.
+        currState.untrustedChecker.check(cert, Collections.<String>emptySet());
 
         /*
          * check for looping - abort a loop if

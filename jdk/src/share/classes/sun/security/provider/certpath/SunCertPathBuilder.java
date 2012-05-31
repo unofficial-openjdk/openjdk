@@ -233,6 +233,7 @@ public final class SunCertPathBuilder extends CertPathBuilderSpi {
         Iterator<TrustAnchor> iter = buildParams.trustAnchors().iterator();
         while (iter.hasNext()) {
             TrustAnchor anchor = iter.next();
+
             /* check if anchor satisfies target constraints */
             if (anchorIsTarget(anchor, buildParams.targetCertConstraints())) {
                 this.trustAnchor = anchor;
@@ -246,6 +247,7 @@ public final class SunCertPathBuilder extends CertPathBuilderSpi {
             currentState.updateState(anchor, buildParams);
 
             currentState.algorithmChecker = new AlgorithmChecker(anchor);
+            currentState.untrustedChecker = new UntrustedChecker();
             try {
                 depthFirstSearchReverse(null, currentState,
                                         new ReverseBuilder(buildParams),
@@ -259,7 +261,9 @@ public final class SunCertPathBuilder extends CertPathBuilderSpi {
             }
 
             // break out of loop if search is successful
-            break;
+            if (pathCompleted) {
+                break;
+            }
         }
 
         if (debug != null) {
@@ -289,6 +293,8 @@ public final class SunCertPathBuilder extends CertPathBuilderSpi {
         /* Initialize adjacency list */
         adjacencyList.clear();
         adjacencyList.add(new LinkedList<Vertex>());
+
+        currentState.untrustedChecker = new UntrustedChecker();
 
         depthFirstSearchForward(buildParams.targetSubject(), currentState,
                                 new ForwardBuilder(buildParams,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@
 #include "code/vmreg.hpp"
 #include "compiler/oopMap.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
 #include "gc_implementation/shared/immutableSpace.hpp"
 #include "gc_implementation/shared/markSweep.hpp"
 #include "gc_implementation/shared/mutableSpace.hpp"
@@ -55,6 +54,7 @@
 #include "memory/cardTableRS.hpp"
 #include "memory/compactPermGen.hpp"
 #include "memory/defNewGeneration.hpp"
+#include "memory/freeBlockDictionary.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/generation.hpp"
 #include "memory/generationSpec.hpp"
@@ -292,8 +292,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(instanceKlass,               _method_ordering,                              typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _local_interfaces,                             objArrayOop)                           \
   nonstatic_field(instanceKlass,               _transitive_interfaces,                        objArrayOop)                           \
-  nonstatic_field(instanceKlass,               _nof_implementors,                             int)                                   \
-  nonstatic_field(instanceKlass,               _implementors[0],                              klassOop)                              \
   nonstatic_field(instanceKlass,               _fields,                                       typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _java_fields_count,                            u2)                                    \
   nonstatic_field(instanceKlass,               _constants,                                    constantPoolOop)                       \
@@ -314,7 +312,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(instanceKlass,               _init_thread,                                  Thread*)                               \
   nonstatic_field(instanceKlass,               _vtable_len,                                   int)                                   \
   nonstatic_field(instanceKlass,               _itable_len,                                   int)                                   \
-  nonstatic_field(instanceKlass,               _reference_type,                               ReferenceType)                         \
+  nonstatic_field(instanceKlass,               _reference_type,                               u1)                                    \
   volatile_nonstatic_field(instanceKlass,      _oop_map_cache,                                OopMapCache*)                          \
   nonstatic_field(instanceKlass,               _jni_ids,                                      JNIid*)                                \
   nonstatic_field(instanceKlass,               _osr_nmethods_head,                            nmethod*)                              \
@@ -2261,13 +2259,6 @@ static inline uint64_t cast_uint64_t(size_t x)
                                                                           \
   declare_constant(SymbolTable::symbol_table_size)                        \
                                                                           \
-  /********************/                                                  \
-  /* SystemDictionary */                                                  \
-  /********************/                                                  \
-                                                                          \
-  declare_constant(SystemDictionary::_loader_constraint_size)             \
-  declare_constant(SystemDictionary::_nof_buckets)                        \
-                                                                          \
   /***********************************/                                   \
   /* LoaderConstraintTable constants */                                   \
   /***********************************/                                   \
@@ -2350,7 +2341,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* instanceKlass enum                */                                 \
   /*************************************/                                 \
                                                                           \
-  declare_constant(instanceKlass::implementors_limit)                     \
                                                                           \
   /*************************************/                                 \
   /* FieldInfo FieldOffset enum        */                                 \

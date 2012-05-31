@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,9 @@
 #include <strings.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef _ALLBSD_SOURCE
+#include <unistd.h> /* gethostname */
+#endif
 
 #include "jvm.h"
 #include "jni_util.h"
@@ -70,8 +73,8 @@ Java_java_net_Inet6AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
     } else {
         // ensure null-terminated
         hostname[NI_MAXHOST] = '\0';
-#ifdef __linux__
-        /* On Linux gethostname() says "host.domain.sun.com".  On
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
+        /* On Linux/FreeBSD gethostname() says "host.domain.sun.com".  On
          * Solaris gethostname() says "host", so extra work is needed.
          */
 #else
@@ -107,7 +110,7 @@ Java_java_net_Inet6AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
             freeaddrinfo(res);
         }
 #endif /* AF_INET6 */
-#endif /* __linux__ */
+#endif /* __linux__ || _ALLBSD_SOURCE */
     }
     return (*env)->NewStringUTF(env, hostname);
 }
@@ -529,10 +532,15 @@ ping6(JNIEnv *env, jint fd, struct sockaddr_in6* him, jint timeout,
            *       from the host that we are trying to determine is reachable.
            */
           if (n >= 8 && icmp6->icmp6_type == ICMP6_ECHO_REPLY &&
-              (ntohs(icmp6->icmp6_id) == pid) &&
-              NET_IsEqual(caddr, recv_caddr)) {
-            close(fd);
-            return JNI_TRUE;
+              (ntohs(icmp6->icmp6_id) == pid)) {
+            if (NET_IsEqual(caddr, recv_caddr)) {
+              close(fd);
+              return JNI_TRUE;
+            }
+            if (NET_IsZeroAddr(caddr)) {
+              close(fd);
+              return JNI_TRUE;
+            }
           }
         }
       } while (tmout2 > 0);

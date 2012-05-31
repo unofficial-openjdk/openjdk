@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -548,7 +548,7 @@ void DefNewGeneration::collect(bool   full,
 
   init_assuming_no_promotion_failure();
 
-  TraceTime t1("GC", PrintGC && !PrintGCDetails, true, gclog_or_tty);
+  TraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, gclog_or_tty);
   // Capture heap used before collection (for printing).
   size_t gch_prev_used = gch->used();
 
@@ -655,7 +655,12 @@ void DefNewGeneration::collect(bool   full,
   from()->set_concurrent_iteration_safe_limit(from()->top());
   to()->set_concurrent_iteration_safe_limit(to()->top());
   SpecializationStats::print();
-  update_time_of_last_gc(os::javaTimeMillis());
+
+  // We need to use a monotonically non-deccreasing time in ms
+  // or we will see time-warp warnings and os::javaTimeMillis()
+  // does not guarantee monotonicity.
+  jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
+  update_time_of_last_gc(now);
 }
 
 class RemoveForwardPointerClosure: public ObjectClosure {
@@ -934,10 +939,10 @@ void DefNewGeneration::update_counters() {
   }
 }
 
-void DefNewGeneration::verify(bool allow_dirty) {
-  eden()->verify(allow_dirty);
-  from()->verify(allow_dirty);
-    to()->verify(allow_dirty);
+void DefNewGeneration::verify() {
+  eden()->verify();
+  from()->verify();
+    to()->verify();
 }
 
 void DefNewGeneration::print_on(outputStream* st) const {

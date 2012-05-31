@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -267,36 +267,42 @@ public abstract class SSLContextImpl extends SSLContextSpi {
 
     // Get suported CipherSuiteList.
     CipherSuiteList getSuportedCipherSuiteList() {
-        // Clear cache of available ciphersuites.
-        clearAvailableCache();
+        // The maintenance of cipher suites needs to be synchronized.
+        synchronized (this) {
+            // Clear cache of available ciphersuites.
+            clearAvailableCache();
 
-        if (supportedCipherSuiteList == null) {
-            supportedCipherSuiteList =
-                getApplicableCipherSuiteList(getSuportedProtocolList(), false);
+            if (supportedCipherSuiteList == null) {
+                supportedCipherSuiteList = getApplicableCipherSuiteList(
+                        getSuportedProtocolList(), false);
+            }
+
+            return supportedCipherSuiteList;
         }
-
-        return supportedCipherSuiteList;
     }
 
     // Get default CipherSuiteList.
     CipherSuiteList getDefaultCipherSuiteList(boolean roleIsServer) {
-        // Clear cache of available ciphersuites.
-        clearAvailableCache();
+        // The maintenance of cipher suites needs to be synchronized.
+        synchronized (this) {
+            // Clear cache of available ciphersuites.
+            clearAvailableCache();
 
-        if (roleIsServer) {
-            if (defaultServerCipherSuiteList == null) {
-                defaultServerCipherSuiteList = getApplicableCipherSuiteList(
+            if (roleIsServer) {
+                if (defaultServerCipherSuiteList == null) {
+                    defaultServerCipherSuiteList = getApplicableCipherSuiteList(
                         getDefaultProtocolList(true), true);
-            }
+                }
 
-            return defaultServerCipherSuiteList;
-        } else {
-            if (defaultClientCipherSuiteList == null) {
-                defaultClientCipherSuiteList = getApplicableCipherSuiteList(
+                return defaultServerCipherSuiteList;
+            } else {
+                if (defaultClientCipherSuiteList == null) {
+                    defaultClientCipherSuiteList = getApplicableCipherSuiteList(
                         getDefaultProtocolList(false), true);
-            }
+                }
 
-            return defaultClientCipherSuiteList;
+                return defaultClientCipherSuiteList;
+            }
         }
     }
 
@@ -364,8 +370,11 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      * Clear cache of available ciphersuites. If we support all ciphers
      * internally, there is no need to clear the cache and calling this
      * method has no effect.
+     *
+     * Note that every call to clearAvailableCache() and the maintenance of
+     * cipher suites need to be synchronized with this instance.
      */
-    synchronized void clearAvailableCache() {
+    private void clearAvailableCache() {
         if (CipherSuite.DYNAMIC_AVAILABILITY) {
             supportedCipherSuiteList = null;
             defaultServerCipherSuiteList = null;
@@ -774,12 +783,8 @@ final class AbstractTrustManagerWrapper extends X509ExtendedTrustManager
     // the delegated trust manager
     private final X509TrustManager tm;
 
-    // Cache the trusted certificate to optimize the performance.
-    private final Collection<X509Certificate> trustedCerts = new HashSet<>();
-
     AbstractTrustManagerWrapper(X509TrustManager tm) {
         this.tm = tm;
-        Collections.addAll(trustedCerts, tm.getAcceptedIssuers());
     }
 
     @Override
@@ -920,6 +925,13 @@ final class AbstractTrustManagerWrapper extends X509ExtendedTrustManager
         try {
             // Does the certificate chain end with a trusted certificate?
             int checkedLength = chain.length - 1;
+
+            Collection<X509Certificate> trustedCerts = new HashSet<>();
+            X509Certificate[] certs = tm.getAcceptedIssuers();
+            if ((certs != null) && (certs.length > 0)){
+                Collections.addAll(trustedCerts, certs);
+            }
+
             if (trustedCerts.contains(chain[checkedLength])) {
                     checkedLength--;
             }

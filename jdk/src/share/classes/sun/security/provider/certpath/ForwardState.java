@@ -75,6 +75,10 @@ class ForwardState implements State {
     /* Flag indicating if state is initial (path is just starting) */
     private boolean init = true;
 
+
+    /* the untrusted certificates checker */
+    UntrustedChecker untrustedChecker;
+
     /* The list of user-defined checkers that support forward checking */
     ArrayList<PKIXCertPathChecker> forwardCheckers;
 

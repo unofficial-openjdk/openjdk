@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,28 @@
 #
 
 #------------------------------------------------------------------------
-# CC, CPP & AS
+# CC, CXX & AS
 
-# When cross-compiling the ALT_COMPILER_PATH points
-# to the cross-compilation toolset
-ifdef CROSS_COMPILE_ARCH
-CPP = $(ALT_COMPILER_PATH)/g++
-CC  = $(ALT_COMPILER_PATH)/gcc
-HOSTCPP = g++
-HOSTCC  = gcc
-else
-CPP = g++
-CC  = gcc
-HOSTCPP = $(CPP)
-HOSTCC  = $(CC)
+# If a SPEC is not set already, then use these defaults.
+ifeq ($(SPEC),)
+  # When cross-compiling the ALT_COMPILER_PATH points
+  # to the cross-compilation toolset
+  ifdef CROSS_COMPILE_ARCH
+    CXX = $(ALT_COMPILER_PATH)/g++
+    CC  = $(ALT_COMPILER_PATH)/gcc
+    HOSTCXX = g++
+    HOSTCC  = gcc
+    STRIP = $(ALT_COMPILER_PATH)/strip
+  else
+    CXX = g++
+    CC  = gcc
+    HOSTCXX = $(CXX)
+    HOSTCC  = $(CC)
+    STRIP = strip
+  endif
+  AS  = $(CC) -c
 endif
 
-AS  = $(CC) -c
 
 # -dumpversion in gcc-2.91 shows "egcs-2.91.66". In later version, it only
 # prints the numbers (e.g. "2.95", "3.2.1")
@@ -67,10 +72,11 @@ VM_PICFLAG/LIBJVM = $(PICFLAG)
 VM_PICFLAG/AOUT   =
 VM_PICFLAG        = $(VM_PICFLAG/$(LINK_INTO))
 
-ifeq ($(ZERO_BUILD), true)
+ifeq ($(JVM_VARIANT_ZERO), true)
 CFLAGS += $(LIBFFI_CFLAGS)
 endif
-ifeq ($(SHARK_BUILD), true)
+ifeq ($(JVM_VARIANT_ZEROSHARK), true)
+CFLAGS += $(LIBFFI_CFLAGS)
 CFLAGS += $(LLVM_CFLAGS)
 endif
 CFLAGS += $(VM_PICFLAG)
@@ -224,7 +230,7 @@ ifeq ($(DEBUG_CFLAGS/$(BUILDARCH)),)
 DEBUG_CFLAGS += -gstabs
 endif
 
-ifneq ($(OBJCOPY),)
+ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
   FASTDEBUG_CFLAGS/ia64  = -g
   FASTDEBUG_CFLAGS/amd64 = -g
   FASTDEBUG_CFLAGS/arm   = -g
@@ -260,10 +266,4 @@ endif
 # favor code space over speed
 ifdef MINIMIZE_RAM_USAGE
 CFLAGS += -DMINIMIZE_RAM_USAGE
-endif
-
-ifdef CROSS_COMPILE_ARCH
-  STRIP = $(ALT_COMPILER_PATH)/strip
-else
-  STRIP = strip
 endif

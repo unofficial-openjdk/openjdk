@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,7 @@
 
 package com.sun.java.util.jar.pack;
 
-import com.sun.java.util.jar.pack.ConstantPool.ClassEntry;
-import com.sun.java.util.jar.pack.ConstantPool.DescriptorEntry;
-import com.sun.java.util.jar.pack.ConstantPool.Entry;
-import com.sun.java.util.jar.pack.ConstantPool.Index;
-import com.sun.java.util.jar.pack.ConstantPool.IndexGroup;
-import com.sun.java.util.jar.pack.ConstantPool.MemberEntry;
-import com.sun.java.util.jar.pack.ConstantPool.NumberEntry;
-import com.sun.java.util.jar.pack.ConstantPool.SignatureEntry;
-import com.sun.java.util.jar.pack.ConstantPool.StringEntry;
+import com.sun.java.util.jar.pack.ConstantPool.*;
 import com.sun.java.util.jar.pack.Package.Class;
 import com.sun.java.util.jar.pack.Package.File;
 import com.sun.java.util.jar.pack.Package.InnerClass;
@@ -57,12 +49,13 @@ import static com.sun.java.util.jar.pack.Constants.*;
 class PackageWriter extends BandStructure {
     Package pkg;
     OutputStream finalOut;
+    Package.Version packageVersion;
 
     PackageWriter(Package pkg, OutputStream out) throws IOException {
         this.pkg = pkg;
         this.finalOut = out;
-        // Caller has specified archive version in the package:
-        initPackageMajver(pkg.package_majver);
+        // Caller has specified maximum class file version in the package:
+        initHighestClassVersion(pkg.getHighestClassVersion());
     }
 
     void write() throws IOException {
@@ -126,6 +119,57 @@ class PackageWriter extends BandStructure {
         collectInnerClasses();
     }
 
+    /*
+     * Convenience function to choose an archive version based
+     * on the class file versions observed within the archive
+     * or set the user defined version preset via properties.
+     */
+    void chooseDefaultPackageVersion() throws IOException {
+        if (pkg.packageVersion != null) {
+            packageVersion = pkg.packageVersion;
+            if (verbose > 0) {
+                Utils.log.info("package version overridden with: "
+                                + packageVersion);
+            }
+            return;
+        }
+
+        Package.Version highV = getHighestClassVersion();
+        // set the package version now
+        if (highV.lessThan(JAVA6_MAX_CLASS_VERSION)) {
+            // There are only old classfiles in this segment or resources
+            packageVersion = JAVA5_PACKAGE_VERSION;
+        } else if (highV.equals(JAVA6_MAX_CLASS_VERSION) ||
+                (highV.equals(JAVA7_MAX_CLASS_VERSION) && !pkg.cp.haveExtraTags())) {
+            // force down the package version if we have jdk7 classes without
+            // any Indy references, this is because jdk7 class file (52.0) without
+            // Indy is identical to jdk6 class file (51.0).
+            packageVersion = JAVA6_PACKAGE_VERSION;
+        } else {
+            // Normal case.  Use the newest archive format, when available
+            packageVersion = JAVA7_PACKAGE_VERSION;
+        }
+
+        if (verbose > 0) {
+            Utils.log.info("Highest version class file: " + highV
+                    + " package version: " + packageVersion);
+        }
+    }
+
+    void checkVersion() throws IOException {
+        assert(packageVersion != null);
+
+        if (packageVersion.lessThan(JAVA7_PACKAGE_VERSION)) {
+            // this bit was reserved for future use in previous versions
+            if (testBit(archiveOptions, AO_HAVE_CP_EXTRAS)) {
+                throw new IOException("Format bits for Java 7 must be zero in previous releases");
+            }
+        }
+        if (testBit(archiveOptions, AO_UNUSED_MBZ)) {
+            throw new IOException("High archive option bits are reserved and must be zero: " + Integer.toHexString(archiveOptions));
+        }
+    }
+
     void setArchiveOptions() {
         // Decide on some archive options early.
         // Does not decide on: AO_HAVE_SPECIAL_FORMATS,
@@ -176,11 +220,11 @@ class PackageWriter extends BandStructure {
             }
         }
         // Decide on default version number (majority rule).
-        Map<Integer, int[]> verCounts = new HashMap<>();
+        Map<Package.Version, int[]> verCounts = new HashMap<>();
         int bestCount = 0;
-        int bestVersion = -1;
+        Package.Version bestVersion = null;
         for (Class cls : pkg.classes) {
-            int version = cls.getVersion();
+            Package.Version version = cls.getVersion();
             int[] var = verCounts.get(version);
             if (var == null) {
                 var = new int[1];
@@ -194,28 +238,22 @@ class PackageWriter extends BandStructure {
             }
         }
         verCounts.clear();
-        if (bestVersion == -1)  bestVersion = 0;  // degenerate case
-        int bestMajver = (char)(bestVersion >>> 16);
-        int bestMinver = (char)(bestVersion);
-        pkg.default_class_majver = (short) bestMajver;
-        pkg.default_class_minver = (short) bestMinver;
-        String bestVerStr = Package.versionStringOf(bestMajver, bestMinver);
+        if (bestVersion == null)  bestVersion = JAVA_MIN_CLASS_VERSION;  // degenerate case
+        pkg.defaultClassVersion = bestVersion;
         if (verbose > 0)
-           Utils.log.info("Consensus version number in segment is "+bestVerStr);
+           Utils.log.info("Consensus version number in segment is " + bestVersion);
         if (verbose > 0)
-            Utils.log.info("Highest version number in segment is "+
-                           Package.versionStringOf(pkg.getHighestClassVersion()));
+            Utils.log.info("Highest version number in segment is "
+                            + pkg.getHighestClassVersion());
 
         // Now add explicit pseudo-attrs. to classes with odd versions.
         for (Class cls : pkg.classes) {
-            if (cls.getVersion() != bestVersion) {
-                Attribute a = makeClassFileVersionAttr(cls.minver, cls.majver);
+            if (!cls.getVersion().equals(bestVersion)) {
+                Attribute a = makeClassFileVersionAttr(cls.getVersion());
                 if (verbose > 1) {
-                    String clsVer = cls.getVersionString();
-                    String pkgVer = bestVerStr;
-                    Utils.log.fine("Version "+clsVer+" of "+cls
-                                     +" doesn't match package version "
-                                     +pkgVer);
+                    Utils.log.fine("Version "+cls.getVersion() + " of " + cls
+                                     + " doesn't match package version "
+                                     + bestVersion);
                 }
                 // Note:  Does not add in "natural" order.  (Who cares?)
                 cls.addAttribute(a);
@@ -260,7 +298,7 @@ class PackageWriter extends BandStructure {
     }
 
     void writeFileHeader() throws IOException {
-        pkg.checkVersion();
+        chooseDefaultPackageVersion();
         writeArchiveMagic();
         writeArchiveHeader();
     }
@@ -281,7 +319,7 @@ class PackageWriter extends BandStructure {
 
     void writeArchiveHeader() throws IOException {
         // for debug only:  number of words optimized away
-        int headerDiscountForDebug = 0;
+        int headerSizeForDebug = AH_LENGTH_MIN;
 
         // AO_HAVE_SPECIAL_FORMATS is set if non-default
         // coding techniques are used, or if there are
@@ -293,8 +331,8 @@ class PackageWriter extends BandStructure {
             if (haveSpecial)
                 archiveOptions |= AO_HAVE_SPECIAL_FORMATS;
         }
-        if (!haveSpecial)
-            headerDiscountForDebug += AH_SPECIAL_FORMAT_LEN;
+        if (haveSpecial)
+            headerSizeForDebug += AH_SPECIAL_FORMAT_LEN;
 
         // AO_HAVE_FILE_HEADERS is set if there is any
         // file or segment envelope information present.
@@ -305,8 +343,8 @@ class PackageWriter extends BandStructure {
             if (haveFiles)
                 archiveOptions |= AO_HAVE_FILE_HEADERS;
         }
-        if (!haveFiles)
-            headerDiscountForDebug += AH_FILE_HEADER_LEN;
+        if (haveFiles)
+            headerSizeForDebug += AH_FILE_HEADER_LEN;
 
         // AO_HAVE_CP_NUMBERS is set if there are any numbers
         // in the global constant pool.  (Numbers are in 15% of classes.)
@@ -316,15 +354,27 @@ class PackageWriter extends BandStructure {
             if (haveNumbers)
                 archiveOptions |= AO_HAVE_CP_NUMBERS;
         }
-        if (!haveNumbers)
-            headerDiscountForDebug += AH_CP_NUMBER_LEN;
+        if (haveNumbers)
+            headerSizeForDebug += AH_CP_NUMBER_LEN;
 
-        assert(pkg.package_majver > 0);  // caller must specify!
-        archive_header_0.putInt(pkg.package_minver);
-        archive_header_0.putInt(pkg.package_majver);
+        // AO_HAVE_CP_EXTRAS is set if there are constant pool entries
+        // beyond the Java 6 version of the class file format.
+        boolean haveCPExtra = testBit(archiveOptions, AO_HAVE_CP_EXTRAS);
+        if (!haveCPExtra) {
+            haveCPExtra |= pkg.cp.haveExtraTags();
+            if (haveCPExtra)
+                archiveOptions |= AO_HAVE_CP_EXTRAS;
+        }
+        if (haveCPExtra)
+            headerSizeForDebug += AH_CP_EXTRA_LEN;
+
+        // the archiveOptions are all initialized, sanity check now!.
+        checkVersion();
+
+        archive_header_0.putInt(packageVersion.minor);
+        archive_header_0.putInt(packageVersion.major);
         if (verbose > 0)
-            Utils.log.info("Package Version for this segment:"+
-                           Package.versionStringOf(pkg.getPackageVersion()));
+            Utils.log.info("Package Version for this segment:" + packageVersion);
         archive_header_0.putInt(archiveOptions); // controls header format
         assert(archive_header_0.length() == AH_LENGTH_0);
 
@@ -355,18 +405,18 @@ class PackageWriter extends BandStructure {
             assert(attrDefsWritten.length == 0);
         }
 
-        writeConstantPoolCounts(haveNumbers);
+        writeConstantPoolCounts(haveNumbers, haveCPExtra);
 
         archive_header_1.putInt(pkg.getAllInnerClasses().size());
-        archive_header_1.putInt(pkg.default_class_minver);
-        archive_header_1.putInt(pkg.default_class_majver);
+        archive_header_1.putInt(pkg.defaultClassVersion.minor);
+        archive_header_1.putInt(pkg.defaultClassVersion.major);
         archive_header_1.putInt(pkg.classes.size());
 
-        // Sanity:  Make sure we came out to 26 (less optional fields):
+        // Sanity:  Make sure we came out to 29 (less optional fields):
         assert(archive_header_0.length() +
                archive_header_S.length() +
                archive_header_1.length()
-               == AH_LENGTH - headerDiscountForDebug);
+               == headerSizeForDebug);
 
         // Figure out all the sizes now, first cut:
         archiveSize0 = 0;
@@ -394,9 +444,8 @@ class PackageWriter extends BandStructure {
         assert(all_bands.outputSize() == archiveSize0+archiveSize1);
     }
 
-    void writeConstantPoolCounts(boolean haveNumbers) throws IOException {
-        for (int k = 0; k < ConstantPool.TAGS_IN_ORDER.length; k++) {
-            byte tag = ConstantPool.TAGS_IN_ORDER[k];
+    void writeConstantPoolCounts(boolean haveNumbers, boolean haveCPExtra) throws IOException {
+        for (byte tag : ConstantPool.TAGS_IN_ORDER) {
             int count = pkg.cp.getIndexByTag(tag).size();
             switch (tag) {
             case CONSTANT_Utf8:
@@ -412,6 +461,17 @@ class PackageWriter extends BandStructure {
             case CONSTANT_Double:
                 // Omit counts for numbers if possible.
                 if (!haveNumbers) {
+                    assert(count == 0);
+                    continue;
+                }
+                break;
+
+            case CONSTANT_MethodHandle:
+            case CONSTANT_MethodType:
+            case CONSTANT_InvokeDynamic:
+            case CONSTANT_BootstrapMethod:
+                // Omit counts for newer entities if possible.
+                if (!haveCPExtra) {
                     assert(count == 0);
                     continue;
                 }
@@ -449,8 +509,7 @@ class PackageWriter extends BandStructure {
 
         if (verbose > 0)  Utils.log.info("Writing CP");
 
-        for (int k = 0; k < ConstantPool.TAGS_IN_ORDER.length; k++) {
-            byte  tag   = ConstantPool.TAGS_IN_ORDER[k];
+        for (byte tag : ConstantPool.TAGS_IN_ORDER) {
             Index index = cp.getIndexByTag(tag);
 
             Entry[] cpMap = index.cpMap;
@@ -530,8 +589,52 @@ class PackageWriter extends BandStructure {
             case CONSTANT_InterfaceMethodref:
                 writeMemberRefs(tag, cpMap, cp_Imethod_class, cp_Imethod_desc);
                 break;
+            case CONSTANT_MethodHandle:
+                for (int i = 0; i < cpMap.length; i++) {
+                    MethodHandleEntry e = (MethodHandleEntry) cpMap[i];
+                    cp_MethodHandle_refkind.putInt(e.refKind);
+                    cp_MethodHandle_member.putRef(e.memRef);
+                }
+                break;
+            case CONSTANT_MethodType:
+                for (int i = 0; i < cpMap.length; i++) {
+                    MethodTypeEntry e = (MethodTypeEntry) cpMap[i];
+                    cp_MethodType.putRef(e.typeRef);
+                }
+                break;
+            case CONSTANT_InvokeDynamic:
+                for (int i = 0; i < cpMap.length; i++) {
+                    InvokeDynamicEntry e = (InvokeDynamicEntry) cpMap[i];
+                    cp_InvokeDynamic_spec.putRef(e.bssRef);
+                    cp_InvokeDynamic_desc.putRef(e.descRef);
+                }
+                break;
+            case CONSTANT_BootstrapMethod:
+                for (int i = 0; i < cpMap.length; i++) {
+                    BootstrapMethodEntry e = (BootstrapMethodEntry) cpMap[i];
+                    cp_BootstrapMethod_ref.putRef(e.bsmRef);
+                    cp_BootstrapMethod_arg_count.putInt(e.argRefs.length);
+                    for (Entry argRef : e.argRefs) {
+                        cp_BootstrapMethod_arg.putRef(argRef);
+                    }
+                }
+                break;
             default:
-                assert(false);
+                throw new AssertionError("unexpected CP tag in package");
+            }
+        }
+        if (optDumpBands || verbose > 1) {
+            for (byte tag = CONSTANT_GroupFirst; tag < CONSTANT_GroupLimit; tag++) {
+                Index index = cp.getIndexByTag(tag);
+                if (index == null || index.isEmpty())  continue;
+                Entry[] cpMap = index.cpMap;
+                if (verbose > 1)
+                    Utils.log.info("Index group "+ConstantPool.tagName(tag)+" contains "+cpMap.length+" entries.");
+                if (optDumpBands) {
+                    try (PrintStream ps = new PrintStream(getDumpStream(index.debugName, tag, ".gidx", index))) {
+                        printArrayTo(ps, cpMap, 0, cpMap.length, true);
+                    }
+                }
             }
         }
     }
@@ -836,7 +939,7 @@ class PackageWriter extends BandStructure {
                 if (predefIndex == null) {
                     // Make sure the package CP can name the local attribute.
                     Entry ne = ConstantPool.getUtf8Entry(def.name());
-                    String layout = def.layoutForPackageMajver(getPackageMajver());
+                    String layout = def.layoutForClassVersion(getHighestClassVersion());
                     Entry le = ConstantPool.getUtf8Entry(layout);
                     requiredEntries.add(ne);
                     requiredEntries.add(le);
@@ -932,7 +1035,7 @@ class PackageWriter extends BandStructure {
                 assert((header & ADH_CONTEXT_MASK) == def.ctype());
                 attr_definition_headers.putByte(header);
                 attr_definition_name.putRef(ConstantPool.getUtf8Entry(def.name()));
-                String layout = def.layoutForPackageMajver(getPackageMajver());
+                String layout = def.layoutForClassVersion(getHighestClassVersion());
                 attr_definition_layout.putRef(ConstantPool.getUtf8Entry(layout));
                 // Check that we are transmitting that correct attribute index:
                 boolean debug = false;
@@ -988,6 +1091,8 @@ class PackageWriter extends BandStructure {
         for (Class cls : pkg.classes) {
             // Replace "obvious" SourceFile attrs by null.
             cls.minimizeSourceFile();
+            // BootstrapMethods should never have been inserted.
+            assert(cls.getAttribute(Package.attrBootstrapMethodsEmpty) == null);
         }
     }
 
@@ -1325,9 +1430,7 @@ class PackageWriter extends BandStructure {
             // %%% Add a stress mode which issues _ref/_byte_escape.
             if (verbose > 3)  Utils.log.fine(i.toString());
 
-            if (i.isNonstandard()
-                && (!p200.getBoolean(Utils.COM_PREFIX+"invokedynamic")
-                    || i.getBC() != _xxxunusedxxx)) {
+            if (i.isNonstandard()) {
                 // Crash and burn with a complaint if there are funny
                 // bytecodes in this class file.
                 String complaint = code.getMethod()
@@ -1427,24 +1530,6 @@ class PackageWriter extends BandStructure {
                 continue;
             }
 
-            switch (bc) {
-            case _xxxunusedxxx:  // %%% pretend this is invokedynamic
-                {
-                    i.setNonstandardLength(3);
-                    int refx = i.getShortAt(1);
-                    Entry ref = (refx == 0)? null: curCPMap[refx];
-                    // transmit the opcode, carefully:
-                    bc_codes.putByte(_byte_escape);
-                    bc_escsize.putInt(1);     // one byte of opcode
-                    bc_escbyte.putByte(bc);   // the opcode
-                    // transmit the CP reference, carefully:
-                    bc_codes.putByte(_ref_escape);
-                    bc_escrefsize.putInt(2);  // two bytes of ref
-                    bc_escref.putRef(ref);    // the ref
-                    continue;
-                }
-            }
-
             int branch = i.getBranchLabel();
             if (branch >= 0) {
                 bc_codes.putByte(bc);
@@ -1458,7 +1543,7 @@ class PackageWriter extends BandStructure {
                 CPRefBand bc_which;
                 int vbc = bc;
                 switch (i.getCPTag()) {
-                case CONSTANT_Literal:
+                case CONSTANT_LoadableValue:
                     switch (ref.tag) {
                     case CONSTANT_Integer:
                         bc_which = bc_intref;
@@ -1489,8 +1574,8 @@ class PackageWriter extends BandStructure {
                     case CONSTANT_String:
                         bc_which = bc_stringref;
                         switch (bc) {
-                        case _ldc:    vbc = _aldc; break;
-                        case _ldc_w:  vbc = _aldc_w; break;
+                        case _ldc:    vbc = _sldc; break;
+                        case _ldc_w:  vbc = _sldc_w; break;
                         default:      assert(false);
                         }
                         break;
@@ -1503,8 +1588,16 @@ class PackageWriter extends BandStructure {
                         }
                         break;
                     default:
-                        bc_which = null;
-                        assert(false);
+                        // CONSTANT_MethodHandle, etc.
+                        if (getHighestClassVersion().lessThan(JAVA7_MAX_CLASS_VERSION)) {
+                            throw new IOException("bad class file major version for Java 7 ldc");
+                        }
+                        bc_which = bc_loadablevalueref;
+                        switch (bc) {
+                        case _ldc:    vbc = _qldc; break;
+                        case _ldc_w:  vbc = _qldc_w; break;
+                        default:      assert(false);
+                        }
                     }
                     break;
                 case CONSTANT_Class:
@@ -1517,6 +1610,8 @@ class PackageWriter extends BandStructure {
                     bc_which = bc_methodref; break;
                 case CONSTANT_InterfaceMethodref:
                     bc_which = bc_imethodref; break;
+                case CONSTANT_InvokeDynamic:
+                    bc_which = bc_indyref; break;
                 default:
                     bc_which = null;
                     assert(false);
@@ -1532,6 +1627,12 @@ class PackageWriter extends BandStructure {
                     assert(i.getLength() == 5);
                     // Make sure the discarded bytes are sane:
                     assert(i.getConstant() == (1+((MemberEntry)ref).descRef.typeRef.computeSize(true)) << 8);
+                } else if (bc == _invokedynamic) {
+                    if (getHighestClassVersion().lessThan(JAVA7_MAX_CLASS_VERSION)) {
+                        throw new IOException("bad class major version for Java 7 invokedynamic");
+                    }
+                    assert(i.getLength() == 5);
+                    assert(i.getConstant() == 0);  // last 2 bytes MBZ
                 } else {
                     // Make sure there is nothing else to write.
                     assert(i.getLength() == ((bc == _ldc)?2:3));

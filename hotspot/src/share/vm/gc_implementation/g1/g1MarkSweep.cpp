@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
+#include "gc_implementation/g1/g1Log.hpp"
 #include "gc_implementation/g1/g1MarkSweep.hpp"
 #include "memory/gcLocker.hpp"
 #include "memory/genCollectedHeap.hpp"
@@ -126,8 +127,7 @@ void G1MarkSweep::allocate_stacks() {
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
                                     bool clear_all_softrefs) {
   // Recursively traverse all live objects and mark them
-  EventMark m("1 mark object");
-  TraceTime tm("phase 1", PrintGC && Verbose, true, gclog_or_tty);
+  TraceTime tm("phase 1", G1Log::fine() && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace(" 1");
 
   SharedHeap* sh = SharedHeap::heap();
@@ -193,8 +193,7 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
     // fail. At the end of the GC, the orginal mark word values
     // (including hash values) are restored to the appropriate
     // objects.
-    Universe::heap()->verify(/* allow dirty */ true,
-                             /* silent      */ false,
+    Universe::heap()->verify(/* silent      */ false,
                              /* option      */ VerifyOption_G1UseMarkWord);
 
     G1CollectedHeap* g1h = G1CollectedHeap::heap();
@@ -292,8 +291,7 @@ void G1MarkSweep::mark_sweep_phase2() {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   Generation* pg = g1h->perm_gen();
 
-  EventMark m("2 compute new addresses");
-  TraceTime tm("phase 2", PrintGC && Verbose, true, gclog_or_tty);
+  TraceTime tm("phase 2", G1Log::fine() && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace("2");
 
   FindFirstRegionClosure cl;
@@ -337,8 +335,7 @@ void G1MarkSweep::mark_sweep_phase3() {
   Generation* pg = g1h->perm_gen();
 
   // Adjust the pointers to reflect the new locations
-  EventMark m("3 adjust pointers");
-  TraceTime tm("phase 3", PrintGC && Verbose, true, gclog_or_tty);
+  TraceTime tm("phase 3", G1Log::fine() && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace("3");
 
   SharedHeap* sh = SharedHeap::heap();
@@ -402,8 +399,7 @@ void G1MarkSweep::mark_sweep_phase4() {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   Generation* pg = g1h->perm_gen();
 
-  EventMark m("4 compact heap");
-  TraceTime tm("phase 4", PrintGC && Verbose, true, gclog_or_tty);
+  TraceTime tm("phase 4", G1Log::fine() && Verbose, true, gclog_or_tty);
   GenMarkSweep::trace("4");
 
   pg->compact();

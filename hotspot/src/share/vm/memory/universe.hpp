@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -412,7 +412,7 @@ class Universe: AllStatic {
 
   // Debugging
   static bool verify_in_progress() { return _verify_in_progress; }
-  static void verify(bool allow_dirty = true, bool silent = false,
+  static void verify(bool silent = false,
                      VerifyOption option = VerifyOption_Default );
   static int  verify_count()       { return _verify_count; }
   // The default behavior is to call print_on() on gclog_or_tty.
@@ -424,8 +424,8 @@ class Universe: AllStatic {
   static void print_heap_at_SIGBREAK();
   static void print_heap_before_gc() { print_heap_before_gc(gclog_or_tty); }
   static void print_heap_after_gc()  { print_heap_after_gc(gclog_or_tty); }
-  static void print_heap_before_gc(outputStream* st);
-  static void print_heap_after_gc(outputStream* st);
+  static void print_heap_before_gc(outputStream* st, bool ignore_extended = false);
+  static void print_heap_after_gc(outputStream* st, bool ignore_extended = false);
 
   // Change the number of dummy objects kept reachable by the full gc dummy
   // array; this should trigger relocation in a sliding compaction collector.

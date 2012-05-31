@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1279,7 +1279,8 @@ public class ExtendedCharsets
         }
         String osName = AccessController.doPrivileged(
             new GetPropertyAction("os.name"));
-        if ("SunOS".equals(osName) || "Linux".equals(osName)) {
+        if ("SunOS".equals(osName) || "Linux".equals(osName)
+               || osName.contains("OS X")) {
             charset("x-COMPOUND_TEXT", "COMPOUND_TEXT",
                     new String[] {
                         "COMPOUND_TEXT",        // JDK historical

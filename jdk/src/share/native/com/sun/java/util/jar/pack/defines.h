@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,10 @@
 #include <winuser.h>
 #else
 #include <unistd.h>
+#endif
+
+#ifndef NO_ZLIB
+#include <zconf.h>
 #endif
 
 #ifndef FULL
@@ -89,10 +93,12 @@ extern int assert_failed(const char*);
 // bytes and byte arrays
 
 typedef unsigned int uint;
+#if !defined(MACOSX) || (defined(MACOSX) && defined(NO_ZLIB))
 #ifdef _LP64
 typedef unsigned int uLong; // Historical zlib, should be 32-bit.
 #else
 typedef unsigned long uLong;
+#endif
 #endif
 #ifdef _MSC_VER
 typedef LONGLONG        jlong;
@@ -103,7 +109,8 @@ typedef DWORDLONG       julong;
 #define dup2(a,b)       _dup2(a,b)
 #define strcasecmp(s1, s2) _stricmp(s1,s2)
 #define tempname        _tempname
-#define sleep Sleep
+#define sleep           Sleep
+#define snprintf        _snprintf
 #else
 typedef signed char byte;
 #ifdef _LP64

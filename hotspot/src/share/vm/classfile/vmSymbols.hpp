@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include "oops/symbol.hpp"
 #include "memory/iterator.hpp"
+#include "trace/traceMacros.hpp"
 
 // The class vmSymbols is a name space for fast lookup of
 // symbols commonly used in the VM.
@@ -284,6 +285,7 @@
   template(run_method_name,                           "run")                                      \
   template(exit_method_name,                          "exit")                                     \
   template(add_method_name,                           "add")                                      \
+  template(remove_method_name,                        "remove")                                   \
   template(parent_name,                               "parent")                                   \
   template(threads_name,                              "threads")                                  \
   template(groups_name,                               "groups")                                   \
@@ -338,6 +340,9 @@
   template(park_event_name,                           "nativeParkEventPointer")                   \
   template(cache_field_name,                          "cache")                                    \
   template(value_name,                                "value")                                    \
+  template(offset_name,                               "offset")                                   \
+  template(count_name,                                "count")                                    \
+  template(hash_name,                                 "hash")                                     \
   template(frontCacheEnabled_name,                    "frontCacheEnabled")                        \
   template(stringCacheEnabled_name,                   "stringCacheEnabled")                       \
   template(numberOfLeadingZeros_name,                 "numberOfLeadingZeros")                     \
@@ -423,6 +428,7 @@
   template(throwable_throwable_signature,             "(Ljava/lang/Throwable;)Ljava/lang/Throwable;")             \
   template(class_void_signature,                      "(Ljava/lang/Class;)V")                     \
   template(class_int_signature,                       "(Ljava/lang/Class;)I")                     \
+  template(class_long_signature,                      "(Ljava/lang/Class;)J")                     \
   template(class_boolean_signature,                   "(Ljava/lang/Class;)Z")                     \
   template(throwable_string_void_signature,           "(Ljava/lang/Throwable;Ljava/lang/String;)V")               \
   template(string_array_void_signature,               "([Ljava/lang/String;)V")                                   \
@@ -508,6 +514,9 @@
   template(clear_name,                                 "clear")                                                   \
   template(trigger_method_signature,                   "(ILjava/lang/management/MemoryUsage;)V")                                                 \
   template(startAgent_name,                            "startAgent")                                              \
+  template(startRemoteAgent_name,                      "startRemoteManagementAgent")                              \
+  template(startLocalAgent_name,                       "startLocalManagementAgent")                               \
+  template(stopRemoteAgent_name,                       "stopRemoteManagementAgent")                               \
   template(java_lang_management_ThreadInfo_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;)V") \
   template(java_lang_management_ThreadInfo_with_locks_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;[Ljava/lang/Object;[I[Ljava/lang/Object;)V") \
   template(long_long_long_long_void_signature,         "(JJJJ)V")                                                 \
@@ -535,9 +544,11 @@
   template(serializePropertiesToByteArray_signature,   "()[B")                                                    \
   template(serializeAgentPropertiesToByteArray_name,   "serializeAgentPropertiesToByteArray")                     \
   template(classRedefinedCount_name,                   "classRedefinedCount")                                     \
+                                                                                                                  \
+  /* trace signatures */                                                                                          \
+  TRACE_TEMPLATES(template)                                                                                       \
+                                                                                                                  \
   /*end*/
-
-
 
 // Here are all the intrinsics known to the runtime and the CI.
 // Each intrinsic consists of a public enum name (like _hashCode),
@@ -643,6 +654,8 @@
    do_name(     currentTimeMillis_name,                          "currentTimeMillis")                                   \
   do_intrinsic(_nanoTime,                 java_lang_System,       nanoTime_name,          void_long_signature,   F_S)   \
    do_name(     nanoTime_name,                                   "nanoTime")                                            \
+                                                                                                                        \
+  TRACE_INTRINSICS(do_intrinsic, do_class, do_name, do_signature, do_alias)                                             \
                                                                                                                         \
   do_intrinsic(_arraycopy,                java_lang_System,       arraycopy_name, arraycopy_signature,           F_S)   \
    do_name(     arraycopy_name,                                  "arraycopy")                                           \

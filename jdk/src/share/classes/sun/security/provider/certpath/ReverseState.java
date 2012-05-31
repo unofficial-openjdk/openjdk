@@ -100,6 +100,9 @@ class ReverseState implements State {
     /* the algorithm checker */
     AlgorithmChecker algorithmChecker;
 
+    /* the untrusted certificates checker */
+    UntrustedChecker untrustedChecker;
+
     /* the trust anchor used to validate the path */
     TrustAnchor trustAnchor;
 

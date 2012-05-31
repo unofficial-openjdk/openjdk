@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@
 
 package com.sun.java.util.jar.pack;
 
+import java.util.jar.Pack200;
 import com.sun.java.util.jar.pack.Attribute.Layout;
 import com.sun.java.util.jar.pack.ConstantPool.ClassEntry;
 import com.sun.java.util.jar.pack.ConstantPool.DescriptorEntry;
+import com.sun.java.util.jar.pack.ConstantPool.BootstrapMethodEntry;
 import com.sun.java.util.jar.pack.ConstantPool.Index;
 import com.sun.java.util.jar.pack.ConstantPool.LiteralEntry;
 import com.sun.java.util.jar.pack.ConstantPool.Utf8Entry;
@@ -66,48 +68,63 @@ class Package {
             verbose = pmap.getInteger(Utils.DEBUG_VERBOSE);
     }
 
-    int magic;
-    int package_minver;
-    int package_majver;
+    final int magic = JAVA_PACKAGE_MAGIC;
 
     int default_modtime = NO_MODTIME;
     int default_options = 0;  // FO_DEFLATE_HINT
 
-    short default_class_majver = -1; // fill in later
-    short default_class_minver = 0;  // fill in later
+    Version defaultClassVersion = null;
 
     // These fields can be adjusted by driver properties.
-    short min_class_majver = JAVA_MIN_CLASS_MAJOR_VERSION;
-    short min_class_minver = JAVA_MIN_CLASS_MINOR_VERSION;
-    short max_class_majver = JAVA7_MAX_CLASS_MAJOR_VERSION;
-    short max_class_minver = JAVA7_MAX_CLASS_MINOR_VERSION;
+    final Version minClassVersion;
+    final Version maxClassVersion;
+    // null, indicates that consensus rules during package write
+    final Version packageVersion;
 
-    short observed_max_class_majver = min_class_majver;
-    short observed_max_class_minver = min_class_minver;
+    Version observedHighestClassVersion = null;
+
 
     // What constants are used in this unit?
     ConstantPool.IndexGroup cp = new ConstantPool.IndexGroup();
 
-    Package() {
-        magic          = JAVA_PACKAGE_MAGIC;
-        package_minver = -1;  // fill in later
-        package_majver = 0;   // fill in later
+    /*
+     * typically used by the PackageReader to set the defaults, in which
+     * case we take the defaults.
+     */
+    public Package() {
+        minClassVersion = JAVA_MIN_CLASS_VERSION;
+        maxClassVersion = JAVA_MAX_CLASS_VERSION;
+        packageVersion = null;
     }
 
-    public
-    void reset() {
+
+    /*
+     * Typically used by the PackerImpl during before packing, the defaults are
+     * overridden by the users preferences.
+     */
+    public Package(Version minClassVersion, Version maxClassVersion, Version packageVersion) {
+        // Fill in permitted range of major/minor version numbers.
+        this.minClassVersion = minClassVersion == null
+                ? JAVA_MIN_CLASS_VERSION
+                : minClassVersion;
+        this.maxClassVersion = maxClassVersion == null
+                ? JAVA_MAX_CLASS_VERSION
+                : maxClassVersion;
+        this.packageVersion  = packageVersion;
+    }
+
+
+    public void reset() {
         cp = new ConstantPool.IndexGroup();
         classes.clear();
         files.clear();
         BandStructure.nextSeqForDebug = 0;
-    }
-
-    int getPackageVersion() {
-        return (package_majver << 16) + package_minver;
+        observedHighestClassVersion = null;
     }
 
     // Special empty versions of Code and InnerClasses, used for markers.
     public static final Attribute.Layout attrCodeEmpty;
+    public static final Attribute.Layout attrBootstrapMethodsEmpty;
     public static final Attribute.Layout attrInnerClassesEmpty;
     public static final Attribute.Layout attrSourceFileSpecial;
     public static final Map<Attribute.Layout, Attribute> attrDefs;
@@ -115,6 +132,8 @@ class Package {
         Map<Layout, Attribute> ad = new HashMap<>(3);
         attrCodeEmpty = Attribute.define(ad, ATTR_CONTEXT_METHOD,
                                          "Code", "").layout();
+        attrBootstrapMethodsEmpty = Attribute.define(ad, ATTR_CONTEXT_CLASS,
+                                                     "BootstrapMethods", "").layout();
         attrInnerClassesEmpty = Attribute.define(ad, ATTR_CONTEXT_CLASS,
                                                  "InnerClasses", "").layout();
         attrSourceFileSpecial = Attribute.define(ad, ATTR_CONTEXT_CLASS,
@@ -122,64 +141,30 @@ class Package {
         attrDefs = Collections.unmodifiableMap(ad);
     }
 
-    int getDefaultClassVersion() {
-        return (default_class_majver << 16) + (char)default_class_minver;
+    Version getDefaultClassVersion() {
+        return defaultClassVersion;
     }
 
     /** Return the highest version number of all classes,
      *  or 0 if there are no classes.
      */
-    int getHighestClassVersion() {
-        int res = 0;  // initial low value
+    private void setHighestClassVersion() {
+        if (observedHighestClassVersion != null)
+            return;
+        Version res = JAVA_MIN_CLASS_VERSION;  // initial low value
         for (Class cls : classes) {
-            int ver = cls.getVersion();
-            if (res < ver)  res = ver;
+            Version ver = cls.getVersion();
+            if (res.lessThan(ver))  res = ver;
         }
-        return res;
+        observedHighestClassVersion = res;
     }
 
-    /** Convenience function to choose an archive version based
-     *  on the class file versions observed within the archive.
-     */
-    void choosePackageVersion() {
-        assert(package_majver <= 0);  // do not call this twice
-        int classver = getHighestClassVersion();
-        if (classver == 0 || (classver >>> 16) < JAVA6_MAX_CLASS_MAJOR_VERSION) {
-            // There are only old classfiles in this segment or resources
-            package_majver = JAVA5_PACKAGE_MAJOR_VERSION;
-            package_minver = JAVA5_PACKAGE_MINOR_VERSION;
-        } else if ((classver >>> 16) == JAVA6_MAX_CLASS_MAJOR_VERSION) {
-            package_majver = JAVA6_PACKAGE_MAJOR_VERSION;
-            package_minver = JAVA6_PACKAGE_MINOR_VERSION;
-        } else {
-            // Normal case.  Use the newest archive format, when available
-            // TODO: replace the following with JAVA7* when the need arises
-            package_majver = JAVA6_PACKAGE_MAJOR_VERSION;
-            package_minver = JAVA6_PACKAGE_MINOR_VERSION;
-        }
+    Version getHighestClassVersion() {
+        setHighestClassVersion();
+        return observedHighestClassVersion;
     }
 
     // What Java classes are in this unit?
-
-    // Fixed 6211177, converted to throw IOException
-    void checkVersion() throws IOException {
-        if (magic != JAVA_PACKAGE_MAGIC) {
-            String gotMag = Integer.toHexString(magic);
-            String expMag = Integer.toHexString(JAVA_PACKAGE_MAGIC);
-            throw new IOException("Unexpected package magic number: got "+gotMag+"; expected "+expMag);
-        }
-        if ((package_majver != JAVA6_PACKAGE_MAJOR_VERSION  &&
-             package_majver != JAVA5_PACKAGE_MAJOR_VERSION) ||
-             (package_minver != JAVA6_PACKAGE_MINOR_VERSION &&
-             package_minver != JAVA5_PACKAGE_MINOR_VERSION)) {
-
-            String gotVer = package_majver+"."+package_minver;
-            String expVer = JAVA6_PACKAGE_MAJOR_VERSION+"."+JAVA6_PACKAGE_MINOR_VERSION+
-                            " OR "+
-                            JAVA5_PACKAGE_MAJOR_VERSION+"."+JAVA5_PACKAGE_MINOR_VERSION;
-            throw new IOException("Unexpected package minor version: got "+gotVer+"; expected "+expVer);
-        }
-    }
 
     ArrayList<Package.Class> classes = new ArrayList<>();
 
@@ -196,7 +181,7 @@ class Package {
 
         // File header
         int magic;
-        short minver, majver;
+        Version version;
 
         // Local constant pool (one-way mapping of index => package cp).
         Entry[] cpMap;
@@ -213,11 +198,11 @@ class Package {
         //ArrayList attributes;  // in Attribute.Holder.this.attributes
         // Note that InnerClasses may be collected at the package level.
         ArrayList<InnerClass> innerClasses;
+        ArrayList<BootstrapMethodEntry> bootstrapMethods;
 
         Class(int flags, ClassEntry thisClass, ClassEntry superClass, ClassEntry[] interfaces) {
             this.magic      = JAVA_MAGIC;
-            this.minver     = default_class_minver;
-            this.majver     = default_class_majver;
+            this.version    = defaultClassVersion;
             this.flags      = flags;
             this.thisClass  = thisClass;
             this.superClass = superClass;
@@ -239,11 +224,8 @@ class Package {
             return thisClass.stringValue();
         }
 
-        int getVersion() {
-            return (majver << 16) + (char)minver;
-        }
-        String getVersionString() {
-            return versionStringOf(majver, minver);
+        Version getVersion() {
+            return this.version;
         }
 
         // Note:  equals and hashCode are identity-based.
@@ -311,6 +293,25 @@ class Package {
 
         protected void setCPMap(Entry[] cpMap) {
             this.cpMap = cpMap;
+        }
+
+        boolean hasBootstrapMethods() {
+            return bootstrapMethods != null && !bootstrapMethods.isEmpty();
+        }
+
+        List<BootstrapMethodEntry> getBootstrapMethods() {
+            return bootstrapMethods;
+        }
+
+        BootstrapMethodEntry[] getBootstrapMethodMap() {
+            return (hasBootstrapMethods())
+                    ? bootstrapMethods.toArray(new BootstrapMethodEntry[bootstrapMethods.size()])
+                    : null;
+        }
+
+        void setBootstrapMethods(Collection<BootstrapMethodEntry> bsms) {
+            assert(bootstrapMethods == null);  // do not do this twice
+            bootstrapMethods = new ArrayList<>(bsms);
         }
 
         boolean hasInnerClasses() {
@@ -1148,13 +1149,6 @@ class Package {
         }
     }
 
-    public static String versionStringOf(int majver, int minver) {
-        return majver+"."+minver;
-    }
-    public static String versionStringOf(int version) {
-        return versionStringOf(version >>> 16, (char)version);
-    }
-
     public void stripConstantFields() {
         for (Class c : classes) {
             for (Iterator<Class.Field> j = c.fields.iterator(); j.hasNext(); ) {
@@ -1283,7 +1277,8 @@ class Package {
             byTagU[tag] = null;  // done with it
         }
         for (int i = 0; i < byTagU.length; i++) {
-            assert(byTagU[i] == null);  // all consumed
+            Index ix = byTagU[i];
+            assert(ix == null);  // all consumed
         }
         for (int i = 0; i < ConstantPool.TAGS_IN_ORDER.length; i++) {
             byte tag = ConstantPool.TAGS_IN_ORDER[i];
@@ -1307,4 +1302,75 @@ class Package {
     static final List<Class.Field> noFields = Arrays.asList(new Class.Field[0]);
     static final List<Class.Method> noMethods = Arrays.asList(new Class.Method[0]);
     static final List<InnerClass> noInnerClasses = Arrays.asList(new InnerClass[0]);
+
+    protected static final class Version {
+
+        public final short major;
+        public final short minor;
+
+        private Version(short major, short minor) {
+            this.major = major;
+            this.minor = minor;
+        }
+
+        public String toString() {
+            return major + "." + minor;
+        }
+
+        public boolean equals(Object that) {
+            return that instanceof Version
+                    && major == ((Version)that).major
+                    && minor == ((Version)that).minor;
+        }
+
+        public int intValue() {
+            return (major << 16) + minor;
+        }
+
+        public int hashCode() {
+            return (major << 16) + 7 + minor;
+        }
+
+        public static Version of(int major, int minor) {
+            return new Version((short)major, (short)minor);
+        }
+
+        public static Version of(byte[] bytes) {
+           int minor = ((bytes[0] & 0xFF) << 8) | (bytes[1] & 0xFF);
+           int major = ((bytes[2] & 0xFF) << 8) | (bytes[3] & 0xFF);
+           return new Version((short)major, (short)minor);
+        }
+
+        public static Version of(int major_minor) {
+            short minor = (short)major_minor;
+            short major = (short)(major_minor >>> 16);
+            return new Version(major, minor);
+        }
+
+        public static Version makeVersion(PropMap props, String partialKey) {
+            int min = props.getInteger(Utils.COM_PREFIX
+                    + partialKey + ".minver", -1);
+            int maj = props.getInteger(Utils.COM_PREFIX
+                    + partialKey + ".majver", -1);
+            return min >= 0 && maj >= 0 ? Version.of(maj, min) : null;
+        }
+        public byte[] asBytes() {
+            byte[] bytes = {
+                (byte) (minor >> 8), (byte) minor,
+                (byte) (major >> 8), (byte) major
+            };
+            return bytes;
+        }
+        public int compareTo(Version that) {
+            return this.intValue() - that.intValue();
+        }
+
+        public boolean lessThan(Version that) {
+            return compareTo(that) < 0 ;
+        }
+
+        public boolean greaterThan(Version that) {
+            return compareTo(that) > 0 ;
+        }
+    }
 }

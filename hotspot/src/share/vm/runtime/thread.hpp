@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@
 #include "runtime/stubRoutines.hpp"
 #include "runtime/threadLocalStorage.hpp"
 #include "runtime/unhandledOops.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/top.hpp"
 #ifndef SERIALGC
@@ -181,7 +182,8 @@ class Thread: public ThreadShadow {
     _ext_suspended          = 0x40000000U, // thread has self-suspended
     _deopt_suspend          = 0x10000000U, // thread needs to self suspend for deopt
 
-    _has_async_exception    = 0x00000001U  // there is a pending async exception
+    _has_async_exception    = 0x00000001U, // there is a pending async exception
+    _critical_native_unlock = 0x00000002U  // Must call back to unlock JNI critical lock
   };
 
   // various suspension related flags - atomically updated
@@ -246,6 +248,8 @@ class Thread: public ThreadShadow {
   jlong _allocated_bytes;                       // Cumulative number of bytes allocated on
                                                 // the Java heap
 
+  TRACE_BUFFER _trace_buffer;                   // Thread-local buffer for tracing
+
   int   _vm_operation_started_count;            // VM_Operation support
   int   _vm_operation_completed_count;          // VM_Operation support
 
@@ -263,6 +267,15 @@ class Thread: public ThreadShadow {
   int omFreeProvision;                          // reload chunk size
   ObjectMonitor* omInUseList;                   // SLL to track monitors in circulation
   int omInUseCount;                             // length of omInUseList
+
+#ifdef ASSERT
+ private:
+  bool _visited_for_critical_count;
+
+ public:
+  void set_visited_for_critical_count(bool z) { _visited_for_critical_count = z; }
+  bool was_visited_for_critical_count() const   { return _visited_for_critical_count; }
+#endif
 
  public:
   enum {
@@ -347,6 +360,15 @@ class Thread: public ThreadShadow {
     clear_suspend_flag(_has_async_exception);
   }
 
+  bool do_critical_native_unlock() const { return (_suspend_flags & _critical_native_unlock) != 0; }
+
+  void set_critical_native_unlock() {
+    set_suspend_flag(_critical_native_unlock);
+  }
+  void clear_critical_native_unlock() {
+    clear_suspend_flag(_critical_native_unlock);
+  }
+
   // Support for Unhandled Oop detection
 #ifdef CHECK_UNHANDLED_OOPS
  private:
@@ -413,6 +435,9 @@ class Thread: public ThreadShadow {
     }
     return allocated_bytes;
   }
+
+  TRACE_BUFFER trace_buffer()              { return _trace_buffer; }
+  void set_trace_buffer(TRACE_BUFFER buf)  { _trace_buffer = buf; }
 
   // VM operation support
   int vm_operation_ticket()                      { return ++_vm_operation_started_count; }
@@ -1032,6 +1057,11 @@ class JavaThread: public Thread {
   // Check for async exception in addition to safepoint and suspend request.
   static void check_special_condition_for_native_trans(JavaThread *thread);
 
+  // Same as check_special_condition_for_native_trans but finishes the
+  // transition into thread_in_Java mode so that it can potentially
+  // block.
+  static void check_special_condition_for_native_trans_and_transition(JavaThread *thread);
+
   bool is_ext_suspend_completed(bool called_by_wait, int delay, uint32_t *bits);
   bool is_ext_suspend_completed_with_lock(uint32_t *bits) {
     MutexLockerEx ml(SR_lock(), Mutex::_no_safepoint_check_flag);
@@ -1304,8 +1334,10 @@ class JavaThread: public Thread {
 
   // JNI critical regions. These can nest.
   bool in_critical()    { return _jni_active_critical > 0; }
-  void enter_critical() { assert(Thread::current() == this,
-                                 "this must be current thread");
+  bool in_last_critical()  { return _jni_active_critical == 1; }
+  void enter_critical() { assert(Thread::current() == this ||
+                                 Thread::current()->is_VM_thread() && SafepointSynchronize::is_synchronizing(),
+                                 "this must be current thread or synchronizing");
                           _jni_active_critical++; }
   void exit_critical()  { assert(Thread::current() == this,
                                  "this must be current thread");

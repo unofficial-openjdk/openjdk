@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,12 @@
 import java.io.*;
 
 public class Zombies {
+
+    static final String os = System.getProperty("os.name");
+
+    static final String TrueCommand = os.contains("OS X")?
+        "/usr/bin/true" : "/bin/true";
+
     public static void main(String[] args) throws Throwable {
         if (! new File("/usr/bin/perl").canExecute() ||
             ! new File("/bin/ps").canExecute())
@@ -49,11 +55,11 @@ public class Zombies {
         } catch (IOException _) {/* OK */}
 
         try {
-            rt.exec("/bin/true", null, new File("no-such-dir"));
+            rt.exec(TrueCommand, null, new File("no-such-dir"));
             throw new Error("expected IOException not thrown");
         } catch (IOException _) {/* OK */}
 
-        rt.exec("/bin/true").waitFor();
+        rt.exec(TrueCommand).waitFor();
 
         // Count all the zombies that are children of this Java process
         final String[] zombieCounter = {

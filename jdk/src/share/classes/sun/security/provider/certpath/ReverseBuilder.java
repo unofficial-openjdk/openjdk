@@ -356,6 +356,10 @@ class ReverseBuilder extends Builder {
             return;
         }
 
+        // Don't bother to verify untrusted certificate more.
+        currentState.untrustedChecker.check(cert,
+                                    Collections.<String>emptySet());
+
         /*
          * check for looping - abort a loop if
          * ((we encounter the same certificate twice) AND

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -295,6 +295,9 @@ const char* Runtime1::name_for_address(address entry) {
   FUNCTION_CASE(entry, SharedRuntime::dtrace_method_entry);
   FUNCTION_CASE(entry, SharedRuntime::dtrace_method_exit);
   FUNCTION_CASE(entry, trace_block_entry);
+#ifdef TRACE_HAVE_INTRINSICS
+  FUNCTION_CASE(entry, TRACE_TIME_METHOD);
+#endif
 
 #undef FUNCTION_CASE
 
@@ -413,8 +416,9 @@ static nmethod* counter_overflow_helper(JavaThread* THREAD, int branch_bci, meth
     }
     bci = branch_bci + offset;
   }
-
+  assert(!HAS_PENDING_EXCEPTION, "Should not have any exceptions pending");
   osr_nm = CompilationPolicy::policy()->event(enclosing_method, method, branch_bci, bci, level, nm, THREAD);
+  assert(!HAS_PENDING_EXCEPTION, "Event handler should not throw any exceptions");
   return osr_nm;
 }
 
@@ -596,7 +600,6 @@ address Runtime1::exception_handler_for_pc(JavaThread* thread) {
 
 JRT_ENTRY(void, Runtime1::throw_range_check_exception(JavaThread* thread, int index))
   NOT_PRODUCT(_throw_range_check_exception_count++;)
-  Events::log("throw_range_check");
   char message[jintAsStringSize];
   sprintf(message, "%d", index);
   SharedRuntime::throw_and_post_jvmti_exception(thread, vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), message);
@@ -605,7 +608,6 @@ JRT_END
 
 JRT_ENTRY(void, Runtime1::throw_index_exception(JavaThread* thread, int index))
   NOT_PRODUCT(_throw_index_exception_count++;)
-  Events::log("throw_index");
   char message[16];
   sprintf(message, "%d", index);
   SharedRuntime::throw_and_post_jvmti_exception(thread, vmSymbols::java_lang_IndexOutOfBoundsException(), message);
@@ -803,11 +805,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* thread, Runtime1::StubID stub_i
   // Note also that in the presence of inlining it is not guaranteed
   // that caller_method() == caller_code->method()
 
-
   int bci = vfst.bci();
-
-  Events::log("patch_code @ " INTPTR_FORMAT , caller_frame.pc());
-
   Bytecodes::Code code = caller_method()->java_code_at(bci);
 
 #ifndef PRODUCT

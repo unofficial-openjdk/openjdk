@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -306,7 +306,7 @@ class Space: public CHeapObj {
   }
 
   // Debugging
-  virtual void verify(bool allow_dirty) const = 0;
+  virtual void verify() const = 0;
 };
 
 // A MemRegionClosure (ResourceObj) whose "do_MemRegion" function applies an
@@ -880,10 +880,17 @@ class ContiguousSpace: public CompactibleSpace {
   void object_iterate_mem(MemRegion mr, UpwardsObjectClosure* cl);
   // iterates on objects up to the safe limit
   HeapWord* object_iterate_careful(ObjectClosureCareful* cl);
-  inline HeapWord* concurrent_iteration_safe_limit();
+  HeapWord* concurrent_iteration_safe_limit() {
+    assert(_concurrent_iteration_safe_limit <= top(),
+           "_concurrent_iteration_safe_limit update missed");
+    return _concurrent_iteration_safe_limit;
+  }
   // changes the safe limit, all objects from bottom() to the new
   // limit should be properly initialized
-  inline void set_concurrent_iteration_safe_limit(HeapWord* new_limit);
+  void set_concurrent_iteration_safe_limit(HeapWord* new_limit) {
+    assert(new_limit <= top(), "uninitialized objects in the safe range");
+    _concurrent_iteration_safe_limit = new_limit;
+  }
 
 #ifndef SERIALGC
   // In support of parallel oop_iterate.
@@ -948,7 +955,7 @@ class ContiguousSpace: public CompactibleSpace {
   }
 
   // Debugging
-  virtual void verify(bool allow_dirty) const;
+  virtual void verify() const;
 
   // Used to increase collection frequency.  "factor" of 0 means entire
   // space.
@@ -1100,7 +1107,7 @@ class OffsetTableContigSpace: public ContiguousSpace {
   virtual void print_on(outputStream* st) const;
 
   // Debugging
-  void verify(bool allow_dirty) const;
+  void verify() const;
 
   // Shared space support
   void serialize_block_offset_array_offsets(SerializeOopClosure* soc);

@@ -78,7 +78,7 @@ public class ZipFileSystemProvider extends FileSystemProvider {
         }
         try {
             // only support legacy JAR URL syntax  jar:{uri}!/{entry} for now
-            String spec = uri.getSchemeSpecificPart();
+            String spec = uri.getRawSchemeSpecificPart();
             int sep = spec.indexOf("!/");
             if (sep != -1)
                 spec = spec.substring(0, sep);
@@ -211,7 +211,7 @@ public class ZipFileSystemProvider extends FileSystemProvider {
     public <V extends FileAttributeView> V
         getFileAttributeView(Path path, Class<V> type, LinkOption... options)
     {
-        return (V)ZipFileAttributeView.get(toZipPath(path), type);
+        return ZipFileAttributeView.get(toZipPath(path), type);
     }
 
     @Override

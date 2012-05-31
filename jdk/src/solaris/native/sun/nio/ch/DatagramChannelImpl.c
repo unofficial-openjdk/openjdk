@@ -35,7 +35,7 @@
 #include <string.h>
 #include <errno.h>
 
-#if __linux__
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
 #include <netinet/in.h>
 #endif
 
@@ -77,7 +77,7 @@ Java_sun_nio_ch_DatagramChannelImpl_initIDs(JNIEnv *env, jclass clazz)
 
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jobject this,
-                                                jobject fdo)
+                                                jobject fdo, jboolean isIPv6)
 {
     jint fd = fdval(env, fdo);
     int rv;
@@ -86,7 +86,7 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jobject this,
     rv = connect(fd, 0, 0);
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(_ALLBSD_SOURCE)
     {
         int len;
         SOCKADDR sa;
@@ -94,19 +94,32 @@ Java_sun_nio_ch_DatagramChannelImpl_disconnect0(JNIEnv *env, jobject this,
         memset(&sa, 0, sizeof(sa));
 
 #ifdef AF_INET6
-        if (ipv6_available()) {
+        if (isIPv6) {
             struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)&sa;
+#if defined(_ALLBSD_SOURCE)
+            him6->sin6_family = AF_INET6;
+#else
             him6->sin6_family = AF_UNSPEC;
+#endif
             len = sizeof(struct sockaddr_in6);
         } else
 #endif
         {
             struct sockaddr_in *him4 = (struct sockaddr_in*)&sa;
+#if defined(_ALLBSD_SOURCE)
+            him4->sin_family = AF_INET;
+#else
             him4->sin_family = AF_UNSPEC;
+#endif
             len = sizeof(struct sockaddr_in);
         }
 
         rv = connect(fd, (struct sockaddr *)&sa, len);
+
+#if defined(_ALLBSD_SOURCE)
+        if (rv < 0 && errno == EADDRNOTAVAIL)
+                rv = errno = 0;
+#endif
     }
 #endif
 

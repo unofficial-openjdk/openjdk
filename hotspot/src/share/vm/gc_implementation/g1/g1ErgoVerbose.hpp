@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,7 +120,7 @@ public:
 
 // Single parameter format strings
 #define ergo_format_str(_name_)      ", " _name_ ": %s"
-#define ergo_format_region(_name_)   ", " _name_ ": "SIZE_FORMAT" regions"
+#define ergo_format_region(_name_)   ", " _name_ ": %u regions"
 #define ergo_format_byte(_name_)     ", " _name_ ": "SIZE_FORMAT" bytes"
 #define ergo_format_double(_name_)   ", " _name_ ": %1.2f"
 #define ergo_format_perc(_name_)     ", " _name_ ": %1.2f %%"
@@ -131,8 +131,8 @@ public:
                              ", " _name_ ": "SIZE_FORMAT" bytes (%1.2f %%)"
 
 // Generates the format string
-#define ergo_format(_action_, _extra_format_)                   \
-  " %1.3f: [G1Ergonomics (%s) " _action_ _extra_format_ "]"
+#define ergo_format(_extra_format_)                           \
+  " %1.3f: [G1Ergonomics (%s) %s" _extra_format_ "]"
 
 // Conditionally, prints an ergonomic decision record. _extra_format_
 // is the format string for the optional items we'd like to print
@@ -145,20 +145,21 @@ public:
 // them to the print method. For convenience, we have wrapper macros
 // below which take a specific number of arguments and set the rest to
 // a default value.
-#define ergo_verbose_common(_tag_, _action_, _extra_format_,            \
+#define ergo_verbose_common(_tag_, _action_, _extra_format_,                \
                             _arg0_, _arg1_, _arg2_, _arg3_, _arg4_, _arg5_) \
-  do {                                                                  \
-    if (G1ErgoVerbose::enabled((_tag_))) {                              \
-      gclog_or_tty->print_cr(ergo_format(_action_, _extra_format_),     \
-                             os::elapsedTime(),                         \
-                             G1ErgoVerbose::to_string((_tag_)),         \
-                             (_arg0_), (_arg1_), (_arg2_),              \
-                             (_arg3_), (_arg4_), (_arg5_));             \
-    }                                                                   \
+  do {                                                                      \
+    if (G1ErgoVerbose::enabled((_tag_))) {                                  \
+      gclog_or_tty->print_cr(ergo_format(_extra_format_),                   \
+                             os::elapsedTime(),                             \
+                             G1ErgoVerbose::to_string((_tag_)),             \
+                             (_action_),                                    \
+                             (_arg0_), (_arg1_), (_arg2_),                  \
+                             (_arg3_), (_arg4_), (_arg5_));                 \
+    }                                                                       \
   } while (0)
 
 
-#define ergo_verbose(_tag_, _action_)                           \
+#define ergo_verbose(_tag_, _action_)                                   \
   ergo_verbose_common(_tag_, _action_, "", 0, 0, 0, 0, 0, 0)
 
 #define ergo_verbose0(_tag_, _action_, _extra_format_)                  \

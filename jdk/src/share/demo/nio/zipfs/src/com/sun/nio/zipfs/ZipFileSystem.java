@@ -651,7 +651,11 @@ public class ZipFileSystem extends FileSystem {
                     }
 
                     public int read(ByteBuffer dst) throws IOException {
-                        return rbc.read(dst);
+                        int n = rbc.read(dst);
+                        if (n > 0) {
+                            read += n;
+                        }
+                        return n;
                     }
 
                     public SeekableByteChannel truncate(long size)
@@ -1609,7 +1613,7 @@ public class ZipFileSystem extends FileSystem {
         synchronized (inflaters) {
             int size = inflaters.size();
             if (size > 0) {
-                Inflater inf = (Inflater)inflaters.remove(size - 1);
+                Inflater inf = inflaters.remove(size - 1);
                 return inf;
             } else {
                 return new Inflater(true);
@@ -1638,7 +1642,7 @@ public class ZipFileSystem extends FileSystem {
         synchronized (deflaters) {
             int size = deflaters.size();
             if (size > 0) {
-                Deflater def = (Deflater)deflaters.remove(size - 1);
+                Deflater def = deflaters.remove(size - 1);
                 return def;
             } else {
                 return new Deflater(Deflater.DEFAULT_COMPRESSION, true);
