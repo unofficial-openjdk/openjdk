@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,6 +119,15 @@ public class WriterFactoryImpl implements WriterFactory {
     /**
      * {@inheritDoc}
      */
+    public PropertyWriter getPropertyWriter(ClassWriter classWriter)
+            throws Exception {
+        return new PropertyWriterImpl((SubWriterHolderWriter) classWriter,
+            classWriter.getClassDoc());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public  MethodWriter getMethodWriter(ClassWriter classWriter)
             throws Exception {
         return new MethodWriterImpl((SubWriterHolderWriter) classWriter,
@@ -147,6 +156,8 @@ public class WriterFactoryImpl implements WriterFactory {
                 return (EnumConstantWriterImpl) getEnumConstantWriter(classWriter);
             case VisibleMemberMap.FIELDS:
                 return (FieldWriterImpl) getFieldWriter(classWriter);
+            case VisibleMemberMap.PROPERTIES:
+                return (PropertyWriterImpl) getPropertyWriter(classWriter);
             case VisibleMemberMap.INNERCLASSES:
                 return new NestedClassWriterImpl((SubWriterHolderWriter)
                     classWriter, classWriter.getClassDoc());

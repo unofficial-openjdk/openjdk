@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -207,6 +207,25 @@ public class IndexBuilder {
      * Should this doc element be added to the index map?
      */
     protected boolean shouldAddToIndexMap(Doc element) {
+        if (Configuration.getJavafxJavadoc()) {
+            if (element.tags("treatAsPrivate").length > 0) {
+                return false;
+            }
+            if (element instanceof ProgramElementDoc) {
+                ProgramElementDoc elementCasted = (ProgramElementDoc) element;
+                if (elementCasted.isPackagePrivate() || elementCasted.isPrivate()) {
+                    return false;
+                }
+            }
+
+            if (element instanceof ClassDoc) {
+                ClassDoc elementCasted = (ClassDoc) element;
+                if (elementCasted.isPackagePrivate() || elementCasted.isPrivate()) {
+                    return false;
+                }
+            }
+        }
+
         if (element instanceof PackageDoc)
             // Do not add to index map if -nodeprecated option is set and the
             // package is marked as deprecated.
