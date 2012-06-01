@@ -83,4 +83,9 @@ public interface JavaLangAccess {
      * Returns the ith StackTraceElement for the given throwable.
      */
     StackTraceElement getStackTraceElement(Throwable t, int i);
+
+    /**
+     * Returns the murmur hash value for the specified String.
+     */
+    int getStringHash32(String string);
 }

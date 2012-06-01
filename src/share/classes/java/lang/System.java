@@ -1196,6 +1196,9 @@ public final class System {
             public StackTraceElement getStackTraceElement(Throwable t, int i) {
                 return t.getStackTraceElement(i);
             }
+            public int getStringHash32(String string) {
+                return string.hash32();
+            }
         });
     }
 
