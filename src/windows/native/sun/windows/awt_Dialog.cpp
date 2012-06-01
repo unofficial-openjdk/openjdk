@@ -428,8 +428,12 @@ void AwtDialog::ModalActivateNextWindow(HWND dialogHWnd,
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
-    jlongArray windows = (jlongArray)(env->CallStaticObjectMethod(AwtWindow::wwindowPeerCls,
-                                                                  AwtWindow::getActiveWindowsMID));
+    jclass wwindowPeerCls = env->FindClass("sun/awt/windows/WWindowPeer");
+    jmethodID getActiveWindowsMID = env->GetStaticMethodID(wwindowPeerCls,
+                                                           "getActiveWindowHandles", "()[J");
+    DASSERT(getActiveWindowsMID != NULL);
+    jlongArray windows = (jlongArray)(env->CallStaticObjectMethod(wwindowPeerCls,
+                                                                  getActiveWindowsMID));
     if (windows == NULL) {
         return;
     }

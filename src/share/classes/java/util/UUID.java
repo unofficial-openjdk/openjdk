@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,9 +122,11 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
 
     /*
      * The random number generator used by this class to create random
-     * based UUIDs.
+     * based UUIDs. In a holder class to defer initialization until needed.
      */
-    private static volatile SecureRandom numberGenerator = null;
+    private static class Holder {
+        static final SecureRandom numberGenerator = new SecureRandom();
+    }
 
     // Constructors and Factories
 
@@ -169,10 +171,7 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * @return  A randomly generated {@code UUID}
      */
     public static UUID randomUUID() {
-        SecureRandom ng = numberGenerator;
-        if (ng == null) {
-            numberGenerator = ng = new SecureRandom();
-        }
+        SecureRandom ng = Holder.numberGenerator;
 
         byte[] randomBytes = new byte[16];
         ng.nextBytes(randomBytes);
@@ -290,7 +289,8 @@ public final class UUID implements java.io.Serializable, Comparable<UUID> {
      * The variant number has the following meaning:
      * <p><ul>
      * <li>0    Reserved for NCS backward compatibility
-     * <li>2    The Leach-Salz variant (used by this class)
+     * <li>2 <a href="http://www.ietf.org/rfc/rfc4122.txt">IETF&nbsp;RFC&nbsp;4122</a>
+     * (Leach-Salz), used by this class
      * <li>6    Reserved, Microsoft Corporation backward compatibility
      * <li>7    Reserved for future definition
      * </ul>
