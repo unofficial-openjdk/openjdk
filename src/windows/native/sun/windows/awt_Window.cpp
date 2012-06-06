@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2157,11 +2157,6 @@ Java_sun_awt_windows_WWindowPeer_initIDs(JNIEnv *env, jclass cls)
     AwtWindow::sysYID = env->GetFieldID(cls, "sysY", "I");
     AwtWindow::sysWID = env->GetFieldID(cls, "sysW", "I");
     AwtWindow::sysHID = env->GetFieldID(cls, "sysH", "I");
-
-    AwtWindow::wwindowPeerCls = cls;
-    AwtWindow::getActiveWindowsMID =
-        env->GetStaticMethodID(cls, "getActiveWindowHandles", "()[J");
-    DASSERT(AwtWindow::getActiveWindowsMID != NULL);
 
     CATCH_BAD_ALLOC;
 }
