@@ -679,7 +679,7 @@ public class HashMap<K,V>
 
         Map.Entry<K,V> entry = (Map.Entry<K,V>) o;
         Object key = entry.getKey();
-        int hash = (key == null) ? 0 : hash(key.hashCode());
+        int hash = (key == null) ? 0 : hash(key);
         int i = indexFor(hash, table.length);
         Entry<K,V> prev = table[i];
         Entry<K,V> e = prev;
