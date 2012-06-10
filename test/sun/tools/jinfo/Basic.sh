@@ -44,7 +44,8 @@ set +e
 
 failed=0
 
-runSA=true
+# Skip SA options for now, see 7175133
+runSA=false
 
 if [ $isLinux = true ]; then
     # Some Linux systems disable non-child ptrace (see 7050524)
