@@ -45,7 +45,7 @@ JAB_MANIFEST_INP = $(CLOSED_PLATFORM_SRC)/native/sun/bridge/jabswitch.manifest
 JAB_MANIFEST_OUT = $(TEMPDIR)/jabswitch.exe.intermediate.manifest
 
 RC_FLAGS += /fo "$(VERSIONRES)"
-OTHER_CPPFLAGS += /Fo"$(TEMPDIR)/" /Fd"$(TEMPDIR)/" /analyze- /Od /Gd /nologo /MDd /Gm /D "WIN32" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /RTC1 /W3 /ZI /Zc:wchar_t /EHsc 
+OTHER_CPPFLAGS += /MD /Fo"$(TEMPDIR)/" /Fd"$(TEMPDIR)/" /analyze- /Od /Gd /nologo /Gm /D "WIN32" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /RTC1 /W3 /ZI /Zc:wchar_t /EHsc 
 LDDFLAGS += Advapi32.lib Version.lib User32.lib
 
 all: buildexe copyfilejab
