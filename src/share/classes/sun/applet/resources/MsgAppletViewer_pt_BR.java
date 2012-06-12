@@ -137,7 +137,7 @@ public class MsgAppletViewer_pt_BR extends ListResourceBundle {
             {"appletpanel.fileexception", "exce\u00E7\u00E3o de {0} ao carregar: {1}"},
             {"appletpanel.filedeath", "{0} eliminado ao carregar: {1}"},
             {"appletpanel.fileerror", "erro de {0} ao carregar: {1}"},
-            {"appletpanel.badattribute.exception", "Parse de HTML: valor incorreto do atributo de largura/altura"},
+            {"appletpanel.badattribute.exception", "Parsing de HTML: valor incorreto do atributo de largura/altura"},
             {"appletillegalargumentexception.objectinputstream", "AppletObjectInputStream requer um carregador n\u00E3o nulo"},
             {"appletprops.title", "Propriedades do AppletViewer"},
             {"appletprops.label.http.server", "Servidor proxy Http:"},
