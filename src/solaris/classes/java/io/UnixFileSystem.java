@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -253,7 +253,7 @@ class UnixFileSystem extends FileSystem {
 
     /* -- File operations -- */
 
-    public native boolean createFileExclusively(String path)
+    public native boolean createFileExclusively(String path, boolean restrictive)
         throws IOException;
     public boolean delete(File f) {
         // Keep canonicalization caches in sync after file deletion

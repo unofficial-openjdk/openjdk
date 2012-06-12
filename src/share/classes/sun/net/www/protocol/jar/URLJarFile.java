@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -219,7 +219,7 @@ public class URLJarFile extends JarFile {
                             OutputStream out = null;
                             File tmpFile = null;
                             try {
-                                tmpFile = File.createTempFile("jar_cache", null);
+                                tmpFile = sun.misc.IOUtils.createTempFile("jar_cache", null);
                                 tmpFile.deleteOnExit();
                                 out  = new FileOutputStream(tmpFile);
                                 int read = 0;

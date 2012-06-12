@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -310,7 +310,8 @@ Java_java_io_UnixFileSystem_getLength(JNIEnv *env, jobject this,
 
 JNIEXPORT jboolean JNICALL
 Java_java_io_UnixFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
-                                                  jstring pathname)
+                                                  jstring pathname,
+                                                  jboolean restrictive)
 {
     jboolean rv = JNI_FALSE;
 
@@ -319,7 +320,8 @@ Java_java_io_UnixFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
         if (!strcmp (path, "/")) {
             fd = JVM_EEXIST;    /* The root directory always exists */
         } else {
-            fd = JVM_Open(path, JVM_O_RDWR | JVM_O_CREAT | JVM_O_EXCL, 0666);
+            jint mode = (restrictive == JNI_TRUE) ? 0600 : 0666;
+            fd = JVM_Open(path, JVM_O_RDWR | JVM_O_CREAT | JVM_O_EXCL, mode);
         }
         if (fd < 0) {
             if (fd != JVM_EEXIST) {

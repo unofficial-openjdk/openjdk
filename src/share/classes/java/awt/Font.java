@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -809,7 +809,7 @@ public class Font implements java.io.Serializable
         File f = null;
         boolean hasPerm = false;
         try {
-            f = File.createTempFile("+~JT", ".tmp", null);
+            f = sun.misc.IOUtils.createTempFile("+~JT", ".tmp", null);
             f.delete();
             f = null;
             hasPerm = true;
@@ -860,7 +860,7 @@ public class Font implements java.io.Serializable
             final File tFile = AccessController.doPrivileged(
                 new PrivilegedExceptionAction<File>() {
                     public File run() throws IOException {
-                        return File.createTempFile("+~JF", ".tmp", null);
+                        return sun.misc.IOUtils.createTempFile("+~JF", ".tmp", null);
                     }
                 }
             );

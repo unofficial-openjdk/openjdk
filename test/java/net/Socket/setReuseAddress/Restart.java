@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,11 @@
 
 /*
  * @test
- * @bug 4476378
- * @summary Check that SO_REUSEADDR allows a server to restart
+ * @bug 4476378 7123896
+ * @summary Check that SO_REUSEADDR allows a server to restart 
  *          after a crash.
+ * @run main Restart
+ * @run main/othervm -Dsun.net.useExclusiveBind Restart
  */
 import java.net.*;
 
@@ -39,27 +41,34 @@ public class Restart {
      */
 
     public static void main(String args[]) throws Exception {
+        ServerSocket ss = new ServerSocket(0);
+        Socket s1 = null, s2 = null;
+        try {
+            int port = ss.getLocalPort();
 
-        InetSocketAddress isa = new InetSocketAddress(0);
-        ServerSocket ss = new ServerSocket();
-        ss.bind(isa);
+            s1 = new Socket(InetAddress.getLocalHost(), port);
+            s2 = ss.accept();
 
-        int port = ss.getLocalPort();
+            // close server socket and the accepted connection
+            ss.close();
+            s2.close();
 
-        Socket s1 = new Socket(InetAddress.getLocalHost(), port);
-        Socket s2 = ss.accept();
+            ss = new ServerSocket();
+            ss.bind( new InetSocketAddress(port) );
+            ss.close();
 
-        // close server socket and the accepted connection
-        ss.close();
-        s2.close();
-
-        boolean failed = false;
-
-        ss = new ServerSocket();
-        ss.bind( new InetSocketAddress(port) );
-        ss.close();
-
-        // close the client socket
-        s1.close();
+            // close the client socket
+            s1.close();
+        } catch (BindException be) {
+            if (System.getProperty("sun.net.useExclusiveBind") != null) {
+                // exclusive bind, expected exception
+            } else {
+                throw be;
+            }
+        } finally {
+            if (ss != null) ss.close();
+            if (s1 != null) s1.close();
+            if (s2 != null) s2.close();
+        }
     }
 }
