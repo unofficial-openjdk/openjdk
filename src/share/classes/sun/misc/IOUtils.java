@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 package sun.misc;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -76,5 +77,38 @@ public class IOUtils {
             pos += cc;
         }
         return output;
+    }
+    
+    /*
+     * <p> Creates a new empty file in the specified directory, using the
+     * given prefix and suffix strings to generate its name. The resulting
+     * temporary file may have more restrictive access permission on some
+     * platforms.
+     *
+     * @param  prefix     The prefix string to be used in generating the file's
+     *                    name; must be at least three characters long
+     *
+     * @param  suffix     The suffix string to be used in generating the file's
+     *                    name; may be <code>null</code>, in which case the
+     *                    suffix <code>".tmp"</code> will be used
+     *
+     * @param  directory  The directory in which the file is to be created, or
+     *                    <code>null</code> if the default temporary-file
+     *                    directory is to be used
+     *
+     * @return  An abstract pathname denoting a newly-created empty file
+     *
+     * @see java.io.File#createTempFile(String,String,java.io.File)
+     */
+    public static File createTempFile(String prefix, String suffix, File directory)
+        throws IOException
+    {
+        return SharedSecrets.getJavaIOFileAccess().createTempFile(prefix, suffix, directory);
+    }
+
+    public static File createTempFile(String prefix, String suffix)
+        throws IOException
+    {
+        return SharedSecrets.getJavaIOFileAccess().createTempFile(prefix, suffix, null);
     }
 }

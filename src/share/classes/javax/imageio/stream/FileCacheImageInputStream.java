@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ public class FileCacheImageInputStream extends ImageInputStreamImpl {
         }
         this.stream = stream;
         this.cacheFile =
-            File.createTempFile("imageio", ".tmp", cacheDir);
+            sun.misc.IOUtils.createTempFile("imageio", ".tmp", cacheDir);
         this.cache = new RandomAccessFile(cacheFile, "rw");
 
         this.closeAction = StreamCloser.createCloseAction(this);

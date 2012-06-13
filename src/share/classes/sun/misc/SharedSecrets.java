@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ public class SharedSecrets {
     private static JavaSecurityProtectionDomainAccess javaSecurityProtectionDomainAccess;
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaAWTAccess javaAWTAccess;
+    private static JavaIOFileAccess javaIOFileAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
         if (javaUtilJarAccess == null) {
@@ -148,5 +149,13 @@ public class SharedSecrets {
         // this may return null in which case calling code needs to 
         // provision for.
         return javaAWTAccess;
+    }
+    
+    public static void setJavaIOFileAccess(JavaIOFileAccess access) {
+        javaIOFileAccess = access;
+    }
+
+    public static JavaIOFileAccess getJavaIOFileAccess() {
+        return javaIOFileAccess;
     }
 }
