@@ -297,6 +297,66 @@ AWT_ASSERT_APPKIT_THREAD;
     return self;
 }
 
+// checks that this window is under the mouse cursor and this point is not overlapped by others windows
+- (BOOL) isTopmostWindowUnderMouse {
+
+    int currentWinID = [self.nsWindow windowNumber];
+
+    NSRect screenRect = [[NSScreen mainScreen] frame];
+    NSPoint nsMouseLocation = [NSEvent mouseLocation];
+    CGPoint cgMouseLocation = CGPointMake(nsMouseLocation.x, screenRect.size.height - nsMouseLocation.y);
+
+    NSMutableArray *windows = (NSMutableArray *)CGWindowListCopyWindowInfo(kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID);
+
+
+    for (NSDictionary *window in windows) {
+        int layer = [[window objectForKey:(id)kCGWindowLayer] intValue];
+        if (layer == 0) {
+            int winID = [[window objectForKey:(id)kCGWindowNumber] intValue];
+            CGRect rect;
+            CGRectMakeWithDictionaryRepresentation((CFDictionaryRef)[window objectForKey:(id)kCGWindowBounds], &rect);
+            if (CGRectContainsPoint(rect, cgMouseLocation)) {
+                return currentWinID == winID;
+            } else if (currentWinID == winID) {
+                return NO;
+            }
+        }
+    }
+    return NO;
+}
+
+- (void) synthesizeMouseEnteredExitedEvents {
+
+    int eventType = 0;
+    BOOL isUnderMouse = [self isTopmostWindowUnderMouse];
+    BOOL mouseIsOver = [[self.nsWindow contentView] mouseIsOver];
+
+    if (isUnderMouse && !mouseIsOver) {
+        eventType = NSMouseEntered;
+    } else if (!isUnderMouse && mouseIsOver) {
+        eventType = NSMouseExited;
+    } else {
+        return;
+    }
+
+    NSPoint screenLocation = [NSEvent mouseLocation];
+    NSPoint windowLocation = [self.nsWindow convertScreenToBase: screenLocation];
+    int modifierFlags = (eventType == NSMouseEntered) ? NSMouseEnteredMask : NSMouseExitedMask;
+
+    NSEvent *mouseEvent = [NSEvent enterExitEventWithType: eventType
+                                                 location: windowLocation
+                                            modifierFlags: modifierFlags
+                                                timestamp: 0
+                                             windowNumber: [self.nsWindow windowNumber]
+                                                  context: nil
+                                              eventNumber: 0
+                                           trackingNumber: 0
+                                                 userData: nil
+                           ];
+
+    [[self.nsWindow contentView] deliverJavaMouseEvent: mouseEvent];
+}
+
 - (void) dealloc {
 AWT_ASSERT_APPKIT_THREAD;
 
@@ -839,6 +899,8 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
         // ensure we repaint the whole window after the resize operation
         // (this will also re-enable screen updates, which were disabled above)
         // TODO: send PaintEvent
+
+        [window synthesizeMouseEnteredExitedEvents];
     }];
 
 JNF_COCOA_EXIT(env);
@@ -1069,6 +1131,28 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
     [JNFException raise:env as:kRuntimeException reason:"unimplemented"];
 
 JNF_COCOA_EXIT(env);
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CPlatformWindow
+ * Method:    nativeSynthesizeMouseEnteredExitedEvents
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMouseEnteredExitedEvents
+(JNIEnv *env, jclass clazz, jlong windowPtr)
+{
+    JNF_COCOA_ENTER(env);
+    AWT_ASSERT_NOT_APPKIT_THREAD;
+
+    NSWindow *nsWindow = OBJC(windowPtr);
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+        AWT_ASSERT_APPKIT_THREAD;
+        AWTWindow *window = (AWTWindow*)[nsWindow delegate];
+
+        [window synthesizeMouseEnteredExitedEvents];
+    }];
+
+    JNF_COCOA_EXIT(env);
 }
 
 /*
