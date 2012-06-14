@@ -179,7 +179,7 @@ public class Resources_ko extends java.util.ListResourceBundle {
                  "\uCCA0\uD68C\uD560 \uC778\uC99D\uC11C\uC758 \uC77C\uB828 ID"}, //-id
         // keytool: Running part
         {"keytool.error.", "keytool \uC624\uB958: "},
-        {"Illegal.option.", "\uC798\uBABB\uB41C \uC635\uC158:   "},
+        {"Illegal.option.", "\uC798\uBABB\uB41C \uC635\uC158:  "},
         {"Illegal.value.", "\uC798\uBABB\uB41C \uAC12: "},
         {"Unknown.password.type.", "\uC54C \uC218 \uC5C6\uB294 \uBE44\uBC00\uBC88\uD638 \uC720\uD615: "},
         {"Cannot.find.environment.variable.",
