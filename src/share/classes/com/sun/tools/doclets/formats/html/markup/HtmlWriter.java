@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,6 +136,8 @@ public class HtmlWriter extends PrintWriter {
 
     public final Content fieldDetailsLabel;
 
+    public final Content propertyDetailsLabel;
+
     public final Content constructorDetailsLabel;
 
     public final Content enumConstantsDetailsLabel;
@@ -205,6 +207,7 @@ public class HtmlWriter extends PrintWriter {
         methodDetailsLabel = getResource("doclet.Method_Detail");
         annotationTypeDetailsLabel = getResource("doclet.Annotation_Type_Member_Detail");
         fieldDetailsLabel = getResource("doclet.Field_Detail");
+        propertyDetailsLabel = getResource("doclet.Property_Detail");
         constructorDetailsLabel = getResource("doclet.Constructor_Detail");
         enumConstantsDetailsLabel = getResource("doclet.Enum_Constant_Detail");
         specifiedByLabel = getResource("doclet.Specified_By");

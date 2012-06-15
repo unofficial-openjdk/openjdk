@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -663,7 +663,16 @@ public class TagletManager {
             customTags.put((temp = new SimpleTaglet("author", message.getText("doclet.Author"),
                 SimpleTaglet.PACKAGE + SimpleTaglet.TYPE + SimpleTaglet.OVERVIEW)).getName(), temp);
         }
-        customTags.put((temp = new SimpleTaglet("serialData", message.getText("doclet.SerialData"),
+        customTags.put((temp = new PropertyGetterTaglet()).getName(), temp);
+        customTags.put((temp = new PropertySetterTaglet()).getName(), temp);
+        customTags.put((temp = new SimpleTaglet("propertyDescription",
+                                  message.getText("doclet.PropertyDescription"),
+            SimpleTaglet.FIELD + SimpleTaglet.METHOD)).getName(), temp);
+        customTags.put((temp = new SimpleTaglet("defaultValue",
+                                  message.getText("doclet.DefaultValue"),
+            SimpleTaglet.FIELD + SimpleTaglet.METHOD)).getName(), temp);
+        customTags.put((temp = new SimpleTaglet("serialData",
+                                  message.getText("doclet.SerialData"),
             SimpleTaglet.EXCLUDED)).getName(), temp);
         customTags.put((temp = new SimpleTaglet("factory", message.getText("doclet.Factory"),
             SimpleTaglet.METHOD)).getName(), temp);
@@ -676,6 +685,9 @@ public class TagletManager {
             temp);
         customTags.put((temp = new LegacyTaglet(new CodeTaglet())).getName(),
             temp);
+        customTags.put((temp = new SimpleTaglet("treatAsPrivate", null ,
+                SimpleTaglet.FIELD + SimpleTaglet.METHOD + SimpleTaglet.TYPE)).getName(), temp);
+        customTags.put((temp = new LegacyTaglet(new ExpertTaglet())).getName(), temp);
 
         //Keep track of the names of standard tags for error
         //checking purposes.
@@ -686,6 +698,10 @@ public class TagletManager {
         standardTags.add("since");
         standardTags.add("version");
         standardTags.add("author");
+        standardTags.add("propertyGetter");
+        standardTags.add("propertySetter");
+        standardTags.add("propertyDescription");
+        standardTags.add("defaultValue");
         standardTags.add("see");
         standardTags.add("deprecated");
         standardTags.add("link");
@@ -699,6 +715,8 @@ public class TagletManager {
         standardTags.add("Text");
         standardTags.add("literal");
         standardTags.add("code");
+        standardTags.add("treatAsPrivate");
+        standardTags.add("expert");
     }
 
     /**

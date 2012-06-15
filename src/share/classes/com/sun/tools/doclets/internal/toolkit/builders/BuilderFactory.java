@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -185,6 +185,19 @@ public class BuilderFactory {
             throws Exception {
         return FieldBuilder.getInstance(configuration, classWriter.getClassDoc(),
             writerFactory.getFieldWriter(classWriter));
+    }
+
+    /**
+     * Return an instance of the property builder for the given class.
+     *
+     * @return an instance of the field builder for the given class.
+     */
+    public AbstractBuilder getPropertyBuilder(ClassWriter classWriter) throws Exception {
+        final PropertyWriter propertyWriter =
+                writerFactory.getPropertyWriter(classWriter);
+        return PropertyBuilder.getInstance(configuration,
+                                           classWriter.getClassDoc(),
+                                           propertyWriter);
     }
 
     /**
