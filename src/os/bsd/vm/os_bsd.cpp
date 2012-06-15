@@ -998,8 +998,13 @@ static void *java_start(Thread *thread) {
   }
 
 #ifdef _ALLBSD_SOURCE
+#ifdef __APPLE__
+  // thread_id is mach thread on macos
+  osthread->set_thread_id(::mach_thread_self());
+#else
   // thread_id is pthread_id on BSD
   osthread->set_thread_id(::pthread_self());
+#endif
 #else
   // thread_id is kernel thread id (similar to Solaris LWP id)
   osthread->set_thread_id(os::Bsd::gettid());
@@ -1190,7 +1195,11 @@ bool os::create_attached_thread(JavaThread* thread) {
 
   // Store pthread info into the OSThread
 #ifdef _ALLBSD_SOURCE
+#ifdef __APPLE__
+  osthread->set_thread_id(::mach_thread_self());
+#else
   osthread->set_thread_id(::pthread_self());
+#endif
 #else
   osthread->set_thread_id(os::Bsd::gettid());
 #endif
@@ -1807,7 +1816,13 @@ size_t os::lasterror(char *buf, size_t len) {
   return n;
 }
 
-intx os::current_thread_id() { return (intx)pthread_self(); }
+intx os::current_thread_id() {
+#ifdef __APPLE__
+  return (intx)::mach_thread_self();
+#else
+  return (intx)::pthread_self();
+#endif
+}
 int os::current_process_id() {
 
   // Under the old bsd thread library, bsd gives each thread
@@ -2325,93 +2340,21 @@ void os::print_dll_info(outputStream *st) {
 #endif
 }
 
+void os::print_os_info_brief(outputStream* st) {
+  st->print("Bsd");
+
+  os::Posix::print_uname_info(st);
+}
 
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
+  st->print("Bsd");
 
-  // Try to identify popular distros.
-  // Most Bsd distributions have /etc/XXX-release file, which contains
-  // the OS version string. Some have more than one /etc/XXX-release file
-  // (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
-  // so the order is important.
-  if (!_print_ascii_file("/etc/mandrake-release", st) &&
-      !_print_ascii_file("/etc/sun-release", st) &&
-      !_print_ascii_file("/etc/redhat-release", st) &&
-      !_print_ascii_file("/etc/SuSE-release", st) &&
-      !_print_ascii_file("/etc/turbobsd-release", st) &&
-      !_print_ascii_file("/etc/gentoo-release", st) &&
-      !_print_ascii_file("/etc/debian_version", st) &&
-      !_print_ascii_file("/etc/ltib-release", st) &&
-      !_print_ascii_file("/etc/angstrom-version", st)) {
-      st->print("Bsd");
-  }
-  st->cr();
+  os::Posix::print_uname_info(st);
 
-  // kernel
-  st->print("uname:");
-  struct utsname name;
-  uname(&name);
-  st->print(name.sysname); st->print(" ");
-  st->print(name.release); st->print(" ");
-  st->print(name.version); st->print(" ");
-  st->print(name.machine);
-  st->cr();
+  os::Posix::print_rlimit_info(st);
 
-#ifndef _ALLBSD_SOURCE
-  // Print warning if unsafe chroot environment detected
-  if (unsafe_chroot_detected) {
-    st->print("WARNING!! ");
-    st->print_cr(unstable_chroot_error);
-  }
-
-  // libc, pthread
-  st->print("libc:");
-  st->print(os::Bsd::glibc_version()); st->print(" ");
-  st->print(os::Bsd::libpthread_version()); st->print(" ");
-  if (os::Bsd::is_BsdThreads()) {
-     st->print("(%s stack)", os::Bsd::is_floating_stack() ? "floating" : "fixed");
-  }
-  st->cr();
-#endif
-
-  // rlimit
-  st->print("rlimit:");
-  struct rlimit rlim;
-
-  st->print(" STACK ");
-  getrlimit(RLIMIT_STACK, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", CORE ");
-  getrlimit(RLIMIT_CORE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", NPROC ");
-  getrlimit(RLIMIT_NPROC, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-  st->print(", NOFILE ");
-  getrlimit(RLIMIT_NOFILE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-#ifndef _ALLBSD_SOURCE
-  st->print(", AS ");
-  getrlimit(RLIMIT_AS, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-  st->cr();
-
-  // load average
-  st->print("load average:");
-  double loadavg[3];
-  os::loadavg(loadavg, 3);
-  st->print("%0.02f %0.02f %0.02f", loadavg[0], loadavg[1], loadavg[2]);
-  st->cr();
-#endif
+  os::Posix::print_load_average(st);
 }
 
 void os::pd_print_cpu_info(outputStream* st) {
@@ -5152,9 +5095,9 @@ jlong os::thread_cpu_time(Thread *thread, bool user_sys_cpu_time) {
   struct thread_basic_info tinfo;
   mach_msg_type_number_t tcount = THREAD_INFO_MAX;
   kern_return_t kr;
-  mach_port_t mach_thread;
+  thread_t mach_thread;
 
-  mach_thread = pthread_mach_thread_np(thread->osthread()->thread_id());
+  mach_thread = thread->osthread()->thread_id();
   kr = thread_info(mach_thread, THREAD_BASIC_INFO, (thread_info_t)&tinfo, &tcount);
   if (kr != KERN_SUCCESS)
     return -1;

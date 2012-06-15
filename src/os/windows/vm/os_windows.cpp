@@ -1572,9 +1572,17 @@ void os::print_dll_info(outputStream *st) {
    enumerate_modules(pid, _print_module, (void *)st);
 }
 
+void os::print_os_info_brief(outputStream* st) {
+  os::print_os_info(st);
+}
+
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
+  os::win32::print_windows_version(st);
+}
+
+void os::win32::print_windows_version(outputStream* st) {
   OSVERSIONINFOEX osvi;
   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
@@ -1593,7 +1601,8 @@ void os::print_os_info(outputStream* st) {
     case 5001: st->print(" Windows XP"); break;
     case 5002:
     case 6000:
-    case 6001: {
+    case 6001:
+    case 6002: {
       // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
       // find out whether we are running on 64 bit processor or not.
       SYSTEM_INFO si;
@@ -1622,6 +1631,14 @@ void os::print_os_info(outputStream* st) {
         } else {
             // Unrecognized windows, print out its major and minor versions
             st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+            st->print(" , 64 bit");
+      } else if (os_vers == 6002) {
+        if (osvi.wProductType == VER_NT_WORKSTATION) {
+            st->print(" Windows 8");
+        } else {
+            st->print(" Windows Server 2012");
         }
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
