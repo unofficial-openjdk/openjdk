@@ -40,8 +40,10 @@ endif
 
 JFR =
 ifndef OPENJDK
-ifndef JAVASE_EMBEDDED
+ifndef JAVASE_EMBEDDED 
+ifneq (${ARCH},arm)
 	JFR = jfr
+endif
 endif
 endif
 

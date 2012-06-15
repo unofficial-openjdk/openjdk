@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +21,21 @@
  * questions.
  */
 
-/* @test
-   @bug 4054511
-   @summary Check that applets don't get a security exception when invoking
-            the File.isDirectory method on a non-existent directory
-   @author Mark Reinhold
-   @run applet Applet.html
+/**
+ * @test
+ * @bug 6961765
+ * @summary Double byte characters corrupted in DN for LDAP referrals
  */
 
-import java.io.*;
+import com.sun.jndi.ldap.LdapURL;
 
-
-public class Applet extends java.applet.Applet {
-
-    void go(String fn) {
-        File f = new File(fn);
-        System.err.println(fn + ": " + f.isDirectory());
+public class LdapUnicodeURL {
+    public static void main(String[] args) throws Exception {
+        // First 3 characters of the CJK Unified Ideographs
+        String uid = "uid=\u4e00\u4e01\u4e02";
+        LdapURL ldURL = new LdapURL("ldap://www.example.com/" + uid);
+        if (!ldURL.getDN().equals(uid)) {
+            throw new Exception("uid changed to " + ldURL.getDN());
+        }
     }
-
-    public void init() {
-        String nxdir = "non_EX_is_TENT_dir_EC_tory";
-        go(nxdir);
-        go(nxdir + File.separator + "bar" + File.separator + "baz");
-    }
-
 }

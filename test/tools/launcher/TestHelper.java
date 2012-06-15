@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.util.Set;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
@@ -29,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.Files;
 import java.nio.file.FileVisitResult;
@@ -36,20 +38,26 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
 
 import static java.nio.file.StandardCopyOption.*;
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * This class provides some common utilities for the launcher tests.
  */
-public enum TestHelper {
-    INSTANCE;
+public class TestHelper {
+    // commonly used jtreg constants
+    static final File TEST_CLASSES_DIR;
+    static final File TEST_SOURCES_DIR;
+
     static final String JAVAHOME = System.getProperty("java.home");
     static final boolean isSDK = JAVAHOME.endsWith("jre");
     static final String javaCmd;
+    static final String javawCmd;
     static final String java64Cmd;
     static final String javacCmd;
     static final JavaCompiler compiler;
@@ -70,13 +78,30 @@ public enum TestHelper {
     static final boolean isDualMode = isSolaris;
     static final boolean isSparc = System.getProperty("os.arch").startsWith("sparc");
 
+    // make a note of the golden default locale
+    static final Locale DefaultLocale = Locale.getDefault();
+
     static final String JAVA_FILE_EXT  = ".java";
     static final String CLASS_FILE_EXT = ".class";
     static final String JAR_FILE_EXT   = ".jar";
+    static final String JLDEBUG_KEY     = "_JAVA_LAUNCHER_DEBUG";
+    static final String EXPECTED_MARKER = "TRACER_MARKER:About to EXEC";
 
     static int testExitValue = 0;
 
     static {
+        String tmp = System.getProperty("test.classes", null);
+        if (tmp == null) {
+            throw new Error("property test.classes not defined ??");
+        }
+        TEST_CLASSES_DIR = new File(tmp).getAbsoluteFile();
+
+        tmp = System.getProperty("test.src", null);
+        if (tmp == null) {
+            throw new Error("property test.src not defined ??");
+        }
+        TEST_SOURCES_DIR = new File(tmp).getAbsoluteFile();
+
         if (is64Bit && is32Bit) {
             throw new RuntimeException("arch model cannot be both 32 and 64 bit");
         }
@@ -91,15 +116,29 @@ public enum TestHelper {
                 : new File(binDir, "java");
         javaCmd = javaCmdFile.getAbsolutePath();
         if (!javaCmdFile.canExecute()) {
-            throw new RuntimeException("java <" + TestHelper.javaCmd + "> must exist");
+            throw new RuntimeException("java <" + TestHelper.javaCmd +
+                    "> must exist and should be executable");
         }
 
         File javacCmdFile = (isWindows)
                 ? new File(binDir, "javac.exe")
                 : new File(binDir, "javac");
         javacCmd = javacCmdFile.getAbsolutePath();
+
+        if (isWindows) {
+            File javawCmdFile = new File(binDir, "javaw.exe");
+            javawCmd = javawCmdFile.getAbsolutePath();
+            if (!javawCmdFile.canExecute()) {
+                throw new RuntimeException("java <" + javawCmd +
+                        "> must exist and should be executable");
+            }
+        } else {
+            javawCmd = null;
+        }
+
         if (!javacCmdFile.canExecute()) {
-            throw new RuntimeException("java <" + javacCmd + "> must exist");
+            throw new RuntimeException("java <" + javacCmd +
+                    "> must exist and should be executable");
         }
         if (isSolaris) {
             File sparc64BinDir = new File(binDir,isSparc ? "sparcv9" : "amd64");
@@ -168,6 +207,19 @@ public enum TestHelper {
     }
 
     /*
+     * A convenience method to compile java files.
+     */
+    static void compile(String... compilerArgs) {
+        if (compiler.run(null, null, null, compilerArgs) != 0) {
+            String sarg = "";
+            for (String x : compilerArgs) {
+                sarg.concat(x + " ");
+            }
+            throw new Error("compilation failed: " + sarg);
+        }
+    }
+
+    /*
      * A generic jar file creator to create a java file, compile it
      * and jar it up, a specific Main-Class entry name in the
      * manifest can be specified or a null to use the sole class file name
@@ -226,6 +278,11 @@ public enum TestHelper {
         Files.copy(src.toPath(), dst.toPath(), COPY_ATTRIBUTES, REPLACE_EXISTING);
     }
 
+    static void createFile(File outFile, List<String> content) throws IOException {
+        Files.write(outFile.getAbsoluteFile().toPath(), content,
+                Charset.defaultCharset(), CREATE_NEW);
+    }
+
     static void recursiveDelete(File target) throws IOException {
         if (!target.exists()) {
             return;
@@ -257,19 +314,28 @@ public enum TestHelper {
     }
 
     static TestResult doExec(String...cmds) {
-        return doExec(null, cmds);
+        return doExec(null, null, cmds);
     }
 
+    static TestResult doExec(Map<String, String> envToSet, String...cmds) {
+        return doExec(envToSet, null, cmds);
+    }
     /*
      * A method which executes a java cmd and returns the results in a container
      */
-    static TestResult doExec(Map<String, String> envToSet, String...cmds) {
+    static TestResult doExec(Map<String, String> envToSet,
+                             Set<String> envToRemove, String...cmds) {
         String cmdStr = "";
         for (String x : cmds) {
             cmdStr = cmdStr.concat(x + " ");
         }
         ProcessBuilder pb = new ProcessBuilder(cmds);
         Map<String, String> env = pb.environment();
+        if (envToRemove != null) {
+            for (String key : envToRemove) {
+                env.remove(key);
+            }
+        }
         if (envToSet != null) {
             env.putAll(envToSet);
         }
@@ -306,6 +372,10 @@ public enum TestHelper {
                 return false;
             }
         };
+    }
+
+    static boolean isEnglishLocale() {
+        return Locale.getDefault().getLanguage().equals("en");
     }
 
     /*

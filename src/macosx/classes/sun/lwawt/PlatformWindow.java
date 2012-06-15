@@ -27,6 +27,7 @@ package sun.lwawt;
 
 import java.awt.*;
 
+import sun.awt.CausedFocusEvent;
 import sun.java2d.SurfaceData;
 
 // TODO Is it worth to generify this interface, like that:
@@ -66,9 +67,9 @@ public interface PlatformWindow {
     public void setBounds(int x, int y, int w, int h);
 
     /*
-     * Returns the screen number where the window is.
+     * Returns the graphics device where the window is.
      */
-    public int getScreenImOn();
+    public GraphicsDevice getGraphicsDevice();
 
     /*
      * Returns the location of the window.
@@ -107,6 +108,8 @@ public interface PlatformWindow {
     public void flip(int x1, int y1, int x2, int y2,
                      BufferCapabilities.FlipContents flipAction);
 
+    public void setModalBlocked(boolean blocked);
+
     public void toFront();
 
     public void toBack();
@@ -116,6 +119,8 @@ public interface PlatformWindow {
     public void setAlwaysOnTop(boolean value);
 
     public void updateFocusableWindowState();
+
+    public boolean rejectFocusRequest(CausedFocusEvent.Cause cause);
 
     public boolean requestWindowFocus();
 

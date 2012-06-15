@@ -27,9 +27,9 @@ package sun.lwawt.macosx;
 
 import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
 
-// TODO:BG this class is really a NOOP right now, but should be filled in if needed.
-
 final class CToolkitThreadBlockedHandler implements ToolkitThreadBlockedHandler {
+    private final LWCToolkit toolkit = (LWCToolkit)java.awt.Toolkit.getDefaultToolkit();
+
     public void lock() {
     }
 
@@ -41,9 +41,12 @@ final class CToolkitThreadBlockedHandler implements ToolkitThreadBlockedHandler 
     }
 
     public void enter() {
+        // Despite the naming of this method, on MacOS only one
+        // event is read and dispatched before this method returns.
+        // This call is non-blocking and does not wait for an event
+        toolkit.startNativeNestedEventLoop();
     }
 
     public void exit() {
     }
-
 }

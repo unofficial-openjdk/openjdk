@@ -93,32 +93,59 @@ public class CImage extends CFRetainedResource {
             return createImageUsingNativeSize(nativeCreateNSImageFromImageName(name));
         }
 
-        // This is used to create a CImage from a Image
-        public CImage createFromImage(final Image image) {
+        private static int[] imageToArray(Image image, boolean prepareImage) {
             if (image == null) return null;
 
-            MediaTracker mt = new MediaTracker(new Label());
-            final int id = 0;
-            mt.addImage(image, id);
+            if (prepareImage && !(image instanceof BufferedImage)) {
+                final MediaTracker mt = new MediaTracker(new Label());
+                final int id = 0;
+                mt.addImage(image, id);
 
-            try {
-                mt.waitForID(id);
-            } catch (InterruptedException e) {
-            }
+                try {
+                    mt.waitForID(id);
+                } catch (InterruptedException e) {
+                    return null;
+                }
 
-            if (mt.isErrorID(id)) {
-                return null;
+                if (mt.isErrorID(id)) {
+                    return null;
+                }
             }
 
             int w = image.getWidth(null);
             int h = image.getHeight(null);
+
+            if (w < 0 || h < 0) {
+                return null;
+            }
+
             BufferedImage bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB_PRE);
             Graphics2D g2 = bimg.createGraphics();
             g2.setComposite(AlphaComposite.Src);
             g2.drawImage(image, 0, 0, null);
             g2.dispose();
-            int[] buffer = ((DataBufferInt)bimg.getRaster().getDataBuffer()).getData();
-            return new CImage(nativeCreateNSImageFromArray(buffer, w, h));
+
+            return ((DataBufferInt)bimg.getRaster().getDataBuffer()).getData();
+        }
+
+        public CImage createFromImageImmediately(final Image image) {
+            int[]  buffer = imageToArray(image, false);
+
+            if (buffer == null) {
+                return null;
+            }
+
+            return new CImage(nativeCreateNSImageFromArray(buffer, image.getWidth(null),
+                                                           image.getHeight(null)));
+        }
+
+        // This is used to create a CImage from a Image
+        public CImage createFromImage(final Image image) {
+            int[] buffer = imageToArray(image, true);
+            if (buffer == null) {
+                return null;
+            }
+            return new CImage(nativeCreateNSImageFromArray(buffer, image.getWidth(null), image.getHeight(null)));
         }
 
         static int getSelectorAsInt(final String fromString) {

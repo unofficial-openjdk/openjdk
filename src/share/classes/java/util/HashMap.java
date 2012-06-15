@@ -146,7 +146,7 @@ public class HashMap<K,V>
     /**
      * The table, resized as necessary. Length MUST Always be a power of two.
      */
-    transient Entry[] table;
+    transient Entry<K,V>[] table;
 
     /**
      * The number of key-value mappings contained in this map.
@@ -176,6 +176,86 @@ public class HashMap<K,V>
     transient int modCount;
 
     /**
+     * The default threshold of capacity above which alternate hashing is used.
+     * Alternative hashing reduces the incidence of collisions due to weak hash
+     * code calculation.
+     * <p/>
+     * This value may be overridden by defining the system property
+     * {@code java.util.althashing.threshold}. A property value of {@code 1}
+     * forces alternative hashing to be used at all times whereas
+     * {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures that
+     * alternative hashing is never used.
+     */
+    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 0;
+
+    /**
+     * holds values which can't be initialized until after VM is booted.
+     */
+    private static class Holder {
+
+            // Unsafe mechanics
+        /**
+         *
+         */
+        static final sun.misc.Unsafe UNSAFE;
+
+        /**
+         * Offset of "final" hashmask field we must set in
+         * readObject() method.
+         */
+        static final long HASHSEED_OFFSET;
+
+        /**
+         * Table capacity above which to switch to use alternate hashing.
+         */
+        static final int ALTERNATE_HASHING_THRESHOLD;
+
+        static {
+            String altThreshold = java.security.AccessController.doPrivileged(
+                new sun.security.action.GetPropertyAction(
+                    "jdk.map.althashing.threshold"));
+
+            int threshold;
+            try {
+                threshold = (null != altThreshold)
+                        ? Integer.parseInt(altThreshold)
+                        : ALTERNATE_HASHING_THRESHOLD_DEFAULT;
+
+                if(threshold == -1) {
+                    threshold = Integer.MAX_VALUE;
+                }
+
+                if(threshold < 0) {
+                    throw new IllegalArgumentException("value must be positive integer.");
+                }
+            } catch(IllegalArgumentException failed) {
+                throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);
+            }
+            ALTERNATE_HASHING_THRESHOLD = threshold;
+
+            try {
+                UNSAFE = sun.misc.Unsafe.getUnsafe();
+                HASHSEED_OFFSET = UNSAFE.objectFieldOffset(
+                    HashMap.class.getDeclaredField("hashSeed"));
+            } catch (NoSuchFieldException | SecurityException e) {
+                throw new Error("Failed to record hashSeed offset", e);
+            }
+        }
+    }
+
+    /**
+     * If {@code true} then perform alternate hashing to reduce the incidence of
+     * collisions due to weak hash code calculation.
+     */
+    transient boolean useAltHashing;
+
+    /**
+     * A randomizing value associated with this instance that is applied to
+     * hash code of keys to make hash collisions harder to find.
+     */
+    transient final int hashSeed = sun.misc.Hashing.randomHashSeed(this);
+
+    /**
      * Constructs an empty <tt>HashMap</tt> with the specified initial
      * capacity and load factor.
      *
@@ -200,8 +280,10 @@ public class HashMap<K,V>
             capacity <<= 1;
 
         this.loadFactor = loadFactor;
-        threshold = (int)(capacity * loadFactor);
+        threshold = (int)Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
         table = new Entry[capacity];
+        useAltHashing = sun.misc.VM.isBooted() &&
+                (capacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
         init();
     }
 
@@ -221,10 +303,7 @@ public class HashMap<K,V>
      * (16) and the default load factor (0.75).
      */
     public HashMap() {
-        this.loadFactor = DEFAULT_LOAD_FACTOR;
-        threshold = (int)(DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
-        table = new Entry[DEFAULT_INITIAL_CAPACITY];
-        init();
+        this(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR);
     }
 
     /**
@@ -255,13 +334,23 @@ public class HashMap<K,V>
     }
 
     /**
-     * Applies a supplemental hash function to a given hashCode, which
-     * defends against poor quality hash functions.  This is critical
-     * because HashMap uses power-of-two length hash tables, that
+     * Retrieve object hash code and applies a supplemental hash function to the
+     * result hash, which defends against poor quality hash functions.  This is
+     * critical because HashMap uses power-of-two length hash tables, that
      * otherwise encounter collisions for hashCodes that do not differ
      * in lower bits. Note: Null keys always map to hash 0, thus index 0.
      */
-    static int hash(int h) {
+    final int hash(Object k) {
+        int h = 0;
+        if (useAltHashing) {
+            if (k instanceof String) {
+                return sun.misc.Hashing.stringHash32((String) k);
+            }
+            h = hashSeed;
+        }
+
+        h ^= k.hashCode();
+
         // This function ensures that hashCodes that differ only by
         // constant multiples at each bit position have a bounded
         // number of collisions (approximately 8 at default load factor).
@@ -314,15 +403,9 @@ public class HashMap<K,V>
     public V get(Object key) {
         if (key == null)
             return getForNullKey();
-        int hash = hash(key.hashCode());
-        for (Entry<K,V> e = table[indexFor(hash, table.length)];
-             e != null;
-             e = e.next) {
-            Object k;
-            if (e.hash == hash && ((k = e.key) == key || key.equals(k)))
-                return e.value;
-        }
-        return null;
+        Entry<K,V> entry = getEntry(key);
+
+        return null == entry ? null : entry.getValue();
     }
 
     /**
@@ -358,7 +441,7 @@ public class HashMap<K,V>
      * for the key.
      */
     final Entry<K,V> getEntry(Object key) {
-        int hash = (key == null) ? 0 : hash(key.hashCode());
+        int hash = (key == null) ? 0 : hash(key);
         for (Entry<K,V> e = table[indexFor(hash, table.length)];
              e != null;
              e = e.next) {
@@ -386,7 +469,7 @@ public class HashMap<K,V>
     public V put(K key, V value) {
         if (key == null)
             return putForNullKey(value);
-        int hash = hash(key.hashCode());
+        int hash = hash(key);
         int i = indexFor(hash, table.length);
         for (Entry<K,V> e = table[i]; e != null; e = e.next) {
             Object k;
@@ -427,7 +510,7 @@ public class HashMap<K,V>
      * addEntry.
      */
     private void putForCreate(K key, V value) {
-        int hash = (key == null) ? 0 : hash(key.hashCode());
+        int hash = null == key ? 0 : hash(key);
         int i = indexFor(hash, table.length);
 
         /**
@@ -475,28 +558,30 @@ public class HashMap<K,V>
         }
 
         Entry[] newTable = new Entry[newCapacity];
-        transfer(newTable);
+        boolean oldAltHashing = useAltHashing;
+        useAltHashing |= sun.misc.VM.isBooted() &&
+                (newCapacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
+        boolean rehash = oldAltHashing ^ useAltHashing;
+        transfer(newTable, rehash);
         table = newTable;
-        threshold = (int)(newCapacity * loadFactor);
+        threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
     }
 
     /**
      * Transfers all entries from current table to newTable.
      */
-    void transfer(Entry[] newTable) {
-        Entry[] src = table;
+    void transfer(Entry[] newTable, boolean rehash) {
         int newCapacity = newTable.length;
-        for (int j = 0; j < src.length; j++) {
-            Entry<K,V> e = src[j];
-            if (e != null) {
-                src[j] = null;
-                do {
-                    Entry<K,V> next = e.next;
-                    int i = indexFor(e.hash, newCapacity);
-                    e.next = newTable[i];
-                    newTable[i] = e;
-                    e = next;
-                } while (e != null);
+        for (Entry<K,V> e : table) {
+            while(null != e) {
+                Entry<K,V> next = e.next;
+                if(rehash) {
+                    e.hash = null == e.key ? 0 : hash(e.key);
+                }
+                int i = indexFor(e.hash, newCapacity);
+                e.next = newTable[i];
+                newTable[i] = e;
+                e = next;
             }
         }
     }
@@ -558,7 +643,7 @@ public class HashMap<K,V>
      * for this key.
      */
     final Entry<K,V> removeEntryForKey(Object key) {
-        int hash = (key == null) ? 0 : hash(key.hashCode());
+        int hash = (key == null) ? 0 : hash(key);
         int i = indexFor(hash, table.length);
         Entry<K,V> prev = table[i];
         Entry<K,V> e = prev;
@@ -585,7 +670,8 @@ public class HashMap<K,V>
     }
 
     /**
-     * Special version of remove for EntrySet.
+     * Special version of remove for EntrySet using {@code Map.Entry.equals()}
+     * for matching.
      */
     final Entry<K,V> removeMapping(Object o) {
         if (!(o instanceof Map.Entry))
@@ -688,7 +774,7 @@ public class HashMap<K,V>
         final K key;
         V value;
         Entry<K,V> next;
-        final int hash;
+        int hash;
 
         /**
          * Creates new entry.
@@ -762,10 +848,13 @@ public class HashMap<K,V>
      * Subclass overrides this to alter the behavior of put method.
      */
     void addEntry(int hash, K key, V value, int bucketIndex) {
-        Entry<K,V> e = table[bucketIndex];
-        table[bucketIndex] = new Entry<>(hash, key, value, e);
-        if (size++ >= threshold)
+        if ((size >= threshold) && (null != table[bucketIndex])) {
             resize(2 * table.length);
+            hash = (null != key) ? hash(key) : 0;
+            bucketIndex = indexFor(hash, table.length);
+        }
+
+        createEntry(hash, key, value, bucketIndex);
     }
 
     /**
@@ -827,7 +916,6 @@ public class HashMap<K,V>
             HashMap.this.removeEntryForKey(k);
             expectedModCount = modCount;
         }
-
     }
 
     private final class ValueIterator extends HashIterator<V> {
@@ -1007,9 +1095,8 @@ public class HashMap<K,V>
         s.writeInt(size);
 
         // Write out keys and values (alternating)
-        if (i != null) {
-            while (i.hasNext()) {
-                Map.Entry<K,V> e = i.next();
+        if (size > 0) {
+            for(Map.Entry<K,V> e : entrySet0()) {
                 s.writeObject(e.getKey());
                 s.writeObject(e.getValue());
             }
@@ -1019,26 +1106,52 @@ public class HashMap<K,V>
     private static final long serialVersionUID = 362498820763181265L;
 
     /**
-     * Reconstitute the <tt>HashMap</tt> instance from a stream (i.e.,
+     * Reconstitute the {@code HashMap} instance from a stream (i.e.,
      * deserialize it).
      */
     private void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-        // Read in the threshold, loadfactor, and any hidden stuff
+        // Read in the threshold (ignored), loadfactor, and any hidden stuff
         s.defaultReadObject();
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+            throw new InvalidObjectException("Illegal load factor: " +
+                                               loadFactor);
+
+        // set hashSeed (can only happen after VM boot)
+        Holder.UNSAFE.putIntVolatile(this, Holder.HASHSEED_OFFSET,
+                sun.misc.Hashing.randomHashSeed(this));
 
         // Read in number of buckets and allocate the bucket array;
-        int numBuckets = s.readInt();
-        table = new Entry[numBuckets];
+        s.readInt(); // ignored
+
+        // Read number of mappings
+        int mappings = s.readInt();
+        if (mappings < 0)
+            throw new InvalidObjectException("Illegal mappings count: " +
+                                               mappings);
+
+        int initialCapacity = (int) Math.min(
+                // capacity chosen by number of mappings
+                // and desired load (if >= 0.25)
+                mappings * Math.min(1 / loadFactor, 4.0f),
+                // we have limits...
+                HashMap.MAXIMUM_CAPACITY);
+        int capacity = 1;
+        // find smallest power of two which holds all mappings
+        while (capacity < initialCapacity) {
+            capacity <<= 1;
+        }
+
+        table = new Entry[capacity];
+        threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
+        useAltHashing = sun.misc.VM.isBooted() &&
+                (capacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
 
         init();  // Give subclass a chance to do its thing.
 
-        // Read in size (number of Mappings)
-        int size = s.readInt();
-
         // Read the keys and values, and put the mappings in the HashMap
-        for (int i=0; i<size; i++) {
+        for (int i=0; i<mappings; i++) {
             K key = (K) s.readObject();
             V value = (V) s.readObject();
             putForCreate(key, value);

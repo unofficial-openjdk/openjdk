@@ -33,17 +33,23 @@ import sun.java2d.SurfaceData;
 
 import sun.awt.CGraphicsConfig;
 import sun.awt.CGraphicsDevice;
+import sun.awt.CausedFocusEvent;
 
 import java.awt.*;
 import java.awt.BufferCapabilities.FlipContents;
+
+import sun.util.logging.PlatformLogger;
 
 /*
  * Provides a lightweight implementation of the EmbeddedFrame.
  */
 public class CPlatformEmbeddedFrame implements PlatformWindow {
 
+    private static final PlatformLogger focusLogger = PlatformLogger.getLogger("sun.lwawt.macosx.focus.CPlatformEmbeddedFrame");
+
     private CGLLayer windowLayer;
     private LWWindowPeer peer;
+    private CEmbeddedFrame target;
 
     private volatile int screenX = 0;
     private volatile int screenY = 0;
@@ -52,6 +58,7 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
     public void initialize(Window target, final LWWindowPeer peer, PlatformWindow owner) {
         this.peer = peer;
         this.windowLayer = new CGLLayer(peer);
+        this.target = (CEmbeddedFrame)target;
     }
 
     @Override
@@ -79,11 +86,10 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
     }
 
     @Override
-    public int getScreenImOn() {
+    public GraphicsDevice getGraphicsDevice() {
         // REMIND: return the main screen for the initial implementation
-        CGraphicsConfig gc = (CGraphicsConfig)peer.getGraphicsConfiguration();
-        CGraphicsDevice device = gc.getDevice();
-        return device.getCoreGraphicsScreen();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        return ge.getDefaultScreenDevice();
     }
 
     @Override
@@ -149,6 +155,18 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
     public void updateFocusableWindowState() {}
 
     @Override
+    public boolean rejectFocusRequest(CausedFocusEvent.Cause cause) {
+        // Cross-app activation requests are not allowed.
+        if (cause != CausedFocusEvent.Cause.MOUSE_EVENT &&
+            !target.isParentWindowActive())
+        {
+            focusLogger.fine("the embedder is inactive, so the request is rejected");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public boolean requestWindowFocus() {
         return true;
     }
@@ -186,4 +204,7 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
 
     @Override
     public void setWindowState(int windowState) {}
+
+    @Override
+    public void setModalBlocked(boolean blocked) {}
 }

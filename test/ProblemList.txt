@@ -210,6 +210,9 @@ java/lang/ThreadLocal/MemoryLeak.java                           solaris-all
 # Windows X64, RuntimeException: MyThread expected to have RUNNABLE but got WAITING
 java/lang/Thread/ThreadStateTest.java                           generic-all
 
+# 7148492
+java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
+
 ############################################################################
 
 # jdk_management
@@ -301,6 +304,9 @@ sun/management/jmxremote/startstop/JMXStartStopTest.sh          generic-all
 # 6988950
 demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
 
+# 7162111
+demo/jvmti/mtrace/TraceJFrame.java				macosx-all
+
 # Need to be marked othervm, or changed to be samevm safe
 com/sun/jndi/ldap/ReadTimeoutTest.java                          generic-all
 com/sun/jndi/rmi/registry/RegistryContext/UnbindIdempotent.java generic-all
@@ -368,6 +374,26 @@ javax/print/attribute/AttributeTest.java                        generic-all
 # Only print test left, excluding just because all print tests have been
 javax/print/attribute/MediaMappingsTest.java                    generic-all
 
+# 7162111
+javax/script/CauseExceptionTest.java				macosx-all
+javax/script/GetInterfaceTest.java				macosx-all
+javax/script/JavaScriptScopeTest.java				macosx-all
+javax/script/NullUndefinedVarTest.java				macosx-all
+javax/script/PluggableContextTest.java				macosx-all
+javax/script/ProviderTest.sh					macosx-all
+javax/script/RhinoExceptionTest.java				macosx-all
+javax/script/StringWriterPrintTest.java				macosx-all
+javax/script/Test1.java						macosx-all
+javax/script/Test2.java						macosx-all
+javax/script/Test3.java						macosx-all
+javax/script/Test4.java						macosx-all
+javax/script/Test5.java						macosx-all
+javax/script/Test6.java						macosx-all
+javax/script/Test7.java						macosx-all
+javax/script/Test8.java						macosx-all
+javax/script/UnescapedBracketRegExTest.java			macosx-all
+javax/script/VersionTest.java					macosx-all
+
 ############################################################################
 
 # jdk_net
@@ -381,6 +407,27 @@ java/net/MulticastSocket/Test.java                               macosx-all
 
 #7143960
 java/net/DatagramSocket/SendDatagramToBadAddress.java            macosx-all
+
+# 7148829
+sun/net/InetAddress/nameservice/simple/CacheTest.java		generic-all
+sun/net/InetAddress/nameservice/simple/DefaultCaching.java	generic-all
+
+# 7161936
+sun/net/www/http/HttpClient/RetryPost.sh			macosx-all
+sun/net/www/protocol/http/B5017051.java				macosx-all
+sun/net/www/protocol/http/B6369510.java				macosx-all
+sun/net/www/protocol/http/StreamingOutputStream.java		macosx-all
+sun/net/www/protocol/http/UserAuth.java				macosx-all
+sun/net/www/protocol/http/UserCookie.java			macosx-all
+
+# 7162118
+java/net/CookieHandler/CookieManagerTest.java			macosx-all
+
+# 7162123
+test/java/net/InetSocketAddress/B6469803.java			macosx-all
+
+# JPRT needs to set 127.0.0.1 in proxy bypass list
+java/net/URLClassLoader/closetest/CloseTest.java		macosx-all
 
 ############################################################################
 
@@ -431,6 +478,9 @@ java/rmi/Naming/legalRegistryNames/LegalRegistryNames.java      generic-all
 # Fails on Linux 32 and 64bit -server?, impl not garbage collected???
 java/rmi/transport/pinLastArguments/PinLastArguments.java       generic-all
 
+# 7146541
+java/rmi/transport/rapidExportUnexport/RapidExportUnexport.java	linux-all
+
 # Times out on solaris sparc
 java/rmi/server/RemoteServer/AddrInUse.java                     generic-all
 
@@ -476,6 +526,9 @@ java/rmi/transport/checkLeaseInfoLeak/CheckLeaseLeak.java generic-all
 java/rmi/server/RMISocketFactory/useSocketFactory/activatable/UseCustomSocketFactory.java generic-all
 java/rmi/server/RMISocketFactory/useSocketFactory/registry/UseCustomSocketFactory.java generic-all
 java/rmi/server/UnicastRemoteObject/unexportObject/UnexportLeak.java generic-all
+
+# 7142596
+java/rmi/transport/httpSocket/HttpSocketTest.java		macosx-all
 
 ############################################################################
 
@@ -691,6 +744,14 @@ sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
 # 7132203
 sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
 
+# 7162111
+sun/tools/jrunscript/jrunscript-DTest.sh			macosx-all
+sun/tools/jrunscript/jrunscript-argsTest.sh			macosx-all
+sun/tools/jrunscript/jrunscript-cpTest.sh			macosx-all
+sun/tools/jrunscript/jrunscript-eTest.sh			macosx-all
+sun/tools/jrunscript/jrunscript-fTest.sh			macosx-all
+sun/tools/jrunscript/jrunscriptTest.sh				macosx-all
+
 ############################################################################
 
 # jdk_util
@@ -722,5 +783,9 @@ java/util/concurrent/FutureTask/BlockingTaskExecutor.java       generic-all
 # Problems on windows, jmap.exe hangs? (these run jmap), fails on Solaris 10 x86
 java/util/concurrent/locks/Lock/TimedAcquireLeak.java           generic-all
 
+# 7162111
+java/util/ResourceBundle/Control/Bug6530694.java		macosx-all
+
 ############################################################################
+
 

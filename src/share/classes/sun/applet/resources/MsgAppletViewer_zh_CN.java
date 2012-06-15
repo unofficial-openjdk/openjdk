@@ -154,7 +154,7 @@ public class MsgAppletViewer_zh_CN extends ListResourceBundle {
             {"appletprops.choice.unsignedapplet.yes", "\u662F"},
             {"appletprops.button.apply", "\u5E94\u7528"},
             {"appletprops.button.cancel", "\u53D6\u6D88"},
-            {"appletprops.button.reset", "\u91CD\u8BBE"},
+            {"appletprops.button.reset", "\u91CD\u7F6E"},
             {"appletprops.apply.exception", "\u65E0\u6CD5\u4FDD\u5B58\u5C5E\u6027: {0}"},
             /* 4066432 */
             {"appletprops.title.invalidproxy", "\u6761\u76EE\u65E0\u6548"},
