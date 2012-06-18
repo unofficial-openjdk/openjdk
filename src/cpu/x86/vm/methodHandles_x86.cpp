@@ -691,6 +691,14 @@ void MethodHandles::insert_arg_slots(MacroAssembler* _masm,
   if (VerifyMethodHandles)
     verify_stack_move(_masm, arg_slots, -1);
 
+  // We have to insert at least one word, so bang the stack.
+  if (UseStackBanging) {
+    int frame_size = (arg_slots.is_constant() ? -1 * arg_slots.as_constant() * wordSize : 0);
+    if (frame_size <= 0)
+      frame_size = 256 * Interpreter::stackElementSize;  // conservative
+    __ generate_stack_overflow_check(frame_size);
+  }
+
   // Make space on the stack for the inserted argument(s).
   // Then pull down everything shallower than rax_argslot.
   // The stacked return address gets pulled down with everything else.
@@ -1769,6 +1777,11 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
                         "copied argument(s) must fall within current frame");
       }
 
+      if (UseStackBanging) {
+        // Bang the stack before pushing args.
+        int frame_size = 256 * Interpreter::stackElementSize;  // conservative
+        __ generate_stack_overflow_check(frame_size + sizeof(RicochetFrame));
+      }
       // insert location is always the bottom of the argument list:
       Address insert_location = __ argument_address(constant(0));
       int pre_arg_words = insert_location.disp() / wordSize;   // return PC is pushed
@@ -2206,6 +2219,15 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // The return handler will further cut back the stack when it takes
       // down the RF.  Perhaps there is a way to streamline this further.
 
+      if (UseStackBanging) {
+        // Bang the stack before recursive call.
+        // Even if slots == 0, we are inside a RicochetFrame.
+        int frame_size = collect_count.is_constant() ? collect_count.as_constant() * wordSize : -1;
+        if (frame_size < 0) {
+          frame_size = 256 * Interpreter::stackElementSize;  // conservative
+        }
+        __ generate_stack_overflow_check(frame_size + sizeof(RicochetFrame));
+      }
       // State during recursive call:
       // ... keep1 | dest | dest=42 | keep3 | RF... | collect | bounce_pc |
       __ jump_to_method_handle_entry(rcx_recv, rdx_temp);
@@ -2366,10 +2388,15 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
         // case in a 32-bit version of the VM) we have to save 'rsi'
         // on the stack because later on (at 'L_array_is_empty') 'rsi'
         // will be overwritten.
-        { if (rsi_temp == saved_last_sp)  __ push(saved_last_sp); }
+        if (rsi_temp == saved_last_sp) {
+          __ push(saved_last_sp);
+          // Need to re-push return PC to keep it on stack top.
+          __ lea(saved_last_sp, ExternalAddress(SharedRuntime::ricochet_blob()->bounce_addr()).addr());
+          __ push(saved_last_sp);
+        }
         // Also prepare a handy macro which restores 'rsi' if required.
 #define UNPUSH_RSI                                                      \
-        { if (rsi_temp == saved_last_sp)  __ pop(saved_last_sp); }
+        { if (rsi_temp == saved_last_sp) { __ pop(saved_last_sp); __ pop(saved_last_sp); } }
 
         __ jmp(L_array_is_empty);
         __ bind(L_skip);
@@ -2382,7 +2409,12 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // called in the case of a null pointer exception will not be
       // confused by the extra value on the stack (it expects the
       // return pointer on top of the stack)
-      { if (rsi_temp == saved_last_sp)  __ push(saved_last_sp); }
+      if (rsi_temp == saved_last_sp) {
+        __ push(saved_last_sp);
+        // Need to re-push return PC to keep it on stack top.
+        __ lea(saved_last_sp, ExternalAddress(SharedRuntime::ricochet_blob()->bounce_addr()).addr());
+        __ push(saved_last_sp);
+      }
 
       // Check the array type.
       Register rbx_klass = rbx_temp;
