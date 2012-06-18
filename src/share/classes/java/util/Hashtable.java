@@ -174,7 +174,7 @@ public class Hashtable<K,V>
      * {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures that
      * alternative hashing is never used.
      */
-    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 0;
+    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 512;
 
     /**
      * holds values which can't be initialized until after VM is booted.
@@ -1063,7 +1063,7 @@ public class Hashtable<K,V>
      */
     private static class Entry<K,V> implements Map.Entry<K,V> {
         int hash;
-        K key;
+        final K key;
         V value;
         Entry<K,V> next;
 

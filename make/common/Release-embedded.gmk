@@ -159,10 +159,13 @@ reduced-image-jre::
 
 	@# Remove misc. other files
 	$(RM) -r $(JRE_REDUCED_IMAGE_DIR)/man
-	$(RM) -f $(JRE_REDUCED_IMAGE_DIR)/CHANGES
+	$(RM) $(JRE_REDUCED_IMAGE_DIR)/CHANGES
 
 	@# Copy back in the attach library
 	$(CP) $(JDK_IMAGE_DIR)/jre/lib/$(LIBARCH)/$(LIB_PREFIX)attach.$(LIB_SUFFIX) $(JRE_REDUCED_IMAGE_DIR)/lib/$(LIBARCH)
+
+	@# Remove FDS files: debuginfo, diz
+	$(FIND) $(JRE_REDUCED_IMAGE_DIR)/lib/$(LIBARCH) -type f \( -name "*.debuginfo" -o -name "*.diz" \) -print | $(XARGS) $(RM)
 
 	@$(ECHO) Done Creating Reduced JRE
 
@@ -180,33 +183,33 @@ reduced-headless-image-jre:: $(RT_JAR) $(RESOURCES_JAR) $(BUILD_META_INDEX) $(HL
 	    $(TAR) cf - . | ($(CD) $(JRE_REDUCED_HEADLESS_IMAGE_DIR); $(TAR) xf - ); 
 
 	@# Replace the full rt.jar with the headless rt.jar
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/rt.jar
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/rt.jar
 	$(CP) $(HL_RT_JAR) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/rt.jar
 
 	@#
 	@# Remove all of the files that are not needed for the
 	@# reduced Headless JRE
 	@#
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/gtkhelper
+	$(RM)  $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/gtkhelper
 	$(RM)  $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/libjsoundalsa.so
 	$(RM) -r $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/audio
-	$(RM) -fr $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/applet
+	$(RM) -r $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/applet
 	$(RM)  $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/awt_robot
 	$(RM) -r $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/xawt
 	$(RM) -r $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/$(LIBARCH)/libsplashscreen.so
 	@# Remove oblique fonts and reduce font support to LucidaSansRegular only
-	$(RM) -fr $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/oblique-fonts
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightDemiBold.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightDemiItalic.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightItalic.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightRegular.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaSansDemiBold.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaTypewriterBold.ttf
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaTypewriterRegular.ttf
+	$(RM) -r $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/oblique-fonts
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightDemiBold.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightDemiItalic.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightItalic.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaBrightRegular.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaSansDemiBold.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaTypewriterBold.ttf
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/LucidaTypewriterRegular.ttf
 
 ifeq ($(PLATFORM), linux)
 # put out minimal fonts.dir file for the remaining font
-	$(RM) -f $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/fonts.dir
+	$(RM) $(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/fonts.dir
 	$(ECHO) 6>$(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/fonts.dir
 	$(ECHO) "LucidaSansRegular.ttf -b&h-lucidasans-medium-r-normal-sans-0-0-0-0-p-0-iso8859-1">>$(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/fonts.dir
 	$(ECHO) "LucidaSansRegular.ttf -b&h-lucidasans-medium-r-normal-sans-0-0-0-0-p-0-iso8859-2">>$(JRE_REDUCED_HEADLESS_IMAGE_DIR)/lib/fonts/fonts.dir
