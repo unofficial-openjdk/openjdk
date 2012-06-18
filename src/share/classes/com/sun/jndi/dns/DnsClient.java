@@ -622,11 +622,7 @@ public class DnsClient {
 
     //-------------------------------------------------------------------------
 
-    private static boolean debug = false;
-
-    public static void setDebug(boolean flag) {
-        debug = flag;
-    }
+    private static final boolean debug = false;
 
     private static void dprint(String mess) {
         if (debug) {

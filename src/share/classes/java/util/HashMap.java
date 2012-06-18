@@ -186,7 +186,7 @@ public class HashMap<K,V>
      * {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures that
      * alternative hashing is never used.
      */
-    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 0;
+    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 512;
 
     /**
      * holds values which can't be initialized until after VM is booted.
@@ -679,7 +679,7 @@ public class HashMap<K,V>
 
         Map.Entry<K,V> entry = (Map.Entry<K,V>) o;
         Object key = entry.getKey();
-        int hash = (key == null) ? 0 : hash(key.hashCode());
+        int hash = (key == null) ? 0 : hash(key);
         int i = indexFor(hash, table.length);
         Entry<K,V> prev = table[i];
         Entry<K,V> e = prev;
