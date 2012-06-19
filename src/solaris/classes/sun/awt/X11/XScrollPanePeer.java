@@ -29,7 +29,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.peer.*;
 import java.lang.reflect.*;
-import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 
 class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollbarClient {
 
@@ -41,9 +41,7 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
     public final static int     VERTICAL = 1 << 0;
     public final static int     HORIZONTAL = 1 << 1;
 
-    private static Method m_setValue;
     static {
-        m_setValue = SunToolkit.getMethod(ScrollPaneAdjustable.class, "setTypedValue", new Class[] {Integer.TYPE, Integer.TYPE});
         SCROLLBAR = XToolkit.getUIDefaults().getInt("ScrollBar.defaultWidth");
     }
 
@@ -316,18 +314,8 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
     }
 
     void setAdjustableValue(ScrollPaneAdjustable adj, int value, int type) {
-        try {
-            m_setValue.invoke(adj, new Object[] {Integer.valueOf(value), Integer.valueOf(type)});
-        } catch (IllegalAccessException iae) {
-            adj.setValue(value);
-        } catch (IllegalArgumentException iae2) {
-            adj.setValue(value);
-        } catch (InvocationTargetException ite) {
-            adj.setValue(value);
-            ite.getCause().printStackTrace();
-        }
+        AWTAccessor.getScrollPaneAdjustableAccessor().setTypedValue(adj, value, type);
     }
-
 
     public void paint(Graphics g) {
         paintComponent(g);
