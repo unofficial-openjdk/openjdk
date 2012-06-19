@@ -1015,8 +1015,10 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         // loading SystemFlavorMap and associated classes.
         public void setTransferHandler(TransferHandler newHandler) {
             TransferHandler oldHandler = (TransferHandler)
-                getClientProperty(XTextTransferHelper.getTransferHandlerKey());
-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
+                getClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
+                                      .getJComponent_TRANSFER_HANDLER());
+            putClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
+                                  .getJComponent_TRANSFER_HANDLER(),
                               newHandler);
 
             firePropertyChange("transferHandler", oldHandler, newHandler);
