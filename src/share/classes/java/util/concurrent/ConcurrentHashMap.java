@@ -198,6 +198,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
                         ? Integer.parseInt(altThreshold)
                         : 1;
 
+                // disable alternative hashing if -1
                 if(threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }

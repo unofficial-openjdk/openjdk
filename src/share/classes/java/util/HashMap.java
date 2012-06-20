@@ -221,6 +221,7 @@ public class HashMap<K,V>
                         ? Integer.parseInt(altThreshold)
                         : ALTERNATE_HASHING_THRESHOLD_DEFAULT;
 
+                // disable alternative hashing if -1
                 if(threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }
