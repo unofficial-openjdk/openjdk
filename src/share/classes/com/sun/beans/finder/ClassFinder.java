@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
  * questions.
  */
 package com.sun.beans.finder;
+
+import static sun.reflect.misc.ReflectUtil.checkPackageAccess;
 
 /**
  * This is utility class that provides <code>static</code> methods
@@ -53,6 +55,7 @@ public final class ClassFinder {
      * @see Thread#getContextClassLoader()
      */
     public static Class findClass( String name ) throws ClassNotFoundException {
+        checkPackageAccess(name);
         try {
             ClassLoader loader = Thread.currentThread().getContextClassLoader();
             if ( loader == null ) {
@@ -93,6 +96,7 @@ public final class ClassFinder {
      * @see Class#forName(String,boolean,ClassLoader)
      */
     public static Class findClass( String name, ClassLoader loader ) throws ClassNotFoundException {
+        checkPackageAccess(name);
         if ( loader != null ) {
             try {
                 return Class.forName( name, false, loader );

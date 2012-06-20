@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 package java.beans;
 
-import sun.beans.editors.*;
+import com.sun.beans.editors.*;
 
 /**
  * The PropertyEditorManager can be used to locate a property editor for
@@ -53,6 +53,9 @@ import sun.beans.editors.*;
  */
 
 public class PropertyEditorManager {
+
+    private static final String DEFAULT_SEARCH_PATH = "sun.beans.editors";
+    private static final String DEFAULT_SEARCH_PATH_NEW = "com.sun.beans.editors";
 
     /**
      * Register an editor class to be used to edit values of
@@ -119,7 +122,7 @@ public class PropertyEditorManager {
             editorName = editorName.substring(index);
         }
         for (String path : searchPath) {
-            String name = path + '.' + editorName;
+            String name = (DEFAULT_SEARCH_PATH.equals(path) ? DEFAULT_SEARCH_PATH_NEW : path) + '.' + editorName;
             try {
                 return (PropertyEditor) Introspector.instantiate(targetType, name);
             } catch (Exception ex) {
@@ -188,6 +191,6 @@ public class PropertyEditorManager {
         registry.put(Double.TYPE, DoubleEditor.class);
     }
 
-    private static String[] searchPath = { "sun.beans.editors" };
+    private static String[] searchPath = { DEFAULT_SEARCH_PATH };
     private static java.util.Hashtable registry;
 }

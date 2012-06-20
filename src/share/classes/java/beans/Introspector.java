@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,6 +139,7 @@ public class Introspector {
     private Map events;
 
     private final static String DEFAULT_INFO_PATH = "sun.beans.infos";
+    private final static String DEFAULT_INFO_PATH_NEW = "com.sun.beans.infos";
 
     private static String[] searchPath = { DEFAULT_INFO_PATH };
 
@@ -460,12 +461,15 @@ public class Introspector {
         name = name.substring(name.lastIndexOf('.')+1);
 
         for (int i = 0; i < searchPath.length; i++) {
+            String path = searchPath[i];
+            if (DEFAULT_INFO_PATH.equals(path)) {
+                path = DEFAULT_INFO_PATH_NEW;
+            }
             // This optimization will only use the BeanInfo search path if is has changed
             // from the original or trying to get the ComponentBeanInfo.
-            if (!DEFAULT_INFO_PATH.equals(searchPath[i]) ||
-                DEFAULT_INFO_PATH.equals(searchPath[i]) && "ComponentBeanInfo".equals(name)) {
+            if (!DEFAULT_INFO_PATH_NEW.equals(path) || "ComponentBeanInfo".equals(name)) {
                 try {
-                    String fullName = searchPath[i] + "." + name;
+                    String fullName = path + "." + name;
                     java.beans.BeanInfo bi = (java.beans.BeanInfo)instantiate(beanClass, fullName);
 
                     // Make sure that the returned BeanInfo matches the class.
