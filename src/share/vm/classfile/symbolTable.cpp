@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/altHashing.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -33,10 +34,13 @@
 #include "oops/oop.inline2.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "utilities/hashtable.inline.hpp"
+#include "utilities/numberSeq.hpp"
 
 // --------------------------------------------------------------------------
 
 SymbolTable* SymbolTable::_the_table = NULL;
+bool SymbolTable::_needs_rehashing = false;
+jint SymbolTable::_seed = 0;
 
 Symbol* SymbolTable::allocate_symbol(const u1* name, int len, TRAPS) {
   // Don't allow symbols to be created which cannot fit in a Symbol*.
@@ -120,12 +124,41 @@ void SymbolTable::unlink() {
   }
 }
 
+unsigned int SymbolTable::new_hash(Symbol* sym) {
+  ResourceMark rm;
+  // Use alternate hashing algorithm on this symbol.
+  return AltHashing::murmur3_32(seed(), (const jbyte*)sym->as_C_string(), sym->utf8_length());
+}
+
+// Create a new table and using alternate hash code, populate the new table
+// with the existing strings.   Set flag to use the alternate hash code afterwards.
+void SymbolTable::rehash_table() {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
+  assert(!DumpSharedSpaces, "this should never happen with -Xshare:dump");
+  // Create a new symbol table
+  SymbolTable* new_table = new SymbolTable();
+
+  // Initialize the global seed for hashing.
+  _seed = AltHashing::compute_seed();
+  assert(seed() != 0, "shouldn't be zero");
+
+  the_table()->move_to(new_table);
+
+  // Delete the table and buckets (entries are reused in new table).
+  delete _the_table;
+  // Don't check if we need rehashing until the table gets unbalanced again.
+  // Then rehash with a new global seed.
+  _needs_rehashing = false;
+  _the_table = new_table;
+}
 
 // Lookup a symbol in a bucket.
 
 Symbol* SymbolTable::lookup(int index, const char* name,
                               int len, unsigned int hash) {
+  int count = 0;
   for (HashtableEntry<Symbol*>* e = bucket(index); e != NULL; e = e->next()) {
+    count++;  // count all entries in this bucket, not just ones with same hash
     if (e->hash() == hash) {
       Symbol* sym = e->literal();
       if (sym->equals(name, len)) {
@@ -135,7 +168,19 @@ Symbol* SymbolTable::lookup(int index, const char* name,
       }
     }
   }
+  // If the bucket size is too deep check if this hash code is insufficient.
+  if (count >= BasicHashtable::rehash_count && !needs_rehashing()) {
+    _needs_rehashing = check_rehash_table(count);
+  }
   return NULL;
+}
+
+// Pick hashing algorithm, but return value already given if not using a new
+// hash algorithm.
+unsigned int SymbolTable::hash_symbol(const char* s, int len, unsigned int hashValue) {
+  return use_alternate_hashcode() ?
+           AltHashing::murmur3_32(seed(), (const jbyte*)s, len) :
+           (hashValue != 0 ? hashValue : java_lang_String::to_hash(s, len));
 }
 
 
@@ -274,7 +319,7 @@ void SymbolTable::add(constantPoolHandle cp, int names_count,
 }
 
 Symbol* SymbolTable::basic_add(int index, u1 *name, int len,
-                                 unsigned int hashValue, TRAPS) {
+                                 unsigned int hashValue_arg, TRAPS) {
   assert(!Universe::heap()->is_in_reserved(name) || GC_locker::is_active(),
          "proposed name of symbol must be stable");
 
@@ -286,6 +331,10 @@ Symbol* SymbolTable::basic_add(int index, u1 *name, int len,
   MutexLocker ml(SymbolTable_lock, THREAD);
 
   assert(sym->equals((char*)name, len), "symbol must be properly initialized");
+
+  // Check if the symbol table has been rehashed, if so, need to recalculate
+  // the hash value.
+  unsigned int hashValue = hash_symbol((const char*)name, len, hashValue_arg);
 
   // Since look-up was done lock-free, we need to check if another
   // thread beat us in the race to insert the symbol.
@@ -321,10 +370,13 @@ bool SymbolTable::basic_add(constantPoolHandle cp, int names_count,
 
   for (int i=0; i<names_count; i++) {
     assert(syms[i]->equals(names[i], lengths[i]), "symbol must be properly initialized");
+    // Check if the symbol table has been rehashed, if so, need to recalculate
+    // the hash value.
+    unsigned int hashValue = hash_symbol(names[i], lengths[i], hashValues[i]);
     // Since look-up was done lock-free, we need to check if another
     // thread beat us in the race to insert the symbol.
-    int index = hash_to_index(hashValues[i]);
-    Symbol* test = lookup(index, names[i], lengths[i], hashValues[i]);
+    int index = hash_to_index(hashValue);
+    Symbol* test = lookup(index, names[i], lengths[i], hashValue);
     if (test != NULL) {
       // A race occurred and another thread introduced the symbol, this one
       // will be dropped and collected. Use test instead.
@@ -333,7 +385,7 @@ bool SymbolTable::basic_add(constantPoolHandle cp, int names_count,
       delete syms[i];
     } else {
       Symbol* sym = syms[i];
-      HashtableEntry<Symbol*>* entry = new_entry(hashValues[i], sym);
+      HashtableEntry<Symbol*>* entry = new_entry(hashValue, sym);
       sym->increment_refcount();  // increment refcount in external hashtable
       add_entry(index, entry);
       cp->symbol_at_put(cp_indices[i], sym);
@@ -356,6 +408,24 @@ void SymbolTable::verify() {
                 "wrong index in symbol table");
     }
   }
+}
+
+void SymbolTable::dump(outputStream* st) {
+  NumberSeq summary;
+  for (int i = 0; i < the_table()->table_size(); ++i) {
+    int count = 0;
+    for (HashtableEntry<Symbol*>* e = the_table()->bucket(i);
+       e != NULL; e = e->next()) {
+      count++;
+    }
+    summary.add((double)count);
+  }
+  st->print_cr("SymbolTable statistics:");
+  st->print_cr("Number of buckets       : %7d", summary.num());
+  st->print_cr("Average bucket size     : %7.0f", summary.avg());
+  st->print_cr("Variance of bucket size : %7.0f", summary.variance());
+  st->print_cr("Std. dev. of bucket size: %7.0f", summary.sd());
+  st->print_cr("Maximum bucket size     : %7.0f", summary.maximum());
 }
 
 
@@ -454,7 +524,6 @@ void SymbolTable::print() {
     }
   }
 }
-
 #endif // PRODUCT
 
 // --------------------------------------------------------------------------
@@ -500,21 +569,36 @@ class StableMemoryChecker : public StackObj {
 // --------------------------------------------------------------------------
 StringTable* StringTable::_the_table = NULL;
 
+bool StringTable::_needs_rehashing = false;
+jint StringTable::_seed = 0;
+
+// Pick hashing algorithm
+unsigned int StringTable::hash_string(const jchar* s, int len, unsigned int hashValue) {
+  return use_alternate_hashcode() ? AltHashing::murmur3_32(seed(), s, len) :
+            (hashValue != 0 ? hashValue : java_lang_String::to_hash(s, len));
+}
+
 oop StringTable::lookup(int index, jchar* name,
                         int len, unsigned int hash) {
+  int count = 0;
   for (HashtableEntry<oop>* l = bucket(index); l != NULL; l = l->next()) {
+    count++;
     if (l->hash() == hash) {
       if (java_lang_String::equals(l->literal(), name, len)) {
         return l->literal();
       }
     }
   }
+  // If the bucket size is too deep check if this hash code is insufficient.
+  if (count >= BasicHashtable::rehash_count && !needs_rehashing()) {
+    _needs_rehashing = check_rehash_table(count);
+  }
   return NULL;
 }
 
 
 oop StringTable::basic_add(int index, Handle string_or_null, jchar* name,
-                           int len, unsigned int hashValue, TRAPS) {
+                           int len, unsigned int hashValue_arg, TRAPS) {
   debug_only(StableMemoryChecker smc(name, len * sizeof(name[0])));
   assert(!Universe::heap()->is_in_reserved(name) || GC_locker::is_active(),
          "proposed name of symbol must be stable");
@@ -532,6 +616,10 @@ oop StringTable::basic_add(int index, Handle string_or_null, jchar* name,
 
   assert(java_lang_String::equals(string(), name, len),
          "string must be properly initialized");
+
+  // Check if the symbol table has been rehashed, if so, need to recalculate
+  // the hash value before second lookup.
+  unsigned int hashValue = hash_string(name, len, hashValue_arg);
 
   // Since look-up was done lock-free, we need to check if another
   // thread beat us in the race to insert the symbol.
@@ -552,7 +640,7 @@ oop StringTable::lookup(Symbol* symbol) {
   ResourceMark rm;
   int length;
   jchar* chars = symbol->as_unicode(length);
-  unsigned int hashValue = java_lang_String::hash_string(chars, length);
+  unsigned int hashValue = hash_string(chars, length);
   int index = the_table()->hash_to_index(hashValue);
   return the_table()->lookup(index, chars, length, hashValue);
 }
@@ -560,7 +648,7 @@ oop StringTable::lookup(Symbol* symbol) {
 
 oop StringTable::intern(Handle string_or_null, jchar* name,
                         int len, TRAPS) {
-  unsigned int hashValue = java_lang_String::hash_string(name, len);
+  unsigned int hashValue = hash_string(name, len);
   int index = the_table()->hash_to_index(hashValue);
   oop string = the_table()->lookup(index, name, len, hashValue);
 
@@ -660,4 +748,53 @@ void StringTable::verify() {
                 "wrong index in string table");
     }
   }
+}
+
+void StringTable::dump(outputStream* st) {
+  NumberSeq summary;
+  for (int i = 0; i < the_table()->table_size(); ++i) {
+    HashtableEntry<oop>* p = the_table()->bucket(i);
+    int count = 0;
+    for ( ; p != NULL; p = p->next()) {
+      count++;
+    }
+    summary.add((double)count);
+  }
+  st->print_cr("StringTable statistics:");
+  st->print_cr("Number of buckets       : %7d", summary.num());
+  st->print_cr("Average bucket size     : %7.0f", summary.avg());
+  st->print_cr("Variance of bucket size : %7.0f", summary.variance());
+  st->print_cr("Std. dev. of bucket size: %7.0f", summary.sd());
+  st->print_cr("Maximum bucket size     : %7.0f", summary.maximum());
+}
+
+
+unsigned int StringTable::new_hash(oop string) {
+  ResourceMark rm;
+  int length;
+  jchar* chars = java_lang_String::as_unicode_string(string, length);
+  // Use alternate hashing algorithm on the string
+  return AltHashing::murmur3_32(seed(), chars, length);
+}
+
+// Create a new table and using alternate hash code, populate the new table
+// with the existing strings.   Set flag to use the alternate hash code afterwards.
+void StringTable::rehash_table() {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
+  assert(!DumpSharedSpaces, "this should never happen with -Xshare:dump");
+  StringTable* new_table = new StringTable();
+
+  // Initialize new global seed for hashing.
+  _seed = AltHashing::compute_seed();
+  assert(seed() != 0, "shouldn't be zero");
+
+  // Rehash the table
+  the_table()->move_to(new_table);
+
+  // Delete the table and buckets (entries are reused in new table).
+  delete _the_table;
+  // Don't check if we need rehashing until the table gets unbalanced again.
+  // Then rehash with a new global seed.
+  _needs_rehashing = false;
+  _the_table = new_table;
 }
