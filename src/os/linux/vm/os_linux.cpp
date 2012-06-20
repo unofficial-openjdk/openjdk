@@ -2020,15 +2020,43 @@ void os::print_dll_info(outputStream *st) {
    }
 }
 
+void os::print_os_info_brief(outputStream* st) {
+  os::Linux::print_distro_info(st);
+
+  os::Posix::print_uname_info(st);
+
+  os::Linux::print_libversion_info(st);
+
+}
 
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
-  // Try to identify popular distros.
-  // Most Linux distributions have /etc/XXX-release file, which contains
-  // the OS version string. Some have more than one /etc/XXX-release file
-  // (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
-  // so the order is important.
+  os::Linux::print_distro_info(st);
+
+  os::Posix::print_uname_info(st);
+
+  // Print warning if unsafe chroot environment detected
+  if (unsafe_chroot_detected) {
+    st->print("WARNING!! ");
+    st->print_cr(unstable_chroot_error);
+  }
+
+  os::Linux::print_libversion_info(st);
+
+  os::Posix::print_rlimit_info(st);
+
+  os::Posix::print_load_average(st);
+
+  os::Linux::print_full_memory_info(st);
+}
+
+// Try to identify popular distros.
+// Most Linux distributions have /etc/XXX-release file, which contains
+// the OS version string. Some have more than one /etc/XXX-release file
+// (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
+// so the order is important.
+void os::Linux::print_distro_info(outputStream* st) {
   if (!_print_ascii_file("/etc/mandrake-release", st) &&
       !_print_ascii_file("/etc/sun-release", st) &&
       !_print_ascii_file("/etc/redhat-release", st) &&
@@ -2041,23 +2069,9 @@ void os::print_os_info(outputStream* st) {
       st->print("Linux");
   }
   st->cr();
+}
 
-  // kernel
-  st->print("uname:");
-  struct utsname name;
-  uname(&name);
-  st->print(name.sysname); st->print(" ");
-  st->print(name.release); st->print(" ");
-  st->print(name.version); st->print(" ");
-  st->print(name.machine);
-  st->cr();
-
-  // Print warning if unsafe chroot environment detected
-  if (unsafe_chroot_detected) {
-    st->print("WARNING!! ");
-    st->print_cr(unstable_chroot_error);
-  }
-
+void os::Linux::print_libversion_info(outputStream* st) {
   // libc, pthread
   st->print("libc:");
   st->print(os::Linux::glibc_version()); st->print(" ");
@@ -2066,56 +2080,12 @@ void os::print_os_info(outputStream* st) {
      st->print("(%s stack)", os::Linux::is_floating_stack() ? "floating" : "fixed");
   }
   st->cr();
-
-  // rlimit
-  st->print("rlimit:");
-  struct rlimit rlim;
-
-  st->print(" STACK ");
-  getrlimit(RLIMIT_STACK, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", CORE ");
-  getrlimit(RLIMIT_CORE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", NPROC ");
-  getrlimit(RLIMIT_NPROC, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-  st->print(", NOFILE ");
-  getrlimit(RLIMIT_NOFILE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-  st->print(", AS ");
-  getrlimit(RLIMIT_AS, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-  st->cr();
-
-  // load average
-  st->print("load average:");
-  double loadavg[3];
-  os::loadavg(loadavg, 3);
-  st->print("%0.02f %0.02f %0.02f", loadavg[0], loadavg[1], loadavg[2]);
-  st->cr();
-
-  // meminfo
-  st->print("\n/proc/meminfo:\n");
-  _print_ascii_file("/proc/meminfo", st);
-  st->cr();
 }
 
-void os::pd_print_cpu_info(outputStream* st) {
-  st->print("\n/proc/cpuinfo:\n");
-  if (!_print_ascii_file("/proc/cpuinfo", st)) {
-    st->print("  <Not Available>");
-  }
-  st->cr();
+void os::Linux::print_full_memory_info(outputStream* st) {
+   st->print("\n/proc/meminfo:\n");
+   _print_ascii_file("/proc/meminfo", st);
+   st->cr();
 }
 
 void os::print_memory_info(outputStream* st) {
@@ -2135,6 +2105,14 @@ void os::print_memory_info(outputStream* st) {
             ((jlong)si.totalswap * si.mem_unit) >> 10);
   st->print("(" UINT64_FORMAT "k free)",
             ((jlong)si.freeswap * si.mem_unit) >> 10);
+  st->cr();
+}
+
+void os::pd_print_cpu_info(outputStream* st) {
+  st->print("\n/proc/cpuinfo:\n");
+  if (!_print_ascii_file("/proc/cpuinfo", st)) {
+    st->print("  <Not Available>");
+  }
   st->cr();
 }
 
@@ -2547,7 +2525,14 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 }
 
 void os::free_memory(char *addr, size_t bytes, size_t alignment_hint) {
-  commit_memory(addr, bytes, alignment_hint, false);
+  // This method works by doing an mmap over an existing mmaping and effectively discarding
+  // the existing pages. However it won't work for SHM-based large pages that cannot be
+  // uncommitted at all. We don't do anything in this case to avoid creating a segment with
+  // small pages on top of the SHM segment. This method always works for small pages, so we
+  // allow that in any case.
+  if (alignment_hint <= (size_t)os::vm_page_size() || !UseSHM) {
+    commit_memory(addr, bytes, alignment_hint, false);
+  }
 }
 
 void os::numa_make_global(char *addr, size_t bytes) {
@@ -4690,14 +4675,12 @@ char* os::map_memory(int fd, const char* file_name, size_t file_offset,
                      char *addr, size_t bytes, bool read_only,
                      bool allow_exec) {
   int prot;
-  int flags;
+  int flags = MAP_PRIVATE;
 
   if (read_only) {
     prot = PROT_READ;
-    flags = MAP_SHARED;
   } else {
     prot = PROT_READ | PROT_WRITE;
-    flags = MAP_PRIVATE;
   }
 
   if (allow_exec) {

@@ -42,7 +42,7 @@ DEP_DIR       = $(GENERATED)/dependencies
 -include $(DEP_DIR)/*.d
 
 # read machine-specific adjustments (%%% should do this via buildtree.make?)
-ifeq ($(ZERO_BUILD), true)
+ifeq ($(findstring true, $(JVM_VARIANT_ZERO) $(JVM_VARIANT_ZEROSHARK)), true)
   include $(MAKEFILES_DIR)/zeroshark.make
 else
   include $(MAKEFILES_DIR)/$(BUILDARCH).make
@@ -102,8 +102,10 @@ CXXFLAGS =           \
 # a time and date. 
 vm_version.o: CXXFLAGS += ${JRE_VERSION}
 
-ifndef JAVASE_EMBEDDED
+ifndef JAVASE_EMBEDDED 
+ifneq (${ARCH},arm)
 CFLAGS += -DINCLUDE_TRACE
+endif
 endif
 
 # CFLAGS_WARN holds compiler options to suppress/enable warnings.
@@ -153,10 +155,12 @@ SOURCE_PATHS+=$(HS_COMMON_SRC)/os/posix/vm
 SOURCE_PATHS+=$(HS_COMMON_SRC)/cpu/$(Platform_arch)/vm
 SOURCE_PATHS+=$(HS_COMMON_SRC)/os_cpu/$(Platform_os_arch)/vm
 
-ifndef JAVASE_EMBEDDED
+ifndef JAVASE_EMBEDDED 
+ifneq (${ARCH},arm)
 SOURCE_PATHS+=$(shell if [ -d $(HS_ALT_SRC)/share/vm/jfr ]; then \
   find $(HS_ALT_SRC)/share/vm/jfr -type d; \
   fi)
+endif
 endif
 
 CORE_PATHS=$(foreach path,$(SOURCE_PATHS),$(call altsrc,$(path)) $(path))
@@ -238,7 +242,7 @@ mapfile_reorder : mapfile $(REORDERFILE)
 vm.def: $(Res_Files) $(Obj_Files)
 	sh $(GAMMADIR)/make/linux/makefiles/build_vm_def.sh *.o > $@
 
-ifeq ($(SHARK_BUILD), true)
+ifeq ($(JVM_VARIANT_ZEROSHARK), true)
   STATIC_CXX = false
 else
   ifeq ($(ZERO_LIBARCH), ppc64)
@@ -270,12 +274,12 @@ else
 
   LIBS_VM                  += $(LIBS)
 endif
-ifeq ($(ZERO_BUILD), true)
+ifeq ($(JVM_VARIANT_ZERO), true)
   LIBS_VM += $(LIBFFI_LIBS)
 endif
-ifeq ($(SHARK_BUILD), true)
+ifeq ($(JVM_VARIANT_ZEROSHARK), true)
+  LIBS_VM   += $(LIBFFI_LIBS) $(LLVM_LIBS)
   LFLAGS_VM += $(LLVM_LDFLAGS)
-  LIBS_VM   += $(LLVM_LIBS)
 endif
 
 LINK_VM = $(LINK_LIB.CC)
@@ -378,9 +382,12 @@ include $(MAKEFILES_DIR)/jsig.make
 # Serviceability agent
 include $(MAKEFILES_DIR)/saproc.make
 
+# Whitebox testing API
+include $(MAKEFILES_DIR)/wb.make
+
 #----------------------------------------------------------------------
 
-build: $(LIBJVM) $(LAUNCHER) $(LIBJSIG) $(LIBJVM_DB) $(BUILDLIBSAPROC)
+build: $(LIBJVM) $(LAUNCHER) $(LIBJSIG) $(LIBJVM_DB) $(BUILDLIBSAPROC) $(WB_JAR)
 
 install: install_jvm install_jsig install_saproc
 

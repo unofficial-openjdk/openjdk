@@ -1884,7 +1884,7 @@ void LinearScan::resolve_exception_entry(BlockBegin* block, MoveResolver &move_r
 
   if (move_resolver.has_mappings()) {
     // insert moves after first instruction
-    move_resolver.set_insert_position(block->lir(), 1);
+    move_resolver.set_insert_position(block->lir(), 0);
     move_resolver.resolve_and_append_moves();
   }
 }
@@ -6579,6 +6579,8 @@ void LinearScanStatistic::collect(LinearScan* allocator) {
         case lir_abs:
         case lir_log10:
         case lir_log:
+        case lir_pow:
+        case lir_exp:
         case lir_logic_and:
         case lir_logic_or:
         case lir_logic_xor:

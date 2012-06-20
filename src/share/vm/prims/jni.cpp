@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/altHashing.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
@@ -378,6 +379,7 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
   jclass cls = NULL;
   DT_RETURN_MARK(DefineClass, jclass, (const jclass&)cls);
 
+  TempNewSymbol class_name = NULL;
   // Since exceptions can be thrown, class initialization can take place
   // if name is NULL no check for class name in .class stream has to be made.
   if (name != NULL) {
@@ -387,9 +389,8 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
       // into the constant pool.
       THROW_MSG_0(vmSymbols::java_lang_NoClassDefFoundError(), name);
     }
+    class_name = SymbolTable::new_symbol(name, CHECK_NULL);
   }
-  TempNewSymbol class_name = SymbolTable::new_symbol(name, THREAD);
-
   ResourceMark rm(THREAD);
   ClassFileStream st((u1*) buf, bufLen, NULL);
   Handle class_loader (THREAD, JNIHandles::resolve(loaderRef));
@@ -5053,6 +5054,7 @@ void execute_internal_vm_tests() {
     run_unit_test(arrayOopDesc::test_max_array_length());
     run_unit_test(CollectedHeap::test_is_in());
     run_unit_test(QuickSort::test_quick_sort());
+    run_unit_test(AltHashing::test_alt_hash());
     tty->print_cr("All internal VM tests passed");
   }
 }

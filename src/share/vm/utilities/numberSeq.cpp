@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,24 +115,6 @@ bool NumberSeq::check_nums(NumberSeq *total, int n, NumberSeq **parts) {
   return true;
 }
 
-NumberSeq::NumberSeq(NumberSeq *total, int n, NumberSeq **parts) {
-  guarantee(check_nums(total, n, parts), "all seq lengths should match");
-  double sum = total->sum();
-  for (int i = 0; i < n; ++i) {
-    if (parts[i] != NULL)
-      sum -= parts[i]->sum();
-  }
-
-  _num = total->num();
-  _sum = sum;
-
-  // we do not calculate these...
-  _sum_of_squares = -1.0;
-  _maximum = -1.0;
-  _davg = -1.0;
-  _dvariance = -1.0;
-}
-
 void NumberSeq::add(double val) {
   AbsSeq::add(val);
 
@@ -154,6 +136,10 @@ TruncatedSeq::TruncatedSeq(int length, double alpha):
   _sequence = NEW_C_HEAP_ARRAY(double, _length);
   for (int i = 0; i < _length; ++i)
     _sequence[i] = 0.0;
+}
+
+TruncatedSeq::~TruncatedSeq() {
+  FREE_C_HEAP_ARRAY(double, _sequence);
 }
 
 void TruncatedSeq::add(double val) {

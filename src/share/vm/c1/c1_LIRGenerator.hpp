@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -238,12 +238,12 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   LIR_Opr getThreadPointer();
 
   void do_RegisterFinalizer(Intrinsic* x);
+  void do_isInstance(Intrinsic* x);
   void do_getClass(Intrinsic* x);
   void do_currentThread(Intrinsic* x);
   void do_MathIntrinsic(Intrinsic* x);
   void do_ArrayCopy(Intrinsic* x);
   void do_CompareAndSwap(Intrinsic* x, ValueType* type);
-  void do_AttemptUpdate(Intrinsic* x);
   void do_NIOCheckIndex(Intrinsic* x);
   void do_FPIntrinsics(Intrinsic* x);
   void do_Reference_get(Intrinsic* x);
@@ -426,6 +426,12 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   SwitchRangeArray* create_lookup_ranges(LookupSwitch* x);
   void do_SwitchRanges(SwitchRangeArray* x, LIR_Opr value, BlockBegin* default_sux);
 
+  void do_RuntimeCall(address routine, int expected_arguments, Intrinsic* x);
+#ifdef TRACE_HAVE_INTRINSICS
+  void do_ThreadIDIntrinsic(Intrinsic* x);
+  void do_ClassIDIntrinsic(Intrinsic* x);
+#endif
+
  public:
   Compilation*  compilation() const              { return _compilation; }
   FrameMap*     frame_map() const                { return _compilation->frame_map(); }
@@ -525,6 +531,7 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   virtual void do_ProfileCall    (ProfileCall*     x);
   virtual void do_ProfileInvoke  (ProfileInvoke*   x);
   virtual void do_RuntimeCall    (RuntimeCall*     x);
+  virtual void do_MemBar         (MemBar*          x);
 };
 
 

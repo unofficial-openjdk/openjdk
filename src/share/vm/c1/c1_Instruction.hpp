@@ -107,6 +107,7 @@ class         UnsafePrefetchWrite;
 class   ProfileCall;
 class   ProfileInvoke;
 class   RuntimeCall;
+class   MemBar;
 
 // A Value is a reference to the instruction creating the value
 typedef Instruction* Value;
@@ -204,6 +205,7 @@ class InstructionVisitor: public StackObj {
   virtual void do_ProfileCall    (ProfileCall*     x) = 0;
   virtual void do_ProfileInvoke  (ProfileInvoke*   x) = 0;
   virtual void do_RuntimeCall    (RuntimeCall*     x) = 0;
+  virtual void do_MemBar         (MemBar*          x) = 0;
 };
 
 
@@ -300,8 +302,6 @@ class Instruction: public CompilationResourceObj {
 
   void update_exception_state(ValueStack* state);
 
-  bool has_printable_bci() const                 { return NOT_PRODUCT(_printable_bci != -99) PRODUCT_ONLY(false); }
-
  protected:
   void set_type(ValueType* type) {
     assert(type != NULL, "type must exist");
@@ -390,8 +390,9 @@ class Instruction: public CompilationResourceObj {
   // accessors
   int id() const                                 { return _id; }
 #ifndef PRODUCT
+  bool has_printable_bci() const                 { return _printable_bci != -99; }
   int printable_bci() const                      { assert(has_printable_bci(), "_printable_bci should have been set"); return _printable_bci; }
-  void set_printable_bci(int bci)                { NOT_PRODUCT(_printable_bci = bci;) }
+  void set_printable_bci(int bci)                { _printable_bci = bci; }
 #endif
   int use_count() const                          { return _use_count; }
   int pin_state() const                          { return _pin_state; }
@@ -574,6 +575,7 @@ LEAF(Phi, Instruction)
   , _block(b)
   , _index(index)
   {
+    NOT_PRODUCT(set_printable_bci(Value(b)->printable_bci()));
     if (type->is_illegal()) {
       make_illegal();
     }
@@ -629,7 +631,9 @@ LEAF(Local, Instruction)
     : Instruction(type)
     , _java_index(index)
     , _declared_type(declared)
-  {}
+  {
+    NOT_PRODUCT(set_printable_bci(-1));
+  }
 
   // accessors
   int java_index() const                         { return _java_index; }
@@ -2349,6 +2353,23 @@ LEAF(ProfileInvoke, Instruction)
   ValueStack* state()      { return _state; }
   virtual void input_values_do(ValueVisitor*)   {}
   virtual void state_values_do(ValueVisitor*);
+};
+
+LEAF(MemBar, Instruction)
+ private:
+  LIR_Code _code;
+
+ public:
+  MemBar(LIR_Code code)
+    : Instruction(voidType)
+    , _code(code)
+  {
+    pin();
+  }
+
+  LIR_Code code()           { return _code; }
+
+  virtual void input_values_do(ValueVisitor*)   {}
 };
 
 class BlockPair: public CompilationResourceObj {

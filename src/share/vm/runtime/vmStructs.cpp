@@ -44,7 +44,6 @@
 #include "code/vmreg.hpp"
 #include "compiler/oopMap.hpp"
 #include "compiler/compileBroker.hpp"
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
 #include "gc_implementation/shared/immutableSpace.hpp"
 #include "gc_implementation/shared/markSweep.hpp"
 #include "gc_implementation/shared/mutableSpace.hpp"
@@ -55,6 +54,7 @@
 #include "memory/cardTableRS.hpp"
 #include "memory/compactPermGen.hpp"
 #include "memory/defNewGeneration.hpp"
+#include "memory/freeBlockDictionary.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/generation.hpp"
 #include "memory/generationSpec.hpp"
@@ -292,8 +292,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(instanceKlass,               _method_ordering,                              typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _local_interfaces,                             objArrayOop)                           \
   nonstatic_field(instanceKlass,               _transitive_interfaces,                        objArrayOop)                           \
-  nonstatic_field(instanceKlass,               _nof_implementors,                             int)                                   \
-  nonstatic_field(instanceKlass,               _implementors[0],                              klassOop)                              \
   nonstatic_field(instanceKlass,               _fields,                                       typeArrayOop)                          \
   nonstatic_field(instanceKlass,               _java_fields_count,                            u2)                                    \
   nonstatic_field(instanceKlass,               _constants,                                    constantPoolOop)                       \
@@ -360,7 +358,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(methodDataOopDesc,           _arg_stack,                                    intx)                                  \
   nonstatic_field(methodDataOopDesc,           _arg_returned,                                 intx)                                  \
   nonstatic_field(methodOopDesc,               _constMethod,                                  constMethodOop)                        \
-  nonstatic_field(methodOopDesc,               _constants,                                    constantPoolOop)                       \
   nonstatic_field(methodOopDesc,               _method_data,                                  methodDataOop)                         \
   nonstatic_field(methodOopDesc,               _interpreter_invocation_count,                 int)                                   \
   nonstatic_field(methodOopDesc,               _access_flags,                                 AccessFlags)                           \
@@ -380,7 +377,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   volatile_nonstatic_field(methodOopDesc,      _from_compiled_entry,                          address)                               \
   volatile_nonstatic_field(methodOopDesc,      _from_interpreted_entry,                       address)                               \
   volatile_nonstatic_field(constMethodOopDesc, _fingerprint,                                  uint64_t)                              \
-  nonstatic_field(constMethodOopDesc,          _method,                                       methodOop)                             \
+  nonstatic_field(constMethodOopDesc,          _constants,                                    constantPoolOop)                       \
   nonstatic_field(constMethodOopDesc,          _stackmap_data,                                typeArrayOop)                          \
   nonstatic_field(constMethodOopDesc,          _exception_table,                              typeArrayOop)                          \
   nonstatic_field(constMethodOopDesc,          _constMethod_size,                             int)                                   \
@@ -1878,7 +1875,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_c2_type(StoreNNode, StoreNode)                                  \
   declare_c2_type(StoreCMNode, StoreNode)                                 \
   declare_c2_type(LoadPLockedNode, LoadPNode)                             \
-  declare_c2_type(LoadLLockedNode, LoadLNode)                             \
   declare_c2_type(SCMemProjNode, ProjNode)                                \
   declare_c2_type(LoadStoreNode, Node)                                    \
   declare_c2_type(StorePConditionalNode, LoadStoreNode)                   \
@@ -2343,7 +2339,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   /* instanceKlass enum                */                                 \
   /*************************************/                                 \
                                                                           \
-  declare_constant(instanceKlass::implementors_limit)                     \
                                                                           \
   /*************************************/                                 \
   /* FieldInfo FieldOffset enum        */                                 \
@@ -2355,7 +2350,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_constant(FieldInfo::initval_index_offset)                       \
   declare_constant(FieldInfo::low_offset)                                 \
   declare_constant(FieldInfo::high_offset)                                \
-  declare_constant(FieldInfo::generic_signature_offset)                   \
   declare_constant(FieldInfo::field_slots)                                \
                                                                           \
   /************************************************/                      \

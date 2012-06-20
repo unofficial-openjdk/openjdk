@@ -25,9 +25,13 @@
 #------------------------------------------------------------------------
 # CC, CXX & AS
 
-CXX = g++
-CC  = gcc
-AS  = $(CC) -c
+# If a SPEC is not set already, then use these defaults.
+ifeq ($(SPEC),)
+  CXX = g++
+  CC  = gcc
+  AS  = $(CC) -c
+  MCS = /usr/ccs/bin/mcs
+endif
 
 Compiler = gcc
 
@@ -137,7 +141,7 @@ OPT_CFLAGS/NOOPT=-O0
 
 # Flags for generating make dependency flags.
 ifneq ("${CC_VER_MAJOR}", "2")
-DEPFLAGS = -MMD -MP -MF $(DEP_DIR)/$(@:%=%.d)
+DEPFLAGS = -fpch-deps -MMD -MP -MF $(DEP_DIR)/$(@:%=%.d)
 endif
 
 # -DDONT_USE_PRECOMPILED_HEADER will exclude all includes in precompiled.hpp.
@@ -193,5 +197,3 @@ DEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
 ifeq ($(DEBUG_CFLAGS/$(BUILDARCH)),) 
 DEBUG_CFLAGS += -gstabs 
 endif 
-
-MCS = /usr/ccs/bin/mcs

@@ -816,8 +816,24 @@ bool Arguments::process_argument(const char* arg,
     return true;
   }
 
-  jio_fprintf(defaultStream::error_stream(),
-              "Unrecognized VM option '%s'\n", argname);
+  // For locked flags, report a custom error message if available.
+  // Otherwise, report the standard unrecognized VM option.
+
+  Flag* locked_flag = Flag::find_flag((char*)argname, strlen(argname), true);
+  if (locked_flag != NULL) {
+    char locked_message_buf[BUFLEN];
+    locked_flag->get_locked_message(locked_message_buf, BUFLEN);
+    if (strlen(locked_message_buf) == 0) {
+      jio_fprintf(defaultStream::error_stream(),
+        "Unrecognized VM option '%s'\n", argname);
+    } else {
+      jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
+    }
+  } else {
+    jio_fprintf(defaultStream::error_stream(),
+                "Unrecognized VM option '%s'\n", argname);
+  }
+
   // allow for commandline "commenting out" options like -XX:#+Verbose
   return arg[0] == '#';
 }
@@ -2050,6 +2066,19 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
     FREE_C_HEAP_ARRAY(char, altclasses_path);
   }
 
+  if (WhiteBoxAPI) {
+    // Append wb.jar to bootclasspath if enabled
+    const char* wb_jar = "wb.jar";
+    size_t wb_path_len = strlen(get_meta_index_dir()) + 1 +
+                         strlen(wb_jar);
+    char* wb_path = NEW_C_HEAP_ARRAY(char, wb_path_len);
+    strcpy(wb_path, get_meta_index_dir());
+    strcat(wb_path, wb_jar);
+    scp.add_suffix(wb_path);
+    scp_assembly_required = true;
+    FREE_C_HEAP_ARRAY(char, wb_path);
+  }
+
   // Parse _JAVA_OPTIONS environment variable (if present) (mimics classic VM)
   result = parse_java_options_environment_variable(&scp, &scp_assembly_required);
   if (result != JNI_OK) {
@@ -2509,15 +2538,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       // number of PLAB allocation events during gc.  The value of 8kw
       // was arrived at by experimenting with specjbb.
       FLAG_SET_CMDLINE(uintx, OldPLABSize, 8*K);  // Note: this is in words
-
-      // CompilationPolicyChoice=0 causes the server compiler to adopt
-      // a more conservative which-method-do-I-compile policy when one
-      // of the counters maintained by the interpreter trips.  The
-      // result is reduced startup time and improved specjbb and
-      // alacrity performance.  Zero is the default, but we set it
-      // explicitly here in case the default changes.
-      // See runtime/compilationPolicy.*.
-      FLAG_SET_CMDLINE(intx, CompilationPolicyChoice, 0);
 
       // Enable parallel GC and adaptive generation sizing
       FLAG_SET_CMDLINE(bool, UseParallelGC, true);
@@ -3019,7 +3039,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     return result;
   }
 
-#ifdef JAVASE_EMBEDDED
+#if (defined JAVASE_EMBEDDED || defined ARM)
   UNSUPPORTED_OPTION(UseG1GC, "G1 GC");
 #endif
 
@@ -3070,6 +3090,14 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   if (PrintGCDetails) {
     // Turn on -verbose:gc options as well
     PrintGC = true;
+  }
+
+  if (!JDK_Version::is_gte_jdk18x_version()) {
+    // To avoid changing the log format for 7 updates this flag is only
+    // true by default in JDK8 and above.
+    if (FLAG_IS_DEFAULT(PrintGCCause)) {
+      FLAG_SET_DEFAULT(PrintGCCause, false);
+    }
   }
 
   // Set object alignment values.

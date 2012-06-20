@@ -141,8 +141,11 @@ class ValueNumberingVisitor: public InstructionVisitor {
 
   // visitor functions
   void do_StoreField     (StoreField*      x) {
-    if (x->is_init_point()) {
-      // putstatic is an initialization point so treat it as a wide kill
+    if (x->is_init_point() ||  // putstatic is an initialization point so treat it as a wide kill
+        // This is actually too strict and the JMM doesn't require
+        // this in all cases (e.g. load a; volatile store b; load a)
+        // but possible future optimizations might require this.
+        x->field()->is_volatile()) {
       kill_memory();
     } else {
       kill_field(x->field());
@@ -160,8 +163,8 @@ class ValueNumberingVisitor: public InstructionVisitor {
   void do_Local          (Local*           x) { /* nothing to do */ }
   void do_Constant       (Constant*        x) { /* nothing to do */ }
   void do_LoadField      (LoadField*       x) {
-    if (x->is_init_point()) {
-      // getstatic is an initialization point so treat it as a wide kill
+    if (x->is_init_point() ||         // getstatic is an initialization point so treat it as a wide kill
+        x->field()->is_volatile()) {  // the JMM requires this
       kill_memory();
     }
   }
@@ -200,6 +203,7 @@ class ValueNumberingVisitor: public InstructionVisitor {
   void do_ProfileCall    (ProfileCall*     x) { /* nothing to do */ }
   void do_ProfileInvoke  (ProfileInvoke*   x) { /* nothing to do */ };
   void do_RuntimeCall    (RuntimeCall*     x) { /* nothing to do */ };
+  void do_MemBar         (MemBar*          x) { /* nothing to do */ };
 };
 
 

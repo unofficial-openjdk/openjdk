@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,7 +147,8 @@ class LibraryCallKit : public GraphKit {
     return generate_method_call(method_id, true, false);
   }
 
-  Node* make_string_method_node(int opcode, Node* str1, Node* cnt1, Node* str2, Node* cnt2);
+  Node* make_string_method_node(int opcode, Node* str1_start, Node* cnt1, Node* str2_start, Node* cnt2);
+  Node* make_string_method_node(int opcode, Node* str1, Node* str2);
   bool inline_string_compareTo();
   bool inline_string_indexOf();
   Node* string_indexOf(Node* string_object, ciTypeArray* target_array, jint offset, jint cache_i, jint md2_i);
@@ -175,7 +176,11 @@ class LibraryCallKit : public GraphKit {
   bool inline_unsafe_allocate();
   bool inline_unsafe_copyMemory();
   bool inline_native_currentThread();
-  bool inline_native_time_funcs(bool isNano);
+#ifdef TRACE_HAVE_INTRINSICS
+  bool inline_native_classID();
+  bool inline_native_threadID();
+#endif
+  bool inline_native_time_funcs(address method, const char* funcName);
   bool inline_native_isInterrupted();
   bool inline_native_Class_query(vmIntrinsics::ID id);
   bool inline_native_subtype_check();
@@ -187,8 +192,6 @@ class LibraryCallKit : public GraphKit {
   void copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, bool is_array, bool card_mark);
   bool inline_native_clone(bool is_virtual);
   bool inline_native_Reflection_getCallerClass();
-  bool inline_native_AtomicLong_get();
-  bool inline_native_AtomicLong_attemptUpdate();
   bool is_method_invoke_or_aux_frame(JVMState* jvms);
   // Helper function for inlining native object hash method
   bool inline_native_hashcode(bool is_virtual, bool is_static);
@@ -326,11 +329,6 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     // We do not intrinsify this.  The optimizer does fine with it.
     return NULL;
 
-  case vmIntrinsics::_get_AtomicLong:
-  case vmIntrinsics::_attemptUpdate:
-    if (!InlineAtomicLong)  return NULL;
-    break;
-
   case vmIntrinsics::_getCallerClass:
     if (!UseNewReflection)  return NULL;
     if (!InlineReflectionGetCallerClass)  return NULL;
@@ -338,8 +336,27 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     break;
 
   case vmIntrinsics::_bitCount_i:
+    if (!Matcher::match_rule_supported(Op_PopCountI)) return NULL;
+    break;
+
   case vmIntrinsics::_bitCount_l:
-    if (!UsePopCountInstruction)  return NULL;
+    if (!Matcher::match_rule_supported(Op_PopCountL)) return NULL;
+    break;
+
+  case vmIntrinsics::_numberOfLeadingZeros_i:
+    if (!Matcher::match_rule_supported(Op_CountLeadingZerosI)) return NULL;
+    break;
+
+  case vmIntrinsics::_numberOfLeadingZeros_l:
+    if (!Matcher::match_rule_supported(Op_CountLeadingZerosL)) return NULL;
+    break;
+
+  case vmIntrinsics::_numberOfTrailingZeros_i:
+    if (!Matcher::match_rule_supported(Op_CountTrailingZerosI)) return NULL;
+    break;
+
+  case vmIntrinsics::_numberOfTrailingZeros_l:
+    if (!Matcher::match_rule_supported(Op_CountTrailingZerosL)) return NULL;
     break;
 
   case vmIntrinsics::_Reference_get:
@@ -416,14 +433,12 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
     return kit.transfer_exceptions_into_jvms();
   }
 
-  if (PrintIntrinsics) {
+  // The intrinsic bailed out
+  if (PrintIntrinsics || PrintInlining NOT_PRODUCT( || PrintOptoInlining) ) {
     if (jvms->has_method()) {
       // Not a root compile.
-      tty->print("Did not inline intrinsic %s%s at bci:%d in",
-                 vmIntrinsics::name_at(intrinsic_id()),
-                 (is_virtual() ? " (virtual)" : ""), kit.bci());
-      kit.caller()->print_short_name(tty);
-      tty->print_cr(" (%d bytes)", kit.caller()->code_size());
+      const char* msg = is_virtual() ? "failed to inline (intrinsic, virtual)" : "failed to inline (intrinsic)";
+      CompileTask::print_inlining(kit.callee(), jvms->depth() - 1, kit.bci(), msg);
     } else {
       // Root compile
       tty->print("Did not generate intrinsic %s%s at bci:%d in",
@@ -621,10 +636,18 @@ bool LibraryCallKit::try_to_inline() {
   case vmIntrinsics::_isInterrupted:
     return inline_native_isInterrupted();
 
+#ifdef TRACE_HAVE_INTRINSICS
+  case vmIntrinsics::_classID:
+    return inline_native_classID();
+  case vmIntrinsics::_threadID:
+    return inline_native_threadID();
+  case vmIntrinsics::_counterTime:
+    return inline_native_time_funcs(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), "counterTime");
+#endif
   case vmIntrinsics::_currentTimeMillis:
-    return inline_native_time_funcs(false);
+    return inline_native_time_funcs(CAST_FROM_FN_PTR(address, os::javaTimeMillis), "currentTimeMillis");
   case vmIntrinsics::_nanoTime:
-    return inline_native_time_funcs(true);
+    return inline_native_time_funcs(CAST_FROM_FN_PTR(address, os::javaTimeNanos), "nanoTime");
   case vmIntrinsics::_allocateInstance:
     return inline_unsafe_allocate();
   case vmIntrinsics::_copyMemory:
@@ -680,11 +703,6 @@ bool LibraryCallKit::try_to_inline() {
   case vmIntrinsics::_reverseBytes_s:
   case vmIntrinsics::_reverseBytes_c:
     return inline_reverseBytes((vmIntrinsics::ID) intrinsic_id());
-
-  case vmIntrinsics::_get_AtomicLong:
-    return inline_native_AtomicLong_get();
-  case vmIntrinsics::_attemptUpdate:
-    return inline_native_AtomicLong_attemptUpdate();
 
   case vmIntrinsics::_getCallerClass:
     return inline_native_Reflection_getCallerClass();
@@ -844,48 +862,76 @@ Node* LibraryCallKit::generate_current_thread(Node* &tls_output) {
 
 
 //------------------------------make_string_method_node------------------------
-// Helper method for String intrinsic finctions.
-Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1, Node* cnt1, Node* str2, Node* cnt2) {
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
+// Helper method for String intrinsic functions. This version is called
+// with str1 and str2 pointing to String object nodes.
+//
+Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1, Node* str2) {
   Node* no_ctrl = NULL;
 
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-
-  const TypeAryPtr* value_type =
-        TypeAryPtr::make(TypePtr::NotNull,
-                         TypeAry::make(TypeInt::CHAR,TypeInt::POS),
-                         ciTypeArrayKlass::make(T_CHAR), true, 0);
-
-  // Get start addr of string and substring
-  Node* str1_valuea  = basic_plus_adr(str1, str1, value_offset);
-  Node* str1_value   = make_load(no_ctrl, str1_valuea, value_type, T_OBJECT, string_type->add_offset(value_offset));
-  Node* str1_offseta = basic_plus_adr(str1, str1, offset_offset);
-  Node* str1_offset  = make_load(no_ctrl, str1_offseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
+  // Get start addr of string
+  Node* str1_value   = load_String_value(no_ctrl, str1);
+  Node* str1_offset  = load_String_offset(no_ctrl, str1);
   Node* str1_start   = array_element_address(str1_value, str1_offset, T_CHAR);
 
-  Node* str2_valuea  = basic_plus_adr(str2, str2, value_offset);
-  Node* str2_value   = make_load(no_ctrl, str2_valuea, value_type, T_OBJECT, string_type->add_offset(value_offset));
-  Node* str2_offseta = basic_plus_adr(str2, str2, offset_offset);
-  Node* str2_offset  = make_load(no_ctrl, str2_offseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
+  // Get length of string 1
+  Node* str1_len  = load_String_length(no_ctrl, str1);
+
+  Node* str2_value   = load_String_value(no_ctrl, str2);
+  Node* str2_offset  = load_String_offset(no_ctrl, str2);
   Node* str2_start   = array_element_address(str2_value, str2_offset, T_CHAR);
+
+  Node* str2_len = NULL;
+  Node* result = NULL;
+
+  switch (opcode) {
+  case Op_StrIndexOf:
+    // Get length of string 2
+    str2_len = load_String_length(no_ctrl, str2);
+
+    result = new (C, 6) StrIndexOfNode(control(), memory(TypeAryPtr::CHARS),
+                                 str1_start, str1_len, str2_start, str2_len);
+    break;
+  case Op_StrComp:
+    // Get length of string 2
+    str2_len = load_String_length(no_ctrl, str2);
+
+    result = new (C, 6) StrCompNode(control(), memory(TypeAryPtr::CHARS),
+                                 str1_start, str1_len, str2_start, str2_len);
+    break;
+  case Op_StrEquals:
+    result = new (C, 5) StrEqualsNode(control(), memory(TypeAryPtr::CHARS),
+                               str1_start, str2_start, str1_len);
+    break;
+  default:
+    ShouldNotReachHere();
+    return NULL;
+  }
+
+  // All these intrinsics have checks.
+  C->set_has_split_ifs(true); // Has chance for split-if optimization
+
+  return _gvn.transform(result);
+}
+
+// Helper method for String intrinsic functions. This version is called
+// with str1 and str2 pointing to char[] nodes, with cnt1 and cnt2 pointing
+// to Int nodes containing the lenghts of str1 and str2.
+//
+Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1_start, Node* cnt1, Node* str2_start, Node* cnt2) {
 
   Node* result = NULL;
   switch (opcode) {
   case Op_StrIndexOf:
     result = new (C, 6) StrIndexOfNode(control(), memory(TypeAryPtr::CHARS),
-                                       str1_start, cnt1, str2_start, cnt2);
+                                 str1_start, cnt1, str2_start, cnt2);
     break;
   case Op_StrComp:
     result = new (C, 6) StrCompNode(control(), memory(TypeAryPtr::CHARS),
-                                    str1_start, cnt1, str2_start, cnt2);
+                                 str1_start, cnt1, str2_start, cnt2);
     break;
   case Op_StrEquals:
     result = new (C, 5) StrEqualsNode(control(), memory(TypeAryPtr::CHARS),
-                                      str1_start, str2_start, cnt1);
+                                 str1_start, str2_start, cnt1);
     break;
   default:
     ShouldNotReachHere();
@@ -903,10 +949,6 @@ bool LibraryCallKit::inline_string_compareTo() {
 
   if (!Matcher::has_match_rule(Op_StrComp)) return false;
 
-  const int value_offset = java_lang_String::value_offset_in_bytes();
-  const int count_offset = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
   _sp += 2;
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
@@ -923,18 +965,7 @@ bool LibraryCallKit::inline_string_compareTo() {
     return true;
   }
 
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-  Node* no_ctrl = NULL;
-
-  // Get counts for string and argument
-  Node* receiver_cnta = basic_plus_adr(receiver, receiver, count_offset);
-  Node* receiver_cnt  = make_load(no_ctrl, receiver_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-
-  Node* argument_cnta = basic_plus_adr(argument, argument, count_offset);
-  Node* argument_cnt  = make_load(no_ctrl, argument_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-
-  Node* compare = make_string_method_node(Op_StrComp, receiver, receiver_cnt, argument, argument_cnt);
+  Node* compare = make_string_method_node(Op_StrComp, receiver, argument);
   push(compare);
   return true;
 }
@@ -943,10 +974,6 @@ bool LibraryCallKit::inline_string_compareTo() {
 bool LibraryCallKit::inline_string_equals() {
 
   if (!Matcher::has_match_rule(Op_StrEquals)) return false;
-
-  const int value_offset = java_lang_String::value_offset_in_bytes();
-  const int count_offset = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
 
   int nargs = 2;
   _sp += nargs;
@@ -1001,24 +1028,31 @@ bool LibraryCallKit::inline_string_equals() {
     }
   }
 
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-
-  Node* no_ctrl = NULL;
-  Node* receiver_cnt;
-  Node* argument_cnt;
-
   if (!stopped()) {
+    const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
+
     // Properly cast the argument to String
     argument = _gvn.transform(new (C, 2) CheckCastPPNode(control(), argument, string_type));
     // This path is taken only when argument's type is String:NotNull.
     argument = cast_not_null(argument, false);
 
-    // Get counts for string and argument
-    Node* receiver_cnta = basic_plus_adr(receiver, receiver, count_offset);
-    receiver_cnt  = make_load(no_ctrl, receiver_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    Node* no_ctrl = NULL;
 
-    Node* argument_cnta = basic_plus_adr(argument, argument, count_offset);
-    argument_cnt  = make_load(no_ctrl, argument_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get start addr of receiver
+    Node* receiver_val    = load_String_value(no_ctrl, receiver);
+    Node* receiver_offset = load_String_offset(no_ctrl, receiver);
+    Node* receiver_start = array_element_address(receiver_val, receiver_offset, T_CHAR);
+
+    // Get length of receiver
+    Node* receiver_cnt  = load_String_length(no_ctrl, receiver);
+
+    // Get start addr of argument
+    Node* argument_val   = load_String_value(no_ctrl, argument);
+    Node* argument_offset = load_String_offset(no_ctrl, argument);
+    Node* argument_start = array_element_address(argument_val, argument_offset, T_CHAR);
+
+    // Get length of argument
+    Node* argument_cnt  = load_String_length(no_ctrl, argument);
 
     // Check for receiver count != argument count
     Node* cmp = _gvn.transform( new(C, 3) CmpINode(receiver_cnt, argument_cnt) );
@@ -1028,14 +1062,14 @@ bool LibraryCallKit::inline_string_equals() {
       phi->init_req(4, intcon(0));
       region->init_req(4, if_ne);
     }
-  }
 
-  // Check for count == 0 is done by mach node StrEquals.
+    // Check for count == 0 is done by assembler code for StrEquals.
 
-  if (!stopped()) {
-    Node* equals = make_string_method_node(Op_StrEquals, receiver, receiver_cnt, argument, argument_cnt);
-    phi->init_req(1, equals);
-    region->init_req(1, control());
+    if (!stopped()) {
+      Node* equals = make_string_method_node(Op_StrEquals, receiver_start, receiver_cnt, argument_start, argument_cnt);
+      phi->init_req(1, equals);
+      region->init_req(1, control());
+    }
   }
 
   // post merge
@@ -1133,20 +1167,9 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
 
   const int nargs = 2; // number of arguments to push back for uncommon trap in predicate
 
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-  const TypeAryPtr*  source_type = TypeAryPtr::make(TypePtr::NotNull, TypeAry::make(TypeInt::CHAR,TypeInt::POS), ciTypeArrayKlass::make(T_CHAR), true, 0);
-
-  Node* sourceOffseta = basic_plus_adr(string_object, string_object, offset_offset);
-  Node* sourceOffset  = make_load(no_ctrl, sourceOffseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
-  Node* sourceCounta  = basic_plus_adr(string_object, string_object, count_offset);
-  Node* sourceCount   = make_load(no_ctrl, sourceCounta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-  Node* sourcea       = basic_plus_adr(string_object, string_object, value_offset);
-  Node* source        = make_load(no_ctrl, sourcea, source_type, T_OBJECT, string_type->add_offset(value_offset));
+  Node* source        = load_String_value(no_ctrl, string_object);
+  Node* sourceOffset  = load_String_offset(no_ctrl, string_object);
+  Node* sourceCount   = load_String_length(no_ctrl, string_object);
 
   Node* target = _gvn.transform( makecon(TypeOopPtr::make_from_constant(target_array, true)) );
   jint target_length = target_array->length();
@@ -1214,10 +1237,6 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
 //------------------------------inline_string_indexOf------------------------
 bool LibraryCallKit::inline_string_indexOf() {
 
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
   _sp += 2;
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
@@ -1251,12 +1270,21 @@ bool LibraryCallKit::inline_string_indexOf() {
     Node*       result_phi = new (C, 4) PhiNode(result_rgn, TypeInt::INT);
     Node* no_ctrl  = NULL;
 
-    // Get counts for string and substr
-    Node* source_cnta = basic_plus_adr(receiver, receiver, count_offset);
-    Node* source_cnt  = make_load(no_ctrl, source_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get start addr of source string
+    Node* source = load_String_value(no_ctrl, receiver);
+    Node* source_offset = load_String_offset(no_ctrl, receiver);
+    Node* source_start = array_element_address(source, source_offset, T_CHAR);
 
-    Node* substr_cnta = basic_plus_adr(argument, argument, count_offset);
-    Node* substr_cnt  = make_load(no_ctrl, substr_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get length of source string
+    Node* source_cnt  = load_String_length(no_ctrl, receiver);
+
+    // Get start addr of substring
+    Node* substr = load_String_value(no_ctrl, argument);
+    Node* substr_offset = load_String_offset(no_ctrl, argument);
+    Node* substr_start = array_element_address(substr, substr_offset, T_CHAR);
+
+    // Get length of source string
+    Node* substr_cnt  = load_String_length(no_ctrl, argument);
 
     // Check for substr count > string count
     Node* cmp = _gvn.transform( new(C, 3) CmpINode(substr_cnt, source_cnt) );
@@ -1279,7 +1307,7 @@ bool LibraryCallKit::inline_string_indexOf() {
     }
 
     if (!stopped()) {
-      result = make_string_method_node(Op_StrIndexOf, receiver, source_cnt, argument, substr_cnt);
+      result = make_string_method_node(Op_StrIndexOf, source_start, source_cnt, substr_start, substr_cnt);
       result_phi->init_req(1, result);
       result_rgn->init_req(1, control());
     }
@@ -1304,10 +1332,18 @@ bool LibraryCallKit::inline_string_indexOf() {
     ciInstance* str = str_const->as_instance();
     assert(str != NULL, "must be instance");
 
-    ciObject* v = str->field_value_by_offset(value_offset).as_object();
-    int       o = str->field_value_by_offset(offset_offset).as_int();
-    int       c = str->field_value_by_offset(count_offset).as_int();
+    ciObject* v = str->field_value_by_offset(java_lang_String::value_offset_in_bytes()).as_object();
     ciTypeArray* pat = v->as_type_array(); // pattern (argument) character array
+
+    int o;
+    int c;
+    if (java_lang_String::has_offset_field()) {
+      o = str->field_value_by_offset(java_lang_String::offset_offset_in_bytes()).as_int();
+      c = str->field_value_by_offset(java_lang_String::count_offset_in_bytes()).as_int();
+    } else {
+      o = 0;
+      c = pat->length();
+    }
 
     // constant strings have no offset and count == length which
     // simplifies the resulting code somewhat so lets optimize for that.
@@ -1508,9 +1544,6 @@ bool LibraryCallKit::inline_exp(vmIntrinsics::ID id) {
   // If this inlining ever returned NaN in the past, we do not intrinsify it
   // every again.  NaN results requires StrictMath.exp handling.
   if (too_many_traps(Deoptimization::Reason_intrinsic))  return false;
-
-  // Do not intrinsify on older platforms which lack cmove.
-  if (ConditionalMoveLimit == 0)  return false;
 
   _sp += arg_size();        // restore stack pointer
   Node *x = pop_math_arg();
@@ -1754,15 +1787,11 @@ bool LibraryCallKit::inline_math_native(vmIntrinsics::ID id) {
   case vmIntrinsics::_dsqrt: return Matcher::has_match_rule(Op_SqrtD) ? inline_sqrt(id) : false;
   case vmIntrinsics::_dabs:  return Matcher::has_match_rule(Op_AbsD)  ? inline_abs(id)  : false;
 
-    // These intrinsics don't work on X86.  The ad implementation doesn't
-    // handle NaN's properly.  Instead of returning infinity, the ad
-    // implementation returns a NaN on overflow. See bug: 6304089
-    // Once the ad implementations are fixed, change the code below
-    // to match the intrinsics above
-
   case vmIntrinsics::_dexp:  return
+    Matcher::has_match_rule(Op_ExpD) ? inline_exp(id) :
     runtime_math(OptoRuntime::Math_D_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dexp), "EXP");
   case vmIntrinsics::_dpow:  return
+    Matcher::has_match_rule(Op_PowD) ? inline_pow(id) :
     runtime_math(OptoRuntime::Math_DD_D_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::dpow), "POW");
 
    // These intrinsics are not yet correctly implemented
@@ -2823,14 +2852,63 @@ bool LibraryCallKit::inline_unsafe_allocate() {
   return true;
 }
 
+#ifdef TRACE_HAVE_INTRINSICS
+/*
+ * oop -> myklass
+ * myklass->trace_id |= USED
+ * return myklass->trace_id & ~0x3
+ */
+bool LibraryCallKit::inline_native_classID() {
+  int nargs = 1 + 1;
+  null_check_receiver(callee());  // check then ignore argument(0)
+  _sp += nargs;
+  Node* cls = do_null_check(argument(1), T_OBJECT);
+  _sp -= nargs;
+  Node* kls = load_klass_from_mirror(cls, false, nargs, NULL, 0);
+  _sp += nargs;
+  kls = do_null_check(kls, T_OBJECT);
+  _sp -= nargs;
+  ByteSize offset = TRACE_ID_OFFSET;
+  Node* insp = basic_plus_adr(kls, in_bytes(offset));
+  Node* tvalue = make_load(NULL, insp, TypeLong::LONG, T_LONG);
+  Node* bits = longcon(~0x03l); // ignore bit 0 & 1
+  Node* andl = _gvn.transform(new (C, 3) AndLNode(tvalue, bits));
+  Node* clsused = longcon(0x01l); // set the class bit
+  Node* orl = _gvn.transform(new (C, 3) OrLNode(tvalue, clsused));
+
+  const TypePtr *adr_type = _gvn.type(insp)->isa_ptr();
+  store_to_memory(control(), insp, orl, T_LONG, adr_type);
+  push_pair(andl);
+  return true;
+}
+
+bool LibraryCallKit::inline_native_threadID() {
+  Node* tls_ptr = NULL;
+  Node* cur_thr = generate_current_thread(tls_ptr);
+  Node* p = basic_plus_adr(top()/*!oop*/, tls_ptr, in_bytes(JavaThread::osthread_offset()));
+  Node* osthread = make_load(NULL, p, TypeRawPtr::NOTNULL, T_ADDRESS);
+  p = basic_plus_adr(top()/*!oop*/, osthread, in_bytes(OSThread::thread_id_offset()));
+
+  Node* threadid = NULL;
+  size_t thread_id_size = OSThread::thread_id_size();
+  if (thread_id_size == (size_t) BytesPerLong) {
+    threadid = ConvL2I(make_load(control(), p, TypeLong::LONG, T_LONG));
+    push(threadid);
+  } else if (thread_id_size == (size_t) BytesPerInt) {
+    threadid = make_load(control(), p, TypeInt::INT, T_INT);
+    push(threadid);
+  } else {
+    ShouldNotReachHere();
+  }
+  return true;
+}
+#endif
+
 //------------------------inline_native_time_funcs--------------
 // inline code for System.currentTimeMillis() and System.nanoTime()
 // these have the same type and signature
-bool LibraryCallKit::inline_native_time_funcs(bool isNano) {
-  address funcAddr = isNano ? CAST_FROM_FN_PTR(address, os::javaTimeNanos) :
-                              CAST_FROM_FN_PTR(address, os::javaTimeMillis);
-  const char * funcName = isNano ? "nanoTime" : "currentTimeMillis";
-  const TypeFunc *tf = OptoRuntime::current_time_millis_Type();
+bool LibraryCallKit::inline_native_time_funcs(address funcAddr, const char* funcName) {
+  const TypeFunc *tf = OptoRuntime::void_long_Type();
   const TypePtr* no_memory_effects = NULL;
   Node* time = make_runtime_call(RC_LEAF, tf, funcAddr, funcName, no_memory_effects);
   Node* value = _gvn.transform(new (C, 1) ProjNode(time, TypeFunc::Parms+0));
@@ -3914,113 +3992,6 @@ bool LibraryCallKit::is_method_invoke_or_aux_frame(JVMState* jvms) {
   }
 
   return false;
-}
-
-static int value_field_offset = -1;  // offset of the "value" field of AtomicLongCSImpl.  This is needed by
-                                     // inline_native_AtomicLong_attemptUpdate() but it has no way of
-                                     // computing it since there is no lookup field by name function in the
-                                     // CI interface.  This is computed and set by inline_native_AtomicLong_get().
-                                     // Using a static variable here is safe even if we have multiple compilation
-                                     // threads because the offset is constant.  At worst the same offset will be
-                                     // computed and  stored multiple
-
-bool LibraryCallKit::inline_native_AtomicLong_get() {
-  // Restore the stack and pop off the argument
-  _sp+=1;
-  Node *obj = pop();
-
-  // get the offset of the "value" field. Since the CI interfaces
-  // does not provide a way to look up a field by name, we scan the bytecodes
-  // to get the field index.  We expect the first 2 instructions of the method
-  // to be:
-  //    0 aload_0
-  //    1 getfield "value"
-  ciMethod* method = callee();
-  if (value_field_offset == -1)
-  {
-    ciField* value_field;
-    ciBytecodeStream iter(method);
-    Bytecodes::Code bc = iter.next();
-
-    if ((bc != Bytecodes::_aload_0) &&
-              ((bc != Bytecodes::_aload) || (iter.get_index() != 0)))
-      return false;
-    bc = iter.next();
-    if (bc != Bytecodes::_getfield)
-      return false;
-    bool ignore;
-    value_field = iter.get_field(ignore);
-    value_field_offset = value_field->offset_in_bytes();
-  }
-
-  // Null check without removing any arguments.
-  _sp++;
-  obj = do_null_check(obj, T_OBJECT);
-  _sp--;
-  // Check for locking null object
-  if (stopped()) return true;
-
-  Node *adr = basic_plus_adr(obj, obj, value_field_offset);
-  const TypePtr *adr_type = _gvn.type(adr)->is_ptr();
-  int alias_idx = C->get_alias_index(adr_type);
-
-  Node *result = _gvn.transform(new (C, 3) LoadLLockedNode(control(), memory(alias_idx), adr));
-
-  push_pair(result);
-
-  return true;
-}
-
-bool LibraryCallKit::inline_native_AtomicLong_attemptUpdate() {
-  // Restore the stack and pop off the arguments
-  _sp+=5;
-  Node *newVal = pop_pair();
-  Node *oldVal = pop_pair();
-  Node *obj = pop();
-
-  // we need the offset of the "value" field which was computed when
-  // inlining the get() method.  Give up if we don't have it.
-  if (value_field_offset == -1)
-    return false;
-
-  // Null check without removing any arguments.
-  _sp+=5;
-  obj = do_null_check(obj, T_OBJECT);
-  _sp-=5;
-  // Check for locking null object
-  if (stopped()) return true;
-
-  Node *adr = basic_plus_adr(obj, obj, value_field_offset);
-  const TypePtr *adr_type = _gvn.type(adr)->is_ptr();
-  int alias_idx = C->get_alias_index(adr_type);
-
-  Node *cas = _gvn.transform(new (C, 5) StoreLConditionalNode(control(), memory(alias_idx), adr, newVal, oldVal));
-  Node *store_proj = _gvn.transform( new (C, 1) SCMemProjNode(cas));
-  set_memory(store_proj, alias_idx);
-  Node *bol = _gvn.transform( new (C, 2) BoolNode( cas, BoolTest::eq ) );
-
-  Node *result;
-  // CMove node is not used to be able fold a possible check code
-  // after attemptUpdate() call. This code could be transformed
-  // into CMove node by loop optimizations.
-  {
-    RegionNode *r = new (C, 3) RegionNode(3);
-    result = new (C, 3) PhiNode(r, TypeInt::BOOL);
-
-    Node *iff = create_and_xform_if(control(), bol, PROB_FAIR, COUNT_UNKNOWN);
-    Node *iftrue = opt_iff(r, iff);
-    r->init_req(1, iftrue);
-    result->init_req(1, intcon(1));
-    result->init_req(2, intcon(0));
-
-    set_control(_gvn.transform(r));
-    record_for_igvn(r);
-
-    C->set_has_split_ifs(true); // Has chance for split-if optimization
-  }
-
-  push(_gvn.transform(result));
-  return true;
 }
 
 bool LibraryCallKit::inline_fp_conversions(vmIntrinsics::ID id) {
@@ -5453,4 +5424,3 @@ bool LibraryCallKit::inline_reference_get() {
   push(result);
   return true;
 }
-

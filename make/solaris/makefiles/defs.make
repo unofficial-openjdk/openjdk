@@ -59,6 +59,18 @@ else
   endif
 endif
 
+# On 32 bit solaris we build server and client, on 64 bit just server.
+ifeq ($(JVM_VARIANTS),)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+    JVM_VARIANTS:=client,server
+    JVM_VARIANT_CLIENT:=true
+    JVM_VARIANT_SERVER:=true
+  else
+    JVM_VARIANTS:=server
+    JVM_VARIANT_SERVER:=true
+  endif
+endif
+
 # determine if HotSpot is being built in JDK6 or earlier version
 JDK6_OR_EARLIER=0
 ifeq "$(shell expr \( '$(JDK_MAJOR_VERSION)' != '' \& '$(JDK_MINOR_VERSION)' != '' \& '$(JDK_MICRO_VERSION)' != '' \))" "1"
@@ -172,58 +184,65 @@ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
   endif
 endif
 
+EXPORT_LIST += $(EXPORT_JRE_LIB_DIR)/wb.jar
+
 EXPORT_SERVER_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/server
 EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
 
-ifneq ($(BUILD_CLIENT_ONLY),true)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.$(LIBRARY_SUFFIX)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
+ifeq ($(JVM_VARIANT_SERVER),true)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.$(LIBRARY_SUFFIX)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  ifeq ($(ARCH_DATA_MODEL),32)
+    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
+    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  endif
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
     ifeq ($(ZIP_DEBUGINFO_FILES),1)
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.diz
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.diz
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.diz
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.diz
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.diz
+      endif
     else
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.debuginfo
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.debuginfo
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.debuginfo
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.debuginfo
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.debuginfo
+      endif
     endif
   endif
 endif
-ifeq ($(ARCH_DATA_MODEL), 32)
+ifeq ($(JVM_VARIANT_CLIENT),true)
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.$(LIBRARY_SUFFIX) 
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.$(LIBRARY_SUFFIX) 
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  ifeq ($(ARCH_DATA_MODEL),32)
+    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
+    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  endif
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
     ifeq ($(ZIP_DEBUGINFO_FILES),1)
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.diz
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.diz
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.diz
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.diz
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.diz
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.diz
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.diz
+      endif
     else
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.debuginfo
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.debuginfo
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.debuginfo
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.debuginfo
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.debuginfo
-    endif
-  endif
-  ifneq ($(BUILD_CLIENT_ONLY), true)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
-    ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-      ifeq ($(ZIP_DEBUGINFO_FILES),1)
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.diz
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.diz
-      else
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.debuginfo
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.debuginfo
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.debuginfo
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.debuginfo
       endif
     endif
   endif

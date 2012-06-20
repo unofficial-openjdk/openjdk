@@ -404,6 +404,8 @@ class os: AllStatic {
   static address current_stack_base();
   static size_t current_stack_size();
 
+  static void verify_stack_alignment() PRODUCT_RETURN;
+
   static int message_box(const char* title, const char* message);
   static char* do_you_want_to_debug(const char* message);
 
@@ -490,6 +492,7 @@ class os: AllStatic {
   // Print out system information; they are called by fatal error handler.
   // Output format may be different on different platforms.
   static void print_os_info(outputStream* st);
+  static void print_os_info_brief(outputStream* st);
   static void print_cpu_info(outputStream* st);
   static void pd_print_cpu_info(outputStream* st);
   static void print_memory_info(outputStream* st);
@@ -683,14 +686,17 @@ class os: AllStatic {
   // Platform dependent stuff
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.hpp"
+# include "os_posix.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_solaris
 # include "os_solaris.hpp"
+# include "os_posix.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
+# include "os_posix.hpp"
 # include "os_bsd.hpp"
 #endif
 #ifdef TARGET_OS_ARCH_linux_x86

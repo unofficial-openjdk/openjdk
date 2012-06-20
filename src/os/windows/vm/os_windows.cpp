@@ -324,16 +324,6 @@ extern "C" void breakpoint() {
   os::breakpoint();
 }
 
-// Returns an estimate of the current stack pointer. Result must be guaranteed
-// to point into the calling threads stack, and be no lower than the current
-// stack pointer.
-
-address os::current_stack_pointer() {
-  int dummy;
-  address sp = (address)&dummy;
-  return sp;
-}
-
 // os::current_stack_base()
 //
 //   Returns the base of the stack, which is the stack's
@@ -1572,9 +1562,17 @@ void os::print_dll_info(outputStream *st) {
    enumerate_modules(pid, _print_module, (void *)st);
 }
 
+void os::print_os_info_brief(outputStream* st) {
+  os::print_os_info(st);
+}
+
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
+  os::win32::print_windows_version(st);
+}
+
+void os::win32::print_windows_version(outputStream* st) {
   OSVERSIONINFOEX osvi;
   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
@@ -1593,7 +1591,8 @@ void os::print_os_info(outputStream* st) {
     case 5001: st->print(" Windows XP"); break;
     case 5002:
     case 6000:
-    case 6001: {
+    case 6001:
+    case 6002: {
       // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
       // find out whether we are running on 64 bit processor or not.
       SYSTEM_INFO si;
@@ -1622,6 +1621,14 @@ void os::print_os_info(outputStream* st) {
         } else {
             // Unrecognized windows, print out its major and minor versions
             st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
+        }
+        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+            st->print(" , 64 bit");
+      } else if (os_vers == 6002) {
+        if (osvi.wProductType == VER_NT_WORKSTATION) {
+            st->print(" Windows 8");
+        } else {
+            st->print(" Windows Server 2012");
         }
         if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
             st->print(" , 64 bit");
@@ -4830,99 +4837,92 @@ struct hostent* os::get_host_by_name(char* name) {
   return (struct hostent*)os::WinSock2Dll::gethostbyname(name);
 }
 
-
 int os::socket_close(int fd) {
-  ShouldNotReachHere();
-  return 0;
+  return ::closesocket(fd);
 }
 
 int os::socket_available(int fd, jint *pbytes) {
-  ShouldNotReachHere();
-  return 0;
+  int ret = ::ioctlsocket(fd, FIONREAD, (u_long*)pbytes);
+  return (ret < 0) ? 0 : 1;
 }
 
 int os::socket(int domain, int type, int protocol) {
-  ShouldNotReachHere();
-  return 0;
+  return ::socket(domain, type, protocol);
 }
 
 int os::listen(int fd, int count) {
-  ShouldNotReachHere();
-  return 0;
+  return ::listen(fd, count);
 }
 
 int os::connect(int fd, struct sockaddr* him, socklen_t len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::connect(fd, him, len);
 }
 
 int os::accept(int fd, struct sockaddr* him, socklen_t* len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::accept(fd, him, len);
 }
 
 int os::sendto(int fd, char* buf, size_t len, uint flags,
                struct sockaddr* to, socklen_t tolen) {
-  ShouldNotReachHere();
-  return 0;
+
+  return ::sendto(fd, buf, (int)len, flags, to, tolen);
 }
 
 int os::recvfrom(int fd, char *buf, size_t nBytes, uint flags,
                  sockaddr* from, socklen_t* fromlen) {
-  ShouldNotReachHere();
-  return 0;
+
+  return ::recvfrom(fd, buf, (int)nBytes, flags, from, fromlen);
 }
 
 int os::recv(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::recv(fd, buf, (int)nBytes, flags);
 }
 
 int os::send(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::send(fd, buf, (int)nBytes, flags);
 }
 
 int os::raw_send(int fd, char* buf, size_t nBytes, uint flags) {
-  ShouldNotReachHere();
-  return 0;
+  return ::send(fd, buf, (int)nBytes, flags);
 }
 
 int os::timeout(int fd, long timeout) {
-  ShouldNotReachHere();
-  return 0;
+  fd_set tbl;
+  struct timeval t;
+
+  t.tv_sec  = timeout / 1000;
+  t.tv_usec = (timeout % 1000) * 1000;
+
+  tbl.fd_count    = 1;
+  tbl.fd_array[0] = fd;
+
+  return ::select(1, &tbl, 0, 0, &t);
 }
 
 int os::get_host_name(char* name, int namelen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::gethostname(name, namelen);
 }
 
 int os::socket_shutdown(int fd, int howto) {
-  ShouldNotReachHere();
-  return 0;
+  return ::shutdown(fd, howto);
 }
 
 int os::bind(int fd, struct sockaddr* him, socklen_t len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::bind(fd, him, len);
 }
 
 int os::get_sock_name(int fd, struct sockaddr* him, socklen_t* len) {
-  ShouldNotReachHere();
-  return 0;
+  return ::getsockname(fd, him, len);
 }
 
 int os::get_sock_opt(int fd, int level, int optname,
                      char* optval, socklen_t* optlen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::getsockopt(fd, level, optname, optval, optlen);
 }
 
 int os::set_sock_opt(int fd, int level, int optname,
                      const char* optval, socklen_t optlen) {
-  ShouldNotReachHere();
-  return 0;
+  return ::setsockopt(fd, level, optname, optval, optlen);
 }
 
 

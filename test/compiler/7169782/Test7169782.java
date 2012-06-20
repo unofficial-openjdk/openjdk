@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,39 +22,22 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
+/**
+ * @test
+ * @bug 7169782
+ * @summary C2: SIGSEGV in LShiftLNode::Ideal(PhaseGVN*, bool)
+ *
+ * @run main/othervm -Xcomp -XX:CompileOnly="Test7169782::<clinit>" Test7169782
+ */
 
-#ifndef PRODUCT
-Mutex* FreeBlockDictionary::par_lock() const {
-  return _lock;
-}
+public class Test7169782 {
+    static long var_8;
 
-void FreeBlockDictionary::set_par_lock(Mutex* lock) {
-  _lock = lock;
-}
-
-void FreeBlockDictionary::verify_par_locked() const {
-#ifdef ASSERT
-  if (ParallelGCThreads > 0) {
-    Thread* myThread = Thread::current();
-    if (myThread->is_GC_task_thread()) {
-      assert(par_lock() != NULL, "Should be using locking?");
-      assert_lock_strong(par_lock());
+    static {
+        var_8 /= (long)(1E100 + ("".startsWith("a", 0) ? 1 : 2));
     }
-  }
-#endif // ASSERT
+
+    public static void main(String[] args) {
+        System.out.println("Test passed.");
+    }
 }
-#endif

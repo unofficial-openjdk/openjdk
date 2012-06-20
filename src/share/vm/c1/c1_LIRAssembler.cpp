@@ -664,6 +664,22 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
       membar_release();
       break;
 
+    case lir_membar_loadload:
+      membar_loadload();
+      break;
+
+    case lir_membar_storestore:
+      membar_storestore();
+      break;
+
+    case lir_membar_loadstore:
+      membar_loadstore();
+      break;
+
+    case lir_membar_storeload:
+      membar_storeload();
+      break;
+
     case lir_get_thread:
       get_thread(op->result_opr());
       break;
@@ -702,7 +718,7 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
       if (op->in_opr2()->is_constant()) {
         shift_op(op->code(), op->in_opr1(), op->in_opr2()->as_constant_ptr()->as_jint(), op->result_opr());
       } else {
-        shift_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op->tmp_opr());
+        shift_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op->tmp1_opr());
       }
       break;
 
@@ -730,6 +746,8 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
     case lir_cos:
     case lir_log:
     case lir_log10:
+    case lir_exp:
+    case lir_pow:
       intrinsic_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op);
       break;
 

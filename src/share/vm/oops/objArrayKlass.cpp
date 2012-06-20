@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,6 +68,7 @@ objArrayOop objArrayKlass::allocate(int length, TRAPS) {
       return a;
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
+      JvmtiExport::post_array_size_exhausted();
       THROW_OOP_0(Universe::out_of_memory_error_array_size());
     }
   } else {
@@ -544,10 +545,3 @@ void objArrayKlass::oop_verify_on(oop obj, outputStream* st) {
     guarantee(oa->obj_at(index)->is_oop_or_null(), "should be oop");
   }
 }
-
-void objArrayKlass::oop_verify_old_oop(oop obj, oop* p, bool allow_dirty) {
-  /* $$$ move into remembered set verification?
-  RememberedSet::verify_old_oop(obj, p, allow_dirty, true);
-  */
-}
-void objArrayKlass::oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty) {}

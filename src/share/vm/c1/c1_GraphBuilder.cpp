@@ -1306,6 +1306,7 @@ void GraphBuilder::table_switch() {
       if (sw.dest_offset_at(i) < 0) has_bb = true;
     }
     // add default successor
+    if (sw.default_offset() < 0) has_bb = true;
     sux->at_put(i, block_at(bci() + sw.default_offset()));
     ValueStack* state_before = has_bb ? copy_state_before() : NULL;
     Instruction* res = append(new TableSwitch(ipop(), sux, sw.low_key(), state_before, has_bb));
@@ -1350,6 +1351,7 @@ void GraphBuilder::lookup_switch() {
       keys->at_put(i, pair.match());
     }
     // add default successor
+    if (sw.default_offset() < 0) has_bb = true;
     sux->at_put(i, block_at(bci() + sw.default_offset()));
     ValueStack* state_before = has_bb ? copy_state_before() : NULL;
     Instruction* res = append(new LookupSwitch(ipop(), sux, keys, state_before, has_bb));
@@ -1418,6 +1420,12 @@ void GraphBuilder::method_return(Value x) {
     call_register_finalizer();
   }
 
+  bool need_mem_bar = false;
+  if (method()->name() == ciSymbol::object_initializer_name() &&
+      scope()->wrote_final()) {
+    need_mem_bar = true;
+  }
+
   // Check to see whether we are inlining. If so, Return
   // instructions become Gotos to the continuation point.
   if (continuation() != NULL) {
@@ -1435,6 +1443,10 @@ void GraphBuilder::method_return(Value x) {
     if (method()->is_synchronized()) {
       assert(state()->locks_size() == 1, "receiver must be locked here");
       monitorexit(state()->lock_at(0), SynchronizationEntryBCI);
+    }
+
+    if (need_mem_bar) {
+      append(new MemBar(lir_membar_storestore));
     }
 
     // State at end of inlined method is the state of the caller
@@ -1456,7 +1468,6 @@ void GraphBuilder::method_return(Value x) {
     // the continuation point.
     append_with_bci(goto_callee, scope_data()->continuation()->bci());
     incr_num_returns();
-
     return;
   }
 
@@ -1470,6 +1481,10 @@ void GraphBuilder::method_return(Value x) {
       receiver = append(new Constant(new ClassConstant(method()->holder())));
     }
     append_split(new MonitorExit(receiver, state()->unlock()));
+  }
+
+  if (need_mem_bar) {
+      append(new MemBar(lir_membar_storestore));
   }
 
   append(new Return(x));
@@ -1504,6 +1519,9 @@ void GraphBuilder::access_field(Bytecodes::Code code) {
     }
   }
 
+  if (field->is_final() && (code == Bytecodes::_putfield)) {
+    scope()->set_wrote_final();
+  }
 
   const int offset = !needs_patching ? field->offset() : -1;
   switch (code) {
@@ -1676,7 +1694,9 @@ void GraphBuilder::invoke(Bytecodes::Code code) {
       // they are roughly equivalent to Object.
       ciInstanceKlass* singleton = NULL;
       if (target->holder()->nof_implementors() == 1) {
-        singleton = target->holder()->implementor(0);
+        singleton = target->holder()->implementor();
+        assert(singleton != NULL && singleton != target->holder(),
+               "just checking");
 
         assert(holder->is_interface(), "invokeinterface to non interface?");
         ciInstanceKlass* decl_interface = (ciInstanceKlass*)holder;
@@ -2929,6 +2949,8 @@ GraphBuilder::GraphBuilder(Compilation* compilation, IRScope* scope)
   case vmIntrinsics::_dtan          : // fall through
   case vmIntrinsics::_dlog          : // fall through
   case vmIntrinsics::_dlog10        : // fall through
+  case vmIntrinsics::_dexp          : // fall through
+  case vmIntrinsics::_dpow          : // fall through
     {
       // Compiles where the root method is an intrinsic need a special
       // compilation environment because the bytecodes for the method
@@ -2949,6 +2971,9 @@ GraphBuilder::GraphBuilder(Compilation* compilation, IRScope* scope)
       _state = start_block->state()->copy_for_parsing();
       _last  = start_block;
       load_local(doubleType, 0);
+      if (scope->method()->intrinsic_id() == vmIntrinsics::_dpow) {
+        load_local(doubleType, 2);
+      }
 
       // Emit the intrinsic node.
       bool result = try_inline_intrinsics(scope->method());
@@ -3112,9 +3137,22 @@ bool GraphBuilder::try_inline_intrinsics(ciMethod* callee) {
   bool cantrap = true;
   vmIntrinsics::ID id = callee->intrinsic_id();
   switch (id) {
-    case vmIntrinsics::_arraycopy     :
+    case vmIntrinsics::_arraycopy:
       if (!InlineArrayCopy) return false;
       break;
+
+#ifdef TRACE_HAVE_INTRINSICS
+    case vmIntrinsics::_classID:
+    case vmIntrinsics::_threadID:
+      preserves_state = true;
+      cantrap = true;
+      break;
+
+    case vmIntrinsics::_counterTime:
+      preserves_state = true;
+      cantrap = false;
+      break;
+#endif
 
     case vmIntrinsics::_currentTimeMillis:
     case vmIntrinsics::_nanoTime:
@@ -3132,6 +3170,7 @@ bool GraphBuilder::try_inline_intrinsics(ciMethod* callee) {
       break;
 
     case vmIntrinsics::_getClass      :
+    case vmIntrinsics::_isInstance    :
       if (!InlineClassNatives) return false;
       preserves_state = true;
       break;
@@ -3149,15 +3188,10 @@ bool GraphBuilder::try_inline_intrinsics(ciMethod* callee) {
     case vmIntrinsics::_dtan          : // fall through
     case vmIntrinsics::_dlog          : // fall through
     case vmIntrinsics::_dlog10        : // fall through
+    case vmIntrinsics::_dexp          : // fall through
+    case vmIntrinsics::_dpow          : // fall through
       if (!InlineMathNatives) return false;
       cantrap = false;
-      preserves_state = true;
-      break;
-
-    // sun/misc/AtomicLong.attemptUpdate
-    case vmIntrinsics::_attemptUpdate :
-      if (!VM_Version::supports_cx8()) return false;
-      if (!InlineAtomicLong) return false;
       preserves_state = true;
       break;
 
