@@ -30,11 +30,15 @@
     NSString *fApplicationName;
     BOOL fUseDefaultIcon;
     NSWindow *eventTransparentWindow;
+    NSTimeInterval dummyEventTimestamp;
+    NSConditionLock* seenDummyEventLock;
 }
 
 - (void) finishLaunching;
 - (void) registerWithProcessManager;
 - (void) setDockIconWithEnv:(JNIEnv *)env;
+- (void) postDummyEvent;
+- (void) waitForDummyEvent;
 
 + (void) runAWTLoopWithApp:(NSApplication*)app;
 
