@@ -66,6 +66,7 @@ JDK_TEST_LIST = \
 	jdk_sound  \
 	jdk_text  \
 	jdk_tools1 jdk_tools2  \
+	jdk_jfr \
 	jdk_util
 
 # These tests need a DISPLAY and can create window interaction complications
