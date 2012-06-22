@@ -75,7 +75,7 @@ import sun.security.util.*;
 class OCSPRequest {
 
     private static final Debug debug = Debug.getInstance("certpath");
-    private static final boolean dump = false;
+    private static final boolean dump = debug.isOn("ocsp");
 
     // List of request CertIds
     private final List<CertId> certIds;
@@ -116,8 +116,8 @@ class OCSPRequest {
 
         if (dump) {
             HexDumpEncoder hexEnc = new HexDumpEncoder();
-            System.out.println("OCSPRequest bytes are... ");
-            System.out.println(hexEnc.encode(bytes));
+            debug.println("\nOCSPRequest bytes... ");
+            debug.println(hexEnc.encode(bytes) + "\n");
         }
 
         return bytes;
