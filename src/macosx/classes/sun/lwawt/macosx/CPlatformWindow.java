@@ -62,6 +62,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSetNSWindowRepresentedFilename(long nsWindowPtr, String representedFilename);
     private static native void nativeSetNSWindowSecurityWarningPositioning(long nsWindowPtr, double x, double y, float biasX, float biasY);
     private static native void nativeSetEnabled(long nsWindowPtr, boolean isEnabled);
+    private static native void nativeSynthesizeMouseEnteredExitedEvents(long nsWindowPtr);
 
     private static native int nativeGetNSWindowDisplayID_AppKitThread(long nsWindowPtr);
 
@@ -594,6 +595,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             }
         }
 
+        nativeSynthesizeMouseEnteredExitedEvents(nsWindowPtr);
+
         // 6. Configure stuff #2
         updateFocusabilityForAutoRequestFocus(true);
 
@@ -802,6 +805,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             default:
                 throw new RuntimeException("Unknown window state: " + windowState);
         }
+
+        nativeSynthesizeMouseEnteredExitedEvents(nsWindowPtr);
 
         // NOTE: the SWP.windowState field gets updated to the newWindowState
         //       value when the native notification comes to us

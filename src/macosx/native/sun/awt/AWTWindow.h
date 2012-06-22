@@ -64,6 +64,7 @@
                   contentView:(NSView *)contentView;
 
 - (void) adjustGrowBoxWindow;
+- (BOOL) isTopmostWindowUnderMouse;
 
 // NSWindow overrides delegate methods
 - (BOOL) canBecomeKeyWindow;
