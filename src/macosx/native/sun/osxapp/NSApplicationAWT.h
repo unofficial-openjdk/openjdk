@@ -28,7 +28,6 @@
 
 @interface NSApplicationAWT : NSApplication {
     NSString *fApplicationName;
-    BOOL fUseDefaultIcon;
     NSWindow *eventTransparentWindow;
     NSTimeInterval dummyEventTimestamp;
     NSConditionLock* seenDummyEventLock;
