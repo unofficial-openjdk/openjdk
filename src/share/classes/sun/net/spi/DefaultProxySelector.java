@@ -111,7 +111,7 @@ public class DefaultProxySelector extends ProxySelector {
     static class NonProxyInfo {
         // Default value for nonProxyHosts, this provides backward compatibility
         // by excluding localhost and its litteral notations.
-        static final String defStringVal = "localhost|127.*|[::1]";
+        static final String defStringVal = "localhost|127.*|[::1]|0.0.0.0|[::0]";
 
         String hostsSource;
         RegexpPool hostsPool;
