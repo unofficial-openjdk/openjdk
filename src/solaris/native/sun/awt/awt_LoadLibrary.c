@@ -110,7 +110,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     /* Check if toolkit is specified in env variable */
 #ifdef MACOSX
     envvar = getenv("AWT_TOOLKIT");
-    if ((envvar && strstr(envvar, "XToolkit")) || AWTIsHeadless()) {
+    if (envvar && strstr(envvar, "XToolkit")) {
 #endif
         fmanager = (*env)->NewStringUTF(env, "sun.awt.X11FontManager");
         tk = "/xawt/libmawt";
@@ -127,11 +127,15 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     }
 
     /* Calculate library name to load */
+#ifndef MACOSX
     if (AWTIsHeadless()) {
         strcpy(p, "/headless/libmawt");
     } else if (tk) {
+#endif
         strcpy(p, tk);
+#ifndef MACOSX
     }
+#endif
 
 #ifdef MACOSX
     strcat(p, ".dylib");

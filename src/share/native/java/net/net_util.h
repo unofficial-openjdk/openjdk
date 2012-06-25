@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ void NET_ThrowCurrent(JNIEnv *env, char *msg);
 
 jfieldID NET_GetFileDescriptorID(JNIEnv *env);
 
-JNIEXPORT jint JNICALL ipv6_available() ;
+JNIEXPORT jint JNICALL ipv6_available();
 
 void
 NET_AllocSockaddr(struct sockaddr **him, int *len);
@@ -120,6 +120,7 @@ JNIEXPORT jobject JNICALL
 NET_SockaddrToInetAddress(JNIEnv *env, struct sockaddr *him, int *port);
 
 void initLocalAddrTable ();
+void parseExclusiveBindProperty(JNIEnv *env);
 
 void
 NET_SetTrafficClass(struct sockaddr *him, int trafficClass);

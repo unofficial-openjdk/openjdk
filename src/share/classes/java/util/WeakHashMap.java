@@ -218,6 +218,7 @@ public class WeakHashMap<K,V>
                         ? Integer.parseInt(altThreshold)
                         : ALTERNATE_HASHING_THRESHOLD_DEFAULT;
 
+                // disable alternative hashing if -1
                 if(threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }
@@ -356,7 +357,7 @@ public class WeakHashMap<K,V>
         if (useAltHashing) {
             h = hashSeed;
             if (k instanceof String) {
-                return h ^ sun.misc.Hashing.stringHash32((String) k);
+                return sun.misc.Hashing.stringHash32((String) k);
             } else {
                 h ^= k.hashCode();
             }

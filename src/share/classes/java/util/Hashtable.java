@@ -171,7 +171,7 @@ public class Hashtable<K,V>
      * This value may be overridden by defining the system property
      * {@code java.util.althashing.threshold}. A property value of {@code 1}
      * forces alternative hashing to be used at all times whereas
-     * {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures that
+     * {@code -1 } value ensures that
      * alternative hashing is never used.
      */
     static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 512;
@@ -195,8 +195,9 @@ public class Hashtable<K,V>
             try {
                 threshold = (null != altThreshold)
                         ? Integer.parseInt(altThreshold)
-                        : 1;
+                        : ALTERNATE_HASHING_THRESHOLD_DEFAULT;
 
+                // disable alternative hashing if -1
                 if(threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }

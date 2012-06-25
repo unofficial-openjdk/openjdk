@@ -70,33 +70,35 @@ AWT_ASSERT_APPKIT_THREAD;
 
     JNIEnv *env = [ThreadUtilities getJNIEnv];
 
-    // Add CFRunLoopObservers to call into AWT so that AWT knows that the
-    //  AWT thread (which is the AppKit main thread) is alive. This way AWT
-    //  will not automatically shutdown.
-    busyObserver = CFRunLoopObserverCreate(
-                        NULL,                        // CFAllocator
-                        kCFRunLoopAfterWaiting,      // CFOptionFlags
-                        true,                        // repeats
-                        NSIntegerMax,                // order
-                        &BusyObserver,               // CFRunLoopObserverCallBack
-                        NULL);                       // CFRunLoopObserverContext
+    if (!headless) {
+        // Add CFRunLoopObservers to call into AWT so that AWT knows that the
+        //  AWT thread (which is the AppKit main thread) is alive. This way AWT
+        //  will not automatically shutdown.
+        busyObserver = CFRunLoopObserverCreate(
+                NULL,                        // CFAllocator
+                kCFRunLoopAfterWaiting,      // CFOptionFlags
+                true,                        // repeats
+                NSIntegerMax,                // order
+                &BusyObserver,               // CFRunLoopObserverCallBack
+                NULL);                       // CFRunLoopObserverContext
 
-    notBusyObserver = CFRunLoopObserverCreate(
-                        NULL,                        // CFAllocator
-                        kCFRunLoopBeforeWaiting,     // CFOptionFlags
-                        true,                        // repeats
-                        NSIntegerMin,                // order
-                        &NotBusyObserver,            // CFRunLoopObserverCallBack
-                        NULL);                       // CFRunLoopObserverContext
+        notBusyObserver = CFRunLoopObserverCreate(
+                NULL,                        // CFAllocator
+                kCFRunLoopBeforeWaiting,     // CFOptionFlags
+                true,                        // repeats
+                NSIntegerMin,                // order
+                &NotBusyObserver,            // CFRunLoopObserverCallBack
+                NULL);                       // CFRunLoopObserverContext
 
-    CFRunLoopRef runLoop = [[NSRunLoop currentRunLoop] getCFRunLoop];
-    CFRunLoopAddObserver(runLoop, busyObserver, kCFRunLoopDefaultMode);
-    CFRunLoopAddObserver(runLoop, notBusyObserver, kCFRunLoopDefaultMode);
+        CFRunLoopRef runLoop = [[NSRunLoop currentRunLoop] getCFRunLoop];
+        CFRunLoopAddObserver(runLoop, busyObserver, kCFRunLoopDefaultMode);
+        CFRunLoopAddObserver(runLoop, notBusyObserver, kCFRunLoopDefaultMode);
 
-    CFRelease(busyObserver);
-    CFRelease(notBusyObserver);
+        CFRelease(busyObserver);
+        CFRelease(notBusyObserver);
 
-    if (!headless) setBusy(YES);
+        setBusy(YES);
+    }
 
     // Set the java name of the AppKit main thread appropriately.
     jclass threadClass = NULL;
