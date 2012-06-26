@@ -31,6 +31,7 @@
 #import "PropertiesUtilities.h"
 #import "ThreadUtilities.h"
 #import "QueuingApplicationDelegate.h"
+#import "AWTIconData.h"
 
 static BOOL sUsingDefaultNIB = YES;
 static NSString *SHARED_FRAMEWORK_BUNDLE = @"/System/Library/Frameworks/JavaVM.framework";
@@ -257,22 +258,26 @@ AWT_ASSERT_APPKIT_THREAD;
         theIconPath = [PropertiesUtilities javaSystemPropertyForKey:@"apple.awt.application.icon" withEnv:env];
     }
 
-    // If the icon file wasn't specified as an argument and we need to get an icon
-    // we'll use the generic java app icon.
-    NSString *defaultIconPath = [NSString stringWithFormat:@"%@%@", SHARED_FRAMEWORK_BUNDLE, @"/Resources/GenericApp.icns"];
-    if (([NSApp applicationIconImage] == nil) && (theIconPath == nil)) {
-        theIconPath = defaultIconPath;
+    // Use the path specified to get the icon image
+    NSImage* iconImage = nil;
+    if (theIconPath != nil) {
+        iconImage = [[NSImage alloc] initWithContentsOfFile:theIconPath];
+    } 
+
+    // If no icon file was specified or we failed to get the icon image
+    // and we need to get an icon, then use the default icon
+    if (iconImage == nil) {
+        NSString* bundleIcon = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIconFile"];
+        if (bundleIcon == nil) {
+            NSData* iconData;
+            iconData = [[NSData alloc] initWithBytesNoCopy: sAWTIconData length: sizeof(sAWTIconData) freeWhenDone: NO];
+            iconImage = [[NSImage alloc] initWithData: iconData];
+            [iconData release];
+        }
     }
 
-    // Set up the dock icon if we have an icon name.
-    if (theIconPath != nil) {
-        NSImage *iconImage = [[NSImage alloc] initWithContentsOfFile:theIconPath];
-
-        // If we failed for some reason fall back to the default icon.
-        if (iconImage == nil) {
-            iconImage = [[NSImage alloc] initWithContentsOfFile:defaultIconPath];
-        }
-
+    // Set up the dock icon if we have an icon image.
+    if (iconImage != nil) {
         [NSApp setApplicationIconImage:iconImage];
         [iconImage release];
     }
