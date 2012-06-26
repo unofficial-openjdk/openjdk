@@ -225,7 +225,6 @@ public class LWCToolkit extends LWToolkit {
     @Override
     public SystemTrayPeer createSystemTray(SystemTray target) {
         SystemTrayPeer peer = new CSystemTray();
-        targetCreatedPeer(target, peer);
         return peer;
     }
 
