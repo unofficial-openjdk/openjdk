@@ -88,7 +88,6 @@ private:
   static int symbols_counted;
 
   Symbol* allocate_symbol(const u1* name, int len, TRAPS);   // Assumes no characters larger than 0x7F
-  bool allocate_symbols(int names_count, const u1** names, int* lengths, Symbol** syms, TRAPS);
 
   // Adding elements
   Symbol* basic_add(int index, u1* name, int len,
@@ -144,7 +143,7 @@ public:
     _the_table = new SymbolTable(t, number_of_entries);
   }
 
-  static unsigned int hash_symbol(const char* s, int len, unsigned int hashValue = 0);
+  static unsigned int hash_symbol(const char* s, int len);
 
   static Symbol* lookup(const char* name, int len, TRAPS);
   // lookup only, won't add. Also calculate hash.
@@ -279,7 +278,7 @@ public:
   // Hashing algorithm, used as the hash value used by the
   //     StringTable for bucket selection and comparison (stored in the
   //     HashtableEntry structures).  This is used in the String.intern() method.
-  static unsigned int hash_string(const jchar* s, int len, unsigned int hashValue = 0);
+  static unsigned int hash_string(const jchar* s, int len);
 
   // Internal test.
   static void test_alt_hash() PRODUCT_RETURN;
