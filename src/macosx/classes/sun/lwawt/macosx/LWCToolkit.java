@@ -42,6 +42,7 @@ import java.util.concurrent.Callable;
 import sun.awt.*;
 import sun.lwawt.*;
 import sun.lwawt.LWWindowPeer.PeerType;
+import sun.security.action.GetBooleanAction;
 
 
 class NamedCursor extends Cursor {
