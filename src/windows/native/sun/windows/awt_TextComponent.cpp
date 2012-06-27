@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -336,7 +336,8 @@ AwtTextComponent::WmPaste()
 //im --- override to over the spot composition
 void AwtTextComponent::SetCompositionWindow(RECT& rc)
 {
-    HIMC hIMC = ImmGetContext();
+    HWND hwnd = ImmGetHWnd();
+    HIMC hIMC = ImmGetContext(hwnd);
     // rc is not used for text component.
     COMPOSITIONFORM cf = { CFS_FORCE_POSITION, {0,0}, {0,0,0,0} };
     GetCaretPos(&(cf.ptCurrentPos));
@@ -348,6 +349,7 @@ void AwtTextComponent::SetCompositionWindow(RECT& rc)
     LOGFONT lf;
     GetObject(m_hFont, sizeof(LOGFONT), &lf);
     ImmSetCompositionFont(hIMC, &lf);
+    ImmReleaseContext(hwnd, hIMC);
 }
 //im --- end
 

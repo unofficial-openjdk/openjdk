@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1472,9 +1472,7 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           ::GetClientRect( GetHWnd(), &r );
           mr = WmSize(static_cast<UINT>(wParam), r.right - r.left, r.bottom - r.top);
           //mr = WmSize(wParam, LOWORD(lParam), HIWORD(lParam));
-          if (ImmGetContext() != NULL) {
-              SetCompositionWindow(r);
-          }
+          SetCompositionWindow(r);
           break;
       }
       case WM_SIZING:
@@ -1533,7 +1531,10 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
               // When the window is deactivated, send WM_IME_ENDCOMPOSITION
               // message to deactivate the composition window so that
               // it won't receive keyboard input focus.
-              if (ImmGetContext() != NULL) {
+              HIMC hIMC;
+              HWND hwnd = ImmGetHWnd();
+              if ((hIMC = ImmGetContext(hwnd)) != NULL) {
+                  ImmReleaseContext(hwnd, hIMC);
                   DefWindowProc(WM_IME_ENDCOMPOSITION, 0, 0);
               }
           }
@@ -1716,11 +1717,9 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case WM_IME_SETCONTEXT:
           // lParam is passed as pointer and it can be modified.
           mr = WmImeSetContext(static_cast<BOOL>(wParam), &lParam);
-          CallProxyDefWindowProc(message, wParam, lParam, retValue, mr);
           break;
       case WM_IME_NOTIFY:
           mr = WmImeNotify(wParam, lParam);
-          CallProxyDefWindowProc(message, wParam, lParam, retValue, mr);
           break;
       case WM_IME_STARTCOMPOSITION:
           mr = WmImeStartComposition();
@@ -3721,12 +3720,14 @@ MsgRouting AwtComponent::WmPaste()
 // support IME Composition messages
 void AwtComponent::SetCompositionWindow(RECT& r)
 {
-    HIMC hIMC = ImmGetContext();
+    HWND hwnd = ImmGetHWnd();
+    HIMC hIMC = ImmGetContext(hwnd);
     if (hIMC == NULL) {
         return;
     }
     COMPOSITIONFORM cf = {CFS_DEFAULT, {0, 0}, {0, 0, 0, 0}};
     ImmSetCompositionWindow(hIMC, &cf);
+    ImmReleaseContext(hwnd, hIMC);
 }
 
 void AwtComponent::OpenCandidateWindow(int x, int y)
@@ -3740,16 +3741,16 @@ void AwtComponent::OpenCandidateWindow(int x, int y)
             SetCandidateWindow(iCandType, x-rc.left, y-rc.top);
     }
     if (m_bitsCandType != 0) {
-        HWND proxy = GetProxyFocusOwner();
         // REMIND: is there any chance GetProxyFocusOwner() returns NULL here?
-        ::DefWindowProc((proxy != NULL) ? proxy : GetHWnd(),
+        ::DefWindowProc(ImmGetHWnd(),
                         WM_IME_NOTIFY, IMN_OPENCANDIDATE, m_bitsCandType);
     }
 }
 
 void AwtComponent::SetCandidateWindow(int iCandType, int x, int y)
 {
-    HIMC hIMC = ImmGetContext();
+    HWND hwnd = ImmGetHWnd();
+    HIMC hIMC = ImmGetContext(hwnd);
     CANDIDATEFORM cf;
     cf.dwIndex = iCandType;
     cf.dwStyle = CFS_CANDIDATEPOS;
@@ -3757,17 +3758,20 @@ void AwtComponent::SetCandidateWindow(int iCandType, int x, int y)
     cf.ptCurrentPos.y = y;
 
     ImmSetCandidateWindow(hIMC, &cf);
+    ImmReleaseContext(hwnd, hIMC);
 }
 
 MsgRouting AwtComponent::WmImeSetContext(BOOL fSet, LPARAM *lplParam)
 {
     // If the Windows input context is disabled, do not let Windows
     // display any UIs.
-    HIMC hIMC = ImmGetContext();
+    HWND hwnd = ImmGetHWnd();
+    HIMC hIMC = ImmGetContext(hwnd);
     if (hIMC == NULL) {
         *lplParam = 0;
         return mrDoDefault;
     }
+    ImmReleaseContext(hwnd, hIMC);
 
     if (fSet) {
         LPARAM lParam = *lplParam;
@@ -3822,11 +3826,13 @@ MsgRouting AwtComponent::WmImeComposition(WORD wChar, LPARAM flags)
     AwtInputTextInfor* textInfor = NULL;
 
     try {
-        HIMC hIMC = ImmGetContext();
+        HWND hwnd = ImmGetHWnd();
+        HIMC hIMC = ImmGetContext(hwnd);
         DASSERT(hIMC!=0);
 
         textInfor = new AwtInputTextInfor;
         textInfor->GetContextData(hIMC, flags);
+        ImmReleaseContext(hwnd, hIMC);
 
         jstring jtextString = textInfor->GetText();
         /* The conditions to send the input method event to AWT EDT are:
@@ -4010,16 +4016,15 @@ void AwtComponent::InquireCandidatePosition()
     DASSERT(!safe_ExceptionOccurred(env));
 }
 
-HIMC AwtComponent::ImmGetContext()
+HWND AwtComponent::ImmGetHWnd()
 {
     HWND proxy = GetProxyFocusOwner();
-    return ::ImmGetContext((proxy != NULL) ? proxy : GetHWnd());
+    return (proxy != NULL) ? proxy : GetHWnd();
 }
 
 HIMC AwtComponent::ImmAssociateContext(HIMC himc)
 {
-    HWND proxy = GetProxyFocusOwner();
-    return ::ImmAssociateContext((proxy != NULL) ? proxy : GetHWnd(), himc);
+    return ::ImmAssociateContext(ImmGetHWnd(), himc);
 }
 
 HWND AwtComponent::GetProxyFocusOwner()
