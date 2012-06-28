@@ -115,6 +115,10 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
             new sun.security.action.GetPropertyAction("os.name"));
     }
 
+    static boolean isMac() {
+        return osname.contains("OS X");
+    }
+
     static boolean isSysV() {
         return osname.equals("SunOS");
     }
@@ -213,7 +217,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
                 }
             }
         } else {
-            if (isSysV()) {
+            if (isMac() || isSysV()) {
                 printers = getAllPrinterNamesSysV();
             } else { //BSD
                 printers = getAllPrinterNamesBSD();
@@ -362,7 +366,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         if (name == null || name.equals("") || !checkPrinterName(name)) {
             return null;
         }
-        if (isSysV()) {
+        if (isMac() || isSysV()) {
             printer = getNamedPrinterNameSysV(name);
         } else {
             printer = getNamedPrinterNameBSD(name);
@@ -524,7 +528,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         if (CUPSPrinter.isCupsRunning()) {
             defaultPrinter = CUPSPrinter.getDefaultPrinter();
         } else {
-            if (isSysV()) {
+            if (isMac() || isSysV()) {
                 defaultPrinter = getDefaultPrinterNameSysV();
             } else {
                 defaultPrinter = getDefaultPrinterNameBSD();
@@ -645,7 +649,7 @@ public class UnixPrintServiceLookup extends PrintServiceLookup
         return names;
     }
 
-    private String getDefaultPrinterNameSysV() {
+    static String getDefaultPrinterNameSysV() {
         String defaultPrinter = "lp";
         String command = "/usr/bin/lpstat -d";
 

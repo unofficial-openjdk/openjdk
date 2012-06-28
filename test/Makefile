@@ -472,6 +472,16 @@ JDK_ALL_TARGETS += jdk_io
 jdk_io: $(call TestDirs, java/io)
 	$(call RunAgentvmBatch)
 
+# Stable othervm testruns (minus items from PROBLEM_LIST)
+#   Using agentvm has serious problems with these tests
+ifdef OPENJDK
+jdk_jfr:
+else
+JDK_ALL_TARGETS += jdk_jfr
+jdk_jfr: $(call TestDirs, com/oracle/jfr)
+	$(call RunOthervmBatch)
+endif
+
 # Stable agentvm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_lang
 jdk_lang: $(call TestDirs, java/lang)
