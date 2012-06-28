@@ -183,11 +183,18 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     private static class Holder {
 
         /**
-        * Enable alternate hashing?
+        * Enable alternative hashing of String keys?
+        *
+        * <p>Unlike the other hash map implementations we do not implement a
+        * threshold for regulating whether alternative hashing is used for
+        * String keys. Alternative hashing is either enabled for all instances
+        * or disabled for all instances.
         */
-        static final boolean ALTERNATE_HASHING;
+        static final boolean ALTERNATIVE_HASHING;
 
         static {
+            // Use the "threshold" system property even though our threshold
+            // behaviour is "ON" or "OFF".
             String altThreshold = java.security.AccessController.doPrivileged(
                 new sun.security.action.GetPropertyAction(
                     "jdk.map.althashing.threshold"));
@@ -196,20 +203,20 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
             try {
                 threshold = (null != altThreshold)
                         ? Integer.parseInt(altThreshold)
-                        : 1;
+                        : Integer.MAX_VALUE;
 
                 // disable alternative hashing if -1
-                if(threshold == -1) {
+                if (threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }
 
-                if(threshold < 0) {
+                if (threshold < 0) {
                     throw new IllegalArgumentException("value must be positive integer.");
                 }
             } catch(IllegalArgumentException failed) {
                 throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);
             }
-            ALTERNATE_HASHING = threshold <= MAXIMUM_CAPACITY;
+            ALTERNATIVE_HASHING = threshold <= MAXIMUM_CAPACITY;
         }
     }
 
@@ -220,7 +227,7 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     private transient final int hashSeed = randomHashSeed(this);
 
     private static int randomHashSeed(ConcurrentHashMap instance) {
-        if (sun.misc.VM.isBooted() && Holder.ALTERNATE_HASHING) {
+        if (sun.misc.VM.isBooted() && Holder.ALTERNATIVE_HASHING) {
             return sun.misc.Hashing.randomHashSeed(instance);
         }
 

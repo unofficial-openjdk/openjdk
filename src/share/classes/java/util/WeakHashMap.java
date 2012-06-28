@@ -185,17 +185,16 @@ public class WeakHashMap<K,V>
     int modCount;
 
     /**
-    * The default threshold of capacity above which alternate hashing is
-    * used. Alternative hashing reduces the incidence of collisions due to
-    * weak hash code calculation.
-    * <p/>
-    * This value may be overridden by defining the system property
-    * {@code java.util.althashing.threshold} to an integer value. A property
-    * value of {@code 1} forces alternative hashing to be used at all times
-    * whereas {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures
-    * that alternative hashing is never used.
-    */
-    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 512;
+     * The default threshold of map capacity above which alternative hashing is
+     * used for String keys. Alternative hashing reduces the incidence of
+     * collisions due to weak hash code calculation for String keys.
+     * <p/>
+     * This value may be overridden by defining the system property
+     * {@code jdk.map.althashing.threshold}. A property value of {@code 1}
+     * forces alternative hashing to be used at all times whereas
+     * {@code -1} value ensures that alternative hashing is never used.
+     */
+    static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = Integer.MAX_VALUE;
 
     /**
      * holds values which can't be initialized until after VM is booted.
@@ -203,9 +202,9 @@ public class WeakHashMap<K,V>
     private static class Holder {
 
         /**
-         * Table capacity above which to switch to use alternate hashing.
+         * Table capacity above which to switch to use alternative hashing.
          */
-        static final int ALTERNATE_HASHING_THRESHOLD;
+        static final int ALTERNATIVE_HASHING_THRESHOLD;
 
         static {
             String altThreshold = java.security.AccessController.doPrivileged(
@@ -216,20 +215,20 @@ public class WeakHashMap<K,V>
             try {
                 threshold = (null != altThreshold)
                         ? Integer.parseInt(altThreshold)
-                        : ALTERNATE_HASHING_THRESHOLD_DEFAULT;
+                        : ALTERNATIVE_HASHING_THRESHOLD_DEFAULT;
 
                 // disable alternative hashing if -1
-                if(threshold == -1) {
+                if (threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }
 
-                if(threshold < 0) {
+                if (threshold < 0) {
                     throw new IllegalArgumentException("value must be positive integer.");
                 }
             } catch(IllegalArgumentException failed) {
                 throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);
             }
-            ALTERNATE_HASHING_THRESHOLD = threshold;
+            ALTERNATIVE_HASHING_THRESHOLD = threshold;
         }
     }
 
@@ -276,7 +275,7 @@ public class WeakHashMap<K,V>
         this.loadFactor = loadFactor;
         threshold = (int)(capacity * loadFactor);
         useAltHashing = sun.misc.VM.isBooted() &&
-                (capacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
+                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
     }
 
     /**
@@ -560,7 +559,7 @@ public class WeakHashMap<K,V>
         Entry<K,V>[] newTable = newTable(newCapacity);
         boolean oldAltHashing = useAltHashing;
         useAltHashing |= sun.misc.VM.isBooted() &&
-                (newCapacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
+                (newCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
         boolean rehash = oldAltHashing ^ useAltHashing;
         transfer(oldTable, newTable, rehash);
         table = newTable;
@@ -592,7 +591,7 @@ public class WeakHashMap<K,V>
                     e.value = null; //  "   "
                     size--;
                 } else {
-                    if(rehash) {
+                    if (rehash) {
                         e.hash = hash(key);
                     }
                     int i = indexFor(e.hash, dest.length);
