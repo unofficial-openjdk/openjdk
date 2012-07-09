@@ -2667,7 +2667,7 @@ void LIR_Assembler::comp_op(LIR_Condition condition, LIR_Opr opr1, LIR_Opr opr2,
 #endif // _LP64
         }
       } else {
-        ShouldNotReachHere();
+        fatal(err_msg("unexpected type: %s", basictype_to_str(c->type())));
       }
       // cpu register - address
     } else if (opr2->is_address()) {
@@ -3724,6 +3724,25 @@ void LIR_Assembler::membar_acquire() {
 void LIR_Assembler::membar_release() {
   // No x86 machines currently require store fences
   // __ store_fence();
+}
+
+void LIR_Assembler::membar_loadload() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::loadload));
+}
+
+void LIR_Assembler::membar_storestore() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::storestore));
+}
+
+void LIR_Assembler::membar_loadstore() {
+  // no-op
+  //__ membar(Assembler::Membar_mask_bits(Assembler::loadstore));
+}
+
+void LIR_Assembler::membar_storeload() {
+  __ membar(Assembler::Membar_mask_bits(Assembler::StoreLoad));
 }
 
 void LIR_Assembler::get_thread(LIR_Opr result_reg) {
