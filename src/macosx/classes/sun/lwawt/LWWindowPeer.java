@@ -145,8 +145,6 @@ public class LWWindowPeer
             // similar to what Apple's Java do.
             // Since JDK7 we should rely on setOpacity() only.
             // this.opacity = c.getAlpha();
-            // System.out.println("Delegate assigns alpha (we ignore setOpacity()):"
-            // +this.opacity);
         }
 
         if (!target.isForegroundSet()) {
@@ -159,23 +157,29 @@ public class LWWindowPeer
     }
 
     @Override
-    public void initialize() {
+    void initializeImpl() {
+        super.initializeImpl();
         if (getTarget() instanceof Frame) {
-            setTitle(((Frame)getTarget()).getTitle());
-            setState(((Frame)getTarget()).getExtendedState());
+            setTitle(((Frame) getTarget()).getTitle());
+            setState(((Frame) getTarget()).getExtendedState());
         } else if (getTarget() instanceof Dialog) {
-            setTitle(((Dialog)getTarget()).getTitle());
+            setTitle(((Dialog) getTarget()).getTitle());
         }
 
         setAlwaysOnTop(getTarget().isAlwaysOnTop());
         updateMinimumSize();
 
-        setOpacity(getTarget().getOpacity());
+        final float opacity = getTarget().getOpacity();
+        if (opacity < 1.0f) {
+            setOpacity(opacity);
+        }
+
         setOpaque(getTarget().isOpaque());
 
-        super.initialize();
-
         updateInsets(platformWindow.getInsets());
+        if (getSurfaceData() == null) {
+            replaceSurfaceData();
+        }
     }
 
     // Just a helper method
@@ -213,49 +217,28 @@ public class LWWindowPeer
     }
 
     @Override
-    public void setVisible(final boolean visible) {
-        if (getSurfaceData() == null) {
-            replaceSurfaceData();
-        }
-
-        if (isVisible() == visible) {
-            return;
-        }
-        super.setVisible(visible);
-
+    protected void setVisibleImpl(final boolean visible) {
+        super.setVisibleImpl(visible);
         // TODO: update graphicsConfig, see 4868278
-        // TODO: don't notify the delegate if our visibility is unchanged
+        platformWindow.setVisible(visible);
+        if (isSimpleWindow()) {
+            LWKeyboardFocusManagerPeer manager = LWKeyboardFocusManagerPeer.
+                getInstance(getAppContext());
 
-        // it is important to call this method on EDT
-        // to prevent the deadlocks during the painting of the lightweight delegates
-        //TODO: WHY? This is a native-system related call. Perhaps NOT calling
-        // the painting procedure right from the setVisible(), but rather relying
-        // on the native Expose event (or, scheduling the repainting asynchronously)
-        // is better?
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                platformWindow.setVisible(visible);
-                if (isSimpleWindow()) {
-                    LWKeyboardFocusManagerPeer manager = LWKeyboardFocusManagerPeer.
-                        getInstance(getAppContext());
-
-                    if (visible) {
-                        if (!getTarget().isAutoRequestFocus()) {
-                            return;
-                        } else {
-                            requestWindowFocus(CausedFocusEvent.Cause.ACTIVATION);
-                        }
-                    } else if (manager.getCurrentFocusedWindow() == getTarget()) {
-                        // Transfer focus to the owner.
-                        LWWindowPeer owner = getOwnerFrameDialog(LWWindowPeer.this);
-                        if (owner != null) {
-                            owner.requestWindowFocus(CausedFocusEvent.Cause.ACTIVATION);
-                        }
-                    }
+            if (visible) {
+                if (!getTarget().isAutoRequestFocus()) {
+                    return;
+                } else {
+                    requestWindowFocus(CausedFocusEvent.Cause.ACTIVATION);
+                }
+            } else if (manager.getCurrentFocusedWindow() == getTarget()) {
+                // Transfer focus to the owner.
+                LWWindowPeer owner = getOwnerFrameDialog(LWWindowPeer.this);
+                if (owner != null) {
+                    owner.requestWindowFocus(CausedFocusEvent.Cause.ACTIVATION);
                 }
             }
-        });
+        }
     }
 
     @Override
@@ -689,39 +672,42 @@ public class LWWindowPeer
             }
         } else {
             if (targetPeer != lastMouseEventPeer) {
-                // lastMouseEventPeer may be null if mouse was out of Java windows
-                if (lastMouseEventPeer != null && lastMouseEventPeer.isEnabled()) {
-                    // Sometimes, MOUSE_EXITED is not sent by delegate (or is sent a bit
-                    // later), in which case lastWindowPeer is another window
-                    if (lastWindowPeer != this) {
-                        Point oldp = lastMouseEventPeer.windowToLocal(x, y, lastWindowPeer);
-                        // Additionally translate from this to lastWindowPeer coordinates
-                        Rectangle lr = lastWindowPeer.getBounds();
-                        oldp.x += r.x - lr.x;
-                        oldp.y += r.y - lr.y;
-                        postEvent(new MouseEvent(lastMouseEventPeer.getTarget(),
-                                                 MouseEvent.MOUSE_EXITED,
+
+                if (id != MouseEvent.MOUSE_DRAGGED || lastMouseEventPeer == null) {
+                    // lastMouseEventPeer may be null if mouse was out of Java windows
+                    if (lastMouseEventPeer != null && lastMouseEventPeer.isEnabled()) {
+                        // Sometimes, MOUSE_EXITED is not sent by delegate (or is sent a bit
+                        // later), in which case lastWindowPeer is another window
+                        if (lastWindowPeer != this) {
+                            Point oldp = lastMouseEventPeer.windowToLocal(x, y, lastWindowPeer);
+                            // Additionally translate from this to lastWindowPeer coordinates
+                            Rectangle lr = lastWindowPeer.getBounds();
+                            oldp.x += r.x - lr.x;
+                            oldp.y += r.y - lr.y;
+                            postEvent(new MouseEvent(lastMouseEventPeer.getTarget(),
+                                                     MouseEvent.MOUSE_EXITED,
+                                                     when, modifiers,
+                                                     oldp.x, oldp.y, screenX, screenY,
+                                                     clickCount, popupTrigger, button));
+                        } else {
+                            Point oldp = lastMouseEventPeer.windowToLocal(x, y, this);
+                            postEvent(new MouseEvent(lastMouseEventPeer.getTarget(),
+                                                     MouseEvent.MOUSE_EXITED,
+                                                     when, modifiers,
+                                                     oldp.x, oldp.y, screenX, screenY,
+                                                     clickCount, popupTrigger, button));
+                        }
+                    }
+                    if (targetPeer != null && targetPeer.isEnabled() && id != MouseEvent.MOUSE_ENTERED) {
+                        Point newp = targetPeer.windowToLocal(x, y, curWindowPeer);
+                        postEvent(new MouseEvent(targetPeer.getTarget(),
+                                                 MouseEvent.MOUSE_ENTERED,
                                                  when, modifiers,
-                                                 oldp.x, oldp.y, screenX, screenY,
-                                                 clickCount, popupTrigger, button));
-                    } else {
-                        Point oldp = lastMouseEventPeer.windowToLocal(x, y, this);
-                        postEvent(new MouseEvent(lastMouseEventPeer.getTarget(),
-                                                 MouseEvent.MOUSE_EXITED,
-                                                 when, modifiers,
-                                                 oldp.x, oldp.y, screenX, screenY,
+                                                 newp.x, newp.y, screenX, screenY,
                                                  clickCount, popupTrigger, button));
                     }
                 }
                 lastMouseEventPeer = targetPeer;
-                if (targetPeer != null && targetPeer.isEnabled() && id != MouseEvent.MOUSE_ENTERED) {
-                    Point newp = targetPeer.windowToLocal(x, y, curWindowPeer);
-                    postEvent(new MouseEvent(targetPeer.getTarget(),
-                                             MouseEvent.MOUSE_ENTERED,
-                                             when, modifiers,
-                                             newp.x, newp.y, screenX, screenY,
-                                             clickCount, popupTrigger, button));
-                }
             }
             // TODO: fill "bdata" member of AWTEvent
 
@@ -804,9 +790,8 @@ public class LWWindowPeer
                 }
                 mouseClickButtons &= ~eventButtonMask;
             }
-
-            notifyUpdateCursor();
         }
+        notifyUpdateCursor();
     }
 
     public void dispatchMouseWheelEvent(long when, int x, int y, int modifiers,
@@ -1002,6 +987,9 @@ public class LWWindowPeer
                 try {
                     Rectangle r = getBounds();
                     g.setColor(getBackground());
+                    if (g instanceof Graphics2D) {
+                        ((Graphics2D) g).setComposite(AlphaComposite.Src);
+                    }
                     g.fillRect(0, 0, r.width, r.height);
                     if (oldBB != null) {
                         // Draw the old back buffer to the new one
@@ -1065,6 +1053,10 @@ public class LWWindowPeer
 
     public static LWWindowPeer getWindowUnderCursor() {
         return lastMouseEventPeer != null ? lastMouseEventPeer.getWindowPeerOrSelf() : null;
+    }
+
+    public static LWComponentPeer<?, ?> getPeerUnderCursor() {
+        return lastMouseEventPeer;
     }
 
     /*

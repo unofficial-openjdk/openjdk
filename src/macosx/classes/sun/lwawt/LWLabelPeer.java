@@ -56,8 +56,8 @@ final class LWLabelPeer extends LWComponentPeer<Label, JLabel>
     }
 
     @Override
-    public void initialize() {
-        super.initialize();
+    void initializeImpl() {
+        super.initializeImpl();
         setText(getTarget().getText());
         setAlignment(getTarget().getAlignment());
     }

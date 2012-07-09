@@ -164,17 +164,16 @@ public class Hashtable<K,V>
     private static final long serialVersionUID = 1421746759512286392L;
 
     /**
-     * The default threshold of capacity above which alternate hashing is used.
-     * Alternative hashing reduces the incidence of collisions due to weak hash
-     * code calculation.
+     * The default threshold of map capacity above which alternative hashing is
+     * used for String keys. Alternative hashing reduces the incidence of
+     * collisions due to weak hash code calculation for String keys.
      * <p/>
      * This value may be overridden by defining the system property
-     * {@code java.util.althashing.threshold}. A property value of {@code 1}
+     * {@code jdk.map.althashing.threshold}. A property value of {@code 1}
      * forces alternative hashing to be used at all times whereas
-     * {@code 2147483648 } ({@code Integer.MAX_VALUE}) value ensures that
-     * alternative hashing is never used.
+     * {@code -1} value ensures that alternative hashing is never used.
      */
-    static final int ALTERNATE_HASHING_THRESHOLD_DEFAULT = 512;
+    static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = 512;
 
     /**
      * holds values which can't be initialized until after VM is booted.
@@ -182,9 +181,9 @@ public class Hashtable<K,V>
     private static class Holder {
 
         /**
-         * Table capacity above which to switch to use alternate hashing.
+         * Table capacity above which to switch to use alternative hashing.
          */
-        static final int ALTERNATE_HASHING_THRESHOLD;
+        static final int ALTERNATIVE_HASHING_THRESHOLD;
 
         static {
             String altThreshold = java.security.AccessController.doPrivileged(
@@ -195,31 +194,39 @@ public class Hashtable<K,V>
             try {
                 threshold = (null != altThreshold)
                         ? Integer.parseInt(altThreshold)
-                        : 1;
+                        : ALTERNATIVE_HASHING_THRESHOLD_DEFAULT;
 
-                if(threshold == -1) {
+                // disable alternative hashing if -1
+                if (threshold == -1) {
                     threshold = Integer.MAX_VALUE;
                 }
 
-                if(threshold < 0) {
+                if (threshold < 0) {
                     throw new IllegalArgumentException("value must be positive integer.");
                 }
             } catch(IllegalArgumentException failed) {
                 throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);
             }
 
-            ALTERNATE_HASHING_THRESHOLD = threshold;
+            ALTERNATIVE_HASHING_THRESHOLD = threshold;
         }
     }
 
     /**
-     * If {@code true} then perform alternate hashing to reduce the incidence of
-     * collisions due to weak hash code calculation.
+     * If {@code true} then perform alternative hashing of String keys to reduce
+     * the incidence of collisions due to weak hash code calculation.
      */
     transient boolean useAltHashing;
 
     // Unsafe mechanics
+    /**
+    * Unsafe utilities
+    */
     private static final sun.misc.Unsafe UNSAFE;
+
+    /**
+    * Offset of "final" hashSeed field we must set in readObject() method.
+    */
     private static final long HASHSEED_OFFSET;
 
      static {
@@ -278,7 +285,7 @@ public class Hashtable<K,V>
         table = new Entry[initialCapacity];
         threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
         useAltHashing = sun.misc.VM.isBooted() &&
-                (initialCapacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
+                (initialCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
     }
 
     /**
@@ -492,7 +499,7 @@ public class Hashtable<K,V>
         threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
         boolean currentAltHashing = useAltHashing;
         useAltHashing = sun.misc.VM.isBooted() &&
-                (newCapacity >= Holder.ALTERNATE_HASHING_THRESHOLD);
+                (newCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
         boolean rehash = currentAltHashing ^ useAltHashing;
 
         table = newMap;
@@ -502,7 +509,7 @@ public class Hashtable<K,V>
                 Entry<K,V> e = old;
                 old = old.next;
 
-                if(rehash) {
+                if (rehash) {
                     e.hash = hash(e.key);
                 }
                 int index = (e.hash & 0x7FFFFFFF) % newCapacity;
@@ -1014,7 +1021,7 @@ public class Hashtable<K,V>
         threshold = (int) Math.min(length * loadFactor, MAX_ARRAY_SIZE + 1);
         count = 0;
         useAltHashing = sun.misc.VM.isBooted() &&
-                (length >= Holder.ALTERNATE_HASHING_THRESHOLD);
+                (length >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
 
         // Read the number of elements and then all the key/value objects
         for (; elements > 0; elements--) {

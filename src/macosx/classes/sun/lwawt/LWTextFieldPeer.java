@@ -54,8 +54,8 @@ final class LWTextFieldPeer
     }
 
     @Override
-    public void initialize() {
-        super.initialize();
+    void initializeImpl() {
+        super.initializeImpl();
         setEchoChar(getTarget().getEchoChar());
         synchronized (getDelegateLock()) {
             getDelegate().addActionListener(this);
