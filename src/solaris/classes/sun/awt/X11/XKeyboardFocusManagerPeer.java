@@ -32,14 +32,11 @@ import java.awt.event.FocusEvent;
 
 import java.awt.peer.KeyboardFocusManagerPeer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import sun.awt.CausedFocusEvent;
-import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 
 public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
     private static final Logger focusLog = Logger.getLogger("sun.awt.X11.focus.XKeyboardFocusManagerPeer");
@@ -130,46 +127,16 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
         return true;
     }
 
-    static Method shouldNativelyFocusHeavyweightMethod;
-
     static int shouldNativelyFocusHeavyweight(Component heavyweight,
          Component descendant, boolean temporary,
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause)
     {
-        if (shouldNativelyFocusHeavyweightMethod == null) {
-            Class[] arg_types =
-                new Class[] { Component.class,
-                              Component.class,
-                              Boolean.TYPE,
-                              Boolean.TYPE,
-                              Long.TYPE,
-                              CausedFocusEvent.Cause.class
-            };
-
-            shouldNativelyFocusHeavyweightMethod =
-                SunToolkit.getMethod(KeyboardFocusManager.class,
-                                   "shouldNativelyFocusHeavyweight",
-                                   arg_types);
-        }
-        Object[] args = new Object[] { heavyweight,
-                                       descendant,
-                                       Boolean.valueOf(temporary),
-                                       Boolean.valueOf(focusedWindowChangeAllowed),
-                                       Long.valueOf(time), cause};
-
-        int result = XComponentPeer.SNFH_FAILURE;
-        if (shouldNativelyFocusHeavyweightMethod != null) {
-            try {
-                result = ((Integer) shouldNativelyFocusHeavyweightMethod.invoke(null, args)).intValue();
-            }
-            catch (IllegalAccessException e) {
-                assert false;
-            }
-            catch (InvocationTargetException e) {
-                assert false;
-            }
-        }
-
-        return result;
+         return AWTAccessor.getKeyboardFocusManagerAccessor()
+                 .shouldNativelyFocusHeavyweight(heavyweight,
+                                                 descendant,
+                                                 temporary,
+                                                 focusedWindowChangeAllowed,
+                                                 time,
+                                                 cause);
     }
 }

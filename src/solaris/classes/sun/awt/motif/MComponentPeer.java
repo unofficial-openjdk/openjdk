@@ -400,16 +400,7 @@ abstract class MComponentPeer implements ComponentPeer, DropTargetPeer, X11Compo
     static Method requestFocusWithCause;
 
     static void callRequestFocusInWindow(Component target, CausedFocusEvent.Cause cause) {
-        if (requestFocusWithCause == null) {
-            requestFocusWithCause = SunToolkit.getMethod(Component.class, "requestFocusInWindow", new Class[] {CausedFocusEvent.Cause.class});
-        }
-        if (requestFocusWithCause != null) {
-            try {
-                requestFocusWithCause.invoke(target, new Object[] {cause});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        AWTAccessor.getComponentAccessor().requestFocusInWindow(target, cause);
     }
 
     public void handleEvent(AWTEvent e) {

@@ -49,7 +49,7 @@ import sun.font.FontManager;
 import sun.misc.PerformanceLogger;
 import sun.print.PrintJob2D;
 import sun.security.action.GetBooleanAction;
-import java.lang.reflect.*;
+import sun.security.action.GetPropertyAction;
 
 public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     private static Logger log = Logger.getLogger("sun.awt.X11.XToolkit");
@@ -102,7 +102,6 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     private static int screenWidth = -1, screenHeight = -1; // Dimensions of default screen
     static long awt_defaultFg; // Pixel
     private static XMouseInfoPeer xPeer;
-    private static Method m_removeSourceEvents;
 
     static {
         initSecurityWarning();
@@ -120,9 +119,9 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             initIDs();
             setBackingStoreType();
         }
-        m_removeSourceEvents = SunToolkit.getMethod(EventQueue.class, "removeSourceEvents", new Class[] {Object.class, Boolean.TYPE}) ;
 
-        noisyAwtHandler = AccessController.doPrivileged(new GetBooleanAction("sun.awt.noisyerrorhandler"));
+        noisyAwtHandler = AccessController.doPrivileged(
+                new GetBooleanAction("sun.awt.noisyerrorhandler"));
     }
 
     //---- ERROR HANDLER CODE ----//
@@ -203,7 +202,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
 
     static void initSecurityWarning() {
         // Enable warning only for internal builds
-        String runtime = getSystemProperty("java.runtime.version");
+        String runtime = AccessController.doPrivileged(
+                new GetPropertyAction("java.runtime.version"));
         securityWarningEnabled = (runtime != null && runtime.contains("internal"));
     }
 
@@ -1126,14 +1126,6 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         }
     }
 
-    static String getSystemProperty(final String name) {
-        return (String)AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
-                    return System.getProperty(name);
-                }
-            });
-    }
-
     public PrintJob getPrintJob(final Frame frame, final String doctitle,
                                 final Properties props) {
 
@@ -1894,16 +1886,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     }
 
     static void removeSourceEvents(EventQueue queue, Object source, boolean removeAllEvents) {
-        try {
-            m_removeSourceEvents.invoke(queue, source, removeAllEvents);
-        }
-        catch (IllegalAccessException e)
-        {
-            e.printStackTrace();
-        }
-        catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        AWTAccessor.getEventQueueAccessor().removeSourceEvents(queue, source, removeAllEvents);
     }
 
     public boolean isAlwaysOnTopSupported() {
@@ -1937,8 +1920,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     }
 
     private static void setBackingStoreType() {
-        String prop = (String)AccessController.doPrivileged(
-                new sun.security.action.GetPropertyAction("sun.awt.backingStore"));
+        String prop = AccessController.doPrivileged(
+                new GetPropertyAction("sun.awt.backingStore"));
 
         if (prop == null) {
             backingStoreType = XConstants.NotUseful;

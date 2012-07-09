@@ -30,10 +30,6 @@ import java.awt.Window;
 
 import java.awt.peer.KeyboardFocusManagerPeer;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-
 public class KeyboardFocusManagerPeerImpl implements KeyboardFocusManagerPeer {
     static native Window getNativeFocusedWindow();
     static native Component getNativeFocusOwner();
@@ -56,18 +52,7 @@ public class KeyboardFocusManagerPeerImpl implements KeyboardFocusManagerPeer {
         clearNativeGlobalFocusOwner(activeWindow);
     }
 
-    static Method m_removeLastFocusRequest = null;
     public static void removeLastFocusRequest(Component heavyweight) {
-        try {
-            if (m_removeLastFocusRequest == null) {
-                m_removeLastFocusRequest = SunToolkit.getMethod(KeyboardFocusManager.class, "removeLastFocusRequest",
-                                                              new Class[] {Component.class});
-            }
-            m_removeLastFocusRequest.invoke(null, new Object[]{heavyweight});
-        } catch (InvocationTargetException ite) {
-            ite.printStackTrace();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        }
+        AWTAccessor.getKeyboardFocusManagerAccessor().removeLastFocusRequest(heavyweight);
     }
 }

@@ -29,7 +29,7 @@ import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import sun.awt.AppContext;
-import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 import javax.accessibility.*;
 
 import java.security.AccessControlContext;
@@ -55,6 +55,22 @@ public abstract class MenuComponent implements java.io.Serializable {
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
+        AWTAccessor.setMenuComponentAccessor(
+            new AWTAccessor.MenuComponentAccessor() {
+                public AppContext getAppContext(MenuComponent menuComp) {
+                    return menuComp.appContext;
+                }
+                public void setAppContext(MenuComponent menuComp,
+                                          AppContext appContext) {
+                    menuComp.appContext = appContext;
+                }
+                public MenuContainer getParent(MenuComponent menuComp) {
+                    return menuComp.parent;
+                }
+                public Font getFont_NoClientCode(MenuComponent menuComp) {
+                    return menuComp.getFont_NoClientCode();
+                }
+            });
     }
 
     transient MenuComponentPeer peer;

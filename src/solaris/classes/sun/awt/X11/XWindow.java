@@ -33,7 +33,6 @@ import java.awt.image.ColorModel;
 import java.lang.ref.WeakReference;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -108,7 +107,6 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     native void getWindowBounds(long window, long x, long y, long width, long height);
     private native static void initIDs();
 
-    private static Field isPostedField;
     static {
         initIDs();
     }
@@ -361,20 +359,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         return false;
     }
 
-    static Method m_sendMessage;
     static void sendEvent(final AWTEvent e) {
-        if (isPostedField == null) {
-            isPostedField = SunToolkit.getField(AWTEvent.class, "isPosted");
-        }
         PeerEvent pe = new PeerEvent(Toolkit.getDefaultToolkit(), new Runnable() {
                 public void run() {
-                    try {
-                        isPostedField.setBoolean(e, true);
-                    } catch (IllegalArgumentException e) {
-                        assert(false);
-                    } catch (IllegalAccessException e) {
-                        assert(false);
-                    }
+                    AWTAccessor.getAWTEventAccessor().setPosted(e);
                     ((Component)e.getSource()).dispatchEvent(e);
                 }
             }, PeerEvent.ULTIMATE_PRIORITY_EVENT);
@@ -1250,16 +1238,8 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
 
-    static Field bdata;
     static void setBData(KeyEvent e, byte[] data) {
-        try {
-            if (bdata == null) {
-                bdata = SunToolkit.getField(java.awt.AWTEvent.class, "bdata");
-            }
-            bdata.set(e, data);
-        } catch (IllegalAccessException ex) {
-            assert false;
-        }
+        AWTAccessor.getAWTEventAccessor().setBData(e, data);
     }
 
     public void postKeyEvent(int id, long when, int keyCode, char keyChar,

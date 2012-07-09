@@ -32,14 +32,10 @@ import java.awt.dnd.peer.DragSourceContextPeer;
 import java.awt.peer.*;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
-import java.awt.im.spi.InputMethodDescriptor;
 import java.awt.image.*;
-import java.awt.geom.AffineTransform;
 import java.awt.TrayIcon;
 import java.awt.SystemTray;
-import java.io.*;
 import java.net.URL;
-import java.net.JarURLConnection;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -49,18 +45,14 @@ import java.util.logging.Logger;
 import sun.misc.SoftCache;
 import sun.font.FontDesignMetrics;
 import sun.awt.im.InputContext;
-import sun.awt.im.SimpleInputMethodWindow;
 import sun.awt.image.*;
 import sun.security.action.GetPropertyAction;
 import sun.security.action.GetBooleanAction;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 
 public abstract class SunToolkit extends Toolkit
     implements WindowClosingSupport, WindowClosingListener,
@@ -82,14 +74,7 @@ public abstract class SunToolkit extends Toolkit
      */
     public static final int GRAB_EVENT_MASK = 0x80000000;
 
-    private static Field syncLWRequestsField;
     private static Method  wakeupMethod;
-    private static Field componentKeyField;
-    private static Field menuComponentKeyField;
-    private static Field trayIconKeyField;
-    private static Field componentAppContextField;
-    private static Field menuComponentAppContextField;
-    private static Field isPostedField;
     /* The key to put()/get() the PostEventQueue into/from the AppContext.
      */
     private static final String POST_EVENT_QUEUE_KEY = "PostEventQueue";
@@ -326,24 +311,6 @@ public abstract class SunToolkit extends Toolkit
         return appContext;
     }
 
-    public static Field getField(final Class klass, final String fieldName) {
-        return AccessController.doPrivileged(new PrivilegedAction<Field>() {
-            public Field run() {
-                try {
-                    Field field = klass.getDeclaredField(fieldName);
-                    assert (field != null);
-                    field.setAccessible(true);
-                    return field;
-                } catch (SecurityException e) {
-                    assert false;
-                } catch (NoSuchFieldException e) {
-                    assert false;
-                }
-                return null;
-            }//run
-        });
-    }
-
     static void wakeupEventQueue(EventQueue q, boolean isShutdown){
         if (wakeupMethod == null){
             wakeupMethod = (Method)AccessController.doPrivileged(new PrivilegedAction(){
@@ -417,25 +384,15 @@ public abstract class SunToolkit extends Toolkit
      */
     private static boolean setAppContext(Object target, AppContext context)
     {
-        if (!(target instanceof Component) && !(target instanceof MenuComponent)) {
+        if (target instanceof Component) {
+            AWTAccessor.getComponentAccessor().
+                setAppContext((Component)target, context);
+        } else if (target instanceof MenuComponent) {
+            AWTAccessor.getMenuComponentAccessor().
+                setAppContext((MenuComponent)target, context);
+        } else {
             return false;
         }
-        try{
-            if (target instanceof Component){
-                if (componentAppContextField == null) {
-                    componentAppContextField = getField(Component.class, "appContext");
-                }
-                componentAppContextField.set(target, context);
-            } else if (target instanceof MenuComponent) {
-                if (menuComponentAppContextField == null) {
-                    menuComponentAppContextField = getField(MenuComponent.class, "appContext");
-                }
-                menuComponentAppContextField.set(target, context);
-            }
-        } catch( IllegalAccessException e){
-            assert false;
-        }
-
         return true;
     }
 
@@ -444,23 +401,15 @@ public abstract class SunToolkit extends Toolkit
      * Component or MenuComponent this returns null.
      */
     private static AppContext getAppContext(Object target) {
-        AppContext retObj = null;
-        try{
-            if (target instanceof Component){
-                if (componentAppContextField == null) {
-                    componentAppContextField = getField(Component.class, "appContext");
-                }
-                retObj = (AppContext) componentAppContextField.get(target);
-            } else if (target instanceof MenuComponent) {
-                if (menuComponentAppContextField == null) {
-                    menuComponentAppContextField = getField(MenuComponent.class, "appContext");
-                }
-                retObj = (AppContext) menuComponentAppContextField.get(target);
-            }
-        } catch( IllegalAccessException e){
-            assert false;
+        if (target instanceof Component) {
+            return AWTAccessor.getComponentAccessor().
+                       getAppContext((Component)target);
+        } else if (target instanceof MenuComponent) {
+            return AWTAccessor.getMenuComponentAccessor().
+                       getAppContext((MenuComponent)target);
+        } else {
+            return null;
         }
-        return retObj;
     }
 
     /*
@@ -508,16 +457,7 @@ public abstract class SunToolkit extends Toolkit
       */
 
     public static void setLWRequestStatus(Window changed,boolean status){
-        if (syncLWRequestsField == null){
-            syncLWRequestsField = getField(Window.class, "syncLWRequests");
-        }
-        try{
-            if (syncLWRequestsField != null){
-                syncLWRequestsField.setBoolean(changed, status);
-            }
-        } catch( IllegalAccessException e){
-            assert false;
-        }
+        AWTAccessor.getWindowAccessor().setLWRequestStatus(changed, status);
     };
 
     public static void checkAndSetPolicy(Container cont, boolean isSwingCont)
@@ -625,18 +565,9 @@ public abstract class SunToolkit extends Toolkit
      * Post AWTEvent of high priority.
      */
     public static void postPriorityEvent(final AWTEvent e) {
-        if (isPostedField == null) {
-            isPostedField = getField(AWTEvent.class, "isPosted");
-        }
         PeerEvent pe = new PeerEvent(Toolkit.getDefaultToolkit(), new Runnable() {
                 public void run() {
-                    try {
-                        isPostedField.setBoolean(e, true);
-                    } catch (IllegalArgumentException e) {
-                        assert(false);
-                    } catch (IllegalAccessException e) {
-                        assert(false);
-                    }
+                    AWTAccessor.getAWTEventAccessor().setPosted(e);
                     ((Component)e.getSource()).dispatchEvent(e);
                 }
             }, PeerEvent.ULTIMATE_PRIORITY_EVENT);
@@ -745,36 +676,6 @@ public abstract class SunToolkit extends Toolkit
     }
 
     /*
-     * Returns next queue for the given EventQueue which has private access
-     */
-    private static EventQueue getNextQueue(final Object o) {
-        EventQueue result = null;
-        try{
-            Field nextQueueField = getField(EventQueue.class,
-                                            "nextQueue");
-            result = (EventQueue)nextQueueField.get(o);
-        } catch( IllegalAccessException e){
-            assert false;
-        }
-        return result;
-    }
-
-    /*
-     * Returns dispatch thread for the given EventQueue which has private access
-     */
-    private static Thread getDispatchThread(final Object o) {
-        Thread result = null;
-        try{
-            Field dispatchThreadField = getField(EventQueue.class,
-                                                 "dispatchThread");
-            result = (Thread)dispatchThreadField.get(o);
-        } catch( IllegalAccessException e){
-            assert false;
-        }
-        return result;
-    }
-
-    /*
      * Returns true if the calling thread is the event dispatch thread
      * contained within AppContext which associated with the given target.
      * Use this call to ensure that a given task is being executed
@@ -784,13 +685,14 @@ public abstract class SunToolkit extends Toolkit
         AppContext appContext = targetToAppContext(target);
         EventQueue eq = (EventQueue)appContext.get(AppContext.EVENT_QUEUE_KEY);
 
-        EventQueue next = getNextQueue(eq);
+        EventQueue next = AWTAccessor.getEventQueueAccessor().getNextQueue(eq);
         while (next != null) {
             eq = next;
-            next = getNextQueue(eq);
+            next = AWTAccessor.getEventQueueAccessor().getNextQueue(eq);
         }
 
-        return (Thread.currentThread() == getDispatchThread(eq));
+        return (Thread.currentThread() == AWTAccessor.getEventQueueAccessor()
+                                              .getDispatchThread(eq));
     }
 
     public Dimension getScreenSize() {
@@ -1524,22 +1426,6 @@ public abstract class SunToolkit extends Toolkit
             || comp instanceof Window);
     }
 
-    public static Method getMethod(final Class clz, final String methodName, final Class[] params) {
-        Method res = null;
-        try {
-            res = AccessController.doPrivileged(new PrivilegedExceptionAction<Method>() {
-                    public Method run() throws Exception {
-                        Method m = clz.getDeclaredMethod(methodName, params);
-                        m.setAccessible(true);
-                        return m;
-                    }
-                });
-        } catch (PrivilegedActionException ex) {
-            ex.printStackTrace();
-        }
-        return res;
-    }
-
     public static class OperationTimedOut extends RuntimeException {
         public OperationTimedOut(String msg) {
             super(msg);
@@ -1682,21 +1568,9 @@ public abstract class SunToolkit extends Toolkit
     private boolean queueEmpty = false;
     private final Object waitLock = "Wait Lock";
 
-    static Method eqNoEvents;
-
     private boolean isEQEmpty() {
         EventQueue queue = getSystemEventQueueImpl();
-        synchronized(SunToolkit.class) {
-            if (eqNoEvents == null) {
-                eqNoEvents = getMethod(java.awt.EventQueue.class, "noEvents", null);
-            }
-        }
-        try {
-            return (Boolean)eqNoEvents.invoke(queue);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return AWTAccessor.getEventQueueAccessor().noEvents(queue);
     }
 
     /**
@@ -1951,20 +1825,14 @@ public abstract class SunToolkit extends Toolkit
      * consumeNextKeyTyped() method is not currently used,
      * however Swing could use it in the future.
      */
-    private static Method consumeNextKeyTypedMethod = null;
     public static synchronized void consumeNextKeyTyped(KeyEvent keyEvent) {
-        if (consumeNextKeyTypedMethod == null) {
-            consumeNextKeyTypedMethod = getMethod(DefaultKeyboardFocusManager.class,
-                                                  "consumeNextKeyTyped",
-                                                  new Class[] {KeyEvent.class});
-        }
         try {
-            consumeNextKeyTypedMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
-                                             keyEvent);
-        } catch (IllegalAccessException iae) {
-            iae.printStackTrace();
-        } catch (InvocationTargetException ite) {
-            ite.printStackTrace();
+            AWTAccessor.getDefaultKeyboardFocusManagerAccessor().consumeNextKeyTyped(
+                (DefaultKeyboardFocusManager)KeyboardFocusManager.
+                    getCurrentKeyboardFocusManager(),
+                keyEvent);
+        } catch (ClassCastException cce) {
+             cce.printStackTrace();
         }
     }
 

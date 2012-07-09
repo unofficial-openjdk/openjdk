@@ -50,6 +50,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.accessibility.*;
+import sun.awt.AWTAccessor;
 import sun.awt.AppContext;
 import sun.awt.CausedFocusEvent;
 import sun.awt.SunToolkit;
@@ -318,6 +319,12 @@ public class Window extends Container implements Accessible {
         s = (String) java.security.AccessController.doPrivileged(
             new GetPropertyAction("java.awt.Window.locationByPlatform"));
         locationByPlatformProp = (s != null && s.equals("true"));
+
+        AWTAccessor.setWindowAccessor(new AWTAccessor.WindowAccessor() {
+            public void setLWRequestStatus(Window changed, boolean status) {
+                changed.syncLWRequests = status;
+            }
+        });
     }
 
     /**

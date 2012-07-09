@@ -38,6 +38,7 @@ import java.util.StringTokenizer;
 import java.util.logging.*;
 
 import java.security.AccessController;
+import sun.awt.AWTAccessor;
 
 /**
  * A class to encapsulate the bitmap representation of the mouse cursor.
@@ -193,6 +194,21 @@ public class Cursor implements java.io.Serializable {
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
+
+        AWTAccessor.setCursorAccessor(
+            new AWTAccessor.CursorAccessor() {
+                public long getPData(Cursor cursor) {
+                    return cursor.pData;
+                }
+
+                public void setPData(Cursor cursor, long pData) {
+                    cursor.pData = pData;
+                }
+
+                public int getType(Cursor cursor) {
+                    return cursor.type;
+                }
+            });
     }
 
     /**

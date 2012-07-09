@@ -798,10 +798,25 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     static {
         AWTAccessor.setComponentAccessor(new AWTAccessor.ComponentAccessor() {
+                public AppContext getAppContext(Component comp) {
+                    return comp.appContext;
+                }
+
+                public void setAppContext(Component comp, AppContext appContext) {
+                    comp.appContext = appContext;
+                }
+
                 public AccessControlContext getAccessControlContext(Component comp) {
                     return comp.getAccessControlContext();
                 }
 
+                public boolean requestFocusInWindow(Component comp, CausedFocusEvent.Cause cause) {
+                    return comp.requestFocusInWindow(cause);
+                }
+
+                public void requestFocus(Component comp, CausedFocusEvent.Cause cause) {
+                    comp.requestFocus(cause);
+                }
             });
     }
 

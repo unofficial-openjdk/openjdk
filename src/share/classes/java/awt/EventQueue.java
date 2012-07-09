@@ -42,9 +42,9 @@ import sun.awt.AppContext;
 import sun.awt.AWTAutoShutdown;
 import sun.awt.PeerEvent;
 import sun.awt.SunToolkit;
+import sun.awt.AWTAccessor;
 
 import java.security.AccessControlContext;
-import java.security.ProtectionDomain;
 
 import sun.misc.SharedSecrets;
 import sun.misc.JavaSecurityAccess;
@@ -158,6 +158,26 @@ public class EventQueue {
     private final String name = "AWT-EventQueue-" + nextThreadNum();
 
     private static final Logger eventLog = Logger.getLogger("java.awt.event.EventQueue");
+
+    static {
+        AWTAccessor.setEventQueueAccessor(
+            new AWTAccessor.EventQueueAccessor() {
+                public boolean noEvents(EventQueue eventQueue) {
+                    return eventQueue.noEvents();
+                }
+                public Thread getDispatchThread(EventQueue eventQueue) {
+                    return eventQueue.dispatchThread;
+                }
+                public EventQueue getNextQueue(EventQueue eventQueue) {
+                    return eventQueue.nextQueue;
+                }
+                public void removeSourceEvents(EventQueue eventQueue,
+                                               Object source,
+                                               boolean removeAllEvents) {
+                    eventQueue.removeSourceEvents(source, removeAllEvents);
+                }
+            });
+    }
 
     public EventQueue() {
         for (int i = 0; i < NUM_PRIORITIES; i++) {

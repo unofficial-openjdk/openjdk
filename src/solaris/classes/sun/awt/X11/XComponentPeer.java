@@ -31,17 +31,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
-import java.awt.DefaultKeyboardFocusManager;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
-import java.awt.MenuBar;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
@@ -60,12 +56,9 @@ import java.awt.event.InvocationEvent;
 import java.awt.image.ImageObserver;
 import java.awt.image.ImageProducer;
 import java.awt.image.VolatileImage;
-import java.awt.peer.CanvasPeer;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.ContainerPeer;
 import java.awt.peer.LightweightPeer;
-import java.awt.peer.PanelPeer;
-import java.awt.peer.WindowPeer;
 import java.lang.reflect.*;
 import java.security.*;
 import java.util.Collection;
@@ -397,19 +390,8 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         }
     }
 
-    static Method requestFocusWithCause;
-
     static void callRequestFocus(Component target, CausedFocusEvent.Cause cause) {
-        if (requestFocusWithCause == null) {
-            requestFocusWithCause = SunToolkit.getMethod(Component.class, "requestFocus", new Class[] {CausedFocusEvent.Cause.class});
-        }
-        if (requestFocusWithCause != null) {
-            try {
-                requestFocusWithCause.invoke(target, new Object[] {cause});
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        AWTAccessor.getComponentAccessor().requestFocus(target, cause);
     }
 
     final public boolean requestFocus(Component lightweightChild, boolean temporary,

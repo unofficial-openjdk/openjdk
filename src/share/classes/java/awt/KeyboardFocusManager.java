@@ -60,6 +60,7 @@ import sun.awt.AppContext;
 import sun.awt.HeadlessToolkit;
 import sun.awt.SunToolkit;
 import sun.awt.CausedFocusEvent;
+import sun.awt.AWTAccessor;
 
 /**
  * The KeyboardFocusManager is responsible for managing the active and focused
@@ -117,6 +118,24 @@ public abstract class KeyboardFocusManager
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
+        AWTAccessor.setKeyboardFocusManagerAccessor(
+            new AWTAccessor.KeyboardFocusManagerAccessor() {
+                public int shouldNativelyFocusHeavyweight(Component heavyweight,
+                                                   Component descendant,
+                                                   boolean temporary,
+                                                   boolean focusedWindowChangeAllowed,
+                                                   long time,
+                                                   CausedFocusEvent.Cause cause)
+                {
+                    return KeyboardFocusManager.shouldNativelyFocusHeavyweight(
+                        heavyweight, descendant, temporary, focusedWindowChangeAllowed, time, cause);
+                }
+
+                public void removeLastFocusRequest(Component heavyweight) {
+                    KeyboardFocusManager.removeLastFocusRequest(heavyweight);
+                }
+            }
+        );
     }
 
     transient KeyboardFocusManagerPeer peer;
