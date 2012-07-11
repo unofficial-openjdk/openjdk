@@ -237,7 +237,7 @@ public class Main {
             if (tempDir == null)
                 tempDir = new File(System.getProperty("user.dir"));
 
-            tempFile = sun.misc.IOUtils.createTempFile("_N2A", ".TMP", tempDir);
+            tempFile = File.createTempFile("_N2A", ".TMP", tempDir);
             tempFile.deleteOnExit();
 
             try {
