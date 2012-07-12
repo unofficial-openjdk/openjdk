@@ -39,11 +39,12 @@ import java.util.EmptyStackException;
 import sun.util.logging.PlatformLogger;
 
 import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
 import sun.awt.AWTAutoShutdown;
+import sun.awt.AWTInterruptedException;
 import sun.awt.PeerEvent;
 import sun.awt.SunToolkit;
 import sun.awt.EventQueueItem;
-import sun.awt.AWTAccessor;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -1038,15 +1039,17 @@ public class EventQueue {
         pushPopLock.lock();
         try {
             if (edt == dispatchThread) {
-                /*
-                 * Don't detach the thread if any events are pending. Not
-                 * sure if it's a possible scenario, though.
-                 *
-                 * Fix for 4648733. Check both the associated java event
-                 * queue and the PostEventQueue.
-                 */
-                if (!forceDetach && (peekEvent() != null) || !SunToolkit.isPostEventQueueEmpty()) {
-                    return false;
+                if (peekEvent() != null || !SunToolkit.isPostEventQueueEmpty()) {
+                    if (!forceDetach) {
+                        /*
+                         * Fix for 4648733. Check both the associated java event
+                         * queue and the PostEventQueue.
+                         */
+                        return false;
+                    } else {
+                        // 7162144 - derail pending events
+                        removeAllEvents();
+                    }
                 }
                 dispatchThread = null;
             }
@@ -1119,6 +1122,39 @@ public class EventQueue {
                     } else {
                         prev = entry;
                     }
+                    entry = entry.next;
+                }
+                queues[i].tail = prev;
+            }
+        } finally {
+            pushPopLock.unlock();
+        }
+    }
+
+    private void removeAllEvents() {
+        SunToolkit.flushPendingEvents();
+        pushPopLock.lock();
+        try {
+            for (int i = 0; i < NUM_PRIORITIES; i++) {
+                EventQueueItem entry = queues[i].head;
+                EventQueueItem prev = null;
+                while (entry != null) {
+                    if (entry.event instanceof InvocationEvent) {
+                        AWTAccessor.getInvocationEventAccessor().
+                            dispose((InvocationEvent)entry.event);
+                    }
+                    if (entry.event instanceof SequencedEvent) {
+                        ((SequencedEvent)entry.event).dispose();
+                    }
+                    if (entry.event instanceof SentEvent) {
+                        ((SentEvent)entry.event).dispose();
+                    }
+                    if (prev == null) {
+                        queues[i].head = entry.next;
+                    } else {
+                        prev.next = entry.next;
+                    }
+                    uncacheEQItem(entry);
                     entry = entry.next;
                 }
                 queues[i].tail = prev;
@@ -1235,7 +1271,11 @@ public class EventQueue {
 
         Throwable eventThrowable = event.getThrowable();
         if (eventThrowable != null) {
-            throw new InvocationTargetException(eventThrowable);
+            if (eventThrowable instanceof AWTInterruptedException) {
+                throw new InterruptedException(eventThrowable.getMessage());
+            } else {
+                throw new InvocationTargetException(eventThrowable);
+            }
         }
     }
 

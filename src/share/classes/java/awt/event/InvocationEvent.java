@@ -28,6 +28,9 @@ package java.awt.event;
 import java.awt.ActiveEvent;
 import java.awt.AWTEvent;
 
+import sun.awt.AWTAccessor;
+import sun.awt.AWTInterruptedException;
+
 /**
  * An event which executes the <code>run()</code> method on a <code>Runnable
  * </code> when dispatched by the AWT event dispatcher thread. This class can
@@ -126,6 +129,16 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      * JDK 1.1 serialVersionUID.
      */
     private static final long serialVersionUID = 436056344909459450L;
+
+    static {
+        AWTAccessor.setInvocationEventAccessor(
+                new AWTAccessor.InvocationEventAccessor() {
+                    @Override
+                    public void dispose(InvocationEvent ie) {
+                        ie.dispose();
+                    }
+                });
+    }
 
     /**
      * Constructs an <code>InvocationEvent</code> with the specified
@@ -228,6 +241,19 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
         this.when = System.currentTimeMillis();
     }
 
+    /*
+     * Marks the event as dispatched and notifies all interested parties.
+     */
+    private void setDispatched() {
+        dispatched = true;
+
+        if (notifier != null) {
+            synchronized (notifier) {
+                notifier.notifyAll();
+            }
+        }
+    }
+
     /**
      * Executes the Runnable's <code>run()</code> method and notifies the
      * notifier (if any) when <code>run()</code> has returned or thrown an exception.
@@ -251,14 +277,16 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
                 runnable.run();
             }
         } finally {
-            dispatched = true;
-
-            if (notifier != null) {
-                synchronized (notifier) {
-                    notifier.notifyAll();
-                }
-            }
+            setDispatched();
         }
+    }
+
+    private void dispose() {
+        throwable = exception =
+            new AWTInterruptedException(
+                    "The event is discarded due to Event Thread interruption");
+
+        setDispatched();
     }
 
     /**

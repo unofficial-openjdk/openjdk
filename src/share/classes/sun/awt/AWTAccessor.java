@@ -27,7 +27,7 @@ package sun.awt;
 
 import java.awt.*;
 import java.awt.KeyboardFocusManager;
-import java.awt.event.InputEvent;
+import java.awt.event.*;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
@@ -478,6 +478,16 @@ public final class AWTAccessor {
         boolean isMultipleMode(FileDialog fileDialog);
     }
 
+    /**
+     * An accessor for the InvocationEvent class
+     */
+    public interface InvocationEventAccessor {
+        /**
+         * Dispose an InvocationEvent (cancel it).
+         */
+        void dispose(InvocationEvent ie);
+    }
+
     /*
      * Accessor instances are initialized in the static initializers of
      * corresponding AWT classes by using setters defined below.
@@ -493,6 +503,7 @@ public final class AWTAccessor {
     private static EventQueueAccessor eventQueueAccessor;
     private static PopupMenuAccessor popupMenuAccessor;
     private static FileDialogAccessor fileDialogAccessor;
+    private static InvocationEventAccessor invocationEventAccessor;
 
     /*
      * Set an accessor object for the java.awt.Component class.
@@ -681,6 +692,23 @@ public final class AWTAccessor {
             unsafe.ensureClassInitialized(FileDialog.class);
         }
         return fileDialogAccessor;
+    }
+
+    /**
+     * Set an accessor object for the java.awt.event.InvocationEvent class.
+     */
+    public static void setInvocationEventAccessor(InvocationEventAccessor iea) {
+        invocationEventAccessor = iea;
+    }
+
+    /**
+     * Retrieve the accessor object for the java.awt.event.InvocationEvent class.
+     */
+    public static InvocationEventAccessor getInvocationEventAccessor() {
+        if (invocationEventAccessor == null) {
+            unsafe.ensureClassInitialized(InvocationEvent.class);
+        }
+        return invocationEventAccessor;
     }
 
 }
