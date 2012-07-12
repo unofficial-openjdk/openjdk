@@ -24,8 +24,8 @@
  */
 
 package java.io;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Instances of the file descriptor class serve as an opaque handle
@@ -42,10 +42,16 @@ import java.util.List;
 public final class FileDescriptor {
 
     private int fd;
+
     private long handle;
-    private Closeable parent;
-    private List<Closeable> otherParents;
-    private boolean closed;
+
+    /**
+     * A use counter for tracking the FIS/FOS/RAF instances that
+     * use this FileDescriptor. The FIS/FOS.finalize() will not release
+     * the FileDescriptor if it is still under use by any stream.
+     */
+    private AtomicInteger useCount;
+
 
     /**
      * Constructs an (invalid) FileDescriptor
@@ -54,6 +60,7 @@ public final class FileDescriptor {
     public /**/ FileDescriptor() {
         fd = -1;
         handle = -1;
+        useCount = new AtomicInteger();
     }
 
     static {
@@ -161,67 +168,13 @@ public final class FileDescriptor {
         return desc;
     }
 
-    /*
-     * Package private methods to track referents.
-     * If multiple streams point to the same FileDescriptor, we cycle
-     * through the list of all referents and call close()
-     */
+    // package private methods used by FIS, FOS and RAF.
 
-    /**
-     * Attach a Closeable to this FD for tracking.
-     * parent reference is added to otherParents when
-     * needed to make closeAll simpler.
-     */
-    synchronized void attach(Closeable c) {
-        if (parent == null) {
-            // first caller gets to do this
-            parent = c;
-        } else if (otherParents == null) {
-            otherParents = new ArrayList<>();
-            otherParents.add(parent);
-            otherParents.add(c);
-        } else {
-            otherParents.add(c);
-        }
+    int incrementAndGetUseCount() {
+        return useCount.incrementAndGet();
     }
 
-    /**
-     * Cycle through all Closeables sharing this FD and call
-     * close() on each one.
-     *
-     * The caller closeable gets to call close0().
-     */
-    @SuppressWarnings("try")
-    synchronized void closeAll(Closeable releaser) throws IOException {
-        if (!closed) {
-            closed = true;
-            IOException ioe = null;
-            try (Closeable c = releaser) {
-                if (otherParents != null) {
-                    for (Closeable referent : otherParents) {
-                        try {
-                            referent.close();
-                        } catch(IOException x) {
-                            if (ioe == null) {
-                                ioe = x;
-                            } else {
-                                ioe.addSuppressed(x);
-                            }
-                        }
-                    }
-                }
-            } catch(IOException ex) {
-                /*
-                 * If releaser close() throws IOException
-                 * add other exceptions as suppressed.
-                 */
-                if (ioe != null)
-                    ex.addSuppressed(ioe);
-                ioe = ex;
-            } finally {
-                if (ioe != null)
-                    throw ioe;
-            }
-        }
+    int decrementAndGetUseCount() {
+        return useCount.decrementAndGet();
     }
 }

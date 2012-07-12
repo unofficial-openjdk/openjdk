@@ -56,6 +56,16 @@ class FileInputStream extends InputStream
     private final Object closeLock = new Object();
     private volatile boolean closed = false;
 
+    private static final ThreadLocal<Boolean> runningFinalize =
+        new ThreadLocal<>();
+
+    private static boolean isRunningFinalize() {
+        Boolean val;
+        if ((val = runningFinalize.get()) != null)
+            return val.booleanValue();
+        return false;
+    }
+
     /**
      * Creates a <code>FileInputStream</code> by
      * opening a connection to an actual file,
@@ -124,7 +134,7 @@ class FileInputStream extends InputStream
             throw new NullPointerException();
         }
         fd = new FileDescriptor();
-        fd.attach(this);
+        fd.incrementAndGetUseCount();
         open(name);
     }
 
@@ -164,9 +174,10 @@ class FileInputStream extends InputStream
 
         /*
          * FileDescriptor is being shared by streams.
-         * Register this stream with FileDescriptor tracker.
+         * Ensure that it's GC'ed only when all the streams/channels are done
+         * using it.
          */
-        fd.attach(this);
+        fd.incrementAndGetUseCount();
     }
 
     /**
@@ -293,13 +304,27 @@ class FileInputStream extends InputStream
             closed = true;
         }
         if (channel != null) {
+            /*
+             * Decrement the FD use count associated with the channel
+             * The use count is incremented whenever a new channel
+             * is obtained from this stream.
+             */
+           fd.decrementAndGetUseCount();
            channel.close();
         }
-        fd.closeAll(new Closeable() {
-            public void close() throws IOException {
-               close0();
-           }
-        });
+
+        /*
+         * Decrement the FD use count associated with this stream
+         */
+        int useCount = fd.decrementAndGetUseCount();
+
+        /*
+         * If FileDescriptor is still in use by another stream, the finalizer
+         * will not close it.
+         */
+        if ((useCount <= 0) || !isRunningFinalize()) {
+            close0();
+        }
     }
 
     /**
@@ -313,9 +338,7 @@ class FileInputStream extends InputStream
      * @see        java.io.FileDescriptor
      */
     public final FileDescriptor getFD() throws IOException {
-        if (fd != null) {
-            return fd;
-        }
+        if (fd != null) return fd;
         throw new IOException();
     }
 
@@ -339,6 +362,13 @@ class FileInputStream extends InputStream
         synchronized (this) {
             if (channel == null) {
                 channel = FileChannelImpl.open(fd, true, false, this);
+
+                /*
+                 * Increment fd's use count. Invoking the channel's close()
+                 * method will result in decrementing the use count set for
+                 * the channel.
+                 */
+                fd.incrementAndGetUseCount();
             }
             return channel;
         }
@@ -361,12 +391,18 @@ class FileInputStream extends InputStream
      */
     protected void finalize() throws IOException {
         if ((fd != null) &&  (fd != FileDescriptor.in)) {
-            /* if fd is shared, the references in FileDescriptor
-             * will ensure that finalizer is only called when
-             * safe to do so. All references using the fd have
-             * become unreachable. We can call close()
+
+            /*
+             * Finalizer should not release the FileDescriptor if another
+             * stream is still using it. If the user directly invokes
+             * close() then the FileDescriptor is also released.
              */
-            close();
+            runningFinalize.set(Boolean.TRUE);
+            try {
+                close();
+            } finally {
+                runningFinalize.set(Boolean.FALSE);
+            }
         }
     }
 }
