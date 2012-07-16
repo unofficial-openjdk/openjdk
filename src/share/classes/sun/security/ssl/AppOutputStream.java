@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 20111 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,10 +88,21 @@ class AppOutputStream extends OutputStream {
 
         try {
             do {
+                boolean holdRecord = false;
                 int howmuch;
                 if (isFirstRecordOfThePayload && c.needToSplitPayload()) {
                     howmuch = (len == 0) ? 0 : Math.min(
                         0x01, r.availableDataBytes());
+                    /*
+                     * Nagle's algorithm (TCP_NODELAY) was coming into
+                     * play here when writing short (split) packets.
+                     * Signal to the OutputRecord code to internally
+                     * buffer this small packet until the next outbound
+                     * packet (of any type) is written.
+                     */
+                    if ((len != 1) && (howmuch == 1)) {
+                        holdRecord = true;
+                    } 
                 } else {
                     howmuch = Math.min(len, r.availableDataBytes());
                 }
@@ -105,7 +116,7 @@ class AppOutputStream extends OutputStream {
                     off += howmuch;
                     len -= howmuch;
                 }
-                c.writeRecord(r);
+                c.writeRecord(r, holdRecord); 
                 c.checkWrite();
             } while (len > 0);
         } catch (Exception e) {
