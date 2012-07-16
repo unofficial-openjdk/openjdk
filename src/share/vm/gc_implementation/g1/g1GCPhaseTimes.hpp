@@ -28,7 +28,7 @@
 #include "memory/allocation.hpp"
 #include "gc_interface/gcCause.hpp"
 
-class G1GCPhaseTimes : public CHeapObj {
+class G1GCPhaseTimes : public CHeapObj<mtGC> {
   friend class G1CollectorPolicy;
   friend class TraceGen0TimeData;
 
