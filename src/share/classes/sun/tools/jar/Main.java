@@ -134,7 +134,7 @@ class Main {
         File dir = file.getParentFile();
         if (dir == null)
             dir = new File(".");
-        return sun.misc.IOUtils.createTempFile("jartmp", null, dir);
+        return File.createTempFile("jartmp", null, dir);
     }
 
     private boolean ok;
