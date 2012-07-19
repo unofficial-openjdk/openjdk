@@ -167,13 +167,13 @@ public class Hashtable<K,V>
      * The default threshold of map capacity above which alternative hashing is
      * used for String keys. Alternative hashing reduces the incidence of
      * collisions due to weak hash code calculation for String keys.
-     * <p/>
+     * <p>
      * This value may be overridden by defining the system property
      * {@code jdk.map.althashing.threshold}. A property value of {@code 1}
      * forces alternative hashing to be used at all times whereas
      * {@code -1} value ensures that alternative hashing is never used.
      */
-    static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = 512;
+    static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = Integer.MAX_VALUE;
 
     /**
      * holds values which can't be initialized until after VM is booted.

@@ -19,7 +19,7 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH idlj 1 "21 Mar 2012"
+.TH idlj 1 "05 Jul 2012"
 
 .LP
 .SH "名前"
@@ -47,7 +47,7 @@ IDL\-to\-Javaコンパイラは、指定されたIDLファイルに対してJavaバインディングを生成
 .na
 \f2OMG IDL to Java Language Mapping Specification\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/idl/mapping/jidlMapping.htmlを参照してください。IDL\-to\-Javaコンパイラの以前のリリースの中には、\f2idltojava\fPという名前だったものがあります。
+http://docs.oracle.com/javase/7/docs/technotes/guides/idl/mapping/jidlMapping.htmlを参照してください。IDL\-to\-Javaコンパイラの以前のリリースの中には、\f2idltojava\fPという名前だったものがあります。
 .LP
 .SS 
 クライアント・バインディングおよびサーバー・バインディングの発行
@@ -110,13 +110,13 @@ idlj \f3\-fall\fP My.idl
 .na
 \f2org.omg.PortableServer.Servant\fP @
 .fi
-http://download.oracle.com/javase/7/docs/api/org/omg/PortableServer/Servant.htmlを拡張するストリームベースのスケルトンで、スケルトンが実装するIDLインタフェースに関連付けられている\f2InvokeHandler\fPインタフェースと操作インタフェースを実装します。
+http://docs.oracle.com/javase/7/docs/api/org/omg/PortableServer/Servant.htmlを拡張するストリームベースのスケルトンで、スケルトンが実装するIDLインタフェースに関連付けられている\f2InvokeHandler\fPインタフェースと操作インタフェースを実装します。
 .LP
 .LP
 .na
 \f2Portable Object Adapter(POA)\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/guides/idl/POA.htmlの\f2PortableServer\fPモジュールは、ネイティブの\f2Servant\fP型を定義します。Javaプログラミング言語では、\f2Servant\fP型はJavaの\f2org.omg.PortableServer.Servant\fPクラスにマップされます。このクラスは、すべてのPOAサーバント実装のベース・クラスとして機能し、アプリケーション・プログラマが呼び出すことのできるいくつかのメソッドの他に、POAそのものによって呼び出され、サーバントの動作を制御するためにユーザーがオーバーライドできるメソッドも提供します。
+http://docs.oracle.com/javase/7/docs/technotes/guides/idl/POA.htmlの\f2PortableServer\fPモジュールは、ネイティブの\f2Servant\fP型を定義します。Javaプログラミング言語では、\f2Servant\fP型はJavaの\f2org.omg.PortableServer.Servant\fPクラスにマップされます。このクラスは、すべてのPOAサーバント実装のベース・クラスとして機能し、アプリケーション・プログラマが呼び出すことのできるいくつかのメソッドの他に、POAそのものによって呼び出され、サーバントの動作を制御するためにユーザーがオーバーライドできるメソッドも提供します。
 .LP
 .LP
 継承モデルのもう1つのオプションは、\f2\-oldImplBase\fPフラグを使用することで、J2SE 1.4より前のバージョンのJavaプログラミング言語と互換性のあるサーバー側バインディングを生成することです。ただし、\f2\-oldImplBase\fPフラグを使用するのは、標準的な手法ではありません。これらのAPIは今後非推奨になる予定です。このフラグを使用するのは、J2SE 1.3で記述された既存のサーバーとの互換性が必要な場合のみです。その場合には既存のMAKEFILEを変更し、\f2idlj\fPコンパイラに\f2\-oldImplBase\fPフラグを追加する必要があります。そうしないと、POAベースのサーバー側マッピングが生成されます。下位互換性のあるサーバー側バインディングを生成するには、次のコマンドを使用します。
@@ -294,7 +294,7 @@ includes=/includes;/moreIncludes
 .na
 \f2クラス・パスの設定\fP @
 .fi
-http://download.oracle.com/javase/7/docs/technotes/tools/index.html#generalを参照してください。
+http://docs.oracle.com/javase/7/docs/technotes/tools/index.html#generalを参照してください。
 .LP
 .SS 
 インクルード・ファイルに対するバインディングの発行
