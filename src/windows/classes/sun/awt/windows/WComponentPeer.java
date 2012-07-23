@@ -419,8 +419,12 @@ public abstract class WComponentPeer extends WObjectPeer
     public void createScreenSurface(boolean isResize)
     {
         Win32GraphicsConfig gc = (Win32GraphicsConfig)getGraphicsConfiguration();
-        ScreenUpdateManager mgr = ScreenUpdateManager.getInstance();
+        if (gc == null) {
+            surfaceData = null;
+            return;
+        }
 
+        ScreenUpdateManager mgr = ScreenUpdateManager.getInstance();
         surfaceData = mgr.createScreenSurface(gc, this, numBackBuffers, isResize);
     }
 
