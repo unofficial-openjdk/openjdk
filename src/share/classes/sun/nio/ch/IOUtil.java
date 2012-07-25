@@ -36,6 +36,11 @@ import java.nio.ByteBuffer;
 
 class IOUtil {
 
+    /**
+     * Max number of iovec structures that readv/writev supports
+     */
+    static final int IOV_MAX;
+
     private IOUtil() { }                // No instantiation
 
     static int write(FileDescriptor fd, ByteBuffer src, long position,
@@ -111,7 +116,8 @@ class IOUtil {
 
             // Iterate over buffers to populate native iovec array.
             int count = offset + length;
-            for (int i=offset; i<count; i++) {
+            int i = offset;
+            while (i < count && iov_len < IOV_MAX) {
                 ByteBuffer buf = bufs[i];
                 int pos = buf.position();
                 int lim = buf.limit();
@@ -135,6 +141,7 @@ class IOUtil {
                     vec.putLen(iov_len, rem);
                     iov_len++;
                 }
+                i++;
             }
             if (iov_len == 0)
                 return 0L;
@@ -240,7 +247,8 @@ class IOUtil {
 
             // Iterate over buffers to populate native iovec array.
             int count = offset + length;
-            for (int i=offset; i<count; i++) {
+            int i = offset;
+            while (i < count && iov_len < IOV_MAX) {
                 ByteBuffer buf = bufs[i];
                 if (buf.isReadOnly())
                     throw new IllegalArgumentException("Read-only buffer");
@@ -264,6 +272,7 @@ class IOUtil {
                     vec.putLen(iov_len, rem);
                     iov_len++;
                 }
+                i++;
             }
             if (iov_len == 0)
                 return 0L;
@@ -333,11 +342,14 @@ class IOUtil {
 
     static native void setfdVal(FileDescriptor fd, int value);
 
+    static native int iovMax();
+
     static native void initIDs();
 
     static {
         // Note that IOUtil.initIDs is called from within Util.load.
         Util.load();
+        IOV_MAX = iovMax();
     }
 
 }
