@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -201,7 +201,7 @@ final class P11RSACipher extends CipherSpi {
         } else {
             throw new InvalidKeyException("Unknown key type: " + p11Key);
         }
-        int n = (p11Key.keyLength() + 7) >> 3;
+        int n = (p11Key.length() + 7) >> 3;
         outputSize = n;
         buffer = new byte[n];
         maxInputSize = encrypt ? (n - PKCS1_MIN_PADDING_LENGTH) : n;
@@ -458,7 +458,7 @@ final class P11RSACipher extends CipherSpi {
 
     // see JCE spec
     protected int engineGetKeySize(Key key) throws InvalidKeyException {
-        int n = P11KeyFactory.convertKey(token, key, algorithm).keyLength();
+        int n = P11KeyFactory.convertKey(token, key, algorithm).length();
         return n;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import javax.crypto.spec.*;
 import javax.net.ssl.*;
 
 import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
+import sun.security.util.KeyLength;
 
 /**
  * This is the client key exchange message (CLIENT --> SERVER) used with
@@ -85,7 +86,8 @@ final class RSAClientKeyExchange extends HandshakeMessage {
      * it, using its RSA private key.  Result is the same size as the
      * server's public key, and uses PKCS #1 block format 02.
      */
-    RSAClientKeyExchange(ProtocolVersion protocolVersion, ProtocolVersion maxVersion,
+    RSAClientKeyExchange(ProtocolVersion protocolVersion,
+            ProtocolVersion maxVersion,
             SecureRandom generator, PublicKey publicKey) throws IOException {
         if (publicKey.getAlgorithm().equals("RSA") == false) {
             throw new SSLKeyException("Public key not of type RSA");
@@ -120,7 +122,8 @@ final class RSAClientKeyExchange extends HandshakeMessage {
      * Server gets the PKCS #1 (block format 02) data, decrypts
      * it with its private key.
      */
-    RSAClientKeyExchange(ProtocolVersion currentVersion, HandshakeInStream input,
+    RSAClientKeyExchange(ProtocolVersion currentVersion,
+            ProtocolVersion maxVersion, HandshakeInStream input,
             int messageSize, PrivateKey privateKey) throws IOException {
 
         if (privateKey.getAlgorithm().equals("RSA") == false) {
@@ -143,28 +146,119 @@ final class RSAClientKeyExchange extends HandshakeMessage {
             cipher.init(Cipher.UNWRAP_MODE, privateKey);
             preMaster = (SecretKey)cipher.unwrap(encrypted,
                                 "TlsRsaPremasterSecret", Cipher.SECRET_KEY);
+
+            // polish the premaster secret
+            preMaster = polishPreMasterSecretKey(
+                                currentVersion, maxVersion, preMaster, null);
         } catch (Exception e) {
-            /*
-             * Bogus decrypted ClientKeyExchange? If so, conjure a
-             * a random preMaster secret that will fail later during
-             * Finished message processing. This is a countermeasure against
-             * the "interactive RSA PKCS#1 encryption envelop attack" reported
-             * in June 1998. Preserving the executation path will
-             * mitigate timing attacks and force consistent error handling
-             * that will prevent an attacking client from differentiating
-             * different kinds of decrypted ClientKeyExchange bogosities.
-             */
-            if (debug != null && Debug.isOn("handshake")) {
-                System.out.println("Error decrypting premaster secret:");
-                e.printStackTrace(System.out);
-                System.out.println("Generating random secret");
-            }
-            preMaster = generateDummySecret(currentVersion);
+            // polish the premaster secret
+            preMaster = polishPreMasterSecretKey(
+                                currentVersion, maxVersion, preMaster, e);
         }
+    }
+
+    /**
+     * To avoid vulnerabilities described by section 7.4.7.1, RFC 5246,
+     * treating incorrectly formatted message blocks and/or mismatched
+     * version numbers in a manner indistinguishable from correctly
+     * formatted RSA blocks.
+     *
+     * RFC 5246 describes the approach as :
+     *
+     *  1. Generate a string R of 46 random bytes
+     *
+     *  2. Decrypt the message to recover the plaintext M
+     *
+     *  3. If the PKCS#1 padding is not correct, or the length of message
+     *     M is not exactly 48 bytes:
+     *        pre_master_secret = ClientHello.client_version || R
+     *     else If ClientHello.client_version <= TLS 1.0, and version
+     *     number check is explicitly disabled:
+     *        pre_master_secret = M
+     *     else:
+     *        pre_master_secret = ClientHello.client_version || M[2..47]
+     *
+     * Note that although TLS 1.2 is not supported in this release, we still
+     * want to make use of the above approach to provide better protection.
+     */
+    private SecretKey polishPreMasterSecretKey(
+            ProtocolVersion currentVersion, ProtocolVersion clientHelloVersion,
+            SecretKey secretKey, Exception failoverException) {
+
+        if (failoverException == null && secretKey != null) {
+            // check the length
+            byte[] encoded = secretKey.getEncoded();
+            if (encoded == null) {      // unable to get the encoded key
+                if (debug != null && Debug.isOn("handshake")) {
+                    System.out.println(
+                        "unable to get the plaintext of the premaster secret");
+                }
+
+                int keySize = KeyLength.getKeySize(secretKey);
+                if (keySize > 0 && keySize != 384) {       // 384 = 48 * 8
+                    if (debug != null && Debug.isOn("handshake")) {
+                        System.out.println(
+                            "incorrect length of premaster secret: " +
+                            (keySize/8));
+                    }
+
+                    return generateDummySecret(currentVersion);
+                }
+
+                // The key size is exactly 48 bytes or not accessible.
+                //
+                // Conservatively, pass the checking to master secret
+                // calculation.
+                return secretKey;
+            } else if (encoded.length == 48) {
+                // check the version
+                if (clientHelloVersion.major == encoded[0] &&
+                    clientHelloVersion.minor == encoded[1]) {
+
+                    return secretKey;
+                } else if (clientHelloVersion.v <= ProtocolVersion.TLS10.v &&
+                           currentVersion.major == encoded[0] &&
+                           currentVersion.minor == encoded[1]) {
+                    /*
+                     * For compatibility, we maintain the behavior that the
+                     * version in pre_master_secret can be the negotiated
+                     * version for TLS v1.0 and SSL v3.0.
+                     */
+                    return secretKey;
+                }
+
+                if (debug != null && Debug.isOn("handshake")) {
+                    System.out.println("Mismatching Protocol Versions, " +
+                        "ClientHello.client_version is " + clientHelloVersion +
+                        ", while PreMasterSecret.client_version is " +
+                        ProtocolVersion.valueOf(encoded[0], encoded[1]));
+                }
+                return generateDummySecret(currentVersion);
+            } else {
+                if (debug != null && Debug.isOn("handshake")) {
+                    System.out.println(
+                        "incorrect length of premaster secret: " +
+                        encoded.length);
+                }
+                return generateDummySecret(currentVersion);
+            }
+        }
+
+        if (debug != null && Debug.isOn("handshake") &&
+                        failoverException != null) {
+            System.out.println("Error decrypting premaster secret:");
+            failoverException.printStackTrace(System.out);
+        }
+
+        return generateDummySecret(currentVersion);
     }
 
     // generate a premaster secret with the specified version number
     static SecretKey generateDummySecret(ProtocolVersion version) {
+        if (debug != null && Debug.isOn("handshake")) {
+            System.out.println("Generating a random fake premaster secret");
+        }
+
         try {
             KeyGenerator kg =
                     JsseJce.getKeyGenerator("SunTlsRsaPremasterSecret");

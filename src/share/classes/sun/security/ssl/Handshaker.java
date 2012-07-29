@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -776,9 +776,9 @@ abstract class Handshaker {
             if (debug != null && Debug.isOn("handshake")) {
                 System.out.println("RSA master secret generation error:");
                 e.printStackTrace(System.out);
-                System.out.println("Generating new random premaster secret");
             }
-            preMasterSecret = RSAClientKeyExchange.generateDummySecret(protocolVersion);
+            preMasterSecret =
+                    RSAClientKeyExchange.generateDummySecret(protocolVersion);
             // recursive call with new premaster secret
             return calculateMasterSecret(preMasterSecret, null);
         }
@@ -821,9 +821,9 @@ abstract class Handshaker {
             System.out.println("RSA PreMasterSecret version error: expected"
                 + protocolVersion + " or " + requestedVersion + ", decrypted: "
                 + premasterVersion);
-            System.out.println("Generating new random premaster secret");
         }
-        preMasterSecret = RSAClientKeyExchange.generateDummySecret(protocolVersion);
+        preMasterSecret =
+                RSAClientKeyExchange.generateDummySecret(protocolVersion);
         // recursive call with new premaster secret
         return calculateMasterSecret(preMasterSecret, null);
     }

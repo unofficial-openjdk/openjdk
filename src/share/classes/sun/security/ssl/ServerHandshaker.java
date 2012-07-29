@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,8 +190,9 @@ final class ServerHandshaker extends Handshaker {
                      * temporary one used for non-export or signing-only
                      * certificates/keys.
                      */
-                    RSAClientKeyExchange pms = new RSAClientKeyExchange
-                        (protocolVersion, input, message_len, privateKey);
+                    RSAClientKeyExchange pms = new RSAClientKeyExchange(
+                            protocolVersion, clientRequestedVersion,
+                            input, message_len, privateKey);
                     preMasterSecret = this.clientKeyExchange(pms);
                     break;
                 case K_KRB5:
