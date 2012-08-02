@@ -182,6 +182,10 @@ public class CDataTransferer extends DataTransferer {
         Long format = predefinedClipboardNameMap.get(str);
 
         if (format == null) {
+            if (java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
+                // Do not try to access GUI manager for unknown format
+                return new Long(-1);
+            }
             format = new Long(registerFormatWithPasteboard(str));
             predefinedClipboardNameMap.put(str, format);
             predefinedClipboardFormatMap.put(format, str);
