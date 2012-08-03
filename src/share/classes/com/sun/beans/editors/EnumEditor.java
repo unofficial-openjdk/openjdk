@@ -42,7 +42,7 @@ import java.util.List;
  *
  * @author Sergey A. Malenkov
  */
-public final class EnumEditor implements PropertyEditor {
+public class EnumEditor implements PropertyEditor {
     private final List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
 
     private final Class type;
