@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1999, 2002, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 4218206
+# @bug 4218206 7083664
 # @summary missing or invalid permission target names in policy tool
 #
 # @run applet/manual=done UpdatePermissions.html
@@ -50,13 +50,17 @@ case "$OS" in
     NULL=/dev/null
     PS=":"
     FS="/"
-    TMP=/tmp
+    ;;
+  CYGWIN* )
+    NULL=/dev/null
+    PS=";"
+    FS="/"
+    CP="cp -f"
     ;;
   Windows* )
     NULL=NUL
     PS=";"
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized system!"
