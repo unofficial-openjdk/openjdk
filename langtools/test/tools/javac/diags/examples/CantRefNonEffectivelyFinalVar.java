@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,14 @@
  * questions.
  */
 
-// key: compiler.misc.try.not.applicable.to.type
-// key: compiler.err.prob.found.req
-// key: compiler.misc.inconvertible.types
+// key: compiler.err.cant.ref.non.effectively.final.var
+// key: compiler.misc.inner.cls
+// options: -XDallowEffectivelyFinalInInnerClasses
 
-class ResourceNotApplicableToType {
-    void m() {
-        try (String s = "") {
-        }
+class CantRefNonEffectivelyFinalVar {
+    void test() {
+        int i = 0;
+        new Object() { int j = i; };
+        i = 2;
     }
 }
