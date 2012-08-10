@@ -349,7 +349,9 @@ public final class OCSPResponse {
             }
         }
 
-        X509Certificate trustedResponderCert = null;
+        // By default, the OCSP responder's cert is the same as the issuer of
+        // the cert being validated. The issuer cert is the first in the list.
+        X509Certificate trustedResponderCert = responderCerts.get(0);
 
         // Check whether the signer cert returned by the responder is trusted
         if (x509Certs != null && x509Certs[0] != null) {

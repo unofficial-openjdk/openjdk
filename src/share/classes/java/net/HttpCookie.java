@@ -154,7 +154,7 @@ public final class HttpCookie implements Cloneable {
 
     private HttpCookie(String name, String value, String header) {
         name = name.trim();
-        if (name.length() == 0 || !isToken(name) || isReserved(name)) {
+        if (name.length() == 0 || !isToken(name) || name.charAt(0) == '$') {
             throw new IllegalArgumentException("Illegal cookie name");
         }
 
@@ -905,32 +905,6 @@ public final class HttpCookie implements Cloneable {
                 return false;
         }
         return true;
-    }
-
-
-    /*
-     * @param name      the name to be tested
-     * @return          <tt>true</tt> if the name is reserved by cookie
-     *                  specification, <tt>false</tt> if it is not
-     */
-    private static boolean isReserved(String name) {
-        if (name.equalsIgnoreCase("Comment")
-            || name.equalsIgnoreCase("CommentURL")      // rfc2965 only
-            || name.equalsIgnoreCase("Discard")         // rfc2965 only
-            || name.equalsIgnoreCase("Domain")
-            || name.equalsIgnoreCase("Expires")         // netscape draft only
-            || name.equalsIgnoreCase("Max-Age")
-            || name.equalsIgnoreCase("Path")
-            || name.equalsIgnoreCase("Port")            // rfc2965 only
-            || name.equalsIgnoreCase("Secure")
-            || name.equalsIgnoreCase("Version")
-            || name.equalsIgnoreCase("HttpOnly")
-            || name.charAt(0) == '$')
-        {
-            return true;
-        }
-
-        return false;
     }
 
 
