@@ -59,8 +59,8 @@ final class LWTextAreaPeer
     }
 
     @Override
-    public void initialize() {
-        super.initialize();
+    void initializeImpl() {
+        super.initializeImpl();
         final int visibility = getTarget().getScrollbarVisibility();
         synchronized (getDelegateLock()) {
             setScrollBarVisibility(visibility);
@@ -126,16 +126,6 @@ final class LWTextAreaPeer
             }
         }
         repaintPeer();
-    }
-
-    @Override
-    public void setText(final String l) {
-        // Please note that we do not want to post an event
-        // if TextArea.setText() replaces an empty text by an empty text,
-        // that is, if component's text remains unchanged.
-        if (!l.isEmpty() || getTextComponent().getDocument().getLength() != 0) {
-            super.setText(l);
-        }
     }
 
     @Override
