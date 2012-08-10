@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 6948909
+# @bug 6948909 7083664
 # @summary Jarsigner removes MANIFEST.MF info for badly packages jar's
 #
 
@@ -46,21 +46,18 @@ case "$OS" in
     PS=":"
     FS="/"
     CP="${FS}bin${FS}cp -f"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     PS=";"
     FS="/"
     CP="cp -f"
-    TMP=/tmp
     ;;
   Windows_* )
     NULL=NUL
     PS=";"
     FS="\\"
     CP="cp -f"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized operating system!"
