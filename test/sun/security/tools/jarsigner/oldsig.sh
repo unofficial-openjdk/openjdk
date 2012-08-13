@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 6543940 6868865
+# @bug 6543940 6868865 7083664
 # @summary Exception thrown when signing a jarfile in java 1.5
 #
 # @run shell oldsig.sh
@@ -47,21 +47,18 @@ case "$OS" in
     PS=":"
     FS="/"
     CP="${FS}bin${FS}cp -f"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     PS=";"
     FS="/"
     CP="cp -f"
-    TMP=/tmp
     ;;
   Windows_* )
     NULL=NUL
     PS=";"
     FS="\\"
     CP="cp -f"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized operating system!"

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 4449491
+# @bug 4449491 7083664
 # @summary policytool should allow principal type to be empty
 #               (keystore alias substitution)
 #
@@ -51,13 +51,16 @@ case "$OS" in
     NULL=/dev/null
     PS=":"
     FS="/"
-    TMP=/tmp
     ;;
+  CYGWIN* )
+    NULL=/dev/null
+    PS=";"
+    FS="/"
+    ;;	
   Windows* )
     NULL=NUL
     PS=";"
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized system!"

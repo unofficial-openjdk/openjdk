@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2005, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 4906940
+# @bug 4906940 7083664
 # @summary Add -providerPath option for keytool allowing one to specify
 #          an additional classpath to search for providers.
 # @author Andrew Fan
@@ -50,19 +50,16 @@ case "$OS" in
     NULL=/dev/null
     PS=":"
     FS="/"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     PS=";"
     FS="/"
-    TMP=/tmp
     ;;
   Windows_* )
     NULL=NUL
     PS=";"
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized operating system!"
