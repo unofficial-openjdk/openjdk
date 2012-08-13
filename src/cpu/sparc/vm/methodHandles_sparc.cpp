@@ -698,6 +698,17 @@ void MethodHandles::insert_arg_slots(MacroAssembler* _masm,
   if (arg_slots.is_constant() && arg_slots.as_constant() == 0)
     return;
 
+  // We have to insert at least one word, so bang the stack.
+  if (UseStackBanging) {
+    // Save G3_method_handle since bang_stack_with_offset uses it as a temp register
+    __ mov(G3_method_handle, temp_reg);
+    int frame_size = (arg_slots.is_constant() ? -1 * arg_slots.as_constant() * wordSize : 0);
+    if (frame_size <= 0)
+      frame_size = 256 * Interpreter::stackElementSize;  // conservative
+    __ generate_stack_overflow_check(frame_size);
+    __ mov(temp_reg, G3_method_handle);
+  }
+
   assert_different_registers(argslot_reg, temp_reg, temp2_reg, temp3_reg,
                              (!arg_slots.is_register() ? Gargs : arg_slots.as_register()));
 
@@ -1702,6 +1713,14 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
                         "copied argument(s) must fall within current frame");
       }
 
+      if (UseStackBanging) {
+        // Save G3_method_handle since bang_stack_with_offset uses it as a temp register
+        __ mov(G3_method_handle, O3_scratch);
+         // Bang the stack before pushing args.
+        int frame_size = 256 * Interpreter::stackElementSize;  // conservative
+        __ generate_stack_overflow_check(frame_size + sizeof(RicochetFrame));
+        __ mov(O3_scratch, G3_method_handle);
+      }
       // insert location is always the bottom of the argument list:
       __ neg(O1_stack_move);
       push_arg_slots(_masm, O0_argslot, O1_stack_move, O2_scratch, O3_scratch);
@@ -2118,6 +2137,18 @@ void MethodHandles::generate_method_handle_stub(MacroAssembler* _masm, MethodHan
       // The return handler will further cut back the stack when it takes
       // down the RF.  Perhaps there is a way to streamline this further.
 
+      if (UseStackBanging) {
+        // Save G3_method_handle since bang_stack_with_offset uses it as a temp register
+        __ mov(G3_method_handle, O4_scratch);
+        // Bang the stack before recursive call.
+        // Even if slots == 0, we are inside a RicochetFrame.
+        int frame_size = collect_count.is_constant() ? collect_count.as_constant() * wordSize : -1;
+        if (frame_size < 0) {
+          frame_size = 256 * Interpreter::stackElementSize;  // conservative
+        }
+        __ generate_stack_overflow_check(frame_size + sizeof(RicochetFrame));
+        __ mov(O4_scratch, G3_method_handle);
+      }
       // State during recursive call:
       // ... keep1 | dest | dest=42 | keep3 | RF... | collect | bounce_pc |
       __ jump_to_method_handle_entry(G3_method_handle, O1_scratch);
