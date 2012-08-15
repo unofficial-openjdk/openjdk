@@ -400,7 +400,7 @@ TOOLS = \
 	sun/tools/jmap
 
 JFR_SRCDIRS_EXIST := $(shell \
-  if [ -d $(CLOSED_SHARE_SRC)/com/oracle/jrockit/jfr ] ; then \
+  if [ -d $(CLOSED_SHARE_SRC)/classes/com/oracle/jrockit/jfr ] ; then \
    echo true; \
   else \
    echo false; \
