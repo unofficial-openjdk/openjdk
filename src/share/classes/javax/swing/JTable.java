@@ -8588,7 +8588,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
              *    <code>null</code> if this object is not on the screen
              */
             public Point getLocationOnScreen() {
-                if (parent != null) {
+                if (parent != null && parent.isShowing()) {
                     Point parentLocation = parent.getLocationOnScreen();
                     Point componentLocation = getLocation();
                     componentLocation.translate(parentLocation.x, parentLocation.y);
@@ -9389,7 +9389,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
              *    <code>null</code> if this object is not on the screen
              */
             public Point getLocationOnScreen() {
-                if (parent != null) {
+                if (parent != null && parent.isShowing()) {
                     Point parentLocation = parent.getLocationOnScreen();
                     Point componentLocation = getLocation();
                     componentLocation.translate(parentLocation.x, parentLocation.y);
