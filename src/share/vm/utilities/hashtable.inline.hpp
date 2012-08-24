@@ -30,27 +30,6 @@
 
 // Inline function definitions for hashtable.hpp.
 
-
-// --------------------------------------------------------------------------
-// Hash function
-
-// We originally used hashpjw, but hash P(31) gives just as good results
-// and is slighly faster. We would like a hash function that looks at every
-// character, since package names have large common prefixes, and also because
-// hash_or_fail does error checking while iterating.
-
-// hash P(31) from Kernighan & Ritchie
-
-inline unsigned int Hashtable::hash_symbol(const char* s, int len) {
-  unsigned int h = 0;
-  while (len-- > 0) {
-    h = 31*h + (unsigned) *s;
-    s++;
-  }
-  return h;
-}
-
-
 // --------------------------------------------------------------------------
 
 // Initialize a table.

@@ -177,6 +177,11 @@ protected:
   void verify_lookup_length(double load);
 #endif
 
+  enum {
+    rehash_count = 100,
+    rehash_multiple = 60
+  };
+
   void initialize(int table_size, int entry_size, int number_of_entries);
 
   // Accessor
@@ -191,6 +196,29 @@ protected:
 
   // Table entry management
   BasicHashtableEntry* new_entry(unsigned int hashValue);
+
+  // Check that the table is unbalanced
+  bool check_rehash_table(int count);
+
+  // Used when moving the entry to another table
+  // Clean up links, but do not add to free_list
+  void unlink_entry(BasicHashtableEntry* entry) {
+    entry->set_next(NULL);
+    --_number_of_entries;
+  }
+
+  // Move over freelist and free block for allocation
+  void copy_freelist(BasicHashtable* src) {
+    _free_list = src->_free_list;
+    src->_free_list = NULL;
+    _first_free_entry = src->_first_free_entry;
+    src->_first_free_entry = NULL;
+    _end_block = src->_end_block;
+    src->_end_block = NULL;
+  }
+
+  // Free the buckets in this hashtable
+  void free_buckets();
 
 public:
   void set_entry(int index, BasicHashtableEntry* entry);
@@ -210,11 +238,11 @@ class Hashtable : public BasicHashtable {
 
 public:
   Hashtable(int table_size, int entry_size)
-    : BasicHashtable(table_size, entry_size) { }
+    : BasicHashtable(table_size, entry_size), _seed(0)  { }
 
   Hashtable(int table_size, int entry_size,
                    HashtableBucket* buckets, int number_of_entries)
-    : BasicHashtable(table_size, entry_size, buckets, number_of_entries) { }
+    : BasicHashtable(table_size, entry_size, buckets, number_of_entries), _seed(0) { }
 
   // Invoke "f->do_oop" on the locations of all oops in the table.
   void oops_do(OopClosure* f);
@@ -233,8 +261,6 @@ public:
   void reverse(void* boundary = NULL);
 
 protected:
-
-  static unsigned int hash_symbol(const char* s, int len);
 
   unsigned int compute_hash(symbolHandle name) {
     return (unsigned int) name->identity_hash();
@@ -256,6 +282,17 @@ protected:
   HashtableEntry** bucket_addr(int i) {
     return (HashtableEntry**)BasicHashtable::bucket_addr(i);
   }
+
+  // Function to move these elements into the new table.
+  void move_to(Hashtable* new_table);
+  bool use_alternate_hashcode()  { return _seed != 0; }
+  jint seed()                    { return _seed; }
+  void set_seed(jint seed)       { _seed = seed; }
+
+ private:
+  jint _seed;
+
+  unsigned int new_hash(oop string);
 };
 
 

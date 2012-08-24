@@ -40,6 +40,7 @@
 //  - symbolTableEntrys are allocated in blocks to reduce the space overhead.
 
 class BoolObjectClosure;
+class outputStream;
 
 
 class SymbolTable : public Hashtable {
@@ -49,10 +50,13 @@ private:
   // The symbol table
   static SymbolTable* _the_table;
 
+  // Set if one bucket is out of balance due to hash algorithm deficiency
+  static bool _needs_rehashing;
+
   // Adding elements
-  symbolOop basic_add(int index, u1* name, int len,
+  symbolOop basic_add(symbolHandle sym, int index, u1* name, int len,
                       unsigned int hashValue, TRAPS);
-  bool basic_add(constantPoolHandle cp, int names_count,
+  bool basic_add(symbolHandle* syms, constantPoolHandle cp, int names_count,
                  const char** names, int* lengths, int* cp_indices,
                  unsigned int* hashValues, TRAPS);
 
@@ -60,6 +64,8 @@ private:
   enum {
     symbol_table_size = 20011
   };
+
+  static unsigned int hash_symbol(const char* s, int len);
 
   symbolOop lookup(int index, const char* name, int len, unsigned int hash);
 
@@ -69,7 +75,6 @@ private:
   SymbolTable(HashtableBucket* t, int number_of_entries)
     : Hashtable(symbol_table_size, sizeof (HashtableEntry), t,
                 number_of_entries) {}
-
 
 public:
   enum {
@@ -137,6 +142,7 @@ public:
 
   // Debugging
   static void verify();
+  static void dump(outputStream* st);
 
   // Sharing
   static void copy_buckets(char** top, char*end) {
@@ -148,6 +154,10 @@ public:
   static void reverse(void* boundary = NULL) {
     ((Hashtable*)the_table())->reverse(boundary);
   }
+
+  // Rehash the symbol table if it gets out of balance
+  static void rehash_table();
+  static bool needs_rehashing()         { return _needs_rehashing; }
 };
 
 
@@ -158,8 +168,11 @@ private:
   // The string table
   static StringTable* _the_table;
 
+  // Set if one bucket is out of balance due to hash algorithm deficiency
+  static bool _needs_rehashing;
+
   static oop intern(Handle string_or_null, jchar* chars, int length, TRAPS);
-  oop basic_add(int index, Handle string_or_null, jchar* name, int len,
+  oop basic_add(int index, Handle string, jchar* name, int len,
                 unsigned int hashValue, TRAPS);
 
   // Table size
@@ -192,10 +205,6 @@ public:
     _the_table = new StringTable(t, number_of_entries);
   }
 
-
-  static int hash_string(jchar* s, int len);
-
-
   // GC support
   //   Delete pointers to otherwise-unreachable objects.
   static void unlink(BoolObjectClosure* cl) {
@@ -207,6 +216,14 @@ public:
     the_table()->Hashtable::oops_do(f);
   }
 
+  // Hashing algorithm, used as the hash value used by the
+  //     StringTable for bucket selection and comparison (stored in the
+  //     HashtableEntry structures).  This is used in the String.intern() method.
+  static unsigned int hash_string(const jchar* s, int len);
+
+  // Internal test.
+  static void test_alt_hash() PRODUCT_RETURN;
+
   // Probing
   static oop lookup(symbolOop symbol);
 
@@ -217,6 +234,7 @@ public:
 
   // Debugging
   static void verify();
+  static void dump(outputStream* st);
 
   // Sharing
   static void copy_buckets(char** top, char*end) {
@@ -228,6 +246,9 @@ public:
   static void reverse() {
     ((BasicHashtable*)the_table())->reverse();
   }
-};
 
+  // Rehash the symbol table if it gets out of balance
+  static void rehash_table();
+  static bool needs_rehashing() { return _needs_rehashing; }
+};
 #endif // SHARE_VM_CLASSFILE_SYMBOLTABLE_HPP

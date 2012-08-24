@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+/* * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +22,10 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/altHashing.hpp"
+#include "classfile/javaClasses.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/filemap.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/safepoint.hpp"
@@ -69,7 +71,6 @@ BasicHashtableEntry* BasicHashtable::new_entry(unsigned int hashValue) {
 
 HashtableEntry* Hashtable::new_entry(unsigned int hashValue, oop obj) {
   HashtableEntry* entry;
-
   entry = (HashtableEntry*)BasicHashtable::new_entry(hashValue);
   entry->set_literal(obj);   // clears literal string field
   HS_DTRACE_PROBE4(hs_private, hashtable__new_entry,
@@ -85,18 +86,24 @@ void Hashtable::unlink(BoolObjectClosure* is_alive) {
   // entries at a safepoint.
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
   for (int i = 0; i < table_size(); ++i) {
-    for (HashtableEntry** p = bucket_addr(i); *p != NULL; ) {
-      HashtableEntry* entry = *p;
-      if (entry->is_shared()) {
+    HashtableEntry** p = bucket_addr(i);
+    HashtableEntry* entry = bucket(i);
+    while (entry != NULL) {
+      // Shared entries are normally at the end of the bucket and if we run into
+      // a shared entry, then there is nothing more to remove. However, if we
+      // have rehashed the table, then the shared entries are no longer at the
+      // end of the bucket.
+      if (entry->is_shared() && !use_alternate_hashcode()) {
         break;
       }
       assert(entry->literal() != NULL, "just checking");
-      if (is_alive->do_object_b(entry->literal())) {
+      if (entry->is_shared() || is_alive->do_object_b(entry->literal())) {
         p = entry->next_addr();
       } else {
         *p = entry->next();
         free_entry(entry);
       }
+      entry = (HashtableEntry*)HashtableEntry::make_ptr(*p);
     }
   }
 }
@@ -119,6 +126,96 @@ void Hashtable::oops_do(OopClosure* f) {
       }
       entry = (HashtableEntry*)HashtableEntry::make_ptr(*p);
     }
+  }
+}
+
+
+// Check to see if the hashtable is unbalanced.  The caller set a flag to
+// rehash at the next safepoint.  If this bucket is 60 times greater than the
+// expected average bucket length, it's an unbalanced hashtable.
+// This is somewhat an arbitrary heuristic but if one bucket gets to
+// rehash_count which is currently 100, there's probably something wrong.
+
+bool BasicHashtable::check_rehash_table(int count) {
+  assert(table_size() != 0, "underflow");
+  if (count > (((double)number_of_entries()/(double)table_size())*rehash_multiple)) {
+    // Set a flag for the next safepoint, which should be at some guaranteed
+    // safepoint interval.
+    return true;
+  }
+  return false;
+}
+
+unsigned int Hashtable::new_hash(oop string) {
+  ResourceMark rm;
+  int length;
+  if (java_lang_String::is_instance(string)) {
+    jchar* chars = java_lang_String::as_unicode_string(string, length);
+    // Use alternate hashing algorithm on the string
+    return AltHashing::murmur3_32(seed(), chars, length);
+  } else {
+    // Use alternate hashing algorithm on this symbol.
+    symbolOop symOop = (symbolOop) string;
+    return AltHashing::murmur3_32(seed(), (const jbyte*)symOop->bytes(), symOop->utf8_length());
+  }
+}
+
+// Create a new table and using alternate hash code, populate the new table
+// with the existing elements.   This can be used to change the hash code
+// and could in the future change the size of the table.
+
+void Hashtable::move_to(Hashtable* new_table) {
+  // Initialize the global seed for hashing.
+  assert(new_table->seed() == 0, "should be zero");
+  _seed = AltHashing::compute_seed();
+  assert(seed() != 0, "shouldn't be zero");
+  new_table->set_seed(_seed);
+
+  int saved_entry_count = this->number_of_entries();
+  
+  // Iterate through the table and create a new entry for the new table
+  for (int i = 0; i < new_table->table_size(); ++i) {
+    for (HashtableEntry* p = bucket(i); p != NULL; ) {
+      HashtableEntry* next = p->next();
+      oop string = p->literal();
+      // Use alternate hashing algorithm on the symbol in the first table
+      unsigned int hashValue = new_hash(string);
+      // Get a new index relative to the new table (can also change size)
+      int index = new_table->hash_to_index(hashValue);
+      p->set_hash(hashValue);
+      // Keep the shared bit in the Hashtable entry to indicate that this entry
+      // can't be deleted.   The shared bit is the LSB in the _next field so
+      // walking the hashtable past these entries requires
+      // BasicHashtableEntry::make_ptr() call.
+      bool keep_shared = p->is_shared();
+      unlink_entry(p);
+      new_table->add_entry(index, p);
+      if (keep_shared) {
+        p->set_shared();
+      }
+      p = next;
+    }
+  }
+  // give the new table the free list as well
+  new_table->copy_freelist(this);
+  assert(new_table->number_of_entries() == saved_entry_count, "lost entry on dictionary copy?");
+
+  // Destroy memory used by the buckets in the hashtable.  The memory
+  // for the elements has been used in a new table and is not
+  // destroyed.  The memory reuse will benefit resizing the SystemDictionary
+  // to avoid a memory allocation spike at safepoint.
+  free_buckets();
+}
+
+void BasicHashtable::free_buckets() {
+  if (NULL != _buckets) {
+    // Don't delete the buckets in the shared space.  They aren't
+    // allocated by os::malloc
+    if (!UseSharedSpaces ||
+        !FileMapInfo::current_info()->is_in_shared_space(_buckets)) {
+       FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
+    }
+    _buckets = NULL;
   }
 }
 
