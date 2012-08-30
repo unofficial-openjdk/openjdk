@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,7 +179,7 @@ class UnixPath
     }
 
     // use this message when throwing exceptions
-    String getPathForExecptionMessage() {
+    String getPathForExceptionMessage() {
         return toString();
     }
 
@@ -767,8 +767,11 @@ class UnixPath
     // package-private
     int openForAttributeAccess(boolean followLinks) throws IOException {
         int flags = O_RDONLY;
-        if (!followLinks)
+        if (!followLinks) {
+            if (!supportsNoFollowLinks())
+                throw new IOException("NOFOLLOW_LINKS is not supported on this platform");
             flags |= O_NOFOLLOW;
+        }
         try {
             return open(this, flags, 0);
         } catch (UnixException x) {
@@ -777,7 +780,7 @@ class UnixPath
                 x.setError(ELOOP);
 
             if (x.errno() == ELOOP)
-                throw new FileSystemException(getPathForExecptionMessage(), null,
+                throw new FileSystemException(getPathForExceptionMessage(), null,
                     x.getMessage() + " or unable to access attributes of symbolic link");
 
             x.rethrowAsIOException(this);
