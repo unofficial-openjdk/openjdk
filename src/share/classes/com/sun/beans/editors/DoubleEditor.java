@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,19 @@
  * questions.
  */
 
-package sun.beans.editors;
+package com.sun.beans.editors;
 
 /**
- * FOR BACKWARD COMPATIBILITY ONLY - DO NOT USE.
+ * Property editor for a java builtin "double" type.
+ *
  */
-public class FontEditor extends com.sun.beans.editors.FontEditor {
+
+import java.beans.*;
+
+public class DoubleEditor extends NumberEditor {
+
+    public void setAsText(String text) throws IllegalArgumentException {
+        setValue((text == null) ? null : Double.valueOf(text));
+    }
+
 }
