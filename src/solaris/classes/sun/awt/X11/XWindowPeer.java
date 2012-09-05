@@ -1164,15 +1164,25 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
     }
 
     public void dispose() {
+        if (isGrabbed()) {
+            if (grabLog.isLoggable(PlatformLogger.FINE)) {
+                grabLog.fine("Generating UngrabEvent on {0} because of the window disposal", this);
+            }
+            postEventToEventQueue(new sun.awt.UngrabEvent(getEventSource()));
+        }
+
         SunToolkit.awtLock();
+
         try {
             windows.remove(this);
         } finally {
             SunToolkit.awtUnlock();
         }
+
         if (warningWindow != null) {
             warningWindow.destroy();
         }
+
         removeRootPropertyEventDispatcher();
         mustControlStackPosition = false;
         super.dispose();
@@ -1190,6 +1200,7 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
             }
         }
     }
+
     boolean isResizable() {
         return winAttr.isResizable;
     }
