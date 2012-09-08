@@ -474,9 +474,6 @@ java/rmi/activation/Activatable/forceLogSnapshot/ForceLogSnapshot.java  generic-
 # Registry already running on port, solaris
 java/rmi/Naming/legalRegistryNames/LegalRegistryNames.java      generic-all
 
-# Fails on Linux 32 and 64bit -server?, impl not garbage collected???
-java/rmi/transport/pinLastArguments/PinLastArguments.java       generic-all
-
 # 7146541
 java/rmi/transport/rapidExportUnexport/RapidExportUnexport.java	linux-all
 
