@@ -222,11 +222,13 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   );
 
   void set_method_handle(
+    constantPoolHandle cpool,                    // holding constant pool (required for locking)
     methodHandle method,                         // adapter for invokeExact, etc.
     Handle appendix                              // stored in f1; could be a java.lang.invoke.MethodType
   );
 
   void set_dynamic_call(
+    constantPoolHandle cpool,                    // holding constant pool (required for locking)
     methodHandle method,                         // adapter for this call site
     Handle appendix                              // stored in f1; could be a java.lang.invoke.CallSite
   );
@@ -247,6 +249,7 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   // resolution logic needs to make slightly different assessments about the
   // number and types of arguments.
   void set_method_handle_common(
+    constantPoolHandle cpool,                    // holding constant pool (required for locking)
     Bytecodes::Code invoke_code,                 // _invokehandle or _invokedynamic
     methodHandle adapter,                        // invoker method (f2)
     Handle appendix                              // appendix such as CallSite, MethodType, etc. (f1)
