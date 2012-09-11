@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,11 +39,17 @@ import java.io.IOException;
 import java.rmi.MarshalledObject;
 import java.rmi.UnmarshalException;
 import java.rmi.server.Unreferenced;
+
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.Permission;
+import java.security.PermissionCollection;
+import java.security.Permissions;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.ProtectionDomain;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -60,6 +66,7 @@ import javax.management.ListenerNotFoundException;
 import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanRegistrationException;
+import javax.management.MBeanPermission;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.NotificationFilter;
@@ -143,6 +150,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         this.mbeanServer = rmiServer.getMBeanServer();
 
         final ClassLoader dcl = defaultClassLoader;
+
         this.classLoaderWithRepository =
             AccessController.doPrivileged(
                 new PrivilegedAction<ClassLoaderWithRepository>() {
@@ -151,11 +159,27 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                                       mbeanServer.getClassLoaderRepository(),
                                       dcl);
                     }
-                });
+                },
+
+                withPermissions( new MBeanPermission("*", "getClassLoaderRepository"),
+                                 new RuntimePermission("createClassLoader"))
+            );
+
         serverCommunicatorAdmin = new
           RMIServerCommunicatorAdmin(EnvHelp.getServerConnectionTimeout(env));
 
         this.env = env;
+    }
+
+    private static AccessControlContext withPermissions(Permission ... perms){
+        Permissions col = new Permissions();
+
+        for (Permission thePerm : perms ) {
+            col.add(thePerm);
+        }
+
+        final ProtectionDomain pd = new ProtectionDomain(null, col);
+        return new AccessControlContext( new ProtectionDomain[] { pd });
     }
 
     private synchronized ServerNotifForwarder getServerNotifFwd() {
@@ -1330,7 +1354,9 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                         public ClassLoader run() throws InstanceNotFoundException {
                             return mbeanServer.getClassLoader(name);
                         }
-                    });
+                    },
+                    withPermissions(new MBeanPermission("*", "getClassLoader"))
+            );
         } catch (PrivilegedActionException pe) {
             throw (InstanceNotFoundException) extractException(pe);
         }
@@ -1345,7 +1371,9 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                         public Object run() throws InstanceNotFoundException {
                             return mbeanServer.getClassLoaderFor(name);
                         }
-                    });
+                    },
+                    withPermissions(new MBeanPermission("*", "getClassLoaderFor"))
+            );
         } catch (PrivilegedActionException pe) {
             throw (InstanceNotFoundException) extractException(pe);
         }
