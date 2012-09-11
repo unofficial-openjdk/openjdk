@@ -364,19 +364,21 @@ public abstract class Configuration {
             if (opt.equals("-d")) {
                 destDirName = addTrailingFileSep(os[1]);
                 docFileDestDirName = destDirName;
-            } else  if (opt.equals("-docfilessubdirs")) {
+            } else if (opt.equals("-docfilessubdirs")) {
                 copydocfilesubdirs = true;
-            } else  if (opt.equals("-docencoding")) {
+            } else if (opt.equals("-docencoding")) {
                 docencoding = os[1];
-            } else  if (opt.equals("-encoding")) {
+            } else if (opt.equals("-encoding")) {
                 encoding = os[1];
-            } else  if (opt.equals("-author")) {
+            } else if (opt.equals("-author")) {
                 showauthor = true;
-            } else  if (opt.equals("-version")) {
+            } else if (opt.equals("-nosince")) {
+                nosince = true;
+            } else if (opt.equals("-version")) {
                 showversion = true;
-            } else  if (opt.equals("-nodeprecated")) {
+            } else if (opt.equals("-nodeprecated")) {
                 nodeprecated = true;
-            } else  if (opt.equals("-sourcepath")) {
+            } else if (opt.equals("-sourcepath")) {
                 sourcepath = os[1];
             } else if (opt.equals("-classpath") &&
                        sourcepath.length() == 0) {
@@ -400,17 +402,17 @@ public abstract class Configuration {
                     message.warning("doclet.sourcetab_warning");
                     sourcetab = DocletConstants.DEFAULT_TAB_STOP_LENGTH;
                 }
-            } else  if (opt.equals("-notimestamp")) {
+            } else if (opt.equals("-notimestamp")) {
                 notimestamp = true;
-            } else  if (opt.equals("-nocomment")) {
+            } else if (opt.equals("-nocomment")) {
                 nocomment = true;
             } else if (opt.equals("-tag") || opt.equals("-taglet")) {
                 customTagStrs.add(os);
             } else if (opt.equals("-tagletpath")) {
                 tagletpath = os[1];
-            } else  if (opt.equals("-keywords")) {
+            } else if (opt.equals("-keywords")) {
                 keywords = true;
-            } else  if (opt.equals("-serialwarn")) {
+            } else if (opt.equals("-serialwarn")) {
                 serialwarn = true;
             } else if (opt.equals("-group")) {
                 group.checkPackageGroups(os[1], os[2]);
