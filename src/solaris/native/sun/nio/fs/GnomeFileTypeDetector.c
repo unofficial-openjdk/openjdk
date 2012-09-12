@@ -30,15 +30,12 @@
 
 #include <stdlib.h>
 #include <dlfcn.h>
-#ifndef __APPLE__
-#include <link.h>
-#endif
 
 #ifdef __solaris__
 #include <strings.h>
 #endif
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__)
 #include <string.h>
 #endif
 
