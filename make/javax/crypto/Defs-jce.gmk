@@ -31,7 +31,7 @@ include $(BUILDDIR)/common/Release.gmk
 JCE_MANIFEST_FILE    = $(TEMPDIR)/manifest.mf
 $(JCE_MANIFEST_FILE): $(MAINMANIFEST)
 	$(prep-target)
-	$(SED) -e "s#@@RELEASE@@#$(RELEASE)#"           \
+	$(SED) -e "s#@@RELEASE@@#$(JDK_VERSION)#"       \
                -e "s#@@COMPANY_NAME@@#$(COMPANY_NAME)#" \
                $(MAINMANIFEST) >> $@
 	$(ECHO) "Extension-Name: javax.crypto" >> $@
