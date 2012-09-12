@@ -330,7 +330,7 @@ public class MToolkit extends UNIXToolkit implements Runnable {
         return null;
     }
 
-    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) {
+    public KeyboardFocusManagerPeer getKeyboardFocusManagerPeer() {
         return null;
     }
 

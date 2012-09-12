@@ -56,7 +56,6 @@ import java.util.WeakHashMap;
 import sun.util.logging.PlatformLogger;
 
 import sun.awt.AppContext;
-import sun.awt.HeadlessToolkit;
 import sun.awt.SunToolkit;
 import sun.awt.CausedFocusEvent;
 import sun.awt.KeyboardFocusManagerPeerProvider;
@@ -456,7 +455,7 @@ public abstract class KeyboardFocusManager
     private void initPeer() {
         Toolkit tk = Toolkit.getDefaultToolkit();
         KeyboardFocusManagerPeerProvider peerProvider = (KeyboardFocusManagerPeerProvider)tk;
-        peer = peerProvider.createKeyboardFocusManagerPeer(this);
+        peer = peerProvider.getKeyboardFocusManagerPeer();
     }
 
     /**
