@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.util.concurrent.Callable;
 import sun.awt.*;
 import sun.lwawt.*;
 import sun.lwawt.LWWindowPeer.PeerType;
+import sun.security.action.GetBooleanAction;
 
 
 class NamedCursor extends Cursor {
@@ -88,14 +89,6 @@ public class LWCToolkit extends LWToolkit {
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
-    }
-
-    static String getSystemProperty(final String name, final String deflt) {
-        return AccessController.doPrivileged (new PrivilegedAction<String>() {
-            public String run() {
-                return System.getProperty(name, deflt);
-            }
-        });
     }
 
     public LWCToolkit() {
@@ -709,8 +702,8 @@ public class LWCToolkit extends LWToolkit {
      */
     public synchronized static boolean getSunAwtDisableCALayers() {
         if (sunAwtDisableCALayers == null) {
-            sunAwtDisableCALayers =
-            getBooleanSystemProperty("sun.awt.disableCALayers");
+            sunAwtDisableCALayers = AccessController.doPrivileged(
+                new GetBooleanAction("sun.awt.disableCALayers"));
         }
         return sunAwtDisableCALayers.booleanValue();
     }
