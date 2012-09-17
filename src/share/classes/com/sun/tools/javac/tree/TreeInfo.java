@@ -247,7 +247,7 @@ public class TreeInfo {
             JCTry t = (JCTry) tree;
             return endPos((t.finalizer != null)
                           ? t.finalizer
-                          : t.catchers.last().body);
+                          : (t.catchers.isEmpty()? t.body : t.catchers.last().body));
         } else
             return tree.pos;
     }
