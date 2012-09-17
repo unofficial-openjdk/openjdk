@@ -458,7 +458,7 @@ public abstract class KeyboardFocusManager
     private void initPeer() {
         Toolkit tk = Toolkit.getDefaultToolkit();
         KeyboardFocusManagerPeerProvider peerProvider = (KeyboardFocusManagerPeerProvider)tk;
-        peer = peerProvider.createKeyboardFocusManagerPeer(this);
+        peer = peerProvider.getKeyboardFocusManagerPeer();
     }
 
     /**

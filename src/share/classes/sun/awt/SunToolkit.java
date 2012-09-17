@@ -196,7 +196,7 @@ public abstract class SunToolkit extends Toolkit
     public abstract RobotPeer createRobot(Robot target, GraphicsDevice screen)
         throws AWTException;
 
-    public abstract KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager)
+    public abstract KeyboardFocusManagerPeer getKeyboardFocusManagerPeer()
         throws HeadlessException;
 
     /**
@@ -505,15 +505,19 @@ public abstract class SunToolkit extends Toolkit
             // Don't call flushPendingEvents() recursively
             if (!isFlushingPendingEvents) {
                 isFlushingPendingEvents = true;
-                AppContext appContext = AppContext.getAppContext();
-                PostEventQueue postEventQueue =
-                    (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
-                if (postEventQueue != null) {
-                    postEventQueue.flush();
+                try {
+                    AppContext appContext = AppContext.getAppContext();
+                    PostEventQueue postEventQueue =
+                        (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
+                    if (postEventQueue != null) {
+                        postEventQueue.flush();
+                    }
+                }
+                finally {
+                    isFlushingPendingEvents = false;
                 }
             }
         } finally {
-            isFlushingPendingEvents = false;
             flushLock.unlock();
         }
     }
