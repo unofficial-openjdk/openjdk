@@ -21,23 +21,41 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 7177216
+ * @bug 7177216 7199153
  * @summary resulting file of native2ascii should have normal permission
  */
 
 import java.io.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
 import sun.tools.native2ascii.Main;
 
 public class Permission {
 
     private static void cleanup(String... fnames) throws Throwable {
         for (String fname : fnames) {
-            Files.deleteIfExists(Paths.get(fname)); 
+            File f = new File(fname);
+            if (f.exists())
+                f.delete();
         }
+    }
+
+    private static String permission(String fname) throws Throwable {
+        Process p = Runtime.getRuntime().exec("ls -l " + fname);
+        InputStream is = null;
+        String ret = null;
+        if (p != null && (is = p.getInputStream()) != null) {
+            p.waitFor();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "ISO-8859-1"));
+            try {
+                ret = br.readLine();
+                if (ret != null)
+                    ret = ret.split(" ")[0];
+            } finally {
+                br.close();
+            }
+        }
+        return ret;
     }
 
     public static void realMain(String[] args) throws Throwable {
@@ -47,21 +65,22 @@ public class Permission {
 
             cleanup(src, dst);
             try {
-                try (FileOutputStream fos = new FileOutputStream(src)) {
+                FileOutputStream fos = new FileOutputStream(src);
+                try {
                     fos.write('a'); fos.write('b'); fos.write('c');
+                } finally {
+                    fos.close();
                 }
                 String[] n2aArgs = new String[] {"-encoding", "utf8", src, dst};
                 if (!new Main().convert(n2aArgs)) {
                     fail("n2a failed.");
                 }
-                equal(Files.getPosixFilePermissions(Paths.get(src)),
-                      Files.getPosixFilePermissions(Paths.get(dst)));
+                equal(permission(src), permission(dst));
                 String[] a2nArgs = new String[] {"-reverse", "-encoding", "utf8", dst, src};
                 if (!new Main().convert(a2nArgs)) {
                     fail("a2n failed.");
                 }
-                equal(Files.getPosixFilePermissions(Paths.get(src)),
-                      Files.getPosixFilePermissions(Paths.get(dst)));
+                equal(permission(src), permission(dst));
             } finally {
                 cleanup(src, dst);
             }

@@ -23,48 +23,76 @@
 
 /**
  * @test
- * @bug 7175845
+ * @bug 7175845 7199153
  * @summary jar -uf should not change file permission
  */
 
 import java.io.*;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.Set;
 import sun.tools.jar.Main;
 
 public class UpdateJar {
 
-    private static void cleanup(String... fnames) throws Throwable {
-        for (String fname : fnames) {
-            Files.deleteIfExists(Paths.get(fname)); 
+    private static void cleanup(File f) throws Throwable {
+        if (f.exists())
+            f.delete();
+    }
+
+    private static String permission(String fname) throws Throwable {
+        Process p = Runtime.getRuntime().exec("ls -l " + fname);
+        InputStream is = null;
+        String ret = null;
+        if (p != null && (is = p.getInputStream()) != null) {
+            p.waitFor();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, "ISO-8859-1"));
+            try {
+                ret = br.readLine();
+                if (ret != null)
+                    ret = ret.split(" ")[0];
+            } finally {
+                br.close();
+            }
         }
+        return ret;
     }
 
     public static void realMain(String[] args) throws Throwable {
         if (!System.getProperty("os.name").startsWith("Windows")) {
-            String jar = "testUpdateJar.jar";
-            String e0  = "testUpdateJar_entry0.txt";
-            String e1  = "testUpdateJar_entry1.txt";
-            cleanup(jar, e0, e1);
+            String jarName = "testUpdateJar.jar";
+            String e0Name = "testUpdateJar_entry0.txt";
+            String e1Name = "testUpdateJar_entry1.txt";
+
+            File jar = new File(jarName);
+            File e0 = new File(e0Name);
+            File e1 = new File(e1Name);
             try {
-                try (FileOutputStream fos0 = new FileOutputStream(e0);
-                     FileOutputStream fos1 = new FileOutputStream(e1)) {
-                    fos0.write(0);
-                    fos1.write(0);
-                }
-                String[] jarArgs = new String[] {"cfM0", jar, e0};
+                cleanup(jar);
+                cleanup(e0);
+                cleanup(e1);
+
+                FileOutputStream fos = new FileOutputStream(e0Name);
+                fos.write(0);
+                fos.close();
+
+                fos = new FileOutputStream(e1Name);
+                fos.write(0);
+                fos.close();
+
+                String[] jarArgs = new String[] {"cfM0", jarName, e0Name};
                 if (!new Main(System.out, System.err, "jar").run(jarArgs)) {
                     fail("Could not create jar file.");
                 }
-                Set<PosixFilePermission> pm = Files.getPosixFilePermissions(Paths.get(jar));
-                jarArgs = new String[] {"uf", jar, e1};
+                String pm = permission(jarName);
+                jarArgs = new String[] {"uf", jarName, e1Name};
                 if (!new Main(System.out, System.err, "jar").run(jarArgs)) {
                     fail("Could not create jar file.");
                 }
-                equal(pm, Files.getPosixFilePermissions(Paths.get(jar)));
+                equal(pm, permission(jarName));
+
             } finally {
-                cleanup(jar, e0, e1);
+                cleanup(jar);
+                cleanup(e0);
+                cleanup(e1);
+
             }
         }
     }
@@ -84,4 +112,3 @@ public class UpdateJar {
         System.out.println("\nPassed = " + passed + " failed = " + failed);
         if (failed > 0) throw new AssertionError("Some tests failed");}
 }
-
