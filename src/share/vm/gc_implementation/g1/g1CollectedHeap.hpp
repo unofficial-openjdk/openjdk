@@ -1878,9 +1878,7 @@ public:
     if (word_sz * 100 < gclab_word_size * ParallelGCBufferWastePct) {
       G1ParGCAllocBuffer* alloc_buf = alloc_buffer(purpose);
       add_to_alloc_buffer_waste(alloc_buf->words_remaining());
-      alloc_buf->flush_stats_and_retire(_g1h->stats_for_purpose(purpose),
-                                        false /* end_of_gc */,
-                                        false /* retain */);
+      alloc_buf->retire(false /* end_of_gc */, false /* retain */);
 
       HeapWord* buf = _g1h->par_allocate_during_gc(purpose, gclab_word_size);
       if (buf == NULL) return NULL; // Let caller handle allocation failure.
