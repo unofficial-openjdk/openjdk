@@ -161,8 +161,10 @@ void CodeBlob::trace_new_stub(CodeBlob* stub, const char* name1, const char* nam
     assert(strlen(name1) + strlen(name2) < sizeof(stub_id), "");
     jio_snprintf(stub_id, sizeof(stub_id), "%s%s", name1, name2);
     if (PrintStubCode) {
+      ttyLocker ttyl;
       tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, (intptr_t) stub);
       Disassembler::decode(stub->code_begin(), stub->code_end());
+      tty->cr();
     }
     Forte::register_stub(stub_id, stub->code_begin(), stub->code_end());
 
@@ -547,6 +549,7 @@ void RuntimeStub::verify() {
 }
 
 void RuntimeStub::print_on(outputStream* st) const {
+  ttyLocker ttyl;
   CodeBlob::print_on(st);
   st->print("Runtime Stub (" INTPTR_FORMAT "): ", this);
   st->print_cr(name());
@@ -562,6 +565,7 @@ void SingletonBlob::verify() {
 }
 
 void SingletonBlob::print_on(outputStream* st) const {
+  ttyLocker ttyl;
   CodeBlob::print_on(st);
   st->print_cr(name());
   Disassembler::decode((CodeBlob*)this, st);
