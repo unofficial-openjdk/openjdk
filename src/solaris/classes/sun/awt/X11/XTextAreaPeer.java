@@ -168,6 +168,8 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
     public void dispose() {
         XToolkit.specialPeerMap.remove(jtext);
+        // visible caret has a timer thread which must be stopped
+        jtext.getCaret().setVisible(false);
         jtext.removeNotify();
         textPane.removeNotify();
         super.dispose();
@@ -651,10 +653,13 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
     }
 
 
-    // TODO : fix this duplicate code
-    class XAWTCaret extends DefaultCaret {
+    static class XAWTCaret extends DefaultCaret {
         public void focusGained(FocusEvent e) {
             super.focusGained(e);
+            if (getComponent().isEnabled()){
+                // Make sure the cursor is visible in case of non-editable TextArea
+                super.setVisible(true);
+            }
             getComponent().repaint();
         }
 
@@ -1006,8 +1011,10 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         // loading SystemFlavorMap and associated classes.
         public void setTransferHandler(TransferHandler newHandler) {
             TransferHandler oldHandler = (TransferHandler)
-                getClientProperty(XTextTransferHelper.getTransferHandlerKey());
-            putClientProperty(XTextTransferHelper.getTransferHandlerKey(),
+                getClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
+                                      .getJComponent_TRANSFER_HANDLER());
+            putClientProperty(AWTAccessor.getClientPropertyKeyAccessor()
+                                  .getJComponent_TRANSFER_HANDLER(),
                               newHandler);
 
             firePropertyChange("transferHandler", oldHandler, newHandler);
