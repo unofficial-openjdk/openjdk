@@ -654,14 +654,14 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       const TypeTuple *domain = StartOSRNode::osr_domain();
       const TypeTuple *range = TypeTuple::make_range(method()->signature());
       init_tf(TypeFunc::make(domain, range));
-      StartNode* s = new (this, 2) StartOSRNode(root(), domain);
+      StartNode* s = new (this) StartOSRNode(root(), domain);
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       cg = CallGenerator::for_osr(method(), entry_bci());
     } else {
       // Normal case.
       init_tf(TypeFunc::make(method()));
-      StartNode* s = new (this, 2) StartNode(root(), tf()->domain());
+      StartNode* s = new (this) StartNode(root(), tf()->domain());
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       if (method()->intrinsic_id() == vmIntrinsics::_Reference_get && UseG1GC) {
@@ -958,9 +958,9 @@ void Compile::Init(int aliaslevel) {
   // Globally visible Nodes
   // First set TOP to NULL to give safe behavior during creation of RootNode
   set_cached_top_node(NULL);
-  set_root(new (this, 3) RootNode());
+  set_root(new (this) RootNode());
   // Now that you have a Root to point to, create the real TOP
-  set_cached_top_node( new (this, 1) ConNode(Type::TOP) );
+  set_cached_top_node( new (this) ConNode(Type::TOP) );
   set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
@@ -2356,7 +2356,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         if (nn != NULL) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
-          nn = new (C,  2) DecodeNNode(nn, t);
+          nn = new (C) DecodeNNode(nn, t);
           n->set_req(AddPNode::Base, nn);
           n->set_req(AddPNode::Address, nn);
           if (addp->outcnt() == 0) {
@@ -2474,7 +2474,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         }
       }
       if (new_in2 != NULL) {
-        Node* cmpN = new (C, 3) CmpNNode(in1->in(1), new_in2);
+        Node* cmpN = new (C) CmpNNode(in1->in(1), new_in2);
         n->subsume_by( cmpN );
         if (in1->outcnt() == 0) {
           in1->disconnect_inputs(NULL);
@@ -2570,8 +2570,8 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           n->subsume_by(divmod->mod_proj());
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulINode(d, d->in(2));
-          Node* sub  = new (C, 3) SubINode(d->in(1), mult);
+          Node* mult = new (C) MulINode(d, d->in(2));
+          Node* sub  = new (C) SubINode(d->in(1), mult);
           n->subsume_by( sub );
         }
       }
@@ -2591,8 +2591,8 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           n->subsume_by(divmod->mod_proj());
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulLNode(d, d->in(2));
-          Node* sub  = new (C, 3) SubLNode(d->in(1), mult);
+          Node* mult = new (C) MulLNode(d, d->in(2));
+          Node* sub  = new (C) SubLNode(d->in(1), mult);
           n->subsume_by( sub );
         }
       }
@@ -2643,7 +2643,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       } else {
         if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
           Compile* C = Compile::current();
-          Node* shift = new (C, 3) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
+          Node* shift = new (C) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
           n->set_req(2, shift);
         }
       }
