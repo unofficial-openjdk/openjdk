@@ -349,7 +349,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
     private HttpClient reuseClient = null;
 
     /* Tunnel states */
-    enum TunnelState {
+    public enum TunnelState {
         /* No tunnel */
         NONE,
 
@@ -1739,7 +1739,7 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
      *
      * @param  the state
      */
-    void setTunnelState(TunnelState tunnelState) {
+    public void setTunnelState(TunnelState tunnelState) {
         this.tunnelState = tunnelState;
     }
 
