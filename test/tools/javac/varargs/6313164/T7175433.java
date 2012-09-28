@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,39 @@
  * questions.
  */
 
-// key: compiler.misc.kindname.constructor
-// key: compiler.misc.kindname.class
-// key: compiler.err.cant.apply.symbol.1
-// key: compiler.misc.no.conforming.assignment.exists
-// key: compiler.misc.inconvertible.types
-// key: compiler.misc.count.error
-// key: compiler.err.error
-// run: backdoor
+/*
+ * @test
+ * @bug 7175433 6313164
+ * @summary Inference cleanup: add helper class to handle inference variables
+ *
+ */
 
-class KindnameConstructor {
+import java.util.List;
 
-    KindnameConstructor(Integer x) {}
+class Bar {
 
-    void m() {
-        new KindnameConstructor(""){};
+    private class Foo { }
+
+    <Z> List<Z> m(Object... o) { T7175433.assertTrue(true); return null; }
+    <Z> List<Z> m(Foo... o) { T7175433.assertTrue(false); return null; }
+
+    Foo getFoo() { return null; }
+}
+
+public class T7175433 {
+
+    static int assertionCount;
+
+    static void assertTrue(boolean b) {
+        assertionCount++;
+        if (!b) {
+            throw new AssertionError();
+        }
+    }
+
+    public static void main(String[] args) {
+        Bar b = new Bar();
+        b.m(b.getFoo());
+        assertTrue(assertionCount == 1);
     }
 }

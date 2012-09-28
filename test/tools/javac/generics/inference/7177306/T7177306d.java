@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,33 @@
  * questions.
  */
 
-// key: compiler.misc.kindname.constructor
-// key: compiler.misc.kindname.class
-// key: compiler.err.cant.apply.symbol.1
-// key: compiler.misc.no.conforming.assignment.exists
-// key: compiler.misc.inconvertible.types
-// key: compiler.misc.count.error
-// key: compiler.err.error
-// run: backdoor
+/*
+ * @test
+ * @bug 7177306
+ * @summary Regression: unchecked method call does not erase return type
+ */
+import java.util.List;
 
-class KindnameConstructor {
+public class T7177306d {
 
-    KindnameConstructor(Integer x) {}
+    static int assertionCount = 0;
 
-    void m() {
-        new KindnameConstructor(""){};
+    static void assertTrue(boolean cond) {
+        if (!cond) {
+            throw new AssertionError();
+        }
+        assertionCount++;
+    }
+
+    static <T, S extends List<T>> void m(List<? super T> arg1, S arg2, Class<Object> arg3) { assertTrue(false); }
+    static void m(Object o1, Object o2, Object o3) { assertTrue(true); }
+
+    static void test(List<Integer> li, List<String> ls, Class c) {
+        m(li, ls, c);
+    }
+
+    public static void main(String[] args) {
+        test(null, null, null);
+        assertTrue(assertionCount == 1);
     }
 }

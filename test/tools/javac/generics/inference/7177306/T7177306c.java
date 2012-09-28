@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,18 @@
  * questions.
  */
 
-// key: compiler.misc.kindname.constructor
-// key: compiler.misc.kindname.class
-// key: compiler.err.cant.apply.symbol.1
-// key: compiler.misc.no.conforming.assignment.exists
-// key: compiler.misc.inconvertible.types
-// key: compiler.misc.count.error
-// key: compiler.err.error
-// run: backdoor
+/*
+ * @test
+ * @bug 7177306
+ * @summary Regression: unchecked method call does not erase return type
+ */
+public class T7177306c {
 
-class KindnameConstructor {
+    static <T> T m(T t) { return (T)"Null"; }
 
-    KindnameConstructor(Integer x) {}
-
-    void m() {
-        new KindnameConstructor(""){};
+    public static void main(String[] args) {
+        if (m("NonNullConst") != "Null") {
+            throw new AssertionError("should not get there!");
+        }
     }
 }

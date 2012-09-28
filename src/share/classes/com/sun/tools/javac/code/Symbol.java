@@ -168,6 +168,10 @@ public abstract class Symbol implements Element {
         return owner;
     }
 
+    public Symbol baseSymbol() {
+        return this;
+    }
+
     /** The symbol's erased type.
      */
     public Type erasure(Types types) {
@@ -1068,6 +1072,10 @@ public abstract class Symbol implements Element {
             }
         }
 
+        public boolean isDynamic() {
+            return false;
+        }
+
         /** find a symbol that this (proxy method) symbol implements.
          *  @param    c       The class whose members are searched for
          *                    implementations
@@ -1353,6 +1361,27 @@ public abstract class Symbol implements Element {
 
         public List<Type> getThrownTypes() {
             return asType().getThrownTypes();
+        }
+    }
+
+    /** A class for invokedynamic method calls.
+     */
+    public static class DynamicMethodSymbol extends MethodSymbol {
+
+        public Object[] staticArgs;
+        public Symbol bsm;
+        public int bsmKind;
+
+        public DynamicMethodSymbol(Name name, Symbol owner, int bsmKind, MethodSymbol bsm, Type type, Object[] staticArgs) {
+            super(0, name, type, owner);
+            this.bsm = bsm;
+            this.bsmKind = bsmKind;
+            this.staticArgs = staticArgs;
+        }
+
+        @Override
+        public boolean isDynamic() {
+            return true;
         }
     }
 

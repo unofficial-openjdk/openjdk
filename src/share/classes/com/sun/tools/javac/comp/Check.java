@@ -40,6 +40,8 @@ import com.sun.tools.javac.code.Lint;
 import com.sun.tools.javac.code.Lint.LintCategory;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.comp.Infer.InferenceContext;
+import com.sun.tools.javac.comp.Infer.InferenceContext.FreeTypeListener;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.ANNOTATION;
@@ -429,6 +431,8 @@ public class Check {
          * Obtain a warner for this check context
          */
         public Warner checkWarner(DiagnosticPosition pos, Type found, Type req);
+
+        public Infer.InferenceContext inferenceContext();
     }
 
     /**
@@ -455,6 +459,10 @@ public class Check {
         public Warner checkWarner(DiagnosticPosition pos, Type found, Type req) {
             return enclosingContext.checkWarner(pos, found, req);
         }
+
+        public Infer.InferenceContext inferenceContext() {
+            return enclosingContext.inferenceContext();
+        }
     }
 
     /**
@@ -471,6 +479,10 @@ public class Check {
         public Warner checkWarner(DiagnosticPosition pos, Type found, Type req) {
             return convertWarner(pos, found, req);
         }
+
+        public InferenceContext inferenceContext() {
+            return infer.emptyContext;
+        }
     };
 
     /** Check that a given type is assignable to a given proto-type.
@@ -483,7 +495,16 @@ public class Check {
         return checkType(pos, found, req, basicHandler);
     }
 
-    Type checkType(final DiagnosticPosition pos, Type found, Type req, CheckContext checkContext) {
+    Type checkType(final DiagnosticPosition pos, final Type found, final Type req, final CheckContext checkContext) {
+        final Infer.InferenceContext inferenceContext = checkContext.inferenceContext();
+        if (inferenceContext.free(req)) {
+            inferenceContext.addFreeTypeListener(List.of(req), new FreeTypeListener() {
+                @Override
+                public void typesInferred(InferenceContext inferenceContext) {
+                    checkType(pos, found, inferenceContext.asInstType(req, types), checkContext);
+                }
+            });
+        }
         if (req.tag == ERROR)
             return req;
         if (req.tag == NONE)
@@ -2470,6 +2491,7 @@ public class Check {
         validateDocumented(t.tsym, s, pos);
         validateInherited(t.tsym, s, pos);
         validateTarget(t.tsym, s, pos);
+        validateDefault(t.tsym, s, pos);
     }
 
     /**
@@ -2648,6 +2670,21 @@ public class Check {
                 return false;
         }
         return true;
+    }
+
+    private void validateDefault(Symbol container, Symbol contained, DiagnosticPosition pos) {
+        // validate that all other elements of containing type has defaults
+        Scope scope = container.members();
+        for(Symbol elm : scope.getElements()) {
+            if (elm.name != names.value &&
+                elm.kind == Kinds.MTH &&
+                ((MethodSymbol)elm).defaultValue == null) {
+                log.error(pos,
+                          "invalid.containedby.annotation.elem.nondefault",
+                          container,
+                          elm);
+            }
+        }
     }
 
     /** Is s a method symbol that overrides a method in a superclass? */
