@@ -561,7 +561,7 @@ jdk_security1: $(call TestDirs, java/security)
 #   Using samevm has serious problems with these tests
 JDK_ALL_TARGETS += jdk_security2
 jdk_security2: $(call TestDirs, javax/crypto com/sun/crypto)
-	$(call RunOthervmBatch)
+	$(call RunAgentvmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
 #   Using samevm has serious problems with these tests
@@ -835,17 +835,17 @@ endif
 # The jtjck.jar utility to use to run the tests
 JTJCK_JAR = $(JCK_HOME)/lib/jtjck.jar
 JTJCK_JAVA_ARGS =  -XX:MaxPermSize=256m -Xmx512m
-JTJCK_OPTIONS = -headless -v 
+JTJCK_OPTIONS = -headless -v
 
 # Default tests to run
 ifndef JCK_COMPILER_TESTS
-  JCK_COMPILER_TESTS = 
+  JCK_COMPILER_TESTS =
 endif
 ifndef JCK_RUNTIME_TESTS
-  JCK_RUNTIME_TESTS  = 
+  JCK_RUNTIME_TESTS  =
 endif
 ifndef JCK_DEVTOOLS_TESTS
-  JCK_DEVTOOLS_TESTS = 
+  JCK_DEVTOOLS_TESTS =
 endif
 
 # Generic rule used to run jck tests
@@ -871,14 +871,14 @@ jck7compiler:
                 _generic_jck_tests
 
 # JCK7 runtime tests
-jck7runtime: 
+jck7runtime:
 	$(MAKE) UNIQUE_DIR=$@ \
 	        JCK_HOME=$(JCK7RUNTIME_HOME) \
 	        TESTDIRS="$(JCK_RUNTIME_TESTS)" \
                 _generic_jck_tests
 
 # JCK7 devtools tests
-jck7devtools: 
+jck7devtools:
 	$(MAKE) UNIQUE_DIR=$@ \
 	        JCK_HOME=$(JCK7DEVTOOLS_HOME) \
                 TESTDIRS="$(JCK_DEVTOOLS_TESTS)" \
