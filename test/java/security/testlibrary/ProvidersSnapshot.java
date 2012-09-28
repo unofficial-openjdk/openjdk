@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,37 +21,28 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 4273454 7054918 7052537
- * @library ../testlibrary
- * @summary Make sure getProviders(filter) doesn't throw NPE
- * @run main/othervm NoInstalledProviders
- */
+import java.security.Provider;
+import java.security.Security;
 
-import java.security.*;
+public class ProvidersSnapshot {
 
-public class NoInstalledProviders {
+    private Provider[] oldProviders;
 
-    public static void main(String[] args) throws Exception {
-        ProvidersSnapshot snapshot = ProvidersSnapshot.create();
-        try {
-            main0(args);
-        } finally {
-            snapshot.restore();
-        }
+    private ProvidersSnapshot() {
+        oldProviders = Security.getProviders();
     }
 
-    public static void main0(String[] args) throws Exception {
+    public static ProvidersSnapshot create() {
+        return new ProvidersSnapshot();
+    }
 
-        Provider[] provs = Security.getProviders();
-        // make sure there are no providers in the system
-        for(int i = 0; i < provs.length; i++ ) {
-            Security.removeProvider( provs[i].getName());
+    public void restore() {
+        Provider[] newProviders = Security.getProviders();
+        for (Provider p: newProviders) {
+            Security.removeProvider(p.getName());
         }
-
-        String filter = "Signature.SHA1withDSA";
-
-        provs = Security.getProviders(filter);
+        for (Provider p: oldProviders) {
+            Security.addProvider(p);
+        }
     }
 }
