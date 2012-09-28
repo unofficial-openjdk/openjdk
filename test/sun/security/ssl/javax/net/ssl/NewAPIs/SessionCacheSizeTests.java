@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug   4366807
  * @summary Need new APIs to get/set session timeout and session cache size.
+ * @run main/othervm SessionCacheSizeTests
  */
 
 import java.io.*;

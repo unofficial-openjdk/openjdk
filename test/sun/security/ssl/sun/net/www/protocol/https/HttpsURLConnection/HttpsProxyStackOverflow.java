@@ -21,10 +21,13 @@
  * questions.
  */
 
+// No way to reserve default Authenticator, need to run in othervm mode.
+
 /*
  * @test
  * @bug 6670868
  * @summary StackOverFlow with bad authenticated Proxy tunnels
+ * @run main/othervm HttpsProxyStackOverflow
  */
 
 import java.io.IOException;

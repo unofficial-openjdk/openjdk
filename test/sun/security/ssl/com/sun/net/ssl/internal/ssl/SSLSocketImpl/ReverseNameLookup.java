@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4748292
  * @summary Prevent/Disable reverse name lookups with JSSE SSL sockets
+ * @run main/othervm ReverseNameLookup
  */
 
 import java.io.*;

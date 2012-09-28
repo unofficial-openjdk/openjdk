@@ -21,6 +21,11 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4395238 4354003 4387961 4395266
@@ -30,6 +35,7 @@
  *      Fixed 4354003: Need API to get client certificate chain
  *      Fixed 4387961: HostnameVerifier needs to pass various hostnames
  *      Fixed 4395266: HttpsURLConnection should be made protected
+ * @run main/othervm HttpsURLConnectionLocalCertificateChain
  * @author Brad Wetmore
  */
 

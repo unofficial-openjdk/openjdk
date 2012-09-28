@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4514971
  * @summary Verify applications do not read handshake data after failure
+ * @run main/othervm ReadHandshake
  */
 
 import java.io.*;

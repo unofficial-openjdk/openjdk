@@ -21,11 +21,17 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test 1.3 01/03/08
  * @bug 4522550
  * @summary SSLContext TrustMananagerFactory and KeyManagerFactory
  *              should throw if not init
+ * @run main/othervm ProviderInit
  * @author Jaya Hangal
  */
 

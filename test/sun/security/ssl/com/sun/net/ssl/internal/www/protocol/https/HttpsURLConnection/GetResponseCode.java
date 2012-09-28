@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4482187
  * @summary HttpsClient tests are failing for build 71
+ * @run main/othervm GetResponseCode
  * @author Yingxian Wang
  */
 import java.io.*;

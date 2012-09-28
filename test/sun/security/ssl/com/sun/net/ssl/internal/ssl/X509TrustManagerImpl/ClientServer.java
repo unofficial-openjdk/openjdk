@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4717766
  * @summary 1.0.3 JsseX509TrustManager erroneously calls isClientTrusted()
+ * @run main/othervm ClientServer
  * @ignore JSSE supports algorithm constraints with CR 6916074,
  *     need to update this test case in JDK 7 soon
  * @author Brad Wetmore
