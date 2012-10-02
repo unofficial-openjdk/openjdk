@@ -582,6 +582,11 @@ const int Matcher::vector_ideal_reg(int size) {
   return 0;
 }
 
+// Only lowest bits of xmm reg are used for vector shift count.
+const int Matcher::vector_shift_count_ideal_reg(int size) {
+  return Op_VecS;
+}
+
 // x86 supports misaligned vectors store/load.
 const bool Matcher::misaligned_vectors_ok() {
   return !AlignVector; // can be changed by flag
@@ -3769,10 +3774,24 @@ instruct vdiv4D_mem(vecY dst, vecY src, memory mem) %{
   ins_pipe( pipe_slow );
 %}
 
+// ------------------------------ Shift ---------------------------------------
+
+// Left and right shift count vectors are the same on x86
+// (only lowest bits of xmm reg are used for count).
+instruct vshiftcnt(vecS dst, rRegI cnt) %{
+  match(Set dst (LShiftCntV cnt));
+  match(Set dst (RShiftCntV cnt));
+  format %{ "movd    $dst,$cnt\t! load shift count" %}
+  ins_encode %{
+    __ movdl($dst$$XMMRegister, $cnt$$Register);
+  %}
+  ins_pipe( pipe_slow );
+%}
+
 // ------------------------------ LeftShift -----------------------------------
 
 // Shorts/Chars vector left shift
-instruct vsll2S(vecS dst, regF shift) %{
+instruct vsll2S(vecS dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (LShiftVS dst shift));
   format %{ "psllw   $dst,$shift\t! left shift packed2S" %}
@@ -3792,7 +3811,7 @@ instruct vsll2S_imm(vecS dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll2S_reg(vecS dst, vecS src, regF shift) %{
+instruct vsll2S_reg(vecS dst, vecS src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (LShiftVS src shift));
   format %{ "vpsllw  $dst,$src,$shift\t! left shift packed2S" %}
@@ -3814,7 +3833,7 @@ instruct vsll2S_reg_imm(vecS dst, vecS src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll4S(vecD dst, regF shift) %{
+instruct vsll4S(vecD dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 4);
   match(Set dst (LShiftVS dst shift));
   format %{ "psllw   $dst,$shift\t! left shift packed4S" %}
@@ -3834,7 +3853,7 @@ instruct vsll4S_imm(vecD dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll4S_reg(vecD dst, vecD src, regF shift) %{
+instruct vsll4S_reg(vecD dst, vecD src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (LShiftVS src shift));
   format %{ "vpsllw  $dst,$src,$shift\t! left shift packed4S" %}
@@ -3856,7 +3875,7 @@ instruct vsll4S_reg_imm(vecD dst, vecD src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll8S(vecX dst, regF shift) %{
+instruct vsll8S(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 8);
   match(Set dst (LShiftVS dst shift));
   format %{ "psllw   $dst,$shift\t! left shift packed8S" %}
@@ -3876,7 +3895,7 @@ instruct vsll8S_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll8S_reg(vecX dst, vecX src, regF shift) %{
+instruct vsll8S_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 8);
   match(Set dst (LShiftVS src shift));
   format %{ "vpsllw  $dst,$src,$shift\t! left shift packed8S" %}
@@ -3898,7 +3917,7 @@ instruct vsll8S_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll16S_reg(vecY dst, vecY src, regF shift) %{
+instruct vsll16S_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 16);
   match(Set dst (LShiftVS src shift));
   format %{ "vpsllw  $dst,$src,$shift\t! left shift packed16S" %}
@@ -3921,7 +3940,7 @@ instruct vsll16S_reg_imm(vecY dst, vecY src, immI8 shift) %{
 %}
 
 // Integers vector left shift
-instruct vsll2I(vecD dst, regF shift) %{
+instruct vsll2I(vecD dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (LShiftVI dst shift));
   format %{ "pslld   $dst,$shift\t! left shift packed2I" %}
@@ -3941,7 +3960,7 @@ instruct vsll2I_imm(vecD dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll2I_reg(vecD dst, vecD src, regF shift) %{
+instruct vsll2I_reg(vecD dst, vecD src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (LShiftVI src shift));
   format %{ "vpslld  $dst,$src,$shift\t! left shift packed2I" %}
@@ -3963,7 +3982,7 @@ instruct vsll2I_reg_imm(vecD dst, vecD src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll4I(vecX dst, regF shift) %{
+instruct vsll4I(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 4);
   match(Set dst (LShiftVI dst shift));
   format %{ "pslld   $dst,$shift\t! left shift packed4I" %}
@@ -3983,7 +4002,7 @@ instruct vsll4I_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll4I_reg(vecX dst, vecX src, regF shift) %{
+instruct vsll4I_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (LShiftVI src shift));
   format %{ "vpslld  $dst,$src,$shift\t! left shift packed4I" %}
@@ -4005,7 +4024,7 @@ instruct vsll4I_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll8I_reg(vecY dst, vecY src, regF shift) %{
+instruct vsll8I_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
   match(Set dst (LShiftVI src shift));
   format %{ "vpslld  $dst,$src,$shift\t! left shift packed8I" %}
@@ -4028,7 +4047,7 @@ instruct vsll8I_reg_imm(vecY dst, vecY src, immI8 shift) %{
 %}
 
 // Longs vector left shift
-instruct vsll2L(vecX dst, regF shift) %{
+instruct vsll2L(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (LShiftVL dst shift));
   format %{ "psllq   $dst,$shift\t! left shift packed2L" %}
@@ -4048,7 +4067,7 @@ instruct vsll2L_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll2L_reg(vecX dst, vecX src, regF shift) %{
+instruct vsll2L_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (LShiftVL src shift));
   format %{ "vpsllq  $dst,$src,$shift\t! left shift packed2L" %}
@@ -4070,7 +4089,7 @@ instruct vsll2L_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsll4L_reg(vecY dst, vecY src, regF shift) %{
+instruct vsll4L_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4);
   match(Set dst (LShiftVL src shift));
   format %{ "vpsllq  $dst,$src,$shift\t! left shift packed4L" %}
@@ -4099,7 +4118,7 @@ instruct vsll4L_reg_imm(vecY dst, vecY src, immI8 shift) %{
 // sign extension before a shift.
 
 // Integers vector logical right shift
-instruct vsrl2I(vecD dst, regF shift) %{
+instruct vsrl2I(vecD dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (URShiftVI dst shift));
   format %{ "psrld   $dst,$shift\t! logical right shift packed2I" %}
@@ -4119,7 +4138,7 @@ instruct vsrl2I_imm(vecD dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl2I_reg(vecD dst, vecD src, regF shift) %{
+instruct vsrl2I_reg(vecD dst, vecD src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (URShiftVI src shift));
   format %{ "vpsrld  $dst,$src,$shift\t! logical right shift packed2I" %}
@@ -4141,7 +4160,7 @@ instruct vsrl2I_reg_imm(vecD dst, vecD src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl4I(vecX dst, regF shift) %{
+instruct vsrl4I(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 4);
   match(Set dst (URShiftVI dst shift));
   format %{ "psrld   $dst,$shift\t! logical right shift packed4I" %}
@@ -4161,7 +4180,7 @@ instruct vsrl4I_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl4I_reg(vecX dst, vecX src, regF shift) %{
+instruct vsrl4I_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (URShiftVI src shift));
   format %{ "vpsrld  $dst,$src,$shift\t! logical right shift packed4I" %}
@@ -4183,7 +4202,7 @@ instruct vsrl4I_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl8I_reg(vecY dst, vecY src, regF shift) %{
+instruct vsrl8I_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
   match(Set dst (URShiftVI src shift));
   format %{ "vpsrld  $dst,$src,$shift\t! logical right shift packed8I" %}
@@ -4206,7 +4225,7 @@ instruct vsrl8I_reg_imm(vecY dst, vecY src, immI8 shift) %{
 %}
 
 // Longs vector logical right shift
-instruct vsrl2L(vecX dst, regF shift) %{
+instruct vsrl2L(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (URShiftVL dst shift));
   format %{ "psrlq   $dst,$shift\t! logical right shift packed2L" %}
@@ -4226,7 +4245,7 @@ instruct vsrl2L_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl2L_reg(vecX dst, vecX src, regF shift) %{
+instruct vsrl2L_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (URShiftVL src shift));
   format %{ "vpsrlq  $dst,$src,$shift\t! logical right shift packed2L" %}
@@ -4248,7 +4267,7 @@ instruct vsrl2L_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsrl4L_reg(vecY dst, vecY src, regF shift) %{
+instruct vsrl4L_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 4);
   match(Set dst (URShiftVL src shift));
   format %{ "vpsrlq  $dst,$src,$shift\t! logical right shift packed4L" %}
@@ -4273,7 +4292,7 @@ instruct vsrl4L_reg_imm(vecY dst, vecY src, immI8 shift) %{
 // ------------------- ArithmeticRightShift -----------------------------------
 
 // Shorts/Chars vector arithmetic right shift
-instruct vsra2S(vecS dst, regF shift) %{
+instruct vsra2S(vecS dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (RShiftVS dst shift));
   format %{ "psraw   $dst,$shift\t! arithmetic right shift packed2S" %}
@@ -4293,7 +4312,7 @@ instruct vsra2S_imm(vecS dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra2S_reg(vecS dst, vecS src, regF shift) %{
+instruct vsra2S_reg(vecS dst, vecS src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVS src shift));
   format %{ "vpsraw  $dst,$src,$shift\t! arithmetic right shift packed2S" %}
@@ -4315,7 +4334,7 @@ instruct vsra2S_reg_imm(vecS dst, vecS src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra4S(vecD dst, regF shift) %{
+instruct vsra4S(vecD dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 4);
   match(Set dst (RShiftVS dst shift));
   format %{ "psraw   $dst,$shift\t! arithmetic right shift packed4S" %}
@@ -4335,7 +4354,7 @@ instruct vsra4S_imm(vecD dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra4S_reg(vecD dst, vecD src, regF shift) %{
+instruct vsra4S_reg(vecD dst, vecD src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (RShiftVS src shift));
   format %{ "vpsraw  $dst,$src,$shift\t! arithmetic right shift packed4S" %}
@@ -4357,7 +4376,7 @@ instruct vsra4S_reg_imm(vecD dst, vecD src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra8S(vecX dst, regF shift) %{
+instruct vsra8S(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 8);
   match(Set dst (RShiftVS dst shift));
   format %{ "psraw   $dst,$shift\t! arithmetic right shift packed8S" %}
@@ -4377,7 +4396,7 @@ instruct vsra8S_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra8S_reg(vecX dst, vecX src, regF shift) %{
+instruct vsra8S_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 8);
   match(Set dst (RShiftVS src shift));
   format %{ "vpsraw  $dst,$src,$shift\t! arithmetic right shift packed8S" %}
@@ -4399,7 +4418,7 @@ instruct vsra8S_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra16S_reg(vecY dst, vecY src, regF shift) %{
+instruct vsra16S_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 16);
   match(Set dst (RShiftVS src shift));
   format %{ "vpsraw  $dst,$src,$shift\t! arithmetic right shift packed16S" %}
@@ -4422,7 +4441,7 @@ instruct vsra16S_reg_imm(vecY dst, vecY src, immI8 shift) %{
 %}
 
 // Integers vector arithmetic right shift
-instruct vsra2I(vecD dst, regF shift) %{
+instruct vsra2I(vecD dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 2);
   match(Set dst (RShiftVI dst shift));
   format %{ "psrad   $dst,$shift\t! arithmetic right shift packed2I" %}
@@ -4442,7 +4461,7 @@ instruct vsra2I_imm(vecD dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra2I_reg(vecD dst, vecD src, regF shift) %{
+instruct vsra2I_reg(vecD dst, vecD src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 2);
   match(Set dst (RShiftVI src shift));
   format %{ "vpsrad  $dst,$src,$shift\t! arithmetic right shift packed2I" %}
@@ -4464,7 +4483,7 @@ instruct vsra2I_reg_imm(vecD dst, vecD src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra4I(vecX dst, regF shift) %{
+instruct vsra4I(vecX dst, vecS shift) %{
   predicate(n->as_Vector()->length() == 4);
   match(Set dst (RShiftVI dst shift));
   format %{ "psrad   $dst,$shift\t! arithmetic right shift packed4I" %}
@@ -4484,7 +4503,7 @@ instruct vsra4I_imm(vecX dst, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra4I_reg(vecX dst, vecX src, regF shift) %{
+instruct vsra4I_reg(vecX dst, vecX src, vecS shift) %{
   predicate(UseAVX > 0 && n->as_Vector()->length() == 4);
   match(Set dst (RShiftVI src shift));
   format %{ "vpsrad  $dst,$src,$shift\t! arithmetic right shift packed4I" %}
@@ -4506,7 +4525,7 @@ instruct vsra4I_reg_imm(vecX dst, vecX src, immI8 shift) %{
   ins_pipe( pipe_slow );
 %}
 
-instruct vsra8I_reg(vecY dst, vecY src, regF shift) %{
+instruct vsra8I_reg(vecY dst, vecY src, vecS shift) %{
   predicate(UseAVX > 1 && n->as_Vector()->length() == 8);
   match(Set dst (RShiftVI src shift));
   format %{ "vpsrad  $dst,$src,$shift\t! arithmetic right shift packed8I" %}
