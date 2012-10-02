@@ -264,6 +264,7 @@ public final class OCSPResponse {
                 DEBUG.println("OCSP Responder name: " + responderName);
             }
         } else if (tag == KEY_TAG) {
+            seq = seq.data.getDerValue(); // consume tag and length
             if (DEBUG != null) {
                 byte[] responderKeyId = seq.getOctetString();
                 DEBUG.println("OCSP Responder key ID: " +
@@ -392,21 +393,29 @@ public final class OCSPResponse {
                     // Retrieve the issuer's key identifier
                     if (certIssuerKeyId == null) {
                         certIssuerKeyId = signerCert.getIssuerKeyIdentifier();
+                        if (certIssuerKeyId == null) {
+                            if (DEBUG != null) {
+                                DEBUG.println("No issuer key identifier (AKID) "
+                                    + "in the signer certificate");
+                            }
+                        }
                     }
 
-                    // Check that the key identifiers match
-                    if (certIssuerKeyId == null ||
-                        !Arrays.equals(certIssuerKeyId,
-                            OCSPChecker.getKeyId(responderCert))) {
+                    // Check that the key identifiers match, if both are present
+                    byte[] responderKeyId = null;
+                    if (certIssuerKeyId != null &&
+                        (responderKeyId =
+                            OCSPChecker.getKeyId(responderCert)) != null) {
+                        if (!Arrays.equals(certIssuerKeyId, responderKeyId)) {
+                            continue; // try next cert
+                        }
 
-                        continue; // try next cert
-                    }
-
-                    if (DEBUG != null) {
-                        DEBUG.println("Issuer certificate key ID: " +
-                            String.format("0x%0" +
-                                (certIssuerKeyId.length * 2) + "x",
-                                    new BigInteger(1, certIssuerKeyId)));
+                        if (DEBUG != null) {
+                            DEBUG.println("Issuer certificate key ID: " +
+                                String.format("0x%0" +
+                                    (certIssuerKeyId.length * 2) + "x",
+                                        new BigInteger(1, certIssuerKeyId)));
+                        }
                     }
 
                     // Check for the OCSPSigning key purpose
@@ -433,15 +442,11 @@ public final class OCSPResponse {
 
                     // Check the date validity
                     try {
-                        if (dateCheckedAgainst == null) {
-                            signerCert.checkValidity();
-                        } else {
-                            signerCert.checkValidity(dateCheckedAgainst);
-                        }
+                        signerCert.checkValidity();
                     } catch (GeneralSecurityException e) {
                         if (DEBUG != null) {
                             DEBUG.println("Responder's certificate not within" +
-                            " the validity period" + e);
+                            " the validity period " + e);
                         }
                         continue; // try next cert
                     }
