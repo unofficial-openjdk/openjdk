@@ -1031,7 +1031,7 @@ void ParNewGeneration::collect(bool   full,
 
   adjust_desired_tenuring_threshold();
   if (ResizePLAB) {
-    plab_stats()->adjust_desired_plab_sz();
+    plab_stats()->adjust_desired_plab_sz(n_workers);
   }
 
   if (PrintGC && !PrintGCDetails) {
