@@ -447,10 +447,10 @@ Java_sun_java2d_opengl_CGLGraphicsConfig_getOGLCapabilities
 }
 
 JNIEXPORT jint JNICALL
-Java_sun_java2d_opengl_CGLGraphicsConfig_getMaxTextureSize
+Java_sun_java2d_opengl_CGLGraphicsConfig__1getMaxTextureSize
     (JNIEnv *env, jclass cglgc)
 {
-    J2dTraceLn(J2D_TRACE_INFO, "CGLGraphicsConfig_getMaxTextureSize");
+    J2dTraceLn(J2D_TRACE_INFO, "CGLGraphicsConfig__1getMaxTextureSize");
 
     __block int max = 0;
 

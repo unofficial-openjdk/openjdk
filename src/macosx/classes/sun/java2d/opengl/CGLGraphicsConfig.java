@@ -84,11 +84,14 @@ public class CGLGraphicsConfig extends CGraphicsConfig
     private OGLContext context;
     private Object disposerReferent = new Object();
 
+    private final int cachedMaxTextureSize;
+
     public static native int getDefaultPixFmt(int screennum);
     private static native boolean initCGL();
     private static native long getCGLConfigInfo(int screennum, int visualnum,
                                                 int swapInterval);
     private static native int getOGLCapabilities(long configInfo);
+    private static native int _getMaxTextureSize();
 
     static {
         cglAvailable = initCGL();
@@ -108,6 +111,10 @@ public class CGLGraphicsConfig extends CGraphicsConfig
         // CGLGraphicsConfigInfo data when this object goes away
         Disposer.addRecord(disposerReferent,
                            new CGLGCDisposerRecord(pConfigInfo));
+
+        // 7200762: Workaround a deadlock by caching the value
+        //          A fix for JDK 8 will remove the workaround
+        this.cachedMaxTextureSize = _getMaxTextureSize();
     }
 
     @Override
@@ -500,9 +507,12 @@ public class CGLGraphicsConfig extends CGraphicsConfig
         }
     }
 
+
     // 7160609: GL still fails to create a square texture of this size,
     //          so we use this value to cap the total display bounds.
-    native private static int getMaxTextureSize();
+    private int getMaxTextureSize() {
+        return cachedMaxTextureSize;
+    }
 
     @Override
     public int getMaxTextureWidth() {
