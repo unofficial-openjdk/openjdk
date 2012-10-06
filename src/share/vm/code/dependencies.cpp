@@ -622,7 +622,15 @@ inline oop Dependencies::DepStream::recorded_oop_at(int i) {
 }
 
 oop Dependencies::DepStream::argument(int i) {
-  return recorded_oop_at(argument_index(i));
+  oop result = recorded_oop_at(argument_index(i));
+  if (result == NULL) { // Explicit context argument can be compressed
+    int ctxkj = dep_context_arg(type());  // -1 if no explicit context arg
+     if (ctxkj >= 0 && i == ctxkj && ctxkj+1 < argument_count()) {
+       result = ctxk_encoded_as_null(type(), argument(ctxkj+1));
+     }
+  }
+
+  return result;
 }
 
 klassOop Dependencies::DepStream::context_type() {
@@ -630,25 +638,21 @@ klassOop Dependencies::DepStream::context_type() {
 
   // Most dependencies have an explicit context type argument.
   {
-    int ctxkj = dep_context_arg(_type);  // -1 if no explicit context arg
+    int ctxkj = dep_context_arg(type());  // -1 if no explicit context arg
     if (ctxkj >= 0) {
       oop k = argument(ctxkj);
-      if (k != NULL) {       // context type was not compressed away
-        assert(k->is_klass(), "type check");
-        return (klassOop) k;
-      }
-      // recompute "default" context type
-      return ctxk_encoded_as_null(_type, argument(ctxkj+1));
+      assert(k != NULL && k->is_klass(), "type check");
+      return (klassOop) k;
     }
   }
 
   // Some dependencies are using the klass of the first object
   // argument as implicit context type (e.g. call_site_target_value).
   {
-    int ctxkj = dep_implicit_context_arg(_type);
+    int ctxkj = dep_implicit_context_arg(type());
     if (ctxkj >= 0) {
       oop k = argument(ctxkj)->klass();
-      assert(k->is_klass(), "type check");
+      assert(k != NULL && k->is_klass(), "type check");
       return (klassOop) k;
     }
   }
