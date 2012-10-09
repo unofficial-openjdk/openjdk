@@ -1134,9 +1134,6 @@ public:
 
   static const char* short_name_as_C_string(ID id, char* buf, int size);
 
-  // Access to intrinsic methods:
-  static methodOop method_for(ID id);
-
   // Wrapper object methods:
   static ID for_boxing(BasicType type);
   static ID for_unboxing(BasicType type);
