@@ -2925,7 +2925,8 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
           oop entry;
           if (tag.is_string()) {
             entry = pool->resolved_string_at(i);
-            assert(java_lang_String::is_instance(entry), "must be string");
+            assert(java_lang_String::is_instance(entry) ||
+                   pool->is_pseudo_string_at(i), "must be string");
           } else {
             entry = Klass::cast(pool->resolved_klass_at(i))->java_mirror();
           }
