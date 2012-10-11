@@ -825,9 +825,6 @@ objArrayHandle ClassFileParser::parse_interfaces(constantPoolHandle cp,
                     unresolved_klass, class_loader, protection_domain,
                     false, CHECK_(nullHandle));
       interf = KlassHandle(THREAD, k);
-
-      if (LinkWellKnownClasses)  // my super type is well known to me
-        cp->klass_at_put(interface_index, interf()); // eagerly resolve
     }
 
     if (!Klass::cast(interf())->is_interface()) {
@@ -3207,8 +3204,6 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
 
       KlassHandle kh (THREAD, k);
       super_klass = instanceKlassHandle(THREAD, kh());
-      if (LinkWellKnownClasses)  // my super class is well known to me
-        cp->klass_at_put(super_class_index, super_klass()); // eagerly resolve
     }
     if (super_klass.not_null()) {
       if (super_klass->is_interface()) {
@@ -3640,7 +3635,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
     // has to be changed accordingly.
     this_klass->set_initial_method_idnum(methods->length());
     this_klass->set_name(cp->klass_name_at(this_class_index));
-    if (LinkWellKnownClasses || is_anonymous())  // I am well known to myself
+    if (is_anonymous())  // I am well known to myself
       cp->klass_at_put(this_class_index, this_klass()); // eagerly resolve
     this_klass->set_protection_domain(protection_domain());
     this_klass->set_fields_annotations(fields_annotations());
