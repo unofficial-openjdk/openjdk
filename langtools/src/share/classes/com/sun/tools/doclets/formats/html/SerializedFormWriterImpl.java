@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,15 @@ import java.io.*;
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.DocletAbortException;
 
 /**
  * Generate the Serialized Form Information Page.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Atul M Dambalkar
  */
@@ -46,23 +52,6 @@ public class SerializedFormWriterImpl extends SubWriterHolderWriter
      */
     public SerializedFormWriterImpl() throws IOException {
         super(ConfigurationImpl.getInstance(), FILE_NAME);
-    }
-
-    /**
-     * Writes the given header.
-     *
-     * @param header the header to write.
-     */
-    public void writeHeader(String header) {
-        printHtmlHeader(header, null, true);
-        printTop();
-        navLinks(true);
-        hr();
-        center();
-        h1();
-        print(header);
-        h1End();
-        centerEnd();
     }
 
     /**

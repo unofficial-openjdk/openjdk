@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,22 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import java.util.*;
 import java.lang.reflect.Modifier;
+import java.util.*;
+
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.formats.html.markup.*;
 import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.taglets.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * The base class for member writers.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Robert Field
  * @author Atul M Dambalkar
@@ -257,7 +263,7 @@ public abstract class AbstractMemberWriter {
         if (len <= 0) {
             return "";
         }
-        StringBuffer sb = new StringBuffer(len);
+        StringBuilder sb = new StringBuilder(len);
         for(int i = 0; i < len; i++) {
             sb.append(' ');
     }
@@ -364,7 +370,7 @@ public abstract class AbstractMemberWriter {
      * Add the comment for the given member.
      *
      * @param member the member being documented.
-     * @param contentTree the content tree to which the comment will be added.
+     * @param htmltree the content tree to which the comment will be added.
      */
     protected void addComment(ProgramElementDoc member, Content htmltree) {
         if (member.inlineTags().length > 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,11 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  * Class for the Html format code generation.
  * Initilizes PrintWriter with FileWriter, to enable print
  * related methods to generate the code to the named File through FileWriter.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @since 1.2
  * @author Atul M Dambalkar
@@ -158,7 +163,7 @@ public class HtmlWriter extends PrintWriter {
      * @param docencoding Encoding to be used for this file.
      * @exception IOException Exception raised by the FileWriter is passed on
      * to next level.
-     * @exception UnSupportedEncodingException Exception raised by the
+     * @exception UnsupportedEncodingException Exception raised by the
      * OutputStreamWriter is passed on to next level.
      */
     public HtmlWriter(Configuration configuration,
