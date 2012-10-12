@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,35 +21,32 @@
  * questions.
  */
 
-/* @test
- * @bug 6344646
- * @summary tests that WinNTFileSystem.hashCode() uses
- *    locale independent case mapping.
+/*
+ * @test
+ * @bug 7181793
+ * @summary getOutputStream create streams that cannot be GC'ed until Socket is closed
+ * @run main/othervm -Xmx32m SocketGrowth
  */
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-public class bug6344646 {
-    public static void main(String[] s) {
-        Locale reservedLocale = Locale.getDefault();
-        try {
-            /* This test is only valid on win32 systems */
-            if (File.separatorChar != '\\') {
-                return;
+public class SocketGrowth {
+
+    public static void main(String[] args) throws IOException {
+
+        try (ServerSocket ss = new ServerSocket(0)) {
+            try (Socket s = new Socket("localhost", ss.getLocalPort());
+                    Socket peer = ss.accept()) {
+                for (int i=0; i<1000000; i++) {
+                    // buggy JDK will run out of memory in this loop
+                    s.getOutputStream();
+                    // test InputStream also while we're here
+                    s.getInputStream();
+                    if (i % 100000 == 0) System.out.println(i);
+                }
             }
-
-            Locale.setDefault(new Locale("lt"));
-            File f1 = new File("J\u0301");
-            File f2 = new File("j\u0301");
-
-            if (f1.hashCode() != f2.hashCode()) {
-                throw new RuntimeException("File.hashCode() for \"J\u0301\" " +
-                        "and \"j\u0301\" should be the same");
-            }
-        } finally {
-            // restore the reserved locale
-            Locale.setDefault(reservedLocale);
         }
     }
 }
