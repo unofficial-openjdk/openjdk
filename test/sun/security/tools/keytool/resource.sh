@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 6239297
+# @bug 6239297 7083664
 # @summary keytool usage is broken after changing Resources.java
 # @author Max Wang
 #
@@ -46,17 +46,14 @@ case "$OS" in
   SunOS | Linux | Darwin )
     NULL=/dev/null
     FS="/"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     FS="/"
-    TMP=/tmp
     ;;
   Windows_* )
     NULL=NUL
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized operating system!"
@@ -65,13 +62,11 @@ case "$OS" in
 esac
 
 # the test code
-${TESTJAVA}${FS}bin${FS}keytool > ${TMP}${FS}temp_file_40875602475 2> ${NULL}
-grep MissingResourceException ${TMP}${FS}temp_file_40875602475
+${TESTJAVA}${FS}bin${FS}keytool > temp_file_40875602475 2> ${NULL}
+grep MissingResourceException temp_file_40875602475
 
 if [ $? -eq 0 ]; then
-    rm ${TMP}${FS}temp_file_40875602475
     exit 1
 fi
 
-rm ${TMP}${FS}temp_file_40875602475
 exit 0

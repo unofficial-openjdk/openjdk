@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 4215035
+# @bug 4215035 7083664
 # @summary standard extensions path is hard-coded in default system policy file
 #
 # @build Ext_AllPolicy
@@ -54,19 +54,16 @@ case "$OS" in
     NULL=/dev/null
     PS=":"
     FS="/"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     PS=";"
     FS="/"
-    TMP=/tmp
     ;;
   Windows_95 | Windows_98 | Windows_NT )
     NULL=NUL
     PS=";"
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized system!"
