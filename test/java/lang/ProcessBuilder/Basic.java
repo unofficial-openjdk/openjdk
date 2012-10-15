@@ -40,6 +40,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.security.*;
+import sun.misc.Unsafe;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import static java.lang.System.getenv;
@@ -1930,6 +1931,7 @@ public class Basic {
 
                 thread.start();
                 latch.await();
+                Thread.sleep(10);
 
                 String os = System.getProperty("os.name");
                 if (os.equalsIgnoreCase("Solaris") ||
@@ -1953,6 +1955,15 @@ public class Basic {
 
                     while (useCountField.getInt(deferred) <= 0) {
                         Thread.yield();
+                    }
+                } else if (s instanceof BufferedInputStream) {
+                    Field f = Unsafe.class.getDeclaredField("theUnsafe");
+                    f.setAccessible(true);
+                    Unsafe unsafe = (Unsafe)f.get(null);
+
+                    while (unsafe.tryMonitorEnter(s)) {
+                        unsafe.monitorExit(s);
+                        Thread.sleep(1);
                     }
                 }
                 p.destroy();
