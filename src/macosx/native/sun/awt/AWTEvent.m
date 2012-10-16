@@ -383,6 +383,7 @@ static unichar NsGetDeadKeyChar(unsigned short keyCode)
 {
     TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardInputSource();
     CFDataRef uchr = (CFDataRef)TISGetInputSourceProperty(currentKeyboard, kTISPropertyUnicodeKeyLayoutData);
+    if (uchr == nil) { return; }
     const UCKeyboardLayout *keyboardLayout = (const UCKeyboardLayout*)CFDataGetBytePtr(uchr);
     // Carbon modifiers should be used instead of NSEvent modifiers
     UInt32 modifierKeyState = (GetCurrentEventKeyModifiers() >> 8) & 0xFF;
