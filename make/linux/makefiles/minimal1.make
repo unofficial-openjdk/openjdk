@@ -1,5 +1,5 @@
-# 
-# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+#
+# Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -19,27 +19,28 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-# 
-
-#
-# 
-
-#
-# Master Hotspot version file.  These values may be overridden by a control
-# workspace build.  This file format must remain compatible with both
-# GNU Makefile and Microsoft nmake formats.
+#  
 #
 
-# Don't put quotes (fail windows build).
-HOTSPOT_VM_COPYRIGHT=Copyright 2012
+TYPE=MINIMAL1
 
-HS_MAJOR_VER=25
-HS_MINOR_VER=0
-HS_BUILD_NUMBER=06
+INCLUDE_JVMTI ?= false
+INCLUDE_FPROF ?= false
+INCLUDE_VM_STRUCTS ?= false
+INCLUDE_JNI_CHECK ?= false
+INCLUDE_SERVICES ?= false
+INCLUDE_MANAGEMENT ?= false
+INCLUDE_ALTERNATE_GCS ?= false
+INCLUDE_NMT ?= false
+INCLUDE_CDS ?= false
 
-JDK_MAJOR_VER=1
-JDK_MINOR_VER=8
-JDK_MICRO_VER=0
+CXXFLAGS += -DMINIMAL_JVM -DCOMPILER1 -DVMTYPE=\"Minimal\"
+CFLAGS += -DMINIMAL_JVM -DCOMPILER1 -DVMTYPE=\"Minimal\"
 
-# Previous (bootdir) JDK version
-JDK_PREVIOUS_VERSION=1.7.0
+Src_Dirs/MINIMAL1 = $(CORE_PATHS) $(COMPILER1_PATHS)
+
+Src_Files_EXCLUDE/MINIMAL1 += $(COMPILER2_SPECIFIC_FILES) $(ZERO_SPECIFIC_FILES) $(SHARK_SPECIFIC_FILES) ciTypeFlow.cpp
+
+-include $(HS_ALT_MAKE)/$(OSNAME)/makefiles/minimal1.make
+
+.PHONY: $(HS_ALT_MAKE)/$(OSNAME)/makefiles/minimal1.make

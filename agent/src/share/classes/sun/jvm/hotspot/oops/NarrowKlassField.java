@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,20 @@
  *
  */
 
-#ifndef SHARE_VM_PRIMS_FORTE_HPP
-#define SHARE_VM_PRIMS_FORTE_HPP
+package sun.jvm.hotspot.oops;
 
-// Interface to Forte support.
+import sun.jvm.hotspot.debugger.*;
 
-class Forte : AllStatic {
- public:
-   static void register_stub(const char* name, address start, address end)
-                                                 NOT_JVMTI_RETURN;
-                                                 // register internal VM stub
-};
+public class NarrowKlassField extends MetadataField {
 
-#endif // SHARE_VM_PRIMS_FORTE_HPP
+  public NarrowKlassField(sun.jvm.hotspot.types.AddressField vmField, long startOffset) {
+    super(vmField, startOffset);
+  }
+
+  public Metadata getValue(Address addr) {
+    return Metadata.instantiateWrapperFor(addr.getCompKlassAddressAt(getOffset()));
+  }
+  public void setValue(Oop obj, long value) throws MutationException {
+    // Fix this: set* missing in Address
+  }
+}
