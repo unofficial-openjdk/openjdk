@@ -93,6 +93,16 @@ import sun.misc.Unsafe;
     }
 
     // handy shared exception makers (they simplify the common case code)
+    /*non-public*/ static InternalError newInternalError(String message, Throwable cause) {
+        InternalError e = new InternalError(message);
+        e.initCause(cause);
+        return e;
+    }
+    /*non-public*/ static InternalError newInternalError(Throwable cause) {
+        InternalError e = new InternalError();
+        e.initCause(cause);
+        return e;
+    }
     /*non-public*/ static RuntimeException newIllegalStateException(String message) {
         return new IllegalStateException(message);
     }
@@ -109,9 +119,7 @@ import sun.misc.Unsafe;
         return new IllegalArgumentException(message(message, obj, obj2));
     }
     /*non-public*/ static Error uncaughtException(Throwable ex) {
-        Error err = new InternalError("uncaught exception");
-        err.initCause(ex);
-        return err;
+        throw newInternalError("uncaught exception", ex);
     }
     static Error NYI() {
         throw new AssertionError("NYI");

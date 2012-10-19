@@ -480,7 +480,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                     .getDeclaredMethod("checkSpreadArgument", Object.class, int.class));
             NF_checkSpreadArgument.resolve();
         } catch (ReflectiveOperationException ex) {
-            throw new InternalError(ex);
+            throw newInternalError(ex);
         }
     }
 
@@ -829,7 +829,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                 if (tramp.getClassLoader() == BindCaller.class.getClassLoader())
                     throw new RuntimeException(tramp.getName()+" class loader");
             } catch (Throwable ex) {
-                throw new InternalError(ex.toString());
+                throw newInternalError(ex);
             }
             C_Trampoline = tramp;
         }
@@ -865,7 +865,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                 MethodHandle vamh = prepareForInvoker(MH_checkCallerClass);
                 Object ok = bccInvoker.invokeExact(vamh, new Object[]{hostClass, bcc});
             } catch (Throwable ex) {
-                throw new InternalError(ex.toString());
+                throw newInternalError(ex);
             }
             return bccInvoker;
         }
@@ -902,7 +902,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                                 MethodType.methodType(boolean.class, Class.class, Class.class));
                 assert((boolean) MH_checkCallerClass.invokeExact(THIS_CLASS, THIS_CLASS));
             } catch (Throwable ex) {
-                throw new InternalError(ex.toString());
+                throw newInternalError(ex);
             }
         }
 
@@ -933,7 +933,7 @@ import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;
                             }
                             values[0] = bytes;
                         } catch (java.io.IOException ex) {
-                            throw new InternalError(ex.toString());
+                            throw newInternalError(ex);
                         }
                         return null;
                     }
