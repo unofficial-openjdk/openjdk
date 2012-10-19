@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -400,5 +400,102 @@ class MethodHandleNatives {
     static boolean workaroundWithoutRicochetFrames() {
         assert(!HAVE_RICOCHET_FRAMES) : "this code should not be executed if `-XX:+UseRicochetFrames is enabled";
         return true;
+    }
+
+    /**
+     * Is this method a caller-sensitive method?
+     * I.e., does it call Reflection.getCallerClass or a similer method
+     * to ask about the identity of its caller?
+     */
+    // FIXME: Replace this pattern match by an annotation @sun.reflect.CallerSensitive.
+    static boolean isCallerSensitive(MemberName mem) {
+        assert(mem.isInvocable());
+        Class<?> defc = mem.getDeclaringClass();
+        switch (mem.getName()) {
+        case "doPrivileged":
+            return defc == java.security.AccessController.class;
+        case "getUnsafe":
+            return defc == sun.misc.Unsafe.class;
+        case "lookup":
+            return defc == java.lang.invoke.MethodHandles.class;
+        case "invoke":
+            return defc == java.lang.reflect.Method.class;
+        case "get":
+        case "getBoolean":
+        case "getByte":
+        case "getChar":
+        case "getShort":
+        case "getInt":
+        case "getLong":
+        case "getFloat":
+        case "getDouble":
+        case "set":
+        case "setBoolean":
+        case "setByte":
+        case "setChar":
+        case "setShort":
+        case "setInt":
+        case "setLong":
+        case "setFloat":
+        case "setDouble":
+            return defc == java.lang.reflect.Field.class;
+        case "newInstance":
+            if (defc == java.lang.reflect.Constructor.class)  return true;
+            if (defc == java.lang.Class.class)  return true;
+            break;
+        case "forName":
+        case "getClassLoader":
+        case "getClasses":
+        case "getFields":
+        case "getMethods":
+        case "getConstructors":
+        case "getDeclaredClasses":
+        case "getDeclaredFields":
+        case "getDeclaredMethods":
+        case "getDeclaredConstructors":
+        case "getField":
+        case "getMethod":
+        case "getConstructor":
+        case "getDeclaredField":
+        case "getDeclaredMethod":
+        case "getDeclaredConstructor":
+            return defc == java.lang.Class.class;
+        case "getConnection":
+        case "getDriver":
+        case "getDrivers":
+        case "deregisterDriver":
+            return defc == java.sql.DriverManager.class;
+        case "newUpdater":
+            if (defc == java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class)  return true;
+            if (defc == java.util.concurrent.atomic.AtomicLongFieldUpdater.class)  return true;
+            if (defc == java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class)  return true;
+            break;
+        case "getContextClassLoader":
+            return defc == java.lang.Thread.class;
+        case "getPackage":
+        case "getPackages":
+            return defc == java.lang.Package.class;
+        case "getParent":
+        case "getSystemClassLoader":
+            return defc == java.lang.ClassLoader.class;
+        case "load":
+        case "loadLibrary":
+            if (defc == java.lang.Runtime.class)  return true;
+            if (defc == java.lang.System.class)  return true;
+            break;
+        case "getCallerClass":
+            if (defc == sun.reflect.Reflection.class)  return true;
+            if (defc == java.lang.System.class)  return true;
+            break;
+        case "getCallerClassLoader":
+            return defc == java.lang.ClassLoader.class;
+        case "getProxyClass":
+        case "newProxyInstance":
+            return defc == java.lang.reflect.Proxy.class;
+        case "getBundle":
+        case "clearCache":
+            return defc == java.util.ResourceBundle.class;
+        }
+        return false;
     }
 }

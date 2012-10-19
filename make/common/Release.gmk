@@ -399,10 +399,29 @@ TOOLS = \
 	sun/tools/jinfo         \
 	sun/tools/jmap
 
+JFR_SRCDIRS_EXIST := $(shell \
+  if [ -d $(CLOSED_SHARE_SRC)/classes/com/oracle/jrockit/jfr ] ; then \
+   echo true; \
+  else \
+   echo false; \
+  fi)
+
+BUILD_JFR=
+ifndef OPENJDK
+ifndef JAVASE_EMBEDDED
+ifeq ($(JFR_SRCDIRS_EXIST), true)
+BUILD_JFR=true
+endif
+endif
+endif
+
 # classes that go into jfr.jar
+JFR_CLASSES_DIRS=
+ifdef BUILD_JFR
 JFR_CLASSES_DIRS= \
 	com/oracle/jrockit/jfr \
 	oracle/jrockit/jfr
+endif
 
 # classes that go into jsse.jar
 JSSE_CLASSES_DIRS = \
@@ -606,8 +625,7 @@ $(NOT_RT_JAR_LIST): FRC
 	$(ECHO) "sun/tools/jstack/" >> $@
 	$(ECHO) "sun/tools/jinfo/" >> $@
 	$(ECHO) "sun/tools/jmap/" >> $@
-ifndef OPENJDK
-ifndef JAVASE_EMBEDDED
+ifdef BUILD_JFR
 	$(ECHO) "com/oracle/jrockit/jfr/" >> $@
 	$(ECHO) "com/oracle/jrockit/jfr/client/" >> $@
 	$(ECHO) "com/oracle/jrockit/jfr/management/" >> $@
@@ -618,7 +636,7 @@ ifndef JAVASE_EMBEDDED
 	$(ECHO) "oracle/jrockit/jfr/settings/" >> $@
 	$(ECHO) "oracle/jrockit/jfr/tools/" >> $@
 endif
-endif
+
 
 
 # File order list for rt.jar
@@ -645,8 +663,7 @@ $(TOTAL_JAR_FILELIST): $(JARREORDER_JARFILE) $(NOT_RT_JAR_LIST)
 
 # Create jfr.jar
 JFR_JAR=
-ifndef OPENJDK
-ifndef JAVASE_EMBEDDED
+ifdef BUILD_JFR
 JFR_JAR=$(ABS_TEMPDIR)/jfr-orig.jar
 $(JFR_JAR): $(OTHER_JAR_MANIFEST_FILE)
 	$(prep-target)
@@ -654,7 +671,6 @@ $(JFR_JAR): $(OTHER_JAR_MANIFEST_FILE)
 	    $(BOOT_JAR_CMD) $(CREATE_JAR_OPTS) $(OTHER_JAR_MANIFEST_FILE) $@ \
 		$(JFR_CLASSES_DIRS) $(BOOT_JAR_JFLAGS)
 	@$(CD) $(CLASSBINDIR) && $(java-vm-cleanup)
-endif
 endif
 
 # Create the rt.jar file list & non-class files list

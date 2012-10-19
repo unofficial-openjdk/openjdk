@@ -146,7 +146,11 @@ public final class RhinoScriptEngine extends AbstractScriptEngine
      */
     public RhinoScriptEngine() {
         if (System.getSecurityManager() != null) {
-            accCtxt = AccessController.getContext();
+            try {
+                AccessController.checkPermission(new AllPermission());
+            } catch (AccessControlException ace) {
+                accCtxt = AccessController.getContext();
+            }
         }
 
         Context cx = enterContext();

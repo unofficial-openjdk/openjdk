@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -589,7 +589,9 @@ public class MethodHandles {
         private
         MethodHandle accessStatic(Class<?> refc, MemberName method) throws IllegalAccessException {
             checkMethod(refc, method, true);
-            return MethodHandleImpl.findMethod(method, false, lookupClassOrNull());
+            MethodHandle mh = MethodHandleImpl.findMethod(method, false, lookupClassOrNull());
+            mh = maybeBindCaller(method, mh);
+            return mh;
         }
         private
         MethodHandle resolveStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
@@ -647,6 +649,7 @@ public class MethodHandles {
         private MethodHandle accessVirtual(Class<?> refc, MemberName method) throws IllegalAccessException {
             checkMethod(refc, method, false);
             MethodHandle mh = MethodHandleImpl.findMethod(method, true, lookupClassOrNull());
+            mh = maybeBindCaller(method, mh);
             return restrictProtectedReceiver(method, mh);
         }
 
@@ -687,6 +690,7 @@ public class MethodHandles {
             checkAccess(refc, ctor);
             MethodHandle rawMH = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             MethodHandle allocMH = MethodHandleImpl.makeAllocator(rawMH);
+            assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
             return fixVarargs(allocMH, rawMH);
         }
         private MethodHandle resolveConstructor(Class<?> refc, MethodType type) throws NoSuchMethodException, IllegalAccessException {
@@ -755,6 +759,7 @@ public class MethodHandles {
                                            Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
             checkMethod(refc, method, false);
             MethodHandle mh = MethodHandleImpl.findMethod(method, false, specialCaller);
+            mh = maybeBindCaller(method, mh);
             return restrictReceiver(method, mh, specialCaller);
         }
         private MethodHandle resolveSpecial(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
@@ -922,6 +927,8 @@ return mh1;
             checkSecurityManager(refc, method);  // stack walk magic: do not refactor
             checkMethod(refc, method, false);
             MethodHandle dmh = MethodHandleImpl.findMethod(method, true, lookupClassOrNull());
+            MethodHandle bcmh = maybeBindCaller(method, dmh);
+            if (bcmh != dmh)  return fixVarargs(bcmh.bindTo(receiver), dmh);
             MethodHandle bmh = MethodHandleImpl.bindReceiver(dmh, receiver);
             if (bmh == null)
                 throw method.makeAccessException("no access", this);
@@ -956,6 +963,7 @@ return mh1;
                 return MethodHandleImpl.findMethod(method, true, /*no lookupClass*/ null);
             checkMethod(method.getDeclaringClass(), method, method.isStatic());
             MethodHandle mh = MethodHandleImpl.findMethod(method, true, lookupClassOrNull());
+            mh = maybeBindCaller(method, mh);
             return restrictProtectedReceiver(method, mh);
         }
 
@@ -987,6 +995,7 @@ return mh1;
             // ignore m.isAccessible:  this is a new kind of access
             checkMethod(m.getDeclaringClass(), method, false);
             MethodHandle mh = MethodHandleImpl.findMethod(method, false, lookupClassOrNull());
+            mh = maybeBindCaller(method, mh);
             return restrictReceiver(method, mh, specialCaller);
         }
 
@@ -1021,6 +1030,7 @@ return mh1;
                 checkAccess(c.getDeclaringClass(), ctor);
                 rawCtor = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             }
+            assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
             MethodHandle allocator = MethodHandleImpl.makeAllocator(rawCtor);
             return fixVarargs(allocator, rawCtor);
         }
@@ -1231,6 +1241,16 @@ return mh1;
             MethodType narrowType = rawType.changeParameterType(0, caller);
             MethodHandle narrowMH = MethodHandleImpl.convertArguments(mh, narrowType, rawType, 0);
             return fixVarargs(narrowMH, mh);
+        }
+        private MethodHandle maybeBindCaller(MemberName method, MethodHandle mh) throws IllegalAccessException {
+            if (allowedModes == TRUSTED || !MethodHandleNatives.isCallerSensitive(method))
+                return mh;
+            Class<?> hostClass = lookupClass;
+            if ((allowedModes & PRIVATE) == 0)  // caller must use full-power lookup
+                hostClass = null;
+            MethodHandle cbmh = MethodHandleImpl.bindCaller(mh, hostClass);
+            cbmh = fixVarargs(cbmh, mh);  // in JDK 7 version, varargs happens earlier and must be repaired
+            return cbmh;
         }
 
         MethodHandle makeAccessor(Class<?> refc, MemberName field,

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
 #
 
 # @test
-# @bug 4694076
+# @bug 4694076 7083664
 # @summary KeyTool throws ArrayIndexOutOfBoundsException for listing
 #          SecretKey entries in non-verbose mode.
 # @author Valerie Peng
@@ -49,19 +49,16 @@ case "$OS" in
     NULL=/dev/null
     PS=":"
     FS="/"
-    TMP=/tmp
     ;;
   CYGWIN* )
     NULL=/dev/null
     PS=";"
     FS="/"
-    TMP=/tmp
     ;;
   Windows_* )
     NULL=NUL
     PS=";"
     FS="\\"
-    TMP="c:/temp"
     ;;
   * )
     echo "Unrecognized operating system!"
