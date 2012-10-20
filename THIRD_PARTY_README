@@ -216,15 +216,16 @@ site-policy@w3.org.
 is included with JRE 7, JDK 7, and OpenJDK 7.
 
 You are receiving a copy of the Elliptic Curve Cryptography library in source
-form with the JDK 7 source distribution and object code in the JRE 7 & JDK 7
-runtime.
+form with the JDK 7 and OpenJDK7 source distributions, and as object code in
+the JRE 7 & JDK 7 runtimes.
 
-The terms of the Oracle license do NOT apply to the Elliptic Curve
-Cryptography library program; it is licensed under the following license,
-separately from the Oracle programs you receive. If you do not wish to install
-this program, you may delete the library named libsunec.so (on Solaris and
-Linux systems) or sunec.dll (on Windows systems) from the JRE bin directory
-reserved for native libraries.
+In the case of the JRE 7 & JDK 7 runtimes, the terms of the Oracle license do
+NOT apply to the Elliptic Curve Cryptography library; it is licensed under the
+following license, separately from Oracle's JDK & JRE.  If you do not wish to
+install the Elliptic Curve Cryptography library, you may delete the library
+named libsunec.so (on Solaris and Linux systems) or sunec.dll (on Windows
+systems) from the JRE bin directory reserved for native libraries.
+
 
 --- begin of LICENSE ---
 
@@ -1000,7 +1001,7 @@ included with JDK 7 and OpenJDK 7 source distributions.
 
 -------------------------------------------------------------------------------
 
-%% This notice is provided with respect to libpng 1.2.18, which is 
+%% This notice is provided with respect to libpng 1.5.4, which is 
 included with JRE 7, JDK 7, and OpenJDK 7.
 
 --- begin of LICENSE ---
@@ -1014,8 +1015,10 @@ COPYRIGHT NOTICE, DISCLAIMER, and LICENSE:
 If you modify libpng you may insert additional notices immediately following
 this sentence.
 
-libpng versions 1.2.6, August 15, 2004, through 1.2.18, May 15, 2007, are
-Copyright (c) 2004, 2006-2007 Glenn Randers-Pehrson, and are
+This code is released under the libpng license.
+
+libpng versions 1.2.6, August 15, 2004, through 1.5.4, July 7, 2011, are
+Copyright (c) 2004, 2006-2011 Glenn Randers-Pehrson, and are
 distributed according to the same disclaimer and license as libpng-1.2.5
 with the following individual added to the list of Contributing Authors
 
@@ -1112,7 +1115,7 @@ certification mark of the Open Source Initiative.
 
 Glenn Randers-Pehrson
 glennrp at users.sourceforge.net
-May 15, 2007
+July 7, 2011
 
 --- end of LICENSE ---
 
