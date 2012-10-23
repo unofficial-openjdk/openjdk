@@ -50,6 +50,7 @@ class DerIndefLenConverter {
 
     private byte[] data, newData;
     private int newDataPos, dataPos, dataSize, index;
+    private int unresolved = 0;
 
     private ArrayList<Object> ndefsList = new ArrayList<Object>();
 
@@ -113,6 +114,7 @@ class DerIndefLenConverter {
                              numOfEncapsulatedLenBytes;
             byte[] sectionLenBytes = getLengthBytes(sectionLen);
             ndefsList.set(index, sectionLenBytes);
+            unresolved--;
 
             // Add the number of bytes required to represent this section
             // to the total number of length bytes,
@@ -149,6 +151,7 @@ class DerIndefLenConverter {
         int lenByte = data[dataPos++] & 0xff;
         if (isIndefinite(lenByte)) {
             ndefsList.add(new Integer(dataPos));
+            unresolved++;
             return curLen;
         }
         if (isLongForm(lenByte)) {
@@ -314,6 +317,10 @@ class DerIndefLenConverter {
             parseTag();
             len = parseLength();
             parseValue(len);
+        }
+
+        if (unresolved != 0) {
+            throw new IOException("not all indef len BER resolved");
         }
 
         newData = new byte[dataSize + numOfTotalLenBytes];
