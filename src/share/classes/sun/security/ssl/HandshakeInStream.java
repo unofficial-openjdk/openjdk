@@ -121,7 +121,8 @@ public class HandshakeInStream extends InputStream {
         r.mark(readlimit);
     }
 
-    public void reset() {
+    @Override
+    public void reset() throws IOException {
         r.reset();
     }
 
