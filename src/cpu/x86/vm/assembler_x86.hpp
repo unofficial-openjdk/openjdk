@@ -885,6 +885,17 @@ private:
   void addss(XMMRegister dst, Address src);
   void addss(XMMRegister dst, XMMRegister src);
 
+  // AES instructions
+  void aesdec(XMMRegister dst, Address src);
+  void aesdec(XMMRegister dst, XMMRegister src);
+  void aesdeclast(XMMRegister dst, Address src);
+  void aesdeclast(XMMRegister dst, XMMRegister src);
+  void aesenc(XMMRegister dst, Address src);
+  void aesenc(XMMRegister dst, XMMRegister src);
+  void aesenclast(XMMRegister dst, Address src);
+  void aesenclast(XMMRegister dst, XMMRegister src);
+
+
   void andl(Address  dst, int32_t imm32);
   void andl(Register dst, int32_t imm32);
   void andl(Register dst, Address src);
@@ -1433,6 +1444,10 @@ private:
   void prefetcht1(Address src);
   void prefetcht2(Address src);
   void prefetchw(Address src);
+
+  // Shuffle Bytes
+  void pshufb(XMMRegister dst, XMMRegister src);
+  void pshufb(XMMRegister dst, Address src);
 
   // Shuffle Packed Doublewords
   void pshufd(XMMRegister dst, XMMRegister src, int mode);
@@ -2596,6 +2611,12 @@ public:
   void divss(XMMRegister dst, Address src)        { Assembler::divss(dst, src); }
   void divss(XMMRegister dst, AddressLiteral src);
 
+  // Move Unaligned Double Quadword
+  void movdqu(Address     dst, XMMRegister src)   { Assembler::movdqu(dst, src); }
+  void movdqu(XMMRegister dst, Address src)       { Assembler::movdqu(dst, src); }
+  void movdqu(XMMRegister dst, XMMRegister src)   { Assembler::movdqu(dst, src); }
+  void movdqu(XMMRegister dst, AddressLiteral src);
+
   void movsd(XMMRegister dst, XMMRegister src) { Assembler::movsd(dst, src); }
   void movsd(Address dst, XMMRegister src)     { Assembler::movsd(dst, src); }
   void movsd(XMMRegister dst, Address src)     { Assembler::movsd(dst, src); }
@@ -2643,6 +2664,10 @@ public:
   void xorps(XMMRegister dst, Address src)     { Assembler::xorps(dst, src); }
   void xorps(XMMRegister dst, AddressLiteral src);
 
+  // Shuffle Bytes
+  void pshufb(XMMRegister dst, XMMRegister src) { Assembler::pshufb(dst, src); }
+  void pshufb(XMMRegister dst, Address src)     { Assembler::pshufb(dst, src); }
+  void pshufb(XMMRegister dst, AddressLiteral src);
   // AVX 3-operands instructions
 
   void vaddsd(XMMRegister dst, XMMRegister nds, XMMRegister src) { Assembler::vaddsd(dst, nds, src); }
