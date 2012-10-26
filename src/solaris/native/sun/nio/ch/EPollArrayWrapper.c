@@ -32,7 +32,6 @@
 
 #include <dlfcn.h>
 #include <unistd.h>
-#include <sys/resource.h>
 #include <sys/time.h>
 
 #ifdef  __cplusplus
@@ -139,16 +138,6 @@ Java_sun_nio_ch_EPollArrayWrapper_epollCreate(JNIEnv *env, jobject this)
        JNU_ThrowIOExceptionWithLastError(env, "epoll_create failed");
     }
     return epfd;
-}
-
-JNIEXPORT jint JNICALL
-Java_sun_nio_ch_EPollArrayWrapper_fdLimit(JNIEnv *env, jclass this)
-{
-    struct rlimit rlp;
-    if (getrlimit(RLIMIT_NOFILE, &rlp) < 0) {
-        JNU_ThrowIOExceptionWithLastError(env, "getrlimit failed");
-    }
-    return (jint)rlp.rlim_max;
 }
 
 JNIEXPORT jint JNICALL
