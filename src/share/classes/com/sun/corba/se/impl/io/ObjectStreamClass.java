@@ -56,6 +56,8 @@ import java.io.Serializable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.sun.corba.se.impl.util.RepositoryId;
 
@@ -381,11 +383,23 @@ public class ObjectStreamClass implements java.io.Serializable {
          */
     }
 
-    private static final class PersistentFieldsValue
-            extends ClassValue<ObjectStreamField[]> {
+    private static final class PersistentFieldsValue {
+        private final ConcurrentMap map = new ConcurrentHashMap();
+        private static final Object NULL_VALUE =
+            (PersistentFieldsValue.class.getName() + ".NULL_VALUE");
+
         PersistentFieldsValue() { }
 
-        protected ObjectStreamField[] computeValue(Class<?> type) {
+        ObjectStreamField[] get(Class type) {
+            Object value = map.get(type);
+            if (value == null) {
+                value = computeValue(type);
+                map.putIfAbsent(type, value);
+            }
+            return ((value == NULL_VALUE) ? null : (ObjectStreamField[])value);
+        }
+
+        private static Object computeValue(Class<?> type) {
             try {
                 Field pf = type.getDeclaredField("serialPersistentFields");
                 int mods = pf.getModifiers();
@@ -396,14 +410,15 @@ public class ObjectStreamClass implements java.io.Serializable {
                         (java.io.ObjectStreamField[])pf.get(type);
                     return translateFields(fields);
                 }
-            } catch (NoSuchFieldException | IllegalAccessException |
-                    IllegalArgumentException | ClassCastException e) {
-            }
-            return null;
+            } catch (NoSuchFieldException e1) {
+            } catch (IllegalAccessException e2) {
+            } catch (IllegalArgumentException e3) {
+            } catch (ClassCastException e4) { }
+            return NULL_VALUE;
         }
 
         private static ObjectStreamField[] translateFields(
-            java.io.ObjectStreamField[] fields) {
+                java.io.ObjectStreamField[] fields) {
             ObjectStreamField[] translation =
                 new ObjectStreamField[fields.length];
             for (int i = 0; i < fields.length; i++) {
@@ -449,7 +464,7 @@ public class ObjectStreamClass implements java.io.Serializable {
                  * If it is declared, use the declared serialPersistentFields.
                  * Otherwise, extract the fields from the class itself.
                  */
-                    fields = persistentFieldsValue.get(cl);
+                fields = persistentFieldsValue.get(cl);
 
                 if (fields == null) {
                     /* Get all of the declared fields for this
@@ -645,7 +660,6 @@ public class ObjectStreamClass implements java.io.Serializable {
         suid = s;
         superclass = null;
     }
-
 
     /*
      * Set the class this version descriptor matches.
