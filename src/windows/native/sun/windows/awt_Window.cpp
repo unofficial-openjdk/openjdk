@@ -1477,7 +1477,7 @@ void AwtWindow::SendWindowEvent(jint id, HWND opposite,
     if (wClassEvent == NULL) {
         if (env->PushLocalFrame(1) < 0)
             return;
-        wClassEvent = env->FindClass("java/awt/event/WindowEvent");
+        wClassEvent = env->FindClass("sun/awt/TimedWindowEvent");
         if (wClassEvent != NULL) {
             wClassEvent = (jclass)env->NewGlobalRef(wClassEvent);
         }
@@ -1491,7 +1491,7 @@ void AwtWindow::SendWindowEvent(jint id, HWND opposite,
     if (wEventInitMID == NULL) {
         wEventInitMID =
             env->GetMethodID(wClassEvent, "<init>",
-                             "(Ljava/awt/Window;ILjava/awt/Window;II)V");
+                             "(Ljava/awt/Window;ILjava/awt/Window;IIJ)V");
         DASSERT(wEventInitMID);
         if (wEventInitMID == NULL) {
             return;
@@ -1532,7 +1532,7 @@ void AwtWindow::SendWindowEvent(jint id, HWND opposite,
         }
     }
     jobject event = env->NewObject(wClassEvent, wEventInitMID, target, id,
-                                   jOpposite, oldState, newState);
+                                   jOpposite, oldState, newState, TimeHelper::getMessageTimeUTC());
     DASSERT(!safe_ExceptionOccurred(env));
     DASSERT(event != NULL);
     if (jOpposite != NULL) {
@@ -1559,21 +1559,8 @@ void AwtWindow::SendWindowEvent(jint id, HWND opposite,
 
 BOOL AwtWindow::AwtSetActiveWindow(BOOL isMouseEventCause, UINT hittest)
 {
-    // Fix for 6458497.
-    // Retreat if current foreground window is out of both our and embedder process.
-    // The exception is when activation is requested due to a mouse event.
-    if (!isMouseEventCause) {
-        HWND fgWindow = ::GetForegroundWindow();
-        if (NULL != fgWindow) {
-            DWORD fgProcessID;
-            ::GetWindowThreadProcessId(fgWindow, &fgProcessID);
-            if (fgProcessID != ::GetCurrentProcessId()
-                && !AwtToolkit::GetInstance().IsEmbedderProcessId(fgProcessID))
-            {
-                return FALSE;
-            }
-        }
-    }
+    // We used to reject non mouse window activation if our app wasn't active.
+    // This code since has been removed as the fix for 7185280
 
     HWND proxyContainerHWnd = GetProxyToplevelContainer();
     HWND proxyHWnd = GetProxyFocusOwner();
