@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,6 +124,11 @@ class ChunkedInputStream extends InputStream implements Hurryable {
      * <code>close</code> method.
      */
     private boolean closed;
+
+    /*
+     * Maximum chunk header size of 2KB + 2 bytes for CRLF
+     */
+    private final static int MAX_CHUNK_HEADER_SIZE = 2050;
 
     /**
      * State to indicate that next field should be :-
@@ -290,6 +295,10 @@ class ChunkedInputStream extends InputStream implements Hurryable {
                             break;
                         }
                         pos++;
+                        if ((pos - rawPos) >= MAX_CHUNK_HEADER_SIZE) {
+                            error = true;
+                            throw new IOException("Chunk header too long");
+                        }
                     }
                     if (pos >= rawCount) {
                         return;
