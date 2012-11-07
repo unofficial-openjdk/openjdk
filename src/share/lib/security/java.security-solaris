@@ -128,7 +128,9 @@ system.scope=sun.security.provider.IdentityDatabase
 # passed to checkPackageAccess unless the
 # corresponding RuntimePermission ("accessClassInPackage."+package) has
 # been granted.
-package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.imageio.
+package.access=sun.,\
+               com.sun.xml.internal.,\
+               com.sun.imageio.
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -140,7 +142,9 @@ package.access=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.
 # by default, none of the class loaders supplied with the JDK call
 # checkPackageDefinition.
 #
-package.definition=sun.,com.sun.xml.internal.ws.,com.sun.xml.internal.bind.,com.sun.imageio.
+package.definition=sun.,\
+                   com.sun.xml.internal.,\
+                   com.sun.imageio.
 
 #
 # Determines whether this properties file can be appended to
