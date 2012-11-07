@@ -404,19 +404,6 @@ public class BasicInt
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         // Compact
 
         relPut(b);
