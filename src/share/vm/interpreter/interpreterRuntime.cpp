@@ -746,7 +746,8 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokehandle(JavaThread* thread)) {
   cache_entry(thread)->set_method_handle(
       pool,
       info.resolved_method(),
-      info.resolved_appendix());
+      info.resolved_appendix(),
+      info.resolved_method_type());
 }
 IRT_END
 
@@ -773,7 +774,8 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
   pool->cache()->secondary_entry_at(index)->set_dynamic_call(
       pool,
       info.resolved_method(),
-      info.resolved_appendix());
+      info.resolved_appendix(),
+      info.resolved_method_type());
 }
 IRT_END
 

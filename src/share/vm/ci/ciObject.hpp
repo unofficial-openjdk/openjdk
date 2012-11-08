@@ -146,6 +146,7 @@ public:
   virtual bool is_method()                  { return false; }
   virtual bool is_method_data()             { return false; }
   virtual bool is_method_handle()     const { return false; }
+  virtual bool is_method_type()       const { return false; }
   virtual bool is_array()                   { return false; }
   virtual bool is_obj_array()               { return false; }
   virtual bool is_type_array()              { return false; }
@@ -193,103 +194,107 @@ public:
   }
 
   // Subclass casting with assertions.
-  ciNullObject*            as_null_object() {
+  ciNullObject* as_null_object() {
     assert(is_null_object(), "bad cast");
     return (ciNullObject*)this;
   }
-  ciCallSite*              as_call_site() {
+  ciCallSite* as_call_site() {
     assert(is_call_site(), "bad cast");
-    return (ciCallSite*) this;
+    return (ciCallSite*)this;
   }
-  ciCPCache*               as_cpcache() {
+  ciCPCache* as_cpcache() {
     assert(is_cpcache(), "bad cast");
-    return (ciCPCache*) this;
+    return (ciCPCache*)this;
   }
-  ciInstance*              as_instance() {
+  ciInstance* as_instance() {
     assert(is_instance(), "bad cast");
     return (ciInstance*)this;
   }
-  ciMemberName*            as_member_name() {
+  ciMemberName* as_member_name() {
     assert(is_member_name(), "bad cast");
     return (ciMemberName*)this;
   }
-  ciMethod*                as_method() {
+  ciMethod* as_method() {
     assert(is_method(), "bad cast");
     return (ciMethod*)this;
   }
-  ciMethodData*            as_method_data() {
+  ciMethodData* as_method_data() {
     assert(is_method_data(), "bad cast");
     return (ciMethodData*)this;
   }
-  ciMethodHandle*          as_method_handle() {
+  ciMethodHandle* as_method_handle() {
     assert(is_method_handle(), "bad cast");
-    return (ciMethodHandle*) this;
+    return (ciMethodHandle*)this;
   }
-  ciArray*                 as_array() {
+  ciMethodType* as_method_type() {
+    assert(is_method_type(), "bad cast");
+    return (ciMethodType*)this;
+  }
+  ciArray* as_array() {
     assert(is_array(), "bad cast");
     return (ciArray*)this;
   }
-  ciObjArray*              as_obj_array() {
+  ciObjArray* as_obj_array() {
     assert(is_obj_array(), "bad cast");
     return (ciObjArray*)this;
   }
-  ciTypeArray*             as_type_array() {
+  ciTypeArray* as_type_array() {
     assert(is_type_array(), "bad cast");
     return (ciTypeArray*)this;
   }
-  ciSymbol*                as_symbol() {
+  ciSymbol* as_symbol() {
     assert(is_symbol(), "bad cast");
     return (ciSymbol*)this;
   }
-  ciType*                  as_type() {
+  ciType* as_type() {
     assert(is_type(), "bad cast");
     return (ciType*)this;
   }
-  ciReturnAddress*         as_return_address() {
+  ciReturnAddress* as_return_address() {
     assert(is_return_address(), "bad cast");
     return (ciReturnAddress*)this;
   }
-  ciKlass*                 as_klass() {
+  ciKlass* as_klass() {
     assert(is_klass(), "bad cast");
     return (ciKlass*)this;
   }
-  ciInstanceKlass*         as_instance_klass() {
+  ciInstanceKlass* as_instance_klass() {
     assert(is_instance_klass(), "bad cast");
     return (ciInstanceKlass*)this;
   }
-  ciMethodKlass*           as_method_klass() {
+  ciMethodKlass* as_method_klass() {
     assert(is_method_klass(), "bad cast");
     return (ciMethodKlass*)this;
   }
-  ciArrayKlass*            as_array_klass() {
+  ciArrayKlass* as_array_klass() {
     assert(is_array_klass(), "bad cast");
     return (ciArrayKlass*)this;
   }
-  ciObjArrayKlass*         as_obj_array_klass() {
+  ciObjArrayKlass* as_obj_array_klass() {
     assert(is_obj_array_klass(), "bad cast");
     return (ciObjArrayKlass*)this;
   }
-  ciTypeArrayKlass*        as_type_array_klass() {
+  ciTypeArrayKlass* as_type_array_klass() {
     assert(is_type_array_klass(), "bad cast");
     return (ciTypeArrayKlass*)this;
   }
-  ciKlassKlass*            as_klass_klass() {
+  ciKlassKlass* as_klass_klass() {
     assert(is_klass_klass(), "bad cast");
     return (ciKlassKlass*)this;
   }
-  ciInstanceKlassKlass*    as_instance_klass_klass() {
+  ciInstanceKlassKlass* as_instance_klass_klass() {
     assert(is_instance_klass_klass(), "bad cast");
     return (ciInstanceKlassKlass*)this;
   }
-  ciArrayKlassKlass*       as_array_klass_klass() {
+  ciArrayKlassKlass* as_array_klass_klass() {
     assert(is_array_klass_klass(), "bad cast");
     return (ciArrayKlassKlass*)this;
   }
-  ciObjArrayKlassKlass*    as_obj_array_klass_klass() {
+  ciObjArrayKlassKlass* as_obj_array_klass_klass() {
     assert(is_obj_array_klass_klass(), "bad cast");
     return (ciObjArrayKlassKlass*)this;
   }
-  ciTypeArrayKlassKlass*   as_type_array_klass_klass() {
+  ciTypeArrayKlassKlass* as_type_array_klass_klass() {
     assert(is_type_array_klass_klass(), "bad cast");
     return (ciTypeArrayKlassKlass*)this;
   }

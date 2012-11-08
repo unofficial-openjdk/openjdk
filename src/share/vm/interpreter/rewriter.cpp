@@ -163,10 +163,14 @@ void Rewriter::maybe_rewrite_invokehandle(address opc, int cp_index, bool revers
       if (status == 0) {
         if (_pool->klass_ref_at_noresolve(cp_index) == vmSymbols::java_lang_invoke_MethodHandle() &&
             MethodHandles::is_signature_polymorphic_name(SystemDictionary::MethodHandle_klass(),
-                                                         _pool->name_ref_at(cp_index)))
+                                                         _pool->name_ref_at(cp_index))) {
+          assert(has_cp_cache(cp_index), "should already have an entry");
+          int cpc  = maybe_add_cp_cache_entry(cp_index);  // should already have an entry
+          int cpc2 = add_secondary_cp_cache_entry(cpc);
           status = +1;
-        else
+        } else {
           status = -1;
+        }
         _method_handle_invokers[cp_index] = status;
       }
       // We use a special internal bytecode for such methods (if non-static).
@@ -195,6 +199,10 @@ void Rewriter::rewrite_invokedynamic(address bcp, int offset, bool reverse) {
     int cp_index = Bytes::get_Java_u2(p);
     int cpc  = maybe_add_cp_cache_entry(cp_index);  // add lazily
     int cpc2 = add_secondary_cp_cache_entry(cpc);
+    // The second secondary entry is required to store the MethodType and
+    // must be the next entry.
+    int cpc3 = add_secondary_cp_cache_entry(cpc);
+    assert(cpc2 + 1 == cpc3, err_msg_res("must be consecutive: %d + 1 == %d", cpc2, cpc3));
 
     // Replace the trailing four bytes with a CPC index for the dynamic
     // call site.  Unlike other CPC entries, there is one per bytecode,

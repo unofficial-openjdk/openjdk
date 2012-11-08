@@ -167,10 +167,11 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
     tos_state_mask             = right_n_bits(tos_state_bits),
     tos_state_shift            = BitsPerInt - tos_state_bits,  // see verify_tos_state_shift below
     // misc. option bits; can be any bit position in [16..27]
-    is_vfinal_shift            = 21,
-    is_volatile_shift          = 22,
-    is_final_shift             = 23,
-    has_appendix_shift         = 24,
+    is_vfinal_shift            = 20,
+    is_volatile_shift          = 21,
+    is_final_shift             = 22,
+    has_appendix_shift         = 23,
+    has_method_type_shift      = 24,
     is_forced_virtual_shift    = 25,
     is_field_entry_shift       = 26,
     // low order bits give field index (for FieldInfo) or method parameter size:
@@ -224,13 +225,15 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   void set_method_handle(
     constantPoolHandle cpool,                    // holding constant pool (required for locking)
     methodHandle method,                         // adapter for invokeExact, etc.
-    Handle appendix                              // stored in f1; could be a java.lang.invoke.MethodType
+    Handle appendix,                             // stored in f1; could be a java.lang.invoke.MethodType
+    Handle method_type                           // stored in f1 (of secondary entry); is a java.lang.invoke.MethodType
   );
 
   void set_dynamic_call(
     constantPoolHandle cpool,                    // holding constant pool (required for locking)
     methodHandle method,                         // adapter for this call site
-    Handle appendix                              // stored in f1; could be a java.lang.invoke.CallSite
+    Handle appendix,                             // stored in f1; could be a java.lang.invoke.CallSite
+    Handle method_type                           // stored in f1 (of secondary entry); is a java.lang.invoke.MethodType
   );
 
   // Common code for invokedynamic and MH invocations.
@@ -252,10 +255,13 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
     constantPoolHandle cpool,                    // holding constant pool (required for locking)
     Bytecodes::Code invoke_code,                 // _invokehandle or _invokedynamic
     methodHandle adapter,                        // invoker method (f2)
-    Handle appendix                              // appendix such as CallSite, MethodType, etc. (f1)
+    Handle appendix,                             // appendix such as CallSite, MethodType, etc. (f1)
+    Handle method_type                           // MethodType (f1 of secondary entry)
   );
 
-  methodOop method_if_resolved(constantPoolHandle cpool);
+  methodOop      method_if_resolved(constantPoolHandle cpool);
+  oop          appendix_if_resolved(constantPoolHandle cpool);
+  oop       method_type_if_resolved(constantPoolHandle cpool);
 
   void set_parameter_size(int value);
 
@@ -267,11 +273,11 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
       case Bytecodes::_getfield        :    // fall through
       case Bytecodes::_invokespecial   :    // fall through
       case Bytecodes::_invokestatic    :    // fall through
+      case Bytecodes::_invokehandle    :    // fall through
+      case Bytecodes::_invokedynamic   :    // fall through
       case Bytecodes::_invokeinterface : return 1;
       case Bytecodes::_putstatic       :    // fall through
       case Bytecodes::_putfield        :    // fall through
-      case Bytecodes::_invokehandle    :    // fall through
-      case Bytecodes::_invokedynamic   :    // fall through
       case Bytecodes::_invokevirtual   : return 2;
       default                          : break;
     }
@@ -310,7 +316,8 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   int  parameter_size() const                    { assert(is_method_entry(), ""); return (_flags & parameter_size_mask); }
   bool is_volatile() const                       { return (_flags & (1 << is_volatile_shift))       != 0; }
   bool is_final() const                          { return (_flags & (1 << is_final_shift))          != 0; }
-  bool has_appendix() const                      { return (_flags & (1 << has_appendix_shift))     != 0; }
+  bool has_appendix() const                      { return (_flags & (1 << has_appendix_shift))      != 0; }
+  bool has_method_type() const                   { return (_flags & (1 << has_method_type_shift))   != 0; }
   bool is_forced_virtual() const                 { return (_flags & (1 << is_forced_virtual_shift)) != 0; }
   bool is_vfinal() const                         { return (_flags & (1 << is_vfinal_shift))         != 0; }
   bool is_method_entry() const                   { return (_flags & (1 << is_field_entry_shift))    == 0; }
@@ -443,6 +450,29 @@ class constantPoolCacheOopDesc: public oopDesc {
     }
     assert(!entry_at(primary_index)->is_secondary_entry(), "only one level of indirection");
     return entry_at(primary_index);
+  }
+
+  int index_of(ConstantPoolCacheEntry* e) {
+    assert(base() <= e && e < base() + length(), "oob");
+    int cpc_index = (e - base());
+    assert(entry_at(cpc_index) == e, "sanity");
+    return cpc_index;
+  }
+  ConstantPoolCacheEntry* find_secondary_entry_for(ConstantPoolCacheEntry* e) {
+    const int cpc_index = index_of(e);
+    if (e->is_secondary_entry()) {
+      ConstantPoolCacheEntry* e2 = entry_at(cpc_index + 1);
+      assert(e->main_entry_index() == e2->main_entry_index(), "");
+      return e2;
+    } else {
+      for (int i = length() - 1; i >= 0; i--) {
+        ConstantPoolCacheEntry* e2 = entry_at(i);
+        if (cpc_index == e2->main_entry_index())
+          return e2;
+      }
+    }
+    fatal("no secondary entry found");
+    return NULL;
   }
 
   // Code generation

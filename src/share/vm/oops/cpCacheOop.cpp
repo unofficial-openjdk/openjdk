@@ -266,21 +266,23 @@ void ConstantPoolCacheEntry::set_interface_call(methodHandle method, int index) 
 
 
 void ConstantPoolCacheEntry::set_method_handle(constantPoolHandle cpool,
-                                               methodHandle adapter, Handle appendix) {
+                                               methodHandle adapter,
+                                               Handle appendix, Handle method_type) {
   assert(!is_secondary_entry(), "");
-  set_method_handle_common(cpool, Bytecodes::_invokehandle, adapter, appendix);
+  set_method_handle_common(cpool, Bytecodes::_invokehandle, adapter, appendix, method_type);
 }
 
 void ConstantPoolCacheEntry::set_dynamic_call(constantPoolHandle cpool,
-                                              methodHandle adapter, Handle appendix) {
+                                              methodHandle adapter,
+                                              Handle appendix, Handle method_type) {
   assert(is_secondary_entry(), "");
-  set_method_handle_common(cpool, Bytecodes::_invokedynamic, adapter, appendix);
+  set_method_handle_common(cpool, Bytecodes::_invokedynamic, adapter, appendix, method_type);
 }
 
 void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
                                                       Bytecodes::Code invoke_code,
                                                       methodHandle adapter,
-                                                      Handle appendix) {
+                                                      Handle appendix, Handle method_type) {
   // NOTE: This CPCE can be the subject of data races.
   // There are three words to update: flags, f2, f1 (in that order).
   // Writers must store all other values before f1.
@@ -296,23 +298,28 @@ void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
     return;
   }
 
-  bool has_appendix = appendix.not_null();
+  const bool has_appendix    = appendix.not_null();
+  const bool has_method_type = method_type.not_null();
+
   if (!has_appendix) {
     // The extra argument is not used, but we need a non-null value to signify linkage state.
     // Set it to something benign that will never leak memory.
     appendix = Universe::void_mirror();
   }
 
+  // Write the flags.
   set_method_flags(as_TosState(adapter->result_type()),
-                   ((has_appendix ?  1 : 0) << has_appendix_shift) |
-                   (                 1      << is_vfinal_shift)    |
-                   (                 1      << is_final_shift),
+                   ((has_appendix    ? 1 : 0) << has_appendix_shift)    |
+                   ((has_method_type ? 1 : 0) << has_method_type_shift) |
+                   (                   1      << is_vfinal_shift)       |
+                   (                   1      << is_final_shift),
                    adapter->size_of_parameters());
 
   if (TraceInvokeDynamic) {
-    tty->print_cr("set_method_handle bc=%d appendix="PTR_FORMAT"%s method="PTR_FORMAT" ",
+    tty->print_cr("set_method_handle bc=%d appendix="PTR_FORMAT"%s method_type="PTR_FORMAT"%s method="PTR_FORMAT" ",
                   invoke_code,
-                  (intptr_t)appendix(), (has_appendix ? "" : " (unused)"),
+                  (intptr_t)appendix(),    (has_appendix    ? "" : " (unused)"),
+                  (intptr_t)method_type(), (has_method_type ? "" : " (unused)"),
                   (intptr_t)adapter());
     adapter->print();
     if (has_appendix)  appendix()->print();
@@ -336,14 +343,31 @@ void ConstantPoolCacheEntry::set_method_handle_common(constantPoolHandle cpool,
   // The fact that String and List are involved is encoded in the MethodType in f1.
   // This allows us to create fewer method oops, while keeping type safety.
   //
+
   set_f2_as_vfinal_method(adapter());
+
+  // Store MethodType, if any.
+  if (has_method_type) {
+    ConstantPoolCacheEntry* e2 = cpool->cache()->find_secondary_entry_for(this);
+
+    // Write the flags.
+    e2->set_method_flags(as_TosState(adapter->result_type()),
+                     ((has_method_type ? 1 : 0) << has_method_type_shift) |
+                     (                   1      << is_vfinal_shift)       |
+                     (                   1      << is_final_shift),
+                     adapter->size_of_parameters());
+    e2->release_set_f1(method_type());
+  }
+
   assert(appendix.not_null(), "needed for linkage state");
   release_set_f1(appendix());  // This must be the last one to set (see NOTE above)!
+
   if (!is_secondary_entry()) {
     // The interpreter assembly code does not check byte_2,
     // but it is used by is_resolved, method_if_resolved, etc.
     set_bytecode_2(invoke_code);
   }
+
   NOT_PRODUCT(verify(tty));
   if (TraceInvokeDynamic) {
     this->print(tty, 0);
@@ -398,6 +422,20 @@ methodOop ConstantPoolCacheEntry::method_if_resolved(constantPoolHandle cpool) {
     }
   }
   return NULL;
+}
+
+
+oop ConstantPoolCacheEntry::appendix_if_resolved(constantPoolHandle cpool) {
+  if (is_f1_null() || !has_appendix())
+    return NULL;
+  return f1_appendix();
+}
+
+
+oop ConstantPoolCacheEntry::method_type_if_resolved(constantPoolHandle cpool) {
+  if (is_f1_null() || !has_method_type())
+    return NULL;
+  return f1_as_instance();
 }
 
 

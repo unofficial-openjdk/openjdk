@@ -49,6 +49,7 @@ class   ciInstance;
 class     ciCallSite;
 class     ciMemberName;
 class     ciMethodHandle;
+class     ciMethodType;
 class   ciMethod;
 class   ciMethodData;
 class     ciReceiverTypeData;  // part of ciMethodData
@@ -105,6 +106,7 @@ friend class ciMemberName;             \
 friend class ciMethod;                 \
 friend class ciMethodData;             \
 friend class ciMethodHandle;           \
+friend class ciMethodType;             \
 friend class ciReceiverTypeData;       \
 friend class ciSymbol;                 \
 friend class ciArray;                  \

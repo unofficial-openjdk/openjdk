@@ -674,6 +674,8 @@ class constantPoolOopDesc : public oopDesc {
   static methodOop       method_at_if_loaded      (constantPoolHandle this_oop, int which);
   static bool      has_appendix_at_if_loaded      (constantPoolHandle this_oop, int which);
   static oop           appendix_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static bool   has_method_type_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static oop        method_type_at_if_loaded      (constantPoolHandle this_oop, int which);
   static klassOop         klass_at_if_loaded      (constantPoolHandle this_oop, int which);
   static klassOop     klass_ref_at_if_loaded      (constantPoolHandle this_oop, int which);
   // Same as above - but does LinkResolving.
@@ -704,6 +706,12 @@ class constantPoolOopDesc : public oopDesc {
 #endif //ASSERT
 
   static int get_cpcache_index(int index) { return index - CPCACHE_INDEX_TAG; }
+  static int decode_cpcache_index(int raw_index, bool invokedynamic_ok = false) {
+    if (invokedynamic_ok && constantPoolCacheOopDesc::is_secondary_index(raw_index))
+      return constantPoolCacheOopDesc::decode_secondary_index(raw_index);
+    else
+      return get_cpcache_index(raw_index);
+  }
 
  private:
 

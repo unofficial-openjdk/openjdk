@@ -270,13 +270,7 @@ methodOop constantPoolOopDesc::method_at_if_loaded(constantPoolHandle cpool,
                                                    int which) {
   assert(!constantPoolCacheOopDesc::is_secondary_index(which), "no indy instruction here");
   if (cpool->cache() == NULL)  return NULL;  // nothing to load yet
-  int cache_index = get_cpcache_index(which);
-  if (!(cache_index >= 0 && cache_index < cpool->cache()->length())) {
-    if (PrintMiscellaneous && (Verbose||WizardMode)) {
-      tty->print_cr("bad operand %d in:", which); cpool->print();
-    }
-    return NULL;
-  }
+  int cache_index = decode_cpcache_index(which, true);
   ConstantPoolCacheEntry* e = cpool->cache()->entry_at(cache_index);
   return e->method_if_resolved(cpool);
 }
@@ -284,44 +278,33 @@ methodOop constantPoolOopDesc::method_at_if_loaded(constantPoolHandle cpool,
 
 bool constantPoolOopDesc::has_appendix_at_if_loaded(constantPoolHandle cpool, int which) {
   if (cpool->cache() == NULL)  return false;  // nothing to load yet
-  // XXX Is there a simpler way to get to the secondary entry?
-  ConstantPoolCacheEntry* e;
-  if (constantPoolCacheOopDesc::is_secondary_index(which)) {
-    e = cpool->cache()->secondary_entry_at(which);
-  } else {
-    int cache_index = get_cpcache_index(which);
-    if (!(cache_index >= 0 && cache_index < cpool->cache()->length())) {
-      if (PrintMiscellaneous && (Verbose||WizardMode)) {
-        tty->print_cr("bad operand %d in:", which); cpool->print();
-      }
-      return false;
-    }
-    e = cpool->cache()->entry_at(cache_index);
-  }
+  int cache_index = decode_cpcache_index(which, true);
+  ConstantPoolCacheEntry* e = cpool->cache()->entry_at(cache_index);
   return e->has_appendix();
 }
 
 
 oop constantPoolOopDesc::appendix_at_if_loaded(constantPoolHandle cpool, int which) {
   if (cpool->cache() == NULL)  return NULL;  // nothing to load yet
-  // XXX Is there a simpler way to get to the secondary entry?
-  ConstantPoolCacheEntry* e;
-  if (constantPoolCacheOopDesc::is_secondary_index(which)) {
-    e = cpool->cache()->secondary_entry_at(which);
-  } else {
-    int cache_index = get_cpcache_index(which);
-    if (!(cache_index >= 0 && cache_index < cpool->cache()->length())) {
-      if (PrintMiscellaneous && (Verbose||WizardMode)) {
-        tty->print_cr("bad operand %d in:", which); cpool->print();
-      }
-      return NULL;
-    }
-    e = cpool->cache()->entry_at(cache_index);
-  }
-  if (!e->has_appendix()) {
-    return NULL;
-  }
-  return e->f1_as_instance();
+  int cache_index = decode_cpcache_index(which, true);
+  ConstantPoolCacheEntry* e = cpool->cache()->entry_at(cache_index);
+  return e->appendix_if_resolved(cpool);
+}
+
+
+bool constantPoolOopDesc::has_method_type_at_if_loaded(constantPoolHandle cpool, int which) {
+  if (cpool->cache() == NULL)  return false;  // nothing to load yet
+  int cache_index = decode_cpcache_index(which, true);
+  ConstantPoolCacheEntry* e = cpool->cache()->entry_at(cache_index);
+  return e->has_method_type();
+}
+
+oop constantPoolOopDesc::method_type_at_if_loaded(constantPoolHandle cpool, int which) {
+  if (cpool->cache() == NULL)  return NULL;  // nothing to load yet
+  int cache_index = decode_cpcache_index(which, true);
+  ConstantPoolCacheEntry* e  = cpool->cache()->entry_at(cache_index);  // get next CPC entry
+  ConstantPoolCacheEntry* e2 = cpool->cache()->find_secondary_entry_for(e);
+  return e2->method_type_if_resolved(cpool);
 }
 
 
