@@ -3902,7 +3902,10 @@ class CommandLineFlags {
   product(bool, UseVMInterruptibleIO, false,                                \
           "(Unstable, Solaris-specific) Thread interrupt before or with "   \
           "EINTR for I/O operations results in OS_INTRPT. The default value"\
-          " of this flag is true for JDK 6 and earlier")
+          " of this flag is true for JDK 6 and earlier")                    \
+                                                                            \
+  product(bool, AllowNonVirtualCalls, false,                                \
+         "Obey the ACC_SUPER flag and allow invokenonvirtual calls")
 
 /*
  *  Macros for factoring of globals
