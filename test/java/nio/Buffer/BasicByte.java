@@ -404,19 +404,6 @@ public class BasicByte
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         // Compact
 
         relPut(b);
