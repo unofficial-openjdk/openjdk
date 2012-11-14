@@ -154,7 +154,7 @@ public final class Init {
                 }
             }
                         for (Node el=config.getFirstChild();el!=null;el=el.getNextSibling()) {
-                if (!(el instanceof Element)) {
+                if (el.getNodeType() != Node.ELEMENT_NODE) {
                         continue;
                 }
                 String tag=el.getLocalName();

@@ -1,0 +1,21 @@
+#
+# Configuration file to allow the SunPKCS11 provider to utilize
+# the Solaris Cryptographic Framework, if it is available
+#
+# This is a temporary file only for testing.  It does not contain the
+# normal disabled PKCS11 mechanisms that we will use for this test.
+#
+
+name = MyProvider
+
+description = SunPKCS11 accessing Solaris Cryptographic Framework
+
+library = /usr/lib/$ISA/libpkcs11.so
+
+handleStartupErrors = ignoreAll
+
+attributes = compatibility
+
+disabledMechanisms = {
+  CKM_MD2
+}
