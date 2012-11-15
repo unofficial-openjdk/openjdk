@@ -306,20 +306,25 @@ void Thread::initialize_thread_local_storage() {
 
   // initialize structure dependent on thread local storage
   ThreadLocalStorage::set_thread(this);
-
-  // set up any platform-specific state.
-  os::initialize_thread();
 }
 
 void Thread::record_stack_base_and_size() {
   set_stack_base(os::current_stack_base());
   set_stack_size(os::current_stack_size());
+  // CR 7190089: on Solaris, primordial thread's stack is adjusted
+  // in initialize_thread(). Without the adjustment, stack size is
+  // incorrect if stack is set to unlimited (ulimit -s unlimited).
+  // So far, only Solaris has real implementation of initialize_thread().
+  //
+  // set up any platform-specific state.
+  os::initialize_thread(this);
 
-  // record thread's native stack, stack grows downward
-  address vm_base = _stack_base - _stack_size;
-  MemTracker::record_virtual_memory_reserve(vm_base, _stack_size,
-    CURRENT_PC, this);
-  MemTracker::record_virtual_memory_type(vm_base, mtThreadStack);
+   // record thread's native stack, stack grows downward
+  if (MemTracker::is_on()) {
+    address stack_low_addr = stack_base() - stack_size();
+    MemTracker::record_thread_stack(stack_low_addr, stack_size(), this,
+      CURRENT_PC);
+  }
 }
 
 
@@ -327,8 +332,14 @@ Thread::~Thread() {
   // Reclaim the objectmonitors from the omFreeList of the moribund thread.
   ObjectSynchronizer::omFlush (this) ;
 
-  MemTracker::record_virtual_memory_release((_stack_base - _stack_size),
-    _stack_size, this);
+  // stack_base can be NULL if the thread is never started or exited before
+  // record_stack_base_and_size called. Although, we would like to ensure
+  // that all started threads do call record_stack_base_and_size(), there is
+  // not proper way to enforce that.
+  if (_stack_base != NULL) {
+    address low_stack_addr = stack_base() - stack_size();
+    MemTracker::release_thread_stack(low_stack_addr, stack_size(), this);
+  }
 
   // deallocate data structures
   delete resource_area();
