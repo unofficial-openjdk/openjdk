@@ -339,6 +339,9 @@ Thread::~Thread() {
   if (_stack_base != NULL) {
     address low_stack_addr = stack_base() - stack_size();
     MemTracker::release_thread_stack(low_stack_addr, stack_size(), this);
+#ifdef ASSERT
+    set_stack_base(NULL);
+#endif
   }
 
   // deallocate data structures
@@ -1560,10 +1563,12 @@ JavaThread::~JavaThread() {
       tty->print_cr("terminate thread %p", this);
   }
 
-  // Info NMT that this JavaThread is exiting, its memory
-  // recorder should be collected
+  // By now, this thread should already be invisible to safepoint,
+  // and its per-thread recorder also collected.
   assert(!is_safepoint_visible(), "wrong state");
-  MemTracker::thread_exiting(this);
+#if INCLUDE_NMT
+  assert(get_recorder() == NULL, "Already collected");
+#endif // INCLUDE_NMT
 
   // JSR166 -- return the parker to the free list
   Parker::Release(_parker);
@@ -2464,6 +2469,7 @@ void JavaThread::create_stack_guard_pages() {
 }
 
 void JavaThread::remove_stack_guard_pages() {
+  assert(Thread::current() == this, "from different thread");
   if (_stack_guard_state == stack_guard_unused) return;
   address low_addr = stack_base() - stack_size();
   size_t len = (StackYellowPages + StackRedPages) * os::vm_page_size();
@@ -4104,7 +4110,10 @@ void Threads::remove(JavaThread* p) {
 
     // Now, this thread is not visible to safepoint
     p->set_safepoint_visible(false);
-
+    // once the thread becomes safepoint invisible, we can not use its per-thread
+    // recorder. And Threads::do_threads() no longer walks this thread, so we have
+    // to release its per-thread recorder here.
+    MemTracker::thread_exiting(p);
   } // unlock Threads_lock
 
   // Since Events::log uses a lock, we grab it outside the Threads_lock
