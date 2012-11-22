@@ -47,6 +47,7 @@ import java.util.Locale;
 import java.util.WeakHashMap;
 import javax.swing.SwingUtilities;
 import sun.awt.AppContext;
+import sun.awt.AWTAccessor;
 import sun.awt.EmbeddedFrame;
 import sun.awt.SunToolkit;
 import sun.misc.MessageUtils;
@@ -449,12 +450,12 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       // to avoid deadlock.
                       try {
                           final AppletPanel p = this;
-
-                          SwingUtilities.invokeAndWait(new Runnable() {
-                                  public void run() {
-                                      p.validate();
-                                  }
-                              });
+                           Runnable r = new Runnable() {
+                              public void run() {
+                                  p.validate();
+                              }
+                          };
+                          AWTAccessor.getEventQueueAccessor().invokeAndWait(applet, r);
                       }
                       catch(InterruptedException ie) {
                       }
@@ -479,18 +480,19 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       try {
                           final AppletPanel p = this;
                           final Applet a = applet;
+                          Runnable r = new Runnable() {
+                              public void run() {
+                                  p.validate();
+                                  a.setVisible(true);
 
-                          SwingUtilities.invokeAndWait(new Runnable() {
-                                  public void run() {
-                                      p.validate();
-                                      a.setVisible(true);
-
-                                      // Fix for BugTraq ID 4041703.
-                                      // Set the default focus for an applet.
-                                      if (hasInitialFocus())
-                                        setDefaultFocus();
+                                  // Fix for BugTraq ID 4041703.
+                                  // Set the default focus for an applet.
+                                  if (hasInitialFocus()) {
+                                      setDefaultFocus();
                                   }
-                              });
+                              }
+                          };
+                          AWTAccessor.getEventQueueAccessor().invokeAndWait(applet, r);
                       }
                       catch(InterruptedException ie) {
                       }
@@ -513,13 +515,12 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                     // to avoid deadlock.
                     try {
                         final Applet a = applet;
-
-                        SwingUtilities.invokeAndWait(new Runnable() {
-                                public void run()
-                                {
-                                    a.setVisible(false);
-                                }
-                            });
+                        Runnable r = new Runnable() {
+                            public void run() {
+                                a.setVisible(false);
+                            }
+                        };
+                        AWTAccessor.getEventQueueAccessor().invokeAndWait(applet, r);
                     }
                     catch(InterruptedException ie) {
                     }
@@ -571,17 +572,14 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                     }
                     status = APPLET_DISPOSE;
 
-                    try
-                    {
+                    try {
                         final Applet a = applet;
-
-                        EventQueue.invokeAndWait(new Runnable()
-                        {
-                            public void run()
-                            {
+                        Runnable r = new Runnable() {
+                            public void run() {
                                 remove(a);
                             }
-                        });
+                        };
+                        AWTAccessor.getEventQueueAccessor().invokeAndWait(applet, r);
                     }
                     catch(InterruptedException ie)
                     {

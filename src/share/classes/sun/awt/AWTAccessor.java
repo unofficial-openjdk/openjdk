@@ -29,6 +29,7 @@ import java.awt.*;
 
 import sun.misc.Unsafe;
 
+import java.lang.reflect.InvocationTargetException;
 import java.security.AccessControlContext;
 
 import java.util.Vector;
@@ -198,6 +199,11 @@ public final class AWTAccessor {
          */
         void removeSourceEvents(EventQueue eventQueue, Object source,
                                 boolean removeAllEvents);
+        /**
+         * Static in EventQueue
+         */
+        void invokeAndWait(Object source, Runnable r)
+            throws InterruptedException, InvocationTargetException;
     }
 
     /**
