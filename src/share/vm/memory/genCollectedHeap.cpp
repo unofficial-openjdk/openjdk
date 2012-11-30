@@ -51,6 +51,7 @@
 #include "runtime/java.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/memoryService.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/vmError.hpp"
 #include "utilities/workgroup.hpp"
 #ifndef SERIALGC
@@ -171,9 +172,13 @@ jint GenCollectedHeap::initialize() {
     ReservedSpace this_rs = heap_rs.first_part(_gen_specs[i]->max_size(),
                                               UseSharedSpaces, UseSharedSpaces);
     _gens[i] = _gen_specs[i]->init(this_rs, i, rem_set());
+    // tag generations in JavaHeap
+    MemTracker::record_virtual_memory_type((address)this_rs.base(), mtJavaHeap);
     heap_rs = heap_rs.last_part(_gen_specs[i]->max_size());
   }
   _perm_gen = perm_gen_spec->init(heap_rs, PermSize, rem_set());
+  // tag PermGen
+  MemTracker::record_virtual_memory_type((address)heap_rs.base(), mtJavaHeap);
 
   clear_incremental_collection_failed();
 

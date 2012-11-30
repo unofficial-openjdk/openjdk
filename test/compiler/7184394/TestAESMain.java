@@ -22,21 +22,36 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "services/memPtr.hpp"
-#include "services/memTracker.hpp"
+/**
+ * @test
+ * @bug 7184394
+ * @summary add intrinsics to use AES instructions
+ *
+ * @run main/othervm/timeout=600 -Xbatch -DcheckOutput=true TestAESMain
+ *
+ * @author Tom Deneau
+ */
 
-volatile jint SequenceGenerator::_seq_number = 1;
-NOT_PRODUCT(jint SequenceGenerator::_max_seq_number = 1;)
-DEBUG_ONLY(volatile unsigned long SequenceGenerator::_generation = 0;)
+public class TestAESMain {
+  public static void main(String[] args) {
+    int iters = (args.length > 0 ? Integer.valueOf(args[0]) : 1000000);
+    System.out.println(iters + " iterations");
+    TestAESEncode etest = new TestAESEncode();
+    etest.prepare();
+    long start = System.nanoTime();
+    for (int i=0; i<iters; i++) {
+      etest.run();
+    }
+    long end = System.nanoTime();
+    System.out.println("TestAESEncode runtime was " + (double)((end - start)/1000000000.0) + " ms");
 
-jint SequenceGenerator::next() {
-  jint seq = Atomic::add(1, &_seq_number);
-  if (seq < 0) {
-    MemTracker::shutdown(MemTracker::NMT_sequence_overflow);
+    TestAESDecode dtest = new TestAESDecode();
+    dtest.prepare();
+    start = System.nanoTime();
+    for (int i=0; i<iters; i++) {
+      dtest.run();
+    }
+    end = System.nanoTime();
+    System.out.println("TestAESDecode runtime was " + (double)((end - start)/1000000000.0) + " ms");
   }
-  assert(seq > 0, "counter overflow");
-  NOT_PRODUCT(_max_seq_number = (seq > _max_seq_number) ? seq : _max_seq_number;)
-  return seq;
 }
-

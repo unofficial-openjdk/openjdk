@@ -1097,8 +1097,12 @@ methodHandle methodOopDesc::clone_with_new_data(methodHandle m, u_char* new_code
 vmSymbols::SID methodOopDesc::klass_id_for_intrinsics(klassOop holder) {
   // if loader is not the default loader (i.e., != NULL), we can't know the intrinsics
   // because we are not loading from core libraries
-  if (instanceKlass::cast(holder)->class_loader() != NULL)
+  // exception: the AES intrinsics come from lib/ext/sunjce_provider.jar
+  // which does not use the class default class loader so we check for its loader here
+  if ((instanceKlass::cast(holder)->class_loader() != NULL) &&
+       instanceKlass::cast(holder)->class_loader()->klass()->klass_part()->name() != vmSymbols::sun_misc_Launcher_ExtClassLoader()) {
     return vmSymbols::NO_SID;   // regardless of name, no intrinsics here
+  }
 
   // see if the klass name is well-known:
   Symbol* klass_name = instanceKlass::cast(holder)->name();

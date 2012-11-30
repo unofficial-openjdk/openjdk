@@ -22,21 +22,36 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "services/memPtr.hpp"
-#include "services/memTracker.hpp"
+/**
+ * @author Tom Deneau
+ */
 
-volatile jint SequenceGenerator::_seq_number = 1;
-NOT_PRODUCT(jint SequenceGenerator::_max_seq_number = 1;)
-DEBUG_ONLY(volatile unsigned long SequenceGenerator::_generation = 0;)
+import javax.crypto.Cipher;
 
-jint SequenceGenerator::next() {
-  jint seq = Atomic::add(1, &_seq_number);
-  if (seq < 0) {
-    MemTracker::shutdown(MemTracker::NMT_sequence_overflow);
+public class TestAESEncode extends TestAESBase {
+  @Override
+  public void run() {
+    try {
+      if (!noReinit) cipher.init(Cipher.ENCRYPT_MODE, key, algParams);
+      if (checkOutput) {
+        // checked version creates new output buffer each time
+        encode = cipher.doFinal(input, 0, msgSize);
+        compareArrays(encode, expectedEncode);
+      } else {
+        // non-checked version outputs to existing encode buffer for maximum speed
+        encode = new byte[cipher.getOutputSize(msgSize)];
+        cipher.doFinal(input, 0, msgSize, encode);
+      }
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
   }
-  assert(seq > 0, "counter overflow");
-  NOT_PRODUCT(_max_seq_number = (seq > _max_seq_number) ? seq : _max_seq_number;)
-  return seq;
-}
 
+  @Override
+  void childShowCipher() {
+    showCipher(cipher, "Encryption");
+  }
+
+}

@@ -55,6 +55,7 @@
 #include "runtime/threadCritical.hpp"
 #include "runtime/timer.hpp"
 #include "services/attachListener.hpp"
+#include "services/memTracker.hpp"
 #include "services/runtimeService.hpp"
 #include "thread_solaris.inline.hpp"
 #include "utilities/decoder.hpp"
@@ -1482,11 +1483,11 @@ void _handle_uncaught_cxx_exception() {
 
 
 // First crack at OS-specific initialization, from inside the new thread.
-void os::initialize_thread() {
+void os::initialize_thread(Thread* thr) {
   int r = thr_main() ;
   guarantee (r == 0 || r == 1, "CR6501650 or CR6493689") ;
   if (r) {
-    JavaThread* jt = (JavaThread *)Thread::current();
+    JavaThread* jt = (JavaThread *)thr;
     assert(jt != NULL,"Sanity check");
     size_t stack_size;
     address base = jt->stack_base();
@@ -3072,11 +3073,12 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
   // Since snv_84, Solaris attempts to honor the address hint - see 5003415.
   // Give it a try, if the kernel honors the hint we can return immediately.
   char* addr = Solaris::anon_mmap(requested_addr, bytes, 0, false);
+
   volatile int err = errno;
   if (addr == requested_addr) {
     return addr;
   } else if (addr != NULL) {
-    unmap_memory(addr, bytes);
+    pd_unmap_memory(addr, bytes);
   }
 
   if (PrintMiscellaneous && Verbose) {
