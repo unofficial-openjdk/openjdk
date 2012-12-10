@@ -1,6 +1,6 @@
 ###########################################################################
 #
-# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -144,17 +144,43 @@ java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
 
 # jdk_management
 
-# Failing, bug was filed: 6959636
-javax/management/loading/LibraryLoader/LibraryLoaderTest.java   generic-all
-
 # Access denied messages on windows/mks, filed 6954450
 sun/management/jmxremote/bootstrap/RmiSslNoKeyStoreTest.sh      windows-all
 
-# Fails on linux: KO: StringMonitor notification missed or not emitted
-javax/management/monitor/NonComparableAttributeValueTest.java   generic-all
-
 # Port conflict? Fails with communication error
 sun/management/jmxremote/bootstrap/PasswordFilePermissionTest.sh generic-all
+
+# Fails with port already in use
+sun/management/jmxremote/bootstrap/SSLConfigFilePermissionTest.sh generic-all
+
+# Fails with port already in use
+sun/management/jmxremote/bootstrap/RmiRegistrySslTest.sh        generic-all
+
+# Windows run seems to have triggered a hotspot gc error (see 6801625)
+com/sun/management/HotSpotDiagnosticMXBean/DumpHeap.sh          generic-all
+
+# Port already in use
+sun/management/jmxremote/bootstrap/LocalManagementTest.sh       generic-all
+
+# Failed to initialize connector (also overflowing jtreg io buffers)
+sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
+sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       generic-all
+
+# Windows X64, java.lang.IllegalStateException
+javax/management/monitor/AttributeArbitraryDataTypeTest.java    generic-all
+
+# 7149181
+sun/management/jmxremote/startstop/JMXStartStopTest.sh          generic-all
+
+############################################################################
+
+# jdk_jmx
+
+# Failing, bug was filed: 6959636
+javax/management/loading/LibraryLoader/LibraryLoaderTest.java   generic-all
+
+# Fails on linux: KO: StringMonitor notification missed or not emitted
+javax/management/monitor/NonComparableAttributeValueTest.java   generic-all
 
 # Fails on Windows 2000, Test failed for iiop java.lang.NullPointerException
 #  at org.omg.stub.javax.management.remote.rmi._RMIConnectionImpl_Tie._invoke(Unknown Source)
@@ -170,20 +196,11 @@ javax/management/monitor/RuntimeExceptionTest.java              generic-all
 # Problems with rmi connection, othervm
 javax/management/remote/mandatory/subjectDelegation/SubjectDelegation2Test.java generic-all
 
-# Fails with port already in use
-sun/management/jmxremote/bootstrap/SSLConfigFilePermissionTest.sh generic-all
-
-# Fails with port already in use
-sun/management/jmxremote/bootstrap/RmiRegistrySslTest.sh        generic-all
-
 # Windows, connection can't last that long
 javax/management/eventService/LeaseTest.java                    generic-all
 
 # Linux othervm, X64, java.lang.Exception: Failed: ratio=102.4027795593753
 javax/management/remote/mandatory/notif/ListenerScaleTest.java  generic-all
-
-# Windows run seems to have triggered a hotspot gc error (see 6801625)
-com/sun/management/HotSpotDiagnosticMXBean/DumpHeap.sh          generic-all
 
 # rmi problem? othervm, java.lang.reflect.UndeclaredThrowableException
 javax/management/remote/mandatory/subjectDelegation/SubjectDelegation3Test.java generic-all
@@ -207,26 +224,13 @@ javax/management/eventService/CustomForwarderTest.java          windows-all
 # Windows i586 failure, callback did not complete
 javax/management/eventService/LeaseManagerDeadlockTest.java     windows-all
 
-# Port already in use
-sun/management/jmxremote/bootstrap/LocalManagementTest.sh       generic-all
-
-# Failed to initialize connector (also overflowing jtreg io buffers)
-sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       generic-all
-
-# Windows X64, java.lang.IllegalStateException
-javax/management/monitor/AttributeArbitraryDataTypeTest.java    generic-all
-
-# 7149181
-sun/management/jmxremote/startstop/JMXStartStopTest.sh          generic-all
-
 ############################################################################
 
 # jdk_math
 
 ############################################################################
 
-# jdk_misc
+# jdk_other
 
 # 6988950
 demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
@@ -466,12 +470,6 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 # 6461635
 com/sun/tools/attach/BasicTests.sh                              generic-all
 
-# Filed 6952105
-com/sun/jdi/SuspendThreadTest.java                              generic-all
-
-# Filed 6987312
-com/sun/jdi/DoubleAgentTest.java                                generic-all
-
 # Filed 6986875
 sun/tools/jps/jps-Vvml.sh                                       generic-all
 
@@ -495,6 +493,16 @@ sun/tools/jcmd/jcmd-help-help.sh				generic-all
 
 # 7175775
 sun/tools/jinfo/Basic.sh					macosx-all
+
+############################################################################
+
+# jdk_jdi
+
+# Filed 6952105
+com/sun/jdi/SuspendThreadTest.java                              generic-all
+
+# Filed 6987312
+com/sun/jdi/DoubleAgentTest.java                                generic-all
 
 ############################################################################
 
