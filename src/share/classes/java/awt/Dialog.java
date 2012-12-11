@@ -1636,12 +1636,13 @@ public class Dialog extends Window {
         if (localModalityType == null) {
             this.modal = fields.get("modal", false);
             setModal(modal);
+        } else {
+            this.modalityType = localModalityType;
         }
 
         this.resizable = fields.get("resizable", true);
         this.undecorated = fields.get("undecorated", false);
         this.title = (String)fields.get("title", "");
-        this.modalityType = localModalityType;
 
         blockedWindows = new IdentityArrayList();
 
