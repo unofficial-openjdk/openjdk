@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import javax.crypto.spec.*;
 import static sun.security.pkcs11.TemplateManager.*;
 import sun.security.pkcs11.wrapper.*;
 import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
+import sun.security.util.KeyUtil;
 
 /**
  * KeyAgreement implementation class. This class currently supports
@@ -134,6 +135,8 @@ final class P11KeyAgreement extends KeyAgreementSpi {
         BigInteger p, g, y;
         if (key instanceof DHPublicKey) {
             DHPublicKey dhKey = (DHPublicKey)key;
+            // validate the Diffie-Hellman public key
+            KeyUtil.validate(dhKey);
             y = dhKey.getY();
             DHParameterSpec params = dhKey.getParams();
             p = params.getP();
@@ -145,6 +148,8 @@ final class P11KeyAgreement extends KeyAgreementSpi {
             try {
                 DHPublicKeySpec spec = (DHPublicKeySpec)kf.engineGetKeySpec
                                                 (key, DHPublicKeySpec.class);
+                // validate the Diffie-Hellman public key
+                KeyUtil.validate(spec);
                 y = spec.getY();
                 p = spec.getP();
                 g = spec.getG();

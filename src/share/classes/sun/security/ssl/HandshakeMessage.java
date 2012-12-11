@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import javax.security.auth.x500.X500Principal;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.DHPublicKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import javax.net.ssl.*;
@@ -51,6 +52,7 @@ import sun.security.action.GetPropertyAction;
 import sun.security.internal.spec.TlsPrfParameterSpec;
 
 import sun.security.ssl.CipherSuite.*;
+import sun.security.util.KeyUtil;
 
 /**
  * Many data structures are involved in the handshake messages.  These
@@ -715,6 +717,7 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * key exchange.
      */
     DH_ServerKeyExchange(DHCrypt obj) {
+        // The DH key has been validated in the constructor of DHCrypt.
         getValues(obj);
         signature = null;
     }
@@ -727,6 +730,7 @@ class DH_ServerKeyExchange extends ServerKeyExchange
     DH_ServerKeyExchange(DHCrypt obj, PrivateKey key, byte clntNonce[],
             byte svrNonce[], SecureRandom sr) throws GeneralSecurityException {
 
+        // The DH key has been validated in the constructor of DHCrypt.
         getValues(obj);
 
         Signature sig;
@@ -751,10 +755,14 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * stream, as if sent from server to client for use with
      * DH_anon key exchange
      */
-    DH_ServerKeyExchange(HandshakeInStream input) throws IOException {
+    DH_ServerKeyExchange(HandshakeInStream input)
+            throws IOException, GeneralSecurityException {
         dh_p = input.getBytes16();
         dh_g = input.getBytes16();
         dh_Ys = input.getBytes16();
+        KeyUtil.validate(new DHPublicKeySpec(new BigInteger(1, dh_Ys),
+                                             new BigInteger(1, dh_p),
+                                             new BigInteger(1, dh_g)));
         signature = null;
     }
 
@@ -770,7 +778,9 @@ class DH_ServerKeyExchange extends ServerKeyExchange
         dh_p = input.getBytes16();
         dh_g = input.getBytes16();
         dh_Ys = input.getBytes16();
-
+        KeyUtil.validate(new DHPublicKeySpec(new BigInteger(1, dh_Ys),
+                                             new BigInteger(1, dh_p),
+                                             new BigInteger(1, dh_g)));
         byte signature[];
         if (dhKeyExchangeFix) {
             signature = input.getBytes16();
