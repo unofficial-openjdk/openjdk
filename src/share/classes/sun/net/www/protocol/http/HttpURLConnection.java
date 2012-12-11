@@ -1324,6 +1324,16 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 if (logger.isLoggable(PlatformLogger.FINE)) {
                     logger.fine(responses.toString());
                 }
+
+                boolean b1 = responses.filterNTLMResponses("WWW-Authenticate");
+                boolean b2 = responses.filterNTLMResponses("Proxy-Authenticate");
+                if (b1 || b2) {
+                    if (logger.isLoggable(PlatformLogger.FINE)) {
+                        logger.fine(">>>> Headers are filtered");
+                        logger.fine(responses.toString());
+                    }
+                }
+
                 inputStream = http.getInputStream();
 
                 respCode = getResponseCode();
@@ -1781,6 +1791,13 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 /* Log the response to the CONNECT */
                 if (logger.isLoggable(PlatformLogger.FINE)) {
                     logger.fine(responses.toString());
+                }
+
+                if (responses.filterNTLMResponses("Proxy-Authenticate")) {
+                    if (logger.isLoggable(PlatformLogger.FINE)) {
+                        logger.fine(">>>> Headers are filtered");
+                        logger.fine(responses.toString());
+                    }
                 }
 
                 statusLine = responses.getValue(0);
