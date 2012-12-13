@@ -130,7 +130,10 @@ system.scope=sun.security.provider.IdentityDatabase
 # been granted.
 package.access=sun.,\
                com.sun.xml.internal.,\
-               com.sun.imageio.
+               com.sun.imageio.,\
+               com.sun.istack.internal.,\
+               com.sun.jmx.defaults.,\
+               com.sun.jmx.remote.util.
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -144,7 +147,10 @@ package.access=sun.,\
 #
 package.definition=sun.,\
                    com.sun.xml.internal.,\
-                   com.sun.imageio.
+                   com.sun.imageio.,\
+                   com.sun.istack.internal.,\
+                   com.sun.jmx.defaults.,\
+                   com.sun.jmx.remote.util.
 
 #
 # Determines whether this properties file can be appended to
