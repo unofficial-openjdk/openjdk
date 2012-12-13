@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,7 @@ public class SimpleFormatter extends Formatter {
         }
         sb.append(lineSeparator);
         String message = formatMessage(record);
-        sb.append(record.getLevel().getLocalizedName());
+        sb.append(record.getLevel().getLocalizedLevelName());
         sb.append(": ");
         sb.append(message);
         sb.append(lineSeparator);
