@@ -27,6 +27,7 @@ package java.io;
 
 import java.nio.channels.FileChannel;
 import sun.nio.ch.FileChannelImpl;
+import sun.misc.IoTrace;
 
 
 /**
@@ -50,6 +51,9 @@ class FileInputStream extends InputStream
 {
     /* File Descriptor - handle to the open file */
     private final FileDescriptor fd;
+
+    /* The path of the referenced file (null if the stream is created with a file descriptor) */
+    private final String path;
 
     private FileChannel channel = null;
 
@@ -135,6 +139,7 @@ class FileInputStream extends InputStream
         }
         fd = new FileDescriptor();
         fd.incrementAndGetUseCount();
+        this.path = name;
         open(name);
     }
 
@@ -171,6 +176,7 @@ class FileInputStream extends InputStream
             security.checkRead(fdObj);
         }
         fd = fdObj;
+        path = null;
 
         /*
          * FileDescriptor is being shared by streams.
@@ -194,7 +200,18 @@ class FileInputStream extends InputStream
      *             file is reached.
      * @exception  IOException  if an I/O error occurs.
      */
-    public native int read() throws IOException;
+    public int read() throws IOException {
+        Object traceContext = IoTrace.fileReadBegin(path);
+        int b = 0;
+        try {
+            b = read0();
+        } finally {
+            IoTrace.fileReadEnd(traceContext, b == -1 ? 0 : 1);
+        }
+        return b;
+    }
+
+    private native int read0() throws IOException;
 
     /**
      * Reads a subarray as a sequence of bytes.
@@ -217,7 +234,14 @@ class FileInputStream extends InputStream
      * @exception  IOException  if an I/O error occurs.
      */
     public int read(byte b[]) throws IOException {
-        return readBytes(b, 0, b.length);
+        Object traceContext = IoTrace.fileReadBegin(path);
+        int bytesRead = 0;
+        try {
+            bytesRead = readBytes(b, 0, b.length);
+        } finally {
+            IoTrace.fileReadEnd(traceContext, bytesRead == -1 ? 0 : bytesRead);
+        }
+        return bytesRead;
     }
 
     /**
@@ -239,7 +263,14 @@ class FileInputStream extends InputStream
      * @exception  IOException  if an I/O error occurs.
      */
     public int read(byte b[], int off, int len) throws IOException {
-        return readBytes(b, off, len);
+        Object traceContext = IoTrace.fileReadBegin(path);
+        int bytesRead = 0;
+        try {
+            bytesRead = readBytes(b, off, len);
+        } finally {
+            IoTrace.fileReadEnd(traceContext, bytesRead == -1 ? 0 : bytesRead);
+        }
+        return bytesRead;
     }
 
     /**
@@ -361,7 +392,7 @@ class FileInputStream extends InputStream
     public FileChannel getChannel() {
         synchronized (this) {
             if (channel == null) {
-                channel = FileChannelImpl.open(fd, true, false, this);
+                channel = FileChannelImpl.open(fd, path, true, false, this);
 
                 /*
                  * Increment fd's use count. Invoking the channel's close()

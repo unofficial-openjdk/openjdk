@@ -33,7 +33,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.*;
 import java.util.*;
 import sun.net.NetHooks;
-
+import sun.misc.IoTrace;
 
 /**
  * An implementation of SocketChannels
@@ -80,8 +80,8 @@ class SocketChannelImpl
     private int state = ST_UNINITIALIZED;
 
     // Binding
-    private SocketAddress localAddress;
-    private SocketAddress remoteAddress;
+    private InetSocketAddress localAddress;
+    private InetSocketAddress remoteAddress;
 
     // Input/Output open
     private boolean isInputOpen = true;
@@ -278,6 +278,11 @@ class SocketChannelImpl
         synchronized (readLock) {
             if (!ensureReadOpen())
                 return -1;
+            Object traceContext = null;
+            if (isBlocking()) {
+                traceContext = IoTrace.socketReadBegin(remoteAddress.getAddress(),
+                                                      remoteAddress.getPort(), 0);
+            }
             int n = 0;
             try {
 
@@ -367,6 +372,11 @@ class SocketChannelImpl
 
             } finally {
                 readerCleanup();        // Clear reader thread
+
+                if (isBlocking()) {
+                    IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                }
+
                 // The end method, which is defined in our superclass
                 // AbstractInterruptibleChannel, resets the interruption
                 // machinery.  If its argument is true then it returns
@@ -407,6 +417,11 @@ class SocketChannelImpl
             if (!ensureReadOpen())
                 return -1;
             long n = 0;
+            Object traceContext = null;
+            if (isBlocking()) {
+                traceContext = IoTrace.socketReadBegin(remoteAddress.getAddress(),
+                                                      remoteAddress.getPort(), 0);
+            }
             try {
                 begin();
                 synchronized (stateLock) {
@@ -423,6 +438,9 @@ class SocketChannelImpl
                 }
             } finally {
                 readerCleanup();
+                if (isBlocking()) {
+                    IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                }
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isInputOpen))
@@ -439,6 +457,10 @@ class SocketChannelImpl
         synchronized (writeLock) {
             ensureWriteOpen();
             int n = 0;
+            Object traceContext =
+                IoTrace.socketWriteBegin(remoteAddress.getAddress(),
+                                         remoteAddress.getPort());
+
             try {
                 begin();
                 synchronized (stateLock) {
@@ -454,6 +476,7 @@ class SocketChannelImpl
                 }
             } finally {
                 writerCleanup();
+                IoTrace.socketWriteEnd(traceContext, n > 0 ? n : 0);
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))
@@ -472,6 +495,9 @@ class SocketChannelImpl
         synchronized (writeLock) {
             ensureWriteOpen();
             long n = 0;
+            Object traceContext =
+                IoTrace.socketWriteBegin(remoteAddress.getAddress(),
+                                         remoteAddress.getPort());
             try {
                 begin();
                 synchronized (stateLock) {
@@ -487,6 +513,7 @@ class SocketChannelImpl
                 }
             } finally {
                 writerCleanup();
+                IoTrace.socketWriteEnd(traceContext, n > 0 ? n : 0);
                 end((n > 0) || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))

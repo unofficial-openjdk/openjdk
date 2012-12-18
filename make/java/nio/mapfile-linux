@@ -39,7 +39,6 @@ SUNWprivate_1.1 {
                 Java_sun_nio_ch_EPollArrayWrapper_epollCreate;
                 Java_sun_nio_ch_EPollArrayWrapper_epollCtl;
                 Java_sun_nio_ch_EPollArrayWrapper_epollWait;
-		Java_sun_nio_ch_EPollArrayWrapper_fdLimit;
 		Java_sun_nio_ch_EPollArrayWrapper_init;
 		Java_sun_nio_ch_EPollArrayWrapper_interrupt;
 		Java_sun_nio_ch_EPollArrayWrapper_offsetofData;
@@ -87,6 +86,7 @@ SUNWprivate_1.1 {
                 Java_sun_nio_ch_IOUtil_configureBlocking;
                 Java_sun_nio_ch_IOUtil_drain;
                 Java_sun_nio_ch_IOUtil_fdVal;
+		Java_sun_nio_ch_IOUtil_fdLimit;
                 Java_sun_nio_ch_IOUtil_initIDs;
 		Java_sun_nio_ch_IOUtil_iovMax;
                 Java_sun_nio_ch_IOUtil_makePipe;
@@ -143,6 +143,7 @@ SUNWprivate_1.1 {
 		Java_sun_nio_fs_LinuxNativeDispatcher_fsetxattr0;
 		Java_sun_nio_fs_LinuxNativeDispatcher_fremovexattr0;
 		Java_sun_nio_fs_LinuxNativeDispatcher_setmntent0;
+                Java_sun_nio_fs_LinuxNativeDispatcher_getmntent;
 		Java_sun_nio_fs_LinuxNativeDispatcher_endmntent;
 		Java_sun_nio_fs_UnixNativeDispatcher_init;
 		Java_sun_nio_fs_UnixNativeDispatcher_getcwd;
@@ -189,7 +190,6 @@ SUNWprivate_1.1 {
 		Java_sun_nio_fs_UnixNativeDispatcher_getgrgid;
 		Java_sun_nio_fs_UnixNativeDispatcher_getpwnam0;
 		Java_sun_nio_fs_UnixNativeDispatcher_getgrnam0;
-		Java_sun_nio_fs_UnixNativeDispatcher_getextmntent;
 		Java_sun_nio_fs_UnixCopyFile_transfer;
 		handleSocketError;
 

@@ -266,7 +266,7 @@ int enumInterfaces(JNIEnv *env, netif **netifPP)
             }
         }
         if (curr == NULL) {
-            JNU_ThrowOutOfMemoryError(env, "heap allocation failure");
+            JNU_ThrowOutOfMemoryError(env, "Native heap allocation failure");
             free_netif(netifP);
             free(tableP);
             return -1;
@@ -366,7 +366,7 @@ int enumAddresses_win(JNIEnv *env, netif *netifP, netaddr **netaddrPP)
 
             netaddr *curr = (netaddr *)malloc(sizeof(netaddr));
             if (curr == NULL) {
-                JNU_ThrowOutOfMemoryError(env, "heap allocation failure");
+                JNU_ThrowOutOfMemoryError(env, "Native heap allocation failure");
                 free_netaddr(netaddrP);
                 free(tableP);
                 return -1;
@@ -504,8 +504,7 @@ jobject createNetworkInterface
      */
     if (netaddrCount < 0) {
         netaddrCount = enumAddresses_win(env, ifs, &netaddrP);
-        if ((*env)->ExceptionOccurred(env)) {
-            free_netaddr(netaddrP);
+        if (netaddrCount == -1) {
             return NULL;
         }
     }

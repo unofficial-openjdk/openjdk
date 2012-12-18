@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4473210
  * @summary SSLSessionContext should be accessible from SSLContext
+ * @run main/othervm SSLCtxAccessToSessCtx
  */
 
 import java.io.*;

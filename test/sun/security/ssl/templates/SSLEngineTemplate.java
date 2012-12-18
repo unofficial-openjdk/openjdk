@@ -21,11 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 1234567
  * @summary SSLEngine has not yet caused Solaris kernel to panic
- *
+ * @run main/othervm SSLEngineTemplate
  */
 
 /**

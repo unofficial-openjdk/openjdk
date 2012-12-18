@@ -105,7 +105,6 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         this.target = target;
 
         //ComponentAccessor.enableEvents(target,AWTEvent.MOUSE_WHEEL_EVENT_MASK);
-        target.enableInputMethods(true);
 
         firstChangeSkipped = false;
         String text = ((TextArea)target).getText();
@@ -113,7 +112,6 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
         jtext.setWrapStyleWord(true);
         jtext.getDocument().addDocumentListener(jtext);
         XToolkit.specialPeerMap.put(jtext,this);
-        jtext.enableInputMethods(true);
         textPane = new AWTTextPane(jtext,this, target.getParent());
 
         setBounds(x, y, width, height, SET_BOUNDS);
@@ -170,6 +168,8 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
     public void dispose() {
         XToolkit.specialPeerMap.remove(jtext);
+        // visible caret has a timer thread which must be stopped
+        jtext.getCaret().setVisible(false);
         jtext.removeNotify();
         textPane.removeNotify();
         super.dispose();
@@ -466,13 +466,6 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
 
     protected boolean setTextImpl(String txt) {
         if (jtext != null) {
-            // Please note that we do not want to post an event
-            // if setText() replaces an empty text by an empty text,
-            // that is, if component's text remains unchanged.
-            if (jtext.getDocument().getLength() == 0 && txt.length() == 0) {
-                return true;
-            }
-
             // JTextArea.setText() posts two different events (remove & insert).
             // Since we make no differences between text events,
             // the document listener has to be disabled while
@@ -660,10 +653,13 @@ class XTextAreaPeer extends XComponentPeer implements TextAreaPeer {
     }
 
 
-    // TODO : fix this duplicate code
-    class XAWTCaret extends DefaultCaret {
+    static class XAWTCaret extends DefaultCaret {
         public void focusGained(FocusEvent e) {
             super.focusGained(e);
+            if (getComponent().isEnabled()){
+                // Make sure the cursor is visible in case of non-editable TextArea
+                super.setVisible(true);
+            }
             getComponent().repaint();
         }
 

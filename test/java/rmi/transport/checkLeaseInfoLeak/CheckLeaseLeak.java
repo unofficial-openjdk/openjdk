@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
  * @author Laird Dornin
  *
  * @library ../../testlibrary
- * @build CheckLeaseLeak CheckLeaseLeak_Stub LeaseLeakClient LeaseLeak
+ * @build TestLibrary CheckLeaseLeak_Stub LeaseLeakClient LeaseLeak
  * @run main/othervm/timeout=240 CheckLeaseLeak
  *
  */
@@ -57,7 +57,6 @@ import java.lang.reflect.*;
 import java.rmi.registry.*;
 
 public class CheckLeaseLeak extends UnicastRemoteObject implements LeaseLeak {
-
     public CheckLeaseLeak() throws RemoteException { }
     public void ping () throws RemoteException { }
 
@@ -87,8 +86,8 @@ public class CheckLeaseLeak extends UnicastRemoteObject implements LeaseLeak {
 
         try {
             Registry registry =
-                java.rmi.registry.LocateRegistry.
-                    createRegistry(TestLibrary.REGISTRY_PORT);
+                TestLibrary.createRegistryOnUnusedPort();
+            int registryPort = TestLibrary.getRegistryPort(registry);
 
             leakServer = new CheckLeaseLeak();
             registry.rebind("/LeaseLeak", leakServer);
@@ -99,7 +98,10 @@ public class CheckLeaseLeak extends UnicastRemoteObject implements LeaseLeak {
 
                 JavaVM jvm = new JavaVM("LeaseLeakClient",
                                         " -Djava.security.policy=" +
-                                        TestParams.defaultPolicy, "");
+                                        TestParams.defaultPolicy +
+                                        " -Drmi.registry.port=" +
+                                        registryPort,
+                                        "");
                 jvm.start();
 
                 if (jvm.getVM().waitFor() == 1 ) {

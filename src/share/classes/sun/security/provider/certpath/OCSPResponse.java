@@ -442,7 +442,11 @@ public final class OCSPResponse {
 
                     // Check the date validity
                     try {
-                        signerCert.checkValidity();
+                        if (dateCheckedAgainst == null) {
+                            signerCert.checkValidity();
+                        } else {
+                            signerCert.checkValidity(dateCheckedAgainst);
+                        }
                     } catch (GeneralSecurityException e) {
                         if (DEBUG != null) {
                             DEBUG.println("Responder's certificate not within" +

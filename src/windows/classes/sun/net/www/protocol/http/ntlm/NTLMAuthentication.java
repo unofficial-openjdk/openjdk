@@ -194,12 +194,12 @@ public class NTLMAuthentication extends AuthenticationInfo {
             }
             String response = "NTLM " + seq.getAuthHeader (raw.length()>6?raw.substring(5):null);
             conn.setAuthenticationProperty(getHeaderName(), response);
-            if (seq.isComplete()) { // 7200720
+            if (seq.isComplete()) {
                 conn.authObj(null);
             }
             return true;
         } catch (IOException e) {
-            conn.authObj(null); // MMM 7200720 ??
+            conn.authObj(null);
             return false;
         }
     }

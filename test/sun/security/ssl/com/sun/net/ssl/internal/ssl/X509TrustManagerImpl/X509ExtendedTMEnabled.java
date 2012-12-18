@@ -21,12 +21,18 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+// Ensure that the SunJSSE provider enables the X509ExtendedTrustManager.
+//
+
 /*
  * @test
  * @bug 6916074
  * @summary Add support for TLS 1.2
- *
- * Ensure that the SunJSSE provider enables the X509ExtendedTrustManager.
+ * @run main/othervm X509ExtendedTMEnabled
  */
 
 import java.io.*;

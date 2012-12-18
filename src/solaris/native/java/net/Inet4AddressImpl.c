@@ -196,7 +196,7 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
                 struct addrinfo *next
                     = (struct addrinfo*) malloc(sizeof(struct addrinfo));
                 if (!next) {
-                    JNU_ThrowOutOfMemoryError(env, "heap allocation failed");
+                    JNU_ThrowOutOfMemoryError(env, "Native heap allocation failed");
                     ret = NULL;
                     goto cleanupAndReturn;
                 }
@@ -669,11 +669,11 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
                  sizeof(struct sockaddr));
       if (n < 0 && errno != EINPROGRESS ) {
 #ifdef __linux__
-        if (errno != EINVAL)
+        if (errno != EINVAL && errno != EHOSTUNREACH)
           /*
            * On some Linuxes, when bound to the loopback interface, sendto
-           * will fail and errno will be set to EINVAL. When that happens,
-           * don't throw an exception, just return false.
+           * will fail and errno will be set to EINVAL or EHOSTUNREACH.
+           * When that happens, don't throw an exception, just return false.
            */
 #endif /*__linux__ */
           NET_ThrowNew(env, errno, "Can't send ICMP packet");
@@ -695,12 +695,19 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
            * We did receive something, but is it what we were expecting?
            * I.E.: A ICMP_ECHOREPLY packet with the proper PID.
            */
-          if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY &&
-               (ntohs(icmp->icmp_id) == pid) &&
-               (him->sin_addr.s_addr == sa_recv.sin_addr.s_addr)) {
-            close(fd);
-            return JNI_TRUE;
-          }
+          if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY
+               && (ntohs(icmp->icmp_id) == pid)) {
+            if ((him->sin_addr.s_addr == sa_recv.sin_addr.s_addr)) {
+              close(fd);
+              return JNI_TRUE;
+            }
+
+            if (him->sin_addr.s_addr == 0) {
+              close(fd);
+              return JNI_TRUE;
+            }
+         }
+
         }
       } while (tmout2 > 0);
       timeout -= 1000;
@@ -828,10 +835,11 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
         case EADDRNOTAVAIL: /* address is not available on  the  remote machine */
 #ifdef __linux__
         case EINVAL:
+        case EHOSTUNREACH:
           /*
            * On some Linuxes, when bound to the loopback interface, connect
-           * will fail and errno will be set to EINVAL. When that happens,
-           * don't throw an exception, just return false.
+           * will fail and errno will be set to EINVAL or EHOSTUNREACH.
+           * When that happens, don't throw an exception, just return false.
            */
 #endif /* __linux__ */
           close(fd);

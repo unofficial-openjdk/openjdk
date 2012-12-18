@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
  * @author Laird Dornin
  *
  * @library ../../testlibrary
- * @build CheckFQDN CheckFQDNClient CheckFQDN_Stub TellServerName
+ * @build TestLibrary CheckFQDNClient CheckFQDN_Stub TellServerName
  * @run main/othervm/timeout=120 CheckFQDN
  */
 
@@ -63,7 +63,7 @@ import java.io.*;
  */
 public class CheckFQDN extends UnicastRemoteObject
     implements TellServerName {
-
+    public static int REGISTRY_PORT =-1;
     static String propertyBeingTested = null;
     static String propertyBeingTestedValue = null;
 
@@ -77,8 +77,8 @@ public class CheckFQDN extends UnicastRemoteObject
             System.err.println
                 ("\nRegression test for bug/rfe 4115683\n");
 
-            Registry registry = java.rmi.registry.LocateRegistry.
-                createRegistry(TestLibrary.REGISTRY_PORT);
+            Registry registry = TestLibrary.createRegistryOnUnusedPort();
+            REGISTRY_PORT = TestLibrary.getRegistryPort(registry);
             registry.bind("CheckFQDN", checkFQDN);
 
             /* test the host name scheme in different environments.*/
@@ -117,7 +117,9 @@ public class CheckFQDN extends UnicastRemoteObject
             JavaVM jvm = new JavaVM("CheckFQDNClient",
                                     propOption + property +
                                     equal +
-                                    propertyValue + extraProp,
+                                    propertyValue + extraProp +
+                                    " -Drmi.registry.port=" +
+                                    REGISTRY_PORT,
                                     "");
 
             propertyBeingTested=property;
