@@ -207,4 +207,13 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
 
     @Override
     public void setModalBlocked(boolean blocked) {}
+
+    /*
+     * The method could not be implemented due to CALayer restrictions.
+     * The exeption enforce clients not to use it.
+     */
+    @Override
+    public boolean isUnderMouse() {
+        throw new RuntimeException("Not implemented");
+    }
 }

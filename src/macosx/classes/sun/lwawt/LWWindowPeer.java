@@ -48,7 +48,8 @@ public class LWWindowPeer
         SIMPLEWINDOW,
         FRAME,
         DIALOG,
-        EMBEDDEDFRAME
+        EMBEDDED_FRAME,
+        VIEW_EMBEDDED_FRAME
     }
 
     private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.lwawt.focus.LWWindowPeer");
@@ -114,6 +115,8 @@ public class LWWindowPeer
 
     private volatile boolean textured;
 
+    private final PeerType peerType;
+
     /**
      * Current modal blocker or null.
      *
@@ -122,10 +125,11 @@ public class LWWindowPeer
     private LWWindowPeer blocker;
 
     public LWWindowPeer(Window target, PlatformComponent platformComponent,
-                        PlatformWindow platformWindow)
+                        PlatformWindow platformWindow, PeerType peerType)
     {
         super(target, platformComponent);
         this.platformWindow = platformWindow;
+        this.peerType = peerType;
 
         Window owner = target.getOwner();
         LWWindowPeer ownerPeer = (owner != null) ? (LWWindowPeer)owner.getPeer() : null;
@@ -339,6 +343,11 @@ public class LWWindowPeer
 
     @Override
     public void setBounds(int x, int y, int w, int h, int op) {
+
+        if((op & NO_EMBEDDED_CHECK) == 0 && getPeerType() == PeerType.VIEW_EMBEDDED_FRAME) {
+            return;
+        }
+
         if ((op & SET_CLIENT_SIZE) != 0) {
             // SET_CLIENT_SIZE is only applicable to window peers, so handle it here
             // instead of pulling 'insets' field up to LWComponentPeer
@@ -1305,6 +1314,10 @@ public class LWWindowPeer
 
     private boolean isGrabbing() {
         return this == grabbingWindow;
+    }
+
+    public PeerType getPeerType() {
+        return peerType;
     }
 
     @Override
