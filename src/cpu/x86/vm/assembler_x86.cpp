@@ -2407,7 +2407,6 @@ void Assembler::pshufb(XMMRegister dst, XMMRegister src) {
 
 void Assembler::pshufb(XMMRegister dst, Address src) {
   assert(VM_Version::supports_ssse3(), "");
-  assert((UseAVX > 0), "SSE mode requires address alignment 16 bytes");
   InstructionMark im(this);
   simd_prefix(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F_38);
   emit_byte(0x00);
@@ -8427,7 +8426,8 @@ void MacroAssembler::xorps(XMMRegister dst, AddressLiteral src) {
 
 void MacroAssembler::pshufb(XMMRegister dst, AddressLiteral src) {
   // Used in sign-bit flipping with aligned address.
-  assert((UseAVX > 0) || (((intptr_t)src.target() & 15) == 0), "SSE mode requires address alignment 16 bytes");
+  bool aligned_adr = (((intptr_t)src.target() & 15) == 0);
+  assert((UseAVX > 0) || aligned_adr, "SSE mode requires address alignment 16 bytes");
   if (reachable(src)) {
     Assembler::pshufb(dst, as_Address(src));
   } else {
