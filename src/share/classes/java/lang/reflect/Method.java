@@ -79,7 +79,8 @@ public final class Method extends Executable {
     // currently only two levels deep (i.e., one root Method and
     // potentially many Method objects pointing to it.)
     private Method              root;
-
+    // This is set by the vm at Method creation
+    private byte[]              typeAnnotations;
 
     // Generics infrastructure
     private String getGenericSignature() {return signature;}
@@ -150,6 +151,8 @@ public final class Method extends Executable {
         res.root = this;
         // Might as well eagerly propagate this if already present
         res.methodAccessor = methodAccessor;
+
+        res.typeAnnotations = typeAnnotations;
         return res;
     }
 
@@ -502,6 +505,22 @@ public final class Method extends Executable {
     @Override
     public boolean isSynthetic() {
         return super.isSynthetic();
+    }
+
+    /**
+     * Returns {@code true} if this method is a default
+     * method; returns {@code false} otherwise.
+     *
+     * A default method is a non-abstract method, that is, a method
+     * with a body, declared in an interface type.
+     *
+     * @return true if and only if this method is a default
+     * method as defined by the Java Language Specification.
+     * @since 1.8
+     */
+    public boolean isDefault() {
+        return (getModifiers() & Modifier.ABSTRACT) == 0 &&
+            getDeclaringClass().isInterface();
     }
 
     // NOTE that there is no synchronization used here. It is correct
