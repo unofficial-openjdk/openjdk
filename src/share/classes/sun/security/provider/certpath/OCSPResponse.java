@@ -294,7 +294,7 @@ public final class OCSPResponse {
         }
         for (int i = 0; i < singleResponseDer.length; i++) {
             SingleResponse singleResponse
-                = new SingleResponse(singleResponseDer[i]);
+                = new SingleResponse(singleResponseDer[i], dateCheckedAgainst);
             singleResponseMap.put(singleResponse.getCertId(), singleResponse);
         }
 
@@ -576,6 +576,11 @@ public final class OCSPResponse {
         private final Map<String, java.security.cert.Extension> singleExtensions;
 
         private SingleResponse(DerValue der) throws IOException {
+            this(der, null);
+        }
+
+        private SingleResponse(DerValue der, Date dateCheckedAgainst)
+            throws IOException {
             if (der.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad ASN.1 encoding in SingleResponse");
             }
@@ -673,7 +678,8 @@ public final class OCSPResponse {
                 singleExtensions = Collections.emptyMap();
             }
 
-            long now = System.currentTimeMillis();
+            long now = (dateCheckedAgainst == null) ?
+                System.currentTimeMillis() : dateCheckedAgainst.getTime();
             Date nowPlusSkew = new Date(now + MAX_CLOCK_SKEW);
             Date nowMinusSkew = new Date(now - MAX_CLOCK_SKEW);
             if (DEBUG != null) {
