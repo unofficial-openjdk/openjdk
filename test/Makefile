@@ -510,7 +510,7 @@ jdk_other: $(call TestDirs, \
           demo/jvmti demo/zipfs \
           javax/naming com/sun/jndi \
           javax/script \
-          javax/sql \
+          java/sql javax/sql \
           javax/smartcardio \
           com/sun/xml \
           javax/xml/ws com/sun/internal/ws \
