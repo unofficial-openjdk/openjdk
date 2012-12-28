@@ -264,6 +264,7 @@ public final class OCSPResponse {
                 DEBUG.println("OCSP Responder name: " + responderName);
             }
         } else if (tag == KEY_TAG) {
+            seq = seq.data.getDerValue(); // consume tag and length
             if (DEBUG != null) {
                 byte[] responderKeyId = seq.getOctetString();
                 DEBUG.println("OCSP Responder key ID: " +
@@ -293,7 +294,7 @@ public final class OCSPResponse {
         }
         for (int i = 0; i < singleResponseDer.length; i++) {
             SingleResponse singleResponse
-                = new SingleResponse(singleResponseDer[i]);
+                = new SingleResponse(singleResponseDer[i], dateCheckedAgainst);
             singleResponseMap.put(singleResponse.getCertId(), singleResponse);
         }
 
@@ -392,21 +393,29 @@ public final class OCSPResponse {
                     // Retrieve the issuer's key identifier
                     if (certIssuerKeyId == null) {
                         certIssuerKeyId = signerCert.getIssuerKeyIdentifier();
+                        if (certIssuerKeyId == null) {
+                            if (DEBUG != null) {
+                                DEBUG.println("No issuer key identifier (AKID) "
+                                    + "in the signer certificate");
+                            }
+                        }
                     }
 
-                    // Check that the key identifiers match
-                    if (certIssuerKeyId == null ||
-                        !Arrays.equals(certIssuerKeyId,
-                            OCSPChecker.getKeyId(responderCert))) {
+                    // Check that the key identifiers match, if both are present
+                    byte[] responderKeyId = null;
+                    if (certIssuerKeyId != null &&
+                        (responderKeyId =
+                            OCSPChecker.getKeyId(responderCert)) != null) {
+                        if (!Arrays.equals(certIssuerKeyId, responderKeyId)) {
+                            continue; // try next cert
+                        }
 
-                        continue; // try next cert
-                    }
-
-                    if (DEBUG != null) {
-                        DEBUG.println("Issuer certificate key ID: " +
-                            String.format("0x%0" +
-                                (certIssuerKeyId.length * 2) + "x",
-                                    new BigInteger(1, certIssuerKeyId)));
+                        if (DEBUG != null) {
+                            DEBUG.println("Issuer certificate key ID: " +
+                                String.format("0x%0" +
+                                    (certIssuerKeyId.length * 2) + "x",
+                                        new BigInteger(1, certIssuerKeyId)));
+                        }
                     }
 
                     // Check for the OCSPSigning key purpose
@@ -441,7 +450,7 @@ public final class OCSPResponse {
                     } catch (GeneralSecurityException e) {
                         if (DEBUG != null) {
                             DEBUG.println("Responder's certificate not within" +
-                            " the validity period" + e);
+                            " the validity period " + e);
                         }
                         continue; // try next cert
                     }
@@ -567,6 +576,11 @@ public final class OCSPResponse {
         private final Map<String, java.security.cert.Extension> singleExtensions;
 
         private SingleResponse(DerValue der) throws IOException {
+            this(der, null);
+        }
+
+        private SingleResponse(DerValue der, Date dateCheckedAgainst)
+            throws IOException {
             if (der.tag != DerValue.tag_Sequence) {
                 throw new IOException("Bad ASN.1 encoding in SingleResponse");
             }
@@ -664,7 +678,8 @@ public final class OCSPResponse {
                 singleExtensions = Collections.emptyMap();
             }
 
-            long now = System.currentTimeMillis();
+            long now = (dateCheckedAgainst == null) ?
+                System.currentTimeMillis() : dateCheckedAgainst.getTime();
             Date nowPlusSkew = new Date(now + MAX_CLOCK_SKEW);
             Date nowMinusSkew = new Date(now - MAX_CLOCK_SKEW);
             if (DEBUG != null) {

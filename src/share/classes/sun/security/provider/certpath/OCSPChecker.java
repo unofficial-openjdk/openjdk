@@ -257,18 +257,21 @@ class OCSPChecker extends PKIXCertPathChecker {
                         }
                     }
 
-                    // Check that the key identifiers match
+                    // Check that the key identifiers match, if both are present
+                    byte[] anchorKeyId = null;
                     if (certIssuerKeyId != null &&
-                        !Arrays.equals(certIssuerKeyId, getKeyId(anchorCert))) {
+                        (anchorKeyId =
+                            OCSPChecker.getKeyId(anchorCert)) != null) {
+                        if (!Arrays.equals(certIssuerKeyId, anchorKeyId)) {
+                            continue; // try next cert
+                        }
 
-                        continue; // try next cert
-                    }
-
-                    if (DEBUG != null && certIssuerKeyId != null) {
-                        DEBUG.println("Issuer certificate key ID: " +
-                            String.format("0x%0" +
-                                (certIssuerKeyId.length * 2) + "x",
-                                    new BigInteger(1, certIssuerKeyId)));
+                        if (DEBUG != null) {
+                            DEBUG.println("Issuer certificate key ID: " +
+                                String.format("0x%0" +
+                                    (certIssuerKeyId.length * 2) + "x",
+                                        new BigInteger(1, certIssuerKeyId)));
+                        }
                     }
 
                     issuerCert = anchorCert;
