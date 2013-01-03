@@ -842,7 +842,8 @@ private:
 
   // These do register sized moves/scans
   void rep_mov();
-  void rep_set();
+  void rep_stos();
+  void rep_stosb();
   void repne_scan();
 #ifdef _LP64
   void repne_scanl();
@@ -2813,6 +2814,9 @@ public:
 
   // C2 compiled method's prolog code.
   void verified_entry(int framesize, bool stack_bang, bool fp_mode_24b);
+
+  // clear memory of size 'cnt' qwords, starting at 'base'.
+  void clear_mem(Register base, Register cnt, Register rtmp);
 
   // IndexOf strings.
   // Small strings are loaded through stack if they cross page boundary.

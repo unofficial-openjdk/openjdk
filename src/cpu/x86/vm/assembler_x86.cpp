@@ -2551,12 +2551,18 @@ void Assembler::rep_mov() {
   emit_byte(0xA5);
 }
 
+// sets rcx bytes with rax, value at [edi]
+void Assembler::rep_stosb() {
+  emit_byte(0xF3); // REP
+  LP64_ONLY(prefix(REX_W));
+  emit_byte(0xAA); // STOSB
+}
+
 // sets rcx pointer sized words with rax, value at [edi]
 // generic
-void Assembler::rep_set() { // rep_set
-  emit_byte(0xF3);
-  // STOSQ
-  LP64_ONLY(prefix(REX_W));
+void Assembler::rep_stos() {
+  emit_byte(0xF3); // REP
+  LP64_ONLY(prefix(REX_W));       // LP64:STOSQ, LP32:STOSD
   emit_byte(0xAB);
 }
 
@@ -10483,6 +10489,22 @@ void MacroAssembler::verified_entry(int framesize, bool stack_bang, bool fp_mode
 
 }
 
+void MacroAssembler::clear_mem(Register base, Register cnt, Register tmp) {
+  // cnt - number of qwords (8-byte words).
+  // base - start address, qword aligned.
+  assert(base==rdi, "base register must be edi for rep stos");
+  assert(tmp==rax,   "tmp register must be eax for rep stos");
+  assert(cnt==rcx,   "cnt register must be ecx for rep stos");
+
+  xorptr(tmp, tmp);
+  if (UseFastStosb) {
+    shlptr(cnt,3); // convert to number of bytes
+    rep_stosb();
+  } else {
+    NOT_LP64(shlptr(cnt,1);) // convert to number of dwords for 32-bit VM
+    rep_stos();
+  }
+}
 
 // IndexOf for constant substrings with size >= 8 chars
 // which don't need to be loaded through stack.
