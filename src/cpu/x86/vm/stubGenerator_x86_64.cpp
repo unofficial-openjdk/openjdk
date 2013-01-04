@@ -1314,23 +1314,54 @@ class StubGenerator: public StubCodeGenerator {
   //   end_to       - destination array end address
   //   qword_count  - 64-bits element count, negative
   //   to           - scratch
-  //   L_copy_32_bytes - entry label
+  //   L_copy_bytes - entry label
   //   L_copy_8_bytes  - exit  label
   //
-  void copy_32_bytes_forward(Register end_from, Register end_to,
+  void copy_bytes_forward(Register end_from, Register end_to,
                              Register qword_count, Register to,
-                             Label& L_copy_32_bytes, Label& L_copy_8_bytes) {
+                             Label& L_copy_bytes, Label& L_copy_8_bytes) {
     DEBUG_ONLY(__ stop("enter at entry label, not here"));
     Label L_loop;
     __ align(OptoLoopAlignment);
-  __ BIND(L_loop);
-    if(UseUnalignedLoadStores) {
-      __ movdqu(xmm0, Address(end_from, qword_count, Address::times_8, -24));
-      __ movdqu(Address(end_to, qword_count, Address::times_8, -24), xmm0);
-      __ movdqu(xmm1, Address(end_from, qword_count, Address::times_8, - 8));
-      __ movdqu(Address(end_to, qword_count, Address::times_8, - 8), xmm1);
-
+    if (UseUnalignedLoadStores) {
+      Label L_end;
+      // Copy 64-bytes per iteration
+      __ BIND(L_loop);
+      if (UseAVX >= 2) {
+        __ vmovdqu(xmm0, Address(end_from, qword_count, Address::times_8, -56));
+        __ vmovdqu(Address(end_to, qword_count, Address::times_8, -56), xmm0);
+        __ vmovdqu(xmm1, Address(end_from, qword_count, Address::times_8, -24));
+        __ vmovdqu(Address(end_to, qword_count, Address::times_8, -24), xmm1);
+      } else {
+        __ movdqu(xmm0, Address(end_from, qword_count, Address::times_8, -56));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, -56), xmm0);
+        __ movdqu(xmm1, Address(end_from, qword_count, Address::times_8, -40));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, -40), xmm1);
+        __ movdqu(xmm2, Address(end_from, qword_count, Address::times_8, -24));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, -24), xmm2);
+        __ movdqu(xmm3, Address(end_from, qword_count, Address::times_8, - 8));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, - 8), xmm3);
+      }
+      __ BIND(L_copy_bytes);
+      __ addptr(qword_count, 8);
+      __ jcc(Assembler::lessEqual, L_loop);
+      __ subptr(qword_count, 4);  // sub(8) and add(4)
+      __ jccb(Assembler::greater, L_end);
+      // Copy trailing 32 bytes
+      if (UseAVX >= 2) {
+        __ vmovdqu(xmm0, Address(end_from, qword_count, Address::times_8, -24));
+        __ vmovdqu(Address(end_to, qword_count, Address::times_8, -24), xmm0);
+      } else {
+        __ movdqu(xmm0, Address(end_from, qword_count, Address::times_8, -24));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, -24), xmm0);
+        __ movdqu(xmm1, Address(end_from, qword_count, Address::times_8, - 8));
+        __ movdqu(Address(end_to, qword_count, Address::times_8, - 8), xmm1);
+      }
+      __ addptr(qword_count, 4);
+      __ BIND(L_end);
     } else {
+      // Copy 32-bytes per iteration
+      __ BIND(L_loop);
       __ movq(to, Address(end_from, qword_count, Address::times_8, -24));
       __ movq(Address(end_to, qword_count, Address::times_8, -24), to);
       __ movq(to, Address(end_from, qword_count, Address::times_8, -16));
@@ -1339,14 +1370,14 @@ class StubGenerator: public StubCodeGenerator {
       __ movq(Address(end_to, qword_count, Address::times_8, - 8), to);
       __ movq(to, Address(end_from, qword_count, Address::times_8, - 0));
       __ movq(Address(end_to, qword_count, Address::times_8, - 0), to);
+
+      __ BIND(L_copy_bytes);
+      __ addptr(qword_count, 4);
+      __ jcc(Assembler::lessEqual, L_loop);
     }
-  __ BIND(L_copy_32_bytes);
-    __ addptr(qword_count, 4);
-    __ jcc(Assembler::lessEqual, L_loop);
     __ subptr(qword_count, 4);
     __ jcc(Assembler::less, L_copy_8_bytes); // Copy trailing qwords
   }
-
 
   // Copy big chunks backward
   //
@@ -1355,23 +1386,55 @@ class StubGenerator: public StubCodeGenerator {
   //   dest         - destination array address
   //   qword_count  - 64-bits element count
   //   to           - scratch
-  //   L_copy_32_bytes - entry label
+  //   L_copy_bytes - entry label
   //   L_copy_8_bytes  - exit  label
   //
-  void copy_32_bytes_backward(Register from, Register dest,
+  void copy_bytes_backward(Register from, Register dest,
                               Register qword_count, Register to,
-                              Label& L_copy_32_bytes, Label& L_copy_8_bytes) {
+                              Label& L_copy_bytes, Label& L_copy_8_bytes) {
     DEBUG_ONLY(__ stop("enter at entry label, not here"));
     Label L_loop;
     __ align(OptoLoopAlignment);
-  __ BIND(L_loop);
-    if(UseUnalignedLoadStores) {
-      __ movdqu(xmm0, Address(from, qword_count, Address::times_8, 16));
-      __ movdqu(Address(dest, qword_count, Address::times_8, 16), xmm0);
-      __ movdqu(xmm1, Address(from, qword_count, Address::times_8,  0));
-      __ movdqu(Address(dest, qword_count, Address::times_8,  0), xmm1);
+    if (UseUnalignedLoadStores) {
+      Label L_end;
+      // Copy 64-bytes per iteration
+      __ BIND(L_loop);
+      if (UseAVX >= 2) {
+        __ vmovdqu(xmm0, Address(from, qword_count, Address::times_8, 32));
+        __ vmovdqu(Address(dest, qword_count, Address::times_8, 32), xmm0);
+        __ vmovdqu(xmm1, Address(from, qword_count, Address::times_8,  0));
+        __ vmovdqu(Address(dest, qword_count, Address::times_8,  0), xmm1);
+      } else {
+        __ movdqu(xmm0, Address(from, qword_count, Address::times_8, 48));
+        __ movdqu(Address(dest, qword_count, Address::times_8, 48), xmm0);
+        __ movdqu(xmm1, Address(from, qword_count, Address::times_8, 32));
+        __ movdqu(Address(dest, qword_count, Address::times_8, 32), xmm1);
+        __ movdqu(xmm2, Address(from, qword_count, Address::times_8, 16));
+        __ movdqu(Address(dest, qword_count, Address::times_8, 16), xmm2);
+        __ movdqu(xmm3, Address(from, qword_count, Address::times_8,  0));
+        __ movdqu(Address(dest, qword_count, Address::times_8,  0), xmm3);
+      }
+      __ BIND(L_copy_bytes);
+      __ subptr(qword_count, 8);
+      __ jcc(Assembler::greaterEqual, L_loop);
 
+      __ addptr(qword_count, 4);  // add(8) and sub(4)
+      __ jccb(Assembler::less, L_end);
+      // Copy trailing 32 bytes
+      if (UseAVX >= 2) {
+        __ vmovdqu(xmm0, Address(from, qword_count, Address::times_8, 0));
+        __ vmovdqu(Address(dest, qword_count, Address::times_8, 0), xmm0);
+      } else {
+        __ movdqu(xmm0, Address(from, qword_count, Address::times_8, 16));
+        __ movdqu(Address(dest, qword_count, Address::times_8, 16), xmm0);
+        __ movdqu(xmm1, Address(from, qword_count, Address::times_8,  0));
+        __ movdqu(Address(dest, qword_count, Address::times_8,  0), xmm1);
+      }
+      __ subptr(qword_count, 4);
+      __ BIND(L_end);
     } else {
+      // Copy 32-bytes per iteration
+      __ BIND(L_loop);
       __ movq(to, Address(from, qword_count, Address::times_8, 24));
       __ movq(Address(dest, qword_count, Address::times_8, 24), to);
       __ movq(to, Address(from, qword_count, Address::times_8, 16));
@@ -1380,10 +1443,11 @@ class StubGenerator: public StubCodeGenerator {
       __ movq(Address(dest, qword_count, Address::times_8,  8), to);
       __ movq(to, Address(from, qword_count, Address::times_8,  0));
       __ movq(Address(dest, qword_count, Address::times_8,  0), to);
+
+      __ BIND(L_copy_bytes);
+      __ subptr(qword_count, 4);
+      __ jcc(Assembler::greaterEqual, L_loop);
     }
-  __ BIND(L_copy_32_bytes);
-    __ subptr(qword_count, 4);
-    __ jcc(Assembler::greaterEqual, L_loop);
     __ addptr(qword_count, 4);
     __ jcc(Assembler::greater, L_copy_8_bytes); // Copy trailing qwords
   }
@@ -1413,7 +1477,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_4_bytes, L_copy_2_bytes;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_4_bytes, L_copy_2_bytes;
     Label L_copy_byte, L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
@@ -1445,7 +1509,7 @@ class StubGenerator: public StubCodeGenerator {
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
     __ lea(end_to,   Address(to,   qword_count, Address::times_8, -8));
     __ negptr(qword_count); // make the count negative
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1488,8 +1552,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_forward(end_from, end_to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_forward(end_from, end_to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
     __ jmp(L_copy_4_bytes);
 
     return start;
@@ -1516,7 +1580,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_4_bytes, L_copy_2_bytes;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_4_bytes, L_copy_2_bytes;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register count       = rdx;  // elements count
@@ -1559,10 +1623,10 @@ class StubGenerator: public StubCodeGenerator {
     // Check for and copy trailing dword
   __ BIND(L_copy_4_bytes);
     __ testl(byte_count, 4);
-    __ jcc(Assembler::zero, L_copy_32_bytes);
+    __ jcc(Assembler::zero, L_copy_bytes);
     __ movl(rax, Address(from, qword_count, Address::times_8));
     __ movl(Address(to, qword_count, Address::times_8), rax);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1577,8 +1641,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_backward(from, to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
 
     restore_arg_regs();
     inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr); // Update counter after rscratch1 is free
@@ -1613,7 +1677,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_4_bytes,L_copy_2_bytes,L_exit;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_4_bytes,L_copy_2_bytes,L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register count       = rdx;  // elements count
@@ -1644,7 +1708,7 @@ class StubGenerator: public StubCodeGenerator {
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
     __ lea(end_to,   Address(to,   qword_count, Address::times_8, -8));
     __ negptr(qword_count);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1680,8 +1744,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_forward(end_from, end_to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_forward(end_from, end_to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
     __ jmp(L_copy_4_bytes);
 
     return start;
@@ -1728,7 +1792,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_4_bytes;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_4_bytes;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register count       = rdx;  // elements count
@@ -1763,10 +1827,10 @@ class StubGenerator: public StubCodeGenerator {
     // Check for and copy trailing dword
   __ BIND(L_copy_4_bytes);
     __ testl(word_count, 2);
-    __ jcc(Assembler::zero, L_copy_32_bytes);
+    __ jcc(Assembler::zero, L_copy_bytes);
     __ movl(rax, Address(from, qword_count, Address::times_8));
     __ movl(Address(to, qword_count, Address::times_8), rax);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1781,8 +1845,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_backward(from, to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
 
     restore_arg_regs();
     inc_counter_np(SharedRuntime::_jshort_array_copy_ctr); // Update counter after rscratch1 is free
@@ -1818,7 +1882,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_4_bytes, L_exit;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_4_bytes, L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register count       = rdx;  // elements count
@@ -1854,7 +1918,7 @@ class StubGenerator: public StubCodeGenerator {
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
     __ lea(end_to,   Address(to,   qword_count, Address::times_8, -8));
     __ negptr(qword_count);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1881,8 +1945,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy 32-bytes chunks
-    copy_32_bytes_forward(end_from, end_to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_forward(end_from, end_to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
     __ jmp(L_copy_4_bytes);
 
     return start;
@@ -1910,7 +1974,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_copy_2_bytes, L_exit;
+    Label L_copy_bytes, L_copy_8_bytes, L_copy_2_bytes, L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register count       = rdx;  // elements count
@@ -1944,10 +2008,10 @@ class StubGenerator: public StubCodeGenerator {
 
     // Check for and copy trailing dword
     __ testl(dword_count, 1);
-    __ jcc(Assembler::zero, L_copy_32_bytes);
+    __ jcc(Assembler::zero, L_copy_bytes);
     __ movl(rax, Address(from, dword_count, Address::times_4, -4));
     __ movl(Address(to, dword_count, Address::times_4, -4), rax);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -1965,8 +2029,8 @@ class StubGenerator: public StubCodeGenerator {
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_backward(from, to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
 
    __ bind(L_exit);
      if (is_oop) {
@@ -2004,7 +2068,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_exit;
+    Label L_copy_bytes, L_copy_8_bytes, L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register qword_count = rdx;  // elements count
@@ -2036,7 +2100,7 @@ class StubGenerator: public StubCodeGenerator {
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
     __ lea(end_to,   Address(to,   qword_count, Address::times_8, -8));
     __ negptr(qword_count);
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -2055,8 +2119,8 @@ class StubGenerator: public StubCodeGenerator {
       __ ret(0);
     }
 
-    // Copy 64-byte chunks
-    copy_32_bytes_forward(end_from, end_to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_forward(end_from, end_to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
 
     if (is_oop) {
     __ BIND(L_exit);
@@ -2093,7 +2157,7 @@ class StubGenerator: public StubCodeGenerator {
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
 
-    Label L_copy_32_bytes, L_copy_8_bytes, L_exit;
+    Label L_copy_bytes, L_copy_8_bytes, L_exit;
     const Register from        = rdi;  // source array address
     const Register to          = rsi;  // destination array address
     const Register qword_count = rdx;  // elements count
@@ -2119,7 +2183,7 @@ class StubGenerator: public StubCodeGenerator {
       gen_write_ref_array_pre_barrier(to, saved_count, dest_uninitialized);
     }
 
-    __ jmp(L_copy_32_bytes);
+    __ jmp(L_copy_bytes);
 
     // Copy trailing qwords
   __ BIND(L_copy_8_bytes);
@@ -2138,8 +2202,8 @@ class StubGenerator: public StubCodeGenerator {
       __ ret(0);
     }
 
-    // Copy in 32-bytes chunks
-    copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
+    // Copy in multi-bytes chunks
+    copy_bytes_backward(from, to, qword_count, rax, L_copy_bytes, L_copy_8_bytes);
 
     if (is_oop) {
     __ BIND(L_exit);
