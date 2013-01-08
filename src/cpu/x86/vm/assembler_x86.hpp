@@ -1461,9 +1461,12 @@ private:
   // Shift Right by bytes Logical DoubleQuadword Immediate
   void psrldq(XMMRegister dst, int shift);
 
-  // Logical Compare Double Quadword
+  // Logical Compare 128bit
   void ptest(XMMRegister dst, XMMRegister src);
   void ptest(XMMRegister dst, Address src);
+  // Logical Compare 256bit
+  void vptest(XMMRegister dst, XMMRegister src);
+  void vptest(XMMRegister dst, Address src);
 
   // Interleave Low Bytes
   void punpcklbw(XMMRegister dst, XMMRegister src);
@@ -2736,6 +2739,10 @@ public:
     else
       Assembler::vxorpd(dst, nds, src, vector256);
   }
+
+  // Simple version for AVX2 256bit vectors
+  void vpxor(XMMRegister dst, XMMRegister src) { Assembler::vpxor(dst, dst, src, true); }
+  void vpxor(XMMRegister dst, Address src) { Assembler::vpxor(dst, dst, src, true); }
 
   // Move packed integer values from low 128 bit to hign 128 bit in 256 bit vector.
   void vinserti128h(XMMRegister dst, XMMRegister nds, XMMRegister src) {
