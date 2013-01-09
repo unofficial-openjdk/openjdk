@@ -1101,13 +1101,6 @@ class CommandLineFlags {
   product(bool, ReduceSignalUsage, false,                                   \
           "Reduce the use of OS signals in Java and/or the VM")             \
                                                                             \
-  notproduct(bool, ValidateMarkSweep, false,                                \
-          "Do extra validation during MarkSweep collection")                \
-                                                                            \
-  notproduct(bool, RecordMarkSweepCompaction, false,                        \
-          "Enable GC-to-GC recording and querying of compaction during "    \
-          "MarkSweep")                                                      \
-                                                                            \
   develop_pd(bool, ShareVtableStubs,                                        \
           "Share vtable stubs (smaller code but worse branch prediction")   \
                                                                             \
@@ -1606,7 +1599,7 @@ class CommandLineFlags {
   develop(bool, CMSTraceThreadState, false,                                 \
           "Trace the CMS thread state (enable the trace_state() method)")   \
                                                                             \
-  product(bool, CMSClassUnloadingEnabled, false,                            \
+  product(bool, CMSClassUnloadingEnabled, true,                             \
           "Whether class unloading enabled when using CMS GC")              \
                                                                             \
   product(uintx, CMSClassUnloadingMaxInterval, 0,                           \
@@ -2217,7 +2210,8 @@ class CommandLineFlags {
   develop(bool, TraceClassLoaderData, false,                                \
           "Trace class loader loader_data lifetime")                        \
                                                                             \
-  product(uintx, InitialBootClassLoaderMetaspaceSize, 3*M,                  \
+  product(uintx, InitialBootClassLoaderMetaspaceSize,                       \
+          NOT_LP64(2200*K) LP64_ONLY(4*M),                                  \
           "Initial size of the boot class loader data metaspace")           \
                                                                             \
   product(bool, TraceGen0Time, false,                                       \
