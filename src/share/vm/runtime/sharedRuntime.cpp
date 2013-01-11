@@ -642,7 +642,7 @@ address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc,
       bool skip_scope_increment = false;
       // exception handler lookup
       KlassHandle ek (THREAD, exception->klass());
-      handler_bci = sd->method()->fast_exception_handler_bci_for(ek, bci, THREAD);
+      handler_bci = methodOopDesc::fast_exception_handler_bci_for(sd->method(), ek, bci, THREAD);
       if (HAS_PENDING_EXCEPTION) {
         recursive_exception = true;
         // We threw an exception while trying to find the exception handler.
