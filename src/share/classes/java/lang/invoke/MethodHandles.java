@@ -69,6 +69,10 @@ public class MethodHandles {
     public static Lookup lookup() {
         return new Lookup();
     }
+    static {
+        // FIXME in MR1: Core Reflection cannot be used to gain a Lookup to perform MH reflection
+        Reflection.registerMethodsToFilter(MethodHandles.class, "lookup");
+    }
 
     /**
      * Returns a {@link Lookup lookup object} which is trusted minimally.
