@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -57,15 +57,17 @@ JDK_TEST_LIST = \
 	jdk_beans1 jdk_beans2 jdk_beans3  \
 	jdk_io  \
 	jdk_lang  \
-	jdk_management1 jdk_management2  \
+	jdk_management \
+	jdk_jmx \
 	jdk_math  \
-	jdk_misc  \
+	jdk_other  \
 	jdk_net  \
-	jdk_nio1 jdk_nio2 jdk_nio3  \
+	jdk_nio \
 	jdk_security1 jdk_security2 jdk_security3  \
 	jdk_sound  \
 	jdk_text  \
-	jdk_tools1 jdk_tools2  \
+	jdk_tools \
+	jdk_jdi \
 	jdk_jfr \
 	jdk_util
 
