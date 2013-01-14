@@ -101,6 +101,7 @@ class InstructionPrinter: public InstructionVisitor {
   virtual void do_IfOp           (IfOp*            x);
   virtual void do_Convert        (Convert*         x);
   virtual void do_NullCheck      (NullCheck*       x);
+  virtual void do_TypeCast       (TypeCast*        x);
   virtual void do_Invoke         (Invoke*          x);
   virtual void do_NewInstance    (NewInstance*     x);
   virtual void do_NewTypeArray   (NewTypeArray*    x);
@@ -127,6 +128,7 @@ class InstructionPrinter: public InstructionVisitor {
   virtual void do_UnsafePutRaw   (UnsafePutRaw*    x);
   virtual void do_UnsafeGetObject(UnsafeGetObject* x);
   virtual void do_UnsafePutObject(UnsafePutObject* x);
+  virtual void do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x);
   virtual void do_UnsafePrefetchRead (UnsafePrefetchRead*  x);
   virtual void do_UnsafePrefetchWrite(UnsafePrefetchWrite* x);
   virtual void do_ProfileCall    (ProfileCall*     x);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -392,16 +392,16 @@ void Relocator::change_jumps(int break_bci, int delta) {
 // The width of instruction at "pc" is changing by "delta".  Adjust the
 // exception table, if any, of "rc->mb".
 void Relocator::adjust_exception_table(int bci, int delta) {
-  typeArrayOop table = method()->exception_table();
-  for (int index = 0; index < table->length(); index +=4) {
-    if (table->int_at(index) > bci) {
-      table->int_at_put(index+0, table->int_at(index+0) + delta);
-      table->int_at_put(index+1, table->int_at(index+1) + delta);
-    } else if (bci < table->int_at(index+1)) {
-      table->int_at_put(index+1, table->int_at(index+1) + delta);
+  ExceptionTable table(_method());
+  for (int index = 0; index < table.length(); index ++) {
+    if (table.start_pc(index) > bci) {
+      table.set_start_pc(index, table.start_pc(index) + delta);
+      table.set_end_pc(index, table.end_pc(index) + delta);
+    } else if (bci < table.end_pc(index)) {
+      table.set_end_pc(index, table.end_pc(index) + delta);
     }
-    if (table->int_at(index+2) > bci)
-      table->int_at_put(index+2, table->int_at(index+2) + delta);
+    if (table.handler_pc(index) > bci)
+      table.set_handler_pc(index, table.handler_pc(index) + delta);
   }
 }
 
@@ -465,13 +465,12 @@ static typeArrayOop insert_hole_at(
 void Relocator::adjust_stack_map_table(int bci, int delta) {
   if (method()->has_stackmap_table()) {
     typeArrayOop data = method()->stackmap_data();
-    // The data in the array is a classfile representation of the stackmap
-    // table attribute, less the initial u2 tag and u4 attribute_length fields.
-    stack_map_table_attribute* attr = stack_map_table_attribute::at(
-        (address)data->byte_at_addr(0) - (sizeof(u2) + sizeof(u4)));
+    // The data in the array is a classfile representation of the stackmap table
+    stack_map_table* sm_table =
+        stack_map_table::at((address)data->byte_at_addr(0));
 
-    int count = attr->number_of_entries();
-    stack_map_frame* frame = attr->entries();
+    int count = sm_table->number_of_entries();
+    stack_map_frame* frame = sm_table->entries();
     int bci_iter = -1;
     bool offset_adjusted = false; // only need to adjust one offset
 
@@ -486,7 +485,7 @@ void Relocator::adjust_stack_map_table(int bci, int delta) {
           frame->set_offset_delta(new_offset_delta);
         } else {
           assert(frame->is_same_frame() ||
-                 frame->is_same_frame_1_stack_item_frame(),
+                 frame->is_same_locals_1_stack_item_frame(),
                  "Frame must be one of the compressed forms");
           // The new delta exceeds the capacity of the 'same_frame' or
           // 'same_frame_1_stack_item_frame' frame types.  We need to
@@ -513,7 +512,7 @@ void Relocator::adjust_stack_map_table(int bci, int delta) {
           if (frame->is_same_frame()) {
             same_frame_extended::create_at(frame_addr, new_offset_delta);
           } else {
-            same_frame_1_stack_item_extended::create_at(
+            same_locals_1_stack_item_extended::create_at(
               frame_addr, new_offset_delta, NULL);
             // the verification_info_type should already be at the right spot
           }

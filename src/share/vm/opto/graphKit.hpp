@@ -145,6 +145,7 @@ class GraphKit : public Phase {
   void clean_stack(int from_sp); // clear garbage beyond from_sp to top
 
   void inc_sp(int i)                  { set_sp(sp() + i); }
+  void dec_sp(int i)                  { set_sp(sp() - i); }
   void set_bci(int bci)               { _bci = bci; }
 
   // Make sure jvms has current bci & sp.
@@ -285,7 +286,7 @@ class GraphKit : public Phase {
   // How many stack inputs does the current BC consume?
   // And, how does the stack change after the bytecode?
   // Returns false if unknown.
-  bool compute_stack_effects(int& inputs, int& depth);
+  bool compute_stack_effects(int& inputs, int& depth, bool for_parse = false);
 
   // Add a fixed offset to a pointer
   Node* basic_plus_adr(Node* base, Node* ptr, intptr_t offset) {
@@ -302,31 +303,31 @@ class GraphKit : public Phase {
 
 
   // Some convenient shortcuts for common nodes
-  Node* IfTrue(IfNode* iff)                   { return _gvn.transform(new (C,1) IfTrueNode(iff));      }
-  Node* IfFalse(IfNode* iff)                  { return _gvn.transform(new (C,1) IfFalseNode(iff));     }
+  Node* IfTrue(IfNode* iff)                   { return _gvn.transform(new (C) IfTrueNode(iff));      }
+  Node* IfFalse(IfNode* iff)                  { return _gvn.transform(new (C) IfFalseNode(iff));     }
 
-  Node* AddI(Node* l, Node* r)                { return _gvn.transform(new (C,3) AddINode(l, r));       }
-  Node* SubI(Node* l, Node* r)                { return _gvn.transform(new (C,3) SubINode(l, r));       }
-  Node* MulI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MulINode(l, r));       }
-  Node* DivI(Node* ctl, Node* l, Node* r)     { return _gvn.transform(new (C,3) DivINode(ctl, l, r));  }
+  Node* AddI(Node* l, Node* r)                { return _gvn.transform(new (C) AddINode(l, r));       }
+  Node* SubI(Node* l, Node* r)                { return _gvn.transform(new (C) SubINode(l, r));       }
+  Node* MulI(Node* l, Node* r)                { return _gvn.transform(new (C) MulINode(l, r));       }
+  Node* DivI(Node* ctl, Node* l, Node* r)     { return _gvn.transform(new (C) DivINode(ctl, l, r));  }
 
-  Node* AndI(Node* l, Node* r)                { return _gvn.transform(new (C,3) AndINode(l, r));       }
-  Node* OrI(Node* l, Node* r)                 { return _gvn.transform(new (C,3) OrINode(l, r));        }
-  Node* XorI(Node* l, Node* r)                { return _gvn.transform(new (C,3) XorINode(l, r));       }
+  Node* AndI(Node* l, Node* r)                { return _gvn.transform(new (C) AndINode(l, r));       }
+  Node* OrI(Node* l, Node* r)                 { return _gvn.transform(new (C) OrINode(l, r));        }
+  Node* XorI(Node* l, Node* r)                { return _gvn.transform(new (C) XorINode(l, r));       }
 
-  Node* MaxI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MaxINode(l, r));       }
-  Node* MinI(Node* l, Node* r)                { return _gvn.transform(new (C,3) MinINode(l, r));       }
+  Node* MaxI(Node* l, Node* r)                { return _gvn.transform(new (C) MaxINode(l, r));       }
+  Node* MinI(Node* l, Node* r)                { return _gvn.transform(new (C) MinINode(l, r));       }
 
-  Node* LShiftI(Node* l, Node* r)             { return _gvn.transform(new (C,3) LShiftINode(l, r));    }
-  Node* RShiftI(Node* l, Node* r)             { return _gvn.transform(new (C,3) RShiftINode(l, r));    }
-  Node* URShiftI(Node* l, Node* r)            { return _gvn.transform(new (C,3) URShiftINode(l, r));   }
+  Node* LShiftI(Node* l, Node* r)             { return _gvn.transform(new (C) LShiftINode(l, r));    }
+  Node* RShiftI(Node* l, Node* r)             { return _gvn.transform(new (C) RShiftINode(l, r));    }
+  Node* URShiftI(Node* l, Node* r)            { return _gvn.transform(new (C) URShiftINode(l, r));   }
 
-  Node* CmpI(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpINode(l, r));       }
-  Node* CmpL(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpLNode(l, r));       }
-  Node* CmpP(Node* l, Node* r)                { return _gvn.transform(new (C,3) CmpPNode(l, r));       }
-  Node* Bool(Node* cmp, BoolTest::mask relop) { return _gvn.transform(new (C,2) BoolNode(cmp, relop)); }
+  Node* CmpI(Node* l, Node* r)                { return _gvn.transform(new (C) CmpINode(l, r));       }
+  Node* CmpL(Node* l, Node* r)                { return _gvn.transform(new (C) CmpLNode(l, r));       }
+  Node* CmpP(Node* l, Node* r)                { return _gvn.transform(new (C) CmpPNode(l, r));       }
+  Node* Bool(Node* cmp, BoolTest::mask relop) { return _gvn.transform(new (C) BoolNode(cmp, relop)); }
 
-  Node* AddP(Node* b, Node* a, Node* o)       { return _gvn.transform(new (C,4) AddPNode(b, a, o));    }
+  Node* AddP(Node* b, Node* a, Node* o)       { return _gvn.transform(new (C) AddPNode(b, a, o));    }
 
   // Convert between int and long, and size_t.
   // (See macros ConvI2X, etc., in type.hpp for ConvI2X, etc.)
@@ -370,9 +371,9 @@ class GraphKit : public Phase {
   // Replace all occurrences of one node by another.
   void replace_in_map(Node* old, Node* neww);
 
-  void push(Node* n)    { map_not_null(); _map->set_stack(_map->_jvms,_sp++,n); }
-  Node* pop()           { map_not_null(); return _map->stack(_map->_jvms,--_sp); }
-  Node* peek(int off=0) { map_not_null(); return _map->stack(_map->_jvms, _sp - off - 1); }
+  void  push(Node* n)     { map_not_null();        _map->set_stack(_map->_jvms,   _sp++, n); }
+  Node* pop()             { map_not_null(); return _map->stack(    _map->_jvms, --_sp); }
+  Node* peek(int off = 0) { map_not_null(); return _map->stack(    _map->_jvms,   _sp - off - 1); }
 
   void push_pair(Node* ldval) {
     push(ldval);
@@ -791,7 +792,7 @@ class GraphKit : public Phase {
 
   // Handy for making control flow
   IfNode* create_and_map_if(Node* ctrl, Node* tst, float prob, float cnt) {
-    IfNode* iff = new (C, 2) IfNode(ctrl, tst, prob, cnt);// New IfNode's
+    IfNode* iff = new (C) IfNode(ctrl, tst, prob, cnt);// New IfNode's
     _gvn.set_type(iff, iff->Value(&_gvn)); // Value may be known at parse-time
     // Place 'if' on worklist if it will be in graph
     if (!tst->is_Con())  record_for_igvn(iff);     // Range-check and Null-check removal is later
@@ -799,7 +800,7 @@ class GraphKit : public Phase {
   }
 
   IfNode* create_and_xform_if(Node* ctrl, Node* tst, float prob, float cnt) {
-    IfNode* iff = new (C, 2) IfNode(ctrl, tst, prob, cnt);// New IfNode's
+    IfNode* iff = new (C) IfNode(ctrl, tst, prob, cnt);// New IfNode's
     _gvn.transform(iff);                           // Value may be known at parse-time
     // Place 'if' on worklist if it will be in graph
     if (!tst->is_Con())  record_for_igvn(iff);     // Range-check and Null-check removal is later

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +34,7 @@
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #endif // SERIALGC
+#include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/gcLocker.inline.hpp"
 #include "memory/oopFactory.hpp"
@@ -2819,10 +2821,9 @@ JNI_END
 JNI_QUICK_ENTRY(void, jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, Argument value)) \
   JNIWrapper("Set" XSTR(Result) "Field"); \
 \
-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, Set##Result##Field__entry, \
-    ( JNIEnv*, jobject, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
-  HS_DTRACE_PROBE_N(hotspot_jni, Set##Result##Field__entry, \
-    ( env, obj, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
+  FP_SELECT_##Result( \
+    DTRACE_PROBE4(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID, value), \
+    DTRACE_PROBE3(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID)); \
 \
   oop o = JNIHandles::resolve_non_null(obj); \
   klassOop k = o->klass(); \
@@ -3129,10 +3130,9 @@ JNI_END
 \
 JNI_ENTRY(void, jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, Argument value)) \
   JNIWrapper("SetStatic" XSTR(Result) "Field"); \
-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, SetStatic##Result##Field__entry,\
-    ( JNIEnv*, jclass, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
-  HS_DTRACE_PROBE_N(hotspot_jni, SetStatic##Result##Field__entry, \
-    ( env, clazz, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
+  FP_SELECT_##Result( \
+     DTRACE_PROBE4(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID, value), \
+     DTRACE_PROBE3(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID)); \
 \
   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID); \
   assert(id->is_static_field_id(), "invalid static field id"); \
@@ -3270,7 +3270,7 @@ JNI_QUICK_ENTRY(const jchar*, jni_GetStringChars(
   int s_len = java_lang_String::length(s);
   typeArrayOop s_value = java_lang_String::value(s);
   int s_offset = java_lang_String::offset(s);
-  jchar* buf = NEW_C_HEAP_ARRAY(jchar, s_len + 1);  // add one for zero termination
+  jchar* buf = NEW_C_HEAP_ARRAY(jchar, s_len + 1, mtInternal);  // add one for zero termination
   if (s_len > 0) {
     memcpy(buf, s_value->char_at_addr(s_offset), sizeof(jchar)*s_len);
   }
@@ -3363,7 +3363,7 @@ JNI_ENTRY(const char*, jni_GetStringUTFChars(JNIEnv *env, jstring string, jboole
 #endif /* USDT2 */
   oop java_string = JNIHandles::resolve_non_null(string);
   size_t length = java_lang_String::utf8_length(java_string);
-  char* result = AllocateHeap(length + 1, "GetStringUTFChars");
+  char* result = AllocateHeap(length + 1, mtInternal);
   java_lang_String::as_utf8_string(java_string, result, (int) length + 1);
   if (isCopy != NULL) *isCopy = JNI_TRUE;
 #ifndef USDT2
@@ -3619,7 +3619,7 @@ JNI_QUICK_ENTRY(ElementType*, \
      * Avoid asserts in typeArrayOop. */ \
     result = (ElementType*)get_bad_address(); \
   } else { \
-    result = NEW_C_HEAP_ARRAY(ElementType, len); \
+    result = NEW_C_HEAP_ARRAY(ElementType, len, mtInternal); \
     /* copy the array to the c chunk */ \
     memcpy(result, a->Tag##_at_addr(0), sizeof(ElementType)*len); \
   } \
@@ -3656,7 +3656,7 @@ JNI_QUICK_ENTRY(ElementType*, \
      * Avoid asserts in typeArrayOop. */ \
     result = (ElementType*)get_bad_address(); \
   } else { \
-    result = NEW_C_HEAP_ARRAY(ElementType, len); \
+    result = NEW_C_HEAP_ARRAY(ElementType, len, mtInternal); \
     /* copy the array to the c chunk */ \
     memcpy(result, a->Tag##_at_addr(0), sizeof(ElementType)*len); \
   } \

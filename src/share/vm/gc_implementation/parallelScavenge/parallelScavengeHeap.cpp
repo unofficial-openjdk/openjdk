@@ -40,6 +40,7 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/vmThread.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/vmError.hpp"
 
 PSYoungGen*  ParallelScavengeHeap::_young_gen = NULL;
@@ -160,6 +161,8 @@ jint ParallelScavengeHeap::initialize() {
       }
     }
   }
+
+  MemTracker::record_virtual_memory_type((address)heap_rs.base(), mtJavaHeap);
 
   os::trace_page_sizes("ps perm", pg_min_size, pg_max_size, pg_page_sz,
                        heap_rs.base(), pg_max_size);
@@ -911,23 +914,23 @@ void ParallelScavengeHeap::print_tracing_info() const {
 }
 
 
-void ParallelScavengeHeap::verify(bool allow_dirty, bool silent, VerifyOption option /* ignored */) {
+void ParallelScavengeHeap::verify(bool silent, VerifyOption option /* ignored */) {
   // Why do we need the total_collections()-filter below?
   if (total_collections() > 0) {
     if (!silent) {
       gclog_or_tty->print("permanent ");
     }
-    perm_gen()->verify(allow_dirty);
+    perm_gen()->verify();
 
     if (!silent) {
       gclog_or_tty->print("tenured ");
     }
-    old_gen()->verify(allow_dirty);
+    old_gen()->verify();
 
     if (!silent) {
       gclog_or_tty->print("eden ");
     }
-    young_gen()->verify(allow_dirty);
+    young_gen()->verify();
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,6 +100,7 @@ class MemBarNode;
 class MemBarStoreStoreNode;
 class MemNode;
 class MergeMemNode;
+class MulNode;
 class MultiNode;
 class MultiBranchNode;
 class NeverBranchNode;
@@ -133,8 +134,8 @@ class Type;
 class TypeNode;
 class UnlockNode;
 class VectorNode;
-class VectorLoadNode;
-class VectorStoreNode;
+class LoadVectorNode;
+class StoreVectorNode;
 class VectorSet;
 typedef void (*NFunc)(Node&,void*);
 extern "C" {
@@ -211,18 +212,6 @@ public:
     Node* n = (Node*)C->node_arena()->Amalloc_D(x);
 #ifdef ASSERT
     n->_in = (Node**)n; // magic cookie for assertion check
-#endif
-    n->_out = (Node**)C;
-    return (void*)n;
-  }
-
-  // New Operator that takes a Compile pointer, this will eventually
-  // be the "new" New operator.
-  inline void* operator new( size_t x, Compile* C, int y) {
-    Node* n = (Node*)C->node_arena()->Amalloc_D(x + y*sizeof(void*));
-    n->_in = (Node**)(((char*)n) + x);
-#ifdef ASSERT
-    n->_in[y-1] = n; // magic cookie for assertion check
 #endif
     n->_out = (Node**)C;
     return (void*)n;
@@ -362,7 +351,7 @@ protected:
 #endif
 
   // Reference to the i'th input Node.  Error if out of bounds.
-  Node* in(uint i) const { assert(i < _max,"oob"); return _in[i]; }
+  Node* in(uint i) const { assert(i < _max, err_msg_res("oob: i=%d, _max=%d", i, _max)); return _in[i]; }
   // Reference to the i'th output Node.  Error if out of bounds.
   // Use this accessor sparingly.  We are going trying to use iterators instead.
   Node* raw_out(uint i) const { assert(i < _outcnt,"oob"); return _out[i]; }
@@ -393,7 +382,7 @@ protected:
   void ins_req( uint i, Node *n ); // Insert a NEW required input
   void set_req( uint i, Node *n ) {
     assert( is_not_dead(n), "can not use dead node");
-    assert( i < _cnt, "oob");
+    assert( i < _cnt, err_msg_res("oob: i=%d, _cnt=%d", i, _cnt));
     assert( !VerifyHashTableKeys || _hash_lock == 0,
             "remove node from hash table before modifying it");
     Node** p = &_in[i];    // cache this._in, across the del_out call
@@ -609,9 +598,9 @@ public:
 
     DEFINE_CLASS_ID(Mem,   Node, 4)
       DEFINE_CLASS_ID(Load,  Mem, 0)
-        DEFINE_CLASS_ID(VectorLoad,  Load, 0)
+        DEFINE_CLASS_ID(LoadVector,  Load, 0)
       DEFINE_CLASS_ID(Store, Mem, 1)
-        DEFINE_CLASS_ID(VectorStore, Store, 0)
+        DEFINE_CLASS_ID(StoreVector, Store, 0)
       DEFINE_CLASS_ID(LoadStore, Mem, 2)
 
     DEFINE_CLASS_ID(Region, Node, 5)
@@ -629,8 +618,9 @@ public:
     DEFINE_CLASS_ID(AddP,     Node, 9)
     DEFINE_CLASS_ID(BoxLock,  Node, 10)
     DEFINE_CLASS_ID(Add,      Node, 11)
-    DEFINE_CLASS_ID(Vector,   Node, 12)
-    DEFINE_CLASS_ID(ClearArray, Node, 13)
+    DEFINE_CLASS_ID(Mul,      Node, 12)
+    DEFINE_CLASS_ID(Vector,   Node, 13)
+    DEFINE_CLASS_ID(ClearArray, Node, 14)
 
     _max_classes  = ClassMask_ClearArray
   };
@@ -752,6 +742,7 @@ public:
   DEFINE_CLASS_QUERY(MemBar)
   DEFINE_CLASS_QUERY(MemBarStoreStore)
   DEFINE_CLASS_QUERY(MergeMem)
+  DEFINE_CLASS_QUERY(Mul)
   DEFINE_CLASS_QUERY(Multi)
   DEFINE_CLASS_QUERY(MultiBranch)
   DEFINE_CLASS_QUERY(Parm)
@@ -767,8 +758,8 @@ public:
   DEFINE_CLASS_QUERY(Sub)
   DEFINE_CLASS_QUERY(Type)
   DEFINE_CLASS_QUERY(Vector)
-  DEFINE_CLASS_QUERY(VectorLoad)
-  DEFINE_CLASS_QUERY(VectorStore)
+  DEFINE_CLASS_QUERY(LoadVector)
+  DEFINE_CLASS_QUERY(StoreVector)
   DEFINE_CLASS_QUERY(Unlock)
 
   #undef DEFINE_CLASS_QUERY

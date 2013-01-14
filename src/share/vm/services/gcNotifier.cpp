@@ -45,7 +45,7 @@ void GCNotifier::pushNotification(GCMemoryManager *mgr, const char *action, cons
   // GC may occur between now and the creation of the notification
   int num_pools = MemoryService::num_memory_pools();
   // stat is deallocated inside GCNotificationRequest
-  GCStatInfo* stat = new(ResourceObj::C_HEAP) GCStatInfo(num_pools);
+  GCStatInfo* stat = new(ResourceObj::C_HEAP, mtGC) GCStatInfo(num_pools);
   mgr->get_last_gc_stat(stat);
   GCNotificationRequest *request = new GCNotificationRequest(os::javaTimeMillis(),mgr,action,cause,stat);
   addRequest(request);
@@ -163,8 +163,8 @@ static Handle createGcInfo(GCMemoryManager *gcManager, GCStatInfo *gcStatInfo,TR
   constructor_args.push_oop(gcInfo_instance);
   constructor_args.push_oop(getGcInfoBuilder(gcManager,THREAD));
   constructor_args.push_long(gcStatInfo->gc_index());
-  constructor_args.push_long(gcStatInfo->start_time());
-  constructor_args.push_long(gcStatInfo->end_time());
+  constructor_args.push_long(Management::ticks_to_ms(gcStatInfo->start_time()));
+  constructor_args.push_long(Management::ticks_to_ms(gcStatInfo->end_time()));
   constructor_args.push_oop(usage_before_gc_ah);
   constructor_args.push_oop(usage_after_gc_ah);
   constructor_args.push_oop(extra_array);

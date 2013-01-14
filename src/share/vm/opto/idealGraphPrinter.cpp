@@ -130,15 +130,15 @@ IdealGraphPrinter::IdealGraphPrinter() {
       } else {
         st.print("%s%d", PrintIdealGraphFile, _file_count);
       }
-      fileStream *stream = new (ResourceObj::C_HEAP) fileStream(st.as_string());
+      fileStream *stream = new (ResourceObj::C_HEAP, mtCompiler) fileStream(st.as_string());
       _output = stream;
     } else {
-      fileStream *stream = new (ResourceObj::C_HEAP) fileStream(PrintIdealGraphFile);
+      fileStream *stream = new (ResourceObj::C_HEAP, mtCompiler) fileStream(PrintIdealGraphFile);
       _output = stream;
     }
     _file_count++;
   } else {
-    _stream = new (ResourceObj::C_HEAP) networkStream();
+    _stream = new (ResourceObj::C_HEAP, mtCompiler) networkStream();
 
     // Try to connect to visualizer
     if (_stream->connect(PrintIdealGraphAddress, PrintIdealGraphPort)) {
@@ -155,12 +155,12 @@ IdealGraphPrinter::IdealGraphPrinter() {
     } else {
       // It would be nice if we could shut down cleanly but it should
       // be an error if we can't connect to the visualizer.
-      fatal(err_msg("Couldn't connect to visualizer at %s:%d",
-                    PrintIdealGraphAddress, PrintIdealGraphPort));
+      fatal(err_msg_res("Couldn't connect to visualizer at %s:%d",
+                        PrintIdealGraphAddress, PrintIdealGraphPort));
     }
   }
 
-  _xml = new (ResourceObj::C_HEAP) xmlStream(_output);
+  _xml = new (ResourceObj::C_HEAP, mtCompiler) xmlStream(_output);
 
   head(TOP_ELEMENT);
 }

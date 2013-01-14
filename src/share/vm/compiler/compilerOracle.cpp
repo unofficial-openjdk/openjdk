@@ -34,7 +34,7 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/jniHandles.hpp"
 
-class MethodMatcher : public CHeapObj {
+class MethodMatcher : public CHeapObj<mtCompiler> {
  public:
   enum Mode {
     Exact,
@@ -554,9 +554,8 @@ static const char* default_cc_file = ".hotspot_compiler";
 
 static const char* cc_file() {
 #ifdef ASSERT
-  if (CompileCommandFile == NULL) {
+  if (CompileCommandFile == NULL)
     return default_cc_file;
-  }
 #endif
   return CompileCommandFile;
 }

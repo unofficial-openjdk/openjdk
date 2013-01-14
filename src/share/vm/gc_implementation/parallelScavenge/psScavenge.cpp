@@ -62,8 +62,8 @@ bool                       PSScavenge::_survivor_overflow = false;
 int                        PSScavenge::_tenuring_threshold = 0;
 HeapWord*                  PSScavenge::_young_generation_boundary = NULL;
 elapsedTimer               PSScavenge::_accumulated_time;
-Stack<markOop>             PSScavenge::_preserved_mark_stack;
-Stack<oop>                 PSScavenge::_preserved_oop_stack;
+Stack<markOop, mtGC>       PSScavenge::_preserved_mark_stack;
+Stack<oop, mtGC>           PSScavenge::_preserved_oop_stack;
 CollectorCounters*         PSScavenge::_counters = NULL;
 bool                       PSScavenge::_promotion_failed = false;
 
@@ -316,7 +316,7 @@ bool PSScavenge::invoke_no_policy() {
   if (VerifyBeforeGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
     gclog_or_tty->print(" VerifyBeforeGC:");
-    Universe::verify(true);
+    Universe::verify();
   }
 
   {
@@ -325,7 +325,7 @@ bool PSScavenge::invoke_no_policy() {
 
     gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
     TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
-    TraceTime t1("GC", PrintGC, !PrintGCDetails, gclog_or_tty);
+    TraceTime t1(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, gclog_or_tty);
     TraceCollectorStats tcs(counters());
     TraceMemoryManagerStats tms(false /* not full GC */,gc_cause);
 
@@ -646,7 +646,7 @@ bool PSScavenge::invoke_no_policy() {
   if (VerifyAfterGC && heap->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
     gclog_or_tty->print(" VerifyAfterGC:");
-    Universe::verify(false);
+    Universe::verify();
   }
 
   heap->print_heap_after_gc();

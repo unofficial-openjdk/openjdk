@@ -23,6 +23,7 @@
 */
 
 #include "prims/jvm.h"
+#include "runtime/frame.inline.hpp"
 #include "runtime/os.hpp"
 #include "utilities/vmError.hpp"
 
@@ -33,19 +34,19 @@
 
 // Check core dump limit and report possible place where core can be found
 void os::check_or_create_dump(void* exceptionRecord, void* contextRecord, char* buffer, size_t bufferSize) {
+  int n;
   struct rlimit rlim;
-  static char cwd[O_BUFLEN];
   bool success;
 
-  get_current_directory(cwd, sizeof(cwd));
+  n = get_core_path(buffer, bufferSize);
 
   if (getrlimit(RLIMIT_CORE, &rlim) != 0) {
-    jio_snprintf(buffer, bufferSize, "%s/core or core.%d (may not exist)", cwd, current_process_id());
+    jio_snprintf(buffer + n, bufferSize - n, "/core or core.%d (may not exist)", current_process_id());
     success = true;
   } else {
     switch(rlim.rlim_cur) {
       case RLIM_INFINITY:
-        jio_snprintf(buffer, bufferSize, "%s/core or core.%d", cwd, current_process_id());
+        jio_snprintf(buffer + n, bufferSize - n, "/core or core.%d", current_process_id());
         success = true;
         break;
       case 0:
@@ -53,12 +54,29 @@ void os::check_or_create_dump(void* exceptionRecord, void* contextRecord, char* 
         success = false;
         break;
       default:
-        jio_snprintf(buffer, bufferSize, "%s/core or core.%d (max size %lu kB). To ensure a full core dump, try \"ulimit -c unlimited\" before starting Java again", cwd, current_process_id(), (unsigned long)(rlim.rlim_cur >> 10));
+        jio_snprintf(buffer + n, bufferSize - n, "/core or core.%d (max size %lu kB). To ensure a full core dump, try \"ulimit -c unlimited\" before starting Java again", current_process_id(), (unsigned long)(rlim.rlim_cur >> 10));
         success = true;
         break;
     }
   }
   VMError::report_coredump_status(buffer, success);
+}
+
+address os::get_caller_pc(int n) {
+#ifdef _NMT_NOINLINE_
+  n ++;
+#endif
+  frame fr = os::current_frame();
+  while (n > 0 && fr.pc() &&
+    !os::is_first_C_frame(&fr) && fr.sender_pc()) {
+    fr = os::get_sender_for_C_frame(&fr);
+    n --;
+  }
+  if (n == 0) {
+    return fr.pc();
+  } else {
+    return NULL;
+  }
 }
 
 int os::get_last_error() {
@@ -73,6 +91,47 @@ bool os::is_debugger_attached() {
 void os::wait_for_keypress_at_exit(void) {
   // don't do anything on posix platforms
   return;
+}
+
+// Multiple threads can race in this code, and can remap over each other with MAP_FIXED,
+// so on posix, unmap the section at the start and at the end of the chunk that we mapped
+// rather than unmapping and remapping the whole chunk to get requested alignment.
+char* os::reserve_memory_aligned(size_t size, size_t alignment) {
+  assert((alignment & (os::vm_allocation_granularity() - 1)) == 0,
+      "Alignment must be a multiple of allocation granularity (page size)");
+  assert((size & (alignment -1)) == 0, "size must be 'alignment' aligned");
+
+  size_t extra_size = size + alignment;
+  assert(extra_size >= size, "overflow, size is too large to allow alignment");
+
+  char* extra_base = os::reserve_memory(extra_size, NULL, alignment);
+
+  if (extra_base == NULL) {
+    return NULL;
+  }
+
+  // Do manual alignment
+  char* aligned_base = (char*) align_size_up((uintptr_t) extra_base, alignment);
+
+  // [  |                                       |  ]
+  // ^ extra_base
+  //    ^ extra_base + begin_offset == aligned_base
+  //     extra_base + begin_offset + size       ^
+  //                       extra_base + extra_size ^
+  // |<>| == begin_offset
+  //                              end_offset == |<>|
+  size_t begin_offset = aligned_base - extra_base;
+  size_t end_offset = (extra_base + extra_size) - (aligned_base + size);
+
+  if (begin_offset > 0) {
+      os::release_memory(extra_base, begin_offset);
+  }
+
+  if (end_offset > 0) {
+      os::release_memory(extra_base + begin_offset + size, end_offset);
+  }
+
+  return aligned_base;
 }
 
 void os::Posix::print_load_average(outputStream* st) {

@@ -121,6 +121,7 @@ extern "C" {
   void JNICALL JVM_RegisterUnsafeMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterMethodHandleMethods(JNIEnv *env, jclass unsafecls);
   void JNICALL JVM_RegisterPerfMethods(JNIEnv *env, jclass perfclass);
+  void JNICALL JVM_RegisterWhiteBoxMethods(JNIEnv *env, jclass wbclass);
 }
 
 #define CC (char*)  /* cast a literal from (const char*) */
@@ -133,7 +134,8 @@ static JNINativeMethod lookup_special_native_methods[] = {
 
   { CC"Java_sun_misc_Unsafe_registerNatives",                      NULL, FN_PTR(JVM_RegisterUnsafeMethods)       },
   { CC"Java_java_lang_invoke_MethodHandleNatives_registerNatives", NULL, FN_PTR(JVM_RegisterMethodHandleMethods) },
-  { CC"Java_sun_misc_Perf_registerNatives",                        NULL, FN_PTR(JVM_RegisterPerfMethods)         }
+  { CC"Java_sun_misc_Perf_registerNatives",                        NULL, FN_PTR(JVM_RegisterPerfMethods)         },
+  { CC"Java_sun_hotspot_WhiteBox_registerNatives",                 NULL, FN_PTR(JVM_RegisterWhiteBoxMethods)     },
 };
 
 static address lookup_special_native(char* jni_name) {
@@ -379,7 +381,10 @@ address NativeLookup::lookup_base(methodHandle method, bool& in_base_library, TR
 
 address NativeLookup::lookup(methodHandle method, bool& in_base_library, TRAPS) {
   if (!method->has_native_function()) {
-    address entry = lookup_base(method, in_base_library, CHECK_NULL);
+    address entry =
+        method->intrinsic_id() == vmIntrinsics::_invokeGeneric ?
+            SharedRuntime::native_method_throw_unsupported_operation_exception_entry() :
+            lookup_base(method, in_base_library, CHECK_NULL);
     method->set_native_function(entry,
       methodOopDesc::native_bind_event_is_interesting);
     // -verbose:jni printing

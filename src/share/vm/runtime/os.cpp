@@ -45,6 +45,7 @@
 #include "runtime/os.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "services/attachListener.hpp"
+#include "services/memTracker.hpp"
 #include "services/threadService.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/events.hpp"
@@ -433,9 +434,9 @@ void* os::native_java_library() {
 
 // --------------------- heap allocation utilities ---------------------
 
-char *os::strdup(const char *str) {
+char *os::strdup(const char *str, MEMFLAGS flags) {
   size_t size = strlen(str);
-  char *dup_str = (char *)malloc(size + 1);
+  char *dup_str = (char *)malloc(size + 1, flags);
   if (dup_str == NULL) return NULL;
   strcpy(dup_str, str);
   return dup_str;
@@ -559,7 +560,7 @@ void verify_block(void* memblock) {
 }
 #endif
 
-void* os::malloc(size_t size) {
+void* os::malloc(size_t size, MEMFLAGS memflags, address caller) {
   NOT_PRODUCT(inc_stat_counter(&num_mallocs, 1));
   NOT_PRODUCT(inc_stat_counter(&alloc_bytes, size));
 
@@ -571,6 +572,7 @@ void* os::malloc(size_t size) {
 
   NOT_PRODUCT(if (MallocVerifyInterval > 0) check_heap());
   u_char* ptr = (u_char*)::malloc(size + space_before + space_after);
+
 #ifdef ASSERT
   if (ptr == NULL) return NULL;
   if (MallocCushion) {
@@ -589,18 +591,27 @@ void* os::malloc(size_t size) {
   }
   debug_only(if (paranoid) verify_block(memblock));
   if (PrintMalloc && tty != NULL) tty->print_cr("os::malloc " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, memblock);
+
+  // we do not track MallocCushion memory
+    MemTracker::record_malloc((address)memblock, size, memflags, caller == 0 ? CALLER_PC : caller);
+
   return memblock;
 }
 
 
-void* os::realloc(void *memblock, size_t size) {
+void* os::realloc(void *memblock, size_t size, MEMFLAGS memflags, address caller) {
 #ifndef ASSERT
   NOT_PRODUCT(inc_stat_counter(&num_mallocs, 1));
   NOT_PRODUCT(inc_stat_counter(&alloc_bytes, size));
-  return ::realloc(memblock, size);
+  void* ptr = ::realloc(memblock, size);
+  if (ptr != NULL) {
+    MemTracker::record_realloc((address)memblock, (address)ptr, size, memflags,
+     caller == 0 ? CALLER_PC : caller);
+  }
+  return ptr;
 #else
   if (memblock == NULL) {
-    return malloc(size);
+    return malloc(size, memflags, (caller == 0 ? CALLER_PC : caller));
   }
   if ((intptr_t)memblock == (intptr_t)MallocCatchPtr) {
     tty->print_cr("os::realloc caught " PTR_FORMAT, memblock);
@@ -610,7 +621,7 @@ void* os::realloc(void *memblock, size_t size) {
   NOT_PRODUCT(if (MallocVerifyInterval > 0) check_heap());
   if (size == 0) return NULL;
   // always move the block
-  void* ptr = malloc(size);
+  void* ptr = malloc(size, memflags, caller == 0 ? CALLER_PC : caller);
   if (PrintMalloc) tty->print_cr("os::remalloc " SIZE_FORMAT " bytes, " PTR_FORMAT " --> " PTR_FORMAT, size, memblock, ptr);
   // Copy to new memory if malloc didn't fail
   if ( ptr != NULL ) {
@@ -627,7 +638,7 @@ void* os::realloc(void *memblock, size_t size) {
 }
 
 
-void  os::free(void *memblock) {
+void  os::free(void *memblock, MEMFLAGS memflags) {
   NOT_PRODUCT(inc_stat_counter(&num_frees, 1));
 #ifdef ASSERT
   if (memblock == NULL) return;
@@ -660,6 +671,8 @@ void  os::free(void *memblock) {
     fprintf(stderr, "os::free " PTR_FORMAT "\n", (uintptr_t)memblock);
   }
 #endif
+  MemTracker::record_free((address)memblock, memflags);
+
   ::free((char*)memblock - space_before);
 }
 
@@ -807,7 +820,7 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
       // the interpreter is generated into a buffer blob
       InterpreterCodelet* i = Interpreter::codelet_containing(addr);
       if (i != NULL) {
-        st->print_cr(INTPTR_FORMAT " is an Interpreter codelet", addr);
+        st->print_cr(INTPTR_FORMAT " is at code_begin+%d in an Interpreter codelet", addr, (int)(addr - i->code_begin()));
         i->print_on(st);
         return;
       }
@@ -818,14 +831,15 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
       }
       //
       if (AdapterHandlerLibrary::contains(b)) {
-        st->print_cr(INTPTR_FORMAT " is an AdapterHandler", addr);
+        st->print_cr(INTPTR_FORMAT " is at code_begin+%d in an AdapterHandler", addr, (int)(addr - b->code_begin()));
         AdapterHandlerLibrary::print_handler_on(st, b);
       }
       // the stubroutines are generated into a buffer blob
       StubCodeDesc* d = StubCodeDesc::desc_for(addr);
       if (d != NULL) {
+        st->print_cr(INTPTR_FORMAT " is at begin+%d in a stub", addr, (int)(addr - d->begin()));
         d->print_on(st);
-        if (verbose) st->cr();
+        st->cr();
         return;
       }
       if (StubRoutines::contains(addr)) {
@@ -840,26 +854,25 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
       }
       VtableStub* v = VtableStubs::stub_containing(addr);
       if (v != NULL) {
+        st->print_cr(INTPTR_FORMAT " is at entry_point+%d in a vtable stub", addr, (int)(addr - v->entry_point()));
         v->print_on(st);
+        st->cr();
         return;
       }
     }
-    if (verbose && b->is_nmethod()) {
+    nmethod* nm = b->as_nmethod_or_null();
+    if (nm != NULL) {
       ResourceMark rm;
-      st->print("%#p: Compiled ", addr);
-      ((nmethod*)b)->method()->print_value_on(st);
-      st->print("  = (CodeBlob*)" INTPTR_FORMAT, b);
-      st->cr();
+      st->print(INTPTR_FORMAT " is at entry_point+%d in (nmethod*)" INTPTR_FORMAT,
+                addr, (int)(addr - nm->entry_point()), nm);
+      if (verbose) {
+        st->print(" for ");
+        nm->method()->print_value_on(st);
+      }
+      nm->print_nmethod(verbose);
       return;
     }
-    st->print(INTPTR_FORMAT " ", b);
-    if ( b->is_nmethod()) {
-      if (b->is_zombie()) {
-        st->print_cr("is zombie nmethod");
-      } else if (b->is_not_entrant()) {
-        st->print_cr("is non-entrant nmethod");
-      }
-    }
+    st->print_cr(INTPTR_FORMAT " is at code_begin+%d in ", addr, (int)(addr - b->code_begin()));
     b->print_on(st);
     return;
   }
@@ -1048,7 +1061,7 @@ char* os::format_boot_path(const char* format_string,
         ++formatted_path_len;
     }
 
-    char* formatted_path = NEW_C_HEAP_ARRAY(char, formatted_path_len + 1);
+    char* formatted_path = NEW_C_HEAP_ARRAY(char, formatted_path_len + 1, mtInternal);
     if (formatted_path == NULL) {
         return NULL;
     }
@@ -1127,7 +1140,7 @@ char** os::split_path(const char* path, int* n) {
     return NULL;
   }
   const char psepchar = *os::path_separator();
-  char* inpath = (char*)NEW_C_HEAP_ARRAY(char, strlen(path) + 1);
+  char* inpath = (char*)NEW_C_HEAP_ARRAY(char, strlen(path) + 1, mtInternal);
   if (inpath == NULL) {
     return NULL;
   }
@@ -1140,7 +1153,7 @@ char** os::split_path(const char* path, int* n) {
     p++;
     p = strchr(p, psepchar);
   }
-  char** opath = (char**) NEW_C_HEAP_ARRAY(char*, count);
+  char** opath = (char**) NEW_C_HEAP_ARRAY(char*, count, mtInternal);
   if (opath == NULL) {
     return NULL;
   }
@@ -1153,7 +1166,7 @@ char** os::split_path(const char* path, int* n) {
       return NULL;
     }
     // allocate the string and add terminator storage
-    char* s  = (char*)NEW_C_HEAP_ARRAY(char, len + 1);
+    char* s  = (char*)NEW_C_HEAP_ARRAY(char, len + 1, mtInternal);
     if (s == NULL) {
       return NULL;
     }
@@ -1162,7 +1175,7 @@ char** os::split_path(const char* path, int* n) {
     opath[i] = s;
     p += len + 1;
   }
-  FREE_C_HEAP_ARRAY(char, inpath);
+  FREE_C_HEAP_ARRAY(char, inpath, mtInternal);
   *n = count;
   return opath;
 }
@@ -1366,3 +1379,99 @@ int os::get_line_chars(int fd, char* buf, const size_t bsize){
 
   return (int) i;
 }
+
+bool os::create_stack_guard_pages(char* addr, size_t bytes) {
+  return os::pd_create_stack_guard_pages(addr, bytes);
+}
+
+
+char* os::reserve_memory(size_t bytes, char* addr, size_t alignment_hint) {
+  char* result = pd_reserve_memory(bytes, addr, alignment_hint);
+  if (result != NULL) {
+    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC);
+  }
+
+  return result;
+}
+char* os::attempt_reserve_memory_at(size_t bytes, char* addr) {
+  char* result = pd_attempt_reserve_memory_at(bytes, addr);
+  if (result != NULL) {
+    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC);
+  }
+  return result;
+}
+
+void os::split_reserved_memory(char *base, size_t size,
+                                 size_t split, bool realloc) {
+  pd_split_reserved_memory(base, size, split, realloc);
+}
+
+bool os::commit_memory(char* addr, size_t bytes, bool executable) {
+  bool res = pd_commit_memory(addr, bytes, executable);
+  if (res) {
+    MemTracker::record_virtual_memory_commit((address)addr, bytes, CALLER_PC);
+  }
+  return res;
+}
+
+bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
+                              bool executable) {
+  bool res = os::pd_commit_memory(addr, size, alignment_hint, executable);
+  if (res) {
+    MemTracker::record_virtual_memory_commit((address)addr, size, CALLER_PC);
+  }
+  return res;
+}
+
+bool os::uncommit_memory(char* addr, size_t bytes) {
+  bool res = pd_uncommit_memory(addr, bytes);
+  if (res) {
+    MemTracker::record_virtual_memory_uncommit((address)addr, bytes);
+  }
+  return res;
+}
+
+bool os::release_memory(char* addr, size_t bytes) {
+  bool res = pd_release_memory(addr, bytes);
+  if (res) {
+    MemTracker::record_virtual_memory_release((address)addr, bytes);
+  }
+  return res;
+}
+
+
+char* os::map_memory(int fd, const char* file_name, size_t file_offset,
+                           char *addr, size_t bytes, bool read_only,
+                           bool allow_exec) {
+  char* result = pd_map_memory(fd, file_name, file_offset, addr, bytes, read_only, allow_exec);
+  if (result != NULL) {
+    MemTracker::record_virtual_memory_reserve((address)result, bytes, CALLER_PC);
+    MemTracker::record_virtual_memory_commit((address)result, bytes, CALLER_PC);
+  }
+  return result;
+}
+
+char* os::remap_memory(int fd, const char* file_name, size_t file_offset,
+                             char *addr, size_t bytes, bool read_only,
+                             bool allow_exec) {
+  return pd_remap_memory(fd, file_name, file_offset, addr, bytes,
+                    read_only, allow_exec);
+}
+
+bool os::unmap_memory(char *addr, size_t bytes) {
+  bool result = pd_unmap_memory(addr, bytes);
+  if (result) {
+    MemTracker::record_virtual_memory_uncommit((address)addr, bytes);
+    MemTracker::record_virtual_memory_release((address)addr, bytes);
+  }
+  return result;
+}
+
+void os::free_memory(char *addr, size_t bytes, size_t alignment_hint) {
+  pd_free_memory(addr, bytes, alignment_hint);
+}
+
+void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
+  pd_realign_memory(addr, bytes, alignment_hint);
+}
+

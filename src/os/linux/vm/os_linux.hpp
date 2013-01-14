@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -178,7 +178,7 @@ class Linux {
   // fast POSIX clocks support
   static void fast_thread_clock_init(void);
 
-  static bool supports_monotonic_clock() {
+  static inline bool supports_monotonic_clock() {
     return _clock_gettime != NULL;
   }
 
@@ -287,7 +287,7 @@ public:
 };
 
 
-class PlatformEvent : public CHeapObj {
+class PlatformEvent : public CHeapObj<mtInternal> {
   private:
     double CachePad [4] ;   // increase odds that _mutex is sole occupant of cache line
     volatile int _Event ;
@@ -322,7 +322,7 @@ class PlatformEvent : public CHeapObj {
     void SetAssociation (Thread * a) { _Assoc = a ; }
 } ;
 
-class PlatformParker : public CHeapObj {
+class PlatformParker : public CHeapObj<mtInternal> {
   protected:
     pthread_mutex_t _mutex [1] ;
     pthread_cond_t  _cond  [1] ;

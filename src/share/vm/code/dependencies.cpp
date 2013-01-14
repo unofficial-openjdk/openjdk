@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -622,7 +622,15 @@ inline oop Dependencies::DepStream::recorded_oop_at(int i) {
 }
 
 oop Dependencies::DepStream::argument(int i) {
-  return recorded_oop_at(argument_index(i));
+  oop result = recorded_oop_at(argument_index(i));
+  if (result == NULL) { // Explicit context argument can be compressed
+    int ctxkj = dep_context_arg(type());  // -1 if no explicit context arg
+     if (ctxkj >= 0 && i == ctxkj && ctxkj+1 < argument_count()) {
+       result = ctxk_encoded_as_null(type(), argument(ctxkj+1));
+     }
+  }
+
+  return result;
 }
 
 klassOop Dependencies::DepStream::context_type() {
@@ -630,25 +638,21 @@ klassOop Dependencies::DepStream::context_type() {
 
   // Most dependencies have an explicit context type argument.
   {
-    int ctxkj = dep_context_arg(_type);  // -1 if no explicit context arg
+    int ctxkj = dep_context_arg(type());  // -1 if no explicit context arg
     if (ctxkj >= 0) {
       oop k = argument(ctxkj);
-      if (k != NULL) {       // context type was not compressed away
-        assert(k->is_klass(), "type check");
-        return (klassOop) k;
-      }
-      // recompute "default" context type
-      return ctxk_encoded_as_null(_type, argument(ctxkj+1));
+      assert(k != NULL && k->is_klass(), "type check");
+      return (klassOop) k;
     }
   }
 
   // Some dependencies are using the klass of the first object
   // argument as implicit context type (e.g. call_site_target_value).
   {
-    int ctxkj = dep_implicit_context_arg(_type);
+    int ctxkj = dep_implicit_context_arg(type());
     if (ctxkj >= 0) {
       oop k = argument(ctxkj)->klass();
-      assert(k->is_klass(), "type check");
+      assert(k != NULL && k->is_klass(), "type check");
       return (klassOop) k;
     }
   }
@@ -1033,21 +1037,25 @@ klassOop ClassHierarchyWalker::find_witness_anywhere(klassOop context_type,
     // (Old CHA had the same limitation.)
     return context_type;
   }
-  for (int i = 0; i < nof_impls; i++) {
-    klassOop impl = instanceKlass::cast(context_type)->implementor(i);
-    if (impl == NULL) {
-      // implementors array overflowed => no exact info.
+  if (nof_impls > 0) {
+    klassOop impl = instanceKlass::cast(context_type)->implementor();
+    assert(impl != NULL, "just checking");
+    // If impl is the same as the context_type, then more than one
+    // implementor has seen. No exact info in this case.
+    if (impl == context_type) {
       return context_type;  // report an inexact witness to this sad affair
     }
     if (do_counts)
       { NOT_PRODUCT(deps_find_witness_steps++); }
     if (is_participant(impl)) {
-      if (participants_hide_witnesses)  continue;
-      // else fall through to process this guy's subclasses
+      if (!participants_hide_witnesses) {
+        ADD_SUBCLASS_CHAIN(impl);
+      }
     } else if (is_witness(impl) && !ignore_witness(impl)) {
       return impl;
+    } else {
+      ADD_SUBCLASS_CHAIN(impl);
     }
-    ADD_SUBCLASS_CHAIN(impl);
   }
 
   // Recursively process each non-trivial sibling chain.
@@ -1174,8 +1182,9 @@ klassOop Dependencies::check_leaf_type(klassOop ctxk) {
   } else if (ctx->nof_implementors() != 0) {
     // if it is an interface, it must be unimplemented
     // (if it is not an interface, nof_implementors is always zero)
-    klassOop impl = ctx->implementor(0);
-    return (impl != NULL)? impl: ctxk;
+    klassOop impl = ctx->implementor();
+    assert(impl != NULL, "must be set");
+    return impl;
   } else {
     return NULL;
   }

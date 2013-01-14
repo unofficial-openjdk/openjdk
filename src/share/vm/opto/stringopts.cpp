@@ -69,7 +69,7 @@ class StringConcat : public ResourceObj {
     _multiple(false),
     _string_alloc(NULL),
     _stringopts(stringopts) {
-    _arguments = new (_stringopts->C, 1) Node(1);
+    _arguments = new (_stringopts->C) Node(1);
     _arguments->del_req(0);
   }
 
@@ -220,11 +220,10 @@ class StringConcat : public ResourceObj {
       // Build a new call using the jvms state of the allocate
       address call_addr = SharedRuntime::uncommon_trap_blob()->entry_point();
       const TypeFunc* call_type = OptoRuntime::uncommon_trap_Type();
-      int size = call_type->domain()->cnt();
       const TypePtr* no_memory_effects = NULL;
       Compile* C = _stringopts->C;
-      CallStaticJavaNode* call = new (C, size) CallStaticJavaNode(call_type, call_addr, "uncommon_trap",
-                                                                  jvms->bci(), no_memory_effects);
+      CallStaticJavaNode* call = new (C) CallStaticJavaNode(call_type, call_addr, "uncommon_trap",
+                                                            jvms->bci(), no_memory_effects);
       for (int e = 0; e < TypeFunc::Parms; e++) {
         call->init_req(e, uct->in(e));
       }
@@ -533,7 +532,17 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
         if (arg->is_Proj() && arg->in(0)->is_CallStaticJava()) {
           CallStaticJavaNode* csj = arg->in(0)->as_CallStaticJava();
           if (csj->method() != NULL &&
-              csj->method()->intrinsic_id() == vmIntrinsics::_Integer_toString) {
+              csj->method()->intrinsic_id() == vmIntrinsics::_Integer_toString &&
+              arg->outcnt() == 1) {
+            // _control is the list of StringBuilder calls nodes which
+            // will be replaced by new String code after this optimization.
+            // Integer::toString() call is not part of StringBuilder calls
+            // chain. It could be eliminated only if its result is used
+            // only by this SB calls chain.
+            // Another limitation: it should be used only once because
+            // it is unknown that it is used only by this SB calls chain
+            // until all related SB calls nodes are collected.
+            assert(arg->unique_out() == cnode, "sanity");
             sc->add_control(csj);
             sc->push_int(csj->in(TypeFunc::Parms));
             continue;
@@ -929,8 +938,8 @@ bool StringConcat::validate_control_flow() {
 }
 
 Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
-  const TypeKlassPtr* klass_type = TypeKlassPtr::make(field->holder());
-  Node* klass_node = __ makecon(klass_type);
+  const TypeInstPtr* mirror_type = TypeInstPtr::make(field->holder()->java_mirror());
+  Node* klass_node = __ makecon(mirror_type);
   BasicType bt = field->layout_type();
   ciType* field_klass = field->type();
 
@@ -945,6 +954,7 @@ Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
       // and may yield a vacuous result if the field is of interface type.
       type = TypeOopPtr::make_from_constant(con, true)->isa_oopptr();
       assert(type != NULL, "field singleton type must be consistent");
+      return __ makecon(type);
     } else {
       type = TypeOopPtr::make_from_klass(field_klass->as_klass());
     }
@@ -954,13 +964,13 @@ Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
 
   return kit.make_load(NULL, kit.basic_plus_adr(klass_node, field->offset_in_bytes()),
                        type, T_OBJECT,
-                       C->get_alias_index(klass_type->add_offset(field->offset_in_bytes())));
+                       C->get_alias_index(mirror_type->add_offset(field->offset_in_bytes())));
 }
 
 Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
-  RegionNode *final_merge = new (C, 3) RegionNode(3);
+  RegionNode *final_merge = new (C) RegionNode(3);
   kit.gvn().set_type(final_merge, Type::CONTROL);
-  Node* final_size = new (C, 3) PhiNode(final_merge, TypeInt::INT);
+  Node* final_size = new (C) PhiNode(final_merge, TypeInt::INT);
   kit.gvn().set_type(final_size, TypeInt::INT);
 
   IfNode* iff = kit.create_and_map_if(kit.control(),
@@ -977,11 +987,11 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
   } else {
 
     // int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);
-    RegionNode *r = new (C, 3) RegionNode(3);
+    RegionNode *r = new (C) RegionNode(3);
     kit.gvn().set_type(r, Type::CONTROL);
-    Node *phi = new (C, 3) PhiNode(r, TypeInt::INT);
+    Node *phi = new (C) PhiNode(r, TypeInt::INT);
     kit.gvn().set_type(phi, TypeInt::INT);
-    Node *size = new (C, 3) PhiNode(r, TypeInt::INT);
+    Node *size = new (C) PhiNode(r, TypeInt::INT);
     kit.gvn().set_type(size, TypeInt::INT);
     Node* chk = __ CmpI(arg, __ intcon(0));
     Node* p = __ Bool(chk, BoolTest::lt);
@@ -1006,11 +1016,11 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
     // Add loop predicate first.
     kit.add_predicate();
 
-    RegionNode *loop = new (C, 3) RegionNode(3);
+    RegionNode *loop = new (C) RegionNode(3);
     loop->init_req(1, kit.control());
     kit.gvn().set_type(loop, Type::CONTROL);
 
-    Node *index = new (C, 3) PhiNode(loop, TypeInt::INT);
+    Node *index = new (C) PhiNode(loop, TypeInt::INT);
     index->init_req(1, __ intcon(0));
     kit.gvn().set_type(index, TypeInt::INT);
     kit.set_control(loop);
@@ -1043,7 +1053,7 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
 }
 
 void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, Node* start, Node* end) {
-  RegionNode *final_merge = new (C, 4) RegionNode(4);
+  RegionNode *final_merge = new (C) RegionNode(4);
   kit.gvn().set_type(final_merge, Type::CONTROL);
   Node *final_mem = PhiNode::make(final_merge, kit.memory(char_adr_idx), Type::MEMORY, TypeAryPtr::CHARS);
   kit.gvn().set_type(final_mem, Type::MEMORY);
@@ -1093,11 +1103,11 @@ void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, N
                                         __ Bool(__ CmpI(arg, __ intcon(0)), BoolTest::lt),
                                         PROB_FAIR, COUNT_UNKNOWN);
 
-    RegionNode *merge = new (C, 3) RegionNode(3);
+    RegionNode *merge = new (C) RegionNode(3);
     kit.gvn().set_type(merge, Type::CONTROL);
-    i = new (C, 3) PhiNode(merge, TypeInt::INT);
+    i = new (C) PhiNode(merge, TypeInt::INT);
     kit.gvn().set_type(i, TypeInt::INT);
-    sign = new (C, 3) PhiNode(merge, TypeInt::INT);
+    sign = new (C) PhiNode(merge, TypeInt::INT);
     kit.gvn().set_type(sign, TypeInt::INT);
 
     merge->init_req(1, __ IfTrue(iff));
@@ -1126,10 +1136,10 @@ void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, N
     // Add loop predicate first.
     kit.add_predicate();
 
-    RegionNode *head = new (C, 3) RegionNode(3);
+    RegionNode *head = new (C) RegionNode(3);
     head->init_req(1, kit.control());
     kit.gvn().set_type(head, Type::CONTROL);
-    Node *i_phi = new (C, 3) PhiNode(head, TypeInt::INT);
+    Node *i_phi = new (C) PhiNode(head, TypeInt::INT);
     i_phi->init_req(1, i);
     kit.gvn().set_type(i_phi, TypeInt::INT);
     charPos = PhiNode::make(head, charPos);
@@ -1250,7 +1260,7 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
   // as a shim for the insertion of the new code.
   JVMState* jvms     = sc->begin()->jvms()->clone_shallow(C);
   uint size = sc->begin()->req();
-  SafePointNode* map = new (C, size) SafePointNode(size, jvms);
+  SafePointNode* map = new (C) SafePointNode(size, jvms);
 
   // copy the control and memory state from the final call into our
   // new starting state.  This allows any preceeding tests to feed
@@ -1295,12 +1305,12 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
 
   // Create a region for the overflow checks to merge into.
   int args = MAX2(sc->num_arguments(), 1);
-  RegionNode* overflow = new (C, args) RegionNode(args);
+  RegionNode* overflow = new (C) RegionNode(args);
   kit.gvn().set_type(overflow, Type::CONTROL);
 
   // Create a hook node to hold onto the individual sizes since they
   // are need for the copying phase.
-  Node* string_sizes = new (C, args) Node(args);
+  Node* string_sizes = new (C) Node(args);
 
   Node* length = __ intcon(0);
   for (int argi = 0; argi < sc->num_arguments(); argi++) {
@@ -1344,9 +1354,9 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
         } else if (!type->higher_equal(TypeInstPtr::NOTNULL)) {
           // s = s != null ? s : "null";
           // length = length + (s.count - s.offset);
-          RegionNode *r = new (C, 3) RegionNode(3);
+          RegionNode *r = new (C) RegionNode(3);
           kit.gvn().set_type(r, Type::CONTROL);
-          Node *phi = new (C, 3) PhiNode(r, type);
+          Node *phi = new (C) PhiNode(r, type);
           kit.gvn().set_type(phi, phi->bottom_type());
           Node* p = __ Bool(__ CmpP(arg, kit.null()), BoolTest::ne);
           IfNode* iff = kit.create_and_map_if(kit.control(), p, PROB_MIN, COUNT_UNKNOWN);

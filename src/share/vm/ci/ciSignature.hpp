@@ -39,13 +39,15 @@ private:
   ciKlass*  _accessing_klass;
 
   GrowableArray<ciType*>* _types;
-  int _size;
-  int _count;
+  int _size;   // number of stack slots required for arguments
+  int _count;  // number of parameter types in the signature
 
   friend class ciMethod;
+  friend class ciBytecodeStream;
   friend class ciObjectFactory;
 
   ciSignature(ciKlass* accessing_klass, constantPoolHandle cpool, ciSymbol* signature);
+  ciSignature(ciKlass* accessing_klass,                           ciSymbol* signature, ciMethodType* method_type);
 
   void get_all_klasses();
 

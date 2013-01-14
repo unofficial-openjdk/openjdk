@@ -320,7 +320,7 @@ static jint set_ccstr_flag(const char* name, AttachOperation* op, outputStream* 
   }
   bool res = CommandLineFlags::ccstrAtPut((char*)name, &value, ATTACH_ON_DEMAND);
   if (res) {
-    FREE_C_HEAP_ARRAY(char, value);
+    FREE_C_HEAP_ARRAY(char, value, mtInternal);
   } else {
     out->print_cr("setting flag %s failed", name);
   }
@@ -403,6 +403,8 @@ static AttachOperationFunctionInfo funcs[] = {
 
 static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
   os::set_priority(thread, NearMaxPriority);
+
+  thread->record_stack_base_and_size();
 
   if (AttachListener::pd_init() != 0) {
     return;

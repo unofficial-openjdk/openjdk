@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,6 +115,12 @@ void ADLParser::parse() {
       parse_err(SYNERR, "expected one of - instruct, operand, ins_attrib, op_attrib, source, register, pipeline, encode\n     Found %s",ident);
     }
   }
+  // Add reg_class spill_regs after parsing.
+  RegisterForm *regBlock = _AD.get_registers();
+  if (regBlock == NULL) {
+    parse_err(SEMERR, "Did not declare 'register' definitions");
+  }
+  regBlock->addSpillRegClass();
 
   // Done with parsing, check consistency.
 
@@ -768,11 +774,12 @@ void ADLParser::source_hpp_parse(void) {
 
 //------------------------------reg_parse--------------------------------------
 void ADLParser::reg_parse(void) {
-
-  // Create the RegisterForm for the architecture description.
-  RegisterForm *regBlock = new RegisterForm();    // Build new Source object
-  regBlock->_linenum = linenum();
-  _AD.addForm(regBlock);
+  RegisterForm *regBlock = _AD.get_registers(); // Information about registers encoding
+  if (regBlock == NULL) {
+    // Create the RegisterForm for the architecture description.
+    regBlock = new RegisterForm();    // Build new Source object
+    _AD.addForm(regBlock);
+  }
 
   skipws();                       // Skip leading whitespace
   if (_curchar == '%' && *(_ptr+1) == '{') {
@@ -796,15 +803,11 @@ void ADLParser::reg_parse(void) {
     parse_err(SYNERR, "Missing %c{ ... %c} block after register keyword.\n",'%','%');
     return;
   }
-
-  // Add reg_class spill_regs
-  regBlock->addSpillRegClass();
 }
 
 //------------------------------encode_parse-----------------------------------
 void ADLParser::encode_parse(void) {
   EncodeForm *encBlock;         // Information about instruction/operand encoding
-  char       *desc = NULL;      // String representation of encode rule
 
   _AD.getForm(&encBlock);
   if ( encBlock == NULL) {
@@ -1389,7 +1392,7 @@ void ADLParser::pipe_parse(void) {
       _AD.addForm(machnode);
     }
     else if (!strcmp(ident, "attributes")) {
-      bool vsi_seen = false, bhds_seen = false;
+      bool vsi_seen = false;
 
       skipws();
       if ( (_curchar != '%')
@@ -1433,7 +1436,6 @@ void ADLParser::pipe_parse(void) {
           }
 
           pipeline->_branchHasDelaySlot = true;
-          bhds_seen = true;
           continue;
         }
 
@@ -1635,6 +1637,12 @@ void ADLParser::resource_parse(PipelineForm &pipeline) {
   do {
     next_char();                   // Skip "(" or ","
     ident = get_ident();           // Grab next identifier
+
+    if (_AD._adl_debug > 1) {
+      if (ident != NULL) {
+        fprintf(stderr, "resource_parse: identifier: %s\n", ident);
+      }
+    }
 
     if (ident == NULL) {
       parse_err(SYNERR, "keyword identifier expected at \"%c\"\n", _curchar);
@@ -2424,7 +2432,6 @@ InstructForm *ADLParser::peep_match_child_parse(PeepMatch &match, int parent, in
   int        lparen = 0;          // keep track of parenthesis nesting depth
   int        rparen = 0;          // position of instruction at this depth
   InstructForm *inst_seen  = NULL;
-  InstructForm *child_seen = NULL;
 
   // Walk the match tree,
   // Record <parent, position, instruction name, input position>
@@ -2434,7 +2441,7 @@ InstructForm *ADLParser::peep_match_child_parse(PeepMatch &match, int parent, in
     if (_curchar == '(') {
       ++lparen;
       next_char();
-      child_seen = peep_match_child_parse(match, parent, position, rparen);
+      ( void ) peep_match_child_parse(match, parent, position, rparen);
     }
     // Right paren signals end of an input, may be more
     else if (_curchar == ')') {
@@ -3151,6 +3158,9 @@ void ADLParser::constant_parse_expression(EncClass* encoding, char* ec_name) {
 
 
 //------------------------------size_parse-----------------------------------
+// Parse a 'size(<expr>)' attribute which specifies the size of the
+// emitted instructions in bytes. <expr> can be a C++ expression,
+// e.g. a constant.
 char* ADLParser::size_parse(InstructForm *instr) {
   char* sizeOfInstr = NULL;
 
@@ -4271,7 +4281,17 @@ char *ADLParser::get_ident_common(bool do_preproc) {
             || ((c >= '0') && (c <= '9'))
             || ((c == '_')) || ((c == ':')) || ((c == '#')) );
   if (start == end) {             // We popped out on the first try
-    parse_err(SYNERR, "identifier expected at %c\n", c);
+    // It can occur that `start' contains the rest of the input file.
+    // In this case the output should be truncated.
+    if (strlen(start) > 24) {
+      char buf[32];
+      strncpy(buf, start, 20);
+      buf[20] = '\0';
+      strcat(buf, "[...]");
+      parse_err(SYNERR, "Identifier expected, but found '%s'.", buf);
+    } else {
+      parse_err(SYNERR, "Identifier expected, but found '%s'.", start);
+    }
     start = NULL;
   }
   else {

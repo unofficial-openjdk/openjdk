@@ -36,7 +36,7 @@ class nmethodLocker;
 //
 // An entry in the compile queue.  It represents a pending or current
 // compilation.
-class CompileTask : public CHeapObj {
+class CompileTask : public CHeapObj<mtCompiler> {
   friend class VMStructs;
 
  private:
@@ -103,11 +103,11 @@ private:
                                       const char* msg = NULL, bool short_form = false);
 
 public:
-  void         print_compilation(outputStream* st = tty, bool short_form = false);
-  static void  print_compilation(outputStream* st, const nmethod* nm, const char* msg = NULL) {
+  void         print_compilation(outputStream* st = tty, const char* msg = NULL, bool short_form = false);
+  static void  print_compilation(outputStream* st, const nmethod* nm, const char* msg = NULL, bool short_form = false) {
     print_compilation_impl(st, nm->method(), nm->compile_id(), nm->comp_level(),
                            nm->is_osr_method(), nm->is_osr_method() ? nm->osr_entry_bci() : -1, /*is_blocking*/ false,
-                           msg);
+                           msg, short_form);
   }
 
   static void  print_inlining(outputStream* st, ciMethod* method, int inline_level, int bci, const char* msg = NULL);
@@ -131,7 +131,7 @@ public:
 //
 // Per Compiler Performance Counters.
 //
-class CompilerCounters : public CHeapObj {
+class CompilerCounters : public CHeapObj<mtCompiler> {
 
   public:
     enum {
@@ -175,7 +175,7 @@ class CompilerCounters : public CHeapObj {
 // CompileQueue
 //
 // A list of CompileTasks.
-class CompileQueue : public CHeapObj {
+class CompileQueue : public CHeapObj<mtCompiler> {
  private:
   const char* _name;
   Monitor*    _lock;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -764,7 +764,7 @@ jint universe_init() {
 
   FileMapInfo* mapinfo = NULL;
   if (UseSharedSpaces) {
-    mapinfo = NEW_C_HEAP_OBJ(FileMapInfo);
+    mapinfo = NEW_C_HEAP_OBJ(FileMapInfo, mtInternal);
     memset(mapinfo, 0, sizeof(FileMapInfo));
 
     // Open the shared archive file, read and validate the header. If
@@ -1326,7 +1326,7 @@ void Universe::print_heap_after_gc(outputStream* st, bool ignore_extended) {
   st->print_cr("}");
 }
 
-void Universe::verify(bool allow_dirty, bool silent, VerifyOption option) {
+void Universe::verify(bool silent, VerifyOption option) {
   if (SharedSkipVerify) {
     return;
   }
@@ -1350,7 +1350,7 @@ void Universe::verify(bool allow_dirty, bool silent, VerifyOption option) {
   if (!silent) gclog_or_tty->print("[Verifying ");
   if (!silent) gclog_or_tty->print("threads ");
   Threads::verify();
-  heap()->verify(allow_dirty, silent, option);
+  heap()->verify(silent, option);
 
   if (!silent) gclog_or_tty->print("syms ");
   SymbolTable::verify();
@@ -1546,7 +1546,7 @@ void ActiveMethodOopsCache::add_previous_version(const methodOop method) {
     // This is the first previous version so make some space.
     // Start with 2 elements under the assumption that the class
     // won't be redefined much.
-    _prev_methods = new (ResourceObj::C_HEAP) GrowableArray<jweak>(2, true);
+    _prev_methods = new (ResourceObj::C_HEAP, mtClass) GrowableArray<jweak>(2, true);
   }
 
   // RC_TRACE macro has an embedded ResourceMark

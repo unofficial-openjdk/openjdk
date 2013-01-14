@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ class DeferredObjAllocEvent;
 // Common parts of a methodOop cache. This cache safely interacts with
 // the RedefineClasses API.
 //
-class CommonMethodOopCache : public CHeapObj {
+class CommonMethodOopCache : public CHeapObj<mtClass> {
   // We save the klassOop and the idnum of methodOop in order to get
   // the current cached methodOop.
  private:
@@ -412,8 +412,14 @@ class Universe: AllStatic {
 
   // Debugging
   static bool verify_in_progress() { return _verify_in_progress; }
-  static void verify(bool allow_dirty = true, bool silent = false,
-                     VerifyOption option = VerifyOption_Default );
+  static void verify(bool silent, VerifyOption option);
+  static void verify(bool silent) {
+    verify(silent, VerifyOption_Default /* option */);
+  }
+  static void verify() {
+    verify(false /* silent */);
+  }
+
   static int  verify_count()       { return _verify_count; }
   // The default behavior is to call print_on() on gclog_or_tty.
   static void print();
@@ -455,7 +461,7 @@ class Universe: AllStatic {
   static int base_vtable_size()               { return _base_vtable_size; }
 };
 
-class DeferredObjAllocEvent : public CHeapObj {
+class DeferredObjAllocEvent : public CHeapObj<mtInternal> {
   private:
     oop    _oop;
     size_t _bytesize;

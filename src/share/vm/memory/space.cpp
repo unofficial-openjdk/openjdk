@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -531,7 +531,7 @@ void OffsetTableContigSpace::print_on(outputStream* st) const {
               bottom(), top(), _offsets.threshold(), end());
 }
 
-void ContiguousSpace::verify(bool allow_dirty) const {
+void ContiguousSpace::verify() const {
   HeapWord* p = bottom();
   HeapWord* t = top();
   HeapWord* prev_p = NULL;
@@ -790,7 +790,9 @@ ALL_SINCE_SAVE_MARKS_CLOSURES(ContigSpace_OOP_SINCE_SAVE_MARKS_DEFN)
 
 // Very general, slow implementation.
 HeapWord* ContiguousSpace::block_start_const(const void* p) const {
-  assert(MemRegion(bottom(), end()).contains(p), "p not in space");
+  assert(MemRegion(bottom(), end()).contains(p),
+         err_msg("p (" PTR_FORMAT ") not in space [" PTR_FORMAT ", " PTR_FORMAT ")",
+                  p, bottom(), end()));
   if (p >= top()) {
     return top();
   } else {
@@ -800,19 +802,27 @@ HeapWord* ContiguousSpace::block_start_const(const void* p) const {
       last = cur;
       cur += oop(cur)->size();
     }
-    assert(oop(last)->is_oop(), "Should be an object start");
+    assert(oop(last)->is_oop(),
+           err_msg(PTR_FORMAT " should be an object start", last));
     return last;
   }
 }
 
 size_t ContiguousSpace::block_size(const HeapWord* p) const {
-  assert(MemRegion(bottom(), end()).contains(p), "p not in space");
+  assert(MemRegion(bottom(), end()).contains(p),
+         err_msg("p (" PTR_FORMAT ") not in space [" PTR_FORMAT ", " PTR_FORMAT ")",
+                  p, bottom(), end()));
   HeapWord* current_top = top();
-  assert(p <= current_top, "p is not a block start");
-  assert(p == current_top || oop(p)->is_oop(), "p is not a block start");
-  if (p < current_top)
+  assert(p <= current_top,
+         err_msg("p > current top - p: " PTR_FORMAT ", current top: " PTR_FORMAT,
+                  p, current_top));
+  assert(p == current_top || oop(p)->is_oop(),
+         err_msg("p (" PTR_FORMAT ") is not a block start - "
+                 "current_top: " PTR_FORMAT ", is_oop: %s",
+                 p, current_top, BOOL_TO_STR(oop(p)->is_oop())));
+  if (p < current_top) {
     return oop(p)->size();
-  else {
+  } else {
     assert(p == current_top, "just checking");
     return pointer_delta(end(), (HeapWord*) p);
   }
@@ -965,27 +975,12 @@ OffsetTableContigSpace::OffsetTableContigSpace(BlockOffsetSharedArray* sharedOff
   initialize(mr, SpaceDecorator::Clear, SpaceDecorator::Mangle);
 }
 
-
-class VerifyOldOopClosure : public OopClosure {
- public:
-  oop  _the_obj;
-  bool _allow_dirty;
-  void do_oop(oop* p) {
-    _the_obj->verify_old_oop(p, _allow_dirty);
-  }
-  void do_oop(narrowOop* p) {
-    _the_obj->verify_old_oop(p, _allow_dirty);
-  }
-};
-
 #define OBJ_SAMPLE_INTERVAL 0
 #define BLOCK_SAMPLE_INTERVAL 100
 
-void OffsetTableContigSpace::verify(bool allow_dirty) const {
+void OffsetTableContigSpace::verify() const {
   HeapWord* p = bottom();
   HeapWord* prev_p = NULL;
-  VerifyOldOopClosure blk;      // Does this do anything?
-  blk._allow_dirty = allow_dirty;
   int objs = 0;
   int blocks = 0;
 
@@ -1007,8 +1002,6 @@ void OffsetTableContigSpace::verify(bool allow_dirty) const {
 
     if (objs == OBJ_SAMPLE_INTERVAL) {
       oop(p)->verify();
-      blk._the_obj = oop(p);
-      oop(p)->oop_iterate(&blk);
       objs = 0;
     } else {
       objs++;

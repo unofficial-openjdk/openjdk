@@ -36,7 +36,6 @@
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.hpp"
 #include "prims/jvm.h"
-#include "prims/methodHandleWalk.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -502,11 +501,6 @@ bool Reflection::can_relax_access_check_for(
       under_host_klass(accessee_ik, accessor))
     return true;
 
-  // Adapter frames can access anything.
-  if (MethodHandleCompiler::klass_is_method_handle_adapter_holder(accessor))
-    // This is an internal adapter frame from the MethodHandleCompiler.
-    return true;
-
   if (RelaxAccessControlCheck ||
       (accessor_ik->major_version() < JAVA_1_5_VERSION &&
        accessee_ik->major_version() < JAVA_1_5_VERSION)) {
@@ -591,14 +585,11 @@ bool Reflection::is_same_package_member(klassOop class1, klassOop class2, TRAPS)
 // Caller is responsible for figuring out in advance which case must be true.
 void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassHandle inner,
                                        bool inner_is_member, TRAPS) {
-  const int inner_class_info_index = 0;
-  const int outer_class_info_index = 1;
-
-  typeArrayHandle    icls (THREAD, outer->inner_classes());
+  InnerClassesIterator iter(outer);
   constantPoolHandle cp   (THREAD, outer->constants());
-  for(int i = 0; i < icls->length(); i += 4) {
-     int ioff = icls->ushort_at(i + inner_class_info_index);
-     int ooff = icls->ushort_at(i + outer_class_info_index);
+  for (; !iter.done(); iter.next()) {
+     int ioff = iter.inner_class_info_index();
+     int ooff = iter.outer_class_info_index();
 
      if (inner_is_member && ioff != 0 && ooff != 0) {
         klassOop o = cp->klass_at(ooff, CHECK);
@@ -832,7 +823,7 @@ oop Reflection::new_field(fieldDescriptor* fd, bool intern_name, TRAPS) {
   java_lang_reflect_Field::set_modifiers(rh(), fd->access_flags().as_int() & JVM_RECOGNIZED_FIELD_MODIFIERS);
   java_lang_reflect_Field::set_override(rh(), false);
   if (java_lang_reflect_Field::has_signature_field() &&
-      fd->generic_signature() != NULL) {
+      fd->has_generic_signature()) {
     Symbol*  gs = fd->generic_signature();
     Handle sig = java_lang_String::create_from_symbol(gs, CHECK_NULL);
     java_lang_reflect_Field::set_signature(rh(), sig());

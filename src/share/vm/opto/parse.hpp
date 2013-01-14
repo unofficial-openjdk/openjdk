@@ -84,7 +84,7 @@ public:
   static const char* check_can_parse(ciMethod* callee);
 
   static InlineTree* build_inline_tree_root();
-  static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee, bool create_if_not_found = false);
+  static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee);
 
   // For temporary (stack-allocated, stateless) ilts:
   InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int max_inline_level);
@@ -527,6 +527,9 @@ class Parse : public GraphKit {
   int     repush_if_args();
   void    adjust_map_after_if(BoolTest::mask btest, Node* c, float prob,
                               Block* path, Block* other_path);
+  void    sharpen_type_after_if(BoolTest::mask btest,
+                                Node* con, const Type* tcon,
+                                Node* val, const Type* tval);
   IfNode* jump_if_fork_int(Node* a, Node* b, BoolTest::mask mask);
   Node*   jump_if_join(Node* iffalse, Node* iftrue);
   void    jump_if_true_fork(IfNode *ifNode, int dest_bci_if_true, int prof_table_index);

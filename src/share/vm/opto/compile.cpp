@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -654,14 +654,14 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       const TypeTuple *domain = StartOSRNode::osr_domain();
       const TypeTuple *range = TypeTuple::make_range(method()->signature());
       init_tf(TypeFunc::make(domain, range));
-      StartNode* s = new (this, 2) StartOSRNode(root(), domain);
+      StartNode* s = new (this) StartOSRNode(root(), domain);
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       cg = CallGenerator::for_osr(method(), entry_bci());
     } else {
       // Normal case.
       init_tf(TypeFunc::make(method()));
-      StartNode* s = new (this, 2) StartNode(root(), tf()->domain());
+      StartNode* s = new (this) StartNode(root(), tf()->domain());
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       if (method()->intrinsic_id() == vmIntrinsics::_Reference_get && UseG1GC) {
@@ -825,8 +825,12 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            &_handler_table, &_inc_table,
                            compiler,
                            env()->comp_level(),
-                           has_unsafe_access()
+                           has_unsafe_access(),
+                           SharedRuntime::is_wide_vector(max_vector_size())
                            );
+
+    if (log() != NULL) // Print code cache state into compiler log
+      log()->code_cache_state();
   }
 }
 
@@ -957,9 +961,9 @@ void Compile::Init(int aliaslevel) {
   // Globally visible Nodes
   // First set TOP to NULL to give safe behavior during creation of RootNode
   set_cached_top_node(NULL);
-  set_root(new (this, 3) RootNode());
+  set_root(new (this) RootNode());
   // Now that you have a Root to point to, create the real TOP
-  set_cached_top_node( new (this, 1) ConNode(Type::TOP) );
+  set_cached_top_node( new (this) ConNode(Type::TOP) );
   set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
@@ -974,6 +978,7 @@ void Compile::Init(int aliaslevel) {
   _trap_can_recompile = false;  // no traps emitted yet
   _major_progress = true; // start out assuming good things will happen
   set_has_unsafe_access(false);
+  set_max_vector_size(0);
   Copy::zero_to_bytes(_trap_hist, sizeof(_trap_hist));
   set_decompile_count(0);
 
@@ -1707,7 +1712,6 @@ void Compile::Optimize() {
       if (major_progress()) print_method("PhaseIdealLoop before EA", 2);
       if (failing())  return;
     }
-    TracePhase t2("escapeAnalysis", &_t_escapeAnalysis, true);
     ConnectionGraph::do_analysis(this, &igvn);
 
     if (failing())  return;
@@ -1719,6 +1723,7 @@ void Compile::Optimize() {
     if (failing())  return;
 
     if (congraph() != NULL && macro_count() > 0) {
+      NOT_PRODUCT( TracePhase t2("macroEliminate", &_t_macroEliminate, TimeCompiler); )
       PhaseMacroExpand mexp(igvn);
       mexp.eliminate_macro_nodes();
       igvn.set_delay_transform(false);
@@ -1875,10 +1880,10 @@ void Compile::Code_Gen() {
 
     cfg.Estimate_Block_Frequency();
     cfg.GlobalCodeMotion(m,unique(),proj_list);
+    if (failing())  return;
 
     print_method("Global code motion", 2);
 
-    if (failing())  return;
     NOT_PRODUCT( verify_graph_edges(); )
 
     debug_only( cfg.verify(); )
@@ -2285,19 +2290,23 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
   case Op_CompareAndSwapL:
   case Op_CompareAndSwapP:
   case Op_CompareAndSwapN:
+  case Op_GetAndAddI:
+  case Op_GetAndAddL:
+  case Op_GetAndSetI:
+  case Op_GetAndSetL:
+  case Op_GetAndSetP:
+  case Op_GetAndSetN:
   case Op_StoreP:
   case Op_StoreN:
   case Op_LoadB:
   case Op_LoadUB:
   case Op_LoadUS:
   case Op_LoadI:
-  case Op_LoadUI2L:
   case Op_LoadKlass:
   case Op_LoadNKlass:
   case Op_LoadL:
   case Op_LoadL_unaligned:
   case Op_LoadPLocked:
-  case Op_LoadLLocked:
   case Op_LoadP:
   case Op_LoadN:
   case Op_LoadRange:
@@ -2349,7 +2358,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         if (nn != NULL) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
-          nn = new (C,  2) DecodeNNode(nn, t);
+          nn = new (C) DecodeNNode(nn, t);
           n->set_req(AddPNode::Base, nn);
           n->set_req(AddPNode::Address, nn);
           if (addp->outcnt() == 0) {
@@ -2467,7 +2476,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         }
       }
       if (new_in2 != NULL) {
-        Node* cmpN = new (C, 3) CmpNNode(in1->in(1), new_in2);
+        Node* cmpN = new (C) CmpNNode(in1->in(1), new_in2);
         n->subsume_by( cmpN );
         if (in1->outcnt() == 0) {
           in1->disconnect_inputs(NULL);
@@ -2563,8 +2572,8 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           n->subsume_by(divmod->mod_proj());
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulINode(d, d->in(2));
-          Node* sub  = new (C, 3) SubINode(d->in(1), mult);
+          Node* mult = new (C) MulINode(d, d->in(2));
+          Node* sub  = new (C) SubINode(d->in(1), mult);
           n->subsume_by( sub );
         }
       }
@@ -2584,46 +2593,20 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           n->subsume_by(divmod->mod_proj());
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulLNode(d, d->in(2));
-          Node* sub  = new (C, 3) SubLNode(d->in(1), mult);
+          Node* mult = new (C) MulLNode(d, d->in(2));
+          Node* sub  = new (C) SubLNode(d->in(1), mult);
           n->subsume_by( sub );
         }
       }
     }
     break;
 
-  case Op_Load16B:
-  case Op_Load8B:
-  case Op_Load4B:
-  case Op_Load8S:
-  case Op_Load4S:
-  case Op_Load2S:
-  case Op_Load8C:
-  case Op_Load4C:
-  case Op_Load2C:
-  case Op_Load4I:
-  case Op_Load2I:
-  case Op_Load2L:
-  case Op_Load4F:
-  case Op_Load2F:
-  case Op_Load2D:
-  case Op_Store16B:
-  case Op_Store8B:
-  case Op_Store4B:
-  case Op_Store8C:
-  case Op_Store4C:
-  case Op_Store2C:
-  case Op_Store4I:
-  case Op_Store2I:
-  case Op_Store2L:
-  case Op_Store4F:
-  case Op_Store2F:
-  case Op_Store2D:
+  case Op_LoadVector:
+  case Op_StoreVector:
     break;
 
   case Op_PackB:
   case Op_PackS:
-  case Op_PackC:
   case Op_PackI:
   case Op_PackF:
   case Op_PackL:
@@ -2631,7 +2614,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
     if (n->req()-1 > 2) {
       // Replace many operand PackNodes with a binary tree for matching
       PackNode* p = (PackNode*) n;
-      Node* btp = p->binaryTreePack(Compile::current(), 1, n->req());
+      Node* btp = p->binary_tree_pack(Compile::current(), 1, n->req());
       n->subsume_by(btp);
     }
     break;
@@ -2662,7 +2645,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       } else {
         if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
           Compile* C = Compile::current();
-          Node* shift = new (C, 3) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
+          Node* shift = new (C) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
           n->set_req(2, shift);
         }
       }
@@ -3165,7 +3148,7 @@ void Compile::ConstantTable::emit(CodeBuffer& cb) {
     default: ShouldNotReachHere();
     }
     assert(constant_addr, "consts section too small");
-    assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
+    assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg_res("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
   }
 }
 
@@ -3226,7 +3209,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
   if (Compile::current()->in_scratch_emit_size())  return;
 
   assert(labels.is_nonempty(), "must be");
-  assert((uint) labels.length() == n->outcnt(), err_msg("must be equal: %d == %d", labels.length(), n->outcnt()));
+  assert((uint) labels.length() == n->outcnt(), err_msg_res("must be equal: %d == %d", labels.length(), n->outcnt()));
 
   // Since MachConstantNode::constant_offset() also contains
   // table_base_offset() we need to subtract the table_base_offset()
@@ -3238,7 +3221,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
 
   for (uint i = 0; i < n->outcnt(); i++) {
     address* constant_addr = &jump_table_base[i];
-    assert(*constant_addr == (((address) n) + i), err_msg("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, *constant_addr, (((address) n) + i)));
+    assert(*constant_addr == (((address) n) + i), err_msg_res("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, *constant_addr, (((address) n) + i)));
     *constant_addr = cb.consts()->target(*labels.at(i), (address) constant_addr);
     cb.consts()->relocate((address) constant_addr, relocInfo::internal_word_type);
   }

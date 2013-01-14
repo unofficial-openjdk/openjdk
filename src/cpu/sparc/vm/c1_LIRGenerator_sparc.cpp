@@ -644,30 +644,6 @@ void LIRGenerator::do_CompareOp(CompareOp* x) {
 }
 
 
-void LIRGenerator::do_AttemptUpdate(Intrinsic* x) {
-  assert(x->number_of_arguments() == 3, "wrong type");
-  LIRItem obj       (x->argument_at(0), this);  // AtomicLong object
-  LIRItem cmp_value (x->argument_at(1), this);  // value to compare with field
-  LIRItem new_value (x->argument_at(2), this);  // replace field with new_value if it matches cmp_value
-
-  obj.load_item();
-  cmp_value.load_item();
-  new_value.load_item();
-
-  // generate compare-and-swap and produce zero condition if swap occurs
-  int value_offset = sun_misc_AtomicLongCSImpl::value_offset();
-  LIR_Opr addr = FrameMap::O7_opr;
-  __ add(obj.result(), LIR_OprFact::intConst(value_offset), addr);
-  LIR_Opr t1 = FrameMap::G1_opr;  // temp for 64-bit value
-  LIR_Opr t2 = FrameMap::G3_opr;  // temp for 64-bit value
-  __ cas_long(addr, cmp_value.result(), new_value.result(), t1, t2);
-
-  // generate conditional move of boolean result
-  LIR_Opr result = rlock_result(x);
-  __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result, T_LONG);
-}
-
-
 void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   assert(x->number_of_arguments() == 4, "wrong type");
   LIRItem obj   (x->argument_at(0), this);  // object
@@ -738,7 +714,8 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
     case vmIntrinsics::_dlog: // fall through
     case vmIntrinsics::_dsin: // fall through
     case vmIntrinsics::_dtan: // fall through
-    case vmIntrinsics::_dcos: {
+    case vmIntrinsics::_dcos: // fall through
+    case vmIntrinsics::_dexp: {
       assert(x->number_of_arguments() == 1, "wrong type");
 
       address runtime_entry = NULL;
@@ -758,12 +735,23 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
       case vmIntrinsics::_dlog10:
         runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dlog10);
         break;
+      case vmIntrinsics::_dexp:
+        runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dexp);
+        break;
       default:
         ShouldNotReachHere();
       }
 
       LIR_Opr result = call_runtime(x->argument_at(0), runtime_entry, x->type(), NULL);
       set_result(x, result);
+      break;
+    }
+    case vmIntrinsics::_dpow: {
+      assert(x->number_of_arguments() == 2, "wrong type");
+      address runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dpow);
+      LIR_Opr result = call_runtime(x->argument_at(0), x->argument_at(1), runtime_entry, x->type(), NULL);
+      set_result(x, result);
+      break;
     }
   }
 }
@@ -1213,5 +1201,60 @@ void LIRGenerator::get_Object_unsafe(LIR_Opr dst, LIR_Opr src, LIR_Opr offset,
     {
     LIR_Address* addr = new LIR_Address(src, offset, type);
     __ load(addr, dst);
+  }
+}
+
+void LIRGenerator::do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) {
+  BasicType type = x->basic_type();
+  LIRItem src(x->object(), this);
+  LIRItem off(x->offset(), this);
+  LIRItem value(x->value(), this);
+
+  src.load_item();
+  value.load_item();
+  off.load_nonconstant();
+
+  LIR_Opr dst = rlock_result(x, type);
+  LIR_Opr data = value.result();
+  bool is_obj = (type == T_ARRAY || type == T_OBJECT);
+  LIR_Opr offset = off.result();
+
+  if (data != dst) {
+    __ move(data, dst);
+    data = dst;
+  }
+
+  assert (!x->is_add() && (type == T_INT || (is_obj LP64_ONLY(&& UseCompressedOops))), "unexpected type");
+  LIR_Address* addr;
+  if (offset->is_constant()) {
+
+#ifdef _LP64
+    jlong l = offset->as_jlong();
+    assert((jlong)((jint)l) == l, "offset too large for constant");
+    jint c = (jint)l;
+#else
+    jint c = offset->as_jint();
+#endif
+    addr = new LIR_Address(src.result(), c, type);
+  } else {
+    addr = new LIR_Address(src.result(), offset, type);
+  }
+
+  LIR_Opr tmp = LIR_OprFact::illegalOpr;
+  LIR_Opr ptr = LIR_OprFact::illegalOpr;
+
+  if (is_obj) {
+    // Do the pre-write barrier, if any.
+    // barriers on sparc don't work with a base + index address
+    tmp = FrameMap::G3_opr;
+    ptr = new_pointer_register();
+    __ add(src.result(), off.result(), ptr);
+    pre_barrier(ptr, LIR_OprFact::illegalOpr /* pre_val */,
+                true /* do_load */, false /* patch */, NULL);
+  }
+  __ xchg(LIR_OprFact::address(addr), data, dst, tmp);
+  if (is_obj) {
+    // Seems to be a precise address
+    post_barrier(ptr, data);
   }
 }
