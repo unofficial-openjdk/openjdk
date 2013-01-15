@@ -34,6 +34,7 @@
 #include "memory/allocation.hpp"
 #include "memory/gcLocker.hpp"
 #include "memory/oopFactory.hpp"
+#include "memory/referenceType.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/constantPoolOop.hpp"
 #include "oops/fieldStreams.hpp"

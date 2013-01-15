@@ -91,7 +91,7 @@ public:
   // flags that support signal based suspend/resume on Bsd are in a
   // separate class to avoid confusion with many flags in OSThread that
   // are used by VM level suspend/resume.
-  os::Bsd::SuspendResume sr;
+  os::SuspendResume sr;
 
   // _ucontext and _siginfo are used by SR_handler() to save thread context,
   // and they will later be used to walk the stack or reposition thread PC.

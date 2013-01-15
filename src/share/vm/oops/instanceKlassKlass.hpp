@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_OOPS_INSTANCEKLASSKLASS_HPP
 #define SHARE_VM_OOPS_INSTANCEKLASSKLASS_HPP
 
+#include "memory/referenceType.hpp"
 #include "oops/klassKlass.hpp"
 
 // An instanceKlassKlass is the klass of an instanceKlass

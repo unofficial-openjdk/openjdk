@@ -47,6 +47,8 @@ class GCTaskQueue;
 class PreGCValues;
 class MoveAndUpdateClosure;
 class RefProcTaskExecutor;
+class ParallelOldTracer;
+class STWGCTimer;
 
 // The SplitInfo class holds the information needed to 'split' a source region
 // so that the live data can be copied to two destination *spaces*.  Normally,
@@ -840,6 +842,8 @@ class PSParallelCompact : AllStatic {
   friend class RefProcTaskProxy;
 
  private:
+  static STWGCTimer           _gc_timer;
+  static ParallelOldTracer    _gc_tracer;
   static elapsedTimer         _accumulated_time;
   static unsigned int         _total_invocations;
   static unsigned int         _maximum_compaction_gc_num;
@@ -887,7 +891,8 @@ class PSParallelCompact : AllStatic {
 
   // Mark live objects
   static void marking_phase(ParCompactionManager* cm,
-                            bool maximum_heap_compaction);
+                            bool maximum_heap_compaction,
+                            ParallelOldTracer *gc_tracer);
   static void follow_weak_klass_links();
   static void follow_mdo_weak_refs();
 
@@ -1166,6 +1171,8 @@ class PSParallelCompact : AllStatic {
 
   // Reference Processing
   static ReferenceProcessor* const ref_processor() { return _ref_processor; }
+
+  static STWGCTimer* gc_timer() { return &_gc_timer; }
 
   // Return the SpaceId for the given address.
   static SpaceId space_id(HeapWord* addr);

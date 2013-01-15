@@ -28,8 +28,9 @@
 #include "gc_implementation/g1/concurrentMark.hpp"
 #include "gc_implementation/g1/g1AllocRegion.hpp"
 #include "gc_implementation/g1/g1HRPrinter.hpp"
-#include "gc_implementation/g1/g1RemSet.hpp"
 #include "gc_implementation/g1/g1MonitoringSupport.hpp"
+#include "gc_implementation/g1/g1RemSet.hpp"
+#include "gc_implementation/g1/g1YCTypes.hpp"
 #include "gc_implementation/g1/heapRegionSeq.hpp"
 #include "gc_implementation/g1/heapRegionSets.hpp"
 #include "gc_implementation/shared/hSpaceCounters.hpp"
@@ -60,7 +61,11 @@ class HeapRegionRemSetIterator;
 class ConcurrentMark;
 class ConcurrentMarkThread;
 class ConcurrentG1Refine;
+class ConcurrentGCTimer;
 class GenerationCounters;
+class STWGCTimer;
+class G1NewTracer;
+class G1OldTracer;
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
@@ -389,6 +394,8 @@ private:
   // Keeps track of how many "old marking cycles" (i.e., Full GCs or
   // concurrent cycles) we have completed.
   volatile unsigned int _old_marking_cycles_completed;
+
+  bool _concurrent_cycle_started;
 
   // This is a non-product method that is helpful for testing. It is
   // called at the end of a GC and artificially expands the heap by
@@ -737,6 +744,12 @@ public:
     return _old_marking_cycles_completed;
   }
 
+  void register_concurrent_cycle_start(jlong start_time);
+  void register_concurrent_cycle_end();
+  void trace_heap_after_concurrent_cycle();
+
+  G1YCType yc_type();
+
   G1HRPrinter* hr_printer() { return &_hr_printer; }
 
 protected:
@@ -1003,6 +1016,12 @@ protected:
   // The (stw) reference processor...
   ReferenceProcessor* _ref_processor_stw;
 
+  STWGCTimer* _gc_timer_stw;
+  ConcurrentGCTimer* _gc_timer_cm;
+
+  G1OldTracer* _gc_tracer_cm;
+  G1NewTracer* _gc_tracer_stw;
+
   // During reference object discovery, the _is_alive_non_header
   // closure (if non-null) is applied to the referent object to
   // determine whether the referent is live. If so then the
@@ -1157,6 +1176,8 @@ public:
 
   // The Concurent Marking reference processor...
   ReferenceProcessor* ref_processor_cm() const { return _ref_processor_cm; }
+
+  ConcurrentGCTimer* gc_timer_cm() const { return _gc_timer_cm; }
 
   virtual size_t capacity() const;
   virtual size_t used() const;
@@ -1592,6 +1613,7 @@ public:
 
   // Override; it uses the "prev" marking information
   virtual void verify(bool silent);
+
   virtual void print_on(outputStream* st) const;
   virtual void print_extended_on(outputStream* st) const;
 

@@ -1380,10 +1380,15 @@ int os::get_line_chars(int fd, char* buf, const size_t bsize){
   return (int) i;
 }
 
+void os::SuspendedThreadTask::run() {
+  assert(Threads_lock->owned_by_self() || (_thread == VMThread::vm_thread()), "must have threads lock to call this");
+  internal_do_task();
+  _done = true;
+}
+
 bool os::create_stack_guard_pages(char* addr, size_t bytes) {
   return os::pd_create_stack_guard_pages(addr, bytes);
 }
-
 
 char* os::reserve_memory(size_t bytes, char* addr, size_t alignment_hint) {
   char* result = pd_reserve_memory(bytes, addr, alignment_hint);

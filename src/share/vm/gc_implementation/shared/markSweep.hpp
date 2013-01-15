@@ -36,6 +36,8 @@
 
 class ReferenceProcessor;
 class DataLayout;
+class SerialOldTracer;
+class STWGCTimer;
 
 // MarkSweep takes care of global mark-compact garbage collection for a
 // GenCollectedHeap using a four-phase pointer forwarding algorithm.  All
@@ -139,6 +141,9 @@ class MarkSweep : AllStatic {
   // Reference processing (used in ...follow_contents)
   static ReferenceProcessor*             _ref_processor;
 
+  static STWGCTimer*                     _gc_timer;
+  static SerialOldTracer*                _gc_tracer;
+
 #ifdef VALIDATE_MARK_SWEEP
   static GrowableArray<void*>*           _root_refs_stack;
   static GrowableArray<oop> *            _live_oops;
@@ -191,6 +196,9 @@ class MarkSweep : AllStatic {
 
   // Reference Processing
   static ReferenceProcessor* const ref_processor() { return _ref_processor; }
+
+  static STWGCTimer* gc_timer() { return _gc_timer; }
+  static SerialOldTracer* gc_tracer() { return _gc_tracer; }
 
   // Call backs for marking
   static void mark_object(oop obj);

@@ -34,6 +34,7 @@
 class EdenSpace;
 class ContiguousSpace;
 class ScanClosure;
+class STWGCTimer;
 
 // DefNewGeneration is a young generation containing eden, from- and
 // to-space.
@@ -130,6 +131,8 @@ protected:
   ContiguousSpace* _from_space;
   ContiguousSpace* _to_space;
 
+  STWGCTimer* _gc_timer;
+
   enum SomeProtectedConstants {
     // Generations are GenGrain-aligned and have size that are multiples of
     // GenGrain.
@@ -201,6 +204,8 @@ protected:
  public:
   DefNewGeneration(ReservedSpace rs, size_t initial_byte_size, int level,
                    const char* policy="Copy");
+
+  virtual void ref_processor_init();
 
   virtual Generation::Name kind() { return Generation::DefNew; }
 

@@ -90,6 +90,7 @@ class oopDesc {
 
   klassOop klass() const;
   klassOop klass_or_null() const volatile;
+  klassOop unsafe_klass_or_null() const volatile;
   oop* klass_addr();
   narrowOop* compressed_klass_addr();
 
@@ -172,6 +173,11 @@ class oopDesc {
   static oop decode_heap_oop_not_null(narrowOop v);
   static oop decode_heap_oop(oop v);
   static oop decode_heap_oop(narrowOop v);
+  // Same as above, but without asserts that verifies the value
+  static oop unsafe_decode_heap_oop_not_null(oop v);
+  static oop unsafe_decode_heap_oop_not_null(narrowOop v);
+  static oop unsafe_decode_heap_oop(oop v);
+  static oop unsafe_decode_heap_oop(narrowOop v);
 
   // Encode an oop pointer to a narrow oop.  The or_null versions accept
   // null oop pointer, others do not in order to eliminate the

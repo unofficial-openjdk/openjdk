@@ -45,6 +45,13 @@ BootStrapDir=$(HOTSPOTJDKDIST)
 !endif
 !endif
 
+!ifndef OPENJDK
+!if exist($(WorkSpace)\src\closed)
+OPENJDK=false
+!else
+OPENJDK=true
+!endif
+!endif
 
 
 !include $(HOTSPOTWORKSPACE)/make/windows/makefiles/projectcreator.make
@@ -53,6 +60,10 @@ BootStrapDir=$(HOTSPOTJDKDIST)
 # Pick up rules for building JVMTI (JSR-163)
 JvmtiOutDir=$(HOTSPOTBUILDSPACE)\$(Variant)\generated\jvmtifiles
 !include $(HOTSPOTWORKSPACE)/make/windows/makefiles/jvmti.make
+
+# Pick up rules for building trace
+TraceOutDir=$(HOTSPOTBUILDSPACE)\$(Variant)\generated\tracefiles
+!include $(HOTSPOTWORKSPACE)/make/windows/makefiles/trace.make
 
 !if "$(Variant)" == "compiler2"
 # Pick up rules for building adlc
@@ -67,7 +78,7 @@ JvmtiOutDir=$(HOTSPOTBUILDSPACE)\$(Variant)\generated\jvmtifiles
 HS_INTERNAL_NAME=jvm
 !include $(HOTSPOTWORKSPACE)/make/windows/makefiles/launcher.make
 
-default:: $(AdditionalTargets) $(JvmtiGeneratedFiles)
+default:: $(AdditionalTargets) $(JvmtiGeneratedFiles) $(TraceGeneratedFiles)
 
 !include $(HOTSPOTWORKSPACE)/make/hotspot_version
 

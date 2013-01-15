@@ -224,6 +224,7 @@ class G1MonitoringSupport : public CHeapObj<mtGC> {
   // Monitoring support used by
   //   MemoryService
   //   jstat counters
+  //   Tracing
 
   size_t overall_reserved()           { return _overall_reserved;     }
   size_t overall_committed()          { return _overall_committed;    }

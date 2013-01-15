@@ -4259,6 +4259,127 @@ int os::message_box(const char* title, const char* message) {
   return buf[0] == 'y' || buf[0] == 'Y';
 }
 
+static int sr_notify(OSThread* osthread) {
+  int status = thr_kill(osthread->thread_id(), os::Solaris::SIGasync());
+  assert_status(status == 0, status, "thr_kill");
+  return status;
+}
+
+// "Randomly" selected value for how long we want to spin
+// before bailing out on suspending a thread, also how often
+// we send a signal to a thread we want to resume
+static const int RANDOMLY_LARGE_INTEGER = 1000000;
+static const int RANDOMLY_LARGE_INTEGER2 = 100;
+
+static bool do_suspend(OSThread* osthread) {
+  assert(osthread->sr.is_running(), "thread should be running");
+  // mark as suspended and send signal
+
+  if (osthread->sr.request_suspend() != os::SuspendResume::SR_SUSPEND_REQUEST) {
+    // failed to switch, state wasn't running?
+    ShouldNotReachHere();
+    return false;
+  }
+
+  if (sr_notify(osthread) != 0) {
+    // try to cancel, switch to running
+
+    os::SuspendResume::State result = osthread->sr.cancel_suspend();
+    if (result == os::SuspendResume::SR_RUNNING) {
+      // cancelled
+      return false;
+    } else if (result == os::SuspendResume::SR_SUSPENDED) {
+      // somehow managed to suspend
+      return true;
+    } else {
+      ShouldNotReachHere();
+      return false;
+    }
+  }
+
+  // managed to send the signal and switch to SUSPEND_REQUEST, now wait for SUSPENDED
+
+  for (int n = 0; !osthread->sr.is_suspended(); n++) {
+    for (int i = 0; i < RANDOMLY_LARGE_INTEGER2 && !osthread->sr.is_suspended(); i++) {
+      os::yield_all(i);
+    }
+
+    // timeout, try to cancel the request
+    if (n >= RANDOMLY_LARGE_INTEGER) {
+      os::SuspendResume::State cancelled = osthread->sr.cancel_suspend();
+      if (cancelled == os::SuspendResume::SR_RUNNING) {
+        return false;
+      } else if (cancelled == os::SuspendResume::SR_SUSPENDED) {
+        return true;
+      } else {
+        ShouldNotReachHere();
+        return false;
+      }
+    }
+  }
+
+  guarantee(osthread->sr.is_suspended(), "Must be suspended");
+  return true;
+}
+
+static void do_resume(OSThread* osthread) {
+  assert(osthread->sr.is_suspended(), "thread should be suspended");
+
+  if (osthread->sr.request_wakeup() != os::SuspendResume::SR_WAKEUP_REQUEST) {
+    // failed to switch to WAKEUP_REQUEST
+    ShouldNotReachHere();
+    return;
+  }
+
+  while (!osthread->sr.is_running()) {
+    if (sr_notify(osthread) == 0) {
+      for (int n = 0; n < RANDOMLY_LARGE_INTEGER && !osthread->sr.is_running(); n++) {
+        for (int i = 0; i < 100 && !osthread->sr.is_running(); i++) {
+          os::yield_all(i);
+        }
+      }
+    } else {
+      ShouldNotReachHere();
+    }
+  }
+
+  guarantee(osthread->sr.is_running(), "Must be running!");
+}
+
+void os::SuspendedThreadTask::internal_do_task() {
+  if (do_suspend(_thread->osthread())) {
+    SuspendedThreadTaskContext context(_thread, _thread->osthread()->ucontext());
+    do_task(context);
+    do_resume(_thread->osthread());
+  }
+}
+
+class PcFetcher : public os::SuspendedThreadTask {
+public:
+  PcFetcher(Thread* thread) : os::SuspendedThreadTask(thread) {}
+  ExtendedPC result();
+protected:
+  void do_task(const os::SuspendedThreadTaskContext& context);
+private:
+  ExtendedPC _epc;
+};
+
+ExtendedPC PcFetcher::result() {
+  guarantee(is_done(), "task is not done yet.");
+  return _epc;
+}
+
+void PcFetcher::do_task(const os::SuspendedThreadTaskContext& context) {
+  Thread* thread = context.thread();
+  OSThread* osthread = thread->osthread();
+  if (osthread->ucontext() != NULL) {
+    _epc = os::Solaris::ucontext_get_pc((ucontext_t *) context.ucontext());
+  } else {
+    // NULL context is unexpected, double-check this is the VMThread
+    guarantee(thread->is_VM_thread(), "can only be called for VMThread");
+  }
+}
+
 // A lightweight implementation that does not suspend the target thread and
 // thus returns only a hint. Used for profiling only!
 ExtendedPC os::get_thread_pc(Thread* thread) {
@@ -4266,21 +4387,9 @@ ExtendedPC os::get_thread_pc(Thread* thread) {
   assert(Thread::current()->is_Watcher_thread(), "Must be watcher and own Threads_lock");
   // For now, is only used to profile the VM Thread
   assert(thread->is_VM_thread(), "Can only be called for VMThread");
-  ExtendedPC epc;
-
-  GetThreadPC_Callback  cb(ProfileVM_lock);
-  OSThread *osthread = thread->osthread();
-  const int time_to_wait = 400; // 400ms wait for initial response
-  int status = cb.interrupt(thread, time_to_wait);
-
-  if (cb.is_done() ) {
-    epc = cb.addr();
-  } else {
-    DEBUG_ONLY(tty->print_cr("Failed to get pc for thread: %d got %d status",
-                              osthread->thread_id(), status););
-    // epc is already NULL
-  }
-  return epc;
+  PcFetcher fetcher(thread);
+  fetcher.run();
+  return fetcher.result();
 }
 
 

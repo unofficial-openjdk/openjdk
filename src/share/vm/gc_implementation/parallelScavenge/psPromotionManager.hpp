@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_IMPLEMENTATION_PARALLELSCAVENGE_PSPROMOTIONMANAGER_HPP
 
 #include "gc_implementation/parallelScavenge/psPromotionLAB.hpp"
+#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "memory/allocation.hpp"
 #include "utilities/taskqueue.hpp"
 
@@ -33,7 +34,7 @@
 // psPromotionManager is used by a single thread to manage object survival
 // during a scavenge. The promotion manager contains thread local data only.
 //
-// NOTE! Be carefull when allocating the stacks on cheap. If you are going
+// NOTE! Be careful when allocating the stacks on cheap. If you are going
 // to use a promotion manager in more than one thread, the stacks MUST be
 // on cheap. This can lead to memory leaks, though, as they are not auto
 // deallocated.
@@ -84,6 +85,8 @@ class PSPromotionManager : public CHeapObj<mtGC> {
 
   uint                                _array_chunk_size;
   uint                                _min_array_size_for_chunking;
+
+  PromotionFailedInfo                 _promotion_failed_info;
 
   // Accessors
   static PSOldGen* old_gen()         { return _old_gen; }
@@ -149,7 +152,7 @@ class PSPromotionManager : public CHeapObj<mtGC> {
   static void initialize();
 
   static void pre_scavenge();
-  static void post_scavenge();
+  static PromotionFailedInfo post_scavenge();
 
   static PSPromotionManager* gc_thread_promotion_manager(int index);
   static PSPromotionManager* vm_thread_promotion_manager();

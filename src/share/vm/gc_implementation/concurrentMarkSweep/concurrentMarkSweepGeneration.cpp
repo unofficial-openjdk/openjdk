@@ -36,8 +36,12 @@
 #include "gc_implementation/concurrentMarkSweep/vmCMSOperations.hpp"
 #include "gc_implementation/parNew/parNewGeneration.hpp"
 #include "gc_implementation/shared/collectorCounters.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/isGCActiveMark.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
+#include "memory/allocation.hpp"
 #include "memory/cardTableRS.hpp"
 #include "memory/collectorPolicy.hpp"
 #include "memory/gcLocker.inline.hpp"
@@ -597,7 +601,10 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   _concurrent_cycles_since_last_unload(0),
   _roots_scanning_options(0),
   _inter_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
-  _intra_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding)
+  _intra_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
+  _gc_tracer_cm(new (ResourceObj::C_HEAP, mtGC) CMSTracer()),
+  _gc_timer_cm(new (ResourceObj::C_HEAP, mtGC) ConcurrentGCTimer()),
+  _cms_start_registered(false)
 {
   if (ExplicitGCInvokesConcurrentAndUnloadsClasses) {
     ExplicitGCInvokesConcurrent = true;
@@ -1970,7 +1977,14 @@ void CMSCollector::decide_foreground_collection_type(
 // a mark-sweep-compact.
 void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
-  TraceTime t("CMS:MSC ", PrintGCDetails && Verbose, true, gclog_or_tty);
+
+  STWGCTimer* gc_timer = GenMarkSweep::gc_timer();
+  gc_timer->register_gc_start(os::elapsed_counter());
+
+  SerialOldTracer* gc_tracer = GenMarkSweep::gc_tracer();
+  gc_tracer->report_gc_start(gch->gc_cause(), gc_timer->gc_start());
+
+  GCTraceTime t("CMS:MSC ", PrintGCDetails && Verbose, true, NULL);
   if (PrintGC && Verbose && !(GCCause::is_user_requested_gc(gch->gc_cause()))) {
     gclog_or_tty->print_cr("Compact ConcurrentMarkSweepGeneration after %d "
       "collections passed to foreground collector", _full_gcs_since_conc_gc);
@@ -2061,6 +2075,10 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   if (UseAdaptiveSizePolicy) {
     size_policy()->msc_collection_end(gch->gc_cause());
   }
+
+  gc_timer->register_gc_end(os::elapsed_counter());
+
+  gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
 
   // For a mark-sweep-compact, compute_new_size() will be called
   // in the heap's do_collection() method.
@@ -2267,6 +2285,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
         {
           ReleaseForegroundGC x(this);
           stats().record_cms_begin();
+          register_gc_start();
 
           VM_CMS_Initial_Mark initial_mark_op(this);
           VMThread::execute(&initial_mark_op);
@@ -2402,6 +2421,21 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
   }
 }
 
+void CMSCollector::register_gc_start() {
+  _cms_start_registered = true;
+  CollectedHeap* heap = GenCollectedHeap::heap();
+  _gc_timer_cm->register_gc_start(os::elapsed_counter());
+  _gc_tracer_cm->report_gc_start(heap->gc_cause(), _gc_timer_cm->gc_start());
+}
+
+void CMSCollector::register_gc_end() {
+  if (_cms_start_registered) {
+    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
+    _cms_start_registered = false;
+  }
+}
+
 void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
   assert(_foregroundGCIsActive && !_foregroundGCShouldWait,
          "Foreground collector should be waiting, not executing");
@@ -2410,8 +2444,8 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
   assert(ConcurrentMarkSweepThread::vm_thread_has_cms_token(),
          "VM thread should have CMS token");
 
-  NOT_PRODUCT(TraceTime t("CMS:MS (foreground) ", PrintGCDetails && Verbose,
-    true, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime t("CMS:MS (foreground) ", PrintGCDetails && Verbose,
+    true, NULL);)
   if (UseAdaptiveSizePolicy) {
     size_policy()->ms_collection_begin();
   }
@@ -2435,6 +2469,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
     }
     switch (_collectorState) {
       case InitialMarking:
+        register_gc_start();
         init_mark_was_synchronous = true;  // fact to be exploited in re-mark
         checkpointRootsInitial(false);
         assert(_collectorState == Marking, "Collector state should have changed"
@@ -3516,8 +3551,8 @@ void CMSCollector::checkpointRootsInitialWork(bool asynch) {
   // CMS collection cycle.
   setup_cms_unloading_and_verification_state();
 
-  NOT_PRODUCT(TraceTime t("\ncheckpointRootsInitialWork",
-    PrintGCDetails && Verbose, true, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime t("\ncheckpointRootsInitialWork",
+    PrintGCDetails && Verbose, true, _gc_timer_cm);)
   if (UseAdaptiveSizePolicy) {
     size_policy()->checkpoint_roots_initial_begin();
   }
@@ -4526,9 +4561,10 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
     // The code in this method may need further
     // tweaking for better performance and some restructuring
     // for cleaner interfaces.
+    GCTimer *gc_timer = NULL; // Currently not tracing concurrent phases
     rp->preclean_discovered_references(
           rp->is_alive_non_header(), &keep_alive, &complete_trace,
-          &yield_cl, should_unload_classes());
+          &yield_cl, should_unload_classes(), gc_timer);
   }
 
   if (clean_survivor) {  // preclean the active survivor space(s)
@@ -4861,8 +4897,8 @@ void CMSCollector::checkpointRootsFinal(bool asynch,
       // Temporarily set flag to false, GCH->do_collection will
       // expect it to be false and set to true
       FlagSetting fl(gch->_is_gc_active, false);
-      NOT_PRODUCT(TraceTime t("Scavenge-Before-Remark",
-        PrintGCDetails && Verbose, true, gclog_or_tty);)
+      NOT_PRODUCT(GCTraceTime t("Scavenge-Before-Remark",
+        PrintGCDetails && Verbose, true, _gc_timer_cm);)
       int level = _cmsGen->level() - 1;
       if (level >= 0) {
         gch->do_collection(true,        // full (i.e. force, see below)
@@ -4891,7 +4927,7 @@ void CMSCollector::checkpointRootsFinal(bool asynch,
 void CMSCollector::checkpointRootsFinalWork(bool asynch,
   bool clear_all_soft_refs, bool init_mark_was_synchronous) {
 
-  NOT_PRODUCT(TraceTime tr("checkpointRootsFinalWork", PrintGCDetails, false, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime tr("checkpointRootsFinalWork", PrintGCDetails, false, _gc_timer_cm);)
 
   assert(haveFreelistLocks(), "must have free list locks");
   assert_lock_strong(bitMapLock());
@@ -4943,11 +4979,11 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
       // the most recent young generation GC, minus those cleaned up by the
       // concurrent precleaning.
       if (CMSParallelRemarkEnabled && CollectedHeap::use_parallel_gc_threads()) {
-        TraceTime t("Rescan (parallel) ", PrintGCDetails, false, gclog_or_tty);
+        GCTraceTime t("Rescan (parallel) ", PrintGCDetails, false, _gc_timer_cm);
         do_remark_parallel();
       } else {
-        TraceTime t("Rescan (non-parallel) ", PrintGCDetails, false,
-                    gclog_or_tty);
+        GCTraceTime t("Rescan (non-parallel) ", PrintGCDetails, false,
+                    _gc_timer_cm);
         do_remark_non_parallel();
       }
     }
@@ -4960,7 +4996,7 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
   verify_overflow_empty();
 
   {
-    NOT_PRODUCT(TraceTime ts("refProcessingWork", PrintGCDetails, false, gclog_or_tty);)
+    NOT_PRODUCT(GCTraceTime ts("refProcessingWork", PrintGCDetails, false, _gc_timer_cm);)
     refProcessingWork(asynch, clear_all_soft_refs);
   }
   verify_work_stacks_empty();
@@ -5610,7 +5646,7 @@ void CMSCollector::do_remark_non_parallel() {
                               &_markBitMap, &_markStack, &_revisitStack,
                               &mrias_cl);
   {
-    TraceTime t("grey object rescan", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("grey object rescan", PrintGCDetails, false, _gc_timer_cm);
     // Iterate over the dirty cards, setting the corresponding bits in the
     // mod union table.
     {
@@ -5665,7 +5701,7 @@ void CMSCollector::do_remark_non_parallel() {
     Universe::verify();
   }
   {
-    TraceTime t("root rescan", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("root rescan", PrintGCDetails, false, _gc_timer_cm);
 
     verify_work_stacks_empty();
 
@@ -5874,7 +5910,7 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
                                 _span, &_markBitMap, &_markStack,
                                 &cmsKeepAliveClosure, false /* !preclean */);
   {
-    TraceTime t("weak refs processing", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("weak refs processing", PrintGCDetails, false, _gc_timer_cm);
     if (rp->processing_is_mt()) {
       // Set the degree of MT here.  If the discovery is done MT, there
       // may have been a different number of threads doing the discovery
@@ -5896,19 +5932,21 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
       rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
-                                        &task_executor);
+                                        &task_executor,
+                                        _gc_timer_cm);
     } else {
       rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
-                                        NULL);
+                                        NULL,
+                                        _gc_timer_cm);
     }
     verify_work_stacks_empty();
   }
 
   if (should_unload_classes()) {
     {
-      TraceTime t("class unloading", PrintGCDetails, false, gclog_or_tty);
+      GCTraceTime t("class unloading", PrintGCDetails, false, _gc_timer_cm);
 
       // Follow SystemDictionary roots and unload classes
       bool purged_class = SystemDictionary::do_unloading(&_is_alive_closure);
@@ -5938,14 +5976,14 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
     }
 
     {
-      TraceTime t("scrub symbol table", PrintGCDetails, false, gclog_or_tty);
+      GCTraceTime t("scrub symbol table", PrintGCDetails, false, _gc_timer_cm);
       // Clean up unreferenced symbols in symbol table.
       SymbolTable::unlink();
     }
   }
 
   if (should_unload_classes() || !JavaObjectsInPerm) {
-    TraceTime t("scrub string table", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("scrub string table", PrintGCDetails, false, _gc_timer_cm);
     // Now clean up stale oops in StringTable
     StringTable::unlink(&_is_alive_closure);
   }
@@ -6319,12 +6357,14 @@ void CMSCollector::reset(bool asynch) {
       _cmsGen->rotate_debug_collection_type();
     }
   )
+
+  register_gc_end();
 }
 
 void CMSCollector::do_CMS_operation(CMS_op_type op, GCCause::Cause gc_cause) {
   gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
   TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
-  TraceTime t(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, gclog_or_tty);
+  GCTraceTime t(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, NULL);
   TraceCollectorStats tcs(counters());
 
   switch (op) {

@@ -145,6 +145,7 @@ class Solaris {
   static intptr_t*   ucontext_get_sp(ucontext_t* uc);
   // ucontext_get_fp() is only used by Solaris X86 (see note below)
   static intptr_t*   ucontext_get_fp(ucontext_t* uc);
+  static address    ucontext_get_pc(ucontext_t* uc);
 
   // For Analyzer Forte AsyncGetCallTrace profiling support:
   // Parameter ret_fp is only used by Solaris X86.

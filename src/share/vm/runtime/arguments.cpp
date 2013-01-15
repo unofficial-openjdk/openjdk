@@ -817,22 +817,32 @@ bool Arguments::process_argument(const char* arg,
     return true;
   }
 
+  // Make a copy and remove everything after '=' (if there is something)
+#define BUFLEN 255
+  char name[BUFLEN+1];
+  strncpy(name, argname, BUFLEN);
+  name[BUFLEN] = '\0';
+  char* end = strchr(name, '=');
+  if (end != NULL) {
+    end[0] = '\0';
+  }
+
   // For locked flags, report a custom error message if available.
   // Otherwise, report the standard unrecognized VM option.
 
-  Flag* locked_flag = Flag::find_flag((char*)argname, strlen(argname), true);
-  if (locked_flag != NULL) {
+  Flag* locked_flag = Flag::find_flag((char*)name, strlen(name), true);
+  if (locked_flag != NULL && !locked_flag->is_unlocked()) {
     char locked_message_buf[BUFLEN];
     locked_flag->get_locked_message(locked_message_buf, BUFLEN);
     if (strlen(locked_message_buf) == 0) {
       jio_fprintf(defaultStream::error_stream(),
-        "Unrecognized VM option '%s'\n", argname);
+        "Unrecognized VM option '%s'\n", name);
     } else {
       jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
     }
   } else {
     jio_fprintf(defaultStream::error_stream(),
-                "Unrecognized VM option '%s'\n", argname);
+                "Unrecognized VM option '%s'\n", name);
   }
 
   // allow for commandline "commenting out" options like -XX:#+Verbose

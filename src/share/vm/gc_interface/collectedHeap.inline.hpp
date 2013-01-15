@@ -355,7 +355,7 @@ inline bool CollectedHeap::is_valid_method(oop p) const {
     !is_gc_active() &&
 
     // Check that p is a methodOop.
-    p->klass() == Universe::methodKlassObj();
+    p->unsafe_klass_or_null() == Universe::methodKlassObj();
 }
 
 

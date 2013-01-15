@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_INTERFACE_COLLECTEDHEAP_HPP
 
 #include "gc_interface/gcCause.hpp"
+#include "gc_implementation/shared/gcWhen.hpp"
 #include "memory/allocation.hpp"
 #include "memory/barrierSet.hpp"
 #include "runtime/handles.hpp"
@@ -38,11 +39,16 @@
 // class defines the functions that a heap must implement, and contains
 // infrastructure common to all heaps.
 
-class BarrierSet;
-class ThreadClosure;
 class AdaptiveSizePolicy;
-class Thread;
+class BarrierSet;
 class CollectorPolicy;
+class GCHeapSummary;
+class GCTimer;
+class GCTracer;
+class PermGenSummary;
+class Thread;
+class ThreadClosure;
+class VirtualSpaceSummary;
 
 class GCMessage : public FormatBuffer<1024> {
  public:
@@ -175,6 +181,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Fill with a single object (either an int array or a java.lang.Object).
   static inline void fill_with_object_impl(HeapWord* start, size_t words, bool zap = true);
 
+  virtual void trace_heap(GCWhen::Type when, GCTracer* tracer);
+
   // Verification functions
   virtual void check_for_bad_heap_word_value(HeapWord* addr, size_t size)
     PRODUCT_RETURN;
@@ -211,8 +219,6 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   MemRegion reserved_region() const { return _reserved; }
   address base() const { return (address)reserved_region().start(); }
 
-  // Future cleanup here. The following functions should specify bytes or
-  // heapwords as part of their signature.
   virtual size_t capacity() const = 0;
   virtual size_t used() const = 0;
 
@@ -609,8 +615,14 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   virtual void prepare_for_verify() = 0;
 
   // Generate any dumps preceding or following a full gc
-  void pre_full_gc_dump();
-  void post_full_gc_dump();
+  void pre_full_gc_dump(GCTimer* timer);
+  void post_full_gc_dump(GCTimer* timer);
+
+  VirtualSpaceSummary create_heap_space_summary();
+  GCHeapSummary create_heap_summary();
+
+  virtual VirtualSpaceSummary create_perm_gen_space_summary() = 0;
+  PermGenSummary create_perm_gen_summary();
 
   // Print heap information on the given outputStream.
   virtual void print_on(outputStream* st) const = 0;
@@ -619,7 +631,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
     print_on(tty);
   }
   // Print more detailed heap information on the given
-  // outputStream. The default behaviour is to call print_on(). It is
+  // outputStream. The default behavior is to call print_on(). It is
   // up to each subclass to override it and add any additional output
   // it needs.
   virtual void print_extended_on(outputStream* st) const {
@@ -640,23 +652,11 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Default implementation does nothing.
   virtual void print_tracing_info() const = 0;
 
-  // If PrintHeapAtGC is set call the appropriate routi
-  void print_heap_before_gc() {
-    if (PrintHeapAtGC) {
-      Universe::print_heap_before_gc();
-    }
-    if (_gc_heap_log != NULL) {
-      _gc_heap_log->log_heap_before();
-    }
-  }
-  void print_heap_after_gc() {
-    if (PrintHeapAtGC) {
-      Universe::print_heap_after_gc();
-    }
-    if (_gc_heap_log != NULL) {
-      _gc_heap_log->log_heap_after();
-    }
-  }
+  void print_heap_before_gc();
+  void print_heap_after_gc();
+
+  void trace_heap_before_gc(GCTracer* gc_tracer);
+  void trace_heap_after_gc(GCTracer* gc_tracer);
 
   // Heap verification
   virtual void verify(bool silent, VerifyOption option) = 0;
@@ -670,7 +670,7 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   inline bool promotion_should_fail();
 
   // Reset the PromotionFailureALot counters.  Should be called at the end of a
-  // GC in which promotion failure ocurred.
+  // GC in which promotion failure occurred.
   inline void reset_promotion_should_fail(volatile size_t* count);
   inline void reset_promotion_should_fail();
 #endif  // #ifndef PRODUCT

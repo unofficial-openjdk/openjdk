@@ -31,9 +31,12 @@
 //
 
 class NMethodSweeper : public AllStatic {
-  static long      _traversals;   // Stack traversal count
-  static nmethod*  _current;      // Current nmethod
-  static int       _seen;         // Nof. nmethod we have currently processed in current pass of CodeCache
+  static long      _traversals;      // Stack scan count, also sweep ID.
+  static nmethod*  _current;         // Current nmethod
+  static int       _seen;            // Nof. nmethod we have currently processed in current pass of CodeCache
+  static int       _flushed_count;   // Nof. nmethods flushed in current sweep
+  static int       _zombified_count; // Nof. nmethods made zombie in current sweep
+  static int       _marked_count;    // Nof. nmethods marked for reclaim in current sweep
 
   static volatile int      _invocations;   // No. of invocations left until we are completed with this pass
   static volatile int      _sweep_started; // Flag to control conc sweeper
@@ -50,12 +53,29 @@ class NMethodSweeper : public AllStatic {
   static uint      _highest_marked;   // highest compile id dumped at last emergency unloading
   static long      _was_full_traversal;   // trav number at last emergency unloading
 
+  // Stat counters
+  static int       _number_of_flushes;           // Total of full traversals caused by full cache
+  static int       _total_nof_methods_reclaimed; // Accumulated nof methods flushed
+  static long      _total_time_sweeping;         // Accumulated time sweeping
+  static long      _total_time_this_sweep;       // Total time this sweep
+  static long      _peak_sweep_time;             // Peak time for a full sweep
+  static long      _peak_sweep_fraction_time;    // Peak time sweeping one fraction
+  static long      _total_disconnect_time;       // Total time cleaning code mem
+  static long      _peak_disconnect_time;        // Peak time cleaning code mem
+
   static void process_nmethod(nmethod *nm);
 
   static void log_sweep(const char* msg, const char* format = NULL, ...);
 
  public:
-  static long traversal_count() { return _traversals; }
+  static long traversal_count()             { return _traversals; }
+  static int  number_of_flushes()           { return _number_of_flushes; }
+  static int  total_nof_methods_reclaimed() { return _total_nof_methods_reclaimed; }
+  static long total_time_sweeping()         { return _total_time_sweeping; }
+  static long peak_sweep_time()             { return _peak_sweep_time; }
+  static long peak_sweep_fraction_time()    { return _peak_sweep_fraction_time; }
+  static long total_disconnect_time()       { return _total_disconnect_time; }
+  static long peak_disconnect_time()        { return _peak_disconnect_time; }
 
 #ifdef ASSERT
   // Keep track of sweeper activity in the ring buffer

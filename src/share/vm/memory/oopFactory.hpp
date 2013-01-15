@@ -27,6 +27,7 @@
 
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "memory/referenceType.hpp"
 #include "memory/universe.hpp"
 #include "oops/klassOop.hpp"
 #include "oops/objArrayKlass.hpp"

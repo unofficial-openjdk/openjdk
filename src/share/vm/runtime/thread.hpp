@@ -42,7 +42,8 @@
 #include "runtime/threadLocalStorage.hpp"
 #include "runtime/unhandledOops.hpp"
 #include "services/memRecorder.hpp"
-#include "trace/tracing.hpp"
+#include "trace/traceBackend.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/top.hpp"
 #ifndef SERIALGC

@@ -31,6 +31,10 @@
 #include "code/icBuffer.hpp"
 #include "gc_implementation/g1/g1Log.hpp"
 #include "gc_implementation/g1/g1MarkSweep.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "memory/gcLocker.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/modRefBarrierSet.hpp"
@@ -127,7 +131,7 @@ void G1MarkSweep::allocate_stacks() {
 void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
                                     bool clear_all_softrefs) {
   // Recursively traverse all live objects and mark them
-  TraceTime tm("phase 1", G1Log::fine() && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 1", G1Log::fine() && Verbose, true, gc_timer());
   GenMarkSweep::trace(" 1");
 
   SharedHeap* sh = SharedHeap::heap();
@@ -147,7 +151,8 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   rp->process_discovered_references(&GenMarkSweep::is_alive,
                                     &GenMarkSweep::keep_alive,
                                     &GenMarkSweep::follow_stack_closure,
-                                    NULL);
+                                    NULL,
+                                    gc_timer());
 
   // Follow system dictionary roots and unload classes
   bool purged_class = SystemDictionary::do_unloading(&GenMarkSweep::is_alive);
@@ -279,7 +284,7 @@ void G1MarkSweep::mark_sweep_phase2() {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   Generation* pg = g1h->perm_gen();
 
-  TraceTime tm("phase 2", G1Log::fine() && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 2", G1Log::fine() && Verbose, true, gc_timer());
   GenMarkSweep::trace("2");
 
   // find the first region
@@ -322,7 +327,7 @@ void G1MarkSweep::mark_sweep_phase3() {
   Generation* pg = g1h->perm_gen();
 
   // Adjust the pointers to reflect the new locations
-  TraceTime tm("phase 3", G1Log::fine() && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 3", G1Log::fine() && Verbose, true, gc_timer());
   GenMarkSweep::trace("3");
 
   SharedHeap* sh = SharedHeap::heap();
@@ -386,7 +391,7 @@ void G1MarkSweep::mark_sweep_phase4() {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   Generation* pg = g1h->perm_gen();
 
-  TraceTime tm("phase 4", G1Log::fine() && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 4", G1Log::fine() && Verbose, true, gc_timer());
   GenMarkSweep::trace("4");
 
   pg->compact();
