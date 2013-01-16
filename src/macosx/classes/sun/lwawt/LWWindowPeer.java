@@ -910,20 +910,16 @@ public class LWWindowPeer
     public void dispatchKeyEvent(int id, long when, int modifiers,
                                  int keyCode, char keyChar, int keyLocation)
     {
-        KeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
+        LWKeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
         Component focusOwner = kfmPeer.getCurrentFocusOwner();
 
-        // Null focus owner may receive key event when
-        // application hides the focused window upon ESC press
-        // (AWT transfers/clears the focus owner) and pending ESC release
-        // may come to already hidden window. This check eliminates NPE.
-        if (focusOwner != null) {
-            KeyEvent event =
-                new KeyEvent(focusOwner, id, when, modifiers,
-                             keyCode, keyChar, keyLocation);
-            LWComponentPeer peer = (LWComponentPeer)focusOwner.getPeer();
-            peer.postEvent(event);
+        if (focusOwner == null) {
+            focusOwner = kfmPeer.getCurrentFocusedWindow();
+            if (focusOwner == null) {
+                focusOwner = this.getTarget();
+            }
         }
+        postEvent(new KeyEvent(focusOwner, id, when, modifiers, keyCode, keyChar, keyLocation));
     }
 
 
