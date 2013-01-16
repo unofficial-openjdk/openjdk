@@ -1,13 +1,14 @@
 compiler.err.already.annotated                          # internal compiler error?
 compiler.err.already.defined.this.unit                  # seems to be masked by compiler.err.duplicate.class
 compiler.err.annotation.value.not.allowable.type        # cannot happen: precluded by complete type-specific tests
+compiler.err.bad.functional.intf.anno                   # seems to be masked by compiler.err.annotation.type.not.applicable
 compiler.err.cant.read.file                             # (apt.JavaCompiler?)
 compiler.err.cant.select.static.class.from.param.type
 compiler.err.dc.unterminated.string                     # cannot happen
 compiler.err.illegal.char.for.encoding
-compiler.err.invalid.containedby.annotation             # should not happen
-compiler.err.invalid.containedby.annotation.invalid.value # "can't" happen
-compiler.err.invalid.containedby.annotation.multiple.values # can't happen
+compiler.err.invalid.repeatable.annotation              # should not happen
+compiler.err.invalid.repeatable.annotation.invalid.value # "can't" happen
+compiler.err.invalid.repeatable.annotation.multiple.values # can't happen
 compiler.err.io.exception                               # (javah.JavahTask?)
 compiler.err.limit.code                                 # Code
 compiler.err.limit.code.too.large.for.try.stmt          # Gen

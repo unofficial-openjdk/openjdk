@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,18 +21,8 @@
  * questions.
  */
 
-/**
- * @test
- * @summary Smoke test for repeating annotations
- * @compile/fail MissingContainerFor.java
- * @bug 7151010
- */
+// key: compiler.err.bad.functional.intf.anno.1
+// key: compiler.misc.not.a.functional.intf
 
-import java.lang.annotation.*;
-
-@interface Foos {
-    MissingContainerFor[] value();
-}
-
-@ContainedBy(Foos.class)
-public @interface MissingContainerFor {}
+@FunctionalInterface
+class BadFunctionalIntfAnno { }
