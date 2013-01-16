@@ -1305,15 +1305,17 @@ void JvmtiExport::post_exception_throw(JavaThread *thread, methodOop method, add
         vframeStream st(thread);
         assert(!st.at_end(), "cannot be at end");
         methodOop current_method = NULL;
+        methodHandle current_mh = methodHandle(thread, current_method);
         int current_bci = -1;
         do {
           current_method = st.method();
+          current_mh = methodHandle(thread, current_method);
           current_bci = st.bci();
           do {
             should_repeat = false;
             KlassHandle eh_klass(thread, exception_handle()->klass());
-            current_bci = current_method->fast_exception_handler_bci_for(
-              eh_klass, current_bci, THREAD);
+            current_bci = methodOopDesc::fast_exception_handler_bci_for(
+              current_mh, eh_klass, current_bci, THREAD);
             if (HAS_PENDING_EXCEPTION) {
               exception_handle = KlassHandle(thread, PENDING_EXCEPTION);
               CLEAR_PENDING_EXCEPTION;
@@ -1328,8 +1330,7 @@ void JvmtiExport::post_exception_throw(JavaThread *thread, methodOop method, add
           catch_jmethodID = 0;
           current_bci = 0;
         } else {
-          catch_jmethodID = jem.to_jmethodID(
-                                     methodHandle(thread, current_method));
+          catch_jmethodID = jem.to_jmethodID(current_mh);
         }
 
         JvmtiJavaThreadEventTransition jet(thread);

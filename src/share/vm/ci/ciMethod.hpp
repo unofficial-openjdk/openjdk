@@ -224,6 +224,9 @@ class ciMethod : public ciObject {
   ciCallProfile call_profile_at_bci(int bci);
   int           interpreter_call_site_count(int bci);
 
+  ciField*      get_field_at_bci( int bci, bool &will_link);
+  ciMethod*     get_method_at_bci(int bci, bool &will_link, ciSignature* *declared_signature);
+
   // Given a certain calling environment, find the monomorphic target
   // for the call.  Return NULL if the call is not monomorphic in
   // its calling environment.
@@ -239,9 +242,6 @@ class ciMethod : public ciObject {
   int resolve_vtable_index(ciKlass* caller, ciKlass* receiver);
 
   // Compilation directives
-  bool will_link(ciKlass* accessing_klass,
-                 ciKlass* declared_method_holder,
-                 Bytecodes::Code bc);
   bool should_exclude();
   bool should_inline();
   bool should_not_inline();

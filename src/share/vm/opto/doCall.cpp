@@ -41,25 +41,30 @@
 #include "prims/nativeLookup.hpp"
 #include "runtime/sharedRuntime.hpp"
 
-void trace_type_profile(ciMethod *method, int depth, int bci, ciMethod *prof_method, ciKlass *prof_klass, int site_count, int receiver_count) {
+void trace_type_profile(Compile* C, ciMethod *method, int depth, int bci, ciMethod *prof_method, ciKlass *prof_klass, int site_count, int receiver_count) {
   if (TraceTypeProfile || PrintInlining NOT_PRODUCT(|| PrintOptoInlining)) {
+    outputStream* out = tty;
     if (!PrintInlining) {
       if (NOT_PRODUCT(!PrintOpto &&) !PrintCompilation) {
         method->print_short_name();
         tty->cr();
       }
       CompileTask::print_inlining(prof_method, depth, bci);
+    } else {
+      out = C->print_inlining_stream();
     }
-    CompileTask::print_inline_indent(depth);
-    tty->print(" \\-> TypeProfile (%d/%d counts) = ", receiver_count, site_count);
-    prof_klass->name()->print_symbol();
-    tty->cr();
+    CompileTask::print_inline_indent(depth, out);
+    out->print(" \\-> TypeProfile (%d/%d counts) = ", receiver_count, site_count);
+    stringStream ss;
+    prof_klass->name()->print_symbol_on(&ss);
+    out->print(ss.as_string());
+    out->cr();
   }
 }
 
 CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool call_is_virtual,
                                        JVMState* jvms, bool allow_inline,
-                                       float prof_factor, bool allow_intrinsics) {
+                                       float prof_factor, bool allow_intrinsics, bool delayed_forbidden) {
   ciMethod*       caller   = jvms->method();
   int             bci      = jvms->bci();
   Bytecodes::Code bytecode = caller->java_code_at_bci(bci);
@@ -126,7 +131,9 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
   // MethodHandle.invoke* are native methods which obviously don't
   // have bytecodes and so normal inlining fails.
   if (callee->is_method_handle_intrinsic()) {
-    return CallGenerator::for_method_handle_call(jvms, caller, callee);
+    CallGenerator* cg = CallGenerator::for_method_handle_call(jvms, caller, callee, delayed_forbidden);
+    assert (cg == NULL || !delayed_forbidden || !cg->is_late_inline() || cg->is_mh_late_inline(), "unexpected CallGenerator");
+    return cg;
   }
 
   // Do not inline strict fp into non-strict code, or the reverse
@@ -157,20 +164,27 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
       WarmCallInfo scratch_ci;
       if (!UseOldInlining)
         scratch_ci.init(jvms, callee, profile, prof_factor);
-      WarmCallInfo* ci = ilt->ok_to_inline(callee, jvms, profile, &scratch_ci);
+      bool should_delay = false;
+      WarmCallInfo* ci = ilt->ok_to_inline(callee, jvms, profile, &scratch_ci, should_delay);
       assert(ci != &scratch_ci, "do not let this pointer escape");
       bool allow_inline   = (ci != NULL && !ci->is_cold());
       bool require_inline = (allow_inline && ci->is_hot());
 
       if (allow_inline) {
         CallGenerator* cg = CallGenerator::for_inline(callee, expected_uses);
-        if (require_inline && cg != NULL && should_delay_inlining(callee, jvms)) {
+
+        if (require_inline && cg != NULL) {
           // Delay the inlining of this method to give us the
           // opportunity to perform some high level optimizations
           // first.
-          return CallGenerator::for_late_inline(callee, cg);
+          if (should_delay_inlining(callee, jvms)) {
+            assert(!delayed_forbidden, "strange");
+            return CallGenerator::for_string_late_inline(callee, cg);
+          } else if ((should_delay || AlwaysIncrementalInline) && !delayed_forbidden) {
+            return CallGenerator::for_late_inline(callee, cg);
+          }
         }
-        if (cg == NULL) {
+        if (cg == NULL || should_delay) {
           // Fall through.
         } else if (require_inline || !InlineWarmCalls) {
           return cg;
@@ -234,13 +248,13 @@ CallGenerator* Compile::call_generator(ciMethod* callee, int vtable_index, bool 
           }
           if (miss_cg != NULL) {
             if (next_hit_cg != NULL) {
-              trace_type_profile(jvms->method(), jvms->depth() - 1, jvms->bci(), next_receiver_method, profile.receiver(1), site_count, profile.receiver_count(1));
+              trace_type_profile(C, jvms->method(), jvms->depth() - 1, jvms->bci(), next_receiver_method, profile.receiver(1), site_count, profile.receiver_count(1));
               // We don't need to record dependency on a receiver here and below.
               // Whenever we inline, the dependency is added by Parse::Parse().
               miss_cg = CallGenerator::for_predicted_call(profile.receiver(1), miss_cg, next_hit_cg, PROB_MAX);
             }
             if (miss_cg != NULL) {
-              trace_type_profile(jvms->method(), jvms->depth() - 1, jvms->bci(), receiver_method, profile.receiver(0), site_count, receiver_count);
+              trace_type_profile(C, jvms->method(), jvms->depth() - 1, jvms->bci(), receiver_method, profile.receiver(0), site_count, receiver_count);
               CallGenerator* cg = CallGenerator::for_predicted_call(profile.receiver(0), miss_cg, hit_cg, profile.receiver_prob(0));
               if (cg != NULL)  return cg;
             }
@@ -335,7 +349,7 @@ bool Parse::can_not_compile_call_site(ciMethod *dest_method, ciInstanceKlass* kl
     return true;
   }
 
-  assert(dest_method->will_link(method()->holder(), klass, bc()), "dest_method: typeflow responsibility");
+  assert(dest_method->is_loaded(), "dest_method: typeflow responsibility");
   return false;
 }
 
@@ -351,7 +365,7 @@ void Parse::do_call() {
   // Set frequently used booleans
   const bool is_virtual = bc() == Bytecodes::_invokevirtual;
   const bool is_virtual_or_interface = is_virtual || bc() == Bytecodes::_invokeinterface;
-  const bool has_receiver = is_virtual_or_interface || bc() == Bytecodes::_invokespecial;
+  const bool has_receiver = Bytecodes::has_receiver(bc());
 
   // Find target being called
   bool             will_link;
@@ -381,6 +395,8 @@ void Parse::do_call() {
   // Note:  In the absence of miranda methods, an abstract class K can perform
   // an invokevirtual directly on an interface method I.m if K implements I.
 
+  // orig_callee is the resolved callee which's signature includes the
+  // appendix argument.
   const int nargs = orig_callee->arg_size();
 
   // Push appendix argument (MethodType, CallSite, etc.), if one.
@@ -573,7 +589,7 @@ void Parse::do_call() {
       }
       // If there is going to be a trap, put it at the next bytecode:
       set_bci(iter().next_bci());
-      do_null_assert(peek(), T_OBJECT);
+      null_assert(peek());
       set_bci(iter().cur_bci()); // put it back
     }
   }

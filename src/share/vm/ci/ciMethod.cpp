@@ -735,6 +735,24 @@ int ciMethod::interpreter_call_site_count(int bci) {
 }
 
 // ------------------------------------------------------------------
+// ciMethod::get_field_at_bci
+ciField* ciMethod::get_field_at_bci(int bci, bool &will_link) {
+  ciBytecodeStream iter(this);
+  iter.reset_to_bci(bci);
+  iter.next();
+  return iter.get_field(will_link);
+}
+
+// ------------------------------------------------------------------
+// ciMethod::get_method_at_bci
+ciMethod* ciMethod::get_method_at_bci(int bci, bool &will_link, ciSignature* *declared_signature) {
+  ciBytecodeStream iter(this);
+  iter.reset_to_bci(bci);
+  iter.next();
+  return iter.get_method(will_link, declared_signature);
+}
+
+// ------------------------------------------------------------------
 // Adjust a CounterData count to be commensurate with
 // interpreter_invocation_count.  If the MDO exists for
 // only 25% of the time the method exists, then the
@@ -866,25 +884,6 @@ ciMethodData* ciMethod::method_data_or_null() {
   ciMethodData *md = method_data();
   if (md->is_empty()) return NULL;
   return md;
-}
-
-// ------------------------------------------------------------------
-// ciMethod::will_link
-//
-// Will this method link in a specific calling context?
-bool ciMethod::will_link(ciKlass* accessing_klass,
-                         ciKlass* declared_method_holder,
-                         Bytecodes::Code bc) {
-  if (!is_loaded()) {
-    // Method lookup failed.
-    return false;
-  }
-
-  // The link checks have been front-loaded into the get_method
-  // call.  This method (ciMethod::will_link()) will be removed
-  // in the future.
-
-  return true;
 }
 
 // ------------------------------------------------------------------

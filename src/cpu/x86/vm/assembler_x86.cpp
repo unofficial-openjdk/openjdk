@@ -2407,7 +2407,6 @@ void Assembler::pshufb(XMMRegister dst, XMMRegister src) {
 
 void Assembler::pshufb(XMMRegister dst, Address src) {
   assert(VM_Version::supports_ssse3(), "");
-  assert((UseAVX > 0), "SSE mode requires address alignment 16 bytes");
   InstructionMark im(this);
   simd_prefix(dst, dst, src, VEX_SIMD_66, VEX_OPCODE_0F_38);
   emit_byte(0x00);
@@ -2472,6 +2471,26 @@ void Assembler::ptest(XMMRegister dst, Address src) {
 void Assembler::ptest(XMMRegister dst, XMMRegister src) {
   assert(VM_Version::supports_sse4_1(), "");
   int encode = simd_prefix_and_encode(dst, xnoreg, src, VEX_SIMD_66, VEX_OPCODE_0F_38);
+  emit_byte(0x17);
+  emit_byte(0xC0 | encode);
+}
+
+void Assembler::vptest(XMMRegister dst, Address src) {
+  assert(VM_Version::supports_avx(), "");
+  InstructionMark im(this);
+  bool vector256 = true;
+  assert(dst != xnoreg, "sanity");
+  int dst_enc = dst->encoding();
+  // swap src<->dst for encoding
+  vex_prefix(src, dst_enc, dst_enc, VEX_SIMD_66, VEX_OPCODE_0F_38, false, vector256);
+  emit_byte(0x17);
+  emit_operand(dst, src);
+}
+
+void Assembler::vptest(XMMRegister dst, XMMRegister src) {
+  assert(VM_Version::supports_avx(), "");
+  bool vector256 = true;
+  int encode = vex_prefix_and_encode(dst, xnoreg, src, VEX_SIMD_66, vector256, VEX_OPCODE_0F_38);
   emit_byte(0x17);
   emit_byte(0xC0 | encode);
 }
@@ -2552,12 +2571,18 @@ void Assembler::rep_mov() {
   emit_byte(0xA5);
 }
 
+// sets rcx bytes with rax, value at [edi]
+void Assembler::rep_stosb() {
+  emit_byte(0xF3); // REP
+  LP64_ONLY(prefix(REX_W));
+  emit_byte(0xAA); // STOSB
+}
+
 // sets rcx pointer sized words with rax, value at [edi]
 // generic
-void Assembler::rep_set() { // rep_set
-  emit_byte(0xF3);
-  // STOSQ
-  LP64_ONLY(prefix(REX_W));
+void Assembler::rep_stos() {
+  emit_byte(0xF3); // REP
+  LP64_ONLY(prefix(REX_W));       // LP64:STOSQ, LP32:STOSD
   emit_byte(0xAB);
 }
 
@@ -3646,6 +3671,15 @@ void Assembler::vextracti128h(Address dst, XMMRegister src) {
   emit_operand(src, dst);
   // 0x01 - extract from upper 128 bits
   emit_byte(0x01);
+}
+
+// duplicate 4-bytes integer data from src into 8 locations in dest
+void Assembler::vpbroadcastd(XMMRegister dst, XMMRegister src) {
+  assert(VM_Version::supports_avx2(), "");
+  bool vector256 = true;
+  int encode = vex_prefix_and_encode(dst, xnoreg, src, VEX_SIMD_66, vector256, VEX_OPCODE_0F_38);
+  emit_byte(0x58);
+  emit_byte((unsigned char)(0xC0 | encode));
 }
 
 void Assembler::vzeroupper() {
@@ -8427,7 +8461,8 @@ void MacroAssembler::xorps(XMMRegister dst, AddressLiteral src) {
 
 void MacroAssembler::pshufb(XMMRegister dst, AddressLiteral src) {
   // Used in sign-bit flipping with aligned address.
-  assert((UseAVX > 0) || (((intptr_t)src.target() & 15) == 0), "SSE mode requires address alignment 16 bytes");
+  bool aligned_adr = (((intptr_t)src.target() & 15) == 0);
+  assert((UseAVX > 0) || aligned_adr, "SSE mode requires address alignment 16 bytes");
   if (reachable(src)) {
     Assembler::pshufb(dst, as_Address(src));
   } else {
@@ -10483,6 +10518,22 @@ void MacroAssembler::verified_entry(int framesize, bool stack_bang, bool fp_mode
 
 }
 
+void MacroAssembler::clear_mem(Register base, Register cnt, Register tmp) {
+  // cnt - number of qwords (8-byte words).
+  // base - start address, qword aligned.
+  assert(base==rdi, "base register must be edi for rep stos");
+  assert(tmp==rax,   "tmp register must be eax for rep stos");
+  assert(cnt==rcx,   "cnt register must be ecx for rep stos");
+
+  xorptr(tmp, tmp);
+  if (UseFastStosb) {
+    shlptr(cnt,3); // convert to number of bytes
+    rep_stosb();
+  } else {
+    NOT_LP64(shlptr(cnt,1);) // convert to number of dwords for 32-bit VM
+    rep_stos();
+  }
+}
 
 // IndexOf for constant substrings with size >= 8 chars
 // which don't need to be loaded through stack.
@@ -10918,42 +10969,114 @@ void MacroAssembler::string_compare(Register str1, Register str2,
   testl(cnt2, cnt2);
   jcc(Assembler::zero, LENGTH_DIFF_LABEL);
 
-  // Load first characters
+  // Compare first characters
   load_unsigned_short(result, Address(str1, 0));
   load_unsigned_short(cnt1, Address(str2, 0));
-
-  // Compare first characters
   subl(result, cnt1);
   jcc(Assembler::notZero,  POP_LABEL);
-  decrementl(cnt2);
-  jcc(Assembler::zero, LENGTH_DIFF_LABEL);
+  cmpl(cnt2, 1);
+  jcc(Assembler::equal, LENGTH_DIFF_LABEL);
 
-  {
-    // Check after comparing first character to see if strings are equivalent
-    Label LSkip2;
-    // Check if the strings start at same location
-    cmpptr(str1, str2);
-    jccb(Assembler::notEqual, LSkip2);
-
-    // Check if the length difference is zero (from stack)
-    cmpl(Address(rsp, 0), 0x0);
-    jcc(Assembler::equal,  LENGTH_DIFF_LABEL);
-
-    // Strings might not be equivalent
-    bind(LSkip2);
-  }
+  // Check if the strings start at the same location.
+  cmpptr(str1, str2);
+  jcc(Assembler::equal, LENGTH_DIFF_LABEL);
 
   Address::ScaleFactor scale = Address::times_2;
   int stride = 8;
 
-  // Advance to next element
-  addptr(str1, 16/stride);
-  addptr(str2, 16/stride);
+  if (UseAVX >= 2) {
+    Label COMPARE_WIDE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_WIDE_TAIL, COMPARE_SMALL_STR;
+    Label COMPARE_WIDE_VECTORS_LOOP, COMPARE_16_CHARS, COMPARE_INDEX_CHAR;
+    Label COMPARE_TAIL_LONG;
+    int pcmpmask = 0x19;
 
-  if (UseSSE42Intrinsics) {
+    // Setup to compare 16-chars (32-bytes) vectors,
+    // start from first character again because it has aligned address.
+    int stride2 = 16;
+    int adr_stride  = stride  << scale;
+    int adr_stride2 = stride2 << scale;
+
+    assert(result == rax && cnt2 == rdx && cnt1 == rcx, "pcmpestri");
+    // rax and rdx are used by pcmpestri as elements counters
+    movl(result, cnt2);
+    andl(cnt2, ~(stride2-1));   // cnt2 holds the vector count
+    jcc(Assembler::zero, COMPARE_TAIL_LONG);
+
+    // fast path : compare first 2 8-char vectors.
+    bind(COMPARE_16_CHARS);
+    movdqu(vec1, Address(str1, 0));
+    pcmpestri(vec1, Address(str2, 0), pcmpmask);
+    jccb(Assembler::below, COMPARE_INDEX_CHAR);
+
+    movdqu(vec1, Address(str1, adr_stride));
+    pcmpestri(vec1, Address(str2, adr_stride), pcmpmask);
+    jccb(Assembler::aboveEqual, COMPARE_WIDE_VECTORS);
+    addl(cnt1, stride);
+
+    // Compare the characters at index in cnt1
+    bind(COMPARE_INDEX_CHAR); //cnt1 has the offset of the mismatching character
+    load_unsigned_short(result, Address(str1, cnt1, scale));
+    load_unsigned_short(cnt2, Address(str2, cnt1, scale));
+    subl(result, cnt2);
+    jmp(POP_LABEL);
+
+    // Setup the registers to start vector comparison loop
+    bind(COMPARE_WIDE_VECTORS);
+    lea(str1, Address(str1, result, scale));
+    lea(str2, Address(str2, result, scale));
+    subl(result, stride2);
+    subl(cnt2, stride2);
+    jccb(Assembler::zero, COMPARE_WIDE_TAIL);
+    negptr(result);
+
+    //  In a loop, compare 16-chars (32-bytes) at once using (vpxor+vptest)
+    bind(COMPARE_WIDE_VECTORS_LOOP);
+    vmovdqu(vec1, Address(str1, result, scale));
+    vpxor(vec1, Address(str2, result, scale));
+    vptest(vec1, vec1);
+    jccb(Assembler::notZero, VECTOR_NOT_EQUAL);
+    addptr(result, stride2);
+    subl(cnt2, stride2);
+    jccb(Assembler::notZero, COMPARE_WIDE_VECTORS_LOOP);
+
+    // compare wide vectors tail
+    bind(COMPARE_WIDE_TAIL);
+    testptr(result, result);
+    jccb(Assembler::zero, LENGTH_DIFF_LABEL);
+
+    movl(result, stride2);
+    movl(cnt2, result);
+    negptr(result);
+    jmpb(COMPARE_WIDE_VECTORS_LOOP);
+
+    // Identifies the mismatching (higher or lower)16-bytes in the 32-byte vectors.
+    bind(VECTOR_NOT_EQUAL);
+    lea(str1, Address(str1, result, scale));
+    lea(str2, Address(str2, result, scale));
+    jmp(COMPARE_16_CHARS);
+
+    // Compare tail chars, length between 1 to 15 chars
+    bind(COMPARE_TAIL_LONG);
+    movl(cnt2, result);
+    cmpl(cnt2, stride);
+    jccb(Assembler::less, COMPARE_SMALL_STR);
+
+    movdqu(vec1, Address(str1, 0));
+    pcmpestri(vec1, Address(str2, 0), pcmpmask);
+    jcc(Assembler::below, COMPARE_INDEX_CHAR);
+    subptr(cnt2, stride);
+    jccb(Assembler::zero, LENGTH_DIFF_LABEL);
+    lea(str1, Address(str1, result, scale));
+    lea(str2, Address(str2, result, scale));
+    negptr(cnt2);
+    jmpb(WHILE_HEAD_LABEL);
+
+    bind(COMPARE_SMALL_STR);
+  } else if (UseSSE42Intrinsics) {
     Label COMPARE_WIDE_VECTORS, VECTOR_NOT_EQUAL, COMPARE_TAIL;
     int pcmpmask = 0x19;
-    // Setup to compare 16-byte vectors
+    // Setup to compare 8-char (16-byte) vectors,
+    // start from first character again because it has aligned address.
     movl(result, cnt2);
     andl(cnt2, ~(stride - 1));   // cnt2 holds the vector count
     jccb(Assembler::zero, COMPARE_TAIL);
@@ -10985,7 +11108,7 @@ void MacroAssembler::string_compare(Register str1, Register str2,
     jccb(Assembler::notZero, COMPARE_WIDE_VECTORS);
 
     // compare wide vectors tail
-    testl(result, result);
+    testptr(result, result);
     jccb(Assembler::zero, LENGTH_DIFF_LABEL);
 
     movl(cnt2, stride);
@@ -10997,21 +11120,20 @@ void MacroAssembler::string_compare(Register str1, Register str2,
 
     // Mismatched characters in the vectors
     bind(VECTOR_NOT_EQUAL);
-    addptr(result, cnt1);
-    movptr(cnt2, result);
-    load_unsigned_short(result, Address(str1, cnt2, scale));
-    load_unsigned_short(cnt1, Address(str2, cnt2, scale));
-    subl(result, cnt1);
+    addptr(cnt1, result);
+    load_unsigned_short(result, Address(str1, cnt1, scale));
+    load_unsigned_short(cnt2, Address(str2, cnt1, scale));
+    subl(result, cnt2);
     jmpb(POP_LABEL);
 
     bind(COMPARE_TAIL); // limit is zero
     movl(cnt2, result);
     // Fallthru to tail compare
   }
-
   // Shift str2 and str1 to the end of the arrays, negate min
-  lea(str1, Address(str1, cnt2, scale, 0));
-  lea(str2, Address(str2, cnt2, scale, 0));
+  lea(str1, Address(str1, cnt2, scale));
+  lea(str2, Address(str2, cnt2, scale));
+  decrementl(cnt2);  // first character was compared already
   negptr(cnt2);
 
   // Compare the rest of the elements
@@ -11076,7 +11198,44 @@ void MacroAssembler::char_arrays_equals(bool is_array_equ, Register ary1, Regist
   shll(limit, 1);      // byte count != 0
   movl(result, limit); // copy
 
-  if (UseSSE42Intrinsics) {
+  if (UseAVX >= 2) {
+    // With AVX2, use 32-byte vector compare
+    Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
+
+    // Compare 32-byte vectors
+    andl(result, 0x0000001e);  //   tail count (in bytes)
+    andl(limit, 0xffffffe0);   // vector count (in bytes)
+    jccb(Assembler::zero, COMPARE_TAIL);
+
+    lea(ary1, Address(ary1, limit, Address::times_1));
+    lea(ary2, Address(ary2, limit, Address::times_1));
+    negptr(limit);
+
+    bind(COMPARE_WIDE_VECTORS);
+    vmovdqu(vec1, Address(ary1, limit, Address::times_1));
+    vmovdqu(vec2, Address(ary2, limit, Address::times_1));
+    vpxor(vec1, vec2);
+
+    vptest(vec1, vec1);
+    jccb(Assembler::notZero, FALSE_LABEL);
+    addptr(limit, 32);
+    jcc(Assembler::notZero, COMPARE_WIDE_VECTORS);
+
+    testl(result, result);
+    jccb(Assembler::zero, TRUE_LABEL);
+
+    vmovdqu(vec1, Address(ary1, result, Address::times_1, -32));
+    vmovdqu(vec2, Address(ary2, result, Address::times_1, -32));
+    vpxor(vec1, vec2);
+
+    vptest(vec1, vec1);
+    jccb(Assembler::notZero, FALSE_LABEL);
+    jmpb(TRUE_LABEL);
+
+    bind(COMPARE_TAIL); // limit is zero
+    movl(limit, result);
+    // Fallthru to tail compare
+  } else if (UseSSE42Intrinsics) {
     // With SSE4.2, use double quad vector compare
     Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
 
@@ -11254,29 +11413,53 @@ void MacroAssembler::generate_fill(BasicType t, bool aligned,
     {
       assert( UseSSE >= 2, "supported cpu only" );
       Label L_fill_32_bytes_loop, L_check_fill_8_bytes, L_fill_8_bytes_loop, L_fill_8_bytes;
-      // Fill 32-byte chunks
       movdl(xtmp, value);
-      pshufd(xtmp, xtmp, 0);
+      if (UseAVX >= 2 && UseUnalignedLoadStores) {
+        // Fill 64-byte chunks
+        Label L_fill_64_bytes_loop, L_check_fill_32_bytes;
+        vpbroadcastd(xtmp, xtmp);
 
-      subl(count, 8 << shift);
-      jcc(Assembler::less, L_check_fill_8_bytes);
-      align(16);
+        subl(count, 16 << shift);
+        jcc(Assembler::less, L_check_fill_32_bytes);
+        align(16);
 
-      BIND(L_fill_32_bytes_loop);
+        BIND(L_fill_64_bytes_loop);
+        vmovdqu(Address(to, 0), xtmp);
+        vmovdqu(Address(to, 32), xtmp);
+        addptr(to, 64);
+        subl(count, 16 << shift);
+        jcc(Assembler::greaterEqual, L_fill_64_bytes_loop);
 
-      if (UseUnalignedLoadStores) {
-        movdqu(Address(to, 0), xtmp);
-        movdqu(Address(to, 16), xtmp);
+        BIND(L_check_fill_32_bytes);
+        addl(count, 8 << shift);
+        jccb(Assembler::less, L_check_fill_8_bytes);
+        vmovdqu(Address(to, 0), xtmp);
+        addptr(to, 32);
+        subl(count, 8 << shift);
       } else {
-        movq(Address(to, 0), xtmp);
-        movq(Address(to, 8), xtmp);
-        movq(Address(to, 16), xtmp);
-        movq(Address(to, 24), xtmp);
-      }
+        // Fill 32-byte chunks
+        pshufd(xtmp, xtmp, 0);
 
-      addptr(to, 32);
-      subl(count, 8 << shift);
-      jcc(Assembler::greaterEqual, L_fill_32_bytes_loop);
+        subl(count, 8 << shift);
+        jcc(Assembler::less, L_check_fill_8_bytes);
+        align(16);
+
+        BIND(L_fill_32_bytes_loop);
+
+        if (UseUnalignedLoadStores) {
+          movdqu(Address(to, 0), xtmp);
+          movdqu(Address(to, 16), xtmp);
+        } else {
+          movq(Address(to, 0), xtmp);
+          movq(Address(to, 8), xtmp);
+          movq(Address(to, 16), xtmp);
+          movq(Address(to, 24), xtmp);
+        }
+
+        addptr(to, 32);
+        subl(count, 8 << shift);
+        jcc(Assembler::greaterEqual, L_fill_32_bytes_loop);
+      }
       BIND(L_check_fill_8_bytes);
       addl(count, 8 << shift);
       jccb(Assembler::zero, L_exit);
