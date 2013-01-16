@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,17 +21,14 @@
  * questions.
  */
 
-// key: compiler.err.invalid.containedby.annotation.not.documented
+// key: compiler.err.invalid.repeatable.annotation.incompatible.target
 
 import java.lang.annotation.*;
 
-@Documented
-@ContainedBy(Annos.class)
+@Repeatable(Annos.class)
+@Target(ElementType.METHOD)
 @interface Anno { }
 
-@ContainerFor(Anno.class)
 @interface Annos { Anno[] value(); }
 
-@Anno
-@Anno
-class ContainedByDocumentedMismatch { }
+class RepeatableTargetMismatch { }

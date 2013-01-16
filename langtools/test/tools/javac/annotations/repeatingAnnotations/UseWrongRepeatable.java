@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,21 @@
  * questions.
  */
 
-// key: compiler.err.invalid.containedby.annotation.no.value
+/**
+ * @test
+ * @summary Smoke test for repeating annotations
+ * @compile/fail UseWrongRepeatable.java
+ * @bug 7151010
+ */
 
 import java.lang.annotation.*;
 
-@ContainedBy(Annos.class)
-@interface Anno { }
+@interface Foos {
+    UseWrongRepeatable[] value();
+}
 
-@ContainerFor(Anno.class)
-@interface Annos {}
+@Repeatable(Target.class)
+public @interface UseWrongRepeatable {}
 
-@Anno
-@Anno
-class ContainedByNoValue { }
+@UseWrongRepeatable @UseWrongRepeatable
+@interface Foo {}
