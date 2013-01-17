@@ -288,6 +288,10 @@ Declares a structure type that can be used in other events.
 
   </events>
   
+  <xi:include href="../../../closed/share/vm/trace/traceeventtypes.xml" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:fallback/>
+  </xi:include>
+
   <xi:include href="../../../closed/share/vm/trace/traceevents.xml" xmlns:xi="http://www.w3.org/2001/XInclude">
     <xi:fallback/>
   </xi:include>
