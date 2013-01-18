@@ -3951,7 +3951,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                     break;
                 case TableModelEvent.INSERT:
                     modelSelection.insertIndexInterval(change.startModelIndex,
-                                                       change.endModelIndex,
+                                                       change.length,
                                                        true);
                     break;
                 default:
