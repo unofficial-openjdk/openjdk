@@ -929,11 +929,14 @@ class CommandLineFlags {
           "Starts debugger when an implicit OS (e.g., NULL) "               \
           "exception happens")                                              \
                                                                             \
-  notproduct(bool, PrintCodeCache, false,                                   \
-          "Print the compiled_code cache when exiting")                     \
+  product(bool, PrintCodeCache, false,                                      \
+          "Print the code cache memory usage when exiting")                 \
                                                                             \
   develop(bool, PrintCodeCache2, false,                                     \
-          "Print detailed info on the compiled_code cache when exiting")    \
+          "Print detailed usage info on the code cache when exiting")       \
+                                                                            \
+  product(bool, PrintCodeCacheOnCompilation, false,                         \
+          "Print the code cache memory usage each time a method is compiled") \
                                                                             \
   diagnostic(bool, PrintStubCode, false,                                    \
           "Print generated stub code")                                      \
@@ -1075,7 +1078,7 @@ class CommandLineFlags {
                                                                             \
   product(intx, ClearFPUAtPark, 0, "(Unsafe,Unstable)" )                    \
                                                                             \
-  product(intx, hashCode, 0,                                                \
+  product(intx, hashCode, 5,                                                \
          "(Unstable) select hashCode generation algorithm" )                \
                                                                             \
   product(intx, WorkAroundNPTLTimedWaitHang, 1,                             \
@@ -1165,6 +1168,18 @@ class CommandLineFlags {
                                                                             \
   notproduct(bool, PrintCompactFieldsSavings, false,                        \
           "Print how many words were saved with CompactFields")             \
+                                                                            \
+  notproduct(bool, PrintFieldLayout, false,                                 \
+          "Print field layout for each class")                              \
+                                                                            \
+  product(intx, ContendedPaddingWidth, 128,                                 \
+          "How many bytes to pad the fields/classes marked @Contended with")\
+                                                                            \
+  product(bool, EnableContended, true,                                      \
+          "Enable @Contended annotation support")                           \
+                                                                            \
+  product(bool, RestrictContended, true,                                    \
+          "Restrict @Contended to trusted classes")                         \
                                                                             \
   product(bool, UseBiasedLocking, true,                                     \
           "Enable biased locking in JVM")                                   \
