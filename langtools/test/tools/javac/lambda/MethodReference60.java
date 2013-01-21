@@ -21,15 +21,35 @@
  * questions.
  */
 
-// key: compiler.err.invalid.container.wrong.containerfor
-// key: compiler.err.invalid.container.no.containedby
+/*
+ * @test
+ * @bug 8004102
+ * @summary Add support for array constructor references
+ * @compile/fail/ref=MethodReference60.out -XDrawDiagnostics MethodReference60.java
+ */
+public class MethodReference60 {
 
-import java.lang.annotation.*;
+    interface ArrayFactory<X> {
+        X make(int size);
+    }
 
-@ContainerFor(Retention.class)
-@interface Foos {
-    WrongContainerFor[] value();
+    interface BadArrayFactory1<X> {
+        X make();
+    }
+
+    interface BadArrayFactory2<X> {
+        X make(int i1, int i2);
+    }
+
+    interface BadArrayFactory3<X> {
+        X make(String s);
+    }
+
+    public static void main(String[] args) {
+        BadArrayFactory1<int[]> factory1 = int[]::new; //param mismatch
+        BadArrayFactory2<int[]> factory2 = int[]::new; //param mismatch
+        BadArrayFactory3<int[]> factory3 = int[]::new; //param mismatch
+        ArrayFactory<Integer> factory4 = int[]::new; //return type mismatch
+        ArrayFactory<Integer[]> factory5 = int[]::new; //return type mismatch
+    }
 }
-
-@ContainedBy(Foos.class)
-public @interface WrongContainerFor {}

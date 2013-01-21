@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,15 +23,23 @@
  * questions.
  */
 
-// key: compiler.err.invalid.containedby.annotation.incompatible.target
+/**
+ * A utility class used to report information about the system
+ * where the javac server is running.
+ *
+ * <p><b>This is NOT part of any supported API.
+ * If you write code that depends on this, you do so at your own
+ * risk.  This code and its internal interfaces are subject to change
+ * or deletion without notice.</b></p>
+ */
+package com.sun.tools.sjavac.server;
 
-import java.lang.annotation.*;
+public class SysInfo {
+    public int numCores;
+    public long maxMemory;
 
-@ContainedBy(Annos.class)
-@Target(ElementType.METHOD)
-@interface Anno { }
-
-@ContainerFor(Anno.class)
-@interface Annos { Anno[] value(); }
-
-class ContainedByTargetMismatch { }
+    public SysInfo(int nc, long mm) {
+        numCores = nc;
+        maxMemory = mm;
+    }
+}

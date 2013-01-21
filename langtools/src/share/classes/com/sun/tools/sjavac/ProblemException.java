@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,15 +23,19 @@
  * questions.
  */
 
-// key: compiler.err.invalid.container.no.containerfor
-// key: compiler.err.invalid.container.wrong.containedby
+package com.sun.tools.sjavac;
 
-import java.lang.annotation.*;
-
-@ContainerFor(WrongContainedBy.class)
-@interface Foos {
-    WrongContainedBy[] value();
+/**
+ * Used to signal serious problems when running sjavac.
+ *
+ * <p><b>This is NOT part of any supported API.
+ * If you write code that depends on this, you do so at your own
+ * risk.  This code and its internal interfaces are subject to change
+ * or deletion without notice.</b></p>
+ */
+public class ProblemException extends Exception {
+    static final long serialVersionUID = -3387516993124229949L;
+    public ProblemException(String s) {
+        super(s);
+    }
 }
-
-@ContainedBy(Target.class)
-public @interface WrongContainedBy {}

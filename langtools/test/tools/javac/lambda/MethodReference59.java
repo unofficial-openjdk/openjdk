@@ -21,16 +21,32 @@
  * questions.
  */
 
-// key: compiler.err.invalid.containedby.annotation.value.return
+/*
+ * @test
+ * @bug 8004102
+ * @summary Add support for array constructor references
+ */
+public class MethodReference59 {
 
-import java.lang.annotation.*;
+    static int assertionCount = 0;
 
-@ContainedBy(Annos.class)
-@interface Anno { }
+    static void assertTrue(boolean cond) {
+        assertionCount++;
+        if (!cond)
+            throw new AssertionError();
+    }
 
-@ContainerFor(Anno.class)
-@interface Annos { String value(); }
+    interface ArrayFactory<X> {
+        X make(int size);
+    }
 
-@Anno
-@Anno
-class ContainedByWrongValueType { }
+    public static void main(String[] args) {
+        ArrayFactory<int[]> factory1 = int[]::new;
+        int[] i1 = factory1.make(5);
+        assertTrue(i1.length == 5);
+        ArrayFactory<int[][]> factory2 = int[][]::new;
+        int[][] i2 = factory2.make(5);
+        assertTrue(i2.length == 5);
+        assertTrue(assertionCount == 2);
+    }
+}
