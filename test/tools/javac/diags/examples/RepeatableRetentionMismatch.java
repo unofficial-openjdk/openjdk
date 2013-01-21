@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,22 +21,16 @@
  * questions.
  */
 
-/**
- * @test
- * @summary Smoke test for repeating annotations
- * @compile/fail UseWrongContainerFor.java
- * @bug 7151010
- */
+// key: compiler.err.invalid.repeatable.annotation.retention
 
 import java.lang.annotation.*;
 
-@ContainerFor(Retention.class)
-@interface Foos {
-    UseWrongContainerFor[] value();
-}
+@Retention(RetentionPolicy.RUNTIME)
+@Repeatable(Annos.class)
+@interface Anno { }
 
-@ContainedBy(Foos.class)
-public @interface UseWrongContainerFor {}
+@interface Annos { Anno[] value(); }
 
-@UseWrongContainerFor @UseWrongContainerFor
-@interface Foo {}
+@Anno
+@Anno
+class RepeatableRetentionMismatch { }

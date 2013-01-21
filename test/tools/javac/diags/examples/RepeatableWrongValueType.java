@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,15 @@
  * questions.
  */
 
-// key: compiler.err.invalid.containedby.annotation.no.value
+// key: compiler.err.invalid.repeatable.annotation.value.return
 
 import java.lang.annotation.*;
 
-@ContainedBy(Annos.class)
+@Repeatable(Annos.class)
 @interface Anno { }
 
-@ContainerFor(Anno.class)
-@interface Annos {}
+@interface Annos { String value(); }
 
 @Anno
 @Anno
-class ContainedByNoValue { }
+class RepeatableWrongValueType { }

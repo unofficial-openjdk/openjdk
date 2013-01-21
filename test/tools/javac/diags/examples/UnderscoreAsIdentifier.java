@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,8 @@
  * questions.
  */
 
-/**
- * @test
- * @summary Smoke test for repeating annotations
- * @compile/fail WrongContainerFor.java
- * @bug 7151010
- */
+// key: compiler.warn.underscore.as.identifier
 
-import java.lang.annotation.*;
-
-@ContainerFor(Retention.class)
-@interface Foos {
-    WrongContainerFor[] value();
+class UnderscoreAsIdentifier {
+    String _ = null;
 }
-
-@ContainedBy(Foos.class)
-public @interface WrongContainerFor {}

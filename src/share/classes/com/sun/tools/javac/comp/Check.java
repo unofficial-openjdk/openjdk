@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -634,25 +634,40 @@ public class Check {
         }
     }
 
+    Type checkClassOrArrayType(DiagnosticPosition pos, Type t) {
+        if (!t.hasTag(CLASS) && !t.hasTag(ARRAY) && !t.hasTag(ERROR)) {
+            return typeTagError(pos,
+                                diags.fragment("type.req.class.array"),
+                                asTypeParam(t));
+        } else {
+            return t;
+        }
+    }
+
     /** Check that type is a class or interface type.
      *  @param pos           Position to be used for error reporting.
      *  @param t             The type to be checked.
      */
     Type checkClassType(DiagnosticPosition pos, Type t) {
-        if (!t.hasTag(CLASS) && !t.hasTag(ERROR))
+        if (!t.hasTag(CLASS) && !t.hasTag(ERROR)) {
             return typeTagError(pos,
                                 diags.fragment("type.req.class"),
-                                (t.hasTag(TYPEVAR))
-                                ? diags.fragment("type.parameter", t)
-                                : t);
-        else
+                                asTypeParam(t));
+        } else {
             return t;
+        }
     }
+    //where
+        private Object asTypeParam(Type t) {
+            return (t.hasTag(TYPEVAR))
+                                    ? diags.fragment("type.parameter", t)
+                                    : t;
+        }
 
     /** Check that type is a valid qualifier for a constructor reference expression
      */
     Type checkConstructorRefType(DiagnosticPosition pos, Type t) {
-        t = checkClassType(pos, t);
+        t = checkClassOrArrayType(pos, t);
         if (t.hasTag(CLASS)) {
             if ((t.tsym.flags() & (ABSTRACT | INTERFACE)) != 0) {
                 log.error(pos, "abstract.cant.be.instantiated");
@@ -690,11 +705,8 @@ public class Check {
      *  @param t             The type to be checked.
      */
     Type checkReifiableReferenceType(DiagnosticPosition pos, Type t) {
-        if (!t.hasTag(CLASS) && !t.hasTag(ARRAY) && !t.hasTag(ERROR)) {
-            return typeTagError(pos,
-                                diags.fragment("type.req.class.array"),
-                                t);
-        } else if (!types.isReifiable(t)) {
+        t = checkClassOrArrayType(pos, t);
+        if (!t.isErroneous() && !types.isReifiable(t)) {
             log.error(pos, "illegal.generic.type.for.instof");
             return types.createErrorType(t);
         } else {
@@ -2589,33 +2601,45 @@ public class Check {
             if (!isOverrider(s))
                 log.error(a.pos(), "method.does.not.override.superclass");
         }
+
+        if (a.annotationType.type.tsym == syms.functionalInterfaceType.tsym) {
+            if (s.kind != TYP) {
+                log.error(a.pos(), "bad.functional.intf.anno");
+            } else {
+                try {
+                    types.findDescriptorSymbol((TypeSymbol)s);
+                } catch (Types.FunctionDescriptorLookupError ex) {
+                    log.error(a.pos(), "bad.functional.intf.anno.1", ex.getDiagnostic());
+                }
+            }
+        }
     }
 
     /**
-     * Validate the proposed container 'containedBy' on the
+     * Validate the proposed container 'repeatable' on the
      * annotation type symbol 's'. Report errors at position
      * 'pos'.
      *
-     * @param s The (annotation)type declaration annotated with a @ContainedBy
-     * @param containedBy the @ContainedBy on 's'
+     * @param s The (annotation)type declaration annotated with a @Repeatable
+     * @param repeatable the @Repeatable on 's'
      * @param pos where to report errors
      */
-    public void validateContainedBy(TypeSymbol s, Attribute.Compound containedBy, DiagnosticPosition pos) {
-        Assert.check(types.isSameType(containedBy.type, syms.containedByType));
+    public void validateRepeatable(TypeSymbol s, Attribute.Compound repeatable, DiagnosticPosition pos) {
+        Assert.check(types.isSameType(repeatable.type, syms.repeatableType));
 
         Type t = null;
-        List<Pair<MethodSymbol,Attribute>> l = containedBy.values;
+        List<Pair<MethodSymbol,Attribute>> l = repeatable.values;
         if (!l.isEmpty()) {
             Assert.check(l.head.fst.name == names.value);
             t = ((Attribute.Class)l.head.snd).getValue();
         }
 
         if (t == null) {
-            log.error(pos, "invalid.container.wrong.containedby", s, containedBy);
+            // errors should already have been reported during Annotate
             return;
         }
 
-        validateHasContainerFor(t.tsym, s, pos);
+        validateValue(t.tsym, s, pos);
         validateRetention(t.tsym, s, pos);
         validateDocumented(t.tsym, s, pos);
         validateInherited(t.tsym, s, pos);
@@ -2623,79 +2647,18 @@ public class Check {
         validateDefault(t.tsym, s, pos);
     }
 
-    /**
-     * Validate the proposed container 'containerFor' on the
-     * annotation type symbol 's'. Report errors at position
-     * 'pos'.
-     *
-     * @param s The (annotation)type declaration annotated with a @ContainerFor
-     * @param containerFor the @ContainedFor on 's'
-     * @param pos where to report errors
-     */
-    public void validateContainerFor(TypeSymbol s, Attribute.Compound containerFor, DiagnosticPosition pos) {
-        Assert.check(types.isSameType(containerFor.type, syms.containerForType));
-
-        Type t = null;
-        List<Pair<MethodSymbol,Attribute>> l = containerFor.values;
-        if (!l.isEmpty()) {
-            Assert.check(l.head.fst.name == names.value);
-            t = ((Attribute.Class)l.head.snd).getValue();
+    private void validateValue(TypeSymbol container, TypeSymbol contained, DiagnosticPosition pos) {
+        Scope.Entry e = container.members().lookup(names.value);
+        if (e.scope != null && e.sym.kind == MTH) {
+            MethodSymbol m = (MethodSymbol) e.sym;
+            Type ret = m.getReturnType();
+            if (!(ret.hasTag(ARRAY) && types.isSameType(((ArrayType)ret).elemtype, contained.type))) {
+                log.error(pos, "invalid.repeatable.annotation.value.return",
+                        container, ret, types.makeArrayType(contained.type));
+            }
+        } else {
+            log.error(pos, "invalid.repeatable.annotation.no.value", container);
         }
-
-        if (t == null) {
-            log.error(pos, "invalid.container.wrong.containerfor", s, containerFor);
-            return;
-        }
-
-        validateHasContainedBy(t.tsym, s, pos);
-    }
-
-    private void validateHasContainedBy(TypeSymbol container, TypeSymbol contained, DiagnosticPosition pos) {
-        Attribute.Compound containedBy = container.attribute(syms.containedByType.tsym);
-
-        if (containedBy == null) {
-            log.error(pos, "invalid.container.no.containedby", container, syms.containedByType.tsym);
-            return;
-        }
-
-        Type t = null;
-        List<Pair<MethodSymbol,Attribute>> l = containedBy.values;
-        if (!l.isEmpty()) {
-            Assert.check(l.head.fst.name == names.value);
-            t = ((Attribute.Class)l.head.snd).getValue();
-        }
-
-        if (t == null) {
-            log.error(pos, "invalid.container.wrong.containedby", container, contained);
-            return;
-        }
-
-        if (!types.isSameType(t, contained.type))
-            log.error(pos, "invalid.container.wrong.containedby", t.tsym, contained);
-    }
-
-    private void validateHasContainerFor(TypeSymbol container, TypeSymbol contained, DiagnosticPosition pos) {
-        Attribute.Compound containerFor = container.attribute(syms.containerForType.tsym);
-
-        if (containerFor == null) {
-            log.error(pos, "invalid.container.no.containerfor", container, syms.containerForType.tsym);
-            return;
-        }
-
-        Type t = null;
-        List<Pair<MethodSymbol,Attribute>> l = containerFor.values;
-        if (!l.isEmpty()) {
-            Assert.check(l.head.fst.name == names.value);
-            t = ((Attribute.Class)l.head.snd).getValue();
-        }
-
-        if (t == null) {
-            log.error(pos, "invalid.container.wrong.containerfor", container, contained);
-            return;
-        }
-
-        if (!types.isSameType(t, contained.type))
-            log.error(pos, "invalid.container.wrong.containerfor", t.tsym, contained);
     }
 
     private void validateRetention(Symbol container, Symbol contained, DiagnosticPosition pos) {
@@ -2715,7 +2678,7 @@ public class Check {
             }
         }
         if (error ) {
-            log.error(pos, "invalid.containedby.annotation.retention",
+            log.error(pos, "invalid.repeatable.annotation.retention",
                       container, containerRetention,
                       contained, containedRetention);
         }
@@ -2724,7 +2687,7 @@ public class Check {
     private void validateDocumented(Symbol container, Symbol contained, DiagnosticPosition pos) {
         if (contained.attribute(syms.documentedType.tsym) != null) {
             if (container.attribute(syms.documentedType.tsym) == null) {
-                log.error(pos, "invalid.containedby.annotation.not.documented", container, contained);
+                log.error(pos, "invalid.repeatable.annotation.not.documented", container, contained);
             }
         }
     }
@@ -2732,7 +2695,7 @@ public class Check {
     private void validateInherited(Symbol container, Symbol contained, DiagnosticPosition pos) {
         if (contained.attribute(syms.inheritedType.tsym) != null) {
             if (container.attribute(syms.inheritedType.tsym) == null) {
-                log.error(pos, "invalid.containedby.annotation.not.inherited", container, contained);
+                log.error(pos, "invalid.repeatable.annotation.not.inherited", container, contained);
             }
         }
     }
@@ -2752,7 +2715,7 @@ public class Check {
         // contained has target, but container has not, error
         Attribute.Array containerTarget = getAttributeTargetAttribute(container);
         if (containerTarget == null) {
-            log.error(pos, "invalid.containedby.annotation.incompatible.target", container, contained);
+            log.error(pos, "invalid.repeatable.annotation.incompatible.target", container, contained);
             return;
         }
 
@@ -2775,7 +2738,7 @@ public class Check {
         }
 
         if (!isTargetSubset(containedTargets, containerTargets)) {
-            log.error(pos, "invalid.containedby.annotation.incompatible.target", container, contained);
+            log.error(pos, "invalid.repeatable.annotation.incompatible.target", container, contained);
         }
     }
 
@@ -2809,7 +2772,7 @@ public class Check {
                 elm.kind == Kinds.MTH &&
                 ((MethodSymbol)elm).defaultValue == null) {
                 log.error(pos,
-                          "invalid.containedby.annotation.elem.nondefault",
+                          "invalid.repeatable.annotation.elem.nondefault",
                           container,
                           elm);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 
 package com.sun.tools.doclint;
 
+import com.sun.source.doctree.LiteralTree;
 import java.util.regex.Matcher;
 import com.sun.source.doctree.LinkTree;
 import java.net.URI;
@@ -359,9 +360,8 @@ public class Checker extends DocTreeScanner<Void, Void> {
             env.messages.error(HTML, tree, "dc.tag.unknown", treeName);
         } else if (t.endKind == HtmlTag.EndKind.NONE) {
             env.messages.error(HTML, tree, "dc.tag.end.not.permitted", treeName);
-        } else if (tagStack.isEmpty()) {
-            env.messages.error(HTML, tree, "dc.tag.end.unexpected", treeName);
         } else {
+            boolean done = false;
             while (!tagStack.isEmpty()) {
                 TagStackItem top = tagStack.peek();
                 if (t == top.tag) {
@@ -383,6 +383,7 @@ public class Checker extends DocTreeScanner<Void, Void> {
                         env.messages.error(HTML, tree, "dc.text.not.allowed", treeName);
                     }
                     tagStack.pop();
+                    done = true;
                     break;
                 } else if (top.tag == null || top.tag.endKind != HtmlTag.EndKind.REQUIRED) {
                     tagStack.pop();
@@ -400,9 +401,14 @@ public class Checker extends DocTreeScanner<Void, Void> {
                         tagStack.pop();
                     } else {
                         env.messages.error(HTML, tree, "dc.tag.end.unexpected", treeName);
+                        done = true;
                         break;
                     }
                 }
+            }
+
+            if (!done && tagStack.isEmpty()) {
+                env.messages.error(HTML, tree, "dc.tag.end.unexpected", treeName);
             }
         }
 
@@ -447,14 +453,18 @@ public class Checker extends DocTreeScanner<Void, Void> {
                         if (currTag != HtmlTag.A) {
                             break;
                         }
-                    // fallthrough
+                        // fallthrough
                     case ID:
                         String value = getAttrValue(tree);
-                        if (!validName.matcher(value).matches()) {
-                            env.messages.error(HTML, tree, "dc.invalid.anchor", value);
-                        }
-                        if (!foundAnchors.add(value)) {
-                            env.messages.error(HTML, tree, "dc.anchor.already.defined", value);
+                        if (value == null) {
+                            env.messages.error(HTML, tree, "dc.anchor.value.missing");
+                        } else {
+                            if (!validName.matcher(value).matches()) {
+                                env.messages.error(HTML, tree, "dc.invalid.anchor", value);
+                            }
+                            if (!foundAnchors.add(value)) {
+                                env.messages.error(HTML, tree, "dc.anchor.already.defined", value);
+                            }
                         }
                         break;
 
@@ -539,6 +549,19 @@ public class Checker extends DocTreeScanner<Void, Void> {
         } finally {
             tagStack.pop();
         }
+    }
+
+    @Override
+    public Void visitLiteral(LiteralTree tree, Void ignore) {
+        if (tree.getKind() == DocTree.Kind.CODE) {
+            for (TagStackItem tsi: tagStack) {
+                if (tsi.tag == HtmlTag.CODE) {
+                    env.messages.warning(HTML, tree, "dc.tag.code.within.code");
+                    break;
+                }
+            }
+        }
+        return super.visitLiteral(tree, ignore);
     }
 
     @Override
