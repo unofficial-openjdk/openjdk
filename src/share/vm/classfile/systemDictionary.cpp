@@ -54,6 +54,7 @@
 #include "runtime/signature.hpp"
 #include "services/classLoadingService.hpp"
 #include "services/threadService.hpp"
+#include "trace/traceMacros.hpp"
 
 
 Dictionary*            SystemDictionary::_dictionary          = NULL;

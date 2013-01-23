@@ -145,7 +145,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o) {
 
         // This is the promotion failed test, and code handling.
         // The code belongs here for two reasons. It is slightly
-        // different thatn the code below, and cannot share the
+        // different than the code below, and cannot share the
         // CAS testing code. Keeping the code here also minimizes
         // the impact on the common case fast path code.
 

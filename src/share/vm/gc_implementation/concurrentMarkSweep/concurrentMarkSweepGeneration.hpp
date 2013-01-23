@@ -53,6 +53,8 @@
 class CMSAdaptiveSizePolicy;
 class CMSConcMarkingTask;
 class CMSGCAdaptivePolicyCounters;
+class CMSTracer;
+class ConcurrentGCTimer;
 class ConcurrentMarkSweepGeneration;
 class ConcurrentMarkSweepPolicy;
 class ConcurrentMarkSweepThread;
@@ -60,6 +62,7 @@ class CompactibleFreeListSpace;
 class FreeChunk;
 class PromotionInfo;
 class ScanMarkedObjectsAgainCarefullyClosure;
+class SerialOldTracer;
 
 // A generic CMS bit map. It's the basis for both the CMS marking bit map
 // as well as for the mod union table (in each case only a subset of the
@@ -607,6 +610,13 @@ class CMSCollector: public CHeapObj<mtGC> {
   // padded decaying average estimates of the above
   AdaptivePaddedAverage _inter_sweep_estimate;
   AdaptivePaddedAverage _intra_sweep_estimate;
+
+  CMSTracer* _gc_tracer_cm;
+  ConcurrentGCTimer* _gc_timer_cm;
+
+  bool _cms_start_registered;
+  void register_gc_start();
+  void register_gc_end();
 
  protected:
   ConcurrentMarkSweepGeneration* _cmsGen;  // old gen (CMS)

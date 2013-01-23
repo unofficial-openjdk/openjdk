@@ -35,6 +35,8 @@
 #include "gc_implementation/parallelScavenge/psPromotionManager.hpp"
 #include "gc_implementation/parallelScavenge/psScavenge.hpp"
 #include "gc_implementation/parallelScavenge/vmPSOperations.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcWhen.hpp"
 #include "memory/gcLocker.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -888,6 +890,37 @@ void ParallelScavengeHeap::prepare_for_verify() {
   ensure_parsability(false);  // no need to retire TLABs for verification
 }
 
+PSHeapSummary ParallelScavengeHeap::create_ps_heap_summary() {
+  PSOldGen* old = old_gen();
+  HeapWord* old_committed_end = (HeapWord*)old->virtual_space()->committed_high_addr();
+  VirtualSpaceSummary old_summary(old->reserved().start(), old_committed_end, old->reserved().end());
+  SpaceSummary old_space(old->reserved().start(), old_committed_end, old->used_in_bytes());
+
+  PSYoungGen* young = young_gen();
+  VirtualSpaceSummary young_summary(young->reserved().start(),
+    (HeapWord*)young->virtual_space()->committed_high_addr(), young->reserved().end());
+
+  MutableSpace* eden = young_gen()->eden_space();
+  SpaceSummary eden_space(eden->bottom(), eden->end(), eden->used_in_bytes());
+
+  MutableSpace* from = young_gen()->from_space();
+  SpaceSummary from_space(from->bottom(), from->end(), from->used_in_bytes());
+
+  MutableSpace* to = young_gen()->to_space();
+  SpaceSummary to_space(to->bottom(), to->end(), to->used_in_bytes());
+
+  VirtualSpaceSummary heap_summary = create_heap_space_summary();
+  return PSHeapSummary(heap_summary, used(), old_summary, old_space, young_summary, eden_space, from_space, to_space);
+}
+
+VirtualSpaceSummary ParallelScavengeHeap::create_perm_gen_space_summary() {
+  PSVirtualSpace* space = perm_gen()->virtual_space();
+  return VirtualSpaceSummary(
+    (HeapWord*)space->low_boundary(),
+    (HeapWord*)space->high(),
+    (HeapWord*)space->high_boundary());
+}
+
 void ParallelScavengeHeap::print_on(outputStream* st) const {
   young_gen()->print_on(st);
   old_gen()->print_on(st);
@@ -946,6 +979,12 @@ void ParallelScavengeHeap::print_heap_change(size_t prev_used) {
                         "("  SIZE_FORMAT "K)",
                         prev_used / K, used() / K, capacity() / K);
   }
+}
+
+void ParallelScavengeHeap::trace_heap(GCWhen::Type when, GCTracer* gc_tracer) {
+  const PSHeapSummary& heap_summary = create_ps_heap_summary();
+  const PermGenSummary& perm_gen_summary = create_perm_gen_summary();
+  gc_tracer->report_gc_heap_summary(when, heap_summary, perm_gen_summary);
 }
 
 ParallelScavengeHeap* ParallelScavengeHeap::heap() {

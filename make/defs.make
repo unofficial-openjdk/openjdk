@@ -19,7 +19,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#  
+#
 #
 
 ifeq ($(HS_ALT_MAKE),)
@@ -231,7 +231,7 @@ ifneq ($(ALT_JDK_IMAGE_DIR),)
   JDK_IMAGE_DIR=$(ALT_JDK_IMAGE_DIR)
 endif
 
-# The platform dependent defs.make defines platform specific variable such 
+# The platform dependent defs.make defines platform specific variable such
 # as ARCH, EXPORT_LIST etc. We must place the include here after BOOTDIR is defined.
 include $(GAMMADIR)/make/$(OSNAME)/makefiles/defs.make
 
@@ -253,7 +253,7 @@ ifneq ($(OSNAME),windows)
   #   LIBARCH   - directory name in JDK/JRE
 
   # Use uname output for SRCARCH, but deal with platform differences. If ARCH
-  # is not explicitly listed below, it is treated as x86. 
+  # is not explicitly listed below, it is treated as x86.
   SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64 arm ppc zero,$(ARCH)))
   ARCH/       = x86
   ARCH/sparc  = sparc
@@ -333,6 +333,10 @@ EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/$(JDK_INCLUDE_SUBDIR)/jni_md.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jmm.h
 
 ifndef JAVASE_EMBEDDED
-EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jfr.h
+  EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jfr.h
+  ifneq (${ARCH},arm)
+    ifneq (${INCLUDE_TRACE},0)
+      MAKE_ARGS += INCLUDE_TRACE=1
+    endif
+  endif
 endif
-

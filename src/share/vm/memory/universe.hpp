@@ -373,6 +373,11 @@ class Universe: AllStatic {
     ZeroBasedNarrowOop = 1,
     HeapBasedNarrowOop = 2
   };
+
+  static const char* narrow_oop_mode_to_string(NARROW_OOP_MODE mode);
+
+  static NARROW_OOP_MODE narrow_oop_mode();
+
   static char* preferred_heap_base(size_t heap_size, NARROW_OOP_MODE mode);
 
   // Historic gc information

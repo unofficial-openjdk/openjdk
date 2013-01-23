@@ -223,6 +223,8 @@ class StubRoutines: AllStatic {
   static void    initialize1();                            // must happen before universe::genesis
   static void    initialize2();                            // must happen after  universe::genesis
 
+  static bool is_stub_code(address addr)                   { return contains(addr); }
+
   static bool contains(address addr) {
     return
       (_code1 != NULL && _code1->blob_contains(addr)) ||

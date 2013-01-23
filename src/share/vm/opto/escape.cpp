@@ -263,7 +263,7 @@ bool ConnectionGraph::compute_escape() {
     // scalar replaceable objects.
     split_unique_types(alloc_worklist);
     if (C->failing())  return false;
-    C->print_method("After Escape Analysis", 2);
+    C->print_method(PHASE_AFTER_EA, 2);
 
 #ifdef ASSERT
   } else if (Verbose && (PrintEscapeAnalysis || PrintEliminateAllocations)) {

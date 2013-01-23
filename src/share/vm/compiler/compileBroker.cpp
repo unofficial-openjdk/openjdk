@@ -43,6 +43,7 @@
 #include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/sweeper.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
 #ifdef COMPILER1
@@ -183,9 +184,11 @@ int CompileBroker::_sum_standard_bytes_compiled  = 0;
 int CompileBroker::_sum_nmethod_size             = 0;
 int CompileBroker::_sum_nmethod_code_size        = 0;
 
-CompileQueue* CompileBroker::_c2_method_queue   = NULL;
-CompileQueue* CompileBroker::_c1_method_queue   = NULL;
-CompileTask*  CompileBroker::_task_free_list = NULL;
+long CompileBroker::_peak_compilation_time       = 0;
+
+CompileQueue* CompileBroker::_c2_method_queue    = NULL;
+CompileQueue* CompileBroker::_c1_method_queue    = NULL;
+CompileTask*  CompileBroker::_task_free_list     = NULL;
 
 GrowableArray<CompilerThread*>* CompileBroker::_method_threads = NULL;
 
@@ -1769,6 +1772,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     ciMethod* target = ci_env.get_method_from_handle(target_handle);
 
     TraceTime t1("compilation", &time);
+    EventCompilation event;
 
     compiler(task->comp_level())->compile_method(&ci_env, target, osr_bci);
 
@@ -1802,6 +1806,16 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
           _compilation_log->log_nmethod(thread, code);
         }
       }
+    }
+    if (event.should_commit()) {
+      event.set_method(target->get_methodOop());
+      event.set_compileID(compile_id);
+      event.set_compileLevel(task->comp_level());
+      event.set_succeded(task->is_success());
+      event.set_isOsr(is_osr);
+      event.set_codeSize((task->code() == NULL) ? 0 : task->code()->total_size());
+      event.set_inlinedBytes(task->num_inlined_bytecodes());
+      event.commit();
     }
   }
   pop_jni_handle_block();
@@ -1879,6 +1893,10 @@ void CompileBroker::handle_full_code_cache() {
     warning("CodeCache is full. Compiler has been disabled.");
     warning("Try increasing the code cache size using -XX:ReservedCodeCacheSize=");
     CodeCache::print_bounds(tty);
+
+    CodeCache::report_codemem_full();
+
+
 #ifndef PRODUCT
     if (CompileTheWorld || ExitOnFullCodeCache) {
       before_exit(JavaThread::current());
@@ -2034,8 +2052,10 @@ void CompileBroker::collect_statistics(CompilerThread* thread, elapsedTimer time
     // java.lang.management.CompilationMBean
     _perf_total_compilation->inc(time.ticks());
 
+    _t_total_compilation.add(time);
+    _peak_compilation_time = time.milliseconds() > _peak_compilation_time ? time.milliseconds() : _peak_compilation_time;
+
     if (CITime) {
-      _t_total_compilation.add(time);
       if (is_osr) {
         _t_osr_compilation.add(time);
         _sum_osr_bytes_compiled += method->code_size() + task->num_inlined_bytecodes();
@@ -2120,7 +2140,6 @@ void CompileBroker::print_times() {
   tty->print_cr("  nmethod code size        : %6d bytes", CompileBroker::_sum_nmethod_code_size);
   tty->print_cr("  nmethod total size       : %6d bytes", CompileBroker::_sum_nmethod_size);
 }
-
 
 // Debugging output for failure
 void CompileBroker::print_last_compile() {

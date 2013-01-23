@@ -279,10 +279,9 @@ void mutex_init() {
   def(MethodCompileQueue_lock      , Monitor, nonleaf+4,   true );
   def(Debug2_lock                  , Mutex  , nonleaf+4,   true );
   def(Debug3_lock                  , Mutex  , nonleaf+4,   true );
-  def(ProfileVM_lock               , Monitor, nonleaf+4,   false); // used for profiling of the VMThread
+  def(ProfileVM_lock               , Monitor, special,   false); // used for profiling of the VMThread
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
 
-  def(JfrQuery_lock                , Monitor, nonleaf,     true);  // JFR locks, keep these in consecutive order
   def(JfrMsg_lock                  , Monitor, nonleaf+2,   true);
   def(JfrBuffer_lock               , Mutex,   nonleaf+3,   true);
   def(JfrStream_lock               , Mutex,   nonleaf+4,   true);

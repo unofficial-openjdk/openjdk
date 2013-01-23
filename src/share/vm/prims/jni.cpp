@@ -71,7 +71,6 @@
 #include "runtime/vm_operations.hpp"
 #include "services/runtimeService.hpp"
 #include "trace/tracing.hpp"
-#include "trace/traceEventTypes.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
@@ -5041,6 +5040,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 
 #ifndef PRODUCT
 
+#include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "utilities/quickSort.hpp"
 
@@ -5051,6 +5051,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 void execute_internal_vm_tests() {
   if (ExecuteInternalVMTests) {
     tty->print_cr("Running internal VM tests");
+    run_unit_test(GCTimerAllTest::all());
     run_unit_test(arrayOopDesc::test_max_array_length());
     run_unit_test(CollectedHeap::test_is_in());
     run_unit_test(QuickSort::test_quick_sort());
@@ -5145,9 +5146,11 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
        JvmtiExport::post_thread_start(thread);
     }
 
-    EVENT_BEGIN(TraceEventThreadStart, event);
-    EVENT_COMMIT(event,
-        EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+    EventThreadStart event;
+    if (event.should_commit()) {
+      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.commit();
+    }
 
     // Check if we should compile all classes on bootclasspath
     NOT_PRODUCT(if (CompileTheWorld) ClassLoader::compile_the_world();)
@@ -5347,9 +5350,11 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
     JvmtiExport::post_thread_start(thread);
   }
 
-  EVENT_BEGIN(TraceEventThreadStart, event);
-  EVENT_COMMIT(event,
-      EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+  EventThreadStart event;
+  if (event.should_commit()) {
+    event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+    event.commit();
+  }
 
   *(JNIEnv**)penv = thread->jni_environment();
 

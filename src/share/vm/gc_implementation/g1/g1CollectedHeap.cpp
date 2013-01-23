@@ -38,10 +38,15 @@
 #include "gc_implementation/g1/g1MarkSweep.hpp"
 #include "gc_implementation/g1/g1OopClosures.inline.hpp"
 #include "gc_implementation/g1/g1RemSet.inline.hpp"
+#include "gc_implementation/g1/g1YCTypes.hpp"
 #include "gc_implementation/g1/heapRegion.inline.hpp"
 #include "gc_implementation/g1/heapRegionRemSet.hpp"
 #include "gc_implementation/g1/heapRegionSeq.inline.hpp"
 #include "gc_implementation/g1/vm_operations_g1.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/isGCActiveMark.hpp"
 #include "memory/gcLocker.inline.hpp"
 #include "memory/genOopClosures.inline.hpp"
@@ -1280,10 +1285,17 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     return false;
   }
 
+  STWGCTimer* gc_timer = G1MarkSweep::gc_timer();
+  gc_timer->register_gc_start(os::elapsed_counter());
+
+  SerialOldTracer* gc_tracer = G1MarkSweep::gc_tracer();
+  gc_tracer->report_gc_start(gc_cause(), gc_timer->gc_start());
+
   SvcGCMarker sgcm(SvcGCMarker::FULL);
   ResourceMark rm;
 
   print_heap_before_gc();
+  trace_heap_before_gc(gc_tracer);
 
   HRSPhaseSetter x(HRSPhaseFullGC);
   verify_region_sets_optional();
@@ -1301,7 +1313,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     gclog_or_tty->date_stamp(G1Log::fine() && PrintGCDateStamps);
     TraceCPUTime tcpu(G1Log::finer(), true, gclog_or_tty);
 
-    TraceTime t(GCCauseString("Full GC", gc_cause()), G1Log::fine(), true, gclog_or_tty);
+    GCTraceTime t(GCCauseString("Full GC", gc_cause()), G1Log::fine(), true, NULL);
     TraceCollectorStats tcs(g1mm()->full_collection_counters());
     TraceMemoryManagerStats tms(true /* fullGC */, gc_cause());
 
@@ -1331,7 +1343,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
     verify_before_gc();
 
-    pre_full_gc_dump();
+    pre_full_gc_dump(gc_timer);
 
     COMPILER2_PRESENT(DerivedPointerTable::clear());
 
@@ -1517,6 +1529,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     verify_region_sets_optional();
 
     print_heap_after_gc();
+    trace_heap_after_gc(gc_tracer);
 
     // We must call G1MonitoringSupport::update_sizes() in the same scoping level
     // as an active TraceMemoryManagerStats object (i.e. before the destructor for the
@@ -1525,7 +1538,11 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     g1mm()->update_sizes();
   }
 
-  post_full_gc_dump();
+  post_full_gc_dump(gc_timer);
+
+  gc_timer->register_gc_end(os::elapsed_counter());
+
+  gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
 
   return true;
 }
@@ -1909,12 +1926,18 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _surviving_young_words(NULL),
   _old_marking_cycles_started(0),
   _old_marking_cycles_completed(0),
+  _concurrent_cycle_started(false),
   _in_cset_fast_test(NULL),
   _in_cset_fast_test_base(NULL),
   _dirty_cards_region_list(NULL),
   _worker_cset_start_region(NULL),
-  _worker_cset_start_region_time_stamp(NULL) {
-  _g1h = this; // To catch bugs.
+  _worker_cset_start_region_time_stamp(NULL),
+  _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
+  _gc_timer_cm(new (ResourceObj::C_HEAP, mtGC) ConcurrentGCTimer()),
+  _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),
+  _gc_tracer_cm(new (ResourceObj::C_HEAP, mtGC) G1OldTracer()) {
+
+  _g1h = this;
   if (_process_strong_tasks == NULL || !_process_strong_tasks->valid()) {
     vm_exit_during_initialization("Failed necessary allocation.");
   }
@@ -2482,6 +2505,46 @@ void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
   // and it's waiting for a full GC to finish will be woken up. It is
   // waiting in VM_G1IncCollectionPause::doit_epilogue().
   FullGCCount_lock->notify_all();
+}
+
+void G1CollectedHeap::register_concurrent_cycle_start(jlong start_time) {
+  _concurrent_cycle_started = true;
+  _gc_timer_cm->register_gc_start(start_time);
+
+  _gc_tracer_cm->report_gc_start(gc_cause(), _gc_timer_cm->gc_start());
+  trace_heap_before_gc(_gc_tracer_cm);
+}
+
+void G1CollectedHeap::register_concurrent_cycle_end() {
+  if (_concurrent_cycle_started) {
+    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+
+    _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
+
+    _concurrent_cycle_started = false;
+  }
+}
+
+void G1CollectedHeap::trace_heap_after_concurrent_cycle() {
+  if (_concurrent_cycle_started) {
+    trace_heap_after_gc(_gc_tracer_cm);
+  }
+}
+
+G1YCType G1CollectedHeap::yc_type() {
+  bool is_young = g1_policy()->gcs_are_young();
+  bool is_initial_mark = g1_policy()->during_initial_mark_pause();
+  bool is_during_mark = mark_in_progress();
+
+  if (is_initial_mark) {
+    return InitialMark;
+  } else if (is_during_mark) {
+    return DuringMark;
+  } else if (is_young) {
+    return Normal;
+  } else {
+    return Mixed;
+  }
 }
 
 void G1CollectedHeap::collect_as_vm_thread(GCCause::Cause cause) {
@@ -3738,10 +3801,15 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     return false;
   }
 
+  _gc_timer_stw->register_gc_start(os::elapsed_counter());
+
+  _gc_tracer_stw->report_gc_start(gc_cause(), _gc_timer_stw->gc_start());
+
   SvcGCMarker sgcm(SvcGCMarker::MINOR);
   ResourceMark rm;
 
   print_heap_before_gc();
+  trace_heap_before_gc(_gc_tracer_stw);
 
   HRSPhaseSetter x(HRSPhaseEvacuation);
   verify_region_sets_optional();
@@ -3770,7 +3838,11 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
       // We are about to start a marking cycle, so we increment the
       // full collection counter.
       increment_old_marking_cycles_started();
+      register_concurrent_cycle_start(_gc_timer_stw->gc_start());
     }
+
+    _gc_tracer_stw->report_yc_type(yc_type());
+
     TraceCPUTime tcpu(G1Log::finer(), true, gclog_or_tty);
 
     int active_workers = (G1CollectedHeap::use_parallel_gc_threads() ?
@@ -4091,12 +4163,17 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     TASKQUEUE_STATS_ONLY(reset_taskqueue_stats());
 
     print_heap_after_gc();
+    trace_heap_after_gc(_gc_tracer_stw);
 
     // We must call G1MonitoringSupport::update_sizes() in the same scoping level
     // as an active TraceMemoryManagerStats object (i.e. before the destructor for the
     // TraceMemoryManagerStats is called) so that the G1 memory pools are updated
     // before any GC notifications are raised.
     g1mm()->update_sizes();
+
+    _gc_timer_stw->register_gc_end(os::elapsed_counter());
+
+    _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());
   }
 
   if (G1SummarizeRSetStats &&
@@ -4104,7 +4181,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
       (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
     g1_rem_set()->print_summary_info();
   }
-
   // It should now be safe to tell the concurrent mark thread to start
   // without its logging output interfering with the logging output
   // that came from the pause.
@@ -5528,14 +5604,15 @@ void G1CollectedHeap::process_discovered_references(uint no_of_gc_workers) {
     rp->process_discovered_references(&is_alive,
                                       &keep_alive,
                                       &drain_queue,
-                                      NULL);
+                                      NULL,
+                                      _gc_timer_stw);
   } else {
     // Parallel reference processing
     assert(rp->num_q() == no_of_gc_workers, "sanity");
     assert(no_of_gc_workers <= rp->max_num_q(), "sanity");
 
     G1STWRefProcTaskExecutor par_task_executor(this, workers(), _task_queues, no_of_gc_workers);
-    rp->process_discovered_references(&is_alive, &keep_alive, &drain_queue, &par_task_executor);
+    rp->process_discovered_references(&is_alive, &keep_alive, &drain_queue, &par_task_executor, _gc_timer_stw);
   }
 
   // We have completed copying any necessary live referent objects

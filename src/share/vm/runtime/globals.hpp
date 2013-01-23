@@ -3623,7 +3623,10 @@ class CommandLineFlags {
           "Enable internal testing APIs")                                   \
                                                                             \
   product(bool, PrintGCCause, true,                                         \
-          "Include GC cause in GC logging")
+          "Include GC cause in GC logging")                                 \
+                                                                            \
+  product(bool, EnableTracing, false,                                       \
+                  "Enable event-based tracing")
 
 /*
  *  Macros for factoring of globals

@@ -34,6 +34,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
 #include "runtime/atomic.hpp"
+#include "trace/traceMacros.hpp"
 
 void Klass::set_name(Symbol* n) {
   _name = n;

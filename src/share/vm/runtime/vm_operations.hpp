@@ -178,6 +178,8 @@ class VM_Operation: public CHeapObj<mtInternal> {
            evaluation_mode() == _async_safepoint;
   }
 
+  static const char* mode_to_string(Mode mode);
+
   // Debugging
   void print_on_error(outputStream* st) const;
   const char* name() const { return _names[type()]; }

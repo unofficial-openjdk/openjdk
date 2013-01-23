@@ -29,6 +29,10 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/genMarkSweep.hpp"
@@ -76,7 +80,9 @@ void GenMarkSweep::invoke_at_safepoint(int level, ReferenceProcessor* rp,
   _ref_processor = rp;
   rp->setup_policy(clear_all_softrefs);
 
-  TraceTime t1(GCCauseString("Full GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, gclog_or_tty);
+  GCTraceTime t1(GCCauseString("Full GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL);
+
+  gch->trace_heap_before_gc(_gc_tracer);
 
   // When collecting the permanent generation methodOops may be moving,
   // so we either have to flush all bcp data or convert it into bci.
@@ -181,6 +187,8 @@ void GenMarkSweep::invoke_at_safepoint(int level, ReferenceProcessor* rp,
   // does not guarantee monotonicity.
   jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
   gch->update_time_of_last_gc(now);
+
+  gch->trace_heap_after_gc(_gc_tracer);
 }
 
 void GenMarkSweep::allocate_stacks() {
@@ -258,7 +266,7 @@ void GenMarkSweep::deallocate_stacks() {
 void GenMarkSweep::mark_sweep_phase1(int level,
                                   bool clear_all_softrefs) {
   // Recursively traverse all live objects and mark them
-  TraceTime tm("phase 1", PrintGC && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 1", PrintGC && Verbose, true, _gc_timer);
   trace(" 1");
 
   VALIDATE_MARK_SWEEP_ONLY(reset_live_oop_tracking(false));
@@ -284,7 +292,7 @@ void GenMarkSweep::mark_sweep_phase1(int level,
   {
     ref_processor()->setup_policy(clear_all_softrefs);
     ref_processor()->process_discovered_references(
-      &is_alive, &keep_alive, &follow_stack_closure, NULL);
+      &is_alive, &keep_alive, &follow_stack_closure, NULL, _gc_timer);
   }
 
   // Follow system dictionary roots and unload classes
@@ -328,7 +336,7 @@ void GenMarkSweep::mark_sweep_phase2() {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   Generation* pg = gch->perm_gen();
 
-  TraceTime tm("phase 2", PrintGC && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 2", PrintGC && Verbose, true, _gc_timer);
   trace("2");
 
   VALIDATE_MARK_SWEEP_ONLY(reset_live_oop_tracking(false));
@@ -352,7 +360,7 @@ void GenMarkSweep::mark_sweep_phase3(int level) {
   Generation* pg = gch->perm_gen();
 
   // Adjust the pointers to reflect the new locations
-  TraceTime tm("phase 3", PrintGC && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 3", PrintGC && Verbose, true, _gc_timer);
   trace("3");
 
   VALIDATE_MARK_SWEEP_ONLY(reset_live_oop_tracking(false));
@@ -412,7 +420,7 @@ void GenMarkSweep::mark_sweep_phase4() {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   Generation* pg = gch->perm_gen();
 
-  TraceTime tm("phase 4", PrintGC && Verbose, true, gclog_or_tty);
+  GCTraceTime tm("phase 4", PrintGC && Verbose, true, _gc_timer);
   trace("4");
 
   VALIDATE_MARK_SWEEP_ONLY(reset_live_oop_tracking(true));

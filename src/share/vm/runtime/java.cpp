@@ -60,7 +60,6 @@
 #include "services/memReporter.hpp"
 #include "services/memTracker.hpp"
 #include "trace/tracing.hpp"
-#include "trace/traceEventTypes.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/histogram.hpp"
@@ -526,9 +525,12 @@ void before_exit(JavaThread * thread) {
     JvmtiExport::post_thread_end(thread);
   }
 
-  EVENT_BEGIN(TraceEventThreadEnd, event);
-  EVENT_COMMIT(event,
-      EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+
+  EventThreadEnd event;
+  if (event.should_commit()) {
+      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.commit();
+  }
 
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution

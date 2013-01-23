@@ -26,7 +26,11 @@
 #define SHARE_VM_MEMORY_REFERENCEPROCESSOR_HPP
 
 #include "memory/referencePolicy.hpp"
+#include "memory/referenceProcessorStats.hpp"
+#include "memory/referenceType.hpp"
 #include "oops/instanceRefKlass.hpp"
+
+class GCTimer;
 
 // ReferenceProcessor class encapsulates the per-"collector" processing
 // of java.lang.Reference objects for GC. The interface is useful for supporting
@@ -204,6 +208,13 @@ public:
 };
 
 class ReferenceProcessor : public CHeapObj<mtGC> {
+
+ private:
+  ReferenceProcessorStats _stats;
+
+  size_t total_count(DiscoveredList lists[]);
+  void save_discovered_list_stats();
+
  protected:
   // Compatibility with pre-4965777 JDK's
   static bool _pending_list_uses_discovered_field;
@@ -351,7 +362,8 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
                                       OopClosure*        keep_alive,
                                       VoidClosure*       complete_gc,
                                       YieldClosure*      yield,
-                                      bool               should_unload_classes);
+                                      bool               should_unload_classes,
+                                      GCTimer*           gc_timer);
 
   // Delete entries in the discovered lists that have
   // either a null referent or are not active. Such
@@ -371,6 +383,12 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
   const char* list_name(uint i);
 
   void enqueue_discovered_reflists(HeapWord* pending_list_addr, AbstractRefProcTaskExecutor* task_executor);
+
+  // Returns statistics from the last time the reference where processed via
+  // an invocation of process_discovered_references.
+  const ReferenceProcessorStats& collect_statistics() const {
+    return _stats;
+  }
 
  protected:
   // Set the 'discovered' field of the given reference to
@@ -429,7 +447,8 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
     _num_q(0),
     _max_num_q(0),
     _processing_is_mt(false),
-    _next_id(0)
+    _next_id(0),
+    _stats()
   { }
 
   // Default parameters give you a vanilla reference processor.
@@ -504,9 +523,9 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
   void process_discovered_references(BoolObjectClosure*           is_alive,
                                      OopClosure*                  keep_alive,
                                      VoidClosure*                 complete_gc,
-                                     AbstractRefProcTaskExecutor* task_executor);
+                                     AbstractRefProcTaskExecutor* task_executor,
+                                     GCTimer *gc_timer);
 
- public:
   // Enqueue references at end of GC (called by the garbage collector)
   bool enqueue_discovered_references(AbstractRefProcTaskExecutor* task_executor = NULL);
 

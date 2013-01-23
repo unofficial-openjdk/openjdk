@@ -203,47 +203,6 @@ class Linux {
   // LinuxThreads work-around for 6292965
   static int safe_cond_timedwait(pthread_cond_t *_cond, pthread_mutex_t *_mutex, const struct timespec *_abstime);
 
-
-  // Linux suspend/resume support - this helper is a shadow of its former
-  // self now that low-level suspension is barely used, and old workarounds
-  // for LinuxThreads are no longer needed.
-  class SuspendResume {
-  private:
-    volatile int _suspend_action;
-    // values for suspend_action:
-    #define SR_NONE               (0x00)
-    #define SR_SUSPEND            (0x01)  // suspend request
-    #define SR_CONTINUE           (0x02)  // resume request
-
-    volatile jint _state;
-    // values for _state: + SR_NONE
-    #define SR_SUSPENDED          (0x20)
-  public:
-    SuspendResume() { _suspend_action = SR_NONE; _state = SR_NONE; }
-
-    int suspend_action() const     { return _suspend_action; }
-    void set_suspend_action(int x) { _suspend_action = x;    }
-
-    // atomic updates for _state
-    void set_suspended()           {
-      jint temp, temp2;
-      do {
-        temp = _state;
-        temp2 = Atomic::cmpxchg(temp | SR_SUSPENDED, &_state, temp);
-      } while (temp2 != temp);
-    }
-    void clear_suspended()        {
-      jint temp, temp2;
-      do {
-        temp = _state;
-        temp2 = Atomic::cmpxchg(temp & ~SR_SUSPENDED, &_state, temp);
-      } while (temp2 != temp);
-    }
-    bool is_suspended()            { return _state & SR_SUSPENDED;       }
-
-    #undef SR_SUSPENDED
-  };
-
 private:
   typedef int (*sched_getcpu_func_t)(void);
   typedef int (*numa_node_to_cpus_func_t)(int node, unsigned long *buffer, int bufferlen);

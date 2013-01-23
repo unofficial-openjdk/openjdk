@@ -47,6 +47,7 @@
 # flags.make	- with macro settings
 # vm.make	- to support making "$(MAKE) -v vm.make" in makefiles
 # adlc.make	- 
+# trace.make	- generate tracing event and type definitions
 # jvmti.make	- generate JVMTI bindings from the spec (JSR-163)
 # sa.make	- generate SA jar file and natives
 # env.[ck]sh	- environment settings
@@ -110,7 +111,8 @@ COMPILER	= $(shell sed -n 's/^compiler[ 	]*=[ 	]*//p' $(PLATFORM_FILE))
 SIMPLE_DIRS	= \
 	$(PLATFORM_DIR)/generated/dependencies \
 	$(PLATFORM_DIR)/generated/adfiles \
-	$(PLATFORM_DIR)/generated/jvmtifiles
+	$(PLATFORM_DIR)/generated/jvmtifiles \
+	$(PLATFORM_DIR)/generated/tracefiles
 
 TARGETS      = debug fastdebug jvmg optimized product profiled
 SUBMAKE_DIRS = $(addprefix $(PLATFORM_DIR)/,$(TARGETS))
@@ -118,7 +120,7 @@ SUBMAKE_DIRS = $(addprefix $(PLATFORM_DIR)/,$(TARGETS))
 # For dependencies and recursive makes.
 BUILDTREE_MAKE	= $(GAMMADIR)/make/$(OS_FAMILY)/makefiles/buildtree.make
 
-BUILDTREE_TARGETS = Makefile flags.make flags_vm.make vm.make adlc.make jvmti.make sa.make \
+BUILDTREE_TARGETS = Makefile flags.make flags_vm.make vm.make adlc.make trace.make jvmti.make sa.make \
         env.sh env.csh jdkpath.sh .dbxrc test_gamma
 
 BUILDTREE_VARS	= GAMMADIR=$(GAMMADIR) OS_FAMILY=$(OS_FAMILY) \
@@ -311,6 +313,16 @@ adlc.make: $(BUILDTREE_MAKE)
 	) > $@
 
 jvmti.make: $(BUILDTREE_MAKE)
+	@echo Creating $@ ...
+	$(QUIETLY) ( \
+	$(BUILDTREE_COMMENT); \
+	echo; \
+	echo include flags.make; \
+	echo; \
+	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(@F)"; \
+	) > $@
+
+trace.make: $(BUILDTREE_MAKE)
 	@echo Creating $@ ...
 	$(QUIETLY) ( \
 	$(BUILDTREE_COMMENT); \

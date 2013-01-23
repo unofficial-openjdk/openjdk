@@ -19,7 +19,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-#  
+#
 #
 
 # Rules to build JVM and related libraries, included from vm.make in the build
@@ -52,7 +52,7 @@ endif
 # Src_Dirs_V is everything in src/share/vm/*, plus the right os/*/vm and cpu/*/vm
 # The adfiles directory contains ad_<arch>.[ch]pp.
 # The jvmtifiles directory contains jvmti*.[ch]pp
-Src_Dirs_V += $(GENERATED)/adfiles $(GENERATED)/jvmtifiles
+Src_Dirs_V += $(GENERATED)/adfiles $(GENERATED)/jvmtifiles $(GENERATED)/tracefiles
 VPATH += $(Src_Dirs_V:%=%:)
 
 # set INCLUDES for C preprocessor.
@@ -72,7 +72,7 @@ else
   endif
 endif
 
-# HOTSPOT_RELEASE_VERSION and HOTSPOT_BUILD_VERSION are defined 
+# HOTSPOT_RELEASE_VERSION and HOTSPOT_BUILD_VERSION are defined
 # in $(GAMMADIR)/make/defs.make
 ifeq ($(HOTSPOT_BUILD_VERSION),)
   BUILD_VERSION = -DHOTSPOT_RELEASE_VERSION="\"$(HOTSPOT_RELEASE_VERSION)\""
@@ -99,13 +99,11 @@ CXXFLAGS =           \
 
 # This is VERY important! The version define must only be supplied to vm_version.o
 # If not, ccache will not re-use the cache at all, since the version string might contain
-# a time and date. 
+# a time and date.
 vm_version.o: CXXFLAGS += ${JRE_VERSION}
 
-ifndef JAVASE_EMBEDDED 
-ifneq (${ARCH},arm)
-CFLAGS += -DINCLUDE_TRACE
-endif
+ifeq ($(INCLUDE_TRACE), 1)
+CFLAGS += -DINCLUDE_TRACE=1
 endif
 
 # CFLAGS_WARN holds compiler options to suppress/enable warnings.
@@ -155,16 +153,14 @@ SOURCE_PATHS+=$(HS_COMMON_SRC)/os/posix/vm
 SOURCE_PATHS+=$(HS_COMMON_SRC)/cpu/$(Platform_arch)/vm
 SOURCE_PATHS+=$(HS_COMMON_SRC)/os_cpu/$(Platform_os_arch)/vm
 
-ifndef JAVASE_EMBEDDED 
-ifneq (${ARCH},arm)
+ifeq ($(INCLUDE_TRACE), 1)
 SOURCE_PATHS+=$(shell if [ -d $(HS_ALT_SRC)/share/vm/jfr ]; then \
   find $(HS_ALT_SRC)/share/vm/jfr -type d; \
   fi)
 endif
-endif
 
 CORE_PATHS=$(foreach path,$(SOURCE_PATHS),$(call altsrc,$(path)) $(path))
-CORE_PATHS+=$(GENERATED)/jvmtifiles
+CORE_PATHS+=$(GENERATED)/jvmtifiles $(GENERATED)/tracefiles
 
 COMPILER1_PATHS := $(call altsrc,$(HS_COMMON_SRC)/share/vm/c1)
 COMPILER1_PATHS += $(HS_COMMON_SRC)/share/vm/c1
@@ -313,7 +309,7 @@ endif
 # With more recent Redhat releases (or the cutting edge version Fedora), if
 # SELinux is configured to be enabled, the runtime linker will fail to apply
 # the text relocation to libjvm.so considering that it is built as a non-PIC
-# DSO. To workaround that, we run chcon to libjvm.so after it is built. See 
+# DSO. To workaround that, we run chcon to libjvm.so after it is built. See
 # details in bug 6538311.
 $(LIBJVM): $(LIBJVM.o) $(LIBJVM_MAPFILE) $(LD_SCRIPT)
 	$(QUIETLY) {                                                    \
