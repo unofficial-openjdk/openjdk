@@ -133,8 +133,7 @@ package.access=sun.,\
                com.sun.xml.internal.ws.,\
                com.sun.imageio.,\
                com.sun.istack.internal.,\
-               com.sun.jmx.defaults.,\
-               com.sun.jmx.remote.util.
+               com.sun.jmx.
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -152,8 +151,7 @@ package.definition=sun.,\
                    com.sun.xml.internal.ws.,\
                    com.sun.imageio.,\
                    com.sun.istack.internal.,\
-                   com.sun.jmx.defaults.,\
-                   com.sun.jmx.remote.util.
+                   com.sun.jmx.
 
 #
 # Determines whether this properties file can be appended to

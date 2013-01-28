@@ -85,7 +85,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
         }
 
         // Convert MonitorInfo[] and LockInfo[] to CompositeData[]
-        LockDataConverter converter = new LockDataConverter(threadInfo);
+        LockDataConverter converter = LockDataConverter.newLockDataConverter(threadInfo);
         CompositeData lockInfoData = converter.toLockInfoCompositeData();
         CompositeData[] lockedSyncsData = converter.toLockedSynchronizersCompositeData();
 
@@ -315,7 +315,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
 
     // 6.0 new attributes
     public LockInfo lockInfo() {
-        LockDataConverter converter = new LockDataConverter();
+        LockDataConverter converter = LockDataConverter.newLockDataConverter();
         CompositeData lockInfoData = (CompositeData) cdata.get(LOCK_INFO);
         return converter.toLockInfo(lockInfoData);
     }
@@ -336,7 +336,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     }
 
     public LockInfo[] lockedSynchronizers() {
-        LockDataConverter converter = new LockDataConverter();
+        LockDataConverter converter = LockDataConverter.newLockDataConverter();
         CompositeData[] lockedSyncsData =
             (CompositeData[]) cdata.get(LOCKED_SYNCS);
 

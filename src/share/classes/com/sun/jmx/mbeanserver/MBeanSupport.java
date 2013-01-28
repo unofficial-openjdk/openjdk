@@ -38,6 +38,7 @@ import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * Base class for MBeans.  There is one instance of this class for
@@ -131,6 +132,7 @@ public abstract class MBeanSupport<M>
                 " is not an instance of " + mbeanInterface.getName();
             throw new NotCompliantMBeanException(msg);
         }
+        ReflectUtil.checkPackageAccess(mbeanInterface);
         this.resource = resource;
         MBeanIntrospector<M> introspector = getMBeanIntrospector();
         this.perInterface = introspector.getPerInterface(mbeanInterface);
