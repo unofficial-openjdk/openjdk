@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,13 +23,22 @@
  * questions.
  */
 
-package subpackage;
+package java.lang.reflect;
 
-import java.lang.annotation.*;
+/**
+ * AnnotatedType represents the annotated use of a type in the program
+ * currently running in this VM. The use may be of any type in the Java
+ * programming language, including an array type, a parameterized type, a type
+ * variable, or a wildcard type.
+ *
+ * @since 1.8
+ */
+public interface AnnotatedType extends AnnotatedElement {
 
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Repeatable(InheritedContainer.class)
-public @interface InheritedContainee {
-    int value();
+    /**
+     * Returns the underlying type that this annotated type represents.
+     *
+     * @return the type this annotated type represents
+     */
+    public Type getType();
 }

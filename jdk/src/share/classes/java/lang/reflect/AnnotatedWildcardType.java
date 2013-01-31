@@ -4,7 +4,9 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,13 +23,27 @@
  * questions.
  */
 
-package subpackage;
+package java.lang.reflect;
 
-import java.lang.annotation.*;
+/**
+ * AnnotatedWildcardType represents the use of a wildcard type argument, whose
+ * upper or lower bounds may themselves represent annotated uses of types.
+ *
+ * @since 1.8
+ */
+public interface AnnotatedWildcardType extends AnnotatedType {
 
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Repeatable(InheritedContainer.class)
-public @interface InheritedContainee {
-    int value();
+    /**
+     * Returns the annotated lower bounds of this wildcard type.
+     *
+     * @return the annotated lower bounds of this wildcard type
+     */
+    AnnotatedType[] getAnnotatedLowerBounds();
+
+    /**
+     * Returns the annotated upper bounds of this wildcard type.
+     *
+     * @return the annotated upper bounds of this wildcard type
+     */
+    AnnotatedType[] getAnnotatedUpperBounds();
 }
