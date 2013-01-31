@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@
 #include "memory/cardTableRS.hpp"
 #include "oops/oop.pcgc.inline.hpp"
 #endif
+#include "runtime/atomic.hpp"
 
 klassOop instanceKlassKlass::create_klass(TRAPS) {
   instanceKlassKlass o;
@@ -456,6 +457,8 @@ instanceKlassKlass::allocate_instance_klass(Symbol* name, int vtable_len, int it
     // To get verify to work - must be set to partial loaded before first GC point.
     k()->set_partially_loaded();
   }
+
+  Atomic::inc(&instanceKlass::_total_instanceKlass_count);
   return k();
 }
 
