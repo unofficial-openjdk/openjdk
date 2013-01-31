@@ -1074,7 +1074,7 @@ void ConcurrentMark::scanRootRegions() {
     uint active_workers = MAX2(1U, parallel_marking_threads());
 
     CMRootRegionScanTask task(this);
-    if (parallel_marking_threads() > 0) {
+    if (use_parallel_marking_threads()) {
       _parallel_workers->set_active_workers((int) active_workers);
       _parallel_workers->run_task(&task);
     } else {
@@ -1110,7 +1110,7 @@ void ConcurrentMark::markFromRoots() {
   set_phase(active_workers, true /* concurrent */);
 
   CMConcurrentMarkingTask markingTask(this, cmThread());
-  if (parallel_marking_threads() > 0) {
+  if (use_parallel_marking_threads()) {
     _parallel_workers->set_active_workers((int)active_workers);
     // Don't set _n_par_threads because it affects MT in proceess_strong_roots()
     // and the decisions on that MT processing is made elsewhere.
@@ -3127,7 +3127,9 @@ void ConcurrentMark::print_summary_info() {
 }
 
 void ConcurrentMark::print_worker_threads_on(outputStream* st) const {
-  _parallel_workers->print_worker_threads_on(st);
+  if (use_parallel_marking_threads()) {
+    _parallel_workers->print_worker_threads_on(st);
+  }
 }
 
 // We take a break if someone is trying to stop the world.
