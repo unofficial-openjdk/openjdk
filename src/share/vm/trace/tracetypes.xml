@@ -264,8 +264,12 @@ creating the constant pool data in  VM_JFRCheckpoint::write_checkpoint
     <primary_type symbol="NANOS" datatype="LONG" contenttype="NANOS"
                   type="s8" sizeop="sizeof(s8)"/>
 
-    <!-- 64-bit unsigned integer, SEMANTIC value RELATIVE TICKS -->
+    <!-- 64-bit signed integer, SEMANTIC value ABSOLUTE TICKS -->
     <primary_type symbol="TICKS" datatype="LONG" contenttype="TICKS"
+                  type="s8" sizeop="sizeof(s8)"/>
+
+    <!-- 64-bit signed integer, SEMANTIC value RELATIVE TICKS -->
+    <primary_type symbol="RELATIVE_TICKS" datatype="LONG" contenttype="TICKS"
                   type="s8" sizeop="sizeof(s8)"/>
 
     <!-- 64-bit unsigned integer, SEMANTIC value ADDRESS (mem loc) -->
