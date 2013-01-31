@@ -34,26 +34,6 @@
 // Makes a string of the macro expansion of a
 #define XSTR(a) STR(a)
 
-// KERNEL variant
-#ifdef KERNEL
-#define COMPILER1
-#define SERIALGC
-
-#define JVMTI_KERNEL
-#define FPROF_KERNEL
-#define VM_STRUCTS_KERNEL
-#define JNICHECK_KERNEL
-#define SERVICES_KERNEL
-
-#define KERNEL_RETURN        {}
-#define KERNEL_RETURN_(code) { return code; }
-
-#else  // KERNEL
-
-#define KERNEL_RETURN        /* next token must be ; */
-#define KERNEL_RETURN_(code) /* next token must be ; */
-
-#endif // KERNEL
 
 // COMPILER1 variant
 #ifdef COMPILER1

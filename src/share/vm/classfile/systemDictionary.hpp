@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,8 +166,6 @@ class SymbolPropertyTable;
   /* It's okay if this turns out to be NULL in non-1.4 JDKs. */                                                          \
   do_klass(nio_Buffer_klass,                            java_nio_Buffer,                           Opt                 ) \
                                                                                                                          \
-  do_klass(DownloadManager_klass,                       sun_jkernel_DownloadManager,               Opt_Kernel          ) \
-                                                                                                                         \
   do_klass(PostVMInitHook_klass,                        sun_misc_PostVMInitHook,                   Opt                 ) \
                                                                                                                          \
   /* Preload boxing klasses */                                                                                           \
@@ -211,7 +209,6 @@ class SystemDictionary : AllStatic {
     Opt,                        // preload tried; NULL if not present
     Opt_Only_JDK14NewRef,       // preload tried; use only with NewReflection
     Opt_Only_JDK15,             // preload tried; use only with JDK1.5+
-    Opt_Kernel,                 // preload tried only #ifdef KERNEL
     OPTION_LIMIT,
     CEIL_LG_OPTION_LIMIT = 4    // OPTION_LIMIT <= (1<<CEIL_LG_OPTION_LIMIT)
   };
@@ -399,7 +396,6 @@ public:
   static klassOop check_klass_Pre(       klassOop k) { return check_klass(k); }
   static klassOop check_klass_Pre_JSR292(klassOop k) { return EnableInvokeDynamic ? check_klass(k) : k; }
   static klassOop check_klass_Opt(       klassOop k) { return k; }
-  static klassOop check_klass_Opt_Kernel(klassOop k) { return k; } //== Opt
   static klassOop check_klass_Opt_Only_JDK15(klassOop k) {
     assert(JDK_Version::is_gte_jdk15x_version(), "JDK 1.5 only");
     return k;
