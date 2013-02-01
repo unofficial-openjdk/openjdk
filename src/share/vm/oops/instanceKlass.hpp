@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include "oops/klassOop.hpp"
 #include "oops/klassVtable.hpp"
 #include "oops/objArrayOop.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/os.hpp"
 #include "utilities/accessFlags.hpp"
@@ -153,6 +154,11 @@ class instanceKlass: public Klass {
  public:
   oop* oop_block_beg() const { return adr_array_klasses(); }
   oop* oop_block_end() const { return adr_methods_default_annotations() + 1; }
+
+  static int number_of_instance_classes() { return _total_instanceKlass_count; }
+
+ private:
+  static volatile int _total_instanceKlass_count;
 
  protected:
   //

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -203,6 +203,7 @@ class MemRecorder : public CHeapObj<mtNMT|otNMTRecorder> {
   friend class MemSnapshot;
   friend class MemTracker;
   friend class MemTrackWorker;
+  friend class GenerationData;
 
  protected:
   // the array that holds memory records

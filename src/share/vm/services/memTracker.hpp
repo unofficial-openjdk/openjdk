@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,7 @@ class Thread;
  * MemTracker is the 'gate' class to native memory tracking runtime.
  */
 class MemTracker : AllStatic {
+  friend class GenerationData;
   friend class MemTrackWorker;
   friend class MemSnapshot;
   friend class SyncThreadRecorderClosure;

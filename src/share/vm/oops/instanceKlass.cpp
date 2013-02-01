@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,6 +167,8 @@ HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
 #define DTRACE_CLASSINIT_PROBE_WAIT(type, clss, thread_type, wait)
 
 #endif //  ndef DTRACE_ENABLED
+
+volatile int instanceKlass::_total_instanceKlass_count = 0;
 
 bool instanceKlass::should_be_initialized() const {
   return !is_initialized();
@@ -1947,6 +1949,9 @@ void instanceKlass::release_C_heap_structures() {
   _constants->unreference_symbols();
 
   if (_source_debug_extension != NULL) FREE_C_HEAP_ARRAY(char, _source_debug_extension, mtClass);
+
+  assert(_total_instanceKlass_count >= 1, "Sanity check");
+  Atomic::dec(&_total_instanceKlass_count);
 }
 
 void instanceKlass::set_source_file_name(Symbol* n) {
