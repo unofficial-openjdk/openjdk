@@ -28,5 +28,6 @@
 #include "prims/jni.h"
 
 typedef jlong TracingTime;
+typedef jlong RelativeTracingTime;
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,9 +43,7 @@ void DCmdRegistrant::register_dcmds(){
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<VMUptimeDCmd>(true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<SystemGCDCmd>(true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<RunFinalizationDCmd>(true, false));
-#ifndef SERVICES_KERNEL   // Heap dumping not supported
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<HeapDumpDCmd>(true, false));
-#endif // SERVICES_KERNEL
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<ClassHistogramDCmd>(true, false));
   DCmdFactory::register_DCmdFactory(new DCmdFactoryImpl<ThreadDumpDCmd>(true, false));
 
@@ -252,7 +250,6 @@ void RunFinalizationDCmd::execute(TRAPS) {
                          vmSymbols::void_method_signature(), CHECK);
 }
 
-#ifndef SERVICES_KERNEL   // Heap dumping not supported
 HeapDumpDCmd::HeapDumpDCmd(outputStream* output, bool heap) :
                            DCmdWithParser(output, heap),
   _filename("filename","Name of the dump file", "STRING",true),
@@ -292,7 +289,6 @@ int HeapDumpDCmd::num_arguments() {
     return 0;
   }
 }
-#endif // SERVICES_KERNEL
 
 ClassHistogramDCmd::ClassHistogramDCmd(outputStream* output, bool heap) :
                                        DCmdWithParser(output, heap),
@@ -406,7 +402,32 @@ JMXStartRemoteDCmd::JMXStartRemoteDCmd(outputStream *output, bool heap_allocated
 
   _jmxremote_ssl_config_file
   ("jmxremote.ssl.config.file",
-   "set com.sun.management.jmxremote.ssl_config_file", "STRING", false)
+   "set com.sun.management.jmxremote.ssl_config_file", "STRING", false),
+
+// JDP Protocol support
+  _jmxremote_autodiscovery
+  ("jmxremote.autodiscovery",
+   "set com.sun.management.jmxremote.autodiscovery", "STRING", false),
+
+   _jdp_port
+  ("jdp.port",
+   "set com.sun.management.jdp.port", "INT", false),
+
+   _jdp_address
+  ("jdp.address",
+   "set com.sun.management.jdp.address", "STRING", false),
+
+   _jdp_source_addr
+  ("jdp.source_addr",
+   "set com.sun.management.jdp.source_addr", "STRING", false),
+
+   _jdp_ttl
+  ("jdp.ttl",
+   "set com.sun.management.jdp.ttl", "INT", false),
+
+   _jdp_pause
+  ("jdp.pause",
+   "set com.sun.management.jdp.pause", "INT", false)
 
   {
     _dcmdparser.add_dcmd_option(&_config_file);
@@ -422,6 +443,12 @@ JMXStartRemoteDCmd::JMXStartRemoteDCmd(outputStream *output, bool heap_allocated
     _dcmdparser.add_dcmd_option(&_jmxremote_ssl_enabled_protocols);
     _dcmdparser.add_dcmd_option(&_jmxremote_ssl_need_client_auth);
     _dcmdparser.add_dcmd_option(&_jmxremote_ssl_config_file);
+    _dcmdparser.add_dcmd_option(&_jmxremote_autodiscovery);
+    _dcmdparser.add_dcmd_option(&_jdp_port);
+    _dcmdparser.add_dcmd_option(&_jdp_address);
+    _dcmdparser.add_dcmd_option(&_jdp_source_addr);
+    _dcmdparser.add_dcmd_option(&_jdp_ttl);
+    _dcmdparser.add_dcmd_option(&_jdp_pause);
 }
 
 
@@ -435,7 +462,6 @@ int JMXStartRemoteDCmd::num_arguments() {
     return 0;
   }
 }
-
 
 void JMXStartRemoteDCmd::execute(TRAPS) {
     ResourceMark rm(THREAD);
@@ -466,7 +492,9 @@ void JMXStartRemoteDCmd::execute(TRAPS) {
     // file.
 #define PUT_OPTION(a) \
     if ( (a).is_set() ){ \
-        options.print("%scom.sun.management.%s=%s", comma, (a).name(), (a).value()); \
+        options.print(\
+               ( *((a).type()) == 'I' ) ? "%scom.sun.management.%s=%d" : "%scom.sun.management.%s=%s",\
+                comma, (a).name(), (a).value()); \
         comma[0] = ','; \
     }
 
@@ -483,6 +511,12 @@ void JMXStartRemoteDCmd::execute(TRAPS) {
     PUT_OPTION(_jmxremote_ssl_enabled_protocols);
     PUT_OPTION(_jmxremote_ssl_need_client_auth);
     PUT_OPTION(_jmxremote_ssl_config_file);
+    PUT_OPTION(_jmxremote_autodiscovery);
+    PUT_OPTION(_jdp_port);
+    PUT_OPTION(_jdp_address);
+    PUT_OPTION(_jdp_source_addr);
+    PUT_OPTION(_jdp_ttl);
+    PUT_OPTION(_jdp_pause);
 
 #undef PUT_OPTION
 

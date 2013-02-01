@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -3002,9 +3002,7 @@ JNI_ENTRY(jobject, jni_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID 
   HOTSPOT_JNI_GETSTATICOBJECTFIELD_ENTRY(
                                          env, clazz, (uintptr_t) fieldID);
 #endif /* USDT2 */
-#ifndef JNICHECK_KERNEL
   DEBUG_ONLY(klassOop param_k = jniCheck::validate_class(thread, clazz);)
-#endif // JNICHECK_KERNEL
   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID);
   assert(id->is_static_field_id(), "invalid static field id");
   // Keep JVMTI addition small and only check enabled flag here.
@@ -4973,11 +4971,7 @@ void quicken_jni_functions() {
 
 // Returns the function structure
 struct JNINativeInterface_* jni_functions() {
-#ifndef JNICHECK_KERNEL
   if (CheckJNICalls) return jni_functions_check();
-#else  // JNICHECK_KERNEL
-  if (CheckJNICalls) warning("-Xcheck:jni is not supported in kernel vm.");
-#endif // JNICHECK_KERNEL
   return &jni_NativeInterface;
 }
 

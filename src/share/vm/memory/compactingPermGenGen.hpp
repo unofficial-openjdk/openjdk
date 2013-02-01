@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -233,7 +233,7 @@ public:
   void verify();
 
   // Serialization
-  static void initialize_oops() KERNEL_RETURN;
+  static void initialize_oops();
   static void serialize_oops(SerializeOopClosure* soc);
   void serialize_bts(SerializeOopClosure* soc);
 

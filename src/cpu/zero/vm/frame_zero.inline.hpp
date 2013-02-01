@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2013, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,8 @@ inline frame::frame() {
   _cb = NULL;
   _deopt_state = unknown;
 }
+
+inline address  frame::sender_pc()           const { ShouldNotCallThis();  }
 
 inline frame::frame(ZeroFrame* zf, intptr_t* sp) {
   _zeroframe = zf;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -320,6 +320,7 @@ class AbstractInterpreterGenerator: public StackObj {
   void bang_stack_shadow_pages(bool native_call);
 
   void generate_all();
+  void initialize_method_handle_entries();
 
  public:
   AbstractInterpreterGenerator(StubQueue* _code);
