@@ -43,14 +43,14 @@ checkExit () {
     fi
 }
 
-${TESTJAVA}/bin/javac -d . ${TESTSRC}/Test.java
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}/Test.java
 cp ${TESTSRC}/test.jar .
 
-${TESTJAVA}/bin/java Test
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test
 checkExit 
 
 # try with security manager
 
-${TESTJAVA}/bin/java -Djava.security.policy=file:./policy -Djava.security.manager Test
+${TESTJAVA}/bin/java ${TESTVMOPTS} -Djava.security.policy=file:./policy -Djava.security.manager Test
 checkExit 
 exit 0

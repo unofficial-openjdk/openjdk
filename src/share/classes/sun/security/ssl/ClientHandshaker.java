@@ -45,10 +45,7 @@ import javax.net.ssl.*;
 import javax.security.auth.Subject;
 
 import sun.security.ssl.HandshakeMessage.*;
-import sun.security.ssl.CipherSuite.*;
 import static sun.security.ssl.CipherSuite.KeyExchange.*;
-
-import sun.net.util.IPAddressUtil;
 
 /**
  * ClientHandshaker does the protocol handshaking from the point
@@ -92,6 +89,9 @@ final class ClientHandshaker extends Handshaker {
     private final static boolean enableSNIExtension =
             Debug.getBooleanProperty("jsse.enableSNIExtension", true);
 
+    private List<SNIServerName> requestedServerNames =
+            Collections.<SNIServerName>emptyList();
+
     /*
      * Constructors
      */
@@ -127,6 +127,7 @@ final class ClientHandshaker extends Handshaker {
      * is processed, and writes responses as needed using the connection
      * in the constructor.
      */
+    @Override
     void processMessage(byte type, int messageLen) throws IOException {
         if (state >= type
                 && (type != HandshakeMessage.ht_hello_request)) {
@@ -507,6 +508,7 @@ final class ClientHandshaker extends Handshaker {
                     try {
                         subject = AccessController.doPrivileged(
                             new PrivilegedExceptionAction<Subject>() {
+                            @Override
                             public Subject run() throws Exception {
                                 return Krb5Helper.getClientSubject(getAccSE());
                             }});
@@ -558,10 +560,6 @@ final class ClientHandshaker extends Handshaker {
         }
 
         if (resumingSession && session != null) {
-            if (protocolVersion.v >= ProtocolVersion.TLS12.v) {
-                handshakeHash.setCertificateVerifyAlg(null);
-            }
-
             setHandshakeSessionSE(session);
             return;
         }
@@ -582,6 +580,7 @@ final class ClientHandshaker extends Handshaker {
         session = new SSLSessionImpl(protocolVersion, cipherSuite,
                             getLocalSupportedSignAlgs(),
                             mesg.sessionId, getHostSE(), getPortSE());
+        session.setRequestedServerNames(requestedServerNames);
         setHandshakeSessionSE(session);
         if (debug != null && Debug.isOn("handshake")) {
             System.out.println("** " + cipherSuite);
@@ -975,8 +974,6 @@ final class ClientHandshaker extends Handshaker {
                         throw new SSLHandshakeException(
                                 "No supported hash algorithm");
                     }
-
-                    handshakeHash.setCertificateVerifyAlg(hashAlg);
                 }
 
                 m3 = new CertificateVerify(protocolVersion, handshakeHash,
@@ -994,10 +991,6 @@ final class ClientHandshaker extends Handshaker {
             }
             m3.write(output);
             output.doHashes();
-        } else {
-            if (protocolVersion.v >= ProtocolVersion.TLS12.v) {
-                handshakeHash.setCertificateVerifyAlg(null);
-            }
         }
 
         /*
@@ -1105,6 +1098,7 @@ final class ClientHandshaker extends Handshaker {
     /*
      * Returns a ClientHello message to kickstart renegotiations
      */
+    @Override
     HandshakeMessage getKickstartMessage() throws SSLException {
         // session ID of the ClientHello message
         SessionId sessionId = SSLSessionImpl.nullSession.getSessionId();
@@ -1249,17 +1243,14 @@ final class ClientHandshaker extends Handshaker {
 
         // add server_name extension
         if (enableSNIExtension) {
-            // We cannot use the hostname resolved from name services.  For
-            // virtual hosting, multiple hostnames may be bound to the same IP
-            // address, so the hostname resolved from name services is not
-            // reliable.
-            String hostname = getRawHostnameSE();
+            if (session != null) {
+                requestedServerNames = session.getRequestedServerNames();
+            } else {
+                requestedServerNames = serverNames;
+            }
 
-            // we only allow FQDN
-            if (hostname != null && hostname.indexOf('.') > 0 &&
-                    !IPAddressUtil.isIPv4LiteralAddress(hostname) &&
-                    !IPAddressUtil.isIPv6LiteralAddress(hostname)) {
-                clientHelloMessage.addServerNameIndicationExtension(hostname);
+            if (!requestedServerNames.isEmpty()) {
+                clientHelloMessage.addSNIExtension(requestedServerNames);
             }
         }
 
@@ -1283,6 +1274,7 @@ final class ClientHandshaker extends Handshaker {
     /*
      * Fault detected during handshake.
      */
+    @Override
     void handshakeAlert(byte description) throws SSLProtocolException {
         String message = Alerts.alertDescription(description);
 

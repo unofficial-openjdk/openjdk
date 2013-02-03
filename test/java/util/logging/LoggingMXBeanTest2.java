@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,17 +37,18 @@ import java.util.ListIterator;
 
 public class LoggingMXBeanTest2
 {
-
     static LoggingMXBean mbean = LogManager.getLoggingMXBean();
     static String LOGGER_NAME_1 = "com.sun.management.Logger";
     static String LOGGER_NAME_2 = "com.sun.management.Logger.Logger2";
     static String UNKNOWN_LOGGER_NAME = "com.sun.management.Unknown";
+    static Logger logger1;
+    static Logger logger2;
 
     public LoggingMXBeanTest2() throws Exception {
 
-        Logger logger1 = Logger.getLogger( LOGGER_NAME_1 );
+        logger1 = Logger.getLogger( LOGGER_NAME_1 );
         logger1.setLevel(Level.FINE);
-        Logger logger2 = Logger.getLogger( LOGGER_NAME_2 );
+        logger2 = Logger.getLogger( LOGGER_NAME_2 );
         logger2.setLevel(null);
 
         /*
@@ -55,14 +56,14 @@ public class LoggingMXBeanTest2
          */
         System.out.println("Test Logger Name retrieval (getLoggerNames)");
         boolean log1 = false, log2 = false;
-        List loggers = mbean.getLoggerNames();
+        List<String> loggers = mbean.getLoggerNames();
         if (loggers == null || loggers.size() < 2) {
             throw new RuntimeException(
                 "Could not Detect the presense of the new Loggers");
         }
 
-        for (ListIterator iter = loggers.listIterator(); iter.hasNext(); ) {
-            String logger = (String) iter.next();
+        for (ListIterator<String> iter = loggers.listIterator(); iter.hasNext(); ) {
+            String logger = iter.next();
             if (logger.equals(LOGGER_NAME_1)) {
                 log1 = true;
                 System.out.println("  : Found new Logger : " + logger);
@@ -185,6 +186,6 @@ public class LoggingMXBeanTest2
     }
 
     public static void main(String[] argv) throws Exception {
-        LoggingMXBeanTest2 p = new LoggingMXBeanTest2();
+        new LoggingMXBeanTest2();
     }
 }

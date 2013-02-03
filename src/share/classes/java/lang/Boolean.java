@@ -196,11 +196,24 @@ public final class Boolean implements java.io.Serializable,
      * {@code true}; returns the integer {@code 1237} if this
      * object represents {@code false}.
      */
+    @Override
     public int hashCode() {
-        return value ? 1231 : 1237;
+        return Boolean.hashCode(value);
     }
 
     /**
+     * Returns a hash code for a {@code boolean} value; compatible with
+     * {@code Boolean.hashCode()}.
+     *
+     * @since 1.8
+     *
+     * @return a hash code value for a {@code boolean} value.
+     */
+    public static int hashCode(boolean value) {
+        return value ? 1231 : 1237;
+    }
+
+   /**
      * Returns {@code true} if and only if the argument is not
      * {@code null} and is a {@code Boolean} object that
      * represents the same {@code boolean} value as this object.
@@ -276,5 +289,47 @@ public final class Boolean implements java.io.Serializable,
      */
     public static int compare(boolean x, boolean y) {
         return (x == y) ? 0 : (x ? 1 : -1);
+    }
+
+    /**
+     * Returns the result of applying the logical AND operator to the
+     * specified {@code boolean} operands.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the logical AND of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static boolean logicalAnd(boolean a, boolean b) {
+        return a && b;
+    }
+
+    /**
+     * Returns the result of applying the logical OR operator to the
+     * specified {@code boolean} operands.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the logical OR of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static boolean logicalOr(boolean a, boolean b) {
+        return a || b;
+    }
+
+    /**
+     * Returns the result of applying the logical XOR operator to the
+     * specified {@code boolean} operands.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return  the logical XOR of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static boolean logicalXor(boolean a, boolean b) {
+        return a ^ b;
     }
 }

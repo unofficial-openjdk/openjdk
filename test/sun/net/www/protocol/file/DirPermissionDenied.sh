@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ rm -rf ${TESTDIR}
 mkdir -p ${TESTDIR}
 chmod 333 ${TESTDIR}
 
-$TESTJAVA/bin/java -classpath $TESTCLASSES DirPermissionDenied ${TESTDIR}
+$TESTJAVA/bin/java ${TESTVMOPTS} -classpath $TESTCLASSES DirPermissionDenied ${TESTDIR}
 result=$?
 
 # Add back read access for user, otherwise not removable on some systems

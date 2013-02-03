@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.nio.file.spi.FileTypeDetector;
 import java.io.IOException;
+import java.security.AccessController;
+import sun.security.action.GetPropertyAction;
 
 /**
  * Solaris implementation of FileSystemProvider
@@ -83,6 +85,12 @@ public class SolarisFileSystemProvider extends UnixFileSystemProvider {
 
     @Override
     FileTypeDetector getFileTypeDetector() {
-        return new GnomeFileTypeDetector();
+        Path userMimeTypes = Paths.get(AccessController.doPrivileged(
+            new GetPropertyAction("user.home")), ".mime.types");
+        Path etcMimeTypes = Paths.get("/etc/mime.types");
+
+        return chain(new GnomeFileTypeDetector(),
+                     new MimeTypesFileTypeDetector(userMimeTypes),
+                     new MimeTypesFileTypeDetector(etcMimeTypes));
     }
 }

@@ -33,6 +33,9 @@ include NativeCompilation.gmk
 # Setup the java compilers for the JDK build.
 include Setup.gmk
 
+# Prepare the find cache. Only used if running on windows.
+$(eval $(call FillCacheFind,$(JDK_TOPDIR)/src))
+
 # Append demo goals to this variable.
 BUILD_DEMOS=
 
@@ -107,10 +110,7 @@ define SetupDemo
         $1_JARFILE := $1.jar
     endif
 
-    # Compile java classes if there are any.
-    $1_JAVA_FILES_EXIST := $$(shell $$(FIND) $$($1_MAIN_SRC) -name "*.java")
-
-    ifneq ($$($1_JAVA_FILES_EXIST),)
+    ifeq ($(findstring $1,Laffy SwingSet3),)
         $$(eval $$(call SetupJavaCompilation,BUILD_DEMO_$1,\
                 SETUP:=GENERATE_USINGJDKBYTECODE,\
                 ADD_JAVAC_FLAGS:=$3,\
@@ -169,9 +169,9 @@ $(eval $(call SetupDemo,SampleTree,jfc,,SampleTree,,,README*))
 $(eval $(call SetupDemo,SwingApplet,jfc,,SwingApplet,,,README* *.html))
 $(eval $(call SetupDemo,TableExample,jfc,,TableExample,,,README*))
 $(eval $(call SetupDemo,TransparentRuler,jfc,,transparentruler.Ruler,,,README*))
-$(eval $(call SetupDemo,jconsole-plugin,scripting,-cp $(JDK_OUTPUTDIR)/lib/jconsole.jar,,,,*.xml *.txt,,,,Main-Class: \n))
+$(eval $(call SetupDemo,jconsole-plugin,scripting,,,,,*.xml *.txt,,,,Main-Class: \n))
 $(eval $(call SetupDemo,FullThreadDump,management,,FullThreadDump,,,README*))
-$(eval $(call SetupDemo,JTop,management,-cp $(JDK_OUTPUTDIR)/lib/jconsole.jar,JTop,,,README*))
+$(eval $(call SetupDemo,JTop,management,,JTop,,,README*))
 $(eval $(call SetupDemo,MemoryMonitor,management,,MemoryMonitor,,,README*))
 $(eval $(call SetupDemo,VerboseGC,management,,VerboseGC,,,README*))
 $(eval $(call SetupDemo,zipfs,nio,,,,,README* *.java,,,,Main-Class: \n))
@@ -188,21 +188,12 @@ ifndef OPENJDK
 
     BUILD_DEMOS += $(patsubst $(JDK_TOPDIR)/src/closed/share/demo/nbproject/%,\
 			$(JDK_OUTPUTDIR)/demo/nbproject/%,\
-			$(shell $(FIND) $(JDK_TOPDIR)/src/closed/share/demo/nbproject/ -type f))
+			$(call CacheFind,$(JDK_TOPDIR)/src/closed/share/demo/nbproject))
     $(JDK_OUTPUTDIR)/demo/nbproject/% : $(JDK_TOPDIR)/src/closed/share/demo/nbproject/%
 		$(MKDIR) -p $(@D)
 		$(CP) $< $@
 		$(CHMOD) -f ug+w $@
 endif
-
-##################################################################################################
-
-# Why do we install a demo jar into the main jre/lib/ext????????????????
-$(JDK_OUTPUTDIR)/lib/ext/zipfs.jar : $(JDK_OUTPUTDIR)/demo/nio/zipfs/zipfs.jar
-		$(MKDIR) -p $(@D)
-		$(CP) $< $@
-
-BUILD_DEMOS += $(JDK_OUTPUTDIR)/lib/ext/zipfs.jar
 
 ##################################################################################################
 
@@ -264,9 +255,9 @@ define SetupJVMTIDemo
 		LDFLAGS_SUFFIX_linux:=$8,\
 		VERSIONINFO_RESOURCE:=$(JDK_TOPDIR)/src/windows/resource/version.rc,\
 		RC_FLAGS:=$$(RC_FLAGS) \
-			  /D "JDK_FNAME=$1.dll" \
-			  /D "JDK_INTERNAL_NAME=$1" \
-			  /D "JDK_FTYPE=0x2L",\
+			  -D "JDK_FNAME=$1.dll" \
+			  -D "JDK_INTERNAL_NAME=$1" \
+			  -D "JDK_FTYPE=0x2L",\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/demoobjs/jvmti/$1,\
 		OUTPUT_DIR:=$(JDK_OUTPUTDIR)/demo/jvmti/$1/lib,\
 		LIBRARY:=$1))
@@ -329,7 +320,7 @@ $(eval $(call SetupJVMTIDemo,versionCheck,		agent_util))
 
 # The jpda demo (com/sun/tools/example) is oddly enough stored in src/share/classes.
 # At least, we do not need to compile the jpda demo, just jar/zip up the sources.
-JPDA_SOURCES:=$(shell $(FIND) $(JDK_TOPDIR)/src/share/classes/com/sun/tools/example -type f)
+JPDA_SOURCES:=$(call CacheFind,$(JDK_TOPDIR)/src/share/classes/com/sun/tools/example)
 # The number of files are few enough so that we can use echo safely below to list them.
 JPDA_FILES:=$(subst $(JDK_TOPDIR)/src/share/classes/,,$(JPDA_SOURCES))
 
@@ -375,7 +366,7 @@ BUILD_DEMOS += $(JDK_OUTPUTDIR)/demo/management/index.html \
 # The netbeans project files are copied into the demo directory.
 BUILD_DEMOS += $(patsubst $(JDK_TOPDIR)/src/share/demo/nbproject/%,\
 		$(JDK_OUTPUTDIR)/demo/nbproject/%,\
-		$(shell $(FIND) $(JDK_TOPDIR)/src/share/demo/nbproject/ -type f))
+		$(call CacheFind,$(JDK_TOPDIR)/src/share/demo/nbproject))
 
 $(JDK_OUTPUTDIR)/demo/nbproject/% : $(JDK_TOPDIR)/src/share/demo/nbproject/%
 	$(MKDIR) -p $(@D)
@@ -451,12 +442,12 @@ endif
 ##################################################################################################
 
 ifndef OPENJDK
-    DB_DEMO_ZIPFILE := $(shell $(FIND) $(JDK_TOPDIR)/src/closed/share/db -name "*demo*.zip")
+    DB_DEMO_ZIPFILE := $(wildcard $(JDK_TOPDIR)/src/closed/share/db/*demo*.zip)
 
     $(JDK_OUTPUTDIR)/demo/_the.db.unzipped: $(DB_DEMO_ZIPFILE)
 	$(MKDIR) -p $(@D)
 	$(RM) -r $(JDK_OUTPUTDIR)/demo/db $(JDK_OUTPUTDIR)/demo/demo
-	$(CD) $(JDK_OUTPUTDIR)/demo && $(UNZIP) -o $<
+	$(CD) $(JDK_OUTPUTDIR)/demo && $(UNZIP) -q -o $<
 	$(MV) $(JDK_OUTPUTDIR)/demo/demo $(JDK_OUTPUTDIR)/demo/db
 	$(TOUCH) $@
 

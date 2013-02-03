@@ -40,10 +40,7 @@ import sun.security.krb5.EncryptionKey;
 import sun.security.krb5.KrbException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import sun.security.krb5.KerberosSecrets;
 import sun.security.krb5.PrincipalName;
 /**
@@ -189,133 +186,6 @@ public class Krb5Util {
         return subject;
     }
 
-    // A special KerberosKey, used as keys read from a KeyTab object.
-    // Each time new keys are read from KeyTab objects in the private
-    // credentials set, old ones are removed and new ones added.
-    public static class KeysFromKeyTab extends KerberosKey {
-        private static final long serialVersionUID = 8238092170252746927L;
-
-        public KeysFromKeyTab(KerberosKey key) {
-            super(key.getPrincipal(), key.getEncoded(),
-                    key.getKeyType(), key.getVersionNumber());
-        }
-    }
-
-    /**
-     * Credentials of a service, the private secret to authenticate its
-     * identity, which can be:
-     *   1. Some KerberosKeys (generated from password)
-     *   2. A KeyTab (for a typical service)
-     *   3. A TGT (for a user2user service. Not supported yet)
-     *
-     * Note that some creds can coexist. For example, a user2user service
-     * can use its keytab (or keys) if the client can successfully obtain a
-     * normal service ticket, otherwise, it can uses the TGT (actually, the
-     * session key of the TGT) if the client can only acquire a service ticket
-     * of ENC-TKT-IN-SKEY style.
-     */
-    public static class ServiceCreds {
-        private KerberosPrincipal kp;
-        private List<KeyTab> ktabs;
-        private List<KerberosKey> kk;
-        private Subject subj;
-        //private KerberosTicket tgt;   // user2user, not supported yet
-
-        private static ServiceCreds getInstance(
-                Subject subj, String serverPrincipal) {
-
-            ServiceCreds sc = new ServiceCreds();
-            sc.subj = subj;
-
-            for (KerberosPrincipal p: subj.getPrincipals(KerberosPrincipal.class)) {
-                if (serverPrincipal == null ||
-                        p.getName().equals(serverPrincipal)) {
-                    sc.kp = p;
-                    serverPrincipal = p.getName();
-                    break;
-                }
-            }
-            if (sc.kp == null) {
-                // Compatibility with old behavior: even when there is no
-                // KerberosPrincipal, we can find one from KerberosKeys
-                List<KerberosKey> keys = SubjectComber.findMany(
-                        subj, null, null, KerberosKey.class);
-                if (!keys.isEmpty()) {
-                    sc.kp = keys.get(0).getPrincipal();
-                    serverPrincipal = sc.kp.getName();
-                    if (DEBUG) {
-                        System.out.println(">>> ServiceCreds: no kp?"
-                                + " find one from kk: " + serverPrincipal);
-                    }
-                } else {
-                    return null;
-                }
-            }
-            sc.ktabs = SubjectComber.findMany(
-                        subj, null, null, KeyTab.class);
-            sc.kk = SubjectComber.findMany(
-                        subj, serverPrincipal, null, KerberosKey.class);
-            if (sc.ktabs.isEmpty() && sc.kk.isEmpty()) {
-                return null;
-            }
-            return sc;
-        }
-
-        public String getName() {
-            return kp.getName();
-        }
-
-        public KerberosKey[] getKKeys() {
-            if (ktabs.isEmpty()) {
-                return kk.toArray(new KerberosKey[kk.size()]);
-            } else {
-                List<KerberosKey> keys = new ArrayList<>();
-                for (KeyTab ktab: ktabs) {
-                    for (KerberosKey k: ktab.getKeys(kp)) {
-                        keys.add(k);
-                    }
-                }
-                // Compatibility: also add keys to privCredSet. Remove old
-                // ones first, only remove those from keytab.
-                if (!subj.isReadOnly()) {
-                    Set<Object> pcs = subj.getPrivateCredentials();
-                    synchronized (pcs) {
-                        Iterator<Object> iterator = pcs.iterator();
-                        while (iterator.hasNext()) {
-                            Object obj = iterator.next();
-                            if (obj instanceof KeysFromKeyTab) {
-                                KerberosKey key = (KerberosKey)obj;
-                                if (Objects.equals(key.getPrincipal(), kp)) {
-                                    iterator.remove();
-                                }
-                            }
-                        }
-                    }
-                    for (KerberosKey key: keys) {
-                        subj.getPrivateCredentials().add(new KeysFromKeyTab(key));
-                    }
-                }
-                return keys.toArray(new KerberosKey[keys.size()]);
-            }
-        }
-
-        public EncryptionKey[] getEKeys() {
-            KerberosKey[] kkeys = getKKeys();
-            EncryptionKey[] ekeys = new EncryptionKey[kkeys.length];
-            for (int i=0; i<ekeys.length; i++) {
-                ekeys[i] =  new EncryptionKey(
-                            kkeys[i].getEncoded(), kkeys[i].getKeyType(),
-                            new Integer(kkeys[i].getVersionNumber()));
-            }
-            return ekeys;
-        }
-
-        public void destroy() {
-            kp = null;
-            ktabs = null;
-            kk = null;
-        }
-    }
     /**
      * Retrieves the ServiceCreds for the specified server principal from
      * the Subject in the specified AccessControlContext. If not found, and if
@@ -357,7 +227,7 @@ public class Krb5Util {
     };
 
     public static Credentials ticketToCreds(KerberosTicket kerbTicket)
-        throws KrbException, IOException {
+            throws KrbException, IOException {
         return new Credentials(
             kerbTicket.getEncoded(),
             kerbTicket.getClient().getName(),
@@ -383,5 +253,4 @@ public class Krb5Util {
         return KerberosSecrets.getJavaxSecurityAuthKerberosAccess().
                 keyTabGetEncryptionKeys(ktab, cname);
     }
-
 }

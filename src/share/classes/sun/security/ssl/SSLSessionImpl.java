@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,14 @@
 
 package sun.security.ssl;
 
-import java.io.*;
 import java.net.*;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.security.Principal;
 import java.security.PrivateKey;
@@ -42,19 +43,14 @@ import java.security.cert.CertificateEncodingException;
 
 import javax.crypto.SecretKey;
 
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.SSLSessionBindingListener;
 import javax.net.ssl.SSLSessionBindingEvent;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLPermission;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.ExtendedSSLSession;
+import javax.net.ssl.SNIServerName;
 
-import javax.security.auth.x500.X500Principal;
-
-import static sun.security.ssl.CipherSuite.*;
 import static sun.security.ssl.CipherSuite.KeyExchange.*;
 
 /**
@@ -111,6 +107,8 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     private PrivateKey          localPrivateKey;
     private String[]            localSupportedSignAlgs;
     private String[]            peerSupportedSignAlgs;
+    private List<SNIServerName>    requestedServerNames;
+
 
     // Principals for non-certificate based cipher suites
     private Principal peerPrincipal;
@@ -212,6 +210,10 @@ final class SSLSessionImpl extends ExtendedSSLSession {
             SignatureAndHashAlgorithm.getAlgorithmNames(algorithms);
     }
 
+    void setRequestedServerNames(List<SNIServerName> requestedServerNames) {
+        this.requestedServerNames = new ArrayList<>(requestedServerNames);
+    }
+
     /**
      * Set the peer principal.
      */
@@ -240,6 +242,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
             !invalidated && isLocalAuthenticationValid();
     }
 
+    @Override
     public synchronized boolean isValid() {
         return isRejoinable();
     }
@@ -267,6 +270,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Returns the ID for this session.  The ID is fixed for the
      * duration of the session; neither it, nor its value, changes.
      */
+    @Override
     public byte[] getId() {
         return sessionId.getId();
     }
@@ -276,6 +280,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * are currently valid in this process.  For client sessions,
      * this returns null.
      */
+    @Override
     public SSLSessionContext getSessionContext() {
         /*
          * An interim security policy until we can do something
@@ -322,6 +327,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns the name of the cipher suite in use on this session
      */
+    @Override
     public String getCipherSuite() {
         return getSuite().name;
     }
@@ -333,6 +339,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns the standard name of the protocol in use on this session
      */
+    @Override
     public String getProtocol() {
         return getProtocolVersion().name;
     }
@@ -347,6 +354,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns the hashcode for this session
      */
+    @Override
     public int hashCode() {
         return sessionId.hashCode();
     }
@@ -355,6 +363,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns true if sessions have same ids, false otherwise.
      */
+    @Override
     public boolean equals(Object obj) {
 
         if (obj == this) {
@@ -381,6 +390,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * @return array of peer X.509 certs, with the peer's own cert
      *  first in the chain, and with the "root" CA last.
      */
+    @Override
     public java.security.cert.Certificate[] getPeerCertificates()
             throws SSLPeerUnverifiedException {
         //
@@ -411,6 +421,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * @return array of peer X.509 certs, with the peer's own cert
      *  first in the chain, and with the "root" CA last.
      */
+    @Override
     public java.security.cert.Certificate[] getLocalCertificates() {
         //
         // clone to preserve integrity of session ... caller can't
@@ -430,6 +441,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * @return array of peer X.509 certs, with the peer's own cert
      *  first in the chain, and with the "root" CA last.
      */
+    @Override
     public javax.security.cert.X509Certificate[] getPeerCertificateChain()
             throws SSLPeerUnverifiedException {
         //
@@ -501,6 +513,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * @throws SSLPeerUnverifiedException if the peer's identity has not
      *          been verified
      */
+    @Override
     public Principal getPeerPrincipal()
                 throws SSLPeerUnverifiedException
     {
@@ -527,6 +540,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Principal for Kerberos cipher suites. If no principal was
      * sent, then null is returned.
      */
+    @Override
     public Principal getLocalPrincipal() {
 
         if ((cipherSuite.keyExchange == K_KRB5) ||
@@ -541,6 +555,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns the time this session was created.
      */
+    @Override
     public long getCreationTime() {
         return creationTime;
     }
@@ -549,6 +564,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Returns the last time this session was used to initialize
      * a connection.
      */
+    @Override
     public long getLastAccessedTime() {
         return (lastUsedTime != 0) ? lastUsedTime : creationTime;
     }
@@ -572,6 +588,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
         }
     }
 
+    @Override
     public String getPeerHost() {
         return host;
     }
@@ -580,6 +597,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Need to provide the port info for caching sessions based on
      * host and port. Accessed by SSLSessionContextImpl
      */
+    @Override
     public int getPeerPort() {
         return port;
     }
@@ -594,6 +612,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Invalidate a session.  Active connections may still exist, but
      * no connections will be able to rejoin this session.
      */
+    @Override
     synchronized public void invalidate() {
         //
         // Can't invalidate the NULL session -- this would be
@@ -624,6 +643,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Assigns a session value.  Session change events are given if
      * appropriate, to any original value as well as the new value.
      */
+    @Override
     public void putValue(String key, Object value) {
         if ((key == null) || (value == null)) {
             throw new IllegalArgumentException("arguments can not be null");
@@ -650,6 +670,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Returns the specified session value.
      */
+    @Override
     public Object getValue(String key) {
         if (key == null) {
             throw new IllegalArgumentException("argument can not be null");
@@ -664,6 +685,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Removes the specified session value, delivering a session changed
      * event as appropriate.
      */
+    @Override
     public void removeValue(String key) {
         if (key == null) {
             throw new IllegalArgumentException("argument can not be null");
@@ -684,6 +706,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
     /**
      * Lists the names of the session values.
      */
+    @Override
     public String[] getValueNames() {
         Enumeration<SecureKey> e;
         Vector<Object> v = new Vector<>();
@@ -731,6 +754,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Gets the current size of the largest SSL/TLS packet that is expected
      * when using this session.
      */
+    @Override
     public synchronized int getPacketBufferSize() {
         return acceptLargeFragments ?
                 Record.maxLargeRecordSize : Record.maxRecordSize;
@@ -740,6 +764,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Gets the current size of the largest application data that is
      * expected when using this session.
      */
+    @Override
     public synchronized int getApplicationBufferSize() {
         return getPacketBufferSize() - Record.headerSize;
     }
@@ -748,6 +773,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Gets an array of supported signature algorithms that the local side is
      * willing to verify.
      */
+    @Override
     public String[] getLocalSupportedSignatureAlgorithms() {
         if (localSupportedSignAlgs != null) {
             return localSupportedSignAlgs.clone();
@@ -760,6 +786,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * Gets an array of supported signature algorithms that the peer is
      * able to verify.
      */
+    @Override
     public String[] getPeerSupportedSignatureAlgorithms() {
         if (peerSupportedSignAlgs != null) {
             return peerSupportedSignAlgs.clone();
@@ -768,7 +795,22 @@ final class SSLSessionImpl extends ExtendedSSLSession {
         return new String[0];
     }
 
+    /**
+     * Obtains a <code>List</code> containing all {@link SNIServerName}s
+     * of the requested Server Name Indication (SNI) extension.
+     */
+    @Override
+    public List<SNIServerName> getRequestedServerNames() {
+        if (requestedServerNames != null && !requestedServerNames.isEmpty()) {
+            return Collections.<SNIServerName>unmodifiableList(
+                                                requestedServerNames);
+        }
+
+        return Collections.<SNIServerName>emptyList();
+    }
+
     /** Returns a string representation of this SSL session */
+    @Override
     public String toString() {
         return "[Session-" + sessionCount
             + ", " + getCipherSuite()
@@ -779,6 +821,7 @@ final class SSLSessionImpl extends ExtendedSSLSession {
      * When SSL sessions are finalized, all values bound to
      * them are removed.
      */
+    @Override
     public void finalize() {
         String[] names = getValueNames();
         for (int i = 0; i < names.length; i++) {
@@ -821,10 +864,12 @@ class SecureKey {
         return securityCtx;
     }
 
+    @Override
     public int hashCode() {
         return appKey.hashCode() ^ securityCtx.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         return o instanceof SecureKey && ((SecureKey)o).appKey.equals(appKey)
                         && ((SecureKey)o).securityCtx.equals(securityCtx);

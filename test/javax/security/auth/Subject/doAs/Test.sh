@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -66,12 +66,13 @@ esac
 # remove any leftover built class
 cd ${TESTCLASSES}${FS}
 ${RM} Test.class
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS} ${TESTSRC}${FS}Test.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS} \
+    ${TESTSRC}${FS}Test.java
 WD=`pwd`
 cd ${TESTSRC}${FS}
 cd $WD
 echo $WD
-${TESTJAVA}${FS}bin${FS}java -classpath "${TESTCLASSES}${FS}" \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath "${TESTCLASSES}${FS}" \
 -Djava.security.manager  \
 -Djava.security.policy=${TESTSRC}${FS}policy \
 Test

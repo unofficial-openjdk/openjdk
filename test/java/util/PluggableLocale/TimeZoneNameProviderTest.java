@@ -40,18 +40,20 @@ public class TimeZoneNameProviderTest extends ProviderTest {
     TimeZoneNameProviderTest() {
         test1();
         test2();
+        test3();
         aliasTest();
     }
 
     void test1() {
         Locale[] available = Locale.getAvailableLocales();
+        List<Locale> jreimplloc = Arrays.asList(LocaleProviderAdapter.forJRE().getTimeZoneNameProvider().getAvailableLocales());
         List<Locale> providerLocales = Arrays.asList(tznp.getAvailableLocales());
         String[] ids = TimeZone.getAvailableIDs();
 
         for (Locale target: available) {
             // pure JRE implementation
-            OpenListResourceBundle rb = LocaleProviderAdapter.forJRE().getLocaleData().getTimeZoneNames(target);
-            boolean jreHasBundle = rb.getLocale().equals(target);
+            OpenListResourceBundle rb = ((ResourceBundleBasedAdapter)LocaleProviderAdapter.forJRE()).getLocaleData().getTimeZoneNames(target);
+            boolean jreSupportsTarget = jreimplloc.contains(target);
 
             for (String id: ids) {
                 // the time zone
@@ -59,7 +61,7 @@ public class TimeZoneNameProviderTest extends ProviderTest {
 
                 // JRE string array for the id
                 String[] jrearray = null;
-                if (jreHasBundle) {
+                if (jreSupportsTarget) {
                     try {
                         jrearray = rb.getStringArray(id);
                     } catch (MissingResourceException mre) {}
@@ -75,14 +77,14 @@ public class TimeZoneNameProviderTest extends ProviderTest {
                         providersname = tznp.getDisplayName(id, i>=3, i%2, target);
                     }
 
-                    // JRE's name (if any)
+                    // JRE's name
                     String jresname = null;
                     if (jrearray != null) {
                         jresname = jrearray[i];
                     }
 
                     checkValidity(target, jresname, providersname, name,
-                        jreHasBundle && rb.handleGetKeys().contains(id));
+                        jreSupportsTarget && jresname != null);
                 }
             }
         }
@@ -91,6 +93,7 @@ public class TimeZoneNameProviderTest extends ProviderTest {
     final String pattern = "z";
     final Locale OSAKA = new Locale("ja", "JP", "osaka");
     final Locale KYOTO = new Locale("ja", "JP", "kyoto");
+    final Locale GENERIC = new Locale("ja", "JP", "generic");
 
     final String[] TIMEZONES = {
         "GMT", "America/Los_Angeles", "SystemV/PST8",
@@ -153,6 +156,29 @@ public class TimeZoneNameProviderTest extends ProviderTest {
             // restore the reserved locale and time zone
             Locale.setDefault(defaultLocale);
             TimeZone.setDefault(reservedTimeZone);
+        }
+    }
+
+    void test3() {
+        final String[] TZNAMES = {
+            LATIME, PST, PST8PDT, US_PACIFIC,
+            TOKYOTIME, JST, JAPAN,
+        };
+        for (String tzname : TZNAMES) {
+            TimeZone tz = TimeZone.getTimeZone(tzname);
+            for (int style : new int[] { TimeZone.LONG, TimeZone.SHORT }) {
+                String osakaStd = tz.getDisplayName(false, style, OSAKA);
+                if (osakaStd != null) {
+                    // No API for getting generic time zone names
+                    String generic = TimeZoneNameUtility.retrieveGenericDisplayName(tzname,
+                                                                                    style, GENERIC);
+                    String expected = "Generic " + osakaStd;
+                    if (!expected.equals(generic)) {
+                        throw new RuntimeException("Wrong generic name: got=\"" + generic
+                                                   + "\", expected=\"" + expected + "\"");
+                    }
+                }
+            }
         }
     }
 

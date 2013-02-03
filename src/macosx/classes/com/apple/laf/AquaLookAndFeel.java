@@ -697,7 +697,7 @@ public class AquaLookAndFeel extends BasicLookAndFeel {
             "Panel.foreground", black,
             "Panel.opaque", useOpaqueComponents,
 
-            "PasswordField.focusInputMap", aquaKeyBindings.getTextFieldInputMap(),
+            "PasswordField.focusInputMap", aquaKeyBindings.getPasswordFieldInputMap(),
             "PasswordField.font", controlFont,
             "PasswordField.background", textBackground,
             "PasswordField.foreground", textForeground,
@@ -714,7 +714,8 @@ public class AquaLookAndFeel extends BasicLookAndFeel {
 
             "PopupMenu.font", menuFont,
             "PopupMenu.background", menuBackgroundColor,
-            "PopupMenu.translucentBackground", translucentWhite,
+            // Fix for 7154516: make popups opaque
+            "PopupMenu.translucentBackground", white,
             "PopupMenu.foreground", menuForegroundColor,
             "PopupMenu.selectionBackground", menuSelectedBackgroundColor,
             "PopupMenu.selectionForeground", menuSelectedForegroundColor,

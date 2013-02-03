@@ -53,9 +53,8 @@ public class BreakIteratorProviderTest extends ProviderTest {
     }
 
     void availableLocalesTest() {
-        Set<Locale> localesFromAPI = new HashSet<Locale>(availloc);
-        Set<Locale> localesExpected = new HashSet<Locale>(jreimplloc);
-        localesExpected.remove(Locale.ROOT);
+        Set<Locale> localesFromAPI = new HashSet<>(availloc);
+        Set<Locale> localesExpected = new HashSet<>(jreloc);
         localesExpected.addAll(providerloc);
         if (localesFromAPI.equals(localesExpected)) {
             System.out.println("availableLocalesTest passed.");
@@ -68,8 +67,7 @@ public class BreakIteratorProviderTest extends ProviderTest {
 
         for (Locale target: availloc) {
             // pure JRE implementation
-            ResourceBundle rb = LocaleProviderAdapter.forJRE().getLocaleData().getBundle(
-                        "sun.text.resources.BreakIteratorInfo", target);
+            ResourceBundle rb = ((ResourceBundleBasedAdapter)LocaleProviderAdapter.forJRE()).getLocaleData().getBreakIteratorInfo(target);
             String[] classNames = rb.getStringArray("BreakIteratorClasses");
             boolean jreSupportsLocale = jreimplloc.contains(target);
 

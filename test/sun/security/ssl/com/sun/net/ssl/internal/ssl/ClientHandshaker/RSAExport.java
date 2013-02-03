@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,14 @@
  * questions.
  */
 
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+
 /*
  * @test
  * @bug 6690018
  * @summary RSAClientKeyExchange NullPointerException
  * @run main/othervm RSAExport
- *
- *     SunJSSE does not support dynamic system properties, no way to re-use
- *     system properties in samevm/agentvm mode.
  */
 
 /*
@@ -199,6 +199,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.security.Security;
 import java.security.KeyStore;
 import java.security.KeyFactory;
 import java.security.cert.Certificate;
@@ -415,6 +416,10 @@ public class RSAExport {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
+        // reset the security property to make sure that the algorithms
+        // and keys used in this test are not disabled.
+        Security.setProperty("jdk.certpath.disabledAlgorithms", "MD2");
+
         if (debug)
             System.setProperty("javax.net.debug", "all");
 

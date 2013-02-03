@@ -42,7 +42,7 @@ H_TARGET_FILES =$(INCLUDEDIR)/jdwpTransport.h		\
 		$(INCLUDEDIR)/jvmticmlr.h		\
 		$(INCLUDEDIR)/classfile_constants.h	\
 		$(INCLUDEDIR)/jawt.h			\
-		$(OPENJDK_TARGET_OS_INCLUDE)/jni_md.h		\
+		$(OPENJDK_TARGET_OS_INCLUDE)/jni_md.h	\
 		$(OPENJDK_TARGET_OS_INCLUDE)/jawt_md.h
 
 $(INCLUDEDIR)/%.h: $(JDK_TOPDIR)/src/share/javavm/export/%.h
@@ -56,6 +56,27 @@ $(OPENJDK_TARGET_OS_INCLUDE)/%.h: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)
 	$(CP) $< $@
 
 COPY_FILES = $(H_TARGET_FILES)
+
+##########################################################################################
+
+ifndef OPENJDK
+ifeq ($(OPENJDK_TARGET_OS), windows)
+    COPY_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+		  $(JDK_OUTPUTDIR)/lib/accessibility.properties
+
+    $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
+		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
+	$(install-file)
+
+    $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
+		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/accessibility.properties
+	$(install-file)
+
+endif
+endif
 
 ##########################################################################################
 
@@ -263,16 +284,18 @@ endif
 
 ##########################################################################################
 
-# Copy msvcr100.dll on windows
+# Copy msvcrXX.dll on windows
 
 ifeq ($(OPENJDK_TARGET_OS),windows)
-    MSVCRNN_TARGET := $(JDK_OUTPUTDIR)/bin/$(notdir $(MSVCRNN_DLL))
-    $(MSVCRNN_TARGET): $(MSVCRNN_DLL)
+    MSVCR_TARGET := $(JDK_OUTPUTDIR)/bin/$(notdir $(MSVCR_DLL))
+    # Chmod to avoid permission issues if bundles are unpacked on unix platforms.
+    $(MSVCR_TARGET): $(MSVCR_DLL)
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(CP) $< $@
+	$(CHMOD) a+rx $@
 
-    COPY_FILES += $(MSVCRNN_TARGET)
+    COPY_FILES += $(MSVCR_TARGET)
 endif
 
 ##########################################################################################
@@ -317,7 +340,7 @@ ifeq ($(OPENJDK_TARGET_CPU_BITS),32)
 		$(MKDIR) -p $(@D)
 		$(RM) $(JVMCFG)
 		$(PRINTF) "-client KNOWN\n">$(JVMCFG)
-		$(PRINTF) "-server IGNORE\n">>$(JVMCFG)
+		$(PRINTF) "-server ALIASED_TO -client\n">>$(JVMCFG)
 		$(PRINTF) "-hotspot ALIASED_TO -client\n">>$(JVMCFG)
 		$(PRINTF) "-classic WARN\n">>$(JVMCFG)
 		$(PRINTF) "-native ERROR\n">>$(JVMCFG)
@@ -356,20 +379,8 @@ COPY_FILES += $(JVMCFG)
 
 ##########################################################################################
 
-PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security
+PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-$(OPENJDK_TARGET_OS)
 PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
-
-ifeq ($(OPENJDK_TARGET_OS), solaris)
-	PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-solaris
-endif
-
-ifeq ($(OPENJDK_TARGET_OS), windows)
-	PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-windows
-endif
-
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-	PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-macosx
-endif
 
 $(PROPS_DST): $(PROPS_SRC)
 	$(MKDIR) -p $(@D)
@@ -553,7 +564,7 @@ $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNW%.so: $(JDK_TOPDIR)/
 $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWafb.so: $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWffb.so
 	$(MKDIR) -p $(@D)
 	$(RM) $@
-	$(LN) -s $< $@
+	$(LN) -s $(<F) $@
 
 COPY_FILES += $(DGALIBS)
 

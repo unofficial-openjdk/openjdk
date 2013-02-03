@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     private boolean shut_wr = false;
 
     private SocketInputStream socketInputStream = null;
+    private SocketOutputStream socketOutputStream = null;
 
     /* number of threads using the FileDescriptor */
     protected int fdUseCount = 0;
@@ -410,14 +411,13 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * Gets an InputStream for this socket.
      */
     protected synchronized InputStream getInputStream() throws IOException {
-        if (isClosedOrPending()) {
-            throw new IOException("Socket Closed");
-        }
-        if (shut_rd) {
-            throw new IOException("Socket input is shutdown");
-        }
-        if (socketInputStream == null) {
-            socketInputStream = new SocketInputStream(this);
+        synchronized (fdLock) {
+            if (isClosedOrPending())
+                throw new IOException("Socket Closed");
+            if (shut_rd)
+                throw new IOException("Socket input is shutdown");
+            if (socketInputStream == null)
+                socketInputStream = new SocketInputStream(this);
         }
         return socketInputStream;
     }
@@ -430,13 +430,15 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * Gets an OutputStream for this socket.
      */
     protected synchronized OutputStream getOutputStream() throws IOException {
-        if (isClosedOrPending()) {
-            throw new IOException("Socket Closed");
+        synchronized (fdLock) {
+            if (isClosedOrPending())
+                throw new IOException("Socket Closed");
+            if (shut_wr)
+                throw new IOException("Socket output is shutdown");
+            if (socketOutputStream == null)
+                socketOutputStream = new SocketOutputStream(this);
         }
-        if (shut_wr) {
-            throw new IOException("Socket output is shutdown");
-        }
-        return new SocketOutputStream(this);
+        return socketOutputStream;
     }
 
     void setFileDescriptor(FileDescriptor fd) {

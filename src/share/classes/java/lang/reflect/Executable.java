@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,11 @@
 package java.lang.reflect;
 
 import java.lang.annotation.*;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import sun.reflect.annotation.AnnotationParser;
+import sun.reflect.annotation.AnnotationSupport;
 import sun.reflect.generics.repository.ConstructorRepository;
 
 /**
@@ -223,6 +226,18 @@ public abstract class Executable extends AccessibleObject
     public abstract Class<?>[] getParameterTypes();
 
     /**
+     * Returns the number of formal parameters (including any
+     * synthetic or synthesized parameters) for the executable
+     * represented by this object.
+     *
+     * @return The number of formal parameters for the executable this
+     * object represents
+     */
+    public int getParameterCount() {
+        throw new AbstractMethodError();
+    }
+
+    /**
      * Returns an array of {@code Type} objects that represent the formal
      * parameter types, in declaration order, of the executable represented by
      * this object. Returns an array of length 0 if the
@@ -254,6 +269,60 @@ public abstract class Executable extends AccessibleObject
         else
             return getParameterTypes();
     }
+
+    /**
+     * Returns an array of {@code Parameter} objects that represent
+     * all the parameters to the underlying executable represented by
+     * this object.  Returns an array of length 0 if the executable
+     * has no parameters.
+     *
+     * @return an array of {@code Parameter} objects representing all
+     * the parameters to the executable this object represents
+     */
+    public Parameter[] getParameters() {
+        // TODO: This may eventually need to be guarded by security
+        // mechanisms similar to those in Field, Method, etc.
+        //
+        // Need to copy the cached array to prevent users from messing
+        // with it.  Since parameters are immutable, we can
+        // shallow-copy.
+        return privateGetParameters().clone();
+    }
+
+    private Parameter[] synthesizeAllParams() {
+        final int realparams = getParameterCount();
+        final Parameter[] out = new Parameter[realparams];
+        for (int i = 0; i < realparams; i++)
+            // TODO: is there a way to synthetically derive the
+            // modifiers?  Probably not in the general case, since
+            // we'd have no way of knowing about them, but there
+            // may be specific cases.
+            out[i] = new Parameter("arg" + i, 0, this, i);
+        return out;
+    }
+
+    private Parameter[] privateGetParameters() {
+        // Use tmp to avoid multiple writes to a volatile.
+        Parameter[] tmp = parameters;
+
+        if (tmp == null) {
+
+            // Otherwise, go to the JVM to get them
+            tmp = getParameters0();
+
+            // If we get back nothing, then synthesize parameters
+            if (tmp == null)
+                tmp = synthesizeAllParams();
+
+            parameters = tmp;
+        }
+
+        return tmp;
+    }
+
+    private transient volatile Parameter[] parameters;
+
+    private native Parameter[] getParameters0();
 
     /**
      * Returns an array of {@code Class} objects that represent the
@@ -321,6 +390,7 @@ public abstract class Executable extends AccessibleObject
      * @return true if and only if this executable is a synthetic
      * construct as defined by
      * <cite>The Java&trade; Language Specification</cite>.
+     * @jls 13.1 The Form of a Binary
      */
     public boolean isSynthetic() {
         return Modifier.isSynthetic(getModifiers());
@@ -363,19 +433,28 @@ public abstract class Executable extends AccessibleObject
      * {@inheritDoc}
      * @throws NullPointerException  {@inheritDoc}
      */
-    @SuppressWarnings("unchecked")
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-        if (annotationClass == null)
-            throw new NullPointerException();
+        Objects.requireNonNull(annotationClass);
 
-        return (T) declaredAnnotations().get(annotationClass);
+        return AnnotationSupport.getOneAnnotation(declaredAnnotations(), annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     * @since 1.8
+     */
+    public <T extends Annotation> T[] getAnnotations(Class<T> annotationClass) {
+        Objects.requireNonNull(annotationClass);
+
+        return AnnotationSupport.getMultipleAnnotations(declaredAnnotations(), annotationClass);
     }
 
     /**
      * {@inheritDoc}
      */
     public Annotation[] getDeclaredAnnotations()  {
-        return AnnotationParser.toArray(declaredAnnotations());
+        return AnnotationSupport.unpackToArray(declaredAnnotations());
     }
 
     private transient Map<Class<? extends Annotation>, Annotation> declaredAnnotations;
@@ -390,4 +469,5 @@ public abstract class Executable extends AccessibleObject
         }
         return declaredAnnotations;
     }
+
 }

@@ -596,12 +596,12 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         /* this is an attempt to refactor button IDs in : MouseEvent, InputEvent, XlibWrapper and XWindow.*/
 
         //reflects a button number similar to MouseEvent.BUTTON1, 2, 3 etc.
-        for (int i = 0; i < XConstants.buttonsMask.length; i ++){
+        for (int i = 0; i < XConstants.buttons.length; i ++){
             //modifier should be added if :
             // 1) current button is now still in PRESSED state (means that user just pressed mouse but not released yet) or
             // 2) if Xsystem reports that "state" represents that button was just released. This only happens on RELEASE with 1,2,3 buttons.
             // ONLY one of these conditions should be TRUE to add that modifier.
-            if (((state & XConstants.buttonsMask[i]) != 0) != (button == XConstants.buttons[i])){
+            if (((state & XlibUtil.getButtonMask(i + 1)) != 0) != (button == XConstants.buttons[i])){
                 //exclude wheel buttons from adding their numbers as modifiers
                 if (!wheel_mouse) {
                     modifiers |= InputEvent.getMaskForButton(i+1);
@@ -689,7 +689,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
         if (type == XConstants.ButtonPress) {
             //Allow this mouse button to generate CLICK event on next ButtonRelease
-            mouseButtonClickAllowed |= XConstants.buttonsMask[lbutton];
+            mouseButtonClickAllowed |= XlibUtil.getButtonMask(lbutton);
             XWindow lastWindow = (lastWindowRef != null) ? ((XWindow)lastWindowRef.get()):(null);
             /*
                multiclick checking
@@ -747,7 +747,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             postEventToEventQueue(me);
 
             if ((type == XConstants.ButtonRelease) &&
-                ((mouseButtonClickAllowed & XConstants.buttonsMask[lbutton]) != 0) ) // No up-button in the drag-state
+                ((mouseButtonClickAllowed & XlibUtil.getButtonMask(lbutton)) != 0) ) // No up-button in the drag-state
             {
                 postEventToEventQueue(me = new MouseEvent((Component)getEventSource(),
                                                      MouseEvent.MOUSE_CLICKED,
@@ -777,7 +777,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         /* Update the state variable AFTER the CLICKED event post. */
         if (type == XConstants.ButtonRelease) {
             /* Exclude this mouse button from allowed list.*/
-            mouseButtonClickAllowed &= ~XConstants.buttonsMask[lbutton];
+            mouseButtonClickAllowed &= ~ XlibUtil.getButtonMask(lbutton);
         }
     }
 
@@ -793,12 +793,12 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         //this doesn't work for extra buttons because Xsystem is sending state==0 for every extra button event.
         // we can't correct it in MouseEvent class as we done it with modifiers, because exact type (DRAG|MOVE)
         // should be passed from XWindow.
-        final int buttonsNumber = ((SunToolkit)(Toolkit.getDefaultToolkit())).getNumberOfButtons();
+        final int buttonsNumber = XToolkit.getNumberOfButtonsForMask();
 
         for (int i = 0; i < buttonsNumber; i++){
             // TODO : here is the bug in WM: extra buttons doesn't have state!=0 as they should.
             if ((i != 4) && (i != 5)) {
-                mouseKeyState = mouseKeyState | (xme.get_state() & XConstants.buttonsMask[i]);
+                mouseKeyState = mouseKeyState | (xme.get_state() & XlibUtil.getButtonMask(i + 1));
             }
         }
 
@@ -1115,7 +1115,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         //  (1) either XIM could not handle it or
         //  (2) it was Latin 1:1 mapping.
         //
-        XKeysym.Keysym2JavaKeycode jkc = XKeysym.getJavaKeycode(ev);
+        // Preserve modifiers to get Java key code for dead keys
+        boolean isDeadKey = isDeadKey(keysym[0]);
+        XKeysym.Keysym2JavaKeycode jkc = isDeadKey ? XKeysym.getJavaKeycode(keysym[0])
+                : XKeysym.getJavaKeycode(ev);
         if( jkc == null ) {
             jkc = new XKeysym.Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDEFINED, java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN);
         }
@@ -1141,7 +1144,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                              jkc.getJavaKeycode();
         postKeyEvent( java.awt.event.KeyEvent.KEY_PRESSED,
                           ev.get_time(),
-                          jkeyToReturn,
+                          isDeadKey ? jkeyExtended : jkeyToReturn,
                           (unicodeKey == 0 ? java.awt.event.KeyEvent.CHAR_UNDEFINED : unicodeKey),
                           jkc.getKeyLocation(),
                           ev.get_state(),ev.getPData(), XKeyEvent.getSize(), (long)(ev.get_keycode()),
@@ -1149,7 +1152,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                           jkeyExtended);
 
 
-        if( unicodeKey > 0 ) {
+        if (unicodeKey > 0 && !isDeadKey) {
                 keyEventLog.fine("fire _TYPED on "+unicodeKey);
                 postKeyEvent( java.awt.event.KeyEvent.KEY_TYPED,
                               ev.get_time(),
@@ -1176,9 +1179,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
     // un-private it if you need to call it from elsewhere
     private void handleKeyRelease(XKeyEvent ev) {
-        long keysym[] = new long[2];
         int unicodeKey = 0;
-        keysym[0] = XConstants.NoSymbol;
 
         if (keyEventLog.isLoggable(PlatformLogger.FINE)) {
             logIncomingKeyEvent( ev );
@@ -1187,7 +1188,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         // and Java KeyEvent keycode should be calculated.
         // For release we should post released event.
         //
-        XKeysym.Keysym2JavaKeycode jkc = XKeysym.getJavaKeycode(ev);
+        // Preserve modifiers to get Java key code for dead keys
+        long keysym = xkeycodeToKeysym(ev);
+        boolean isDeadKey = isDeadKey(keysym);
+        XKeysym.Keysym2JavaKeycode jkc = isDeadKey ? XKeysym.getJavaKeycode(keysym)
+                : XKeysym.getJavaKeycode(ev);
         if( jkc == null ) {
             jkc = new XKeysym.Keysym2JavaKeycode(java.awt.event.KeyEvent.VK_UNDEFINED, java.awt.event.KeyEvent.KEY_LOCATION_UNKNOWN);
         }
@@ -1219,7 +1224,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                              jkc.getJavaKeycode();
         postKeyEvent(  java.awt.event.KeyEvent.KEY_RELEASED,
                           ev.get_time(),
-                          jkeyToReturn,
+                          isDeadKey ? jkeyExtended : jkeyToReturn,
                           (unicodeKey == 0 ? java.awt.event.KeyEvent.CHAR_UNDEFINED : unicodeKey),
                           jkc.getKeyLocation(),
                           ev.get_state(),ev.getPData(), XKeyEvent.getSize(), (long)(ev.get_keycode()),
@@ -1227,6 +1232,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                           jkeyExtended);
 
 
+    }
+
+
+    private boolean isDeadKey(long keysym){
+        return XKeySymConstants.XK_dead_grave <= keysym && keysym <= XKeySymConstants.XK_dead_semivoiced_sound;
     }
 
     /*

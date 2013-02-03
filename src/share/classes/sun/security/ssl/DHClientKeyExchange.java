@@ -39,6 +39,7 @@ import javax.net.ssl.SSLHandshakeException;
  */
 final class DHClientKeyExchange extends HandshakeMessage {
 
+    @Override
     int messageType() {
         return ht_client_key_exchange;
     }
@@ -82,6 +83,7 @@ final class DHClientKeyExchange extends HandshakeMessage {
         }
     }
 
+    @Override
     int messageLength() {
         if (dh_Yc == null) {
             return 0;
@@ -90,12 +92,14 @@ final class DHClientKeyExchange extends HandshakeMessage {
         }
     }
 
+    @Override
     void send(HandshakeOutStream s) throws IOException {
         if (dh_Yc != null && dh_Yc.length != 0) {
             s.putBytes16(dh_Yc);
         }
     }
 
+    @Override
     void print(PrintStream s) throws IOException {
         s.println("*** ClientKeyExchange, DH");
 

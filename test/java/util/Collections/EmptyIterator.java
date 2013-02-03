@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,12 @@
 
 /*
  * @test
- * @bug 5017904 6356890
+ * @bug 5017904 6356890 8004928
  * @summary Test empty iterators, enumerations, and collections
  */
 
-import java.util.*;
 import static java.util.Collections.*;
+import java.util.*;
 
 public class EmptyIterator {
 
@@ -45,10 +45,13 @@ public class EmptyIterator {
         testEmptyIterator(emptyTable.values().iterator());
         testEmptyIterator(emptyTable.entrySet().iterator());
 
-        testEmptyEnumeration(javax.swing.tree.DefaultMutableTreeNode
-                             .EMPTY_ENUMERATION);
-        testEmptyEnumeration(javax.swing.text.SimpleAttributeSet
-                             .EMPTY.getAttributeNames());
+        final Enumeration<EmptyIterator> finalEmptyTyped =
+            Collections.emptyEnumeration();
+        testEmptyEnumeration(finalEmptyTyped);
+
+        final Enumeration finalEmptyAbstract =
+            Collections.emptyEnumeration();
+        testEmptyEnumeration(finalEmptyAbstract);
 
         @SuppressWarnings("unchecked") Iterator<?> x =
             new sun.tools.java.MethodSet()

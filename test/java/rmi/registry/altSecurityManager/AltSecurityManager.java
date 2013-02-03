@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,7 @@
  * @author Laird Dornin
  *
  * @library ../../testlibrary
- * @build StreamPipe TestParams TestLibrary JavaVM RMID
- * @build AltSecurityManager TestSecurityManager
+ * @build TestLibrary JavaVM RMID TestSecurityManager
  * @run main/othervm AltSecurityManager
  */
 
@@ -77,8 +76,7 @@ public class AltSecurityManager implements Runnable {
             }
 
             System.err.println("starting " + utilityToStart);
-            vm.start();
-            vm.getVM().waitFor();
+            vm.execute();
 
         } catch (Exception e) {
             TestLibrary.bomb(e);

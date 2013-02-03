@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,7 @@ fi
 runOne()
 {
    echo "$TESTJAVA/bin/java -classpath $TESTCLASSES $@"
-   $TESTJAVA/bin/java -classpath $TESTCLASSES $@
+   $TESTJAVA/bin/java ${TESTVMOPTS} -classpath $TESTCLASSES $@
 }
 
 # Retry 5 times to be more resilent to system load fluctation.

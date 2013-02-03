@@ -34,6 +34,8 @@
  */
 
 package java.util.concurrent.atomic;
+import java.util.function.UnaryOperator;
+import java.util.function.BinaryOperator;
 import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -116,7 +118,7 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
      * @param obj An object whose field to conditionally set
      * @param expect the expected value
      * @param update the new value
-     * @return true if successful.
+     * @return true if successful
      */
     public abstract boolean compareAndSet(T obj, V expect, V update);
 
@@ -134,7 +136,7 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
      * @param obj An object whose field to conditionally set
      * @param expect the expected value
      * @param update the new value
-     * @return true if successful.
+     * @return true if successful
      */
     public abstract boolean weakCompareAndSet(T obj, V expect, V update);
 
@@ -176,11 +178,101 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
      * @return the previous value
      */
     public V getAndSet(T obj, V newValue) {
-        for (;;) {
-            V current = get(obj);
-            if (compareAndSet(obj, current, newValue))
-                return current;
-        }
+        V prev;
+        do {
+            prev = get(obj);
+        } while (!compareAndSet(obj, prev, newValue));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this updater
+     * with the results of applying the given function, returning the previous
+     * value. The function should be side-effect-free, since it may be
+     * re-applied when attempted updates fail due to contention among threads.
+     *
+     * @param obj An object whose field to get and set
+     * @param updateFunction a side-effect-free function
+     * @return the previous value
+     * @since 1.8
+     */
+    public final V getAndUpdate(T obj, UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get(obj);
+            next = updateFunction.operate(prev);
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this updater
+     * with the results of applying the given function, returning the updated
+     * value. The function should be side-effect-free, since it may be
+     * re-applied when attempted updates fail due to contention among threads.
+     *
+     * @param obj An object whose field to get and set
+     * @param updateFunction a side-effect-free function
+     * @return the updated value
+     * @since 1.8
+     */
+    public final V updateAndGet(T obj, UnaryOperator<V> updateFunction) {
+        V prev, next;
+        do {
+            prev = get(obj);
+            next = updateFunction.operate(prev);
+        } while (!compareAndSet(obj, prev, next));
+        return next;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this
+     * updater with the results of applying the given function to the
+     * current and given values, returning the previous value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.  The
+     * function is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param obj An object whose field to get and set
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the previous value
+     * @since 1.8
+     */
+    public final V getAndAccumulate(T obj, V x,
+                                    BinaryOperator<V> accumulatorFunction) {
+        V prev, next;
+        do {
+            prev = get(obj);
+            next = accumulatorFunction.operate(prev, x);
+        } while (!compareAndSet(obj, prev, next));
+        return prev;
+    }
+
+    /**
+     * Atomically updates the field of the given object managed by this
+     * updater with the results of applying the given function to the
+     * current and given values, returning the updated value. The
+     * function should be side-effect-free, since it may be re-applied
+     * when attempted updates fail due to contention among threads.  The
+     * function is applied with the current value as its first argument,
+     * and the given update as the second argument.
+     *
+     * @param obj An object whose field to get and set
+     * @param x the update value
+     * @param accumulatorFunction a side-effect-free function of two arguments
+     * @return the updated value
+     * @since 1.8
+     */
+    public final V accumulateAndGet(T obj, V x,
+                                    BinaryOperator<V> accumulatorFunction) {
+        V prev, next;
+        do {
+            prev = get(obj);
+            next = accumulatorFunction.operate(prev, x);
+        } while (!compareAndSet(obj, prev, next));
+        return next;
     }
 
     private static final class AtomicReferenceFieldUpdaterImpl<T,V>
@@ -206,10 +298,10 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
         AtomicReferenceFieldUpdaterImpl(final Class<T> tclass,
                                         Class<V> vclass,
                                         final String fieldName) {
-            Field field = null;
-            Class<?> fieldClass = null;
-            Class<?> caller = null;
-            int modifiers = 0;
+            final Field field;
+            final Class<?> fieldClass;
+            final Class<?> caller;
+            final int modifiers;
             try {
                 field = AccessController.doPrivileged(
                     new PrivilegedExceptionAction<Field>() {
@@ -220,12 +312,12 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
                 caller = sun.reflect.Reflection.getCallerClass(3);
                 modifiers = field.getModifiers();
                 sun.reflect.misc.ReflectUtil.ensureMemberAccess(
-                                                                caller, tclass, null, modifiers);
+                    caller, tclass, null, modifiers);
                 ClassLoader cl = tclass.getClassLoader();
                 ClassLoader ccl = caller.getClassLoader();
                 if ((ccl != null) && (ccl != cl) &&
                     ((cl == null) || !isAncestor(cl, ccl))) {
-                    sun.reflect.misc.ReflectUtil.checkPackageAccess(tclass);
+                  sun.reflect.misc.ReflectUtil.checkPackageAccess(tclass);
                 }
                 fieldClass = field.getType();
             } catch (PrivilegedActionException pae) {
@@ -315,10 +407,19 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
         }
 
         @SuppressWarnings("unchecked")
-            public V get(T obj) {
+        public V get(T obj) {
             if (obj == null || obj.getClass() != tclass || cclass != null)
                 targetCheck(obj);
             return (V)unsafe.getObjectVolatile(obj, offset);
+        }
+
+        @SuppressWarnings("unchecked")
+        public V getAndSet(T obj, V newValue) {
+            if (obj == null || obj.getClass() != tclass || cclass != null ||
+                (newValue != null && vclass != null &&
+                 vclass != newValue.getClass()))
+                updateCheck(obj, newValue);
+            return (V)unsafe.getAndSetObject(obj, offset, newValue);
         }
 
         private void ensureProtectedAccess(T obj) {
@@ -326,14 +427,14 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
                 return;
             }
             throw new RuntimeException(
-                                       new IllegalAccessException("Class " +
-                                                                  cclass.getName() +
-                                                                  " can not access a protected member of class " +
-                                                                  tclass.getName() +
-                                                                  " using an instance of " +
-                                                                  obj.getClass().getName()
-                                                                  )
-                                       );
+                new IllegalAccessException("Class " +
+                    cclass.getName() +
+                    " can not access a protected member of class " +
+                    tclass.getName() +
+                    " using an instance of " +
+                    obj.getClass().getName()
+                )
+            );
         }
     }
 }

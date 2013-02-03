@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,11 +83,8 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
             if (expected > count) {
                 long nskip = expected - count;
                 if (nskip <= available()) {
-                    long n = 0;
-                    while (n < nskip) {
-                        nskip = nskip - n;
-                        n = skip(nskip);
-                    }
+                    do {} while ((nskip = (expected - count)) > 0L
+                                 && skip(Math.min(nskip, available())) > 0L);
                 } else if (expected <= KeepAliveStreamCleaner.MAX_DATA_REMAINING && !hurried) {
                     //put this KeepAliveStream on the queue so that the data remaining
                     //on the socket can be cleanup asyncronously.
@@ -205,33 +202,4 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
         hc = null;
         closed = true;
     }
-}
-
-
-class KeepAliveCleanerEntry
-{
-    KeepAliveStream kas;
-    HttpClient hc;
-
-    public KeepAliveCleanerEntry(KeepAliveStream kas, HttpClient hc) {
-        this.kas = kas;
-        this.hc = hc;
-    }
-
-    protected KeepAliveStream getKeepAliveStream() {
-        return kas;
-    }
-
-    protected HttpClient getHttpClient() {
-        return hc;
-    }
-
-    protected void setQueuedForCleanup() {
-        kas.queuedForCleanup = true;
-    }
-
-    protected boolean getQueuedForCleanup() {
-        return kas.queuedForCleanup;
-    }
-
 }

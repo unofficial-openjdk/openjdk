@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -77,6 +77,7 @@ ifeq ($(PLATFORM), windows)
     FILES_export += java/net/DualStackPlainSocketImpl.java
     FILES_export += java/net/TwoStacksPlainDatagramSocketImpl.java
     FILES_export += java/net/DualStackPlainDatagramSocketImpl.java
+    FILES_export += sun/net/www/protocol/http/ntlm/NTLMAuthSequence.java
 else
     FILES_export += java/net/PlainDatagramSocketImpl.java
 endif

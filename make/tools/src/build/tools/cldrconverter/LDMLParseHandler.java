@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,6 +71,13 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             // ignore this element - it has language and territory elements that aren't locale data
             pushIgnoredContainer(qName);
             break;
+        case "type":
+            if ("calendar".equals(attributes.getValue("key"))) {
+                pushStringEntry(qName, attributes, CLDRConverter.CALENDAR_NAME_PREFIX + attributes.getValue("type"));
+            } else {
+                pushIgnoredContainer(qName);
+            }
+            break;
         case "language":
             // for LocaleNames
             // copy string
@@ -98,19 +105,30 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
         case "symbol":
             // for CurrencyNames
             // need to get the key from the containing <currency> element
-            pushStringEntry(qName, attributes, CLDRConverter.CURRENCY_SYMBOL_PREFIX + getContainerKey());
+            pushStringEntry(qName, attributes, CLDRConverter.CURRENCY_SYMBOL_PREFIX
+                                               + getContainerKey());
             break;
+
+        // Calendar or currency
         case "displayName":
-            // for CurrencyNames
-            // need to get the key from the containing <currency> element
-            // ignore if is has "count" attribute
-            String containerKey = getContainerKey();
-            if (containerKey != null && attributes.getValue("count") == null) {
-                pushStringEntry(qName, attributes,
-                                CLDRConverter.CURRENCY_NAME_PREFIX + containerKey.toLowerCase(Locale.ROOT),
-                                attributes.getValue("type"));
-            } else {
-                pushIgnoredContainer(qName);
+            {
+                if (currentCalendarType != null) {
+                    pushStringEntry(qName, attributes,
+                            currentCalendarType.keyElementName() + "field." + getContainerKey());
+                } else {
+                    // for CurrencyNames
+                    // need to get the key from the containing <currency> element
+                    // ignore if is has "count" attribute
+                    String containerKey = getContainerKey();
+                    if (containerKey != null && attributes.getValue("count") == null) {
+                        pushStringEntry(qName, attributes,
+                                        CLDRConverter.CURRENCY_NAME_PREFIX
+                                        + containerKey.toLowerCase(Locale.ROOT),
+                                        attributes.getValue("type"));
+                    } else {
+                        pushIgnoredContainer(qName);
+                    }
+                }
             }
             break;
 
@@ -127,6 +145,35 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                     pushContainer(qName, attributes);
                 } else {
                     pushIgnoredContainer(qName);
+                }
+            }
+            break;
+        case "fields":
+            if (currentCalendarType != null) {
+                pushContainer(qName, attributes);
+            } else {
+                pushIgnoredContainer(qName);
+            }
+            break;
+        case "field":
+            {
+                String type = attributes.getValue("type");
+                switch (type) {
+                case "era":
+                case "year":
+                case "month":
+                case "week":
+                case "weekday":
+                case "dayperiod":
+                case "hour":
+                case "minute":
+                case "second":
+                case "zone":
+                    pushKeyContainer(qName, attributes, type);
+                    break;
+                default:
+                    pushIgnoredContainer(qName);
+                    break;
                 }
             }
             break;
@@ -154,6 +201,9 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                     break;
                 case "abbreviated":
                     pushStringArrayEntry(qName, attributes, prefix + "MonthAbbreviations/" + getContainerKey(), 13);
+                    break;
+                case "narrow":
+                    pushStringArrayEntry(qName, attributes, prefix + "MonthNarrows/" + getContainerKey(), 13);
                     break;
                 default:
                     pushIgnoredContainer(qName);
@@ -191,6 +241,9 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 case "abbreviated":
                     pushStringArrayEntry(qName, attributes, prefix + "DayAbbreviations/" + getContainerKey(), 7);
                     break;
+                case "narrow":
+                    pushStringArrayEntry(qName, attributes, prefix + "DayNarrows/" + getContainerKey(), 7);
+                    break;
                 default:
                     pushIgnoredContainer(qName);
                     break;
@@ -219,25 +272,36 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
         case "dayPeriodWidth":
             // for FormatData
             // create string array entry for am/pm. only keeping wide
-            if ("wide".equals(attributes.getValue("type"))) {
+            switch (attributes.getValue("type")) {
+            case "wide":
                 pushStringArrayEntry(qName, attributes, "AmPmMarkers/" + getContainerKey(), 2);
-            } else {
+                break;
+            case "narrow":
+                pushStringArrayEntry(qName, attributes, "narrow.AmPmMarkers/" + getContainerKey(), 2);
+                break;
+            default:
                 pushIgnoredContainer(qName);
+                break;
             }
             break;
         case "dayPeriod":
             // for FormatData
             // add to string array entry of AmPmMarkers element
-            switch (attributes.getValue("type")) {
-            case "am":
-                pushStringArrayElement(qName, attributes, 0);
-                break;
-            case "pm":
-                pushStringArrayElement(qName, attributes, 1);
-                break;
-            default:
+            if (attributes.getValue("alt") == null) {
+                switch (attributes.getValue("type")) {
+                case "am":
+                    pushStringArrayElement(qName, attributes, 0);
+                    break;
+                case "pm":
+                    pushStringArrayElement(qName, attributes, 1);
+                    break;
+                default:
+                    pushIgnoredContainer(qName);
+                    break;
+                }
+            } else {
+                // discard alt values
                 pushIgnoredContainer(qName);
-                break;
             }
             break;
         case "eraNames":
@@ -269,7 +333,7 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
                 assert currentContainer instanceof IgnoredContainer;
                 pushIgnoredContainer(qName);
             } else {
-                String key = currentCalendarType.keyElementName() + "short.Eras";
+                String key = currentCalendarType.keyElementName() + "narrow.Eras";
                 pushStringArrayEntry(qName, attributes, key, currentCalendarType.getEraLength(qName));
             }
             break;
@@ -301,15 +365,15 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             break;
         case "zone":
             {
-                String zone = attributes.getValue("type");
+                String tzid = attributes.getValue("type"); // Olson tz id
                 zonePrefix = CLDRConverter.TIMEZONE_ID_PREFIX;
-                put(zonePrefix + zone, new HashMap<String, String>());
-                pushKeyContainer(qName, attributes, zone);
+                put(zonePrefix + tzid, new HashMap<String, String>());
+                pushKeyContainer(qName, attributes, tzid);
             }
             break;
         case "metazone":
             {
-                String zone = attributes.getValue("type");
+                String zone = attributes.getValue("type"); // LDML meta zone id
                 zonePrefix = CLDRConverter.METAZONE_ID_PREFIX;
                 put(zonePrefix + zone, new HashMap<String, String>());
                 pushKeyContainer(qName, attributes, zone);
@@ -323,16 +387,12 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
             zoneNameStyle = "short";
             pushContainer(qName, attributes);
             break;
-        case "generic": // not used in JDK
-            pushIgnoredContainer(qName);
+        case "generic":  // generic name
+        case "standard": // standard time name
+        case "daylight": // daylight saving (summer) time name
+            pushStringEntry(qName, attributes, CLDRConverter.ZONE_NAME_PREFIX + qName + "." + zoneNameStyle);
             break;
-        case "standard": // standard time
-            pushStringEntry(qName, attributes, CLDRConverter.TIMEZONE_NAME_PREFIX + "standard." + zoneNameStyle);
-            break;
-        case "daylight":
-            pushStringEntry(qName, attributes, CLDRConverter.TIMEZONE_NAME_PREFIX + "daylight." + zoneNameStyle);
-            break;
-        case "exemplarCity":
+        case "exemplarCity":  // not used in JDK
             pushIgnoredContainer(qName);
             break;
 
@@ -530,6 +590,7 @@ class LDMLParseHandler extends AbstractLDMLHandler<Object> {
         case "timeZoneNames":
             zonePrefix = null;
             break;
+        case "generic":
         case "standard":
         case "daylight":
             if (zonePrefix != null && (currentContainer instanceof Entry)) {

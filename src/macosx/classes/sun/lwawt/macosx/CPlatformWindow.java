@@ -25,7 +25,6 @@
 
 package sun.lwawt.macosx;
 
-import java.awt.BufferCapabilities.FlipContents;
 import java.awt.*;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.*;
@@ -39,14 +38,13 @@ import sun.awt.*;
 import sun.java2d.SurfaceData;
 import sun.java2d.opengl.CGLSurfaceData;
 import sun.lwawt.*;
-import sun.lwawt.LWWindowPeer.PeerType;
 import sun.util.logging.PlatformLogger;
 
 import com.apple.laf.*;
 import com.apple.laf.ClientPropertyApplicator.Property;
 import com.sun.awt.AWTUtilities;
 
-public class CPlatformWindow extends CFRetainedResource implements PlatformWindow {
+public final class CPlatformWindow extends CFRetainedResource implements PlatformWindow {
     private native long nativeCreateNSWindow(long nsViewPtr, long styleBits, double x, double y, double w, double h);
     private static native void nativeSetNSWindowStyleBits(long nsWindowPtr, int mask, int data);
     private static native void nativeSetNSWindowMenuBar(long nsWindowPtr, long menuBarPtr);
@@ -59,13 +57,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeRevalidateNSWindowShadow(long nsWindowPtr);
     private static native void nativeSetNSWindowMinimizedIcon(long nsWindowPtr, long nsImage);
     private static native void nativeSetNSWindowRepresentedFilename(long nsWindowPtr, String representedFilename);
-    private static native void nativeSetNSWindowSecurityWarningPositioning(long nsWindowPtr, double x, double y, float biasX, float biasY);
     private static native void nativeSetEnabled(long nsWindowPtr, boolean isEnabled);
     private static native void nativeSynthesizeMouseEnteredExitedEvents();
     private static native void nativeDispose(long nsWindowPtr);
     private static native CPlatformWindow nativeGetTopmostPlatformWindowUnderMouse();
-
-    private static native int nativeGetNSWindowDisplayID_AppKitThread(long nsWindowPtr);
 
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
@@ -199,8 +194,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     // In order to keep it up-to-date we will update them on
     // 1) setting native bounds via nativeSetBounds() call
     // 2) getting notification from the native level via deliverMoveResizeEvent()
-    private Rectangle nativeBounds;
-    private volatile boolean isFullScreenMode = false;
+    private Rectangle nativeBounds = new Rectangle(0, 0, 0, 0);
+    private volatile boolean isFullScreenMode;
+    private boolean isFullScreenAnimationOn;
 
     private Window target;
     private LWWindowPeer peer;
@@ -212,9 +208,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private CPlatformResponder responder;
     private volatile boolean zoomed = false; // from native perspective
 
-    public CPlatformWindow(final PeerType peerType) {
+    public CPlatformWindow() {
         super(0, true);
-        assert (peerType == PeerType.SIMPLEWINDOW || peerType == PeerType.DIALOG || peerType == PeerType.FRAME);
     }
 
     /*
@@ -258,7 +253,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         validateSurface();
     }
 
-    protected int getInitialStyleBits() {
+    private int getInitialStyleBits() {
         // defaults style bits
         int styleBits = DECORATED | HAS_SHADOW | CLOSEABLE | MINIMIZABLE | ZOOMABLE | RESIZABLE;
 
@@ -285,7 +280,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             final boolean resizable = isFrame ? ((Frame)target).isResizable() : (isDialog ? ((Dialog)target).isResizable() : false);
             styleBits = SET(styleBits, RESIZABLE, resizable);
             if (!resizable) {
-                styleBits = SET(styleBits, RESIZABLE, false);
                 styleBits = SET(styleBits, ZOOMABLE, false);
             }
         }
@@ -380,7 +374,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     // this is the counter-point to -[CWindow _nativeSetStyleBit:]
-    protected void setStyleBits(final int mask, final boolean value) {
+    private void setStyleBits(final int mask, final boolean value) {
         nativeSetNSWindowStyleBits(getNSWindowPtr(), mask, value ? mask : 0);
     }
 
@@ -402,11 +396,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     @Override // PlatformWindow
-    public Image createBackBuffer() {
-        return contentView.createBackBuffer();
-    }
-
-    @Override // PlatformWindow
     public void dispose() {
         if (owner != null) {
             CWrapper.NSWindow.removeChildWindow(owner.getNSWindowPtr(), getNSWindowPtr());
@@ -414,12 +403,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         contentView.dispose();
         nativeDispose(getNSWindowPtr());
         CPlatformWindow.super.dispose();
-    }
-
-    @Override // PlatformWindow
-    public void flip(int x1, int y1, int x2, int y2, FlipContents flipAction) {
-        // TODO: not implemented
-        (new RuntimeException("unimplemented")).printStackTrace();
     }
 
     @Override // PlatformWindow
@@ -431,8 +414,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override // PlatformWindow
     public Insets getInsets() {
-        final Insets insets = nativeGetNSWindowInsets(getNSWindowPtr());
-        return insets;
+        if (!isFullScreenMode) {
+            return nativeGetNSWindowInsets(getNSWindowPtr());
+        }
+        return new Insets(0, 0, 0, 0);
     }
 
     @Override // PlatformWindow
@@ -442,16 +427,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public GraphicsDevice getGraphicsDevice() {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        CGraphicsEnvironment cge = (CGraphicsEnvironment)ge;
-        int displayID = nativeGetNSWindowDisplayID_AppKitThread(getNSWindowPtr());
-        GraphicsDevice gd = cge.getScreenDevice(displayID);
-        if (gd == null) {
-            // this could possibly happen during device removal
-            // use the default screen device in this case
-            gd = ge.getDefaultScreenDevice();
-        }
-        return gd;
+        return contentView.getGraphicsDevice();
     }
 
     @Override // PlatformWindow
@@ -668,15 +644,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     @Override
-    public void setResizable(boolean resizable) {
+    public void setResizable(final boolean resizable) {
         setStyleBits(RESIZABLE, resizable);
-
-        // Re-apply the size constraints and the size to ensure the space
-        // occupied by the grow box is counted properly
-        peer.updateMinimumSize();
-
-        Rectangle bounds = peer.getBounds();
-        setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     }
 
     @Override
@@ -760,7 +729,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public void enterFullScreenMode() {
         isFullScreenMode = true;
-        contentView.enterFullScreenMode(getNSWindowPtr());
+        contentView.enterFullScreenMode();
+        // the move/size notification from the underlying system comes
+        // but it contains a bounds smaller than the whole screen
+        // and therefore we need to create the synthetic notifications
+        Rectangle screenBounds;
+        final long screenPtr = CWrapper.NSWindow.screen(getNSWindowPtr());
+        try {
+            screenBounds = CWrapper.NSScreen.frame(screenPtr).getBounds();
+        } finally {
+            CWrapper.NSObject.release(screenPtr);
+        }
+        peer.notifyReshape(screenBounds.x, screenBounds.y, screenBounds.width,
+                           screenBounds.height);
     }
 
     @Override
@@ -853,6 +834,11 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         return peer;
     }
 
+    @Override
+    public boolean isUnderMouse() {
+        return contentView.isUnderMouse();
+    }
+
     public CPlatformView getContentView() {
         return contentView;
     }
@@ -869,29 +855,43 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         }
     }
 
+    private void flushBuffers() {
+        if (isVisible() && !nativeBounds.isEmpty()) {
+            LWCToolkit.getLWCToolkit().flushPendingEventsOnAppkit(target);
+        }
+    }
+
     /*************************************************************
      * Callbacks from the AWTWindow and AWTView objc classes.
      *************************************************************/
-    private void deliverWindowFocusEvent(boolean gained){
+    private void deliverWindowFocusEvent(boolean gained, CPlatformWindow opposite){
         // Fix for 7150349: ingore "gained" notifications when the app is inactive.
         if (gained && !((LWCToolkit)Toolkit.getDefaultToolkit()).isApplicationActive()) {
             focusLogger.fine("the app is inactive, so the notification is ignored");
             return;
         }
-        responder.handleWindowFocusEvent(gained);
+
+        LWWindowPeer oppositePeer = (opposite == null)? null : opposite.getPeer();
+        responder.handleWindowFocusEvent(gained, oppositePeer);
     }
 
-    private void deliverMoveResizeEvent(int x, int y, int width, int height) {
+    private void deliverMoveResizeEvent(int x, int y, int width, int height,
+                                        boolean byUser) {
         // when the content view enters the full-screen mode, the native
         // move/resize notifications contain a bounds smaller than
         // the whole screen and therefore we ignore the native notifications
         // and the content view itself creates correct synthetic notifications
-        if (isFullScreenMode) return;
+        if (isFullScreenMode) {
+            return;
+        }
 
+        final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
         peer.notifyReshape(x, y, width, height);
-        //TODO validateSurface already called from notifyReshape
-        validateSurface();
+        if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
+            || isFullScreenAnimationOn) {
+            flushBuffers();
+        }
     }
 
     private void deliverWindowClosingEvent() {
@@ -934,6 +934,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         LWWindowPeer blocker = peer.getBlocker();
         if (blocker == null) {
             return false;
+        }
+
+        if (blocker instanceof CPrinterDialogPeer) {
+            return true;
         }
 
         CPlatformWindow pWindow = (CPlatformWindow)blocker.getPlatformWindow();
@@ -987,27 +991,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         orderAboveSiblings();
     }
 
-    private void updateDisplay() {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                validateSurface();
-            }
-        });
-    }
-
-    private void updateWindowContent() {
-        ComponentEvent resizeEvent = new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED);
-        SunToolkit.postEvent(SunToolkit.targetToAppContext(target), resizeEvent);
-    }
-
     private void windowWillEnterFullScreen() {
-        updateWindowContent();
+        isFullScreenAnimationOn = true;
     }
+
     private void windowDidEnterFullScreen() {
-        updateDisplay();
+        isFullScreenAnimationOn = false;
     }
+
     private void windowWillExitFullScreen() {
-        updateWindowContent();
+        isFullScreenAnimationOn = true;
     }
-    private void windowDidExitFullScreen() {}
+
+    private void windowDidExitFullScreen() {
+        isFullScreenAnimationOn = false;
+    }
 }

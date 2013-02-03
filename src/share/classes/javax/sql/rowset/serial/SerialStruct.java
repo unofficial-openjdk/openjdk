@@ -50,6 +50,13 @@ import javax.sql.rowset.*;
  * an instance from a <code>Struct</code> object, a method for retrieving
  * the SQL type name of the SQL structured type in the database, and methods
  * for retrieving its attribute values.
+ *
+ * <h4> Thread safety </h4>
+ *
+ * A SerialStruct is not safe for use by multiple concurrent threads.  If a
+ * SerialStruct is to be used by more than one thread then access to the
+ * SerialStruct should be controlled by appropriate synchronization.
+ *
  */
 public class SerialStruct implements Struct, Serializable, Cloneable {
 
@@ -247,6 +254,88 @@ public class SerialStruct implements Struct, Serializable, Cloneable {
             throw new SerialException(e.getMessage());
         }
         return;
+    }
+
+    /**
+     * Compares this SerialStruct to the specified object.  The result is
+     * {@code true} if and only if the argument is not {@code null} and is a
+     * {@code SerialStruct} object whose attributes are identical to this
+     * object's attributes
+     *
+     * @param  obj The object to compare this {@code SerialStruct} against
+     *
+     * @return {@code true} if the given object represents a {@code SerialStruct}
+     *          equivalent to this SerialStruct, {@code false} otherwise
+     *
+     */
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof SerialStruct) {
+            SerialStruct ss = (SerialStruct)obj;
+            return SQLTypeName.equals(ss.SQLTypeName) &&
+                    Arrays.equals(attribs, ss.attribs);
+        }
+        return false;
+    }
+
+    /**
+     * Returns a hash code for this {@code SerialStruct}. The hash code for a
+     * {@code SerialStruct} object is computed using the hash codes
+     * of the attributes of the {@code SerialStruct} object and its
+     * {@code SQLTypeName}
+     *
+     * @return  a hash code value for this object.
+     */
+    public int hashCode() {
+        return ((31 + Arrays.hashCode(attribs)) * 31) * 31
+                + SQLTypeName.hashCode();
+    }
+
+    /**
+     * Returns a clone of this {@code SerialStruct}. The copy will contain a
+     * reference to a clone of the underlying attribs array, not a reference
+     * to the original underlying attribs array of this {@code SerialStruct} object.
+     *
+     * @return  a clone of this SerialStruct
+     */
+    public Object clone() {
+        try {
+            SerialStruct ss = (SerialStruct) super.clone();
+            ss.attribs = Arrays.copyOf(attribs, attribs.length);
+            return ss;
+        } catch (CloneNotSupportedException ex) {
+            // this shouldn't happen, since we are Cloneable
+            throw new InternalError();
+        }
+
+    }
+
+    /**
+     * readObject is called to restore the state of the {@code SerialStruct} from
+     * a stream.
+     */
+    private void readObject(ObjectInputStream s)
+            throws IOException, ClassNotFoundException {
+
+       ObjectInputStream.GetField fields = s.readFields();
+       Object[] tmp = (Object[])fields.get("attribs", null);
+       attribs = tmp == null ? null : tmp.clone();
+       SQLTypeName = (String)fields.get("SQLTypeName", null);
+    }
+
+    /**
+     * writeObject is called to save the state of the {@code SerialStruct}
+     * to a stream.
+     */
+    private void writeObject(ObjectOutputStream s)
+            throws IOException, ClassNotFoundException {
+
+        ObjectOutputStream.PutField fields = s.putFields();
+        fields.put("attribs", attribs);
+        fields.put("SQLTypeName", SQLTypeName);
+        s.writeFields();
     }
 
     /**

@@ -47,9 +47,8 @@ public class CollatorProviderTest extends ProviderTest {
     }
 
     void availableLocalesTest() {
-        Set<Locale> localesFromAPI = new HashSet<Locale>(availloc);
-        Set<Locale> localesExpected = new HashSet<Locale>(jreimplloc);
-        localesExpected.remove(Locale.ROOT);
+        Set<Locale> localesFromAPI = new HashSet<>(availloc);
+        Set<Locale> localesExpected = new HashSet<>(jreloc);
         localesExpected.addAll(providerloc);
         if (localesFromAPI.equals(localesExpected)) {
             System.out.println("availableLocalesTest passed.");
@@ -68,7 +67,7 @@ public class CollatorProviderTest extends ProviderTest {
             for (String tag : ((AvailableLanguageTags)LocaleProviderAdapter.forJRE().getCollatorProvider()).getAvailableLanguageTags()) {
                 jreimplloc.add(Locale.forLanguageTag(tag));
             }
-            ResourceBundle rb = LocaleProviderAdapter.forJRE().getLocaleData().getCollationData(target);
+            ResourceBundle rb = ((ResourceBundleBasedAdapter)LocaleProviderAdapter.forJRE()).getLocaleData().getCollationData(target);
             boolean jreSupportsLocale = jreimplloc.contains(target);
 
             // result object

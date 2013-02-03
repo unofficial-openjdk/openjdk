@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ fi
 if [ "${TESTJAVA}" = "" ] ; then
   JAVAC_CMD=`which javac`
   TESTJAVA=`dirname $JAVAC_CMD`/..
+  COMPILEJAVA="${TESTJAVA}"
 fi
 
 # set platform-dependent variables
@@ -56,9 +57,9 @@ case "$OS" in
     ;;
 esac
 
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}KeyToolTest.java || exit 10
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . -XDignore.symbol.file ${TESTSRC}${FS}KeyToolTest.java || exit 10
 
-echo | ${TESTJAVA}${FS}bin${FS}java -Dfile KeyToolTest
+echo | ${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Dfile KeyToolTest
 status=$?
 
 rm HumanInputStream*.class

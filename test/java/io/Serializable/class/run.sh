@@ -34,96 +34,100 @@ then
   exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ] ; then
+  COMPILEJAVA="${TESTJAVA}"
+fi
+
 if [ "${TESTSRC}" = "" ]
 then
 TESTSRC="."
 fi
 
-${TESTJAVA}/bin/javac -d . ${TESTSRC}/Test.java
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}/Test.java
 
 echo Write NonSerial1, Read NonSerial1
 rm -f A.java     
 cp ${TESTSRC}/NonSerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -s A
-${TESTJAVA}/bin/java Test -d
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -d
 echo
 
 echo Write NonSerial1, Read NonSerial2
 rm -f A.java     
 cp ${TESTSRC}/NonSerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/NonSerialA_2.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -d
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -d
 echo
 
 echo Write NonSerial1, Read Serial1
 rm -f A.java     
 cp ${TESTSRC}/NonSerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -d
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -d
 echo
 
 echo Write Serial1, Read NonSerial1
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/NonSerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -doe
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -doe
 echo
 
 echo Write Serial1, Read Serial2
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/SerialA_2.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -d
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -d
 echo
 
 echo Write Serial2, Read Serial1
 rm -f A.java     
 cp ${TESTSRC}/SerialA_2.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -d
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -d
 echo
 
 echo Write Serial1, Read Serial3
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/SerialA_3.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -de
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -de
 echo
 
 echo Write Serial3, Read Serial1
 rm -f A.java     
 cp ${TESTSRC}/SerialA_3.java A.java
-${TESTJAVA}/bin/javac A.java 
-${TESTJAVA}/bin/java Test -s A
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java 
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -s A
 rm -f A.java     
 cp ${TESTSRC}/SerialA_1.java A.java
-${TESTJAVA}/bin/javac A.java
-${TESTJAVA}/bin/java Test -de
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} A.java
+${TESTJAVA}/bin/java ${TESTVMOPTS} Test -de
 echo
 
 echo Passed

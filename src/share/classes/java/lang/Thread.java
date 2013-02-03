@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -2027,6 +2027,16 @@ class Thread implements Runnable {
             }
         }
     }
+
+
+    // The following three initially uninitialized fields are exclusively
+    // managed by class java.util.concurrent.ThreadLocalRandom.
+    /** The current seed for a ThreadLocalRandom */
+    long threadLocalRandomSeed;
+    /** Probe hash value; nonzero if threadLocalRandomSeed initialized */
+    int threadLocalRandomProbe;
+    /** Secondary seed isolated from public ThreadLocalRandom sequence */
+    int threadLocalRandomSecondarySeed;
 
     /* Some private helper methods */
     private native void setPriority0(int newPriority);

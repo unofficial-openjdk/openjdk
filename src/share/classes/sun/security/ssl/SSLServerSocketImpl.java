@@ -29,16 +29,15 @@ package sun.security.ssl;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.ServerSocket;
 
 import java.security.AlgorithmConstraints;
 
 import java.util.*;
 
-import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SNIMatcher;
 
 
 /**
@@ -83,14 +82,15 @@ class SSLServerSocketImpl extends SSLServerSocket
     /* which protocol to use by default */
     private ProtocolList        enabledProtocols = null;
 
-    /* could enabledCipherSuites ever complete handshaking? */
-    private boolean             checkedEnabled = false;
-
     // the endpoint identification protocol to use by default
     private String              identificationProtocol = null;
 
     // The cryptographic algorithm constraints
     private AlgorithmConstraints    algorithmConstraints = null;
+
+    // The server name indication
+    Collection<SNIMatcher>      sniMatchers =
+                                    Collections.<SNIMatcher>emptyList();
 
     /**
      * Create an SSL server socket on a port, using a non-default
@@ -167,6 +167,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      *
      * @return an array of cipher suite names
      */
+    @Override
     public String[] getSupportedCipherSuites() {
         return sslContext.getSupportedCipherSuiteList().toStringArray();
     }
@@ -176,6 +177,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * for use by newly accepted connections.  A null return indicates
      * that the system defaults are in effect.
      */
+    @Override
     synchronized public String[] getEnabledCipherSuites() {
         return enabledCipherSuites.toStringArray();
     }
@@ -187,11 +189,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * @param suites Names of all the cipher suites to enable; null
      *  means to accept system defaults.
      */
+    @Override
     synchronized public void setEnabledCipherSuites(String[] suites) {
         enabledCipherSuites = new CipherSuiteList(suites);
-        checkedEnabled = false;
     }
 
+    @Override
     public String[] getSupportedProtocols() {
         return sslContext.getSuportedProtocolList().toStringArray();
     }
@@ -205,10 +208,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * @exception IllegalArgumentException when one of the protocols
      *  named by the parameter is not supported.
      */
+    @Override
     synchronized public void setEnabledProtocols(String[] protocols) {
         enabledProtocols = new ProtocolList(protocols);
     }
 
+    @Override
     synchronized public String[] getEnabledProtocols() {
         return enabledProtocols.toStringArray();
     }
@@ -217,11 +222,13 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Controls whether the connections which are accepted must include
      * client authentication.
      */
+    @Override
     public void setNeedClientAuth(boolean flag) {
         doClientAuth = (flag ?
             SSLEngineImpl.clauth_required : SSLEngineImpl.clauth_none);
     }
 
+    @Override
     public boolean getNeedClientAuth() {
         return (doClientAuth == SSLEngineImpl.clauth_required);
     }
@@ -230,11 +237,13 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Controls whether the connections which are accepted should request
      * client authentication.
      */
+    @Override
     public void setWantClientAuth(boolean flag) {
         doClientAuth = (flag ?
             SSLEngineImpl.clauth_requested : SSLEngineImpl.clauth_none);
     }
 
+    @Override
     public boolean getWantClientAuth() {
         return (doClientAuth == SSLEngineImpl.clauth_requested);
     }
@@ -245,6 +254,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * FTP clients, which accept connections from servers and should be
      * rejoining the already-negotiated SSL connection.
      */
+    @Override
     public void setUseClientMode(boolean flag) {
         /*
          * If we need to change the socket mode and the enabled
@@ -259,6 +269,7 @@ class SSLServerSocketImpl extends SSLServerSocket
         useServerMode = !flag;
     }
 
+    @Override
     public boolean getUseClientMode() {
         return !useServerMode;
     }
@@ -268,6 +279,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Controls whether new connections may cause creation of new SSL
      * sessions.
      */
+    @Override
     public void setEnableSessionCreation(boolean flag) {
         enableSessionCreation = flag;
     }
@@ -276,6 +288,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Returns true if new connections may cause creation of new SSL
      * sessions.
      */
+    @Override
     public boolean getEnableSessionCreation() {
         return enableSessionCreation;
     }
@@ -283,12 +296,14 @@ class SSLServerSocketImpl extends SSLServerSocket
     /**
      * Returns the SSLParameters in effect for newly accepted connections.
      */
+    @Override
     synchronized public SSLParameters getSSLParameters() {
         SSLParameters params = super.getSSLParameters();
 
         // the super implementation does not handle the following parameters
         params.setEndpointIdentificationAlgorithm(identificationProtocol);
         params.setAlgorithmConstraints(algorithmConstraints);
+        params.setSNIMatchers(sniMatchers);
 
         return params;
     }
@@ -296,12 +311,17 @@ class SSLServerSocketImpl extends SSLServerSocket
     /**
      * Applies SSLParameters to newly accepted connections.
      */
+    @Override
     synchronized public void setSSLParameters(SSLParameters params) {
         super.setSSLParameters(params);
 
         // the super implementation does not handle the following parameters
         identificationProtocol = params.getEndpointIdentificationAlgorithm();
         algorithmConstraints = params.getAlgorithmConstraints();
+        Collection<SNIMatcher> matchers = params.getSNIMatchers();
+        if (matchers != null) {
+            sniMatchers = params.getSNIMatchers();
+        }
     }
 
     /**
@@ -309,10 +329,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * information provided in the authentication context which was
      * presented during construction.
      */
+    @Override
     public Socket accept() throws IOException {
         SSLSocketImpl s = new SSLSocketImpl(sslContext, useServerMode,
             enabledCipherSuites, doClientAuth, enableSessionCreation,
-            enabledProtocols, identificationProtocol, algorithmConstraints);
+            enabledProtocols, identificationProtocol, algorithmConstraints,
+            sniMatchers);
 
         implAccept(s);
         s.doneConnect();
@@ -322,6 +344,7 @@ class SSLServerSocketImpl extends SSLServerSocket
     /**
      * Provides a brief description of this SSL socket.
      */
+    @Override
     public String toString() {
         return "[SSL: "+ super.toString() + "]";
     }

@@ -51,7 +51,8 @@ case "$OS" in
     ;;
 esac
 
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}DebugReportsOneExtraByte.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
+    ${TESTSRC}${FS}DebugReportsOneExtraByte.java
 
 STRING='main, WRITE: TLSv1 Application Data, length = 8'
 
@@ -59,7 +60,7 @@ echo "Examining debug output for the string:"
 echo "${STRING}"
 echo "========="
 
-${TESTJAVA}${FS}bin${FS}java -Djavax.net.debug=all \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Djavax.net.debug=all \
     -Dtest.src=${TESTSRC} \
     DebugReportsOneExtraByte 2>&1 | \
     grep "${STRING}"

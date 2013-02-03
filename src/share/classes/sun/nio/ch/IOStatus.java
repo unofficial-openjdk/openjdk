@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 
 package sun.nio.ch;
 
+import java.lang.annotation.Native;
 
 // Constants for reporting I/O status
 
@@ -32,12 +33,12 @@ public final class IOStatus {
 
     private IOStatus() { }
 
-    public static final int EOF = -1;              // End of file
-    public static final int UNAVAILABLE = -2;      // Nothing available (non-blocking)
-    public static final int INTERRUPTED = -3;      // System call interrupted
-    public static final int UNSUPPORTED = -4;      // Operation not supported
-    public static final int THROWN = -5;           // Exception thrown in JNI code
-    public static final int UNSUPPORTED_CASE = -6; // This case not supported
+    @Native public static final int EOF = -1;              // End of file
+    @Native public static final int UNAVAILABLE = -2;      // Nothing available (non-blocking)
+    @Native public static final int INTERRUPTED = -3;      // System call interrupted
+    @Native public static final int UNSUPPORTED = -4;      // Operation not supported
+    @Native public static final int THROWN = -5;           // Exception thrown in JNI code
+    @Native public static final int UNSUPPORTED_CASE = -6; // This case not supported
 
     // The following two methods are for use in try/finally blocks where a
     // status value needs to be normalized before being returned to the invoker

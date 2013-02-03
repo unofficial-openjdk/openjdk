@@ -38,13 +38,13 @@ fi
 
 echo "Creating JAR file ..."
 
-$JAR -cf ${TESTCLASSES}/dummy.jar \
+$JAR ${TESTTOOLVMOPTS} -cf ${TESTCLASSES}/dummy.jar \
     -C ${TESTCLASSES} DummyScriptEngine.class \
     -C ${TESTCLASSES} DummyScriptEngineFactory.class \
     -C "${TESTSRC}" META-INF/services/javax.script.ScriptEngineFactory
 
 echo "Running test ..."
 
-$JAVA -classpath \
+$JAVA ${TESTVMOPTS} -classpath \
   "${TESTCLASSES}${PS}${TESTCLASSES}/dummy.jar" \
   ProviderTest

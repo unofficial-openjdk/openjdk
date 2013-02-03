@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,12 +43,12 @@ import java.lang.ref.SoftReference;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.ConcurrentHashMap;
-import sun.misc.SharedSecrets;
 import sun.misc.JavaAWTAccess;
+import sun.misc.SharedSecrets;
 import sun.security.action.GetPropertyAction;
-import sun.util.locale.provider.TimeZoneNameUtility;
 import sun.util.calendar.ZoneInfo;
 import sun.util.calendar.ZoneInfoFile;
+import sun.util.locale.provider.TimeZoneNameUtility;
 
 /**
  * <code>TimeZone</code> represents a time zone offset, and also figures out daylight
@@ -399,28 +399,23 @@ abstract public class TimeZone implements Serializable, Cloneable {
         if (style != SHORT && style != LONG) {
             throw new IllegalArgumentException("Illegal style: " + style);
         }
-
         String id = getID();
-        String[] names = getDisplayNames(id, locale);
-        if (names == null) {
-            if (id.startsWith("GMT") && id.length() > 3) {
-                char sign = id.charAt(3);
-                if (sign == '+' || sign == '-') {
-                    return id;
-                }
-            }
-            int offset = getRawOffset();
-            if (daylight) {
-                offset += getDSTSavings();
-            }
-            return ZoneInfoFile.toCustomID(offset);
+        String name = TimeZoneNameUtility.retrieveDisplayName(id, daylight, style, locale);
+        if (name != null) {
+            return name;
         }
 
-        int index = daylight ? 3 : 1;
-        if (style == SHORT) {
-            index++;
+        if (id.startsWith("GMT") && id.length() > 3) {
+            char sign = id.charAt(3);
+            if (sign == '+' || sign == '-') {
+                return id;
+            }
         }
-        return names[index];
+        int offset = getRawOffset();
+        if (daylight) {
+            offset += getDSTSavings();
+        }
+        return ZoneInfoFile.toCustomID(offset);
     }
 
     private static class DisplayNames {
@@ -429,35 +424,13 @@ abstract public class TimeZone implements Serializable, Cloneable {
         //   Map(key=id, value=SoftReference(Map(key=locale, value=displaynames)))
         private static final Map<String, SoftReference<Map<Locale, String[]>>> CACHE =
             new ConcurrentHashMap<>();
+
+        private DisplayNames() {
+        }
     }
 
-    private static final String[] getDisplayNames(String id, Locale locale) {
-        Map<String, SoftReference<Map<Locale, String[]>>> displayNames = DisplayNames.CACHE;
-
-        SoftReference<Map<Locale, String[]>> ref = displayNames.get(id);
-        if (ref != null) {
-            Map<Locale, String[]> perLocale = ref.get();
-            if (perLocale != null) {
-                String[] names = perLocale.get(locale);
-                if (names != null) {
-                    return names;
-                }
-                names = TimeZoneNameUtility.retrieveDisplayNames(id, locale);
-                if (names != null) {
-                    perLocale.put(locale, names);
-                }
-                return names;
-            }
-        }
-
-        String[] names = TimeZoneNameUtility.retrieveDisplayNames(id, locale);
-        if (names != null) {
-            Map<Locale, String[]> perLocale = new ConcurrentHashMap<>();
-            perLocale.put(locale, names);
-            ref = new SoftReference<>(perLocale);
-            displayNames.put(id, ref);
-        }
-        return names;
+    private static String[] getDisplayNames(String id, Locale locale) {
+        return TimeZoneNameUtility.retrieveDisplayNames(id, locale);
     }
 
     /**
@@ -631,14 +604,14 @@ abstract public class TimeZone implements Serializable, Cloneable {
     }
 
     private static synchronized TimeZone setDefaultZone() {
-        TimeZone tz = null;
+        TimeZone tz;
         // get the time zone ID from the system properties
         String zoneID = AccessController.doPrivileged(
                 new GetPropertyAction("user.timezone"));
 
         // if the time zone ID is not set (yet), perform the
         // platform to Java time zone ID mapping.
-        if (zoneID == null || zoneID.equals("")) {
+        if (zoneID == null || zoneID.isEmpty()) {
             String country = AccessController.doPrivileged(
                     new GetPropertyAction("user.country"));
             String javaHome = AccessController.doPrivileged(
@@ -670,8 +643,9 @@ abstract public class TimeZone implements Serializable, Cloneable {
         assert tz != null;
 
         final String id = zoneID;
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            @Override
+                public Void run() {
                     System.setProperty("user.timezone", id);
                     return null;
                 }
@@ -719,15 +693,16 @@ abstract public class TimeZone implements Serializable, Cloneable {
      * Returns the default TimeZone in an AppContext if any AppContext
      * has ever used. null is returned if any AppContext hasn't been
      * used or if the AppContext doesn't have the default TimeZone.
+     *
+     * Note that javaAWTAccess may be null if sun.awt.AppContext class hasn't
+     * been loaded. If so, it implies that AWTSecurityManager is not our
+     * SecurityManager and we can use a local static variable.
+     * This works around a build time issue.
      */
-    private synchronized static TimeZone getDefaultInAppContext() {
+    private static TimeZone getDefaultInAppContext() {
         // JavaAWTAccess provides access implementation-private methods without using reflection.
         JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
 
-        // Note that javaAWTAccess may be null if sun.awt.AppContext class hasn't
-        // been loaded. If so, it implies that AWTSecurityManager is not our
-        // SecurityManager and we can use a local static variable.
-        // This works around a build time issue.
         if (javaAWTAccess == null) {
             return mainAppContextDefault;
         } else {
@@ -749,15 +724,16 @@ abstract public class TimeZone implements Serializable, Cloneable {
      * tz. null is handled special: do nothing if any AppContext
      * hasn't been used, remove the default TimeZone in the
      * AppContext otherwise.
+     *
+     * Note that javaAWTAccess may be null if sun.awt.AppContext class hasn't
+     * been loaded. If so, it implies that AWTSecurityManager is not our
+     * SecurityManager and we can use a local static variable.
+     * This works around a build time issue.
      */
-    private synchronized static void setDefaultInAppContext(TimeZone tz) {
+    private static void setDefaultInAppContext(TimeZone tz) {
         // JavaAWTAccess provides access implementation-private methods without using reflection.
         JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
 
-        // Note that javaAWTAccess may be null if sun.awt.AppContext class hasn't
-        // been loaded. If so, it implies that AWTSecurityManager is not our
-        // SecurityManager and we can use a local static variable.
-        // This works around a build time issue.
         if (javaAWTAccess == null) {
             mainAppContextDefault = tz;
         } else {
@@ -822,7 +798,7 @@ abstract public class TimeZone implements Serializable, Cloneable {
     private static final int    GMT_ID_LENGTH = 3;
 
     // a static TimeZone we can reference if no AppContext is in place
-    private static TimeZone mainAppContextDefault;
+    private static volatile TimeZone mainAppContextDefault;
 
     /**
      * Parses a custom time zone identifier and returns a corresponding zone.

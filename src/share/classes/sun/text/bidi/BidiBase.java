@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3251,10 +3251,9 @@ public class BidiBase {
     {
         verifyValidParaOrLine();
         BidiLine.getRuns(this);
-        if (runCount == 1) {
+        if (run < 0 || run >= runCount) {
             return getParaLevel();
         }
-        verifyIndex(run, 0, runCount);
         getLogicalToVisualRunsMap();
         return runs[logicalToVisualRunsMap[run]].level;
     }

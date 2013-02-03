@@ -112,6 +112,12 @@ abstract class Handshaker {
      */
     private CipherSuiteList    activeCipherSuites;
 
+    // The server name indication and matchers
+    List<SNIServerName>         serverNames =
+                                    Collections.<SNIServerName>emptyList();
+    Collection<SNIMatcher>      sniMatchers =
+                                    Collections.<SNIMatcher>emptyList();
+
     private boolean             isClient;
     private boolean             needCertVerify;
 
@@ -287,14 +293,7 @@ abstract class Handshaker {
         }
     }
 
-    String getRawHostnameSE() {
-        if (conn != null) {
-            return conn.getRawHostname();
-        } else {
-            return engine.getPeerHost();
-        }
-    }
-
+    // ONLY used by ClientHandshaker to setup the peer host in SSLSession.
     String getHostSE() {
         if (conn != null) {
             return conn.getHost();
@@ -303,6 +302,7 @@ abstract class Handshaker {
         }
     }
 
+    // ONLY used by ServerHandshaker to setup the peer host in SSLSession.
     String getHostAddressSE() {
         if (conn != null) {
             return conn.getInetAddress().getHostAddress();
@@ -436,6 +436,22 @@ abstract class Handshaker {
     }
 
     /**
+     * Sets the server name indication of the handshake.
+     */
+    void setSNIServerNames(List<SNIServerName> serverNames) {
+        // The serverNames parameter is unmodifiable.
+        this.serverNames = serverNames;
+    }
+
+    /**
+     * Sets the server name matchers of the handshaking.
+     */
+    void setSNIMatchers(Collection<SNIMatcher> sniMatchers) {
+        // The sniMatchers parameter is unmodifiable.
+        this.sniMatchers = sniMatchers;
+    }
+
+    /**
      * Prior to handshaking, activate the handshake and initialize the version,
      * input stream and output stream.
      */
@@ -473,11 +489,7 @@ abstract class Handshaker {
         // We accumulate digests of the handshake messages so that
         // we can read/write CertificateVerify and Finished messages,
         // getting assurance against some particular active attacks.
-        Set<String> localSupportedHashAlgorithms =
-            SignatureAndHashAlgorithm.getHashAlgorithmNames(
-                getLocalSupportedSignAlgs());
-        handshakeHash = new HandshakeHash(!isClient, needCertVerify,
-            localSupportedHashAlgorithms);
+        handshakeHash = new HandshakeHash(needCertVerify);
 
         // Generate handshake input/output stream.
         input = new HandshakeInStream(handshakeHash);
@@ -804,6 +816,7 @@ abstract class Handshaker {
             processLoop();
         } else {
             delegateTask(new PrivilegedExceptionAction<Void>() {
+                @Override
                 public Void run() throws Exception {
                     processLoop();
                     return null;

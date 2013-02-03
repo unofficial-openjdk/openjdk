@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -337,7 +337,8 @@ public class RMIConnectorServer extends JMXConnectorServer {
      * @exception IllegalStateException if the connector server has
      * not been attached to an MBean server.
      * @exception IOException if the connector server cannot be
-     * started.
+     * started, or in the case of the {@code iiop} protocol, that
+     * RMI/IIOP is not supported.
      */
     public synchronized void start() throws IOException {
         final boolean tracing = logger.traceOn();

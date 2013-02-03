@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2011, 2012 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 # 
 # This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ _lockFileName="JMXStartStop.lck"
 
 _compile(){
 
-    if [ ! -e ${_testclasses} ]
+    if [ ! -d ${_testclasses} ]
     then
       mkdir -p ${_testclasses} 
     fi   
@@ -51,9 +51,10 @@ _compile(){
     rm -f ${_testclasses}/JMXStartStopTest.class
 
     # Compile testcase
-    ${TESTJAVA}/bin/javac -d ${_testclasses} JMXStartStopDoSomething.java JMXStartStopTest.java 
+    ${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${_testclasses} \
+	JMXStartStopDoSomething.java JMXStartStopTest.java 
 
-    if [ ! -e ${_testclasses}/JMXStartStopTest.class ]
+    if [ ! -f ${_testclasses}/JMXStartStopTest.class ]
     then
       echo "ERROR: Can't compile"
       exit -1
@@ -61,21 +62,28 @@ _compile(){
 }
 
 _app_start(){
-  ${TESTJAVA}/bin/java -server $* -cp ${_testclasses} JMXStartStopDoSomething  >> ${_logname} 2>&1 &
+  ${TESTJAVA}/bin/java ${TESTVMOPTS} $* -cp ${_testclasses} JMXStartStopDoSomething  >> ${_logname} 2>&1 &
 
-  npid=`_get_pid`
-  if [ "${npid}" = "" ]
-  then
-     echo "ERROR: Test app not started"
-     if [ "${_jtreg}" = "yes" ]
+  x=0
+  while [ ! -f ${_lockFileName} ]
+  do
+     if [ $x -gt 20 ]
      then
-       exit -1
-     fi  
-  fi
+        echo "ERROR: Test app not started"
+        if [ "${_jtreg}" = "yes" ]
+        then
+           exit -1
+        fi   
+     fi    
+        
+     echo "Waiting JMXStartStopDoSomething to start: $x"
+     x=`expr $x + 1`
+     sleep 1
+  done
 }
 
 _get_pid(){
-    ${TESTJAVA}/bin/jps | sed -n "/JMXStartStopDoSomething/s/ .*//p"
+    ${COMPILEJAVA}/bin/jps ${TESTTOOLVMOPTS} | sed -n "/JMXStartStopDoSomething/s/ .*//p"
 }
 
 _app_stop(){
@@ -103,12 +111,12 @@ _exit_on_jtreg(){
 }
 
 _testme(){
-  ${TESTJAVA}/bin/java -cp ${_testclasses} JMXStartStopTest $*
+  ${TESTJAVA}/bin/java ${TESTVMOPTS} -cp ${_testclasses} JMXStartStopTest $*
 }   
 
   
 _jcmd(){
-  ${TESTJAVA}/bin/jcmd JMXStartStopDoSomething $* > /dev/null 2>/dev/null
+  ${TESTJAVA}/bin/jcmd ${TESTTOOLVMOPTS} JMXStartStopDoSomething $* > /dev/null 2>/dev/null
 } 
 
 _echo(){
@@ -438,7 +446,7 @@ test_11(){
 
     _jcmd ManagementAgent.stop
 
-    pid=`${TESTJAVA}/bin/jps | sed -n "/JMXStartStopDoSomething/s/ .*//p"`
+    pid=`${COMPILEJAVA}/bin/jps ${TESTTOOLVMOPTS} | sed -n "/JMXStartStopDoSomething/s/ .*//p"`
     res2=`_testme local ${pid}`
 
     if [ "${res1}" = "OK_CONN" -a "${res2}" = "OK_CONN" ] 
@@ -521,6 +529,7 @@ if [ ! -x "${TESTJAVA}/bin/jcmd" ]
 then
   echo "${TESTJAVA}/bin/jcmd"
   echo "Doesn't exist or not an executable"
+  exit
 fi
 
 

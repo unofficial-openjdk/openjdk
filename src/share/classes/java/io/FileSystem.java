@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,19 +25,13 @@
 
 package java.io;
 
+import java.lang.annotation.Native;
 
 /**
  * Package-private abstract class for the local filesystem abstraction.
  */
 
 abstract class FileSystem {
-
-    /**
-     * Return the FileSystem object representing this platform's local
-     * filesystem.
-     */
-    public static native FileSystem getFileSystem();
-
 
     /* -- Normalization and construction -- */
 
@@ -105,10 +99,10 @@ abstract class FileSystem {
     /* -- Attribute accessors -- */
 
     /* Constants for simple boolean attributes */
-    public static final int BA_EXISTS    = 0x01;
-    public static final int BA_REGULAR   = 0x02;
-    public static final int BA_DIRECTORY = 0x04;
-    public static final int BA_HIDDEN    = 0x08;
+    @Native public static final int BA_EXISTS    = 0x01;
+    @Native public static final int BA_REGULAR   = 0x02;
+    @Native public static final int BA_DIRECTORY = 0x04;
+    @Native public static final int BA_HIDDEN    = 0x08;
 
     /**
      * Return the simple boolean attributes for the file or directory denoted
@@ -117,9 +111,9 @@ abstract class FileSystem {
      */
     public abstract int getBooleanAttributes(File f);
 
-    public static final int ACCESS_READ    = 0x04;
-    public static final int ACCESS_WRITE   = 0x02;
-    public static final int ACCESS_EXECUTE = 0x01;
+    @Native public static final int ACCESS_READ    = 0x04;
+    @Native public static final int ACCESS_WRITE   = 0x02;
+    @Native public static final int ACCESS_EXECUTE = 0x01;
 
     /**
      * Check whether the file or directory denoted by the given abstract
@@ -210,9 +204,9 @@ abstract class FileSystem {
     public abstract File[] listRoots();
 
     /* -- Disk usage -- */
-    public static final int SPACE_TOTAL  = 0;
-    public static final int SPACE_FREE   = 1;
-    public static final int SPACE_USABLE = 2;
+    @Native public static final int SPACE_TOTAL  = 0;
+    @Native public static final int SPACE_FREE   = 1;
+    @Native public static final int SPACE_USABLE = 2;
 
     public abstract long getSpace(File f, int t);
 

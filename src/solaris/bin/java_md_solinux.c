@@ -478,9 +478,11 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
         JLI_TraceLauncher("mustsetenv: %s\n", mustsetenv ? "TRUE" : "FALSE");
 
         if (mustsetenv == JNI_FALSE) {
+            JLI_MemFree(newargv);
             return;
         }
 #else
+        JLI_MemFree(newargv);
         return;
 #endif /* SETENV_REQUIRED */
       } else {  /* do the same speculatively or exit */
@@ -809,7 +811,6 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
 jboolean
 LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
 {
-    Dl_info dlinfo;
     void *libjvm;
 
     JLI_TraceLauncher("JVM path is %s\n", jvmpath);

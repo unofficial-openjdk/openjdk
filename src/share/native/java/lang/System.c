@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ Java_java_lang_System_identityHashCode(JNIEnv *env, jobject this, jobject x)
 #define VENDOR_URL_BUG "http://bugreport.sun.com/bugreport/"
 #endif
 
-#define JAVA_MAX_SUPPORTED_VERSION 51
+#define JAVA_MAX_SUPPORTED_VERSION 52
 #define JAVA_MAX_SUPPORTED_MINOR_VERSION 0
 
 #ifdef JAVA_SPECIFICATION_VENDOR /* Third party may NOT overwrite this. */
@@ -389,11 +389,19 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
         sprops->display_variant, sprops->format_variant, putID, getPropID);
     GETPROP(props, "file.encoding", jVMVal);
     if (jVMVal == NULL) {
+#ifdef MACOSX
+        /*
+         * Since sun_jnu_encoding is now hard-coded to UTF-8 on Mac, we don't
+         * want to use it to overwrite file.encoding
+         */
+        PUTPROP(props, "file.encoding", sprops->encoding);
+#else
         if (fmtdefault) {
             PUTPROP(props, "file.encoding", sprops->encoding);
         } else {
             PUTPROP(props, "file.encoding", sprops->sun_jnu_encoding);
         }
+#endif
     } else {
         (*env)->DeleteLocalRef(env, jVMVal);
     }

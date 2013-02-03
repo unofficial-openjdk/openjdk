@@ -25,9 +25,11 @@
 
 package sun.util.locale.provider;
 
+import static java.util.Calendar.*;
 import java.util.Locale;
 import java.util.Map;
 import java.util.spi.CalendarDataProvider;
+import java.util.spi.CalendarNameProvider;
 
 /**
  * {@code CalendarDataUtility} is a utility class for calling the
@@ -44,17 +46,46 @@ public class CalendarDataUtility {
     private CalendarDataUtility() {
     }
 
-    public static String retrieveFieldValueName(String id, int field, int value, int style, Locale locale) {
+    public static int retrieveFirstDayOfWeek(Locale locale) {
         LocaleServiceProviderPool pool =
                 LocaleServiceProviderPool.getPool(CalendarDataProvider.class);
-        return pool.getLocalizedObject(CalendarFieldValueNameGetter.INSTANCE, locale, id,
+        Integer value = pool.getLocalizedObject(CalendarWeekParameterGetter.INSTANCE,
+                                                locale, FIRST_DAY_OF_WEEK);
+        return (value != null && (value >= SUNDAY && value <= SATURDAY)) ? value : SUNDAY;
+    }
+
+    public static int retrieveMinimalDaysInFirstWeek(Locale locale) {
+        LocaleServiceProviderPool pool =
+                LocaleServiceProviderPool.getPool(CalendarDataProvider.class);
+        Integer value = pool.getLocalizedObject(CalendarWeekParameterGetter.INSTANCE,
+                                                locale, MINIMAL_DAYS_IN_FIRST_WEEK);
+        return (value != null && (value >= 1 && value <= 7)) ? value : 1;
+    }
+
+    public static String retrieveFieldValueName(String id, int field, int value, int style, Locale locale) {
+        LocaleServiceProviderPool pool =
+                LocaleServiceProviderPool.getPool(CalendarNameProvider.class);
+        return pool.getLocalizedObject(CalendarFieldValueNameGetter.INSTANCE, locale, normalizeCalendarType(id),
                                        field, value, style);
     }
 
     public static Map<String, Integer> retrieveFieldValueNames(String id, int field, int style, Locale locale) {
         LocaleServiceProviderPool pool =
-            LocaleServiceProviderPool.getPool(CalendarDataProvider.class);
-        return pool.getLocalizedObject(CalendarFieldValueNamesMapGetter.INSTANCE, locale, id, field, style);
+            LocaleServiceProviderPool.getPool(CalendarNameProvider.class);
+        return pool.getLocalizedObject(CalendarFieldValueNamesMapGetter.INSTANCE, locale,
+                                       normalizeCalendarType(id), field, style);
+    }
+
+    private static String normalizeCalendarType(String requestID) {
+        String type;
+        if (requestID.equals("gregorian") || requestID.equals("iso8601")) {
+            type = "gregory";
+        } else if (requestID.startsWith("islamic")) {
+            type = "islamic";
+        } else {
+            type = requestID;
+        }
+        return type;
     }
 
     /**
@@ -62,13 +93,13 @@ public class CalendarDataUtility {
      * implementation.
      */
     private static class CalendarFieldValueNameGetter
-        implements LocaleServiceProviderPool.LocalizedObjectGetter<CalendarDataProvider,
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<CalendarNameProvider,
                                                                    String> {
         private static final CalendarFieldValueNameGetter INSTANCE =
             new CalendarFieldValueNameGetter();
 
         @Override
-        public String getObject(CalendarDataProvider calendarDataProvider,
+        public String getObject(CalendarNameProvider calendarNameProvider,
                                 Locale locale,
                                 String requestID, // calendarType
                                 Object... params) {
@@ -76,7 +107,7 @@ public class CalendarDataUtility {
             int field = (int) params[0];
             int value = (int) params[1];
             int style = (int) params[2];
-            return calendarDataProvider.getDisplayName(requestID, field, value, style, locale);
+            return calendarNameProvider.getDisplayName(requestID, field, value, style, locale);
         }
     }
 
@@ -85,20 +116,47 @@ public class CalendarDataUtility {
      * implementation.
      */
     private static class CalendarFieldValueNamesMapGetter
-        implements LocaleServiceProviderPool.LocalizedObjectGetter<CalendarDataProvider,
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<CalendarNameProvider,
                                                                    Map<String, Integer>> {
         private static final CalendarFieldValueNamesMapGetter INSTANCE =
             new CalendarFieldValueNamesMapGetter();
 
         @Override
-        public Map<String, Integer> getObject(CalendarDataProvider calendarDataProvider,
+        public Map<String, Integer> getObject(CalendarNameProvider calendarNameProvider,
                                               Locale locale,
                                               String requestID, // calendarType
                                               Object... params) {
             assert params.length == 2;
             int field = (int) params[0];
             int style = (int) params[1];
-            return calendarDataProvider.getDisplayNames(requestID, field, style, locale);
+            return calendarNameProvider.getDisplayNames(requestID, field, style, locale);
+        }
+    }
+
+     private static class CalendarWeekParameterGetter
+        implements LocaleServiceProviderPool.LocalizedObjectGetter<CalendarDataProvider,
+                                                                   Integer> {
+        private static final CalendarWeekParameterGetter INSTANCE =
+            new CalendarWeekParameterGetter();
+
+        @Override
+        public Integer getObject(CalendarDataProvider calendarDataProvider,
+                                 Locale locale,
+                                 String requestID,    // resource key
+                                 Object... params) {
+            assert params.length == 0;
+            int value;
+            switch (requestID) {
+            case FIRST_DAY_OF_WEEK:
+                value = calendarDataProvider.getFirstDayOfWeek(locale);
+                break;
+            case MINIMAL_DAYS_IN_FIRST_WEEK:
+                value = calendarDataProvider.getMinimalDaysInFirstWeek(locale);
+                break;
+            default:
+                throw new InternalError("invalid requestID: " + requestID);
+            }
+            return (value != 0) ? value : null;
         }
     }
 }

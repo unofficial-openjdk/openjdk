@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1995, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ SUBDIRS += version jvm redist verify fdlibm java sun_nio jli main zip
 # Others
 #    Note: java_crw_demo java_hprof_demo are demos but must be delivered built in sdk
 
-SUBDIRS += security math util text net nio jar
+SUBDIRS += security math util text net nio jar time
 
 SUBDIRS_desktop    = awt applet beans
 SUBDIRS_management = management

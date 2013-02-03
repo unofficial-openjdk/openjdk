@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,10 @@ if [ "${TESTJAVA}" = "" ] ; then
    exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ]; then
+   COMPILEJAVA="${TESTJAVA}"
+fi
+
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
@@ -78,16 +82,16 @@ if [ ! -d provider ] ; then
 fi
 
 # compile the test program
-${TESTJAVA}${FILESEP}bin${FILESEP}javac \
+${COMPILEJAVA}${FILESEP}bin${FILESEP}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
         -d ${TESTCLASSES}${FILESEP} \
         ${TESTSRC}${FILESEP}ClassLoaderDeadlock.java
 
-${TESTJAVA}${FILESEP}bin${FILESEP}javac \
+${COMPILEJAVA}${FILESEP}bin${FILESEP}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
         -d ${TESTCLASSES}${FILESEP}provider${FILESEP} \
         ${TESTSRC}${FILESEP}provider${FILESEP}HashProvider.java
 
 # run the test
-${TESTJAVA}${FILESEP}bin${FILESEP}java \
+${TESTJAVA}${FILESEP}bin${FILESEP}java ${TESTVMOPTS} \
         -classpath "${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}Deadlock.jar" \
 	-Djava.awt.headless=true \
         ClassLoaderDeadlock

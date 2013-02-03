@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,10 @@ if [ "${TESTJAVA}" = "" ] ; then
     exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ] ; then
+    COMPILEJAVA="${TESTJAVA}"
+fi
+
 # set platform-specific variables
 OS=`uname -s`
 case "$OS" in
@@ -69,7 +73,7 @@ echo TESTJAVA=${TESTJAVA}
 echo ""
 
 # compile test
-${TESTJAVA}${FS}bin${FS}javac \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
         -d ${TESTCLASSES} \
         ${TESTSRC}${FS}Starter.java ${TESTSRC}${FS}DelegatingLoader.java
 
@@ -80,7 +84,7 @@ then
 fi
 
 # set up test
-${TESTJAVA}${FS}bin${FS}javac \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
         -d ${TESTCLASSES}${FS} \
         ${TESTSRC}${FS}Alice.java ${TESTSRC}${FS}SupBob.java \
         ${TESTSRC}${FS}Bob.java ${TESTSRC}${FS}SupAlice.java
@@ -98,6 +102,7 @@ done
 
 # run test
 ${TESTJAVA}${FS}bin${FS}java \
+        ${TESTVMOPTS} \
         -verbose:class -XX:+TraceClassLoading -cp . \
         -Dtest.classes=${TESTCLASSES} \
         Starter cross

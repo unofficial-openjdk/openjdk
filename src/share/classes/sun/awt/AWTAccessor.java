@@ -637,6 +637,11 @@ public final class AWTAccessor {
          * Sets extendedKeyCode field for KeyEvent
          */
         void setExtendedKeyCode(KeyEvent ev, long extendedKeyCode);
+
+        /**
+         * Gets original source for KeyEvent
+         */
+        Component getOriginalSource(KeyEvent ev);
     }
 
     /**

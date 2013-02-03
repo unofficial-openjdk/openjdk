@@ -120,9 +120,9 @@ import java.io.IOException;
 
 public class KDCOptions extends KerberosFlags {
 
-    public final int KDC_OPT_PROXIABLE = 0x10000000;
-    public final int KDC_OPT_RENEWABLE_OK = 0x00000010;
-    public final int KDC_OPT_FORWARDABLE = 0x40000000;
+    private static final int KDC_OPT_PROXIABLE = 0x10000000;
+    private static final int KDC_OPT_RENEWABLE_OK = 0x00000010;
+    private static final int KDC_OPT_FORWARDABLE = 0x40000000;
 
 
     // KDC Options
@@ -139,12 +139,44 @@ public class KDCOptions extends KerberosFlags {
     public static final int UNUSED9         = 9;
     public static final int UNUSED10        = 10;
     public static final int UNUSED11        = 11;
+    public static final int CNAME_IN_ADDL_TKT = 14;
     public static final int RENEWABLE_OK    = 27;
     public static final int ENC_TKT_IN_SKEY = 28;
     public static final int RENEW           = 30;
     public static final int VALIDATE        = 31;
 
+    private static final String[] names = {
+        "RESERVED",         //0
+        "FORWARDABLE",      //1;
+        "FORWARDED",        //2;
+        "PROXIABLE",        //3;
+        "PROXY",            //4;
+        "ALLOW_POSTDATE",   //5;
+        "POSTDATED",        //6;
+        "UNUSED7",          //7;
+        "RENEWABLE",        //8;
+        "UNUSED9",          //9;
+        "UNUSED10",         //10;
+        "UNUSED11",         //11;
+        null,null,
+        "CNAME_IN_ADDL_TKT",//14;
+        null,null,null,null,null,null,null,null,null,null,null,null,
+        "RENEWABLE_OK",     //27;
+        "ENC_TKT_IN_SKEY",  //28;
+        null,
+        "RENEW",            //30;
+        "VALIDATE",         //31;
+    };
+
     private boolean DEBUG = Krb5.DEBUG;
+
+    public static KDCOptions with(int... flags) {
+        KDCOptions options = new KDCOptions();
+        for (int flag: flags) {
+            options.set(flag, true);
+        }
+        return options;
+    }
 
     public KDCOptions() {
         super(Krb5.KDC_OPTS_MAX + 1);
@@ -238,39 +270,51 @@ public class KDCOptions extends KerberosFlags {
         return super.get(option);
     }
 
+    @Override public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("KDCOptions: ");
+        for (int i=0; i<Krb5.KDC_OPTS_MAX+1; i++) {
+            if (get(i)) {
+                if (names[i] != null) {
+                    sb.append(names[i]).append(",");
+                } else {
+                    sb.append(i).append(",");
+                }
+            }
+        }
+        return sb.toString();
+    }
 
     private void setDefault() {
         try {
 
             Config config = Config.getInstance();
 
-            /*
-             * First see if the IBM hex format is being used.
-             * If not, try the Sun's string (boolean) format.
-             */
+            // If key not present, returns Integer.MIN_VALUE, which is
+            // almost all zero.
 
-            int options =config.getDefaultIntValue("kdc_default_options",
-                    "libdefaults");
+            int options = config.getIntValue("libdefaults",
+                    "kdc_default_options");
 
-            if ((options & RENEWABLE_OK) == RENEWABLE_OK) {
+            if ((options & KDC_OPT_RENEWABLE_OK) == KDC_OPT_RENEWABLE_OK) {
                 set(RENEWABLE_OK, true);
             } else {
-                if (config.getDefaultBooleanValue("renewable", "libdefaults")) {
+                if (config.getBooleanValue("libdefaults", "renewable")) {
                     set(RENEWABLE_OK, true);
                 }
             }
-            if ((options & PROXIABLE) == PROXIABLE) {
+            if ((options & KDC_OPT_PROXIABLE) == KDC_OPT_PROXIABLE) {
                 set(PROXIABLE, true);
             } else {
-                if (config.getDefaultBooleanValue("proxiable", "libdefaults")) {
+                if (config.getBooleanValue("libdefaults", "proxiable")) {
                     set(PROXIABLE, true);
                 }
             }
 
-            if ((options & FORWARDABLE) == FORWARDABLE) {
+            if ((options & KDC_OPT_FORWARDABLE) == KDC_OPT_FORWARDABLE) {
                 set(FORWARDABLE, true);
             } else {
-                if (config.getDefaultBooleanValue("forwardable", "libdefaults")) {
+                if (config.getBooleanValue("libdefaults", "forwardable")) {
                     set(FORWARDABLE, true);
                 }
             }

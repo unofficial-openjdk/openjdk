@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,8 @@ case "$OS" in
     exit 1;
     ;;
 esac
-${TESTJAVA}${FS}bin${FS}javac -d . -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest" ${TESTSRC}${FS}B4933582.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
+    -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest" ${TESTSRC}${FS}B4933582.java
 rm -f cache.ser auth.save
-${TESTJAVA}${FS}bin${FS}java -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest${PS}." B4933582 first
-${TESTJAVA}${FS}bin${FS}java -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest${PS}." B4933582 second
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest${PS}." B4933582 first
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath "${TESTSRC}${FS}..${FS}..${FS}..${FS}sun${FS}net${FS}www${FS}httptest${PS}." B4933582 second

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,10 +44,10 @@ case "$OS" in
     ;;
 esac
 
-# Choose 512-bit RSA to make sure it runs fine and fast on all platforms. In fact,
-# every keyalg/keysize combination is OK for this test.
+# Choose 1024-bit RSA to make sure it runs fine and fast on all platforms. In
+# fact, every keyalg/keysize combination is OK for this test.
 
-KT="$TESTJAVA${FS}bin${FS}keytool -storepass changeit -keypass changeit -keystore js.jks -keyalg rsa -keysize 512"
+KT="$TESTJAVA${FS}bin${FS}keytool -storepass changeit -keypass changeit -keystore js.jks -keyalg rsa -keysize 1024"
 JAR=$TESTJAVA${FS}bin${FS}jar
 JARSIGNER=$TESTJAVA${FS}bin${FS}jarsigner
 JAVAC=$TESTJAVA${FS}bin${FS}javac

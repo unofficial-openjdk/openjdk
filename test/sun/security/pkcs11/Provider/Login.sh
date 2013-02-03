@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -42,9 +42,13 @@ fi
 if [ "${TESTJAVA}" = "" ] ; then
     TESTJAVA="/net/radiant/export1/charlie/mustang/build/solaris-sparc"
 fi
+if [ "${COMPILEJAVA}" = "" ]; then
+    COMPILEJAVA="${TESTJAVA}"
+fi
 echo TESTSRC=${TESTSRC}
 echo TESTCLASSES=${TESTCLASSES}
 echo TESTJAVA=${TESTJAVA}
+echo COMPILEJAVA=${COMPILEJAVA}
 echo ""
 
 # let java test exit if platform unsupported
@@ -101,14 +105,14 @@ ${CHMOD} +w ${TESTCLASSES}${FS}key3.db
 
 # compile test
 
-${TESTJAVA}${FS}bin${FS}javac \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
         -classpath ${TESTSRC}${FS}.. \
         -d ${TESTCLASSES} \
         ${TESTSRC}${FS}Login.java
 
 # run test
 
-${TESTJAVA}${FS}bin${FS}java \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} \
         -classpath ${TESTCLASSES} \
         -DCUSTOM_DB_DIR=${TESTCLASSES} \
         -DCUSTOM_P11_CONFIG=${TESTSRC}${FS}Login-nss.txt \

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -63,11 +63,11 @@ mkdir jars
 
 cp ${TESTSRC}${FS}test.jar  jars
 
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}Test.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}${FS}Test.java
 
 WD=`pwd`
 ulimit -H -n 300
-${TESTJAVA}${FS}bin${FS}java Test ${WD}/jars/ test.jar
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} Test ${WD}/jars/ test.jar
 result=$?
 rm -rf jars
 exit $?

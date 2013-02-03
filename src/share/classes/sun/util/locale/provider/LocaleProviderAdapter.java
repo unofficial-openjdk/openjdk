@@ -37,13 +37,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.spi.CalendarDataProvider;
+import java.util.spi.CalendarNameProvider;
 import java.util.spi.CurrencyNameProvider;
 import java.util.spi.LocaleNameProvider;
 import java.util.spi.LocaleServiceProvider;
 import java.util.spi.TimeZoneNameProvider;
 import sun.util.cldr.CLDRLocaleProviderAdapter;
-import sun.util.resources.LocaleData;
 
 /**
  * The LocaleProviderAdapter abstract class.
@@ -117,6 +119,12 @@ public abstract class LocaleProviderAdapter {
      * in for the root locale.
      */
     private static LocaleProviderAdapter fallbackLocaleProviderAdapter = null;
+
+    /**
+     * Adapter lookup cache.
+     */
+    private static ConcurrentMap<Class<? extends LocaleServiceProvider>, ConcurrentMap<Locale, LocaleProviderAdapter>>
+        adapterCache = new ConcurrentHashMap<>();
 
     static {
         String order = AccessController.doPrivileged(
@@ -209,9 +217,23 @@ public abstract class LocaleProviderAdapter {
      */
     public static LocaleProviderAdapter getAdapter(Class<? extends LocaleServiceProvider> providerClass,
                                                Locale locale) {
+        LocaleProviderAdapter adapter;
+
+        // cache lookup
+        ConcurrentMap<Locale, LocaleProviderAdapter> adapterMap = adapterCache.get(providerClass);
+        if (adapterMap != null) {
+            if ((adapter = adapterMap.get(locale)) != null) {
+                return adapter;
+            }
+        } else {
+            adapterMap = new ConcurrentHashMap<>();
+            adapterCache.putIfAbsent(providerClass, adapterMap);
+        }
+
         // Fast look-up for the given locale
-        LocaleProviderAdapter adapter = findAdapter(providerClass, locale);
+        adapter = findAdapter(providerClass, locale);
         if (adapter != null) {
+            adapterMap.putIfAbsent(locale, adapter);
             return adapter;
         }
 
@@ -225,11 +247,13 @@ public abstract class LocaleProviderAdapter {
             }
             adapter = findAdapter(providerClass, loc);
             if (adapter != null) {
+                adapterMap.putIfAbsent(locale, adapter);
                 return adapter;
             }
         }
 
         // returns the adapter for FALLBACK as the last resort
+        adapterMap.putIfAbsent(locale, fallbackLocaleProviderAdapter);
         return fallbackLocaleProviderAdapter;
     }
 
@@ -387,9 +411,15 @@ public abstract class LocaleProviderAdapter {
      */
     public abstract CalendarDataProvider getCalendarDataProvider();
 
-    public abstract LocaleResources getLocaleResources(Locale locale);
+    /**
+     * Returns a CalendarNameProvider for this LocaleProviderAdapter, or null if no
+     * CalendarNameProvider is available.
+     *
+     * @return a CalendarNameProvider
+     */
+    public abstract CalendarNameProvider getCalendarNameProvider();
 
-    public abstract LocaleData getLocaleData();
+    public abstract LocaleResources getLocaleResources(Locale locale);
 
     public abstract Locale[] getAvailableLocales();
 }
