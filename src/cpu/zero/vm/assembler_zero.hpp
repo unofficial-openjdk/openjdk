@@ -37,9 +37,6 @@ class Assembler : public AbstractAssembler {
 
  public:
   void pd_patch_instruction(address branch, address target);
-#ifndef PRODUCT
-  static void pd_print_patched_instruction(address branch);
-#endif // PRODUCT
 };
 
 class MacroAssembler : public Assembler {
@@ -55,13 +52,8 @@ class MacroAssembler : public Assembler {
  public:
   void advance(int bytes);
   void store_oop(jobject obj);
+  void store_Metadata(Metadata* obj);
 };
-
-#ifdef ASSERT
-inline bool AbstractAssembler::pd_check_instruction_mark() {
-  ShouldNotCallThis();
-}
-#endif
 
 address ShouldNotCallThisStub();
 address ShouldNotCallThisEntry();

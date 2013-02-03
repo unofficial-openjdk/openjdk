@@ -31,6 +31,309 @@
 #include "services/memSnapshot.hpp"
 #include "services/memTracker.hpp"
 
+#ifdef ASSERT
+
+void decode_pointer_record(MemPointerRecord* rec) {
+  tty->print("Pointer: [" PTR_FORMAT " - " PTR_FORMAT  "] size = %d bytes", rec->addr(),
+    rec->addr() + rec->size(), (int)rec->size());
+  tty->print(" type = %s", MemBaseline::type2name(FLAGS_TO_MEMORY_TYPE(rec->flags())));
+  if (rec->is_vm_pointer()) {
+    if (rec->is_allocation_record()) {
+      tty->print_cr(" (reserve)");
+    } else if (rec->is_commit_record()) {
+      tty->print_cr(" (commit)");
+    } else if (rec->is_uncommit_record()) {
+      tty->print_cr(" (uncommit)");
+    } else if (rec->is_deallocation_record()) {
+      tty->print_cr(" (release)");
+    } else {
+      tty->print_cr(" (tag)");
+    }
+  } else {
+    if (rec->is_arena_memory_record()) {
+      tty->print_cr(" (arena size)");
+    } else if (rec->is_allocation_record()) {
+      tty->print_cr(" (malloc)");
+    } else {
+      tty->print_cr(" (free)");
+    }
+  }
+  if (MemTracker::track_callsite()) {
+    char buf[1024];
+    address pc = ((MemPointerRecordEx*)rec)->pc();
+    if (pc != NULL && os::dll_address_to_function_name(pc, buf, sizeof(buf), NULL)) {
+      tty->print_cr("\tfrom %s", buf);
+    } else {
+      tty->print_cr("\tcould not decode pc = " PTR_FORMAT "", pc);
+    }
+  }
+}
+
+void decode_vm_region_record(VMMemRegion* rec) {
+  tty->print("VM Region [" PTR_FORMAT " - " PTR_FORMAT "]", rec->addr(),
+    rec->addr() + rec->size());
+  tty->print(" type = %s", MemBaseline::type2name(FLAGS_TO_MEMORY_TYPE(rec->flags())));
+  if (rec->is_allocation_record()) {
+    tty->print_cr(" (reserved)");
+  } else if (rec->is_commit_record()) {
+    tty->print_cr(" (committed)");
+  } else {
+    ShouldNotReachHere();
+  }
+  if (MemTracker::track_callsite()) {
+    char buf[1024];
+    address pc = ((VMMemRegionEx*)rec)->pc();
+    if (pc != NULL && os::dll_address_to_function_name(pc, buf, sizeof(buf), NULL)) {
+      tty->print_cr("\tfrom %s", buf);
+    } else {
+      tty->print_cr("\tcould not decode pc = " PTR_FORMAT "", pc);
+    }
+
+  }
+}
+
+#endif
+
+
+bool VMMemPointerIterator::insert_record(MemPointerRecord* rec) {
+  VMMemRegionEx new_rec;
+  assert(rec->is_allocation_record() || rec->is_commit_record(),
+    "Sanity check");
+  if (MemTracker::track_callsite()) {
+    new_rec.init((MemPointerRecordEx*)rec);
+  } else {
+    new_rec.init(rec);
+  }
+  return insert(&new_rec);
+}
+
+bool VMMemPointerIterator::insert_record_after(MemPointerRecord* rec) {
+  VMMemRegionEx new_rec;
+  assert(rec->is_allocation_record() || rec->is_commit_record(),
+    "Sanity check");
+  if (MemTracker::track_callsite()) {
+    new_rec.init((MemPointerRecordEx*)rec);
+  } else {
+    new_rec.init(rec);
+  }
+  return insert_after(&new_rec);
+}
+
+// we don't consolidate reserved regions, since they may be categorized
+// in different types.
+bool VMMemPointerIterator::add_reserved_region(MemPointerRecord* rec) {
+  assert(rec->is_allocation_record(), "Sanity check");
+  VMMemRegion* reserved_region = (VMMemRegion*)current();
+
+  // we don't have anything yet
+  if (reserved_region == NULL) {
+    return insert_record(rec);
+  }
+
+  assert(reserved_region->is_reserved_region(), "Sanity check");
+  // duplicated records
+  if (reserved_region->is_same_region(rec)) {
+    return true;
+  }
+  // Overlapping stack regions indicate that a JNI thread failed to
+  // detach from the VM before exiting. This leaks the JavaThread object.
+  if (CheckJNICalls)  {
+      guarantee(FLAGS_TO_MEMORY_TYPE(reserved_region->flags()) != mtThreadStack ||
+         !reserved_region->overlaps_region(rec),
+         "Attached JNI thread exited without being detached");
+  }
+  // otherwise, we should not have overlapping reserved regions
+  assert(FLAGS_TO_MEMORY_TYPE(reserved_region->flags()) == mtThreadStack ||
+    reserved_region->base() > rec->addr(), "Just check: locate()");
+  assert(FLAGS_TO_MEMORY_TYPE(reserved_region->flags()) == mtThreadStack ||
+    !reserved_region->overlaps_region(rec), "overlapping reserved regions");
+
+  return insert_record(rec);
+}
+
+// we do consolidate committed regions
+bool VMMemPointerIterator::add_committed_region(MemPointerRecord* rec) {
+  assert(rec->is_commit_record(), "Sanity check");
+  VMMemRegion* reserved_rgn = (VMMemRegion*)current();
+  assert(reserved_rgn->is_reserved_region() && reserved_rgn->contains_region(rec),
+    "Sanity check");
+
+  // thread's native stack is always marked as "committed", ignore
+  // the "commit" operation for creating stack guard pages
+  if (FLAGS_TO_MEMORY_TYPE(reserved_rgn->flags()) == mtThreadStack &&
+      FLAGS_TO_MEMORY_TYPE(rec->flags()) != mtThreadStack) {
+    return true;
+  }
+
+  // if the reserved region has any committed regions
+  VMMemRegion* committed_rgn  = (VMMemRegion*)next();
+  while (committed_rgn != NULL && committed_rgn->is_committed_region()) {
+    // duplicated commit records
+    if(committed_rgn->contains_region(rec)) {
+      return true;
+    } else if (committed_rgn->overlaps_region(rec)) {
+      // overlaps front part
+      if (rec->addr() < committed_rgn->addr()) {
+        committed_rgn->expand_region(rec->addr(),
+          committed_rgn->addr() - rec->addr());
+      } else {
+        // overlaps tail part
+        address committed_rgn_end = committed_rgn->addr() +
+              committed_rgn->size();
+        assert(committed_rgn_end < rec->addr() + rec->size(),
+             "overlap tail part");
+        committed_rgn->expand_region(committed_rgn_end,
+          (rec->addr() + rec->size()) - committed_rgn_end);
+      }
+    } else if (committed_rgn->base() + committed_rgn->size() == rec->addr()) {
+      // adjunct each other
+      committed_rgn->expand_region(rec->addr(), rec->size());
+      VMMemRegion* next_reg = (VMMemRegion*)next();
+      // see if we can consolidate next committed region
+      if (next_reg != NULL && next_reg->is_committed_region() &&
+        next_reg->base() == committed_rgn->base() + committed_rgn->size()) {
+          committed_rgn->expand_region(next_reg->base(), next_reg->size());
+          // delete merged region
+          remove();
+      }
+      return true;
+    } else if (committed_rgn->base() > rec->addr()) {
+      // found the location, insert this committed region
+      return insert_record(rec);
+    }
+    committed_rgn = (VMMemRegion*)next();
+  }
+  return insert_record(rec);
+}
+
+bool VMMemPointerIterator::remove_uncommitted_region(MemPointerRecord* rec) {
+  assert(rec->is_uncommit_record(), "sanity check");
+  VMMemRegion* cur;
+  cur = (VMMemRegion*)current();
+  assert(cur->is_reserved_region() && cur->contains_region(rec),
+    "Sanity check");
+  // thread's native stack is always marked as "committed", ignore
+  // the "commit" operation for creating stack guard pages
+  if (FLAGS_TO_MEMORY_TYPE(cur->flags()) == mtThreadStack &&
+      FLAGS_TO_MEMORY_TYPE(rec->flags()) != mtThreadStack) {
+    return true;
+  }
+
+  cur = (VMMemRegion*)next();
+  while (cur != NULL && cur->is_committed_region()) {
+    // region already uncommitted, must be due to duplicated record
+    if (cur->addr() >= rec->addr() + rec->size()) {
+      break;
+    } else if (cur->contains_region(rec)) {
+      // uncommit whole region
+      if (cur->is_same_region(rec)) {
+        remove();
+        break;
+      } else if (rec->addr() == cur->addr() ||
+        rec->addr() + rec->size() == cur->addr() + cur->size()) {
+        // uncommitted from either end of current memory region.
+        cur->exclude_region(rec->addr(), rec->size());
+        break;
+      } else { // split the committed region and release the middle
+        address high_addr = cur->addr() + cur->size();
+        size_t sz = high_addr - rec->addr();
+        cur->exclude_region(rec->addr(), sz);
+        sz = high_addr - (rec->addr() + rec->size());
+        if (MemTracker::track_callsite()) {
+          MemPointerRecordEx tmp(rec->addr() + rec->size(), cur->flags(), sz,
+             ((VMMemRegionEx*)cur)->pc());
+          return insert_record_after(&tmp);
+        } else {
+          MemPointerRecord tmp(rec->addr() + rec->size(), cur->flags(), sz);
+          return insert_record_after(&tmp);
+        }
+      }
+    }
+    cur = (VMMemRegion*)next();
+  }
+
+  // we may not find committed record due to duplicated records
+  return true;
+}
+
+bool VMMemPointerIterator::remove_released_region(MemPointerRecord* rec) {
+  assert(rec->is_deallocation_record(), "Sanity check");
+  VMMemRegion* cur = (VMMemRegion*)current();
+  assert(cur->is_reserved_region() && cur->contains_region(rec),
+    "Sanity check");
+  if (rec->is_same_region(cur)) {
+    // release whole reserved region
+#ifdef ASSERT
+    VMMemRegion* next_region = (VMMemRegion*)peek_next();
+    // should not have any committed memory in this reserved region
+    assert(next_region == NULL || !next_region->is_committed_region(), "Sanity check");
+#endif
+    remove();
+  } else if (rec->addr() == cur->addr() ||
+    rec->addr() + rec->size() == cur->addr() + cur->size()) {
+    // released region is at either end of this region
+    cur->exclude_region(rec->addr(), rec->size());
+    assert(check_reserved_region(), "Integrity check");
+  } else { // split the reserved region and release the middle
+    address high_addr = cur->addr() + cur->size();
+    size_t sz = high_addr - rec->addr();
+    cur->exclude_region(rec->addr(), sz);
+    sz = high_addr - rec->addr() - rec->size();
+    if (MemTracker::track_callsite()) {
+      MemPointerRecordEx tmp(rec->addr() + rec->size(), cur->flags(), sz,
+        ((VMMemRegionEx*)cur)->pc());
+      bool ret = insert_reserved_region(&tmp);
+      assert(!ret || check_reserved_region(), "Integrity check");
+      return ret;
+    } else {
+      MemPointerRecord tmp(rec->addr() + rec->size(), cur->flags(), sz);
+      bool ret = insert_reserved_region(&tmp);
+      assert(!ret || check_reserved_region(), "Integrity check");
+      return ret;
+    }
+  }
+  return true;
+}
+
+bool VMMemPointerIterator::insert_reserved_region(MemPointerRecord* rec) {
+  // skip all 'commit' records associated with previous reserved region
+  VMMemRegion* p = (VMMemRegion*)next();
+  while (p != NULL && p->is_committed_region() &&
+         p->base() + p->size() < rec->addr()) {
+    p = (VMMemRegion*)next();
+  }
+  return insert_record(rec);
+}
+
+bool VMMemPointerIterator::split_reserved_region(VMMemRegion* rgn, address new_rgn_addr, size_t new_rgn_size) {
+  assert(rgn->contains_region(new_rgn_addr, new_rgn_size), "Not fully contained");
+  address pc = (MemTracker::track_callsite() ? ((VMMemRegionEx*)rgn)->pc() : NULL);
+  if (rgn->base() == new_rgn_addr) { // new region is at the beginning of the region
+    size_t sz = rgn->size() - new_rgn_size;
+    // the original region becomes 'new' region
+    rgn->exclude_region(new_rgn_addr + new_rgn_size, sz);
+     // remaining becomes next region
+    MemPointerRecordEx next_rgn(new_rgn_addr + new_rgn_size, rgn->flags(), sz, pc);
+    return insert_reserved_region(&next_rgn);
+  } else if (rgn->base() + rgn->size() == new_rgn_addr + new_rgn_size) {
+    rgn->exclude_region(new_rgn_addr, new_rgn_size);
+    MemPointerRecordEx next_rgn(new_rgn_addr, rgn->flags(), new_rgn_size, pc);
+    return insert_reserved_region(&next_rgn);
+  } else {
+    // the orginal region will be split into three
+    address rgn_high_addr = rgn->base() + rgn->size();
+    // first region
+    rgn->exclude_region(new_rgn_addr, (rgn_high_addr - new_rgn_addr));
+    // the second region is the new region
+    MemPointerRecordEx new_rgn(new_rgn_addr, rgn->flags(), new_rgn_size, pc);
+    if (!insert_reserved_region(&new_rgn)) return false;
+    // the remaining region
+    MemPointerRecordEx rem_rgn(new_rgn_addr + new_rgn_size, rgn->flags(),
+      rgn_high_addr - (new_rgn_addr + new_rgn_size), pc);
+    return insert_reserved_region(&rem_rgn);
+  }
+}
+
 static int sort_in_seq_order(const void* p1, const void* p2) {
   assert(p1 != NULL && p2 != NULL, "Sanity check");
   const MemPointerRecord* mp1 = (MemPointerRecord*)p1;
@@ -61,11 +364,11 @@ bool StagingArea::init() {
 }
 
 
-MemPointerArrayIteratorImpl StagingArea::virtual_memory_record_walker() {
+VMRecordIterator StagingArea::virtual_memory_record_walker() {
   MemPointerArray* arr = vm_data();
   // sort into seq number order
   arr->sort((FN_SORT)sort_in_seq_order);
-  return MemPointerArrayIteratorImpl(arr);
+  return VMRecordIterator(arr);
 }
 
 
@@ -81,6 +384,7 @@ MemSnapshot::MemSnapshot() {
   _staging_area.init();
   _lock = new (std::nothrow) Mutex(Monitor::max_nonleaf - 1, "memSnapshotLock");
   NOT_PRODUCT(_untracked_count = 0;)
+  _number_of_classes = 0;
 }
 
 MemSnapshot::~MemSnapshot() {
@@ -104,21 +408,31 @@ MemSnapshot::~MemSnapshot() {
   }
 }
 
-void MemSnapshot::copy_pointer(MemPointerRecord* dest, const MemPointerRecord* src) {
+
+void MemSnapshot::copy_seq_pointer(MemPointerRecord* dest, const MemPointerRecord* src) {
   assert(dest != NULL && src != NULL, "Just check");
   assert(dest->addr() == src->addr(), "Just check");
+  assert(dest->seq() > 0 && src->seq() > 0, "not sequenced");
 
-  MEMFLAGS flags = dest->flags();
+  if (MemTracker::track_callsite()) {
+    *(SeqMemPointerRecordEx*)dest = *(SeqMemPointerRecordEx*)src;
+  } else {
+    *(SeqMemPointerRecord*)dest = *(SeqMemPointerRecord*)src;
+  }
+}
+
+void MemSnapshot::assign_pointer(MemPointerRecord*dest, const MemPointerRecord* src) {
+  assert(src != NULL && dest != NULL, "Just check");
+  assert(dest->seq() == 0 && src->seq() >0, "cast away sequence");
 
   if (MemTracker::track_callsite()) {
     *(MemPointerRecordEx*)dest = *(MemPointerRecordEx*)src;
   } else {
-    *dest = *src;
+    *(MemPointerRecord*)dest = *(MemPointerRecord*)src;
   }
 }
 
-
-// merge a per-thread memory recorder to the staging area
+// merge a recorder to the staging area
 bool MemSnapshot::merge(MemRecorder* rec) {
   assert(rec != NULL && !rec->out_of_memory(), "Just check");
 
@@ -126,71 +440,47 @@ bool MemSnapshot::merge(MemRecorder* rec) {
 
   MutexLockerEx lock(_lock, true);
   MemPointerIterator malloc_staging_itr(_staging_area.malloc_data());
-  MemPointerRecord *p1, *p2;
-  p1 = (MemPointerRecord*) itr.current();
-  while (p1 != NULL) {
-    if (p1->is_vm_pointer()) {
+  MemPointerRecord* incoming_rec = (MemPointerRecord*) itr.current();
+  MemPointerRecord* matched_rec;
+
+  while (incoming_rec != NULL) {
+    if (incoming_rec->is_vm_pointer()) {
       // we don't do anything with virtual memory records during merge
-      if (!_staging_area.vm_data()->append(p1)) {
+      if (!_staging_area.vm_data()->append(incoming_rec)) {
         return false;
       }
     } else {
-      p2 = (MemPointerRecord*)malloc_staging_itr.locate(p1->addr());
-      // we have not seen this memory block, so just add to staging area
-      if (p2 == NULL) {
-        if (!malloc_staging_itr.insert(p1)) {
+      // locate matched record and/or also position the iterator to proper
+      // location for this incoming record.
+      matched_rec = (MemPointerRecord*)malloc_staging_itr.locate(incoming_rec->addr());
+      // we have not seen this memory block in this generation,
+      // so just add to staging area
+      if (matched_rec == NULL) {
+        if (!malloc_staging_itr.insert(incoming_rec)) {
           return false;
         }
-      } else if (p1->addr() == p2->addr()) {
-        MemPointerRecord* staging_next = (MemPointerRecord*)malloc_staging_itr.peek_next();
-        // a memory block can have many tagging records, find right one to replace or
-        // right position to insert
-        while (staging_next != NULL && staging_next->addr() == p1->addr()) {
-          if ((staging_next->flags() & MemPointerRecord::tag_masks) <=
-            (p1->flags() & MemPointerRecord::tag_masks)) {
-            p2 = (MemPointerRecord*)malloc_staging_itr.next();
-            staging_next = (MemPointerRecord*)malloc_staging_itr.peek_next();
-          } else {
-            break;
-          }
+      } else if (incoming_rec->addr() == matched_rec->addr()) {
+        // whoever has higher sequence number wins
+        if (incoming_rec->seq() > matched_rec->seq()) {
+          copy_seq_pointer(matched_rec, incoming_rec);
         }
-        int df = (p1->flags() & MemPointerRecord::tag_masks) -
-          (p2->flags() & MemPointerRecord::tag_masks);
-        if (df == 0) {
-          assert(p1->seq() > 0, "not sequenced");
-          assert(p2->seq() > 0, "not sequenced");
-          if (p1->seq() > p2->seq()) {
-            copy_pointer(p2, p1);
-          }
-        } else if (df < 0) {
-          if (!malloc_staging_itr.insert(p1)) {
-            return false;
-          }
-        } else {
-          if (!malloc_staging_itr.insert_after(p1)) {
-            return false;
-          }
-        }
-      } else if (p1->addr() < p2->addr()) {
-        if (!malloc_staging_itr.insert(p1)) {
+      } else if (incoming_rec->addr() < matched_rec->addr()) {
+        if (!malloc_staging_itr.insert(incoming_rec)) {
           return false;
         }
       } else {
-        if (!malloc_staging_itr.insert_after(p1)) {
-          return false;
-        }
+        ShouldNotReachHere();
       }
     }
-    p1 = (MemPointerRecord*)itr.next();
+    incoming_rec = (MemPointerRecord*)itr.next();
   }
   NOT_PRODUCT(void check_staging_data();)
   return true;
 }
 
 
-
 // promote data to next generation
-bool MemSnapshot::promote() {
+bool MemSnapshot::promote(int number_of_classes) {
   assert(_alloc_ptrs != NULL && _vm_ptrs != NULL, "Just check");
   assert(_staging_area.malloc_data() != NULL && _staging_area.vm_data() != NULL,
          "Just check");
@@ -199,7 +489,7 @@ bool MemSnapshot::promote() {
   MallocRecordIterator  malloc_itr = _staging_area.malloc_record_walker();
   bool promoted = false;
   if (promote_malloc_records(&malloc_itr)) {
-    MemPointerArrayIteratorImpl vm_itr = _staging_area.virtual_memory_record_walker();
+    VMRecordIterator vm_itr = _staging_area.virtual_memory_record_walker();
     if (promote_virtual_memory_records(&vm_itr)) {
       promoted = true;
     }
@@ -207,6 +497,7 @@ bool MemSnapshot::promote() {
 
   NOT_PRODUCT(check_malloc_pointers();)
   _staging_area.clear();
+  _number_of_classes = number_of_classes;
   return promoted;
 }
 
@@ -218,21 +509,26 @@ bool MemSnapshot::promote_malloc_records(MemPointerArrayIterator* itr) {
     matched_rec = (MemPointerRecord*)malloc_snapshot_itr.locate(new_rec->addr());
     // found matched memory block
     if (matched_rec != NULL && new_rec->addr() == matched_rec->addr()) {
-      // snapshot already contains 'lived' records
-      assert(matched_rec->is_allocation_record() || matched_rec->is_arena_size_record(),
+      // snapshot already contains 'live' records
+      assert(matched_rec->is_allocation_record() || matched_rec->is_arena_memory_record(),
              "Sanity check");
       // update block states
-      if (new_rec->is_allocation_record() || new_rec->is_arena_size_record()) {
-        copy_pointer(matched_rec, new_rec);
+      if (new_rec->is_allocation_record()) {
+        assign_pointer(matched_rec, new_rec);
+      } else if (new_rec->is_arena_memory_record()) {
+        if (new_rec->size() == 0) {
+          // remove size record once size drops to 0
+          malloc_snapshot_itr.remove();
+        } else {
+          assign_pointer(matched_rec, new_rec);
+        }
       } else {
         // a deallocation record
         assert(new_rec->is_deallocation_record(), "Sanity check");
         // an arena record can be followed by a size record, we need to remove both
         if (matched_rec->is_arena_record()) {
           MemPointerRecord* next = (MemPointerRecord*)malloc_snapshot_itr.peek_next();
-          if (next->is_arena_size_record()) {
-            // it has to match the arena record
-            assert(next->is_size_record_of_arena(matched_rec), "Sanity check");
+          if (next->is_arena_memory_record() && next->is_memory_record_of_arena(matched_rec)) {
             malloc_snapshot_itr.remove();
           }
         }
@@ -240,17 +536,13 @@ bool MemSnapshot::promote_malloc_records(MemPointerArrayIterator* itr) {
         malloc_snapshot_itr.remove();
       }
     } else {
-      // it is a new record, insert into snapshot
-      if (new_rec->is_arena_size_record()) {
-        MemPointerRecord* prev = (MemPointerRecord*)malloc_snapshot_itr.peek_prev();
-        if (prev == NULL || !prev->is_arena_record() || !new_rec->is_size_record_of_arena(prev)) {
-          // no matched arena record, ignore the size record
-          new_rec = NULL;
-        }
+      // don't insert size 0 record
+      if (new_rec->is_arena_memory_record() && new_rec->size() == 0) {
+        new_rec = NULL;
       }
-      // only 'live' record can go into snapshot
+
       if (new_rec != NULL) {
-        if  (new_rec->is_allocation_record() || new_rec->is_arena_size_record()) {
+        if  (new_rec->is_allocation_record() || new_rec->is_arena_memory_record()) {
           if (matched_rec != NULL && new_rec->addr() > matched_rec->addr()) {
             if (!malloc_snapshot_itr.insert_after(new_rec)) {
               return false;
@@ -277,87 +569,60 @@ bool MemSnapshot::promote_malloc_records(MemPointerArrayIterator* itr) {
 bool MemSnapshot::promote_virtual_memory_records(MemPointerArrayIterator* itr) {
   VMMemPointerIterator vm_snapshot_itr(_vm_ptrs);
   MemPointerRecord* new_rec = (MemPointerRecord*)itr->current();
-  VMMemRegionEx new_vm_rec;
-  VMMemRegion*  matched_rec;
+  VMMemRegion*  reserved_rec;
   while (new_rec != NULL) {
     assert(new_rec->is_vm_pointer(), "Sanity check");
-    if (MemTracker::track_callsite()) {
-      new_vm_rec.init((MemPointerRecordEx*)new_rec);
-    } else {
-      new_vm_rec.init(new_rec);
-    }
-    matched_rec = (VMMemRegion*)vm_snapshot_itr.locate(new_rec->addr());
-    if (matched_rec != NULL &&
-        (matched_rec->contains(&new_vm_rec) || matched_rec->base() == new_vm_rec.base())) {
+
+    // locate a reserved region that contains the specified address, or
+    // the nearest reserved region has base address just above the specified
+    // address
+    reserved_rec = (VMMemRegion*)vm_snapshot_itr.locate(new_rec->addr());
+    if (reserved_rec != NULL && reserved_rec->contains_region(new_rec)) {
       // snapshot can only have 'live' records
-      assert(matched_rec->is_reserve_record(), "Sanity check");
-      if (new_vm_rec.is_reserve_record() && matched_rec->base() == new_vm_rec.base()) {
-        // resize reserved virtual memory range
-        // resize has to cover committed area
-        assert(new_vm_rec.size() >= matched_rec->committed_size(), "Sanity check");
-        matched_rec->set_reserved_size(new_vm_rec.size());
-      } else if (new_vm_rec.is_commit_record()) {
-        // commit memory inside reserved memory range
-        assert(new_vm_rec.committed_size() <= matched_rec->reserved_size(), "Sanity check");
-        // thread stacks are marked committed, so we ignore 'commit' record for creating
-        // stack guard pages
-        if (FLAGS_TO_MEMORY_TYPE(matched_rec->flags()) != mtThreadStack) {
-          matched_rec->commit(new_vm_rec.committed_size());
-        }
-      } else if (new_vm_rec.is_uncommit_record()) {
-        if (FLAGS_TO_MEMORY_TYPE(matched_rec->flags()) == mtThreadStack) {
-          // ignore 'uncommit' record from removing stack guard pages, uncommit
-          // thread stack as whole
-          if (matched_rec->committed_size() == new_vm_rec.committed_size()) {
-            matched_rec->uncommit(new_vm_rec.committed_size());
+      assert(reserved_rec->is_reserved_region(), "Sanity check");
+      if (new_rec->is_allocation_record()) {
+        if (!reserved_rec->is_same_region(new_rec)) {
+          // only deal with split a bigger reserved region into smaller regions.
+          // So far, CDS is the only use case.
+          if (!vm_snapshot_itr.split_reserved_region(reserved_rec, new_rec->addr(), new_rec->size())) {
+            return false;
           }
-        } else {
-          // uncommit memory inside reserved memory range
-          assert(new_vm_rec.committed_size() <= matched_rec->committed_size(),
-                "Sanity check");
-          matched_rec->uncommit(new_vm_rec.committed_size());
         }
-      } else if (new_vm_rec.is_type_tagging_record()) {
-        // tag this virtual memory range to a memory type
-        // can not re-tag a memory range to different type
-        assert(FLAGS_TO_MEMORY_TYPE(matched_rec->flags()) == mtNone ||
-               FLAGS_TO_MEMORY_TYPE(matched_rec->flags()) == FLAGS_TO_MEMORY_TYPE(new_vm_rec.flags()),
+      } else if (new_rec->is_uncommit_record()) {
+        if (!vm_snapshot_itr.remove_uncommitted_region(new_rec)) {
+          return false;
+        }
+      } else if (new_rec->is_commit_record()) {
+        // insert or expand existing committed region to cover this
+        // newly committed region
+        if (!vm_snapshot_itr.add_committed_region(new_rec)) {
+          return false;
+        }
+      } else if (new_rec->is_deallocation_record()) {
+        // release part or all memory region
+        if (!vm_snapshot_itr.remove_released_region(new_rec)) {
+          return false;
+        }
+      } else if (new_rec->is_type_tagging_record()) {
+        // tag this reserved virtual memory range to a memory type. Can not re-tag a memory range
+        // to different type.
+        assert(FLAGS_TO_MEMORY_TYPE(reserved_rec->flags()) == mtNone ||
+               FLAGS_TO_MEMORY_TYPE(reserved_rec->flags()) == FLAGS_TO_MEMORY_TYPE(new_rec->flags()),
                "Sanity check");
-        matched_rec->tag(new_vm_rec.flags());
-      } else if (new_vm_rec.is_release_record()) {
-        // release part or whole memory range
-        if (new_vm_rec.base() == matched_rec->base() &&
-            new_vm_rec.size() == matched_rec->size()) {
-          // release whole virtual memory range
-          assert(matched_rec->committed_size() == 0, "Sanity check");
-          vm_snapshot_itr.remove();
-        } else {
-          // partial release
-          matched_rec->partial_release(new_vm_rec.base(), new_vm_rec.size());
-        }
-      } else {
-        // multiple reserve/commit on the same virtual memory range
-        assert((new_vm_rec.is_reserve_record() || new_vm_rec.is_commit_record()) &&
-          (new_vm_rec.base() == matched_rec->base() && new_vm_rec.size() == matched_rec->size()),
-          "Sanity check");
-        matched_rec->tag(new_vm_rec.flags());
-      }
+        reserved_rec->tag(new_rec->flags());
     } else {
-      // no matched record
-      if (new_vm_rec.is_reserve_record()) {
-        if (matched_rec == NULL || matched_rec->base() > new_vm_rec.base()) {
-          if (!vm_snapshot_itr.insert(&new_vm_rec)) {
-            return false;
+        ShouldNotReachHere();
           }
         } else {
-          if (!vm_snapshot_itr.insert_after(&new_vm_rec)) {
+      /*
+       * The assertion failure indicates mis-matched virtual memory records. The likely
+       * scenario is, that some virtual memory operations are not going through os::xxxx_memory()
+       * api, which have to be tracked manually. (perfMemory is an example).
+      */
+      assert(new_rec->is_allocation_record(), "Sanity check");
+      if (!vm_snapshot_itr.add_reserved_region(new_rec)) {
             return false;
           }
-        }
-      } else {
-        // throw out obsolete records, which are the commit/uncommit/release/tag records
-        // on memory regions that are already released.
-      }
   }
     new_rec = (MemPointerRecord*)itr->next();
   }
@@ -432,6 +697,34 @@ void MemSnapshot::check_staging_data() {
     assert(cur->is_vm_pointer(), "virtual memory pointer only");
     cur = (MemPointerRecord*)vm_itr.next();
   }
+}
+
+void MemSnapshot::dump_all_vm_pointers() {
+  MemPointerArrayIteratorImpl itr(_vm_ptrs);
+  VMMemRegion* ptr = (VMMemRegion*)itr.current();
+  tty->print_cr("dump virtual memory pointers:");
+  while (ptr != NULL) {
+    if (ptr->is_committed_region()) {
+      tty->print("\t");
+    }
+    tty->print("[" PTR_FORMAT " - " PTR_FORMAT "] [%x]", ptr->addr(),
+      (ptr->addr() + ptr->size()), ptr->flags());
+
+    if (MemTracker::track_callsite()) {
+      VMMemRegionEx* ex = (VMMemRegionEx*)ptr;
+      if (ex->pc() != NULL) {
+        char buf[1024];
+        if (os::dll_address_to_function_name(ex->pc(), buf, sizeof(buf), NULL)) {
+          tty->print_cr("\t%s", buf);
+        } else {
+          tty->print_cr("");
+        }
+      }
+    }
+
+    ptr = (VMMemRegion*)itr.next();
+  }
+  tty->flush();
 }
 #endif // ASSERT
 

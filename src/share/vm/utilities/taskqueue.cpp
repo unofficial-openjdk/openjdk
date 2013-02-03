@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,10 @@
 #include "precompiled.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/os.hpp"
+#include "runtime/thread.inline.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/stack.inline.hpp"
 #include "utilities/taskqueue.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 
 #ifdef TRACESPINNING
 uint ParallelTaskTerminator::_total_yields = 0;
@@ -250,8 +239,8 @@ ParallelTaskTerminator::offer_termination(TerminatorTerminator* terminator) {
 
 #ifdef TRACESPINNING
 void ParallelTaskTerminator::print_termination_counts() {
-  gclog_or_tty->print_cr("ParallelTaskTerminator Total yields: %lld  "
-    "Total spins: %lld  Total peeks: %lld",
+  gclog_or_tty->print_cr("ParallelTaskTerminator Total yields: " UINT32_FORMAT
+    " Total spins: " UINT32_FORMAT " Total peeks: " UINT32_FORMAT,
     total_yields(),
     total_spins(),
     total_peeks());

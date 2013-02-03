@@ -67,7 +67,7 @@ class MethodMatcher : public CHeapObj<mtCompiler> {
 
   // utility method
   MethodMatcher* find(methodHandle method) {
-    Symbol* class_name  = Klass::cast(method->method_holder())->name();
+    Symbol* class_name  = method->method_holder()->name();
     Symbol* method_name = method->name();
     for (MethodMatcher* current = this; current != NULL; current = current->_next) {
       if (match(class_name, current->class_name(), current->_class_mode) &&
@@ -538,6 +538,7 @@ void CompilerOracle::parse_from_line(char* line) {
 
   if (match != NULL) {
     if (!_quiet) {
+      ResourceMark rm;
       tty->print("CompilerOracle: %s ", command_names[command]);
       match->print();
     }
@@ -624,7 +625,7 @@ void CompilerOracle::append_exclude_to_file(methodHandle method) {
   assert(has_command_file(), "command file must be specified");
   fileStream stream(fopen(cc_file(), "at"));
   stream.print("exclude ");
-  Klass::cast(method->method_holder())->name()->print_symbol_on(&stream);
+  method->method_holder()->name()->print_symbol_on(&stream);
   stream.print(".");
   method->name()->print_symbol_on(&stream);
   method->signature()->print_symbol_on(&stream);

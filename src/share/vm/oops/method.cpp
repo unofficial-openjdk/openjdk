@@ -35,6 +35,7 @@
 #include "memory/generation.hpp"
 #include "memory/metadataFactory.hpp"
 #include "memory/oopFactory.hpp"
+#include "oops/constMethod.hpp"
 #include "oops/methodData.hpp"
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
@@ -57,22 +58,28 @@
 // Implementation of Method
 
 Method* Method::allocate(ClassLoaderData* loader_data,
-                            int byte_code_size,
-                            AccessFlags access_flags,
-                            int compressed_line_number_size,
-                            int localvariable_table_length,
-                            int exception_table_length,
-                            int checked_exceptions_length,
-                            TRAPS) {
+                         int byte_code_size,
+                         AccessFlags access_flags,
+                         int compressed_line_number_size,
+                         int localvariable_table_length,
+                         int exception_table_length,
+                         int checked_exceptions_length,
+                         int method_parameters_length,
+                         u2  generic_signature_index,
+                         ConstMethod::MethodType method_type,
+                         TRAPS) {
   assert(!access_flags.is_native() || byte_code_size == 0,
          "native methods should not contain byte codes");
   ConstMethod* cm = ConstMethod::allocate(loader_data,
-                                      byte_code_size,
-                                      compressed_line_number_size,
-                                      localvariable_table_length,
-                                      exception_table_length,
-                                      checked_exceptions_length,
-                                      CHECK_NULL);
+                                          byte_code_size,
+                                          compressed_line_number_size,
+                                          localvariable_table_length,
+                                          exception_table_length,
+                                          checked_exceptions_length,
+                                          method_parameters_length,
+                                          generic_signature_index,
+                                          method_type,
+                                          CHECK_NULL);
 
   int size = Method::size(access_flags.is_native());
 
@@ -149,11 +156,11 @@ address Method::get_c2i_unverified_entry() {
 }
 
 char* Method::name_and_sig_as_C_string() const {
-  return name_and_sig_as_C_string(Klass::cast(constants()->pool_holder()), name(), signature());
+  return name_and_sig_as_C_string(constants()->pool_holder(), name(), signature());
 }
 
 char* Method::name_and_sig_as_C_string(char* buf, int size) const {
-  return name_and_sig_as_C_string(Klass::cast(constants()->pool_holder()), name(), signature(), buf, size);
+  return name_and_sig_as_C_string(constants()->pool_holder(), name(), signature(), buf, size);
 }
 
 char* Method::name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol* signature) {
@@ -187,16 +194,16 @@ char* Method::name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol
   return buf;
 }
 
-int  Method::fast_exception_handler_bci_for(KlassHandle ex_klass, int throw_bci, TRAPS) {
+int Method::fast_exception_handler_bci_for(methodHandle mh, KlassHandle ex_klass, int throw_bci, TRAPS) {
   // exception table holds quadruple entries of the form (beg_bci, end_bci, handler_bci, klass_index)
   // access exception table
-  ExceptionTable table(this);
+  ExceptionTable table(mh());
   int length = table.length();
   // iterate through all entries sequentially
-  constantPoolHandle pool(THREAD, constants());
+  constantPoolHandle pool(THREAD, mh->constants());
   for (int i = 0; i < length; i ++) {
     //reacquire the table in case a GC happened
-    ExceptionTable table(this);
+    ExceptionTable table(mh());
     int beg_bci = table.start_pc(i);
     int end_bci = table.end_pc(i);
     assert(beg_bci <= end_bci, "inconsistent exception table");
@@ -240,12 +247,12 @@ void Method::mask_for(int bci, InterpreterOopMap* mask) {
       warning("oopmap should only be accessed by the "
               "VM, GC task or CMS threads (or during debugging)");
       InterpreterOopMap local_mask;
-      InstanceKlass::cast(method_holder())->mask_for(h_this, bci, &local_mask);
+      method_holder()->mask_for(h_this, bci, &local_mask);
       local_mask.print();
     }
   }
 #endif
-  InstanceKlass::cast(method_holder())->mask_for(h_this, bci, mask);
+  method_holder()->mask_for(h_this, bci, mask);
   return;
 }
 
@@ -520,7 +527,7 @@ bool Method::compute_has_loops_flag() {
 bool Method::is_final_method() const {
   // %%% Should return true for private methods also,
   // since there is no way to override them.
-  return is_final() || Klass::cast(method_holder())->is_final();
+  return is_final() || method_holder()->is_final();
 }
 
 
@@ -552,7 +559,7 @@ bool Method::is_initializer() const {
 
 bool Method::has_valid_initializer_flags() const {
   return (is_static() ||
-          InstanceKlass::cast(method_holder())->major_version() < 51);
+          method_holder()->major_version() < 51);
 }
 
 bool Method::is_static_initializer() const {
@@ -575,8 +582,8 @@ objArrayHandle Method::resolved_checked_exceptions_impl(Method* this_oop, TRAPS)
     for (int i = 0; i < length; i++) {
       CheckedExceptionElement* table = h_this->checked_exceptions_start(); // recompute on each iteration, not gc safe
       Klass* k = h_this->constants()->klass_at(table[i].class_cp_index, CHECK_(objArrayHandle()));
-      assert(Klass::cast(k)->is_subclass_of(SystemDictionary::Throwable_klass()), "invalid exception class");
-      mirrors->obj_at_put(i, Klass::cast(k)->java_mirror());
+      assert(k->is_subclass_of(SystemDictionary::Throwable_klass()), "invalid exception class");
+      mirrors->obj_at_put(i, k->java_mirror());
     }
     return mirrors;
   }
@@ -614,8 +621,8 @@ bool Method::is_klass_loaded_by_klass_index(int klass_index) const {
   if( constants()->tag_at(klass_index).is_unresolved_klass() ) {
     Thread *thread = Thread::current();
     Symbol* klass_name = constants()->klass_name_at(klass_index);
-    Handle loader(thread, InstanceKlass::cast(method_holder())->class_loader());
-    Handle prot  (thread, Klass::cast(method_holder())->protection_domain());
+    Handle loader(thread, method_holder()->class_loader());
+    Handle prot  (thread, method_holder()->protection_domain());
     return SystemDictionary::find(klass_name, loader, prot, thread) != NULL;
   } else {
     return true;
@@ -932,7 +939,7 @@ bool Method::is_overridden_in(Klass* k) const {
 
   // If method is an interface, we skip it - except if it
   // is a miranda method
-  if (InstanceKlass::cast(method_holder())->is_interface()) {
+  if (method_holder()->is_interface()) {
     // Check that method is not a miranda method
     if (ik->lookup_method(name(), signature()) == NULL) {
       // No implementation exist - so miranda method
@@ -1017,7 +1024,7 @@ methodHandle Method::make_method_handle_intrinsic(vmIntrinsics::ID iid,
     ConstantPool* cp_oop = ConstantPool::allocate(loader_data, cp_length, CHECK_(empty));
     cp = constantPoolHandle(THREAD, cp_oop);
   }
-  cp->set_pool_holder(holder());
+  cp->set_pool_holder(InstanceKlass::cast(holder()));
   cp->symbol_at_put(_imcp_invoke_name,       name);
   cp->symbol_at_put(_imcp_invoke_signature,  signature);
   cp->set_preresolution();
@@ -1030,8 +1037,10 @@ methodHandle Method::make_method_handle_intrinsic(vmIntrinsics::ID iid,
 
   methodHandle m;
   {
-    Method* m_oop = Method::allocate(loader_data, 0, accessFlags_from(flags_bits),
-                                              0, 0, 0, 0, CHECK_(empty));
+    Method* m_oop = Method::allocate(loader_data, 0,
+                                     accessFlags_from(flags_bits),
+                                     0, 0, 0, 0, 0, 0,
+                                     ConstMethod::NORMAL, CHECK_(empty));
     m = methodHandle(THREAD, m_oop);
   }
   m->set_constants(cp());
@@ -1064,8 +1073,8 @@ methodHandle Method::make_method_handle_intrinsic(vmIntrinsics::ID iid,
 }
 
 Klass* Method::check_non_bcp_klass(Klass* klass) {
-  if (klass != NULL && Klass::cast(klass)->class_loader() != NULL) {
-    if (Klass::cast(klass)->oop_is_objArray())
+  if (klass != NULL && klass->class_loader() != NULL) {
+    if (klass->oop_is_objArray())
       klass = ObjArrayKlass::cast(klass)->bottom_klass();
     return klass;
   }
@@ -1079,19 +1088,24 @@ methodHandle Method::clone_with_new_data(methodHandle m, u_char* new_code, int n
   assert(!m->is_native(), "cannot rewrite native methods");
   // Allocate new Method*
   AccessFlags flags = m->access_flags();
+  u2  generic_signature_index = m->generic_signature_index();
   int checked_exceptions_len = m->checked_exceptions_length();
   int localvariable_len = m->localvariable_table_length();
   int exception_table_len = m->exception_table_length();
+  int method_parameters_len = m->method_parameters_length();
 
-  ClassLoaderData* loader_data = m()->method_holder()->class_loader_data();
+  ClassLoaderData* loader_data = m->method_holder()->class_loader_data();
   Method* newm_oop = Method::allocate(loader_data,
-                                               new_code_length,
-                                              flags,
-                                              new_compressed_linenumber_size,
-                                              localvariable_len,
-                                              exception_table_len,
-                                              checked_exceptions_len,
-                                              CHECK_(methodHandle()));
+                                      new_code_length,
+                                      flags,
+                                      new_compressed_linenumber_size,
+                                      localvariable_len,
+                                      exception_table_len,
+                                      checked_exceptions_len,
+                                      method_parameters_len,
+                                      generic_signature_index,
+                                      m->method_type(),
+                                      CHECK_(methodHandle()));
   methodHandle newm (THREAD, newm_oop);
   int new_method_size = newm->method_size();
 
@@ -1155,8 +1169,12 @@ methodHandle Method::clone_with_new_data(methodHandle m, u_char* new_code, int n
 vmSymbols::SID Method::klass_id_for_intrinsics(Klass* holder) {
   // if loader is not the default loader (i.e., != NULL), we can't know the intrinsics
   // because we are not loading from core libraries
-  if (InstanceKlass::cast(holder)->class_loader() != NULL)
+  // exception: the AES intrinsics come from lib/ext/sunjce_provider.jar
+  // which does not use the class default class loader so we check for its loader here
+  if ((InstanceKlass::cast(holder)->class_loader() != NULL) &&
+       InstanceKlass::cast(holder)->class_loader()->klass()->name() != vmSymbols::sun_misc_Launcher_ExtClassLoader()) {
     return vmSymbols::NO_SID;   // regardless of name, no intrinsics here
+  }
 
   // see if the klass name is well-known:
   Symbol* klass_name = InstanceKlass::cast(holder)->name();
@@ -1229,8 +1247,8 @@ bool Method::load_signature_classes(methodHandle m, TRAPS) {
     return false;
   }
   bool sig_is_loaded = true;
-  Handle class_loader(THREAD, InstanceKlass::cast(m->method_holder())->class_loader());
-  Handle protection_domain(THREAD, Klass::cast(m->method_holder())->protection_domain());
+  Handle class_loader(THREAD, m->method_holder()->class_loader());
+  Handle protection_domain(THREAD, m->method_holder()->protection_domain());
   ResourceMark rm(THREAD);
   Symbol*  signature = m->signature();
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
@@ -1256,8 +1274,8 @@ bool Method::load_signature_classes(methodHandle m, TRAPS) {
 }
 
 bool Method::has_unloaded_classes_in_signature(methodHandle m, TRAPS) {
-  Handle class_loader(THREAD, InstanceKlass::cast(m->method_holder())->class_loader());
-  Handle protection_domain(THREAD, Klass::cast(m->method_holder())->protection_domain());
+  Handle class_loader(THREAD, m->method_holder()->class_loader());
+  Handle protection_domain(THREAD, m->method_holder()->protection_domain());
   ResourceMark rm(THREAD);
   Symbol*  signature = m->signature();
   for(SignatureStream ss(signature); !ss.is_done(); ss.next()) {
@@ -1319,13 +1337,15 @@ void Method::sort_methods(Array<Method*>* methods,
                                  Array<AnnotationArray*>* methods_annotations,
                                  Array<AnnotationArray*>* methods_parameter_annotations,
                                  Array<AnnotationArray*>* methods_default_annotations,
+                                 Array<AnnotationArray*>* methods_type_annotations,
                                  bool idempotent) {
   int length = methods->length();
   if (length > 1) {
     bool do_annotations = false;
     if (methods_annotations != NULL ||
         methods_parameter_annotations != NULL ||
-        methods_default_annotations != NULL) {
+        methods_default_annotations != NULL ||
+        methods_type_annotations != NULL) {
       do_annotations = true;
     }
     if (do_annotations) {
@@ -1344,6 +1364,7 @@ void Method::sort_methods(Array<Method*>* methods,
     assert(methods_annotations == NULL           || methods_annotations->length() == methods->length(), "");
     assert(methods_parameter_annotations == NULL || methods_parameter_annotations->length() == methods->length(), "");
     assert(methods_default_annotations == NULL   || methods_default_annotations->length() == methods->length(), "");
+    assert(methods_type_annotations == NULL   || methods_type_annotations->length() == methods->length(), "");
     if (do_annotations) {
       ResourceMark rm;
       // Allocate temporary storage
@@ -1351,6 +1372,7 @@ void Method::sort_methods(Array<Method*>* methods,
       reorder_based_on_method_index(methods, methods_annotations, temp_array);
       reorder_based_on_method_index(methods, methods_parameter_annotations, temp_array);
       reorder_based_on_method_index(methods, methods_default_annotations, temp_array);
+      reorder_based_on_method_index(methods, methods_type_annotations, temp_array);
     }
 
     // Reset method ordering
@@ -1464,7 +1486,7 @@ bool CompressedLineNumberReadStream::read_pair() {
 
 
 Bytecodes::Code Method::orig_bytecode_at(int bci) const {
-  BreakpointInfo* bp = InstanceKlass::cast(method_holder())->breakpoints();
+  BreakpointInfo* bp = method_holder()->breakpoints();
   for (; bp != NULL; bp = bp->next()) {
     if (bp->match(this, bci)) {
       return bp->orig_bytecode();
@@ -1476,7 +1498,7 @@ Bytecodes::Code Method::orig_bytecode_at(int bci) const {
 
 void Method::set_orig_bytecode_at(int bci, Bytecodes::Code code) {
   assert(code != Bytecodes::_breakpoint, "cannot patch breakpoints this way");
-  BreakpointInfo* bp = InstanceKlass::cast(method_holder())->breakpoints();
+  BreakpointInfo* bp = method_holder()->breakpoints();
   for (; bp != NULL; bp = bp->next()) {
     if (bp->match(this, bci)) {
       bp->set_orig_bytecode(code);
@@ -1486,7 +1508,7 @@ void Method::set_orig_bytecode_at(int bci, Bytecodes::Code code) {
 }
 
 void Method::set_breakpoint(int bci) {
-  InstanceKlass* ik = InstanceKlass::cast(method_holder());
+  InstanceKlass* ik = method_holder();
   BreakpointInfo *bp = new BreakpointInfo(this, bci);
   bp->set_next(ik->breakpoints());
   ik->set_breakpoints(bp);
@@ -1495,7 +1517,7 @@ void Method::set_breakpoint(int bci) {
 }
 
 static void clear_matches(Method* m, int bci) {
-  InstanceKlass* ik = InstanceKlass::cast(m->method_holder());
+  InstanceKlass* ik = m->method_holder();
   BreakpointInfo* prev_bp = NULL;
   BreakpointInfo* next_bp;
   for (BreakpointInfo* bp = ik->breakpoints(); bp != NULL; bp = next_bp) {
@@ -1778,7 +1800,7 @@ void Method::change_method_associated_with_jmethod_id(jmethodID jmid, Method* ne
 bool Method::is_method_id(jmethodID mid) {
   Method* m = resolve_jmethod_id(mid);
   assert(m != NULL, "should be called with non-null method");
-  InstanceKlass* ik = InstanceKlass::cast(m->method_holder());
+  InstanceKlass* ik = m->method_holder();
   ClassLoaderData* cld = ik->class_loader_data();
   if (cld->jmethod_ids() == NULL) return false;
   return (cld->jmethod_ids()->contains((Method**)mid));
@@ -1804,6 +1826,23 @@ void Method::set_on_stack(const bool value) {
 // Called when the class loader is unloaded to make all methods weak.
 void Method::clear_jmethod_ids(ClassLoaderData* loader_data) {
   loader_data->jmethod_ids()->clear_all_methods();
+}
+
+
+// Check that this pointer is valid by checking that the vtbl pointer matches
+bool Method::is_valid_method() const {
+  if (this == NULL) {
+    return false;
+  } else if (!is_metaspace_object()) {
+    return false;
+  } else {
+    Method m;
+    // This assumes that the vtbl pointer is the first word of a C++ object.
+    // This assumption is also in universe.cpp patch_klass_vtble
+    void* vtbl2 = dereference_vptr((void*)&m);
+    void* this_vtbl = dereference_vptr((void*)this);
+    return vtbl2 == this_vtbl;
+  }
 }
 
 #ifndef PRODUCT
@@ -1927,7 +1966,7 @@ void Method::verify_on(outputStream* st) {
   guarantee(constMethod()->is_metadata(), "should be metadata");
   MethodData* md = method_data();
   guarantee(md == NULL ||
-      md->is_metadata(), "should be in permspace");
+      md->is_metadata(), "should be metadata");
   guarantee(md == NULL ||
       md->is_methodData(), "should be method data");
 }

@@ -26,18 +26,7 @@
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/stubRoutines.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
+#include "runtime/thread.inline.hpp"
 
 // Implementation of the platform-specific part of StubRoutines - for
 // a description of how to extend it, see the stubRoutines.hpp file.
@@ -56,3 +45,4 @@ address StubRoutines::x86::_float_sign_flip = NULL;
 address StubRoutines::x86::_double_sign_mask = NULL;
 address StubRoutines::x86::_double_sign_flip = NULL;
 address StubRoutines::x86::_mxcsr_std = NULL;
+address StubRoutines::x86::_key_shuffle_mask_addr = NULL;

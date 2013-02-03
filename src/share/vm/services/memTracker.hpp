@@ -109,12 +109,10 @@ class MemTracker : AllStatic {
 #include "services/memSnapshot.hpp"
 #include "services/memTrackWorker.hpp"
 
-#ifdef SOLARIS
-#include "thread_solaris.inline.hpp"
-#endif
+extern bool NMT_track_callsite;
 
-#ifdef _DEBUG
-  #define DEBUG_CALLER_PC  os::get_caller_pc(3)
+#ifdef ASSERT
+  #define DEBUG_CALLER_PC  (NMT_track_callsite ? os::get_caller_pc(2) : 0)
 #else
   #define DEBUG_CALLER_PC  0
 #endif
@@ -144,6 +142,7 @@ class Thread;
  * MemTracker is the 'gate' class to native memory tracking runtime.
  */
 class MemTracker : AllStatic {
+  friend class GenerationData;
   friend class MemTrackWorker;
   friend class MemSnapshot;
   friend class SyncThreadRecorderClosure;
@@ -261,7 +260,7 @@ class MemTracker : AllStatic {
   // record a 'malloc' call
   static inline void record_malloc(address addr, size_t size, MEMFLAGS flags,
                             address pc = 0, Thread* thread = NULL) {
-    if (NMT_CAN_TRACK(flags)) {
+    if (is_on() && NMT_CAN_TRACK(flags)) {
       assert(size > 0, "Sanity check");
       create_memory_record(addr, (flags|MemPointerRecord::malloc_tag()), size, pc, thread);
     }
@@ -275,21 +274,21 @@ class MemTracker : AllStatic {
   // record a 'realloc' call
   static inline void record_realloc(address old_addr, address new_addr, size_t size,
        MEMFLAGS flags, address pc = 0, Thread* thread = NULL) {
-    if (is_on()) {
+    if (is_on() && NMT_CAN_TRACK(flags)) {
       assert(size > 0, "Sanity check");
       record_free(old_addr, flags, thread);
       record_malloc(new_addr, size, flags, pc, thread);
     }
   }
 
-  // record arena size
+  // record arena memory size
   static inline void record_arena_size(address addr, size_t size) {
-    // we add a positive offset to arena address, so we can have arena size record
+    // we add a positive offset to arena address, so we can have arena memory record
     // sorted after arena record
     if (is_on() && !UseMallocOnly) {
       assert(addr != NULL, "Sanity check");
       create_memory_record((addr + sizeof(void*)), MemPointerRecord::arena_size_tag(), size,
-        0, NULL);
+        DEBUG_CALLER_PC, NULL);
     }
   }
 
@@ -317,6 +316,7 @@ class MemTracker : AllStatic {
   static inline void release_thread_stack(address addr, size_t size, Thread* thr) {
     if (is_on()) {
       assert(size > 0 && thr != NULL, "Sanity check");
+      assert(!thr->is_Java_thread(), "too early");
       create_memory_record(addr, MemPointerRecord::virtual_memory_uncommit_tag() | mtThreadStack,
                           size, DEBUG_CALLER_PC, thr);
       create_memory_record(addr, MemPointerRecord::virtual_memory_release_tag() | mtThreadStack,
@@ -326,11 +326,11 @@ class MemTracker : AllStatic {
 
   // record a virtual memory 'commit' call
   static inline void record_virtual_memory_commit(address addr, size_t size,
-                            address pc = 0, Thread* thread = NULL) {
+                            address pc, Thread* thread = NULL) {
     if (is_on()) {
       assert(size > 0, "Sanity check");
       create_memory_record(addr, MemPointerRecord::virtual_memory_commit_tag(),
-                           size, DEBUG_CALLER_PC, thread);
+                           size, pc, thread);
     }
   }
 

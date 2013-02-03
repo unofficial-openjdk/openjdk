@@ -26,18 +26,7 @@
 #define SHARE_VM_MEMORY_RESOURCEAREA_HPP
 
 #include "memory/allocation.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
+#include "runtime/thread.inline.hpp"
 
 // The resource area holds temporary data structures in the VM.
 // The actual allocation areas are thread local. Typical usage:
@@ -127,15 +116,21 @@ protected:
   void reset_to_mark() {
     if (UseMallocOnly) free_malloced_objects();
 
-    if( _chunk->next() )        // Delete later chunks
+    if( _chunk->next() ) {       // Delete later chunks
+      // reset arena size before delete chunks. Otherwise, the total
+      // arena size could exceed total chunk size
+      assert(_area->size_in_bytes() > size_in_bytes(), "Sanity check");
+      _area->set_size_in_bytes(size_in_bytes());
       _chunk->next_chop();
+    } else {
+      assert(_area->size_in_bytes() == size_in_bytes(), "Sanity check");
+    }
     _area->_chunk = _chunk;     // Roll back arena to saved chunk
     _area->_hwm = _hwm;
     _area->_max = _max;
 
     // clear out this chunk (to detect allocation bugs)
     if (ZapResourceArea) memset(_hwm, badResourceValue, _max - _hwm);
-    _area->set_size_in_bytes(size_in_bytes());
   }
 
   ~ResourceMark() {
@@ -219,15 +214,21 @@ protected:
   void reset_to_mark() {
     if (UseMallocOnly) free_malloced_objects();
 
-    if( _chunk->next() )        // Delete later chunks
+    if( _chunk->next() ) {        // Delete later chunks
+      // reset arena size before delete chunks. Otherwise, the total
+      // arena size could exceed total chunk size
+      assert(_area->size_in_bytes() > size_in_bytes(), "Sanity check");
+      _area->set_size_in_bytes(size_in_bytes());
       _chunk->next_chop();
+    } else {
+      assert(_area->size_in_bytes() == size_in_bytes(), "Sanity check");
+    }
     _area->_chunk = _chunk;     // Roll back arena to saved chunk
     _area->_hwm = _hwm;
     _area->_max = _max;
 
     // clear out this chunk (to detect allocation bugs)
     if (ZapResourceArea) memset(_hwm, badResourceValue, _max - _hwm);
-    _area->set_size_in_bytes(size_in_bytes());
   }
 
   ~DeoptResourceMark() {

@@ -124,6 +124,8 @@ inline void* index_oop_from_field_offset_long(oop p, jlong field_offset) {
       assert((void*)p->obj_field_addr<oop>((jint)byte_offset) == ptr_plus_disp,
              "raw [ptr+disp] must be consistent with oop::field_base");
     }
+    jlong p_size = HeapWordSize * (jlong)(p->size());
+    assert(byte_offset < p_size, err_msg("Unsafe access: offset " INT64_FORMAT " > object's size " INT64_FORMAT, byte_offset, p_size));
   }
 #endif
   if (sizeof(char*) == sizeof(jint))    // (this constant folds!)
@@ -466,6 +468,21 @@ UNSAFE_ENTRY(void, Unsafe_SetOrderedLong(JNIEnv *env, jobject unsafe, jobject ob
 #endif
 UNSAFE_END
 
+UNSAFE_ENTRY(void, Unsafe_LoadFence(JNIEnv *env, jobject unsafe))
+  UnsafeWrapper("Unsafe_LoadFence");
+  OrderAccess::acquire();
+UNSAFE_END
+
+UNSAFE_ENTRY(void, Unsafe_StoreFence(JNIEnv *env, jobject unsafe))
+  UnsafeWrapper("Unsafe_StoreFence");
+  OrderAccess::release();
+UNSAFE_END
+
+UNSAFE_ENTRY(void, Unsafe_FullFence(JNIEnv *env, jobject unsafe))
+  UnsafeWrapper("Unsafe_FullFence");
+  OrderAccess::fence();
+UNSAFE_END
+
 ////// Data in the C heap.
 
 // Note:  These do not throw NullPointerException for bad pointers.
@@ -769,7 +786,7 @@ UNSAFE_ENTRY(void, Unsafe_EnsureClassInitialized(JNIEnv *env, jobject unsafe, jo
   oop mirror = JNIHandles::resolve_non_null(clazz);
 
   Klass* klass = java_lang_Class::as_Klass(mirror);
-  if (klass != NULL && Klass::cast(klass)->should_be_initialized()) {
+  if (klass != NULL && klass->should_be_initialized()) {
     InstanceKlass* k = InstanceKlass::cast(klass);
     k->initialize(CHECK);
   }
@@ -783,7 +800,7 @@ UNSAFE_ENTRY(jboolean, Unsafe_ShouldBeInitialized(JNIEnv *env, jobject unsafe, j
   }
   oop mirror = JNIHandles::resolve_non_null(clazz);
   Klass* klass = java_lang_Class::as_Klass(mirror);
-  if (klass != NULL && Klass::cast(klass)->should_be_initialized()) {
+  if (klass != NULL && klass->should_be_initialized()) {
     return true;
   }
   return false;
@@ -994,7 +1011,7 @@ UNSAFE_END
 // not just a literal string.  For such ldc instructions, the verifier uses the
 // type Object instead of String, if the loaded constant is not in fact a String.
 
-static oop
+static instanceKlassHandle
 Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
                                  jclass host_class, jbyteArray data, jobjectArray cp_patches_jh,
                                  HeapWord* *temp_alloc,
@@ -1071,31 +1088,38 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
     anon_klass = instanceKlassHandle(THREAD, anonk);
   }
 
-  // let caller initialize it as needed...
-
-  return anon_klass->java_mirror();
+  return anon_klass;
 }
 
 UNSAFE_ENTRY(jclass, Unsafe_DefineAnonymousClass(JNIEnv *env, jobject unsafe, jclass host_class, jbyteArray data, jobjectArray cp_patches_jh))
 {
+  instanceKlassHandle anon_klass;
+  jobject res_jh = NULL;
+
   UnsafeWrapper("Unsafe_DefineAnonymousClass");
   ResourceMark rm(THREAD);
 
   HeapWord* temp_alloc = NULL;
 
-  jobject res_jh = NULL;
-
-  { oop res_oop = Unsafe_DefineAnonymousClass_impl(env,
-                                                   host_class, data, cp_patches_jh,
+  anon_klass = Unsafe_DefineAnonymousClass_impl(env, host_class, data,
+                                                cp_patches_jh,
                                                    &temp_alloc, THREAD);
-    if (res_oop != NULL)
-      res_jh = JNIHandles::make_local(env, res_oop);
-  }
+  if (anon_klass() != NULL)
+    res_jh = JNIHandles::make_local(env, anon_klass->java_mirror());
 
   // try/finally clause:
   if (temp_alloc != NULL) {
     FREE_C_HEAP_ARRAY(HeapWord, temp_alloc, mtInternal);
   }
+
+  // The anonymous class loader data has been artificially been kept alive to
+  // this point.   The mirror and any instances of this class have to keep
+  // it alive afterwards.
+  if (anon_klass() != NULL) {
+    anon_klass->class_loader_data()->set_keep_alive(false);
+  }
+
+  // let caller initialize it as needed...
 
   return (jclass) res_jh;
 }
@@ -1541,6 +1565,9 @@ static JNINativeMethod methods[] = {
     {CC"putOrderedObject",   CC"("OBJ"J"OBJ")V",         FN_PTR(Unsafe_SetOrderedObject)},
     {CC"putOrderedInt",      CC"("OBJ"JI)V",             FN_PTR(Unsafe_SetOrderedInt)},
     {CC"putOrderedLong",     CC"("OBJ"JJ)V",             FN_PTR(Unsafe_SetOrderedLong)},
+    {CC"loadFence",          CC"()V",                    FN_PTR(Unsafe_LoadFence)},
+    {CC"storeFence",         CC"()V",                    FN_PTR(Unsafe_StoreFence)},
+    {CC"fullFence",          CC"()V",                    FN_PTR(Unsafe_FullFence)},
     {CC"park",               CC"(ZJ)V",                  FN_PTR(Unsafe_Park)},
     {CC"unpark",             CC"("OBJ")V",               FN_PTR(Unsafe_Unpark)}
 

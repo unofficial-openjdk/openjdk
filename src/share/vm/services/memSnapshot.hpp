@@ -31,7 +31,6 @@
 #include "services/memBaseline.hpp"
 #include "services/memPtrArray.hpp"
 
-
 // Snapshot pointer array iterator
 
 // The pointer array contains malloc-ed pointers
@@ -111,34 +110,59 @@ class VMMemPointerIterator : public MemPointerIterator {
       MemPointerIterator(arr) {
   }
 
-  // locate an existing record that contains specified address, or
-  // the record, where the record with specified address, should
-  // be inserted.
-  // virtual memory record array is sorted in address order, so
-  // binary search is performed
+  // locate an existing reserved memory region that contains specified address,
+  // or the reserved region just above this address, where the incoming
+  // reserved region should be inserted.
   virtual MemPointer* locate(address addr) {
-    int index_low = 0;
-    int index_high = _array->length();
-    int index_mid = (index_high + index_low) / 2;
-    int r = 1;
-    while (index_low < index_high && (r = compare(index_mid, addr)) != 0) {
-      if (r > 0) {
-        index_high = index_mid;
-      } else {
-        index_low = index_mid;
+    reset();
+    VMMemRegion* reg = (VMMemRegion*)current();
+    while (reg != NULL) {
+      if (reg->is_reserved_region()) {
+        if (reg->contains_address(addr) || addr < reg->base()) {
+          return reg;
       }
-      index_mid = (index_high + index_low) / 2;
     }
-    if (r == 0) {
-      // update current location
-      _pos = index_mid;
-      return _array->at(index_mid);
-    } else {
+      reg = (VMMemRegion*)next();
+    }
       return NULL;
     }
+
+  // following methods update virtual memory in the context
+  // of 'current' position, which is properly positioned by
+  // callers via locate method.
+  bool add_reserved_region(MemPointerRecord* rec);
+  bool add_committed_region(MemPointerRecord* rec);
+  bool remove_uncommitted_region(MemPointerRecord* rec);
+  bool remove_released_region(MemPointerRecord* rec);
+
+  // split a reserved region to create a new memory region with specified base and size
+  bool split_reserved_region(VMMemRegion* rgn, address new_rgn_addr, size_t new_rgn_size);
+ private:
+  bool insert_record(MemPointerRecord* rec);
+  bool insert_record_after(MemPointerRecord* rec);
+
+  bool insert_reserved_region(MemPointerRecord* rec);
+
+  // reset current position
+  inline void reset() { _pos = 0; }
+#ifdef ASSERT
+  // check integrity of records on current reserved memory region.
+  bool check_reserved_region() {
+    VMMemRegion* reserved_region = (VMMemRegion*)current();
+    assert(reserved_region != NULL && reserved_region->is_reserved_region(),
+          "Sanity check");
+    // all committed regions that follow current reserved region, should all
+    // belong to the reserved region.
+    VMMemRegion* next_region = (VMMemRegion*)next();
+    for (; next_region != NULL && next_region->is_committed_region();
+         next_region = (VMMemRegion*)next() ) {
+      if(!reserved_region->contains_region(next_region)) {
+        return false;
+      }
+    }
+    return true;
   }
 
-#ifdef ASSERT
   virtual bool is_dup_pointer(const MemPointer* ptr1,
     const MemPointer* ptr2) const {
     VMMemRegion* p1 = (VMMemRegion*)ptr1;
@@ -154,57 +178,61 @@ class VMMemPointerIterator : public MemPointerIterator {
            (p1->flags() & MemPointerRecord::tag_masks) == MemPointerRecord::tag_release;
   }
 #endif
-  // compare if an address falls into a memory region,
-  // return 0, if the address falls into a memory region at specified index
-  // return 1, if memory region pointed by specified index is higher than the address
-  // return -1, if memory region pointed by specified index is lower than the address
-  int compare(int index, address addr) const {
-    VMMemRegion* r = (VMMemRegion*)_array->at(index);
-    assert(r->is_reserve_record(), "Sanity check");
-    if (r->addr() > addr) {
-      return 1;
-    } else if (r->addr() + r->reserved_size() <= addr) {
-      return -1;
-    } else {
-      return 0;
-    }
-  }
 };
 
 class MallocRecordIterator : public MemPointerArrayIterator {
  private:
   MemPointerArrayIteratorImpl  _itr;
 
+
+
  public:
   MallocRecordIterator(MemPointerArray* arr) : _itr(arr) {
   }
 
-  MemPointer* current() const {
-    MemPointerRecord* cur = (MemPointerRecord*)_itr.current();
-    assert(cur == NULL || !cur->is_vm_pointer(), "seek error");
-    MemPointerRecord* next = (MemPointerRecord*)_itr.peek_next();
-    if (next == NULL || next->addr() != cur->addr()) {
-      return cur;
-    } else {
-      assert(!cur->is_vm_pointer(), "Sanity check");
-      assert(cur->is_allocation_record() && next->is_deallocation_record(),
-             "sorting order");
-      assert(cur->seq() != next->seq(), "Sanity check");
-      return cur->seq() >  next->seq() ? cur : next;
+  virtual MemPointer* current() const {
+#ifdef ASSERT
+    MemPointer* cur_rec = _itr.current();
+    if (cur_rec != NULL) {
+      MemPointer* prev_rec = _itr.peek_prev();
+      MemPointer* next_rec = _itr.peek_next();
+      assert(prev_rec == NULL || prev_rec->addr() < cur_rec->addr(), "Sorting order");
+      assert(next_rec == NULL || next_rec->addr() > cur_rec->addr(), "Sorting order");
     }
+#endif
+    return _itr.current();
   }
-
-  MemPointer* next() {
-    MemPointerRecord* cur = (MemPointerRecord*)_itr.current();
-    assert(cur == NULL || !cur->is_vm_pointer(), "Sanity check");
-    MemPointerRecord* next = (MemPointerRecord*)_itr.next();
-    if (next == NULL) {
-      return NULL;
+  virtual MemPointer* next() {
+    MemPointerRecord* next_rec = (MemPointerRecord*)_itr.next();
+    // arena memory record is a special case, which we have to compare
+    // sequence number against its associated arena record.
+    if (next_rec != NULL && next_rec->is_arena_memory_record()) {
+      MemPointerRecord* prev_rec = (MemPointerRecord*)_itr.peek_prev();
+      // if there is an associated arena record, it has to be previous
+      // record because of sorting order (by address) - NMT generates a pseudo address
+      // for arena's size record by offsetting arena's address, that guarantees
+      // the order of arena record and it's size record.
+      if (prev_rec != NULL && prev_rec->is_arena_record() &&
+        next_rec->is_memory_record_of_arena(prev_rec)) {
+        if (prev_rec->seq() > next_rec->seq()) {
+          // Skip this arena memory record
+          // Two scenarios:
+          //   - if the arena record is an allocation record, this early
+          //     size record must be leftover by previous arena,
+          //     and the last size record should have size = 0.
+          //   - if the arena record is a deallocation record, this
+          //     size record should be its cleanup record, which should
+          //     also have size = 0. In other world, arena alway reset
+          //     its size before gone (see Arena's destructor)
+          assert(next_rec->size() == 0, "size not reset");
+          return _itr.next();
+        } else {
+          assert(prev_rec->is_allocation_record(),
+            "Arena size record ahead of allocation record");
+        }
+      }
     }
-    if (cur->addr() == next->addr()) {
-      next = (MemPointerRecord*)_itr.next();
-    }
-    return current();
+    return next_rec;
   }
 
   MemPointer* peek_next() const      { ShouldNotReachHere(); return NULL; }
@@ -212,6 +240,72 @@ class MallocRecordIterator : public MemPointerArrayIterator {
   void remove()                      { ShouldNotReachHere(); }
   bool insert(MemPointer* ptr)       { ShouldNotReachHere(); return false; }
   bool insert_after(MemPointer* ptr) { ShouldNotReachHere(); return false; }
+};
+
+// collapse duplicated records. Eliminating duplicated records here, is much
+// cheaper than during promotion phase. However, it does have limitation - it
+// can only eliminate duplicated records within the generation, there are
+// still chances seeing duplicated records during promotion.
+// We want to use the record with higher sequence number, because it has
+// more accurate callsite pc.
+class VMRecordIterator : public MemPointerArrayIterator {
+ private:
+  MemPointerArrayIteratorImpl  _itr;
+
+ public:
+  VMRecordIterator(MemPointerArray* arr) : _itr(arr) {
+    MemPointerRecord* cur = (MemPointerRecord*)_itr.current();
+    MemPointerRecord* next = (MemPointerRecord*)_itr.peek_next();
+    while (next != NULL) {
+      assert(cur != NULL, "Sanity check");
+      assert(((SeqMemPointerRecord*)next)->seq() > ((SeqMemPointerRecord*)cur)->seq(),
+        "pre-sort order");
+
+      if (is_duplicated_record(cur, next)) {
+        _itr.next();
+        next = (MemPointerRecord*)_itr.peek_next();
+      } else {
+        break;
+      }
+    }
+  }
+
+  virtual MemPointer* current() const {
+    return _itr.current();
+  }
+
+  // get next record, but skip the duplicated records
+  virtual MemPointer* next() {
+    MemPointerRecord* cur = (MemPointerRecord*)_itr.next();
+    MemPointerRecord* next = (MemPointerRecord*)_itr.peek_next();
+    while (next != NULL) {
+      assert(cur != NULL, "Sanity check");
+      assert(((SeqMemPointerRecord*)next)->seq() > ((SeqMemPointerRecord*)cur)->seq(),
+        "pre-sort order");
+
+      if (is_duplicated_record(cur, next)) {
+        _itr.next();
+        cur = next;
+        next = (MemPointerRecord*)_itr.peek_next();
+      } else {
+        break;
+      }
+    }
+    return cur;
+  }
+
+  MemPointer* peek_next() const      { ShouldNotReachHere(); return NULL; }
+  MemPointer* peek_prev() const      { ShouldNotReachHere(); return NULL; }
+  void remove()                      { ShouldNotReachHere(); }
+  bool insert(MemPointer* ptr)       { ShouldNotReachHere(); return false; }
+  bool insert_after(MemPointer* ptr) { ShouldNotReachHere(); return false; }
+
+ private:
+  bool is_duplicated_record(MemPointerRecord* p1, MemPointerRecord* p2) const {
+    bool ret = (p1->addr() == p2->addr() && p1->size() == p2->size() && p1->flags() == p2->flags());
+    assert(!(ret && FLAGS_TO_MEMORY_TYPE(p1->flags()) == mtThreadStack), "dup on stack record");
+    return ret;
+  }
 };
 
 class StagingArea : public _ValueObj {
@@ -233,7 +327,8 @@ class StagingArea : public _ValueObj {
     return MallocRecordIterator(malloc_data());
   }
 
-  MemPointerArrayIteratorImpl virtual_memory_record_walker();
+  VMRecordIterator virtual_memory_record_walker();
+
   bool init();
   void clear() {
     assert(_malloc_data != NULL && _vm_data != NULL, "Just check");
@@ -260,6 +355,9 @@ class MemSnapshot : public CHeapObj<mtNMT> {
   // the lock to protect this snapshot
   Monitor*              _lock;
 
+  // the number of instance classes
+  int                   _number_of_classes;
+
   NOT_PRODUCT(size_t    _untracked_count;)
   friend class MemBaseline;
 
@@ -280,8 +378,9 @@ class MemSnapshot : public CHeapObj<mtNMT> {
   // merge a per-thread memory recorder into staging area
   bool merge(MemRecorder* rec);
   // promote staged data to snapshot
-  bool promote();
+  bool promote(int number_of_classes);
 
+  int  number_of_classes() const { return _number_of_classes; }
 
   void wait(long timeout) {
     assert(_lock != NULL, "Just check");
@@ -293,14 +392,17 @@ class MemSnapshot : public CHeapObj<mtNMT> {
   NOT_PRODUCT(void check_staging_data();)
   NOT_PRODUCT(void check_malloc_pointers();)
   NOT_PRODUCT(bool has_allocation_record(address addr);)
+  // dump all virtual memory pointers in snapshot
+  DEBUG_ONLY( void dump_all_vm_pointers();)
 
  private:
-   // copy pointer data from src to dest
-   void copy_pointer(MemPointerRecord* dest, const MemPointerRecord* src);
+   // copy sequenced pointer from src to dest
+   void copy_seq_pointer(MemPointerRecord* dest, const MemPointerRecord* src);
+   // assign a sequenced pointer to non-sequenced pointer
+   void assign_pointer(MemPointerRecord*dest, const MemPointerRecord* src);
 
    bool promote_malloc_records(MemPointerArrayIterator* itr);
    bool promote_virtual_memory_records(MemPointerArrayIterator* itr);
 };
-
 
 #endif // SHARE_VM_SERVICES_MEM_SNAPSHOT_HPP

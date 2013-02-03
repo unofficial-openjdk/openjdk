@@ -27,21 +27,18 @@
 #include "oops/constantPool.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/thread.inline.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
-# include "thread_linux.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_solaris
 # include "os_solaris.inline.hpp"
-# include "thread_solaris.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
-# include "thread_windows.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
-# include "thread_bsd.inline.hpp"
 #endif
 
 #ifdef ASSERT
@@ -158,13 +155,18 @@ HandleMark::~HandleMark() {
 
   // Delete later chunks
   if( _chunk->next() ) {
+    // reset arena size before delete chunks. Otherwise, the total
+    // arena size could exceed total chunk size
+    assert(area->size_in_bytes() > size_in_bytes(), "Sanity check");
+    area->set_size_in_bytes(size_in_bytes());
     _chunk->next_chop();
+  } else {
+    assert(area->size_in_bytes() == size_in_bytes(), "Sanity check");
   }
   // Roll back arena to saved top markers
   area->_chunk = _chunk;
   area->_hwm = _hwm;
   area->_max = _max;
-  area->set_size_in_bytes(_size_in_bytes);
 #ifdef ASSERT
   // clear out first chunk (to detect allocation bugs)
   if (ZapVMHandleArea) {

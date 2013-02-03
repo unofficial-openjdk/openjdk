@@ -131,12 +131,14 @@ class SymbolPropertyTable;
   do_klass(Properties_klass,                            java_util_Properties,                      Pre                 ) \
   do_klass(reflect_AccessibleObject_klass,              java_lang_reflect_AccessibleObject,        Pre                 ) \
   do_klass(reflect_Field_klass,                         java_lang_reflect_Field,                   Pre                 ) \
+  do_klass(reflect_Parameter_klass,                     java_lang_reflect_Parameter,               Opt                 ) \
   do_klass(reflect_Method_klass,                        java_lang_reflect_Method,                  Pre                 ) \
   do_klass(reflect_Constructor_klass,                   java_lang_reflect_Constructor,             Pre                 ) \
                                                                                                                          \
   /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */                              \
   /* Universe::is_gte_jdk14x_version() is not set up by this point. */                                                   \
   /* It's okay if this turns out to be NULL in non-1.4 JDKs. */                                                          \
+  do_klass(lambda_MagicLambdaImpl_klass,                java_lang_invoke_MagicLambdaImpl, Opt ) \
   do_klass(reflect_MagicAccessorImpl_klass,             sun_reflect_MagicAccessorImpl,             Opt                 ) \
   do_klass(reflect_MethodAccessorImpl_klass,            sun_reflect_MethodAccessorImpl,            Opt_Only_JDK14NewRef) \
   do_klass(reflect_ConstructorAccessorImpl_klass,       sun_reflect_ConstructorAccessorImpl,       Opt_Only_JDK14NewRef) \
@@ -458,6 +460,7 @@ public:
   // Tells whether ClassLoader.checkPackageAccess is present
   static bool has_checkPackageAccess()      { return _has_checkPackageAccess; }
 
+  static bool Parameter_klass_loaded()      { return WK_KLASS(reflect_Parameter_klass) != NULL; }
   static bool Class_klass_loaded()          { return WK_KLASS(Class_klass) != NULL; }
   static bool Cloneable_klass_loaded()      { return WK_KLASS(Cloneable_klass) != NULL; }
   static bool Object_klass_loaded()         { return WK_KLASS(Object_klass) != NULL; }
@@ -470,7 +473,7 @@ public:
   static void compute_java_system_loader(TRAPS);
 
   // Register a new class loader
-  static ClassLoaderData* register_loader(Handle class_loader);
+  static ClassLoaderData* register_loader(Handle class_loader, TRAPS);
 private:
   // Mirrors for primitive classes (created eagerly)
   static oop check_mirror(oop m) {
@@ -530,7 +533,7 @@ public:
             InstanceKlass::cast((loader)->klass())->name()->as_C_string() );
   }
   static const char* loader_name(ClassLoaderData* loader_data) {
-    return (loader_data->is_the_null_class_loader_data() ? "<bootloader>" :
+    return (loader_data->class_loader() == NULL ? "<bootloader>" :
             InstanceKlass::cast((loader_data->class_loader())->klass())->name()->as_C_string() );
   }
 

@@ -57,12 +57,10 @@
 //
 
 class ClassLoaderData;
+class Metablock;
 class MetaWord;
 class Mutex;
 class outputStream;
-class FreeChunk;
-template <class Chunk_t> class FreeList;
-template <class Chunk_t> class BinaryTreeDictionary;
 class SpaceManager;
 
 // Metaspaces each have a  SpaceManager and allocations
@@ -89,11 +87,23 @@ class Metaspace : public CHeapObj<mtClass> {
 
  public:
   enum MetadataType {ClassType, NonClassType};
+  enum MetaspaceType {
+    StandardMetaspaceType,
+    BootMetaspaceType,
+    ROMetaspaceType,
+    ReadWriteMetaspaceType,
+    AnonymousMetaspaceType,
+    ReflectionMetaspaceType
+  };
 
  private:
-  void initialize(Mutex* lock, size_t initial_size = 0);
+  void initialize(Mutex* lock, MetaspaceType type);
+
+  // Align up the word size to the allocation word size
+  static size_t align_word_size_up(size_t);
 
   static size_t _first_chunk_word_size;
+  static size_t _first_class_chunk_word_size;
 
   SpaceManager* _vsm;
   SpaceManager* vsm() const { return _vsm; }
@@ -112,8 +122,7 @@ class Metaspace : public CHeapObj<mtClass> {
 
  public:
 
-  Metaspace(Mutex* lock, size_t initial_size);
-  Metaspace(Mutex* lock);
+  Metaspace(Mutex* lock, MetaspaceType type);
   ~Metaspace();
 
   // Initialize globals for Metaspace
@@ -121,6 +130,7 @@ class Metaspace : public CHeapObj<mtClass> {
   static void initialize_class_space(ReservedSpace rs);
 
   static size_t first_chunk_word_size() { return _first_chunk_word_size; }
+  static size_t first_class_chunk_word_size() { return _first_class_chunk_word_size; }
 
   char*  bottom() const;
   size_t used_words(MetadataType mdtype) const;
@@ -128,7 +138,7 @@ class Metaspace : public CHeapObj<mtClass> {
   size_t capacity_words(MetadataType mdtype) const;
   size_t waste_words(MetadataType mdtype) const;
 
-  static MetaWord* allocate(ClassLoaderData* loader_data, size_t size,
+  static Metablock* allocate(ClassLoaderData* loader_data, size_t size,
                             bool read_only, MetadataType mdtype, TRAPS);
   void deallocate(MetaWord* ptr, size_t byte_size, bool is_class);
 
@@ -137,11 +147,7 @@ class Metaspace : public CHeapObj<mtClass> {
 
   static bool is_initialized() { return _class_space_list != NULL; }
 
-#ifndef PRODUCT
-  bool contains(const void *ptr) const;
-  bool contains_class(const void *ptr) const;
-#endif
-
+  static bool contains(const void *ptr);
   void dump(outputStream* const out) const;
 
   void print_on(outputStream* st) const;
@@ -191,6 +197,7 @@ class MetaspaceAux : AllStatic {
 
   static void print_waste(outputStream* out);
   static void dump(outputStream* out);
+  static void verify_free_chunks();
 };
 
 // Metaspace are deallocated when their class loader are GC'ed.

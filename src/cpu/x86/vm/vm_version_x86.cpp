@@ -23,7 +23,8 @@
  */
 
 #include "precompiled.hpp"
-#include "assembler_x86.inline.hpp"
+#include "asm/macroAssembler.hpp"
+#include "asm/macroAssembler.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "runtime/java.hpp"
 #include "runtime/stubCodeGenerator.hpp"
@@ -419,13 +420,16 @@ void VM_Version::get_processor_features() {
   if (UseAVX < 1)
     _cpuFeatures &= ~CPU_AVX;
 
+  if (!UseAES && !FLAG_IS_DEFAULT(UseAES))
+    _cpuFeatures &= ~CPU_AES;
+
   if (logical_processors_per_package() == 1) {
     // HT processor could be installed on a system which doesn't support HT.
     _cpuFeatures &= ~CPU_HT;
   }
 
   char buf[256];
-  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                cores_per_cpu(), threads_per_core(),
                cpu_family(), _model, _stepping,
                (supports_cmov() ? ", cmov" : ""),
@@ -441,6 +445,8 @@ void VM_Version::get_processor_features() {
                (supports_popcnt() ? ", popcnt" : ""),
                (supports_avx()    ? ", avx" : ""),
                (supports_avx2()   ? ", avx2" : ""),
+               (supports_aes()    ? ", aes" : ""),
+               (supports_erms()   ? ", erms" : ""),
                (supports_mmx_ext() ? ", mmxext" : ""),
                (supports_3dnow_prefetch() ? ", 3dnowpref" : ""),
                (supports_lzcnt()   ? ", lzcnt": ""),
@@ -471,6 +477,29 @@ void VM_Version::get_processor_features() {
     UseAVX = MIN2((intx)1,UseAVX);
   if (!supports_avx ()) // Drop to 0 if no AVX  support
     UseAVX = 0;
+
+  // Use AES instructions if available.
+  if (supports_aes()) {
+    if (FLAG_IS_DEFAULT(UseAES)) {
+      UseAES = true;
+    }
+  } else if (UseAES) {
+    if (!FLAG_IS_DEFAULT(UseAES))
+      warning("AES instructions not available on this CPU");
+    FLAG_SET_DEFAULT(UseAES, false);
+  }
+
+  // The AES intrinsic stubs require AES instruction support (of course)
+  // but also require sse3 mode for instructions it use.
+  if (UseAES && (UseSSE > 2)) {
+    if (FLAG_IS_DEFAULT(UseAESIntrinsics)) {
+      UseAESIntrinsics = true;
+    }
+  } else if (UseAESIntrinsics) {
+    if (!FLAG_IS_DEFAULT(UseAESIntrinsics))
+      warning("AES intrinsics not available on this CPU");
+    FLAG_SET_DEFAULT(UseAESIntrinsics, false);
+  }
 
 #ifdef COMPILER2
   if (UseFPUForSpilling) {
@@ -632,6 +661,14 @@ void VM_Version::get_processor_features() {
       }
     }
   }
+#if defined(COMPILER2) && defined(_ALLBSD_SOURCE)
+    if (MaxVectorSize > 16) {
+      // Limit vectors size to 16 bytes on BSD until it fixes
+      // restoring upper 128bit of YMM registers on return
+      // from signal handler.
+      FLAG_SET_DEFAULT(MaxVectorSize, 16);
+    }
+#endif // COMPILER2
 
   // Use population count instruction if available.
   if (supports_popcnt()) {
@@ -641,6 +678,16 @@ void VM_Version::get_processor_features() {
   } else if (UsePopCountInstruction) {
     warning("POPCNT instruction is not available on this CPU");
     FLAG_SET_DEFAULT(UsePopCountInstruction, false);
+  }
+
+  // Use fast-string operations if available.
+  if (supports_erms()) {
+    if (FLAG_IS_DEFAULT(UseFastStosb)) {
+      UseFastStosb = true;
+    }
+  } else if (UseFastStosb) {
+    warning("fast-string operations are not available on this CPU");
+    FLAG_SET_DEFAULT(UseFastStosb, false);
   }
 
 #ifdef COMPILER2
@@ -706,6 +753,10 @@ void VM_Version::get_processor_features() {
   PrefetchFieldsAhead         = prefetch_fields_ahead();
 #endif
 
+  if (FLAG_IS_DEFAULT(ContendedPaddingWidth) &&
+     (cache_line_size > ContendedPaddingWidth))
+     ContendedPaddingWidth = cache_line_size;
+
 #ifndef PRODUCT
   if (PrintMiscellaneous && Verbose) {
     tty->print_cr("Logical CPUs per core: %u",
@@ -713,6 +764,9 @@ void VM_Version::get_processor_features() {
     tty->print("UseSSE=%d",UseSSE);
     if (UseAVX > 0) {
       tty->print("  UseAVX=%d",UseAVX);
+    }
+    if (UseAES) {
+      tty->print("  UseAES=1");
     }
     tty->cr();
     tty->print("Allocation");
@@ -748,6 +802,9 @@ void VM_Version::get_processor_features() {
     }
     if (PrefetchFieldsAhead > 0) {
       tty->print_cr("PrefetchFieldsAhead %d", PrefetchFieldsAhead);
+    }
+    if (ContendedPaddingWidth > 0) {
+      tty->print_cr("ContendedPaddingWidth %d", ContendedPaddingWidth);
     }
   }
 #endif // !PRODUCT

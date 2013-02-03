@@ -23,7 +23,7 @@
  */
 
 // no precompiled headers
-#include "assembler_x86.inline.hpp"
+#include "asm/macroAssembler.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -48,8 +48,8 @@
 #include "runtime/osThread.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/timer.hpp"
-#include "thread_windows.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
 
@@ -174,9 +174,6 @@ bool os::register_code_area(char *low, char *high) {
   pDynamicCodeData pDCD;
   PRUNTIME_FUNCTION prt;
   PUNWIND_INFO_EH_ONLY punwind;
-
-  // If we are using Vectored Exceptions we don't need this registration
-  if (UseVectoredExceptions) return true;
 
   BufferBlob* blob = BufferBlob::create("CodeCache Exception Handler", sizeof(DynamicCodeData));
   CodeBuffer cb(blob);

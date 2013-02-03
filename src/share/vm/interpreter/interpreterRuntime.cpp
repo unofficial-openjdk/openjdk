@@ -26,6 +26,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
+#include "compiler/disassembler.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
@@ -312,7 +313,7 @@ IRT_END
 
 IRT_ENTRY(void, InterpreterRuntime::create_klass_exception(JavaThread* thread, char* name, oopDesc* obj))
   ResourceMark rm(thread);
-  const char* klass_name = Klass::cast(obj->klass())->external_name();
+  const char* klass_name = obj->klass()->external_name();
   // lookup exception klass
   TempNewSymbol s = SymbolTable::new_symbol(name, CHECK);
   if (ProfileTraps) {
@@ -341,7 +342,7 @@ IRT_ENTRY(void, InterpreterRuntime::throw_ClassCastException(
 
   ResourceMark rm(thread);
   char* message = SharedRuntime::generate_class_cast_message(
-    thread, Klass::cast(obj->klass())->external_name());
+    thread, obj->klass()->external_name());
 
   if (ProfileTraps) {
     note_trap(thread, Deoptimization::Reason_class_check, CHECK);
@@ -416,7 +417,7 @@ IRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
 
     // exception handler lookup
     KlassHandle h_klass(THREAD, h_exception->klass());
-    handler_bci = h_method->fast_exception_handler_bci_for(h_klass, current_bci, THREAD);
+    handler_bci = Method::fast_exception_handler_bci_for(h_method, h_klass, current_bci, THREAD);
     if (HAS_PENDING_EXCEPTION) {
       // We threw an exception while trying to find the exception handler.
       // Transfer the new exception to the exception handle which will
@@ -733,12 +734,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokehandle(JavaThread* thread)) {
                                  get_index_u2_cpcache(thread, bytecode), bytecode, CHECK);
   } // end JvmtiHideSingleStepping
 
-  cache_entry(thread)->set_method_handle(
-      pool,
-      info.resolved_method(),
-      info.resolved_appendix(),
-      info.resolved_method_type(),
-      pool->resolved_references());
+  cache_entry(thread)->set_method_handle(pool, info);
 }
 IRT_END
 
@@ -762,12 +758,7 @@ IRT_ENTRY(void, InterpreterRuntime::resolve_invokedynamic(JavaThread* thread)) {
   } // end JvmtiHideSingleStepping
 
   ConstantPoolCacheEntry* cp_cache_entry = pool->invokedynamic_cp_cache_entry_at(index);
-  cp_cache_entry->set_dynamic_call(
-      pool,
-      info.resolved_method(),
-      info.resolved_appendix(),
-      info.resolved_method_type(),
-      pool->resolved_references());
+  cp_cache_entry->set_dynamic_call(pool, info);
 }
 IRT_END
 

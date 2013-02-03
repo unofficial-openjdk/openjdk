@@ -37,19 +37,8 @@
 #include "runtime/globals_extension.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/vmThread.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/cmsAdaptiveSizePolicy.hpp"
 #include "gc_implementation/concurrentMarkSweep/cmsGCAdaptivePolicyCounters.hpp"
@@ -742,6 +731,8 @@ MetaWord* CollectorPolicy::satisfy_failed_metadata_allocation(
   uint gc_count = 0;
   uint full_gc_count = 0;
 
+  assert(!Heap_lock->owned_by_self(), "Should not be holding the Heap_lock");
+
   do {
     MetaWord* result = NULL;
     if (GC_locker::is_active_and_needs_gc()) {
@@ -756,7 +747,6 @@ MetaWord* CollectorPolicy::satisfy_failed_metadata_allocation(
       }
       JavaThread* jthr = JavaThread::current();
       if (!jthr->in_critical()) {
-        MutexUnlocker mul(Heap_lock);
         // Wait for JNI critical section to be exited
         GC_locker::stall_until_clear();
         // The GC invoked by the last thread leaving the critical
@@ -787,6 +777,15 @@ MetaWord* CollectorPolicy::satisfy_failed_metadata_allocation(
                                        full_gc_count,
                                        GCCause::_metadata_GC_threshold);
     VMThread::execute(&op);
+
+    // If GC was locked out, try again.  Check
+    // before checking success because the prologue
+    // could have succeeded and the GC still have
+    // been locked out.
+    if (op.gc_locked()) {
+      continue;
+    }
+
     if (op.prologue_succeeded()) {
       return op.result();
     }
@@ -828,7 +827,7 @@ void MarkSweepPolicy::initialize_generations() {
   if (_generations == NULL)
     vm_exit_during_initialization("Unable to allocate gen spec");
 
-  if (UseParNewGC && ParallelGCThreads > 0) {
+  if (UseParNewGC) {
     _generations[0] = new GenerationSpec(Generation::ParNew, _initial_gen0_size, _max_gen0_size);
   } else {
     _generations[0] = new GenerationSpec(Generation::DefNew, _initial_gen0_size, _max_gen0_size);
@@ -841,10 +840,9 @@ void MarkSweepPolicy::initialize_generations() {
 
 void MarkSweepPolicy::initialize_gc_policy_counters() {
   // initialize the policy counters - 2 collectors, 3 generations
-  if (UseParNewGC && ParallelGCThreads > 0) {
+  if (UseParNewGC) {
     _gc_policy_counters = new GCPolicyCounters("ParNew:MSC", 2, 3);
-  }
-  else {
+  } else {
     _gc_policy_counters = new GCPolicyCounters("Copy:MSC", 2, 3);
   }
 }

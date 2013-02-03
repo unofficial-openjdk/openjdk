@@ -46,19 +46,19 @@ int AbstractAssembler::code_fill_byte() {
   return 0;
 }
 
+#ifdef ASSERT
+bool AbstractAssembler::pd_check_instruction_mark() {
+  ShouldNotCallThis();
+}
+#endif
+
 void Assembler::pd_patch_instruction(address branch, address target) {
   ShouldNotCallThis();
 }
 
-#ifndef PRODUCT
-void Assembler::pd_print_patched_instruction(address branch) {
-  ShouldNotCallThis();
-}
-#endif // PRODUCT
-
 void MacroAssembler::align(int modulus) {
   while (offset() % modulus != 0)
-    emit_byte(AbstractAssembler::code_fill_byte());
+    emit_int8(AbstractAssembler::code_fill_byte());
 }
 
 void MacroAssembler::bang_stack_with_offset(int offset) {
@@ -66,8 +66,7 @@ void MacroAssembler::bang_stack_with_offset(int offset) {
 }
 
 void MacroAssembler::advance(int bytes) {
-  _code_pos += bytes;
-  sync();
+  code_section()->set_end(code_section()->end() + bytes);
 }
 
 RegisterOrConstant MacroAssembler::delayed_value_impl(
@@ -78,6 +77,11 @@ RegisterOrConstant MacroAssembler::delayed_value_impl(
 void MacroAssembler::store_oop(jobject obj) {
   code_section()->relocate(pc(), oop_Relocation::spec_for_immediate());
   emit_address((address) obj);
+}
+
+void MacroAssembler::store_Metadata(Metadata* md) {
+  code_section()->relocate(pc(), metadata_Relocation::spec_for_immediate());
+  emit_address((address) md);
 }
 
 static void should_not_call() {

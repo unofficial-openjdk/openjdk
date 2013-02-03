@@ -59,6 +59,7 @@
 #include "memory/generation.hpp"
 #include "memory/generationSpec.hpp"
 #include "memory/heap.hpp"
+#include "memory/metablock.hpp"
 #include "memory/space.hpp"
 #include "memory/tenuredGeneration.hpp"
 #include "memory/universe.hpp"
@@ -94,6 +95,7 @@
 #include "runtime/serviceThread.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/virtualspace.hpp"
 #include "runtime/vmStructs.hpp"
 #include "utilities/array.hpp"
@@ -113,18 +115,6 @@
 #endif
 #ifdef TARGET_ARCH_ppc
 # include "vmStructs_ppc.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
 #endif
 #ifdef TARGET_OS_ARCH_linux_x86
 # include "vmStructs_linux_x86.hpp"
@@ -249,6 +239,7 @@ typedef TwoOopHashtable<Klass*, mtClass>      KlassTwoOopHashtable;
 typedef Hashtable<Klass*, mtClass>            KlassHashtable;
 typedef HashtableEntry<Klass*, mtClass>       KlassHashtableEntry;
 typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
+typedef BinaryTreeDictionary<Metablock, FreeList> MetablockTreeDictionary;
 
 //--------------------------------------------------------------------------------
 // VM_STRUCTS
@@ -266,8 +257,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
                    c1_nonstatic_field, \
                    c2_nonstatic_field, \
                    unchecked_c1_static_field, \
-                   unchecked_c2_static_field, \
-                   last_entry) \
+                   unchecked_c2_static_field) \
                                                                                                                                      \
   /******************************************************************/                                                               \
   /* OopDesc and Klass hierarchies (NOTE: MethodData* incomplete) */                                                               \
@@ -287,7 +277,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(CompiledICHolder,     _holder_klass,                                 Klass*)                                \
   nonstatic_field(ConstantPool,         _tags,                                         Array<u1>*)                            \
   nonstatic_field(ConstantPool,         _cache,                                        ConstantPoolCache*)             \
-  nonstatic_field(ConstantPool,         _pool_holder,                                  Klass*)                                \
+  nonstatic_field(ConstantPool,         _pool_holder,                                  InstanceKlass*)                        \
   nonstatic_field(ConstantPool,         _operands,                                     Array<u2>*)                            \
   nonstatic_field(ConstantPool,         _length,                                       int)                                   \
   nonstatic_field(ConstantPool,         _resolved_references,                          jobject)                               \
@@ -364,9 +354,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(Method,               _access_flags,                                 AccessFlags)                           \
   nonstatic_field(Method,               _vtable_index,                                 int)                                   \
   nonstatic_field(Method,               _method_size,                                  u2)                                    \
-  nonstatic_field(Method,               _max_stack,                                    u2)                                    \
-  nonstatic_field(Method,               _max_locals,                                   u2)                                    \
-  nonstatic_field(Method,               _size_of_parameters,                           u2)                                    \
   nonstatic_field(Method,               _interpreter_throwout_count,                   u2)                                    \
   nonstatic_field(Method,               _number_of_breakpoints,                        u2)                                    \
   nonstatic_field(Method,               _invocation_counter,                           InvocationCounter)                     \
@@ -387,7 +374,9 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(ConstMethod,          _name_index,                                   u2)                                    \
   nonstatic_field(ConstMethod,          _signature_index,                              u2)                                    \
   nonstatic_field(ConstMethod,          _method_idnum,                                 u2)                                    \
-  nonstatic_field(ConstMethod,          _generic_signature_index,                      u2)                                    \
+  nonstatic_field(ConstMethod,          _max_stack,                                    u2)                                    \
+  nonstatic_field(ConstMethod,          _max_locals,                                   u2)                                    \
+  nonstatic_field(ConstMethod,          _size_of_parameters,                           u2)                                    \
   nonstatic_field(ObjArrayKlass,               _element_klass,                                Klass*)                                \
   nonstatic_field(ObjArrayKlass,               _bottom_klass,                                 Klass*)                                \
   volatile_nonstatic_field(Symbol,             _refcount,                                     int)                                   \
@@ -728,7 +717,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(ClassLoaderData,             _next,                                         ClassLoaderData*)                      \
                                                                                                                                      \
   static_field(ClassLoaderDataGraph,           _head,                                         ClassLoaderData*)                      \
-  nonstatic_field(ClassLoaderDataGraph,        _unloading,                                    ClassLoaderData*)                      \
                                                                                                                                      \
   /*******************/                                                                                                              \
   /* GrowableArrays  */                                                                                                              \
@@ -991,6 +979,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
                                                                                                                                      \
  nonstatic_field(ciMethod,     _interpreter_invocation_count, int)                                                                   \
  nonstatic_field(ciMethod,     _interpreter_throwout_count, int)                                                                     \
+ nonstatic_field(ciMethod,     _instructions_size, int)                                                                              \
                                                                                                                                      \
  nonstatic_field(ciMethodData, _data_size, int)                                                                                      \
  nonstatic_field(ciMethodData, _state, u_char)                                                                                       \
@@ -1209,7 +1198,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   /*********************************/                                                                                                \
                                                                                                                                      \
   static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
-  static_field(java_lang_Class,                _resolved_constructor_offset,                  int)                                   \
   static_field(java_lang_Class,                _array_klass_offset,                           int)                                   \
   static_field(java_lang_Class,                _oop_size_offset,                              int)                                   \
   static_field(java_lang_Class,                _static_oop_field_count_offset,                int)                                   \
@@ -1237,11 +1225,16 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(AccessFlags,                 _flags,                                       jint)                                   \
   nonstatic_field(elapsedTimer,                _counter,                                     jlong)                                  \
   nonstatic_field(elapsedTimer,                _active,                                      bool)                                   \
-  nonstatic_field(InvocationCounter,           _counter,                                     unsigned int)
+  nonstatic_field(InvocationCounter,           _counter,                                     unsigned int)                           \
+  volatile_nonstatic_field(FreeChunk,          _size,                                        size_t)                                 \
+  nonstatic_field(FreeChunk,                   _next,                                        FreeChunk*)                             \
+  nonstatic_field(FreeChunk,                   _prev,                                        FreeChunk*)                             \
+  nonstatic_field(FreeList<FreeChunk>,         _size,                                        size_t)                                 \
+  nonstatic_field(FreeList<Metablock>,         _size,                                        size_t)                                 \
+  nonstatic_field(FreeList<FreeChunk>,         _count,                                       ssize_t)                                \
+  nonstatic_field(FreeList<Metablock>,         _count,                                       ssize_t)                                \
+  nonstatic_field(MetablockTreeDictionary,     _total_size,                                  size_t)
 
-  /* NOTE that we do not use the last_entry() macro here; it is used  */
-  /* in vmStructs_<os>_<cpu>.hpp's VM_STRUCTS_OS_CPU macro (and must  */
-  /* be present there)                                                */
 
 //--------------------------------------------------------------------------------
 // VM_TYPES
@@ -1281,8 +1274,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
                  declare_unsigned_integer_type,                           \
                  declare_c1_toplevel_type,                                \
                  declare_c2_type,                                         \
-                 declare_c2_toplevel_type,                                \
-                 last_entry)                                              \
+                 declare_c2_toplevel_type)                                \
                                                                           \
   /*************************************************************/         \
   /* Java primitive types -- required by the SA implementation */         \
@@ -2080,12 +2072,24 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   declare_toplevel_type(Universe)                                         \
   declare_toplevel_type(vframeArray)                                      \
   declare_toplevel_type(vframeArrayElement)                               \
-  declare_toplevel_type(Annotations*)
+  declare_toplevel_type(Annotations*)                                     \
+                                                                          \
+  /***************/                                                       \
+  /* Miscellaneous types */                                               \
+  /***************/                                                       \
+                                                                          \
+  /* freelist */                                                          \
+  declare_toplevel_type(FreeChunk*)                                       \
+  declare_toplevel_type(Metablock*)                                       \
+  declare_toplevel_type(FreeBlockDictionary<FreeChunk>*)                  \
+  declare_toplevel_type(FreeList<FreeChunk>*)                             \
+  declare_toplevel_type(FreeList<FreeChunk>)                              \
+  declare_toplevel_type(FreeBlockDictionary<Metablock>*)                  \
+  declare_toplevel_type(FreeList<Metablock>*)                             \
+  declare_toplevel_type(FreeList<Metablock>)                              \
+  declare_toplevel_type(MetablockTreeDictionary*)                         \
+           declare_type(MetablockTreeDictionary, FreeBlockDictionary<Metablock>)
 
-
-  /* NOTE that we do not use the last_entry() macro here; it is used  */
-  /* in vmStructs_<os>_<cpu>.hpp's VM_TYPES_OS_CPU macro (and must be */
-  /* present there)                                                   */
 
 //--------------------------------------------------------------------------------
 // VM_INT_CONSTANTS
@@ -2099,8 +2103,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
                          declare_preprocessor_constant,                   \
                          declare_c1_constant,                             \
                          declare_c2_constant,                             \
-                         declare_c2_preprocessor_constant,                \
-                         last_entry)                                      \
+                         declare_c2_preprocessor_constant)                \
                                                                           \
   /******************/                                                    \
   /* Useful globals */                                                    \
@@ -2264,6 +2267,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   declare_constant(ConstMethod::_has_checked_exceptions)           \
   declare_constant(ConstMethod::_has_localvariable_table)          \
   declare_constant(ConstMethod::_has_exception_table)              \
+  declare_constant(ConstMethod::_has_generic_signature)            \
                                                                           \
   /*************************************/                                 \
   /* InstanceKlass enum                */                                 \
@@ -2278,9 +2282,17 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   declare_constant(FieldInfo::name_index_offset)                          \
   declare_constant(FieldInfo::signature_index_offset)                     \
   declare_constant(FieldInfo::initval_index_offset)                       \
-  declare_constant(FieldInfo::low_offset)                                 \
-  declare_constant(FieldInfo::high_offset)                                \
+  declare_constant(FieldInfo::low_packed_offset)                          \
+  declare_constant(FieldInfo::high_packed_offset)                         \
   declare_constant(FieldInfo::field_slots)                                \
+                                                                          \
+  /*************************************/                                 \
+  /* FieldInfo tag constants           */                                 \
+  /*************************************/                                 \
+                                                                          \
+  declare_preprocessor_constant("FIELDINFO_TAG_SIZE", FIELDINFO_TAG_SIZE) \
+  declare_preprocessor_constant("FIELDINFO_TAG_MASK", FIELDINFO_TAG_MASK) \
+  declare_preprocessor_constant("FIELDINFO_TAG_OFFSET", FIELDINFO_TAG_OFFSET) \
                                                                           \
   /************************************************/                      \
   /* InstanceKlass InnerClassAttributeOffset enum */                      \
@@ -2447,7 +2459,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   /* frame              */                                                \
   /**********************/                                                \
                                                                           \
-  X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset))      \
+  NOT_ZERO(X86_ONLY(declare_constant(frame::entry_frame_call_wrapper_offset)))      \
   declare_constant(frame::pc_return_offset)                               \
                                                                           \
   /*************/                                                         \
@@ -2467,9 +2479,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   declare_c2_preprocessor_constant("SAVED_ON_ENTRY_REG_COUNT", SAVED_ON_ENTRY_REG_COUNT) \
   declare_c2_preprocessor_constant("C_SAVED_ON_ENTRY_REG_COUNT", C_SAVED_ON_ENTRY_REG_COUNT)
 
-  /* NOTE that we do not use the last_entry() macro here; it is used  */
-  /* in vmStructs_<os>_<cpu>.hpp's VM_INT_CONSTANTS_OS_CPU macro (and */
-  /* must be present there)                                           */
 
 //--------------------------------------------------------------------------------
 // VM_LONG_CONSTANTS
@@ -2479,7 +2488,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
 // enums, etc., while "declare_preprocessor_constant" must be used for
 // all #defined constants.
 
-#define VM_LONG_CONSTANTS(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant, last_entry) \
+#define VM_LONG_CONSTANTS(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \
                                                                           \
   /*********************/                                                 \
   /* MarkOop constants */                                                 \
@@ -2525,11 +2534,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   /* Constants in markOop used by CMS. */                                 \
   declare_constant(markOopDesc::cms_shift)                                \
   declare_constant(markOopDesc::cms_mask)                                 \
-  declare_constant(markOopDesc::size_shift)                               \
-
-  /* NOTE that we do not use the last_entry() macro here; it is used   */
-  /* in vmStructs_<os>_<cpu>.hpp's VM_LONG_CONSTANTS_OS_CPU macro (and */
-  /* must be present there)                                            */
+  declare_constant(markOopDesc::size_shift)
 
 
 //--------------------------------------------------------------------------------
@@ -2569,7 +2574,8 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
 
 // This macro checks the type of a VMStructEntry by comparing pointer types
 #define CHECK_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)                 \
- {typeName *dummyObj = NULL; type* dummy = &dummyObj->fieldName; }
+ {typeName *dummyObj = NULL; type* dummy = &dummyObj->fieldName;                   \
+  assert(offset_of(typeName, fieldName) < sizeof(typeName), "Illegal nonstatic struct entry, field offset too large"); }
 
 // This macro checks the type of a volatile VMStructEntry by comparing pointer types
 #define CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)        \
@@ -2591,9 +2597,6 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
 
 // This is a no-op macro for unchecked fields
 #define CHECK_NO_OP(a, b, c)
-
-// This is a no-op macro for the sentinel value
-#define CHECK_SENTINEL()
 
 //
 // Build-specific macros:
@@ -2773,48 +2776,47 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
 // as long as class VMStructs is a friend
 VMStructEntry VMStructs::localHotSpotVMStructs[] = {
 
-  VM_STRUCTS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_STATIC_VM_STRUCT_ENTRY, \
-             GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_C1_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY, \
-             GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-             GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-             GENERATE_VM_STRUCT_LAST_ENTRY)
+  VM_STRUCTS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_STATIC_VM_STRUCT_ENTRY,
+             GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_C1_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY,
+             GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY,
+             GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY)
 
 #ifndef SERIALGC
-  VM_STRUCTS_PARALLELGC(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
+  VM_STRUCTS_PARALLELGC(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                         GENERATE_STATIC_VM_STRUCT_ENTRY)
 
-  VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
+  VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                  GENERATE_STATIC_VM_STRUCT_ENTRY)
 
-  VM_STRUCTS_G1(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
+  VM_STRUCTS_G1(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                 GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif // SERIALGC
 
-  VM_STRUCTS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_STATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-                 GENERATE_VM_STRUCT_LAST_ENTRY)
+  VM_STRUCTS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_STATIC_VM_STRUCT_ENTRY,
+                 GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY,
+                 GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY,
+                 GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY)
 
-  VM_STRUCTS_OS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_STATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_NONSTATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY, \
-                    GENERATE_VM_STRUCT_LAST_ENTRY)
+  VM_STRUCTS_OS_CPU(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                    GENERATE_STATIC_VM_STRUCT_ENTRY,
+                    GENERATE_UNCHECKED_NONSTATIC_VM_STRUCT_ENTRY,
+                    GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                    GENERATE_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY,
+                    GENERATE_C2_NONSTATIC_VM_STRUCT_ENTRY,
+                    GENERATE_C1_UNCHECKED_STATIC_VM_STRUCT_ENTRY,
+                    GENERATE_C2_UNCHECKED_STATIC_VM_STRUCT_ENTRY)
+
+  GENERATE_VM_STRUCT_LAST_ENTRY()
 };
 
 VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
@@ -2826,8 +2828,7 @@ VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
            GENERATE_UNSIGNED_INTEGER_VM_TYPE_ENTRY,
            GENERATE_C1_TOPLEVEL_VM_TYPE_ENTRY,
            GENERATE_C2_VM_TYPE_ENTRY,
-           GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY,
-           GENERATE_VM_TYPE_LAST_ENTRY)
+           GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY)
 
 #ifndef SERIALGC
   VM_TYPES_PARALLELGC(GENERATE_VM_TYPE_ENTRY,
@@ -2849,8 +2850,7 @@ VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
                GENERATE_UNSIGNED_INTEGER_VM_TYPE_ENTRY,
                GENERATE_C1_TOPLEVEL_VM_TYPE_ENTRY,
                GENERATE_C2_VM_TYPE_ENTRY,
-               GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY,
-               GENERATE_VM_TYPE_LAST_ENTRY)
+               GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY)
 
   VM_TYPES_OS_CPU(GENERATE_VM_TYPE_ENTRY,
                   GENERATE_TOPLEVEL_VM_TYPE_ENTRY,
@@ -2859,8 +2859,9 @@ VMTypeEntry VMStructs::localHotSpotVMTypes[] = {
                   GENERATE_UNSIGNED_INTEGER_VM_TYPE_ENTRY,
                   GENERATE_C1_TOPLEVEL_VM_TYPE_ENTRY,
                   GENERATE_C2_VM_TYPE_ENTRY,
-                  GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY,
-                  GENERATE_VM_TYPE_LAST_ENTRY)
+                  GENERATE_C2_TOPLEVEL_VM_TYPE_ENTRY)
+
+  GENERATE_VM_TYPE_LAST_ENTRY()
 };
 
 VMIntConstantEntry VMStructs::localHotSpotVMIntConstants[] = {
@@ -2869,8 +2870,7 @@ VMIntConstantEntry VMStructs::localHotSpotVMIntConstants[] = {
                    GENERATE_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
                    GENERATE_C1_VM_INT_CONSTANT_ENTRY,
                    GENERATE_C2_VM_INT_CONSTANT_ENTRY,
-                   GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
-                   GENERATE_VM_INT_CONSTANT_LAST_ENTRY)
+                   GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY)
 
 #ifndef SERIALGC
   VM_INT_CONSTANTS_CMS(GENERATE_VM_INT_CONSTANT_ENTRY)
@@ -2882,15 +2882,15 @@ VMIntConstantEntry VMStructs::localHotSpotVMIntConstants[] = {
                        GENERATE_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
                        GENERATE_C1_VM_INT_CONSTANT_ENTRY,
                        GENERATE_C2_VM_INT_CONSTANT_ENTRY,
-                       GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
-                       GENERATE_VM_INT_CONSTANT_LAST_ENTRY)
+                       GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY)
 
   VM_INT_CONSTANTS_OS_CPU(GENERATE_VM_INT_CONSTANT_ENTRY,
                           GENERATE_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
                           GENERATE_C1_VM_INT_CONSTANT_ENTRY,
                           GENERATE_C2_VM_INT_CONSTANT_ENTRY,
-                          GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY,
-                          GENERATE_VM_INT_CONSTANT_LAST_ENTRY)
+                          GENERATE_C2_PREPROCESSOR_VM_INT_CONSTANT_ENTRY)
+
+  GENERATE_VM_INT_CONSTANT_LAST_ENTRY()
 };
 
 VMLongConstantEntry VMStructs::localHotSpotVMLongConstants[] = {
@@ -2899,22 +2899,21 @@ VMLongConstantEntry VMStructs::localHotSpotVMLongConstants[] = {
                     GENERATE_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
                     GENERATE_C1_VM_LONG_CONSTANT_ENTRY,
                     GENERATE_C2_VM_LONG_CONSTANT_ENTRY,
-                    GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
-                    GENERATE_VM_LONG_CONSTANT_LAST_ENTRY)
+                    GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY)
 
   VM_LONG_CONSTANTS_CPU(GENERATE_VM_LONG_CONSTANT_ENTRY,
                         GENERATE_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
                         GENERATE_C1_VM_LONG_CONSTANT_ENTRY,
                         GENERATE_C2_VM_LONG_CONSTANT_ENTRY,
-                        GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
-                        GENERATE_VM_LONG_CONSTANT_LAST_ENTRY)
+                        GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY)
 
   VM_LONG_CONSTANTS_OS_CPU(GENERATE_VM_LONG_CONSTANT_ENTRY,
                            GENERATE_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
                            GENERATE_C1_VM_LONG_CONSTANT_ENTRY,
                            GENERATE_C2_VM_LONG_CONSTANT_ENTRY,
-                           GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY,
-                           GENERATE_VM_LONG_CONSTANT_LAST_ENTRY)
+                           GENERATE_C2_PREPROCESSOR_VM_LONG_CONSTANT_ENTRY)
+
+  GENERATE_VM_LONG_CONSTANT_LAST_ENTRY()
 };
 
 // This is used both to check the types of referenced fields and, in
@@ -2929,8 +2928,7 @@ VMStructs::init() {
              CHECK_C1_NONSTATIC_VM_STRUCT_ENTRY,
              CHECK_C2_NONSTATIC_VM_STRUCT_ENTRY,
              CHECK_NO_OP,
-             CHECK_NO_OP,
-             CHECK_SENTINEL);
+             CHECK_NO_OP);
 
 #ifndef SERIALGC
   VM_STRUCTS_PARALLELGC(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
@@ -2951,8 +2949,7 @@ VMStructs::init() {
                  CHECK_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY,
                  CHECK_C2_NONSTATIC_VM_STRUCT_ENTRY,
                  CHECK_NO_OP,
-                 CHECK_NO_OP,
-                 CHECK_SENTINEL);
+                 CHECK_NO_OP);
 
   VM_STRUCTS_OS_CPU(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
                     CHECK_STATIC_VM_STRUCT_ENTRY,
@@ -2961,8 +2958,7 @@ VMStructs::init() {
                     CHECK_NONPRODUCT_NONSTATIC_VM_STRUCT_ENTRY,
                     CHECK_C2_NONSTATIC_VM_STRUCT_ENTRY,
                     CHECK_NO_OP,
-                    CHECK_NO_OP,
-                    CHECK_SENTINEL);
+                    CHECK_NO_OP);
 
   VM_TYPES(CHECK_VM_TYPE_ENTRY,
            CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
@@ -2971,8 +2967,7 @@ VMStructs::init() {
            CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
            CHECK_C1_TOPLEVEL_VM_TYPE_ENTRY,
            CHECK_C2_VM_TYPE_ENTRY,
-           CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY,
-           CHECK_SENTINEL);
+           CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY);
 
 #ifndef SERIALGC
   VM_TYPES_PARALLELGC(CHECK_VM_TYPE_ENTRY,
@@ -2994,8 +2989,7 @@ VMStructs::init() {
                CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
                CHECK_C1_TOPLEVEL_VM_TYPE_ENTRY,
                CHECK_C2_VM_TYPE_ENTRY,
-               CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY,
-               CHECK_SENTINEL);
+               CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY);
 
   VM_TYPES_OS_CPU(CHECK_VM_TYPE_ENTRY,
                   CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
@@ -3004,8 +2998,7 @@ VMStructs::init() {
                   CHECK_SINGLE_ARG_VM_TYPE_NO_OP,
                   CHECK_C1_TOPLEVEL_VM_TYPE_ENTRY,
                   CHECK_C2_VM_TYPE_ENTRY,
-                  CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY,
-                  CHECK_SENTINEL);
+                  CHECK_C2_TOPLEVEL_VM_TYPE_ENTRY);
 
   //
   // Split VM_STRUCTS() invocation into two parts to allow MS VC++ 6.0
@@ -3024,53 +3017,49 @@ VMStructs::init() {
   // Solstice NFS setup. If everyone switches to local workspaces on
   // Win32, we can put this back in.
 #ifndef _WINDOWS
-  debug_only(VM_STRUCTS(ENSURE_FIELD_TYPE_PRESENT, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_SENTINEL));
-  debug_only(VM_STRUCTS(CHECK_NO_OP, \
-                        ENSURE_FIELD_TYPE_PRESENT, \
-                        CHECK_NO_OP, \
-                        ENSURE_FIELD_TYPE_PRESENT, \
-                        ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT, \
-                        ENSURE_C1_FIELD_TYPE_PRESENT, \
-                        ENSURE_C2_FIELD_TYPE_PRESENT, \
-                        CHECK_NO_OP, \
-                        CHECK_NO_OP, \
-                        CHECK_SENTINEL));
+  debug_only(VM_STRUCTS(ENSURE_FIELD_TYPE_PRESENT,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP));
+  debug_only(VM_STRUCTS(CHECK_NO_OP,
+                        ENSURE_FIELD_TYPE_PRESENT,
+                        CHECK_NO_OP,
+                        ENSURE_FIELD_TYPE_PRESENT,
+                        ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT,
+                        ENSURE_C1_FIELD_TYPE_PRESENT,
+                        ENSURE_C2_FIELD_TYPE_PRESENT,
+                        CHECK_NO_OP,
+                        CHECK_NO_OP));
 #ifndef SERIALGC
-  debug_only(VM_STRUCTS_PARALLELGC(ENSURE_FIELD_TYPE_PRESENT, \
+  debug_only(VM_STRUCTS_PARALLELGC(ENSURE_FIELD_TYPE_PRESENT,
                                    ENSURE_FIELD_TYPE_PRESENT));
-  debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT, \
-                            ENSURE_FIELD_TYPE_PRESENT, \
+  debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT,
+                            ENSURE_FIELD_TYPE_PRESENT,
                             ENSURE_FIELD_TYPE_PRESENT));
-  debug_only(VM_STRUCTS_G1(ENSURE_FIELD_TYPE_PRESENT, \
+  debug_only(VM_STRUCTS_G1(ENSURE_FIELD_TYPE_PRESENT,
                            ENSURE_FIELD_TYPE_PRESENT));
 #endif // SERIALGC
-  debug_only(VM_STRUCTS_CPU(ENSURE_FIELD_TYPE_PRESENT, \
-                            ENSURE_FIELD_TYPE_PRESENT, \
-                            CHECK_NO_OP, \
-                            ENSURE_FIELD_TYPE_PRESENT, \
-                            ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT, \
-                            ENSURE_C2_FIELD_TYPE_PRESENT, \
-                            CHECK_NO_OP, \
-                            CHECK_NO_OP, \
-                            CHECK_SENTINEL));
-  debug_only(VM_STRUCTS_OS_CPU(ENSURE_FIELD_TYPE_PRESENT, \
-                               ENSURE_FIELD_TYPE_PRESENT, \
-                               CHECK_NO_OP, \
-                               ENSURE_FIELD_TYPE_PRESENT, \
-                               ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT, \
-                               ENSURE_C2_FIELD_TYPE_PRESENT, \
-                               CHECK_NO_OP, \
-                               CHECK_NO_OP, \
-                               CHECK_SENTINEL));
+  debug_only(VM_STRUCTS_CPU(ENSURE_FIELD_TYPE_PRESENT,
+                            ENSURE_FIELD_TYPE_PRESENT,
+                            CHECK_NO_OP,
+                            ENSURE_FIELD_TYPE_PRESENT,
+                            ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT,
+                            ENSURE_C2_FIELD_TYPE_PRESENT,
+                            CHECK_NO_OP,
+                            CHECK_NO_OP));
+  debug_only(VM_STRUCTS_OS_CPU(ENSURE_FIELD_TYPE_PRESENT,
+                               ENSURE_FIELD_TYPE_PRESENT,
+                               CHECK_NO_OP,
+                               ENSURE_FIELD_TYPE_PRESENT,
+                               ENSURE_NONPRODUCT_FIELD_TYPE_PRESENT,
+                               ENSURE_C2_FIELD_TYPE_PRESENT,
+                               CHECK_NO_OP,
+                               CHECK_NO_OP));
 #endif
 }
 
@@ -3130,10 +3119,10 @@ static int recursiveFindType(VMTypeEntry* origtypes, const char* typeName, bool 
     s[len-1] = '\0';
     // tty->print_cr("checking \"%s\" for \"%s\"", s, typeName);
     if (recursiveFindType(origtypes, s, true) == 1) {
-      delete s;
+      delete [] s;
       return 1;
     }
-    delete s;
+    delete [] s;
   }
   const char* start = NULL;
   if (strstr(typeName, "GrowableArray<") == typeName) {
@@ -3149,10 +3138,10 @@ static int recursiveFindType(VMTypeEntry* origtypes, const char* typeName, bool 
     s[len-1] = '\0';
     // tty->print_cr("checking \"%s\" for \"%s\"", s, typeName);
     if (recursiveFindType(origtypes, s, true) == 1) {
-      delete s;
+      delete [] s;
       return 1;
     }
-    delete s;
+    delete [] s;
   }
   if (strstr(typeName, "const ") == typeName) {
     const char * s = typeName + strlen("const ");
@@ -3166,8 +3155,10 @@ static int recursiveFindType(VMTypeEntry* origtypes, const char* typeName, bool 
     s[len - 6] = '\0';
     // tty->print_cr("checking \"%s\" for \"%s\"", s, typeName);
     if (recursiveFindType(origtypes, s, true) == 1) {
+      free(s);
       return 1;
     }
+    free(s);
   }
   if (!isRecurse) {
     tty->print_cr("type \"%s\" not found", typeName);
@@ -3187,3 +3178,41 @@ VMStructs::findType(const char* typeName) {
 void vmStructs_init() {
   debug_only(VMStructs::init());
 }
+
+#ifndef PRODUCT
+void VMStructs::test() {
+  // Make sure last entry in the each array is indeed the correct end marker.
+  // The reason why these are static is to make sure they are zero initialized.
+  // Putting them on the stack will leave some garbage in the padding of some fields.
+  static VMStructEntry struct_last_entry = GENERATE_VM_STRUCT_LAST_ENTRY();
+  assert(memcmp(&localHotSpotVMStructs[(sizeof(localHotSpotVMStructs) / sizeof(VMStructEntry)) - 1],
+                &struct_last_entry,
+                sizeof(VMStructEntry)) == 0, "Incorrect last entry in localHotSpotVMStructs");
+
+  static VMTypeEntry type_last_entry = GENERATE_VM_TYPE_LAST_ENTRY();
+  assert(memcmp(&localHotSpotVMTypes[sizeof(localHotSpotVMTypes) / sizeof(VMTypeEntry) - 1],
+                &type_last_entry,
+                sizeof(VMTypeEntry)) == 0, "Incorrect last entry in localHotSpotVMTypes");
+
+  static VMIntConstantEntry int_last_entry = GENERATE_VM_INT_CONSTANT_LAST_ENTRY();
+  assert(memcmp(&localHotSpotVMIntConstants[sizeof(localHotSpotVMIntConstants) / sizeof(VMIntConstantEntry) - 1],
+                &int_last_entry,
+                sizeof(VMIntConstantEntry)) == 0, "Incorrect last entry in localHotSpotVMIntConstants");
+
+  static VMLongConstantEntry long_last_entry = GENERATE_VM_LONG_CONSTANT_LAST_ENTRY();
+  assert(memcmp(&localHotSpotVMLongConstants[sizeof(localHotSpotVMLongConstants) / sizeof(VMLongConstantEntry) - 1],
+                &long_last_entry,
+                sizeof(VMLongConstantEntry)) == 0, "Incorrect last entry in localHotSpotVMLongConstants");
+
+
+  // Check for duplicate entries in type array
+  for (int i = 0; localHotSpotVMTypes[i].typeName != NULL; i++) {
+    for (int j = i + 1; localHotSpotVMTypes[j].typeName != NULL; j++) {
+      if (strcmp(localHotSpotVMTypes[i].typeName, localHotSpotVMTypes[j].typeName) == 0) {
+        tty->print_cr("Duplicate entries for '%s'", localHotSpotVMTypes[i].typeName);
+        assert(false, "Duplicate types in localHotSpotVMTypes array");
+      }
+    }
+  }
+}
+#endif

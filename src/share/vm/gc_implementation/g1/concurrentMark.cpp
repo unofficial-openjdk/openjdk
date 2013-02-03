@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,27 +46,11 @@
 
 // Concurrent marking bit map wrapper
 
-CMBitMapRO::CMBitMapRO(ReservedSpace rs, int shifter) :
-  _bm((uintptr_t*)NULL,0),
+CMBitMapRO::CMBitMapRO(int shifter) :
+  _bm(),
   _shifter(shifter) {
-  _bmStartWord = (HeapWord*)(rs.base());
-  _bmWordSize  = rs.size()/HeapWordSize;    // rs.size() is in bytes
-  ReservedSpace brs(ReservedSpace::allocation_align_size_up(
-                     (_bmWordSize >> (_shifter + LogBitsPerByte)) + 1));
-
-  MemTracker::record_virtual_memory_type((address)brs.base(), mtGC);
-
-  guarantee(brs.is_reserved(), "couldn't allocate concurrent marking bit map");
-  // For now we'll just commit all of the bit map up fromt.
-  // Later on we'll try to be more parsimonious with swap.
-  guarantee(_virtual_space.initialize(brs, brs.size()),
-            "couldn't reseve backing store for concurrent marking bit map");
-  assert(_virtual_space.committed_size() == brs.size(),
-         "didn't reserve backing store for all of concurrent marking bit map?");
-  _bm.set_map((uintptr_t*)_virtual_space.low());
-  assert(_virtual_space.committed_size() << (_shifter + LogBitsPerByte) >=
-         _bmWordSize, "inconsistency in bit map sizing");
-  _bm.set_size(_bmWordSize >> _shifter);
+  _bmStartWord = 0;
+  _bmWordSize = 0;
 }
 
 HeapWord* CMBitMapRO::getNextMarkedWordAddress(HeapWord* addr,
@@ -108,14 +92,39 @@ int CMBitMapRO::heapWordDiffToOffsetDiff(size_t diff) const {
 }
 
 #ifndef PRODUCT
-bool CMBitMapRO::covers(ReservedSpace rs) const {
+bool CMBitMapRO::covers(ReservedSpace heap_rs) const {
   // assert(_bm.map() == _virtual_space.low(), "map inconsistency");
   assert(((size_t)_bm.size() * ((size_t)1 << _shifter)) == _bmWordSize,
          "size inconsistency");
-  return _bmStartWord == (HeapWord*)(rs.base()) &&
-         _bmWordSize  == rs.size()>>LogHeapWordSize;
+  return _bmStartWord == (HeapWord*)(heap_rs.base()) &&
+         _bmWordSize  == heap_rs.size()>>LogHeapWordSize;
 }
 #endif
+
+bool CMBitMap::allocate(ReservedSpace heap_rs) {
+  _bmStartWord = (HeapWord*)(heap_rs.base());
+  _bmWordSize  = heap_rs.size()/HeapWordSize;    // heap_rs.size() is in bytes
+  ReservedSpace brs(ReservedSpace::allocation_align_size_up(
+                     (_bmWordSize >> (_shifter + LogBitsPerByte)) + 1));
+  if (!brs.is_reserved()) {
+    warning("ConcurrentMark marking bit map allocation failure");
+    return false;
+  }
+  MemTracker::record_virtual_memory_type((address)brs.base(), mtGC);
+  // For now we'll just commit all of the bit map up front.
+  // Later on we'll try to be more parsimonious with swap.
+  if (!_virtual_space.initialize(brs, brs.size())) {
+    warning("ConcurrentMark marking bit map backing store failure");
+    return false;
+  }
+  assert(_virtual_space.committed_size() == brs.size(),
+         "didn't reserve backing store for all of concurrent marking bit map?");
+  _bm.set_map((uintptr_t*)_virtual_space.low());
+  assert(_virtual_space.committed_size() << (_shifter + LogBitsPerByte) >=
+         _bmWordSize, "inconsistency in bit map sizing");
+  _bm.set_size(_bmWordSize >> _shifter);
+  return true;
+}
 
 void CMBitMap::clearAll() {
   _bm.clear();
@@ -163,20 +172,80 @@ CMMarkStack::CMMarkStack(ConcurrentMark* cm) :
 #endif
 {}
 
-void CMMarkStack::allocate(size_t size) {
-  _base = NEW_C_HEAP_ARRAY(oop, size, mtGC);
-  if (_base == NULL) {
-    vm_exit_during_initialization("Failed to allocate CM region mark stack");
+bool CMMarkStack::allocate(size_t capacity) {
+  // allocate a stack of the requisite depth
+  ReservedSpace rs(ReservedSpace::allocation_align_size_up(capacity * sizeof(oop)));
+  if (!rs.is_reserved()) {
+    warning("ConcurrentMark MarkStack allocation failure");
+    return false;
   }
-  _index = 0;
-  _capacity = (jint) size;
+  MemTracker::record_virtual_memory_type((address)rs.base(), mtGC);
+  if (!_virtual_space.initialize(rs, rs.size())) {
+    warning("ConcurrentMark MarkStack backing store failure");
+    // Release the virtual memory reserved for the marking stack
+    rs.release();
+    return false;
+  }
+  assert(_virtual_space.committed_size() == rs.size(),
+         "Didn't reserve backing store for all of ConcurrentMark stack?");
+  _base = (oop*) _virtual_space.low();
+  setEmpty();
+  _capacity = (jint) capacity;
   _saved_index = -1;
+  _should_expand = false;
   NOT_PRODUCT(_max_depth = 0);
+  return true;
+}
+
+void CMMarkStack::expand() {
+  // Called, during remark, if we've overflown the marking stack during marking.
+  assert(isEmpty(), "stack should been emptied while handling overflow");
+  assert(_capacity <= (jint) MarkStackSizeMax, "stack bigger than permitted");
+  // Clear expansion flag
+  _should_expand = false;
+  if (_capacity == (jint) MarkStackSizeMax) {
+    if (PrintGCDetails && Verbose) {
+      gclog_or_tty->print_cr(" (benign) Can't expand marking stack capacity, at max size limit");
+    }
+    return;
+  }
+  // Double capacity if possible
+  jint new_capacity = MIN2(_capacity*2, (jint) MarkStackSizeMax);
+  // Do not give up existing stack until we have managed to
+  // get the double capacity that we desired.
+  ReservedSpace rs(ReservedSpace::allocation_align_size_up(new_capacity *
+                                                           sizeof(oop)));
+  if (rs.is_reserved()) {
+    // Release the backing store associated with old stack
+    _virtual_space.release();
+    // Reinitialize virtual space for new stack
+    if (!_virtual_space.initialize(rs, rs.size())) {
+      fatal("Not enough swap for expanded marking stack capacity");
+    }
+    _base = (oop*)(_virtual_space.low());
+    _index = 0;
+    _capacity = new_capacity;
+  } else {
+    if (PrintGCDetails && Verbose) {
+      // Failed to double capacity, continue;
+      gclog_or_tty->print(" (benign) Failed to expand marking stack capacity from "
+                          SIZE_FORMAT"K to " SIZE_FORMAT"K",
+                          _capacity / K, new_capacity / K);
+    }
+  }
+}
+
+void CMMarkStack::set_should_expand() {
+  // If we're resetting the marking state because of an
+  // marking stack overflow, record that we should, if
+  // possible, expand the stack.
+  _should_expand = _cm->has_overflown();
 }
 
 CMMarkStack::~CMMarkStack() {
   if (_base != NULL) {
-    FREE_C_HEAP_ARRAY(oop, _base, mtGC);
+    _base = NULL;
+    _virtual_space.release();
   }
 }
 
@@ -217,7 +286,7 @@ void CMMarkStack::par_adjoin_arr(oop* ptr_arr, int n) {
     jint res = Atomic::cmpxchg(next_index, &_index, index);
     if (res == index) {
       for (int i = 0; i < n; i++) {
-        int ind = index + i;
+        int  ind = index + i;
         assert(ind < _capacity, "By overflow test above.");
         _base[ind] = ptr_arr[i];
       }
@@ -227,7 +296,6 @@ void CMMarkStack::par_adjoin_arr(oop* ptr_arr, int n) {
     // Otherwise, we need to try again.
   }
 }
-
 
 void CMMarkStack::par_push_arr(oop* ptr_arr, int n) {
   MutexLockerEx x(ParGCRareEvent_lock, Mutex::_no_safepoint_check_flag);
@@ -244,8 +312,8 @@ void CMMarkStack::par_push_arr(oop* ptr_arr, int n) {
     assert(ind < _capacity, "By overflow test above.");
     _base[ind] = ptr_arr[i];
   }
+  NOT_PRODUCT(_max_depth = MAX2(_max_depth, next_index));
 }
-
 
 bool CMMarkStack::par_pop_arr(oop* ptr_arr, int max, int* n) {
   MutexLockerEx x(ParGCRareEvent_lock, Mutex::_no_safepoint_check_flag);
@@ -255,7 +323,7 @@ bool CMMarkStack::par_pop_arr(oop* ptr_arr, int max, int* n) {
     return false;
   } else {
     int k = MIN2(max, index);
-    jint new_ind = index - k;
+    jint  new_ind = index - k;
     for (int j = 0; j < k; j++) {
       ptr_arr[j] = _base[new_ind + j];
     }
@@ -404,9 +472,10 @@ uint ConcurrentMark::scale_parallel_threads(uint n_par_threads) {
   return MAX2((n_par_threads + 2) / 4, 1U);
 }
 
-ConcurrentMark::ConcurrentMark(ReservedSpace rs, uint max_regions) :
-  _markBitMap1(rs, MinObjAlignment - 1),
-  _markBitMap2(rs, MinObjAlignment - 1),
+ConcurrentMark::ConcurrentMark(G1CollectedHeap* g1h, ReservedSpace heap_rs) :
+  _g1h(g1h),
+  _markBitMap1(MinObjAlignment - 1),
+  _markBitMap2(MinObjAlignment - 1),
 
   _parallel_marking_threads(0),
   _max_parallel_marking_threads(0),
@@ -415,10 +484,10 @@ ConcurrentMark::ConcurrentMark(ReservedSpace rs, uint max_regions) :
   _cleanup_sleep_factor(0.0),
   _cleanup_task_overhead(1.0),
   _cleanup_list("Cleanup List"),
-  _region_bm((BitMap::idx_t) max_regions, false /* in_resource_area*/),
-  _card_bm((rs.size() + CardTableModRefBS::card_size - 1) >>
-           CardTableModRefBS::card_shift,
-           false /* in_resource_area*/),
+  _region_bm((BitMap::idx_t)(g1h->max_regions()), false /* in_resource_area*/),
+  _card_bm((heap_rs.size() + CardTableModRefBS::card_size - 1) >>
+            CardTableModRefBS::card_shift,
+            false /* in_resource_area*/),
 
   _prevMarkBitMap(&_markBitMap1),
   _nextMarkBitMap(&_markBitMap2),
@@ -449,7 +518,8 @@ ConcurrentMark::ConcurrentMark(ReservedSpace rs, uint max_regions) :
   _parallel_workers(NULL),
 
   _count_card_bitmaps(NULL),
-  _count_marked_bytes(NULL) {
+  _count_marked_bytes(NULL),
+  _completed_initialization(false) {
   CMVerboseLevel verbose_level = (CMVerboseLevel) G1MarkingVerboseLevel;
   if (verbose_level < no_verbose) {
     verbose_level = no_verbose;
@@ -464,61 +534,34 @@ ConcurrentMark::ConcurrentMark(ReservedSpace rs, uint max_regions) :
                            "heap end = "PTR_FORMAT, _heap_start, _heap_end);
   }
 
-  _markStack.allocate(MarkStackSize);
+  if (!_markBitMap1.allocate(heap_rs)) {
+    warning("Failed to allocate first CM bit map");
+    return;
+  }
+  if (!_markBitMap2.allocate(heap_rs)) {
+    warning("Failed to allocate second CM bit map");
+    return;
+  }
 
   // Create & start a ConcurrentMark thread.
   _cmThread = new ConcurrentMarkThread(this);
   assert(cmThread() != NULL, "CM Thread should have been created");
   assert(cmThread()->cm() != NULL, "CM Thread should refer to this cm");
 
-  _g1h = G1CollectedHeap::heap();
   assert(CGC_lock != NULL, "Where's the CGC_lock?");
-  assert(_markBitMap1.covers(rs), "_markBitMap1 inconsistency");
-  assert(_markBitMap2.covers(rs), "_markBitMap2 inconsistency");
+  assert(_markBitMap1.covers(heap_rs), "_markBitMap1 inconsistency");
+  assert(_markBitMap2.covers(heap_rs), "_markBitMap2 inconsistency");
 
   SATBMarkQueueSet& satb_qs = JavaThread::satb_mark_queue_set();
   satb_qs.set_buffer_size(G1SATBBufferSize);
 
   _root_regions.init(_g1h, this);
 
-  _tasks = NEW_C_HEAP_ARRAY(CMTask*, _max_worker_id, mtGC);
-  _accum_task_vtime = NEW_C_HEAP_ARRAY(double, _max_worker_id, mtGC);
-
-  _count_card_bitmaps = NEW_C_HEAP_ARRAY(BitMap,  _max_worker_id, mtGC);
-  _count_marked_bytes = NEW_C_HEAP_ARRAY(size_t*, _max_worker_id, mtGC);
-
-  BitMap::idx_t card_bm_size = _card_bm.size();
-
-  // so that the assertion in MarkingTaskQueue::task_queue doesn't fail
-  _active_tasks = _max_worker_id;
-  for (uint i = 0; i < _max_worker_id; ++i) {
-    CMTaskQueue* task_queue = new CMTaskQueue();
-    task_queue->initialize();
-    _task_queues->register_queue(i, task_queue);
-
-    _count_card_bitmaps[i] = BitMap(card_bm_size, false);
-    _count_marked_bytes[i] = NEW_C_HEAP_ARRAY(size_t, (size_t) max_regions, mtGC);
-
-    _tasks[i] = new CMTask(i, this,
-                           _count_marked_bytes[i],
-                           &_count_card_bitmaps[i],
-                           task_queue, _task_queues);
-
-    _accum_task_vtime[i] = 0.0;
-  }
-
-  // Calculate the card number for the bottom of the heap. Used
-  // in biasing indexes into the accounting card bitmaps.
-  _heap_bottom_card_num =
-    intptr_t(uintptr_t(_g1h->reserved_region().start()) >>
-                                CardTableModRefBS::card_shift);
-
-  // Clear all the liveness counting data
-  clear_all_count_data();
-
   if (ConcGCThreads > ParallelGCThreads) {
-    vm_exit_during_initialization("Can't have more ConcGCThreads "
-                                  "than ParallelGCThreads.");
+    warning("Can't have more ConcGCThreads (" UINT32_FORMAT ") "
+            "than ParallelGCThreads (" UINT32_FORMAT ").",
+            ConcGCThreads, ParallelGCThreads);
+    return;
   }
   if (ParallelGCThreads == 0) {
     // if we are not running with any parallel GC threads we will not
@@ -590,9 +633,86 @@ ConcurrentMark::ConcurrentMark(ReservedSpace rs, uint max_regions) :
     }
   }
 
+  if (FLAG_IS_DEFAULT(MarkStackSize)) {
+    uintx mark_stack_size =
+      MIN2(MarkStackSizeMax,
+          MAX2(MarkStackSize, (uintx) (parallel_marking_threads() * TASKQUEUE_SIZE)));
+    // Verify that the calculated value for MarkStackSize is in range.
+    // It would be nice to use the private utility routine from Arguments.
+    if (!(mark_stack_size >= 1 && mark_stack_size <= MarkStackSizeMax)) {
+      warning("Invalid value calculated for MarkStackSize (" UINTX_FORMAT "): "
+              "must be between " UINTX_FORMAT " and " UINTX_FORMAT,
+              mark_stack_size, 1, MarkStackSizeMax);
+      return;
+    }
+    FLAG_SET_ERGO(uintx, MarkStackSize, mark_stack_size);
+  } else {
+    // Verify MarkStackSize is in range.
+    if (FLAG_IS_CMDLINE(MarkStackSize)) {
+      if (FLAG_IS_DEFAULT(MarkStackSizeMax)) {
+        if (!(MarkStackSize >= 1 && MarkStackSize <= MarkStackSizeMax)) {
+          warning("Invalid value specified for MarkStackSize (" UINTX_FORMAT "): "
+                  "must be between " UINTX_FORMAT " and " UINTX_FORMAT,
+                  MarkStackSize, 1, MarkStackSizeMax);
+          return;
+        }
+      } else if (FLAG_IS_CMDLINE(MarkStackSizeMax)) {
+        if (!(MarkStackSize >= 1 && MarkStackSize <= MarkStackSizeMax)) {
+          warning("Invalid value specified for MarkStackSize (" UINTX_FORMAT ")"
+                  " or for MarkStackSizeMax (" UINTX_FORMAT ")",
+                  MarkStackSize, MarkStackSizeMax);
+          return;
+        }
+      }
+    }
+  }
+
+  if (!_markStack.allocate(MarkStackSize)) {
+    warning("Failed to allocate CM marking stack");
+    return;
+  }
+
+  _tasks = NEW_C_HEAP_ARRAY(CMTask*, _max_worker_id, mtGC);
+  _accum_task_vtime = NEW_C_HEAP_ARRAY(double, _max_worker_id, mtGC);
+
+  _count_card_bitmaps = NEW_C_HEAP_ARRAY(BitMap,  _max_worker_id, mtGC);
+  _count_marked_bytes = NEW_C_HEAP_ARRAY(size_t*, _max_worker_id, mtGC);
+
+  BitMap::idx_t card_bm_size = _card_bm.size();
+
+  // so that the assertion in MarkingTaskQueue::task_queue doesn't fail
+  _active_tasks = _max_worker_id;
+
+  size_t max_regions = (size_t) _g1h->max_regions();
+  for (uint i = 0; i < _max_worker_id; ++i) {
+    CMTaskQueue* task_queue = new CMTaskQueue();
+    task_queue->initialize();
+    _task_queues->register_queue(i, task_queue);
+
+    _count_card_bitmaps[i] = BitMap(card_bm_size, false);
+    _count_marked_bytes[i] = NEW_C_HEAP_ARRAY(size_t, max_regions, mtGC);
+
+    _tasks[i] = new CMTask(i, this,
+                           _count_marked_bytes[i],
+                           &_count_card_bitmaps[i],
+                           task_queue, _task_queues);
+
+    _accum_task_vtime[i] = 0.0;
+  }
+
+  // Calculate the card number for the bottom of the heap. Used
+  // in biasing indexes into the accounting card bitmaps.
+  _heap_bottom_card_num =
+    intptr_t(uintptr_t(_g1h->reserved_region().start()) >>
+                                CardTableModRefBS::card_shift);
+
+  // Clear all the liveness counting data
+  clear_all_count_data();
+
   // so that the call below can read a sensible value
-  _heap_start = (HeapWord*) rs.base();
+  _heap_start = (HeapWord*) heap_rs.base();
   set_non_marking_state();
+  _completed_initialization = true;
 }
 
 void ConcurrentMark::update_g1_committed(bool force) {
@@ -628,8 +748,8 @@ void ConcurrentMark::reset() {
   assert(_heap_end != NULL, "heap bounds should look ok");
   assert(_heap_start < _heap_end, "heap bounds should look ok");
 
-  // reset all the marking data structures and any necessary flags
-  clear_marking_state();
+  // Reset all the marking data structures and any necessary flags
+  reset_marking_state();
 
   if (verbose_low()) {
     gclog_or_tty->print_cr("[global] resetting");
@@ -645,6 +765,23 @@ void ConcurrentMark::reset() {
   // we need this to make sure that the flag is on during the evac
   // pause with initial mark piggy-backed
   set_concurrent_marking_in_progress();
+}
+
+
+void ConcurrentMark::reset_marking_state(bool clear_overflow) {
+  _markStack.set_should_expand();
+  _markStack.setEmpty();        // Also clears the _markStack overflow flag
+  if (clear_overflow) {
+    clear_has_overflown();
+  } else {
+    assert(has_overflown(), "pre-condition");
+  }
+  _finger = _heap_start;
+
+  for (uint i = 0; i < _max_worker_id; ++i) {
+    CMTaskQueue* queue = _task_queues->queue(i);
+    queue->set_empty();
+  }
 }
 
 void ConcurrentMark::set_phase(uint active_tasks, bool concurrent) {
@@ -677,7 +814,7 @@ void ConcurrentMark::set_phase(uint active_tasks, bool concurrent) {
 void ConcurrentMark::set_non_marking_state() {
   // We set the global marking state to some default values when we're
   // not doing marking.
-  clear_marking_state();
+  reset_marking_state();
   _active_tasks = 0;
   clear_concurrent_marking_in_progress();
 }
@@ -844,7 +981,7 @@ void ConcurrentMark::enter_first_sync_barrier(uint worker_id) {
     // not clear the overflow flag since we rely on it being true when
     // we exit this method to abort the pause and restart concurent
     // marking.
-    clear_marking_state(concurrent() /* clear_overflow */);
+    reset_marking_state(concurrent() /* clear_overflow */);
     force_overflow()->update();
 
     if (G1Log::fine()) {
@@ -1138,8 +1275,9 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
   if (has_overflown()) {
     // Oops.  We overflowed.  Restart concurrent marking.
     _restart_for_overflow = true;
-    // Clear the flag. We do not need it any more.
-    clear_has_overflown();
+    // Clear the marking state because we will be restarting
+    // marking due to overflowing the global mark stack.
+    reset_marking_state();
     if (G1TraceMarkStackOverflow) {
       gclog_or_tty->print_cr("\nRemark led to restart for overflow.");
     }
@@ -1163,11 +1301,13 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
                        /* option */ VerifyOption_G1UseNextMarking);
     }
     assert(!restart_for_overflow(), "sanity");
+    // Completely reset the marking state since marking completed
+    set_non_marking_state();
   }
 
-  // Reset the marking state if marking completed
-  if (!restart_for_overflow()) {
-    set_non_marking_state();
+  // Expand the marking stack, if we have to and if we can.
+  if (_markStack.should_expand()) {
+    _markStack.expand();
   }
 
 #if VERIFY_OBJS_PROCESSED
@@ -2785,7 +2925,7 @@ void ConcurrentMark::verify_no_cset_oops(bool verify_stacks,
     // Verify entries on the task queues
     for (uint i = 0; i < _max_worker_id; i += 1) {
       cl.set_phase(VerifyNoCSetOopsQueues, i);
-      OopTaskQueue* queue = _task_queues->queue(i);
+      CMTaskQueue* queue = _task_queues->queue(i);
       queue->oops_do(&cl);
     }
   }
@@ -2838,22 +2978,6 @@ void ConcurrentMark::verify_no_cset_oops(bool verify_stacks,
   }
 }
 #endif // PRODUCT
-
-void ConcurrentMark::clear_marking_state(bool clear_overflow) {
-  _markStack.setEmpty();
-  _markStack.clear_overflow();
-  if (clear_overflow) {
-    clear_has_overflown();
-  } else {
-    assert(has_overflown(), "pre-condition");
-  }
-  _finger = _heap_start;
-
-  for (uint i = 0; i < _max_worker_id; ++i) {
-    OopTaskQueue* queue = _task_queues->queue(i);
-    queue->set_empty();
-  }
-}
 
 // Aggregate the counting data that was constructed concurrently
 // with marking.
@@ -3061,7 +3185,7 @@ void ConcurrentMark::abort() {
   // Clear the liveness counting data
   clear_all_count_data();
   // Empty mark stack
-  clear_marking_state();
+  reset_marking_state();
   for (uint i = 0; i < _max_worker_id; ++i) {
     _tasks[i]->clear_region_fields();
   }

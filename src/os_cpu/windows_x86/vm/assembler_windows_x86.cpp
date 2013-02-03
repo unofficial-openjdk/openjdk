@@ -23,14 +23,14 @@
  */
 
 #include "precompiled.hpp"
-#include "asm/assembler.hpp"
-#include "assembler_x86.inline.hpp"
+#include "asm/macroAssembler.hpp"
+#include "asm/macroAssembler.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/threadLocalStorage.hpp"
 
 
 void MacroAssembler::int3() {
-  emit_byte(0xCC);
+  emit_int8((unsigned char)0xCC);
 }
 
 #ifndef _LP64

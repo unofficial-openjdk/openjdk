@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -827,10 +827,10 @@ void ConcurrentMarkSweepGeneration::printOccupancy(const char *s) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   if (PrintGCDetails) {
     if (Verbose) {
-      gclog_or_tty->print(" [%d %s-%s: "SIZE_FORMAT"("SIZE_FORMAT")]",
+      gclog_or_tty->print("[%d %s-%s: "SIZE_FORMAT"("SIZE_FORMAT")]",
         level(), short_name(), s, used(), capacity());
     } else {
-      gclog_or_tty->print(" [%d %s-%s: "SIZE_FORMAT"K("SIZE_FORMAT"K)]",
+      gclog_or_tty->print("[%d %s-%s: "SIZE_FORMAT"K("SIZE_FORMAT"K)]",
         level(), short_name(), s, used() / K, capacity() / K);
     }
   }
@@ -3338,7 +3338,7 @@ bool ConcurrentMarkSweepGeneration::grow_by(size_t bytes) {
     if (Verbose && PrintGC) {
       size_t new_mem_size = _virtual_space.committed_size();
       size_t old_mem_size = new_mem_size - bytes;
-      gclog_or_tty->print_cr("Expanding %s from %ldK by %ldK to %ldK",
+      gclog_or_tty->print_cr("Expanding %s from " SIZE_FORMAT "K by " SIZE_FORMAT "K to " SIZE_FORMAT "K",
                     name(), old_mem_size/K, bytes/K, new_mem_size/K);
     }
   }
@@ -9143,7 +9143,7 @@ void ASConcurrentMarkSweepGeneration::shrink_by(size_t desired_bytes) {
     size_t shrinkable_size_in_bytes = chunk_at_end->size();
     size_t aligned_shrinkable_size_in_bytes =
       align_size_down(shrinkable_size_in_bytes, os::vm_page_size());
-    assert(unallocated_start <= chunk_at_end->end(),
+    assert(unallocated_start <= (HeapWord*) chunk_at_end->end(),
       "Inconsistent chunk at end of space");
     size_t bytes = MIN2(desired_bytes, aligned_shrinkable_size_in_bytes);
     size_t word_size_before = heap_word_size(_virtual_space.committed_size());
@@ -9203,14 +9203,14 @@ void ASConcurrentMarkSweepGeneration::shrink_by(size_t desired_bytes) {
       if (Verbose && PrintGCDetails) {
         size_t new_mem_size = _virtual_space.committed_size();
         size_t old_mem_size = new_mem_size + bytes;
-        gclog_or_tty->print_cr("Shrinking %s from %ldK by %ldK to %ldK",
+        gclog_or_tty->print_cr("Shrinking %s from " SIZE_FORMAT "K by " SIZE_FORMAT "K to " SIZE_FORMAT "K",
                       name(), old_mem_size/K, bytes/K, new_mem_size/K);
       }
     }
 
     assert(_cmsSpace->unallocated_block() <= _cmsSpace->end(),
       "Inconsistency at end of space");
-    assert(chunk_at_end->end() == _cmsSpace->end(),
+    assert(chunk_at_end->end() == (uintptr_t*) _cmsSpace->end(),
       "Shrinking is inconsistent");
     return;
   }

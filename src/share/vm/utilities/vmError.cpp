@@ -453,7 +453,9 @@ void VMError::report(outputStream* st) {
      JDK_Version::current().to_string(buf, sizeof(buf));
      const char* runtime_name = JDK_Version::runtime_name() != NULL ?
                                   JDK_Version::runtime_name() : "";
-     st->print_cr("# JRE version: %s (%s)", runtime_name, buf);
+     const char* runtime_version = JDK_Version::runtime_version() != NULL ?
+                                  JDK_Version::runtime_version() : "";
+     st->print_cr("# JRE version: %s (%s) (build %s)", runtime_name, buf, runtime_version);
      st->print_cr("# Java VM: %s (%s %s %s %s)",
                    Abstract_VM_Version::vm_name(),
                    Abstract_VM_Version::vm_release(),
@@ -700,7 +702,7 @@ void VMError::report(outputStream* st) {
 
      if (_verbose && Universe::is_fully_initialized()) {
        // print code cache information before vm abort
-       CodeCache::print_bounds(st);
+       CodeCache::print_summary(st);
        st->cr();
      }
 
@@ -1005,6 +1007,15 @@ void VMError::report_and_die() {
 
     // done with OnError
     OnError = NULL;
+  }
+
+  static bool skip_replay = false;
+  if (DumpReplayDataOnError && _thread && _thread->is_Compiler_thread() && !skip_replay) {
+    skip_replay = true;
+    ciEnv* env = ciEnv::current();
+    if (env != NULL) {
+      env->dump_replay_data();
+    }
   }
 
   static bool skip_bug_url = !should_report_bug(first_error->_id);
