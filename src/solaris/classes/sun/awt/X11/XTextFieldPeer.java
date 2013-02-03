@@ -73,8 +73,6 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         xtext = new XAWTTextField(text,this, target.getParent());
         xtext.getDocument().addDocumentListener(xtext);
         xtext.setCursor(target.getCursor());
-        target.enableInputMethods(true);
-        xtext.enableInputMethods(true);
         XToolkit.specialPeerMap.put(xtext,this);
 
         TextField txt = (TextField) target;
@@ -106,6 +104,8 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
 
     public void dispose() {
         XToolkit.specialPeerMap.remove(xtext);
+        // visible caret has a timer thread which must be stopped
+        xtext.getCaret().setVisible(false);
         xtext.removeNotify();
         super.dispose();
     }
@@ -579,31 +579,7 @@ public class XTextFieldPeer extends XComponentPeer implements TextFieldPeer {
         }
 
         protected Caret createCaret() {
-            return new XAWTCaret();
-        }
-    }
-
-    class XAWTCaret extends DefaultCaret {
-        public void focusGained(FocusEvent e) {
-            super.focusGained(e);
-            getComponent().repaint();
-        }
-
-        public void focusLost(FocusEvent e) {
-            super.focusLost(e);
-            getComponent().repaint();
-        }
-
-        // Fix for 5100950: textarea.getSelectedText() returns the de-selected text, on XToolkit
-        // Restoring Motif behaviour
-        // If the text is unhighlighted then we should sets the selection range to zero
-        public void setSelectionVisible(boolean vis) {
-            if (vis){
-                super.setSelectionVisible(vis);
-            }else{
-                // In order to de-select the selection
-                setDot(getDot());
-            }
+            return new XTextAreaPeer.XAWTCaret();
         }
     }
 

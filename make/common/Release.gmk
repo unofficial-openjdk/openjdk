@@ -158,7 +158,6 @@ JDK_MAN_PAGES =            \
         jstack.1           \
         jstat.1            \
         jstatd.1           \
-        jvisualvm.1        \
 	native2ascii.1     \
 	rmic.1             \
         schemagen.1        \
@@ -166,6 +165,10 @@ JDK_MAN_PAGES =            \
         wsgen.1            \
         wsimport.1         \
         xjc.1
+
+ifndef OPENJDK
+  JDK_MAN_PAGES += jvisualvm.1
+endif
 
 ifeq ($(PLATFORM), solaris)
   MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
@@ -1328,8 +1331,8 @@ $(TEMP_PREV_JDK_COMPARISON): install-previous-jdk $(DIRDIFF_JARFILE)
 	@$(java-vm-cleanup)
 
 # Clean up names in the messages printed out
-CAT_FILTER = $(SED) -e "s@$(JDK_IMAGE_DIR)@JDK_IMAGE@g" \
-	            -e "s@$(JRE_IMAGE_DIR)@JRE_IMAGE@g"
+CAT_FILTER = $(SED) -e "s|$(JDK_IMAGE_DIR)|JDK_IMAGE|g" \
+	            -e "s|$(JRE_IMAGE_DIR)|JRE_IMAGE|g"
 
 # Report on the jre image comparison
 compare-image-jre: $(TEMP_PREV_JRE_COMPARISON)

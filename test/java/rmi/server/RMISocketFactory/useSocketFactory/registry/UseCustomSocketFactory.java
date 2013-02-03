@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,7 @@
  * @author Laird Dornin; code borrowed from Ann Wollrath
  *
  * @library ../../../../testlibrary
- * @build Hello
- * @build HelloImpl
- * @build HelloImpl_Stub
- * @build UseCustomSocketFactory
- * @build Compress
+ * @build TestLibrary Compress Hello HelloImpl HelloImpl_Stub
  * @run main/othervm/policy=security.policy/timeout=240 UseCustomSocketFactory
  */
 
@@ -58,6 +54,7 @@ public class UseCustomSocketFactory {
         System.out.println("\nRegression test for bug 4148850\n");
 
         TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+        int registryPort = TestLibrary.getUnusedRandomPort();
 
         try {
             impl = new HelloImpl();
@@ -67,7 +64,7 @@ public class UseCustomSocketFactory {
              * allow the rmiregistry to be secure.
              */
             registry = LocateRegistry.
-                createRegistry(TestLibrary.REGISTRY_PORT,
+                createRegistry(registryPort,
                                new Compress.CompressRMIClientSocketFactory(),
                                new Compress.CompressRMIServerSocketFactory());
             registry.rebind("/HelloServer", impl);
@@ -77,8 +74,12 @@ public class UseCustomSocketFactory {
             TestLibrary.bomb("creating registry", e);
         }
 
-        JavaVM serverVM = new JavaVM("HelloImpl", "-Djava.security.policy=" +
-                                     TestParams.defaultPolicy, "");
+        JavaVM serverVM = new JavaVM("HelloImpl",
+                                     "-Djava.security.policy=" +
+                                     TestParams.defaultPolicy +
+                                     " -Drmi.registry.port=" +
+                                     registryPort,
+                                     "");
 
         try {
 

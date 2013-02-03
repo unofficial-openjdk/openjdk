@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,27 +26,26 @@
  * @summary Verify that class loaded outside of application class loader is
  *          correctly resolved during deserialization when read in by custom
  *          readObject() method of a bootstrap class (in this case,
- *          java.awt.Button).
+ *          java.util.Vector).
  */
 
-import java.awt.Button;
-import java.awt.event.MouseAdapter;
 import java.io.*;
+import java.util.Vector;
 
 public class Foo implements Runnable {
 
-    static class Adapter extends MouseAdapter implements Serializable {}
+    static class TestElement extends Object implements Serializable {}
 
     public void run() {
         try {
-            Button button = new Button();
-            button.addMouseListener(new Adapter());
+            Vector<TestElement> container = new Vector<TestElement>();
+            container.add(new TestElement());
 
             // iterate to trigger java.lang.reflect code generation
             for (int i = 0; i < 100; i++) {
                 ByteArrayOutputStream bout = new ByteArrayOutputStream();
                 ObjectOutputStream oout = new ObjectOutputStream(bout);
-                oout.writeObject(button);
+                oout.writeObject(container);
                 oout.close();
                 ObjectInputStream oin = new ObjectInputStream(
                     new ByteArrayInputStream(bout.toByteArray()));
@@ -54,7 +53,7 @@ public class Foo implements Runnable {
             }
         } catch (Exception ex) {
             throw new Error(
-                "Error occured while (de)serializing Button: " + ex);
+                "Error occured while (de)serializing container: ", ex);
         }
     }
 }

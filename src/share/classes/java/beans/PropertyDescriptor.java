@@ -109,6 +109,10 @@ public class PropertyDescriptor extends FeatureDescriptor {
         if (writeMethodName != null && getWriteMethod() == null) {
             throw new IntrospectionException("Method not found: " + writeMethodName);
         }
+        boundInitialization(beanClass);
+    }
+
+    private void boundInitialization(Class<?> beanClass) {
         // If this class or one of its base classes allow PropertyChangeListener,
         // then we assume that any properties we discover are "bound".
         // See Introspector.getTargetPropertyInfo() method.
@@ -159,6 +163,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
         setReadMethod(read);
         setWriteMethod(write);
         this.baseName = base;
+        boundInitialization(bean);
     }
 
     /**
@@ -210,12 +215,13 @@ public class PropertyDescriptor extends FeatureDescriptor {
                 // The read method was explicitly set to null.
                 return null;
             }
+            String nextMethodName = Introspector.GET_PREFIX + getBaseName();
             if (readMethodName == null) {
                 Class type = getPropertyType0();
                 if (type == boolean.class || type == null) {
                     readMethodName = Introspector.IS_PREFIX + getBaseName();
                 } else {
-                    readMethodName = Introspector.GET_PREFIX + getBaseName();
+                    readMethodName = nextMethodName;
                 }
             }
 
@@ -225,8 +231,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
             // methods.  If an "is" method exists, this is the official
             // reader method so look for this one first.
             readMethod = Introspector.findMethod(cls, readMethodName, 0);
-            if (readMethod == null) {
-                readMethodName = Introspector.GET_PREFIX + getBaseName();
+            if ((readMethod == null) && !readMethodName.equals(nextMethodName)) {
+                readMethodName = nextMethodName;
                 readMethod = Introspector.findMethod(cls, readMethodName, 0);
             }
             try {
@@ -590,7 +596,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
         Method yw = y.getWriteMethod();
 
         try {
-            if (yw != null && yw.getDeclaringClass() == getClass0()) {
+            if (yw != null) {
                 setWriteMethod(yw);
             } else {
                 setWriteMethod(xw);
@@ -669,7 +675,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
                     throw new IntrospectionException("bad write method arg count: "
                                                      + writeMethod);
                 }
-                if (propertyType != null && propertyType != params[0]) {
+                if (propertyType != null && !params[0].isAssignableFrom(propertyType)) {
                     throw new IntrospectionException("type mismatch between read and write methods");
                 }
                 propertyType = params[0];

@@ -32,10 +32,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.management.ManagementFactory;
-
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.text.MessageFormat;
 
 import java.util.MissingResourceException;
@@ -43,9 +45,12 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXServiceURL;
 
 import static sun.management.AgentConfigurationError.*;
 import sun.management.jmxremote.ConnectorBootstrap;
+import sun.management.jdp.JdpController;
+import sun.management.jdp.JdpException;
 import sun.misc.VMSupport;
 
 /**
@@ -67,6 +72,8 @@ public class Agent {
         "com.sun.management.jmxremote";
     private static final String JMXREMOTE_PORT =
         "com.sun.management.jmxremote.port";
+    private static final String RMI_PORT =
+        "com.sun.management.jmxremote.rmi.port";
     private static final String ENABLE_THREAD_CONTENTION_MONITORING =
         "com.sun.management.enableThreadContentionMonitoring";
     private static final String LOCAL_CONNECTOR_ADDRESS_PROP =
@@ -74,6 +81,9 @@ public class Agent {
 
     private static final String SNMP_ADAPTOR_BOOTSTRAP_CLASS_NAME =
         "sun.management.snmp.AdaptorBootstrap";
+
+    private static final String JDP_DEFAULT_ADDRESS = "239.255.255.225";
+    private static final int JDP_DEFAULT_PORT = 7095;
 
     // The only active agent allowed
     private static JMXConnectorServer jmxServer = null;
@@ -168,7 +178,10 @@ public class Agent {
 
         // management properties can be overridden by system properties
         // which take precedence
-        configProps.putAll(System.getProperties());
+        Properties sysProps = System.getProperties();
+        synchronized(sysProps){
+            configProps.putAll(sysProps);
+        }
 
         // if user specifies config file into command line for either
         // jcmd utilities or attach command it overrides properties set in
@@ -198,10 +211,13 @@ public class Agent {
         if (jmxremotePort != null) {
             jmxServer = ConnectorBootstrap.
                            startRemoteConnectorServer(jmxremotePort, configProps);
+            startDiscoveryService(configProps);
         }
     }
 
     private static synchronized void stopRemoteManagementAgent() throws Exception {
+
+        JdpController.stopDiscoveryService();
         if (jmxServer != null) {
             ConnectorBootstrap.unexportRegistry();
 
@@ -243,6 +259,7 @@ public class Agent {
                 if (jmxremotePort != null) {
                    jmxServer = ConnectorBootstrap.
                                startRemoteConnectorServer(jmxremotePort, props);
+                    startDiscoveryService(props);
                 }
                 startLocalManagementAgent();
              }
@@ -251,6 +268,73 @@ public class Agent {
             error(e.getError(), e.getParams());
         } catch (Exception e) {
             error(e);
+        }
+    }
+
+    private static void startDiscoveryService(Properties props)
+            throws IOException {
+        // Start discovery service if requested
+        String discoveryPort = props.getProperty("com.sun.management.jdp.port");
+        String discoveryAddress = props.getProperty("com.sun.management.jdp.address");
+        String discoveryShouldStart = props.getProperty("com.sun.management.jmxremote.autodiscovery");
+
+        // Decide whether we should start autodicovery service.
+        // To start autodiscovery following conditions should be met:
+        // autodiscovery==true OR (autodicovery==null AND jdp.port != NULL)
+
+        boolean shouldStart = false;
+        if (discoveryShouldStart == null){
+            shouldStart = (discoveryPort != null);
+        }
+        else{
+            try{
+               shouldStart = Boolean.parseBoolean(discoveryShouldStart);
+            } catch (NumberFormatException e) {
+                throw new AgentConfigurationError("Couldn't parse autodiscovery argument");
+            }
+        }
+
+        if (shouldStart) {
+            // port and address are required arguments and have no default values
+            InetAddress address;
+            try {
+                address = (discoveryAddress == null) ?
+                        InetAddress.getByName(JDP_DEFAULT_ADDRESS) : InetAddress.getByName(discoveryAddress);
+            } catch (UnknownHostException e) {
+                throw new AgentConfigurationError("Unable to broadcast to requested address", e);
+            }
+
+            int port = JDP_DEFAULT_PORT;
+            if (discoveryPort != null) {
+               try {
+                  port = Integer.parseInt(discoveryPort);
+               } catch (NumberFormatException e) {
+                 throw new AgentConfigurationError("Couldn't parse JDP port argument");
+               }
+            }
+
+            // Rebuilding service URL to broadcast it
+            String jmxremotePort = props.getProperty(JMXREMOTE_PORT);
+            String rmiPort = props.getProperty(RMI_PORT);
+
+            JMXServiceURL url = jmxServer.getAddress();
+            String hostname = url.getHost();
+
+            String jmxUrlStr = (rmiPort != null)
+                    ? String.format(
+                    "service:jmx:rmi://%s:%s/jndi/rmi://%s:%s/jmxrmi",
+                    hostname, rmiPort, hostname, jmxremotePort)
+                    : String.format(
+                    "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", hostname, jmxremotePort);
+
+            String instanceName = System.getProperty("com.sun.management.jdp.name");
+
+            try{
+               JdpController.startDiscoveryService(address, port, instanceName, jmxUrlStr);
+            }
+            catch(JdpException e){
+                throw new AgentConfigurationError("Couldn't start JDP service", e);
+            }
         }
     }
 
@@ -264,7 +348,10 @@ public class Agent {
 
         // management properties can be overridden by system properties
         // which take precedence
-        props.putAll(System.getProperties());
+        Properties sysProps = System.getProperties();
+        synchronized(sysProps){
+            props.putAll(sysProps);
+        }
 
         return props;
    }

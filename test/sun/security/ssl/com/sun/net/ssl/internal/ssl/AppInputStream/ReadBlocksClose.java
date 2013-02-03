@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to
+// re-use system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4814140
  * @summary AppInputStream: read can block a close
+ * @run main/othervm ReadBlocksClose
  * @author Brad Wetmore
  */
 

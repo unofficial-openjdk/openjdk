@@ -26,6 +26,7 @@
  * @bug 7129083
  * @summary Cookiemanager does not store cookies if url is read
  *          before setting cookiemanager
+ * @run main/othervm CookieHttpsClientTest
  */
 
 import java.net.CookieHandler;

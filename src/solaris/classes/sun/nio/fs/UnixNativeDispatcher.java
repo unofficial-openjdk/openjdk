@@ -498,11 +498,6 @@ class UnixNativeDispatcher {
     private static native int getgrnam0(long nameAddress) throws UnixException;
 
     /**
-     * int getextmntent(FILE *fp, struct extmnttab *mp, int len);
-     */
-    static native int getextmntent(long fp, UnixMountEntry entry) throws UnixException;
-
-    /**
      * statvfs(const char* path, struct statvfs *buf)
      */
     static void statvfs(UnixPath path, UnixFileStoreAttributes attrs)
@@ -546,6 +541,10 @@ class UnixNativeDispatcher {
     private static final boolean hasAtSysCalls;
     static boolean supportsAtSysCalls() {
         return hasAtSysCalls;
+    }
+
+    static boolean supportsNoFollowLinks() {
+        return UnixConstants.O_NOFOLLOW != 0;
     }
 
     // initialize syscalls and fieldIDs

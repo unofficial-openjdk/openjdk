@@ -40,6 +40,7 @@ import java.awt.image.VolatileImage;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.ContainerPeer;
 
+import java.awt.peer.KeyboardFocusManagerPeer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.reflect.Field;
 import java.security.AccessController;
@@ -282,7 +283,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
      * Note that we call setVisible() at the end of initialization.
      */
     public final void initialize() {
-        platformComponent.initialize(target, this, getPlatformWindow());
+        platformComponent.initialize(getPlatformWindow());
         initializeImpl();
         setVisible(target.isVisible());
     }
@@ -424,8 +425,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
 
     @Override
     public final Graphics getGraphics() {
-        Graphics g = getWindowPeerOrSelf().isOpaque() ? getOnscreenGraphics()
-                                                      : getOffscreenGraphics();
+        final Graphics g = getOnscreenGraphics();
         if (g != null) {
             synchronized (getPeerTreeLock()){
                 applyConstrain(g);
@@ -443,13 +443,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         final LWWindowPeer wp = getWindowPeerOrSelf();
         return wp.getOnscreenGraphics(getForeground(), getBackground(),
                                       getFont());
-    }
 
-    public final Graphics getOffscreenGraphics() {
-        final LWWindowPeer wp = getWindowPeerOrSelf();
-
-        return wp.getOffscreenGraphics(getForeground(), getBackground(),
-                                       getFont());
     }
 
     private void applyConstrain(final Graphics g) {
@@ -463,7 +457,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     }
 
     //TODO Move this method to SG2D?
-    private void SG2DConstraint(final SunGraphics2D sg2d, Region r) {
+    void SG2DConstraint(final SunGraphics2D sg2d, Region r) {
         sg2d.constrainX = sg2d.transX;
         sg2d.constrainY = sg2d.transY;
 
@@ -710,7 +704,7 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         // Obtain the metrics from the offscreen window where this peer is
         // mostly drawn to.
         // TODO: check for "use platform metrics" settings
-        Graphics g = getWindowPeer().getOffscreenGraphics();
+        Graphics g = getWindowPeer().getGraphics();
         try {
             if (g != null) {
                 return g.getFontMetrics(f);
@@ -901,15 +895,15 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                             ", focusedWindowChangeAllowed=" + focusedWindowChangeAllowed +
                             ", time= " + time + ", cause=" + cause);
         }
-        if (LWKeyboardFocusManagerPeer.getInstance(getAppContext()).
-                processSynchronousLightweightTransfer(getTarget(), lightweightChild, temporary,
-                        focusedWindowChangeAllowed, time)) {
+        if (LWKeyboardFocusManagerPeer.processSynchronousLightweightTransfer(
+                getTarget(), lightweightChild, temporary,
+                focusedWindowChangeAllowed, time)) {
             return true;
         }
 
-        int result = LWKeyboardFocusManagerPeer.getInstance(getAppContext()).
-                shouldNativelyFocusHeavyweight(getTarget(), lightweightChild, temporary,
-                        focusedWindowChangeAllowed, time, cause);
+        int result = LWKeyboardFocusManagerPeer.shouldNativelyFocusHeavyweight(
+                getTarget(), lightweightChild, temporary,
+                focusedWindowChangeAllowed, time, cause);
         switch (result) {
             case LWKeyboardFocusManagerPeer.SNFH_FAILURE:
                 return false;
@@ -958,14 +952,13 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
                     return false;
                 }
 
-                LWComponentPeer focusOwnerPeer =
-                    LWKeyboardFocusManagerPeer.getInstance(getAppContext()).
-                        getFocusOwner();
-                Component focusOwner = (focusOwnerPeer != null) ? focusOwnerPeer.getTarget() : null;
+                KeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
+                Component focusOwner = kfmPeer.getCurrentFocusOwner();
                 return LWKeyboardFocusManagerPeer.deliverFocus(lightweightChild,
                         getTarget(), temporary,
                         focusedWindowChangeAllowed,
                         time, cause, focusOwner);
+
             case LWKeyboardFocusManagerPeer.SNFH_SUCCESS_HANDLED:
                 return true;
         }
@@ -1011,14 +1004,33 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     @Override
     public final void applyShape(final Region shape) {
         synchronized (getStateLock()) {
-            region = shape;
+            if (region == shape || (region != null && region.equals(shape))) {
+                return;
+            }
+        }
+        applyShapeImpl(shape);
+    }
+
+    void applyShapeImpl(final Region shape) {
+        synchronized (getStateLock()) {
+            if (shape != null) {
+                region = Region.WHOLE_REGION.getIntersection(shape);
+            } else {
+                region = null;
+            }
         }
         repaintParent(getBounds());
     }
 
     protected final Region getRegion() {
         synchronized (getStateLock()) {
-            return region == null ? Region.getInstance(getSize()) : region;
+            return isShaped() ? region : Region.getInstance(getSize());
+        }
+    }
+
+    public boolean isShaped() {
+        synchronized (getStateLock()) {
+            return region != null;
         }
     }
 
@@ -1251,8 +1263,8 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
     protected void handleJavaFocusEvent(FocusEvent e) {
         // Note that the peer receives all the FocusEvents from
         // its lightweight children as well
-        LWKeyboardFocusManagerPeer.getInstance(getAppContext()).
-                setFocusOwner(e.getID() == FocusEvent.FOCUS_GAINED ? this : null);
+        KeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
+        kfmPeer.setCurrentFocusOwner(e.getID() == FocusEvent.FOCUS_GAINED ? getTarget() : null);
     }
 
     /**
@@ -1386,11 +1398,6 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
         }
     }
 
-    // Just a helper method, thus final
-    protected final void flushOffscreenGraphics() {
-        flushOffscreenGraphics(getSize());
-    }
-
     protected static final void flushOnscreenGraphics(){
         final OGLRenderQueue rq = OGLRenderQueue.getInstance();
         rq.lock();
@@ -1398,36 +1405,6 @@ public abstract class LWComponentPeer<T extends Component, D extends JComponent>
             rq.flushNow();
         } finally {
             rq.unlock();
-        }
-    }
-
-    /*
-     * Flushes the given rectangle from the back buffer to the screen.
-     */
-    protected void flushOffscreenGraphics(Rectangle r) {
-        flushOffscreenGraphics(r.x, r.y, r.width, r.height);
-    }
-
-    private void flushOffscreenGraphics(int x, int y, int width, int height) {
-        Image bb = getWindowPeerOrSelf().getBackBuffer();
-        if (bb != null) {
-            // g is a screen Graphics from the delegate
-            final Graphics g = getOnscreenGraphics();
-
-            if (g != null && g instanceof Graphics2D) {
-                try {
-                    Graphics2D g2d = (Graphics2D)g;
-                    Point p = localToWindow(new Point(0, 0));
-                    Composite composite = g2d.getComposite();
-                    g2d.setComposite(AlphaComposite.Src);
-                    g.drawImage(bb, x, y, x + width, y + height, p.x + x,
-                            p.y + y, p.x + x + width, p.y + y + height,
-                            null);
-                    g2d.setComposite(composite);
-                } finally {
-                    g.dispose();
-                }
-            }
         }
     }
 

@@ -148,7 +148,7 @@ class MessageHeader {
         for (int i=0; i<nkeys; i++) {
             if (k.equalsIgnoreCase(keys[i])
                     && values[i] != null && values[i].length() > 5
-                    && values[i].substring(0, 5).equalsIgnoreCase("NTLM ")) {
+                    && values[i].regionMatches(true, 0, "NTLM ", 0, 5)) {
                 found = true;
                 break;
             }

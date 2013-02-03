@@ -162,10 +162,13 @@ public class LWCToolkit extends LWToolkit {
 
     @Override
     protected PlatformWindow createPlatformWindow(PeerType peerType) {
-        if (peerType == PeerType.EMBEDDEDFRAME) {
+        if (peerType == PeerType.EMBEDDED_FRAME) {
             return new CPlatformEmbeddedFrame();
+        } else if (peerType == PeerType.VIEW_EMBEDDED_FRAME) {
+            return new CViewPlatformEmbeddedFrame();
         } else {
-            return new CPlatformWindow(peerType);
+            assert (peerType == PeerType.SIMPLEWINDOW || peerType == PeerType.DIALOG || peerType == PeerType.FRAME);
+            return new CPlatformWindow();
         }
     }
 
@@ -752,12 +755,21 @@ public class LWCToolkit extends LWToolkit {
     }
 
     @Override
+    public boolean isWindowShapingSupported() {
+        return true;
+    }
+
+    @Override
     public boolean isWindowTranslucencySupported() {
         return true;
     }
 
     @Override
     public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
+        return true;
+    }
+
+    public boolean isSwingBackbufferTranslucencySupported() {
         return true;
     }
 

@@ -54,6 +54,9 @@ FILES_java += \
 	sun/nio/ch/DevPollArrayWrapper.java \
 	sun/nio/ch/DevPollSelectorImpl.java \
         sun/nio/ch/DevPollSelectorProvider.java \
+	sun/nio/ch/EventPortSelectorImpl.java \
+	sun/nio/ch/EventPortSelectorProvider.java \
+	sun/nio/ch/EventPortWrapper.java \
 	sun/nio/ch/InheritedChannel.java \
         sun/nio/ch/PollSelectorProvider.java \
         sun/nio/ch/PollSelectorImpl.java \
@@ -274,11 +277,13 @@ FILES_java += \
 	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
 	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
 	\
-	sun/nio/fs/GnomeFileTypeDetector.java \
 	sun/nio/fs/BsdFileStore.java \
 	sun/nio/fs/BsdFileSystem.java \
 	sun/nio/fs/BsdFileSystemProvider.java \
 	sun/nio/fs/BsdNativeDispatcher.java \
+	sun/nio/fs/MacOSXFileSystemProvider.java \
+	sun/nio/fs/MacOSXFileSystem.java \
+	sun/nio/fs/MacOSXNativeDispatcher.java \
 	sun/nio/fs/PollingWatchService.java \
 	sun/nio/fs/UnixChannelFactory.java \
 	sun/nio/fs/UnixCopyFile.java \
@@ -306,8 +311,8 @@ FILES_c += \
 	UnixAsynchronousServerSocketChannelImpl.c \
 	UnixAsynchronousSocketChannelImpl.c \
 	\
-	GnomeFileTypeDetector.c \
 	BsdNativeDispatcher.c \
+	MacOSXNativeDispatcher.c \
 	UnixCopyFile.c \
 	UnixNativeDispatcher.c \
 	\
@@ -322,7 +327,6 @@ FILES_export += \
 	sun/nio/ch/UnixAsynchronousServerSocketChannelImpl.java \
 	sun/nio/ch/UnixAsynchronousSocketChannelImpl.java \
 	\
-	sun/nio/fs/GnomeFileTypeDetector.java \
 	sun/nio/fs/BsdNativeDispatcher.java \
 	sun/nio/fs/UnixCopyFile.java \
 	sun/nio/fs/UnixNativeDispatcher.java
@@ -382,7 +386,7 @@ ifeq ($(PLATFORM), linux)
 OTHER_LDLIBS += -L$(LIBDIR)/$(LIBARCH) -ljava -lnet -lpthread $(LIBDL)
 endif
 ifeq ($(PLATFORM), macosx)
-OTHER_LDLIBS += -L$(LIBDIR) -ljava -lnet -pthread
+OTHER_LDLIBS += -L$(LIBDIR) -ljava -lnet -pthread -framework CoreFoundation
 endif
 ifeq ($(PLATFORM), solaris)
 OTHER_LDLIBS += $(JVMLIB) $(LIBSOCKET) -lposix4 $(LIBDL) -lsendfile \

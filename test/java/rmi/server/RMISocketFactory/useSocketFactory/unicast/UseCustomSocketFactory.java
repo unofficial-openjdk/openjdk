@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,7 @@
  * @author Ann Wollrath
  *
  * @library ../../../../testlibrary
- * @build TestLibrary RMID JavaVM StreamPipe
- * @build Echo
- * @build EchoImpl
- * @build EchoImpl_Stub
- * @build UseCustomSocketFactory
+ * @build TestLibrary RMID JavaVM Echo EchoImpl EchoImpl_Stub
  * @run main/othervm/policy=security.policy/timeout=120 UseCustomSocketFactory
  */
 
@@ -46,6 +42,8 @@ public class UseCustomSocketFactory {
 
     public static void main(String[] args) {
 
+        int registryPort = -1;
+
         String[] protocol = new String[] { "", "compress", "xor" };
 
         System.out.println("\nRegression test for bug 4127826\n");
@@ -53,7 +51,8 @@ public class UseCustomSocketFactory {
         TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
 
         try {
-            LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
+            Registry registry = TestLibrary.createRegistryOnUnusedPort();
+            registryPort = TestLibrary.getRegistryPort(registry);
         } catch (Exception e) {
             TestLibrary.bomb("creating registry", e);
         }
@@ -65,7 +64,9 @@ public class UseCustomSocketFactory {
 
             JavaVM serverVM = new JavaVM("EchoImpl",
                                          "-Djava.security.policy=" +
-                                         TestParams.defaultPolicy,
+                                         TestParams.defaultPolicy +
+                                         " -Drmi.registry.port=" +
+                                         registryPort,
                                          protocol[i]);
             System.err.println("\nusing protocol: " +
                                (protocol[i] == "" ? "none" : protocol[i]));
@@ -79,7 +80,7 @@ public class UseCustomSocketFactory {
                 Echo obj = null;
                 do {
                     try {
-                        obj = (Echo) Naming.lookup("//:" + TestLibrary.REGISTRY_PORT +
+                        obj = (Echo) Naming.lookup("//:" + registryPort +
                                                    "/EchoServer");
                         break;
                     } catch (NotBoundException e) {
@@ -109,7 +110,7 @@ public class UseCustomSocketFactory {
             } finally {
                 serverVM.destroy();
                 try {
-                    Naming.unbind("//:" + TestLibrary.REGISTRY_PORT +
+                    Naming.unbind("//:" + registryPort +
                                   "/EchoServer");
                 } catch (Exception e) {
                     TestLibrary.bomb("unbinding EchoServer", e);

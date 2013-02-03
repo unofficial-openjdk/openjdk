@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -210,9 +210,9 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
      * and DialogPeer interfaces.
      */
     private LWWindowPeer createDelegatedPeer(Window target, PlatformComponent platformComponent,
-                                             PlatformWindow platformWindow)
+                                             PlatformWindow platformWindow, LWWindowPeer.PeerType peerType)
     {
-        LWWindowPeer peer = new LWWindowPeer(target, platformComponent, platformWindow);
+        LWWindowPeer peer = new LWWindowPeer(target, platformComponent, platformWindow, peerType);
         targetCreatedPeer(target, peer);
         peer.initialize();
         return peer;
@@ -222,21 +222,28 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     public WindowPeer createWindow(Window target) {
         PlatformComponent platformComponent = createPlatformComponent();
         PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.SIMPLEWINDOW);
-        return createDelegatedPeer(target, platformComponent, platformWindow);
+        return createDelegatedPeer(target, platformComponent, platformWindow, LWWindowPeer.PeerType.SIMPLEWINDOW);
     }
 
     @Override
     public FramePeer createFrame(Frame target) {
         PlatformComponent platformComponent = createPlatformComponent();
         PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.FRAME);
-        return createDelegatedPeer(target, platformComponent, platformWindow);
+        return createDelegatedPeer(target, platformComponent, platformWindow, LWWindowPeer.PeerType.FRAME);
     }
 
     public LWWindowPeer createEmbeddedFrame(CEmbeddedFrame target) {
         PlatformComponent platformComponent = createPlatformComponent();
-        PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.EMBEDDEDFRAME);
-        return createDelegatedPeer(target, platformComponent, platformWindow);
+        PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.EMBEDDED_FRAME);
+        return createDelegatedPeer(target, platformComponent, platformWindow, LWWindowPeer.PeerType.EMBEDDED_FRAME);
     }
+
+    public LWWindowPeer createEmbeddedFrame(CViewEmbeddedFrame target) {
+        PlatformComponent platformComponent = createPlatformComponent();
+        PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.VIEW_EMBEDDED_FRAME);
+        return createDelegatedPeer(target, platformComponent, platformWindow, LWWindowPeer.PeerType.VIEW_EMBEDDED_FRAME);
+    }
+
 
     CPrinterDialogPeer createCPrinterDialog(CPrinterDialog target) {
         PlatformComponent platformComponent = createPlatformComponent();
@@ -254,7 +261,7 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
 
         PlatformComponent platformComponent = createPlatformComponent();
         PlatformWindow platformWindow = createPlatformWindow(LWWindowPeer.PeerType.DIALOG);
-        return createDelegatedPeer(target, platformComponent, platformWindow);
+        return createDelegatedPeer(target, platformComponent, platformWindow, LWWindowPeer.PeerType.DIALOG);
     }
 
     @Override
@@ -415,8 +422,8 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     }
 
     @Override
-    public KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) {
-        return LWKeyboardFocusManagerPeer.getInstance(manager);
+    public KeyboardFocusManagerPeer getKeyboardFocusManagerPeer() {
+        return LWKeyboardFocusManagerPeer.getInstance();
     }
 
     @Override
@@ -522,12 +529,6 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
         postEvent(targetToAppContext(event.getSource()), event);
     }
 
-    // use peer's back buffer to implement non-opaque windows.
-    @Override
-    public boolean needUpdateWindow() {
-        return true;
-    }
-
     @Override
     public void grab(Window w) {
         if (w.getPeer() != null) {
@@ -538,7 +539,7 @@ public abstract class LWToolkit extends SunToolkit implements Runnable {
     @Override
     public void ungrab(Window w) {
         if (w.getPeer() != null) {
-            ((LWWindowPeer)w.getPeer()).ungrab();
+            ((LWWindowPeer)w.getPeer()).ungrab(false);
         }
     }
 }

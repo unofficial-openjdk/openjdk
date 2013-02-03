@@ -198,8 +198,8 @@ AWT_NS_WINDOW_IMPLEMENTATION
         [self.nsWindow setDocumentEdited:IS(bits, DOCUMENT_MODIFIED)];
     }
 
-    if ([self.nsWindow respondsToSelector:@selector(toggleFullScreen:)]) {
-        if (IS(mask, FULLSCREENABLE)) {
+    if (IS(mask, FULLSCREENABLE) && [self.nsWindow respondsToSelector:@selector(toggleFullScreen:)]) {
+        if (IS(bits, FULLSCREENABLE)) {
             [self.nsWindow setCollectionBehavior:(1 << 7) /*NSWindowCollectionBehaviorFullScreenPrimary*/];
         } else {
             [self.nsWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
@@ -356,6 +356,13 @@ AWT_ASSERT_APPKIT_THREAD;
                            ];
 
     [[self.nsWindow contentView] deliverJavaMouseEvent: mouseEvent];
+}
+
++ (NSNumber *) getNSWindowDisplayID_AppKitThread:(NSWindow *)window {
+    AWT_ASSERT_APPKIT_THREAD;
+    NSScreen *screen = [window screen];
+    NSDictionary *deviceDescription = [screen deviceDescription];
+    return [deviceDescription objectForKey:@"NSScreenNumber"];
 }
 
 - (void) dealloc {
@@ -1017,14 +1024,17 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeRevalidateNSW
 (JNIEnv *env, jclass clazz, jlong windowPtr)
 {
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_NOT_APPKIT_THREAD;
 
     NSWindow *nsWindow = OBJC(windowPtr);
-    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-
+    if ([NSThread isMainThread]) {
         [nsWindow invalidateShadow];
-    }];
+    } else {
+        [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+            AWT_ASSERT_APPKIT_THREAD;
+
+            [nsWindow invalidateShadow];
+        }];
+    }
 
 JNF_COCOA_EXIT(env);
 }
@@ -1135,31 +1145,6 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSynthesizeMou
 
 /*
  * Class:     sun_lwawt_macosx_CPlatformWindow
- * Method:    nativeGetDisplayID_AppKitThread
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL
-Java_sun_lwawt_macosx_CPlatformWindow_nativeGetNSWindowDisplayID_1AppKitThread
-(JNIEnv *env, jclass clazz, jlong windowPtr)
-{
-    jint ret; // CGDirectDisplayID
-
-JNF_COCOA_ENTER(env);
-AWT_ASSERT_APPKIT_THREAD;
-
-    NSWindow *window = OBJC(windowPtr);
-    NSScreen *screen = [window screen];
-    NSDictionary *deviceDescription = [screen deviceDescription];
-    NSNumber *displayID = [deviceDescription objectForKey:@"NSScreenNumber"];
-    ret = (jint)[displayID intValue];
-
-JNF_COCOA_EXIT(env);
-
-    return ret;
-}
-
-/*
- * Class:     sun_lwawt_macosx_CPlatformWindow
  * Method:    _toggleFullScreenMode
  * Signature: (J)V
  */
@@ -1177,27 +1162,6 @@ JNF_COCOA_ENTER(env);
     }];
 
 JNF_COCOA_EXIT(env);
-}
-
-JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CMouseInfoPeer_nativeIsWindowUnderMouse
-(JNIEnv *env, jclass clazz, jlong windowPtr)
-{
-    __block jboolean underMouse = JNI_FALSE;
-
-JNF_COCOA_ENTER(env);
-AWT_ASSERT_NOT_APPKIT_THREAD;
-
-    NSWindow *nsWindow = OBJC(windowPtr);
-    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^() {
-        AWT_ASSERT_APPKIT_THREAD;
-
-        NSPoint pt = [nsWindow mouseLocationOutsideOfEventStream];
-        underMouse = [[nsWindow contentView] hitTest:pt] != nil;
-    }];
-
-JNF_COCOA_EXIT(env);
-
-    return underMouse;
 }
 
 JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CPlatformWindow_nativeSetEnabled

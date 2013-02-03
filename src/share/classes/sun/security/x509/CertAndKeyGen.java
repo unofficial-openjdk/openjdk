@@ -153,6 +153,13 @@ public final class CertAndKeyGen {
 
         publicKey = pair.getPublic();
         privateKey = pair.getPrivate();
+
+        // publicKey's format must be X.509 otherwise
+        // the whole CertGen part of this class is broken.
+        if (!"X.509".equalsIgnoreCase(publicKey.getFormat())) {
+            throw new IllegalArgumentException("publicKey's is not X.509, but "
+                    + publicKey.getFormat());
+        }
     }
 
 
@@ -174,6 +181,16 @@ public final class CertAndKeyGen {
         return (X509Key)publicKey;
     }
 
+    /**
+     * Always returns the public key of the generated key pair. Used
+     * by KeyTool only.
+     *
+     * The publicKey is not necessarily to be an instance of
+     * X509Key in some JCA/JCE providers, for example SunPKCS11.
+     */
+    public PublicKey getPublicKeyAnyway() {
+        return publicKey;
+    }
 
     /**
      * Returns the private key of the generated key pair.
@@ -187,7 +204,6 @@ public final class CertAndKeyGen {
     {
         return privateKey;
     }
-
 
     /**
      * Returns a self-signed X.509v3 certificate for the public key.
@@ -210,6 +226,15 @@ public final class CertAndKeyGen {
      */
     public X509Certificate getSelfCertificate (
             X500Name myname, Date firstDate, long validity)
+    throws CertificateException, InvalidKeyException, SignatureException,
+        NoSuchAlgorithmException, NoSuchProviderException
+    {
+        return getSelfCertificate(myname, firstDate, validity, null);
+    }
+
+    // Like above, plus a CertificateExtensions argument, which can be null.
+    public X509Certificate getSelfCertificate (X500Name myname, Date firstDate,
+            long validity, CertificateExtensions ext)
     throws CertificateException, InvalidKeyException, SignatureException,
         NoSuchAlgorithmException, NoSuchProviderException
     {
@@ -236,6 +261,7 @@ public final class CertAndKeyGen {
             info.set(X509CertInfo.KEY, new CertificateX509Key(publicKey));
             info.set(X509CertInfo.VALIDITY, interval);
             info.set(X509CertInfo.ISSUER, new CertificateIssuerName(myname));
+            if (ext != null) info.set(X509CertInfo.EXTENSIONS, ext);
 
             cert = new X509CertImpl(info);
             cert.sign(privateKey, this.sigAlg);
