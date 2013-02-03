@@ -38,20 +38,9 @@
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
+#include "runtime/thread.inline.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/stack.inline.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 
 //
 // DefNewGeneration functions.
@@ -561,6 +550,11 @@ HeapWord* DefNewGeneration::expand_and_allocate(size_t size,
   return allocate(size, is_tlab);
 }
 
+void DefNewGeneration::adjust_desired_tenuring_threshold() {
+  // Set the desired survivor size to half the real survivor space
+  _tenuring_threshold =
+    age_table()->compute_tenuring_threshold(to()->capacity()/HeapWordSize);
+}
 
 void DefNewGeneration::collect(bool   full,
                                bool   clear_all_soft_refs,
@@ -660,9 +654,7 @@ void DefNewGeneration::collect(bool   full,
 
     assert(to()->is_empty(), "to space should be empty now");
 
-    // Set the desired survivor size to half the real survivor space
-    _tenuring_threshold =
-      age_table()->compute_tenuring_threshold(to()->capacity()/HeapWordSize);
+    adjust_desired_tenuring_threshold();
 
     // A successful scavenge should restart the GC time limit count which is
     // for full GC's.

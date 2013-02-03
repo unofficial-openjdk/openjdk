@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,20 @@
 
 package com.sun.tools.doclets.formats.html;
 
-import com.sun.tools.doclets.internal.toolkit.util.links.*;
+import java.util.List;
+
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
+import com.sun.tools.doclets.internal.toolkit.util.links.*;
 
 /**
  * A factory that returns a link given the information about it.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @since 1.5
@@ -66,18 +73,19 @@ public class LinkFactoryImpl extends LinkFactory {
                     classLinkInfo.type != null &&
                     !classDoc.qualifiedTypeName().equals(classLinkInfo.type.qualifiedTypeName())) :
             "";
-        StringBuffer label = new StringBuffer(
+        StringBuilder label = new StringBuilder(
             classLinkInfo.getClassLinkLabel(m_writer.configuration));
         classLinkInfo.displayLength += label.length();
-        Configuration configuration = ConfigurationImpl.getInstance();
+        Configuration configuration = m_writer.configuration;
         LinkOutputImpl linkOutput = new LinkOutputImpl();
         if (classDoc.isIncluded()) {
             if (configuration.isGeneratedDoc(classDoc)) {
-                String filename = pathString(classLinkInfo);
+                DocPath filename = getPath(classLinkInfo);
                 if (linkInfo.linkToSelf ||
-                                !(linkInfo.classDoc.name() + ".html").equals(m_writer.filename)) {
-                        linkOutput.append(m_writer.getHyperLinkString(filename,
-                            classLinkInfo.where, label.toString(),
+                                !(DocPath.forName(classDoc)).equals(m_writer.filename)) {
+                        linkOutput.append(m_writer.getHyperLinkString(
+                                filename.fragment(classLinkInfo.where),
+                            label.toString(),
                             classLinkInfo.isStrong, classLinkInfo.styleName,
                             title, classLinkInfo.target));
                         if (noLabel && !classLinkInfo.excludeTypeParameterLinks) {
@@ -112,13 +120,52 @@ public class LinkFactoryImpl extends LinkFactory {
      */
     protected LinkOutput getTypeParameterLink(LinkInfo linkInfo,
         Type typeParam) {
-        LinkInfoImpl typeLinkInfo = new LinkInfoImpl(linkInfo.getContext(),
-            typeParam);
+        LinkInfoImpl typeLinkInfo = new LinkInfoImpl(m_writer.configuration,
+                linkInfo.getContext(), typeParam);
         typeLinkInfo.excludeTypeBounds = linkInfo.excludeTypeBounds;
         typeLinkInfo.excludeTypeParameterLinks = linkInfo.excludeTypeParameterLinks;
         typeLinkInfo.linkToSelf = linkInfo.linkToSelf;
+        typeLinkInfo.isJava5DeclarationLocation = false;
         LinkOutput output = getLinkOutput(typeLinkInfo);
         ((LinkInfoImpl) linkInfo).displayLength += typeLinkInfo.displayLength;
+        return output;
+    }
+
+    protected LinkOutput getTypeAnnotationLink(LinkInfo linkInfo,
+            AnnotationDesc annotation) {
+        throw new RuntimeException("Not implemented yet!");
+    }
+
+    public LinkOutput getTypeAnnotationLinks(LinkInfo linkInfo) {
+        LinkOutput output = getOutputInstance();
+        AnnotationDesc[] annotations;
+        if (linkInfo.type instanceof AnnotatedType) {
+            annotations = linkInfo.type.asAnnotatedType().annotations();
+        } else if (linkInfo.type instanceof TypeVariable) {
+            annotations = linkInfo.type.asTypeVariable().annotations();
+        } else {
+            return output;
+        }
+
+        if (annotations.length == 0)
+            return output;
+
+        List<String> annos = m_writer.getAnnotations(0, annotations, false, linkInfo.isJava5DeclarationLocation);
+
+        boolean isFirst = true;
+        for (String anno : annos) {
+            if (!isFirst) {
+                linkInfo.displayLength += 1;
+                output.append(" ");
+                isFirst = false;
+            }
+            output.append(anno);
+        }
+        if (!annos.isEmpty()) {
+            linkInfo.displayLength += 1;
+            output.append(" ");
+        }
+
         return output;
     }
 
@@ -129,10 +176,10 @@ public class LinkFactoryImpl extends LinkFactory {
      * @return the tool tip for the appropriate class.
      */
     private String getClassToolTip(ClassDoc classDoc, boolean isTypeLink) {
-        Configuration configuration = ConfigurationImpl.getInstance();
+        Configuration configuration = m_writer.configuration;
         if (isTypeLink) {
             return configuration.getText("doclet.Href_Type_Param_Title",
-            classDoc.name());
+                classDoc.name());
         } else if (classDoc.isInterface()){
             return configuration.getText("doclet.Href_Interface_Title",
                 Util.getPackageName(classDoc.containingPackage()));
@@ -155,18 +202,13 @@ public class LinkFactoryImpl extends LinkFactory {
      * "../../java/lang/Object.html"
      *
      * @param linkInfo the information about the link.
-     * @param fileName the file name, to which path string is.
      */
-    private String pathString(LinkInfoImpl linkInfo) {
+    private DocPath getPath(LinkInfoImpl linkInfo) {
         if (linkInfo.context == LinkInfoImpl.PACKAGE_FRAME) {
             //Not really necessary to do this but we want to be consistent
             //with 1.4.2 output.
-            return linkInfo.classDoc.name() + ".html";
+            return DocPath.forName(linkInfo.classDoc);
         }
-        StringBuffer buf = new StringBuffer(m_writer.relativePath);
-        buf.append(DirectoryManager.getPathToPackage(
-            linkInfo.classDoc.containingPackage(),
-            linkInfo.classDoc.name() + ".html"));
-        return buf.toString();
+        return m_writer.pathToRoot.resolve(DocPath.forClass(linkInfo.classDoc));
     }
 }

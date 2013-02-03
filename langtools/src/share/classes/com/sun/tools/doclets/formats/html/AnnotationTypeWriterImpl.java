@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,22 @@
 
 package com.sun.tools.doclets.formats.html;
 
+import java.io.IOException;
+
 import com.sun.javadoc.*;
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.builders.*;
 import com.sun.tools.doclets.formats.html.markup.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.builders.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Generate the Class Information Page.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
+ *
  * @see com.sun.javadoc.ClassDoc
  * @see java.util.Collections
  * @see java.util.List
@@ -57,13 +65,10 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * @param prevType the previous class that was documented.
      * @param nextType the next class being documented.
      */
-    public AnnotationTypeWriterImpl (AnnotationTypeDoc annotationType,
-            Type prevType, Type nextType)
-    throws Exception {
-        super(ConfigurationImpl.getInstance(),
-              DirectoryManager.getDirectoryPath(annotationType.containingPackage()),
-              annotationType.name() + ".html",
-              DirectoryManager.getRelativePath(annotationType.containingPackage().name()));
+    public AnnotationTypeWriterImpl(ConfigurationImpl configuration,
+            AnnotationTypeDoc annotationType, Type prevType, Type nextType)
+            throws Exception {
+        super(configuration, DocPath.forClass(annotationType));
         this.annotationType = annotationType;
         configuration.currentcd = annotationType.asClassDoc();
         this.prev = prevType;
@@ -76,7 +81,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * @return a content tree for the package link
      */
     protected Content getNavLinkPackage() {
-        Content linkContent = getHyperLink("package-summary.html", "",
+        Content linkContent = getHyperLink(DocPaths.PACKAGE_SUMMARY,
                 packageLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
@@ -98,7 +103,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * @return a content tree for the class use link
      */
     protected Content getNavLinkClassUse() {
-        Content linkContent = getHyperLink("class-use/" + filename, "", useLabel);
+        Content linkContent = getHyperLink(DocPaths.CLASS_USE.resolve(filename), useLabel);
         Content li = HtmlTree.LI(linkContent);
         return li;
     }
@@ -111,7 +116,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     public Content getNavLinkPrevious() {
         Content li;
         if (prev != null) {
-            Content prevLink = new RawHtml(getLink(new LinkInfoImpl(
+            Content prevLink = new RawHtml(getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.CONTEXT_CLASS, prev.asClassDoc(), "",
                     configuration.getText("doclet.Prev_Class"), true)));
             li = HtmlTree.LI(prevLink);
@@ -129,7 +134,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     public Content getNavLinkNext() {
         Content li;
         if (next != null) {
-            Content nextLink = new RawHtml(getLink(new LinkInfoImpl(
+            Content nextLink = new RawHtml(getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.CONTEXT_CLASS, next.asClassDoc(), "",
                     configuration.getText("doclet.Next_Class"), true)));
             li = HtmlTree.LI(nextLink);
@@ -157,7 +162,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             Content pkgNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, pkgNameContent);
             div.addContent(pkgNameDiv);
         }
-        LinkInfoImpl linkInfo = new LinkInfoImpl(
+        LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
                 LinkInfoImpl.CONTEXT_CLASS_HEADER, annotationType, false);
         Content headerContent = new StringContent(header);
         Content heading = HtmlTree.HEADING(HtmlConstants.CLASS_PAGE_HEADING, true,
@@ -187,7 +192,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     /**
      * {@inheritDoc}
      */
-    public void printDocument(Content contentTree) {
+    public void printDocument(Content contentTree) throws IOException {
         printHtmlDocument(configuration.metakeywords.getMetaKeywords(annotationType),
                 true, contentTree);
     }
@@ -214,11 +219,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         Content pre = new HtmlTree(HtmlTag.PRE);
         addAnnotationInfo(annotationType, pre);
         pre.addContent(modifiers);
-        LinkInfoImpl linkInfo = new LinkInfoImpl(
+        LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
                 LinkInfoImpl.CONTEXT_CLASS_SIGNATURE, annotationType, false);
         Content annotationName = new StringContent(annotationType.name());
         Content parameterLinks = new RawHtml(getTypeParameterLinks(linkInfo));
-        if (configuration().linksource) {
+        if (configuration.linksource) {
             addSrcLink(annotationType, annotationName, pre);
             pre.addContent(parameterLinks);
         } else {
@@ -281,8 +286,8 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      * {@inheritDoc}
      */
     protected Content getNavLinkTree() {
-        Content treeLinkContent = getHyperLink("package-tree.html",
-                "", treeLabel, "", "");
+        Content treeLinkContent = getHyperLink(DocPaths.PACKAGE_TREE,
+                treeLabel, "", "");
         Content li = HtmlTree.LI(treeLinkContent);
         return li;
     }

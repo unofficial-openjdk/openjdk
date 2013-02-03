@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,7 @@
  * @author Laird Dornin
  *
  * @library ../../testlibrary
- * @build CheckLeaseLeak CheckLeaseLeak_Stub LeaseLeakClient LeaseLeak
- * @build TestLibrary
+ * @build TestLibrary CheckLeaseLeak_Stub LeaseLeakClient LeaseLeak
  * @run main/othervm/timeout=240 CheckLeaseLeak
  *
  */
@@ -103,9 +102,8 @@ public class CheckLeaseLeak extends UnicastRemoteObject implements LeaseLeak {
                                         " -Drmi.registry.port=" +
                                         registryPort,
                                         "");
-                jvm.start();
 
-                if (jvm.getVM().waitFor() == 1 ) {
+                if (jvm.execute() != 0) {
                     TestLibrary.bomb("Client process failed");
                 }
             }

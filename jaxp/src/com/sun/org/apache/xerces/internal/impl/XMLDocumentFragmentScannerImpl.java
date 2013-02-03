@@ -193,9 +193,12 @@ public class XMLDocumentFragmentScannerImpl
                 null,
     };
 
-    protected static final char [] cdata = {'[','C','D','A','T','A','['};
-    protected static final char [] xmlDecl = {'<','?','x','m','l'};
-    protected static final char [] endTag = {'<','/'};
+    private static final char [] cdata = {'[','C','D','A','T','A','['};
+    private static final char [] endTag = {'<','/'};
+
+    //this variable is also used by XMLDocumentScannerImpl in the same package
+    static final char [] xmlDecl = {'<','?','x','m','l'};
+
     // debugging
 
     /** Debug scanner state. */
@@ -806,6 +809,7 @@ public class XMLDocumentFragmentScannerImpl
      *                 where the entity encoding is not auto-detected (e.g.
      *                 internal entities or a document entity that is
      *                 parsed from a java.io.Reader).
+     * @param augs     Additional information that may include infoset augmentations
      *
      * @throws XNIException Thrown by handler to signal an error.
      */
@@ -833,7 +837,7 @@ public class XMLDocumentFragmentScannerImpl
         // call handler
         if (fDocumentHandler != null && !fScanningAttribute) {
             if (!name.equals("[xml]")) {
-                fDocumentHandler.startGeneralEntity(name, identifier, encoding, null);
+                fDocumentHandler.startGeneralEntity(name, identifier, encoding, augs);
             }
         }
 
@@ -845,6 +849,7 @@ public class XMLDocumentFragmentScannerImpl
      * are just specified by their name.
      *
      * @param name The name of the entity.
+     * @param augs Additional information that may include infoset augmentations
      *
      * @throws XNIException Thrown by handler to signal an error.
      */
@@ -869,7 +874,7 @@ public class XMLDocumentFragmentScannerImpl
         // call handler
         if (fDocumentHandler != null && !fScanningAttribute) {
             if (!name.equals("[xml]")) {
-                fDocumentHandler.endGeneralEntity(name, null);
+                fDocumentHandler.endGeneralEntity(name, augs);
             }
         }
 

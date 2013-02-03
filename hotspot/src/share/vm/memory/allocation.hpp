@@ -144,8 +144,10 @@ enum MemoryType {
   mtNMT               = 0x0A00,  // memory used by native memory tracking
   mtChunk             = 0x0B00,  // chunk that holds content of arenas
   mtJavaHeap          = 0x0C00,  // Java heap
-  mtDontTrack         = 0x0D00,  // memory we donot or cannot track
-  mt_number_of_types  = 0x000C,  // number of memory types
+  mtClassShared       = 0x0D00,  // class data sharing
+  mt_number_of_types  = 0x000D,  // number of memory types (mtDontTrack
+                                 // is not included as validate type)
+  mtDontTrack         = 0x0E00,  // memory we do not or cannot track
   mt_masks            = 0x7F00,
 
   // object type mask
@@ -200,7 +202,7 @@ template <MEMFLAGS F> class CHeapObj ALLOCATION_SUPER_CLASS_SPEC {
 // Calling new or delete will result in fatal error.
 
 class StackObj ALLOCATION_SUPER_CLASS_SPEC {
- public:
+ private:
   void* operator new(size_t size);
   void  operator delete(void* p);
 };
@@ -224,7 +226,7 @@ class StackObj ALLOCATION_SUPER_CLASS_SPEC {
 // be defined as a an empty string "".
 //
 class _ValueObj {
- public:
+ private:
   void* operator new(size_t size);
   void operator delete(void* p);
 };
@@ -243,6 +245,7 @@ class ClassLoaderData;
 class MetaspaceObj {
  public:
   bool is_metadata() const;
+  bool is_metaspace_object() const;  // more specific test but slower
   bool is_shared() const;
   void print_address_on(outputStream* st) const;  // nonvirtual address printing
 
@@ -342,7 +345,6 @@ protected:
  public:
   Arena();
   Arena(size_t init_size);
-  Arena(Arena *old);
   ~Arena();
   void  destruct_contents();
   char* hwm() const             { return _hwm; }

@@ -63,6 +63,7 @@ private:
     int    _magic;                    // identify file type.
     int    _version;                  // (from enum, above.)
     size_t _alignment;                // how shared archive should be aligned
+    int    _obj_alignment;            // value of ObjectAlignmentInBytes
 
     struct space_info {
       int    _file_offset;   // sizeof(this) rounded to vm page size
@@ -125,7 +126,6 @@ public:
                      size_t capacity, bool read_only, bool allow_exec);
   void  write_bytes(const void* buffer, int count);
   void  write_bytes_aligned(const void* buffer, int count);
-  char* map_region(int i, ReservedSpace rs);
   char* map_region(int i);
   void  unmap_region(int i);
   void  close();

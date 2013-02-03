@@ -188,6 +188,7 @@ class SequencedRecordIterator : public MemPointerArrayIterator {
   // Test if the two records are the same kind: the same memory block and allocation
   // type.
   inline bool same_kind(const MemPointerRecord* p1, const MemPointerRecord* p2) const {
+    assert(!p1->is_vm_pointer() && !p2->is_vm_pointer(), "malloc pointer only");
     return (p1->addr() == p2->addr() &&
       (p1->flags() &MemPointerRecord::tag_masks) ==
       (p2->flags() & MemPointerRecord::tag_masks));
@@ -202,6 +203,7 @@ class MemRecorder : public CHeapObj<mtNMT|otNMTRecorder> {
   friend class MemSnapshot;
   friend class MemTracker;
   friend class MemTrackWorker;
+  friend class GenerationData;
 
  protected:
   // the array that holds memory records

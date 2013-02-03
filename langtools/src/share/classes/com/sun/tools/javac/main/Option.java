@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,28 +25,30 @@
 
 package com.sun.tools.javac.main;
 
-import java.util.Collections;
-import com.sun.tools.javac.util.Log.PrefixKind;
-import com.sun.tools.javac.util.Log.WriterKind;
-import com.sun.tools.javac.util.Log;
-import com.sun.tools.javac.code.Lint;
-import com.sun.tools.javac.code.Source;
-import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.jvm.Target;
-import com.sun.tools.javac.util.Options;
-import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+
 import javax.lang.model.SourceVersion;
 
+import com.sun.tools.doclint.DocLint;
+import com.sun.tools.javac.code.Lint;
+import com.sun.tools.javac.code.Source;
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.jvm.Target;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.util.Log;
+import com.sun.tools.javac.util.Log.PrefixKind;
+import com.sun.tools.javac.util.Log.WriterKind;
+import com.sun.tools.javac.util.Options;
 import static com.sun.tools.javac.main.Option.ChoiceKind.*;
-import static com.sun.tools.javac.main.Option.OptionKind.*;
 import static com.sun.tools.javac.main.Option.OptionGroup.*;
+import static com.sun.tools.javac.main.Option.OptionKind.*;
 
 /**
  * Options for javac. The specific Option to handle a command-line option
@@ -78,6 +80,24 @@ public enum Option {
 
     XLINT_CUSTOM("-Xlint:", "opt.Xlint.suboptlist",
             EXTENDED,   BASIC, ANYOF, getXLintChoices()),
+
+    XDOCLINT("-Xdoclint", "opt.Xdoclint", EXTENDED, BASIC),
+
+    XDOCLINT_CUSTOM("-Xdoclint:", "opt.Xdoclint.subopts", "opt.Xdoclint.custom", EXTENDED, BASIC) {
+        @Override
+        public boolean matches(String option) {
+            return DocLint.isValidOption(
+                    option.replace(XDOCLINT_CUSTOM.text, DocLint.XMSGS_CUSTOM_PREFIX));
+        }
+
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String prev = helper.get(XDOCLINT_CUSTOM);
+            String next = (prev == null) ? option : (prev + " " + option);
+            helper.put(XDOCLINT_CUSTOM.text, next);
+            return false;
+        }
+    },
 
     // -nowarn is retained for command-line backward compatibility
     NOWARN("-nowarn", "opt.nowarn", STANDARD, BASIC) {
@@ -156,6 +176,8 @@ public enum Option {
 
     PROCESSORPATH("-processorpath", "opt.arg.path", "opt.processorpath", STANDARD, FILEMANAGER),
 
+    PARAMETERS("-parameters","opt.parameters", STANDARD, BASIC),
+
     D("-d", "opt.arg.directory", "opt.d", STANDARD, FILEMANAGER),
 
     S("-s", "opt.arg.directory", "opt.sourceDest", STANDARD, FILEMANAGER),
@@ -167,7 +189,6 @@ public enum Option {
     ENCODING("-encoding", "opt.arg.encoding", "opt.encoding", STANDARD, FILEMANAGER) {
         @Override
         public boolean process(OptionHelper helper, String option, String operand) {
-//            System.err.println("process encoding " + operand);
             return super.process(helper, option, operand);
         }
 
@@ -246,9 +267,7 @@ public enum Option {
         }
     },
 
-    A("-A", "opt.arg.key.equals.value", "opt.A", STANDARD, BASIC) {
-        { hasSuffix = true; }
-
+    A("-A", "opt.arg.key.equals.value", "opt.A", STANDARD, BASIC, true) {
         @Override
         public boolean matches(String arg) {
             return arg.startsWith("-A");
@@ -292,9 +311,7 @@ public enum Option {
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the launcher.
-    J("-J", "opt.arg.flag", "opt.J", STANDARD, INFO) {
-        { hasSuffix = true; }
-
+    J("-J", "opt.arg.flag", "opt.J", STANDARD, INFO, true) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             throw new AssertionError
@@ -302,10 +319,6 @@ public enum Option {
         }
     },
 
-    // stop after parsing and attributing.
-    // new HiddenOption("-attrparseonly"),
-
-    // new Option("-moreinfo",                                      "opt.moreinfo") {
     MOREINFO("-moreinfo", null, HIDDEN, BASIC) {
         @Override
         public boolean process(OptionHelper helper, String option) {
@@ -317,23 +330,6 @@ public enum Option {
     // treat warnings as errors
     WERROR("-Werror", "opt.Werror", STANDARD, BASIC),
 
-//    // use complex inference from context in the position of a method call argument
-//    COMPLEXINFERENCE("-complexinference", null, HIDDEN, BASIC),
-
-    // generare source stubs
-    // new HiddenOption("-stubs"),
-
-    // relax some constraints to allow compiling from stubs
-    // new HiddenOption("-relax"),
-
-    // output source after translating away inner classes
-    // new Option("-printflat",                             "opt.printflat"),
-    // new HiddenOption("-printflat"),
-
-    // display scope search details
-    // new Option("-printsearch",                           "opt.printsearch"),
-    // new HiddenOption("-printsearch"),
-
     // prompt after each error
     // new Option("-prompt",                                        "opt.prompt"),
     PROMPT("-prompt", null, HIDDEN, BASIC),
@@ -342,12 +338,7 @@ public enum Option {
     DOE("-doe", null, HIDDEN, BASIC),
 
     // output source after type erasure
-    // new Option("-s",                                     "opt.s"),
     PRINTSOURCE("-printsource", null, HIDDEN, BASIC),
-
-    // output shrouded class files
-    // new Option("-scramble",                              "opt.scramble"),
-    // new Option("-scrambleall",                           "opt.scrambleall"),
 
     // display warnings for generic unchecked operations
     WARNUNCHECKED("-warnunchecked", null, HIDDEN, BASIC) {
@@ -393,23 +384,31 @@ public enum Option {
     /* -Xjcov produces tables to support the code coverage tool jcov. */
     XJCOV("-Xjcov", null, HIDDEN, BASIC),
 
+    PLUGIN("-Xplugin:", "opt.arg.plugin", "opt.plugin", EXTENDED, BASIC) {
+        @Override
+        public boolean process(OptionHelper helper, String option) {
+            String p = option.substring(option.indexOf(':') + 1);
+            String prev = helper.get(PLUGIN);
+            helper.put(PLUGIN.text, (prev == null) ? p : prev + '\0' + p.trim());
+            return false;
+        }
+    },
+
     /* This is a back door to the compiler's option table.
      * -XDx=y sets the option x to the value y.
      * -XDx sets the option x to the value x.
      */
     XD("-XD", null, HIDDEN, BASIC) {
-        String s;
         @Override
         public boolean matches(String s) {
-            this.s = s;
             return s.startsWith(text);
         }
         @Override
         public boolean process(OptionHelper helper, String option) {
-            s = s.substring(text.length());
-            int eq = s.indexOf('=');
-            String key = (eq < 0) ? s : s.substring(0, eq);
-            String value = (eq < 0) ? s : s.substring(eq+1);
+            option = option.substring(text.length());
+            int eq = option.indexOf('=');
+            String key = (eq < 0) ? option : option.substring(0, eq);
+            String value = (eq < 0) ? option : option.substring(eq+1);
             helper.put(key, value);
             return false;
         }
@@ -417,9 +416,7 @@ public enum Option {
 
     // This option exists only for the purpose of documenting itself.
     // It's actually implemented by the CommandLine class.
-    AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO) {
-        { hasSuffix = true; }
-
+    AT("@", "opt.arg.file", "opt.AT", STANDARD, INFO, true) {
         @Override
         public boolean process(OptionHelper helper, String option) {
             throw new AssertionError("the @ flag should be caught by CommandLine.");
@@ -435,17 +432,15 @@ public enum Option {
      * name to a separate list.
      */
     SOURCEFILE("sourcefile", null, HIDDEN, INFO) {
-        String s;
         @Override
         public boolean matches(String s) {
-            this.s = s;
             return s.endsWith(".java")  // Java source file
                 || SourceVersion.isName(s);   // Legal type name
         }
         @Override
         public boolean process(OptionHelper helper, String option) {
-            if (s.endsWith(".java") ) {
-                File f = new File(s);
+            if (option.endsWith(".java") ) {
+                File f = new File(option);
                 if (!f.exists()) {
                     helper.error("err.file.not.found", f);
                     return true;
@@ -455,9 +450,9 @@ public enum Option {
                     return true;
                 }
                 helper.addFile(f);
+            } else {
+                helper.addClassName(option);
             }
-            else
-                helper.addClassName(s);
             return false;
         }
     };
@@ -511,7 +506,7 @@ public enum Option {
 
     /** Suffix option (-foo=bar or -foo:bar)
      */
-    boolean hasSuffix;
+    final boolean hasSuffix;
 
     /** The kind of choices for this option, if any.
      */
@@ -525,24 +520,30 @@ public enum Option {
 
     Option(String text, String descrKey,
             OptionKind kind, OptionGroup group) {
-        this(text, null, descrKey, kind, group, null, null);
+        this(text, null, descrKey, kind, group, null, null, false);
     }
 
     Option(String text, String argsNameKey, String descrKey,
             OptionKind kind, OptionGroup group) {
-        this(text, argsNameKey, descrKey, kind, group, null, null);
+        this(text, argsNameKey, descrKey, kind, group, null, null, false);
+    }
+
+    Option(String text, String argsNameKey, String descrKey,
+            OptionKind kind, OptionGroup group, boolean doHasSuffix) {
+        this(text, argsNameKey, descrKey, kind, group, null, null, doHasSuffix);
     }
 
     Option(String text, String descrKey,
             OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, Map<String,Boolean> choices) {
-        this(text, null, descrKey, kind, group, choiceKind, choices);
+        this(text, null, descrKey, kind, group, choiceKind, choices, false);
     }
 
     Option(String text, String descrKey,
             OptionKind kind, OptionGroup group,
             ChoiceKind choiceKind, String... choices) {
-        this(text, null, descrKey, kind, group, choiceKind, createChoices(choices));
+        this(text, null, descrKey, kind, group, choiceKind,
+                createChoices(choices), false);
     }
     // where
         private static Map<String,Boolean> createChoices(String... choices) {
@@ -554,7 +555,8 @@ public enum Option {
 
     private Option(String text, String argsNameKey, String descrKey,
             OptionKind kind, OptionGroup group,
-            ChoiceKind choiceKind, Map<String,Boolean> choices) {
+            ChoiceKind choiceKind, Map<String,Boolean> choices,
+            boolean doHasSuffix) {
         this.text = text;
         this.argsNameKey = argsNameKey;
         this.descrKey = descrKey;
@@ -563,7 +565,7 @@ public enum Option {
         this.choiceKind = choiceKind;
         this.choices = choices;
         char lastChar = text.charAt(text.length()-1);
-        hasSuffix = lastChar == ':' || lastChar == '=';
+        this.hasSuffix = doHasSuffix || lastChar == ':' || lastChar == '=';
     }
 
     public String getText() {

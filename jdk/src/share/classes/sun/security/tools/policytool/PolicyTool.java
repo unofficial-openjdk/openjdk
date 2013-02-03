@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,8 @@ public class PolicyTool {
 
     // for i18n
     static final java.util.ResourceBundle rb =
-        java.util.ResourceBundle.getBundle("sun.security.util.Resources");
+        java.util.ResourceBundle.getBundle(
+            "sun.security.tools.policytool.Resources");
     static final Collator collator = Collator.getInstance();
     static {
         // this is for case insensitive string comparisons
@@ -603,7 +604,7 @@ public class PolicyTool {
                InstantiationException
     {
         if (type.equals(PolicyParser.PrincipalEntry.WILDCARD_CLASS) ||
-            type.equals(PolicyParser.REPLACE_NAME)) {
+            type.equals(PolicyParser.PrincipalEntry.REPLACE_NAME)) {
             return;
         }
         Class<?> PRIN = Class.forName("java.security.Principal");
@@ -2093,7 +2094,7 @@ class ToolDialog extends Dialog {
         } else if (pclass.equals("")) {
             // make this consistent with what PolicyParser does
             // when it sees an empty principal class
-            pclass = PolicyParser.REPLACE_NAME;
+            pclass = PolicyParser.PrincipalEntry.REPLACE_NAME;
             tool.warnings.addElement(
                         "Warning: Principal name '" + pname +
                                 "' specified without a Principal class.\n" +

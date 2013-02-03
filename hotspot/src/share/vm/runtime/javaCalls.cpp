@@ -39,18 +39,7 @@
 #include "runtime/mutexLocker.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/stubRoutines.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
+#include "runtime/thread.inline.hpp"
 
 // -----------------------------------------------------
 // Implementation of JavaCallWrapper
@@ -189,7 +178,7 @@ void JavaCalls::call_default_constructor(JavaThread* thread, methodHandle method
   assert(method->name() == vmSymbols::object_initializer_name(),    "Should only be called for default constructor");
   assert(method->signature() == vmSymbols::void_method_signature(), "Should only be called for default constructor");
 
-  InstanceKlass* ik = InstanceKlass::cast(method->method_holder());
+  InstanceKlass* ik = method->method_holder();
   if (ik->is_initialized() && ik->has_vanilla_constructor()) {
     // safe to skip constructor call
   } else {
@@ -344,11 +333,11 @@ void JavaCalls::call_helper(JavaValue* result, methodHandle* m, JavaCallArgument
 
 
 #ifdef ASSERT
-  { Klass* holder = method->method_holder();
+  { InstanceKlass* holder = method->method_holder();
     // A klass might not be initialized since JavaCall's might be used during the executing of
     // the <clinit>. For example, a Thread.start might start executing on an object that is
     // not fully initialized! (bad Java programming style)
-    assert(InstanceKlass::cast(holder)->is_linked(), "rewritting must have taken place");
+    assert(holder->is_linked(), "rewritting must have taken place");
   }
 #endif
 

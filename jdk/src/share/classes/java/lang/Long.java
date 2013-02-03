@@ -25,6 +25,7 @@
 
 package java.lang;
 
+import java.lang.annotation.Native;
 import java.math.*;
 
 /**
@@ -54,13 +55,13 @@ public final class Long extends Number implements Comparable<Long> {
      * A constant holding the minimum value a {@code long} can
      * have, -2<sup>63</sup>.
      */
-    public static final long MIN_VALUE = 0x8000000000000000L;
+    @Native public static final long MIN_VALUE = 0x8000000000000000L;
 
     /**
      * A constant holding the maximum value a {@code long} can
      * have, 2<sup>63</sup>-1.
      */
-    public static final long MAX_VALUE = 0x7fffffffffffffffL;
+    @Native public static final long MAX_VALUE = 0x7fffffffffffffffL;
 
     /**
      * The {@code Class} instance representing the primitive type
@@ -1021,7 +1022,20 @@ public final class Long extends Number implements Comparable<Long> {
      *
      * @return  a hash code value for this object.
      */
+    @Override
     public int hashCode() {
+        return Long.hashCode(value);
+    }
+
+    /**
+     * Returns a hash code for a {@code long} value; compatible with
+     * {@code Long.hashCode()}.
+     *
+     * @since 1.8
+     *
+     * @return a hash code value for a {@code long} value.
+     */
+    public static int hashCode(long value) {
         return (int)(value ^ (value >>> 32));
     }
 
@@ -1304,7 +1318,15 @@ public final class Long extends Number implements Comparable<Long> {
      *
      * @since 1.5
      */
-    public static final int SIZE = 64;
+    @Native public static final int SIZE = 64;
+
+    /**
+     * The number of bytes used to represent a {@code long} value in two's
+     * complement binary form.
+     *
+     * @since 1.8
+     */
+    public static final int BYTES = SIZE / Byte.SIZE;
 
     /**
      * Returns a {@code long} value with at most a single one-bit, in the
@@ -1518,6 +1540,47 @@ public final class Long extends Number implements Comparable<Long> {
             ((i >>> 16) & 0xffff0000L) | (i >>> 48);
     }
 
+    /**
+     * Adds two {@code long} values together as per the + operator.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the sum of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static long sum(long a, long b) {
+        return a + b;
+    }
+
+    /**
+     * Returns the greater of two {@code long} values
+     * as if by calling {@link Math#max(long, long) Math.max}.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the greater of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static long max(long a, long b) {
+        return Math.max(a, b);
+    }
+
+    /**
+     * Returns the smaller of two {@code long} values
+     * as if by calling {@link Math#min(long, long) Math.min}.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the smaller of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static long min(long a, long b) {
+        return Math.min(a, b);
+    }
+
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
-    private static final long serialVersionUID = 4290774380558885855L;
+    @Native private static final long serialVersionUID = 4290774380558885855L;
 }

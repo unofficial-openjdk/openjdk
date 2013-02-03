@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,10 +46,10 @@ case "$OS" in
     ;;
 esac
 
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}MarkResetTest.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}${FS}MarkResetTest.java
 
 # ftp server used by the test requires the file to be present
 # in this directory
 cp ${TESTSRC}${FS}EncDec.doc .
 
-${TESTJAVA}${FS}bin${FS}java MarkResetTest
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} MarkResetTest

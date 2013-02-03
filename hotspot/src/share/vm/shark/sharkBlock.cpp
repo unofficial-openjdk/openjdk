@@ -170,10 +170,12 @@ void SharkBlock::parse_bytecode(int start, int limit) {
 
     case Bytecodes::_ldc:
     case Bytecodes::_ldc_w:
-    case Bytecodes::_ldc2_w:
-      push(SharkConstant::for_ldc(iter())->value(builder()));
+    case Bytecodes::_ldc2_w: {
+      SharkConstant* constant = SharkConstant::for_ldc(iter());
+      assert(constant->is_loaded(), "trap should handle unloaded classes");
+      push(constant->value(builder()));
       break;
-
+    }
     case Bytecodes::_iload_0:
     case Bytecodes::_lload_0:
     case Bytecodes::_fload_0:
@@ -1000,9 +1002,9 @@ void SharkBlock::do_div_or_rem(bool is_long, bool is_rem) {
   builder()->SetInsertPoint(done);
   PHINode *result;
   if (is_long)
-    result = builder()->CreatePHI(SharkType::jlong_type(), "result");
+    result = builder()->CreatePHI(SharkType::jlong_type(), 0, "result");
   else
-    result = builder()->CreatePHI(SharkType::jint_type(), "result");
+    result = builder()->CreatePHI(SharkType::jint_type(), 0, "result");
   result->addIncoming(special_result, special_case);
   result->addIncoming(general_result, general_case);
 
@@ -1030,28 +1032,40 @@ void SharkBlock::do_field_access(bool is_get, bool is_field) {
     check_null(value);
     object = value->generic_value();
   }
-  if (is_get && field->is_constant()) {
+  if (is_get && field->is_constant() && field->is_static()) {
     SharkConstant *constant = SharkConstant::for_field(iter());
     if (constant->is_loaded())
       value = constant->value(builder());
   }
   if (!is_get || value == NULL) {
-    if (!is_field)
-      object = builder()->CreateInlineOop(field->holder());
-
+    if (!is_field) {
+      object = builder()->CreateInlineOop(field->holder()->java_mirror());
+    }
     BasicType   basic_type = field->type()->basic_type();
-    const Type *stack_type = SharkType::to_stackType(basic_type);
-    const Type *field_type = SharkType::to_arrayType(basic_type);
-
+    Type *stack_type = SharkType::to_stackType(basic_type);
+    Type *field_type = SharkType::to_arrayType(basic_type);
+    Type *type = field_type;
+    if (field->is_volatile()) {
+      if (field_type == SharkType::jfloat_type()) {
+        type = SharkType::jint_type();
+      } else if (field_type == SharkType::jdouble_type()) {
+        type = SharkType::jlong_type();
+      }
+    }
     Value *addr = builder()->CreateAddressOfStructEntry(
       object, in_ByteSize(field->offset_in_bytes()),
-      PointerType::getUnqual(field_type),
+      PointerType::getUnqual(type),
       "addr");
 
     // Do the access
     if (is_get) {
-      Value *field_value = builder()->CreateLoad(addr);
-
+      Value* field_value;
+      if (field->is_volatile()) {
+        field_value = builder()->CreateAtomicLoad(addr);
+        field_value = builder()->CreateBitCast(field_value, field_type);
+      } else {
+        field_value = builder()->CreateLoad(addr);
+      }
       if (field_type != stack_type) {
         field_value = builder()->CreateIntCast(
           field_value, stack_type, basic_type != T_CHAR);
@@ -1067,13 +1081,16 @@ void SharkBlock::do_field_access(bool is_get, bool is_field) {
           field_value, field_type, basic_type != T_CHAR);
       }
 
-      builder()->CreateStore(field_value, addr);
+      if (field->is_volatile()) {
+        field_value = builder()->CreateBitCast(field_value, type);
+        builder()->CreateAtomicStore(field_value, addr);
+      } else {
+        builder()->CreateStore(field_value, addr);
+      }
 
-      if (!field->type()->is_primitive_type())
+      if (!field->type()->is_primitive_type()) {
         builder()->CreateUpdateBarrierSet(oopDesc::bs(), addr);
-
-      if (field->is_volatile())
-        builder()->CreateMemoryBarrier(SharkBuilder::BARRIER_STORELOAD);
+      }
     }
   }
 
@@ -1105,7 +1122,7 @@ void SharkBlock::do_lcmp() {
   builder()->CreateBr(done);
 
   builder()->SetInsertPoint(done);
-  PHINode *result = builder()->CreatePHI(SharkType::jint_type(), "result");
+  PHINode *result = builder()->CreatePHI(SharkType::jint_type(), 0, "result");
   result->addIncoming(LLVMValue::jint_constant(-1), lt);
   result->addIncoming(LLVMValue::jint_constant(0),  eq);
   result->addIncoming(LLVMValue::jint_constant(1),  gt);
@@ -1152,7 +1169,7 @@ void SharkBlock::do_fcmp(bool is_double, bool unordered_is_greater) {
   builder()->CreateBr(done);
 
   builder()->SetInsertPoint(done);
-  PHINode *result = builder()->CreatePHI(SharkType::jint_type(), "result");
+  PHINode *result = builder()->CreatePHI(SharkType::jint_type(), 0, "result");
   result->addIncoming(LLVMValue::jint_constant(-1), lt);
   result->addIncoming(LLVMValue::jint_constant(0),  eq);
   result->addIncoming(LLVMValue::jint_constant(1),  gt);

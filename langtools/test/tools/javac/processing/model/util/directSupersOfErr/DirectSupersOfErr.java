@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@
  * @bug     6346973
  * @summary directSupertypes(t) should not return t
  * @author  Scott Seligman
- * @library ../../../../lib
+ * @library /tools/javac/lib
  * @build   JavacTestingAbstractProcessor DirectSupersOfErr
- * @compile -processor DirectSupersOfErr -proc:only C1.java
+ * @compile/fail/ref=DirectSupersOfErr.ref -processor DirectSupersOfErr -proc:only -XDrawDiagnostics C1.java
  */
 
 import java.util.Set;

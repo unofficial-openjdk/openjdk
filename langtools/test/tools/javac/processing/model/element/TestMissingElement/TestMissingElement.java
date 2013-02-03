@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@
  * @test
  * @bug 6639645 7026414 7025809
  * @summary Modeling type implementing missing interfaces
- * @library ../../../../lib
+ * @library /tools/javac/lib
  * @build JavacTestingAbstractProcessor TestMissingElement
- * @compile -proc:only -XprintRounds -processor TestMissingElement InvalidSource.java
+ * @compile/fail/ref=TestMissingElement.ref -proc:only -XprintRounds -XDrawDiagnostics -processor TestMissingElement InvalidSource.java
  */
 
 import java.util.*;

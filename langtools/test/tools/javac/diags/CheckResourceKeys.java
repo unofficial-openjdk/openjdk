@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -200,6 +200,7 @@ public class CheckResourceKeys {
 
 
     Set<String> needToInvestigate = new TreeSet<String>(Arrays.asList(
+        "compiler.misc.fatal.err.cant.close.loader",        // Supressed by JSR308
         "compiler.err.cant.read.file",                      // UNUSED
         "compiler.err.illegal.self.ref",                    // UNUSED
         "compiler.err.io.exception",                        // UNUSED
@@ -310,9 +311,8 @@ public class CheckResourceKeys {
                     pkg, EnumSet.of(JavaFileObject.Kind.CLASS), true)) {
                 String name = fo.getName();
                 // ignore resource files, and files which are not really part of javac
-                if (name.contains("resources")
-                        || name.contains("Launcher.class")
-                        || name.contains("CreateSymbols.class"))
+                if (name.matches(".*resources.[A-Za-z_0-9]+\\.class.*")
+                        || name.matches(".*CreateSymbols\\.class.*"))
                     continue;
                 scan(fo, results);
             }

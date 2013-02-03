@@ -1,0 +1,2 @@
+InferenceTest_neg5.java:14:21: compiler.err.prob.found.req: (compiler.misc.cyclic.inference: X)
+1 error

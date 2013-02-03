@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,22 +24,28 @@
 /*
  * @test
  * @bug 7115052
- * @summary Add parser support for method references
+ * @bug 8003280 8006694
+ * @summary Add lambda tests
+ *  Add parser support for method references
+ *  temporarily workaround combo tests are causing time out in several platforms
+ * @library ../lib
+ * @build JavacTestingAbstractThreadedTest
+ * @run main/othervm MethodReferenceParserTest
  */
 
-import com.sun.source.util.JavacTask;
+// use /othervm to avoid jtreg timeout issues (CODETOOLS-7900047)
+// see JDK-8006746
+
 import java.net.URI;
 import java.util.Arrays;
 import javax.tools.Diagnostic;
-import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import com.sun.source.util.JavacTask;
 
-public class MethodReferenceParserTest {
-
-    static int checkCount = 0;
+public class MethodReferenceParserTest
+    extends JavacTestingAbstractThreadedTest
+    implements Runnable {
 
     enum ReferenceKind {
         METHOD_REF("#Q::#Gm"),
@@ -86,7 +92,8 @@ public class MethodReferenceParserTest {
             this.contextTemplate = contextTemplate;
         }
 
-        String contextString(ExprKind ek, ReferenceKind rk, QualifierKind qk, GenericKind gk, SubExprKind sk) {
+        String contextString(ExprKind ek, ReferenceKind rk, QualifierKind qk,
+                GenericKind gk, SubExprKind sk) {
             return contextTemplate.replaceAll("#E", ek.expressionString(rk, qk, gk, sk));
         }
     }
@@ -163,25 +170,21 @@ public class MethodReferenceParserTest {
     }
 
     public static void main(String... args) throws Exception {
-
-        //create default shared JavaCompiler - reused across multiple compilations
-        JavaCompiler comp = ToolProvider.getSystemJavaCompiler();
-        StandardJavaFileManager fm = comp.getStandardFileManager(null, null, null);
-
         for (ReferenceKind rk : ReferenceKind.values()) {
             for (QualifierKind qk : QualifierKind.values()) {
                 for (GenericKind gk : GenericKind.values()) {
                     for (SubExprKind sk : SubExprKind.values()) {
                         for (ExprKind ek : ExprKind.values()) {
                             for (ContextKind ck : ContextKind.values()) {
-                                new MethodReferenceParserTest(rk, qk, gk, sk, ek, ck).run(comp, fm);
+                                pool.execute(new MethodReferenceParserTest(rk, qk, gk, sk, ek, ck));
                             }
                         }
                     }
                 }
             }
         }
-        System.out.println("Total check executed: " + checkCount);
+
+        checkAfterExec();
     }
 
     ReferenceKind rk;
@@ -225,19 +228,21 @@ public class MethodReferenceParserTest {
         }
     }
 
-    void run(JavaCompiler tool, StandardJavaFileManager fm) throws Exception {
-        JavacTask ct = (JavacTask)tool.getTask(null, fm, diagChecker,
-                Arrays.asList("-XDallowMethodReferences"), null, Arrays.asList(source));
+    @Override
+    public void run() {
+        JavacTask ct = (JavacTask)comp.getTask(null, fm.get(), diagChecker,
+                null, null, Arrays.asList(source));
         try {
             ct.parse();
         } catch (Throwable ex) {
-            throw new AssertionError("Error thrown when parsing the following source:\n" + source.getCharContent(true));
+            processException(ex);
+            return;
         }
         check();
     }
 
     void check() {
-        checkCount++;
+        checkCount.incrementAndGet();
 
         if (diagChecker.errorFound != rk.erroneous()) {
             throw new Error("invalid diagnostics for source:\n" +
@@ -257,4 +262,5 @@ public class MethodReferenceParserTest {
             }
         }
     }
+
 }

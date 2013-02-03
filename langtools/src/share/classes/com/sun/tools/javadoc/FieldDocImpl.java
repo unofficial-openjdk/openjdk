@@ -25,23 +25,28 @@
 
 package com.sun.tools.javadoc;
 
+import com.sun.source.util.TreePath;
 import java.lang.reflect.Modifier;
 
 import com.sun.javadoc.*;
 
-import static com.sun.javadoc.LanguageVersion.*;
-
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.VarSymbol;
-import com.sun.tools.javac.code.TypeTags;
 
 import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 import com.sun.tools.javac.util.Position;
 
+import static com.sun.tools.javac.code.TypeTag.BOOLEAN;
+
 /**
  * Represents a field in a java class.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @see MemberDocImpl
  *
@@ -57,9 +62,8 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
     /**
      * Constructor.
      */
-    public FieldDocImpl(DocEnv env, VarSymbol sym,
-                        String rawDocs, JCVariableDecl tree, Position.LineMap lineMap) {
-        super(env, sym, rawDocs, tree, lineMap);
+    public FieldDocImpl(DocEnv env, VarSymbol sym, TreePath treePath) {
+        super(env, sym, treePath);
         this.sym = sym;
     }
 
@@ -67,7 +71,7 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      * Constructor.
      */
     public FieldDocImpl(DocEnv env, VarSymbol sym) {
-        this(env, sym, null, null, null);
+        this(env, sym, null);
     }
 
     /**
@@ -100,7 +104,7 @@ public class FieldDocImpl extends MemberDocImpl implements FieldDoc {
      */
     public Object constantValue() {
         Object result = sym.getConstValue();
-        if (result != null && sym.type.tag == TypeTags.BOOLEAN)
+        if (result != null && sym.type.hasTag(BOOLEAN))
             // javac represents false and true as Integers 0 and 1
             result = Boolean.valueOf(((Integer)result).intValue() != 0);
         return result;

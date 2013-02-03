@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -201,7 +201,15 @@ public class TestHtmlTableTags extends JavadocTester {
             "<caption><span>Fields</span><span class=\"tabEnd\">&nbsp;</span></caption>"
         },
         {BUG_ID + FS + "pkg1" + FS + "C1.html",
-            "<caption><span>Methods</span><span class=\"tabEnd\">&nbsp;</span></caption>"
+            "<caption><span id=\"t0\" class=\"activeTableTab\"><span>All " +
+            "Methods</span><span class=\"tabEnd\">&nbsp;</span></span>" +
+            "<span id=\"t2\" class=\"tableTab\"><span><a href=\"javascript:show(2);\">" +
+            "Instance Methods</a></span><span class=\"tabEnd\">&nbsp;</span></span>" +
+            "<span id=\"t4\" class=\"tableTab\"><span><a href=\"javascript:show(8);\">" +
+            "Concrete Methods</a></span><span class=\"tabEnd\">&nbsp;</span></span>" +
+            "<span id=\"t6\" class=\"tableTab\"><span><a href=\"javascript:show(32);\">" +
+            "Deprecated Methods</a></span><span class=\"tabEnd\">&nbsp;</span></span>" +
+            "</caption>"
         },
         {BUG_ID + FS + "pkg2" + FS + "C2.html",
             "<caption><span>Nested Classes</span><span class=\"tabEnd\">&nbsp;</span></caption>"

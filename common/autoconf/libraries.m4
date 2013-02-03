@@ -136,6 +136,12 @@ fi
 AC_PATH_X
 AC_PATH_XTRA
 
+# AC_PATH_XTRA creates X_LIBS and sometimes adds -R flags. When cross compiling
+# this doesn't make sense so we remove it.
+if test "x$COMPILE_TYPE" = xcross; then
+  X_LIBS=`$ECHO $X_LIBS | $SED 's/-R \{0,1\}[[^ ]]*//g'`
+fi
+
 if test "x$no_x" = xyes && test "x$X11_NOT_NEEDED" != xyes; then 
     HELP_MSG_MISSING_DEPENDENCY([x11])
     AC_MSG_ERROR([Could not find X11 libraries. $HELP_MSG])
@@ -172,9 +178,15 @@ fi
 AC_LANG_PUSH(C)
 OLD_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $X_CFLAGS"
+
+# Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
 AC_CHECK_HEADERS([X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h],
-                [X11_A_OK=yes],
-                [X11_A_OK=no])
+                 [X11_A_OK=yes],
+                 [X11_A_OK=no],
+                 [ # include <X11/Xlib.h>
+                   # include <X11/Xutil.h>
+                 ])
+
 CFLAGS="$OLD_CFLAGS"
 AC_LANG_POP(C)
 
@@ -196,36 +208,28 @@ AC_DEFUN_ONCE([LIB_SETUP_CUPS],
 #
 AC_ARG_WITH(cups, [AS_HELP_STRING([--with-cups],
     [specify prefix directory for the cups package
-	 (expecting the libraries under PATH/lib and the headers under PATH/include)])])
+	 (expecting the headers under PATH/include)])])
 AC_ARG_WITH(cups-include, [AS_HELP_STRING([--with-cups-include],
 	[specify directory for the cups include files])])
-AC_ARG_WITH(cups-lib, [AS_HELP_STRING([--with-cups-lib],
-	[specify directory for the cups library])])
 
 if test "x$CUPS_NOT_NEEDED" = xyes; then
-	if test "x${with_cups}" != x || test "x${with_cups_include}" != x || test "x${with_cups_lib}" != x; then
+	if test "x${with_cups}" != x || test "x${with_cups_include}" != x; then
 		AC_MSG_WARN([cups not used, so --with-cups is ignored])
 	fi
 	CUPS_CFLAGS=
-	CUPS_LIBS=
 else
 	CUPS_FOUND=no
 
-	if test "x${with_cups}" = xno || test "x${with_cups_include}" = xno || test "x${with_cups_lib}" = xno; then
+	if test "x${with_cups}" = xno || test "x${with_cups_include}" = xno; then
 	    AC_MSG_ERROR([It is not possible to disable the use of cups. Remove the --without-cups option.])
 	fi
 
 	if test "x${with_cups}" != x; then
-	    CUPS_LIBS="-L${with_cups}/lib -lcups"
 	    CUPS_CFLAGS="-I${with_cups}/include"
 	    CUPS_FOUND=yes
 	fi
 	if test "x${with_cups_include}" != x; then
 	    CUPS_CFLAGS="-I${with_cups_include}"
-	    CUPS_FOUND=yes
-	fi
-	if test "x${with_cups_lib}" != x; then
-	    CUPS_LIBS="-L${with_cups_lib} -lcups"
 	    CUPS_FOUND=yes
 	fi
 	if test "x$CUPS_FOUND" = xno; then
@@ -236,23 +240,20 @@ else
 	    AC_CHECK_HEADERS([cups/cups.h cups/ppd.h],
 	                     [CUPS_FOUND=yes
 	                      CUPS_CFLAGS=
-	                      CUPS_LIBS="-lcups"
 	                      DEFAULT_CUPS=yes])
 	fi
 	if test "x$CUPS_FOUND" = xno; then
 	    # Getting nervous now? Lets poke around for standard Solaris third-party
 	    # package installation locations.
-	    AC_MSG_CHECKING([for cups headers and libs])
+	    AC_MSG_CHECKING([for cups headers])
 	    if test -s /opt/sfw/cups/include/cups/cups.h; then
 	       # An SFW package seems to be installed!
 	       CUPS_FOUND=yes
 	       CUPS_CFLAGS="-I/opt/sfw/cups/include"
-	       CUPS_LIBS="-L/opt/sfw/cups/lib -lcups"
 	    elif test -s /opt/csw/include/cups/cups.h; then
 	       # A CSW package seems to be installed!
 	       CUPS_FOUND=yes
 	       CUPS_CFLAGS="-I/opt/csw/include"
-	       CUPS_LIBS="-L/opt/csw/lib -lcups"
 	    fi
 	    AC_MSG_RESULT([$CUPS_FOUND])
 	fi
@@ -263,7 +264,6 @@ else
 fi
 
 AC_SUBST(CUPS_CFLAGS)
-AC_SUBST(CUPS_LIBS)
 
 ])
 
@@ -292,17 +292,21 @@ else
 	FREETYPE2_FOUND=no
 
 	if test "x$with_freetype" != x; then
-            SPACESAFE(with_freetype,[the path to freetype])
+            BASIC_FIXUP_PATH(with_freetype)
 	    FREETYPE2_LIBS="-L$with_freetype/lib -lfreetype"
+            FREETYPE2_LIB_PATH="$with_freetype/lib"
+            if test "x$OPENJDK_TARGET_OS" = xsolaris && test "x$OPENJDK_TARGET_CPU" = xx86_64 && test -d "$with_freetype/lib/amd64"; then
+                FREETYPE2_LIBS="-L$with_freetype/lib/amd64 -lfreetype"
+                FREETYPE2_LIB_PATH="$with_freetype/lib/amd64"
+            fi
             if test "x$OPENJDK_TARGET_OS" = xwindows; then
                 FREETYPE2_LIBS="$with_freetype/lib/freetype.lib"
             fi
-            FREETYPE2_LIB_PATH="$with_freetype/lib"
 	    FREETYPE2_CFLAGS="-I$with_freetype/include"
             if test -s $with_freetype/include/ft2build.h && test -d $with_freetype/include/freetype2/freetype; then
                 FREETYPE2_CFLAGS="-I$with_freetype/include/freetype2 -I$with_freetype/include"
             fi
-	    FREETYPE2_FOUND=yes
+ 	    FREETYPE2_FOUND=yes
    	    if test "x$FREETYPE2_FOUND" = xyes; then
 	        # Verify that the directories exist 
                 if ! test -d "$with_freetype/lib" || ! test -d "$with_freetype/include"; then
@@ -311,7 +315,7 @@ else
 	        # List the contents of the lib.
 		FREETYPELIB=`ls $with_freetype/lib/libfreetype.so $with_freetype/lib/freetype.dll 2> /dev/null`
                 if test "x$FREETYPELIB" = x; then
-		   AC_MSG_ERROR([Could not find libfreetype.se nor freetype.dll in $with_freetype/lib])
+		   AC_MSG_ERROR([Could not find libfreetype.so nor freetype.dll in $with_freetype/lib])
 		fi
 	        # Check one h-file
                 if ! test -s "$with_freetype/include/ft2build.h"; then
@@ -323,9 +327,34 @@ else
 	    BDEPS_CHECK_MODULE(FREETYPE2, freetype2, xxx, [FREETYPE2_FOUND=yes], [FREETYPE2_FOUND=no])
             USING_SYSTEM_FT_LIB=true
 	fi
+	if test "x$FREETYPE2_FOUND" = xno && test "x$OPENJDK_TARGET_OS" = xwindows; then
+            FREETYPELOCATION="$PROGRAMFILES/GnuWin32"
+            BASIC_FIXUP_PATH(FREETYPELOCATION)
+	    AC_MSG_CHECKING([for freetype in some standard windows locations])
+	    if test -s "$FREETYPELOCATION/include/ft2build.h" && test -d "$FREETYPELOCATION/include/freetype2/freetype"; then
+	        FREETYPE2_CFLAGS="-I$FREETYPELOCATION/include/freetype2 -I$FREETYPELOCATION/include"
+	        FREETYPE2_LIBS="$FREETYPELOCATION/lib/freetype.lib"
+ 	        FREETYPE2_LIB_PATH="$FREETYPELOCATION/lib"
+                if ! test -s "$FREETYPE2_LIBS"; then
+		   AC_MSG_ERROR([Could not find $FREETYPE2_LIBS])
+		fi
+                if ! test -s "$FREETYPE2_LIB_PATH/freetype.dll"; then
+		   AC_MSG_ERROR([Could not find $FREETYPE2_LIB_PATH/freetype.dll])
+		fi
+                USING_SYSTEM_FT_LIB=true
+                FREETYPE2_FOUND=yes
+	    fi
+	    AC_MSG_RESULT([$FREETYPE2_FOUND])         
+        fi
 	if test "x$FREETYPE2_FOUND" = xno; then
 	    PKG_CHECK_MODULES(FREETYPE2, freetype2, [FREETYPE2_FOUND=yes], [FREETYPE2_FOUND=no])
+            # On solaris, pkg_check adds -lz to freetype libs, which isn't necessary for us.
+            FREETYPE2_LIBS=`$ECHO $FREETYPE2_LIBS | $SED 's/-lz//g'` 
             USING_SYSTEM_FT_LIB=true
+            # 64-bit libs for Solaris x86 are installed in the amd64 subdirectory, change lib to lib/amd64
+            if test "x$FREETYPE2_FOUND" = xyes && test "x$OPENJDK_TARGET_OS" = xsolaris && test "x$OPENJDK_TARGET_CPU" = xx86_64; then
+              FREETYPE2_LIBS=`$ECHO $FREETYPE2_LIBS | $SED 's?/lib?/lib/amd64?g'`
+            fi
 	fi
 	if test "x$FREETYPE2_FOUND" = xno; then
 	    AC_MSG_CHECKING([for freetype in some standard locations])
@@ -364,7 +393,17 @@ else
 	if test "x$FREETYPE2_FOUND" = xno; then
 		HELP_MSG_MISSING_DEPENDENCY([freetype2])
 		AC_MSG_ERROR([Could not find freetype2! $HELP_MSG ])
-	fi    
+	fi
+
+        if test "x$OPENJDK_TARGET_OS" != xwindows; then
+            # AC_CHECK_LIB does not support use of cl.exe
+            PREV_LDFLAGS="$LDFLAGS"
+            LDFLAGS="$FREETYPE2_LIBS"
+            AC_CHECK_LIB(freetype, FT_Init_FreeType, 
+                         FREETYPE2_FOUND=true, 
+                         AC_MSG_ERROR([Could not find freetype2! $HELP_MSG ]))
+            LDFLAGS="$PREV_LDFLAGS"
+        fi
 fi
 
 AC_SUBST(USING_SYSTEM_FT_LIB)
@@ -568,11 +607,16 @@ AC_DEFUN_ONCE([LIB_SETUP_STATIC_LINK_LIBSTDCPP],
 # statically link libstdc++ before C++ ABI is stablized on Linux unless 
 # dynamic build is configured on command line.
 #
-AC_ARG_ENABLE([static-link-stdc++], [AS_HELP_STRING([--disable-static-link-stdc++],
-	[disable static linking of the C++ runtime on Linux @<:@enabled@:>@])],,
-	[
-		enable_static_link_stdc__=yes
-    ])
+AC_ARG_WITH([stdc++lib], [AS_HELP_STRING([--with-stdc++lib=<static>,<dynamic>,<default>],
+  [force linking of the C++ runtime on Linux to either static or dynamic, default is static with dynamic as fallback])],
+  [
+    if test "x$with_stdc__lib" != xdynamic && test "x$with_stdc__lib" != xstatic \
+        && test "x$with_stdc__lib" != xdefault; then
+      AC_MSG_ERROR([Bad parameter value --with-stdc++lib=$with_stdc__lib!])
+    fi
+  ],
+  [with_stdc__lib=default]
+)
 
 if test "x$OPENJDK_TARGET_OS" = xlinux; then
     # Test if -lstdc++ works.
@@ -603,31 +647,34 @@ if test "x$OPENJDK_TARGET_OS" = xlinux; then
     AC_LANG_POP(C++)
     AC_MSG_RESULT([$has_static_libstdcxx])
 
-    if test "x$has_static_libcxx" = xno && test "x$has_dynamic_libcxx" = xno; then
-        AC_MSG_ERROR([I cannot link to stdc++! Neither dynamically nor statically.])
+    if test "x$has_static_libstdcxx" = xno && test "x$has_dynamic_libstdcxx" = xno; then
+        AC_MSG_ERROR([Cannot link to stdc++, neither dynamically nor statically!])
     fi
 
-    if test "x$enable_static_link_stdc__" = xyes && test "x$has_static_libstdcxx" = xno; then
-        AC_MSG_NOTICE([Static linking of libstdc++ was not possible reverting to dynamic linking.])
-        enable_static_link_stdc__=no
+    if test "x$with_stdc__lib" = xstatic && test "x$has_static_libstdcxx" = xno; then
+        AC_MSG_ERROR([Static linking of libstdc++ was not possible!])
     fi
 
-    if test "x$enable_static_link_stdc__" = xno && test "x$has_dynamic_libstdcxx" = xno; then
-        AC_MSG_NOTICE([Dynamic linking of libstdc++ was not possible reverting to static linking.])
-        enable_static_link_stdc__=yes
+    if test "x$with_stdc__lib" = xdynamic && test "x$has_dynamic_libstdcxx" = xno; then
+        AC_MSG_ERROR([Dynamic linking of libstdc++ was not possible!])
     fi
 
     AC_MSG_CHECKING([how to link with libstdc++])
-    if test "x$enable_static_link_stdc__" = xyes; then
-        LIBCXX="$LIBCXX $STATIC_STDCXX_FLAGS"
-        LDCXX="$CC"
-        AC_MSG_RESULT([static])
-    else
+    # If dynamic was requested, it's available since it would fail above otherwise.
+    # If dynamic wasn't requested, go with static unless it isn't available.
+    if test "x$with_stdc__lib" = xdynamic || test "x$has_static_libstdcxx" = xno; then
         LIBCXX="$LIBCXX -lstdc++"
         LDCXX="$CXX"
+        STATIC_CXX_SETTING="STATIC_CXX=false"
         AC_MSG_RESULT([dynamic])
+    else
+        LIBCXX="$LIBCXX $STATIC_STDCXX_FLAGS"
+        LDCXX="$CC"
+        STATIC_CXX_SETTING="STATIC_CXX=true"
+        AC_MSG_RESULT([static])
     fi
 fi
+AC_SUBST(STATIC_CXX_SETTING)
 
 # libCrun is the c++ runtime-library with SunStudio (roughly the equivalent of gcc's libstdc++.so)
 if test "x$OPENJDK_TARGET_OS" = xsolaris && test "x$LIBCXX" = x; then

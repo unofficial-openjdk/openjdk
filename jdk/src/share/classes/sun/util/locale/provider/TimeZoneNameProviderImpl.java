@@ -26,11 +26,9 @@
 package sun.util.locale.provider;
 
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.spi.TimeZoneNameProvider;
-import sun.util.resources.OpenListResourceBundle;
 
 /**
  * Concrete implementation of the
@@ -97,27 +95,41 @@ public class TimeZoneNameProviderImpl extends TimeZoneNameProvider {
      */
     @Override
     public String getDisplayName(String id, boolean daylight, int style, Locale locale) {
+        String[] names = getDisplayNameArray(id, 5, locale);
+        if (names != null) {
+            int index = daylight ? 3 : 1;
+            if (style == TimeZone.SHORT) {
+                index++;
+            }
+            return names[index];
+        }
+        return null;
+    }
+
+    @Override
+    public String getGenericDisplayName(String id, int style, Locale locale) {
+        String[] names = getDisplayNameArray(id, 7, locale);
+        if (names != null && names.length >= 7) {
+            return names[(style == TimeZone.LONG) ? 5 : 6];
+        }
+        return null;
+    }
+
+    private String[] getDisplayNameArray(String id, int n, Locale locale) {
         if (id == null || locale == null) {
             throw new NullPointerException();
         }
+        return LocaleProviderAdapter.forType(type).getLocaleResources(locale).getTimeZoneNames(id, n);
+    }
 
-        LocaleProviderAdapter adapter = LocaleProviderAdapter.forType(type);
-        OpenListResourceBundle rb = adapter.getLocaleResources(locale).getTimeZoneNames();
-        LocaleServiceProviderPool pool =
-                LocaleServiceProviderPool.getPool(TimeZoneNameProvider.class);
-        try {
-            if (!pool.hasProviders() ||
-                (rb.getLocale().equals(locale) && rb.handleGetKeys().contains(id))) {
-                String[] names = rb.getStringArray(id);
-                int index = daylight ? 3 : 1;
-                if (style == TimeZone.SHORT) {
-                    index++;
-                }
-                return names[index];
-            }
-        } catch (MissingResourceException mre) {
-        }
-
-        return null;
+    /**
+     * Returns a String[][] as the DateFormatSymbols.getZoneStrings() value for
+     * the given locale. This method is package private.
+     *
+     * @param locale a Locale for time zone names
+     * @return an array of time zone names arrays
+     */
+    String[][] getZoneStrings(Locale locale) {
+        return LocaleProviderAdapter.forType(type).getLocaleResources(locale).getZoneStrings();
     }
 }

@@ -54,6 +54,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/statSampler.hpp"
 #include "runtime/task.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/timer.hpp"
 #include "runtime/vm_operations.hpp"
 #include "services/memReporter.hpp"
@@ -78,18 +79,6 @@
 #endif
 #ifdef TARGET_ARCH_ppc
 # include "vm_version_ppc.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
 #endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepThread.hpp"
@@ -379,6 +368,12 @@ void print_statistics() {
   if (CITime) {
     CompileBroker::print_times();
   }
+
+  if (PrintCodeCache) {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    CodeCache::print();
+  }
+
 #ifdef COMPILER2
   if (PrintPreciseBiasedLockingStatistics) {
     OptoRuntime::print_named_counters();
@@ -553,6 +548,10 @@ void before_exit(JavaThread * thread) {
     BeforeExit_lock->notify_all();
   }
 
+  // Shutdown NMT before exit. Otherwise,
+  // it will run into trouble when system destroys static variables.
+  MemTracker::shutdown(MemTracker::NMT_normal);
+
   #undef BEFORE_EXIT_NOT_RUN
   #undef BEFORE_EXIT_RUNNING
   #undef BEFORE_EXIT_DONE
@@ -688,6 +687,7 @@ void vm_shutdown_during_initialization(const char* error, const char* message) {
 
 JDK_Version JDK_Version::_current;
 const char* JDK_Version::_runtime_name;
+const char* JDK_Version::_runtime_version;
 
 void JDK_Version::initialize() {
   jdk_version_info info;

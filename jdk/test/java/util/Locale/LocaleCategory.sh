@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ esac
 # test user.xxx.display user.xxx.format properties
 
 # run
-RUNCMD="${TESTJAVA}${FS}bin${FS}java -classpath ${TESTCLASSES} -Duser.language.display=ja -Duser.language.format=zh LocaleCategory"
+RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${TESTCLASSES} -Duser.language.display=ja -Duser.language.format=zh LocaleCategory"
 
 echo ${RUNCMD}
 ${RUNCMD}
@@ -85,7 +85,7 @@ fi
 # test user.xxx properties overriding user.xxx.display/format
 
 # run
-RUNCMD="${TESTJAVA}${FS}bin${FS}java -classpath ${TESTCLASSES} -Duser.language=en -Duser.language.display=ja -Duser.language.format=zh LocaleCategory"
+RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${TESTCLASSES} -Duser.language=en -Duser.language.display=ja -Duser.language.format=zh LocaleCategory"
 
 echo ${RUNCMD}
 ${RUNCMD}

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,8 @@ AUTO_FILES_JAVA_DIRS = java/security
 # Directories
 #
 
-PROPS_SRC   = $(TOPDIR)/src/share/lib/security/java.security
+# The default security properties file is for linux
+PROPS_SRC   = $(TOPDIR)/src/share/lib/security/java.security-linux
 
 ifeq ($(PLATFORM), solaris)
 PROPS_SRC   = $(TOPDIR)/src/share/lib/security/java.security-solaris

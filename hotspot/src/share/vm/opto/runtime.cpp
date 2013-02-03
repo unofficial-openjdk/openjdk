@@ -236,7 +236,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(Klass* klass, JavaThread* thre
   assert(check_compiled_frame(thread), "incorrect caller");
 
   // These checks are cheap to make and support reflective allocation.
-  int lh = Klass::cast(klass)->layout_helper();
+  int lh = klass->layout_helper();
   if (Klass::layout_helper_needs_slow_path(lh)
       || !InstanceKlass::cast(klass)->is_initialized()) {
     KlassHandle kh(THREAD, klass);
@@ -283,7 +283,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(Klass* array_type, int len, JavaT
   // Scavenge and allocate an instance.
   oop result;
 
-  if (Klass::cast(array_type)->oop_is_typeArray()) {
+  if (array_type->oop_is_typeArray()) {
     // The oopFactory likes to work with the element type.
     // (We could bypass the oopFactory, since it doesn't add much value.)
     BasicType elem_type = TypeArrayKlass::cast(array_type)->element_type();
@@ -321,7 +321,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_nozero_C(Klass* array_type, int len
   // Scavenge and allocate an instance.
   oop result;
 
-  assert(Klass::cast(array_type)->oop_is_typeArray(), "should be called only for type array");
+  assert(array_type->oop_is_typeArray(), "should be called only for type array");
   // The oopFactory likes to work with the element type.
   BasicType elem_type = TypeArrayKlass::cast(array_type)->element_type();
   result = oopFactory::new_typeArray_nozero(elem_type, len, THREAD);
@@ -811,6 +811,48 @@ const TypeFunc* OptoRuntime::array_fill_Type() {
   return TypeFunc::make(domain, range);
 }
 
+// for aescrypt encrypt/decrypt operations, just three pointers returning void (length is constant)
+const TypeFunc* OptoRuntime::aescrypt_block_Type() {
+  // create input type (domain)
+  int num_args      = 3;
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // src
+  fields[argp++] = TypePtr::NOTNULL;    // dest
+  fields[argp++] = TypePtr::NOTNULL;    // k array
+  assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = NULL; // void
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
+// for cipherBlockChaining calls of aescrypt encrypt/decrypt, four pointers and a length, returning void
+const TypeFunc* OptoRuntime::cipherBlockChaining_aescrypt_Type() {
+  // create input type (domain)
+  int num_args      = 5;
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // src
+  fields[argp++] = TypePtr::NOTNULL;    // dest
+  fields[argp++] = TypePtr::NOTNULL;    // k array
+  fields[argp++] = TypePtr::NOTNULL;    // r array
+  fields[argp++] = TypeInt::INT;        // src len
+  assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = NULL; // void
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
 //------------- Interpreter state access for on stack replacement
 const TypeFunc* OptoRuntime::osr_end_Type() {
   // create input type (domain)
@@ -947,7 +989,7 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
       // since we're notifying the VM on every catch.
       // Force deoptimization and the rest of the lookup
       // will be fine.
-      deoptimize_caller_frame(thread, true);
+      deoptimize_caller_frame(thread);
     }
 
     // Check the stack guard pages.  If enabled, look for handler in this frame;
@@ -1101,17 +1143,22 @@ const TypeFunc *OptoRuntime::rethrow_Type() {
 
 
 void OptoRuntime::deoptimize_caller_frame(JavaThread *thread, bool doit) {
-  // Deoptimize frame
-  if (doit) {
-    // Called from within the owner thread, so no need for safepoint
-    RegisterMap reg_map(thread);
-    frame stub_frame = thread->last_frame();
-    assert(stub_frame.is_runtime_frame() || exception_blob()->contains(stub_frame.pc()), "sanity check");
-    frame caller_frame = stub_frame.sender(&reg_map);
-
-    // Deoptimize the caller frame.
-    Deoptimization::deoptimize_frame(thread, caller_frame.id());
+  // Deoptimize the caller before continuing, as the compiled
+  // exception handler table may not be valid.
+  if (!StressCompiledExceptionHandlers && doit) {
+    deoptimize_caller_frame(thread);
   }
+}
+
+void OptoRuntime::deoptimize_caller_frame(JavaThread *thread) {
+  // Called from within the owner thread, so no need for safepoint
+  RegisterMap reg_map(thread);
+  frame stub_frame = thread->last_frame();
+  assert(stub_frame.is_runtime_frame() || exception_blob()->contains(stub_frame.pc()), "sanity check");
+  frame caller_frame = stub_frame.sender(&reg_map);
+
+  // Deoptimize the caller frame.
+  Deoptimization::deoptimize_frame(thread, caller_frame.id());
 }
 
 

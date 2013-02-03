@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,17 +47,17 @@ case "$OS" in
 esac
 
 # compile
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}RetryPost.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}${FS}RetryPost.java
 
 # run with no option specified. Should retry POST request.
-${TESTJAVA}${FS}bin${FS}java RetryPost
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} RetryPost
 result=$?
 if [ "$result" -ne "0" ]; then
     exit 1
 fi
 
 # run with option specified. Should not retry POST request.
-${TESTJAVA}${FS}bin${FS}java -Dsun.net.http.retryPost=false RetryPost noRetry
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Dsun.net.http.retryPost=false RetryPost noRetry
 result=$?
 if [ "$result" -ne "0" ]; then
     exit 1

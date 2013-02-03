@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,11 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Writes enum constant documentation in HTML format.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -96,11 +101,11 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
         Content pre = new HtmlTree(HtmlTag.PRE);
         writer.addAnnotationInfo(enumConstant, pre);
         addModifiers(enumConstant, pre);
-        Content enumConstantLink = new RawHtml(writer.getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
-                enumConstant.type())));
+        Content enumConstantLink = new RawHtml(writer.getLink(new LinkInfoImpl(
+                configuration, LinkInfoImpl.CONTEXT_MEMBER, enumConstant.type())));
         pre.addContent(enumConstantLink);
         pre.addContent(" ");
-        if (configuration().linksource) {
+        if (configuration.linksource) {
             Content enumConstantName = new StringContent(enumConstant.name());
             writer.addSrcLink(enumConstant, enumConstantName, pre);
         } else {
@@ -169,16 +174,16 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public String getTableSummary() {
-        return configuration().getText("doclet.Member_Table_Summary",
-                configuration().getText("doclet.Enum_Constant_Summary"),
-                configuration().getText("doclet.enum_constants"));
+        return configuration.getText("doclet.Member_Table_Summary",
+                configuration.getText("doclet.Enum_Constant_Summary"),
+                configuration.getText("doclet.enum_constants"));
     }
 
     /**
      * {@inheritDoc}
      */
     public String getCaption() {
-        return configuration().getText("doclet.Enum_Constants");
+        return configuration.getText("doclet.Enum_Constants");
     }
 
     /**
@@ -186,9 +191,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     public String[] getSummaryTableHeader(ProgramElementDoc member) {
         String[] header = new String[] {
-            configuration().getText("doclet.0_and_1",
-                    configuration().getText("doclet.Enum_Constant"),
-                    configuration().getText("doclet.Description"))
+            configuration.getText("doclet.0_and_1",
+                    configuration.getText("doclet.Enum_Constant"),
+                    configuration.getText("doclet.Description"))
         };
         return header;
     }
@@ -258,10 +263,10 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink("", (cd == null)?
+            return writer.getHyperLink((cd == null)?
                 "enum_constant_summary":
                 "enum_constants_inherited_from_class_" +
-                configuration().getClassName(cd),
+                configuration.getClassName(cd),
                 writer.getResource("doclet.navEnum"));
         } else {
             return writer.getResource("doclet.navEnum");
@@ -273,7 +278,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink("", "enum_constant_detail",
+            liNav.addContent(writer.getHyperLink("enum_constant_detail",
                     writer.getResource("doclet.navEnum")));
         } else {
             liNav.addContent(writer.getResource("doclet.navEnum"));

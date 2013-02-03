@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,34 +26,26 @@
 package com.sun.tools.doclets.internal.toolkit.util;
 
 import java.io.*;
+import java.lang.annotation.ElementType;
 import java.util.*;
 
 import com.sun.javadoc.*;
+import com.sun.javadoc.AnnotationDesc.ElementValuePair;
 import com.sun.tools.doclets.internal.toolkit.*;
+import javax.tools.StandardLocation;
 
 /**
  * Utilities Class for Doclets.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Atul M Dambalkar
  * @author Jamie Ho
  */
 public class Util {
-
-    /**
-     * A mapping between characters and their
-     * corresponding HTML escape character.
-     */
-    public static final String[][] HTML_ESCAPE_CHARS =
-    {{"&", "&amp;"}, {"<", "&lt;"}, {">", "&gt;"}};
-
-    /**
-     * Name of the resource directory.
-     */
-    public static final String RESOURCESDIR = "resources";
 
     /**
      * Return array of class members whose documentation is to be generated.
@@ -196,32 +188,6 @@ public class Util {
     }
 
     /**
-     * Copy source file to destination file.
-     *
-     * @throws SecurityException
-     * @throws IOException
-     */
-    public static void copyFile(File destfile, File srcfile)
-        throws IOException {
-        byte[] bytearr = new byte[512];
-        int len = 0;
-        FileInputStream input = new FileInputStream(srcfile);
-        File destDir = destfile.getParentFile();
-        destDir.mkdirs();
-        FileOutputStream output = new FileOutputStream(destfile);
-        try {
-            while ((len = input.read(bytearr)) != -1) {
-                output.write(bytearr, 0, len);
-                }
-        } catch (FileNotFoundException exc) {
-        } catch (SecurityException exc) {
-            } finally {
-            input.close();
-            output.close();
-            }
-        }
-
-    /**
      * Copy the given directory contents from the source package directory
      * to the generated documentation directory. For example for a package
      * java.lang this method find out the source location of the package using
@@ -234,180 +200,50 @@ public class Util {
      * @param dir The original directory name to copy from.
      * @param overwrite Overwrite files if true.
      */
-    public static void copyDocFiles(Configuration configuration,
-            String path, String dir, boolean overwrite) {
-        if (checkCopyDocFilesErrors(configuration, path, dir)) {
-            return;
-        }
-        String destname = configuration.docFileDestDirName;
-        File srcdir = new File(path + dir);
-        if (destname.length() > 0 && !destname.endsWith(
-               DirectoryManager.URL_FILE_SEPARATOR)) {
-            destname += DirectoryManager.URL_FILE_SEPARATOR;
-        }
-        String dest = destname + dir;
+    public static void copyDocFiles(Configuration configuration, PackageDoc pd) {
+        copyDocFiles(configuration, DocPath.forPackage(pd).resolve(DocPaths.DOC_FILES));
+    }
+
+    public static void copyDocFiles(Configuration configuration, DocPath dir) {
         try {
-            File destdir = new File(dest);
-            DirectoryManager.createDirectory(configuration, dest);
-            String[] files = srcdir.list();
-            for (int i = 0; i < files.length; i++) {
-                File srcfile = new File(srcdir, files[i]);
-                File destfile = new File(destdir, files[i]);
-                if (srcfile.isFile()) {
-                    if(destfile.exists() && ! overwrite) {
-                        configuration.message.warning((SourcePosition) null,
-                                "doclet.Copy_Overwrite_warning",
-                                srcfile.toString(), destdir.toString());
-                    } else {
-                        configuration.message.notice(
-                            "doclet.Copying_File_0_To_Dir_1",
-                            srcfile.toString(), destdir.toString());
-                        Util.copyFile(destfile, srcfile);
-                    }
-                } else if(srcfile.isDirectory()) {
-                    if(configuration.copydocfilesubdirs
-                        && ! configuration.shouldExcludeDocFileDir(
-                          srcfile.getName())){
-                        copyDocFiles(configuration, path, dir +
-                                    DirectoryManager.URL_FILE_SEPARATOR + srcfile.getName(),
-                                overwrite);
+            boolean first = true;
+            for (DocFile f : DocFile.list(configuration, StandardLocation.SOURCE_PATH, dir)) {
+                if (!f.isDirectory()) {
+                    continue;
+                }
+                DocFile srcdir = f;
+                DocFile destdir = DocFile.createFileForOutput(configuration, dir);
+                if (srcdir.isSameFile(destdir)) {
+                    continue;
+                }
+
+                for (DocFile srcfile: srcdir.list()) {
+                    DocFile destfile = destdir.resolve(srcfile.getName());
+                    if (srcfile.isFile()) {
+                        if (destfile.exists() && !first) {
+                            configuration.message.warning((SourcePosition) null,
+                                    "doclet.Copy_Overwrite_warning",
+                                    srcfile.getPath(), destdir.getPath());
+                        } else {
+                            configuration.message.notice(
+                                    "doclet.Copying_File_0_To_Dir_1",
+                                    srcfile.getPath(), destdir.getPath());
+                            destfile.copyFile(srcfile);
+                        }
+                    } else if (srcfile.isDirectory()) {
+                        if (configuration.copydocfilesubdirs
+                                && !configuration.shouldExcludeDocFileDir(srcfile.getName())) {
+                            copyDocFiles(configuration, dir.resolve(srcfile.getName()));
+                        }
                     }
                 }
+
+                first = false;
             }
         } catch (SecurityException exc) {
             throw new DocletAbortException();
         } catch (IOException exc) {
             throw new DocletAbortException();
-        }
-    }
-
-    /**
-     * Given the parameters for copying doc-files, check for errors.
-     *
-     * @param configuration The configuration of the current doclet.
-     * @param path The relative path to the directory to be copied.
-     * @param dirName The original directory name to copy from.
-     */
-    private static boolean checkCopyDocFilesErrors (Configuration configuration,
-            String path, String dirName) {
-        if ((configuration.sourcepath == null || configuration.sourcepath.length() == 0) &&
-               (configuration.destDirName == null || configuration.destDirName.length() == 0)) {
-            //The destination path and source path are definitely equal.
-            return true;
-        }
-        File sourcePath, destPath = new File(configuration.destDirName);
-        StringTokenizer pathTokens = new StringTokenizer(
-            configuration.sourcepath == null ? "" : configuration.sourcepath,
-            File.pathSeparator);
-        //Check if the destination path is equal to the source path.  If yes,
-        //do not copy doc-file directories.
-        while(pathTokens.hasMoreTokens()){
-            sourcePath = new File(pathTokens.nextToken());
-            if(destPath.equals(sourcePath)){
-                return true;
-            }
-        }
-        //Make sure the doc-file being copied exists.
-        File srcdir = new File(path + dirName);
-        if (! srcdir.exists()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Copy a file in the resources directory to the destination
-     * directory (if it is not there already).  If
-     * <code>overwrite</code> is true and the destination file
-     * already exists, overwrite it.
-     *
-     * @param configuration  Holds the destination directory and error message
-     * @param resourcefile   The name of the resource file to copy
-     * @param overwrite      A flag to indicate whether the file in the
-     *                       destination directory will be overwritten if
-     *                       it already exists.
-     */
-    public static void copyResourceFile(Configuration configuration,
-            String resourcefile, boolean overwrite) {
-        String destresourcesdir = configuration.destDirName + RESOURCESDIR;
-        copyFile(configuration, resourcefile, RESOURCESDIR, destresourcesdir,
-                overwrite, false);
-    }
-
-    /**
-     * Copy a file from a source directory to a destination directory
-     * (if it is not there already). If <code>overwrite</code> is true and
-     * the destination file already exists, overwrite it.
-     *
-     * @param configuration Holds the error message
-     * @param file The name of the file to copy
-     * @param source The source directory
-     * @param destination The destination directory where the file needs to be copied
-     * @param overwrite A flag to indicate whether the file in the
-     *                  destination directory will be overwritten if
-     *                  it already exists.
-     * @param replaceNewLine true if the newline needs to be replaced with platform-
-     *                  specific newline.
-     */
-    public static void copyFile(Configuration configuration, String file, String source,
-            String destination, boolean overwrite, boolean replaceNewLine) {
-        DirectoryManager.createDirectory(configuration, destination);
-        File destfile = new File(destination, file);
-        if(destfile.exists() && (! overwrite)) return;
-        try {
-            InputStream in = Configuration.class.getResourceAsStream(
-                    source + DirectoryManager.URL_FILE_SEPARATOR + file);
-            if(in==null) return;
-            OutputStream out = new FileOutputStream(destfile);
-            try {
-                if (!replaceNewLine) {
-                    byte[] buf = new byte[2048];
-                    int n;
-                    while((n = in.read(buf))>0) out.write(buf,0,n);
-                } else {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                    BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
-                    try {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            writer.write(line);
-                            writer.write(DocletConstants.NL);
-                        }
-                    } finally {
-                        reader.close();
-                        writer.close();
-                    }
-                }
-            } finally {
-                in.close();
-                out.close();
-            }
-        } catch (IOException ie) {
-            ie.printStackTrace(System.err);
-            throw new DocletAbortException();
-        }
-    }
-
-    /**
-     * Given a PackageDoc, return the source path for that package.
-     * @param configuration The Configuration for the current Doclet.
-     * @param pkgDoc The package to seach the path for.
-     * @return A string representing the path to the given package.
-     */
-    public static String getPackageSourcePath(Configuration configuration,
-            PackageDoc pkgDoc){
-        try{
-            String pkgPath = DirectoryManager.getDirectoryPath(pkgDoc);
-            String completePath = new SourcePath(configuration.sourcepath).
-                getDirectory(pkgPath) + DirectoryManager.URL_FILE_SEPARATOR;
-            //Make sure that both paths are using the same separators.
-            completePath = Util.replaceText(completePath, File.separator,
-                    DirectoryManager.URL_FILE_SEPARATOR);
-            pkgPath = Util.replaceText(pkgPath, File.separator,
-                    DirectoryManager.URL_FILE_SEPARATOR);
-            return completePath.substring(0, completePath.lastIndexOf(pkgPath));
-        } catch (Exception e){
-            return "";
         }
     }
 
@@ -470,15 +306,21 @@ public class Util {
         //Try walking the tree.
         addAllInterfaceTypes(results,
             superType,
-            superType instanceof ClassDoc ?
-                ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+            interfaceTypesOf(superType),
             false, configuration);
         List<Type> resultsList = new ArrayList<Type>(results.values());
         if (sort) {
                 Collections.sort(resultsList, new TypeComparator());
         }
         return resultsList;
+    }
+
+    private static Type[] interfaceTypesOf(Type type) {
+        if (type instanceof AnnotatedType)
+            type = ((AnnotatedType)type).underlyingType();
+        return type instanceof ClassDoc ?
+                ((ClassDoc)type).interfaceTypes() :
+                ((ParameterizedType)type).interfaceTypes();
     }
 
     public static List<Type> getAllInterfaces(Type type, Configuration configuration) {
@@ -491,9 +333,7 @@ public class Util {
         if (superType == null)
             return;
         addAllInterfaceTypes(results, superType,
-                superType instanceof ClassDoc ?
-                ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+                interfaceTypesOf(superType),
                 raw, configuration);
     }
 
@@ -503,9 +343,7 @@ public class Util {
         if (superType == null)
             return;
         addAllInterfaceTypes(results, superType,
-                superType instanceof ClassDoc ?
-                ((ClassDoc) superType).interfaceTypes() :
-                ((ParameterizedType) superType).interfaceTypes(),
+                interfaceTypesOf(superType),
                 false, configuration);
     }
 
@@ -529,6 +367,9 @@ public class Util {
                 results.put(superInterface.asClassDoc(), superInterface);
             }
         }
+        if (type instanceof AnnotatedType)
+            type = ((AnnotatedType)type).underlyingType();
+
         if (type instanceof ParameterizedType)
             findAllInterfaceTypes(results, (ParameterizedType) type, configuration);
         else if (((ClassDoc) type).typeParameters().length == 0)
@@ -545,7 +386,7 @@ public class Util {
     }
 
     /**
-     * Given a package, return it's name.
+     * Given a package, return its name.
      * @param packageDoc the package to check.
      * @return the name of the given package.
      */
@@ -555,7 +396,7 @@ public class Util {
     }
 
     /**
-     * Given a package, return it's file name without the extension.
+     * Given a package, return its file name without the extension.
      * @param packageDoc the package to check.
      * @return the file name of the given package.
      */
@@ -565,7 +406,7 @@ public class Util {
     }
 
     /**
-     * Given a string, replace all occurraces of 'newStr' with 'oldStr'.
+     * Given a string, replace all occurrences of 'newStr' with 'oldStr'.
      * @param originalStr the string to modify.
      * @param oldStr the string to replace.
      * @param newStr the string to insert in place of the old string.
@@ -583,18 +424,44 @@ public class Util {
      * return the result.
      *
      * @param s The string to check.
-     * @return the original string with all of the HTML characters
-     * escaped.
-     *
-     * @see #HTML_ESCAPE_CHARS
+     * @return the original string with all of the HTML characters escaped.
      */
     public static String escapeHtmlChars(String s) {
-        String result = s;
-        for (int i = 0; i < HTML_ESCAPE_CHARS.length; i++) {
-            result = Util.replaceText(result,
-                    HTML_ESCAPE_CHARS[i][0], HTML_ESCAPE_CHARS[i][1]);
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            switch (ch) {
+                // only start building a new string if we need to
+                case '<': case '>': case '&':
+                    StringBuilder sb = new StringBuilder(s.substring(0, i));
+                    for ( ; i < s.length(); i++) {
+                        ch = s.charAt(i);
+                        switch (ch) {
+                            case '<': sb.append("&lt;");  break;
+                            case '>': sb.append("&gt;");  break;
+                            case '&': sb.append("&amp;"); break;
+                            default:  sb.append(ch);      break;
+                        }
+                    }
+                    return sb.toString();
+            }
         }
-        return result;
+        return s;
+    }
+
+    /**
+     * Escape all special html characters in a string buffer.
+     *
+     * @param sb The string buffer to update
+     */
+    public static void escapeHtmlChars(StringBuilder sb) {
+        // scan backwards, replacing characters as needed.
+        for (int i = sb.length() - 1; i >= 0; i--) {
+            switch (sb.charAt(i)) {
+                case '<': sb.replace(i, i+1, "&lt;"); break;
+                case '>': sb.replace(i, i+1, "&gt;"); break;
+                case '&': sb.replace(i, i+1, "&amp;"); break;
+            }
+        }
     }
 
     /**
@@ -616,40 +483,6 @@ public class Util {
     }
 
     /**
-     * Create the directory path for the file to be generated, construct
-     * FileOutputStream and OutputStreamWriter depending upon docencoding.
-     *
-     * @param path The directory path to be created for this file.
-     * @param filename File Name to which the PrintWriter will do the Output.
-     * @param docencoding Encoding to be used for this file.
-     * @exception IOException Exception raised by the FileWriter is passed on
-     * to next level.
-     * @exception UnsupportedEncodingException Exception raised by the
-     * OutputStreamWriter is passed on to next level.
-     * @return Writer Writer for the file getting generated.
-     * @see java.io.FileOutputStream
-     * @see java.io.OutputStreamWriter
-     */
-    public static Writer genWriter(Configuration configuration,
-            String path, String filename,
-            String docencoding)
-        throws IOException, UnsupportedEncodingException {
-        FileOutputStream fos;
-        if (path != null) {
-            DirectoryManager.createDirectory(configuration, path);
-            fos = new FileOutputStream(((path.length() > 0)?
-                                                  path + File.separator: "") + filename);
-        } else {
-            fos = new FileOutputStream(filename);
-        }
-        if (docencoding == null) {
-            return new OutputStreamWriter(fos);
-        } else {
-            return new OutputStreamWriter(fos, docencoding);
-        }
-    }
-
-    /**
      * Given an annotation, return true if it should be documented and false
      * otherwise.
      *
@@ -668,45 +501,55 @@ public class Util {
         return false;
     }
 
-    /**
-     * Given a string, return an array of tokens.  The separator can be escaped
-     * with the '\' character.  The '\' character may also be escaped by the
-     * '\' character.
-     *
-     * @param s         the string to tokenize.
-     * @param separator the separator char.
-     * @param maxTokens the maxmimum number of tokens returned.  If the
-     *                  max is reached, the remaining part of s is appended
-     *                  to the end of the last token.
-     *
-     * @return an array of tokens.
-     */
-    public static String[] tokenize(String s, char separator, int maxTokens) {
-        List<String> tokens = new ArrayList<String>();
-        StringBuilder  token = new StringBuilder ();
-        boolean prevIsEscapeChar = false;
-        for (int i = 0; i < s.length(); i += Character.charCount(i)) {
-            int currentChar = s.codePointAt(i);
-            if (prevIsEscapeChar) {
-                // Case 1:  escaped character
-                token.appendCodePoint(currentChar);
-                prevIsEscapeChar = false;
-            } else if (currentChar == separator && tokens.size() < maxTokens-1) {
-                // Case 2:  separator
-                tokens.add(token.toString());
-                token = new StringBuilder();
-            } else if (currentChar == '\\') {
-                // Case 3:  escape character
-                prevIsEscapeChar = true;
-            } else {
-                // Case 4:  regular character
-                token.appendCodePoint(currentChar);
+    private static boolean isDeclarationTarget(AnnotationDesc targetAnno) {
+        // The error recovery steps here are analogous to TypeAnnotations
+        ElementValuePair[] elems = targetAnno.elementValues();
+        if (elems == null
+            || elems.length != 1
+            || !"value".equals(elems[0].element().name())
+            || !(elems[0].value().value() instanceof AnnotationValue[]))
+            return true;    // error recovery
+
+        AnnotationValue[] values = (AnnotationValue[])elems[0].value().value();
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i].value();
+            if (!(value instanceof FieldDoc))
+                return true; // error recovery
+
+            FieldDoc eValue = (FieldDoc)value;
+            if (Util.isJava5DeclarationElementType(eValue)) {
+                return true;
             }
         }
-        if (token.length() > 0) {
-            tokens.add(token.toString());
+
+        return false;
+    }
+
+    /**
+     * Returns true if the {@code annotationDoc} is to be treated
+     * as a declaration annotation, when targeting the
+     * {@code elemType} element type.
+     *
+     * @param annotationDoc the annotationDoc to check
+     * @param elemType  the targeted elemType
+     * @return true if annotationDoc is a declaration annotation
+     */
+    public static boolean isDeclarationAnnotation(AnnotationTypeDoc annotationDoc,
+            boolean isJava5DeclarationLocation) {
+        if (!isJava5DeclarationLocation)
+            return false;
+        AnnotationDesc[] annotationDescList = annotationDoc.annotations();
+        // Annotations with no target are treated as declaration as well
+        if (annotationDescList.length==0)
+            return true;
+        for (int i = 0; i < annotationDescList.length; i++) {
+            if (annotationDescList[i].annotationType().qualifiedName().equals(
+                    java.lang.annotation.Target.class.getName())) {
+                if (isDeclarationTarget(annotationDescList[i]))
+                    return true;
+            }
         }
-        return tokens.toArray(new String[] {});
+        return false;
     }
 
     /**
@@ -789,7 +632,7 @@ public class Util {
      *
      * @param cd the ClassDoc to check.
      * @param lowerCaseOnly true if you want the name returned in lower case.
-     *                      If false, the first letter of the name is capatilized.
+     *                      If false, the first letter of the name is capitalized.
      * @return
      */
     public static String getTypeName(Configuration config,
@@ -813,22 +656,21 @@ public class Util {
     }
 
     /**
-     * Given a string, replace all tabs with the appropriate
-     * number of spaces.
-     * @param tabLength the length of each tab.
-     * @param s the String to scan.
+     * Replace all tabs with the appropriate number of spaces.
+     * @param configuration the doclet configuration defining the setting for the
+     *                      tab length.
+     * @param sb the StringBuilder in which to replace the tabs
      */
-    public static void replaceTabs(int tabLength, StringBuilder s) {
-        if (whitespace == null || whitespace.length() < tabLength)
-            whitespace = String.format("%" + tabLength + "s", " ");
+    public static void replaceTabs(Configuration configuration, StringBuilder sb) {
+        int tabLength = configuration.sourcetab;
+        String whitespace = configuration.tabSpaces;
         int index = 0;
-        while ((index = s.indexOf("\t", index)) != -1) {
+        while ((index = sb.indexOf("\t", index)) != -1) {
             int spaceCount = tabLength - index % tabLength;
-            s.replace(index, index+1, whitespace.substring(0, spaceCount));
+            sb.replace(index, index+1, whitespace.substring(0, spaceCount));
             index += spaceCount;
         }
     }
-    private static String whitespace;
 
     /**
      * The documentation for values() and valueOf() in Enums are set by the
@@ -877,5 +719,26 @@ public class Util {
             }
         }
         return false;
+    }
+
+    /**
+     * Test whether the given FieldDoc is one of the declaration annotation ElementTypes
+     * defined in Java 5.
+     * Instead of testing for one of the new enum constants added in Java 8, test for
+     * the old constants. This prevents bootstrapping problems.
+     *
+     * @param elt The FieldDoc to test
+     * @return true, iff the given ElementType is one of the constants defined in Java 5
+     * @since 1.8
+     */
+    public static boolean isJava5DeclarationElementType(FieldDoc elt) {
+        return elt.name().contentEquals(ElementType.ANNOTATION_TYPE.name()) ||
+                elt.name().contentEquals(ElementType.CONSTRUCTOR.name()) ||
+                elt.name().contentEquals(ElementType.FIELD.name()) ||
+                elt.name().contentEquals(ElementType.LOCAL_VARIABLE.name()) ||
+                elt.name().contentEquals(ElementType.METHOD.name()) ||
+                elt.name().contentEquals(ElementType.PACKAGE.name()) ||
+                elt.name().contentEquals(ElementType.PARAMETER.name()) ||
+                elt.name().contentEquals(ElementType.TYPE.name());
     }
 }

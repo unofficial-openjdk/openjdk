@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,20 @@
 
 package com.sun.tools.doclets.internal.toolkit.builders;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.javadoc.*;
 
 /**
  * The factory for constructing builders.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @since 1.4
@@ -45,12 +49,14 @@ public class BuilderFactory {
     /**
      * The current configuration of the doclet.
      */
-    private Configuration configuration;
+    private final Configuration configuration;
 
     /**
      * The factory to retrieve the required writers from.
      */
-    private WriterFactory writerFactory;
+    private final WriterFactory writerFactory;
+
+    private final AbstractBuilder.Context context;
 
     /**
      * Construct a builder factory using the given configuration.
@@ -60,6 +66,10 @@ public class BuilderFactory {
     public BuilderFactory (Configuration configuration) {
         this.configuration = configuration;
         this.writerFactory = configuration.getWriterFactory();
+
+        Set<String> containingPackagesSeen = new HashSet<String>();
+        context = new AbstractBuilder.Context(configuration, containingPackagesSeen,
+                LayoutParser.getInstance(configuration));
     }
 
     /**
@@ -67,7 +77,7 @@ public class BuilderFactory {
      * @return the builder that builds the constant summary.
      */
     public AbstractBuilder getConstantsSummaryBuider() throws Exception {
-        return ConstantsSummaryBuilder.getInstance(configuration,
+        return ConstantsSummaryBuilder.getInstance(context,
             writerFactory.getConstantsSummaryWriter());
     }
 
@@ -81,7 +91,7 @@ public class BuilderFactory {
      */
     public AbstractBuilder getPackageSummaryBuilder(PackageDoc pkg, PackageDoc prevPkg,
             PackageDoc nextPkg) throws Exception {
-        return PackageSummaryBuilder.getInstance(configuration, pkg,
+        return PackageSummaryBuilder.getInstance(context, pkg,
             writerFactory.getPackageSummaryWriter(pkg, prevPkg, nextPkg));
     }
 
@@ -96,9 +106,9 @@ public class BuilderFactory {
      * writer is not supported by the doclet.
      */
     public AbstractBuilder getClassBuilder(ClassDoc classDoc,
-        ClassDoc prevClass, ClassDoc nextClass, ClassTree classTree)
+            ClassDoc prevClass, ClassDoc nextClass, ClassTree classTree)
             throws Exception {
-        return ClassBuilder.getInstance(configuration, classDoc,
+        return ClassBuilder.getInstance(context, classDoc,
             writerFactory.getClassWriter(classDoc, prevClass, nextClass,
                 classTree));
     }
@@ -116,9 +126,8 @@ public class BuilderFactory {
         AnnotationTypeDoc annotationType,
         Type prevType, Type nextType)
             throws Exception {
-        return AnnotationTypeBuilder.getInstance(configuration, annotationType,
-            writerFactory.getAnnotationTypeWriter(annotationType, prevType,
-            nextType));
+        return AnnotationTypeBuilder.getInstance(context, annotationType,
+            writerFactory.getAnnotationTypeWriter(annotationType, prevType, nextType));
     }
 
     /**
@@ -128,7 +137,7 @@ public class BuilderFactory {
      */
     public AbstractBuilder getMethodBuilder(ClassWriter classWriter)
            throws Exception {
-        return MethodBuilder.getInstance(configuration,
+        return MethodBuilder.getInstance(context,
             classWriter.getClassDoc(),
             writerFactory.getMethodWriter(classWriter));
     }
@@ -143,7 +152,7 @@ public class BuilderFactory {
     public AbstractBuilder getAnnotationTypeOptionalMemberBuilder(
             AnnotationTypeWriter annotationTypeWriter)
     throws Exception {
-        return AnnotationTypeOptionalMemberBuilder.getInstance(configuration,
+        return AnnotationTypeOptionalMemberBuilder.getInstance(context,
             annotationTypeWriter.getAnnotationTypeDoc(),
             writerFactory.getAnnotationTypeOptionalMemberWriter(
                 annotationTypeWriter));
@@ -159,7 +168,7 @@ public class BuilderFactory {
     public AbstractBuilder getAnnotationTypeRequiredMemberBuilder(
             AnnotationTypeWriter annotationTypeWriter)
     throws Exception {
-        return AnnotationTypeRequiredMemberBuilder.getInstance(configuration,
+        return AnnotationTypeRequiredMemberBuilder.getInstance(context,
             annotationTypeWriter.getAnnotationTypeDoc(),
             writerFactory.getAnnotationTypeRequiredMemberWriter(
                 annotationTypeWriter));
@@ -172,7 +181,7 @@ public class BuilderFactory {
      */
     public AbstractBuilder getEnumConstantsBuilder(ClassWriter classWriter)
             throws Exception {
-        return EnumConstantBuilder.getInstance(configuration, classWriter.getClassDoc(),
+        return EnumConstantBuilder.getInstance(context, classWriter.getClassDoc(),
             writerFactory.getEnumConstantWriter(classWriter));
     }
 
@@ -183,7 +192,7 @@ public class BuilderFactory {
      */
     public AbstractBuilder getFieldBuilder(ClassWriter classWriter)
             throws Exception {
-        return FieldBuilder.getInstance(configuration, classWriter.getClassDoc(),
+        return FieldBuilder.getInstance(context, classWriter.getClassDoc(),
             writerFactory.getFieldWriter(classWriter));
     }
 
@@ -194,9 +203,9 @@ public class BuilderFactory {
      */
     public AbstractBuilder getConstructorBuilder(ClassWriter classWriter)
             throws Exception {
-        return ConstructorBuilder.getInstance(configuration,
-            classWriter.getClassDoc(), writerFactory.getConstructorWriter(
-            classWriter));
+        return ConstructorBuilder.getInstance(context,
+            classWriter.getClassDoc(),
+            writerFactory.getConstructorWriter(classWriter));
     }
 
     /**
@@ -206,7 +215,7 @@ public class BuilderFactory {
      */
     public AbstractBuilder getMemberSummaryBuilder(ClassWriter classWriter)
             throws Exception {
-        return MemberSummaryBuilder.getInstance(classWriter, configuration);
+        return MemberSummaryBuilder.getInstance(classWriter, context);
     }
 
     /**
@@ -219,8 +228,7 @@ public class BuilderFactory {
     public AbstractBuilder getMemberSummaryBuilder(
             AnnotationTypeWriter annotationTypeWriter)
     throws Exception {
-        return MemberSummaryBuilder.getInstance(annotationTypeWriter,
-            configuration);
+        return MemberSummaryBuilder.getInstance(annotationTypeWriter, context);
     }
 
     /**
@@ -230,6 +238,6 @@ public class BuilderFactory {
      */
     public AbstractBuilder getSerializedFormBuilder()
             throws Exception {
-        return SerializedFormBuilder.getInstance(configuration);
+        return SerializedFormBuilder.getInstance(context);
     }
 }

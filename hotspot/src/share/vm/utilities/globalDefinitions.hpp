@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -325,6 +325,12 @@ typedef jlong  s8;
 // JVM spec restrictions
 
 const int max_method_code_size = 64*K - 1;  // JVM spec, 2nd ed. section 4.8.1 (p.134)
+
+
+//----------------------------------------------------------------------------------------------------
+// Minimum StringTableSize value
+
+const int defaultStringTableSize=1009;
 
 
 //----------------------------------------------------------------------------------------------------
@@ -1244,6 +1250,14 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 
 #define PTR64_FORMAT           "0x%016" PRIx64
 
+// Format jlong, if necessary
+#ifndef JLONG_FORMAT
+#define JLONG_FORMAT           INT64_FORMAT
+#endif
+#ifndef JULONG_FORMAT
+#define JULONG_FORMAT          UINT64_FORMAT
+#endif
+
 // Format pointers which change size between 32- and 64-bit.
 #ifdef  _LP64
 #define INTPTR_FORMAT "0x%016" PRIxPTR
@@ -1273,5 +1287,13 @@ inline int build_int_from_shorts( jushort low, jushort high ) {
 # endif /* ASSERT */
 
 #define ARRAY_SIZE(array) (sizeof(array)/sizeof((array)[0]))
+
+// Dereference vptr
+// All C++ compilers that we know of have the vtbl pointer in the first
+// word.  If there are exceptions, this function needs to be made compiler
+// specific.
+static inline void* dereference_vptr(void* addr) {
+  return *(void**)addr;
+}
 
 #endif // SHARE_VM_UTILITIES_GLOBALDEFINITIONS_HPP

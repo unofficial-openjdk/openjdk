@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,6 @@ case "$OS" in
 esac
 
 cp ${TESTSRC}${FS}foo2.jar .
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}B5105410.java
-${TESTJAVA}${FS}bin${FS}java B5105410
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}${FS}B5105410.java
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} B5105410
 

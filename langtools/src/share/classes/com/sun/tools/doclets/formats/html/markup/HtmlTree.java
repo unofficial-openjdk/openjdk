@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,20 @@
 
 package com.sun.tools.doclets.formats.html.markup;
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
+
 import com.sun.tools.doclets.internal.toolkit.Content;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Class for generating HTML tree for javadoc output.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Bhavesh Patel
  */
@@ -423,9 +431,9 @@ public class HtmlTree extends Content {
     /**
      * Generates a META tag with the http-equiv, content and charset attributes.
      *
-     * @param http-equiv http equiv attribute for the META tag
+     * @param httpEquiv http equiv attribute for the META tag
      * @param content type of content
-     * @param charset character set used
+     * @param charSet character set used
      * @return an HtmlTree object for the META tag
      */
     public static HtmlTree META(String httpEquiv, String content, String charSet) {
@@ -486,6 +494,20 @@ public class HtmlTree extends Content {
     }
 
     /**
+     * Generates a SCRIPT tag with the type and src attributes.
+     *
+     * @param type type of link
+     * @param src the path for the script
+     * @return an HtmlTree object for the SCRIPT tag
+     */
+    public static HtmlTree SCRIPT(String type, String src) {
+        HtmlTree htmltree = new HtmlTree(HtmlTag.SCRIPT);
+        htmltree.addAttr(HtmlAttr.TYPE, nullCheck(type));
+        htmltree.addAttr(HtmlAttr.SRC, nullCheck(src));
+        return htmltree;
+    }
+
+    /**
      * Generates a SMALL tag with some content.
      *
      * @param body content for the tag
@@ -526,6 +548,23 @@ public class HtmlTree extends Content {
      */
     public static HtmlTree SPAN(HtmlStyle styleClass, Content body) {
         HtmlTree htmltree = new HtmlTree(HtmlTag.SPAN, nullCheck(body));
+        if (styleClass != null)
+            htmltree.addStyle(styleClass);
+        return htmltree;
+    }
+
+    /**
+     * Generates a SPAN tag with id and style class attributes. It also encloses
+     * a content.
+     *
+     * @param id the id for the tag
+     * @param styleClass stylesheet class for the tag
+     * @param body content for the tag
+     * @return an HtmlTree object for the SPAN tag
+     */
+    public static HtmlTree SPAN(String id, HtmlStyle styleClass, Content body) {
+        HtmlTree htmltree = new HtmlTree(HtmlTag.SPAN, nullCheck(body));
+        htmltree.addAttr(HtmlAttr.ID, nullCheck(id));
         if (styleClass != null)
             htmltree.addStyle(styleClass);
         return htmltree;
@@ -734,6 +773,9 @@ public class HtmlTree extends Content {
                 return (hasAttr(HtmlAttr.HREF) && !hasContent());
             case META :
                 return (hasAttr(HtmlAttr.CONTENT) && !hasContent());
+            case SCRIPT :
+                return ((hasAttr(HtmlAttr.TYPE) && hasAttr(HtmlAttr.SRC) && !hasContent()) ||
+                        (hasAttr(HtmlAttr.TYPE) && hasContent()));
             default :
                 return hasContent();
         }
@@ -751,35 +793,41 @@ public class HtmlTree extends Content {
     /**
      * {@inheritDoc}
      */
-    public void write(StringBuilder contentBuilder) {
-        if (!isInline() && !endsWithNewLine(contentBuilder))
-            contentBuilder.append(DocletConstants.NL);
+    @Override
+    public boolean write(Writer out, boolean atNewline) throws IOException {
+        if (!isInline() && !atNewline)
+            out.write(DocletConstants.NL);
         String tagString = htmlTag.toString();
-        contentBuilder.append("<");
-        contentBuilder.append(tagString);
+        out.write("<");
+        out.write(tagString);
         Iterator<HtmlAttr> iterator = attrs.keySet().iterator();
         HtmlAttr key;
         String value = "";
         while (iterator.hasNext()) {
             key = iterator.next();
             value = attrs.get(key);
-            contentBuilder.append(" ");
-            contentBuilder.append(key.toString());
+            out.write(" ");
+            out.write(key.toString());
             if (!value.isEmpty()) {
-                contentBuilder.append("=\"");
-                contentBuilder.append(value);
-                contentBuilder.append("\"");
+                out.write("=\"");
+                out.write(value);
+                out.write("\"");
             }
         }
-        contentBuilder.append(">");
+        out.write(">");
+        boolean nl = false;
         for (Content c : content)
-            c.write(contentBuilder);
+            nl = c.write(out, nl);
         if (htmlTag.endTagRequired()) {
-            contentBuilder.append("</");
-            contentBuilder.append(tagString);
-            contentBuilder.append(">");
+            out.write("</");
+            out.write(tagString);
+            out.write(">");
         }
-        if (!isInline())
-            contentBuilder.append(DocletConstants.NL);
+        if (!isInline()) {
+            out.write(DocletConstants.NL);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

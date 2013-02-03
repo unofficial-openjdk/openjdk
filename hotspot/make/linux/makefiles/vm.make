@@ -138,12 +138,9 @@ include $(MAKEFILES_DIR)/dtrace.make
 
 JVM      = jvm
 LIBJVM   = lib$(JVM).so
-LIBJVM_G = lib$(JVM)$(G_SUFFIX).so
 
 LIBJVM_DEBUGINFO   = lib$(JVM).debuginfo
 LIBJVM_DIZ         = lib$(JVM).diz
-LIBJVM_G_DEBUGINFO = lib$(JVM)$(G_SUFFIX).debuginfo
-LIBJVM_G_DIZ       = lib$(JVM)$(G_SUFFIX).diz
 
 SPECIAL_PATHS:=adlc c1 gc_implementation opto shark libadt
 
@@ -323,7 +320,6 @@ $(LIBJVM): $(LIBJVM.o) $(LIBJVM_MAPFILE) $(LD_SCRIPT)
 		       $(LFLAGS_VM) -o $@ $(sort $(LIBJVM.o)) $(LIBS_VM);       \
 	    $(LINK_LIB.CXX/POST_HOOK)                                    \
 	    rm -f $@.1; ln -s $@ $@.1;                                  \
-	    [ -f $(LIBJVM_G) ] || { ln -s $@ $(LIBJVM_G); ln -s $@.1 $(LIBJVM_G).1; }; \
             if [ \"$(CROSS_COMPILE_ARCH)\" = \"\" ] ; then                    \
 	      if [ -x /usr/sbin/selinuxenabled ] ; then                 \
 	        /usr/sbin/selinuxenabled;                               \
@@ -336,24 +332,21 @@ $(LIBJVM): $(LIBJVM.o) $(LIBJVM_MAPFILE) $(LD_SCRIPT)
 	      fi                                                        \
             fi 								\
 	}
-ifeq ($(CROSS_COMPILE_ARCH),)
-  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+
+ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
 	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBJVM_DEBUGINFO)
 	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBJVM_DEBUGINFO) $@
-    ifeq ($(STRIP_POLICY),all_strip)
+  ifeq ($(STRIP_POLICY),all_strip)
 	$(QUIETLY) $(STRIP) $@
-    else
-      ifeq ($(STRIP_POLICY),min_strip)
+  else
+    ifeq ($(STRIP_POLICY),min_strip)
 	$(QUIETLY) $(STRIP) -g $@
-      # implied else here is no stripping at all
-      endif
+    # implied else here is no stripping at all
     endif
-	$(QUIETLY) [ -f $(LIBJVM_G_DEBUGINFO) ] || ln -s $(LIBJVM_DEBUGINFO) $(LIBJVM_G_DEBUGINFO)
-    ifeq ($(ZIP_DEBUGINFO_FILES),1)
-	$(ZIPEXE) -q -y $(LIBJVM_DIZ) $(LIBJVM_DEBUGINFO) $(LIBJVM_G_DEBUGINFO)
-	$(RM) $(LIBJVM_DEBUGINFO) $(LIBJVM_G_DEBUGINFO)
-	[ -f $(LIBJVM_G_DIZ) ] || { ln -s $(LIBJVM_DIZ) $(LIBJVM_G_DIZ); }
-    endif
+  endif
+  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+	$(ZIPEXE) -q -y $(LIBJVM_DIZ) $(LIBJVM_DEBUGINFO)
+	$(RM) $(LIBJVM_DEBUGINFO)
   endif
 endif
 

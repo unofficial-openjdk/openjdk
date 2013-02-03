@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package com.sun.tools.doclets.internal.toolkit.taglets;
 
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.Configuration;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
@@ -33,9 +34,10 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
  * be used with a method.  It is used to inherit documentation from overriden
  * and implemented methods.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @since 1.4
@@ -103,7 +105,7 @@ public class InheritDocTaglet extends BaseInlineTaglet {
 
     /**
      * Given a <code>MethodDoc</code> item, a <code>Tag</code> in the
-     * <code>MethodDoc</code> item and a String, replace all occurances
+     * <code>MethodDoc</code> item and a String, replace all occurrences
      * of @inheritDoc with documentation from it's superclass or superinterface.
      *
      * @param writer the writer that is writing the output.
@@ -115,12 +117,13 @@ public class InheritDocTaglet extends BaseInlineTaglet {
             MethodDoc md, Tag holderTag, boolean isFirstSentence) {
         TagletOutput replacement = writer.getTagletOutputInstance();
 
+        Configuration configuration = writer.configuration();
         Taglet inheritableTaglet = holderTag == null ?
-            null : writer.configuration().tagletManager.getTaglet(holderTag.name());
+            null : configuration.tagletManager.getTaglet(holderTag.name());
         if (inheritableTaglet != null &&
             !(inheritableTaglet instanceof InheritableTaglet)) {
                 //This tag does not support inheritence.
-                writer.configuration().message.warning(md.position(),
+                configuration.message.warning(md.position(),
                 "doclet.noInheritedDoc", md.name() + md.flatSignature());
          }
         DocFinder.Output inheritedDoc =
@@ -128,7 +131,7 @@ public class InheritDocTaglet extends BaseInlineTaglet {
                 (InheritableTaglet) inheritableTaglet, holderTag,
                 isFirstSentence, true));
         if (inheritedDoc.isValidInheritDocTag == false) {
-            writer.configuration().message.warning(md.position(),
+            configuration.message.warning(md.position(),
                 "doclet.noInheritedDoc", md.name() + md.flatSignature());
         } else if (inheritedDoc.inlineTags.length > 0) {
             replacement = writer.commentTagsToOutput(inheritedDoc.holderTag,

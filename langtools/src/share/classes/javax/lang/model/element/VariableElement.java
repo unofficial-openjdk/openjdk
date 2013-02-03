@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@
 
 package javax.lang.model.element;
 
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 
 /**
@@ -63,4 +62,29 @@ public interface VariableElement extends Element {
      * @jls 4.12.4 final Variables
      */
     Object getConstantValue();
+
+    /**
+     * Returns the simple name of this variable element.
+     *
+     * <p>For method and constructor parameters, the name of each
+     * parameter must be distinct from the names of all other
+     * parameters of the same executable.  If the original source
+     * names are not available, an implementation may synthesize names
+     * subject to the distinctness requirement above.
+     *
+     * @return the simple name of this variable element
+     */
+    @Override
+    Name getSimpleName();
+
+    /**
+     * Returns the enclosing element of this variable.
+     *
+     * The enclosing element of a method or constructor parameter is
+     * the executable declaring the parameter.
+     *
+     * @return the enclosing element of this variable
+     */
+    @Override
+    Element getEnclosingElement();
 }

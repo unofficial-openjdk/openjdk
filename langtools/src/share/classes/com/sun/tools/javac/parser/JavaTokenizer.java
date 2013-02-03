@@ -44,7 +44,7 @@ import static com.sun.tools.javac.util.LayoutCharacters.*;
  */
 public class JavaTokenizer {
 
-    private static boolean scannerDebug = false;
+    private static final boolean scannerDebug = false;
 
     /** Allow hex floating-point literals.
      */
@@ -108,8 +108,7 @@ public class JavaTokenizer {
      * {@code input[input.length -1]} is a white space character.
      *
      * @param fac the factory which created this Scanner
-     * @param input the input, might be modified
-     * @param inputLength the size of the input.
+     * @param buf the input, might be modified
      * Must be positive and less than or equal to input.length.
      */
     protected JavaTokenizer(ScannerFactory fac, CharBuffer buf) {
@@ -349,8 +348,8 @@ public class JavaTokenizer {
     private void scanIdent() {
         boolean isJavaIdentifierPart;
         char high;
+        reader.putChar(true);
         do {
-            reader.putChar(true);
             switch (reader.ch) {
             case 'A': case 'B': case 'C': case 'D': case 'E':
             case 'F': case 'G': case 'H': case 'I': case 'J':
@@ -367,6 +366,7 @@ public class JavaTokenizer {
             case '$': case '_':
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
+                break;
             case '\u0000': case '\u0001': case '\u0002': case '\u0003':
             case '\u0004': case '\u0005': case '\u0006': case '\u0007':
             case '\u0008': case '\u000E': case '\u000F': case '\u0010':
@@ -374,26 +374,33 @@ public class JavaTokenizer {
             case '\u0015': case '\u0016': case '\u0017':
             case '\u0018': case '\u0019': case '\u001B':
             case '\u007F':
-                break;
+                reader.scanChar();
+                continue;
             case '\u001A': // EOI is also a legal identifier part
                 if (reader.bp >= reader.buflen) {
                     name = reader.name();
                     tk = tokens.lookupKind(name);
                     return;
                 }
-                break;
+                reader.scanChar();
+                continue;
             default:
                 if (reader.ch < '\u0080') {
                     // all ASCII range chars already handled, above
                     isJavaIdentifierPart = false;
                 } else {
-                    high = reader.scanSurrogates();
-                    if (high != 0) {
-                        reader.putChar(high);
-                        isJavaIdentifierPart = Character.isJavaIdentifierPart(
-                            Character.toCodePoint(high, reader.ch));
+                    if (Character.isIdentifierIgnorable(reader.ch)) {
+                        reader.scanChar();
+                        continue;
                     } else {
-                        isJavaIdentifierPart = Character.isJavaIdentifierPart(reader.ch);
+                        high = reader.scanSurrogates();
+                        if (high != 0) {
+                            reader.putChar(high);
+                            isJavaIdentifierPart = Character.isJavaIdentifierPart(
+                                Character.toCodePoint(high, reader.ch));
+                        } else {
+                            isJavaIdentifierPart = Character.isJavaIdentifierPart(reader.ch);
+                        }
                     }
                 }
                 if (!isJavaIdentifierPart) {
@@ -402,6 +409,7 @@ public class JavaTokenizer {
                     return;
                 }
             }
+            reader.putChar(true);
         } while (true);
     }
 
@@ -663,7 +671,10 @@ public class JavaTokenizer {
                             tk = TokenKind.EOF;
                             pos = reader.buflen;
                         } else {
-                            lexError(pos, "illegal.char", String.valueOf((int)reader.ch));
+                            String arg = (32 < reader.ch && reader.ch < 127) ?
+                                            String.format("%s", reader.ch) :
+                                            String.format("\\u%04x", (int)reader.ch);
+                            lexError(pos, "illegal.char", arg);
                             reader.scanChar();
                         }
                     }

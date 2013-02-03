@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,10 @@ package com.sun.tools.javac.code;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
+
 import javax.lang.model.element.*;
 import javax.tools.JavaFileObject;
 
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
@@ -39,10 +38,13 @@ import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
 import com.sun.tools.javac.model.*;
 import com.sun.tools.javac.tree.JCTree;
-
+import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.Name;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.code.TypeTag.CLASS;
+import static com.sun.tools.javac.code.TypeTag.FORALL;
+import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
 
 /** Root class for Java symbols. It contains subclasses
  *  for specific sorts of symbols, such as variables, methods and operators,
@@ -81,13 +83,21 @@ public abstract class Symbol implements Element {
      *  Attributes of class symbols should be accessed through the accessor
      *  method to make sure that the class symbol is loaded.
      */
-    public List<Attribute.Compound> getAnnotationMirrors() {
-        return Assert.checkNonNull(annotations.getAttributes());
+    public List<Attribute.Compound> getRawAttributes() {
+        return annotations.getDeclarationAttributes();
+    }
+
+    /** An accessor method for the type attributes of this symbol.
+     *  Attributes of class symbols should be accessed through the accessor
+     *  method to make sure that the class symbol is loaded.
+     */
+    public List<Attribute.TypeCompound> getRawTypeAttributes() {
+        return annotations.getTypeAttributes();
     }
 
     /** Fetch a particular annotation from a symbol. */
     public Attribute.Compound attribute(Symbol anno) {
-        for (Attribute.Compound a : getAnnotationMirrors()) {
+        for (Attribute.Compound a : getRawAttributes()) {
             if (a.type.tsym == anno) return a;
         }
         return null;
@@ -161,7 +171,7 @@ public abstract class Symbol implements Element {
         if (owner.name == null || owner.name.isEmpty()) {
             return location();
         }
-        if (owner.type.tag == CLASS) {
+        if (owner.type.hasTag(CLASS)) {
             Type ownertype = types.asOuterSuper(site, owner);
             if (ownertype != null) return ownertype.tsym;
         }
@@ -256,7 +266,7 @@ public abstract class Symbol implements Element {
     /** A class is an inner class if it it has an enclosing instance class.
      */
     public boolean isInner() {
-        return type.getEnclosingType().tag == CLASS;
+        return type.getEnclosingType().hasTag(CLASS);
     }
 
     /** An inner class has an outer instance if it is not an interface
@@ -269,7 +279,7 @@ public abstract class Symbol implements Element {
      */
     public boolean hasOuterInstance() {
         return
-            type.getEnclosingType().tag == CLASS && (flags() & (INTERFACE | NOOUTERTHIS)) == 0;
+            type.getEnclosingType().hasTag(CLASS) && (flags() & (INTERFACE | NOOUTERTHIS)) == 0;
     }
 
     /** The closest enclosing class of this symbol's declaration.
@@ -277,7 +287,7 @@ public abstract class Symbol implements Element {
     public ClassSymbol enclClass() {
         Symbol c = this;
         while (c != null &&
-               ((c.kind & TYP) == 0 || c.type.tag != CLASS)) {
+               ((c.kind & TYP) == 0 || !c.type.hasTag(CLASS))) {
             c = c.owner;
         }
         return (ClassSymbol)c;
@@ -346,7 +356,7 @@ public abstract class Symbol implements Element {
                 e = e.next();
             }
             Type superType = types.supertype(clazz.type);
-            if (superType.tag != TypeTags.CLASS) return false;
+            if (!superType.hasTag(CLASS)) return false;
             clazz = (ClassSymbol)superType.tsym;
         }
     }
@@ -373,7 +383,7 @@ public abstract class Symbol implements Element {
             for (Symbol sup = clazz;
                  sup != null && sup != this.owner;
                  sup = types.supertype(sup.type).tsym) {
-                while (sup.type.tag == TYPEVAR)
+                while (sup.type.hasTag(TYPEVAR))
                     sup = sup.type.getUpperBound().tsym;
                 if (sup.type.isErroneous())
                     return true; // error recovery
@@ -436,11 +446,28 @@ public abstract class Symbol implements Element {
     }
 
     public Set<Modifier> getModifiers() {
-        return Flags.asModifierSet(flags());
+        long flags = flags();
+        return Flags.asModifierSet((flags & DEFAULT) != 0 ? flags & ~ABSTRACT : flags);
     }
 
     public Name getSimpleName() {
         return name;
+    }
+
+    /**
+     * This is the implementation for {@code
+     * javax.lang.model.element.Element.getAnnotationMirrors()}.
+     */
+    public final List<? extends AnnotationMirror> getAnnotationMirrors() {
+        return getRawAttributes();
+    }
+
+    /**
+     * TODO: Should there be a {@code
+     * javax.lang.model.element.Element.getTypeAnnotationMirrors()}.
+     */
+    public final List<Attribute.TypeCompound> getTypeAnnotationMirrors() {
+        return getRawTypeAttributes();
     }
 
     /**
@@ -449,6 +476,11 @@ public abstract class Symbol implements Element {
     @Deprecated
     public <A extends java.lang.annotation.Annotation> A getAnnotation(Class<A> annoType) {
         return JavacElements.getAnnotation(this, annoType);
+    }
+
+    // This method is part of the javax.lang.model API, do not use this in javac code.
+    public <A extends java.lang.annotation.Annotation> A[] getAnnotations(Class<A> annoType) {
+        return JavacElements.getAnnotations(this, annoType);
     }
 
     // TODO: getEnclosedElements should return a javac List, fix in FilteredMemberList
@@ -473,6 +505,7 @@ public abstract class Symbol implements Element {
         public String toString() { return other.toString(); }
         public Symbol location() { return other.location(); }
         public Symbol location(Type site, Types types) { return other.location(site, types); }
+        public Symbol baseSymbol() { return other; }
         public Type erasure(Types types) { return other.erasure(types); }
         public Type externalType(Types types) { return other.externalType(types); }
         public boolean isLocal() { return other.isLocal(); }
@@ -520,7 +553,7 @@ public abstract class Symbol implements Element {
             if (owner == null) return name;
             if (((owner.kind != ERR)) &&
                 ((owner.kind & (VAR | MTH)) != 0
-                 || (owner.kind == TYP && owner.type.tag == TYPEVAR)
+                 || (owner.kind == TYP && owner.type.hasTag(TYPEVAR))
                  )) return name;
             Name prefix = owner.getQualifiedName();
             if (prefix == null || prefix == prefix.table.names.empty)
@@ -534,7 +567,7 @@ public abstract class Symbol implements Element {
         static public Name formFlatName(Name name, Symbol owner) {
             if (owner == null ||
                 (owner.kind & (VAR | MTH)) != 0
-                || (owner.kind == TYP && owner.type.tag == TYPEVAR)
+                || (owner.kind == TYP && owner.type.hasTag(TYPEVAR))
                 ) return name;
             char sep = owner.kind == TYP ? '$' : '.';
             Name prefix = owner.flatName();
@@ -553,16 +586,16 @@ public abstract class Symbol implements Element {
             if (this == that)
                 return false;
             if (this.type.tag == that.type.tag) {
-                if (this.type.tag == CLASS) {
+                if (this.type.hasTag(CLASS)) {
                     return
                         types.rank(that.type) < types.rank(this.type) ||
                         types.rank(that.type) == types.rank(this.type) &&
                         that.getQualifiedName().compareTo(this.getQualifiedName()) < 0;
-                } else if (this.type.tag == TYPEVAR) {
+                } else if (this.type.hasTag(TYPEVAR)) {
                     return types.isSubtype(this.type, that.type);
                 }
             }
-            return this.type.tag == TYPEVAR;
+            return this.type.hasTag(TYPEVAR);
         }
 
         // For type params; overridden in subclasses.
@@ -572,7 +605,7 @@ public abstract class Symbol implements Element {
 
         public java.util.List<Symbol> getEnclosedElements() {
             List<Symbol> list = List.nil();
-            if (kind == TYP && type.tag == TYPEVAR) {
+            if (kind == TYP && type.hasTag(TYPEVAR)) {
                 return list;
             }
             for (Scope.Entry e = members().elems; e != null; e = e.sibling) {
@@ -591,7 +624,7 @@ public abstract class Symbol implements Element {
         }
 
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
-            Assert.check(type.tag == TYPEVAR); // else override will be invoked
+            Assert.check(type.hasTag(TYPEVAR)); // else override will be invoked
             return v.visitTypeParameter(this, p);
         }
 
@@ -658,15 +691,21 @@ public abstract class Symbol implements Element {
             return flags_field;
         }
 
-        public List<Attribute.Compound> getAnnotationMirrors() {
+        @Override
+        public List<Attribute.Compound> getRawAttributes() {
             if (completer != null) complete();
             if (package_info != null && package_info.completer != null) {
                 package_info.complete();
-                if (annotations.isEmpty()) {
-                    annotations.setAttributes(package_info.annotations);
+                mergeAttributes();
             }
+            return super.getRawAttributes();
+        }
+
+        private void mergeAttributes() {
+            if (annotations.isEmpty() &&
+                !package_info.annotations.isEmpty()) {
+                annotations.setAttributes(package_info.annotations);
             }
-            return Assert.checkNonNull(annotations.getAttributes());
         }
 
         /** A package "exists" if a type or package that exists has
@@ -766,9 +805,16 @@ public abstract class Symbol implements Element {
             return members_field;
         }
 
-        public List<Attribute.Compound> getAnnotationMirrors() {
+        @Override
+        public List<Attribute.Compound> getRawAttributes() {
             if (completer != null) complete();
-            return Assert.checkNonNull(annotations.getAttributes());
+            return super.getRawAttributes();
+        }
+
+        @Override
+        public List<Attribute.TypeCompound> getRawTypeAttributes() {
+            if (completer != null) complete();
+            return super.getRawTypeAttributes();
         }
 
         public Type erasure(Types types) {
@@ -798,13 +844,13 @@ public abstract class Symbol implements Element {
             if (this == base) {
                 return true;
             } else if ((base.flags() & INTERFACE) != 0) {
-                for (Type t = type; t.tag == CLASS; t = types.supertype(t))
+                for (Type t = type; t.hasTag(CLASS); t = types.supertype(t))
                     for (List<Type> is = types.interfaces(t);
                          is.nonEmpty();
                          is = is.tail)
                         if (is.head.tsym.isSubClass(base, types)) return true;
             } else {
-                for (Type t = type; t.tag == CLASS; t = types.supertype(t))
+                for (Type t = type; t.hasTag(CLASS); t = types.supertype(t))
                     if (t.tsym == base) return true;
             }
             return false;
@@ -1048,7 +1094,7 @@ public abstract class Symbol implements Element {
          */
         public MethodSymbol(long flags, Name name, Type type, Symbol owner) {
             super(MTH, flags, name, type, owner);
-            if (owner.type.tag == TYPEVAR) Assert.error(owner + "." + name);
+            if (owner.type.hasTag(TYPEVAR)) Assert.error(owner + "." + name);
         }
 
         /** Clone this symbol with new owner.
@@ -1074,7 +1120,7 @@ public abstract class Symbol implements Element {
                     ? owner.name.toString()
                     : name.toString();
                 if (type != null) {
-                    if (type.tag == FORALL)
+                    if (type.hasTag(FORALL))
                         s = "<" + ((ForAll)type).getTypeArguments() + ">" + s;
                     s += "(" + type.argtypes((flags() & VARARGS) != 0) + ")";
                 }
@@ -1190,9 +1236,9 @@ public abstract class Symbol implements Element {
 
             // check for an inherited implementation
             if ((flags() & ABSTRACT) != 0 ||
-                (other.flags() & ABSTRACT) == 0 ||
-                !other.isOverridableIn(origin) ||
-                !this.isMemberOf(origin, types))
+                    ((other.flags() & ABSTRACT) == 0 && (other.flags() & DEFAULT) == 0) ||
+                    !other.isOverridableIn(origin) ||
+                    !this.isMemberOf(origin, types))
                 return false;
 
             // assert types.asSuper(origin.type, other.owner) != null;
@@ -1200,7 +1246,7 @@ public abstract class Symbol implements Element {
             Type ot = types.memberType(origin.type, other);
             return
                 types.isSubSignature(mt, ot) &&
-                (!checkResult || types.resultSubtype(mt, ot, Warner.noWarnings));
+                (!checkResult || types.resultSubtype(mt, ot, types.noWarnings));
         }
 
         private boolean isOverridableIn(TypeSymbol origin) {
@@ -1209,7 +1255,8 @@ public abstract class Symbol implements Element {
             case Flags.PRIVATE:
                 return false;
             case Flags.PUBLIC:
-                return true;
+                return !this.owner.isInterface() ||
+                        (flags_field & STATIC) == 0;
             case Flags.PROTECTED:
                 return (origin.flags() & INTERFACE) == 0;
             case 0:
@@ -1220,6 +1267,18 @@ public abstract class Symbol implements Element {
                     (origin.flags() & INTERFACE) == 0;
             default:
                 return false;
+            }
+        }
+
+        @Override
+        public boolean isInheritedIn(Symbol clazz, Types types) {
+            switch ((int)(flags_field & Flags.AccessFlags)) {
+                case PUBLIC:
+                    return !this.owner.isInterface() ||
+                            clazz == owner ||
+                            (flags_field & STATIC) == 0;
+                default:
+                    return super.isInheritedIn(clazz, types);
             }
         }
 
@@ -1264,8 +1323,9 @@ public abstract class Symbol implements Element {
                 List<Name> paramNames = savedParameterNames;
                 savedParameterNames = null;
                 // discard the provided names if the list of names is the wrong size.
-                if (paramNames == null || paramNames.size() != type.getParameterTypes().size())
+                if (paramNames == null || paramNames.size() != type.getParameterTypes().size()) {
                     paramNames = List.nil();
+                }
                 ListBuffer<VarSymbol> buf = new ListBuffer<VarSymbol>();
                 List<Name> remaining = paramNames;
                 // assert: remaining and paramNames are both empty or both
@@ -1355,6 +1415,10 @@ public abstract class Symbol implements Element {
 
         public boolean isVarArgs() {
             return (flags() & VARARGS) != 0;
+        }
+
+        public boolean isDefault() {
+            return (flags() & DEFAULT) != 0;
         }
 
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {

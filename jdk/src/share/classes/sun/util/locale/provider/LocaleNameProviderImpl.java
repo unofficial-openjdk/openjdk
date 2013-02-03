@@ -26,10 +26,8 @@
 package sun.util.locale.provider;
 
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.spi.LocaleNameProvider;
-import sun.util.resources.OpenListResourceBundle;
 
 /**
  * Concrete implementation of the
@@ -175,17 +173,7 @@ public class LocaleNameProviderImpl extends LocaleNameProvider implements Availa
             throw new NullPointerException();
         }
 
-        OpenListResourceBundle rb = LocaleProviderAdapter.forType(type).getLocaleData().getLocaleNames(locale);
-        LocaleServiceProviderPool pool =
-                LocaleServiceProviderPool.getPool(LocaleNameProvider.class);
-        try {
-            if (!pool.hasProviders() ||
-                (rb.getLocale().equals(locale) && rb.handleGetKeys().contains(key))) {
-                return rb.getString(key);
-            }
-        } catch (MissingResourceException mre) {}
-
-        return null;
+        return LocaleProviderAdapter.forType(type).getLocaleResources(locale).getLocaleName(key);
     }
 
     @Override

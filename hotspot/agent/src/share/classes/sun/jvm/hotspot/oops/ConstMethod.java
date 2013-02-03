@@ -48,6 +48,7 @@ public class ConstMethod extends VMObject {
   private static int HAS_CHECKED_EXCEPTIONS;
   private static int HAS_LOCALVARIABLE_TABLE;
   private static int HAS_EXCEPTION_TABLE;
+  private static int HAS_GENERIC_SIGNATURE;
 
   private static synchronized void initialize(TypeDataBase db) throws WrongTypeException {
     Type type                  = db.lookupType("ConstMethod");
@@ -60,13 +61,16 @@ public class ConstMethod extends VMObject {
     HAS_CHECKED_EXCEPTIONS     = db.lookupIntConstant("ConstMethod::_has_checked_exceptions").intValue();
     HAS_LOCALVARIABLE_TABLE   = db.lookupIntConstant("ConstMethod::_has_localvariable_table").intValue();
     HAS_EXCEPTION_TABLE       = db.lookupIntConstant("ConstMethod::_has_exception_table").intValue();
+    HAS_GENERIC_SIGNATURE     = db.lookupIntConstant("ConstMethod::_has_generic_signature").intValue();
 
     // Size of Java bytecodes allocated immediately after ConstMethod*.
     codeSize                   = new CIntField(type.getCIntegerField("_code_size"), 0);
     nameIndex                  = new CIntField(type.getCIntegerField("_name_index"), 0);
     signatureIndex             = new CIntField(type.getCIntegerField("_signature_index"), 0);
-    genericSignatureIndex      = new CIntField(type.getCIntegerField("_generic_signature_index"),0);
     idnum                      = new CIntField(type.getCIntegerField("_method_idnum"), 0);
+    maxStack                   = new CIntField(type.getCIntegerField("_max_stack"), 0);
+    maxLocals                  = new CIntField(type.getCIntegerField("_max_locals"), 0);
+    sizeOfParameters           = new CIntField(type.getCIntegerField("_size_of_parameters"), 0);
 
     // start of byte code
     bytecodeOffset = type.getSize();
@@ -92,8 +96,10 @@ public class ConstMethod extends VMObject {
   private static CIntField codeSize;
   private static CIntField nameIndex;
   private static CIntField signatureIndex;
-  private static CIntField genericSignatureIndex;
   private static CIntField idnum;
+  private static CIntField maxStack;
+  private static CIntField maxLocals;
+  private static CIntField sizeOfParameters;
 
   // start of bytecode
   private static long bytecodeOffset;
@@ -134,11 +140,27 @@ public class ConstMethod extends VMObject {
   }
 
   public long getGenericSignatureIndex() {
-    return genericSignatureIndex.getValue(this);
+    if (hasGenericSignature()) {
+      return getAddress().getCIntegerAt(offsetOfGenericSignatureIndex(), 2, true);
+    } else {
+      return 0;
+    }
   }
 
   public long getIdNum() {
     return idnum.getValue(this);
+  }
+
+  public long getMaxStack() {
+    return maxStack.getValue(this);
+  }
+
+  public long getMaxLocals() {
+    return maxLocals.getValue(this);
+  }
+
+  public long getSizeOfParameters() {
+    return sizeOfParameters.getValue(this);
   }
 
   public Symbol getName() {
@@ -235,8 +257,10 @@ public class ConstMethod extends VMObject {
       visitor.doCInt(codeSize, true);
       visitor.doCInt(nameIndex, true);
       visitor.doCInt(signatureIndex, true);
-      visitor.doCInt(genericSignatureIndex, true);
       visitor.doCInt(codeSize, true);
+      visitor.doCInt(maxStack, true);
+      visitor.doCInt(maxLocals, true);
+      visitor.doCInt(sizeOfParameters, true);
     }
 
   // Accessors
@@ -353,6 +377,10 @@ public class ConstMethod extends VMObject {
     return ret;
   }
 
+  private boolean hasGenericSignature() {
+    return (getFlags() & HAS_GENERIC_SIGNATURE) != 0;
+  }
+
 
   //---------------------------------------------------------------------------
   // Internals only below this point
@@ -377,8 +405,14 @@ public class ConstMethod extends VMObject {
     return getSize() * VM.getVM().getObjectHeap().getOopSize() - 2;
   }
 
-  private long offsetOfCheckedExceptionsLength() {
+  // Offset of the generic signature index
+  private long offsetOfGenericSignatureIndex() {
     return offsetOfLastU2Element();
+  }
+
+  private long offsetOfCheckedExceptionsLength() {
+    return hasGenericSignature() ? offsetOfLastU2Element() - 2 :
+                                   offsetOfLastU2Element();
   }
 
   private int getCheckedExceptionsLength() {
@@ -431,7 +465,8 @@ public class ConstMethod extends VMObject {
     } else if (hasCheckedExceptions()) {
       return offsetOfCheckedExceptions() - 2;
     } else {
-      return offsetOfLastU2Element();
+      return hasGenericSignature() ? offsetOfLastU2Element() - 2 :
+                                     offsetOfLastU2Element();
     }
   }
 
@@ -460,7 +495,8 @@ public class ConstMethod extends VMObject {
     if (hasCheckedExceptions()) {
       return offsetOfCheckedExceptions() - 2;
     } else {
-      return offsetOfLastU2Element();
+      return hasGenericSignature() ? offsetOfLastU2Element() - 2 :
+                                     offsetOfLastU2Element();
     }
   }
 

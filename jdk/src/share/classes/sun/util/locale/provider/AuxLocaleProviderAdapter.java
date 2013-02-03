@@ -38,11 +38,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.spi.CalendarDataProvider;
+import java.util.spi.CalendarNameProvider;
 import java.util.spi.CurrencyNameProvider;
 import java.util.spi.LocaleNameProvider;
 import java.util.spi.LocaleServiceProvider;
 import java.util.spi.TimeZoneNameProvider;
-import sun.util.resources.LocaleData;
 
 /**
  * An abstract parent class for the
@@ -135,14 +135,13 @@ public abstract class AuxLocaleProviderAdapter extends LocaleProviderAdapter {
         return getLocaleServiceProvider(CalendarDataProvider.class);
     }
 
-
     @Override
-    public LocaleResources getLocaleResources(Locale locale) {
-        return null;
+    public CalendarNameProvider getCalendarNameProvider() {
+        return getLocaleServiceProvider(CalendarNameProvider.class);
     }
 
     @Override
-    public LocaleData getLocaleData() {
+    public LocaleResources getLocaleResources(Locale locale) {
         return null;
     }
 

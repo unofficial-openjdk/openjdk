@@ -40,9 +40,13 @@ fi
 if [ "${TESTJAVA}" = "" ] ; then
     TESTJAVA="/net/radiant/export1/charlie/mustang/build/solaris-sparc"
 fi
+if [ "${COMPILEJAVA}" = "" ]; then
+  COMPILEJAVA="${TESTJAVA}"
+fi
 echo TESTSRC=${TESTSRC}
 echo TESTCLASSES=${TESTCLASSES}
 echo TESTJAVA=${TESTJAVA}
+echo COMPILEJAVA=${COMPILEJAVA}
 echo ""
 
 OS=`uname -s`
@@ -121,14 +125,14 @@ ${CP} ${TESTSRC}${FS}ClientAuthData${FS}key3.db ${TESTCLASSES}
 ${CHMOD} +w ${TESTCLASSES}${FS}key3.db
 
 # compile test
-${TESTJAVA}${FS}bin${FS}javac \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
 	-classpath ${TESTSRC}${FS}..${PS}${TESTSRC}${FS}loader.jar \
 	-d ${TESTCLASSES} \
 	${TESTSRC}${FS}ClientAuth.java
 
 # run test
 echo "Run ClientAuth ..."
-${TESTJAVA}${FS}bin${FS}java \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} \
 	-classpath ${TESTCLASSES}${PS}${TESTSRC}${FS}loader.jar \
 	-DDIR=${TESTSRC}${FS}ClientAuthData${FS} \
 	-DCUSTOM_DB_DIR=${TESTCLASSES} \
@@ -149,7 +153,7 @@ fi
 
 # run test with specified TLS protocol and cipher suite
 echo "Run ClientAuth TLSv1.2 TLS_DHE_RSA_WITH_AES_128_CBC_SHA"
-${TESTJAVA}${FS}bin${FS}java \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} \
 	-classpath ${TESTCLASSES}${PS}${TESTSRC}${FS}loader.jar \
 	-DDIR=${TESTSRC}${FS}ClientAuthData${FS} \
 	-DCUSTOM_DB_DIR=${TESTCLASSES} \

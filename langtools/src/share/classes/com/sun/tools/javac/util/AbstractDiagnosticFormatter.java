@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.api.DiagnosticFormatter;
@@ -43,9 +44,8 @@ import com.sun.tools.javac.code.Printer;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.CapturedType;
-import com.sun.tools.javac.tree.JCTree.*;
-
 import com.sun.tools.javac.file.BaseFileObject;
+import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.tree.Pretty;
 import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticType.*;
 
@@ -484,7 +484,7 @@ public abstract class AbstractDiagnosticFormatter implements DiagnosticFormatter
         /**
          * Tells whether the caret display is active or not.
          *
-         * @param caretEnabled if true the caret is enabled
+         * @return true if the caret is enabled
          */
         public boolean isCaretEnabled() {
             return caretEnabled;

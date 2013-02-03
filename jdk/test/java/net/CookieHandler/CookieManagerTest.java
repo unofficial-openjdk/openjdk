@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,7 +126,7 @@ class CookieHttpTransaction implements HttpCallback {
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
                 new CookieTestCase("Set-Cookie",
-                "CUSTOMER=WILE:BOB; path=/; expires=Wednesday, 09-Nov-2030 23:12:40 GMT;" + "domain=." + localHostAddr,
+                "CUSTOMER=WILE:BOB; path=/; expires=Sat, 09-Nov-2030 23:12:40 GMT;" + "domain=." + localHostAddr,
                 "CUSTOMER=WILE:BOB",
                 "/"
                 ),

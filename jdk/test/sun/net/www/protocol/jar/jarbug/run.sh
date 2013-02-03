@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -59,19 +59,19 @@ esac
 mkdir -p ${DEST}${FS}jar1
 cd ${TESTSRC}${FS}etc${FS}jar1
 cp -r . ${DEST}${FS}jar1
-${TESTJAVA}${FS}bin${FS}javac -d ${DEST}${FS}jar1 \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${DEST}${FS}jar1 \
     ${TESTSRC}${FS}src${FS}jar1${FS}LoadResourceBundle.java
-${TESTJAVA}${FS}bin${FS}javac -d ${DEST}${FS}jar1 \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${DEST}${FS}jar1 \
     ${TESTSRC}${FS}src${FS}jar1${FS}GetResource.java
 cd ${DEST}${FS}jar1
-${TESTJAVA}${FS}bin${FS}jar cfM jar1.jar jar1 res1.txt
+${COMPILEJAVA}${FS}bin${FS}jar ${TESTTOOLVMOPTS} cfM jar1.jar jar1 res1.txt
 mv jar1.jar ..
 #
 # build the test sources and run them
 #
-${TESTJAVA}${FS}bin${FS}javac -d ${DEST} ${TESTSRC}${FS}src${FS}test${FS}*.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${DEST} ${TESTSRC}${FS}src${FS}test${FS}*.java
 cd ${DEST}
-${TESTJAVA}${FS}bin${FS}java RunAllTests
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} RunAllTests
 result=$?
 if [ "$result" -ne "0" ]; then
     exit 1

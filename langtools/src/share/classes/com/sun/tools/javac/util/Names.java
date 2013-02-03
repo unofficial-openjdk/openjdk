@@ -132,6 +132,7 @@ public class Names {
     public final Name LineNumberTable;
     public final Name LocalVariableTable;
     public final Name LocalVariableTypeTable;
+    public final Name MethodParameters;
     public final Name RuntimeInvisibleAnnotations;
     public final Name RuntimeInvisibleParameterAnnotations;
     public final Name RuntimeInvisibleTypeAnnotations;
@@ -169,6 +170,10 @@ public class Names {
     public final Name deprecated;
     public final Name ex;
     public final Name package_info;
+
+    //lambda-related
+    public final Name lambda;
+    public final Name metaFactory;
 
     public final Name.Table table;
 
@@ -261,6 +266,7 @@ public class Names {
         LineNumberTable = fromString("LineNumberTable");
         LocalVariableTable = fromString("LocalVariableTable");
         LocalVariableTypeTable = fromString("LocalVariableTypeTable");
+        MethodParameters = fromString("MethodParameters");
         RuntimeInvisibleAnnotations = fromString("RuntimeInvisibleAnnotations");
         RuntimeInvisibleParameterAnnotations = fromString("RuntimeInvisibleParameterAnnotations");
         RuntimeInvisibleTypeAnnotations = fromString("RuntimeInvisibleTypeAnnotations");
@@ -298,6 +304,10 @@ public class Names {
         deprecated = fromString("deprecated");
         ex = fromString("ex");
         package_info = fromString("package-info");
+
+        //lambda-related
+        lambda = fromString("lambda");
+        metaFactory = fromString("metaFactory");
     }
 
     protected Name.Table createTable(Options options) {

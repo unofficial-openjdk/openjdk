@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,13 @@
 #define OS_SOLARIS_VM_OS_SOLARIS_INLINE_HPP
 
 #include "runtime/atomic.hpp"
+#include "runtime/atomic.inline.hpp"
 #include "runtime/os.hpp"
+
 #ifdef TARGET_OS_ARCH_solaris_x86
-# include "atomic_solaris_x86.inline.hpp"
 # include "orderAccess_solaris_x86.inline.hpp"
 #endif
 #ifdef TARGET_OS_ARCH_solaris_sparc
-# include "atomic_solaris_sparc.inline.hpp"
 # include "orderAccess_solaris_sparc.inline.hpp"
 #endif
 
@@ -49,9 +49,6 @@
 inline const char* os::file_separator() { return "/"; }
 inline const char* os::line_separator() { return "\n"; }
 inline const char* os::path_separator() { return ":"; }
-
-inline const char* os::jlong_format_specifier()   { return "%lld"; }
-inline const char* os::julong_format_specifier()  { return "%llu"; }
 
 // File names are case-sensitive on windows only
 inline int os::file_name_strcmp(const char* s1, const char* s2) {

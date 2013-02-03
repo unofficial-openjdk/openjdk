@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,21 +26,20 @@
 package com.sun.tools.javac.code;
 
 import java.util.Collections;
-
-import com.sun.tools.javac.code.Symbol.*;
-import com.sun.tools.javac.util.*;
-
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.type.*;
 
+import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.util.*;
 import static com.sun.tools.javac.code.BoundKind.*;
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.code.TypeTag.*;
 
 /** This class represents Java types. The class itself defines the behavior of
  *  the following types:
@@ -68,7 +67,7 @@ import static com.sun.tools.javac.code.TypeTags.*;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  *
- *  @see TypeTags
+ *  @see TypeTag
  */
 public class Type implements PrimitiveType {
 
@@ -85,13 +84,75 @@ public class Type implements PrimitiveType {
 
     /** The tag of this type.
      *
-     *  @see TypeTags
+     *  @see TypeTag
      */
-    public int tag;
+    protected TypeTag tag;
 
-    /** The defining class / interface / package / type variable
+    /** The defining class / interface / package / type variable.
      */
     public TypeSymbol tsym;
+
+    /**
+     * Checks if the current type tag is equal to the given tag.
+     * @return true if tag is equal to the current type tag.
+     */
+    public boolean hasTag(TypeTag tag) {
+        return this.tag == tag;
+    }
+
+    /**
+     * Returns the current type tag.
+     * @return the value of the current type tag.
+     */
+    public TypeTag getTag() {
+        return tag;
+    }
+
+    public boolean isNumeric() {
+        switch (tag) {
+            case BYTE: case CHAR:
+            case SHORT:
+            case INT: case LONG:
+            case FLOAT: case DOUBLE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isPrimitive() {
+        return (isNumeric() || tag == BOOLEAN);
+    }
+
+    public boolean isPrimitiveOrVoid() {
+        return (isPrimitive() || tag == VOID);
+    }
+
+    public boolean isReference() {
+        switch (tag) {
+        case CLASS:
+        case ARRAY:
+        case TYPEVAR:
+        case WILDCARD:
+        case ERROR:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    public boolean isNullOrReference() {
+        return (tag == BOT || isReference());
+    }
+
+    public boolean isPartial() {
+        switch(tag) {
+            case ERROR: case UNKNOWN: case UNDETVAR:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     /**
      * The constant value of this type, null if this type does not
@@ -106,7 +167,7 @@ public class Type implements PrimitiveType {
     /**
      * Get the representation of this type used for modelling purposes.
      * By default, this is itself. For ErrorType, a different value
-     * may be provided,
+     * may be provided.
      */
     public Type getModelType() {
         return this;
@@ -123,7 +184,7 @@ public class Type implements PrimitiveType {
 
     /** Define a type given its tag and type symbol
      */
-    public Type(int tag, TypeSymbol tsym) {
+    public Type(TypeTag tag, TypeSymbol tsym) {
         this.tag = tag;
         this.tsym = tsym;
     }
@@ -164,7 +225,7 @@ public class Type implements PrimitiveType {
      */
     public Type constType(Object constValue) {
         final Object value = constValue;
-        Assert.check(tag <= BOOLEAN);
+        Assert.check(isPrimitive());
         return new Type(tag, tsym) {
                 @Override
                 public Object constValue() {
@@ -182,6 +243,14 @@ public class Type implements PrimitiveType {
      * Otherwise, return the type itself.
      */
     public Type baseType() {
+        return this;
+    }
+
+    /**
+     * If this is an annotated type, return the underlying type.
+     * Otherwise, return the type itself.
+     */
+    public Type unannotatedType() {
         return this;
     }
 
@@ -242,10 +311,12 @@ public class Type implements PrimitiveType {
      * never complete classes. Where isSameType would complete a
      * class, equals assumes that the two types are different.
      */
+    @Override
     public boolean equals(Object t) {
         return super.equals(t);
     }
 
+    @Override
     public int hashCode() {
         return super.hashCode();
     }
@@ -277,8 +348,11 @@ public class Type implements PrimitiveType {
             args = args.tail;
             buf.append(',');
         }
-        if (args.head.tag == ARRAY) {
-            buf.append(((ArrayType)args.head).elemtype);
+        if (args.head.unannotatedType().tag == ARRAY) {
+            buf.append(((ArrayType)args.head.unannotatedType()).elemtype);
+            if (args.head.getAnnotations().nonEmpty()) {
+                buf.append(args.head.getAnnotations());
+            }
             buf.append("...");
         } else {
             buf.append(args.head);
@@ -288,10 +362,12 @@ public class Type implements PrimitiveType {
 
     /** Access methods.
      */
+    public List<? extends AnnotationMirror> getAnnotations() { return List.nil(); }
     public List<Type>        getTypeArguments()  { return List.nil(); }
-    public Type              getEnclosingType() { return null; }
+    public Type              getEnclosingType()  { return null; }
     public List<Type>        getParameterTypes() { return List.nil(); }
     public Type              getReturnType()     { return null; }
+    public Type              getReceiverType()   { return null; }
     public List<Type>        getThrownTypes()    { return List.nil(); }
     public Type              getUpperBound()     { return null; }
     public Type              getLowerBound()     { return null; }
@@ -352,10 +428,6 @@ public class Type implements PrimitiveType {
 
     public boolean isFinal() {
         return (tsym.flags() & FINAL) != 0;
-    }
-
-    public boolean isPrimitive() {
-        return tag < VOID;
     }
 
     /**
@@ -542,7 +614,7 @@ public class Type implements PrimitiveType {
 
         /** The enclosing type of this type. If this is the type of an inner
          *  class, outer_field refers to the type of its enclosing
-         *  instance class, in all other cases it referes to noType.
+         *  instance class, in all other cases it refers to noType.
          */
         private Type outer_field;
 
@@ -783,6 +855,49 @@ public class Type implements PrimitiveType {
         }
     }
 
+    // a clone of a ClassType that knows about the bounds of an intersection type.
+    public static class IntersectionClassType extends ClassType implements IntersectionType {
+
+        public boolean allInterfaces;
+
+        public enum IntersectionKind {
+            EXPLICIT,
+            IMPLICT;
+        }
+
+        public IntersectionKind intersectionKind;
+
+        public IntersectionClassType(List<Type> bounds, ClassSymbol csym, boolean allInterfaces) {
+            super(Type.noType, List.<Type>nil(), csym);
+            this.allInterfaces = allInterfaces;
+            Assert.check((csym.flags() & COMPOUND) != 0);
+            supertype_field = bounds.head;
+            interfaces_field = bounds.tail;
+            Assert.check(supertype_field.tsym.completer != null ||
+                    !supertype_field.isInterface(), supertype_field);
+        }
+
+        public java.util.List<? extends TypeMirror> getBounds() {
+            return Collections.unmodifiableList(getComponents());
+        }
+
+        public List<Type> getComponents() {
+            return interfaces_field.prepend(supertype_field);
+        }
+
+        @Override
+        public TypeKind getKind() {
+            return TypeKind.INTERSECTION;
+        }
+
+        @Override
+        public <R, P> R accept(TypeVisitor<R, P> v, P p) {
+            return intersectionKind == IntersectionKind.EXPLICIT ?
+                v.visitIntersection(this, p) :
+                v.visitDeclared(this, p);
+        }
+    }
+
     public static class ArrayType extends Type
             implements javax.lang.model.type.ArrayType {
 
@@ -810,7 +925,7 @@ public class Type implements PrimitiveType {
         }
 
         public int hashCode() {
-            return (ARRAY << 5) + elemtype.hashCode();
+            return (ARRAY.ordinal() << 5) + elemtype.hashCode();
         }
 
         public boolean isVarargs() {
@@ -873,6 +988,10 @@ public class Type implements PrimitiveType {
         public Type restype;
         public List<Type> thrown;
 
+        /** The type annotations on the method receiver.
+         */
+        public Type recvtype;
+
         public MethodType(List<Type> argtypes,
                           Type restype,
                           List<Type> thrown,
@@ -897,36 +1016,9 @@ public class Type implements PrimitiveType {
             return "(" + argtypes + ")" + restype;
         }
 
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!(obj instanceof MethodType))
-                return false;
-            MethodType m = (MethodType)obj;
-            List<Type> args1 = argtypes;
-            List<Type> args2 = m.argtypes;
-            while (!args1.isEmpty() && !args2.isEmpty()) {
-                if (!args1.head.equals(args2.head))
-                    return false;
-                args1 = args1.tail;
-                args2 = args2.tail;
-            }
-            if (!args1.isEmpty() || !args2.isEmpty())
-                return false;
-            return restype.equals(m.restype);
-        }
-
-        public int hashCode() {
-            int h = METHOD;
-            for (List<Type> thisargs = this.argtypes;
-                 thisargs.tail != null; /*inlined: thisargs.nonEmpty()*/
-                 thisargs = thisargs.tail)
-                h = (h << 5) + thisargs.head.hashCode();
-            return (h << 5) + this.restype.hashCode();
-        }
-
         public List<Type>        getParameterTypes() { return argtypes; }
         public Type              getReturnType()     { return restype; }
+        public Type              getReceiverType()   { return recvtype; }
         public List<Type>        getThrownTypes()    { return thrown; }
 
         public boolean isErroneous() {
@@ -955,6 +1047,7 @@ public class Type implements PrimitiveType {
             for (List<Type> l = argtypes; l.nonEmpty(); l = l.tail)
                 l.head.complete();
             restype.complete();
+            recvtype.complete();
             for (List<Type> l = thrown; l.nonEmpty(); l = l.tail)
                 l.head.complete();
         }
@@ -1039,7 +1132,11 @@ public class Type implements PrimitiveType {
         }
 
         @Override
-        public Type getUpperBound() { return bound; }
+        public Type getUpperBound() {
+            if ((bound == null || bound.tag == NONE) && this != tsym.type)
+                bound = tsym.type.getUpperBound();
+            return bound;
+        }
 
         int rank_field = -1;
 
@@ -1101,7 +1198,7 @@ public class Type implements PrimitiveType {
 
     public static abstract class DelegatedType extends Type {
         public Type qtype;
-        public DelegatedType(int tag, Type qtype) {
+        public DelegatedType(TypeTag tag, Type qtype) {
             super(tag, qtype.tsym);
             this.qtype = qtype;
         }
@@ -1110,6 +1207,7 @@ public class Type implements PrimitiveType {
         public Type getEnclosingType() { return qtype.getEnclosingType(); }
         public List<Type> getParameterTypes() { return qtype.getParameterTypes(); }
         public Type getReturnType() { return qtype.getReturnType(); }
+        public Type getReceiverType() { return qtype.getReceiverType(); }
         public List<Type> getThrownTypes() { return qtype.getThrownTypes(); }
         public List<Type> allparams() { return qtype.allparams(); }
         public Type getUpperBound() { return qtype.getUpperBound(); }
@@ -1287,7 +1385,7 @@ public class Type implements PrimitiveType {
     /** Represents VOID or NONE.
      */
     static class JCNoType extends Type implements NoType {
-        public JCNoType(int tag) {
+        public JCNoType(TypeTag tag) {
             super(tag, null);
         }
 
@@ -1309,7 +1407,7 @@ public class Type implements PrimitiveType {
 
     static class BottomType extends Type implements NullType {
         public BottomType() {
-            super(TypeTags.BOT, null);
+            super(BOT, null);
         }
 
         @Override
@@ -1362,7 +1460,7 @@ public class Type implements PrimitiveType {
         }
 
         public Type constType(Object constValue) { return this; }
-        public Type getEnclosingType()          { return this; }
+        public Type getEnclosingType()           { return this; }
         public Type getReturnType()              { return this; }
         public Type asSub(Symbol sym)            { return this; }
         public Type map(Mapping f)               { return this; }
@@ -1388,11 +1486,165 @@ public class Type implements PrimitiveType {
         }
     }
 
+    public static class AnnotatedType extends Type
+            implements javax.lang.model.type.AnnotatedType {
+        /** The type annotations on this type.
+         */
+        public List<Attribute.TypeCompound> typeAnnotations;
+
+        /** The underlying type that is annotated.
+         */
+        public Type underlyingType;
+
+        public AnnotatedType(Type underlyingType) {
+            super(underlyingType.tag, underlyingType.tsym);
+            this.typeAnnotations = List.nil();
+            this.underlyingType = underlyingType;
+            Assert.check(underlyingType.getKind() != TypeKind.ANNOTATED,
+                    "Can't annotate already annotated type: " + underlyingType);
+        }
+
+        public AnnotatedType(List<Attribute.TypeCompound> typeAnnotations,
+                Type underlyingType) {
+            super(underlyingType.tag, underlyingType.tsym);
+            this.typeAnnotations = typeAnnotations;
+            this.underlyingType = underlyingType;
+            Assert.check(underlyingType.getKind() != TypeKind.ANNOTATED,
+                    "Can't annotate already annotated type: " + underlyingType +
+                    "; adding: " + typeAnnotations);
+        }
+
+        @Override
+        public TypeKind getKind() {
+            return TypeKind.ANNOTATED;
+        }
+
+        @Override
+        public List<? extends AnnotationMirror> getAnnotations() {
+            return typeAnnotations;
+        }
+
+        @Override
+        public TypeMirror getUnderlyingType() {
+            return underlyingType;
+        }
+
+        @Override
+        public Type unannotatedType() {
+            return underlyingType;
+        }
+
+        @Override
+        public <R,S> R accept(Type.Visitor<R,S> v, S s) {
+            return v.visitAnnotatedType(this, s);
+        }
+
+        @Override
+        public <R, P> R accept(TypeVisitor<R, P> v, P p) {
+            return v.visitAnnotated(this, p);
+        }
+
+        @Override
+        public Type map(Mapping f) {
+            underlyingType.map(f);
+            return this;
+        }
+
+        @Override
+        public Type constType(Object constValue) { return underlyingType.constType(constValue); }
+        @Override
+        public Type getEnclosingType()           { return underlyingType.getEnclosingType(); }
+
+        @Override
+        public Type getReturnType()              { return underlyingType.getReturnType(); }
+        @Override
+        public List<Type> getTypeArguments()     { return underlyingType.getTypeArguments(); }
+        @Override
+        public List<Type> getParameterTypes()    { return underlyingType.getParameterTypes(); }
+        @Override
+        public Type getReceiverType()            { return underlyingType.getReceiverType(); }
+        @Override
+        public List<Type> getThrownTypes()       { return underlyingType.getThrownTypes(); }
+        @Override
+        public Type getUpperBound()              { return underlyingType.getUpperBound(); }
+        @Override
+        public Type getLowerBound()              { return underlyingType.getLowerBound(); }
+
+        @Override
+        public boolean isErroneous()             { return underlyingType.isErroneous(); }
+        @Override
+        public boolean isCompound()              { return underlyingType.isCompound(); }
+        @Override
+        public boolean isInterface()             { return underlyingType.isInterface(); }
+        @Override
+        public List<Type> allparams()            { return underlyingType.allparams(); }
+        @Override
+        public boolean isNumeric()               { return underlyingType.isNumeric(); }
+        @Override
+        public boolean isReference()             { return underlyingType.isReference(); }
+        @Override
+        public boolean isParameterized()         { return underlyingType.isParameterized(); }
+        @Override
+        public boolean isRaw()                   { return underlyingType.isRaw(); }
+        @Override
+        public boolean isFinal()                 { return underlyingType.isFinal(); }
+        @Override
+        public boolean isSuperBound()            { return underlyingType.isSuperBound(); }
+        @Override
+        public boolean isExtendsBound()          { return underlyingType.isExtendsBound(); }
+        @Override
+        public boolean isUnbound()               { return underlyingType.isUnbound(); }
+
+        @Override
+        public String toString() {
+            // TODO more logic for arrays, etc.
+            if (typeAnnotations != null &&
+                    !typeAnnotations.isEmpty()) {
+                return "(" + typeAnnotations.toString() + " :: " + underlyingType.toString() + ")";
+            } else {
+                return "({} :: " + underlyingType.toString() +")";
+            }
+        }
+
+        @Override
+        public boolean contains(Type t)          { return underlyingType.contains(t); }
+
+        // TODO: attach annotations?
+        @Override
+        public Type withTypeVar(Type t)          { return underlyingType.withTypeVar(t); }
+
+        // TODO: attach annotations?
+        @Override
+        public TypeSymbol asElement()            { return underlyingType.asElement(); }
+
+        // TODO: attach annotations?
+        @Override
+        public MethodType asMethodType()         { return underlyingType.asMethodType(); }
+
+        @Override
+        public void complete()                   { underlyingType.complete(); }
+
+        @Override
+        public TypeMirror getComponentType()     { return ((ArrayType)underlyingType).getComponentType(); }
+
+        // The result is an ArrayType, but only in the model sense, not the Type sense.
+        public AnnotatedType makeVarargs() {
+            AnnotatedType atype = new AnnotatedType(((ArrayType)underlyingType).makeVarargs());
+            atype.typeAnnotations = this.typeAnnotations;
+            return atype;
+        }
+
+        @Override
+        public TypeMirror getExtendsBound()      { return ((WildcardType)underlyingType).getExtendsBound(); }
+        @Override
+        public TypeMirror getSuperBound()        { return ((WildcardType)underlyingType).getSuperBound(); }
+    }
+
     /**
      * A visitor for types.  A visitor is used to implement operations
      * (or relations) on types.  Most common operations on types are
      * binary relations and this interface is designed for binary
-     * relations, that is, operations on the form
+     * relations, that is, operations of the form
      * Type&nbsp;&times;&nbsp;S&nbsp;&rarr;&nbsp;R.
      * <!-- In plain text: Type x S -> R -->
      *
@@ -1413,6 +1665,7 @@ public class Type implements PrimitiveType {
         R visitForAll(ForAll t, S s);
         R visitUndetVar(UndetVar t, S s);
         R visitErrorType(ErrorType t, S s);
+        R visitAnnotatedType(AnnotatedType t, S s);
         R visitType(Type t, S s);
     }
 }

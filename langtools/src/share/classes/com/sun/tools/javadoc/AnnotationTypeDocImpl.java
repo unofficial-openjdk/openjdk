@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,17 +27,21 @@ package com.sun.tools.javadoc;
 
 import com.sun.javadoc.*;
 
-
+import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Names;
-import com.sun.tools.javac.util.Position;
 
 /**
  * Represents an annotation type.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Scott Seligman
  * @since 1.5
@@ -47,12 +51,11 @@ public class AnnotationTypeDocImpl
         extends ClassDocImpl implements AnnotationTypeDoc {
 
     public AnnotationTypeDocImpl(DocEnv env, ClassSymbol sym) {
-        this(env, sym, null, null, null);
+        this(env, sym, null);
     }
 
-    public AnnotationTypeDocImpl(DocEnv env, ClassSymbol sym,
-                          String doc, JCClassDecl tree, Position.LineMap lineMap) {
-        super(env, sym, doc, tree, lineMap);
+    public AnnotationTypeDocImpl(DocEnv env, ClassSymbol sym, TreePath treePath) {
+        super(env, sym, treePath);
     }
 
     /**

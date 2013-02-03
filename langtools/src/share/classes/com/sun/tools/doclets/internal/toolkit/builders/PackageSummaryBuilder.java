@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,18 @@
 package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.io.*;
+
 import com.sun.javadoc.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds the summary for a given package.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -50,40 +52,47 @@ public class PackageSummaryBuilder extends AbstractBuilder {
     /**
      * The package being documented.
      */
-    private PackageDoc packageDoc;
+    private final PackageDoc packageDoc;
 
     /**
      * The doclet specific writer that will output the result.
      */
-    private PackageSummaryWriter packageWriter;
+    private final PackageSummaryWriter packageWriter;
 
     /**
      * The content that will be added to the package summary documentation tree.
      */
     private Content contentTree;
 
-    private PackageSummaryBuilder(Configuration configuration) {
-        super(configuration);
+    /**
+     * Construct a new PackageSummaryBuilder.
+     *
+     * @param context  the build context.
+     * @param pkg the package being documented.
+     * @param packageWriter the doclet specific writer that will output the
+     *        result.
+     */
+    private PackageSummaryBuilder(Context context,
+            PackageDoc pkg,
+            PackageSummaryWriter packageWriter) {
+        super(context);
+        this.packageDoc = pkg;
+        this.packageWriter = packageWriter;
     }
 
     /**
      * Construct a new PackageSummaryBuilder.
-     * @param configuration the current configuration of the doclet.
+     *
+     * @param context  the build context.
      * @param pkg the package being documented.
      * @param packageWriter the doclet specific writer that will output the
      *        result.
      *
      * @return an instance of a PackageSummaryBuilder.
      */
-    public static PackageSummaryBuilder getInstance(
-        Configuration configuration,
-        PackageDoc pkg,
-        PackageSummaryWriter packageWriter) {
-        PackageSummaryBuilder builder =
-                new PackageSummaryBuilder(configuration);
-        builder.packageDoc = pkg;
-        builder.packageWriter = packageWriter;
-        return builder;
+    public static PackageSummaryBuilder getInstance(Context context,
+            PackageDoc pkg, PackageSummaryWriter packageWriter) {
+        return new PackageSummaryBuilder(context, pkg, packageWriter);
     }
 
     /**
@@ -94,7 +103,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
             //Doclet does not support this output.
             return;
         }
-        build(LayoutParser.getInstance(configuration).parseXML(ROOT), contentTree);
+        build(layoutParser.parseXML(ROOT), contentTree);
     }
 
     /**
@@ -117,13 +126,7 @@ public class PackageSummaryBuilder extends AbstractBuilder {
         packageWriter.addPackageFooter(contentTree);
         packageWriter.printDocument(contentTree);
         packageWriter.close();
-        Util.copyDocFiles(
-                configuration,
-                Util.getPackageSourcePath(configuration, packageDoc),
-                DirectoryManager.getDirectoryPath(packageDoc)
-                        + File.separator
-                        + DocletConstants.DOC_FILES_DIR_NAME,
-                true);
+        Util.copyDocFiles(configuration, packageDoc);
     }
 
     /**

@@ -30,7 +30,6 @@
 #include "compiler/oopMap.hpp"
 #include "interpreter/invocationCounter.hpp"
 #include "oops/annotations.hpp"
-#include "oops/constMethod.hpp"
 #include "oops/constantPool.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/oop.hpp"
@@ -74,12 +73,9 @@
 // |------------------------------------------------------|
 // | result_index (C++ interpreter only)                  |
 // |------------------------------------------------------|
-// | method_size             | max_stack                  |
-// | max_locals              | size_of_parameters         |
+// | method_size             |   intrinsic_id|   flags    |
 // |------------------------------------------------------|
-// |intrinsic_id|   flags    |  throwout_count            |
-// |------------------------------------------------------|
-// | num_breakpoints         |  (unused)                  |
+// | throwout_count          |   num_breakpoints          |
 // |------------------------------------------------------|
 // | invocation_counter                                   |
 // | backedge_counter                                     |
@@ -104,6 +100,7 @@ class CheckedExceptionElement;
 class LocalVariableTableElement;
 class AdapterHandlerEntry;
 class MethodData;
+class ConstMethod;
 
 class Method : public Metadata {
  friend class VMStructs;
@@ -118,9 +115,6 @@ class Method : public Metadata {
   int               _result_index;               // C++ interpreter needs for converting results to/from stack
 #endif
   u2                _method_size;                // size of this object
-  u2                _max_stack;                  // Maximum number of entries on the expression stack
-  u2                _max_locals;                 // Number of local variables used by this method
-  u2                _size_of_parameters;         // size of the parameter block (receiver + arguments) in words
   u1                _intrinsic_id;               // vmSymbols::intrinsic_id (0 == _none)
   u1                _jfr_towrite  : 1,           // Flags
                     _force_inline : 1,
@@ -158,16 +152,21 @@ class Method : public Metadata {
   // Constructor
   Method(ConstMethod* xconst, AccessFlags access_flags, int size);
  public:
-  static Method* allocate(ClassLoaderData* loader_data,
-                            int byte_code_size,
-                            AccessFlags access_flags,
-                            int compressed_line_number_size,
-                            int localvariable_table_length,
-                            int exception_table_length,
-                            int checked_exceptions_length,
-                            TRAPS);
 
-  Method() { assert(DumpSharedSpaces || UseSharedSpaces, "only for CDS"); }
+  static Method* allocate(ClassLoaderData* loader_data,
+                          int byte_code_size,
+                          AccessFlags access_flags,
+                          int compressed_line_number_size,
+                          int localvariable_table_length,
+                          int exception_table_length,
+                          int checked_exceptions_length,
+                          int method_parameters_length,
+                          u2 generic_signature_index,
+                          ConstMethod::MethodType method_type,
+                          TRAPS);
+
+  // CDS and vtbl checking can create an empty Method to get vtbl pointer.
+  Method(){}
 
   // The Method vtable is restored by this call when the Method is in the
   // shared archive.  See patch_klass_vtables() in metaspaceShared.cpp for
@@ -207,26 +206,33 @@ class Method : public Metadata {
 
   // annotations support
   AnnotationArray* annotations() const           {
-    InstanceKlass* ik = InstanceKlass::cast(method_holder());
+    InstanceKlass* ik = method_holder();
     if (ik->annotations() == NULL) {
       return NULL;
     }
     return ik->annotations()->get_method_annotations_of(method_idnum());
   }
   AnnotationArray* parameter_annotations() const {
-    InstanceKlass* ik = InstanceKlass::cast(method_holder());
+    InstanceKlass* ik = method_holder();
     if (ik->annotations() == NULL) {
       return NULL;
     }
     return ik->annotations()->get_method_parameter_annotations_of(method_idnum());
   }
   AnnotationArray* annotation_default() const    {
-    InstanceKlass* ik = InstanceKlass::cast(method_holder());
+    InstanceKlass* ik = method_holder();
     if (ik->annotations() == NULL) {
       return NULL;
     }
     return ik->annotations()->get_method_default_annotations_of(method_idnum());
   }
+  AnnotationArray* type_annotations() const {
+  InstanceKlass* ik = method_holder();
+  Annotations* type_annos = ik->type_annotations();
+  if (type_annos == NULL)
+    return NULL;
+  return type_annos->get_method_annotations_of(method_idnum());
+}
 
 #ifdef CC_INTERP
   void set_result_index(BasicType type);
@@ -286,13 +292,13 @@ class Method : public Metadata {
 
   // max stack
   // return original max stack size for method verification
-  int  verifier_max_stack() const                { return _max_stack; }
-  int           max_stack() const                { return _max_stack + extra_stack_entries(); }
-  void      set_max_stack(int size)              {        _max_stack = size; }
+  int  verifier_max_stack() const                { return constMethod()->max_stack(); }
+  int           max_stack() const                { return constMethod()->max_stack() + extra_stack_entries(); }
+  void      set_max_stack(int size)              {        constMethod()->set_max_stack(size); }
 
   // max locals
-  int  max_locals() const                        { return _max_locals; }
-  void set_max_locals(int size)                  { _max_locals = size; }
+  int  max_locals() const                        { return constMethod()->max_locals(); }
+  void set_max_locals(int size)                  { constMethod()->set_max_locals(size); }
 
   int highest_comp_level() const;
   void set_highest_comp_level(int level);
@@ -310,7 +316,8 @@ class Method : public Metadata {
   void set_interpreter_throwout_count(int count) { _interpreter_throwout_count = count; }
 
   // size of parameters
-  int  size_of_parameters() const                { return _size_of_parameters; }
+  int  size_of_parameters() const                { return constMethod()->size_of_parameters(); }
+  void set_size_of_parameters(int size)          { constMethod()->set_size_of_parameters(size); }
 
   bool has_stackmap_table() const {
     return constMethod()->has_stackmap_table();
@@ -344,7 +351,7 @@ class Method : public Metadata {
   // exception handler which caused the exception to be thrown, which
   // is needed for proper retries. See, for example,
   // InterpreterRuntime::exception_handler_for_exception.
-  int fast_exception_handler_bci_for(KlassHandle ex_klass, int throw_bci, TRAPS);
+  static int fast_exception_handler_bci_for(methodHandle mh, KlassHandle ex_klass, int throw_bci, TRAPS);
 
   // method data access
   MethodData* method_data() const              {
@@ -474,6 +481,12 @@ class Method : public Metadata {
   void print_codes_on(outputStream* st) const                      PRODUCT_RETURN;
   void print_codes_on(int from, int to, outputStream* st) const    PRODUCT_RETURN;
 
+  // method parameters
+  int method_parameters_length() const
+                         { return constMethod()->method_parameters_length(); }
+  MethodParametersElement* method_parameters_start() const
+                          { return constMethod()->method_parameters_start(); }
+
   // checked exceptions
   int checked_exceptions_length() const
                          { return constMethod()->checked_exceptions_length(); }
@@ -494,7 +507,7 @@ class Method : public Metadata {
                        { return constMethod()->compressed_linenumber_table(); }
 
   // method holder (the Klass* holding this method)
-  Klass* method_holder() const                 { return constants()->pool_holder(); }
+  InstanceKlass* method_holder() const         { return constants()->pool_holder(); }
 
   void compute_size_of_parameters(Thread *thread); // word size of parameters (receiver if any + arguments)
   Symbol* klass_name() const;                    // returns the name of the method holder
@@ -587,8 +600,6 @@ class Method : public Metadata {
 #ifdef CC_INTERP
   static ByteSize result_index_offset()          { return byte_offset_of(Method, _result_index ); }
 #endif /* CC_INTERP */
-  static ByteSize size_of_locals_offset()        { return byte_offset_of(Method, _max_locals        ); }
-  static ByteSize size_of_parameters_offset()    { return byte_offset_of(Method, _size_of_parameters); }
   static ByteSize from_compiled_offset()         { return byte_offset_of(Method, _from_compiled_entry); }
   static ByteSize code_offset()                  { return byte_offset_of(Method, _code); }
   static ByteSize invocation_counter_offset()    { return byte_offset_of(Method, _invocation_counter); }
@@ -604,7 +615,6 @@ class Method : public Metadata {
   static ByteSize from_interpreted_offset()      { return byte_offset_of(Method, _from_interpreted_entry ); }
   static ByteSize interpreter_entry_offset()     { return byte_offset_of(Method, _i2i_entry ); }
   static ByteSize signature_handler_offset()     { return in_ByteSize(sizeof(Method) + wordSize);      }
-  static ByteSize max_stack_offset()             { return byte_offset_of(Method, _max_stack         ); }
 
   // for code generation
   static int method_data_offset_in_bytes()       { return offset_of(Method, _method_data); }
@@ -695,18 +705,18 @@ class Method : public Metadata {
 
   // Get this method's jmethodID -- allocate if it doesn't exist
   jmethodID jmethod_id()                            { methodHandle this_h(this);
-                                                      return InstanceKlass::get_jmethod_id(InstanceKlass::cast(method_holder()), this_h); }
+                                                      return InstanceKlass::get_jmethod_id(method_holder(), this_h); }
 
   // Lookup the jmethodID for this method.  Return NULL if not found.
   // NOTE that this function can be called from a signal handler
   // (see AsyncGetCallTrace support for Forte Analyzer) and this
   // needs to be async-safe. No allocation should be done and
   // so handles are not used to avoid deadlock.
-  jmethodID find_jmethod_id_or_null()               { return InstanceKlass::cast(method_holder())->jmethod_id_or_null(this); }
+  jmethodID find_jmethod_id_or_null()               { return method_holder()->jmethod_id_or_null(this); }
 
   // JNI static invoke cached itable index accessors
-  int cached_itable_index()                         { return InstanceKlass::cast(method_holder())->cached_itable_index(method_idnum()); }
-  void set_cached_itable_index(int index)           { InstanceKlass::cast(method_holder())->set_cached_itable_index(method_idnum(), index); }
+  int cached_itable_index()                         { return method_holder()->cached_itable_index(method_idnum()); }
+  void set_cached_itable_index(int index)           { method_holder()->set_cached_itable_index(method_idnum(), index); }
 
   // Support for inlining of intrinsic methods
   vmIntrinsics::ID intrinsic_id() const          { return (vmIntrinsics::ID) _intrinsic_id;           }
@@ -725,14 +735,18 @@ class Method : public Metadata {
   void set_dont_inline(bool x)  {        _dont_inline = x;  }
   bool  is_hidden()             { return _hidden;           }
   void set_hidden(bool x)       {        _hidden = x;       }
+  ConstMethod::MethodType method_type() const {
+      return _constMethod->method_type();
+  }
+  bool is_overpass() const { return method_type() == ConstMethod::OVERPASS; }
 
   // On-stack replacement support
   bool has_osr_nmethod(int level, bool match_level) {
-   return InstanceKlass::cast(method_holder())->lookup_osr_nmethod(this, InvocationEntryBci, level, match_level) != NULL;
+   return method_holder()->lookup_osr_nmethod(this, InvocationEntryBci, level, match_level) != NULL;
   }
 
   nmethod* lookup_osr_nmethod_for(int bci, int level, bool match_level) {
-    return InstanceKlass::cast(method_holder())->lookup_osr_nmethod(this, bci, level, match_level);
+    return method_holder()->lookup_osr_nmethod(this, bci, level, match_level);
   }
 
   // Inline cache support
@@ -790,10 +804,8 @@ class Method : public Metadata {
                            Array<AnnotationArray*>* methods_annotations,
                            Array<AnnotationArray*>* methods_parameter_annotations,
                            Array<AnnotationArray*>* methods_default_annotations,
+                           Array<AnnotationArray*>* methods_type_annotations,
                            bool idempotent = false);
-
-  // size of parameters
-  void set_size_of_parameters(int size)          { _size_of_parameters = size; }
 
   // Deallocation function for redefine classes or if an error occurs
   void deallocate_contents(ClassLoaderData* loader_data);
@@ -805,6 +817,9 @@ class Method : public Metadata {
   void print_value_on(outputStream* st) const;
 
   const char* internal_name() const { return "{method}"; }
+
+  // Check for valid method pointer
+  bool is_valid_method() const;
 
   // Verify
   void verify() { verify_on(tty); }

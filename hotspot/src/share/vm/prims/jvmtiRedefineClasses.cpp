@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,7 +222,7 @@ bool VM_RedefineClasses::is_modifiable_class(oop klass_mirror) {
   }
   Klass* the_class_oop = java_lang_Class::as_Klass(klass_mirror);
   // classes for arrays cannot be redefined
-  if (the_class_oop == NULL || !Klass::cast(the_class_oop)->oop_is_instance()) {
+  if (the_class_oop == NULL || !the_class_oop->oop_is_instance()) {
     return false;
   }
   return true;
@@ -573,8 +573,8 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   // Check for NULL superclass first since this might be java.lang.Object
   if (the_class->super() != scratch_class->super() &&
       (the_class->super() == NULL || scratch_class->super() == NULL ||
-       Klass::cast(the_class->super())->name() !=
-       Klass::cast(scratch_class->super())->name())) {
+       the_class->super()->name() !=
+       scratch_class->super()->name())) {
     return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
   }
 
@@ -592,8 +592,8 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
     return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
   }
   for (i = 0; i < n_intfs; i++) {
-    if (Klass::cast(k_interfaces->at(i))->name() !=
-        Klass::cast(k_new_interfaces->at(i))->name()) {
+    if (k_interfaces->at(i)->name() !=
+        k_new_interfaces->at(i)->name()) {
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
     }
   }
@@ -1043,7 +1043,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
 
     Rewriter::rewrite(scratch_class, THREAD);
     if (!HAS_PENDING_EXCEPTION) {
-      Rewriter::relocate_and_link(scratch_class, THREAD);
+      scratch_class->link_methods(THREAD);
     }
     if (HAS_PENDING_EXCEPTION) {
       Symbol* ex_name = PENDING_EXCEPTION->klass()->name();
@@ -1334,20 +1334,8 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
     return JVMTI_ERROR_INTERNAL;
   }
 
-  int orig_length = old_cp->orig_length();
-  if (orig_length == 0) {
-    // This old_cp is an actual original constant pool. We save
-    // the original length in the merged constant pool so that
-    // merge_constant_pools() can be more efficient. If a constant
-    // pool has a non-zero orig_length() value, then that constant
-    // pool was created by a merge operation in RedefineClasses.
-    merge_cp->set_orig_length(old_cp->length());
-  } else {
-    // This old_cp is a merged constant pool from a previous
-    // RedefineClasses() calls so just copy the orig_length()
-    // value.
-    merge_cp->set_orig_length(old_cp->orig_length());
-  }
+  // Update the version number of the constant pool
+  merge_cp->increment_and_save_version(old_cp->version());
 
   ResourceMark rm(THREAD);
   _index_map_count = 0;
@@ -2417,18 +2405,19 @@ void VM_RedefineClasses::set_new_constant_pool(
        int scratch_cp_length, TRAPS) {
   assert(scratch_cp->length() >= scratch_cp_length, "sanity check");
 
-    // scratch_cp is a merged constant pool and has enough space for a
-    // worst case merge situation. We want to associate the minimum
-    // sized constant pool with the klass to save space.
-    constantPoolHandle smaller_cp(THREAD,
-    ConstantPool::allocate(loader_data, scratch_cp_length,
-                                   THREAD));
-    // preserve orig_length() value in the smaller copy
-    int orig_length = scratch_cp->orig_length();
-    assert(orig_length != 0, "sanity check");
-    smaller_cp->set_orig_length(orig_length);
-    scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
-    scratch_cp = smaller_cp;
+  // scratch_cp is a merged constant pool and has enough space for a
+  // worst case merge situation. We want to associate the minimum
+  // sized constant pool with the klass to save space.
+  constantPoolHandle smaller_cp(THREAD,
+          ConstantPool::allocate(loader_data, scratch_cp_length, THREAD));
+
+  // preserve version() value in the smaller copy
+  int version = scratch_cp->version();
+  assert(version != 0, "sanity check");
+  smaller_cp->set_version(version);
+
+  scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
+  scratch_cp = smaller_cp;
 
   // attach new constant pool to klass
   scratch_cp->set_pool_holder(scratch_class());
@@ -2684,7 +2673,7 @@ void VM_RedefineClasses::adjust_cpool_cache_and_vtable(Klass* k_oop,
     // interface, then we have to call adjust_method_entries() for
     // every InstanceKlass that has an itable since there isn't a
     // subclass relationship between an interface and an InstanceKlass.
-    if (ik->itable_length() > 0 && (Klass::cast(_the_class_oop)->is_interface()
+    if (ik->itable_length() > 0 && (_the_class_oop->is_interface()
         || ik->is_subclass_of(_the_class_oop))) {
       // ik->itable() creates a wrapper object; rm cleans it up
       ResourceMark rm(THREAD);
@@ -2929,7 +2918,7 @@ class TransferNativeFunctionRegistration {
                                      Symbol* signature) {
     TempNewSymbol name_symbol = SymbolTable::probe(name_str, (int)name_len);
     if (name_symbol != NULL) {
-      Method* method = Klass::cast(the_class())->lookup_method(name_symbol, signature);
+      Method* method = the_class()->lookup_method(name_symbol, signature);
       if (method != NULL) {
         // Even if prefixed, intermediate methods must exist.
         if (method->is_native()) {
@@ -3338,7 +3327,20 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
     the_class->set_access_flags(flags);
   }
 
-  // Replace annotation fields value
+  // Since there is currently no rewriting of type annotations indexes
+  // into the CP, we null out type annotations on scratch_class before
+  // we swap annotations with the_class rather than facing the
+  // possibility of shipping annotations with broken indexes to
+  // Java-land.
+  Annotations* new_annotations = scratch_class->annotations();
+  if (new_annotations != NULL) {
+    Annotations* new_type_annotations = new_annotations->type_annotations();
+    if (new_type_annotations != NULL) {
+      MetadataFactory::free_metadata(scratch_class->class_loader_data(), new_type_annotations);
+      new_annotations->set_type_annotations(NULL);
+    }
+  }
+  // Swap annotation fields values
   Annotations* old_annotations = the_class->annotations();
   the_class->set_annotations(scratch_class->annotations());
   scratch_class->set_annotations(old_annotations);

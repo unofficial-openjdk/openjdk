@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ echo "NEW_EXT_DIR=${NEW_EXT_DIR}"
 
 cd ${TESTSRC}
 
-${TESTJAVA}/bin/java -cp ${TESTCLASSES} -Djava.ext.dirs=${NEW_EXT_DIR} Bug6299235Test
+${TESTJAVA}/bin/java ${TESTVMOPTS} -cp ${TESTCLASSES} -Djava.ext.dirs=${NEW_EXT_DIR} Bug6299235Test
 
 if [ $? -ne 0 ]
     then

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,14 @@
 package com.sun.tools.javadoc;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Locale;
+
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 
 import com.sun.javadoc.*;
-
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
@@ -40,7 +42,12 @@ import com.sun.tools.javac.util.Position;
 /**
  * This class holds the information from one run of javadoc.
  * Particularly the packages, classes and options specified
- * by the user..
+ * by the user.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @since 1.2
  * @author Robert Field
@@ -325,7 +332,6 @@ public class RootDocImpl extends DocImpl implements RootDoc {
     @Override
     protected String documentation() {
         if (documentation == null) {
-            int cnt = options.length();
             JavaFileObject overviewPath = getOverviewPath();
             if (overviewPath == null) {
                 // no doc file to be had
@@ -362,5 +368,20 @@ public class RootDocImpl extends DocImpl implements RootDoc {
      */
     public Locale getLocale() {
         return env.doclocale.locale;
+    }
+
+    /**
+     * Return the current file manager.
+     */
+    public JavaFileManager getFileManager() {
+        return env.fileManager;
+    }
+
+    public void initDocLint(Collection<String> opts) {
+        env.initDoclint(opts);
+    }
+
+    public boolean showTagMessages() {
+        return env.showTagMessages();
     }
 }

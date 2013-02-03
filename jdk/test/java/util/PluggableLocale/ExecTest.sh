@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,10 @@ if [ "${TESTJAVA}" = "" ]
 then
   echo "TESTJAVA not set.  Test cannot execute.  Failed."
   exit 1
+fi
+if [ "${COMPILEJAVA}" = "" ]
+then
+  COMPILEJAVA="${TESTJAVA}"
 fi
 echo "TESTJAVA=${TESTJAVA}"
 if [ "${TESTCLASSES}" = "" ]
@@ -99,7 +103,8 @@ esac
 # compile
 cp ${TESTSRC}${FS}ProviderTest.java .
 cp ${TESTSRC}${FS}$2.java .
-COMPILE="${TESTJAVA}${FS}bin${FS}javac -XDignore.symbol.file -d . -classpath ${CLASSPATHARG} $2.java"
+COMPILE="${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
+    -XDignore.symbol.file -d . -classpath ${CLASSPATHARG} $2.java"
 echo ${COMPILE}
 ${COMPILE}
 result=$?
@@ -119,9 +124,9 @@ fi
 # run
 if [ "$3" = "true" ]
 then
-  RUNCMD="${TESTJAVA}${FS}bin${FS}java -Djava.ext.dirs=${EXTDIRS} $2 "
+  RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -Djava.ext.dirs=${EXTDIRS} $2 "
 else
-  RUNCMD="${TESTJAVA}${FS}bin${FS}java -classpath ${CLASSPATHARG} $2 "
+  RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${CLASSPATHARG} $2 "
 fi
 
 echo ${RUNCMD}

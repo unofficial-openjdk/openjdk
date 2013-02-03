@@ -23,189 +23,109 @@
 # questions.
 #
 
-# Utilities used in this Makefile
-BASENAME=basename
-CAT=cat
-CD=cd
-CMP=cmp
-CP=cp
-ECHO=echo
-MKDIR=mkdir
-PWD=pwd
-SH=sh
-ifeq ($(PLATFORM),windows)
-  ZIP=zip
+# This must be the first rule
+default:
+
+# Inclusion of this pseudo-target will cause make to execute this file
+# serially, regardless of -j. Recursively called makefiles will not be
+# affected, however. This is required for correct dependency management.
+.NOTPARALLEL:
+
+# The shell code below will be executed on /usr/ccs/bin/make on Solaris, but not in GNU make.
+# /usr/ccs/bin/make lacks basically every other flow control mechanism.
+TEST_FOR_NON_GNUMAKE:sh=echo You are not using GNU make/gmake, this is a requirement. Check your path. 1>&2 && exit 1
+
+# Assume we have GNU make, but check version.
+ifeq (,$(findstring 3.81,$(MAKE_VERSION)))
+    ifeq (,$(findstring 3.82,$(MAKE_VERSION)))
+        $(error This version of GNU Make is too low ($(MAKE_VERSION)). Check your path, or upgrade to 3.81 or newer.)
+    endif
+endif
+
+# Locate this Makefile
+ifeq ($(filter /%,$(lastword $(MAKEFILE_LIST))),)
+    makefile_path:=$(CURDIR)/$(lastword $(MAKEFILE_LIST))
 else
-  # store symbolic links as the link
-  ZIP=zip -y
+    makefile_path:=$(lastword $(MAKEFILE_LIST))
 endif
-# Insure we have a path that looks like it came from pwd
-#   (This is mostly for Windows sake and drive letters)
-define UnixPath # path
-$(shell (cd "$1" && $(PWD)))
-endef
+root_dir:=$(dir $(makefile_path))
 
-# Current root directory
-CURRENT_DIRECTORY := $(shell $(PWD))
+# ... and then we can include our helper functions
+include $(root_dir)/common/makefiles/MakeHelpers.gmk
 
-# Build directory root
-BUILD_DIR_ROOT = $(CURRENT_DIRECTORY)/build
+$(eval $(call ParseLogLevel))
+$(eval $(call ParseConfAndSpec))
 
-# All configured Makefiles to run
-ALL_MAKEFILES = $(wildcard $(BUILD_DIR_ROOT)/*-*/Makefile)
-
-# All bundles to create
-ALL_IMAGE_DIRS = $(wildcard $(BUILD_DIR_ROOT)/*-*/images/*-image)
-
-# Build all the standard 'all', 'images', and 'clean' targets
-all images clean: checks
-	@if [ "$(ALL_MAKEFILES)" = "" ] ; then \
-	  $(ECHO) "ERROR: No configurations to build"; exit 1; \
-	fi
-	@for bdir in $(dir $(ALL_MAKEFILES)) ; do \
-	  $(ECHO) "$(CD) $${bdir} && $(MAKE) $(EXTRA_MAKE_ARGS) $@" ; \
-	  $(CD) $${bdir} && $(MAKE) $(EXTRA_MAKE_ARGS) $@ ; \
-	done
-
-# Bundle creation
-bundles:
-	@if [ "$(ALL_IMAGE_DIRS)" = "" ] ; then \
-	  $(ECHO) "ERROR: No images to bundle"; exit 1; \
-	fi
-	@for i in $(ALL_IMAGE_DIRS) ; do \
-          $(MKDIR) -p $${i}/../../bundles && \
-          $(RM) $${i}/../../bundles/`$(BASENAME) $${i}`.zip && \
-	  $(ECHO) "$(CD) $${i} && $(ZIP) -q -r ../../bundles/`$(BASENAME) $${i}`.zip ."  && \
-	  $(CD) $${i} && $(ZIP) -q -r ../../bundles/`$(BASENAME) $${i}`.zip . ; \
-	done
-
-# Clobber all the built files
-clobber::
-	$(RM) -r $(BUILD_DIR_ROOT)
-
-# Make various checks to insure the build will be successful
-#   Possibilities:
-#     * Check that if any closed repo is provided, they all must be.
-#     * Check that all open repos exist, at least until we are ready for some
-#       kind of partial build.
-checks:
-	@$(ECHO) "No checks yet"
-
-# Keep track of phony targets
-PHONY_LIST += all images clean clobber checks
-
-###########################################################################
-# To help in adoption of the new configure&&make build process, a bridge
-#   build will use the old settings to run configure and do the build.
-
-# Build with the configure bridge
-bridgeBuild: bridge2configure images
-
-# Bridge from old Makefile ALT settings to configure options
-bridge2configure: .bridge2configureOpts
-	$(CD) common/makefiles && sh ../autoconf/configure $(strip $(shell $(CAT) $<))
-
-# Create a file with configure options created from old Makefile mechanisms.
-.bridge2configureOpts: .bridge2configureOptsLatest
-	$(RM) $@
-	$(CP) $< $@
-
-# In case make was invoked from a specific path
-_MAKE_COMMAND_PATH:=$(firstword $(MAKE))
-ifneq ($(dir $(_MAKE_COMMAND_PATH)),./)
-  # This could be removed someday if JPRT was fixed and we could assume that
-  #    the path to make was always in PATH.
-  MAKE_BINDIR:=$(call UnixPath,$(dir $(_MAKE_COMMAND_PATH)))
-  NEWPATH:=$(MAKE_BINDIR):${PATH}
-  PATH:=$(NEWPATH)
-  export PATH
-  MAKE_COMMAND=$(MAKE_BINDIR)/$(notdir $(_MAKE_COMMAND_PATH))
+# Now determine if we have zero, one or several configurations to build.
+ifeq ($(SPEC),)
+    # Since we got past ParseConfAndSpec, we must be building a global target. Do nothing.
 else
-  MAKE_COMMAND=$(_MAKE_COMMAND_PATH)
+    ifeq ($(words $(SPEC)),1)
+        # We are building a single configuration. This is the normal case. Execute the Main.gmk file.
+        include $(root_dir)/common/makefiles/Main.gmk
+    else
+        # We are building multiple configurations.
+        # First, find out the valid targets
+        # Run the makefile with an arbitraty SPEC using -p -q (quiet dry-run and dump rules) to find
+        # available PHONY targets. Use this list as valid targets to pass on to the repeated calls.
+        all_phony_targets=$(filter-out $(global_targets), $(strip $(shell \
+            $(MAKE) -p -q -f common/makefiles SPEC=$(firstword $(SPEC)) | \
+            grep ^.PHONY: | head -n 1 | cut -d " " -f 2-)))
+
+$(all_phony_targets):
+	@$(foreach spec,$(SPEC),($(MAKE) -f NewMakefile.gmk SPEC=$(spec) $(VERBOSE) VERBOSE=$(VERBOSE) $@) &&) true
+
+    endif
 endif
 
-# Use this file to only change when obvious things have changed
-.bridge2configureOptsLatest: FRC
-	$(RM) $@.tmp
-	@$(ECHO) " MAKE=$(MAKE_COMMAND) " >> $@.tmp
-	@$(ECHO) " --with-debug-level=$(if $(DEBUG_LEVEL),$(DEBUG_LEVEL),release) " >> $@.tmp
-ifdef ARCH_DATA_MODEL
-	@$(ECHO) " --with-target-bits=$(ARCH_DATA_MODEL) " >> $@.tmp
-endif
-ifdef ALT_PARALLEL_COMPILE_JOBS
-	@$(ECHO) " --with-num-cores=$(ALT_PARALLEL_COMPILE_JOBS) " >> $@.tmp
-endif
-ifdef ALT_BOOTDIR
-	@$(ECHO) " --with-boot-jdk=$(call UnixPath,$(ALT_BOOTDIR)) " >> $@.tmp
-endif
-ifdef ALT_CUPS_HEADERS_PATH
-	@$(ECHO) " --with-cups-include=$(call UnixPath,$(ALT_CUPS_HEADERS_PATH)) " >> $@.tmp
-endif
-ifdef ALT_FREETYPE_HEADERS_PATH
-	@$(ECHO) " --with-freetype=$(call UnixPath,$(ALT_FREETYPE_HEADERS_PATH)/..) " >> $@.tmp
-endif
-	@if [ -f $@ ] ; then \
-          if ! $(CMP) $@ $@.tmp > /dev/null ; then \
-            $(CP) $@.tmp $@ ; \
-          fi ; \
-        else \
-          $(CP) $@.tmp $@ ; \
-        fi
-	$(RM) $@.tmp
+# Include this after a potential spec file has been included so that the bundles target
+# has access to the spec variables.
+include $(root_dir)/common/makefiles/Jprt.gmk
 
-# Clobber all the built files
-clobber:: bridge2clobber
-bridge2clobber::
-	$(RM) .bridge2*
+# Here are "global" targets, i.e. targets that can be executed without specifying a single configuration.
+# If you addd more global targets, please update the variable global_targets in MakeHelpers.
 
-# Keep track of phony targets
-PHONY_LIST += bridge2configure bridgeBuild bridge2clobber
+help:
+	$(info )
+	$(info OpenJDK Makefile help)
+	$(info =====================)
+	$(info )
+	$(info Common make targets)
+	$(info .  make [default]         # Compile all product in langtools, hotspot, jaxp, jaxws,)
+	$(info .                         # corba and jdk)
+	$(info .  make all               # Compile everything, all repos and images)
+	$(info .  make images            # Create complete j2sdk and j2re images)
+	$(info .  make overlay-images    # Create limited images for sparc 64 bit platforms)
+	$(info .  make bootcycle-images  # Build images twice, second time with newly build JDK)
+	$(info .  make install           # Install the generated images locally)
+	$(info .  make clean             # Remove all files generated by make, but not those)
+	$(info .                         # generated by configure)
+	$(info .  make dist-clean        # Remove all files, including configuration)
+	$(info .  make help              # Give some help on using make)
+	$(info .  make test              # Run tests, default is all tests (see TEST below))
+	$(info )
+	$(info Targets for specific components)
+	$(info (Component is any of langtools, corba, jaxp, jaxws, hotspot, jdk, images or overlay-images))
+	$(info .  make <component>       # Build <component> and everything it depends on. )
+	$(info .  make <component>-only  # Build <component> only, without dependencies. This)
+	$(info .                         # is faster but can result in incorrect build results!)
+	$(info .  make clean-<component> # Remove files generated by make for <component>)
+	$(info )
+	$(info Useful make variables)
+	$(info .  make CONF=             # Build all configurations (note, assignment is empty))
+	$(info .  make CONF=<substring>  # Build the configuration(s) with a name matching)
+	$(info .                         # <substring>)
+	$(info )
+	$(info .  make LOG=<loglevel>    # Change the log level from warn to <loglevel>)
+	$(info .                         # Available log levels are:)
+	$(info .                         # 'warn' (default), 'info', 'debug' and 'trace')
+	$(info .                         # To see executed command lines, use LOG=debug)
+	$(info )
+	$(info .  make JOBS=<n>          # Run <n> parallel make jobs)
+	$(info .                         # Note that -jN does not work as expected!)
+	$(info )
+	$(info .  make test TEST=<test>  # Only run the given test or tests, e.g.)
+	$(info .                         # make test TEST="jdk_lang jdk_net")
+	$(info )
 
-###########################################################################
-# Javadocs
-#
-
-javadocs:
-	cd common/makefiles && $(MAKE) -f MakefileJavadoc.gmk
-
-# Keep track of phony targets
-PHONY_LIST += javadocs
-
-###########################################################################
-# JPRT targets
-
-ifndef JPRT_ARCHIVE_BUNDLE
-  JPRT_ARCHIVE_BUNDLE=/tmp/jprt_bundles/j2sdk-image.zip
-endif
-
-jprt_build_product: DEBUG_LEVEL=release
-jprt_build_product: BUILD_DIRNAME=*-release
-jprt_build_product: jprt_build_generic
-
-jprt_build_fastdebug: DEBUG_LEVEL=fastdebug
-jprt_build_fastdebug: BUILD_DIRNAME=*-fastdebug
-jprt_build_fastdebug: jprt_build_generic
-
-jprt_build_debug: DEBUG_LEVEL=slowdebug
-jprt_build_debug: BUILD_DIRNAME=*-debug
-jprt_build_debug: jprt_build_generic
-
-jprt_build_generic: EXTRA_MAKE_ARGS=LOG=nofile,info
-jprt_build_generic: $(JPRT_ARCHIVE_BUNDLE)
-
-$(JPRT_ARCHIVE_BUNDLE): bridgeBuild bundles
-	$(MKDIR) -p $(@D)
-	$(RM) $@
-	$(CP) $(BUILD_DIR_ROOT)/$(BUILD_DIRNAME)/bundles/j2sdk-image.zip $@
-
-# Keep track of phony targets
-PHONY_LIST += jprt_build_product jprt_build_fastdebug jprt_build_debug \
-              jprt_build_generic
-
-###########################################################################
-# Phony targets
-.PHONY: $(PHONY_LIST)
-
-# Force target
-FRC:
-
+.PHONY: help

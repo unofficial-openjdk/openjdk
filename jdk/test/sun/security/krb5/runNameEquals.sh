@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,10 @@ if [ "${TESTJAVA}" = "" ] ; then
    exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ]; then
+    COMPILEJAVA="${TESTJAVA}"
+fi
+
 NATIVE=false
 
 # set platform-dependent variables
@@ -73,7 +77,7 @@ esac
 
 TEST=Krb5NameEquals
 
-${TESTJAVA}${FILESEP}bin${FILESEP}javac \
+${COMPILEJAVA}${FILESEP}bin${FILESEP}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
     -d ${TESTCLASSES}${FILESEP} \
     ${TESTSRC}${FILESEP}${TEST}.java
 
@@ -81,7 +85,7 @@ EXIT_STATUS=0
 
 if [ "${NATIVE}" = "true" ] ; then
     echo "Testing native provider"
-    ${TESTJAVA}${FILESEP}bin${FILESEP}java \
+    ${TESTJAVA}${FILESEP}bin${FILESEP}java ${TESTVMOPTS} \
         -classpath ${TESTCLASSES} \
         -Dsun.security.jgss.native=true \
         ${TEST}
@@ -92,7 +96,7 @@ if [ "${NATIVE}" = "true" ] ; then
 fi
 
 echo "Testing java provider"
-${TESTJAVA}${FILESEP}bin${FILESEP}java \
+${TESTJAVA}${FILESEP}bin${FILESEP}java ${TESTVMOPTS} \
         -classpath ${TESTCLASSES} \
         -Djava.security.krb5.realm=R \
         -Djava.security.krb5.kdc=127.0.0.1 \

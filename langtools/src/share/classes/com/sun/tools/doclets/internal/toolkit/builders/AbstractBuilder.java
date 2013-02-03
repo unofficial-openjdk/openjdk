@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,12 @@
 
 package com.sun.tools.doclets.internal.toolkit.builders;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * The superclass for all builders.  A builder is a class that provides
@@ -41,27 +42,56 @@ import java.util.*;
  * do is implement the ConstantsSummaryWriter interface and pass it to the
  * builder using a WriterFactory.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @since 1.5
  */
 
 public abstract class AbstractBuilder {
+    public static class Context {
+        /**
+         * The configuration used in this run of the doclet.
+         */
+        final Configuration configuration;
+
+        /**
+         * Keep track of which packages we have seen for
+         * efficiency purposes.  We don't want to copy the
+         * doc files multiple times for a single package.
+         */
+        final Set<String> containingPackagesSeen;
+
+        /**
+         * Shared parser for the builder XML file
+         */
+        final LayoutParser layoutParser;
+
+        Context(Configuration configuration,
+                Set<String> containingPackagesSeen,
+                LayoutParser layoutParser) {
+            this.configuration = configuration;
+            this.containingPackagesSeen = containingPackagesSeen;
+            this.layoutParser = layoutParser;
+        }
+    }
 
     /**
      * The configuration used in this run of the doclet.
      */
-    protected Configuration configuration;
+    protected final Configuration configuration;
 
     /**
      * Keep track of which packages we have seen for
      * efficiency purposes.  We don't want to copy the
      * doc files multiple times for a single package.
      */
-    protected static Set<String> containingPackagesSeen;
+    protected final Set<String> containingPackagesSeen;
+
+    protected final LayoutParser layoutParser;
 
     /**
      * True if we want to print debug output.
@@ -73,8 +103,10 @@ public abstract class AbstractBuilder {
      * @param configuration the configuration used in this run
      *        of the doclet.
      */
-    public AbstractBuilder(Configuration configuration) {
-        this.configuration = configuration;
+    public AbstractBuilder(Context c) {
+        this.configuration = c.configuration;
+        this.containingPackagesSeen = c.containingPackagesSeen;
+        this.layoutParser = c.layoutParser;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,11 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Writes nested class documentation in HTML format.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Robert Field
  * @author Atul M Dambalkar
@@ -88,16 +93,16 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public String getTableSummary() {
-        return configuration().getText("doclet.Member_Table_Summary",
-                configuration().getText("doclet.Nested_Class_Summary"),
-                configuration().getText("doclet.nested_classes"));
+        return configuration.getText("doclet.Member_Table_Summary",
+                configuration.getText("doclet.Nested_Class_Summary"),
+                configuration.getText("doclet.nested_classes"));
     }
 
     /**
      * {@inheritDoc}
      */
     public String getCaption() {
-        return configuration().getText("doclet.Nested_Classes");
+        return configuration.getText("doclet.Nested_Classes");
     }
 
     /**
@@ -108,17 +113,17 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         if (member.isInterface()) {
             header = new String[] {
                 writer.getModifierTypeHeader(),
-                configuration().getText("doclet.0_and_1",
-                        configuration().getText("doclet.Interface"),
-                        configuration().getText("doclet.Description"))
+                configuration.getText("doclet.0_and_1",
+                        configuration.getText("doclet.Interface"),
+                        configuration.getText("doclet.Description"))
             };
         }
         else {
             header = new String[] {
                 writer.getModifierTypeHeader(),
-                configuration().getText("doclet.0_and_1",
-                        configuration().getText("doclet.Class"),
-                        configuration().getText("doclet.Description"))
+                configuration.getText("doclet.0_and_1",
+                        configuration.getText("doclet.Class"),
+                        configuration.getText("doclet.Description"))
             };
         }
         return header;
@@ -146,8 +151,8 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
         Content classLink = new RawHtml(writer.getPreQualifiedClassLink(
                 LinkInfoImpl.CONTEXT_MEMBER, cd, false));
         Content label = new StringContent(cd.isInterface() ?
-            configuration().getText("doclet.Nested_Classes_Interface_Inherited_From_Interface") :
-            configuration().getText("doclet.Nested_Classes_Interfaces_Inherited_From_Class"));
+            configuration.getText("doclet.Nested_Classes_Interface_Inherited_From_Interface") :
+            configuration.getText("doclet.Nested_Classes_Interfaces_Inherited_From_Class"));
         Content labelHeading = HtmlTree.HEADING(HtmlConstants.INHERITED_SUMMARY_HEADING,
                 label);
         labelHeading.addContent(writer.getSpace());
@@ -161,7 +166,7 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     protected void addSummaryLink(int context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
         Content strong = HtmlTree.STRONG(new RawHtml(
-                writer.getLink(new LinkInfoImpl(context, (ClassDoc)member, false))));
+                writer.getLink(new LinkInfoImpl(configuration, context, (ClassDoc)member, false))));
         Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
@@ -172,7 +177,7 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
     protected void addInheritedSummaryLink(ClassDoc cd,
             ProgramElementDoc member, Content linksTree) {
         linksTree.addContent(new RawHtml(
-                writer.getLink(new LinkInfoImpl(LinkInfoImpl.CONTEXT_MEMBER,
+                writer.getLink(new LinkInfoImpl(configuration, LinkInfoImpl.CONTEXT_MEMBER,
                 (ClassDoc)member, false))));
     }
 
@@ -198,9 +203,8 @@ public class NestedClassWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink("", (cd == null) ? "nested_class_summary":
-                "nested_classes_inherited_from_class_" +
-                cd.qualifiedName(),
+            return writer.getHyperLink((cd == null) ? "nested_class_summary":
+                "nested_classes_inherited_from_class_" + cd.qualifiedName(),
                 writer.getResource("doclet.navNested"));
         } else {
             return writer.getResource("doclet.navNested");

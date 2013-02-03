@@ -68,6 +68,12 @@ class CallGenerator : public ResourceObj {
 
   // is_late_inline: supports conversion of call into an inline
   virtual bool      is_late_inline() const      { return false; }
+  // same but for method handle calls
+  virtual bool      is_mh_late_inline() const   { return false; }
+
+  // for method handle calls: have we tried inlinining the call already?
+  virtual bool      already_attempted() const   { ShouldNotReachHere(); return false; }
+
   // Replace the call with an inline version of the code
   virtual void do_late_inline() { ShouldNotReachHere(); }
 
@@ -112,11 +118,13 @@ class CallGenerator : public ResourceObj {
   static CallGenerator* for_virtual_call(ciMethod* m, int vtable_index);  // virtual, interface
   static CallGenerator* for_dynamic_call(ciMethod* m);   // invokedynamic
 
-  static CallGenerator* for_method_handle_call(  JVMState* jvms, ciMethod* caller, ciMethod* callee);
-  static CallGenerator* for_method_handle_inline(JVMState* jvms, ciMethod* caller, ciMethod* callee);
+  static CallGenerator* for_method_handle_call(  JVMState* jvms, ciMethod* caller, ciMethod* callee, bool delayed_forbidden);
+  static CallGenerator* for_method_handle_inline(JVMState* jvms, ciMethod* caller, ciMethod* callee, bool& input_not_const);
 
   // How to generate a replace a direct call with an inline version
   static CallGenerator* for_late_inline(ciMethod* m, CallGenerator* inline_cg);
+  static CallGenerator* for_mh_late_inline(ciMethod* caller, ciMethod* callee, bool input_not_const);
+  static CallGenerator* for_string_late_inline(ciMethod* m, CallGenerator* inline_cg);
 
   // How to make a call but defer the decision whether to inline or not.
   static CallGenerator* for_warm_call(WarmCallInfo* ci,
@@ -143,10 +151,15 @@ class CallGenerator : public ResourceObj {
   // Registry for intrinsics:
   static CallGenerator* for_intrinsic(ciMethod* m);
   static void register_intrinsic(ciMethod* m, CallGenerator* cg);
+  static CallGenerator* for_predicted_intrinsic(CallGenerator* intrinsic,
+                                                CallGenerator* cg);
+  virtual Node* generate_predicate(JVMState* jvms) { return NULL; };
 
-  static void print_inlining(ciMethod* callee, int inline_level, int bci, const char* msg) {
+  virtual void print_inlining_late(const char* msg) { ShouldNotReachHere(); }
+
+  static void print_inlining(Compile* C, ciMethod* callee, int inline_level, int bci, const char* msg) {
     if (PrintInlining)
-      CompileTask::print_inlining(callee, inline_level, bci, msg);
+      C->print_inlining(callee, inline_level, bci, msg);
   }
 };
 

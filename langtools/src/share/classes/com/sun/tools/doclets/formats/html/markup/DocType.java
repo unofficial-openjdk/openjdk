@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,31 @@
 
 package com.sun.tools.doclets.formats.html.markup;
 
+import java.io.IOException;
+import java.io.Writer;
+
 import com.sun.tools.doclets.internal.toolkit.Content;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Class for generating document type for HTML pages of javadoc output.
  *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
+ *
  * @author Bhavesh Patel
  */
-public class DocType extends Content{
+public class DocType extends Content {
 
     private String docType;
 
-    private static DocType transitional;
+    public static final DocType TRANSITIONAL =
+            new DocType("Transitional", "http://www.w3.org/TR/html4/loose.dtd");
 
-    private static DocType frameset;
+    public static final DocType FRAMESET =
+            new DocType("Frameset", "http://www.w3.org/TR/html4/frameset.dtd");
 
     /**
      * Constructor to construct a DocType object.
@@ -49,28 +59,6 @@ public class DocType extends Content{
     private DocType(String type, String dtd) {
         docType = "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 " + type +
                 "//EN\" \"" + dtd + "\">" + DocletConstants.NL;
-    }
-
-     /**
-     * Construct and return a HTML 4.01 transitional DocType content
-     *
-     * @return a content tree for transitional DocType
-     */
-    public static DocType Transitional() {
-        if (transitional == null)
-            transitional = new DocType("Transitional", "http://www.w3.org/TR/html4/loose.dtd");
-        return transitional;
-    }
-
-    /**
-     * Construct and return a HTML 4.01 frameset DocType content
-     *
-     * @return a content tree for frameset DocType
-     */
-    public static DocType Frameset() {
-        if (frameset == null)
-            frameset = new DocType("Frameset", "http://www.w3.org/TR/html4/frameset.dtd");
-        return frameset;
     }
 
     /**
@@ -107,7 +95,9 @@ public class DocType extends Content{
     /**
      * {@inheritDoc}
      */
-    public void write(StringBuilder contentBuilder) {
-        contentBuilder.append(docType);
+    @Override
+    public boolean write(Writer out, boolean atNewline) throws IOException {
+        out.write(docType);
+        return true; // guaranteed by constructor
     }
 }

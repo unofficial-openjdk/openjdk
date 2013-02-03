@@ -46,24 +46,26 @@ case "$OS" in
            echo "Could not find the directory-" ${TMP} "- passing test"
 	   exit 0;
 	fi
-	${TESTJAVA}/bin/javac -d . ${TESTSRC}\\FileOpenPos.java
-	${TESTJAVA}/bin/javac -d . ${TESTSRC}\\FileOpenNeg.java
+	${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
+	    ${TESTSRC}\\FileOpenPos.java
+	${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
+	    ${TESTSRC}\\FileOpenNeg.java
 
 	echo "Opening Writable Normal File.."
-	${TESTJAVA}/bin/java FileOpenPos ${hfile}
+	${TESTJAVA}/bin/java ${TESTVMOPTS} FileOpenPos ${hfile}
 
 	echo "Opening Writable Hidden File.."
 	${ATTRIB} +h ${hfile}
-	${TESTJAVA}/bin/java FileOpenNeg ${hfile}
+	${TESTJAVA}/bin/java ${TESTVMOPTS} FileOpenNeg ${hfile}
 
 	echo "Opening Read-Only Normal File.."
 	${ATTRIB} -h ${hfile}
 	${ATTRIB} +r ${hfile}
-	${TESTJAVA}/bin/java FileOpenNeg ${hfile}
+	${TESTJAVA}/bin/java ${TESTVMOPTS} FileOpenNeg ${hfile}
 
 	echo "Opening Read-Only Hidden File.." 
 	${ATTRIB} +h ${hfile}
-	${TESTJAVA}/bin/java FileOpenNeg ${hfile}
+	${TESTJAVA}/bin/java ${TESTVMOPTS} FileOpenNeg ${hfile}
 
         rm -f ${hfile}
 	exit

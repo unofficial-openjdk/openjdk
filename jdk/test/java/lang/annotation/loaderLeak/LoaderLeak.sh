@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,10 @@ then
   exit 1
 fi
 echo "TESTJAVA=${TESTJAVA}"
+if [ "${COMPILEJAVA}" = "" ]; then
+  COMPILEJAVA="${TESTJAVA}"
+fi
+echo "COMPILEJAVA=${COMPILEJAVA}"
 if [ "${TESTCLASSES}" = "" ]
 then
   echo "TESTCLASSES not set.  Test cannot execute.  Failed."
@@ -67,9 +71,9 @@ esac
 
 mkdir -p classes
 cp ${TESTSRC}${FS}*.java .
-${TESTJAVA}${FS}bin${FS}javac -d classes A.java B.java C.java
-${TESTJAVA}${FS}bin${FS}javac Main.java
-${TESTJAVA}${FS}bin${FS}java Main
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d classes A.java B.java C.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} Main.java
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} Main
 result=$?
 if [ $result -eq 0 ]
 then
@@ -78,7 +82,7 @@ else
   echo "Failed 1 of 2"
   exit $result
 fi
-${TESTJAVA}${FS}bin${FS}java Main foo
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} Main foo
 result=$?
 if [ $result -eq 0 ]
 then

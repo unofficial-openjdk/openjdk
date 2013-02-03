@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,13 +44,14 @@ case "$OS" in
     exit 1;
     ;;
 esac
-${TESTJAVA}${FS}bin${FS}javac -d . ${TESTSRC}${FS}Constructor.java
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . \
+    ${TESTSRC}${FS}Constructor.java
 
 failures=0
 
 go() {
     echo ''
-    ${TESTJAVA}${FS}bin${FS}java Constructor $1
+    ${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} Constructor $1
     if [ $? != 0 ]; then failures=`expr $failures + 1`; fi
 }
 

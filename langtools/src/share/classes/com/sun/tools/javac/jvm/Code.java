@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,12 @@ package com.sun.tools.javac.jvm;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.code.Types.UniqueType;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
-import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.code.TypeTag.BOT;
+import static com.sun.tools.javac.code.TypeTag.INT;
 import static com.sun.tools.javac.jvm.ByteCodes.*;
 import static com.sun.tools.javac.jvm.UninitializedType.*;
 import static com.sun.tools.javac.jvm.ClassWriter.StackMapTableFrame;
@@ -224,7 +226,7 @@ public class Code {
      *  JVM architecture).
      */
     public static int typecode(Type type) {
-        switch (type.tag) {
+        switch (type.getTag()) {
         case BYTE: return BYTEcode;
         case SHORT: return SHORTcode;
         case CHAR: return CHARcode;
@@ -242,7 +244,7 @@ public class Code {
         case UNINITIALIZED_THIS:
         case UNINITIALIZED_OBJECT:
             return OBJECTcode;
-        default: throw new AssertionError("typecode " + type.tag);
+        default: throw new AssertionError("typecode " + type.getTag());
         }
     }
 
@@ -281,7 +283,7 @@ public class Code {
     /** Given a type, return its code for allocating arrays of that type.
      */
     public static int arraycode(Type type) {
-        switch (type.tag) {
+        switch (type.getTag()) {
         case BYTE: return 8;
         case BOOLEAN: return 4;
         case SHORT: return 9;
@@ -477,7 +479,7 @@ public class Code {
             state.pop(1);
             //sometimes 'null type' is treated as a one-dimensional array type
             //see Gen.visitLiteral - we should handle this case accordingly
-            Type stackType = a.tag == BOT ?
+            Type stackType = a.hasTag(BOT) ?
                 syms.objectType :
                 types.erasure(types.elemtype(a));
             state.push(stackType); }
@@ -900,6 +902,7 @@ public class Code {
         if (o instanceof ClassSymbol) return syms.classType;
         if (o instanceof Type.ArrayType) return syms.classType;
         if (o instanceof Type.MethodType) return syms.methodTypeType;
+        if (o instanceof UniqueType) return typeForPool(((UniqueType)o).type);
         if (o instanceof Pool.MethodHandle) return syms.methodHandleType;
         throw new AssertionError(o);
     }
@@ -1029,7 +1032,7 @@ public class Code {
             Object o = pool.pool[od];
             Type t = (o instanceof Symbol)
                 ? ((Symbol)o).erasure(types)
-                : types.erasure(((Type)o));
+                : types.erasure((((UniqueType)o).type));
             state.push(t);
             break; }
         case ldc2w:
@@ -1544,10 +1547,10 @@ public class Code {
     public void compressCatchTable() {
         ListBuffer<char[]> compressedCatchInfo = ListBuffer.lb();
         List<Integer> handlerPcs = List.nil();
-        for (char[] catchEntry : catchInfo.elems) {
+        for (char[] catchEntry : catchInfo) {
             handlerPcs = handlerPcs.prepend((int)catchEntry[2]);
         }
-        for (char[] catchEntry : catchInfo.elems) {
+        for (char[] catchEntry : catchInfo) {
             int startpc = catchEntry[0];
             int endpc = catchEntry[1];
             if (startpc == endpc ||
@@ -1656,13 +1659,13 @@ public class Code {
 
         void push(Type t) {
             if (debugCode) System.err.println("   pushing " + t);
-            switch (t.tag) {
-            case TypeTags.VOID:
+            switch (t.getTag()) {
+            case VOID:
                 return;
-            case TypeTags.BYTE:
-            case TypeTags.CHAR:
-            case TypeTags.SHORT:
-            case TypeTags.BOOLEAN:
+            case BYTE:
+            case CHAR:
+            case SHORT:
+            case BOOLEAN:
                 t = syms.intType;
                 break;
             default:
@@ -1722,7 +1725,7 @@ public class Code {
          *  of its current type. */
         void forceStackTop(Type t) {
             if (!alive) return;
-            switch (t.tag) {
+            switch (t.getTag()) {
             case CLASS:
             case ARRAY:
                 int width = width(t);
@@ -1824,7 +1827,7 @@ public class Code {
         }
     }
 
-    static Type jsrReturnValue = new Type(TypeTags.INT, null);
+    static final Type jsrReturnValue = new Type(INT, null);
 
 
 /* **************************************************************************
@@ -1921,17 +1924,70 @@ public class Code {
                 if (length < Character.MAX_VALUE) {
                     v.length = length;
                     putVar(v);
+                    fillLocalVarPosition(v);
                 }
             }
         }
         state.defined.excl(adr);
     }
 
+    private void fillLocalVarPosition(LocalVar lv) {
+        if (lv == null || lv.sym == null
+                || lv.sym.annotations.isTypesEmpty())
+            return;
+        for (Attribute.TypeCompound ta : lv.sym.getRawTypeAttributes()) {
+            TypeAnnotationPosition p = ta.position;
+            p.lvarOffset = new int[] { (int)lv.start_pc };
+            p.lvarLength = new int[] { (int)lv.length };
+            p.lvarIndex = new int[] { (int)lv.reg };
+            p.isValidOffset = true;
+        }
+    }
+
+    // Method to be called after compressCatchTable to
+    // fill in the exception table index for type
+    // annotations on exception parameters.
+    public void fillExceptionParameterPositions() {
+        for (int i = 0; i < varBufferSize; ++i) {
+            LocalVar lv = varBuffer[i];
+            if (lv == null || lv.sym == null
+                    || lv.sym.annotations.isTypesEmpty()
+                    || !lv.sym.isExceptionParameter())
+                return;
+
+            int exidx = findExceptionIndex(lv);
+
+            for (Attribute.TypeCompound ta : lv.sym.getRawTypeAttributes()) {
+                TypeAnnotationPosition p = ta.position;
+                p.exception_index = exidx;
+            }
+        }
+    }
+
+    private int findExceptionIndex(LocalVar lv) {
+        List<char[]> iter = catchInfo.toList();
+        int len = catchInfo.length();
+        for (int i = 0; i < len; ++i) {
+            char[] catchEntry = iter.head;
+            iter = iter.tail;
+            char handlerpc = catchEntry[2];
+            if (lv.start_pc == handlerpc + 1) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /** Put a live variable range into the buffer to be output to the
      *  class file.
      */
     void putVar(LocalVar var) {
-        if (!varDebugInfo) return;
+        // Keep local variables if
+        // 1) we need them for debug information
+        // 2) it is an exception type and it contains type annotations
+        if (!varDebugInfo &&
+                (!var.sym.isExceptionParameter() ||
+                var.sym.annotations.isTypesEmpty())) return;
         if ((var.sym.flags() & Flags.SYNTHETIC) != 0) return;
         if (varBuffer == null)
             varBuffer = new LocalVar[20];

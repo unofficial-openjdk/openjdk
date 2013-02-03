@@ -23,7 +23,7 @@
 #!/bin/sh
 #
 # @test
-# @bug 6336885 7196799 7197573 7198834
+# @bug 6336885 7196799 7197573 7198834 8000245 8000615 8001440
 # @summary tests for "java.locale.providers" system property
 # @compile -XDignore.symbol.file LocaleProviders.java
 # @run shell/timeout=600 LocaleProviders.sh
@@ -38,6 +38,10 @@ if [ "${TESTJAVA}" = "" ]
 then
   echo "TESTJAVA not set.  Test cannot execute.  Failed."
   exit 1
+fi
+if [ "${COMPILEJAVA}" = "" ]
+then
+  COMPILEJAVA="${TESTJAVA}"
 fi
 echo "TESTJAVA=${TESTJAVA}"
 if [ "${TESTCLASSES}" = "" ]
@@ -65,13 +69,44 @@ case "$OS" in
     ;;
 esac
 
+# create an SPI implementation
+mk() {
+  d=`dirname $1`
+  if [ ! -d $d ]; then mkdir -p $d; fi
+  cat - >$1
+}
+
+SPIDIR=${TESTCLASSES}${FS}spi
+rm -rf ${SPIDIR}
+mk ${SPIDIR}${FS}src${FS}tznp.java << EOF
+import java.util.spi.TimeZoneNameProvider;
+import java.util.Locale;
+
+public class tznp extends TimeZoneNameProvider {
+    public String getDisplayName(String ID, boolean daylight, int style, Locale locale) {
+        return "tznp";
+    }
+
+    public Locale[] getAvailableLocales() {
+        Locale[] locales = {Locale.GERMAN, Locale.US, Locale.JAPANESE, Locale.CHINESE};
+        return locales;
+    }
+}
+EOF
+mk ${SPIDIR}${FS}dest${FS}META-INF${FS}services${FS}java.util.spi.TimeZoneNameProvider << EOF
+tznp
+EOF
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${SPIDIR}${FS}dest \
+    ${SPIDIR}${FS}src${FS}tznp.java
+${COMPILEJAVA}${FS}bin${FS}jar ${TESTTOOLVMOPTS} cvf ${SPIDIR}${FS}tznp.jar -C ${SPIDIR}${FS}dest .
+
 # get the platform default locales
-PLATDEF=`${TESTJAVA}${FS}bin${FS}java -classpath ${TESTCLASSES} LocaleProviders getPlatformLocale display`
+PLATDEF=`${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${TESTCLASSES} LocaleProviders getPlatformLocale display`
 DEFLANG=`echo ${PLATDEF} | sed -e "s/,.*//"`
 DEFCTRY=`echo ${PLATDEF} | sed -e "s/.*,//"`
 echo "DEFLANG=${DEFLANG}"
 echo "DEFCTRY=${DEFCTRY}"
-PLATDEF=`${TESTJAVA}${FS}bin${FS}java -classpath ${TESTCLASSES} LocaleProviders getPlatformLocale format`
+PLATDEF=`${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${TESTCLASSES} LocaleProviders getPlatformLocale format`
 DEFFMTLANG=`echo ${PLATDEF} | sed -e "s/,.*//"`
 DEFFMTCTRY=`echo ${PLATDEF} | sed -e "s/.*,//"`
 echo "DEFFMTLANG=${DEFFMTLANG}"
@@ -79,7 +114,7 @@ echo "DEFFMTCTRY=${DEFFMTCTRY}"
 
 runTest()
 {
-    RUNCMD="${TESTJAVA}${FS}bin${FS}java -classpath ${TESTCLASSES} -Djava.locale.providers=$PREFLIST LocaleProviders $METHODNAME $PARAM1 $PARAM2 $PARAM3"
+    RUNCMD="${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -classpath ${TESTCLASSES} -Djava.locale.providers=$PREFLIST LocaleProviders $METHODNAME $PARAM1 $PARAM2 $PARAM3"
     echo ${RUNCMD}
     ${RUNCMD}
     result=$?
@@ -194,6 +229,30 @@ runTest
 # testing 7198834 fix. Only works on Windows Vista or upper.
 METHODNAME=bug7198834Test
 PREFLIST=HOST
+PARAM1=
+PARAM2=
+PARAM3=
+runTest
+
+# testing 8000245 fix.
+METHODNAME=tzNameTest
+PREFLIST="JRE -Djava.ext.dirs=${SPIDIR}"
+PARAM1=Europe/Moscow
+PARAM2=
+PARAM3=
+runTest
+
+# testing 8000615 fix.
+METHODNAME=tzNameTest
+PREFLIST="JRE -Djava.ext.dirs=${SPIDIR}"
+PARAM1=America/Los_Angeles
+PARAM2=
+PARAM3=
+runTest
+
+# testing 8001440 fix.
+METHODNAME=bug8001440Test
+PREFLIST=CLDR
 PARAM1=
 PARAM2=
 PARAM3=

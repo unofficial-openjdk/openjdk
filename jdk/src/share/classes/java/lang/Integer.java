@@ -25,6 +25,7 @@
 
 package java.lang;
 
+import java.lang.annotation.Native;
 import java.util.Properties;
 
 /**
@@ -54,13 +55,13 @@ public final class Integer extends Number implements Comparable<Integer> {
      * A constant holding the minimum value an {@code int} can
      * have, -2<sup>31</sup>.
      */
-    public static final int   MIN_VALUE = 0x80000000;
+    @Native public static final int   MIN_VALUE = 0x80000000;
 
     /**
      * A constant holding the maximum value an {@code int} can
      * have, 2<sup>31</sup>-1.
      */
-    public static final int   MAX_VALUE = 0x7fffffff;
+    @Native public static final int   MAX_VALUE = 0x7fffffff;
 
     /**
      * The {@code Class} instance representing the primitive type
@@ -772,7 +773,7 @@ public final class Integer extends Number implements Comparable<Integer> {
                 int i = parseInt(integerCacheHighPropValue);
                 i = Math.max(i, 127);
                 // Maximum array size is Integer.MAX_VALUE
-                h = Math.min(i, Integer.MAX_VALUE - (-low));
+                h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
             }
             high = h;
 
@@ -918,7 +919,20 @@ public final class Integer extends Number implements Comparable<Integer> {
      *          primitive {@code int} value represented by this
      *          {@code Integer} object.
      */
+    @Override
     public int hashCode() {
+        return Integer.hashCode(value);
+    }
+
+    /**
+     * Returns a hash code for a {@code int} value; compatible with
+     * {@code Integer.hashCode()}.
+     *
+     * @since 1.8
+     *
+     * @return a hash code value for a {@code int} value.
+     */
+    public static int hashCode(int value) {
         return value;
     }
 
@@ -1282,7 +1296,15 @@ public final class Integer extends Number implements Comparable<Integer> {
      *
      * @since 1.5
      */
-    public static final int SIZE = 32;
+    @Native public static final int SIZE = 32;
+
+    /**
+     * The number of bytes used to represent a {@code int} value in two's
+     * complement binary form.
+     *
+     * @since 1.8
+     */
+    public static final int BYTES = SIZE / Byte.SIZE;
 
     /**
      * Returns an {@code int} value with at most a single one-bit, in the
@@ -1491,6 +1513,47 @@ public final class Integer extends Number implements Comparable<Integer> {
                ((i << 24));
     }
 
+    /**
+     * Adds two integers together as per the + operator.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the sum of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static int sum(int a, int b) {
+        return a + b;
+    }
+
+    /**
+     * Returns the greater of two {@code int} values
+     * as if by calling {@link Math#max(int, int) Math.max}.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the greater of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static int max(int a, int b) {
+        return Math.max(a, b);
+    }
+
+    /**
+     * Returns the smaller of two {@code int} values
+     * as if by calling {@link Math#min(int, int) Math.min}.
+     *
+     * @param a the first operand
+     * @param b the second operand
+     * @return the smaller of {@code a} and {@code b}
+     * @see java.util.function.BinaryOperator
+     * @since 1.8
+     */
+    public static int min(int a, int b) {
+        return Math.min(a, b);
+    }
+
     /** use serialVersionUID from JDK 1.0.2 for interoperability */
-    private static final long serialVersionUID = 1360826667806852920L;
+    @Native private static final long serialVersionUID = 1360826667806852920L;
 }

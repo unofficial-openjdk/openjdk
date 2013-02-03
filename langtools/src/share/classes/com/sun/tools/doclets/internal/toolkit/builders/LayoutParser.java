@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,25 @@
  */
 package com.sun.tools.doclets.internal.toolkit.builders;
 
-import com.sun.tools.doclets.internal.toolkit.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import java.io.*;
 import java.util.*;
+
+import javax.xml.parsers.*;
+
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
-import javax.xml.parsers.*;
+
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Parse the XML that specified the order of operation for the builders.  This
  * Parser uses SAX parsing.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @since 1.5
@@ -47,14 +55,10 @@ public class LayoutParser extends DefaultHandler {
      */
     private Map<String,XMLNode> xmlElementsMap;
     private XMLNode currentNode;
-    private Configuration configuration;
-    private static LayoutParser instance;
+    private final Configuration configuration;
     private String currentRoot;
     private boolean isParsing;
 
-    /**
-     * This class is a singleton.
-     */
     private LayoutParser(Configuration configuration) {
         xmlElementsMap = new HashMap<String,XMLNode>();
         this.configuration = configuration;
@@ -67,10 +71,7 @@ public class LayoutParser extends DefaultHandler {
      * @return an instance of the BuilderXML.
      */
     public static LayoutParser getInstance(Configuration configuration) {
-        if (instance == null) {
-            instance = new LayoutParser(configuration);
-        }
-        return instance;
+        return new LayoutParser(configuration);
     }
 
     /**

@@ -721,7 +721,7 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
         guarantee(false, "wrong number of expression stack elements during deopt");
       }
       VerifyOopClosure verify;
-      iframe->oops_interpreted_do(&verify, &rm, false);
+      iframe->oops_interpreted_do(&verify, NULL, &rm, false);
       callee_size_of_parameters = mh->size_of_parameters();
       callee_max_locals = mh->max_locals();
       is_top_frame = false;
@@ -1191,12 +1191,12 @@ void Deoptimization::load_class_by_index(constantPoolHandle constant_pool, int i
 
   if (!constant_pool->tag_at(index).is_symbol()) return;
 
-  Handle class_loader (THREAD, InstanceKlass::cast(constant_pool->pool_holder())->class_loader());
+  Handle class_loader (THREAD, constant_pool->pool_holder()->class_loader());
   Symbol*  symbol  = constant_pool->symbol_at(index);
 
   // class name?
   if (symbol->byte_at(0) != '(') {
-    Handle protection_domain (THREAD, Klass::cast(constant_pool->pool_holder())->protection_domain());
+    Handle protection_domain (THREAD, constant_pool->pool_holder()->protection_domain());
     SystemDictionary::resolve_or_null(symbol, class_loader, protection_domain, CHECK);
     return;
   }
@@ -1206,7 +1206,7 @@ void Deoptimization::load_class_by_index(constantPoolHandle constant_pool, int i
   for (SignatureStream ss(symbol); !ss.is_done(); ss.next()) {
     if (ss.is_object()) {
       Symbol* class_name = ss.as_symbol(CHECK);
-      Handle protection_domain (THREAD, Klass::cast(constant_pool->pool_holder())->protection_domain());
+      Handle protection_domain (THREAD, constant_pool->pool_holder()->protection_domain());
       SystemDictionary::resolve_or_null(class_name, class_loader, protection_domain, CHECK);
     }
   }
@@ -1242,8 +1242,8 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
   nmethodLocker nl(fr.pc());
 
   // Log a message
-  Events::log_deopt_message(thread, "Uncommon trap %d fr.pc " INTPTR_FORMAT,
-                            trap_request, fr.pc());
+  Events::log(thread, "Uncommon trap: trap_request=" PTR32_FORMAT " fr.pc=" INTPTR_FORMAT,
+              trap_request, fr.pc());
 
   {
     ResourceMark rm;
@@ -1273,6 +1273,11 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
 
     MethodData* trap_mdo =
       get_method_data(thread, trap_method, create_if_missing);
+
+    // Log a message
+    Events::log_deopt_message(thread, "Uncommon trap: reason=%s action=%s pc=" INTPTR_FORMAT " method=%s @ %d",
+                              trap_reason_name(reason), trap_action_name(action), fr.pc(),
+                              trap_method->name_and_sig_as_C_string(), trap_bci);
 
     // Print a bunch of diagnostics, if requested.
     if (TraceDeoptimization || LogCompilation) {

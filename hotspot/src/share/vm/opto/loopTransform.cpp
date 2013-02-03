@@ -269,10 +269,10 @@ void IdealLoopTree::reassociate_invariants(PhaseIdealLoop *phase) {
 bool IdealLoopTree::policy_peeling( PhaseIdealLoop *phase ) const {
   Node *test = ((IdealLoopTree*)this)->tail();
   int  body_size = ((IdealLoopTree*)this)->_body.size();
-  int  uniq      = phase->C->unique();
+  int  live_node_count = phase->C->live_nodes();
   // Peeling does loop cloning which can result in O(N^2) node construction
   if( body_size > 255 /* Prevent overflow for large body_size */
-      || (body_size * body_size + uniq > MaxNodeLimit) ) {
+      || (body_size * body_size + live_node_count > MaxNodeLimit) ) {
     return false;           // too large to safely clone
   }
   while( test != _head ) {      // Scan till run off top of loop
@@ -601,7 +601,7 @@ bool IdealLoopTree::policy_maximally_unroll( PhaseIdealLoop *phase ) const {
     return false;
   if (new_body_size > unroll_limit ||
       // Unrolling can result in a large amount of node construction
-      new_body_size >= MaxNodeLimit - phase->C->unique()) {
+      new_body_size >= MaxNodeLimit - (uint) phase->C->live_nodes()) {
     return false;
   }
 
@@ -613,6 +613,7 @@ bool IdealLoopTree::policy_maximally_unroll( PhaseIdealLoop *phase ) const {
       case Op_StrComp:
       case Op_StrEquals:
       case Op_StrIndexOf:
+      case Op_EncodeISOArray:
       case Op_AryEq: {
         return false;
       }
@@ -717,6 +718,7 @@ bool IdealLoopTree::policy_unroll( PhaseIdealLoop *phase ) const {
       case Op_StrComp:
       case Op_StrEquals:
       case Op_StrIndexOf:
+      case Op_EncodeISOArray:
       case Op_AryEq: {
         // Do not unroll a loop with String intrinsics code.
         // String intrinsics are large and have loops.
@@ -2268,7 +2270,7 @@ bool IdealLoopTree::iteration_split_impl( PhaseIdealLoop *phase, Node_List &old_
 
   // Skip next optimizations if running low on nodes. Note that
   // policy_unswitching and policy_maximally_unroll have this check.
-  uint nodes_left = MaxNodeLimit - phase->C->unique();
+  uint nodes_left = MaxNodeLimit - (uint) phase->C->live_nodes();
   if ((2 * _body.size()) > nodes_left) {
     return true;
   }
@@ -2715,6 +2717,8 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
   result_mem = new (C) ProjNode(call,TypeFunc::Memory);
   _igvn.register_new_node_with_optimizer(result_mem);
 
+/* Disable following optimization until proper fix (add missing checks).
+
   // If this fill is tightly coupled to an allocation and overwrites
   // the whole body, allow it to take over the zeroing.
   AllocateNode* alloc = AllocateNode::Ideal_allocation(base, this);
@@ -2738,6 +2742,7 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
 #endif
     }
   }
+*/
 
   // Redirect the old control and memory edges that are outside the loop.
   Node* exit = head->loopexit()->proj_out(0);

@@ -26,10 +26,8 @@
 package sun.util.locale.provider;
 
 import java.util.Locale;
-import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.spi.CurrencyNameProvider;
-import sun.util.resources.OpenListResourceBundle;
 
 /**
  * Concrete implementation of the
@@ -121,17 +119,6 @@ public class CurrencyNameProviderImpl extends CurrencyNameProvider
             throw new NullPointerException();
         }
 
-        OpenListResourceBundle bundle = LocaleProviderAdapter.forType(type).getLocaleData().getCurrencyNames(locale);
-        LocaleServiceProviderPool pool =
-                LocaleServiceProviderPool.getPool(CurrencyNameProvider.class);
-        try {
-            if (!pool.hasProviders() ||
-                (bundle.getLocale().equals(locale) &&
-                 bundle.handleGetKeys().contains(key))) {
-                return bundle.getString(key);
-            }
-        } catch (MissingResourceException mre) {}
-
-        return null;
+        return LocaleProviderAdapter.forType(type).getLocaleResources(locale).getCurrencyName(key);
     }
 }

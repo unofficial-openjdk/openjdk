@@ -410,7 +410,7 @@ protected:
   int replace_edge(Node* old, Node* neww);
   // NULL out all inputs to eliminate incoming Def-Use edges.
   // Return the number of edges between 'n' and 'this'
-  int  disconnect_inputs(Node *n);
+  int  disconnect_inputs(Node *n, Compile *c);
 
   // Quickly, return true if and only if I am Compile::current()->top().
   bool is_top() const {
@@ -458,9 +458,9 @@ public:
   void replace_by(Node* new_node);
   // Globally replace this node by a given new node, updating all uses
   // and cutting input edges of old node.
-  void subsume_by(Node* new_node) {
+  void subsume_by(Node* new_node, Compile* c) {
     replace_by(new_node);
-    disconnect_inputs(NULL);
+    disconnect_inputs(NULL, c);
   }
   void set_req_X( uint i, Node *n, PhaseIterGVN *igvn );
   // Find the one non-null required input.  RegionNode only
@@ -994,12 +994,13 @@ public:
 #ifndef PRODUCT
   Node* find(int idx) const;         // Search the graph for the given idx.
   Node* find_ctrl(int idx) const;    // Search control ancestors for the given idx.
-  void dump() const;                 // Print this node,
+  void dump() const { dump("\n"); }  // Print this node.
+  void dump(const char* suffix, outputStream *st = tty) const;// Print this node.
   void dump(int depth) const;        // Print this node, recursively to depth d
   void dump_ctrl(int depth) const;   // Print control nodes, to depth d
-  virtual void dump_req() const;     // Print required-edge info
-  virtual void dump_prec() const;    // Print precedence-edge info
-  virtual void dump_out() const;     // Print the output edge info
+  virtual void dump_req(outputStream *st = tty) const;     // Print required-edge info
+  virtual void dump_prec(outputStream *st = tty) const;    // Print precedence-edge info
+  virtual void dump_out(outputStream *st = tty) const;     // Print the output edge info
   virtual void dump_spec(outputStream *st) const {}; // Print per-node info
   void verify_edges(Unique_Node_List &visited); // Verify bi-directional edges
   void verify() const;               // Check Def-Use info for my subgraph

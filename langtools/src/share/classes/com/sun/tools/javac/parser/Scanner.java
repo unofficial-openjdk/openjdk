@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,7 @@ public class Scanner implements Lexer {
     private List<Token> savedTokens = new ArrayList<Token>();
 
     private JavaTokenizer tokenizer;
+
     /**
      * Create a scanner from the input array.  This method might
      * modify the array.  To avoid copying the input array, ensure
@@ -66,8 +67,7 @@ public class Scanner implements Lexer {
      * {@code input[input.length -1]} is a white space character.
      *
      * @param fac the factory which created this Scanner
-     * @param input the input, might be modified
-     * @param inputLength the size of the input.
+     * @param buf the input, might be modified
      * Must be positive and less than or equal to input.length.
      */
     protected Scanner(ScannerFactory fac, CharBuffer buf) {

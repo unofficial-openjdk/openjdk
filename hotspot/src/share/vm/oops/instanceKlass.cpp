@@ -47,24 +47,14 @@
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
+#include "prims/methodComparator.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
+#include "runtime/thread.inline.hpp"
 #include "services/threadService.hpp"
 #include "utilities/dtrace.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/cmsOopClosures.inline.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
@@ -171,6 +161,8 @@ HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
 
 #endif //  ndef DTRACE_ENABLED
 
+volatile int InstanceKlass::_total_instanceKlass_count = 0;
+
 Klass* InstanceKlass::allocate_instance_klass(ClassLoaderData* loader_data,
                                                 int vtable_len,
                                                 int itable_len,
@@ -214,6 +206,7 @@ Klass* InstanceKlass::allocate_instance_klass(ClassLoaderData* loader_data,
         access_flags, !host_klass.is_null());
   }
 
+  Atomic::inc(&_total_instanceKlass_count);
   return ik;
 }
 
@@ -372,6 +365,9 @@ void InstanceKlass::deallocate_contents(ClassLoaderData* loader_data) {
   set_protection_domain(NULL);
   set_signers(NULL);
   set_init_lock(NULL);
+
+  // We should deallocate the Annotations instance
+  MetadataFactory::free_metadata(loader_data, annotations());
   set_annotations(NULL);
 }
 
@@ -610,7 +606,7 @@ bool InstanceKlass::link_class_impl(
       }
 
       // relocate jsrs and link methods after they are all rewritten
-      this_oop->relocate_and_link_methods(CHECK_false);
+      this_oop->link_methods(CHECK_false);
 
       // Initialize the vtable and interface table after
       // methods have been rewritten since rewrite may
@@ -658,10 +654,31 @@ void InstanceKlass::rewrite_class(TRAPS) {
 // Now relocate and link method entry points after class is rewritten.
 // This is outside is_rewritten flag. In case of an exception, it can be
 // executed more than once.
-void InstanceKlass::relocate_and_link_methods(TRAPS) {
-  assert(is_loaded(), "must be loaded");
-  instanceKlassHandle this_oop(THREAD, this);
-  Rewriter::relocate_and_link(this_oop, CHECK);
+void InstanceKlass::link_methods(TRAPS) {
+  int len = methods()->length();
+  for (int i = len-1; i >= 0; i--) {
+    methodHandle m(THREAD, methods()->at(i));
+
+    // Set up method entry points for compiler and interpreter    .
+    m->link_method(m, CHECK);
+
+    // This is for JVMTI and unrelated to relocator but the last thing we do
+#ifdef ASSERT
+    if (StressMethodComparator) {
+      ResourceMark rm(THREAD);
+      static int nmc = 0;
+      for (int j = i; j >= 0 && j >= i-4; j--) {
+        if ((++nmc % 1000) == 0)  tty->print_cr("Have run MethodComparator %d times...", nmc);
+        bool z = MethodComparator::methods_EMCP(m(),
+                   methods()->at(j));
+        if (j == i && !z) {
+          tty->print("MethodComparator FAIL: "); m->print(); m->print_codes();
+          assert(z, "method must compare equal to itself");
+        }
+      }
+    }
+#endif //ASSERT
+  }
 }
 
 
@@ -727,8 +744,8 @@ void InstanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
 
   // Step 7
   Klass* super_klass = this_oop->super();
-  if (super_klass != NULL && !this_oop->is_interface() && Klass::cast(super_klass)->should_be_initialized()) {
-    Klass::cast(super_klass)->initialize(THREAD);
+  if (super_klass != NULL && !this_oop->is_interface() && super_klass->should_be_initialized()) {
+    super_klass->initialize(THREAD);
 
     if (HAS_PENDING_EXCEPTION) {
       Handle e(THREAD, PENDING_EXCEPTION);
@@ -740,6 +757,35 @@ void InstanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
       }
       DTRACE_CLASSINIT_PROBE_WAIT(super__failed, InstanceKlass::cast(this_oop()), -1,wait);
       THROW_OOP(e());
+    }
+  }
+
+  if (this_oop->has_default_methods()) {
+    // Step 7.5: initialize any interfaces which have default methods
+    for (int i = 0; i < this_oop->local_interfaces()->length(); ++i) {
+      Klass* iface = this_oop->local_interfaces()->at(i);
+      InstanceKlass* ik = InstanceKlass::cast(iface);
+      if (ik->has_default_methods() && ik->should_be_initialized()) {
+        ik->initialize(THREAD);
+
+        if (HAS_PENDING_EXCEPTION) {
+          Handle e(THREAD, PENDING_EXCEPTION);
+          CLEAR_PENDING_EXCEPTION;
+          {
+            EXCEPTION_MARK;
+            // Locks object, set state, and notify all waiting threads
+            this_oop->set_initialization_state_and_notify(
+                initialization_error, THREAD);
+
+            // ignore any exception thrown, superclass initialization error is
+            // thrown below
+            CLEAR_PENDING_EXCEPTION;
+          }
+          DTRACE_CLASSINIT_PROBE_WAIT(
+              super__failed, InstanceKlass::cast(this_oop()), -1, wait);
+          THROW_OOP(e());
+        }
+      }
     }
   }
 
@@ -895,7 +941,7 @@ GrowableArray<Klass*>* InstanceKlass::compute_secondary_supers(int num_extra_slo
 }
 
 bool InstanceKlass::compute_is_subtype_of(Klass* k) {
-  if (Klass::cast(k)->is_interface()) {
+  if (k->is_interface()) {
     return implements_interface(k);
   } else {
     return Klass::compute_is_subtype_of(k);
@@ -904,7 +950,7 @@ bool InstanceKlass::compute_is_subtype_of(Klass* k) {
 
 bool InstanceKlass::implements_interface(Klass* k) const {
   if (this == k) return true;
-  assert(Klass::cast(k)->is_interface(), "should be an interface class");
+  assert(k->is_interface(), "should be an interface class");
   for (int i = 0; i < transitive_interfaces()->length(); i++) {
     if (transitive_interfaces()->at(i) == k) {
       return true;
@@ -1023,6 +1069,13 @@ Method* InstanceKlass::class_initializer() {
 }
 
 void InstanceKlass::call_class_initializer_impl(instanceKlassHandle this_oop, TRAPS) {
+  if (ReplayCompiles &&
+      (ReplaySuppressInitializers == 1 ||
+       ReplaySuppressInitializers >= 2 && this_oop->class_loader() != NULL)) {
+    // Hide the existence of the initializer for the purpose of replaying the compile
+    return;
+  }
+
   methodHandle h_method(THREAD, this_oop->class_initializer());
   assert(!this_oop->is_initialized(), "we cannot initialize twice");
   if (TraceClassInitialization) {
@@ -1071,7 +1124,7 @@ Klass* InstanceKlass::find_interface_field(Symbol* name, Symbol* sig, fieldDescr
   const int n = local_interfaces()->length();
   for (int i = 0; i < n; i++) {
     Klass* intf1 = local_interfaces()->at(i);
-    assert(Klass::cast(intf1)->is_interface(), "just checking type");
+    assert(intf1->is_interface(), "just checking type");
     // search for field in current interface
     if (InstanceKlass::cast(intf1)->find_local_field(name, sig, fd)) {
       assert(fd->is_static(), "interface field must be static");
@@ -1142,7 +1195,7 @@ bool InstanceKlass::find_field_from_offset(int offset, bool is_static, fieldDesc
     if (InstanceKlass::cast(klass)->find_local_field_from_offset(offset, is_static, fd)) {
       return true;
     }
-    klass = Klass::cast(klass)->super();
+    klass = klass->super();
   }
   return false;
 }
@@ -1252,11 +1305,7 @@ static int linear_search(Array<Method*>* methods, Symbol* name, Symbol* signatur
 }
 #endif
 
-Method* InstanceKlass::find_method(Symbol* name, Symbol* signature) const {
-  return InstanceKlass::find_method(methods(), name, signature);
-}
-
-Method* InstanceKlass::find_method(Array<Method*>* methods, Symbol* name, Symbol* signature) {
+static int binary_search(Array<Method*>* methods, Symbol* name) {
   int len = methods->length();
   // methods are sorted, so do binary search
   int l = 0;
@@ -1267,41 +1316,68 @@ Method* InstanceKlass::find_method(Array<Method*>* methods, Symbol* name, Symbol
     assert(m->is_method(), "must be method");
     int res = m->name()->fast_compare(name);
     if (res == 0) {
-      // found matching name; do linear search to find matching signature
-      // first, quick check for common case
-      if (m->signature() == signature) return m;
-      // search downwards through overloaded methods
-      int i;
-      for (i = mid - 1; i >= l; i--) {
-        Method* m = methods->at(i);
-        assert(m->is_method(), "must be method");
-        if (m->name() != name) break;
-        if (m->signature() == signature) return m;
-      }
-      // search upwards
-      for (i = mid + 1; i <= h; i++) {
-        Method* m = methods->at(i);
-        assert(m->is_method(), "must be method");
-        if (m->name() != name) break;
-        if (m->signature() == signature) return m;
-      }
-      // not found
-#ifdef ASSERT
-      int index = linear_search(methods, name, signature);
-      assert(index == -1, err_msg("binary search should have found entry %d", index));
-#endif
-      return NULL;
+      return mid;
     } else if (res < 0) {
       l = mid + 1;
     } else {
       h = mid - 1;
     }
   }
+  return -1;
+}
+
+Method* InstanceKlass::find_method(Symbol* name, Symbol* signature) const {
+  return InstanceKlass::find_method(methods(), name, signature);
+}
+
+Method* InstanceKlass::find_method(
+    Array<Method*>* methods, Symbol* name, Symbol* signature) {
+  int hit = binary_search(methods, name);
+  if (hit != -1) {
+    Method* m = methods->at(hit);
+    // Do linear search to find matching signature.  First, quick check
+    // for common case
+    if (m->signature() == signature) return m;
+    // search downwards through overloaded methods
+    int i;
+    for (i = hit - 1; i >= 0; --i) {
+        Method* m = methods->at(i);
+        assert(m->is_method(), "must be method");
+        if (m->name() != name) break;
+        if (m->signature() == signature) return m;
+    }
+    // search upwards
+    for (i = hit + 1; i < methods->length(); ++i) {
+        Method* m = methods->at(i);
+        assert(m->is_method(), "must be method");
+        if (m->name() != name) break;
+        if (m->signature() == signature) return m;
+    }
+    // not found
 #ifdef ASSERT
-  int index = linear_search(methods, name, signature);
-  assert(index == -1, err_msg("binary search should have found entry %d", index));
+    int index = linear_search(methods, name, signature);
+    assert(index == -1, err_msg("binary search should have found entry %d", index));
 #endif
+  }
   return NULL;
+}
+
+int InstanceKlass::find_method_by_name(Symbol* name, int* end) {
+  return find_method_by_name(methods(), name, end);
+}
+
+int InstanceKlass::find_method_by_name(
+    Array<Method*>* methods, Symbol* name, int* end_ptr) {
+  assert(end_ptr != NULL, "just checking");
+  int start = binary_search(methods, name);
+  int end = start + 1;
+  if (start != -1) {
+    while (start - 1 >= 0 && (methods->at(start - 1))->name() == name) --start;
+    while (end < methods->length() && (methods->at(end))->name() == name) ++end;
+    *end_ptr = end;
+    return start;
+  }
+  return -1;
 }
 
 Method* InstanceKlass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
@@ -2258,6 +2334,9 @@ void InstanceKlass::release_C_heap_structures() {
   if (_array_name != NULL)  _array_name->decrement_refcount();
   if (_source_file_name != NULL) _source_file_name->decrement_refcount();
   if (_source_debug_extension != NULL) FREE_C_HEAP_ARRAY(char, _source_debug_extension, mtClass);
+
+  assert(_total_instanceKlass_count >= 1, "Sanity check");
+  Atomic::dec(&_total_instanceKlass_count);
 }
 
 void InstanceKlass::set_source_file_name(Symbol* n) {
@@ -2307,19 +2386,19 @@ const char* InstanceKlass::signature_name() const {
 bool InstanceKlass::is_same_class_package(Klass* class2) {
   Klass* class1 = this;
   oop classloader1 = InstanceKlass::cast(class1)->class_loader();
-  Symbol* classname1 = Klass::cast(class1)->name();
+  Symbol* classname1 = class1->name();
 
-  if (Klass::cast(class2)->oop_is_objArray()) {
+  if (class2->oop_is_objArray()) {
     class2 = ObjArrayKlass::cast(class2)->bottom_klass();
   }
   oop classloader2;
-  if (Klass::cast(class2)->oop_is_instance()) {
+  if (class2->oop_is_instance()) {
     classloader2 = InstanceKlass::cast(class2)->class_loader();
   } else {
-    assert(Klass::cast(class2)->oop_is_typeArray(), "should be type array");
+    assert(class2->oop_is_typeArray(), "should be type array");
     classloader2 = NULL;
   }
-  Symbol* classname2 = Klass::cast(class2)->name();
+  Symbol* classname2 = class2->name();
 
   return InstanceKlass::is_same_class_package(classloader1, classname1,
                                               classloader2, classname2);
@@ -2328,7 +2407,7 @@ bool InstanceKlass::is_same_class_package(Klass* class2) {
 bool InstanceKlass::is_same_class_package(oop classloader2, Symbol* classname2) {
   Klass* class1 = this;
   oop classloader1 = InstanceKlass::cast(class1)->class_loader();
-  Symbol* classname1 = Klass::cast(class1)->name();
+  Symbol* classname1 = class1->name();
 
   return InstanceKlass::is_same_class_package(classloader1, classname1,
                                               classloader2, classname2);
@@ -2419,7 +2498,7 @@ Klass* InstanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
 bool InstanceKlass::is_same_package_member_impl(instanceKlassHandle class1,
                                                 Klass* class2_oop, TRAPS) {
   if (class2_oop == class1())                       return true;
-  if (!Klass::cast(class2_oop)->oop_is_instance())  return false;
+  if (!class2_oop->oop_is_instance())  return false;
   instanceKlassHandle class2(THREAD, class2_oop);
 
   // must be in same package before we try anything else
@@ -2811,11 +2890,7 @@ void InstanceKlass::oop_print_on(oop obj, outputStream* st) {
     st->print(BULLET"fake entry for mirror: ");
     mirrored_klass->print_value_on_maybe_null(st);
     st->cr();
-    st->print(BULLET"fake entry resolved_constructor: ");
-    Method* ctor = java_lang_Class::resolved_constructor(obj);
-    ctor->print_value_on_maybe_null(st);
     Klass* array_klass = java_lang_Class::array_klass(obj);
-    st->cr();
     st->print(BULLET"fake entry for array: ");
     array_klass->print_value_on_maybe_null(st);
     st->cr();
@@ -2952,7 +3027,7 @@ void InstanceKlass::verify_on(outputStream* st) {
   if (im != NULL) {
     guarantee(is_interface(), "only interfaces should have implementor set");
     guarantee(im->is_klass(), "should be klass");
-    guarantee(!Klass::cast(im)->is_interface() || im == this,
+    guarantee(!im->is_interface() || im == this,
       "implementors cannot be interfaces");
   }
 
@@ -2961,7 +3036,7 @@ void InstanceKlass::verify_on(outputStream* st) {
     Array<Klass*>* local_interfaces = this->local_interfaces();
     for (int j = 0; j < local_interfaces->length(); j++) {
       Klass* e = local_interfaces->at(j);
-      guarantee(e->is_klass() && Klass::cast(e)->is_interface(), "invalid local interface");
+      guarantee(e->is_klass() && e->is_interface(), "invalid local interface");
     }
   }
 
@@ -2970,7 +3045,7 @@ void InstanceKlass::verify_on(outputStream* st) {
     Array<Klass*>* transitive_interfaces = this->transitive_interfaces();
     for (int j = 0; j < transitive_interfaces->length(); j++) {
       Klass* e = transitive_interfaces->at(j);
-      guarantee(e->is_klass() && Klass::cast(e)->is_interface(), "invalid transitive interface");
+      guarantee(e->is_klass() && e->is_interface(), "invalid transitive interface");
     }
   }
 

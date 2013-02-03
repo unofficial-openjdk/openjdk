@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004, 2009, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2004, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,9 @@ if [ "${TESTJAVA}" = "" ] ; then
   echo "TESTJAVA not set.  Test cannot execute."
   echo "FAILED!!!"
   exit 1
+fi
+if [ "${COMPILEJAVA}" = "" ]; then
+  COMPILEJAVA="${TESTJAVA}"
 fi
 
 # set platform-dependent variables
@@ -103,7 +106,7 @@ echo "==================================================="
 
 # the test code
 
-${TESTJAVA}${FS}bin${FS}javac -target 1.4 -source 1.4 \
+${COMPILEJAVA}${FS}bin${FS}javac -target 1.4 -source 1.4 \
         -d . ${TESTSRC}${FS}SerialTest.java || exit 10
 
 # You can set ALT_JAVA_RE_JDK to another location that contains the

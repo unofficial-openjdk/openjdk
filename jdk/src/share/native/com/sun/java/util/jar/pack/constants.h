@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,18 @@
 #define JAVA_MAGIC 0xCAFEBABE
 #define JAVA_MIN_MAJOR_VERSION 45
 #define JAVA_MIN_MINOR_VERSION 3
+
 #define JAVA5_MAX_MAJOR_VERSION 49
 #define JAVA5_MAX_MINOR_VERSION 0
-// NOTE: Assume for now
+
 #define JAVA6_MAX_MAJOR_VERSION 50
 #define JAVA6_MAX_MINOR_VERSION 0
+
+#define JAVA7_MAX_MAJOR_VERSION 51
+#define JAVA7_MAX_MINOR_VERSION 0
+
+#define JAVA8_MAX_MAJOR_VERSION 52
+#define JAVA8_MAX_MINOR_VERSION 0
 
 // package file constants
 #define JAVA_PACKAGE_MAGIC 0xCAFED00D
@@ -51,6 +58,9 @@
 
 #define JAVA7_PACKAGE_MAJOR_VERSION 170
 #define JAVA7_PACKAGE_MINOR_VERSION 1
+
+#define JAVA8_PACKAGE_MAJOR_VERSION 171
+#define JAVA8_PACKAGE_MINOR_VERSION 0
 
 // magic number for gzip streams (for processing pack200-gzip data)
 #define GZIP_MAGIC      0x1F8B0800
@@ -113,6 +123,7 @@ enum {
     METHOD_ATTR_RuntimeVisibleParameterAnnotations   = 23,
     METHOD_ATTR_RuntimeInvisibleParameterAnnotations = 24,
     METHOD_ATTR_AnnotationDefault                    = 25,
+    METHOD_ATTR_MethodParameters                     = 26,
     CODE_ATTR_StackMapTable          = 0,
     CODE_ATTR_LineNumberTable        = 1,
     CODE_ATTR_LocalVariableTable     = 2,
@@ -153,6 +164,7 @@ enum {
         F(METHOD_ATTR_RuntimeVisibleParameterAnnotations,RuntimeVisibleParameterAnnotations) \
         F(METHOD_ATTR_RuntimeInvisibleParameterAnnotations,RuntimeInvisibleParameterAnnotations) \
         F(METHOD_ATTR_AnnotationDefault,AnnotationDefault) \
+        F(METHOD_ATTR_MethodParameters,MethodParameters) \
           /*(end)*/
 #define CODE_ATTR_DO(F) \
         F(CODE_ATTR_StackMapTable,StackMapTable) \

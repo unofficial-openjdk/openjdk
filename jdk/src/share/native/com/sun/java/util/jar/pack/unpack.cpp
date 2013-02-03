@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -650,13 +650,14 @@ void unpacker::read_file_header() {
   majver = hdr.getInt();
   hdrVals += 2;
 
-  int majmin[3][2] = {
+  int majmin[4][2] = {
       {JAVA5_PACKAGE_MAJOR_VERSION, JAVA5_PACKAGE_MINOR_VERSION},
       {JAVA6_PACKAGE_MAJOR_VERSION, JAVA6_PACKAGE_MINOR_VERSION},
-      {JAVA7_PACKAGE_MAJOR_VERSION, JAVA7_PACKAGE_MINOR_VERSION}
+      {JAVA7_PACKAGE_MAJOR_VERSION, JAVA7_PACKAGE_MINOR_VERSION},
+      {JAVA8_PACKAGE_MAJOR_VERSION, JAVA8_PACKAGE_MINOR_VERSION}
   };
   int majminfound = false;
-  for (int i = 0 ; i < 3 ; i++) {
+  for (int i = 0 ; i < 4 ; i++) {
       if (majver == majmin[i][0] && minver == majmin[i][1]) {
           majminfound = true;
           break;
@@ -665,11 +666,12 @@ void unpacker::read_file_header() {
   if (majminfound == null) {
     char message[200];
     sprintf(message, "@" ERROR_FORMAT ": magic/ver = "
-            "%08X/%d.%d should be %08X/%d.%d OR %08X/%d.%d OR %08X/%d.%d\n",
+            "%08X/%d.%d should be %08X/%d.%d OR %08X/%d.%d OR %08X/%d.%d OR %08X/%d.%d\n",
             magic, majver, minver,
             JAVA_PACKAGE_MAGIC, JAVA5_PACKAGE_MAJOR_VERSION, JAVA5_PACKAGE_MINOR_VERSION,
             JAVA_PACKAGE_MAGIC, JAVA6_PACKAGE_MAJOR_VERSION, JAVA6_PACKAGE_MINOR_VERSION,
-            JAVA_PACKAGE_MAGIC, JAVA7_PACKAGE_MAJOR_VERSION, JAVA7_PACKAGE_MINOR_VERSION);
+            JAVA_PACKAGE_MAGIC, JAVA7_PACKAGE_MAJOR_VERSION, JAVA7_PACKAGE_MINOR_VERSION,
+            JAVA_PACKAGE_MAGIC, JAVA8_PACKAGE_MAJOR_VERSION, JAVA8_PACKAGE_MINOR_VERSION);
     abort(message);
   }
   CHECK;
@@ -2487,6 +2489,13 @@ void unpacker::read_attrs(int attrc, int obj_count) {
     ad.readBandData(METHOD_ATTR_RuntimeVisibleParameterAnnotations);
     ad.readBandData(METHOD_ATTR_RuntimeInvisibleParameterAnnotations);
     ad.readBandData(METHOD_ATTR_AnnotationDefault);
+    CHECK;
+
+    count = ad.predefCount(METHOD_ATTR_MethodParameters);
+    method_MethodParameters_NB.readData(count);
+    count = method_MethodParameters_NB.getIntTotal();
+    method_MethodParameters_name_RUN.readData(count);
+    method_MethodParameters_flag_I.readData(count);
     CHECK;
     break;
 
@@ -4428,6 +4437,15 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
         for (j = 0; j < count; j++) {
           putref(method_Exceptions_RC.getRefN());
           CHECK_0;
+        }
+        break;
+
+      case ADH_BYTE(ATTR_CONTEXT_METHOD, METHOD_ATTR_MethodParameters):
+        aname = cp.sym[cpool::s_MethodParameters];
+        putu1(count = method_MethodParameters_NB.getByte());
+        for (j = 0; j < count; j++) {
+          putref(method_MethodParameters_name_RUN.getRefN());
+          putu4(method_MethodParameters_flag_I.getInt());
         }
         break;
 

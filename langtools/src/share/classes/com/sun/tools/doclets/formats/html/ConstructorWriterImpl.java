@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,11 @@ import com.sun.tools.doclets.internal.toolkit.util.*;
 /**
  * Writes constructor documentation.
  *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
+ *
  * @author Robert Field
  * @author Atul M Dambalkar
  * @author Bhavesh Patel (Modified)
@@ -55,7 +60,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             ClassDoc classDoc) {
         super(writer, classDoc);
         VisibleMemberMap visibleMemberMap = new VisibleMemberMap(classDoc,
-            VisibleMemberMap.CONSTRUCTORS, configuration().nodeprecated);
+            VisibleMemberMap.CONSTRUCTORS, configuration.nodeprecated);
         List<ProgramElementDoc> constructors = new ArrayList<ProgramElementDoc>(visibleMemberMap.getMembersFor(classDoc));
         for (int i = 0; i < constructors.size(); i++) {
             if ((constructors.get(i)).isProtected() ||
@@ -125,13 +130,14 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
         Content pre = new HtmlTree(HtmlTag.PRE);
         writer.addAnnotationInfo(constructor, pre);
         addModifiers(constructor, pre);
-        if (configuration().linksource) {
+        if (configuration.linksource) {
             Content constructorName = new StringContent(constructor.name());
             writer.addSrcLink(constructor, constructorName, pre);
         } else {
             addName(constructor.name(), pre);
         }
         addParameters(constructor, pre);
+        writer.addReceiverAnnotationInfo(constructor, pre);
         addExceptions(constructor, pre);
         return pre;
     }
@@ -212,16 +218,16 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      * {@inheritDoc}
      */
     public String getTableSummary() {
-        return configuration().getText("doclet.Member_Table_Summary",
-                configuration().getText("doclet.Constructor_Summary"),
-                configuration().getText("doclet.constructors"));
+        return configuration.getText("doclet.Member_Table_Summary",
+                configuration.getText("doclet.Constructor_Summary"),
+                configuration.getText("doclet.constructors"));
     }
 
     /**
      * {@inheritDoc}
      */
     public String getCaption() {
-        return configuration().getText("doclet.Constructors");
+        return configuration.getText("doclet.Constructors");
     }
 
     /**
@@ -231,17 +237,17 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
         String[] header;
         if (foundNonPubConstructor) {
             header = new String[] {
-                configuration().getText("doclet.Modifier"),
-                configuration().getText("doclet.0_and_1",
-                        configuration().getText("doclet.Constructor"),
-                        configuration().getText("doclet.Description"))
+                configuration.getText("doclet.Modifier"),
+                configuration.getText("doclet.0_and_1",
+                        configuration.getText("doclet.Constructor"),
+                        configuration.getText("doclet.Description"))
             };
         }
         else {
             header = new String[] {
-                configuration().getText("doclet.0_and_1",
-                        configuration().getText("doclet.Constructor"),
-                        configuration().getText("doclet.Description"))
+                configuration.getText("doclet.0_and_1",
+                        configuration.getText("doclet.Constructor"),
+                        configuration.getText("doclet.Description"))
             };
         }
         return header;
@@ -275,7 +281,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink("", "constructor_summary",
+            return writer.getHyperLink("constructor_summary",
                     writer.getResource("doclet.navConstructor"));
         } else {
             return writer.getResource("doclet.navConstructor");
@@ -287,7 +293,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink("", "constructor_detail",
+            liNav.addContent(writer.getHyperLink("constructor_detail",
                     writer.getResource("doclet.navConstructor")));
         } else {
             liNav.addContent(writer.getResource("doclet.navConstructor"));
@@ -308,7 +314,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
                 code.addContent(writer.getSpace());
             } else {
                 code.addContent(
-                        configuration().getText("doclet.Package_private"));
+                        configuration.getText("doclet.Package_private"));
             }
             tdSummaryType.addContent(code);
         }

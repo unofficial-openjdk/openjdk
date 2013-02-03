@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -129,10 +129,6 @@ static bool isInAquaSession() {
     return true;
 }
 
-static bool isXDisplayDefined() {
-    return getenv("DISPLAY") != NULL;
-}
-
 PreferredToolkit getPreferredToolkit() {
     static PreferredToolkit pref = unset;
     if (pref != unset) return pref;
@@ -141,31 +137,25 @@ PreferredToolkit getPreferredToolkit() {
     if (prefFromEnv != unset) return pref = prefFromEnv;
 
     if (isInAquaSession()) return pref = CToolkit;
-    if (isXDisplayDefined()) return pref = XToolkit;
     return pref = HToolkit;
 }
 
-void setUnknownOSAndVersion(java_props_t *sprops) {
-    sprops->os_name = strdup("Unknown");
-    sprops->os_version = strdup("Unknown");
-}
-
 void setOSNameAndVersion(java_props_t *sprops) {
+    /* Don't rely on JRSCopyOSName because there's no guarantee the value will
+     * remain the same, or even if the JRS functions will continue to be part of
+     * Mac OS X.  So hardcode os_name, and fill in os_version if we can.
+     */
+    sprops->os_name = strdup("Mac OS X");
+
     void *jrsFwk = getJRSFramework();
-    if (jrsFwk == NULL) {
-        setUnknownOSAndVersion(sprops);
-        return;
+    if (jrsFwk != NULL) {
+        char *(*copyOSVersion)() = dlsym(jrsFwk, "JRSCopyOSVersion");
+        if (copyOSVersion != NULL) {
+            sprops->os_version = copyOSVersion();
+            return;
+        }
     }
-
-    char *(*copyOSName)() = dlsym(jrsFwk, "JRSCopyOSName");
-    char *(*copyOSVersion)() = dlsym(jrsFwk, "JRSCopyOSVersion");
-    if (copyOSName == NULL || copyOSVersion == NULL) {
-        setUnknownOSAndVersion(sprops);
-        return;
-    }
-
-    sprops->os_name = copyOSName();
-    sprops->os_version = copyOSVersion();
+    sprops->os_version = strdup("Unknown");
 }
 
 

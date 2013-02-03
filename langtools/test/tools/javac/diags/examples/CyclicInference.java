@@ -21,9 +21,8 @@
  * questions.
  */
 
-// key: compiler.err.cant.apply.symbol
+// key: compiler.err.prob.found.req
 // key: compiler.misc.cyclic.inference
-// options: -XDallowLambda -XDallowPoly
 
 class CyclicInference {
     interface SAM<X> {

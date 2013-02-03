@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import static com.sun.tools.javac.code.Kinds.*;
  *  the symbol table. The pass consists of two phases, organized as
  *  follows:
  *
- *  <p>In the first phase, all class symbols are intered into their
+ *  <p>In the first phase, all class symbols are entered into their
  *  enclosing scope, descending recursively down the tree for classes
  *  which are members of other classes. The class symbols are given a
  *  MemberEnter object as completer.
@@ -131,7 +131,11 @@ public class Enter extends JCTree.Visitor {
 
         predefClassDef = make.ClassDef(
             make.Modifiers(PUBLIC),
-            syms.predefClass.name, null, null, null, null);
+            syms.predefClass.name,
+            List.<JCTypeParameter>nil(),
+            null,
+            List.<JCExpression>nil(),
+            List.<JCTree>nil());
         predefClassDef.sym = syms.predefClass;
         todo = Todo.instance(context);
         fileManager = context.get(JavaFileManager.class);

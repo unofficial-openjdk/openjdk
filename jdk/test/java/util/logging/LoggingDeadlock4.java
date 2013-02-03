@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,13 @@
 
 /*
  * @test
- * @bug     6977677
+ * @bug     6977677 8004928
  * @summary Deadlock between LogManager.<clinit> and Logger.getLogger()
  * @author  Daniel D. Daugherty
- * @build LoggingDeadlock4
- * @run main/othervm/timeout=15 -Djava.awt.headless=true LoggingDeadlock4
+ * @compile -XDignore.symbol.file LoggingDeadlock4.java
+ * @run main/othervm/timeout=15 LoggingDeadlock4
  */
 
-import java.awt.Container;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -40,20 +39,15 @@ public class LoggingDeadlock4 {
     private static CountDownLatch lmIsRunning  = new CountDownLatch(1);
     private static CountDownLatch logIsRunning = new CountDownLatch(1);
 
+    // Create a sun.util.logging.PlatformLogger$JavaLogger object
+    // that has to be redirected when the LogManager class
+    // is initialized. This can cause a deadlock between
+    // LogManager.<clinit> and Logger.getLogger().
+    private static final sun.util.logging.PlatformLogger log =
+        sun.util.logging.PlatformLogger.getLogger("java.util.logging");
+
     public static void main(String[] args) {
         System.out.println("main: LoggingDeadlock4 is starting.");
-
-        // Loading the java.awt.Container class will create a
-        // sun.util.logging.PlatformLogger$JavaLogger object
-        // that has to be redirected when the LogManager class
-        // is initialized. This can cause a deadlock between
-        // LogManager.<clinit> and Logger.getLogger().
-        try {
-            Class.forName("java.awt.Container");
-        } catch (ClassNotFoundException cnfe) {
-            throw new RuntimeException("Test failed: could not load"
-                + " java.awt.Container." + cnfe);
-        }
 
         Thread lmThread = new Thread("LogManagerThread") {
             public void run() {
@@ -68,7 +62,7 @@ public class LoggingDeadlock4 {
                 } catch (InterruptedException e) {
                 }
 
-                LogManager manager = LogManager.getLogManager();
+                LogManager.getLogManager();
             }
         };
         lmThread.start();
@@ -86,7 +80,7 @@ public class LoggingDeadlock4 {
                 } catch (InterruptedException e) {
                 }
 
-                Logger foo = Logger.getLogger("foo logger");
+                Logger.getLogger("foo logger");
             }
         };
         logThread.start();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -186,8 +186,8 @@ public class KeyTab implements KeyTabConstants {
         } else {
             String kname = null;
             try {
-                String keytab_names = Config.getInstance().getDefault
-                    ("default_keytab_name", "libdefaults");
+                String keytab_names = Config.getInstance().get
+                        ("libdefaults", "default_keytab_name");
                 if (keytab_names != null) {
                     StringTokenizer st = new StringTokenizer(keytab_names, " ");
                     while (st.hasMoreTokens()) {
@@ -279,6 +279,9 @@ public class KeyTab implements KeyTabConstants {
         EncryptionKey key;
         int size = entries.size();
         ArrayList<EncryptionKey> keys = new ArrayList<>(size);
+        if (DEBUG) {
+            System.out.println("Looking for keys for: " + service);
+        }
         for (int i = size-1; i >= 0; i--) {
             entry = entries.elementAt(i);
             if (entry.service.match(service)) {
@@ -379,9 +382,15 @@ public class KeyTab implements KeyTabConstants {
      */
     public void addEntry(PrincipalName service, char[] psswd,
             int kvno, boolean append) throws KrbException {
+        addEntry(service, service.getSalt(), psswd, kvno, append);
+    }
+
+    // Called by KDC test
+    public void addEntry(PrincipalName service, String salt, char[] psswd,
+            int kvno, boolean append) throws KrbException {
 
         EncryptionKey[] encKeys = EncryptionKey.acquireSecretKeys(
-            psswd, service.getSalt());
+            psswd, salt);
 
         // There should be only one maximum KVNO value for all etypes, so that
         // all added keys can have the same KVNO.

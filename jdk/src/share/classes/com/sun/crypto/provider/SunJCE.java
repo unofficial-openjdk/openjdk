@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ import java.security.SecureRandom;
  * - ARCFOUR (RC4 compatible)
  *
  * - Cipher modes ECB, CBC, CFB, OFB, PCBC, CTR, and CTS for all block ciphers
+ *   and mode GCM for AES cipher
  *
  * - Cipher padding ISO10126Padding for non-PKCS#5 block ciphers and
  *   NoPadding and PKCS5Padding for all block ciphers
@@ -77,16 +78,25 @@ public final class SunJCE extends Provider {
     "(implements RSA, DES, Triple DES, AES, Blowfish, ARCFOUR, RC2, PBE, "
     + "Diffie-Hellman, HMAC)";
 
-    private static final String OID_PKCS12_RC2_40 = "1.2.840.113549.1.12.1.6";
+    private static final String OID_PKCS12_RC4_128 = "1.2.840.113549.1.12.1.1";
+    private static final String OID_PKCS12_RC4_40 = "1.2.840.113549.1.12.1.2";
     private static final String OID_PKCS12_DESede = "1.2.840.113549.1.12.1.3";
+    private static final String OID_PKCS12_RC2_128 = "1.2.840.113549.1.12.1.5";
+    private static final String OID_PKCS12_RC2_40 = "1.2.840.113549.1.12.1.6";
     private static final String OID_PKCS5_MD5_DES = "1.2.840.113549.1.5.3";
     private static final String OID_PKCS5_PBKDF2 = "1.2.840.113549.1.5.12";
+    private static final String OID_PKCS5_PBES2 = "1.2.840.113549.1.5.13";
     private static final String OID_PKCS3 = "1.2.840.113549.1.3.1";
 
     /* Are we debugging? -- for developers */
     static final boolean debug = false;
 
-    static final SecureRandom RANDOM = new SecureRandom();
+    // lazy initialize SecureRandom to avoid potential recursion if Sun
+    // provider has not been installed yet
+    private static class SecureRandomHolder {
+        static final SecureRandom RANDOM = new SecureRandom();
+    }
+    static SecureRandom getRandom() { return SecureRandomHolder.RANDOM; }
 
     public SunJCE() {
         /* We are the "SunJCE" provider */
@@ -96,7 +106,7 @@ public final class SunJCE extends Provider {
             "|CFB8|CFB16|CFB24|CFB32|CFB40|CFB48|CFB56|CFB64" +
             "|OFB8|OFB16|OFB24|OFB32|OFB40|OFB48|OFB56|OFB64";
         final String BLOCK_MODES128 = BLOCK_MODES +
-            "|CFB72|CFB80|CFB88|CFB96|CFB104|CFB112|CFB120|CFB128" +
+            "|GCM|CFB72|CFB80|CFB88|CFB96|CFB104|CFB112|CFB120|CFB128" +
             "|OFB72|OFB80|OFB88|OFB96|OFB104|OFB112|OFB120|OFB128";
         final String BLOCK_PADS = "NOPADDING|PKCS5PADDING|ISO10126PADDING";
 
@@ -138,21 +148,18 @@ public final class SunJCE extends Provider {
                     put("Cipher.DESedeWrap SupportedPaddings", "NOPADDING");
                     put("Cipher.DESedeWrap SupportedKeyFormats", "RAW");
 
+                    // PBES1
+
                     put("Cipher.PBEWithMD5AndDES",
                         "com.sun.crypto.provider.PBEWithMD5AndDESCipher");
                     put("Alg.Alias.Cipher.OID."+OID_PKCS5_MD5_DES,
                         "PBEWithMD5AndDES");
                     put("Alg.Alias.Cipher."+OID_PKCS5_MD5_DES,
                         "PBEWithMD5AndDES");
+
                     put("Cipher.PBEWithMD5AndTripleDES",
                         "com.sun.crypto.provider.PBEWithMD5AndTripleDESCipher");
-                    put("Cipher.PBEWithSHA1AndRC2_40",
-                        "com.sun.crypto.provider.PKCS12PBECipherCore$" +
-                        "PBEWithSHA1AndRC2_40");
-                    put("Alg.Alias.Cipher.OID." + OID_PKCS12_RC2_40,
-                        "PBEWithSHA1AndRC2_40");
-                    put("Alg.Alias.Cipher." + OID_PKCS12_RC2_40,
-                        "PBEWithSHA1AndRC2_40");
+
                     put("Cipher.PBEWithSHA1AndDESede",
                         "com.sun.crypto.provider.PKCS12PBECipherCore$" +
                         "PBEWithSHA1AndDESede");
@@ -160,6 +167,78 @@ public final class SunJCE extends Provider {
                         "PBEWithSHA1AndDESede");
                     put("Alg.Alias.Cipher." + OID_PKCS12_DESede,
                         "PBEWithSHA1AndDESede");
+
+                    put("Cipher.PBEWithSHA1AndRC2_40",
+                        "com.sun.crypto.provider.PKCS12PBECipherCore$" +
+                        "PBEWithSHA1AndRC2_40");
+                    put("Alg.Alias.Cipher.OID." + OID_PKCS12_RC2_40,
+                        "PBEWithSHA1AndRC2_40");
+                    put("Alg.Alias.Cipher." + OID_PKCS12_RC2_40,
+                        "PBEWithSHA1AndRC2_40");
+
+                    put("Cipher.PBEWithSHA1AndRC2_128",
+                        "com.sun.crypto.provider.PKCS12PBECipherCore$" +
+                        "PBEWithSHA1AndRC2_128");
+                    put("Alg.Alias.Cipher.OID." + OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+                    put("Alg.Alias.Cipher." + OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+
+                    put("Cipher.PBEWithSHA1AndRC4_40",
+                        "com.sun.crypto.provider.PKCS12PBECipherCore$" +
+                        "PBEWithSHA1AndRC4_40");
+                    put("Alg.Alias.Cipher.OID." + OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+                    put("Alg.Alias.Cipher." + OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+
+                    put("Cipher.PBEWithSHA1AndRC4_128",
+                        "com.sun.crypto.provider.PKCS12PBECipherCore$" +
+                        "PBEWithSHA1AndRC4_128");
+                    put("Alg.Alias.Cipher.OID." + OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+                    put("Alg.Alias.Cipher." + OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+
+                    //PBES2
+
+                    put("Cipher.PBEWithHmacSHA1AndAES_128",
+                        "com.sun.crypto.provider.PBES2Core$HmacSHA1AndAES_128");
+
+                    put("Cipher.PBEWithHmacSHA224AndAES_128",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA224AndAES_128");
+
+                    put("Cipher.PBEWithHmacSHA256AndAES_128",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA256AndAES_128");
+
+                    put("Cipher.PBEWithHmacSHA384AndAES_128",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA384AndAES_128");
+
+                    put("Cipher.PBEWithHmacSHA512AndAES_128",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA512AndAES_128");
+
+                    put("Cipher.PBEWithHmacSHA1AndAES_256",
+                        "com.sun.crypto.provider.PBES2Core$HmacSHA1AndAES_256");
+
+                    put("Cipher.PBEWithHmacSHA224AndAES_256",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA224AndAES_256");
+
+                    put("Cipher.PBEWithHmacSHA256AndAES_256",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA256AndAES_256");
+
+                    put("Cipher.PBEWithHmacSHA384AndAES_256",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA384AndAES_256");
+
+                    put("Cipher.PBEWithHmacSHA512AndAES_256",
+                        "com.sun.crypto.provider.PBES2Core$" +
+                            "HmacSHA512AndAES_256");
 
                     put("Cipher.Blowfish",
                         "com.sun.crypto.provider.BlowfishCipher");
@@ -185,6 +264,9 @@ public final class SunJCE extends Provider {
                     put("Cipher.AES_128/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_CFB_NoPadding");
                     put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.4", "AES_128/CFB/NoPadding");
                     put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.4", "AES_128/CFB/NoPadding");
+                    put("Cipher.AES_128/GCM/NoPadding", "com.sun.crypto.provider.AESCipher$AES128_GCM_NoPadding");
+                    put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.6", "AES_128/GCM/NoPadding");
+                    put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.6", "AES_128/GCM/NoPadding");
 
                     put("Cipher.AES_192/ECB/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_ECB_NoPadding");
                     put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.21", "AES_192/ECB/NoPadding");
@@ -198,7 +280,9 @@ public final class SunJCE extends Provider {
                     put("Cipher.AES_192/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_CFB_NoPadding");
                     put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.24", "AES_192/CFB/NoPadding");
                     put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.24", "AES_192/CFB/NoPadding");
-
+                    put("Cipher.AES_192/GCM/NoPadding", "com.sun.crypto.provider.AESCipher$AES192_GCM_NoPadding");
+                    put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.26", "AES_192/GCM/NoPadding");
+                    put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.26", "AES_192/GCM/NoPadding");
 
                     put("Cipher.AES_256/ECB/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_ECB_NoPadding");
                     put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.41", "AES_256/ECB/NoPadding");
@@ -212,6 +296,9 @@ public final class SunJCE extends Provider {
                     put("Cipher.AES_256/CFB/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_CFB_NoPadding");
                     put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.44", "AES_256/CFB/NoPadding");
                     put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.44", "AES_256/CFB/NoPadding");
+                    put("Cipher.AES_256/GCM/NoPadding", "com.sun.crypto.provider.AESCipher$AES256_GCM_NoPadding");
+                    put("Alg.Alias.Cipher.2.16.840.1.101.3.4.1.46", "AES_256/GCM/NoPadding");
+                    put("Alg.Alias.Cipher.OID.2.16.840.1.101.3.4.1.46", "AES_256/GCM/NoPadding");
 
                     put("Cipher.AESWrap", "com.sun.crypto.provider.AESWrapCipher$General");
                     put("Cipher.AESWrap SupportedModes", "ECB");
@@ -301,6 +388,7 @@ public final class SunJCE extends Provider {
                         "DiffieHellman");
                     put("Alg.Alias.KeyPairGenerator."+OID_PKCS3,
                         "DiffieHellman");
+
                     /*
                      * Algorithm parameter generation engines
                      */
@@ -371,12 +459,73 @@ public final class SunJCE extends Provider {
                     put("Alg.Alias.AlgorithmParameters." + OID_PKCS12_RC2_40,
                         "PBEWithSHA1AndRC2_40");
 
+                    put("AlgorithmParameters.PBEWithSHA1AndRC2_128",
+                        "com.sun.crypto.provider.PBEParameters");
+                    put("Alg.Alias.AlgorithmParameters.OID."+OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+                    put("Alg.Alias.AlgorithmParameters." + OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+
+                    put("AlgorithmParameters.PBEWithSHA1AndRC4_40",
+                        "com.sun.crypto.provider.PBEParameters");
+                    put("Alg.Alias.AlgorithmParameters.OID."+OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+                    put("Alg.Alias.AlgorithmParameters." + OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+
+                    put("AlgorithmParameters.PBEWithSHA1AndRC4_128",
+                        "com.sun.crypto.provider.PBEParameters");
+                    put("Alg.Alias.AlgorithmParameters.OID."+OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+                    put("Alg.Alias.AlgorithmParameters." + OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+
+                    put("AlgorithmParameters.PBES2",
+                        "com.sun.crypto.provider.PBES2Parameters$General");
+                    put("Alg.Alias.AlgorithmParameters.OID."+OID_PKCS5_PBES2,
+                        "PBES2");
+                    put("Alg.Alias.AlgorithmParameters." + OID_PKCS5_PBES2,
+                        "PBES2");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA1AndAES_128",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA1AndAES_128");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA224AndAES_128",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA224AndAES_128");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA256AndAES_128",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA256AndAES_128");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA384AndAES_128",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA384AndAES_128");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA512AndAES_128",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA512AndAES_128");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA1AndAES_256",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA1AndAES_256");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA224AndAES_256",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA224AndAES_256");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA256AndAES_256",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA256AndAES_256");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA384AndAES_256",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA384AndAES_256");
+
+                    put("AlgorithmParameters.PBEWithHmacSHA512AndAES_256",
+                        "com.sun.crypto.provider.PBES2Parameters$HmacSHA512AndAES_256");
+
                     put("AlgorithmParameters.Blowfish",
                         "com.sun.crypto.provider.BlowfishParameters");
 
                     put("AlgorithmParameters.AES",
                         "com.sun.crypto.provider.AESParameters");
                     put("Alg.Alias.AlgorithmParameters.Rijndael", "AES");
+                    put("AlgorithmParameters.GCM",
+                        "com.sun.crypto.provider.GCMParameters");
+
 
                     put("AlgorithmParameters.RC2",
                         "com.sun.crypto.provider.RC2Parameters");
@@ -393,6 +542,7 @@ public final class SunJCE extends Provider {
                     put("Alg.Alias.KeyFactory.OID."+OID_PKCS3,
                         "DiffieHellman");
                     put("Alg.Alias.KeyFactory."+OID_PKCS3, "DiffieHellman");
+
                     /*
                      * Secret-key factories
                      */
@@ -441,12 +591,89 @@ public final class SunJCE extends Provider {
                     put("Alg.Alias.SecretKeyFactory." + OID_PKCS12_RC2_40,
                         "PBEWithSHA1AndRC2_40");
 
+                    put("SecretKeyFactory.PBEWithSHA1AndRC2_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$PBEWithSHA1AndRC2_128"
+                        );
+                    put("Alg.Alias.SecretKeyFactory.OID." + OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+                    put("Alg.Alias.SecretKeyFactory." + OID_PKCS12_RC2_128,
+                        "PBEWithSHA1AndRC2_128");
+
+                    put("SecretKeyFactory.PBEWithSHA1AndRC4_40",
+                        "com.sun.crypto.provider.PBEKeyFactory$PBEWithSHA1AndRC4_40"
+                        );
+
+                    put("Alg.Alias.SecretKeyFactory.OID." + OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+                    put("Alg.Alias.SecretKeyFactory." + OID_PKCS12_RC4_40,
+                        "PBEWithSHA1AndRC4_40");
+
+                    put("SecretKeyFactory.PBEWithSHA1AndRC4_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$PBEWithSHA1AndRC4_128"
+                        );
+
+                    put("Alg.Alias.SecretKeyFactory.OID." + OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+                    put("Alg.Alias.SecretKeyFactory." + OID_PKCS12_RC4_128,
+                        "PBEWithSHA1AndRC4_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA1AndAES_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA1AndAES_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA224AndAES_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA224AndAES_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA256AndAES_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA256AndAES_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA384AndAES_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA384AndAES_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA512AndAES_128",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA512AndAES_128");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA1AndAES_256",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA1AndAES_256");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA224AndAES_256",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA224AndAES_256");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA256AndAES_256",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA256AndAES_256");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA384AndAES_256",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA384AndAES_256");
+
+                    put("SecretKeyFactory.PBEWithHmacSHA512AndAES_256",
+                        "com.sun.crypto.provider.PBEKeyFactory$" +
+                        "PBEWithHmacSHA512AndAES_256");
+
+                    // PBKDF2
+
                     put("SecretKeyFactory.PBKDF2WithHmacSHA1",
-                        "com.sun.crypto.provider.PBKDF2HmacSHA1Factory");
+                        "com.sun.crypto.provider.PBKDF2Core$HmacSHA1");
                     put("Alg.Alias.SecretKeyFactory.OID." + OID_PKCS5_PBKDF2,
                         "PBKDF2WithHmacSHA1");
                     put("Alg.Alias.SecretKeyFactory." + OID_PKCS5_PBKDF2,
                         "PBKDF2WithHmacSHA1");
+
+                    put("SecretKeyFactory.PBKDF2WithHmacSHA224",
+                        "com.sun.crypto.provider.PBKDF2Core$HmacSHA224");
+                    put("SecretKeyFactory.PBKDF2WithHmacSHA256",
+                        "com.sun.crypto.provider.PBKDF2Core$HmacSHA256");
+                    put("SecretKeyFactory.PBKDF2WithHmacSHA384",
+                        "com.sun.crypto.provider.PBKDF2Core$HmacSHA384");
+                    put("SecretKeyFactory.PBKDF2WithHmacSHA512",
+                        "com.sun.crypto.provider.PBKDF2Core$HmacSHA512");
 
                     /*
                      * MAC
@@ -475,6 +702,19 @@ public final class SunJCE extends Provider {
                     put("Mac.HmacPBESHA1",
                         "com.sun.crypto.provider.HmacPKCS12PBESHA1");
 
+                    // PBMAC1
+
+                    put("Mac.PBEWithHmacSHA1",
+                        "com.sun.crypto.provider.PBMAC1Core$HmacSHA1");
+                    put("Mac.PBEWithHmacSHA224",
+                        "com.sun.crypto.provider.PBMAC1Core$HmacSHA224");
+                    put("Mac.PBEWithHmacSHA256",
+                        "com.sun.crypto.provider.PBMAC1Core$HmacSHA256");
+                    put("Mac.PBEWithHmacSHA384",
+                        "com.sun.crypto.provider.PBMAC1Core$HmacSHA384");
+                    put("Mac.PBEWithHmacSHA512",
+                        "com.sun.crypto.provider.PBMAC1Core$HmacSHA512");
+
                     put("Mac.SslMacMD5",
                         "com.sun.crypto.provider.SslMacCore$SslMacMD5");
                     put("Mac.SslMacSHA1",
@@ -487,6 +727,10 @@ public final class SunJCE extends Provider {
                     put("Mac.HmacSHA384 SupportedKeyFormats", "RAW");
                     put("Mac.HmacSHA512 SupportedKeyFormats", "RAW");
                     put("Mac.HmacPBESHA1 SupportedKeyFormats", "RAW");
+                    put("Mac.HmacPBESHA224 SupportedKeyFormats", "RAW");
+                    put("Mac.HmacPBESHA256 SupportedKeyFormats", "RAW");
+                    put("Mac.HmacPBESHA384 SupportedKeyFormats", "RAW");
+                    put("Mac.HmacPBESHA512 SupportedKeyFormats", "RAW");
                     put("Mac.SslMacMD5 SupportedKeyFormats", "RAW");
                     put("Mac.SslMacSHA1 SupportedKeyFormats", "RAW");
 

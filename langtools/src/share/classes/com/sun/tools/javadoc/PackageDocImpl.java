@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,13 @@
 
 package com.sun.tools.javadoc;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
+
 import javax.tools.FileObject;
 
 import com.sun.javadoc.*;
-
+import com.sun.source.util.TreePath;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Scope;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
@@ -46,6 +47,11 @@ import com.sun.tools.javac.util.Position;
  * Represents a java package.  Provides access to information
  * about the package, the package's comment and tags, and the
  * classes in the package.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @since 1.2
  * @author Kaiyang Liu (original)
@@ -70,17 +76,16 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * Constructor
      */
     public PackageDocImpl(DocEnv env, PackageSymbol sym) {
-        this(env, sym, null, null);
+        this(env, sym, null);
     }
 
     /**
      * Constructor
      */
-    public PackageDocImpl(DocEnv env, PackageSymbol sym,
-                          String documentation, JCTree tree) {
-        super(env, documentation);
+    public PackageDocImpl(DocEnv env, PackageSymbol sym, TreePath treePath) {
+        super(env, treePath);
         this.sym = sym;
-        this.tree = (JCCompilationUnit) tree;
+        this.tree = (treePath == null) ? null : (JCCompilationUnit) treePath.getCompilationUnit();
         foundDoc = (documentation != null);
     }
 
@@ -88,8 +93,8 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
         this.tree = (JCCompilationUnit) tree;
     }
 
-    public void setRawCommentText(String rawDocumentation) {
-        super.setRawCommentText(rawDocumentation);
+    public void setTreePath(TreePath treePath) {
+        super.setTreePath(treePath);
         checkDoc();
     }
 
@@ -283,9 +288,9 @@ public class PackageDocImpl extends DocImpl implements PackageDoc {
      * Return an empty array if there are none.
      */
     public AnnotationDesc[] annotations() {
-        AnnotationDesc res[] = new AnnotationDesc[sym.getAnnotationMirrors().length()];
+        AnnotationDesc res[] = new AnnotationDesc[sym.getRawAttributes().length()];
         int i = 0;
-        for (Attribute.Compound a : sym.getAnnotationMirrors()) {
+        for (Attribute.Compound a : sym.getRawAttributes()) {
             res[i++] = new AnnotationDescImpl(env, a);
         }
         return res;

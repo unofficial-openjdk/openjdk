@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,18 @@
 package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.util.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.*;
+
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds documentation for a method.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -52,57 +54,61 @@ public class MethodBuilder extends AbstractMemberBuilder {
     /**
      * The class whose methods are being documented.
      */
-    private ClassDoc classDoc;
+    private final ClassDoc classDoc;
 
     /**
      * The visible methods for the given class.
      */
-    private VisibleMemberMap visibleMemberMap;
+    private final VisibleMemberMap visibleMemberMap;
 
     /**
      * The writer to output the method documentation.
      */
-    private MethodWriter writer;
+    private final MethodWriter writer;
 
     /**
      * The methods being documented.
      */
     private List<ProgramElementDoc> methods;
 
-    private MethodBuilder(Configuration configuration) {
-        super(configuration);
+
+    /**
+     * Construct a new MethodBuilder.
+     *
+     * @param context       the build context.
+     * @param classDoc the class whoses members are being documented.
+     * @param writer the doclet specific writer.
+     */
+    private MethodBuilder(Context context,
+            ClassDoc classDoc,
+            MethodWriter writer) {
+        super(context);
+        this.classDoc = classDoc;
+        this.writer = writer;
+        visibleMemberMap = new VisibleMemberMap(
+                classDoc,
+                VisibleMemberMap.METHODS,
+                configuration.nodeprecated);
+        methods =
+                new ArrayList<ProgramElementDoc>(visibleMemberMap.getLeafClassMembers(
+                configuration));
+        if (configuration.getMemberComparator() != null) {
+            Collections.sort(methods, configuration.getMemberComparator());
+        }
     }
 
     /**
      * Construct a new MethodBuilder.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param context       the build context.
      * @param classDoc the class whoses members are being documented.
      * @param writer the doclet specific writer.
      *
      * @return an instance of a MethodBuilder.
      */
-    public static MethodBuilder getInstance(
-            Configuration configuration,
-            ClassDoc classDoc,
-            MethodWriter writer) {
-        MethodBuilder builder = new MethodBuilder(configuration);
-        builder.classDoc = classDoc;
-        builder.writer = writer;
-        builder.visibleMemberMap =
-                new VisibleMemberMap(
-                classDoc,
-                VisibleMemberMap.METHODS,
-                configuration.nodeprecated);
-        builder.methods =
-                new ArrayList<ProgramElementDoc>(builder.visibleMemberMap.getLeafClassMembers(
-                configuration));
-        if (configuration.getMemberComparator() != null) {
-            Collections.sort(
-                    builder.methods,
-                    configuration.getMemberComparator());
-        }
-        return builder;
+    public static MethodBuilder getInstance(Context context,
+            ClassDoc classDoc, MethodWriter writer) {
+        return new MethodBuilder(context, classDoc, writer);
     }
 
     /**

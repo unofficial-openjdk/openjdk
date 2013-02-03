@@ -137,7 +137,7 @@ address CppInterpreterGenerator::generate_result_handler_for(BasicType type) {
   }
   __ ret();                           // return from interpreter activation
   __ delayed()->restore(I5_savedSP, G0, SP);  // remove interpreter frame
-  NOT_PRODUCT(__ emit_long(0);)       // marker for disassembly
+  NOT_PRODUCT(__ emit_int32(0);)       // marker for disassembly
   return entry;
 }
 
@@ -232,7 +232,7 @@ address CppInterpreterGenerator::generate_tosca_to_stack_converter(BasicType typ
   }
   __ retl();                          // return from interpreter activation
   __ delayed()->nop();                // schedule this better
-  NOT_PRODUCT(__ emit_long(0);)       // marker for disassembly
+  NOT_PRODUCT(__ emit_int32(0);)       // marker for disassembly
   return entry;
 }
 
@@ -582,7 +582,9 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   // the following temporary registers are used during frame creation
   const Register Gtmp1 = G3_scratch ;
   const Register Gtmp2 = G1_scratch;
-  const Address size_of_parameters(G5_method, 0, in_bytes(Method::size_of_parameters_offset()));
+  const Register RconstMethod = Gtmp1;
+  const Address constMethod(G5_method, 0, in_bytes(Method::const_offset()));
+  const Address size_of_parameters(RconstMethod, 0, in_bytes(ConstMethod::size_of_parameters_offset()));
 
   bool inc_counter  = UseCompiler || CountCompiledCalls;
 
@@ -618,6 +620,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   }
 #endif // ASSERT
 
+  __ ld_ptr(constMethod, RconstMethod);
   __ lduh(size_of_parameters, Gtmp1);
   __ sll(Gtmp1, LogBytesPerWord, Gtmp2);       // parameter size in bytes
   __ add(Gargs, Gtmp2, Gargs);                 // points to first local + BytesPerWord
@@ -1047,9 +1050,6 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
   const Register Gtmp = G3_scratch;
   const Address constMethod       (G5_method, 0, in_bytes(Method::const_offset()));
   const Address access_flags      (G5_method, 0, in_bytes(Method::access_flags_offset()));
-  const Address size_of_parameters(G5_method, 0, in_bytes(Method::size_of_parameters_offset()));
-  const Address max_stack         (G5_method, 0, in_bytes(Method::max_stack_offset()));
-  const Address size_of_locals    (G5_method, 0, in_bytes(Method::size_of_locals_offset()));
 
   // slop factor is two extra slots on the expression stack so that
   // we always have room to store a result when returning from a call without parameters
@@ -1067,10 +1067,15 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
   // Now compute new frame size
 
   if (native) {
+    const Register RconstMethod = Gtmp;
+    const Address size_of_parameters(RconstMethod, 0, in_bytes(ConstMethod::size_of_parameters_offset()));
+    __ ld_ptr(constMethod, RconstMethod);
     __ lduh( size_of_parameters, Gtmp );
     __ calc_mem_param_words(Gtmp, Gtmp);     // space for native call parameters passed on the stack in words
   } else {
-    __ lduh(max_stack, Gtmp);                // Full size expression stack
+    // Full size expression stack
+    __ ld_ptr(constMethod, Gtmp);
+    __ lduh(Gtmp, in_bytes(ConstMethod::max_stack_offset()), Gtmp);
   }
   __ add(Gtmp, fixed_size, Gtmp);           // plus the fixed portion
 
@@ -1206,7 +1211,9 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
   __ sub(O2, wordSize, O2);                    // prepush
   __ st_ptr(O2, XXX_STATE(_stack));                // PREPUSH
 
-  __ lduh(max_stack, O3);                      // Full size expression stack
+  // Full size expression stack
+  __ ld_ptr(constMethod, O3);
+  __ lduh(O3, in_bytes(ConstMethod::max_stack_offset()), O3);
   guarantee(!EnableInvokeDynamic, "no support yet for java.lang.invoke.MethodHandle"); //6815692
   //6815692//if (EnableInvokeDynamic)
   //6815692//  __ inc(O3, Method::extra_stack_entries());
@@ -1233,9 +1240,13 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
     }
     if (init_value != noreg) {
       Label clear_loop;
+      const Register RconstMethod = O1;
+      const Address size_of_parameters(RconstMethod, 0, in_bytes(ConstMethod::size_of_parameters_offset()));
+      const Address size_of_locals    (RconstMethod, 0, in_bytes(ConstMethod::size_of_locals_offset()));
 
       // NOTE: If you change the frame layout, this code will need to
       // be updated!
+      __ ld_ptr( constMethod, RconstMethod );
       __ lduh( size_of_locals, O2 );
       __ lduh( size_of_parameters, O1 );
       __ sll( O2, LogBytesPerWord, O2);
@@ -1462,7 +1473,7 @@ static address interpreter_frame_manager = NULL;
     __ brx(Assembler::equal, false, Assembler::pt, skip);         \
     __ delayed()->nop();                                          \
     __ breakpoint_trap();                                         \
-    __ emit_long(marker);                                         \
+    __ emit_int32(marker);                                         \
     __ bind(skip);                                                \
   }
 #else
@@ -1480,13 +1491,16 @@ void CppInterpreterGenerator::adjust_callers_stack(Register args) {
 //
 //  assert_different_registers(state, prev_state);
   const Register Gtmp = G3_scratch;
+  const RconstMethod = G3_scratch;
   const Register tmp = O2;
-  const Address size_of_parameters(G5_method, 0, in_bytes(Method::size_of_parameters_offset()));
-  const Address size_of_locals    (G5_method, 0, in_bytes(Method::size_of_locals_offset()));
+  const Address constMethod(G5_method, 0, in_bytes(Method::const_offset()));
+  const Address size_of_parameters(RconstMethod, 0, in_bytes(ConstMethod::size_of_parameters_offset()));
+  const Address size_of_locals    (RconstMethod, 0, in_bytes(ConstMethod::size_of_locals_offset()));
 
+  __ ld_ptr(constMethod, RconstMethod);
   __ lduh(size_of_parameters, tmp);
-  __ sll(tmp, LogBytesPerWord, Gtmp);       // parameter size in bytes
-  __ add(args, Gtmp, Gargs);                // points to first local + BytesPerWord
+  __ sll(tmp, LogBytesPerWord, Gargs);       // parameter size in bytes
+  __ add(args, Gargs, Gargs);                // points to first local + BytesPerWord
   // NEW
   __ add(Gargs, -wordSize, Gargs);             // points to first local[0]
   // determine extra space for non-argument locals & adjust caller's SP
@@ -1538,9 +1552,6 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   const Address constMethod       (G5_method, 0, in_bytes(Method::const_offset()));
   const Address access_flags      (G5_method, 0, in_bytes(Method::access_flags_offset()));
-  const Address size_of_parameters(G5_method, 0, in_bytes(Method::size_of_parameters_offset()));
-  const Address max_stack         (G5_method, 0, in_bytes(Method::max_stack_offset()));
-  const Address size_of_locals    (G5_method, 0, in_bytes(Method::size_of_locals_offset()));
 
   address entry_point = __ pc();
   __ mov(G0, prevState);                                                 // no current activation
@@ -1748,7 +1759,9 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   __ ld_ptr(STATE(_result._to_call._callee), L4_scratch);                        // called method
   __ ld_ptr(STATE(_stack), L1_scratch);                                          // get top of java expr stack
-  __ lduh(L4_scratch, in_bytes(Method::size_of_parameters_offset()), L2_scratch); // get parameter size
+  // get parameter size
+  __ ld_ptr(L4_scratch, in_bytes(Method::const_offset()), L2_scratch);
+  __ lduh(L2_scratch, in_bytes(ConstMethod::size_of_parameters_offset()), L2_scratch);
   __ sll(L2_scratch, LogBytesPerWord, L2_scratch     );                           // parameter size in bytes
   __ add(L1_scratch, L2_scratch, L1_scratch);                                      // stack destination for result
   __ ld(L4_scratch, in_bytes(Method::result_index_offset()), L3_scratch); // called method result type index

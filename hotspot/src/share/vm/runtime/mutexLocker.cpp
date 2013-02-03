@@ -25,20 +25,9 @@
 #include "precompiled.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/safepoint.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/threadLocalStorage.hpp"
 #include "runtime/vmThread.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
 
 // Mutexes used in the VM (see comment in mutexLocker.hpp):
 //
@@ -140,6 +129,7 @@ Monitor* JfrQuery_lock                = NULL;
 Monitor* JfrMsg_lock                  = NULL;
 Mutex*   JfrBuffer_lock               = NULL;
 Mutex*   JfrStream_lock               = NULL;
+Monitor* PeriodicTask_lock            = NULL;
 
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];
@@ -285,6 +275,7 @@ void mutex_init() {
   def(JfrMsg_lock                  , Monitor, nonleaf+2,   true);
   def(JfrBuffer_lock               , Mutex,   nonleaf+3,   true);
   def(JfrStream_lock               , Mutex,   nonleaf+4,   true);
+  def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {

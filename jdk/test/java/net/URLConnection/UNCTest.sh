@@ -35,8 +35,8 @@ UNC="file://jdk/LOCAL-JAVA/jdk1.4/win/README.txt"
 OS=`uname -s`
 case "$OS" in
     Windows_95 | Windows_98 | Windows_NT )
-	${TESTJAVA}/bin/javac -d . ${TESTSRC}\\UNCTest.java
-	${TESTJAVA}/bin/java UNCTest ${UNC}
+	${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}\\UNCTest.java
+	${TESTJAVA}/bin/java ${TESTVMOPTS} UNCTest ${UNC}
 	exit
         ;;
 

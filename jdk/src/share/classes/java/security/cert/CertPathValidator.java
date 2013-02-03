@@ -293,25 +293,23 @@ public class CertPathValidator {
     }
 
     /**
-     * Returns the default <code>CertPathValidator</code> type as specified in
-     * the Java security properties file, or the string &quot;PKIX&quot;
-     * if no such property exists. The Java security properties file is
-     * located in the file named &lt;JAVA_HOME&gt;/lib/security/java.security.
-     * &lt;JAVA_HOME&gt; refers to the value of the java.home system property,
-     * and specifies the directory where the JRE is installed.
+     * Returns the default {@code CertPathValidator} type as specified by
+     * the {@code certpathvalidator.type} security property, or the string
+     * {@literal "PKIX"} if no such property exists.
      *
-     * <p>The default <code>CertPathValidator</code> type can be used by
+     * <p>The default {@code CertPathValidator} type can be used by
      * applications that do not want to use a hard-coded type when calling one
-     * of the <code>getInstance</code> methods, and want to provide a default
+     * of the {@code getInstance} methods, and want to provide a default
      * type in case a user does not specify its own.
      *
-     * <p>The default <code>CertPathValidator</code> type can be changed by
-     * setting the value of the "certpathvalidator.type" security property
-     * (in the Java security properties file) to the desired type.
+     * <p>The default {@code CertPathValidator} type can be changed by
+     * setting the value of the {@code certpathvalidator.type} security
+     * property to the desired type.
      *
-     * @return the default <code>CertPathValidator</code> type as specified
-     * in the Java security properties file, or the string &quot;PKIX&quot;
-     * if no such property exists.
+     * @see java.security.Security security properties
+     * @return the default {@code CertPathValidator} type as specified
+     * by the {@code certpathvalidator.type} security property, or the string
+     * {@literal "PKIX"} if no such property exists.
      */
     public final static String getDefaultType() {
         String cpvtype =
@@ -327,12 +325,14 @@ public class CertPathValidator {
      * Returns a {@code CertPathChecker} that the encapsulated
      * {@code CertPathValidatorSpi} implementation uses to check the revocation
      * status of certificates. A PKIX implementation returns objects of
-     * type {@code PKIXRevocationChecker}.
+     * type {@code PKIXRevocationChecker}. Each invocation of this method
+     * returns a new instance of {@code CertPathChecker}.
      *
      * <p>The primary purpose of this method is to allow callers to specify
      * additional input parameters and options specific to revocation checking.
      * See the class description for an example.
      *
+     * @return a {@code CertPathChecker}
      * @throws UnsupportedOperationException if the service provider does not
      *         support this method
      * @since 1.8

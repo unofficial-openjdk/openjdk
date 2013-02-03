@@ -42,7 +42,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.text.spi.DecimalFormatSymbolsProvider;
+import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -50,6 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.LocaleServiceProviderPool;
+import sun.util.locale.provider.ResourceBundleBasedAdapter;
 
 /**
  * This class represents the set of symbols (such as the decimal separator,
@@ -540,37 +543,13 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
     private void initialize( Locale locale ) {
         this.locale = locale;
 
-        // get resource bundle data - try the cache first
-        boolean needCacheUpdate = false;
-        Object[] data = cachedLocaleData.get(locale);
-        if (data == null) {  /* cache miss */
-            LocaleProviderAdapter adapter = LocaleProviderAdapter.getAdapter(DecimalFormatSymbolsProvider.class, locale);
-            // Avoid potential recursions
-            switch (adapter.getAdapterType()) {
-            case HOST:
-            case SPI:
-                adapter = LocaleProviderAdapter.getResourceBundleBased();
-                break;
-            }
-            ResourceBundle rb = adapter.getLocaleData().getNumberFormatData(locale);
-            data = new Object[3];
-            String numberType = locale.getUnicodeLocaleType("nu");
-            StringBuilder numElemKey =
-                new StringBuilder(numberType != null ?
-                                  numberType : rb.getString("DefaultNumberingSystem"));
-            if (numElemKey.length() != 0) {
-                numElemKey.append(".");
-            }
-            numElemKey.append("NumberElements");
-            try {
-                data[0] = rb.getStringArray(numElemKey.toString());
-            } catch (MissingResourceException mre) {
-                // numberType must be bogus. Use the last resort numbering system.
-                data[0] = rb.getStringArray("NumberElements");
-            }
-            needCacheUpdate = true;
+        // get resource bundle data
+        LocaleProviderAdapter adapter = LocaleProviderAdapter.getAdapter(DecimalFormatSymbolsProvider.class, locale);
+        // Avoid potential recursions
+        if (!(adapter instanceof ResourceBundleBasedAdapter)) {
+            adapter = LocaleProviderAdapter.getResourceBundleBased();
         }
-
+        Object[] data = adapter.getLocaleResources(locale).getDecimalFormatSymbolsData();
         String[] numberElements = (String[]) data[0];
 
         decimalSeparator = numberElements[0].charAt(0);
@@ -605,7 +584,6 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
                 currencySymbol = currency.getSymbol(locale);
                 data[1] = intlCurrencySymbol;
                 data[2] = currencySymbol;
-                needCacheUpdate = true;
             }
         } else {
             // default values
@@ -620,10 +598,6 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
         // standard decimal separator for all locales that we support.
         // If that changes, add a new entry to NumberElements.
         monetarySeparator = decimalSeparator;
-
-        if (needCacheUpdate) {
-            cachedLocaleData.putIfAbsent(locale, data);
-        }
     }
 
     /**
@@ -837,11 +811,4 @@ public class DecimalFormatSymbols implements Cloneable, Serializable {
      * @since JDK 1.1.6
      */
     private int serialVersionOnStream = currentSerialVersion;
-
-    /**
-     * cache to hold the NumberElements and the Currency
-     * of a Locale.
-     */
-    private static final ConcurrentMap<Locale, Object[]> cachedLocaleData
-            = new ConcurrentHashMap<>(3);
 }

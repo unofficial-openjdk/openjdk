@@ -272,7 +272,7 @@ void CompileTask::initialize(int compile_id,
 
   _compile_id = compile_id;
   _method = method();
-  _method_loader = JNIHandles::make_global(_method->method_holder()->class_loader());
+  _method_holder = JNIHandles::make_global(method->method_holder()->klass_holder());
   _osr_bci = osr_bci;
   _is_blocking = is_blocking;
   _comp_level = comp_level;
@@ -283,7 +283,7 @@ void CompileTask::initialize(int compile_id,
   _code_handle = NULL;
 
   _hot_method = NULL;
-  _hot_method_loader = NULL;
+  _hot_method_holder = NULL;
   _hot_count = hot_count;
   _time_queued = 0;  // tidy
   _comment = comment;
@@ -295,8 +295,9 @@ void CompileTask::initialize(int compile_id,
         _hot_method = _method;
       } else {
         _hot_method = hot_method();
+        // only add loader or mirror if different from _method_holder
+        _hot_method_holder = JNIHandles::make_global(hot_method->method_holder()->klass_holder());
       }
-      _hot_method_loader = JNIHandles::make_global(_hot_method->method_holder()->class_loader());
     }
   }
 
@@ -321,8 +322,8 @@ void CompileTask::set_code(nmethod* nm) {
 void CompileTask::free() {
   set_code(NULL);
   assert(!_lock->is_locked(), "Should not be locked when freed");
-  JNIHandles::destroy_global(_method_loader);
-  JNIHandles::destroy_global(_hot_method_loader);
+  JNIHandles::destroy_global(_method_holder);
+  JNIHandles::destroy_global(_hot_method_holder);
 }
 
 
@@ -1051,7 +1052,7 @@ void CompileBroker::compile_method_base(methodHandle method,
   guarantee(!method->is_abstract(), "cannot compile abstract methods");
   assert(method->method_holder()->oop_is_instance(),
          "sanity check");
-  assert(!InstanceKlass::cast(method->method_holder())->is_not_initialized(),
+  assert(!method->method_holder()->is_not_initialized(),
          "method holder must be initialized");
   assert(!method->is_method_handle_intrinsic(), "do not enqueue these guys");
 
@@ -1206,7 +1207,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
   assert(method->method_holder()->oop_is_instance(), "not an instance method");
   assert(osr_bci == InvocationEntryBci || (0 <= osr_bci && osr_bci < method->code_size()), "bci out of range");
   assert(!method->is_abstract() && (osr_bci == InvocationEntryBci || !method->is_native()), "cannot compile abstract/native methods");
-  assert(!InstanceKlass::cast(method->method_holder())->is_not_initialized(), "method holder must be initialized");
+  assert(!method->method_holder()->is_not_initialized(), "method holder must be initialized");
 
   if (!TieredCompilation) {
     comp_level = CompLevel_highest_tier;
@@ -1217,7 +1218,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
   // lock, make sure that the compilation
   // isn't prohibited in a straightforward way.
 
-  if (compiler(comp_level) == NULL || compilation_is_prohibited(method, osr_bci, comp_level)) {
+  if (compiler(comp_level) == NULL || !compiler(comp_level)->can_compile_method(method) || compilation_is_prohibited(method, osr_bci, comp_level)) {
     return NULL;
   }
 
@@ -1713,6 +1714,20 @@ void CompileBroker::maybe_block() {
   }
 }
 
+// wrapper for CodeCache::print_summary()
+static void codecache_print(bool detailed)
+{
+  ResourceMark rm;
+  stringStream s;
+  // Dump code cache  into a buffer before locking the tty,
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    CodeCache::print_summary(&s, detailed);
+  }
+  ttyLocker ttyl;
+  tty->print_cr(s.as_string());
+}
+
 // ------------------------------------------------------------------
 // CompileBroker::invoke_compiler_on_method
 //
@@ -1840,6 +1855,9 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     tty->print_cr("size: %d time: %d inlined: %d bytes", code_size, (int)time.milliseconds(), task->num_inlined_bytecodes());
   }
 
+  if (PrintCodeCacheOnCompilation)
+    codecache_print(/* detailed= */ false);
+
   // Disable compilation, if required.
   switch (compilable) {
   case ciEnv::MethodCompilable_never:
@@ -1884,6 +1902,7 @@ void CompileBroker::handle_full_code_cache() {
   UseInterpreter = true;
   if (UseCompiler || AlwaysCompileLoopMethods ) {
     if (xtty != NULL) {
+      ResourceMark rm;
       stringStream s;
       // Dump code cache state into a buffer before locking the tty,
       // because log_state() will use locks causing lock conflicts.
@@ -1897,9 +1916,9 @@ void CompileBroker::handle_full_code_cache() {
     }
     warning("CodeCache is full. Compiler has been disabled.");
     warning("Try increasing the code cache size using -XX:ReservedCodeCacheSize=");
-    CodeCache::print_bounds(tty);
 #ifndef PRODUCT
     if (CompileTheWorld || ExitOnFullCodeCache) {
+      codecache_print(/* detailed= */ true);
       before_exit(JavaThread::current());
       exit_globals(); // will delete tty
       vm_direct_exit(CompileTheWorld ? 0 : 1);
@@ -1912,6 +1931,7 @@ void CompileBroker::handle_full_code_cache() {
       AlwaysCompileLoopMethods  = false;
     }
   }
+  codecache_print(/* detailed= */ true);
 }
 
 // ------------------------------------------------------------------

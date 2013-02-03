@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 2001, 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,10 @@ if [ "${TESTJAVA}" = "" ] ; then
    exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ]; then
+    COMPILEJAVA="${TESTJAVA}"
+fi
+
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
@@ -81,18 +85,18 @@ if [ ! -d ${TESTCLASSES}${FS}app ]; then
 fi
 
 cd ${TESTSRC}${FS}
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS}boot \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS}boot \
         ${TESTSRC}${FS}NoArgPermission.java
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS}boot \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS}boot \
         ${TESTSRC}${FS}OneArgPermission.java
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS}boot \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS}boot \
         ${TESTSRC}${FS}TwoArgPermission.java
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS}boot \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS}boot \
         ${TESTSRC}${FS}TwoArgNullActionsPermission.java
-${TESTJAVA}${FS}bin${FS}javac -d ${TESTCLASSES}${FS}app \
+${COMPILEJAVA}${FS}bin${FS}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d ${TESTCLASSES}${FS}app \
         ${TESTSRC}${FS}GetInstance.java
 
-${TESTJAVA}${FS}bin${FS}java  \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS}  \
 -Xbootclasspath/a:"${TESTCLASSES}${FS}boot" \
 -classpath "${TESTCLASSES}${FS}app" -Djava.security.manager \
 -Djava.security.policy=GetInstance.policy \
@@ -106,7 +110,7 @@ if [ $status1 -ne 0 ]; then
      echo "Failed on first test"
 fi
 
-${TESTJAVA}${FS}bin${FS}java  \
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS}  \
 -classpath "${TESTCLASSES}${FS}boot${PS}${TESTCLASSES}${FS}app" \
 -Djava.security.manager \
 -Djava.security.policy=GetInstance.policy \

@@ -65,7 +65,6 @@ import com.sun.tools.javac.util.List;
  * @author Jonathan Gibbons
  */
 public class JavacTaskImpl extends BasicJavacTask {
-    private ClientCodeWrapper ccw;
     private Main compilerMain;
     private JavaCompiler compiler;
     private Locale locale;
@@ -74,7 +73,7 @@ public class JavacTaskImpl extends BasicJavacTask {
     private List<JavaFileObject> fileObjects;
     private Map<JavaFileObject, JCCompilationUnit> notYetEntered;
     private ListBuffer<Env<AttrContext>> genList;
-    private AtomicBoolean used = new AtomicBoolean();
+    private final AtomicBoolean used = new AtomicBoolean();
     private Iterable<? extends Processor> processors;
 
     private Main.Result result = null;
@@ -85,7 +84,6 @@ public class JavacTaskImpl extends BasicJavacTask {
                 Context context,
                 List<JavaFileObject> fileObjects) {
         super(null, false);
-        this.ccw = ClientCodeWrapper.instance(context);
         this.compilerMain = compilerMain;
         this.args = args;
         this.classNames = classNames;
@@ -99,11 +97,11 @@ public class JavacTaskImpl extends BasicJavacTask {
     }
 
     JavacTaskImpl(Main compilerMain,
-                Iterable<String> flags,
+                Iterable<String> args,
                 Context context,
                 Iterable<String> classes,
                 Iterable<? extends JavaFileObject> fileObjects) {
-        this(compilerMain, toArray(flags), toArray(classes), context, toList(fileObjects));
+        this(compilerMain, toArray(args), toArray(classes), context, toList(fileObjects));
     }
 
     static private String[] toArray(Iterable<String> iter) {
@@ -483,22 +481,6 @@ public class JavacTaskImpl extends BasicJavacTask {
         }
 
         abstract void process(Env<AttrContext> env);
-    }
-
-    /**
-     * For internal use only.  This method will be
-     * removed without warning.
-     */
-    public Context getContext() {
-        return context;
-    }
-
-    /**
-     * For internal use only.  This method will be
-     * removed without warning.
-     */
-    public void updateContext(Context newContext) {
-        context = newContext;
     }
 
     /**

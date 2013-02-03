@@ -27,18 +27,9 @@
 #include "gc_implementation/concurrentMarkSweep/freeChunk.hpp"
 #endif // SERIALGC
 #include "memory/freeBlockDictionary.hpp"
-#ifdef TARGET_OS_FAMILY_linux
-# include "thread_linux.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_solaris
-# include "thread_solaris.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_windows
-# include "thread_windows.inline.hpp"
-#endif
-#ifdef TARGET_OS_FAMILY_bsd
-# include "thread_bsd.inline.hpp"
-#endif
+#include "memory/metablock.hpp"
+#include "memory/metachunk.hpp"
+#include "runtime/thread.inline.hpp"
 
 #ifndef PRODUCT
 template <class Chunk> Mutex* FreeBlockDictionary<Chunk>::par_lock() const {
@@ -61,6 +52,9 @@ template <class Chunk> void FreeBlockDictionary<Chunk>::verify_par_locked() cons
 #endif // ASSERT
 }
 #endif
+
+template class FreeBlockDictionary<Metablock>;
+template class FreeBlockDictionary<Metachunk>;
 
 #ifndef SERIALGC
 // Explicitly instantiate for FreeChunk

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,6 +66,8 @@ public final class Constructor<T> extends Executable {
     private transient ConstructorRepository genericInfo;
     private byte[]              annotations;
     private byte[]              parameterAnnotations;
+    // This is set by the vm at Constructor creation
+    private byte[]              typeAnnotations;
 
     // Generics infrastructure
     // Accessor for factory
@@ -138,6 +140,8 @@ public final class Constructor<T> extends Executable {
         res.root = this;
         // Might as well eagerly propagate this if already present
         res.constructorAccessor = constructorAccessor;
+
+        res.typeAnnotations = typeAnnotations;
         return res;
     }
 
@@ -198,6 +202,11 @@ public final class Constructor<T> extends Executable {
     public Class<?>[] getParameterTypes() {
         return parameterTypes.clone();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getParameterCount() { return parameterTypes.length; }
 
     /**
      * {@inheritDoc}
@@ -407,6 +416,7 @@ public final class Constructor<T> extends Executable {
 
     /**
      * {@inheritDoc}
+     * @jls 13.1 The Form of a Binary
      * @since 1.5
      */
     @Override

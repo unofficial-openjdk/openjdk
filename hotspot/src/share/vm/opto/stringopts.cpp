@@ -241,13 +241,13 @@ class StringConcat : public ResourceObj {
 
       _stringopts->gvn()->transform(call);
       C->gvn_replace_by(uct, call);
-      uct->disconnect_inputs(NULL);
+      uct->disconnect_inputs(NULL, C);
     }
   }
 
   void cleanup() {
     // disconnect the hook node
-    _arguments->disconnect_inputs(NULL);
+    _arguments->disconnect_inputs(NULL, _stringopts->C);
   }
 };
 
@@ -265,7 +265,8 @@ void StringConcat::eliminate_unneeded_control() {
     } else if (n->is_IfTrue()) {
       Compile* C = _stringopts->C;
       C->gvn_replace_by(n, n->in(0)->in(0));
-      C->gvn_replace_by(n->in(0), C->top());
+      // get rid of the other projection
+      C->gvn_replace_by(n->in(0)->as_If()->proj_out(false), C->top());
     }
   }
 }
@@ -358,7 +359,7 @@ void StringConcat::eliminate_initialize(InitializeNode* init) {
     C->gvn_replace_by(mem_proj, mem);
   }
   C->gvn_replace_by(init, C->top());
-  init->disconnect_inputs(NULL);
+  init->disconnect_inputs(NULL, C);
 }
 
 Node_List PhaseStringOpts::collect_toString_calls() {
@@ -439,7 +440,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
       }
       // Find the constructor call
       Node* result = alloc->result_cast();
-      if (result == NULL || !result->is_CheckCastPP()) {
+      if (result == NULL || !result->is_CheckCastPP() || alloc->in(TypeFunc::Memory)->is_top()) {
         // strange looking allocation
 #ifndef PRODUCT
         if (PrintOptimizeStringConcat) {
@@ -744,7 +745,9 @@ bool StringConcat::validate_control_flow() {
       ctrl_path.push(cn);
       ctrl_path.push(cn->proj_out(0));
       ctrl_path.push(cn->proj_out(0)->unique_out());
-      ctrl_path.push(cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0));
+      if (cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0) != NULL) {
+        ctrl_path.push(cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0));
+      }
     } else {
       ShouldNotReachHere();
     }
@@ -762,6 +765,12 @@ bool StringConcat::validate_control_flow() {
     } else if (ptr->is_IfTrue()) {
       IfNode* iff = ptr->in(0)->as_If();
       BoolNode* b = iff->in(1)->isa_Bool();
+
+      if (b == NULL) {
+        fail = true;
+        break;
+      }
+
       Node* cmp = b->in(1);
       Node* v1 = cmp->in(1);
       Node* v2 = cmp->in(2);
@@ -826,6 +835,9 @@ bool StringConcat::validate_control_flow() {
           ptr->in(1)->in(0) != NULL && ptr->in(1)->in(0)->is_If()) {
         // Simple diamond.
         // XXX should check for possibly merging stores.  simple data merges are ok.
+        // The IGVN will make this simple diamond go away when it
+        // transforms the Region. Make sure it sees it.
+        Compile::current()->record_for_igvn(ptr);
         ptr = ptr->in(1)->in(0)->in(0);
         continue;
       }
@@ -1408,75 +1420,80 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
                       Deoptimization::Action_make_not_entrant);
   }
 
-  // length now contains the number of characters needed for the
-  // char[] so create a new AllocateArray for the char[]
-  Node* char_array = NULL;
-  {
-    PreserveReexecuteState preexecs(&kit);
-    // The original jvms is for an allocation of either a String or
-    // StringBuffer so no stack adjustment is necessary for proper
-    // reexecution.  If we deoptimize in the slow path the bytecode
-    // will be reexecuted and the char[] allocation will be thrown away.
-    kit.jvms()->set_should_reexecute(true);
-    char_array = kit.new_array(__ makecon(TypeKlassPtr::make(ciTypeArrayKlass::make(T_CHAR))),
-                               length, 1);
-  }
+  Node* result;
+  if (!kit.stopped()) {
 
-  // Mark the allocation so that zeroing is skipped since the code
-  // below will overwrite the entire array
-  AllocateArrayNode* char_alloc = AllocateArrayNode::Ideal_array_allocation(char_array, _gvn);
-  char_alloc->maybe_set_complete(_gvn);
-
-  // Now copy the string representations into the final char[]
-  Node* start = __ intcon(0);
-  for (int argi = 0; argi < sc->num_arguments(); argi++) {
-    Node* arg = sc->argument(argi);
-    switch (sc->mode(argi)) {
-      case StringConcat::IntMode: {
-        Node* end = __ AddI(start, string_sizes->in(argi));
-        // getChars words backwards so pass the ending point as well as the start
-        int_getChars(kit, arg, char_array, start, end);
-        start = end;
-        break;
-      }
-      case StringConcat::StringNullCheckMode:
-      case StringConcat::StringMode: {
-        start = copy_string(kit, arg, char_array, start);
-        break;
-      }
-      case StringConcat::CharMode: {
-        __ store_to_memory(kit.control(), kit.array_element_address(char_array, start, T_CHAR),
-                           arg, T_CHAR, char_adr_idx);
-        start = __ AddI(start, __ intcon(1));
-        break;
-      }
-      default:
-        ShouldNotReachHere();
+    // length now contains the number of characters needed for the
+    // char[] so create a new AllocateArray for the char[]
+    Node* char_array = NULL;
+    {
+      PreserveReexecuteState preexecs(&kit);
+      // The original jvms is for an allocation of either a String or
+      // StringBuffer so no stack adjustment is necessary for proper
+      // reexecution.  If we deoptimize in the slow path the bytecode
+      // will be reexecuted and the char[] allocation will be thrown away.
+      kit.jvms()->set_should_reexecute(true);
+      char_array = kit.new_array(__ makecon(TypeKlassPtr::make(ciTypeArrayKlass::make(T_CHAR))),
+                                 length, 1);
     }
-  }
 
-  // If we're not reusing an existing String allocation then allocate one here.
-  Node* result = sc->string_alloc();
-  if (result == NULL) {
-    PreserveReexecuteState preexecs(&kit);
-    // The original jvms is for an allocation of either a String or
-    // StringBuffer so no stack adjustment is necessary for proper
-    // reexecution.
-    kit.jvms()->set_should_reexecute(true);
-    result = kit.new_instance(__ makecon(TypeKlassPtr::make(C->env()->String_klass())));
-  }
+    // Mark the allocation so that zeroing is skipped since the code
+    // below will overwrite the entire array
+    AllocateArrayNode* char_alloc = AllocateArrayNode::Ideal_array_allocation(char_array, _gvn);
+    char_alloc->maybe_set_complete(_gvn);
 
-  // Intialize the string
-  if (java_lang_String::has_offset_field()) {
-    kit.store_String_offset(kit.control(), result, __ intcon(0));
-    kit.store_String_length(kit.control(), result, length);
-  }
-  kit.store_String_value(kit.control(), result, char_array);
+    // Now copy the string representations into the final char[]
+    Node* start = __ intcon(0);
+    for (int argi = 0; argi < sc->num_arguments(); argi++) {
+      Node* arg = sc->argument(argi);
+      switch (sc->mode(argi)) {
+        case StringConcat::IntMode: {
+          Node* end = __ AddI(start, string_sizes->in(argi));
+          // getChars words backwards so pass the ending point as well as the start
+          int_getChars(kit, arg, char_array, start, end);
+          start = end;
+          break;
+        }
+        case StringConcat::StringNullCheckMode:
+        case StringConcat::StringMode: {
+          start = copy_string(kit, arg, char_array, start);
+          break;
+        }
+        case StringConcat::CharMode: {
+          __ store_to_memory(kit.control(), kit.array_element_address(char_array, start, T_CHAR),
+                             arg, T_CHAR, char_adr_idx);
+          start = __ AddI(start, __ intcon(1));
+          break;
+        }
+        default:
+          ShouldNotReachHere();
+      }
+    }
 
+    // If we're not reusing an existing String allocation then allocate one here.
+    result = sc->string_alloc();
+    if (result == NULL) {
+      PreserveReexecuteState preexecs(&kit);
+      // The original jvms is for an allocation of either a String or
+      // StringBuffer so no stack adjustment is necessary for proper
+      // reexecution.
+      kit.jvms()->set_should_reexecute(true);
+      result = kit.new_instance(__ makecon(TypeKlassPtr::make(C->env()->String_klass())));
+    }
+
+    // Intialize the string
+    if (java_lang_String::has_offset_field()) {
+      kit.store_String_offset(kit.control(), result, __ intcon(0));
+      kit.store_String_length(kit.control(), result, length);
+    }
+    kit.store_String_value(kit.control(), result, char_array);
+  } else {
+    result = C->top();
+  }
   // hook up the outgoing control and result
   kit.replace_call(sc->end(), result);
 
   // Unhook any hook nodes
-  string_sizes->disconnect_inputs(NULL);
+  string_sizes->disconnect_inputs(NULL, C);
   sc->cleanup();
 }

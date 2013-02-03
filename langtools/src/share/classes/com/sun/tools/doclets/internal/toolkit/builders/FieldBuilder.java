@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,18 @@
 package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.util.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.*;
+
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds documentation for a field.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -46,22 +48,22 @@ public class FieldBuilder extends AbstractMemberBuilder {
     /**
      * The class whose fields are being documented.
      */
-    private ClassDoc classDoc;
+    private final ClassDoc classDoc;
 
     /**
      * The visible fields for the given class.
      */
-    private VisibleMemberMap visibleMemberMap;
+    private final VisibleMemberMap visibleMemberMap;
 
     /**
      * The writer to output the field documentation.
      */
-    private FieldWriter writer;
+    private final FieldWriter writer;
 
     /**
      * The list of fields being documented.
      */
-    private List<ProgramElementDoc> fields;
+    private final List<ProgramElementDoc> fields;
 
     /**
      * The index of the current field that is being documented at this point
@@ -72,41 +74,40 @@ public class FieldBuilder extends AbstractMemberBuilder {
     /**
      * Construct a new FieldBuilder.
      *
-     * @param configuration the current configuration of the
-     *                      doclet.
+     * @param context  the build context.
+     * @param classDoc the class whoses members are being documented.
+     * @param writer the doclet specific writer.
      */
-    private FieldBuilder(Configuration configuration) {
-        super(configuration);
+    private FieldBuilder(Context context,
+            ClassDoc classDoc,
+            FieldWriter writer) {
+        super(context);
+        this.classDoc = classDoc;
+        this.writer = writer;
+        visibleMemberMap =
+                new VisibleMemberMap(
+                classDoc,
+                VisibleMemberMap.FIELDS,
+                configuration.nodeprecated);
+        fields =
+                new ArrayList<ProgramElementDoc>(visibleMemberMap.getLeafClassMembers(
+                configuration));
+        if (configuration.getMemberComparator() != null) {
+            Collections.sort(fields, configuration.getMemberComparator());
+        }
     }
 
     /**
      * Construct a new FieldBuilder.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param context  the build context.
      * @param classDoc the class whoses members are being documented.
      * @param writer the doclet specific writer.
      */
-    public static FieldBuilder getInstance(
-            Configuration configuration,
+    public static FieldBuilder getInstance(Context context,
             ClassDoc classDoc,
             FieldWriter writer) {
-        FieldBuilder builder = new FieldBuilder(configuration);
-        builder.classDoc = classDoc;
-        builder.writer = writer;
-        builder.visibleMemberMap =
-                new VisibleMemberMap(
-                classDoc,
-                VisibleMemberMap.FIELDS,
-                configuration.nodeprecated);
-        builder.fields =
-                new ArrayList<ProgramElementDoc>(builder.visibleMemberMap.getLeafClassMembers(
-                configuration));
-        if (configuration.getMemberComparator() != null) {
-            Collections.sort(
-                    builder.fields,
-                    configuration.getMemberComparator());
-        }
-        return builder;
+        return new FieldBuilder(context, classDoc, writer);
     }
 
     /**

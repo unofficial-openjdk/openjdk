@@ -23,7 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "asm/assembler.hpp"
+#include "asm/macroAssembler.hpp"
 #include "interpreter/bytecodeHistogram.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterGenerator.hpp"
@@ -259,7 +259,7 @@ address TemplateInterpreterGenerator::generate_result_handler_for(BasicType type
   }
   __ ret();                           // return from interpreter activation
   __ delayed()->restore(I5_savedSP, G0, SP);  // remove interpreter frame
-  NOT_PRODUCT(__ emit_long(0);)       // marker for disassembly
+  NOT_PRODUCT(__ emit_int32(0);)       // marker for disassembly
   return entry;
 }
 
@@ -434,7 +434,7 @@ void TemplateInterpreterGenerator::generate_stack_overflow_check(Register Rframe
 
   // the frame is greater than one page in size, so check against
   // the bottom of the stack
-  __ cmp_and_brx_short(SP, Rscratch, Assembler::greater, Assembler::pt, after_frame_check);
+  __ cmp_and_brx_short(SP, Rscratch, Assembler::greaterUnsigned, Assembler::pt, after_frame_check);
 
   // the stack will overflow, throw an exception
 
@@ -494,9 +494,6 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
   // (gri - 2/25/2000)
 
 
-  const Address size_of_parameters(G5_method, Method::size_of_parameters_offset());
-  const Address size_of_locals    (G5_method, Method::size_of_locals_offset());
-  const Address max_stack         (G5_method, Method::max_stack_offset());
   int rounded_vm_local_words = round_to( frame::interpreter_frame_vm_local_words, WordsPerLong );
 
   const int extra_space =
@@ -506,11 +503,15 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     (native_call ? frame::interpreter_frame_extra_outgoing_argument_words : 0);
 
   const Register Glocals_size = G3;
+  const Register RconstMethod = Glocals_size;
   const Register Otmp1 = O3;
   const Register Otmp2 = O4;
   // Lscratch can't be used as a temporary because the call_stub uses
   // it to assert that the stack frame was setup correctly.
+  const Address constMethod       (G5_method, Method::const_offset());
+  const Address size_of_parameters(RconstMethod, ConstMethod::size_of_parameters_offset());
 
+  __ ld_ptr( constMethod, RconstMethod );
   __ lduh( size_of_parameters, Glocals_size);
 
   // Gargs points to first local + BytesPerWord
@@ -530,6 +531,8 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     //
     // Compute number of locals in method apart from incoming parameters
     //
+    const Address size_of_locals    (Otmp1, ConstMethod::size_of_locals_offset());
+    __ ld_ptr( constMethod, Otmp1 );
     __ lduh( size_of_locals, Otmp1 );
     __ sub( Otmp1, Glocals_size, Glocals_size );
     __ round_to( Glocals_size, WordsPerLong );
@@ -538,7 +541,8 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     // see if the frame is greater than one page in size. If so,
     // then we need to verify there is enough stack space remaining
     // Frame_size = (max_stack + extra_space) * BytesPerWord;
-    __ lduh( max_stack, Gframe_size );
+    __ ld_ptr( constMethod, Gframe_size );
+    __ lduh( Gframe_size, in_bytes(ConstMethod::max_stack_offset()), Gframe_size );
     __ add( Gframe_size, extra_space, Gframe_size );
     __ round_to( Gframe_size, WordsPerLong );
     __ sll( Gframe_size, Interpreter::logStackElementSize, Gframe_size);
@@ -1255,8 +1259,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   // make sure registers are different!
   assert_different_registers(G2_thread, G5_method, Gargs, Gtmp1, Gtmp2);
 
-  const Address size_of_parameters(G5_method, Method::size_of_parameters_offset());
-  const Address size_of_locals    (G5_method, Method::size_of_locals_offset());
+  const Address constMethod       (G5_method, Method::const_offset());
   // Seems like G5_method is live at the point this is used. So we could make this look consistent
   // and use in the asserts.
   const Address access_flags      (Lmethod,   Method::access_flags_offset());
@@ -1306,8 +1309,13 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   init_value = G0;
   Label clear_loop;
 
+  const Register RconstMethod = O1;
+  const Address size_of_parameters(RconstMethod, ConstMethod::size_of_parameters_offset());
+  const Address size_of_locals    (RconstMethod, ConstMethod::size_of_locals_offset());
+
   // NOTE: If you change the frame layout, this code will need to
   // be updated!
+  __ ld_ptr( constMethod, RconstMethod );
   __ lduh( size_of_locals, O2 );
   __ lduh( size_of_parameters, O1 );
   __ sll( O2, Interpreter::logStackElementSize, O2);
@@ -1822,9 +1830,13 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
 
     const Register Gtmp1 = G3_scratch;
     const Register Gtmp2 = G1_scratch;
+    const Register RconstMethod = Gtmp1;
+    const Address constMethod(Lmethod, Method::const_offset());
+    const Address size_of_parameters(RconstMethod, ConstMethod::size_of_parameters_offset());
 
     // Compute size of arguments for saving when returning to deoptimized caller
-    __ lduh(Lmethod, in_bytes(Method::size_of_parameters_offset()), Gtmp1);
+    __ ld_ptr(constMethod, RconstMethod);
+    __ lduh(size_of_parameters, Gtmp1);
     __ sll(Gtmp1, Interpreter::logStackElementSize, Gtmp1);
     __ sub(Llocals, Gtmp1, Gtmp2);
     __ add(Gtmp2, wordSize, Gtmp2);

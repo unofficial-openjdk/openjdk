@@ -33,24 +33,31 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.ServiceLoader;
 import java.util.Set;
+
+import javax.annotation.processing.Processor;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
-import javax.annotation.processing.Processor;
 
+import com.sun.source.util.JavacTask;
+import com.sun.source.util.Plugin;
+import com.sun.tools.doclint.DocLint;
+import com.sun.tools.javac.api.BasicJavacTask;
 import com.sun.tools.javac.code.Source;
 import com.sun.tools.javac.file.CacheFSInfo;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.jvm.Target;
-import com.sun.tools.javac.util.*;
-import com.sun.tools.javac.util.Log.WriterKind;
-import com.sun.tools.javac.util.Log.PrefixKind;
 import com.sun.tools.javac.processing.AnnotationProcessingError;
-
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.util.*;
+import com.sun.tools.javac.util.Log.PrefixKind;
+import com.sun.tools.javac.util.Log.WriterKind;
 import static com.sun.tools.javac.main.Option.*;
 
-/** This class provides a commandline interface to the GJC compiler.
+/** This class provides a command line interface to the javac compiler.
  *
  *  <p><b>This is NOT part of any supported API.
  *  If you write code that depends on this, you do so at your own risk.
@@ -423,10 +430,68 @@ public class Main {
             if (batchMode)
                 CacheFSInfo.preRegister(context);
 
-            fileManager = context.get(JavaFileManager.class);
+            // FIXME: this code will not be invoked if using JavacTask.parse/analyze/generate
+            // invoke any available plugins
+            String plugins = options.get(PLUGIN);
+            if (plugins != null) {
+                JavacProcessingEnvironment pEnv = JavacProcessingEnvironment.instance(context);
+                ClassLoader cl = pEnv.getProcessorClassLoader();
+                ServiceLoader<Plugin> sl = ServiceLoader.load(Plugin.class, cl);
+                Set<List<String>> pluginsToCall = new LinkedHashSet<List<String>>();
+                for (String plugin: plugins.split("\\x00")) {
+                    pluginsToCall.add(List.from(plugin.split("\\s+")));
+                }
+                JavacTask task = null;
+                Iterator<Plugin> iter = sl.iterator();
+                while (iter.hasNext()) {
+                    Plugin plugin = iter.next();
+                    for (List<String> p: pluginsToCall) {
+                        if (plugin.getName().equals(p.head)) {
+                            pluginsToCall.remove(p);
+                            try {
+                                if (task == null)
+                                    task = JavacTask.instance(pEnv);
+                                plugin.init(task, p.tail.toArray(new String[p.tail.size()]));
+                            } catch (Throwable ex) {
+                                if (apiMode)
+                                    throw new RuntimeException(ex);
+                                pluginMessage(ex);
+                                return Result.SYSERR;
+                            }
+
+                        }
+                    }
+                }
+                for (List<String> p: pluginsToCall) {
+                    log.printLines(PrefixKind.JAVAC, "msg.plugin.not.found", p.head);
+                }
+            }
 
             comp = JavaCompiler.instance(context);
-            if (comp == null) return Result.SYSERR;
+
+            // FIXME: this code will not be invoked if using JavacTask.parse/analyze/generate
+            String xdoclint = options.get(XDOCLINT);
+            String xdoclintCustom = options.get(XDOCLINT_CUSTOM);
+            if (xdoclint != null || xdoclintCustom != null) {
+                Set<String> doclintOpts = new LinkedHashSet<String>();
+                if (xdoclint != null)
+                    doclintOpts.add(DocLint.XMSGS_OPTION);
+                if (xdoclintCustom != null) {
+                    for (String s: xdoclintCustom.split("\\s+")) {
+                        if (s.isEmpty())
+                            continue;
+                        doclintOpts.add(s.replace(XDOCLINT_CUSTOM.text, DocLint.XMSGS_CUSTOM_PREFIX));
+                    }
+                }
+                if (!(doclintOpts.size() == 1
+                        && doclintOpts.iterator().next().equals(DocLint.XMSGS_CUSTOM_PREFIX + "none"))) {
+                    JavacTask t = BasicJavacTask.instance(context);
+                    new DocLint().init(t, doclintOpts.toArray(new String[doclintOpts.size()]));
+                    comp.keepComments = true;
+                }
+            }
+
+            fileManager = context.get(JavaFileManager.class);
 
             if (!files.isEmpty()) {
                 // add filenames to fileObjects
@@ -533,8 +598,16 @@ public class Main {
      * annotation processor.
      */
     void apMessage(AnnotationProcessingError ex) {
-        log.printLines("msg.proc.annotation.uncaught.exception");
+        log.printLines(PrefixKind.JAVAC, "msg.proc.annotation.uncaught.exception");
         ex.getCause().printStackTrace(log.getWriter(WriterKind.NOTICE));
+    }
+
+    /** Print a message reporting an uncaught exception from an
+     * annotation processor.
+     */
+    void pluginMessage(Throwable ex) {
+        log.printLines(PrefixKind.JAVAC, "msg.plugin.uncaught.exception");
+        ex.printStackTrace(log.getWriter(WriterKind.NOTICE));
     }
 
     /** Display the location and checksum of a class. */

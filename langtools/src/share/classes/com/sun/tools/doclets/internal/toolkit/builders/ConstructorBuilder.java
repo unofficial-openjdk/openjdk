@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,18 @@
 package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.util.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.*;
+
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds documentation for a constructor.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -57,66 +59,64 @@ public class ConstructorBuilder extends AbstractMemberBuilder {
     /**
      * The class whose constructors are being documented.
      */
-    private ClassDoc classDoc;
+    private final ClassDoc classDoc;
 
     /**
      * The visible constructors for the given class.
      */
-    private VisibleMemberMap visibleMemberMap;
+    private final VisibleMemberMap visibleMemberMap;
 
     /**
      * The writer to output the constructor documentation.
      */
-    private ConstructorWriter writer;
+    private final ConstructorWriter writer;
 
     /**
      * The constructors being documented.
      */
-    private List<ProgramElementDoc> constructors;
+    private final List<ProgramElementDoc> constructors;
 
     /**
      * Construct a new ConstructorBuilder.
      *
-     * @param configuration the current configuration of the
-     *                      doclet.
+     * @param context  the build context.
+     * @param classDoc the class whoses members are being documented.
+     * @param writer the doclet specific writer.
      */
-    private ConstructorBuilder(Configuration configuration) {
-        super(configuration);
+    private ConstructorBuilder(Context context,
+            ClassDoc classDoc,
+            ConstructorWriter writer) {
+        super(context);
+        this.classDoc = classDoc;
+        this.writer = writer;
+        visibleMemberMap =
+                new VisibleMemberMap(
+                classDoc,
+                VisibleMemberMap.CONSTRUCTORS,
+                configuration.nodeprecated);
+        constructors =
+                new ArrayList<ProgramElementDoc>(visibleMemberMap.getMembersFor(classDoc));
+        for (int i = 0; i < constructors.size(); i++) {
+            if (constructors.get(i).isProtected()
+                    || constructors.get(i).isPrivate()) {
+                writer.setFoundNonPubConstructor(true);
+            }
+        }
+        if (configuration.getMemberComparator() != null) {
+            Collections.sort(constructors,configuration.getMemberComparator());
+        }
     }
 
     /**
      * Construct a new ConstructorBuilder.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param context  the build context.
      * @param classDoc the class whoses members are being documented.
      * @param writer the doclet specific writer.
      */
-    public static ConstructorBuilder getInstance(
-            Configuration configuration,
-            ClassDoc classDoc,
-            ConstructorWriter writer) {
-        ConstructorBuilder builder = new ConstructorBuilder(configuration);
-        builder.classDoc = classDoc;
-        builder.writer = writer;
-        builder.visibleMemberMap =
-                new VisibleMemberMap(
-                classDoc,
-                VisibleMemberMap.CONSTRUCTORS,
-                configuration.nodeprecated);
-        builder.constructors =
-                new ArrayList<ProgramElementDoc>(builder.visibleMemberMap.getMembersFor(classDoc));
-        for (int i = 0; i < builder.constructors.size(); i++) {
-            if (builder.constructors.get(i).isProtected()
-                    || builder.constructors.get(i).isPrivate()) {
-                writer.setFoundNonPubConstructor(true);
-            }
-        }
-        if (configuration.getMemberComparator() != null) {
-            Collections.sort(
-                    builder.constructors,
-                    configuration.getMemberComparator());
-        }
-        return builder;
+    public static ConstructorBuilder getInstance(Context context,
+            ClassDoc classDoc, ConstructorWriter writer) {
+        return new ConstructorBuilder(context, classDoc, writer);
     }
 
     /**

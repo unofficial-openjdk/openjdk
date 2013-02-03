@@ -39,8 +39,8 @@ case "$OS" in
     #
     #  execute test program - rely on it to exit if platform unsupported
 
-	${TESTJAVA}/bin/javac -d . ${TESTSRC}\\IsSunMSCAPIAvailable.java
-	${TESTJAVA}/bin/java IsSunMSCAPIAvailable
+	${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} -d . ${TESTSRC}\\IsSunMSCAPIAvailable.java
+	${TESTJAVA}/bin/java ${TESTVMOPTS} IsSunMSCAPIAvailable
 	exit
 	;;
 

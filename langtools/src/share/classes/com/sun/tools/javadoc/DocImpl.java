@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,22 +26,30 @@
 package com.sun.tools.javadoc;
 
 import java.io.DataInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.CollationKey;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.tools.FileObject;
 
 import com.sun.javadoc.*;
-
+import com.sun.source.util.TreePath;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Position;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * abstract base class of all Doc classes.  Doc item's are representations
  * of java language constructs (class, package, method,...) which have
  * comments and have been processed by this run of javadoc.  All Doc items
  * are unique, that is, they are == comparable.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @since 1.2
  * @author Robert Field
@@ -54,6 +62,12 @@ public abstract class DocImpl implements Doc, Comparable<Object> {
      * Doc environment
      */
     protected final DocEnv env;   //### Rename this everywhere to 'docenv' ?
+
+    /**
+     * Back pointer to the tree node for this doc item.
+     * May be null if there is no associated tree.
+     */
+    protected TreePath treePath;
 
     /**
      *  The complex comment object, lazily initialized.
@@ -83,9 +97,19 @@ public abstract class DocImpl implements Doc, Comparable<Object> {
     /**
      * Constructor.
      */
-    DocImpl(DocEnv env, String documentation) {
-        this.documentation = documentation;
+    DocImpl(DocEnv env, TreePath treePath) {
+        this.treePath = treePath;
+        this.documentation = getCommentText(treePath);
         this.env = env;
+    }
+
+    private static String getCommentText(TreePath p) {
+        if (p == null)
+            return null;
+
+        JCCompilationUnit topLevel = (JCCompilationUnit) p.getCompilationUnit();
+        JCTree tree = (JCTree) p.getLeaf();
+        return topLevel.docComments.getCommentText(tree);
     }
 
     /**
@@ -102,7 +126,13 @@ public abstract class DocImpl implements Doc, Comparable<Object> {
      */
     Comment comment() {
         if (comment == null) {
-            comment = new Comment(this, documentation());
+            String d = documentation();
+            if (env.doclint != null
+                    && treePath != null
+                    && d.equals(getCommentText(treePath))) {
+                env.doclint.scan(treePath);
+            }
+            comment = new Comment(this, d);
         }
         return comment;
     }
@@ -208,7 +238,17 @@ public abstract class DocImpl implements Doc, Comparable<Object> {
      * operations like internalization.
      */
     public void setRawCommentText(String rawDocumentation) {
+        treePath = null;
         documentation = rawDocumentation;
+        comment = null;
+    }
+
+    /**
+     * Set the full unprocessed text of the comment and tree path.
+     */
+    void setTreePath(TreePath treePath) {
+        this.treePath = treePath;
+        documentation = getCommentText(treePath);
         comment = null;
     }
 
@@ -262,7 +302,7 @@ public abstract class DocImpl implements Doc, Comparable<Object> {
      * <p>
      * Included so that Doc item are java.lang.Comparable.
      *
-     * @param   o the <code>Object</code> to be compared.
+     * @param   obj the {@code Object} to be compared.
      * @return  a negative integer, zero, or a positive integer as this Object
      *          is less than, equal to, or greater than the given Object.
      * @exception ClassCastException the specified Object's type prevents it

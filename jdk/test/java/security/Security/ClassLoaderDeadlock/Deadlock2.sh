@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,10 @@ if [ "${TESTJAVA}" = "" ] ; then
    exit 1
 fi
 
+if [ "${COMPILEJAVA}" = "" ]; then
+   COMPILEJAVA="${TESTJAVA}"
+fi
+
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
@@ -88,20 +92,20 @@ else
 fi
 
 # compile and package the test program
-${TESTJAVA}${FILESEP}bin${FILESEP}javac \
+${COMPILEJAVA}${FILESEP}bin${FILESEP}javac ${TESTJAVACOPTS} ${TESTTOOLVMOPTS} \
     -d ${TESTCLASSES} \
     ${TESTSRC}${FILESEP}CreateSerialized.java \
     ${TESTSRC}${FILESEP}Deadlock2.java
 
-${TESTJAVA}${FILESEP}bin${FILESEP}jar \
+${COMPILEJAVA}${FILESEP}bin${FILESEP}jar ${TESTTOOLVMOPTS} \
     -cvf testlib${FILESEP}Deadlock2.jar \
     Deadlock2*.class
 
 rm Deadlock2*.class
 
 # create serialized object and run the test
-${TESTJAVA}${FILESEP}bin${FILESEP}java CreateSerialized
-${TESTJAVA}${FILESEP}bin${FILESEP}java -Djava.ext.dirs=${TESTCLASSES}${FILESEP}testlib Deadlock2
+${TESTJAVA}${FILESEP}bin${FILESEP}java ${TESTVMOPTS} CreateSerialized
+${TESTJAVA}${FILESEP}bin${FILESEP}java ${TESTVMOPTS} -Djava.ext.dirs=${TESTCLASSES}${FILESEP}testlib Deadlock2
 STATUS=$?
 
 # clean up

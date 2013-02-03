@@ -98,10 +98,20 @@ BasicObjectLock* frame::interpreter_frame_monitor_end() const {
 #endif // CC_INTERP
 
 void frame::patch_pc(Thread* thread, address pc) {
-  // We borrow this call to set the thread pointer in the interpreter
-  // state; the hook to set up deoptimized frames isn't supplied it.
-  assert(pc == NULL, "should be");
-  get_interpreterState()->set_thread((JavaThread *) thread);
+
+  if (pc != NULL) {
+    _cb = CodeCache::find_blob(pc);
+    SharkFrame* sharkframe = zeroframe()->as_shark_frame();
+    sharkframe->set_pc(pc);
+    _pc = pc;
+    _deopt_state = is_deoptimized;
+
+  } else {
+    // We borrow this call to set the thread pointer in the interpreter
+    // state; the hook to set up deoptimized frames isn't supplied it.
+    assert(pc == NULL, "should be");
+    get_interpreterState()->set_thread((JavaThread *) thread);
+  }
 }
 
 bool frame::safe_for_sender(JavaThread *thread) {
@@ -351,7 +361,7 @@ void SharkFrame::identify_word(int   frame_index,
   switch (offset) {
   case pc_off:
     strncpy(fieldbuf, "pc", buflen);
-    if (method()->is_oop()) {
+    if (method()->is_method()) {
       nmethod *code = method()->code();
       if (code && code->pc_desc_at(pc())) {
         SimpleScopeDesc ssd(code, pc());
@@ -367,7 +377,7 @@ void SharkFrame::identify_word(int   frame_index,
 
   case method_off:
     strncpy(fieldbuf, "method", buflen);
-    if (method()->is_oop()) {
+    if (method()->is_method()) {
       method()->name_and_sig_as_C_string(valuebuf, buflen);
     }
     return;
@@ -378,7 +388,7 @@ void SharkFrame::identify_word(int   frame_index,
   }
 
   // Variable part
-  if (method()->is_oop()) {
+  if (method()->is_method()) {
     identify_vp_word(frame_index, addr_of_word(offset),
                      addr_of_word(header_words + 1),
                      unextended_sp() + method()->max_stack(),
@@ -430,4 +440,3 @@ intptr_t *frame::initial_deoptimization_info() {
   // unused... but returns fp() to minimize changes introduced by 7087445
   return fp();
 }
-

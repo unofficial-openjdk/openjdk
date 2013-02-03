@@ -25,6 +25,7 @@
 
 package sun.security.jgss.krb5;
 
+import java.io.IOException;
 import org.ietf.jgss.*;
 import sun.security.jgss.GSSCaller;
 import sun.security.jgss.spi.*;
@@ -44,13 +45,10 @@ import javax.security.auth.DestroyFailedException;
 public class Krb5AcceptCredential
     implements Krb5CredElement {
 
-    private static final long serialVersionUID = 7714332137352567952L;
+    private final Krb5NameElement name;
+    private final ServiceCreds screds;
 
-    private Krb5NameElement name;
-
-    private Krb5Util.ServiceCreds screds;
-
-    private Krb5AcceptCredential(Krb5NameElement name, Krb5Util.ServiceCreds creds) {
+    private Krb5AcceptCredential(Krb5NameElement name, ServiceCreds creds) {
         /*
          * Initialize this instance with the data from the acquired
          * KerberosKey. This class needs to be a KerberosKey too
@@ -68,11 +66,11 @@ public class Krb5AcceptCredential
             name.getKrb5PrincipalName().getName());
         final AccessControlContext acc = AccessController.getContext();
 
-        Krb5Util.ServiceCreds creds = null;
+        ServiceCreds creds = null;
         try {
             creds = AccessController.doPrivileged(
-                        new PrivilegedExceptionAction<Krb5Util.ServiceCreds>() {
-                public Krb5Util.ServiceCreds run() throws Exception {
+                        new PrivilegedExceptionAction<ServiceCreds>() {
+                public ServiceCreds run() throws Exception {
                     return Krb5Util.getServiceCreds(
                         caller == GSSCaller.CALLER_UNKNOWN ? GSSCaller.CALLER_ACCEPT: caller,
                         serverPrinc, acc);
@@ -91,8 +89,10 @@ public class Krb5AcceptCredential
 
         if (name == null) {
             String fullName = creds.getName();
-            name = Krb5NameElement.getInstance(fullName,
+            if (fullName != null) {
+                name = Krb5NameElement.getInstance(fullName,
                                        Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
+            }
         }
 
         return new Krb5AcceptCredential(name, creds);
@@ -152,8 +152,8 @@ public class Krb5AcceptCredential
         return Krb5MechFactory.PROVIDER;
     }
 
-    EncryptionKey[] getKrb5EncryptionKeys() {
-        return screds.getEKeys();
+    public EncryptionKey[] getKrb5EncryptionKeys(PrincipalName princ) {
+        return screds.getEKeys(princ);
     }
 
     /**
@@ -176,5 +176,22 @@ public class Krb5AcceptCredential
      */
     public void destroy() throws DestroyFailedException {
         screds.destroy();
+    }
+
+    /**
+     * Impersonation is only available on the initiator side. The
+     * service must starts as an initiator to get an initial TGT to complete
+     * the S4U2self protocol.
+     */
+    @Override
+    public GSSCredentialSpi impersonate(GSSNameSpi name) throws GSSException {
+        Credentials cred = screds.getInitCred();
+        if (cred != null) {
+            return Krb5InitCredential.getInstance(this.name, cred)
+                    .impersonate(name);
+        } else {
+            throw new GSSException(GSSException.FAILURE, -1,
+                "Only an initiate credentials can impersonate");
+        }
     }
 }

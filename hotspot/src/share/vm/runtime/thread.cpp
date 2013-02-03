@@ -65,6 +65,7 @@
 #include "runtime/statSampler.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/task.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/threadCritical.hpp"
 #include "runtime/threadLocalStorage.hpp"
 #include "runtime/vframe.hpp"
@@ -83,19 +84,15 @@
 #include "utilities/preserveException.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
-# include "thread_linux.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_solaris
 # include "os_solaris.inline.hpp"
-# include "thread_solaris.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
-# include "thread_windows.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
-# include "thread_bsd.inline.hpp"
 #endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepThread.hpp"
@@ -323,12 +320,10 @@ void Thread::record_stack_base_and_size() {
   os::initialize_thread(this);
 
 #if INCLUDE_NMT
-   // record thread's native stack, stack grows downward
-  if (MemTracker::is_on()) {
-    address stack_low_addr = stack_base() - stack_size();
-    MemTracker::record_thread_stack(stack_low_addr, stack_size(), this,
+  // record thread's native stack, stack grows downward
+  address stack_low_addr = stack_base() - stack_size();
+  MemTracker::record_thread_stack(stack_low_addr, stack_size(), this,
       CURRENT_PC);
-  }
 #endif // INCLUDE_NMT
 }
 
@@ -345,6 +340,9 @@ Thread::~Thread() {
   if (_stack_base != NULL) {
     address low_stack_addr = stack_base() - stack_size();
     MemTracker::release_thread_stack(low_stack_addr, stack_size(), this);
+#ifdef ASSERT
+    set_stack_base(NULL);
+#endif
   }
 #endif // INCLUDE_NMT
 
@@ -825,7 +823,7 @@ bool Thread::claim_oops_do_par_case(int strong_roots_parity) {
   return false;
 }
 
-void Thread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+void Thread::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
   active_handles()->oops_do(f);
   // Do oop for ThreadShadow
   f->do_oop((oop*)&_pending_exception);
@@ -1041,6 +1039,7 @@ static void call_initializeSystemClass(TRAPS) {
 }
 
 char java_runtime_name[128] = "";
+char java_runtime_version[128] = "";
 
 // extract the JRE name from sun.misc.Version.java_runtime_name
 static const char* get_java_runtime_name(TRAPS) {
@@ -1057,6 +1056,27 @@ static const char* get_java_runtime_name(TRAPS) {
     const char* name = java_lang_String::as_utf8_string(name_oop,
                                                         java_runtime_name,
                                                         sizeof(java_runtime_name));
+    return name;
+  } else {
+    return NULL;
+  }
+}
+
+// extract the JRE version from sun.misc.Version.java_runtime_version
+static const char* get_java_runtime_version(TRAPS) {
+  Klass* k = SystemDictionary::find(vmSymbols::sun_misc_Version(),
+                                      Handle(), Handle(), CHECK_AND_CLEAR_NULL);
+  fieldDescriptor fd;
+  bool found = k != NULL &&
+               InstanceKlass::cast(k)->find_local_field(vmSymbols::java_runtime_version_name(),
+                                                        vmSymbols::string_signature(), &fd);
+  if (found) {
+    oop name_oop = k->java_mirror()->obj_field(fd.offset());
+    if (name_oop == NULL)
+      return NULL;
+    const char* name = java_lang_String::as_utf8_string(name_oop,
+                                                        java_runtime_version,
+                                                        sizeof(java_runtime_version));
     return name;
   } else {
     return NULL;
@@ -1194,6 +1214,7 @@ void NamedThread::set_name(const char* format, ...) {
 // timer interrupts exists on the platform.
 
 WatcherThread* WatcherThread::_watcher_thread   = NULL;
+bool WatcherThread::_startable = false;
 volatile bool  WatcherThread::_should_terminate = false;
 
 WatcherThread::WatcherThread() : Thread() {
@@ -1214,6 +1235,55 @@ WatcherThread::WatcherThread() : Thread() {
   }
 }
 
+int WatcherThread::sleep() const {
+  MutexLockerEx ml(PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
+
+  // remaining will be zero if there are no tasks,
+  // causing the WatcherThread to sleep until a task is
+  // enrolled
+  int remaining = PeriodicTask::time_to_wait();
+  int time_slept = 0;
+
+  // we expect this to timeout - we only ever get unparked when
+  // we should terminate or when a new task has been enrolled
+  OSThreadWaitState osts(this->osthread(), false /* not Object.wait() */);
+
+  jlong time_before_loop = os::javaTimeNanos();
+
+  for (;;) {
+    bool timedout = PeriodicTask_lock->wait(Mutex::_no_safepoint_check_flag, remaining);
+    jlong now = os::javaTimeNanos();
+
+    if (remaining == 0) {
+        // if we didn't have any tasks we could have waited for a long time
+        // consider the time_slept zero and reset time_before_loop
+        time_slept = 0;
+        time_before_loop = now;
+    } else {
+        // need to recalulate since we might have new tasks in _tasks
+        time_slept = (int) ((now - time_before_loop) / 1000000);
+    }
+
+    // Change to task list or spurious wakeup of some kind
+    if (timedout || _should_terminate) {
+        break;
+    }
+
+    remaining = PeriodicTask::time_to_wait();
+    if (remaining == 0) {
+        // Last task was just disenrolled so loop around and wait until
+        // another task gets enrolled
+        continue;
+    }
+
+    remaining -= time_slept;
+    if (remaining <= 0)
+      break;
+  }
+
+  return time_slept;
+}
+
 void WatcherThread::run() {
   assert(this == watcher_thread(), "just checking");
 
@@ -1226,26 +1296,7 @@ void WatcherThread::run() {
 
     // Calculate how long it'll be until the next PeriodicTask work
     // should be done, and sleep that amount of time.
-    size_t time_to_wait = PeriodicTask::time_to_wait();
-
-    // we expect this to timeout - we only ever get unparked when
-    // we should terminate
-    {
-      OSThreadWaitState osts(this->osthread(), false /* not Object.wait() */);
-
-      jlong prev_time = os::javaTimeNanos();
-      for (;;) {
-        int res= _SleepEvent->park(time_to_wait);
-        if (res == OS_TIMEOUT || _should_terminate)
-          break;
-        // spurious wakeup of some kind
-        jlong now = os::javaTimeNanos();
-        time_to_wait -= (now - prev_time) / 1000000;
-        if (time_to_wait <= 0)
-          break;
-        prev_time = now;
-      }
-    }
+    int time_waited = sleep();
 
     if (is_error_reported()) {
       // A fatal error has happened, the error handler(VMError::report_and_die)
@@ -1275,13 +1326,7 @@ void WatcherThread::run() {
       }
     }
 
-    PeriodicTask::real_time_tick(time_to_wait);
-
-    // If we have no more tasks left due to dynamic disenrollment,
-    // shut down the thread since we don't currently support dynamic enrollment
-    if (PeriodicTask::num_tasks() == 0) {
-      _should_terminate = true;
-    }
+    PeriodicTask::real_time_tick(time_waited);
   }
 
   // Signal that it is terminated
@@ -1296,22 +1341,33 @@ void WatcherThread::run() {
 }
 
 void WatcherThread::start() {
-  if (watcher_thread() == NULL) {
+  assert(PeriodicTask_lock->owned_by_self(), "PeriodicTask_lock required");
+
+  if (watcher_thread() == NULL && _startable) {
     _should_terminate = false;
     // Create the single instance of WatcherThread
     new WatcherThread();
   }
 }
 
+void WatcherThread::make_startable() {
+  assert(PeriodicTask_lock->owned_by_self(), "PeriodicTask_lock required");
+  _startable = true;
+}
+
 void WatcherThread::stop() {
+  {
+    MutexLockerEx ml(PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
+    _should_terminate = true;
+    OrderAccess::fence();  // ensure WatcherThread sees update in main loop
+
+    WatcherThread* watcher = watcher_thread();
+    if (watcher != NULL)
+      watcher->unpark();
+  }
+
   // it is ok to take late safepoints here, if needed
   MutexLocker mu(Terminator_lock);
-  _should_terminate = true;
-  OrderAccess::fence();  // ensure WatcherThread sees update in main loop
-
-  Thread* watcher = watcher_thread();
-  if (watcher != NULL)
-    watcher->_SleepEvent->unpark();
 
   while(watcher_thread() != NULL) {
     // This wait should make safepoint checks, wait without a timeout,
@@ -1327,6 +1383,11 @@ void WatcherThread::stop() {
     Terminator_lock->wait(!Mutex::_no_safepoint_check_flag, 0,
                           Mutex::_as_suspend_equivalent_flag);
   }
+}
+
+void WatcherThread::unpark() {
+  MutexLockerEx ml(PeriodicTask_lock->owned_by_self() ? NULL : PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
+  PeriodicTask_lock->notify();
 }
 
 void WatcherThread::print_on(outputStream* st) const {
@@ -1521,10 +1582,12 @@ JavaThread::~JavaThread() {
       tty->print_cr("terminate thread %p", this);
   }
 
-  // Info NMT that this JavaThread is exiting, its memory
-  // recorder should be collected
+  // By now, this thread should already be invisible to safepoint,
+  // and its per-thread recorder also collected.
   assert(!is_safepoint_visible(), "wrong state");
-  MemTracker::thread_exiting(this);
+#if INCLUDE_NMT
+  assert(get_recorder() == NULL, "Already collected");
+#endif // INCLUDE_NMT
 
   // JSR166 -- return the parker to the free list
   Parker::Release(_parker);
@@ -1653,7 +1716,6 @@ static void ensure_join(JavaThread* thread) {
 // cleanup_failed_attach_current_thread as well.
 void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
   assert(this == JavaThread::current(),  "thread consistency check");
-  if (!InitializeJavaLangSystem) return;
 
   HandleMark hm(this);
   Handle uncaught_exception(this, this->pending_exception());
@@ -1719,7 +1781,7 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
           jio_fprintf(defaultStream::error_stream(),
                 "\nException: %s thrown from the UncaughtExceptionHandler"
                 " in thread \"%s\"\n",
-                Klass::cast(pending_exception()->klass())->external_name(),
+                pending_exception()->klass()->external_name(),
                 get_thread_name());
           CLEAR_PENDING_EXCEPTION;
         }
@@ -2127,7 +2189,7 @@ void JavaThread::send_thread_stop(oop java_throwable)  {
           // BiasedLocking needs an updated RegisterMap for the revoke monitors pass
           RegisterMap reg_map(this, UseBiasedLocking);
           frame compiled_frame = f.sender(&reg_map);
-          if (compiled_frame.can_be_deoptimized()) {
+          if (!StressCompiledExceptionHandlers && compiled_frame.can_be_deoptimized()) {
             Deoptimization::deoptimize(this, compiled_frame, &reg_map);
           }
         }
@@ -2425,6 +2487,7 @@ void JavaThread::create_stack_guard_pages() {
 }
 
 void JavaThread::remove_stack_guard_pages() {
+  assert(Thread::current() == this, "from different thread");
   if (_stack_guard_state == stack_guard_unused) return;
   address low_addr = stack_base() - stack_size();
   size_t len = (StackYellowPages + StackRedPages) * os::vm_page_size();
@@ -2638,7 +2701,7 @@ public:
   }
 };
 
-void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+void JavaThread::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
   // Verify that the deferred card marks have been flushed.
   assert(deferred_card_mark().is_empty(), "Should be empty during GC");
 
@@ -2646,7 +2709,7 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
   // since there may be more than one thread using each ThreadProfiler.
 
   // Traverse the GCHandles
-  Thread::oops_do(f, cf);
+  Thread::oops_do(f, cld_f, cf);
 
   assert( (!has_last_Java_frame() && java_call_counter() == 0) ||
           (has_last_Java_frame() && java_call_counter() > 0), "wrong java_sp info!");
@@ -2674,7 +2737,7 @@ void JavaThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
 
     // Traverse the execution stack
     for(StackFrameStream fst(this); !fst.is_done(); fst.next()) {
-      fst.current()->oops_do(f, cf, fst.register_map());
+      fst.current()->oops_do(f, cld_f, cf, fst.register_map());
     }
   }
 
@@ -2808,7 +2871,7 @@ static void frame_verify(frame* f, const RegisterMap *map) { f->verify(map); }
 
 void JavaThread::verify() {
   // Verify oops in the thread.
-  oops_do(&VerifyOopClosure::verify_oop, NULL);
+  oops_do(&VerifyOopClosure::verify_oop, NULL, NULL);
 
   // Verify the stack frames.
   frames_do(frame_verify);
@@ -3058,7 +3121,7 @@ class PrintAndVerifyOopClosure: public OopClosure {
 static void oops_print(frame* f, const RegisterMap *map) {
   PrintAndVerifyOopClosure print;
   f->print_value();
-  f->oops_do(&print, NULL, (RegisterMap*)map);
+  f->oops_do(&print, NULL, NULL, (RegisterMap*)map);
 }
 
 // Print our all the locations that contain oops and whether they are
@@ -3160,8 +3223,8 @@ CompilerThread::CompilerThread(CompileQueue* queue, CompilerCounters* counters)
 #endif
 }
 
-void CompilerThread::oops_do(OopClosure* f, CodeBlobClosure* cf) {
-  JavaThread::oops_do(f, cf);
+void CompilerThread::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
+  JavaThread::oops_do(f, cld_f, cf);
   if (_scanned_nmethod != NULL && cf != NULL) {
     // Safepoints can occur when the sweeper is scanning an nmethod so
     // process it here to make sure it isn't unloaded in the middle of
@@ -3266,6 +3329,9 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // Initialize the os module after parsing the args
   jint os_init_2_result = os::init_2();
   if (os_init_2_result != JNI_OK) return os_init_2_result;
+
+  jint adjust_after_os_result = Arguments::adjust_after_os();
+  if (adjust_after_os_result != JNI_OK) return adjust_after_os_result;
 
   // intialize TLS
   ThreadLocalStorage::init();
@@ -3402,11 +3468,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
       create_vm_init_libraries();
     }
 
-    if (InitializeJavaLangString) {
-      initialize_class(vmSymbols::java_lang_String(), CHECK_0);
-    } else {
-      warning("java.lang.String not initialized");
-    }
+    initialize_class(vmSymbols::java_lang_String(), CHECK_0);
 
     if (AggressiveOpts) {
       {
@@ -3447,51 +3509,39 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     }
 
     // Initialize java_lang.System (needed before creating the thread)
-    if (InitializeJavaLangSystem) {
-      initialize_class(vmSymbols::java_lang_System(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ThreadGroup(), CHECK_0);
-      Handle thread_group = create_initial_thread_group(CHECK_0);
-      Universe::set_main_thread_group(thread_group());
-      initialize_class(vmSymbols::java_lang_Thread(), CHECK_0);
-      oop thread_object = create_initial_thread(thread_group, main_thread, CHECK_0);
-      main_thread->set_threadObj(thread_object);
-      // Set thread status to running since main thread has
-      // been started and running.
-      java_lang_Thread::set_thread_status(thread_object,
-                                          java_lang_Thread::RUNNABLE);
+    initialize_class(vmSymbols::java_lang_System(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_ThreadGroup(), CHECK_0);
+    Handle thread_group = create_initial_thread_group(CHECK_0);
+    Universe::set_main_thread_group(thread_group());
+    initialize_class(vmSymbols::java_lang_Thread(), CHECK_0);
+    oop thread_object = create_initial_thread(thread_group, main_thread, CHECK_0);
+    main_thread->set_threadObj(thread_object);
+    // Set thread status to running since main thread has
+    // been started and running.
+    java_lang_Thread::set_thread_status(thread_object,
+                                        java_lang_Thread::RUNNABLE);
 
-      // The VM preresolve methods to these classes. Make sure that get initialized
-      initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ref_Finalizer(),  CHECK_0);
-      // The VM creates & returns objects of this class. Make sure it's initialized.
-      initialize_class(vmSymbols::java_lang_Class(), CHECK_0);
-      call_initializeSystemClass(CHECK_0);
+    // The VM creates & returns objects of this class. Make sure it's initialized.
+    initialize_class(vmSymbols::java_lang_Class(), CHECK_0);
 
-      // get the Java runtime name after java.lang.System is initialized
-      JDK_Version::set_runtime_name(get_java_runtime_name(THREAD));
-    } else {
-      warning("java.lang.System not initialized");
-    }
+    // The VM preresolves methods to these classes. Make sure that they get initialized
+    initialize_class(vmSymbols::java_lang_reflect_Method(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_ref_Finalizer(),  CHECK_0);
+    call_initializeSystemClass(CHECK_0);
+
+    // get the Java runtime name after java.lang.System is initialized
+    JDK_Version::set_runtime_name(get_java_runtime_name(THREAD));
+    JDK_Version::set_runtime_version(get_java_runtime_version(THREAD));
 
     // an instance of OutOfMemory exception has been allocated earlier
-    if (InitializeJavaLangExceptionsErrors) {
-      initialize_class(vmSymbols::java_lang_OutOfMemoryError(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_NullPointerException(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ClassCastException(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ArrayStoreException(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_ArithmeticException(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_StackOverflowError(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_IllegalMonitorStateException(), CHECK_0);
-      initialize_class(vmSymbols::java_lang_IllegalArgumentException(), CHECK_0);
-    } else {
-      warning("java.lang.OutOfMemoryError has not been initialized");
-      warning("java.lang.NullPointerException has not been initialized");
-      warning("java.lang.ClassCastException has not been initialized");
-      warning("java.lang.ArrayStoreException has not been initialized");
-      warning("java.lang.ArithmeticException has not been initialized");
-      warning("java.lang.StackOverflowError has not been initialized");
-      warning("java.lang.IllegalArgumentException has not been initialized");
-    }
+    initialize_class(vmSymbols::java_lang_OutOfMemoryError(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_NullPointerException(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_ClassCastException(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_ArrayStoreException(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_ArithmeticException(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_StackOverflowError(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_IllegalMonitorStateException(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_IllegalArgumentException(), CHECK_0);
   }
 
   // See        : bugid 4211085.
@@ -3599,7 +3649,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   }
 
   // initialize compiler(s)
-#if defined(COMPILER1) || defined(COMPILER2)
+#if defined(COMPILER1) || defined(COMPILER2) || defined(SHARK)
   CompileBroker::compilation_init();
 #endif
 
@@ -3631,12 +3681,18 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     }
   }
 
-  // Start up the WatcherThread if there are any periodic tasks
-  // NOTE:  All PeriodicTasks should be registered by now. If they
-  //   aren't, late joiners might appear to start slowly (we might
-  //   take a while to process their first tick).
-  if (PeriodicTask::num_tasks() > 0) {
-    WatcherThread::start();
+  {
+      MutexLockerEx ml(PeriodicTask_lock, Mutex::_no_safepoint_check_flag);
+      // Make sure the watcher thread can be started by WatcherThread::start()
+      // or by dynamic enrollment.
+      WatcherThread::make_startable();
+      // Start up the WatcherThread if there are any periodic tasks
+      // NOTE:  All PeriodicTasks should be registered by now. If they
+      //   aren't, late joiners might appear to start slowly (we might
+      //   take a while to process their first tick).
+      if (PeriodicTask::num_tasks() > 0) {
+          WatcherThread::start();
+      }
   }
 
   // Give os specific code one last chance to start
@@ -3679,8 +3735,10 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
       }
     } else {
       // Try to load the agent from the standard dll directory
-      os::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), name);
-      library = os::dll_load(buffer, ebuf, sizeof ebuf);
+      if (os::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(),
+                             name)) {
+        library = os::dll_load(buffer, ebuf, sizeof ebuf);
+      }
 #ifdef KERNEL
       // Download instrument dll
       if (library == NULL && strcmp(name, "instrument") == 0) {
@@ -3705,8 +3763,9 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
 #endif // KERNEL
       if (library == NULL) { // Try the local directory
         char ns[1] = {0};
-        os::dll_build_name(buffer, sizeof(buffer), ns, name);
-        library = os::dll_load(buffer, ebuf, sizeof ebuf);
+        if (os::dll_build_name(buffer, sizeof(buffer), ns, name)) {
+          library = os::dll_load(buffer, ebuf, sizeof ebuf);
+        }
         if (library == NULL) {
           const char *sub_msg = " on the library path, with error: ";
           size_t len = strlen(msg) + strlen(name) + strlen(sub_msg) + strlen(ebuf) + 1;
@@ -3933,10 +3992,6 @@ bool Threads::destroy_vm() {
                          Mutex::_as_suspend_equivalent_flag);
   }
 
-  // Shutdown NMT before exit. Otherwise,
-  // it will run into trouble when system destroys static variables.
-  MemTracker::shutdown(MemTracker::NMT_normal);
-
   // Hang forever on exit if we are reporting an error.
   if (ShowMessageBoxOnError && is_error_reported()) {
     os::infinite_sleep();
@@ -4093,7 +4148,10 @@ void Threads::remove(JavaThread* p) {
 
     // Now, this thread is not visible to safepoint
     p->set_safepoint_visible(false);
-
+    // once the thread becomes safepoint invisible, we can not use its per-thread
+    // recorder. And Threads::do_threads() no longer walks this thread, so we have
+    // to release its per-thread recorder here.
+    MemTracker::thread_exiting(p);
   } // unlock Threads_lock
 
   // Since Events::log uses a lock, we grab it outside the Threads_lock
@@ -4118,14 +4176,14 @@ bool Threads::includes(JavaThread* p) {
 // uses the Threads_lock to gurantee this property. It also makes sure that
 // all threads gets blocked when exiting or starting).
 
-void Threads::oops_do(OopClosure* f, CodeBlobClosure* cf) {
+void Threads::oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
   ALL_JAVA_THREADS(p) {
-    p->oops_do(f, cf);
+    p->oops_do(f, cld_f, cf);
   }
-  VMThread::vm_thread()->oops_do(f, cf);
+  VMThread::vm_thread()->oops_do(f, cld_f, cf);
 }
 
-void Threads::possibly_parallel_oops_do(OopClosure* f, CodeBlobClosure* cf) {
+void Threads::possibly_parallel_oops_do(OopClosure* f, CLDToOopClosure* cld_f, CodeBlobClosure* cf) {
   // Introduce a mechanism allowing parallel threads to claim threads as
   // root groups.  Overhead should be small enough to use all the time,
   // even in sequential code.
@@ -4142,12 +4200,12 @@ void Threads::possibly_parallel_oops_do(OopClosure* f, CodeBlobClosure* cf) {
   int cp = SharedHeap::heap()->strong_roots_parity();
   ALL_JAVA_THREADS(p) {
     if (p->claim_oops_do(is_par, cp)) {
-      p->oops_do(f, cf);
+      p->oops_do(f, cld_f, cf);
     }
   }
   VMThread* vmt = VMThread::vm_thread();
   if (vmt->claim_oops_do(is_par, cp)) {
-    vmt->oops_do(f, cf);
+    vmt->oops_do(f, cld_f, cf);
   }
 }
 

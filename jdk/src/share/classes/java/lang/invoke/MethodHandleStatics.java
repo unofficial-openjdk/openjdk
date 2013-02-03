@@ -115,7 +115,7 @@ import sun.misc.Unsafe;
         return new IllegalArgumentException(message(message, obj, obj2));
     }
     /*non-public*/ static Error uncaughtException(Throwable ex) {
-        throw new InternalError("uncaught exception", ex);
+        throw newInternalError("uncaught exception", ex);
     }
     static Error NYI() {
         throw new AssertionError("NYI");

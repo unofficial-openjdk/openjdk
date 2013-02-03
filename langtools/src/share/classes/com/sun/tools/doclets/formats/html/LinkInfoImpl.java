@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,12 @@ import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.util.links.*;
 
+/**
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
+ */
 public class LinkInfoImpl extends LinkInfo {
 
     /**
@@ -192,6 +198,8 @@ public class LinkInfoImpl extends LinkInfo {
      */
     public static final int CONTEXT_CLASS_USE_HEADER = 33;
 
+    public final ConfigurationImpl configuration;
+
     /**
      * The integer indicating the location of the link.
      */
@@ -208,20 +216,22 @@ public class LinkInfoImpl extends LinkInfo {
     public String styleName ="";
 
     /**
-     * The valueof the target.
+     * The value of the target.
      */
     public String target = "";
 
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param classDoc   the class to link to.
      * @param label      the label for the link.
      * @param target     the value of the target attribute.
      */
-    public LinkInfoImpl (int context, ClassDoc classDoc, String label,
-            String target){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ClassDoc classDoc, String label, String target) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.label = label;
         this.target = target;
@@ -231,6 +241,7 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param classDoc   the class to link to.
      * @param where      the value of the marker #.
@@ -238,8 +249,10 @@ public class LinkInfoImpl extends LinkInfo {
      * @param isStrong       true if the link should be strong.
      * @param styleName  String style of text defined in style sheet.
      */
-    public LinkInfoImpl (int context, ClassDoc classDoc, String where, String label,
-            boolean isStrong, String styleName){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ClassDoc classDoc, String where, String label,
+            boolean isStrong, String styleName) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.where = where;
         this.label = label;
@@ -251,14 +264,17 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param classDoc   the class to link to.
      * @param where      the value of the marker #.
      * @param label      the label for the link.
      * @param isStrong       true if the link should be strong.
      */
-    public LinkInfoImpl (int context, ClassDoc classDoc, String where, String label,
-            boolean isStrong){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ClassDoc classDoc, String where, String label,
+            boolean isStrong) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.where = where;
         this.label = label;
@@ -269,10 +285,13 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param classDoc   the class to link to.
      * @param label      the label for the link.
      */
-    public LinkInfoImpl (ClassDoc classDoc, String label){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            ClassDoc classDoc, String label) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.label = label;
         setContext(context);
@@ -281,12 +300,15 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context               the context of the link.
      * @param executableMemberDoc   the member to link to.
      * @param isStrong                true if the link should be strong.
      */
-    public LinkInfoImpl (int context, ExecutableMemberDoc executableMemberDoc,
-            boolean isStrong){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ExecutableMemberDoc executableMemberDoc,
+            boolean isStrong) {
+        this.configuration = configuration;
         this.executableMemberDoc = executableMemberDoc;
         this.isStrong = isStrong;
         setContext(context);
@@ -295,11 +317,14 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param classDoc   the class to link to.
      * @param isStrong       true if the link should be strong.
      */
-    public LinkInfoImpl (int context, ClassDoc classDoc,  boolean isStrong){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ClassDoc classDoc,  boolean isStrong) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.isStrong = isStrong;
         setContext(context);
@@ -308,10 +333,13 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param type       the class to link to.
      */
-    public LinkInfoImpl (int context, Type type){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, Type type) {
+        this.configuration = configuration;
         this.type = type;
         setContext(context);
     }
@@ -319,11 +347,14 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param type       the class to link to.
      * @param isVarArg   true if this is a link to a var arg.
      */
-    public LinkInfoImpl (int context, Type type, boolean isVarArg){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, Type type, boolean isVarArg) {
+        this.configuration = configuration;
         this.type = type;
         this.isVarArg = isVarArg;
         setContext(context);
@@ -332,13 +363,16 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param type       the class to link to.
      * @param label      the label for the link.
      * @param isStrong     true if the link should be strong.
      */
-    public LinkInfoImpl (int context, Type type, String label,
-            boolean isStrong){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, Type type, String label,
+            boolean isStrong) {
+        this.configuration = configuration;
         this.type = type;
         this.label = label;
         this.isStrong = isStrong;
@@ -348,13 +382,16 @@ public class LinkInfoImpl extends LinkInfo {
     /**
      * Construct a LinkInfo object.
      *
+     * @param configuration the configuration data for the doclet
      * @param context    the context of the link.
      * @param classDoc   the class to link to.
      * @param label      the label for the link.
      * @param isStrong       true if the link should be strong.
      */
-    public LinkInfoImpl (int context, ClassDoc classDoc, String label,
-            boolean isStrong){
+    public LinkInfoImpl(ConfigurationImpl configuration,
+            int context, ClassDoc classDoc, String label,
+            boolean isStrong) {
+        this.configuration = configuration;
         this.classDoc = classDoc;
         this.label = label;
         this.isStrong = isStrong;
@@ -422,6 +459,8 @@ public class LinkInfoImpl extends LinkInfo {
 
             case CONTEXT_RETURN_TYPE:
             case CONTEXT_SUMMARY_RETURN_TYPE:
+                excludeTypeBounds = true;
+                break;
             case CONTEXT_EXECUTABLE_MEMBER_PARAM:
                 excludeTypeBounds = true;
                 break;
@@ -442,6 +481,6 @@ public class LinkInfoImpl extends LinkInfo {
      * desired place.
      */
     public boolean isLinkable() {
-        return Util.isLinkable(classDoc, ConfigurationImpl.getInstance());
+        return Util.isLinkable(classDoc, configuration);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,8 +34,6 @@ import javax.lang.model.type.DeclaredType;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.util.*;
 
-import static com.sun.tools.javac.code.TypeTags.*;
-
 /** An annotation value.
  *
  *  <p><b>This is NOT part of any supported API.
@@ -62,6 +60,9 @@ public abstract class Attribute implements AnnotationValue {
         throw new UnsupportedOperationException();
     }
 
+    public boolean isSynthesized() {
+        return false;
+    }
 
     /** The value for an annotation element of primitive type or String. */
     public static class Constant extends Attribute {
@@ -138,6 +139,18 @@ public abstract class Attribute implements AnnotationValue {
          *  access this attribute.
          */
         public final List<Pair<MethodSymbol,Attribute>> values;
+
+        private boolean synthesized = false;
+
+        @Override
+        public boolean isSynthesized() {
+            return synthesized;
+        }
+
+        public void setSynthesized(boolean synthesized) {
+            this.synthesized = synthesized;
+        }
+
         public Compound(Type type,
                         List<Pair<MethodSymbol,Attribute>> values) {
             super(type);
@@ -202,6 +215,21 @@ public abstract class Attribute implements AnnotationValue {
                 valmap.put(value.fst, value.snd);
             return valmap;
         }
+    }
+
+    public static class TypeCompound extends Compound {
+        public TypeAnnotationPosition position;
+        public TypeCompound(Compound compound,
+                TypeAnnotationPosition position) {
+            this(compound.type, compound.values, position);
+        }
+        public TypeCompound(Type type,
+                List<Pair<MethodSymbol, Attribute>> values,
+                TypeAnnotationPosition position) {
+            super(type, values);
+            this.position = position;
+        }
+
     }
 
     /** The value for an annotation element of an array type.

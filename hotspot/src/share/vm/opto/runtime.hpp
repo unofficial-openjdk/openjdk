@@ -174,6 +174,7 @@ private:
   static address handle_exception_C       (JavaThread* thread);
   static address handle_exception_C_helper(JavaThread* thread, nmethod*& nm);
   static address rethrow_C                (oopDesc* exception, JavaThread *thread, address return_pc );
+  static void deoptimize_caller_frame     (JavaThread *thread);
   static void deoptimize_caller_frame     (JavaThread *thread, bool doit);
   static bool is_deoptimized_caller_frame (JavaThread *thread);
 
@@ -279,6 +280,9 @@ private:
   static const TypeFunc* slow_arraycopy_Type();   // the full routine
 
   static const TypeFunc* array_fill_Type();
+
+  static const TypeFunc* aescrypt_block_Type();
+  static const TypeFunc* cipherBlockChaining_aescrypt_Type();
 
   // leaf on stack replacement interpreter accessor types
   static const TypeFunc* osr_end_Type();

@@ -27,16 +27,18 @@ package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.io.*;
 import java.util.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.*;
+
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds the summary for a given class.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -52,22 +54,22 @@ public class ClassBuilder extends AbstractBuilder {
     /**
      * The class being documented.
      */
-    private ClassDoc classDoc;
+    private final ClassDoc classDoc;
 
     /**
      * The doclet specific writer.
      */
-    private ClassWriter writer;
+    private final ClassWriter writer;
 
     /**
      * Keep track of whether or not this classdoc is an interface.
      */
-    private boolean isInterface = false;
+    private final boolean isInterface;
 
     /**
      * Keep track of whether or not this classdoc is an enum.
      */
-    private boolean isEnum = false;
+    private final boolean isEnum;
 
     /**
      * The content tree for the class documentation.
@@ -77,44 +79,45 @@ public class ClassBuilder extends AbstractBuilder {
     /**
      * Construct a new ClassBuilder.
      *
-     * @param configuration the current configuration of the
-     *                      doclet.
+     * @param context  the build context
+     * @param classDoc the class being documented.
+     * @param writer the doclet specific writer.
      */
-    private ClassBuilder(Configuration configuration) {
-        super(configuration);
+    private ClassBuilder(Context context,
+            ClassDoc classDoc, ClassWriter writer) {
+        super(context);
+        this.classDoc = classDoc;
+        this.writer = writer;
+        if (classDoc.isInterface()) {
+            isInterface = true;
+            isEnum = false;
+        } else if (classDoc.isEnum()) {
+            isInterface = false;
+            isEnum = true;
+            Util.setEnumDocumentation(configuration, classDoc);
+        } else {
+            isInterface = false;
+            isEnum = false;
+        }
     }
 
     /**
      * Construct a new ClassBuilder.
      *
-     * @param configuration the current configuration of the doclet.
+     * @param context  the build context
      * @param classDoc the class being documented.
      * @param writer the doclet specific writer.
      */
-    public static ClassBuilder getInstance(Configuration configuration,
-        ClassDoc classDoc, ClassWriter writer)
-    throws Exception {
-        ClassBuilder builder = new ClassBuilder(configuration);
-        builder.configuration = configuration;
-        builder.classDoc = classDoc;
-        builder.writer = writer;
-        if (classDoc.isInterface()) {
-            builder.isInterface = true;
-        } else if (classDoc.isEnum()) {
-            builder.isEnum = true;
-            Util.setEnumDocumentation(configuration, classDoc);
-        }
-        if(containingPackagesSeen == null) {
-            containingPackagesSeen = new HashSet<String>();
-        }
-        return builder;
+    public static ClassBuilder getInstance(Context context,
+            ClassDoc classDoc, ClassWriter writer) {
+        return new ClassBuilder(context, classDoc, writer);
     }
 
     /**
      * {@inheritDoc}
      */
     public void build() throws IOException {
-        build(LayoutParser.getInstance(configuration).parseXML(ROOT), contentTree);
+        build(layoutParser.parseXML(ROOT), contentTree);
     }
 
     /**
@@ -233,6 +236,16 @@ public class ClassBuilder extends AbstractBuilder {
     }
 
     /**
+     * If this is an functional interface, display appropriate message.
+     *
+     * @param node the XML element that specifies which components to document
+     * @param classInfoTree the content tree to which the documentation will be added
+     */
+    public void buildFunctionalInterfaceInfo(XMLNode node, Content classInfoTree) {
+        writer.addFunctionalInterfaceInfo(classInfoTree);
+    }
+
+    /**
      * If this class is deprecated, build the appropriate information.
      *
      * @param node the XML element that specifies which components to document
@@ -264,11 +277,7 @@ public class ClassBuilder extends AbstractBuilder {
             //Only copy doc files dir if the containing package is not
             //documented AND if we have not documented a class from the same
             //package already. Otherwise, we are making duplicate copies.
-            Util.copyDocFiles(configuration,
-                    Util.getPackageSourcePath(configuration,
-                    classDoc.containingPackage()) +
-                    DirectoryManager.getDirectoryPath(classDoc.containingPackage())
-                    + File.separator, DocletConstants.DOC_FILES_DIR_NAME, true);
+            Util.copyDocFiles(configuration, containingPackage);
             containingPackagesSeen.add(containingPackage.name());
         }
      }
@@ -280,18 +289,18 @@ public class ClassBuilder extends AbstractBuilder {
      * @param classInfoTree the content tree to which the documentation will be added
      */
     public void buildClassSignature(XMLNode node, Content classInfoTree) {
-        StringBuffer modifiers = new StringBuffer(classDoc.modifiers() + " ");
+        StringBuilder modifiers = new StringBuilder(classDoc.modifiers() + " ");
         if (isEnum) {
             modifiers.append("enum ");
             int index;
             if ((index = modifiers.indexOf("abstract")) >= 0) {
-                modifiers.delete(index, index + (new String("abstract")).length());
-                modifiers = new StringBuffer(
+                modifiers.delete(index, index + "abstract".length());
+                modifiers = new StringBuilder(
                         Util.replaceText(modifiers.toString(), "  ", " "));
             }
             if ((index = modifiers.indexOf("final")) >= 0) {
-                modifiers.delete(index, index + (new String("final")).length());
-                modifiers = new StringBuffer(
+                modifiers.delete(index, index + "final".length());
+                modifiers = new StringBuilder(
                         Util.replaceText(modifiers.toString(), "  ", " "));
             }
         //} else if (classDoc.isAnnotationType()) {

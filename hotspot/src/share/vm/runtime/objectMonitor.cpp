@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,25 +34,21 @@
 #include "runtime/objectMonitor.inline.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/stubRoutines.hpp"
-#include "runtime/thread.hpp"
+#include "runtime/thread.inline.hpp"
 #include "services/threadService.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/preserveException.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
-# include "thread_linux.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_solaris
 # include "os_solaris.inline.hpp"
-# include "thread_solaris.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
-# include "thread_windows.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
-# include "thread_bsd.inline.hpp"
 #endif
 
 #if defined(__GNUC__) && !defined(IA64)
@@ -657,8 +653,7 @@ void ATTR ObjectMonitor::EnterI (TRAPS) {
     assert (_succ != Self, "invariant") ;
     if (_Responsible == Self) {
         _Responsible = NULL ;
-        // Dekker pivot-point.
-        // Consider OrderAccess::storeload() here
+        OrderAccess::fence(); // Dekker pivot-point
 
         // We may leave threads on cxq|EntryList without a designated
         // "Responsible" thread.  This is benign.  When this thread subsequently
@@ -678,10 +673,6 @@ void ATTR ObjectMonitor::EnterI (TRAPS) {
         //
         // The MEMBAR, above, prevents the LD of cxq|EntryList in the subsequent
         // exit operation from floating above the ST Responsible=null.
-        //
-        // In *practice* however, EnterI() is always followed by some atomic
-        // operation such as the decrement of _count in ::enter().  Those atomics
-        // obviate the need for the explicit MEMBAR, above.
     }
 
     // We've acquired ownership with CAS().

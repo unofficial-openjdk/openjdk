@@ -113,14 +113,16 @@ public class CEmbeddedFrame extends EmbeddedFrame {
     public void handleFocusEvent(boolean focused) {
         this.focused = focused;
         if (parentWindowActive) {
-            responder.handleWindowFocusEvent(focused);
+            responder.handleWindowFocusEvent(focused, null);
         }
     }
 
     public void handleWindowFocusEvent(boolean parentWindowActive) {
         this.parentWindowActive = parentWindowActive;
-        if (focused) {
-            responder.handleWindowFocusEvent(parentWindowActive);
+        // ignore focus "lost" native request as it may mistakenly
+        // deactivate active window (see 8001161)
+        if (focused && parentWindowActive) {
+            responder.handleWindowFocusEvent(parentWindowActive, null);
         }
     }
 

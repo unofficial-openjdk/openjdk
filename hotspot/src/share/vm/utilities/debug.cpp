@@ -44,6 +44,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "runtime/stubRoutines.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/vframe.hpp"
 #include "services/heapDumper.hpp"
 #include "utilities/defaultStream.hpp"
@@ -52,19 +53,15 @@
 #include "utilities/vmError.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
-# include "thread_linux.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_solaris
 # include "os_solaris.inline.hpp"
-# include "thread_solaris.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
-# include "thread_windows.inline.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "os_bsd.inline.hpp"
-# include "thread_bsd.inline.hpp"
 #endif
 
 #ifndef ASSERT
@@ -614,21 +611,6 @@ extern "C" void events() {
   Command c("events");
   Events::print();
 }
-
-// Given a heap address that was valid before the most recent GC, if
-// the oop that used to contain it is still live, prints the new
-// location of the oop and the address. Useful for tracking down
-// certain kinds of naked oop and oop map bugs.
-extern "C" void pnl(intptr_t old_heap_addr) {
-  // Print New Location of old heap address
-  Command c("pnl");
-#ifndef VALIDATE_MARK_SWEEP
-  tty->print_cr("Requires build with VALIDATE_MARK_SWEEP defined (debug build) and RecordMarkSweepCompaction enabled");
-#else
-  MarkSweep::print_new_location_of_heap_address((HeapWord*) old_heap_addr);
-#endif
-}
-
 
 extern "C" Method* findm(intptr_t pc) {
   Command c("findm");

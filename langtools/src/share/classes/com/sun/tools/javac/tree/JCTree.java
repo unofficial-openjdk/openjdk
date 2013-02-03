@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
 public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /* Tree tag values, identifying kinds of trees */
-    public enum Tag{
+    public enum Tag {
         /** For methods that return an invalid tag if a given condition is not met
          */
         NO_TAG,
@@ -250,9 +250,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         TYPEAPPLY,
 
-        /** Union types, of type TypeUnion
+        /** Union types, of type TypeUnion.
          */
         TYPEUNION,
+
+        /** Intersection types, of type TypeIntersection.
+         */
+        TYPEINTERSECTION,
 
         /** Formal type parameters, of type TypeParameter.
          */
@@ -270,10 +274,16 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         ANNOTATION,
 
+        /** metadata: Type annotation.
+         */
+        TYPE_ANNOTATION,
+
         /** metadata: Modifiers
          */
         MODIFIERS,
 
+        /** An annotated type tree.
+         */
         ANNOTATED_TYPE,
 
         /** Error trees, of type Erroneous.
@@ -336,15 +346,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
          */
         LETEXPR;                         // ala scheme
 
-        private Tag noAssignTag;
+        private final Tag noAssignTag;
 
-        private static int numberOfOperators = MOD.ordinal() - POS.ordinal() + 1;
+        private static final int numberOfOperators = MOD.ordinal() - POS.ordinal() + 1;
 
         private Tag(Tag noAssignTag) {
             this.noAssignTag = noAssignTag;
         }
 
-        private Tag() { }
+        private Tag() {
+            this(null);
+        }
 
         public static int getNumberOfOperators() {
             return numberOfOperators;
@@ -464,32 +476,29 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     /**
-     * Everything in one source file is kept in a TopLevel structure.
-     * @param pid              The tree representing the package clause.
-     * @param sourcefile       The source file name.
-     * @param defs             All definitions in this file (ClassDef, Import, and Skip)
-     * @param packge           The package it belongs to.
-     * @param namedImportScope A scope for all named imports.
-     * @param starImportScope  A scope for all import-on-demands.
-     * @param lineMap          Line starting positions, defined only
-     *                         if option -g is set.
-     * @param docComments      A hashtable that stores all documentation comments
-     *                         indexed by the tree nodes they refer to.
-     *                         defined only if option -s is set.
-     * @param endPositions     An object encapsulating ending positions of source
-     *                         ranges indexed by the tree nodes they belong to.
-     *                         Defined only if option -Xjcov is set.
+     * Everything in one source file is kept in a {@linkplain JCCompilationUnit} structure.
      */
     public static class JCCompilationUnit extends JCTree implements CompilationUnitTree {
         public List<JCAnnotation> packageAnnotations;
+        /** The tree representing the package clause. */
         public JCExpression pid;
+        /** All definitions in this file (ClassDef, Import, and Skip) */
         public List<JCTree> defs;
+        /* The source file name. */
         public JavaFileObject sourcefile;
+        /** The package to which this compilation unit belongs. */
         public PackageSymbol packge;
+        /** A scope for all named imports. */
         public ImportScope namedImportScope;
+        /** A scope for all import-on-demands. */
         public StarImportScope starImportScope;
+        /** Line starting positions, defined only if option -g is set. */
         public Position.LineMap lineMap = null;
+        /** A table that stores all documentation comments indexed by the tree
+         * nodes they refer to. defined only if option -s is set. */
         public DocCommentTable docComments = null;
+        /* An object encapsulating ending positions of source ranges indexed by
+         * the tree nodes they belong to. Defined only if option -Xjcov is set. */
         public EndPosTable endPositions = null;
         protected JCCompilationUnit(List<JCAnnotation> packageAnnotations,
                         JCExpression pid,
@@ -550,10 +559,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * An import clause.
-     * @param qualid    The imported class(es).
      */
     public static class JCImport extends JCTree implements ImportTree {
         public boolean staticImport;
+        /** The imported class(es). */
         public JCTree qualid;
         protected JCImport(JCTree qualid, boolean importStatic) {
             this.qualid = qualid;
@@ -604,22 +613,58 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     /**
+     * Common supertype for all poly expression trees (lambda, method references,
+     * conditionals, method and constructor calls)
+     */
+    public static abstract class JCPolyExpression extends JCExpression {
+
+        /**
+         * A poly expression can only be truly 'poly' in certain contexts
+         */
+        public enum PolyKind {
+            /** poly expression to be treated as a standalone expression */
+            STANDALONE,
+            /** true poly expression */
+            POLY;
+        }
+
+        /** is this poly expression a 'true' poly expression? */
+        public PolyKind polyKind;
+    }
+
+    /**
+     * Common supertype for all functional expression trees (lambda and method references)
+     */
+    public static abstract class JCFunctionalExpression extends JCPolyExpression {
+
+        public JCFunctionalExpression() {
+            //a functional expression is always a 'true' poly
+            polyKind = PolyKind.POLY;
+        }
+
+        /** target descriptor inferred for this functional expression. */
+        public Type descriptorType;
+        /** list of target types inferred for this functional expression. */
+        public List<TypeSymbol> targets;
+    }
+
+    /**
      * A class definition.
-     * @param modifiers the modifiers
-     * @param name the name of the class
-     * @param typarams formal class parameters
-     * @param extending the classes this class extends
-     * @param implementing the interfaces implemented by this class
-     * @param defs all variables and methods defined in this class
-     * @param sym the symbol
      */
     public static class JCClassDecl extends JCStatement implements ClassTree {
+        /** the modifiers */
         public JCModifiers mods;
+        /** the name of the class */
         public Name name;
+        /** formal class parameters */
         public List<JCTypeParameter> typarams;
+        /** the classes this class extends */
         public JCExpression extending;
+        /** the interfaces implemented by this class */
         public List<JCExpression> implementing;
+        /** all variables and methods defined in this class */
         public List<JCTree> defs;
+        /** the symbol */
         public ClassSymbol sym;
         protected JCClassDecl(JCModifiers mods,
                            Name name,
@@ -676,29 +721,33 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * A method definition.
-     * @param modifiers method modifiers
-     * @param name method name
-     * @param restype type of method return value
-     * @param typarams type parameters
-     * @param params value parameters
-     * @param thrown exceptions thrown by this method
-     * @param stats statements in the method
-     * @param sym method symbol
      */
     public static class JCMethodDecl extends JCTree implements MethodTree {
+        /** method modifiers */
         public JCModifiers mods;
+        /** method name */
         public Name name;
+        /** type of method return value */
         public JCExpression restype;
+        /** type parameters */
         public List<JCTypeParameter> typarams;
+        /** receiver parameter */
+        public JCVariableDecl recvparam;
+        /** value parameters */
         public List<JCVariableDecl> params;
+        /** exceptions thrown by this method */
         public List<JCExpression> thrown;
+        /** statements in the method */
         public JCBlock body;
-        public JCExpression defaultValue; // for annotation types
+        /** default value, for annotation types */
+        public JCExpression defaultValue;
+        /** method symbol */
         public MethodSymbol sym;
         protected JCMethodDecl(JCModifiers mods,
                             Name name,
                             JCExpression restype,
                             List<JCTypeParameter> typarams,
+                            JCVariableDecl recvparam,
                             List<JCVariableDecl> params,
                             List<JCExpression> thrown,
                             JCBlock body,
@@ -710,6 +759,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             this.restype = restype;
             this.typarams = typarams;
             this.params = params;
+            this.recvparam = recvparam;
+            // TODO: do something special if the given type is null?
+            // receiver != null ? receiver : List.<JCTypeAnnotation>nil());
             this.thrown = thrown;
             this.body = body;
             this.defaultValue = defaultValue;
@@ -728,6 +780,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public List<JCVariableDecl> getParameters() {
             return params;
         }
+        public JCVariableDecl getReceiverParameter() { return recvparam; }
         public List<JCExpression> getThrows() {
             return thrown;
         }
@@ -748,17 +801,17 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * A variable definition.
-     * @param modifiers variable modifiers
-     * @param name variable name
-     * @param vartype type of the variable
-     * @param init variables initial value
-     * @param sym symbol
      */
     public static class JCVariableDecl extends JCStatement implements VariableTree {
+        /** variable modifiers */
         public JCModifiers mods;
+        /** variable name */
         public Name name;
+        /** type of the variable */
         public JCExpression vartype;
+        /** variable's initial value */
         public JCExpression init;
+        /** symbol */
         public VarSymbol sym;
         protected JCVariableDecl(JCModifiers mods,
                          Name name,
@@ -815,11 +868,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * A statement block.
-     * @param stats statements
-     * @param flags flags
      */
     public static class JCBlock extends JCStatement implements BlockTree {
+        /** flags */
         public long flags;
+        /** statements */
         public List<JCStatement> stats;
         /** Position of closing brace, optional. */
         public int endpos = Position.NOPOS;
@@ -1143,7 +1196,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /**
      * A ( ) ? ( ) : ( ) conditional expression
      */
-    public static class JCConditional extends JCExpression implements ConditionalExpressionTree {
+    public static class JCConditional extends JCPolyExpression implements ConditionalExpressionTree {
         public JCExpression cond;
         public JCExpression truepart;
         public JCExpression falsepart;
@@ -1206,9 +1259,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * an expression statement
-     * @param expr expression structure
      */
     public static class JCExpressionStatement extends JCStatement implements ExpressionStatementTree {
+        /** expression structure */
         public JCExpression expr;
         protected JCExpressionStatement(JCExpression expr)
         {
@@ -1369,7 +1422,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /**
      * A method invocation
      */
-    public static class JCMethodInvocation extends JCExpression implements MethodInvocationTree {
+    public static class JCMethodInvocation extends JCPolyExpression implements MethodInvocationTree {
         public List<JCExpression> typeargs;
         public JCExpression meth;
         public List<JCExpression> args;
@@ -1412,7 +1465,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /**
      * A new(...) operation.
      */
-    public static class JCNewClass extends JCExpression implements NewClassTree {
+    public static class JCNewClass extends JCPolyExpression implements NewClassTree {
         public JCExpression encl;
         public List<JCExpression> typeargs;
         public JCExpression clazz;
@@ -1465,6 +1518,10 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     public static class JCNewArray extends JCExpression implements NewArrayTree {
         public JCExpression elemtype;
         public List<JCExpression> dims;
+        // type annotations on inner-most component
+        public List<JCAnnotation> annotations;
+        // type annotations on dimensions
+        public List<List<JCAnnotation>> dimAnnotations;
         public List<JCExpression> elems;
         protected JCNewArray(JCExpression elemtype,
                            List<JCExpression> dims,
@@ -1472,6 +1529,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         {
             this.elemtype = elemtype;
             this.dims = dims;
+            this.annotations = List.nil();
+            this.dimAnnotations = List.nil();
             this.elems = elems;
         }
         @Override
@@ -1498,18 +1557,29 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /**
      * A lambda expression.
      */
-    public static class JCLambda extends JCExpression implements LambdaExpressionTree {
+    public static class JCLambda extends JCFunctionalExpression implements LambdaExpressionTree {
+
+        public enum ParameterKind {
+            IMPLICIT,
+            EXPLICIT;
+        }
 
         public List<JCVariableDecl> params;
         public JCTree body;
-        public Type targetType;
         public boolean canCompleteNormally = true;
         public List<Type> inferredThrownTypes;
+        public ParameterKind paramKind;
 
         public JCLambda(List<JCVariableDecl> params,
                         JCTree body) {
             this.params = params;
             this.body = body;
+            if (params.isEmpty() ||
+                params.head.vartype != null) {
+                paramKind = ParameterKind.EXPLICIT;
+            } else {
+                paramKind = ParameterKind.IMPLICIT;
+            }
         }
         @Override
         public Tag getTag() {
@@ -1776,13 +1846,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * Selects through packages and classes
-     * @param selected selected Tree hierarchie
-     * @param selector name of field to select thru
-     * @param sym symbol of the selected class
      */
     public static class JCFieldAccess extends JCExpression implements MemberSelectTree {
+        /** selected Tree hierarchy */
         public JCExpression selected;
+        /** name of field to select thru */
         public Name name;
+        /** symbol of the selected class */
         public Symbol sym;
         protected JCFieldAccess(JCExpression selected, Name name, Symbol sym) {
             this.selected = selected;
@@ -1808,15 +1878,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     /**
      * Selects a member expression.
      */
-    public static class JCMemberReference extends JCExpression implements MemberReferenceTree {
+    public static class JCMemberReference extends JCFunctionalExpression implements MemberReferenceTree {
         public ReferenceMode mode;
         public ReferenceKind kind;
         public Name name;
         public JCExpression expr;
         public List<JCExpression> typeargs;
-        public Type targetType;
         public Symbol sym;
         public Type varargsElement;
+        public PolyKind refPolyKind;
 
         /**
          * Javac-dependent classification for member references, based
@@ -1831,15 +1901,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
             STATIC(ReferenceMode.INVOKE, false),
             /** Expr # instMethod */
             BOUND(ReferenceMode.INVOKE, false),
-            /** Expr # staticMethod */
-            STATIC_EVAL(ReferenceMode.INVOKE, false),
             /** Inner # new */
             IMPLICIT_INNER(ReferenceMode.NEW, false),
             /** Toplevel # new */
-            TOPLEVEL(ReferenceMode.NEW, false);
+            TOPLEVEL(ReferenceMode.NEW, false),
+            /** ArrayType # new */
+            ARRAY_CTOR(ReferenceMode.NEW, false);
 
-            ReferenceMode mode;
-            boolean unbound;
+            final ReferenceMode mode;
+            final boolean unbound;
 
             private ReferenceKind(ReferenceMode mode, boolean unbound) {
                 this.mode = mode;
@@ -1885,11 +1955,11 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * An identifier
-     * @param idname the name
-     * @param sym the symbol
      */
     public static class JCIdent extends JCExpression implements IdentifierTree {
+        /** the name */
         public Name name;
+        /** the symbol */
         public Symbol sym;
         protected JCIdent(Name name, Symbol sym) {
             this.name = name;
@@ -1912,12 +1982,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * A constant value given literally.
-     * @param value value representation
      */
     public static class JCLiteral extends JCExpression implements LiteralTree {
-        public int typetag;
+        public TypeTag typetag;
+        /** value representation */
         public Object value;
-        protected JCLiteral(int typetag, Object value) {
+        protected JCLiteral(TypeTag typetag, Object value) {
             this.typetag = typetag;
             this.value = value;
         }
@@ -1925,33 +1995,15 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void accept(Visitor v) { v.visitLiteral(this); }
 
         public Kind getKind() {
-            switch (typetag) {
-            case TypeTags.INT:
-                return Kind.INT_LITERAL;
-            case TypeTags.LONG:
-                return Kind.LONG_LITERAL;
-            case TypeTags.FLOAT:
-                return Kind.FLOAT_LITERAL;
-            case TypeTags.DOUBLE:
-                return Kind.DOUBLE_LITERAL;
-            case TypeTags.BOOLEAN:
-                return Kind.BOOLEAN_LITERAL;
-            case TypeTags.CHAR:
-                return Kind.CHAR_LITERAL;
-            case TypeTags.CLASS:
-                return Kind.STRING_LITERAL;
-            case TypeTags.BOT:
-                return Kind.NULL_LITERAL;
-            default:
-                throw new AssertionError("unknown literal kind " + this);
-            }
+            return typetag.getKindLiteral();
         }
+
         public Object getValue() {
             switch (typetag) {
-                case TypeTags.BOOLEAN:
+                case BOOLEAN:
                     int bi = (Integer) value;
                     return (bi != 0);
-                case TypeTags.CHAR:
+                case CHAR:
                     int ci = (Integer) value;
                     char c = (char) ci;
                     if (c != ci)
@@ -1978,12 +2030,12 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
     /**
      * Identifies a basic type.
-     * @param tag the basic type id
-     * @see TypeTags
+     * @see TypeTag
      */
     public static class JCPrimitiveTypeTree extends JCExpression implements PrimitiveTypeTree {
-        public int typetag;
-        protected JCPrimitiveTypeTree(int typetag) {
+        /** the basic type id */
+        public TypeTag typetag;
+        protected JCPrimitiveTypeTree(TypeTag typetag) {
             this.typetag = typetag;
         }
         @Override
@@ -1991,29 +2043,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
 
         public Kind getKind() { return Kind.PRIMITIVE_TYPE; }
         public TypeKind getPrimitiveTypeKind() {
-            switch (typetag) {
-            case TypeTags.BOOLEAN:
-                return TypeKind.BOOLEAN;
-            case TypeTags.BYTE:
-                return TypeKind.BYTE;
-            case TypeTags.SHORT:
-                return TypeKind.SHORT;
-            case TypeTags.INT:
-                return TypeKind.INT;
-            case TypeTags.LONG:
-                return TypeKind.LONG;
-            case TypeTags.CHAR:
-                return TypeKind.CHAR;
-            case TypeTags.FLOAT:
-                return TypeKind.FLOAT;
-            case TypeTags.DOUBLE:
-                return TypeKind.DOUBLE;
-            case TypeTags.VOID:
-                return TypeKind.VOID;
-            default:
-                throw new AssertionError("unknown primitive type " + this);
-            }
+            return typetag.getPrimitiveTypeKind();
         }
+
         @Override
         public <R,D> R accept(TreeVisitor<R,D> v, D d) {
             return v.visitPrimitiveType(this, d);
@@ -2104,16 +2136,47 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     /**
+     * An intersection type, T1 & T2 & ... Tn (used in cast expressions)
+     */
+    public static class JCTypeIntersection extends JCExpression implements IntersectionTypeTree {
+
+        public List<JCExpression> bounds;
+
+        protected JCTypeIntersection(List<JCExpression> bounds) {
+            this.bounds = bounds;
+        }
+        @Override
+        public void accept(Visitor v) { v.visitTypeIntersection(this); }
+
+        public Kind getKind() { return Kind.INTERSECTION_TYPE; }
+
+        public List<JCExpression> getBounds() {
+            return bounds;
+        }
+        @Override
+        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
+            return v.visitIntersectionType(this, d);
+        }
+        @Override
+        public Tag getTag() {
+            return TYPEINTERSECTION;
+        }
+    }
+
+    /**
      * A formal class parameter.
-     * @param name name
-     * @param bounds bounds
      */
     public static class JCTypeParameter extends JCTree implements TypeParameterTree {
+        /** name */
         public Name name;
+        /** bounds */
         public List<JCExpression> bounds;
-        protected JCTypeParameter(Name name, List<JCExpression> bounds) {
+        /** type annotations on type parameter */
+        public List<JCAnnotation> annotations;
+        protected JCTypeParameter(Name name, List<JCExpression> bounds, List<JCAnnotation> annotations) {
             this.name = name;
             this.bounds = bounds;
+            this.annotations = annotations;
         }
         @Override
         public void accept(Visitor v) { v.visitTypeParameter(this); }
@@ -2122,6 +2185,9 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public Name getName() { return name; }
         public List<JCExpression> getBounds() {
             return bounds;
+        }
+        public List<JCAnnotation> getAnnotations() {
+            return annotations;
         }
         @Override
         public <R,D> R accept(TreeVisitor<R,D> v, D d) {
@@ -2163,7 +2229,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
         @Override
         public Tag getTag() {
-            return WILDCARD;
+            return Tag.WILDCARD;
         }
     }
 
@@ -2189,16 +2255,27 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
     }
 
     public static class JCAnnotation extends JCExpression implements AnnotationTree {
+        // Either Tag.ANNOTATION or Tag.TYPE_ANNOTATION
+        private Tag tag;
+
         public JCTree annotationType;
         public List<JCExpression> args;
-        protected JCAnnotation(JCTree annotationType, List<JCExpression> args) {
+
+        // Attribute.Compound if tag is ANNOTATION
+        // Attribute.TypeCompound if tag is TYPE_ANNOTATION
+        public Attribute.Compound attribute;
+
+        protected JCAnnotation(Tag tag, JCTree annotationType, List<JCExpression> args) {
+            this.tag = tag;
             this.annotationType = annotationType;
             this.args = args;
         }
+
         @Override
         public void accept(Visitor v) { v.visitAnnotation(this); }
 
-        public Kind getKind() { return Kind.ANNOTATION; }
+        public Kind getKind() { return TreeInfo.tagToKind(getTag()); }
+
         public JCTree getAnnotationType() { return annotationType; }
         public List<JCExpression> getArguments() {
             return args;
@@ -2209,7 +2286,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         }
         @Override
         public Tag getTag() {
-            return ANNOTATION;
+            return tag;
         }
     }
 
@@ -2237,6 +2314,35 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         @Override
         public Tag getTag() {
             return MODIFIERS;
+        }
+    }
+
+    public static class JCAnnotatedType extends JCExpression implements com.sun.source.tree.AnnotatedTypeTree {
+        // type annotations
+        public List<JCAnnotation> annotations;
+        public JCExpression underlyingType;
+
+        protected JCAnnotatedType(List<JCAnnotation> annotations, JCExpression underlyingType) {
+            this.annotations = annotations;
+            this.underlyingType = underlyingType;
+        }
+        @Override
+        public void accept(Visitor v) { v.visitAnnotatedType(this); }
+
+        public Kind getKind() { return Kind.ANNOTATED_TYPE; }
+        public List<JCAnnotation> getAnnotations() {
+            return annotations;
+        }
+        public JCExpression getUnderlyingType() {
+            return underlyingType;
+        }
+        @Override
+        public <R,D> R accept(TreeVisitor<R,D> v, D d) {
+            return v.visitAnnotatedType(this, d);
+        }
+        @Override
+        public Tag getTag() {
+            return ANNOTATED_TYPE;
         }
     }
 
@@ -2306,6 +2412,7 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
                             Name name,
                             JCExpression restype,
                             List<JCTypeParameter> typarams,
+                            JCVariableDecl recvparam,
                             List<JCVariableDecl> params,
                             List<JCExpression> thrown,
                             JCBlock body,
@@ -2364,8 +2471,8 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         JCArrayAccess Indexed(JCExpression indexed, JCExpression index);
         JCFieldAccess Select(JCExpression selected, Name selector);
         JCIdent Ident(Name idname);
-        JCLiteral Literal(int tag, Object value);
-        JCPrimitiveTypeTree TypeIdent(int typetag);
+        JCLiteral Literal(TypeTag tag, Object value);
+        JCPrimitiveTypeTree TypeIdent(TypeTag typetag);
         JCArrayTypeTree TypeArray(JCExpression elemtype);
         JCTypeApply TypeApply(JCExpression clazz, List<JCExpression> arguments);
         JCTypeParameter TypeParameter(Name name, List<JCExpression> bounds);
@@ -2425,11 +2532,13 @@ public abstract class JCTree implements Tree, Cloneable, DiagnosticPosition {
         public void visitTypeArray(JCArrayTypeTree that)     { visitTree(that); }
         public void visitTypeApply(JCTypeApply that)         { visitTree(that); }
         public void visitTypeUnion(JCTypeUnion that)         { visitTree(that); }
+        public void visitTypeIntersection(JCTypeIntersection that)  { visitTree(that); }
         public void visitTypeParameter(JCTypeParameter that) { visitTree(that); }
         public void visitWildcard(JCWildcard that)           { visitTree(that); }
         public void visitTypeBoundKind(TypeBoundKind that)   { visitTree(that); }
         public void visitAnnotation(JCAnnotation that)       { visitTree(that); }
         public void visitModifiers(JCModifiers that)         { visitTree(that); }
+        public void visitAnnotatedType(JCAnnotatedType that) { visitTree(that); }
         public void visitErroneous(JCErroneous that)         { visitTree(that); }
         public void visitLetExpr(LetExpr that)               { visitTree(that); }
 

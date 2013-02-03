@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -137,6 +137,7 @@ JAVA_JAVA_java = \
     java/lang/Appendable.java \
     java/lang/Comparable.java \
     java/lang/Readable.java \
+    java/lang/FunctionalInterface.java \
     java/lang/Override.java \
     java/lang/SafeVarargs.java \
     java/lang/SuppressWarnings.java \
@@ -147,6 +148,7 @@ JAVA_JAVA_java = \
 	java/lang/ref/PhantomReference.java \
     java/lang/ref/ReferenceQueue.java \
     java/lang/ref/Finalizer.java \
+    java/util/Base64.java \
     java/util/BitSet.java \
     java/util/Calendar.java \
         java/util/GregorianCalendar.java \
@@ -206,6 +208,7 @@ JAVA_JAVA_java = \
             sun/util/locale/provider/BreakIteratorProviderImpl.java \
             sun/util/locale/provider/CalendarDataProviderImpl.java \
             sun/util/locale/provider/CalendarDataUtility.java \
+            sun/util/locale/provider/CalendarNameProviderImpl.java \
             sun/util/locale/provider/CollationRules.java \
             sun/util/locale/provider/CollatorProviderImpl.java \
             sun/util/locale/provider/CurrencyNameProviderImpl.java \
@@ -225,6 +228,7 @@ JAVA_JAVA_java = \
             sun/util/locale/provider/LocaleResources.java \
             sun/util/locale/provider/NumberFormatProviderImpl.java \
             sun/util/locale/provider/RuleBasedBreakIterator.java \
+            sun/util/locale/provider/ResourceBundleBasedAdapter.java \
             sun/util/locale/provider/SPILocaleProviderAdapter.java \
             sun/util/locale/provider/TimeZoneNameProviderImpl.java \
             sun/util/locale/provider/TimeZoneNameUtility.java \
@@ -292,6 +296,7 @@ JAVA_JAVA_java = \
 	java/util/IdentityHashMap.java \
 	java/util/EnumMap.java \
     java/util/Arrays.java \
+    java/util/ArraysParallelSortHelpers.java \
     java/util/DualPivotQuicksort.java \
     java/util/TimSort.java \
     java/util/ComparableTimSort.java \
@@ -320,6 +325,7 @@ JAVA_JAVA_java = \
     java/util/concurrent/CopyOnWriteArrayList.java \
     java/util/concurrent/CopyOnWriteArraySet.java \
     java/util/concurrent/CountDownLatch.java \
+    java/util/concurrent/CountedCompleter.java \
     java/util/concurrent/CyclicBarrier.java \
     java/util/concurrent/DelayQueue.java \
     java/util/concurrent/Delayed.java \
@@ -368,6 +374,11 @@ JAVA_JAVA_java = \
     java/util/concurrent/atomic/AtomicReferenceArray.java \
     java/util/concurrent/atomic/AtomicReferenceFieldUpdater.java \
     java/util/concurrent/atomic/AtomicStampedReference.java \
+    java/util/concurrent/atomic/DoubleAccumulator.java \
+    java/util/concurrent/atomic/DoubleAdder.java \
+    java/util/concurrent/atomic/LongAccumulator.java \
+    java/util/concurrent/atomic/LongAdder.java \
+    java/util/concurrent/atomic/Striped64.java \
     java/util/concurrent/locks/AbstractOwnableSynchronizer.java \
     java/util/concurrent/locks/AbstractQueuedLongSynchronizer.java \
     java/util/concurrent/locks/AbstractQueuedSynchronizer.java \
@@ -396,6 +407,7 @@ JAVA_JAVA_java = \
     java/util/prefs/Base64.java \
     java/util/prefs/XmlSupport.java \
     java/util/spi/CalendarDataProvider.java \
+    java/util/spi/CalendarNameProvider.java \
     java/util/spi/CurrencyNameProvider.java \
     java/util/spi/LocaleNameProvider.java \
     java/util/spi/LocaleServiceProvider.java \
@@ -438,6 +450,7 @@ JAVA_JAVA_java = \
     java/io/File.java \
     java/io/FileSystem.java \
     java/io/FileDescriptor.java \
+    java/io/DefaultFileSystem.java \
     java/io/FilenameFilter.java \
     java/io/FileFilter.java \
     java/io/FilePermission.java \

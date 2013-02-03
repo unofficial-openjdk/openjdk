@@ -57,9 +57,10 @@ AWT_ASSERT_APPKIT_THREAD;
 
     // NOTE: async=YES means that the layer is re-cached periodically
     self.asynchronous = FALSE;
-    self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
     self.contentsGravity = kCAGravityTopLeft;
-    self.needsDisplayOnBoundsChange = YES;
+    //Layer backed view
+    //self.needsDisplayOnBoundsChange = YES;
+    //self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
     textureID = 0; // texture will be created by rendering pipe
     target = 0;
 
@@ -109,6 +110,10 @@ AWT_ASSERT_APPKIT_THREAD;
     glDisable(target);
 }
 
+-(BOOL)canDrawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp{
+    return textureID == 0 ? NO : YES;
+}
+
 -(void)drawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp
 {
     AWT_ASSERT_APPKIT_THREAD;
@@ -146,16 +151,15 @@ Java_sun_java2d_opengl_CGLLayer_nativeCreateLayer
     __block CGLLayer *layer = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_NOT_APPKIT_THREAD;
 
     JNFJObjectWrapper *javaLayer = [JNFJObjectWrapper wrapperWithJObject:obj withEnv:env];
 
-    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-
-        layer = [[CGLLayer alloc] initWithJavaLayer: javaLayer];
+    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
+            AWT_ASSERT_APPKIT_THREAD;
+        
+            layer = [[CGLLayer alloc] initWithJavaLayer: javaLayer];
     }];
-
+    
 JNF_COCOA_EXIT(env);
 
     return ptr_to_jlong(layer);

@@ -599,7 +599,7 @@ public class TextComponent extends Component implements Accessible {
      * @since 1.4
      */
     public synchronized TextListener[] getTextListeners() {
-        return (TextListener[])(getListeners(TextListener.class));
+        return getListeners(TextListener.class);
     }
 
     /**

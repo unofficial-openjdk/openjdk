@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,14 @@
 
 package com.sun.tools.doclets.internal.toolkit;
 
+import java.io.*;
+import java.util.*;
+
+import com.sun.javadoc.*;
+import com.sun.tools.doclets.internal.toolkit.builders.BuilderFactory;
 import com.sun.tools.doclets.internal.toolkit.taglets.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
-import com.sun.tools.doclets.internal.toolkit.builders.BuilderFactory;
-import com.sun.javadoc.*;
-import java.util.*;
-import java.io.*;
+import javax.tools.JavaFileManager;
 
 /**
  * Configure the output based on the options. Doclets should sub-class
@@ -38,9 +40,10 @@ import java.io.*;
  * all user options which are supported by the 1.1 doclet and the standard
  * doclet.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Robert Field.
  * @author Atul Dambalkar.
@@ -75,14 +78,16 @@ public abstract class Configuration {
 
     /**
      * This is true if option "-serialwarn" is used. Defualt value is false to
-     * supress excessive warnings about serial tag.
+     * suppress excessive warnings about serial tag.
      */
     public boolean serialwarn = false;
 
     /**
      * The specified amount of space between tab stops.
      */
-    public int sourcetab = DocletConstants.DEFAULT_TAB_STOP_LENGTH;
+    public int sourcetab;
+
+    public String tabSpaces;
 
     /**
      * True if we should generate browsable sources.
@@ -257,6 +262,7 @@ public abstract class Configuration {
             "com.sun.tools.doclets.internal.toolkit.resources.doclets");
         excludedDocFileDirs = new HashSet<String>();
         excludedQualifiers = new HashSet<String>();
+        setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
     }
 
     /**
@@ -380,7 +386,7 @@ public abstract class Configuration {
             } else if (opt.equals("-sourcetab")) {
                 linksource = true;
                 try {
-                    sourcetab = Integer.parseInt(os[1]);
+                    setTabWidth(Integer.parseInt(os[1]));
                 } catch (NumberFormatException e) {
                     //Set to -1 so that warning will be printed
                     //to indicate what is valid argument.
@@ -388,7 +394,7 @@ public abstract class Configuration {
                 }
                 if (sourcetab <= 0) {
                     message.warning("doclet.sourcetab_warning");
-                    sourcetab = DocletConstants.DEFAULT_TAB_STOP_LENGTH;
+                    setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
                 }
             } else if (opt.equals("-notimestamp")) {
                 notimestamp = true;
@@ -406,11 +412,11 @@ public abstract class Configuration {
                 group.checkPackageGroups(os[1], os[2]);
             } else if (opt.equals("-link")) {
                 String url = os[1];
-                extern.url(url, url, root, false);
+                extern.link(url, url, root, false);
             } else if (opt.equals("-linkoffline")) {
                 String url = os[1];
                 String pkglisturl = os[2];
-                extern.url(url, pkglisturl, root, true);
+                extern.link(url, pkglisturl, root, true);
             }
         }
         if (sourcepath.length() == 0) {
@@ -440,7 +446,7 @@ public abstract class Configuration {
     /**
      * Initialize the taglet manager.  The strings to initialize the simple custom tags should
      * be in the following format:  "[tag name]:[location str]:[heading]".
-     * @param customTagStrs the set two dimentional arrays of strings.  These arrays contain
+     * @param customTagStrs the set two dimensional arrays of strings.  These arrays contain
      * either -tag or -taglet arguments.
      */
     private void initTagletManager(Set<String[]> customTagStrs) {
@@ -451,11 +457,11 @@ public abstract class Configuration {
         for (Iterator<String[]> it = customTagStrs.iterator(); it.hasNext(); ) {
             args = it.next();
             if (args[0].equals("-taglet")) {
-                tagletManager.addCustomTag(args[1], tagletpath);
+                tagletManager.addCustomTag(args[1], getFileManager(), tagletpath);
                 continue;
             }
-            String[] tokens = Util.tokenize(args[1],
-                TagletManager.SIMPLE_TAGLET_OPT_SEPERATOR, 3);
+            String[] tokens = tokenize(args[1],
+                TagletManager.SIMPLE_TAGLET_OPT_SEPARATOR, 3);
             if (tokens.length == 1) {
                 String tagName = args[1];
                 if (tagletManager.isKnownCustomTag(tagName)) {
@@ -463,7 +469,7 @@ public abstract class Configuration {
                     tagletManager.addNewSimpleCustomTag(tagName, null, "");
                 } else {
                     //Create a simple tag with the heading that has the same name as the tag.
-                    StringBuffer heading = new StringBuffer(tagName + ":");
+                    StringBuilder heading = new StringBuilder(tagName + ":");
                     heading.setCharAt(0, Character.toUpperCase(tagName.charAt(0)));
                     tagletManager.addNewSimpleCustomTag(tagName, heading.toString(), "a");
                 }
@@ -476,6 +482,47 @@ public abstract class Configuration {
                 message.error("doclet.Error_invalid_custom_tag_argument", args[1]);
             }
         }
+    }
+
+    /**
+     * Given a string, return an array of tokens.  The separator can be escaped
+     * with the '\' character.  The '\' character may also be escaped by the
+     * '\' character.
+     *
+     * @param s         the string to tokenize.
+     * @param separator the separator char.
+     * @param maxTokens the maximum number of tokens returned.  If the
+     *                  max is reached, the remaining part of s is appended
+     *                  to the end of the last token.
+     *
+     * @return an array of tokens.
+     */
+    private String[] tokenize(String s, char separator, int maxTokens) {
+        List<String> tokens = new ArrayList<String>();
+        StringBuilder  token = new StringBuilder ();
+        boolean prevIsEscapeChar = false;
+        for (int i = 0; i < s.length(); i += Character.charCount(i)) {
+            int currentChar = s.codePointAt(i);
+            if (prevIsEscapeChar) {
+                // Case 1:  escaped character
+                token.appendCodePoint(currentChar);
+                prevIsEscapeChar = false;
+            } else if (currentChar == separator && tokens.size() < maxTokens-1) {
+                // Case 2:  separator
+                tokens.add(token.toString());
+                token = new StringBuilder();
+            } else if (currentChar == '\\') {
+                // Case 3:  escape character
+                prevIsEscapeChar = true;
+            } else {
+                // Case 4:  regular character
+                token.appendCodePoint(currentChar);
+            }
+        }
+        if (token.length() > 0) {
+            tokens.add(token.toString());
+        }
+        return tokens.toArray(new String[] {});
     }
 
     private void addToSet(Set<String> s, String str){
@@ -530,12 +577,12 @@ public abstract class Configuration {
             String opt = os[0].toLowerCase();
             if (opt.equals("-d")) {
                 String destdirname = addTrailingFileSep(os[1]);
-                File destDir = new File(destdirname);
+                DocFile destDir = DocFile.createFileForDirectory(this, destdirname);
                 if (!destDir.exists()) {
                     //Create the output directory (in case it doesn't exist yet)
                     reporter.printNotice(getText("doclet.dest_dir_create",
                         destdirname));
-                    (new File(destdirname)).mkdirs();
+                    destDir.mkdirs();
                 } else if (!destDir.isDirectory()) {
                     reporter.printError(getText(
                         "doclet.destination_directory_not_directory_0",
@@ -706,10 +753,10 @@ public abstract class Configuration {
      * @return the input steam to the builder XML.
      * @throws FileNotFoundException when the given XML file cannot be found.
      */
-    public InputStream getBuilderXML() throws FileNotFoundException {
+    public InputStream getBuilderXML() throws IOException {
         return builderXMLPath == null ?
             Configuration.class.getResourceAsStream(DEFAULT_BUILDER_XML) :
-            new FileInputStream(new File(builderXMLPath));
+            DocFile.createFileForInput(this, builderXMLPath).openInputStream();
     }
 
     /**
@@ -718,10 +765,22 @@ public abstract class Configuration {
     public abstract Locale getLocale();
 
     /**
+     * Return the current file manager.
+     */
+    public abstract JavaFileManager getFileManager();
+
+    /**
      * Return the comparator that will be used to sort member documentation.
      * To no do any sorting, return null.
      *
      * @return the {@link java.util.Comparator} used to sort members.
      */
     public abstract Comparator<ProgramElementDoc> getMemberComparator();
+
+    private void setTabWidth(int n) {
+        sourcetab = n;
+        tabSpaces = String.format("%" + n + "s", "");
+    }
+
+    public abstract boolean showMessage(SourcePosition pos, String key);
 }

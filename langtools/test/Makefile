@@ -146,10 +146,15 @@ ifdef TESTBOOTCLASSPATH
 endif
 
 # Concurrency is the number of tests that can execute at once. 
-# Supported for JCK, not supported for jtreg.
 # On an otherwise empty machine, suggest setting to (#cpus + 2)
 # If unset, the default is (#cpus)
 ### RFE: determine and use #cpus
+ifdef CONCURRENCY
+  JTREG_OPTIONS += -agentvm -concurrency:$(CONCURRENCY)
+else
+  JTREG_OPTIONS += -samevm
+endif
+
 ifdef JCK_CONCURRENCY
   JCK_OPTIONS += -concurrency:$(JCK_CONCURRENCY)
 endif
@@ -224,7 +229,7 @@ JCK_RUNTIME_OUTPUT_DIR = $(ABS_TEST_OUTPUT_DIR)/jck-runtime-Xcompile
 all: $(JPRT_CLEAN) jtreg-tests jck-compiler-tests jck-runtime-tests $(JPRT_ARCHIVE_BUNDLE) all-summary
 	@echo "Testing completed successfully"
 
-jtreg apt javac javadoc javah javap: $(JPRT_CLEAN) jtreg-tests $(JPRT_ARCHIVE_BUNDLE) jtreg-summary
+jtreg apt javac javadoc javah javap jdeps: $(JPRT_CLEAN) jtreg-tests $(JPRT_ARCHIVE_BUNDLE) jtreg-summary
 	@echo "Testing completed successfully"
 
 jck-compiler: $(JPRT_CLEAN) jck-compiler-tests $(JPRT_ARCHIVE_BUNDLE) jck-compiler-summary
@@ -241,6 +246,7 @@ javac: 		JTREG_TESTDIRS = tools/javac
 javadoc:	JTREG_TESTDIRS = tools/javadoc com/sun/javadoc
 javah:		JTREG_TESTDIRS = tools/javah
 javap:		JTREG_TESTDIRS = tools/javap
+jdeps:		JTREG_TESTDIRS = tools/jdeps
 
 # Run jtreg tests
 #
@@ -266,7 +272,8 @@ jtreg-tests: check-jtreg FRC
 	@mkdir -p $(JTREG_OUTPUT_DIR)
 	JT_JAVA=$(JT_JAVA) $(JTREG) \
 	  -J-Xmx512m \
-	  -a -samevm -ignore:quiet -v:fail,error,nopass \
+	  -vmoption:-Xmx768m \
+	  -a -ignore:quiet -v:fail,error,nopass \
           -r:$(JTREG_OUTPUT_DIR)/JTreport \
           -w:$(JTREG_OUTPUT_DIR)/JTwork \
           -jdk:$(TESTJAVA) \
@@ -421,7 +428,7 @@ FRC:
 
 # Phony targets (e.g. these are not filenames)
 .PHONY: all clean \
-	jtreg javac javadoc javah javap jtreg-tests jtreg-summary check-jtreg \
+	jtreg javac javadoc javah javap jdeps jtreg-tests jtreg-summary check-jtreg \
 	jck-compiler jck-compiler-tests jck-compiler-summary \
 	jck-runtime jck-runtime-tests jck-runtime-summary check-jck
 

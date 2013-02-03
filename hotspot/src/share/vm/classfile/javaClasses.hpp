@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -154,6 +154,8 @@ class java_lang_String : AllStatic {
   static char*  as_utf8_string(oop java_string, int start, int len);
   static char*  as_platform_dependent_str(Handle java_string, TRAPS);
   static jchar* as_unicode_string(oop java_string, int& length);
+  // produce an ascii string with all other values quoted using \u####
+  static char*  as_quoted_ascii(oop java_string);
 
   // Compute the hash value for a java.lang.String object which would
   // contain the characters passed in.
@@ -164,8 +166,8 @@ class java_lang_String : AllStatic {
   // objects in the shared archive file.
   // hash P(31) from Kernighan & Ritchie
   //
-  // For this reason, THIS ALGORITHM MUST MATCH String.toHash().
-  template <typename T> static unsigned int to_hash(T* s, int len) {
+  // For this reason, THIS ALGORITHM MUST MATCH String.hashCode().
+  template <typename T> static unsigned int hash_code(T* s, int len) {
     unsigned int h = 0;
     while (len-- > 0) {
       h = 31*h + (unsigned int) *s;
@@ -173,10 +175,10 @@ class java_lang_String : AllStatic {
     }
     return h;
   }
-  static unsigned int to_hash(oop java_string);
+  static unsigned int hash_code(oop java_string);
 
   // This is the string hash code used by the StringTable, which may be
-  // the same as String.toHash or an alternate hash code.
+  // the same as String.hashCode or an alternate hash code.
   static unsigned int hash_string(oop java_string);
 
   static bool equals(oop java_string, jchar* chars, int len);
@@ -204,7 +206,6 @@ class java_lang_String : AllStatic {
 
 #define CLASS_INJECTED_FIELDS(macro)                                       \
   macro(java_lang_Class, klass,                  intptr_signature,  false) \
-  macro(java_lang_Class, resolved_constructor,   intptr_signature,  false) \
   macro(java_lang_Class, array_klass,            intptr_signature,  false) \
   macro(java_lang_Class, oop_size,               int_signature,     false) \
   macro(java_lang_Class, static_oop_field_count, int_signature,     false)
@@ -216,7 +217,6 @@ class java_lang_Class : AllStatic {
   // The fake offsets are added by the class loader when java.lang.Class is loaded
 
   static int _klass_offset;
-  static int _resolved_constructor_offset;
   static int _array_klass_offset;
 
   static int _oop_size_offset;
@@ -252,15 +252,11 @@ class java_lang_Class : AllStatic {
   static bool is_primitive(oop java_class);
   static BasicType primitive_type(oop java_class);
   static oop primitive_mirror(BasicType t);
-  // JVM_NewInstance support
-  static Method* resolved_constructor(oop java_class);
-  static void set_resolved_constructor(oop java_class, Method* constructor);
   // JVM_NewArray support
   static Klass* array_klass(oop java_class);
   static void set_array_klass(oop java_class, Klass* klass);
   // compiler support for class operations
   static int klass_offset_in_bytes()                { return _klass_offset; }
-  static int resolved_constructor_offset_in_bytes() { return _resolved_constructor_offset; }
   static int array_klass_offset_in_bytes()          { return _array_klass_offset; }
   // Support for classRedefinedCount field
   static int classRedefinedCount(oop the_class_mirror);
@@ -467,8 +463,7 @@ class java_lang_Throwable: AllStatic {
   static int static_unassigned_stacktrace_offset;
 
   // Printing
-  static char* print_stack_element_to_buffer(Method* method, int bci);
-  static void print_to_stream(Handle stream, const char* str);
+  static char* print_stack_element_to_buffer(Handle mirror, int method, int version, int bci);
   // StackTrace (programmatic access, new since 1.4)
   static void clear_stacktrace(oop throwable);
   // No stack trace available
@@ -488,12 +483,9 @@ class java_lang_Throwable: AllStatic {
   static oop message(oop throwable);
   static oop message(Handle throwable);
   static void set_message(oop throwable, oop value);
-  // Print stack trace stored in exception by call-back to Java
-  // Note: this is no longer used in Merlin, but we still suppport
-  // it for compatibility.
-  static void print_stack_trace(oop throwable, oop print_stream);
-  static void print_stack_element(Handle stream, Method* method, int bci);
-  static void print_stack_element(outputStream *st, Method* method, int bci);
+  static void print_stack_element(outputStream *st, Handle mirror, int method,
+                                  int version, int bci);
+  static void print_stack_element(outputStream *st, methodHandle method, int bci);
   static void print_stack_usage(Handle stream);
 
   // Allocate space for backtrace (created but stack trace not filled in)
@@ -552,6 +544,7 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
   static int annotations_offset;
   static int parameter_annotations_offset;
   static int annotation_default_offset;
+  static int type_annotations_offset;
 
   static void compute_offsets();
 
@@ -597,6 +590,10 @@ class java_lang_reflect_Method : public java_lang_reflect_AccessibleObject {
   static oop annotation_default(oop method);
   static void set_annotation_default(oop method, oop value);
 
+  static bool has_type_annotations_field();
+  static oop type_annotations(oop method);
+  static void set_type_annotations(oop method, oop value);
+
   // Debugging
   friend class JavaClasses;
 };
@@ -616,6 +613,7 @@ class java_lang_reflect_Constructor : public java_lang_reflect_AccessibleObject 
   static int signature_offset;
   static int annotations_offset;
   static int parameter_annotations_offset;
+  static int type_annotations_offset;
 
   static void compute_offsets();
 
@@ -651,6 +649,10 @@ class java_lang_reflect_Constructor : public java_lang_reflect_AccessibleObject 
   static oop parameter_annotations(oop method);
   static void set_parameter_annotations(oop method, oop value);
 
+  static bool has_type_annotations_field();
+  static oop type_annotations(oop constructor);
+  static void set_type_annotations(oop constructor, oop value);
+
   // Debugging
   friend class JavaClasses;
 };
@@ -669,6 +671,7 @@ class java_lang_reflect_Field : public java_lang_reflect_AccessibleObject {
   static int modifiers_offset;
   static int signature_offset;
   static int annotations_offset;
+  static int type_annotations_offset;
 
   static void compute_offsets();
 
@@ -708,7 +711,42 @@ class java_lang_reflect_Field : public java_lang_reflect_AccessibleObject {
   static oop annotation_default(oop method);
   static void set_annotation_default(oop method, oop value);
 
+  static bool has_type_annotations_field();
+  static oop type_annotations(oop field);
+  static void set_type_annotations(oop field, oop value);
+
   // Debugging
+  friend class JavaClasses;
+};
+
+class java_lang_reflect_Parameter {
+ private:
+  // Note that to reduce dependencies on the JDK we compute these
+  // offsets at run-time.
+  static int name_offset;
+  static int modifiers_offset;
+  static int index_offset;
+  static int executable_offset;
+
+  static void compute_offsets();
+
+ public:
+  // Allocation
+  static Handle create(TRAPS);
+
+  // Accessors
+  static oop name(oop field);
+  static void set_name(oop field, oop value);
+
+  static int index(oop reflect);
+  static void set_index(oop reflect, int value);
+
+  static int modifiers(oop reflect);
+  static void set_modifiers(oop reflect, int value);
+
+  static oop executable(oop constructor);
+  static void set_executable(oop constructor, oop value);
+
   friend class JavaClasses;
 };
 
@@ -912,7 +950,7 @@ class java_lang_invoke_MethodHandle: AllStatic {
 
   // Testers
   static bool is_subclass(Klass* klass) {
-    return Klass::cast(klass)->is_subclass_of(SystemDictionary::MethodHandle_klass());
+    return klass->is_subclass_of(SystemDictionary::MethodHandle_klass());
   }
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
@@ -942,7 +980,7 @@ class java_lang_invoke_LambdaForm: AllStatic {
   // Testers
   static bool is_subclass(Klass* klass) {
     return SystemDictionary::LambdaForm_klass() != NULL &&
-      Klass::cast(klass)->is_subclass_of(SystemDictionary::LambdaForm_klass());
+      klass->is_subclass_of(SystemDictionary::LambdaForm_klass());
   }
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
@@ -1004,7 +1042,7 @@ class java_lang_invoke_MemberName: AllStatic {
 
   // Testers
   static bool is_subclass(Klass* klass) {
-    return Klass::cast(klass)->is_subclass_of(SystemDictionary::MemberName_klass());
+    return klass->is_subclass_of(SystemDictionary::MemberName_klass());
   }
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
@@ -1090,7 +1128,7 @@ public:
 
   // Testers
   static bool is_subclass(Klass* klass) {
-    return Klass::cast(klass)->is_subclass_of(SystemDictionary::CallSite_klass());
+    return klass->is_subclass_of(SystemDictionary::CallSite_klass());
   }
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
@@ -1123,8 +1161,7 @@ class java_security_AccessControlContext: AllStatic {
 // Interface to java.lang.ClassLoader objects
 
 #define CLASSLOADER_INJECTED_FIELDS(macro)                            \
-  macro(java_lang_ClassLoader, loader_data,  intptr_signature, false) \
-  macro(java_lang_ClassLoader, dependencies, object_signature, false)
+  macro(java_lang_ClassLoader, loader_data,  intptr_signature, false)
 
 class java_lang_ClassLoader : AllStatic {
  private:
@@ -1133,7 +1170,6 @@ class java_lang_ClassLoader : AllStatic {
    hc_parent_offset = 0
   };
   static int _loader_data_offset;
-  static int _dependencies_offset;
   static bool offsets_computed;
   static int parent_offset;
   static int parallelCapable_offset;
@@ -1143,9 +1179,6 @@ class java_lang_ClassLoader : AllStatic {
 
   static ClassLoaderData** loader_data_addr(oop loader);
   static ClassLoaderData* loader_data(oop loader);
-
-  static oop  dependencies(oop loader);
-  static HeapWord* dependencies_addr(oop loader);
 
   static oop parent(oop loader);
   static bool isAncestor(oop loader, oop cl);
@@ -1160,7 +1193,7 @@ class java_lang_ClassLoader : AllStatic {
 
   // Testers
   static bool is_subclass(Klass* klass) {
-    return Klass::cast(klass)->is_subclass_of(SystemDictionary::ClassLoader_klass());
+    return klass->is_subclass_of(SystemDictionary::ClassLoader_klass());
   }
   static bool is_instance(oop obj) {
     return obj != NULL && is_subclass(obj->klass());
@@ -1220,7 +1253,8 @@ class java_lang_StackTraceElement: AllStatic {
   static void set_lineNumber(oop element, int value);
 
   // Create an instance of StackTraceElement
-  static oop create(methodHandle m, int bci, TRAPS);
+  static oop create(Handle mirror, int method, int version, int bci, TRAPS);
+  static oop create(methodHandle method, int bci, TRAPS);
 
   // Debugging
   friend class JavaClasses;

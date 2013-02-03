@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -329,20 +329,9 @@ void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
     if ((((size_t)base + noaccess_prefix) & (alignment - 1)) != 0) {
       // Base not aligned, retry
       if (!os::release_memory(base, size)) fatal("os::release_memory failed");
-      // Reserve size large enough to do manual alignment and
-      // increase size to a multiple of the desired alignment
+      // Make sure that size is aligned
       size = align_size_up(size, alignment);
-      size_t extra_size = size + alignment;
-      do {
-        char* extra_base = os::reserve_memory(extra_size, NULL, alignment);
-        if (extra_base == NULL) return;
-        // Do manual alignement
-        base = (char*) align_size_up((uintptr_t) extra_base, alignment);
-        assert(base >= extra_base, "just checking");
-        // Re-reserve the region at the aligned base address.
-        os::release_memory(extra_base, extra_size);
-        base = os::reserve_memory(size, base);
-      } while (base == NULL);
+      base = os::reserve_memory_aligned(size, alignment);
 
       if (requested_address != 0 &&
           failed_to_reserve_as_requested(base, requested_address, size, false)) {
@@ -879,8 +868,8 @@ void VirtualSpace::print() {
   tty->print   ("Virtual space:");
   if (special()) tty->print(" (pinned in memory)");
   tty->cr();
-  tty->print_cr(" - committed: %ld", committed_size());
-  tty->print_cr(" - reserved:  %ld", reserved_size());
+  tty->print_cr(" - committed: " SIZE_FORMAT, committed_size());
+  tty->print_cr(" - reserved:  " SIZE_FORMAT, reserved_size());
   tty->print_cr(" - [low, high]:     [" INTPTR_FORMAT ", " INTPTR_FORMAT "]",  low(), high());
   tty->print_cr(" - [low_b, high_b]: [" INTPTR_FORMAT ", " INTPTR_FORMAT "]",  low_boundary(), high_boundary());
 }

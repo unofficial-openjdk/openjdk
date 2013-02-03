@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,12 @@
 
 package com.sun.tools.javadoc;
 
+import javax.lang.model.type.TypeKind;
 
 import com.sun.javadoc.*;
 
+import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Attribute.TypeCompound;
 import com.sun.tools.javac.code.Kinds;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
@@ -41,6 +44,11 @@ import com.sun.tools.javac.util.Names;
 /**
  * Implementation of <code>TypeVariable</code>, which
  * represents a type variable.
+ *
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Scott Seligman
  * @since 1.5
@@ -116,11 +124,30 @@ public class TypeVariableImpl extends AbstractTypeImpl implements TypeVariable {
      * Get the bounds of a type variable as listed in the "extends" clause.
      */
     private static List<Type> getBounds(TypeVar v, DocEnv env) {
-        Name boundname = v.getUpperBound().tsym.getQualifiedName();
-        if (boundname == boundname.table.names.java_lang_Object) {
+        final Type upperBound = v.getUpperBound();
+        Name boundname = upperBound.tsym.getQualifiedName();
+        if (boundname == boundname.table.names.java_lang_Object
+            && upperBound.getKind() != TypeKind.ANNOTATED) {
             return List.nil();
         } else {
             return env.types.getBounds(v);
         }
+    }
+
+    /**
+     * Get the annotations of this program element.
+     * Return an empty array if there are none.
+     */
+    public AnnotationDesc[] annotations() {
+        if (type.getKind() != TypeKind.ANNOTATED) {
+            return new AnnotationDesc[0];
+        }
+        List<TypeCompound> tas = ((com.sun.tools.javac.code.Type.AnnotatedType) type).typeAnnotations;
+        AnnotationDesc res[] = new AnnotationDesc[tas.length()];
+        int i = 0;
+        for (Attribute.Compound a : tas) {
+            res[i++] = new AnnotationDescImpl(env, a);
+        }
+        return res;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,12 +35,14 @@ import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 
 import com.sun.tools.javac.code.Symbol.*;
+import com.sun.tools.javac.comp.Resolve;
 import com.sun.tools.javac.tree.JCTree.*;
 
 import static com.sun.tools.javac.code.Flags.*;
 import static com.sun.tools.javac.code.Flags.BLOCK;
 import static com.sun.tools.javac.code.Kinds.*;
-import static com.sun.tools.javac.code.TypeTags.*;
+import static com.sun.tools.javac.code.TypeTag.BOOLEAN;
+import static com.sun.tools.javac.code.TypeTag.VOID;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /** This pass implements dataflow analysis for Java programs though
@@ -148,7 +150,7 @@ import static com.sun.tools.javac.tree.JCTree.Tag.*;
  *  exception to this [no pun intended] is that checked exceptions that
  *  are known to be caught or declared to be caught in the enclosing
  *  method are not recorded in the queue, but instead are recorded in a
- *  global variable "Set<Type> thrown" that records the type of all
+ *  global variable "{@code Set<Type> thrown}" that records the type of all
  *  exceptions that can be thrown.
  *
  *  <p>Other minor issues the treatment of members of other classes
@@ -212,24 +214,21 @@ public class Flow {
     }
 
     public void analyzeLambda(Env<AttrContext> env, JCLambda that, TreeMaker make, boolean speculative) {
-        java.util.Queue<JCDiagnostic> prevDeferredDiagnostics = log.deferredDiagnostics;
-        Filter<JCDiagnostic> prevDeferDiagsFilter = log.deferredDiagFilter;
+        Log.DiagnosticHandler diagHandler = null;
         //we need to disable diagnostics temporarily; the problem is that if
         //a lambda expression contains e.g. an unreachable statement, an error
         //message will be reported and will cause compilation to skip the flow analyis
         //step - if we suppress diagnostics, we won't stop at Attr for flow-analysis
         //related errors, which will allow for more errors to be detected
         if (!speculative) {
-            log.deferAll();
-            log.deferredDiagnostics = ListBuffer.lb();
+            diagHandler = new Log.DiscardDiagnosticHandler(log);
         }
         try {
             new AliveAnalyzer().analyzeTree(env, that, make);
             new FlowAnalyzer().analyzeTree(env, that, make);
         } finally {
             if (!speculative) {
-                log.deferredDiagFilter = prevDeferDiagsFilter;
-                log.deferredDiagnostics = prevDeferredDiagnostics;
+                log.popDiagnosticHandler(diagHandler);
             }
         }
     }
@@ -248,8 +247,8 @@ public class Flow {
          */
         SPECULATIVE_LOOP("var.might.be.assigned.in.loop", true);
 
-        String errKey;
-        boolean isFinal;
+        final String errKey;
+        final boolean isFinal;
 
         FlowKind(String errKey, boolean isFinal) {
             this.errKey = errKey;
@@ -274,9 +273,7 @@ public class Flow {
         Source source = Source.instance(context);
         allowImprovedRethrowAnalysis = source.allowImprovedRethrowAnalysis();
         allowImprovedCatchAnalysis = source.allowImprovedCatchAnalysis();
-        Options options = Options.instance(context);
-        allowEffectivelyFinalInInnerClasses = source.allowEffectivelyFinalInInnerClasses() &&
-                options.isSet("allowEffectivelyFinalInInnerClasses"); //pre-lambda guard
+        allowEffectivelyFinalInInnerClasses = source.allowEffectivelyFinalInInnerClasses();
     }
 
     /**
@@ -299,7 +296,7 @@ public class Flow {
                 }
             };
 
-            JCTree.Tag treeTag;
+            final JCTree.Tag treeTag;
 
             private JumpKind(Tag treeTag) {
                 this.treeTag = treeTag;
@@ -473,7 +470,7 @@ public class Flow {
                 alive = true;
                 scanStat(tree.body);
 
-                if (alive && tree.sym.type.getReturnType().tag != VOID)
+                if (alive && !tree.sym.type.getReturnType().hasTag(VOID))
                     log.error(TreeInfo.diagEndPos(tree.body), "missing.ret.stmt");
 
                 List<PendingExit> exits = pendingExits.toList();
@@ -1976,8 +1973,8 @@ public class Flow {
             Bits uninitsBeforeElse = uninitsWhenFalse;
             inits = initsWhenTrue;
             uninits = uninitsWhenTrue;
-            if (tree.truepart.type.tag == BOOLEAN &&
-                tree.falsepart.type.tag == BOOLEAN) {
+            if (tree.truepart.type.hasTag(BOOLEAN) &&
+                tree.falsepart.type.hasTag(BOOLEAN)) {
                 // if b and c are boolean valued, then
                 // v is (un)assigned after a?b:c when true iff
                 //    v is (un)assigned after b when true and
@@ -2177,6 +2174,11 @@ public class Flow {
 
         void referenced(Symbol sym) {
             unrefdResources.remove(sym);
+        }
+
+        public void visitAnnotatedType(JCAnnotatedType tree) {
+            // annotations don't get scanned
+            tree.underlyingType.accept(this);
         }
 
         public void visitTopLevel(JCCompilationUnit tree) {

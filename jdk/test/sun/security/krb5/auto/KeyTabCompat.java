@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 6894072
+ * @bug 8004488
  * @compile -XDignore.symbol.file KeyTabCompat.java
  * @run main/othervm KeyTabCompat
  * @summary always refresh keytab
@@ -37,7 +38,7 @@ import sun.security.jgss.GSSUtil;
  *
  * 1. If there is only KerberosKeys in private credential set and no
  *    KerberosPrincipal. JAAS login should go on.
- * 2. Even if KeyTab is used, user can still get KerberosKeys from
+ * 2. If KeyTab is used, user won't get KerberosKeys from
  *    private credentials set.
  */
 public class KeyTabCompat {
@@ -70,21 +71,8 @@ public class KeyTabCompat {
         s.startAsServer(GSSUtil.GSS_KRB5_MECH_OID);
         s.status();
 
-        if (s.s().getPrivateCredentials(KerberosKey.class).size() != 1) {
-            throw new Exception("There should be one KerberosKey");
+        if (s.s().getPrivateCredentials(KerberosKey.class).size() != 0) {
+            throw new Exception("There should be no KerberosKey");
         }
-
-        Thread.sleep(2000);     // make sure ktab timestamp is different
-
-        kdc.addPrincipal(OneKDC.SERVER, "pass2".toCharArray());
-        kdc.writeKtab(OneKDC.KTAB);
-
-        Context.handshake(c, s);
-        s.status();
-
-        if (s.s().getPrivateCredentials(KerberosKey.class).size() != 1) {
-            throw new Exception("There should be only one KerberosKey");
-        }
-
     }
 }

@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ if [ -z "$TESTJAVA" ]; then
   TESTCLASSES=`pwd`
 fi
 
-if $TESTJAVA/bin/java -cp $TESTCLASSES ExitOnThrow; then
+if $TESTJAVA/bin/java ${TESTVMOPTS} -cp $TESTCLASSES ExitOnThrow; then
   echo Failed: VM exited normally
   exit 1
 else

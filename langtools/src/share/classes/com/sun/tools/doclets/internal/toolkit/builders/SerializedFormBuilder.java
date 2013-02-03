@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,16 +27,18 @@ package com.sun.tools.doclets.internal.toolkit.builders;
 
 import java.io.*;
 import java.util.*;
+
 import com.sun.javadoc.*;
-import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclets.internal.toolkit.*;
+import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
  * Builds the serialized form.
  *
- * This code is not part of an API.
- * It is implementation that is subject to change.
- * Do not use it as an API
+ *  <p><b>This is NOT part of any supported API.
+ *  If you write code that depends on this, you do so at your own risk.
+ *  This code and its internal interfaces are subject to change or
+ *  deletion without notice.</b>
  *
  * @author Jamie Ho
  * @author Bhavesh Patel (Modified)
@@ -91,17 +93,21 @@ public class SerializedFormBuilder extends AbstractBuilder {
      */
     private Content contentTree;
 
-    private SerializedFormBuilder(Configuration configuration) {
-        super(configuration);
+
+    /**
+     * Construct a new SerializedFormBuilder.
+     * @param context  the build context.
+     */
+    private SerializedFormBuilder(Context context) {
+        super(context);
     }
 
     /**
      * Construct a new SerializedFormBuilder.
-     * @param configuration the current configuration of the doclet.
+     * @param context  the build context.
      */
-    public static SerializedFormBuilder getInstance(Configuration configuration) {
-        SerializedFormBuilder builder = new SerializedFormBuilder(configuration);
-        return builder;
+    public static SerializedFormBuilder getInstance(Context context) {
+        return new SerializedFormBuilder(context);
     }
 
     /**
@@ -121,7 +127,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
         } catch (Exception e) {
             throw new DocletAbortException();
         }
-        build(LayoutParser.getInstance(configuration).parseXML(NAME), contentTree);
+        build(layoutParser.parseXML(NAME), contentTree);
         writer.close();
     }
 
@@ -472,6 +478,8 @@ public class SerializedFormBuilder extends AbstractBuilder {
         Arrays.sort(tags);
         int tagsLength = tags.length;
         for (int i = 0; i < tagsLength; i++) {
+            if (tags[i].fieldName() == null || tags[i].fieldType() == null) // ignore malformed @serialField tags
+                continue;
             Content fieldsContentTree = fieldWriter.getFieldsContentHeader(
                     (i == tagsLength - 1));
             fieldWriter.addMemberHeader(tags[i].fieldTypeDoc(),
