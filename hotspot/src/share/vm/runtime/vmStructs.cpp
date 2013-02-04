@@ -2290,6 +2290,7 @@ typedef BinaryTreeDictionary<Metablock, FreeList> MetablockTreeDictionary;
   /*************************************/                                 \
                                                                           \
   declare_preprocessor_constant("FIELDINFO_TAG_SIZE", FIELDINFO_TAG_SIZE) \
+  declare_preprocessor_constant("FIELDINFO_TAG_MASK", FIELDINFO_TAG_MASK) \
   declare_preprocessor_constant("FIELDINFO_TAG_OFFSET", FIELDINFO_TAG_OFFSET) \
                                                                           \
   /************************************************/                      \
