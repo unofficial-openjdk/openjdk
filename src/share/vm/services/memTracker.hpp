@@ -41,6 +41,10 @@
 
 extern bool NMT_track_callsite;
 
+#ifndef MAX_UNSIGNED_LONG
+#define MAX_UNSIGNED_LONG    (unsigned long)(-1)
+#endif
+
 #ifdef ASSERT
   #define DEBUG_CALLER_PC  (NMT_track_callsite ? os::get_caller_pc(2) : 0)
 #else
@@ -310,6 +314,11 @@ class MemTracker : AllStatic {
   static bool compare_memory_usage(BaselineOutputer& out, size_t unit,
            bool summary_only = true);
 
+  // the version for whitebox testing support, it ensures that all memory
+  // activities before this method call, are reflected in the snapshot
+  // database.
+  static bool wbtest_wait_for_data_merge();
+
   // sync is called within global safepoint to synchronize nmt data
   static void sync();
 
@@ -362,6 +371,15 @@ class MemTracker : AllStatic {
   static void create_record_in_recorder(address addr, MEMFLAGS type,
                    size_t size, address pc, JavaThread* thread);
 
+  static void set_current_processing_generation(unsigned long generation) {
+    _worker_thread_idle = false;
+    _processing_generation = generation;
+  }
+
+  static void report_worker_idle() {
+    _worker_thread_idle = true;
+  }
+
  private:
   // global memory snapshot
   static MemSnapshot*     _snapshot;
@@ -413,6 +431,11 @@ class MemTracker : AllStatic {
   static volatile enum NMTStates   _state;
   // the reason for shutting down nmt
   static enum ShutdownReason       _reason;
+  // the generation that NMT is processing
+  static volatile unsigned long    _processing_generation;
+  // although NMT is still procesing current generation, but
+  // there is not more recorder to process, set idle state
+  static volatile bool             _worker_thread_idle;
 };
 
 #endif // SHARE_VM_SERVICES_MEM_TRACKER_HPP
