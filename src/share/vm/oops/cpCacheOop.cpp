@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -575,6 +575,24 @@ bool ConstantPoolCacheEntry::adjust_method_entry(methodOop old_method,
   return false;
 }
 
+// a constant pool cache entry should never contain old or obsolete methods
+bool ConstantPoolCacheEntry::check_no_old_or_obsolete_entries() {
+  if (is_vfinal()) {
+    // virtual and final so _f2 contains method ptr instead of vtable index
+    methodOop m = (methodOop)_f2;
+    // Return false if _f2 refers to an old or an obsolete method.
+    // _f2 == NULL || !m->is_method() are just as unexpected here.
+    return (m != NULL && m->is_method() && !m->is_old() && !m->is_obsolete());
+  } else if ((oop)_f1 == NULL || !((oop)_f1)->is_method()) {
+    // _f1 == NULL || !_f1->is_method() are OK here
+    return true;
+  }
+
+  methodOop m = (methodOop)_f1;
+  // return false if _f1 refers to an old or an obsolete method
+  return (!m->is_old() && !m->is_obsolete());
+}
+
 bool ConstantPoolCacheEntry::is_interesting_method_entry(klassOop k) {
   if (!is_method_entry()) {
     // not a method entry so not interesting by default
@@ -598,7 +616,7 @@ bool ConstantPoolCacheEntry::is_interesting_method_entry(klassOop k) {
   }
 
   assert(m != NULL && m->is_method(), "sanity check");
-  if (m == NULL || !m->is_method() || m->method_holder() != k) {
+  if (m == NULL || !m->is_method() || (k != NULL && m->method_holder() != k)) {
     // robustness for above sanity checks or method is not in
     // the interesting class
     return false;
@@ -680,6 +698,25 @@ void constantPoolCacheOopDesc::adjust_method_entries(methodOop* old_methods, met
         // break out and get to the next interesting entry if there one
         break;
       }
+    }
+  }
+}
+
+// the constant pool cache should never contain old or obsolete methods
+bool constantPoolCacheOopDesc::check_no_old_or_obsolete_entries() {
+  for (int i = 1; i < length(); i++) {
+    if (entry_at(i)->is_interesting_method_entry(NULL) &&
+        !entry_at(i)->check_no_old_or_obsolete_entries()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void constantPoolCacheOopDesc::dump_cache() {
+  for (int i = 1; i < length(); i++) {
+    if (entry_at(i)->is_interesting_method_entry(NULL)) {
+      entry_at(i)->print(tty, i);
     }
   }
 }

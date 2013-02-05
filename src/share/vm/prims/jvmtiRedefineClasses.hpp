@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -478,9 +478,8 @@ class VM_RedefineClasses: public VM_Operation {
 
   void flush_dependent_code(instanceKlassHandle k_h, TRAPS);
 
-  static void check_class(klassOop k_oop, oop initiating_loader, TRAPS) PRODUCT_RETURN;
-
-  static void dump_methods()   PRODUCT_RETURN;
+  static void check_class(klassOop k_oop, oop initiating_loader, TRAPS);
+  static void dump_methods();
 
  public:
   VM_RedefineClasses(jint class_count,

@@ -129,8 +129,15 @@ void VM_RedefineClasses::doit() {
   // See jvmtiExport.hpp for detailed explanation.
   JvmtiExport::set_has_redefined_a_class();
 
-#ifdef ASSERT
-  SystemDictionary::classes_do(check_class, thread);
+// check_class() is optionally called for product bits, but is
+// always called for non-product bits.
+#ifdef PRODUCT
+  if (RC_TRACE_ENABLED(0x00004000)) {
+#endif
+    RC_TRACE_WITH_THREAD(0x00004000, thread, ("calling check_class"));
+    SystemDictionary::classes_do(check_class, thread);
+#ifdef PRODUCT
+  }
 #endif
 }
 
@@ -3349,76 +3356,116 @@ void VM_RedefineClasses::increment_class_counter(instanceKlass *ik, TRAPS) {
   }
 }
 
-#ifndef PRODUCT
 void VM_RedefineClasses::check_class(klassOop k_oop,
        oop initiating_loader, TRAPS) {
   Klass *k = k_oop->klass_part();
   if (k->oop_is_instance()) {
     HandleMark hm(THREAD);
     instanceKlass *ik = (instanceKlass *) k;
+    bool no_old_methods = true;  // be optimistic
+    ResourceMark rm(THREAD);
 
-    if (ik->vtable_length() > 0) {
-      ResourceMark rm(THREAD);
-      if (!ik->vtable()->check_no_old_entries()) {
-        tty->print_cr("klassVtable::check_no_old_entries failure -- OLD method found -- class: %s", ik->signature_name());
+    // a vtable should never contain old or obsolete methods
+    if (ik->vtable_length() > 0 &&
+        !ik->vtable()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("klassVtable::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
         ik->vtable()->dump_vtable();
-        dump_methods();
-        assert(false, "OLD method found");
       }
+      no_old_methods = false;
+    }
+
+    // an itable should never contain old or obsolete methods
+    if (ik->itable_length() > 0 &&
+        !ik->itable()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("klassItable::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
+        ik->itable()->dump_itable();
+      }
+      no_old_methods = false;
+    }
+
+    // the constant pool cache should never contain old or obsolete methods
+    if (ik->constants() != NULL &&
+        ik->constants()->cache() != NULL &&
+        !ik->constants()->cache()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("cp-cache::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
+        ik->constants()->cache()->dump_cache();
+      }
+      no_old_methods = false;
+    }
+
+    if (!no_old_methods) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        dump_methods();
+      } else {
+        tty->print_cr("INFO: use the '-XX:TraceRedefineClasses=16384' option "
+          "to see more info about the following guarantee() failure.");
+      }
+      guarantee(false, "OLD and/or OBSOLETE method(s) found");
     }
   }
 }
 
 void VM_RedefineClasses::dump_methods() {
-        int j;
-        tty->print_cr("_old_methods --");
-        for (j = 0; j < _old_methods->length(); ++j) {
-          methodOop m = (methodOop) _old_methods->obj_at(j);
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_new_methods --");
-        for (j = 0; j < _new_methods->length(); ++j) {
-          methodOop m = (methodOop) _new_methods->obj_at(j);
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_matching_(old/new)_methods --");
-        for (j = 0; j < _matching_methods_length; ++j) {
-          methodOop m = _matching_old_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-          m = _matching_new_methods[j];
-          tty->print("      (%5d)  ", m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->cr();
-        }
-        tty->print_cr("_deleted_methods --");
-        for (j = 0; j < _deleted_methods_length; ++j) {
-          methodOop m = _deleted_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_added_methods --");
-        for (j = 0; j < _added_methods_length; ++j) {
-          methodOop m = _added_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
+  int j;
+  RC_TRACE(0x00004000, ("_old_methods --"));
+  for (j = 0; j < _old_methods->length(); ++j) {
+    methodOop m = (methodOop) _old_methods->obj_at(j);
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_new_methods --"));
+  for (j = 0; j < _new_methods->length(); ++j) {
+    methodOop m = (methodOop) _new_methods->obj_at(j);
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_matching_(old/new)_methods --"));
+  for (j = 0; j < _matching_methods_length; ++j) {
+    methodOop m = _matching_old_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+    m = _matching_new_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("      (%5d)  ", m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_deleted_methods --"));
+  for (j = 0; j < _deleted_methods_length; ++j) {
+    methodOop m = _deleted_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_added_methods --"));
+  for (j = 0; j < _added_methods_length; ++j) {
+    methodOop m = _added_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
 }
-#endif
