@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ package java.util.logging;
 import java.util.*;
 import java.security.*;
 import java.lang.ref.WeakReference;
-import java.util.logging.LogManager.LoggerContext;
 
 /**
  * A Logger object is used to log messages for a specific
@@ -283,18 +282,32 @@ public class Logger {
     //
     // As an interim solution, if the immediate caller whose caller loader is
     // null, we assume it's a system logger and add it to the system context.
-    private static LoggerContext getLoggerContext() {
+    // These system loggers only set the resource bundle to the given
+    // resource bundle name (rather than the default system resource bundle).
+    private static class SystemLoggerHelper {
+        static boolean disableCallerCheck = getBooleanProperty("sun.util.logging.disableCallerCheck");
+        private static boolean getBooleanProperty(final String key) {
+            String s = AccessController.doPrivileged(new PrivilegedAction<String>() {
+                public String run() {
+                    return System.getProperty(key);
+                }
+            });
+            return Boolean.valueOf(s);
+        }
+    }
+
+    private static Logger demandLogger(String name, String resourceBundleName) {
         LogManager manager = LogManager.getLogManager();
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
+        if (sm != null && !SystemLoggerHelper.disableCallerCheck) {
             // 0: Reflection 1: Logger.getLoggerContext 2: Logger.getLogger 3: caller
             final int SKIP_FRAMES = 3;
             Class<?> caller = sun.reflect.Reflection.getCallerClass(SKIP_FRAMES);
             if (caller.getClassLoader() == null) {
-                return manager.getSystemContext();
+                return manager.demandSystemLogger(name, resourceBundleName);
             }
         }
-        return manager.getUserContext();
+        return manager.demandLogger(name, resourceBundleName);
     }
 
     /**
@@ -325,8 +338,7 @@ public class Logger {
      * @throws NullPointerException if the name is null.
      */
     public static synchronized Logger getLogger(String name) {
-        LoggerContext context = getLoggerContext();
-        return context.demandLogger(name);
+        return demandLogger(name, null);
     }
 
     /**
@@ -369,8 +381,7 @@ public class Logger {
      * @throws NullPointerException if the name is null.
      */
     public static synchronized Logger getLogger(String name, String resourceBundleName) {
-        LoggerContext context = getLoggerContext();
-        Logger result = context.demandLogger(name, resourceBundleName);
+        Logger result = demandLogger(name, resourceBundleName);
         if (result.resourceBundleName == null) {
             // Note: we may get a MissingResourceException here.
             result.setupResourceInfo(resourceBundleName);
@@ -1300,7 +1311,8 @@ public class Logger {
             public ResourceBundle run() {
                 try {
                     return ResourceBundle.getBundle(SYSTEM_LOGGER_RB_NAME,
-                                                    locale);
+                                                    locale,
+                                                    ClassLoader.getSystemClassLoader());
                 } catch (MissingResourceException e) {
                     throw new InternalError(e.toString());
                 }
