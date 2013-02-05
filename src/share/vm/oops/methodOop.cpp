@@ -613,7 +613,7 @@ void methodOopDesc::set_signature_handler(address handler) {
 }
 
 
-void methodOopDesc::print_made_not_compilable(int comp_level, bool is_osr, bool report) {
+void methodOopDesc::print_made_not_compilable(int comp_level, bool is_osr, bool report, const char* reason) {
   if (PrintCompilation && report) {
     ttyLocker ttyl;
     tty->print("made not %scompilable on ", is_osr ? "OSR " : "");
@@ -627,14 +627,21 @@ void methodOopDesc::print_made_not_compilable(int comp_level, bool is_osr, bool 
     }
     this->print_short_name(tty);
     int size = this->code_size();
-    if (size > 0)
+    if (size > 0) {
       tty->print(" (%d bytes)", size);
+    }
+    if (reason != NULL) {
+      tty->print("   %s", reason);
+    }
     tty->cr();
   }
   if ((TraceDeoptimization || LogCompilation) && (xtty != NULL)) {
     ttyLocker ttyl;
     xtty->begin_elem("make_not_%scompilable thread='" UINTX_FORMAT "'",
                      is_osr ? "osr_" : "", os::current_thread_id());
+    if (reason != NULL) {
+      xtty->print(" reason=\'%s\'", reason);
+    }
     xtty->method(methodOop(this));
     xtty->stamp();
     xtty->end_elem();
@@ -656,8 +663,8 @@ bool methodOopDesc::is_not_compilable(int comp_level) const {
 }
 
 // call this when compiler finds that this method is not compilable
-void methodOopDesc::set_not_compilable(int comp_level, bool report) {
-  print_made_not_compilable(comp_level, /*is_osr*/ false, report);
+void methodOopDesc::set_not_compilable(int comp_level, bool report, const char* reason) {
+  print_made_not_compilable(comp_level, /*is_osr*/ false, report, reason);
   if (comp_level == CompLevel_all) {
     set_not_c1_compilable();
     set_not_c2_compilable();
@@ -682,8 +689,8 @@ bool methodOopDesc::is_not_osr_compilable(int comp_level) const {
   return false;
 }
 
-void methodOopDesc::set_not_osr_compilable(int comp_level, bool report) {
-  print_made_not_compilable(comp_level, /*is_osr*/ true, report);
+void methodOopDesc::set_not_osr_compilable(int comp_level, bool report, const char* reason) {
+  print_made_not_compilable(comp_level, /*is_osr*/ true, report, reason);
   if (comp_level == CompLevel_all) {
     set_not_c1_osr_compilable();
     set_not_c2_osr_compilable();
