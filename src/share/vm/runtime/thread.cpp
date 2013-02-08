@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1501,7 +1501,7 @@ JavaThread::JavaThread(bool is_attaching_via_jni) :
   } else {
     _jni_attach_state = _not_attaching_via_jni;
   }
-  assert(_deferred_card_mark.is_empty(), "Default MemRegion ctor");
+  assert(deferred_card_mark().is_empty(), "Default MemRegion ctor");
   _safepoint_visible = false;
 }
 
@@ -1897,9 +1897,16 @@ void JavaThread::exit(bool destroy_vm, ExitType exit_type) {
     JvmtiExport::cleanup_thread(this);
   }
 
-#if INCLUDE_ALL_GCS
-  // We must flush G1-related buffers before removing a thread from
+  // We must flush any deferred card marks before removing a thread from
   // the list of active threads.
+  Universe::heap()->flush_deferred_store_barrier(this);
+  assert(deferred_card_mark().is_empty(), "Should have been flushed");
+
+#if INCLUDE_ALL_GCS
+  // We must flush the G1-related buffers before removing a thread
+  // from the list of active threads. We must do this after any deferred
+  // card marks have been flushed (above) so that any entries that are
+  // added to the thread's dirty card queue as a result are not lost.
   if (UseG1GC) {
     flush_barrier_queues();
   }
@@ -3740,28 +3747,6 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
                              name)) {
         library = os::dll_load(buffer, ebuf, sizeof ebuf);
       }
-#ifdef KERNEL
-      // Download instrument dll
-      if (library == NULL && strcmp(name, "instrument") == 0) {
-        char *props = Arguments::get_kernel_properties();
-        char *home  = Arguments::get_java_home();
-        const char *fmt   = "%s/bin/java %s -Dkernel.background.download=false"
-                      " sun.jkernel.DownloadManager -download client_jvm";
-        size_t length = strlen(props) + strlen(home) + strlen(fmt) + 1;
-        char *cmd = NEW_C_HEAP_ARRAY(char, length, mtThread);
-        jio_snprintf(cmd, length, fmt, home, props);
-        int status = os::fork_and_exec(cmd);
-        FreeHeap(props);
-        if (status == -1) {
-          warning(cmd);
-          vm_exit_during_initialization("fork_and_exec failed: %s",
-                                         strerror(errno));
-        }
-        FREE_C_HEAP_ARRAY(char, cmd, mtThread);
-        // when this comes back the instrument.dll should be where it belongs.
-        library = os::dll_load(buffer, ebuf, sizeof ebuf);
-      }
-#endif // KERNEL
       if (library == NULL) { // Try the local directory
         char ns[1] = {0};
         if (os::dll_build_name(buffer, sizeof(buffer), ns, name)) {
