@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,10 +234,6 @@
     }
 #endif
 #endif
-
-// JavaStack Implementation
-#define MORE_STACK(count)  \
-    (topOfStack -= ((count) * Interpreter::stackElementWords))
 
 
 #define UPDATE_PC(opsize) {pc += opsize; }
@@ -575,7 +571,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 
 /* 0xE0 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xE4 */ &&opc_default,     &&opc_fast_aldc,      &&opc_fast_aldc_w,  &&opc_return_register_finalizer,
-/* 0xE8 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
+/* 0xE8 */ &&opc_invokehandle,&&opc_default,        &&opc_default,      &&opc_default,
 /* 0xEC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
 /* 0xF0 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
@@ -2199,15 +2195,15 @@ run:
           ShouldNotReachHere();
         }
 
-        int index = Bytes::get_native_u4(pc+1);
+        u4 index = Bytes::get_native_u4(pc+1);
+        ConstantPoolCacheEntry* cache = cp->secondary_entry_at(index);
+        oop result = cache->f1_as_instance();
 
         // We are resolved if the f1 field contains a non-null object (CallSite, etc.)
         // This kind of CP cache entry does not need to match the flags byte, because
         // there is a 1-1 relation between bytecode type and CP entry type.
         assert(constantPoolCacheOopDesc::is_secondary_index(index), "incorrect format");
-        ConstantPoolCacheEntry* cache = cp->secondary_entry_at(index);
-        oop result = cache->f1_as_instance();
-        if (result == NULL) {
+        if (! cache->is_resolved((Bytecodes::Code) opcode)) {
           CALL_VM(InterpreterRuntime::resolve_invokedynamic(THREAD),
                   handle_exception);
           result = cache->f1_as_instance();
@@ -2217,9 +2213,51 @@ run:
         oop method_handle = java_lang_invoke_CallSite::target(result);
         CHECK_NULL(method_handle);
 
-        istate->set_msg(call_method_handle);
-        istate->set_callee((methodOop) method_handle);
+        methodOop method = cache->f1_as_method();
+        VERIFY_OOP(method);
+
+        if (cache->has_appendix()) {
+          constantPoolOop constants = METHOD->constants();
+          SET_STACK_OBJECT(cache->appendix_if_resolved(constants), 0);
+          MORE_STACK(1);
+        }
+
+        istate->set_msg(call_method);
+        istate->set_callee(method);
+        istate->set_callee_entry_point(method->from_interpreted_entry());
         istate->set_bcp_advance(5);
+
+        UPDATE_PC_AND_RETURN(0); // I'll be back...
+      }
+      CASE(_invokehandle): {
+
+        if (!EnableInvokeDynamic) {
+          ShouldNotReachHere();
+        }
+
+        u2 index = Bytes::get_native_u2(pc+1);
+        ConstantPoolCacheEntry* cache = cp->entry_at(index);
+
+        if (! cache->is_resolved((Bytecodes::Code) opcode)) {
+          CALL_VM(InterpreterRuntime::resolve_invokehandle(THREAD),
+                  handle_exception);
+          cache = cp->entry_at(index);
+        }
+
+        methodOop method = cache->f1_as_method();
+
+        VERIFY_OOP(method);
+
+        if (cache->has_appendix()) {
+          constantPoolOop constants = METHOD->constants();
+          SET_STACK_OBJECT(cache->appendix_if_resolved(constants), 0);
+          MORE_STACK(1);
+        }
+
+        istate->set_msg(call_method);
+        istate->set_callee(method);
+        istate->set_callee_entry_point(method->from_interpreted_entry());
+        istate->set_bcp_advance(3);
 
         UPDATE_PC_AND_RETURN(0); // I'll be back...
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -462,5 +462,13 @@ void AbstractInterpreterGenerator::bang_stack_shadow_pages(bool native_call) {
     for (int pages = start_page; pages <= StackShadowPages ; pages++) {
       __ bang_stack_with_offset(pages*page_size);
     }
+  }
+}
+
+void AbstractInterpreterGenerator::initialize_method_handle_entries() {
+  // method handle entry kinds are generated later in MethodHandlesAdapterGenerator::generate:
+  for (int i = Interpreter::method_handle_invoke_FIRST; i <= Interpreter::method_handle_invoke_LAST; i++) {
+    Interpreter::MethodKind kind = (Interpreter::MethodKind) i;
+    Interpreter::_entry_table[kind] = Interpreter::_entry_table[Interpreter::abstract];
   }
 }

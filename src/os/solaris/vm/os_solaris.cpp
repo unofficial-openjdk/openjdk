@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -5981,12 +5981,9 @@ extern "C" {
   }
 }
 
-// Just to get the Kernel build to link on solaris for testing.
-
 extern "C" {
 class ASGCT_CallTrace;
-void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext)
-  KERNEL_RETURN;
+void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext);
 }
 
 

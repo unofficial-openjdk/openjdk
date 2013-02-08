@@ -166,6 +166,14 @@ public:
 #endif
 </xsl:template>
 
+<xsl:template match="value[@type='RELATIVE_TICKS']" mode="write-setters">
+#if INCLUDE_TRACE
+  <xsl:value-of select="concat('void set_', @field, '(jlong time) { _', @field, ' = time; }')"/>
+#else
+  <xsl:value-of select="concat('void set_', @field, '(jlong ignore) {}')"/>
+#endif
+</xsl:template>
+
 <xsl:template match="value" mode="write-fields">
   <xsl:variable name="type" select="@type"/>
   <xsl:variable name="wt" select="//primary_type[@symbol=$type]/@type"/>
