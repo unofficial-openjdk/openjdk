@@ -29,12 +29,9 @@ import sun.awt.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.peer.ComponentPeer;
-import java.util.*;
-import java.awt.color.*;
 import java.awt.image.*;
 import sun.awt.image.ByteInterleavedRaster;
 import sun.security.action.GetPropertyAction;
-import java.lang.reflect.*;
 
 public class WEmbeddedFrame extends EmbeddedFrame {
 
@@ -232,11 +229,13 @@ public class WEmbeddedFrame extends EmbeddedFrame {
         } else {
             // To avoid focus concurrence b/w IE and EmbeddedFrame
             // activation is postponed by means of posting it to EDT.
-            EventQueue.invokeLater(new Runnable() {
-                    public void run() {
-                        ((WEmbeddedFramePeer)getPeer()).synthesizeWmActivate(true);
-                    }
-                });
+            Runnable r = new Runnable() {
+                public void run() {
+                    ((WEmbeddedFramePeer)getPeer()).synthesizeWmActivate(true);
+                }
+            };
+            WToolkit.postEvent(WToolkit.targetToAppContext(this),
+                               new InvocationEvent(this, r));
         }
     }
 
