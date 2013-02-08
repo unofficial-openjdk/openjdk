@@ -281,8 +281,8 @@ void mutex_init() {
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
 
   def(JfrMsg_lock                  , Monitor, nonleaf+2,   true);
-  def(JfrBuffer_lock               , Mutex,   nonleaf+3,   true);
-  def(JfrStream_lock               , Mutex,   nonleaf+4,   true);
+  def(JfrBuffer_lock               , Mutex,   nonleaf+4,   true);
+  def(JfrStream_lock               , Mutex,   nonleaf+5,   true);
   def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
 }
 
