@@ -875,7 +875,7 @@ void BinaryTreeDictionary<Chunk_t, FreeList_t>::dict_census_update(size_t size, 
 
 #if INCLUDE_ALL_GCS
 template <>
-void BinaryTreeDictionary<FreeChunk, AdaptiveFreeList>::dict_census_update(size_t size, bool split, bool birth){
+void AFLBinaryTreeDictionary::dict_census_update(size_t size, bool split, bool birth){
   TreeList<FreeChunk, AdaptiveFreeList>* nd = find_list(size);
   if (nd) {
     if (split) {
@@ -913,7 +913,7 @@ bool BinaryTreeDictionary<Chunk_t, FreeList_t>::coal_dict_over_populated(size_t 
 
 #if INCLUDE_ALL_GCS
 template <>
-bool BinaryTreeDictionary<FreeChunk, AdaptiveFreeList>::coal_dict_over_populated(size_t size) {
+bool AFLBinaryTreeDictionary::coal_dict_over_populated(size_t size) {
   if (FLSAlwaysCoalesceLarge) return true;
 
   TreeList<FreeChunk, AdaptiveFreeList>* list_of_size = find_list(size);
@@ -1290,7 +1290,7 @@ void BinaryTreeDictionary<Chunk_t, FreeList_t>::print_dict_census(void) const {
 
 #if INCLUDE_ALL_GCS
 template <>
-void BinaryTreeDictionary<FreeChunk, AdaptiveFreeList>::print_dict_census(void) const {
+void AFLBinaryTreeDictionary::print_dict_census(void) const {
 
   gclog_or_tty->print("\nBinaryTree\n");
   AdaptiveFreeList<FreeChunk>::print_labels_on(gclog_or_tty, "size");

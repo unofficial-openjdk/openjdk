@@ -1162,6 +1162,7 @@ typedef BinaryTreeDictionary<Metablock, FreeList> MetablockTreeDictionary;
   static_field(Abstract_VM_Version,            _vm_major_version,                             int)                                   \
   static_field(Abstract_VM_Version,            _vm_minor_version,                             int)                                   \
   static_field(Abstract_VM_Version,            _vm_build_number,                              int)                                   \
+  static_field(Abstract_VM_Version,            _reserve_for_allocation_prefetch,              int)                                   \
                                                                                                                                      \
   static_field(JDK_Version,                    _current,                                      JDK_Version)                           \
   nonstatic_field(JDK_Version,                 _partially_initialized,                        bool)                                  \
@@ -2088,8 +2089,7 @@ typedef BinaryTreeDictionary<Metablock, FreeList> MetablockTreeDictionary;
   declare_toplevel_type(FreeBlockDictionary<Metablock>*)                  \
   declare_toplevel_type(FreeList<Metablock>*)                             \
   declare_toplevel_type(FreeList<Metablock>)                              \
-  declare_toplevel_type(MetablockTreeDictionary*)                         \
-           declare_type(MetablockTreeDictionary, FreeBlockDictionary<Metablock>)
+  declare_type(MetablockTreeDictionary, FreeBlockDictionary<Metablock>)
 
 
 //--------------------------------------------------------------------------------
