@@ -207,7 +207,7 @@ public class SocketAdaptor
                 Selector sel = null;
                 sc.configureBlocking(false);
                 int n = 0;
-                Object traceContext = IoTrace.socketReadBegin(getInetAddress(), getPort(), timeout);
+                Object traceContext = IoTrace.socketReadBegin();
                 try {
                     if ((n = sc.read(bb)) != 0)
                         return n;
@@ -229,7 +229,8 @@ public class SocketAdaptor
                             throw new SocketTimeoutException();
                     }
                 } finally {
-                    IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                    IoTrace.socketReadEnd(traceContext, getInetAddress(),
+                                          getPort(), timeout, n > 0 ? n : 0);
                     if (sk != null)
                         sk.cancel();
                     if (sc.isOpen())
