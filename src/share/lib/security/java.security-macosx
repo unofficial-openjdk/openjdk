@@ -134,7 +134,9 @@ package.access=sun.,\
                com.sun.proxy.,\
                com.sun.org.apache.xerces.internal.utils.,\
                com.sun.org.apache.xalan.internal.utils.,\
+               com.sun.org.apache.xml.internal.security.,\
                com.sun.org.glassfish.,\
+               org.jcp.xml.dsig.internal.,\
                apple.
 
 #
@@ -157,7 +159,9 @@ package.definition=sun.,\
                    com.sun.proxy.,\
                    com.sun.org.apache.xerces.internal.utils.,\
                    com.sun.org.apache.xalan.internal.utils.,\
+                   com.sun.org.apache.xml.internal.security.,\
                    com.sun.org.glassfish.,\
+                   org.jcp.xml.dsig.internal.,\
                    apple.
 
 #
