@@ -356,26 +356,11 @@ public class Types {
             }
 
             public Type getType(Type site) {
-                if (capture(site) != site) {
-                    Type formalInterface = site.tsym.type;
-                    ListBuffer<Type> typeargs = ListBuffer.lb();
-                    List<Type> actualTypeargs = site.getTypeArguments();
-                    //simply replace the wildcards with its bound
-                    for (Type t : formalInterface.getTypeArguments()) {
-                        if (actualTypeargs.head.hasTag(WILDCARD)) {
-                            WildcardType wt = (WildcardType)actualTypeargs.head;
-                            typeargs.append(wt.type);
-                        } else {
-                            typeargs.append(actualTypeargs.head);
-                        }
-                        actualTypeargs = actualTypeargs.tail;
-                    }
-                    site = subst(formalInterface, formalInterface.getTypeArguments(), typeargs.toList());
-                    if (!chk.checkValidGenericType(site)) {
-                        //if the inferred functional interface type is not well-formed,
-                        //or if it's not a subtype of the original target, issue an error
-                        throw failure(diags.fragment("no.suitable.functional.intf.inst", site));
-                    }
+                site = removeWildcards(site);
+                if (!chk.checkValidGenericType(site)) {
+                    //if the inferred functional interface type is not well-formed,
+                    //or if it's not a subtype of the original target, issue an error
+                    throw failure(diags.fragment("no.suitable.functional.intf.inst", site));
                 }
                 return memberType(site, descSym);
             }
@@ -582,6 +567,27 @@ public class Types {
             return true;
         } catch (FunctionDescriptorLookupError ex) {
             return false;
+        }
+    }
+
+    public Type removeWildcards(Type site) {
+        if (capture(site) != site) {
+            Type formalInterface = site.tsym.type;
+            ListBuffer<Type> typeargs = ListBuffer.lb();
+            List<Type> actualTypeargs = site.getTypeArguments();
+            //simply replace the wildcards with its bound
+            for (Type t : formalInterface.getTypeArguments()) {
+                if (actualTypeargs.head.hasTag(WILDCARD)) {
+                    WildcardType wt = (WildcardType)actualTypeargs.head;
+                    typeargs.append(wt.type);
+                } else {
+                    typeargs.append(actualTypeargs.head);
+                }
+                actualTypeargs = actualTypeargs.tail;
+            }
+            return subst(formalInterface, formalInterface.getTypeArguments(), typeargs.toList());
+        } else {
+            return site;
         }
     }
     // </editor-fold>
@@ -2600,16 +2606,17 @@ public class Types {
                 candidates = candidates.prepend((MethodSymbol)s);
             }
         }
-        return prune(candidates, ownerComparator);
+        return prune(candidates);
     }
 
-    public List<MethodSymbol> prune(List<MethodSymbol> methods, Comparator<MethodSymbol> cmp) {
+    public List<MethodSymbol> prune(List<MethodSymbol> methods) {
         ListBuffer<MethodSymbol> methodsMin = ListBuffer.lb();
         for (MethodSymbol m1 : methods) {
             boolean isMin_m1 = true;
             for (MethodSymbol m2 : methods) {
                 if (m1 == m2) continue;
-                if (cmp.compare(m2, m1) < 0) {
+                if (m2.owner != m1.owner &&
+                        asSuper(m2.owner.type, m1.owner) != null) {
                     isMin_m1 = false;
                     break;
                 }
@@ -2619,12 +2626,6 @@ public class Types {
         }
         return methodsMin.toList();
     }
-
-    Comparator<MethodSymbol> ownerComparator = new Comparator<MethodSymbol>() {
-        public int compare(MethodSymbol s1, MethodSymbol s2) {
-            return s1.owner.isSubClass(s2.owner, Types.this) ? -1 : 1;
-        }
-    };
     // where
             private class MethodFilter implements Filter<Symbol> {
 
