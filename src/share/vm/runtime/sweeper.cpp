@@ -148,12 +148,12 @@ long      NMethodSweeper::_was_full_traversal = 0;
 
 int       NMethodSweeper::_number_of_flushes = 0; // Total of full traversals caused by full cache
 int       NMethodSweeper::_total_nof_methods_reclaimed = 0;
-long      NMethodSweeper::_total_time_sweeping = 0;
-long      NMethodSweeper::_total_time_this_sweep = 0;
-long      NMethodSweeper::_peak_sweep_time = 0;
-long      NMethodSweeper::_peak_sweep_fraction_time = 0;
-long      NMethodSweeper::_total_disconnect_time = 0;
-long      NMethodSweeper::_peak_disconnect_time = 0;
+jlong     NMethodSweeper::_total_time_sweeping = 0;
+jlong     NMethodSweeper::_total_time_this_sweep = 0;
+jlong     NMethodSweeper::_peak_sweep_time = 0;
+jlong     NMethodSweeper::_peak_sweep_fraction_time = 0;
+jlong     NMethodSweeper::_total_disconnect_time = 0;
+jlong     NMethodSweeper::_peak_disconnect_time = 0;
 
 class MarkActivationClosure: public CodeBlobClosure {
 public:
@@ -257,9 +257,7 @@ void NMethodSweeper::possibly_sweep() {
 
 void NMethodSweeper::sweep_code_cache() {
 
-  long sweep_start_counter, sweep_end_counter;
-  long sweep_time;
-  sweep_start_counter = os::elapsed_counter();
+  jlong sweep_start_counter = os::elapsed_counter();
 
   _flushed_count   = 0;
   _zombified_count = 0;
@@ -324,8 +322,8 @@ void NMethodSweeper::sweep_code_cache() {
     }
   }
 
-  sweep_end_counter = os::elapsed_counter();
-  sweep_time = sweep_end_counter - sweep_start_counter;
+  jlong sweep_end_counter = os::elapsed_counter();
+  jlong sweep_time = sweep_end_counter - sweep_start_counter;
   _total_time_sweeping  += sweep_time;
   _total_time_this_sweep += sweep_time;
   _peak_sweep_fraction_time = MAX2(sweep_time, _peak_sweep_fraction_time);
@@ -523,10 +521,6 @@ void NMethodSweeper::speculative_disconnect_nmethods(bool is_full) {
   // If there was a race in detecting full code cache, only run
   // one vm op for it or keep the compiler shut off
 
-  long disconnect_start_counter;
-  long disconnect_end_counter;
-  long disconnect_time;
-
   if ((!was_full()) && (is_full)) {
     if (!CodeCache::needs_flushing()) {
       log_sweep("restart_compiler");
@@ -535,7 +529,7 @@ void NMethodSweeper::speculative_disconnect_nmethods(bool is_full) {
     }
   }
 
-  disconnect_start_counter = os::elapsed_counter();
+  jlong disconnect_start_counter = os::elapsed_counter();
 
   // Traverse the code cache trying to dump the oldest nmethods
   uint curr_max_comp_id = CompileBroker::get_compilation_id();
@@ -583,8 +577,8 @@ void NMethodSweeper::speculative_disconnect_nmethods(bool is_full) {
     CompileBroker::set_should_compile_new_jobs(CompileBroker::stop_compilation);
   }
 
-  disconnect_end_counter = os::elapsed_counter();
-  disconnect_time = disconnect_end_counter - disconnect_start_counter;
+  jlong disconnect_end_counter = os::elapsed_counter();
+  jlong disconnect_time = disconnect_end_counter - disconnect_start_counter;
   _total_disconnect_time += disconnect_time;
   _peak_disconnect_time = MAX2(disconnect_time, _peak_disconnect_time);
 

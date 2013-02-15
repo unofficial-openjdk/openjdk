@@ -615,7 +615,7 @@ class CMSCollector: public CHeapObj<mtGC> {
   ConcurrentGCTimer* _gc_timer_cm;
 
   bool _cms_start_registered;
-  void register_gc_start();
+  void register_gc_start(GCCause::Cause cause);
   void register_gc_end();
 
  protected:

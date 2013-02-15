@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1328,10 +1328,6 @@ void methodOopDesc::sort_methods(objArrayOop methods,
 }
 
 
-//-----------------------------------------------------------------------------------
-// Non-product code
-
-#ifndef PRODUCT
 class SignatureTypePrinter : public SignatureTypeNames {
  private:
   outputStream* _st;
@@ -1368,6 +1364,10 @@ void methodOopDesc::print_name(outputStream* st) {
 }
 
 
+//-----------------------------------------------------------------------------------
+// Non-product code
+
+#ifndef PRODUCT
 void methodOopDesc::print_codes_on(outputStream* st) const {
   print_codes_on(0, code_size(), st);
 }

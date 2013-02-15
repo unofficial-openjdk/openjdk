@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -363,6 +363,7 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   // group don't print the klass name.
   bool adjust_method_entry(methodOop old_method, methodOop new_method,
          bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
   bool is_interesting_method_entry(klassOop k);
 
   // Debugging & Printing
@@ -492,6 +493,8 @@ class constantPoolCacheOopDesc: public oopDesc {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_cache();
 };
 
 #endif // SHARE_VM_OOPS_CPCACHEOOP_HPP

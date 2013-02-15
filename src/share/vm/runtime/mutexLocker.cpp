@@ -103,7 +103,6 @@ Monitor* Terminator_lock              = NULL;
 Monitor* BeforeExit_lock              = NULL;
 Monitor* Notify_lock                  = NULL;
 Monitor* Interrupt_lock               = NULL;
-Monitor* ProfileVM_lock               = NULL;
 Mutex*   ProfilePrint_lock            = NULL;
 Mutex*   ExceptionCache_lock          = NULL;
 Monitor* ObjAllocPost_lock            = NULL;
@@ -279,7 +278,6 @@ void mutex_init() {
   def(MethodCompileQueue_lock      , Monitor, nonleaf+4,   true );
   def(Debug2_lock                  , Mutex  , nonleaf+4,   true );
   def(Debug3_lock                  , Mutex  , nonleaf+4,   true );
-  def(ProfileVM_lock               , Monitor, special,   false); // used for profiling of the VMThread
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
 
   def(JfrMsg_lock                  , Monitor, nonleaf+2,   true);

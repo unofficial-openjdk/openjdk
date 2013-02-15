@@ -809,7 +809,8 @@ bool Arguments::process_argument(const char* arg,
     return true;
   }
 
-  const char * const argname = *arg == '+' || *arg == '-' ? arg + 1 : arg;
+  bool has_plus_minus = (*arg == '+' || *arg == '-');
+  const char* const argname = has_plus_minus ? arg + 1 : arg;
   if (is_newly_obsolete(arg, &since)) {
     char version[256];
     since.to_string(version, sizeof(version));
@@ -817,32 +818,38 @@ bool Arguments::process_argument(const char* arg,
     return true;
   }
 
-  // Make a copy and remove everything after '=' (if there is something)
-#define BUFLEN 255
-  char name[BUFLEN+1];
-  strncpy(name, argname, BUFLEN);
-  name[BUFLEN] = '\0';
-  char* end = strchr(name, '=');
-  if (end != NULL) {
-    end[0] = '\0';
+  // For locked flags, report a custom error message if available.
+  // Otherwise, report a standard VM option message.
+
+  size_t arg_len;
+  const char* equal_sign = strchr(argname, '=');
+  if (equal_sign == NULL) {
+    arg_len = strlen(argname);
+  } else {
+    arg_len = equal_sign - argname;
   }
 
-  // For locked flags, report a custom error message if available.
-  // Otherwise, report the standard unrecognized VM option.
-
-  Flag* locked_flag = Flag::find_flag((char*)name, strlen(name), true);
-  if (locked_flag != NULL && !locked_flag->is_unlocked()) {
+  Flag* found_flag = Flag::find_flag((char*)argname, arg_len, true);
+  if (found_flag != NULL) {
     char locked_message_buf[BUFLEN];
-    locked_flag->get_locked_message(locked_message_buf, BUFLEN);
+    found_flag->get_locked_message(locked_message_buf, BUFLEN);
     if (strlen(locked_message_buf) == 0) {
-      jio_fprintf(defaultStream::error_stream(),
-        "Unrecognized VM option '%s'\n", name);
+     if (found_flag->is_bool() && !has_plus_minus) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Missing +/- setting for VM option '%s'\n", argname);
+      } else if (!found_flag->is_bool() && has_plus_minus) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Unexpected +/- setting in VM option '%s'\n", argname);
+      } else {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Improperly specified VM option '%s'\n", argname);
+      }
     } else {
       jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
     }
   } else {
     jio_fprintf(defaultStream::error_stream(),
-                "Unrecognized VM option '%s'\n", name);
+                "Unrecognized VM option '%s'\n", argname);
   }
 
   // allow for commandline "commenting out" options like -XX:#+Verbose
