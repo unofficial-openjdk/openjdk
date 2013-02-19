@@ -51,6 +51,7 @@ import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import sun.util.BuddhistCalendar;
@@ -1571,7 +1572,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
 
     /**
      * Constructs a Calendar with the default time zone
-     * and locale.
+     * and the default {@link java.util.Locale.Category#FORMAT FORMAT}
+     * locale.
      * @see     TimeZone#getDefault
      */
     protected Calendar()
@@ -1599,7 +1601,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
     /**
      * Gets a calendar using the default time zone and locale. The
      * <code>Calendar</code> returned is based on the current time
-     * in the default time zone with the default locale.
+     * in the default time zone with the default
+     * {@link Locale.Category#FORMAT FORMAT} locale.
      *
      * @return a Calendar.
      */
@@ -1613,7 +1616,8 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
     /**
      * Gets a calendar using the specified time zone and default locale.
      * The <code>Calendar</code> returned is based on the current time
-     * in the given time zone with the default locale.
+     * in the given time zone with the default
+     * {@link Locale.Category#FORMAT FORMAT} locale.
      *
      * @param zone the time zone to use
      * @return a Calendar.
@@ -3561,5 +3565,18 @@ public abstract class Calendar implements Serializable, Cloneable, Comparable<Ca
                 zone = tz;
             }
         }
+    }
+
+    /**
+     * Converts this object to an {@link Instant}.
+     * <p>
+     * The conversion creates an {@code Instant} that represents the
+     * same point on the time-line as this {@code Calendar}.
+     *
+     * @return the instant representing the same point on the time-line
+     * @since 1.8
+     */
+    public final Instant toInstant() {
+        return Instant.ofEpochMilli(getTimeInMillis());
     }
 }
