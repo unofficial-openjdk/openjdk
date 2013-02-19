@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -632,8 +632,8 @@ void ConcurrentMark::reset() {
   assert(_heap_end != NULL, "heap bounds should look ok");
   assert(_heap_start < _heap_end, "heap bounds should look ok");
 
-  // reset all the marking data structures and any necessary flags
-  clear_marking_state();
+  // Reset all the marking data structures and any necessary flags
+  reset_marking_state();
 
   if (verbose_low()) {
     gclog_or_tty->print_cr("[global] resetting");
@@ -649,6 +649,23 @@ void ConcurrentMark::reset() {
   // we need this to make sure that the flag is on during the evac
   // pause with initial mark piggy-backed
   set_concurrent_marking_in_progress();
+}
+
+
+void ConcurrentMark::reset_marking_state(bool clear_overflow) {
+  _markStack.setEmpty();
+  _markStack.clear_overflow();
+  if (clear_overflow) {
+    clear_has_overflown();
+  } else {
+    assert(has_overflown(), "pre-condition");
+  }
+  _finger = _heap_start;
+
+  for (uint i = 0; i < _max_task_num; ++i) {
+    CMTaskQueue* queue = _task_queues->queue(i);
+    queue->set_empty();
+  }
 }
 
 void ConcurrentMark::set_phase(uint active_tasks, bool concurrent) {
@@ -681,7 +698,7 @@ void ConcurrentMark::set_phase(uint active_tasks, bool concurrent) {
 void ConcurrentMark::set_non_marking_state() {
   // We set the global marking state to some default values when we're
   // not doing marking.
-  clear_marking_state();
+  reset_marking_state();
   _active_tasks = 0;
   clear_concurrent_marking_in_progress();
 }
@@ -848,7 +865,7 @@ void ConcurrentMark::enter_first_sync_barrier(int task_num) {
     // not clear the overflow flag since we rely on it being true when
     // we exit this method to abort the pause and restart concurent
     // marking.
-    clear_marking_state(concurrent() /* clear_overflow */);
+    reset_marking_state(concurrent() /* clear_overflow */);
     force_overflow()->update();
 
     if (G1Log::fine()) {
@@ -1057,7 +1074,7 @@ void ConcurrentMark::scanRootRegions() {
     uint active_workers = MAX2(1U, parallel_marking_threads());
 
     CMRootRegionScanTask task(this);
-    if (parallel_marking_threads() > 0) {
+    if (use_parallel_marking_threads()) {
       _parallel_workers->set_active_workers((int) active_workers);
       _parallel_workers->run_task(&task);
     } else {
@@ -1093,7 +1110,7 @@ void ConcurrentMark::markFromRoots() {
   set_phase(active_workers, true /* concurrent */);
 
   CMConcurrentMarkingTask markingTask(this, cmThread());
-  if (parallel_marking_threads() > 0) {
+  if (use_parallel_marking_threads()) {
     _parallel_workers->set_active_workers((int)active_workers);
     // Don't set _n_par_threads because it affects MT in proceess_strong_roots()
     // and the decisions on that MT processing is made elsewhere.
@@ -1142,8 +1159,9 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
   if (has_overflown()) {
     // Oops.  We overflowed.  Restart concurrent marking.
     _restart_for_overflow = true;
-    // Clear the flag. We do not need it any more.
-    clear_has_overflown();
+    // Clear the marking state because we will be restarting
+    // marking due to overflowing the global mark stack.
+    reset_marking_state();
     if (G1TraceMarkStackOverflow) {
       gclog_or_tty->print_cr("\nRemark led to restart for overflow.");
     }
@@ -1167,10 +1185,7 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
                        /* option */ VerifyOption_G1UseNextMarking);
     }
     assert(!restart_for_overflow(), "sanity");
-  }
-
-  // Reset the marking state if marking completed
-  if (!restart_for_overflow()) {
+    // Completely reset the marking state since marking completed
     set_non_marking_state();
   }
 
@@ -2846,22 +2861,6 @@ void ConcurrentMark::verify_no_cset_oops(bool verify_stacks,
 }
 #endif // PRODUCT
 
-void ConcurrentMark::clear_marking_state(bool clear_overflow) {
-  _markStack.setEmpty();
-  _markStack.clear_overflow();
-  if (clear_overflow) {
-    clear_has_overflown();
-  } else {
-    assert(has_overflown(), "pre-condition");
-  }
-  _finger = _heap_start;
-
-  for (int i = 0; i < (int)_max_task_num; ++i) {
-    OopTaskQueue* queue = _task_queues->queue(i);
-    queue->set_empty();
-  }
-}
-
 // Aggregate the counting data that was constructed concurrently
 // with marking.
 class AggregateCountDataHRClosure: public HeapRegionClosure {
@@ -3068,7 +3067,7 @@ void ConcurrentMark::abort() {
   // Clear the liveness counting data
   clear_all_count_data();
   // Empty mark stack
-  clear_marking_state();
+  reset_marking_state();
   for (int i = 0; i < (int)_max_task_num; ++i) {
     _tasks[i]->clear_region_fields();
   }
@@ -3128,7 +3127,9 @@ void ConcurrentMark::print_summary_info() {
 }
 
 void ConcurrentMark::print_worker_threads_on(outputStream* st) const {
-  _parallel_workers->print_worker_threads_on(st);
+  if (use_parallel_marking_threads()) {
+    _parallel_workers->print_worker_threads_on(st);
+  }
 }
 
 // We take a break if someone is trying to stop the world.

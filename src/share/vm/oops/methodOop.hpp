@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -714,8 +714,8 @@ class methodOopDesc : public oopDesc {
   static bool has_unloaded_classes_in_signature(methodHandle m, TRAPS);
 
   // Printing
-  void print_short_name(outputStream* st = tty)  /*PRODUCT_RETURN*/; // prints as klassname::methodname; Exposed so field engineers can debug VM
-  void print_name(outputStream* st = tty)        PRODUCT_RETURN; // prints as "virtual void foo(int)"
+  void print_short_name(outputStream* st = tty); // prints as klassname::methodname; Exposed so field engineers can debug VM
+  void print_name(outputStream* st = tty); // prints as "virtual void foo(int)"; exposed for TraceRedefineClasses
 
   // Helper routine used for method sorting
   static void sort_methods(objArrayOop methods,

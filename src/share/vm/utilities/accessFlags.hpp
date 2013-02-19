@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,7 +229,7 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   inline friend AccessFlags accessFlags_from(jint flags);
 
   // Printing/debugging
-  void print_on(outputStream* st) const PRODUCT_RETURN;
+  void print_on(outputStream* st) const;
 };
 
 inline AccessFlags accessFlags_from(jint flags) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -461,15 +461,18 @@ protected:
   // It resets the global marking data structures, as well as the
   // task local ones; should be called during initial mark.
   void reset();
-  // It resets all the marking data structures.
-  void clear_marking_state(bool clear_overflow = true);
+
+  // Resets all the marking data structures. Called when we have to restart
+  // marking or when marking completes (via set_non_marking_state below).
+  void reset_marking_state(bool clear_overflow = true);
+
+  // We do this after we're done with marking so that the marking data
+  // structures are initialised to a sensible and predictable state.
+  void set_non_marking_state();
 
   // It should be called to indicate which phase we're in (concurrent
   // mark or remark) and how many threads are currently active.
   void set_phase(uint active_tasks, bool concurrent);
-  // We do this after we're done with marking so that the marking data
-  // structures are initialised to a sensible and predictable state.
-  void set_non_marking_state();
 
   // prints all gathered CM-related statistics
   void print_stats();
@@ -479,17 +482,26 @@ protected:
   }
 
   // accessor methods
-  uint parallel_marking_threads() { return _parallel_marking_threads; }
-  uint max_parallel_marking_threads() { return _max_parallel_marking_threads;}
-  double sleep_factor()             { return _sleep_factor; }
-  double marking_task_overhead()    { return _marking_task_overhead;}
-  double cleanup_sleep_factor()     { return _cleanup_sleep_factor; }
-  double cleanup_task_overhead()    { return _cleanup_task_overhead;}
+  uint parallel_marking_threads() const     { return _parallel_marking_threads; }
+  uint max_parallel_marking_threads() const { return _max_parallel_marking_threads;}
+  double sleep_factor()                     { return _sleep_factor; }
+  double marking_task_overhead()            { return _marking_task_overhead;}
+  double cleanup_sleep_factor()             { return _cleanup_sleep_factor; }
+  double cleanup_task_overhead()            { return _cleanup_task_overhead;}
 
-  HeapWord*               finger()        { return _finger;   }
-  bool                    concurrent()    { return _concurrent; }
-  uint                    active_tasks()  { return _active_tasks; }
-  ParallelTaskTerminator* terminator()    { return &_terminator; }
+  bool use_parallel_marking_threads() const {
+    assert(parallel_marking_threads() <=
+           max_parallel_marking_threads(), "sanity");
+    assert((_parallel_workers == NULL && parallel_marking_threads() == 0) ||
+           parallel_marking_threads() > 0,
+           "parallel workers not set up correctly");
+    return _parallel_workers != NULL;
+  }
+
+  HeapWord*               finger()          { return _finger;   }
+  bool                    concurrent()      { return _concurrent; }
+  uint                    active_tasks()    { return _active_tasks; }
+  ParallelTaskTerminator* terminator()      { return &_terminator; }
 
   // It claims the next available region to be scanned by a marking
   // task. It might return NULL if the next region is empty or we have

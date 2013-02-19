@@ -542,7 +542,7 @@ class Compile : public Phase {
   bool              has_method_handle_invokes() const { return _has_method_handle_invokes;     }
   void          set_has_method_handle_invokes(bool z) {        _has_method_handle_invokes = z; }
 
-  long _latest_stage_start_counter;
+  jlong _latest_stage_start_counter;
 
   void begin_method() {
 #ifndef PRODUCT
