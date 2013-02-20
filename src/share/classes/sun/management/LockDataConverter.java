@@ -27,6 +27,8 @@ package sun.management;
 
 import java.lang.management.LockInfo;
 import java.lang.management.ThreadInfo;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import javax.management.Attribute;
 import javax.management.StandardMBean;
 import javax.management.openmbean.CompositeData;
@@ -40,13 +42,13 @@ class LockDataConverter extends StandardMBean
     private LockInfo      lockInfo;
     private LockInfo[]    lockedSyncs;
 
-    LockDataConverter() {
+    private LockDataConverter() {
         super(LockDataConverterMXBean.class, true);
         this.lockInfo = null;
         this.lockedSyncs = null;
     }
 
-    LockDataConverter(ThreadInfo ti) {
+    private LockDataConverter(ThreadInfo ti) {
         super(LockDataConverterMXBean.class, true);
         this.lockInfo = ti.getLockInfo();
         this.lockedSyncs = ti.getLockedSynchronizers();
@@ -104,8 +106,24 @@ class LockDataConverter extends StandardMBean
     }
 
     static CompositeData toLockInfoCompositeData(LockInfo l) {
-        LockDataConverter ldc = new LockDataConverter();
+        LockDataConverter ldc = newLockDataConverter();
         ldc.setLockInfo(l);
         return ldc.toLockInfoCompositeData();
     }
+
+   static LockDataConverter newLockDataConverter() {
+        return AccessController.doPrivileged(new PrivilegedAction<LockDataConverter>() {
+               public LockDataConverter run() {
+                   return new LockDataConverter();
+               }
+        });
+   }
+
+   static LockDataConverter newLockDataConverter(final ThreadInfo ti) {
+        LockDataConverter result = newLockDataConverter();
+        result.lockInfo = ti.getLockInfo();
+        result.lockedSyncs = ti.getLockedSynchronizers();
+        return result;
+   }
 }
+

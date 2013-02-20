@@ -202,5 +202,5 @@ public final class ReflectUtil {
         }
     }
 
-    public static final String PROXY_PACKAGE = "sun.proxy";
+    public static final String PROXY_PACKAGE = "com.sun.proxy";
 }
