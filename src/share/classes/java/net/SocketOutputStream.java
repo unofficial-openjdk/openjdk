@@ -106,7 +106,7 @@ class SocketOutputStream extends FileOutputStream
             throw new ArrayIndexOutOfBoundsException();
         }
 
-        Object traceContext = IoTrace.socketWriteBegin(impl.address, impl.port);
+        Object traceContext = IoTrace.socketWriteBegin();
         int bytesWritten = 0;
         FileDescriptor fd = impl.acquireFD();
         try {
@@ -124,7 +124,7 @@ class SocketOutputStream extends FileOutputStream
             }
         } finally {
             impl.releaseFD();
-            IoTrace.socketWriteEnd(traceContext, bytesWritten);
+            IoTrace.socketWriteEnd(traceContext, impl.address, impl.port, bytesWritten);
         }
     }
 

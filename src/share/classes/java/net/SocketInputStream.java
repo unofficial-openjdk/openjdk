@@ -145,7 +145,7 @@ class SocketInputStream extends FileInputStream
 
         boolean gotReset = false;
 
-        Object traceContext = IoTrace.socketReadBegin(impl.address, impl.port, timeout);
+        Object traceContext = IoTrace.socketReadBegin();
         // acquire file descriptor and do the read
         FileDescriptor fd = impl.acquireFD();
         try {
@@ -157,7 +157,8 @@ class SocketInputStream extends FileInputStream
             gotReset = true;
         } finally {
             impl.releaseFD();
-            IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+            IoTrace.socketReadEnd(traceContext, impl.address, impl.port,
+                                  timeout, n > 0 ? n : 0);
         }
 
         /*
@@ -165,7 +166,7 @@ class SocketInputStream extends FileInputStream
          * buffered on the socket
          */
         if (gotReset) {
-            traceContext = IoTrace.socketReadBegin(impl.address, impl.port, timeout);
+            traceContext = IoTrace.socketReadBegin();
             impl.setConnectionResetPending();
             impl.acquireFD();
             try {
@@ -176,7 +177,8 @@ class SocketInputStream extends FileInputStream
             } catch (ConnectionResetException rstExc) {
             } finally {
                 impl.releaseFD();
-                IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                IoTrace.socketReadEnd(traceContext, impl.address, impl.port,
+                                      timeout, n > 0 ? n : 0);
             }
         }
 

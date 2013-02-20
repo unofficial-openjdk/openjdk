@@ -73,30 +73,31 @@ public class IoTraceBase implements IoTraceListener {
     }
 
     @Override
-    public Object socketReadBegin(InetAddress address, int port,
-            int timeout) {
-        this.address = address;
-        this.port = port;
-        this.timeout = timeout;
+    public Object socketReadBegin() {
         return my_context;
     }
 
     @Override
-    public void socketReadEnd(Object context, long bytesRead) {
+    public void socketReadEnd(Object context, InetAddress address, int port,
+                              int timeout, long bytesRead) {
         this.context = context;
+        this.address = address;
+        this.port = port;
+        this.timeout = timeout;
         this.bytesRead = bytesRead;
     }
 
     @Override
-    public Object socketWriteBegin(InetAddress address, int port) {
-        this.address = address;
-        this.port = port;
+    public Object socketWriteBegin() {
         return my_context;
     }
 
     @Override
-    public void socketWriteEnd(Object context, long bytesWritten) {
+    public void socketWriteEnd(Object context, InetAddress address, int port,
+                               long bytesWritten) {
         this.context = context;
+        this.address = address;
+        this.port = port;
         this.bytesWritten = bytesWritten;
     }
 

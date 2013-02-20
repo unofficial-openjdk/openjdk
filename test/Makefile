@@ -512,6 +512,7 @@ jdk_other: $(call TestDirs, \
           javax/script \
           java/sql javax/sql \
           javax/smartcardio \
+          javax/xml/soap \
           com/sun/xml \
           javax/xml/ws com/sun/internal/ws \
           com/sun/org/apache/xerces \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,8 @@ public class JavaVM {
     private OutputStream outputStream = System.out;
     private OutputStream errorStream = System.err;
     private String policyFileName = null;
+    private StreamPipe outPipe;
+    private StreamPipe errPipe;
 
     private static void mesg(Object mesg) {
         System.err.println("JAVAVM: " + mesg.toString());
@@ -108,6 +110,14 @@ public class JavaVM {
         return TestLibrary.getExtraProperty("jcov.options","");
     }
 
+    public void start(Runnable runnable) throws IOException {
+        if (runnable == null) {
+            throw new NullPointerException("Runnable cannot be null.");
+        }
+
+        start();
+        new JavaVMCallbackHandler(runnable).start();
+    }
 
     /**
      * Exec the VM as specified in this object's constructor.
@@ -145,13 +155,12 @@ public class JavaVM {
         }
 
         mesg("command = " + Arrays.asList(javaCommand).toString());
-        System.err.println("");
 
         vm = Runtime.getRuntime().exec(javaCommand);
 
         /* output from the execed process may optionally be captured. */
-        StreamPipe.plugTogether(vm.getInputStream(), this.outputStream);
-        StreamPipe.plugTogether(vm.getErrorStream(), this.errorStream);
+        outPipe = StreamPipe.plugTogether(vm.getInputStream(), this.outputStream);
+        errPipe = StreamPipe.plugTogether(vm.getErrorStream(), this.errorStream);
     }
 
     public void destroy() {
@@ -161,7 +170,56 @@ public class JavaVM {
         vm = null;
     }
 
-    protected Process getVM() {
-        return vm;
+    /**
+     * Waits for the subprocess to exit, joins the pipe threads to ensure that
+     * all output is collected, and returns its exit status.
+     */
+    public int waitFor() throws InterruptedException {
+        if (vm == null)
+            throw new IllegalStateException("can't wait for JavaVM that hasn't started");
+
+        int status = vm.waitFor();
+        outPipe.join();
+        errPipe.join();
+        return status;
+    }
+
+    /**
+     * Starts the subprocess, waits for it to exit, and returns its exit status.
+     */
+    public int execute() throws IOException, InterruptedException {
+        start();
+        return waitFor();
+    }
+
+    /**
+     * Handles calling the callback.
+     */
+    private class JavaVMCallbackHandler extends Thread {
+        Runnable runnable;
+
+        JavaVMCallbackHandler(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+
+        /**
+         * Wait for the Process to terminate and notify the callback.
+         */
+        @Override
+        public void run() {
+            if (vm != null) {
+                try {
+                    vm.waitFor();
+                } catch(InterruptedException ie) {
+                    // Restore the interrupted status
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            if (runnable != null) {
+                runnable.run();
+            }
+        }
     }
 }

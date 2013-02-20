@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,17 @@
  * questions.
  */
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-public interface CallbackInterface extends Remote {
-    public void inc() throws RemoteException;
-    public int getNumDeactivated() throws RemoteException;
+import java.awt.*;
+
+class AbsoluteComponentCenterCalculator {
+    private AbsoluteComponentCenterCalculator() {
+    }
+
+    public static int calculateXCenterCoordinate(Component component) {
+        return (int) component.getLocationOnScreen().getX() + (component.getWidth() / 2);
+    }
+
+    public static int calculateYCenterCoordinate(Component component) {
+        return (int) component.getLocationOnScreen().getY() + (component.getHeight() / 2);
+    }
 }

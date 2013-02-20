@@ -280,8 +280,7 @@ class SocketChannelImpl
                 return -1;
             Object traceContext = null;
             if (isBlocking()) {
-                traceContext = IoTrace.socketReadBegin(remoteAddress.getAddress(),
-                                                      remoteAddress.getPort(), 0);
+                traceContext = IoTrace.socketReadBegin();
             }
             int n = 0;
             try {
@@ -374,7 +373,8 @@ class SocketChannelImpl
                 readerCleanup();        // Clear reader thread
 
                 if (isBlocking()) {
-                    IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                    IoTrace.socketReadEnd(traceContext, remoteAddress.getAddress(),
+                                          remoteAddress.getPort(), 0, n > 0 ? n : 0);
                 }
 
                 // The end method, which is defined in our superclass
@@ -419,8 +419,7 @@ class SocketChannelImpl
             long n = 0;
             Object traceContext = null;
             if (isBlocking()) {
-                traceContext = IoTrace.socketReadBegin(remoteAddress.getAddress(),
-                                                      remoteAddress.getPort(), 0);
+                traceContext = IoTrace.socketReadBegin();
             }
             try {
                 begin();
@@ -439,7 +438,8 @@ class SocketChannelImpl
             } finally {
                 readerCleanup();
                 if (isBlocking()) {
-                    IoTrace.socketReadEnd(traceContext, n > 0 ? n : 0);
+                    IoTrace.socketReadEnd(traceContext, remoteAddress.getAddress(),
+                                          remoteAddress.getPort(), 0, n > 0 ? n : 0);
                 }
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
@@ -458,8 +458,7 @@ class SocketChannelImpl
             ensureWriteOpen();
             int n = 0;
             Object traceContext =
-                IoTrace.socketWriteBegin(remoteAddress.getAddress(),
-                                         remoteAddress.getPort());
+                IoTrace.socketWriteBegin();
 
             try {
                 begin();
@@ -476,7 +475,8 @@ class SocketChannelImpl
                 }
             } finally {
                 writerCleanup();
-                IoTrace.socketWriteEnd(traceContext, n > 0 ? n : 0);
+                IoTrace.socketWriteEnd(traceContext, remoteAddress.getAddress(),
+                                       remoteAddress.getPort(), n > 0 ? n : 0);
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))
@@ -496,8 +496,7 @@ class SocketChannelImpl
             ensureWriteOpen();
             long n = 0;
             Object traceContext =
-                IoTrace.socketWriteBegin(remoteAddress.getAddress(),
-                                         remoteAddress.getPort());
+                IoTrace.socketWriteBegin();
             try {
                 begin();
                 synchronized (stateLock) {
@@ -513,7 +512,8 @@ class SocketChannelImpl
                 }
             } finally {
                 writerCleanup();
-                IoTrace.socketWriteEnd(traceContext, n > 0 ? n : 0);
+                IoTrace.socketWriteEnd(traceContext, remoteAddress.getAddress(),
+                                       remoteAddress.getPort(), n > 0 ? n : 0);
                 end((n > 0) || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))

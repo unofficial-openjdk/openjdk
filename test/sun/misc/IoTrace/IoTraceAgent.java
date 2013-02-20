@@ -52,34 +52,35 @@ public class IoTraceAgent {
         listener = l;
     }
 
-    public static Object socketReadBegin(InetAddress address, int port,
-            int timeout) {
+    public static Object socketReadBegin() {
         IoTraceListener l = listener;
         if (l != null) {
-            return l.socketReadBegin(address, port, timeout);
+            return l.socketReadBegin();
         }
         return null;
     }
 
-    public static void socketReadEnd(Object context, long bytesRead) {
+    public static void socketReadEnd(Object context, InetAddress address, int port,
+                                     int timeout, long bytesRead) {
         IoTraceListener l = listener;
         if (l != null) {
-            l.socketReadEnd(context, bytesRead);
+            l.socketReadEnd(context, address, port, timeout, bytesRead);
         }
     }
 
-    public static Object socketWriteBegin(InetAddress address, int port) {
+    public static Object socketWriteBegin() {
         IoTraceListener l = listener;
         if (l != null) {
-            return l.socketWriteBegin(address, port);
+            return l.socketWriteBegin();
         }
         return null;
     }
 
-    public static void socketWriteEnd(Object context, long bytesWritten) {
+    public static void socketWriteEnd(Object context, InetAddress address, int port,
+                                      long bytesWritten) {
         IoTraceListener l = listener;
         if (l != null) {
-            l.socketWriteEnd(context, bytesWritten);
+            l.socketWriteEnd(context, address, port, bytesWritten);
         }
     }
 
@@ -133,7 +134,7 @@ public class IoTraceAgent {
         // 1: iload_1
         // 2: iload_2
         // 3: invokestatic #16 // Method
-        // IoTraceAgent.socketReadBegin:(Ljava/net/InetAddress;II)Ljava/lang/Object;
+        // IoTraceAgent.socketReadBegin:(II)Ljava/lang/Object;
         // 6: areturn
 
         for (Method om : IoTrace.class.getDeclaredMethods()) {
