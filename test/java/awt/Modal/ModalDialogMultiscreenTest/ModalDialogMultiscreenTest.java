@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,63 +23,99 @@
 
 /*
   @test
-  @bug 6572263 6571808 8005920
-  @summary  PIT:FileDialog minimized to taskbar(through 'Show Desktop')selecting the fileDialog using windowList
-  @author dmitry.cherepanov: area=awt.modal
-  @run main/manual Winkey
+  @bug 6430802 8008379
+  @summary WM should not hang after show()/close()
+  @author anthony.petrov@sun.com: area=awt.modal
+  @run main/manual ModalDialogMultiscreenTest
 */
 
+
 /**
- * Winkey.java
+ * ModalDialogMultiscreenTest.java
  *
- * summary: the test verifies that pressing combination of Windows key
- *          and M key to minimize all windows doesn't break AWT modality
+ * summary: Tests whether a WM will hang on show()/close() a modal dialog in multiscreen mode
  */
 
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
 
-public class Winkey
+
+public class ModalDialogMultiscreenTest
 {
+
+    private static class ButtonActionListener implements ActionListener {
+        JFrame frame;
+        JDialog dialog;
+        public ButtonActionListener(JFrame frame, JDialog dialog) {
+            this.frame = frame;
+            this.dialog = dialog;
+        }
+        public void actionPerformed(ActionEvent e) {
+            dialog.setLocationRelativeTo(frame);
+            dialog.setVisible(true);
+        }
+    }
+    public static class TestDialog extends JDialog {
+        public TestDialog(Frame owner, String title, boolean modal, GraphicsConfiguration gc) {
+            super(owner, title, modal, gc);
+            setSize(200, 100);
+            JButton button = new JButton("Close");
+            button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    dispose();
+                }
+            });
+            getContentPane().add(button);
+        }
+    }
 
     private static void init()
     {
-        //*** Create instructions for the user here ***
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+
+        Sysout.createDialog( );
+
+        if (gs.length < 2) {
+            System.out.println("Not multi-head environment, test not valid!");
+            ModalDialogMultiscreenTest.pass( );
+        }
 
         String[] instructions =
         {
-            " 0. This test is for MS Windows only, if you use other OS, press \"pass\" button.",
-            " 1. there is a frame with a 'show modal' button, ",
-            " 2. press the button to show a modal dialog, ",
-            " 3. the modal dialog will be shown over the frame, ",
-            " 4. please verify that all (5.1, 5.2.1, 5.2.2) the following tests pass: ",
-            " ",
-            " 5.1. press combination Windows Key and M key to minimize all windows, ",
-            "      note that the modal dialog and modal blocked windows are NOT minimized",
-            " 5.2. press combination Windows Key and D key to show desktop, ",
-            "      5.2.1. restore the dialog by choosing this one in the ALT-TAB list, ",
-            "      5.2.2. restore the dialog by mouse click on taskbar (on java or any other item)",
-            " ",
-            " 6. make sure that the dialog and the frame are visible, ",
-            "    the bounds of the windows should be the same as before, ",
-            "    if it's true, then the test passed; otherwise, it failed. "
+            "The test should be run on a multi-head X (non-xinerama) systems.",
+            "Otherwise click the Pass button right now.",
+            "You will see an open Frame on each screen your system has.",
+            "The frame has an 'Open dialog' button.",
+            "Clicking the button opens a modal dialog with a Close button.",
+            "The test procedure:",
+            "1. Open a dialog and close it with appropriate buttons.",
+            "2. Switch to another screen ($ DISPLAY=X.Y xprop)",
+            "3. Repeat steps 1-2 several times (about 3*<number-of-screens>)",
+            "If the test doesn't cause the window manager to hang, it's passed."
         };
-        Sysout.createDialog( );
         Sysout.printInstructions( instructions );
 
-        final Frame frame = new Frame();
-        Button button = new Button("show modal");
-        button.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent ae) {
-                    FileDialog dialog = new FileDialog((Frame)null, "Sample", FileDialog.LOAD);
-                    dialog.setVisible(true);
-                }
-            });
-        frame.add(button);
-        frame.setBounds(400, 400, 200, 200);
-        frame.setVisible(true);
+
+        for (int i = 0; i < gs.length; i++) {
+            JFrame frame = new JFrame("Frame "+i,gs[i].getDefaultConfiguration());
+            JButton button = new JButton("Open Dialog");
+            button.setMinimumSize(new Dimension(200, 100));
+            button.setPreferredSize(new Dimension(200, 100));
+            button.setSize(new Dimension(200, 100));
+            button.addActionListener(new ButtonActionListener(frame, new TestDialog(frame, "Dialog #"+i, true, gs[i].getDefaultConfiguration())));
+            frame.getContentPane().add(button);
+            frame.pack();
+            frame.setVisible(true);
+        }
 
     }//End  init()
+
+
+    //ap203012: NO MORE CHANGES BELOW THIS LINE
+
+
 
     /*****************************************************
      * Standard Test Machinery Section
@@ -187,7 +223,7 @@ public class Winkey
         mainThread.interrupt();
     }//fail()
 
-}// class ManualMainTest
+}// class ModalDialogMultiscreenTest
 
 //This exception is used to exit from any level of call nesting
 // when it's determined that the test has passed, and immediately
@@ -217,13 +253,13 @@ class NewClass implements anInterface
        {
          //got enough events, so pass
 
-         ManualMainTest.pass();
+         ModalDialogMultiscreenTest.pass();
        }
       else if( tries == 20 )
        {
          //tried too many times without getting enough events so fail
 
-         ManualMainTest.fail();
+         ModalDialogMultiscreenTest.fail();
        }
 
     }// eventDispatched()
@@ -389,16 +425,16 @@ class TestDialog extends Dialog implements ActionListener
 
     //catch presses of the passed and failed buttons.
     //simply call the standard pass() or fail() static methods of
-    //ManualMainTest
+    //ModalDialogMultiscreenTest
     public void actionPerformed( ActionEvent e )
     {
         if( e.getActionCommand() == "pass" )
         {
-            Winkey.pass();
+            ModalDialogMultiscreenTest.pass();
         }
         else
         {
-            Winkey.fail();
+            ModalDialogMultiscreenTest.fail();
         }
     }
 
