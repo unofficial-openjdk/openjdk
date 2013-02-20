@@ -890,7 +890,11 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
       print = true;
     }
     if (print) {
-      st->print_cr(INTPTR_FORMAT " is an oop", addr);
+      if (p == (HeapWord*) addr) {
+        st->print_cr(INTPTR_FORMAT " is an oop", addr);
+      } else {
+        st->print_cr(INTPTR_FORMAT " is pointing into object: " INTPTR_FORMAT, addr, p);
+      }
       oop(p)->print_on(st);
       if (p != (HeapWord*)x && oop(p)->is_constMethod() &&
           constMethodOop(p)->contains(addr)) {
