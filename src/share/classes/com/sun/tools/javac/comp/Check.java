@@ -1588,6 +1588,7 @@ public class Check {
                    (other.flags() & STATIC) == 0) {
             log.error(TreeInfo.diagnosticPositionFor(m, tree), "override.static",
                       cannotOverride(m, other));
+            m.flags_field |= BAD_OVERRIDE;
             return;
         }
 
@@ -1599,6 +1600,7 @@ public class Check {
             log.error(TreeInfo.diagnosticPositionFor(m, tree), "override.meth",
                       cannotOverride(m, other),
                       asFlagSet(other.flags() & (FINAL | STATIC)));
+            m.flags_field |= BAD_OVERRIDE;
             return;
         }
 
@@ -1615,6 +1617,7 @@ public class Check {
                       other.flags() == 0 ?
                           Flag.PACKAGE :
                           asFlagSet(other.flags() & AccessFlags));
+            m.flags_field |= BAD_OVERRIDE;
             return;
         }
 
@@ -1642,6 +1645,7 @@ public class Check {
                           "override.incompatible.ret",
                           cannotOverride(m, other),
                           mtres, otres);
+                m.flags_field |= BAD_OVERRIDE;
                 return;
             }
         } else if (overrideWarner.hasNonSilentLint(LintCategory.UNCHECKED)) {
@@ -1661,6 +1665,7 @@ public class Check {
                       "override.meth.doesnt.throw",
                       cannotOverride(m, other),
                       unhandledUnerased.head);
+            m.flags_field |= BAD_OVERRIDE;
             return;
         }
         else if (unhandledUnerased.nonEmpty()) {
@@ -1956,6 +1961,33 @@ public class Check {
         }
     }
 
+    public void checkClassOverrideEqualsAndHash(ClassSymbol someClass) {
+        if (lint.isEnabled(LintCategory.OVERRIDES)) {
+            boolean hasEquals = false;
+            boolean hasHashCode = false;
+
+            Scope.Entry equalsAtObject = syms.objectType.tsym.members().lookup(names.equals);
+            Scope.Entry hashCodeAtObject = syms.objectType.tsym.members().lookup(names.hashCode);
+            for (Symbol s: someClass.members().getElements(new Filter<Symbol>() {
+                    public boolean accepts(Symbol s) {
+                        return s.kind == Kinds.MTH &&
+                                (s.flags() & BAD_OVERRIDE) == 0;
+                    }
+                })) {
+                MethodSymbol m = (MethodSymbol)s;
+                hasEquals |= m.name.equals(names.equals) &&
+                        m.overrides(equalsAtObject.sym, someClass, types, false);
+
+                hasHashCode |= m.name.equals(names.hashCode) &&
+                        m.overrides(hashCodeAtObject.sym, someClass, types, false);
+            }
+            if (hasEquals && !hasHashCode) {
+                log.warning(LintCategory.OVERRIDES, (DiagnosticPosition) null,
+                        "override.equals.but.not.hashcode", someClass.fullname);
+            }
+        }
+    }
+
     private boolean checkNameClash(ClassSymbol origin, Symbol s1, Symbol s2) {
         ClashFilter cf = new ClashFilter(origin.type);
         return (cf.accepts(s1) &&
@@ -2232,10 +2264,13 @@ public class Check {
     void checkFunctionalInterface(JCTree tree, Type funcInterface) {
         ClassType c = new ClassType(Type.noType, List.<Type>nil(), null);
         ClassSymbol csym = new ClassSymbol(0, names.empty, c, syms.noSymbol);
-        c.interfaces_field = List.of(funcInterface);
+        c.interfaces_field = List.of(types.removeWildcards(funcInterface));
         c.supertype_field = syms.objectType;
         c.tsym = csym;
         csym.members_field = new Scope(csym);
+        Symbol descSym = types.findDescriptorSymbol(funcInterface.tsym);
+        Type descType = types.findDescriptorType(funcInterface);
+        csym.members_field.enter(new MethodSymbol(PUBLIC, descSym.name, descType, csym));
         csym.completer = null;
         checkImplementations(tree, csym, csym);
     }
