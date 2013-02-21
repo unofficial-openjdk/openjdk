@@ -149,7 +149,8 @@ package.access=sun.,\
                com.sun.org.apache.xml.internal.utils.,\
                com.sun.org.apache.xml.internal.security.,\
                com.sun.org.glassfish.,\
-               org.jcp.xml.dsig.internal.
+               org.jcp.xml.dsig.internal.,\
+               com.sun.java.accessibility.
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -186,7 +187,8 @@ package.definition=sun.,\
                    com.sun.org.apache.xml.internal.utils.,\
                    com.sun.org.apache.xml.internal.security.,\
                    com.sun.org.glassfish.,\
-                   org.jcp.xml.dsig.internal.
+                   org.jcp.xml.dsig.internal.,\
+                   com.sun.java.accessibility.
 
 #
 # Determines whether this properties file can be appended to
