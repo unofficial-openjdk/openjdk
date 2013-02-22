@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,13 @@ package java.util.function;
 
 /**
  * An operation on two {@code long} operands yielding a {@code long} result.
+ * This is the primitive type specialization of {@link BinaryOperator} for
+ * {@code long}.
  *
+ * @see BinaryOperator
  * @since 1.8
  */
+@FunctionalInterface
 public interface LongBinaryOperator {
 
     /**
@@ -40,5 +44,5 @@ public interface LongBinaryOperator {
      * @param right  the right operand value
      * @return the result of the operation
      */
-    public long operateAsLong(long left, long right);
+    public long applyAsLong(long left, long right);
 }

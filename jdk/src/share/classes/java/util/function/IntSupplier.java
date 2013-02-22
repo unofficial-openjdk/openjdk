@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,13 @@
 package java.util.function;
 
 /**
- * A supplier of {@code int} values.
+ * A supplier of {@code int} values. This is the {@code int}-providing
+ * primitive specialization of {@link Supplier}.
  *
- * <p/>This is the primitive type specialization of {@link Supplier} for
- * {@code int} and also may be used as a {@code Supplier<Integer>}.
- *
+ * @see Supplier
  * @since 1.8
  */
+@FunctionalInterface
 public interface IntSupplier {
 
     /**

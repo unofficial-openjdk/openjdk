@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,23 @@
 package java.util.function;
 
 /**
- * Apply a function to the input object yielding an appropriate {@code int}
- * value; this is the {@code int}-bearing specialization for {@link Function}.
+ * Apply a function to the integer-valued input argument, yielding an
+ * appropriate result. This is the {@code int}-consuming primitive
+ * specialization for {@link Function}.
  *
- * @param <T> the type of input objects to the function
+ * @param <R> the type of output objects from the function
  *
+ * @see Function
  * @since 1.8
  */
-public interface IntFunction<T> {
+@FunctionalInterface
+public interface IntFunction<R> {
 
     /**
-     * Apply a function to the input object yielding an appropriate {@code int}
-     * value.
+     * Compute the result of applying the function to the input argument
      *
-     * @param t the input object
-     * @return the function result value
+     * @param value the input value
+     * @return the function result
      */
-    public int applyAsInt(T t);
+    public R apply(int value);
 }

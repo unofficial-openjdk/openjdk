@@ -50,7 +50,6 @@ import java.text.NumberFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -58,12 +57,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.Queries;
-import java.time.temporal.OffsetDate;
-import java.time.temporal.OffsetDateTime;
-import java.time.temporal.OffsetTime;
-import java.time.temporal.ChronoZonedDateTime;
-import java.time.format.TextStyle;
-import java.time.zone.ZoneRules;
 
 import sun.misc.DoubleConsts;
 import sun.misc.FormattedFloatingDecimal;
@@ -1907,7 +1900,8 @@ public final class Formatter implements Closeable, Flushable {
      * which may be retrieved by invoking {@link #out out()} and whose
      * current content may be converted into a string by invoking {@link
      * #toString toString()}.  The locale used is the {@linkplain
-     * Locale#getDefault() default locale} for this instance of the Java
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
      * virtual machine.
      */
     public Formatter() {
@@ -1917,8 +1911,10 @@ public final class Formatter implements Closeable, Flushable {
     /**
      * Constructs a new formatter with the specified destination.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault() default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  a
      *         Destination for the formatted output.  If {@code a} is
@@ -1968,8 +1964,10 @@ public final class Formatter implements Closeable, Flushable {
      * java.nio.charset.Charset#defaultCharset() default charset} for this
      * instance of the Java virtual machine.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault() default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  fileName
      *         The name of the file to use as the destination of this
@@ -1996,8 +1994,10 @@ public final class Formatter implements Closeable, Flushable {
     /**
      * Constructs a new formatter with the specified file name and charset.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  fileName
      *         The name of the file to use as the destination of this
@@ -2075,8 +2075,10 @@ public final class Formatter implements Closeable, Flushable {
      * java.nio.charset.Charset#defaultCharset() default charset} for this
      * instance of the Java virtual machine.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault() default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  file
      *         The file to use as the destination of this formatter.  If the
@@ -2103,8 +2105,10 @@ public final class Formatter implements Closeable, Flushable {
     /**
      * Constructs a new formatter with the specified file and charset.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  file
      *         The file to use as the destination of this formatter.  If the
@@ -2178,8 +2182,10 @@ public final class Formatter implements Closeable, Flushable {
     /**
      * Constructs a new formatter with the specified print stream.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault() default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * <p> Characters are written to the given {@link java.io.PrintStream
      * PrintStream} object and are therefore encoded using that object's
@@ -2200,8 +2206,10 @@ public final class Formatter implements Closeable, Flushable {
      * java.nio.charset.Charset#defaultCharset() default charset} for this
      * instance of the Java virtual machine.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault() default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  os
      *         The output stream to use as the destination of this formatter.
@@ -2216,8 +2224,10 @@ public final class Formatter implements Closeable, Flushable {
      * Constructs a new formatter with the specified output stream and
      * charset.
      *
-     * <p> The locale used is the {@linkplain Locale#getDefault default
-     * locale} for this instance of the Java virtual machine.
+     * <p> The locale used is the {@linkplain
+     * Locale#getDefault(Locale.Category) default locale} for
+     * {@linkplain Locale.Category#FORMAT formatting} for this instance of the Java
+     * virtual machine.
      *
      * @param  os
      *         The output stream to use as the destination of this formatter.

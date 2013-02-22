@@ -188,11 +188,6 @@ public class TypeVariableImpl<D extends GenericDeclaration>
     }
 
     // Implementations of AnnotatedElement methods.
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-        Objects.requireNonNull(annotationClass);
-        return false;
-    }
-
     @SuppressWarnings("unchecked")
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         Objects.requireNonNull(annotationClass);
@@ -205,14 +200,16 @@ public class TypeVariableImpl<D extends GenericDeclaration>
         return getAnnotation(annotationClass);
     }
 
-    public <T extends Annotation> T[] getAnnotations(Class<T> annotationClass) {
+    @Override
+    public <T extends Annotation> T[] getAnnotationsByType(Class<T> annotationClass) {
         Objects.requireNonNull(annotationClass);
         return AnnotationSupport.getMultipleAnnotations(mapAnnotations(getAnnotations()), annotationClass);
     }
 
-    public <T extends Annotation> T[] getDeclaredAnnotations(Class<T> annotationClass) {
+    @Override
+    public <T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> annotationClass) {
         Objects.requireNonNull(annotationClass);
-        return getAnnotations(annotationClass);
+        return getAnnotationsByType(annotationClass);
     }
 
     public Annotation[] getAnnotations() {

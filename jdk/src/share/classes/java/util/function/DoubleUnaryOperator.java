@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,14 @@
 package java.util.function;
 
 /**
- * An operation on a single {@code double} operand yielding a {@code double}
- * result.
+ * An operation on a {@code double} operand yielding a {@code double}
+ * result. This is the primitive type specialization of {@link UnaryOperator}
+ * for {@code double}.
  *
+ * @see UnaryOperator
  * @since 1.8
  */
+@FunctionalInterface
 public interface DoubleUnaryOperator {
 
     /**
@@ -39,5 +42,5 @@ public interface DoubleUnaryOperator {
      * @param operand the operand value
      * @return the operation result value
      */
-    public double operateAsDouble(double operand);
+    public double applyAsDouble(double operand);
 }

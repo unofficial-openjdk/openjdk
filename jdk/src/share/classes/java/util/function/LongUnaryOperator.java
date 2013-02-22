@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,13 @@ package java.util.function;
 
 /**
  * An operation on a single {@code long} operand yielding a {@code long} result.
+ * This is the primitive type specialization of {@link UnaryOperator} for
+ * {@code long}.
  *
+ * @see UnaryOperator
  * @since 1.8
  */
+@FunctionalInterface
 public interface LongUnaryOperator {
 
     /**
@@ -38,5 +42,5 @@ public interface LongUnaryOperator {
      * @param operand the operand value
      * @return the operation result value
      */
-    public long operateAsLong(long operand);
+    public long applyAsLong(long operand);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,19 +26,14 @@ package java.util.function;
 
 /**
  * An operation upon a single operand yielding a result. The operand and the
- * result are of the same type.
+ * result are of the same type. This is a specialization of {@code Function} for
+ * the case where the operand and result are of the same type.
  *
- * @param <T> the type of operand to {@code operate} and of the result
+ * @param <T> the type of operand to {@code apply} and of the result
  *
+ * @see Function
  * @since 1.8
  */
-public interface UnaryOperator<T> {
-
-    /**
-     * Returns the result of the operation upon the operand.
-     *
-     * @param operand the operand
-     * @return the operation result
-     */
-    public T operate(T operand);
+@FunctionalInterface
+public interface UnaryOperator<T> extends Function<T, T> {
 }

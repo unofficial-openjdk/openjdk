@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,23 +25,14 @@
 package java.util.function;
 
 /**
- * An operation upon two operands yielding a result. The operands and the result
- * are all of the same type.
+ * An operation upon two operands yielding a result. This is a specialization of
+ * {@code BiFunction} where the operands and the result are all of the same type.
  *
- * @param <T> the type of operands to {@code operate} and of the result
+ * @param <T> the type of operands to {@code apply} and of the result
  *
+ * @see BiFunction.
  * @since 1.8
  */
-public interface BinaryOperator<T> {
-
-    /**
-     * Returns the result of the operation upon the operands.
-     * The operands are named {@code left} and {@code right} for operations
-     * where the order of operands matters.
-     *
-     * @param left the left operand
-     * @param right the right operand
-     * @return the result of the operation
-     */
-    public T operate(T left, T right);
+@FunctionalInterface
+public interface BinaryOperator<T> extends BiFunction<T,T,T> {
 }

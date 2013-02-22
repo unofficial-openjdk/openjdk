@@ -3085,19 +3085,10 @@ public final
 
     /**
      * @throws NullPointerException {@inheritDoc}
-     * @since 1.5
-     */
-    public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-        Objects.requireNonNull(annotationClass);
-
-        return getAnnotation(annotationClass) != null;
-    }
-
-    /**
-     * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
-    public <A extends Annotation> A[] getAnnotations(Class<A> annotationClass) {
+    @Override
+    public <A extends Annotation> A[] getAnnotationsByType(Class<A> annotationClass) {
         Objects.requireNonNull(annotationClass);
 
         initAnnotationsIfNecessary();
@@ -3116,6 +3107,7 @@ public final
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
+    @Override
     @SuppressWarnings("unchecked")
     public <A extends Annotation> A getDeclaredAnnotation(Class<A> annotationClass) {
         Objects.requireNonNull(annotationClass);
@@ -3128,7 +3120,8 @@ public final
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
-    public <A extends Annotation> A[] getDeclaredAnnotations(Class<A> annotationClass) {
+    @Override
+    public <A extends Annotation> A[] getDeclaredAnnotationsByType(Class<A> annotationClass) {
         Objects.requireNonNull(annotationClass);
 
         initAnnotationsIfNecessary();

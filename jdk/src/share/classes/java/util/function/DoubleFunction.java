@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,21 +25,23 @@
 package java.util.function;
 
 /**
- * Apply a function to the input object yielding an appropriate {@code double}
- * value; this is the {@code double}-bearing specialization for {@link Function}.
+ * Apply a function to the double-valued input argument, yielding an appropriate
+ * result. This is the {@code double}-consuming primitive specialization for
+ * {@link Function}.
  *
- * @param <T> the type of input objects to the function
+ * @param <R> the type of output objects from the function
  *
+ * @see Function
  * @since 1.8
  */
-public interface DoubleFunction<T> {
+@FunctionalInterface
+public interface DoubleFunction<R> {
 
     /**
-     * Apply a function to the input object yielding an appropriate
-     * {@code double} value.
+     * Compute the result of applying the function to the input argument
      *
-     * @param t the input object
-     * @return the function result value
+     * @param value the input value
+     * @return the function result
      */
-    public double applyAsDouble(T t);
+    public R apply(double value);
 }

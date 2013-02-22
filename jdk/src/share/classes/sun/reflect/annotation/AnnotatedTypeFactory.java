@@ -138,11 +138,6 @@ public class AnnotatedTypeFactory {
 
         // AnnotatedElement
         @Override
-        public final boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
-            return annotations.get(annotation) != null;
-        }
-
-        @Override
         public final Annotation[] getAnnotations() {
             return getDeclaredAnnotations();
         }
@@ -153,8 +148,8 @@ public class AnnotatedTypeFactory {
         }
 
         @Override
-        public final <T extends Annotation> T[] getAnnotations(Class<T> annotation) {
-            return getDeclaredAnnotations(annotation);
+        public final <T extends Annotation> T[] getAnnotationsByType(Class<T> annotation) {
+            return getDeclaredAnnotationsByType(annotation);
         }
 
         @Override
@@ -169,7 +164,7 @@ public class AnnotatedTypeFactory {
         }
 
         @Override
-        public <T extends Annotation> T[] getDeclaredAnnotations(Class<T> annotation) {
+        public <T extends Annotation> T[] getDeclaredAnnotationsByType(Class<T> annotation) {
             return AnnotationSupport.getMultipleAnnotations(annotations, annotation);
         }
 
