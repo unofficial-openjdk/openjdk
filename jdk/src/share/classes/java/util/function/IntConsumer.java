@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,35 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package build.tools.javazic;
+package java.util.function;
 
 /**
- * Day of week enum.
+ * An operation which accepts a single integer argument and returns no result.
+ * This is the primitive type specialization of {@link Consumer} for {@code int}.
+ * Unlike most other functional interfaces, {@code IntConsumer} is expected to
+ * operate via side-effects.
  *
- * @since 1.6
+ * @see Consumer
+ * @since 1.8
  */
+@FunctionalInterface
+public interface IntConsumer {
 
-enum DayOfWeek {
-    SUNDAY("Sun"),
-    MONDAY("Mon"),
-    TUESDAY("Tue"),
-    WEDNESDAY("Wed"),
-    THURSDAY("Thu"),
-    FRIDAY("Fri"),
-    SATURDAY("Sat");
-
-    private final String abbr;
-
-    private DayOfWeek(String abbr) {
-        this.abbr = abbr;
-    }
-
-    String getAbbr() {
-        return abbr;
-    }
-
-    int value() {
-        return ordinal() + 1;
-    }
+    /**
+     * Accept an input value.
+     *
+     * @param value the input value
+     */
+    public void accept(int value);
 }
