@@ -68,6 +68,7 @@ public class DeferredAttr extends JCTree.Visitor {
     final JCDiagnostic.Factory diags;
     final Enter enter;
     final Infer infer;
+    final Resolve rs;
     final Log log;
     final Symtab syms;
     final TreeMaker make;
@@ -87,6 +88,7 @@ public class DeferredAttr extends JCTree.Visitor {
         diags = JCDiagnostic.Factory.instance(context);
         enter = Enter.instance(context);
         infer = Infer.instance(context);
+        rs = Resolve.instance(context);
         log = Log.instance(context);
         syms = Symtab.instance(context);
         make = TreeMaker.instance(context);
@@ -274,14 +276,27 @@ public class DeferredAttr extends JCTree.Visitor {
      * disabled during speculative type-checking.
      */
     JCTree attribSpeculative(JCTree tree, Env<AttrContext> env, ResultInfo resultInfo) {
-        JCTree newTree = new TreeCopier<Object>(make).copy(tree);
+        final JCTree newTree = new TreeCopier<Object>(make).copy(tree);
         Env<AttrContext> speculativeEnv = env.dup(newTree, env.info.dup(env.info.scope.dupUnshared()));
         speculativeEnv.info.scope.owner = env.info.scope.owner;
-        final JavaFileObject currentSource = log.currentSourceFile();
         Log.DeferredDiagnosticHandler deferredDiagnosticHandler =
                 new Log.DeferredDiagnosticHandler(log, new Filter<JCDiagnostic>() {
-            public boolean accepts(JCDiagnostic t) {
-                return t.getDiagnosticSource().getFile().equals(currentSource);
+            public boolean accepts(final JCDiagnostic d) {
+                class PosScanner extends TreeScanner {
+                    boolean found = false;
+
+                    @Override
+                    public void scan(JCTree tree) {
+                        if (tree != null &&
+                                tree.pos() == d.getDiagnosticPosition()) {
+                            found = true;
+                        }
+                        super.scan(tree);
+                    }
+                };
+                PosScanner posScanner = new PosScanner();
+                posScanner.scan(newTree);
+                return posScanner.found;
             }
         });
         try {
@@ -463,10 +478,12 @@ public class DeferredAttr extends JCTree.Visitor {
 
             ResultInfo resultInfo;
             InferenceContext inferenceContext;
+            Env<AttrContext> env;
 
             public Type complete(DeferredType dt, ResultInfo resultInfo, DeferredAttrContext deferredAttrContext) {
                 this.resultInfo = resultInfo;
                 this.inferenceContext = deferredAttrContext.inferenceContext;
+                this.env = dt.env.dup(dt.tree, dt.env.info.dup());
                 dt.tree.accept(this);
                 dt.speculativeCache.put(deferredAttrContext.msym, stuckTree, deferredAttrContext.phase);
                 return Type.noType;
@@ -511,11 +528,29 @@ public class DeferredAttr extends JCTree.Visitor {
                     return;
                 } else {
                     try {
-                        //TODO: we should speculative determine if there's a match
-                        //based on arity - if yes, method is applicable.
                         types.findDescriptorType(pt);
                     } catch (Types.FunctionDescriptorLookupError ex) {
                         checkContext.report(null, ex.getDiagnostic());
+                    }
+                    JCExpression exprTree = (JCExpression)attribSpeculative(tree.getQualifierExpression(), env,
+                            attr.memberReferenceQualifierResult(tree));
+                    ListBuffer<Type> argtypes = ListBuffer.lb();
+                    for (Type t : types.findDescriptorType(pt).getParameterTypes()) {
+                        argtypes.append(syms.errType);
+                    }
+                    JCMemberReference mref2 = new TreeCopier<Void>(make).copy(tree);
+                    mref2.expr = exprTree;
+                    Pair<Symbol, ?> lookupRes =
+                            rs.resolveMemberReference(tree, env, mref2, exprTree.type, tree.name, argtypes.toList(), null, true);
+                    switch (lookupRes.fst.kind) {
+                        //note: as argtypes are erroneous types, type-errors must
+                        //have been caused by arity mismatch
+                        case Kinds.ABSENT_MTH:
+                        case Kinds.WRONG_MTH:
+                        case Kinds.WRONG_MTHS:
+                        case Kinds.STATICERR:
+                        case Kinds.MISSING_ENCL:
+                           checkContext.report(null, diags.fragment("incompatible.arg.types.in.mref"));
                     }
                 }
             }
