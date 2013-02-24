@@ -21,11 +21,17 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 6223624
  * @summary SSLSocket.setUseClientMode() fails to throw expected
  *        IllegalArgumentException
+ * @run main/othervm SetClientMode
  */
 
 /*

@@ -21,13 +21,18 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4414843
  * @summary This test tries all the different ways in which an SSL
  * connection can be established to exercise different SSLSocketImpl
  * constructors.
- * @run main/timeout=300 SocketCreation
+ * @run main/othervm/timeout=300 SocketCreation
  */
 
 import java.io.*;
