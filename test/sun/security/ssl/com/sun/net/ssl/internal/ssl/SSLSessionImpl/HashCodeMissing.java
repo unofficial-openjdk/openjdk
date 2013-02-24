@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4910892
  * @summary 4518403 was not properly fixed.   hashcode should be hashCode.
+ * @run main/othervm HashCodeMissing
  * @author Brad Wetmore
  */
 
