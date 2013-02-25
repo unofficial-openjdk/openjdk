@@ -83,7 +83,7 @@ class TraceStream : public StackObj {
   }
 
   void print_val(const char* label, methodOop& val) {
-    _st.print("%s = %s", label, val->print_string());
+    _st.print("%s = %s", label, val->name_and_sig_as_C_string());
   }
 
   void print_val(const char* label, const char* val) {
