@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,25 +20,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.util.function;
 
-/**
- * An operation upon an {@code int} input value. The operation may modify
- * external state.
- *
- * <p/>This is the primitive type specialization of {@link Block} for
- * {@code int} and also may be used as a {@code Block<Integer>}.
- *
- * @since 1.8
+/* @test
+ * @bug 8004502
+ * @summary Sanity check that specifying the APPLET property when creating an
+ *   InitialContext behaves as expected when java.awt.Applet is not present
  */
-@FunctionalInterface
-public interface IntBlock {
 
-    /**
-     * Use the {@code int} input value in an operation which may modify external
-     * state.
-     *
-     * @param t the input value
-     */
-   public void accept(int t);
+import javax.naming.*;
+import java.util.Hashtable;
+
+public class NoApplet {
+    public static void main(String[] args) throws NamingException {
+         Hashtable<Object,Object> env = new Hashtable<>();
+         env.put(Context.APPLET, new Object());
+         try {
+             Context ctxt = new InitialContext(env);
+             throw new RuntimeException("ClassCastException expected");
+         } catch (ClassCastException expected) { }
+    }
 }

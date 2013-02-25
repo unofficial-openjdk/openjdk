@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.util.function;
+
+package java.util.jar;
 
 /**
- * An operation upon a {@code long} input value. The operation may modify
- * external state.
+ * Thrown to indicate an attempt to access a JAR file with a {@link
+ * Attributes.Name#PROFILE Profile} attribute that names a profile that
+ * is not supported by this runtime.
  *
- * <p/>This is the primitive type specialization of {@link Block} for
- * {@code long} and also may be used as a {@code Block<Long>}.
- *
- * @since 1.8
+ * @since   1.8
  */
-@FunctionalInterface
-public interface LongBlock {
+public class UnsupportedProfileException extends RuntimeException {
+    private static final long serialVersionUID = -1834773870678792406L;
 
     /**
-     * Use the {@code long} input value in an operation which may modify
-     * external state.
-     *
-     * @param t the input value
+     * Constructs an {@code UnsupportedProfileException} with no detail
+     * message.
      */
-    public void accept(long t);
+    public UnsupportedProfileException() {
+    }
+
+    /**
+     * Constructs an {@code UnsupportedProfileException} with the
+     * specified detail message.
+     *
+     * @param message the detail message
+     */
+    public UnsupportedProfileException(String message) {
+        super(message);
+    }
 }

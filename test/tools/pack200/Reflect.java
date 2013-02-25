@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,24 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.util.function;
 
-/**
- * An operation upon an input object. The operation may modify that object or
- * external state (other objects).
- *
- * @param <T> The type of input objects to {@code accept}
- *
- * @since 1.8
+/* @test
+ * @summary Invoke getDeclaredMethods on Packer and Unpacker to ensure
+ *    that all types referenced in the method signatures is present.
  */
-@FunctionalInterface
-public interface Block<T> {
 
-    /**
-     * Use the input object in operations which may modify that object or
-     * external state (other objects).
-     *
-     * @param t the input object
-     */
-    public void accept(T t);
+import java.util.jar.Pack200;
+import java.util.jar.Pack200.Packer;
+import java.util.jar.Pack200.Unpacker;
+import java.lang.reflect.Method;
+
+public class Reflect {
+    static void printMethods(Class<?> c) {
+        System.out.println(c);
+        for (Method m: c.getDeclaredMethods()) {
+            System.out.println("    " + m);
+        }
+    }
+    public static void main(String[] args) {
+        printMethods(Pack200.Packer.class);
+        printMethods(Pack200.Unpacker.class);
+        printMethods(Pack200.newPacker().getClass());
+        printMethods(Pack200.newUnpacker().getClass());
+    }
 }

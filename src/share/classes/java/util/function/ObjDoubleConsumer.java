@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,22 +25,24 @@
 package java.util.function;
 
 /**
- * An operation upon a {@code double} input value. The operation may modify
- * external state.
+ * An operation which accepts an object reference and a double, and returns no
+ * result. This is the {@code (reference, double)} specialization of
+ * {@link BiConsumer}. Unlike most other functional interfaces,
+ * {@code ObjDoubleConsumer} is expected to operate via side-effects.
  *
- * <p/>This is the primitive type specialization of {@link Block} for
- * {@code double} and also may be used as a {@code Block<Double>}.
+ * @param <T> Type of reference argument to {@code accept()}.
  *
+ * @see BiConsumer
  * @since 1.8
  */
 @FunctionalInterface
-public interface DoubleBlock {
+public interface ObjDoubleConsumer<T> {
 
     /**
-     * Use the {@code double} input value in an operation which may modify
-     * external state.
+     * Accept a set of input values.
      *
-     * @param t the input value
+     * @param t an input object
+     * @param value an input value
      */
-    public void accept(double t);
+    public void accept(T t, double value);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package java.util.function;
 
-package sun.lwawt.macosx;
+/**
+ * An operation which accepts a single long argument and returns no result.
+ * This is the {@code long}-consuming primitive type specialization of
+ * {@link Consumer}. Unlike most other functional interfaces, {@code LongConsumer}
+ * is expected to operate via side-effects.
+ *
+ * @see Consumer
+ * @since 1.8
+ */
+@FunctionalInterface
+public interface LongConsumer {
 
-// This exists strictly to work around the fact that java.awt.Conditional isn't a public class.
-// It uses java reflection to get the EventDispatchThread class and call a MacOSX only
-// method on it.
-//
-// NOTE: This uses reflection in its implementation, so it is not for performance critical code.
-//
-// See java.awt.EventDispatchThread and apple.awt.CPrintJob for more.
-//
-public abstract class EventDispatchAccess {
-    public native void pumpEventsAndWait();
-    public abstract boolean evaluate();
+    /**
+     * Accept an input value.
+     *
+     * @param value the input value
+     */
+    public void accept(long value);
 }
