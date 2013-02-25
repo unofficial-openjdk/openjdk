@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2013 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,14 @@ public final class ReflectUtil {
         return cls.newInstance();
     }
 
+    public static void ensureClassAccess(Class clazz)
+           throws IllegalAccessException
+    {
+        int mod = clazz.getModifiers();
+        if ( ! Modifier.isPublic(mod) ){
+            throw new IllegalAccessException("Class is not public and can't be instantiated");
+        }
+    }
     /*
      * Reflection.ensureMemberAccess is overly-restrictive
      * due to a bug. We awkwardly work around it for now.
