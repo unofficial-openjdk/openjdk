@@ -383,10 +383,14 @@ void VMThread::evaluate_operation(VM_Operation* op) {
     op->evaluate();
 
     if (event.should_commit()) {
+      bool is_concurrent = op->evaluate_concurrently();
       event.set_operation(op->type());
       event.set_safepoint(op->evaluate_at_safepoint());
-      event.set_blocking(!op->evaluate_concurrently());
-      event.set_caller(op->calling_thread()->osthread()->thread_id());
+      event.set_blocking(!is_concurrent);
+      // Only write caller thread information for non-concurrent vm operations.
+      // For concurrent vm operations, the thread id is set to 0 indicating thread is unknown.
+      // This is because the caller thread could have exited already.
+      event.set_caller(is_concurrent ? 0 : op->calling_thread()->osthread()->thread_id());
       event.commit();
     }
 
