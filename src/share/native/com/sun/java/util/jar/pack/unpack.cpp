@@ -267,11 +267,13 @@ int entry::typeSize() {
 }
 
 inline cpindex* cpool::getFieldIndex(entry* classRef) {
+  if (classRef == NULL) { abort("missing class reference"); return NULL; }
   assert(classRef->tagMatches(CONSTANT_Class));
   assert((uint)classRef->inord < (uint)tag_count[CONSTANT_Class]);
   return &member_indexes[classRef->inord*2+0];
 }
 inline cpindex* cpool::getMethodIndex(entry* classRef) {
+  if (classRef == NULL) { abort("missing class reference"); return NULL; }
   assert(classRef->tagMatches(CONSTANT_Class));
   assert((uint)classRef->inord < (uint)tag_count[CONSTANT_Class]);
   return &member_indexes[classRef->inord*2+1];
@@ -1238,6 +1240,7 @@ void unpacker::read_double_refs(band& cp_band, byte ref1Tag, byte ref2Tag,
     entry& e = cpMap[i];
     e.refs = U_NEW(entry*, e.nrefs = 2);
     e.refs[0] = cp_band1.getRef();
+    CHECK;
     e.refs[1] = cp_band2.getRef();
     CHECK;
   }
@@ -1963,6 +1966,7 @@ void unpacker::read_attr_defs() {
     int    attrc   = ADH_BYTE_CONTEXT(header);
     int    idx     = ADH_BYTE_INDEX(header);
     entry* name    = attr_definition_name.getRef();
+    CHECK;
     entry* layout  = attr_definition_layout.getRef();
     CHECK;
     attr_defs[attrc].defineLayout(idx, name, layout->value.b.strval());
@@ -2067,7 +2071,9 @@ void unpacker::read_ics() {
     if (ics[i].name == NO_ENTRY_YET) {
       // Long form.
       ics[i].outer = ic_outer_class.getRefN();
+      CHECK;
       ics[i].name  = ic_name.getRefN();
+      CHECK;
     } else {
       // Fill in outer and name based on inner.
       bytes& n = ics[i].inner->value.b;
@@ -2583,6 +2589,7 @@ void unpacker::putlayout(band** body) {
           e = b.getRefUsing(cp.getKQIndex());
         else
           e = b.getRefN();
+        CHECK;
         switch (b.le_len) {
         case 0: break;
         case 1: putu1ref(e); break;
@@ -2964,7 +2971,7 @@ void unpacker::read_bcs() {
 
 void unpacker::read_bands() {
   byte* rp0 = rp;
-
+  CHECK;
   read_file_header();
   CHECK;
 
@@ -3632,10 +3639,12 @@ void unpacker::dump_options() {
 // packed file and len is the length of the buffer.
 // If null, the callback is used to fill an internal buffer.
 void unpacker::start(void* packptr, size_t len) {
+  CHECK;
   NOT_PRODUCT(debug_u = this);
   if (packptr != null && len != 0) {
     inbytes.set((byte*) packptr, len);
   }
+  CHECK;
   read_bands();
 }
 
@@ -3766,6 +3775,7 @@ void unpacker::write_bc_ops() {
     NOT_PRODUCT(bc_superfield.setIndex(null));
     NOT_PRODUCT(bc_supermethod.setIndex(null));
   }
+  CHECK;
 
   for (int curIP = 0; ; curIP++) {
     int curPC = (int)(wpoffset() - codeBase);
@@ -3879,7 +3889,8 @@ void unpacker::write_bc_ops() {
         int coding = bc_initref.getInt();
         // Find the nth overloading of <init> in classRef.
         entry*   ref = null;
-        cpindex* ix = (classRef == null)? null: cp.getMethodIndex(classRef);
+        cpindex* ix = cp.getMethodIndex(classRef);
+        CHECK;
         for (int j = 0, which_init = 0; ; j++) {
           ref = (ix == null)? null: ix->get(j);
           if (ref == null)  break;  // oops, bad input
@@ -4150,6 +4161,7 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
       case ADH_BYTE(ATTR_CONTEXT_CLASS, CLASS_ATTR_EnclosingMethod):
         aname = cp.sym[cpool::s_EnclosingMethod];
         putref(class_EnclosingMethod_RC.getRefN());
+        CHECK_0;
         putref(class_EnclosingMethod_RDN.getRefN());
         break;
 
@@ -4168,6 +4180,7 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
         putu2(count = method_Exceptions_N.getInt());
         for (j = 0; j < count; j++) {
           putref(method_Exceptions_RC.getRefN());
+          CHECK_0;
         }
         break;
 
@@ -4191,16 +4204,18 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
             // (253)     [(1)(2)(2)]
             // (254)     [(1)(2)(2)(2)]
             putu2(code_StackMapTable_offset.getInt());
+            CHECK_0;
             for (int k = (tag - 251); k > 0; k--) {
               put_stackmap_type();
+              CHECK_0;
             }
           } else {
             // (255)     [(1)NH[(2)]NH[(2)]]
             putu2(code_StackMapTable_offset.getInt());
             putu2(j2 = code_StackMapTable_local_N.getInt());
-            while (j2-- > 0)  put_stackmap_type();
+            while (j2-- > 0) {put_stackmap_type(); CHECK_0;}
             putu2(j2 = code_StackMapTable_stack_N.getInt());
-            while (j2-- > 0)  put_stackmap_type();
+            while (j2-- > 0)  {put_stackmap_type(); CHECK_0;}
           }
         }
         break;
@@ -4224,7 +4239,9 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
           bii    += code_LocalVariableTable_span_O.getInt();
           putu2(to_bci(bii) - bci);
           putref(code_LocalVariableTable_name_RU.getRefN());
+          CHECK_0;
           putref(code_LocalVariableTable_type_RS.getRefN());
+          CHECK_0;
           putu2(code_LocalVariableTable_slot.getInt());
         }
         break;
@@ -4239,7 +4256,9 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
           bii    += code_LocalVariableTypeTable_span_O.getInt();
           putu2(to_bci(bii) - bci);
           putref(code_LocalVariableTypeTable_name_RU.getRefN());
+          CHECK_0;
           putref(code_LocalVariableTypeTable_type_RS.getRefN());
+          CHECK_0;
           putu2(code_LocalVariableTypeTable_slot.getInt());
         }
         break;
@@ -4267,7 +4286,7 @@ int unpacker::write_attrs(int attrc, julong indexBits) {
         break;
       }
     }
-
+    CHECK_0;
     if (aname == null) {
       // Unparse a compressor-defined attribute.
       layout_definition* lo = ad.getLayout(idx);
@@ -4366,6 +4385,7 @@ void unpacker::write_classfile_tail() {
   julong indexMask = ad.flagIndexMask();
 
   cur_class = class_this.getRef();
+  CHECK;
   cur_super = class_super.getRef();
 
   CHECK;
@@ -4380,6 +4400,7 @@ void unpacker::write_classfile_tail() {
   putu2(num = class_interface_count.getInt());
   for (i = 0; i < num; i++) {
     putref(class_interface.getRef());
+    CHECK;
   }
 
   write_members(class_field_count.getInt(),  ATTR_CONTEXT_FIELD);
@@ -4460,7 +4481,9 @@ void unpacker::write_classfile_tail() {
       flags &= ~ACC_IC_LONG_FORM;  // clear high bit if set to get clean zero
       extra_ic.flags = flags;
       extra_ic.outer = class_InnerClasses_outer_RCN.getRefN();
+      CHECK;
       extra_ic.name  = class_InnerClasses_name_RUN.getRefN();
+      CHECK;
       // Detect if this is an exact copy of the global tuple.
       if (global_ic != null) {
         if (global_ic->flags != extra_ic.flags ||

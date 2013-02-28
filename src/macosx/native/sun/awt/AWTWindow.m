@@ -829,9 +829,9 @@ AWT_ASSERT_NOT_APPKIT_THREAD;
         if ([nsWindow isKeyWindow]) [window.javaMenuBar deactivate];
         window.javaMenuBar = menuBar;
 
-        // if ([self isKeyWindow]) {
-        [CMenuBar activate:window.javaMenuBar modallyDisabled:NO];
-        // }
+        if ([nsWindow isKeyWindow]) {
+            [CMenuBar activate:window.javaMenuBar modallyDisabled:NO];
+        }
     }];
 
 JNF_COCOA_EXIT(env);

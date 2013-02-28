@@ -50,6 +50,15 @@ public interface IoTraceListener {
     /**
      * Called before data is read from a socket.
      *
+     * @return a context object
+     */
+    public Object socketReadBegin();
+
+    /**
+     * Called after data is read from the socket.
+     *
+     * @param context
+     *            the context returned by the previous call to socketReadBegin()
      * @param address
      *            the remote address the socket is bound to
      * @param port
@@ -57,31 +66,19 @@ public interface IoTraceListener {
      * @param timeout
      *            the SO_TIMEOUT value of the socket (in milliseconds) or 0 if
      *            there is no timeout set
-     * @return a context object
-     */
-    public Object socketReadBegin(InetAddress address, int port, int timeout);
-
-    /**
-     * Called after data is read from the socket.
-     *
-     * @param context
-     *            the context returned by the previous call to socketReadBegin()
      * @param bytesRead
      *            the number of bytes read from the socket, 0 if there was an
      *            error reading from the socket
      */
-    public void socketReadEnd(Object context, long bytesRead);
+    public void socketReadEnd(Object context, InetAddress address, int port,
+                              int timeout, long bytesRead);
 
     /**
      * Called before data is written to a socket.
      *
-     * @param address
-     *            the remote address the socket is bound to
-     * @param port
-     *            the remote port the socket is bound to
      * @return a context object
      */
-    public Object socketWriteBegin(InetAddress address, int port);
+    public Object socketWriteBegin();
 
     /**
      * Called after data is written to a socket.
@@ -89,11 +86,16 @@ public interface IoTraceListener {
      * @param context
      *            the context returned by the previous call to
      *            socketWriteBegin()
+     * @param address
+     *            the remote address the socket is bound to
+     * @param port
+     *            the remote port the socket is bound to
      * @param bytesWritten
      *            the number of bytes written to the socket, 0 if there was an
      *            error writing to the socket
      */
-    public void socketWriteEnd(Object context, long bytesWritten);
+    public void socketWriteEnd(Object context, InetAddress address, int port,
+                               long bytesWritten);
 
     /**
      * Called before data is read from a file.

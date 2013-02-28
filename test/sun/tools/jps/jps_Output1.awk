@@ -16,7 +16,12 @@ BEGIN	{
 }
 
 # or match on the condition that the class name is not available
-/^[0-9]+ -- process information unavailable$/	{
+/^[0-9]+ -- .*$/	{
+	    matched++;
+	}
+
+# or match an empty class name
+/^[0-9]+ $/	{
 	    matched++;
 	}
 

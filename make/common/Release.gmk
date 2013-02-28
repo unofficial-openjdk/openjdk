@@ -171,12 +171,20 @@ ifndef OPENJDK
 endif
 
 ifeq ($(PLATFORM), solaris)
-  MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
+  ifndef OPENJDK
+    MANBASEDIRS=$(CLOSED_SRC)/solaris/doc $(IMPORTDOCDIR)
+  else
+    MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
+  endif
   MAN1SUBDIR=sun/man/man1
 endif # solaris
 
 ifeq ($(PLATFORM), linux)
-  MANBASEDIRS=$(JDK_TOPDIR)/src/linux/doc $(IMPORTDOCDIR)
+  ifndef OPENJDK
+    MANBASEDIRS=$(CLOSED_SRC)/linux/doc $(IMPORTDOCDIR)
+  else
+    MANBASEDIRS=$(JDK_TOPDIR)/src/linux/doc $(IMPORTDOCDIR)
+  endif
   MAN1SUBDIR=man
   JA_DIRNAME=ja_JP.UTF-8
 endif # linux
