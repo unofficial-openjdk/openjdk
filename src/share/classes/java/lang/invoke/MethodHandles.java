@@ -762,6 +762,29 @@ public class MethodHandles {
                                            Class<?> callerClass,
                                            Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
             checkMethod(refc, method, false);
+
+            Class<?> refcAsSuper;
+            if (refc != lookupClass() &&
+                refc != (refcAsSuper = lookupClass().getSuperclass()) &&
+                refc.isAssignableFrom(lookupClass())) {
+                assert(!method.getName().equals("<init>"));  // not this code path
+                // Per JVMS 6.5, desc. of invokespecial instruction:
+                // If the method is in a superclass of the LC,
+                // and if our original search was above LC.super,
+                // repeat the search (symbolic lookup) from LC.super.
+                // FIXME: MemberName.resolve should handle this instead.
+                MemberName m2 = new MemberName(refcAsSuper,
+                                               method.getName(),
+                                               method.getMethodType(),
+                                               REF_invokeSpecial);
+                m2 = IMPL_NAMES.resolveOrNull(m2, true, lookupClassOrNull());
+                if (m2 == null)  throw new InternalError(method.toString());
+                method = m2;
+                refc = refcAsSuper;
+                // redo basic checks
+                checkMethod(refc, method, false);
+            }
+
             MethodHandle mh = MethodHandleImpl.findMethod(method, false, specialCaller);
             mh = maybeBindCaller(method, mh, callerClass);
             return restrictReceiver(method, mh, specialCaller);
