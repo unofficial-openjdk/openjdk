@@ -188,17 +188,7 @@ bool frame::safe_for_sender(JavaThread *thread) {
       return false;
     }
 
-    // Exception stubs don't make calls
-    if (sender_blob->is_exception_stub()) {
-      return false;
-    }
-
-    if (sender_blob->is_deoptimization_stub()) {
-        return false;
-    }
-
     // Could be the call_stub
-
     if (StubRoutines::returns_to_call_stub(sender_pc)) {
       intptr_t *saved_fp = (intptr_t*)*(sender_sp - frame::sender_sp_offset);
       bool saved_fp_safe = ((address)saved_fp < thread->stack_base()) && (saved_fp > sender_sp);
@@ -228,10 +218,10 @@ bool frame::safe_for_sender(JavaThread *thread) {
       }
     }
 
-    // If the frame size is 0 something is bad because every nmethod has a non-zero frame size
+    // If the frame size is 0 something (or less) is bad because every nmethod has a non-zero frame size
     // because the return address counts against the callee's frame.
 
-    if (sender_blob->frame_size() == 0) {
+    if (sender_blob->frame_size() <= 0) {
       assert(!sender_blob->is_nmethod(), "should count return address at least");
       return false;
     }
@@ -241,7 +231,9 @@ bool frame::safe_for_sender(JavaThread *thread) {
     // should not be anything but the call stub (already covered), the interpreter (already covered)
     // or an nmethod.
 
-    assert(sender_blob->is_runtime_stub() || sender_blob->is_nmethod(), "Impossible call chain");
+    if (!sender_blob->is_nmethod()) {
+        return false;
+    }
 
     // Could put some more validation for the potential non-interpreted sender
     // frame we'd create by calling sender if I could think of any. Wait for next crash in forte...
