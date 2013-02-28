@@ -136,7 +136,7 @@ public class JarSignerResources_ja extends java.util.ListResourceBundle {
         {"jar.verified.", "jar\u304C\u691C\u8A3C\u3055\u308C\u307E\u3057\u305F\u3002"},
         {"jarsigner.", "jarsigner: "},
         {"signature.filename.must.consist.of.the.following.characters.A.Z.0.9.or.",
-                "\u7F72\u540D\u306E\u30D5\u30A1\u30A4\u30EB\u540D\u306B\u4F7F\u7528\u3067\u304D\u308B\u6587\u5B57\u306F\u3001A-Z\u30010-9\u3001_\u3001- \u306E\u307F\u3067\u3059\u3002"},
+                "\u7F72\u540D\u306E\u30D5\u30A1\u30A4\u30EB\u540D\u306F\u6B21\u306E\u6587\u5B57\u3067\u69CB\u6210\u3059\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059: A-Z 0-9 _ -"},
         {"unable.to.open.jar.file.", "\u6B21\u306Ejar\u30D5\u30A1\u30A4\u30EB\u3092\u958B\u304F\u3053\u3068\u304C\u3067\u304D\u307E\u305B\u3093: "},
         {"unable.to.create.", "\u4F5C\u6210\u3067\u304D\u307E\u305B\u3093: "},
         {".adding.", "   \u8FFD\u52A0\u4E2D: "},
