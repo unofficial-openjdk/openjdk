@@ -46,14 +46,6 @@ public final class ReflectUtil {
         return cls.newInstance();
     }
 
-    public static void ensureClassAccess(Class clazz)
-           throws IllegalAccessException
-    {
-        int mod = clazz.getModifiers();
-        if ( ! Modifier.isPublic(mod) ){
-            throw new IllegalAccessException("Class is not public and can't be instantiated");
-        }
-    }
     /*
      * Reflection.ensureMemberAccess is overly-restrictive
      * due to a bug. We awkwardly work around it for now.
