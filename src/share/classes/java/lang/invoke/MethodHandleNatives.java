@@ -393,11 +393,14 @@ class MethodHandleNatives {
      */
     // FIXME: Replace this pattern match by an annotation @sun.reflect.CallerSensitive.
     static boolean isCallerSensitive(MemberName mem) {
-        assert(mem.isInvocable());
+        if (!mem.isInvocable())  return false;  // fields are not caller sensitive
         Class<?> defc = mem.getDeclaringClass();
         switch (mem.getName()) {
         case "doPrivileged":
+        case "doPrivilegedWithCombiner":
             return defc == java.security.AccessController.class;
+        case "checkMemberAccess":
+            return canBeCalledVirtual(mem, java.lang.SecurityManager.class);
         case "getUnsafe":
             return defc == sun.misc.Unsafe.class;
         case "lookup":
@@ -470,7 +473,7 @@ class MethodHandleNatives {
             if (defc == java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class)  return true;
             break;
         case "getContextClassLoader":
-            return defc == java.lang.Thread.class;
+            return canBeCalledVirtual(mem, java.lang.Thread.class);
         case "getPackage":
         case "getPackages":
             return defc == java.lang.Package.class;
@@ -488,13 +491,24 @@ class MethodHandleNatives {
             break;
         case "getCallerClassLoader":
             return defc == java.lang.ClassLoader.class;
+        case "registerAsParallelCapable":
+            return canBeCalledVirtual(mem, java.lang.ClassLoader.class);
         case "getProxyClass":
         case "newProxyInstance":
             return defc == java.lang.reflect.Proxy.class;
+        case "asInterfaceInstance":
+            return defc == java.lang.invoke.MethodHandleProxies.class;
         case "getBundle":
         case "clearCache":
             return defc == java.util.ResourceBundle.class;
         }
         return false;
+    }
+    static boolean canBeCalledVirtual(MemberName symbolicRef, Class<?> definingClass) {
+        Class<?> symbolicRefClass = symbolicRef.getDeclaringClass();
+        if (symbolicRefClass == definingClass)  return true;
+        if (symbolicRef.isStatic() || symbolicRef.isPrivate())  return false;
+        return (definingClass.isAssignableFrom(symbolicRefClass) ||  // Msym overrides Mdef
+                symbolicRefClass.isInterface());                     // Mdef implements Msym
     }
 }
