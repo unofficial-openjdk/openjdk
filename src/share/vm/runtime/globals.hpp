@@ -3619,6 +3619,9 @@ class CommandLineFlags {
           "EINTR for I/O operations results in OS_INTRPT. The default value"\
           " of this flag is true for JDK 6 and earlier")                    \
                                                                             \
+  product(bool, AllowNonVirtualCalls, false,                                \
+         "Obey the ACC_SUPER flag and allow invokenonvirtual calls")        \
+                                                                            \
   diagnostic(bool, WhiteBoxAPI, false,                                      \
           "Enable internal testing APIs")                                   \
                                                                             \
