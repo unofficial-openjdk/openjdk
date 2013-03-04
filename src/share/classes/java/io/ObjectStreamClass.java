@@ -1135,7 +1135,14 @@ public class ObjectStreamClass implements Serializable {
             end = end.getSuperclass();
         }
 
+        HashSet<String> oscNames = new HashSet<String>(3);
+
         for (ObjectStreamClass d = this; d != null; d = d.superDesc) {
+            if (oscNames.contains(d.name)) {
+                throw new InvalidClassException("Circular reference.");
+            } else {
+                oscNames.add(d.name);
+            }
 
             // search up inheritance hierarchy for class with matching name
             String searchName = (d.cl != null) ? d.cl.getName() : d.name;
