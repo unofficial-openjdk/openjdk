@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.security.Permission;
 import java.util.Map;
 import java.util.logging.Level;
@@ -223,7 +224,7 @@ public class MBeanInstantiator {
         // Instantiate the new object
         try {
             ReflectUtil.checkPackageAccess(theClass);
-            ReflectUtil.ensureClassAccess(theClass);
+            ensureClassAccess(theClass);
             moi= cons.newInstance();
         } catch (InvocationTargetException e) {
             // Wrap the exception.
@@ -299,7 +300,7 @@ public class MBeanInstantiator {
         }
         try {
             ReflectUtil.checkPackageAccess(theClass);
-            ReflectUtil.ensureClassAccess(theClass);
+            ensureClassAccess(theClass);
             moi = cons.newInstance(params);
         }
         catch (NoSuchMethodError error) {
@@ -739,6 +740,15 @@ public class MBeanInstantiator {
                                                   objectName,
                                                   actions);
             sm.checkPermission(perm);
+        }
+    }
+
+    private static void ensureClassAccess(Class clazz)
+            throws IllegalAccessException
+    {
+        int mod = clazz.getModifiers();
+        if (!Modifier.isPublic(mod)) {
+            throw new IllegalAccessException("Class is not public and can't be instantiated");
         }
     }
 }
