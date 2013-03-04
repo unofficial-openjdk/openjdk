@@ -1268,11 +1268,17 @@ public class LWWindowPeer
         grabbingWindow = this;
     }
 
-    void ungrab() {
+    final void ungrab(boolean doPost) {
         if (isGrabbing()) {
             grabbingWindow = null;
-            postEvent(new UngrabEvent(getTarget()));
+            if (doPost) {
+                postEvent(new UngrabEvent(getTarget()));
+            }
         }
+    }
+
+    void ungrab() {
+        ungrab(true);
     }
 
     private boolean isGrabbing() {
