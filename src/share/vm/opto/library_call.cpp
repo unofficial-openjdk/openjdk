@@ -3931,7 +3931,8 @@ bool LibraryCallKit::is_method_invoke_or_aux_frame(JVMState* jvms) {
       }
     }
   }
-  else if (method->is_method_handle_adapter()) {
+
+  if (method->is_method_handle_adapter()) {
     // This is an internal adapter frame from the MethodHandleCompiler -- skip it
     return true;
   }
@@ -5476,4 +5477,3 @@ bool LibraryCallKit::inline_reference_get() {
   push(result);
   return true;
 }
-
