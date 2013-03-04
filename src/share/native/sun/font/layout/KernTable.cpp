@@ -92,16 +92,16 @@ struct KernTableHeader {
  * TODO: support multiple subtables
  * TODO: respect header flags
  */
-KernTable::KernTable(const LEFontInstance* font_, const void* tableData)
-  : pairs(0), font(font_)
+KernTable::KernTable(const LETableReference &table, LEErrorCode &success)
+  : pairs(table, success), pairsSwapped(NULL), fTable(table)
 {
-  const KernTableHeader* header = (const KernTableHeader*)tableData;
-  if (header == 0) {
+  if(LE_FAILURE(success) || (fTable.isEmpty())) {
 #if DEBUG
     fprintf(stderr, "no kern data\n");
 #endif
     return;
   }
+  LEReferenceTo<KernTableHeader> header(fTable, success);
 
 #if DEBUG
   // dump first 32 bytes of header
@@ -115,12 +115,17 @@ KernTable::KernTable(const LEFontInstance* font_, const void* tableData)
   }
 #endif
 
-  if (header->version == 0 && SWAPW(header->nTables) > 0) {
-    const SubtableHeader* subhead = (const SubtableHeader*)((char*)tableData + KERN_TABLE_HEADER_SIZE);
-    if (subhead->version == 0) {
+  if(LE_FAILURE(success)) return;
+
+  if (!header.isEmpty() && header->version == 0 && SWAPW(header->nTables) > 0) {
+    LEReferenceTo<SubtableHeader> subhead(header, success, KERN_TABLE_HEADER_SIZE);
+
+    if (LE_SUCCESS(success) && !subhead.isEmpty() && subhead->version == 0) {
       coverage = SWAPW(subhead->coverage);
       if (coverage & COVERAGE_HORIZONTAL) { // only handle horizontal kerning
-        const Subtable_0* table = (const Subtable_0*)((char*)subhead + KERN_SUBTABLE_HEADER_SIZE);
+        LEReferenceTo<Subtable_0> table(subhead, success, KERN_SUBTABLE_HEADER_SIZE);
+
+        if(table.isEmpty() || LE_FAILURE(success)) return;
 
         nPairs        = SWAPW(table->nPairs);
 
@@ -134,17 +139,17 @@ KernTable::KernTable(const LEFontInstance* font_, const void* tableData)
         rangeShift    = (nPairs * KERN_PAIRINFO_SIZE) - searchRange;
 #endif
 
-        pairs = (PairInfo*)font->getKernPairs();
-        if (pairs == NULL) {
-            char *pairData = (char*)table + KERN_SUBTABLE_0_HEADER_SIZE;
-            char *pptr = pairData;
-            pairs =  (PairInfo*)(malloc(nPairs*sizeof(PairInfo)));
-            PairInfo *p = (PairInfo*)pairs;
-            for (int i = 0; i < nPairs; i++, pptr += KERN_PAIRINFO_SIZE, p++) {
-              memcpy(p, pptr, KERN_PAIRINFO_SIZE);
+        if(LE_SUCCESS(success) && nPairs>0) {
+          pairs.setToOffsetInParent(table, KERN_SUBTABLE_0_HEADER_SIZE, nPairs, success);
+        }
+        if (LE_SUCCESS(success) && pairs.isValid()) {
+            pairsSwapped =  (PairInfo*)(malloc(nPairs*sizeof(PairInfo)));
+            PairInfo *p = (PairInfo*)pairsSwapped;
+            for (int i = 0; LE_SUCCESS(success) && i < nPairs; i++, p++) {
+              memcpy(p, pairs.getAlias(i,success), KERN_PAIRINFO_SIZE);
               p->key = SWAPL(p->key);
             }
-            font->setKernPairs((void*)pairs);
+            fTable.getFont()->setKernPairs((void*)pairsSwapped); // store it
         }
 
 #if DEBUG
@@ -194,10 +199,12 @@ KernTable::KernTable(const LEFontInstance* font_, const void* tableData)
  * Process the glyph positions.  The positions array has two floats for each
  * glyph, plus a trailing pair to mark the end of the last glyph.
  */
-void KernTable::process(LEGlyphStorage& storage)
+void KernTable::process(LEGlyphStorage& storage, LEErrorCode &success)
 {
-  if (pairs) {
-    LEErrorCode success = LE_NO_ERROR;
+  if(LE_FAILURE(success)) return;
+
+  if (pairsSwapped) {
+    success = LE_NO_ERROR;
 
     le_uint32 key = storage[0]; // no need to mask off high bits
     float adjust = 0;
@@ -209,7 +216,7 @@ void KernTable::process(LEGlyphStorage& storage)
       // so either I have to swap the element each time I examine it, or I have to swap
       // all the elements ahead of time and store them in the font
 
-      const PairInfo* p = pairs;
+      const PairInfo* p = pairsSwapped;
       const PairInfo* tp = (const PairInfo*)(p + (rangeShift/KERN_PAIRINFO_SIZE)); /* rangeshift is in original table bytes */
       if (key > tp->key) {
         p = tp;
@@ -225,7 +232,7 @@ void KernTable::process(LEGlyphStorage& storage)
         tp = (const PairInfo*)(p + (probe/KERN_PAIRINFO_SIZE));
         le_uint32 tkey = tp->key;
 #if DEBUG
-        fprintf(stdout, "   %.3d (%0.8x)\n", (tp - pairs), tkey);
+        fprintf(stdout, "   %.3d (%0.8x)\n", (tp - pairsSwapped), tkey);
 #endif
         if (tkey <= key) {
           if (tkey == key) {
@@ -240,10 +247,10 @@ void KernTable::process(LEGlyphStorage& storage)
             // device transform, or a faster way, such as moving the
             // entire kern table up to Java.
             LEPoint pt;
-            pt.fX = font->xUnitsToPoints(value);
+            pt.fX = fTable.getFont()->xUnitsToPoints(value);
             pt.fY = 0;
 
-            font->getKerningAdjustment(pt);
+            fTable.getFont()->getKerningAdjustment(pt);
             adjust += pt.fX;
             break;
           }
