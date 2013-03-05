@@ -97,7 +97,6 @@ bool frame::safe_for_sender(JavaThread *thread) {
     // check for a valid frame_size, otherwise we are unlikely to get a valid sender_pc
 
     if (!Interpreter::contains(_pc) && _cb->frame_size() <= 0) {
-      //assert(0, "Invalid frame_size");
       return false;
     }
 
@@ -106,20 +105,22 @@ bool frame::safe_for_sender(JavaThread *thread) {
         return false;
       }
     }
+
+    // Could just be some random pointer within the codeBlob
+    if (!_cb->code_contains(_pc)) {
+      return false;
+    }
+
     // Entry frame checks
     if (is_entry_frame()) {
       // an entry frame must have a valid fp.
 
       if (!fp_safe) return false;
-
       // Validate the JavaCallWrapper an entry frame must have
 
       address jcw = (address)entry_frame_call_wrapper();
-
       bool jcw_safe = (jcw < thread->stack_base()) && ( jcw > fp);
-
       return jcw_safe;
-
     }
 
     intptr_t* sender_sp = NULL;

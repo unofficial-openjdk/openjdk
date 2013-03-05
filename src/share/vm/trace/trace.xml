@@ -283,7 +283,7 @@ Declares a structure type that can be used in other events.
       <value type="VMOPERATIONTYPE" field="operation" label="Operation" />
       <value type="BOOLEAN" field="safepoint" label="At Safepoint" description="If the operation occured at a safepoint."/>
       <value type="BOOLEAN" field="blocking" label="Caller Blocked" description="If the calling thread was blocked until the operation was complete."/>
-      <value type="OSTHREAD" field="caller" label="Caller" transition="TO"/>
+      <value type="OSTHREAD" field="caller" label="Caller" transition="TO" description="Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknown."/>
     </event>
 
   </events>

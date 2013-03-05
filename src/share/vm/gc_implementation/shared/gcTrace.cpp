@@ -27,15 +27,14 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "memory/referenceProcessorStats.hpp"
-#include "runtime/atomic.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 #define assert_unset_gc_id() assert(_shared_gc_info.id() == SharedGCInfo::UNSET_GCID, "GC already started?")
 #define assert_set_gc_id() assert(_shared_gc_info.id() != SharedGCInfo::UNSET_GCID, "GC not started?")
 
-static volatile jlong GCTracer_next_gc_id = 0;
+static jlong GCTracer_next_gc_id = 0;
 static GCId create_new_gc_id() {
-  return Atomic::add((jlong)1, &GCTracer_next_gc_id);
+  return GCTracer_next_gc_id++;
 }
 
 void GCTracer::report_gc_start_impl(GCCause::Cause cause, jlong timestamp) {

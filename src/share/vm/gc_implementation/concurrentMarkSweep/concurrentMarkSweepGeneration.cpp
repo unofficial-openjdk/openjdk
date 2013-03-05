@@ -2285,8 +2285,6 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
         {
           ReleaseForegroundGC x(this);
           stats().record_cms_begin();
-          register_gc_start(GCCause::_cms_concurrent_mark);
-
           VM_CMS_Initial_Mark initial_mark_op(this);
           VMThread::execute(&initial_mark_op);
         }
@@ -2423,7 +2421,6 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
 
 void CMSCollector::register_gc_start(GCCause::Cause cause) {
   _cms_start_registered = true;
-  CollectedHeap* heap = GenCollectedHeap::heap();
   _gc_timer_cm->register_gc_start(os::elapsed_counter());
   _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
 }
