@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 # @summary Verify that class loaded outside of application class loader is
 #          correctly resolved during deserialization when read in by custom
 #          readObject() method of a bootstrap class (in this case,
-#          java.awt.Button).
+#          java.util.Vector).
 
 if [ "${TESTJAVA}" = "" ]
 then

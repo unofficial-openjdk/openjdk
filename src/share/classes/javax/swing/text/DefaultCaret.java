@@ -403,6 +403,10 @@ public class DefaultCaret extends Rectangle implements Caret, FocusListener, Mou
      * @see MouseListener#mouseClicked
      */
     public void mouseClicked(MouseEvent e) {
+        if (getComponent() == null) {
+            return;
+        }
+
         int nclicks = SwingUtilities2.getAdjustedClickCount(getComponent(), e);
 
         if (! e.isConsumed()) {
@@ -1326,7 +1330,7 @@ public class DefaultCaret extends Rectangle implements Caret, FocusListener, Mou
         if ( ! SwingUtilities2.canCurrentEventAccessSystemClipboard() ) {
             return;
         }
-        if (this.dot != this.mark && component != null) {
+        if (this.dot != this.mark && component != null && component.hasFocus()) {
             Clipboard clip = getSystemSelection();
             if (clip != null) {
                 String selectedText;

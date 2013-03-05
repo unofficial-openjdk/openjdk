@@ -47,11 +47,11 @@ BUG_SUBMIT_LINE = <a href="$(BUG_SUBMIT_URL)">Submit a bug or feature</a>
 
 # Url to devdocs page
 #   Was: http://java.sun.com/javase/6/webnotes/devdocs-vs-specs.html
-DEV_DOCS_URL-5 = http://java.sun.com/j2se/1.5.0/docs/index.html
-DEV_DOCS_URL-6 = http://download.oracle.com/javase/6/docs/index.html
-DEV_DOCS_URL-7 = http://download.oracle.com/javase/7/docs/index.html
+DEV_DOCS_URL-5 = http://docs.oracle.com/javase/1.5.0/docs/index.html
+DEV_DOCS_URL-6 = http://docs.oracle.com/javase/6/docs/index.html
+DEV_DOCS_URL-7 = http://docs.oracle.com/javase/7/docs/index.html
 DEV_DOCS_URL = $(DEV_DOCS_URL-$(JDK_MINOR_VERSION))
-DOCS_BASE_URL = http://download.oracle.com/javase/7/docs
+DOCS_BASE_URL = http://docs.oracle.com/javase/7/docs
 
 # Url to Java Language Spec
 #JLS3_URL = http://java.sun.com/docs/books/jls/

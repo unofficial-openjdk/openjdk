@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,18 +28,22 @@
 # of sample input classes.
 # @author Peter Jones
 #
-# @build AgentServerImpl
-# @build AppleImpl
-# @build AppleUserImpl
-# @build ComputeServerImpl
-# @build CountServerImpl
-# @build DayTimeServerImpl
-# @build G1Impl
-# @build MyObjectImpl
-# @build NotActivatableServerImpl
-# @build OrangeEchoImpl
-# @build OrangeImpl
-# @build ServerImpl
+# @library ../../../../../java/rmi/testlibrary
+#
+# @build TestLibrary
+#     AgentServerImpl
+#     AppleImpl
+#     AppleUserImpl
+#     ComputeServerImpl
+#     CountServerImpl
+#     DayTimeServerImpl
+#     G1Impl
+#     MyObjectImpl
+#     NotActivatableServerImpl
+#     OrangeEchoImpl
+#     OrangeImpl
+#     ServerImpl
+#
 # @run shell run.sh
 
 if [ "${TESTJAVA}" = "" ]

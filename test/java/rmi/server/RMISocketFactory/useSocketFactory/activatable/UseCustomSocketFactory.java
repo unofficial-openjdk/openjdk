@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,10 +28,7 @@
  * @author Ann Wollrath
  *
  * @library ../../../../testlibrary
- * @build Echo
- * @build EchoImpl
- * @build EchoImpl_Stub
- * @build UseCustomSocketFactory
+ * @build TestLibrary Echo EchoImpl EchoImpl_Stub
  * @run main/othervm/policy=security.policy/timeout=360 UseCustomSocketFactory
  */
 
@@ -42,8 +39,8 @@ import java.rmi.server.*;
 import java.rmi.registry.*;
 
 public class UseCustomSocketFactory {
+    static final int REGISTRY_PORT = TestLibrary.getUnusedRandomPort();
 
-    final static int REGISTRY_PORT = 2006;
     static String[] protocol = new String[] { "", "compress", "xor" };
 
     public static void main(String[] args) {
@@ -68,7 +65,7 @@ public class UseCustomSocketFactory {
                     " -C-Djava.security.manager=java.rmi.RMISecurityManager "});
             rmid.start();
 
-            Echo[] echo = spawnAndTest();
+            Echo[] echo = spawnAndTest(rmid.getPort());
             reactivateAndTest(echo);
         } catch (IOException e) {
             TestLibrary.bomb("creating rmid", e);
@@ -78,17 +75,20 @@ public class UseCustomSocketFactory {
         }
     }
 
-    private static Echo[] spawnAndTest() {
+    private static Echo[] spawnAndTest(int rmidPort) {
 
         System.err.println("\nCreate Test-->");
 
         Echo[] echo = new Echo[protocol.length];
 
         for (int i = 0; i < protocol.length; i++) {
-
             JavaVM serverVM = new JavaVM("EchoImpl",
                                          "-Djava.security.policy=" +
-                                         TestParams.defaultPolicy,
+                                         TestParams.defaultPolicy +
+                                         " -Drmi.registry.port=" +
+                                         REGISTRY_PORT +
+                                         " -Djava.rmi.activation.port=" +
+                                         rmidPort,
                                          protocol[i]);
 
             System.err.println("\nusing protocol: " +

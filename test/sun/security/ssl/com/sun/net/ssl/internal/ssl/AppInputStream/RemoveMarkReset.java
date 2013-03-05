@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4413664
  * @summary remove mark/reset functionality from AppInputStream
+ * @run main/othervm RemoveMarkReset
  * @author Brad Wetmore
  */
 

@@ -344,6 +344,8 @@ class IOUtil {
 
     static native int iovMax();
 
+    static native int fdLimit();
+
     static native void initIDs();
 
     static {

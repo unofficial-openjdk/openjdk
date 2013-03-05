@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ class SolarisUserDefinedFileAttributeView
             if (bytes.length <= 1 ||
                 (bytes.length == 2 && bytes[1] == '.'))
             {
-                throw new FileSystemException(file.getPathForExecptionMessage(),
+                throw new FileSystemException(file.getPathForExceptionMessage(),
                     null, "'" + name + "' is not a valid name");
             }
         }
@@ -96,7 +96,7 @@ class SolarisUserDefinedFileAttributeView
                 }
                 return Collections.unmodifiableList(list);
             } catch (UnixException x) {
-                throw new FileSystemException(file.getPathForExecptionMessage(),
+                throw new FileSystemException(file.getPathForExceptionMessage(),
                     null, "Unable to get list of extended attributes: " +
                     x.getMessage());
             }
@@ -126,7 +126,7 @@ class SolarisUserDefinedFileAttributeView
                     close(afd);
                 }
             } catch (UnixException x) {
-                throw new FileSystemException(file.getPathForExecptionMessage(),
+                throw new FileSystemException(file.getPathForExceptionMessage(),
                     null, "Unable to get size of extended attribute '" + name +
                     "': " + x.getMessage());
             }
@@ -147,7 +147,7 @@ class SolarisUserDefinedFileAttributeView
                 int afd = openat(fd, nameAsBytes(file,name), (O_RDONLY|O_XATTR), 0);
 
                 // wrap with channel
-                FileChannel fc = UnixChannelFactory.newFileChannel(afd, true, false);
+                FileChannel fc = UnixChannelFactory.newFileChannel(afd, file.toString(), true, false);
 
                 // read to EOF (nothing we can do if I/O error occurs)
                 try {
@@ -165,7 +165,7 @@ class SolarisUserDefinedFileAttributeView
                     fc.close();
                 }
             } catch (UnixException x) {
-                throw new FileSystemException(file.getPathForExecptionMessage(),
+                throw new FileSystemException(file.getPathForExceptionMessage(),
                     null, "Unable to read extended attribute '" + name +
                     "': " + x.getMessage());
             }
@@ -188,7 +188,7 @@ class SolarisUserDefinedFileAttributeView
                                  UnixFileModeAttribute.ALL_PERMISSIONS);
 
                 // wrap with channel
-                FileChannel fc = UnixChannelFactory.newFileChannel(afd, false, true);
+                FileChannel fc = UnixChannelFactory.newFileChannel(afd, file.toString(), false, true);
 
                 // write value (nothing we can do if I/O error occurs)
                 try {
@@ -201,7 +201,7 @@ class SolarisUserDefinedFileAttributeView
                     fc.close();
                 }
             } catch (UnixException x) {
-                throw new FileSystemException(file.getPathForExecptionMessage(),
+                throw new FileSystemException(file.getPathForExceptionMessage(),
                     null, "Unable to write extended attribute '" + name +
                     "': " + x.getMessage());
             }
@@ -224,7 +224,7 @@ class SolarisUserDefinedFileAttributeView
                 close(dfd);
             }
         } catch (UnixException x) {
-            throw new FileSystemException(file.getPathForExecptionMessage(),
+            throw new FileSystemException(file.getPathForExceptionMessage(),
                 null, "Unable to delete extended attribute '" + name +
                 "': " + x.getMessage());
         } finally {

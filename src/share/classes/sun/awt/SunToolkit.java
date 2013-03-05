@@ -196,7 +196,7 @@ public abstract class SunToolkit extends Toolkit
     public abstract RobotPeer createRobot(Robot target, GraphicsDevice screen)
         throws AWTException;
 
-    public abstract KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager)
+    public abstract KeyboardFocusManagerPeer getKeyboardFocusManagerPeer()
         throws HeadlessException;
 
     /**
@@ -1908,6 +1908,13 @@ public abstract class SunToolkit extends Toolkit
     }
 
     public boolean isTranslucencyCapable(GraphicsConfiguration gc) {
+        return false;
+    }
+
+    /**
+     * Returns true if swing backbuffer should be translucent.
+     */
+    public boolean isSwingBackbufferTranslucencySupported() {
         return false;
     }
 

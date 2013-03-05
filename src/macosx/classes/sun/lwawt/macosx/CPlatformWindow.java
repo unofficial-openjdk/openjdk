@@ -64,8 +64,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private static native void nativeSynthesizeMouseEnteredExitedEvents(long nsWindowPtr);
     private static native void nativeDispose(long nsWindowPtr);
 
-    private static native int nativeGetNSWindowDisplayID_AppKitThread(long nsWindowPtr);
-
     // Loger to report issues happened during execution but that do not affect functionality
     private static final PlatformLogger logger = PlatformLogger.getLogger("sun.lwawt.macosx.CPlatformWindow");
     private static final PlatformLogger focusLogger = PlatformLogger.getLogger("sun.lwawt.macosx.focus.CPlatformWindow");
@@ -211,9 +209,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private CPlatformResponder responder;
     private volatile boolean zoomed = false; // from native perspective
 
-    public CPlatformWindow(final PeerType peerType) {
+    public CPlatformWindow() {
         super(0, true);
-        assert (peerType == PeerType.SIMPLEWINDOW || peerType == PeerType.DIALOG || peerType == PeerType.FRAME);
     }
 
     /*
@@ -299,7 +296,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         // If the target is a dialog, popup or tooltip we want it to ignore the brushed metal look.
         if (isPopup) {
-            styleBits = SET(styleBits, TEXTURED, true);
+            styleBits = SET(styleBits, TEXTURED, false);
             // Popups in applets don't activate applet's process
             styleBits = SET(styleBits, NONACTIVATING, true);
         }
@@ -373,6 +370,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             }
         }
 
+        peer.setTextured(IS(TEXTURED, styleBits));
+
         return styleBits;
     }
 
@@ -439,16 +438,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public GraphicsDevice getGraphicsDevice() {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        CGraphicsEnvironment cge = (CGraphicsEnvironment)ge;
-        int displayID = nativeGetNSWindowDisplayID_AppKitThread(getNSWindowPtr());
-        GraphicsDevice gd = cge.getScreenDevice(displayID);
-        if (gd == null) {
-            // this could possibly happen during device removal
-            // use the default screen device in this case
-            gd = ge.getDefaultScreenDevice();
-        }
-        return gd;
+        return contentView.getGraphicsDevice();
     }
 
     @Override // PlatformWindow
@@ -735,10 +725,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public void setOpaque(boolean isOpaque) {
         CWrapper.NSWindow.setOpaque(getNSWindowPtr(), isOpaque);
-        if (!isOpaque) {
+        if (!isOpaque && !peer.isTextured()) {
             long clearColor = CWrapper.NSColor.clearColor();
             CWrapper.NSWindow.setBackgroundColor(getNSWindowPtr(), clearColor);
         }
+
+        //This is a temporary workaround. Looks like after 7124236 will be fixed
+        //the correct place for invalidateShadow() is CGLayer.drawInCGLContext.
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                invalidateShadow();
+            }
+        });
     }
 
     @Override
@@ -808,6 +807,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
 
+    public final void invalidateShadow(){
+        nativeRevalidateNSWindowShadow(getNSWindowPtr());
+    }
+
     // ----------------------------------------------------------------------
     //                          UTILITY METHODS
     // ----------------------------------------------------------------------
@@ -844,6 +847,11 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     @Override
     public LWWindowPeer getPeer() {
         return peer;
+    }
+
+    @Override
+    public boolean isUnderMouse() {
+        return contentView.isUnderMouse();
     }
 
     public CPlatformView getContentView() {

@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4403428
  * @summary Invalidating JSSE session on server causes SSLProtocolException
+ * @run main/othervm InvalidateServerSessionRenegotiate
  * @author Brad Wetmore
  */
 

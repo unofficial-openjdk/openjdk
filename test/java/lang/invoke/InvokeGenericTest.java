@@ -25,7 +25,7 @@
 
 /* @test
  * @summary unit tests for java.lang.invoke.MethodHandle.invoke
- * @compile -target 7 InvokeGenericTest.java
+ * @compile InvokeGenericTest.java
  * @run junit/othervm test.java.lang.invoke.InvokeGenericTest
  */
 
@@ -45,6 +45,7 @@ import static org.junit.Assume.*;
  *
  * @author jrose
  */
+@SuppressWarnings("cast")  // various casts help emphasize arguments to invokeExact
 public class InvokeGenericTest {
     // How much output?
     static int verbosity = 0;
@@ -65,24 +66,6 @@ public class InvokeGenericTest {
     }
 
     public InvokeGenericTest() {
-    }
-
-    @Before
-    public void checkImplementedPlatform() {
-        boolean platformOK = false;
-        Properties properties = System.getProperties();
-        String vers = properties.getProperty("java.vm.version");
-        String name = properties.getProperty("java.vm.name");
-        String arch = properties.getProperty("os.arch");
-        if ((arch.equals("amd64") || arch.equals("i386") || arch.equals("x86") ||
-             arch.equals("x86_64") || arch.equals("sparc") || arch.equals("sparcv9")) &&
-            (name.contains("Client") || name.contains("Server"))
-            ) {
-            platformOK = true;
-        } else {
-            System.err.println("Skipping tests for unsupported platform: "+Arrays.asList(vers, name, arch));
-        }
-        assumeTrue(platformOK);
     }
 
     String testName;
@@ -129,7 +112,7 @@ public class InvokeGenericTest {
         }
     }
 
-    static List<Object> calledLog = new ArrayList<Object>();
+    static List<Object> calledLog = new ArrayList<>();
     static Object logEntry(String name, Object... args) {
         return Arrays.asList(name, Arrays.asList(args));
     }
@@ -237,8 +220,7 @@ public class InvokeGenericTest {
         else
             try {
                 return param.newInstance();
-            } catch (InstantiationException ex) {
-            } catch (IllegalAccessException ex) {
+            } catch (InstantiationException | IllegalAccessException ex) {
             }
         return null;  // random class not Object, String, Integer, etc.
     }
@@ -274,9 +256,11 @@ public class InvokeGenericTest {
         return zeroArgs(params.toArray(new Class<?>[0]));
     }
 
+    @SafeVarargs @SuppressWarnings("varargs")
     static <T, E extends T> T[] array(Class<T[]> atype, E... a) {
         return Arrays.copyOf(a, a.length, atype);
     }
+    @SafeVarargs @SuppressWarnings("varargs")
     static <T> T[] cat(T[] a, T... b) {
         int alen = a.length, blen = b.length;
         if (blen == 0)  return a;
@@ -311,7 +295,7 @@ public class InvokeGenericTest {
             int beg, int end, Class<?> argType) {
         MethodType targetType = target.type();
         end = Math.min(end, targetType.parameterCount());
-        ArrayList<Class<?>> argTypes = new ArrayList<Class<?>>(targetType.parameterList());
+        ArrayList<Class<?>> argTypes = new ArrayList<>(targetType.parameterList());
         Collections.fill(argTypes.subList(beg, end), argType);
         MethodType ttype2 = MethodType.methodType(targetType.returnType(), argTypes);
         return target.asType(ttype2);
@@ -320,7 +304,7 @@ public class InvokeGenericTest {
     // This lookup is good for all members in and under InvokeGenericTest.
     static final Lookup LOOKUP = MethodHandles.lookup();
 
-    Map<List<Class<?>>, MethodHandle> CALLABLES = new HashMap<List<Class<?>>, MethodHandle>();
+    Map<List<Class<?>>, MethodHandle> CALLABLES = new HashMap<>();
     MethodHandle callable(List<Class<?>> params) {
         MethodHandle mh = CALLABLES.get(params);
         if (mh == null) {
@@ -353,8 +337,8 @@ public class InvokeGenericTest {
         countTest();
         String[] args = { "one", "two" };
         MethodHandle mh = callable(Object.class, String.class);
-        Object res; List resl;
-        res = resl = (List) mh.invoke((String)args[0], (Object)args[1]);
+        Object res; List<?> resl;
+        res = resl = (List<?>) mh.invoke((String)args[0], (Object)args[1]);
         //System.out.println(res);
         assertEquals(Arrays.asList(args), res);
     }
@@ -365,8 +349,8 @@ public class InvokeGenericTest {
         countTest();
         int[] args = { 1, 2 };
         MethodHandle mh = callable(Object.class, Object.class);
-        Object res; List resl;
-        res = resl = (List) mh.invoke(args[0], args[1]);
+        Object res; List<?> resl;
+        res = resl = (List<?>) mh.invoke(args[0], args[1]);
         //System.out.println(res);
         assertEquals(Arrays.toString(args), res.toString());
     }
@@ -377,8 +361,8 @@ public class InvokeGenericTest {
         countTest();
         String[] args = { "one", "two" };
         MethodHandle mh = callable(Object.class, String.class);
-        Object res; List resl;
-        res = resl = (List) mh.invoke((String)args[0], (Object)args[1]);
+        Object res; List<?> resl;
+        res = resl = (List<?>) mh.invoke((String)args[0], (Object)args[1]);
         //System.out.println(res);
         assertEquals(Arrays.asList(args), res);
     }
@@ -440,9 +424,9 @@ public class InvokeGenericTest {
      *  A void return type is possible iff the first type is void.class.
      */
     static List<MethodType> allMethodTypes(int minargc, int maxargc, Class<?>... types) {
-        ArrayList<MethodType> result = new ArrayList<MethodType>();
+        ArrayList<MethodType> result = new ArrayList<>();
         if (types.length > 0) {
-            ArrayList<MethodType> argcTypes = new ArrayList<MethodType>();
+            ArrayList<MethodType> argcTypes = new ArrayList<>();
             // build arity-zero types first
             for (Class<?> rtype : types) {
                 argcTypes.add(MethodType.methodType(rtype));
@@ -456,7 +440,7 @@ public class InvokeGenericTest {
                 if (argc >= maxargc)
                     break;
                 ArrayList<MethodType> prevTypes = argcTypes;
-                argcTypes = new ArrayList<MethodType>();
+                argcTypes = new ArrayList<>();
                 for (MethodType prevType : prevTypes) {
                     for (Class<?> ptype : types) {
                         argcTypes.add(prevType.insertParameterTypes(argc, ptype));
@@ -524,8 +508,8 @@ public class InvokeGenericTest {
         countTest();
         Object[] args = { 1, 2 };
         MethodHandle mh = callable(Object.class, int.class);
-        Object res; List resl; int resi;
-        res = resl = (List) mh.invoke((int)args[0], (Object)args[1]);
+        Object res; List<?> resl; int resi;
+        res = resl = (List<?>) mh.invoke((int)args[0], (Object)args[1]);
         //System.out.println(res);
         assertEquals(Arrays.asList(args), res);
         mh = MethodHandles.identity(int.class);

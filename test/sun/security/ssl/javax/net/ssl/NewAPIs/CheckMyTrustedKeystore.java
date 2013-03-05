@@ -21,11 +21,17 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4329114
  * @summary Need better way of reflecting the reason when a chain is
  *      rejected as untrusted.
+ * @run main/othervm CheckMyTrustedKeystore
  * @ignore JSSE supports algorithm constraints with CR 6916074,
  *     need to update this test case in JDK 7 soon
  * This is a serious hack job!

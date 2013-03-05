@@ -64,23 +64,23 @@ Java_java_io_RandomAccessFile_open(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_java_io_RandomAccessFile_read(JNIEnv *env, jobject this) {
+Java_java_io_RandomAccessFile_read0(JNIEnv *env, jobject this) {
     return readSingle(env, this, raf_fd);
 }
 
 JNIEXPORT jint JNICALL
-Java_java_io_RandomAccessFile_readBytes(JNIEnv *env,
+Java_java_io_RandomAccessFile_readBytes0(JNIEnv *env,
     jobject this, jbyteArray bytes, jint off, jint len) {
     return readBytes(env, this, bytes, off, len, raf_fd);
 }
 
 JNIEXPORT void JNICALL
-Java_java_io_RandomAccessFile_write(JNIEnv *env, jobject this, jint byte) {
+Java_java_io_RandomAccessFile_write0(JNIEnv *env, jobject this, jint byte) {
     writeSingle(env, this, byte, JNI_FALSE, raf_fd);
 }
 
 JNIEXPORT void JNICALL
-Java_java_io_RandomAccessFile_writeBytes(JNIEnv *env,
+Java_java_io_RandomAccessFile_writeBytes0(JNIEnv *env,
     jobject this, jbyteArray bytes, jint off, jint len) {
     writeBytes(env, this, bytes, off, len, JNI_FALSE, raf_fd);
 }

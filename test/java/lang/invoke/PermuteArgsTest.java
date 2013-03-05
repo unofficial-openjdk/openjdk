@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 /* @test
  * @summary unit tests for method handles which permute their arguments
- * @run junit/othervm -ea -esa -DPermuteArgsTest.MAX_ARITY=8 test.java.lang.invoke.PermuteArgsTest
+ * @run junit/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:-VerifyDependencies -ea -esa -DPermuteArgsTest.MAX_ARITY=8 test.java.lang.invoke.PermuteArgsTest
  */
 /* Examples of manual runs:
  * java -DPermuteArgsTest.{DRY_RUN=true,MAX_ARITY=253} test.java.lang.invoke.PermuteArgsTest
@@ -45,7 +45,7 @@ import static java.lang.invoke.MethodHandles.*;
 import static java.lang.invoke.MethodType.*;
 
 public class PermuteArgsTest {
-    private static final Class CLASS = PermuteArgsTest.class;
+    private static final Class<?> CLASS = PermuteArgsTest.class;
     private static final int MAX_ARITY = Integer.getInteger(CLASS.getSimpleName()+".MAX_ARITY", 8);
     private static final boolean DRY_RUN = Boolean.getBoolean(CLASS.getSimpleName()+".DRY_RUN");
     private static final boolean VERBOSE = Boolean.getBoolean(CLASS.getSimpleName()+".VERBOSE") || DRY_RUN;
@@ -99,12 +99,12 @@ public class PermuteArgsTest {
         return Arrays.asList(w, x, y, z);
     }
     static Object listI_etc(int... va) {
-        ArrayList<Object> res = new ArrayList<Object>();
+        ArrayList<Object> res = new ArrayList<>();
         for (int x : va)  res.add(x);
         return res;
     }
     static Object listIJL_etc(int x, long y, Object z, Object... va) {
-        ArrayList<Object> res = new ArrayList<Object>();
+        ArrayList<Object> res = new ArrayList<>();
         res.addAll(Arrays.asList(x, y, z));
         res.addAll(Arrays.asList(va));
         return res;
@@ -168,7 +168,7 @@ public class PermuteArgsTest {
                     mh1 = adjustArity(mh, arity);
                 } catch (IllegalArgumentException ex) {
                     System.out.println("*** mh = "+name+" : "+mh+"; arity = "+arity+" => "+ex);
-                    ex.printStackTrace();
+                    ex.printStackTrace(System.out);
                     break;  // cannot get this arity for this type
                 }
                 test("("+arity+")"+name, mh1);
@@ -191,7 +191,11 @@ public class PermuteArgsTest {
                 pt = mt1.parameterType(mt1.parameterCount() - posArgs);
             mt1 = mt1.appendParameterTypes(pt);
         }
-        return mh.asType(mt1);
+        try {
+            return mh.asType(mt1);
+        } catch (WrongMethodTypeException | IllegalArgumentException ex) {
+            throw new IllegalArgumentException("cannot convert to type "+mt1+" from "+mh, ex);
+        }
     }
     static MethodHandle findTestMH(String name, int[] perm) throws ReflectiveOperationException {
         int arity = perm.length;
@@ -213,7 +217,7 @@ public class PermuteArgsTest {
     }
 
     static void testPermutations(MethodHandle mh) throws Throwable {
-        HashSet<String> done = new HashSet<String>();
+        HashSet<String> done = new HashSet<>();
         MethodType mt = mh.type();
         int[] perm = nullPerm(mt.parameterCount());
         final int MARGIN = (perm.length <= 10 ? 2 : 0);
@@ -326,8 +330,8 @@ public class PermuteArgsTest {
             Class<?> pt = ptypes[i];
             Object arg;
             if (pt == Void.class)       arg = null;
-            else if (pt == int.class)   arg = (int)  i + 101;
-            else if (pt == long.class)  arg = (long) i + 10_000_000_001L;
+            else if (pt == int.class)   arg = i + 101;
+            else if (pt == long.class)  arg = i + 10_000_000_001L;
             else                        arg = "#" + (i + 1);
             args[i] = arg;
         }

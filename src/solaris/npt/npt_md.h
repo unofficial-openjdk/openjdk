@@ -32,21 +32,18 @@
 #include <string.h>
 #include <errno.h>
 #include <dlfcn.h>
-#ifndef __APPLE__
-#include <link.h>
-#endif
 #include <jvm_md.h>
 
 #define NPT_LIBNAME "npt"
 
-#define NPT_INITIALIZE(pnpt,version,options)                            \
+#define NPT_INITIALIZE(path,pnpt,version,options)                       \
     {                                                                   \
         void   *_handle;                                                \
         void   *_sym;                                                   \
                                                                         \
         if ( (pnpt) == NULL ) NPT_ERROR("NptEnv* is NULL");             \
         *(pnpt) = NULL;                                                 \
-        _handle =  dlopen(JNI_LIB_NAME(NPT_LIBNAME), RTLD_LAZY);              \
+        _handle =  dlopen(path, RTLD_LAZY);                             \
         if ( _handle == NULL ) NPT_ERROR("Cannot open library");        \
         _sym = dlsym(_handle, "nptInitialize");                         \
         if ( _sym == NULL ) NPT_ERROR("Cannot find nptInitialize");     \

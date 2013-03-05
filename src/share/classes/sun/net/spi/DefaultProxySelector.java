@@ -346,5 +346,5 @@ public class DefaultProxySelector extends ProxySelector {
     }
 
     private native static boolean init();
-    private native Proxy getSystemProxy(String protocol, String host);
+    private synchronized native Proxy getSystemProxy(String protocol, String host);
 }

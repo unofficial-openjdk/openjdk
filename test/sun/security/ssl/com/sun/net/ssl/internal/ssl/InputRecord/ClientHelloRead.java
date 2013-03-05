@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4432868
  * @summary A client-hello message may not always be read correctly
+ * @run main/othervm ClientHelloRead
  */
 
 import java.io.*;
@@ -154,23 +160,29 @@ public class ClientHelloRead {
          * we want to avoid URLspoofCheck failures in cases where the cert
          * DN name does not match the hostname in the URL.
          */
-        HttpsURLConnection.setDefaultHostnameVerifier(
-                                      new NameVerifier());
-        URL url = new URL("https://" + "localhost:" + serverPort
-                                + "/index.html");
-        BufferedReader in = null;
+        HostnameVerifier reservedHV =
+            HttpsURLConnection.getDefaultHostnameVerifier();
         try {
-            in = new BufferedReader(new InputStreamReader(
-                               url.openStream()));
-            String inputLine;
-            System.out.print("Client recieved from the server: ");
-            while ((inputLine = in.readLine()) != null)
-                System.out.println(inputLine);
-            in.close();
-        } catch (SSLException e) {
-            if (in != null)
+            HttpsURLConnection.setDefaultHostnameVerifier(
+                                          new NameVerifier());
+            URL url = new URL("https://" + "localhost:" + serverPort
+                                    + "/index.html");
+            BufferedReader in = null;
+            try {
+                in = new BufferedReader(new InputStreamReader(
+                                   url.openStream()));
+                String inputLine;
+                System.out.print("Client recieved from the server: ");
+                while ((inputLine = in.readLine()) != null)
+                    System.out.println(inputLine);
                 in.close();
-            throw e;
+            } catch (SSLException e) {
+                if (in != null)
+                    in.close();
+                throw e;
+            }
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(reservedHV);
         }
     }
 
