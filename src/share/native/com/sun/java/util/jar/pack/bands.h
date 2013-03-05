@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
+ 
 // -*- C++ -*-
 struct entry;
 struct cpindex;
@@ -50,7 +50,7 @@ struct band {
 
   // properties for attribute layout elements:
   byte          le_kind;       // EK_XXX
-  byte          le_bci;        // 0,EK_BCI,EK_BCD,EK_BCO
+  byte		le_bci;        // 0,EK_BCI,EK_BCD,EK_BCO
   byte          le_back;       // ==EF_BACK
   byte          le_len;        // 0,1,2,4 (size in classfile), or call addr
   band**        le_body;       // body of repl, union, call (null-terminated)
@@ -101,8 +101,8 @@ struct band {
 
   int    getByte()  { assert(ix == null); return vs[0].getByte(); }
   int    getInt()   { assert(ix == null); return vs[0].getInt(); }
-  entry* getRefN()  { assert(ix != null); return getRefCommon(ix, true); }
-  entry* getRef()   { assert(ix != null); return getRefCommon(ix, false); }
+  entry* getRefN()  { return getRefCommon(ix, true); }
+  entry* getRef()   { return getRefCommon(ix, false); }
   entry* getRefUsing(cpindex* ix2)
                     { assert(ix == null); return getRefCommon(ix2, true); }
   entry* getRefCommon(cpindex* ix, bool nullOK);

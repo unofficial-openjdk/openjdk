@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -451,9 +451,18 @@ final class CipherSuite implements Comparable {
         // size of the MAC value (and MAC key) in bytes
         final int size;
 
-        MacAlg(String name, int size) {
+        // block size of the underlying hash algorithm
+        final int hashBlockSize;
+
+        // minimal padding size of the underlying hash algorithm
+        final int minimalPaddingSize;
+
+        MacAlg(String name, int size,
+                int hashBlockSize, int minimalPaddingSize) {
             this.name = name;
             this.size = size;
+            this.hashBlockSize = hashBlockSize;
+            this.minimalPaddingSize = minimalPaddingSize;
         }
 
         /**
@@ -497,9 +506,9 @@ final class CipherSuite implements Comparable {
                         new BulkCipher(CIPHER_AES,     32, 16, true);
 
     // MACs
-    final static MacAlg M_NULL = new MacAlg("NULL", 0);
-    final static MacAlg M_MD5  = new MacAlg("MD5", 16);
-    final static MacAlg M_SHA  = new MacAlg("SHA", 20);
+    final static MacAlg M_NULL    = new MacAlg("NULL",     0,   0,   0);
+    final static MacAlg M_MD5     = new MacAlg("MD5",     16,  64,   9);
+    final static MacAlg M_SHA     = new MacAlg("SHA",     20,  64,   9);
 
     static {
         idMap = new HashMap<Integer,CipherSuite>();

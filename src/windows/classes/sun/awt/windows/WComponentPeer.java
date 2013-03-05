@@ -427,14 +427,15 @@ public abstract class WComponentPeer extends WObjectPeer
                     try {
                         replaceSurfaceData();
                     } catch (InvalidPipeException e) {
-                    // REMIND : what do we do if our surface creation failed?
+                        // REMIND : what do we do if our surface creation failed?
                     }
                 }
             }
         };
+        Component c = (Component)target;
         // Fix 6255371.
-        if (!PaintEventDispatcher.getPaintEventDispatcher().queueSurfaceDataReplacing((Component)target, r)) {
-            postEvent(new InvocationEvent(Toolkit.getDefaultToolkit(), r));
+        if (!PaintEventDispatcher.getPaintEventDispatcher().queueSurfaceDataReplacing(c, r)) {
+            postEvent(new InvocationEvent(c, r));
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -128,9 +128,8 @@ final class ClientHandshaker extends Handshaker {
      * in the constructor.
      */
     void processMessage(byte type, int messageLen) throws IOException {
-        if (state > type
-                && (type != HandshakeMessage.ht_hello_request
-                    && state != HandshakeMessage.ht_client_hello)) {
+        if (state >= type
+                && (type != HandshakeMessage.ht_hello_request)) {
             throw new SSLProtocolException(
                     "Handshake message sequence violation, " + type);
         }
@@ -168,7 +167,11 @@ final class ClientHandshaker extends Handshaker {
                 }
                 break;
             case K_DH_ANON:
-                this.serverKeyExchange(new DH_ServerKeyExchange(input));
+                try {
+                    this.serverKeyExchange(new DH_ServerKeyExchange(input));
+                } catch (GeneralSecurityException e) {
+                    throwSSLException("Server key", e);
+                }
                 break;
             case K_DHE_DSS:
             case K_DHE_RSA:
@@ -811,7 +814,7 @@ final class ClientHandshaker extends Handshaker {
         case K_DHE_RSA:
         case K_DHE_DSS:
         case K_DH_ANON:
-            preMasterSecret = dh.getAgreedSecret(serverDH);
+            preMasterSecret = dh.getAgreedSecret(serverDH, true);
             break;
         case K_ECDHE_RSA:
         case K_ECDHE_ECDSA:

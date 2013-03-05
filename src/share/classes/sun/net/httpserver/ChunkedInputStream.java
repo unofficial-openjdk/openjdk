@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,8 +41,12 @@ class ChunkedInputStream extends LeftOverInputStream {
 
     private boolean needToReadHeader = true;
 
-    static char CR = '\r';
-    static char LF = '\n';
+    final static char CR = '\r';
+    final static char LF = '\n';
+    /*
+     * Maximum chunk header size of 2KB + 2 bytes for CRLF
+     */
+    private final static int MAX_CHUNK_HEADER_SIZE = 2050;
 
     private int numeric (char[] arr, int nchars) throws IOException {
         assert arr.length >= nchars;
@@ -73,9 +77,13 @@ class ChunkedInputStream extends LeftOverInputStream {
         char[] len_arr = new char [16];
         int len_size = 0;
         boolean end_of_len = false;
+	int read = 0;
 
         while ((c=(char)in.read())!= -1) {
-            if (len_size == len_arr.length -1) {
+            read++;
+            if ((len_size == len_arr.length -1) ||
+                (read > MAX_CHUNK_HEADER_SIZE))
+            {
                 throw new IOException ("invalid chunk header");
             }
             if (gotCR) {

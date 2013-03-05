@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import javax.crypto.KeyAgreementSpi;
 import javax.crypto.ShortBufferException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.*;
+import sun.security.util.KeyUtil;
 
 /**
  * This class implements the Diffie-Hellman key agreement protocol between
@@ -205,6 +206,9 @@ extends KeyAgreementSpi {
         if (pub_g != null && !(init_g.equals(pub_g))) {
             throw new InvalidKeyException("Incompatible parameters");
         }
+
+        // validate the Diffie-Hellman public key
+        KeyUtil.validate(dhPubKey);
 
         // store the y value
         this.y = dhPubKey.getY();

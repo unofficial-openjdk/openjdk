@@ -44,6 +44,8 @@ public class SendToUnresolved {
             throw new RuntimeException("Expected exception not thrown");
         } catch (IOException e) {
             // Correct result
+        } catch (UnresolvedAddressException e) {
+            // Correct result
         }
         dc.close();
     }
