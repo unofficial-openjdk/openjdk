@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +21,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
@@ -52,7 +52,7 @@ class LETableReference; // fwd
  *  defined in OpenTypeUtilities.cpp
  * @internal
  */
-U_INTERNAL void U_EXPORT2 _debug_LETableReference(const char *f, int l, const char *msg, const LETableReference *what, const void *ptr, size_t len);
+extern void _debug_LETableReference(const char *f, int l, const char *msg, const LETableReference *what, const void *ptr, size_t len);
 
 #define LE_DEBUG_TR(x) _debug_LETableReference(__FILE__, __LINE__, x, this, NULL, 0);
 #define LE_DEBUG_TR3(x,y,z) _debug_LETableReference(__FILE__, __LINE__, x, this, (const void*)y, (size_t)z);
@@ -204,18 +204,6 @@ public:
     return fLength;
   }
 
-  le_bool isSubsetOf(const LETableReference& base) const {
-    if(this == &base) return true;
-    if(fStart < base.fStart) return false;
-    if(base.hasBounds()) {
-      if(fStart >= base.fStart + base.fLength) return false;
-      if(hasBounds()) {
-        if(fStart + fLength > base.fStart + base.fLength) return false;
-      }
-    }
-    return true;
-  }
-
   /**
    * Change parent link to another
    */
@@ -278,6 +266,12 @@ size_t LETableVarSizer<T>::getSize() {
  * dereferencing NULL is valid here because we never actually dereference it, just inside sizeof.
  */
 #define LE_VAR_ARRAY(x,y) template<> inline size_t LETableVarSizer<x>::getSize() { return sizeof(x) - (sizeof(((const x*)0)->y)); }
+/**
+ * \def LE_CORRECT_SIZE
+ * @param x type (T)
+ * @param y fixed size for T
+ */
+#define LE_CORRECT_SIZE(x,y) template<> inline size_t LETableVarSizer<x>::getSize() { return y; }
 
 /**
  * Open a new entry based on an existing table
@@ -338,15 +332,7 @@ LE_TRACE_TR("INFO: new RTAO")
   using LETableReference::getAlias;
 
   const T *getAlias(le_uint32 i, LEErrorCode &success) const {
-    if(LE_SUCCESS(success)&& i<getCount()) {
-      return  ((const T*)getAlias())+i;
-    } else {
-      if(LE_SUCCESS(success)) {
-        LE_DEBUG_TR("getAlias(subscript) out of range");
-        success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
-      }
-      return ((const T*)getAlias());  // return first item, so there's no crash
-    }
+    return ((const T*)(((const char*)getAlias())+getOffsetFor(i, success)));
   }
 
   const T *getAliasTODO() const { LE_DEBUG_TR("getAliasTODO<>"); return (const T*)fStart; }
@@ -377,46 +363,6 @@ LE_TRACE_TR("INFO: new RTAO")
     LE_TRACE_TR("INFO: null RTAO")
   }
 
-  /**
-   * set this to point within our fParent, but based on 'base' as a subtable.
-   */
-  void setToOffsetInParent(const LETableReference& base, size_t offset, le_uint32 count, LEErrorCode &success) {
-LE_TRACE_TR("INFO: sTOIP")
-    if(LE_FAILURE(success)) return;
-    if(!fParent->isSubsetOf(base)) {  // Ensure that 'base' is containable within our parent.
-      clear();                        // otherwise, it's not a subtable of our parent.
-      LE_DEBUG_TR("setToOffsetInParents called on non subsets");
-      success = LE_ILLEGAL_ARGUMENT_ERROR; return;
-    }
-    size_t baseOffset = fParent->ptrToOffset(((const le_uint8*)base.getAlias())+offset, success);
-    if(LE_FAILURE(success)) return; // base was outside of parent's range
-    if(fParent->hasBounds()) {
-      if((baseOffset >= fParent->getLength()) || // start off end of parent
-         (baseOffset+(count*LETableVarSizer<T>::getSize()) >= fParent->getLength()) || // or off end of parent
-         count > LE_UINTPTR_MAX/LETableVarSizer<T>::getSize()) { // or more than would fit in memory
-        LE_DEBUG_TR("setToOffsetInParent called with bad length");
-        success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
-        clear();
-        return; // start would go off end of parent
-      }
-    }
-    fStart = (const le_uint8*)(fParent->getAlias()) + baseOffset;
-    //fLength = count*LETableVarSizer<T>::getSize(); - no- do not shrink fLength.
-    if(fParent->hasBounds()) {
-      fLength = (fParent->getLength() - (fStart-(const le_uint8*)fParent->getAlias())); // reduces fLength accordingly.
-    } else {
-      fLength = LE_UINTPTR_MAX; // unbounded
-    }
-    if((fStart < fParent->getAlias()) ||
-       (hasBounds()&&(fStart+fLength < fStart))) { // wrapped
-        LE_DEBUG_TR("setToOffsetInParent called with bad length");
-        success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
-        clear();
-        return; // start would go off end of parent
-    }
-    fCount = count;
-  }
-
 private:
   le_uint32 fCount;
 };
@@ -433,7 +379,7 @@ public:
    */
   LEReferenceTo(const LETableReference &parent, LEErrorCode &success, const void* atPtr)
     : LETableReference(parent, parent.ptrToOffset(atPtr, success), LE_UINTPTR_MAX, success) {
-    verifyLength(parent.ptrToOffset(atPtr,success), LETableVarSizer<T>::getSize(), success);
+    verifyLength(0, LETableVarSizer<T>::getSize(), success);
     if(LE_FAILURE(success)) clear();
   }
   /**
