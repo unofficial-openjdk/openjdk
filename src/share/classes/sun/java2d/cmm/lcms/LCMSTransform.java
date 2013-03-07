@@ -572,12 +572,12 @@ public class LCMSTransform implements ColorTransform {
                 dst, dst.length/getNumOutComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
                 LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
+
+            synchronized(this) {
+                LCMS.colorConvert(this, srcIL, dstIL);
+            }
         } catch (ImageLayoutException e) {
             throw new CMMException("Unable to convert data");
-        }
-
-        synchronized(this) {
-            LCMS.colorConvert(this, srcIL, dstIL);
         }
 
         return dst;
@@ -598,12 +598,12 @@ public class LCMSTransform implements ColorTransform {
                 dst, dst.length/getNumOutComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
                 LCMSImageLayout.BYTES_SH(1), getNumOutComponents());
+
+            synchronized(this) {
+                LCMS.colorConvert(this, srcIL, dstIL);
+            }
         } catch (ImageLayoutException e) {
             throw new CMMException("Unable to convert data");
-        }
-
-        synchronized(this) {
-            LCMS.colorConvert(this, srcIL, dstIL);
         }
 
         return dst;
