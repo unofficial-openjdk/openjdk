@@ -597,7 +597,8 @@ public class MethodHandles {
         MethodHandle findStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(REF_invokeStatic, refc, name, type);
             checkSecurityManager(refc, method);  // stack walk magic: do not refactor
-            return getDirectMethod(REF_invokeStatic, refc, method);
+            Class<?> callerClass = findBoundCallerClass(method);  // stack walk magic: do not refactor
+            return getDirectMethod(REF_invokeStatic, refc, method, callerClass);
         }
 
         /**
@@ -651,7 +652,8 @@ public class MethodHandles {
             byte refKind = (refc.isInterface() ? REF_invokeInterface : REF_invokeVirtual);
             MemberName method = resolveOrFail(refKind, refc, name, type);
             checkSecurityManager(refc, method);  // stack walk magic: do not refactor
-            return getDirectMethod(refKind, refc, method);
+            Class<?> callerClass = findBoundCallerClass(method);
+            return getDirectMethod(refKind, refc, method, callerClass);
         }
         private MethodHandle findVirtualForMH(String name, MethodType type) {
             // these names require special lookups because of the implicit MethodType argument
@@ -735,7 +737,8 @@ public class MethodHandles {
             Lookup specialLookup = this.in(specialCaller);
             MemberName method = specialLookup.resolveOrFail(REF_invokeSpecial, refc, name, type);
             checkSecurityManager(refc, method);  // stack walk magic: do not refactor
-            return specialLookup.getDirectMethod(REF_invokeSpecial, refc, method);
+            Class<?> callerClass = findBoundCallerClass(method);
+            return specialLookup.getDirectMethod(REF_invokeSpecial, refc, method, callerClass);
         }
 
         /**
@@ -878,7 +881,8 @@ return mh1;
             Class<? extends Object> refc = receiver.getClass(); // may get NPE
             MemberName method = resolveOrFail(REF_invokeSpecial, refc, name, type);
             checkSecurityManager(refc, method);  // stack walk magic: do not refactor
-            MethodHandle mh = getDirectMethodNoRestrict(REF_invokeSpecial, refc, method);
+            Class<?> callerClass = findBoundCallerClass(method);  // stack walk magic: do not refactor
+            MethodHandle mh = getDirectMethodNoRestrict(REF_invokeSpecial, refc, method, callerClass);
             return mh.bindReceiver(receiver).setVarargs(method);
         }
 
@@ -909,8 +913,9 @@ return mh1;
             if (refKind == REF_invokeSpecial)
                 refKind = REF_invokeVirtual;
             assert(method.isMethod());
+            Class<?> callerClass = findBoundCallerClass(method);  // stack walk magic: do not refactor
             Lookup lookup = m.isAccessible() ? IMPL_LOOKUP : this;
-            return lookup.getDirectMethod(refKind, method.getDeclaringClass(), method);
+            return lookup.getDirectMethod(refKind, method.getDeclaringClass(), method, callerClass);
         }
 
         /**
@@ -939,8 +944,9 @@ return mh1;
             Lookup specialLookup = this.in(specialCaller);
             MemberName method = new MemberName(m, true);
             assert(method.isMethod());
+            Class<?> callerClass = findBoundCallerClass(method);  // stack walk magic: do not refactor
             // ignore m.isAccessible:  this is a new kind of access
-            return specialLookup.getDirectMethod(REF_invokeSpecial, method.getDeclaringClass(), method);
+            return specialLookup.getDirectMethod(REF_invokeSpecial, method.getDeclaringClass(), method, callerClass);
         }
 
         /**
@@ -1039,7 +1045,29 @@ return mh1;
         }
 
         /**
+         * Find my trustable caller class if m is a caller sensitive method.
+         * If this lookup object has private access, then the caller class is the lookupClass.
+         * Otherwise, it is the caller of the currently executing public API method (e.g., findVirtual).
+         * This is the same caller class as is used by checkSecurityManager.
+         * This function performs stack walk magic: do not refactor it.
+         */
+        Class<?> findBoundCallerClass(MemberName m) {
+            Class<?> callerClass = null;
+            if (MethodHandleNatives.isCallerSensitive(m)) {
+                // Do not refactor this to a more "logical" place, since it is stack walk magic.
+                // Note that this is the same expression as in Step 2 below in checkSecurityManager.
+                callerClass = ((allowedModes & PRIVATE) != 0
+                               ? lookupClass  // for strong access modes, no extra check
+                               // next line does stack walk magic; do not refactor:
+                               : getCallerClassAtEntryPoint(true));
+            }
+            return callerClass;
+        }
+        /**
          * Perform necessary <a href="MethodHandles.Lookup.html#secmgr">access checks</a>.
+         * Determines a trustable caller class to compare with refc, the symbolic reference class.
+         * If this lookup object has private access, then the caller class is the lookupClass.
+         * Otherwise, it is the caller of the currently executing public API method (e.g., findVirtual).
          * This function performs stack walk magic: do not refactor it.
          */
         void checkSecurityManager(Class<?> refc, MemberName m) {
@@ -1194,22 +1222,22 @@ return mh1;
             return mh.viewAsType(narrowType);
         }
 
-        private MethodHandle getDirectMethod(byte refKind, Class<?> refc, MemberName method) throws IllegalAccessException {
+        private MethodHandle getDirectMethod(byte refKind, Class<?> refc, MemberName method, Class<?> callerClass) throws IllegalAccessException {
             return getDirectMethodCommon(refKind, refc, method,
                     (refKind == REF_invokeSpecial ||
                         (MethodHandleNatives.refKindHasReceiver(refKind) &&
-                            restrictProtectedReceiver(method))));
+                            restrictProtectedReceiver(method))), callerClass);
         }
-        private MethodHandle getDirectMethodNoRestrict(byte refKind, Class<?> refc, MemberName method) throws IllegalAccessException {
-            return getDirectMethodCommon(refKind, refc, method, false);
+        private MethodHandle getDirectMethodNoRestrict(byte refKind, Class<?> refc, MemberName method, Class<?> callerClass) throws IllegalAccessException {
+            return getDirectMethodCommon(refKind, refc, method, false, callerClass);
         }
         private MethodHandle getDirectMethodCommon(byte refKind, Class<?> refc, MemberName method,
-                                                   boolean doRestrict) throws IllegalAccessException {
+                                                   boolean doRestrict, Class<?> callerClass) throws IllegalAccessException {
             checkMethod(refKind, refc, method);
             if (method.isMethodHandleInvoke())
                 return fakeMethodHandleInvoke(method);
             MethodHandle mh = DirectMethodHandle.make(refc, method);
-            mh = maybeBindCaller(method, mh);
+            mh = maybeBindCaller(method, mh, callerClass);
             mh = mh.setVarargs(method);
             if (doRestrict)
                 mh = restrictReceiver(method, mh, lookupClass());
@@ -1218,12 +1246,14 @@ return mh1;
         private MethodHandle fakeMethodHandleInvoke(MemberName method) {
             return throwException(method.getReturnType(), UnsupportedOperationException.class);
         }
-        private MethodHandle maybeBindCaller(MemberName method, MethodHandle mh) throws IllegalAccessException {
+        private MethodHandle maybeBindCaller(MemberName method, MethodHandle mh,
+                                             Class<?> callerClass)
+                                             throws IllegalAccessException {
             if (allowedModes == TRUSTED || !MethodHandleNatives.isCallerSensitive(method))
                 return mh;
             Class<?> hostClass = lookupClass;
             if ((allowedModes & PRIVATE) == 0)  // caller must use full-power lookup
-                hostClass = null;
+                hostClass = callerClass;  // callerClass came from a security manager style stack walk
             MethodHandle cbmh = MethodHandleImpl.bindCaller(mh, hostClass);
             // Note: caller will apply varargs after this step happens.
             return cbmh;
@@ -1261,7 +1291,7 @@ return mh1;
             } else if (MethodHandleNatives.refKindIsMethod(refKind)) {
                 MemberName method = (resolved != null) ? resolved
                         : resolveOrFail(refKind, defc, name, (MethodType) type);
-                return getDirectMethod(refKind, defc, method);
+                return getDirectMethod(refKind, defc, method, lookupClass);
             } else if (refKind == REF_newInvokeSpecial) {
                 assert(name == null || name.equals("<init>"));
                 MemberName ctor = (resolved != null) ? resolved

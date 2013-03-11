@@ -134,9 +134,6 @@ java/lang/Runtime/exec/SleepyCat.java                           generic-all
 # Times out on solaris sparc -server
 java/lang/ThreadLocal/MemoryLeak.java                           solaris-all
 
-# Windows X64, RuntimeException: MyThread expected to have RUNNABLE but got WAITING
-java/lang/Thread/ThreadStateTest.java                           generic-all
-
 # 7148492
 java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
 
@@ -266,9 +263,6 @@ sun/net/www/protocol/http/UserCookie.java			macosx-all
 
 # 7162118
 java/net/CookieHandler/CookieManagerTest.java			macosx-all
-
-# 7162123
-test/java/net/InetSocketAddress/B6469803.java			macosx-all
 
 # JPRT needs to set 127.0.0.1 in proxy bypass list
 java/net/URLClassLoader/closetest/CloseTest.java		macosx-all
