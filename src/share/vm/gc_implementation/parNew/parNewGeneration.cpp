@@ -893,10 +893,6 @@ void ParNewGeneration::collect(bool   full,
   GenCollectedHeap* gch = GenCollectedHeap::heap();
 
   _gc_timer->register_gc_start(os::elapsed_counter());
-  ParNewTracer gc_tracer;
-  gc_tracer.report_gc_start(gch->gc_cause(), _gc_timer->gc_start());
-
-  gch->trace_heap_before_gc(&gc_tracer);
 
   assert(gch->kind() == CollectedHeap::GenCollectedHeap,
     "not a CMS generational heap");
@@ -926,6 +922,10 @@ void ParNewGeneration::collect(bool   full,
     return;
   }
   assert(to()->is_empty(), "Else not collection_attempt_is_safe");
+
+  ParNewTracer gc_tracer;
+  gc_tracer.report_gc_start(gch->gc_cause(), _gc_timer->gc_start());
+  gch->trace_heap_before_gc(&gc_tracer);
 
   init_assuming_no_promotion_failure();
 
