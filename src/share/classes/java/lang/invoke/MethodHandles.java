@@ -689,7 +689,7 @@ public class MethodHandles {
         }
         private MethodHandle accessConstructor(Class<?> refc, MemberName ctor) throws IllegalAccessException {
             assert(ctor.isConstructor());
-            checkAccess(refc, ctor);
+            checkAccess(refc, ctor, false /* is_setter */);
             MethodHandle rawMH = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             MethodHandle allocMH = MethodHandleImpl.makeAllocator(rawMH);
             assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
@@ -1057,7 +1057,7 @@ return mh1;
             if (c.isAccessible()) {
                 rawCtor = MethodHandleImpl.findMethod(ctor, false, /*no lookupClass*/ null);
             } else {
-                checkAccess(c.getDeclaringClass(), ctor);
+                checkAccess(c.getDeclaringClass(), ctor, false /* is_setter */);
                 rawCtor = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             }
             assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
@@ -1211,14 +1211,17 @@ return mh1;
             else if (wantStatic != m.isStatic())
                 message = wantStatic ? "expected a static method" : "expected a non-static method";
             else
-                { checkAccess(refc, m); return; }
+                { checkAccess(refc, m, false /* is_setter */); return; }
             throw m.makeAccessException(message, this);
         }
 
-        void checkAccess(Class<?> refc, MemberName m) throws IllegalAccessException {
+        void checkAccess(Class<?> refc, MemberName m, boolean isSetter) throws IllegalAccessException {
             int allowedModes = this.allowedModes;
             if (allowedModes == TRUSTED)  return;
             int mods = m.getModifiers();
+            if (m.isField() && Modifier.isFinal(mods) && isSetter) {
+              throw m.makeAccessException("unexpected set of a final field", this);
+            }
             if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) && allowedModes != 0)
                 return;  // common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
@@ -1317,7 +1320,7 @@ return mh1;
                                                 : "expected a non-static field", this);
             if (trusted)
                 return MethodHandleImpl.accessField(field, isSetter, /*no lookupClass*/ null);
-            checkAccess(refc, field);
+            checkAccess(refc, field, isSetter);
             MethodHandle mh = MethodHandleImpl.accessField(field, isSetter, lookupClassOrNull());
             return restrictProtectedReceiver(field, mh);
         }
