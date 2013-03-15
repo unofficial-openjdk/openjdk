@@ -645,6 +645,13 @@ void MethodHandles::resolve_MemberName(Handle mname, TRAPS) {
         }
       }
       methodHandle m = result.resolved_method();
+      KlassHandle mklass = m->method_holder();
+      KlassHandle receiver_limit = result.resolved_klass();
+      if (receiver_limit.is_null() ||
+          // ignore passed-in limit; interfaces are interconvertible
+          receiver_limit->is_interface() && mklass->is_interface()) {
+        receiver_limit = mklass;
+      }
       oop vmtarget = NULL;
       int vmindex = methodOopDesc::nonvirtual_vtable_index;
       if (defc->is_interface()) {
@@ -665,6 +672,7 @@ void MethodHandles::resolve_MemberName(Handle mname, TRAPS) {
       java_lang_invoke_MemberName::set_vmtarget(mname(), vmtarget);
       java_lang_invoke_MemberName::set_vmindex(mname(),  vmindex);
       java_lang_invoke_MemberName::set_modifiers(mname(), mods);
+      java_lang_invoke_MemberName::set_clazz(mname(), receiver_limit->java_mirror());
       DEBUG_ONLY(KlassHandle junk1; int junk2);
       assert(decode_MemberName(mname(), junk1, junk2) == result.resolved_method(),
              "properly stored for later decoding");
