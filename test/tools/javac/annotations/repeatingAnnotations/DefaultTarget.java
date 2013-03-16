@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,17 +21,27 @@
  * questions.
  */
 
-package p;
+import java.lang.annotation.*;
 
-import java.util.List;
-import java.util.Collections;
-public class Foo {
-    public static List foo() {
-        return Collections.emptyList();
-    }
+/**
+ * @test
+ * @bug 8006547
+ * @compile DefaultTarget.java
+ */
 
-    public Foo() {
-        // compact3
-        java.lang.management.ManagementFactory.getRuntimeMXBean();
-    }
+@Target({
+    ElementType.CONSTRUCTOR,
+    ElementType.PARAMETER,
+    ElementType.TYPE,
+    ElementType.METHOD,
+    ElementType.LOCAL_VARIABLE,
+    ElementType.PACKAGE,
+    ElementType.ANNOTATION_TYPE,
+    ElementType.FIELD,
+})
+@interface Container {
+  DefaultTarget[] value();
 }
+
+@Repeatable(Container.class)
+public @interface DefaultTarget {}
