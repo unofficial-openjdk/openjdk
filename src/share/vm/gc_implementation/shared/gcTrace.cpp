@@ -75,13 +75,13 @@ void GCTracer::report_gc_end(jlong timestamp, TimePartitions* time_partitions) {
   _shared_gc_info.set_id(SharedGCInfo::UNSET_GCID);
 }
 
-void GCTracer::report_gc_reference_processing(const ReferenceProcessorStats& rps) const {
+void GCTracer::report_gc_reference_stats(const ReferenceProcessorStats& rps) const {
   assert_set_gc_id();
 
-  send_reference_processing_event(REF_SOFT, rps.soft_count());
-  send_reference_processing_event(REF_WEAK, rps.weak_count());
-  send_reference_processing_event(REF_FINAL, rps.final_count());
-  send_reference_processing_event(REF_PHANTOM, rps.phantom_count());
+  send_reference_stats_event(REF_SOFT, rps.soft_count());
+  send_reference_stats_event(REF_WEAK, rps.weak_count());
+  send_reference_stats_event(REF_FINAL, rps.final_count());
+  send_reference_stats_event(REF_PHANTOM, rps.phantom_count());
 }
 
 void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& heap_summary, const PermGenSummary& perm_gen_summary) const {

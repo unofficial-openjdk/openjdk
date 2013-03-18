@@ -449,17 +449,18 @@ bool PSScavenge::invoke_no_policy() {
       reference_processor()->set_active_mt_degree(active_workers);
       PSKeepAliveClosure keep_alive(promotion_manager);
       PSEvacuateFollowersClosure evac_followers(promotion_manager);
+      ReferenceProcessorStats stats;
       if (reference_processor()->processing_is_mt()) {
         PSRefProcTaskExecutor task_executor;
-        reference_processor()->process_discovered_references(
+        stats = reference_processor()->process_discovered_references(
           &_is_alive_closure, &keep_alive, &evac_followers, &task_executor,
           &_gc_timer);
       } else {
-        reference_processor()->process_discovered_references(
+        stats = reference_processor()->process_discovered_references(
           &_is_alive_closure, &keep_alive, &evac_followers, NULL, &_gc_timer);
       }
 
-      _gc_tracer.report_gc_reference_processing(reference_processor()->collect_statistics());
+      _gc_tracer.report_gc_reference_stats(stats);
 
       // Enqueue reference objects discovered during scavenge.
       if (reference_processor()->processing_is_mt()) {

@@ -32,9 +32,6 @@ class ReferenceProcessor;
 // ReferenceProcessorStats contains statistics about how many references that
 // have been traversed when processing references during garbage collection.
 class ReferenceProcessorStats {
-  friend class ReferenceProcessor;
-
- private:
   size_t _soft_count;
   size_t _weak_count;
   size_t _final_count;
@@ -46,6 +43,16 @@ class ReferenceProcessorStats {
     _weak_count(0),
     _final_count(0),
     _phantom_count(0) {}
+
+  ReferenceProcessorStats(size_t soft_count,
+                          size_t weak_count,
+                          size_t final_count,
+                          size_t phantom_count) :
+    _soft_count(soft_count),
+    _weak_count(weak_count),
+    _final_count(final_count),
+    _phantom_count(phantom_count)
+  {}
 
   size_t soft_count() const {
     return _soft_count;

@@ -2407,18 +2407,19 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
   {
     GCTraceTime tm_r("reference processing", print_phases(), true, &_gc_timer);
 
+    ReferenceProcessorStats stats;
     if (ref_processor()->processing_is_mt()) {
       RefProcTaskExecutor task_executor;
-      ref_processor()->process_discovered_references(
+      stats = ref_processor()->process_discovered_references(
         is_alive_closure(), &mark_and_push_closure, &follow_stack_closure,
         &task_executor, &_gc_timer);
     } else {
-      ref_processor()->process_discovered_references(
+      stats = ref_processor()->process_discovered_references(
         is_alive_closure(), &mark_and_push_closure, &follow_stack_closure, NULL,
         &_gc_timer);
     }
 
-    gc_tracer->report_gc_reference_processing(ref_processor()->collect_statistics());
+    gc_tracer->report_gc_reference_stats(stats);
   }
 
   GCTraceTime tm_c("class unloading", print_phases(), true, &_gc_timer);

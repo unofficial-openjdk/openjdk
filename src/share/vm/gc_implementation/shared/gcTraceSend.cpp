@@ -50,8 +50,8 @@ void GCTracer::send_garbage_collection_event() const {
   }
 }
 
-void GCTracer::send_reference_processing_event(ReferenceType type, size_t count) const {
-  EventGCReferenceProcessing e;
+void GCTracer::send_reference_stats_event(ReferenceType type, size_t count) const {
+  EventGCReferenceStatistics e;
   if (e.should_commit()) {
       e.set_gcId(_shared_gc_info.id());
       e.set_type((u1)type);

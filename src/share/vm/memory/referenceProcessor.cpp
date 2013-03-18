@@ -102,8 +102,7 @@ ReferenceProcessor::ReferenceProcessor(MemRegion span,
   _discovered_list_needs_barrier(discovered_list_needs_barrier),
   _bs(NULL),
   _processing_is_mt(mt_processing),
-  _next_id(0),
-  _stats()
+  _next_id(0)
 {
   _span = span;
   _discovery_is_atomic = atomic_discovery;
@@ -191,14 +190,7 @@ size_t ReferenceProcessor::total_count(DiscoveredList lists[]) {
   return total;
 }
 
-void ReferenceProcessor::save_discovered_list_stats() {
-  _stats._soft_count = total_count(_discoveredSoftRefs);
-  _stats._weak_count = total_count(_discoveredWeakRefs);
-  _stats._final_count = total_count(_discoveredFinalRefs);
-  _stats._phantom_count = total_count(_discoveredPhantomRefs);
-}
-
-void ReferenceProcessor::process_discovered_references(
+ReferenceProcessorStats ReferenceProcessor::process_discovered_references(
   BoolObjectClosure*           is_alive,
   OopClosure*                  keep_alive,
   VoidClosure*                 complete_gc,
@@ -220,37 +212,44 @@ void ReferenceProcessor::process_discovered_references(
 
   _soft_ref_timestamp_clock = java_lang_ref_SoftReference::clock();
 
-  save_discovered_list_stats();
-
   bool trace_time = PrintGCDetails && PrintReferenceGC;
+
   // Soft references
+  size_t soft_count = 0;
   {
     GCTraceTime tt("SoftReference", trace_time, false, gc_timer);
-    process_discovered_reflist(_discoveredSoftRefs, _current_soft_ref_policy, true,
-                               is_alive, keep_alive, complete_gc, task_executor);
+    soft_count =
+      process_discovered_reflist(_discoveredSoftRefs, _current_soft_ref_policy, true,
+                                 is_alive, keep_alive, complete_gc, task_executor);
   }
 
   update_soft_ref_master_clock();
 
   // Weak references
+  size_t weak_count = 0;
   {
     GCTraceTime tt("WeakReference", trace_time, false, gc_timer);
-    process_discovered_reflist(_discoveredWeakRefs, NULL, true,
-                               is_alive, keep_alive, complete_gc, task_executor);
+    weak_count =
+      process_discovered_reflist(_discoveredWeakRefs, NULL, true,
+                                 is_alive, keep_alive, complete_gc, task_executor);
   }
 
   // Final references
+  size_t final_count = 0;
   {
     GCTraceTime tt("FinalReference", trace_time, false, gc_timer);
-    process_discovered_reflist(_discoveredFinalRefs, NULL, false,
-                               is_alive, keep_alive, complete_gc, task_executor);
+    final_count =
+      process_discovered_reflist(_discoveredFinalRefs, NULL, false,
+                                 is_alive, keep_alive, complete_gc, task_executor);
   }
 
   // Phantom references
+  size_t phantom_count = 0;
   {
     GCTraceTime tt("PhantomReference", trace_time, false, gc_timer);
-    process_discovered_reflist(_discoveredPhantomRefs, NULL, false,
-                               is_alive, keep_alive, complete_gc, task_executor);
+    phantom_count =
+      process_discovered_reflist(_discoveredPhantomRefs, NULL, false,
+                                 is_alive, keep_alive, complete_gc, task_executor);
   }
 
   // Weak global JNI references. It would make more sense (semantically) to
@@ -265,6 +264,8 @@ void ReferenceProcessor::process_discovered_references(
     }
     process_phaseJNI(is_alive, keep_alive, complete_gc);
   }
+
+  return ReferenceProcessorStats(soft_count, weak_count, final_count, phantom_count);
 }
 
 #ifndef PRODUCT
@@ -900,7 +901,7 @@ void ReferenceProcessor::balance_all_queues() {
   balance_queues(_discoveredPhantomRefs);
 }
 
-void
+size_t
 ReferenceProcessor::process_discovered_reflist(
   DiscoveredList               refs_lists[],
   ReferencePolicy*             policy,
@@ -923,8 +924,11 @@ ReferenceProcessor::process_discovered_reflist(
       must_balance) {
     balance_queues(refs_lists);
   }
+
+  size_t total_list_count = total_count(refs_lists);
+
   if (PrintReferenceGC && PrintGCDetails) {
-    gclog_or_tty->print(", %u refs", total_count(refs_lists));
+    gclog_or_tty->print(", %u refs", total_list_count);
   }
 
   // Phase 1 (soft refs only):
@@ -969,6 +973,8 @@ ReferenceProcessor::process_discovered_reflist(
                      is_alive, keep_alive, complete_gc);
     }
   }
+
+  return total_list_count;
 }
 
 void ReferenceProcessor::clean_up_discovered_references() {

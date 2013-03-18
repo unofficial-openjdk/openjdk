@@ -183,7 +183,7 @@ Declares a structure type that can be used in other events.
       <value type="G1YCTYPE" field="type" label="Type" />
     </event>
 
-    <event id="GCReferenceProcessing" path="vm/gc/reference/statistics"
+    <event id="GCReferenceStatistics" path="vm/gc/reference/statistics"
            label="GC Reference Processing" is_instant="true"
            description="Total count of processed references during GC">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>

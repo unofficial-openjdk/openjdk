@@ -125,7 +125,7 @@ class GCTracer : public ResourceObj {
   void report_gc_start(GCCause::Cause cause, jlong timestamp);
   void report_gc_end(jlong timestamp, TimePartitions* time_partitions);
   void report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& heap_summary, const PermGenSummary& perm_gen_summary) const;
-  void report_gc_reference_processing(const ReferenceProcessorStats& rp) const;
+  void report_gc_reference_stats(const ReferenceProcessorStats& rp) const;
 
   bool has_reported_gc_start() const;
 
@@ -138,7 +138,7 @@ class GCTracer : public ResourceObj {
   void send_garbage_collection_event() const;
   void send_gc_heap_summary_event(GCWhen::Type when, const GCHeapSummary& heap_summary) const;
   void send_perm_gen_summary_event(GCWhen::Type when, const PermGenSummary& perm_gen_summary) const;
-  void send_reference_processing_event(ReferenceType type, size_t count) const;
+  void send_reference_stats_event(ReferenceType type, size_t count) const;
   void send_phase_events(TimePartitions* time_partitions) const;
 };
 

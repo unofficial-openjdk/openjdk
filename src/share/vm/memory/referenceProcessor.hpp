@@ -210,10 +210,7 @@ public:
 class ReferenceProcessor : public CHeapObj<mtGC> {
 
  private:
-  ReferenceProcessorStats _stats;
-
   size_t total_count(DiscoveredList lists[]);
-  void save_discovered_list_stats();
 
  protected:
   // Compatibility with pre-4965777 JDK's
@@ -293,13 +290,13 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
   }
 
   // Process references with a certain reachability level.
-  void process_discovered_reflist(DiscoveredList               refs_lists[],
-                                  ReferencePolicy*             policy,
-                                  bool                         clear_referent,
-                                  BoolObjectClosure*           is_alive,
-                                  OopClosure*                  keep_alive,
-                                  VoidClosure*                 complete_gc,
-                                  AbstractRefProcTaskExecutor* task_executor);
+  size_t process_discovered_reflist(DiscoveredList               refs_lists[],
+                                    ReferencePolicy*             policy,
+                                    bool                         clear_referent,
+                                    BoolObjectClosure*           is_alive,
+                                    OopClosure*                  keep_alive,
+                                    VoidClosure*                 complete_gc,
+                                    AbstractRefProcTaskExecutor* task_executor);
 
   void process_phaseJNI(BoolObjectClosure* is_alive,
                         OopClosure*        keep_alive,
@@ -384,12 +381,6 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
 
   void enqueue_discovered_reflists(HeapWord* pending_list_addr, AbstractRefProcTaskExecutor* task_executor);
 
-  // Returns statistics from the last time the reference where processed via
-  // an invocation of process_discovered_references.
-  const ReferenceProcessorStats& collect_statistics() const {
-    return _stats;
-  }
-
  protected:
   // Set the 'discovered' field of the given reference to
   // the given value - emitting barriers depending upon
@@ -447,8 +438,7 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
     _num_q(0),
     _max_num_q(0),
     _processing_is_mt(false),
-    _next_id(0),
-    _stats()
+    _next_id(0)
   { }
 
   // Default parameters give you a vanilla reference processor.
@@ -520,11 +510,12 @@ class ReferenceProcessor : public CHeapObj<mtGC> {
   bool discover_reference(oop obj, ReferenceType rt);
 
   // Process references found during GC (called by the garbage collector)
-  void process_discovered_references(BoolObjectClosure*           is_alive,
-                                     OopClosure*                  keep_alive,
-                                     VoidClosure*                 complete_gc,
-                                     AbstractRefProcTaskExecutor* task_executor,
-                                     GCTimer *gc_timer);
+  ReferenceProcessorStats
+  process_discovered_references(BoolObjectClosure*           is_alive,
+                                OopClosure*                  keep_alive,
+                                VoidClosure*                 complete_gc,
+                                AbstractRefProcTaskExecutor* task_executor,
+                                GCTimer *gc_timer);
 
   // Enqueue references at end of GC (called by the garbage collector)
   bool enqueue_discovered_references(AbstractRefProcTaskExecutor* task_executor = NULL);
