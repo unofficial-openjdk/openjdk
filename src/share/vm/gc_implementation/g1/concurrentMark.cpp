@@ -37,6 +37,7 @@
 #include "gc_implementation/g1/heapRegionSeq.inline.hpp"
 #include "gc_implementation/shared/vmGCOperations.hpp"
 #include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcTraceTime.hpp"
 #include "memory/genOopClosures.inline.hpp"
 #include "memory/referencePolicy.hpp"
@@ -2325,6 +2326,7 @@ void ConcurrentMark::weakRefsWork(bool clear_all_soft_refs) {
     G1CMRefProcTaskExecutor par_task_executor(g1h, this,
                                               g1h->workers(), active_workers);
 
+    ReferenceProcessorStats stats;
     if (rp->processing_is_mt()) {
       // Set the degree of MT here.  If the discovery is done MT, there
       // may have been a different number of threads doing the discovery
@@ -2333,7 +2335,7 @@ void ConcurrentMark::weakRefsWork(bool clear_all_soft_refs) {
       // balance_all_queues() and balance_queues()).
       rp->set_active_mt_degree(active_workers);
 
-      rp->process_discovered_references(&g1_is_alive,
+      stats = rp->process_discovered_references(&g1_is_alive,
                                       &g1_keep_alive,
                                       &g1_drain_mark_stack,
                                       &par_task_executor,
@@ -2343,12 +2345,14 @@ void ConcurrentMark::weakRefsWork(bool clear_all_soft_refs) {
       // will set the has_overflown flag if we overflow the global marking
       // stack.
     } else {
-      rp->process_discovered_references(&g1_is_alive,
+      stats = rp->process_discovered_references(&g1_is_alive,
                                         &g1_keep_alive,
                                         &g1_drain_mark_stack,
                                         NULL,
                                         g1h->gc_timer_cm());
     }
+
+    g1h->gc_tracer_cm()->report_gc_reference_stats(stats);
 
     assert(_markStack.overflow() || _markStack.isEmpty(),
             "mark stack should be empty (unless it overflowed)");

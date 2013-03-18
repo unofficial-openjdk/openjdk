@@ -538,8 +538,10 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
   // Process reference objects found during marking
   {
     ref_processor()->setup_policy(clear_all_softrefs);
-    ref_processor()->process_discovered_references(
-      is_alive_closure(), mark_and_push_closure(), follow_stack_closure(), NULL, _gc_timer);
+    const ReferenceProcessorStats& stats =
+      ref_processor()->process_discovered_references(
+        is_alive_closure(), mark_and_push_closure(), follow_stack_closure(), NULL, _gc_timer);
+    gc_tracer()->report_gc_reference_stats(stats);
   }
 
   // Follow system dictionary roots and unload classes

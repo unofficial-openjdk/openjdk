@@ -1178,6 +1178,7 @@ public:
   ReferenceProcessor* ref_processor_cm() const { return _ref_processor_cm; }
 
   ConcurrentGCTimer* gc_timer_cm() const { return _gc_timer_cm; }
+  G1OldTracer* gc_tracer_cm() const { return _gc_tracer_cm; }
 
   virtual size_t capacity() const;
   virtual size_t used() const;

@@ -987,19 +987,21 @@ void ParNewGeneration::collect(bool   full,
   rp->setup_policy(clear_all_soft_refs);
   // Can  the mt_degree be set later (at run_task() time would be best)?
   rp->set_active_mt_degree(active_workers);
+  ReferenceProcessorStats stats;
   if (rp->processing_is_mt()) {
     ParNewRefProcTaskExecutor task_executor(*this, thread_state_set);
-    rp->process_discovered_references(&is_alive, &keep_alive,
-                                      &evacuate_followers, &task_executor,
-                                      _gc_timer);
+    stats = rp->process_discovered_references(&is_alive, &keep_alive,
+                                              &evacuate_followers, &task_executor,
+                                              _gc_timer);
   } else {
     thread_state_set.flush();
     gch->set_par_threads(0);  // 0 ==> non-parallel.
     gch->save_marks();
-    rp->process_discovered_references(&is_alive, &keep_alive,
-                                      &evacuate_followers, NULL,
-                                      _gc_timer);
+    stats = rp->process_discovered_references(&is_alive, &keep_alive,
+                                              &evacuate_followers, NULL,
+                                              _gc_timer);
   }
+  gc_tracer.report_gc_reference_stats(stats);
   if (!promotion_failed()) {
     // Swap the survivor spaces.
     eden()->clear(SpaceDecorator::Mangle);

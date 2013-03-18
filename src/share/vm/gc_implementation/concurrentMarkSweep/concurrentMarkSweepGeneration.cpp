@@ -5903,6 +5903,8 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
                                 &cmsKeepAliveClosure, false /* !preclean */);
   {
     GCTraceTime t("weak refs processing", PrintGCDetails, false, _gc_timer_cm);
+
+    ReferenceProcessorStats stats;
     if (rp->processing_is_mt()) {
       // Set the degree of MT here.  If the discovery is done MT, there
       // may have been a different number of threads doing the discovery
@@ -5921,18 +5923,20 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
       }
       rp->set_active_mt_degree(active_workers);
       CMSRefProcTaskExecutor task_executor(*this);
-      rp->process_discovered_references(&_is_alive_closure,
+      stats = rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
                                         &task_executor,
                                         _gc_timer_cm);
     } else {
-      rp->process_discovered_references(&_is_alive_closure,
+      stats = rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
                                         NULL,
                                         _gc_timer_cm);
     }
+    _gc_tracer_cm->report_gc_reference_stats(stats);
+
     verify_work_stacks_empty();
   }
 

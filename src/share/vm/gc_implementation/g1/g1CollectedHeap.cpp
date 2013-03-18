@@ -5584,22 +5584,28 @@ void G1CollectedHeap::process_discovered_references(uint no_of_gc_workers) {
   // Setup the soft refs policy...
   rp->setup_policy(false);
 
+  ReferenceProcessorStats stats;
   if (!rp->processing_is_mt()) {
     // Serial reference processing...
-    rp->process_discovered_references(&is_alive,
-                                      &keep_alive,
-                                      &drain_queue,
-                                      NULL,
-                                      _gc_timer_stw);
+    stats = rp->process_discovered_references(&is_alive,
+                                              &keep_alive,
+                                              &drain_queue,
+                                              NULL,
+                                              _gc_timer_stw);
   } else {
     // Parallel reference processing
     assert(rp->num_q() == no_of_gc_workers, "sanity");
     assert(no_of_gc_workers <= rp->max_num_q(), "sanity");
 
     G1STWRefProcTaskExecutor par_task_executor(this, workers(), _task_queues, no_of_gc_workers);
-    rp->process_discovered_references(&is_alive, &keep_alive, &drain_queue, &par_task_executor, _gc_timer_stw);
+    stats = rp->process_discovered_references(&is_alive,
+                                              &keep_alive,
+                                              &drain_queue,
+                                              &par_task_executor,
+                                              _gc_timer_stw);
   }
 
+  _gc_tracer_stw->report_gc_reference_stats(stats);
   // We have completed copying any necessary live referent objects
   // (that were not copied during the actual pause) so we can
   // retire any active alloc buffers

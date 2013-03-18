@@ -610,8 +610,10 @@ void DefNewGeneration::collect(bool   full,
   FastKeepAliveClosure keep_alive(this, &scan_weak_ref);
   ReferenceProcessor* rp = ref_processor();
   rp->setup_policy(clear_all_soft_refs);
-  rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
-                                    NULL, _gc_timer);
+  const ReferenceProcessorStats& stats =
+    rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
+                                      NULL, _gc_timer);
+  gc_tracer.report_gc_reference_stats(stats);
   if (!promotion_failed()) {
     // Swap the survivor spaces.
     eden()->clear(SpaceDecorator::Mangle);
