@@ -25,34 +25,46 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP
 
+#include "runtime/thread.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 class PromotionFailedInfo VALUE_OBJ_CLASS_SPEC {
-  uint   _promotion_failed_count;
-  size_t _promotion_failed_size;
+  size_t    _first_size;
+  size_t    _smallest_size;
+  size_t    _total_size;
+  uint      _count;
+  OSThread* _thread;
+
  public:
-  PromotionFailedInfo() : _promotion_failed_count(0), _promotion_failed_size(0) {}
+  PromotionFailedInfo() : _first_size(0), _smallest_size(0), _total_size(0), _count(0), _thread(NULL) {}
 
   void register_promotion_failed(size_t size) {
-    _promotion_failed_size += size;
-    _promotion_failed_count++;
-  }
-
-  void set_promotion_failed(size_t size, uint count) {
-    _promotion_failed_size = size;
-    _promotion_failed_count = count;
+    if (_first_size == 0) {
+      _first_size = size;
+      _smallest_size = size;
+      _thread = Thread::current()->osthread();
+    } else if (size < _smallest_size) {
+      _smallest_size = size;
+    }
+    _total_size += size;
+    _count++;
+    assert(_thread == Thread::current()->osthread(), "The PromotionFailedInfo should be thread local.");
   }
 
   void reset() {
-    _promotion_failed_size = 0;
-    _promotion_failed_count = 0;
+    _first_size = 0;
+    _smallest_size = 0;
+    _total_size = 0;
+    _count = 0;
+    _thread = NULL;
   }
 
-  bool promotion_failed() const { return _promotion_failed_size > 0; }
-  size_t promotion_failed_size() const { return _promotion_failed_size; }
-  uint promotion_failed_count() const { return _promotion_failed_count; }
+  bool promotion_failed() const { return _count != 0; }
+  size_t first_size() const { return _first_size; }
+  size_t smallest_size() const { return _smallest_size; }
+  size_t total_size() const { return _total_size; }
+  uint promotion_failed_count() const { return _count; }
+  OSThread* thread() const { return _thread; }
 };
 
-
 #endif /* SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP */
-

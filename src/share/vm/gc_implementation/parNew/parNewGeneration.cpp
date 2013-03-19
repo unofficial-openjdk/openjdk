@@ -33,6 +33,7 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcTraceTime.hpp"
+#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "gc_implementation/shared/spaceDecorator.hpp"
 #include "memory/defNewGeneration.inline.hpp"
 #include "memory/genCollectedHeap.hpp"
@@ -79,7 +80,6 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                       work_queue_set_, &term_),
   _is_alive_closure(gen_), _scan_weak_ref_closure(gen_, this),
   _keep_alive_closure(&_scan_weak_ref_closure),
-  _promotion_failure_size(0),
   _strong_roots_time(0.0), _term_time(0.0)
 {
   #if TASKQUEUE_STATS
@@ -283,13 +283,10 @@ void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
   }
 }
 
-void ParScanThreadState::print_and_clear_promotion_failure_size() {
-  if (_promotion_failure_size != 0) {
-    if (PrintPromotionFailure) {
-      gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
-        _thread_num, _promotion_failure_size);
-    }
-    _promotion_failure_size = 0;
+void ParScanThreadState::print_promotion_failure_size() {
+  if (_promotion_failed_info.promotion_failed() && PrintPromotionFailure) {
+    gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
+                        _thread_num, _promotion_failed_info.first_size());
   }
 }
 
@@ -309,6 +306,7 @@ public:
 
   inline ParScanThreadState& thread_state(int i);
 
+  void trace_promotion_failed(YoungGCTracer& gc_tracer);
   void reset(int active_workers, bool promotion_failed);
   void flush();
 
@@ -357,13 +355,21 @@ inline ParScanThreadState& ParScanThreadStateSet::thread_state(int i)
   return ((ParScanThreadState*)_data)[i];
 }
 
+void ParScanThreadStateSet::trace_promotion_failed(YoungGCTracer& gc_tracer) {
+  for (int i = 0; i < length(); ++i) {
+    if (thread_state(i).promotion_failed()) {
+      gc_tracer.report_promotion_failed(thread_state(i).promotion_failed_info());
+      thread_state(i).promotion_failed_info().reset();
+    }
+  }
+}
 
 void ParScanThreadStateSet::reset(int active_threads, bool promotion_failed)
 {
   _term.reset_for_reuse(active_threads);
   if (promotion_failed) {
     for (int i = 0; i < length(); ++i) {
-      thread_state(i).print_and_clear_promotion_failure_size();
+      thread_state(i).print_promotion_failure_size();
     }
   }
 }
@@ -874,6 +880,8 @@ void EvacuateFollowersClosureGeneral::do_void() {
 }
 
 
+// A Generation that does parallel young-gen collection.
+
 bool ParNewGeneration::_avoid_promotion_undo = false;
 
 void ParNewGeneration::adjust_desired_tenuring_threshold() {
@@ -882,7 +890,30 @@ void ParNewGeneration::adjust_desired_tenuring_threshold() {
     age_table()->compute_tenuring_threshold(to()->capacity()/HeapWordSize);
 }
 
-// A Generation that does parallel young-gen collection.
+void ParNewGeneration::handle_promotion_failed(GenCollectedHeap* gch, ParScanThreadStateSet& thread_state_set, ParNewTracer& gc_tracer) {
+  assert(_promo_failure_scan_stack.is_empty(), "post condition");
+  _promo_failure_scan_stack.clear(true); // Clear cached segments.
+
+  remove_forwarding_pointers();
+  if (PrintGCDetails) {
+    gclog_or_tty->print(" (promotion failed)");
+  }
+  // All the spaces are in play for mark-sweep.
+  swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
+  from()->set_next_compaction_space(to());
+  gch->set_incremental_collection_failed();
+  // Inform the next generation that a promotion failure occurred.
+  _next_gen->promotion_failure_occurred();
+
+  // Trace promotion failure in the parallel GC threads
+  thread_state_set.trace_promotion_failed(gc_tracer);
+  // Single threaded code may have reported promotion failure to the global state
+  if (_promotion_failed_info.promotion_failed()) {
+    gc_tracer.report_promotion_failed(_promotion_failed_info);
+  }
+  // Reset the PromotionFailureALot counters.
+  NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
+}
 
 void ParNewGeneration::collect(bool   full,
                                bool   clear_all_soft_refs,
@@ -914,7 +945,7 @@ void ParNewGeneration::collect(bool   full,
     set_avoid_promotion_undo(true);
   }
 
-  // If the next generation is too full to accomodate worst-case promotion
+  // If the next generation is too full to accommodate worst-case promotion
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
@@ -1024,22 +1055,7 @@ void ParNewGeneration::collect(bool   full,
 
     assert(to()->is_empty(), "to space should be empty now");
   } else {
-    assert(_promo_failure_scan_stack.is_empty(), "post condition");
-    _promo_failure_scan_stack.clear(true); // Clear cached segments.
-
-    remove_forwarding_pointers();
-    if (PrintGCDetails) {
-      gclog_or_tty->print(" (promotion failed)");
-    }
-    // All the spaces are in play for mark-sweep.
-    swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
-    from()->set_next_compaction_space(to());
-    gch->set_incremental_collection_failed();
-    // Inform the next generation that a promotion failure occurred.
-    _next_gen->promotion_failure_occurred();
-
-    // Reset the PromotionFailureALot counters.
-    NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
+    handle_promotion_failed(gch, thread_state_set, gc_tracer);
   }
   // set new iteration safe limit for the survivor spaces
   from()->set_concurrent_iteration_safe_limit(from()->top());
@@ -1195,8 +1211,7 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
       new_obj = old;
 
       preserve_mark_if_necessary(old, m);
-      // Log the size of the maiden promotion failure
-      par_scan_state->log_promotion_failure(sz);
+      par_scan_state->register_promotion_failure(sz);
     }
 
     old->forward_to(new_obj);
@@ -1311,8 +1326,7 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
       failed_to_promote = true;
 
       preserve_mark_if_necessary(old, m);
-      // Log the size of the maiden promotion failure
-      par_scan_state->log_promotion_failure(sz);
+      par_scan_state->register_promotion_failure(sz);
     }
   } else {
     // Is in to-space; do copying ourselves.

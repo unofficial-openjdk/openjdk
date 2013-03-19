@@ -193,7 +193,10 @@ Declares a structure type that can be used in other events.
            description="Promotion of an object failed">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="BYTES64" field="objectCount" label="Object Count"/>
+      <value type="BYTES64" field="firstSize" label="First Failed Object Size"/>
+      <value type="BYTES64" field="smallestSize" label="Smallest Failed Object Size"/>
       <value type="BYTES64" field="totalSize" label="Total Object Size"/>
+      <value type="OSTHREAD" field="thread" label="Running thread"/>
     </event>
 
     <event id="GCPhasePause" path="vm/gc/phases/pause" label="GC Phase Pause">

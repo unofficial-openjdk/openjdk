@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_IMPLEMENTATION_PARALLELSCAVENGE_PSPROMOTIONMANAGER_HPP
 
 #include "gc_implementation/parallelScavenge/psPromotionLAB.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "memory/allocation.hpp"
 #include "utilities/taskqueue.hpp"
@@ -152,7 +153,7 @@ class PSPromotionManager : public CHeapObj<mtGC> {
   static void initialize();
 
   static void pre_scavenge();
-  static PromotionFailedInfo post_scavenge();
+  static bool post_scavenge(YoungGCTracer& gc_tracer);
 
   static PSPromotionManager* gc_thread_promotion_manager(int index);
   static PSPromotionManager* vm_thread_promotion_manager();

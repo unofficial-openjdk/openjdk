@@ -27,6 +27,7 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
+#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "trace/tracing.hpp"
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1YCTypes.hpp"
@@ -91,12 +92,15 @@ void OldGCTracer::send_old_gc_event() const {
   }
 }
 
-void YoungGCTracer::send_promotion_failed_event(size_t size, uint count) const {
+void YoungGCTracer::send_promotion_failed_event(const PromotionFailedInfo& pf_info) const {
   EventPromotionFailed e;
   if (e.should_commit()) {
     e.set_gcId(_shared_gc_info.id());
-    e.set_objectCount(count);
-    e.set_totalSize(size);
+    e.set_objectCount(pf_info.promotion_failed_count());
+    e.set_firstSize(pf_info.first_size());
+    e.set_smallestSize(pf_info.smallest_size());
+    e.set_totalSize(pf_info.total_size());
+    e.set_thread(pf_info.thread()->thread_id());
     e.commit();
   }
 }

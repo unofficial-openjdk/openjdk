@@ -27,8 +27,8 @@
 #include "gc_implementation/parallelScavenge/psOldGen.hpp"
 #include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
 #include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/mutableSpace.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "memory/memRegion.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.psgc.inline.hpp"
@@ -87,24 +87,20 @@ void PSPromotionManager::pre_scavenge() {
   }
 }
 
-PromotionFailedInfo PSPromotionManager::post_scavenge() {
-  size_t promotion_failed_size = 0;
-  uint   promotion_failed_count = 0;
-  PromotionFailedInfo pfi;
+bool PSPromotionManager::post_scavenge(YoungGCTracer& gc_tracer) {
+  bool promotion_failure_occurred = false;
 
   TASKQUEUE_STATS_ONLY(if (PrintGCDetails && ParallelGCVerbose) print_stats());
   for (uint i = 0; i < ParallelGCThreads + 1; i++) {
     PSPromotionManager* manager = manager_array(i);
     assert(manager->claimed_stack_depth()->is_empty(), "should be empty");
     if (manager->_promotion_failed_info.promotion_failed()) {
-        promotion_failed_size += manager->_promotion_failed_info.promotion_failed_size();
-        promotion_failed_count += manager->_promotion_failed_info.promotion_failed_count();
+      gc_tracer.report_promotion_failed(manager->_promotion_failed_info);
+      promotion_failure_occurred = true;
     }
     manager->flush_labs();
   }
-
-  pfi.set_promotion_failed(promotion_failed_size, promotion_failed_count);
-  return pfi;
+  return promotion_failure_occurred;
 }
 
 #if TASKQUEUE_STATS

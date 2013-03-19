@@ -546,7 +546,7 @@ void DefNewGeneration::collect(bool   full,
   assert(_next_gen != NULL,
     "This must be the youngest gen, and not the only gen");
 
-  // If the next generation is too full to accomodate promotion
+  // If the next generation is too full to accommodate promotion
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
@@ -614,7 +614,7 @@ void DefNewGeneration::collect(bool   full,
     rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
                                       NULL, _gc_timer);
   gc_tracer.report_gc_reference_stats(stats);
-  if (!promotion_failed()) {
+  if (!_promotion_failed) {
     // Swap the survivor spaces.
     eden()->clear(SpaceDecorator::Mangle);
     from()->clear(SpaceDecorator::Mangle);
@@ -663,6 +663,7 @@ void DefNewGeneration::collect(bool   full,
 
     // Inform the next generation that a promotion failure occurred.
     _next_gen->promotion_failure_occurred();
+    gc_tracer.report_promotion_failed(_promotion_failed_info);
 
     // Reset the PromotionFailureALot counters.
     NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
@@ -672,7 +673,7 @@ void DefNewGeneration::collect(bool   full,
   to()->set_concurrent_iteration_safe_limit(to()->top());
   SpecializationStats::print();
 
-  // We need to use a monotonically non-deccreasing time in ms
+  // We need to use a monotonically non-decreasing time in ms
   // or we will see time-warp warnings and os::javaTimeMillis()
   // does not guarantee monotonicity.
   jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
@@ -694,6 +695,7 @@ public:
 
 void DefNewGeneration::init_assuming_no_promotion_failure() {
   _promotion_failed = false;
+  _promotion_failed_info.reset();
   from()->set_next_compaction_space(NULL);
 }
 
@@ -715,7 +717,7 @@ void DefNewGeneration::remove_forwarding_pointers() {
 }
 
 void DefNewGeneration::preserve_mark(oop obj, markOop m) {
-  assert(promotion_failed() && m->must_be_preserved_for_promotion_failure(obj),
+  assert(_promotion_failed && m->must_be_preserved_for_promotion_failure(obj),
          "Oversaving!");
   _objs_with_preserved_marks.push(obj);
   _preserved_marks_of_objs.push(m);
@@ -733,6 +735,7 @@ void DefNewGeneration::handle_promotion_failure(oop old) {
                         old->size());
   }
   _promotion_failed = true;
+  _promotion_failed_info.register_promotion_failed(old->size());
   preserve_mark_if_necessary(old, old->mark());
   // forward to self
   old->forward_to(old);

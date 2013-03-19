@@ -26,6 +26,7 @@
 #include "gc_implementation/shared/gcHeapSummary.hpp"
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "memory/referenceProcessorStats.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -98,10 +99,10 @@ void YoungGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_par
   send_young_gc_event();
 }
 
-void YoungGCTracer::report_promotion_failed(size_t size, uint count) {
+void YoungGCTracer::report_promotion_failed(const PromotionFailedInfo& pf_info) {
   assert_set_gc_id();
 
-  send_promotion_failed_event(size, count);
+  send_promotion_failed_event(pf_info);
 }
 
 

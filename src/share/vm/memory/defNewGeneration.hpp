@@ -28,6 +28,7 @@
 #include "gc_implementation/shared/ageTable.hpp"
 #include "gc_implementation/shared/cSpaceCounters.hpp"
 #include "gc_implementation/shared/generationCounters.hpp"
+#include "gc_implementation/shared/promotionFailedInfo.hpp"
 #include "memory/generation.inline.hpp"
 #include "utilities/stack.hpp"
 
@@ -47,15 +48,17 @@ protected:
   int         _tenuring_threshold;   // Tenuring threshold for next collection.
   ageTable    _age_table;
   // Size of object to pretenure in words; command line provides bytes
-  size_t        _pretenure_size_threshold_words;
+  size_t      _pretenure_size_threshold_words;
 
   ageTable*   age_table() { return &_age_table; }
+
   // Initialize state to optimistically assume no promotion failure will
   // happen.
   void   init_assuming_no_promotion_failure();
   // True iff a promotion has failed in the current collection.
   bool   _promotion_failed;
   bool   promotion_failed() { return _promotion_failed; }
+  PromotionFailedInfo _promotion_failed_info;
 
   // Handling promotion failure.  A young generation collection
   // can fail if a live object cannot be copied out of its
