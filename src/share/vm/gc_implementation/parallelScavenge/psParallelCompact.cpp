@@ -2086,7 +2086,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     bool marked_for_unloading = false;
 
     marking_start.update();
-    marking_phase(vmthread_cm, maximum_heap_compaction, &_gc_tracer);
+    marking_phase(vmthread_cm, maximum_heap_compaction);
 
 #ifndef PRODUCT
     if (TraceParallelOldGCMarkingPhase) {
@@ -2361,9 +2361,7 @@ GCTaskManager* const PSParallelCompact::gc_task_manager() {
   return ParallelScavengeHeap::gc_task_manager();
 }
 
-void PSParallelCompact::marking_phase(ParCompactionManager* cm,
-                                      bool maximum_heap_compaction,
-                                      ParallelOldTracer *gc_tracer) {
+void PSParallelCompact::marking_phase(ParCompactionManager* cm, bool maximum_heap_compaction) {
   // Recursively traverse all live objects and mark them
   GCTraceTime tm("marking phase", print_phases(), true, &_gc_timer);
 
@@ -2419,7 +2417,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
         &_gc_timer);
     }
 
-    gc_tracer->report_gc_reference_stats(stats);
+    _gc_tracer.report_gc_reference_stats(stats);
   }
 
   GCTraceTime tm_c("class unloading", print_phases(), true, &_gc_timer);

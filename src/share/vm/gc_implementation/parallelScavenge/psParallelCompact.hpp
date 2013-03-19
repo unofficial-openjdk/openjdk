@@ -890,9 +890,7 @@ class PSParallelCompact : AllStatic {
   static void post_compact();
 
   // Mark live objects
-  static void marking_phase(ParCompactionManager* cm,
-                            bool maximum_heap_compaction,
-                            ParallelOldTracer *gc_tracer);
+  static void marking_phase(ParCompactionManager* cm, bool maximum_heap_compaction);
   static void follow_weak_klass_links();
   static void follow_mdo_weak_refs();
 
