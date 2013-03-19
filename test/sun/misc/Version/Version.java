@@ -35,7 +35,7 @@ import static sun.misc.Version.*;
 public class Version {
 
     public static void main(String[] args) throws Exception {
-        VersionInfo jdk = newVersionInfo(System.getProperty("java.runtime.version"));
+        VersionInfo jdk = jdkVersionInfo(System.getProperty("java.runtime.version"));
         VersionInfo v1 = new VersionInfo(jdkMajorVersion(),
                                          jdkMinorVersion(),
                                          jdkMicroVersion(),
@@ -46,7 +46,7 @@ public class Version {
         if (!jdk.equals(v1)) {
             throw new RuntimeException("Unmatched version: " + jdk + " vs " + v1);
         }
-        VersionInfo jvm = newVersionInfo(System.getProperty("java.vm.version"));
+        VersionInfo jvm = jvmVersionInfo(System.getProperty("java.vm.version"));
         VersionInfo v2 = new VersionInfo(jvmMajorVersion(),
                                          jvmMinorVersion(),
                                          jvmMicroVersion(),
@@ -97,9 +97,9 @@ public class Version {
         }
     }
 
-    private static VersionInfo newVersionInfo(String version) throws Exception {
+    private static VersionInfo jdkVersionInfo(String version) throws Exception {
         // valid format of the version string is:
-        // n.n.n[_uu[c]][-<identifer>]-bxx
+        // <major>.<minor>[.<micro>][_uu[c]][-<identifier>]-bxx
         int major = 0;
         int minor = 0;
         int micro = 0;
@@ -107,8 +107,7 @@ public class Version {
         String special = "";
         int build = 0;
 
-        // n.n.n[_uu[c]][-<identifer>]-bxx
-        String regex = "([0-9]{1,2})";      // major
+        String regex = "^([0-9]{1,2})";     // major
         regex += "\\.";                     // separator
         regex += "([0-9]{1,2})";            // minor
         regex += "(\\.";                    // separator
@@ -118,8 +117,8 @@ public class Version {
         regex +=   "([0-9]{2})";            // update
         regex +=   "([a-z])?";              // special char (optional)
         regex += ")?";                      // _uu[c] is optional
-        regex += "(\\-[a-z]{2,})?";         // -<identifier>
-        regex += "(\\-b([0-9]{1,2}))?";     // -bxx
+        regex += ".*";                      // -<identifier>
+        regex += "(\\-b([0-9]{1,3}$))";     // JDK -bxx
 
         Pattern p = Pattern.compile(regex);
         Matcher m = p.matcher(version);
@@ -130,9 +129,35 @@ public class Version {
         micro = (m.group(4) == null) ? 0 : Integer.parseInt(m.group(4));
         update = (m.group(6) == null) ? 0 : Integer.parseInt(m.group(6));
         special = (m.group(7) == null) ? "" : m.group(7);
-        build = Integer.parseInt(m.group(10));
+        build = Integer.parseInt(m.group(9));
 
         VersionInfo vi = new VersionInfo(major, minor, micro, update, special, build);
+        System.out.printf("newVersionInfo: input=%s output=%s\n", version, vi);
+        return vi;
+    }
+
+    private static VersionInfo jvmVersionInfo(String version) throws Exception {
+        // valid format of the version string is:
+        // <major>.<minor>-bxx[-<identifier>][-<debug_flavor>]
+        int major = 0;
+        int minor = 0;
+        int build = 0;
+
+        String regex = "^([0-9]{1,2})";     // major
+        regex += "\\.";                     // separator
+        regex += "([0-9]{1,2})";            // minor
+        regex += "(\\-b([0-9]{1,3}))";      // JVM -bxx
+        regex += ".*";
+
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(version);
+        m.matches();
+
+        major = Integer.parseInt(m.group(1));
+        minor = Integer.parseInt(m.group(2));
+        build = Integer.parseInt(m.group(4));
+
+        VersionInfo vi = new VersionInfo(major, minor, 0, 0, "", build);
         System.out.printf("newVersionInfo: input=%s output=%s\n", version, vi);
         return vi;
     }
