@@ -168,8 +168,6 @@ Declares a structure type that can be used in other events.
     <event id="GCYoungGarbageCollection" path="vm/gc/collector/young_garbage_collection" label="Young Garbage Collection"
            description="Extra information specific to Young Garbage Collections">
       <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
-      <!-- This information can also be found by looking for PromotionFailed events. It's here for convenience. -->
-      <value type="BOOLEAN" field="promotionFailed" label="Promotion Failed" description="Tells if we failed to promote some objects to the old gen" />
     </event>
 
     <event id="GCOldGarbageCollection" path="vm/gc/collector/old_garbage_collection" label="Old Garbage Collection"

@@ -93,16 +93,6 @@ class ParallelOldGCInfo VALUE_OBJ_CLASS_SPEC {
   void* dense_prefix() const { return _dense_prefix; }
 };
 
-class YoungGCInfo VALUE_OBJ_CLASS_SPEC {
-  bool _promotion_failed;
- public:
-  YoungGCInfo() : _promotion_failed(false) {}
-  void register_promotion_failed() {
-    _promotion_failed = true;
-  }
-  bool promotion_failed() const { return _promotion_failed; }
-};
-
 #ifndef SERIALGC
 
 class G1YoungGCInfo VALUE_OBJ_CLASS_SPEC {
@@ -143,11 +133,8 @@ class GCTracer : public ResourceObj {
 };
 
 class YoungGCTracer : public GCTracer {
-  YoungGCInfo _young_gc_info;
-
  protected:
   YoungGCTracer(GCName name) : GCTracer(name) {}
-  virtual YoungGCInfo& young_gc_info() { return _young_gc_info; }
 
  public:
   virtual void report_promotion_failed(size_t size, uint count);

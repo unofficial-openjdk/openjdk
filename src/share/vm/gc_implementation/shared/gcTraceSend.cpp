@@ -75,7 +75,6 @@ void YoungGCTracer::send_young_gc_event() const {
   EventGCYoungGarbageCollection e(UNTIMED);
   if (e.should_commit()) {
     e.set_gcId(_shared_gc_info.id());
-    e.set_promotionFailed(_young_gc_info.promotion_failed());
     e.set_starttime(_shared_gc_info.start_timestamp());
     e.set_endtime(_shared_gc_info.end_timestamp());
     e.commit();

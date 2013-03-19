@@ -101,7 +101,6 @@ void YoungGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_par
 void YoungGCTracer::report_promotion_failed(size_t size, uint count) {
   assert_set_gc_id();
 
-  young_gc_info().register_promotion_failed();
   send_promotion_failed_event(size, count);
 }
 
