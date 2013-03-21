@@ -40,6 +40,7 @@
 #include <langinfo.h>
 #include <locale.h>
 #include <fcntl.h>
+#include <sizecalc.h>
 
 static Bool shapeSupported;
 static int shapeEventBase, shapeErrorBase;
@@ -75,9 +76,12 @@ char* SplashConvertStringAlloc(const char* in, int* size) {
         goto done;
     }
     inSize = strlen(in);
+    buf = SAFE_SIZE_ARRAY_ALLOC(malloc, inSize, 2);
+    if (!buf) {
+        return NULL;
+    }
     bufSize = inSize*2; // need 2 bytes per char for UCS-2, this is
                         // 2 bytes per source byte max
-    buf = malloc(bufSize);
     out = buf; outSize = bufSize;
     /* linux iconv wants char** source and solaris wants const char**...
        cast to void* */
@@ -113,12 +117,20 @@ SplashInitFrameShape(Splash * splash, int imageIndex) {
     initRect(&maskRect, 0, 0, splash->width, splash->height, 1,
             splash->width * splash->imageFormat.depthBytes,
             splash->frames[imageIndex].bitmapBits, &splash->imageFormat);
-    rects =
-        malloc(sizeof(XRectangle) * (splash->width / 2 + 1) * splash->height);
+    if (!IS_SAFE_SIZE_MUL(splash->width / 2 + 1, splash->height)) {
+        return;
+    }
+    rects = SAFE_SIZE_ARRAY_ALLOC(malloc,
+            sizeof(XRectangle), (splash->width / 2 + 1) * splash->height);
+    if (!rects) {
+        return;
+    }
 
     frame->numRects = BitmapToYXBandedRectangles(&maskRect, rects);
-    frame->rects = malloc(frame->numRects * sizeof(XRectangle));
-    memcpy(frame->rects, rects, frame->numRects * sizeof(XRectangle));
+    frame->rects = SAFE_SIZE_ARRAY_ALLOC(malloc, frame->numRects, sizeof(XRectangle));
+    if (frame->rects) { // handle the error after the if(){}
+        memcpy(frame->rects, rects, frame->numRects * sizeof(XRectangle));
+    }
     free(rects);
 }
 

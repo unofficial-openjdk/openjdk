@@ -30,6 +30,7 @@
 #include <string.h>
 #include "gtk2_interface.h"
 #include "java_awt_Transparency.h"
+#include "sizecalc.h"
 
 #define GTK2_LIB "libgtk-x11-2.0.so.0"
 
@@ -637,7 +638,8 @@ gboolean gtk2_load()
     {
         gchar *tmp_env = strdup (gtk_modules_env);
         /* the new env will be smaller than the old one */
-        gchar *s, *new_env = malloc (sizeof(ENV_PREFIX)+strlen (gtk_modules_env));
+        gchar *s, *new_env = SAFE_SIZE_STRUCT_ALLOC(malloc,
+                sizeof(ENV_PREFIX), 1, strlen (gtk_modules_env));
 
         if (new_env != NULL )
         {

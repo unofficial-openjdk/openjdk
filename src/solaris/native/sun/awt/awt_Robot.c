@@ -40,6 +40,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XI.h>
 #include <jni.h>
+#include <sizecalc.h>
 #include "robot_common.h"
 #include "canvas.h"
 #include "wsutils.h"
@@ -266,8 +267,9 @@ FUNC_NAME(getRGBPixelsImpl)( JNIEnv *env,
     image = getWindowImage(awt_display, rootWindow, x, y, width, height);
 
     /* Array to use to crunch around the pixel values */
-    ary = (jint *) malloc(width * height * sizeof (jint));
-    if (ary == NULL) {
+    if (!IS_SAFE_SIZE_MUL(width, height) ||
+        !(ary = (jint *) SAFE_SIZE_ARRAY_ALLOC(malloc, width * height, sizeof (jint))))
+    {
         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
         XDestroyImage(image);
         AWT_UNLOCK();

@@ -97,8 +97,8 @@ Devices::Devices(int numDevices)
     J2dTraceLn1(J2D_TRACE_INFO, "Devices::Devices numDevices=%d", numDevices);
     this->numDevices = numDevices;
     this->refCount = 0;
-    devices = (AwtWin32GraphicsDevice**)safe_Malloc
-        (numDevices * sizeof(AwtWin32GraphicsDevice *));
+    devices = (AwtWin32GraphicsDevice**)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc,
+        numDevices, sizeof(AwtWin32GraphicsDevice *));
 }
 
 /**
@@ -114,7 +114,8 @@ BOOL Devices::UpdateInstance(JNIEnv *env)
     J2dTraceLn(J2D_TRACE_INFO, "Devices::UpdateInstance");
 
     int numScreens = ::CountMonitors();
-    MHND *monHds = (MHND *)safe_Malloc(numScreens * sizeof(MHND));
+    MHND *monHds = (MHND *)SAFE_SIZE_ARRAY_ALLOC(safe_Malloc,
+            numScreens, sizeof(MHND));
     if (numScreens != ::CollectMonitors(monHds, numScreens)) {
         J2dRlsTraceLn(J2D_TRACE_ERROR,
                       "Devices::UpdateInstance: Failed to get all "\

@@ -27,6 +27,7 @@
 #include "splashscreen_gfx.h"
 
 #include "../giflib/gif_lib.h"
+#include <sizecalc.h>
 
 #define GIF_TRANSPARENT     0x01
 #define GIF_USER_INPUT      0x02
@@ -120,7 +121,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
     splash->height = gif->SHeight;
     splash->frameCount = gif->ImageCount;
     splash->frames = (SplashImage *)
-        malloc(sizeof(SplashImage) * gif->ImageCount);
+        SAFE_SIZE_ARRAY_ALLOC(malloc, sizeof(SplashImage), gif->ImageCount);
     if (!splash->frames) {
       free(pBitmapBits);
       free(pOldBitmapBits);
