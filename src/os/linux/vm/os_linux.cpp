@@ -2650,6 +2650,8 @@ get_stack_bounds(uintptr_t *bottom, uintptr_t *top)
     ssize_t len = getline(&str, &dummy, f);
     if (len == -1) {
       fclose(f);
+      if (str != NULL)
+	free(str);
       return false;
     }
 
