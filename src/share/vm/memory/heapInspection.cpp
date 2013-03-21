@@ -87,7 +87,7 @@ KlassInfoEntry* KlassInfoBucket::lookup(const klassOop k) {
     }
     elt = elt->next();
   }
-  elt = new KlassInfoEntry(k, list());
+  elt = new (std::nothrow) KlassInfoEntry(k, list());
   // We may be out of space to allocate the new entry.
   if (elt != NULL) {
     set_list(elt);
@@ -113,12 +113,12 @@ void KlassInfoBucket::empty() {
   }
 }
 
-KlassInfoTable::KlassInfoTable(int size, HeapWord* ref) {
+KlassInfoTable::KlassInfoTable(HeapWord* ref) {
   _size = 0;
   _ref = ref;
-  _buckets = NEW_C_HEAP_ARRAY(KlassInfoBucket, size, mtInternal);
+  _buckets = (KlassInfoBucket *) os::malloc(sizeof(KlassInfoBucket) * _num_buckets, mtInternal);
   if (_buckets != NULL) {
-    _size = size;
+    _size = _num_buckets;
     for (int index = 0; index < _size; index++) {
       _buckets[index].initialize();
     }
@@ -177,9 +177,9 @@ int KlassInfoHisto::sort_helper(KlassInfoEntry** e1, KlassInfoEntry** e2) {
   return (*e1)->compare(*e1,*e2);
 }
 
-KlassInfoHisto::KlassInfoHisto(const char* title, int estimatedCount) :
+KlassInfoHisto::KlassInfoHisto(const char* title) :
   _title(title) {
-  _elements = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<KlassInfoEntry*>(estimatedCount,true);
+  _elements = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<KlassInfoEntry*>(_histo_initial_size, true);
 }
 
 KlassInfoHisto::~KlassInfoHisto() {
@@ -228,82 +228,104 @@ class RecordInstanceClosure : public ObjectClosure {
  private:
   KlassInfoTable* _cit;
   size_t _missed_count;
+  BoolObjectClosure* _filter;
  public:
-  RecordInstanceClosure(KlassInfoTable* cit) :
-    _cit(cit), _missed_count(0) {}
+  RecordInstanceClosure(KlassInfoTable* cit, BoolObjectClosure* filter) :
+    _cit(cit), _missed_count(0), _filter(filter) {}
 
   void do_object(oop obj) {
-    if (!_cit->record_instance(obj)) {
-      _missed_count++;
+    if (should_visit(obj)) {
+      if (!_cit->record_instance(obj)) {
+        _missed_count++;
+      }
     }
   }
 
   size_t missed_count() { return _missed_count; }
+ private:
+  bool should_visit(oop obj) {
+    return _filter == NULL || _filter->do_object_b(obj);
+  }
 };
+
+HeapWord* HeapInspection::start_of_perm_gen() {
+  if (is_shared_heap()) {
+    SharedHeap* sh = SharedHeap::heap();
+    return sh->perm_gen()->used_region().start();
+  }
+#ifndef SERIALGC
+  ParallelScavengeHeap* psh = (ParallelScavengeHeap*)Universe::heap();
+  return psh->perm_gen()->object_space()->used_region().start();
+#else
+  ShouldNotReachHere();
+  return NULL;
+#endif // SERIALGC
+}
+
+bool HeapInspection::is_shared_heap() {
+  CollectedHeap* heap = Universe::heap();
+  return heap->kind() == CollectedHeap::G1CollectedHeap ||
+         heap->kind() == CollectedHeap::GenCollectedHeap;
+}
+
+void HeapInspection::prologue() {
+  if (is_shared_heap()) {
+    SharedHeap* sh = SharedHeap::heap();
+    sh->gc_prologue(false /* !full */); // get any necessary locks, etc.
+  }
+}
+
+void HeapInspection::epilogue() {
+  if (is_shared_heap()) {
+    SharedHeap* sh = SharedHeap::heap();
+    sh->gc_epilogue(false /* !full */); // release all acquired locks, etc.
+  }
+}
+
+size_t HeapInspection::instance_inspection(KlassInfoTable* cit,
+                                           KlassInfoClosure* cl,
+                                           bool need_prologue,
+                                           BoolObjectClosure* filter) {
+  ResourceMark rm;
+
+  if (need_prologue) {
+    prologue();
+  }
+
+  RecordInstanceClosure ric(cit, filter);
+  Universe::heap()->object_iterate(&ric);
+  cit->iterate(cl);
+
+  // need to run epilogue if we run prologue
+  if (need_prologue) {
+    epilogue();
+  }
+
+  return ric.missed_count();
+}
 
 void HeapInspection::heap_inspection(outputStream* st, bool need_prologue) {
   ResourceMark rm;
-  HeapWord* ref;
 
-  CollectedHeap* heap = Universe::heap();
-  bool is_shared_heap = false;
-  switch (heap->kind()) {
-    case CollectedHeap::G1CollectedHeap:
-    case CollectedHeap::GenCollectedHeap: {
-      is_shared_heap = true;
-      SharedHeap* sh = (SharedHeap*)heap;
-      if (need_prologue) {
-        sh->gc_prologue(false /* !full */); // get any necessary locks, etc.
-      }
-      ref = sh->perm_gen()->used_region().start();
-      break;
-    }
-#ifndef SERIALGC
-    case CollectedHeap::ParallelScavengeHeap: {
-      ParallelScavengeHeap* psh = (ParallelScavengeHeap*)heap;
-      ref = psh->perm_gen()->object_space()->used_region().start();
-      break;
-    }
-#endif // SERIALGC
-    default:
-      ShouldNotReachHere(); // Unexpected heap kind for this op
-  }
-  // Collect klass instance info
-  KlassInfoTable cit(KlassInfoTable::cit_size, ref);
+  KlassInfoTable cit(start_of_perm_gen());
   if (!cit.allocation_failed()) {
-    // Iterate over objects in the heap
-    RecordInstanceClosure ric(&cit);
-    // If this operation encounters a bad object when using CMS,
-    // consider using safe_object_iterate() which avoids perm gen
-    // objects that may contain bad references.
-    Universe::heap()->object_iterate(&ric);
+    KlassInfoHisto histo("\n"
+                     " num     #instances         #bytes  class name\n"
+                     "----------------------------------------------");
+    HistoClosure hc(&histo);
 
-    // Report if certain classes are not counted because of
-    // running out of C-heap for the histogram.
-    size_t missed_count = ric.missed_count();
+    size_t missed_count = instance_inspection(&cit, &hc, need_prologue);
     if (missed_count != 0) {
       st->print_cr("WARNING: Ran out of C-heap; undercounted " SIZE_FORMAT
                    " total instances in data below",
                    missed_count);
     }
-    // Sort and print klass instance info
-    KlassInfoHisto histo("\n"
-                     " num     #instances         #bytes  class name\n"
-                     "----------------------------------------------",
-                     KlassInfoHisto::histo_initial_size);
-    HistoClosure hc(&histo);
-    cit.iterate(&hc);
     histo.sort();
     histo.print_on(st);
   } else {
     st->print_cr("WARNING: Ran out of C-heap; histogram not generated");
   }
   st->flush();
-
-  if (need_prologue && is_shared_heap) {
-    SharedHeap* sh = (SharedHeap*)heap;
-    sh->gc_epilogue(false /* !full */); // release all acquired locks, etc.
-  }
 }
 
 class FindInstanceClosure : public ObjectClosure {
