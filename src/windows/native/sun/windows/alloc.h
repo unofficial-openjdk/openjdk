@@ -35,6 +35,9 @@ namespace std {
     class bad_alloc {};
 }
 
+#define SIZECALC_ALLOC_THROWING_BAD_ALLOC
+#include "sizecalc.h"
+
 class awt_toolkit_shutdown {};
 
 // Disable "C++ Exception Specification ignored" warnings.

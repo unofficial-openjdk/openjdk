@@ -95,6 +95,12 @@ class DatagramChannelImpl
     // Multicast support
     private MembershipRegistry registry;
 
+    // set true when socket is bound and SO_REUSEADDRESS is emulated
+    private boolean reuseAddressEmulated;
+
+    // set true/false when socket is already bound and SO_REUSEADDR is emulated
+    private boolean isReuseAddress;
+
     // -- End of fields protected by stateLock
 
 
@@ -223,6 +229,12 @@ class DatagramChannelImpl
                 }
                 return this;
             }
+            if (name == StandardSocketOptions.SO_REUSEADDR &&
+                    Net.useExclusiveBind() && localAddress != null)
+            {
+                reuseAddressEmulated = true;
+                this.isReuseAddress = (Boolean)value;
+            }
 
             // remaining options don't need any special handling
             Net.setSocketOption(fd, Net.UNSPEC, name, value);
@@ -279,6 +291,12 @@ class DatagramChannelImpl
                         throw new IOException("Unable to map index to interface");
                     return (T) ni;
                 }
+            }
+
+            if (name == StandardSocketOptions.SO_REUSEADDR &&
+                    reuseAddressEmulated)
+            {
+                return (T)Boolean.valueOf(isReuseAddress);
             }
 
             // no special handling

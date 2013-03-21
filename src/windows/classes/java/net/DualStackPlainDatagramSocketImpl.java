@@ -46,6 +46,22 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 {
     static JavaIOFileDescriptorAccess fdAccess = SharedSecrets.getJavaIOFileDescriptorAccess();
 
+    // true if this socket is exclusively bound
+    private final boolean exclusiveBind;
+
+    /*
+     * Set to true if SO_REUSEADDR is set after the socket is bound to
+     * indicate SO_REUSEADDR is being emulated
+     */
+    private boolean reuseAddressEmulated;
+
+    // emulates SO_REUSEADDR when exclusiveBind is true and socket is bound
+    private boolean isReuseAddress;
+
+    DualStackPlainDatagramSocketImpl(boolean exclBind) {
+        exclusiveBind = exclBind;
+    }
+
     protected void datagramSocketCreate() throws SocketException {
         if (fd == null)
             throw new SocketException("Socket closed");
@@ -62,7 +78,7 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
         if (laddr == null)
             throw new NullPointerException("argument address");
 
-        socketBind(nativefd, laddr, lport);
+        socketBind(nativefd, laddr, lport, exclusiveBind);
         if (lport == 0) {
             localPort = socketLocalPort(nativefd);
         } else {
@@ -142,6 +158,7 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
         fdAccess.set(fd, -1);
     }
 
+    @SuppressWarnings("fallthrough")
     protected void socketSetOption(int opt, Object val) throws SocketException {
         int nativefd = checkAndReturnNativeFD();
 
@@ -154,6 +171,13 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
                 optionValue = ((Integer)val).intValue();
                 break;
             case SO_REUSEADDR :
+                if (exclusiveBind && localPort != 0)  {
+                    // socket already bound, emulate SO_REUSEADDR
+                    reuseAddressEmulated = true;
+                    isReuseAddress = (Boolean)val;
+                    return;
+                }
+                //Intentional fallthrough
             case SO_BROADCAST :
                 optionValue = ((Boolean)val).booleanValue() ? 1 : 0;
                 break;
@@ -171,6 +195,8 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
         if (opt == SO_BINDADDR) {
             return socketLocalAddress(nativefd);
         }
+        if (opt == SO_REUSEADDR && reuseAddressEmulated)
+            return isReuseAddress;
 
         int value = socketGetIntOption(nativefd, opt);
         Object returnValue = null;
@@ -238,8 +264,8 @@ class DualStackPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 
     private static native int socketCreate(boolean v6Only);
 
-    private static native void socketBind(int fd, InetAddress localAddress, int localport)
-        throws SocketException;
+    private static native void socketBind(int fd, InetAddress localAddress,
+            int localport, boolean exclBind) throws SocketException;
 
     private static native void socketConnect(int fd, InetAddress address, int port)
         throws SocketException;
