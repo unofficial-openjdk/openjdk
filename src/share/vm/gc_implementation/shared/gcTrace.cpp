@@ -26,7 +26,7 @@
 #include "gc_implementation/shared/gcHeapSummary.hpp"
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/referenceProcessorStats.hpp"
 #include "utilities/globalDefinitions.hpp"
 

@@ -27,7 +27,7 @@
 
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/parGCAllocBuffer.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/defNewGeneration.hpp"
 #include "utilities/taskqueue.hpp"
 
@@ -183,13 +183,13 @@ class ParScanThreadState {
 
   // Promotion failure stats
   void register_promotion_failure(size_t sz) {
-    _promotion_failed_info.register_promotion_failed(sz);
+    _promotion_failed_info.register_copy_failure(sz);
   }
   PromotionFailedInfo& promotion_failed_info() {
     return _promotion_failed_info;
   }
   bool promotion_failed() {
-    return _promotion_failed_info.promotion_failed();
+    return _promotion_failed_info.has_failed();
   }
   void print_promotion_failure_size();
 

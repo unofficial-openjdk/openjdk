@@ -27,7 +27,7 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "trace/tracing.hpp"
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1YCTypes.hpp"
@@ -92,15 +92,21 @@ void OldGCTracer::send_old_gc_event() const {
   }
 }
 
+static TraceStructCopyFailed to_trace_struct(const CopyFailedInfo& cf_info) {
+  TraceStructCopyFailed failed_info;
+  failed_info.set_objectCount(cf_info.failed_count());
+  failed_info.set_firstSize(cf_info.first_size());
+  failed_info.set_smallestSize(cf_info.smallest_size());
+  failed_info.set_totalSize(cf_info.total_size());
+  failed_info.set_thread(cf_info.thread()->thread_id());
+  return failed_info;
+}
+
 void YoungGCTracer::send_promotion_failed_event(const PromotionFailedInfo& pf_info) const {
   EventPromotionFailed e;
   if (e.should_commit()) {
     e.set_gcId(_shared_gc_info.id());
-    e.set_objectCount(pf_info.promotion_failed_count());
-    e.set_firstSize(pf_info.first_size());
-    e.set_smallestSize(pf_info.smallest_size());
-    e.set_totalSize(pf_info.total_size());
-    e.set_thread(pf_info.thread()->thread_id());
+    e.set_data(to_trace_struct(pf_info));
     e.commit();
   }
 }

@@ -94,7 +94,7 @@ bool PSPromotionManager::post_scavenge(YoungGCTracer& gc_tracer) {
   for (uint i = 0; i < ParallelGCThreads + 1; i++) {
     PSPromotionManager* manager = manager_array(i);
     assert(manager->claimed_stack_depth()->is_empty(), "should be empty");
-    if (manager->_promotion_failed_info.promotion_failed()) {
+    if (manager->_promotion_failed_info.has_failed()) {
       gc_tracer.report_promotion_failed(manager->_promotion_failed_info);
       promotion_failure_occurred = true;
     }
@@ -316,7 +316,7 @@ oop PSPromotionManager::oop_promotion_failed(oop obj, markOop obj_mark) {
     // We won any races, we "own" this object.
     assert(obj == obj->forwardee(), "Sanity");
 
-    _promotion_failed_info.register_promotion_failed(obj->size());
+    _promotion_failed_info.register_copy_failure(obj->size());
 
     obj->push_contents(this);
 

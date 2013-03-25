@@ -33,7 +33,7 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcTraceTime.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "gc_implementation/shared/spaceDecorator.hpp"
 #include "memory/defNewGeneration.inline.hpp"
 #include "memory/genCollectedHeap.hpp"
@@ -284,7 +284,7 @@ void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
 }
 
 void ParScanThreadState::print_promotion_failure_size() {
-  if (_promotion_failed_info.promotion_failed() && PrintPromotionFailure) {
+  if (_promotion_failed_info.has_failed() && PrintPromotionFailure) {
     gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
                         _thread_num, _promotion_failed_info.first_size());
   }
@@ -908,7 +908,7 @@ void ParNewGeneration::handle_promotion_failed(GenCollectedHeap* gch, ParScanThr
   // Trace promotion failure in the parallel GC threads
   thread_state_set.trace_promotion_failed(gc_tracer);
   // Single threaded code may have reported promotion failure to the global state
-  if (_promotion_failed_info.promotion_failed()) {
+  if (_promotion_failed_info.has_failed()) {
     gc_tracer.report_promotion_failed(_promotion_failed_info);
   }
   // Reset the PromotionFailureALot counters.

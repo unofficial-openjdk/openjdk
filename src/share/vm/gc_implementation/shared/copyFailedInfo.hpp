@@ -22,13 +22,13 @@
  *
  */
 
-#ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP
-#define SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP
+#ifndef SHARE_VM_GC_IMPLEMENTATION_SHARED_COPYFAILEDINFO_HPP
+#define SHARE_VM_GC_IMPLEMENTATION_SHARED_COPYFAILEDINFO_HPP
 
 #include "runtime/thread.hpp"
 #include "utilities/globalDefinitions.hpp"
 
-class PromotionFailedInfo VALUE_OBJ_CLASS_SPEC {
+class CopyFailedInfo VALUE_OBJ_CLASS_SPEC {
   size_t    _first_size;
   size_t    _smallest_size;
   size_t    _total_size;
@@ -36,9 +36,9 @@ class PromotionFailedInfo VALUE_OBJ_CLASS_SPEC {
   OSThread* _thread;
 
  public:
-  PromotionFailedInfo() : _first_size(0), _smallest_size(0), _total_size(0), _count(0), _thread(NULL) {}
+  CopyFailedInfo() : _first_size(0), _smallest_size(0), _total_size(0), _count(0), _thread(NULL) {}
 
-  void register_promotion_failed(size_t size) {
+  void register_copy_failure(size_t size) {
     if (_first_size == 0) {
       _first_size = size;
       _smallest_size = size;
@@ -59,12 +59,14 @@ class PromotionFailedInfo VALUE_OBJ_CLASS_SPEC {
     _thread = NULL;
   }
 
-  bool promotion_failed() const { return _count != 0; }
+  bool has_failed() const { return _count != 0; }
   size_t first_size() const { return _first_size; }
   size_t smallest_size() const { return _smallest_size; }
   size_t total_size() const { return _total_size; }
-  uint promotion_failed_count() const { return _count; }
+  uint failed_count() const { return _count; }
   OSThread* thread() const { return _thread; }
 };
 
-#endif /* SHARE_VM_GC_IMPLEMENTATION_SHARED_PROMOTIONFAILEDINFO_HPP */
+class PromotionFailedInfo : public CopyFailedInfo {};
+
+#endif /* SHARE_VM_GC_IMPLEMENTATION_SHARED_COPYFAILEDINFO_HPP */

@@ -189,14 +189,18 @@ Declares a structure type that can be used in other events.
       <value type="ULONG" field="count" label="Total Count" />
     </event>
 
-    <event id="PromotionFailed" path="vm/gc/detailed/promotion_failed" label="Promotion Failed" is_instant="true"
-           description="Promotion of an object failed">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+    <struct id="CopyFailed">
       <value type="BYTES64" field="objectCount" label="Object Count"/>
       <value type="BYTES64" field="firstSize" label="First Failed Object Size"/>
       <value type="BYTES64" field="smallestSize" label="Smallest Failed Object Size"/>
       <value type="BYTES64" field="totalSize" label="Total Object Size"/>
       <value type="OSTHREAD" field="thread" label="Running thread"/>
+    </struct>
+
+    <event id="PromotionFailed" path="vm/gc/detailed/promotion_failed" label="Promotion Failed" is_instant="true"
+           description="Promotion of an object failed">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <structvalue type="CopyFailed" field="data" label="data"/>
     </event>
 
     <event id="GCPhasePause" path="vm/gc/phases/pause" label="GC Phase Pause">

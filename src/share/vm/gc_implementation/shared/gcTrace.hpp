@@ -28,7 +28,7 @@
 #include "gc_interface/gcCause.hpp"
 #include "gc_interface/gcName.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/allocation.hpp"
 #include "memory/referenceType.hpp"
 #ifndef SERIALGC
@@ -138,7 +138,7 @@ class YoungGCTracer : public GCTracer {
   YoungGCTracer(GCName name) : GCTracer(name) {}
 
  public:
-  virtual void report_promotion_failed(const PromotionFailedInfo& pf_info);
+  void report_promotion_failed(const PromotionFailedInfo& pf_info);
 
  protected:
   virtual void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);

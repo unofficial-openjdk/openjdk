@@ -27,7 +27,7 @@
 
 #include "gc_implementation/parallelScavenge/psPromotionLAB.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
-#include "gc_implementation/shared/promotionFailedInfo.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/allocation.hpp"
 #include "utilities/taskqueue.hpp"
 
