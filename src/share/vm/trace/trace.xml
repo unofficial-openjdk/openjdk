@@ -296,7 +296,20 @@ Declares a structure type that can be used in other events.
       <value type="BOOLEAN" field="blocking" label="Caller Blocked" description="If the calling thread was blocked until the operation was complete."/>
       <value type="OSTHREAD" field="caller" label="Caller" transition="TO" description="Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknown."/>
     </event>
+    
+    <!-- Allocation events -->
+    <event id="AllocObjectInNewTLAB" path="java/object_alloc_in_new_TLAB" label="Allocation in new TLAB"
+        description="Allocation in new Thread Local Allocation Buffer" has_thread="true" has_stacktrace="true" is_instant="true">
+      <value type="CLASS" field="class" label="Class" description="Class of allocated object"/>
+      <value type="BYTES64" field="allocationSize" label="Allocation Size"/>
+      <value type="BYTES64" field="tlabSize" label="TLAB Size"/>
+    </event>
 
+    <event id="AllocObjectOutsideTLAB" path="java/object_alloc_outside_TLAB" label="Allocation outside TLAB"
+        description="Allocation outside Thread Local Allocation Buffers" has_thread="true" has_stacktrace="true" is_instant="true">
+      <value type="CLASS" field="class" label="Class" description="Class of allocated object"/>
+      <value type="BYTES64" field="allocationSize" label="Allocation Size"/>
+    </event>
   </events>
   
   <xi:include href="../../../closed/share/vm/trace/traceeventtypes.xml" xmlns:xi="http://www.w3.org/2001/XInclude">

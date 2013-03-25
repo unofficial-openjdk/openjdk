@@ -29,6 +29,7 @@
 #include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/vmGCOperations.hpp"
+#include "gc_interface/allocTracer.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -218,7 +219,7 @@ void CollectedHeap::check_for_valid_allocation_state() {
 }
 #endif
 
-HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
+HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thread, size_t size) {
 
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
@@ -242,6 +243,9 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
   if (obj == NULL) {
     return NULL;
   }
+
+  AllocTracer::send_allocation_in_new_tlab_event(klass, new_tlab_size * HeapWordSize, size * HeapWordSize);
+
   if (ZeroTLAB) {
     // ..and clear it.
     Copy::zero_to_words(obj, new_tlab_size);
@@ -528,7 +532,7 @@ oop CollectedHeap::Class_obj_allocate(KlassHandle klass, int size, KlassHandle r
     obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   } else {
     assert(ScavengeRootsInCode > 0, "must be");
-    obj = common_mem_allocate_init(size, CHECK_NULL);
+    obj = common_mem_allocate_init(real_klass, size, CHECK_NULL);
   }
   post_allocation_setup_common(klass, obj);
   assert(Universe::is_bootstrapping() ||
