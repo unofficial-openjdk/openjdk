@@ -517,6 +517,10 @@ class MethodHandleNatives {
         case "getBundle":
         case "clearCache":
             return defc == java.util.ResourceBundle.class;
+        case "getType":
+            return defc == java.io.ObjectStreamField.class;
+        case "forClass":
+            return defc == java.io.ObjectStreamClass.class;
         }
         return false;
     }
