@@ -477,6 +477,9 @@ class MethodHandleNatives {
         case "getDeclaredField":
         case "getDeclaredMethod":
         case "getDeclaredConstructor":
+        case "getEnclosingClass":
+        case "getEnclosingMethod":
+        case "getEnclosingConstructor":
             return defc == java.lang.Class.class;
         case "getConnection":
         case "getDriver":
