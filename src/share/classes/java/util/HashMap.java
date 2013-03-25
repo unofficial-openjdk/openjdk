@@ -192,17 +192,6 @@ public class HashMap<K,V>
      */
     private static class Holder {
 
-            // Unsafe mechanics
-        /**
-         * Unsafe utilities
-         */
-        static final sun.misc.Unsafe UNSAFE;
-
-        /**
-         * Offset of "final" hashSeed field we must set in readObject() method.
-         */
-        static final long HASHSEED_OFFSET;
-
         /**
          * Table capacity above which to switch to use alternative hashing.
          */
@@ -230,29 +219,17 @@ public class HashMap<K,V>
             } catch(IllegalArgumentException failed) {
                 throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);
             }
-            ALTERNATIVE_HASHING_THRESHOLD = threshold;
 
-            try {
-                UNSAFE = sun.misc.Unsafe.getUnsafe();
-                HASHSEED_OFFSET = UNSAFE.objectFieldOffset(
-                    HashMap.class.getDeclaredField("hashSeed"));
-            } catch (NoSuchFieldException | SecurityException e) {
-                throw new Error("Failed to record hashSeed offset", e);
-            }
+            ALTERNATIVE_HASHING_THRESHOLD = threshold;
         }
     }
 
     /**
-     * If {@code true} then perform alternative hashing of String keys to reduce
-     * the incidence of collisions due to weak hash code calculation.
-     */
-    transient boolean useAltHashing;
-
-    /**
      * A randomizing value associated with this instance that is applied to
-     * hash code of keys to make hash collisions harder to find.
+     * hash code of keys to make hash collisions harder to find. If 0 then
+     * alternative hashing is disabled.
      */
-    transient final int hashSeed = sun.misc.Hashing.randomHashSeed(this);
+    transient int hashSeed = 0;
 
     /**
      * Constructs an empty <tt>HashMap</tt> with the specified initial
@@ -274,15 +251,15 @@ public class HashMap<K,V>
                                                loadFactor);
 
         // Find a power of 2 >= initialCapacity
-        int capacity = 1;
-        while (capacity < initialCapacity)
-            capacity <<= 1;
+        int capacity = (capacity = Integer.highestOneBit(initialCapacity)) != 0
+                ? capacity
+                : 1;
+        capacity <<= (Integer.bitCount(initialCapacity) > 1) ? 1 : 0;
 
         this.loadFactor = loadFactor;
         threshold = (int)Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
         table = new Entry[capacity];
-        useAltHashing = sun.misc.VM.isBooted() &&
-                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        initHashSeedAsNeeded(capacity);
         init();
     }
 
@@ -333,6 +310,23 @@ public class HashMap<K,V>
     }
 
     /**
+     * Initialize the hashing mask value. We defer initialization until we
+     * really need it.
+     */
+    final boolean initHashSeedAsNeeded(int capacity) {
+        boolean currentAltHashing = hashSeed != 0;
+        boolean useAltHashing = sun.misc.VM.isBooted() &&
+                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        boolean switching = currentAltHashing ^ useAltHashing;
+        if (switching) {
+            hashSeed = useAltHashing
+                ? sun.misc.Hashing.randomHashSeed(this)
+                : 0;
+        }
+        return switching;
+    }
+
+    /**
      * Retrieve object hash code and applies a supplemental hash function to the
      * result hash, which defends against poor quality hash functions.  This is
      * critical because HashMap uses power-of-two length hash tables, that
@@ -340,12 +334,9 @@ public class HashMap<K,V>
      * in lower bits. Note: Null keys always map to hash 0, thus index 0.
      */
     final int hash(Object k) {
-        int h = 0;
-        if (useAltHashing) {
-            if (k instanceof String) {
-                return sun.misc.Hashing.stringHash32((String) k);
-            }
-            h = hashSeed;
+        int h = hashSeed;
+        if (0 != h && k instanceof String) {
+            return sun.misc.Hashing.stringHash32((String) k);
         }
 
         h ^= k.hashCode();
@@ -557,11 +548,7 @@ public class HashMap<K,V>
         }
 
         Entry[] newTable = new Entry[newCapacity];
-        boolean oldAltHashing = useAltHashing;
-        useAltHashing |= sun.misc.VM.isBooted() &&
-                (newCapacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
-        boolean rehash = oldAltHashing ^ useAltHashing;
-        transfer(newTable, rehash);
+        transfer(newTable, initHashSeedAsNeeded(newCapacity));
         table = newTable;
         threshold = (int)Math.min(newCapacity * loadFactor, MAXIMUM_CAPACITY + 1);
     }
@@ -815,8 +802,7 @@ public class HashMap<K,V>
         }
 
         public final int hashCode() {
-            return (key==null   ? 0 : key.hashCode()) ^
-                   (value==null ? 0 : value.hashCode());
+            return Objects.hashCode(getKey()) ^ Objects.hashCode(getValue());
         }
 
         public final String toString() {
@@ -1117,10 +1103,6 @@ public class HashMap<K,V>
             throw new InvalidObjectException("Illegal load factor: " +
                                                loadFactor);
 
-        // set hashSeed (can only happen after VM boot)
-        Holder.UNSAFE.putIntVolatile(this, Holder.HASHSEED_OFFSET,
-                sun.misc.Hashing.randomHashSeed(this));
-
         // Read in number of buckets and allocate the bucket array;
         s.readInt(); // ignored
 
@@ -1136,16 +1118,15 @@ public class HashMap<K,V>
                 mappings * Math.min(1 / loadFactor, 4.0f),
                 // we have limits...
                 HashMap.MAXIMUM_CAPACITY);
-        int capacity = 1;
         // find smallest power of two which holds all mappings
-        while (capacity < initialCapacity) {
-            capacity <<= 1;
-        }
+        int capacity = (capacity = Integer.highestOneBit(initialCapacity)) != 0
+                ? capacity
+                : 1;
+        capacity <<= (Integer.bitCount(initialCapacity) > 1) ? 1 : 0;
 
         table = new Entry[capacity];
         threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
-        useAltHashing = sun.misc.VM.isBooted() &&
-                (capacity >= Holder.ALTERNATIVE_HASHING_THRESHOLD);
+        initHashSeedAsNeeded(capacity);
 
         init();  // Give subclass a chance to do its thing.
 
