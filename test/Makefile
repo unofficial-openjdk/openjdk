@@ -513,11 +513,11 @@ jdk_other: $(call TestDirs, \
           javax/script \
 	  java/sql javax/sql \
           javax/smartcardio \
+	  javax/xml/soap \
 	  javax/xml/ws com/sun/internal/ws \
 	  jdk/asm \
 	  com/sun/org/apache/xerces \
           com/sun/corba \
-	  com/sun/servicetag \
 	  com/sun/tracing \
 	  sun/usagetracker)
 	$(call RunAgentvmBatch)
