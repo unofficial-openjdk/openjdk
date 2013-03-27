@@ -312,6 +312,7 @@ endif
 
 JDK_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2sdk-image
 JRE_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2re-image
+JDK_SERVER_IMAGE_DIR = $(ABS_OUTPUTDIR)/j2sdk-server-image
 
 #where the demo source can be found
 DEMOSRCDIR          = $(SHARE_SRC)/demo
