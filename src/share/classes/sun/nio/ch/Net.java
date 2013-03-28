@@ -31,6 +31,7 @@ import java.nio.channels.*;
 import java.util.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
 
 
 class Net {                                             // package-private
@@ -44,6 +45,12 @@ class Net {                                             // package-private
         }
     };
 
+    // Value of jdk.net.revealLocalAddress
+    private static boolean revealLocalAddress;
+
+    // True if jdk.net.revealLocalAddress had been read
+    private static volatile boolean propRevealLocalAddress;
+
     // set to true if exclusive binding is on for Windows
     private static final boolean exclusiveBind;
 
@@ -52,8 +59,8 @@ class Net {                                             // package-private
         if (availLevel >= 0) {
             String exclBindProp =
                 java.security.AccessController.doPrivileged(
-                    new PrivilegedAction<String>() {
-                        @Override
+                      new PrivilegedAction<String>() {
+                          @Override
                         public String run() {
                             return System.getProperty(
                                     "sun.net.useExclusiveBind");
@@ -180,6 +187,58 @@ class Net {                                             // package-private
         throws IOException
     {
         translateException(x, false);
+    }
+
+    /**
+     * Returns the local address after performing a SecurityManager#checkConnect.
+     */
+    static InetSocketAddress getRevealedLocalAddress(InetSocketAddress addr) {
+        SecurityManager sm = System.getSecurityManager();
+        if (addr == null || sm == null)
+            return addr;
+
+        if (!getRevealLocalAddress()) {
+            // Return loopback address only if security check fails
+            try{
+                sm.checkConnect(addr.getAddress().getHostAddress(), -1);
+                //Security check passed
+            } catch (SecurityException e) {
+                //Return loopback address
+                addr = getLoopbackAddress(addr.getPort());
+            }
+        }
+        return addr;
+    }
+
+    static String getRevealedLocalAddressAsString(InetSocketAddress addr) {
+        if (!getRevealLocalAddress() && System.getSecurityManager() != null)
+            addr = getLoopbackAddress(addr.getPort());
+        return addr.toString();
+    }
+
+    private static boolean getRevealLocalAddress() {
+        if (!propRevealLocalAddress) {
+            try {
+                revealLocalAddress = Boolean.parseBoolean(
+                      AccessController.doPrivileged(
+                          new PrivilegedExceptionAction<String>() {
+                              public String run() {
+                                  return System.getProperty(
+                                      "jdk.net.revealLocalAddress");
+                              }
+                          }));
+
+            } catch (Exception e) {
+                // revealLocalAddress is false
+            }
+            propRevealLocalAddress = true;
+        }
+        return revealLocalAddress;
+    }
+
+    private static InetSocketAddress getLoopbackAddress(int port) {
+        return new InetSocketAddress(InetAddress.getLoopbackAddress(),
+                                     port);
     }
 
     /**
