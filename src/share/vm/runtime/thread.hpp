@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1274,6 +1274,7 @@ class JavaThread: public Thread {
   void enable_stack_red_zone();
   void disable_stack_red_zone();
 
+  inline bool stack_guard_zone_unused();
   inline bool stack_yellow_zone_disabled();
   inline bool stack_yellow_zone_enabled();
 
@@ -1739,6 +1740,10 @@ inline JavaThread* JavaThread::current() {
 inline CompilerThread* JavaThread::as_CompilerThread() {
   assert(is_Compiler_thread(), "just checking");
   return (CompilerThread*)this;
+}
+
+inline bool JavaThread::stack_guard_zone_unused() {
+  return _stack_guard_state == stack_guard_unused;
 }
 
 inline bool JavaThread::stack_yellow_zone_disabled() {
