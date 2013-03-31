@@ -366,6 +366,9 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
     validate(index);
     float[] charinfo = getCharinfo();
     index = l2v(index) * numvals;
+    if ((index+vish) >= charinfo.length) {
+        return new Rectangle2D.Float();
+    }
     return new Rectangle2D.Float(
                                  charinfo[index + visx],
                                  charinfo[index + visy],
@@ -455,6 +458,10 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
     int length = source.getLength();
     --start;
     while (width >= 0 && ++start < length) {
+      int cidx = l2v(start) * numvals + advx;
+      if (cidx >= charinfo.length) {
+          break; // layout bailed for some reason
+      }
       float adv = charinfo[l2v(start) * numvals + advx];
       width -= adv;
     }
@@ -468,7 +475,11 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
     float[] charinfo = getCharinfo();
     --start;
     while (++start < limit) {
-      a += charinfo[l2v(start) * numvals + advx];
+      int cidx = l2v(start) * numvals + advx;
+      if (cidx >= charinfo.length) {
+          break; // layout bailed for some reason
+      }
+      a += charinfo[cidx];
     }
 
     return a;
