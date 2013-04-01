@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,22 +23,13 @@
  * questions.
  */
 
-#include "com_apple_jobjc_SEL.h"
+package sun.lwawt;
 
-#include <JavaNativeFoundation/JavaNativeFoundation.h>
-#include <objc/message.h>
+public interface SecurityWarningWindow extends PlatformWindow {
+    /**
+     * @param x,y,w,h coordinates of the untrusted window
+     */
+    public void reposition(int x, int y, int w, int h);
 
-JNIEXPORT jlong JNICALL Java_com_apple_jobjc_SEL_getSelectorPtr
-(JNIEnv *env, jclass jclazz, jstring selName)
-{
-    const char *selNameAsChars = (*env)->GetStringUTFChars(env, selName, JNI_FALSE);
-    const SEL sel = sel_registerName(selNameAsChars);
-    (*env)->ReleaseStringUTFChars(env, selName, selNameAsChars);
-    return ptr_to_jlong((void*)sel);
-}
-
-JNIEXPORT jstring JNICALL Java_com_apple_jobjc_SEL_getSelectorName
-(JNIEnv *env, jclass jclazz, jlong selPtr)
-{
-    return (*env)->NewStringUTF(env, sel_getName(jlong_to_ptr(selPtr)));
+    public void setVisible(boolean visible, boolean doSchedule);
 }
