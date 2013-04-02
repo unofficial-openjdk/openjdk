@@ -103,6 +103,7 @@ creating the constant pool data in  VM_JFRCheckpoint::write_checkpoint
 
     <content_type id="StackTrace" hr_name="Stacktrace"
                   type="U8" builtin_type="STACKTRACE">
+      <value type="BOOLEAN" field="truncated" label="Truncated"/>
       <structarray type="StackFrame" field="frames" label="Stack frames"/>
     </content_type>
 
