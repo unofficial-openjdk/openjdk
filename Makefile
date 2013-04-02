@@ -164,16 +164,23 @@ ifeq ($(BUILD_DEPLOY), true)
   clobber:: deploy-clobber
 endif
 
+ifeq ($(BUILD_INSTALL_BUNDLES), true)
+  generic_build_repo_series:: install-binaries-jdk-debug
+  clobber:: install-binaries-jdk-debug-clobber
+endif
+
 generic_build_repo_series::
 	@$(call StopTimer,$(if $(DEBUG_NAME),$(DEBUG_NAME)_build,all_product_build))
 
 # The debug build, fastdebug or debug. Needs special handling.
-#  Note that debug builds do NOT do INSTALL steps, but must be done
-#  after the product build and before the INSTALL step of the product build.
+#
+#  Note that debug builds do NOT do INSTALL steps aside from the
+#  install-binaries-jdk-debug or install-binaries-jdk-debug-clobber targets.
 #
 #   DEBUG_NAME is fastdebug or debug
 #   ALT_OUTPUTDIR is changed to have -debug or -fastdebug suffix
 #   The resulting image directory (j2sdk-image) is used by the install makefiles
+#     (only if debug files are present when install checks for them)
 #     to create a debug install bundle jdk-*-debug-** bundle (tar or zip) 
 #     which will install in the debug or fastdebug subdirectory of the
 #     normal product install area.
@@ -189,7 +196,7 @@ generic_build_repo_series::
 ABS_BOOTDIR_OUTPUTDIR=$(ABS_OUTPUTDIR)/bootjdk
 FRESH_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/$(JDK_IMAGE_DIRNAME)
 FRESH_DEBUG_BOOTDIR=$(ABS_BOOTDIR_OUTPUTDIR)/$(REL_JDK_IMAGE_DIR)
-  
+
 create_fresh_product_bootdir: FRC
 	$(MAKE) ALT_OUTPUTDIR=$(ABS_BOOTDIR_OUTPUTDIR) \
 		GENERATE_DOCS=false \
@@ -218,7 +225,7 @@ endif
 
 
 ifeq ($(DO_BOOT_CYCLE),true)
-  
+
   # Create the bootdir to use in the build
   product_build:: create_fresh_product_bootdir
   debug_build:: create_fresh_debug_bootdir
@@ -256,6 +263,8 @@ generic_debug_build:
 		ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)/$(REL_JDK_OUTPUTDIR) \
 	        DEBUG_NAME=$(DEBUG_NAME) \
 		GENERATE_DOCS=false \
+		BUILD_INSTALL_BUNDLES=true \
+		CREATE_DEBUGINFO_BUNDLES=false \
 	        $(BOOT_CYCLE_DEBUG_SETTINGS) \
 		generic_build_repo_series
 
@@ -540,8 +549,8 @@ include ./make/jprt.gmk
 ################################################################
 
 .PHONY: all  test test_run test_start test_summary test_clean \
-	generic_build_repo_series \
-	what clobber insane \
+        generic_build_repo_series \
+        what clobber insane \
         dev dev-build dev-sanity dev-clobber \
         product_build \
         fastdebug_build \
@@ -556,4 +565,3 @@ include ./make/jprt.gmk
 
 # Force target
 FRC:
-
