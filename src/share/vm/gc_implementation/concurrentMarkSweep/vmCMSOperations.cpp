@@ -195,6 +195,7 @@ void VM_CMS_Final_Remark::doit() {
 
   VM_CMS_Operation::verify_after_gc();
 
+  _collector->save_heap_summary();
   _collector->_gc_timer_cm->register_gc_pause_end(os::elapsed_counter());
 
 #ifndef USDT2

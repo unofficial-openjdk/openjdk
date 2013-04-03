@@ -2359,6 +2359,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
           CMSTokenSync        z(true);   // not strictly needed.
           if (_collectorState == Resizing) {
             compute_new_size();
+            save_heap_summary();
             _collectorState = Resetting;
           } else {
             assert(_collectorState == Idling, "The state should only change"
@@ -2418,14 +2419,29 @@ void CMSCollector::register_gc_start(GCCause::Cause cause) {
   _cms_start_registered = true;
   _gc_timer_cm->register_gc_start(os::elapsed_counter());
   _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
+
+  save_heap_summary();
+  report_heap_summary(GCWhen::BeforeGC);
 }
 
 void CMSCollector::register_gc_end() {
   if (_cms_start_registered) {
+    report_heap_summary(GCWhen::AfterGC);
+
     _gc_timer_cm->register_gc_end(os::elapsed_counter());
     _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
     _cms_start_registered = false;
   }
+}
+
+void CMSCollector::save_heap_summary() {
+  GenCollectedHeap* gch = GenCollectedHeap::heap();
+  _last_heap_summary = gch->create_heap_summary();
+  _last_perm_gen_summary = gch->create_perm_gen_summary();
+}
+
+void CMSCollector::report_heap_summary(GCWhen::Type when) {
+  _gc_tracer_cm->report_gc_heap_summary(when, _last_heap_summary, _last_perm_gen_summary);
 }
 
 void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
@@ -2514,6 +2530,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
           gclog_or_tty->print("Verify before reset: ");
           Universe::verify();
         }
+        save_heap_summary();
         reset(false);
         assert(_collectorState == Idling, "Collector state should "
           "have changed");

@@ -25,8 +25,10 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 
+#include "gc_implementation/shared/gcHeapSummary.hpp"
 #include "gc_implementation/shared/gSpaceCounters.hpp"
 #include "gc_implementation/shared/gcStats.hpp"
+#include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/generationCounters.hpp"
 #include "memory/freeBlockDictionary.hpp"
 #include "memory/generation.hpp"
@@ -615,8 +617,14 @@ class CMSCollector: public CHeapObj<mtGC> {
   ConcurrentGCTimer* _gc_timer_cm;
 
   bool _cms_start_registered;
+
+  GCHeapSummary _last_heap_summary;
+  PermGenSummary _last_perm_gen_summary;
+
   void register_gc_start(GCCause::Cause cause);
   void register_gc_end();
+  void save_heap_summary();
+  void report_heap_summary(GCWhen::Type when);
 
  protected:
   ConcurrentMarkSweepGeneration* _cmsGen;  // old gen (CMS)
