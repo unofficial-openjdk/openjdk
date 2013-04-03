@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,25 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 4703132 7197662
- * @summary flush() throws an IllegalStateException on a removed node
- * @run main/othervm -Djava.util.prefs.userRoot=. ConflictInFlush
- * @author Sucheta Dambalkar
+/* @test
+ * @bug 7160242
+ * @summary Check if NullPointerException is thrown if the key passed
+ *          to remove() is null.
+ * @run main/othervm -Djava.util.prefs.userRoot=. RemoveNullKeyCheck
  */
 
-import java.util.prefs.*;
+import java.util.prefs.Preferences;
 
-public final class ConflictInFlush{
+public class RemoveNullKeyCheck {
 
-    public static void main(String args[]) {
-        Preferences root = Preferences.userRoot();
-        try {
-            Preferences node = root.node("1/2/3");
-            node.flush();
-            System.out.println("Node "+node+" has been created");
-            System.out.println("Removing node "+node);
-            node.removeNode();
-            node.flush();
-        }catch (BackingStoreException bse){
-            bse.printStackTrace();
-        }
-
+    public static void main(String[] args) throws Exception {
+       try {
+           Preferences node = Preferences.userRoot().node("N1");
+           node.remove(null);
+           throw new RuntimeException("Expected NullPointerException " +
+                                      "not thrown");
+       } catch (NullPointerException npe) {
+           System.out.println("NullPointerException thrown");
+       }
     }
 }

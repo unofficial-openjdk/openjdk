@@ -245,7 +245,7 @@ trim-image-jre trim-image-jdk \
 identify-image-jre identify-image-jdk \
 process-image-jre process-image-jdk \
 compare-image \
-sec-files sec-files-win jgss-files ::
+sec-files sec-files-win jgss-files server-jdk-image ::
 	@$(ECHO) ">>>Making "$@" @ `$(DATE)` ..."
 
 # Order is important here, trim jre after jdk image is created
@@ -254,16 +254,17 @@ ifeq ($(PLATFORM), macosx)
 images:: sanity-images post-sanity-images  \
 	 $(INITIAL_IMAGE_JRE) $(EXTRA_JRE_TARGETS) $(INITIAL_IMAGE_JDK) \
 	 trim-image-jre trim-image-jdk \
-     identify-image-jre identify-image-jdk \
-	 process-image-jre process-image-jdk sec-files sec-files-win jgss-files \
-	 $(EXTRA_IMAGE_TARGETS)
+	identify-image-jre identify-image-jdk \
+	 process-image-jre process-image-jdk sec-files sec-files-win \
+	 jgss-files $(EXTRA_IMAGE_TARGETS) server-jdk-image
 else
 
 images:: sanity-images post-sanity-images  \
 	 $(INITIAL_IMAGE_JRE) $(INITIAL_IMAGE_JDK) \
 	 trim-image-jre trim-image-jdk \
          identify-image-jre identify-image-jdk \
-	 process-image-jre process-image-jdk sec-files sec-files-win jgss-files 
+	 process-image-jre process-image-jdk sec-files sec-files-win \
+	 jgss-files server-jdk-image
 endif
 
 # Don't use these
@@ -938,6 +939,27 @@ endif
 	  $(call binary_file_verification,$${f}); \
 	done
 	$(RM) $(JRE_BIN_LIST)
+
+# Duplicate current j2re-image contents to server-j2re-image
+# for the server version of jre, before deploy build
+server-jdk-image::
+ifeq ($(PLATFORM), macosx)
+	$(RM) -r $(JDK_SERVER_BUNDLE_DIR)/Home/demo
+	$(RM) -r $(JDK_SERVER_BUNDLE_DIR)/Home/sample
+	$(RM) $(JDK_SERVER_BUNDLE_DIR)/Home/bin/jcontrol
+	$(RM) $(JDK_SERVER_BUNDLE_DIR)/Home/jre/bin/jcontrol
+	$(RM) $(JDK_SERVER_BUNDLE_DIR)/Home/man/ja_JP.UTF-8/man1/javaws.1
+	$(RM) $(JDK_SERVER_BUNDLE_DIR)/Home/man/man1/javaws.1
+else
+	$(RM) -r $(JDK_SERVER_IMAGE_DIR)
+	$(CP) -r $(JDK_IMAGE_DIR) $(JDK_SERVER_IMAGE_DIR)
+	$(RM) -r $(JDK_SERVER_IMAGE_DIR)/demo
+	$(RM) -r $(JDK_SERVER_IMAGE_DIR)/sample
+	$(RM) $(JDK_SERVER_IMAGE_DIR)/bin/jcontrol
+	$(RM) $(JDK_SERVER_IMAGE_DIR)/jre/bin/jcontrol
+	$(RM) $(JDK_SERVER_IMAGE_DIR)/man/ja_JP.UTF-8/man1/javaws.1
+	$(RM) $(JDK_SERVER_IMAGE_DIR)/man/man1/javaws.1
+endif
 
 ######################################################
 # JDK Image
