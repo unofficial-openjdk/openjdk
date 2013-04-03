@@ -1404,6 +1404,10 @@ class CommandLineFlags {
           "How much the GC can expand the eden by while the GC locker  "    \
           "is active (as a percentage)")                                    \
                                                                             \
+  diagnostic(intx, GCLockerRetryAllocationCount, 2,                         \
+          "Number of times to retry allocations when"                       \
+          " blocked by the GC locker")                                      \
+                                                                            \
   develop(bool, UseCMSAdaptiveFreeLists, true,                              \
           "Use Adaptive Free Lists in the CMS generation")                  \
                                                                             \
@@ -1959,6 +1963,10 @@ class CommandLineFlags {
                                                                             \
   product(uintx, InitialRAMFraction, 64,                                    \
           "Fraction (1/n) of real memory used for initial heap size")       \
+                                                                            \
+  develop(uintx, MaxVirtMemFraction, 2,                                     \
+          "Maximum fraction (1/n) of virtual memory used for ergonomically" \
+          "determining maximum heap size")                                  \
                                                                             \
   product(bool, UseAutoGCSelectPolicy, false,                               \
           "Use automatic collection selection policy")                      \
