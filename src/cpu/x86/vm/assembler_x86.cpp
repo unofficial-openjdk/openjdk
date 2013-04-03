@@ -10154,6 +10154,31 @@ void MacroAssembler::verify_FPU(int stack_depth, const char* s) {
   pop_CPU_state();
 }
 
+void MacroAssembler::restore_cpu_control_state_after_jni() {
+  // Either restore the MXCSR register after returning from the JNI Call
+  // or verify that it wasn't changed (with -Xcheck:jni flag).
+  if (VM_Version::supports_sse()) {
+    if (RestoreMXCSROnJNICalls) {
+      ldmxcsr(ExternalAddress(StubRoutines::addr_mxcsr_std()));
+    } else if (CheckJNICalls) {
+      call(RuntimeAddress(StubRoutines::x86::verify_mxcsr_entry()));
+    }
+  }
+  if (VM_Version::supports_avx()) {
+    // Clear upper bits of YMM registers to avoid SSE <-> AVX transition penalty.
+    vzeroupper();
+  }
+
+#ifndef _LP64
+  // Either restore the x87 floating pointer control word after returning
+  // from the JNI call or verify that it wasn't changed.
+  if (CheckJNICalls) {
+    call(RuntimeAddress(StubRoutines::x86::verify_fpu_cntrl_wrd_entry()));
+  }
+#endif // _LP64
+}
+
+
 void MacroAssembler::load_klass(Register dst, Register src) {
 #ifdef _LP64
   if (UseCompressedOops) {
@@ -11052,6 +11077,8 @@ void MacroAssembler::string_compare(Register str1, Register str2,
     addptr(result, stride2);
     subl(cnt2, stride2);
     jccb(Assembler::notZero, COMPARE_WIDE_VECTORS_LOOP);
+    // clean upper bits of YMM registers
+    vzeroupper();
 
     // compare wide vectors tail
     bind(COMPARE_WIDE_TAIL);
@@ -11065,6 +11092,8 @@ void MacroAssembler::string_compare(Register str1, Register str2,
 
     // Identifies the mismatching (higher or lower)16-bytes in the 32-byte vectors.
     bind(VECTOR_NOT_EQUAL);
+    // clean upper bits of YMM registers
+    vzeroupper();
     lea(str1, Address(str1, result, scale));
     lea(str2, Address(str2, result, scale));
     jmp(COMPARE_16_CHARS);
@@ -11321,6 +11350,10 @@ void MacroAssembler::char_arrays_equals(bool is_array_equ, Register ary1, Regist
 
   // That's it
   bind(DONE);
+  if (UseAVX >= 2) {
+    // clean upper bits of YMM registers
+    vzeroupper();
+  }
 }
 
 void MacroAssembler::generate_fill(BasicType t, bool aligned,
@@ -11450,6 +11483,10 @@ void MacroAssembler::generate_fill(BasicType t, bool aligned,
         vmovdqu(Address(to, 0), xtmp);
         addptr(to, 32);
         subl(count, 8 << shift);
+
+        BIND(L_check_fill_8_bytes);
+        // clean upper bits of YMM registers
+        vzeroupper();
       } else {
         // Fill 32-byte chunks
         pshufd(xtmp, xtmp, 0);
@@ -11473,8 +11510,9 @@ void MacroAssembler::generate_fill(BasicType t, bool aligned,
         addptr(to, 32);
         subl(count, 8 << shift);
         jcc(Assembler::greaterEqual, L_fill_32_bytes_loop);
+
+        BIND(L_check_fill_8_bytes);
       }
-      BIND(L_check_fill_8_bytes);
       addl(count, 8 << shift);
       jccb(Assembler::zero, L_exit);
       jmpb(L_fill_8_bytes);
