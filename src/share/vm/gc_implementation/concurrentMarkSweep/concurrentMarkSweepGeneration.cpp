@@ -1695,6 +1695,24 @@ void CMSCollector::request_full_gc(unsigned int full_gc_count) {
   }
 }
 
+bool CMSCollector::is_external_interruption() {
+  GCCause::Cause cause = GenCollectedHeap::heap()->gc_cause();
+  return GCCause::is_user_requested_gc(cause) ||
+         GCCause::is_serviceability_requested_gc(cause);
+}
+
+void CMSCollector::report_concurrent_mode_interruption() {
+  if (is_external_interruption()) {
+    if (PrintGCDetails) {
+      gclog_or_tty->print(" (concurrent mode interrupted)");
+    }
+  } else {
+    if (PrintGCDetails) {
+      gclog_or_tty->print(" (concurrent mode failure)");
+    }
+    _gc_tracer_cm->report_concurrent_mode_failure();
+  }
+}
 
 // The foreground and background collectors need to coordinate in order
 // to make sure that they do not mutually interfere with CMS collections.
@@ -1852,14 +1870,8 @@ NOT_PRODUCT(
   }
 )
 
-  if (PrintGCDetails && first_state > Idling) {
-    GCCause::Cause cause = GenCollectedHeap::heap()->gc_cause();
-    if (GCCause::is_user_requested_gc(cause) ||
-        GCCause::is_serviceability_requested_gc(cause)) {
-      gclog_or_tty->print(" (concurrent mode interrupted)");
-    } else {
-      gclog_or_tty->print(" (concurrent mode failure)");
-    }
+  if (first_state > Idling) {
+    report_concurrent_mode_interruption();
   }
 
   if (should_compact) {

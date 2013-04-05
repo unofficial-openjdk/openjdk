@@ -211,6 +211,11 @@ class G1NewTracer : public YoungGCTracer {
 class CMSTracer : public OldGCTracer {
  public:
   CMSTracer() : OldGCTracer(ConcurrentMarkSweep) {}
+
+  void report_concurrent_mode_failure();
+
+ private:
+  void send_concurrent_mode_failure_event();
 };
 
 class G1OldTracer : public OldGCTracer {

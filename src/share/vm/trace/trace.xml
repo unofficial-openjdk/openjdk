@@ -203,6 +203,11 @@ Declares a structure type that can be used in other events.
       <structvalue type="CopyFailed" field="data" label="data"/>
     </event>
 
+    <event id="ConcurrentModeFailure" path="vm/gc/detailed/concurrent_mode_failure" label="Concurrent Mode Failure"
+           is_instant="true" description="Concurrent Mode failed">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+    </event>
+
     <event id="GCPhasePause" path="vm/gc/phases/pause" label="GC Phase Pause">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UTF8" field="name" label="Name" />

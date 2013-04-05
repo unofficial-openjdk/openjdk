@@ -850,6 +850,10 @@ class CMSCollector: public CHeapObj<mtGC> {
   void do_mark_sweep_work(bool clear_all_soft_refs,
     CollectorState first_state, bool should_start_over);
 
+  // Work methods for reporting concurrent mode interruption or failure
+  bool is_external_interruption();
+  void report_concurrent_mode_interruption();
+
   // If the backgrould GC is active, acquire control from the background
   // GC and do the collection.
   void acquire_control_and_collect(bool   full, bool clear_all_soft_refs);
