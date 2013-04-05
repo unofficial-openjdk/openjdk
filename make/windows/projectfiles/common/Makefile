@@ -45,10 +45,9 @@ BootStrapDir=$(HOTSPOTJDKDIST)
 !endif
 !endif
 
+# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
 !ifndef OPENJDK
-!if exist($(WorkSpace)\src\closed)
-OPENJDK=false
-!else
+!if !exists($(WorkSpace)\src\closed)
 OPENJDK=true
 !endif
 !endif

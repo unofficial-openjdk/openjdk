@@ -110,8 +110,6 @@ VARIANT_TEXT=Server
 !endif
 !elseif "$(Variant)" == "tiered"
 VARIANT_TEXT=Tiered
-!elseif "$(Variant)" == "kernel"
-VARIANT_TEXT=Kernel
 !endif
 
 #########################################################################
@@ -198,6 +196,12 @@ HS_BUILD_VER=$(HOTSPOT_RELEASE_VERSION)-$(HOTSPOT_BUILD_VERSION)
 
 # End VERSIONINFO parameters
 
+# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
+!ifndef OPENJDK
+!if !exists($(WorkSpace)\src\closed)
+OPENJDK=true
+!endif
+!endif
 
 # We don't support SA on ia64, and we can't
 # build it if we are using a version of Vis Studio
@@ -284,6 +288,7 @@ $(variantDir)\local.make: checks
 	@ echo HS_COMPANY=$(COMPANY_NAME)			>> $@
 	@ echo HS_FILEDESC=$(HS_FILEDESC)			>> $@
 	@ echo HOTSPOT_VM_DISTRO=$(HOTSPOT_VM_DISTRO)		>> $@
+	@ if "$(OPENJDK)" NEQ "" echo OPENJDK=$(OPENJDK)	>> $@
 	@ echo HS_COPYRIGHT=$(HOTSPOT_VM_COPYRIGHT)		>> $@
 	@ echo HS_NAME=$(PRODUCT_NAME) $(JDK_MKTG_VERSION)	>> $@
 	@ echo HS_BUILD_VER=$(HS_BUILD_VER)			>> $@
@@ -310,9 +315,9 @@ $(variantDir)\local.make: checks
 checks: checkVariant checkWorkSpace checkSA
 
 checkVariant:
-	@ if "$(Variant)"=="" echo Need to specify "Variant=[tiered|compiler2|compiler1|kernel|core]" && false
-	@ if "$(Variant)" NEQ "tiered" if "$(Variant)" NEQ "compiler2" if "$(Variant)" NEQ "compiler1" if "$(Variant)" NEQ "kernel" if "$(Variant)" NEQ "core" \
-          echo Need to specify "Variant=[tiered|compiler2|compiler1|kernel|core]" && false
+	@ if "$(Variant)"=="" echo Need to specify "Variant=[tiered|compiler2|compiler1|core]" && false
+	@ if "$(Variant)" NEQ "tiered" if "$(Variant)" NEQ "compiler2" if "$(Variant)" NEQ "compiler1" if "$(Variant)" NEQ "core" \
+          echo Need to specify "Variant=[tiered|compiler2|compiler1|core]" && false
 
 checkWorkSpace:
 	@ if "$(WorkSpace)"=="" echo Need to specify "WorkSpace=..." && false

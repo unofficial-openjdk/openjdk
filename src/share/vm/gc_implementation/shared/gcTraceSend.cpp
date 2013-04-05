@@ -111,6 +111,14 @@ void YoungGCTracer::send_promotion_failed_event(const PromotionFailedInfo& pf_in
   }
 }
 
+void CMSTracer::send_concurrent_mode_failure_event() {
+  EventConcurrentModeFailure e;
+  if (e.should_commit()) {
+    e.set_gcId(_shared_gc_info.id());
+    e.commit();
+  }
+}
+
 #ifndef SERIALGC
 void G1NewTracer::send_g1_young_gc_event() {
   EventGCG1GarbageCollection e(UNTIMED);

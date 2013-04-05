@@ -126,6 +126,12 @@ void ParallelOldTracer::report_dense_prefix(void* dense_prefix) {
   _parallel_old_gc_info.report_dense_prefix(dense_prefix);
 }
 
+void CMSTracer::report_concurrent_mode_failure() {
+  assert_set_gc_id();
+
+  send_concurrent_mode_failure_event();
+}
+
 #ifndef SERIALGC
 void G1NewTracer::report_yc_type(G1YCType type) {
   assert_set_gc_id();
