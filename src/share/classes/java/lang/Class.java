@@ -915,13 +915,22 @@ public final
             for(int i = 0; i < parameterClasses.length; i++)
                 parameterClasses[i] = toClass(parameterTypes[i]);
 
+            // Perform access check
+            Class<?> enclosingCandidate = enclosingInfo.getEnclosingClass();
+            // be very careful not to change the stack depth of this
+            // checkMemberAccess call for security reasons
+            // see java.lang.SecurityManager.checkMemberAccess
+            //
+            // Note that we need to do this on the enclosing class
+            enclosingCandidate.checkMemberAccess(Member.DECLARED,
+                        ClassLoader.getCallerClassLoader(), true);
             /*
              * Loop over all declared methods; match method name,
              * number of and type of parameters, *and* return
              * type.  Matching return type is also necessary
              * because of covariant returns, etc.
              */
-            for(Method m: enclosingInfo.getEnclosingClass().getDeclaredMethods()) {
+            for(Method m: enclosingCandidate.getDeclaredMethods()) {
                 if (m.getName().equals(enclosingInfo.getName()) ) {
                     Class<?>[] candidateParamClasses = m.getParameterTypes();
                     if (candidateParamClasses.length == parameterClasses.length) {
@@ -1042,11 +1051,20 @@ public final
             for(int i = 0; i < parameterClasses.length; i++)
                 parameterClasses[i] = toClass(parameterTypes[i]);
 
+            // Perform access check
+            Class<?> enclosingCandidate = enclosingInfo.getEnclosingClass();
+            // be very careful not to change the stack depth of this
+            // checkMemberAccess call for security reasons
+            // see java.lang.SecurityManager.checkMemberAccess
+            //
+            // Note that we need to do this on the enclosing class
+            enclosingCandidate.checkMemberAccess(Member.DECLARED,
+                        ClassLoader.getCallerClassLoader(), true);
             /*
              * Loop over all declared constructors; match number
              * of and type of parameters.
              */
-            for(Constructor<?> c: enclosingInfo.getEnclosingClass().getDeclaredConstructors()) {
+            for(Constructor<?> c: enclosingCandidate.getDeclaredConstructors()) {
                 Class<?>[] candidateParamClasses = c.getParameterTypes();
                 if (candidateParamClasses.length == parameterClasses.length) {
                     boolean matches = true;
@@ -1101,18 +1119,28 @@ public final
         // attribute if and only if it is a local class or an
         // anonymous class.
         EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
+        Class<?> enclosingCandidate;
 
         if (enclosingInfo == null) {
             // This is a top level or a nested class or an inner class (a, b, or c)
-            return getDeclaringClass();
+            enclosingCandidate = getDeclaringClass();
         } else {
             Class<?> enclosingClass = enclosingInfo.getEnclosingClass();
             // This is a local class or an anonymous class (d or e)
             if (enclosingClass == this || enclosingClass == null)
                 throw new InternalError("Malformed enclosing method information");
             else
-                return enclosingClass;
+                enclosingCandidate = enclosingClass;
         }
+
+        // be very careful not to change the stack depth of this
+        // checkMemberAccess call for security reasons
+        // see java.lang.SecurityManager.checkMemberAccess
+        if (enclosingCandidate != null) {
+            enclosingCandidate.checkMemberAccess(Member.DECLARED,
+                    ClassLoader.getCallerClassLoader(), true);
+        }
+        return enclosingCandidate;
     }
 
     /**
@@ -2181,7 +2209,7 @@ public final
                 if (i != -1) {
                     // skip the package access check on a proxy class in default proxy package
                     String pkg = name.substring(0, i);
-                    if (!Proxy.isProxyClass(this) || !pkg.equals(ReflectUtil.PROXY_PACKAGE)) {
+                    if (!Proxy.isProxyClass(this) || ReflectUtil.isNonPublicProxyClass(this)) {
                         s.checkPackageAccess(pkg);
                     }
                 }

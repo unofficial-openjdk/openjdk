@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ JNIEXPORT jlong JNICALL Java_com_apple_jobjc_SEL_getSelectorPtr
     const char *selNameAsChars = (*env)->GetStringUTFChars(env, selName, JNI_FALSE);
     const SEL sel = sel_registerName(selNameAsChars);
     (*env)->ReleaseStringUTFChars(env, selName, selNameAsChars);
-    return ptr_to_jlong(sel);
+    return ptr_to_jlong((void*)sel);
 }
 
 JNIEXPORT jstring JNICALL Java_com_apple_jobjc_SEL_getSelectorName

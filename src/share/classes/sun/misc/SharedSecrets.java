@@ -56,6 +56,7 @@ public class SharedSecrets {
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaxSecurityAuthKerberosAccess javaxSecurityAuthKerberosAccess;
     private static JavaUtilZipAccess javaUtilZipAccess;
+    private static JavaUtilZipFileAccess javaUtilZipFileAccess;
     private static JavaAWTAccess javaAWTAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
@@ -177,6 +178,16 @@ public class SharedSecrets {
             unsafe.ensureClassInitialized(Adler32.class);
         }
         return javaUtilZipAccess;
+    }
+
+    public static JavaUtilZipFileAccess getJavaUtilZipFileAccess() {
+        if (javaUtilZipFileAccess == null)
+            unsafe.ensureClassInitialized(java.util.zip.ZipFile.class);
+        return javaUtilZipFileAccess;
+    }
+
+    public static void setJavaUtilZipFileAccess(JavaUtilZipFileAccess access) {
+        javaUtilZipFileAccess = access;
     }
 
     public static void setJavaAWTAccess(JavaAWTAccess jaa) {

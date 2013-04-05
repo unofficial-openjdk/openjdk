@@ -79,6 +79,7 @@ import javax.management.remote.JMXServerErrorException;
 import javax.management.remote.NotificationResult;
 import javax.management.remote.TargetedNotification;
 import javax.security.auth.Subject;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * <p>Implementation of the {@link RMIConnection} interface.  User
@@ -1813,6 +1814,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         @Override
         protected Class<?> loadClass(String name, boolean resolve)
         throws ClassNotFoundException {
+            ReflectUtil.checkPackageAccess(name);
             try {
                 super.loadClass(name, resolve);
             } catch(Exception e) {
