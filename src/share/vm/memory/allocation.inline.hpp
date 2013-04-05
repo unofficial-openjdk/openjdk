@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,25 +48,29 @@ inline void inc_stat_counter(volatile julong* dest, julong add_value) {
 #endif
 
 // allocate using malloc; will fail if no memory available
-inline char* AllocateHeap(size_t size, const char* name = NULL) {
+inline char* AllocateHeap(size_t size, const char* name = NULL,
+     AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
   char* p = (char*) os::malloc(size);
   #ifdef ASSERT
   if (PrintMallocFree) trace_heap_malloc(size, name, p);
   #else
   Unused_Variable(name);
   #endif
-  if (p == NULL) vm_exit_out_of_memory(size, name);
+  if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
+    vm_exit_out_of_memory(size, "AllocateHeap");
   return p;
 }
 
-inline char* ReallocateHeap(char *old, size_t size, const char* name = NULL) {
+inline char* ReallocateHeap(char *old, size_t size, const char* name = NULL,
+    AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
   char* p = (char*) os::realloc(old,size);
   #ifdef ASSERT
   if (PrintMallocFree) trace_heap_malloc(size, name, p);
   #else
   Unused_Variable(name);
   #endif
-  if (p == NULL) vm_exit_out_of_memory(size, name);
+  if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
+    vm_exit_out_of_memory(size, "ReallocateHeap");
   return p;
 }
 
