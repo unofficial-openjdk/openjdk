@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -276,6 +276,11 @@ public class ProtectionDomain {
             return permissions.implies(permission);
 
         return false;
+    }
+
+    // called by the VM -- do not remove
+    boolean impliesCreateAccessControlContext() {
+        return implies(SecurityConstants.CREATE_ACC_PERMISSION);
     }
 
     /**

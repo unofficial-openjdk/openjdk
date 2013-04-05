@@ -2209,7 +2209,7 @@ public final
                 if (i != -1) {
                     // skip the package access check on a proxy class in default proxy package
                     String pkg = name.substring(0, i);
-                    if (!Proxy.isProxyClass(this) || !pkg.equals(ReflectUtil.PROXY_PACKAGE)) {
+                    if (!Proxy.isProxyClass(this) || ReflectUtil.isNonPublicProxyClass(this)) {
                         s.checkPackageAccess(pkg);
                     }
                 }

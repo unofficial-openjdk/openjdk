@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,22 +28,25 @@ package sun.lwawt.macosx;
 import sun.awt.SunToolkit;
 import sun.lwawt.LWWindowPeer;
 import sun.lwawt.macosx.event.NSEvent;
-import java.awt.Toolkit;
+
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.KeyEvent;
+import sun.lwawt.PlatformEventNotifier;
 
 /**
  * Translates NSEvents/NPCocoaEvents into AWT events.
  */
 final class CPlatformResponder {
 
-    private final LWWindowPeer peer;
+    private final PlatformEventNotifier eventNotifier;
     private final boolean isNpapiCallback;
 
-    CPlatformResponder(final LWWindowPeer peer, final boolean isNpapiCallback) {
-        this.peer = peer;
+    CPlatformResponder(final PlatformEventNotifier eventNotifier,
+                       final boolean isNpapiCallback) {
+        this.eventNotifier = eventNotifier;
         this.isNpapiCallback = isNpapiCallback;
     }
 
@@ -77,9 +80,9 @@ final class CPlatformResponder {
                                                         modifierFlags);
         boolean jpopupTrigger = NSEvent.isPopupTrigger(jmodifiers);
 
-        peer.dispatchMouseEvent(jeventType, System.currentTimeMillis(), jbuttonNumber,
-                                x, y, absoluteX, absoluteY, jmodifiers, jclickCount,
-                                jpopupTrigger, null);
+        eventNotifier.notifyMouseEvent(jeventType, System.currentTimeMillis(), jbuttonNumber,
+                x, y, absoluteX, absoluteY, jmodifiers, jclickCount,
+                jpopupTrigger, null);
     }
 
     /**
@@ -115,8 +118,8 @@ final class CPlatformResponder {
             wheelRotation = signum;
         }
         // invert the wheelRotation for the peer
-        peer.dispatchMouseWheelEvent(when, x, y, modifiers, scrollType,
-                                     scrollAmount, -wheelRotation, -delta, null);
+        eventNotifier.notifyMouseWheelEvent(when, x, y, modifiers, scrollType,
+                scrollAmount, -wheelRotation, -delta, null);
     }
 
     /**
@@ -176,8 +179,8 @@ final class CPlatformResponder {
         int jmodifiers = NSEvent.nsToJavaKeyModifiers(modifierFlags);
         long when = System.currentTimeMillis();
 
-        peer.dispatchKeyEvent(jeventType, when, jmodifiers,
-                              jkeyCode, javaChar, jkeyLocation);
+        eventNotifier.notifyKeyEvent(jeventType, when, jmodifiers,
+                jkeyCode, javaChar, jkeyLocation);
 
         // Current browser may be sending input events, so don't
         // post the KEY_TYPED here.
@@ -190,9 +193,9 @@ final class CPlatformResponder {
         // for clipboard related shortcuts like Meta + [CVX]
         boolean isMetaDown = (jmodifiers & KeyEvent.META_DOWN_MASK) != 0;
         if (jeventType == KeyEvent.KEY_PRESSED && postsTyped && !isMetaDown) {
-            peer.dispatchKeyEvent(KeyEvent.KEY_TYPED, when, jmodifiers,
-                                  KeyEvent.VK_UNDEFINED, javaChar,
-                                  KeyEvent.KEY_LOCATION_UNKNOWN);
+            eventNotifier.notifyKeyEvent(KeyEvent.KEY_TYPED, when, jmodifiers,
+                    KeyEvent.VK_UNDEFINED, javaChar,
+                    KeyEvent.KEY_LOCATION_UNKNOWN);
         }
     }
 
@@ -202,16 +205,20 @@ final class CPlatformResponder {
             char c;
             while (index < length) {
                 c = text.charAt(index);
-                peer.dispatchKeyEvent(KeyEvent.KEY_TYPED,
-                                      System.currentTimeMillis(),
-                                      0, KeyEvent.VK_UNDEFINED, c,
-                                      KeyEvent.KEY_LOCATION_UNKNOWN);
+                eventNotifier.notifyKeyEvent(KeyEvent.KEY_TYPED,
+                        System.currentTimeMillis(),
+                        0, KeyEvent.VK_UNDEFINED, c,
+                        KeyEvent.KEY_LOCATION_UNKNOWN);
                 index++;
             }
         }
     }
 
     void handleWindowFocusEvent(boolean gained) {
-        peer.notifyActivation(gained);
+        eventNotifier.notifyActivation(gained);
+    }
+
+    void handleWindowDidExposeEvent(float x, float y, float w, float h) {
+        eventNotifier.notifyExpose((int)x, (int)y, (int)w, (int)h);
     }
 }
