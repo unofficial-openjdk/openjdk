@@ -302,13 +302,11 @@ public class Proxy implements java.io.Serializable {
                 return false;
             }
 
-            if (proxyClass.getName().startsWith(ReflectUtil.PROXY_PACKAGE + ".")) {
-                // all proxy interfaces are public
-                return false;
-            }
-            for (Class<?> intf : proxyClass.getInterfaces()) {
-                if (!Modifier.isPublic(intf.getModifiers())) {
-                    return true;
+            if (ReflectUtil.isNonPublicProxyClass(proxyClass)) {
+                for (Class<?> intf : proxyClass.getInterfaces()) {
+                    if (!Modifier.isPublic(intf.getModifiers())) {
+                        return true;
+                    }
                 }
             }
             return false;
