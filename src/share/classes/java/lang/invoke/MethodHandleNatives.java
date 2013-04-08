@@ -477,6 +477,9 @@ class MethodHandleNatives {
         case "getDeclaredField":
         case "getDeclaredMethod":
         case "getDeclaredConstructor":
+        case "getEnclosingClass":
+        case "getEnclosingMethod":
+        case "getEnclosingConstructor":
             return defc == java.lang.Class.class;
         case "getConnection":
         case "getDriver":
@@ -517,6 +520,10 @@ class MethodHandleNatives {
         case "getBundle":
         case "clearCache":
             return defc == java.util.ResourceBundle.class;
+        case "getType":
+            return defc == java.io.ObjectStreamField.class;
+        case "forClass":
+            return defc == java.io.ObjectStreamClass.class;
         }
         return false;
     }
