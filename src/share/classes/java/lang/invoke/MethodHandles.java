@@ -26,7 +26,6 @@
 package java.lang.invoke;
 
 import java.lang.reflect.*;
-import sun.invoke.WrapperInstance;
 import sun.invoke.util.ValueConversions;
 import sun.invoke.util.VerifyAccess;
 import sun.invoke.util.Wrapper;
@@ -35,9 +34,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import sun.reflect.CallerSensitive;
 import sun.reflect.Reflection;
-import sun.security.util.SecurityConstants;
+import sun.reflect.misc.ReflectUtil;
+
 import static java.lang.invoke.MethodHandleStatics.*;
 import static java.lang.invoke.MethodHandleNatives.Constants.*;
+import sun.security.util.SecurityConstants;
 
 /**
  * This class consists exclusively of static methods that operate on or return
@@ -564,13 +565,11 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public
         MethodHandle findStatic(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(refc, name, type, true);
-            Class<?> callerClass = Reflection.getCallerClass();
-            checkSecurityManager(refc, method, callerClass);
-            return accessStatic(refc, method, findBoundCallerClass(method, callerClass));
+            checkSecurityManager(refc, method);
+            return accessStatic(refc, method, findBoundCallerClass(method));
         }
         private
         MethodHandle accessStatic(Class<?> refc, MemberName method, Class<?> callerClass) throws IllegalAccessException {
@@ -623,12 +622,10 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findVirtual(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(refc, name, type, false);
-            Class<?> callerClass = Reflection.getCallerClass();
-            checkSecurityManager(refc, method, callerClass);
-            return accessVirtual(refc, method, findBoundCallerClass(method, callerClass));
+            checkSecurityManager(refc, method);
+            return accessVirtual(refc, method, findBoundCallerClass(method));
         }
         private MethodHandle resolveVirtual(Class<?> refc, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             MemberName method = resolveOrFail(refc, name, type, false);
@@ -667,11 +664,10 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findConstructor(Class<?> refc, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             String name = "<init>";
             MemberName ctor = resolveOrFail(refc, name, type, false, false, lookupClassOrNull());
-            checkSecurityManager(refc, ctor, Reflection.getCallerClass());
+            checkSecurityManager(refc, ctor);
             return accessConstructor(refc, ctor);
         }
         private MethodHandle accessConstructor(Class<?> refc, MemberName ctor) throws IllegalAccessException {
@@ -737,14 +733,12 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findSpecial(Class<?> refc, String name, MethodType type,
                                         Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
             checkSpecialCaller(specialCaller);
             MemberName method = resolveOrFail(refc, name, type, false, false, specialCaller);
-            Class<?> callerClass = Reflection.getCallerClass();
-            checkSecurityManager(refc, method, callerClass);
-            return accessSpecial(refc, method, findBoundCallerClass(method, callerClass), specialCaller);
+            checkSecurityManager(refc, method);
+            return accessSpecial(refc, method, findBoundCallerClass(method), specialCaller);
         }
         private MethodHandle accessSpecial(Class<?> refc, MemberName method,
                                            Class<?> callerClass,
@@ -801,10 +795,9 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findGetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(refc, name, type, false);
-            checkSecurityManager(refc, field, Reflection.getCallerClass());
+            checkSecurityManager(refc, field);
             return makeAccessor(refc, field, false, false, 0);
         }
         private MethodHandle resolveGetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
@@ -829,10 +822,9 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(refc, name, type, false);
-            checkSecurityManager(refc, field, Reflection.getCallerClass());
+            checkSecurityManager(refc, field);
             return makeAccessor(refc, field, false, true, 0);
         }
         private MethodHandle resolveSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
@@ -856,10 +848,9 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findStaticGetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(refc, name, type, true);
-            checkSecurityManager(refc, field, Reflection.getCallerClass());
+            checkSecurityManager(refc, field);
             return makeAccessor(refc, field, false, false, 1);
         }
         private MethodHandle resolveStaticGetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
@@ -883,10 +874,9 @@ public class MethodHandles {
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle findStaticSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
             MemberName field = resolveOrFail(refc, name, type, true);
-            checkSecurityManager(refc, field, Reflection.getCallerClass());
+            checkSecurityManager(refc, field);
             return makeAccessor(refc, field, false, true, 1);
         }
         private MethodHandle resolveStaticSetter(Class<?> refc, String name, Class<?> type) throws NoSuchFieldException, IllegalAccessException {
@@ -940,15 +930,13 @@ return mh1;
          *                              <a href="MethodHandles.Lookup.html#secmgr">refuses access</a>
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle bind(Object receiver, String name, MethodType type) throws NoSuchMethodException, IllegalAccessException {
             Class<? extends Object> refc = receiver.getClass(); // may get NPE
             MemberName method = resolveOrFail(refc, name, type, false);
-            Class<?> callerClass = Reflection.getCallerClass();
-            checkSecurityManager(refc, method, callerClass);
+            checkSecurityManager(refc, method);
             checkMethod(refc, method, false);
             MethodHandle dmh = MethodHandleImpl.findMethod(method, true, lookupClassOrNull());
-            MethodHandle bcmh = maybeBindCaller(method, dmh, findBoundCallerClass(method, callerClass));
+            MethodHandle bcmh = maybeBindCaller(method, dmh, findBoundCallerClass(method));
             if (bcmh != dmh)  return fixVarargs(bcmh.bindTo(receiver), dmh);
             MethodHandle bmh = MethodHandleImpl.bindReceiver(dmh, receiver);
             if (bmh == null)
@@ -977,7 +965,6 @@ return mh1;
          *                                is set and {@code asVarargsCollector} fails
          * @throws NullPointerException if the argument is null
          */
-        @CallerSensitive
         public MethodHandle unreflect(Method m) throws IllegalAccessException {
             MemberName method = new MemberName(m);
             assert(method.isMethod());
@@ -985,8 +972,7 @@ return mh1;
                 return MethodHandleImpl.findMethod(method, true, /*no lookupClass*/ null);
             checkMethod(method.getDeclaringClass(), method, method.isStatic());
             MethodHandle mh = MethodHandleImpl.findMethod(method, true, lookupClassOrNull());
-            Class<?> callerClass = Reflection.getCallerClass();
-            mh = maybeBindCaller(method, mh, findBoundCallerClass(method, callerClass));
+            mh = maybeBindCaller(method, mh, findBoundCallerClass(method));
             return restrictProtectedReceiver(method, mh);
         }
 
@@ -1011,7 +997,6 @@ return mh1;
          *                                is set and {@code asVarargsCollector} fails
          * @throws NullPointerException if any argument is null
          */
-        @CallerSensitive
         public MethodHandle unreflectSpecial(Method m, Class<?> specialCaller) throws IllegalAccessException {
             checkSpecialCaller(specialCaller);
             MemberName method = new MemberName(m);
@@ -1019,8 +1004,7 @@ return mh1;
             // ignore m.isAccessible:  this is a new kind of access
             checkMethod(m.getDeclaringClass(), method, false);
             MethodHandle mh = MethodHandleImpl.findMethod(method, false, lookupClassOrNull());
-            Class<?> callerClass = Reflection.getCallerClass();
-            mh = maybeBindCaller(method, mh, findBoundCallerClass(method, callerClass));
+            mh = maybeBindCaller(method, mh, findBoundCallerClass(method));
             return restrictReceiver(method, mh, specialCaller);
         }
 
@@ -1132,19 +1116,23 @@ return mh1;
         /**
          * Find my trustable caller class if m is a caller sensitive method.
          * If this lookup object has private access, then the caller class is the lookupClass.
-         * Otherwise, it is the caller of the currently executing public API method (e.g., findVirtual).
+         * Otherwise, if m is caller-sensitive, throw IllegalAccessException.
          */
-        Class<?> findBoundCallerClass(MemberName m, Class<?> caller) {
+        Class<?> findBoundCallerClass(MemberName m) throws IllegalAccessException {
             Class<?> callerClass = null;
             if (MethodHandleNatives.isCallerSensitive(m)) {
-                // Do not refactor this to a more "logical" place, since it is stack walk magic.
-                // Note that this is the same expression as in Step 2 below in checkSecurityManager.
-                callerClass = ((allowedModes & PRIVATE) != 0
-                               ? lookupClass  // for strong access modes, no extra check
-                               // next line does stack walk magic; do not refactor:
-                               : caller);
+                // Only full-power lookup is allowed to resolve caller-sensitive methods
+                if (isFullPowerLookup()) {
+                    callerClass = lookupClass;
+                } else {
+                    throw new IllegalAccessException("Attempt to lookup caller-sensitive method using restricted lookup object");
+                }
             }
             return callerClass;
+        }
+
+        private boolean isFullPowerLookup() {
+            return (allowedModes & PRIVATE) != 0;
         }
 
         /**
@@ -1167,7 +1155,7 @@ return mh1;
          * Perform necessary <a href="MethodHandles.Lookup.html#secmgr">access checks</a>.
          * This function performs stack walk magic: do not refactor it.
          */
-        void checkSecurityManager(Class<?> refc, MemberName m, Class<?> caller) {
+        void checkSecurityManager(Class<?> refc, MemberName m) {
             SecurityManager smgr = System.getSecurityManager();
             if (smgr == null)  return;
             if (allowedModes == TRUSTED)  return;
@@ -1187,13 +1175,10 @@ return mh1;
             }
 
             // Step 2:
-            Class<?> callerClass = ((allowedModes & PRIVATE) != 0
-                                    ? lookupClass  // for strong access modes, no extra check
-                                    : caller);
-            if (!VerifyAccess.classLoaderIsAncestor(lookupClass, refc) ||
-                (callerClass != lookupClass &&
-                 !VerifyAccess.classLoaderIsAncestor(callerClass, refc)))
-                smgr.checkPackageAccess(VerifyAccess.getPackageName(refc));
+            if (!isFullPowerLookup() ||
+                !VerifyAccess.classLoaderIsAncestor(lookupClass, refc)) {
+                ReflectUtil.checkPackageAccess(refc);
+            }
 
             // Step 3:
             if (m.isPublic()) return;
@@ -1203,7 +1188,8 @@ return mh1;
                 final int which = Member.DECLARED;
                 final Class<?> clazz = defc;
                 if (!overridden) {
-                    if (caller.getClassLoader() != defc.getClassLoader()) {
+                    if (!isFullPowerLookup() ||
+                        (lookupClass.getClassLoader() != defc.getClassLoader())) {
                         smgr.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
                     }
                 } else {
@@ -1214,8 +1200,9 @@ return mh1;
             }
 
             // Step 4:
-            if (defc != refc)
-                smgr.checkPackageAccess(VerifyAccess.getPackageName(defc));
+            if (defc != refc) {
+                ReflectUtil.checkPackageAccess(defc);
+            }
         }
 
         void checkMethod(Class<?> refc, MemberName m, boolean wantStatic) throws IllegalAccessException {
