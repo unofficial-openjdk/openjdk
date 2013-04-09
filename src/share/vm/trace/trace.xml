@@ -36,6 +36,7 @@
     <relation_decl id="GC_ID" uri="vm/gc/id"/>
     <relation_decl id="COMP_ID" uri="vm/compiler/id"/>
     <relation_decl id="SWEEP_ID" uri="vm/code_sweeper/id"/>
+    <relation_decl id="JAVA_MONITOR_ADDRESS" uri="java/monitor/address"/>
   </relation_decls>
 
 <!--
@@ -89,14 +90,14 @@ Declares a structure type that can be used in other events.
             has_thread="true" has_stacktrace="true" is_instant="false">
       <value type="CLASS" field="klass" label="Class Parked On"/>
       <value type="MILLIS" field="timeout" label="Park Timeout"/>
-      <value type="ADDRESS" field="address" label="Address of Object Parked"/>
+      <value type="ADDRESS" field="address" label="Address of Object Parked" relation="JAVA_MONITOR_ADDRESS"/>
     </event>
 
     <event id="JavaMonitorEnter" path="java/monitor_enter" label="Java Monitor Blocked"
             has_thread="true" has_stacktrace="true" is_instant="false">
       <value type="CLASS" field="klass" label="Monitor Class"/>
       <value type="JAVALANGTHREAD" field="previousOwner" label="Previous Monitor Owner"/>
-      <value type="ADDRESS" field="address" label="Monitor Address"/>
+      <value type="ADDRESS" field="address" label="Monitor Address" relation="JAVA_MONITOR_ADDRESS"/>
     </event>
     
     <event id="JavaMonitorWait" path="java/monitor_wait" label="Java Monitor Wait" description="Waiting on a Java monitor"
@@ -105,7 +106,7 @@ Declares a structure type that can be used in other events.
       <value type="OSTHREAD" field="notifier" label="Notifier Thread" description="Notifying Thread"/>
       <value type="MILLIS" field="timeout" label="Timeout" description="Maximum wait time"/>
       <value type="BOOLEAN" field="timedOut" label="Timed Out" description="Wait has been timed out"/>
-      <value type="ADDRESS" field="address" label="Monitor Address" description="Address of object waited on"/>
+      <value type="ADDRESS" field="address" label="Monitor Address" description="Address of object waited on" relation="JAVA_MONITOR_ADDRESS"/>
     </event>
 
     <struct id="VirtualSpace">
@@ -203,7 +204,7 @@ Declares a structure type that can be used in other events.
     </event>
 
     <struct id="CopyFailed">
-      <value type="BYTES64" field="objectCount" label="Object Count"/>
+      <value type="ULONG" field="objectCount" label="Object Count"/>
       <value type="BYTES64" field="firstSize" label="First Failed Object Size"/>
       <value type="BYTES64" field="smallestSize" label="Smallest Failed Object Size"/>
       <value type="BYTES64" field="totalSize" label="Total Object Size"/>
@@ -313,7 +314,7 @@ Declares a structure type that can be used in other events.
       <value type="VMOPERATIONTYPE" field="operation" label="Operation" />
       <value type="BOOLEAN" field="safepoint" label="At Safepoint" description="If the operation occured at a safepoint."/>
       <value type="BOOLEAN" field="blocking" label="Caller Blocked" description="If the calling thread was blocked until the operation was complete."/>
-      <value type="OSTHREAD" field="caller" label="Caller" transition="TO" description="Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknown."/>
+      <value type="OSTHREAD" field="caller" label="Caller" transition="FROM" description="Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknown."/>
     </event>
     
     <!-- Allocation events -->
