@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,10 +79,7 @@ import sun.misc.SharedSecrets;
 public final class AccessControlContext {
 
     private ProtectionDomain context[];
-    // isPrivileged and isAuthorized are referenced by the VM - do not remove
-    // or change their names
     private boolean isPrivileged;
-    private boolean isAuthorized = false;
 
     // Note: This field is directly used by the virtual machine
     // native codes. Don't touch it.
@@ -168,7 +165,6 @@ public final class AccessControlContext {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
-            this.isAuthorized = true;
         }
 
         this.context = acc.context;
@@ -190,7 +186,6 @@ public final class AccessControlContext {
             this.context = context.clone();
         }
         this.combiner = combiner;
-        this.isAuthorized = true;
     }
 
     /**
@@ -198,11 +193,10 @@ public final class AccessControlContext {
      */
 
     AccessControlContext(ProtectionDomain context[],
-                         boolean isPrivileged)
+                                 boolean isPrivileged)
     {
         this.context = context;
         this.isPrivileged = isPrivileged;
-        this.isAuthorized = true;
     }
 
     /**
@@ -483,7 +477,7 @@ public final class AccessControlContext {
     }
 
     private AccessControlContext goCombiner(ProtectionDomain[] current,
-                                            AccessControlContext assigned) {
+                                        AccessControlContext assigned) {
 
         // the assigned ACC's combiner is not null --
         // let the combiner do its thing
@@ -505,7 +499,6 @@ public final class AccessControlContext {
         this.context = combinedPds;
         this.combiner = assigned.combiner;
         this.isPrivileged = false;
-        this.isAuthorized = assigned.isAuthorized;
 
         return this;
     }
