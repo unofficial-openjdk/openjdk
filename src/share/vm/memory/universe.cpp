@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,7 +145,6 @@ oop Universe::_the_null_string                        = NULL;
 oop Universe::_the_min_jint_string                   = NULL;
 LatestMethodOopCache* Universe::_finalizer_register_cache = NULL;
 LatestMethodOopCache* Universe::_loader_addClass_cache    = NULL;
-LatestMethodOopCache* Universe::_pd_implies_cache         = NULL;
 ActiveMethodOopsCache* Universe::_reflect_invoke_cache    = NULL;
 oop Universe::_out_of_memory_error_java_heap          = NULL;
 oop Universe::_out_of_memory_error_perm_gen           = NULL;
@@ -265,7 +264,6 @@ void Universe::oops_do(OopClosure* f, bool do_all) {
   f->do_oop((oop*)&_the_min_jint_string);
   _finalizer_register_cache->oops_do(f);
   _loader_addClass_cache->oops_do(f);
-  _pd_implies_cache->oops_do(f);
   _reflect_invoke_cache->oops_do(f);
   f->do_oop((oop*)&_out_of_memory_error_java_heap);
   f->do_oop((oop*)&_out_of_memory_error_perm_gen);
@@ -790,7 +788,6 @@ jint universe_init() {
   // CompactingPermGenGen::initialize_oops() tries to populate them.
   Universe::_finalizer_register_cache = new LatestMethodOopCache();
   Universe::_loader_addClass_cache    = new LatestMethodOopCache();
-  Universe::_pd_implies_cache         = new LatestMethodOopCache();
   Universe::_reflect_invoke_cache     = new ActiveMethodOopsCache();
 
   if (UseSharedSpaces) {
@@ -1143,23 +1140,6 @@ bool universe_post_init() {
   }
   Universe::_loader_addClass_cache->init(
     SystemDictionary::ClassLoader_klass(), m, CHECK_false);
-
-  // Setup method for checking protection domain
-  instanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->link_class(CHECK_false);
-  m = instanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->
-            find_method(vmSymbols::impliesCreateAccessControlContext_name(),
-                        vmSymbols::void_boolean_signature());
-  // Allow NULL which should only happen with bootstrapping.
-  if (m != NULL) {
-    if (m->is_static()) {
-      // NoSuchMethodException doesn't actually work because it tries to run the
-      // <init> function before java_lang_Class is linked. Print error and exit.
-      tty->print_cr("ProtectionDomain.impliesCreateAccessControlContext() has the wrong linkage");
-      return false; // initialization failed
-    }
-    Universe::_pd_implies_cache->init(
-      SystemDictionary::ProtectionDomain_klass(), m, CHECK_false);;
-  }
 
   // The folowing is initializing converter functions for serialization in
   // JVM.cpp. If we clean up the StrictMath code above we may want to find
@@ -1641,7 +1621,6 @@ bool ActiveMethodOopsCache::is_same_method(const methodOop method) const {
 
 
 methodOop LatestMethodOopCache::get_methodOop() {
-  if (klass() == NULL) return NULL;
   instanceKlass* ik = instanceKlass::cast(klass());
   methodOop m = ik->method_with_idnum(method_idnum());
   assert(m != NULL, "sanity check");
