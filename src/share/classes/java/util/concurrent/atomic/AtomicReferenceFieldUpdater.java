@@ -34,8 +34,10 @@
  */
 
 package java.util.concurrent.atomic;
-import sun.misc.Unsafe;
 import java.lang.reflect.*;
+import sun.misc.Unsafe;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 
 /**
  * A reflection-based utility that enables atomic updates to
@@ -88,10 +90,12 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
      * @throws RuntimeException with a nested reflection-based
      * exception if the class does not hold field or is the wrong type.
      */
+    @CallerSensitive
     public static <U, W> AtomicReferenceFieldUpdater<U,W> newUpdater(Class<U> tclass, Class<W> vclass, String fieldName) {
         return new AtomicReferenceFieldUpdaterImpl<U,W>(tclass,
                                                         vclass,
-                                                        fieldName);
+                                                        fieldName,
+                                                        Reflection.getCallerClass());
     }
 
     /**
@@ -199,14 +203,13 @@ public abstract class AtomicReferenceFieldUpdater<T, V> {
 
         AtomicReferenceFieldUpdaterImpl(Class<T> tclass,
                                         Class<V> vclass,
-                                        String fieldName) {
+                                        String fieldName,
+                                        Class<?> caller) {
             Field field = null;
             Class fieldClass = null;
-            Class caller = null;
             int modifiers = 0;
             try {
                 field = tclass.getDeclaredField(fieldName);
-                caller = sun.reflect.Reflection.getCallerClass(3);
                 modifiers = field.getModifiers();
                 sun.reflect.misc.ReflectUtil.ensureMemberAccess(
                     caller, tclass, null, modifiers);

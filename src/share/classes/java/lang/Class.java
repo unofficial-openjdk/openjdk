@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import sun.misc.Unsafe;
+import sun.reflect.CallerSensitive;
 import sun.reflect.ConstantPool;
 import sun.reflect.Reflection;
 import sun.reflect.ReflectionFactory;
@@ -183,9 +184,11 @@ public final
      *            by this method fails
      * @exception ClassNotFoundException if the class cannot be located
      */
+    @CallerSensitive
     public static Class<?> forName(String className)
                 throws ClassNotFoundException {
-        return forName0(className, true, ClassLoader.getCallerClassLoader());
+        return forName0(className, true,
+                        ClassLoader.getClassLoader(Reflection.getCallerClass()));
     }
 
 
@@ -249,6 +252,7 @@ public final
      * @see       java.lang.ClassLoader
      * @since     1.2
      */
+    @CallerSensitive
     public static Class<?> forName(String name, boolean initialize,
                                    ClassLoader loader)
         throws ClassNotFoundException
@@ -256,7 +260,7 @@ public final
         if (loader == null) {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null) {
-                ClassLoader ccl = ClassLoader.getCallerClassLoader();
+                ClassLoader ccl = ClassLoader.getClassLoader(Reflection.getCallerClass());
                 if (ccl != null) {
                     sm.checkPermission(
                         SecurityConstants.GET_CLASSLOADER_PERMISSION);
@@ -318,18 +322,14 @@ public final
      *             </ul>
      *
      */
+    @CallerSensitive
     public T newInstance()
         throws InstantiationException, IllegalAccessException
     {
         if (System.getSecurityManager() != null) {
-            checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), false);
+            checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), false);
         }
-        return newInstance0();
-    }
 
-    private T newInstance0()
-        throws InstantiationException, IllegalAccessException
-    {
         // NOTE: the following code may not be strictly correct under
         // the current Java memory model.
 
@@ -363,7 +363,7 @@ public final
         // Security check (same as in java.lang.reflect.Constructor)
         int modifiers = tmpConstructor.getModifiers();
         if (!Reflection.quickCheckMemberAccess(this, modifiers)) {
-            Class<?> caller = Reflection.getCallerClass(3);
+            Class<?> caller = Reflection.getCallerClass();
             if (newInstanceCallerCache != caller) {
                 Reflection.ensureMemberAccess(caller, this, null, modifiers);
                 newInstanceCallerCache = caller;
@@ -604,16 +604,14 @@ public final
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
+    @CallerSensitive
     public ClassLoader getClassLoader() {
         ClassLoader cl = getClassLoader0();
         if (cl == null)
             return null;
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            ClassLoader ccl = ClassLoader.getCallerClassLoader();
-            if (ccl != null && ccl != cl && !cl.isAncestor(ccl)) {
-                sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
-            }
+            ClassLoader.checkClassLoaderPermission(cl, Reflection.getCallerClass());
         }
         return cl;
     }
@@ -894,6 +892,7 @@ public final
      *     that class is a local or anonymous class; otherwise {@code null}.
      * @since 1.5
      */
+    @CallerSensitive
     public Method getEnclosingMethod() {
         EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
 
@@ -923,7 +922,7 @@ public final
             //
             // Note that we need to do this on the enclosing class
             enclosingCandidate.checkMemberAccess(Member.DECLARED,
-                        ClassLoader.getCallerClassLoader(), true);
+                                                 Reflection.getCallerClass(), true);
             /*
              * Loop over all declared methods; match method name,
              * number of and type of parameters, *and* return
@@ -1031,6 +1030,7 @@ public final
      *     that class is a local or anonymous class; otherwise {@code null}.
      * @since 1.5
      */
+    @CallerSensitive
     public Constructor<?> getEnclosingConstructor() {
         EnclosingMethodInfo enclosingInfo = getEnclosingMethodInfo();
 
@@ -1059,7 +1059,7 @@ public final
             //
             // Note that we need to do this on the enclosing class
             enclosingCandidate.checkMemberAccess(Member.DECLARED,
-                        ClassLoader.getCallerClassLoader(), true);
+                                                 Reflection.getCallerClass(), true);
             /*
              * Loop over all declared constructors; match number
              * of and type of parameters.
@@ -1106,6 +1106,7 @@ public final
      * @return the immediately enclosing class of the underlying class
      * @since 1.5
      */
+    @CallerSensitive
     public Class<?> getEnclosingClass() {
         // There are five kinds of classes (or interfaces):
         // a) Top level classes
@@ -1138,7 +1139,7 @@ public final
         // see java.lang.SecurityManager.checkMemberAccess
         if (enclosingCandidate != null) {
             enclosingCandidate.checkMemberAccess(Member.DECLARED,
-                    ClassLoader.getCallerClassLoader(), true);
+                                                 Reflection.getCallerClass(), true);
         }
         return enclosingCandidate;
     }
@@ -1323,11 +1324,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Class<?>[] getClasses() {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), false);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), false);
 
         // Privileged so this implementation can look at DECLARED classes,
         // something the caller might not have privilege to do.  The code here
@@ -1398,11 +1400,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Field[] getFields() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         return copyFields(privateGetPublicFields(null));
     }
 
@@ -1449,11 +1452,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Method[] getMethods() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         return copyMethods(privateGetPublicMethods());
     }
 
@@ -1498,11 +1502,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Constructor<?>[] getConstructors() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         return copyConstructors(privateGetDeclaredConstructors(true));
     }
 
@@ -1556,12 +1561,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Field getField(String name)
         throws NoSuchFieldException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         Field field = getField0(name);
         if (field == null) {
             throw new NoSuchFieldException(name);
@@ -1641,12 +1647,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Method getMethod(String name, Class<?>... parameterTypes)
         throws NoSuchMethodException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         Method method = getMethod0(name, parameterTypes);
         if (method == null) {
             throw new NoSuchMethodException(getName() + "." + name + argumentTypesToString(parameterTypes));
@@ -1695,12 +1702,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Constructor<T> getConstructor(Class<?>... parameterTypes)
         throws NoSuchMethodException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.PUBLIC, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.PUBLIC, Reflection.getCallerClass(), true);
         return getConstructor0(parameterTypes, Member.PUBLIC);
     }
 
@@ -1738,11 +1746,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Class<?>[] getDeclaredClasses() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), false);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), false);
         return getDeclaredClasses0();
     }
 
@@ -1782,11 +1791,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Field[] getDeclaredFields() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         return copyFields(privateGetDeclaredFields(false));
     }
 
@@ -1830,11 +1840,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Method[] getDeclaredMethods() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         return copyMethods(privateGetDeclaredMethods(false));
     }
 
@@ -1875,11 +1886,12 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Constructor<?>[] getDeclaredConstructors() throws SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         return copyConstructors(privateGetDeclaredConstructors(false));
     }
 
@@ -1918,12 +1930,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Field getDeclaredField(String name)
         throws NoSuchFieldException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         Field field = searchFields(privateGetDeclaredFields(false), name);
         if (field == null) {
             throw new NoSuchFieldException(name);
@@ -1973,12 +1986,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Method getDeclaredMethod(String name, Class<?>... parameterTypes)
         throws NoSuchMethodException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         Method method = searchMethods(privateGetDeclaredMethods(false), name, parameterTypes);
         if (method == null) {
             throw new NoSuchMethodException(getName() + "." + name + argumentTypesToString(parameterTypes));
@@ -2023,12 +2037,13 @@ public final
      *
      * @since JDK1.1
      */
+    @CallerSensitive
     public Constructor<T> getDeclaredConstructor(Class<?>... parameterTypes)
         throws NoSuchMethodException, SecurityException {
         // be very careful not to change the stack depth of this
         // checkMemberAccess call for security reasons
         // see java.lang.SecurityManager.checkMemberAccess
-        checkMemberAccess(Member.DECLARED, ClassLoader.getCallerClassLoader(), true);
+        checkMemberAccess(Member.DECLARED, Reflection.getCallerClass(), true);
         return getConstructor0(parameterTypes, Member.DECLARED);
     }
 
@@ -2186,23 +2201,40 @@ public final
      */
     static native Class getPrimitiveClass(String name);
 
+    private static boolean isCheckMemberAccessOverridden(SecurityManager smgr) {
+        if (smgr.getClass() == SecurityManager.class) return false;
+
+        Class<?>[] paramTypes = new Class<?>[] {Class.class, int.class};
+        return smgr.getClass().getMethod0("checkMemberAccess", paramTypes).
+                getDeclaringClass() != SecurityManager.class;
+    }
+
 
     /*
      * Check if client is allowed to access members.  If access is denied,
      * throw a SecurityException.
      *
-     * Be very careful not to change the stack depth of this checkMemberAccess
-     * call for security reasons.
-     * See java.lang.SecurityManager.checkMemberAccess.
-     *
      * <p> Default policy: allow all clients access with normal Java access
      * control.
      */
-    private void checkMemberAccess(int which, ClassLoader ccl, boolean checkProxyInterfaces) {
-        SecurityManager s = System.getSecurityManager();
+    private void checkMemberAccess(int which, Class<?> caller, boolean checkProxyInterfaces) {
+        final SecurityManager s = System.getSecurityManager();
         if (s != null) {
-            s.checkMemberAccess(this, which);
-            ClassLoader cl = getClassLoader0();
+            final ClassLoader ccl = ClassLoader.getClassLoader(caller);
+            final ClassLoader cl = getClassLoader0();
+            if (!isCheckMemberAccessOverridden(s)) {
+                // Inlined SecurityManager.checkMemberAccess
+                if (which != Member.PUBLIC) {
+                    if (ccl != cl) {
+                        s.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
+                    }
+                }
+            } else {
+                // Don't refactor; otherwise break the stack depth for
+                // checkMemberAccess of subclasses of SecurityManager as specified.
+                s.checkMemberAccess(this, which);
+            }
+
             if (ReflectUtil.needsPackageAccessCheck(ccl, cl)) {
                 String name = this.getName();
                 int i = name.lastIndexOf('.');

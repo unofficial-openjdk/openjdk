@@ -484,7 +484,7 @@ endif
 
 # Stable agentvm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_lang
-jdk_lang: $(call TestDirs, java/lang)
+jdk_lang: $(call TestDirs, java/lang sun/reflect)
 	$(call RunAgentvmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
