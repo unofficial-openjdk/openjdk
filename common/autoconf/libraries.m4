@@ -182,7 +182,7 @@ CFLAGS="$CFLAGS $X_CFLAGS"
 # Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
 AC_CHECK_HEADERS([X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h],
                  [X11_A_OK=yes],
-                 [X11_A_OK=no],
+                 [X11_A_OK=no; break],
                  [ # include <X11/Xlib.h>
                    # include <X11/Xutil.h>
                  ])
@@ -499,11 +499,36 @@ AC_SUBST(USE_EXTERNAL_LIBJPEG)
 # Check for the gif library
 #
 
-USE_EXTERNAL_LIBJPEG=true
-AC_CHECK_LIB(gif, main, [],
-             [ USE_EXTERNAL_LIBGIF=false
-               AC_MSG_NOTICE([Will use gif decoder bundled with the OpenJDK source])
-             ])
+AC_ARG_WITH(giflib, [AS_HELP_STRING([--with-giflib],
+	[use giflib from build system or OpenJDK source (system, bundled) @<:@bundled@:>@])])
+
+
+AC_MSG_CHECKING([for which giflib to use])
+
+# default is bundled
+DEFAULT_GIFLIB=bundled
+
+#
+# if user didn't specify, use DEFAULT_GIFLIB
+#
+if test "x${with_giflib}" = "x"; then
+    with_giflib=${DEFAULT_GIFLIB}
+fi
+
+AC_MSG_RESULT(${with_giflib})
+
+if test "x${with_giflib}" = "xbundled"; then
+    USE_EXTERNAL_LIBGIF=false
+elif test "x${with_giflib}" = "xsystem"; then
+    AC_CHECK_HEADER(gif_lib.h, [],
+             [ AC_MSG_ERROR([--with-giflib=system specified, but gif_lib.h not found!])])
+    AC_CHECK_LIB(gif, DGifGetCode, [],
+             [ AC_MSG_ERROR([--with-giflib=system specified, but no giflib found!])])
+
+    USE_EXTERNAL_LIBGIF=true
+else
+    AC_MSG_ERROR([Invalid value of --with-giflib: ${with_giflib}, use 'system' or 'bundled'])
+fi
 AC_SUBST(USE_EXTERNAL_LIBGIF)
 
 ###############################################################################
