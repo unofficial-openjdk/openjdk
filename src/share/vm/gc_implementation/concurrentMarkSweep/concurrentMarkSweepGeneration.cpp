@@ -2205,6 +2205,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
     } else {
       assert(_collectorState == Idling, "Should be idling before start.");
       _collectorState = InitialMarking;
+      register_gc_start(GCCause::_cms_concurrent_mark);
       // Reset the expansion cause, now that we are about to begin
       // a new cycle.
       clear_expansion_cause();
@@ -2427,13 +2428,16 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
   }
 }
 
+void CMSCollector::register_foreground_gc_start(GCCause::Cause cause) {
+  if (!_cms_start_registered) {
+    register_gc_start(cause);
+  }
+}
+
 void CMSCollector::register_gc_start(GCCause::Cause cause) {
   _cms_start_registered = true;
   _gc_timer_cm->register_gc_start(os::elapsed_counter());
   _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
-
-  save_heap_summary();
-  report_heap_summary(GCWhen::BeforeGC);
 }
 
 void CMSCollector::register_gc_end() {
@@ -2489,7 +2493,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
     }
     switch (_collectorState) {
       case InitialMarking:
-        register_gc_start(GenCollectedHeap::heap()->gc_cause());
+        register_foreground_gc_start(GenCollectedHeap::heap()->gc_cause());
         init_mark_was_synchronous = true;  // fact to be exploited in re-mark
         checkpointRootsInitial(false);
         assert(_collectorState == Marking, "Collector state should have changed"
@@ -3526,6 +3530,9 @@ void CMSCollector::checkpointRootsInitial(bool asynch) {
   assert(_collectorState == InitialMarking, "Wrong collector state");
   check_correct_thread_executing();
   TraceCMSMemoryManagerStats tms(_collectorState,GenCollectedHeap::heap()->gc_cause());
+
+  save_heap_summary();
+  report_heap_summary(GCWhen::BeforeGC);
 
   ReferenceProcessor* rp = ref_processor();
   SpecializationStats::clear();
