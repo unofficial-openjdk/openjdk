@@ -5088,6 +5088,8 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
     verify_after_remark();
   }
 
+  _gc_tracer_cm->report_object_count_after_gc(&_is_alive_closure);
+
   // Change under the freelistLocks.
   _collectorState = Sweeping;
   // Call isAllClear() under bitMapLock

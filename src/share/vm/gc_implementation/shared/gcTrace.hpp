@@ -42,6 +42,7 @@ class PermGenSummary;
 class PSHeapSummary;
 class ReferenceProcessorStats;
 class TimePartitions;
+class BoolObjectClosure;
 
 class SharedGCInfo VALUE_OBJ_CLASS_SPEC {
   static const jlong UNSET_TIMESTAMP = -1;
@@ -109,6 +110,7 @@ class G1YoungGCInfo VALUE_OBJ_CLASS_SPEC {
 #endif // SERIALGC
 
 class GCTracer : public ResourceObj {
+  friend class ObjectCountEventSenderClosure;
  protected:
   SharedGCInfo _shared_gc_info;
 
@@ -117,6 +119,7 @@ class GCTracer : public ResourceObj {
   void report_gc_end(jlong timestamp, TimePartitions* time_partitions);
   void report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& heap_summary, const PermGenSummary& perm_gen_summary) const;
   void report_gc_reference_stats(const ReferenceProcessorStats& rp) const;
+  void report_object_count_after_gc(BoolObjectClosure* object_filter);
 
   bool has_reported_gc_start() const;
 
@@ -131,6 +134,8 @@ class GCTracer : public ResourceObj {
   void send_perm_gen_summary_event(GCWhen::Type when, const PermGenSummary& perm_gen_summary) const;
   void send_reference_stats_event(ReferenceType type, size_t count) const;
   void send_phase_events(TimePartitions* time_partitions) const;
+  void send_object_count_after_gc_event(klassOop klass, jlong count, julong total_size) const;
+  bool should_send_object_count_after_gc_event() const;
 };
 
 class YoungGCTracer : public GCTracer {
