@@ -129,7 +129,7 @@ public class HashMap<K,V>
     /**
      * The default initial capacity - MUST be a power of two.
      */
-    static final int DEFAULT_INITIAL_CAPACITY = 16;
+    static final int DEFAULT_INITIAL_CAPACITY = 1 << 4; // aka 16
 
     /**
      * The maximum capacity, used if a higher value is implicitly specified
@@ -144,9 +144,14 @@ public class HashMap<K,V>
     static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
+     * An empty table instance to share when the table is not inflated.
+     */
+    static final Entry<?,?>[] EMPTY_TABLE = {};
+
+    /**
      * The table, resized as necessary. Length MUST Always be a power of two.
      */
-    transient Entry<K,V>[] table;
+    transient Entry<K,V>[] table = (Entry<K,V>[]) EMPTY_TABLE;
 
     /**
      * The number of key-value mappings contained in this map.
@@ -157,6 +162,8 @@ public class HashMap<K,V>
      * The next size value at which to resize (capacity * load factor).
      * @serial
      */
+    // If table == EMPTY_TABLE then this is the initial capacity at which the
+    // table will be created when inflated.
     int threshold;
 
     /**
@@ -250,16 +257,8 @@ public class HashMap<K,V>
             throw new IllegalArgumentException("Illegal load factor: " +
                                                loadFactor);
 
-        // Find a power of 2 >= initialCapacity
-        int capacity = (capacity = Integer.highestOneBit(initialCapacity)) != 0
-                ? capacity
-                : 1;
-        capacity <<= (Integer.bitCount(initialCapacity) > 1) ? 1 : 0;
-
         this.loadFactor = loadFactor;
-        threshold = (int)Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
-        table = new Entry[capacity];
-        initHashSeedAsNeeded(capacity);
+        threshold = initialCapacity;
         init();
     }
 
@@ -294,7 +293,32 @@ public class HashMap<K,V>
     public HashMap(Map<? extends K, ? extends V> m) {
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                       DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
+        inflateTable(threshold);
+
         putAllForCreate(m);
+    }
+
+    private static int roundUpToPowerOf2(int number) {
+        // assert number >= 0 : "number must be non-negative";
+        int rounded = number >= MAXIMUM_CAPACITY
+                ? MAXIMUM_CAPACITY
+                : (rounded = Integer.highestOneBit(number)) != 0
+                    ? (Integer.bitCount(number) > 1) ? rounded << 1 : rounded
+                    : 1;
+
+        return rounded;
+    }
+
+    /**
+     * Inflates the table.
+     */
+    private void inflateTable(int toSize) {
+        // Find a power of 2 >= toSize
+        int capacity = roundUpToPowerOf2(toSize);
+
+        threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
+        table = new Entry[capacity];
+        initHashSeedAsNeeded(capacity);
     }
 
     // internal utilities
@@ -352,6 +376,7 @@ public class HashMap<K,V>
      * Returns index for hash code h.
      */
     static int indexFor(int h, int length) {
+        // assert Integer.bitCount(length) == 1 : "length must be a non-zero power of 2";
         return h & (length-1);
     }
 
@@ -406,6 +431,9 @@ public class HashMap<K,V>
      * others.
      */
     private V getForNullKey() {
+        if (isEmpty()) {
+            return null;
+        }
         for (Entry<K,V> e = table[0]; e != null; e = e.next) {
             if (e.key == null)
                 return e.value;
@@ -431,6 +459,10 @@ public class HashMap<K,V>
      * for the key.
      */
     final Entry<K,V> getEntry(Object key) {
+        if (isEmpty()) {
+            return null;
+        }
+
         int hash = (key == null) ? 0 : hash(key);
         for (Entry<K,V> e = table[indexFor(hash, table.length)];
              e != null;
@@ -442,7 +474,6 @@ public class HashMap<K,V>
         }
         return null;
     }
-
 
     /**
      * Associates the specified value with the specified key in this map.
@@ -457,6 +488,9 @@ public class HashMap<K,V>
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public V put(K key, V value) {
+        if (table == EMPTY_TABLE) {
+            inflateTable(threshold);
+        }
         if (key == null)
             return putForNullKey(value);
         int hash = hash(key);
@@ -585,6 +619,10 @@ public class HashMap<K,V>
         if (numKeysToBeAdded == 0)
             return;
 
+        if (table == EMPTY_TABLE) {
+            inflateTable((int) Math.max(numKeysToBeAdded * loadFactor, threshold));
+        }
+
         /*
          * Expand the map if the map if the number of mappings to be added
          * is greater than or equal to threshold.  This is conservative; the
@@ -629,6 +667,9 @@ public class HashMap<K,V>
      * for this key.
      */
     final Entry<K,V> removeEntryForKey(Object key) {
+        if (isEmpty()) {
+            return null;
+        }
         int hash = (key == null) ? 0 : hash(key);
         int i = indexFor(hash, table.length);
         Entry<K,V> prev = table[i];
@@ -660,7 +701,7 @@ public class HashMap<K,V>
      * for matching.
      */
     final Entry<K,V> removeMapping(Object o) {
-        if (!(o instanceof Map.Entry))
+        if (isEmpty() || !(o instanceof Map.Entry))
             return null;
 
         Map.Entry<K,V> entry = (Map.Entry<K,V>) o;
@@ -695,9 +736,7 @@ public class HashMap<K,V>
      */
     public void clear() {
         modCount++;
-        Entry[] tab = table;
-        for (int i = 0; i < tab.length; i++)
-            tab[i] = null;
+        Arrays.fill(table, null);
         size = 0;
     }
 
@@ -746,7 +785,14 @@ public class HashMap<K,V>
         } catch (CloneNotSupportedException e) {
             // assert false;
         }
-        result.table = new Entry[table.length];
+        if (result.table != EMPTY_TABLE) {
+            result.inflateTable(Math.min(
+                (int) Math.min(
+                    size * Math.min(1 / loadFactor, 4.0f),
+                    // we have limits...
+                    HashMap.MAXIMUM_CAPACITY),
+               table.length));
+        }
         result.entrySet = null;
         result.modCount = 0;
         result.size = 0;
@@ -1067,14 +1113,15 @@ public class HashMap<K,V>
     private void writeObject(java.io.ObjectOutputStream s)
         throws IOException
     {
-        Iterator<Map.Entry<K,V>> i =
-            (size > 0) ? entrySet0().iterator() : null;
-
         // Write out the threshold, loadfactor, and any hidden stuff
         s.defaultWriteObject();
 
         // Write out number of buckets
-        s.writeInt(table.length);
+        if (table==EMPTY_TABLE) {
+            s.writeInt(roundUpToPowerOf2(threshold));
+        } else {
+           s.writeInt(table.length);
+        }
 
         // Write out size (number of Mappings)
         s.writeInt(size);
@@ -1099,12 +1146,16 @@ public class HashMap<K,V>
     {
         // Read in the threshold (ignored), loadfactor, and any hidden stuff
         s.defaultReadObject();
-        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+        if (loadFactor <= 0 || Float.isNaN(loadFactor)) {
             throw new InvalidObjectException("Illegal load factor: " +
                                                loadFactor);
+        }
 
-        // Read in number of buckets and allocate the bucket array;
-        s.readInt(); // ignored
+        // set other fields that need values
+        table = (Entry<K,V>[]) EMPTY_TABLE;
+
+        // Read in number of buckets
+        s.readInt(); // ignored.
 
         // Read number of mappings
         int mappings = s.readInt();
@@ -1112,26 +1163,23 @@ public class HashMap<K,V>
             throw new InvalidObjectException("Illegal mappings count: " +
                                                mappings);
 
-        int initialCapacity = (int) Math.min(
-                // capacity chosen by number of mappings
-                // and desired load (if >= 0.25)
-                mappings * Math.min(1 / loadFactor, 4.0f),
-                // we have limits...
-                HashMap.MAXIMUM_CAPACITY);
-        // find smallest power of two which holds all mappings
-        int capacity = (capacity = Integer.highestOneBit(initialCapacity)) != 0
-                ? capacity
-                : 1;
-        capacity <<= (Integer.bitCount(initialCapacity) > 1) ? 1 : 0;
+        // capacity chosen by number of mappings and desired load (if >= 0.25)
+        int capacity = (int) Math.min(
+                    mappings * Math.min(1 / loadFactor, 4.0f),
+                    // we have limits...
+                    HashMap.MAXIMUM_CAPACITY);
 
-        table = new Entry[capacity];
-        threshold = (int) Math.min(capacity * loadFactor, MAXIMUM_CAPACITY + 1);
-        initHashSeedAsNeeded(capacity);
+        // allocate the bucket array;
+        if (mappings > 0) {
+            inflateTable(capacity);
+        } else {
+            threshold = capacity;
+        }
 
         init();  // Give subclass a chance to do its thing.
 
         // Read the keys and values, and put the mappings in the HashMap
-        for (int i=0; i<mappings; i++) {
+        for (int i = 0; i < mappings; i++) {
             K key = (K) s.readObject();
             V value = (V) s.readObject();
             putForCreate(key, value);
