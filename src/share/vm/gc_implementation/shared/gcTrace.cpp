@@ -94,9 +94,12 @@ void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& he
 
 void YoungGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
+  assert(_tenuring_threshold != UNSET_TENURING_THRESHOLD, "Tenuring threshold has not been reported");
 
   GCTracer::report_gc_end_impl(timestamp, time_partitions);
   send_young_gc_event();
+
+  _tenuring_threshold = UNSET_TENURING_THRESHOLD;
 }
 
 void YoungGCTracer::report_promotion_failed(const PromotionFailedInfo& pf_info) {
@@ -105,6 +108,9 @@ void YoungGCTracer::report_promotion_failed(const PromotionFailedInfo& pf_info) 
   send_promotion_failed_event(pf_info);
 }
 
+void YoungGCTracer::report_tenuring_threshold(const uint tenuring_threshold) {
+  _tenuring_threshold = tenuring_threshold;
+}
 
 void OldGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();

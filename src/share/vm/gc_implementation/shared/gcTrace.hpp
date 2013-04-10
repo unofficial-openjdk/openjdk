@@ -134,14 +134,17 @@ class GCTracer : public ResourceObj {
 };
 
 class YoungGCTracer : public GCTracer {
+  static const uint UNSET_TENURING_THRESHOLD = (uint) -1;
+
+  uint _tenuring_threshold;
+
  protected:
-  YoungGCTracer(GCName name) : GCTracer(name) {}
+  YoungGCTracer(GCName name) : GCTracer(name), _tenuring_threshold(UNSET_TENURING_THRESHOLD) {}
+  virtual void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
 
  public:
   void report_promotion_failed(const PromotionFailedInfo& pf_info);
-
- protected:
-  virtual void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
+  void report_tenuring_threshold(const uint tenuring_threshold);
 
  private:
   void send_young_gc_event() const;
@@ -151,8 +154,6 @@ class YoungGCTracer : public GCTracer {
 class OldGCTracer : public GCTracer {
  protected:
   OldGCTracer(GCName name) : GCTracer(name) {}
-
- protected:
   virtual void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
 
  private:

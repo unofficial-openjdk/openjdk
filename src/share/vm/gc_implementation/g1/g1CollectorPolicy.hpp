@@ -861,6 +861,7 @@ private:
   ageTable _survivors_age_table;
 
 public:
+  uint tenuring_threshold() const { return _tenuring_threshold; }
 
   inline GCAllocPurpose
     evacuation_destination(HeapRegion* src_region, int age, size_t word_sz) {

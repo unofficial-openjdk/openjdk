@@ -168,6 +168,7 @@ Declares a structure type that can be used in other events.
     <event id="GCYoungGarbageCollection" path="vm/gc/collector/young_garbage_collection" label="Young Garbage Collection"
            description="Extra information specific to Young Garbage Collections">
       <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="UINT" field="tenuringThreshold" label="Tenuring Threshold" />
     </event>
 
     <event id="GCOldGarbageCollection" path="vm/gc/collector/old_garbage_collection" label="Old Garbage Collection"

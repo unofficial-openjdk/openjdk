@@ -4170,6 +4170,8 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     // before any GC notifications are raised.
     g1mm()->update_sizes();
 
+    _gc_tracer_stw->report_tenuring_threshold(_g1_policy->tenuring_threshold());
+
     _gc_timer_stw->register_gc_end(os::elapsed_counter());
 
     _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());

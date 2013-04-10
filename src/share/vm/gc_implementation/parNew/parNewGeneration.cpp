@@ -1098,6 +1098,7 @@ void ParNewGeneration::collect(bool   full,
   rp->verify_no_references_recorded();
 
   gch->trace_heap_after_gc(&gc_tracer);
+  gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
   _gc_timer->register_gc_end(os::elapsed_counter());
 

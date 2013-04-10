@@ -680,6 +680,7 @@ void DefNewGeneration::collect(bool   full,
   update_time_of_last_gc(now);
 
   gch->trace_heap_after_gc(&gc_tracer);
+  gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
   _gc_timer->register_gc_end(os::elapsed_counter());
 

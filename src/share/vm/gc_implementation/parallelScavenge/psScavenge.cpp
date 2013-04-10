@@ -668,6 +668,7 @@ bool PSScavenge::invoke_no_policy() {
 
   heap->print_heap_after_gc();
   heap->trace_heap_after_gc(&_gc_tracer);
+  _gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
   if (ZapUnusedHeapArea) {
     young_gen->eden_space()->check_mangled_unused_area_complete();
