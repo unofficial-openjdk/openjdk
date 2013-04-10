@@ -66,59 +66,6 @@ void OSThread::handle_spinlock_contention(int tries) {
   }
 }
 
-static void resume_clear_context(OSThread *osthread) {
-  osthread->set_ucontext(NULL);
-}
-
-static void suspend_save_context(OSThread *osthread, ucontext_t* context) {
-  osthread->set_ucontext(context);
-}
-
 void OSThread::SR_handler(Thread* thread, ucontext_t* uc) {
-  // Save and restore errno to avoid confusing native code with EINTR
-  // after sigsuspend.
-  int old_errno = errno;
-
-  OSThread* osthread = thread->osthread();
-  assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
-
-  os::SuspendResume::State current = osthread->sr.state();
-  if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
-    suspend_save_context(osthread, uc);
-
-    // attempt to switch the state, we assume we had a SUSPEND_REQUEST
-    os::SuspendResume::State state = osthread->sr.suspended();
-    if (state == os::SuspendResume::SR_SUSPENDED) {
-      sigset_t suspend_set;  // signals for sigsuspend()
-
-      // get current set of blocked signals and unblock resume signal
-      thr_sigsetmask(SIG_BLOCK, NULL, &suspend_set);
-      sigdelset(&suspend_set, os::Solaris::SIGasync());
-
-      // wait here until we are resumed
-      while (1) {
-        sigsuspend(&suspend_set);
-
-        os::SuspendResume::State result = osthread->sr.running();
-        if (result == os::SuspendResume::SR_RUNNING) {
-          break;
-        }
-      }
-
-    } else if (state == os::SuspendResume::SR_RUNNING) {
-      // request was cancelled, continue
-    } else {
-      ShouldNotReachHere();
-    }
-
-    resume_clear_context(osthread);
-  } else if (current == os::SuspendResume::SR_RUNNING) {
-    // request was cancelled, continue
-  } else if (current == os::SuspendResume::SR_WAKEUP_REQUEST) {
-    // ignore
-  } else {
-    ShouldNotReachHere();
-  }
-
-  errno = old_errno;
+  os::Solaris::SR_handler(thread, uc);
 }

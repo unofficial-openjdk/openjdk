@@ -163,6 +163,9 @@ sigset_t SR_sigset;
 /* Used to protect dlsym() calls */
 static pthread_mutex_t dl_mutex;
 
+// Declarations
+static void unpackTime(timespec* absTime, bool isAbsolute, jlong time);
+
 #ifdef JAVASE_EMBEDDED
 class MemNotifyThread: public Thread {
   friend class VMStructs;
@@ -2434,6 +2437,57 @@ void* os::user_handler() {
   return CAST_FROM_FN_PTR(void*, UserHandler);
 }
 
+class Semaphore : public StackObj {
+  public:
+    Semaphore();
+    ~Semaphore();
+    void signal();
+    void wait();
+    bool trywait();
+    bool timedwait(unsigned int sec, int nsec);
+  private:
+    sem_t _semaphore;
+};
+
+
+Semaphore::Semaphore() {
+  sem_init(&_semaphore, 0, 0);
+}
+
+Semaphore::~Semaphore() {
+  sem_destroy(&_semaphore);
+}
+
+void Semaphore::signal() {
+  sem_post(&_semaphore);
+}
+
+void Semaphore::wait() {
+  sem_wait(&_semaphore);
+}
+
+bool Semaphore::trywait() {
+  return sem_trywait(&_semaphore) == 0;
+}
+
+bool Semaphore::timedwait(unsigned int sec, int nsec) {
+  struct timespec ts;
+  unpackTime(&ts, false, (sec * NANOSECS_PER_SEC) + nsec);
+
+  while (1) {
+    int result = sem_timedwait(&_semaphore, &ts);
+    if (result == 0) {
+      return true;
+    } else if (errno == EINTR) {
+      continue;
+    } else if (errno == ETIMEDOUT) {
+      return false;
+    } else {
+      return false;
+    }
+  }
+}
+
 extern "C" {
   typedef void (*sa_handler_t)(int);
   typedef void (*sa_sigaction_t)(int, siginfo_t *, void *);
@@ -2473,6 +2527,7 @@ static volatile jint pending_signals[NSIG+1] = { 0 };
 
 // Linux(POSIX) specific hand shaking semaphore.
 static sem_t sig_sem;
+static Semaphore sr_semaphore;
 
 void os::signal_init_pd() {
   // Initialize signal structures
@@ -3628,12 +3683,14 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
       pthread_sigmask(SIG_BLOCK, NULL, &suspend_set);
       sigdelset(&suspend_set, SR_signum);
 
+      sr_semaphore.signal();
       // wait here until we are resumed
       while (1) {
         sigsuspend(&suspend_set);
 
         os::SuspendResume::State result = osthread->sr.running();
         if (result == os::SuspendResume::SR_RUNNING) {
+          sr_semaphore.signal();
           break;
         }
       }
@@ -3650,7 +3707,7 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   } else if (current == os::SuspendResume::SR_WAKEUP_REQUEST) {
     // ignore
   } else {
-    ShouldNotReachHere();
+    // ignore
   }
 
   errno = old_errno;
@@ -3714,8 +3771,9 @@ static const int RANDOMLY_LARGE_INTEGER2 = 100;
 // but this seems the normal response to library errors
 static bool do_suspend(OSThread* osthread) {
   assert(osthread->sr.is_running(), "thread should be running");
-  // mark as suspended and send signal
+  assert(!sr_semaphore.trywait(), "semaphore has invalid state");
 
+  // mark as suspended and send signal
   if (osthread->sr.request_suspend() != os::SuspendResume::SR_SUSPEND_REQUEST) {
     // failed to switch, state wasn't running?
     ShouldNotReachHere();
@@ -3723,35 +3781,22 @@ static bool do_suspend(OSThread* osthread) {
   }
 
   if (sr_notify(osthread) != 0) {
-    // try to cancel, switch to running
-
-    os::SuspendResume::State result = osthread->sr.cancel_suspend();
-    if (result == os::SuspendResume::SR_RUNNING) {
-      // cancelled
-      return false;
-    } else if (result == os::SuspendResume::SR_SUSPENDED) {
-      // somehow managed to suspend
-      return true;
-    } else {
-      ShouldNotReachHere();
-      return false;
-    }
+    ShouldNotReachHere();
   }
 
   // managed to send the signal and switch to SUSPEND_REQUEST, now wait for SUSPENDED
-
-  for (int n = 0; !osthread->sr.is_suspended(); n++) {
-    for (int i = 0; i < RANDOMLY_LARGE_INTEGER2 && !osthread->sr.is_suspended(); i++) {
-      os::yield_all(i);
-    }
-
-    // timeout, try to cancel the request
-    if (n >= RANDOMLY_LARGE_INTEGER) {
+  while (true) {
+    if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+      break;
+    } else {
+      // timeout
       os::SuspendResume::State cancelled = osthread->sr.cancel_suspend();
       if (cancelled == os::SuspendResume::SR_RUNNING) {
         return false;
       } else if (cancelled == os::SuspendResume::SR_SUSPENDED) {
-        return true;
+        // make sure that we consume the signal on the semaphore as well
+        sr_semaphore.wait();
+        break;
       } else {
         ShouldNotReachHere();
         return false;
@@ -3765,6 +3810,7 @@ static bool do_suspend(OSThread* osthread) {
 
 static void do_resume(OSThread* osthread) {
   assert(osthread->sr.is_suspended(), "thread should be suspended");
+  assert(!sr_semaphore.trywait(), "invalid semaphore state");
 
   if (osthread->sr.request_wakeup() != os::SuspendResume::SR_WAKEUP_REQUEST) {
     // failed to switch to WAKEUP_REQUEST
@@ -3772,11 +3818,11 @@ static void do_resume(OSThread* osthread) {
     return;
   }
 
-  while (!osthread->sr.is_running()) {
+  while (true) {
     if (sr_notify(osthread) == 0) {
-      for (int n = 0; n < RANDOMLY_LARGE_INTEGER && !osthread->sr.is_running(); n++) {
-        for (int i = 0; i < 100 && !osthread->sr.is_running(); i++) {
-          os::yield_all(i);
+      if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+        if (osthread->sr.is_running()) {
+          return;
         }
       }
     } else {
@@ -5748,4 +5794,5 @@ void MemNotifyThread::start() {
     new MemNotifyThread(fd);
   }
 }
+
 #endif // JAVASE_EMBEDDED

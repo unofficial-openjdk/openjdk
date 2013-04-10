@@ -301,6 +301,6 @@ class PlatformParker : public CHeapObj<mtInternal> {
       status = pthread_mutex_init (_mutex, NULL);
       assert_status(status == 0, status, "mutex_init");
     }
-} ;
+};
 
 #endif // OS_LINUX_VM_OS_LINUX_HPP
