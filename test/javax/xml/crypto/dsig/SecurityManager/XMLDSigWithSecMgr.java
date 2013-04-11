@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
  * @bug 6436919 6460930
  * @summary check that XML Signatures can be generated and validated with
  *  SecurityManager enabled and default policy
+ * @run main/othervm XMLDSigWithSecMgr
  * @author Sean Mullan
  */
 import java.io.*;

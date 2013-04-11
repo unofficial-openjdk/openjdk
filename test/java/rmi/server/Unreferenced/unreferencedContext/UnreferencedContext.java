@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,7 @@
  * @author Laird Dornin
  *
  * @library ../../../testlibrary
- * @build UnreferencedContext
- * @build UnreferencedContext_Stub
+ * @build TestLibrary UnreferencedContext_Stub
  * @run main/othervm/timeout=120 UnreferencedContext
  */
 
@@ -119,10 +118,11 @@ public class UnreferencedContext implements Remote, Unreferenced, Runnable {
             UnicastRemoteObject.exportObject(obj);
             System.err.println("exported remote object");
 
-            LocateRegistry.createRegistry(TestLibrary.REGISTRY_PORT);
+            Registry registry1 = TestLibrary.createRegistryOnUnusedPort();
+            int port = TestLibrary.getRegistryPort(registry1);
             System.err.println("created registry");
 
-            Registry registry = LocateRegistry.getRegistry("", TestLibrary.REGISTRY_PORT);
+            Registry registry = LocateRegistry.getRegistry("", port);
             registry.bind(BINDING, obj);
             System.err.println("bound remote object in registry");
 

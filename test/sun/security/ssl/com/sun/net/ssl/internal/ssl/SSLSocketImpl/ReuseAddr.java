@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4482446
  * @summary java.net.SocketTimeoutException on 98, NT, 2000 for JSSE
+ * @run main/othervm ReuseAddr
  * @author Brad Wetmore
  */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,7 @@
  * @author Peter Jones
  *
  * @library ../../../../../java/rmi/testlibrary
- * @build JavaVM
- * @build NoConsoleOutput
+ * @build TestLibrary JavaVM
  * @run main/othervm NoConsoleOutput
  */
 
@@ -60,11 +59,13 @@ public class NoConsoleOutput {
             File.separatorChar + "logging.properties";
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
+
+        // We instantiate a JavaVM that should not produce any console output
+        // (neither on standard output, nor on standard err streams).
         JavaVM vm = new JavaVM(DoRMIStuff.class.getName(),
             "-Djava.util.logging.config.file=" + loggingPropertiesFile,
                                "", out, err);
-        vm.start();
-        vm.getVM().waitFor();
+        vm.execute();
 
         /*
          * Verify that the subprocess had no System.out or System.err
@@ -87,7 +88,6 @@ public class NoConsoleOutput {
     }
 
     public static class DoRMIStuff {
-        private static final int PORT = 2020;
         private interface Foo extends Remote {
             Object echo(Object obj) throws RemoteException;
         }
@@ -96,8 +96,9 @@ public class NoConsoleOutput {
             public Object echo(Object obj) { return obj; }
         }
         public static void main(String[] args) throws Exception {
-            LocateRegistry.createRegistry(PORT);
-            Registry reg = LocateRegistry.getRegistry("", PORT);
+            Registry registry = TestLibrary.createRegistryOnUnusedPort();
+            int registryPort = TestLibrary.getRegistryPort(registry);
+            Registry reg = LocateRegistry.getRegistry("", registryPort);
             FooImpl fooimpl = new FooImpl();
             UnicastRemoteObject.exportObject(fooimpl, 0);
             reg.rebind("foo", fooimpl);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,37 +36,64 @@
  * not make use of packages.
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.URL;
 import java.net.MalformedURLException;
-import java.rmi.activation.Activatable;
-import java.rmi.activation.ActivationID;
+import java.net.ServerSocket;
+import java.net.URL;
 import java.rmi.NoSuchObjectException;
-import java.rmi.registry.Registry;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.RemoteRef;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Properties;
-import java.io.ByteArrayOutputStream;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+
+import sun.rmi.registry.RegistryImpl;
+import sun.rmi.server.UnicastServerRef;
+import sun.rmi.transport.Endpoint;
+import sun.rmi.transport.LiveRef;
+import sun.rmi.transport.tcp.TCPEndpoint;
 
 /**
  * Class of utility/library methods (i.e. procedures) that assist with
  * the writing and maintainance of rmi regression tests.
  */
 public class TestLibrary {
-
-    /** standard test port number for registry */
-    public final static int REGISTRY_PORT = 2006;
-    /** port for rmid necessary: not used to actually start rmid */
-    public final static int RMID_PORT = 1098;
+    /**
+     *                       IMPORTANT!
+     *
+     * RMI tests are run concurrently and port conflicts result when a single
+     * port number is used by multiple tests.  When needing a port, use
+     * getUnusedRandomPort() wherever possible.  If getUnusedRandomPort() cannot
+     * be used, reserve and specify a port to use for your test here.   This
+     * will ensure there are no port conflicts amongst the RMI tests.  The
+     * port numbers specified here may also be specified in the respective
+     * tests.  Do not change the reserved port numbers here without also
+     * changing the port numbers in the respective tests.
+     *
+     * When needing an instance of the RMIRegistry, use
+     * createRegistryOnUnusedPort wherever possible to prevent port conflicts.
+     *
+     * Reserved port range: FIXED_PORT_MIN to FIXED_PORT_MAX (inclusive) for
+     * tests which cannot use a random port.  If new fixed ports are added below
+     * FIXED_PORT_MIN or above FIXED_PORT_MAX, then adjust
+     * FIXED_PORT_MIN/MAX appropriately.
+     */
+    public final static int FIXED_PORT_MIN = 64001;
+    public final static int FIXED_PORT_MAX = 64010;
+    public final static int RMIDVIAINHERITEDCHANNEL_ACTIVATION_PORT = 64001;
+    public final static int RMIDVIAINHERITEDCHANNEL_REGISTRY_PORT = 64002;
+    public final static int INHERITEDCHANNELNOTSERVERSOCKET_ACTIVATION_PORT = 64003;
+    public final static int INHERITEDCHANNELNOTSERVERSOCKET_REGISTRY_PORT = 64004;
+    public final static int READTEST_REGISTRY_PORT = 64005;
+    private final static int MAX_SERVER_SOCKET_TRIES = 2*(FIXED_PORT_MAX-FIXED_PORT_MIN+1);
 
     static void mesg(Object mesg) {
         System.err.println("TEST_LIBRARY: " + mesg.toString());
@@ -100,36 +127,15 @@ public class TestLibrary {
         bomb(null, e);
     }
 
-    /**
-     * Property accessors
-     */
-    private static boolean getBoolean(String name) {
-        return (new Boolean(getProperty(name, "false")).booleanValue());
-    }
-    private static Integer getInteger(String name) {
-        int val = 0;
-        Integer value = null;
-
-        String propVal = getProperty(name, null);
-        if (propVal == null) {
-            return null;
-        }
-
-        try {
-            value = new Integer(Integer.parseInt(propVal));
-        } catch (NumberFormatException nfe) {
-        }
-        return value;
-    }
     public static String getProperty(String property, String defaultVal) {
         final String prop = property;
         final String def = defaultVal;
-        return ((String) java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction() {
-                public Object run() {
+        return java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<String>() {
+                public String run() {
                     return System.getProperty(prop, def);
                 }
-            }));
+            });
     }
 
     /**
@@ -144,9 +150,9 @@ public class TestLibrary {
     public static void setProperty(String property, String value) {
         final String prop = property;
         final String val = value;
-        java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction() {
-                public Object run() {
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
                     System.setProperty(prop, val);
                     return null;
                 }
@@ -163,7 +169,7 @@ public class TestLibrary {
         out.println("-------------------Test environment----------" +
                     "---------");
 
-        for(Enumeration keys = System.getProperties().keys();
+        for(Enumeration<?> keys = System.getProperties().keys();
             keys.hasMoreElements();) {
 
             String property = (String) keys.nextElement();
@@ -227,7 +233,7 @@ public class TestLibrary {
         /*
          * Obtain the URL for the codebase.
          */
-        URL codebaseURL = dstDir.toURL();
+        URL codebaseURL = dstDir.toURI().toURL();
 
         /*
          * Specify where we will copy the class definition from, if
@@ -337,6 +343,103 @@ public class TestLibrary {
 
             System.setSecurityManager(manager);
         }
+    }
+
+    /**
+     * Creates an RMI {@link Registry} on a random, un-reserved port.
+     *
+     * @returns an RMI Registry, using a random port.
+     * @throws RemoteException if there was a problem creating a Registry.
+     */
+    public static Registry createRegistryOnUnusedPort() throws RemoteException {
+        return LocateRegistry.createRegistry(getUnusedRandomPort());
+    }
+
+    /**
+     * Returns the port number the RMI {@link Registry} is running on.
+     *
+     * @param registry the registry to find the port of.
+     * @return the port number the registry is using.
+     * @throws RuntimeException if there was a problem getting the port number.
+     */
+    public static int getRegistryPort(Registry registry) {
+        int port = -1;
+
+        try {
+            RemoteRef remoteRef = ((RegistryImpl)registry).getRef();
+            LiveRef liveRef = ((UnicastServerRef)remoteRef).getLiveRef();
+            Endpoint endpoint = liveRef.getChannel().getEndpoint();
+            TCPEndpoint tcpEndpoint = (TCPEndpoint) endpoint;
+            port = tcpEndpoint.getPort();
+        } catch (Exception ex) {
+            throw new RuntimeException("Error getting registry port.", ex);
+        }
+
+        return port;
+    }
+
+    /**
+     * Returns an unused random port number which is not a reserved port.  Will
+     * try up to 10 times to get a random port before giving up and throwing a
+     * RuntimeException.
+     *
+     * @return an unused random port number.
+     * @throws RuntimeException if there was a problem getting a port.
+     */
+    public static int getUnusedRandomPort() {
+        int numTries = 0;
+        IOException ex = null;
+
+        while (numTries++ < MAX_SERVER_SOCKET_TRIES) {
+            int unusedRandomPort = -1;
+            ex = null; //reset
+
+            try (ServerSocket ss = new ServerSocket(0)) {
+                unusedRandomPort = ss.getLocalPort();
+            } catch (IOException e) {
+                ex = e;
+                // temporarily print stack trace here until we find out why
+                // tests are failing.
+                System.err.println("TestLibrary.getUnusedRandomPort() caught "
+                        + "exception on iteration " + numTries
+                        + (numTries==MAX_SERVER_SOCKET_TRIES ? " (the final try)."
+                        : "."));
+                ex.printStackTrace();
+            }
+
+            if (unusedRandomPort >= 0) {
+                if (isReservedPort(unusedRandomPort)) {
+                    System.out.println("INFO: On try # " + numTries
+                        + (numTries==MAX_SERVER_SOCKET_TRIES ? ", the final try, ": ",")
+                        + " ServerSocket(0) returned the reserved port "
+                        + unusedRandomPort
+                        + " in TestLibrary.getUnusedRandomPort() ");
+                } else {
+                    return unusedRandomPort;
+                }
+            }
+        }
+
+        // If we're here, then either an exception was thrown or the port is
+        // a reserved port.
+        if (ex==null) {
+            throw new RuntimeException("Error getting unused random port. The"
+                    +" last port returned by ServerSocket(0) was a reserved port");
+        } else {
+            throw new RuntimeException("Error getting unused random port.", ex);
+        }
+    }
+
+    /**
+     * Determines if a port is one of the reserved port numbers.
+     *
+     * @param port the port to test.
+     * @return {@code true} if the port is a reserved port, otherwise
+     *         {@code false}.
+     */
+    public static boolean isReservedPort(int port) {
+        return ((port >= FIXED_PORT_MIN) && (port <= FIXED_PORT_MAX) ||
+                (port == 1099));
     }
 
     /**

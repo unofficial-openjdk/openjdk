@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,16 @@
  * questions.
  */
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-public interface CallbackInterface extends Remote {
-    public void inc() throws RemoteException;
-    public int getNumDeactivated() throws RemoteException;
+import java.security.Provider;
+import java.security.Security;
+
+public class Providers {
+    public static void setAt(Provider p, int pos) throws Exception {
+        if (Security.getProvider(p.getName()) != null) {
+            Security.removeProvider(p.getName());
+        }
+        if (Security.insertProviderAt(p, pos) == -1) {
+            throw new Exception("cannot setAt");
+        }
+    }
 }

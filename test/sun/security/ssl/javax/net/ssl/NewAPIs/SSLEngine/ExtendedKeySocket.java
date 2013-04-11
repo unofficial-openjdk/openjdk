@@ -21,10 +21,16 @@
  * questions.
  */
 
+//
+// SunJSSE does not support dynamic system properties, no way to re-use
+// system properties in samevm/agentvm mode.
+//
+
 /*
  * @test
  * @bug 4981697
  * @summary Rework the X509KeyManager to avoid incompatibility issues
+ * @run main/othervm ExtendedKeySocket
  * @author Brad R. Wetmore
  */
 

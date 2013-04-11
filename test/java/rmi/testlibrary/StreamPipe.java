@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,11 +21,10 @@
  * questions.
  */
 
-/**
- *
- */
-
-import java.io.*;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * Pipe output of one stream into input of another.
@@ -34,47 +33,51 @@ public class StreamPipe extends Thread {
 
     private InputStream in;
     private OutputStream out;
-    private String preamble;
-    private static Object lock = new Object();
+
+    private static Object countLock = new Object();
     private static int count = 0;
 
-    public StreamPipe(InputStream in, OutputStream out, String name) {
+    /**
+     * StreamPipe constructor : should only be called by plugTogether() method.
+     */
+    private StreamPipe(InputStream in, OutputStream out, String name) {
         super(name);
         this.in  = in;
         this.out = out;
-        this.preamble = "# ";
     }
 
-    public void run() {
-        BufferedReader r = new BufferedReader(new InputStreamReader(in), 1);
-        BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out));
-        byte[] buf = new byte[256];
-        boolean bol = true;     // beginning-of-line
-        int count;
+    /**
+     * Creates a StreamPipe thread that copies in to out and returns
+     * the created instance.
+     */
+    public static StreamPipe plugTogether(InputStream in, OutputStream out) {
+        String name;
 
+        synchronized (countLock) {
+            name = "java.rmi.testlibrary.StreamPipe-" + (count++);
+        }
+
+        StreamPipe pipe = new StreamPipe(in, out, name);
+        pipe.setDaemon(true);
+        pipe.start();
+        return pipe;
+    }
+
+    // Starts redirection of streams.
+    public void run() {
         try {
-            String line;
-            while ((line = r.readLine()) != null) {
-                w.write(preamble);
-                w.write(line);
-                w.newLine();
-                w.flush();
+            byte[] buf = new byte[1024];
+
+            while (true) {
+                int nr = in.read(buf);
+                if (nr == -1)
+                    break;
+                out.write(buf, 0, nr);
             }
+
         } catch (IOException e) {
             System.err.println("*** IOException in StreamPipe.run:");
             e.printStackTrace();
         }
-    }
-
-    public static void plugTogether(InputStream in, OutputStream out) {
-        String name = null;
-
-        synchronized (lock) {
-            name = "TestLibrary: StreamPipe-" + (count ++ );
-        }
-
-        Thread pipe = new StreamPipe(in, out, name);
-        pipe.setDaemon(true);
-        pipe.start();
     }
 }

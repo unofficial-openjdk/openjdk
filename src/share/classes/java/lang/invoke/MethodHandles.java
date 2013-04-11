@@ -689,7 +689,7 @@ public class MethodHandles {
         }
         private MethodHandle accessConstructor(Class<?> refc, MemberName ctor) throws IllegalAccessException {
             assert(ctor.isConstructor());
-            checkAccess(refc, ctor);
+            checkAccess(refc, ctor, false /* is_setter */);
             MethodHandle rawMH = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             MethodHandle allocMH = MethodHandleImpl.makeAllocator(rawMH);
             assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
@@ -762,6 +762,29 @@ public class MethodHandles {
                                            Class<?> callerClass,
                                            Class<?> specialCaller) throws NoSuchMethodException, IllegalAccessException {
             checkMethod(refc, method, false);
+
+            Class<?> refcAsSuper;
+            if (refc != lookupClass() &&
+                refc != (refcAsSuper = lookupClass().getSuperclass()) &&
+                refc.isAssignableFrom(lookupClass())) {
+                assert(!method.getName().equals("<init>"));  // not this code path
+                // Per JVMS 6.5, desc. of invokespecial instruction:
+                // If the method is in a superclass of the LC,
+                // and if our original search was above LC.super,
+                // repeat the search (symbolic lookup) from LC.super.
+                // FIXME: MemberName.resolve should handle this instead.
+                MemberName m2 = new MemberName(refcAsSuper,
+                                               method.getName(),
+                                               method.getMethodType(),
+                                               REF_invokeSpecial);
+                m2 = IMPL_NAMES.resolveOrNull(m2, true, lookupClassOrNull());
+                if (m2 == null)  throw new InternalError(method.toString());
+                method = m2;
+                refc = refcAsSuper;
+                // redo basic checks
+                checkMethod(refc, method, false);
+            }
+
             MethodHandle mh = MethodHandleImpl.findMethod(method, false, specialCaller);
             mh = maybeBindCaller(method, mh, callerClass);
             return restrictReceiver(method, mh, specialCaller);
@@ -1034,7 +1057,7 @@ return mh1;
             if (c.isAccessible()) {
                 rawCtor = MethodHandleImpl.findMethod(ctor, false, /*no lookupClass*/ null);
             } else {
-                checkAccess(c.getDeclaringClass(), ctor);
+                checkAccess(c.getDeclaringClass(), ctor, false /* is_setter */);
                 rawCtor = MethodHandleImpl.findMethod(ctor, false, lookupClassOrNull());
             }
             assert(!MethodHandleNatives.isCallerSensitive(ctor));  // maybeBindCaller not relevant here
@@ -1188,14 +1211,17 @@ return mh1;
             else if (wantStatic != m.isStatic())
                 message = wantStatic ? "expected a static method" : "expected a non-static method";
             else
-                { checkAccess(refc, m); return; }
+                { checkAccess(refc, m, false /* is_setter */); return; }
             throw m.makeAccessException(message, this);
         }
 
-        void checkAccess(Class<?> refc, MemberName m) throws IllegalAccessException {
+        void checkAccess(Class<?> refc, MemberName m, boolean isSetter) throws IllegalAccessException {
             int allowedModes = this.allowedModes;
             if (allowedModes == TRUSTED)  return;
             int mods = m.getModifiers();
+            if (m.isField() && Modifier.isFinal(mods) && isSetter) {
+              throw m.makeAccessException("unexpected set of a final field", this);
+            }
             if (Modifier.isPublic(mods) && Modifier.isPublic(refc.getModifiers()) && allowedModes != 0)
                 return;  // common case
             int requestedModes = fixmods(mods);  // adjust 0 => PACKAGE
@@ -1294,7 +1320,7 @@ return mh1;
                                                 : "expected a non-static field", this);
             if (trusted)
                 return MethodHandleImpl.accessField(field, isSetter, /*no lookupClass*/ null);
-            checkAccess(refc, field);
+            checkAccess(refc, field, isSetter);
             MethodHandle mh = MethodHandleImpl.accessField(field, isSetter, lookupClassOrNull());
             return restrictProtectedReceiver(field, mh);
         }

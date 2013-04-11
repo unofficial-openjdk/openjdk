@@ -89,6 +89,7 @@ ${TESTJAVA}${FILESEP}bin${FILESEP}javac \
 # run the test
 ${TESTJAVA}${FILESEP}bin${FILESEP}java \
         -classpath "${TESTCLASSES}${PATHSEP}${TESTSRC}${FILESEP}Deadlock.jar" \
+        -Djava.awt.headless=true \
         ClassLoaderDeadlock
 
 STATUS=$?

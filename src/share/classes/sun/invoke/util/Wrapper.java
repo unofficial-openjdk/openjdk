@@ -456,6 +456,9 @@ public enum Wrapper {
             // If the target type is an interface, perform no runtime check.
             // (This loophole is safe, and is allowed by the JVM verifier.)
             // If the target type is a primitive, change it to a wrapper.
+            assert(!type.isPrimitive());
+            if (!type.isInterface())
+                type.cast(x);
             @SuppressWarnings("unchecked")
             T result = (T) x;  // unchecked warning is expected here
             return result;

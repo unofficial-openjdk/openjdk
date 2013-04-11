@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,7 @@
  * @bug 4094891
  * @summary unable to retry call if cached connection to server is used
  * @library ../../../../java/rmi/testlibrary
- * @build DeadCachedConnection
- * @build JavaVM
- * @build TestLibrary
+ * @build TestLibrary JavaVM
  * @run main/othervm DeadCachedConnection
  */
 
@@ -58,7 +56,7 @@ import java.rmi.registry.*;
 import java.rmi.server.*;
 
 public class DeadCachedConnection {
-    static public final int regport = 17340;
+    static public final int regport = TestLibrary.getUnusedRandomPort();
 
     static public void main(String[] argv)
         throws Exception {
@@ -106,7 +104,7 @@ public class DeadCachedConnection {
             JavaVM jvm =
                 new JavaVM("sun.rmi.registry.RegistryImpl", "", Integer.toString(p));
             jvm.start();
-            DeadCachedConnection.subreg = jvm.getVM();
+            DeadCachedConnection.subreg = jvm;
 
         } catch (IOException e) {
             // one of these is summarily dropped, can't remember which one
@@ -119,7 +117,7 @@ public class DeadCachedConnection {
         } catch (Exception whatever) {
         }
     }
-    private static Process subreg = null;
+    private static JavaVM subreg = null;
 
     public static void killRegistry() {
         if (DeadCachedConnection.subreg != null) {
