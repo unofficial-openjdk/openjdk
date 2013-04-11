@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,12 @@ public abstract class SOAPFactory {
      */
     static private final String SOAP_FACTORY_PROPERTY =
         "javax.xml.soap.SOAPFactory";
+
+    /**
+     * Class name of default <code>SOAPFactory</code> implementation.
+     */
+    static final String DEFAULT_SOAP_FACTORY
+        = "com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPFactory1_1Impl";
 
     /**
      * Creates a <code>SOAPElement</code> object from an existing DOM
@@ -255,7 +261,7 @@ public abstract class SOAPFactory {
         throws SOAPException
     {
         try {
-            SOAPFactory factory = (SOAPFactory) FactoryFinder.find(SOAP_FACTORY_PROPERTY);
+            SOAPFactory factory = (SOAPFactory) FactoryFinder.find(SOAP_FACTORY_PROPERTY, DEFAULT_SOAP_FACTORY, false);
             if (factory != null)
                 return factory;
             return newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);

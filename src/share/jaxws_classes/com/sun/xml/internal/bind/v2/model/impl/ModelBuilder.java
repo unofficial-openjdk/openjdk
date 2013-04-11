@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -235,7 +235,7 @@ public class ModelBuilder<T,C,F,M> {
                         String pkg = nav.getPackageName(ci.getClazz());
                         if(!registries.containsKey(pkg)) {
                             // insert the package's object factory
-                            C c = nav.findClass(pkg + ".ObjectFactory",ci.getClazz());
+                            C c = loadObjectFactory(ci, pkg);
                             if(c!=null)
                                 addRegistry(c,(Locatable)p);
                         }
@@ -262,6 +262,15 @@ public class ModelBuilder<T,C,F,M> {
 
 
         return r;
+    }
+
+    private C loadObjectFactory(ClassInfoImpl<T, C, F, M> ci, String pkg) {
+        try {
+            return nav.findClass(pkg + ".ObjectFactory", ci.getClazz());
+        } catch (SecurityException ignored) {
+            // treat SecurityException in same way as ClassNotFoundException in this case
+            return null;
+        }
     }
 
     /**
