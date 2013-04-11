@@ -27,6 +27,8 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
+#include "memory/heapInspection.hpp"
+#include "memory/iterator.hpp"
 #include "memory/referenceProcessorStats.hpp"
 #include "utilities/globalDefinitions.hpp"
 
@@ -83,6 +85,29 @@ void GCTracer::report_gc_reference_stats(const ReferenceProcessorStats& rps) con
   send_reference_stats_event(REF_WEAK, rps.weak_count());
   send_reference_stats_event(REF_FINAL, rps.final_count());
   send_reference_stats_event(REF_PHANTOM, rps.phantom_count());
+}
+
+class ObjectCountEventSenderClosure : public KlassInfoClosure {
+  GCTracer* _gc_tracer;
+ public:
+  ObjectCountEventSenderClosure(GCTracer* gc_tracer) : _gc_tracer(gc_tracer) {}
+ private:
+  void do_cinfo(KlassInfoEntry* entry) {
+    _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
+                                                 entry->words() * BytesPerWord);
+  }
+};
+
+void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
+  if (should_send_object_count_after_gc_event()) {
+    ResourceMark rm;
+
+    KlassInfoTable cit(HeapInspection::start_of_perm_gen());
+    if (!cit.allocation_failed()) {
+      ObjectCountEventSenderClosure event_sender(this);
+      HeapInspection::instance_inspection(&cit, &event_sender, false, is_alive_cl);
+    }
+  }
 }
 
 void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& heap_summary, const PermGenSummary& perm_gen_summary) const {

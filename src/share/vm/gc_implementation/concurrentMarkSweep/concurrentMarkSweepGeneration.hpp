@@ -621,6 +621,7 @@ class CMSCollector: public CHeapObj<mtGC> {
   GCHeapSummary _last_heap_summary;
   PermGenSummary _last_perm_gen_summary;
 
+  void register_foreground_gc_start(GCCause::Cause cause);
   void register_gc_start(GCCause::Cause cause);
   void register_gc_end();
   void save_heap_summary();

@@ -28,6 +28,7 @@
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
+#include "trace/traceBackend.hpp"
 #include "trace/tracing.hpp"
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1YCTypes.hpp"
@@ -118,6 +119,25 @@ void CMSTracer::send_concurrent_mode_failure_event() {
     e.set_gcId(_shared_gc_info.id());
     e.commit();
   }
+}
+
+void GCTracer::send_object_count_after_gc_event(klassOop klass, jlong count, julong total_size) const {
+  EventObjectCountAfterGC e;
+  if (e.should_commit()) {
+    e.set_gcId(_shared_gc_info.id());
+    e.set_class(klass);
+    e.set_count(count);
+    e.set_totalSize(total_size);
+    e.commit();
+  }
+}
+
+bool GCTracer::should_send_object_count_after_gc_event() const {
+#if INCLUDE_TRACE
+  return Tracing::enabled(EventObjectCountAfterGC::eventId);
+#else
+  return false;
+#endif
 }
 
 #ifndef SERIALGC

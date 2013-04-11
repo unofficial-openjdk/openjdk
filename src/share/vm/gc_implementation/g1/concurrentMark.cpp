@@ -1202,6 +1202,9 @@ void ConcurrentMark::checkpointRootsFinal(bool clear_all_soft_refs) {
   _remark_times.add((now - start) * 1000.0);
 
   g1p->record_concurrent_mark_remark_end();
+
+  G1CMIsAliveClosure is_alive(g1h);
+  g1h->gc_tracer_cm()->report_object_count_after_gc(&is_alive);
 }
 
 // Base class of the closures that finalize and verify the
