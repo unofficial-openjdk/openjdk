@@ -31,6 +31,7 @@
 #include "trace/traceBackend.hpp"
 #include "trace/tracing.hpp"
 #ifndef SERIALGC
+#include "gc_implementation/g1/evacuationInfo.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"
 #endif
 
@@ -148,6 +149,22 @@ void G1NewTracer::send_g1_young_gc_event() {
     e.set_type(_g1_young_gc_info.type());
     e.set_starttime(_shared_gc_info.start_timestamp());
     e.set_endtime(_shared_gc_info.end_timestamp());
+    e.commit();
+  }
+}
+
+void G1NewTracer::send_evacuation_info_event(EvacuationInfo* info) {
+  EventEvacuationInfo e;
+  if (e.should_commit()) {
+    e.set_gcId(_shared_gc_info.id());
+    e.set_cSetRegions(info->collectionset_regions());
+    e.set_cSetUsedBefore(info->collectionset_used_before());
+    e.set_cSetUsedAfter(info->collectionset_used_after());
+    e.set_allocationRegions(info->allocation_regions());
+    e.set_allocRegionsUsedBefore(info->alloc_regions_used_before());
+    e.set_allocRegionsUsedAfter(info->alloc_regions_used_before() + info->bytes_copied());
+    e.set_bytesCopied(info->bytes_copied());
+    e.set_regionsFreed(info->regions_freed());
     e.commit();
   }
 }

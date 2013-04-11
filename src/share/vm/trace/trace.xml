@@ -182,6 +182,18 @@ Declares a structure type that can be used in other events.
       <value type="G1YCTYPE" field="type" label="Type" />
     </event>
 
+    <event id="EvacuationInfo" path="vm/gc/detailed/evacuation_info" label="Evacuation Info" is_instant="true">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="cSetRegions" label="Collection Set Regions"/>
+      <value type="BYTES64" field="cSetUsedBefore" label="Collection Set Before" description="Memory usage before GC in the collection set regions"/>
+      <value type="BYTES64" field="cSetUsedAfter" label="Collection Set After" description="Memory usage after GC in the collection set regions"/>
+      <value type="UINT" field="allocationRegions" label="Allocation Regions" description="Regions chosen as allocation regions during evacuation (includes survivors and old space regions)"/>
+      <value type="BYTES64" field="allocRegionsUsedBefore" label="Alloc Regions Before" description="Memory usage before GC in allocation regions"/>
+      <value type="BYTES64" field="allocRegionsUsedAfter" label="Alloc Regions After" description="Memory usage after GC in allocation regions"/>
+      <value type="BYTES64" field="bytesCopied" label="BytesCopied"/>
+      <value type="UINT" field="regionsFreed" label="Regions Freed"/>
+    </event>
+
     <event id="GCReferenceStatistics" path="vm/gc/reference/statistics"
            label="GC Reference Processing" is_instant="true"
            description="Total count of processed references during GC">

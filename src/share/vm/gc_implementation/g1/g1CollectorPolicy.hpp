@@ -681,7 +681,7 @@ public:
 
   void record_concurrent_pause();
 
-  void record_collection_pause_end(double pause_time);
+  void record_collection_pause_end(double pause_time, EvacuationInfo& evacuation_info);
   void print_heap_transition();
   void print_detailed_heap_transition();
 
@@ -709,7 +709,7 @@ public:
   // Choose a new collection set.  Marks the chosen regions as being
   // "in_collection_set", and links them together.  The head and number of
   // the collection set are available via access methods.
-  void finalize_cset(double target_pause_time_ms);
+  void finalize_cset(double target_pause_time_ms, EvacuationInfo& evacuation_info);
 
   // The head of the list (via "next_in_collection_set()") representing the
   // current collection set.

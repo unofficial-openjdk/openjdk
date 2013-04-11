@@ -37,6 +37,7 @@
 
 typedef uint GCId;
 
+class EvacuationInfo;
 class GCHeapSummary;
 class PermGenSummary;
 class PSHeapSummary;
@@ -208,9 +209,11 @@ class G1NewTracer : public YoungGCTracer {
 
   void report_yc_type(G1YCType type);
   void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
+  void report_evacuation_info(EvacuationInfo* info);
 
  private:
   void send_g1_young_gc_event();
+  void send_evacuation_info_event(EvacuationInfo* info);
 };
 #endif
 

@@ -32,6 +32,10 @@
 #include "memory/referenceProcessorStats.hpp"
 #include "utilities/globalDefinitions.hpp"
 
+#ifndef SERIALGC
+#include "gc_implementation/g1/evacuationInfo.hpp"
+#endif
+
 #define assert_unset_gc_id() assert(_shared_gc_info.id() == SharedGCInfo::UNSET_GCID, "GC already started?")
 #define assert_set_gc_id() assert(_shared_gc_info.id() != SharedGCInfo::UNSET_GCID, "GC not started?")
 
@@ -175,5 +179,11 @@ void G1NewTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_parti
 
   YoungGCTracer::report_gc_end_impl(timestamp, time_partitions);
   send_g1_young_gc_event();
+}
+
+void G1NewTracer::report_evacuation_info(EvacuationInfo* info) {
+  assert_set_gc_id();
+
+  send_evacuation_info_event(info);
 }
 #endif
