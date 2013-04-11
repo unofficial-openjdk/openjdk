@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,6 +98,8 @@ class klassVtable : public ResourceObj {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_vtable();
 
   // Garbage collection
   void oop_follow_contents();
@@ -117,11 +119,6 @@ class klassVtable : public ResourceObj {
   void print()                                              PRODUCT_RETURN;
   void verify(outputStream* st, bool force = false);
   static void print_statistics()                            PRODUCT_RETURN;
-
-#ifndef PRODUCT
-  bool check_no_old_entries();
-  void dump_vtable();
-#endif
 
  protected:
   friend class vtableEntry;
@@ -292,6 +289,8 @@ class klassItable : public ResourceObj {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_itable();
 
   // Garbage collection
   void oop_follow_contents();

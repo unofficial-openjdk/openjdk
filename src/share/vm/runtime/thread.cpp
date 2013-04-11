@@ -3555,6 +3555,9 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
       os::dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), name);
       library = os::dll_load(buffer, ebuf, sizeof ebuf);
 #ifdef KERNEL
+
+      // Dead code, KERNEL is never built in JDK7 or later. This code will be removed in a future update release.
+
       // Download instrument dll
       if (library == NULL && strcmp(name, "instrument") == 0) {
         char *props = Arguments::get_kernel_properties();
