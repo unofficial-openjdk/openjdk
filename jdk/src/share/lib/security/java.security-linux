@@ -169,7 +169,12 @@ package.access=sun.,\
                com.sun.org.apache.xml.internal.serializer.utils.,\
                com.sun.org.apache.xml.internal.utils.,\
                com.sun.org.glassfish.,\
-	       jdk.internal.
+               com.oracle.xmlns.internal.,\
+               com.oracle.webservices.internal.,\
+               jdk.internal.,\
+               jdk.nashorn.internal.,\
+               jdk.nashorn.tools.
+
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -205,7 +210,12 @@ package.definition=sun.,\
                    com.sun.org.apache.xml.internal.serializer.utils.,\
                    com.sun.org.apache.xml.internal.utils.,\
                    com.sun.org.glassfish.,\
-		   jdk.internal.
+                   com.oracle.xmlns.internal.,\
+                   com.oracle.webservices.internal.,\
+                   jdk.internal.,\
+                   jdk.nashorn.internal.,\
+                   jdk.nashorn.tools.
+
 
 #
 # Determines whether this properties file can be appended to
