@@ -162,8 +162,12 @@ class OldGCTracer : public GCTracer {
   OldGCTracer(GCName name) : GCTracer(name) {}
   virtual void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
 
+ public:
+  void report_concurrent_mode_failure();
+
  private:
   void send_old_gc_event() const;
+  void send_concurrent_mode_failure_event();
 };
 
 class ParallelOldTracer : public OldGCTracer {
@@ -220,11 +224,6 @@ class G1NewTracer : public YoungGCTracer {
 class CMSTracer : public OldGCTracer {
  public:
   CMSTracer() : OldGCTracer(ConcurrentMarkSweep) {}
-
-  void report_concurrent_mode_failure();
-
- private:
-  void send_concurrent_mode_failure_event();
 };
 
 class G1OldTracer : public OldGCTracer {

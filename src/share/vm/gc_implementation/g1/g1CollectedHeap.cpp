@@ -2518,6 +2518,9 @@ void G1CollectedHeap::register_concurrent_cycle_end() {
   if (_concurrent_cycle_started) {
     _gc_timer_cm->register_gc_end(os::elapsed_counter());
 
+    if (_cm->has_aborted()) {
+      _gc_tracer_cm->report_concurrent_mode_failure();
+    }
     _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
 
     _concurrent_cycle_started = false;

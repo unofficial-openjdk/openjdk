@@ -114,7 +114,8 @@ void YoungGCTracer::send_promotion_failed_event(const PromotionFailedInfo& pf_in
   }
 }
 
-void CMSTracer::send_concurrent_mode_failure_event() {
+// Common to CMS and G1
+void OldGCTracer::send_concurrent_mode_failure_event() {
   EventConcurrentModeFailure e;
   if (e.should_commit()) {
     e.set_gcId(_shared_gc_info.id());
