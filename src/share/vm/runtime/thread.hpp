@@ -1042,11 +1042,11 @@ class JavaThread: public Thread {
 
   // native memory tracking
   inline MemRecorder* get_recorder() const          { return (MemRecorder*)_recorder; }
-  inline void         set_recorder(MemRecorder* rc) { _recorder = (volatile MemRecorder*)rc; }
+  inline void         set_recorder(MemRecorder* rc) { _recorder = rc; }
 
  private:
   // per-thread memory recorder
-  volatile MemRecorder* _recorder;
+  MemRecorder* volatile _recorder;
 
   // Suspend/resume support for JavaThread
  private:
