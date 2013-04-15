@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,36 +21,23 @@
  * questions.
  *
  */
-#ifndef SHARE_VM_TRACE_TRACEBACKEND_HPP
-#define SHARE_VM_TRACE_TRACEBACKEND_HPP
+#ifndef SHARE_VM_TRACE_NOTRACEBACKEND_HPP
+#define SHARE_VM_TRACE_NOTRACEBACKEND_HPP
 
-#if INCLUDE_TRACE
+#include "prims/jni.h"
 
-#include "trace/traceTime.hpp"
-#include "tracefiles/traceEventIds.hpp"
-#include "runtime/globals.hpp"
-#include "runtime/os.hpp"
+typedef jlong TracingTime;
+typedef jlong RelativeTracingTime;
 
-class TraceBackend {
+class NoTraceBackend {
 public:
-  static bool enabled(TraceEventId id) {
-    return EnableTracing;
-  }
-
   static TracingTime time() {
-    return os::elapsed_counter();
-  }
-
-  static TracingTime time_adjustment(jlong time) {
-    return time;
+    return 0;
   }
 };
 
-typedef TraceBackend Tracing;
+typedef NoTraceBackend Tracing;
 
-#else /* INCLUDE_TRACE */
+#endif
 
-#include "trace/noTraceBackend.hpp"
 
-#endif /* INCLUDE_TRACE */
-#endif /* SHARE_VM_TRACE_TRACEBACKEND_HPP */
