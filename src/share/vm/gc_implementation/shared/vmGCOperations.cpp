@@ -145,19 +145,18 @@ bool VM_GC_HeapInspection::skip_operation() const {
 }
 
 bool VM_GC_HeapInspection::collect() {
-  CollectedHeap* ch = Universe::heap();
-  ch->ensure_parsability(false); // must happen, even if collection does
-                                 // not happen (e.g. due to GC_locker)
-
   if (GC_locker::is_active()) {
     return false;
   }
-  ch->collect_as_vm_thread(GCCause::_heap_inspection);
+  Universe::heap()->collect_as_vm_thread(GCCause::_heap_inspection);
   return true;
 }
 
 void VM_GC_HeapInspection::doit() {
   HandleMark hm;
+  Universe::heap()->ensure_parsability(false); // must happen, even if collection does
+                                               // not happen (e.g. due to GC_locker)
+                                               // or _full_gc being false
   if (_full_gc) {
     if (!collect()) {
       // The collection attempt was skipped because the gc locker is held.
