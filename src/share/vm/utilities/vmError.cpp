@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "compiler/compileBroker.hpp"
 #include "gc_interface/collectedHeap.hpp"
+#include "prims/whitebox.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/init.hpp"
@@ -32,6 +33,7 @@
 #include "runtime/thread.hpp"
 #include "runtime/vmThread.hpp"
 #include "runtime/vm_operations.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/decoder.hpp"
 #include "utilities/defaultStream.hpp"
@@ -449,7 +451,11 @@ void VMError::report(outputStream* st) {
      // VM version
      st->print_cr("#");
      JDK_Version::current().to_string(buf, sizeof(buf));
-     st->print_cr("# JRE version: %s", buf);
+     const char* runtime_name = JDK_Version::runtime_name() != NULL ?
+                                  JDK_Version::runtime_name() : "";
+     const char* runtime_version = JDK_Version::runtime_version() != NULL ?
+                                  JDK_Version::runtime_version() : "";
+     st->print_cr("# JRE version: %s (%s) (build %s)", runtime_name, buf, runtime_version);
      st->print_cr("# Java VM: %s (%s %s %s %s)",
                    Abstract_VM_Version::vm_name(),
                    Abstract_VM_Version::vm_release(),
@@ -723,6 +729,13 @@ void VMError::report(outputStream* st) {
        st->cr();
      }
 
+  STEP(215, "(printing warning if internal testing API used)" )
+
+     if (WhiteBox::used()) {
+       st->print_cr("Unsupported internal testing APIs have been used.");
+       st->cr();
+     }
+
   STEP(220, "(printing environment variables)" )
 
      if (_verbose) {
@@ -809,6 +822,9 @@ void VMError::report_and_die() {
   static bool log_done = false;         // done saving error log
   static bool transmit_report_done = false; // done error reporting
   static fdStream log;                  // error log
+
+  // disble NMT to avoid further exception
+  MemTracker::shutdown(MemTracker::NMT_error_reporting);
 
   if (SuppressFatalErrorMessage) {
       os::abort();

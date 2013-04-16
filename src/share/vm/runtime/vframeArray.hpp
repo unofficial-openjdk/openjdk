@@ -88,6 +88,7 @@ class vframeArrayElement : public _ValueObj {
   int on_stack_size(int caller_actual_parameters,
                     int callee_parameters,
                     int callee_locals,
+                    bool is_bottom_frame,
                     bool is_top_frame,
                     int popframe_extra_stack_expression_els) const;
 
@@ -97,6 +98,7 @@ class vframeArrayElement : public _ValueObj {
                        int callee_locals,
                        frame* caller,
                        bool is_top_frame,
+                       bool is_bottom_frame,
                        int exec_mode);
 
 #ifndef PRODUCT
@@ -108,7 +110,7 @@ class vframeArrayElement : public _ValueObj {
 // but it does make debugging easier even if we can't look
 // at the data in each vframeElement
 
-class vframeArray: public CHeapObj {
+class vframeArray: public CHeapObj<mtCompiler> {
   friend class VMStructs;
 
  private:

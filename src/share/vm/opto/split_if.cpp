@@ -35,7 +35,7 @@ Node *PhaseIdealLoop::split_thru_region( Node *n, Node *region ) {
   uint wins = 0;
   assert( n->is_CFG(), "" );
   assert( region->is_Region(), "" );
-  Node *r = new (C, region->req()) RegionNode( region->req() );
+  Node *r = new (C) RegionNode( region->req() );
   IdealLoopTree *loop = get_loop( n );
   for( uint i = 1; i < region->req(); i++ ) {
     Node *x = n->clone();
@@ -137,9 +137,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
             Node *iff_ctrl = iff->is_If() ? iff->in(0) : get_ctrl(iff);
             Node *x = bol->clone();
             register_new_node(x, iff_ctrl);
-            _igvn.hash_delete(iff);
-            iff->set_req(1, x);
-            _igvn._worklist.push(iff);
+            _igvn.replace_input_of(iff, 1, x);
           }
           _igvn.remove_dead_node( bol );
           --i;
@@ -151,9 +149,7 @@ bool PhaseIdealLoop::split_up( Node *n, Node *blk1, Node *blk2 ) {
         assert( bol->in(1) == n, "" );
         Node *x = n->clone();
         register_new_node(x, get_ctrl(bol));
-        _igvn.hash_delete(bol);
-        bol->set_req(1, x);
-        _igvn._worklist.push(bol);
+        _igvn.replace_input_of(bol, 1, x);
       }
       _igvn.remove_dead_node( n );
 
@@ -387,9 +383,7 @@ void PhaseIdealLoop::handle_use( Node *use, Node *def, small_cache *cache, Node 
     if( use->in(i) == def )
       break;
   assert( i < use->req(), "def should be among use's inputs" );
-  _igvn.hash_delete(use);
-  use->set_req(i, new_def);
-  _igvn._worklist.push(use);
+  _igvn.replace_input_of(use, i, new_def);
 }
 
 //------------------------------do_split_if------------------------------------

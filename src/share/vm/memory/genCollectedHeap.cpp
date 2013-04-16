@@ -28,6 +28,7 @@
 #include "classfile/vmSymbols.hpp"
 #include "code/icBuffer.hpp"
 #include "gc_implementation/shared/collectorCounters.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/vmGCOperations.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "memory/compactPermGen.hpp"
@@ -51,6 +52,7 @@
 #include "runtime/java.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/memoryService.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/vmError.hpp"
 #include "utilities/workgroup.hpp"
 #ifndef SERIALGC
@@ -171,9 +173,13 @@ jint GenCollectedHeap::initialize() {
     ReservedSpace this_rs = heap_rs.first_part(_gen_specs[i]->max_size(),
                                               UseSharedSpaces, UseSharedSpaces);
     _gens[i] = _gen_specs[i]->init(this_rs, i, rem_set());
+    // tag generations in JavaHeap
+    MemTracker::record_virtual_memory_type((address)this_rs.base(), mtJavaHeap);
     heap_rs = heap_rs.last_part(_gen_specs[i]->max_size());
   }
   _perm_gen = perm_gen_spec->init(heap_rs, PermSize, rem_set());
+  // tag PermGen
+  MemTracker::record_virtual_memory_type((address)heap_rs.base(), mtJavaHeap);
 
   clear_incremental_collection_failed();
 
@@ -480,26 +486,15 @@ void GenCollectedHeap::do_collection(bool  full,
   const size_t perm_prev_used = perm_gen()->used();
 
   print_heap_before_gc();
-  if (Verbose) {
-    gclog_or_tty->print_cr("GC Cause: %s", GCCause::to_string(gc_cause()));
-  }
 
   {
     FlagSetting fl(_is_gc_active, true);
 
     bool complete = full && (max_level == (n_gens()-1));
-    const char* gc_cause_str = "GC ";
-    if (complete) {
-      GCCause::Cause cause = gc_cause();
-      if (cause == GCCause::_java_lang_system_gc) {
-        gc_cause_str = "Full GC (System) ";
-      } else {
-        gc_cause_str = "Full GC ";
-      }
-    }
+    const char* gc_cause_prefix = complete ? "Full GC" : "GC";
     gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
     TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
-    TraceTime t(gc_cause_str, PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t(GCCauseString(gc_cause_prefix, gc_cause()), PrintGCDetails, false, NULL);
 
     gc_prologue(complete);
     increment_total_collections(complete);
@@ -528,10 +523,11 @@ void GenCollectedHeap::do_collection(bool  full,
             // The full_collections increment was missed above.
             increment_total_full_collections();
           }
-          pre_full_gc_dump();    // do any pre full gc dumps
+          pre_full_gc_dump(NULL);    // do any pre full gc dumps
         }
         // Timer for individual generations. Last argument is false: no CR
-        TraceTime t1(_gens[i]->short_name(), PrintGCDetails, false, gclog_or_tty);
+        // FIXME: We should try to start the timing earlier to cover more of the GC pause
+        GCTraceTime t1(_gens[i]->short_name(), PrintGCDetails, false, NULL);
         TraceCollectorStats tcs(_gens[i]->counters());
         TraceMemoryManagerStats tmms(_gens[i]->kind(),gc_cause());
 
@@ -559,7 +555,7 @@ void GenCollectedHeap::do_collection(bool  full,
             prepared_for_verification = true;
           }
           gclog_or_tty->print(" VerifyBeforeGC:");
-          Universe::verify(true);
+          Universe::verify();
         }
         COMPILER2_PRESENT(DerivedPointerTable::clear());
 
@@ -631,7 +627,7 @@ void GenCollectedHeap::do_collection(bool  full,
             total_collections() >= VerifyGCStartAt) {
           HandleMark hm;  // Discard invalid handles created during verification
           gclog_or_tty->print(" VerifyAfterGC:");
-          Universe::verify(false);
+          Universe::verify();
         }
 
         if (PrintGCDetails) {
@@ -647,7 +643,8 @@ void GenCollectedHeap::do_collection(bool  full,
     complete = complete || (max_level_collected == n_gens() - 1);
 
     if (complete) { // We did a "major" collection
-      post_full_gc_dump();   // do any post full gc dumps
+      // FIXME: See comment at pre_full_gc_dump call
+      post_full_gc_dump(NULL);   // do any post full gc dumps
     }
 
     if (PrintGCDetails) {
@@ -688,11 +685,6 @@ void GenCollectedHeap::do_collection(bool  full,
 #ifdef TRACESPINNING
   ParallelTaskTerminator::print_termination_counts();
 #endif
-
-  if (ExitAfterGCNum > 0 && total_collections() == ExitAfterGCNum) {
-    tty->print_cr("Stopping after GC #%d", ExitAfterGCNum);
-    vm_exit(-1);
-  }
 }
 
 HeapWord* GenCollectedHeap::satisfy_failed_allocation(size_t size, bool is_tlab) {
@@ -1247,18 +1239,18 @@ GCStats* GenCollectedHeap::gc_stats(int level) const {
   return _gens[level]->gc_stats();
 }
 
-void GenCollectedHeap::verify(bool allow_dirty, bool silent, VerifyOption option /* ignored */) {
+void GenCollectedHeap::verify(bool silent, VerifyOption option /* ignored */) {
   if (!silent) {
     gclog_or_tty->print("permgen ");
   }
-  perm_gen()->verify(allow_dirty);
+  perm_gen()->verify();
   for (int i = _n_gens-1; i >= 0; i--) {
     Generation* g = _gens[i];
     if (!silent) {
       gclog_or_tty->print(g->name());
       gclog_or_tty->print(" ");
     }
-    g->verify(allow_dirty);
+    g->verify();
   }
   if (!silent) {
     gclog_or_tty->print("remset ");

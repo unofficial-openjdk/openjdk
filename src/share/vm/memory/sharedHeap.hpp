@@ -26,6 +26,7 @@
 #define SHARE_VM_MEMORY_SHAREDHEAP_HPP
 
 #include "gc_interface/collectedHeap.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
 #include "memory/generation.hpp"
 #include "memory/permGen.hpp"
 
@@ -304,6 +305,11 @@ public:
   size_t permanent_used() const {
     assert(perm_gen(), "NULL perm gen");
     return perm_gen()->used();
+  }
+
+  VirtualSpaceSummary create_perm_gen_space_summary() {
+    HeapWord* start = perm_gen()->reserved().start();
+    return VirtualSpaceSummary(start, (HeapWord*)((uintptr_t)start + perm_gen()->capacity()), perm_gen()->reserved().end());
   }
 
   bool is_in_permanent(const void *p) const {

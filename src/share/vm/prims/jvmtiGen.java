@@ -31,7 +31,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.DOMException;
-
 // For write operation
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -129,6 +128,7 @@ public class jvmtiGen
 
         factory.setNamespaceAware(true);
         factory.setValidating(true);
+        factory.setXIncludeAware(true);
 
         try {
             File datafile   = new File(inFileName);

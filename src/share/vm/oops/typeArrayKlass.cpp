@@ -55,7 +55,7 @@ klassOop typeArrayKlass::create_klass(BasicType type, int scale,
 
   Symbol* sym = NULL;
   if (name_str != NULL) {
-    sym = SymbolTable::new_symbol(name_str, CHECK_NULL);
+    sym = SymbolTable::new_permanent_symbol(name_str, CHECK_NULL);
   }
   KlassHandle klassklass (THREAD, Universe::typeArrayKlassKlassObj());
 
@@ -354,7 +354,7 @@ void typeArrayKlass::oop_print_on(oop obj, outputStream* st) {
   }
   int remaining = ta->length() - print_len;
   if (remaining > 0) {
-    tty->print_cr(" - <%d more elements, increase MaxElementPrintSize to print>", remaining);
+    st->print_cr(" - <%d more elements, increase MaxElementPrintSize to print>", remaining);
   }
 }
 

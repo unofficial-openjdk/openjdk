@@ -36,11 +36,21 @@ bool JavaThread::pd_get_top_frame_for_signal_handler(frame* fr_addr,
   void* ucontext, bool isInJava) {
 
   assert(Thread::current() == this, "caller must be current thread");
+  return pd_get_top_frame(fr_addr, ucontext, isInJava, true);
+}
+
+bool JavaThread::pd_get_top_frame_for_profiling(frame* fr_addr, void* ucontext, bool isInJava) {
+  // get ucontext somehow
+  return pd_get_top_frame(fr_addr, ucontext, isInJava, false);
+}
+
+bool JavaThread::pd_get_top_frame(frame* fr_addr,
+  void* ucontext, bool isInJava, bool makeWalkable) {
   assert(this->is_Java_thread(), "must be JavaThread");
 
   JavaThread* jt = (JavaThread *)this;
 
-  if (!isInJava) {
+  if (!isInJava && makeWalkable) {
     // make_walkable flushes register windows and grabs last_Java_pc
     // which can not be done if the ucontext sp matches last_Java_sp
     // stack walking utilities assume last_Java_pc set if marked flushed

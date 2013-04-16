@@ -66,6 +66,7 @@ class     CompareOp;
 class     IfOp;
 class   Convert;
 class   NullCheck;
+class   TypeCast;
 class   OsrEntry;
 class   ExceptionObject;
 class   StateSplit;
@@ -101,6 +102,7 @@ class       UnsafePutRaw;
 class     UnsafeObjectOp;
 class       UnsafeGetObject;
 class       UnsafePutObject;
+class         UnsafeGetAndSetObject;
 class       UnsafePrefetch;
 class         UnsafePrefetchRead;
 class         UnsafePrefetchWrite;
@@ -174,6 +176,7 @@ class InstructionVisitor: public StackObj {
   virtual void do_IfOp           (IfOp*            x) = 0;
   virtual void do_Convert        (Convert*         x) = 0;
   virtual void do_NullCheck      (NullCheck*       x) = 0;
+  virtual void do_TypeCast       (TypeCast*        x) = 0;
   virtual void do_Invoke         (Invoke*          x) = 0;
   virtual void do_NewInstance    (NewInstance*     x) = 0;
   virtual void do_NewTypeArray   (NewTypeArray*    x) = 0;
@@ -200,6 +203,7 @@ class InstructionVisitor: public StackObj {
   virtual void do_UnsafePutRaw   (UnsafePutRaw*    x) = 0;
   virtual void do_UnsafeGetObject(UnsafeGetObject* x) = 0;
   virtual void do_UnsafePutObject(UnsafePutObject* x) = 0;
+  virtual void do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) = 0;
   virtual void do_UnsafePrefetchRead (UnsafePrefetchRead*  x) = 0;
   virtual void do_UnsafePrefetchWrite(UnsafePrefetchWrite* x) = 0;
   virtual void do_ProfileCall    (ProfileCall*     x) = 0;
@@ -302,9 +306,8 @@ class Instruction: public CompilationResourceObj {
 
   void update_exception_state(ValueStack* state);
 
-  bool has_printable_bci() const                 { return NOT_PRODUCT(_printable_bci != -99) PRODUCT_ONLY(false); }
-
- protected:
+ //protected:
+ public:
   void set_type(ValueType* type) {
     assert(type != NULL, "type must exist");
     _type = type;
@@ -392,8 +395,9 @@ class Instruction: public CompilationResourceObj {
   // accessors
   int id() const                                 { return _id; }
 #ifndef PRODUCT
+  bool has_printable_bci() const                 { return _printable_bci != -99; }
   int printable_bci() const                      { assert(has_printable_bci(), "_printable_bci should have been set"); return _printable_bci; }
-  void set_printable_bci(int bci)                { NOT_PRODUCT(_printable_bci = bci;) }
+  void set_printable_bci(int bci)                { _printable_bci = bci; }
 #endif
   int use_count() const                          { return _use_count; }
   int pin_state() const                          { return _pin_state; }
@@ -486,6 +490,7 @@ class Instruction: public CompilationResourceObj {
   virtual TypeCheck*        as_TypeCheck()       { return NULL; }
   virtual CheckCast*        as_CheckCast()       { return NULL; }
   virtual InstanceOf*       as_InstanceOf()      { return NULL; }
+  virtual TypeCast*         as_TypeCast()        { return NULL; }
   virtual AccessMonitor*    as_AccessMonitor()   { return NULL; }
   virtual MonitorEnter*     as_MonitorEnter()    { return NULL; }
   virtual MonitorExit*      as_MonitorExit()     { return NULL; }
@@ -576,6 +581,7 @@ LEAF(Phi, Instruction)
   , _block(b)
   , _index(index)
   {
+    NOT_PRODUCT(set_printable_bci(Value(b)->printable_bci()));
     if (type->is_illegal()) {
       make_illegal();
     }
@@ -631,13 +637,15 @@ LEAF(Local, Instruction)
     : Instruction(type)
     , _java_index(index)
     , _declared_type(declared)
-  {}
+  {
+    NOT_PRODUCT(set_printable_bci(-1));
+  }
 
   // accessors
   int java_index() const                         { return _java_index; }
 
-  ciType* declared_type() const                  { return _declared_type; }
-  ciType* exact_type() const;
+  virtual ciType* declared_type() const          { return _declared_type; }
+  virtual ciType* exact_type() const;
 
   // generic
   virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
@@ -648,13 +656,13 @@ LEAF(Constant, Instruction)
  public:
   // creation
   Constant(ValueType* type):
-      Instruction(type, NULL, true)
+      Instruction(type, NULL, /*type_is_constant*/ true)
   {
     assert(type->is_constant(), "must be a constant");
   }
 
   Constant(ValueType* type, ValueStack* state_before):
-    Instruction(type, state_before, true)
+    Instruction(type, state_before, /*type_is_constant*/ true)
   {
     assert(state_before != NULL, "only used for constants which need patching");
     assert(type->is_constant(), "must be a constant");
@@ -668,6 +676,7 @@ LEAF(Constant, Instruction)
   virtual intx hash() const;
   virtual bool is_equal(Value v) const;
 
+  virtual ciType* exact_type() const;
 
   enum CompareResult { not_comparable = -1, cond_false, cond_true };
 
@@ -1101,6 +1110,29 @@ LEAF(NullCheck, Instruction)
 };
 
 
+// This node is supposed to cast the type of another node to a more precise
+// declared type.
+LEAF(TypeCast, Instruction)
+ private:
+  ciType* _declared_type;
+  Value   _obj;
+
+ public:
+  // The type of this node is the same type as the object type (and it might be constant).
+  TypeCast(ciType* type, Value obj, ValueStack* state_before)
+  : Instruction(obj->type(), state_before, obj->type()->is_constant()),
+    _declared_type(type),
+    _obj(obj) {}
+
+  // accessors
+  ciType* declared_type() const                  { return _declared_type; }
+  Value   obj() const                            { return _obj; }
+
+  // generic
+  virtual void input_values_do(ValueVisitor* f)  { f->visit(&_obj); }
+};
+
+
 BASE(StateSplit, Instruction)
  private:
   ValueStack* _state;
@@ -1164,6 +1196,7 @@ LEAF(Invoke, StateSplit)
 
   // JSR 292 support
   bool is_invokedynamic() const                  { return code() == Bytecodes::_invokedynamic; }
+  bool is_method_handle_intrinsic() const        { return target()->is_method_handle_intrinsic(); }
 
   virtual bool needs_exception_state() const     { return false; }
 
@@ -2242,6 +2275,27 @@ LEAF(UnsafePutObject, UnsafeObjectOp)
                                                    f->visit(&_value); }
 };
 
+LEAF(UnsafeGetAndSetObject, UnsafeObjectOp)
+ private:
+  Value _value;                                  // Value to be stored
+  bool  _is_add;
+ public:
+  UnsafeGetAndSetObject(BasicType basic_type, Value object, Value offset, Value value, bool is_add)
+  : UnsafeObjectOp(basic_type, object, offset, false, false)
+    , _value(value)
+    , _is_add(is_add)
+  {
+    ASSERT_VALUES
+  }
+
+  // accessors
+  bool is_add() const                            { return _is_add; }
+  Value value()                                  { return _value; }
+
+  // generic
+  virtual void input_values_do(ValueVisitor* f)   { UnsafeObjectOp::input_values_do(f);
+                                                   f->visit(&_value); }
+};
 
 BASE(UnsafePrefetch, UnsafeObjectOp)
  public:
@@ -2275,14 +2329,16 @@ LEAF(ProfileCall, Instruction)
  private:
   ciMethod* _method;
   int       _bci_of_invoke;
+  ciMethod* _callee;         // the method that is called at the given bci
   Value     _recv;
   ciKlass*  _known_holder;
 
  public:
-  ProfileCall(ciMethod* method, int bci, Value recv, ciKlass* known_holder)
+  ProfileCall(ciMethod* method, int bci, ciMethod* callee, Value recv, ciKlass* known_holder)
     : Instruction(voidType)
     , _method(method)
     , _bci_of_invoke(bci)
+    , _callee(callee)
     , _recv(recv)
     , _known_holder(known_holder)
   {
@@ -2292,6 +2348,7 @@ LEAF(ProfileCall, Instruction)
 
   ciMethod* method()      { return _method; }
   int bci_of_invoke()     { return _bci_of_invoke; }
+  ciMethod* callee()      { return _callee; }
   Value recv()            { return _recv; }
   ciKlass* known_holder() { return _known_holder; }
 

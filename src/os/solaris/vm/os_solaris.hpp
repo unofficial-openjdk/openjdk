@@ -145,6 +145,7 @@ class Solaris {
   static intptr_t*   ucontext_get_sp(ucontext_t* uc);
   // ucontext_get_fp() is only used by Solaris X86 (see note below)
   static intptr_t*   ucontext_get_fp(ucontext_t* uc);
+  static address    ucontext_get_pc(ucontext_t* uc);
 
   // For Analyzer Forte AsyncGetCallTrace profiling support:
   // Parameter ret_fp is only used by Solaris X86.
@@ -346,7 +347,7 @@ class Solaris {
 
 };
 
-class PlatformEvent : public CHeapObj {
+class PlatformEvent : public CHeapObj<mtInternal> {
   private:
     double CachePad [4] ;   // increase odds that _mutex is sole occupant of cache line
     volatile int _Event ;
@@ -383,7 +384,7 @@ class PlatformEvent : public CHeapObj {
     void unpark () ;
 } ;
 
-class PlatformParker : public CHeapObj {
+class PlatformParker : public CHeapObj<mtInternal> {
   protected:
     mutex_t _mutex [1] ;
     cond_t  _cond  [1] ;

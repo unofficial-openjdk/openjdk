@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,8 +65,8 @@ void BitMap::resize(idx_t size_in_bits, bool in_resource_area) {
   if (in_resource_area) {
     _map = NEW_RESOURCE_ARRAY(bm_word_t, new_size_in_words);
   } else {
-    if (old_map != NULL) FREE_C_HEAP_ARRAY(bm_word_t, _map);
-    _map = NEW_C_HEAP_ARRAY(bm_word_t, new_size_in_words);
+    if (old_map != NULL) FREE_C_HEAP_ARRAY(bm_word_t, _map, mtInternal);
+    _map = NEW_C_HEAP_ARRAY(bm_word_t, new_size_in_words, mtInternal);
   }
   Copy::disjoint_words((HeapWord*)old_map, (HeapWord*) _map,
                        MIN2(old_size_in_words, new_size_in_words));
@@ -177,64 +177,6 @@ void BitMap::clear_large_range(idx_t beg, idx_t end) {
   clear_range_within_word(beg, bit_index(beg_full_word));
   clear_large_range_of_words(beg_full_word, end_full_word);
   clear_range_within_word(bit_index(end_full_word), end);
-}
-
-void BitMap::mostly_disjoint_range_union(BitMap* from_bitmap,
-                                         idx_t   from_start_index,
-                                         idx_t   to_start_index,
-                                         size_t  word_num) {
-  // Ensure that the parameters are correct.
-  // These shouldn't be that expensive to check, hence I left them as
-  // guarantees.
-  guarantee(from_bitmap->bit_in_word(from_start_index) == 0,
-            "it should be aligned on a word boundary");
-  guarantee(bit_in_word(to_start_index) == 0,
-            "it should be aligned on a word boundary");
-  guarantee(word_num >= 2, "word_num should be at least 2");
-
-  intptr_t* from = (intptr_t*) from_bitmap->word_addr(from_start_index);
-  intptr_t* to   = (intptr_t*) word_addr(to_start_index);
-
-  if (*from != 0) {
-    // if it's 0, then there's no point in doing the CAS
-    while (true) {
-      intptr_t old_value = *to;
-      intptr_t new_value = old_value | *from;
-      intptr_t res       = Atomic::cmpxchg_ptr(new_value, to, old_value);
-      if (res == old_value) break;
-    }
-  }
-  ++from;
-  ++to;
-
-  for (size_t i = 0; i < word_num - 2; ++i) {
-    if (*from != 0) {
-      // if it's 0, then there's no point in doing the CAS
-      assert(*to == 0, "nobody else should be writing here");
-      intptr_t new_value = *from;
-      *to = new_value;
-    }
-
-    ++from;
-    ++to;
-  }
-
-  if (*from != 0) {
-    // if it's 0, then there's no point in doing the CAS
-    while (true) {
-      intptr_t old_value = *to;
-      intptr_t new_value = old_value | *from;
-      intptr_t res       = Atomic::cmpxchg_ptr(new_value, to, old_value);
-      if (res == old_value) break;
-    }
-  }
-
-  // the -1 is because we didn't advance them after the final CAS
-  assert(from ==
-           (intptr_t*) from_bitmap->word_addr(from_start_index) + word_num - 1,
-            "invariant");
-  assert(to == (intptr_t*) word_addr(to_start_index) + word_num - 1,
-            "invariant");
 }
 
 void BitMap::at_put(idx_t offset, bool value) {
@@ -527,7 +469,7 @@ BitMap::idx_t* BitMap::_pop_count_table = NULL;
 
 void BitMap::init_pop_count_table() {
   if (_pop_count_table == NULL) {
-    BitMap::idx_t *table = NEW_C_HEAP_ARRAY(idx_t, 256);
+    BitMap::idx_t *table = NEW_C_HEAP_ARRAY(idx_t, 256, mtInternal);
     for (uint i = 0; i < 256; i++) {
       table[i] = num_set_bits(i);
     }
@@ -537,7 +479,7 @@ void BitMap::init_pop_count_table() {
                                        (intptr_t)  NULL_WORD);
     if (res != NULL_WORD) {
       guarantee( _pop_count_table == (void*) res, "invariant" );
-      FREE_C_HEAP_ARRAY(bm_word_t, table);
+      FREE_C_HEAP_ARRAY(bm_word_t, table, mtInternal);
     }
   }
 }

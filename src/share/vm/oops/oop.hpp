@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -90,6 +90,7 @@ class oopDesc {
 
   klassOop klass() const;
   klassOop klass_or_null() const volatile;
+  klassOop unsafe_klass_or_null() const volatile;
   oop* klass_addr();
   narrowOop* compressed_klass_addr();
 
@@ -172,6 +173,11 @@ class oopDesc {
   static oop decode_heap_oop_not_null(narrowOop v);
   static oop decode_heap_oop(oop v);
   static oop decode_heap_oop(narrowOop v);
+  // Same as above, but without asserts that verifies the value
+  static oop unsafe_decode_heap_oop_not_null(oop v);
+  static oop unsafe_decode_heap_oop_not_null(narrowOop v);
+  static oop unsafe_decode_heap_oop(oop v);
+  static oop unsafe_decode_heap_oop(narrowOop v);
 
   // Encode an oop pointer to a narrow oop.  The or_null versions accept
   // null oop pointer, others do not in order to eliminate the
@@ -293,8 +299,6 @@ class oopDesc {
   // verification operations
   void verify_on(outputStream* st);
   void verify();
-  void verify_old_oop(oop* p, bool allow_dirty);
-  void verify_old_oop(narrowOop* p, bool allow_dirty);
 
   // tells whether this oop is partially constructed (gc during class loading)
   bool partially_loaded();

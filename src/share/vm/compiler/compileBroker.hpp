@@ -36,7 +36,7 @@ class nmethodLocker;
 //
 // An entry in the compile queue.  It represents a pending or current
 // compilation.
-class CompileTask : public CHeapObj {
+class CompileTask : public CHeapObj<mtCompiler> {
   friend class VMStructs;
 
  private:
@@ -103,11 +103,11 @@ private:
                                       const char* msg = NULL, bool short_form = false);
 
 public:
-  void         print_compilation(outputStream* st = tty, bool short_form = false);
-  static void  print_compilation(outputStream* st, const nmethod* nm, const char* msg = NULL) {
+  void         print_compilation(outputStream* st = tty, const char* msg = NULL, bool short_form = false);
+  static void  print_compilation(outputStream* st, const nmethod* nm, const char* msg = NULL, bool short_form = false) {
     print_compilation_impl(st, nm->method(), nm->compile_id(), nm->comp_level(),
                            nm->is_osr_method(), nm->is_osr_method() ? nm->osr_entry_bci() : -1, /*is_blocking*/ false,
-                           msg);
+                           msg, short_form);
   }
 
   static void  print_inlining(outputStream* st, ciMethod* method, int inline_level, int bci, const char* msg = NULL);
@@ -131,7 +131,7 @@ public:
 //
 // Per Compiler Performance Counters.
 //
-class CompilerCounters : public CHeapObj {
+class CompilerCounters : public CHeapObj<mtCompiler> {
 
   public:
     enum {
@@ -175,7 +175,7 @@ class CompilerCounters : public CHeapObj {
 // CompileQueue
 //
 // A list of CompileTasks.
-class CompileQueue : public CHeapObj {
+class CompileQueue : public CHeapObj<mtCompiler> {
  private:
   const char* _name;
   Monitor*    _lock;
@@ -291,17 +291,17 @@ class CompileBroker: AllStatic {
   static elapsedTimer _t_osr_compilation;
   static elapsedTimer _t_standard_compilation;
 
+  static int _total_compile_count;
   static int _total_bailout_count;
   static int _total_invalidated_count;
-  static int _total_compile_count;
   static int _total_native_compile_count;
   static int _total_osr_compile_count;
   static int _total_standard_compile_count;
-
   static int _sum_osr_bytes_compiled;
   static int _sum_standard_bytes_compiled;
   static int _sum_nmethod_size;
   static int _sum_nmethod_code_size;
+  static long _peak_compilation_time;
 
   static CompilerThread* make_compiler_thread(const char* name, CompileQueue* queue, CompilerCounters* counters, TRAPS);
   static void init_compiler_threads(int c1_compiler_count, int c2_compiler_count);
@@ -407,6 +407,19 @@ class CompileBroker: AllStatic {
   static void print_last_compile();
 
   static void print_compiler_threads_on(outputStream* st);
+
+  static int get_total_compile_count() {          return _total_compile_count; }
+  static int get_total_bailout_count() {          return _total_bailout_count; }
+  static int get_total_invalidated_count() {      return _total_invalidated_count; }
+  static int get_total_native_compile_count() {   return _total_native_compile_count; }
+  static int get_total_osr_compile_count() {      return _total_osr_compile_count; }
+  static int get_total_standard_compile_count() { return _total_standard_compile_count; }
+  static int get_sum_osr_bytes_compiled() {       return _sum_osr_bytes_compiled; }
+  static int get_sum_standard_bytes_compiled() {  return _sum_standard_bytes_compiled; }
+  static int get_sum_nmethod_size() {             return _sum_nmethod_size;}
+  static int get_sum_nmethod_code_size() {        return _sum_nmethod_code_size; }
+  static long get_peak_compilation_time() {       return _peak_compilation_time; }
+  static long get_total_compilation_time() {      return _t_total_compilation.milliseconds(); }
 };
 
 #endif // SHARE_VM_COMPILER_COMPILEBROKER_HPP

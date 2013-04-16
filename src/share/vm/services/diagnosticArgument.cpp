@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "memory/allocation.inline.hpp"
+#include "memory/resourceArea.hpp"
 #include "runtime/thread.hpp"
 #include "services/diagnosticArgument.hpp"
 
@@ -43,11 +44,61 @@ void GenDCmdArgument::read_value(const char* str, size_t len, TRAPS) {
   set_is_set(true);
 }
 
+void GenDCmdArgument::to_string(jlong l, char* buf, size_t len) {
+  jio_snprintf(buf, len, INT64_FORMAT, l);
+}
+
+void GenDCmdArgument::to_string(bool b, char* buf, size_t len) {
+  jio_snprintf(buf, len, b ? "true" : "false");
+}
+
+void GenDCmdArgument::to_string(NanoTimeArgument n, char* buf, size_t len) {
+  jio_snprintf(buf, len, INT64_FORMAT, n._nanotime);
+}
+
+void GenDCmdArgument::to_string(MemorySizeArgument m, char* buf, size_t len) {
+  jio_snprintf(buf, len, INT64_FORMAT, m._size);
+}
+
+void GenDCmdArgument::to_string(char* c, char* buf, size_t len) {
+  jio_snprintf(buf, len, "%s", c);
+}
+
+void GenDCmdArgument::to_string(StringArrayArgument* f, char* buf, size_t len) {
+  int length = f->array()->length();
+  size_t written = 0;
+  buf[0] = 0;
+  for (int i = 0; i < length; i++) {
+    char* next_str = f->array()->at(i);
+    size_t next_size = strlen(next_str);
+    //Check if there's room left to write next element
+    if (written + next_size > len) {
+      return;
+    }
+    //Actually write element
+    strcat(buf, next_str);
+    written += next_size;
+    //Check if there's room left for the comma
+    if (i < length-1 && len - written > 0) {
+      strcat(buf, ",");
+    }
+  }
+}
+
 template <> void DCmdArgument<jlong>::parse_value(const char* str,
                                                   size_t len, TRAPS) {
-    if (str == NULL || sscanf(str, INT64_FORMAT, &_value) != 1) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-      "Integer parsing error in diagnostic command arguments\n");
+  int scanned = -1;
+  if (str == NULL
+      || sscanf(str, INT64_FORMAT"%n", &_value, &scanned) != 1
+      || (size_t)scanned != len)
+  {
+    ResourceMark rm;
+
+    char* buf = NEW_RESOURCE_ARRAY(char, len + 1);
+    strncpy(buf, str, len);
+    buf[len] = '\0';
+    Exceptions::fthrow(THREAD_AND_LOCATION, vmSymbols::java_lang_IllegalArgumentException(),
+      "Integer parsing error in command argument '%s'. Could not parse: %s.", _name, buf);
   }
 }
 
@@ -55,7 +106,7 @@ template <> void DCmdArgument<jlong>::init_value(TRAPS) {
   if (has_default()) {
     this->parse_value(_default_string, strlen(_default_string), THREAD);
     if (HAS_PENDING_EXCEPTION) {
-      fatal("Default string must be parsable");
+      fatal("Default string must be parseable");
     }
   } else {
     set_value(0);
@@ -75,8 +126,13 @@ template <> void DCmdArgument<bool>::parse_value(const char* str,
     } else if (len == strlen("false") && strncasecmp(str, "false", len) == 0) {
        set_value(false);
     } else {
-      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-        "Boolean parsing error in diagnostic command arguments");
+      ResourceMark rm;
+
+      char* buf = NEW_RESOURCE_ARRAY(char, len + 1);
+      strncpy(buf, str, len);
+      buf[len] = '\0';
+      Exceptions::fthrow(THREAD_AND_LOCATION, vmSymbols::java_lang_IllegalArgumentException(),
+        "Boolean parsing error in command argument '%s'. Could not parse: %s.", _name, buf);
     }
   }
 }
@@ -99,7 +155,7 @@ template <> void DCmdArgument<char*>::parse_value(const char* str,
   if (str == NULL) {
     _value = NULL;
   } else {
-    _value = NEW_C_HEAP_ARRAY(char, len+1);
+    _value = NEW_C_HEAP_ARRAY(char, len+1, mtInternal);
     strncpy(_value, str, len);
     _value[len] = 0;
   }
@@ -118,7 +174,7 @@ template <> void DCmdArgument<char*>::init_value(TRAPS) {
 
 template <> void DCmdArgument<char*>::destroy_value() {
   if (_value != NULL) {
-    FREE_C_HEAP_ARRAY(char, _value);
+    FREE_C_HEAP_ARRAY(char, _value, mtInternal);
     set_value(NULL);
   }
 }
@@ -127,7 +183,7 @@ template <> void DCmdArgument<NanoTimeArgument>::parse_value(const char* str,
                                                  size_t len, TRAPS) {
   if (str == NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "Integer parsing error nanotime value: syntax error");
+              "Integer parsing error nanotime value: syntax error, value is null");
   }
 
   int argc = sscanf(str, INT64_FORMAT , &_value._time);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_PARNEW_PARNEWGENERATION_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_PARNEW_PARNEWGENERATION_HPP
 
-#include "gc_implementation/parNew/parGCAllocBuffer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/parGCAllocBuffer.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/defNewGeneration.hpp"
 #include "utilities/taskqueue.hpp"
 
@@ -41,7 +43,7 @@ class ParEvacuateFollowersClosure;
 // in genOopClosures.inline.hpp.
 
 typedef Padded<OopTaskQueue> ObjToScanQueue;
-typedef GenericTaskQueueSet<ObjToScanQueue> ObjToScanQueueSet;
+typedef GenericTaskQueueSet<ObjToScanQueue, mtGC> ObjToScanQueueSet;
 
 class ParKeepAliveClosure: public DefNewGeneration::KeepAliveClosure {
  private:
@@ -59,7 +61,7 @@ class ParScanThreadState {
   friend class ParScanThreadStateSet;
  private:
   ObjToScanQueue *_work_queue;
-  Stack<oop>* const _overflow_stack;
+  Stack<oop, mtGC>* const _overflow_stack;
 
   ParGCAllocBuffer _to_space_alloc_buffer;
 
@@ -105,7 +107,7 @@ class ParScanThreadState {
 #endif // TASKQUEUE_STATS
 
   // Stats for promotion failure
-  size_t _promotion_failure_size;
+  PromotionFailedInfo _promotion_failed_info;
 
   // Timing numbers.
   double _start;
@@ -127,7 +129,7 @@ class ParScanThreadState {
   ParScanThreadState(Space* to_space_, ParNewGeneration* gen_,
                      Generation* old_gen_, int thread_num_,
                      ObjToScanQueueSet* work_queue_set_,
-                     Stack<oop>* overflow_stacks_,
+                     Stack<oop, mtGC>* overflow_stacks_,
                      size_t desired_plab_sz_,
                      ParallelTaskTerminator& term_);
 
@@ -151,7 +153,7 @@ class ParScanThreadState {
   void trim_queues(int max_size);
 
   // Private overflow stack usage
-  Stack<oop>* overflow_stack() { return _overflow_stack; }
+  Stack<oop, mtGC>* overflow_stack() { return _overflow_stack; }
   bool take_from_overflow_stack();
   void push_on_overflow_stack(oop p);
 
@@ -180,13 +182,16 @@ class ParScanThreadState {
   void undo_alloc_in_to_space(HeapWord* obj, size_t word_sz);
 
   // Promotion failure stats
-  size_t promotion_failure_size() { return promotion_failure_size(); }
-  void log_promotion_failure(size_t sz) {
-    if (_promotion_failure_size == 0) {
-      _promotion_failure_size = sz;
-    }
+  void register_promotion_failure(size_t sz) {
+    _promotion_failed_info.register_copy_failure(sz);
   }
-  void print_and_clear_promotion_failure_size();
+  PromotionFailedInfo& promotion_failed_info() {
+    return _promotion_failed_info;
+  }
+  bool promotion_failed() {
+    return _promotion_failed_info.has_failed();
+  }
+  void print_promotion_failure_size();
 
 #if TASKQUEUE_STATS
   TaskQueueStats & taskqueue_stats() const { return _work_queue->stats; }
@@ -312,7 +317,7 @@ class ParNewGeneration: public DefNewGeneration {
   ObjToScanQueueSet* _task_queues;
 
   // Per-worker-thread local overflow stacks
-  Stack<oop>* _overflow_stacks;
+  Stack<oop, mtGC>* _overflow_stacks;
 
   // Desired size of survivor space plab's
   PLABStats _plab_stats;
@@ -336,6 +341,8 @@ class ParNewGeneration: public DefNewGeneration {
   // Preserve the mark of "obj", if necessary, in preparation for its mark
   // word being overwritten with a self-forwarding-pointer.
   void preserve_mark_if_necessary(oop obj, markOop m);
+
+  void handle_promotion_failed(GenCollectedHeap* gch, ParScanThreadStateSet& thread_state_set, ParNewTracer& gc_tracer);
 
  protected:
 

@@ -36,6 +36,7 @@
 #include "runtime/sweeper.hpp"
 #include "runtime/vm_operations.hpp"
 #include "services/threadService.hpp"
+#include "trace/tracing.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "thread_linux.inline.hpp"
 #endif
@@ -73,19 +74,21 @@ void VM_Operation::evaluate() {
   }
 }
 
+const char* VM_Operation::mode_to_string(Mode mode) {
+  switch(mode) {
+    case _safepoint      : return "safepoint";
+    case _no_safepoint   : return "no safepoint";
+    case _concurrent     : return "concurrent";
+    case _async_safepoint: return "async safepoint";
+    default              : return "unknown";
+  }
+}
 // Called by fatal error handler.
 void VM_Operation::print_on_error(outputStream* st) const {
   st->print("VM_Operation (" PTR_FORMAT "): ", this);
   st->print("%s", name());
 
-  const char* mode;
-  switch(evaluation_mode()) {
-    case _safepoint      : mode = "safepoint";       break;
-    case _no_safepoint   : mode = "no safepoint";    break;
-    case _concurrent     : mode = "concurrent";      break;
-    case _async_safepoint: mode = "async safepoint"; break;
-    default              : mode = "unknown";         break;
-  }
+  const char* mode = mode_to_string(evaluation_mode());
   st->print(", mode: %s", mode);
 
   if (calling_thread()) {

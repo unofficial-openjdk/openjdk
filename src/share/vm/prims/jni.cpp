@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +34,7 @@
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #endif // SERIALGC
+#include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/gcLocker.inline.hpp"
 #include "memory/oopFactory.hpp"
@@ -69,7 +71,6 @@
 #include "runtime/vm_operations.hpp"
 #include "services/runtimeService.hpp"
 #include "trace/tracing.hpp"
-#include "trace/traceEventTypes.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
@@ -2819,10 +2820,9 @@ JNI_END
 JNI_QUICK_ENTRY(void, jni_Set##Result##Field(JNIEnv *env, jobject obj, jfieldID fieldID, Argument value)) \
   JNIWrapper("Set" XSTR(Result) "Field"); \
 \
-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, Set##Result##Field__entry, \
-    ( JNIEnv*, jobject, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
-  HS_DTRACE_PROBE_N(hotspot_jni, Set##Result##Field__entry, \
-    ( env, obj, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
+  FP_SELECT_##Result( \
+    DTRACE_PROBE4(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID, value), \
+    DTRACE_PROBE3(hotspot_jni, Set##Result##Field__entry, env, obj, fieldID)); \
 \
   oop o = JNIHandles::resolve_non_null(obj); \
   klassOop k = o->klass(); \
@@ -3002,9 +3002,7 @@ JNI_ENTRY(jobject, jni_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID 
   HOTSPOT_JNI_GETSTATICOBJECTFIELD_ENTRY(
                                          env, clazz, (uintptr_t) fieldID);
 #endif /* USDT2 */
-#ifndef JNICHECK_KERNEL
   DEBUG_ONLY(klassOop param_k = jniCheck::validate_class(thread, clazz);)
-#endif // JNICHECK_KERNEL
   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID);
   assert(id->is_static_field_id(), "invalid static field id");
   // Keep JVMTI addition small and only check enabled flag here.
@@ -3129,10 +3127,9 @@ JNI_END
 \
 JNI_ENTRY(void, jni_SetStatic##Result##Field(JNIEnv *env, jclass clazz, jfieldID fieldID, Argument value)) \
   JNIWrapper("SetStatic" XSTR(Result) "Field"); \
-  HS_DTRACE_PROBE_CDECL_N(hotspot_jni, SetStatic##Result##Field__entry,\
-    ( JNIEnv*, jclass, jfieldID FP_SELECT_##Result(COMMA Argument,/*empty*/) ) ); \
-  HS_DTRACE_PROBE_N(hotspot_jni, SetStatic##Result##Field__entry, \
-    ( env, clazz, fieldID FP_SELECT_##Result(COMMA value,/*empty*/) ) ); \
+  FP_SELECT_##Result( \
+     DTRACE_PROBE4(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID, value), \
+     DTRACE_PROBE3(hotspot_jni, SetStatic##Result##Field__entry, env, clazz, fieldID)); \
 \
   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID); \
   assert(id->is_static_field_id(), "invalid static field id"); \
@@ -3270,7 +3267,7 @@ JNI_QUICK_ENTRY(const jchar*, jni_GetStringChars(
   int s_len = java_lang_String::length(s);
   typeArrayOop s_value = java_lang_String::value(s);
   int s_offset = java_lang_String::offset(s);
-  jchar* buf = NEW_C_HEAP_ARRAY(jchar, s_len + 1);  // add one for zero termination
+  jchar* buf = NEW_C_HEAP_ARRAY(jchar, s_len + 1, mtInternal);  // add one for zero termination
   if (s_len > 0) {
     memcpy(buf, s_value->char_at_addr(s_offset), sizeof(jchar)*s_len);
   }
@@ -3363,7 +3360,7 @@ JNI_ENTRY(const char*, jni_GetStringUTFChars(JNIEnv *env, jstring string, jboole
 #endif /* USDT2 */
   oop java_string = JNIHandles::resolve_non_null(string);
   size_t length = java_lang_String::utf8_length(java_string);
-  char* result = AllocateHeap(length + 1, "GetStringUTFChars");
+  char* result = AllocateHeap(length + 1, mtInternal);
   java_lang_String::as_utf8_string(java_string, result, (int) length + 1);
   if (isCopy != NULL) *isCopy = JNI_TRUE;
 #ifndef USDT2
@@ -3619,7 +3616,7 @@ JNI_QUICK_ENTRY(ElementType*, \
      * Avoid asserts in typeArrayOop. */ \
     result = (ElementType*)get_bad_address(); \
   } else { \
-    result = NEW_C_HEAP_ARRAY(ElementType, len); \
+    result = NEW_C_HEAP_ARRAY(ElementType, len, mtInternal); \
     /* copy the array to the c chunk */ \
     memcpy(result, a->Tag##_at_addr(0), sizeof(ElementType)*len); \
   } \
@@ -3656,7 +3653,7 @@ JNI_QUICK_ENTRY(ElementType*, \
      * Avoid asserts in typeArrayOop. */ \
     result = (ElementType*)get_bad_address(); \
   } else { \
-    result = NEW_C_HEAP_ARRAY(ElementType, len); \
+    result = NEW_C_HEAP_ARRAY(ElementType, len, mtInternal); \
     /* copy the array to the c chunk */ \
     memcpy(result, a->Tag##_at_addr(0), sizeof(ElementType)*len); \
   } \
@@ -4974,11 +4971,7 @@ void quicken_jni_functions() {
 
 // Returns the function structure
 struct JNINativeInterface_* jni_functions() {
-#ifndef JNICHECK_KERNEL
   if (CheckJNICalls) return jni_functions_check();
-#else  // JNICHECK_KERNEL
-  if (CheckJNICalls) warning("-Xcheck:jni is not supported in kernel vm.");
-#endif // JNICHECK_KERNEL
   return &jni_NativeInterface;
 }
 
@@ -5041,6 +5034,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 
 #ifndef PRODUCT
 
+#include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "utilities/quickSort.hpp"
 
@@ -5051,6 +5045,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
 void execute_internal_vm_tests() {
   if (ExecuteInternalVMTests) {
     tty->print_cr("Running internal VM tests");
+    run_unit_test(GCTimerAllTest::all());
     run_unit_test(arrayOopDesc::test_max_array_length());
     run_unit_test(CollectedHeap::test_is_in());
     run_unit_test(QuickSort::test_quick_sort());
@@ -5145,9 +5140,11 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
        JvmtiExport::post_thread_start(thread);
     }
 
-    EVENT_BEGIN(TraceEventThreadStart, event);
-    EVENT_COMMIT(event,
-        EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+    EventThreadStart event;
+    if (event.should_commit()) {
+      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.commit();
+    }
 
     // Check if we should compile all classes on bootclasspath
     NOT_PRODUCT(if (CompileTheWorld) ClassLoader::compile_the_world();)
@@ -5347,9 +5344,11 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
     JvmtiExport::post_thread_start(thread);
   }
 
-  EVENT_BEGIN(TraceEventThreadStart, event);
-  EVENT_COMMIT(event,
-      EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+  EventThreadStart event;
+  if (event.should_commit()) {
+    event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+    event.commit();
+  }
 
   *(JNIEnv**)penv = thread->jni_environment();
 

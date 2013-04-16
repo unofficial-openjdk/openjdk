@@ -363,6 +363,11 @@ void VM_Version::get_processor_features() {
   }
 
   _supports_cx8 = supports_cmpxchg8();
+  // xchg and xadd instructions
+  _supports_atomic_getset4 = true;
+  _supports_atomic_getadd4 = true;
+  LP64_ONLY(_supports_atomic_getset8 = true);
+  LP64_ONLY(_supports_atomic_getadd8 = true);
 
 #ifdef _LP64
   // OS should support SSE for x64 and hardware should support at least SSE2.
@@ -414,13 +419,16 @@ void VM_Version::get_processor_features() {
   if (UseAVX < 1)
     _cpuFeatures &= ~CPU_AVX;
 
+  if (!UseAES && !FLAG_IS_DEFAULT(UseAES))
+    _cpuFeatures &= ~CPU_AES;
+
   if (logical_processors_per_package() == 1) {
     // HT processor could be installed on a system which doesn't support HT.
     _cpuFeatures &= ~CPU_HT;
   }
 
   char buf[256];
-  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "(%u cores per cpu, %u threads per core) family %d model %d stepping %d%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                cores_per_cpu(), threads_per_core(),
                cpu_family(), _model, _stepping,
                (supports_cmov() ? ", cmov" : ""),
@@ -436,6 +444,8 @@ void VM_Version::get_processor_features() {
                (supports_popcnt() ? ", popcnt" : ""),
                (supports_avx()    ? ", avx" : ""),
                (supports_avx2()   ? ", avx2" : ""),
+               (supports_aes()    ? ", aes" : ""),
+               (supports_erms()   ? ", erms" : ""),
                (supports_mmx_ext() ? ", mmxext" : ""),
                (supports_3dnow_prefetch() ? ", 3dnowpref" : ""),
                (supports_lzcnt()   ? ", lzcnt": ""),
@@ -466,6 +476,55 @@ void VM_Version::get_processor_features() {
     UseAVX = MIN2((intx)1,UseAVX);
   if (!supports_avx ()) // Drop to 0 if no AVX  support
     UseAVX = 0;
+
+  // Use AES instructions if available.
+  if (supports_aes()) {
+    if (FLAG_IS_DEFAULT(UseAES)) {
+      UseAES = true;
+    }
+  } else if (UseAES) {
+    if (!FLAG_IS_DEFAULT(UseAES))
+      warning("AES instructions not available on this CPU");
+    FLAG_SET_DEFAULT(UseAES, false);
+  }
+
+  // The AES intrinsic stubs require AES instruction support (of course)
+  // but also require sse3 mode for instructions it use.
+  if (UseAES && (UseSSE > 2)) {
+    if (FLAG_IS_DEFAULT(UseAESIntrinsics)) {
+      UseAESIntrinsics = true;
+    }
+  } else if (UseAESIntrinsics) {
+    if (!FLAG_IS_DEFAULT(UseAESIntrinsics))
+      warning("AES intrinsics not available on this CPU");
+    FLAG_SET_DEFAULT(UseAESIntrinsics, false);
+  }
+
+#ifdef COMPILER2
+  if (UseFPUForSpilling) {
+    if (UseSSE < 2) {
+      // Only supported with SSE2+
+      FLAG_SET_DEFAULT(UseFPUForSpilling, false);
+    }
+  }
+  if (MaxVectorSize > 0) {
+    if (!is_power_of_2(MaxVectorSize)) {
+      warning("MaxVectorSize must be a power of 2");
+      FLAG_SET_DEFAULT(MaxVectorSize, 32);
+    }
+    if (MaxVectorSize > 32) {
+      FLAG_SET_DEFAULT(MaxVectorSize, 32);
+    }
+    if (MaxVectorSize > 16 && UseAVX == 0) {
+      // Only supported with AVX+
+      FLAG_SET_DEFAULT(MaxVectorSize, 16);
+    }
+    if (UseSSE < 2) {
+      // Only supported with SSE2+
+      FLAG_SET_DEFAULT(MaxVectorSize, 0);
+    }
+  }
+#endif
 
   // On new cpus instructions which update whole XMM register should be used
   // to prevent partial register stall due to dependencies on high half.
@@ -536,14 +595,20 @@ void VM_Version::get_processor_features() {
         AllocatePrefetchInstr = 3;
       }
       // On family 15h processors use XMM and UnalignedLoadStores for Array Copy
-      if( FLAG_IS_DEFAULT(UseXMMForArrayCopy) ) {
+      if (supports_sse2() && FLAG_IS_DEFAULT(UseXMMForArrayCopy)) {
         UseXMMForArrayCopy = true;
       }
-      if( FLAG_IS_DEFAULT(UseUnalignedLoadStores) && UseXMMForArrayCopy ) {
+      if (supports_sse2() && FLAG_IS_DEFAULT(UseUnalignedLoadStores)) {
         UseUnalignedLoadStores = true;
       }
     }
 
+#ifdef COMPILER2
+    if (MaxVectorSize > 16) {
+      // Limit vectors size to 16 bytes on current AMD cpus.
+      FLAG_SET_DEFAULT(MaxVectorSize, 16);
+    }
+#endif // COMPILER2
   }
 
   if( is_intel() ) { // Intel cpus specific settings
@@ -580,21 +645,29 @@ void VM_Version::get_processor_features() {
         MaxLoopPad = 11;
       }
 #endif // COMPILER2
-      if( FLAG_IS_DEFAULT(UseXMMForArrayCopy) ) {
+      if (FLAG_IS_DEFAULT(UseXMMForArrayCopy)) {
         UseXMMForArrayCopy = true; // use SSE2 movq on new Intel cpus
       }
-      if( supports_sse4_2() && supports_ht() ) { // Newest Intel cpus
-        if( FLAG_IS_DEFAULT(UseUnalignedLoadStores) && UseXMMForArrayCopy ) {
+      if (supports_sse4_2() && supports_ht()) { // Newest Intel cpus
+        if (FLAG_IS_DEFAULT(UseUnalignedLoadStores)) {
           UseUnalignedLoadStores = true; // use movdqu on newest Intel cpus
         }
       }
-      if( supports_sse4_2() && UseSSE >= 4 ) {
-        if( FLAG_IS_DEFAULT(UseSSE42Intrinsics)) {
+      if (supports_sse4_2() && UseSSE >= 4) {
+        if (FLAG_IS_DEFAULT(UseSSE42Intrinsics)) {
           UseSSE42Intrinsics = true;
         }
       }
     }
   }
+#if defined(COMPILER2) && defined(_ALLBSD_SOURCE)
+    if (MaxVectorSize > 16) {
+      // Limit vectors size to 16 bytes on BSD until it fixes
+      // restoring upper 128bit of YMM registers on return
+      // from signal handler.
+      FLAG_SET_DEFAULT(MaxVectorSize, 16);
+    }
+#endif // COMPILER2
 
   // Use population count instruction if available.
   if (supports_popcnt()) {
@@ -606,14 +679,22 @@ void VM_Version::get_processor_features() {
     FLAG_SET_DEFAULT(UsePopCountInstruction, false);
   }
 
-#ifdef COMPILER2
-  if (UseFPUForSpilling) {
-    if (UseSSE < 2) {
-      // Only supported with SSE2+
-      FLAG_SET_DEFAULT(UseFPUForSpilling, false);
+  // Use fast-string operations if available.
+  if (supports_erms()) {
+    if (FLAG_IS_DEFAULT(UseFastStosb)) {
+      UseFastStosb = true;
     }
+  } else if (UseFastStosb) {
+    warning("fast-string operations are not available on this CPU");
+    FLAG_SET_DEFAULT(UseFastStosb, false);
   }
-#endif
+
+#ifdef COMPILER2
+  if (FLAG_IS_DEFAULT(AlignVector)) {
+    // Modern processors allow misaligned memory operations for vectors.
+    AlignVector = !UseUnalignedLoadStores;
+  }
+#endif // COMPILER2
 
   assert(0 <= ReadPrefetchInstr && ReadPrefetchInstr <= 3, "invalid value");
   assert(0 <= AllocatePrefetchInstr && AllocatePrefetchInstr <= 3, "invalid value");
@@ -678,6 +759,9 @@ void VM_Version::get_processor_features() {
     tty->print("UseSSE=%d",UseSSE);
     if (UseAVX > 0) {
       tty->print("  UseAVX=%d",UseAVX);
+    }
+    if (UseAES) {
+      tty->print("  UseAES=1");
     }
     tty->cr();
     tty->print("Allocation");

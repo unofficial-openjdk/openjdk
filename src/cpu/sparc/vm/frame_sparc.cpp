@@ -216,6 +216,11 @@ bool frame::safe_for_sender(JavaThread *thread) {
       }
     }
 
+    // Could just be some random pointer within the codeBlob
+    if (!_cb->code_contains(_pc)) {
+      return false;
+    }
+
     // Entry frame checks
     if (is_entry_frame()) {
       // an entry frame must have a valid fp.
@@ -244,6 +249,11 @@ bool frame::safe_for_sender(JavaThread *thread) {
     // We must always be able to find a recognizable pc
     CodeBlob* sender_blob = CodeCache::find_blob_unsafe(sender_pc);
     if (sender_pc == NULL ||  sender_blob == NULL) {
+      return false;
+    }
+
+    // Could be a zombie method
+    if (sender_blob->is_zombie() || sender_blob->is_unloaded()) {
       return false;
     }
 
@@ -289,10 +299,10 @@ bool frame::safe_for_sender(JavaThread *thread) {
       return jcw_safe;
     }
 
-    // If the frame size is 0 something is bad because every nmethod has a non-zero frame size
+    // If the frame size is 0 something (or less) is bad because every nmethod has a non-zero frame size
     // because you must allocate window space
 
-    if (sender_blob->frame_size() == 0) {
+    if (sender_blob->frame_size() <= 0) {
       assert(!sender_blob->is_nmethod(), "should count return address at least");
       return false;
     }
@@ -514,7 +524,6 @@ frame frame::sender(RegisterMap* map) const {
   // interpreted but its pc is in the code cache (for c1 -> osr_frame_return_id stub), so it must be
   // explicitly recognized.
 
-  if (is_ricochet_frame())    return sender_for_ricochet_frame(map);
 
   bool frame_is_interpreted = is_interpreted_frame();
   if (frame_is_interpreted) {
@@ -821,9 +830,7 @@ void frame::describe_pd(FrameValues& values, int frame_no) {
     values.describe(frame_no, sp() + w, err_msg("register save area word %d", w), 1);
   }
 
-  if (is_ricochet_frame()) {
-    MethodHandles::RicochetFrame::describe(this, values, frame_no);
-  } else if (is_interpreted_frame()) {
+  if (is_interpreted_frame()) {
     DESCRIBE_FP_OFFSET(interpreter_frame_d_scratch_fp);
     DESCRIBE_FP_OFFSET(interpreter_frame_l_scratch_fp);
     DESCRIBE_FP_OFFSET(interpreter_frame_padding);

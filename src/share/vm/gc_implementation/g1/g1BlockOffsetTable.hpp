@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,9 @@ public:
   virtual void resize(size_t new_word_size) = 0;
 
   virtual void set_bottom(HeapWord* new_bottom) {
-    assert(new_bottom <= _end, "new_bottom > _end");
+    assert(new_bottom <= _end,
+           err_msg("new_bottom (" PTR_FORMAT ") > _end (" PTR_FORMAT ")",
+                   new_bottom, _end));
     _bottom = new_bottom;
     resize(pointer_delta(_end, _bottom));
   }
@@ -117,7 +119,7 @@ public:
 
 // Here is the shared array type.
 
-class G1BlockOffsetSharedArray: public CHeapObj {
+class G1BlockOffsetSharedArray: public CHeapObj<mtGC> {
   friend class G1BlockOffsetArray;
   friend class G1BlockOffsetArrayContigSpace;
   friend class VMStructs;
@@ -134,47 +136,75 @@ private:
   VirtualSpace _vs;
   u_char* _offset_array;          // byte array keeping backwards offsets
 
+  void check_index(size_t index, const char* msg) const {
+    assert(index < _vs.committed_size(),
+           err_msg("%s - "
+                   "index: " SIZE_FORMAT ", _vs.committed_size: " SIZE_FORMAT,
+                   msg, index, _vs.committed_size()));
+  }
+
+  void check_offset(size_t offset, const char* msg) const {
+    assert(offset <= N_words,
+           err_msg("%s - "
+                   "offset: " UINT32_FORMAT", N_words: " UINT32_FORMAT,
+                   msg, offset, N_words));
+  }
+
   // Bounds checking accessors:
   // For performance these have to devolve to array accesses in product builds.
   u_char offset_array(size_t index) const {
-    assert(index < _vs.committed_size(), "index out of range");
+    check_index(index, "index out of range");
     return _offset_array[index];
   }
 
   void set_offset_array(size_t index, u_char offset) {
-    assert(index < _vs.committed_size(), "index out of range");
-    assert(offset <= N_words, "offset too large");
+    check_index(index, "index out of range");
+    check_offset(offset, "offset too large");
     _offset_array[index] = offset;
   }
 
   void set_offset_array(size_t index, HeapWord* high, HeapWord* low) {
-    assert(index < _vs.committed_size(), "index out of range");
+    check_index(index, "index out of range");
     assert(high >= low, "addresses out of order");
-    assert(pointer_delta(high, low) <= N_words, "offset too large");
+    check_offset(pointer_delta(high, low), "offset too large");
     _offset_array[index] = (u_char) pointer_delta(high, low);
   }
 
   void set_offset_array(HeapWord* left, HeapWord* right, u_char offset) {
-    assert(index_for(right - 1) < _vs.committed_size(),
-           "right address out of range");
+    check_index(index_for(right - 1), "right address out of range");
     assert(left  < right, "Heap addresses out of order");
     size_t num_cards = pointer_delta(right, left) >> LogN_words;
-    memset(&_offset_array[index_for(left)], offset, num_cards);
+    if (UseMemSetInBOT) {
+      memset(&_offset_array[index_for(left)], offset, num_cards);
+    } else {
+      size_t i = index_for(left);
+      const size_t end = i + num_cards;
+      for (; i < end; i++) {
+        _offset_array[i] = offset;
+      }
+    }
   }
 
   void set_offset_array(size_t left, size_t right, u_char offset) {
-    assert(right < _vs.committed_size(), "right address out of range");
-    assert(left  <= right, "indexes out of order");
+    check_index(right, "right index out of range");
+    assert(left <= right, "indexes out of order");
     size_t num_cards = right - left + 1;
-    memset(&_offset_array[left], offset, num_cards);
+    if (UseMemSetInBOT) {
+      memset(&_offset_array[left], offset, num_cards);
+    } else {
+      size_t i = left;
+      const size_t end = i + num_cards;
+      for (; i < end; i++) {
+        _offset_array[i] = offset;
+      }
+    }
   }
 
   void check_offset_array(size_t index, HeapWord* high, HeapWord* low) const {
-    assert(index < _vs.committed_size(), "index out of range");
+    check_index(index, "index out of range");
     assert(high >= low, "addresses out of order");
-    assert(pointer_delta(high, low) <= N_words, "offset too large");
-    assert(_offset_array[index] == pointer_delta(high, low),
-           "Wrong offset");
+    check_offset(pointer_delta(high, low), "offset too large");
+    assert(_offset_array[index] == pointer_delta(high, low), "Wrong offset");
   }
 
   bool is_card_boundary(HeapWord* p) const;
@@ -464,7 +494,6 @@ class G1BlockOffsetArrayContigSpace: public G1BlockOffsetArray {
     alloc_block_work2(&_next_offset_threshold, &_next_offset_index,
                       blk_start, blk_end);
   }
-
 
  public:
   G1BlockOffsetArrayContigSpace(G1BlockOffsetSharedArray* array, MemRegion mr);

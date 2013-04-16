@@ -181,6 +181,19 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
         __ push_fTOS();
         __ pop_fTOS();
         break;
+    case Interpreter::java_lang_math_pow:
+      __ fld_d(Address(rsp, 3*wordSize)); // second argument
+      __ pow_with_fallback(0);
+      // Store to stack to convert 80bit precision back to 64bits
+      __ push_fTOS();
+      __ pop_fTOS();
+      break;
+    case Interpreter::java_lang_math_exp:
+      __ exp_with_fallback(0);
+      // Store to stack to convert 80bit precision back to 64bits
+      __ push_fTOS();
+      __ pop_fTOS();
+      break;
     default                              :
         ShouldNotReachHere();
   }
@@ -229,18 +242,6 @@ address InterpreterGenerator::generate_abstract_entry(void) {
   return entry_point;
 }
 
-
-// Method handle invoker
-// Dispatch a method of the form java.lang.invoke.MethodHandles::invoke(...)
-address InterpreterGenerator::generate_method_handle_entry(void) {
-  if (!EnableInvokeDynamic) {
-    return generate_abstract_entry();
-  }
-
-  address entry_point = MethodHandles::generate_method_handle_interpreter_entry(_masm);
-
-  return entry_point;
-}
 
 void Deoptimization::unwind_callee_save_values(frame* f, vframeArray* vframe_array) {
 

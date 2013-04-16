@@ -52,13 +52,6 @@
 #include "thread_linux.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
-#ifdef COMPILER1
-#include "c1/c1_Runtime1.hpp"
-#endif
-#ifdef COMPILER2
-#include "opto/runtime.hpp"
-#endif
-
 
 // Linux/Sparc has rather obscure naming of registers in sigcontext
 // different between 32 and 64 bits
@@ -225,7 +218,7 @@ char* os::non_memory_address_word() {
   return (char*) 0;
 }
 
-void os::initialize_thread() {}
+void os::initialize_thread(Thread* thr) {}
 
 void os::print_context(outputStream *st, void *context) {
   if (context == NULL) return;
@@ -756,3 +749,8 @@ size_t os::Linux::default_guard_size(os::ThreadType thr_type) {
   // guard page, only enable glibc guard page for non-Java threads.
   return (thr_type == java_thread ? 0 : page_size());
 }
+
+#ifndef PRODUCT
+void os::verify_stack_alignment() {
+}
+#endif

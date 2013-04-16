@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,10 +74,8 @@ JvmtiEnvBase::globally_initialize() {
 
   JvmtiManageCapabilities::initialize();
 
-#ifndef JVMTI_KERNEL
   // register extension functions and events
   JvmtiExtensions::register_extensions();
-#endif // !JVMTI_KERNEL
 
 #ifdef JVMTI_TRACE
   JvmtiTrace::initialize();
@@ -236,14 +234,12 @@ JvmtiEnvBase::env_dispose() {
   // Same situation as with events (see above)
   set_native_method_prefixes(0, NULL);
 
-#ifndef JVMTI_KERNEL
   JvmtiTagMap* tag_map_to_deallocate = _tag_map;
   set_tag_map(NULL);
   // A tag map can be big, deallocate it now
   if (tag_map_to_deallocate != NULL) {
     delete tag_map_to_deallocate;
   }
-#endif // !JVMTI_KERNEL
 
   _needs_clean_up = true;
 }
@@ -255,14 +251,12 @@ JvmtiEnvBase::~JvmtiEnvBase() {
   // There is a small window of time during which the tag map of a
   // disposed environment could have been reallocated.
   // Make sure it is gone.
-#ifndef JVMTI_KERNEL
   JvmtiTagMap* tag_map_to_deallocate = _tag_map;
   set_tag_map(NULL);
   // A tag map can be big, deallocate it now
   if (tag_map_to_deallocate != NULL) {
     delete tag_map_to_deallocate;
   }
-#endif // !JVMTI_KERNEL
 
   _magic = BAD_MAGIC;
 }
@@ -381,7 +375,7 @@ JvmtiEnvBase::set_native_method_prefixes(jint prefix_count, char** prefixes) {
     _native_method_prefixes = NULL;
   } else {
     // there are prefixes, allocate an array to hold them, and fill it
-    char** new_prefixes = (char**)os::malloc((prefix_count) * sizeof(char*));
+    char** new_prefixes = (char**)os::malloc((prefix_count) * sizeof(char*), mtInternal);
     if (new_prefixes == NULL) {
       return JVMTI_ERROR_OUT_OF_MEMORY;
     }
@@ -592,8 +586,6 @@ JvmtiEnvBase::get_jni_class_non_null(klassOop k) {
   assert(k != NULL, "k != NULL");
   return (jclass)jni_reference(Klass::cast(k)->java_mirror());
 }
-
-#ifndef JVMTI_KERNEL
 
 //
 // Field Information
@@ -1150,7 +1142,7 @@ JvmtiEnvBase::get_object_monitor_usage(JavaThread* calling_thread, jobject objec
 
 ResourceTracker::ResourceTracker(JvmtiEnv* env) {
   _env = env;
-  _allocations = new (ResourceObj::C_HEAP) GrowableArray<unsigned char*>(20, true);
+  _allocations = new (ResourceObj::C_HEAP, mtInternal) GrowableArray<unsigned char*>(20, true);
   _failed = false;
 }
 ResourceTracker::~ResourceTracker() {
@@ -1482,5 +1474,3 @@ JvmtiMonitorClosure::do_monitor(ObjectMonitor* mon) {
     }
   }
 }
-
-#endif // !JVMTI_KERNEL

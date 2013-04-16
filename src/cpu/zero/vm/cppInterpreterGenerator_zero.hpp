@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2008, 2009 Red Hat, Inc.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,17 @@
     return _masm;
   }
 
- protected:
-  address generate_entry(address entry_point) {
-    ZeroEntry *entry = (ZeroEntry *) assembler()->pc();
-    assembler()->advance(sizeof(ZeroEntry));
+ public:
+  static address generate_entry_impl(MacroAssembler* masm, address entry_point) {
+    ZeroEntry *entry = (ZeroEntry *) masm->pc();
+    masm->advance(sizeof(ZeroEntry));
     entry->set_entry_point(entry_point);
     return (address) entry;
+  }
+
+ protected:
+  address generate_entry(address entry_point) {
+        return generate_entry_impl(assembler(), entry_point);
   }
 
 #endif // CPU_ZERO_VM_CPPINTERPRETERGENERATOR_ZERO_HPP

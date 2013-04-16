@@ -108,7 +108,6 @@ extern Monitor* Terminator_lock;                 // a lock used to guard termina
 extern Monitor* BeforeExit_lock;                 // a lock used to guard cleanups and shutdown hooks
 extern Monitor* Notify_lock;                     // a lock used to synchronize the start-up of the vm
 extern Monitor* Interrupt_lock;                  // a lock used for condition variable mediated interrupt processing
-extern Monitor* ProfileVM_lock;                  // a lock used for profiling the VMThread
 extern Mutex*   ProfilePrint_lock;               // a lock used to serialize the printing of profiles
 extern Mutex*   ExceptionCache_lock;             // a lock used to synchronize exception cache updates
 extern Mutex*   OsrList_lock;                    // a lock used to serialize access to OSR queues
@@ -142,6 +141,7 @@ extern Monitor* JfrQuery_lock;                   // protects JFR use
 extern Monitor* JfrMsg_lock;                     // protects JFR messaging
 extern Mutex*   JfrBuffer_lock;                  // protects JFR buffer operations
 extern Mutex*   JfrStream_lock;                  // protects JFR stream access
+extern Monitor* PeriodicTask_lock;               // protects the periodic task structure
 
 // A MutexLocker provides mutual exclusion with respect to a given mutex
 // for the scope which contains the locker.  The lock is an OS lock, not

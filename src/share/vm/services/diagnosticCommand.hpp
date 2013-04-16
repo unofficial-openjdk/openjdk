@@ -48,7 +48,7 @@ public:
            "With no argument this will show a list of available commands. "
            "'help all' will show help for all commands.";
   }
-  static const char* impact() { return "Low: "; }
+  static const char* impact() { return "Low"; }
   static int num_arguments();
   virtual void execute(TRAPS);
 };
@@ -60,7 +60,7 @@ public:
   static const char* description() {
     return "Print JVM version information.";
   }
-  static const char* impact() { return "Low: "; }
+  static const char* impact() { return "Low"; }
   static int num_arguments() { return 0; }
   virtual void execute(TRAPS);
 };
@@ -72,7 +72,7 @@ public:
   static const char* description() {
     return "Print the command line used to start this VM instance.";
   }
-  static const char* impact() { return "Low: "; }
+  static const char* impact() { return "Low"; }
   static int num_arguments() { return 0; }
   virtual void execute(TRAPS) {
     Arguments::print_on(_output);
@@ -88,7 +88,7 @@ public:
       return "Print system properties.";
     }
     static const char* impact() {
-      return "Low: ";
+      return "Low";
     }
     static int num_arguments() { return 0; }
     virtual void execute(TRAPS);
@@ -105,7 +105,7 @@ public:
     return "Print VM flag options and their current values.";
   }
   static const char* impact() {
-    return "Low: ";
+    return "Low";
   }
   static int num_arguments();
   virtual void execute(TRAPS);
@@ -121,7 +121,7 @@ public:
     return "Print VM uptime.";
   }
   static const char* impact() {
-    return "Low: ";
+    return "Low";
   }
   static int num_arguments();
   virtual void execute(TRAPS);
@@ -235,6 +235,16 @@ class JMXStartRemoteDCmd : public DCmdWithParser {
   DCmdArgument<char *> _jmxremote_ssl_enabled_protocols;
   DCmdArgument<char *> _jmxremote_ssl_need_client_auth;
   DCmdArgument<char *> _jmxremote_ssl_config_file;
+
+  // JDP support
+  // Keep autodiscovery char* not bool to pass true/false
+  // as property value to java level.
+  DCmdArgument<char *> _jmxremote_autodiscovery;
+  DCmdArgument<jlong>  _jdp_port;
+  DCmdArgument<char *> _jdp_address;
+  DCmdArgument<char *> _jdp_source_addr;
+  DCmdArgument<jlong>  _jdp_ttl;
+  DCmdArgument<jlong>  _jdp_pause;
 
 public:
   JMXStartRemoteDCmd(outputStream *output, bool heap_allocated);

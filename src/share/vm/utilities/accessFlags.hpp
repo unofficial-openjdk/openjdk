@@ -47,16 +47,13 @@ enum {
   JVM_ACC_QUEUED                  = 0x01000000,     // Queued for compilation
   JVM_ACC_NOT_C2_COMPILABLE       = 0x02000000,
   JVM_ACC_NOT_C1_COMPILABLE       = 0x04000000,
-  JVM_ACC_NOT_OSR_COMPILABLE      = 0x08000000,
+  JVM_ACC_NOT_C2_OSR_COMPILABLE   = 0x08000000,
   JVM_ACC_HAS_LINE_NUMBER_TABLE   = 0x00100000,
   JVM_ACC_HAS_CHECKED_EXCEPTIONS  = 0x00400000,
   JVM_ACC_HAS_JSRS                = 0x00800000,
   JVM_ACC_IS_OLD                  = 0x00010000,     // RedefineClasses() has replaced this method
   JVM_ACC_IS_OBSOLETE             = 0x00020000,     // RedefineClasses() has made method obsolete
   JVM_ACC_IS_PREFIXED_NATIVE      = 0x00040000,     // JVMTI has prefixed this native method
-
-  JVM_MH_INVOKE_BITS           // = 0x10001100      // MethodHandle.invoke quasi-native
-                                  = (JVM_ACC_NATIVE | JVM_ACC_SYNTHETIC | JVM_ACC_MONITOR_MATCH),
 
   // klassOop flags
   JVM_ACC_HAS_MIRANDA_METHODS     = 0x10000000,     // True if this class has miranda methods in it's vtable
@@ -80,10 +77,12 @@ enum {
   JVM_ACC_FIELD_ACCESS_WATCHED       = 0x00002000,  // field access is watched by JVMTI
   JVM_ACC_FIELD_MODIFICATION_WATCHED = 0x00008000,  // field modification is watched by JVMTI
   JVM_ACC_FIELD_INTERNAL             = 0x00000400,  // internal field, same as JVM_ACC_ABSTRACT
+  JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE = 0x00000800, // field has generic signature
 
   JVM_ACC_FIELD_INTERNAL_FLAGS       = JVM_ACC_FIELD_ACCESS_WATCHED |
                                        JVM_ACC_FIELD_MODIFICATION_WATCHED |
-                                       JVM_ACC_FIELD_INTERNAL,
+                                       JVM_ACC_FIELD_INTERNAL |
+                                       JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE,
 
                                                     // flags accepted by set_field_flags()
   JVM_ACC_FIELD_FLAGS                = JVM_RECOGNIZED_FIELD_MODIFIERS | JVM_ACC_FIELD_INTERNAL_FLAGS
@@ -121,24 +120,15 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   bool has_loops               () const { return (_flags & JVM_ACC_HAS_LOOPS              ) != 0; }
   bool loops_flag_init         () const { return (_flags & JVM_ACC_LOOPS_FLAG_INIT        ) != 0; }
   bool queued_for_compilation  () const { return (_flags & JVM_ACC_QUEUED                 ) != 0; }
-  bool is_not_c1_compilable () const    { return (_flags & JVM_ACC_NOT_C1_COMPILABLE      ) != 0; }
-  bool is_not_c2_compilable () const    { return (_flags & JVM_ACC_NOT_C2_COMPILABLE      ) != 0; }
-  bool is_not_osr_compilable   () const { return (_flags & JVM_ACC_NOT_OSR_COMPILABLE     ) != 0; }
+  bool is_not_c1_compilable    () const { return (_flags & JVM_ACC_NOT_C1_COMPILABLE      ) != 0; }
+  bool is_not_c2_compilable    () const { return (_flags & JVM_ACC_NOT_C2_COMPILABLE      ) != 0; }
+  bool is_not_c2_osr_compilable() const { return (_flags & JVM_ACC_NOT_C2_OSR_COMPILABLE  ) != 0; }
   bool has_linenumber_table    () const { return (_flags & JVM_ACC_HAS_LINE_NUMBER_TABLE  ) != 0; }
   bool has_checked_exceptions  () const { return (_flags & JVM_ACC_HAS_CHECKED_EXCEPTIONS ) != 0; }
   bool has_jsrs                () const { return (_flags & JVM_ACC_HAS_JSRS               ) != 0; }
   bool is_old                  () const { return (_flags & JVM_ACC_IS_OLD                 ) != 0; }
   bool is_obsolete             () const { return (_flags & JVM_ACC_IS_OBSOLETE            ) != 0; }
   bool is_prefixed_native      () const { return (_flags & JVM_ACC_IS_PREFIXED_NATIVE     ) != 0; }
-
-  // JSR 292:  A method of the form MethodHandle.invoke(A...)R method is
-  // neither bytecoded nor a JNI native, but rather a fast call through
-  // a lightweight method handle object.  Because it is not bytecoded,
-  // it has the native bit set, but the monitor-match bit is also set
-  // to distinguish it from a JNI native (which never has the match bit set).
-  // The synthetic bit is also present, because such a method is never
-  // explicitly defined in Java code.
-  bool is_method_handle_invoke () const { return (_flags & JVM_MH_INVOKE_BITS) == JVM_MH_INVOKE_BITS; }
 
   // klassOop flags
   bool has_miranda_methods     () const { return (_flags & JVM_ACC_HAS_MIRANDA_METHODS    ) != 0; }
@@ -156,6 +146,8 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   bool is_field_modification_watched() const
                                         { return (_flags & JVM_ACC_FIELD_MODIFICATION_WATCHED) != 0; }
   bool is_internal() const              { return (_flags & JVM_ACC_FIELD_INTERNAL) != 0; }
+  bool field_has_generic_signature() const
+                                        { return (_flags & JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE) != 0; }
 
   // get .class file flags
   jint get_flags               () const { return (_flags & JVM_ACC_WRITTEN_FLAGS); }
@@ -192,7 +184,7 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
   void set_loops_flag_init()           { atomic_set_bits(JVM_ACC_LOOPS_FLAG_INIT);         }
   void set_not_c1_compilable()         { atomic_set_bits(JVM_ACC_NOT_C1_COMPILABLE);       }
   void set_not_c2_compilable()         { atomic_set_bits(JVM_ACC_NOT_C2_COMPILABLE);       }
-  void set_not_osr_compilable()        { atomic_set_bits(JVM_ACC_NOT_OSR_COMPILABLE);      }
+  void set_not_c2_osr_compilable()     { atomic_set_bits(JVM_ACC_NOT_C2_OSR_COMPILABLE);   }
   void set_has_linenumber_table()      { atomic_set_bits(JVM_ACC_HAS_LINE_NUMBER_TABLE);   }
   void set_has_checked_exceptions()    { atomic_set_bits(JVM_ACC_HAS_CHECKED_EXCEPTIONS);  }
   void set_has_jsrs()                  { atomic_set_bits(JVM_ACC_HAS_JSRS);                }
@@ -224,6 +216,10 @@ class AccessFlags VALUE_OBJ_CLASS_SPEC {
                                          } else {
                                            atomic_clear_bits(JVM_ACC_FIELD_MODIFICATION_WATCHED);
                                          }
+                                       }
+  void set_field_has_generic_signature()
+                                       {
+                                         atomic_set_bits(JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE);
                                        }
 
   // Conversion

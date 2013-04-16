@@ -59,7 +59,7 @@ bool IdealLoopTree::policy_unswitching( PhaseIdealLoop *phase ) const {
   if (!_head->is_Loop()) {
     return false;
   }
-  uint nodes_left = MaxNodeLimit - phase->C->unique();
+  uint nodes_left = MaxNodeLimit - phase->C->live_nodes();
   if (2 * _body.size() > nodes_left) {
     return false; // Too speculative if running low on nodes.
   }
@@ -174,27 +174,21 @@ void PhaseIdealLoop::do_unswitching (IdealLoopTree *loop, Node_List &old_new) {
       Node* use = worklist.pop();
       Node* nuse = use->clone();
       nuse->set_req(0, invar_proj);
-      _igvn.hash_delete(use);
-      use->set_req(1, nuse);
-      _igvn._worklist.push(use);
+      _igvn.replace_input_of(use, 1, nuse);
       register_new_node(nuse, invar_proj);
       // Same for the clone
       Node* use_clone = old_new[use->_idx];
-      _igvn.hash_delete(use_clone);
-      use_clone->set_req(1, nuse);
-      _igvn._worklist.push(use_clone);
+      _igvn.replace_input_of(use_clone, 1, nuse);
     }
   }
 
   // Hardwire the control paths in the loops into if(true) and if(false)
-  _igvn.hash_delete(unswitch_iff);
+  _igvn.rehash_node_delayed(unswitch_iff);
   short_circuit_if(unswitch_iff, proj_true);
-  _igvn._worklist.push(unswitch_iff);
 
   IfNode* unswitch_iff_clone = old_new[unswitch_iff->_idx]->as_If();
-  _igvn.hash_delete(unswitch_iff_clone);
+  _igvn.rehash_node_delayed(unswitch_iff_clone);
   short_circuit_if(unswitch_iff_clone, proj_false);
-  _igvn._worklist.push(unswitch_iff_clone);
 
   // Reoptimize loops
   loop->record_for_igvn();
@@ -224,21 +218,20 @@ ProjNode* PhaseIdealLoop::create_slow_version_of_loop(IdealLoopTree *loop,
   LoopNode* head  = loop->_head->as_Loop();
   bool counted_loop = head->is_CountedLoop();
   Node*     entry = head->in(LoopNode::EntryControl);
-  _igvn.hash_delete(entry);
-  _igvn._worklist.push(entry);
+  _igvn.rehash_node_delayed(entry);
   IdealLoopTree* outer_loop = loop->_parent;
 
   Node *cont      = _igvn.intcon(1);
   set_ctrl(cont, C->root());
-  Node* opq       = new (C, 2) Opaque1Node(C, cont);
+  Node* opq       = new (C) Opaque1Node(C, cont);
   register_node(opq, outer_loop, entry, dom_depth(entry));
-  Node *bol       = new (C, 2) Conv2BNode(opq);
+  Node *bol       = new (C) Conv2BNode(opq);
   register_node(bol, outer_loop, entry, dom_depth(entry));
-  IfNode* iff = new (C, 2) IfNode(entry, bol, PROB_MAX, COUNT_UNKNOWN);
+  IfNode* iff = new (C) IfNode(entry, bol, PROB_MAX, COUNT_UNKNOWN);
   register_node(iff, outer_loop, entry, dom_depth(entry));
-  ProjNode* iffast = new (C, 1) IfTrueNode(iff);
+  ProjNode* iffast = new (C) IfTrueNode(iff);
   register_node(iffast, outer_loop, iff, dom_depth(iff));
-  ProjNode* ifslow = new (C, 1) IfFalseNode(iff);
+  ProjNode* ifslow = new (C) IfFalseNode(iff);
   register_node(ifslow, outer_loop, iff, dom_depth(iff));
 
   // Clone the loop body.  The clone becomes the fast loop.  The
@@ -249,18 +242,14 @@ ProjNode* PhaseIdealLoop::create_slow_version_of_loop(IdealLoopTree *loop,
 
   // Fast (true) control
   Node* iffast_pred = clone_loop_predicates(entry, iffast, !counted_loop);
-  _igvn.hash_delete(head);
-  head->set_req(LoopNode::EntryControl, iffast_pred);
+  _igvn.replace_input_of(head, LoopNode::EntryControl, iffast_pred);
   set_idom(head, iffast_pred, dom_depth(head));
-  _igvn._worklist.push(head);
 
   // Slow (false) control
   Node* ifslow_pred = clone_loop_predicates(entry, ifslow, !counted_loop);
   LoopNode* slow_head = old_new[head->_idx]->as_Loop();
-  _igvn.hash_delete(slow_head);
-  slow_head->set_req(LoopNode::EntryControl, ifslow_pred);
+  _igvn.replace_input_of(slow_head, LoopNode::EntryControl, ifslow_pred);
   set_idom(slow_head, ifslow_pred, dom_depth(slow_head));
-  _igvn._worklist.push(slow_head);
 
   recompute_dom_depth();
 

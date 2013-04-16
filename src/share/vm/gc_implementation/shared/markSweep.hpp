@@ -36,6 +36,8 @@
 
 class ReferenceProcessor;
 class DataLayout;
+class SerialOldTracer;
+class STWGCTimer;
 
 // MarkSweep takes care of global mark-compact garbage collection for a
 // GenCollectedHeap using a four-phase pointer forwarding algorithm.  All
@@ -122,22 +124,25 @@ class MarkSweep : AllStatic {
   //
  protected:
   // Traversal stacks used during phase1
-  static Stack<oop>                      _marking_stack;
-  static Stack<ObjArrayTask>             _objarray_stack;
+  static Stack<oop, mtGC>                      _marking_stack;
+  static Stack<ObjArrayTask, mtGC>             _objarray_stack;
   // Stack for live klasses to revisit at end of marking phase
-  static Stack<Klass*>                   _revisit_klass_stack;
+  static Stack<Klass*, mtGC>                   _revisit_klass_stack;
   // Set (stack) of MDO's to revisit at end of marking phase
-  static Stack<DataLayout*>              _revisit_mdo_stack;
+  static Stack<DataLayout*, mtGC>              _revisit_mdo_stack;
 
   // Space for storing/restoring mark word
-  static Stack<markOop>                  _preserved_mark_stack;
-  static Stack<oop>                      _preserved_oop_stack;
+  static Stack<markOop, mtGC>                  _preserved_mark_stack;
+  static Stack<oop, mtGC>                      _preserved_oop_stack;
   static size_t                          _preserved_count;
   static size_t                          _preserved_count_max;
   static PreservedMark*                  _preserved_marks;
 
   // Reference processing (used in ...follow_contents)
   static ReferenceProcessor*             _ref_processor;
+
+  static STWGCTimer*                     _gc_timer;
+  static SerialOldTracer*                _gc_tracer;
 
 #ifdef VALIDATE_MARK_SWEEP
   static GrowableArray<void*>*           _root_refs_stack;
@@ -191,6 +196,9 @@ class MarkSweep : AllStatic {
 
   // Reference Processing
   static ReferenceProcessor* const ref_processor() { return _ref_processor; }
+
+  static STWGCTimer* gc_timer() { return _gc_timer; }
+  static SerialOldTracer* gc_tracer() { return _gc_tracer; }
 
   // Call backs for marking
   static void mark_object(oop obj);

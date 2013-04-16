@@ -504,7 +504,7 @@ void objArrayKlass::oop_print_on(oop obj, outputStream* st) {
   }
   int remaining = oa->length() - print_len;
   if (remaining > 0) {
-    tty->print_cr(" - <%d more elements, increase MaxElementPrintSize to print>", remaining);
+    st->print_cr(" - <%d more elements, increase MaxElementPrintSize to print>", remaining);
   }
 }
 
@@ -545,10 +545,3 @@ void objArrayKlass::oop_verify_on(oop obj, outputStream* st) {
     guarantee(oa->obj_at(index)->is_oop_or_null(), "should be oop");
   }
 }
-
-void objArrayKlass::oop_verify_old_oop(oop obj, oop* p, bool allow_dirty) {
-  /* $$$ move into remembered set verification?
-  RememberedSet::verify_old_oop(obj, p, allow_dirty, true);
-  */
-}
-void objArrayKlass::oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty) {}

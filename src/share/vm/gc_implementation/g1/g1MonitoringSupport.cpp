@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,9 @@ G1YoungGenerationCounters::G1YoungGenerationCounters(G1MonitoringSupport* g1mm,
                G1MonitoringSupport::pad_capacity(0, 3) /* min_capacity */,
                G1MonitoringSupport::pad_capacity(g1mm->young_gen_max(), 3),
                G1MonitoringSupport::pad_capacity(0, 3) /* curr_capacity */) {
-  update_all();
+  if (UsePerfData) {
+    update_all();
+  }
 }
 
 G1OldGenerationCounters::G1OldGenerationCounters(G1MonitoringSupport* g1mm,
@@ -53,7 +55,9 @@ G1OldGenerationCounters::G1OldGenerationCounters(G1MonitoringSupport* g1mm,
                G1MonitoringSupport::pad_capacity(0) /* min_capacity */,
                G1MonitoringSupport::pad_capacity(g1mm->old_gen_max()),
                G1MonitoringSupport::pad_capacity(0) /* curr_capacity */) {
-  update_all();
+  if (UsePerfData) {
+    update_all();
+  }
 }
 
 void G1YoungGenerationCounters::update_all() {
@@ -149,10 +153,6 @@ G1MonitoringSupport::G1MonitoringSupport(G1CollectedHeap* g1h) :
     pad_capacity(0) /* max_capacity */,
     pad_capacity(0) /* init_capacity */,
     _young_collection_counters);
-  // Given that this survivor space is not used, we update it here
-  // once to reflect that its used space is 0 so that we don't have to
-  // worry about updating it again later.
-  _from_counters->update_used(0);
 
   //  name "generation.0.space.2"
   // See _old_space_counters for additional counters
@@ -160,6 +160,13 @@ G1MonitoringSupport::G1MonitoringSupport(G1CollectedHeap* g1h) :
     pad_capacity(overall_reserved()) /* max_capacity */,
     pad_capacity(survivor_space_committed()) /* init_capacity */,
     _young_collection_counters);
+
+  if (UsePerfData) {
+    // Given that this survivor space is not used, we update it here
+    // once to reflect that its used space is 0 so that we don't have to
+    // worry about updating it again later.
+    _from_counters->update_used(0);
+  }
 }
 
 void G1MonitoringSupport::recalculate_sizes() {
@@ -170,19 +177,19 @@ void G1MonitoringSupport::recalculate_sizes() {
   // values we read here are possible (i.e., at a STW phase at the end
   // of a GC).
 
-  size_t young_list_length = g1->young_list()->length();
-  size_t survivor_list_length = g1->g1_policy()->recorded_survivor_regions();
+  uint young_list_length = g1->young_list()->length();
+  uint survivor_list_length = g1->g1_policy()->recorded_survivor_regions();
   assert(young_list_length >= survivor_list_length, "invariant");
-  size_t eden_list_length = young_list_length - survivor_list_length;
+  uint eden_list_length = young_list_length - survivor_list_length;
   // Max length includes any potential extensions to the young gen
   // we'll do when the GC locker is active.
-  size_t young_list_max_length = g1->g1_policy()->young_list_max_length();
+  uint young_list_max_length = g1->g1_policy()->young_list_max_length();
   assert(young_list_max_length >= survivor_list_length, "invariant");
-  size_t eden_list_max_length = young_list_max_length - survivor_list_length;
+  uint eden_list_max_length = young_list_max_length - survivor_list_length;
 
   _overall_used = g1->used_unlocked();
-  _eden_used = eden_list_length * HeapRegion::GrainBytes;
-  _survivor_used = survivor_list_length * HeapRegion::GrainBytes;
+  _eden_used = (size_t) eden_list_length * HeapRegion::GrainBytes;
+  _survivor_used = (size_t) survivor_list_length * HeapRegion::GrainBytes;
   _young_region_num = young_list_length;
   _old_used = subtract_up_to_zero(_overall_used, _eden_used + _survivor_used);
 
@@ -200,7 +207,7 @@ void G1MonitoringSupport::recalculate_sizes() {
   committed -= _survivor_committed + _old_committed;
 
   // Next, calculate and remove the committed size for the eden.
-  _eden_committed = eden_list_max_length * HeapRegion::GrainBytes;
+  _eden_committed = (size_t) eden_list_max_length * HeapRegion::GrainBytes;
   // Somewhat defensive: be robust in case there are inaccuracies in
   // the calculations
   _eden_committed = MIN2(_eden_committed, committed);
@@ -230,10 +237,10 @@ void G1MonitoringSupport::recalculate_eden_size() {
   // When a new eden region is allocated, only the eden_used size is
   // affected (since we have recalculated everything else at the last GC).
 
-  size_t young_region_num = g1h()->young_list()->length();
+  uint young_region_num = g1h()->young_list()->length();
   if (young_region_num > _young_region_num) {
-    size_t diff = young_region_num - _young_region_num;
-    _eden_used += diff * HeapRegion::GrainBytes;
+    uint diff = young_region_num - _young_region_num;
+    _eden_used += (size_t) diff * HeapRegion::GrainBytes;
     // Somewhat defensive: cap the eden used size to make sure it
     // never exceeds the committed size.
     _eden_used = MIN2(_eden_used, _eden_committed);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -237,8 +237,9 @@ void outputStream::date_stamp(bool guard,
   return;
 }
 
-void outputStream::indent() {
+outputStream& outputStream::indent() {
   while (_position < _indentation) sp();
+  return *this;
 }
 
 void outputStream::print_jlong(jlong value) {
@@ -249,6 +250,47 @@ void outputStream::print_jlong(jlong value) {
 void outputStream::print_julong(julong value) {
   // N.B. Same as UINT64_FORMAT
   print(os::julong_format_specifier(), value);
+}
+
+/**
+ * This prints out hex data in a 'windbg' or 'xxd' form, where each line is:
+ *   <hex-address>: 8 * <hex-halfword> <ascii translation (optional)>
+ * example:
+ * 0000000: 7f44 4f46 0102 0102 0000 0000 0000 0000  .DOF............
+ * 0000010: 0000 0000 0000 0040 0000 0020 0000 0005  .......@... ....
+ * 0000020: 0000 0000 0000 0040 0000 0000 0000 015d  .......@.......]
+ * ...
+ *
+ * indent is applied to each line.  Ends with a CR.
+ */
+void outputStream::print_data(void* data, size_t len, bool with_ascii) {
+  size_t limit = (len + 16) / 16 * 16;
+  for (size_t i = 0; i < limit; ++i) {
+    if (i % 16 == 0) {
+      indent().print("%07x:", i);
+    }
+    if (i % 2 == 0) {
+      print(" ");
+    }
+    if (i < len) {
+      print("%02x", ((unsigned char*)data)[i]);
+    } else {
+      print("  ");
+    }
+    if ((i + 1) % 16 == 0) {
+      if (with_ascii) {
+        print("  ");
+        for (size_t j = 0; j < 16; ++j) {
+          size_t idx = i + j - 15;
+          if (idx < len) {
+            char c = ((char*)data)[idx];
+            print("%c", c >= 32 && c <= 126 ? c : '.');
+          }
+        }
+      }
+      print_cr("");
+    }
+  }
 }
 
 stringStream::stringStream(size_t initial_size) : outputStream() {
@@ -384,15 +426,15 @@ rotatingFileStream::~rotatingFileStream() {
   if (_file != NULL) {
     if (_need_close) fclose(_file);
     _file      = NULL;
-    FREE_C_HEAP_ARRAY(char, _file_name);
+    FREE_C_HEAP_ARRAY(char, _file_name, mtInternal);
     _file_name = NULL;
   }
 }
 
 rotatingFileStream::rotatingFileStream(const char* file_name) {
   _cur_file_num = 0;
-  _bytes_writen = 0L;
-  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10);
+  _bytes_written = 0L;
+  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10, mtInternal);
   jio_snprintf(_file_name, strlen(file_name)+10, "%s.%d", file_name, _cur_file_num);
   _file = fopen(_file_name, "w");
   _need_close = true;
@@ -400,18 +442,17 @@ rotatingFileStream::rotatingFileStream(const char* file_name) {
 
 rotatingFileStream::rotatingFileStream(const char* file_name, const char* opentype) {
   _cur_file_num = 0;
-  _bytes_writen = 0L;
-  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10);
+  _bytes_written = 0L;
+  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10, mtInternal);
   jio_snprintf(_file_name, strlen(file_name)+10, "%s.%d", file_name, _cur_file_num);
   _file = fopen(_file_name, opentype);
   _need_close = true;
 }
 
 void rotatingFileStream::write(const char* s, size_t len) {
-  if (_file != NULL)  {
-    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+  if (_file != NULL) {
     size_t count = fwrite(s, 1, len, _file);
-    Atomic::add((jlong)count, &_bytes_writen);
+    _bytes_written += count;
   }
   update_position(s, len);
 }
@@ -425,7 +466,10 @@ void rotatingFileStream::write(const char* s, size_t len) {
 // concurrent GC threads to run parallel with VMThread at safepoint, write and rotate_log
 // must be synchronized.
 void rotatingFileStream::rotate_log() {
-  if (_bytes_writen < (jlong)GCLogFileSize) return;
+  if (_bytes_written < (jlong)GCLogFileSize) {
+    return;
+  }
+
 #ifdef ASSERT
   Thread *thread = Thread::current();
   assert(thread == NULL ||
@@ -435,7 +479,7 @@ void rotatingFileStream::rotate_log() {
   if (NumberOfGCLogFiles == 1) {
     // rotate in same file
     rewind();
-    _bytes_writen = 0L;
+    _bytes_written = 0L;
     return;
   }
 
@@ -451,7 +495,7 @@ void rotatingFileStream::rotate_log() {
   }
   _file = fopen(_file_name, "w");
   if (_file != NULL) {
-    _bytes_writen = 0L;
+    _bytes_written = 0L;
     _need_close = true;
   } else {
     tty->print_cr("failed to open rotation log file %s due to %s\n",
@@ -524,7 +568,7 @@ static const char* make_log_name(const char* log_name, const char* force_directo
   }
 
   // Create big enough buffer.
-  char *buf = NEW_C_HEAP_ARRAY(char, buffer_length);
+  char *buf = NEW_C_HEAP_ARRAY(char, buffer_length, mtInternal);
 
   strcpy(buf, "");
   if (force_directory != NULL) {
@@ -549,7 +593,7 @@ void defaultStream::init_log() {
   // %%% Need a MutexLocker?
   const char* log_name = LogFile != NULL ? LogFile : "hotspot.log";
   const char* try_name = make_log_name(log_name, NULL);
-  fileStream* file = new(ResourceObj::C_HEAP) fileStream(try_name);
+  fileStream* file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
   if (!file->is_open()) {
     // Try again to open the file.
     char warnbuf[O_BUFLEN*2];
@@ -557,18 +601,18 @@ void defaultStream::init_log() {
                  "Warning:  Cannot open log file: %s\n", try_name);
     // Note:  This feature is for maintainer use only.  No need for L10N.
     jio_print(warnbuf);
-    FREE_C_HEAP_ARRAY(char, try_name);
+    FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
     try_name = make_log_name("hs_pid%p.log", os::get_temp_directory());
     jio_snprintf(warnbuf, sizeof(warnbuf),
                  "Warning:  Forcing option -XX:LogFile=%s\n", try_name);
     jio_print(warnbuf);
     delete file;
-    file = new(ResourceObj::C_HEAP) fileStream(try_name);
-    FREE_C_HEAP_ARRAY(char, try_name);
+    file = new(ResourceObj::C_HEAP, mtInternal) fileStream(try_name);
+    FREE_C_HEAP_ARRAY(char, try_name, mtInternal);
   }
   if (file->is_open()) {
     _log_file = file;
-    xmlStream* xs = new(ResourceObj::C_HEAP) xmlStream(file);
+    xmlStream* xs = new(ResourceObj::C_HEAP, mtInternal) xmlStream(file);
     _outer_xmlStream = xs;
     if (this == tty)  xtty = xs;
     // Write XML header.
@@ -717,7 +761,7 @@ intx defaultStream::hold(intx writer_id) {
     if (has_log) {
       _log_file->bol();
       // output a hint where this output is coming from:
-      _log_file->print_cr("<writer thread='"INTX_FORMAT"'/>", writer_id);
+      _log_file->print_cr("<writer thread='" UINTX_FORMAT "'/>", writer_id);
     }
     _last_writer = writer_id;
   }
@@ -815,7 +859,7 @@ void ttyLocker::break_tty_lock_for_safepoint(intx holder) {
 
 void ostream_init() {
   if (defaultStream::instance == NULL) {
-    defaultStream::instance = new(ResourceObj::C_HEAP) defaultStream();
+    defaultStream::instance = new(ResourceObj::C_HEAP, mtInternal) defaultStream();
     tty = defaultStream::instance;
 
     // We want to ensure that time stamps in GC logs consider time 0
@@ -833,9 +877,9 @@ void ostream_init_log() {
   gclog_or_tty = tty; // default to tty
   if (Arguments::gc_log_filename() != NULL) {
     fileStream * gclog  = UseGCLogFileRotation ?
-                          new(ResourceObj::C_HEAP)
+                          new(ResourceObj::C_HEAP, mtInternal)
                              rotatingFileStream(Arguments::gc_log_filename()) :
-                          new(ResourceObj::C_HEAP)
+                          new(ResourceObj::C_HEAP, mtInternal)
                              fileStream(Arguments::gc_log_filename());
     if (gclog->is_open()) {
       // now we update the time stamp of the GC log to be synced up
@@ -940,7 +984,7 @@ void staticBufferStream::vprint_cr(const char* format, va_list argptr) {
 
 bufferedStream::bufferedStream(size_t initial_size, size_t bufmax) : outputStream() {
   buffer_length = initial_size;
-  buffer        = NEW_C_HEAP_ARRAY(char, buffer_length);
+  buffer        = NEW_C_HEAP_ARRAY(char, buffer_length, mtInternal);
   buffer_pos    = 0;
   buffer_fixed  = false;
   buffer_max    = bufmax;
@@ -971,7 +1015,7 @@ void bufferedStream::write(const char* s, size_t len) {
       if (end < buffer_length * 2) {
         end = buffer_length * 2;
       }
-      buffer = REALLOC_C_HEAP_ARRAY(char, buffer, end);
+      buffer = REALLOC_C_HEAP_ARRAY(char, buffer, end, mtInternal);
       buffer_length = end;
     }
   }
@@ -989,7 +1033,7 @@ char* bufferedStream::as_string() {
 
 bufferedStream::~bufferedStream() {
   if (!buffer_fixed) {
-    FREE_C_HEAP_ARRAY(char, buffer);
+    FREE_C_HEAP_ARRAY(char, buffer, mtInternal);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,7 +126,7 @@ public:
   virtual uint ideal_reg() const { return NotAMachineReg; }
   virtual uint match_edge(uint idx) const;
 #ifndef PRODUCT
-  virtual void dump_req() const;
+  virtual void dump_req(outputStream *st = tty) const;
 #endif
 };
 
@@ -147,7 +147,7 @@ class RethrowNode : public Node {
   virtual uint match_edge(uint idx) const;
   virtual uint ideal_reg() const { return NotAMachineReg; }
 #ifndef PRODUCT
-  virtual void dump_req() const;
+  virtual void dump_req(outputStream *st = tty) const;
 #endif
 };
 
@@ -197,7 +197,7 @@ public:
 
 private:
   JVMState*         _caller;    // List pointer for forming scope chains
-  uint              _depth;     // One mroe than caller depth, or one.
+  uint              _depth;     // One more than caller depth, or one.
   uint              _locoff;    // Offset to locals in input edge mapping
   uint              _stkoff;    // Offset to stack in input edge mapping
   uint              _monoff;    // Offset to monitors in input edge mapping
@@ -223,6 +223,8 @@ public:
   JVMState(int stack_size);  // root state; has a null method
 
   // Access functions for the JVM
+  // ... --|--- loc ---|--- stk ---|--- arg ---|--- mon ---|--- scl ---|
+  //       \ locoff    \ stkoff    \ argoff    \ monoff    \ scloff    \ endoff
   uint              locoff() const { return _locoff; }
   uint              stkoff() const { return _stkoff; }
   uint              argoff() const { return _stkoff + _sp; }
@@ -231,15 +233,16 @@ public:
   uint              endoff() const { return _endoff; }
   uint              oopoff() const { return debug_end(); }
 
-  int            loc_size() const { return _stkoff - _locoff; }
-  int            stk_size() const { return _monoff - _stkoff; }
-  int            mon_size() const { return _scloff - _monoff; }
-  int            scl_size() const { return _endoff - _scloff; }
+  int            loc_size() const { return stkoff() - locoff(); }
+  int            stk_size() const { return monoff() - stkoff(); }
+  int            arg_size() const { return monoff() - argoff(); }
+  int            mon_size() const { return scloff() - monoff(); }
+  int            scl_size() const { return endoff() - scloff(); }
 
-  bool        is_loc(uint i) const { return i >= _locoff && i < _stkoff; }
-  bool        is_stk(uint i) const { return i >= _stkoff && i < _monoff; }
-  bool        is_mon(uint i) const { return i >= _monoff && i < _scloff; }
-  bool        is_scl(uint i) const { return i >= _scloff && i < _endoff; }
+  bool        is_loc(uint i) const { return locoff() <= i && i < stkoff(); }
+  bool        is_stk(uint i) const { return stkoff() <= i && i < monoff(); }
+  bool        is_mon(uint i) const { return monoff() <= i && i < scloff(); }
+  bool        is_scl(uint i) const { return scloff() <= i && i < endoff(); }
 
   uint                      sp() const { return _sp; }
   int                      bci() const { return _bci; }
@@ -341,17 +344,26 @@ public:
   OopMap *oop_map() const { return _oop_map; }
   void set_oop_map(OopMap *om) { _oop_map = om; }
 
+ private:
+  void verify_input(JVMState* jvms, uint idx) const {
+    assert(verify_jvms(jvms), "jvms must match");
+    Node* n = in(idx);
+    assert((!n->bottom_type()->isa_long() && !n->bottom_type()->isa_double()) ||
+           in(idx + 1)->is_top(), "2nd half of long/double");
+  }
+
+ public:
   // Functionality from old debug nodes which has changed
   Node *local(JVMState* jvms, uint idx) const {
-    assert(verify_jvms(jvms), "jvms must match");
+    verify_input(jvms, jvms->locoff() + idx);
     return in(jvms->locoff() + idx);
   }
   Node *stack(JVMState* jvms, uint idx) const {
-    assert(verify_jvms(jvms), "jvms must match");
+    verify_input(jvms, jvms->stkoff() + idx);
     return in(jvms->stkoff() + idx);
   }
   Node *argument(JVMState* jvms, uint idx) const {
-    assert(verify_jvms(jvms), "jvms must match");
+    verify_input(jvms, jvms->argoff() + idx);
     return in(jvms->argoff() + idx);
   }
   Node *monitor_box(JVMState* jvms, uint idx) const {
@@ -495,6 +507,7 @@ public:
   Node* exobj;
 };
 
+class CallGenerator;
 
 //------------------------------CallNode---------------------------------------
 // Call nodes now subsume the function of debug nodes at callsites, so they
@@ -505,26 +518,31 @@ public:
   const TypeFunc *_tf;        // Function type
   address      _entry_point;  // Address of method being called
   float        _cnt;          // Estimate of number of times called
+  CallGenerator* _generator;  // corresponding CallGenerator for some late inline calls
 
   CallNode(const TypeFunc* tf, address addr, const TypePtr* adr_type)
     : SafePointNode(tf->domain()->cnt(), NULL, adr_type),
       _tf(tf),
       _entry_point(addr),
-      _cnt(COUNT_UNKNOWN)
+      _cnt(COUNT_UNKNOWN),
+      _generator(NULL)
   {
     init_class_id(Class_Call);
   }
 
-  const TypeFunc* tf()        const { return _tf; }
-  const address entry_point() const { return _entry_point; }
-  const float   cnt()         const { return _cnt; }
+  const TypeFunc* tf()         const { return _tf; }
+  const address  entry_point() const { return _entry_point; }
+  const float    cnt()         const { return _cnt; }
+  CallGenerator* generator()   const { return _generator; }
 
-  void set_tf(const TypeFunc* tf) { _tf = tf; }
-  void set_entry_point(address p) { _entry_point = p; }
-  void set_cnt(float c)           { _cnt = c; }
+  void set_tf(const TypeFunc* tf)       { _tf = tf; }
+  void set_entry_point(address p)       { _entry_point = p; }
+  void set_cnt(float c)                 { _cnt = c; }
+  void set_generator(CallGenerator* cg) { _generator = cg; }
 
   virtual const Type *bottom_type() const;
   virtual const Type *Value( PhaseTransform *phase ) const;
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
   virtual Node *Identity( PhaseTransform *phase ) { return this; }
   virtual uint        cmp( const Node &n ) const;
   virtual uint        size_of() const = 0;
@@ -546,6 +564,12 @@ public:
   // or result projection is there are several CheckCastPP
   // or returns NULL if there is no one.
   Node *result_cast();
+  // Does this node returns pointer?
+  bool returns_pointer() const {
+    const TypeTuple *r = tf()->range();
+    return (r->cnt() > TypeFunc::Parms &&
+            r->field_at(TypeFunc::Parms)->isa_ptr());
+  }
 
   // Collect all the interesting edges from a call for use in
   // replacing the call by something else.  Used by macro expansion
@@ -555,7 +579,7 @@ public:
   virtual uint match_edge(uint idx) const;
 
 #ifndef PRODUCT
-  virtual void        dump_req()  const;
+  virtual void        dump_req(outputStream *st = tty) const;
   virtual void        dump_spec(outputStream *st) const;
 #endif
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -764,7 +764,7 @@ jint universe_init() {
 
   FileMapInfo* mapinfo = NULL;
   if (UseSharedSpaces) {
-    mapinfo = NEW_C_HEAP_OBJ(FileMapInfo);
+    mapinfo = NEW_C_HEAP_OBJ(FileMapInfo, mtInternal);
     memset(mapinfo, 0, sizeof(FileMapInfo));
 
     // Open the shared archive file, read and validate the header. If
@@ -946,12 +946,14 @@ jint Universe::initialize_heap() {
       Universe::set_narrow_oop_base(Universe::heap()->base() - os::vm_page_size());
       Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
       if (verbose) {
-        tty->print(", Compressed Oops with base: "PTR_FORMAT, Universe::narrow_oop_base());
+        tty->print(", %s: "PTR_FORMAT,
+            narrow_oop_mode_to_string(HeapBasedNarrowOop),
+            Universe::narrow_oop_base());
       }
     } else {
       Universe::set_narrow_oop_base(0);
       if (verbose) {
-        tty->print(", zero based Compressed Oops");
+        tty->print(", %s", narrow_oop_mode_to_string(ZeroBasedNarrowOop));
       }
 #ifdef _WIN64
       if (!Universe::narrow_oop_use_implicit_null_checks()) {
@@ -966,7 +968,7 @@ jint Universe::initialize_heap() {
       } else {
         Universe::set_narrow_oop_shift(0);
         if (verbose) {
-          tty->print(", 32-bits Oops");
+          tty->print(", %s", narrow_oop_mode_to_string(UnscaledNarrowOop));
         }
       }
     }
@@ -999,6 +1001,33 @@ void Universe::update_heap_info_at_gc() {
   _heap_used_at_last_gc     = heap()->used();
 }
 
+
+const char* Universe::narrow_oop_mode_to_string(Universe::NARROW_OOP_MODE mode) {
+  switch (mode) {
+    case UnscaledNarrowOop:
+      return "32-bits Oops";
+    case ZeroBasedNarrowOop:
+      return "zero based Compressed Oops";
+    case HeapBasedNarrowOop:
+      return "Compressed Oops with base";
+  }
+
+  ShouldNotReachHere();
+  return "";
+}
+
+
+Universe::NARROW_OOP_MODE Universe::narrow_oop_mode() {
+  if (narrow_oop_base() != 0) {
+    return HeapBasedNarrowOop;
+  }
+
+  if (narrow_oop_shift() != 0) {
+    return ZeroBasedNarrowOop;
+  }
+
+  return UnscaledNarrowOop;
+}
 
 
 void universe2_init() {
@@ -1326,7 +1355,7 @@ void Universe::print_heap_after_gc(outputStream* st, bool ignore_extended) {
   st->print_cr("}");
 }
 
-void Universe::verify(bool allow_dirty, bool silent, VerifyOption option) {
+void Universe::verify(bool silent, VerifyOption option) {
   if (SharedSkipVerify) {
     return;
   }
@@ -1350,7 +1379,7 @@ void Universe::verify(bool allow_dirty, bool silent, VerifyOption option) {
   if (!silent) gclog_or_tty->print("[Verifying ");
   if (!silent) gclog_or_tty->print("threads ");
   Threads::verify();
-  heap()->verify(allow_dirty, silent, option);
+  heap()->verify(silent, option);
 
   if (!silent) gclog_or_tty->print("syms ");
   SymbolTable::verify();
@@ -1546,7 +1575,7 @@ void ActiveMethodOopsCache::add_previous_version(const methodOop method) {
     // This is the first previous version so make some space.
     // Start with 2 elements under the assumption that the class
     // won't be redefined much.
-    _prev_methods = new (ResourceObj::C_HEAP) GrowableArray<jweak>(2, true);
+    _prev_methods = new (ResourceObj::C_HEAP, mtClass) GrowableArray<jweak>(2, true);
   }
 
   // RC_TRACE macro has an embedded ResourceMark

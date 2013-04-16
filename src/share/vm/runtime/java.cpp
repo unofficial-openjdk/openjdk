@@ -57,8 +57,9 @@
 #include "runtime/task.hpp"
 #include "runtime/timer.hpp"
 #include "runtime/vm_operations.hpp"
+#include "services/memReporter.hpp"
+#include "services/memTracker.hpp"
 #include "trace/tracing.hpp"
-#include "trace/traceEventTypes.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/histogram.hpp"
@@ -356,6 +357,15 @@ void print_statistics() {
   }
 #endif // COMPILER2
 #endif // ENABLE_ZAP_DEAD_LOCALS
+  // Native memory tracking data
+  if (PrintNMTStatistics) {
+    if (MemTracker::is_on()) {
+      BaselineTTYOutputer outputer(tty);
+      MemTracker::print_memory_usage(outputer, K, false);
+    } else {
+      tty->print_cr(MemTracker::reason());
+    }
+  }
 }
 
 #else // PRODUCT MODE STATISTICS
@@ -373,6 +383,16 @@ void print_statistics() {
   if (PrintBiasedLockingStatistics) {
     BiasedLocking::print_counters();
   }
+
+  // Native memory tracking data
+  if (PrintNMTStatistics) {
+    if (MemTracker::is_on()) {
+      BaselineTTYOutputer outputer(tty);
+      MemTracker::print_memory_usage(outputer, K, false);
+    } else {
+      tty->print_cr(MemTracker::reason());
+    }
+  }
 }
 
 #endif
@@ -384,7 +404,7 @@ extern "C" {
     typedef void (*__exit_proc)(void);
 }
 
-class ExitProc : public CHeapObj {
+class ExitProc : public CHeapObj<mtInternal> {
  private:
   __exit_proc _proc;
   // void (*_proc)(void);
@@ -505,9 +525,12 @@ void before_exit(JavaThread * thread) {
     JvmtiExport::post_thread_end(thread);
   }
 
-  EVENT_BEGIN(TraceEventThreadEnd, event);
-  EVENT_COMMIT(event,
-      EVENT_SET(event, javalangthread, java_lang_Thread::thread_id(thread->threadObj())));
+
+  EventThreadEnd event;
+  if (event.should_commit()) {
+      event.set_javalangthread(java_lang_Thread::thread_id(thread->threadObj()));
+      event.commit();
+  }
 
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution
@@ -525,6 +548,10 @@ void before_exit(JavaThread * thread) {
     _before_exit_status = BEFORE_EXIT_DONE;
     BeforeExit_lock->notify_all();
   }
+
+  // Shutdown NMT before exit. Otherwise,
+  // it will run into trouble when system destroys static variables.
+  MemTracker::shutdown(MemTracker::NMT_normal);
 
   #undef BEFORE_EXIT_NOT_RUN
   #undef BEFORE_EXIT_RUNNING
@@ -660,6 +687,8 @@ void vm_shutdown_during_initialization(const char* error, const char* message) {
 }
 
 JDK_Version JDK_Version::_current;
+const char* JDK_Version::_runtime_name;
+const char* JDK_Version::_runtime_version;
 
 void JDK_Version::initialize() {
   jdk_version_info info;

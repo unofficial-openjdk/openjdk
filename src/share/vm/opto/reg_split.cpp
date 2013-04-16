@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,12 +74,13 @@ Node *PhaseChaitin::get_spillcopy_wide( Node *def, Node *use, uint uidx ) {
   const RegMask *w_i_mask = w_mask->overlap( *i_mask ) ? w_mask : i_mask;
   const RegMask *w_o_mask;
 
+  int num_regs = RegMask::num_registers(ireg);
+  bool is_vect = RegMask::is_vector(ireg);
   if( w_mask->overlap( *o_mask ) && // Overlap AND
-      ((ireg != Op_RegL && ireg != Op_RegD // Single use or aligned
-#ifdef _LP64
-        && ireg != Op_RegP
-#endif
-         ) || o_mask->is_aligned_Pairs()) ) {
+      ((num_regs == 1) // Single use or aligned
+        ||  is_vect    // or vector
+        || !is_vect && o_mask->is_aligned_pairs()) ) {
+    assert(!is_vect || o_mask->is_aligned_sets(num_regs), "vectors are aligned");
     // Don't come here for mis-aligned doubles
     w_o_mask = w_mask;
   } else {                      // wide ideal mask does not overlap with o_mask
@@ -400,15 +401,17 @@ bool PhaseChaitin::is_high_pressure( Block *b, LRG *lrg, uint insidx ) {
   // CNC - Turned off 7/8/99, causes too much spilling
   // if( lrg->_is_bound ) return false;
 
+  // Use float pressure numbers for vectors.
+  bool is_float_or_vector = lrg->_is_float || lrg->_is_vector;
   // Not yet reached the high-pressure cutoff point, so low pressure
-  uint hrp_idx = lrg->_is_float ? b->_fhrp_index : b->_ihrp_index;
+  uint hrp_idx = is_float_or_vector ? b->_fhrp_index : b->_ihrp_index;
   if( insidx < hrp_idx ) return false;
   // Register pressure for the block as a whole depends on reg class
-  int block_pres = lrg->_is_float ? b->_freg_pressure : b->_reg_pressure;
+  int block_pres = is_float_or_vector ? b->_freg_pressure : b->_reg_pressure;
   // Bound live ranges will split at the binding points first;
   // Intermediate splits should assume the live range's register set
   // got "freed up" and that num_regs will become INT_PRESSURE.
-  int bound_pres = lrg->_is_float ? FLOATPRESSURE : INTPRESSURE;
+  int bound_pres = is_float_or_vector ? FLOATPRESSURE : INTPRESSURE;
   // Effective register pressure limit.
   int lrg_pres = (lrg->get_invalid_mask_size() > lrg->num_regs())
     ? (lrg->get_invalid_mask_size() >> (lrg->num_regs()-1)) : bound_pres;
@@ -446,8 +449,11 @@ bool PhaseChaitin::prompt_use( Block *b, uint lidx ) {
 // USES: If USE is in HRP, split at use to leave main LRG on stack.
 //       Else, hoist LRG back up to register only (ie - split is also DEF)
 // We will compute a new maxlrg as we go
-uint PhaseChaitin::Split( uint maxlrg ) {
+uint PhaseChaitin::Split(uint maxlrg, ResourceArea* split_arena) {
   NOT_PRODUCT( Compile::TracePhase t3("regAllocSplit", &_t_regAllocSplit, TimeCompiler); )
+
+  // Free thread local resources used by this method on exit.
+  ResourceMark rm(split_arena);
 
   uint                 bidx, pidx, slidx, insidx, inpidx, twoidx;
   uint                 non_phi = 1, spill_cnt = 0;
@@ -458,14 +464,17 @@ uint PhaseChaitin::Split( uint maxlrg ) {
   bool                 u1, u2, u3;
   Block               *b, *pred;
   PhiNode             *phi;
-  GrowableArray<uint>  lidxs;
+  GrowableArray<uint>  lidxs(split_arena, _maxlrg, 0, 0);
 
   // Array of counters to count splits per live range
-  GrowableArray<uint>  splits;
+  GrowableArray<uint>  splits(split_arena, _maxlrg, 0, 0);
+
+#define NEW_SPLIT_ARRAY(type, size)\
+  (type*) split_arena->allocate_bytes((size) * sizeof(type))
 
   //----------Setup Code----------
   // Create a convenient mapping from lrg numbers to reaches/leaves indices
-  uint *lrg2reach = NEW_RESOURCE_ARRAY( uint, _maxlrg );
+  uint *lrg2reach = NEW_SPLIT_ARRAY( uint, _maxlrg );
   // Keep track of DEFS & Phis for later passes
   defs = new Node_List();
   phis = new Node_List();
@@ -497,15 +506,15 @@ uint PhaseChaitin::Split( uint maxlrg ) {
   // a Def is UP or DOWN.  UP means that it should get a register (ie -
   // it is always in LRP regions), and DOWN means that it is probably
   // on the stack (ie - it crosses HRP regions).
-  Node ***Reaches     = NEW_RESOURCE_ARRAY( Node**, _cfg._num_blocks+1 );
-  bool  **UP          = NEW_RESOURCE_ARRAY( bool*, _cfg._num_blocks+1 );
-  Node  **debug_defs  = NEW_RESOURCE_ARRAY( Node*, spill_cnt );
-  VectorSet **UP_entry= NEW_RESOURCE_ARRAY( VectorSet*, spill_cnt );
+  Node ***Reaches     = NEW_SPLIT_ARRAY( Node**, _cfg._num_blocks+1 );
+  bool  **UP          = NEW_SPLIT_ARRAY( bool*, _cfg._num_blocks+1 );
+  Node  **debug_defs  = NEW_SPLIT_ARRAY( Node*, spill_cnt );
+  VectorSet **UP_entry= NEW_SPLIT_ARRAY( VectorSet*, spill_cnt );
 
   // Initialize Reaches & UP
   for( bidx = 0; bidx < _cfg._num_blocks+1; bidx++ ) {
-    Reaches[bidx]     = NEW_RESOURCE_ARRAY( Node*, spill_cnt );
-    UP[bidx]          = NEW_RESOURCE_ARRAY( bool, spill_cnt );
+    Reaches[bidx]     = NEW_SPLIT_ARRAY( Node*, spill_cnt );
+    UP[bidx]          = NEW_SPLIT_ARRAY( bool, spill_cnt );
     Node **Reachblock = Reaches[bidx];
     bool *UPblock     = UP[bidx];
     for( slidx = 0; slidx < spill_cnt; slidx++ ) {
@@ -514,9 +523,11 @@ uint PhaseChaitin::Split( uint maxlrg ) {
     }
   }
 
+#undef NEW_SPLIT_ARRAY
+
   // Initialize to array of empty vectorsets
   for( slidx = 0; slidx < spill_cnt; slidx++ )
-    UP_entry[slidx] = new VectorSet(Thread::current()->resource_area());
+    UP_entry[slidx] = new VectorSet(split_arena);
 
   //----------PASS 1----------
   //----------Propagation & Node Insertion Code----------
@@ -635,7 +646,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
           // create a new phi node and insert it into the block
           // type is taken from left over pointer to a predecessor
           assert(n3,"No non-NULL reaching DEF for a Phi");
-          phi = new (C, b->num_preds()) PhiNode(b->head(), n3->bottom_type());
+          phi = new (C) PhiNode(b->head(), n3->bottom_type());
           // initialize the Reaches entry for this LRG
           Reachblock[slidx] = phi;
 
@@ -736,7 +747,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
             if( i >= cnt ) {    // Found one unique input
               assert(Find_id(n) == Find_id(u), "should be the same lrg");
               n->replace_by(u); // Then replace with unique input
-              n->disconnect_inputs(NULL);
+              n->disconnect_inputs(NULL, C);
               b->_nodes.remove(insidx);
               insidx--;
               b->_ihrp_index--;
@@ -794,12 +805,15 @@ uint PhaseChaitin::Split( uint maxlrg ) {
                   if( i < n->req() ) break;
                   insert_point--;
                 }
+                uint orig_eidx = b->end_idx();
                 maxlrg = split_DEF( n1, b, insert_point, maxlrg, Reachblock, debug_defs, splits, slidx);
                 // If it wasn't split bail
                 if (!maxlrg) {
                   return 0;
                 }
-                insidx++;
+                // Spill of NULL check mem op goes into the following block.
+                if (b->end_idx() > orig_eidx)
+                  insidx++;
               }
               // This is a new DEF, so update UP
               UPblock[slidx] = false;
@@ -960,7 +974,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
             // Grab register mask info
             const RegMask &dmask = def->out_RegMask();
             const RegMask &umask = n->in_RegMask(inpidx);
-
+            bool is_vect = RegMask::is_vector(def->ideal_reg());
             assert(inpidx < oopoff, "cannot use-split oop map info");
 
             bool dup = UPblock[slidx];
@@ -972,7 +986,7 @@ uint PhaseChaitin::Split( uint maxlrg ) {
             if( !umask.is_AllStack() &&
                 (int)umask.Size() <= lrgs(useidx).num_regs() &&
                 (!def->rematerialize() ||
-                 umask.is_misaligned_Pair())) {
+                 !is_vect && umask.is_misaligned_pair())) {
               // These need a Split regardless of overlap or pressure
               // SPLIT - NO DEF - NO CISC SPILL
               maxlrg = split_USE(def,b,n,inpidx,maxlrg,dup,false, splits,slidx);
@@ -1123,10 +1137,12 @@ uint PhaseChaitin::Split( uint maxlrg ) {
         // Grab UP info for DEF
         const RegMask &dmask = n->out_RegMask();
         bool defup = dmask.is_UP();
+        int ireg = n->ideal_reg();
+        bool is_vect = RegMask::is_vector(ireg);
         // Only split at Def if this is a HRP block or bound (and spilled once)
         if( !n->rematerialize() &&
-            (((dmask.is_bound1() || dmask.is_bound2() || dmask.is_misaligned_Pair()) &&
-             (deflrg._direct_conflict || deflrg._must_spill)) ||
+            (((dmask.is_bound(ireg) || !is_vect && dmask.is_misaligned_pair()) &&
+              (deflrg._direct_conflict || deflrg._must_spill)) ||
              // Check for LRG being up in a register and we are inside a high
              // pressure area.  Spill it down immediately.
              (defup && is_high_pressure(b,&deflrg,insidx))) ) {

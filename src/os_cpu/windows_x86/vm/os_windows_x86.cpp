@@ -52,12 +52,6 @@
 #include "thread_windows.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
-#ifdef COMPILER1
-#include "c1/c1_Runtime1.hpp"
-#endif
-#ifdef COMPILER2
-#include "opto/runtime.hpp"
-#endif
 
 # include "unwind_windows_x86.hpp"
 #undef REG_SP
@@ -219,7 +213,7 @@ bool os::register_code_area(char *low, char *high) {
   return true;
 }
 
-void os::initialize_thread() {
+void os::initialize_thread(Thread* thr) {
 // Nothing to do.
 }
 
@@ -369,6 +363,26 @@ frame os::fetch_frame_from_context(void* ucVoid) {
 frame os::get_sender_for_C_frame(frame* fr) {
   return frame(fr->sender_sp(), fr->link(), fr->sender_pc());
 }
+
+#ifndef AMD64
+// Returns an estimate of the current stack pointer. Result must be guaranteed
+// to point into the calling threads stack, and be no lower than the current
+// stack pointer.
+address os::current_stack_pointer() {
+  int dummy;
+  address sp = (address)&dummy;
+  return sp;
+}
+#else
+// Returns the current stack pointer. Accurate value needed for
+// os::verify_stack_alignment().
+address os::current_stack_pointer() {
+  typedef address get_sp_func();
+  get_sp_func* func = CAST_TO_FN_PTR(get_sp_func*,
+                                     StubRoutines::x86::get_previous_sp_entry());
+  return (*func)();
+}
+#endif
 
 
 #ifndef AMD64
@@ -546,3 +560,11 @@ void os::setup_fpu() {
   __asm fldcw fpu_cntrl_word;
 #endif // !AMD64
 }
+
+#ifndef PRODUCT
+void os::verify_stack_alignment() {
+#ifdef AMD64
+  assert(((intptr_t)os::current_stack_pointer() & (StackAlignmentInBytes-1)) == 0, "incorrect stack alignment");
+#endif
+}
+#endif

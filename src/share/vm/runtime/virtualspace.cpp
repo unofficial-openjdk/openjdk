@@ -26,6 +26,7 @@
 #include "oops/markOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/virtualspace.hpp"
+#include "services/memTracker.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
 #endif
@@ -478,6 +479,10 @@ ReservedHeapSpace::ReservedHeapSpace(size_t size, size_t alignment,
                 (UseCompressedOops && (Universe::narrow_oop_base() != NULL) &&
                  Universe::narrow_oop_use_implicit_null_checks()) ?
                   lcm(os::vm_page_size(), alignment) : 0) {
+  if (base() > 0) {
+    MemTracker::record_virtual_memory_type((address)base(), mtJavaHeap);
+  }
+
   // Only reserved space for the java heap should have a noaccess_prefix
   // if using compressed oops.
   protect_noaccess_prefix(size);
@@ -493,6 +498,10 @@ ReservedHeapSpace::ReservedHeapSpace(const size_t prefix_size,
                 (UseCompressedOops && (Universe::narrow_oop_base() != NULL) &&
                  Universe::narrow_oop_use_implicit_null_checks()) ?
                   lcm(os::vm_page_size(), prefix_align) : 0) {
+  if (base() > 0) {
+    MemTracker::record_virtual_memory_type((address)base(), mtJavaHeap);
+  }
+
   protect_noaccess_prefix(prefix_size+suffix_size);
 }
 
@@ -502,6 +511,7 @@ ReservedCodeSpace::ReservedCodeSpace(size_t r_size,
                                      size_t rs_align,
                                      bool large) :
   ReservedSpace(r_size, rs_align, large, /*executable*/ true) {
+  MemTracker::record_virtual_memory_type((address)base(), mtCode);
 }
 
 // VirtualSpace

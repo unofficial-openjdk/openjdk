@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,11 @@ class   TypeLong;
 class   TypeNarrowOop;
 class   TypeAry;
 class   TypeTuple;
+class   TypeVect;
+class     TypeVectS;
+class     TypeVectD;
+class     TypeVectX;
+class     TypeVectY;
 class   TypePtr;
 class     TypeRawPtr;
 class     TypeOopPtr;
@@ -78,6 +83,10 @@ public:
 
     Tuple,                      // Method signature or object layout
     Array,                      // Array types
+    VectorS,                    //  32bit Vector types
+    VectorD,                    //  64bit Vector types
+    VectorX,                    // 128bit Vector types
+    VectorY,                    // 256bit Vector types
 
     AnyPtr,                     // Any old raw, klass, inst, or array pointer
     RawPtr,                     // Raw (non-oop) pointers
@@ -216,12 +225,16 @@ public:
   const TypeInt    *isa_int() const;             // Returns NULL if not an Int
   const TypeLong   *is_long() const;
   const TypeLong   *isa_long() const;            // Returns NULL if not a Long
+  const TypeD      *isa_double() const;          // Returns NULL if not a Double{Top,Con,Bot}
   const TypeD      *is_double_constant() const;  // Asserts it is a DoubleCon
   const TypeD      *isa_double_constant() const; // Returns NULL if not a DoubleCon
+  const TypeF      *isa_float() const;           // Returns NULL if not a Float{Top,Con,Bot}
   const TypeF      *is_float_constant() const;   // Asserts it is a FloatCon
   const TypeF      *isa_float_constant() const;  // Returns NULL if not a FloatCon
   const TypeTuple  *is_tuple() const;            // Collection of fields, NOT a pointer
   const TypeAry    *is_ary() const;              // Array, NOT array pointer
+  const TypeVect   *is_vect() const;             // Vector
+  const TypeVect   *isa_vect() const;            // Returns NULL if not a Vector
   const TypePtr    *is_ptr() const;              // Asserts it is a ptr type
   const TypePtr    *isa_ptr() const;             // Returns NULL if not ptr type
   const TypeRawPtr *isa_rawptr() const;          // NOT Java oop
@@ -572,6 +585,69 @@ public:
 #ifndef PRODUCT
   virtual void dump2( Dict &d, uint, outputStream *st  ) const; // Specialized per-Type dumping
 #endif
+};
+
+//------------------------------TypeVect---------------------------------------
+// Class of Vector Types
+class TypeVect : public Type {
+  const Type*   _elem;  // Vector's element type
+  const uint  _length;  // Elements in vector (power of 2)
+
+protected:
+  TypeVect(TYPES t, const Type* elem, uint length) : Type(t),
+    _elem(elem), _length(length) {}
+
+public:
+  const Type* element_type() const { return _elem; }
+  BasicType element_basic_type() const { return _elem->array_element_basic_type(); }
+  uint length() const { return _length; }
+  uint length_in_bytes() const {
+   return _length * type2aelembytes(element_basic_type());
+  }
+
+  virtual bool eq(const Type *t) const;
+  virtual int  hash() const;             // Type specific hashing
+  virtual bool singleton(void) const;    // TRUE if type is a singleton
+  virtual bool empty(void) const;        // TRUE if type is vacuous
+
+  static const TypeVect *make(const BasicType elem_bt, uint length) {
+    // Use bottom primitive type.
+    return make(get_const_basic_type(elem_bt), length);
+  }
+  // Used directly by Replicate nodes to construct singleton vector.
+  static const TypeVect *make(const Type* elem, uint length);
+
+  virtual const Type *xmeet( const Type *t) const;
+  virtual const Type *xdual() const;     // Compute dual right now.
+
+  static const TypeVect *VECTS;
+  static const TypeVect *VECTD;
+  static const TypeVect *VECTX;
+  static const TypeVect *VECTY;
+
+#ifndef PRODUCT
+  virtual void dump2(Dict &d, uint, outputStream *st) const; // Specialized per-Type dumping
+#endif
+};
+
+class TypeVectS : public TypeVect {
+  friend class TypeVect;
+  TypeVectS(const Type* elem, uint length) : TypeVect(VectorS, elem, length) {}
+};
+
+class TypeVectD : public TypeVect {
+  friend class TypeVect;
+  TypeVectD(const Type* elem, uint length) : TypeVect(VectorD, elem, length) {}
+};
+
+class TypeVectX : public TypeVect {
+  friend class TypeVect;
+  TypeVectX(const Type* elem, uint length) : TypeVect(VectorX, elem, length) {}
+};
+
+class TypeVectY : public TypeVect {
+  friend class TypeVect;
+  TypeVectY(const Type* elem, uint length) : TypeVect(VectorY, elem, length) {}
 };
 
 //------------------------------TypePtr----------------------------------------
@@ -1067,24 +1143,6 @@ inline double Type::getd() const {
   return ((TypeD*)this)->_d;
 }
 
-inline const TypeF *Type::is_float_constant() const {
-  assert( _base == FloatCon, "Not a Float" );
-  return (TypeF*)this;
-}
-
-inline const TypeF *Type::isa_float_constant() const {
-  return ( _base == FloatCon ? (TypeF*)this : NULL);
-}
-
-inline const TypeD *Type::is_double_constant() const {
-  assert( _base == DoubleCon, "Not a Double" );
-  return (TypeD*)this;
-}
-
-inline const TypeD *Type::isa_double_constant() const {
-  return ( _base == DoubleCon ? (TypeD*)this : NULL);
-}
-
 inline const TypeInt *Type::is_int() const {
   assert( _base == Int, "Not an Int" );
   return (TypeInt*)this;
@@ -1103,6 +1161,36 @@ inline const TypeLong *Type::isa_long() const {
   return ( _base == Long ? (TypeLong*)this : NULL);
 }
 
+inline const TypeF *Type::isa_float() const {
+  return ((_base == FloatTop ||
+           _base == FloatCon ||
+           _base == FloatBot) ? (TypeF*)this : NULL);
+}
+
+inline const TypeF *Type::is_float_constant() const {
+  assert( _base == FloatCon, "Not a Float" );
+  return (TypeF*)this;
+}
+
+inline const TypeF *Type::isa_float_constant() const {
+  return ( _base == FloatCon ? (TypeF*)this : NULL);
+}
+
+inline const TypeD *Type::isa_double() const {
+  return ((_base == DoubleTop ||
+           _base == DoubleCon ||
+           _base == DoubleBot) ? (TypeD*)this : NULL);
+}
+
+inline const TypeD *Type::is_double_constant() const {
+  assert( _base == DoubleCon, "Not a Double" );
+  return (TypeD*)this;
+}
+
+inline const TypeD *Type::isa_double_constant() const {
+  return ( _base == DoubleCon ? (TypeD*)this : NULL);
+}
+
 inline const TypeTuple *Type::is_tuple() const {
   assert( _base == Tuple, "Not a Tuple" );
   return (TypeTuple*)this;
@@ -1111,6 +1199,15 @@ inline const TypeTuple *Type::is_tuple() const {
 inline const TypeAry *Type::is_ary() const {
   assert( _base == Array , "Not an Array" );
   return (TypeAry*)this;
+}
+
+inline const TypeVect *Type::is_vect() const {
+  assert( _base >= VectorS && _base <= VectorY, "Not a Vector" );
+  return (TypeVect*)this;
+}
+
+inline const TypeVect *Type::isa_vect() const {
+  return (_base >= VectorS && _base <= VectorY) ? (TypeVect*)this : NULL;
 }
 
 inline const TypePtr *Type::is_ptr() const {

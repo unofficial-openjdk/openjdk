@@ -46,7 +46,7 @@
 // crash time.  This is a very generic interface that is mainly here
 // for completeness.  Normally the templated EventLogBase would be
 // subclassed to provide different log types.
-class EventLog : public CHeapObj {
+class EventLog : public CHeapObj<mtInternal> {
   friend class Events;
 
  private:
@@ -135,11 +135,11 @@ template <class T> class EventLogBase : public EventLog {
 };
 
 // A simple wrapper class for fixed size text messages.
-class StringLogMessage : public FormatBuffer<132> {
+class StringLogMessage : public FormatBuffer<256> {
  public:
   // Wrap this buffer in a stringStream.
   stringStream stream() {
-    return stringStream(_buf, sizeof(_buf));
+    return stringStream(_buf, size());
   }
 };
 

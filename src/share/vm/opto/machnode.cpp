@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -439,9 +439,9 @@ bool MachNode::rematerialize() const {
   // Don't remateralize somebody with bound inputs - it stretches a
   // fixed register lifetime.
   uint idx = oper_input_base();
-  if( req() > idx ) {
+  if (req() > idx) {
     const RegMask &rm = in_RegMask(idx);
-    if( rm.is_bound1() || rm.is_bound2() )
+    if (rm.is_bound(ideal_reg()))
       return false;
   }
 
@@ -501,7 +501,7 @@ int MachConstantNode::constant_offset() {
 #ifndef PRODUCT
 void MachNullCheckNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   int reg = ra_->get_reg_first(in(1)->in(_vidx));
-  tty->print("%s %s", Name(), Matcher::regName[reg]);
+  st->print("%s %s", Name(), Matcher::regName[reg]);
 }
 #endif
 

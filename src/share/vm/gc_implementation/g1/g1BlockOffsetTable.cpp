@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "memory/space.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/java.hpp"
+#include "services/memTracker.hpp"
 
 //////////////////////////////////////////////////////////////////////
 // G1BlockOffsetSharedArray
@@ -44,6 +45,9 @@ G1BlockOffsetSharedArray::G1BlockOffsetSharedArray(MemRegion reserved,
   if (!_vs.initialize(rs, 0)) {
     vm_exit_during_initialization("Could not reserve enough space for heap offset array");
   }
+
+  MemTracker::record_virtual_memory_type((address)rs.base(), mtGC);
+
   _offset_array = (u_char*)_vs.low_boundary();
   resize(init_word_size);
   if (TraceBlockOffsetTable) {
@@ -298,16 +302,28 @@ void G1BlockOffsetArray::check_all_cards(size_t start_card, size_t end_card) con
   for (size_t c = start_card + 1; c <= end_card; c++ /* yeah! */) {
     u_char entry = _array->offset_array(c);
     if (c - start_card > BlockOffsetArray::power_to_cards_back(1)) {
-      guarantee(entry > N_words, "Should be in logarithmic region");
+      guarantee(entry > N_words,
+                err_msg("Should be in logarithmic region - "
+                        "entry: " UINT32_FORMAT ", "
+                        "_array->offset_array(c): " UINT32_FORMAT ", "
+                        "N_words: " UINT32_FORMAT,
+                        entry, _array->offset_array(c), N_words));
     }
     size_t backskip = BlockOffsetArray::entry_to_cards_back(entry);
     size_t landing_card = c - backskip;
     guarantee(landing_card >= (start_card - 1), "Inv");
     if (landing_card >= start_card) {
-      guarantee(_array->offset_array(landing_card) <= entry, "monotonicity");
+      guarantee(_array->offset_array(landing_card) <= entry,
+                err_msg("Monotonicity - landing_card offset: " UINT32_FORMAT ", "
+                        "entry: " UINT32_FORMAT,
+                        _array->offset_array(landing_card), entry));
     } else {
       guarantee(landing_card == start_card - 1, "Tautology");
-      guarantee(_array->offset_array(landing_card) <= N_words, "Offset value");
+      // Note that N_words is the maximum offset value
+      guarantee(_array->offset_array(landing_card) <= N_words,
+                err_msg("landing card offset: " UINT32_FORMAT ", "
+                        "N_words: " UINT32_FORMAT,
+                        _array->offset_array(landing_card), N_words));
     }
   }
 }
@@ -524,17 +540,27 @@ void G1BlockOffsetArray::alloc_block_work2(HeapWord** threshold_, size_t* index_
   // The offset can be 0 if the block starts on a boundary.  That
   // is checked by an assertion above.
   size_t start_index = _array->index_for(blk_start);
-  HeapWord* boundary    = _array->address_for_index(start_index);
+  HeapWord* boundary = _array->address_for_index(start_index);
   assert((_array->offset_array(orig_index) == 0 &&
           blk_start == boundary) ||
           (_array->offset_array(orig_index) > 0 &&
          _array->offset_array(orig_index) <= N_words),
-         "offset array should have been set");
+         err_msg("offset array should have been set - "
+                  "orig_index offset: " UINT32_FORMAT ", "
+                  "blk_start: " PTR_FORMAT ", "
+                  "boundary: " PTR_FORMAT,
+                  _array->offset_array(orig_index),
+                  blk_start, boundary));
   for (size_t j = orig_index + 1; j <= end_index; j++) {
     assert(_array->offset_array(j) > 0 &&
            _array->offset_array(j) <=
              (u_char) (N_words+BlockOffsetArray::N_powers-1),
-           "offset array should have been set");
+           err_msg("offset array should have been set - "
+                   UINT32_FORMAT " not > 0 OR "
+                   UINT32_FORMAT " not <= " UINT32_FORMAT,
+                   _array->offset_array(j),
+                   _array->offset_array(j),
+                   (u_char) (N_words+BlockOffsetArray::N_powers-1)));
   }
 #endif
 }

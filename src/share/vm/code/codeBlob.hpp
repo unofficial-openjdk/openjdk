@@ -35,7 +35,6 @@
 // Suptypes are:
 //   nmethod            : Compiled Java methods (include method that calls to native code)
 //   RuntimeStub        : Call to VM runtime methods
-//   RicochetBlob       : Used for blocking MethodHandle adapters
 //   DeoptimizationBlob : Used for deoptimizatation
 //   ExceptionBlob      : Used for stack unrolling
 //   SafepointBlob      : Used to handle illegal instruction exceptions
@@ -67,7 +66,7 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   int        _data_offset;                       // offset to where data region begins
   int        _frame_size;                        // size of stack frame
   OopMapSet* _oop_maps;                          // OopMap for this CodeBlob
-  CodeComments _comments;
+  CodeStrings _strings;
 
   friend class OopRecorder;
 
@@ -99,7 +98,6 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   virtual bool is_buffer_blob() const            { return false; }
   virtual bool is_nmethod() const                { return false; }
   virtual bool is_runtime_stub() const           { return false; }
-  virtual bool is_ricochet_stub() const          { return false; }
   virtual bool is_deoptimization_stub() const    { return false; }
   virtual bool is_uncommon_trap_stub() const     { return false; }
   virtual bool is_exception_stub() const         { return false; }
@@ -188,14 +186,14 @@ class CodeBlob VALUE_OBJ_CLASS_SPEC {
   static void trace_new_stub(CodeBlob* blob, const char* name1, const char* name2 = "");
 
   // Print the comment associated with offset on stream, if there is one
-  virtual void print_block_comment(outputStream* stream, address block_begin) {
+  virtual void print_block_comment(outputStream* stream, address block_begin) const {
     intptr_t offset = (intptr_t)(block_begin - code_begin());
-    _comments.print_block_comment(stream, offset);
+    _strings.print_block_comment(stream, offset);
   }
 
   // Transfer ownership of comments to this CodeBlob
-  void set_comments(CodeComments& comments) {
-    _comments.assign(comments);
+  void set_strings(CodeStrings& strings) {
+    _strings.assign(strings);
   }
 };
 
@@ -346,50 +344,6 @@ class SingletonBlob: public CodeBlob {
   void verify(); // does nothing
   void print_on(outputStream* st) const;
   void print_value_on(outputStream* st) const;
-};
-
-
-//----------------------------------------------------------------------------------------------------
-// RicochetBlob
-// Holds an arbitrary argument list indefinitely while Java code executes recursively.
-
-class RicochetBlob: public SingletonBlob {
-  friend class VMStructs;
- private:
-
-  int _bounce_offset;
-  int _exception_offset;
-
-  // Creation support
-  RicochetBlob(
-    CodeBuffer* cb,
-    int         size,
-    int         bounce_offset,
-    int         exception_offset,
-    int         frame_size
-  );
-
- public:
-  // Creation
-  static RicochetBlob* create(
-    CodeBuffer* cb,
-    int         bounce_offset,
-    int         exception_offset,
-    int         frame_size
-  );
-
-  // Typing
-  bool is_ricochet_stub() const { return true; }
-
-  // GC for args
-  void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f) { /* Nothing to do */ }
-
-  address bounce_addr() const           { return code_begin() + _bounce_offset; }
-  address exception_addr() const        { return code_begin() + _exception_offset; }
-  bool returns_to_bounce_addr(address pc) const {
-    address bounce_pc = bounce_addr();
-    return (pc == bounce_pc || (pc + frame::pc_return_offset) == bounce_pc);
-  }
 };
 
 

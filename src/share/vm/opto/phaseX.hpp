@@ -92,6 +92,7 @@ public:
   }
 
   void   remove_useless_nodes(VectorSet &useful); // replace with sentinel
+  void replace_with(NodeHash* nh);
 
   Node  *sentinel() { return _sentinel; }
 
@@ -193,6 +194,7 @@ public:
   // If you want the type of a very new (untransformed) node,
   // you must use type_or_null, and test the result for NULL.
   const Type* type(const Node* n) const {
+    assert(n != NULL, "must not be null");
     const Type* t = _types.fast_lookup(n->_idx);
     assert(t != NULL, "must set before get");
     return t;
@@ -385,6 +387,11 @@ public:
   Node  *transform( Node *n );
   Node  *transform_no_reclaim( Node *n );
 
+  void replace_with(PhaseGVN* gvn) {
+    _table.replace_with(&gvn->_table);
+    _types = gvn->_types;
+  }
+
   // Check for a simple dead loop when a data node references itself.
   DEBUG_ONLY(void dead_loop_check(Node *n);)
 };
@@ -402,6 +409,8 @@ class PhaseIterGVN : public PhaseGVN {
 
   // Subsume users of node 'old' into node 'nn'
   void subsume_node( Node *old, Node *nn );
+
+  Node_Stack _stack;      // Stack used to avoid recursion
 
 protected:
 
@@ -438,8 +447,8 @@ public:
   // It is significant only for debugging and profiling.
   Node* register_new_node_with_optimizer(Node* n, Node* orig = NULL);
 
-  // Kill a globally dead Node.   It is allowed to have uses which are
-  // assumed dead and left 'in limbo'.
+  // Kill a globally dead Node.  All uses are also globally dead and are
+  // aggressively trimmed.
   void remove_globally_dead_node( Node *dead );
 
   // Kill all inputs to a dead node, recursively making more dead nodes.
@@ -460,6 +469,25 @@ public:
     subsume_node(old, nn);
   }
 
+  // Delayed node rehash: remove a node from the hash table and rehash it during
+  // next optimizing pass
+  void rehash_node_delayed(Node* n) {
+    hash_delete(n);
+    _worklist.push(n);
+  }
+
+  // Replace ith edge of "n" with "in"
+  void replace_input_of(Node* n, int i, Node* in) {
+    rehash_node_delayed(n);
+    n->set_req(i, in);
+  }
+
+  // Delete ith edge of "n"
+  void delete_input_of(Node* n, int i) {
+    rehash_node_delayed(n);
+    n->del_req(i);
+  }
+
   bool delay_transform() const { return _delay_transform; }
 
   void set_delay_transform(bool delay) {
@@ -475,8 +503,8 @@ public:
 #ifndef PRODUCT
 protected:
   // Sub-quadratic implementation of VerifyIterativeGVN.
-  unsigned long _verify_counter;
-  unsigned long _verify_full_passes;
+  julong _verify_counter;
+  julong _verify_full_passes;
   enum { _verify_window_size = 30 };
   Node* _verify_window[_verify_window_size];
   void verify_step(Node* n);

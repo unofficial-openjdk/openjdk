@@ -31,17 +31,17 @@
 #include "runtime/thread.hpp"
 #include "utilities/exceptions.hpp"
 
-class StringArrayArgument : public CHeapObj {
+class StringArrayArgument : public CHeapObj<mtInternal> {
 private:
   GrowableArray<char*>* _array;
 public:
   StringArrayArgument() {
-    _array = new(ResourceObj::C_HEAP)GrowableArray<char *>(32, true);
+    _array = new(ResourceObj::C_HEAP, mtInternal)GrowableArray<char *>(32, true);
     assert(_array != NULL, "Sanity check");
   }
   void add(const char* str, size_t len) {
     if (str != NULL) {
-      char* ptr = NEW_C_HEAP_ARRAY(char, len+1);
+      char* ptr = NEW_C_HEAP_ARRAY(char, len+1, mtInternal);
       strncpy(ptr, str, len);
       ptr[len] = 0;
       _array->append(ptr);
@@ -53,7 +53,7 @@ public:
   ~StringArrayArgument() {
     for (int i=0; i<_array->length(); i++) {
       if(_array->at(i) != NULL) { // Safety check
-        FREE_C_HEAP_ARRAY(char, _array->at(i));
+        FREE_C_HEAP_ARRAY(char, _array->at(i), mtInternal);
       }
     }
     delete _array;
@@ -110,12 +110,20 @@ public:
   virtual void init_value(TRAPS) = 0;
   virtual void reset(TRAPS) = 0;
   virtual void cleanup() = 0;
+  virtual void value_as_str(char* buf, size_t len) = 0;
   void set_next(GenDCmdArgument* arg) {
     _next = arg;
   }
   GenDCmdArgument* next() {
     return _next;
   }
+
+  void to_string(jlong l, char* buf, size_t len);
+  void to_string(bool b, char* buf, size_t len);
+  void to_string(char* c, char* buf, size_t len);
+  void to_string(NanoTimeArgument n, char* buf, size_t len);
+  void to_string(MemorySizeArgument f, char* buf, size_t len);
+  void to_string(StringArrayArgument* s, char* buf, size_t len);
 };
 
 template <class ArgType> class DCmdArgument: public GenDCmdArgument {
@@ -143,6 +151,7 @@ public:
   void parse_value(const char* str, size_t len, TRAPS);
   void init_value(TRAPS);
   void destroy_value();
+  void value_as_str(char *buf, size_t len) { return to_string(_value, buf, len);}
 };
 
 #endif  /* SHARE_VM_SERVICES_DIAGNOSTICARGUMENT_HPP */

@@ -101,7 +101,7 @@ Deoptimization::UnrollBlock::UnrollBlock(int  size_of_deoptimized_frame,
   _number_of_frames          = number_of_frames;
   _frame_sizes               = frame_sizes;
   _frame_pcs                 = frame_pcs;
-  _register_block            = NEW_C_HEAP_ARRAY(intptr_t, RegisterMap::reg_count * 2);
+  _register_block            = NEW_C_HEAP_ARRAY(intptr_t, RegisterMap::reg_count * 2, mtCompiler);
   _return_type               = return_type;
   _initial_info              = 0;
   // PD (x86 only)
@@ -114,9 +114,9 @@ Deoptimization::UnrollBlock::UnrollBlock(int  size_of_deoptimized_frame,
 
 
 Deoptimization::UnrollBlock::~UnrollBlock() {
-  FREE_C_HEAP_ARRAY(intptr_t, _frame_sizes);
-  FREE_C_HEAP_ARRAY(intptr_t, _frame_pcs);
-  FREE_C_HEAP_ARRAY(intptr_t, _register_block);
+  FREE_C_HEAP_ARRAY(intptr_t, _frame_sizes, mtCompiler);
+  FREE_C_HEAP_ARRAY(intptr_t, _frame_pcs, mtCompiler);
+  FREE_C_HEAP_ARRAY(intptr_t, _register_block, mtCompiler);
 }
 
 
@@ -233,6 +233,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
         return_value = Handle(thread, result);
         assert(Universe::heap()->is_in_or_null(result), "must be heap pointer");
         if (TraceDeoptimization) {
+          ttyLocker ttyl;
           tty->print_cr("SAVED OOP RESULT " INTPTR_FORMAT " in thread " INTPTR_FORMAT, result, thread);
         }
       }
@@ -358,9 +359,9 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   // Compute the vframes' sizes.  Note that frame_sizes[] entries are ordered from outermost to innermost
   // virtual activation, which is the reverse of the elements in the vframes array.
-  intptr_t* frame_sizes = NEW_C_HEAP_ARRAY(intptr_t, number_of_frames);
+  intptr_t* frame_sizes = NEW_C_HEAP_ARRAY(intptr_t, number_of_frames, mtCompiler);
   // +1 because we always have an interpreter return address for the final slot.
-  address* frame_pcs = NEW_C_HEAP_ARRAY(address, number_of_frames + 1);
+  address* frame_pcs = NEW_C_HEAP_ARRAY(address, number_of_frames + 1, mtCompiler);
   int popframe_extra_args = 0;
   // Create an interpreter return address for the stub to use as its return
   // address so the skeletal frames are perfectly walkable
@@ -388,7 +389,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   if (deopt_sender.is_interpreted_frame()) {
     methodHandle method = deopt_sender.interpreter_frame_method();
     Bytecode_invoke cur = Bytecode_invoke_check(method, deopt_sender.interpreter_frame_bci());
-    if (cur.is_method_handle_invoke()) {
+    if (cur.is_invokedynamic() || cur.is_invokehandle()) {
       // Method handle invokes may involve fairly arbitrary chains of
       // calls so it's impossible to know how much actual space the
       // caller has for locals.
@@ -424,6 +425,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
                                                                                                     callee_parameters,
                                                                                                     callee_locals,
                                                                                                     index == 0,
+                                                                                                    index == array->frames() - 1,
                                                                                                     popframe_extra_args);
     // This pc doesn't have to be perfect just good enough to identify the frame
     // as interpreted so the skeleton frame will be walkable
@@ -493,6 +495,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   if (array->frames() > 1) {
     if (VerifyStack && TraceDeoptimization) {
+      ttyLocker ttyl;
       tty->print_cr("Deoptimizing method containing inlining");
     }
   }
@@ -573,6 +576,7 @@ JRT_LEAF(BasicType, Deoptimization::unpack_frames(JavaThread* thread, int exec_m
 
 #ifndef PRODUCT
   if (TraceDeoptimization) {
+    ttyLocker ttyl;
     tty->print_cr("DEOPT UNPACKING thread " INTPTR_FORMAT " vframeArray " INTPTR_FORMAT " mode %d", thread, array, exec_mode);
   }
 #endif
@@ -1239,8 +1243,8 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
   nmethodLocker nl(fr.pc());
 
   // Log a message
-  Events::log_deopt_message(thread, "Uncommon trap %d fr.pc " INTPTR_FORMAT,
-                            trap_request, fr.pc());
+  Events::log(thread, "Uncommon trap: trap_request=" PTR32_FORMAT " fr.pc=" INTPTR_FORMAT,
+              trap_request, fr.pc());
 
   {
     ResourceMark rm;
@@ -1270,6 +1274,11 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
 
     methodDataHandle trap_mdo
       (THREAD, get_method_data(thread, trap_method, create_if_missing));
+
+    // Log a message
+    Events::log_deopt_message(thread, "Uncommon trap: reason=%s action=%s pc=" INTPTR_FORMAT " method=%s @ %d",
+                              trap_reason_name(reason), trap_action_name(action), fr.pc(),
+                              trap_method->name_and_sig_as_C_string(), trap_bci);
 
     // Print a bunch of diagnostics, if requested.
     if (TraceDeoptimization || LogCompilation) {
@@ -1322,9 +1331,9 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
       if (TraceDeoptimization) {  // make noise on the tty
         tty->print("Uncommon trap occurred in");
         nm->method()->print_short_name(tty);
-        tty->print(" (@" INTPTR_FORMAT ") thread=%d reason=%s action=%s unloaded_class_index=%d",
+        tty->print(" (@" INTPTR_FORMAT ") thread=" UINTX_FORMAT " reason=%s action=%s unloaded_class_index=%d",
                    fr.pc(),
-                   (int) os::current_thread_id(),
+                   os::current_thread_id(),
                    trap_reason_name(reason),
                    trap_action_name(action),
                    unloaded_class_index);
@@ -1551,7 +1560,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
         if (trap_method() == nm->method()) {
           make_not_compilable = true;
         } else {
-          trap_method->set_not_compilable(CompLevel_full_optimization);
+          trap_method->set_not_compilable(CompLevel_full_optimization, true, "overflow_recompile_count > PerBytecodeRecompilationCutoff");
           // But give grace to the enclosing nm->method().
         }
       }

@@ -271,6 +271,14 @@ address InterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKin
       case Interpreter::java_lang_math_log10:
           __ flog10();
           break;
+      case Interpreter::java_lang_math_pow:
+          __ fld_d(Address(rsp, 3*wordSize)); // second argument (one
+                                              // empty stack slot)
+          __ pow_with_fallback(0);
+          break;
+      case Interpreter::java_lang_math_exp:
+          __ exp_with_fallback(0);
+           break;
       default                              :
           ShouldNotReachHere();
     }
@@ -312,19 +320,6 @@ address InterpreterGenerator::generate_abstract_entry(void) {
                              InterpreterRuntime::throw_AbstractMethodError));
   // the call_VM checks for exception, so we should never return here.
   __ should_not_reach_here();
-
-  return entry_point;
-}
-
-
-// Method handle invoker
-// Dispatch a method of the form java.lang.invoke.MethodHandles::invoke(...)
-address InterpreterGenerator::generate_method_handle_entry(void) {
-  if (!EnableInvokeDynamic) {
-    return generate_abstract_entry();
-  }
-
-  address entry_point = MethodHandles::generate_method_handle_interpreter_entry(_masm);
 
   return entry_point;
 }

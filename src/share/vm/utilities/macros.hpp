@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,26 +34,6 @@
 // Makes a string of the macro expansion of a
 #define XSTR(a) STR(a)
 
-// KERNEL variant
-#ifdef KERNEL
-#define COMPILER1
-#define SERIALGC
-
-#define JVMTI_KERNEL
-#define FPROF_KERNEL
-#define VM_STRUCTS_KERNEL
-#define JNICHECK_KERNEL
-#define SERVICES_KERNEL
-
-#define KERNEL_RETURN        {}
-#define KERNEL_RETURN_(code) { return code; }
-
-#else  // KERNEL
-
-#define KERNEL_RETURN        /* next token must be ; */
-#define KERNEL_RETURN_(code) /* next token must be ; */
-
-#endif // KERNEL
 
 // COMPILER1 variant
 #ifdef COMPILER1
@@ -175,6 +155,22 @@
 #else
 #define WIN64_ONLY(code)
 #define NOT_WIN64(code) code
+#endif
+
+#if defined(ZERO)
+#define ZERO_ONLY(code) code
+#define NOT_ZERO(code)
+#else
+#define ZERO_ONLY(code)
+#define NOT_ZERO(code) code
+#endif
+
+#if defined(SHARK)
+#define SHARK_ONLY(code) code
+#define NOT_SHARK(code)
+#else
+#define SHARK_ONLY(code)
+#define NOT_SHARK(code) code
 #endif
 
 #if defined(IA32) || defined(AMD64)

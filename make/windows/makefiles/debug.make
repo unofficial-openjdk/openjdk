@@ -33,12 +33,13 @@ GENERATED=../generated
 BUILD_PCH_FILE=_build_pch_file.obj
 !endif
 
-default:: $(BUILD_PCH_FILE) $(AOUT) launcher checkAndBuildSA
+default:: $(BUILD_PCH_FILE) $(AOUT) launcher checkAndBuildSA wb
 
 !include ../local.make
 !include compile.make
 
-CXX_FLAGS=$(CXX_FLAGS) $(DEBUG_OPT_OPTION)
+# _NMT_NOINLINE_ informs NMT that no inlining by Compiler
+CXX_FLAGS=$(CXX_FLAGS) $(DEBUG_OPT_OPTION) /D "_NMT_NOINLINE_"
 
 !include $(WorkSpace)/make/windows/makefiles/vm.make
 !include local.make
@@ -71,3 +72,4 @@ $(AOUT): $(Res_Files) $(Obj_Files) vm.def
 !include $(WorkSpace)/make/windows/makefiles/shared.make
 !include $(WorkSpace)/make/windows/makefiles/sa.make
 !include $(WorkSpace)/make/windows/makefiles/launcher.make
+!include $(WorkSpace)/make/windows/makefiles/wb.make

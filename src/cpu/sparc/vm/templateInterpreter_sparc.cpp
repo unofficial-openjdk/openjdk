@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -371,7 +371,8 @@ void InterpreterGenerator::lock_method(void) {
     __ br( Assembler::zero, true, Assembler::pt, done);
     __ delayed()->ld_ptr(Llocals, Interpreter::local_offset_in_bytes(0), O0); // get receiver for not-static case
 
-    __ ld_ptr( Lmethod, in_bytes(methodOopDesc::constants_offset()), O0);
+    __ ld_ptr( Lmethod, in_bytes(methodOopDesc::const_offset()), O0);
+    __ ld_ptr( O0, in_bytes(constMethodOopDesc::constants_offset()), O0);
     __ ld_ptr( O0, constantPoolOopDesc::pool_holder_offset_in_bytes(), O0);
 
     // lock the mirror, not the klassOop
@@ -379,7 +380,7 @@ void InterpreterGenerator::lock_method(void) {
 
 #ifdef ASSERT
     __ tst(O0);
-    __ breakpoint_trap(Assembler::zero);
+    __ breakpoint_trap(Assembler::zero, Assembler::ptr_cc);
 #endif // ASSERT
 
     __ bind(done);
@@ -433,7 +434,7 @@ void TemplateInterpreterGenerator::generate_stack_overflow_check(Register Rframe
 
   // the frame is greater than one page in size, so check against
   // the bottom of the stack
-  __ cmp_and_brx_short(SP, Rscratch, Assembler::greater, Assembler::pt, after_frame_check);
+  __ cmp_and_brx_short(SP, Rscratch, Assembler::greaterUnsigned, Assembler::pt, after_frame_check);
 
   // the stack will overflow, throw an exception
 
@@ -670,7 +671,8 @@ address InterpreterGenerator::generate_accessor_entry(void) {
                       ConstantPoolCacheEntry::size()) * BytesPerWord), G1_scratch);
 
     // get constant pool cache
-    __ ld_ptr(G5_method, methodOopDesc::constants_offset(), G3_scratch);
+    __ ld_ptr(G5_method, methodOopDesc::const_offset(), G3_scratch);
+    __ ld_ptr(G3_scratch, constMethodOopDesc::constants_offset(), G3_scratch);
     __ ld_ptr(G3_scratch, constantPoolOopDesc::cache_offset_in_bytes(), G3_scratch);
 
     // get specific constant pool cache entry
@@ -692,9 +694,9 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     // Need to differentiate between igetfield, agetfield, bgetfield etc.
     // because they are different sizes.
     // Get the type from the constant pool cache
-    __ srl(G1_scratch, ConstantPoolCacheEntry::tosBits, G1_scratch);
-    // Make sure we don't need to mask G1_scratch for tosBits after the above shift
-    ConstantPoolCacheEntry::verify_tosBits();
+    __ srl(G1_scratch, ConstantPoolCacheEntry::tos_state_shift, G1_scratch);
+    // Make sure we don't need to mask G1_scratch after the above shift
+    ConstantPoolCacheEntry::verify_tos_state_shift();
     __ cmp(G1_scratch, atos );
     __ br(Assembler::equal, true, Assembler::pt, xreturn_path);
     __ delayed()->ld_ptr(Otos_i, G3_scratch, Otos_i);
@@ -993,7 +995,8 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
     // for static methods insert the mirror argument
     const int mirror_offset = in_bytes(Klass::java_mirror_offset());
 
-    __ ld_ptr(Lmethod, methodOopDesc:: constants_offset(), O1);
+    __ ld_ptr(Lmethod, methodOopDesc:: const_offset(), O1);
+    __ ld_ptr(O1, constMethodOopDesc::constants_offset(), O1);
     __ ld_ptr(O1, constantPoolOopDesc::pool_holder_offset_in_bytes(), O1);
     __ ld_ptr(O1, mirror_offset, O1);
 #ifdef ASSERT
@@ -1575,7 +1578,8 @@ int AbstractInterpreter::layout_activation(methodOop method,
                                            int callee_local_count,
                                            frame* caller,
                                            frame* interpreter_frame,
-                                           bool is_top_frame) {
+                                           bool is_top_frame,
+                                           bool is_bottom_frame) {
   // Note: This calculation must exactly parallel the frame setup
   // in InterpreterGenerator::generate_fixed_frame.
   // If f!=NULL, set up the following variables:
@@ -1658,8 +1662,17 @@ int AbstractInterpreter::layout_activation(methodOop method,
       int delta = local_words - parm_words;
       int computed_sp_adjustment = (delta > 0) ? round_to(delta, WordsPerLong) : 0;
       *interpreter_frame->register_addr(I5_savedSP)    = (intptr_t) (fp + computed_sp_adjustment) - STACK_BIAS;
+      if (!is_bottom_frame) {
+        // Llast_SP is set below for the current frame to SP (with the
+        // extra space for the callee's locals). Here we adjust
+        // Llast_SP for the caller's frame, removing the extra space
+        // for the current method's locals.
+        *caller->register_addr(Llast_SP) = *interpreter_frame->register_addr(I5_savedSP);
+      } else {
+        assert(*caller->register_addr(Llast_SP) >= *interpreter_frame->register_addr(I5_savedSP), "strange Llast_SP");
+      }
     } else {
-      assert(caller->is_compiled_frame() || caller->is_entry_frame() || caller->is_ricochet_frame(), "only possible cases");
+      assert(caller->is_compiled_frame() || caller->is_entry_frame(), "only possible cases");
       // Don't have Lesp available; lay out locals block in the caller
       // adjacent to the register window save area.
       //
@@ -2050,7 +2063,7 @@ void TemplateInterpreterGenerator::stop_interpreter_at() {
   AddressLiteral stop_at(&StopInterpreterAt);
   __ load_ptr_contents(stop_at, G4_scratch);
   __ cmp(G3_scratch, G4_scratch);
-  __ breakpoint_trap(Assembler::equal);
+  __ breakpoint_trap(Assembler::equal, Assembler::icc);
 }
 #endif // not PRODUCT
 #endif // !CC_INTERP

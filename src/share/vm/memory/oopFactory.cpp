@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,23 +127,28 @@ constantPoolCacheOop oopFactory::new_constantPoolCache(int length,
 klassOop oopFactory::new_instanceKlass(Symbol* name, int vtable_len, int itable_len,
                                        int static_field_size,
                                        unsigned int nonstatic_oop_map_count,
-                                       ReferenceType rt, TRAPS) {
+                                       AccessFlags access_flags,
+                                       ReferenceType rt,
+                                       KlassHandle host_klass, TRAPS) {
   instanceKlassKlass* ikk = instanceKlassKlass::cast(Universe::instanceKlassKlassObj());
-  return ikk->allocate_instance_klass(name, vtable_len, itable_len, static_field_size, nonstatic_oop_map_count, rt, CHECK_NULL);
+  return ikk->allocate_instance_klass(name, vtable_len, itable_len,
+                                      static_field_size, nonstatic_oop_map_count,
+                                      access_flags, rt, host_klass, CHECK_NULL);
 }
 
 
 constMethodOop oopFactory::new_constMethod(int byte_code_size,
                                            int compressed_line_number_size,
                                            int localvariable_table_length,
+                                           int exception_table_length,
                                            int checked_exceptions_length,
                                            bool is_conc_safe,
                                            TRAPS) {
   klassOop cmkObj = Universe::constMethodKlassObj();
   constMethodKlass* cmk = constMethodKlass::cast(cmkObj);
   return cmk->allocate(byte_code_size, compressed_line_number_size,
-                       localvariable_table_length, checked_exceptions_length,
-                       is_conc_safe,
+                       localvariable_table_length, exception_table_length,
+                       checked_exceptions_length, is_conc_safe,
                        CHECK_NULL);
 }
 
@@ -151,6 +156,7 @@ constMethodOop oopFactory::new_constMethod(int byte_code_size,
 methodOop oopFactory::new_method(int byte_code_size, AccessFlags access_flags,
                                  int compressed_line_number_size,
                                  int localvariable_table_length,
+                                 int exception_table_length,
                                  int checked_exceptions_length,
                                  bool is_conc_safe,
                                  TRAPS) {
@@ -160,6 +166,7 @@ methodOop oopFactory::new_method(int byte_code_size, AccessFlags access_flags,
   constMethodOop cm = new_constMethod(byte_code_size,
                                       compressed_line_number_size,
                                       localvariable_table_length,
+                                      exception_table_length,
                                       checked_exceptions_length,
                                       is_conc_safe, CHECK_NULL);
   constMethodHandle rw(THREAD, cm);
