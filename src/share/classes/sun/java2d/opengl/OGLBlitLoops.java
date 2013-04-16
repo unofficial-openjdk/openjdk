@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -791,10 +791,10 @@ class OGLAnyCompositeBlit extends Blit {
 
         // convert source to IntArgbPre
         SurfaceData dstBuffer = convertFrom(convertdst, dst, dx, dy, w, h,
-                          cachedDst, BufferedImage.TYPE_INT_ARGB_PRE);
+                                            cachedDst, BufferedImage.TYPE_INT_ARGB_PRE);
 
         Blit performop = Blit.getFromCache(src.getSurfaceType(),
-                CompositeType.Any, dstBuffer.getSurfaceType());
+        CompositeType.Any, dstBuffer.getSurfaceType());
 
         performop.Blit(src, dstBuffer, comp, clip,
                        sx, sy, 0, 0, w, h);
@@ -806,9 +806,9 @@ class OGLAnyCompositeBlit extends Blit {
 
         // now blit the buffer back to the destination
         convertdst = Blit.getFromCache(dstBuffer.getSurfaceType(),
-                                            CompositeType.SrcNoEa,
-                                            dst.getSurfaceType());
+                                       CompositeType.SrcNoEa,
+                                       dst.getSurfaceType());
         convertdst.Blit(dstBuffer, dst, AlphaComposite.Src,
-                 clip, 0, 0, dx, dy, w, h);
+                        clip, 0, 0, dx, dy, w, h);
     }
 }
