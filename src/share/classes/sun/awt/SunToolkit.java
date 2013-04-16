@@ -97,6 +97,14 @@ public abstract class SunToolkit extends Toolkit
      */
     public final static int MAX_BUTTONS_SUPPORTED = 20;
 
+    /**
+     * Creates and initializes EventQueue instance for the specified
+     * AppContext.
+     * Note that event queue must be created from createNewAppContext()
+     * only in order to ensure that EventQueue constructor obtains
+     * the correct AppContext.
+     * @param appContext AppContext to associate with the event queue
+     */
     private static void initEQ(AppContext appContext) {
         EventQueue eventQueue;
 
@@ -514,13 +522,17 @@ public abstract class SunToolkit extends Toolkit
      * EventQueue yet.
      */
     public static void flushPendingEvents()  {
+        AppContext appContext = AppContext.getAppContext();
+        flushPendingEvents(appContext);
+    }
+
+    public static void flushPendingEvents(AppContext appContext)  {
         flushLock.lock();
         try {
             // Don't call flushPendingEvents() recursively
             if (!isFlushingPendingEvents) {
                 isFlushingPendingEvents = true;
                 try {
-                    AppContext appContext = AppContext.getAppContext();
                     PostEventQueue postEventQueue =
                         (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
                     if (postEventQueue != null) {
