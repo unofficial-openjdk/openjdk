@@ -29,6 +29,7 @@
  * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp
  * @run main ResourceBundleSearchTest
  */
+import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -70,7 +71,8 @@ public class ResourceBundleSearchTest {
         String sep = System.getProperty("file.separator");
 
         URL[] urls = new URL[1];
-        urls[0] = new URL("file://" + testDir + sep + "resources" + sep);
+
+        urls[0] = new File( testDir + sep + "resources" + sep ).toURI().toURL();
         URLClassLoader rbClassLoader = new URLClassLoader(urls);
 
         // Test 1 - can we find a Logger bundle from doing a stack search?
