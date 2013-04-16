@@ -21,6 +21,7 @@
  * questions.
  */
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -45,11 +46,13 @@ public class IndirectlyLoadABundle {
         String testClassesDir = System.getProperty("test.classes",
                 System.getProperty("user.dir"));
         String sep = System.getProperty("file.separator");
+
         URL[] urls = new URL[2];
 
         // Allow for both jtreg and standalone cases here
-        urls[0] = new URL("file://" + testDir + sep + "resources" + sep);
-        urls[1] = new URL("file://" + testClassesDir + sep );
+        urls[0] = new File( testDir + sep + "resources" + sep ).toURI().toURL();
+        urls[1] = new File( testClassesDir + sep ).toURI().toURL();
+
         System.out.println("INFO: urls[0] = " + urls[0]);
         System.out.println("INFO: urls[1] = " + urls[1]);
 
