@@ -32,6 +32,8 @@ class VirtualSpaceSummary : public StackObj {
   HeapWord* _committed_end;
   HeapWord* _reserved_end;
 public:
+  VirtualSpaceSummary() :
+      _start(NULL), _committed_end(NULL), _reserved_end(NULL) { }
   VirtualSpaceSummary(HeapWord* start, HeapWord* committed_end, HeapWord* reserved_end) :
       _start(start), _committed_end(committed_end), _reserved_end(reserved_end) { }
 
@@ -47,6 +49,8 @@ class SpaceSummary : public StackObj {
   HeapWord* _end;
   size_t    _used;
 public:
+  SpaceSummary() :
+      _start(NULL), _end(NULL), _used(0) { }
   SpaceSummary(HeapWord* start, HeapWord* end, size_t used) :
       _start(start), _end(end), _used(used) { }
 
@@ -70,6 +74,8 @@ class GCHeapSummary : public StackObj {
   size_t _used;
 
  public:
+   GCHeapSummary() :
+       _heap(), _used(0) { }
    GCHeapSummary(VirtualSpaceSummary& heap_space, size_t used) :
        _heap(heap_space), _used(used) { }
 
@@ -108,6 +114,8 @@ class PermGenSummary : public StackObj {
   SpaceSummary        _object_space;
 
  public:
+  PermGenSummary() :
+       _perm_space(), _object_space() { }
   PermGenSummary(const VirtualSpaceSummary& perm_space, const SpaceSummary& object_space) :
        _perm_space(perm_space), _object_space(object_space) { }
 

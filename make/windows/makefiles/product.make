@@ -32,7 +32,7 @@ GENERATED=../generated
 BUILD_PCH_FILE=_build_pch_file.obj
 !endif
 
-default:: $(BUILD_PCH_FILE) $(AOUT) launcher checkAndBuildSA wb
+default:: $(BUILD_PCH_FILE) $(AOUT) launcher checkAndBuildSA
 
 !include ../local.make
 !include compile.make
@@ -51,13 +51,6 @@ HS_BUILD_ID=$(HS_BUILD_VER)
 # Force resources to be rebuilt every time
 $(Res_Files): FORCE
 
-# Kernel doesn't need exported vtbl symbols.
-!if "$(Variant)" == "kernel"
-$(AOUT): $(Res_Files) $(Obj_Files)
-	$(LD) @<<
-  $(LD_FLAGS) /out:$@ /implib:$*.lib $(Obj_Files) $(Res_Files)
-<<
-!else
 vm.def: $(Obj_Files)
 	sh $(WorkSpace)/make/windows/build_vm_def.sh
 
@@ -65,7 +58,6 @@ $(AOUT): $(Res_Files) $(Obj_Files) vm.def
 	$(LD) @<<
   $(LD_FLAGS) /out:$@ /implib:$*.lib /def:vm.def $(Obj_Files) $(Res_Files)
 <<
-!endif
 !if "$(MT)" != ""
 # The previous link command created a .manifest file that we want to
 # insert into the linked artifact so we do not need to track it
@@ -82,4 +74,3 @@ $(AOUT): $(Res_Files) $(Obj_Files) vm.def
 !include $(WorkSpace)/make/windows/makefiles/shared.make
 !include $(WorkSpace)/make/windows/makefiles/sa.make
 !include $(WorkSpace)/make/windows/makefiles/launcher.make
-!include $(WorkSpace)/make/windows/makefiles/wb.make

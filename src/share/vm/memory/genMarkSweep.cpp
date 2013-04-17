@@ -318,6 +318,8 @@ void GenMarkSweep::mark_sweep_phase1(int level,
   SymbolTable::unlink();
 
   assert(_marking_stack.is_empty(), "stack should be empty by now");
+
+  gc_tracer()->report_object_count_after_gc(&is_alive);
 }
 
 

@@ -95,6 +95,7 @@
   template(ReportJavaOutOfMemory)                 \
   template(JFRCheckpoint)                         \
   template(Exit)                                  \
+  template(LinuxDllLoad)                          \
 
 class VM_Operation: public CHeapObj<mtInternal> {
  public:

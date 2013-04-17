@@ -27,8 +27,14 @@
 #include "gc_implementation/shared/gcTimer.hpp"
 #include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
+#include "memory/heapInspection.hpp"
+#include "memory/iterator.hpp"
 #include "memory/referenceProcessorStats.hpp"
 #include "utilities/globalDefinitions.hpp"
+
+#ifndef SERIALGC
+#include "gc_implementation/g1/evacuationInfo.hpp"
+#endif
 
 #define assert_unset_gc_id() assert(_shared_gc_info.id() == SharedGCInfo::UNSET_GCID, "GC already started?")
 #define assert_set_gc_id() assert(_shared_gc_info.id() != SharedGCInfo::UNSET_GCID, "GC not started?")
@@ -85,6 +91,29 @@ void GCTracer::report_gc_reference_stats(const ReferenceProcessorStats& rps) con
   send_reference_stats_event(REF_PHANTOM, rps.phantom_count());
 }
 
+class ObjectCountEventSenderClosure : public KlassInfoClosure {
+  GCTracer* _gc_tracer;
+ public:
+  ObjectCountEventSenderClosure(GCTracer* gc_tracer) : _gc_tracer(gc_tracer) {}
+ private:
+  void do_cinfo(KlassInfoEntry* entry) {
+    _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
+                                                 entry->words() * BytesPerWord);
+  }
+};
+
+void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
+  if (should_send_object_count_after_gc_event()) {
+    ResourceMark rm;
+
+    KlassInfoTable cit(HeapInspection::start_of_perm_gen());
+    if (!cit.allocation_failed()) {
+      ObjectCountEventSenderClosure event_sender(this);
+      HeapInspection::instance_inspection(&cit, &event_sender, false, is_alive_cl);
+    }
+  }
+}
+
 void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& heap_summary, const PermGenSummary& perm_gen_summary) const {
   assert_set_gc_id();
 
@@ -94,9 +123,12 @@ void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& he
 
 void YoungGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
+  assert(_tenuring_threshold != UNSET_TENURING_THRESHOLD, "Tenuring threshold has not been reported");
 
   GCTracer::report_gc_end_impl(timestamp, time_partitions);
   send_young_gc_event();
+
+  _tenuring_threshold = UNSET_TENURING_THRESHOLD;
 }
 
 void YoungGCTracer::report_promotion_failed(const PromotionFailedInfo& pf_info) {
@@ -105,6 +137,9 @@ void YoungGCTracer::report_promotion_failed(const PromotionFailedInfo& pf_info) 
   send_promotion_failed_event(pf_info);
 }
 
+void YoungGCTracer::report_tenuring_threshold(const uint tenuring_threshold) {
+  _tenuring_threshold = tenuring_threshold;
+}
 
 void OldGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
@@ -126,6 +161,12 @@ void ParallelOldTracer::report_dense_prefix(void* dense_prefix) {
   _parallel_old_gc_info.report_dense_prefix(dense_prefix);
 }
 
+void CMSTracer::report_concurrent_mode_failure() {
+  assert_set_gc_id();
+
+  send_concurrent_mode_failure_event();
+}
+
 #ifndef SERIALGC
 void G1NewTracer::report_yc_type(G1YCType type) {
   assert_set_gc_id();
@@ -138,5 +179,11 @@ void G1NewTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_parti
 
   YoungGCTracer::report_gc_end_impl(timestamp, time_partitions);
   send_g1_young_gc_event();
+}
+
+void G1NewTracer::report_evacuation_info(EvacuationInfo* info) {
+  assert_set_gc_id();
+
+  send_evacuation_info_event(info);
 }
 #endif

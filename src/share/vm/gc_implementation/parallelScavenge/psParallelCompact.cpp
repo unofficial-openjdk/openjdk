@@ -2443,6 +2443,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm, bool maximum_hea
   SymbolTable::unlink();
 
   assert(cm->marking_stacks_empty(), "marking stacks should be empty");
+  _gc_tracer.report_object_count_after_gc(is_alive_closure());
 }
 
 // This should be moved to the shared markSweep code!

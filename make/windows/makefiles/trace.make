@@ -116,8 +116,6 @@ $(TraceOutDir)/traceEventControl.hpp: $(TraceSrcDir)/trace.xml $(TraceAltSrcDir)
 # #########################################################################
 
 cleanall :
-!if "$(INCLUDE_TRACE)" == "1"
 	rm $(TraceGeneratedFiles)
-!endif
 
 

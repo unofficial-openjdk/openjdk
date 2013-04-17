@@ -26,6 +26,7 @@
 #define SHARE_VM_GC_IMPLEMENTATION_G1_G1COLLECTEDHEAP_HPP
 
 #include "gc_implementation/g1/concurrentMark.hpp"
+#include "gc_implementation/g1/evacuationInfo.hpp"
 #include "gc_implementation/g1/g1AllocRegion.hpp"
 #include "gc_implementation/g1/g1HRPrinter.hpp"
 #include "gc_implementation/g1/g1MonitoringSupport.hpp"
@@ -330,10 +331,10 @@ private:
   void release_mutator_alloc_region();
 
   // It initializes the GC alloc regions at the start of a GC.
-  void init_gc_alloc_regions();
+  void init_gc_alloc_regions(EvacuationInfo& evacuation_info);
 
   // It releases the GC alloc regions at the end of a GC.
-  void release_gc_alloc_regions(uint no_of_gc_workers);
+  void release_gc_alloc_regions(uint no_of_gc_workers, EvacuationInfo& evacuation_info);
 
   // It does any cleanup that needs to be done on the GC alloc regions
   // before a Full GC.
@@ -786,7 +787,7 @@ protected:
   bool do_collection_pause_at_safepoint(double target_pause_time_ms);
 
   // Actually do the work of evacuating the collection set.
-  void evacuate_collection_set();
+  void evacuate_collection_set(EvacuationInfo& evacuation_info);
 
   // The g1 remembered set of the heap.
   G1RemSet* _g1_rem_set;
@@ -814,7 +815,7 @@ protected:
 
   // After a collection pause, make the regions in the CS into free
   // regions.
-  void free_collection_set(HeapRegion* cs_head);
+  void free_collection_set(HeapRegion* cs_head, EvacuationInfo& evacuation_info);
 
   // Abandon the current collection set without recording policy
   // statistics or updating free lists.
@@ -1174,7 +1175,7 @@ public:
   // The STW reference processor....
   ReferenceProcessor* ref_processor_stw() const { return _ref_processor_stw; }
 
-  // The Concurent Marking reference processor...
+  // The Concurrent Marking reference processor...
   ReferenceProcessor* ref_processor_cm() const { return _ref_processor_cm; }
 
   ConcurrentGCTimer* gc_timer_cm() const { return _gc_timer_cm; }

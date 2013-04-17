@@ -85,6 +85,7 @@ class KlassInfoBucket: public CHeapObj<mtInternal> {
 class KlassInfoTable: public StackObj {
  private:
   int _size;
+  static const int _num_buckets = 20011;
 
   // An aligned reference address (typically the least
   // address in the perm gen) used for hashing klass
@@ -96,11 +97,7 @@ class KlassInfoTable: public StackObj {
   KlassInfoEntry* lookup(const klassOop k);
 
  public:
-  // Table size
-  enum {
-    cit_size = 20011
-  };
-  KlassInfoTable(int size, HeapWord* ref);
+  KlassInfoTable(HeapWord* ref);
   ~KlassInfoTable();
   bool record_instance(const oop obj);
   void iterate(KlassInfoClosure* cic);
@@ -115,12 +112,9 @@ class KlassInfoHisto : public StackObj {
   const char* title() const { return _title; }
   static int sort_helper(KlassInfoEntry** e1, KlassInfoEntry** e2);
   void print_elements(outputStream* st) const;
+  static const int _histo_initial_size = 1000;
  public:
-  enum {
-    histo_initial_size = 1000
-  };
-  KlassInfoHisto(const char* title,
-             int estimatedCount);
+  KlassInfoHisto(const char* title);
   ~KlassInfoHisto();
   void add(KlassInfoEntry* cie);
   void print_on(outputStream* st) const;
@@ -131,7 +125,16 @@ class KlassInfoHisto : public StackObj {
 class HeapInspection : public AllStatic {
  public:
   static void heap_inspection(outputStream* st, bool need_prologue);
+  static size_t instance_inspection(KlassInfoTable* cit,
+                                    KlassInfoClosure* cl,
+                                    bool need_prologue,
+                                    BoolObjectClosure* filter = NULL);
+  static HeapWord* start_of_perm_gen();
   static void find_instances_at_safepoint(klassOop k, GrowableArray<oop>* result);
+ private:
+  static bool is_shared_heap();
+  static void prologue();
+  static void epilogue();
 };
 
 #endif // SHARE_VM_MEMORY_HEAPINSPECTION_HPP

@@ -168,6 +168,7 @@ Declares a structure type that can be used in other events.
     <event id="GCYoungGarbageCollection" path="vm/gc/collector/young_garbage_collection" label="Young Garbage Collection"
            description="Extra information specific to Young Garbage Collections">
       <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="UINT" field="tenuringThreshold" label="Tenuring Threshold" />
     </event>
 
     <event id="GCOldGarbageCollection" path="vm/gc/collector/old_garbage_collection" label="Old Garbage Collection"
@@ -179,6 +180,18 @@ Declares a structure type that can be used in other events.
            description="Extra information specific to G1 Garbage Collections">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="G1YCTYPE" field="type" label="Type" />
+    </event>
+
+    <event id="EvacuationInfo" path="vm/gc/detailed/evacuation_info" label="Evacuation Info" is_instant="true">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="cSetRegions" label="Collection Set Regions"/>
+      <value type="BYTES64" field="cSetUsedBefore" label="Collection Set Before" description="Memory usage before GC in the collection set regions"/>
+      <value type="BYTES64" field="cSetUsedAfter" label="Collection Set After" description="Memory usage after GC in the collection set regions"/>
+      <value type="UINT" field="allocationRegions" label="Allocation Regions" description="Regions chosen as allocation regions during evacuation (includes survivors and old space regions)"/>
+      <value type="BYTES64" field="allocRegionsUsedBefore" label="Alloc Regions Before" description="Memory usage before GC in allocation regions"/>
+      <value type="BYTES64" field="allocRegionsUsedAfter" label="Alloc Regions After" description="Memory usage after GC in allocation regions"/>
+      <value type="BYTES64" field="bytesCopied" label="BytesCopied"/>
+      <value type="UINT" field="regionsFreed" label="Regions Freed"/>
     </event>
 
     <event id="GCReferenceStatistics" path="vm/gc/reference/statistics"
@@ -197,10 +210,22 @@ Declares a structure type that can be used in other events.
       <value type="OSTHREAD" field="thread" label="Running thread"/>
     </struct>
 
+    <event id="ObjectCountAfterGC" path="vm/gc/detailed/object_count_after_gc" is_instant="true" label="Object Count After GC">
+      <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="CLASS" field="class" label="Class" />
+      <value type="LONG" field="count" label="Count" />
+      <value type="BYTES64" field="totalSize" label="Total Size" />
+    </event>
+
     <event id="PromotionFailed" path="vm/gc/detailed/promotion_failed" label="Promotion Failed" is_instant="true"
            description="Promotion of an object failed">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
       <structvalue type="CopyFailed" field="data" label="data"/>
+    </event>
+
+    <event id="ConcurrentModeFailure" path="vm/gc/detailed/concurrent_mode_failure" label="Concurrent Mode Failure"
+           is_instant="true" description="Concurrent Mode failed">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
     </event>
 
     <event id="GCPhasePause" path="vm/gc/phases/pause" label="GC Phase Pause">
@@ -290,7 +315,20 @@ Declares a structure type that can be used in other events.
       <value type="BOOLEAN" field="blocking" label="Caller Blocked" description="If the calling thread was blocked until the operation was complete."/>
       <value type="OSTHREAD" field="caller" label="Caller" transition="TO" description="Thread requesting operation. If non-blocking, will be set to 0 indicating thread is unknown."/>
     </event>
+    
+    <!-- Allocation events -->
+    <event id="AllocObjectInNewTLAB" path="java/object_alloc_in_new_TLAB" label="Allocation in new TLAB"
+        description="Allocation in new Thread Local Allocation Buffer" has_thread="true" has_stacktrace="true" is_instant="true">
+      <value type="CLASS" field="class" label="Class" description="Class of allocated object"/>
+      <value type="BYTES64" field="allocationSize" label="Allocation Size"/>
+      <value type="BYTES64" field="tlabSize" label="TLAB Size"/>
+    </event>
 
+    <event id="AllocObjectOutsideTLAB" path="java/object_alloc_outside_TLAB" label="Allocation outside TLAB"
+        description="Allocation outside Thread Local Allocation Buffers" has_thread="true" has_stacktrace="true" is_instant="true">
+      <value type="CLASS" field="class" label="Class" description="Class of allocated object"/>
+      <value type="BYTES64" field="allocationSize" label="Allocation Size"/>
+    </event>
   </events>
   
   <xi:include href="../../../closed/share/vm/trace/traceeventtypes.xml" xmlns:xi="http://www.w3.org/2001/XInclude">

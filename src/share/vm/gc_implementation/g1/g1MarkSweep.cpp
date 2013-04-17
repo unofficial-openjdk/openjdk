@@ -206,6 +206,8 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
     G1CollectedHeap* g1h = G1CollectedHeap::heap();
     gclog_or_tty->print_cr("]");
   }
+
+  gc_tracer()->report_object_count_after_gc(&GenMarkSweep::is_alive);
 }
 
 class G1PrepareCompactClosure: public HeapRegionClosure {

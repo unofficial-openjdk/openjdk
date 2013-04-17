@@ -145,7 +145,6 @@ void VM_CMS_Initial_Mark::doit() {
                                 );
 #endif /* USDT2 */
 
-  _collector->register_gc_start(GCCause::_cms_concurrent_mark);
   _collector->_gc_timer_cm->register_gc_pause_start("Initial Mark", os::elapsed_counter());
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
@@ -195,6 +194,7 @@ void VM_CMS_Final_Remark::doit() {
 
   VM_CMS_Operation::verify_after_gc();
 
+  _collector->save_heap_summary();
   _collector->_gc_timer_cm->register_gc_pause_end(os::elapsed_counter());
 
 #ifndef USDT2
