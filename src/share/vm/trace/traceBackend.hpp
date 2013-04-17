@@ -52,6 +52,11 @@ public:
   }
 };
 
+class TraceThreadData {
+public:
+    TraceThreadData() {}
+};
+
 typedef TraceBackend Tracing;
 
 #else /* INCLUDE_TRACE */

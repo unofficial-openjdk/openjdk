@@ -28,7 +28,7 @@
 #define EVENT_THREAD_EXIT(thread)
 
 #define TRACE_INIT_ID(k)
-#define TRACE_BUFFER void*
+#define TRACE_DATA TraceThreadData
 
 #define TRACE_START() JNI_OK
 #define TRACE_INITIALIZE() JNI_OK
