@@ -214,10 +214,12 @@ class G1NewTracer : public YoungGCTracer {
   void report_yc_type(G1YCType type);
   void report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions);
   void report_evacuation_info(EvacuationInfo* info);
+  void report_evacuation_failed(EvacuationFailedInfo& ef_info);
 
  private:
   void send_g1_young_gc_event();
   void send_evacuation_info_event(EvacuationInfo* info);
+  void send_evacuation_failed_event(const EvacuationFailedInfo& ef_info) const;
 };
 #endif
 

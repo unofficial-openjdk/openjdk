@@ -36,7 +36,7 @@ class WorkerDataArray  : public CHeapObj<mtGC> {
   bool        _print_sum;
 
   // We are caching the sum and average to only have to calculate them once.
-  // This is not done in an MT-safe way. It is intetened to allow single
+  // This is not done in an MT-safe way. It is intended to allow single
   // threaded code to call sum() and average() multiple times in any order
   // without having to worry about the cost.
   bool   _has_new_data;
@@ -135,7 +135,7 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
   double _min_clear_cc_time_ms;         // min
   double _max_clear_cc_time_ms;         // max
   double _cur_clear_cc_time_ms;         // clearing time during current pause
-  double _cum_clear_cc_time_ms;         // cummulative clearing time
+  double _cum_clear_cc_time_ms;         // cumulative clearing time
   jlong  _num_cc_clears;                // number of times the card count cache has been cleared
 
   double _cur_collection_start_sec;

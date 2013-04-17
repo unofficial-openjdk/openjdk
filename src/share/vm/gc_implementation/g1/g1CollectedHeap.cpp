@@ -1905,7 +1905,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   _ref_processor_stw(NULL),
   _process_strong_tasks(new SubTasksDone(G1H_PS_NumElements)),
   _bot_shared(NULL),
-  _evac_failure_scan_stack(NULL) ,
+  _evac_failure_scan_stack(NULL),
   _mark_in_progress(false),
   _cg1r(NULL), _summary_bytes_used(0),
   _g1mm(NULL),
@@ -1949,21 +1949,19 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* policy_) :
   int n_rem_sets = HeapRegionRemSet::num_par_rem_sets();
   assert(n_rem_sets > 0, "Invariant.");
 
-  HeapRegionRemSetIterator** iter_arr =
-    NEW_C_HEAP_ARRAY(HeapRegionRemSetIterator*, n_queues, mtGC);
-  for (int i = 0; i < n_queues; i++) {
-    iter_arr[i] = new HeapRegionRemSetIterator();
-  }
-  _rem_set_iterator = iter_arr;
-
+  HeapRegionRemSetIterator** iter_arr = NEW_C_HEAP_ARRAY(HeapRegionRemSetIterator*, n_queues, mtGC);
   _worker_cset_start_region = NEW_C_HEAP_ARRAY(HeapRegion*, n_queues, mtGC);
   _worker_cset_start_region_time_stamp = NEW_C_HEAP_ARRAY(unsigned int, n_queues, mtGC);
+  _evacuation_failed_info_array = NEW_C_HEAP_ARRAY(EvacuationFailedInfo, n_queues, mtGC);
 
   for (int i = 0; i < n_queues; i++) {
     RefToScanQueue* q = new RefToScanQueue();
     q->initialize();
     _task_queues->register_queue(i, q);
+    iter_arr[i] = new HeapRegionRemSetIterator();
+    ::new (&_evacuation_failed_info_array[i]) EvacuationFailedInfo();
   }
+  _rem_set_iterator = iter_arr;
 
   clear_cset_start_regions();
 
@@ -4038,13 +4036,19 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 #endif // YOUNG_LIST_VERBOSE
 
         g1_policy()->record_survivor_regions(_young_list->survivor_length(),
-                                            _young_list->first_survivor_region(),
-                                            _young_list->last_survivor_region());
+                                             _young_list->first_survivor_region(),
+                                             _young_list->last_survivor_region());
 
         _young_list->reset_auxilary_lists();
 
         if (evacuation_failed()) {
           _summary_bytes_used = recalculate_used();
+          uint n_queues = MAX2((int)ParallelGCThreads, 1);
+          for (uint i = 0; i < n_queues; i++) {
+            if (_evacuation_failed_info_array[i].has_failed()) {
+              _gc_tracer_stw->report_evacuation_failed(_evacuation_failed_info_array[i]);
+            }
+          }
         } else {
           // The "used" of the the collection set have already been subtracted
           // when they were freed.  Add in the bytes evacuated.
@@ -4358,7 +4362,7 @@ void G1CollectedHeap::drain_evac_failure_scan_stack() {
 }
 
 oop
-G1CollectedHeap::handle_evacuation_failure_par(OopsInHeapRegionClosure* cl,
+G1CollectedHeap::handle_evacuation_failure_par(G1ParScanThreadState* _par_scan_state,
                                                oop old) {
   assert(obj_in_cs(old),
          err_msg("obj: "PTR_FORMAT" should still be in the CSet",
@@ -4367,7 +4371,12 @@ G1CollectedHeap::handle_evacuation_failure_par(OopsInHeapRegionClosure* cl,
   oop forward_ptr = old->forward_to_atomic(old);
   if (forward_ptr == NULL) {
     // Forward-to-self succeeded.
+    assert(_par_scan_state != NULL, "par scan state");
+    OopsInHeapRegionClosure* cl = _par_scan_state->evac_failure_closure();
+    uint queue_num = _par_scan_state->queue_num();
 
+    _evacuation_failed = true;
+    _evacuation_failed_info_array[queue_num].register_copy_failure(old->size());
     if (_evac_failure_closure != cl) {
       MutexLockerEx x(EvacFailureStack_lock, Mutex::_no_safepoint_check_flag);
       assert(!_drain_in_progress,
@@ -4398,8 +4407,6 @@ G1CollectedHeap::handle_evacuation_failure_par(OopsInHeapRegionClosure* cl,
 }
 
 void G1CollectedHeap::handle_evacuation_failure_common(oop old, markOop m) {
-  set_evacuation_failed(true);
-
   preserve_mark_if_necessary(old, m);
 
   HeapRegion* r = heap_region_containing(old);
@@ -4649,8 +4656,7 @@ oop G1ParCopyClosure<do_gen_barrier, barrier, do_mark_object>
   if (obj_ptr == NULL) {
     // This will either forward-to-self, or detect that someone else has
     // installed a forwarding pointer.
-    OopsInHeapRegionClosure* cl = _par_scan_state->evac_failure_closure();
-    return _g1->handle_evacuation_failure_par(cl, old);
+    return _g1->handle_evacuation_failure_par(_par_scan_state, old);
   }
 
   oop obj = oop(obj_ptr);
@@ -5663,7 +5669,7 @@ void G1CollectedHeap::enqueue_discovered_references(uint no_of_gc_workers) {
 
 void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info) {
   _expand_heap_after_alloc_failure = true;
-  set_evacuation_failed(false);
+  _evacuation_failed = false;
 
   // Should G1EvacuationFailureALot be in effect for this GC?
   NOT_PRODUCT(set_evacuation_failure_alot_for_current_gc();)

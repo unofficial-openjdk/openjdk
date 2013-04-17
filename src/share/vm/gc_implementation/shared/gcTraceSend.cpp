@@ -101,7 +101,6 @@ static TraceStructCopyFailed to_trace_struct(const CopyFailedInfo& cf_info) {
   failed_info.set_firstSize(cf_info.first_size());
   failed_info.set_smallestSize(cf_info.smallest_size());
   failed_info.set_totalSize(cf_info.total_size());
-  failed_info.set_thread(cf_info.thread()->thread_id());
   return failed_info;
 }
 
@@ -110,6 +109,7 @@ void YoungGCTracer::send_promotion_failed_event(const PromotionFailedInfo& pf_in
   if (e.should_commit()) {
     e.set_gcId(_shared_gc_info.id());
     e.set_data(to_trace_struct(pf_info));
+    e.set_thread(pf_info.thread()->thread_id());
     e.commit();
   }
 }
@@ -166,6 +166,15 @@ void G1NewTracer::send_evacuation_info_event(EvacuationInfo* info) {
     e.set_allocRegionsUsedAfter(info->alloc_regions_used_before() + info->bytes_copied());
     e.set_bytesCopied(info->bytes_copied());
     e.set_regionsFreed(info->regions_freed());
+    e.commit();
+  }
+}
+
+void G1NewTracer::send_evacuation_failed_event(const EvacuationFailedInfo& ef_info) const {
+  EventEvacuationFailed e;
+  if (e.should_commit()) {
+    e.set_gcId(_shared_gc_info.id());
+    e.set_data(to_trace_struct(ef_info));
     e.commit();
   }
 }

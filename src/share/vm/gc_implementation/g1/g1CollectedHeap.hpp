@@ -68,6 +68,7 @@ class GenerationCounters;
 class STWGCTimer;
 class G1NewTracer;
 class G1OldTracer;
+class EvacuationFailedInfo;
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
@@ -166,7 +167,7 @@ public:
 // An instance is embedded into the G1CH and used as the
 // (optional) _is_alive_non_header closure in the STW
 // reference processor. It is also extensively used during
-// refence processing during STW evacuation pauses.
+// reference processing during STW evacuation pauses.
 class G1STWIsAliveClosure: public BoolObjectClosure {
   G1CollectedHeap* _g1;
 public:
@@ -885,9 +886,7 @@ protected:
   // True iff a evacuation has failed in the current collection.
   bool _evacuation_failed;
 
-  // Set the attribute indicating whether evacuation has failed in the
-  // current collection.
-  void set_evacuation_failed(bool b) { _evacuation_failed = b; }
+  EvacuationFailedInfo* _evacuation_failed_info_array;
 
   // Failed evacuations cause some logical from-space objects to have
   // forwarding pointers to themselves.  Reset them.
@@ -929,7 +928,7 @@ protected:
   void finalize_for_evac_failure();
 
   // An attempt to evacuate "obj" has failed; take necessary steps.
-  oop handle_evacuation_failure_par(OopsInHeapRegionClosure* cl, oop obj);
+  oop handle_evacuation_failure_par(G1ParScanThreadState* _par_scan_state, oop obj);
   void handle_evacuation_failure_common(oop obj, markOop m);
 
 #ifndef PRODUCT
@@ -961,13 +960,13 @@ protected:
   inline bool evacuation_should_fail();
 
   // Reset the G1EvacuationFailureALot counters.  Should be called at
-  // the end of an evacuation pause in which an evacuation failure ocurred.
+  // the end of an evacuation pause in which an evacuation failure occurred.
   inline void reset_evacuation_should_fail();
 #endif // !PRODUCT
 
   // ("Weak") Reference processing support.
   //
-  // G1 has 2 instances of the referece processor class. One
+  // G1 has 2 instances of the reference processor class. One
   // (_ref_processor_cm) handles reference object discovery
   // and subsequent processing during concurrent marking cycles.
   //
@@ -1238,7 +1237,7 @@ public:
 
   // verify_region_sets_optional() is planted in the code for
   // list verification in non-product builds (and it can be enabled in
-  // product builds by definning HEAP_REGION_SET_FORCE_VERIFY to be 1).
+  // product builds by defining HEAP_REGION_SET_FORCE_VERIFY to be 1).
 #if HEAP_REGION_SET_FORCE_VERIFY
   void verify_region_sets_optional() {
     verify_region_sets();
@@ -1310,7 +1309,7 @@ public:
   // the context of the vm thread.
   virtual void collect_as_vm_thread(GCCause::Cause cause);
 
-  // True iff a evacuation has failed in the most-recent collection.
+  // True iff an evacuation has failed in the most-recent collection.
   bool evacuation_failed() { return _evacuation_failed; }
 
   // It will free a region if it has allocated objects in it that are
@@ -1816,7 +1815,7 @@ protected:
   G1ParScanHeapEvacClosure*     _evac_cl;
   G1ParScanPartialArrayClosure* _partial_scan_cl;
 
-  int _hash_seed;
+  int  _hash_seed;
   uint _queue_num;
 
   size_t _term_attempts;
@@ -2020,7 +2019,6 @@ public:
     }
   }
 
-public:
   void trim_queue();
 };
 

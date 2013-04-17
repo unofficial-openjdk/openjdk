@@ -186,4 +186,11 @@ void G1NewTracer::report_evacuation_info(EvacuationInfo* info) {
 
   send_evacuation_info_event(info);
 }
+
+void G1NewTracer::report_evacuation_failed(EvacuationFailedInfo& ef_info) {
+  assert_set_gc_id();
+
+  send_evacuation_failed_event(ef_info);
+  ef_info.reset();
+}
 #endif

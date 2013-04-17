@@ -28,35 +28,31 @@
 #include "runtime/thread.hpp"
 #include "utilities/globalDefinitions.hpp"
 
-class CopyFailedInfo VALUE_OBJ_CLASS_SPEC {
+class CopyFailedInfo : public CHeapObj<mtGC> {
   size_t    _first_size;
   size_t    _smallest_size;
   size_t    _total_size;
   uint      _count;
-  OSThread* _thread;
 
  public:
-  CopyFailedInfo() : _first_size(0), _smallest_size(0), _total_size(0), _count(0), _thread(NULL) {}
+  CopyFailedInfo() : _first_size(0), _smallest_size(0), _total_size(0), _count(0) {}
 
-  void register_copy_failure(size_t size) {
+  virtual void register_copy_failure(size_t size) {
     if (_first_size == 0) {
       _first_size = size;
       _smallest_size = size;
-      _thread = Thread::current()->osthread();
     } else if (size < _smallest_size) {
       _smallest_size = size;
     }
     _total_size += size;
     _count++;
-    assert(_thread == Thread::current()->osthread(), "The PromotionFailedInfo should be thread local.");
   }
 
-  void reset() {
+  virtual void reset() {
     _first_size = 0;
     _smallest_size = 0;
     _total_size = 0;
     _count = 0;
-    _thread = NULL;
   }
 
   bool has_failed() const { return _count != 0; }
@@ -64,9 +60,31 @@ class CopyFailedInfo VALUE_OBJ_CLASS_SPEC {
   size_t smallest_size() const { return _smallest_size; }
   size_t total_size() const { return _total_size; }
   uint failed_count() const { return _count; }
+};
+
+class PromotionFailedInfo : public CopyFailedInfo {
+  OSThread* _thread;
+
+ public:
+  PromotionFailedInfo() : CopyFailedInfo(), _thread(NULL) {}
+
+  void register_copy_failure(size_t size) {
+    CopyFailedInfo::register_copy_failure(size);
+    if (_thread == NULL) {
+      _thread = Thread::current()->osthread();
+    } else {
+      assert(_thread == Thread::current()->osthread(), "The PromotionFailedInfo should be thread local.");
+    }
+  }
+
+  void reset() {
+    CopyFailedInfo::reset();
+    _thread = NULL;
+  }
+
   OSThread* thread() const { return _thread; }
 };
 
-class PromotionFailedInfo : public CopyFailedInfo {};
+class EvacuationFailedInfo : public CopyFailedInfo {};
 
 #endif /* SHARE_VM_GC_IMPLEMENTATION_SHARED_COPYFAILEDINFO_HPP */

@@ -208,7 +208,6 @@ Declares a structure type that can be used in other events.
       <value type="BYTES64" field="firstSize" label="First Failed Object Size"/>
       <value type="BYTES64" field="smallestSize" label="Smallest Failed Object Size"/>
       <value type="BYTES64" field="totalSize" label="Total Object Size"/>
-      <value type="OSTHREAD" field="thread" label="Running thread"/>
     </struct>
 
     <event id="ObjectCountAfterGC" path="vm/gc/detailed/object_count_after_gc" is_instant="true" label="Object Count After GC">
@@ -220,6 +219,13 @@ Declares a structure type that can be used in other events.
 
     <event id="PromotionFailed" path="vm/gc/detailed/promotion_failed" label="Promotion Failed" is_instant="true"
            description="Promotion of an object failed">
+      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <structvalue type="CopyFailed" field="data" label="data"/>
+      <value type="OSTHREAD" field="thread" label="Running thread"/>
+    </event>
+
+    <event id="EvacuationFailed" path="vm/gc/detailed/evacuation_failed" label="Evacuation Failed" is_instant="true"
+           description="Evacuation of an object failed">
       <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
       <structvalue type="CopyFailed" field="data" label="data"/>
     </event>
