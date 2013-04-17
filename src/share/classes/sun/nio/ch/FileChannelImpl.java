@@ -146,7 +146,7 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.read(fd, dst, -1, nd, positionLock);
+                    n = IOUtil.read(fd, dst, -1, nd);
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -202,7 +202,7 @@ public class FileChannelImpl
                 if (!isOpen())
                     return 0;
                 do {
-                    n = IOUtil.write(fd, src, -1, nd, positionLock);
+                    n = IOUtil.write(fd, src, -1, nd);
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -676,6 +676,17 @@ public class FileChannelImpl
         if (!readable)
             throw new NonReadableChannelException();
         ensureOpen();
+        if (nd.needsPositionLock()) {
+            synchronized (positionLock) {
+                return readInternal(dst, position);
+            }
+        } else {
+            return readInternal(dst, position);
+        }
+    }
+
+    private int readInternal(ByteBuffer dst, long position) throws IOException {
+        assert !nd.needsPositionLock() || Thread.holdsLock(positionLock);
         int n = 0;
         int ti = -1;
         Object traceContext = IoTrace.fileReadBegin(path);
@@ -685,7 +696,7 @@ public class FileChannelImpl
             if (!isOpen())
                 return -1;
             do {
-                n = IOUtil.read(fd, dst, position, nd, positionLock);
+                n = IOUtil.read(fd, dst, position, nd);
             } while ((n == IOStatus.INTERRUPTED) && isOpen());
             return IOStatus.normalize(n);
         } finally {
@@ -704,6 +715,17 @@ public class FileChannelImpl
         if (!writable)
             throw new NonWritableChannelException();
         ensureOpen();
+        if (nd.needsPositionLock()) {
+            synchronized (positionLock) {
+                return writeInternal(src, position);
+            }
+        } else {
+            return writeInternal(src, position);
+        }
+    }
+
+    private int writeInternal(ByteBuffer src, long position) throws IOException {
+        assert !nd.needsPositionLock() || Thread.holdsLock(positionLock);
         int n = 0;
         int ti = -1;
         Object traceContext = IoTrace.fileWriteBegin(path);
@@ -713,7 +735,7 @@ public class FileChannelImpl
             if (!isOpen())
                 return -1;
             do {
-                n = IOUtil.write(fd, src, position, nd, positionLock);
+                n = IOUtil.write(fd, src, position, nd);
             } while ((n == IOStatus.INTERRUPTED) && isOpen());
             return IOStatus.normalize(n);
         } finally {
