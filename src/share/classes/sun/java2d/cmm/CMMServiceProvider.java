@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.util.function;
 
-/**
- * An operation which accepts an object reference and an int, and returns no
- * result. This is the {@code (reference, int)} specialization of
- * {@link BiConsumer}. Unlike most other functional interfaces,
- * {@code ObjIntConsumer} is expected to operate via side-effects.
- *
- * @param <T> Type of reference argument to {@code accept()}.
- *
- * @see BiConsumer
- * @since 1.8
- */
-@FunctionalInterface
-public interface ObjIntConsumer<T> {
+package sun.java2d.cmm;
 
-    /**
-     * Accept a set of input values.
-     *
-     * @param t an input object
-     * @param value an input value
-     */
-    public void accept(T t, int value);
+public abstract class CMMServiceProvider {
+    public final PCMM getColorManagementModule() {
+        if (CMSManager.canCreateModule()) {
+            return getModule();
+        }
+        return null;
+    }
+
+    protected abstract PCMM getModule();
 }
