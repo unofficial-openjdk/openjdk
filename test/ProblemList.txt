@@ -1,4 +1,4 @@
-###########################################################################
+##########################################################################
 #
 # Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -274,6 +274,11 @@ java/net/URLClassLoader/closetest/CloseTest.java		macosx-all
 # 6962637
 java/io/File/MaxPathLength.java                                 windows-all
 
+# 7162111 - these tests need to be updated to run headless
+java/io/Serializable/resolveClass/deserializeButton/run.sh      macosx-all
+java/io/Serializable/serialver/classpath/run.sh                 macosx-all
+java/io/Serializable/serialver/nested/run.sh                    macosx-all
+
 ############################################################################
 
 # jdk_nio
@@ -387,6 +392,9 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 ############################################################################
 
 # jdk_tools
+
+# 8012474
+sun/tools/jmap/Basic.sh                                         generic-all
 
 # 6461635
 com/sun/tools/attach/BasicTests.sh                              generic-all

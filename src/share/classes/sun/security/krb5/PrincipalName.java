@@ -461,7 +461,7 @@ public class PrincipalName
     }
 
     public String[] getNameStrings() {
-        return nameStrings;
+        return nameStrings.clone();
     }
 
     public byte[][] toByteArray() {

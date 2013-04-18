@@ -244,7 +244,7 @@ initial-image-jre-sol64 initial-image-jdk-sol64 \
 trim-image-jre trim-image-jdk \
 identify-image-jre identify-image-jdk \
 process-image-jre process-image-jdk \
-compare-image \
+compare-image  \
 sec-files sec-files-win jgss-files server-jdk-image ::
 	@$(ECHO) ">>>Making "$@" @ `$(DATE)` ..."
 
@@ -254,9 +254,9 @@ ifeq ($(PLATFORM), macosx)
 images:: sanity-images post-sanity-images  \
 	 $(INITIAL_IMAGE_JRE) $(EXTRA_JRE_TARGETS) $(INITIAL_IMAGE_JDK) \
 	 trim-image-jre trim-image-jdk \
-	identify-image-jre identify-image-jdk \
+	 identify-image-jre identify-image-jdk \
 	 process-image-jre process-image-jdk sec-files sec-files-win \
-	 jgss-files $(EXTRA_IMAGE_TARGETS) server-jdk-image
+	jgss-files $(EXTRA_IMAGE_TARGETS) server-jdk-image 
 else
 
 images:: sanity-images post-sanity-images  \
@@ -940,7 +940,7 @@ endif
 	done
 	$(RM) $(JRE_BIN_LIST)
 
-# Duplicate current j2re-image contents to server-j2re-image
+# Duplicate current j2re-image contents to server-j2re-image 
 # for the server version of jre, before deploy build
 server-jdk-image::
 ifeq ($(PLATFORM), macosx)
