@@ -1134,13 +1134,9 @@ public final
                 enclosingCandidate = enclosingClass;
         }
 
-        // be very careful not to change the stack depth of this
-        // checkMemberAccess call for security reasons
-        // see java.lang.SecurityManager.checkMemberAccess
-        if (enclosingCandidate != null) {
-            enclosingCandidate.checkMemberAccess(Member.DECLARED,
-                                                 Reflection.getCallerClass(), true);
-        }
+        if (enclosingCandidate != null)
+            enclosingCandidate.checkPackageAccess(
+                    ClassLoader.getClassLoader(Reflection.getCallerClass()), true);
         return enclosingCandidate;
     }
 
@@ -2214,6 +2210,8 @@ public final
      * Check if client is allowed to access members.  If access is denied,
      * throw a SecurityException.
      *
+     * This method also enforces package access.
+     *
      * <p> Default policy: allow all clients access with normal Java access
      * control.
      */
@@ -2234,7 +2232,19 @@ public final
                 // checkMemberAccess of subclasses of SecurityManager as specified.
                 s.checkMemberAccess(this, which);
             }
+            this.checkPackageAccess(ccl, checkProxyInterfaces);
+        }
+    }
 
+    /*
+     * Checks if a client loaded in ClassLoader ccl is allowed to access this
+     * class under the current package access policy. If access is denied,
+     * throw a SecurityException.
+     */
+    private void checkPackageAccess(final ClassLoader ccl, boolean checkProxyInterfaces) {
+        final SecurityManager s = System.getSecurityManager();
+        if (s != null) {
+            final ClassLoader cl = getClassLoader0();
             if (ReflectUtil.needsPackageAccessCheck(ccl, cl)) {
                 String name = this.getName();
                 int i = name.lastIndexOf('.');
