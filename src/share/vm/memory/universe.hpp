@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -186,6 +186,7 @@ class Universe: AllStatic {
   static oop          _the_min_jint_string;          // A cache of "-2147483648" as a Java string
   static LatestMethodOopCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodOopCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
+  static LatestMethodOopCache* _pd_implies_cache;         // method for checking protection domain attributes
   static ActiveMethodOopsCache* _reflect_invoke_cache;    // method for security checks
   static oop          _out_of_memory_error_java_heap; // preallocated error object (no backtrace)
   static oop          _out_of_memory_error_perm_gen;  // preallocated error object (no backtrace)
@@ -325,6 +326,7 @@ class Universe: AllStatic {
   static oop          the_min_jint_string()          { return _the_min_jint_string;          }
   static methodOop    finalizer_register_method()     { return _finalizer_register_cache->get_methodOop(); }
   static methodOop    loader_addClass_method()        { return _loader_addClass_cache->get_methodOop(); }
+  static methodOop protection_domain_implies_method() { return _pd_implies_cache->get_methodOop(); }
   static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }
   static oop          null_ptr_exception_instance()   { return _null_ptr_exception_instance;   }
   static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
