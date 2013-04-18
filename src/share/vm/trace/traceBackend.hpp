@@ -33,8 +33,11 @@
 
 class TraceBackend {
 public:
-  static bool enabled(TraceEventId id) {
+  static bool enabled(void) {
     return EnableTracing;
+  }
+  static bool is_event_enabled(TraceEventId id) {
+    return enabled();
   }
 
   static TracingTime time() {
@@ -43,6 +46,9 @@ public:
 
   static TracingTime time_adjustment(jlong time) {
     return time;
+  }
+
+  static void on_unloading_classes(BoolObjectClosure* is_alive, int no_of_classes_unloading) {
   }
 };
 

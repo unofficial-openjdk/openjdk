@@ -37,6 +37,7 @@
 // INCLUDE_TRACE
 
 #include "memory/resourceArea.hpp"
+#include "runtime/handles.inline.hpp"
 #include "tracefiles/traceTypes.hpp"
 #include "trace/traceEvent.hpp"
 
@@ -130,6 +131,7 @@ public:
   <xsl:value-of select="concat('  Event', @id, '(EventStartTime timing=TIMED) : TraceEvent&lt;Event', @id, '&gt;(timing) {}', $newline)"/>
   void writeEvent(void) {
     ResourceMark rm;
+    HandleMark hm;
     TraceStream ts(*tty);
     ts.print("<xsl:value-of select="@label"/>: [");
 <xsl:apply-templates select="value|structvalue" mode="write-data"/>

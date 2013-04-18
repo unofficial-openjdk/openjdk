@@ -54,7 +54,11 @@
 #include "runtime/signature.hpp"
 #include "services/classLoadingService.hpp"
 #include "services/threadService.hpp"
-#include "trace/traceMacros.hpp"
+
+#if INCLUDE_TRACE
+ #include "memory/iterator.hpp"
+ #include "trace/tracing.hpp"
+#endif
 
 
 Dictionary*            SystemDictionary::_dictionary          = NULL;
@@ -581,6 +585,8 @@ klassOop SystemDictionary::resolve_instance_class_or_null(Symbol* name, Handle c
   assert(name != NULL && !FieldType::is_array(name) &&
          !FieldType::is_obj(name), "invalid class name");
 
+  TracingTime class_load_start_time = Tracing::time();
+
   // UseNewReflection
   // Fix for 4474172; see evaluation for more details
   class_loader = Handle(THREAD, java_lang_ClassLoader::non_reflection_class_loader(class_loader()));
@@ -820,6 +826,7 @@ klassOop SystemDictionary::resolve_instance_class_or_null(Symbol* name, Handle c
         }
         return NULL;
       }
+      post_class_load_event(class_load_start_time, k, class_loader);
     }
   }
 
@@ -939,6 +946,8 @@ klassOop SystemDictionary::parse_stream(Symbol* class_name,
                                         TRAPS) {
   TempNewSymbol parsed_name = NULL;
 
+  TracingTime class_load_start_time = Tracing::time();
+
   // Parse the stream. Note that we do this even though this klass might
   // already be present in the SystemDictionary, otherwise we would not
   // throw potential ClassFormatErrors.
@@ -996,6 +1005,8 @@ klassOop SystemDictionary::parse_stream(Symbol* class_name,
         assert(THREAD->is_Java_thread(), "thread->is_Java_thread()");
         JvmtiExport::post_class_load((JavaThread *) THREAD, k());
     }
+
+    post_class_load_event(class_load_start_time, k, class_loader);
   }
 
   return k();
@@ -1012,7 +1023,6 @@ klassOop SystemDictionary::resolve_from_stream(Symbol* class_name,
                                                ClassFileStream* st,
                                                bool verify,
                                                TRAPS) {
-
   // Classloaders that support parallelism, e.g. bootstrap classloader,
   // or all classloaders with UnsyncloadClass do not acquire lock here
   bool DoObjectLock = true;
@@ -1655,6 +1665,7 @@ int SystemDictionary::calculate_systemdictionary_size(int classcount) {
   return newsize;
 }
 bool SystemDictionary::do_unloading(BoolObjectClosure* is_alive) {
+  post_class_unload_events(is_alive);
   bool result = dictionary()->do_unloading(is_alive);
   constraints()->purge_loader_constraints(is_alive);
   resolution_errors()->purge_resolution_errors(is_alive);
@@ -2600,6 +2611,73 @@ void SystemDictionary::verify_obj_klass_present(Handle obj,
   guarantee(probe != NULL || name != NULL,
             "Loaded klasses should be in SystemDictionary");
 }
+
+// utility function for posting class load event
+void SystemDictionary::post_class_load_event(TracingTime start_time,
+                                             instanceKlassHandle k,
+                                             Handle initiating_loader) {
+#if INCLUDE_TRACE
+  EventClassLoad event(UNTIMED);
+  if (event.should_commit()) {
+    event.set_endtime(Tracing::time());
+    event.set_starttime(start_time);
+    event.set_loadedClass(k());
+    oop defining_class_loader = k->class_loader();
+    event.set_definingClassLoader(defining_class_loader != NULL ?
+                                  defining_class_loader->klass() : (klassOop)NULL);
+    oop class_loader = initiating_loader.is_null() ? (oop)NULL : initiating_loader();
+    event.set_initiatingClassLoader(class_loader != NULL ?
+                                    class_loader->klass() : (klassOop)NULL);
+    event.commit();
+  }
+#endif /* INCLUDE_TRACE */
+}
+
+void SystemDictionary::post_class_unload_events(BoolObjectClosure* is_alive) {
+#if INCLUDE_TRACE
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
+  if (Tracing::enabled()) {
+    _should_write_unload_events = Tracing::is_event_enabled(TraceClassUnloadEvent);
+    _class_unload_time = Tracing::time();
+    _is_alive = is_alive;
+    classes_do(&class_unload_event);
+
+    if (_no_of_classes_unloading > 0) {
+      Tracing::on_unloading_classes(is_alive, _no_of_classes_unloading);
+      _no_of_classes_unloading = 0;
+    }
+    _should_write_unload_events = false;
+    _is_alive = NULL;
+  }
+#endif /* INCLUDE_TRACE */
+}
+
+#if INCLUDE_TRACE
+
+TracingTime SystemDictionary::_class_unload_time;
+BoolObjectClosure* SystemDictionary::_is_alive = NULL;
+int SystemDictionary::_no_of_classes_unloading = 0;
+bool SystemDictionary::_should_write_unload_events = false;
+
+void SystemDictionary::class_unload_event(klassOop curklass) {
+
+  Klass* myklass = curklass->klass_part();
+  oop class_loader = myklass->class_loader();
+
+  if (class_loader != NULL && _is_alive != NULL && !_is_alive->do_object_b(class_loader)) {
+    _no_of_classes_unloading++;
+    if (_should_write_unload_events) {
+      // post class unload event
+      EventClassUnload event(UNTIMED);
+      event.set_endtime(_class_unload_time);
+      event.set_unloadedClass(curklass);
+      event.set_definingClassLoader(class_loader->klass());
+      event.commit();
+    }
+  }
+}
+
+#endif /* INCLUDE_TRACE */
 
 #ifndef PRODUCT
 

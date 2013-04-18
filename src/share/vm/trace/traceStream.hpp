@@ -27,9 +27,11 @@
 
 #if INCLUDE_TRACE
 
-#include "utilities/ostream.hpp"
-#include "oops/methodOop.hpp"
+#include "oops/klass.hpp"
 #include "oops/klassOop.hpp"
+#include "oops/methodOop.hpp"
+#include "oops/symbol.hpp"
+#include "utilities/ostream.hpp"
 
 class TraceStream : public StackObj {
  private:
@@ -78,12 +80,32 @@ class TraceStream : public StackObj {
     _st.print("%s = %f", label, val);
   }
 
-  void print_val(const char* label, klassOop& val) {
-    _st.print("%s = %s", label, val->print_string());
+  // Caller is machine generated code located in traceEventClasses.hpp
+  // Event<TraceId>::writeEvent() (pseudocode) contains the
+  // necessary ResourceMark for the resource allocations below.
+  // See traceEventClasses.xsl for details.
+  void print_val(const char* label, const klassOop& val) {
+    const char* description = "NULL";
+    if (val != NULL) {
+      Klass* myklass = val->klass_part();
+      Symbol* name = myklass->name();
+      if (name != NULL) {
+        description = name->as_C_string();
+      }
+    }
+    _st.print("%s = %s", label, description);
   }
 
-  void print_val(const char* label, methodOop& val) {
-    _st.print("%s = %s", label, val->name_and_sig_as_C_string());
+  // Caller is machine generated code located in traceEventClasses.hpp
+  // Event<TraceId>::writeEvent() (pseudocode) contains the
+  // necessary ResourceMark for the resource allocations below.
+  // See traceEventClasses.xsl for details.
+  void print_val(const char* label, const methodOop& val) {
+    const char* description = "NULL";
+    if (val != NULL) {
+      description = val->name_and_sig_as_C_string();
+    }
+    _st.print("%s = %s", label, description);
   }
 
   void print_val(const char* label, const char* val) {
@@ -95,5 +117,5 @@ class TraceStream : public StackObj {
   }
 };
 
-#endif
-#endif
+#endif /* INCLUDE_TRACE */
+#endif /* SHARE_VM_TRACE_TRACESTREAM_HPP */

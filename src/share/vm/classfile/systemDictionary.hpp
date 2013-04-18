@@ -33,6 +33,7 @@
 #include "runtime/reflectionUtils.hpp"
 #include "utilities/hashtable.hpp"
 #include "utilities/hashtable.inline.hpp"
+#include "trace/traceTime.hpp"
 
 // The system dictionary stores all loaded classes and maps:
 //
@@ -76,6 +77,7 @@ class LoaderConstraintTable;
 template <MEMFLAGS F> class HashtableBucket;
 class ResolutionErrorTable;
 class SymbolPropertyTable;
+class BoolObjectClosure;
 
 // Certain classes are preloaded, such as java.lang.Object and java.lang.String.
 // They are all "well-known", in the sense that no class loader is allowed
@@ -613,6 +615,11 @@ private:
   // Setup link to hierarchy
   static void add_to_hierarchy(instanceKlassHandle k, TRAPS);
 
+  // event based tracing
+  static void post_class_load_event(TracingTime start_time, instanceKlassHandle k,
+                                    Handle initiating_loader);
+  static void post_class_unload_events(BoolObjectClosure* is_alive);
+
 private:
   // We pass in the hashtable index so we can calculate it outside of
   // the SystemDictionary_lock.
@@ -669,6 +676,14 @@ private:
 
   static bool _has_loadClassInternal;
   static bool _has_checkPackageAccess;
+
+#if INCLUDE_TRACE
+  static TracingTime _class_unload_time;
+  static BoolObjectClosure* _is_alive;
+  static int _no_of_classes_unloading;
+  static bool _should_write_unload_events;
+  static void class_unload_event(klassOop curklass);
+#endif
 };
 
 class SystemDictionaryHandles : AllStatic {
