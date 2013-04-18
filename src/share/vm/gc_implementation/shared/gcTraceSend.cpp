@@ -136,7 +136,7 @@ void GCTracer::send_object_count_after_gc_event(klassOop klass, jlong count, jul
 
 bool GCTracer::should_send_object_count_after_gc_event() const {
 #if INCLUDE_TRACE
-  return Tracing::enabled(EventObjectCountAfterGC::eventId);
+  return Tracing::is_event_enabled(EventObjectCountAfterGC::eventId);
 #else
   return false;
 #endif

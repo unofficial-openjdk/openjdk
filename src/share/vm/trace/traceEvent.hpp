@@ -73,7 +73,7 @@ class TraceEvent : public StackObj {
   }
 
   static bool is_enabled() {
-    return Tracing::enabled(T::eventId);
+    return Tracing::is_event_enabled(T::eventId);
   }
 
   bool should_commit() {

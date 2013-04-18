@@ -973,7 +973,7 @@ void ATTR ObjectMonitor::exit(bool not_suspended, TRAPS) {
 #if INCLUDE_TRACE
    // get the owner's thread id for the MonitorEnter event
    // if it is enabled and the thread isn't suspended
-   if (not_suspended && Tracing::enabled(TraceJavaMonitorEnterEvent)) {
+   if (not_suspended && Tracing::is_event_enabled(TraceJavaMonitorEnterEvent)) {
      _previous_owner_tid = SharedRuntime::get_java_tid(Self);
    }
 #endif
