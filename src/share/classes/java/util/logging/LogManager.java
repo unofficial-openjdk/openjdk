@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,10 +33,8 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.net.URL;
 import sun.misc.JavaAWTAccess;
 import sun.misc.SharedSecrets;
-import sun.security.action.GetPropertyAction;
 
 /**
  * There is a single global LogManager object that is used to
@@ -151,7 +149,6 @@ public class LogManager {
     // The global LogManager object
     private static LogManager manager;
 
-    private final static Handler[] emptyHandlers = { };
     private Properties props = new Properties();
     private PropertyChangeSupport changes
                          = new PropertyChangeSupport(LogManager.class);
@@ -507,13 +504,10 @@ public class LogManager {
                 throw new NullPointerException();
             }
 
-            // cleanup some Loggers that have been GC'ed
-            manager.drainLoggerRefQueueBounded();
-
             LoggerWeakRef ref = namedLoggers.get(name);
             if (ref != null) {
                 if (ref.get() == null) {
-                    // It's possible that the Logger was GC'ed after the
+                    // It's possible that the Logger was GC'ed after a
                     // drainLoggerRefQueueBounded() call above so allow
                     // a new one to be registered.
                     removeLogger(name);
@@ -562,6 +556,8 @@ public class LogManager {
             return true;
         }
 
+        // note: all calls to removeLogger are synchronized on LogManager's
+        // intrinsic lock
         void removeLogger(String name) {
             namedLoggers.remove(name);
         }
@@ -844,6 +840,7 @@ public class LogManager {
         if (name == null) {
             throw new NullPointerException();
         }
+        drainLoggerRefQueueBounded();
         LoggerContext cx = getUserContext();
         if (cx.addLocalLogger(logger)) {
             // Do we have a per logger handler too?
