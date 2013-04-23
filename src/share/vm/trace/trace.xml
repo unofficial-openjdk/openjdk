@@ -138,21 +138,21 @@ Declares a structure type that can be used in other events.
     </struct>
 
     <event id="GCHeapSummary" path="vm/gc/heap/summary" label="Heap Summary" is_instant="true">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="GCWHEN" field="when" label="When" />
       <structvalue type="VirtualSpace" field="heapSpace" label="Heap Space"/>
       <value type="BYTES64" field="heapUsed" label="Heap Used" description="Bytes allocated by objects in the heap"/>
     </event>
 
     <event id="PermGenSummary" path="vm/gc/heap/perm_gen_summary" label="Perm Gen Summary" is_instant="true">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="GCWHEN" field="when" label="When" />
       <structvalue type="VirtualSpace" field="permSpace" label="PermGen Space"/>
       <structvalue type="ObjectSpace" field="objectSpace" label="Object Space"/>
     </event>
 
     <event id="PSHeapSummary" path="vm/gc/heap/ps_summary" label="ParallelScavengeHeap Summary" is_instant="true">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="GCWHEN" field="when" label="When" />
 
       <structvalue type="VirtualSpace" field="oldSpace" label="Old Space"/>
@@ -166,7 +166,7 @@ Declares a structure type that can be used in other events.
 
     <event id="GCGarbageCollection" path="vm/gc/collector/garbage_collection" label="Garbage Collection"
            description="Garbage collection performed by the JVM">
-      <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="UINT" field="gcId"  label="GC ID" relation="GC_ID" />
       <value type="GCNAME" field="name" label="Name" description="The name of the Garbage Collector" />
       <value type="GCCAUSE" field="cause" label="Cause" description="The reason for triggering this Garbage Collection" />
       <value type="RELATIVE_TICKS" field="sumOfPauses" label="Sum of Pauses" description="Sum of all the times in which Java execution was paused during the garbage collection" />
@@ -175,29 +175,29 @@ Declares a structure type that can be used in other events.
 
     <event id="GCParallelOld" path="vm/gc/collector/parold_garbage_collection" label="Parallel Old Garbage Collection"
            description="Extra information specific to Parallel Old Garbage Collections">
-      <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="UINT" field="gcId"  label="GC ID" relation="GC_ID" />
       <value type="ADDRESS" field="densePrefix" label="Dense Prefix" description="The address of the dense prefix, used when compacting" />
     </event>
 
     <event id="GCYoungGarbageCollection" path="vm/gc/collector/young_garbage_collection" label="Young Garbage Collection"
            description="Extra information specific to Young Garbage Collections">
-      <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="UINT" field="gcId"  label="GC ID" relation="GC_ID" />
       <value type="UINT" field="tenuringThreshold" label="Tenuring Threshold" />
     </event>
 
     <event id="GCOldGarbageCollection" path="vm/gc/collector/old_garbage_collection" label="Old Garbage Collection"
            description="Extra information specific to Old Garbage Collections">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
     </event>
 
     <event id="GCG1GarbageCollection" path="vm/gc/collector/g1_garbage_collection" label="G1 Garbage Collection"
            description="Extra information specific to G1 Garbage Collections">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="G1YCTYPE" field="type" label="Type" />
     </event>
 
     <event id="EvacuationInfo" path="vm/gc/detailed/evacuation_info" label="Evacuation Info" is_instant="true">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UINT" field="cSetRegions" label="Collection Set Regions"/>
       <value type="BYTES64" field="cSetUsedBefore" label="Collection Set Before" description="Memory usage before GC in the collection set regions"/>
       <value type="BYTES64" field="cSetUsedAfter" label="Collection Set After" description="Memory usage after GC in the collection set regions"/>
@@ -211,9 +211,16 @@ Declares a structure type that can be used in other events.
     <event id="GCReferenceStatistics" path="vm/gc/reference/statistics"
            label="GC Reference Processing" is_instant="true"
            description="Total count of processed references during GC">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="REFERENCETYPE" field="type" label="Type" />
       <value type="ULONG" field="count" label="Total Count" />
+    </event>
+
+    <event id="ObjectCountAfterGC" path="vm/gc/detailed/object_count_after_gc" is_instant="true" label="Object Count After GC">
+      <value type="UINT" field="gcId"  label="GC ID" relation="GC_ID" />
+      <value type="CLASS" field="class" label="Class" />
+      <value type="LONG" field="count" label="Count" />
+      <value type="BYTES64" field="totalSize" label="Total Size" />
     </event>
 
     <struct id="CopyFailed">
@@ -223,48 +230,41 @@ Declares a structure type that can be used in other events.
       <value type="BYTES64" field="totalSize" label="Total Object Size"/>
     </struct>
 
-    <event id="ObjectCountAfterGC" path="vm/gc/detailed/object_count_after_gc" is_instant="true" label="Object Count After GC">
-      <value type="ULONG" field="gcId"  label="GC ID" relation="GC_ID" />
-      <value type="CLASS" field="class" label="Class" />
-      <value type="LONG" field="count" label="Count" />
-      <value type="BYTES64" field="totalSize" label="Total Size" />
-    </event>
-
     <event id="PromotionFailed" path="vm/gc/detailed/promotion_failed" label="Promotion Failed" is_instant="true"
            description="Promotion of an object failed">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <structvalue type="CopyFailed" field="data" label="data"/>
       <value type="OSTHREAD" field="thread" label="Running thread"/>
     </event>
 
     <event id="EvacuationFailed" path="vm/gc/detailed/evacuation_failed" label="Evacuation Failed" is_instant="true"
            description="Evacuation of an object failed">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <structvalue type="CopyFailed" field="data" label="data"/>
     </event>
 
     <event id="ConcurrentModeFailure" path="vm/gc/detailed/concurrent_mode_failure" label="Concurrent Mode Failure"
            is_instant="true" description="Concurrent Mode failed">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
     </event>
 
     <event id="GCPhasePause" path="vm/gc/phases/pause" label="GC Phase Pause">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UTF8" field="name" label="Name" />
     </event>
     
     <event id="GCPhasePauseLevel1" path="vm/gc/phases/pause_level_1" label="GC Phase Pause Level 1">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UTF8" field="name" label="Name" />
     </event>
     
     <event id="GCPhasePauseLevel2" path="vm/gc/phases/pause_level_2" label="GC Phase Pause Level 2">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UTF8" field="name" label="Name" />
     </event>
     
     <event id="GCPhasePauseLevel3" path="vm/gc/phases/pause_level_3" label="GC Phase Pause Level 3">
-      <value type="ULONG" field="gcId" label="GC ID" relation="GC_ID"/>
+      <value type="UINT" field="gcId" label="GC ID" relation="GC_ID"/>
       <value type="UTF8" field="name" label="Name" />
     </event>
     
@@ -273,7 +273,7 @@ Declares a structure type that can be used in other events.
     <event id="Compilation" path="vm/compiler/compilation" label="Compilation"
          has_thread="true" is_requestable="false" is_constant="false">
       <value type="METHOD" field="method" label="Java Method"/>
-      <value type="INTEGER" field="compileID" label="Compilation ID" relation="COMP_ID"/>
+      <value type="UINT" field="compileID" label="Compilation ID" relation="COMP_ID"/>
       <value type="USHORT" field="compileLevel" label="Compilation Level"/>
       <value type="BOOLEAN" field="succeded" label="Succeeded"/>
       <value type="BOOLEAN" field="isOsr" label="On Stack Replacement"/>
@@ -284,14 +284,14 @@ Declares a structure type that can be used in other events.
     <event id="CompilerPhase" path="vm/compiler/phase" label="Compiler Phase"
             has_thread="true" is_requestable="false" is_constant="false">
       <value type="COMPILERPHASETYPE" field="phase" label="Compile Phase"/>
-      <value type="INTEGER" field="compileID" label="Compilation ID" relation="COMP_ID"/>
+      <value type="UINT" field="compileID" label="Compilation ID" relation="COMP_ID"/>
       <value type="USHORT" field="phaseLevel" label="Phase Level"/>
     </event>
     
     <event id="CompilerFailure" path="vm/compiler/failure" label="Compilation Failure"
             has_thread="true" is_requestable="false" is_constant="false" is_instant="true">
       <value type="UTF8" field="failure" label="Message"/>
-      <value type="INTEGER" field="compileID" label="Compilation ID" relation="COMP_ID"/>
+      <value type="UINT" field="compileID" label="Compilation ID" relation="COMP_ID"/>
     </event>
 
     <!-- Code sweeper events -->
