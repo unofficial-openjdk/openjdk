@@ -517,7 +517,6 @@ jdk_other: $(call TestDirs, \
           javax/xml/ws com/sun/internal/ws \
           com/sun/org/apache/xerces \
           com/sun/corba \
-          com/sun/servicetag \
           com/sun/tracing \
           sun/usagetracker) 
 	$(call RunAgentvmBatch)
@@ -594,7 +593,7 @@ jdk_jdi: $(call TestDirs, com/sun/jdi)
 JDK_ALL_TARGETS += jdk_tools
 jdk_tools: $(call TestDirs, \
 		com/sun/tools sun/jvmstat sun/tools tools \
-		com/sun/servicetag com/sun/tracing)
+		com/sun/tracing)
 	$(call SharedLibraryPermissions,tools/launcher)
 	$(call RunAgentvmBatch)
 
