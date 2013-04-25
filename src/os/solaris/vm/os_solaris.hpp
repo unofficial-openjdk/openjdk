@@ -127,7 +127,6 @@ class Solaris {
   static void set_SIGinterrupt(int newsig) { _SIGinterrupt = newsig; }
   static void set_SIGasync(int newsig) { _SIGasync = newsig; }
 
-
  public:
   // Large Page Support--ISM.
   static bool largepage_range(char* addr, size_t size);
@@ -158,6 +157,8 @@ class Solaris {
 
   static void hotspot_sigmask(Thread* thread);
 
+  // SR_handler
+  static void SR_handler(Thread* thread, ucontext_t* uc);
  protected:
   // Solaris-specific interface goes here
   static julong available_memory();

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -399,6 +399,9 @@ source %{
 static int preserve_SP_size() {
   return 3;  // rex.w, op, rm(reg/reg)
 }
+static int clear_avx_size() {
+  return (Compile::current()->max_vector_size() > 16) ? 3 : 0;  // vzeroupper
+}
 
 // !!!!! Special hack to get all types of calls to specify the byte offset
 //       from the start of the call to the point where the return address
@@ -406,6 +409,7 @@ static int preserve_SP_size() {
 int MachCallStaticJavaNode::ret_addr_offset()
 {
   int offset = 5; // 5 bytes from start of call to where return address points
+  offset += clear_avx_size();
   if (_method_handle_invoke)
     offset += preserve_SP_size();
   return offset;
@@ -413,11 +417,16 @@ int MachCallStaticJavaNode::ret_addr_offset()
 
 int MachCallDynamicJavaNode::ret_addr_offset()
 {
-  return 15; // 15 bytes from start of call to where return address points
+  int offset = 15; // 15 bytes from start of call to where return address points
+  offset += clear_avx_size();
+  return offset;
 }
 
-// In os_cpu .ad file
-// int MachCallRuntimeNode::ret_addr_offset()
+int MachCallRuntimeNode::ret_addr_offset() {
+  int offset = 13; // movq r10,#addr; callq (r10)
+  offset += clear_avx_size();
+  return offset;
+}
 
 // Indicate if the safepoint node needs the polling page as an input,
 // it does if the polling page is more than disp32 away.
@@ -434,6 +443,7 @@ bool SafePointNode::needs_polling_address_input()
 // ensure that it does not span a cache line so that it can be patched.
 int CallStaticJavaDirectNode::compute_padding(int current_offset) const
 {
+  current_offset += clear_avx_size(); // skip vzeroupper
   current_offset += 1; // skip call opcode byte
   return round_to(current_offset, alignment_required()) - current_offset;
 }
@@ -443,6 +453,7 @@ int CallStaticJavaDirectNode::compute_padding(int current_offset) const
 int CallStaticJavaHandleNode::compute_padding(int current_offset) const
 {
   current_offset += preserve_SP_size();   // skip mov rbp, rsp
+  current_offset += clear_avx_size(); // skip vzeroupper
   current_offset += 1; // skip call opcode byte
   return round_to(current_offset, alignment_required()) - current_offset;
 }
@@ -451,6 +462,7 @@ int CallStaticJavaHandleNode::compute_padding(int current_offset) const
 // ensure that it does not span a cache line so that it can be patched.
 int CallDynamicJavaDirectNode::compute_padding(int current_offset) const
 {
+  current_offset += clear_avx_size(); // skip vzeroupper
   current_offset += 11; // skip movq instruction + call opcode byte
   return round_to(current_offset, alignment_required()) - current_offset;
 }
@@ -762,6 +774,11 @@ int MachPrologNode::reloc() const
 void MachEpilogNode::format(PhaseRegAlloc* ra_, outputStream* st) const
 {
   Compile* C = ra_->C;
+  if (C->max_vector_size() > 16) {
+    st->print("vzeroupper");
+    st->cr(); st->print("\t");
+  }
+
   int framesize = C->frame_slots() << LogBytesPerInt;
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
   // Remove word for return adr already pushed
@@ -791,6 +808,13 @@ void MachEpilogNode::format(PhaseRegAlloc* ra_, outputStream* st) const
 void MachEpilogNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const
 {
   Compile* C = ra_->C;
+  if (C->max_vector_size() > 16) {
+    // Clear upper bits of YMM registers when current compiled code uses
+    // wide vectors to avoid AVX <-> SSE transition penalty during call.
+    MacroAssembler _masm(&cbuf);
+    __ vzeroupper();
+  }
+
   int framesize = C->frame_slots() << LogBytesPerInt;
   assert((framesize & (StackAlignmentInBytes-1)) == 0, "frame size not aligned");
   // Remove word for return adr already pushed
@@ -2001,6 +2025,25 @@ encode %{
     __ bind(miss);
   %}
 
+  enc_class clear_avx %{
+    debug_only(int off0 = cbuf.insts_size());
+    if (ra_->C->max_vector_size() > 16) {
+      // Clear upper bits of YMM registers when current compiled code uses
+      // wide vectors to avoid AVX <-> SSE transition penalty during call.
+      MacroAssembler _masm(&cbuf);
+      __ vzeroupper();
+    }
+    debug_only(int off1 = cbuf.insts_size());
+    assert(off1 - off0 == clear_avx_size(), "correct size prediction");
+  %}
+
+  enc_class Java_To_Runtime(method meth) %{
+    // No relocation needed
+    MacroAssembler _masm(&cbuf);
+    __ mov64(r10, (int64_t) $meth$$method);
+    __ call(r10);
+  %}
+
   enc_class Java_To_Interpreter(method meth)
   %{
     // CALL Java_To_Interpreter
@@ -2201,12 +2244,6 @@ encode %{
   %{
     // Output immediate
     $$$emit32$src$$constant;
-  %}
-
-  enc_class Con64(immL src)
-  %{
-    // Output immediate
-    emit_d64($src$$constant);
   %}
 
   enc_class Con32F_as_bits(immF src)
@@ -7349,7 +7386,7 @@ instruct xaddI( memory mem, rRegI newval, rFlagsReg cr) %{
   ins_pipe( pipe_cmpxchg );
 %}
 
-instruct xaddL_no_res( memory mem, Universe dummy, immL add, rFlagsReg cr) %{
+instruct xaddL_no_res( memory mem, Universe dummy, immL32 add, rFlagsReg cr) %{
   predicate(n->as_LoadStore()->result_not_used());
   match(Set dummy (GetAndAddL mem add));
   effect(KILL cr);
@@ -9198,7 +9235,7 @@ instruct cmpLTMask(rRegI dst, rRegI p, rRegI q, rFlagsReg cr)
   match(Set dst (CmpLTMask p q));
   effect(KILL cr);
 
-  ins_cost(400); // XXX
+  ins_cost(400);
   format %{ "cmpl    $p, $q\t# cmpLTMask\n\t"
             "setlt   $dst\n\t"
             "movzbl  $dst, $dst\n\t"
@@ -9216,36 +9253,62 @@ instruct cmpLTMask0(rRegI dst, immI0 zero, rFlagsReg cr)
   match(Set dst (CmpLTMask dst zero));
   effect(KILL cr);
 
-  ins_cost(100); // XXX
+  ins_cost(100);
   format %{ "sarl    $dst, #31\t# cmpLTMask0" %}
-  opcode(0xC1, 0x7);  /* C1 /7 ib */
-  ins_encode(reg_opc_imm(dst, 0x1F));
+  ins_encode %{
+  __ sarl($dst$$Register, 31);
+  %}
   ins_pipe(ialu_reg);
 %}
 
-
-instruct cadd_cmpLTMask(rRegI p, rRegI q, rRegI y, rRegI tmp, rFlagsReg cr)
+/* Better to save a register than avoid a branch */
+instruct cadd_cmpLTMask(rRegI p, rRegI q, rRegI y, rFlagsReg cr)
 %{
   match(Set p (AddI (AndI (CmpLTMask p q) y) (SubI p q)));
-  effect(TEMP tmp, KILL cr);
-
-  ins_cost(400); // XXX
-  format %{ "subl    $p, $q\t# cadd_cmpLTMask1\n\t"
-            "sbbl    $tmp, $tmp\n\t"
-            "andl    $tmp, $y\n\t"
-            "addl    $p, $tmp" %}
+  effect(KILL cr);
+  ins_cost(300);
+  format %{ "subl   $p,$q\t# cadd_cmpLTMask\n\t"
+            "jge    done\n\t"
+            "addl   $p,$y\n"
+            "done:  " %}
   ins_encode %{
     Register Rp = $p$$Register;
     Register Rq = $q$$Register;
     Register Ry = $y$$Register;
-    Register Rt = $tmp$$Register;
+    Label done;
     __ subl(Rp, Rq);
-    __ sbbl(Rt, Rt);
-    __ andl(Rt, Ry);
-    __ addl(Rp, Rt);
+    __ jccb(Assembler::greaterEqual, done);
+    __ addl(Rp, Ry);
+    __ bind(done);
   %}
   ins_pipe(pipe_cmplt);
 %}
+
+/* Better to save a register than avoid a branch */
+instruct and_cmpLTMask(rRegI p, rRegI q, rRegI y, rFlagsReg cr)
+%{
+  match(Set y (AndI (CmpLTMask p q) y));
+  effect(KILL cr);
+
+  ins_cost(300);
+
+  format %{ "cmpl     $p, $q\t# and_cmpLTMask\n\t"
+            "jlt      done\n\t"
+            "xorl     $y, $y\n"
+            "done:  " %}
+  ins_encode %{
+    Register Rp = $p$$Register;
+    Register Rq = $q$$Register;
+    Register Ry = $y$$Register;
+    Label done;
+    __ cmpl(Rp, Rq);
+    __ jccb(Assembler::less, done);
+    __ xorl(Ry, Ry);
+    __ bind(done);
+  %}
+  ins_pipe(pipe_cmplt);
+%}
+
 
 //---------- FP Instructions------------------------------------------------
 
@@ -11124,7 +11187,7 @@ instruct CallStaticJavaDirect(method meth) %{
   ins_cost(300);
   format %{ "call,static " %}
   opcode(0xE8); /* E8 cd */
-  ins_encode(Java_Static_Call(meth), call_epilog);
+  ins_encode(clear_avx, Java_Static_Call(meth), call_epilog);
   ins_pipe(pipe_slow);
   ins_alignment(4);
 %}
@@ -11142,7 +11205,7 @@ instruct CallStaticJavaHandle(method meth, rbp_RegP rbp_mh_SP_save) %{
   ins_cost(300);
   format %{ "call,static/MethodHandle " %}
   opcode(0xE8); /* E8 cd */
-  ins_encode(preserve_SP,
+  ins_encode(clear_avx, preserve_SP,
              Java_Static_Call(meth),
              restore_SP,
              call_epilog);
@@ -11162,7 +11225,7 @@ instruct CallDynamicJavaDirect(method meth)
   format %{ "movq    rax, #Universe::non_oop_word()\n\t"
             "call,dynamic " %}
   opcode(0xE8); /* E8 cd */
-  ins_encode(Java_Dynamic_Call(meth), call_epilog);
+  ins_encode(clear_avx, Java_Dynamic_Call(meth), call_epilog);
   ins_pipe(pipe_slow);
   ins_alignment(4);
 %}
@@ -11175,8 +11238,7 @@ instruct CallRuntimeDirect(method meth)
 
   ins_cost(300);
   format %{ "call,runtime " %}
-  opcode(0xE8); /* E8 cd */
-  ins_encode(Java_To_Runtime(meth));
+  ins_encode(clear_avx, Java_To_Runtime(meth));
   ins_pipe(pipe_slow);
 %}
 
@@ -11188,8 +11250,7 @@ instruct CallLeafDirect(method meth)
 
   ins_cost(300);
   format %{ "call_leaf,runtime " %}
-  opcode(0xE8); /* E8 cd */
-  ins_encode(Java_To_Runtime(meth));
+  ins_encode(clear_avx, Java_To_Runtime(meth));
   ins_pipe(pipe_slow);
 %}
 
@@ -11201,7 +11262,6 @@ instruct CallLeafNoFPDirect(method meth)
 
   ins_cost(300);
   format %{ "call_leaf_nofp,runtime " %}
-  opcode(0xE8); /* E8 cd */
   ins_encode(Java_To_Runtime(meth));
   ins_pipe(pipe_slow);
 %}

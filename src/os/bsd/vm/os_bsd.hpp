@@ -304,7 +304,7 @@ class PlatformEvent : public CHeapObj<mtInternal> {
     int  TryPark () ;
     int  park (jlong millis) ;
     void SetAssociation (Thread * a) { _Assoc = a ; }
-} ;
+};
 
 class PlatformParker : public CHeapObj<mtInternal> {
   protected:
@@ -322,6 +322,6 @@ class PlatformParker : public CHeapObj<mtInternal> {
       status = pthread_mutex_init (_mutex, NULL);
       assert_status(status == 0, status, "mutex_init");
     }
-} ;
+};
 
 #endif // OS_BSD_VM_OS_BSD_HPP
