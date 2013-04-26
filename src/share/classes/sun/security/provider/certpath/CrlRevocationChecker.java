@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -308,11 +308,9 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
                     mPossibleCRLs.add((X509CRL)crl);
                 }
             }
-            DistributionPointFetcher store =
-                DistributionPointFetcher.getInstance();
             // all CRLs returned by the DP Fetcher have also been verified
-            mApprovedCRLs.addAll(store.getCRLs(sel, signFlag, prevKey,
-                mSigProvider, mStores, reasonsMask, trustAnchors,
+            mApprovedCRLs.addAll(DistributionPointFetcher.getCRLs(sel, signFlag,
+                prevKey, mSigProvider, mStores, reasonsMask, trustAnchors,
                 mParams.getDate()));
         } catch (Exception e) {
             if (debug != null) {
@@ -762,14 +760,12 @@ class CrlRevocationChecker extends PKIXCertPathChecker {
                                         CRLDistributionPointsExtension.POINTS);
             }
             Set<X509CRL> results = new HashSet<X509CRL>();
-            DistributionPointFetcher dpf =
-                DistributionPointFetcher.getInstance();
             for (Iterator<DistributionPoint> t = points.iterator();
                  t.hasNext() && !Arrays.equals(reasonsMask, ALL_REASONS); ) {
                 DistributionPoint point = t.next();
                 for (X509CRL crl : crls) {
-                    if (dpf.verifyCRL(certImpl, point, crl, reasonsMask,
-                            signFlag, prevKey, mSigProvider,
+                    if (DistributionPointFetcher.verifyCRL(certImpl, point, crl,
+                            reasonsMask, signFlag, prevKey, mSigProvider,
                             trustAnchors, mStores, mParams.getDate())) {
                         results.add(crl);
                     }
