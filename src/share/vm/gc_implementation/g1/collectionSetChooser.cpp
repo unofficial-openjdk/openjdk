@@ -182,7 +182,7 @@ CollectionSetChooser::CollectionSetChooser() :
     _regionLiveThresholdBytes(0), _remainingReclaimableBytes(0),
     _first_par_unreserved_idx(0) {
   _regionLiveThresholdBytes =
-    HeapRegion::GrainBytes * (size_t) G1OldCSetRegionLiveThresholdPercent / 100;
+    HeapRegion::GrainBytes * (size_t) G1MixedGCLiveThresholdPercent / 100;
 }
 
 #ifndef PRODUCT
