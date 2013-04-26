@@ -785,6 +785,7 @@ public class BufferedImage extends java.awt.Image
                 }
             }
             if (is8bit &&
+                braster.getPixelStride() == numBands &&
                 offs[0] == numBands-1 &&
                 offs[1] == numBands-2 &&
                 offs[2] == numBands-3 &&

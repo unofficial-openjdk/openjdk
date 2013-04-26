@@ -96,6 +96,7 @@ class LCMSImageLayout {
     int width;
     int height;
     int nextRowOffset;
+    private int nextPixelOffset;
     int offset;
 
     Object dataArray;
@@ -107,6 +108,7 @@ class LCMSImageLayout {
         this.pixelType = pixelType;
         width = np;
         height = 1;
+        nextPixelOffset = pixelSize;
         nextRowOffset = safeMult(pixelSize, np);
         offset = 0;
     }
@@ -118,6 +120,7 @@ class LCMSImageLayout {
         this.pixelType = pixelType;
         this.width = width;
         this.height = height;
+        nextPixelOffset = pixelSize;
         nextRowOffset = safeMult(pixelSize, width);
         offset = 0;
     }
@@ -213,6 +216,7 @@ class LCMSImageLayout {
                 intRaster = (IntegerComponentRaster)image.getRaster();
 
                 nextRowOffset = safeMult(4, intRaster.getScanlineStride());
+                nextPixelOffset = safeMult(4, intRaster.getPixelStride());
 
                 offset = safeMult(4, intRaster.getDataOffset(0));
 
@@ -225,6 +229,8 @@ class LCMSImageLayout {
             case BufferedImage.TYPE_4BYTE_ABGR:
                 byteRaster = (ByteComponentRaster)image.getRaster();
                 nextRowOffset = byteRaster.getScanlineStride();
+                nextPixelOffset = byteRaster.getPixelStride();
+
                 int firstBand = image.getSampleModel().getNumBands() - 1;
                 offset = byteRaster.getDataOffset(firstBand);
                 dataArray = byteRaster.getDataStorage();
@@ -235,6 +241,8 @@ class LCMSImageLayout {
             case BufferedImage.TYPE_BYTE_GRAY:
                 byteRaster = (ByteComponentRaster)image.getRaster();
                 nextRowOffset = byteRaster.getScanlineStride();
+                nextPixelOffset = byteRaster.getPixelStride();
+
                 offset = byteRaster.getDataOffset(0);
                 dataArray = byteRaster.getDataStorage();
                 dataArrayLength = byteRaster.getDataStorage().length;
@@ -244,6 +252,8 @@ class LCMSImageLayout {
             case BufferedImage.TYPE_USHORT_GRAY:
                 shortRaster = (ShortComponentRaster)image.getRaster();
                 nextRowOffset = safeMult(2, shortRaster.getScanlineStride());
+                nextPixelOffset = safeMult(2, shortRaster.getPixelStride());
+
                 offset = safeMult(2, shortRaster.getDataOffset(0));
                 dataArray = shortRaster.getDataStorage();
                 dataArrayLength = 2 * shortRaster.getDataStorage().length;
@@ -273,9 +283,15 @@ class LCMSImageLayout {
             throw new ImageLayoutException("Invalid image layout");
         }
 
-        int lastPixelOffset = safeMult(nextRowOffset, (height - 1));
+        if (nextPixelOffset != getBytesPerPixel(pixelType)) {
+            throw new ImageLayoutException("Invalid image layout");
+        }
 
-        lastPixelOffset = safeAdd(lastPixelOffset, (width - 1));
+        int lastScanOffset = safeMult(nextRowOffset, (height - 1));
+
+        int lastPixelOffset = safeMult(nextPixelOffset, (width -1 ));
+
+        lastPixelOffset = safeAdd(lastPixelOffset, lastScanOffset);
 
         int off = safeAdd(offset, lastPixelOffset);
 
@@ -306,5 +322,26 @@ class LCMSImageLayout {
         public ImageLayoutException(String message) {
             super(message);
         }
+    }
+
+    /**
+     * Derives number of bytes per pixel from the pixel format.
+     * Following bit fields are used here:
+     *  [0..2] - bytes per sample
+     *  [3..6] - number of color samples per pixel
+     *  [7..9] - number of non-color samples per pixel
+     *
+     * A complete description of the pixel format can be found
+     * here: lcms2.h, lines 651 - 667.
+     *
+     * @param pixelType pixel format in lcms2 notation.
+     * @return number of bytes per pixel for given pixel format.
+     */
+    private static int getBytesPerPixel(int pixelType) {
+        int bytesPerSample = (0x7 & pixelType);
+        int colorSamplesPerPixel = 0xF & (pixelType >> 3);
+        int extraSamplesPerPixel = 0x7 & (pixelType >> 7);
+
+        return bytesPerSample * (colorSamplesPerPixel + extraSamplesPerPixel);
     }
 }
