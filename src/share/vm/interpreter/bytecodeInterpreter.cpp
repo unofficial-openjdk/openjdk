@@ -2173,12 +2173,13 @@ run:
         // This kind of CP cache entry does not need to match the flags byte, because
         // there is a 1-1 relation between bytecode type and CP entry type.
         ConstantPoolCacheEntry* cache = cp->entry_at(index);
-        oop result = cache->f1_as_instance();
-        if (result == NULL) {
+        if (cache->f1_as_instance() == NULL) {
           CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode),
                   handle_exception);
-          result = cache->f1_as_instance();
+          // GC might move cache while returning from VM call.
+          cache = cp->entry_at(index); // reload
         }
+        oop result = cache->f1_as_instance();
 
         VERIFY_OOP(result);
         SET_STACK_OBJECT(result, 0);
@@ -2197,23 +2198,19 @@ run:
 
         u4 index = Bytes::get_native_u4(pc+1);
         ConstantPoolCacheEntry* cache = cp->secondary_entry_at(index);
-        oop result = cache->f1_as_instance();
 
         // We are resolved if the f1 field contains a non-null object (CallSite, etc.)
         // This kind of CP cache entry does not need to match the flags byte, because
         // there is a 1-1 relation between bytecode type and CP entry type.
         assert(constantPoolCacheOopDesc::is_secondary_index(index), "incorrect format");
-        if (! cache->is_resolved((Bytecodes::Code) opcode)) {
+        if (cache->is_f1_null()) {
           CALL_VM(InterpreterRuntime::resolve_invokedynamic(THREAD),
                   handle_exception);
-          result = cache->f1_as_instance();
+          // GC might move cache while returning from VM call.
+          cache = cp->secondary_entry_at(index); // reload
         }
 
-        VERIFY_OOP(result);
-        oop method_handle = java_lang_invoke_CallSite::target(result);
-        CHECK_NULL(method_handle);
-
-        methodOop method = cache->f1_as_method();
+        methodOop method = cache->f2_as_vfinal_method();
         VERIFY_OOP(method);
 
         if (cache->has_appendix()) {
@@ -2241,10 +2238,11 @@ run:
         if (! cache->is_resolved((Bytecodes::Code) opcode)) {
           CALL_VM(InterpreterRuntime::resolve_invokehandle(THREAD),
                   handle_exception);
-          cache = cp->entry_at(index);
+          // GC might move cache while returning from VM call.
+          cache = cp->entry_at(index); // reload
         }
 
-        methodOop method = cache->f1_as_method();
+        methodOop method = cache->f2_as_vfinal_method();
 
         VERIFY_OOP(method);
 
