@@ -97,6 +97,14 @@ public abstract class SunToolkit extends Toolkit
      */
     public final static int MAX_BUTTONS_SUPPORTED = 20;
 
+    /**
+     * Creates and initializes EventQueue instance for the specified
+     * AppContext.
+     * Note that event queue must be created from createNewAppContext()
+     * only in order to ensure that EventQueue constructor obtains
+     * the correct AppContext.
+     * @param appContext AppContext to associate with the event queue
+     */
     private static void initEQ(AppContext appContext) {
         EventQueue eventQueue;
 
@@ -117,8 +125,6 @@ public abstract class SunToolkit extends Toolkit
     }
 
     public SunToolkit() {
-        // 7122796: Always create an EQ for the main AppContext
-        initEQ(AppContext.getMainAppContext());
     }
 
     public boolean useBufferPerWindow() {
@@ -281,11 +287,14 @@ public abstract class SunToolkit extends Toolkit
      */
     public static AppContext createNewAppContext() {
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        return createNewAppContext(threadGroup);
+    }
+
+    static final AppContext createNewAppContext(ThreadGroup threadGroup) {
         // Create appContext before initialization of EventQueue, so all
         // the calls to AppContext.getAppContext() from EventQueue ctor
         // return correct values
         AppContext appContext = new AppContext(threadGroup);
-
         initEQ(appContext);
 
         return appContext;
