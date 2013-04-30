@@ -2605,6 +2605,41 @@ storeDstArray(JNIEnv *env,  BufImageS_t *srcP, BufImageS_t *dstP,
     return 0;
 }
 
+#define ERR_BAD_IMAGE_LAYOUT (-2)
+
+#define CHECK_DST_ARRAY(start_offset, elements_per_pixel)             \
+    do {                                                              \
+        int offset = (start_offset);                                  \
+        int lastScanOffset;                                           \
+                                                                      \
+        if (!SAFE_TO_MULT(rasterP->scanlineStride,                    \
+                          (rasterP->height - 1)))                     \
+        {                                                             \
+            return ERR_BAD_IMAGE_LAYOUT;                              \
+        }                                                             \
+        lastScanOffset = rasterP->scanlineStride *                    \
+            (rasterP->height - 1);                                    \
+                                                                      \
+        if (!SAFE_TO_ADD(offset, lastScanOffset)) {                   \
+            return ERR_BAD_IMAGE_LAYOUT;                              \
+        }                                                             \
+        lastScanOffset += offset;                                     \
+                                                                      \
+        if (!SAFE_TO_MULT((elements_per_pixel), rasterP->width)) {    \
+            return ERR_BAD_IMAGE_LAYOUT;                              \
+        }                                                             \
+        offset = (elements_per_pixel) * rasterP->width;               \
+                                                                      \
+        if (!SAFE_TO_ADD(offset, lastScanOffset)) {                   \
+            return ERR_BAD_IMAGE_LAYOUT;                              \
+        }                                                             \
+        lastScanOffset += offset;                                     \
+                                                                      \
+        if (dataArrayLength < lastScanOffset) {                       \
+            return ERR_BAD_IMAGE_LAYOUT;                              \
+        }                                                             \
+    } while(0);                                                       \
+
 static int
 storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                 mlib_image *mlibImP) {
@@ -2612,6 +2647,7 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
     unsigned char *cmDataP, *dataP, *cDataP;
     HintS_t *hintP = &dstP->hints;
     RasterS_t *rasterP = &dstP->raster;
+    jsize dataArrayLength = (*env)->GetArrayLength(env, rasterP->jdata);
     int y;
 
     /* REMIND: Store mlib data type? */
@@ -2630,14 +2666,15 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
 
     if (hintP->packing == BYTE_INTERLEAVED) {
         /* Write it back to the destination */
+        CHECK_DST_ARRAY(hintP->channelOffset, hintP->numChans);
         cmDataP = (unsigned char *) mlib_ImageGetData(mlibImP);
         mStride = mlib_ImageGetStride(mlibImP);
         dataP = (unsigned char *)(*env)->GetPrimitiveArrayCritical(env,
                                                       rasterP->jdata, NULL);
         if (dataP == NULL) return 0;
-        cDataP = dataP + hintP->dataOffset;
+        cDataP = dataP + hintP->channelOffset;
         for (y=0; y < rasterP->height;
-             y++, cmDataP += mStride, cDataP += hintP->sStride)
+             y++, cmDataP += mStride, cDataP += rasterP->scanlineStride)
         {
             memcpy(cDataP, cmDataP, rasterP->width*hintP->numChans);
         }
@@ -2648,13 +2685,14 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
         /* Write it back to the destination */
         unsigned short *sdataP, *sDataP;
         unsigned short *smDataP = (unsigned short *)mlib_ImageGetData(mlibImP);
+        CHECK_DST_ARRAY(hintP->channelOffset, hintP->numChans);
         mStride = mlib_ImageGetStride(mlibImP);
         sdataP = (unsigned short *)(*env)->GetPrimitiveArrayCritical(env,
                                                       rasterP->jdata, NULL);
         if (sdataP == NULL) return -1;
-        sDataP = sdataP + hintP->dataOffset;
+        sDataP = sdataP + hintP->channelOffset;
         for (y=0; y < rasterP->height;
-             y++, smDataP += mStride, sDataP += hintP->sStride)
+            y++, smDataP += mStride, sDataP += rasterP->scanlineStride)
         {
             memcpy(sDataP, smDataP, rasterP->width*hintP->numChans);
         }
@@ -3447,7 +3485,8 @@ static int setPackedBCR(JNIEnv *env, RasterS_t *rasterP, int component,
     unsigned char *inP = inDataP;
     unsigned char *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize dataArrayLength;
+    unsigned char *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
 
     if (rasterP->numBands > MAX_NUMBANDS) {
@@ -3456,11 +3495,18 @@ static int setPackedBCR(JNIEnv *env, RasterS_t *rasterP, int component,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_BCRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned char *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
@@ -3515,7 +3561,8 @@ static int setPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
     unsigned char *inP = inDataP;
     unsigned short *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize dataArrayLength;
+    unsigned short *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
 
     if (rasterP->numBands > MAX_NUMBANDS) {
@@ -3524,11 +3571,18 @@ static int setPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_SCRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned short *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
@@ -3583,7 +3637,8 @@ static int setPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
     unsigned char *inP = inDataP;
     unsigned int *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize dataArrayLength;
+    unsigned int *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
 
     if (rasterP->numBands > MAX_NUMBANDS) {
@@ -3592,11 +3647,18 @@ static int setPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_ICRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned int *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
@@ -3653,7 +3715,8 @@ static int setPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
     unsigned char *inP = inDataP;
     unsigned char *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize  dataArrayLength;
+    unsigned char *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int a = rasterP->numBands - 1;
 
@@ -3663,11 +3726,18 @@ static int setPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_BCRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned char *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
@@ -3743,7 +3813,8 @@ static int setPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
     unsigned char *inP = inDataP;
     unsigned short *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize dataArrayLength;
+    unsigned short *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int a = rasterP->numBands - 1;
 
@@ -3753,11 +3824,17 @@ static int setPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_SCRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned short *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
@@ -3833,7 +3910,8 @@ static int setPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
     unsigned char *inP = inDataP;
     unsigned int *lineOutP, *outP;
     jarray jOutDataP;
-    jint   *outDataP;
+    jsize dataArrayLength;
+    unsigned int *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int a = rasterP->numBands - 1;
 
@@ -3843,11 +3921,18 @@ static int setPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
 
     /* Grab data ptr, strides, offsets from raster */
     jOutDataP = (*env)->GetObjectField(env, rasterP->jraster, g_ICRdataID);
+    if (JNU_IsNull(env, jOutDataP)) {
+        return -1;
+    }
+
+    dataArrayLength = (*env)->GetArrayLength(env, jOutDataP);
+    CHECK_DST_ARRAY(rasterP->chanOffsets[0], 1);
+
     outDataP = (*env)->GetPrimitiveArrayCritical(env, jOutDataP, 0);
     if (outDataP == NULL) {
         return -1;
     }
-    lineOutP =  (unsigned int *)outDataP + rasterP->chanOffsets[0];
+    lineOutP = outDataP + rasterP->chanOffsets[0];
 
     if (component < 0) {
         for (c=0; c < rasterP->numBands; c++) {
