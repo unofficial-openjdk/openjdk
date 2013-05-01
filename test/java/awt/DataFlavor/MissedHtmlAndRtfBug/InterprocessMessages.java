@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,24 +21,8 @@
  * questions.
  */
 
-import com.sun.org.apache.xml.internal.security.transforms.Transform;
-import com.sun.org.apache.xml.internal.security.transforms.TransformSpi;
-
-public class MyTransform extends TransformSpi {
-
-    public static final String URI =
-        "http://com.sun.org.apache.xml.internal.security.transforms.MyTransform";
-
-    public MyTransform() {
-        try {
-            System.out.println("Registering Transform");
-            Transform.register(URI, "MyTransform");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    protected String engineGetURI() {
-        return URI;
-    }
+interface InterprocessMessages {
+    final static int EXECUTION_IS_SUCCESSFULL = 0;
+    final static int DATA_IS_CORRUPTED = 212;
 }
+
