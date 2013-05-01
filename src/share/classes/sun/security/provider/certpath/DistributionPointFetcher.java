@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ import sun.security.x509.*;
  * @author Sean Mullan
  * @since 1.4.2
  */
-class DistributionPointFetcher {
+public class DistributionPointFetcher {
 
     private static final Debug debug = Debug.getInstance("certpath");
 
@@ -65,21 +65,10 @@ class DistributionPointFetcher {
     private final static boolean USE_CRLDP = AccessController.doPrivileged
         (new GetBooleanAction("com.sun.security.enableCRLDP"));
 
-    // singleton instance
-    private static final DistributionPointFetcher INSTANCE =
-        new DistributionPointFetcher();
-
     /**
      * Private instantiation only.
      */
     private DistributionPointFetcher() {}
-
-    /**
-     * Return a DistributionPointFetcher instance.
-     */
-    static DistributionPointFetcher getInstance() {
-        return INSTANCE;
-    }
 
     /**
      * Return the X509CRLs matching this selector. The selector must be
@@ -88,11 +77,16 @@ class DistributionPointFetcher {
      * If CRLDP support is disabled, this method always returns an
      * empty set.
      */
-    Collection<X509CRL> getCRLs(X509CRLSelector selector, boolean signFlag,
-        PublicKey prevKey, String provider, List<CertStore> certStores,
-        boolean[] reasonsMask, Set<TrustAnchor> trustAnchors,
-        Date validity) throws CertStoreException {
-
+    public static Collection<X509CRL> getCRLs(X509CRLSelector selector,
+                                              boolean signFlag,
+                                              PublicKey prevKey,
+                                              String provider,
+                                              List<CertStore> certStores,
+                                              boolean[] reasonsMask,
+                                              Set<TrustAnchor> trustAnchors,
+                                              Date validity)
+        throws CertStoreException
+    {
         if (USE_CRLDP == false) {
             return Collections.emptySet();
         }
@@ -140,7 +134,7 @@ class DistributionPointFetcher {
      * Download CRLs from the given distribution point, verify and return them.
      * See the top of the class for current limitations.
      */
-    private Collection<X509CRL> getCRLs(X509CRLSelector selector,
+    private static Collection<X509CRL> getCRLs(X509CRLSelector selector,
         X509CertImpl certImpl, DistributionPoint point, boolean[] reasonsMask,
         boolean signFlag, PublicKey prevKey, String provider,
         List<CertStore> certStores, Set<TrustAnchor> trustAnchors,
@@ -214,7 +208,7 @@ class DistributionPointFetcher {
     /**
      * Download CRL from given URI.
      */
-    private X509CRL getCRL(URIName name) {
+    private static X509CRL getCRL(URIName name) {
         URI uri = name.getURI();
         if (debug != null) {
             debug.println("Trying to fetch CRL from DP " + uri);
@@ -240,7 +234,7 @@ class DistributionPointFetcher {
     /**
      * Fetch CRLs from certStores.
      */
-    private Collection<X509CRL> getCRLs(X500Name name,
+    private static Collection<X509CRL> getCRLs(X500Name name,
         X500Principal certIssuer, List<CertStore> certStores)
     {
         if (debug != null) {
@@ -285,7 +279,7 @@ class DistributionPointFetcher {
      *        certification path should be determined
      * @return true if ok, false if not
      */
-    boolean verifyCRL(X509CertImpl certImpl, DistributionPoint point,
+    static boolean verifyCRL(X509CertImpl certImpl, DistributionPoint point,
         X509CRL crl, boolean[] reasonsMask, boolean signFlag,
         PublicKey prevKey, String provider,
         Set<TrustAnchor> trustAnchors, List<CertStore> certStores,
@@ -670,7 +664,7 @@ class DistributionPointFetcher {
      * Append relative name to the issuer name and return a new
      * GeneralNames object.
      */
-    private GeneralNames getFullNames(X500Name issuer, RDN rdn)
+    private static GeneralNames getFullNames(X500Name issuer, RDN rdn)
         throws IOException {
         List<RDN> rdns = new ArrayList<RDN>(issuer.rdns());
         rdns.add(rdn);
