@@ -2018,8 +2018,12 @@ jint G1CollectedHeap::initialize() {
 
   // Since max_byte_size is aligned to the size of a heap region (checked
   // above), we also need to align the perm gen size as it might not be.
-  const size_t total_reserved = max_byte_size +
-                                align_size_up(pgs->max_size(), HeapRegion::GrainBytes);
+  size_t total_reserved = 0;
+
+  total_reserved = add_and_check_overflow(total_reserved, max_byte_size);
+  size_t pg_max_size = (size_t) align_size_up(pgs->max_size(), HeapRegion::GrainBytes);
+  total_reserved = add_and_check_overflow(total_reserved, pg_max_size);
+
   Universe::check_alignment(total_reserved, HeapRegion::GrainBytes, "g1 heap and perm");
 
   char* addr = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);

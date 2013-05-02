@@ -92,6 +92,8 @@ class CollectedHeap : public CHeapObj<mtInternal> {
   // Used for filler objects (static, but initialized in ctor).
   static size_t _filler_array_max_size;
 
+  const static char* OverflowMessage;
+
   GCHeapLog* _gc_heap_log;
 
   // Used in support of ReduceInitialCardMarks; only consulted if COMPILER2 is being used
@@ -133,6 +135,16 @@ class CollectedHeap : public CHeapObj<mtInternal> {
 
   // Reinitialize tlabs before resuming mutators.
   virtual void resize_all_tlabs();
+
+  // Returns the sum of total and size if the sum does not overflow;
+  // Otherwise, call vm_exit_during_initialization().
+  // The overflow check is performed by comparing the result of the sum against size, which is assumed to be non-zero.
+  size_t add_and_check_overflow(size_t total, size_t size);
+
+  // Round up total against size and return the value, if the result does not overflow;
+  // Otherwise, call vm_exit_during_initialization().
+  // The overflow check is performed by comparing the round-up result against size, which is assumed to be non-zero.
+  size_t round_up_and_check_overflow(size_t total, size_t size);
 
   // Allocate from the current thread's TLAB, with broken-out slow path.
   inline static HeapWord* allocate_from_tlab(KlassHandle klass, Thread* thread, size_t size);

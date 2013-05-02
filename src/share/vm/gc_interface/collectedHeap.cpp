@@ -56,6 +56,9 @@ int CollectedHeap::_fire_out_of_memory_count = 0;
 
 size_t CollectedHeap::_filler_array_max_size = 0;
 
+const char* CollectedHeap::OverflowMessage
+  = "The size of the object heap + perm gen exceeds the maximum representable size";
+
 template <>
 void EventLogBase<GCMessage>::print(outputStream* st, GCMessage& m) {
   st->print_cr("GC heap %s", m.is_before ? "before" : "after");
@@ -178,6 +181,26 @@ void CollectedHeap::pre_initialize() {
 #else
   assert(_defer_initial_card_mark == false, "Who would set it?");
 #endif
+}
+
+size_t CollectedHeap::add_and_check_overflow(size_t total, size_t size) {
+  assert(size >= 0, "must be");
+  size_t result = total + size;
+  if (result < size) {
+    // We must have overflowed
+    vm_exit_during_initialization(CollectedHeap::OverflowMessage);
+  }
+  return result;
+}
+
+size_t CollectedHeap::round_up_and_check_overflow(size_t total, size_t size) {
+  assert(size >= 0, "must be");
+  size_t result = round_to(total, size);
+  if (result < size) {
+    // We must have overflowed
+    vm_exit_during_initialization(CollectedHeap::OverflowMessage);
+  }
+  return result;
 }
 
 #ifndef PRODUCT
