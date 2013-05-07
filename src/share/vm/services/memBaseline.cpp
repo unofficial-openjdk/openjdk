@@ -24,7 +24,7 @@
 #include "precompiled.hpp"
 #include "memory/allocation.hpp"
 #include "runtime/safepoint.hpp"
-#include "runtime/thread.inline.hpp"
+#include "runtime/thread.hpp"
 #include "services/memBaseline.hpp"
 #include "services/memTracker.hpp"
 
@@ -157,7 +157,8 @@ bool MemBaseline::baseline_malloc_summary(const MemPointerArray* malloc_records)
 // for the safepoint
 void MemBaseline::check_safepoint(JavaThread* thr) {
   if (SafepointSynchronize::is_synchronizing()) {
-    SafepointSynchronize::block(thr);
+    // grab and drop the SR_lock to honor the safepoint protocol
+    MutexLocker ml(thr->SR_lock());
   }
 }
 
