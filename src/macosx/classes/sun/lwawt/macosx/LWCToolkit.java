@@ -160,6 +160,10 @@ public class LWCToolkit extends LWToolkit {
            });
     }
 
+    public static LWCToolkit getLWCToolkit() {
+        return (LWCToolkit)Toolkit.getDefaultToolkit();
+    }
+
     @Override
     protected PlatformWindow createPlatformWindow(PeerType peerType) {
         if (peerType == PeerType.EMBEDDED_FRAME) {
@@ -420,7 +424,6 @@ public class LWCToolkit extends LWToolkit {
         return BUTTONS;
     }
 
-
     @Override
     public boolean isTraySupported() {
         return true;
@@ -500,6 +503,22 @@ public class LWCToolkit extends LWToolkit {
         }}}, c); } catch (Exception e) { e.printStackTrace(); }
 
         synchronized(ret) { return ret[0]; }
+    }
+
+    /**
+     * Just a wrapper for LWCToolkit.invokeAndWait. Posts an empty event to the
+     * appropriate event queue and waits for it to finish.
+     */
+    public static void flushPendingEventsOnAppkit(final Component component) {
+        try {
+            invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                }
+            }, component);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     // Kicks an event over to the appropriate eventqueue and waits for it to finish
