@@ -31,6 +31,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.event.*;
 import java.awt.peer.WindowPeer;
 import java.beans.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import javax.swing.*;
@@ -871,7 +872,16 @@ public final class CPlatformWindow extends CFRetainedResource implements Platfor
 
     private void flushBuffers() {
         if (isVisible() && !nativeBounds.isEmpty()) {
-            LWCToolkit.getLWCToolkit().flushPendingEventsOnAppkit(target);
+            try {
+                LWCToolkit.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        //Posting an empty to flush the EventQueue without blocking the main thread
+                    }
+                }, target);
+            } catch (InterruptedException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
         }
     }
 
