@@ -1238,8 +1238,7 @@ JNF_COCOA_ENTER(env);
     jobject cPlatformView = (*env)->NewGlobalRef(env, obj);
 
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-                                           
+
         CALayer *windowLayer = jlong_to_ptr(windowLayerPtr);
         AWTView *view = [[AWTView alloc] initWithRect:rect
                                          platformView:cPlatformView
@@ -1269,8 +1268,7 @@ JNF_COCOA_ENTER(env);
     NSView *view = (NSView *)jlong_to_ptr(viewPtr);    
 
    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-       AWT_ASSERT_APPKIT_THREAD;
-       
+
        if (toResize) {
            [view setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
        } else {
@@ -1303,8 +1301,7 @@ JNF_COCOA_ENTER(env);
     NSWindow *window = [view window];
     
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-            AWT_ASSERT_APPKIT_THREAD;
-        
+
             ret = (jint)[[AWTWindow getNSWindowDisplayID_AppKitThread: window] intValue];
     }];
     
@@ -1331,8 +1328,7 @@ JNF_COCOA_ENTER(env);
     
     NSView *view = (NSView *)jlong_to_ptr(viewPtr);    
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-        
+
         NSRect viewBounds = [view bounds];
         NSRect frameInWindow = [view convertRect:viewBounds toView:nil];
         rect = [[view window] convertRectToScreen:frameInWindow];
@@ -1361,9 +1357,7 @@ JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CPlatformView_nativeIsViewUnder
 JNF_COCOA_ENTER(env);
     
     NSView *nsView = OBJC(viewPtr);
-   [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-       AWT_ASSERT_APPKIT_THREAD;
-       
+   [ThreadUtilities performOnMainThreadWaiting:YES block:^(){       
        NSPoint ptWindowCoords = [[nsView window] mouseLocationOutsideOfEventStream];
        NSPoint ptViewCoords = [nsView convertPoint:ptWindowCoords fromView:nil];
        underMouse = [nsView hitTest:ptViewCoords] != nil;
