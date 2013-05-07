@@ -97,8 +97,16 @@ class ObjectCountEventSenderClosure : public KlassInfoClosure {
   ObjectCountEventSenderClosure(GCTracer* gc_tracer) : _gc_tracer(gc_tracer) {}
  private:
   void do_cinfo(KlassInfoEntry* entry) {
-    _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
-                                                 entry->words() * BytesPerWord);
+    if (is_visible_klass(entry->klass())) {
+      _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
+                                                   entry->words() * BytesPerWord);
+      }
+  }
+
+  // Do not expose internal implementation specific classes
+  bool is_visible_klass(klassOop k) {
+    return k->klass_part()->oop_is_instance() ||
+           (k->klass_part()->oop_is_array() && k != Universe::systemObjArrayKlassObj());
   }
 };
 
