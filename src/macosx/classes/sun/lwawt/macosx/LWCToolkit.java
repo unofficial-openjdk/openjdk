@@ -54,7 +54,7 @@ class NamedCursor extends Cursor {
 /**
  * Mac OS X Cocoa-based AWT Toolkit.
  */
-public class LWCToolkit extends LWToolkit {
+public final class LWCToolkit extends LWToolkit {
     // While it is possible to enumerate all mouse devices
     // and query them for the number of buttons, the code
     // that does it is rather complex. Instead, we opt for
@@ -284,7 +284,6 @@ public class LWCToolkit extends LWToolkit {
         return new CMouseInfoPeer();
     }
 
-
     @Override
     protected int getScreenHeight() {
         return GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -339,8 +338,9 @@ public class LWCToolkit extends LWToolkit {
 
     @Override
     public int getScreenResolution() throws HeadlessException {
-        return ((CGraphicsDevice) GraphicsEnvironment
-                .getLocalGraphicsEnvironment().getDefaultScreenDevice()).getScreenResolution();
+        return (int) ((CGraphicsDevice) GraphicsEnvironment
+                .getLocalGraphicsEnvironment().getDefaultScreenDevice())
+                .getXResolution();
     }
 
     @Override
