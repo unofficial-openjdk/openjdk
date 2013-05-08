@@ -36,6 +36,11 @@ public:
   }
 };
 
+class TraceThreadData {
+public:
+    TraceThreadData() {}
+};
+
 typedef NoTraceBackend Tracing;
 
 #endif
