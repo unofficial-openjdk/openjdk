@@ -21,29 +21,14 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8007464
- * @summary Add graph inference support
- *          more smoke tests for graph inference
- * @ignore  8008682: Core stream API classes
- * @compile TargetType59.java
+package p;
+
+/**
+ * @custom doc for BaseClass class
  */
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
-
-class TargetType59 {
-
-    <T, R> Collector<T, R> m(Supplier<? extends R> supplier, BiConsumer<R, T> accumulator) {
-        return null;
-    }
-
-    <T, C extends Collection<T>> Collector<T,C> test1(Supplier<C> collectionFactory) {
-        return m(collectionFactory, Collection::add);
-    }
-
-    Collector<String, StringBuilder> test2(Supplier<StringBuilder> sb) {
-        return m(sb, StringBuilder::append);
-    }
+public class BaseClass {
+    /**
+     * @custom doc for BaseClass method
+     */
+    public void m() { }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +22,36 @@
  */
 
 /*
- * @ test
- * @ bug      <BUG-ID>
- * @ summary  <BUG-SYNOPSIS>
- * @ author   <AUTHOR> or delete
- * @ library  ../lib/
- * @ build    JavadocTester <CLASS NAME>
- * @ run main <CLASS NAME>
+ * @test
+ * @bug      8008768
+ * @summary  Using {@inheritDoc} in simple tag defined via -tag fails
+ * @library  ../lib/
+ * @build    JavadocTester TestSimpleTagInherit
+ * @run main TestSimpleTagInherit
  */
 
-public class Template extends JavadocTester {
+public class TestSimpleTagInherit extends JavadocTester {
 
     //Test information.
-    private static final String BUG_ID = "<BUG ID>";
-    private static final String OUTPUT_DIR = "docs-" + BUG_ID;
+    private static final String BUG_ID = "8008768";
+    private static final String OUTPUT_DIR = BUG_ID;
 
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
-        "-d", OUTPUT_DIR, "-sourcepath", SRC_DIR
+        "-d", OUTPUT_DIR, "-sourcepath", SRC_DIR,
+        "-tag", "custom:optcm:<em>Custom:</em>",
+        "p"
     };
 
     //Input for string search tests.
-    private static final String[][] TEST = NO_TEST;
+    private static final String[][] TEST = {
+        { BUG_ID + FS + "p" + FS + "TestClass.html",
+          "<dt><span class=\"strong\"><em>Custom:</em></span></dt>" + NL +
+          "  <dd>doc for BaseClass class</dd>" },
+        { BUG_ID + FS + "p" + FS + "TestClass.html",
+          "<dt><span class=\"strong\"><em>Custom:</em></span></dt>" + NL +
+          "  <dd>doc for BaseClass method</dd>" }
+    };
     private static final String[][] NEGATED_TEST = NO_TEST;
 
     /**
@@ -51,7 +59,7 @@ public class Template extends JavadocTester {
      * @param args the array of command line arguments.
      */
     public static void main(String[] args) {
-        Template tester = new Template();
+        TestSimpleTagInherit tester = new TestSimpleTagInherit();
         run(tester, ARGS, TEST, NEGATED_TEST);
         tester.printSummary();
     }
