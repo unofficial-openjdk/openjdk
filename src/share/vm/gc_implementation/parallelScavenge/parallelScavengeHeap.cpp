@@ -132,7 +132,12 @@ jint ParallelScavengeHeap::initialize() {
                   og_min_size, og_max_size,
                   yg_min_size, yg_max_size);
 
-  const size_t total_reserved = pg_max_size + og_max_size + yg_max_size;
+  size_t total_reserved = 0;
+
+  total_reserved = add_and_check_overflow(total_reserved, pg_max_size);
+  total_reserved = add_and_check_overflow(total_reserved, og_max_size);
+  total_reserved = add_and_check_overflow(total_reserved, yg_max_size);
+
   char* addr = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);
 
   // The main part of the heap (old gen + young gen) can often use a larger page

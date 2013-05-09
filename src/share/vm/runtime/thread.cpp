@@ -3383,12 +3383,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // real raw monitor. VM is setup enough here for raw monitor enter.
   JvmtiExport::transition_pending_onload_raw_monitors();
 
-  if (VerifyBeforeGC &&
-      Universe::heap()->total_collections() >= VerifyGCStartAt) {
-    Universe::heap()->prepare_for_verify();
-    Universe::verify();   // make sure we're starting with a clean slate
-  }
-
   // Fully start NMT
   MemTracker::start();
 
@@ -3412,6 +3406,11 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   }
 
   assert (Universe::is_fully_initialized(), "not initialized");
+  if (VerifyBeforeGC && VerifyGCStartAt == 0) {
+    Universe::heap()->prepare_for_verify();
+    Universe::verify();   // make sure we're starting with a clean slate
+  }
+
   EXCEPTION_MARK;
 
   // At this point, the Universe is initialized, but we have not executed
