@@ -21,29 +21,33 @@
  * questions.
  */
 
-/*
+/**
  * @test
- * @bug 8007464
- * @summary Add graph inference support
- *          more smoke tests for graph inference
- * @ignore  8008682: Core stream API classes
- * @compile TargetType59.java
+ * @bug 8014023
+ * @summary When a method reference to a local class constructor is contained
+ *          in a method whose number of parameters matches the number of
+ *          constructor parameters compilation fails
+ * @compile TreeMakerParamsIsGoofy.java
+ * @run main TreeMakerParamsIsGoofy
  */
-import java.util.*;
-import java.util.function.*;
-import java.util.stream.*;
 
-class TargetType59 {
+public class TreeMakerParamsIsGoofy {
 
-    <T, R> Collector<T, R> m(Supplier<? extends R> supplier, BiConsumer<R, T> accumulator) {
-        return null;
+    interface III { }
+
+    interface UO {
+        III m(III x);
     }
 
-    <T, C extends Collection<T>> Collector<T,C> test1(Supplier<C> collectionFactory) {
-        return m(collectionFactory, Collection::add);
+    public static void main(String[] args) {
+        class BA implements III {
+            BA(III b) {
+            }
+        }
+
+        ts(BA::new);
     }
 
-    Collector<String, StringBuilder> test2(Supplier<StringBuilder> sb) {
-        return m(sb, StringBuilder::append);
+    static void ts(UO ba) {
     }
 }
