@@ -201,9 +201,6 @@ char* GenCollectedHeap::allocate(size_t alignment,
                                  size_t* _total_reserved,
                                  int* _n_covered_regions,
                                  ReservedSpace* heap_rs){
-  const char overflow_msg[] = "The size of the object heap + VM data exceeds "
-    "the maximum representable size";
-
   // Now figure out the total size.
   size_t total_reserved = 0;
   int n_covered_regions = 0;
@@ -211,41 +208,29 @@ char* GenCollectedHeap::allocate(size_t alignment,
       os::large_page_size() : os::vm_page_size();
 
   for (int i = 0; i < _n_gens; i++) {
-    total_reserved += _gen_specs[i]->max_size();
-    if (total_reserved < _gen_specs[i]->max_size()) {
-      vm_exit_during_initialization(overflow_msg);
-    }
+    total_reserved = add_and_check_overflow(total_reserved, _gen_specs[i]->max_size());
     n_covered_regions += _gen_specs[i]->n_covered_regions();
   }
+
   assert(total_reserved % pageSize == 0,
          err_msg("Gen size; total_reserved=" SIZE_FORMAT ", pageSize="
                  SIZE_FORMAT, total_reserved, pageSize));
-  total_reserved += perm_gen_spec->max_size();
+  total_reserved = add_and_check_overflow(total_reserved, perm_gen_spec->max_size());
   assert(total_reserved % pageSize == 0,
          err_msg("Perm size; total_reserved=" SIZE_FORMAT ", pageSize="
                  SIZE_FORMAT ", perm gen max=" SIZE_FORMAT, total_reserved,
                  pageSize, perm_gen_spec->max_size()));
 
-  if (total_reserved < perm_gen_spec->max_size()) {
-    vm_exit_during_initialization(overflow_msg);
-  }
   n_covered_regions += perm_gen_spec->n_covered_regions();
 
   // Add the size of the data area which shares the same reserved area
   // as the heap, but which is not actually part of the heap.
-  size_t s = perm_gen_spec->misc_data_size() + perm_gen_spec->misc_code_size();
-
-  total_reserved += s;
-  if (total_reserved < s) {
-    vm_exit_during_initialization(overflow_msg);
-  }
+  size_t misc = perm_gen_spec->misc_data_size() + perm_gen_spec->misc_code_size();
+  total_reserved = add_and_check_overflow(total_reserved, misc);
 
   if (UseLargePages) {
     assert(total_reserved != 0, "total_reserved cannot be 0");
-    total_reserved = round_to(total_reserved, os::large_page_size());
-    if (total_reserved < os::large_page_size()) {
-      vm_exit_during_initialization(overflow_msg);
-    }
+    total_reserved = round_up_and_check_overflow(total_reserved, os::large_page_size());
   }
 
   // Calculate the address at which the heap must reside in order for

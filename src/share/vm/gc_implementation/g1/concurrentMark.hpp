@@ -354,8 +354,8 @@ class ConcurrentMark: public CHeapObj<mtGC> {
   friend class CalcLiveObjectsClosure;
   friend class G1CMRefProcTaskProxy;
   friend class G1CMRefProcTaskExecutor;
-  friend class G1CMParKeepAliveAndDrainClosure;
-  friend class G1CMParDrainMarkingStackClosure;
+  friend class G1CMKeepAliveAndDrainClosure;
+  friend class G1CMDrainMarkingStackClosure;
 
 protected:
   ConcurrentMarkThread* _cmThread;   // the thread doing the work
@@ -470,9 +470,12 @@ protected:
   // structures are initialised to a sensible and predictable state.
   void set_non_marking_state();
 
+  // Called to indicate how many threads are currently active.
+  void set_concurrency(uint active_tasks);
+
   // It should be called to indicate which phase we're in (concurrent
   // mark or remark) and how many threads are currently active.
-  void set_phase(uint active_tasks, bool concurrent);
+  void set_concurrency_and_phase(uint active_tasks, bool concurrent);
 
   // prints all gathered CM-related statistics
   void print_stats();
@@ -1117,7 +1120,9 @@ public:
   // trying not to exceed the given duration. However, it might exit
   // prematurely, according to some conditions (i.e. SATB buffers are
   // available for processing).
-  void do_marking_step(double target_ms, bool do_stealing, bool do_termination);
+  void do_marking_step(double target_ms,
+                       bool do_termination,
+                       bool is_serial);
 
   // These two calls start and stop the timer
   void record_start_time() {
