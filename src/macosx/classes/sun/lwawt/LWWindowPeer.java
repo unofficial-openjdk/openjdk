@@ -54,7 +54,7 @@ public class LWWindowPeer
 
     private static final PlatformLogger focusLog = PlatformLogger.getLogger("sun.lwawt.focus.LWWindowPeer");
 
-    private PlatformWindow platformWindow;
+    private final PlatformWindow platformWindow;
 
     // Window bounds reported by the native system (as opposed to
     // regular bounds inherited from LWComponentPeer which are
@@ -622,29 +622,23 @@ public class LWWindowPeer
     }
 
     /**
-     * Called by the delegate when any part of the window should be repainted.
+     * Called by the {@code PlatformWindow} when any part of the window should
+     * be repainted.
      */
-    public void notifyExpose(final int x, final int y, final int w, final int h) {
-        // TODO: there's a serious problem with Swing here: it handles
-        // the exposition internally, so SwingPaintEventDispatcher always
-        // return null from createPaintEvent(). However, we flush the
-        // back buffer here unconditionally, so some flickering may appear.
-        // A possible solution is to split postPaintEvent() into two parts,
-        // and override that part which is only called after if
-        // createPaintEvent() returned non-null value and flush the buffer
-        // from the overridden method
-        flushOnscreenGraphics();
-        repaintPeer(new Rectangle(x, y, w, h));
+    public final void notifyExpose(final Rectangle r) {
+        repaintPeer(r);
     }
 
     /**
-     * Called by the delegate when this window is moved/resized by user.
-     * There's no notifyReshape() in LWComponentPeer as the only
-     * components which could be resized by user are top-level windows.
+     * Called by the {@code PlatformWindow} when this window is moved/resized by
+     * user or window insets are changed. There's no notifyReshape() in
+     * LWComponentPeer as the only components which could be resized by user are
+     * top-level windows.
      */
     public final void notifyReshape(int x, int y, int w, int h) {
-        boolean moved = false;
-        boolean resized = false;
+        final boolean moved;
+        final boolean resized;
+        final boolean invalid = updateInsets(platformWindow.getInsets());
         synchronized (getStateLock()) {
             moved = (x != sysX) || (y != sysY);
             resized = (w != sysW) || (h != sysH);
@@ -655,7 +649,7 @@ public class LWWindowPeer
         }
 
         // Check if anything changed
-        if (!moved && !resized) {
+        if (!moved && !resized && !invalid) {
             return;
         }
         // First, update peer's bounds
@@ -668,12 +662,13 @@ public class LWWindowPeer
             flushOnscreenGraphics();
         }
 
-        // Third, COMPONENT_MOVED/COMPONENT_RESIZED events
-        if (moved) {
+        // Third, COMPONENT_MOVED/COMPONENT_RESIZED/PAINT events
+        if (moved || invalid) {
             handleMove(x, y, true);
         }
-        if (resized) {
-            handleResize(w, h,true);
+        if (resized || invalid) {
+            handleResize(w, h, true);
+            repaintPeer();
         }
     }
 
@@ -1094,27 +1089,21 @@ public class LWWindowPeer
         return backBufferCaps;
     }
 
-    /*
-     * Request the window insets from the delegate and compares it
-     * with the current one. This method is mostly called by the
-     * delegate, e.g. when the window state is changed and insets
-     * should be recalculated.
-     *
+    /**
+     * Request the window insets from the delegate and compares it with the
+     * current one. This method is mostly called by the delegate, e.g. when the
+     * window state is changed and insets should be recalculated.
+     * <p/>
      * This method may be called on the toolkit thread.
      */
-    public boolean updateInsets(Insets newInsets) {
-        boolean changed = false;
+    public final boolean updateInsets(final Insets newInsets) {
         synchronized (getStateLock()) {
-            changed = (insets.equals(newInsets));
+            if (insets.equals(newInsets)) {
+                return false;
+            }
             insets = newInsets;
         }
-
-        if (changed) {
-            replaceSurfaceData();
-            repaintPeer();
-        }
-
-        return changed;
+        return true;
     }
 
     public static LWWindowPeer getWindowUnderCursor() {

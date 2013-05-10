@@ -1236,6 +1236,11 @@ define info-file-item # name value
 $(PRINTF) '%s="%s"\n' $1 $2 >> $@
 endef
 
+define echo-java-info
+$(CAT) $1
+endef
+-include $(JDK_TOPDIR)/make/closed/common/release.gmk
+
 # Values to emit
 MINIMUM_OS_NAME    := $(REQUIRED_OS_NAME)
 MINIMUM_OS_VERSION := $(REQUIRED_OS_VERSION)
@@ -1252,6 +1257,7 @@ $(JDK_INFO_FILE): FRC
 	$(call info-file-item, "OS_VERSION",   "$(MINIMUM_OS_VERSION)")
 	$(call info-file-item, "OS_ARCH",      "$(MINIMUM_OS_ARCH)")
 	$(call info-file-item, "SOURCE",       "$(ALL_SOURCE_TIPS)")
+	$(call echo-java-info, $@)
 
 # Create release file to identify this image
 identify-image-jdk:: $(JDK_INFO_FILE)
@@ -1263,6 +1269,7 @@ $(JRE_INFO_FILE): FRC
 	$(call info-file-item, "OS_VERSION",   "$(MINIMUM_OS_VERSION)")
 	$(call info-file-item, "OS_ARCH",      "$(MINIMUM_OS_ARCH)")
 	$(call info-file-item, "SOURCE",       "$(ALL_SOURCE_TIPS)")
+	$(call echo-java-info, $@)
 
 # Create release file to identify this image
 identify-image-jre:: $(JRE_INFO_FILE)

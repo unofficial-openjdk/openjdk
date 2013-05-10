@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,17 +25,17 @@
 
 package sun.awt;
 
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.Window;
 import java.awt.AWTPermission;
 import java.awt.DisplayMode;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.Insets;
+import java.awt.Window;
+import java.util.Objects;
 
 import sun.java2d.opengl.CGLGraphicsConfig;
 
-import sun.awt.FullScreenCapable;
-
-public class CGraphicsDevice extends GraphicsDevice {
+public final class CGraphicsDevice extends GraphicsDevice {
 
     // CoreGraphics display ID
     private final int displayID;
@@ -59,9 +59,12 @@ public class CGraphicsDevice extends GraphicsDevice {
     }
 
     /**
+     * Returns CGDirectDisplayID, which is the same id as @"NSScreenNumber" in
+     * NSScreen.
+     *
      * @return CoreGraphics display id.
      */
-    public int getCoreGraphicsScreen() {
+    public int getCGDisplayID() {
         return displayID;
     }
 
@@ -108,13 +111,9 @@ public class CGraphicsDevice extends GraphicsDevice {
         return nativeGetYResolution(displayID);
     }
 
-    public int getScreenResolution() {
-        // TODO: report non-72 value when HiDPI is turned on
-        return 72;
+    public Insets getScreenInsets() {
+        return nativeGetScreenInsets(displayID);
     }
-
-    private static native double nativeGetXResolution(int displayID);
-    private static native double nativeGetYResolution(int displayID);
 
     /**
      * Enters full-screen mode, or returns to windowed mode.
@@ -129,12 +128,12 @@ public class CGraphicsDevice extends GraphicsDevice {
         boolean fsSupported = isFullScreenSupported();
 
         if (fsSupported && old != null) {
-            // enter windowed mode (and restore original display mode)
-            exitFullScreenExclusive(old);
+            // restore original display mode and enter windowed mode.
             if (originalMode != null) {
                 setDisplayMode(originalMode);
                 originalMode = null;
             }
+            exitFullScreenExclusive(old);
         }
 
         super.setFullScreenWindow(w);
@@ -193,13 +192,20 @@ public class CGraphicsDevice extends GraphicsDevice {
     }
 
     @Override
-    public void setDisplayMode(DisplayMode dm) {
+    public void setDisplayMode(final DisplayMode dm) {
         if (dm == null) {
             throw new IllegalArgumentException("Attempt to set null as a DisplayMode");
         }
-        nativeSetDisplayMode(displayID, dm.getWidth(), dm.getHeight(), dm.getBitDepth(), dm.getRefreshRate());
-        if (isFullScreenSupported() && getFullScreenWindow() != null) {
-            getFullScreenWindow().setSize(dm.getWidth(), dm.getHeight());
+        if (!Objects.equals(dm, getDisplayMode())) {
+            final Window w = getFullScreenWindow();
+            if (w != null) {
+                exitFullScreenExclusive(w);
+            }
+            nativeSetDisplayMode(displayID, dm.getWidth(), dm.getHeight(),
+                                 dm.getBitDepth(), dm.getRefreshRate());
+            if (isFullScreenSupported() && w != null) {
+                enterFullScreenExclusive(w);
+            }
         }
     }
 
@@ -213,9 +219,15 @@ public class CGraphicsDevice extends GraphicsDevice {
         return nativeGetDisplayModes(displayID);
     }
 
-    private native void nativeSetDisplayMode(int displayID, int w, int h, int bpp, int refrate);
+    private static native void nativeSetDisplayMode(int displayID, int w, int h, int bpp, int refrate);
 
-    private native DisplayMode nativeGetDisplayMode(int displayID);
+    private static native DisplayMode nativeGetDisplayMode(int displayID);
 
-    private native DisplayMode[] nativeGetDisplayModes(int displayID);
+    private static native DisplayMode[] nativeGetDisplayModes(int displayID);
+
+    private static native double nativeGetXResolution(int displayID);
+
+    private static native double nativeGetYResolution(int displayID);
+
+    private static native Insets nativeGetScreenInsets(int displayID);
 }

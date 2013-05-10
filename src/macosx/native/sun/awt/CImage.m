@@ -81,7 +81,6 @@ JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CImage_nativeCreateNSImageFromArra
     jlong result = 0L;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     NSBitmapImageRep* imageRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
                                                                          pixelsWide:width
@@ -131,7 +130,6 @@ JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CImage_nativeCreateNSImageFromIcon
     NSImage *image = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     IconRef iconRef;
     if (noErr == GetIconRef(kOnSystemDisk, kSystemIconsCreator, selector, &iconRef)) {
@@ -156,7 +154,6 @@ JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CImage_nativeCreateNSImageFromFile
     NSImage *image = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     NSString *path = JNFNormalizedNSStringForPath(env, file);
     image = [[NSImage alloc] initByReferencingFile:path];
@@ -178,10 +175,9 @@ JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CImage_nativeCreateNSImageOfFileFr
     __block NSImage *image = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     NSString *path = JNFNormalizedNSStringForPath(env, file);
-    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
         image = [[NSWorkspace sharedWorkspace] iconForFile:path];
         [image setScalesWhenResized:TRUE];
         if (image) CFRetain(image); // GC
@@ -203,7 +199,6 @@ JNIEXPORT jlong JNICALL Java_sun_lwawt_macosx_CImage_nativeCreateNSImageFromImag
     NSImage *image = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     image = [NSImage imageNamed:JNFJavaToNSString(env, name)];
     if (image) CFRetain(image); // GC
@@ -222,7 +217,6 @@ JNIEXPORT void JNICALL Java_sun_lwawt_macosx_CImage_nativeCopyNSImageIntoArray
 (JNIEnv *env, jclass klass, jlong nsImgPtr, jintArray buffer, jint w, jint h)
 {
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     NSImage *img = (NSImage *)jlong_to_ptr(nsImgPtr);
     jint *dst = (*env)->GetPrimitiveArrayCritical(env, buffer, NULL);
@@ -245,7 +239,6 @@ JNIEXPORT jobject JNICALL Java_sun_lwawt_macosx_CImage_nativeGetNSImageSize
     jobject size = NULL;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_ANY_THREAD;
 
     size = NSToJavaSize(env, [(NSImage *)jlong_to_ptr(nsImgPtr) size]);
 

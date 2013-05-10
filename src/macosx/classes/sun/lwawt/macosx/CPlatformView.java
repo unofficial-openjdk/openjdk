@@ -90,29 +90,8 @@ public class CPlatformView extends CFRetainedResource {
         return peer;
     }
 
-    public void enterFullScreenMode(final long nsWindowPtr) {
+    public void enterFullScreenMode() {
         CWrapper.NSView.enterFullScreenMode(ptr);
-
-        // REMIND: CGLSurfaceData expects top-level's size
-        // and therefore we need to account insets before
-        // recreating the surface data
-        Insets insets = peer.getInsets();
-
-        Rectangle screenBounds;
-        final long screenPtr = CWrapper.NSWindow.screen(nsWindowPtr);
-        try {
-            screenBounds = CWrapper.NSScreen.frame(screenPtr).getBounds();
-        } finally {
-            CWrapper.NSObject.release(screenPtr);
-        }
-
-        // the move/size notification from the underlying system comes
-        // but it contains a bounds smaller than the whole screen
-        // and therefore we need to create the synthetic notifications
-        peer.notifyReshape(screenBounds.x - insets.left,
-                           screenBounds.y - insets.bottom,
-                           screenBounds.width + insets.left + insets.right,
-                           screenBounds.height + insets.top + insets.bottom);
     }
 
     public void exitFullScreenMode() {
@@ -244,12 +223,11 @@ public class CPlatformView extends CFRetainedResource {
                                  event.getCharactersIgnoringModifiers(), event.getKeyCode(), true);
     }
 
+    /**
+     * Called by the native delegate in layer backed view mode or in the simple
+     * NSView mode. See NSView.drawRect().
+     */
     private void deliverWindowDidExposeEvent() {
-        Rectangle r = peer.getBounds();
-        peer.notifyExpose(0, 0, r.width, r.height);
-    }
-
-    private void deliverWindowDidExposeEvent(float x, float y, float w, float h) {
-        peer.notifyExpose((int)x, (int)y, (int)w, (int)h);
+        peer.notifyExpose(peer.getSize());
     }
 }

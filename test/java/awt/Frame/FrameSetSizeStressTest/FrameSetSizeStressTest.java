@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,35 +23,25 @@
  * questions.
  */
 
-package sun.lwawt.macosx;
+import java.awt.Frame;
 
-import sun.awt.Mutex;
-import sun.awt.datatransfer.ToolkitThreadBlockedHandler;
+/*
+  @test
+  @bug 7177173
+  @summary setBounds can cause StackOverflow in case of the considerable loading
+  @author Sergey Bylokhov
+*/
+public final class FrameSetSizeStressTest {
 
-final class CToolkitThreadBlockedHandler extends Mutex implements ToolkitThreadBlockedHandler {
-    private long awtRunLoopMediator = 0;
-    private final boolean processEvents;
-
-    CToolkitThreadBlockedHandler() {
-        super();
-        this.processEvents = true;
-    }
-
-    public void enter() {
-        if (!isOwned()) {
-            throw new IllegalMonitorStateException();
+    public static void main(final String[] args) {
+        final Frame frame = new Frame();
+        frame.setSize(200, 200);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        for (int i = 0; i < 1000; ++i) {
+            frame.setSize(100, 100);
+            frame.setSize(200, 200);
+            frame.setSize(300, 300);
         }
-        awtRunLoopMediator = LWCToolkit.createAWTRunLoopMediator();
-        unlock();
-        LWCToolkit.doAWTRunLoop(awtRunLoopMediator, processEvents);
-        lock();
-    }
-
-    public void exit() {
-        if (!isOwned()) {
-            throw new IllegalMonitorStateException();
-        }
-        LWCToolkit.stopAWTRunLoop(awtRunLoopMediator);
-        awtRunLoopMediator = 0;
     }
 }

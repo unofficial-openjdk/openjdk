@@ -85,11 +85,14 @@ AWT_ASSERT_APPKIT_THREAD;
 
     if (windowLayer != nil) {
         self.cglLayer = windowLayer;
+        //Layer hosting view
+        [self setLayer: cglLayer];
         [self setWantsLayer: YES];
-        [self.layer addSublayer: (CALayer *)cglLayer];
-        [self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
-        [self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
-        [self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
+        //Layer backed view
+        //[self.layer addSublayer: (CALayer *)cglLayer];
+        //[self setLayerContentsRedrawPolicy: NSViewLayerContentsRedrawDuringViewResize];
+        //[self setLayerContentsPlacement: NSViewLayerContentsPlacementTopLeft];
+        //[self setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
 
 #ifdef REMOTELAYER
         CGLLayer *parentLayer = (CGLLayer*)self.cglLayer;
@@ -222,7 +225,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
 - (void) mouseMoved: (NSEvent *)event {
     // TODO: better way to redirect move events to the "under" view
-
+    
     NSPoint eventLocation = [event locationInWindow];
     NSPoint localPoint = [self convertPoint: eventLocation fromView: nil];
 
@@ -663,7 +666,7 @@ AWT_ASSERT_APPKIT_THREAD;
 
 - (void) setDropTarget:(CDropTarget *)target {
     self._dropTarget = target;
-    [ThreadUtilities performOnMainThread:@selector(controlModelControlValid) onObject:self._dropTarget withObject:nil waitUntilDone:YES awtMode:YES];
+    [ThreadUtilities performOnMainThread:@selector(controlModelControlValid) on:self._dropTarget withObject:nil waitUntilDone:YES];
 }
 
 /********************************  BEGIN NSDraggingSource Interface  ********************************/
@@ -1210,7 +1213,7 @@ JNF_CLASS_CACHE(jc_CInputMethod, "sun/lwawt/macosx/CInputMethod");
     fprintf(stderr, "AWTView InputMethod Selector Called : [abandonInput]\n");
 #endif // IM_DEBUG
 
-    [ThreadUtilities performOnMainThread:@selector(markedTextAbandoned:) onObject:[NSInputManager currentInputManager] withObject:self waitUntilDone:YES awtMode:YES];
+    [ThreadUtilities performOnMainThread:@selector(markedTextAbandoned:) on:[NSInputManager currentInputManager] withObject:self waitUntilDone:YES];
     [self unmarkText];
 }
 
@@ -1238,8 +1241,7 @@ JNF_COCOA_ENTER(env);
     jobject cPlatformView = (*env)->NewGlobalRef(env, obj);
 
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-                                           
+
         CALayer *windowLayer = jlong_to_ptr(windowLayerPtr);
         AWTView *view = [[AWTView alloc] initWithRect:rect
                                          platformView:cPlatformView
@@ -1269,8 +1271,7 @@ JNF_COCOA_ENTER(env);
     NSView *view = (NSView *)jlong_to_ptr(viewPtr);    
 
    [ThreadUtilities performOnMainThreadWaiting:NO block:^(){
-       AWT_ASSERT_APPKIT_THREAD;
-       
+
        if (toResize) {
            [view setAutoresizingMask: NSViewHeightSizable | NSViewWidthSizable];
        } else {
@@ -1303,8 +1304,7 @@ JNF_COCOA_ENTER(env);
     NSWindow *window = [view window];
     
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-            AWT_ASSERT_APPKIT_THREAD;
-        
+
             ret = (jint)[[AWTWindow getNSWindowDisplayID_AppKitThread: window] intValue];
     }];
     
@@ -1331,8 +1331,7 @@ JNF_COCOA_ENTER(env);
     
     NSView *view = (NSView *)jlong_to_ptr(viewPtr);    
     [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-        
+
         NSRect viewBounds = [view bounds];
         NSRect frameInWindow = [view convertRect:viewBounds toView:nil];
         rect = [[view window] convertRectToScreen:frameInWindow];
@@ -1361,9 +1360,7 @@ JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CPlatformView_nativeIsViewUnder
 JNF_COCOA_ENTER(env);
     
     NSView *nsView = OBJC(viewPtr);
-   [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
-       AWT_ASSERT_APPKIT_THREAD;
-       
+   [ThreadUtilities performOnMainThreadWaiting:YES block:^(){       
        NSPoint ptWindowCoords = [[nsView window] mouseLocationOutsideOfEventStream];
        NSPoint ptViewCoords = [nsView convertPoint:ptWindowCoords fromView:nil];
        underMouse = [nsView hitTest:ptViewCoords] != nil;
