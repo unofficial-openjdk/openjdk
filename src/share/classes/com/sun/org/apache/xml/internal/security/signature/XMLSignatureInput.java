@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -243,13 +243,13 @@ public class XMLSignatureInput implements Cloneable {
             if (circumvent) {
                 XMLUtils.circumventBug2650(XMLUtils.getOwnerDocument(_subNode));
             }
-            this._inputNodeSet = new HashSet();
+            this._inputNodeSet = new LinkedHashSet();
             XMLUtils.getSet(_subNode,this._inputNodeSet, excludeNode, this.excludeComments);
 
             return this._inputNodeSet;
         } else if (this.isOctetStream()) {
             convertToNodes();
-            HashSet result=new HashSet();
+            LinkedHashSet result = new LinkedHashSet();
             XMLUtils.getSet(_subNode, result,null,false);
             //this._inputNodeSet=result;
             return result;
