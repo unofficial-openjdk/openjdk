@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,14 +19,18 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
-#define CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
-
-const int StackAlignmentInBytes  = 16;
-
-#define SUPPORTS_NATIVE_CX8
-
-#endif // CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
+/*
+ * @test TestRegionAlignment.java
+ * @bug 8013791
+ * @summary Make sure that G1 ergonomics pick a heap size that is aligned with the region size
+ * @run main/othervm -XX:+UseG1GC -XX:G1HeapRegionSize=32m -XX:MaxRAM=555m TestRegionAlignment
+ *
+ * When G1 ergonomically picks a maximum heap size it must be aligned to the region size.
+ * This test tries to get the VM to pick a small and unaligned heap size (by using MaxRAM=555) and a
+ * large region size (by using -XX:G1HeapRegionSize=32m). This will fail without the fix for 8013791.
+ */
+public class TestRegionAlignment {
+    public static void main(String[] args) { }
+}

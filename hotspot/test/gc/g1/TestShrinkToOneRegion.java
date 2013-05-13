@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,14 +19,19 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
-#define CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
-
-const int StackAlignmentInBytes  = 16;
-
-#define SUPPORTS_NATIVE_CX8
-
-#endif // CPU_X86_VM_GLOBALDEFINITIONS_X86_HPP
+/*
+ * @test TestShrinkToOneRegion.java
+ * @bug 8013872
+ * @summary Shrinking the heap down to one region used to hit an assert
+ * @run main/othervm -XX:+UseG1GC -XX:G1HeapRegionSize=32m -Xmx256m TestShrinkToOneRegion
+ *
+ * Doing a System.gc() without having allocated many objects will shrink the heap.
+ * With a large region size we will shrink the heap to one region.
+ */
+public class TestShrinkToOneRegion {
+    public static void main(String[] args) {
+        System.gc();
+    }
+}
