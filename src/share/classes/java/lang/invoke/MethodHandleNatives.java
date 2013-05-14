@@ -524,6 +524,8 @@ class MethodHandleNatives {
             return defc == java.io.ObjectStreamClass.class;
         case "getLogger":
             return defc == java.util.logging.Logger.class;
+        case "getAnonymousLogger":
+            return defc == java.util.logging.Logger.class;
         }
         return false;
     }
