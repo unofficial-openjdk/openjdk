@@ -121,7 +121,7 @@ public class CEmbeddedFrame extends EmbeddedFrame {
             clipboard.checkPasteboard();
         }
         if (parentWindowActive) {
-            responder.handleWindowFocusEvent(focused);
+            responder.handleWindowFocusEvent(focused, null);
         }
     }
 
@@ -130,7 +130,7 @@ public class CEmbeddedFrame extends EmbeddedFrame {
         // ignore focus "lost" native request as it may mistakenly
         // deactivate active window (see 8001161)
         if (focused && parentWindowActive) {
-            responder.handleWindowFocusEvent(parentWindowActive);
+            responder.handleWindowFocusEvent(parentWindowActive, null);
         }
     }
 

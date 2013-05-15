@@ -701,8 +701,9 @@ public class LWWindowPeer
         getLWToolkit().getCursorManager().updateCursorLater(this);
     }
 
-    public void notifyActivation(boolean activation) {
-        changeFocusedWindow(activation);
+    public void notifyActivation(boolean activation, LWWindowPeer opposite) {
+        Window oppositeWindow = (opposite == null)? null : opposite.getTarget();
+        changeFocusedWindow(activation, oppositeWindow);
     }
 
     // MouseDown in non-client area
@@ -1135,6 +1136,9 @@ public class LWWindowPeer
         Window currentActive = KeyboardFocusManager.
             getCurrentKeyboardFocusManager().getActiveWindow();
 
+        Window opposite = LWKeyboardFocusManagerPeer.getInstance().
+            getCurrentFocusedWindow();
+
         // Make the owner active window.
         if (isSimpleWindow()) {
             LWWindowPeer owner = getOwnerFrameDialog(this);
@@ -1161,16 +1165,17 @@ public class LWWindowPeer
             }
 
             // DKFM will synthesize all the focus/activation events correctly.
-            changeFocusedWindow(true);
+            changeFocusedWindow(true, opposite);
             return true;
 
         // In case the toplevel is active but not focused, change focus directly,
         // as requesting native focus on it will not have effect.
         } else if (getTarget() == currentActive && !getTarget().hasFocus()) {
 
-            changeFocusedWindow(true);
+            changeFocusedWindow(true, opposite);
             return true;
         }
+
         return platformWindow.requestWindowFocus();
     }
 
@@ -1200,7 +1205,7 @@ public class LWWindowPeer
     /*
      * Changes focused window on java level.
      */
-    private void changeFocusedWindow(boolean becomesFocused) {
+    private void changeFocusedWindow(boolean becomesFocused, Window opposite) {
         if (focusLog.isLoggable(PlatformLogger.FINE)) {
             focusLog.fine((becomesFocused?"gaining":"loosing") + " focus window: " + this);
         }
@@ -1224,9 +1229,6 @@ public class LWWindowPeer
             }
         }
 
-        KeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
-        Window oppositeWindow = becomesFocused ? kfmPeer.getCurrentFocusedWindow() : null;
-
         // Note, the method is not called:
         // - when the opposite (gaining focus) window is an owned/owner window.
         // - for a simple window in any case.
@@ -1238,10 +1240,11 @@ public class LWWindowPeer
             grabbingWindow.ungrab();
         }
 
+        KeyboardFocusManagerPeer kfmPeer = LWKeyboardFocusManagerPeer.getInstance();
         kfmPeer.setCurrentFocusedWindow(becomesFocused ? getTarget() : null);
 
         int eventID = becomesFocused ? WindowEvent.WINDOW_GAINED_FOCUS : WindowEvent.WINDOW_LOST_FOCUS;
-        WindowEvent windowEvent = new WindowEvent(getTarget(), eventID, oppositeWindow);
+        WindowEvent windowEvent = new WindowEvent(getTarget(), eventID, opposite);
 
         // TODO: wrap in SequencedEvent
         postEvent(windowEvent);

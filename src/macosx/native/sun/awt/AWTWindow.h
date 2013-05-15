@@ -72,6 +72,9 @@
 - (BOOL) worksWhenModal;
 - (void)sendEvent:(NSEvent *)event;
 
++ (void) setLastKeyWindow:(AWTWindow *)window;
++ (AWTWindow *) lastKeyWindow;
+
 @end
 
 @interface AWTWindow_Normal : NSWindow
