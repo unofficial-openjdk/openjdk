@@ -119,6 +119,13 @@ public:
  private:
 <xsl:apply-templates select="value|structvalue|transition_value|relation" mode="write-fields"/>
 
+  void writeEventContent(void) {
+    TraceStream ts(*tty);
+    ts.print("<xsl:value-of select="@label"/>: [");
+<xsl:apply-templates select="value|structvalue" mode="write-data"/>
+    ts.print("]\n");
+  }
+
  public:
 <xsl:apply-templates select="value|structvalue|transition_value|relation" mode="write-setters"/>
 
@@ -132,11 +139,14 @@ public:
   void writeEvent(void) {
     ResourceMark rm;
     HandleMark hm;
-    TraceStream ts(*tty);
-    ts.print("<xsl:value-of select="@label"/>: [");
-<xsl:apply-templates select="value|structvalue" mode="write-data"/>
-    ts.print("]\n");
+    if (UseLockedTracing) {
+      ttyLocker lock;
+      writeEventContent();
+    } else {
+      writeEventContent();
+    }
   }
+
 };
 
 </xsl:template>

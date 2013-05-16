@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,42 +19,32 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test
- * @bug 6795161
- * @summary Escape analysis leads to data corruption
- * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -Xcomp -XX:CompileOnly=Test -XX:+DoEscapeAnalysis Test
+ * @bug 8013120
+ * @summary Release committed memory and make sure NMT handles it correctly
+ * @key nmt regression
+ * @library /testlibrary /testlibrary/whitebox
+ * @build ReleaseCommittedMemory
+ * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:NativeMemoryTracking=detail ReleaseCommittedMemory
  */
 
-class Test_Class_1 {
-    static String var_1;
+import sun.hotspot.WhiteBox;
 
-    static void badFunc(int size)
-    {
-        try {
-          for (int i = 0; i < 1; (new byte[size-i])[0] = 0, i++) {}
-        } catch (Exception e) {
-          // don't comment it out, it will lead to correct results ;)
-          //System.out.println("Got exception: " + e);
-        }
-    }
-}
+public class ReleaseCommittedMemory {
 
-public class Test {
-    static String var_1_copy = Test_Class_1.var_1;
+  public static void main(String args[]) throws Exception {
+    WhiteBox wb = WhiteBox.getWhiteBox();
+    long reserveSize = 256 * 1024;
+    long addr;
 
-    static byte var_check;
-
-    public static void main(String[] args)
-    {
-        var_check = 1;
-
-        Test_Class_1.badFunc(-1);
-
-        System.out.println("EATester.var_check = " + Test.var_check + " (expected 1)\n");
-    }
+    addr = wb.NMTReserveMemory(reserveSize);
+    wb.NMTCommitMemory(addr, 128*1024);
+    wb.NMTReleaseMemory(addr, reserveSize);
+    wb.NMTWaitForDataMerge();
+  }
 }
 

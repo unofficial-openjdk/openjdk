@@ -348,7 +348,7 @@ const class TypePtr *MachNode::adr_type() const {
   if (base == NodeSentinel)  return TypePtr::BOTTOM;
 
   const Type* t = base->bottom_type();
-  if (UseCompressedOops && Universe::narrow_oop_shift() == 0) {
+  if (t->isa_narrowoop() && Universe::narrow_oop_shift() == 0) {
     // 32-bit unscaled narrow oop can be the base of any address expression
     t = t->make_ptr();
   }

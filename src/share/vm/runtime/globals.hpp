@@ -3634,7 +3634,9 @@ class CommandLineFlags {
           "Include GC cause in GC logging")                                 \
                                                                             \
   product(bool, EnableTracing, false,                                       \
-                  "Enable event-based tracing")
+                  "Enable event-based tracing")                             \
+  product(bool, UseLockedTracing, false,                                    \
+          "Use locked-tracing when doing event-based tracing")
 
 /*
  *  Macros for factoring of globals
