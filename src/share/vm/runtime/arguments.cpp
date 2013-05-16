@@ -2118,6 +2118,26 @@ bool Arguments::check_vm_args_consistency() {
 #endif
   }
 
+  // Need to limit the extent of the padding to reasonable size.
+  // 8K is well beyond the reasonable HW cache line size, even with the
+  // aggressive prefetching, while still leaving the room for segregating
+  // among the distinct pages.
+  if (ContendedPaddingWidth < 0 || ContendedPaddingWidth > 8192) {
+    jio_fprintf(defaultStream::error_stream(),
+                "ContendedPaddingWidth=" INTX_FORMAT " must be the between %d and %d\n",
+                ContendedPaddingWidth, 0, 8192);
+    status = false;
+  }
+
+  // Need to enforce the padding not to break the existing field alignments.
+  // It is sufficient to check against the largest type size.
+  if ((ContendedPaddingWidth % BytesPerLong) != 0) {
+    jio_fprintf(defaultStream::error_stream(),
+                "ContendedPaddingWidth=" INTX_FORMAT " must be the multiple of %d\n",
+                ContendedPaddingWidth, BytesPerLong);
+    status = false;
+  }
+
   return status;
 }
 
@@ -3115,36 +3135,27 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 }
 
 void Arguments::set_shared_spaces_flags() {
-  const bool must_share = DumpSharedSpaces || RequireSharedSpaces;
-  const bool might_share = must_share || UseSharedSpaces;
+#ifdef _LP64
+    const bool must_share = DumpSharedSpaces || RequireSharedSpaces;
 
-  // CompressedOops cannot be used with CDS.  The offsets of oopmaps and
-  // static fields are incorrect in the archive.  With some more clever
-  // initialization, this restriction can probably be lifted.
-  // ??? UseLargePages might be okay now
-  const bool cannot_share = UseCompressedOops ||
-                            (UseLargePages && FLAG_IS_CMDLINE(UseLargePages));
-  if (cannot_share) {
-    if (must_share) {
-        warning("disabling large pages %s"
-                "because of %s", "" LP64_ONLY("and compressed oops "),
-                DumpSharedSpaces ? "-Xshare:dump" : "-Xshare:on");
-        FLAG_SET_CMDLINE(bool, UseLargePages, false);
-        LP64_ONLY(FLAG_SET_CMDLINE(bool, UseCompressedOops, false));
-        LP64_ONLY(FLAG_SET_CMDLINE(bool, UseCompressedKlassPointers, false));
-    } else {
-      // Prefer compressed oops and large pages to class data sharing
-      if (UseSharedSpaces && Verbose) {
-        warning("turning off use of shared archive because of large pages%s",
-                 "" LP64_ONLY(" and/or compressed oops"));
+    // CompressedOops cannot be used with CDS.  The offsets of oopmaps and
+    // static fields are incorrect in the archive.  With some more clever
+    // initialization, this restriction can probably be lifted.
+    if (UseCompressedOops) {
+      if (must_share) {
+          warning("disabling compressed oops because of %s",
+                  DumpSharedSpaces ? "-Xshare:dump" : "-Xshare:on");
+          FLAG_SET_CMDLINE(bool, UseCompressedOops, false);
+          FLAG_SET_CMDLINE(bool, UseCompressedKlassPointers, false);
+      } else {
+        // Prefer compressed oops to class data sharing
+        if (UseSharedSpaces && Verbose) {
+          warning("turning off use of shared archive because of compressed oops");
+        }
+        no_shared_spaces();
       }
-      no_shared_spaces();
     }
-  } else if (UseLargePages && might_share) {
-    // Disable large pages to allow shared spaces.  This is sub-optimal, since
-    // there may not even be a shared archive to use.
-    FLAG_SET_DEFAULT(UseLargePages, false);
-  }
+#endif
 
   if (DumpSharedSpaces) {
     if (RequireSharedSpaces) {
@@ -3189,24 +3200,36 @@ static void force_serial_gc() {
 }
 #endif // INCLUDE_ALL_GCS
 
+// Sharing support
+// Construct the path to the archive
+static char* get_shared_archive_path() {
+  char *shared_archive_path;
+  if (SharedArchiveFile == NULL) {
+    char jvm_path[JVM_MAXPATHLEN];
+    os::jvm_path(jvm_path, sizeof(jvm_path));
+    char *end = strrchr(jvm_path, *os::file_separator());
+    if (end != NULL) *end = '\0';
+    size_t jvm_path_len = strlen(jvm_path);
+    size_t file_sep_len = strlen(os::file_separator());
+    shared_archive_path = NEW_C_HEAP_ARRAY(char, jvm_path_len +
+        file_sep_len + 20, mtInternal);
+    if (shared_archive_path != NULL) {
+      strncpy(shared_archive_path, jvm_path, jvm_path_len + 1);
+      strncat(shared_archive_path, os::file_separator(), file_sep_len);
+      strncat(shared_archive_path, "classes.jsa", 11);
+    }
+  } else {
+    shared_archive_path = NEW_C_HEAP_ARRAY(char, strlen(SharedArchiveFile) + 1, mtInternal);
+    if (shared_archive_path != NULL) {
+      strncpy(shared_archive_path, SharedArchiveFile, strlen(SharedArchiveFile) + 1);
+    }
+  }
+  return shared_archive_path;
+}
+
 // Parse entry point called from JNI_CreateJavaVM
 
 jint Arguments::parse(const JavaVMInitArgs* args) {
-
-  // Sharing support
-  // Construct the path to the archive
-  char jvm_path[JVM_MAXPATHLEN];
-  os::jvm_path(jvm_path, sizeof(jvm_path));
-  char *end = strrchr(jvm_path, *os::file_separator());
-  if (end != NULL) *end = '\0';
-  char *shared_archive_path = NEW_C_HEAP_ARRAY(char, strlen(jvm_path) +
-      strlen(os::file_separator()) + 20, mtInternal);
-  if (shared_archive_path == NULL) return JNI_ENOMEM;
-  strcpy(shared_archive_path, jvm_path);
-  strcat(shared_archive_path, os::file_separator());
-  strcat(shared_archive_path, "classes");
-  strcat(shared_archive_path, ".jsa");
-  SharedArchivePath = shared_archive_path;
 
   // Remaining part of option string
   const char* tail;
@@ -3296,6 +3319,12 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   jint result = parse_vm_init_args(args);
   if (result != JNI_OK) {
     return result;
+  }
+
+  // Call get_shared_archive_path() here, after possible SharedArchiveFile option got parsed.
+  SharedArchivePath = get_shared_archive_path();
+  if (SharedArchivePath == NULL) {
+    return JNI_ENOMEM;
   }
 
   // Delay warning until here so that we've had a chance to process

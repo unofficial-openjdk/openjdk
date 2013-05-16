@@ -1159,9 +1159,6 @@ class CommandLineFlags {
   product(bool, CompactFields, true,                                        \
           "Allocate nonstatic fields in gaps between previous fields")      \
                                                                             \
-  notproduct(bool, PrintCompactFieldsSavings, false,                        \
-          "Print how many words were saved with CompactFields")             \
-                                                                            \
   notproduct(bool, PrintFieldLayout, false,                                 \
           "Print field layout for each class")                              \
                                                                             \
@@ -3679,6 +3676,9 @@ class CommandLineFlags {
                                                                             \
   product(bool , AllowNonVirtualCalls, false,                               \
           "Obey the ACC_SUPER flag and allow invokenonvirtual calls")       \
+                                                                            \
+  diagnostic(ccstr, SharedArchiveFile, NULL,                                \
+          "Override the default location of the CDS archive file")          \
                                                                             \
   experimental(uintx, ArrayAllocatorMallocLimit,                            \
           SOLARIS_ONLY(64*K) NOT_SOLARIS(max_uintx),                        \

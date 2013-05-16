@@ -21,35 +21,33 @@
  * questions.
  */
 
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-
-/**
- * Dump a class file for a class on the class path in the current directory
+/*
+ * @test
+ * @bug 8014138
+ * @summary Testing new -XX:SharedArchiveFile=<file-name> option
+ * @library /testlibrary
  */
-public class ClassFileInstaller {
-    /**
-     * @param args The names of the classes to dump
-     * @throws Exception
-     */
-    public static void main(String... args) throws Exception {
-        for (String arg : args) {
-            ClassLoader cl = ClassFileInstaller.class.getClassLoader();
 
-            // Convert dotted class name to a path to a class file
-            String pathName = arg.replace('.', '/').concat(".class");
-            InputStream is = cl.getResourceAsStream(pathName);
+import com.oracle.java.testlibrary.*;
 
-            // Create the class file's package directory
-            Path p = Paths.get(pathName);
-            if (pathName.contains("/")) {
-                Files.createDirectories(p.getParent());
-            }
-            // Create the class file
-            Files.copy(is, p, StandardCopyOption.REPLACE_EXISTING);
-        }
+public class SharedArchiveFile {
+  public static void main(String[] args) throws Exception {
+    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
+        "-XX:+UnlockDiagnosticVMOptions", "-XX:SharedArchiveFile=./sample.jsa", "-Xshare:dump");
+    OutputAnalyzer output = new OutputAnalyzer(pb.start());
+    try {
+      output.shouldContain("Loading classes to share");
+      output.shouldHaveExitValue(0);
+
+      pb = ProcessTools.createJavaProcessBuilder(
+        "-XX:+UnlockDiagnosticVMOptions", "-XX:SharedArchiveFile=./sample.jsa", "-Xshare:on", "-version");
+      output = new OutputAnalyzer(pb.start());
+      output.shouldContain("sharing");
+      output.shouldHaveExitValue(0);
+
+    } catch (RuntimeException e) {
+      output.shouldContain("Unable to use shared archive");
+      output.shouldHaveExitValue(1);
     }
+  }
 }
