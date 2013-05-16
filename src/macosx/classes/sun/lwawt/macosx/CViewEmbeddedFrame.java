@@ -77,7 +77,7 @@ public class CViewEmbeddedFrame extends EmbeddedFrame {
     public void synthesizeWindowActivation(boolean activated) {
         if (isActive != activated) {
             isActive = activated;
-            ((LWWindowPeer)getPeer()).notifyActivation(activated);
+            ((LWWindowPeer)getPeer()).notifyActivation(activated, null);
         }
     }
 
