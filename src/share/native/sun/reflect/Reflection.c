@@ -34,6 +34,12 @@ JNIEXPORT jclass JNICALL Java_sun_reflect_Reflection_getCallerClass
     return JVM_GetCallerClass(env, 2);
 }
 
+JNIEXPORT jclass JNICALL Java_sun_reflect_Reflection_getCallerClass0
+(JNIEnv *env, jclass unused, jint depth)
+{
+    return JVM_GetCallerClass(env, depth);
+}
+
 JNIEXPORT jint JNICALL Java_sun_reflect_Reflection_getClassAccessFlags
 (JNIEnv *env, jclass unused, jclass cls)
 {

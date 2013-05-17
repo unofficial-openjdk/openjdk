@@ -58,6 +58,21 @@ public class Reflection {
     @CallerSensitive
     public static native Class getCallerClass();
 
+    /**
+     * @deprecated No replacement.  This method will be removed in the next
+     * JDK 7 update release.
+     */
+    @Deprecated
+    @CallerSensitive
+    public static Class getCallerClass(int depth) {
+        return getCallerClass0(depth);
+    }
+
+    // If the VM enforces getting caller class with @CallerSensitive,
+    // this will fail anyway.
+    @CallerSensitive
+    private static native Class getCallerClass0(int depth);
+
     /** Retrieves the access flags written to the class file. For
         inner classes these flags may differ from those returned by
         Class.getModifiers(), which searches the InnerClasses
