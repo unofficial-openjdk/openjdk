@@ -28,6 +28,7 @@
  * @author  Jim Gish
  * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp1 LoadItUp2 TwiceIndirectlyLoadABundle LoadItUp2Invoker
  * @run main/othervm ResourceBundleSearchTest
+ * @run main/othervm -Djdk.logging.allowStackWalkSearch=true ResourceBundleSearchTest
  */
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -79,7 +80,15 @@ public class ResourceBundleSearchTest {
 
         // Test 1 - can we find a Logger bundle from doing a stack search?
         // We shouldn't be able to
-        assertFalse(testGetBundleFromStackSearch(), "1-testGetBundleFromStackSearch");
+        // unless -Djdk.logging.allowStackWalkSearch=true is set
+
+        boolean allowStackWalkSearch = Boolean.getBoolean("jdk.logging.allowStackWalkSearch");
+        if (allowStackWalkSearch) {
+            assertTrue(testGetBundleFromStackSearch(), "1-testGetBundleFromStackSearch");
+        } else {
+            // default behavior
+            assertFalse(testGetBundleFromStackSearch(), "1-testGetBundleFromStackSearch");
+        }
 
         // Test 2 - can we find a Logger bundle off of the Thread context class
         // loader? We should be able to.
@@ -111,8 +120,10 @@ public class ResourceBundleSearchTest {
         // Test 6 - first call getLogger("myLogger").
         // Then call getLogger("myLogger","bundleName") from a different ClassLoader
         // Make sure we find the bundle
-        assertTrue(testGetBundleFromSecondCallersClassLoader(),
-                   "6-testGetBundleFromSecondCallersClassLoader");
+        if (!allowStackWalkSearch) {
+            assertTrue(testGetBundleFromSecondCallersClassLoader(),
+                       "6-testGetBundleFromSecondCallersClassLoader");
+        }
 
         report();
     }
