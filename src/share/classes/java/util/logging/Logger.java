@@ -315,8 +315,13 @@ public class Logger {
     // null, we assume it's a system logger and add it to the system context.
     // These system loggers only set the resource bundle to the given
     // resource bundle name (rather than the default system resource bundle).
-    private static class SystemLoggerHelper {
-        static boolean disableCallerCheck = getBooleanProperty("sun.util.logging.disableCallerCheck");
+    private static class LoggerHelper {
+        static boolean disableCallerCheck =
+            getBooleanProperty("sun.util.logging.disableCallerCheck");
+
+        // workaround to turn on the old behavior for resource bundle search
+        static boolean allowStackWalkSearch =
+            getBooleanProperty("jdk.logging.allowStackWalkSearch");
         private static boolean getBooleanProperty(final String key) {
             String s = AccessController.doPrivileged(new PrivilegedAction<String>() {
                 public String run() {
@@ -330,7 +335,7 @@ public class Logger {
     private static Logger demandLogger(String name, String resourceBundleName, Class<?> caller) {
         LogManager manager = LogManager.getLogManager();
         SecurityManager sm = System.getSecurityManager();
-        if (sm != null && !SystemLoggerHelper.disableCallerCheck) {
+        if (sm != null && !LoggerHelper.disableCallerCheck) {
             if (caller.getClassLoader() == null) {
                 return manager.demandSystemLogger(name, resourceBundleName);
             }
@@ -1437,23 +1442,59 @@ public class Logger {
         if (useCallersClassLoader) {
             // Try with the caller's ClassLoader
             ClassLoader callersClassLoader = getCallersClassLoader();
-
-            if (callersClassLoader == null || callersClassLoader == cl) {
-                return null;
+            if (callersClassLoader != null && callersClassLoader != cl) {
+                try {
+                    catalog = ResourceBundle.getBundle(name, currentLocale,
+                                                       callersClassLoader);
+                    catalogName = name;
+                    catalogLocale = currentLocale;
+                    return catalog;
+                } catch (MissingResourceException ex) {
+                }
             }
+        }
 
-            try {
-                catalog = ResourceBundle.getBundle(name, currentLocale,
-                                                   callersClassLoader);
-                catalogName = name;
-                catalogLocale = currentLocale;
-                return catalog;
-            } catch (MissingResourceException ex) {
-                return null; // no luck
-            }
+        // If -Djdk.logging.allowStackWalkSearch=true is set,
+        // does stack walk to search for the resource bundle
+        if (LoggerHelper.allowStackWalkSearch) {
+            return findResourceBundleFromStack(name, currentLocale, cl);
         } else {
             return null;
         }
+    }
+
+    /**
+     * This method will fail when running with a VM that enforces caller-sensitive
+     * methods and only allows to get the immediate caller.
+     */
+    @CallerSensitive
+    private synchronized ResourceBundle findResourceBundleFromStack(String name,
+                                                                    Locale locale,
+                                                                    ClassLoader cl)
+    {
+        for (int ix = 0; ; ix++) {
+            Class<?> clz = sun.reflect.Reflection.getCallerClass(ix);
+            if (clz == null) {
+                break;
+            }
+            ClassLoader cl2 = clz.getClassLoader();
+            if (cl2 == null) {
+                cl2 = ClassLoader.getSystemClassLoader();
+            }
+            if (cl == cl2) {
+                // We've already checked this classloader.
+                continue;
+            }
+            cl = cl2;
+            try {
+                catalog = ResourceBundle.getBundle(name, locale, cl);
+                catalogName = name;
+                catalogLocale = locale;
+                return catalog;
+            } catch (MissingResourceException ex) {
+            }
+        }
+        return null;
     }
 
     // Private utility method to initialize our one entry
