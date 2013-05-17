@@ -1886,6 +1886,10 @@ NOT_PRODUCT(
     // Reference objects are active.
     ref_processor()->clean_up_discovered_references();
 
+    if (first_state > Idling) {
+      save_heap_summary();
+    }
+
     do_compaction_work(clear_all_soft_refs);
 
     // Has the GC time limit been exceeded?
