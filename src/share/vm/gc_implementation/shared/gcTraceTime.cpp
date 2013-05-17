@@ -58,10 +58,8 @@ GCTraceTime::GCTraceTime(const char* title, bool doit, bool print_cr, GCTimer* t
   }
 
   if (_doit) {
-    if (PrintGCTimeStamps) {
-      gclog_or_tty->stamp();
-      gclog_or_tty->print(": ");
-    }
+    gclog_or_tty->date_stamp(PrintGCDateStamps);
+    gclog_or_tty->stamp(PrintGCTimeStamps);
     gclog_or_tty->print("[%s", title);
     gclog_or_tty->flush();
   }
