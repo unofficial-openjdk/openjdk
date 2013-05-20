@@ -42,7 +42,7 @@ import sun.util.logging.PlatformLogger;
 
 public class LWWindowPeer
     extends LWContainerPeer<Window, JComponent>
-    implements WindowPeer, FramePeer, DialogPeer, FullScreenCapable
+    implements FramePeer, DialogPeer, FullScreenCapable, DisplayChangedListener
 {
     public static enum PeerType {
         SIMPLEWINDOW,
@@ -194,6 +194,7 @@ public class LWWindowPeer
         if (getSurfaceData() == null) {
             replaceSurfaceData(false);
         }
+        activateDisplayListener();
     }
 
     // Just a helper method
@@ -215,6 +216,7 @@ public class LWWindowPeer
 
     @Override
     protected void disposeImpl() {
+        deactivateDisplayListener();
         SurfaceData oldData = getSurfaceData();
         synchronized (surfaceDataLock){
             surfaceData = null;
@@ -920,6 +922,18 @@ public class LWWindowPeer
 
     // ---- UTILITY METHODS ---- //
 
+    private void activateDisplayListener() {
+        final GraphicsEnvironment ge =
+                GraphicsEnvironment.getLocalGraphicsEnvironment();
+        ((SunGraphicsEnvironment) ge).addDisplayChangedListener(this);
+    }
+
+    private void deactivateDisplayListener() {
+        final GraphicsEnvironment ge =
+                GraphicsEnvironment.getLocalGraphicsEnvironment();
+        ((SunGraphicsEnvironment) ge).removeDisplayChangedListener(this);
+    }
+
     private void postWindowStateChangedEvent(int newWindowState) {
         if (getTarget() instanceof Frame) {
             AWTAccessor.getFrameAccessor().setExtendedState(
@@ -981,7 +995,6 @@ public class LWWindowPeer
             graphicsDevice = newGraphicsDevice;
         }
 
-        // TODO: DisplayChangedListener stuff
         final GraphicsConfiguration newGC = newGraphicsDevice.getDefaultConfiguration();
 
         if (!setGraphicsConfig(newGC)) return false;
@@ -992,6 +1005,20 @@ public class LWWindowPeer
             }
         });
         return true;
+    }
+
+    @Override
+    public final void displayChanged() {
+        updateGraphicsDevice();
+        // Replace surface unconditionally, because internal state of the
+        // GraphicsDevice could be changed.
+        replaceSurfaceData();
+        repaintPeer();
+    }
+
+    @Override
+    public final void paletteChanged() {
+        // components do not need to react to this event.
     }
 
     /*
