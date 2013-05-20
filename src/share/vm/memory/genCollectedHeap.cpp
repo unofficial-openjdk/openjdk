@@ -477,7 +477,6 @@ void GenCollectedHeap::do_collection(bool  full,
 
     bool complete = full && (max_level == (n_gens()-1));
     const char* gc_cause_prefix = complete ? "Full GC" : "GC";
-    gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
     TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
     GCTraceTime t(GCCauseString(gc_cause_prefix, gc_cause()), PrintGCDetails, false, NULL);
 
