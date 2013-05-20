@@ -573,8 +573,9 @@ class CMSCollector: public CHeapObj<mtGC> {
   bool _completed_initialization;
 
   // In support of ExplicitGCInvokesConcurrent
-  static   bool _full_gc_requested;
-  unsigned int  _collection_count_start;
+  static bool _full_gc_requested;
+  static GCCause::Cause _full_gc_cause;
+  unsigned int _collection_count_start;
 
   // Should we unload classes this concurrent cycle?
   bool _should_unload_classes;
@@ -905,11 +906,11 @@ class CMSCollector: public CHeapObj<mtGC> {
                bool   clear_all_soft_refs,
                size_t size,
                bool   tlab);
-  void collect_in_background(bool clear_all_soft_refs);
-  void collect_in_foreground(bool clear_all_soft_refs);
+  void collect_in_background(bool clear_all_soft_refs, GCCause::Cause cause);
+  void collect_in_foreground(bool clear_all_soft_refs, GCCause::Cause cause);
 
   // In support of ExplicitGCInvokesConcurrent
-  static void request_full_gc(unsigned int full_gc_count);
+  static void request_full_gc(unsigned int full_gc_count, GCCause::Cause cause);
   // Should we unload classes in a particular concurrent cycle?
   bool should_unload_classes() const {
     return _should_unload_classes;

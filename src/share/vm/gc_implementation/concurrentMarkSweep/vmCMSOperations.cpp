@@ -241,7 +241,7 @@ void VM_GenCollectFullConcurrent::doit() {
     // In case CMS thread was in icms_wait(), wake it up.
     CMSCollector::start_icms();
     // Nudge the CMS thread to start a concurrent collection.
-    CMSCollector::request_full_gc(_full_gc_count_before);
+    CMSCollector::request_full_gc(_full_gc_count_before, _gc_cause);
   } else {
     assert(_full_gc_count_before < gch->total_full_collections(), "Error");
     FullGCCount_lock->notify_all();  // Inform the Java thread its work is done
