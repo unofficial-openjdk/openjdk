@@ -83,7 +83,7 @@ public final class OCSP {
         Integer tmp = java.security.AccessController.doPrivileged(
                 new GetIntegerAction("com.sun.security.ocsp.timeout"));
         if (tmp == null || tmp < 0) {
-            tmp = DEFAULT_CONNECT_TIMEOUT;
+            return DEFAULT_CONNECT_TIMEOUT;
         }
         // Convert to milliseconds, as the system property will be
         // specified in seconds
