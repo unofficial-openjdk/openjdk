@@ -3633,6 +3633,11 @@ class CommandLineFlags {
   product(bool, PrintGCCause, true,                                         \
           "Include GC cause in GC logging")                                 \
                                                                             \
+  experimental(uintx, ArrayAllocatorMallocLimit,                            \
+          SOLARIS_ONLY(64*K) NOT_SOLARIS(max_uintx),                        \
+          "Allocation less than this value will be allocated "              \
+          "using malloc. Larger allocations will use mmap.")                \
+                                                                            \
   product(bool, EnableTracing, false,                                       \
                   "Enable event-based tracing")                             \
   product(bool, UseLockedTracing, false,                                    \
