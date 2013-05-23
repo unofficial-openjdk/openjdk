@@ -1461,6 +1461,12 @@ bool os::release_memory(char* addr, size_t bytes) {
   return res;
 }
 
+bool os::release_or_uncommit_partial_region(char * addr, size_t bytes) {
+  if (can_release_partial_region()) {
+    return release_memory(addr, bytes);
+  }
+  return uncommit_memory(addr, bytes);
+}
 
 char* os::map_memory(int fd, const char* file_name, size_t file_offset,
                            char *addr, size_t bytes, bool read_only,

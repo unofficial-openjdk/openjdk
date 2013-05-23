@@ -134,6 +134,10 @@ char* os::reserve_memory_aligned(size_t size, size_t alignment) {
   return aligned_base;
 }
 
+bool os::can_release_partial_region() {
+  return true;
+}
+
 void os::Posix::print_load_average(outputStream* st) {
   st->print("load average:");
   double loadavg[3];

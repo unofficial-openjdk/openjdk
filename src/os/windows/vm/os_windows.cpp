@@ -2971,6 +2971,10 @@ void os::pd_split_reserved_memory(char *base, size_t size, size_t split,
   }
 }
 
+bool os::can_release_partial_region() {
+  return false;
+}
+
 // Multiple threads can race in this code but it's not possible to unmap small sections of
 // virtual space to get requested alignment, like posix-like os's.
 // Windows prevents multiple thread from remapping over each other so this loop is thread-safe.
