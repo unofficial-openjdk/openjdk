@@ -30,6 +30,7 @@
 #include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/allocation.hpp"
+#include "memory/klassInfoClosure.hpp"
 #include "memory/referenceType.hpp"
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1YCTypes.hpp"
@@ -137,6 +138,33 @@ class GCTracer : public ResourceObj {
   void send_phase_events(TimePartitions* time_partitions) const;
   void send_object_count_after_gc_event(klassOop klass, jlong count, julong total_size) const;
   bool should_send_object_count_after_gc_event() const;
+};
+
+class ObjectCountEventSenderClosure : public KlassInfoClosure {
+  GCTracer* _gc_tracer;
+  const double _size_threshold_percentage;
+  const size_t _total_size_in_words;
+ public:
+  ObjectCountEventSenderClosure(GCTracer* gc_tracer, size_t total_size_in_words) :
+    _gc_tracer(gc_tracer),
+    _size_threshold_percentage(ObjectCountCutOffPercent / 100),
+    _total_size_in_words(total_size_in_words)
+  {}
+  virtual void do_cinfo(KlassInfoEntry* entry);
+ protected:
+  virtual void send_event(KlassInfoEntry* entry);
+ private:
+  bool should_send_event(KlassInfoEntry* entry) const;
+};
+
+class ObjectCountFilter : public BoolObjectClosure {
+  BoolObjectClosure* _is_alive;
+ public:
+  ObjectCountFilter(BoolObjectClosure* is_alive = NULL) : _is_alive(is_alive) {}
+  bool do_object_b(oop obj);
+  void do_object(oop obj) { ShouldNotReachHere(); }
+ private:
+  bool is_externally_visible_klass(klassOop k) const;
 };
 
 class YoungGCTracer : public GCTracer {

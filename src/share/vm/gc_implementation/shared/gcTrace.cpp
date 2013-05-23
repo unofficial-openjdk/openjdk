@@ -91,24 +91,32 @@ void GCTracer::report_gc_reference_stats(const ReferenceProcessorStats& rps) con
   send_reference_stats_event(REF_PHANTOM, rps.phantom_count());
 }
 
-class ObjectCountEventSenderClosure : public KlassInfoClosure {
-  GCTracer* _gc_tracer;
- public:
-  ObjectCountEventSenderClosure(GCTracer* gc_tracer) : _gc_tracer(gc_tracer) {}
- private:
-  void do_cinfo(KlassInfoEntry* entry) {
-    if (is_visible_klass(entry->klass())) {
-      _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
-                                                   entry->words() * BytesPerWord);
-      }
+void ObjectCountEventSenderClosure::do_cinfo(KlassInfoEntry* entry) {
+  if (should_send_event(entry)) {
+    send_event(entry);
   }
+}
 
+void ObjectCountEventSenderClosure::send_event(KlassInfoEntry* entry) {
+  _gc_tracer->send_object_count_after_gc_event(entry->klass(), entry->count(),
+                                               entry->words() * BytesPerWord);
+}
+
+bool ObjectCountEventSenderClosure::should_send_event(KlassInfoEntry* entry) const {
+  double percentage_of_heap = ((double) entry->words()) / _total_size_in_words;
+  return percentage_of_heap > _size_threshold_percentage;
+}
+
+bool ObjectCountFilter::do_object_b(oop obj) {
+  bool is_alive = _is_alive == NULL? true : _is_alive->do_object_b(obj);
+  return is_alive && is_externally_visible_klass(obj->klass());
+}
+
+bool ObjectCountFilter::is_externally_visible_klass(klassOop k) const {
   // Do not expose internal implementation specific classes
-  bool is_visible_klass(klassOop k) {
-    return k->klass_part()->oop_is_instance() ||
-           (k->klass_part()->oop_is_array() && k != Universe::systemObjArrayKlassObj());
-  }
-};
+  return (k->klass_part()->oop_is_instance() || k->klass_part()->oop_is_array()) &&
+         k != Universe::systemObjArrayKlassObj();
+}
 
 void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
   if (should_send_object_count_after_gc_event()) {
@@ -116,8 +124,11 @@ void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
 
     KlassInfoTable cit(HeapInspection::start_of_perm_gen());
     if (!cit.allocation_failed()) {
-      ObjectCountEventSenderClosure event_sender(this);
-      HeapInspection::instance_inspection(&cit, &event_sender, false, is_alive_cl);
+      ObjectCountFilter object_filter(is_alive_cl);
+      HeapInspection::populate_table(&cit, false, &object_filter);
+
+      ObjectCountEventSenderClosure event_sender(this, cit.size_of_instances_in_words());
+      cit.iterate(&event_sender);
     }
   }
 }

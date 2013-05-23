@@ -113,9 +113,8 @@ void KlassInfoBucket::empty() {
   }
 }
 
-KlassInfoTable::KlassInfoTable(HeapWord* ref) {
-  _size = 0;
-  _ref = ref;
+KlassInfoTable::KlassInfoTable(HeapWord* ref) :
+  _size(0), _ref(ref), _size_of_instances_in_words(0) {
   _buckets = (KlassInfoBucket *) os::malloc(sizeof(KlassInfoBucket) * _num_buckets, mtInternal);
   if (_buckets != NULL) {
     _size = _num_buckets;
@@ -160,6 +159,7 @@ bool KlassInfoTable::record_instance(const oop obj) {
   if (elt != NULL) {
     elt->set_count(elt->count() + 1);
     elt->set_words(elt->words() + obj->size());
+    _size_of_instances_in_words += obj->size();
     return true;
   } else {
     return false;
@@ -171,6 +171,10 @@ void KlassInfoTable::iterate(KlassInfoClosure* cic) {
   for (int index = 0; index < _size; index++) {
     _buckets[index].iterate(cic);
   }
+}
+
+size_t KlassInfoTable::size_of_instances_in_words() const {
+  return _size_of_instances_in_words;
 }
 
 int KlassInfoHisto::sort_helper(KlassInfoEntry** e1, KlassInfoEntry** e2) {
@@ -282,10 +286,9 @@ void HeapInspection::epilogue() {
   }
 }
 
-size_t HeapInspection::instance_inspection(KlassInfoTable* cit,
-                                           KlassInfoClosure* cl,
-                                           bool need_prologue,
-                                           BoolObjectClosure* filter) {
+size_t HeapInspection::populate_table(KlassInfoTable* cit,
+                                      bool need_prologue,
+                                      BoolObjectClosure *filter) {
   ResourceMark rm;
 
   if (need_prologue) {
@@ -294,7 +297,6 @@ size_t HeapInspection::instance_inspection(KlassInfoTable* cit,
 
   RecordInstanceClosure ric(cit, filter);
   Universe::heap()->object_iterate(&ric);
-  cit->iterate(cl);
 
   // need to run epilogue if we run prologue
   if (need_prologue) {
@@ -309,17 +311,20 @@ void HeapInspection::heap_inspection(outputStream* st, bool need_prologue) {
 
   KlassInfoTable cit(start_of_perm_gen());
   if (!cit.allocation_failed()) {
-    KlassInfoHisto histo("\n"
-                     " num     #instances         #bytes  class name\n"
-                     "----------------------------------------------");
-    HistoClosure hc(&histo);
-
-    size_t missed_count = instance_inspection(&cit, &hc, need_prologue);
+    size_t missed_count = populate_table(&cit, need_prologue);
     if (missed_count != 0) {
       st->print_cr("WARNING: Ran out of C-heap; undercounted " SIZE_FORMAT
                    " total instances in data below",
                    missed_count);
     }
+
+    KlassInfoHisto histo("\n"
+                     " num     #instances         #bytes  class name\n"
+                     "----------------------------------------------");
+    HistoClosure hc(&histo);
+
+    cit.iterate(&hc);
+
     histo.sort();
     histo.print_on(st);
   } else {
