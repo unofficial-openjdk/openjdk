@@ -243,6 +243,8 @@ class os: AllStatic {
                               bool executable = false);
   static bool   uncommit_memory(char* addr, size_t bytes);
   static bool   release_memory(char* addr, size_t bytes);
+  static bool   can_release_partial_region();
+  static bool   release_or_uncommit_partial_region(char* addr, size_t bytes);
 
   enum ProtType { MEM_PROT_NONE, MEM_PROT_READ, MEM_PROT_RW, MEM_PROT_RWX };
   static bool   protect_memory(char* addr, size_t bytes, ProtType prot,

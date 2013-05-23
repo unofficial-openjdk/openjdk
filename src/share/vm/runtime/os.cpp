@@ -1078,6 +1078,12 @@ char* os::format_boot_path(const char* format_string,
     return formatted_path;
 }
 
+bool os::release_or_uncommit_partial_region(char * addr, size_t bytes) {
+  if (can_release_partial_region()) {
+    return release_memory(addr, bytes);
+  }
+  return uncommit_memory(addr, bytes);
+}
 
 bool os::set_boot_path(char fileSep, char pathSep) {
     const char* home = Arguments::get_java_home();
