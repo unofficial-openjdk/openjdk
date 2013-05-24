@@ -170,20 +170,12 @@ ifndef OPENJDK
 endif
 
 ifeq ($(PLATFORM), solaris)
-  ifndef OPENJDK
-    MANBASEDIRS=$(CLOSED_SRC)/solaris/doc $(IMPORTDOCDIR)
-  else
-    MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
-  endif
+  MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
   MAN1SUBDIR=sun/man/man1
 endif # solaris
 
 ifeq ($(PLATFORM), linux)
-  ifndef OPENJDK
-    MANBASEDIRS=$(CLOSED_SRC)/linux/doc $(IMPORTDOCDIR)
-  else
-    MANBASEDIRS=$(JDK_TOPDIR)/src/linux/doc $(IMPORTDOCDIR)
-  endif
+  MANBASEDIRS=$(JDK_TOPDIR)/src/linux/doc $(IMPORTDOCDIR)
   MAN1SUBDIR=man
   JA_DIRNAME=ja_JP.UTF-8
 endif # linux
@@ -1239,7 +1231,6 @@ endef
 define echo-java-info
 $(CAT) $1
 endef
--include $(JDK_TOPDIR)/make/closed/common/release.gmk
 
 # Values to emit
 MINIMUM_OS_NAME    := $(REQUIRED_OS_NAME)
@@ -1436,3 +1427,4 @@ images images-clobber::
 # Force rule
 FRC:
 
+-include $(JDK_TOPDIR)/make/closed/common/release.gmk
