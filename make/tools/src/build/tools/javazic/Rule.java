@@ -119,7 +119,7 @@ class Rule {
                                                 r1.getDay(), r1.getTime().getTime());
                     long t2 = Time.getLocalTime(y, r2.getMonth(),
                                                 r2.getDay(), r2.getTime().getTime());
-                    return (int)(t1 - t2);
+                    return (t1 > t2) ? 1 : (t1 < t2) ? -1 : 0;
                 }
                 public boolean equals(Object o) {
                     return this == o;
