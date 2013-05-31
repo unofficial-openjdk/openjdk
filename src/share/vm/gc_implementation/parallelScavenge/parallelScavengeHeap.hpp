@@ -129,7 +129,7 @@ CollectorPolicy* collector_policy() const { return (CollectorPolicy*) _collector
 
   // The alignment used for eden and survivors within the young gen
   // and for boundary between young gen and old gen.
-  size_t intra_heap_alignment() const { return 64 * K; }
+  size_t intra_heap_alignment() const { return 64 * K * HeapWordSize; }
 
   size_t capacity() const;
   size_t used() const;
