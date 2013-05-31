@@ -217,6 +217,15 @@ public class TreeInfo {
         }
     }
 
+    public static boolean isEnumInit(JCTree tree) {
+        switch (tree.getTag()) {
+            case JCTree.VARDEF:
+                return (((JCVariableDecl)tree).mods.flags & ENUM) != 0;
+            default:
+                return false;
+        }
+    }
+
     /** Return true if a tree represents the null literal. */
     public static boolean isNull(JCTree tree) {
         if (tree.getTag() != JCTree.LITERAL)
