@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,14 +21,22 @@
  * questions.
  */
 
-package two;
+/*
+ * @test
+ * @bug 7179353
+ * @summary try-with-resources fails to compile with generic exception parameters
+ * @compile GenericsAndTWRCompileErrorTest.java
+ */
 
-interface I {
-    int i = 11;
-}
+public class GenericsAndTWRCompileErrorTest {
 
-public class Child2 extends one.Parent2 implements I {
-    void method() {
-        System.out.println(i);
+    public static class Resource<E extends Exception> implements AutoCloseable {
+        public void close() throws E { }
+    }
+
+    public <E extends Exception> void test() throws E {
+        try (Resource<E> r = new Resource<E>()) {
+
+        }
     }
 }
