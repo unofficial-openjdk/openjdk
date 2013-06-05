@@ -22,15 +22,18 @@
  *
  */
 
-#ifndef SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
-#define SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
+#ifndef SHARE_VM_OBJECT_COUNT_EVENT_SENDER_HPP
+#define SHARE_VM_OBJECT_COUNT_EVENT_SENDER_HPP
+
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "memory/allocation.hpp"
 
 class KlassInfoEntry;
 
-class KlassInfoClosure : public StackObj {
+class ObjectCountEventSender : public AllStatic {
  public:
-  // Called for each KlassInfoEntry.
-  virtual void do_cinfo(KlassInfoEntry* cie) = 0;
+  static void send(const KlassInfoEntry* entry, GCId gc_id);
+  static bool should_send_event();
 };
 
-#endif // SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
+#endif // SHARE_VM_OBJECT_COUNT_EVENT_SENDER
