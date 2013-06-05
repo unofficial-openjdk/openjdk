@@ -129,7 +129,7 @@ public class ExecCommand {
         for (int k = 0; k < 3; ++k) {
             switch (k) {
             case 1:
-                System.setProperty("jdk.lang.Process.allowAmbigousCommands", "");
+                System.setProperty("jdk.lang.Process.allowAmbiguousCommands", "");
                 break;
             case 2:
                 System.setSecurityManager( new SecurityMan() );
