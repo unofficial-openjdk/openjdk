@@ -314,13 +314,13 @@ final class ProcessImpl extends Process {
     {
         String cmdstr;
         SecurityManager security = System.getSecurityManager();
-        boolean allowAmbigousCommands = false;
+        boolean allowAmbiguousCommands = false;
         if (security == null) {
-            String value = System.getProperty("jdk.lang.Process.allowAmbigousCommands");
+            String value = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
             if (value != null)
-                allowAmbigousCommands = !"false".equalsIgnoreCase(value);
+                allowAmbiguousCommands = !"false".equalsIgnoreCase(value);
         }
-        if (allowAmbigousCommands) {
+        if (allowAmbiguousCommands) {
             // Legacy mode.
 
             // Normalize path if possible.
