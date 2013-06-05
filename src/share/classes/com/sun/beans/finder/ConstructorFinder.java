@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,18 +112,5 @@ public final class ConstructorFinder extends AbstractFinder<Constructor<?>> {
     @Override
     protected boolean isVarArgs(Constructor<?> constructor) {
         return constructor.isVarArgs();
-    }
-
-    /**
-     * Checks validness of the constructor.
-     * The valid constructor should be public.
-     *
-     * @param constructor  the object that represents constructor
-     * @return {@code true} if the constructor is valid,
-     *         {@code false} otherwise
-     */
-    @Override
-    protected boolean isValid(Constructor<?> constructor) {
-        return Modifier.isPublic(constructor.getModifiers());
     }
 }

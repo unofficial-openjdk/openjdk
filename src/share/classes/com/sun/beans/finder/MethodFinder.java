@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -233,6 +233,6 @@ public final class MethodFinder extends AbstractFinder<Method> {
      */
     @Override
     protected boolean isValid(Method method) {
-        return !method.isBridge() && Modifier.isPublic(method.getModifiers()) && method.getName().equals(this.name);
+        return super.isValid(method) && method.getName().equals(this.name);
     }
 }

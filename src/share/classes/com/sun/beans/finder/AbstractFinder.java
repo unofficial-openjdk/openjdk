@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,9 @@
  */
 package com.sun.beans.finder;
 
+import java.lang.reflect.Member;
+import java.lang.reflect.Modifier;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +40,7 @@ import java.util.Map;
  *
  * @author Sergey A. Malenkov
  */
-abstract class AbstractFinder<T> {
+abstract class AbstractFinder<T extends Member> {
     private final Class<?>[] args;
 
     /**
@@ -81,7 +84,9 @@ abstract class AbstractFinder<T> {
      * @return {@code true} if the method is valid,
      *         {@code false} otherwise
      */
-    protected abstract boolean isValid(T method);
+    protected boolean isValid(T method) {
+        return Modifier.isPublic(method.getModifiers());
+    }
 
     /**
      * Performs a search in the {@code methods} array.
@@ -120,6 +125,11 @@ abstract class AbstractFinder<T> {
                             boolean useNew = isAssignable(oldParams, newParams);
                             boolean useOld = isAssignable(newParams, oldParams);
 
+                            if (useOld && useNew) {
+                                // only if parameters are equal
+                                useNew = !newMethod.isSynthetic();
+                                useOld = !oldMethod.isSynthetic();
+                            }
                             if (useOld == useNew) {
                                 ambiguous = true;
                             } else if (useNew) {
@@ -160,6 +170,11 @@ abstract class AbstractFinder<T> {
                         boolean useNew = isAssignable(oldParams, newParams);
                         boolean useOld = isAssignable(newParams, oldParams);
 
+                        if (useOld && useNew) {
+                            // only if parameters are equal
+                            useNew = !newMethod.isSynthetic();
+                            useOld = !oldMethod.isSynthetic();
+                        }
                         if (useOld == useNew) {
                             if (oldParams == map.get(oldMethod)) {
                                 ambiguous = true;
