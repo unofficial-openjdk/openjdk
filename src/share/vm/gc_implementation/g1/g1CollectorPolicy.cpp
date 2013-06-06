@@ -416,9 +416,9 @@ void G1CollectorPolicy::initialize_flags() {
 }
 
 G1YoungGenSizer::G1YoungGenSizer() : _sizer_kind(SizerDefaults), _adaptive_size(true) {
-  assert(G1DefaultMinNewGenPercent <= G1DefaultMaxNewGenPercent, "Min larger than max");
-  assert(G1DefaultMinNewGenPercent > 0 && G1DefaultMinNewGenPercent < 100, "Min out of bounds");
-  assert(G1DefaultMaxNewGenPercent > 0 && G1DefaultMaxNewGenPercent < 100, "Max out of bounds");
+  assert(G1NewSizePercent <= G1MaxNewSizePercent, "Min larger than max");
+  assert(G1NewSizePercent > 0 && G1NewSizePercent < 100, "Min out of bounds");
+  assert(G1MaxNewSizePercent > 0 && G1MaxNewSizePercent < 100, "Max out of bounds");
 
   if (FLAG_IS_CMDLINE(NewRatio)) {
     if (FLAG_IS_CMDLINE(NewSize) || FLAG_IS_CMDLINE(MaxNewSize)) {
@@ -446,12 +446,12 @@ G1YoungGenSizer::G1YoungGenSizer() : _sizer_kind(SizerDefaults), _adaptive_size(
 }
 
 size_t G1YoungGenSizer::calculate_default_min_length(size_t new_number_of_heap_regions) {
-  size_t default_value = (new_number_of_heap_regions * G1DefaultMinNewGenPercent) / 100;
+  size_t  default_value = (new_number_of_heap_regions * G1NewSizePercent) / 100;
   return MAX2((size_t)1, default_value);
 }
 
 size_t G1YoungGenSizer::calculate_default_max_length(size_t new_number_of_heap_regions) {
-  size_t default_value = (new_number_of_heap_regions * G1DefaultMaxNewGenPercent) / 100;
+  size_t  default_value = (new_number_of_heap_regions * G1MaxNewSizePercent) / 100;
   return MAX2((size_t)1, default_value);
 }
 
@@ -2608,7 +2608,7 @@ bool G1CollectorPolicy::next_gc_should_be_mixed(const char* true_action_str,
   size_t reclaimable_bytes = cset_chooser->remainingReclaimableBytes();
   size_t capacity_bytes = _g1->capacity();
   double perc = (double) reclaimable_bytes * 100.0 / (double) capacity_bytes;
-  double threshold = (double) G1OldReclaimableThresholdPercent;
+  double threshold = (double) G1HeapWastePercent;
   if (perc < threshold) {
     ergo_verbose4(ErgoMixedGCs,
               false_action_str,
