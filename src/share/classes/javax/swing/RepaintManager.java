@@ -342,7 +342,7 @@ public class RepaintManager
 
         // Queue a Runnable to invoke paintDirtyRegions and
         // validateInvalidComponents.
-        scheduleProcessingRunnable();
+        scheduleProcessingRunnable(SunToolkit.targetToAppContext(invalidComponent));
     }
 
 
@@ -431,7 +431,7 @@ public class RepaintManager
 
         // Queue a Runnable to invoke paintDirtyRegions and
         // validateInvalidComponents.
-        scheduleProcessingRunnable();
+        scheduleProcessingRunnable(SunToolkit.targetToAppContext(c));
     }
 
     /**
@@ -1371,10 +1371,6 @@ public class RepaintManager
             setPaintManager(paintManager);
         }
         return paintManager;
-    }
-
-    private void scheduleProcessingRunnable() {
-        scheduleProcessingRunnable(AppContext.getAppContext());
     }
 
     private void scheduleProcessingRunnable(AppContext context) {

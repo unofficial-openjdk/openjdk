@@ -52,16 +52,26 @@ public class Reflection {
         methodFilterMap = new HashMap<Class,String[]>();
     }
 
-    /** Returns the class of the method <code>realFramesToSkip</code>
-        frames up the stack (zero-based), ignoring frames associated
-        with java.lang.reflect.Method.invoke() and its implementation.
-        The first frame is that associated with this method, so
-        <code>getCallerClass(0)</code> returns the Class object for
-        sun.reflect.Reflection. Frames associated with
-        java.lang.reflect.Method.invoke() and its implementation are
-        completely ignored and do not count toward the number of "real"
-        frames skipped. */
-    public static native Class getCallerClass(int realFramesToSkip);
+    /** Returns the class of the caller of the method calling this method,
+        ignoring frames associated with java.lang.reflect.Method.invoke()
+        and its implementation. */
+    @CallerSensitive
+    public static native Class getCallerClass();
+
+    /**
+     * @deprecated No replacement.  This method will be removed in the next
+     * JDK 7 update release.
+     */
+    @Deprecated
+    @CallerSensitive
+    public static Class getCallerClass(int depth) {
+        return getCallerClass0(depth);
+    }
+
+    // If the VM enforces getting caller class with @CallerSensitive,
+    // this will fail anyway.
+    @CallerSensitive
+    private static native Class getCallerClass0(int depth);
 
     /** Retrieves the access flags written to the class file. For
         inner classes these flags may differ from those returned by
@@ -321,5 +331,28 @@ public class Reflection {
             }
         }
         return newMembers;
+    }
+
+    /**
+     * Tests if the given method is caller-sensitive and the declaring class
+     * is defined by either the bootstrap class loader or extension class loader.
+     */
+    public static boolean isCallerSensitive(Method m) {
+        final ClassLoader loader = m.getDeclaringClass().getClassLoader();
+        if (loader == null || isExtClassLoader(loader))  {
+            return m.isAnnotationPresent(CallerSensitive.class);
+        }
+        return false;
+    }
+
+    private static boolean isExtClassLoader(ClassLoader loader) {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        while (cl != null) {
+            if (cl.getParent() == null && cl == loader) {
+                return true;
+            }
+            cl = cl.getParent();
+        }
+        return false;
     }
 }

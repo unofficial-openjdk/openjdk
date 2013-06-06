@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -648,6 +648,27 @@ JNF_COCOA_ENTER(env);
 JNF_COCOA_EXIT(env);
 
     return windowPtr;
+}
+
+/*
+ * Class:     sun_lwawt_macosx_CWrapper$NSView
+ * Method:    setToolTip
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL
+Java_sun_lwawt_macosx_CWrapper_00024NSView_setToolTip
+(JNIEnv *env, jclass cls, jlong viewPtr, jstring msg)
+{
+
+JNF_COCOA_ENTER(env);
+
+    NSView *view = (NSView *)jlong_to_ptr(viewPtr);
+    NSString* s = JNFJavaToNSString(env, msg);
+    [JNFRunLoop performOnMainThreadWaiting:NO withBlock:^(){
+        [view setToolTip: s];
+    }];
+
+JNF_COCOA_EXIT(env);
 }
 
 /*

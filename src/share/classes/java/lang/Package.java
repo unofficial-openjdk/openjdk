@@ -47,9 +47,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import sun.net.www.ParseUtil;
-
 import java.lang.annotation.Annotation;
+import sun.net.www.ParseUtil;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 
 /**
  * {@code Package} objects contain version information
@@ -272,8 +273,9 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return the package of the requested name. It may be null if no package
      *          information is available from the archive or codebase.
      */
+    @CallerSensitive
     public static Package getPackage(String name) {
-        ClassLoader l = ClassLoader.getCallerClassLoader();
+        ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
         if (l != null) {
             return l.getPackage(name);
         } else {
@@ -293,8 +295,9 @@ public class Package implements java.lang.reflect.AnnotatedElement {
      * @return a new array of packages known to the callers {@code ClassLoader}
      * instance.  An zero length array is returned if none are known.
      */
+    @CallerSensitive
     public static Package[] getPackages() {
-        ClassLoader l = ClassLoader.getCallerClassLoader();
+        ClassLoader l = ClassLoader.getClassLoader(Reflection.getCallerClass());
         if (l != null) {
             return l.getPackages();
         } else {

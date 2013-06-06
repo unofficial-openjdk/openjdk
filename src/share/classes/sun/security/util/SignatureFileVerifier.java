@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -548,12 +548,39 @@ public class SignatureFileVerifier {
                 // Create a timestamp token info object
                 TimestampToken timestampTokenInfo =
                     new TimestampToken(encodedTimestampTokenInfo);
+                // Check that the signature timestamp applies to this signature
+                verifyTimestamp(timestampTokenInfo, info.getEncryptedDigest());
                 // Create a timestamp object
                 timestamp =
                     new Timestamp(timestampTokenInfo.getDate(), tsaChain);
             }
         }
         return timestamp;
+    }
+
+    /*
+     * Check that the signature timestamp applies to this signature.
+     * Match the hash present in the signature timestamp token against the hash
+     * of this signature.
+     */
+    private void verifyTimestamp(TimestampToken token, byte[] signature)
+        throws NoSuchAlgorithmException, SignatureException {
+
+        MessageDigest md =
+            MessageDigest.getInstance(token.getHashAlgorithm().getName());
+
+        if (!Arrays.equals(token.getHashedMessage(), md.digest(signature))) {
+            throw new SignatureException("Signature timestamp (#" +
+                token.getSerialNumber() + ") generated on " + token.getDate() +
+                " is inapplicable");
+        }
+
+        if (debug != null) {
+            debug.println();
+            debug.println("Detected signature timestamp (#" +
+                token.getSerialNumber() + ") generated on " + token.getDate());
+            debug.println();
+        }
     }
 
     // for the toHex function

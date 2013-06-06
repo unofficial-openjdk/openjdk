@@ -77,6 +77,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                        "Ora legale di Chatham", "CHADT"};
         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
                                       "Chuuk Summer Time", "CHUST"};
+        String ChST[] = new String[] {"Ora standard di Chamorro", "ChST",
+                              "Ora legale di Chamorro", "ChDT"};
         String CIT[] = new String[] {"Ora dell'Indonesia centrale", "CIT",
                                      "Ora estiva dell'Indonesia centrale", "CIST"};
         String CLT[] = new String[] {"Ora del Cile", "CLT",
@@ -161,6 +163,8 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                       "Pohnpei Summer Time", "PONST"};
         String PST[] = new String[] {"Ora solare della costa occidentale USA", "PST",
                                      "Ora legale della costa occidentale USA", "PDT"};
+        String SAMOA[] = new String[] {"Ora standard di Samoa", "SST",
+                                       "Ora legale di Samoa", "SDT"};
         String SAST[] = new String[] {"Ora solare del Sudafrica", "SAST",
                                       "Ora estiva del Sudafrica", "SAST"};
         String SBT[] = new String[] {"Ora delle Isole Salomone", "SBT",
@@ -175,6 +179,14 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                      "Ora estiva del Turkmenistan", "TMST"};
         String ULAT[]= new String[] {"Ora di Ulaanbaatar", "ULAT",
                                      "Ora estiva di Ulaanbaatar", "ULAST"};
+        String UTC[] = new String[] {"Tempo universale coordinato", "UTC",
+                                     "Tempo universale coordinato", "UTC"};
+        String UZT[] = new String[] {"Ora dell'Uzbekistan", "UZT",
+                                     "Ora estiva dell'Uzbekistan", "UZST"};
+        String VICTORIA[] = new String[] {"Ora orientale standard (Victoria)", "EST",
+                                          "Ora estiva orientale (Victoria)", "EST"};
+        String VLAT[] = new String[] {"Ora di Vladivostok", "VLAT",
+                                      "Ora estiva di Vladivostok", "VLAST"};
         String WART[] = new String[] {"Ora dell'Argentina occidentale", "WART",
                                       "Ora estiva dell'Argentina occidentale", "WARST"};
         String WAT[] = new String[] {"Ora dell'Africa occidentale", "WAT",
@@ -185,18 +197,10 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
                                      "Ora estiva dell'Indonesia occidentale", "WIST"};
         String WST_AUS[] = new String[] {"Ora solare dell'Australia occidentale", "WST",
                                          "Ora estiva dell'Australia occidentale", "WST"};
-        String SAMOA[] = new String[] {"Ora standard di Samoa", "SST",
-                                       "Ora legale di Samoa", "SDT"};
         String WST_SAMOA[] = new String[] {"Ora di Samoa", "WST",
                                            "Ora estiva di Samoa", "WSDT"};
-        String ChST[] = new String[] {"Ora standard di Chamorro", "ChST",
-                              "Ora legale di Chamorro", "ChDT"};
-        String VICTORIA[] = new String[] {"Ora orientale standard (Victoria)", "EST",
-                                          "Ora estiva orientale (Victoria)", "EST"};
-        String UTC[] = new String[] {"Tempo universale coordinato", "UTC",
-                                     "Tempo universale coordinato", "UTC"};
-        String UZT[] = new String[] {"Ora dell'Uzbekistan", "UZT",
-                                     "Ora estiva dell'Uzbekistan", "UZST"};
+        String YAKT[] = new String[] {"Ora di Jakutsk", "YAKT",
+                                      "Ora estiva di Jakutsk", "YAKST"};
 
         return new Object[][] {
             {"America/Los_Angeles", PST},
@@ -287,7 +291,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"Africa/Porto-Novo", WAT},
             {"Africa/Sao_Tome", GMT},
             {"Africa/Timbuktu", GMT},
-            {"Africa/Tripoli", EET},
+            {"Africa/Tripoli", CET},
             {"Africa/Tunis", CET},
             {"Africa/Windhoek", WAT},
             {"America/Adak", HAST},
@@ -533,6 +537,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"Asia/Kashgar", CTT},
             {"Asia/Kathmandu", NPT},
             {"Asia/Katmandu", NPT},
+            {"Asia/Khandyga", YAKT},
             {"Asia/Kolkata", IST},
             {"Asia/Krasnoyarsk", new String[] {"Ora di Krasnojarsk", "KRAT",
                                                "Ora estiva di Krasnojarsk", "KRAST"}},
@@ -581,11 +586,10 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"Asia/Ulaanbaatar", ULAT},
             {"Asia/Ulan_Bator", ULAT},
             {"Asia/Urumqi", CTT},
+            {"Asia/Ust-Nera", VLAT},
             {"Asia/Vientiane", ICT},
-            {"Asia/Vladivostok", new String[] {"Ora di Vladivostok", "VLAT",
-                                               "Ora estiva di Vladivostok", "VLAST"}},
-            {"Asia/Yakutsk", new String[] {"Ora di Jakutsk", "YAKT",
-                                           "Ora estiva di Jakutsk", "YAKST"}},
+            {"Asia/Vladivostok", VLAT},
+            {"Asia/Yakutsk", YAKT},
             {"Asia/Yekaterinburg", new String[] {"Ora di Ekaterinburg", "YEKT",
                                                  "Ora estiva di Ekaterinburg", "YEKST"}},
             {"Asia/Yerevan", ARMT},
@@ -669,6 +673,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"Europe/Bratislava", CET},
             {"Europe/Brussels", CET},
             {"Europe/Budapest", CET},
+            {"Europe/Busingen", CET},
             {"Europe/Chisinau", EET},
             {"Europe/Copenhagen", CET},
             {"Europe/Dublin", DUBLIN},
@@ -748,7 +753,7 @@ public final class TimeZoneNames_it extends TimeZoneNamesBundle {
             {"Jamaica", EST},
             {"Japan", JST},
             {"Kwajalein", MHT},
-            {"Libya", EET},
+            {"Libya", CET},
             {"MET", new String[] {"Ora dell'Europa centrale", "MET",
                                   "Ora estiva dell'Europa centrale", "MEST"}},
             {"Mexico/BajaNorte", PST},

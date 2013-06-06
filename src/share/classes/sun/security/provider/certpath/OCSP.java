@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 
 import static sun.security.provider.certpath.OCSPResponse.*;
+import sun.security.action.GetIntegerAction;
 import sun.security.util.Debug;
 import sun.security.x509.AccessDescription;
 import sun.security.x509.AuthorityInfoAccessExtension;
@@ -64,7 +65,30 @@ public final class OCSP {
 
     private static final Debug debug = Debug.getInstance("certpath");
 
-    private static final int CONNECT_TIMEOUT = 15000; // 15 seconds
+    private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
+
+    /**
+     * Integer value indicating the timeout length, in seconds, to be
+     * used for the OCSP check. A timeout of zero is interpreted as
+     * an infinite timeout.
+     */
+    private static final int CONNECT_TIMEOUT = initializeTimeout();
+
+    /**
+     * Initialize the timeout length by getting the OCSP timeout
+     * system property. If the property has not been set, or if its
+     * value is negative, set the timeout length to the default.
+     */
+    private static int initializeTimeout() {
+        Integer tmp = java.security.AccessController.doPrivileged(
+                new GetIntegerAction("com.sun.security.ocsp.timeout"));
+        if (tmp == null || tmp < 0) {
+            return DEFAULT_CONNECT_TIMEOUT;
+        }
+        // Convert to milliseconds, as the system property will be
+        // specified in seconds
+        return tmp * 1000;
+    }
 
     private OCSP() {}
 

@@ -135,7 +135,6 @@ SUNWprivate_1.1 {
 		Java_java_lang_ClassLoader_00024NativeLibrary_find;
 		Java_java_lang_ClassLoader_00024NativeLibrary_load;
 		Java_java_lang_ClassLoader_00024NativeLibrary_unload;
-		Java_java_lang_ClassLoader_getCaller; 
 		Java_java_lang_ClassLoader_registerNatives;
 		Java_java_lang_Compiler_registerNatives;
 		Java_java_lang_Double_longBitsToDouble;
@@ -233,8 +232,6 @@ SUNWprivate_1.1 {
 		Java_java_security_AccessController_doPrivileged__Ljava_security_PrivilegedExceptionAction_2Ljava_security_AccessControlContext_2;
 		Java_java_security_AccessController_getStackAccessControlContext;
 		Java_java_security_AccessController_getInheritedAccessControlContext;
-		Java_java_sql_DriverManager_getCallerClassLoader;
-		Java_java_util_ResourceBundle_getClassContext;
 		Java_java_util_TimeZone_getSystemTimeZoneID;
 		Java_java_util_TimeZone_getSystemGMTOffsetID;
 		Java_java_util_concurrent_atomic_AtomicLong_VMSupportsCS8;
@@ -269,6 +266,7 @@ SUNWprivate_1.1 {
 		Java_sun_reflect_NativeConstructorAccessorImpl_newInstance0;
 		Java_sun_reflect_NativeMethodAccessorImpl_invoke0;
 		Java_sun_reflect_Reflection_getCallerClass;
+		Java_sun_reflect_Reflection_getCallerClass0;
 		Java_sun_reflect_Reflection_getClassAccessFlags;
                 Java_sun_misc_Version_getJdkVersionInfo;
                 Java_sun_misc_Version_getJdkSpecialVersion;

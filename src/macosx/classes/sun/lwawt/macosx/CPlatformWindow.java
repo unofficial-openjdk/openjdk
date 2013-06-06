@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -203,9 +203,9 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     private Window target;
     private LWWindowPeer peer;
-    private CPlatformView contentView;
-    private CPlatformWindow owner;
-    private boolean visible = false; // visibility status from native perspective
+    protected CPlatformView contentView;
+    protected CPlatformWindow owner;
+    protected boolean visible = false; // visibility status from native perspective
     private boolean undecorated; // initialized in getInitialStyleBits()
     private Rectangle normalBounds = null; // not-null only for undecorated maximized windows
     private CPlatformResponder responder;
@@ -230,12 +230,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         final int styleBits = getInitialStyleBits();
 
-        // TODO: handle these misc properties
-        final long parentNSWindowPtr = (owner != null ? owner.getNSWindowPtr() : 0);
-        String warningString = target.getWarningString();
-
-        responder = new CPlatformResponder(peer, false);
-        contentView = new CPlatformView();
+        responder = createPlatformResponder();
+        contentView = createContentView();
         contentView.initialize(peer, responder);
 
         final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), styleBits, 0, 0, 0, 0);
@@ -255,6 +251,14 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         }
 
         validateSurface();
+    }
+
+    protected CPlatformResponder createPlatformResponder() {
+        return new CPlatformResponder(peer, false);
+    }
+
+    protected CPlatformView createContentView() {
+        return new CPlatformView();
     }
 
     protected int getInitialStyleBits() {
@@ -468,7 +472,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         nativeSetNSWindowBounds(getNSWindowPtr(), x, y, w, h);
     }
 
-    private boolean isVisible() {
+    public boolean isVisible() {
         return this.visible;
     }
 
@@ -477,7 +481,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     private void maximize() {
-        if (isMaximized()) {
+        if (peer == null || isMaximized()) {
             return;
         }
         if (!undecorated) {
@@ -540,7 +544,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         updateFocusabilityForAutoRequestFocus(false);
 
         // Actually show or hide the window
-        LWWindowPeer blocker = peer.getBlocker();
+        LWWindowPeer blocker = (peer == null)? null : peer.getBlocker();
         if (blocker == null || !visible) {
             // If it ain't blocked, or is being hidden, go regular way
             if (visible) {
@@ -666,6 +670,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
     @Override
     public void setResizable(boolean resizable) {
+        if (peer == null) {
+            return;
+        }
+
         setStyleBits(RESIZABLE, resizable);
 
         // Re-apply the size constraints and the size to ensure the space
@@ -754,8 +762,13 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     @Override
+    public boolean isFullScreenMode() {
+        return isFullScreenMode;
+    }
+
+    @Override
     public void setWindowState(int windowState) {
-        if (!peer.isVisible()) {
+        if (peer == null || !peer.isVisible()) {
             // setVisible() applies the state
             return;
         }
@@ -846,6 +859,11 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         return peer;
     }
 
+    @Override
+    public boolean isUnderMouse() {
+        return contentView.isUnderMouse();
+    }
+
     public CPlatformView getContentView() {
         return contentView;
     }
@@ -874,7 +892,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         responder.handleWindowFocusEvent(gained);
     }
 
-    private void deliverMoveResizeEvent(int x, int y, int width, int height) {
+    protected void deliverMoveResizeEvent(int x, int y, int width, int height) {
         // when the content view enters the full-screen mode, the native
         // move/resize notifications contain a bounds smaller than
         // the whole screen and therefore we ignore the native notifications
@@ -882,27 +900,37 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (isFullScreenMode) return;
 
         nativeBounds = new Rectangle(x, y, width, height);
-        peer.notifyReshape(x, y, width, height);
+        if (peer != null) {
+            peer.notifyReshape(x, y, width, height);
+        }
         //TODO validateSurface already called from notifyReshape
         validateSurface();
     }
 
     private void deliverWindowClosingEvent() {
-        if (peer.getBlocker() == null)  {
-            peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
+        if (peer != null) {
+            if (peer.getBlocker() == null)  {
+                peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
+            }
         }
     }
 
     private void deliverIconify(final boolean iconify) {
-        peer.notifyIconify(iconify);
+        if (peer != null) {
+            peer.notifyIconify(iconify);
+        }
     }
 
     private void deliverZoom(final boolean isZoomed) {
-        peer.notifyZoom(isZoomed);
+        if (peer != null) {
+            peer.notifyZoom(isZoomed);
+        }
     }
 
     private void deliverNCMouseDown() {
-        peer.notifyNCMouseDown();
+        if (peer != null) {
+            peer.notifyNCMouseDown();
+        }
     }
 
     /*
@@ -910,6 +938,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
      * may become natively focusable window.
      */
     private boolean isNativelyFocusableWindow() {
+        if (peer == null) {
+            return false;
+        }
+
         return !peer.isSimpleWindow() && target.getFocusableWindowState();
     }
 
@@ -924,7 +956,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     private boolean checkBlocking() {
-        LWWindowPeer blocker = peer.getBlocker();
+        LWWindowPeer blocker = (peer == null)? null : peer.getBlocker();
         if (blocker == null) {
             return false;
         }
@@ -989,8 +1021,10 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     }
 
     private void updateWindowContent() {
-        ComponentEvent resizeEvent = new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED);
-        SunToolkit.postEvent(SunToolkit.targetToAppContext(target), resizeEvent);
+        if (target != null) {
+            ComponentEvent resizeEvent = new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED);
+            SunToolkit.postEvent(SunToolkit.targetToAppContext(target), resizeEvent);
+        }
     }
 
     private void windowWillEnterFullScreen() {

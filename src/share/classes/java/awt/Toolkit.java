@@ -48,8 +48,6 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import java.util.*;
-import sun.util.logging.PlatformLogger;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import sun.awt.AppContext;
@@ -1978,7 +1976,7 @@ public abstract class Toolkit {
      */
     public abstract boolean isModalExclusionTypeSupported(Dialog.ModalExclusionType modalExclusionType);
 
-    private static final PlatformLogger log = PlatformLogger.getLogger("java.awt.Toolkit");
+    // 8014736: logging has been removed from Toolkit
 
     private static final int LONG_BITS = 64;
     private int[] calls = new int[LONG_BITS];
@@ -2145,12 +2143,6 @@ public abstract class Toolkit {
         }
 
     synchronized int countAWTEventListeners(long eventMask) {
-        if (log.isLoggable(PlatformLogger.FINE)) {
-            if (eventMask == 0) {
-                log.fine("Assertion (eventMask != 0) failed");
-            }
-        }
-
         int ci = 0;
         for (; eventMask != 0; eventMask >>>= 1, ci++) {
         }

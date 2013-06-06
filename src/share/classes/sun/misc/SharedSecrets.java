@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,7 @@ public class SharedSecrets {
     private static JavaSecurityAccess javaSecurityAccess;
     private static JavaxSecurityAuthKerberosAccess javaxSecurityAuthKerberosAccess;
     private static JavaUtilZipAccess javaUtilZipAccess;
+    private static JavaUtilZipFileAccess javaUtilZipFileAccess;
     private static JavaAWTAccess javaAWTAccess;
 
     public static JavaUtilJarAccess javaUtilJarAccess() {
@@ -179,6 +180,16 @@ public class SharedSecrets {
         return javaUtilZipAccess;
     }
 
+    public static JavaUtilZipFileAccess getJavaUtilZipFileAccess() {
+        if (javaUtilZipFileAccess == null)
+            unsafe.ensureClassInitialized(java.util.zip.ZipFile.class);
+        return javaUtilZipFileAccess;
+    }
+
+    public static void setJavaUtilZipFileAccess(JavaUtilZipFileAccess access) {
+        javaUtilZipFileAccess = access;
+    }
+
     public static void setJavaAWTAccess(JavaAWTAccess jaa) {
         javaAWTAccess = jaa;
     }
@@ -186,6 +197,9 @@ public class SharedSecrets {
     public static JavaAWTAccess getJavaAWTAccess() {
         // this may return null in which case calling code needs to
         // provision for.
+        if (javaAWTAccess == null || javaAWTAccess.getContext() == null) {
+            return null;
+        }
         return javaAWTAccess;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,9 @@ package javax.sql.rowset.serial;
 import java.io.*;
 import java.lang.reflect.*;
 import javax.sql.rowset.RowSetWarning;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * A serializable mapping in the Java programming language of an SQL
@@ -120,10 +123,24 @@ public class SerialJavaObject implements Serializable, Cloneable {
      * @return an array of <code>Field</code> objects
      * @throws SerialException if an error is encountered accessing
      * the serialized object
+     * @see Class#getFields
      */
+    @CallerSensitive
     public Field[] getFields() throws SerialException {
         if (fields != null) {
             Class<?> c = this.obj.getClass();
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                /*
+                 * Check if the caller is allowed to access the specified class's package.
+                 * If access is denied, throw a SecurityException.
+                 */
+                Class<?> caller = sun.reflect.Reflection.getCallerClass();
+                if (ReflectUtil.needsPackageAccessCheck(caller.getClassLoader(),
+                                                        c.getClassLoader())) {
+                    ReflectUtil.checkPackageAccess(c);
+                }
+            }
             return c.getFields();
         } else {
             throw new SerialException("SerialJavaObject does not contain" +

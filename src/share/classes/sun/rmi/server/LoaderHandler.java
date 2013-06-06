@@ -55,6 +55,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
+import sun.reflect.misc.ReflectUtil;
 import sun.rmi.runtime.Log;
 import sun.security.action.GetPropertyAction;
 
@@ -170,7 +171,7 @@ public final class LoaderHandler {
 
         if (defaultLoader != null) {
             try {
-                Class c = Class.forName(name, false, defaultLoader);
+                Class c = loadClassForName(name, false, defaultLoader);
                 if (loaderLog.isLoggable(Log.VERBOSE)) {
                     loaderLog.log(Log.VERBOSE,
                         "class \"" + name + "\" found via defaultLoader, " +
@@ -375,7 +376,7 @@ public final class LoaderHandler {
         SecurityManager sm = System.getSecurityManager();
         if (sm == null) {
             try {
-                Class c = Class.forName(name, false, parent);
+                Class c = loadClassForName(name, false, parent);
                 if (loaderLog.isLoggable(Log.VERBOSE)) {
                     loaderLog.log(Log.VERBOSE,
                         "class \"" + name + "\" found via " +
@@ -424,7 +425,7 @@ public final class LoaderHandler {
                  * resolved without the security-offending codebase anyway;
                  * if so, return successfully (see bugids 4191926 & 4349670).
                  */
-                Class c = Class.forName(name, false, parent);
+                Class c = loadClassForName(name, false, parent);
                 if (loaderLog.isLoggable(Log.VERBOSE)) {
                     loaderLog.log(Log.VERBOSE,
                         "class \"" + name + "\" found via " +
@@ -450,7 +451,7 @@ public final class LoaderHandler {
         }
 
         try {
-            Class c = Class.forName(name, false, loader);
+            Class c = loadClassForName(name, false, loader);
             if (loaderLog.isLoggable(Log.VERBOSE)) {
                 loaderLog.log(Log.VERBOSE,
                     "class \"" + name + "\" " + "found via codebase, " +
@@ -728,7 +729,7 @@ public final class LoaderHandler {
 
         for (int i = 0; i < interfaces.length; i++) {
             Class cl =
-                (classObjs[i] = Class.forName(interfaces[i], false, loader));
+                (classObjs[i] = loadClassForName(interfaces[i], false, loader));
 
             if (!Modifier.isPublic(cl.getModifiers())) {
                 ClassLoader current = cl.getClassLoader();
@@ -1197,5 +1198,27 @@ public final class LoaderHandler {
         public String toString() {
             return super.toString() + "[\"" + annotation + "\"]";
         }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve)
+                throws ClassNotFoundException {
+            if (parent == null) {
+                ReflectUtil.checkPackageAccess(name);
+            }
+            return super.loadClass(name, resolve);
+        }
+
     }
+
+    private static Class<?> loadClassForName(String name,
+                                              boolean initialize,
+                                              ClassLoader loader)
+            throws ClassNotFoundException
+    {
+        if (loader == null) {
+            ReflectUtil.checkPackageAccess(name);
+        }
+        return Class.forName(name, initialize, loader);
+    }
+
 }

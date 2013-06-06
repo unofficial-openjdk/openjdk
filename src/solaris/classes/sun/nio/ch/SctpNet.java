@@ -36,10 +36,17 @@ import java.security.AccessController;
 import sun.security.action.GetPropertyAction;
 import com.sun.nio.sctp.SctpSocketOption;
 import static com.sun.nio.sctp.SctpStandardSocketOptions.*;
+import java.security.PrivilegedExceptionAction;
 
 public class SctpNet {
     static final String osName = AccessController.doPrivileged(
                     new GetPropertyAction("os.name"));
+
+    // Value of jdk.net.revealLocalAddress
+    private static boolean revealLocalAddress;
+
+    // True if jdk.net.revealLocalAddress had been read
+    private static volatile boolean propRevealLocalAddr;
 
     /* -- Miscellaneous SCTP utilities -- */
 
@@ -92,16 +99,63 @@ public class SctpNet {
 
     static Set<SocketAddress> getLocalAddresses(int fd)
             throws IOException {
-        HashSet<SocketAddress> set = null;
+        Set<SocketAddress> set = null;
         SocketAddress[] saa = getLocalAddresses0(fd);
 
         if (saa != null) {
-            set = new HashSet<SocketAddress>(saa.length);
-            for (SocketAddress sa : saa)
-                set.add(sa);
+            set = getRevealedLocalAddressSet(saa);
         }
 
         return set;
+    }
+
+    private static Set<SocketAddress> getRevealedLocalAddressSet(
+            SocketAddress[] saa)
+    {
+         SecurityManager sm = System.getSecurityManager();
+         Set<SocketAddress> set = new HashSet<>(saa.length);
+         for (SocketAddress sa : saa) {
+             set.add(getRevealedLocalAddress(sa, sm));
+         }
+         return set;
+    }
+
+    private static SocketAddress getRevealedLocalAddress(SocketAddress sa,
+                                                         SecurityManager sm)
+    {
+        if (sm == null || sa == null)
+            return sa;
+        InetSocketAddress ia = (InetSocketAddress)sa;
+        if (!propRevealLocalAddr) {
+            try {
+                revealLocalAddress = Boolean.parseBoolean(
+                      AccessController.doPrivileged(
+                          new PrivilegedExceptionAction<String>() {
+                              public String run() {
+                                  return System.getProperty(
+                                      "jdk.net.revealLocalAddress");
+                              }
+                          }));
+
+            } catch (Exception e) {
+                // revealLocalAddress is false
+            }
+            propRevealLocalAddr = true;
+        }
+        if (!revealLocalAddress) {
+           try{
+               sm.checkConnect(ia.getAddress().getHostAddress(), -1);
+               //Security check passed
+           } catch (SecurityException e) {
+                //Return loopback address
+                return new InetSocketAddress(
+                        InetAddress.getLoopbackAddress(), ia.getPort());
+           }
+        }
+
+        // Security check passed or jdk.net.revealLocalAddress set to true
+        return sa;
+
     }
 
     static Set<SocketAddress> getRemoteAddresses(int fd, int assocId)

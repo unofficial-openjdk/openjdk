@@ -38,7 +38,8 @@ import java.awt.event.*;
 public class CEmbeddedFrame extends EmbeddedFrame {
 
     private CPlatformResponder responder;
-    private boolean focused = true;
+    private static final Object classLock = new Object();
+    private static volatile CEmbeddedFrame focusedWindow;
     private boolean parentWindowActive = true;
 
     public CEmbeddedFrame() {
@@ -97,31 +98,45 @@ public class CEmbeddedFrame extends EmbeddedFrame {
     public void handleKeyEvent(int eventType, int modifierFlags, String characters,
                                String charsIgnoringMods, boolean isRepeat, short keyCode,
                                boolean needsKeyTyped) {
-        responder.handleKeyEvent(eventType, modifierFlags, charsIgnoringMods, keyCode, needsKeyTyped);
-    }
-
-    // REMIND: delete this method once 'deploy' changes for 7156194 is pushed
-    public void handleKeyEvent(int eventType, int modifierFlags, String characters,
-                               String charsIgnoringMods, boolean isRepeat, short keyCode) {
-        handleKeyEvent(eventType, modifierFlags, characters, charsIgnoringMods, isRepeat, keyCode, true);
+        responder.handleKeyEvent(eventType, modifierFlags, charsIgnoringMods, keyCode, needsKeyTyped, isRepeat);
     }
 
     public void handleInputEvent(String text) {
         responder.handleInputEvent(text);
     }
 
+    // handleFocusEvent is called when the applet becames focused/unfocused.
+    // This method can be called from different threads.
     public void handleFocusEvent(boolean focused) {
-        this.focused = focused;
-        if (parentWindowActive) {
+
+        boolean handleWindowFocusEvent;
+        synchronized (classLock) {
+            // In some cases an applet may not receive the focus lost event
+            // from the parent window (see 8012330)
+            focusedWindow = (focused) ? this
+                    : ((focusedWindow == this) ? null : focusedWindow);
+            handleWindowFocusEvent = parentWindowActive;
+        }
+
+        if (handleWindowFocusEvent) {
             responder.handleWindowFocusEvent(focused);
         }
     }
 
+    // handleWindowFocusEvent is called for all applets, when the browser
+    // becames active/inactive. This event should be filtered out for
+    // non-focused applet. This method can be called from different threads.
     public void handleWindowFocusEvent(boolean parentWindowActive) {
-        this.parentWindowActive = parentWindowActive;
+
+        boolean handleWindowFocusEvent;
+        synchronized (classLock) {
+            this.parentWindowActive = parentWindowActive;
+            handleWindowFocusEvent = focusedWindow == this && parentWindowActive;
+        }
+
         // ignore focus "lost" native request as it may mistakenly
         // deactivate active window (see 8001161)
-        if (focused && parentWindowActive) {
+        if (handleWindowFocusEvent) {
             responder.handleWindowFocusEvent(parentWindowActive);
         }
     }

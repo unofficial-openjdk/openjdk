@@ -484,7 +484,7 @@ endif
 
 # Stable agentvm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_lang
-jdk_lang: $(call TestDirs, java/lang)
+jdk_lang: $(call TestDirs, java/lang sun/reflect)
 	$(call RunAgentvmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)
@@ -513,7 +513,7 @@ JDK_ALL_TARGETS += jdk_misc
 jdk_misc: $(call TestDirs, \
           demo/jvmti demo/zipfs javax/naming javax/script \
           javax/smartcardio javax/xml com/sun/jndi com/sun/org/glassfish \
-          com/sun/xml sun/misc)
+          com/sun/corba com/sun/xml sun/misc)
 	$(call RunAgentvmBatch)
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)

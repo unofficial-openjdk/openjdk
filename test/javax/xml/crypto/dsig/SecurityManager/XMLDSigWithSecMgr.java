@@ -140,6 +140,10 @@ public class XMLDSigWithSecMgr implements Runnable {
             // validate a signature with SecurityManager enabled
             DOMValidateContext dvc = new DOMValidateContext
                 (kp.getPublic(), envelope.getFirstChild());
+
+            // disable secure validation mode so that http reference will work
+            dvc.setProperty("org.jcp.xml.dsig.secureValidation", Boolean.FALSE);
+
             sig = fac.unmarshalXMLSignature(dvc);
             if (!sig.validate(dvc)) {
                 throw new Exception

@@ -75,6 +75,8 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
                                      "\u4e2d\u6b50\u590f\u4ee4\u6642\u9593", "CEST"};
         String CHAST[] = new String[] {"\u67e5\u5766\u6a19\u6e96\u6642\u9593", "CHAST",
                                        "\u67e5\u5766\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "CHADT"};
+        String ChST[] = new String[] {"\u67e5\u83ab\u6d1b\u6a19\u6e96\u6642\u9593", "ChST",
+                                     "\u67e5\u83ab\u6d1b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "ChDT"};
         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
                                       "Chuuk Summer Time", "CHUST"};
         String CIT[] = new String[] {"\u4e2d\u5370\u5ea6\u5c3c\u897f\u4e9e\u6642\u9593", "CIT",
@@ -161,6 +163,8 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
                                       "Pohnpei Summer Time", "PONST"};
         String PST[] = new String[] {"\u592a\u5e73\u6d0b\u6a19\u6e96\u6642\u9593", "PST",
                                      "\u592a\u5e73\u6d0b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "PDT"};
+        String SAMOA[] = new String[] {"\u85a9\u6469\u4e9e\u6a19\u6e96\u6642\u9593", "SST",
+                                       "\u85a9\u6469\u4e9e\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "SDT"};
         String SAST[] = new String[] {"\u5357\u975e\u6a19\u6e96\u6642\u9593", "SAST",
                                       "\u5357\u975e\u590f\u4ee4\u6642\u9593", "SAST"};
         String SBT[] = new String[] {"\u6240\u7f85\u9580\u7fa4\u5cf6\u6642\u9593", "SBT",
@@ -175,7 +179,15 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
                                      "\u571f\u5eab\u66fc\u590f\u4ee4\u6642\u9593", "TMST"};
         String ULAT[]= new String[] {"\u5eab\u502b\u6642\u9593", "ULAT",
                                      "\u5eab\u502b\u590f\u4ee4\u6642\u9593", "ULAST"};
-          String WART[] = new String[] {"\u897f\u963f\u6839\u5ef7\u6642\u9593", "WART",
+        String UTC[] = new String[] {"\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC",
+                                     "\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC"};
+        String UZT[] = new String[] {"\u70cf\u8332\u5225\u514b\u65af\u5766\u6642\u9593", "UZT",
+                                     "\u70cf\u8332\u5225\u514b\u65af\u5766\u590f\u4ee4\u6642\u9593", "UZST"};
+        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST",
+                                          "\u6771\u90e8\u590f\u4ee4\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST"};
+        String VLAT[] = new String[] {"\u6d77\u53c3\u5d34\u6642\u9593", "VLAT",
+                                      "\u6d77\u53c3\u5d34\u590f\u4ee4\u6642\u9593", "VLAST"};
+        String WART[] = new String[] {"\u897f\u963f\u6839\u5ef7\u6642\u9593", "WART",
                                       "\u897f\u963f\u6839\u5ef7\u590f\u4ee4\u6642\u9593", "WARST"};
         String WAT[] = new String[] {"\u897f\u975e\u6642\u9593", "WAT",
                                      "\u897f\u975e\u590f\u4ee4\u6642\u9593", "WAST"};
@@ -185,18 +197,10 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
                                      "\u897f\u5370\u5c3c\u590f\u4ee4\u6642\u9593", "WIST"};
         String WST_AUS[] = new String[] {"\u897f\u65b9\u6a19\u6e96\u6642\u9593 (\u6fb3\u5927\u5229\u4e9e)", "WST",
                                          "\u897f\u65b9\u590f\u4ee4\u6642\u9593 (\u6fb3\u5927\u5229\u4e9e)", "WST"};
-        String SAMOA[] = new String[] {"\u85a9\u6469\u4e9e\u6a19\u6e96\u6642\u9593", "SST",
-                                       "\u85a9\u6469\u4e9e\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "SDT"};
         String WST_SAMOA[] = new String[] {"\u897f\u85a9\u6469\u4e9e\u6642\u9593", "WST",
                                            "\u897f\u85a9\u6469\u4e9e\u590f\u4ee4\u6642\u9593", "WSDT"};
-        String ChST[] = new String[] {"\u67e5\u83ab\u6d1b\u6a19\u6e96\u6642\u9593", "ChST",
-                                     "\u67e5\u83ab\u6d1b\u65e5\u5149\u7bc0\u7d04\u6642\u9593", "ChDT"};
-        String VICTORIA[] = new String[] {"\u6771\u90e8\u6a19\u6e96\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST",
-                                          "\u6771\u90e8\u590f\u4ee4\u6642\u9593 (\u7dad\u591a\u5229\u4e9e\u90a6)", "EST"};
-        String UTC[] = new String[] {"\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC",
-                                     "\u5354\u8abf\u4e16\u754c\u6642\u9593", "UTC"};
-        String UZT[] = new String[] {"\u70cf\u8332\u5225\u514b\u65af\u5766\u6642\u9593", "UZT",
-                                     "\u70cf\u8332\u5225\u514b\u65af\u5766\u590f\u4ee4\u6642\u9593", "UZST"};
+        String YAKT[] = new String[] {"\u4e9e\u5eab\u6b21\u514b\u6642\u9593", "YAKT",
+                                      "\u4e9e\u5eab\u6b21\u514b\u590f\u4ee4\u6642\u9593", "YAKST"};
 
         return new Object[][] {
             {"America/Los_Angeles", PST},
@@ -287,7 +291,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"Africa/Porto-Novo", WAT},
             {"Africa/Sao_Tome", GMT},
             {"Africa/Timbuktu", GMT},
-            {"Africa/Tripoli", EET},
+            {"Africa/Tripoli", CET},
             {"Africa/Tunis", CET},
             {"Africa/Windhoek", WAT},
             {"America/Adak", HAST},
@@ -533,6 +537,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"Asia/Kashgar", CTT},
             {"Asia/Kathmandu", NPT},
             {"Asia/Katmandu", NPT},
+            {"Asia/Khandyga", YAKT},
             {"Asia/Kolkata", IST},
             {"Asia/Krasnoyarsk", new String[] {"\u514b\u62c9\u65af\u8afe\u4e9e\u723e\u65af\u514b\u6642\u9593", "KRAT",
                                                "\u514b\u62c9\u65af\u8afe\u4e9e\u723e\u65af\u514b\u590f\u4ee4\u6642\u9593", "KRAST"}},
@@ -582,11 +587,10 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"Asia/Ulaanbaatar", ULAT},
             {"Asia/Ulan_Bator", ULAT},
             {"Asia/Urumqi", CTT},
+            {"Asia/Ust-Nera", VLAT},
             {"Asia/Vientiane", ICT},
-            {"Asia/Vladivostok", new String[] {"\u6d77\u53c3\u5d34\u6642\u9593", "VLAT",
-                                               "\u6d77\u53c3\u5d34\u590f\u4ee4\u6642\u9593", "VLAST"}},
-            {"Asia/Yakutsk", new String[] {"\u4e9e\u5eab\u6b21\u514b\u6642\u9593", "YAKT",
-                                           "\u4e9e\u5eab\u6b21\u514b\u590f\u4ee4\u6642\u9593", "YAKST"}},
+            {"Asia/Vladivostok", VLAT},
+            {"Asia/Yakutsk", YAKT},
             {"Asia/Yekaterinburg", new String[] {"Yekaterinburg \u6642\u9593", "YEKT",
                                                  "Yekaterinburg \u590f\u4ee4\u6642\u9593", "YEKST"}},
             {"Asia/Yerevan", ARMT},
@@ -670,6 +674,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"Europe/Bratislava", CET},
             {"Europe/Brussels", CET},
             {"Europe/Budapest", CET},
+            {"Europe/Busingen", CET},
             {"Europe/Chisinau", EET},
             {"Europe/Copenhagen", CET},
             {"Europe/Dublin", DUBLIN},
@@ -749,7 +754,7 @@ public final class TimeZoneNames_zh_TW extends TimeZoneNamesBundle {
             {"Jamaica", EST},
             {"Japan", JST},
             {"Kwajalein", MHT},
-            {"Libya", EET},
+            {"Libya", CET},
             {"MET", new String[] {"\u4e2d\u6b50\u6642\u9593", "MET",
                                   "\u4e2d\u6b50\u590f\u4ee4\u6642\u9593", "MEST"}},
             {"Mexico/BajaNorte", PST},

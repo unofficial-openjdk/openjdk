@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import sun.misc.HexDumpEncoder;
+import sun.security.action.GetIntegerAction;
 import sun.security.x509.*;
 import sun.security.util.*;
 
@@ -148,9 +149,31 @@ public final class OCSPResponse {
     private final ResponseStatus responseStatus;
     private final Map<CertId, SingleResponse> singleResponseMap;
 
-    // Maximum clock skew in milliseconds (15 minutes) allowed when checking
-    // validity of OCSP responses
-    private static final long MAX_CLOCK_SKEW = 900000;
+    // Default maximum clock skew in milliseconds (15 minutes)
+    // allowed when checking validity of OCSP responses
+    private static final int DEFAULT_MAX_CLOCK_SKEW = 900000;
+
+    /**
+     * Integer value indicating the maximum allowable clock skew, in seconds,
+     * to be used for the OCSP check.
+     */
+    private static final int MAX_CLOCK_SKEW = initializeClockSkew();
+
+    /**
+     * Initialize the maximum allowable clock skew by getting the OCSP
+     * clock skew system property. If the property has not been set, or if its
+     * value is negative, set the skew to the default.
+     */
+    private static int initializeClockSkew() {
+        Integer tmp = java.security.AccessController.doPrivileged(
+                new GetIntegerAction("com.sun.security.ocsp.clockSkew"));
+        if (tmp == null || tmp < 0) {
+            return DEFAULT_MAX_CLOCK_SKEW;
+        }
+        // Convert to milliseconds, as the system property will be
+        // specified in seconds
+        return tmp * 1000;
+    }
 
     // an array of all of the CRLReasons (used in SingleResponse)
     private static CRLReason[] values = CRLReason.values();

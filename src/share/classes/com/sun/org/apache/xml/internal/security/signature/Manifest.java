@@ -42,6 +42,7 @@ import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
 import com.sun.org.apache.xml.internal.security.utils.XMLUtils;
 import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolver;
 import com.sun.org.apache.xml.internal.security.utils.resolver.ResourceResolverSpi;
+import org.w3c.dom.Attr;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -100,6 +101,11 @@ public class Manifest extends SignatureElementProxy {
 
       super(element, BaseURI);
 
+      Attr attr = element.getAttributeNodeNS(null, "Id");
+      if (attr != null) {
+          element.setIdAttributeNode(attr, true);
+      }
+
       // check out Reference children
       this._referencesEl = XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
          Constants._TAG_REFERENCE);
@@ -120,6 +126,11 @@ public class Manifest extends SignatureElementProxy {
       this._references = new ArrayList(le);
 
       for (int i = 0; i < le; i++) {
+         Element refElem = this._referencesEl[i];
+         Attr refAttr = refElem.getAttributeNodeNS(null, "Id");
+         if (refAttr != null) {
+             refElem.setIdAttributeNode(refAttr, true);
+         }
          this._references.add(null);
       }
    }
@@ -220,8 +231,7 @@ public class Manifest extends SignatureElementProxy {
    public void setId(String Id) {
 
       if (Id != null) {
-         this._constructionElement.setAttributeNS(null, Constants._ATT_ID, Id);
-         IdResolver.registerElementById(this._constructionElement, Id);
+          setLocalIdAttribute(Constants._ATT_ID, Id);
       }
    }
 

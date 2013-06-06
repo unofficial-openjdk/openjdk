@@ -275,10 +275,11 @@ import static java.lang.invoke.MethodHandleStatics.*;
 
     // private flags, not part of RECOGNIZED_MODIFIERS:
     static final int
-            IS_METHOD      = MN_IS_METHOD,      // method (not constructor)
-            IS_CONSTRUCTOR = MN_IS_CONSTRUCTOR, // constructor
-            IS_FIELD       = MN_IS_FIELD,       // field
-            IS_TYPE        = MN_IS_TYPE;        // nested type
+            IS_METHOD           = MN_IS_METHOD,        // method (not constructor)
+            IS_CONSTRUCTOR      = MN_IS_CONSTRUCTOR,   // constructor
+            IS_FIELD            = MN_IS_FIELD,         // field
+            IS_TYPE             = MN_IS_TYPE,          // nested type
+            IS_CALLER_SENSITIVE = MN_CALLER_SENSITIVE; // @CallerSensitive annotation
     static final int  // for MethodHandleNatives.getMembers
             SEARCH_SUPERCLASSES = MN_SEARCH_SUPERCLASSES,
             SEARCH_INTERFACES   = MN_SEARCH_INTERFACES;
@@ -316,6 +317,10 @@ import static java.lang.invoke.MethodHandleStatics.*;
     /** Utility method to query whether this member is neither public, private, nor protected. */
     public boolean isPackage() {
         return !testAnyFlags(ALL_ACCESS);
+    }
+    /** Utility method to query whether this member is annotated with @CallerSensitive. */
+    public boolean isCallerSensitive() {
+        return testAllFlags(IS_CALLER_SENSITIVE);
     }
 
     /** Initialize a query.   It is not resolved. */

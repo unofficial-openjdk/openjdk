@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1235,3 +1235,29 @@ JNF_COCOA_EXIT(env);
 
     return ptr_to_jlong(newView);
 }
+
+/*
+ * Class:     sun_lwawt_macosx_CPlatformView
+ * Method:    nativeIsViewUnderMouse
+ * Signature: (J)Z;
+ */
+
+JNIEXPORT jboolean JNICALL Java_sun_lwawt_macosx_CPlatformView_nativeIsViewUnderMouse
+(JNIEnv *env, jclass clazz, jlong viewPtr)
+{
+    __block jboolean underMouse = JNI_FALSE;
+
+JNF_COCOA_ENTER(env);
+
+    NSView *nsView = OBJC(viewPtr);
+   [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
+       NSPoint ptWindowCoords = [[nsView window] mouseLocationOutsideOfEventStream];
+       NSPoint ptViewCoords = [nsView convertPoint:ptWindowCoords fromView:nil];
+       underMouse = [nsView hitTest:ptViewCoords] != nil;
+    }];
+
+JNF_COCOA_EXIT(env);
+
+    return underMouse;
+}
+

@@ -210,6 +210,7 @@ public class JConsoleResources extends ListResourceBundle {
         {"Impact","Impact"},
         {"Info","Info"},
         {"INFO","INFO"},
+        {"Insecure", "Insecure connection"},
         {"Invalid plugin path", "Warning: Invalid plugin path: {0}"},
         {"Invalid URL", "Invalid URL: {0}"},
         {"Is","Is"},
@@ -415,6 +416,10 @@ public class JConsoleResources extends ListResourceBundle {
         {"connectionFailed1","Connection Failed: Retry?"},
         {"connectionFailed2","The connection to {0} did not succeed.<br>" +
                              "Would you like to try again?"},
+        {"connectionFailedSSL1","Secure connection failed. Retry insecurely?"},
+        {"connectionFailedSSL2","The connection to {0} could not be made using SSL.<br>" +
+                             "Would you like to try without SSL?<br>" +
+                             "(Username and password will be sent in plain text.)"},
         {"connectionLost1","Connection Lost: Reconnect?"},
         {"connectionLost2","The connection to {0} has been lost " +
                            "because the remote process has been terminated.<br>" +
