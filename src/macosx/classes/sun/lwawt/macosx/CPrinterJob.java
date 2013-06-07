@@ -209,7 +209,6 @@ public class CPrinterJob extends RasterPrinterJob {
          * the end of the document. Note that firstPage
          * and lastPage are 0 based page indices.
          */
-        int numPages = mDocument.getNumberOfPages();
 
         int firstPage = getFirstPage();
         int lastPage = getLastPage();
@@ -226,38 +225,49 @@ public class CPrinterJob extends RasterPrinterJob {
                 userCancelled = false;
             }
 
-            if (EventQueue.isDispatchThread()) {
-                // This is an AWT EventQueue, and this print rendering loop needs to block it.
+            //Add support for PageRange
+            PageRanges pr = (attributes == null) ?  null
+                                                 : (PageRanges)attributes.get(PageRanges.class);
+            int[][] prMembers = (pr == null) ? new int[0][0] : pr.getMembers();
+            int loopi = 0;
+            do {
+                if (EventQueue.isDispatchThread()) {
+                    // This is an AWT EventQueue, and this print rendering loop needs to block it.
 
-                onEventThread = true;
+                    onEventThread = true;
 
-                try {
-                    // Fire off the print rendering loop on the AppKit thread, and don't have
-                    //  it wait and block this thread.
-                    if (printLoop(false, firstPage, lastPage)) {
-                        // Fire off the EventConditional that will what until the condition is met,
-                        //  but will still process AWTEvent's as they occur.
-                        new EventDispatchAccess() {
-                            public boolean evaluate() {
-                                return performingPrinting;
-                            }
-                        }.pumpEventsAndWait();
+                    try {
+                        // Fire off the print rendering loop on the AppKit thread, and don't have
+                        //  it wait and block this thread.
+                        if (printLoop(false, firstPage, lastPage)) {
+                            // Fire off the EventConditional that will what until the condition is met,
+                            //  but will still process AWTEvent's as they occur.
+                            new EventDispatchAccess() {
+                                public boolean evaluate() {
+                                    return performingPrinting;
+                                }
+                            }.pumpEventsAndWait();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } else {
-                // Fire off the print rendering loop on the AppKit, and block this thread
-                //  until it is done.
-                // But don't actually block... we need to come back here!
-                onEventThread = false;
+                } else {
+                    // Fire off the print rendering loop on the AppKit, and block this thread
+                    //  until it is done.
+                    // But don't actually block... we need to come back here!
+                    onEventThread = false;
 
-                try {
-                    printLoop(true, firstPage, lastPage);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                    try {
+                        printLoop(true, firstPage, lastPage);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
+                if (++loopi < prMembers.length) {
+                    firstPage = prMembers[loopi][0]-1;
+                    lastPage = prMembers[loopi][1] -1;
+                }
+              }  while (loopi < prMembers.length);
         } finally {
             synchronized (this) {
                 // NOTE: Native code shouldn't allow exceptions out while
