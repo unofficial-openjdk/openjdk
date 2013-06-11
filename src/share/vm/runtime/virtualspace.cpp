@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -746,11 +746,13 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
            lower_high() + lower_needs <= lower_high_boundary(),
            "must not expand beyond region");
     if (!os::commit_memory(lower_high(), lower_needs, _executable)) {
-      debug_only(warning("os::commit_memory failed"));
+      debug_only(warning("INFO: os::commit_memory(" PTR_FORMAT
+                         ", lower_needs=" SIZE_FORMAT ", %d) failed",
+                         lower_high(), lower_needs, _executable);)
       return false;
     } else {
       _lower_high += lower_needs;
-     }
+    }
   }
   if (middle_needs > 0) {
     assert(lower_high_boundary() <= middle_high() &&
@@ -758,7 +760,10 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
            "must not expand beyond region");
     if (!os::commit_memory(middle_high(), middle_needs, middle_alignment(),
                            _executable)) {
-      debug_only(warning("os::commit_memory failed"));
+      debug_only(warning("INFO: os::commit_memory(" PTR_FORMAT
+                         ", middle_needs=" SIZE_FORMAT ", " SIZE_FORMAT
+                         ", %d) failed", middle_high(), middle_needs,
+                         middle_alignment(), _executable);)
       return false;
     }
     _middle_high += middle_needs;
@@ -768,7 +773,9 @@ bool VirtualSpace::expand_by(size_t bytes, bool pre_touch) {
            upper_high() + upper_needs <= upper_high_boundary(),
            "must not expand beyond region");
     if (!os::commit_memory(upper_high(), upper_needs, _executable)) {
-      debug_only(warning("os::commit_memory failed"));
+      debug_only(warning("INFO: os::commit_memory(" PTR_FORMAT
+                         ", upper_needs=" SIZE_FORMAT ", %d) failed",
+                         upper_high(), upper_needs, _executable);)
       return false;
     } else {
       _upper_high += upper_needs;

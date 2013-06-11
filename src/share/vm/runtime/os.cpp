@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1443,6 +1443,18 @@ bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
     MemTracker::record_virtual_memory_commit((address)addr, size, CALLER_PC);
   }
   return res;
+}
+
+void os::commit_memory_or_exit(char* addr, size_t bytes, bool executable,
+                               const char* mesg) {
+  pd_commit_memory_or_exit(addr, bytes, executable, mesg);
+  MemTracker::record_virtual_memory_commit((address)addr, bytes, CALLER_PC);
+}
+
+void os::commit_memory_or_exit(char* addr, size_t size, size_t alignment_hint,
+                               bool executable, const char* mesg) {
+  os::pd_commit_memory_or_exit(addr, size, alignment_hint, executable, mesg);
+  MemTracker::record_virtual_memory_commit((address)addr, size, CALLER_PC);
 }
 
 bool os::uncommit_memory(char* addr, size_t bytes) {

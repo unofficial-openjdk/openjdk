@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,10 +113,8 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   jbyte* guard_card = &_byte_map[_guard_index];
   uintptr_t guard_page = align_size_down((uintptr_t)guard_card, _page_size);
   _guard_region = MemRegion((HeapWord*)guard_page, _page_size);
-  if (!os::commit_memory((char*)guard_page, _page_size, _page_size)) {
-    // Do better than this for Merlin
-    vm_exit_out_of_memory(_page_size, "card table last card");
-  }
+  os::commit_memory_or_exit((char*)guard_page, _page_size, _page_size,
+                            !ExecMem, "card table last card");
 
   *guard_card = last_card;
 
@@ -288,12 +286,9 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
         MemRegion(cur_committed.end(), new_end_for_commit);
 
       assert(!new_committed.is_empty(), "Region should not be empty here");
-      if (!os::commit_memory((char*)new_committed.start(),
-                             new_committed.byte_size(), _page_size)) {
-        // Do better than this for Merlin
-        vm_exit_out_of_memory(new_committed.byte_size(),
-                "card table expansion");
-      }
+      os::commit_memory_or_exit((char*)new_committed.start(),
+                                new_committed.byte_size(), _page_size,
+                                !ExecMem, "card table expansion");
     // Use new_end_aligned (as opposed to new_end_for_commit) because
     // the cur_committed region may include the guard region.
     } else if (new_end_aligned < cur_committed.end()) {

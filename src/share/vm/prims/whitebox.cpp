@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,7 +109,7 @@ WB_END
 
 
 WB_ENTRY(void, WB_NMTCommitMemory(JNIEnv* env, jobject o, jlong addr, jlong size))
-  os::commit_memory((char *)(uintptr_t)addr, size);
+  os::commit_memory((char *)(uintptr_t)addr, size, !ExecMem);
   MemTracker::record_virtual_memory_type((address)(uintptr_t)addr, mtTest);
 WB_END
 
