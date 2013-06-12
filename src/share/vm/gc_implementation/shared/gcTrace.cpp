@@ -31,6 +31,7 @@
 #include "memory/heapInspection.hpp"
 #include "memory/iterator.hpp"
 #include "memory/referenceProcessorStats.hpp"
+#include "runtime/os.hpp"
 #include "utilities/globalDefinitions.hpp"
 
 #ifndef SERIALGC
@@ -96,17 +97,19 @@ class ObjectCountEventSenderClosure : public KlassInfoClosure {
   const GCId _gc_id;
   const double _size_threshold_percentage;
   const size_t _total_size_in_words;
+  const jlong _timestamp;
 
  public:
-  ObjectCountEventSenderClosure(GCId gc_id, size_t total_size_in_words) :
+  ObjectCountEventSenderClosure(GCId gc_id, size_t total_size_in_words, jlong timestamp) :
     _gc_id(gc_id),
     _size_threshold_percentage(ObjectCountCutOffPercent / 100),
-    _total_size_in_words(total_size_in_words)
+    _total_size_in_words(total_size_in_words),
+    _timestamp(timestamp)
   {}
 
   virtual void do_cinfo(KlassInfoEntry* entry) {
     if (should_send_event(entry)) {
-      ObjectCountEventSender::send(entry, _gc_id);
+      ObjectCountEventSender::send(entry, _gc_id, _timestamp);
     }
   }
 
@@ -151,7 +154,8 @@ void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
       ObjectCountFilter object_filter(is_alive_cl);
       HeapInspection::populate_table(&cit, false, &object_filter);
 
-      ObjectCountEventSenderClosure event_sender(_shared_gc_info.id(), cit.size_of_instances_in_words());
+      jlong timestamp = os::elapsed_counter();
+      ObjectCountEventSenderClosure event_sender(_shared_gc_info.id(), cit.size_of_instances_in_words(), timestamp);
       cit.iterate(&event_sender);
     }
   }
