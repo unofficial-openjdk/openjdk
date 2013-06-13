@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -770,8 +770,7 @@ static char* mmap_create_shared(size_t size) {
   (void)::memset((void*) mapAddress, 0, size);
 
   // it does not go through os api, the operation has to record from here
-  MemTracker::record_virtual_memory_reserve((address)mapAddress, size, CURRENT_PC);
-  MemTracker::record_virtual_memory_type((address)mapAddress, mtInternal);
+  MemTracker::record_virtual_memory_reserve((address)mapAddress, size, mtInternal, CURRENT_PC);
 
   return mapAddress;
 }
@@ -933,8 +932,7 @@ static void mmap_attach_shared(const char* user, int vmid, PerfMemory::PerfMemor
   }
 
   // it does not go through os api, the operation has to record from here
-  MemTracker::record_virtual_memory_reserve((address)mapAddress, size, CURRENT_PC);
-  MemTracker::record_virtual_memory_type((address)mapAddress, mtInternal);
+  MemTracker::record_virtual_memory_reserve((address)mapAddress, size, mtInternal, CURRENT_PC);
 
   *addr = mapAddress;
   *sizep = size;

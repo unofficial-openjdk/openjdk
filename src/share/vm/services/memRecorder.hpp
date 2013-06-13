@@ -220,7 +220,7 @@ class MemRecorder : public CHeapObj<mtNMT|otNMTRecorder> {
   ~MemRecorder();
 
   // record a memory operation
-  bool record(address addr, MEMFLAGS flags, size_t size, address caller_pc = 0);
+  bool record(address addr, MEMFLAGS flags, size_t size, jint seq, address caller_pc = 0);
 
   // linked list support
   inline void set_next(MemRecorder* rec) {
