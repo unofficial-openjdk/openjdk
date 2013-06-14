@@ -36,7 +36,41 @@ class Net {                                             // package-private
     private Net() { }
 
 
+    // set to true if exclusive binding is on for Windows
+    private static final boolean exclusiveBind;
+
+    static {
+        int availLevel = isExclusiveBindAvailable();
+        if (availLevel >= 0) {
+            String exclBindProp =
+                java.security.AccessController.doPrivileged(
+                    new java.security.PrivilegedAction<String>() {
+                        public String run() {
+                            return System.getProperty(
+                                    "sun.net.useExclusiveBind");
+                        }
+                    });
+            if (exclBindProp != null) {
+                exclusiveBind = exclBindProp.length() == 0 ?
+                        true : Boolean.parseBoolean(exclBindProp);
+            } else if (availLevel == 1) {
+                exclusiveBind = true;
+            } else {
+                exclusiveBind = false;
+            }
+        } else {
+            exclusiveBind = false;
+        }
+    }
+
     // -- Miscellaneous utilities --
+
+    /**
+     * Returns true if exclusive binding is on
+     */
+    static boolean useExclusiveBind() {
+        return exclusiveBind;
+    }
 
     static InetSocketAddress checkAddress(SocketAddress sa) {
         if (sa == null)
@@ -119,10 +153,21 @@ class Net {                                             // package-private
         return IOUtil.newFD(socket0(stream, true));
     }
 
+    /*
+     * Returns 1 for Windows versions that support exclusive binding by default, 0
+     * for those that do not, and -1 for Solaris/Linux/Mac OS
+     */
+    private static native int isExclusiveBindAvailable();
+
     // Due to oddities SO_REUSEADDR on windows reuse is ignored
     private static native int socket0(boolean stream, boolean reuse);
 
-    static native void bind(FileDescriptor fd, InetAddress addr, int port)
+    static void bind(FileDescriptor fd, InetAddress addr, int port)
+        throws IOException {
+        bind0(fd, exclusiveBind, addr, port);
+    }
+
+    private static native void bind0(FileDescriptor fd, boolean useExclBind, InetAddress addr, int port)
         throws IOException;
 
     static native int connect(FileDescriptor fd,

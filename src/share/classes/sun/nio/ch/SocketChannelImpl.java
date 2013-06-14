@@ -423,6 +423,11 @@ class SocketChannelImpl
                             {
                                 Net.setIntOption(fd, opt, arg);
                             }
+                            boolean getIsBoundCondition()
+                            {
+                                // always return true
+                                return true;
+                            }
                         };
                 options = new SocketOptsImpl.IP.TCP(d);
             }

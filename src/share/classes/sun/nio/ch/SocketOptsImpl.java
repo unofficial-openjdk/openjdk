@@ -35,10 +35,17 @@ import java.nio.channels.*;
 class SocketOptsImpl
     implements SocketOpts
 {
+    // set true when socket is bound and SO_REUSEADDRESS is emulated
+    private boolean reuseAddressEmulated;
+
+    // set true/false when socket is already bound and SO_REUSEADDR is emulated
+    private boolean isReuseAddress;
 
     static abstract class Dispatcher {
         abstract int getInt(int opt) throws IOException;
         abstract void setInt(int opt, int arg) throws IOException;
+        // Only used meaningfully by DatagramChannelImpl
+        abstract boolean getIsBoundCondition();
         // Others that pass addresses, etc., will come later
     }
 
@@ -167,11 +174,21 @@ class SocketOptsImpl
     // SO_REUSEADDR
 
     public boolean reuseAddress() throws IOException {
+        if (reuseAddressEmulated) {
+            return isReuseAddress;
+        }
+        // no special handling
         return getBoolean(SocketOptions.SO_REUSEADDR);
     }
 
     public SocketOpts reuseAddress(boolean b) throws IOException {
-        setBoolean(SocketOptions.SO_REUSEADDR, b);
+        if ( Net.useExclusiveBind() && d.getIsBoundCondition() ) {
+            reuseAddressEmulated = true;
+            this.isReuseAddress = b;
+        } else {
+            // no special handling
+            setBoolean(SocketOptions.SO_REUSEADDR, b);
+        }
         return this;
     }
 

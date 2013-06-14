@@ -473,6 +473,10 @@ class DatagramChannelImpl
                             {
                                 Net.setIntOption(fd, opt, arg);
                             }
+                            boolean getIsBoundCondition()
+                            {
+                                return localAddress != null;
+                            }
                         };
                 options = new SocketOptsImpl.IP(d);
             }

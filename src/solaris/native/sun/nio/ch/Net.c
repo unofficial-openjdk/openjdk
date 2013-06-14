@@ -55,6 +55,11 @@ Java_sun_nio_ch_Net_initIDs(JNIEnv *env, jclass clazz)
     /* Here because Windows native code does need to init IDs */
 }
 
+JNIEXPORT jint JNICALL
+Java_sun_nio_ch_Net_isExclusiveBindAvailable(JNIEnv *env, jclass clazz) {
+    return -1;
+}
+
 JNIEXPORT int JNICALL
 Java_sun_nio_ch_Net_socket0(JNIEnv *env, jclass cl, jboolean stream,
                             jboolean reuse)
@@ -84,8 +89,8 @@ Java_sun_nio_ch_Net_socket0(JNIEnv *env, jclass cl, jboolean stream,
 }
 
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_Net_bind(JNIEnv *env, jclass clazz, /* ## Needs rest of PSI gunk */
-                         jobject fdo, jobject ia, int port)
+Java_sun_nio_ch_Net_bind0(JNIEnv *env, jclass clazz, /* ## Needs rest of PSI gunk */
+                         jobject fdo, jboolean exclBind, jobject ia, int port)
 {
     SOCKADDR sa;
     int sa_len = SOCKADDR_LEN;

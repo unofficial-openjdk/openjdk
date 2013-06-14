@@ -72,9 +72,20 @@ Java_sun_nio_ch_Net_socket0(JNIEnv *env, jclass cl, jboolean stream,
     return (jint)s;
 }
 
+JNIEXPORT jint JNICALL
+Java_sun_nio_ch_Net_isExclusiveBindAvailable(JNIEnv *env, jclass clazz) {
+    OSVERSIONINFO ver;
+    int version;
+    ver.dwOSVersionInfoSize = sizeof(ver);
+    GetVersionEx(&ver);
+    version = ver.dwMajorVersion * 10 + ver.dwMinorVersion;
+    //if os <= xp exclusive binding is off by default
+    return version >= 60 ? 1 : 0;
+}
+
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_Net_bind(JNIEnv *env, jclass clazz,
-                         jobject fdo, jobject iao, jint port)
+Java_sun_nio_ch_Net_bind0(JNIEnv *env, jclass clazz,
+                         jobject fdo, jboolean exclBind, jobject iao, jint port)
 {
     SOCKETADDRESS sa;
     int rv;
@@ -84,7 +95,7 @@ Java_sun_nio_ch_Net_bind(JNIEnv *env, jclass clazz,
       return;
     }
 
-    rv = NET_Bind(fdval(env, fdo), (struct sockaddr *)&sa, sa_len);
+    rv = NET_WinBind(fdval(env, fdo), (struct sockaddr *)&sa, sa_len, isExclBind);
     if (rv == SOCKET_ERROR)
         NET_ThrowNew(env, WSAGetLastError(), "bind");
 }
@@ -151,7 +162,6 @@ Java_sun_nio_ch_Net_localInetAddress(JNIEnv *env, jclass clazz, jobject fdo)
 
     return iao;
 }
-
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_Net_getIntOption0(JNIEnv *env, jclass clazz,
