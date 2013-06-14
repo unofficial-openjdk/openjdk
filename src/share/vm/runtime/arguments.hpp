@@ -311,6 +311,8 @@ class Arguments : AllStatic {
   // GC ergonomics
   static void set_ergonomics_flags();
   static void set_shared_spaces_flags();
+  // Setup HeapBaseMinAddress
+  static void set_heap_base_min_address();
   // Setup heap size
   static void set_heap_size();
   // Based on automatic selection criteria, should the

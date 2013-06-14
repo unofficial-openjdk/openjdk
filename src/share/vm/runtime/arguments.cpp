@@ -1500,6 +1500,15 @@ void Arguments::set_g1_gc_flags() {
   }
 }
 
+void Arguments::set_heap_base_min_address() {
+  if (FLAG_IS_DEFAULT(HeapBaseMinAddress) && UseG1GC && HeapBaseMinAddress < 1*G) {
+    // By default HeapBaseMinAddress is 2G on all platforms except Solaris x86.
+    // G1 currently needs a lot of C-heap, so on Solaris we have to give G1
+    // some extra space for the C-heap compared to other collectors.
+    FLAG_SET_ERGO(uintx, HeapBaseMinAddress, 1*G);
+  }
+}
+
 void Arguments::set_heap_size() {
   if (!FLAG_IS_DEFAULT(DefaultMaxRAMFraction)) {
     // Deprecated flag
@@ -3149,6 +3158,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
         "Incompatible compilation policy selected", NULL);
     }
   }
+  set_heap_base_min_address();
   // Set heap size based on available physical memory
   set_heap_size();
   // Set per-collector flags
