@@ -62,6 +62,7 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
     private static ArrayList<TabInfo> tabInfos = new ArrayList<TabInfo>();
 
     private boolean wasConnected = false;
+    private boolean shouldUseSSL = true;
 
     // The everConnected flag keeps track of whether the window can be
     // closed if the user clicks Cancel after a failed connection attempt.
@@ -295,7 +296,7 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
         } else {
             new Thread("VMPanel.connect") {
                 public void run() {
-                    proxyClient.connect();
+                    proxyClient.connect(shouldUseSSL);
                 }
             }.start();
         }
@@ -472,6 +473,7 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
 
         final String connectStr   = getText("Connect");
         final String reconnectStr = getText("Reconnect");
+        final String insecureStr = getText("Insecure");
         final String cancelStr    = getText("Cancel");
 
         String msgTitle, msgExplanation, buttonStr;
@@ -481,6 +483,10 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
             msgTitle = getText("connectionLost1");
             msgExplanation = getText("connectionLost2", getConnectionName());
             buttonStr = reconnectStr;
+        } else if (shouldUseSSL) {
+            msgTitle = getText("connectionFailedSSL1");
+            msgExplanation = getText("connectionFailedSSL2", getConnectionName());
+            buttonStr = insecureStr;
         } else {
             msgTitle = getText("connectionFailed1");
             msgExplanation = getText("connectionFailed2", getConnectionName());
@@ -502,6 +508,9 @@ public class VMPanel extends JTabbedPane implements PropertyChangeListener {
                     Object value = event.getNewValue();
 
                     if (value == reconnectStr || value == connectStr) {
+                        connect();
+                    } else if (value == insecureStr) {
+                        shouldUseSSL = false;
                         connect();
                     } else if (!everConnected) {
                         try {
