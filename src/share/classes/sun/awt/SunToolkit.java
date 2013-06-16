@@ -293,6 +293,10 @@ public abstract class SunToolkit extends Toolkit
      */
     public static AppContext createNewAppContext() {
         ThreadGroup threadGroup = Thread.currentThread().getThreadGroup();
+        return createNewAppContext(threadGroup);
+    }
+
+    static final AppContext createNewAppContext(ThreadGroup threadGroup) {
         EventQueue eventQueue;
         String eqName = System.getProperty("AWT.EventQueueClass",
                                            "java.awt.EventQueue");

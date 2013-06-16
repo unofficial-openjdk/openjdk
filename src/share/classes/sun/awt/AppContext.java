@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.HashSet;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The AppContext is a table referenced by ThreadGroup which stores
@@ -147,8 +148,9 @@ public final class AppContext {
     }
 
     /* The main "system" AppContext, used by everything not otherwise
-       contained in another AppContext.
-     */
+       contained in another AppContext. It is implicitly created for
+       standalone apps only (i.e. not applets)
+    */
     private static AppContext mainAppContext = null;
 
     /*
@@ -181,27 +183,6 @@ public final class AppContext {
     }
 
 
-    static {
-        // On the main Thread, we get the ThreadGroup, make a corresponding
-        // AppContext, and instantiate the Java EventQueue.  This way, legacy
-        // code is unaffected by the move to multiple AppContext ability.
-        AccessController.doPrivileged(new PrivilegedAction() {
-          public Object run() {
-            ThreadGroup currentThreadGroup =
-                                Thread.currentThread().getThreadGroup();
-            ThreadGroup parentThreadGroup = currentThreadGroup.getParent();
-            while (parentThreadGroup != null) {
-                // Find the root ThreadGroup to construct our main AppContext
-                currentThreadGroup = parentThreadGroup;
-                parentThreadGroup = currentThreadGroup.getParent();
-            }
-            mainAppContext = new AppContext(currentThreadGroup);
-            numAppContexts = 1;
-            return mainAppContext;
-          }
-        });
-    }
-
     /*
      * The total number of AppContexts, system-wide.  This number is
      * incremented at the beginning of the constructor, and decremented
@@ -209,7 +190,7 @@ public final class AppContext {
      * number is 1.  If so, it returns the sole AppContext without
      * checking Thread.currentThread().
      */
-    private static int numAppContexts;
+    private static final AtomicInteger numAppContexts = new AtomicInteger(0);
 
     /*
      * The context ClassLoader that was used to create this AppContext.
@@ -230,7 +211,7 @@ public final class AppContext {
      * @since   1.2
      */
     AppContext(ThreadGroup threadGroup) {
-        numAppContexts++;
+        numAppContexts.incrementAndGet();
 
         this.threadGroup = threadGroup;
         threadGroup2appContext.put(threadGroup, this);
@@ -245,6 +226,27 @@ public final class AppContext {
 
     private static MostRecentThreadAppContext mostRecentThreadAppContext = null;
 
+    private final static void initMainAppContext() {
+        // On the main Thread, we get the ThreadGroup, make a corresponding
+        // AppContext, and instantiate the Java EventQueue.  This way, legacy
+        // code is unaffected by the move to multiple AppContext ability.
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            public Void run() {
+                ThreadGroup currentThreadGroup =
+                        Thread.currentThread().getThreadGroup();
+                ThreadGroup parentThreadGroup = currentThreadGroup.getParent();
+                while (parentThreadGroup != null) {
+                    // Find the root ThreadGroup to construct our main AppContext
+                    currentThreadGroup = parentThreadGroup;
+                    parentThreadGroup = currentThreadGroup.getParent();
+                }
+
+                mainAppContext = SunToolkit.createNewAppContext(currentThreadGroup);
+                return null;
+            }
+        });
+    }
+
     /**
      * Returns the appropriate AppContext for the caller,
      * as determined by its ThreadGroup.  If the main "system" AppContext
@@ -257,8 +259,10 @@ public final class AppContext {
      * @since   1.2
      */
     public final static AppContext getAppContext() {
-        if (numAppContexts == 1)   // If there's only one system-wide,
-            return mainAppContext; // return the main system AppContext.
+        // we are standalone app, return the main app context
+        if (numAppContexts.get() == 1 && mainAppContext != null) {
+            return mainAppContext;
+        }
 
         final Thread currentThread = Thread.currentThread();
 
@@ -284,16 +288,25 @@ public final class AppContext {
             // when new AppContext objects are created.
             ThreadGroup currentThreadGroup = currentThread.getThreadGroup();
             ThreadGroup threadGroup = currentThreadGroup;
+
+                    // Special case: we implicitly create the main app context
+                    // if no contexts have been created yet. This covers standalone apps
+                    // and excludes applets because by the time applet starts
+                    // a number of contexts have already been created by the plugin.
+                    if (numAppContexts.get() == 0) {
+                        // This check is not necessary, its purpose is to help
+                        // Plugin devs to catch all the cases of main AC creation.
+                        if (System.getProperty("javaplugin.version") == null &&
+                                System.getProperty("javawebstart.version") == null) {
+                            initMainAppContext();
+                        }
+                    }
+
             AppContext context = threadGroup2appContext.get(threadGroup);
             while (context == null) {
                 threadGroup = threadGroup.getParent();
                 if (threadGroup == null) {
-                    // If we get here, we're running under a ThreadGroup that
-                    // has no AppContext associated with it.  This should never
-                    // happen, because createNewContext() should be used by the
-                    // toolkit to create the ThreadGroup that everything runs
-                    // under.
-                    throw new RuntimeException("Invalid ThreadGroup");
+		    return null;
                 }
                 context = threadGroup2appContext.get(threadGroup);
             }
@@ -303,10 +316,8 @@ public final class AppContext {
             for (ThreadGroup tg = currentThreadGroup; tg != threadGroup; tg = tg.getParent()) {
                 threadGroup2appContext.put(tg, context);
             }
+
             // Now we're done, so we cache the latest key/value pair.
-            // (we do this before checking with any AWTSecurityManager, so if
-            // this Thread equates with the main AppContext in the cache, it
-            // still will)
             mostRecentThreadAppContext =
                 new MostRecentThreadAppContext(currentThread, context);
 
@@ -315,17 +326,17 @@ public final class AppContext {
          });
         }
 
-        if (appContext == mainAppContext)  {
-            // Before we return the main "system" AppContext, check to
-            // see if there's an AWTSecurityManager installed.  If so,
-            // allow it to choose the AppContext to return.
-            AppContext secAppContext = getExecutionAppContext();
-            if (secAppContext != null) {
-               appContext = secAppContext; // Return what we're told
-            }
-        }
-
         return appContext;
+    }
+
+    /**
+     * Returns true if the specified AppContext is the main AppContext.
+     *
+     * @param   ctx the context to compare with the main context
+     * @return  true if the specified AppContext is the main AppContext.
+     */
+    public final static boolean isMainContext(AppContext ctx) {
+        return (ctx != null && ctx == mainAppContext);
     }
 
     private final static AppContext getExecutionAppContext() {
@@ -500,7 +511,7 @@ public final class AppContext {
             this.table.clear(); // Clear out the Hashtable to ease garbage collection
         }
 
-        numAppContexts--;
+        numAppContexts.decrementAndGet();
 
         mostRecentKeyValue = null;
     }
@@ -790,7 +801,7 @@ public final class AppContext {
                 return getAppContext().isDisposed();
             }
             public boolean isMainAppContext() {
-                return (numAppContexts == 1);
+                return (numAppContexts.get() == 1 && mainAppContext != null);
             }
             public Object getContext() {
                 return getAppContext();
