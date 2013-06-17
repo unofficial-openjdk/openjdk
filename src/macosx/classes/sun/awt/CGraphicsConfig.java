@@ -50,7 +50,7 @@ public class CGraphicsConfig extends GraphicsConfiguration {
 
     @Override
     public Rectangle getBounds() {
-        final Rectangle2D nativeBounds = nativeGetBounds(device.getCoreGraphicsScreen());
+        final Rectangle2D nativeBounds = nativeGetBounds(device.getCGDisplayID());
         return nativeBounds.getBounds(); // does integer rounding
     }
 

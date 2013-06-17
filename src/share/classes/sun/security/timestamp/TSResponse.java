@@ -341,7 +341,7 @@ public class TSResponse {
             DerValue[] strings = status.data.getSequence(1);
             statusString = new String[strings.length];
             for (int i = 0; i < strings.length; i++) {
-                statusString[i] = strings[i].data.getUTF8String();
+                statusString[i] = strings[i].getUTF8String();
             }
         }
         // Parse failInfo, if present

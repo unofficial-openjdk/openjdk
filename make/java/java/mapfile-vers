@@ -79,7 +79,7 @@ SUNWprivate_1.1 {
 		Java_java_io_FileInputStream_close0;
 		Java_java_io_FileInputStream_initIDs;
 		Java_java_io_FileInputStream_open;
-		Java_java_io_FileInputStream_read;
+		Java_java_io_FileInputStream_read0;
 		Java_java_io_FileInputStream_readBytes;
 		Java_java_io_FileInputStream_skip;
 		Java_java_io_FileOutputStream_close0;
@@ -90,7 +90,6 @@ SUNWprivate_1.1 {
 		Java_java_io_FileSystem_getFileSystem;
 		Java_java_io_ObjectInputStream_bytesToDoubles;
 		Java_java_io_ObjectInputStream_bytesToFloats;
-		Java_java_io_ObjectInputStream_latestUserDefinedLoader;
 		Java_java_io_ObjectOutputStream_doublesToBytes;
 		Java_java_io_ObjectOutputStream_floatsToBytes;
 		Java_java_io_ObjectStreamClass_hasStaticInitializer;
@@ -100,12 +99,12 @@ SUNWprivate_1.1 {
 		Java_java_io_RandomAccessFile_initIDs;
 		Java_java_io_RandomAccessFile_length;
 		Java_java_io_RandomAccessFile_open;
-		Java_java_io_RandomAccessFile_read;
-		Java_java_io_RandomAccessFile_readBytes;
+		Java_java_io_RandomAccessFile_read0;
+		Java_java_io_RandomAccessFile_readBytes0;
 		Java_java_io_RandomAccessFile_seek;
 		Java_java_io_RandomAccessFile_setLength;
-		Java_java_io_RandomAccessFile_write;
-		Java_java_io_RandomAccessFile_writeBytes;
+		Java_java_io_RandomAccessFile_write0;
+		Java_java_io_RandomAccessFile_writeBytes0;
 		Java_java_io_UnixFileSystem_canonicalize0;
 		Java_java_io_UnixFileSystem_checkAccess;
 		Java_java_io_UnixFileSystem_createDirectory;
@@ -273,6 +272,7 @@ SUNWprivate_1.1 {
                 Java_sun_misc_Version_getJvmVersionInfo;
                 Java_sun_misc_Version_getJvmSpecialVersion;
                 Java_sun_misc_VM_getThreadStateValues;
+		Java_sun_misc_VM_latestUserDefinedLoader;
                 Java_sun_misc_VM_initialize;
 		Java_sun_misc_VMSupport_initAgentProperties;
 

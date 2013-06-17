@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ package java.io;
 
 import java.nio.channels.FileChannel;
 import sun.nio.ch.FileChannelImpl;
+import sun.misc.IoTrace;
 
 
 /**
@@ -61,6 +62,9 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
     private FileDescriptor fd;
     private FileChannel channel = null;
     private boolean rw;
+
+    /* The path of the referenced file */
+    private final String path;
 
     private Object closeLock = new Object();
     private volatile boolean closed = false;
@@ -228,8 +232,12 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
         if (name == null) {
             throw new NullPointerException();
         }
+        if (file.isInvalid()) {
+            throw new FileNotFoundException("Invalid file path");
+        }
         fd = new FileDescriptor();
         fd.incrementAndGetUseCount();
+        this.path = name;
         open(name, imode);
     }
 
@@ -267,7 +275,7 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
     public final FileChannel getChannel() {
         synchronized (this) {
             if (channel == null) {
-                channel = FileChannelImpl.open(fd, true, rw, this);
+                channel = FileChannelImpl.open(fd, path, true, rw, this);
 
                 /*
                  * FileDescriptor could be shared by FileInputStream or
@@ -315,7 +323,18 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @exception  IOException  if an I/O error occurs. Not thrown if
      *                          end-of-file has been reached.
      */
-    public native int read() throws IOException;
+    public int read() throws IOException {
+        Object traceContext = IoTrace.fileReadBegin(path);
+        int b = 0;
+        try {
+            b = read0();
+        } finally {
+            IoTrace.fileReadEnd(traceContext, b == -1 ? 0 : 1);
+        }
+        return b;
+    }
+
+    private native int read0() throws IOException;
 
     /**
      * Reads a sub array as a sequence of bytes.
@@ -324,7 +343,18 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @param len the number of bytes to read.
      * @exception IOException If an I/O error has occurred.
      */
-    private native int readBytes(byte b[], int off, int len) throws IOException;
+    private int readBytes(byte b[], int off, int len) throws IOException {
+        Object traceContext = IoTrace.fileReadBegin(path);
+        int bytesRead = 0;
+        try {
+            bytesRead = readBytes0(b, off, len);
+        } finally {
+            IoTrace.fileReadEnd(traceContext, bytesRead == -1 ? 0 : bytesRead);
+        }
+        return bytesRead;
+    }
+
+    private native int readBytes0(byte b[], int off, int len) throws IOException;
 
     /**
      * Reads up to <code>len</code> bytes of data from this file into an
@@ -463,17 +493,38 @@ public class RandomAccessFile implements DataOutput, DataInput, Closeable {
      * @param      b   the <code>byte</code> to be written.
      * @exception  IOException  if an I/O error occurs.
      */
-    public native void write(int b) throws IOException;
+    public void write(int b) throws IOException {
+        Object traceContext = IoTrace.fileWriteBegin(path);
+        int bytesWritten = 0;
+        try {
+            write0(b);
+            bytesWritten = 1;
+        } finally {
+            IoTrace.fileWriteEnd(traceContext, bytesWritten);
+        }
+    }
+
+    private native void write0(int b) throws IOException;
 
     /**
      * Writes a sub array as a sequence of bytes.
      * @param b the data to be written
-
      * @param off the start offset in the data
      * @param len the number of bytes that are written
      * @exception IOException If an I/O error has occurred.
      */
-    private native void writeBytes(byte b[], int off, int len) throws IOException;
+    private void writeBytes(byte b[], int off, int len) throws IOException {
+        Object traceContext = IoTrace.fileWriteBegin(path);
+        int bytesWritten = 0;
+        try {
+            writeBytes0(b, off, len);
+            bytesWritten = len;
+        } finally {
+            IoTrace.fileWriteEnd(traceContext, bytesWritten);
+        }
+    }
+
+    private native void writeBytes0(byte b[], int off, int len) throws IOException;
 
     /**
      * Writes <code>b.length</code> bytes from the specified byte array

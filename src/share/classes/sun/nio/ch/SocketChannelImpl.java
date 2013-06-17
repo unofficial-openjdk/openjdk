@@ -33,7 +33,7 @@ import java.nio.channels.*;
 import java.nio.channels.spi.*;
 import java.util.*;
 import sun.net.NetHooks;
-
+import sun.misc.IoTrace;
 
 /**
  * An implementation of SocketChannels
@@ -294,6 +294,10 @@ class SocketChannelImpl
         synchronized (readLock) {
             if (!ensureReadOpen())
                 return -1;
+            Object traceContext = null;
+            if (isBlocking()) {
+                traceContext = IoTrace.socketReadBegin();
+            }
             int n = 0;
             try {
 
@@ -372,7 +376,7 @@ class SocketChannelImpl
                 // except that the shutdown operation plays the role of
                 // nd.preClose().
                 for (;;) {
-                    n = IOUtil.read(fd, buf, -1, nd, readLock);
+                    n = IOUtil.read(fd, buf, -1, nd);
                     if ((n == IOStatus.INTERRUPTED) && isOpen()) {
                         // The system call was interrupted but the channel
                         // is still open, so retry
@@ -383,6 +387,12 @@ class SocketChannelImpl
 
             } finally {
                 readerCleanup();        // Clear reader thread
+
+                if (isBlocking()) {
+                    IoTrace.socketReadEnd(traceContext, remoteAddress.getAddress(),
+                                          remoteAddress.getPort(), 0, n > 0 ? n : 0);
+                }
+
                 // The end method, which is defined in our superclass
                 // AbstractInterruptibleChannel, resets the interruption
                 // machinery.  If its argument is true then it returns
@@ -423,6 +433,10 @@ class SocketChannelImpl
             if (!ensureReadOpen())
                 return -1;
             long n = 0;
+            Object traceContext = null;
+            if (isBlocking()) {
+                traceContext = IoTrace.socketReadBegin();
+            }
             try {
                 begin();
                 synchronized (stateLock) {
@@ -439,6 +453,10 @@ class SocketChannelImpl
                 }
             } finally {
                 readerCleanup();
+                if (isBlocking()) {
+                    IoTrace.socketReadEnd(traceContext, remoteAddress.getAddress(),
+                                          remoteAddress.getPort(), 0, n > 0 ? n : 0);
+                }
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isInputOpen))
@@ -455,6 +473,9 @@ class SocketChannelImpl
         synchronized (writeLock) {
             ensureWriteOpen();
             int n = 0;
+            Object traceContext =
+                IoTrace.socketWriteBegin();
+
             try {
                 begin();
                 synchronized (stateLock) {
@@ -463,13 +484,15 @@ class SocketChannelImpl
                     writerThread = NativeThread.current();
                 }
                 for (;;) {
-                    n = IOUtil.write(fd, buf, -1, nd, writeLock);
+                    n = IOUtil.write(fd, buf, -1, nd);
                     if ((n == IOStatus.INTERRUPTED) && isOpen())
                         continue;
                     return IOStatus.normalize(n);
                 }
             } finally {
                 writerCleanup();
+                IoTrace.socketWriteEnd(traceContext, remoteAddress.getAddress(),
+                                       remoteAddress.getPort(), n > 0 ? n : 0);
                 end(n > 0 || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))
@@ -488,6 +511,8 @@ class SocketChannelImpl
         synchronized (writeLock) {
             ensureWriteOpen();
             long n = 0;
+            Object traceContext =
+                IoTrace.socketWriteBegin();
             try {
                 begin();
                 synchronized (stateLock) {
@@ -503,6 +528,8 @@ class SocketChannelImpl
                 }
             } finally {
                 writerCleanup();
+                IoTrace.socketWriteEnd(traceContext, remoteAddress.getAddress(),
+                                       remoteAddress.getPort(), n > 0 ? n : 0);
                 end((n > 0) || (n == IOStatus.UNAVAILABLE));
                 synchronized (stateLock) {
                     if ((n <= 0) && (!isOutputOpen))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -157,7 +157,8 @@ public final class Connection implements Runnable {
     volatile IOException closureReason = null;
     volatile boolean useable = true;  // is Connection still useable
 
-    private int readTimeout;
+    int readTimeout;
+    int connectTimeout;
 
     // true means v3; false means v2
     // Called in LdapClient.authenticate() (which is synchronized)
@@ -187,6 +188,7 @@ public final class Connection implements Runnable {
         this.port = port;
         this.parent = parent;
         this.readTimeout = readTimeout;
+        this.connectTimeout = connectTimeout;
 
         if (trace != null) {
             traceFile = trace;
@@ -685,8 +687,10 @@ public final class Connection implements Runnable {
                         ldr = ldr.next;
                     }
                 }
-                parent.processConnectionClosure();
             }
+        }
+        if (nparent) {
+            parent.processConnectionClosure();
         }
     }
 

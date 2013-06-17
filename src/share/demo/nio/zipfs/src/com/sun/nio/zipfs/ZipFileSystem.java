@@ -466,7 +466,10 @@ public class ZipFileSystem extends FileSystem {
             if (eSrc.type == Entry.NEW || eSrc.type == Entry.FILECH)
             {
                 u.type = eSrc.type;    // make it the same type
-                if (!deletesrc) {      // if it's not "rename", just take the data
+                if (deletesrc) {       // if it's a "rename", take the data
+                    u.bytes = eSrc.bytes;
+                    u.file = eSrc.file;
+                } else {               // if it's not "rename", copy the data
                     if (eSrc.bytes != null)
                         u.bytes = Arrays.copyOf(eSrc.bytes, eSrc.bytes.length);
                     else if (eSrc.file != null) {
@@ -651,7 +654,11 @@ public class ZipFileSystem extends FileSystem {
                     }
 
                     public int read(ByteBuffer dst) throws IOException {
-                        return rbc.read(dst);
+                        int n = rbc.read(dst);
+                        if (n > 0) {
+                            read += n;
+                        }
+                        return n;
                     }
 
                     public SeekableByteChannel truncate(long size)
@@ -1114,7 +1121,7 @@ public class ZipFileSystem extends FileSystem {
             if (old != null) {
                 removeFromTree(old);
             }
-            if (e.type == Entry.NEW || e.type == Entry.FILECH) {
+            if (e.type == Entry.NEW || e.type == Entry.FILECH || e.type == Entry.COPY) {
                 IndexNode parent = inodes.get(LOOKUPKEY.as(getParent(e.name)));
                 e.sibling = parent.child;
                 parent.child = e;
@@ -2322,12 +2329,12 @@ public class ZipFileSystem extends FileSystem {
     private void removeFromTree(IndexNode inode) {
         IndexNode parent = inodes.get(LOOKUPKEY.as(getParent(inode.name)));
         IndexNode child = parent.child;
-        if (child == inode) {
+        if (child.equals(inode)) {
             parent.child = child.sibling;
         } else {
             IndexNode last = child;
             while ((child = child.sibling) != null) {
-                if (child == inode) {
+                if (child.equals(inode)) {
                     last.sibling = child.sibling;
                     break;
                 } else {

@@ -57,9 +57,23 @@ AWT_ASSERT_APPKIT_THREAD;
 
     // NOTE: async=YES means that the layer is re-cached periodically
     self.asynchronous = FALSE;
-    self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
     self.contentsGravity = kCAGravityTopLeft;
-    self.needsDisplayOnBoundsChange = YES;
+    //Layer backed view
+    //self.needsDisplayOnBoundsChange = YES;
+    //self.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
+
+    //Disable CALayer's default animation
+    NSMutableDictionary * actions = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
+                                    [NSNull null], @"bounds",
+                                    [NSNull null], @"contents",
+                                    [NSNull null], @"contentsScale",
+                                    [NSNull null], @"onOrderIn",
+                                    [NSNull null], @"onOrderOut",
+                                    [NSNull null], @"sublayers",
+                                    nil];
+    self.actions = actions;
+    [actions release];
+
     textureID = 0; // texture will be created by rendering pipe
     target = 0;
 
@@ -109,6 +123,10 @@ AWT_ASSERT_APPKIT_THREAD;
     glDisable(target);
 }
 
+-(BOOL)canDrawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp{
+    return textureID == 0 ? NO : YES;
+}
+
 -(void)drawInCGLContext:(CGLContextObj)glContext pixelFormat:(CGLPixelFormatObj)pixelFormat forLayerTime:(CFTimeInterval)timeInterval displayTime:(const CVTimeStamp *)timeStamp
 {
     AWT_ASSERT_APPKIT_THREAD;
@@ -116,8 +134,12 @@ AWT_ASSERT_APPKIT_THREAD;
     // Set the current context to the one given to us.
     CGLSetCurrentContext(glContext);
 
-    glViewport(0, 0, textureWidth, textureHeight);
+    // Should clear the whole CALayer, because it can be larger than our texture.
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
 
+    glViewport(0, 0, textureWidth, textureHeight);
+    
     JNIEnv *env = [ThreadUtilities getJNIEnv];
     static JNF_CLASS_CACHE(jc_JavaLayer, "sun/java2d/opengl/CGLLayer");
     static JNF_MEMBER_CACHE(jm_drawInCGLContext, jc_JavaLayer, "drawInCGLContext", "()V");
@@ -146,16 +168,15 @@ Java_sun_java2d_opengl_CGLLayer_nativeCreateLayer
     __block CGLLayer *layer = nil;
 
 JNF_COCOA_ENTER(env);
-AWT_ASSERT_NOT_APPKIT_THREAD;
 
     JNFJObjectWrapper *javaLayer = [JNFJObjectWrapper wrapperWithJObject:obj withEnv:env];
 
-    [JNFRunLoop performOnMainThreadWaiting:YES withBlock:^(){
-        AWT_ASSERT_APPKIT_THREAD;
-
-        layer = [[CGLLayer alloc] initWithJavaLayer: javaLayer];
+    [ThreadUtilities performOnMainThreadWaiting:YES block:^(){
+            AWT_ASSERT_APPKIT_THREAD;
+        
+            layer = [[CGLLayer alloc] initWithJavaLayer: javaLayer];
     }];
-
+    
 JNF_COCOA_EXIT(env);
 
     return ptr_to_jlong(layer);
@@ -164,7 +185,7 @@ JNF_COCOA_EXIT(env);
 // Must be called under the RQ lock.
 JNIEXPORT void JNICALL
 Java_sun_java2d_opengl_CGLLayer_validate
-(JNIEnv *env, jobject obj, jlong layerPtr, jobject surfaceData)
+(JNIEnv *env, jclass cls, jlong layerPtr, jobject surfaceData)
 {
     CGLLayer *layer = OBJC(layerPtr);
 
@@ -182,9 +203,25 @@ Java_sun_java2d_opengl_CGLLayer_validate
 // Must be called on the AppKit thread and under the RQ lock.
 JNIEXPORT void JNICALL
 Java_sun_java2d_opengl_CGLLayer_blitTexture
-(JNIEnv *env, jobject obj, jlong layerPtr)
+(JNIEnv *env, jclass cls, jlong layerPtr)
 {
     CGLLayer *layer = jlong_to_ptr(layerPtr);
 
     [layer blitTexture];
+}
+
+JNIEXPORT void JNICALL
+Java_sun_java2d_opengl_CGLLayer_nativeSetScale
+(JNIEnv *env, jclass cls, jlong layerPtr, jdouble scale)
+{
+    JNF_COCOA_ENTER(env);
+    CGLLayer *layer = jlong_to_ptr(layerPtr);
+    // We always call all setXX methods asynchronously, exception is only in 
+    // this method where we need to change native texture size and layer's scale
+    // in one call on appkit, otherwise we'll get window's contents blinking, 
+    // during screen-2-screen moving.
+    [ThreadUtilities performOnMainThreadWaiting:[NSThread isMainThread] block:^(){
+        layer.contentsScale = scale;
+    }];
+    JNF_COCOA_EXIT(env);
 }

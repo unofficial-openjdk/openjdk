@@ -150,7 +150,8 @@ package.access=sun.,\
                com.sun.org.apache.xml.internal.utils.,\
                com.sun.org.apache.xml.internal.security.,\
                com.sun.org.glassfish.,\
-               org.jcp.xml.dsig.internal.
+               org.jcp.xml.dsig.internal.,\
+               oracle.jrockit.jfr.
 
 #
 # List of comma-separated packages that start with or equal this string
@@ -187,7 +188,8 @@ package.definition=sun.,\
                    com.sun.org.apache.xml.internal.utils.,\
                    com.sun.org.apache.xml.internal.security.,\
                    com.sun.org.glassfish.,\
-                   org.jcp.xml.dsig.internal.
+                   org.jcp.xml.dsig.internal.,\
+                   oracle.jrockit.jfr.
 
 #
 # Determines whether this properties file can be appended to
@@ -401,7 +403,7 @@ krb5.kdc.bad.policy = tryLast
 #   jdk.certpath.disabledAlgorithms=MD2, DSA, RSA keySize < 2048
 #
 #
-jdk.certpath.disabledAlgorithms=MD2
+jdk.certpath.disabledAlgorithms=MD2, RSA keySize < 1024
 
 # Algorithm restrictions for Secure Socket Layer/Transport Layer Security
 # (SSL/TLS) processing

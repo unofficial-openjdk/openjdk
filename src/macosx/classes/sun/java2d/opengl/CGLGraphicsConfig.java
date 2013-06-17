@@ -85,10 +85,8 @@ public class CGLGraphicsConfig extends CGraphicsConfig
     private Object disposerReferent = new Object();
 
     private final int cachedMaxTextureSize;
-
-    public static native int getDefaultPixFmt(int screennum);
     private static native boolean initCGL();
-    private static native long getCGLConfigInfo(int screennum, int visualnum,
+    private static native long getCGLConfigInfo(int displayID, int visualnum,
                                                 int swapInterval);
     private static native int getOGLCapabilities(long configInfo);
     private static native int _getMaxTextureSize();
@@ -147,15 +145,16 @@ public class CGLGraphicsConfig extends CGraphicsConfig
             // Java-level context and flush the queue...
             OGLContext.invalidateCurrentContext();
 
-            cfginfo = getCGLConfigInfo(device.getCoreGraphicsScreen(), pixfmt,
+            cfginfo = getCGLConfigInfo(device.getCGDisplayID(), pixfmt,
                                        kOpenGLSwapInterval);
-
-            OGLContext.setScratchSurface(cfginfo);
-            rq.flushAndInvokeNow(new Runnable() {
-                public void run() {
-                    ids[0] = OGLContext.getOGLIdString();
-                }
-            });
+            if (cfginfo != 0L) {
+                OGLContext.setScratchSurface(cfginfo);
+                rq.flushAndInvokeNow(new Runnable() {
+                    public void run() {
+                        ids[0] = OGLContext.getOGLIdString();
+                    }
+                });
+            }
         } finally {
             rq.unlock();
         }
@@ -260,8 +259,8 @@ public class CGLGraphicsConfig extends CGraphicsConfig
 
     @Override
     public String toString() {
-        int screen = getDevice().getCoreGraphicsScreen();
-        return ("CGLGraphicsConfig[dev="+screen+",pixfmt="+pixfmt+"]");
+        int displayID = getDevice().getCGDisplayID();
+        return ("CGLGraphicsConfig[dev="+displayID+",pixfmt="+pixfmt+"]");
     }
 
 
@@ -485,8 +484,8 @@ public class CGLGraphicsConfig extends CGraphicsConfig
     }
 
     public void addDeviceEventListener(AccelDeviceEventListener l) {
-        int screen = getDevice().getCoreGraphicsScreen();
-        AccelDeviceEventNotifier.addListener(l, screen);
+        int displayID = getDevice().getCGDisplayID();
+        AccelDeviceEventNotifier.addListener(l, displayID);
     }
 
     public void removeDeviceEventListener(AccelDeviceEventListener l) {
@@ -516,29 +515,37 @@ public class CGLGraphicsConfig extends CGraphicsConfig
 
     @Override
     public int getMaxTextureWidth() {
-        int width;
+        //Temporary disable this logic and use some magic constrain.
+        /*
+         int width;
 
-        synchronized (totalDisplayBounds) {
-            if (totalDisplayBounds.width == 0) {
-                updateTotalDisplayBounds();
-            }
-            width = totalDisplayBounds.width;
-        }
+         synchronized (totalDisplayBounds) {
+         if (totalDisplayBounds.width == 0) {
+         updateTotalDisplayBounds();
+         }
+         width = totalDisplayBounds.width;
+         }
 
-        return Math.min(width, getMaxTextureSize());
+         return Math.min(width, getMaxTextureSize());
+         */
+        return getMaxTextureSize() / (getDevice().getScaleFactor() * 2);
     }
 
     @Override
     public int getMaxTextureHeight() {
-        int height;
+        //Temporary disable this logic and use some magic constrain.
+        /*
+         int height;
 
-        synchronized (totalDisplayBounds) {
-            if (totalDisplayBounds.height == 0) {
-                updateTotalDisplayBounds();
-            }
-            height = totalDisplayBounds.height;
-        }
+         synchronized (totalDisplayBounds) {
+         if (totalDisplayBounds.height == 0) {
+         updateTotalDisplayBounds();
+         }
+         height = totalDisplayBounds.height;
+         }
 
-        return Math.min(height, getMaxTextureSize());
+         return Math.min(height, getMaxTextureSize());
+         */
+        return getMaxTextureSize() / (getDevice().getScaleFactor() * 2);
     }
 }

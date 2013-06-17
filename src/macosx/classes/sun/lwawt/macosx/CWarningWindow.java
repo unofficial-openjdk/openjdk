@@ -31,7 +31,6 @@ import sun.awt.SunToolkit;
 import sun.java2d.SunGraphics2D;
 import sun.java2d.SurfaceData;
 import sun.java2d.opengl.CGLLayer;
-import sun.java2d.opengl.OGLRenderQueue;
 import sun.lwawt.LWWindowPeer;
 import sun.lwawt.PlatformEventNotifier;
 import sun.lwawt.SecurityWarningWindow;
@@ -94,7 +93,7 @@ public final class CWarningWindow extends CPlatformWindow
     }
 
     public CWarningWindow(final Window _ownerWindow, final LWWindowPeer _ownerPeer) {
-        super(LWWindowPeer.PeerType.SIMPLEWINDOW);
+        super();
 
         this.ownerPeer = new WeakReference<LWWindowPeer>(_ownerPeer);
         this.ownerWindow = _ownerWindow;
@@ -167,7 +166,7 @@ public final class CWarningWindow extends CPlatformWindow
     }
 
     @Override
-    public void notifyExpose(int x, int y, int w, int h) {
+    public void notifyExpose(final Rectangle r) {
         repaint();
     }
 
@@ -180,7 +179,7 @@ public final class CWarningWindow extends CPlatformWindow
     }
 
     @Override
-    public void notifyActivation(boolean activation) {
+    public void notifyActivation(boolean activation, LWWindowPeer opposite) {
     }
 
     @Override
@@ -275,7 +274,8 @@ public final class CWarningWindow extends CPlatformWindow
         return styleBits;
     }
 
-    protected void deliverMoveResizeEvent(int x, int y, int width, int height) {
+    protected void deliverMoveResizeEvent(int x, int y, int width, int height,
+                                          boolean byUser) {
 
         boolean isResize;
         synchronized (lock) {
@@ -285,10 +285,9 @@ public final class CWarningWindow extends CPlatformWindow
 
         if (isResize) {
             replaceSurface();
-            flushOnscreenGraphics();
         }
 
-        super.deliverMoveResizeEvent(x, y, width, height);
+        super.deliverMoveResizeEvent(x, y, width, height, byUser);
     }
 
     protected CPlatformResponder createPlatformResponder() {
@@ -377,16 +376,6 @@ public final class CWarningWindow extends CPlatformWindow
             } finally {
                 g.dispose();
             }
-        }
-    }
-
-    private static final void flushOnscreenGraphics(){
-        final OGLRenderQueue rq = OGLRenderQueue.getInstance();
-        rq.lock();
-        try {
-            rq.flushNow();
-        } finally {
-            rq.unlock();
         }
     }
 

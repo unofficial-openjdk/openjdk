@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -169,8 +169,10 @@ public final class MethodFinder extends AbstractFinder<Method> {
                             return findAccessibleMethod(m);
                         }
                         Type[] gpts = m.getGenericParameterTypes();
-                        if (Arrays.equals(params, TypeResolver.erase(TypeResolver.resolve(pt, gpts)))) {
-                            return findAccessibleMethod(m);
+                        if (params.length == gpts.length) {
+                            if (Arrays.equals(params, TypeResolver.erase(TypeResolver.resolve(pt, gpts)))) {
+                                return findAccessibleMethod(m);
+                            }
                         }
                     }
                 }
@@ -231,6 +233,6 @@ public final class MethodFinder extends AbstractFinder<Method> {
      */
     @Override
     protected boolean isValid(Method method) {
-        return !method.isBridge() && Modifier.isPublic(method.getModifiers()) && method.getName().equals(this.name);
+        return super.isValid(method) && method.getName().equals(this.name);
     }
 }

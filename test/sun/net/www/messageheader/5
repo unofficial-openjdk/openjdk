@@ -1,7 +1,0 @@
-HTTP/1.1 200 Ok
-WWW-Authenticate: Negotiate
-Foo: bar
-Bar: foo
-WWW-Authenticate: NTLM
-Bar: foo
-WWW-Authenticate: Kerberos

@@ -25,6 +25,8 @@
 
 package java.util.prefs;
 
+import java.util.Objects;
+
 class MacOSXPreferences extends AbstractPreferences {
     // fixme need security checks?
 
@@ -33,16 +35,16 @@ class MacOSXPreferences extends AbstractPreferences {
     private static final String defaultAppName = "com.apple.java.util.prefs";
 
     // true if this node is a child of userRoot or is userRoot
-    private boolean isUser;
+    private final boolean isUser;
 
     // true if this node is userRoot or systemRoot
-    private boolean isRoot;
+    private final boolean isRoot;
 
     // CF's storage location for this node and its keys
-    private MacOSXPreferencesFile file;
+    private final MacOSXPreferencesFile file;
 
     // absolutePath() + "/"
-    private String path;
+    private final String path;
 
     // User root and system root nodes
     private static MacOSXPreferences userRoot = null;
@@ -71,35 +73,39 @@ class MacOSXPreferences extends AbstractPreferences {
 
     // Create a new root node. Called by getUserRoot() and getSystemRoot()
     // Synchronization is provided by the caller.
-    private MacOSXPreferences(boolean newIsUser)
-    {
-        super(null, "");
-        isUser = newIsUser;
-        isRoot = true;
-
-        initFields();
+    private MacOSXPreferences(boolean newIsUser) {
+        this(null, "", false, true, newIsUser);
     }
 
 
     // Create a new non-root node with the given parent.
     // Called by childSpi().
-    private MacOSXPreferences(MacOSXPreferences parent, String name)
+    private MacOSXPreferences(MacOSXPreferences parent, String name) {
+        this(parent, name, false, false, false);
+    }
+
+    private MacOSXPreferences(MacOSXPreferences parent, String name,
+                              boolean isNew)
+    {
+        this(parent, name, isNew, false, false);
+    }
+
+    private MacOSXPreferences(MacOSXPreferences parent, String name,
+                              boolean isNew, boolean isRoot, boolean isUser)
     {
         super(parent, name);
-        isUser = isUserNode();
-        isRoot = false;
-
-        initFields();
-    }
-
-
-    private void initFields()
-    {
+        this.isRoot = isRoot;
+        if (isRoot)
+            this.isUser = isUser;
+        else
+            this.isUser = isUserNode();
         path = isRoot ? absolutePath() : absolutePath() + "/";
-        file = cfFileForNode(isUser);
-        newNode = file.addNode(path);
+        file = cfFileForNode(this.isUser);
+        if (isNew)
+            newNode = isNew;
+        else
+            newNode = file.addNode(path);
     }
-
 
     // Create and return the MacOSXPreferencesFile for this node.
     // Does not write anything to the file.
@@ -147,6 +153,7 @@ class MacOSXPreferences extends AbstractPreferences {
     // AbstractPreferences implementation
     protected void removeSpi(String key)
     {
+        Objects.requireNonNull(key, "Specified key cannot be null");
         file.removeKeyFromNode(path, key);
     }
 
@@ -194,8 +201,8 @@ class MacOSXPreferences extends AbstractPreferences {
         // Add to parent's child list here and disallow sync
         // because parent and child might be in different files.
         synchronized(MacOSXPreferencesFile.class) {
-            file.addChildToNode(path, name);
-            return new MacOSXPreferences(this, name);
+            boolean isNew = file.addChildToNode(path, name);
+            return new MacOSXPreferences(this, name, isNew);
         }
     }
 
@@ -206,9 +213,14 @@ class MacOSXPreferences extends AbstractPreferences {
         // Flush should *not* check for removal, unlike sync, but should
         // prevent simultaneous removal.
         synchronized(lock) {
-            // fixme! overkill
-            if (!MacOSXPreferencesFile.flushWorld()) {
-                throw new BackingStoreException("Synchronization failed for node '" + path + "'");
+            if (isUser) {
+                if (!MacOSXPreferencesFile.flushUser()) {
+                    throw new BackingStoreException("Synchronization failed for node '" + path + "'");
+                }
+            } else {
+                if (!MacOSXPreferencesFile.flushWorld()) {
+                    throw new BackingStoreException("Synchronization failed for node '" + path + "'");
+                }
             }
         }
     }
