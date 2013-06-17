@@ -23,28 +23,25 @@
 
 /*
  * @test
- * @bug 4645152 4785453
- * @summary javac compiler incorrectly inserts <clinit> when -g is specified
- * @run compile -g ConstDebugTest.java
- * @run main ConstDebugTest
+ * @bug 8008627
+ * @summary Compiler mishandles three-way return-type-substitutability
+ * @compile T8008627.java
  */
-import java.nio.file.Paths;
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.Method;
 
-public class ConstDebugTest {
+class T8008627 {
 
-    public static final long l = 12;
-
-    public static void main(String args[]) throws Exception {
-        ClassFile classFile = ClassFile.read(Paths.get(System.getProperty("test.classes"),
-                ConstDebugTest.class.getSimpleName() + ".class"));
-        for (Method method: classFile.methods) {
-            if (method.getName(classFile.constant_pool).equals("<clinit>")) {
-                throw new AssertionError(
-                    "javac should not create a <clinit> method for ConstDebugTest class");
-            }
-        }
+    interface I {
+        Object m(Iterable l);
     }
 
+    interface J<S> {
+        S m(Iterable<String> l);
+    }
+
+    interface K<T> {
+        T m(Iterable<String> l);
+    }
+
+    @FunctionalInterface
+    interface Functional<S,T> extends I, J<S>, K<T> {}
 }

@@ -23,28 +23,17 @@
 
 /*
  * @test
- * @bug 4645152 4785453
- * @summary javac compiler incorrectly inserts <clinit> when -g is specified
- * @run compile -g ConstDebugTest.java
- * @run main ConstDebugTest
+ * @bug 8015432
+ * @summary javac crashes with stack overflow when method called recursively from nested generic call
+ * @compile TargetType74.java
  */
-import java.nio.file.Paths;
-import com.sun.tools.classfile.ClassFile;
-import com.sun.tools.classfile.Method;
+class TargetType74 {
 
-public class ConstDebugTest {
+    static class LazySeq<E> { }
 
-    public static final long l = 12;
+    <C> LazySeq<C> cons(LazySeq<C> tailFun) { return null; }
 
-    public static void main(String args[]) throws Exception {
-        ClassFile classFile = ClassFile.read(Paths.get(System.getProperty("test.classes"),
-                ConstDebugTest.class.getSimpleName() + ".class"));
-        for (Method method: classFile.methods) {
-            if (method.getName(classFile.constant_pool).equals("<clinit>")) {
-                throw new AssertionError(
-                    "javac should not create a <clinit> method for ConstDebugTest class");
-            }
-        }
+    <T extends Comparable<T>> LazySeq<T> mergeSorted(LazySeq<T> a) {
+        return cons(mergeSorted(a));
     }
-
 }
