@@ -34,6 +34,7 @@ import java.security.Permission;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import javax.management.loading.ClassLoaderRepository;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * <p>Provides MBean server references.  There are no instances of
@@ -442,7 +443,7 @@ public class MBeanServerFactory {
         }
 
         // No context class loader? Try with Class.forName()
-        return Class.forName(builderClassName);
+        return ReflectUtil.forName(builderClassName);
     }
 
     /**

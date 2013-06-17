@@ -104,6 +104,7 @@ import javax.rmi.CORBA.Stub;
 import javax.rmi.PortableRemoteObject;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.security.auth.Subject;
+import sun.reflect.misc.ReflectUtil;
 import org.omg.CORBA.BAD_OPERATION;
 import org.omg.CORBA.ORB;
 import sun.rmi.server.UnicastRef2;
@@ -1970,7 +1971,9 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
 
         protected Class resolveClass(ObjectStreamClass classDesc)
                 throws IOException, ClassNotFoundException {
-            return Class.forName(classDesc.getName(), false, loader);
+            String name = classDesc.getName();
+            ReflectUtil.checkPackageAccess(name);
+            return Class.forName(name, false, loader);
         }
 
         private final ClassLoader loader;
