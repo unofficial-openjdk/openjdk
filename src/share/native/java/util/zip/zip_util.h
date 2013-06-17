@@ -179,6 +179,7 @@ typedef struct jzfile {   /* Zip file */
 #else
     cencache cencache;    /* CEN header cache */
 #endif
+    jboolean locsig;      /* if zip file starts with LOCSIG */
     ZFILE zfd;            /* open file descriptor */
     void *lock;           /* read lock */
     char *comment;        /* zip file comment */

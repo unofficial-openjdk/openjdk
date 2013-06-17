@@ -44,9 +44,10 @@ import java.util.NoSuchElementException;
  */
 public
 class ZipFile implements ZipConstants {
-    private long jzfile;  // address of jzfile data
-    private String name;  // zip file name
-    private int total;    // total number of entries
+    private long jzfile;           // address of jzfile data
+    private final String name;     // zip file name
+    private final int total;       // total number of entries
+    private final boolean locsig;  // if zip file starts with LOCSIG (usually true)
     private boolean closeRequested;
 
     private static final int STORED = ZipEntry.STORED;
@@ -132,10 +133,30 @@ class ZipFile implements ZipConstants {
 
         this.name = name;
         this.total = getTotal(jzfile);
+        this.locsig = startsWithLOC(jzfile);
+    }
+
+    static {
+        sun.misc.SharedSecrets.setJavaUtilZipFileAccess(
+            new sun.misc.JavaUtilZipFileAccess() {
+                public boolean startsWithLocHeader(ZipFile zip) {
+                    return zip.startsWithLocHeader();
+                }
+             }
+        );
+    }
+
+    /**
+     * Returns {@code true} if, and only if, the zip file begins with {@code
+     * LOCSIG}.
+     */
+    private boolean startsWithLocHeader() {
+        return locsig;
     }
 
     private static native long open(String name, int mode, long lastModified);
     private static native int getTotal(long jzfile);
+    private static native boolean startsWithLOC(long jzfile);
 
 
     /**
