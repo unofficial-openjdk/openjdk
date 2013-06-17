@@ -31,6 +31,7 @@ import java.util.Set;
 import java.io.ObjectInputStream;
 import java.security.AccessController;
 import java.security.Permission;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 
 // RI import
@@ -231,8 +232,16 @@ public final class JmxMBeanServer
                 clr = new ClassLoaderRepositorySupport();
             instantiator = new MBeanInstantiator(clr);
         }
+
+        final MBeanInstantiator fInstantiator = instantiator;
         this.secureClr = new
-          SecureClassLoaderRepository(instantiator.getClassLoaderRepository());
+            SecureClassLoaderRepository(AccessController.doPrivileged(new PrivilegedAction<ClassLoaderRepository>() {
+                @Override
+                public ClassLoaderRepository run() {
+                    return fInstantiator.getClassLoaderRepository();
+                }
+            })
+        );
         if (delegate == null)
             delegate = new MBeanServerDelegateImpl();
         if (outer == null)
@@ -1246,8 +1255,14 @@ public final class JmxMBeanServer
            class loader.  The ClassLoaderRepository knows how
            to handle that case.  */
         ClassLoader myLoader = outerShell.getClass().getClassLoader();
-        final ModifiableClassLoaderRepository loaders =
-            instantiator.getClassLoaderRepository();
+        final ModifiableClassLoaderRepository loaders = AccessController.doPrivileged(new PrivilegedAction<ModifiableClassLoaderRepository>() {
+
+            @Override
+            public ModifiableClassLoaderRepository run() {
+                return instantiator.getClassLoaderRepository();
+            }
+        });
+
         if (loaders != null) {
             loaders.addClassLoader(myLoader);
 

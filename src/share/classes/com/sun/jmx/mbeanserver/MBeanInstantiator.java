@@ -625,6 +625,7 @@ public class MBeanInstantiator {
      * Return the Default Loader Repository used by this instantiator object.
      **/
     public ModifiableClassLoaderRepository getClassLoaderRepository() {
+        checkMBeanPermission((String)null, null, null, "getClassLoaderRepository");
         return clr;
     }
 
@@ -736,9 +737,19 @@ public class MBeanInstantiator {
                                              String member,
                                              ObjectName objectName,
                                              String actions) {
+        if (clazz != null) {
+            checkMBeanPermission(clazz.getName(), member, objectName, actions);
+        }
+    }
+
+    private static void checkMBeanPermission(String classname,
+                                             String member,
+                                             ObjectName objectName,
+                                             String actions)
+        throws SecurityException {
         SecurityManager sm = System.getSecurityManager();
-        if (clazz != null && sm != null) {
-            Permission perm = new MBeanPermission(clazz.getName(),
+        if (sm != null) {
+            Permission perm = new MBeanPermission(classname,
                                                   member,
                                                   objectName,
                                                   actions);
