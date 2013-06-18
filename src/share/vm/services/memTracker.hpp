@@ -93,6 +93,45 @@ class MemTracker : AllStatic {
   };
 
  public:
+  class Tracker : public StackObj {
+    friend class MemTracker;
+   public:
+    enum MemoryOperation {
+      NoOp,                   // no op
+      Malloc,                 // malloc
+      Realloc,                // realloc
+      Free,                   // free
+      Reserve,                // virtual memory reserve
+      Commit,                 // virtual memory commit
+      ReserveAndCommit,       // virtual memory reserve and commit
+      StackAlloc = ReserveAndCommit, // allocate thread stack
+      Type,                   // assign virtual memory type
+      Uncommit,               // virtual memory uncommit
+      Release,                // virtual memory release
+      ArenaSize,              // set arena size
+      StackRelease            // release thread stack
+    };
+
+
+   protected:
+    Tracker(MemoryOperation op, Thread* thr = NULL);
+
+   public:
+    void discard();
+
+    void record(address addr, size_t size = 0, MEMFLAGS flags = mtNone, address pc = NULL);
+    void record(address old_addr, address new_addr, size_t size,
+      MEMFLAGS flags, address pc = NULL);
+
+   private:
+    bool            _need_thread_critical_lock;
+    JavaThread*     _java_thread;
+    MemoryOperation _op;          // memory operation
+    jint            _seq;         // reserved sequence number
+  };
+
+
+ public:
   // native memory tracking level
   enum NMTLevel {
     NMT_off,              // native memory tracking is off
@@ -196,7 +235,10 @@ class MemTracker : AllStatic {
   // the second phase of bootstrapping, VM is about or already in multi-threaded mode
   static void bootstrap_multi_thread();
 
+ private:
+  static Tracker _tkr;
 
+ public:
   // start() has to be called when VM still in single thread mode, but after
   // command line option parsing is done.
   static void start();
@@ -204,67 +246,42 @@ class MemTracker : AllStatic {
   // record a 'malloc' call
   static inline void record_malloc(address addr, size_t size, MEMFLAGS flags,
                             address pc = 0, Thread* thread = NULL) {
-    if (is_on() && NMT_CAN_TRACK(flags)) {
-      assert(size > 0, "Sanity check");
-      create_memory_record(addr, (flags|MemPointerRecord::malloc_tag()), size, pc, thread);
-    }
+    Tracker tkr(Tracker::Malloc, thread);
+    tkr.record(addr, size, flags, pc);
   }
   // record a 'free' call
   static inline void record_free(address addr, MEMFLAGS flags, Thread* thread = NULL) {
-    if (is_on() && NMT_CAN_TRACK(flags)) {
-      create_memory_record(addr, MemPointerRecord::free_tag(), 0, 0, thread);
-    }
-  }
-  // record a 'realloc' call
-  static inline void record_realloc(address old_addr, address new_addr, size_t size,
-       MEMFLAGS flags, address pc = 0, Thread* thread = NULL) {
-    if (is_on() && NMT_CAN_TRACK(flags)) {
-      assert(size > 0, "Sanity check");
-      record_free(old_addr, flags, thread);
-      record_malloc(new_addr, size, flags, pc, thread);
-    }
+    Tracker tkr(Tracker::Free, thread);
+    tkr.record(addr, 0, flags, DEBUG_CALLER_PC);
   }
 
-  // record arena memory size
   static inline void record_arena_size(address addr, size_t size) {
-    // we add a positive offset to arena address, so we can have arena memory record
-    // sorted after arena record
-    if (is_on() && !UseMallocOnly) {
-      assert(addr != NULL, "Sanity check");
-      create_memory_record((addr + sizeof(void*)), MemPointerRecord::arena_size_tag(), size,
-        DEBUG_CALLER_PC, NULL);
-    }
+    Tracker tkr(Tracker::ArenaSize);
+    tkr.record(addr, size);
   }
 
   // record a virtual memory 'reserve' call
   static inline void record_virtual_memory_reserve(address addr, size_t size,
-                            address pc = 0, Thread* thread = NULL) {
+                     MEMFLAGS flags, address pc = 0, Thread* thread = NULL) {
     if (is_on()) {
       assert(size > 0, "Sanity check");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_reserve_tag(),
-                           size, pc, thread);
+      Tracker tkr(Tracker::Reserve, thread);
+      tkr.record(addr, size, flags, pc);
     }
   }
 
   static inline void record_thread_stack(address addr, size_t size, Thread* thr,
                            address pc = 0) {
     if (is_on()) {
-      assert(size > 0 && thr != NULL, "Sanity check");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_reserve_tag() | mtThreadStack,
-                          size, pc, thr);
-      create_memory_record(addr, MemPointerRecord::virtual_memory_commit_tag() | mtThreadStack,
-                          size, pc, thr);
+      Tracker tkr(Tracker::StackAlloc, thr);
+      tkr.record(addr, size, mtThreadStack, pc);
     }
   }
 
   static inline void release_thread_stack(address addr, size_t size, Thread* thr) {
     if (is_on()) {
-      assert(size > 0 && thr != NULL, "Sanity check");
-      assert(!thr->is_Java_thread(), "too early");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_uncommit_tag() | mtThreadStack,
-                          size, DEBUG_CALLER_PC, thr);
-      create_memory_record(addr, MemPointerRecord::virtual_memory_release_tag() | mtThreadStack,
-                          size, DEBUG_CALLER_PC, thr);
+      Tracker tkr(Tracker::StackRelease, thr);
+      tkr.record(addr, size, mtThreadStack, DEBUG_CALLER_PC);
     }
   }
 
@@ -272,41 +289,43 @@ class MemTracker : AllStatic {
   static inline void record_virtual_memory_commit(address addr, size_t size,
                             address pc, Thread* thread = NULL) {
     if (is_on()) {
-      assert(size > 0, "Sanity check");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_commit_tag(),
-                           size, pc, thread);
+      Tracker tkr(Tracker::Commit, thread);
+      tkr.record(addr, size, mtNone, pc);
     }
   }
 
-  // record a virtual memory 'uncommit' call
-  static inline void record_virtual_memory_uncommit(address addr, size_t size,
-                            Thread* thread = NULL) {
+  static inline void record_virtual_memory_reserve_and_commit(address addr, size_t size,
+    MEMFLAGS flags, address pc, Thread* thread = NULL) {
     if (is_on()) {
-      assert(size > 0, "Sanity check");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_uncommit_tag(),
-                           size, DEBUG_CALLER_PC, thread);
+      Tracker tkr(Tracker::ReserveAndCommit, thread);
+      tkr.record(addr, size, flags, pc);
     }
   }
 
-  // record a virtual memory 'release' call
-  static inline void record_virtual_memory_release(address addr, size_t size,
-                            Thread* thread = NULL) {
-    if (is_on()) {
-      assert(size > 0, "Sanity check");
-      create_memory_record(addr, MemPointerRecord::virtual_memory_release_tag(),
-                           size, DEBUG_CALLER_PC, thread);
-    }
-  }
 
   // record memory type on virtual memory base address
   static inline void record_virtual_memory_type(address base, MEMFLAGS flags,
                             Thread* thread = NULL) {
     if (is_on()) {
-      assert(base > 0, "wrong base address");
-      assert((flags & (~mt_masks)) == 0, "memory type only");
-      create_memory_record(base, (flags | MemPointerRecord::virtual_memory_type_tag()),
-                           0, DEBUG_CALLER_PC, thread);
+      Tracker tkr(Tracker::Type);
+      tkr.record(base, 0, flags);
     }
+  }
+
+  // Get memory trackers for memory operations that can result race conditions.
+  // The memory tracker has to be obtained before realloc, virtual memory uncommit
+  // and virtual memory release, and call tracker.record() method if operation
+  // succeeded, or tracker.discard() to abort the tracking.
+  static inline Tracker get_realloc_tracker() {
+    return Tracker(Tracker::Realloc);
+  }
+
+  static inline Tracker get_virtual_memory_uncommit_tracker() {
+    return Tracker(Tracker::Uncommit);
+  }
+
+  static inline Tracker get_virtual_memory_release_tracker() {
+    return Tracker(Tracker::Release);
   }
 
 
@@ -371,6 +390,31 @@ class MemTracker : AllStatic {
   static void enqueue_pending_recorder(MemRecorder* rec);
   static MemRecorder* get_pending_recorders();
   static void delete_all_pending_recorders();
+
+  // write a memory tracking record in recorder
+  static void write_tracking_record(address addr, MEMFLAGS type,
+    size_t size, jint seq, address pc, JavaThread* thread);
+
+  static bool is_single_threaded_bootstrap() {
+    return _state == NMT_bootstrapping_single_thread;
+  }
+
+  static void check_NMT_load(Thread* thr) {
+    assert(thr != NULL, "Sanity check");
+    if (_slowdown_calling_thread && thr != _worker_thread) {
+      os::yield_all();
+    }
+  }
+
+  static void inc_pending_op_count() {
+    Atomic::inc(&_pending_op_count);
+  }
+
+  static void dec_pending_op_count() {
+    Atomic::dec(&_pending_op_count);
+    assert(_pending_op_count >= 0, "Sanity check");
+  }
+
 
  private:
   // retrieve a pooled memory record or create new one if there is not
@@ -450,6 +494,12 @@ class MemTracker : AllStatic {
   // if NMT should slow down calling thread to allow
   // worker thread to catch up
   static volatile bool             _slowdown_calling_thread;
+
+  // pending memory op count.
+  // Certain memory ops need to pre-reserve sequence number
+  // before memory operation can happen to avoid race condition.
+  // See MemTracker::Tracker for detail
+  static volatile jint             _pending_op_count;
 };
 
 #endif // SHARE_VM_SERVICES_MEM_TRACKER_HPP
