@@ -431,7 +431,12 @@ vpath %.$(OBJECT_SUFFIX) $(OBJDIR)
 # namely jni.h, jvm.h, and jni_utils.h, plus their platform-specific
 # relatives.
 #
-VPATH0.h =   $(PLATFORM_SRC)/javavm/export$(CLASSPATH_SEPARATOR)$(SHARE_SRC)/javavm/export
+ifeq ($(PLATFORM), macosx)
+  VPATH0.h =   $(PLATFORM_SRC_MACOS)/javavm/export$(CLASSPATH_SEPARATOR)$(SHARE_SRC)/javavm/export
+else
+  VPATH0.h =   $(PLATFORM_SRC)/javavm/export$(CLASSPATH_SEPARATOR)$(SHARE_SRC)/javavm/export
+endif
+
 ifdef OPENJDK
   VPATH.h = $(VPATH0.h)
 else
