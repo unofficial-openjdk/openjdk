@@ -132,10 +132,7 @@ E* ArrayAllocator<E, F>::allocate(size_t length) {
     vm_exit_out_of_memory(_size, "Allocator (reserve)");
   }
 
-  bool success = os::commit_memory(_addr, _size, false /* executable */);
-  if (!success) {
-    vm_exit_out_of_memory(_size, "Allocator (commit)");
-  }
+  os::commit_memory_or_exit(_addr, _size, !ExecMem, "Allocator (commit)");
 
   return (E*)_addr;
 }

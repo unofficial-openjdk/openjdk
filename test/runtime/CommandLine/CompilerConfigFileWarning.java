@@ -19,18 +19,32 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
-#define SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
+/*
+ * @test
+ * @bug 7167142
+ * @summary Warn if unused .hotspot_compiler file is present
+ * @library /testlibrary
+ */
 
-class KlassInfoEntry;
+import java.io.PrintWriter;
+import com.oracle.java.testlibrary.*;
 
-class KlassInfoClosure : public StackObj {
- public:
-  // Called for each KlassInfoEntry.
-  virtual void do_cinfo(KlassInfoEntry* cie) = 0;
-};
+public class CompilerConfigFileWarning {
+    public static void main(String[] args) throws Exception {
+        String vmVersion = System.getProperty("java.vm.version");
+        if (vmVersion.toLowerCase().contains("debug") || vmVersion.toLowerCase().contains("jvmg")) {
+            System.out.println("Skip on debug builds since we'll always read the file there");
+            return;
+        }
 
-#endif // SHARE_VM_MEMORY_KLASSINFOCLOSURE_HPP
+        PrintWriter pw = new PrintWriter(".hotspot_compiler");
+        pw.println("aa");
+        pw.close();
+
+        ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-version");
+        OutputAnalyzer output = new OutputAnalyzer(pb.start());
+        output.shouldContain("warning: .hotspot_compiler file is present but has been ignored.  Run with -XX:CompileCommandFile=.hotspot_compiler to load the file.");
+    }
+}
