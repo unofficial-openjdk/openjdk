@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,10 @@ class Metaspace : public CHeapObj<mtClass> {
   friend class MetaspaceAux;
 
  public:
-  enum MetadataType {ClassType, NonClassType};
+  enum MetadataType {ClassType = 0,
+                     NonClassType = ClassType + 1,
+                     MetadataTypeCount = ClassType + 2
+  };
   enum MetaspaceType {
     StandardMetaspaceType,
     BootMetaspaceType,
@@ -124,6 +127,23 @@ class Metaspace : public CHeapObj<mtClass> {
   static VirtualSpaceList* space_list()       { return _space_list; }
   static VirtualSpaceList* class_space_list() { return _class_space_list; }
 
+  // This is used by DumpSharedSpaces only, where only _vsm is used. So we will
+  // maintain a single list for now.
+  void record_allocation(void* ptr, MetaspaceObj::Type type, size_t word_size);
+
+  class AllocRecord : public CHeapObj<mtClass> {
+  public:
+    AllocRecord(address ptr, MetaspaceObj::Type type, int byte_size)
+      : _next(NULL), _ptr(ptr), _type(type), _byte_size(byte_size) {}
+    AllocRecord *_next;
+    address _ptr;
+    MetaspaceObj::Type _type;
+    int _byte_size;
+  };
+
+  AllocRecord * _alloc_record_head;
+  AllocRecord * _alloc_record_tail;
+
  public:
 
   Metaspace(Mutex* lock, MetaspaceType type);
@@ -145,8 +165,8 @@ class Metaspace : public CHeapObj<mtClass> {
   size_t used_bytes_slow(MetadataType mdtype) const;
   size_t capacity_bytes_slow(MetadataType mdtype) const;
 
-  static Metablock* allocate(ClassLoaderData* loader_data, size_t size,
-                            bool read_only, MetadataType mdtype, TRAPS);
+  static Metablock* allocate(ClassLoaderData* loader_data, size_t word_size,
+                             bool read_only, MetaspaceObj::Type type, TRAPS);
   void deallocate(MetaWord* ptr, size_t byte_size, bool is_class);
 
   MetaWord* expand_and_allocate(size_t size,
@@ -163,10 +183,20 @@ class Metaspace : public CHeapObj<mtClass> {
   void print_on(outputStream* st) const;
   // Debugging support
   void verify();
+
+  class AllocRecordClosure :  public StackObj {
+  public:
+    virtual void doit(address ptr, MetaspaceObj::Type type, int byte_size) = 0;
+  };
+
+  void iterate(AllocRecordClosure *closure);
 };
 
 class MetaspaceAux : AllStatic {
+  static size_t free_chunks_total(Metaspace::MetadataType mdtype);
+  static size_t free_chunks_total_in_bytes(Metaspace::MetadataType mdtype);
 
+ public:
   // Statistics for class space and data space in metaspace.
 
   // These methods iterate over the classloader data graph
@@ -178,26 +208,24 @@ class MetaspaceAux : AllStatic {
   // Iterates over the virtual space list.
   static size_t reserved_in_bytes(Metaspace::MetadataType mdtype);
 
-  static size_t free_chunks_total(Metaspace::MetadataType mdtype);
-  static size_t free_chunks_total_in_bytes(Metaspace::MetadataType mdtype);
-
- public:
   // Running sum of space in all Metachunks that has been
   // allocated to a Metaspace.  This is used instead of
-  // iterating over all the classloaders
-  static size_t _allocated_capacity_words;
+  // iterating over all the classloaders. One for each
+  // type of Metadata
+  static size_t _allocated_capacity_words[Metaspace:: MetadataTypeCount];
   // Running sum of space in all Metachunks that have
-  // are being used for metadata.
-  static size_t _allocated_used_words;
+  // are being used for metadata. One for each
+  // type of Metadata.
+  static size_t _allocated_used_words[Metaspace:: MetadataTypeCount];
 
  public:
   // Decrement and increment _allocated_capacity_words
-  static void dec_capacity(size_t words);
-  static void inc_capacity(size_t words);
+  static void dec_capacity(Metaspace::MetadataType type, size_t words);
+  static void inc_capacity(Metaspace::MetadataType type, size_t words);
 
   // Decrement and increment _allocated_used_words
-  static void dec_used(size_t words);
-  static void inc_used(size_t words);
+  static void dec_used(Metaspace::MetadataType type, size_t words);
+  static void inc_used(Metaspace::MetadataType type, size_t words);
 
   // Total of space allocated to metadata in all Metaspaces.
   // This sums the space used in each Metachunk by
@@ -211,18 +239,32 @@ class MetaspaceAux : AllStatic {
   static size_t free_chunks_total();
   static size_t free_chunks_total_in_bytes();
 
+  static size_t allocated_capacity_words(Metaspace::MetadataType mdtype) {
+    return _allocated_capacity_words[mdtype];
+  }
   static size_t allocated_capacity_words() {
-    return _allocated_capacity_words;
+    return _allocated_capacity_words[Metaspace::ClassType] +
+           _allocated_capacity_words[Metaspace::NonClassType];
+  }
+  static size_t allocated_capacity_bytes(Metaspace::MetadataType mdtype) {
+    return allocated_capacity_words(mdtype) * BytesPerWord;
   }
   static size_t allocated_capacity_bytes() {
-    return _allocated_capacity_words * BytesPerWord;
+    return allocated_capacity_words() * BytesPerWord;
   }
 
+  static size_t allocated_used_words(Metaspace::MetadataType mdtype) {
+    return _allocated_used_words[mdtype];
+  }
   static size_t allocated_used_words() {
-    return _allocated_used_words;
+    return _allocated_used_words[Metaspace::ClassType] +
+           _allocated_used_words[Metaspace::NonClassType];
+  }
+  static size_t allocated_used_bytes(Metaspace::MetadataType mdtype) {
+    return allocated_used_words(mdtype) * BytesPerWord;
   }
   static size_t allocated_used_bytes() {
-    return _allocated_used_words * BytesPerWord;
+    return allocated_used_words() * BytesPerWord;
   }
 
   static size_t free_bytes();
