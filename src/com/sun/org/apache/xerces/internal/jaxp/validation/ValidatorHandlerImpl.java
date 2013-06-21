@@ -685,6 +685,13 @@ final class ValidatorHandlerImpl extends ValidatorHandler implements
                                // Ignore the exception if the security manager cannot be set.
                                catch (SAXException exc) {}
                            }
+                           try {
+                               reader.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD,
+                                      fComponentManager.getProperty(XMLConstants.ACCESS_EXTERNAL_DTD));
+                           } catch (SAXException exc) {
+                               System.err.println("Warning: " + reader.getClass().getName() + ": " +
+                                      exc.getMessage());
+                           }
                         }
                     } catch( Exception e ) {
                         // this is impossible, but better safe than sorry
