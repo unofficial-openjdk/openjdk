@@ -1609,8 +1609,12 @@ void Arguments::set_bytecode_flags() {
 void Arguments::set_aggressive_opts_flags() {
 #ifdef COMPILER2
   if (AggressiveOpts || !FLAG_IS_DEFAULT(AutoBoxCacheMax)) {
+    // EliminateAutoBox code is broken in C2
     if (FLAG_IS_DEFAULT(EliminateAutoBox)) {
-      FLAG_SET_DEFAULT(EliminateAutoBox, true);
+      // FLAG_SET_DEFAULT(EliminateAutoBox, true);
+    }
+    if (EliminateAutoBox) {
+      FLAG_SET_DEFAULT(EliminateAutoBox, false);
     }
     if (FLAG_IS_DEFAULT(AutoBoxCacheMax)) {
       FLAG_SET_DEFAULT(AutoBoxCacheMax, 20000);
