@@ -1616,8 +1616,13 @@ public class Types {
      * type parameters in t are deleted.
      */
     public Type erasure(Type t) {
-        return erasure(t, false);
+        return eraseNotNeeded(t)? t : erasure(t, false);
     }
+    //where
+    private boolean eraseNotNeeded(Type t) {
+        return (t.tag <= lastBaseTag) || (syms.stringType.tsym == t.tsym);
+    }
+
     //where
     private Type erasure(Type t, boolean recurse) {
         if (t.tag <= lastBaseTag)

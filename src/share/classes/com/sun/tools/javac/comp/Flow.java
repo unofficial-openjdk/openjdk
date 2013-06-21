@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -340,9 +340,10 @@ public class Flow extends TreeScanner {
      */
     void markThrown(JCTree tree, Type exc) {
         if (!chk.isUnchecked(tree.pos(), exc)) {
-            if (!chk.isHandled(exc, caught))
+            if (!chk.isHandled(exc, caught)) {
                 pendingExits.append(new PendingExit(tree, exc));
-                thrown = chk.incl(exc, thrown);
+            }
+            thrown = chk.incl(exc, thrown);
         }
     }
 
@@ -1039,8 +1040,9 @@ public class Flow extends TreeScanner {
                             names.close,
                             List.<Type>nil(),
                             List.<Type>nil());
+                    Type mt = types.memberType(resource.type, closeMethod);
                     if (closeMethod.kind == MTH) {
-                        for (Type t : ((MethodSymbol)closeMethod).getThrownTypes()) {
+                        for (Type t : mt.getThrownTypes()) {
                             markThrown(resource, t);
                         }
                     }
