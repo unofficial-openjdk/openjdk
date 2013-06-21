@@ -28,6 +28,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -119,7 +120,7 @@ public class TCPTransport extends Transport {
 
     /** client host for the current thread's connection */
     private static final ThreadLocal<ConnectionHandler>
-        threadConnectionHandler = new ThreadLocal<ConnectionHandler>();
+        threadConnectionHandler = new ThreadLocal<>();
 
     /** endpoints for this transport */
     private final LinkedList<TCPEndpoint> epList;
@@ -129,7 +130,7 @@ public class TCPTransport extends Transport {
     private ServerSocket server = null;
     /** table mapping endpoints to channels */
     private final Map<TCPEndpoint,Reference<TCPChannel>> channelTable =
-        new WeakHashMap<TCPEndpoint,Reference<TCPChannel>>();
+        new WeakHashMap<>();
 
     static final RMISocketFactory defaultSocketFactory =
         RMISocketFactory.getDefaultSocketFactory();
@@ -462,8 +463,10 @@ public class TCPTransport extends Transport {
                             return;
                         }
                         // continue loop
-                    } else {
+                    } else if (t instanceof Error) {
                         throw (Error) t;
+                    } else {
+                        throw new UndeclaredThrowableException(t);
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import sun.net.www.MeteredStream;
 import sun.net.www.ParseUtil;
 import sun.net.www.protocol.http.HttpURLConnection;
 import sun.util.logging.PlatformLogger;
+import static sun.net.www.protocol.http.HttpURLConnection.TunnelState.*;
 
 /**
  * @author Herb Jellinek
@@ -45,7 +46,7 @@ public class HttpClient extends NetworkClient {
     // whether this httpclient comes from the cache
     protected boolean cachedHttpClient = false;
 
-    private boolean inCache;
+    protected boolean inCache;
 
     // Http requests we send
     MessageHeader requests;
@@ -120,7 +121,14 @@ public class HttpClient extends NetworkClient {
     public boolean reuse = false;
 
     // Traffic capture tool, if configured. See HttpCapture class for info
-     private HttpCapture capture = null;
+    private HttpCapture capture = null;
+
+    private static final PlatformLogger logger = HttpURLConnection.getHttpLogger();
+    private static void logFinest(String msg) {
+        if (logger.isLoggable(PlatformLogger.FINEST)) {
+            logger.finest(msg);
+        }
+    }
 
     /**
      * A NOP method kept for backwards binary compatibility
@@ -244,16 +252,17 @@ public class HttpClient extends NetworkClient {
      */
     public static HttpClient New(URL url)
     throws IOException {
-        return HttpClient.New(url, Proxy.NO_PROXY, -1, true);
+        return HttpClient.New(url, Proxy.NO_PROXY, -1, true, null);
     }
 
     public static HttpClient New(URL url, boolean useCache)
         throws IOException {
-        return HttpClient.New(url, Proxy.NO_PROXY, -1, useCache);
+        return HttpClient.New(url, Proxy.NO_PROXY, -1, useCache, null);
     }
 
-    public static HttpClient New(URL url, Proxy p, int to, boolean useCache)
-        throws IOException {
+    public static HttpClient New(URL url, Proxy p, int to, boolean useCache,
+        HttpURLConnection httpuc) throws IOException
+    {
         if (p == null) {
             p = Proxy.NO_PROXY;
         }
@@ -261,6 +270,16 @@ public class HttpClient extends NetworkClient {
         /* see if one's already around */
         if (useCache) {
             ret = kac.get(url, null);
+            if (ret != null && httpuc != null &&
+                httpuc.streaming() &&
+                httpuc.getRequestMethod() == "POST") {
+                if (!ret.available()) {
+                    ret.inCache = false;
+                    ret.closeServer();
+                    ret = null;
+                }
+            }
+
             if (ret != null) {
                 if ((ret.proxy != null && ret.proxy.equals(p)) ||
                     (ret.proxy == null && p == null)) {
@@ -268,10 +287,9 @@ public class HttpClient extends NetworkClient {
                         ret.cachedHttpClient = true;
                         assert ret.inCache;
                         ret.inCache = false;
-                        PlatformLogger logger = HttpURLConnection.getHttpLogger();
-                        if (logger.isLoggable(PlatformLogger.FINEST)) {
-                            logger.finest("KeepAlive stream retrieved from the cache, " + ret);
-                        }
+                        if (httpuc != null && ret.needsTunneling())
+                            httpuc.setTunnelState(TUNNELING);
+                        logFinest("KeepAlive stream retrieved from the cache, " + ret);
                     }
                 } else {
                     // We cannot return this connection to the cache as it's
@@ -302,20 +320,25 @@ public class HttpClient extends NetworkClient {
         return ret;
     }
 
-    public static HttpClient New(URL url, Proxy p, int to) throws IOException {
-        return New(url, p, to, true);
+    public static HttpClient New(URL url, Proxy p, int to,
+        HttpURLConnection httpuc) throws IOException
+    {
+        return New(url, p, to, true, httpuc);
     }
 
     public static HttpClient New(URL url, String proxyHost, int proxyPort,
                                  boolean useCache)
         throws IOException {
-        return New(url, newHttpProxy(proxyHost, proxyPort, "http"), -1, useCache);
+        return New(url, newHttpProxy(proxyHost, proxyPort, "http"),
+            -1, useCache, null);
     }
 
     public static HttpClient New(URL url, String proxyHost, int proxyPort,
-                                 boolean useCache, int to)
+                                 boolean useCache, int to,
+                                 HttpURLConnection httpuc)
         throws IOException {
-        return New(url, newHttpProxy(proxyHost, proxyPort, "http"), to, useCache);
+        return New(url, newHttpProxy(proxyHost, proxyPort, "http"),
+            to, useCache, httpuc);
     }
 
     /* return it to the cache as still usable, if:
@@ -342,6 +365,37 @@ public class HttpClient extends NetworkClient {
         } else {
             closeServer();
         }
+    }
+
+    protected synchronized boolean available() {
+        boolean available = true;
+        int old = -1;
+
+        try {
+            try {
+                old = serverSocket.getSoTimeout();
+                serverSocket.setSoTimeout(1);
+                BufferedInputStream tmpbuf =
+                        new BufferedInputStream(serverSocket.getInputStream());
+                int r = tmpbuf.read();
+                if (r == -1) {
+                    logFinest("HttpClient.available(): " +
+                            "read returned -1: not available");
+                    available = false;
+                }
+            } catch (SocketTimeoutException e) {
+                logFinest("HttpClient.available(): " +
+                        "SocketTimeout: its available");
+            } finally {
+                if (old != -1)
+                    serverSocket.setSoTimeout(old);
+            }
+        } catch (IOException e) {
+            logFinest("HttpClient.available(): " +
+                        "SocketException: not available");
+            available = false;
+        }
+        return available;
     }
 
     protected synchronized void putInKeepAliveCache() {
@@ -821,10 +875,7 @@ public class HttpClient extends NetworkClient {
 
             if (isKeepingAlive())   {
                 // Wrap KeepAliveStream if keep alive is enabled.
-                PlatformLogger logger = HttpURLConnection.getHttpLogger();
-                if (logger.isLoggable(PlatformLogger.FINEST)) {
-                    logger.finest("KeepAlive stream used: " + url);
-                }
+                logFinest("KeepAlive stream used: " + url);
                 serverInput = new KeepAliveStream(serverInput, pi, cl, this);
                 failedOnce = false;
             }

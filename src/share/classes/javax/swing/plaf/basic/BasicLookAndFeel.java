@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -861,6 +861,7 @@ public abstract class BasicLookAndFeel extends LookAndFeel implements Serializab
                          "END", "endPassThrough",
                        "ENTER", "enterPressed"
                  }),
+            "ComboBox.noActionOnKeyNavigation", Boolean.FALSE,
 
             // *** FileChooser
 
@@ -1153,7 +1154,9 @@ public abstract class BasicLookAndFeel extends LookAndFeel implements Serializab
             "Menu.menuPopupOffsetY", new Integer(0),
             "Menu.submenuPopupOffsetX", new Integer(0),
             "Menu.submenuPopupOffsetY", new Integer(0),
-            "Menu.shortcutKeys", new int[] {KeyEvent.ALT_MASK},
+            "Menu.shortcutKeys", new int[]{
+                SwingUtilities2.getSystemMnemonicKeyMask()
+            },
             "Menu.crossMenuMnemonic", Boolean.TRUE,
             // Menu.cancelMode affects the cancel menu action behaviour;
             // currently supports:

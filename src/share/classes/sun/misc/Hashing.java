@@ -24,7 +24,7 @@
  */
 package sun.misc;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Hashing utilities.
@@ -213,18 +213,6 @@ public class Hashing {
     private static class Holder {
 
         /**
-         * Used for generating per-instance hash seeds.
-         *
-         * We try to improve upon the default seeding.
-         */
-        static final Random SEED_MAKER = new Random(
-                Double.doubleToRawLongBits(Math.random())
-                ^ System.identityHashCode(Hashing.class)
-                ^ System.currentTimeMillis()
-                ^ System.nanoTime()
-                ^ Runtime.getRuntime().freeMemory());
-
-        /**
          * Access to {@code String.hash32()}
          */
         static final JavaLangAccess LANG_ACCESS;
@@ -248,10 +236,17 @@ public class Hashing {
         return Holder.LANG_ACCESS.getStringHash32(string);
     }
 
+    /**
+     * Return a non-zero 32-bit pseudo random value. The {@code instance} object
+     * may be used as part of the value.
+     *
+     * @param instance an object to use if desired in choosing value.
+     * @return a non-zero 32-bit pseudo random value.
+     */
     public static int randomHashSeed(Object instance) {
         int seed;
         if (sun.misc.VM.isBooted()) {
-            seed = Holder.SEED_MAKER.nextInt();
+            seed = ThreadLocalRandom.current().nextInt();
         } else {
             // lower quality "random" seed value--still better than zero and not
             // not practically reversible.

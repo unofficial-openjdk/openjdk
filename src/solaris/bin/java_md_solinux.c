@@ -809,7 +809,6 @@ GetJREPath(char *path, jint pathsize, const char * arch, jboolean speculative)
 jboolean
 LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
 {
-    Dl_info dlinfo;
     void *libjvm;
 
     JLI_TraceLauncher("JVM path is %s\n", jvmpath);
@@ -982,7 +981,18 @@ void SplashFreeLibrary() {
 int
 ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void * args) {
     int rslt;
-#ifdef __linux__
+#ifdef __solaris__
+    thread_t tid;
+    long flags = 0;
+    if (thr_create(NULL, stack_size, (void *(*)(void *))continuation, args, flags, &tid) == 0) {
+      void * tmp;
+      thr_join(tid, NULL, &tmp);
+      rslt = (int)tmp;
+    } else {
+      /* See below. Continue in current thread if thr_create() failed */
+      rslt = continuation(args);
+    }
+#else /* ! __solaris__ */
     pthread_t tid;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -1007,18 +1017,7 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
     }
 
     pthread_attr_destroy(&attr);
-#else /* ! __linux__ */
-    thread_t tid;
-    long flags = 0;
-    if (thr_create(NULL, stack_size, (void *(*)(void *))continuation, args, flags, &tid) == 0) {
-      void * tmp;
-      thr_join(tid, NULL, &tmp);
-      rslt = (int)tmp;
-    } else {
-      /* See above. Continue in current thread if thr_create() failed */
-      rslt = continuation(args);
-    }
-#endif /* __linux__ */
+#endif /* __solaris__ */
     return rslt;
 }
 

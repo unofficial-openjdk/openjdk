@@ -145,7 +145,7 @@ static struct  sockaddr *getBroadcast(JNIEnv *env, int sock, const char *name, s
 static short   getSubnet(JNIEnv *env, int sock, const char *ifname);
 static int     getIndex(int sock, const char *ifname);
 
-static int     getFlags(int sock, const char *ifname);
+static int     getFlags(int sock, const char *ifname, int *flags);
 static int     getMacAddress(JNIEnv *env, int sock,  const char* ifname, const struct in_addr* addr, unsigned char *buf);
 static int     getMTU(JNIEnv *env, int sock, const char *ifname);
 
@@ -557,6 +557,7 @@ static int getFlags0(JNIEnv *env, jstring name) {
     jboolean isCopy;
     int ret, sock;
     const char* name_utf;
+    int flags = 0;
 
     name_utf = (*env)->GetStringUTFChars(env, name, &isCopy);
 
@@ -567,7 +568,7 @@ static int getFlags0(JNIEnv *env, jstring name) {
 
     name_utf = (*env)->GetStringUTFChars(env, name, &isCopy);
 
-    ret = getFlags(sock, name_utf);
+    ret = getFlags(sock, name_utf, &flags);
 
     close(sock);
     (*env)->ReleaseStringUTFChars(env, name, name_utf);
@@ -577,7 +578,7 @@ static int getFlags0(JNIEnv *env, jstring name) {
         return -1;
     }
 
-    return ret;
+    return flags;
 }
 
 
@@ -799,7 +800,7 @@ static netif *enumInterfaces(JNIEnv *env) {
        do{ \
         _pointer = (_type)malloc( _size ); \
         if (_pointer == NULL) { \
-            JNU_ThrowOutOfMemoryError(env, "heap allocation failed"); \
+            JNU_ThrowOutOfMemoryError(env, "Native heap allocation failed"); \
             return ifs; /* return untouched list */ \
         } \
        } while(0)
@@ -833,20 +834,26 @@ void freeif(netif *ifs) {
     }
 }
 
-netif *addif(JNIEnv *env, int sock, const char * if_name, netif *ifs, struct sockaddr* ifr_addrP, int family, short prefix) {
+netif *addif(JNIEnv *env, int sock, const char * if_name,
+             netif *ifs, struct sockaddr* ifr_addrP, int family,
+             short prefix)
+{
     netif *currif = ifs, *parent;
     netaddr *addrP;
 
 #ifdef LIFNAMSIZ
-    char name[LIFNAMSIZ],  vname[LIFNAMSIZ];
+    int ifnam_size = LIFNAMSIZ;
+    char name[LIFNAMSIZ], vname[LIFNAMSIZ];
 #else
-    char name[IFNAMSIZ],  vname[IFNAMSIZ];
+    int ifnam_size = IFNAMSIZ;
+    char name[IFNAMSIZ], vname[IFNAMSIZ];
 #endif
 
     char  *name_colonP;
     int mask;
     int isVirtual = 0;
     int addr_size;
+    int flags = 0;
 
     /*
      * If the interface name is a logical interface then we
@@ -855,7 +862,8 @@ netif *addif(JNIEnv *env, int sock, const char * if_name, netif *ifs, struct soc
      * currently doesn't have any concept of physical vs.
      * logical interfaces.
      */
-    strcpy(name, if_name);
+    strncpy(name, if_name, ifnam_size);
+    name[ifnam_size - 1] = '\0';
     *vname = 0;
 
     /*
@@ -901,7 +909,7 @@ netif *addif(JNIEnv *env, int sock, const char * if_name, netif *ifs, struct soc
        * the 'parent' interface with the new records.
        */
         *name_colonP = 0;
-        if (getFlags(sock, name) < 0) {
+        if (getFlags(sock, name, &flags) < 0 || flags < 0) {
             // failed to access parent interface do not create parent.
             // We are a virtual interface with no parent.
             isVirtual = 1;
@@ -932,9 +940,10 @@ netif *addif(JNIEnv *env, int sock, const char * if_name, netif *ifs, struct soc
      * insert it onto the list.
      */
     if (currif == NULL) {
-         CHECKED_MALLOC3(currif, netif *, sizeof(netif)+IFNAMSIZ );
+         CHECKED_MALLOC3(currif, netif *, sizeof(netif) + ifnam_size);
          currif->name = (char *) currif+sizeof(netif);
-         strcpy(currif->name, name);
+         strncpy(currif->name, name, ifnam_size);
+         currif->name[ifnam_size - 1] = '\0';
          currif->index = getIndex(sock, name);
          currif->addr = NULL;
          currif->childs = NULL;
@@ -967,9 +976,10 @@ netif *addif(JNIEnv *env, int sock, const char * if_name, netif *ifs, struct soc
         }
 
         if (currif == NULL) {
-            CHECKED_MALLOC3(currif, netif *, sizeof(netif)+ IFNAMSIZ );
+            CHECKED_MALLOC3(currif, netif *, sizeof(netif) + ifnam_size);
             currif->name = (char *) currif + sizeof(netif);
-            strcpy(currif->name, vname);
+            strncpy(currif->name, vname, ifnam_size);
+            currif->name[ifnam_size - 1] = '\0';
             currif->index = getIndex(sock, vname);
             currif->addr = NULL;
            /* Need to duplicate the addr entry? */
@@ -1122,7 +1132,7 @@ static netif *enumIPv6Interfaces(JNIEnv *env, int sock, netif *ifs) {
     uint8_t ipv6addr[16];
 
     if ((f = fopen(_PATH_PROCNET_IFINET6, "r")) != NULL) {
-        while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+        while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %08x %02x %02x %02x %20s\n",
                          addr6p[0], addr6p[1], addr6p[2], addr6p[3], addr6p[4], addr6p[5], addr6p[6], addr6p[7],
                          &if_idx, &plen, &scope, &dad_status, devname) != EOF) {
 
@@ -1273,9 +1283,8 @@ static int getMTU(JNIEnv *env, int sock,  const char *ifname) {
     return  if2.ifr_mtu;
 }
 
-static int getFlags(int sock, const char *ifname) {
+static int getFlags(int sock, const char *ifname, int *flags) {
   struct ifreq if2;
-  int ret = -1;
 
   memset((char *) &if2, 0, sizeof(if2));
   strcpy(if2.ifr_name, ifname);
@@ -1284,7 +1293,12 @@ static int getFlags(int sock, const char *ifname) {
       return -1;
   }
 
-  return if2.ifr_flags;
+  if (sizeof(if2.ifr_flags) == sizeof(short)) {
+      *flags = (if2.ifr_flags & 0xffff);
+  } else {
+      *flags = if2.ifr_flags;
+  }
+  return 0;
 }
 
 #endif
@@ -1658,7 +1672,7 @@ static int getMTU(JNIEnv *env, int sock,  const char *ifname) {
 }
 
 
-static int getFlags(int sock, const char *ifname) {
+static int getFlags(int sock, const char *ifname, int *flags) {
      struct   lifreq lifr;
      memset((caddr_t)&lifr, 0, sizeof(lifr));
      strcpy((caddr_t)&(lifr.lifr_name), ifname);
@@ -1667,7 +1681,8 @@ static int getFlags(int sock, const char *ifname) {
          return -1;
      }
 
-     return  lifr.lifr_flags;
+     *flags = lifr.lifr_flags;
+     return 0;
 }
 
 
@@ -1963,7 +1978,7 @@ static int getMTU(JNIEnv *env, int sock,  const char *ifname) {
     return  if2.ifr_mtu;
 }
 
-static int getFlags(int sock, const char *ifname) {
+static int getFlags(int sock, const char *ifname, int *flags) {
   struct ifreq if2;
   int ret = -1;
 
@@ -1974,7 +1989,12 @@ static int getFlags(int sock, const char *ifname) {
       return -1;
   }
 
-  return (((int) if2.ifr_flags) & 0xffff);
+  if (sizeof(if2.ifr_flags) == sizeof(short)) {
+    *flags = (if2.ifr_flags & 0xffff);
+  } else {
+    *flags = if2.ifr_flags;
+  }
+  return 0;
 }
 
 #endif

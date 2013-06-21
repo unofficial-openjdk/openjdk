@@ -32,13 +32,13 @@ public interface PlatformEventNotifier {
 
     void notifyZoom(boolean isZoomed);
 
-    void notifyExpose(final int x, final int y, final int w, final int h);
+    void notifyExpose(Rectangle r);
 
     void notifyReshape(int x, int y, int w, int h);
 
     void notifyUpdateCursor();
 
-    void notifyActivation(boolean activation);
+    void notifyActivation(boolean activation, LWWindowPeer opposite);
 
     // MouseDown in non-client area
     void notifyNCMouseDown();
