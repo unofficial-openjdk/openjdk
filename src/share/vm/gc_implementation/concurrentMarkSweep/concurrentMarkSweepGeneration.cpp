@@ -1892,10 +1892,6 @@ NOT_PRODUCT(
       save_heap_summary();
     }
 
-    if (first_state > Idling) {
-      save_heap_summary();
-    }
-
     do_compaction_work(clear_all_soft_refs);
 
     // Has the GC time limit been exceeded?
