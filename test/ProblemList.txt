@@ -134,9 +134,6 @@ java/lang/Runtime/exec/SleepyCat.java                           generic-all
 # Times out on solaris sparc -server
 java/lang/ThreadLocal/MemoryLeak.java                           solaris-all
 
-# Windows X64, RuntimeException: MyThread expected to have RUNNABLE but got WAITING
-java/lang/Thread/ThreadStateTest.java                           generic-all
-
 # 7148492
 java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
 
@@ -144,17 +141,43 @@ java/lang/management/MemoryMXBean/ResetPeakMemoryUsage.java	generic-all
 
 # jdk_management
 
-# Failing, bug was filed: 6959636
-javax/management/loading/LibraryLoader/LibraryLoaderTest.java   generic-all
-
 # Access denied messages on windows/mks, filed 6954450
 sun/management/jmxremote/bootstrap/RmiSslNoKeyStoreTest.sh      windows-all
 
-# Fails on linux: KO: StringMonitor notification missed or not emitted
-javax/management/monitor/NonComparableAttributeValueTest.java   generic-all
-
 # Port conflict? Fails with communication error
 sun/management/jmxremote/bootstrap/PasswordFilePermissionTest.sh generic-all
+
+# Fails with port already in use
+sun/management/jmxremote/bootstrap/SSLConfigFilePermissionTest.sh generic-all
+
+# Fails with port already in use
+sun/management/jmxremote/bootstrap/RmiRegistrySslTest.sh        generic-all
+
+# Windows run seems to have triggered a hotspot gc error (see 6801625)
+com/sun/management/HotSpotDiagnosticMXBean/DumpHeap.sh          generic-all
+
+# Port already in use
+sun/management/jmxremote/bootstrap/LocalManagementTest.sh       generic-all
+
+# Failed to initialize connector (also overflowing jtreg io buffers)
+sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
+sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       generic-all
+
+# Windows X64, java.lang.IllegalStateException
+javax/management/monitor/AttributeArbitraryDataTypeTest.java    generic-all
+
+# 7149181
+sun/management/jmxremote/startstop/JMXStartStopTest.sh          generic-all
+
+############################################################################
+
+# jdk_jmx
+
+# Failing, bug was filed: 6959636
+javax/management/loading/LibraryLoader/LibraryLoaderTest.java   generic-all
+
+# Fails on linux: KO: StringMonitor notification missed or not emitted
+javax/management/monitor/NonComparableAttributeValueTest.java   generic-all
 
 # Fails on Windows 2000, Test failed for iiop java.lang.NullPointerException
 #  at org.omg.stub.javax.management.remote.rmi._RMIConnectionImpl_Tie._invoke(Unknown Source)
@@ -170,20 +193,11 @@ javax/management/monitor/RuntimeExceptionTest.java              generic-all
 # Problems with rmi connection, othervm
 javax/management/remote/mandatory/subjectDelegation/SubjectDelegation2Test.java generic-all
 
-# Fails with port already in use
-sun/management/jmxremote/bootstrap/SSLConfigFilePermissionTest.sh generic-all
-
-# Fails with port already in use
-sun/management/jmxremote/bootstrap/RmiRegistrySslTest.sh        generic-all
-
 # Windows, connection can't last that long
 javax/management/eventService/LeaseTest.java                    generic-all
 
 # Linux othervm, X64, java.lang.Exception: Failed: ratio=102.4027795593753
 javax/management/remote/mandatory/notif/ListenerScaleTest.java  generic-all
-
-# Windows run seems to have triggered a hotspot gc error (see 6801625)
-com/sun/management/HotSpotDiagnosticMXBean/DumpHeap.sh          generic-all
 
 # rmi problem? othervm, java.lang.reflect.UndeclaredThrowableException
 javax/management/remote/mandatory/subjectDelegation/SubjectDelegation3Test.java generic-all
@@ -207,53 +221,19 @@ javax/management/eventService/CustomForwarderTest.java          windows-all
 # Windows i586 failure, callback did not complete
 javax/management/eventService/LeaseManagerDeadlockTest.java     windows-all
 
-# Port already in use
-sun/management/jmxremote/bootstrap/LocalManagementTest.sh       generic-all
-
-# Failed to initialize connector (also overflowing jtreg io buffers)
-sun/management/jmxremote/bootstrap/RmiBootstrapTest.sh          generic-all
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       generic-all
-
-# Windows X64, java.lang.IllegalStateException
-javax/management/monitor/AttributeArbitraryDataTypeTest.java    generic-all
-
-# 7149181
-sun/management/jmxremote/startstop/JMXStartStopTest.sh          generic-all
-
 ############################################################################
 
 # jdk_math
 
 ############################################################################
 
-# jdk_misc
+# jdk_other
 
 # 6988950
 demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       generic-all
 
 # 7056489
 com/sun/jndi/ldap/ReadTimeoutTest.java                          generic-all
-
-# 7162111
-demo/jvmti/mtrace/TraceJFrame.java                              macosx-all
-javax/script/CauseExceptionTest.java                            macosx-all
-javax/script/GetInterfaceTest.java                              macosx-all
-javax/script/JavaScriptScopeTest.java                           macosx-all
-javax/script/NullUndefinedVarTest.java                          macosx-all
-javax/script/PluggableContextTest.java                          macosx-all
-javax/script/ProviderTest.sh                                    macosx-all
-javax/script/RhinoExceptionTest.java                            macosx-all
-javax/script/StringWriterPrintTest.java                         macosx-all
-javax/script/Test1.java                                         macosx-all
-javax/script/Test2.java                                         macosx-all
-javax/script/Test3.java                                         macosx-all
-javax/script/Test4.java                                         macosx-all
-javax/script/Test5.java                                         macosx-all
-javax/script/Test6.java                                         macosx-all
-javax/script/Test7.java                                         macosx-all
-javax/script/Test8.java                                         macosx-all
-javax/script/UnescapedBracketRegExTest.java                     macosx-all
-javax/script/VersionTest.java                                   macosx-all
 
 ############################################################################
 
@@ -283,9 +263,6 @@ sun/net/www/protocol/http/UserCookie.java			macosx-all
 
 # 7162118
 java/net/CookieHandler/CookieManagerTest.java			macosx-all
-
-# 7162123
-test/java/net/InetSocketAddress/B6469803.java			macosx-all
 
 # JPRT needs to set 127.0.0.1 in proxy bypass list
 java/net/URLClassLoader/closetest/CloseTest.java		macosx-all
@@ -392,6 +369,15 @@ sun/security/ssl/com/sun/net/ssl/internal/ssl/InputRecord/InterruptedIO.java sol
 # 7147060
 com/sun/org/apache/xml/internal/security/transforms/ClassLoaderTest.java        generic-all
 
+# 8000439: NPG: REGRESSION : sun/security/krb5/auto/MaxRetries.java fails with timeout
+sun/security/krb5/auto/MaxRetries.java                          solaris-sparcv9
+
+# 8006690: sun/security/krb5/auto/BadKdc1.java fails intermittently
+sun/security/krb5/auto/BadKdc1.java                             solaris-sparcv9
+sun/security/krb5/auto/BadKdc2.java                             solaris-sparcv9
+sun/security/krb5/auto/BadKdc3.java                             solaris-sparcv9
+sun/security/krb5/auto/BadKdc4.java                             solaris-sparcv9
+
 ############################################################################
 
 # jdk_swing
@@ -407,14 +393,11 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 
 # jdk_tools
 
+# 8012474
+sun/tools/jmap/Basic.sh                                         generic-all
+
 # 6461635
 com/sun/tools/attach/BasicTests.sh                              generic-all
-
-# Filed 6952105
-com/sun/jdi/SuspendThreadTest.java                              generic-all
-
-# Filed 6987312
-com/sun/jdi/DoubleAgentTest.java                                generic-all
 
 # Filed 6986875
 sun/tools/jps/jps-Vvml.sh                                       generic-all
@@ -425,20 +408,22 @@ sun/tools/jconsole/ResourceCheckTest.sh                         generic-all
 # 7132203
 sun/jvmstat/monitor/MonitoredVm/CR6672135.java                  generic-all
 
-# 7162111
-sun/tools/jrunscript/jrunscript-DTest.sh                       macosx-all
-sun/tools/jrunscript/jrunscript-argsTest.sh                    macosx-all
-sun/tools/jrunscript/jrunscript-cpTest.sh                      macosx-all
-sun/tools/jrunscript/jrunscript-eTest.sh                       macosx-all
-sun/tools/jrunscript/jrunscript-fTest.sh                       macosx-all
-sun/tools/jrunscript/jrunscriptTest.sh                         macosx-all
-
 # 8001118
 sun/tools/jcmd/jcmd-f.sh					generic-all
 sun/tools/jcmd/jcmd-help-help.sh				generic-all
 
 # 7175775
 sun/tools/jinfo/Basic.sh					macosx-all
+
+############################################################################
+
+# jdk_jdi
+
+# Filed 6952105
+com/sun/jdi/SuspendThreadTest.java                              generic-all
+
+# Filed 6987312
+com/sun/jdi/DoubleAgentTest.java                                generic-all
 
 ############################################################################
 
@@ -470,10 +455,6 @@ java/util/concurrent/FutureTask/BlockingTaskExecutor.java       generic-all
 
 # Problems on windows, jmap.exe hangs? (these run jmap), fails on Solaris 10 x86
 java/util/concurrent/locks/Lock/TimedAcquireLeak.java           generic-all
-
-# 7162111
-java/util/ResourceBundle/Control/Bug6530694.java               macosx-all
-java/util/logging/LoggingDeadlock4.java                        macosx-all
 
 # 7041639, Solaris DSA keypair generation bug
 java/util/TimeZone/TimeZoneDatePermissionCheck.sh               solaris-all

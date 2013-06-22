@@ -59,8 +59,7 @@ EXCLUDE_PROPWARN_PKGS = com.sun.java.swing.plaf.windows  \
 # This is an interim solution until the ct.sym is replaced
 # with a new module system (being discussed for JDK 8).
 #
-EXPORTED_PRIVATE_PKGS = com.sun.servicetag \
-                        com.oracle.net \
+EXPORTED_PRIVATE_PKGS = com.oracle.net \
                         com.oracle.nio \
                         com.oracle.util
 
@@ -158,7 +157,6 @@ JDK_MAN_PAGES =            \
         jstack.1           \
         jstat.1            \
         jstatd.1           \
-        jvisualvm.1        \
 	native2ascii.1     \
 	rmic.1             \
         schemagen.1        \
@@ -166,6 +164,10 @@ JDK_MAN_PAGES =            \
         wsgen.1            \
         wsimport.1         \
         xjc.1
+
+ifndef OPENJDK
+  JDK_MAN_PAGES += jvisualvm.1
+endif
 
 ifeq ($(PLATFORM), solaris)
   MANBASEDIRS=$(JDK_TOPDIR)/src/solaris/doc $(IMPORTDOCDIR)
@@ -1226,6 +1228,10 @@ define info-file-item # name value
 $(PRINTF) '%s="%s"\n' $1 $2 >> $@
 endef
 
+define echo-java-info
+$(CAT) $1
+endef
+
 # Values to emit
 MINIMUM_OS_NAME    := $(REQUIRED_OS_NAME)
 MINIMUM_OS_VERSION := $(REQUIRED_OS_VERSION)
@@ -1242,6 +1248,7 @@ $(JDK_INFO_FILE): FRC
 	$(call info-file-item, "OS_VERSION",   "$(MINIMUM_OS_VERSION)")
 	$(call info-file-item, "OS_ARCH",      "$(MINIMUM_OS_ARCH)")
 	$(call info-file-item, "SOURCE",       "$(ALL_SOURCE_TIPS)")
+	$(call echo-java-info, $@)
 
 # Create release file to identify this image
 identify-image-jdk:: $(JDK_INFO_FILE)
@@ -1253,6 +1260,7 @@ $(JRE_INFO_FILE): FRC
 	$(call info-file-item, "OS_VERSION",   "$(MINIMUM_OS_VERSION)")
 	$(call info-file-item, "OS_ARCH",      "$(MINIMUM_OS_ARCH)")
 	$(call info-file-item, "SOURCE",       "$(ALL_SOURCE_TIPS)")
+	$(call echo-java-info, $@)
 
 # Create release file to identify this image
 identify-image-jre:: $(JRE_INFO_FILE)
@@ -1350,8 +1358,8 @@ $(TEMP_PREV_JDK_COMPARISON): install-previous-jdk $(DIRDIFF_JARFILE)
 	@$(java-vm-cleanup)
 
 # Clean up names in the messages printed out
-CAT_FILTER = $(SED) -e "s@$(JDK_IMAGE_DIR)@JDK_IMAGE@g" \
-	            -e "s@$(JRE_IMAGE_DIR)@JRE_IMAGE@g"
+CAT_FILTER = $(SED) -e "s|$(JDK_IMAGE_DIR)|JDK_IMAGE|g" \
+	            -e "s|$(JRE_IMAGE_DIR)|JRE_IMAGE|g"
 
 # Report on the jre image comparison
 compare-image-jre: $(TEMP_PREV_JRE_COMPARISON)
@@ -1419,3 +1427,4 @@ images images-clobber::
 # Force rule
 FRC:
 
+-include $(JDK_TOPDIR)/make/closed/common/release.gmk

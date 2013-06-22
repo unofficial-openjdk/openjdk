@@ -1109,7 +1109,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
         focusLog.fine("Request for decorated window focus");
         // If this is Frame or Dialog we can't assure focus request success - but we still can try
         // If this is Window and its owner Frame is active we can be sure request succedded.
-        Window focusedWindow = XKeyboardFocusManagerPeer.getCurrentNativeFocusedWindow();
+        Window focusedWindow = XKeyboardFocusManagerPeer.getInstance().getCurrentFocusedWindow();
         Window activeWindow = XWindowPeer.getDecoratedOwner(focusedWindow);
 
         focusLog.finer("Current window is: active={0}, focused={1}",
@@ -1140,8 +1140,8 @@ abstract class XDecoratedPeer extends XWindowPeer {
             focusLog.finest("Real native focused window: " + realNativeFocusedWindow +
                             "\nKFM's focused window: " + focusedWindow);
 
-            // See 6522725, 6613426.
-            if (target == realNativeFocusedWindow) {
+            // A workaround for Metacity. See 6522725, 6613426, 7147075.
+            if (target == realNativeFocusedWindow && XWM.getWMID() == XWM.METACITY_WM) {
                 focusLog.fine("The window is already natively focused.");
                 return true;
             }
@@ -1202,7 +1202,7 @@ abstract class XDecoratedPeer extends XWindowPeer {
     }
 
     public void handleWindowFocusOut(Window oppositeWindow, long serial) {
-        Window actualFocusedWindow = XKeyboardFocusManagerPeer.getCurrentNativeFocusedWindow();
+        Window actualFocusedWindow = XKeyboardFocusManagerPeer.getInstance().getCurrentFocusedWindow();
 
         // If the actual focused window is not this decorated window then retain it.
         if (actualFocusedWindow != null && actualFocusedWindow != target) {

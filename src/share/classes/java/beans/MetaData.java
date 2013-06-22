@@ -70,8 +70,9 @@ import static sun.reflect.misc.ReflectUtil.isPackageAccessible;
  * @author Philip Milne
  * @author Steve Langley
  */
+class MetaData {
 
-class NullPersistenceDelegate extends PersistenceDelegate {
+static final class NullPersistenceDelegate extends PersistenceDelegate {
     // Note this will be called by all classes when they reach the
     // top of their superclass chain.
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
@@ -88,7 +89,7 @@ class NullPersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-class EnumPersistenceDelegate extends PersistenceDelegate {
+static final class EnumPersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance == newInstance;
     }
@@ -99,7 +100,7 @@ class EnumPersistenceDelegate extends PersistenceDelegate {
     }
 }
 
-class PrimitivePersistenceDelegate extends PersistenceDelegate {
+static final class PrimitivePersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -110,7 +111,7 @@ class PrimitivePersistenceDelegate extends PersistenceDelegate {
     }
 }
 
-class ArrayPersistenceDelegate extends PersistenceDelegate {
+static final class ArrayPersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return (newInstance != null &&
                 oldInstance.getClass() == newInstance.getClass() && // Also ensures the subtype is correct.
@@ -151,7 +152,7 @@ class ArrayPersistenceDelegate extends PersistenceDelegate {
     }
 }
 
-class ProxyPersistenceDelegate extends PersistenceDelegate {
+static final class ProxyPersistenceDelegate extends PersistenceDelegate {
     protected Expression instantiate(Object oldInstance, Encoder out) {
         Class type = oldInstance.getClass();
         java.lang.reflect.Proxy p = (java.lang.reflect.Proxy)oldInstance;
@@ -186,7 +187,7 @@ class ProxyPersistenceDelegate extends PersistenceDelegate {
 }
 
 // Strings
-class java_lang_String_PersistenceDelegate extends PersistenceDelegate {
+static final class java_lang_String_PersistenceDelegate extends PersistenceDelegate {
     protected Expression instantiate(Object oldInstance, Encoder out) { return null; }
 
     public void writeObject(Object oldInstance, Encoder out) {
@@ -195,7 +196,7 @@ class java_lang_String_PersistenceDelegate extends PersistenceDelegate {
 }
 
 // Classes
-class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
+static final class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -229,7 +230,7 @@ class java_lang_Class_PersistenceDelegate extends PersistenceDelegate {
 }
 
 // Fields
-class java_lang_reflect_Field_PersistenceDelegate extends PersistenceDelegate {
+static final class java_lang_reflect_Field_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -244,7 +245,7 @@ class java_lang_reflect_Field_PersistenceDelegate extends PersistenceDelegate {
 }
 
 // Methods
-class java_lang_reflect_Method_PersistenceDelegate extends PersistenceDelegate {
+static final class java_lang_reflect_Method_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -268,7 +269,7 @@ class java_lang_reflect_Method_PersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-class java_util_Date_PersistenceDelegate extends PersistenceDelegate {
+static class java_util_Date_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         if (!super.mutatesTo(oldInstance, newInstance)) {
             return false;
@@ -291,7 +292,7 @@ class java_util_Date_PersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-final class java_sql_Timestamp_PersistenceDelegate extends java_util_Date_PersistenceDelegate {
+static final class java_sql_Timestamp_PersistenceDelegate extends java_util_Date_PersistenceDelegate {
     private static final Method getNanosMethod = getNanosMethod();
 
     private static Method getNanosMethod() {
@@ -355,7 +356,7 @@ delegates to be registered with concrete classes.
  *
  * @author Sergey A. Malenkov
  */
-abstract class java_util_Collections extends PersistenceDelegate {
+private static abstract class java_util_Collections extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         if (!super.mutatesTo(oldInstance, newInstance)) {
             return false;
@@ -366,6 +367,10 @@ abstract class java_util_Collections extends PersistenceDelegate {
         Collection oldC = (Collection) oldInstance;
         Collection newC = (Collection) newInstance;
         return (oldC.size() == newC.size()) && oldC.containsAll(newC);
+    }
+
+    protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
+        // do not initialize these custom collections in default way
     }
 
     static final class EmptyList_PersistenceDelegate extends java_util_Collections {
@@ -570,7 +575,7 @@ abstract class java_util_Collections extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-class java_util_EnumMap_PersistenceDelegate extends PersistenceDelegate {
+static final class java_util_EnumMap_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return super.mutatesTo(oldInstance, newInstance) && (getType(oldInstance) == getType(newInstance));
     }
@@ -589,7 +594,7 @@ class java_util_EnumMap_PersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-class java_util_EnumSet_PersistenceDelegate extends PersistenceDelegate {
+static final class java_util_EnumSet_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return super.mutatesTo(oldInstance, newInstance) && (getType(oldInstance) == getType(newInstance));
     }
@@ -604,7 +609,7 @@ class java_util_EnumSet_PersistenceDelegate extends PersistenceDelegate {
 }
 
 // Collection
-class java_util_Collection_PersistenceDelegate extends DefaultPersistenceDelegate {
+static class java_util_Collection_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         java.util.Collection oldO = (java.util.Collection)oldInstance;
         java.util.Collection newO = (java.util.Collection)newInstance;
@@ -619,7 +624,7 @@ class java_util_Collection_PersistenceDelegate extends DefaultPersistenceDelegat
 }
 
 // List
-class java_util_List_PersistenceDelegate extends DefaultPersistenceDelegate {
+static class java_util_List_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         java.util.List oldO = (java.util.List)oldInstance;
         java.util.List newO = (java.util.List)newInstance;
@@ -654,7 +659,7 @@ class java_util_List_PersistenceDelegate extends DefaultPersistenceDelegate {
 
 
 // Map
-class java_util_Map_PersistenceDelegate extends DefaultPersistenceDelegate {
+static class java_util_Map_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         // System.out.println("Initializing: " + newInstance);
         java.util.Map oldMap = (java.util.Map)oldInstance;
@@ -692,14 +697,14 @@ class java_util_Map_PersistenceDelegate extends DefaultPersistenceDelegate {
     }
 }
 
-class java_util_AbstractCollection_PersistenceDelegate extends java_util_Collection_PersistenceDelegate {}
-class java_util_AbstractList_PersistenceDelegate extends java_util_List_PersistenceDelegate {}
-class java_util_AbstractMap_PersistenceDelegate extends java_util_Map_PersistenceDelegate {}
-class java_util_Hashtable_PersistenceDelegate extends java_util_Map_PersistenceDelegate {}
+static final class java_util_AbstractCollection_PersistenceDelegate extends java_util_Collection_PersistenceDelegate {}
+static final class java_util_AbstractList_PersistenceDelegate extends java_util_List_PersistenceDelegate {}
+static final class java_util_AbstractMap_PersistenceDelegate extends java_util_Map_PersistenceDelegate {}
+static final class java_util_Hashtable_PersistenceDelegate extends java_util_Map_PersistenceDelegate {}
 
 
 // Beans
-class java_beans_beancontext_BeanContextSupport_PersistenceDelegate extends java_util_Collection_PersistenceDelegate {}
+static final class java_beans_beancontext_BeanContextSupport_PersistenceDelegate extends java_util_Collection_PersistenceDelegate {}
 
 // AWT
 
@@ -710,7 +715,7 @@ class java_beans_beancontext_BeanContextSupport_PersistenceDelegate extends java
  *
  * @author Sergey A. Malenkov
  */
-final class java_awt_Insets_PersistenceDelegate extends PersistenceDelegate {
+static final class java_awt_Insets_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -734,7 +739,7 @@ final class java_awt_Insets_PersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-final class java_awt_Font_PersistenceDelegate extends PersistenceDelegate {
+static final class java_awt_Font_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -803,7 +808,7 @@ final class java_awt_Font_PersistenceDelegate extends PersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegate {
+static final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -844,7 +849,7 @@ final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegat
     }
 }
 
-class StaticFieldsPersistenceDelegate extends PersistenceDelegate {
+static class StaticFieldsPersistenceDelegate extends PersistenceDelegate {
     protected void installFields(Encoder out, Class<?> cls) {
         if (Modifier.isPublic(cls.getModifiers()) && isPackageAccessible(cls)) {
             Field fields[] = cls.getFields();
@@ -873,13 +878,13 @@ class StaticFieldsPersistenceDelegate extends PersistenceDelegate {
 }
 
 // SystemColor
-class java_awt_SystemColor_PersistenceDelegate extends StaticFieldsPersistenceDelegate {}
+static final class java_awt_SystemColor_PersistenceDelegate extends StaticFieldsPersistenceDelegate {}
 
 // TextAttribute
-class java_awt_font_TextAttribute_PersistenceDelegate extends StaticFieldsPersistenceDelegate {}
+static final class java_awt_font_TextAttribute_PersistenceDelegate extends StaticFieldsPersistenceDelegate {}
 
 // MenuShortcut
-class java_awt_MenuShortcut_PersistenceDelegate extends PersistenceDelegate {
+static final class java_awt_MenuShortcut_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -892,7 +897,7 @@ class java_awt_MenuShortcut_PersistenceDelegate extends PersistenceDelegate {
 }
 
 // Component
-class java_awt_Component_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_Component_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.Component c = (java.awt.Component)oldInstance;
@@ -939,7 +944,7 @@ class java_awt_Component_PersistenceDelegate extends DefaultPersistenceDelegate 
 }
 
 // Container
-class java_awt_Container_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_Container_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         // Ignore the children of a JScrollPane.
@@ -974,7 +979,7 @@ class java_awt_Container_PersistenceDelegate extends DefaultPersistenceDelegate 
 }
 
 // Choice
-class java_awt_Choice_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_Choice_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.Choice m = (java.awt.Choice)oldInstance;
@@ -986,7 +991,7 @@ class java_awt_Choice_PersistenceDelegate extends DefaultPersistenceDelegate {
 }
 
 // Menu
-class java_awt_Menu_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_Menu_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.Menu m = (java.awt.Menu)oldInstance;
@@ -998,7 +1003,7 @@ class java_awt_Menu_PersistenceDelegate extends DefaultPersistenceDelegate {
 }
 
 // MenuBar
-class java_awt_MenuBar_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_MenuBar_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.MenuBar m = (java.awt.MenuBar)oldInstance;
@@ -1010,7 +1015,7 @@ class java_awt_MenuBar_PersistenceDelegate extends DefaultPersistenceDelegate {
 }
 
 // List
-class java_awt_List_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_List_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.List m = (java.awt.List)oldInstance;
@@ -1025,7 +1030,7 @@ class java_awt_List_PersistenceDelegate extends DefaultPersistenceDelegate {
 // LayoutManagers
 
 // BorderLayout
-class java_awt_BorderLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_BorderLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
     private static final String[] CONSTRAINTS = {
             BorderLayout.NORTH,
             BorderLayout.SOUTH,
@@ -1056,40 +1061,43 @@ class java_awt_BorderLayout_PersistenceDelegate extends DefaultPersistenceDelega
 }
 
 // CardLayout
-class java_awt_CardLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_CardLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance,
                               Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
-        Hashtable tab = (Hashtable)ReflectionUtils.getPrivateField(oldInstance,
-                                                                   java.awt.CardLayout.class,
-                                                                   "tab",
-                                                                   out.getExceptionListener());
-        if (tab != null) {
-            for(Enumeration e = tab.keys(); e.hasMoreElements();) {
-                Object child = e.nextElement();
-                invokeStatement(oldInstance, "addLayoutComponent",
-                                new Object[]{child, (String)tab.get(child)}, out);
+        if (getVector(newInstance).isEmpty()) {
+            for (Object card : getVector(oldInstance)) {
+                Object[] args = {MetaData.getPrivateFieldValue(card, "java.awt.CardLayout$Card.name"),
+                                 MetaData.getPrivateFieldValue(card, "java.awt.CardLayout$Card.comp")};
+                invokeStatement(oldInstance, "addLayoutComponent", args, out);
             }
         }
+    }
+    protected boolean mutatesTo(Object oldInstance, Object newInstance) {
+        return super.mutatesTo(oldInstance, newInstance) && getVector(newInstance).isEmpty();
+    }
+    private static Vector<?> getVector(Object instance) {
+        return (Vector<?>) MetaData.getPrivateFieldValue(instance, "java.awt.CardLayout.vector");
     }
 }
 
 // GridBagLayout
-class java_awt_GridBagLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class java_awt_GridBagLayout_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance,
                               Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
-        Hashtable comptable = (Hashtable)ReflectionUtils.getPrivateField(oldInstance,
-                                                 java.awt.GridBagLayout.class,
-                                                 "comptable",
-                                                 out.getExceptionListener());
-        if (comptable != null) {
-            for(Enumeration e = comptable.keys(); e.hasMoreElements();) {
-                Object child = e.nextElement();
-                invokeStatement(oldInstance, "addLayoutComponent",
-                                new Object[]{child, comptable.get(child)}, out);
+        if (getHashtable(newInstance).isEmpty()) {
+            for (Map.Entry<?,?> entry : getHashtable(oldInstance).entrySet()) {
+                Object[] args = {entry.getKey(), entry.getValue()};
+                invokeStatement(oldInstance, "addLayoutComponent", args, out);
             }
         }
+    }
+    protected boolean mutatesTo(Object oldInstance, Object newInstance) {
+        return super.mutatesTo(oldInstance, newInstance) && getHashtable(newInstance).isEmpty();
+    }
+    private static Hashtable<?,?> getHashtable(Object instance) {
+        return (Hashtable<?,?>) MetaData.getPrivateFieldValue(instance, "java.awt.GridBagLayout.comptable");
     }
 }
 
@@ -1098,7 +1106,7 @@ class java_awt_GridBagLayout_PersistenceDelegate extends DefaultPersistenceDeleg
 // JFrame (If we do this for Window instead of JFrame, the setVisible call
 // will be issued before we have added all the children to the JFrame and
 // will appear blank).
-class javax_swing_JFrame_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_JFrame_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         java.awt.Window oldC = (java.awt.Window)oldInstance;
@@ -1118,7 +1126,7 @@ class javax_swing_JFrame_PersistenceDelegate extends DefaultPersistenceDelegate 
 // Models
 
 // DefaultListModel
-class javax_swing_DefaultListModel_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_DefaultListModel_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         // Note, the "size" property will be set here.
         super.initialize(type, oldInstance, newInstance, out);
@@ -1132,7 +1140,7 @@ class javax_swing_DefaultListModel_PersistenceDelegate extends DefaultPersistenc
 }
 
 // DefaultComboBoxModel
-class javax_swing_DefaultComboBoxModel_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_DefaultComboBoxModel_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         javax.swing.DefaultComboBoxModel m = (javax.swing.DefaultComboBoxModel)oldInstance;
@@ -1144,7 +1152,7 @@ class javax_swing_DefaultComboBoxModel_PersistenceDelegate extends DefaultPersis
 
 
 // DefaultMutableTreeNode
-class javax_swing_tree_DefaultMutableTreeNode_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_tree_DefaultMutableTreeNode_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object
                               newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
@@ -1160,7 +1168,7 @@ class javax_swing_tree_DefaultMutableTreeNode_PersistenceDelegate extends Defaul
 }
 
 // ToolTipManager
-class javax_swing_ToolTipManager_PersistenceDelegate extends PersistenceDelegate {
+static final class javax_swing_ToolTipManager_PersistenceDelegate extends PersistenceDelegate {
     protected Expression instantiate(Object oldInstance, Encoder out) {
         return new Expression(oldInstance, javax.swing.ToolTipManager.class,
                               "sharedInstance", new Object[]{});
@@ -1168,7 +1176,7 @@ class javax_swing_ToolTipManager_PersistenceDelegate extends PersistenceDelegate
 }
 
 // JTabbedPane
-class javax_swing_JTabbedPane_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_JTabbedPane_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         javax.swing.JTabbedPane p = (javax.swing.JTabbedPane)oldInstance;
@@ -1183,7 +1191,7 @@ class javax_swing_JTabbedPane_PersistenceDelegate extends DefaultPersistenceDele
 }
 
 // Box
-class javax_swing_Box_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_Box_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return super.mutatesTo(oldInstance, newInstance) && getAxis(oldInstance).equals(getAxis(newInstance));
     }
@@ -1204,7 +1212,7 @@ class javax_swing_Box_PersistenceDelegate extends DefaultPersistenceDelegate {
 // Container will return all of the sub menu items that
 // need to be added to the menu item.
 // Not so for JMenu apparently.
-class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         javax.swing.JMenu m = (javax.swing.JMenu)oldInstance;
@@ -1222,7 +1230,7 @@ class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-final class javax_swing_border_MatteBorder_PersistenceDelegate extends PersistenceDelegate {
+static final class javax_swing_border_MatteBorder_PersistenceDelegate extends PersistenceDelegate {
     protected Expression instantiate(Object oldInstance, Encoder out) {
         MatteBorder border = (MatteBorder) oldInstance;
         Insets insets = border.getBorderInsets();
@@ -1242,7 +1250,7 @@ final class javax_swing_border_MatteBorder_PersistenceDelegate extends Persisten
 }
 
 /* XXX - doens't seem to work. Debug later.
-class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
+static final class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
     protected void initialize(Class<?> type, Object oldInstance, Object newInstance, Encoder out) {
         super.initialize(type, oldInstance, newInstance, out);
         javax.swing.JMenu m = (javax.swing.JMenu)oldInstance;
@@ -1264,7 +1272,7 @@ class javax_swing_JMenu_PersistenceDelegate extends DefaultPersistenceDelegate {
  *
  * @author Sergey A. Malenkov
  */
-final class sun_swing_PrintColorUIResource_PersistenceDelegate extends PersistenceDelegate {
+static final class sun_swing_PrintColorUIResource_PersistenceDelegate extends PersistenceDelegate {
     protected boolean mutatesTo(Object oldInstance, Object newInstance) {
         return oldInstance.equals(newInstance);
     }
@@ -1276,7 +1284,6 @@ final class sun_swing_PrintColorUIResource_PersistenceDelegate extends Persisten
     }
 }
 
-class MetaData {
     private static final Map<String,Field> fields = Collections.synchronizedMap(new WeakHashMap<String, Field>());
     private static Hashtable internalPersistenceDelegates = new Hashtable();
 
@@ -1318,7 +1325,7 @@ class MetaData {
         if (Enum.class.isAssignableFrom(type)) {
             return enumPersistenceDelegate;
         }
-        if (ReflectionUtils.isPrimitive(type)) {
+        if (null != XMLEncoder.primitiveTypeFor(type)) {
             return primitivePersistenceDelegate;
         }
         // The persistence delegate for arrays is non-trivial; instantiate it lazily.
@@ -1352,7 +1359,7 @@ class MetaData {
             internalPersistenceDelegates.put(typeName, defaultPersistenceDelegate);
             try {
                 String name =  type.getName();
-                Class c = Class.forName("java.beans." + name.replace('.', '_')
+                Class c = Class.forName("java.beans.MetaData$" + name.replace('.', '_')
                                         + "_PersistenceDelegate");
                 pd = (PersistenceDelegate)c.newInstance();
                 internalPersistenceDelegates.put(typeName, pd);

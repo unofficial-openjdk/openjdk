@@ -572,6 +572,8 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
         J2dRlsTraceLn1(J2D_TRACE_ERROR,
                        "X11SD_SetupSharedSegment shmget has failed: %s",
                        strerror(errno));
+        free((void *)shminfo);
+        XDestroyImage(img);
         return NULL;
     }
 
@@ -581,6 +583,8 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
         J2dRlsTraceLn1(J2D_TRACE_ERROR,
                        "X11SD_SetupSharedSegment shmat has failed: %s",
                        strerror(errno));
+        free((void *)shminfo);
+        XDestroyImage(img);
         return NULL;
     }
 
@@ -601,6 +605,9 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
         J2dRlsTraceLn1(J2D_TRACE_ERROR,
                        "X11SD_SetupSharedSegment XShmAttach has failed: %s",
                        strerror(errno));
+        shmdt(shminfo->shmaddr);
+        free((void *)shminfo);
+        XDestroyImage(img);
         return NULL;
     }
 
@@ -1494,13 +1501,10 @@ void X11SD_DisposeXImage(XImage * image) {
 #ifdef MITSHM
         if (image->obdata != NULL) {
             X11SD_DropSharedSegment((XShmSegmentInfo*)image->obdata);
-        } else {
-            free(image->data);
+            image->obdata = NULL;
         }
-#else
-        free(image->data);
 #endif /* MITSHM */
-        XFree(image);
+        XDestroyImage(image);
     }
 }
 

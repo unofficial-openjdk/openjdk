@@ -65,7 +65,7 @@ public class GrabTest {
             }, sun.awt.SunToolkit.GRAB_EVENT_MASK);
 
         f = new Frame("Frame");
-        f.setSize(200, 200);
+        f.setBounds(0, 0, 300, 300);
         f.addMouseListener(new MouseAdapter() {
                 public void mousePressed(MouseEvent e) {
                     System.out.println(e);
@@ -74,7 +74,7 @@ public class GrabTest {
             });
 
         f1 = new Frame("OtherFrame");
-        f1.setBounds(600, 100, 200, 200);
+        f1.setBounds(700, 100, 200, 200);
 
         w = new Window(f);
         w.setLayout(new FlowLayout());
@@ -86,7 +86,7 @@ public class GrabTest {
                 }
             });
         w.add(b);
-        w.setBounds(300, 100, 200, 200);
+        w.setBounds(400, 100, 200, 200);
         w.setBackground(Color.blue);
         w.addMouseListener(new MouseAdapter() {
                 public void mousePressed(MouseEvent e) {
@@ -175,7 +175,8 @@ public class GrabTest {
 
         // 6. Check that press on the outside area causes ungrab
         Point loc = f.getLocationOnScreen();
-        robot.mouseMove(loc.x + 100, loc.y + f.getSize().height + 300);
+        robot.mouseMove(loc.x + 100, loc.y + f.getSize().height + 1);
+        Util.waitForIdle(robot);
         robot.mousePress(InputEvent.BUTTON1_MASK);
         robot.delay(50);
         robot.mouseRelease(InputEvent.BUTTON1_MASK);
