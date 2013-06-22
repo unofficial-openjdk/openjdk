@@ -29,6 +29,7 @@
 #include "runtime/arguments.hpp"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/defaultStream.hpp"
 
 # include <sys/stat.h>
@@ -358,7 +359,13 @@ char* FileMapInfo::map_region(int i, ReservedSpace rs) {
   ReservedSpace unmapped_rs = rs.last_part(size);
   mapped_rs.release();
 
-  return map_region(i, true);
+  // This memory still belongs to JavaHeap
+  MemTracker::record_virtual_memory_type((address)unmapped_rs.base(), mtJavaHeap);
+  char* mapped_addr = map_region(i, true);
+  if (mapped_addr != NULL) {
+    MemTracker::record_virtual_memory_type((address)mapped_addr, mtJavaHeap);
+  }
+  return mapped_addr;
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,11 +120,12 @@ public:
 
 // Single parameter format strings
 #define ergo_format_str(_name_)      ", " _name_ ": %s"
-#define ergo_format_region(_name_)   ", " _name_ ": "SIZE_FORMAT" regions"
+#define ergo_format_region(_name_)   ", " _name_ ": %u regions"
 #define ergo_format_byte(_name_)     ", " _name_ ": "SIZE_FORMAT" bytes"
 #define ergo_format_double(_name_)   ", " _name_ ": %1.2f"
 #define ergo_format_perc(_name_)     ", " _name_ ": %1.2f %%"
 #define ergo_format_ms(_name_)       ", " _name_ ": %1.2f ms"
+#define ergo_format_size(_name_)     ", " _name_ ": "SIZE_FORMAT
 
 // Double parameter format strings
 #define ergo_format_byte_perc(_name_)                                   \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,6 +100,7 @@ class MemBarNode;
 class MemBarStoreStoreNode;
 class MemNode;
 class MergeMemNode;
+class MulNode;
 class MultiNode;
 class MultiBranchNode;
 class NeverBranchNode;
@@ -133,8 +134,8 @@ class Type;
 class TypeNode;
 class UnlockNode;
 class VectorNode;
-class VectorLoadNode;
-class VectorStoreNode;
+class LoadVectorNode;
+class StoreVectorNode;
 class VectorSet;
 typedef void (*NFunc)(Node&,void*);
 extern "C" {
@@ -211,18 +212,6 @@ public:
     Node* n = (Node*)C->node_arena()->Amalloc_D(x);
 #ifdef ASSERT
     n->_in = (Node**)n; // magic cookie for assertion check
-#endif
-    n->_out = (Node**)C;
-    return (void*)n;
-  }
-
-  // New Operator that takes a Compile pointer, this will eventually
-  // be the "new" New operator.
-  inline void* operator new( size_t x, Compile* C, int y) {
-    Node* n = (Node*)C->node_arena()->Amalloc_D(x + y*sizeof(void*));
-    n->_in = (Node**)(((char*)n) + x);
-#ifdef ASSERT
-    n->_in[y-1] = n; // magic cookie for assertion check
 #endif
     n->_out = (Node**)C;
     return (void*)n;
@@ -362,7 +351,7 @@ protected:
 #endif
 
   // Reference to the i'th input Node.  Error if out of bounds.
-  Node* in(uint i) const { assert(i < _max,"oob"); return _in[i]; }
+  Node* in(uint i) const { assert(i < _max, err_msg_res("oob: i=%d, _max=%d", i, _max)); return _in[i]; }
   // Reference to the i'th output Node.  Error if out of bounds.
   // Use this accessor sparingly.  We are going trying to use iterators instead.
   Node* raw_out(uint i) const { assert(i < _outcnt,"oob"); return _out[i]; }
@@ -385,6 +374,8 @@ protected:
   bool is_dead() const;
 #define is_not_dead(n) ((n) == NULL || !VerifyIterativeGVN || !((n)->is_dead()))
 #endif
+  // Check whether node has become unreachable
+  bool is_unreachable(PhaseIterGVN &igvn) const;
 
   // Set a required input edge, also updates corresponding output edge
   void add_req( Node *n ); // Append a NEW required input
@@ -393,7 +384,7 @@ protected:
   void ins_req( uint i, Node *n ); // Insert a NEW required input
   void set_req( uint i, Node *n ) {
     assert( is_not_dead(n), "can not use dead node");
-    assert( i < _cnt, "oob");
+    assert( i < _cnt, err_msg_res("oob: i=%d, _cnt=%d", i, _cnt));
     assert( !VerifyHashTableKeys || _hash_lock == 0,
             "remove node from hash table before modifying it");
     Node** p = &_in[i];    // cache this._in, across the del_out call
@@ -417,7 +408,7 @@ protected:
   int replace_edge(Node* old, Node* neww);
   // NULL out all inputs to eliminate incoming Def-Use edges.
   // Return the number of edges between 'n' and 'this'
-  int  disconnect_inputs(Node *n);
+  int  disconnect_inputs(Node *n, Compile *c);
 
   // Quickly, return true if and only if I am Compile::current()->top().
   bool is_top() const {
@@ -465,9 +456,9 @@ public:
   void replace_by(Node* new_node);
   // Globally replace this node by a given new node, updating all uses
   // and cutting input edges of old node.
-  void subsume_by(Node* new_node) {
+  void subsume_by(Node* new_node, Compile* c) {
     replace_by(new_node);
-    disconnect_inputs(NULL);
+    disconnect_inputs(NULL, c);
   }
   void set_req_X( uint i, Node *n, PhaseIterGVN *igvn );
   // Find the one non-null required input.  RegionNode only
@@ -609,9 +600,9 @@ public:
 
     DEFINE_CLASS_ID(Mem,   Node, 4)
       DEFINE_CLASS_ID(Load,  Mem, 0)
-        DEFINE_CLASS_ID(VectorLoad,  Load, 0)
+        DEFINE_CLASS_ID(LoadVector,  Load, 0)
       DEFINE_CLASS_ID(Store, Mem, 1)
-        DEFINE_CLASS_ID(VectorStore, Store, 0)
+        DEFINE_CLASS_ID(StoreVector, Store, 0)
       DEFINE_CLASS_ID(LoadStore, Mem, 2)
 
     DEFINE_CLASS_ID(Region, Node, 5)
@@ -629,8 +620,9 @@ public:
     DEFINE_CLASS_ID(AddP,     Node, 9)
     DEFINE_CLASS_ID(BoxLock,  Node, 10)
     DEFINE_CLASS_ID(Add,      Node, 11)
-    DEFINE_CLASS_ID(Vector,   Node, 12)
-    DEFINE_CLASS_ID(ClearArray, Node, 13)
+    DEFINE_CLASS_ID(Mul,      Node, 12)
+    DEFINE_CLASS_ID(Vector,   Node, 13)
+    DEFINE_CLASS_ID(ClearArray, Node, 14)
 
     _max_classes  = ClassMask_ClearArray
   };
@@ -648,7 +640,8 @@ public:
     Flag_may_be_short_branch = Flag_is_dead_loop_safe << 1,
     Flag_avoid_back_to_back  = Flag_may_be_short_branch << 1,
     Flag_has_call            = Flag_avoid_back_to_back << 1,
-    _max_flags = (Flag_has_call << 1) - 1 // allow flags combination
+    Flag_is_expensive        = Flag_has_call << 1,
+    _max_flags = (Flag_is_expensive << 1) - 1 // allow flags combination
   };
 
 private:
@@ -752,6 +745,7 @@ public:
   DEFINE_CLASS_QUERY(MemBar)
   DEFINE_CLASS_QUERY(MemBarStoreStore)
   DEFINE_CLASS_QUERY(MergeMem)
+  DEFINE_CLASS_QUERY(Mul)
   DEFINE_CLASS_QUERY(Multi)
   DEFINE_CLASS_QUERY(MultiBranch)
   DEFINE_CLASS_QUERY(Parm)
@@ -767,8 +761,8 @@ public:
   DEFINE_CLASS_QUERY(Sub)
   DEFINE_CLASS_QUERY(Type)
   DEFINE_CLASS_QUERY(Vector)
-  DEFINE_CLASS_QUERY(VectorLoad)
-  DEFINE_CLASS_QUERY(VectorStore)
+  DEFINE_CLASS_QUERY(LoadVector)
+  DEFINE_CLASS_QUERY(StoreVector)
   DEFINE_CLASS_QUERY(Unlock)
 
   #undef DEFINE_CLASS_QUERY
@@ -816,6 +810,8 @@ public:
 
   // The node is a "macro" node which needs to be expanded before matching
   bool is_macro() const { return (_flags & Flag_is_macro) != 0; }
+  // The node is expensive: the best control is set during loop opts
+  bool is_expensive() const { return (_flags & Flag_is_expensive) != 0 && in(0) != NULL; }
 
 //----------------- Optimization
 
@@ -956,6 +952,8 @@ public:
   }
   const TypeLong* find_long_type() const;
 
+  const TypePtr* get_ptr_type() const;
+
   // These guys are called by code generated by ADLC:
   intptr_t get_ptr() const;
   intptr_t get_narrowcon() const;
@@ -991,12 +989,13 @@ public:
 #ifndef PRODUCT
   Node* find(int idx) const;         // Search the graph for the given idx.
   Node* find_ctrl(int idx) const;    // Search control ancestors for the given idx.
-  void dump() const;                 // Print this node,
+  void dump() const { dump("\n"); }  // Print this node.
+  void dump(const char* suffix, outputStream *st = tty) const;// Print this node.
   void dump(int depth) const;        // Print this node, recursively to depth d
   void dump_ctrl(int depth) const;   // Print control nodes, to depth d
-  virtual void dump_req() const;     // Print required-edge info
-  virtual void dump_prec() const;    // Print precedence-edge info
-  virtual void dump_out() const;     // Print the output edge info
+  virtual void dump_req(outputStream *st = tty) const;     // Print required-edge info
+  virtual void dump_prec(outputStream *st = tty) const;    // Print precedence-edge info
+  virtual void dump_out(outputStream *st = tty) const;     // Print the output edge info
   virtual void dump_spec(outputStream *st) const {}; // Print per-node info
   void verify_edges(Unique_Node_List &visited); // Verify bi-directional edges
   void verify() const;               // Check Def-Use info for my subgraph

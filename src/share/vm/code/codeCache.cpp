@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/javaClasses.hpp"
 #include "code/codeBlob.hpp"
 #include "code/codeCache.hpp"
 #include "code/dependencies.hpp"
@@ -41,6 +42,7 @@
 #include "runtime/java.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "services/memoryService.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/xmlstream.hpp"
 
 // Helper class for printing in CodeCache
@@ -106,7 +108,6 @@ class CodeBlob_sizes {
   }
 };
 
-
 // CodeCache implementation
 
 CodeHeap * CodeCache::_heap = new CodeHeap();
@@ -118,6 +119,7 @@ bool CodeCache::_needs_cache_clean = false;
 nmethod* CodeCache::_scavenge_root_nmethods = NULL;
 nmethod* CodeCache::_saved_nmethods = NULL;
 
+int CodeCache::_codemem_full_count = 0;
 
 CodeBlob* CodeCache::first() {
   assert_locked_or_safepoint(CodeCache_lock);
@@ -773,6 +775,23 @@ void CodeCache::verify() {
   }
 }
 
+void CodeCache::report_codemem_full() {
+  _codemem_full_count++;
+  EventCodeCacheFull event;
+  if (event.should_commit()) {
+    event.set_startAddress((u8)low_bound());
+    event.set_commitedTopAddress((u8)high());
+    event.set_reservedTopAddress((u8)high_bound());
+    event.set_entryCount(nof_blobs());
+    event.set_methodCount(nof_nmethods());
+    event.set_adaptorCount(nof_adapters());
+    event.set_unallocatedCapacity(unallocated_capacity()/K);
+    event.set_largestFreeBlock(largest_free_block());
+    event.set_fullCount(_codemem_full_count);
+    event.commit();
+  }
+}
+
 //------------------------------------------------------------------------------------------------
 // Non-product version
 
@@ -796,7 +815,6 @@ void CodeCache::print_internals() {
   int nmethodCount = 0;
   int runtimeStubCount = 0;
   int adapterCount = 0;
-  int ricochetStubCount = 0;
   int deoptimizationStubCount = 0;
   int uncommonTrapStubCount = 0;
   int bufferBlobCount = 0;
@@ -841,8 +859,6 @@ void CodeCache::print_internals() {
       }
     } else if (cb->is_runtime_stub()) {
       runtimeStubCount++;
-    } else if (cb->is_ricochet_stub()) {
-      ricochetStubCount++;
     } else if (cb->is_deoptimization_stub()) {
       deoptimizationStubCount++;
     } else if (cb->is_uncommon_trap_stub()) {
@@ -856,7 +872,7 @@ void CodeCache::print_internals() {
 
   int bucketSize = 512;
   int bucketLimit = maxCodeSize / bucketSize + 1;
-  int *buckets = NEW_C_HEAP_ARRAY(int, bucketLimit);
+  int *buckets = NEW_C_HEAP_ARRAY(int, bucketLimit, mtCode);
   memset(buckets,0,sizeof(int) * bucketLimit);
 
   for (cb = first(); cb != NULL; cb = next(cb)) {
@@ -879,7 +895,6 @@ void CodeCache::print_internals() {
   tty->print_cr("runtime_stubs: %d",runtimeStubCount);
   tty->print_cr("adapters: %d",adapterCount);
   tty->print_cr("buffer blobs: %d",bufferBlobCount);
-  tty->print_cr("ricochet_stubs: %d",ricochetStubCount);
   tty->print_cr("deoptimization_stubs: %d",deoptimizationStubCount);
   tty->print_cr("uncommon_traps: %d",uncommonTrapStubCount);
   tty->print_cr("\nnmethod size distribution (non-zombie java)");
@@ -893,7 +908,7 @@ void CodeCache::print_internals() {
     }
   }
 
-  FREE_C_HEAP_ARRAY(int, buckets);
+  FREE_C_HEAP_ARRAY(int, buckets, mtCode);
 }
 
 void CodeCache::print() {

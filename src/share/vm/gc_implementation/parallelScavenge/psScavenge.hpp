@@ -28,6 +28,7 @@
 #include "gc_implementation/parallelScavenge/cardTableExtension.hpp"
 #include "gc_implementation/parallelScavenge/psVirtualspace.hpp"
 #include "gc_implementation/shared/collectorCounters.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "memory/allocation.hpp"
 #include "oops/oop.hpp"
 #include "utilities/stack.hpp"
@@ -37,8 +38,10 @@ class GCTaskQueue;
 class OopStack;
 class ReferenceProcessor;
 class ParallelScavengeHeap;
+class ParallelScavengeTracer;
 class PSIsAliveClosure;
 class PSRefProcTaskExecutor;
+class STWGCTimer;
 
 class PSScavenge: AllStatic {
   friend class PSIsAliveClosure;
@@ -68,13 +71,14 @@ class PSScavenge: AllStatic {
   static bool                _survivor_overflow;    // Overflow this collection
   static int                 _tenuring_threshold;   // tenuring threshold for next scavenge
   static elapsedTimer        _accumulated_time;     // total time spent on scavenge
+  static STWGCTimer          _gc_timer;             // GC time book keeper
+  static ParallelScavengeTracer _gc_tracer;         // GC tracing
   static HeapWord*           _young_generation_boundary; // The lowest address possible for the young_gen.
                                                          // This is used to decide if an oop should be scavenged,
                                                          // cards should be marked, etc.
-  static Stack<markOop>          _preserved_mark_stack; // List of marks to be restored after failed promotion
-  static Stack<oop>              _preserved_oop_stack;  // List of oops that need their mark restored.
+  static Stack<markOop, mtGC> _preserved_mark_stack; // List of marks to be restored after failed promotion
+  static Stack<oop, mtGC>     _preserved_oop_stack;  // List of oops that need their mark restored.
   static CollectorCounters*      _counters;         // collector performance counters
-  static bool                    _promotion_failed;
 
   static void clean_up_failed_promotion();
 
@@ -90,7 +94,6 @@ class PSScavenge: AllStatic {
   // Accessors
   static int              tenuring_threshold()  { return _tenuring_threshold; }
   static elapsedTimer*    accumulated_time()    { return &_accumulated_time; }
-  static bool             promotion_failed()    { return _promotion_failed; }
   static int              consecutive_skipped_scavenges()
     { return _consecutive_skipped_scavenges; }
 

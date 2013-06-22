@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -44,10 +44,6 @@ CXX_FLAGS=$(CXX_FLAGS) /D "ASSERT"
 # No need to define anything, CORE is defined as !COMPILER1 && !COMPILER2
 !endif
 
-!if "$(Variant)" == "kernel"
-CXX_FLAGS=$(CXX_FLAGS) /D "KERNEL"
-!endif
-
 !if "$(Variant)" == "compiler1"
 CXX_FLAGS=$(CXX_FLAGS) /D "COMPILER1"
 !endif
@@ -74,8 +70,8 @@ CXX_FLAGS=$(CXX_FLAGS) /D "HOTSPOT_BUILD_TARGET=\"$(BUILD_FLAVOR)\""
 CXX_FLAGS=$(CXX_FLAGS) /D "HOTSPOT_BUILD_USER=\"$(BuildUser)\""
 CXX_FLAGS=$(CXX_FLAGS) /D "HOTSPOT_VM_DISTRO=\"$(HOTSPOT_VM_DISTRO)\""
 
-!ifndef JAVASE_EMBEDDED
-CXX_FLAGS=$(CXX_FLAGS) /D "INCLUDE_TRACE"
+!if "$(INCLUDE_TRACE)" == "1"
+CXX_FLAGS=$(CXX_FLAGS) /D "INCLUDE_TRACE=1"
 !endif
 
 CXX_FLAGS=$(CXX_FLAGS) $(CXX_INCLUDE_DIRS)
@@ -93,11 +89,7 @@ STACK_SIZE=
 # AsyncGetCallTrace is not supported on IA64 yet
 AGCT_EXPORT=
 !else
-!if "$(Variant)" == "kernel"
-AGCT_EXPORT=
-!else
 AGCT_EXPORT=/export:AsyncGetCallTrace
-!endif
 !endif
 
 # If you modify exports below please do the corresponding changes in
@@ -156,6 +148,7 @@ CXX_USE_PCH=$(CXX_DONT_USE_PCH)
 VM_PATH=../generated
 VM_PATH=$(VM_PATH);../generated/adfiles
 VM_PATH=$(VM_PATH);../generated/jvmtifiles
+VM_PATH=$(VM_PATH);../generated/tracefiles
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/c1
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/compiler
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/code
@@ -172,6 +165,7 @@ VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/asm
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/memory
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/oops
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/prims
+VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/prims/wbtestmethods
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/runtime
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/services
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/trace
@@ -183,17 +177,15 @@ VM_PATH=$(VM_PATH);$(WorkSpace)/src/cpu/$(Platform_arch)/vm
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/opto
 
 !if exists($(ALTSRC)\share\vm\jfr)
-VM_PATH=$(VM_PATH);$(ALTSRC)/share/vm/jfr/agent
-VM_PATH=$(VM_PATH);$(ALTSRC)/share/vm/jfr/agent/isolated_deps/util
-VM_PATH=$(VM_PATH);$(ALTSRC)/share/vm/jfr/jvm
 VM_PATH=$(VM_PATH);$(ALTSRC)/share/vm/jfr
+VM_PATH=$(VM_PATH);$(ALTSRC)/share/vm/jfr/buffers
 !endif
 
 VM_PATH={$(VM_PATH)}
 
 # Special case files not using precompiled header files.
 
-c1_RInfo_$(Platform_arch).obj: $(WorkSpace)\src\cpu\$(Platform_arch)\vm\c1_RInfo_$(Platform_arch).cpp 
+c1_RInfo_$(Platform_arch).obj: $(WorkSpace)\src\cpu\$(Platform_arch)\vm\c1_RInfo_$(Platform_arch).cpp
 	 $(CXX) $(CXX_FLAGS) $(CXX_DONT_USE_PCH) /c $(WorkSpace)\src\cpu\$(Platform_arch)\vm\c1_RInfo_$(Platform_arch).cpp
 
 os_windows.obj: $(WorkSpace)\src\os\windows\vm\os_windows.cpp
@@ -267,6 +259,9 @@ bytecodeInterpreterWithChecks.obj: ..\generated\jvmtifiles\bytecodeInterpreterWi
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
 {$(COMMONSRC)\share\vm\prims}.cpp.obj::
+        $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
+
+{$(COMMONSRC)\share\vm\prims\wbtestmethods}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
 {$(COMMONSRC)\share\vm\runtime}.cpp.obj::
@@ -349,6 +344,9 @@ bytecodeInterpreterWithChecks.obj: ..\generated\jvmtifiles\bytecodeInterpreterWi
 {$(ALTSRC)\share\vm\prims}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
+{$(ALTSRC)\share\vm\prims\wbtestmethods}.cpp.obj::
+        $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
+
 {$(ALTSRC)\share\vm\runtime}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
@@ -389,16 +387,13 @@ bytecodeInterpreterWithChecks.obj: ..\generated\jvmtifiles\bytecodeInterpreterWi
 {..\generated\jvmtifiles}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
+{..\generated\tracefiles}.cpp.obj::
+        $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
+
 {$(ALTSRC)\share\vm\jfr}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
-{$(ALTSRC)\share\vm\jfr\agent}.cpp.obj::
-        $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
-
-{$(ALTSRC)\share\vm\jfr\agent\isolated_deps\util}.cpp.obj::
-        $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
-
-{$(ALTSRC)\share\vm\jfr\jvm}.cpp.obj::
+{$(ALTSRC)\share\vm\jfr\buffers}.cpp.obj::
         $(CXX) $(CXX_FLAGS) $(CXX_USE_PCH) /c $<
 
 default::

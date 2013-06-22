@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ struct ScratchBlock {
 };
 
 
-class Generation: public CHeapObj {
+class Generation: public CHeapObj<mtGC> {
   friend class VMStructs;
  private:
   jlong _time_of_last_gc; // time when last gc on this generation happened (ms)
@@ -599,7 +599,7 @@ class Generation: public CHeapObj {
   virtual void print() const;
   virtual void print_on(outputStream* st) const;
 
-  virtual void verify(bool allow_dirty) = 0;
+  virtual void verify() = 0;
 
   struct StatRecord {
     int invocations;
@@ -753,7 +753,7 @@ class OneContigSpaceCardGeneration: public CardGeneration {
 
   virtual void record_spaces_top();
 
-  virtual void verify(bool allow_dirty);
+  virtual void verify();
   virtual void print_on(outputStream* st) const;
 };
 

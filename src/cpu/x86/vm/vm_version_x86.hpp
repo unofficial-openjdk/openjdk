@@ -78,7 +78,9 @@ public:
                sse4_2   : 1,
                         : 2,
                popcnt   : 1,
-                        : 3,
+                        : 1,
+               aes      : 1,
+                        : 1,
                osxsave  : 1,
                avx      : 1,
                         : 3;
@@ -202,7 +204,8 @@ public:
                    avx2 : 1,
                         : 2,
                    bmi2 : 1,
-                        : 23;
+                   erms : 1,
+                        : 22;
     } bits;
   };
 
@@ -244,7 +247,9 @@ protected:
     CPU_TSC    = (1 << 15),
     CPU_TSCINV = (1 << 16),
     CPU_AVX    = (1 << 17),
-    CPU_AVX2   = (1 << 18)
+    CPU_AVX2   = (1 << 18),
+    CPU_AES    = (1 << 19),
+    CPU_ERMS   = (1 << 20) // enhanced 'rep movsb/stosb' instructions
   } cpuFeatureFlags;
 
   enum {
@@ -420,6 +425,10 @@ protected:
       result |= CPU_TSC;
     if (_cpuid_info.ext_cpuid7_edx.bits.tsc_invariance != 0)
       result |= CPU_TSCINV;
+    if (_cpuid_info.std_cpuid1_ecx.bits.aes != 0)
+      result |= CPU_AES;
+    if (_cpuid_info.sef_cpuid7_ebx.bits.erms != 0)
+      result |= CPU_ERMS;
 
     // AMD features.
     if (is_amd()) {
@@ -484,7 +493,7 @@ public:
     return (_cpuid_info.std_max_function >= 0xB) &&
            // eax[4:0] | ebx[0:15] == 0 indicates invalid topology level.
            // Some cpus have max cpuid >= 0xB but do not support processor topology.
-           ((_cpuid_info.tpl_cpuidB0_eax & 0x1f | _cpuid_info.tpl_cpuidB0_ebx.bits.logical_cpus) != 0);
+           (((_cpuid_info.tpl_cpuidB0_eax & 0x1f) | _cpuid_info.tpl_cpuidB0_ebx.bits.logical_cpus) != 0);
   }
 
   static uint cores_per_cpu()  {
@@ -544,6 +553,8 @@ public:
   static bool supports_avx()      { return (_cpuFeatures & CPU_AVX) != 0; }
   static bool supports_avx2()     { return (_cpuFeatures & CPU_AVX2) != 0; }
   static bool supports_tsc()      { return (_cpuFeatures & CPU_TSC)    != 0; }
+  static bool supports_aes()      { return (_cpuFeatures & CPU_AES) != 0; }
+  static bool supports_erms()     { return (_cpuFeatures & CPU_ERMS) != 0; }
 
   // Intel features
   static bool is_intel_family_core() { return is_intel() &&

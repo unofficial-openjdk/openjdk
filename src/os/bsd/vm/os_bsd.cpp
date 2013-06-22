@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,7 @@
 #include "runtime/threadCritical.hpp"
 #include "runtime/timer.hpp"
 #include "services/attachListener.hpp"
+#include "services/memTracker.hpp"
 #include "services/runtimeService.hpp"
 #include "thread_bsd.inline.hpp"
 #include "utilities/decoder.hpp"
@@ -81,12 +82,6 @@
 #ifdef TARGET_ARCH_ppc
 # include "assembler_ppc.inline.hpp"
 # include "nativeInst_ppc.hpp"
-#endif
-#ifdef COMPILER1
-#include "c1/c1_Runtime1.hpp"
-#endif
-#ifdef COMPILER2
-#include "opto/runtime.hpp"
 #endif
 
 // put OS-includes here
@@ -342,29 +337,32 @@ void os::Bsd::initialize_system_info() {
   int mib[2];
   size_t len;
   int cpu_val;
-  u_long mem_val;
+  julong mem_val;
 
   /* get processors count via hw.ncpus sysctl */
   mib[0] = CTL_HW;
   mib[1] = HW_NCPU;
   len = sizeof(cpu_val);
   if (sysctl(mib, 2, &cpu_val, &len, NULL, 0) != -1 && cpu_val >= 1) {
+       assert(len == sizeof(cpu_val), "unexpected data size");
        set_processor_count(cpu_val);
   }
   else {
        set_processor_count(1);   // fallback
   }
 
-  /* get physical memory via hw.usermem sysctl (hw.usermem is used
-   * instead of hw.physmem because we need size of allocatable memory
+  /* get physical memory via hw.memsize sysctl (hw.memsize is used
+   * since it returns a 64 bit value)
    */
   mib[0] = CTL_HW;
-  mib[1] = HW_USERMEM;
+  mib[1] = HW_MEMSIZE;
   len = sizeof(mem_val);
-  if (sysctl(mib, 2, &mem_val, &len, NULL, 0) != -1)
+  if (sysctl(mib, 2, &mem_val, &len, NULL, 0) != -1) {
+       assert(len == sizeof(mem_val), "unexpected data size");
        _physical_memory = mem_val;
-  else
+  } else {
        _physical_memory = 256*1024*1024;       // fallback (XXXBSD?)
+  }
 
 #ifdef __OpenBSD__
   {
@@ -440,7 +438,7 @@ void os::init_system_properties_values() {
   // code needs to be changed accordingly.
 
   // The next few definitions allow the code to be verbatim:
-#define malloc(n) (char*)NEW_C_HEAP_ARRAY(char, (n))
+#define malloc(n) (char*)NEW_C_HEAP_ARRAY(char, (n), mtInternal)
 #define getenv(n) ::getenv(n)
 
 /*
@@ -972,6 +970,18 @@ extern "C" objc_registerThreadWithCollector_t objc_registerThreadWithCollectorFu
 objc_registerThreadWithCollector_t objc_registerThreadWithCollectorFunction = NULL;
 #endif
 
+#ifdef __APPLE__
+static uint64_t locate_unique_thread_id() {
+  // Additional thread_id used to correlate threads in SA
+  thread_identifier_info_data_t     m_ident_info;
+  mach_msg_type_number_t            count = THREAD_IDENTIFIER_INFO_COUNT;
+
+  thread_info(::mach_thread_self(), THREAD_IDENTIFIER_INFO,
+              (thread_info_t) &m_ident_info, &count);
+  return m_ident_info.thread_id;
+}
+#endif
+
 // Thread start routine for all newly created threads
 static void *java_start(Thread *thread) {
   // Try to randomize the cache line index of hot stack frames.
@@ -1001,6 +1011,7 @@ static void *java_start(Thread *thread) {
 #ifdef __APPLE__
   // thread_id is mach thread on macos
   osthread->set_thread_id(::mach_thread_self());
+  osthread->set_unique_thread_id(locate_unique_thread_id());
 #else
   // thread_id is pthread_id on BSD
   osthread->set_thread_id(::pthread_self());
@@ -1197,6 +1208,7 @@ bool os::create_attached_thread(JavaThread* thread) {
 #ifdef _ALLBSD_SOURCE
 #ifdef __APPLE__
   osthread->set_thread_id(::mach_thread_self());
+  osthread->set_unique_thread_id(locate_unique_thread_id());
 #else
   osthread->set_thread_id(::pthread_self());
 #endif
@@ -1913,11 +1925,11 @@ void os::dll_build_name(char* buffer, size_t buflen,
     // release the storage
     for (int i = 0 ; i < n ; i++) {
       if (pelements[i] != NULL) {
-        FREE_C_HEAP_ARRAY(char, pelements[i]);
+        FREE_C_HEAP_ARRAY(char, pelements[i], mtInternal);
       }
     }
     if (pelements != NULL) {
-      FREE_C_HEAP_ARRAY(char*, pelements);
+      FREE_C_HEAP_ARRAY(char*, pelements, mtInternal);
     }
   } else {
     snprintf(buffer, buflen, "%s/" JNI_LIB_PREFIX "%s" JNI_LIB_SUFFIX, pname, fname);
@@ -1946,10 +1958,16 @@ bool os::address_is_in_vm(address addr) {
   return false;
 }
 
+
+#define MACH_MAXSYMLEN 256
+
 bool os::dll_address_to_function_name(address addr, char *buf,
                                       int buflen, int *offset) {
   Dl_info dlinfo;
+  char localbuf[MACH_MAXSYMLEN];
 
+  // dladdr will find names of dynamic functions only, but does
+  // it set dli_fbase with mach_header address when it "fails" ?
   if (dladdr((void*)addr, &dlinfo) && dlinfo.dli_sname != NULL) {
     if (buf != NULL) {
       if(!Decoder::demangle(dlinfo.dli_sname, buf, buflen)) {
@@ -1965,6 +1983,14 @@ bool os::dll_address_to_function_name(address addr, char *buf,
     }
   }
 
+  // Handle non-dymanic manually:
+  if (dlinfo.dli_fbase != NULL &&
+      Decoder::decode(addr, localbuf, MACH_MAXSYMLEN, offset, dlinfo.dli_fbase)) {
+    if(!Decoder::demangle(localbuf, buf, buflen)) {
+      jio_snprintf(buf, buflen, "%s", localbuf);
+    }
+    return true;
+  }
   if (buf != NULL) buf[0] = '\0';
   if (offset != NULL) *offset = -1;
   return false;
@@ -2641,16 +2667,117 @@ static volatile jint pending_signals[NSIG+1] = { 0 };
 
 // Bsd(POSIX) specific hand shaking semaphore.
 #ifdef __APPLE__
-static semaphore_t sig_sem;
+typedef semaphore_t os_semaphore_t;
 #define SEM_INIT(sem, value)    semaphore_create(mach_task_self(), &sem, SYNC_POLICY_FIFO, value)
-#define SEM_WAIT(sem)           semaphore_wait(sem);
-#define SEM_POST(sem)           semaphore_signal(sem);
+#define SEM_WAIT(sem)           semaphore_wait(sem)
+#define SEM_POST(sem)           semaphore_signal(sem)
+#define SEM_DESTROY(sem)        semaphore_destroy(mach_task_self(), sem)
 #else
-static sem_t sig_sem;
+typedef sem_t os_semaphore_t;
 #define SEM_INIT(sem, value)    sem_init(&sem, 0, value)
-#define SEM_WAIT(sem)           sem_wait(&sem);
-#define SEM_POST(sem)           sem_post(&sem);
+#define SEM_WAIT(sem)           sem_wait(&sem)
+#define SEM_POST(sem)           sem_post(&sem)
+#define SEM_DESTROY(sem)        sem_destroy(&sem)
 #endif
+
+class Semaphore : public StackObj {
+  public:
+    Semaphore();
+    ~Semaphore();
+    void signal();
+    void wait();
+    bool trywait();
+    bool timedwait(unsigned int sec, int nsec);
+  private:
+    jlong currenttime() const;
+    semaphore_t _semaphore;
+};
+
+Semaphore::Semaphore() : _semaphore(0) {
+  SEM_INIT(_semaphore, 0);
+}
+
+Semaphore::~Semaphore() {
+  SEM_DESTROY(_semaphore);
+}
+
+void Semaphore::signal() {
+  SEM_POST(_semaphore);
+}
+
+void Semaphore::wait() {
+  SEM_WAIT(_semaphore);
+}
+
+jlong Semaphore::currenttime() const {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * NANOSECS_PER_SEC) + (tv.tv_usec * 1000);
+}
+
+#ifdef __APPLE__
+bool Semaphore::trywait() {
+  return timedwait(0, 0);
+}
+
+bool Semaphore::timedwait(unsigned int sec, int nsec) {
+  kern_return_t kr = KERN_ABORTED;
+  mach_timespec_t waitspec;
+  waitspec.tv_sec = sec;
+  waitspec.tv_nsec = nsec;
+
+  jlong starttime = currenttime();
+
+  kr = semaphore_timedwait(_semaphore, waitspec);
+  while (kr == KERN_ABORTED) {
+    jlong totalwait = (sec * NANOSECS_PER_SEC) + nsec;
+
+    jlong current = currenttime();
+    jlong passedtime = current - starttime;
+
+    if (passedtime >= totalwait) {
+      waitspec.tv_sec = 0;
+      waitspec.tv_nsec = 0;
+    } else {
+      jlong waittime = totalwait - (current - starttime);
+      waitspec.tv_sec = waittime / NANOSECS_PER_SEC;
+      waitspec.tv_nsec = waittime % NANOSECS_PER_SEC;
+    }
+
+    kr = semaphore_timedwait(_semaphore, waitspec);
+  }
+
+  return kr == KERN_SUCCESS;
+}
+
+#else
+
+bool Semaphore::trywait() {
+  return sem_trywait(&_semaphore) == 0;
+}
+
+bool Semaphore::timedwait(unsigned int sec, int nsec) {
+  struct timespec ts;
+  jlong endtime = unpackTime(&ts, false, (sec * NANOSECS_PER_SEC) + nsec);
+
+  while (1) {
+    int result = sem_timedwait(&_semaphore, &ts);
+    if (result == 0) {
+      return true;
+    } else if (errno == EINTR) {
+      continue;
+    } else if (errno == ETIMEDOUT) {
+      return false;
+    } else {
+      return false;
+    }
+  }
+}
+
+#endif // __APPLE__
+
+static os_semaphore_t sig_sem;
+static Semaphore sr_semaphore;
 
 void os::signal_init_pd() {
   // Initialize signal structures
@@ -2762,20 +2889,37 @@ void bsd_wrap_code(char* base, size_t size) {
   }
 }
 
+static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
+                                    int err) {
+  warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
+          ", %d) failed; error='%s' (errno=%d)", addr, size, exec,
+          strerror(err), err);
+}
+
 // NOTE: Bsd kernel does not really reserve the pages for us.
 //       All it does is to check if there are enough free pages
 //       left at the time of mmap(). This could be a potential
 //       problem.
-bool os::commit_memory(char* addr, size_t size, bool exec) {
+bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
   int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
 #ifdef __OpenBSD__
   // XXX: Work-around mmap/MAP_FIXED bug temporarily on OpenBSD
-  return ::mprotect(addr, size, prot) == 0;
+  if (::mprotect(addr, size, prot) == 0) {
+    return true;
+  }
 #else
   uintptr_t res = (uintptr_t) ::mmap(addr, size, prot,
                                    MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-  return res != (uintptr_t) MAP_FAILED;
+  if (res != (uintptr_t) MAP_FAILED) {
+    return true;
+  }
 #endif
+
+  // Warn about any commit errors we see in non-product builds just
+  // in case mmap() doesn't work as described on the man page.
+  NOT_PRODUCT(warn_fail_commit_memory(addr, size, exec, errno);)
+
+  return false;
 }
 
 #ifndef _ALLBSD_SOURCE
@@ -2790,7 +2934,7 @@ bool os::commit_memory(char* addr, size_t size, bool exec) {
 #endif
 #endif
 
-bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
+bool os::pd_commit_memory(char* addr, size_t size, size_t alignment_hint,
                        bool exec) {
 #ifndef _ALLBSD_SOURCE
   if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
@@ -2803,10 +2947,28 @@ bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
   }
 #endif
 
-  return commit_memory(addr, size, exec);
+  // alignment_hint is ignored on this OS
+  return pd_commit_memory(addr, size, exec);
 }
 
-void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
+void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
+                                  const char* mesg) {
+  assert(mesg != NULL, "mesg must be specified");
+  if (!pd_commit_memory(addr, size, exec)) {
+    // add extra info in product mode for vm_exit_out_of_memory():
+    PRODUCT_ONLY(warn_fail_commit_memory(addr, size, exec, errno);)
+    vm_exit_out_of_memory(size, mesg);
+  }
+}
+
+void os::pd_commit_memory_or_exit(char* addr, size_t size,
+                                  size_t alignment_hint, bool exec,
+                                  const char* mesg) {
+  // alignment_hint is ignored on this OS
+  pd_commit_memory_or_exit(addr, size, exec, mesg);
+}
+
+void os::pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 #ifndef _ALLBSD_SOURCE
   if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
     // We don't check the return value: madvise(MADV_HUGEPAGE) may not
@@ -2816,7 +2978,7 @@ void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
 #endif
 }
 
-void os::free_memory(char *addr, size_t bytes, size_t alignment_hint) {
+void os::pd_free_memory(char *addr, size_t bytes, size_t alignment_hint) {
   ::madvise(addr, bytes, MADV_DONTNEED);
 }
 
@@ -2958,7 +3120,7 @@ os::Bsd::numa_interleave_memory_func_t os::Bsd::_numa_interleave_memory;
 unsigned long* os::Bsd::_numa_all_nodes;
 #endif
 
-bool os::uncommit_memory(char* addr, size_t size) {
+bool os::pd_uncommit_memory(char* addr, size_t size) {
 #ifdef __OpenBSD__
   // XXX: Work-around mmap/MAP_FIXED bug temporarily on OpenBSD
   return ::mprotect(addr, size, PROT_NONE) == 0;
@@ -2969,8 +3131,8 @@ bool os::uncommit_memory(char* addr, size_t size) {
 #endif
 }
 
-bool os::create_stack_guard_pages(char* addr, size_t size) {
-  return os::commit_memory(addr, size);
+bool os::pd_create_stack_guard_pages(char* addr, size_t size) {
+  return os::commit_memory(addr, size, !ExecMem);
 }
 
 // If this is a growable mapping, remove the guard pages entirely by
@@ -3023,12 +3185,12 @@ static int anon_munmap(char * addr, size_t size) {
   return ::munmap(addr, size) == 0;
 }
 
-char* os::reserve_memory(size_t bytes, char* requested_addr,
+char* os::pd_reserve_memory(size_t bytes, char* requested_addr,
                          size_t alignment_hint) {
   return anon_mmap(requested_addr, bytes, (requested_addr != NULL));
 }
 
-bool os::release_memory(char* addr, size_t size) {
+bool os::pd_release_memory(char* addr, size_t size) {
   return anon_munmap(addr, size);
 }
 
@@ -3304,13 +3466,24 @@ char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
      return NULL;
   }
 
+  // The memory is committed
+  MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, mtNone, CALLER_PC);
+
   return addr;
 }
 
 bool os::release_memory_special(char* base, size_t bytes) {
+  MemTracker::Tracker tkr = MemTracker::get_virtual_memory_release_tracker();
   // detaching the SHM segment will also delete it, see reserve_memory_special()
   int rslt = shmdt(base);
-  return rslt == 0;
+  if (rslt == 0) {
+    tkr.record((address)base, bytes);
+    return true;
+  } else {
+    tkr.discard();
+    return false;
+  }
+
 }
 
 size_t os::large_page_size() {
@@ -3331,7 +3504,7 @@ bool os::can_execute_large_page_memory() {
 // Reserve memory at an arbitrary address, only if that area is
 // available (and not reserved for something else).
 
-char* os::attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
+char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
   const int max_tries = 10;
   char* base[max_tries];
   size_t size[max_tries];
@@ -3710,9 +3883,6 @@ void os::hint_no_preempt() {}
 static void resume_clear_context(OSThread *osthread) {
   osthread->set_ucontext(NULL);
   osthread->set_siginfo(NULL);
-
-  // notify the suspend action is completed, we have now resumed
-  osthread->sr.clear_suspended();
 }
 
 static void suspend_save_context(OSThread *osthread, siginfo_t* siginfo, ucontext_t* context) {
@@ -3732,7 +3902,7 @@ static void suspend_save_context(OSThread *osthread, siginfo_t* siginfo, ucontex
 // its signal handlers run and prevents sigwait()'s use with the
 // mutex granting granting signal.
 //
-// Currently only ever called on the VMThread
+// Currently only ever called on the VMThread or JavaThread
 //
 static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
   // Save and restore errno to avoid confusing native code with EINTR
@@ -3741,38 +3911,48 @@ static void SR_handler(int sig, siginfo_t* siginfo, ucontext_t* context) {
 
   Thread* thread = Thread::current();
   OSThread* osthread = thread->osthread();
-  assert(thread->is_VM_thread(), "Must be VMThread");
-  // read current suspend action
-  int action = osthread->sr.suspend_action();
-  if (action == SR_SUSPEND) {
+  assert(thread->is_VM_thread() || thread->is_Java_thread(), "Must be VMThread or JavaThread");
+
+  os::SuspendResume::State current = osthread->sr.state();
+  if (current == os::SuspendResume::SR_SUSPEND_REQUEST) {
     suspend_save_context(osthread, siginfo, context);
 
-    // Notify the suspend action is about to be completed. do_suspend()
-    // waits until SR_SUSPENDED is set and then returns. We will wait
-    // here for a resume signal and that completes the suspend-other
-    // action. do_suspend/do_resume is always called as a pair from
-    // the same thread - so there are no races
+    // attempt to switch the state, we assume we had a SUSPEND_REQUEST
+    os::SuspendResume::State state = osthread->sr.suspended();
+    if (state == os::SuspendResume::SR_SUSPENDED) {
+      sigset_t suspend_set;  // signals for sigsuspend()
 
-    // notify the caller
-    osthread->sr.set_suspended();
+      // get current set of blocked signals and unblock resume signal
+      pthread_sigmask(SIG_BLOCK, NULL, &suspend_set);
+      sigdelset(&suspend_set, SR_signum);
 
-    sigset_t suspend_set;  // signals for sigsuspend()
+      sr_semaphore.signal();
+      // wait here until we are resumed
+      while (1) {
+        sigsuspend(&suspend_set);
 
-    // get current set of blocked signals and unblock resume signal
-    pthread_sigmask(SIG_BLOCK, NULL, &suspend_set);
-    sigdelset(&suspend_set, SR_signum);
+        os::SuspendResume::State result = osthread->sr.running();
+        if (result == os::SuspendResume::SR_RUNNING) {
+          sr_semaphore.signal();
+          break;
+        } else if (result != os::SuspendResume::SR_SUSPENDED) {
+          ShouldNotReachHere();
+        }
+      }
 
-    // wait here until we are resumed
-    do {
-      sigsuspend(&suspend_set);
-      // ignore all returns until we get a resume signal
-    } while (osthread->sr.suspend_action() != SR_CONTINUE);
+    } else if (state == os::SuspendResume::SR_RUNNING) {
+      // request was cancelled, continue
+    } else {
+      ShouldNotReachHere();
+    }
 
     resume_clear_context(osthread);
-
+  } else if (current == os::SuspendResume::SR_RUNNING) {
+    // request was cancelled, continue
+  } else if (current == os::SuspendResume::SR_WAKEUP_REQUEST) {
+    // ignore
   } else {
-    assert(action == SR_CONTINUE, "unexpected sr action");
-    // nothing special to do - just leave the handler
+    // ignore
   }
 
   errno = old_errno;
@@ -3820,42 +4000,82 @@ static int SR_finalize() {
   return 0;
 }
 
+static int sr_notify(OSThread* osthread) {
+  int status = pthread_kill(osthread->pthread_id(), SR_signum);
+  assert_status(status == 0, status, "pthread_kill");
+  return status;
+}
+
+// "Randomly" selected value for how long we want to spin
+// before bailing out on suspending a thread, also how often
+// we send a signal to a thread we want to resume
+static const int RANDOMLY_LARGE_INTEGER = 1000000;
+static const int RANDOMLY_LARGE_INTEGER2 = 100;
 
 // returns true on success and false on error - really an error is fatal
 // but this seems the normal response to library errors
 static bool do_suspend(OSThread* osthread) {
-  // mark as suspended and send signal
-  osthread->sr.set_suspend_action(SR_SUSPEND);
-  int status = pthread_kill(osthread->pthread_id(), SR_signum);
-  assert_status(status == 0, status, "pthread_kill");
+  assert(osthread->sr.is_running(), "thread should be running");
+  assert(!sr_semaphore.trywait(), "semaphore has invalid state");
 
-  // check status and wait until notified of suspension
-  if (status == 0) {
-    for (int i = 0; !osthread->sr.is_suspended(); i++) {
-      os::yield_all(i);
-    }
-    osthread->sr.set_suspend_action(SR_NONE);
-    return true;
-  }
-  else {
-    osthread->sr.set_suspend_action(SR_NONE);
+  // mark as suspended and send signal
+  if (osthread->sr.request_suspend() != os::SuspendResume::SR_SUSPEND_REQUEST) {
+    // failed to switch, state wasn't running?
+    ShouldNotReachHere();
     return false;
   }
+
+  if (sr_notify(osthread) != 0) {
+    ShouldNotReachHere();
+  }
+
+  // managed to send the signal and switch to SUSPEND_REQUEST, now wait for SUSPENDED
+  while (true) {
+    if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+      break;
+    } else {
+      // timeout
+      os::SuspendResume::State cancelled = osthread->sr.cancel_suspend();
+      if (cancelled == os::SuspendResume::SR_RUNNING) {
+        return false;
+      } else if (cancelled == os::SuspendResume::SR_SUSPENDED) {
+        // make sure that we consume the signal on the semaphore as well
+        sr_semaphore.wait();
+        break;
+      } else {
+        ShouldNotReachHere();
+        return false;
+      }
+    }
+  }
+
+  guarantee(osthread->sr.is_suspended(), "Must be suspended");
+  return true;
 }
 
 static void do_resume(OSThread* osthread) {
   assert(osthread->sr.is_suspended(), "thread should be suspended");
-  osthread->sr.set_suspend_action(SR_CONTINUE);
+  assert(!sr_semaphore.trywait(), "invalid semaphore state");
 
-  int status = pthread_kill(osthread->pthread_id(), SR_signum);
-  assert_status(status == 0, status, "pthread_kill");
-  // check status and wait unit notified of resumption
-  if (status == 0) {
-    for (int i = 0; osthread->sr.is_suspended(); i++) {
-      os::yield_all(i);
+  if (osthread->sr.request_wakeup() != os::SuspendResume::SR_WAKEUP_REQUEST) {
+    // failed to switch to WAKEUP_REQUEST
+    ShouldNotReachHere();
+    return;
+  }
+
+  while (true) {
+    if (sr_notify(osthread) == 0) {
+      if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+        if (osthread->sr.is_running()) {
+          return;
+        }
+      }
+    } else {
+      ShouldNotReachHere();
     }
   }
-  osthread->sr.set_suspend_action(SR_NONE);
+
+  guarantee(osthread->sr.is_running(), "Must be running!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4083,6 +4303,19 @@ void os::Bsd::set_signal_handler(int sig, bool set_installed) {
     sigAct.sa_sigaction = signalHandler;
     sigAct.sa_flags = SA_SIGINFO|SA_RESTART;
   }
+#if __APPLE__
+  // Needed for main thread as XNU (Mac OS X kernel) will only deliver SIGSEGV
+  // (which starts as SIGBUS) on main thread with faulting address inside "stack+guard pages"
+  // if the signal handler declares it will handle it on alternate stack.
+  // Notice we only declare we will handle it on alt stack, but we are not
+  // actually going to use real alt stack - this is just a workaround.
+  // Please see ux_exception.c, method catch_mach_exception_raise for details
+  // link http://www.opensource.apple.com/source/xnu/xnu-2050.18.24/bsd/uxkern/ux_exception.c
+  if (sig == SIGSEGV) {
+    sigAct.sa_flags |= SA_ONSTACK;
+  }
+#endif
+
   // Save flags, which are set by ours
   assert(sig > 0 && sig < MAXSIGNUM, "vm signal out of expected range");
   sigflags[sig] = sigAct.sa_flags;
@@ -4467,7 +4700,7 @@ jint os::init_2(void)
 
   if (!UseMembar) {
     address mem_serialize_page = (address) ::mmap(NULL, Bsd::page_size(), PROT_READ | PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    guarantee( mem_serialize_page != NULL, "mmap Failed for memory serialize page");
+    guarantee( mem_serialize_page != MAP_FAILED, "mmap Failed for memory serialize page");
     os::set_memory_serialize_page( mem_serialize_page );
 
 #ifndef PRODUCT
@@ -4666,7 +4899,40 @@ bool os::bind_to_processor(uint processor_id) {
   return false;
 }
 
+void os::SuspendedThreadTask::internal_do_task() {
+  if (do_suspend(_thread->osthread())) {
+    SuspendedThreadTaskContext context(_thread, _thread->osthread()->ucontext());
+    do_task(context);
+    do_resume(_thread->osthread());
+  }
+}
+
 ///
+class PcFetcher : public os::SuspendedThreadTask {
+public:
+  PcFetcher(Thread* thread) : os::SuspendedThreadTask(thread) {}
+  ExtendedPC result();
+protected:
+  void do_task(const os::SuspendedThreadTaskContext& context);
+private:
+  ExtendedPC _epc;
+};
+
+ExtendedPC PcFetcher::result() {
+  guarantee(is_done(), "task is not done yet.");
+  return _epc;
+}
+
+void PcFetcher::do_task(const os::SuspendedThreadTaskContext& context) {
+  Thread* thread = context.thread();
+  OSThread* osthread = thread->osthread();
+  if (osthread->ucontext() != NULL) {
+    _epc = os::Bsd::ucontext_get_pc((ucontext_t *) context.ucontext());
+  } else {
+    // NULL context is unexpected, double-check this is the VMThread
+    guarantee(thread->is_VM_thread(), "can only be called for VMThread");
+  }
+}
 
 // Suspends the target using the signal mechanism and then grabs the PC before
 // resuming the target. Used by the flat-profiler only
@@ -4675,22 +4941,9 @@ ExtendedPC os::get_thread_pc(Thread* thread) {
   assert(Thread::current()->is_Watcher_thread(), "Must be watcher");
   assert(thread->is_VM_thread(), "Can only be called for VMThread");
 
-  ExtendedPC epc;
-
-  OSThread* osthread = thread->osthread();
-  if (do_suspend(osthread)) {
-    if (osthread->ucontext() != NULL) {
-      epc = os::Bsd::ucontext_get_pc(osthread->ucontext());
-    } else {
-      // NULL context is unexpected, double-check this is the VMThread
-      guarantee(thread->is_VM_thread(), "can only be called for VMThread");
-    }
-    do_resume(osthread);
-  }
-  // failure means pthread_kill failed for some reason - arguably this is
-  // a fatal problem, but such problems are ignored elsewhere
-
-  return epc;
+  PcFetcher fetcher(thread);
+  fetcher.run();
+  return fetcher.result();
 }
 
 int os::Bsd::safe_cond_timedwait(pthread_cond_t *_cond, pthread_mutex_t *_mutex, const struct timespec *_abstime)
@@ -4987,7 +5240,7 @@ int os::socket_available(int fd, jint *pbytes) {
 }
 
 // Map a block of memory.
-char* os::map_memory(int fd, const char* file_name, size_t file_offset,
+char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
                      char *addr, size_t bytes, bool read_only,
                      bool allow_exec) {
   int prot;
@@ -5019,7 +5272,7 @@ char* os::map_memory(int fd, const char* file_name, size_t file_offset,
 
 
 // Remap a block of memory.
-char* os::remap_memory(int fd, const char* file_name, size_t file_offset,
+char* os::pd_remap_memory(int fd, const char* file_name, size_t file_offset,
                        char *addr, size_t bytes, bool read_only,
                        bool allow_exec) {
   // same as map_memory() on this OS
@@ -5029,7 +5282,7 @@ char* os::remap_memory(int fd, const char* file_name, size_t file_offset,
 
 
 // Unmap a block of memory.
-bool os::unmap_memory(char* addr, size_t bytes) {
+bool os::pd_unmap_memory(char* addr, size_t bytes) {
   return munmap(addr, bytes) == 0;
 }
 
@@ -5384,11 +5637,12 @@ void os::PlatformEvent::park() {       // AKA "down()"
      }
      -- _nParked ;
 
-    // In theory we could move the ST of 0 into _Event past the unlock(),
-    // but then we'd need a MEMBAR after the ST.
     _Event = 0 ;
      status = pthread_mutex_unlock(_mutex);
      assert_status(status == 0, status, "mutex_unlock");
+    // Paranoia to ensure our locked and lock-free paths interact
+    // correctly with each other.
+    OrderAccess::fence();
   }
   guarantee (_Event >= 0, "invariant") ;
 }
@@ -5451,40 +5705,44 @@ int os::PlatformEvent::park(jlong millis) {
   status = pthread_mutex_unlock(_mutex);
   assert_status(status == 0, status, "mutex_unlock");
   assert (_nParked == 0, "invariant") ;
+  // Paranoia to ensure our locked and lock-free paths interact
+  // correctly with each other.
+  OrderAccess::fence();
   return ret;
 }
 
 void os::PlatformEvent::unpark() {
-  int v, AnyWaiters ;
-  for (;;) {
-      v = _Event ;
-      if (v > 0) {
-         // The LD of _Event could have reordered or be satisfied
-         // by a read-aside from this processor's write buffer.
-         // To avoid problems execute a barrier and then
-         // ratify the value.
-         OrderAccess::fence() ;
-         if (_Event == v) return ;
-         continue ;
-      }
-      if (Atomic::cmpxchg (v+1, &_Event, v) == v) break ;
+  // Transitions for _Event:
+  //    0 :=> 1
+  //    1 :=> 1
+  //   -1 :=> either 0 or 1; must signal target thread
+  //          That is, we can safely transition _Event from -1 to either
+  //          0 or 1. Forcing 1 is slightly more efficient for back-to-back
+  //          unpark() calls.
+  // See also: "Semaphores in Plan 9" by Mullender & Cox
+  //
+  // Note: Forcing a transition from "-1" to "1" on an unpark() means
+  // that it will take two back-to-back park() calls for the owning
+  // thread to block. This has the benefit of forcing a spurious return
+  // from the first park() call after an unpark() call which will help
+  // shake out uses of park() and unpark() without condition variables.
+
+  if (Atomic::xchg(1, &_Event) >= 0) return;
+
+  // Wait for the thread associated with the event to vacate
+  int status = pthread_mutex_lock(_mutex);
+  assert_status(status == 0, status, "mutex_lock");
+  int AnyWaiters = _nParked;
+  assert(AnyWaiters == 0 || AnyWaiters == 1, "invariant");
+  if (AnyWaiters != 0 && WorkAroundNPTLTimedWaitHang) {
+    AnyWaiters = 0;
+    pthread_cond_signal(_cond);
   }
-  if (v < 0) {
-     // Wait for the thread associated with the event to vacate
-     int status = pthread_mutex_lock(_mutex);
-     assert_status(status == 0, status, "mutex_lock");
-     AnyWaiters = _nParked ;
-     assert (AnyWaiters == 0 || AnyWaiters == 1, "invariant") ;
-     if (AnyWaiters != 0 && WorkAroundNPTLTimedWaitHang) {
-        AnyWaiters = 0 ;
-        pthread_cond_signal (_cond);
-     }
-     status = pthread_mutex_unlock(_mutex);
-     assert_status(status == 0, status, "mutex_unlock");
-     if (AnyWaiters != 0) {
-        status = pthread_cond_signal(_cond);
-        assert_status(status == 0, status, "cond_signal");
-     }
+  status = pthread_mutex_unlock(_mutex);
+  assert_status(status == 0, status, "mutex_unlock");
+  if (AnyWaiters != 0) {
+    status = pthread_cond_signal(_cond);
+    assert_status(status == 0, status, "cond_signal");
   }
 
   // Note that we signal() _after dropping the lock for "immortal" Events.
@@ -5570,13 +5828,14 @@ static void unpackTime(struct timespec* absTime, bool isAbsolute, jlong time) {
 }
 
 void Parker::park(bool isAbsolute, jlong time) {
+  // Ideally we'd do something useful while spinning, such
+  // as calling unpackTime().
+
   // Optional fast-path check:
   // Return immediately if a permit is available.
-  if (_counter > 0) {
-      _counter = 0 ;
-      OrderAccess::fence();
-      return ;
-  }
+  // We depend on Atomic::xchg() having full barrier semantics
+  // since we are doing a lock-free update to _counter.
+  if (Atomic::xchg(0, &_counter) > 0) return;
 
   Thread* thread = Thread::current();
   assert(thread->is_Java_thread(), "Must be JavaThread");
@@ -5617,6 +5876,8 @@ void Parker::park(bool isAbsolute, jlong time) {
     _counter = 0;
     status = pthread_mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
+    // Paranoia to ensure our locked and lock-free paths interact
+    // correctly with each other and Java-level accesses.
     OrderAccess::fence();
     return;
   }
@@ -5653,12 +5914,14 @@ void Parker::park(bool isAbsolute, jlong time) {
   _counter = 0 ;
   status = pthread_mutex_unlock(_mutex) ;
   assert_status(status == 0, status, "invariant") ;
+  // Paranoia to ensure our locked and lock-free paths interact
+  // correctly with each other and Java-level accesses.
+  OrderAccess::fence();
+
   // If externally suspended while waiting, re-suspend
   if (jt->handle_special_suspend_equivalent_condition()) {
     jt->java_suspend_self();
   }
-
-  OrderAccess::fence();
 }
 
 void Parker::unpark() {
@@ -5801,3 +6064,15 @@ bool os::is_headless_jre() {
 
     return true;
 }
+
+// Get the default path to the core file
+// Returns the length of the string
+int os::get_core_path(char* buffer, size_t bufferSize) {
+  int n = jio_snprintf(buffer, bufferSize, "/cores");
+
+  // Truncate if theoretical string was longer than bufferSize
+  n = MIN2(n, (int)bufferSize);
+
+  return n;
+}
+

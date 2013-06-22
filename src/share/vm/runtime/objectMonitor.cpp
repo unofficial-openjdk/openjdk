@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,8 @@
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.hpp"
 #include "services/threadService.hpp"
+#include "trace/tracing.hpp"
+#include "trace/traceMacros.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/preserveException.hpp"
 #ifdef TARGET_OS_FAMILY_linux
@@ -375,6 +377,8 @@ void ATTR ObjectMonitor::enter(TRAPS) {
   // Ensure the object-monitor relationship remains stable while there's contention.
   Atomic::inc_ptr(&_count);
 
+  EventJavaMonitorEnter event;
+
   { // Change java thread status to indicate blocked on monitor enter.
     JavaThreadBlockedOnMonitorEnterState jtbmes(jt, this);
 
@@ -406,7 +410,7 @@ void ATTR ObjectMonitor::enter(TRAPS) {
       //
           _recursions = 0 ;
       _succ = NULL ;
-      exit (Self) ;
+      exit (false, Self) ;
 
       jt->java_suspend_self();
     }
@@ -439,6 +443,14 @@ void ATTR ObjectMonitor::enter(TRAPS) {
   if (JvmtiExport::should_post_monitor_contended_entered()) {
     JvmtiExport::post_monitor_contended_entered(jt, this);
   }
+
+  if (event.should_commit()) {
+    event.set_klass(((oop)this->object())->klass());
+    event.set_previousOwner((TYPE_JAVALANGTHREAD)_previous_owner_tid);
+    event.set_address((TYPE_ADDRESS)(uintptr_t)(this->object_addr()));
+    event.commit();
+  }
+
   if (ObjectMonitor::_sync_ContendedLockAttempts != NULL) {
      ObjectMonitor::_sync_ContendedLockAttempts->inc() ;
   }
@@ -657,8 +669,7 @@ void ATTR ObjectMonitor::EnterI (TRAPS) {
     assert (_succ != Self, "invariant") ;
     if (_Responsible == Self) {
         _Responsible = NULL ;
-        // Dekker pivot-point.
-        // Consider OrderAccess::storeload() here
+        OrderAccess::fence(); // Dekker pivot-point
 
         // We may leave threads on cxq|EntryList without a designated
         // "Responsible" thread.  This is benign.  When this thread subsequently
@@ -678,10 +689,6 @@ void ATTR ObjectMonitor::EnterI (TRAPS) {
         //
         // The MEMBAR, above, prevents the LD of cxq|EntryList in the subsequent
         // exit operation from floating above the ST Responsible=null.
-        //
-        // In *practice* however, EnterI() is always followed by some atomic
-        // operation such as the decrement of _count in ::enter().  Those atomics
-        // obviate the need for the explicit MEMBAR, above.
     }
 
     // We've acquired ownership with CAS().
@@ -926,7 +933,7 @@ void ObjectMonitor::UnlinkAfterAcquire (Thread * Self, ObjectWaiter * SelfNode)
 // Both impinge on OS scalability.  Given that, at most one thread parked on
 // a monitor will use a timer.
 
-void ATTR ObjectMonitor::exit(TRAPS) {
+void ATTR ObjectMonitor::exit(bool not_suspended, TRAPS) {
    Thread * Self = THREAD ;
    if (THREAD != _owner) {
      if (THREAD->is_lock_owned((address) _owner)) {
@@ -962,6 +969,14 @@ void ATTR ObjectMonitor::exit(TRAPS) {
    if ((SyncFlags & 4) == 0) {
       _Responsible = NULL ;
    }
+
+#if INCLUDE_TRACE
+   // get the owner's thread id for the MonitorEnter event
+   // if it is enabled and the thread isn't suspended
+   if (not_suspended && Tracing::is_event_enabled(TraceJavaMonitorEnterEvent)) {
+     _previous_owner_tid = SharedRuntime::get_java_tid(Self);
+   }
+#endif
 
    for (;;) {
       assert (THREAD == _owner, "invariant") ;
@@ -1352,7 +1367,7 @@ intptr_t ObjectMonitor::complete_exit(TRAPS) {
    guarantee(Self == _owner, "complete_exit not owner");
    intptr_t save = _recursions; // record the old recursion count
    _recursions = 0;        // set the recursion level to be 0
-   exit (Self) ;           // exit the monitor
+   exit (true, Self) ;           // exit the monitor
    guarantee (_owner != Self, "invariant");
    return save;
 }
@@ -1406,6 +1421,20 @@ static int Adjust (volatile int * adr, int dx) {
   for (v = *adr ; Atomic::cmpxchg (v + dx, adr, v) != v; v = *adr) ;
   return v ;
 }
+
+// helper method for posting a monitor wait event
+void ObjectMonitor::post_monitor_wait_event(EventJavaMonitorWait* event,
+                                                           jlong notifier_tid,
+                                                           jlong timeout,
+                                                           bool timedout) {
+  event->set_klass(((oop)this->object())->klass());
+  event->set_timeout((TYPE_ULONG)timeout);
+  event->set_address((TYPE_ADDRESS)(uintptr_t)(this->object_addr()));
+  event->set_notifier((TYPE_OSTHREAD)notifier_tid);
+  event->set_timedOut((TYPE_BOOLEAN)timedout);
+  event->commit();
+}
+
 // -----------------------------------------------------------------------------
 // Wait/Notify/NotifyAll
 //
@@ -1421,6 +1450,8 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
    // Throw IMSX or IEX.
    CHECK_OWNER();
 
+   EventJavaMonitorWait event;
+
    // check for a pending interrupt
    if (interruptible && Thread::is_interrupted(Self, true) && !HAS_PENDING_EXCEPTION) {
      // post monitor waited event.  Note that this is past-tense, we are done waiting.
@@ -1429,10 +1460,14 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
         // wait was not timed out due to thread interrupt.
         JvmtiExport::post_monitor_waited(jt, this, false);
      }
+     if (event.should_commit()) {
+       post_monitor_wait_event(&event, 0, millis, false);
+     }
      TEVENT (Wait - Throw IEX) ;
      THROW(vmSymbols::java_lang_InterruptedException());
      return ;
    }
+
    TEVENT (Wait) ;
 
    assert (Self->_Stalled == 0, "invariant") ;
@@ -1464,7 +1499,7 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
    intptr_t save = _recursions; // record the old recursion count
    _waiters++;                  // increment the number of waiters
    _recursions = 0;             // set the recursion level to be 1
-   exit (Self) ;                    // exit the monitor
+   exit (true, Self) ;                    // exit the monitor
    guarantee (_owner != Self, "invariant") ;
 
    // As soon as the ObjectMonitor's ownership is dropped in the exit()
@@ -1564,6 +1599,11 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
      if (JvmtiExport::should_post_monitor_waited()) {
        JvmtiExport::post_monitor_waited(jt, this, ret == OS_TIMEOUT);
      }
+
+     if (event.should_commit()) {
+       post_monitor_wait_event(&event, node._notifier_tid, millis, ret == OS_TIMEOUT);
+     }
+
      OrderAccess::fence() ;
 
      assert (Self->_Stalled != 0, "invariant") ;
@@ -1643,6 +1683,8 @@ void ObjectMonitor::notify(TRAPS) {
         iterator->TState = ObjectWaiter::TS_ENTER ;
      }
      iterator->_notified = 1 ;
+     Thread * Self = THREAD;
+     iterator->_notifier_tid = Self->osthread()->thread_id();
 
      ObjectWaiter * List = _EntryList ;
      if (List != NULL) {
@@ -1767,6 +1809,8 @@ void ObjectMonitor::notifyAll(TRAPS) {
      guarantee (iterator->TState == ObjectWaiter::TS_WAIT, "invariant") ;
      guarantee (iterator->_notified == 0, "invariant") ;
      iterator->_notified = 1 ;
+     Thread * Self = THREAD;
+     iterator->_notifier_tid = Self->osthread()->thread_id();
      if (Policy != 4) {
         iterator->TState = ObjectWaiter::TS_ENTER ;
      }

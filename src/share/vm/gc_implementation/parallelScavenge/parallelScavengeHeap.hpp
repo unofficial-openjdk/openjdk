@@ -35,10 +35,14 @@
 #include "utilities/ostream.hpp"
 
 class AdjoiningGenerations;
+class CollectorPolicy;
+class GCHeapSummary;
 class GCTaskManager;
-class PSAdaptiveSizePolicy;
 class GenerationSizer;
 class CollectorPolicy;
+class PSAdaptiveSizePolicy;
+class PSHeapSummary;
+class VirtualSpaceSummary;
 
 class ParallelScavengeHeap : public CollectedHeap {
   friend class VMStructs;
@@ -67,6 +71,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   unsigned int _death_march_count;
 
   static GCTaskManager*          _gc_task_manager;      // The task manager.
+
+  void trace_heap(GCWhen::Type when, GCTracer* tracer);
 
  protected:
   static inline size_t total_invocations();
@@ -123,7 +129,7 @@ CollectorPolicy* collector_policy() const { return (CollectorPolicy*) _collector
 
   // The alignment used for eden and survivors within the young gen
   // and for boundary between young gen and old gen.
-  size_t intra_heap_alignment() const { return 64 * K; }
+  size_t intra_heap_alignment() const { return 64 * K * HeapWordSize; }
 
   size_t capacity() const;
   size_t used() const;
@@ -252,12 +258,14 @@ CollectorPolicy* collector_policy() const { return (CollectorPolicy*) _collector
   jlong millis_since_last_gc();
 
   void prepare_for_verify();
+  PSHeapSummary create_ps_heap_summary();
+  VirtualSpaceSummary create_perm_gen_space_summary();
   virtual void print_on(outputStream* st) const;
   virtual void print_gc_threads_on(outputStream* st) const;
   virtual void gc_threads_do(ThreadClosure* tc) const;
   virtual void print_tracing_info() const;
 
-  void verify(bool allow_dirty, bool silent, VerifyOption option /* ignored */);
+  void verify(bool silent, VerifyOption option /* ignored */);
 
   void print_heap_change(size_t prev_used);
 

@@ -642,6 +642,11 @@ class constantPoolOopDesc : public oopDesc {
     return resolve_constant_at_impl(h_this, pool_index, _possible_index_sentinel, THREAD);
   }
 
+  oop resolve_bootstrap_specifier_at(int index, TRAPS) {
+    constantPoolHandle h_this(THREAD, this);
+    return resolve_bootstrap_specifier_at_impl(h_this, index, THREAD);
+  }
+
   // Klass name matches name at offset
   bool klass_name_at_matches(instanceKlassHandle k, int which);
 
@@ -666,12 +671,15 @@ class constantPoolOopDesc : public oopDesc {
   friend class SystemDictionary;
 
   // Used by compiler to prevent classloading.
-  static methodOop method_at_if_loaded        (constantPoolHandle this_oop, int which,
-                                               Bytecodes::Code bc = Bytecodes::_illegal);
-  static klassOop klass_at_if_loaded          (constantPoolHandle this_oop, int which);
-  static klassOop klass_ref_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static methodOop       method_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static bool      has_appendix_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static oop           appendix_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static bool   has_method_type_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static oop        method_type_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static klassOop         klass_at_if_loaded      (constantPoolHandle this_oop, int which);
+  static klassOop     klass_ref_at_if_loaded      (constantPoolHandle this_oop, int which);
   // Same as above - but does LinkResolving.
-  static klassOop klass_ref_at_if_loaded_check(constantPoolHandle this_oop, int which, TRAPS);
+  static klassOop     klass_ref_at_if_loaded_check(constantPoolHandle this_oop, int which, TRAPS);
 
   // Routines currently used for annotations (only called by jvm.cpp) but which might be used in the
   // future by other Java code. These take constant pool indices rather than
@@ -696,6 +704,14 @@ class constantPoolOopDesc : public oopDesc {
 #else
   enum { CPCACHE_INDEX_TAG = 0 };        // in product mode, this zero value is a no-op
 #endif //ASSERT
+
+  static int get_cpcache_index(int index) { return index - CPCACHE_INDEX_TAG; }
+  static int decode_cpcache_index(int raw_index, bool invokedynamic_ok = false) {
+    if (invokedynamic_ok && constantPoolCacheOopDesc::is_secondary_index(raw_index))
+      return constantPoolCacheOopDesc::decode_secondary_index(raw_index);
+    else
+      return get_cpcache_index(raw_index);
+  }
 
  private:
 
@@ -729,6 +745,7 @@ class constantPoolOopDesc : public oopDesc {
   static void resolve_string_constants_impl(constantPoolHandle this_oop, TRAPS);
 
   static oop resolve_constant_at_impl(constantPoolHandle this_oop, int index, int cache_index, TRAPS);
+  static oop resolve_bootstrap_specifier_at_impl(constantPoolHandle this_oop, int index, TRAPS);
 
  public:
   // Merging constantPoolOop support:
@@ -764,7 +781,7 @@ class constantPoolOopDesc : public oopDesc {
                         unsigned char *bytes);
 };
 
-class SymbolHashMapEntry : public CHeapObj {
+class SymbolHashMapEntry : public CHeapObj<mtSymbol> {
  private:
   unsigned int        _hash;   // 32-bit hash for item
   SymbolHashMapEntry* _next;   // Next element in the linked list for this bucket
@@ -790,7 +807,7 @@ class SymbolHashMapEntry : public CHeapObj {
 }; // End SymbolHashMapEntry class
 
 
-class SymbolHashMapBucket : public CHeapObj {
+class SymbolHashMapBucket : public CHeapObj<mtSymbol> {
 
 private:
   SymbolHashMapEntry*    _entry;
@@ -803,7 +820,7 @@ public:
 }; // End SymbolHashMapBucket class
 
 
-class SymbolHashMap: public CHeapObj {
+class SymbolHashMap: public CHeapObj<mtSymbol> {
 
  private:
   // Default number of entries in the table
@@ -816,7 +833,7 @@ class SymbolHashMap: public CHeapObj {
 
   void initialize_table(int table_size) {
     _table_size = table_size;
-    _buckets = NEW_C_HEAP_ARRAY(SymbolHashMapBucket, table_size);
+    _buckets = NEW_C_HEAP_ARRAY(SymbolHashMapBucket, table_size, mtSymbol);
     for (int index = 0; index < table_size; index++) {
       _buckets[index].clear();
     }

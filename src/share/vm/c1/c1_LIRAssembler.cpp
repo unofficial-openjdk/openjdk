@@ -448,10 +448,10 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
 
   switch (op->code()) {
   case lir_static_call:
+  case lir_dynamic_call:
     call(op, relocInfo::static_call_type);
     break;
   case lir_optvirtual_call:
-  case lir_dynamic_call:
     call(op, relocInfo::opt_virtual_call_type);
     break;
   case lir_icvirtual_call:
@@ -460,7 +460,9 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
   case lir_virtual_call:
     vtable_call(op);
     break;
-  default: ShouldNotReachHere();
+  default:
+    fatal(err_msg_res("unexpected op code: %s", op->name()));
+    break;
   }
 
   // JSR 292
@@ -718,7 +720,7 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
       if (op->in_opr2()->is_constant()) {
         shift_op(op->code(), op->in_opr1(), op->in_opr2()->as_constant_ptr()->as_jint(), op->result_opr());
       } else {
-        shift_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op->tmp_opr());
+        shift_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op->tmp1_opr());
       }
       break;
 
@@ -746,6 +748,8 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
     case lir_cos:
     case lir_log:
     case lir_log10:
+    case lir_exp:
+    case lir_pow:
       intrinsic_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op);
       break;
 
@@ -761,6 +765,11 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
 
     case lir_throw:
       throw_op(op->in_opr1(), op->in_opr2(), op->info());
+      break;
+
+    case lir_xadd:
+    case lir_xchg:
+      atomic_op(op->code(), op->in_opr1(), op->in_opr2(), op->result_opr(), op->tmp1_opr());
       break;
 
     default:

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,9 @@
 # Rules to build jvm_db/dtrace, used by vm.make
 
 # We build libjvm_dtrace/libjvm_db/dtrace for COMPILER1 and COMPILER2
-# but not for CORE or KERNEL configurations.
+# but not for CORE configuration.
 
 ifneq ("${TYPE}", "CORE")
-ifneq ("${TYPE}", "KERNEL")
 
 ifdef USE_GCC
 
@@ -206,15 +205,15 @@ CONDITIONALLY_UPDATE_JVMOFFS_TARGET = \
 
 # $@.tmp is created first to avoid an empty $(JVMOFFS).h if an error occurs.
 $(JVMOFFS).h: $(GENOFFS)
-	$(QUIETLY) LD_LIBRARY_PATH=. ./$(GENOFFS) -header > $@.tmp
+	$(QUIETLY) LD_LIBRARY_PATH=.:$(LD_LIBRARY_PATH) ./$(GENOFFS) -header > $@.tmp
 	$(QUIETLY) $(CONDITIONALLY_UPDATE_JVMOFFS_TARGET)
 
 $(JVMOFFS)Index.h: $(GENOFFS)
-	$(QUIETLY) LD_LIBRARY_PATH=. ./$(GENOFFS) -index > $@.tmp
+	$(QUIETLY) LD_LIBRARY_PATH=.:$(LD_LIBRARY_PATH) ./$(GENOFFS) -index > $@.tmp
 	$(QUIETLY)  $(CONDITIONALLY_UPDATE_JVMOFFS_TARGET)
 
 $(JVMOFFS).cpp: $(GENOFFS) $(JVMOFFS).h $(JVMOFFS)Index.h
-	$(QUIETLY) LD_LIBRARY_PATH=. ./$(GENOFFS) -table > $@.tmp
+	$(QUIETLY) LD_LIBRARY_PATH=.:$(LD_LIBRARY_PATH) ./$(GENOFFS) -table > $@.tmp
 	$(QUIETLY) $(CONDITIONALLY_UPDATE_JVMOFFS_TARGET)
 
 $(JVMOFFS.o): $(JVMOFFS).h $(JVMOFFS).cpp 
@@ -385,13 +384,6 @@ dtraceCheck:
 endif # ifneq ("${dtraceFound}", "")
 
 endif # ifdef USE_GCC
-
-else # KERNEL build
-
-dtraceCheck:
-	$(QUIETLY) echo "**NOTICE** Dtrace support disabled for KERNEL builds"
-
-endif # ifneq ("${TYPE}", "KERNEL")
 
 else # CORE build
 

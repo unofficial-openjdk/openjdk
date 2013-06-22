@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,14 @@
 #include "gc_implementation/shared/ageTable.hpp"
 #include "gc_implementation/shared/cSpaceCounters.hpp"
 #include "gc_implementation/shared/generationCounters.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "memory/generation.inline.hpp"
 #include "utilities/stack.hpp"
 
 class EdenSpace;
 class ContiguousSpace;
 class ScanClosure;
+class STWGCTimer;
 
 // DefNewGeneration is a young generation containing eden, from- and
 // to-space.
@@ -46,15 +48,17 @@ protected:
   int         _tenuring_threshold;   // Tenuring threshold for next collection.
   ageTable    _age_table;
   // Size of object to pretenure in words; command line provides bytes
-  size_t        _pretenure_size_threshold_words;
+  size_t      _pretenure_size_threshold_words;
 
   ageTable*   age_table() { return &_age_table; }
+
   // Initialize state to optimistically assume no promotion failure will
   // happen.
   void   init_assuming_no_promotion_failure();
   // True iff a promotion has failed in the current collection.
   bool   _promotion_failed;
   bool   promotion_failed() { return _promotion_failed; }
+  PromotionFailedInfo _promotion_failed_info;
 
   // Handling promotion failure.  A young generation collection
   // can fail if a live object cannot be copied out of its
@@ -89,8 +93,8 @@ protected:
 
   // Together, these keep <object with a preserved mark, mark value> pairs.
   // They should always contain the same number of elements.
-  Stack<oop>     _objs_with_preserved_marks;
-  Stack<markOop> _preserved_marks_of_objs;
+  Stack<oop, mtGC>     _objs_with_preserved_marks;
+  Stack<markOop, mtGC> _preserved_marks_of_objs;
 
   // Promotion failure handling
   OopClosure *_promo_failure_scan_stack_closure;
@@ -98,7 +102,7 @@ protected:
     _promo_failure_scan_stack_closure = scan_stack_closure;
   }
 
-  Stack<oop> _promo_failure_scan_stack;
+  Stack<oop, mtGC> _promo_failure_scan_stack;
   void drain_promo_failure_scan_stack(void);
   bool _promo_failure_drain_in_progress;
 
@@ -129,6 +133,8 @@ protected:
   EdenSpace*       _eden_space;
   ContiguousSpace* _from_space;
   ContiguousSpace* _to_space;
+
+  STWGCTimer* _gc_timer;
 
   enum SomeProtectedConstants {
     // Generations are GenGrain-aligned and have size that are multiples of
@@ -201,6 +207,8 @@ protected:
  public:
   DefNewGeneration(ReservedSpace rs, size_t initial_byte_size, int level,
                    const char* policy="Copy");
+
+  virtual void ref_processor_init();
 
   virtual Generation::Name kind() { return Generation::DefNew; }
 
@@ -340,7 +348,7 @@ protected:
   // PrintHeapAtGC support.
   void print_on(outputStream* st) const;
 
-  void verify(bool allow_dirty);
+  void verify();
 
   bool promo_failure_scan_is_complete() const {
     return _promo_failure_scan_stack.is_empty();

@@ -318,6 +318,16 @@ void DelayedConstant::update_all() {
   }
 }
 
+RegisterOrConstant AbstractAssembler::delayed_value(int(*value_fn)(), Register tmp, int offset) {
+  intptr_t val = (intptr_t) (*value_fn)();
+  if (val != 0)  return val + offset;
+  return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
+}
+RegisterOrConstant AbstractAssembler::delayed_value(address(*value_fn)(), Register tmp, int offset) {
+  intptr_t val = (intptr_t) (*value_fn)();
+  if (val != 0)  return val + offset;
+  return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
+}
 intptr_t* AbstractAssembler::delayed_value_addr(int(*value_fn)()) {
   DelayedConstant* dcon = DelayedConstant::add(T_INT, (DelayedConstant::value_fn_t) value_fn);
   return &dcon->value;
@@ -330,13 +340,17 @@ void AbstractAssembler::update_delayed_values() {
   DelayedConstant::update_all();
 }
 
-
-
-
 void AbstractAssembler::block_comment(const char* comment) {
   if (sect() == CodeBuffer::SECT_INSTS) {
     code_section()->outer()->block_comment(offset(), comment);
   }
+}
+
+const char* AbstractAssembler::code_string(const char* str) {
+  if (sect() == CodeBuffer::SECT_INSTS || sect() == CodeBuffer::SECT_STUBS) {
+    return code_section()->outer()->code_string(str);
+  }
+  return NULL;
 }
 
 bool MacroAssembler::needs_explicit_null_check(intptr_t offset) {

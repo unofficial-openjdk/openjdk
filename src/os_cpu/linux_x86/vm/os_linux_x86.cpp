@@ -52,12 +52,6 @@
 #include "thread_linux.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
-#ifdef COMPILER1
-#include "c1/c1_Runtime1.hpp"
-#endif
-#ifdef COMPILER2
-#include "opto/runtime.hpp"
-#endif
 
 // put OS-includes here
 # include <sys/types.h>
@@ -114,7 +108,7 @@ char* os::non_memory_address_word() {
   return (char*) -1;
 }
 
-void os::initialize_thread() {
+void os::initialize_thread(Thread* thr) {
 // Nothing to do.
 }
 
@@ -312,6 +306,11 @@ JVM_handle_linux_signal(int sig,
           // to handle_unexpected_exception way down below.
           thread->disable_stack_red_zone();
           tty->print_raw_cr("An irrecoverable stack overflow has occurred.");
+
+          // This is a likely cause, but hard to verify. Let's just print
+          // it as a hint.
+          tty->print_raw_cr("Please check if any of your loaded .so files has "
+                            "enabled executable stack (see man page execstack(8))");
         } else {
           // Accessing stack address below sp may cause SEGV if current
           // thread has MAP_GROWSDOWN stack. This should only happen when
@@ -862,3 +861,11 @@ void os::setup_fpu() {
                       : "r" (fpu_cntrl) : "memory");
 #endif // !AMD64
 }
+
+#ifndef PRODUCT
+void os::verify_stack_alignment() {
+#ifdef AMD64
+  assert(((intptr_t)os::current_stack_pointer() & (StackAlignmentInBytes-1)) == 0, "incorrect stack alignment");
+#endif
+}
+#endif

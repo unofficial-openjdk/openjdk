@@ -111,7 +111,7 @@ void HandleMark::initialize(Thread* thread) {
   _chunk = _area->_chunk;
   _hwm   = _area->_hwm;
   _max   = _area->_max;
-  NOT_PRODUCT(_size_in_bytes = _area->_size_in_bytes;)
+  _size_in_bytes = _area->_size_in_bytes;
   debug_only(_area->_handle_mark_nesting++);
   assert(_area->_handle_mark_nesting > 0, "must stack allocate HandleMarks");
   debug_only(Atomic::inc(&_nof_handlemarks);)
@@ -153,13 +153,18 @@ HandleMark::~HandleMark() {
 
   // Delete later chunks
   if( _chunk->next() ) {
+    // reset arena size before delete chunks. Otherwise, the total
+    // arena size could exceed total chunk size
+    assert(area->size_in_bytes() > size_in_bytes(), "Sanity check");
+    area->set_size_in_bytes(size_in_bytes());
     _chunk->next_chop();
+  } else {
+    assert(area->size_in_bytes() == size_in_bytes(), "Sanity check");
   }
   // Roll back arena to saved top markers
   area->_chunk = _chunk;
   area->_hwm = _hwm;
   area->_max = _max;
-  NOT_PRODUCT(area->set_size_in_bytes(_size_in_bytes);)
 #ifdef ASSERT
   // clear out first chunk (to detect allocation bugs)
   if (ZapVMHandleArea) {

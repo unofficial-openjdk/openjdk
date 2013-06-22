@@ -35,6 +35,12 @@ class ReservedSpace VALUE_OBJ_CLASS_SPEC {
   char*  _base;
   size_t _size;
   size_t _noaccess_prefix;
+
+  // The base and size prior to any alignment done by this class; used only on
+  // systems that cannot release part of a region.
+  char*  _raw_base;
+  size_t _raw_size;
+
   size_t _alignment;
   bool   _special;
   bool   _executable;
@@ -42,10 +48,19 @@ class ReservedSpace VALUE_OBJ_CLASS_SPEC {
   // ReservedSpace
   ReservedSpace(char* base, size_t size, size_t alignment, bool special,
                 bool executable);
+
+  bool failed_to_reserve_as_requested(char* base, char* requested_address,
+                                      const size_t size, bool special);
   void initialize(size_t size, size_t alignment, bool large,
                   char* requested_address,
                   const size_t noaccess_prefix,
                   bool executable);
+
+  inline void set_raw_base_and_size(char * const raw_base, size_t raw_size);
+
+  // Release virtual address space.  If alignment was done, use the saved
+  // address and size when releasing.
+  void release_memory(char * default_addr, size_t default_size);
 
   // Release parts of an already-reserved memory region [addr, addr + len) to
   // get a new region that has "compound alignment."  Return the start of the

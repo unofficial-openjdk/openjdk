@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,8 @@
 
 class G1CollectedHeap;
 class CMTask;
-typedef GenericTaskQueue<oop>            CMTaskQueue;
-typedef GenericTaskQueueSet<CMTaskQueue> CMTaskQueueSet;
+typedef GenericTaskQueue<oop, mtGC>            CMTaskQueue;
+typedef GenericTaskQueueSet<CMTaskQueue, mtGC> CMTaskQueueSet;
 
 // Closure used by CM during concurrent reference discovery
 // and reference processing (during remarking) to determine
@@ -42,9 +42,7 @@ typedef GenericTaskQueueSet<CMTaskQueue> CMTaskQueueSet;
 class G1CMIsAliveClosure: public BoolObjectClosure {
   G1CollectedHeap* _g1;
  public:
-  G1CMIsAliveClosure(G1CollectedHeap* g1) :
-    _g1(g1)
-  {}
+  G1CMIsAliveClosure(G1CollectedHeap* g1) : _g1(g1) { }
 
   void do_object(oop obj) {
     ShouldNotCallThis();
@@ -110,11 +108,6 @@ class CMBitMapRO VALUE_OBJ_CLASS_SPEC {
   HeapWord* nextWord(HeapWord* addr) {
     return offsetToHeapWord(heapWordToOffset(addr) + 1);
   }
-
-  void mostly_disjoint_range_union(BitMap*   from_bitmap,
-                                   size_t    from_start_index,
-                                   HeapWord* to_start_word,
-                                   size_t    word_num);
 
   // debugging
   NOT_PRODUCT(bool covers(ReservedSpace rs) const;)
@@ -258,60 +251,6 @@ class CMMarkStack VALUE_OBJ_CLASS_SPEC {
   void oops_do(OopClosure* f);
 };
 
-class CMRegionStack VALUE_OBJ_CLASS_SPEC {
-  MemRegion* _base;
-  jint _capacity;
-  jint _index;
-  jint _oops_do_bound;
-  bool _overflow;
-public:
-  CMRegionStack();
-  ~CMRegionStack();
-  void allocate(size_t size);
-
-  // This is lock-free; assumes that it will only be called in parallel
-  // with other "push" operations (no pops).
-  void push_lock_free(MemRegion mr);
-
-  // Lock-free; assumes that it will only be called in parallel
-  // with other "pop" operations (no pushes).
-  MemRegion pop_lock_free();
-
-#if 0
-  // The routines that manipulate the region stack with a lock are
-  // not currently used. They should be retained, however, as a
-  // diagnostic aid.
-
-  // These two are the implementations that use a lock. They can be
-  // called concurrently with each other but they should not be called
-  // concurrently with the lock-free versions (push() / pop()).
-  void push_with_lock(MemRegion mr);
-  MemRegion pop_with_lock();
-#endif
-
-  bool isEmpty()    { return _index == 0; }
-  bool isFull()     { return _index == _capacity; }
-
-  bool overflow() { return _overflow; }
-  void clear_overflow() { _overflow = false; }
-
-  int  size() { return _index; }
-
-  // It iterates over the entries in the region stack and it
-  // invalidates (i.e. assigns MemRegion()) the ones that point to
-  // regions in the collection set.
-  bool invalidate_entries_into_cset();
-
-  // This gives an upper bound up to which the iteration in
-  // invalidate_entries_into_cset() will reach. This prevents
-  // newly-added entries to be unnecessarily scanned.
-  void set_oops_do_bound() {
-    _oops_do_bound = _index;
-  }
-
-  void setEmpty()   { _index = 0; clear_overflow(); }
-};
-
 class ForceOverflowSettings VALUE_OBJ_CLASS_SPEC {
 private:
 #ifndef PRODUCT
@@ -404,11 +343,10 @@ public:
 
 class ConcurrentMarkThread;
 
-class ConcurrentMark : public CHeapObj {
+class ConcurrentMark: public CHeapObj<mtGC> {
   friend class ConcurrentMarkThread;
   friend class CMTask;
   friend class CMBitMapClosure;
-  friend class CSetMarkOopClosure;
   friend class CMGlobalObjectClosure;
   friend class CMRemarkTask;
   friend class CMConcurrentMarkingTask;
@@ -416,8 +354,8 @@ class ConcurrentMark : public CHeapObj {
   friend class CalcLiveObjectsClosure;
   friend class G1CMRefProcTaskProxy;
   friend class G1CMRefProcTaskExecutor;
-  friend class G1CMParKeepAliveAndDrainClosure;
-  friend class G1CMParDrainMarkingStackClosure;
+  friend class G1CMKeepAliveAndDrainClosure;
+  friend class G1CMDrainMarkingStackClosure;
 
 protected:
   ConcurrentMarkThread* _cmThread;   // the thread doing the work
@@ -443,7 +381,6 @@ protected:
   CMBitMap                _markBitMap2;
   CMBitMapRO*             _prevMarkBitMap; // completed mark bitmap
   CMBitMap*               _nextMarkBitMap; // under-construction mark bitmap
-  bool                    _at_least_one_mark_complete;
 
   BitMap                  _region_bm;
   BitMap                  _card_bm;
@@ -457,7 +394,6 @@ protected:
 
   // For gray objects
   CMMarkStack             _markStack; // Grey objects behind global finger.
-  CMRegionStack           _regionStack; // Grey regions behind global finger.
   HeapWord* volatile      _finger;  // the global finger, region aligned,
                                     // always points to the end of the
                                     // last claimed region
@@ -502,18 +438,6 @@ protected:
   // verbose level
   CMVerboseLevel          _verbose_level;
 
-  // These two fields are used to implement the optimisation that
-  // avoids pushing objects on the global/region stack if there are
-  // no collection set regions above the lowest finger.
-
-  // This is the lowest finger (among the global and local fingers),
-  // which is calculated before a new collection set is chosen.
-  HeapWord* _min_finger;
-  // If this flag is true, objects/regions that are marked below the
-  // finger should be pushed on the stack(s). If this is flag is
-  // false, it is safe not to push them on the stack(s).
-  bool      _should_gray_objects;
-
   // All of these times are in ms.
   NumberSeq _init_times;
   NumberSeq _remark_times;
@@ -537,15 +461,21 @@ protected:
   // It resets the global marking data structures, as well as the
   // task local ones; should be called during initial mark.
   void reset();
-  // It resets all the marking data structures.
-  void clear_marking_state(bool clear_overflow = true);
 
-  // It should be called to indicate which phase we're in (concurrent
-  // mark or remark) and how many threads are currently active.
-  void set_phase(uint active_tasks, bool concurrent);
+  // Resets all the marking data structures. Called when we have to restart
+  // marking or when marking completes (via set_non_marking_state below).
+  void reset_marking_state(bool clear_overflow = true);
+
   // We do this after we're done with marking so that the marking data
   // structures are initialised to a sensible and predictable state.
   void set_non_marking_state();
+
+  // Called to indicate how many threads are currently active.
+  void set_concurrency(uint active_tasks);
+
+  // It should be called to indicate which phase we're in (concurrent
+  // mark or remark) and how many threads are currently active.
+  void set_concurrency_and_phase(uint active_tasks, bool concurrent);
 
   // prints all gathered CM-related statistics
   void print_stats();
@@ -555,17 +485,26 @@ protected:
   }
 
   // accessor methods
-  uint parallel_marking_threads() { return _parallel_marking_threads; }
-  uint max_parallel_marking_threads() { return _max_parallel_marking_threads;}
-  double sleep_factor()             { return _sleep_factor; }
-  double marking_task_overhead()    { return _marking_task_overhead;}
-  double cleanup_sleep_factor()     { return _cleanup_sleep_factor; }
-  double cleanup_task_overhead()    { return _cleanup_task_overhead;}
+  uint parallel_marking_threads() const     { return _parallel_marking_threads; }
+  uint max_parallel_marking_threads() const { return _max_parallel_marking_threads;}
+  double sleep_factor()                     { return _sleep_factor; }
+  double marking_task_overhead()            { return _marking_task_overhead;}
+  double cleanup_sleep_factor()             { return _cleanup_sleep_factor; }
+  double cleanup_task_overhead()            { return _cleanup_task_overhead;}
 
-  HeapWord*               finger()        { return _finger;   }
-  bool                    concurrent()    { return _concurrent; }
-  uint                    active_tasks()  { return _active_tasks; }
-  ParallelTaskTerminator* terminator()    { return &_terminator; }
+  bool use_parallel_marking_threads() const {
+    assert(parallel_marking_threads() <=
+           max_parallel_marking_threads(), "sanity");
+    assert((_parallel_workers == NULL && parallel_marking_threads() == 0) ||
+           parallel_marking_threads() > 0,
+           "parallel workers not set up correctly");
+    return _parallel_workers != NULL;
+  }
+
+  HeapWord*               finger()          { return _finger;   }
+  bool                    concurrent()      { return _concurrent; }
+  uint                    active_tasks()    { return _active_tasks; }
+  ParallelTaskTerminator* terminator()      { return &_terminator; }
 
   // It claims the next available region to be scanned by a marking
   // task. It might return NULL if the next region is empty or we have
@@ -604,13 +543,11 @@ protected:
   CMTaskQueueSet* task_queues()  { return _task_queues; }
 
   // Access / manipulation of the overflow flag which is set to
-  // indicate that the global stack or region stack has overflown
+  // indicate that the global stack has overflown
   bool has_overflown()           { return _has_overflown; }
   void set_has_overflown()       { _has_overflown = true; }
   void clear_has_overflown()     { _has_overflown = false; }
   bool restart_for_overflow()    { return _restart_for_overflow; }
-
-  bool has_aborted()             { return _has_aborted; }
 
   // Methods to enter the two overflow sync barriers
   void enter_first_sync_barrier(int task_num);
@@ -684,68 +621,6 @@ public:
   bool mark_stack_overflow()              { return _markStack.overflow(); }
   bool mark_stack_empty()                 { return _markStack.isEmpty(); }
 
-  // (Lock-free) Manipulation of the region stack
-  bool region_stack_push_lock_free(MemRegion mr) {
-    // Currently we only call the lock-free version during evacuation
-    // pauses.
-    assert(SafepointSynchronize::is_at_safepoint(), "world should be stopped");
-
-    _regionStack.push_lock_free(mr);
-    if (_regionStack.overflow()) {
-      set_has_overflown();
-      return false;
-    }
-    return true;
-  }
-
-  // Lock-free version of region-stack pop. Should only be
-  // called in tandem with other lock-free pops.
-  MemRegion region_stack_pop_lock_free() {
-    return _regionStack.pop_lock_free();
-  }
-
-#if 0
-  // The routines that manipulate the region stack with a lock are
-  // not currently used. They should be retained, however, as a
-  // diagnostic aid.
-
-  bool region_stack_push_with_lock(MemRegion mr) {
-    // Currently we only call the lock-based version during either
-    // concurrent marking or remark.
-    assert(!SafepointSynchronize::is_at_safepoint() || !concurrent(),
-           "if we are at a safepoint it should be the remark safepoint");
-
-    _regionStack.push_with_lock(mr);
-    if (_regionStack.overflow()) {
-      set_has_overflown();
-      return false;
-    }
-    return true;
-  }
-
-  MemRegion region_stack_pop_with_lock() {
-    // Currently we only call the lock-based version during either
-    // concurrent marking or remark.
-    assert(!SafepointSynchronize::is_at_safepoint() || !concurrent(),
-           "if we are at a safepoint it should be the remark safepoint");
-
-    return _regionStack.pop_with_lock();
-  }
-#endif
-
-  int region_stack_size()               { return _regionStack.size(); }
-  bool region_stack_overflow()          { return _regionStack.overflow(); }
-  bool region_stack_empty()             { return _regionStack.isEmpty(); }
-
-  // Iterate over any regions that were aborted while draining the
-  // region stack (any such regions are saved in the corresponding
-  // CMTask) and invalidate (i.e. assign to the empty MemRegion())
-  // any regions that point into the collection set.
-  bool invalidate_aborted_regions_in_cset();
-
-  // Returns true if there are any aborted memory regions.
-  bool has_aborted_regions();
-
   CMRootRegions* root_regions() { return &_root_regions; }
 
   bool concurrent_marking_in_progress() {
@@ -774,11 +649,7 @@ public:
     return _task_queues->steal(task_num, hash_seed, obj);
   }
 
-  // It grays an object by first marking it. Then, if it's behind the
-  // global finger, it also pushes it on the global stack.
-  void deal_with_reference(oop obj);
-
-  ConcurrentMark(ReservedSpace rs, int max_regions);
+  ConcurrentMark(ReservedSpace rs, uint max_regions);
   ~ConcurrentMark();
 
   ConcurrentMarkThread* cmThread() { return _cmThread; }
@@ -809,22 +680,6 @@ public:
   // might already have it (no point in recalculating it).
   inline void grayRoot(oop obj, size_t word_size,
                        uint worker_id, HeapRegion* hr = NULL);
-
-  // It's used during evacuation pauses to gray a region, if
-  // necessary, and it's MT-safe. It assumes that the caller has
-  // marked any objects on that region. If _should_gray_objects is
-  // true and we're still doing concurrent marking, the region is
-  // pushed on the region stack, if it is located below the global
-  // finger, otherwise we do nothing.
-  void grayRegionIfNecessary(MemRegion mr);
-
-  // It's used during evacuation pauses to mark and, if necessary,
-  // gray a single object and it's MT-safe. It assumes the caller did
-  // not mark the object. If _should_gray_objects is true and we're
-  // still doing concurrent marking, the objects is pushed on the
-  // global stack, if it is located below the global finger, otherwise
-  // we do nothing.
-  void markAndGrayObjectIfNecessary(oop p);
 
   // It iterates over the heap and for each object it comes across it
   // will dump the contents of its reference fields, as well as
@@ -869,10 +724,6 @@ public:
   // Do concurrent phase of marking, to a tentative transitive closure.
   void markFromRoots();
 
-  // Process all unprocessed SATB buffers. It is called at the
-  // beginning of an evacuation pause.
-  void drainAllSATBBuffers();
-
   void checkpointRootsFinal(bool clear_all_soft_refs);
   void checkpointRootsFinalWork();
   void cleanup();
@@ -899,10 +750,6 @@ public:
     _markStack.note_end_of_gc();
   }
 
-  // Iterate over the oops in the mark stack and all local queues. It
-  // also calls invalidate_entries_into_cset() on the region stack.
-  void oops_do(OopClosure* f);
-
   // Verify that there are no CSet oops on the stacks (taskqueues /
   // global mark stack), enqueued SATB buffers, per-thread SATB
   // buffers, and fingers (global / per-task). The boolean parameters
@@ -918,40 +765,6 @@ public:
   // doesn't do anything if concurrent_marking_in_progress() is false,
   // unless the force parameter is true.
   void update_g1_committed(bool force = false);
-
-  void complete_marking_in_collection_set();
-
-  // It indicates that a new collection set is being chosen.
-  void newCSet();
-
-  // It registers a collection set heap region with CM. This is used
-  // to determine whether any heap regions are located above the finger.
-  void registerCSetRegion(HeapRegion* hr);
-
-  // Resets the region fields of any active CMTask whose region fields
-  // are in the collection set (i.e. the region currently claimed by
-  // the CMTask will be evacuated and may be used, subsequently, as
-  // an alloc region). When this happens the region fields in the CMTask
-  // are stale and, hence, should be cleared causing the worker thread
-  // to claim a new region.
-  void reset_active_task_region_fields_in_cset();
-
-  // Registers the maximum region-end associated with a set of
-  // regions with CM. Again this is used to determine whether any
-  // heap regions are located above the finger.
-  void register_collection_set_finger(HeapWord* max_finger) {
-    // max_finger is the highest heap region end of the regions currently
-    // contained in the collection set. If this value is larger than
-    // _min_finger then we need to gray objects.
-    // This routine is like registerCSetRegion but for an entire
-    // collection of regions.
-    if (max_finger > _min_finger) {
-      _should_gray_objects = true;
-    }
-  }
-
-  // Returns "true" if at least one mark has been completed.
-  bool at_least_one_mark_complete() { return _at_least_one_mark_complete; }
 
   bool isMarked(oop p) const {
     assert(p != NULL && p->is_oop(), "expected an oop");
@@ -983,6 +796,8 @@ public:
   // Called to abort the marking cycle after a Full GC takes palce.
   void abort();
 
+  bool has_aborted()      { return _has_aborted; }
+
   // This prints the global/local fingers. It is used for debugging.
   NOT_PRODUCT(void print_finger();)
 
@@ -1006,7 +821,14 @@ public:
     return _MARKING_VERBOSE_ && _verbose_level >= high_verbose;
   }
 
-  // Counting data structure accessors
+  // Liveness counting
+
+  // Utility routine to set an exclusive range of cards on the given
+  // card liveness bitmap
+  inline void set_card_bitmap_range(BitMap* card_bm,
+                                    BitMap::idx_t start_idx,
+                                    BitMap::idx_t end_idx,
+                                    bool is_par);
 
   // Returns the card number of the bottom of the G1 heap.
   // Used in biasing indices into accounting card bitmaps.
@@ -1164,23 +986,6 @@ private:
   // limit of the region this task is scanning, NULL if we're not scanning one
   HeapWord*                   _region_limit;
 
-  // This is used only when we scan regions popped from the region
-  // stack. It records what the last object on such a region we
-  // scanned was. It is used to ensure that, if we abort region
-  // iteration, we do not rescan the first part of the region. This
-  // should be NULL when we're not scanning a region from the region
-  // stack.
-  HeapWord*                   _region_finger;
-
-  // If we abort while scanning a region we record the remaining
-  // unscanned portion and check this field when marking restarts.
-  // This avoids having to push on the region stack while other
-  // marking threads may still be popping regions.
-  // If we were to push the unscanned portion directly to the
-  // region stack then we would need to using locking versions
-  // of the push and pop operations.
-  MemRegion                   _aborted_region;
-
   // the number of words this task has scanned
   size_t                      _words_scanned;
   // When _words_scanned reaches this limit, the regular clock is
@@ -1268,8 +1073,6 @@ private:
   int                         _global_transfers_to;
   int                         _global_transfers_from;
 
-  int                         _region_stack_pops;
-
   int                         _regions_claimed;
   int                         _objs_found_on_bitmap;
 
@@ -1317,7 +1120,9 @@ public:
   // trying not to exceed the given duration. However, it might exit
   // prematurely, according to some conditions (i.e. SATB buffers are
   // available for processing).
-  void do_marking_step(double target_ms, bool do_stealing, bool do_termination);
+  void do_marking_step(double target_ms,
+                       bool do_termination,
+                       bool is_serial);
 
   // These two calls start and stop the timer
   void record_start_time() {
@@ -1346,15 +1151,6 @@ public:
   void clear_has_aborted()      { _has_aborted = false; }
   bool has_timed_out()          { return _has_timed_out; }
   bool claimed()                { return _claimed; }
-
-  // Support routines for the partially scanned region that may be
-  // recorded as a result of aborting while draining the CMRegionStack
-  MemRegion aborted_region()    { return _aborted_region; }
-  void set_aborted_region(MemRegion mr)
-                                { _aborted_region = mr; }
-
-  // Clears any recorded partially scanned region
-  void clear_aborted_region()   { set_aborted_region(MemRegion()); }
 
   void set_cm_oop_closure(G1CMOopClosure* cm_oop_closure);
 
@@ -1385,20 +1181,10 @@ public:
   // buffers are available.
   void drain_satb_buffers();
 
-  // It keeps popping regions from the region stack and processing
-  // them until the region stack is empty.
-  void drain_region_stack(BitMapClosure* closure);
-
   // moves the local finger to a new location
   inline void move_finger_to(HeapWord* new_finger) {
     assert(new_finger >= _finger && new_finger < _region_limit, "invariant");
     _finger = new_finger;
-  }
-
-  // moves the region finger to a new location
-  inline void move_region_finger_to(HeapWord* new_finger) {
-    assert(new_finger < _cm->finger(), "invariant");
-    _region_finger = new_finger;
   }
 
   CMTask(int task_num, ConcurrentMark *cm,

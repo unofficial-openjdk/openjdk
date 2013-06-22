@@ -542,17 +542,17 @@ void print_register_type(OopMapValue::oop_types x, VMReg optional,
     st->print("Oop");
     break;
   case OopMapValue::value_value:
-    st->print("Value" );
+    st->print("Value");
     break;
   case OopMapValue::narrowoop_value:
-    tty->print("NarrowOop" );
+    st->print("NarrowOop");
     break;
   case OopMapValue::callee_saved_value:
-    st->print("Callers_" );
+    st->print("Callers_");
     optional->print_on(st);
     break;
   case OopMapValue::derived_oop_value:
-    st->print("Derived_oop_" );
+    st->print("Derived_oop_");
     optional->print_on(st);
     break;
   default:
@@ -599,7 +599,7 @@ void OopMapSet::print_on(outputStream* st) const {
 
 #ifdef COMPILER2
 
-class DerivedPointerEntry : public CHeapObj {
+class DerivedPointerEntry : public CHeapObj<mtCompiler> {
  private:
   oop*     _location; // Location of derived pointer (also pointing to the base)
   intptr_t _offset;   // Offset from base pointer
@@ -621,7 +621,7 @@ void DerivedPointerTable::clear() {
   assert (!_active, "should not be active");
   assert(_list == NULL || _list->length() == 0, "table not empty");
   if (_list == NULL) {
-    _list = new (ResourceObj::C_HEAP) GrowableArray<DerivedPointerEntry*>(10, true); // Allocated on C heap
+    _list = new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<DerivedPointerEntry*>(10, true); // Allocated on C heap
   }
   _active = true;
 }

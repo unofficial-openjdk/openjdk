@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,6 +78,10 @@ enum ThreadPriority {        // JLS 20.20.1-3
   CriticalPriority = 11      // Critical thread priority
 };
 
+// Executable parameter flag for os::commit_memory() and
+// os::commit_memory_or_exit().
+const bool ExecMem = true;
+
 // Typedef for structured exception handling support
 typedef void (*java_call_t)(JavaValue* value, methodHandle* method, JavaCallArguments* args, Thread* thread);
 
@@ -98,6 +102,35 @@ class os: AllStatic {
     _page_sizes[0] = default_page_size;
     _page_sizes[1] = 0; // sentinel
   }
+
+  static char*  pd_reserve_memory(size_t bytes, char* addr = 0,
+                               size_t alignment_hint = 0);
+  static char*  pd_attempt_reserve_memory_at(size_t bytes, char* addr);
+  static void   pd_split_reserved_memory(char *base, size_t size,
+                                      size_t split, bool realloc);
+  static bool   pd_commit_memory(char* addr, size_t bytes, bool executable);
+  static bool   pd_commit_memory(char* addr, size_t size, size_t alignment_hint,
+                                 bool executable);
+  // Same as pd_commit_memory() that either succeeds or calls
+  // vm_exit_out_of_memory() with the specified mesg.
+  static void   pd_commit_memory_or_exit(char* addr, size_t bytes,
+                                         bool executable, const char* mesg);
+  static void   pd_commit_memory_or_exit(char* addr, size_t size,
+                                         size_t alignment_hint,
+                                         bool executable, const char* mesg);
+  static bool   pd_uncommit_memory(char* addr, size_t bytes);
+  static bool   pd_release_memory(char* addr, size_t bytes);
+
+  static char*  pd_map_memory(int fd, const char* file_name, size_t file_offset,
+                           char *addr, size_t bytes, bool read_only = false,
+                           bool allow_exec = false);
+  static char*  pd_remap_memory(int fd, const char* file_name, size_t file_offset,
+                             char *addr, size_t bytes, bool read_only,
+                             bool allow_exec);
+  static bool   pd_unmap_memory(char *addr, size_t bytes);
+  static void   pd_free_memory(char *addr, size_t bytes, size_t alignment_hint);
+  static void   pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint);
+
 
  public:
   static void init(void);                      // Called before command line parsing
@@ -233,16 +266,26 @@ class os: AllStatic {
   static int    vm_allocation_granularity();
   static char*  reserve_memory(size_t bytes, char* addr = 0,
                                size_t alignment_hint = 0);
+  static char*  reserve_memory(size_t bytes, char* addr,
+                               size_t alignment_hint, MEMFLAGS flags);
   static char*  reserve_memory_aligned(size_t size, size_t alignment);
   static char*  attempt_reserve_memory_at(size_t bytes, char* addr);
   static void   split_reserved_memory(char *base, size_t size,
                                       size_t split, bool realloc);
-  static bool   commit_memory(char* addr, size_t bytes,
-                              bool executable = false);
+  static bool   commit_memory(char* addr, size_t bytes, bool executable);
   static bool   commit_memory(char* addr, size_t size, size_t alignment_hint,
-                              bool executable = false);
+                              bool executable);
+  // Same as commit_memory() that either succeeds or calls
+  // vm_exit_out_of_memory() with the specified mesg.
+  static void   commit_memory_or_exit(char* addr, size_t bytes,
+                                      bool executable, const char* mesg);
+  static void   commit_memory_or_exit(char* addr, size_t size,
+                                      size_t alignment_hint,
+                                      bool executable, const char* mesg);
   static bool   uncommit_memory(char* addr, size_t bytes);
   static bool   release_memory(char* addr, size_t bytes);
+  static bool   can_release_partial_region();
+  static bool   release_or_uncommit_partial_region(char* addr, size_t bytes);
 
   enum ProtType { MEM_PROT_NONE, MEM_PROT_READ, MEM_PROT_RW, MEM_PROT_RWX };
   static bool   protect_memory(char* addr, size_t bytes, ProtType prot,
@@ -251,6 +294,7 @@ class os: AllStatic {
   static bool   guard_memory(char* addr, size_t bytes);
   static bool   unguard_memory(char* addr, size_t bytes);
   static bool   create_stack_guard_pages(char* addr, size_t bytes);
+  static bool   pd_create_stack_guard_pages(char* addr, size_t bytes);
   static bool   remove_stack_guard_pages(char* addr, size_t bytes);
 
   static char*  map_memory(int fd, const char* file_name, size_t file_offset,
@@ -366,7 +410,7 @@ class os: AllStatic {
   static void pd_start_thread(Thread* thread);
   static void start_thread(Thread* thread);
 
-  static void initialize_thread();
+  static void initialize_thread(Thread* thr);
   static void free_thread(OSThread* osthread);
 
   // thread id on Linux/64bit is 64bit, on Windows and Solaris, it's 32bit
@@ -404,6 +448,8 @@ class os: AllStatic {
   static address current_stack_pointer();
   static address current_stack_base();
   static size_t current_stack_size();
+
+  static void verify_stack_alignment() PRODUCT_RETURN;
 
   static int message_box(const char* title, const char* message);
   static char* do_you_want_to_debug(const char* message);
@@ -572,12 +618,15 @@ class os: AllStatic {
   static void* thread_local_storage_at(int index);
   static void  free_thread_local_storage(int index);
 
+  // Stack walk
+  static address get_caller_pc(int n = 0);
+
   // General allocation (must be MT-safe)
-  static void* malloc  (size_t size);
-  static void* realloc (void *memblock, size_t size);
-  static void  free    (void *memblock);
+  static void* malloc  (size_t size, MEMFLAGS flags, address caller_pc = 0);
+  static void* realloc (void *memblock, size_t size, MEMFLAGS flags, address caller_pc = 0);
+  static void  free    (void *memblock, MEMFLAGS flags = mtNone);
   static bool  check_heap(bool force = false);      // verify C heap integrity
-  static char* strdup(const char *);  // Like strdup
+  static char* strdup(const char *, MEMFLAGS flags = mtInternal);  // Like strdup
 
 #ifndef PRODUCT
   static julong num_mallocs;         // # of calls to malloc/realloc
@@ -638,6 +687,10 @@ class os: AllStatic {
 
   // On Windows this will create an actual minidump, on Linux/Solaris it will simply check core dump limits
   static void check_or_create_dump(void* exceptionRecord, void* contextRecord, char* buffer, size_t bufferSize);
+
+  // Get the default path to the core file
+  // Returns the length of the string
+  static int get_core_path(char* buffer, size_t bufferSize);
 
   // JVMTI & JVM monitoring and management support
   // The thread_cpu_time() and current_thread_cpu_time() are only
@@ -749,6 +802,111 @@ class os: AllStatic {
   // (for Unix, that stimulus is a signal, for Windows, an external
   // ResumeThread call)
   static void pause();
+
+  class SuspendedThreadTaskContext {
+  public:
+    SuspendedThreadTaskContext(Thread* thread, void *ucontext) : _thread(thread), _ucontext(ucontext) {}
+    Thread* thread() const { return _thread; }
+    void* ucontext() const { return _ucontext; }
+  private:
+    Thread* _thread;
+    void* _ucontext;
+  };
+
+  class SuspendedThreadTask {
+  public:
+    SuspendedThreadTask(Thread* thread) : _thread(thread), _done(false) {}
+    virtual ~SuspendedThreadTask() {}
+    void run();
+    bool is_done() { return _done; }
+    virtual void do_task(const SuspendedThreadTaskContext& context) = 0;
+  protected:
+  private:
+    void internal_do_task();
+    Thread* _thread;
+    bool _done;
+  };
+
+#ifndef TARGET_OS_FAMILY_windows
+  // Suspend/resume support
+  // Protocol:
+  //
+  // a thread starts in SR_RUNNING
+  //
+  // SR_RUNNING can go to
+  //   * SR_SUSPEND_REQUEST when the WatcherThread wants to suspend it
+  // SR_SUSPEND_REQUEST can go to
+  //   * SR_RUNNING if WatcherThread decides it waited for SR_SUSPENDED too long (timeout)
+  //   * SR_SUSPENDED if the stopped thread receives the signal and switches state
+  // SR_SUSPENDED can go to
+  //   * SR_WAKEUP_REQUEST when the WatcherThread has done the work and wants to resume
+  // SR_WAKEUP_REQUEST can go to
+  //   * SR_RUNNING when the stopped thread receives the signal
+  //   * SR_WAKEUP_REQUEST on timeout (resend the signal and try again)
+  class SuspendResume {
+   public:
+    enum State {
+      SR_RUNNING,
+      SR_SUSPEND_REQUEST,
+      SR_SUSPENDED,
+      SR_WAKEUP_REQUEST
+    };
+
+  private:
+    volatile State _state;
+
+  private:
+    /* try to switch state from state "from" to state "to"
+     * returns the state set after the method is complete
+     */
+    State switch_state(State from, State to) {
+      State result = (State) Atomic::cmpxchg((jint) to, (jint *) &_state, (jint) from);
+      if (result == from) {
+        // success
+        return to;
+      }
+      return result;
+    }
+
+  public:
+    SuspendResume() : _state(SR_RUNNING) { }
+
+    State state() const { return _state; }
+
+    State request_suspend() {
+      return switch_state(SR_RUNNING, SR_SUSPEND_REQUEST);
+    }
+
+    State cancel_suspend() {
+      return switch_state(SR_SUSPEND_REQUEST, SR_RUNNING);
+    }
+
+    State suspended() {
+      return switch_state(SR_SUSPEND_REQUEST, SR_SUSPENDED);
+    }
+
+    State request_wakeup() {
+      return switch_state(SR_SUSPENDED, SR_WAKEUP_REQUEST);
+    }
+
+    State running() {
+      return switch_state(SR_WAKEUP_REQUEST, SR_RUNNING);
+    }
+
+    bool is_running() const {
+      return _state == SR_RUNNING;
+    }
+
+    bool is_suspend_request() const {
+      return _state == SR_SUSPEND_REQUEST;
+    }
+
+    bool is_suspended() const {
+      return _state == SR_SUSPENDED;
+    }
+  };
+#endif
+
 
  protected:
   static long _rand_seed;                   // seed for random number generator

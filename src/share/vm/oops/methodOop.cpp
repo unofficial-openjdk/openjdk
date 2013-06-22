@@ -40,7 +40,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
-#include "prims/methodHandleWalk.hpp"
+#include "prims/methodHandles.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/compilationPolicy.hpp"
@@ -109,27 +109,23 @@ char* methodOopDesc::name_and_sig_as_C_string(Klass* klass, Symbol* method_name,
   return buf;
 }
 
-int  methodOopDesc::fast_exception_handler_bci_for(KlassHandle ex_klass, int throw_bci, TRAPS) {
+int  methodOopDesc::fast_exception_handler_bci_for(methodHandle mh, KlassHandle ex_klass, int throw_bci, TRAPS) {
   // exception table holds quadruple entries of the form (beg_bci, end_bci, handler_bci, klass_index)
-  const int beg_bci_offset     = 0;
-  const int end_bci_offset     = 1;
-  const int handler_bci_offset = 2;
-  const int klass_index_offset = 3;
-  const int entry_size         = 4;
   // access exception table
-  typeArrayHandle table (THREAD, constMethod()->exception_table());
-  int length = table->length();
-  assert(length % entry_size == 0, "exception table format has changed");
+  ExceptionTable table(mh());
+  int length = table.length();
   // iterate through all entries sequentially
-  constantPoolHandle pool(THREAD, constants());
-  for (int i = 0; i < length; i += entry_size) {
-    int beg_bci = table->int_at(i + beg_bci_offset);
-    int end_bci = table->int_at(i + end_bci_offset);
+  constantPoolHandle pool(THREAD, mh->constants());
+  for (int i = 0; i < length; i ++) {
+    //reacquire the table in case a GC happened
+    ExceptionTable table(mh());
+    int beg_bci = table.start_pc(i);
+    int end_bci = table.end_pc(i);
     assert(beg_bci <= end_bci, "inconsistent exception table");
     if (beg_bci <= throw_bci && throw_bci < end_bci) {
       // exception handler bci range covers throw_bci => investigate further
-      int handler_bci = table->int_at(i + handler_bci_offset);
-      int klass_index = table->int_at(i + klass_index_offset);
+      int handler_bci = table.handler_pc(i);
+      int klass_index = table.catch_type_index(i);
       if (klass_index == 0) {
         return handler_bci;
       } else if (ex_klass.is_null()) {
@@ -177,8 +173,12 @@ void methodOopDesc::mask_for(int bci, InterpreterOopMap* mask) {
 
 
 int methodOopDesc::bci_from(address bcp) const {
+#ifdef ASSERT
+  { ResourceMark rm;
   assert(is_native() && bcp == code_base() || contains(bcp) || is_error_reported(),
          err_msg("bcp doesn't belong to this method: bcp: " INTPTR_FORMAT ", method: %s", bcp, name_and_sig_as_C_string()));
+  }
+#endif
   return bcp - code_base();
 }
 
@@ -532,9 +532,9 @@ int methodOopDesc::line_number_from_bci(int bci) const {
 
 
 bool methodOopDesc::is_klass_loaded_by_klass_index(int klass_index) const {
-  if( _constants->tag_at(klass_index).is_unresolved_klass() ) {
+  if( constants()->tag_at(klass_index).is_unresolved_klass() ) {
     Thread *thread = Thread::current();
-    Symbol* klass_name = _constants->klass_name_at(klass_index);
+    Symbol* klass_name = constants()->klass_name_at(klass_index);
     Handle loader(thread, instanceKlass::cast(method_holder())->class_loader());
     Handle prot  (thread, Klass::cast(method_holder())->protection_domain());
     return SystemDictionary::find(klass_name, loader, prot, thread) != NULL;
@@ -545,7 +545,7 @@ bool methodOopDesc::is_klass_loaded_by_klass_index(int klass_index) const {
 
 
 bool methodOopDesc::is_klass_loaded(int refinfo_index, bool must_be_resolved) const {
-  int klass_index = _constants->klass_ref_index_at(refinfo_index);
+  int klass_index = constants()->klass_ref_index_at(refinfo_index);
   if (must_be_resolved) {
     // Make sure klass is resolved in constantpool.
     if (constants()->tag_at(klass_index).is_unresolved_klass()) return false;
@@ -556,6 +556,7 @@ bool methodOopDesc::is_klass_loaded(int refinfo_index, bool must_be_resolved) co
 
 void methodOopDesc::set_native_function(address function, bool post_event_flag) {
   assert(function != NULL, "use clear_native_function to unregister natives");
+  assert(!is_method_handle_intrinsic() || function == SharedRuntime::native_method_throw_unsatisfied_link_error_entry(), "");
   address* native_function = native_function_addr();
 
   // We can see racers trying to place the same native function into place. Once
@@ -585,12 +586,15 @@ void methodOopDesc::set_native_function(address function, bool post_event_flag) 
 
 
 bool methodOopDesc::has_native_function() const {
+  if (is_method_handle_intrinsic())
+    return false;  // special-cased in SharedRuntime::generate_native_wrapper
   address func = native_function();
   return (func != NULL && func != SharedRuntime::native_method_throw_unsatisfied_link_error_entry());
 }
 
 
 void methodOopDesc::clear_native_function() {
+  // Note: is_method_handle_intrinsic() is allowed here.
   set_native_function(
     SharedRuntime::native_method_throw_unsatisfied_link_error_entry(),
     !native_bind_event_is_interesting);
@@ -609,54 +613,92 @@ void methodOopDesc::set_signature_handler(address handler) {
 }
 
 
-bool methodOopDesc::is_not_compilable(int comp_level) const {
-  if (is_method_handle_invoke()) {
-    // compilers must recognize this method specially, or not at all
-    return true;
-  }
-  if (number_of_breakpoints() > 0) {
-    return true;
-  }
-  if (comp_level == CompLevel_any) {
-    return is_not_c1_compilable() || is_not_c2_compilable();
-  }
-  if (is_c1_compile(comp_level)) {
-    return is_not_c1_compilable();
-  }
-  if (is_c2_compile(comp_level)) {
-    return is_not_c2_compilable();
-  }
-  return false;
-}
-
-// call this when compiler finds that this method is not compilable
-void methodOopDesc::set_not_compilable(int comp_level, bool report) {
+void methodOopDesc::print_made_not_compilable(int comp_level, bool is_osr, bool report, const char* reason) {
   if (PrintCompilation && report) {
     ttyLocker ttyl;
-    tty->print("made not compilable ");
+    tty->print("made not %scompilable on ", is_osr ? "OSR " : "");
+    if (comp_level == CompLevel_all) {
+      tty->print("all levels ");
+    } else {
+      tty->print("levels ");
+      for (int i = (int)CompLevel_none; i <= comp_level; i++) {
+        tty->print("%d ", i);
+      }
+    }
     this->print_short_name(tty);
     int size = this->code_size();
-    if (size > 0)
+    if (size > 0) {
       tty->print(" (%d bytes)", size);
+    }
+    if (reason != NULL) {
+      tty->print("   %s", reason);
+    }
     tty->cr();
   }
   if ((TraceDeoptimization || LogCompilation) && (xtty != NULL)) {
     ttyLocker ttyl;
-    xtty->begin_elem("make_not_compilable thread='%d'", (int) os::current_thread_id());
+    xtty->begin_elem("make_not_%scompilable thread='" UINTX_FORMAT "'",
+                     is_osr ? "osr_" : "", os::current_thread_id());
+    if (reason != NULL) {
+      xtty->print(" reason=\'%s\'", reason);
+    }
     xtty->method(methodOop(this));
     xtty->stamp();
     xtty->end_elem();
   }
+}
+
+bool methodOopDesc::is_not_compilable(int comp_level) const {
+  if (number_of_breakpoints() > 0)
+    return true;
+  if (is_method_handle_intrinsic())
+    return !is_synthetic();  // the generated adapters must be compiled
+  if (comp_level == CompLevel_any)
+    return is_not_c1_compilable() || is_not_c2_compilable();
+  if (is_c1_compile(comp_level))
+    return is_not_c1_compilable();
+  if (is_c2_compile(comp_level))
+    return is_not_c2_compilable();
+  return false;
+}
+
+// call this when compiler finds that this method is not compilable
+void methodOopDesc::set_not_compilable(int comp_level, bool report, const char* reason) {
+  print_made_not_compilable(comp_level, /*is_osr*/ false, report, reason);
   if (comp_level == CompLevel_all) {
     set_not_c1_compilable();
     set_not_c2_compilable();
   } else {
-    if (is_c1_compile(comp_level)) {
+    if (is_c1_compile(comp_level))
       set_not_c1_compilable();
-    } else
-      if (is_c2_compile(comp_level)) {
-        set_not_c2_compilable();
-      }
+    if (is_c2_compile(comp_level))
+      set_not_c2_compilable();
+  }
+  CompilationPolicy::policy()->disable_compilation(this);
+}
+
+bool methodOopDesc::is_not_osr_compilable(int comp_level) const {
+  if (is_not_compilable(comp_level))
+    return true;
+  if (comp_level == CompLevel_any)
+    return is_not_c1_osr_compilable() || is_not_c2_osr_compilable();
+  if (is_c1_compile(comp_level))
+    return is_not_c1_osr_compilable();
+  if (is_c2_compile(comp_level))
+    return is_not_c2_osr_compilable();
+  return false;
+}
+
+void methodOopDesc::set_not_osr_compilable(int comp_level, bool report, const char* reason) {
+  print_made_not_compilable(comp_level, /*is_osr*/ true, report, reason);
+  if (comp_level == CompLevel_all) {
+    set_not_c1_osr_compilable();
+    set_not_c2_osr_compilable();
+  } else {
+    if (is_c1_compile(comp_level))
+      set_not_c1_osr_compilable();
+    if (is_c2_compile(comp_level))
+      set_not_c2_osr_compilable();
   }
   CompilationPolicy::policy()->disable_compilation(this);
 }
@@ -713,7 +755,9 @@ void methodOopDesc::link_method(methodHandle h_method, TRAPS) {
   assert(entry != NULL, "interpreter entry must be non-null");
   // Sets both _i2i_entry and _from_interpreted_entry
   set_interpreter_entry(entry);
-  if (is_native() && !is_method_handle_invoke()) {
+
+  // Don't overwrite already registered native entries.
+  if (is_native() && !has_native_function()) {
     set_native_function(
       SharedRuntime::native_method_throw_unsatisfied_link_error_entry(),
       !native_bind_event_is_interesting);
@@ -801,13 +845,13 @@ void methodOopDesc::set_code(methodHandle mh, nmethod *code) {
   OrderAccess::storestore();
 #ifdef SHARK
   mh->_from_interpreted_entry = code->insts_begin();
-#else
+#else //!SHARK
   mh->_from_compiled_entry = code->verified_entry_point();
   OrderAccess::storestore();
   // Instantly compiled code can execute.
-  mh->_from_interpreted_entry = mh->get_i2c_entry();
-#endif // SHARK
-
+  if (!mh->is_method_handle_intrinsic())
+    mh->_from_interpreted_entry = mh->get_i2c_entry();
+#endif //!SHARK
 }
 
 
@@ -859,104 +903,51 @@ bool methodOopDesc::should_not_be_cached() const {
   return false;
 }
 
-bool methodOopDesc::is_method_handle_invoke_name(vmSymbols::SID name_sid) {
-  switch (name_sid) {
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(invokeExact_name):
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(invoke_name):
-    return true;
-  }
-  if (AllowInvokeGeneric
-      && name_sid == vmSymbols::VM_SYMBOL_ENUM_NAME(invokeGeneric_name))
-    return true;
-  return false;
-}
-
 // Constant pool structure for invoke methods:
 enum {
-  _imcp_invoke_name = 1,        // utf8: 'invokeExact' or 'invokeGeneric'
+  _imcp_invoke_name = 1,        // utf8: 'invokeExact', etc.
   _imcp_invoke_signature,       // utf8: (variable Symbol*)
-  _imcp_method_type_value,      // string: (variable java/lang/invoke/MethodType, sic)
   _imcp_limit
 };
 
-oop methodOopDesc::method_handle_type() const {
-  if (!is_method_handle_invoke()) { assert(false, "caller resp."); return NULL; }
-  oop mt = constants()->resolved_string_at(_imcp_method_type_value);
-  assert(mt->klass() == SystemDictionary::MethodType_klass(), "");
-  return mt;
+// Test if this method is an MH adapter frame generated by Java code.
+// Cf. java/lang/invoke/InvokerBytecodeGenerator
+bool methodOopDesc::is_compiled_lambda_form() const {
+  return intrinsic_id() == vmIntrinsics::_compiledLambdaForm;
 }
 
-jint* methodOopDesc::method_type_offsets_chain() {
-  static jint pchase[] = { -1, -1, -1 };
-  if (pchase[0] == -1) {
-    jint step0 = in_bytes(constants_offset());
-    jint step1 = (constantPoolOopDesc::header_size() + _imcp_method_type_value) * HeapWordSize;
-    // do this in reverse to avoid races:
-    OrderAccess::release_store(&pchase[1], step1);
-    OrderAccess::release_store(&pchase[0], step0);
-  }
-  return pchase;
+// Test if this method is an internal MH primitive method.
+bool methodOopDesc::is_method_handle_intrinsic() const {
+  vmIntrinsics::ID iid = intrinsic_id();
+  return (MethodHandles::is_signature_polymorphic(iid) &&
+          MethodHandles::is_signature_polymorphic_intrinsic(iid));
 }
 
-//------------------------------------------------------------------------------
-// methodOopDesc::is_method_handle_adapter
-//
-// Tests if this method is an internal adapter frame from the
-// MethodHandleCompiler.
-// Must be consistent with MethodHandleCompiler::get_method_oop().
-bool methodOopDesc::is_method_handle_adapter() const {
-  if (is_synthetic() &&
-      !is_native() &&   // has code from MethodHandleCompiler
-      is_method_handle_invoke_name(name()) &&
-      MethodHandleCompiler::klass_is_method_handle_adapter_holder(method_holder())) {
-    assert(!is_method_handle_invoke(), "disjoint");
-    return true;
-  } else {
-    return false;
-  }
+bool methodOopDesc::has_member_arg() const {
+  vmIntrinsics::ID iid = intrinsic_id();
+  return (MethodHandles::is_signature_polymorphic(iid) &&
+          MethodHandles::has_member_arg(iid));
 }
 
-methodHandle methodOopDesc::make_invoke_method(KlassHandle holder,
-                                               Symbol* name,
-                                               Symbol* signature,
-                                               Handle method_type, TRAPS) {
+// Make an instance of a signature-polymorphic internal MH primitive.
+methodHandle methodOopDesc::make_method_handle_intrinsic(vmIntrinsics::ID iid,
+                                                         Symbol* signature,
+                                                         TRAPS) {
   ResourceMark rm;
   methodHandle empty;
 
-  assert(holder() == SystemDictionary::MethodHandle_klass(),
-         "must be a JSR 292 magic type");
-
+  KlassHandle holder = SystemDictionary::MethodHandle_klass();
+  Symbol* name = MethodHandles::signature_polymorphic_intrinsic_name(iid);
+  assert(iid == MethodHandles::signature_polymorphic_name_id(name), "");
   if (TraceMethodHandles) {
-    tty->print("Creating invoke method for ");
-    signature->print_value();
-    tty->cr();
+    tty->print_cr("make_method_handle_intrinsic MH.%s%s", name->as_C_string(), signature->as_C_string());
   }
 
   // invariant:   cp->symbol_at_put is preceded by a refcount increment (more usually a lookup)
   name->increment_refcount();
   signature->increment_refcount();
 
-  // record non-BCP method types in the constant pool
-  GrowableArray<KlassHandle>* extra_klasses = NULL;
-  for (int i = -1, len = java_lang_invoke_MethodType::ptype_count(method_type()); i < len; i++) {
-    oop ptype = (i == -1
-                 ? java_lang_invoke_MethodType::rtype(method_type())
-                 : java_lang_invoke_MethodType::ptype(method_type(), i));
-    klassOop klass = check_non_bcp_klass(java_lang_Class::as_klassOop(ptype));
-    if (klass != NULL) {
-      if (extra_klasses == NULL)
-        extra_klasses = new GrowableArray<KlassHandle>(len+1);
-      bool dup = false;
-      for (int j = 0; j < extra_klasses->length(); j++) {
-        if (extra_klasses->at(j) == klass) { dup = true; break; }
-      }
-      if (!dup)
-        extra_klasses->append(KlassHandle(THREAD, klass));
-    }
-  }
-
-  int extra_klass_count = (extra_klasses == NULL ? 0 : extra_klasses->length());
-  int cp_length = _imcp_limit + extra_klass_count;
+  int cp_length = _imcp_limit;
   constantPoolHandle cp;
   {
     constantPoolOop cp_oop = oopFactory::new_constantPool(cp_length, IsSafeConc, CHECK_(empty));
@@ -964,53 +955,43 @@ methodHandle methodOopDesc::make_invoke_method(KlassHandle holder,
   }
   cp->symbol_at_put(_imcp_invoke_name,       name);
   cp->symbol_at_put(_imcp_invoke_signature,  signature);
-  cp->string_at_put(_imcp_method_type_value, Universe::the_null_string());
-  for (int j = 0; j < extra_klass_count; j++) {
-    KlassHandle klass = extra_klasses->at(j);
-    cp->klass_at_put(_imcp_limit + j, klass());
-  }
   cp->set_preresolution();
   cp->set_pool_holder(holder());
 
-  // set up the fancy stuff:
-  cp->pseudo_string_at_put(_imcp_method_type_value, method_type());
+  // decide on access bits:  public or not?
+  int flags_bits = (JVM_ACC_NATIVE | JVM_ACC_SYNTHETIC | JVM_ACC_FINAL);
+  bool must_be_static = MethodHandles::is_signature_polymorphic_static(iid);
+  if (must_be_static)  flags_bits |= JVM_ACC_STATIC;
+  assert((flags_bits & JVM_ACC_PUBLIC) == 0, "do not expose these methods");
+
   methodHandle m;
   {
-    int flags_bits = (JVM_MH_INVOKE_BITS | JVM_ACC_PUBLIC | JVM_ACC_FINAL);
     methodOop m_oop = oopFactory::new_method(0, accessFlags_from(flags_bits),
-                                             0, 0, 0, IsSafeConc, CHECK_(empty));
+                                             0, 0, 0, 0, IsSafeConc, CHECK_(empty));
     m = methodHandle(THREAD, m_oop);
   }
   m->set_constants(cp());
   m->set_name_index(_imcp_invoke_name);
   m->set_signature_index(_imcp_invoke_signature);
-  assert(is_method_handle_invoke_name(m->name()), "");
+  assert(MethodHandles::is_signature_polymorphic_name(m->name()), "");
   assert(m->signature() == signature, "");
-  assert(m->is_method_handle_invoke(), "");
 #ifdef CC_INTERP
   ResultTypeFinder rtf(signature);
   m->set_result_index(rtf.type());
 #endif
   m->compute_size_of_parameters(THREAD);
-  m->set_exception_table(Universe::the_empty_int_array());
   m->init_intrinsic_id();
-  assert(m->intrinsic_id() == vmIntrinsics::_invokeExact ||
-         m->intrinsic_id() == vmIntrinsics::_invokeGeneric, "must be an invoker");
+  assert(m->is_method_handle_intrinsic(), "");
+#ifdef ASSERT
+  if (!MethodHandles::is_signature_polymorphic(m->intrinsic_id()))  m->print();
+  assert(MethodHandles::is_signature_polymorphic(m->intrinsic_id()), "must be an invoker");
+  assert(m->intrinsic_id() == iid, "correctly predicted iid");
+#endif //ASSERT
 
   // Finally, set up its entry points.
-  assert(m->method_handle_type() == method_type(), "");
   assert(m->can_be_statically_bound(), "");
   m->set_vtable_index(methodOopDesc::nonvirtual_vtable_index);
   m->link_method(m, CHECK_(empty));
-
-#ifdef ASSERT
-  // Make sure the pointer chase works.
-  address p = (address) m();
-  for (jint* pchase = method_type_offsets_chain(); (*pchase) != -1; pchase++) {
-    p = *(address*)(p + (*pchase));
-  }
-  assert((oop)p == method_type(), "pointer chase is correct");
-#endif
 
   if (TraceMethodHandles && (Verbose || WizardMode))
     m->print_on(tty);
@@ -1028,7 +1009,7 @@ klassOop methodOopDesc::check_non_bcp_klass(klassOop klass) {
 }
 
 
-methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_code, int new_code_length,
+methodHandle methodOopDesc::clone_with_new_data(methodHandle m, u_char* new_code, int new_code_length,
                                                 u_char* new_compressed_linenumber_table, int new_compressed_linenumber_size, TRAPS) {
   // Code below does not work for native methods - they should never get rewritten anyway
   assert(!m->is_native(), "cannot rewrite native methods");
@@ -1036,6 +1017,7 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
   AccessFlags flags = m->access_flags();
   int checked_exceptions_len = m->checked_exceptions_length();
   int localvariable_len = m->localvariable_table_length();
+  int exception_table_len = m->exception_table_length();
   // Allocate newm_oop with the is_conc_safe parameter set
   // to IsUnsafeConc to indicate that newm_oop is not yet
   // safe for concurrent processing by a GC.
@@ -1043,6 +1025,7 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
                                               flags,
                                               new_compressed_linenumber_size,
                                               localvariable_len,
+                                              exception_table_len,
                                               checked_exceptions_len,
                                               IsUnsafeConc,
                                               CHECK_(methodHandle()));
@@ -1077,14 +1060,13 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
   assert(m->constMethod()->is_parsable(), "Should remain parsable");
 
   // Reset correct method/const method, method size, and parameter info
-  newcm->set_method(newm());
   newm->set_constMethod(newcm);
-  assert(newcm->method() == newm(), "check");
   newm->constMethod()->set_code_size(new_code_length);
   newm->constMethod()->set_constMethod_size(new_const_method_size);
   newm->set_method_size(new_method_size);
   assert(newm->code_size() == new_code_length, "check");
   assert(newm->checked_exceptions_length() == checked_exceptions_len, "check");
+  assert(newm->exception_table_length() == exception_table_len, "check");
   assert(newm->localvariable_table_length() == localvariable_len, "check");
   // Copy new byte codes
   memcpy(newm->code_base(), new_code, new_code_length);
@@ -1099,6 +1081,12 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
     memcpy(newm->checked_exceptions_start(),
            m->checked_exceptions_start(),
            checked_exceptions_len * sizeof(CheckedExceptionElement));
+  }
+  // Copy exception table
+  if (exception_table_len > 0) {
+    memcpy(newm->exception_table_start(),
+           m->exception_table_start(),
+           exception_table_len * sizeof(ExceptionTableElement));
   }
   // Copy local variable number table
   if (localvariable_len > 0) {
@@ -1118,8 +1106,12 @@ methodHandle methodOopDesc:: clone_with_new_data(methodHandle m, u_char* new_cod
 vmSymbols::SID methodOopDesc::klass_id_for_intrinsics(klassOop holder) {
   // if loader is not the default loader (i.e., != NULL), we can't know the intrinsics
   // because we are not loading from core libraries
-  if (instanceKlass::cast(holder)->class_loader() != NULL)
+  // exception: the AES intrinsics come from lib/ext/sunjce_provider.jar
+  // which does not use the class default class loader so we check for its loader here
+  if ((instanceKlass::cast(holder)->class_loader() != NULL) &&
+       instanceKlass::cast(holder)->class_loader()->klass()->klass_part()->name() != vmSymbols::sun_misc_Launcher_ExtClassLoader()) {
     return vmSymbols::NO_SID;   // regardless of name, no intrinsics here
+  }
 
   // see if the klass name is well-known:
   Symbol* klass_name = instanceKlass::cast(holder)->name();
@@ -1138,7 +1130,9 @@ void methodOopDesc::init_intrinsic_id() {
 
   // ditto for method and signature:
   vmSymbols::SID  name_id = vmSymbols::find_sid(name());
-  if (name_id == vmSymbols::NO_SID)  return;
+  if (klass_id != vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_MethodHandle)
+      && name_id == vmSymbols::NO_SID)
+    return;
   vmSymbols::SID   sig_id = vmSymbols::find_sid(signature());
   if (klass_id != vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_MethodHandle)
       && sig_id == vmSymbols::NO_SID)  return;
@@ -1167,21 +1161,10 @@ void methodOopDesc::init_intrinsic_id() {
 
   // Signature-polymorphic methods: MethodHandle.invoke*, InvokeDynamic.*.
   case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_MethodHandle):
-    if (is_static() || !is_native())  break;
-    switch (name_id) {
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(invokeGeneric_name):
-      if (!AllowInvokeGeneric)  break;
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(invoke_name):
-      id = vmIntrinsics::_invokeGeneric;
-      break;
-    case vmSymbols::VM_SYMBOL_ENUM_NAME(invokeExact_name):
-      id = vmIntrinsics::_invokeExact;
-      break;
-    }
-    break;
-  case vmSymbols::VM_SYMBOL_ENUM_NAME(java_lang_invoke_InvokeDynamic):
-    if (!is_static() || !is_native())  break;
-    id = vmIntrinsics::_invokeDynamic;
+    if (!is_native())  break;
+    id = MethodHandles::signature_polymorphic_name_id(method_holder(), name());
+    if (is_static() != MethodHandles::is_signature_polymorphic_static(id))
+      id = vmIntrinsics::_none;
     break;
   }
 
@@ -1194,6 +1177,12 @@ void methodOopDesc::init_intrinsic_id() {
 
 // These two methods are static since a GC may move the methodOopDesc
 bool methodOopDesc::load_signature_classes(methodHandle m, TRAPS) {
+  if (THREAD->is_Compiler_thread()) {
+    // There is nothing useful this routine can do from within the Compile thread.
+    // Hopefully, the signature contains only well-known classes.
+    // We could scan for this and return true/false, but the caller won't care.
+    return false;
+  }
   bool sig_is_loaded = true;
   Handle class_loader(THREAD, instanceKlass::cast(m->method_holder())->class_loader());
   Handle protection_domain(THREAD, Klass::cast(m->method_holder())->protection_domain());
@@ -1247,6 +1236,8 @@ void methodOopDesc::print_short_name(outputStream* st) {
 #endif
   name()->print_symbol_on(st);
   if (WizardMode) signature()->print_symbol_on(st);
+  else if (MethodHandles::is_signature_polymorphic(intrinsic_id()))
+    MethodHandles::print_as_basic_type_signature_on(st, signature(), true);
 }
 
 // This is only done during class loading, so it is OK to assume method_idnum matches the methods() array

@@ -48,7 +48,7 @@ NodeHash::NodeHash(uint est_max_size) :
   _total_insert_probes(0), _total_inserts(0),
   _insert_probes(0), _grows(0) {
   // _sentinel must be in the current node space
-  _sentinel = new (Compile::current(), 1) ProjNode(NULL, TypeFunc::Control);
+  _sentinel = new (Compile::current()) ProjNode(NULL, TypeFunc::Control);
   memset(_table,0,sizeof(Node*)*_max);
 }
 
@@ -63,12 +63,19 @@ NodeHash::NodeHash(Arena *arena, uint est_max_size) :
   _total_insert_probes(0), _total_inserts(0),
   _insert_probes(0), _grows(0) {
   // _sentinel must be in the current node space
-  _sentinel = new (Compile::current(), 1) ProjNode(NULL, TypeFunc::Control);
+  _sentinel = new (Compile::current()) ProjNode(NULL, TypeFunc::Control);
   memset(_table,0,sizeof(Node*)*_max);
 }
 
 //------------------------------NodeHash---------------------------------------
 NodeHash::NodeHash(NodeHash *nh) {
+  debug_only(_table = (Node**)badAddress);   // interact correctly w/ operator=
+  // just copy in all the fields
+  *this = *nh;
+  // nh->_sentinel must be in the current node space
+}
+
+void NodeHash::replace_with(NodeHash *nh) {
   debug_only(_table = (Node**)badAddress);   // interact correctly w/ operator=
   // just copy in all the fields
   *this = *nh;
@@ -383,6 +390,8 @@ PhaseRemoveUseless::PhaseRemoveUseless( PhaseGVN *gvn, Unique_Node_List *worklis
 
   // Identify nodes that are reachable from below, useful.
   C->identify_useful_nodes(_useful);
+  // Update dead node list
+  C->update_dead_node_list(_useful);
 
   // Remove all useless nodes from PhaseValues' recorded types
   // Must be done before disconnecting nodes to preserve hash-table-invariant
@@ -757,6 +766,7 @@ void PhaseGVN::dead_loop_check( Node *n ) {
 //------------------------------PhaseIterGVN-----------------------------------
 // Initialize hash table to fresh and clean for +VerifyOpto
 PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn, const char *dummy ) : PhaseGVN(igvn,dummy), _worklist( ),
+                                                                      _stack(C->unique() >> 1),
                                                                       _delay_transform(false) {
 }
 
@@ -764,6 +774,7 @@ PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn, const char *dummy ) : PhaseGVN(i
 // Initialize with previous PhaseIterGVN info; used by PhaseCCP
 PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn ) : PhaseGVN(igvn),
                                                    _worklist( igvn->_worklist ),
+                                                   _stack( igvn->_stack ),
                                                    _delay_transform(igvn->_delay_transform)
 {
 }
@@ -772,6 +783,7 @@ PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn ) : PhaseGVN(igvn),
 // Initialize with previous PhaseGVN info from Parser
 PhaseIterGVN::PhaseIterGVN( PhaseGVN *gvn ) : PhaseGVN(gvn),
                                               _worklist(*C->for_igvn()),
+                                              _stack(C->unique() >> 1),
                                               _delay_transform(false)
 {
   uint max;
@@ -1138,51 +1150,100 @@ const Type* PhaseIterGVN::saturate(const Type* new_type, const Type* old_type,
 // Kill a globally dead Node.  All uses are also globally dead and are
 // aggressively trimmed.
 void PhaseIterGVN::remove_globally_dead_node( Node *dead ) {
-  assert(dead != C->root(), "killing root, eh?");
-  if (dead->is_top())  return;
-  NOT_PRODUCT( set_progress(); )
-  // Remove from iterative worklist
-  _worklist.remove(dead);
-  if (!dead->is_Con()) { // Don't kill cons but uses
-    // Remove from hash table
-    _table.hash_delete( dead );
-    // Smash all inputs to 'dead', isolating him completely
-    for( uint i = 0; i < dead->req(); i++ ) {
-      Node *in = dead->in(i);
-      if( in ) {                 // Points to something?
-        dead->set_req(i,NULL);  // Kill the edge
-        if (in->outcnt() == 0 && in != C->top()) {// Made input go dead?
-          remove_dead_node(in); // Recursively remove
-        } else if (in->outcnt() == 1 &&
-                   in->has_special_unique_user()) {
-          _worklist.push(in->unique_out());
-        } else if (in->outcnt() <= 2 && dead->is_Phi()) {
-          if( in->Opcode() == Op_Region )
-            _worklist.push(in);
-          else if( in->is_Store() ) {
-            DUIterator_Fast imax, i = in->fast_outs(imax);
-            _worklist.push(in->fast_out(i));
-            i++;
-            if(in->outcnt() == 2) {
-              _worklist.push(in->fast_out(i));
-              i++;
+  enum DeleteProgress {
+    PROCESS_INPUTS,
+    PROCESS_OUTPUTS
+  };
+  assert(_stack.is_empty(), "not empty");
+  _stack.push(dead, PROCESS_INPUTS);
+
+  while (_stack.is_nonempty()) {
+    dead = _stack.node();
+    uint progress_state = _stack.index();
+    assert(dead != C->root(), "killing root, eh?");
+    assert(!dead->is_top(), "add check for top when pushing");
+    NOT_PRODUCT( set_progress(); )
+    if (progress_state == PROCESS_INPUTS) {
+      // After following inputs, continue to outputs
+      _stack.set_index(PROCESS_OUTPUTS);
+      if (!dead->is_Con()) { // Don't kill cons but uses
+        bool recurse = false;
+        // Remove from hash table
+        _table.hash_delete( dead );
+        // Smash all inputs to 'dead', isolating him completely
+        for (uint i = 0; i < dead->req(); i++) {
+          Node *in = dead->in(i);
+          if (in != NULL && in != C->top()) {  // Points to something?
+            int nrep = dead->replace_edge(in, NULL);  // Kill edges
+            assert((nrep > 0), "sanity");
+            if (in->outcnt() == 0) { // Made input go dead?
+              _stack.push(in, PROCESS_INPUTS); // Recursively remove
+              recurse = true;
+            } else if (in->outcnt() == 1 &&
+                       in->has_special_unique_user()) {
+              _worklist.push(in->unique_out());
+            } else if (in->outcnt() <= 2 && dead->is_Phi()) {
+              if (in->Opcode() == Op_Region) {
+                _worklist.push(in);
+              } else if (in->is_Store()) {
+                DUIterator_Fast imax, i = in->fast_outs(imax);
+                _worklist.push(in->fast_out(i));
+                i++;
+                if (in->outcnt() == 2) {
+                  _worklist.push(in->fast_out(i));
+                  i++;
+                }
+                assert(!(i < imax), "sanity");
+              }
             }
-            assert(!(i < imax), "sanity");
-          }
+            if (ReduceFieldZeroing && dead->is_Load() && i == MemNode::Memory &&
+                in->is_Proj() && in->in(0) != NULL && in->in(0)->is_Initialize()) {
+              // A Load that directly follows an InitializeNode is
+              // going away. The Stores that follow are candidates
+              // again to be captured by the InitializeNode.
+              for (DUIterator_Fast jmax, j = in->fast_outs(jmax); j < jmax; j++) {
+                Node *n = in->fast_out(j);
+                if (n->is_Store()) {
+                  _worklist.push(n);
+                }
+              }
+            }
+          } // if (in != NULL && in != C->top())
+        } // for (uint i = 0; i < dead->req(); i++)
+        if (recurse) {
+          continue;
         }
+      } // if (!dead->is_Con())
+    } // if (progress_state == PROCESS_INPUTS)
+
+    // Aggressively kill globally dead uses
+    // (Rather than pushing all the outs at once, we push one at a time,
+    // plus the parent to resume later, because of the indefinite number
+    // of edge deletions per loop trip.)
+    if (dead->outcnt() > 0) {
+      // Recursively remove output edges
+      _stack.push(dead->raw_out(0), PROCESS_INPUTS);
+    } else {
+      // Finished disconnecting all input and output edges.
+      _stack.pop();
+      // Remove dead node from iterative worklist
+      _worklist.remove(dead);
+      // Constant node that has no out-edges and has only one in-edge from
+      // root is usually dead. However, sometimes reshaping walk makes
+      // it reachable by adding use edges. So, we will NOT count Con nodes
+      // as dead to be conservative about the dead node count at any
+      // given time.
+      if (!dead->is_Con()) {
+        C->record_dead_node(dead->_idx);
+      }
+      if (dead->is_macro()) {
+        C->remove_macro_node(dead);
+      }
+      if (dead->is_expensive()) {
+        C->remove_expensive_node(dead);
       }
     }
-
-    if (dead->is_macro()) {
-      C->remove_macro_node(dead);
-    }
-  }
-  // Aggressively kill globally dead uses
-  // (Cannot use DUIterator_Last because of the indefinite number
-  // of edge deletions per loop trip.)
-  while (dead->outcnt() > 0) {
-    remove_globally_dead_node(dead->raw_out(0));
-  }
+  } // while (_stack.is_nonempty())
 }
 
 //------------------------------subsume_node-----------------------------------
@@ -1217,7 +1278,7 @@ void PhaseIterGVN::subsume_node( Node *old, Node *nn ) {
   }
 
   // Smash all inputs to 'old', isolating him completely
-  Node *temp = new (C, 1) Node(1);
+  Node *temp = new (C) Node(1);
   temp->init_req(0,nn);     // Add a use to nn to prevent him from dying
   remove_dead_node( old );
   temp->del_req(0);         // Yank bogus edge

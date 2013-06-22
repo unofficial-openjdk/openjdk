@@ -39,13 +39,15 @@ private:
   ciKlass*  _accessing_klass;
 
   GrowableArray<ciType*>* _types;
-  int _size;
-  int _count;
+  int _size;   // number of stack slots required for arguments
+  int _count;  // number of parameter types in the signature
 
   friend class ciMethod;
+  friend class ciBytecodeStream;
   friend class ciObjectFactory;
 
   ciSignature(ciKlass* accessing_klass, constantPoolHandle cpool, ciSymbol* signature);
+  ciSignature(ciKlass* accessing_klass,                           ciSymbol* signature, ciMethodType* method_type);
 
   void get_all_klasses();
 
@@ -55,11 +57,13 @@ public:
   ciSymbol* as_symbol() const                    { return _symbol; }
   ciKlass*  accessing_klass() const              { return _accessing_klass; }
 
-  ciType* return_type() const;
-  ciType* type_at(int index) const;
+  ciType*   return_type() const;
+  ciType*   type_at(int index) const;
 
   int       size() const                         { return _size; }
   int       count() const                        { return _count; }
+
+  int       arg_size_for_bc(Bytecodes::Code bc)  { return size() + (Bytecodes::has_receiver(bc) ? 1 : 0); }
 
   bool equals(ciSignature* that);
 

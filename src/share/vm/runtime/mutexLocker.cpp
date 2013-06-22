@@ -103,7 +103,6 @@ Monitor* Terminator_lock              = NULL;
 Monitor* BeforeExit_lock              = NULL;
 Monitor* Notify_lock                  = NULL;
 Monitor* Interrupt_lock               = NULL;
-Monitor* ProfileVM_lock               = NULL;
 Mutex*   ProfilePrint_lock            = NULL;
 Mutex*   ExceptionCache_lock          = NULL;
 Monitor* ObjAllocPost_lock            = NULL;
@@ -140,6 +139,7 @@ Monitor* JfrQuery_lock                = NULL;
 Monitor* JfrMsg_lock                  = NULL;
 Mutex*   JfrBuffer_lock               = NULL;
 Mutex*   JfrStream_lock               = NULL;
+Monitor* PeriodicTask_lock            = NULL;
 
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];
@@ -278,13 +278,12 @@ void mutex_init() {
   def(MethodCompileQueue_lock      , Monitor, nonleaf+4,   true );
   def(Debug2_lock                  , Mutex  , nonleaf+4,   true );
   def(Debug3_lock                  , Mutex  , nonleaf+4,   true );
-  def(ProfileVM_lock               , Monitor, nonleaf+4,   false); // used for profiling of the VMThread
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
 
-  def(JfrQuery_lock                , Monitor, nonleaf,     true);  // JFR locks, keep these in consecutive order
-  def(JfrMsg_lock                  , Monitor, nonleaf+2,   true);
-  def(JfrBuffer_lock               , Mutex,   nonleaf+3,   true);
-  def(JfrStream_lock               , Mutex,   nonleaf+4,   true);
+  def(JfrMsg_lock                  , Monitor, leaf,        true);
+  def(JfrBuffer_lock               , Mutex,   nonleaf+1,   true);
+  def(JfrStream_lock               , Mutex,   nonleaf+2,   true);
+  def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {

@@ -23,7 +23,9 @@
 #
 
 # Generic compiler settings
+!if "x$(CXX)" == "x"
 CXX=cl.exe
+!endif
 
 # CXX Flags: (these vary slightly from VC6->VS2003->VS2005 compilers)
 #   /nologo   Supress copyright message at every cl.exe startup
@@ -50,7 +52,7 @@ CXX=cl.exe
 # improving the quality of crash log stack traces involving jvm.dll.
 
 # These are always used in all compiles
-CXX_FLAGS=/nologo /W3 /WX
+CXX_FLAGS=$(EXTRA_CFLAGS) /nologo /W3 /WX
 
 # Let's add debug information when Full Debug Symbols is enabled
 !if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
@@ -185,7 +187,9 @@ BUFFEROVERFLOWLIB = bufferoverflowU.lib
 LD_FLAGS = /manifest $(LD_FLAGS) $(BUFFEROVERFLOWLIB)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
+!if "x$(MT)" == "x"
 MT=mt.exe
+!endif
 !endif
 
 !if "$(COMPILER_NAME)" == "VS2008"
@@ -196,7 +200,9 @@ GX_OPTION = /EHsc
 LD_FLAGS = /manifest $(LD_FLAGS)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
+!if "x$(MT)" == "x"
 MT=mt.exe
+!endif
 !endif
 
 !if "$(COMPILER_NAME)" == "VS2010"
@@ -207,17 +213,12 @@ GX_OPTION = /EHsc
 LD_FLAGS = /manifest $(LD_FLAGS)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
+!if "x$(MT)" == "x"
 MT=mt.exe
+!endif
 !if "$(BUILDARCH)" == "i486"
 LD_FLAGS = /SAFESEH $(LD_FLAGS)
 !endif
-!endif
-
-# Compile for space above time.
-!if "$(Variant)" == "kernel"
-PRODUCT_OPT_OPTION   = /O1 /Oy-
-FASTDEBUG_OPT_OPTION = /O1 /Oy-
-DEBUG_OPT_OPTION     = /Od
 !endif
 
 # If NO_OPTIMIZATIONS is defined in the environment, turn everything off
@@ -227,7 +228,9 @@ FASTDEBUG_OPT_OPTION = $(DEBUG_OPT_OPTION)
 !endif
 
 # Generic linker settings
+!if "x$(LD)" == "x"
 LD=link.exe
+!endif
 LD_FLAGS= $(LD_FLAGS) kernel32.lib user32.lib gdi32.lib winspool.lib \
  comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib \
  uuid.lib Wsock32.lib winmm.lib /nologo /machine:$(MACHINE) /opt:REF \
@@ -242,7 +245,9 @@ LD_FLAGS= $(LD_FLAGS) psapi.lib
 !endif
 
 # Resource compiler settings
+!if "x$(RC)" == "x"
 RC=rc.exe
+!endif
 RC_FLAGS=/D "HS_VER=$(HS_VER)" \
 	 /D "HS_DOTVER=$(HS_DOTVER)" \
 	 /D "HS_BUILD_ID=$(HS_BUILD_ID)" \

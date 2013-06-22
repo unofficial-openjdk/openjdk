@@ -24,11 +24,16 @@
 
 #include "precompiled.hpp"
 #include "gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.hpp"
-#include "gc_implementation/parNew/parGCAllocBuffer.hpp"
 #include "gc_implementation/parNew/parNewGeneration.hpp"
 #include "gc_implementation/parNew/parOopClosures.inline.hpp"
 #include "gc_implementation/shared/adaptiveSizePolicy.hpp"
 #include "gc_implementation/shared/ageTable.hpp"
+#include "gc_implementation/shared/parGCAllocBuffer.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
+#include "gc_implementation/shared/copyFailedInfo.hpp"
 #include "gc_implementation/shared/spaceDecorator.hpp"
 #include "memory/defNewGeneration.inline.hpp"
 #include "memory/genCollectedHeap.hpp"
@@ -59,7 +64,7 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                                        Generation* old_gen_,
                                        int thread_num_,
                                        ObjToScanQueueSet* work_queue_set_,
-                                       Stack<oop>* overflow_stacks_,
+                                       Stack<oop, mtGC>* overflow_stacks_,
                                        size_t desired_plab_sz_,
                                        ParallelTaskTerminator& term_) :
   _to_space(to_space_), _old_gen(old_gen_), _young_gen(gen_), _thread_num(thread_num_),
@@ -75,7 +80,6 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                       work_queue_set_, &term_),
   _is_alive_closure(gen_), _scan_weak_ref_closure(gen_, this),
   _keep_alive_closure(&_scan_weak_ref_closure),
-  _promotion_failure_size(0),
   _strong_roots_time(0.0), _term_time(0.0)
 {
   #if TASKQUEUE_STATS
@@ -184,7 +188,7 @@ bool ParScanThreadState::take_from_overflow_stack() {
   assert(ParGCUseLocalOverflow, "Else should not call");
   assert(young_gen()->overflow_list() == NULL, "Error");
   ObjToScanQueue* queue = work_queue();
-  Stack<oop>* const of_stack = overflow_stack();
+  Stack<oop, mtGC>* const of_stack = overflow_stack();
   const size_t num_overflow_elems = of_stack->size();
   const size_t space_available = queue->max_elems() - queue->size();
   const size_t num_take_elems = MIN3(space_available / 4,
@@ -279,13 +283,10 @@ void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
   }
 }
 
-void ParScanThreadState::print_and_clear_promotion_failure_size() {
-  if (_promotion_failure_size != 0) {
-    if (PrintPromotionFailure) {
-      gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
-        _thread_num, _promotion_failure_size);
-    }
-    _promotion_failure_size = 0;
+void ParScanThreadState::print_promotion_failure_size() {
+  if (_promotion_failed_info.has_failed() && PrintPromotionFailure) {
+    gclog_or_tty->print(" (%d: promotion failure size = " SIZE_FORMAT ") ",
+                        _thread_num, _promotion_failed_info.first_size());
   }
 }
 
@@ -297,7 +298,7 @@ public:
                         ParNewGeneration&       gen,
                         Generation&             old_gen,
                         ObjToScanQueueSet&      queue_set,
-                        Stack<oop>*             overflow_stacks_,
+                        Stack<oop, mtGC>*       overflow_stacks_,
                         size_t                  desired_plab_sz,
                         ParallelTaskTerminator& term);
 
@@ -305,6 +306,7 @@ public:
 
   inline ParScanThreadState& thread_state(int i);
 
+  void trace_promotion_failed(YoungGCTracer& gc_tracer);
   void reset(int active_workers, bool promotion_failed);
   void flush();
 
@@ -331,7 +333,7 @@ private:
 ParScanThreadStateSet::ParScanThreadStateSet(
   int num_threads, Space& to_space, ParNewGeneration& gen,
   Generation& old_gen, ObjToScanQueueSet& queue_set,
-  Stack<oop>* overflow_stacks,
+  Stack<oop, mtGC>* overflow_stacks,
   size_t desired_plab_sz, ParallelTaskTerminator& term)
   : ResourceArray(sizeof(ParScanThreadState), num_threads),
     _gen(gen), _next_gen(old_gen), _term(term)
@@ -353,13 +355,21 @@ inline ParScanThreadState& ParScanThreadStateSet::thread_state(int i)
   return ((ParScanThreadState*)_data)[i];
 }
 
+void ParScanThreadStateSet::trace_promotion_failed(YoungGCTracer& gc_tracer) {
+  for (int i = 0; i < length(); ++i) {
+    if (thread_state(i).promotion_failed()) {
+      gc_tracer.report_promotion_failed(thread_state(i).promotion_failed_info());
+      thread_state(i).promotion_failed_info().reset();
+    }
+  }
+}
 
 void ParScanThreadStateSet::reset(int active_threads, bool promotion_failed)
 {
   _term.reset_for_reuse(active_threads);
   if (promotion_failed) {
     for (int i = 0; i < length(); ++i) {
-      thread_state(i).print_and_clear_promotion_failure_size();
+      thread_state(i).print_promotion_failure_size();
     }
   }
 }
@@ -453,7 +463,8 @@ void ParScanThreadStateSet::flush()
     // retire the last buffer.
     par_scan_state.to_space_alloc_buffer()->
       flush_stats_and_retire(_gen.plab_stats(),
-                             false /* !retain */);
+                             true /* end_of_gc */,
+                             false /* retain */);
 
     // Every thread has its own age table.  We need to merge
     // them all into one.
@@ -649,9 +660,14 @@ ParNewGeneration(ReservedSpace rs, size_t initial_byte_size, int level)
 
   _overflow_stacks = NULL;
   if (ParGCUseLocalOverflow) {
-    _overflow_stacks = NEW_C_HEAP_ARRAY(Stack<oop>, ParallelGCThreads);
+
+    // typedef to workaround NEW_C_HEAP_ARRAY macro, which can not deal
+    // with ','
+    typedef Stack<oop, mtGC> GCOopStack;
+
+    _overflow_stacks = NEW_C_HEAP_ARRAY(GCOopStack, ParallelGCThreads, mtGC);
     for (size_t i = 0; i < ParallelGCThreads; ++i) {
-      new (_overflow_stacks + i) Stack<oop>();
+      new (_overflow_stacks + i) Stack<oop, mtGC>();
     }
   }
 
@@ -864,6 +880,8 @@ void EvacuateFollowersClosureGeneral::do_void() {
 }
 
 
+// A Generation that does parallel young-gen collection.
+
 bool ParNewGeneration::_avoid_promotion_undo = false;
 
 void ParNewGeneration::adjust_desired_tenuring_threshold() {
@@ -872,14 +890,41 @@ void ParNewGeneration::adjust_desired_tenuring_threshold() {
     age_table()->compute_tenuring_threshold(to()->capacity()/HeapWordSize);
 }
 
-// A Generation that does parallel young-gen collection.
+void ParNewGeneration::handle_promotion_failed(GenCollectedHeap* gch, ParScanThreadStateSet& thread_state_set, ParNewTracer& gc_tracer) {
+  assert(_promo_failure_scan_stack.is_empty(), "post condition");
+  _promo_failure_scan_stack.clear(true); // Clear cached segments.
+
+  remove_forwarding_pointers();
+  if (PrintGCDetails) {
+    gclog_or_tty->print(" (promotion failed)");
+  }
+  // All the spaces are in play for mark-sweep.
+  swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
+  from()->set_next_compaction_space(to());
+  gch->set_incremental_collection_failed();
+  // Inform the next generation that a promotion failure occurred.
+  _next_gen->promotion_failure_occurred();
+
+  // Trace promotion failure in the parallel GC threads
+  thread_state_set.trace_promotion_failed(gc_tracer);
+  // Single threaded code may have reported promotion failure to the global state
+  if (_promotion_failed_info.has_failed()) {
+    gc_tracer.report_promotion_failed(_promotion_failed_info);
+  }
+  // Reset the PromotionFailureALot counters.
+  NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
+}
 
 void ParNewGeneration::collect(bool   full,
                                bool   clear_all_soft_refs,
                                size_t size,
                                bool   is_tlab) {
   assert(full || size > 0, "otherwise we don't want to collect");
+
   GenCollectedHeap* gch = GenCollectedHeap::heap();
+
+  _gc_timer->register_gc_start(os::elapsed_counter());
+
   assert(gch->kind() == CollectedHeap::GenCollectedHeap,
     "not a CMS generational heap");
   AdaptiveSizePolicy* size_policy = gch->gen_policy()->size_policy();
@@ -900,7 +945,7 @@ void ParNewGeneration::collect(bool   full,
     set_avoid_promotion_undo(true);
   }
 
-  // If the next generation is too full to accomodate worst-case promotion
+  // If the next generation is too full to accommodate worst-case promotion
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
@@ -909,6 +954,10 @@ void ParNewGeneration::collect(bool   full,
   }
   assert(to()->is_empty(), "Else not collection_attempt_is_safe");
 
+  ParNewTracer gc_tracer;
+  gc_tracer.report_gc_start(gch->gc_cause(), _gc_timer->gc_start());
+  gch->trace_heap_before_gc(&gc_tracer);
+
   init_assuming_no_promotion_failure();
 
   if (UseAdaptiveSizePolicy) {
@@ -916,7 +965,7 @@ void ParNewGeneration::collect(bool   full,
     size_policy->minor_collection_begin();
   }
 
-  TraceTime t1("GC", PrintGC && !PrintGCDetails, true, gclog_or_tty);
+  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL);
   // Capture heap used before collection (for printing).
   size_t gch_prev_used = gch->used();
 
@@ -969,17 +1018,21 @@ void ParNewGeneration::collect(bool   full,
   rp->setup_policy(clear_all_soft_refs);
   // Can  the mt_degree be set later (at run_task() time would be best)?
   rp->set_active_mt_degree(active_workers);
+  ReferenceProcessorStats stats;
   if (rp->processing_is_mt()) {
     ParNewRefProcTaskExecutor task_executor(*this, thread_state_set);
-    rp->process_discovered_references(&is_alive, &keep_alive,
-                                      &evacuate_followers, &task_executor);
+    stats = rp->process_discovered_references(&is_alive, &keep_alive,
+                                              &evacuate_followers, &task_executor,
+                                              _gc_timer);
   } else {
     thread_state_set.flush();
     gch->set_par_threads(0);  // 0 ==> non-parallel.
     gch->save_marks();
-    rp->process_discovered_references(&is_alive, &keep_alive,
-                                      &evacuate_followers, NULL);
+    stats = rp->process_discovered_references(&is_alive, &keep_alive,
+                                              &evacuate_followers, NULL,
+                                              _gc_timer);
   }
+  gc_tracer.report_gc_reference_stats(stats);
   if (!promotion_failed()) {
     // Swap the survivor spaces.
     eden()->clear(SpaceDecorator::Mangle);
@@ -1002,22 +1055,7 @@ void ParNewGeneration::collect(bool   full,
 
     assert(to()->is_empty(), "to space should be empty now");
   } else {
-    assert(_promo_failure_scan_stack.is_empty(), "post condition");
-    _promo_failure_scan_stack.clear(true); // Clear cached segments.
-
-    remove_forwarding_pointers();
-    if (PrintGCDetails) {
-      gclog_or_tty->print(" (promotion failed)");
-    }
-    // All the spaces are in play for mark-sweep.
-    swap_spaces();  // Make life simpler for CMS || rescan; see 6483690.
-    from()->set_next_compaction_space(to());
-    gch->set_incremental_collection_failed();
-    // Inform the next generation that a promotion failure occurred.
-    _next_gen->promotion_failure_occurred();
-
-    // Reset the PromotionFailureALot counters.
-    NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
+    handle_promotion_failed(gch, thread_state_set, gc_tracer);
   }
   // set new iteration safe limit for the survivor spaces
   from()->set_concurrent_iteration_safe_limit(from()->top());
@@ -1025,7 +1063,7 @@ void ParNewGeneration::collect(bool   full,
 
   adjust_desired_tenuring_threshold();
   if (ResizePLAB) {
-    plab_stats()->adjust_desired_plab_sz();
+    plab_stats()->adjust_desired_plab_sz(n_workers);
   }
 
   if (PrintGC && !PrintGCDetails) {
@@ -1058,6 +1096,13 @@ void ParNewGeneration::collect(bool   full,
     rp->enqueue_discovered_references(NULL);
   }
   rp->verify_no_references_recorded();
+
+  gch->trace_heap_after_gc(&gc_tracer);
+  gc_tracer.report_tenuring_threshold(tenuring_threshold());
+
+  _gc_timer->register_gc_end(os::elapsed_counter());
+
+  gc_tracer.report_gc_end(_gc_timer->gc_end(), _gc_timer->time_partitions());
 }
 
 static int sum;
@@ -1167,8 +1212,7 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
       new_obj = old;
 
       preserve_mark_if_necessary(old, m);
-      // Log the size of the maiden promotion failure
-      par_scan_state->log_promotion_failure(sz);
+      par_scan_state->register_promotion_failure(sz);
     }
 
     old->forward_to(new_obj);
@@ -1283,8 +1327,7 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
       failed_to_promote = true;
 
       preserve_mark_if_necessary(old, m);
-      // Log the size of the maiden promotion failure
-      par_scan_state->log_promotion_failure(sz);
+      par_scan_state->register_promotion_failure(sz);
     }
   } else {
     // Is in to-space; do copying ourselves.
@@ -1401,7 +1444,7 @@ void ParNewGeneration::push_on_overflow_list(oop from_space_obj, ParScanThreadSt
     assert(_num_par_pushes > 0, "Tautology");
 #endif
     if (from_space_obj->forwardee() == from_space_obj) {
-      oopDesc* listhead = NEW_C_HEAP_ARRAY(oopDesc, 1);
+      oopDesc* listhead = NEW_C_HEAP_ARRAY(oopDesc, 1, mtGC);
       listhead->forward_to(from_space_obj);
       from_space_obj = listhead;
     }
@@ -1553,7 +1596,7 @@ bool ParNewGeneration::take_from_overflow_list_work(ParScanThreadState* par_scan
       // This can become a scaling bottleneck when there is work queue overflow coincident
       // with promotion failure.
       oopDesc* f = cur;
-      FREE_C_HEAP_ARRAY(oopDesc, f);
+      FREE_C_HEAP_ARRAY(oopDesc, f, mtGC);
     } else if (par_scan_state->should_be_partially_scanned(obj_to_push, cur)) {
       assert(arrayOop(cur)->length() == 0, "entire array remaining to be scanned");
       obj_to_push = cur;
@@ -1572,8 +1615,7 @@ bool ParNewGeneration::take_from_overflow_list_work(ParScanThreadState* par_scan
 }
 #undef BUSY
 
-void ParNewGeneration::ref_processor_init()
-{
+void ParNewGeneration::ref_processor_init() {
   if (_ref_processor == NULL) {
     // Allocate and initialize a reference processor
     _ref_processor =

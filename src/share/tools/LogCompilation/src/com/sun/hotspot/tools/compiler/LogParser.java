@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -146,6 +146,7 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
     private CallSite site;
     private Stack<Phase> phaseStack = new Stack<Phase>();
     private UncommonTrapEvent currentTrap;
+    private Stack<CallSite> late_inline_scope;
 
     long parseLong(String l) {
         try {
@@ -223,7 +224,6 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
         throw new InternalError("can't find " + name);
     }
     int indent = 0;
-    String compile_id;
 
     String type(String id) {
         String result = types.get(id);
@@ -267,12 +267,18 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
         if (qname.equals("phase")) {
             Phase p = new Phase(search(atts, "name"),
                     Double.parseDouble(search(atts, "stamp")),
-                    Integer.parseInt(search(atts, "nodes")));
+                    Integer.parseInt(search(atts, "nodes", "0")),
+                    Integer.parseInt(search(atts, "live")));
             phaseStack.push(p);
         } else if (qname.equals("phase_done")) {
             Phase p = phaseStack.pop();
-            p.setEndNodes(Integer.parseInt(search(atts, "nodes")));
+            if (! p.getId().equals(search(atts, "name"))) {
+                System.out.println("phase: " + p.getId());
+                throw new InternalError("phase name mismatch");
+            }
             p.setEnd(Double.parseDouble(search(atts, "stamp")));
+            p.setEndNodes(Integer.parseInt(search(atts, "nodes", "0")));
+            p.setEndLiveNodes(Integer.parseInt(search(atts, "live")));
             compile.getPhases().add(p);
         } else if (qname.equals("task")) {
             compile = new Compilation(Integer.parseInt(search(atts, "compile_id", "-1")));
@@ -302,6 +308,7 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
             }
             events.add(compile);
             compiles.put(makeId(atts), compile);
+            site = compile.getCall();
         } else if (qname.equals("type")) {
             type(search(atts, "id"), search(atts, "name"));
         } else if (qname.equals("bc")) {
@@ -315,13 +322,16 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
             m.setName(search(atts, "name"));
             m.setReturnType(type(search(atts, "return")));
             m.setArguments(search(atts, "arguments", "void"));
-            m.setBytes(search(atts, "bytes"));
-            m.setIICount(search(atts, "iicount"));
-            m.setFlags(search(atts, "flags"));
+
+            if (search(atts, "unloaded", "0").equals("0")) {
+               m.setBytes(search(atts, "bytes"));
+               m.setIICount(search(atts, "iicount"));
+               m.setFlags(search(atts, "flags"));
+            }
             methods.put(id, m);
         } else if (qname.equals("call")) {
             site = new CallSite(bci, method(search(atts, "method")));
-            site.setCount(Integer.parseInt(search(atts, "count")));
+            site.setCount(Integer.parseInt(search(atts, "count", "0")));
             String receiver = atts.getValue("receiver");
             if (receiver != null) {
                 site.setReceiver(type(receiver));
@@ -360,12 +370,22 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
                 // uncommon trap inserted during parsing.
                 // ignore for now
             }
+        } else if (qname.equals("late_inline")) {
+            late_inline_scope = new Stack<CallSite>();
+            site = new CallSite(-999, method(search(atts, "method")));
+            late_inline_scope.push(site);
         } else if (qname.equals("jvms")) {
             // <jvms bci='4' method='java/io/DataInputStream readChar ()C' bytes='40' count='5815' iicount='20815'/>
             if (currentTrap != null) {
                 currentTrap.addJVMS(atts.getValue("method"), Integer.parseInt(atts.getValue("bci")));
+            } else if (late_inline_scope != null) {
+                bci = Integer.parseInt(search(atts, "bci"));
+                site = new CallSite(bci, method(search(atts, "method")));
+                late_inline_scope.push(site);
             } else {
-                // Ignore <eliminate_allocation type='667'> and <eliminate_lock lock='1'>
+                // Ignore <eliminate_allocation type='667'>,
+                //        <eliminate_lock lock='1'>,
+                //        <replace_string_concat arguments='2' string_alloc='0' multiple='0'>
             }
         } else if (qname.equals("nmethod")) {
             String id = makeId(atts);
@@ -379,7 +399,7 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
             Method m = method(search(atts, "method"));
             if (scopes.size() == 0) {
                 compile.setMethod(m);
-                scopes.push(compile.getCall());
+                scopes.push(site);
             } else {
                 if (site.getMethod() == m) {
                     scopes.push(site);
@@ -393,7 +413,8 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
             }
         } else if (qname.equals("parse_done")) {
             CallSite call = scopes.pop();
-            call.setEndNodes(Integer.parseInt(search(atts, "nodes")));
+            call.setEndNodes(Integer.parseInt(search(atts, "nodes", "1")));
+            call.setEndLiveNodes(Integer.parseInt(search(atts, "live", "1")));
             call.setTimeStamp(Double.parseDouble(search(atts, "stamp")));
             scopes.push(call);
         }
@@ -408,6 +429,43 @@ public class LogParser extends DefaultHandler implements ErrorHandler, Constants
             scopes.pop();
         } else if (qname.equals("uncommon_trap")) {
             currentTrap = null;
+        } else if (qname.equals("late_inline")) {
+            // Populate late inlining info.
+
+            // late_inline scopes are specified in reverse order:
+            // compiled method should be on top of stack.
+            CallSite caller = late_inline_scope.pop();
+            Method m = compile.getMethod();
+            if (m != caller.getMethod()) {
+                System.out.println(m);
+                System.out.println(caller.getMethod() + " bci: " + bci);
+                throw new InternalError("call site and late_inline info don't match");
+            }
+
+            // late_inline contains caller+bci info, convert it
+            // to bci+callee info used by LogCompilation.
+            site = compile.getLateInlineCall();
+            do {
+                bci = caller.getBci();
+                // Next inlined call.
+                caller = late_inline_scope.pop();
+                CallSite callee =  new CallSite(bci, caller.getMethod());
+                site.add(callee);
+                site = callee;
+            } while (!late_inline_scope.empty());
+
+            if (caller.getBci() != -999) {
+                System.out.println(caller.getMethod());
+                throw new InternalError("broken late_inline info");
+            }
+            if (site.getMethod() != caller.getMethod()) {
+                System.out.println(site.getMethod());
+                System.out.println(caller.getMethod());
+                throw new InternalError("call site and late_inline info don't match");
+            }
+            // late_inline is followed by parse with scopes.size() == 0,
+            // 'site' will be pushed to scopes.
+            late_inline_scope = null;
         } else if (qname.equals("task")) {
             types.clear();
             methods.clear();

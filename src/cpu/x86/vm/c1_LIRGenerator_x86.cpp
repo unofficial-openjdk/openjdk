@@ -718,35 +718,6 @@ void LIRGenerator::do_CompareOp(CompareOp* x) {
 }
 
 
-void LIRGenerator::do_AttemptUpdate(Intrinsic* x) {
-  assert(x->number_of_arguments() == 3, "wrong type");
-  LIRItem obj       (x->argument_at(0), this);  // AtomicLong object
-  LIRItem cmp_value (x->argument_at(1), this);  // value to compare with field
-  LIRItem new_value (x->argument_at(2), this);  // replace field with new_value if it matches cmp_value
-
-  // compare value must be in rdx,eax (hi,lo); may be destroyed by cmpxchg8 instruction
-  cmp_value.load_item_force(FrameMap::long0_opr);
-
-  // new value must be in rcx,ebx (hi,lo)
-  new_value.load_item_force(FrameMap::long1_opr);
-
-  // object pointer register is overwritten with field address
-  obj.load_item();
-
-  // generate compare-and-swap; produces zero condition if swap occurs
-  int value_offset = sun_misc_AtomicLongCSImpl::value_offset();
-  LIR_Opr addr = new_pointer_register();
-  __ leal(LIR_OprFact::address(new LIR_Address(obj.result(), value_offset, T_LONG)), addr);
-  LIR_Opr t1 = LIR_OprFact::illegalOpr;  // no temp needed
-  LIR_Opr t2 = LIR_OprFact::illegalOpr;  // no temp needed
-  __ cas_long(addr, cmp_value.result(), new_value.result(), t1, t2);
-
-  // generate conditional move of boolean result
-  LIR_Opr result = rlock_result(x);
-  __ cmove(lir_cond_equal, LIR_OprFact::intConst(1), LIR_OprFact::intConst(0), result, T_LONG);
-}
-
-
 void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   assert(x->number_of_arguments() == 4, "wrong type");
   LIRItem obj   (x->argument_at(0), this);  // object
@@ -782,9 +753,24 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
   LIR_Opr addr = new_pointer_register();
   LIR_Address* a;
   if(offset.result()->is_constant()) {
+#ifdef _LP64
+    jlong c = offset.result()->as_jlong();
+    if ((jlong)((jint)c) == c) {
+      a = new LIR_Address(obj.result(),
+                          (jint)c,
+                          as_BasicType(type));
+    } else {
+      LIR_Opr tmp = new_register(T_LONG);
+      __ move(offset.result(), tmp);
+      a = new LIR_Address(obj.result(),
+                          tmp,
+                          as_BasicType(type));
+    }
+#else
     a = new LIR_Address(obj.result(),
-                        NOT_LP64(offset.result()->as_constant_ptr()->as_jint()) LP64_ONLY((int)offset.result()->as_constant_ptr()->as_jlong()),
+                        offset.result()->as_jint(),
                         as_BasicType(type));
+#endif
   } else {
     a = new LIR_Address(obj.result(),
                         offset.result(),
@@ -823,7 +809,7 @@ void LIRGenerator::do_CompareAndSwap(Intrinsic* x, ValueType* type) {
 
 
 void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
-  assert(x->number_of_arguments() == 1, "wrong type");
+  assert(x->number_of_arguments() == 1 || (x->number_of_arguments() == 2 && x->id() == vmIntrinsics::_dpow), "wrong type");
   LIRItem value(x->argument_at(0), this);
 
   bool use_fpu = false;
@@ -834,6 +820,8 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
       case vmIntrinsics::_dtan:
       case vmIntrinsics::_dlog:
       case vmIntrinsics::_dlog10:
+      case vmIntrinsics::_dexp:
+      case vmIntrinsics::_dpow:
         use_fpu = true;
     }
   } else {
@@ -843,20 +831,37 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
   value.load_item();
 
   LIR_Opr calc_input = value.result();
+  LIR_Opr calc_input2 = NULL;
+  if (x->id() == vmIntrinsics::_dpow) {
+    LIRItem extra_arg(x->argument_at(1), this);
+    if (UseSSE < 2) {
+      extra_arg.set_destroys_register();
+    }
+    extra_arg.load_item();
+    calc_input2 = extra_arg.result();
+  }
   LIR_Opr calc_result = rlock_result(x);
 
-  // sin and cos need two free fpu stack slots, so register two temporary operands
+  // sin, cos, pow and exp need two free fpu stack slots, so register
+  // two temporary operands
   LIR_Opr tmp1 = FrameMap::caller_save_fpu_reg_at(0);
   LIR_Opr tmp2 = FrameMap::caller_save_fpu_reg_at(1);
 
   if (use_fpu) {
     LIR_Opr tmp = FrameMap::fpu0_double_opr;
+    int tmp_start = 1;
+    if (calc_input2 != NULL) {
+      __ move(calc_input2, tmp);
+      tmp_start = 2;
+      calc_input2 = tmp;
+    }
     __ move(calc_input, tmp);
 
     calc_input = tmp;
     calc_result = tmp;
-    tmp1 = FrameMap::caller_save_fpu_reg_at(1);
-    tmp2 = FrameMap::caller_save_fpu_reg_at(2);
+
+    tmp1 = FrameMap::caller_save_fpu_reg_at(tmp_start);
+    tmp2 = FrameMap::caller_save_fpu_reg_at(tmp_start + 1);
   }
 
   switch(x->id()) {
@@ -867,6 +872,8 @@ void LIRGenerator::do_MathIntrinsic(Intrinsic* x) {
     case vmIntrinsics::_dtan:   __ tan  (calc_input, calc_result, tmp1, tmp2);              break;
     case vmIntrinsics::_dlog:   __ log  (calc_input, calc_result, tmp1);                    break;
     case vmIntrinsics::_dlog10: __ log10(calc_input, calc_result, tmp1);                    break;
+    case vmIntrinsics::_dexp:   __ exp  (calc_input, calc_result,              tmp1, tmp2, FrameMap::rax_opr, FrameMap::rcx_opr, FrameMap::rdx_opr); break;
+    case vmIntrinsics::_dpow:   __ pow  (calc_input, calc_input2, calc_result, tmp1, tmp2, FrameMap::rax_opr, FrameMap::rcx_opr, FrameMap::rdx_opr); break;
     default:                    ShouldNotReachHere();
   }
 
@@ -1350,6 +1357,60 @@ void LIRGenerator::put_Object_unsafe(LIR_Opr src, LIR_Opr offset, LIR_Opr data,
       post_barrier(LIR_OprFact::address(addr), data);
     } else {
       __ move(data, addr);
+    }
+  }
+}
+
+void LIRGenerator::do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) {
+  BasicType type = x->basic_type();
+  LIRItem src(x->object(), this);
+  LIRItem off(x->offset(), this);
+  LIRItem value(x->value(), this);
+
+  src.load_item();
+  value.load_item();
+  off.load_nonconstant();
+
+  LIR_Opr dst = rlock_result(x, type);
+  LIR_Opr data = value.result();
+  bool is_obj = (type == T_ARRAY || type == T_OBJECT);
+  LIR_Opr offset = off.result();
+
+  assert (type == T_INT || (!x->is_add() && is_obj) LP64_ONLY( || type == T_LONG ), "unexpected type");
+  LIR_Address* addr;
+  if (offset->is_constant()) {
+#ifdef _LP64
+    jlong c = offset->as_jlong();
+    if ((jlong)((jint)c) == c) {
+      addr = new LIR_Address(src.result(), (jint)c, type);
+    } else {
+      LIR_Opr tmp = new_register(T_LONG);
+      __ move(offset, tmp);
+      addr = new LIR_Address(src.result(), tmp, type);
+    }
+#else
+    addr = new LIR_Address(src.result(), offset->as_jint(), type);
+#endif
+  } else {
+    addr = new LIR_Address(src.result(), offset, type);
+  }
+
+  if (data != dst) {
+    __ move(data, dst);
+    data = dst;
+  }
+  if (x->is_add()) {
+    __ xadd(LIR_OprFact::address(addr), data, dst, LIR_OprFact::illegalOpr);
+  } else {
+    if (is_obj) {
+      // Do the pre-write barrier, if any.
+      pre_barrier(LIR_OprFact::address(addr), LIR_OprFact::illegalOpr /* pre_val */,
+                  true /* do_load */, false /* patch */, NULL);
+    }
+    __ xchg(LIR_OprFact::address(addr), data, dst, LIR_OprFact::illegalOpr);
+    if (is_obj) {
+      // Seems to be a precise address
+      post_barrier(LIR_OprFact::address(addr), data);
     }
   }
 }

@@ -47,7 +47,7 @@ ElfFile::ElfFile(const char* filepath) {
   m_status = NullDecoder::no_error;
 
   int len = strlen(filepath) + 1;
-  m_filepath = (const char*)os::malloc(len * sizeof(char));
+  m_filepath = (const char*)os::malloc(len * sizeof(char), mtInternal);
   if (m_filepath != NULL) {
     strcpy((char*)m_filepath, filepath);
     m_file = fopen(filepath, "r");
@@ -196,5 +196,29 @@ ElfStringTable* ElfFile::get_string_table(int index) {
   }
   return NULL;
 }
+
+#ifdef LINUX
+bool ElfFile::specifies_noexecstack() {
+  Elf_Phdr phdr;
+  if (!m_file)  return true;
+
+  if (!fseek(m_file, m_elfHdr.e_phoff, SEEK_SET)) {
+    for (int index = 0; index < m_elfHdr.e_phnum; index ++) {
+      if (fread((void*)&phdr, sizeof(Elf_Phdr), 1, m_file) != 1) {
+        m_status = NullDecoder::file_invalid;
+        return false;
+      }
+      if (phdr.p_type == PT_GNU_STACK) {
+        if (phdr.p_flags == (PF_R | PF_W))  {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+  return false;
+}
+#endif
 
 #endif // _WINDOWS

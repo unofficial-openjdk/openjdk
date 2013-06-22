@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -363,6 +363,49 @@ bool RegionNode::is_unreachable_region(PhaseGVN *phase) const {
   return true; // The Region node is unreachable - it is dead.
 }
 
+bool RegionNode::try_clean_mem_phi(PhaseGVN *phase) {
+  // Incremental inlining + PhaseStringOpts sometimes produce:
+  //
+  // cmpP with 1 top input
+  //           |
+  //          If
+  //         /  \
+  //   IfFalse  IfTrue  /- Some Node
+  //         \  /      /    /
+  //        Region    / /-MergeMem
+  //             \---Phi
+  //
+  //
+  // It's expected by PhaseStringOpts that the Region goes away and is
+  // replaced by If's control input but because there's still a Phi,
+  // the Region stays in the graph. The top input from the cmpP is
+  // propagated forward and a subgraph that is useful goes away. The
+  // code below replaces the Phi with the MergeMem so that the Region
+  // is simplified.
+
+  PhiNode* phi = has_unique_phi();
+  if (phi && phi->type() == Type::MEMORY && req() == 3 && phi->is_diamond_phi(true)) {
+    MergeMemNode* m = NULL;
+    assert(phi->req() == 3, "same as region");
+    for (uint i = 1; i < 3; ++i) {
+      Node *mem = phi->in(i);
+      if (mem && mem->is_MergeMem() && in(i)->outcnt() == 1) {
+        // Nothing is control-dependent on path #i except the region itself.
+        m = mem->as_MergeMem();
+        uint j = 3 - i;
+        Node* other = phi->in(j);
+        if (other && other == m->base_memory()) {
+          // m is a successor memory to other, and is not pinned inside the diamond, so push it out.
+          // This will allow the diamond to collapse completely.
+          phase->is_IterGVN()->replace_node(phi, m);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 //------------------------------Ideal------------------------------------------
 // Return a node which is more "ideal" than the current node.  Must preserve
 // the CFG, but we can still strip out dead paths.
@@ -375,6 +418,10 @@ Node *RegionNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   bool has_phis = false;
   if (can_reshape) {            // Need DU info to check for Phi users
     has_phis = (has_phi() != NULL);       // Cache result
+    if (has_phis && try_clean_mem_phi(phase)) {
+      has_phis = false;
+    }
+
     if (!has_phis) {            // No Phi users?  Nothing merging?
       for (uint i = 1; i < req()-1; i++) {
         Node *if1 = in(i);
@@ -612,17 +659,17 @@ Node *RegionNode::Ideal(PhaseGVN *phase, bool can_reshape) {
                 convf2i->in(1) == bot_in ) {
                 // Matched pattern, including LShiftI; RShiftI, replace with integer compares
                 // max test
-                Node *cmp   = gvn->register_new_node_with_optimizer(new (phase->C, 3) CmpINode( convf2i, min ));
-                Node *boo   = gvn->register_new_node_with_optimizer(new (phase->C, 2) BoolNode( cmp, BoolTest::lt ));
-                IfNode *iff = (IfNode*)gvn->register_new_node_with_optimizer(new (phase->C, 2) IfNode( top_if->in(0), boo, PROB_UNLIKELY_MAG(5), top_if->_fcnt ));
-                Node *if_min= gvn->register_new_node_with_optimizer(new (phase->C, 1) IfTrueNode (iff));
-                Node *ifF   = gvn->register_new_node_with_optimizer(new (phase->C, 1) IfFalseNode(iff));
+                Node *cmp   = gvn->register_new_node_with_optimizer(new (phase->C) CmpINode( convf2i, min ));
+                Node *boo   = gvn->register_new_node_with_optimizer(new (phase->C) BoolNode( cmp, BoolTest::lt ));
+                IfNode *iff = (IfNode*)gvn->register_new_node_with_optimizer(new (phase->C) IfNode( top_if->in(0), boo, PROB_UNLIKELY_MAG(5), top_if->_fcnt ));
+                Node *if_min= gvn->register_new_node_with_optimizer(new (phase->C) IfTrueNode (iff));
+                Node *ifF   = gvn->register_new_node_with_optimizer(new (phase->C) IfFalseNode(iff));
                 // min test
-                cmp         = gvn->register_new_node_with_optimizer(new (phase->C, 3) CmpINode( convf2i, max ));
-                boo         = gvn->register_new_node_with_optimizer(new (phase->C, 2) BoolNode( cmp, BoolTest::gt ));
-                iff         = (IfNode*)gvn->register_new_node_with_optimizer(new (phase->C, 2) IfNode( ifF, boo, PROB_UNLIKELY_MAG(5), bot_if->_fcnt ));
-                Node *if_max= gvn->register_new_node_with_optimizer(new (phase->C, 1) IfTrueNode (iff));
-                ifF         = gvn->register_new_node_with_optimizer(new (phase->C, 1) IfFalseNode(iff));
+                cmp         = gvn->register_new_node_with_optimizer(new (phase->C) CmpINode( convf2i, max ));
+                boo         = gvn->register_new_node_with_optimizer(new (phase->C) BoolNode( cmp, BoolTest::gt ));
+                iff         = (IfNode*)gvn->register_new_node_with_optimizer(new (phase->C) IfNode( ifF, boo, PROB_UNLIKELY_MAG(5), bot_if->_fcnt ));
+                Node *if_max= gvn->register_new_node_with_optimizer(new (phase->C) IfTrueNode (iff));
+                ifF         = gvn->register_new_node_with_optimizer(new (phase->C) IfFalseNode(iff));
                 // update input edges to region node
                 set_req_X( min_idx, if_min, gvn );
                 set_req_X( max_idx, if_max, gvn );
@@ -681,7 +728,7 @@ const TypePtr* flatten_phi_adr_type(const TypePtr* at) {
 PhiNode* PhiNode::make(Node* r, Node* x, const Type *t, const TypePtr* at) {
   uint preds = r->req();   // Number of predecessor paths
   assert(t != Type::MEMORY || at == flatten_phi_adr_type(at), "flatten at");
-  PhiNode* p = new (Compile::current(), preds) PhiNode(r, t, at);
+  PhiNode* p = new (Compile::current()) PhiNode(r, t, at);
   for (uint j = 1; j < preds; j++) {
     // Fill in all inputs, except those which the region does not yet have
     if (r->in(j) != NULL)
@@ -699,7 +746,7 @@ PhiNode* PhiNode::make_blank(Node* r, Node* x) {
   const Type*    t  = x->bottom_type();
   const TypePtr* at = NULL;
   if (t == Type::MEMORY)  at = flatten_phi_adr_type(x->adr_type());
-  return new (Compile::current(), r->req()) PhiNode(r, t, at);
+  return new (Compile::current()) PhiNode(r, t, at);
 }
 
 
@@ -1005,7 +1052,9 @@ const Type *PhiNode::Value( PhaseTransform *phase ) const {
 //------------------------------is_diamond_phi---------------------------------
 // Does this Phi represent a simple well-shaped diamond merge?  Return the
 // index of the true path or 0 otherwise.
-int PhiNode::is_diamond_phi() const {
+// If check_control_only is true, do not inspect the If node at the
+// top, and return -1 (not an edge number) on success.
+int PhiNode::is_diamond_phi(bool check_control_only) const {
   // Check for a 2-path merge
   Node *region = in(0);
   if( !region ) return 0;
@@ -1018,6 +1067,7 @@ int PhiNode::is_diamond_phi() const {
   Node *iff = ifp1->in(0);
   if( !iff || !iff->is_If() ) return 0;
   if( iff != ifp2->in(0) ) return 0;
+  if (check_control_only)  return -1;
   // Check for a proper bool/cmp
   const Node *b = iff->in(1);
   if( !b->is_Bool() ) return 0;
@@ -1205,9 +1255,9 @@ static Node *is_x2logic( PhaseGVN *phase, PhiNode *phi, int true_path ) {
   } else return NULL;
 
   // Build int->bool conversion
-  Node *n = new (phase->C, 2) Conv2BNode( cmp->in(1) );
+  Node *n = new (phase->C) Conv2BNode( cmp->in(1) );
   if( flipped )
-    n = new (phase->C, 3) XorINode( phase->transform(n), phase->intcon(1) );
+    n = new (phase->C) XorINode( phase->transform(n), phase->intcon(1) );
 
   return n;
 }
@@ -1256,19 +1306,20 @@ static Node* is_cond_add(PhaseGVN *phase, PhiNode *phi, int true_path) {
     return NULL;
 
   Node *x = n2;
-  Node *y = n1->in(1);
-  if( n2 == n1->in(1) ) {
+  Node *y = NULL;
+  if( x == n1->in(1) ) {
     y = n1->in(2);
-  } else if( n2 == n1->in(1) ) {
+  } else if( x == n1->in(2) ) {
+    y = n1->in(1);
   } else return NULL;
 
   // Not so profitable if compare and add are constants
   if( q->is_Con() && phase->type(q) != TypeInt::ZERO && y->is_Con() )
     return NULL;
 
-  Node *cmplt = phase->transform( new (phase->C, 3) CmpLTMaskNode(p,q) );
-  Node *j_and   = phase->transform( new (phase->C, 3) AndINode(cmplt,y) );
-  return new (phase->C, 3) AddINode(j_and,x);
+  Node *cmplt = phase->transform( new (phase->C) CmpLTMaskNode(p,q) );
+  Node *j_and   = phase->transform( new (phase->C) AndINode(cmplt,y) );
+  return new (phase->C) AddINode(j_and,x);
 }
 
 //------------------------------is_absolute------------------------------------
@@ -1330,17 +1381,17 @@ static Node* is_absolute( PhaseGVN *phase, PhiNode *phi_root, int true_path) {
     if( sub->Opcode() != Op_SubF ||
         sub->in(2) != x ||
         phase->type(sub->in(1)) != tzero ) return NULL;
-    x = new (phase->C, 2) AbsFNode(x);
+    x = new (phase->C) AbsFNode(x);
     if (flip) {
-      x = new (phase->C, 3) SubFNode(sub->in(1), phase->transform(x));
+      x = new (phase->C) SubFNode(sub->in(1), phase->transform(x));
     }
   } else {
     if( sub->Opcode() != Op_SubD ||
         sub->in(2) != x ||
         phase->type(sub->in(1)) != tzero ) return NULL;
-    x = new (phase->C, 2) AbsDNode(x);
+    x = new (phase->C) AbsDNode(x);
     if (flip) {
-      x = new (phase->C, 3) SubDNode(sub->in(1), phase->transform(x));
+      x = new (phase->C) SubDNode(sub->in(1), phase->transform(x));
     }
   }
 
@@ -1415,7 +1466,7 @@ static Node* split_flow_path(PhaseGVN *phase, PhiNode *phi) {
   // Now start splitting out the flow paths that merge the same value.
   // Split first the RegionNode.
   PhaseIterGVN *igvn = phase->is_IterGVN();
-  RegionNode *newr = new (phase->C, hit+1) RegionNode(hit+1);
+  RegionNode *newr = new (phase->C) RegionNode(hit+1);
   split_once(igvn, phi, val, r, newr);
 
   // Now split all other Phis than this one
@@ -1566,6 +1617,10 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     Node* n = in(j);            // Get the input
     if (rc == NULL || phase->type(rc) == Type::TOP) {
       if (n != top) {           // Not already top?
+        PhaseIterGVN *igvn = phase->is_IterGVN();
+        if (can_reshape && igvn != NULL) {
+          igvn->_worklist.push(r);
+        }
         set_req(j, top);        // Nuke it down
         progress = this;        // Record progress
       }
@@ -1723,13 +1778,13 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       }
       if (doit) {
         if (base == NULL) {
-          base = new (phase->C, in(0)->req()) PhiNode(in(0), type, NULL);
+          base = new (phase->C) PhiNode(in(0), type, NULL);
           for (uint i = 1; i < req(); i++) {
             base->init_req(i, in(i)->in(AddPNode::Base));
           }
           phase->is_IterGVN()->register_new_node_with_optimizer(base);
         }
-        return new (phase->C, 4) AddPNode(base, base, y);
+        return new (phase->C) AddPNode(base, base, y);
       }
     }
   }
@@ -1806,7 +1861,7 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         // Phi(...MergeMem(m0, m1:AT1, m2:AT2)...) into
         //     MergeMem(Phi(...m0...), Phi:AT1(...m1...), Phi:AT2(...m2...))
         PhaseIterGVN *igvn = phase->is_IterGVN();
-        Node* hook = new (phase->C, 1) Node(1);
+        Node* hook = new (phase->C) Node(1);
         PhiNode* new_base = (PhiNode*) clone();
         // Must eagerly register phis, since they participate in loops.
         if (igvn) {
@@ -1896,7 +1951,7 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       PhaseIterGVN *igvn = phase->is_IterGVN();
       // Make narrow type for new phi.
       const Type* narrow_t = TypeNarrowOop::make(this->bottom_type()->is_ptr());
-      PhiNode* new_phi = new (phase->C, r->req()) PhiNode(r, narrow_t);
+      PhiNode* new_phi = new (phase->C) PhiNode(r, narrow_t);
       uint orig_cnt = req();
       for (uint i=1; i<req(); ++i) {// For all paths in
         Node *ii = in(i);
@@ -1909,14 +1964,14 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
           if (ii->as_Phi() == this) {
             new_ii = new_phi;
           } else {
-            new_ii = new (phase->C, 2) EncodePNode(ii, narrow_t);
+            new_ii = new (phase->C) EncodePNode(ii, narrow_t);
             igvn->register_new_node_with_optimizer(new_ii);
           }
         }
         new_phi->set_req(i, new_ii);
       }
       igvn->register_new_node_with_optimizer(new_phi, this);
-      progress = new (phase->C, 2) DecodeNNode(new_phi, bottom_type());
+      progress = new (phase->C) DecodeNNode(new_phi, bottom_type());
     }
   }
 #endif

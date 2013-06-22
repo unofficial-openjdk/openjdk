@@ -87,6 +87,14 @@ inline klassOop oopDesc::klass_or_null() const volatile {
   }
 }
 
+inline klassOop oopDesc::unsafe_klass_or_null() const volatile {
+  if (UseCompressedOops) {
+    return (klassOop)unsafe_decode_heap_oop(_metadata._compressed_klass);
+  } else {
+    return _metadata._klass;
+  }
+}
+
 inline int oopDesc::klass_gap_offset_in_bytes() {
   assert(UseCompressedOops, "only applicable to compressed headers");
   return oopDesc::klass_offset_in_bytes() + sizeof(narrowOop);
@@ -205,14 +213,26 @@ inline narrowOop oopDesc::encode_heap_oop(oop v) {
   return (is_null(v)) ? (narrowOop)0 : encode_heap_oop_not_null(v);
 }
 
-inline oop oopDesc::decode_heap_oop_not_null(narrowOop v) {
+inline oop oopDesc::unsafe_decode_heap_oop_not_null(narrowOop v) {
   assert(!is_null(v), "narrow oop value can never be zero");
   address base = Universe::narrow_oop_base();
   int    shift = Universe::narrow_oop_shift();
   oop result = (oop)(void*)((uintptr_t)base + ((uintptr_t)v << shift));
+  return result;
+}
+
+inline oop oopDesc::unsafe_decode_heap_oop_not_null(oop v) { return v; }
+
+inline oop oopDesc::decode_heap_oop_not_null(narrowOop v) {
+  oop result = unsafe_decode_heap_oop_not_null(v);
   assert(check_obj_alignment(result), err_msg("address not aligned: " PTR_FORMAT, (void*) result));
   return result;
 }
+
+inline oop oopDesc::unsafe_decode_heap_oop(narrowOop v) {
+  return is_null(v) ? (oop)NULL : unsafe_decode_heap_oop_not_null(v);
+}
+inline oop oopDesc::unsafe_decode_heap_oop(oop v)  { return v; }
 
 inline oop oopDesc::decode_heap_oop(narrowOop v) {
   return is_null(v) ? (oop)NULL : decode_heap_oop_not_null(v);

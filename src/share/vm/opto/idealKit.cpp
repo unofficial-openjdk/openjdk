@@ -48,9 +48,9 @@ IdealKit::IdealKit(GraphKit* gkit, bool delay_all_transforms, bool has_declarati
   _cvstate = NULL;
   // We can go memory state free or else we need the entire memory state
   assert(_initial_memory == NULL || _initial_memory->Opcode() == Op_MergeMem, "memory must be pre-split");
+  assert(!_gvn.is_IterGVN(), "IdealKit can't be used during Optimize phase");
   int init_size = 5;
   _pending_cvstates = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
-  _delay_transform  = new (C->node_arena()) GrowableArray<Node*>(C->node_arena(), init_size, 0, 0);
   DEBUG_ONLY(_state = new (C->node_arena()) GrowableArray<int>(C->node_arena(), init_size, 0, 0));
   if (!has_declarations) {
      declarations_done();
@@ -86,7 +86,7 @@ void IdealKit::if_then(Node* left, BoolTest::mask relop,
   }
   // Delay gvn.tranform on if-nodes until construction is finished
   // to prevent a constant bool input from discarding a control output.
-  IfNode* iff = delay_transform(new (C, 2) IfNode(ctrl(), bol, prob, cnt))->as_If();
+  IfNode* iff = delay_transform(new (C) IfNode(ctrl(), bol, prob, cnt))->as_If();
   Node* then  = IfTrue(iff);
   Node* elsen = IfFalse(iff);
   Node* else_cvstate = copy_cvstate();
@@ -205,7 +205,7 @@ Node* IdealKit::make_label(int goto_ct) {
   assert(_cvstate != NULL, "must declare variables before labels");
   Node* lab = new_cvstate();
   int sz = 1 + goto_ct + 1 /* fall thru */;
-  Node* reg = delay_transform(new (C, sz) RegionNode(sz));
+  Node* reg = delay_transform(new (C) RegionNode(sz));
   lab->init_req(TypeFunc::Control, reg);
   return lab;
 }
@@ -295,23 +295,24 @@ Node* IdealKit::transform(Node* n) {
   if (_delay_all_transforms) {
     return delay_transform(n);
   } else {
-    return gvn().transform(n);
+    n = gvn().transform(n);
+    C->record_for_igvn(n);
+    return n;
   }
 }
 
 //-----------------------------delay_transform-----------------------------------
 Node* IdealKit::delay_transform(Node* n) {
-  if (!gvn().is_IterGVN() || !gvn().is_IterGVN()->delay_transform()) {
-    gvn().set_type(n, n->bottom_type());
-  }
-  _delay_transform->push(n);
+  // Delay transform until IterativeGVN
+  gvn().set_type(n, n->bottom_type());
+  C->record_for_igvn(n);
   return n;
 }
 
 //-----------------------------new_cvstate-----------------------------------
 Node* IdealKit::new_cvstate() {
   uint sz = _var_ct + first_var;
-  return new (C, sz) Node(sz);
+  return new (C) Node(sz);
 }
 
 //-----------------------------copy_cvstate-----------------------------------
@@ -328,17 +329,6 @@ void IdealKit::clear(Node* m) {
   for (uint i = 0; i < m->req(); i++) m->set_req(i, NULL);
 }
 
-//-----------------------------drain_delay_transform----------------------------
-void IdealKit::drain_delay_transform() {
-  while (_delay_transform->length() > 0) {
-    Node* n = _delay_transform->pop();
-    gvn().transform(n);
-    if (!gvn().is_IterGVN()) {
-      C->record_for_igvn(n);
-    }
-  }
-}
-
 //-----------------------------IdealVariable----------------------------
 IdealVariable::IdealVariable(IdealKit &k) {
   k.declare(this);
@@ -347,9 +337,7 @@ IdealVariable::IdealVariable(IdealKit &k) {
 Node* IdealKit::memory(uint alias_idx) {
   MergeMemNode* mem = merged_memory();
   Node* p = mem->memory_at(alias_idx);
-  if (!gvn().is_IterGVN() || !gvn().is_IterGVN()->delay_transform()) {
-    _gvn.set_type(p, Type::MEMORY);  // must be mapped
-  }
+  _gvn.set_type(p, Type::MEMORY);  // must be mapped
   return p;
 }
 
@@ -409,7 +397,7 @@ Node* IdealKit::storeCM(Node* ctl, Node* adr, Node *val, Node* oop_store, int oo
 
   // Add required edge to oop_store, optimizer does not support precedence edges.
   // Convert required edge to precedence edge before allocation.
-  Node* st = new (C, 5) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store, oop_adr_idx);
+  Node* st = new (C) StoreCMNode(ctl, mem, adr, adr_type, val, oop_store, oop_adr_idx);
 
   st = transform(st);
   set_memory(st, adr_idx);
@@ -509,8 +497,7 @@ void IdealKit::make_leaf_call(const TypeFunc *slow_call_type,
   uint adr_idx = C->get_alias_index(adr_type);
 
   // Slow-path leaf call
-  int size = slow_call_type->domain()->cnt();
-  CallNode *call =  (CallNode*)new (C, size) CallLeafNode( slow_call_type, slow_call, leaf_name, adr_type);
+  CallNode *call =  (CallNode*)new (C) CallLeafNode( slow_call_type, slow_call, leaf_name, adr_type);
 
   // Set fixed predefined input arguments
   call->init_req( TypeFunc::Control, ctrl() );
@@ -531,10 +518,10 @@ void IdealKit::make_leaf_call(const TypeFunc *slow_call_type,
 
   // Slow leaf call has no side-effects, sets few values
 
-  set_ctrl(transform( new (C, 1) ProjNode(call,TypeFunc::Control) ));
+  set_ctrl(transform( new (C) ProjNode(call,TypeFunc::Control) ));
 
   // Make memory for the call
-  Node* mem = _gvn.transform( new (C, 1) ProjNode(call, TypeFunc::Memory) );
+  Node* mem = _gvn.transform( new (C) ProjNode(call, TypeFunc::Memory) );
 
   // Set the RawPtr memory state only.
   set_memory(mem, adr_idx);
@@ -557,8 +544,7 @@ void IdealKit::make_leaf_call_no_fp(const TypeFunc *slow_call_type,
   uint adr_idx = C->get_alias_index(adr_type);
 
   // Slow-path leaf call
-  int size = slow_call_type->domain()->cnt();
-  CallNode *call =  (CallNode*)new (C, size) CallLeafNoFPNode( slow_call_type, slow_call, leaf_name, adr_type);
+  CallNode *call =  (CallNode*)new (C) CallLeafNoFPNode( slow_call_type, slow_call, leaf_name, adr_type);
 
   // Set fixed predefined input arguments
   call->init_req( TypeFunc::Control, ctrl() );
@@ -579,10 +565,10 @@ void IdealKit::make_leaf_call_no_fp(const TypeFunc *slow_call_type,
 
   // Slow leaf call has no side-effects, sets few values
 
-  set_ctrl(transform( new (C, 1) ProjNode(call,TypeFunc::Control) ));
+  set_ctrl(transform( new (C) ProjNode(call,TypeFunc::Control) ));
 
   // Make memory for the call
-  Node* mem = _gvn.transform( new (C, 1) ProjNode(call, TypeFunc::Memory) );
+  Node* mem = _gvn.transform( new (C) ProjNode(call, TypeFunc::Memory) );
 
   // Set the RawPtr memory state only.
   set_memory(mem, adr_idx);

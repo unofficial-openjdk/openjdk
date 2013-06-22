@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@
 
 #ifndef SHARE_VM_PRIMS_JVMTIIMPL_HPP
 #define SHARE_VM_PRIMS_JVMTIIMPL_HPP
-
-#ifndef JVMTI_KERNEL
 
 #include "classfile/systemDictionary.hpp"
 #include "jvmtifiles/jvmti.h"
@@ -64,7 +62,7 @@ class JvmtiBreakpoints;
 // to update its pointer to the address cache.
 //
 
-class GrowableElement : public CHeapObj {
+class GrowableElement : public CHeapObj<mtInternal> {
 public:
   virtual address getCacheValue()          =0;
   virtual bool equals(GrowableElement* e)  =0;
@@ -130,7 +128,7 @@ public:
 // Note   : typesafe wrapper for GrowableCache of JvmtiBreakpoint
 //
 
-class JvmtiBreakpointCache : public CHeapObj {
+class JvmtiBreakpointCache : public CHeapObj<mtInternal> {
 
 private:
   GrowableCache _cache;
@@ -202,47 +200,6 @@ public:
 
 ///////////////////////////////////////////////////////////////
 //
-// class VM_ChangeBreakpoints
-// Used by              : JvmtiBreakpoints
-// Used by JVMTI methods: none directly.
-// Note: A Helper class.
-//
-// VM_ChangeBreakpoints implements a VM_Operation for ALL modifications to the JvmtiBreakpoints class.
-//
-
-class VM_ChangeBreakpoints : public VM_Operation {
-private:
-  JvmtiBreakpoints* _breakpoints;
-  int               _operation;
-  JvmtiBreakpoint*  _bp;
-
-public:
-  enum { SET_BREAKPOINT=0, CLEAR_BREAKPOINT=1, CLEAR_ALL_BREAKPOINT=2 };
-
-  VM_ChangeBreakpoints(JvmtiBreakpoints* breakpoints, int operation) {
-    _breakpoints = breakpoints;
-    _bp = NULL;
-    _operation = operation;
-    assert(breakpoints != NULL, "breakpoints != NULL");
-    assert(operation == CLEAR_ALL_BREAKPOINT, "unknown breakpoint operation");
-  }
-  VM_ChangeBreakpoints(JvmtiBreakpoints* breakpoints, int operation, JvmtiBreakpoint *bp) {
-    _breakpoints = breakpoints;
-    _bp = bp;
-    _operation = operation;
-    assert(breakpoints != NULL, "breakpoints != NULL");
-    assert(bp != NULL, "bp != NULL");
-    assert(operation == SET_BREAKPOINT || operation == CLEAR_BREAKPOINT , "unknown breakpoint operation");
-  }
-
-  VMOp_Type type() const { return VMOp_ChangeBreakpoints; }
-  void doit();
-  void oops_do(OopClosure* f);
-};
-
-
-///////////////////////////////////////////////////////////////
-//
 // class JvmtiBreakpoints
 // Used by              : JvmtiCurrentBreakpoints
 // Used by JVMTI methods: none directly
@@ -258,7 +215,7 @@ public:
 // CHeap allocated to emphasize its similarity to JvmtiFramePops.
 //
 
-class JvmtiBreakpoints : public CHeapObj {
+class JvmtiBreakpoints : public CHeapObj<mtInternal> {
 private:
 
   JvmtiBreakpointCache _bps;
@@ -269,7 +226,6 @@ private:
   friend class VM_ChangeBreakpoints;
   void set_at_safepoint(JvmtiBreakpoint& bp);
   void clear_at_safepoint(JvmtiBreakpoint& bp);
-  void clearall_at_safepoint();
 
   static void do_element(GrowableElement *e);
 
@@ -284,7 +240,6 @@ public:
   int  set(JvmtiBreakpoint& bp);
   int  clear(JvmtiBreakpoint& bp);
   void clearall_in_class_at_safepoint(klassOop klass);
-  void clearall();
   void gc_epilogue();
 };
 
@@ -341,6 +296,40 @@ bool JvmtiCurrentBreakpoints::is_breakpoint(address bcp) {
     }
     return false;
 }
+
+
+///////////////////////////////////////////////////////////////
+//
+// class VM_ChangeBreakpoints
+// Used by              : JvmtiBreakpoints
+// Used by JVMTI methods: none directly.
+// Note: A Helper class.
+//
+// VM_ChangeBreakpoints implements a VM_Operation for ALL modifications to the JvmtiBreakpoints class.
+//
+
+class VM_ChangeBreakpoints : public VM_Operation {
+private:
+  JvmtiBreakpoints* _breakpoints;
+  int               _operation;
+  JvmtiBreakpoint*  _bp;
+
+public:
+  enum { SET_BREAKPOINT=0, CLEAR_BREAKPOINT=1 };
+
+  VM_ChangeBreakpoints(int operation, JvmtiBreakpoint *bp) {
+    JvmtiBreakpoints& current_bps = JvmtiCurrentBreakpoints::get_jvmti_breakpoints();
+    _breakpoints = &current_bps;
+    _bp = bp;
+    _operation = operation;
+    assert(bp != NULL, "bp != NULL");
+  }
+
+  VMOp_Type type() const { return VMOp_ChangeBreakpoints; }
+  void doit();
+  void oops_do(OopClosure* f);
+};
+
 
 ///////////////////////////////////////////////////////////////
 // The get/set local operations must only be done by the VM thread
@@ -431,7 +420,6 @@ public:
   static void print();
 };
 
-#endif // !JVMTI_KERNEL
 
 /**
  * When a thread (such as the compiler thread or VM thread) cannot post a
@@ -476,16 +464,14 @@ class JvmtiDeferredEvent VALUE_OBJ_CLASS_SPEC {
   JvmtiDeferredEvent() : _type(TYPE_NONE) {}
 
   // Factory methods
-  static JvmtiDeferredEvent compiled_method_load_event(nmethod* nm)
-    KERNEL_RETURN_(JvmtiDeferredEvent());
+  static JvmtiDeferredEvent compiled_method_load_event(nmethod* nm);
   static JvmtiDeferredEvent compiled_method_unload_event(nmethod* nm,
-      jmethodID id, const void* code) KERNEL_RETURN_(JvmtiDeferredEvent());
+      jmethodID id, const void* code);
   static JvmtiDeferredEvent dynamic_code_generated_event(
-      const char* name, const void* begin, const void* end)
-          KERNEL_RETURN_(JvmtiDeferredEvent());
+      const char* name, const void* begin, const void* end);
 
   // Actually posts the event.
-  void post() KERNEL_RETURN;
+  void post();
 };
 
 /**
@@ -496,7 +482,7 @@ class JvmtiDeferredEvent VALUE_OBJ_CLASS_SPEC {
 class JvmtiDeferredEventQueue : AllStatic {
   friend class JvmtiDeferredEvent;
  private:
-  class QueueNode : public CHeapObj {
+  class QueueNode : public CHeapObj<mtInternal> {
    private:
     JvmtiDeferredEvent _event;
     QueueNode* _next;
@@ -516,13 +502,13 @@ class JvmtiDeferredEventQueue : AllStatic {
   static volatile QueueNode* _pending_list;  // Uses CAS for read/update
 
   // Transfers events from the _pending_list to the _queue.
-  static void process_pending_events() KERNEL_RETURN;
+  static void process_pending_events();
 
  public:
   // Must be holding Service_lock when calling these
-  static bool has_events() KERNEL_RETURN_(false);
-  static void enqueue(const JvmtiDeferredEvent& event) KERNEL_RETURN;
-  static JvmtiDeferredEvent dequeue() KERNEL_RETURN_(JvmtiDeferredEvent());
+  static bool has_events();
+  static void enqueue(const JvmtiDeferredEvent& event);
+  static JvmtiDeferredEvent dequeue();
 
   // Used to enqueue events without using a lock, for times (such as during
   // safepoint) when we can't or don't want to lock the Service_lock.
@@ -530,7 +516,7 @@ class JvmtiDeferredEventQueue : AllStatic {
   // Events will be held off to the side until there's a call to
   // dequeue(), enqueue(), or process_pending_events() (all of which require
   // the holding of the Service_lock), and will be enqueued at that time.
-  static void add_pending_event(const JvmtiDeferredEvent&) KERNEL_RETURN;
+  static void add_pending_event(const JvmtiDeferredEvent&);
 };
 
 // Utility macro that checks for NULL pointers:

@@ -48,37 +48,105 @@ inline void inc_stat_counter(volatile julong* dest, julong add_value) {
 #endif
 
 // allocate using malloc; will fail if no memory available
-inline char* AllocateHeap(size_t size, const char* name = NULL,
+inline char* AllocateHeap(size_t size, MEMFLAGS flags, address pc = 0,
      AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
-  char* p = (char*) os::malloc(size);
+  if (pc == 0) {
+    pc = CURRENT_PC;
+  }
+  char* p = (char*) os::malloc(size, flags, pc);
   #ifdef ASSERT
-  if (PrintMallocFree) trace_heap_malloc(size, name, p);
-  #else
-  Unused_Variable(name);
+  if (PrintMallocFree) trace_heap_malloc(size, "AllocateHeap", p);
   #endif
   if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
     vm_exit_out_of_memory(size, "AllocateHeap");
   return p;
 }
 
-inline char* ReallocateHeap(char *old, size_t size, const char* name = NULL,
+inline char* ReallocateHeap(char *old, size_t size, MEMFLAGS flags,
     AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
-  char* p = (char*) os::realloc(old,size);
+  char* p = (char*) os::realloc(old, size, flags, CURRENT_PC);
   #ifdef ASSERT
-  if (PrintMallocFree) trace_heap_malloc(size, name, p);
-  #else
-  Unused_Variable(name);
+  if (PrintMallocFree) trace_heap_malloc(size, "ReallocateHeap", p);
   #endif
   if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
     vm_exit_out_of_memory(size, "ReallocateHeap");
   return p;
 }
 
-inline void FreeHeap(void* p) {
+inline void FreeHeap(void* p, MEMFLAGS memflags = mtInternal) {
   #ifdef ASSERT
   if (PrintMallocFree) trace_heap_free(p);
   #endif
-  os::free(p);
+  os::free(p, memflags);
+}
+
+
+template <MEMFLAGS F> void* CHeapObj<F>::operator new(size_t size,
+      address caller_pc){
+#ifdef ASSERT
+    void* p = (void*)AllocateHeap(size, F, (caller_pc != 0 ? caller_pc : CALLER_PC));
+    if (PrintMallocFree) trace_heap_malloc(size, "CHeapObj-new", p);
+    return p;
+#else
+    return (void *) AllocateHeap(size, F, (caller_pc != 0 ? caller_pc : CALLER_PC));
+#endif
+  }
+
+template <MEMFLAGS F> void* CHeapObj<F>::operator new (size_t size,
+  const std::nothrow_t&  nothrow_constant, address caller_pc) {
+#ifdef ASSERT
+    void* p = os::malloc(size, F, (caller_pc != 0 ? caller_pc : CALLER_PC));
+    if (PrintMallocFree) trace_heap_malloc(size, "CHeapObj-new", p);
+    return p;
+#else
+    return os::malloc(size, F, (caller_pc != 0 ? caller_pc : CALLER_PC));
+#endif
+}
+
+template <MEMFLAGS F> void CHeapObj<F>::operator delete(void* p){
+   FreeHeap(p, F);
+}
+
+template <class E, MEMFLAGS F>
+E* ArrayAllocator<E, F>::allocate(size_t length) {
+  assert(_addr == NULL, "Already in use");
+
+  _size = sizeof(E) * length;
+  _use_malloc = _size < ArrayAllocatorMallocLimit;
+
+  if (_use_malloc) {
+    _addr = AllocateHeap(_size, F);
+    if (_addr == NULL && _size >=  (size_t)os::vm_allocation_granularity()) {
+      // malloc failed let's try with mmap instead
+      _use_malloc = false;
+    } else {
+      return (E*)_addr;
+    }
+  }
+
+  int alignment = os::vm_allocation_granularity();
+  _size = align_size_up(_size, alignment);
+
+  _addr = os::reserve_memory(_size, NULL, alignment, F);
+  if (_addr == NULL) {
+    vm_exit_out_of_memory(_size, "Allocator (reserve)");
+  }
+
+  os::commit_memory_or_exit(_addr, _size, !ExecMem, "Allocator (commit)");
+
+  return (E*)_addr;
+}
+
+template<class E, MEMFLAGS F>
+void ArrayAllocator<E, F>::free() {
+  if (_addr != NULL) {
+    if (_use_malloc) {
+      FreeHeap(_addr, F);
+    } else {
+      os::release_memory(_addr, _size);
+    }
+    _addr = NULL;
+  }
 }
 
 #endif // SHARE_VM_MEMORY_ALLOCATION_INLINE_HPP

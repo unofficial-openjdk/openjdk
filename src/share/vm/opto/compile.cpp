@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,7 @@
 #include "runtime/signature.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/timer.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/copy.hpp"
 #ifdef TARGET_ARCH_MODEL_x86_32
 # include "adfiles/ad_x86_32.hpp"
@@ -134,7 +135,7 @@ int Compile::intrinsic_insertion_index(ciMethod* m, bool is_virtual) {
 
 void Compile::register_intrinsic(CallGenerator* cg) {
   if (_intrinsics == NULL) {
-    _intrinsics = new GrowableArray<CallGenerator*>(60);
+    _intrinsics = new (comp_arena())GrowableArray<CallGenerator*>(comp_arena(), 60, 0, NULL);
   }
   // This code is stolen from ciObjectFactory::insert.
   // Really, GrowableArray should have methods for
@@ -316,7 +317,12 @@ void Compile::gvn_replace_by(Node* n, Node* nn) {
 }
 
 
-
+static inline bool not_a_node(const Node* n) {
+  if (n == NULL)                   return true;
+  if (((intptr_t)n & 1) != 0)      return true;  // uninitialized, etc.
+  if (*(address*)n == badAddress)  return true;  // kill by Node::destruct
+  return false;
+}
 
 // Identify all nodes that are reachable from below, useful.
 // Use breadth-first pass that records state in a Unique_Node_List,
@@ -337,10 +343,40 @@ void Compile::identify_useful_nodes(Unique_Node_List &useful) {
     uint max = n->len();
     for( uint i = 0; i < max; ++i ) {
       Node *m = n->in(i);
-      if( m == NULL ) continue;
+      if (not_a_node(m))  continue;
       useful.push(m);
     }
   }
+}
+
+// Update dead_node_list with any missing dead nodes using useful
+// list. Consider all non-useful nodes to be useless i.e., dead nodes.
+void Compile::update_dead_node_list(Unique_Node_List &useful) {
+  uint max_idx = unique();
+  VectorSet& useful_node_set = useful.member_set();
+
+  for (uint node_idx = 0; node_idx < max_idx; node_idx++) {
+    // If node with index node_idx is not in useful set,
+    // mark it as dead in dead node list.
+    if (! useful_node_set.test(node_idx) ) {
+      record_dead_node(node_idx);
+    }
+  }
+}
+
+void Compile::remove_useless_late_inlines(GrowableArray<CallGenerator*>* inlines, Unique_Node_List &useful) {
+  int shift = 0;
+  for (int i = 0; i < inlines->length(); i++) {
+    CallGenerator* cg = inlines->at(i);
+    CallNode* call = cg->call_node();
+    if (shift > 0) {
+      inlines->at_put(i-shift, cg);
+    }
+    if (!useful.member(call)) {
+      shift++;
+    }
+  }
+  inlines->trunc_to(inlines->length()-shift);
 }
 
 // Disconnect all useless nodes by disconnecting those at the boundary.
@@ -372,6 +408,16 @@ void Compile::remove_useless_nodes(Unique_Node_List &useful) {
       remove_macro_node(n);
     }
   }
+  // Remove useless expensive node
+  for (int i = C->expensive_count()-1; i >= 0; i--) {
+    Node* n = C->expensive_node(i);
+    if (!useful.member(n)) {
+      remove_expensive_node(n);
+    }
+  }
+  // clean up the late inline lists
+  remove_useless_late_inlines(&_string_late_inlines, useful);
+  remove_useless_late_inlines(&_late_inlines, useful);
   debug_only(verify_graph_edges(true/*check for no_dead_code*/);)
 }
 
@@ -582,11 +628,21 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _inner_loops(0),
                   _scratch_const_size(-1),
                   _in_scratch_emit_size(false),
+                  _dead_node_list(comp_arena()),
+                  _dead_node_count(0),
 #ifndef PRODUCT
                   _trace_opto_output(TraceOptoOutput || method()->has_option("TraceOptoOutput")),
                   _printer(IdealGraphPrinter::printer()),
 #endif
-                  _congraph(NULL) {
+                  _congraph(NULL),
+                  _late_inlines(comp_arena(), 2, 0, NULL),
+                  _string_late_inlines(comp_arena(), 2, 0, NULL),
+                  _late_inlines_pos(0),
+                  _number_of_mh_late_inlines(0),
+                  _inlining_progress(false),
+                  _inlining_incrementally(false),
+                  _print_inlining_list(NULL),
+                  _print_inlining(0) {
   C = this;
 
   CompileWrapper cw(this);
@@ -642,6 +698,9 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
   PhaseGVN gvn(node_arena(), estimated_size);
   set_initial_gvn(&gvn);
 
+  if (PrintInlining  || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+    _print_inlining_list = new (comp_arena())GrowableArray<PrintInliningBuffer>(comp_arena(), 1, 1, PrintInliningBuffer());
+  }
   { // Scope for timing the parser
     TracePhase t3("parse", &_t_parser, true);
 
@@ -654,14 +713,14 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       const TypeTuple *domain = StartOSRNode::osr_domain();
       const TypeTuple *range = TypeTuple::make_range(method()->signature());
       init_tf(TypeFunc::make(domain, range));
-      StartNode* s = new (this, 2) StartOSRNode(root(), domain);
+      StartNode* s = new (this) StartOSRNode(root(), domain);
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       cg = CallGenerator::for_osr(method(), entry_bci());
     } else {
       // Normal case.
       init_tf(TypeFunc::make(method()));
-      StartNode* s = new (this, 2) StartNode(root(), tf()->domain());
+      StartNode* s = new (this) StartNode(root(), tf()->domain());
       initial_gvn()->set_type_bottom(s);
       init_start(s);
       if (method()->intrinsic_id() == vmIntrinsics::_Reference_get && UseG1GC) {
@@ -708,30 +767,15 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       rethrow_exceptions(kit.transfer_exceptions_into_jvms());
     }
 
-    if (!failing() && has_stringbuilder()) {
-      {
-        // remove useless nodes to make the usage analysis simpler
-        ResourceMark rm;
-        PhaseRemoveUseless pru(initial_gvn(), &for_igvn);
-      }
+    assert(IncrementalInline || (_late_inlines.length() == 0 && !has_mh_late_inlines()), "incremental inlining is off");
 
-      {
-        ResourceMark rm;
-        print_method("Before StringOpts", 3);
-        PhaseStringOpts pso(initial_gvn(), &for_igvn);
-        print_method("After StringOpts", 3);
-      }
-
-      // now inline anything that we skipped the first time around
-      while (_late_inlines.length() > 0) {
-        CallGenerator* cg = _late_inlines.pop();
-        cg->do_late_inline();
-        if (failing())  return;
-      }
+    if (_late_inlines.length() == 0 && !has_mh_late_inlines() && !failing() && has_stringbuilder()) {
+      inline_string_calls(true);
     }
-    assert(_late_inlines.length() == 0, "should have been processed");
 
-    print_method("Before RemoveUseless", 3);
+    if (failing())  return;
+
+    print_method(PHASE_BEFORE_REMOVEUSELESS, 3);
 
     // Remove clutter produced by parsing.
     if (!failing()) {
@@ -825,8 +869,12 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            &_handler_table, &_inc_table,
                            compiler,
                            env()->comp_level(),
-                           has_unsafe_access()
+                           has_unsafe_access(),
+                           SharedRuntime::is_wide_vector(max_vector_size())
                            );
+
+    if (log() != NULL) // Print code cache state into compiler log
+      log()->code_cache_state();
   }
 }
 
@@ -843,7 +891,7 @@ Compile::Compile( ciEnv* ci_env,
   : Phase(Compiler),
     _env(ci_env),
     _log(ci_env->log()),
-    _compile_id(-1),
+    _compile_id(0),
     _save_argument_registers(save_arg_registers),
     _method(NULL),
     _stub_name(stub_name),
@@ -869,7 +917,14 @@ Compile::Compile( ciEnv* ci_env,
     _trace_opto_output(TraceOptoOutput),
     _printer(NULL),
 #endif
-    _congraph(NULL) {
+    _dead_node_list(comp_arena()),
+    _dead_node_count(0),
+    _congraph(NULL),
+    _number_of_mh_late_inlines(0),
+    _inlining_progress(false),
+    _inlining_incrementally(false),
+    _print_inlining_list(NULL),
+    _print_inlining(0) {
   C = this;
 
 #ifndef PRODUCT
@@ -957,9 +1012,9 @@ void Compile::Init(int aliaslevel) {
   // Globally visible Nodes
   // First set TOP to NULL to give safe behavior during creation of RootNode
   set_cached_top_node(NULL);
-  set_root(new (this, 3) RootNode());
+  set_root(new (this) RootNode());
   // Now that you have a Root to point to, create the real TOP
-  set_cached_top_node( new (this, 1) ConNode(Type::TOP) );
+  set_cached_top_node( new (this) ConNode(Type::TOP) );
   set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
@@ -974,6 +1029,7 @@ void Compile::Init(int aliaslevel) {
   _trap_can_recompile = false;  // no traps emitted yet
   _major_progress = true; // start out assuming good things will happen
   set_has_unsafe_access(false);
+  set_max_vector_size(0);
   Copy::zero_to_bytes(_trap_hist, sizeof(_trap_hist));
   set_decompile_count(0);
 
@@ -1022,6 +1078,7 @@ void Compile::Init(int aliaslevel) {
   _intrinsics = NULL;
   _macro_nodes = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
   _predicate_opaqs = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
+  _expensive_nodes = new(comp_arena()) GrowableArray<Node*>(comp_arena(), 8,  0, NULL);
   register_library_intrinsics();
 }
 
@@ -1074,6 +1131,72 @@ void Compile::set_cached_top_node(Node* tn) {
   if (old_top != NULL)  old_top->setup_is_top();
   assert(_top == NULL || top()->is_top(), "");
 }
+
+#ifdef ASSERT
+uint Compile::count_live_nodes_by_graph_walk() {
+  Unique_Node_List useful(comp_arena());
+  // Get useful node list by walking the graph.
+  identify_useful_nodes(useful);
+  return useful.size();
+}
+
+void Compile::print_missing_nodes() {
+
+  // Return if CompileLog is NULL and PrintIdealNodeCount is false.
+  if ((_log == NULL) && (! PrintIdealNodeCount)) {
+    return;
+  }
+
+  // This is an expensive function. It is executed only when the user
+  // specifies VerifyIdealNodeCount option or otherwise knows the
+  // additional work that needs to be done to identify reachable nodes
+  // by walking the flow graph and find the missing ones using
+  // _dead_node_list.
+
+  Unique_Node_List useful(comp_arena());
+  // Get useful node list by walking the graph.
+  identify_useful_nodes(useful);
+
+  uint l_nodes = C->live_nodes();
+  uint l_nodes_by_walk = useful.size();
+
+  if (l_nodes != l_nodes_by_walk) {
+    if (_log != NULL) {
+      _log->begin_head("mismatched_nodes count='%d'", abs((int) (l_nodes - l_nodes_by_walk)));
+      _log->stamp();
+      _log->end_head();
+    }
+    VectorSet& useful_member_set = useful.member_set();
+    int last_idx = l_nodes_by_walk;
+    for (int i = 0; i < last_idx; i++) {
+      if (useful_member_set.test(i)) {
+        if (_dead_node_list.test(i)) {
+          if (_log != NULL) {
+            _log->elem("mismatched_node_info node_idx='%d' type='both live and dead'", i);
+          }
+          if (PrintIdealNodeCount) {
+            // Print the log message to tty
+              tty->print_cr("mismatched_node idx='%d' both live and dead'", i);
+              useful.at(i)->dump();
+          }
+        }
+      }
+      else if (! _dead_node_list.test(i)) {
+        if (_log != NULL) {
+          _log->elem("mismatched_node_info node_idx='%d' type='neither live nor dead'", i);
+        }
+        if (PrintIdealNodeCount) {
+          // Print the log message to tty
+          tty->print_cr("mismatched_node idx='%d' type='neither live nor dead'", i);
+        }
+      }
+    }
+    if (_log != NULL) {
+      _log->tail("mismatched_nodes");
+    }
+  }
+}
+#endif
 
 #ifndef PRODUCT
 void Compile::verify_top(Node* tn) const {
@@ -1666,6 +1789,124 @@ void Compile::cleanup_loop_predicates(PhaseIterGVN &igvn) {
   assert(predicate_count()==0, "should be clean!");
 }
 
+// StringOpts and late inlining of string methods
+void Compile::inline_string_calls(bool parse_time) {
+  {
+    // remove useless nodes to make the usage analysis simpler
+    ResourceMark rm;
+    PhaseRemoveUseless pru(initial_gvn(), for_igvn());
+  }
+
+  {
+    ResourceMark rm;
+    print_method(PHASE_BEFORE_STRINGOPTS, 3);
+    PhaseStringOpts pso(initial_gvn(), for_igvn());
+    print_method(PHASE_AFTER_STRINGOPTS, 3);
+  }
+
+  // now inline anything that we skipped the first time around
+  if (!parse_time) {
+    _late_inlines_pos = _late_inlines.length();
+  }
+
+  while (_string_late_inlines.length() > 0) {
+    CallGenerator* cg = _string_late_inlines.pop();
+    cg->do_late_inline();
+    if (failing())  return;
+  }
+  _string_late_inlines.trunc_to(0);
+}
+
+void Compile::inline_incrementally_one(PhaseIterGVN& igvn) {
+  assert(IncrementalInline, "incremental inlining should be on");
+  PhaseGVN* gvn = initial_gvn();
+
+  set_inlining_progress(false);
+  for_igvn()->clear();
+  gvn->replace_with(&igvn);
+
+  int i = 0;
+
+  for (; i <_late_inlines.length() && !inlining_progress(); i++) {
+    CallGenerator* cg = _late_inlines.at(i);
+    _late_inlines_pos = i+1;
+    cg->do_late_inline();
+    if (failing())  return;
+  }
+  int j = 0;
+  for (; i < _late_inlines.length(); i++, j++) {
+    _late_inlines.at_put(j, _late_inlines.at(i));
+  }
+  _late_inlines.trunc_to(j);
+
+  {
+    ResourceMark rm;
+    PhaseRemoveUseless pru(C->initial_gvn(), C->for_igvn());
+  }
+
+  igvn = PhaseIterGVN(gvn);
+}
+
+// Perform incremental inlining until bound on number of live nodes is reached
+void Compile::inline_incrementally(PhaseIterGVN& igvn) {
+  PhaseGVN* gvn = initial_gvn();
+
+  set_inlining_incrementally(true);
+  set_inlining_progress(true);
+  uint low_live_nodes = 0;
+
+  while(inlining_progress() && _late_inlines.length() > 0) {
+
+    if (live_nodes() > (uint)LiveNodeCountInliningCutoff) {
+      if (low_live_nodes < (uint)LiveNodeCountInliningCutoff * 8 / 10) {
+        // PhaseIdealLoop is expensive so we only try it once we are
+        // out of loop and we only try it again if the previous helped
+        // got the number of nodes down significantly
+        PhaseIdealLoop ideal_loop( igvn, false, true );
+        if (failing())  return;
+        low_live_nodes = live_nodes();
+        _major_progress = true;
+      }
+
+      if (live_nodes() > (uint)LiveNodeCountInliningCutoff) {
+        break;
+      }
+    }
+
+    inline_incrementally_one(igvn);
+
+    if (failing())  return;
+
+    igvn.optimize();
+
+    if (failing())  return;
+  }
+
+  assert( igvn._worklist.size() == 0, "should be done with igvn" );
+
+  if (_string_late_inlines.length() > 0) {
+    assert(has_stringbuilder(), "inconsistent");
+    for_igvn()->clear();
+    initial_gvn()->replace_with(&igvn);
+
+    inline_string_calls(false);
+
+    if (failing())  return;
+
+    {
+      ResourceMark rm;
+      PhaseRemoveUseless pru(initial_gvn(), for_igvn());
+    }
+
+    igvn = PhaseIterGVN(gvn);
+
+    igvn.optimize();
+  }
+
+  set_inlining_incrementally(false);
+}
+
+
 //------------------------------Optimize---------------------------------------
 // Given a graph, optimize it.
 void Compile::Optimize() {
@@ -1683,7 +1924,7 @@ void Compile::Optimize() {
 
   NOT_PRODUCT( verify_graph_edges(); )
 
-  print_method("After Parsing");
+  print_method(PHASE_AFTER_PARSING);
 
  {
   // Iterative Global Value Numbering, including ideal transforms
@@ -1694,9 +1935,19 @@ void Compile::Optimize() {
     igvn.optimize();
   }
 
-  print_method("Iter GVN 1", 2);
+  print_method(PHASE_ITER_GVN1, 2);
 
   if (failing())  return;
+
+  inline_incrementally(igvn);
+
+  print_method(PHASE_INCREMENTAL_INLINE, 2);
+
+  if (failing())  return;
+
+  // No more new expensive nodes will be added to the list from here
+  // so keep only the actual candidates for optimizations.
+  cleanup_expensive_nodes(igvn);
 
   // Perform escape analysis
   if (_do_escape_analysis && ConnectionGraph::has_candidates(this)) {
@@ -1704,27 +1955,27 @@ void Compile::Optimize() {
       // Cleanup graph (remove dead nodes).
       TracePhase t2("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, false, true );
-      if (major_progress()) print_method("PhaseIdealLoop before EA", 2);
+      if (major_progress()) print_method(PHASE_PHASEIDEAL_BEFORE_EA, 2);
       if (failing())  return;
     }
-    TracePhase t2("escapeAnalysis", &_t_escapeAnalysis, true);
     ConnectionGraph::do_analysis(this, &igvn);
 
     if (failing())  return;
 
     // Optimize out fields loads from scalar replaceable allocations.
     igvn.optimize();
-    print_method("Iter GVN after EA", 2);
+    print_method(PHASE_ITER_GVN_AFTER_EA, 2);
 
     if (failing())  return;
 
     if (congraph() != NULL && macro_count() > 0) {
+      NOT_PRODUCT( TracePhase t2("macroEliminate", &_t_macroEliminate, TimeCompiler); )
       PhaseMacroExpand mexp(igvn);
       mexp.eliminate_macro_nodes();
       igvn.set_delay_transform(false);
 
       igvn.optimize();
-      print_method("Iter GVN after eliminating allocations and locks", 2);
+      print_method(PHASE_ITER_GVN_AFTER_ELIMINATION, 2);
 
       if (failing())  return;
     }
@@ -1740,7 +1991,7 @@ void Compile::Optimize() {
       TracePhase t2("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, true );
       loop_opts_cnt--;
-      if (major_progress()) print_method("PhaseIdealLoop 1", 2);
+      if (major_progress()) print_method(PHASE_PHASEIDEALLOOP1, 2);
       if (failing())  return;
     }
     // Loop opts pass if partial peeling occurred in previous pass
@@ -1748,7 +1999,7 @@ void Compile::Optimize() {
       TracePhase t3("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, false );
       loop_opts_cnt--;
-      if (major_progress()) print_method("PhaseIdealLoop 2", 2);
+      if (major_progress()) print_method(PHASE_PHASEIDEALLOOP2, 2);
       if (failing())  return;
     }
     // Loop opts pass for loop-unrolling before CCP
@@ -1756,7 +2007,7 @@ void Compile::Optimize() {
       TracePhase t4("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, false );
       loop_opts_cnt--;
-      if (major_progress()) print_method("PhaseIdealLoop 3", 2);
+      if (major_progress()) print_method(PHASE_PHASEIDEALLOOP3, 2);
     }
     if (!failing()) {
       // Verify that last round of loop opts produced a valid graph
@@ -1773,7 +2024,7 @@ void Compile::Optimize() {
     TracePhase t2("ccp", &_t_ccp, true);
     ccp.do_transform();
   }
-  print_method("PhaseCPP 1", 2);
+  print_method(PHASE_CPP1, 2);
 
   assert( true, "Break here to ccp.dump_old2new_map()");
 
@@ -1784,7 +2035,7 @@ void Compile::Optimize() {
     igvn.optimize();
   }
 
-  print_method("Iter GVN 2", 2);
+  print_method(PHASE_ITER_GVN2, 2);
 
   if (failing())  return;
 
@@ -1797,7 +2048,7 @@ void Compile::Optimize() {
       assert( cnt++ < 40, "infinite cycle in loop optimization" );
       PhaseIdealLoop ideal_loop( igvn, true);
       loop_opts_cnt--;
-      if (major_progress()) print_method("PhaseIdealLoop iterations", 2);
+      if (major_progress()) print_method(PHASE_PHASEIDEALLOOP_ITERATIONS, 2);
       if (failing())  return;
     }
   }
@@ -1820,6 +2071,7 @@ void Compile::Optimize() {
 
  } // (End scope of igvn; run destructor if necessary for asserts.)
 
+  dump_inlining();
   // A method with only infinite loops has no edges entering loops from root
   {
     NOT_PRODUCT( TracePhase t2("graphReshape", &_t_graphReshaping, TimeCompiler); )
@@ -1829,7 +2081,7 @@ void Compile::Optimize() {
     }
   }
 
-  print_method("Optimize finished", 2);
+  print_method(PHASE_OPTIMIZE_FINISHED, 2);
 }
 
 
@@ -1875,10 +2127,10 @@ void Compile::Code_Gen() {
 
     cfg.Estimate_Block_Frequency();
     cfg.GlobalCodeMotion(m,unique(),proj_list);
-
-    print_method("Global code motion", 2);
-
     if (failing())  return;
+
+    print_method(PHASE_GLOBAL_CODE_MOTION, 2);
+
     NOT_PRODUCT( verify_graph_edges(); )
 
     debug_only( cfg.verify(); )
@@ -1936,7 +2188,7 @@ void Compile::Code_Gen() {
     Output();
   }
 
-  print_method("Final Code");
+  print_method(PHASE_FINAL_CODE);
 
   // He's dead, Jim.
   _cfg     = (PhaseCFG*)0xdeadbeef;
@@ -2093,7 +2345,7 @@ static bool oop_offset_is_sane(const TypeInstPtr* tp) {
 
 // Eliminate trivially redundant StoreCMs and accumulate their
 // precedence edges.
-static void eliminate_redundant_card_marks(Node* n) {
+void Compile::eliminate_redundant_card_marks(Node* n) {
   assert(n->Opcode() == Op_StoreCM, "expected StoreCM");
   if (n->in(MemNode::Address)->outcnt() > 1) {
     // There are multiple users of the same address so it might be
@@ -2128,7 +2380,7 @@ static void eliminate_redundant_card_marks(Node* n) {
         // Eliminate the previous StoreCM
         prev->set_req(MemNode::Memory, mem->in(MemNode::Memory));
         assert(mem->outcnt() == 0, "should be dead");
-        mem->disconnect_inputs(NULL);
+        mem->disconnect_inputs(NULL, this);
       } else {
         prev = mem;
       }
@@ -2139,7 +2391,7 @@ static void eliminate_redundant_card_marks(Node* n) {
 
 //------------------------------final_graph_reshaping_impl----------------------
 // Implement items 1-5 from final_graph_reshaping below.
-static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
+void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
 
   if ( n->outcnt() == 0 ) return; // dead node
   uint nop = n->Opcode();
@@ -2169,8 +2421,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
 
 #ifdef ASSERT
   if( n->is_Mem() ) {
-    Compile* C = Compile::current();
-    int alias_idx = C->get_alias_index(n->as_Mem()->adr_type());
+    int alias_idx = get_alias_index(n->as_Mem()->adr_type());
     assert( n->in(0) != NULL || alias_idx != Compile::AliasIdxRaw ||
             // oop will be recorded in oop map if load crosses safepoint
             n->is_Load() && (n->as_Load()->bottom_type()->isa_oopptr() ||
@@ -2219,7 +2470,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
     break;
   case Op_Opaque1:              // Remove Opaque Nodes before matching
   case Op_Opaque2:              // Remove Opaque Nodes before matching
-    n->subsume_by(n->in(1));
+    n->subsume_by(n->in(1), this);
     break;
   case Op_CallStaticJava:
   case Op_CallJava:
@@ -2285,19 +2536,23 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
   case Op_CompareAndSwapL:
   case Op_CompareAndSwapP:
   case Op_CompareAndSwapN:
+  case Op_GetAndAddI:
+  case Op_GetAndAddL:
+  case Op_GetAndSetI:
+  case Op_GetAndSetL:
+  case Op_GetAndSetP:
+  case Op_GetAndSetN:
   case Op_StoreP:
   case Op_StoreN:
   case Op_LoadB:
   case Op_LoadUB:
   case Op_LoadUS:
   case Op_LoadI:
-  case Op_LoadUI2L:
   case Op_LoadKlass:
   case Op_LoadNKlass:
   case Op_LoadL:
   case Op_LoadL_unaligned:
   case Op_LoadPLocked:
-  case Op_LoadLLocked:
   case Op_LoadP:
   case Op_LoadN:
   case Op_LoadRange:
@@ -2335,8 +2590,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         Node* nn = NULL;
 
         // Look for existing ConN node of the same exact type.
-        Compile* C = Compile::current();
-        Node* r  = C->root();
+        Node* r  = root();
         uint cnt = r->outcnt();
         for (uint i = 0; i < cnt; i++) {
           Node* m = r->raw_out(i);
@@ -2349,11 +2603,11 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         if (nn != NULL) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
-          nn = new (C,  2) DecodeNNode(nn, t);
+          nn = new (this) DecodeNNode(nn, t);
           n->set_req(AddPNode::Base, nn);
           n->set_req(AddPNode::Address, nn);
           if (addp->outcnt() == 0) {
-            addp->disconnect_inputs(NULL);
+            addp->disconnect_inputs(NULL, this);
           }
         }
       }
@@ -2365,7 +2619,6 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
 #ifdef _LP64
   case Op_CastPP:
     if (n->in(1)->is_DecodeN() && Matcher::gen_narrow_oop_implicit_null_checks()) {
-      Compile* C = Compile::current();
       Node* in1 = n->in(1);
       const Type* t = n->bottom_type();
       Node* new_in1 = in1->clone();
@@ -2394,9 +2647,9 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
         new_in1->set_req(0, n->in(0));
       }
 
-      n->subsume_by(new_in1);
+      n->subsume_by(new_in1, this);
       if (in1->outcnt() == 0) {
-        in1->disconnect_inputs(NULL);
+        in1->disconnect_inputs(NULL, this);
       }
     }
     break;
@@ -2413,7 +2666,6 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       }
       assert(in1->is_DecodeN(), "sanity");
 
-      Compile* C = Compile::current();
       Node* new_in2 = NULL;
       if (in2->is_DecodeN()) {
         new_in2 = in2->in(1);
@@ -2424,7 +2676,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           // oops implicit null check is not generated.
           // This will allow to generate normal oop implicit null check.
           if (Matcher::gen_narrow_oop_implicit_null_checks())
-            new_in2 = ConNode::make(C, TypeNarrowOop::NULL_PTR);
+            new_in2 = ConNode::make(this, TypeNarrowOop::NULL_PTR);
           //
           // This transformation together with CastPP transformation above
           // will generated code for implicit NULL checks for compressed oops.
@@ -2463,17 +2715,17 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           //    NullCheck base_reg
           //
         } else if (t->isa_oopptr()) {
-          new_in2 = ConNode::make(C, t->make_narrowoop());
+          new_in2 = ConNode::make(this, t->make_narrowoop());
         }
       }
       if (new_in2 != NULL) {
-        Node* cmpN = new (C, 3) CmpNNode(in1->in(1), new_in2);
-        n->subsume_by( cmpN );
+        Node* cmpN = new (this) CmpNNode(in1->in(1), new_in2);
+        n->subsume_by(cmpN, this);
         if (in1->outcnt() == 0) {
-          in1->disconnect_inputs(NULL);
+          in1->disconnect_inputs(NULL, this);
         }
         if (in2->outcnt() == 0) {
-          in2->disconnect_inputs(NULL);
+          in2->disconnect_inputs(NULL, this);
         }
       }
     }
@@ -2489,18 +2741,17 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
   case Op_EncodeP: {
     Node* in1 = n->in(1);
     if (in1->is_DecodeN()) {
-      n->subsume_by(in1->in(1));
+      n->subsume_by(in1->in(1), this);
     } else if (in1->Opcode() == Op_ConP) {
-      Compile* C = Compile::current();
       const Type* t = in1->bottom_type();
       if (t == TypePtr::NULL_PTR) {
-        n->subsume_by(ConNode::make(C, TypeNarrowOop::NULL_PTR));
+        n->subsume_by(ConNode::make(this, TypeNarrowOop::NULL_PTR), this);
       } else if (t->isa_oopptr()) {
-        n->subsume_by(ConNode::make(C, t->make_narrowoop()));
+        n->subsume_by(ConNode::make(this, t->make_narrowoop()), this);
       }
     }
     if (in1->outcnt() == 0) {
-      in1->disconnect_inputs(NULL);
+      in1->disconnect_inputs(NULL, this);
     }
     break;
   }
@@ -2523,7 +2774,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           }
         }
         assert(proj != NULL, "must be found");
-        p->subsume_by(proj);
+        p->subsume_by(proj, this);
       }
     }
     break;
@@ -2543,7 +2794,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
           unique_in = NULL;
       }
       if (unique_in != NULL) {
-        n->subsume_by(unique_in);
+        n->subsume_by(unique_in, this);
       }
     }
     break;
@@ -2556,16 +2807,15 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       Node* d = n->find_similar(Op_DivI);
       if (d) {
         // Replace them with a fused divmod if supported
-        Compile* C = Compile::current();
         if (Matcher::has_match_rule(Op_DivModI)) {
-          DivModINode* divmod = DivModINode::make(C, n);
-          d->subsume_by(divmod->div_proj());
-          n->subsume_by(divmod->mod_proj());
+          DivModINode* divmod = DivModINode::make(this, n);
+          d->subsume_by(divmod->div_proj(), this);
+          n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulINode(d, d->in(2));
-          Node* sub  = new (C, 3) SubINode(d->in(1), mult);
-          n->subsume_by( sub );
+          Node* mult = new (this) MulINode(d, d->in(2));
+          Node* sub  = new (this) SubINode(d->in(1), mult);
+          n->subsume_by(sub, this);
         }
       }
     }
@@ -2577,53 +2827,26 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       Node* d = n->find_similar(Op_DivL);
       if (d) {
         // Replace them with a fused divmod if supported
-        Compile* C = Compile::current();
         if (Matcher::has_match_rule(Op_DivModL)) {
-          DivModLNode* divmod = DivModLNode::make(C, n);
-          d->subsume_by(divmod->div_proj());
-          n->subsume_by(divmod->mod_proj());
+          DivModLNode* divmod = DivModLNode::make(this, n);
+          d->subsume_by(divmod->div_proj(), this);
+          n->subsume_by(divmod->mod_proj(), this);
         } else {
           // replace a%b with a-((a/b)*b)
-          Node* mult = new (C, 3) MulLNode(d, d->in(2));
-          Node* sub  = new (C, 3) SubLNode(d->in(1), mult);
-          n->subsume_by( sub );
+          Node* mult = new (this) MulLNode(d, d->in(2));
+          Node* sub  = new (this) SubLNode(d->in(1), mult);
+          n->subsume_by(sub, this);
         }
       }
     }
     break;
 
-  case Op_Load16B:
-  case Op_Load8B:
-  case Op_Load4B:
-  case Op_Load8S:
-  case Op_Load4S:
-  case Op_Load2S:
-  case Op_Load8C:
-  case Op_Load4C:
-  case Op_Load2C:
-  case Op_Load4I:
-  case Op_Load2I:
-  case Op_Load2L:
-  case Op_Load4F:
-  case Op_Load2F:
-  case Op_Load2D:
-  case Op_Store16B:
-  case Op_Store8B:
-  case Op_Store4B:
-  case Op_Store8C:
-  case Op_Store4C:
-  case Op_Store2C:
-  case Op_Store4I:
-  case Op_Store2I:
-  case Op_Store2L:
-  case Op_Store4F:
-  case Op_Store2F:
-  case Op_Store2D:
+  case Op_LoadVector:
+  case Op_StoreVector:
     break;
 
   case Op_PackB:
   case Op_PackS:
-  case Op_PackC:
   case Op_PackI:
   case Op_PackF:
   case Op_PackL:
@@ -2631,8 +2854,8 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
     if (n->req()-1 > 2) {
       // Replace many operand PackNodes with a binary tree for matching
       PackNode* p = (PackNode*) n;
-      Node* btp = p->binaryTreePack(Compile::current(), 1, n->req());
-      n->subsume_by(btp);
+      Node* btp = p->binary_tree_pack(this, 1, n->req());
+      n->subsume_by(btp, this);
     }
     break;
   case Op_Loop:
@@ -2656,19 +2879,24 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
       if (t != NULL && t->is_con()) {
         juint shift = t->get_con();
         if (shift > mask) { // Unsigned cmp
-          Compile* C = Compile::current();
-          n->set_req(2, ConNode::make(C, TypeInt::make(shift & mask)));
+          n->set_req(2, ConNode::make(this, TypeInt::make(shift & mask)));
         }
       } else {
         if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
-          Compile* C = Compile::current();
-          Node* shift = new (C, 3) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
+          Node* shift = new (this) AndINode(in2, ConNode::make(this, TypeInt::make(mask)));
           n->set_req(2, shift);
         }
       }
       if (in2->outcnt() == 0) { // Remove dead node
-        in2->disconnect_inputs(NULL);
+        in2->disconnect_inputs(NULL, this);
       }
+    }
+    break;
+  case Op_MemBarStoreStore:
+    // Break the link with AllocateNode: it is no longer useful and
+    // confuses register allocation.
+    if (n->req() > MemBarNode::Precedent) {
+      n->set_req(MemBarNode::Precedent, top());
     }
     break;
   default:
@@ -2685,7 +2913,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
 //------------------------------final_graph_reshaping_walk---------------------
 // Replacing Opaque nodes with their input in final_graph_reshaping_impl(),
 // requires that the walk visits a node's inputs before visiting the node.
-static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Reshape_Counts &frc ) {
+void Compile::final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Reshape_Counts &frc ) {
   ResourceArea *area = Thread::current()->resource_area();
   Unique_Node_List sfpt(area);
 
@@ -2751,7 +2979,7 @@ static void final_graph_reshaping_walk( Node_Stack &nstack, Node *root, Final_Re
           n->set_req(j, in->in(1));
         }
         if (in->outcnt() == 0) {
-          in->disconnect_inputs(NULL);
+          in->disconnect_inputs(NULL, this);
         }
       }
     }
@@ -2791,6 +3019,15 @@ bool Compile::final_graph_reshaping() {
   if (root()->req() == 1) {
     record_method_not_compilable("trivial infinite loop");
     return true;
+  }
+
+  // Expensive nodes have their control input set to prevent the GVN
+  // from freely commoning them. There's no GVN beyond this point so
+  // no need to keep the control input. We want the expensive nodes to
+  // be freely moved to the least frequent code path by gcm.
+  assert(OptimizeExpensiveOps || expensive_count() == 0, "optimization off but list non empty?");
+  for (int i = 0; i < expensive_count(); i++) {
+    _expensive_nodes->at(i)->set_req(0, NULL);
   }
 
   Final_Reshape_Counts frc;
@@ -3017,14 +3254,23 @@ void Compile::record_failure(const char* reason) {
     // Record the first failure reason.
     _failure_reason = reason;
   }
+
+  EventCompilerFailure event;
+  if (event.should_commit()) {
+    event.set_compileID(Compile::compile_id());
+    event.set_failure(reason);
+    event.commit();
+  }
+
   if (!C->failure_reason_is(C2Compiler::retry_no_subsuming_loads())) {
-    C->print_method(_failure_reason);
+    C->print_method(PHASE_FAILURE);
   }
   _root = NULL;  // flush the graph, too
 }
 
 Compile::TracePhase::TracePhase(const char* name, elapsedTimer* accumulator, bool dolog)
-  : TraceTime(NULL, accumulator, false NOT_PRODUCT( || TimeCompiler ), false)
+  : TraceTime(NULL, accumulator, false NOT_PRODUCT( || TimeCompiler ), false),
+    _phase_name(name), _dolog(dolog)
 {
   if (dolog) {
     C = Compile::current();
@@ -3034,15 +3280,34 @@ Compile::TracePhase::TracePhase(const char* name, elapsedTimer* accumulator, boo
     _log = NULL;
   }
   if (_log != NULL) {
-    _log->begin_head("phase name='%s' nodes='%d'", name, C->unique());
+    _log->begin_head("phase name='%s' nodes='%d' live='%d'", _phase_name, C->unique(), C->live_nodes());
     _log->stamp();
     _log->end_head();
   }
 }
 
 Compile::TracePhase::~TracePhase() {
+
+  C = Compile::current();
+  if (_dolog) {
+    _log = C->log();
+  } else {
+    _log = NULL;
+  }
+
+#ifdef ASSERT
+  if (PrintIdealNodeCount) {
+    tty->print_cr("phase name='%s' nodes='%d' live='%d' live_graph_walk='%d'",
+                  _phase_name, C->unique(), C->live_nodes(), C->count_live_nodes_by_graph_walk());
+  }
+
+  if (VerifyIdealNodeCount) {
+    Compile::current()->print_missing_nodes();
+  }
+#endif
+
   if (_log != NULL) {
-    _log->done("phase nodes='%d'", C->unique());
+    _log->done("phase name='%s' nodes='%d' live='%d'", _phase_name, C->unique(), C->live_nodes());
   }
 }
 
@@ -3165,7 +3430,7 @@ void Compile::ConstantTable::emit(CodeBuffer& cb) {
     default: ShouldNotReachHere();
     }
     assert(constant_addr, "consts section too small");
-    assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
+    assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg_res("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
   }
 }
 
@@ -3226,7 +3491,7 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
   if (Compile::current()->in_scratch_emit_size())  return;
 
   assert(labels.is_nonempty(), "must be");
-  assert((uint) labels.length() == n->outcnt(), err_msg("must be equal: %d == %d", labels.length(), n->outcnt()));
+  assert((uint) labels.length() == n->outcnt(), err_msg_res("must be equal: %d == %d", labels.length(), n->outcnt()));
 
   // Since MachConstantNode::constant_offset() also contains
   // table_base_offset() we need to subtract the table_base_offset()
@@ -3238,8 +3503,161 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
 
   for (uint i = 0; i < n->outcnt(); i++) {
     address* constant_addr = &jump_table_base[i];
-    assert(*constant_addr == (((address) n) + i), err_msg("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, *constant_addr, (((address) n) + i)));
+    assert(*constant_addr == (((address) n) + i), err_msg_res("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, *constant_addr, (((address) n) + i)));
     *constant_addr = cb.consts()->target(*labels.at(i), (address) constant_addr);
     cb.consts()->relocate((address) constant_addr, relocInfo::internal_word_type);
+  }
+}
+
+void Compile::dump_inlining() {
+  if (PrintInlining || PrintIntrinsics NOT_PRODUCT( || PrintOptoInlining)) {
+    // Print inlining message for candidates that we couldn't inline
+    // for lack of space or non constant receiver
+    for (int i = 0; i < _late_inlines.length(); i++) {
+      CallGenerator* cg = _late_inlines.at(i);
+      cg->print_inlining_late("live nodes > LiveNodeCountInliningCutoff");
+    }
+    Unique_Node_List useful;
+    useful.push(root());
+    for (uint next = 0; next < useful.size(); ++next) {
+      Node* n  = useful.at(next);
+      if (n->is_Call() && n->as_Call()->generator() != NULL && n->as_Call()->generator()->call_node() == n) {
+        CallNode* call = n->as_Call();
+        CallGenerator* cg = call->generator();
+        cg->print_inlining_late("receiver not constant");
+      }
+      uint max = n->len();
+      for ( uint i = 0; i < max; ++i ) {
+        Node *m = n->in(i);
+        if ( m == NULL ) continue;
+        useful.push(m);
+      }
+    }
+    for (int i = 0; i < _print_inlining_list->length(); i++) {
+      tty->print(_print_inlining_list->at(i).ss()->as_string());
+    }
+  }
+}
+
+int Compile::cmp_expensive_nodes(Node* n1, Node* n2) {
+  if (n1->Opcode() < n2->Opcode())      return -1;
+  else if (n1->Opcode() > n2->Opcode()) return 1;
+
+  assert(n1->req() == n2->req(), err_msg_res("can't compare %s nodes: n1->req() = %d, n2->req() = %d", NodeClassNames[n1->Opcode()], n1->req(), n2->req()));
+  for (uint i = 1; i < n1->req(); i++) {
+    if (n1->in(i) < n2->in(i))      return -1;
+    else if (n1->in(i) > n2->in(i)) return 1;
+  }
+
+  return 0;
+}
+
+int Compile::cmp_expensive_nodes(Node** n1p, Node** n2p) {
+  Node* n1 = *n1p;
+  Node* n2 = *n2p;
+
+  return cmp_expensive_nodes(n1, n2);
+}
+
+void Compile::sort_expensive_nodes() {
+  if (!expensive_nodes_sorted()) {
+    _expensive_nodes->sort(cmp_expensive_nodes);
+  }
+}
+
+bool Compile::expensive_nodes_sorted() const {
+  for (int i = 1; i < _expensive_nodes->length(); i++) {
+    if (cmp_expensive_nodes(_expensive_nodes->adr_at(i), _expensive_nodes->adr_at(i-1)) < 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Compile::should_optimize_expensive_nodes(PhaseIterGVN &igvn) {
+  if (_expensive_nodes->length() == 0) {
+    return false;
+  }
+
+  assert(OptimizeExpensiveOps, "optimization off?");
+
+  // Take this opportunity to remove dead nodes from the list
+  int j = 0;
+  for (int i = 0; i < _expensive_nodes->length(); i++) {
+    Node* n = _expensive_nodes->at(i);
+    if (!n->is_unreachable(igvn)) {
+      assert(n->is_expensive(), "should be expensive");
+      _expensive_nodes->at_put(j, n);
+      j++;
+    }
+  }
+  _expensive_nodes->trunc_to(j);
+
+  // Then sort the list so that similar nodes are next to each other
+  // and check for at least two nodes of identical kind with same data
+  // inputs.
+  sort_expensive_nodes();
+
+  for (int i = 0; i < _expensive_nodes->length()-1; i++) {
+    if (cmp_expensive_nodes(_expensive_nodes->adr_at(i), _expensive_nodes->adr_at(i+1)) == 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void Compile::cleanup_expensive_nodes(PhaseIterGVN &igvn) {
+  if (_expensive_nodes->length() == 0) {
+    return;
+  }
+
+  assert(OptimizeExpensiveOps, "optimization off?");
+
+  // Sort to bring similar nodes next to each other and clear the
+  // control input of nodes for which there's only a single copy.
+  sort_expensive_nodes();
+
+  int j = 0;
+  int identical = 0;
+  int i = 0;
+  for (; i < _expensive_nodes->length()-1; i++) {
+    assert(j <= i, "can't write beyond current index");
+    if (_expensive_nodes->at(i)->Opcode() == _expensive_nodes->at(i+1)->Opcode()) {
+      identical++;
+      _expensive_nodes->at_put(j++, _expensive_nodes->at(i));
+      continue;
+    }
+    if (identical > 0) {
+      _expensive_nodes->at_put(j++, _expensive_nodes->at(i));
+      identical = 0;
+    } else {
+      Node* n = _expensive_nodes->at(i);
+      igvn.hash_delete(n);
+      n->set_req(0, NULL);
+      igvn.hash_insert(n);
+    }
+  }
+  if (identical > 0) {
+    _expensive_nodes->at_put(j++, _expensive_nodes->at(i));
+  } else if (_expensive_nodes->length() >= 1) {
+    Node* n = _expensive_nodes->at(i);
+    igvn.hash_delete(n);
+    n->set_req(0, NULL);
+    igvn.hash_insert(n);
+  }
+  _expensive_nodes->trunc_to(j);
+}
+
+void Compile::add_expensive_node(Node * n) {
+  assert(!_expensive_nodes->contains(n), "duplicate entry in expensive list");
+  assert(n->is_expensive(), "expensive nodes with non-null control here only");
+  assert(!n->is_CFG() && !n->is_Mem(), "no cfg or memory nodes here");
+  if (OptimizeExpensiveOps) {
+    _expensive_nodes->append(n);
+  } else {
+    // Clear control input and let IGVN optimize expensive nodes if
+    // OptimizeExpensiveOps is off.
+    n->set_req(0, NULL);
   }
 }

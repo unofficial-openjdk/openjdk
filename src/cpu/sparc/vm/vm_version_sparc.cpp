@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,7 @@ void VM_Version::initialize() {
   UseSSE = 0; // Only on x86 and x64
 
   _supports_cx8 = has_v9();
+  _supports_atomic_getset4 = true; // swap instruction
 
   if (is_niagara()) {
     // Indirect branch is the same cost as direct
@@ -106,10 +107,10 @@ void VM_Version::initialize() {
     if (FLAG_IS_DEFAULT(OptoLoopAlignment)) {
       FLAG_SET_DEFAULT(OptoLoopAlignment, 4);
     }
-    // When using CMS, we cannot use memset() in BOT updates because
-    // the sun4v/CMT version in libc_psr uses BIS which exposes
-    // "phantom zeros" to concurrent readers. See 6948537.
-    if (FLAG_IS_DEFAULT(UseMemSetInBOT) && UseConcMarkSweepGC) {
+    // When using CMS or G1, we cannot use memset() in BOT updates
+    // because the sun4v/CMT version in libc_psr uses BIS which
+    // exposes "phantom zeros" to concurrent readers. See 6948537.
+    if (FLAG_IS_DEFAULT(UseMemSetInBOT) && (UseConcMarkSweepGC || UseG1GC)) {
       FLAG_SET_DEFAULT(UseMemSetInBOT, false);
     }
 #ifdef _LP64
@@ -216,6 +217,8 @@ void VM_Version::initialize() {
 
   // Currently not supported anywhere.
   FLAG_SET_DEFAULT(UseFPUForSpilling, false);
+
+  MaxVectorSize = 8;
 
   assert((InteriorEntryAlignment % relocInfo::addr_unit()) == 0, "alignment is not a multiple of NOP size");
 #endif
@@ -336,7 +339,11 @@ void VM_Version::revert() {
 
 unsigned int VM_Version::calc_parallel_worker_threads() {
   unsigned int result;
-  if (is_niagara_plus()) {
+  if (is_M_series()) {
+    // for now, use same gc thread calculation for M-series as for niagara-plus
+    // in future, we may want to tweak parameters for nof_parallel_worker_thread
+    result = nof_parallel_worker_threads(5, 16, 8);
+  } else if (is_niagara_plus()) {
     result = nof_parallel_worker_threads(5, 16, 8);
   } else {
     result = nof_parallel_worker_threads(5, 8, 8);

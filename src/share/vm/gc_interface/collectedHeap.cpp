@@ -24,7 +24,12 @@
 
 #include "precompiled.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
+#include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/vmGCOperations.hpp"
+#include "gc_interface/allocTracer.hpp"
 #include "gc_interface/collectedHeap.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -51,6 +56,9 @@ int CollectedHeap::_fire_out_of_memory_count = 0;
 
 size_t CollectedHeap::_filler_array_max_size = 0;
 
+const char* CollectedHeap::OverflowMessage
+  = "The size of the object heap + perm gen exceeds the maximum representable size";
+
 template <>
 void EventLogBase<GCMessage>::print(outputStream* st, GCMessage& m) {
   st->print_cr("GC heap %s", m.is_before ? "before" : "after");
@@ -76,11 +84,61 @@ void GCHeapLog::log_heap(bool before) {
   }
 }
 
+VirtualSpaceSummary CollectedHeap::create_heap_space_summary() {
+  size_t capacity_in_words = capacity() / HeapWordSize;
+
+  return VirtualSpaceSummary(
+    reserved_region().start(), reserved_region().start() + capacity_in_words, reserved_region().end());
+}
+
+GCHeapSummary CollectedHeap::create_heap_summary() {
+  VirtualSpaceSummary heap_space = create_heap_space_summary();
+  return GCHeapSummary(heap_space, used());
+}
+
+PermGenSummary CollectedHeap::create_perm_gen_summary() {
+  VirtualSpaceSummary perm_space = create_perm_gen_space_summary();
+  SpaceSummary object_space(perm_space.start(), perm_space.committed_end(), permanent_used());
+
+  return PermGenSummary(perm_space, object_space);
+}
+
+void CollectedHeap::print_heap_before_gc() {
+  if (PrintHeapAtGC) {
+    Universe::print_heap_before_gc();
+  }
+  if (_gc_heap_log != NULL) {
+    _gc_heap_log->log_heap_before();
+  }
+}
+
+void CollectedHeap::print_heap_after_gc() {
+  if (PrintHeapAtGC) {
+    Universe::print_heap_after_gc();
+  }
+  if (_gc_heap_log != NULL) {
+    _gc_heap_log->log_heap_after();
+  }
+}
+
+void CollectedHeap::trace_heap(GCWhen::Type when, GCTracer* gc_tracer) {
+  const GCHeapSummary& heap_summary = create_heap_summary();
+  const PermGenSummary& perm_summary = create_perm_gen_summary();
+  gc_tracer->report_gc_heap_summary(when, heap_summary, perm_summary);
+}
+
+void CollectedHeap::trace_heap_before_gc(GCTracer* gc_tracer) {
+  trace_heap(GCWhen::BeforeGC, gc_tracer);
+}
+
+void CollectedHeap::trace_heap_after_gc(GCTracer* gc_tracer) {
+  trace_heap(GCWhen::AfterGC, gc_tracer);
+}
+
 // Memory state functions.
 
 
 CollectedHeap::CollectedHeap() : _n_par_threads(0)
-
 {
   const size_t max_len = size_t(arrayOopDesc::max_array_length(T_INT));
   const size_t elements_per_word = HeapWordSize / sizeof(jint);
@@ -125,6 +183,26 @@ void CollectedHeap::pre_initialize() {
 #endif
 }
 
+size_t CollectedHeap::add_and_check_overflow(size_t total, size_t size) {
+  assert(size >= 0, "must be");
+  size_t result = total + size;
+  if (result < size) {
+    // We must have overflowed
+    vm_exit_during_initialization(CollectedHeap::OverflowMessage);
+  }
+  return result;
+}
+
+size_t CollectedHeap::round_up_and_check_overflow(size_t total, size_t size) {
+  assert(size >= 0, "must be");
+  size_t result = round_to(total, size);
+  if (result < size) {
+    // We must have overflowed
+    vm_exit_during_initialization(CollectedHeap::OverflowMessage);
+  }
+  return result;
+}
+
 #ifndef PRODUCT
 void CollectedHeap::check_for_bad_heap_word_value(HeapWord* addr, size_t size) {
   if (CheckMemoryInitialization && ZapUnusedHeapArea) {
@@ -164,7 +242,7 @@ void CollectedHeap::check_for_valid_allocation_state() {
 }
 #endif
 
-HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
+HeapWord* CollectedHeap::allocate_from_tlab_slow(KlassHandle klass, Thread* thread, size_t size) {
 
   // Retain tlab and allocate object in shared space if
   // the amount free in the tlab is too large to discard.
@@ -188,6 +266,9 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
   if (obj == NULL) {
     return NULL;
   }
+
+  AllocTracer::send_allocation_in_new_tlab_event(klass, new_tlab_size * HeapWordSize, size * HeapWordSize);
+
   if (ZeroTLAB) {
     // ..and clear it.
     Copy::zero_to_words(obj, new_tlab_size);
@@ -333,7 +414,7 @@ CollectedHeap::fill_with_array(HeapWord* start, size_t words, bool zap)
 
   // Set the length first for concurrent GC.
   ((arrayOop)start)->set_length((int)len);
-  post_allocation_setup_common(Universe::intArrayKlassObj(), start, words);
+  post_allocation_setup_common(Universe::intArrayKlassObj(), start);
   DEBUG_ONLY(zap_filler_array(start, words, zap);)
 }
 
@@ -346,8 +427,7 @@ CollectedHeap::fill_with_object_impl(HeapWord* start, size_t words, bool zap)
     fill_with_array(start, words, zap);
   } else if (words > 0) {
     assert(words == min_fill_size(), "unaligned size");
-    post_allocation_setup_common(SystemDictionary::Object_klass(), start,
-                                 words);
+    post_allocation_setup_common(SystemDictionary::Object_klass(), start);
   }
 }
 
@@ -440,27 +520,27 @@ void CollectedHeap::resize_all_tlabs() {
   }
 }
 
-void CollectedHeap::pre_full_gc_dump() {
+void CollectedHeap::pre_full_gc_dump(GCTimer* timer) {
   if (HeapDumpBeforeFullGC) {
-    TraceTime tt("Heap Dump (before full gc): ", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime tt("Heap Dump (before full gc): ", PrintGCDetails, false, timer);
     // We are doing a "major" collection and a heap dump before
     // major collection has been requested.
     HeapDumper::dump_heap();
   }
   if (PrintClassHistogramBeforeFullGC) {
-    TraceTime tt("Class Histogram (before full gc): ", PrintGCDetails, true, gclog_or_tty);
+    GCTraceTime tt("Class Histogram (before full gc): ", PrintGCDetails, true, timer);
     VM_GC_HeapInspection inspector(gclog_or_tty, false /* ! full gc */, false /* ! prologue */);
     inspector.doit();
   }
 }
 
-void CollectedHeap::post_full_gc_dump() {
+void CollectedHeap::post_full_gc_dump(GCTimer* timer) {
   if (HeapDumpAfterFullGC) {
-    TraceTime tt("Heap Dump (after full gc): ", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime tt("Heap Dump (after full gc): ", PrintGCDetails, false, timer);
     HeapDumper::dump_heap();
   }
   if (PrintClassHistogramAfterFullGC) {
-    TraceTime tt("Class Histogram (after full gc): ", PrintGCDetails, true, gclog_or_tty);
+    GCTraceTime tt("Class Histogram (after full gc): ", PrintGCDetails, true, timer);
     VM_GC_HeapInspection inspector(gclog_or_tty, false /* ! full gc */, false /* ! prologue */);
     inspector.doit();
   }
@@ -475,9 +555,9 @@ oop CollectedHeap::Class_obj_allocate(KlassHandle klass, int size, KlassHandle r
     obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   } else {
     assert(ScavengeRootsInCode > 0, "must be");
-    obj = common_mem_allocate_init(size, CHECK_NULL);
+    obj = common_mem_allocate_init(real_klass, size, CHECK_NULL);
   }
-  post_allocation_setup_common(klass, obj, size);
+  post_allocation_setup_common(klass, obj);
   assert(Universe::is_bootstrapping() ||
          !((oop)obj)->blueprint()->oop_is_array(), "must not be an array");
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));

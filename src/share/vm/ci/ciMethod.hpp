@@ -133,16 +133,20 @@ class ciMethod : public ciObject {
     return _signature->size() + (_flags.is_static() ? 0 : 1);
   }
   // Report the number of elements on stack when invoking this method.
-  // This is different than the regular arg_size because invokdynamic
+  // This is different than the regular arg_size because invokedynamic
   // has an implicit receiver.
   int invoke_arg_size(Bytecodes::Code code) const {
-    int arg_size = _signature->size();
-    // Add a receiver argument, maybe:
-    if (code != Bytecodes::_invokestatic &&
-        code != Bytecodes::_invokedynamic) {
-      arg_size++;
+    if (is_loaded()) {
+      return arg_size();
+    } else {
+      int arg_size = _signature->size();
+      // Add a receiver argument, maybe:
+      if (code != Bytecodes::_invokestatic &&
+          code != Bytecodes::_invokedynamic) {
+        arg_size++;
+      }
+      return arg_size;
     }
-    return arg_size;
   }
 
 
@@ -159,6 +163,9 @@ class ciMethod : public ciObject {
 
   // Code size for inlining decisions.
   int code_size_for_inlining();
+
+  bool force_inline() { return get_methodOop()->force_inline(); }
+  bool dont_inline()  { return get_methodOop()->dont_inline();  }
 
   int comp_level();
   int highest_osr_comp_level();
@@ -217,6 +224,9 @@ class ciMethod : public ciObject {
   ciCallProfile call_profile_at_bci(int bci);
   int           interpreter_call_site_count(int bci);
 
+  ciField*      get_field_at_bci( int bci, bool &will_link);
+  ciMethod*     get_method_at_bci(int bci, bool &will_link, ciSignature* *declared_signature);
+
   // Given a certain calling environment, find the monomorphic target
   // for the call.  Return NULL if the call is not monomorphic in
   // its calling environment.
@@ -232,9 +242,6 @@ class ciMethod : public ciObject {
   int resolve_vtable_index(ciKlass* caller, ciKlass* receiver);
 
   // Compilation directives
-  bool will_link(ciKlass* accessing_klass,
-                 ciKlass* declared_method_holder,
-                 Bytecodes::Code bc);
   bool should_exclude();
   bool should_inline();
   bool should_not_inline();
@@ -243,7 +250,7 @@ class ciMethod : public ciObject {
   bool has_option(const char *option);
   bool can_be_compiled();
   bool can_be_osr_compiled(int entry_bci);
-  void set_not_compilable();
+  void set_not_compilable(const char* reason = NULL);
   bool has_compiled_code();
   int  instructions_size(int comp_level = CompLevel_any);
   void log_nmethod_identity(xmlStream* log);
@@ -256,9 +263,9 @@ class ciMethod : public ciObject {
   int scale_count(int count, float prof_factor = 1.);  // make MDO count commensurate with IIC
 
   // JSR 292 support
-  bool is_method_handle_invoke()  const;
-  bool is_method_handle_adapter() const;
-  ciInstance* method_handle_type();
+  bool is_method_handle_intrinsic()  const;
+  bool is_compiled_lambda_form() const;
+  bool has_member_arg() const;
 
   // What kind of ciObject is this?
   bool is_method()                               { return true; }

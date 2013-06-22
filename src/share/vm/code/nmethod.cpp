@@ -463,6 +463,7 @@ void nmethod::init_defaults() {
   _has_unsafe_access          = 0;
   _has_method_handle_invokes  = 0;
   _lazy_critical_native       = 0;
+  _has_wide_vectors           = 0;
   _marked_for_deoptimization  = 0;
   _lock_count                 = 0;
   _stack_traversal_mark       = 0;
@@ -696,7 +697,9 @@ nmethod::nmethod(
     // then print the requested information
     if (PrintNativeNMethods) {
       print_code();
-      oop_maps->print();
+      if (oop_maps != NULL) {
+        oop_maps->print();
+      }
     }
     if (PrintRelocations) {
       print_relocations();
@@ -945,8 +948,12 @@ void nmethod::log_new_nmethod() const {
 void nmethod::print_on(outputStream* st, const char* msg) const {
   if (st != NULL) {
     ttyLocker ttyl;
-    CompileTask::print_compilation(st, this, msg);
-    if (WizardMode) st->print(" (" INTPTR_FORMAT ")", this);
+    if (WizardMode) {
+      CompileTask::print_compilation(st, this, msg, /*short_form:*/ true);
+      st->print_cr(" (" INTPTR_FORMAT ")", this);
+    } else {
+      CompileTask::print_compilation(st, this, msg, /*short_form:*/ false);
+    }
   }
 }
 
@@ -964,7 +971,9 @@ void nmethod::print_nmethod(bool printmethod) {
   if (printmethod) {
     print_code();
     print_pcs();
-    oop_maps()->print();
+    if (oop_maps()) {
+      oop_maps()->print();
+    }
   }
   if (PrintDebugInfo) {
     print_scopes();
@@ -2549,7 +2558,7 @@ ScopeDesc* nmethod::scope_desc_in(address begin, address end) {
   return NULL;
 }
 
-void nmethod::print_nmethod_labels(outputStream* stream, address block_begin) {
+void nmethod::print_nmethod_labels(outputStream* stream, address block_begin) const {
   if (block_begin == entry_point())             stream->print_cr("[Entry Point]");
   if (block_begin == verified_entry_point())    stream->print_cr("[Verified Entry Point]");
   if (block_begin == exception_begin())         stream->print_cr("[Exception Handler]");

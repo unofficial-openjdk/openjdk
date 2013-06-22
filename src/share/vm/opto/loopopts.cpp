@@ -53,7 +53,7 @@ Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
     int iid    = t_oop->instance_id();
     int index  = C->get_alias_index(t_oop);
     int offset = t_oop->offset();
-    phi = new (C,region->req()) PhiNode(region, type, NULL, iid, index, offset);
+    phi = new (C) PhiNode(region, type, NULL, iid, index, offset);
   } else {
     phi = PhiNode::make_blank(region, n);
   }
@@ -216,9 +216,7 @@ void PhaseIdealLoop::dominated_by( Node *prevdom, Node *iff, bool flip, bool exc
   Node *con = _igvn.makecon(pop == Op_IfTrue ? TypeInt::ONE : TypeInt::ZERO);
   set_ctrl(con, C->root()); // Constant gets a new use
   // Hack the dominated test
-  _igvn.hash_delete(iff);
-  iff->set_req(1, con);
-  _igvn._worklist.push(iff);
+  _igvn.replace_input_of(iff, 1, con);
 
   // If I dont have a reachable TRUE and FALSE path following the IfNode then
   // I can assume this path reaches an infinite loop.  In this case it's not
@@ -245,10 +243,8 @@ void PhaseIdealLoop::dominated_by( Node *prevdom, Node *iff, bool flip, bool exc
     Node* cd = dp->fast_out(i); // Control-dependent node
     if (cd->depends_only_on_test()) {
       assert(cd->in(0) == dp, "");
-      _igvn.hash_delete(cd);
-      cd->set_req(0, prevdom);
+      _igvn.replace_input_of(cd, 0, prevdom);
       set_early_ctrl(cd);
-      _igvn._worklist.push(cd);
       IdealLoopTree *new_loop = get_loop(get_ctrl(cd));
       if (old_loop != new_loop) {
         if (!old_loop->_child) old_loop->_body.yank(cd);
@@ -360,9 +356,9 @@ Node *PhaseIdealLoop::remix_address_expressions( Node *n ) {
         _igvn.type( add->in(1) ) != TypeInt::ZERO ) {
       Node *zero = _igvn.intcon(0);
       set_ctrl(zero, C->root());
-      Node *neg = new (C, 3) SubINode( _igvn.intcon(0), add->in(2) );
+      Node *neg = new (C) SubINode( _igvn.intcon(0), add->in(2) );
       register_new_node( neg, get_ctrl(add->in(2) ) );
-      add = new (C, 3) AddINode( add->in(1), neg );
+      add = new (C) AddINode( add->in(1), neg );
       register_new_node( add, add_ctrl );
     }
     if( add->Opcode() != Op_AddI ) return NULL;
@@ -388,14 +384,14 @@ Node *PhaseIdealLoop::remix_address_expressions( Node *n ) {
       return NULL;              // No invariant part of the add?
 
     // Yes!  Reshape address expression!
-    Node *inv_scale = new (C, 3) LShiftINode( add_invar, scale );
+    Node *inv_scale = new (C) LShiftINode( add_invar, scale );
     Node *inv_scale_ctrl =
       dom_depth(add_invar_ctrl) > dom_depth(scale_ctrl) ?
       add_invar_ctrl : scale_ctrl;
     register_new_node( inv_scale, inv_scale_ctrl );
-    Node *var_scale = new (C, 3) LShiftINode( add_var, scale );
+    Node *var_scale = new (C) LShiftINode( add_var, scale );
     register_new_node( var_scale, n_ctrl );
-    Node *var_add = new (C, 3) AddINode( var_scale, inv_scale );
+    Node *var_add = new (C) AddINode( var_scale, inv_scale );
     register_new_node( var_add, n_ctrl );
     _igvn.replace_node( n, var_add );
     return var_add;
@@ -427,10 +423,10 @@ Node *PhaseIdealLoop::remix_address_expressions( Node *n ) {
         IdealLoopTree *n23_loop = get_loop( n23_ctrl );
         if( n22loop != n_loop && n22loop->is_member(n_loop) &&
             n23_loop == n_loop ) {
-          Node *add1 = new (C, 4) AddPNode( n->in(1), n->in(2)->in(2), n->in(3) );
+          Node *add1 = new (C) AddPNode( n->in(1), n->in(2)->in(2), n->in(3) );
           // Stuff new AddP in the loop preheader
           register_new_node( add1, n_loop->_head->in(LoopNode::EntryControl) );
-          Node *add2 = new (C, 4) AddPNode( n->in(1), add1, n->in(2)->in(3) );
+          Node *add2 = new (C) AddPNode( n->in(1), add1, n->in(2)->in(3) );
           register_new_node( add2, n_ctrl );
           _igvn.replace_node( n, add2 );
           return add2;
@@ -448,10 +444,10 @@ Node *PhaseIdealLoop::remix_address_expressions( Node *n ) {
           Node *tmp = V; V = I; I = tmp;
         }
         if( !is_member(n_loop,get_ctrl(I)) ) {
-          Node *add1 = new (C, 4) AddPNode( n->in(1), n->in(2), I );
+          Node *add1 = new (C) AddPNode( n->in(1), n->in(2), I );
           // Stuff new AddP in the loop preheader
           register_new_node( add1, n_loop->_head->in(LoopNode::EntryControl) );
-          Node *add2 = new (C, 4) AddPNode( n->in(1), add1, V );
+          Node *add2 = new (C) AddPNode( n->in(1), add1, V );
           register_new_node( add2, n_ctrl );
           _igvn.replace_node( n, add2 );
           return add2;
@@ -733,7 +729,7 @@ static bool merge_point_too_heavy(Compile* C, Node* region) {
   for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
     weight += region->fast_out(i)->outcnt();
   }
-  int nodes_left = MaxNodeLimit - C->unique();
+  int nodes_left = MaxNodeLimit - C->live_nodes();
   if (weight * 8 > nodes_left) {
 #ifndef PRODUCT
     if (PrintOpto)
@@ -952,8 +948,7 @@ void PhaseIdealLoop::split_if_with_blocks_post( Node *n ) {
         if (!n->is_Load() || late_load_ctrl != n_ctrl) {
           for (DUIterator_Last jmin, j = n->last_outs(jmin); j >= jmin; ) {
             Node *u = n->last_out(j); // Clone private computation per use
-            _igvn.hash_delete(u);
-            _igvn._worklist.push(u);
+            _igvn.rehash_node_delayed(u);
             Node *x = n->clone(); // Clone computation
             Node *x_ctrl = NULL;
             if( u->is_Phi() ) {
@@ -1089,9 +1084,7 @@ BoolNode *PhaseIdealLoop::clone_iff( PhiNode *phi, IdealLoopTree *loop ) {
   for( i = 1; i < phi->req(); i++ ) {
     Node *b = phi->in(i);
     if( b->is_Phi() ) {
-      _igvn.hash_delete(phi);
-      _igvn._worklist.push(phi);
-      phi->set_req(i, clone_iff( b->as_Phi(), loop ));
+      _igvn.replace_input_of(phi, i, clone_iff( b->as_Phi(), loop ));
     } else {
       assert( b->is_Bool(), "" );
     }
@@ -1101,9 +1094,8 @@ BoolNode *PhaseIdealLoop::clone_iff( PhiNode *phi, IdealLoopTree *loop ) {
   Node *sample_cmp  = sample_bool->in(1);
 
   // Make Phis to merge the Cmp's inputs.
-  int size = phi->in(0)->req();
-  PhiNode *phi1 = new (C, size) PhiNode( phi->in(0), Type::TOP );
-  PhiNode *phi2 = new (C, size) PhiNode( phi->in(0), Type::TOP );
+  PhiNode *phi1 = new (C) PhiNode( phi->in(0), Type::TOP );
+  PhiNode *phi2 = new (C) PhiNode( phi->in(0), Type::TOP );
   for( i = 1; i < phi->req(); i++ ) {
     Node *n1 = phi->in(i)->in(1)->in(1);
     Node *n2 = phi->in(i)->in(1)->in(2);
@@ -1161,9 +1153,7 @@ CmpNode *PhaseIdealLoop::clone_bool( PhiNode *phi, IdealLoopTree *loop ) {
   for( i = 1; i < phi->req(); i++ ) {
     Node *b = phi->in(i);
     if( b->is_Phi() ) {
-      _igvn.hash_delete(phi);
-      _igvn._worklist.push(phi);
-      phi->set_req(i, clone_bool( b->as_Phi(), loop ));
+      _igvn.replace_input_of(phi, i, clone_bool( b->as_Phi(), loop ));
     } else {
       assert( b->is_Cmp() || b->is_top(), "inputs are all Cmp or TOP" );
     }
@@ -1172,9 +1162,8 @@ CmpNode *PhaseIdealLoop::clone_bool( PhiNode *phi, IdealLoopTree *loop ) {
   Node *sample_cmp = phi->in(1);
 
   // Make Phis to merge the Cmp's inputs.
-  int size = phi->in(0)->req();
-  PhiNode *phi1 = new (C, size) PhiNode( phi->in(0), Type::TOP );
-  PhiNode *phi2 = new (C, size) PhiNode( phi->in(0), Type::TOP );
+  PhiNode *phi1 = new (C) PhiNode( phi->in(0), Type::TOP );
+  PhiNode *phi2 = new (C) PhiNode( phi->in(0), Type::TOP );
   for( uint j = 1; j < phi->req(); j++ ) {
     Node *cmp_top = phi->in(j); // Inputs are all Cmp or TOP
     Node *n1, *n2;
@@ -1338,7 +1327,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
 
         // We need a Region to merge the exit from the peeled body and the
         // exit from the old loop body.
-        RegionNode *r = new (C, 3) RegionNode(3);
+        RegionNode *r = new (C) RegionNode(3);
         // Map the old use to the new merge point
         old_new.map( use->_idx, r );
         uint dd_r = MIN2(dom_depth(newuse),dom_depth(use));
@@ -1347,8 +1336,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
         // The original user of 'use' uses 'r' instead.
         for (DUIterator_Last lmin, l = use->last_outs(lmin); l >= lmin;) {
           Node* useuse = use->last_out(l);
-          _igvn.hash_delete(useuse);
-          _igvn._worklist.push(useuse);
+          _igvn.rehash_node_delayed(useuse);
           uint uses_found = 0;
           if( useuse->in(0) == use ) {
             useuse->set_req(0, r);
@@ -1435,9 +1423,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
         if( use->is_Phi() )     // Phi use is in prior block
           cfg = prev->in(idx);  // NOT in block of Phi itself
         if (cfg->is_top()) {    // Use is dead?
-          _igvn.hash_delete(use);
-          _igvn._worklist.push(use);
-          use->set_req(idx, C->top());
+          _igvn.replace_input_of(use, idx, C->top());
           continue;
         }
 
@@ -1487,9 +1473,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
           set_ctrl(phi, prev);
         }
         // Make 'use' use the Phi instead of the old loop body exit value
-        _igvn.hash_delete(use);
-        _igvn._worklist.push(use);
-        use->set_req(idx, phi);
+        _igvn.replace_input_of(use, idx, phi);
         if( use->_idx >= new_counter ) { // If updating new phis
           // Not needed for correctness, but prevents a weak assert
           // in AddPNode from tripping (when we end up with different
@@ -1517,9 +1501,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
       Node *iff = split_if_set->pop();
       if( iff->in(1)->is_Phi() ) {
         BoolNode *b = clone_iff( iff->in(1)->as_Phi(), loop );
-        _igvn.hash_delete(iff);
-        _igvn._worklist.push(iff);
-        iff->set_req(1, b);
+        _igvn.replace_input_of(iff, 1, b);
       }
     }
   }
@@ -1529,9 +1511,7 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
       Node *phi = b->in(1);
       assert( phi->is_Phi(), "" );
       CmpNode *cmp = clone_bool( (PhiNode*)phi, loop );
-      _igvn.hash_delete(b);
-      _igvn._worklist.push(b);
-      b->set_req(1, cmp);
+      _igvn.replace_input_of(b, 1, cmp);
     }
   }
   if( split_cex_set ) {
@@ -1686,22 +1666,20 @@ ProjNode* PhaseIdealLoop::insert_if_before_proj(Node* left, bool Signed, BoolTes
   ProjNode *other_proj = iff->proj_out(!proj->is_IfTrue())->as_Proj();
   int ddepth = dom_depth(proj);
 
-  _igvn.hash_delete(iff);
-  _igvn._worklist.push(iff);
-  _igvn.hash_delete(proj);
-  _igvn._worklist.push(proj);
+  _igvn.rehash_node_delayed(iff);
+  _igvn.rehash_node_delayed(proj);
 
   proj->set_req(0, NULL);  // temporary disconnect
   ProjNode* proj2 = proj_clone(proj, iff);
   register_node(proj2, loop, iff, ddepth);
 
-  Node* cmp = Signed ? (Node*) new (C,3)CmpINode(left, right) : (Node*) new (C,3)CmpUNode(left, right);
+  Node* cmp = Signed ? (Node*) new (C)CmpINode(left, right) : (Node*) new (C)CmpUNode(left, right);
   register_node(cmp, loop, proj2, ddepth);
 
-  BoolNode* bol = new (C,2)BoolNode(cmp, relop);
+  BoolNode* bol = new (C)BoolNode(cmp, relop);
   register_node(bol, loop, proj2, ddepth);
 
-  IfNode* new_if = new (C,2)IfNode(proj2, bol, iff->_prob, iff->_fcnt);
+  IfNode* new_if = new (C)IfNode(proj2, bol, iff->_prob, iff->_fcnt);
   register_node(new_if, loop, proj2, ddepth);
 
   proj->set_req(0, new_if); // reattach
@@ -1745,20 +1723,18 @@ RegionNode* PhaseIdealLoop::insert_region_before_proj(ProjNode* proj) {
   ProjNode *other_proj = iff->proj_out(!proj->is_IfTrue())->as_Proj();
   int ddepth = dom_depth(proj);
 
-  _igvn.hash_delete(iff);
-  _igvn._worklist.push(iff);
-  _igvn.hash_delete(proj);
-  _igvn._worklist.push(proj);
+  _igvn.rehash_node_delayed(iff);
+  _igvn.rehash_node_delayed(proj);
 
   proj->set_req(0, NULL);  // temporary disconnect
   ProjNode* proj2 = proj_clone(proj, iff);
   register_node(proj2, loop, iff, ddepth);
 
-  RegionNode* reg = new (C,2)RegionNode(2);
+  RegionNode* reg = new (C)RegionNode(2);
   reg->set_req(1, proj2);
   register_node(reg, loop, iff, ddepth);
 
-  IfNode* dum_if = new (C,2)IfNode(reg, short_circuit_if(NULL, proj), iff->_prob, iff->_fcnt);
+  IfNode* dum_if = new (C)IfNode(reg, short_circuit_if(NULL, proj), iff->_prob, iff->_fcnt);
   register_node(dum_if, loop, reg, ddepth);
 
   proj->set_req(0, dum_if); // reattach
@@ -1950,8 +1926,8 @@ bool PhaseIdealLoop::has_use_internal_to_set( Node* n, VectorSet& vset, IdealLoo
 
 //------------------------------ clone_for_use_outside_loop -------------------------------------
 // clone "n" for uses that are outside of loop
-void PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, Node_List& worklist ) {
-
+int PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, Node_List& worklist ) {
+  int cloned = 0;
   assert(worklist.size() == 0, "should be empty");
   for (DUIterator_Fast jmax, j = n->fast_outs(jmax); j < jmax; j++) {
     Node* use = n->fast_out(j);
@@ -1970,9 +1946,8 @@ void PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, N
 
     // clone "n" and insert it between the inputs of "n" and the use outside the loop
     Node* n_clone = n->clone();
-    _igvn.hash_delete(use);
-    use->set_req(j, n_clone);
-    _igvn._worklist.push(use);
+    _igvn.replace_input_of(use, j, n_clone);
+    cloned++;
     Node* use_c;
     if (!use->is_Phi()) {
       use_c = has_ctrl(use) ? get_ctrl(use) : use->in(0);
@@ -1990,6 +1965,7 @@ void PhaseIdealLoop::clone_for_use_outside_loop( IdealLoopTree *loop, Node* n, N
     }
 #endif
   }
+  return cloned;
 }
 
 
@@ -2028,8 +2004,7 @@ void PhaseIdealLoop::clone_for_special_use_inside_loop( IdealLoopTree *loop, Nod
 #endif
     while( worklist.size() ) {
       Node *use = worklist.pop();
-      _igvn.hash_delete(use);
-      _igvn._worklist.push(use);
+      _igvn.rehash_node_delayed(use);
       for (uint j = 1; j < use->req(); j++) {
         if (use->in(j) == n) {
           use->set_req(j, n_clone);
@@ -2055,9 +2030,7 @@ void PhaseIdealLoop::insert_phi_for_loop( Node* use, uint idx, Node* lp_entry_va
     _igvn.remove_dead_node(phi);
     phi = hit;
   }
-  _igvn.hash_delete(use);
-  _igvn._worklist.push(use);
-  use->set_req(idx, phi);
+  _igvn.replace_input_of(use, idx, phi);
 }
 
 #ifdef ASSERT
@@ -2511,6 +2484,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Evacuate nodes in peel region into the not_peeled region if possible
   uint new_phi_cnt = 0;
+  uint cloned_for_outside_use = 0;
   for (i = 0; i < peel_list.size();) {
     Node* n = peel_list.at(i);
 #if !defined(PRODUCT)
@@ -2529,8 +2503,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
           // if not pinned and not a load (which maybe anti-dependent on a store)
           // and not a CMove (Matcher expects only bool->cmove).
           if ( n->in(0) == NULL && !n->is_Load() && !n->is_CMove() ) {
-            clone_for_use_outside_loop( loop, n, worklist );
-
+            cloned_for_outside_use += clone_for_use_outside_loop( loop, n, worklist );
             sink_list.push(n);
             peel     >>= n->_idx; // delete n from peel set.
             not_peel <<= n->_idx; // add n to not_peel set.
@@ -2567,6 +2540,12 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
     // Inhibit more partial peeling on this loop
     assert(!head->is_partial_peel_loop(), "not partial peeled");
     head->mark_partial_peel_failed();
+    if (cloned_for_outside_use > 0) {
+      // Terminate this round of loop opts because
+      // the graph outside this loop was changed.
+      C->set_major_progress();
+      return true;
+    }
     return false;
   }
 
@@ -2574,7 +2553,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
   // Create new loop head for new phis and to hang
   // the nodes being moved (sinked) from the peel region.
-  LoopNode* new_head = new (C, 3) LoopNode(last_peel, last_peel);
+  LoopNode* new_head = new (C) LoopNode(last_peel, last_peel);
   new_head->set_unswitch_count(head->unswitch_count()); // Preserve
   _igvn.register_new_node_with_optimizer(new_head);
   assert(first_not_peeled->in(0) == last_peel, "last_peel <- first_not_peeled");
@@ -2630,9 +2609,7 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
               // use is in loop
               if (old_new[use->_idx] != NULL) { // null for dead code
                 Node* use_clone = old_new[use->_idx];
-                _igvn.hash_delete(use);
-                use->set_req(j, C->top());
-                _igvn._worklist.push(use);
+                _igvn.replace_input_of(use, j, C->top());
                 insert_phi_for_loop( use_clone, j, old_new[def->_idx], def, new_head_clone );
               }
             } else {
@@ -2667,46 +2644,35 @@ bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
     if (!n->is_CFG()           && n->in(0) != NULL        &&
         not_peel.test(n->_idx) && peel.test(n->in(0)->_idx)) {
       Node* n_clone = old_new[n->_idx];
-      _igvn.hash_delete(n_clone);
-      n_clone->set_req(0, new_head_clone);
-      _igvn._worklist.push(n_clone);
+      _igvn.replace_input_of(n_clone, 0, new_head_clone);
     }
   }
 
   // Backedge of the surviving new_head (the clone) is original last_peel
-  _igvn.hash_delete(new_head_clone);
-  new_head_clone->set_req(LoopNode::LoopBackControl, last_peel);
-  _igvn._worklist.push(new_head_clone);
+  _igvn.replace_input_of(new_head_clone, LoopNode::LoopBackControl, last_peel);
 
   // Cut first node in original not_peel set
-  _igvn.hash_delete(new_head);
-  new_head->set_req(LoopNode::EntryControl, C->top());
-  new_head->set_req(LoopNode::LoopBackControl, C->top());
-  _igvn._worklist.push(new_head);
+  _igvn.rehash_node_delayed(new_head);                     // Multiple edge updates:
+  new_head->set_req(LoopNode::EntryControl,    C->top());  //   use rehash_node_delayed / set_req instead of
+  new_head->set_req(LoopNode::LoopBackControl, C->top());  //   multiple replace_input_of calls
 
   // Copy head_clone back-branch info to original head
   // and remove original head's loop entry and
   // clone head's back-branch
-  _igvn.hash_delete(head);
-  _igvn.hash_delete(head_clone);
-  head->set_req(LoopNode::EntryControl, head_clone->in(LoopNode::LoopBackControl));
+  _igvn.rehash_node_delayed(head); // Multiple edge updates
+  head->set_req(LoopNode::EntryControl,    head_clone->in(LoopNode::LoopBackControl));
   head->set_req(LoopNode::LoopBackControl, C->top());
-  head_clone->set_req(LoopNode::LoopBackControl, C->top());
-  _igvn._worklist.push(head);
-  _igvn._worklist.push(head_clone);
+  _igvn.replace_input_of(head_clone, LoopNode::LoopBackControl, C->top());
 
   // Similarly modify the phis
   for (DUIterator_Fast kmax, k = head->fast_outs(kmax); k < kmax; k++) {
     Node* use = head->fast_out(k);
     if (use->is_Phi() && use->outcnt() > 0) {
       Node* use_clone = old_new[use->_idx];
-      _igvn.hash_delete(use);
-      _igvn.hash_delete(use_clone);
-      use->set_req(LoopNode::EntryControl, use_clone->in(LoopNode::LoopBackControl));
+      _igvn.rehash_node_delayed(use); // Multiple edge updates
+      use->set_req(LoopNode::EntryControl,    use_clone->in(LoopNode::LoopBackControl));
       use->set_req(LoopNode::LoopBackControl, C->top());
-      use_clone->set_req(LoopNode::LoopBackControl, C->top());
-      _igvn._worklist.push(use);
-      _igvn._worklist.push(use_clone);
+      _igvn.replace_input_of(use_clone, LoopNode::LoopBackControl, C->top());
     }
   }
 
@@ -2786,14 +2752,13 @@ void PhaseIdealLoop::reorg_offsets(IdealLoopTree *loop) {
       if (dom_lca(exit, u_ctrl) != exit) continue;
       // Hit!  Refactor use to use the post-incremented tripcounter.
       // Compute a post-increment tripcounter.
-      Node *opaq = new (C, 2) Opaque2Node( C, cle->incr() );
+      Node *opaq = new (C) Opaque2Node( C, cle->incr() );
       register_new_node( opaq, u_ctrl );
       Node *neg_stride = _igvn.intcon(-cle->stride_con());
       set_ctrl(neg_stride, C->root());
-      Node *post = new (C, 3) AddINode( opaq, neg_stride);
+      Node *post = new (C) AddINode( opaq, neg_stride);
       register_new_node( post, u_ctrl );
-      _igvn.hash_delete(use);
-      _igvn._worklist.push(use);
+      _igvn.rehash_node_delayed(use);
       for (uint j = 1; j < use->req(); j++) {
         if (use->in(j) == phi)
           use->set_req(j, post);

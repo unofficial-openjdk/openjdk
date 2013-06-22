@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -522,7 +522,8 @@ void InterpreterGenerator::lock_method(void) {
     // get receiver (assume this is frequent case)
     __ movptr(rax, Address(r14, Interpreter::local_offset_in_bytes(0)));
     __ jcc(Assembler::zero, done);
-    __ movptr(rax, Address(rbx, methodOopDesc::constants_offset()));
+    __ movptr(rax, Address(rbx, methodOopDesc::const_offset()));
+    __ movptr(rax, Address(rax, constMethodOopDesc::constants_offset()));
     __ movptr(rax, Address(rax,
                            constantPoolOopDesc::pool_holder_offset_in_bytes()));
     __ movptr(rax, Address(rax, mirror_offset));
@@ -579,7 +580,8 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
     __ push(0);
   }
 
-  __ movptr(rdx, Address(rbx, methodOopDesc::constants_offset()));
+  __ movptr(rdx, Address(rbx, methodOopDesc::const_offset()));
+  __ movptr(rdx, Address(rdx, constMethodOopDesc::constants_offset()));
   __ movptr(rdx, Address(rdx, constantPoolOopDesc::cache_offset_in_bytes()));
   __ push(rdx); // set constant pool cache
   __ push(r14); // set locals pointer
@@ -629,9 +631,9 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     __ testptr(rax, rax);
     __ jcc(Assembler::zero, slow_path);
 
-    __ movptr(rdi, Address(rbx, methodOopDesc::constants_offset()));
     // read first instruction word and extract bytecode @ 1 and index @ 2
     __ movptr(rdx, Address(rbx, methodOopDesc::const_offset()));
+    __ movptr(rdi, Address(rdx, constMethodOopDesc::constants_offset()));
     __ movl(rdx, Address(rdx, constMethodOopDesc::codes_offset()));
     // Shift codes right to get the index on the right.
     // The bytecode fetched looks like <index><0xb4><0x2a>
@@ -681,9 +683,9 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     // Need to differentiate between igetfield, agetfield, bgetfield etc.
     // because they are different sizes.
     // Use the type from the constant pool cache
-    __ shrl(rdx, ConstantPoolCacheEntry::tosBits);
-    // Make sure we don't need to mask edx for tosBits after the above shift
-    ConstantPoolCacheEntry::verify_tosBits();
+    __ shrl(rdx, ConstantPoolCacheEntry::tos_state_shift);
+    // Make sure we don't need to mask edx after the above shift
+    ConstantPoolCacheEntry::verify_tos_state_shift();
 
     __ cmpl(rdx, atos);
     __ jcc(Assembler::notEqual, notObj);
@@ -1020,7 +1022,8 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
     __ testl(t, JVM_ACC_STATIC);
     __ jcc(Assembler::zero, L);
     // get mirror
-    __ movptr(t, Address(method, methodOopDesc::constants_offset()));
+    __ movptr(t, Address(method, methodOopDesc::const_offset()));
+    __ movptr(t, Address(t, constMethodOopDesc::constants_offset()));
     __ movptr(t, Address(t, constantPoolOopDesc::pool_holder_offset_in_bytes()));
     __ movptr(t, Address(t, mirror_offset));
     // copy mirror into activation frame
@@ -1078,15 +1081,8 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
   __ call(rax);
   // result potentially in rax or xmm0
 
-  // Depending on runtime options, either restore the MXCSR
-  // register after returning from the JNI Call or verify that
-  // it wasn't changed during -Xcheck:jni.
-  if (RestoreMXCSROnJNICalls) {
-    __ ldmxcsr(ExternalAddress(StubRoutines::x86::mxcsr_std()));
-  }
-  else if (CheckJNICalls) {
-    __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::verify_mxcsr_entry())));
-  }
+  // Verify or restore cpu control state after JNI call
+  __ restore_cpu_control_state_after_jni();
 
   // NOTE: The order of these pushes is known to frame::interpreter_frame_result
   // in order to extract the result of a method call. If the order of these
@@ -1521,12 +1517,11 @@ address AbstractInterpreterGenerator::generate_method_entry(
   switch (kind) {
   case Interpreter::zerolocals             :                                                                             break;
   case Interpreter::zerolocals_synchronized: synchronized = true;                                                        break;
-  case Interpreter::native                 : entry_point = ((InterpreterGenerator*) this)->generate_native_entry(false); break;
-  case Interpreter::native_synchronized    : entry_point = ((InterpreterGenerator*) this)->generate_native_entry(true);  break;
-  case Interpreter::empty                  : entry_point = ((InterpreterGenerator*) this)->generate_empty_entry();       break;
-  case Interpreter::accessor               : entry_point = ((InterpreterGenerator*) this)->generate_accessor_entry();    break;
-  case Interpreter::abstract               : entry_point = ((InterpreterGenerator*) this)->generate_abstract_entry();    break;
-  case Interpreter::method_handle          : entry_point = ((InterpreterGenerator*) this)->generate_method_handle_entry();break;
+  case Interpreter::native                 : entry_point = ((InterpreterGenerator*)this)->generate_native_entry(false); break;
+  case Interpreter::native_synchronized    : entry_point = ((InterpreterGenerator*)this)->generate_native_entry(true);  break;
+  case Interpreter::empty                  : entry_point = ((InterpreterGenerator*)this)->generate_empty_entry();       break;
+  case Interpreter::accessor               : entry_point = ((InterpreterGenerator*)this)->generate_accessor_entry();    break;
+  case Interpreter::abstract               : entry_point = ((InterpreterGenerator*)this)->generate_abstract_entry();    break;
 
   case Interpreter::java_lang_math_sin     : // fall thru
   case Interpreter::java_lang_math_cos     : // fall thru
@@ -1534,10 +1529,14 @@ address AbstractInterpreterGenerator::generate_method_entry(
   case Interpreter::java_lang_math_abs     : // fall thru
   case Interpreter::java_lang_math_log     : // fall thru
   case Interpreter::java_lang_math_log10   : // fall thru
-  case Interpreter::java_lang_math_sqrt    : entry_point = ((InterpreterGenerator*) this)->generate_math_entry(kind);    break;
+  case Interpreter::java_lang_math_sqrt    : // fall thru
+  case Interpreter::java_lang_math_pow     : // fall thru
+  case Interpreter::java_lang_math_exp     : entry_point = ((InterpreterGenerator*)this)->generate_math_entry(kind);    break;
   case Interpreter::java_lang_ref_reference_get
                                            : entry_point = ((InterpreterGenerator*)this)->generate_Reference_get_entry(); break;
-  default                                  : ShouldNotReachHere();                                                       break;
+  default:
+    fatal(err_msg("unexpected method kind: %d", kind));
+    break;
   }
 
   if (entry_point) {
@@ -1558,7 +1557,9 @@ bool AbstractInterpreter::can_be_compiled(methodHandle m) {
     case Interpreter::java_lang_math_abs     : // fall thru
     case Interpreter::java_lang_math_log     : // fall thru
     case Interpreter::java_lang_math_log10   : // fall thru
-    case Interpreter::java_lang_math_sqrt    :
+    case Interpreter::java_lang_math_sqrt    : // fall thru
+    case Interpreter::java_lang_math_pow     : // fall thru
+    case Interpreter::java_lang_math_exp     :
       return false;
     default:
       return true;
@@ -1591,7 +1592,8 @@ int AbstractInterpreter::layout_activation(methodOop method,
                                            int callee_locals,
                                            frame* caller,
                                            frame* interpreter_frame,
-                                           bool is_top_frame) {
+                                           bool is_top_frame,
+                                           bool is_bottom_frame) {
   // Note: This calculation must exactly parallel the frame setup
   // in AbstractInterpreterGenerator::generate_method_entry.
   // If interpreter_frame!=NULL, set up the method, locals, and monitors.

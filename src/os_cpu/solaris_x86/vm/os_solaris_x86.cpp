@@ -52,12 +52,6 @@
 #include "thread_solaris.inline.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
-#ifdef COMPILER1
-#include "c1/c1_Runtime1.hpp"
-#endif
-#ifdef COMPILER2
-#include "opto/runtime.hpp"
-#endif
 
 // put OS-includes here
 # include <sys/types.h>
@@ -190,6 +184,10 @@ intptr_t* os::Solaris::ucontext_get_fp(ucontext_t *uc) {
   return (intptr_t*)uc->uc_mcontext.gregs[REG_FP];
 }
 
+address os::Solaris::ucontext_get_pc(ucontext_t *uc) {
+  return (address) uc->uc_mcontext.gregs[REG_PC];
+}
+
 // For Forte Analyzer AsyncGetCallTrace profiling support - thread
 // is currently interrupted by SIGPROF.
 //
@@ -237,6 +235,12 @@ frame os::get_sender_for_C_frame(frame* fr) {
   return frame(fr->sender_sp(), fr->link(), fr->sender_pc());
 }
 
+extern "C" intptr_t *_get_current_sp();  // in .il file
+
+address os::current_stack_pointer() {
+  return (address)_get_current_sp();
+}
+
 extern "C" intptr_t *_get_current_fp();  // in .il file
 
 frame os::current_frame() {
@@ -251,22 +255,6 @@ frame os::current_frame() {
   } else {
     return os::get_sender_for_C_frame(&myframe);
   }
-}
-
-// This is a simple callback that just fetches a PC for an interrupted thread.
-// The thread need not be suspended and the fetched PC is just a hint.
-// This one is currently used for profiling the VMThread ONLY!
-
-// Must be synchronous
-void GetThreadPC_Callback::execute(OSThread::InterruptArguments *args) {
-  Thread*     thread = args->thread();
-  ucontext_t* uc     = args->ucontext();
-  intptr_t* sp;
-
-  assert(ProfileVM && thread->is_VM_thread(), "just checking");
-
-  ExtendedPC new_addr((address)uc->uc_mcontext.gregs[REG_PC]);
-  _addr = new_addr;
 }
 
 static int threadgetstate(thread_t tid, int *flags, lwpid_t *lwp, stack_t *ss, gregset_t rs, lwpstatus_t *lwpstatus) {
@@ -420,14 +408,8 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
   guarantee(sig != os::Solaris::SIGinterrupt(), "Can not chain VM interrupt signal, try -XX:+UseAltSigs");
 
   if (sig == os::Solaris::SIGasync()) {
-    if(thread){
-      OSThread::InterruptArguments args(thread, uc);
-      thread->osthread()->do_interrupt_callbacks_at_interrupt(&args);
-      return true;
-    }
-    else if(vmthread){
-      OSThread::InterruptArguments args(vmthread, uc);
-      vmthread->osthread()->do_interrupt_callbacks_at_interrupt(&args);
+    if(thread || vmthread){
+      OSThread::SR_handler(t, uc);
       return true;
     } else if (os::Solaris::chained_handler(sig, info, ucVoid)) {
       return true;
@@ -954,3 +936,11 @@ void os::setup_fpu() {
   _solaris_raw_setup_fpu(fpu_cntrl);
 }
 #endif // AMD64
+
+#ifndef PRODUCT
+void os::verify_stack_alignment() {
+#ifdef AMD64
+  assert(((intptr_t)os::current_stack_pointer() & (StackAlignmentInBytes-1)) == 0, "incorrect stack alignment");
+#endif
+}
+#endif

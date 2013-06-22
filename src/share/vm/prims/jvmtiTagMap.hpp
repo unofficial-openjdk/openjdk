@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,21 +27,19 @@
 #ifndef SHARE_VM_PRIMS_JVMTITAGMAP_HPP
 #define SHARE_VM_PRIMS_JVMTITAGMAP_HPP
 
-#ifndef JVMTI_KERNEL
 #include "gc_interface/collectedHeap.hpp"
 #include "jvmtifiles/jvmti.h"
 #include "jvmtifiles/jvmtiEnv.hpp"
 #include "memory/allocation.hpp"
 #include "memory/genCollectedHeap.hpp"
 #include "memory/universe.hpp"
-#endif
 
 // forward references
 class JvmtiTagHashmap;
 class JvmtiTagHashmapEntry;
 class JvmtiTagHashmapEntryClosure;
 
-class JvmtiTagMap :  public CHeapObj {
+class JvmtiTagMap :  public CHeapObj<mtInternal> {
  private:
 
   enum{
@@ -125,7 +123,7 @@ class JvmtiTagMap :  public CHeapObj {
                                    jlong** tag_result_ptr);
 
   static void weak_oops_do(
-      BoolObjectClosure* is_alive, OopClosure* f) KERNEL_RETURN;
+      BoolObjectClosure* is_alive, OopClosure* f);
 };
 
 #endif // SHARE_VM_PRIMS_JVMTITAGMAP_HPP

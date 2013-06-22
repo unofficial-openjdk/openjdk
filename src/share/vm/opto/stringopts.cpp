@@ -69,7 +69,7 @@ class StringConcat : public ResourceObj {
     _multiple(false),
     _string_alloc(NULL),
     _stringopts(stringopts) {
-    _arguments = new (_stringopts->C, 1) Node(1);
+    _arguments = new (_stringopts->C) Node(1);
     _arguments->del_req(0);
   }
 
@@ -220,11 +220,10 @@ class StringConcat : public ResourceObj {
       // Build a new call using the jvms state of the allocate
       address call_addr = SharedRuntime::uncommon_trap_blob()->entry_point();
       const TypeFunc* call_type = OptoRuntime::uncommon_trap_Type();
-      int size = call_type->domain()->cnt();
       const TypePtr* no_memory_effects = NULL;
       Compile* C = _stringopts->C;
-      CallStaticJavaNode* call = new (C, size) CallStaticJavaNode(call_type, call_addr, "uncommon_trap",
-                                                                  jvms->bci(), no_memory_effects);
+      CallStaticJavaNode* call = new (C) CallStaticJavaNode(call_type, call_addr, "uncommon_trap",
+                                                            jvms->bci(), no_memory_effects);
       for (int e = 0; e < TypeFunc::Parms; e++) {
         call->init_req(e, uct->in(e));
       }
@@ -242,13 +241,13 @@ class StringConcat : public ResourceObj {
 
       _stringopts->gvn()->transform(call);
       C->gvn_replace_by(uct, call);
-      uct->disconnect_inputs(NULL);
+      uct->disconnect_inputs(NULL, C);
     }
   }
 
   void cleanup() {
     // disconnect the hook node
-    _arguments->disconnect_inputs(NULL);
+    _arguments->disconnect_inputs(NULL, _stringopts->C);
   }
 };
 
@@ -266,7 +265,8 @@ void StringConcat::eliminate_unneeded_control() {
     } else if (n->is_IfTrue()) {
       Compile* C = _stringopts->C;
       C->gvn_replace_by(n, n->in(0)->in(0));
-      C->gvn_replace_by(n->in(0), C->top());
+      // get rid of the other projection
+      C->gvn_replace_by(n->in(0)->as_If()->proj_out(false), C->top());
     }
   }
 }
@@ -359,7 +359,7 @@ void StringConcat::eliminate_initialize(InitializeNode* init) {
     C->gvn_replace_by(mem_proj, mem);
   }
   C->gvn_replace_by(init, C->top());
-  init->disconnect_inputs(NULL);
+  init->disconnect_inputs(NULL, C);
 }
 
 Node_List PhaseStringOpts::collect_toString_calls() {
@@ -440,7 +440,7 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
       }
       // Find the constructor call
       Node* result = alloc->result_cast();
-      if (result == NULL || !result->is_CheckCastPP()) {
+      if (result == NULL || !result->is_CheckCastPP() || alloc->in(TypeFunc::Memory)->is_top()) {
         // strange looking allocation
 #ifndef PRODUCT
         if (PrintOptimizeStringConcat) {
@@ -533,7 +533,17 @@ StringConcat* PhaseStringOpts::build_candidate(CallStaticJavaNode* call) {
         if (arg->is_Proj() && arg->in(0)->is_CallStaticJava()) {
           CallStaticJavaNode* csj = arg->in(0)->as_CallStaticJava();
           if (csj->method() != NULL &&
-              csj->method()->intrinsic_id() == vmIntrinsics::_Integer_toString) {
+              csj->method()->intrinsic_id() == vmIntrinsics::_Integer_toString &&
+              arg->outcnt() == 1) {
+            // _control is the list of StringBuilder calls nodes which
+            // will be replaced by new String code after this optimization.
+            // Integer::toString() call is not part of StringBuilder calls
+            // chain. It could be eliminated only if its result is used
+            // only by this SB calls chain.
+            // Another limitation: it should be used only once because
+            // it is unknown that it is used only by this SB calls chain
+            // until all related SB calls nodes are collected.
+            assert(arg->unique_out() == cnode, "sanity");
             sc->add_control(csj);
             sc->push_int(csj->in(TypeFunc::Parms));
             continue;
@@ -735,7 +745,9 @@ bool StringConcat::validate_control_flow() {
       ctrl_path.push(cn);
       ctrl_path.push(cn->proj_out(0));
       ctrl_path.push(cn->proj_out(0)->unique_out());
-      ctrl_path.push(cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0));
+      if (cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0) != NULL) {
+        ctrl_path.push(cn->proj_out(0)->unique_out()->as_Catch()->proj_out(0));
+      }
     } else {
       ShouldNotReachHere();
     }
@@ -753,6 +765,12 @@ bool StringConcat::validate_control_flow() {
     } else if (ptr->is_IfTrue()) {
       IfNode* iff = ptr->in(0)->as_If();
       BoolNode* b = iff->in(1)->isa_Bool();
+
+      if (b == NULL) {
+        fail = true;
+        break;
+      }
+
       Node* cmp = b->in(1);
       Node* v1 = cmp->in(1);
       Node* v2 = cmp->in(2);
@@ -817,6 +835,9 @@ bool StringConcat::validate_control_flow() {
           ptr->in(1)->in(0) != NULL && ptr->in(1)->in(0)->is_If()) {
         // Simple diamond.
         // XXX should check for possibly merging stores.  simple data merges are ok.
+        // The IGVN will make this simple diamond go away when it
+        // transforms the Region. Make sure it sees it.
+        Compile::current()->record_for_igvn(ptr);
         ptr = ptr->in(1)->in(0)->in(0);
         continue;
       }
@@ -929,8 +950,8 @@ bool StringConcat::validate_control_flow() {
 }
 
 Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
-  const TypeKlassPtr* klass_type = TypeKlassPtr::make(field->holder());
-  Node* klass_node = __ makecon(klass_type);
+  const TypeInstPtr* mirror_type = TypeInstPtr::make(field->holder()->java_mirror());
+  Node* klass_node = __ makecon(mirror_type);
   BasicType bt = field->layout_type();
   ciType* field_klass = field->type();
 
@@ -945,6 +966,7 @@ Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
       // and may yield a vacuous result if the field is of interface type.
       type = TypeOopPtr::make_from_constant(con, true)->isa_oopptr();
       assert(type != NULL, "field singleton type must be consistent");
+      return __ makecon(type);
     } else {
       type = TypeOopPtr::make_from_klass(field_klass->as_klass());
     }
@@ -954,13 +976,13 @@ Node* PhaseStringOpts::fetch_static_field(GraphKit& kit, ciField* field) {
 
   return kit.make_load(NULL, kit.basic_plus_adr(klass_node, field->offset_in_bytes()),
                        type, T_OBJECT,
-                       C->get_alias_index(klass_type->add_offset(field->offset_in_bytes())));
+                       C->get_alias_index(mirror_type->add_offset(field->offset_in_bytes())));
 }
 
 Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
-  RegionNode *final_merge = new (C, 3) RegionNode(3);
+  RegionNode *final_merge = new (C) RegionNode(3);
   kit.gvn().set_type(final_merge, Type::CONTROL);
-  Node* final_size = new (C, 3) PhiNode(final_merge, TypeInt::INT);
+  Node* final_size = new (C) PhiNode(final_merge, TypeInt::INT);
   kit.gvn().set_type(final_size, TypeInt::INT);
 
   IfNode* iff = kit.create_and_map_if(kit.control(),
@@ -977,11 +999,11 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
   } else {
 
     // int size = (i < 0) ? stringSize(-i) + 1 : stringSize(i);
-    RegionNode *r = new (C, 3) RegionNode(3);
+    RegionNode *r = new (C) RegionNode(3);
     kit.gvn().set_type(r, Type::CONTROL);
-    Node *phi = new (C, 3) PhiNode(r, TypeInt::INT);
+    Node *phi = new (C) PhiNode(r, TypeInt::INT);
     kit.gvn().set_type(phi, TypeInt::INT);
-    Node *size = new (C, 3) PhiNode(r, TypeInt::INT);
+    Node *size = new (C) PhiNode(r, TypeInt::INT);
     kit.gvn().set_type(size, TypeInt::INT);
     Node* chk = __ CmpI(arg, __ intcon(0));
     Node* p = __ Bool(chk, BoolTest::lt);
@@ -1006,11 +1028,11 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
     // Add loop predicate first.
     kit.add_predicate();
 
-    RegionNode *loop = new (C, 3) RegionNode(3);
+    RegionNode *loop = new (C) RegionNode(3);
     loop->init_req(1, kit.control());
     kit.gvn().set_type(loop, Type::CONTROL);
 
-    Node *index = new (C, 3) PhiNode(loop, TypeInt::INT);
+    Node *index = new (C) PhiNode(loop, TypeInt::INT);
     index->init_req(1, __ intcon(0));
     kit.gvn().set_type(index, TypeInt::INT);
     kit.set_control(loop);
@@ -1043,7 +1065,7 @@ Node* PhaseStringOpts::int_stringSize(GraphKit& kit, Node* arg) {
 }
 
 void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, Node* start, Node* end) {
-  RegionNode *final_merge = new (C, 4) RegionNode(4);
+  RegionNode *final_merge = new (C) RegionNode(4);
   kit.gvn().set_type(final_merge, Type::CONTROL);
   Node *final_mem = PhiNode::make(final_merge, kit.memory(char_adr_idx), Type::MEMORY, TypeAryPtr::CHARS);
   kit.gvn().set_type(final_mem, Type::MEMORY);
@@ -1093,11 +1115,11 @@ void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, N
                                         __ Bool(__ CmpI(arg, __ intcon(0)), BoolTest::lt),
                                         PROB_FAIR, COUNT_UNKNOWN);
 
-    RegionNode *merge = new (C, 3) RegionNode(3);
+    RegionNode *merge = new (C) RegionNode(3);
     kit.gvn().set_type(merge, Type::CONTROL);
-    i = new (C, 3) PhiNode(merge, TypeInt::INT);
+    i = new (C) PhiNode(merge, TypeInt::INT);
     kit.gvn().set_type(i, TypeInt::INT);
-    sign = new (C, 3) PhiNode(merge, TypeInt::INT);
+    sign = new (C) PhiNode(merge, TypeInt::INT);
     kit.gvn().set_type(sign, TypeInt::INT);
 
     merge->init_req(1, __ IfTrue(iff));
@@ -1126,10 +1148,10 @@ void PhaseStringOpts::int_getChars(GraphKit& kit, Node* arg, Node* char_array, N
     // Add loop predicate first.
     kit.add_predicate();
 
-    RegionNode *head = new (C, 3) RegionNode(3);
+    RegionNode *head = new (C) RegionNode(3);
     head->init_req(1, kit.control());
     kit.gvn().set_type(head, Type::CONTROL);
-    Node *i_phi = new (C, 3) PhiNode(head, TypeInt::INT);
+    Node *i_phi = new (C) PhiNode(head, TypeInt::INT);
     i_phi->init_req(1, i);
     kit.gvn().set_type(i_phi, TypeInt::INT);
     charPos = PhiNode::make(head, charPos);
@@ -1250,7 +1272,7 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
   // as a shim for the insertion of the new code.
   JVMState* jvms     = sc->begin()->jvms()->clone_shallow(C);
   uint size = sc->begin()->req();
-  SafePointNode* map = new (C, size) SafePointNode(size, jvms);
+  SafePointNode* map = new (C) SafePointNode(size, jvms);
 
   // copy the control and memory state from the final call into our
   // new starting state.  This allows any preceeding tests to feed
@@ -1295,12 +1317,12 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
 
   // Create a region for the overflow checks to merge into.
   int args = MAX2(sc->num_arguments(), 1);
-  RegionNode* overflow = new (C, args) RegionNode(args);
+  RegionNode* overflow = new (C) RegionNode(args);
   kit.gvn().set_type(overflow, Type::CONTROL);
 
   // Create a hook node to hold onto the individual sizes since they
   // are need for the copying phase.
-  Node* string_sizes = new (C, args) Node(args);
+  Node* string_sizes = new (C) Node(args);
 
   Node* length = __ intcon(0);
   for (int argi = 0; argi < sc->num_arguments(); argi++) {
@@ -1344,9 +1366,9 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
         } else if (!type->higher_equal(TypeInstPtr::NOTNULL)) {
           // s = s != null ? s : "null";
           // length = length + (s.count - s.offset);
-          RegionNode *r = new (C, 3) RegionNode(3);
+          RegionNode *r = new (C) RegionNode(3);
           kit.gvn().set_type(r, Type::CONTROL);
-          Node *phi = new (C, 3) PhiNode(r, type);
+          Node *phi = new (C) PhiNode(r, type);
           kit.gvn().set_type(phi, phi->bottom_type());
           Node* p = __ Bool(__ CmpP(arg, kit.null()), BoolTest::ne);
           IfNode* iff = kit.create_and_map_if(kit.control(), p, PROB_MIN, COUNT_UNKNOWN);
@@ -1398,75 +1420,80 @@ void PhaseStringOpts::replace_string_concat(StringConcat* sc) {
                       Deoptimization::Action_make_not_entrant);
   }
 
-  // length now contains the number of characters needed for the
-  // char[] so create a new AllocateArray for the char[]
-  Node* char_array = NULL;
-  {
-    PreserveReexecuteState preexecs(&kit);
-    // The original jvms is for an allocation of either a String or
-    // StringBuffer so no stack adjustment is necessary for proper
-    // reexecution.  If we deoptimize in the slow path the bytecode
-    // will be reexecuted and the char[] allocation will be thrown away.
-    kit.jvms()->set_should_reexecute(true);
-    char_array = kit.new_array(__ makecon(TypeKlassPtr::make(ciTypeArrayKlass::make(T_CHAR))),
-                               length, 1);
-  }
+  Node* result;
+  if (!kit.stopped()) {
 
-  // Mark the allocation so that zeroing is skipped since the code
-  // below will overwrite the entire array
-  AllocateArrayNode* char_alloc = AllocateArrayNode::Ideal_array_allocation(char_array, _gvn);
-  char_alloc->maybe_set_complete(_gvn);
-
-  // Now copy the string representations into the final char[]
-  Node* start = __ intcon(0);
-  for (int argi = 0; argi < sc->num_arguments(); argi++) {
-    Node* arg = sc->argument(argi);
-    switch (sc->mode(argi)) {
-      case StringConcat::IntMode: {
-        Node* end = __ AddI(start, string_sizes->in(argi));
-        // getChars words backwards so pass the ending point as well as the start
-        int_getChars(kit, arg, char_array, start, end);
-        start = end;
-        break;
-      }
-      case StringConcat::StringNullCheckMode:
-      case StringConcat::StringMode: {
-        start = copy_string(kit, arg, char_array, start);
-        break;
-      }
-      case StringConcat::CharMode: {
-        __ store_to_memory(kit.control(), kit.array_element_address(char_array, start, T_CHAR),
-                           arg, T_CHAR, char_adr_idx);
-        start = __ AddI(start, __ intcon(1));
-        break;
-      }
-      default:
-        ShouldNotReachHere();
+    // length now contains the number of characters needed for the
+    // char[] so create a new AllocateArray for the char[]
+    Node* char_array = NULL;
+    {
+      PreserveReexecuteState preexecs(&kit);
+      // The original jvms is for an allocation of either a String or
+      // StringBuffer so no stack adjustment is necessary for proper
+      // reexecution.  If we deoptimize in the slow path the bytecode
+      // will be reexecuted and the char[] allocation will be thrown away.
+      kit.jvms()->set_should_reexecute(true);
+      char_array = kit.new_array(__ makecon(TypeKlassPtr::make(ciTypeArrayKlass::make(T_CHAR))),
+                                 length, 1);
     }
-  }
 
-  // If we're not reusing an existing String allocation then allocate one here.
-  Node* result = sc->string_alloc();
-  if (result == NULL) {
-    PreserveReexecuteState preexecs(&kit);
-    // The original jvms is for an allocation of either a String or
-    // StringBuffer so no stack adjustment is necessary for proper
-    // reexecution.
-    kit.jvms()->set_should_reexecute(true);
-    result = kit.new_instance(__ makecon(TypeKlassPtr::make(C->env()->String_klass())));
-  }
+    // Mark the allocation so that zeroing is skipped since the code
+    // below will overwrite the entire array
+    AllocateArrayNode* char_alloc = AllocateArrayNode::Ideal_array_allocation(char_array, _gvn);
+    char_alloc->maybe_set_complete(_gvn);
 
-  // Intialize the string
-  if (java_lang_String::has_offset_field()) {
-    kit.store_String_offset(kit.control(), result, __ intcon(0));
-    kit.store_String_length(kit.control(), result, length);
-  }
-  kit.store_String_value(kit.control(), result, char_array);
+    // Now copy the string representations into the final char[]
+    Node* start = __ intcon(0);
+    for (int argi = 0; argi < sc->num_arguments(); argi++) {
+      Node* arg = sc->argument(argi);
+      switch (sc->mode(argi)) {
+        case StringConcat::IntMode: {
+          Node* end = __ AddI(start, string_sizes->in(argi));
+          // getChars words backwards so pass the ending point as well as the start
+          int_getChars(kit, arg, char_array, start, end);
+          start = end;
+          break;
+        }
+        case StringConcat::StringNullCheckMode:
+        case StringConcat::StringMode: {
+          start = copy_string(kit, arg, char_array, start);
+          break;
+        }
+        case StringConcat::CharMode: {
+          __ store_to_memory(kit.control(), kit.array_element_address(char_array, start, T_CHAR),
+                             arg, T_CHAR, char_adr_idx);
+          start = __ AddI(start, __ intcon(1));
+          break;
+        }
+        default:
+          ShouldNotReachHere();
+      }
+    }
 
+    // If we're not reusing an existing String allocation then allocate one here.
+    result = sc->string_alloc();
+    if (result == NULL) {
+      PreserveReexecuteState preexecs(&kit);
+      // The original jvms is for an allocation of either a String or
+      // StringBuffer so no stack adjustment is necessary for proper
+      // reexecution.
+      kit.jvms()->set_should_reexecute(true);
+      result = kit.new_instance(__ makecon(TypeKlassPtr::make(C->env()->String_klass())));
+    }
+
+    // Intialize the string
+    if (java_lang_String::has_offset_field()) {
+      kit.store_String_offset(kit.control(), result, __ intcon(0));
+      kit.store_String_length(kit.control(), result, length);
+    }
+    kit.store_String_value(kit.control(), result, char_array);
+  } else {
+    result = C->top();
+  }
   // hook up the outgoing control and result
   kit.replace_call(sc->end(), result);
 
   // Unhook any hook nodes
-  string_sizes->disconnect_inputs(NULL);
+  string_sizes->disconnect_inputs(NULL, C);
   sc->cleanup();
 }

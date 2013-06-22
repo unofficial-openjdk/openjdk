@@ -32,6 +32,8 @@
 #import <mach/mach_types.h>
 #import <sys/sysctl.h>
 #import <stdlib.h>
+#import <sys/types.h>
+#import <sys/ptrace.h>
 
 jboolean debug = JNI_FALSE;
 
@@ -88,7 +90,8 @@ static void throw_new_debugger_exception(JNIEnv* env, const char* errMsg) {
  * Method:    init0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_init0(JNIEnv *env, jclass cls) {
+JNIEXPORT void JNICALL 
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_init0(JNIEnv *env, jclass cls) {
   symbolicatorID = (*env)->GetFieldID(env, cls, "symbolicator", "J");
   taskID = (*env)->GetFieldID(env, cls, "task", "J");
   CHECK_EXCEPTION;
@@ -99,7 +102,11 @@ JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_init0(
  * Method:    lookupByName0
  * Signature: (Ljava/lang/String;Ljava/lang/String;)J
  */
-JNIEXPORT jlong JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_lookupByName0(JNIEnv *env, jobject this_obj, jstring objectName, jstring symbolName) {
+JNIEXPORT jlong JNICALL 
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_lookupByName0(
+  JNIEnv *env, jobject this_obj, 
+  jstring objectName, jstring symbolName) 
+{
   jlong address = 0;
 
 JNF_COCOA_ENTER(env);
@@ -128,7 +135,11 @@ JNF_COCOA_EXIT(env);
  * Method:    readBytesFromProcess0
  * Signature: (JJ)Lsun/jvm/hotspot/debugger/ReadResult;
  */
-JNIEXPORT jbyteArray JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_readBytesFromProcess0(JNIEnv *env, jobject this_obj, jlong addr, jlong numBytes) {
+JNIEXPORT jbyteArray JNICALL
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_readBytesFromProcess0(
+  JNIEnv *env, jobject this_obj, 
+  jlong addr, jlong numBytes) 
+{
   if (debug) printf("readBytesFromProcess called. addr = %llx numBytes = %lld\n", addr, numBytes);
 
   // must allocate storage instead of using former parameter buf
@@ -200,12 +211,74 @@ JNIEXPORT jbyteArray JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_
   return array;
 }
 
+
 /*
- * Class:     sun_jvm_hotspot_debugger_macosx_MacOSXDebuggerLocal
- * Method:    getThreadIntegerRegisterSet0
- * Signature: (I)[J
+ * Lookup the thread_t that corresponds to the given thread_id.
+ * The thread_id should be the result from calling thread_info() with THREAD_IDENTIFIER_INFO
+ * and reading the m_ident_info.thread_id returned.
+ * The returned thread_t is the mach send right to the kernel port for the corresponding thread.
+ *
+ * We cannot simply use the OSThread._thread_id field in the JVM. This is set to ::mach_thread_self()
+ * in the VM, but that thread port is not valid for a remote debugger to access the thread.
  */
-JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_getThreadIntegerRegisterSet0(JNIEnv *env, jobject this_obj, jint lwp_id) {
+thread_t
+lookupThreadFromThreadId(task_t task, jlong thread_id) {
+  if (debug) {
+    printf("lookupThreadFromThreadId thread_id=0x%llx\n", thread_id);
+  }
+  
+  thread_array_t thread_list = NULL;
+  mach_msg_type_number_t thread_list_count = 0;
+  thread_t result_thread = 0;
+  int i;
+  
+  // get the list of all the send rights
+  kern_return_t result = task_threads(task, &thread_list, &thread_list_count);
+  if (result != KERN_SUCCESS) {
+    if (debug) {
+      printf("task_threads returned 0x%x\n", result);
+    }
+    return 0;
+  }
+  
+  for(i = 0 ; i < thread_list_count; i++) {
+    thread_identifier_info_data_t m_ident_info;
+    mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
+
+    // get the THREAD_IDENTIFIER_INFO for the send right
+    result = thread_info(thread_list[i], THREAD_IDENTIFIER_INFO, (thread_info_t) &m_ident_info, &count);
+    if (result != KERN_SUCCESS) {
+      if (debug) {
+        printf("thread_info returned 0x%x\n", result);
+      }
+      break;
+    }
+    
+    // if this is the one we're looking for, return the send right
+    if (thread_id == m_ident_info.thread_id)
+    {
+      result_thread = thread_list[i];
+      break;
+    }
+  }
+  
+  vm_size_t thread_list_size = (vm_size_t) (thread_list_count * sizeof (thread_t));
+  vm_deallocate(mach_task_self(), (vm_address_t) thread_list, thread_list_count);
+  
+  return result_thread;
+}
+
+
+/*
+ * Class:     sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal
+ * Method:    getThreadIntegerRegisterSet0
+ * Signature: (J)[J
+ */
+JNIEXPORT jlongArray JNICALL 
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_getThreadIntegerRegisterSet0(
+  JNIEnv *env, jobject this_obj, 
+  jlong thread_id) 
+{
   if (debug)
     printf("getThreadRegisterSet0 called\n");
 
@@ -217,8 +290,9 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_
   int i;
   jlongArray registerArray;
   jlong *primitiveArray;
+  task_t gTask = getTask(env, this_obj);
 
-  tid = lwp_id;
+  tid = lookupThreadFromThreadId(gTask, thread_id);
 
   result = thread_get_state(tid, HSDB_THREAD_STATE, (thread_state_t)&state, &count);
 
@@ -319,19 +393,21 @@ JNIEXPORT jlongArray JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_
 }
 
 /*
- * Class:     sun_jvm_hotspot_debugger_macosx_MacOSXDebuggerLocal
+ * Class:     sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal
  * Method:    translateTID0
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL
-Java_sun_jvm_hotspot_debugger_macosx_MacOSXDebuggerLocal_translateTID0(JNIEnv *env, jobject this_obj, jint tid) {
+Java_sun_jvm_hotspot_debugger_macosx_MacOSXDebuggerLocal_translateTID0(
+  JNIEnv *env, jobject this_obj, jint tid) 
+{
   if (debug)
     printf("translateTID0 called on tid = 0x%x\n", (int)tid);
 
   kern_return_t result;
   thread_t foreign_tid, usable_tid;
   mach_msg_type_name_t type;
-    
+  
   foreign_tid = tid;
     
   task_t gTask = getTask(env, this_obj);
@@ -347,19 +423,90 @@ Java_sun_jvm_hotspot_debugger_macosx_MacOSXDebuggerLocal_translateTID0(JNIEnv *e
   return (jint) usable_tid;
 }
 
+
+static bool ptrace_continue(pid_t pid, int signal) {
+  // pass the signal to the process so we don't swallow it
+  int res;
+  if ((res = ptrace(PT_CONTINUE, pid, (caddr_t)1, signal)) < 0) {
+    fprintf(stderr, "attach: ptrace(PT_CONTINUE, %d) failed with %d\n", pid, res);
+    return false;
+  }
+  return true;
+}
+
+// waits until the ATTACH has stopped the process
+// by signal SIGSTOP
+static bool ptrace_waitpid(pid_t pid) {
+  int ret;
+  int status;
+  while (true) {
+    // Wait for debuggee to stop.
+    ret = waitpid(pid, &status, 0);
+    if (ret >= 0) {
+      if (WIFSTOPPED(status)) {
+        // Any signal will stop the thread, make sure it is SIGSTOP. Otherwise SIGSTOP
+        // will still be pending and delivered when the process is DETACHED and the process
+        // will go to sleep.
+        if (WSTOPSIG(status) == SIGSTOP) {
+          // Debuggee stopped by SIGSTOP.
+          return true;
+        }
+        if (!ptrace_continue(pid, WSTOPSIG(status))) {
+          fprintf(stderr, "attach: Failed to correctly attach to VM. VM might HANG! [PTRACE_CONT failed, stopped by %d]\n", WSTOPSIG(status));
+          return false;
+        }
+      } else {
+        fprintf(stderr, "attach: waitpid(): Child process exited/terminated (status = 0x%x)\n", status);
+        return false;
+      }
+    } else {
+      switch (errno) {
+        case EINTR:
+          continue;
+          break;
+        case ECHILD:
+          fprintf(stderr, "attach: waitpid() failed. Child process pid (%d) does not exist \n", pid);
+          break;
+        case EINVAL:
+          fprintf(stderr, "attach: waitpid() failed. Invalid options argument.\n");
+          break;
+        default:
+          fprintf(stderr, "attach: waitpid() failed. Unexpected error %d\n",errno);
+          break;
+      }
+      return false;
+    }
+  }
+}
+
+// attach to a process/thread specified by "pid"
+static bool ptrace_attach(pid_t pid) {
+  int res;
+  if ((res = ptrace(PT_ATTACH, pid, 0, 0)) < 0) {
+    fprintf(stderr, "ptrace(PT_ATTACH, %d) failed with %d\n", pid, res);
+    return false;
+  } else {
+    return ptrace_waitpid(pid);
+  }
+}
+
 /*
  * Class:     sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal
  * Method:    attach0
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_attach0__I(JNIEnv *env, jobject this_obj, jint jpid) {
+JNIEXPORT void JNICALL 
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_attach0__I(
+  JNIEnv *env, jobject this_obj, jint jpid) 
+{
 JNF_COCOA_ENTER(env);
   if (getenv("JAVA_SAPROC_DEBUG") != NULL)
     debug = JNI_TRUE;
   else
     debug = JNI_FALSE;
   if (debug) printf("attach0 called for jpid=%d\n", (int)jpid);
-
+  
+  // get the task from the pid
   kern_return_t result;
   task_t gTask = 0;
   result = task_for_pid(mach_task_self(), jpid, &gTask);
@@ -368,6 +515,13 @@ JNF_COCOA_ENTER(env);
     THROW_NEW_DEBUGGER_EXCEPTION("Can't attach to the process");
   }
   putTask(env, this_obj, gTask);
+
+  // use ptrace to stop the process
+  // on os x, ptrace only needs to be called on the process, not the individual threads
+  if (ptrace_attach(jpid) != true) {
+    mach_port_deallocate(mach_task_self(), gTask);
+    THROW_NEW_DEBUGGER_EXCEPTION("Can't attach to the process");
+  }
 
   id symbolicator = nil;
   id jrsSymbolicator = objc_lookUpClass("JRSSymbolicator");
@@ -392,11 +546,29 @@ JNF_COCOA_EXIT(env);
  * Method:    detach0
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_detach0(JNIEnv *env, jobject this_obj) {
+JNIEXPORT void JNICALL 
+Java_sun_jvm_hotspot_debugger_bsd_BsdDebuggerLocal_detach0(
+  JNIEnv *env, jobject this_obj) 
+{
 JNF_COCOA_ENTER(env);
   if (debug) printf("detach0 called\n");
 
   task_t gTask = getTask(env, this_obj);
+
+  // detach from the ptraced process causing it to resume execution
+  int pid;
+  kern_return_t k_res;
+  k_res = pid_for_task(gTask, &pid);
+  if (k_res != KERN_SUCCESS) {
+    fprintf(stderr, "detach: pid_for_task(%d) failed (%d)\n", pid, k_res);
+  }
+  else {
+    int res = ptrace(PT_DETACH, pid, 0, 0);
+    if (res < 0) {
+      fprintf(stderr, "detach: ptrace(PT_DETACH, %d) failed (%d)\n", pid, res);
+    }
+  }
+  
   mach_port_deallocate(mach_task_self(), gTask);
   id symbolicator = getSymbolicator(env, this_obj);
   if (symbolicator != nil) {

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
 // This code is free software; you can redistribute it and/or modify it
@@ -221,6 +221,7 @@ ArchDesc::ArchDesc()
       _register = NULL;
       _encode = NULL;
       _pipeline = NULL;
+      _frame = NULL;
 }
 
 ArchDesc::~ArchDesc() {
@@ -648,7 +649,10 @@ int  ArchDesc::instructFormCount() {
 // Return the textual binding for a given CPP flag name.
 // Return NULL if there is no binding, or it has been #undef-ed.
 char* ArchDesc::get_preproc_def(const char* flag) {
-  SourceForm* deff = (SourceForm*) _preproc_table[flag];
+  // In case of syntax errors, flag may take the value NULL.
+  SourceForm* deff = NULL;
+  if (flag != NULL)
+    deff = (SourceForm*) _preproc_table[flag];
   return (deff == NULL) ? NULL : deff->_code;
 }
 
@@ -803,7 +807,9 @@ int ArchDesc::emit_msg(int quiet, int flag, int line, const char *fmt,
     while (i++ <= 15)  fputc(' ', errfile);
     fprintf(errfile, "%-8s:", pref);
     vfprintf(errfile, fmt, args);
-    fprintf(errfile, "\n"); }
+    fprintf(errfile, "\n");
+    fflush(errfile);
+  }
   return 1;
 }
 
@@ -826,6 +832,7 @@ static const char *getRegMask(const char *reg_class_name) {
     int         length  = (int)strlen(rc_name) + (int)strlen(mask) + 5;
     char       *regMask = new char[length];
     sprintf(regMask,"%s%s()", rc_name, mask);
+    delete[] rc_name;
     return regMask;
   }
 }
@@ -855,8 +862,14 @@ const char *ArchDesc::reg_mask(OperandForm  &opForm) {
 
   // Check constraints on result's register class
   const char *result_class = opForm.constrained_reg_class();
-  if (!result_class) opForm.dump();
-  assert( result_class, "Resulting register class was not defined for operand");
+  if (result_class == NULL) {
+    opForm.dump();
+    syntax_err(opForm._linenum,
+               "Use of an undefined result class for operand: %s",
+               opForm._ident);
+    abort();
+  }
+
   regMask = reg_class_to_reg_mask( result_class );
 
   return regMask;
@@ -865,8 +878,14 @@ const char *ArchDesc::reg_mask(OperandForm  &opForm) {
 // Obtain the name of the RegMask for an InstructForm
 const char *ArchDesc::reg_mask(InstructForm &inForm) {
   const char *result = inForm.reduce_result();
-  assert( result,
-          "Did not find result operand or RegMask for this instruction");
+
+  if (result == NULL) {
+    syntax_err(inForm._linenum,
+               "Did not find result operand or RegMask"
+               " for this instruction: %s",
+               inForm._ident);
+    abort();
+  }
 
   // Instructions producing 'Universe' use RegMask::Empty
   if( strcmp(result,"Universe")==0 ) {
@@ -875,10 +894,17 @@ const char *ArchDesc::reg_mask(InstructForm &inForm) {
 
   // Lookup this result operand and get its register class
   Form *form = (Form*)_globalNames[result];
-  assert( form, "Result operand must be defined");
+  if (form == NULL) {
+    syntax_err(inForm._linenum,
+               "Did not find result operand for result: %s", result);
+    abort();
+  }
   OperandForm *oper = form->is_operand();
-  if (oper == NULL) form->dump();
-  assert( oper, "Result must be an OperandForm");
+  if (oper == NULL) {
+    syntax_err(inForm._linenum, "Form is not an OperandForm:");
+    form->dump();
+    abort();
+  }
   return reg_mask( *oper );
 }
 
@@ -887,7 +913,13 @@ const char *ArchDesc::reg_mask(InstructForm &inForm) {
 char *ArchDesc::stack_or_reg_mask(OperandForm  &opForm) {
   // name of cisc_spillable version
   const char *reg_mask_name = reg_mask(opForm);
-  assert( reg_mask_name != NULL, "called with incorrect opForm");
+
+  if (reg_mask_name == NULL) {
+     syntax_err(opForm._linenum,
+                "Did not find reg_mask for opForm: %s",
+                opForm._ident);
+     abort();
+  }
 
   const char *stack_or = "STACK_OR_";
   int   length         = (int)strlen(stack_or) + (int)strlen(reg_mask_name) + 1;
@@ -911,12 +943,24 @@ const char *ArchDesc::getIdealType(const char *idealOp) {
   // Find last character in idealOp, it specifies the type
   char  last_char = 0;
   const char *ptr = idealOp;
-  for( ; *ptr != '\0'; ++ptr) {
+  for (; *ptr != '\0'; ++ptr) {
     last_char = *ptr;
   }
 
+  // Match Vector types.
+  if (strncmp(idealOp, "Vec",3)==0) {
+    switch(last_char) {
+    case 'S':  return "TypeVect::VECTS";
+    case 'D':  return "TypeVect::VECTD";
+    case 'X':  return "TypeVect::VECTX";
+    case 'Y':  return "TypeVect::VECTY";
+    default:
+      internal_err("Vector type %s with unrecognized type\n",idealOp);
+    }
+  }
+
   // !!!!!
-  switch( last_char ) {
+  switch(last_char) {
   case 'I':    return "TypeInt::INT";
   case 'P':    return "TypePtr::BOTTOM";
   case 'N':    return "TypeNarrowOop::BOTTOM";

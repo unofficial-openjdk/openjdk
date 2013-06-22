@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ class CheckForUnmarkedOops : public OopClosure {
 
  protected:
   template <class T> void do_oop_work(T* p) {
-    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
+    oop obj = oopDesc::load_decode_heap_oop(p);
     if (_young_gen->is_in_reserved(obj) &&
         !_card_table->addr_is_marked_imprecise(p)) {
       // Don't overwrite the first missing card mark
@@ -649,11 +649,9 @@ bool CardTableExtension::resize_commit_uncommit(int changed_region,
     if(new_start_aligned < new_end_for_commit) {
       MemRegion new_committed =
         MemRegion(new_start_aligned, new_end_for_commit);
-      if (!os::commit_memory((char*)new_committed.start(),
-                             new_committed.byte_size())) {
-        vm_exit_out_of_memory(new_committed.byte_size(),
-                              "card table expansion");
-      }
+      os::commit_memory_or_exit((char*)new_committed.start(),
+                                new_committed.byte_size(), !ExecMem,
+                                "card table expansion");
     }
     result = true;
   } else if (new_start_aligned > cur_committed.start()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,13 @@
 #define SHARE_VM_GC_IMPLEMENTATION_G1_G1_GLOBALS_HPP
 
 #include "runtime/globals.hpp"
-
 //
 // Defines all globals flags used by the garbage-first compiler.
 //
 
 #define G1_FLAGS(develop, develop_pd, product, product_pd, diagnostic, experimental, notproduct, manageable, product_rw) \
                                                                             \
-  product(intx, G1ConfidencePercent, 50,                                    \
+  product(uintx, G1ConfidencePercent, 50,                                   \
           "Confidence level for MMU/pause predictions")                     \
                                                                             \
   develop(intx, G1MarkingOverheadPercent, 0,                                \
@@ -54,6 +53,9 @@
   develop(bool, G1TraceMarkStackOverflow, false,                            \
           "If true, extra debugging code for CM restart for ovflw.")        \
                                                                             \
+  develop(bool, G1TraceHeapRegionRememberedSet, false,                      \
+          "Enables heap region remembered set debug logs")                  \
+                                                                            \
   diagnostic(bool, G1SummarizeConcMark, false,                              \
           "Summarize concurrent mark info")                                 \
                                                                             \
@@ -68,9 +70,6 @@
                                                                             \
   diagnostic(bool, G1TraceConcRefinement, false,                            \
           "Trace G1 concurrent refinement")                                 \
-                                                                            \
-  product(intx, G1MarkRegionStackSize, 1024 * 1024,                         \
-          "Size of the region stack for concurrent marking.")               \
                                                                             \
   product(double, G1ConcMarkStepDurationMillis, 10.0,                       \
           "Target duration of individual concurrent marking steps "         \
@@ -131,9 +130,6 @@
             "Prints the liveness information for all regions in the heap "  \
             "at the end of a marking cycle.")                               \
                                                                             \
-  develop(bool, G1PrintParCleanupStats, false,                              \
-          "When true, print extra stats about parallel cleanup.")           \
-                                                                            \
   product(intx, G1UpdateBufferSize, 256,                                    \
           "Size of an update buffer")                                       \
                                                                             \
@@ -170,15 +166,11 @@
           "Select green, yellow and red zones adaptively to meet the "      \
           "the pause requirements.")                                        \
                                                                             \
-  develop(intx, G1ConcRSLogCacheSize, 10,                                   \
+  product(uintx, G1ConcRSLogCacheSize, 10,                                  \
           "Log base 2 of the length of conc RS hot-card cache.")            \
                                                                             \
-  develop(intx, G1ConcRSHotCardLimit, 4,                                    \
+  product(uintx, G1ConcRSHotCardLimit, 4,                                   \
           "The threshold that defines (>=) a hot card.")                    \
-                                                                            \
-  develop(intx, G1MaxHotCardCountSizePercent, 25,                           \
-          "The maximum size of the hot card count cache as a "              \
-          "percentage of the number of cards for the maximum heap.")        \
                                                                             \
   develop(bool, G1PrintOopAppls, false,                                     \
           "When true, print applications of closures to external locs.")    \
@@ -254,10 +246,6 @@
           "If non-0 is the number of parallel rem set update threads, "     \
           "otherwise the value is determined ergonomically.")               \
                                                                             \
-  develop(intx, G1CardCountCacheExpandThreshold, 16,                        \
-          "Expand the card count cache if the number of collisions for "    \
-          "a particular entry exceeds this value.")                         \
-                                                                            \
   develop(bool, G1VerifyCTCleanup, false,                                   \
           "Verify card table cleanup.")                                     \
                                                                             \
@@ -291,29 +279,60 @@
           "The number of times we'll force an overflow during "             \
           "concurrent marking")                                             \
                                                                             \
-  develop(uintx, G1DefaultMinNewGenPercent, 20,                             \
-          "Percentage (0-100) of the heap size to use as minimum "          \
-          "young gen size.")                                                \
+  experimental(uintx, G1NewSizePercent, 5,                                  \
+          "Percentage (0-100) of the heap size to use as default "          \
+          "minimum young gen size.")                                        \
                                                                             \
-  develop(uintx, G1DefaultMaxNewGenPercent, 80,                             \
-          "Percentage (0-100) of the heap size to use as maximum "          \
-          "young gen size.")                                                \
+  experimental(uintx, G1MaxNewSizePercent, 60,                              \
+          "Percentage (0-100) of the heap size to use as default "          \
+          " maximum young gen size.")                                       \
                                                                             \
-  develop(uintx, G1OldCSetRegionLiveThresholdPercent, 95,                   \
-          "Threshold for regions to be added to the collection set. "       \
-          "Regions with more live bytes that this will not be collected.")  \
+  experimental(uintx, G1MixedGCLiveThresholdPercent, 65,                    \
+          "Threshold for regions to be considered for inclusion in the "    \
+          "collection set of mixed GCs. "                                   \
+          "Regions with live bytes exceeding this will not be collected.")  \
                                                                             \
-  develop(uintx, G1OldReclaimableThresholdPercent, 1,                       \
-          "Threshold for the remaining old reclaimable bytes, expressed "   \
-          "as a percentage of the heap size. If the old reclaimable bytes " \
-          "are under this we will not collect them with more mixed GCs.")   \
+  product(uintx, G1HeapWastePercent, 10,                                    \
+          "Amount of space, expressed as a percentage of the heap size, "   \
+          "that G1 is willing not to collect to avoid expensive GCs.")      \
                                                                             \
-  develop(uintx, G1MaxMixedGCNum, 4,                                        \
-          "The maximum desired number of mixed GCs after a marking cycle.") \
+  product(uintx, G1MixedGCCountTarget, 8,                                   \
+          "The target number of mixed GCs after a marking cycle.")          \
                                                                             \
-  develop(uintx, G1OldCSetRegionThresholdPercent, 10,                       \
+  experimental(uintx, G1OldCSetRegionThresholdPercent, 10,                  \
           "An upper bound for the number of old CSet regions expressed "    \
-          "as a percentage of the heap size.")
+          "as a percentage of the heap size.")                              \
+                                                                            \
+  experimental(ccstr, G1LogLevel, NULL,                                     \
+          "Log level for G1 logging: fine, finer, finest")                  \
+                                                                            \
+  notproduct(bool, G1EvacuationFailureALot, false,                          \
+          "Force use of evacuation failure handling during certain "        \
+          "evacuation pauses")                                              \
+                                                                            \
+  develop(uintx, G1EvacuationFailureALotCount, 1000,                        \
+          "Number of successful evacuations between evacuation failures "   \
+          "occurring at object copying")                                    \
+                                                                            \
+  develop(uintx, G1EvacuationFailureALotInterval, 5,                        \
+          "Total collections between forced triggering of evacuation "      \
+          "failures")                                                       \
+                                                                            \
+  develop(bool, G1EvacuationFailureALotDuringConcMark, true,                \
+          "Force use of evacuation failure handling during evacuation "     \
+          "pauses when marking is in progress")                             \
+                                                                            \
+  develop(bool, G1EvacuationFailureALotDuringInitialMark, true,             \
+          "Force use of evacuation failure handling during initial mark "   \
+          "evacuation pauses")                                              \
+                                                                            \
+  develop(bool, G1EvacuationFailureALotDuringYoungGC, true,                 \
+          "Force use of evacuation failure handling during young "          \
+          "evacuation pauses")                                              \
+                                                                            \
+  develop(bool, G1EvacuationFailureALotDuringMixedGC, true,                 \
+          "Force use of evacuation failure handling during mixed "          \
+          "evacuation pauses")
 
 G1_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG)
 

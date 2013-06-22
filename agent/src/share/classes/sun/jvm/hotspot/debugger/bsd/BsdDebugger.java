@@ -48,7 +48,7 @@ public interface BsdDebugger extends JVMDebugger {
   public BsdAddress readCompOopAddress(long address) throws DebuggerException;
   public BsdOopHandle readOopHandle(long address) throws DebuggerException;
   public BsdOopHandle readCompOopHandle(long address) throws DebuggerException;
-  public long[]       getThreadIntegerRegisterSet(int lwp_id) throws DebuggerException;
+  public long[]       getThreadIntegerRegisterSet(long unique_thread_id) throws DebuggerException;
   public long         getAddressValue(Address addr) throws DebuggerException;
   public Address      newAddress(long value) throws DebuggerException;
 

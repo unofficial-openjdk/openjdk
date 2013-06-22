@@ -44,14 +44,11 @@ HeapRegionDCTOC::HeapRegionDCTOC(G1CollectedHeap* g1,
                                  CardTableModRefBS::PrecisionStyle precision,
                                  FilterKind fk) :
   ContiguousSpaceDCTOC(hr, cl, precision, NULL),
-  _hr(hr), _fk(fk), _g1(g1)
-{ }
+  _hr(hr), _fk(fk), _g1(g1) { }
 
 FilterOutOfRegionClosure::FilterOutOfRegionClosure(HeapRegion* r,
                                                    OopClosure* oc) :
-  _r_bottom(r->bottom()), _r_end(r->end()),
-  _oc(oc), _out_of_region(0)
-{}
+  _r_bottom(r->bottom()), _r_end(r->end()), _oc(oc) { }
 
 class VerifyLiveClosure: public OopClosure {
 private:
@@ -334,7 +331,7 @@ void HeapRegion::setup_heap_region_size(uintx min_heap_size) {
 
   guarantee(GrainWords == 0, "we should only set it once");
   GrainWords = GrainBytes >> LogHeapWordSize;
-  guarantee((size_t)(1 << LogOfHRGrainWords) == GrainWords, "sanity");
+  guarantee((size_t) 1 << LogOfHRGrainWords == GrainWords, "sanity");
 
   guarantee(CardsPerRegion == 0, "we should only set it once");
   CardsPerRegion = GrainBytes >> CardTableModRefBS::card_shift;
@@ -370,7 +367,6 @@ void HeapRegion::hr_clear(bool par, bool clear_space) {
     _claimed = InitialClaimValue;
   }
   zero_marked_bytes();
-  set_sort_index(-1);
 
   _offsets.resize(HeapRegion::GrainWords);
   init_top_at_mark_start();
@@ -388,10 +384,17 @@ void HeapRegion::par_clear() {
 }
 
 void HeapRegion::calc_gc_efficiency() {
+  // GC efficiency is the ratio of how much space would be
+  // reclaimed over how long we predict it would take to reclaim it.
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
   G1CollectorPolicy* g1p = g1h->g1_policy();
-  _gc_efficiency = (double) reclaimable_bytes() /
-                            g1p->predict_region_elapsed_time_ms(this, false);
+
+  // Retrieve a prediction of the elapsed time for this region for
+  // a mixed gc because the region will only be evacuated during a
+  // mixed gc.
+  double region_elapsed_time_ms =
+    g1p->predict_region_elapsed_time_ms(this, false /* for_young_gc */);
+  _gc_efficiency = (double) reclaimable_bytes() / region_elapsed_time_ms;
 }
 
 void HeapRegion::set_startsHumongous(HeapWord* new_top, HeapWord* new_end) {
@@ -482,17 +485,16 @@ void HeapRegion::initialize(MemRegion mr, bool clear_space, bool mangle_space) {
 #endif // _MSC_VER
 
 
-HeapRegion::
-HeapRegion(size_t hrs_index, G1BlockOffsetSharedArray* sharedOffsetArray,
-           MemRegion mr, bool is_zeroed)
-  : G1OffsetTableContigSpace(sharedOffsetArray, mr, is_zeroed),
+HeapRegion::HeapRegion(uint hrs_index,
+                       G1BlockOffsetSharedArray* sharedOffsetArray,
+                       MemRegion mr, bool is_zeroed) :
+    G1OffsetTableContigSpace(sharedOffsetArray, mr, is_zeroed),
     _hrs_index(hrs_index),
     _humongous_type(NotHumongous), _humongous_start_region(NULL),
     _in_collection_set(false),
     _next_in_special_set(NULL), _orig_end(NULL),
     _claimed(InitialClaimValue), _evacuation_failed(false),
-    _prev_marked_bytes(0), _next_marked_bytes(0), _sort_index(-1),
-    _gc_efficiency(0.0),
+    _prev_marked_bytes(0), _next_marked_bytes(0), _gc_efficiency(0.0),
     _young_type(NotYoung), _next_young_region(NULL),
     _next_dirty_cards_region(NULL), _next(NULL), _pending_removal(false),
 #ifdef ASSERT
@@ -512,40 +514,21 @@ HeapRegion(size_t hrs_index, G1BlockOffsetSharedArray* sharedOffsetArray,
   _rem_set =  new HeapRegionRemSet(sharedOffsetArray, this);
 
   assert(HeapRegionRemSet::num_par_rem_sets() > 0, "Invariant.");
-  // In case the region is allocated during a pause, note the top.
-  // We haven't done any counting on a brand new region.
-  _top_at_conc_mark_count = bottom();
 }
 
-class NextCompactionHeapRegionClosure: public HeapRegionClosure {
-  const HeapRegion* _target;
-  bool _target_seen;
-  HeapRegion* _last;
-  CompactibleSpace* _res;
-public:
-  NextCompactionHeapRegionClosure(const HeapRegion* target) :
-    _target(target), _target_seen(false), _res(NULL) {}
-  bool doHeapRegion(HeapRegion* cur) {
-    if (_target_seen) {
-      if (!cur->isHumongous()) {
-        _res = cur;
-        return true;
-      }
-    } else if (cur == _target) {
-      _target_seen = true;
-    }
-    return false;
-  }
-  CompactibleSpace* result() { return _res; }
-};
-
 CompactibleSpace* HeapRegion::next_compaction_space() const {
+  // We're not using an iterator given that it will wrap around when
+  // it reaches the last region and this is not what we want here.
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
-  // cast away const-ness
-  HeapRegion* r = (HeapRegion*) this;
-  NextCompactionHeapRegionClosure blk(r);
-  g1h->heap_region_iterate_from(r, &blk);
-  return blk.result();
+  uint index = hrs_index() + 1;
+  while (index < g1h->n_regions()) {
+    HeapRegion* hr = g1h->region_at(index);
+    if (!hr->isHumongous()) {
+      return hr;
+    }
+    index += 1;
+  }
+  return NULL;
 }
 
 void HeapRegion::save_marks() {
@@ -587,14 +570,12 @@ void HeapRegion::note_self_forwarding_removal_start(bool during_initial_mark,
     // we find to be self-forwarded on the next bitmap. So all
     // objects need to be below NTAMS.
     _next_top_at_mark_start = top();
-    set_top_at_conc_mark_count(bottom());
     _next_marked_bytes = 0;
   } else if (during_conc_mark) {
     // During concurrent mark, all objects in the CSet (including
     // the ones we find to be self-forwarded) are implicitly live.
     // So all objects need to be above NTAMS.
     _next_top_at_mark_start = bottom();
-    set_top_at_conc_mark_count(bottom());
     _next_marked_bytes = 0;
   }
 }
@@ -779,16 +760,15 @@ void HeapRegion::print_on(outputStream* st) const {
   G1OffsetTableContigSpace::print_on(st);
 }
 
-void HeapRegion::verify(bool allow_dirty) const {
+void HeapRegion::verify() const {
   bool dummy = false;
-  verify(allow_dirty, VerifyOption_G1UsePrevMarking, /* failures */ &dummy);
+  verify(VerifyOption_G1UsePrevMarking, /* failures */ &dummy);
 }
 
 // This really ought to be commoned up into OffsetTableContigSpace somehow.
 // We would need a mechanism to make that code skip dead objects.
 
-void HeapRegion::verify(bool allow_dirty,
-                        VerifyOption vo,
+void HeapRegion::verify(VerifyOption vo,
                         bool* failures) const {
   G1CollectedHeap* g1 = G1CollectedHeap::heap();
   *failures = false;

@@ -336,6 +336,8 @@ class AbstractAssembler : public ResourceObj  {
   // along with the disassembly when printing nmethods.  Currently
   // only supported in the instruction section of the code buffer.
   void block_comment(const char* comment);
+  // Copy str to a buffer that has the same lifetime as the CodeBuffer
+  const char* code_string(const char* str);
 
   // Label functions
   void bind(Label& L); // binds an unbound label L to the current code position
@@ -406,12 +408,8 @@ class AbstractAssembler : public ResourceObj  {
   // offsets in code which must be generated before the object class is loaded.
   // Field offsets are never zero, since an object's header (mark word)
   // is located at offset zero.
-  RegisterOrConstant delayed_value(int(*value_fn)(), Register tmp, int offset = 0) {
-    return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
-  }
-  RegisterOrConstant delayed_value(address(*value_fn)(), Register tmp, int offset = 0) {
-    return delayed_value_impl(delayed_value_addr(value_fn), tmp, offset);
-  }
+  RegisterOrConstant delayed_value(int(*value_fn)(), Register tmp, int offset = 0);
+  RegisterOrConstant delayed_value(address(*value_fn)(), Register tmp, int offset = 0);
   virtual RegisterOrConstant delayed_value_impl(intptr_t* delayed_value_addr, Register tmp, int offset) = 0;
   // Last overloading is platform-dependent; look in assembler_<arch>.cpp.
   static intptr_t* delayed_value_addr(int(*constant_fn)());

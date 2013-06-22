@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include "runtime/globals_extension.hpp"
 #include "runtime/java.hpp"
 #include "services/management.hpp"
+#include "services/memTracker.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/taskqueue.hpp"
 #ifdef TARGET_OS_FAMILY_linux
@@ -368,7 +369,7 @@ inline void SysClassPath::add_suffix(const char* suffix) {
 inline void SysClassPath::reset_item_at(int index) {
   assert(index < _scp_nitems && index != _scp_base, "just checking");
   if (_items[index] != NULL) {
-    FREE_C_HEAP_ARRAY(char, _items[index]);
+    FREE_C_HEAP_ARRAY(char, _items[index], mtInternal);
     _items[index] = NULL;
   }
 }
@@ -400,11 +401,11 @@ void SysClassPath::expand_endorsed() {
       expanded_path = add_jars_to_path(expanded_path, path);
       path = end;
     } else {
-      char* dirpath = NEW_C_HEAP_ARRAY(char, tmp_end - path + 1);
+      char* dirpath = NEW_C_HEAP_ARRAY(char, tmp_end - path + 1, mtInternal);
       memcpy(dirpath, path, tmp_end - path);
       dirpath[tmp_end - path] = '\0';
       expanded_path = add_jars_to_path(expanded_path, dirpath);
-      FREE_C_HEAP_ARRAY(char, dirpath);
+      FREE_C_HEAP_ARRAY(char, dirpath, mtInternal);
       path = tmp_end + 1;
     }
   }
@@ -435,7 +436,7 @@ char* SysClassPath::combined_path() {
   assert(total_len > 0, "empty sysclasspath not allowed");
 
   // Copy the _items to a single string.
-  char* cp = NEW_C_HEAP_ARRAY(char, total_len);
+  char* cp = NEW_C_HEAP_ARRAY(char, total_len, mtInternal);
   char* cp_tmp = cp;
   for (i = 0; i < _scp_nitems; ++i) {
     if (_items[i] != NULL) {
@@ -456,7 +457,7 @@ SysClassPath::add_to_path(const char* path, const char* str, bool prepend) {
   assert(str != NULL, "just checking");
   if (path == NULL) {
     size_t len = strlen(str) + 1;
-    cp = NEW_C_HEAP_ARRAY(char, len);
+    cp = NEW_C_HEAP_ARRAY(char, len, mtInternal);
     memcpy(cp, str, len);                       // copy the trailing null
   } else {
     const char separator = *os::path_separator();
@@ -465,15 +466,15 @@ SysClassPath::add_to_path(const char* path, const char* str, bool prepend) {
     size_t len = old_len + str_len + 2;
 
     if (prepend) {
-      cp = NEW_C_HEAP_ARRAY(char, len);
+      cp = NEW_C_HEAP_ARRAY(char, len, mtInternal);
       char* cp_tmp = cp;
       memcpy(cp_tmp, str, str_len);
       cp_tmp += str_len;
       *cp_tmp = separator;
       memcpy(++cp_tmp, path, old_len + 1);      // copy the trailing null
-      FREE_C_HEAP_ARRAY(char, path);
+      FREE_C_HEAP_ARRAY(char, path, mtInternal);
     } else {
-      cp = REALLOC_C_HEAP_ARRAY(char, path, len);
+      cp = REALLOC_C_HEAP_ARRAY(char, path, len, mtInternal);
       char* cp_tmp = cp + old_len;
       *cp_tmp = separator;
       memcpy(++cp_tmp, str, str_len + 1);       // copy the trailing null
@@ -495,7 +496,7 @@ char* SysClassPath::add_jars_to_path(char* path, const char* directory) {
 
   /* Scan the directory for jars/zips, appending them to path. */
   struct dirent *entry;
-  char *dbuf = NEW_C_HEAP_ARRAY(char, os::readdir_buf_size(directory));
+  char *dbuf = NEW_C_HEAP_ARRAY(char, os::readdir_buf_size(directory), mtInternal);
   while ((entry = os::readdir(dir, (dirent *) dbuf)) != NULL) {
     const char* name = entry->d_name;
     const char* ext = name + strlen(name) - 4;
@@ -503,13 +504,13 @@ char* SysClassPath::add_jars_to_path(char* path, const char* directory) {
       (os::file_name_strcmp(ext, ".jar") == 0 ||
        os::file_name_strcmp(ext, ".zip") == 0);
     if (isJarOrZip) {
-      char* jarpath = NEW_C_HEAP_ARRAY(char, directory_len + 2 + strlen(name));
+      char* jarpath = NEW_C_HEAP_ARRAY(char, directory_len + 2 + strlen(name), mtInternal);
       sprintf(jarpath, "%s%s%s", directory, dir_sep, name);
       path = add_to_path(path, jarpath, false);
-      FREE_C_HEAP_ARRAY(char, jarpath);
+      FREE_C_HEAP_ARRAY(char, jarpath, mtInternal);
     }
   }
-  FREE_C_HEAP_ARRAY(char, dbuf);
+  FREE_C_HEAP_ARRAY(char, dbuf, mtInternal);
   os::closedir(dir);
   return path;
 }
@@ -631,7 +632,7 @@ static bool set_numeric_flag(char* name, char* value, FlagValueOrigin origin) {
 static bool set_string_flag(char* name, const char* value, FlagValueOrigin origin) {
   if (!CommandLineFlags::ccstrAtPut(name, &value, origin))  return false;
   // Contract:  CommandLineFlags always returns a pointer that needs freeing.
-  FREE_C_HEAP_ARRAY(char, value);
+  FREE_C_HEAP_ARRAY(char, value, mtInternal);
   return true;
 }
 
@@ -647,7 +648,7 @@ static bool append_to_string_flag(char* name, const char* new_value, FlagValueOr
   } else if (new_len == 0) {
     value = old_value;
   } else {
-    char* buf = NEW_C_HEAP_ARRAY(char, old_len + 1 + new_len + 1);
+    char* buf = NEW_C_HEAP_ARRAY(char, old_len + 1 + new_len + 1, mtInternal);
     // each new setting adds another LINE to the switch:
     sprintf(buf, "%s\n%s", old_value, new_value);
     value = buf;
@@ -655,10 +656,10 @@ static bool append_to_string_flag(char* name, const char* new_value, FlagValueOr
   }
   (void) CommandLineFlags::ccstrAtPut(name, &value, origin);
   // CommandLineFlags always returns a pointer that needs freeing.
-  FREE_C_HEAP_ARRAY(char, value);
+  FREE_C_HEAP_ARRAY(char, value, mtInternal);
   if (free_this_too != NULL) {
     // CommandLineFlags made its own copy, so I must delete my own temp. buffer.
-    FREE_C_HEAP_ARRAY(char, free_this_too);
+    FREE_C_HEAP_ARRAY(char, free_this_too, mtInternal);
   }
   return true;
 }
@@ -735,9 +736,9 @@ void Arguments::add_string(char*** bldarray, int* count, const char* arg) {
   // expand the array and add arg to the last element
   (*count)++;
   if (*bldarray == NULL) {
-    *bldarray = NEW_C_HEAP_ARRAY(char*, *count);
+    *bldarray = NEW_C_HEAP_ARRAY(char*, *count, mtInternal);
   } else {
-    *bldarray = REALLOC_C_HEAP_ARRAY(char*, *bldarray, *count);
+    *bldarray = REALLOC_C_HEAP_ARRAY(char*, *bldarray, *count, mtInternal);
   }
   (*bldarray)[index] = strdup(arg);
 }
@@ -808,7 +809,8 @@ bool Arguments::process_argument(const char* arg,
     return true;
   }
 
-  const char * const argname = *arg == '+' || *arg == '-' ? arg + 1 : arg;
+  bool has_plus_minus = (*arg == '+' || *arg == '-');
+  const char* const argname = has_plus_minus ? arg + 1 : arg;
   if (is_newly_obsolete(arg, &since)) {
     char version[256];
     since.to_string(version, sizeof(version));
@@ -817,15 +819,31 @@ bool Arguments::process_argument(const char* arg,
   }
 
   // For locked flags, report a custom error message if available.
-  // Otherwise, report the standard unrecognized VM option.
+  // Otherwise, report a standard VM option message.
 
-  Flag* locked_flag = Flag::find_flag((char*)argname, strlen(argname), true);
-  if (locked_flag != NULL) {
+  size_t arg_len;
+  const char* equal_sign = strchr(argname, '=');
+  if (equal_sign == NULL) {
+    arg_len = strlen(argname);
+  } else {
+    arg_len = equal_sign - argname;
+  }
+
+  Flag* found_flag = Flag::find_flag((char*)argname, arg_len, true);
+  if (found_flag != NULL) {
     char locked_message_buf[BUFLEN];
-    locked_flag->get_locked_message(locked_message_buf, BUFLEN);
+    found_flag->get_locked_message(locked_message_buf, BUFLEN);
     if (strlen(locked_message_buf) == 0) {
-      jio_fprintf(defaultStream::error_stream(),
-        "Unrecognized VM option '%s'\n", argname);
+     if (found_flag->is_bool() && !has_plus_minus) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Missing +/- setting for VM option '%s'\n", argname);
+      } else if (!found_flag->is_bool() && has_plus_minus) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Unexpected +/- setting in VM option '%s'\n", argname);
+      } else {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Improperly specified VM option '%s'\n", argname);
+      }
     } else {
       jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
     }
@@ -917,13 +935,13 @@ bool Arguments::add_property(const char* prop) {
   char* value = (char *)ns;
 
   size_t key_len = (eq == NULL) ? strlen(prop) : (eq - prop);
-  key = AllocateHeap(key_len + 1, "add_property");
+  key = AllocateHeap(key_len + 1, mtInternal);
   strncpy(key, prop, key_len);
   key[key_len] = '\0';
 
   if (eq != NULL) {
     size_t value_len = strlen(prop) - key_len - 1;
-    value = AllocateHeap(value_len + 1, "add_property");
+    value = AllocateHeap(value_len + 1, mtInternal);
     strncpy(value, &prop[key_len + 1], value_len + 1);
   }
 
@@ -1053,7 +1071,6 @@ void Arguments::set_tiered_flags() {
   }
 }
 
-#ifndef KERNEL
 static void disable_adaptive_size_policy(const char* collector_name) {
   if (UseAdaptiveSizePolicy) {
     if (FLAG_IS_CMDLINE(UseAdaptiveSizePolicy)) {
@@ -1140,7 +1157,6 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     set_parnew_gc_flags();
   }
 
-  // MaxHeapSize is aligned down in collectorPolicy
   size_t max_heap = align_size_down(MaxHeapSize,
                                     CardTableRS::ct_max_alignment_constraint());
 
@@ -1178,10 +1194,6 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     }
 
     // Code along this path potentially sets NewSize and OldSize
-
-    assert(max_heap >= InitialHeapSize, "Error");
-    assert(max_heap >= NewSize, "Error");
-
     if (PrintGCDetails && Verbose) {
       // Too early to use gclog_or_tty
       tty->print_cr("CMS set min_heap_size: " SIZE_FORMAT
@@ -1273,7 +1285,6 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     tty->print_cr("ConcGCThreads: %u", ConcGCThreads);
   }
 }
-#endif // KERNEL
 
 void set_object_alignment() {
   // Object alignment.
@@ -1290,10 +1301,8 @@ void set_object_alignment() {
   // Oop encoding heap max
   OopEncodingHeapMax = (uint64_t(max_juint) + 1) << LogMinObjAlignmentInBytes;
 
-#ifndef KERNEL
   // Set CMS global values
   CompactibleFreeListSpace::set_cms_values();
-#endif // KERNEL
 }
 
 bool verify_object_alignment() {
@@ -1915,7 +1924,7 @@ bool Arguments::check_vm_args_consistency() {
       (ExplicitGCInvokesConcurrent ||
        ExplicitGCInvokesConcurrentAndUnloadsClasses)) {
     jio_fprintf(defaultStream::error_stream(),
-                "error: +ExplictGCInvokesConcurrent[AndUnloadsClasses] conflicts"
+                "error: +ExplicitGCInvokesConcurrent[AndUnloadsClasses] conflicts"
                 " with -UseAsyncConcMarkSweepGC");
     status = false;
   }
@@ -1930,6 +1939,10 @@ bool Arguments::check_vm_args_consistency() {
                                         "G1RefProcDrainInterval");
     status = status && verify_min_value((intx)G1ConcMarkStepDurationMillis, 1,
                                         "G1ConcMarkStepDurationMillis");
+    status = status && verify_interval(G1ConcRSHotCardLimit, 0, max_jubyte,
+                                       "G1ConcRSHotCardLimit");
+    status = status && verify_interval(G1ConcRSLogCacheSize, 0, 31,
+                                       "G1ConcRSLogCacheSize");
   }
 #endif
 
@@ -1944,6 +1957,25 @@ bool Arguments::check_vm_args_consistency() {
                                      1, 100, "TLABWasteTargetPercent");
 
   status = status && verify_object_alignment();
+
+#ifdef SPARC
+  if (UseConcMarkSweepGC || UseG1GC) {
+    // Issue a stern warning if the user has explicitly set
+    // UseMemSetInBOT (it is known to cause issues), but allow
+    // use for experimentation and debugging.
+    if (VM_Version::is_sun4v() && UseMemSetInBOT) {
+      assert(!FLAG_IS_DEFAULT(UseMemSetInBOT), "Error");
+      warning("Experimental flag -XX:+UseMemSetInBOT is known to cause instability"
+          " on sun4v; please understand that you are using at your own risk!");
+    }
+  }
+#endif // SPARC
+
+  // check native memory tracking flags
+  if (PrintNMTStatistics && MemTracker::tracking_level() == MemTracker::NMT_off) {
+    warning("PrintNMTStatistics is disabled, because native memory tracking is not enabled");
+    PrintNMTStatistics = false;
+  }
 
   return status;
 }
@@ -2058,12 +2090,12 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
     const char* altclasses_jar = "alt-rt.jar";
     size_t altclasses_path_len = strlen(get_meta_index_dir()) + 1 +
                                  strlen(altclasses_jar);
-    char* altclasses_path = NEW_C_HEAP_ARRAY(char, altclasses_path_len);
+    char* altclasses_path = NEW_C_HEAP_ARRAY(char, altclasses_path_len, mtInternal);
     strcpy(altclasses_path, get_meta_index_dir());
     strcat(altclasses_path, altclasses_jar);
     scp.add_suffix_to_prefix(altclasses_path);
     scp_assembly_required = true;
-    FREE_C_HEAP_ARRAY(char, altclasses_path);
+    FREE_C_HEAP_ARRAY(char, altclasses_path, mtInternal);
   }
 
   // Parse _JAVA_OPTIONS environment variable (if present) (mimics classic VM)
@@ -2148,19 +2180,14 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       if (tail != NULL) {
         const char* pos = strchr(tail, ':');
         size_t len = (pos == NULL) ? strlen(tail) : pos - tail;
-        char* name = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len + 1), tail, len);
+        char* name = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len + 1, mtInternal), tail, len);
         name[len] = '\0';
 
         char *options = NULL;
         if(pos != NULL) {
           size_t len2 = strlen(pos+1) + 1; // options start after ':'.  Final zero must be copied.
-          options = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len2), pos+1, len2);
+          options = (char*)memcpy(NEW_C_HEAP_ARRAY(char, len2, mtInternal), pos+1, len2);
         }
-#ifdef JVMTI_KERNEL
-        if ((strcmp(name, "hprof") == 0) || (strcmp(name, "jdwp") == 0)) {
-          warning("profiling and debugging agents are not supported with Kernel VM");
-        } else
-#endif // JVMTI_KERNEL
         add_init_library(name, options);
       }
     // -agentlib and -agentpath
@@ -2169,25 +2196,20 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       if(tail != NULL) {
         const char* pos = strchr(tail, '=');
         size_t len = (pos == NULL) ? strlen(tail) : pos - tail;
-        char* name = strncpy(NEW_C_HEAP_ARRAY(char, len + 1), tail, len);
+        char* name = strncpy(NEW_C_HEAP_ARRAY(char, len + 1, mtInternal), tail, len);
         name[len] = '\0';
 
         char *options = NULL;
         if(pos != NULL) {
-          options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(pos + 1) + 1), pos + 1);
+          options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(pos + 1) + 1, mtInternal), pos + 1);
         }
-#ifdef JVMTI_KERNEL
-        if ((strcmp(name, "hprof") == 0) || (strcmp(name, "jdwp") == 0)) {
-          warning("profiling and debugging agents are not supported with Kernel VM");
-        } else
-#endif // JVMTI_KERNEL
         add_init_agent(name, options, is_absolute_path);
 
       }
     // -javaagent
     } else if (match_option(option, "-javaagent:", &tail)) {
       if(tail != NULL) {
-        char *options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(tail) + 1), tail);
+        char *options = strcpy(NEW_C_HEAP_ARRAY(char, strlen(tail) + 1, mtInternal), tail);
         add_init_agent("instrument", options, false);
       }
     // -Xnoclassgc
@@ -2321,12 +2343,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
           // EVM option, ignore silently for compatibility
     // -Xprof
     } else if (match_option(option, "-Xprof", &tail)) {
-#ifndef FPROF_KERNEL
       _has_profile = true;
-#else // FPROF_KERNEL
-      // do we have to exit?
-      warning("Kernel VM does not support flat profiling.");
-#endif // FPROF_KERNEL
     // -Xaprof
     } else if (match_option(option, "-Xaprof", &tail)) {
       _has_alloc_profile = true;
@@ -2377,9 +2394,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 #elif defined(COMPILER2)
       vm_exit_during_initialization(
           "Dumping a shared archive is not supported on the Server JVM.", NULL);
-#elif defined(KERNEL)
-      vm_exit_during_initialization(
-          "Dumping a shared archive is not supported on the Kernel JVM.", NULL);
 #else
       FLAG_SET_CMDLINE(bool, DumpSharedSpaces, true);
       set_mode_flags(_int);     // Prevent compilation, which creates objects
@@ -2695,6 +2709,17 @@ SOLARIS_ONLY(
         return JNI_EINVAL;
       }
       FLAG_SET_CMDLINE(uintx, ConcGCThreads, conc_threads);
+    } else if (match_option(option, "-XX:MaxDirectMemorySize=", &tail)) {
+      julong max_direct_memory_size = 0;
+      ArgsRange errcode = parse_memory_size(tail, &max_direct_memory_size, 0);
+      if (errcode != arg_in_range) {
+        jio_fprintf(defaultStream::error_stream(),
+                    "Invalid maximum direct memory size: %s\n",
+                    option->optionString);
+        describe_range_error(errcode);
+        return JNI_EINVAL;
+      }
+      FLAG_SET_CMDLINE(uintx, MaxDirectMemorySize, max_direct_memory_size);
     } else if (match_option(option, "-XX:", &tail)) { // -XX:xxxx
       // Skip -XX:Flags= since that case has already been handled
       if (strncmp(tail, "Flags=", strlen("Flags=")) != 0) {
@@ -2945,7 +2970,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   char *end = strrchr(jvm_path, *os::file_separator());
   if (end != NULL) *end = '\0';
   char *shared_archive_path = NEW_C_HEAP_ARRAY(char, strlen(jvm_path) +
-                                        strlen(os::file_separator()) + 20);
+      strlen(os::file_separator()) + 20, mtInternal);
   if (shared_archive_path == NULL) return JNI_ENOMEM;
   strcpy(shared_archive_path, jvm_path);
   strcat(shared_archive_path, os::file_separator());
@@ -2986,6 +3011,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
+    if (match_option(option, "-XX:NativeMemoryTracking", &tail)) {
+      MemTracker::init_tracking_options(tail);
+    }
+
 
 #ifndef PRODUCT
     if (match_option(option, "-XX:+PrintFlagsWithComments", &tail)) {
@@ -3058,15 +3087,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
 #endif // PRODUCT
 
-  // Transitional
-  if (EnableMethodHandles || AnonymousClasses) {
-    if (!EnableInvokeDynamic && !FLAG_IS_DEFAULT(EnableInvokeDynamic)) {
-      warning("EnableMethodHandles and AnonymousClasses are obsolete.  Keeping EnableInvokeDynamic disabled.");
-    } else {
-      EnableInvokeDynamic = true;
-    }
-  }
-
   // JSR 292 is not supported before 1.7
   if (!JDK_Version::is_gte_jdk17x_version()) {
     if (EnableInvokeDynamic) {
@@ -3095,15 +3115,20 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     PrintGC = true;
   }
 
+  if (!JDK_Version::is_gte_jdk18x_version()) {
+    // To avoid changing the log format for 7 updates this flag is only
+    // true by default in JDK8 and above.
+    if (FLAG_IS_DEFAULT(PrintGCCause)) {
+      FLAG_SET_DEFAULT(PrintGCCause, false);
+    }
+  }
+
   // Set object alignment values.
   set_object_alignment();
 
 #ifdef SERIALGC
   force_serial_gc();
 #endif // SERIALGC
-#ifdef KERNEL
-  no_shared_spaces();
-#endif // KERNEL
 
   // Set flags based on ergonomics.
   set_ergonomics_flags();
@@ -3124,8 +3149,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
         "Incompatible compilation policy selected", NULL);
     }
   }
-
-#ifndef KERNEL
   // Set heap size based on available physical memory
   set_heap_size();
   // Set per-collector flags
@@ -3138,7 +3161,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   } else if (UseG1GC) {
     set_g1_gc_flags();
   }
-#endif // KERNEL
 
 #ifdef SERIALGC
   assert(verify_serial_gc_flags(), "SerialGC unset");
@@ -3180,6 +3202,18 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
   if (!EliminateLocks) {
     EliminateNestedLocks = false;
+  }
+  if (!Inline) {
+    IncrementalInline = false;
+  }
+#ifndef PRODUCT
+  if (!IncrementalInline) {
+    AlwaysIncrementalInline = false;
+  }
+#endif
+  if (IncrementalInline && FLAG_IS_DEFAULT(MaxNodeLimit)) {
+    // incremental inlining: bump MaxNodeLimit
+    FLAG_SET_DEFAULT(MaxNodeLimit, (intx)75000);
   }
 #endif
 
@@ -3312,36 +3346,6 @@ void Arguments::PropertyList_unique_add(SystemProperty** plist, const char* k, c
 
   PropertyList_add(plist, k, v);
 }
-
-#ifdef KERNEL
-char *Arguments::get_kernel_properties() {
-  // Find properties starting with kernel and append them to string
-  // We need to find out how long they are first because the URL's that they
-  // might point to could get long.
-  int length = 0;
-  SystemProperty* prop;
-  for (prop = _system_properties; prop != NULL; prop = prop->next()) {
-    if (strncmp(prop->key(), "kernel.", 7 ) == 0) {
-      length += (strlen(prop->key()) + strlen(prop->value()) + 5);  // "-D ="
-    }
-  }
-  // Add one for null terminator.
-  char *props = AllocateHeap(length + 1, "get_kernel_properties");
-  if (length != 0) {
-    int pos = 0;
-    for (prop = _system_properties; prop != NULL; prop = prop->next()) {
-      if (strncmp(prop->key(), "kernel.", 7 ) == 0) {
-        jio_snprintf(&props[pos], length-pos,
-                     "-D%s=%s ", prop->key(), prop->value());
-        pos = strlen(props);
-      }
-    }
-  }
-  // null terminate props in case of null
-  props[length] = '\0';
-  return props;
-}
-#endif // KERNEL
 
 // Copies src into buf, replacing "%%" with "%" and "%p" with pid
 // Returns true if all of the source pointed by src has been copied over to

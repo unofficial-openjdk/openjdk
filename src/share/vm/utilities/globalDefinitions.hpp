@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,10 +161,6 @@ const size_t M                  = K*K;
 const size_t G                  = M*K;
 const size_t HWperKB            = K / sizeof(HeapWord);
 
-const size_t LOG_K              = 10;
-const size_t LOG_M              = 2 * LOG_K;
-const size_t LOG_G              = 2 * LOG_M;
-
 const jint min_jint = (jint)1 << (sizeof(jint)*BitsPerByte-1); // 0x80000000 == smallest jint
 const jint max_jint = (juint)min_jint - 1;                     // 0x7FFFFFFF == largest jint
 
@@ -179,6 +175,11 @@ const jlong NANOSECS_PER_SEC      = CONST64(1000000000);
 const jint  NANOSECS_PER_MILLISEC = 1000000;
 
 inline const char* proper_unit_for_byte_size(size_t s) {
+#ifdef _LP64
+  if (s >= 10*G) {
+    return "G";
+  }
+#endif
   if (s >= 10*M) {
     return "M";
   } else if (s >= 10*K) {
@@ -188,16 +189,21 @@ inline const char* proper_unit_for_byte_size(size_t s) {
   }
 }
 
-inline size_t byte_size_in_proper_unit(size_t s) {
+template <class T>
+inline T byte_size_in_proper_unit(T s) {
+#ifdef _LP64
+  if (s >= 10*G) {
+    return (T)(s/G);
+  }
+#endif
   if (s >= 10*M) {
-    return s/M;
+    return (T)(s/M);
   } else if (s >= 10*K) {
-    return s/K;
+    return (T)(s/K);
   } else {
     return s;
   }
 }
-
 
 //----------------------------------------------------------------------------------------------------
 // VM type definitions
@@ -698,18 +704,6 @@ inline BasicType as_BasicType(TosState state) {
 // Helper function to convert BasicType info into TosState
 // Note: Cannot define here as it uses global constant at the time being.
 TosState as_TosState(BasicType type);
-
-
-// ReferenceType is used to distinguish between java/lang/ref/Reference subclasses
-
-enum ReferenceType {
- REF_NONE,      // Regular class
- REF_OTHER,     // Subclass of java/lang/ref/Reference, but not subclass of one of the classes below
- REF_SOFT,      // Subclass of java/lang/ref/SoftReference
- REF_WEAK,      // Subclass of java/lang/ref/WeakReference
- REF_FINAL,     // Subclass of java/lang/ref/FinalReference
- REF_PHANTOM    // Subclass of java/lang/ref/PhantomReference
-};
 
 
 // JavaThreadState keeps track of which part of the code a thread is executing in. This

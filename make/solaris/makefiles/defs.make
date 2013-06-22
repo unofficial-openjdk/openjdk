@@ -59,6 +59,18 @@ else
   endif
 endif
 
+# On 32 bit solaris we build server and client, on 64 bit just server.
+ifeq ($(JVM_VARIANTS),)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+    JVM_VARIANTS:=client,server
+    JVM_VARIANT_CLIENT:=true
+    JVM_VARIANT_SERVER:=true
+  else
+    JVM_VARIANTS:=server
+    JVM_VARIANT_SERVER:=true
+  endif
+endif
+
 # determine if HotSpot is being built in JDK6 or earlier version
 JDK6_OR_EARLIER=0
 ifeq "$(shell expr \( '$(JDK_MAJOR_VERSION)' != '' \& '$(JDK_MINOR_VERSION)' != '' \& '$(JDK_MICRO_VERSION)' != '' \))" "1"
@@ -97,60 +109,63 @@ ifeq ($(JDK6_OR_EARLIER),0)
   # overridden in some situations, e.g., a BUILD_FLAVOR != product
   # build.
 
-  ifeq ($(BUILD_FLAVOR), product)
-    FULL_DEBUG_SYMBOLS ?= 1
-    ENABLE_FULL_DEBUG_SYMBOLS = $(FULL_DEBUG_SYMBOLS)
-  else
-    # debug variants always get Full Debug Symbols (if available)
-    ENABLE_FULL_DEBUG_SYMBOLS = 1
-  endif
-  _JUNK_ := $(shell \
-    echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
-  # since objcopy is optional, we set ZIP_DEBUGINFO_FILES later
-
-  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-    # Default OBJCOPY comes from the SUNWbinutils package:
-    DEF_OBJCOPY=/usr/sfw/bin/gobjcopy
-    OBJCOPY=$(shell test -x $(DEF_OBJCOPY) && echo $(DEF_OBJCOPY))
-    ifneq ($(ALT_OBJCOPY),)
-      _JUNK_ := $(shell echo >&2 "INFO: ALT_OBJCOPY=$(ALT_OBJCOPY)")
-      OBJCOPY=$(shell test -x $(ALT_OBJCOPY) && echo $(ALT_OBJCOPY))
+  # Due to the multiple sub-make processes that occur this logic gets
+  # executed multiple times. We reduce the noise by at least checking that
+  # BUILD_FLAVOR has been set.
+  ifneq ($(BUILD_FLAVOR),)
+    ifeq ($(BUILD_FLAVOR), product)
+      FULL_DEBUG_SYMBOLS ?= 1
+      ENABLE_FULL_DEBUG_SYMBOLS = $(FULL_DEBUG_SYMBOLS)
+    else
+      # debug variants always get Full Debug Symbols (if available)
+      ENABLE_FULL_DEBUG_SYMBOLS = 1
     endif
-  else
-    OBJCOPY=
-  endif
-
-  ifeq ($(OBJCOPY),)
-    _JUNK_ := $(shell \
-      echo >&2 "INFO: no objcopy cmd found so cannot create .debuginfo files.")
-    ENABLE_FULL_DEBUG_SYMBOLS=0
     _JUNK_ := $(shell \
       echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
-  else
-    _JUNK_ := $(shell \
-      echo >&2 "INFO: $(OBJCOPY) cmd found so will create .debuginfo files.")
+    # since objcopy is optional, we set ZIP_DEBUGINFO_FILES later
 
-    # Library stripping policies for .debuginfo configs:
-    #   all_strip - strips everything from the library
-    #   min_strip - strips most stuff from the library; leaves minimum symbols
-    #   no_strip  - does not strip the library at all
-    #
-    # Oracle security policy requires "all_strip". A waiver was granted on
-    # 2011.09.01 that permits using "min_strip" in the Java JDK and Java JRE.
-    #
-    # Currently, STRIP_POLICY is only used when Full Debug Symbols is enabled.
-    #
-    STRIP_POLICY ?= min_strip
+    ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+      # Default OBJCOPY comes from the SUNWbinutils package:
+      DEF_OBJCOPY=/usr/sfw/bin/gobjcopy
+      OBJCOPY=$(shell test -x $(DEF_OBJCOPY) && echo $(DEF_OBJCOPY))
+      ifneq ($(ALT_OBJCOPY),)
+        _JUNK_ := $(shell echo >&2 "INFO: ALT_OBJCOPY=$(ALT_OBJCOPY)")
+        OBJCOPY=$(shell test -x $(ALT_OBJCOPY) && echo $(ALT_OBJCOPY))
+      endif
 
-    _JUNK_ := $(shell \
-      echo >&2 "INFO: STRIP_POLICY=$(STRIP_POLICY)")
+      ifeq ($(OBJCOPY),)
+        _JUNK_ := $(shell \
+          echo >&2 "INFO: no objcopy cmd found so cannot create .debuginfo files.")
+        ENABLE_FULL_DEBUG_SYMBOLS=0
+        _JUNK_ := $(shell \
+          echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
+      else
+        _JUNK_ := $(shell \
+          echo >&2 "INFO: $(OBJCOPY) cmd found so will create .debuginfo files.")
 
-    ZIP_DEBUGINFO_FILES ?= 1
+        # Library stripping policies for .debuginfo configs:
+        #   all_strip - strips everything from the library
+        #   min_strip - strips most stuff from the library; leaves minimum symbols
+        #   no_strip  - does not strip the library at all
+        #
+        # Oracle security policy requires "all_strip". A waiver was granted on
+        # 2011.09.01 that permits using "min_strip" in the Java JDK and Java JRE.
+        #
+        # Currently, STRIP_POLICY is only used when Full Debug Symbols is enabled.
+        #
+        STRIP_POLICY ?= min_strip
 
-    _JUNK_ := $(shell \
-      echo >&2 "INFO: ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)")
-  endif
-endif
+        _JUNK_ := $(shell \
+          echo >&2 "INFO: STRIP_POLICY=$(STRIP_POLICY)")
+
+        ZIP_DEBUGINFO_FILES ?= 1
+
+        _JUNK_ := $(shell \
+          echo >&2 "INFO: ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)")
+      endif
+    endif # ENABLE_FULL_DEBUG_SYMBOLS=1
+  endif # BUILD_FLAVOR
+endif # JDK_6_OR_EARLIER
 
 JDK_INCLUDE_SUBDIR=solaris
 
@@ -175,55 +190,60 @@ endif
 EXPORT_SERVER_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/server
 EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
 
-ifneq ($(BUILD_CLIENT_ONLY),true)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.$(LIBRARY_SUFFIX)
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
+ifeq ($(JVM_VARIANT_SERVER),true)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.$(LIBRARY_SUFFIX)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  ifeq ($(ARCH_DATA_MODEL),32)
+    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
+    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  endif
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
     ifeq ($(ZIP_DEBUGINFO_FILES),1)
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.diz
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.diz
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.diz
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.diz
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.diz
+      endif
     else
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.debuginfo
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_db.debuginfo
       EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm_dtrace.debuginfo
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.debuginfo
+        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.debuginfo
+      endif
     endif
   endif
 endif
-ifeq ($(ARCH_DATA_MODEL), 32)
+ifeq ($(JVM_VARIANT_CLIENT),true)
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.$(LIBRARY_SUFFIX) 
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.$(LIBRARY_SUFFIX) 
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.$(LIBRARY_SUFFIX)
-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
-  EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  ifeq ($(ARCH_DATA_MODEL),32)
+    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
+    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
+  endif
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
     ifeq ($(ZIP_DEBUGINFO_FILES),1)
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.diz
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.diz
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.diz
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.diz
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.diz
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.diz
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.diz
+      endif
     else
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.debuginfo
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_db.debuginfo
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm_dtrace.debuginfo
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.debuginfo
-      EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.debuginfo
-    endif
-  endif
-  ifneq ($(BUILD_CLIENT_ONLY), true)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.$(LIBRARY_SUFFIX)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.$(LIBRARY_SUFFIX)
-    ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-      ifeq ($(ZIP_DEBUGINFO_FILES),1)
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.diz
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.diz
-      else
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_db.debuginfo
-        EXPORT_LIST += $(EXPORT_SERVER_DIR)/64/libjvm_dtrace.debuginfo
+      ifeq ($(ARCH_DATA_MODEL),32)
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_db.debuginfo
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/64/libjvm_dtrace.debuginfo
       endif
     endif
   endif

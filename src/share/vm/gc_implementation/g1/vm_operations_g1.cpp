@@ -26,7 +26,10 @@
 #include "gc_implementation/g1/concurrentMarkThread.inline.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
+#include "gc_implementation/g1/g1Log.hpp"
 #include "gc_implementation/g1/vm_operations_g1.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/isGCActiveMark.hpp"
 #include "gc_implementation/g1/vm_operations_g1.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -41,6 +44,7 @@ VM_G1CollectForAllocation::VM_G1CollectForAllocation(
 
 void VM_G1CollectForAllocation::doit() {
   G1CollectedHeap* g1h = G1CollectedHeap::heap();
+  GCCauseSetter x(g1h, _gc_cause);
   _result = g1h->satisfy_failed_allocation(_word_size, &_pause_succeeded);
   assert(_result == NULL || _pause_succeeded,
          "if we get back a result, the pause should have succeeded");
@@ -62,7 +66,7 @@ VM_G1IncCollectionPause::VM_G1IncCollectionPause(
     _should_initiate_conc_mark(should_initiate_conc_mark),
     _target_pause_time_ms(target_pause_time_ms),
     _should_retry_gc(false),
-    _full_collections_completed_before(0) {
+    _old_marking_cycles_completed_before(0) {
   guarantee(target_pause_time_ms > 0.0,
             err_msg("target_pause_time_ms = %1.6lf should be positive",
                     target_pause_time_ms));
@@ -110,11 +114,11 @@ void VM_G1IncCollectionPause::doit() {
 
   GCCauseSetter x(g1h, _gc_cause);
   if (_should_initiate_conc_mark) {
-    // It's safer to read full_collections_completed() here, given
+    // It's safer to read old_marking_cycles_completed() here, given
     // that noone else will be updating it concurrently. Since we'll
     // only need it if we're initiating a marking cycle, no point in
     // setting it earlier.
-    _full_collections_completed_before = g1h->full_collections_completed();
+    _old_marking_cycles_completed_before = g1h->old_marking_cycles_completed();
 
     // At this point we are supposed to start a concurrent cycle. We
     // will do so if one is not already in progress.
@@ -179,17 +183,17 @@ void VM_G1IncCollectionPause::doit_epilogue() {
 
     G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
-    // In the doit() method we saved g1h->full_collections_completed()
-    // in the _full_collections_completed_before field. We have to
-    // wait until we observe that g1h->full_collections_completed()
+    // In the doit() method we saved g1h->old_marking_cycles_completed()
+    // in the _old_marking_cycles_completed_before field. We have to
+    // wait until we observe that g1h->old_marking_cycles_completed()
     // has increased by at least one. This can happen if a) we started
     // a cycle and it completes, b) a cycle already in progress
     // completes, or c) a Full GC happens.
 
     // If the condition has already been reached, there's no point in
     // actually taking the lock and doing the wait.
-    if (g1h->full_collections_completed() <=
-                                          _full_collections_completed_before) {
+    if (g1h->old_marking_cycles_completed() <=
+                                          _old_marking_cycles_completed_before) {
       // The following is largely copied from CMS
 
       Thread* thr = Thread::current();
@@ -198,8 +202,8 @@ void VM_G1IncCollectionPause::doit_epilogue() {
       ThreadToNativeFromVM native(jt);
 
       MutexLockerEx x(FullGCCount_lock, Mutex::_no_safepoint_check_flag);
-      while (g1h->full_collections_completed() <=
-                                          _full_collections_completed_before) {
+      while (g1h->old_marking_cycles_completed() <=
+                                          _old_marking_cycles_completed_before) {
         FullGCCount_lock->wait(Mutex::_no_safepoint_check_flag);
       }
     }
@@ -223,9 +227,8 @@ void VM_CGC_Operation::release_and_notify_pending_list_lock() {
 }
 
 void VM_CGC_Operation::doit() {
-  gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
-  TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
-  TraceTime t(_printGCMessage, PrintGC, true, gclog_or_tty);
+  TraceCPUTime tcpu(G1Log::finer(), true, gclog_or_tty);
+  GCTraceTime t(_printGCMessage, G1Log::fine(), true, G1CollectedHeap::heap()->gc_timer_cm());
   SharedHeap* sh = SharedHeap::heap();
   // This could go away if CollectedHeap gave access to _gc_is_active...
   if (sh != NULL) {

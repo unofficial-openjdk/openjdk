@@ -36,8 +36,12 @@
 #include "gc_implementation/concurrentMarkSweep/vmCMSOperations.hpp"
 #include "gc_implementation/parNew/parNewGeneration.hpp"
 #include "gc_implementation/shared/collectorCounters.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
 #include "gc_implementation/shared/isGCActiveMark.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
+#include "memory/allocation.hpp"
 #include "memory/cardTableRS.hpp"
 #include "memory/collectorPolicy.hpp"
 #include "memory/gcLocker.inline.hpp"
@@ -58,7 +62,8 @@
 
 // statics
 CMSCollector* ConcurrentMarkSweepGeneration::_collector = NULL;
-bool          CMSCollector::_full_gc_requested          = false;
+bool CMSCollector::_full_gc_requested = false;
+GCCause::Cause CMSCollector::_full_gc_cause = GCCause::_no_gc;
 
 //////////////////////////////////////////////////////////////////
 // In support of CMS/VM thread synchronization
@@ -174,7 +179,7 @@ NOT_PRODUCT(CompactibleFreeListSpace* debug_cms_space;)
 
 // This struct contains per-thread things necessary to support parallel
 // young-gen collection.
-class CMSParGCThreadState: public CHeapObj {
+class CMSParGCThreadState: public CHeapObj<mtGC> {
  public:
   CFLS_LAB lab;
   PromotionInfo promo;
@@ -188,7 +193,7 @@ class CMSParGCThreadState: public CHeapObj {
 ConcurrentMarkSweepGeneration::ConcurrentMarkSweepGeneration(
      ReservedSpace rs, size_t initial_byte_size, int level,
      CardTableRS* ct, bool use_adaptive_freelists,
-     FreeBlockDictionary::DictionaryChoice dictionaryChoice) :
+     FreeBlockDictionary<FreeChunk>::DictionaryChoice dictionaryChoice) :
   CardGeneration(rs, initial_byte_size, level, ct),
   _dilatation_factor(((double)MinChunkSize)/((double)(CollectedHeap::min_fill_size()))),
   _debug_collection_type(Concurrent_collection_type)
@@ -229,7 +234,7 @@ ConcurrentMarkSweepGeneration::ConcurrentMarkSweepGeneration(
   if (CollectedHeap::use_parallel_gc_threads()) {
     typedef CMSParGCThreadState* CMSParGCThreadStatePtr;
     _par_gc_thread_states =
-      NEW_C_HEAP_ARRAY(CMSParGCThreadStatePtr, ParallelGCThreads);
+      NEW_C_HEAP_ARRAY(CMSParGCThreadStatePtr, ParallelGCThreads, mtGC);
     if (_par_gc_thread_states == NULL) {
       vm_exit_during_initialization("Could not allocate par gc structs");
     }
@@ -597,7 +602,10 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   _concurrent_cycles_since_last_unload(0),
   _roots_scanning_options(0),
   _inter_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
-  _intra_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding)
+  _intra_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
+  _gc_tracer_cm(new (ResourceObj::C_HEAP, mtGC) CMSTracer()),
+  _gc_timer_cm(new (ResourceObj::C_HEAP, mtGC) ConcurrentGCTimer()),
+  _cms_start_registered(false)
 {
   if (ExplicitGCInvokesConcurrentAndUnloadsClasses) {
     ExplicitGCInvokesConcurrent = true;
@@ -687,7 +695,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
         warning("task_queues allocation failure.");
         return;
       }
-      _hash_seed = NEW_C_HEAP_ARRAY(int, num_queues);
+      _hash_seed = NEW_C_HEAP_ARRAY(int, num_queues, mtGC);
       if (_hash_seed == NULL) {
         warning("_hash_seed array allocation failure");
         return;
@@ -737,7 +745,7 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
     assert(_young_gen != NULL, "no _young_gen");
     _eden_chunk_index = 0;
     _eden_chunk_capacity = (_young_gen->max_capacity()+CMSSamplingGrain)/CMSSamplingGrain;
-    _eden_chunk_array = NEW_C_HEAP_ARRAY(HeapWord*, _eden_chunk_capacity);
+    _eden_chunk_array = NEW_C_HEAP_ARRAY(HeapWord*, _eden_chunk_capacity, mtGC);
     if (_eden_chunk_array == NULL) {
       _eden_chunk_capacity = 0;
       warning("GC/CMS: _eden_chunk_array allocation failure");
@@ -750,35 +758,35 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
     const size_t max_plab_samples =
       ((DefNewGeneration*)_young_gen)->max_survivor_size()/MinTLABSize;
 
-    _survivor_plab_array  = NEW_C_HEAP_ARRAY(ChunkArray, ParallelGCThreads);
-    _survivor_chunk_array = NEW_C_HEAP_ARRAY(HeapWord*, 2*max_plab_samples);
-    _cursor               = NEW_C_HEAP_ARRAY(size_t, ParallelGCThreads);
+    _survivor_plab_array  = NEW_C_HEAP_ARRAY(ChunkArray, ParallelGCThreads, mtGC);
+    _survivor_chunk_array = NEW_C_HEAP_ARRAY(HeapWord*, 2*max_plab_samples, mtGC);
+    _cursor               = NEW_C_HEAP_ARRAY(size_t, ParallelGCThreads, mtGC);
     if (_survivor_plab_array == NULL || _survivor_chunk_array == NULL
         || _cursor == NULL) {
       warning("Failed to allocate survivor plab/chunk array");
       if (_survivor_plab_array  != NULL) {
-        FREE_C_HEAP_ARRAY(ChunkArray, _survivor_plab_array);
+        FREE_C_HEAP_ARRAY(ChunkArray, _survivor_plab_array, mtGC);
         _survivor_plab_array = NULL;
       }
       if (_survivor_chunk_array != NULL) {
-        FREE_C_HEAP_ARRAY(HeapWord*, _survivor_chunk_array);
+        FREE_C_HEAP_ARRAY(HeapWord*, _survivor_chunk_array, mtGC);
         _survivor_chunk_array = NULL;
       }
       if (_cursor != NULL) {
-        FREE_C_HEAP_ARRAY(size_t, _cursor);
+        FREE_C_HEAP_ARRAY(size_t, _cursor, mtGC);
         _cursor = NULL;
       }
     } else {
       _survivor_chunk_capacity = 2*max_plab_samples;
       for (uint i = 0; i < ParallelGCThreads; i++) {
-        HeapWord** vec = NEW_C_HEAP_ARRAY(HeapWord*, max_plab_samples);
+        HeapWord** vec = NEW_C_HEAP_ARRAY(HeapWord*, max_plab_samples, mtGC);
         if (vec == NULL) {
           warning("Failed to allocate survivor plab array");
           for (int j = i; j > 0; j--) {
-            FREE_C_HEAP_ARRAY(HeapWord*, _survivor_plab_array[j-1].array());
+            FREE_C_HEAP_ARRAY(HeapWord*, _survivor_plab_array[j-1].array(), mtGC);
           }
-          FREE_C_HEAP_ARRAY(ChunkArray, _survivor_plab_array);
-          FREE_C_HEAP_ARRAY(HeapWord*, _survivor_chunk_array);
+          FREE_C_HEAP_ARRAY(ChunkArray, _survivor_plab_array, mtGC);
+          FREE_C_HEAP_ARRAY(HeapWord*, _survivor_chunk_array, mtGC);
           _survivor_plab_array = NULL;
           _survivor_chunk_array = NULL;
           _survivor_chunk_capacity = 0;
@@ -813,14 +821,6 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   _gc_counters = new CollectorCounters("CMS", 1);
   _completed_initialization = true;
   _inter_sweep_timer.start();  // start of time
-#ifdef SPARC
-  // Issue a stern warning, but allow use for experimentation and debugging.
-  if (VM_Version::is_sun4v() && UseMemSetInBOT) {
-    assert(!FLAG_IS_DEFAULT(UseMemSetInBOT), "Error");
-    warning("Experimental flag -XX:+UseMemSetInBOT is known to cause instability"
-            " on sun4v; please understand that you are using at your own risk!");
-  }
-#endif
 }
 
 const char* ConcurrentMarkSweepGeneration::name() const {
@@ -1026,7 +1026,7 @@ HeapWord* ConcurrentMarkSweepGeneration::have_lock_and_allocate(size_t size,
     // its mark-bit or P-bits not yet set. Such objects need
     // to be safely navigable by block_start().
     assert(oop(res)->klass_or_null() == NULL, "Object should be uninitialized here.");
-    assert(!((FreeChunk*)res)->isFree(), "Error, block will look free but show wrong size");
+    assert(!((FreeChunk*)res)->is_free(), "Error, block will look free but show wrong size");
     collector()->direct_allocated(res, adjustedSize);
     _direct_allocated_words += adjustedSize;
     // allocation counters
@@ -1391,7 +1391,7 @@ ConcurrentMarkSweepGeneration::par_promote(int thread_num,
   oop obj = oop(obj_ptr);
   OrderAccess::storestore();
   assert(obj->klass_or_null() == NULL, "Object should be uninitialized here.");
-  assert(!((FreeChunk*)obj_ptr)->isFree(), "Error, block will look free but show wrong size");
+  assert(!((FreeChunk*)obj_ptr)->is_free(), "Error, block will look free but show wrong size");
   // IMPORTANT: See note on object initialization for CMS above.
   // Otherwise, copy the object.  Here we must be careful to insert the
   // klass pointer last, since this marks the block as an allocated object.
@@ -1400,7 +1400,7 @@ ConcurrentMarkSweepGeneration::par_promote(int thread_num,
   // Restore the mark word copied above.
   obj->set_mark(m);
   assert(obj->klass_or_null() == NULL, "Object should be uninitialized here.");
-  assert(!((FreeChunk*)obj_ptr)->isFree(), "Error, block will look free but show wrong size");
+  assert(!((FreeChunk*)obj_ptr)->is_free(), "Error, block will look free but show wrong size");
   OrderAccess::storestore();
 
   if (UseCompressedOops) {
@@ -1421,7 +1421,7 @@ ConcurrentMarkSweepGeneration::par_promote(int thread_num,
     promoInfo->track((PromotedObject*)obj, old->klass());
   }
   assert(obj->klass_or_null() == NULL, "Object should be uninitialized here.");
-  assert(!((FreeChunk*)obj_ptr)->isFree(), "Error, block will look free but show wrong size");
+  assert(!((FreeChunk*)obj_ptr)->is_free(), "Error, block will look free but show wrong size");
   assert(old->is_oop(), "Will use and dereference old klass ptr below");
 
   // Finally, install the klass pointer (this should be volatile).
@@ -1684,18 +1684,37 @@ void CMSCollector::collect(bool   full,
 
 }
 
-void CMSCollector::request_full_gc(unsigned int full_gc_count) {
+void CMSCollector::request_full_gc(unsigned int full_gc_count, GCCause::Cause cause) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   unsigned int gc_count = gch->total_full_collections();
   if (gc_count == full_gc_count) {
     MutexLockerEx y(CGC_lock, Mutex::_no_safepoint_check_flag);
     _full_gc_requested = true;
+    _full_gc_cause = cause;
     CGC_lock->notify();   // nudge CMS thread
   } else {
     assert(gc_count > full_gc_count, "Error: causal loop");
   }
 }
 
+bool CMSCollector::is_external_interruption() {
+  GCCause::Cause cause = GenCollectedHeap::heap()->gc_cause();
+  return GCCause::is_user_requested_gc(cause) ||
+         GCCause::is_serviceability_requested_gc(cause);
+}
+
+void CMSCollector::report_concurrent_mode_interruption() {
+  if (is_external_interruption()) {
+    if (PrintGCDetails) {
+      gclog_or_tty->print(" (concurrent mode interrupted)");
+    }
+  } else {
+    if (PrintGCDetails) {
+      gclog_or_tty->print(" (concurrent mode failure)");
+    }
+    _gc_tracer_cm->report_concurrent_mode_failure();
+  }
+}
 
 // The foreground and background collectors need to coordinate in order
 // to make sure that they do not mutually interfere with CMS collections.
@@ -1853,14 +1872,8 @@ NOT_PRODUCT(
   }
 )
 
-  if (PrintGCDetails && first_state > Idling) {
-    GCCause::Cause cause = GenCollectedHeap::heap()->gc_cause();
-    if (GCCause::is_user_requested_gc(cause) ||
-        GCCause::is_serviceability_requested_gc(cause)) {
-      gclog_or_tty->print(" (concurrent mode interrupted)");
-    } else {
-      gclog_or_tty->print(" (concurrent mode failure)");
-    }
+  if (first_state > Idling) {
+    report_concurrent_mode_interruption();
   }
 
   if (should_compact) {
@@ -1874,6 +1887,14 @@ NOT_PRODUCT(
     // code assumes referents are not NULL and that all discovered
     // Reference objects are active.
     ref_processor()->clean_up_discovered_references();
+
+    if (first_state > Idling) {
+      save_heap_summary();
+    }
+
+    if (first_state > Idling) {
+      save_heap_summary();
+    }
 
     do_compaction_work(clear_all_soft_refs);
 
@@ -1978,7 +1999,14 @@ void CMSCollector::decide_foreground_collection_type(
 // a mark-sweep-compact.
 void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
-  TraceTime t("CMS:MSC ", PrintGCDetails && Verbose, true, gclog_or_tty);
+
+  STWGCTimer* gc_timer = GenMarkSweep::gc_timer();
+  gc_timer->register_gc_start(os::elapsed_counter());
+
+  SerialOldTracer* gc_tracer = GenMarkSweep::gc_tracer();
+  gc_tracer->report_gc_start(gch->gc_cause(), gc_timer->gc_start());
+
+  GCTraceTime t("CMS:MSC ", PrintGCDetails && Verbose, true, NULL);
   if (PrintGC && Verbose && !(GCCause::is_user_requested_gc(gch->gc_cause()))) {
     gclog_or_tty->print_cr("Compact ConcurrentMarkSweepGeneration after %d "
       "collections passed to foreground collector", _full_gcs_since_conc_gc);
@@ -2034,7 +2062,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
            pointer_delta(cms_space->end(), cms_space->compaction_top())
            * HeapWordSize,
       "All the free space should be compacted into one chunk at top");
-    assert(cms_space->dictionary()->totalChunkSize(
+    assert(cms_space->dictionary()->total_chunk_size(
                                       debug_only(cms_space->freelistLock())) == 0 ||
            cms_space->totalSizeInIndexedFreeLists() == 0,
       "All the free space should be in a single chunk");
@@ -2070,6 +2098,10 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
     size_policy()->msc_collection_end(gch->gc_cause());
   }
 
+  gc_timer->register_gc_end(os::elapsed_counter());
+
+  gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
+
   // For a mark-sweep-compact, compute_new_size() will be called
   // in the heap's do_collection() method.
 }
@@ -2101,12 +2133,7 @@ void CMSCollector::do_mark_sweep_work(bool clear_all_soft_refs,
       // required.
       _collectorState = FinalMarking;
   }
-  if (PrintGCDetails &&
-      (_collectorState > Idling ||
-       !GCCause::is_user_requested_gc(GenCollectedHeap::heap()->gc_cause()))) {
-    gclog_or_tty->print(" (concurrent mode failure)");
-  }
-  collect_in_foreground(clear_all_soft_refs);
+  collect_in_foreground(clear_all_soft_refs, GenCollectedHeap::heap()->gc_cause());
 
   // For a mark-sweep, compute_new_size() will be called
   // in the heap's do_collection() method.
@@ -2169,7 +2196,7 @@ class ReleaseForegroundGC: public StackObj {
 // one "collect" method between the background collector and the foreground
 // collector but the if-then-else required made it cleaner to have
 // separate methods.
-void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
+void CMSCollector::collect_in_background(bool clear_all_soft_refs, GCCause::Cause cause) {
   assert(Thread::current()->is_ConcurrentGC_thread(),
     "A CMS asynchronous collection is only allowed on a CMS thread.");
 
@@ -2188,6 +2215,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
     } else {
       assert(_collectorState == Idling, "Should be idling before start.");
       _collectorState = InitialMarking;
+      register_gc_start(cause);
       // Reset the expansion cause, now that we are about to begin
       // a new cycle.
       clear_expansion_cause();
@@ -2196,6 +2224,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
     // ensuing concurrent GC cycle.
     update_should_unload_classes();
     _full_gc_requested = false;           // acks all outstanding full gc requests
+    _full_gc_cause = GCCause::_no_gc;
     // Signal that we are about to start a collection
     gch->increment_total_full_collections();  // ... starting a collection cycle
     _collection_count_start = gch->total_full_collections();
@@ -2275,7 +2304,6 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
         {
           ReleaseForegroundGC x(this);
           stats().record_cms_begin();
-
           VM_CMS_Initial_Mark initial_mark_op(this);
           VMThread::execute(&initial_mark_op);
         }
@@ -2355,6 +2383,7 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
           CMSTokenSync        z(true);   // not strictly needed.
           if (_collectorState == Resizing) {
             compute_new_size();
+            save_heap_summary();
             _collectorState = Resetting;
           } else {
             assert(_collectorState == Idling, "The state should only change"
@@ -2410,7 +2439,39 @@ void CMSCollector::collect_in_background(bool clear_all_soft_refs) {
   }
 }
 
-void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
+void CMSCollector::register_foreground_gc_start(GCCause::Cause cause) {
+  if (!_cms_start_registered) {
+    register_gc_start(cause);
+  }
+}
+
+void CMSCollector::register_gc_start(GCCause::Cause cause) {
+  _cms_start_registered = true;
+  _gc_timer_cm->register_gc_start(os::elapsed_counter());
+  _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
+}
+
+void CMSCollector::register_gc_end() {
+  if (_cms_start_registered) {
+    report_heap_summary(GCWhen::AfterGC);
+
+    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
+    _cms_start_registered = false;
+  }
+}
+
+void CMSCollector::save_heap_summary() {
+  GenCollectedHeap* gch = GenCollectedHeap::heap();
+  _last_heap_summary = gch->create_heap_summary();
+  _last_perm_gen_summary = gch->create_perm_gen_summary();
+}
+
+void CMSCollector::report_heap_summary(GCWhen::Type when) {
+  _gc_tracer_cm->report_gc_heap_summary(when, _last_heap_summary, _last_perm_gen_summary);
+}
+
+void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Cause cause) {
   assert(_foregroundGCIsActive && !_foregroundGCShouldWait,
          "Foreground collector should be waiting, not executing");
   assert(Thread::current()->is_VM_thread(), "A foreground collection"
@@ -2418,8 +2479,8 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
   assert(ConcurrentMarkSweepThread::vm_thread_has_cms_token(),
          "VM thread should have CMS token");
 
-  NOT_PRODUCT(TraceTime t("CMS:MS (foreground) ", PrintGCDetails && Verbose,
-    true, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime t("CMS:MS (foreground) ", PrintGCDetails && Verbose,
+    true, NULL);)
   if (UseAdaptiveSizePolicy) {
     size_policy()->ms_collection_begin();
   }
@@ -2429,7 +2490,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
 
   if (VerifyBeforeGC &&
       GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-    Universe::verify(true);
+    Universe::verify();
   }
 
   // Snapshot the soft reference policy to be used in this collection cycle.
@@ -2443,6 +2504,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
     }
     switch (_collectorState) {
       case InitialMarking:
+        register_foreground_gc_start(cause);
         init_mark_was_synchronous = true;  // fact to be exploited in re-mark
         checkpointRootsInitial(false);
         assert(_collectorState == Marking, "Collector state should have changed"
@@ -2453,7 +2515,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
           gclog_or_tty->print("Verify before initial mark: ");
-          Universe::verify(true);
+          Universe::verify();
         }
         {
           bool res = markFromRoots(false);
@@ -2465,7 +2527,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
           gclog_or_tty->print("Verify before re-mark: ");
-          Universe::verify(true);
+          Universe::verify();
         }
         checkpointRootsFinal(false, clear_all_soft_refs,
                              init_mark_was_synchronous);
@@ -2477,7 +2539,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
           gclog_or_tty->print("Verify before sweep: ");
-          Universe::verify(true);
+          Universe::verify();
         }
         sweep(false);
         assert(_collectorState == Resizing, "Incorrect state");
@@ -2493,8 +2555,9 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
         if (VerifyDuringGC &&
             GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
           gclog_or_tty->print("Verify before reset: ");
-          Universe::verify(true);
+          Universe::verify();
         }
+        save_heap_summary();
         reset(false);
         assert(_collectorState == Idling, "Collector state should "
           "have changed");
@@ -2520,7 +2583,7 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs) {
 
   if (VerifyAfterGC &&
       GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
-    Universe::verify(true);
+    Universe::verify();
   }
   if (TraceCMSState) {
     gclog_or_tty->print_cr("CMS Thread " INTPTR_FORMAT
@@ -3109,21 +3172,21 @@ ConcurrentMarkSweepGeneration::prepare_for_verify() {
 }
 
 void
-ConcurrentMarkSweepGeneration::verify(bool allow_dirty /* ignored */) {
+ConcurrentMarkSweepGeneration::verify() {
   // Locks are normally acquired/released in gc_prologue/gc_epilogue, but those
   // are not called when the heap is verified during universe initialization and
   // at vm shutdown.
   if (freelistLock()->owned_by_self()) {
-    cmsSpace()->verify(false /* ignored */);
+    cmsSpace()->verify();
   } else {
     MutexLockerEx fll(freelistLock(), Mutex::_no_safepoint_check_flag);
-    cmsSpace()->verify(false /* ignored */);
+    cmsSpace()->verify();
   }
 }
 
-void CMSCollector::verify(bool allow_dirty /* ignored */) {
-  _cmsGen->verify(allow_dirty);
-  _permGen->verify(allow_dirty);
+void CMSCollector::verify() {
+  _cmsGen->verify();
+  _permGen->verify();
 }
 
 #ifndef PRODUCT
@@ -3455,10 +3518,7 @@ CMSPhaseAccounting::~CMSPhaseAccounting() {
   _wallclock.stop();
   if (PrintGCDetails) {
     gclog_or_tty->date_stamp(PrintGCDateStamps);
-    if (PrintGCTimeStamps) {
-      gclog_or_tty->stamp();
-      gclog_or_tty->print(": ");
-    }
+    gclog_or_tty->stamp(PrintGCTimeStamps);
     gclog_or_tty->print("[%s-concurrent-%s: %3.3f/%3.3f secs]",
                  _collector->cmsGen()->short_name(),
                  _phase, _collector->timerValue(), _wallclock.seconds());
@@ -3481,6 +3541,9 @@ void CMSCollector::checkpointRootsInitial(bool asynch) {
   assert(_collectorState == InitialMarking, "Wrong collector state");
   check_correct_thread_executing();
   TraceCMSMemoryManagerStats tms(_collectorState,GenCollectedHeap::heap()->gc_cause());
+
+  save_heap_summary();
+  report_heap_summary(GCWhen::BeforeGC);
 
   ReferenceProcessor* rp = ref_processor();
   SpecializationStats::clear();
@@ -3527,8 +3590,8 @@ void CMSCollector::checkpointRootsInitialWork(bool asynch) {
   // CMS collection cycle.
   setup_cms_unloading_and_verification_state();
 
-  NOT_PRODUCT(TraceTime t("\ncheckpointRootsInitialWork",
-    PrintGCDetails && Verbose, true, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime t("\ncheckpointRootsInitialWork",
+    PrintGCDetails && Verbose, true, _gc_timer_cm);)
   if (UseAdaptiveSizePolicy) {
     size_policy()->checkpoint_roots_initial_begin();
   }
@@ -4537,9 +4600,10 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
     // The code in this method may need further
     // tweaking for better performance and some restructuring
     // for cleaner interfaces.
+    GCTimer *gc_timer = NULL; // Currently not tracing concurrent phases
     rp->preclean_discovered_references(
           rp->is_alive_non_header(), &keep_alive, &complete_trace,
-          &yield_cl, should_unload_classes());
+          &yield_cl, should_unload_classes(), gc_timer);
   }
 
   if (clean_survivor) {  // preclean the active survivor space(s)
@@ -4872,8 +4936,8 @@ void CMSCollector::checkpointRootsFinal(bool asynch,
       // Temporarily set flag to false, GCH->do_collection will
       // expect it to be false and set to true
       FlagSetting fl(gch->_is_gc_active, false);
-      NOT_PRODUCT(TraceTime t("Scavenge-Before-Remark",
-        PrintGCDetails && Verbose, true, gclog_or_tty);)
+      NOT_PRODUCT(GCTraceTime t("Scavenge-Before-Remark",
+        PrintGCDetails && Verbose, true, _gc_timer_cm);)
       int level = _cmsGen->level() - 1;
       if (level >= 0) {
         gch->do_collection(true,        // full (i.e. force, see below)
@@ -4902,7 +4966,7 @@ void CMSCollector::checkpointRootsFinal(bool asynch,
 void CMSCollector::checkpointRootsFinalWork(bool asynch,
   bool clear_all_soft_refs, bool init_mark_was_synchronous) {
 
-  NOT_PRODUCT(TraceTime tr("checkpointRootsFinalWork", PrintGCDetails, false, gclog_or_tty);)
+  NOT_PRODUCT(GCTraceTime tr("checkpointRootsFinalWork", PrintGCDetails, false, _gc_timer_cm);)
 
   assert(haveFreelistLocks(), "must have free list locks");
   assert_lock_strong(bitMapLock());
@@ -4954,11 +5018,11 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
       // the most recent young generation GC, minus those cleaned up by the
       // concurrent precleaning.
       if (CMSParallelRemarkEnabled && CollectedHeap::use_parallel_gc_threads()) {
-        TraceTime t("Rescan (parallel) ", PrintGCDetails, false, gclog_or_tty);
+        GCTraceTime t("Rescan (parallel) ", PrintGCDetails, false, _gc_timer_cm);
         do_remark_parallel();
       } else {
-        TraceTime t("Rescan (non-parallel) ", PrintGCDetails, false,
-                    gclog_or_tty);
+        GCTraceTime t("Rescan (non-parallel) ", PrintGCDetails, false,
+                    _gc_timer_cm);
         do_remark_non_parallel();
       }
     }
@@ -4971,7 +5035,7 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
   verify_overflow_empty();
 
   {
-    NOT_PRODUCT(TraceTime ts("refProcessingWork", PrintGCDetails, false, gclog_or_tty);)
+    NOT_PRODUCT(GCTraceTime ts("refProcessingWork", PrintGCDetails, false, _gc_timer_cm);)
     refProcessingWork(asynch, clear_all_soft_refs);
   }
   verify_work_stacks_empty();
@@ -5034,6 +5098,8 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
       GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
     verify_after_remark();
   }
+
+  _gc_tracer_cm->report_object_count_after_gc(&_is_alive_closure);
 
   // Change under the freelistLocks.
   _collectorState = Sweeping;
@@ -5621,7 +5687,7 @@ void CMSCollector::do_remark_non_parallel() {
                               &_markBitMap, &_markStack, &_revisitStack,
                               &mrias_cl);
   {
-    TraceTime t("grey object rescan", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("grey object rescan", PrintGCDetails, false, _gc_timer_cm);
     // Iterate over the dirty cards, setting the corresponding bits in the
     // mod union table.
     {
@@ -5673,10 +5739,10 @@ void CMSCollector::do_remark_non_parallel() {
   if (VerifyDuringGC &&
       GenCollectedHeap::heap()->total_collections() >= VerifyGCStartAt) {
     HandleMark hm;  // Discard invalid handles created during verification
-    Universe::verify(true);
+    Universe::verify();
   }
   {
-    TraceTime t("root rescan", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("root rescan", PrintGCDetails, false, _gc_timer_cm);
 
     verify_work_stacks_empty();
 
@@ -5885,7 +5951,9 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
                                 _span, &_markBitMap, &_markStack,
                                 &cmsKeepAliveClosure, false /* !preclean */);
   {
-    TraceTime t("weak refs processing", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("weak refs processing", PrintGCDetails, false, _gc_timer_cm);
+
+    ReferenceProcessorStats stats;
     if (rp->processing_is_mt()) {
       // Set the degree of MT here.  If the discovery is done MT, there
       // may have been a different number of threads doing the discovery
@@ -5904,22 +5972,26 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
       }
       rp->set_active_mt_degree(active_workers);
       CMSRefProcTaskExecutor task_executor(*this);
-      rp->process_discovered_references(&_is_alive_closure,
+      stats = rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
-                                        &task_executor);
+                                        &task_executor,
+                                        _gc_timer_cm);
     } else {
-      rp->process_discovered_references(&_is_alive_closure,
+      stats = rp->process_discovered_references(&_is_alive_closure,
                                         &cmsKeepAliveClosure,
                                         &cmsDrainMarkingStackClosure,
-                                        NULL);
+                                        NULL,
+                                        _gc_timer_cm);
     }
+    _gc_tracer_cm->report_gc_reference_stats(stats);
+
     verify_work_stacks_empty();
   }
 
   if (should_unload_classes()) {
     {
-      TraceTime t("class unloading", PrintGCDetails, false, gclog_or_tty);
+      GCTraceTime t("class unloading", PrintGCDetails, false, _gc_timer_cm);
 
       // Follow SystemDictionary roots and unload classes
       bool purged_class = SystemDictionary::do_unloading(&_is_alive_closure);
@@ -5949,14 +6021,14 @@ void CMSCollector::refProcessingWork(bool asynch, bool clear_all_soft_refs) {
     }
 
     {
-      TraceTime t("scrub symbol table", PrintGCDetails, false, gclog_or_tty);
+      GCTraceTime t("scrub symbol table", PrintGCDetails, false, _gc_timer_cm);
       // Clean up unreferenced symbols in symbol table.
       SymbolTable::unlink();
     }
   }
 
   if (should_unload_classes() || !JavaObjectsInPerm) {
-    TraceTime t("scrub string table", PrintGCDetails, false, gclog_or_tty);
+    GCTraceTime t("scrub string table", PrintGCDetails, false, _gc_timer_cm);
     // Now clean up stale oops in StringTable
     StringTable::unlink(&_is_alive_closure);
   }
@@ -6131,7 +6203,7 @@ void ConcurrentMarkSweepGeneration::setNearLargestChunk() {
   double nearLargestPercent = FLSLargestBlockCoalesceProximity;
   HeapWord*  minAddr        = _cmsSpace->bottom();
   HeapWord*  largestAddr    =
-    (HeapWord*) _cmsSpace->dictionary()->findLargestDict();
+    (HeapWord*) _cmsSpace->dictionary()->find_largest_dict();
   if (largestAddr == NULL) {
     // The dictionary appears to be empty.  In this case
     // try to coalesce at the end of the heap.
@@ -6330,12 +6402,13 @@ void CMSCollector::reset(bool asynch) {
       _cmsGen->rotate_debug_collection_type();
     }
   )
+
+  register_gc_end();
 }
 
-void CMSCollector::do_CMS_operation(CMS_op_type op) {
-  gclog_or_tty->date_stamp(PrintGC && PrintGCDateStamps);
+void CMSCollector::do_CMS_operation(CMS_op_type op, GCCause::Cause gc_cause) {
   TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
-  TraceTime t("GC", PrintGC, !PrintGCDetails, gclog_or_tty);
+  GCTraceTime t(GCCauseString("GC", gc_cause), PrintGC, !PrintGCDetails, NULL);
   TraceCollectorStats tcs(counters());
 
   switch (op) {
@@ -7906,7 +7979,7 @@ SweepClosure::SweepClosure(CMSCollector* collector,
     _last_fc = NULL;
 
     _sp->initializeIndexedFreeListArrayReturnedBytes();
-    _sp->dictionary()->initializeDictReturnedBytes();
+    _sp->dictionary()->initialize_dict_returned_bytes();
   )
   assert(_limit >= _sp->bottom() && _limit <= _sp->end(),
          "sweep _limit out of bounds");
@@ -7954,13 +8027,13 @@ SweepClosure::~SweepClosure() {
 
     if (PrintCMSStatistics && CMSVerifyReturnedBytes) {
       size_t indexListReturnedBytes = _sp->sumIndexedFreeListArrayReturnedBytes();
-      size_t dictReturnedBytes = _sp->dictionary()->sumDictReturnedBytes();
-      size_t returnedBytes = indexListReturnedBytes + dictReturnedBytes;
-      gclog_or_tty->print("Returned "SIZE_FORMAT" bytes", returnedBytes);
+      size_t dict_returned_bytes = _sp->dictionary()->sum_dict_returned_bytes();
+      size_t returned_bytes = indexListReturnedBytes + dict_returned_bytes;
+      gclog_or_tty->print("Returned "SIZE_FORMAT" bytes", returned_bytes);
       gclog_or_tty->print("   Indexed List Returned "SIZE_FORMAT" bytes",
         indexListReturnedBytes);
       gclog_or_tty->print_cr("        Dictionary Returned "SIZE_FORMAT" bytes",
-        dictReturnedBytes);
+        dict_returned_bytes);
     }
   }
   if (CMSTraceSweeper) {
@@ -7985,9 +8058,9 @@ void SweepClosure::initialize_free_range(HeapWord* freeFinger,
   if (CMSTestInFreeList) {
     if (freeRangeInFreeLists) {
       FreeChunk* fc = (FreeChunk*) freeFinger;
-      assert(fc->isFree(), "A chunk on the free list should be free.");
+      assert(fc->is_free(), "A chunk on the free list should be free.");
       assert(fc->size() > 0, "Free range should have a size");
-      assert(_sp->verifyChunkInFreeLists(fc), "Chunk is not in free lists");
+      assert(_sp->verify_chunk_in_free_list(fc), "Chunk is not in free lists");
     }
   }
 }
@@ -8057,7 +8130,7 @@ size_t SweepClosure::do_blk_careful(HeapWord* addr) {
   assert(addr < _limit, "sweep invariant");
   // check if we should yield
   do_yield_check(addr);
-  if (fc->isFree()) {
+  if (fc->is_free()) {
     // Chunk that is already free
     res = fc->size();
     do_already_free_chunk(fc);
@@ -8145,7 +8218,7 @@ void SweepClosure::do_already_free_chunk(FreeChunk* fc) {
   // Chunks that cannot be coalesced are not in the
   // free lists.
   if (CMSTestInFreeList && !fc->cantCoalesce()) {
-    assert(_sp->verifyChunkInFreeLists(fc),
+    assert(_sp->verify_chunk_in_free_list(fc),
       "free chunk should be in free lists");
   }
   // a chunk that is already free, should not have been
@@ -8171,7 +8244,7 @@ void SweepClosure::do_already_free_chunk(FreeChunk* fc) {
         FreeChunk* nextChunk = (FreeChunk*)(addr + size);
         assert((HeapWord*)nextChunk <= _sp->end(), "Chunk size out of bounds?");
         if ((HeapWord*)nextChunk < _sp->end() &&     // There is another free chunk to the right ...
-            nextChunk->isFree()               &&     // ... which is free...
+            nextChunk->is_free()               &&     // ... which is free...
             nextChunk->cantCoalesce()) {             // ... but can't be coalesced
           // nothing to do
         } else {
@@ -8203,7 +8276,7 @@ void SweepClosure::do_already_free_chunk(FreeChunk* fc) {
           assert(ffc->size() == pointer_delta(addr, freeFinger()),
             "Size of free range is inconsistent with chunk size.");
           if (CMSTestInFreeList) {
-            assert(_sp->verifyChunkInFreeLists(ffc),
+            assert(_sp->verify_chunk_in_free_list(ffc),
               "free range is not in free lists");
           }
           _sp->removeFreeChunkFromFreeLists(ffc);
@@ -8262,7 +8335,7 @@ size_t SweepClosure::do_garbage_chunk(FreeChunk* fc) {
         assert(ffc->size() == pointer_delta(addr, freeFinger()),
           "Size of free range is inconsistent with chunk size.");
         if (CMSTestInFreeList) {
-          assert(_sp->verifyChunkInFreeLists(ffc),
+          assert(_sp->verify_chunk_in_free_list(ffc),
             "free range is not in free lists");
         }
         _sp->removeFreeChunkFromFreeLists(ffc);
@@ -8351,11 +8424,11 @@ void SweepClosure::do_post_free_or_garbage_chunk(FreeChunk* fc,
                                                  size_t chunkSize) {
   // do_post_free_or_garbage_chunk() should only be called in the case
   // of the adaptive free list allocator.
-  const bool fcInFreeLists = fc->isFree();
+  const bool fcInFreeLists = fc->is_free();
   assert(_sp->adaptive_freelists(), "Should only be used in this case.");
   assert((HeapWord*)fc <= _limit, "sweep invariant");
   if (CMSTestInFreeList && fcInFreeLists) {
-    assert(_sp->verifyChunkInFreeLists(fc), "free chunk is not in free lists");
+    assert(_sp->verify_chunk_in_free_list(fc), "free chunk is not in free lists");
   }
 
   if (CMSTraceSweeper) {
@@ -8410,7 +8483,7 @@ void SweepClosure::do_post_free_or_garbage_chunk(FreeChunk* fc,
       assert(ffc->size() == pointer_delta(fc_addr, freeFinger()),
         "Size of free range is inconsistent with chunk size.");
       if (CMSTestInFreeList) {
-        assert(_sp->verifyChunkInFreeLists(ffc),
+        assert(_sp->verify_chunk_in_free_list(ffc),
           "Chunk is not in free lists");
       }
       _sp->coalDeath(ffc->size());
@@ -8459,7 +8532,7 @@ void SweepClosure::lookahead_and_flush(FreeChunk* fc, size_t chunk_size) {
                  " when examining fc = " PTR_FORMAT "(" SIZE_FORMAT ")",
                  _limit, _sp->bottom(), _sp->end(), fc, chunk_size));
   if (eob >= _limit) {
-    assert(eob == _limit || fc->isFree(), "Only a free chunk should allow us to cross over the limit");
+    assert(eob == _limit || fc->is_free(), "Only a free chunk should allow us to cross over the limit");
     if (CMSTraceSweeper) {
       gclog_or_tty->print_cr("_limit " PTR_FORMAT " reached or crossed by block "
                              "[" PTR_FORMAT "," PTR_FORMAT ") in space "
@@ -8482,8 +8555,8 @@ void SweepClosure::flush_cur_free_chunk(HeapWord* chunk, size_t size) {
   if (!freeRangeInFreeLists()) {
     if (CMSTestInFreeList) {
       FreeChunk* fc = (FreeChunk*) chunk;
-      fc->setSize(size);
-      assert(!_sp->verifyChunkInFreeLists(fc),
+      fc->set_size(size);
+      assert(!_sp->verify_chunk_in_free_list(fc),
         "chunk should not be in free lists yet");
     }
     if (CMSTraceSweeper) {
@@ -8557,8 +8630,8 @@ void SweepClosure::do_yield_work(HeapWord* addr) {
 // This is actually very useful in a product build if it can
 // be called from the debugger.  Compile it into the product
 // as needed.
-bool debug_verifyChunkInFreeLists(FreeChunk* fc) {
-  return debug_cms_space->verifyChunkInFreeLists(fc);
+bool debug_verify_chunk_in_free_list(FreeChunk* fc) {
+  return debug_cms_space->verify_chunk_in_free_list(fc);
 }
 #endif
 
@@ -9255,7 +9328,7 @@ void ASConcurrentMarkSweepGeneration::shrink_by(size_t desired_bytes) {
       size_t chunk_at_end_old_size = chunk_at_end->size();
       assert(chunk_at_end_old_size >= word_size_change,
         "Shrink is too large");
-      chunk_at_end->setSize(chunk_at_end_old_size -
+      chunk_at_end->set_size(chunk_at_end_old_size -
                           word_size_change);
       _cmsSpace->freed((HeapWord*) chunk_at_end->end(),
         word_size_change);

@@ -26,7 +26,11 @@
 #define SHARE_VM_MEMORY_REFERENCEPROCESSOR_HPP
 
 #include "memory/referencePolicy.hpp"
+#include "memory/referenceProcessorStats.hpp"
+#include "memory/referenceType.hpp"
 #include "oops/instanceRefKlass.hpp"
+
+class GCTimer;
 
 // ReferenceProcessor class encapsulates the per-"collector" processing
 // of java.lang.Reference objects for GC. The interface is useful for supporting
@@ -203,7 +207,11 @@ public:
   }
 };
 
-class ReferenceProcessor : public CHeapObj {
+class ReferenceProcessor : public CHeapObj<mtGC> {
+
+ private:
+  size_t total_count(DiscoveredList lists[]);
+
  protected:
   // Compatibility with pre-4965777 JDK's
   static bool _pending_list_uses_discovered_field;
@@ -282,13 +290,13 @@ class ReferenceProcessor : public CHeapObj {
   }
 
   // Process references with a certain reachability level.
-  void process_discovered_reflist(DiscoveredList               refs_lists[],
-                                  ReferencePolicy*             policy,
-                                  bool                         clear_referent,
-                                  BoolObjectClosure*           is_alive,
-                                  OopClosure*                  keep_alive,
-                                  VoidClosure*                 complete_gc,
-                                  AbstractRefProcTaskExecutor* task_executor);
+  size_t process_discovered_reflist(DiscoveredList               refs_lists[],
+                                    ReferencePolicy*             policy,
+                                    bool                         clear_referent,
+                                    BoolObjectClosure*           is_alive,
+                                    OopClosure*                  keep_alive,
+                                    VoidClosure*                 complete_gc,
+                                    AbstractRefProcTaskExecutor* task_executor);
 
   void process_phaseJNI(BoolObjectClosure* is_alive,
                         OopClosure*        keep_alive,
@@ -351,7 +359,8 @@ class ReferenceProcessor : public CHeapObj {
                                       OopClosure*        keep_alive,
                                       VoidClosure*       complete_gc,
                                       YieldClosure*      yield,
-                                      bool               should_unload_classes);
+                                      bool               should_unload_classes,
+                                      GCTimer*           gc_timer);
 
   // Delete entries in the discovered lists that have
   // either a null referent or are not active. Such
@@ -501,12 +510,13 @@ class ReferenceProcessor : public CHeapObj {
   bool discover_reference(oop obj, ReferenceType rt);
 
   // Process references found during GC (called by the garbage collector)
-  void process_discovered_references(BoolObjectClosure*           is_alive,
-                                     OopClosure*                  keep_alive,
-                                     VoidClosure*                 complete_gc,
-                                     AbstractRefProcTaskExecutor* task_executor);
+  ReferenceProcessorStats
+  process_discovered_references(BoolObjectClosure*           is_alive,
+                                OopClosure*                  keep_alive,
+                                VoidClosure*                 complete_gc,
+                                AbstractRefProcTaskExecutor* task_executor,
+                                GCTimer *gc_timer);
 
- public:
   // Enqueue references at end of GC (called by the garbage collector)
   bool enqueue_discovered_references(AbstractRefProcTaskExecutor* task_executor = NULL);
 

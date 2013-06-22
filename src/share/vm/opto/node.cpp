@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ void Node::verify_construction() {
   int new_debug_idx = old_debug_idx+1;
   if (new_debug_idx > 0) {
     // Arrange that the lowest five decimal digits of _debug_idx
-    // will repeat thos of _idx.  In case this is somehow pathological,
+    // will repeat those of _idx. In case this is somehow pathological,
     // we continue to assign negative numbers (!) consecutively.
     const int mod = 100000;
     int bump = (int)(_idx - new_debug_idx) % mod;
@@ -67,7 +67,7 @@ void Node::verify_construction() {
   }
   Compile::set_debug_idx(new_debug_idx);
   set_debug_idx( new_debug_idx );
-  assert(Compile::current()->unique() < (uint)MaxNodeLimit, "Node limit exceeded");
+  assert(Compile::current()->unique() < (UINT_MAX - 1), "Node limit exceeded UINT_MAX");
   if (BreakAtNode != 0 && (_debug_idx == BreakAtNode || (int)_idx == BreakAtNode)) {
     tty->print_cr("BreakAtNode: _idx=%d _debug_idx=%d", _idx, _debug_idx);
     BREAKPOINT;
@@ -296,6 +296,14 @@ inline int Node::Init(int req, Compile* C) {
   assert(Compile::current() == C, "must use operator new(Compile*)");
   int idx = C->next_unique();
 
+  // Allocate memory for the necessary number of edges.
+  if (req > 0) {
+    // Allocate space for _in array to have double alignment.
+    _in = (Node **) ((char *) (C->node_arena()->Amalloc_D(req * sizeof(void*))));
+#ifdef ASSERT
+    _in[req-1] = this; // magic cookie for assertion check
+#endif
+  }
   // If there are default notes floating around, capture them:
   Node_Notes* nn = C->default_node_notes();
   if (nn != NULL)  init_node_notes(C, idx, nn);
@@ -485,6 +493,8 @@ Node *Node::clone() const {
   }
   if (is_macro())
     compile->add_macro_node(n);
+  if (is_expensive())
+    compile->add_expensive_node(n);
 
   n->set_idx(compile->next_unique()); // Get new unique index as well
   debug_only( n->verify_construction() );
@@ -608,6 +618,9 @@ void Node::destruct() {
   if (is_macro()) {
     compile->remove_macro_node(this);
   }
+  if (is_expensive()) {
+    compile->remove_expensive_node(this);
+  }
 #ifdef ASSERT
   // We will not actually delete the storage, but we'll make the node unusable.
   *(address*)this = badAddress;  // smash the C++ vtbl, probably
@@ -680,6 +693,13 @@ bool Node::is_dead() const {
   return true;
 }
 #endif
+
+
+//------------------------------is_unreachable---------------------------------
+bool Node::is_unreachable(PhaseIterGVN &igvn) const {
+  assert(!is_Mach(), "doesn't work with MachNodes");
+  return outcnt() == 0 || igvn.type(this) == Type::TOP || in(0)->is_top();
+}
 
 //------------------------------add_req----------------------------------------
 // Add a new required input at the end
@@ -794,7 +814,7 @@ int Node::replace_edge(Node* old, Node* neww) {
 //-------------------------disconnect_inputs-----------------------------------
 // NULL out all inputs to eliminate incoming Def-Use edges.
 // Return the number of edges between 'n' and 'this'
-int Node::disconnect_inputs(Node *n) {
+int Node::disconnect_inputs(Node *n, Compile* C) {
   int edges_to_n = 0;
 
   uint cnt = req();
@@ -816,6 +836,9 @@ int Node::disconnect_inputs(Node *n) {
 
   // Node::destruct requires all out edges be deleted first
   // debug_only(destruct();)   // no reuse benefit expected
+  if (edges_to_n == 0) {
+    C->record_dead_node(_idx);
+  }
   return edges_to_n;
 }
 
@@ -1004,15 +1027,15 @@ const Type *Node::Value( PhaseTransform * ) const {
 //    set_req(2, phase->intcon(7));
 //    return this;
 // Example: reshape "X*4" into "X<<2"
-//    return new (C,3) LShiftINode(in(1), phase->intcon(2));
+//    return new (C) LShiftINode(in(1), phase->intcon(2));
 //
 // You must call 'phase->transform(X)' on any new Nodes X you make, except
 // for the returned root node.  Example: reshape "X*31" with "(X<<5)-X".
-//    Node *shift=phase->transform(new(C,3)LShiftINode(in(1),phase->intcon(5)));
-//    return new (C,3) AddINode(shift, in(1));
+//    Node *shift=phase->transform(new(C)LShiftINode(in(1),phase->intcon(5)));
+//    return new (C) AddINode(shift, in(1));
 //
 // When making a Node for a constant use 'phase->makecon' or 'phase->intcon'.
-// These forms are faster than 'phase->transform(new (C,1) ConNode())' and Do
+// These forms are faster than 'phase->transform(new (C) ConNode())' and Do
 // The Right Thing with def-use info.
 //
 // You cannot bury the 'this' Node inside of a graph reshape.  If the reshaped
@@ -1235,6 +1258,10 @@ static void kill_dead_code( Node *dead, PhaseIterGVN *igvn ) {
       if (dead->is_macro()) {
         igvn->C->remove_macro_node(dead);
       }
+      if (dead->is_expensive()) {
+        igvn->C->remove_expensive_node(dead);
+      }
+      igvn->C->record_dead_node(dead->_idx);
       // Kill all inputs to the dead guy
       for (uint i=0; i < dead->req(); i++) {
         Node *n = dead->in(i);      // Get input to dead guy
@@ -1356,6 +1383,21 @@ const TypeLong* Node::find_long_type() const {
   return NULL;
 }
 
+
+/**
+ * Return a ptr type for nodes which should have it.
+ */
+const TypePtr* Node::get_ptr_type() const {
+  const TypePtr* tp = this->bottom_type()->make_ptr();
+#ifdef ASSERT
+  if (tp == NULL) {
+    this->dump(1);
+    assert((tp != NULL), "unexpected node type");
+  }
+#endif
+  return tp;
+}
+
 // Get a double constant from a ConstNode.
 // Returns the constant if it is a double ConstNode
 jdouble Node::getd() const {
@@ -1465,35 +1507,35 @@ static bool is_disconnected(const Node* n) {
 }
 
 #ifdef ASSERT
-static void dump_orig(Node* orig) {
+static void dump_orig(Node* orig, outputStream *st) {
   Compile* C = Compile::current();
-  if (NotANode(orig))  orig = NULL;
-  if (orig != NULL && !C->node_arena()->contains(orig))  orig = NULL;
-  if (orig == NULL)  return;
-  tty->print(" !orig=");
+  if (NotANode(orig)) orig = NULL;
+  if (orig != NULL && !C->node_arena()->contains(orig)) orig = NULL;
+  if (orig == NULL) return;
+  st->print(" !orig=");
   Node* fast = orig->debug_orig(); // tortoise & hare algorithm to detect loops
-  if (NotANode(fast))  fast = NULL;
+  if (NotANode(fast)) fast = NULL;
   while (orig != NULL) {
     bool discon = is_disconnected(orig);  // if discon, print [123] else 123
-    if (discon)  tty->print("[");
+    if (discon) st->print("[");
     if (!Compile::current()->node_arena()->contains(orig))
-      tty->print("o");
-    tty->print("%d", orig->_idx);
-    if (discon)  tty->print("]");
+      st->print("o");
+    st->print("%d", orig->_idx);
+    if (discon) st->print("]");
     orig = orig->debug_orig();
-    if (NotANode(orig))  orig = NULL;
-    if (orig != NULL && !C->node_arena()->contains(orig))  orig = NULL;
-    if (orig != NULL)  tty->print(",");
+    if (NotANode(orig)) orig = NULL;
+    if (orig != NULL && !C->node_arena()->contains(orig)) orig = NULL;
+    if (orig != NULL) st->print(",");
     if (fast != NULL) {
       // Step fast twice for each single step of orig:
       fast = fast->debug_orig();
-      if (NotANode(fast))  fast = NULL;
+      if (NotANode(fast)) fast = NULL;
       if (fast != NULL && fast != orig) {
         fast = fast->debug_orig();
-        if (NotANode(fast))  fast = NULL;
+        if (NotANode(fast)) fast = NULL;
       }
       if (fast == orig) {
-        tty->print("...");
+        st->print("...");
         break;
       }
     }
@@ -1520,35 +1562,34 @@ void Node::set_debug_orig(Node* orig) {
 
 //------------------------------dump------------------------------------------
 // Dump a Node
-void Node::dump() const {
+void Node::dump(const char* suffix, outputStream *st) const {
   Compile* C = Compile::current();
   bool is_new = C->node_arena()->contains(this);
   _in_dump_cnt++;
-  tty->print("%c%d\t%s\t=== ",
-             is_new ? ' ' : 'o', _idx, Name());
+  st->print("%c%d\t%s\t=== ", is_new ? ' ' : 'o', _idx, Name());
 
   // Dump the required and precedence inputs
-  dump_req();
-  dump_prec();
+  dump_req(st);
+  dump_prec(st);
   // Dump the outputs
-  dump_out();
+  dump_out(st);
 
   if (is_disconnected(this)) {
 #ifdef ASSERT
-    tty->print("  [%d]",debug_idx());
-    dump_orig(debug_orig());
+    st->print("  [%d]",debug_idx());
+    dump_orig(debug_orig(), st);
 #endif
-    tty->cr();
+    st->cr();
     _in_dump_cnt--;
     return;                     // don't process dead nodes
   }
 
   // Dump node-specific info
-  dump_spec(tty);
+  dump_spec(st);
 #ifdef ASSERT
   // Dump the non-reset _debug_idx
-  if( Verbose && WizardMode ) {
-    tty->print("  [%d]",debug_idx());
+  if (Verbose && WizardMode) {
+    st->print("  [%d]",debug_idx());
   }
 #endif
 
@@ -1558,85 +1599,88 @@ void Node::dump() const {
     const TypeInstPtr  *toop = t->isa_instptr();
     const TypeKlassPtr *tkls = t->isa_klassptr();
     ciKlass*           klass = toop ? toop->klass() : (tkls ? tkls->klass() : NULL );
-    if( klass && klass->is_loaded() && klass->is_interface() ) {
-      tty->print("  Interface:");
-    } else if( toop ) {
-      tty->print("  Oop:");
-    } else if( tkls ) {
-      tty->print("  Klass:");
+    if (klass && klass->is_loaded() && klass->is_interface()) {
+      st->print("  Interface:");
+    } else if (toop) {
+      st->print("  Oop:");
+    } else if (tkls) {
+      st->print("  Klass:");
     }
-    t->dump();
-  } else if( t == Type::MEMORY ) {
-    tty->print("  Memory:");
-    MemNode::dump_adr_type(this, adr_type(), tty);
-  } else if( Verbose || WizardMode ) {
-    tty->print("  Type:");
-    if( t ) {
-      t->dump();
+    t->dump_on(st);
+  } else if (t == Type::MEMORY) {
+    st->print("  Memory:");
+    MemNode::dump_adr_type(this, adr_type(), st);
+  } else if (Verbose || WizardMode) {
+    st->print("  Type:");
+    if (t) {
+      t->dump_on(st);
     } else {
-      tty->print("no type");
+      st->print("no type");
     }
+  } else if (t->isa_vect() && this->is_MachSpillCopy()) {
+    // Dump MachSpillcopy vector type.
+    t->dump_on(st);
   }
   if (is_new) {
-    debug_only(dump_orig(debug_orig()));
+    debug_only(dump_orig(debug_orig(), st));
     Node_Notes* nn = C->node_notes_at(_idx);
     if (nn != NULL && !nn->is_clear()) {
       if (nn->jvms() != NULL) {
-        tty->print(" !jvms:");
-        nn->jvms()->dump_spec(tty);
+        st->print(" !jvms:");
+        nn->jvms()->dump_spec(st);
       }
     }
   }
-  tty->cr();
+  if (suffix) st->print(suffix);
   _in_dump_cnt--;
 }
 
 //------------------------------dump_req--------------------------------------
-void Node::dump_req() const {
+void Node::dump_req(outputStream *st) const {
   // Dump the required input edges
   for (uint i = 0; i < req(); i++) {    // For all required inputs
     Node* d = in(i);
     if (d == NULL) {
-      tty->print("_ ");
+      st->print("_ ");
     } else if (NotANode(d)) {
-      tty->print("NotANode ");  // uninitialized, sentinel, garbage, etc.
+      st->print("NotANode ");  // uninitialized, sentinel, garbage, etc.
     } else {
-      tty->print("%c%d ", Compile::current()->node_arena()->contains(d) ? ' ' : 'o', d->_idx);
+      st->print("%c%d ", Compile::current()->node_arena()->contains(d) ? ' ' : 'o', d->_idx);
     }
   }
 }
 
 
 //------------------------------dump_prec-------------------------------------
-void Node::dump_prec() const {
+void Node::dump_prec(outputStream *st) const {
   // Dump the precedence edges
   int any_prec = 0;
   for (uint i = req(); i < len(); i++) {       // For all precedence inputs
     Node* p = in(i);
     if (p != NULL) {
-      if( !any_prec++ ) tty->print(" |");
-      if (NotANode(p)) { tty->print("NotANode "); continue; }
-      tty->print("%c%d ", Compile::current()->node_arena()->contains(in(i)) ? ' ' : 'o', in(i)->_idx);
+      if (!any_prec++) st->print(" |");
+      if (NotANode(p)) { st->print("NotANode "); continue; }
+      st->print("%c%d ", Compile::current()->node_arena()->contains(in(i)) ? ' ' : 'o', in(i)->_idx);
     }
   }
 }
 
 //------------------------------dump_out--------------------------------------
-void Node::dump_out() const {
+void Node::dump_out(outputStream *st) const {
   // Delimit the output edges
-  tty->print(" [[");
+  st->print(" [[");
   // Dump the output edges
   for (uint i = 0; i < _outcnt; i++) {    // For all outputs
     Node* u = _out[i];
     if (u == NULL) {
-      tty->print("_ ");
+      st->print("_ ");
     } else if (NotANode(u)) {
-      tty->print("NotANode ");
+      st->print("NotANode ");
     } else {
-      tty->print("%c%d ", Compile::current()->node_arena()->contains(u) ? ' ' : 'o', u->_idx);
+      st->print("%c%d ", Compile::current()->node_arena()->contains(u) ? ' ' : 'o', u->_idx);
     }
   }
-  tty->print("]] ");
+  st->print("]] ");
 }
 
 //------------------------------dump_nodes-------------------------------------

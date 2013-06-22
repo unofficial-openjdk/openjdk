@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,9 @@
 # Rules to build jvm_db/dtrace, used by vm.make
 
 # We build libjvm_dtrace/libjvm_db/dtrace for COMPILER1 and COMPILER2
-# but not for CORE or KERNEL configurations.
+# but not for CORE configuration.
 
 ifneq ("${TYPE}", "CORE")
-ifneq ("${TYPE}", "KERNEL")
 
 ifeq ($(OS_VENDOR), Darwin)
 # we build dtrace for macosx using USDT2 probes
@@ -114,21 +113,21 @@ $(GENOFFS): $(DTRACE_SRCDIR)/$(GENOFFS)Main.c lib$(GENOFFS).dylib
 
 # $@.tmp is created first to avoid an empty $(JVMOFFS).h if an error occurs.
 $(JVMOFFS).h: $(GENOFFS)
-	$(QUIETLY) DYLD_LIBRARY_PATH=. ./$(GENOFFS) -header > $@.tmp; touch $@; \
+	$(QUIETLY) DYLD_LIBRARY_PATH=.:$(DYLD_LIBRARY_PATH) ./$(GENOFFS) -header > $@.tmp; touch $@; \
 	if [ `diff $@.tmp $@ > /dev/null 2>&1; echo $$?` -ne 0 ] ; \
 	then rm -f $@; mv $@.tmp $@; \
 	else rm -f $@.tmp; \
 	fi
 
 $(JVMOFFS)Index.h: $(GENOFFS)
-	$(QUIETLY) DYLD_LIBRARY_PATH=. ./$(GENOFFS) -index > $@.tmp; touch $@; \
+	$(QUIETLY) DYLD_LIBRARY_PATH=.:$(DYLD_LIBRARY_PATH) ./$(GENOFFS) -index > $@.tmp; touch $@; \
 	if [ `diff $@.tmp $@ > /dev/null 2>&1; echo $$?` -ne 0 ] ; \
 	then rm -f $@; mv $@.tmp $@; \
 	else rm -f $@.tmp; \
 	fi
 
 $(JVMOFFS).cpp: $(GENOFFS) $(JVMOFFS).h $(JVMOFFS)Index.h
-	$(QUIETLY) DYLD_LIBRARY_PATH=. ./$(GENOFFS) -table > $@.tmp; touch $@; \
+	$(QUIETLY) DYLD_LIBRARY_PATH=.:$(DYLD_LIBRARY_PATH) ./$(GENOFFS) -table > $@.tmp; touch $@; \
 	if [ `diff $@.tmp $@ > /dev/null 2>&1; echo $$?` -ne 0 ] ; \
 	then rm -f $@; mv $@.tmp $@; \
 	else rm -f $@.tmp; \
@@ -287,13 +286,6 @@ endif # ifneq ("${dtraceFound}", "")
 
 endif # ifeq ($(OS_VENDOR), Darwin)
 
-
-else # KERNEL build
-
-dtraceCheck:
-	$(QUIETLY) echo "**NOTICE** Dtrace support disabled for KERNEL builds"
-
-endif # ifneq ("${TYPE}", "KERNEL")
 
 else # CORE build
 

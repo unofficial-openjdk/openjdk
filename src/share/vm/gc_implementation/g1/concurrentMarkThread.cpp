@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include "gc_implementation/g1/concurrentMarkThread.inline.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
+#include "gc_implementation/g1/g1Log.hpp"
 #include "gc_implementation/g1/g1MMUTracker.hpp"
 #include "gc_implementation/g1/vm_operations_g1.hpp"
 #include "memory/resourceArea.hpp"
@@ -92,7 +93,6 @@ void ConcurrentMarkThread::run() {
       ResourceMark rm;
       HandleMark   hm;
       double cycle_start = os::elapsedVTime();
-      char verbose_str[128];
 
       // We have to ensure that we finish scanning the root regions
       // before the next GC takes place. To ensure this we have to
@@ -104,7 +104,7 @@ void ConcurrentMarkThread::run() {
 
       double scan_start = os::elapsedTime();
       if (!cm()->has_aborted()) {
-        if (PrintGC) {
+        if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
           gclog_or_tty->print_cr("[GC concurrent-root-region-scan-start]");
@@ -113,16 +113,16 @@ void ConcurrentMarkThread::run() {
         _cm->scanRootRegions();
 
         double scan_end = os::elapsedTime();
-        if (PrintGC) {
+        if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
-          gclog_or_tty->print_cr("[GC concurrent-root-region-scan-end, %1.7lf]",
+          gclog_or_tty->print_cr("[GC concurrent-root-region-scan-end, %1.7lf secs]",
                                  scan_end - scan_start);
         }
       }
 
       double mark_start_sec = os::elapsedTime();
-      if (PrintGC) {
+      if (G1Log::fine()) {
         gclog_or_tty->date_stamp(PrintGCDateStamps);
         gclog_or_tty->stamp(PrintGCTimeStamps);
         gclog_or_tty->print_cr("[GC concurrent-mark-start]");
@@ -146,26 +146,23 @@ void ConcurrentMarkThread::run() {
             os::sleep(current_thread, sleep_time_ms, false);
           }
 
-          if (PrintGC) {
+          if (G1Log::fine()) {
             gclog_or_tty->date_stamp(PrintGCDateStamps);
             gclog_or_tty->stamp(PrintGCTimeStamps);
-            gclog_or_tty->print_cr("[GC concurrent-mark-end, %1.7lf sec]",
+            gclog_or_tty->print_cr("[GC concurrent-mark-end, %1.7lf secs]",
                                       mark_end_sec - mark_start_sec);
           }
 
           CMCheckpointRootsFinalClosure final_cl(_cm);
-          sprintf(verbose_str, "GC remark");
-          VM_CGC_Operation op(&final_cl, verbose_str, true /* needs_pll */);
+          VM_CGC_Operation op(&final_cl, "GC remark", true /* needs_pll */);
           VMThread::execute(&op);
         }
-        if (cm()->restart_for_overflow() &&
-            G1TraceMarkStackOverflow) {
-          gclog_or_tty->print_cr("Restarting conc marking because of MS overflow "
-                                 "in remark (restart #%d).", iter);
-        }
-
         if (cm()->restart_for_overflow()) {
-          if (PrintGC) {
+          if (G1TraceMarkStackOverflow) {
+            gclog_or_tty->print_cr("Restarting conc marking because of MS overflow "
+                                   "in remark (restart #%d).", iter);
+          }
+          if (G1Log::fine()) {
             gclog_or_tty->date_stamp(PrintGCDateStamps);
             gclog_or_tty->stamp(PrintGCTimeStamps);
             gclog_or_tty->print_cr("[GC concurrent-mark-restart-for-overflow]");
@@ -188,8 +185,7 @@ void ConcurrentMarkThread::run() {
         }
 
         CMCleanUp cl_cl(_cm);
-        sprintf(verbose_str, "GC cleanup");
-        VM_CGC_Operation op(&cl_cl, verbose_str, false /* needs_pll */);
+        VM_CGC_Operation op(&cl_cl, "GC cleanup", false /* needs_pll */);
         VMThread::execute(&op);
       } else {
         // We don't want to update the marking status if a GC pause
@@ -211,7 +207,7 @@ void ConcurrentMarkThread::run() {
         // reclaimed by cleanup.
 
         double cleanup_start_sec = os::elapsedTime();
-        if (PrintGC) {
+        if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
           gclog_or_tty->print_cr("[GC concurrent-cleanup-start]");
@@ -232,10 +228,10 @@ void ConcurrentMarkThread::run() {
         g1h->reset_free_regions_coming();
 
         double cleanup_end_sec = os::elapsedTime();
-        if (PrintGC) {
+        if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
-          gclog_or_tty->print_cr("[GC concurrent-cleanup-end, %1.7lf]",
+          gclog_or_tty->print_cr("[GC concurrent-cleanup-end, %1.7lf secs]",
                                  cleanup_end_sec - cleanup_start_sec);
         }
       }
@@ -273,7 +269,7 @@ void ConcurrentMarkThread::run() {
       _sts.leave();
 
       if (cm()->has_aborted()) {
-        if (PrintGC) {
+        if (G1Log::fine()) {
           gclog_or_tty->date_stamp(PrintGCDateStamps);
           gclog_or_tty->stamp(PrintGCTimeStamps);
           gclog_or_tty->print_cr("[GC concurrent-mark-abort]");
@@ -292,7 +288,8 @@ void ConcurrentMarkThread::run() {
     // Java thread is waiting for a full GC to happen (e.g., it
     // called System.gc() with +ExplicitGCInvokesConcurrent).
     _sts.join();
-    g1h->increment_full_collections_completed(true /* concurrent */);
+    g1h->increment_old_marking_cycles_completed(true /* concurrent */);
+    g1h->register_concurrent_cycle_end();
     _sts.leave();
   }
   assert(_should_terminate, "just checking");

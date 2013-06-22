@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_CODE_STUBS_HPP
 #define SHARE_VM_CODE_STUBS_HPP
 
+#include "asm/codeBuffer.hpp"
 #include "memory/allocation.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
@@ -71,7 +72,8 @@
 class Stub VALUE_OBJ_CLASS_SPEC {
  public:
   // Initialization/finalization
-  void    initialize(int size)                   { ShouldNotCallThis(); }                // called to initialize/specify the stub's size
+  void    initialize(int size,
+                     CodeStrings& strings)       { ShouldNotCallThis(); }                // called to initialize/specify the stub's size
   void    finalize()                             { ShouldNotCallThis(); }                // called before the stub is deallocated
 
   // General info/converters
@@ -101,10 +103,11 @@ class Stub VALUE_OBJ_CLASS_SPEC {
 // of the concrete stub (see also macro below). There's exactly
 // one stub interface instance required per stub queue.
 
-class StubInterface: public CHeapObj {
+class StubInterface: public CHeapObj<mtCode> {
  public:
   // Initialization/finalization
-  virtual void    initialize(Stub* self, int size)         = 0; // called after creation (called twice if allocated via (request, commit))
+  virtual void    initialize(Stub* self, int size,
+                             CodeStrings& strings)         = 0; // called after creation (called twice if allocated via (request, commit))
   virtual void    finalize(Stub* self)                     = 0; // called before deallocation
 
   // General info/converters
@@ -132,7 +135,8 @@ class StubInterface: public CHeapObj {
                                                            \
    public:                                                 \
     /* Initialization/finalization */                      \
-    virtual void    initialize(Stub* self, int size)       { cast(self)->initialize(size); }       \
+    virtual void    initialize(Stub* self, int size,       \
+                               CodeStrings& strings)       { cast(self)->initialize(size, strings); } \
     virtual void    finalize(Stub* self)                   { cast(self)->finalize(); }             \
                                                            \
     /* General info */                                     \
@@ -152,7 +156,7 @@ class StubInterface: public CHeapObj {
 // A StubQueue maintains a queue of stubs.
 // Note: All sizes (spaces) are given in bytes.
 
-class StubQueue: public CHeapObj {
+class StubQueue: public CHeapObj<mtCode> {
   friend class VMStructs;
  private:
   StubInterface* _stub_interface;                // the interface prototype
@@ -171,7 +175,8 @@ class StubQueue: public CHeapObj {
   Stub* current_stub() const                     { return stub_at(_queue_end); }
 
   // Stub functionality accessed via interface
-  void  stub_initialize(Stub* s, int size)       { assert(size % CodeEntryAlignment == 0, "size not aligned"); _stub_interface->initialize(s, size); }
+  void  stub_initialize(Stub* s, int size,
+                        CodeStrings& strings)    { assert(size % CodeEntryAlignment == 0, "size not aligned"); _stub_interface->initialize(s, size, strings); }
   void  stub_finalize(Stub* s)                   { _stub_interface->finalize(s); }
   int   stub_size(Stub* s) const                 { return _stub_interface->size(s); }
   bool  stub_contains(Stub* s, address pc) const { return _stub_interface->code_begin(s) <= pc && pc < _stub_interface->code_end(s); }
@@ -200,7 +205,8 @@ class StubQueue: public CHeapObj {
   // Stub allocation (atomic transactions)
   Stub* request_committed(int code_size);        // request a stub that provides exactly code_size space for code
   Stub* request(int requested_code_size);        // request a stub with a (maximum) code space - locks the queue
-  void  commit (int committed_code_size);        // commit the previously requested stub - unlocks the queue
+  void  commit (int committed_code_size,
+                CodeStrings& strings);           // commit the previously requested stub - unlocks the queue
 
   // Stub deallocation
   void  remove_first();                          // remove the first stub in the queue

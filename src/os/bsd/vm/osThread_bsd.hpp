@@ -42,25 +42,23 @@
 #ifdef _ALLBSD_SOURCE
 
 #ifdef __APPLE__
-  thread_t  _thread_id;
+  typedef thread_t thread_id_t;
 #else
-  pthread_t _thread_id;
+  typedef pthread_t thread_id_t;
+#endif
+
+#else
+  typedef pid_t thread_id_t;
 #endif
 
   // _pthread_id is the pthread id, which is used by library calls
   // (e.g. pthread_kill).
   pthread_t _pthread_id;
 
-#else
-  // _thread_id is kernel thread id (similar to LWP id on Solaris). Each
-  // thread has a unique thread_id (BsdThreads or NPTL). It can be used
-  // to access /proc.
-  pid_t     _thread_id;
-
-  // _pthread_id is the pthread id, which is used by library calls
-  // (e.g. pthread_kill).
-  pthread_t _pthread_id;
-#endif
+  // This is the "thread_id" from struct thread_identifier_info. According to a
+  // comment in thread_info.h, this is a "system-wide unique 64-bit thread id".
+  // The value is used by SA to correlate threads.
+  uint64_t _unique_thread_id;
 
   sigset_t _caller_sigmask; // Caller's signal mask
 
@@ -70,25 +68,11 @@
   sigset_t  caller_sigmask() const       { return _caller_sigmask; }
   void    set_caller_sigmask(sigset_t sigmask)  { _caller_sigmask = sigmask; }
 
-#ifdef _ALLBSD_SOURCE
-#ifdef __APPLE__
-  thread_t thread_id() const {
-    return _thread_id;
-  }
-#else
-  pthread_t thread_id() const {
-    return _thread_id;
-  }
-#endif
-#else
-  pid_t thread_id() const {
-    return _thread_id;
-  }
-#endif
 #ifndef PRODUCT
   // Used for debugging, return a unique integer for each thread.
   intptr_t thread_identifier() const   { return (intptr_t)_pthread_id; }
 #endif
+
 #ifdef ASSERT
   // We expect no reposition failures so kill vm if we get one.
   //
@@ -96,26 +80,16 @@
     return false;
   }
 #endif // ASSERT
-#ifdef _ALLBSD_SOURCE
-#ifdef __APPLE__
-  void set_thread_id(thread_t id) {
-    _thread_id = id;
-  }
-#else
-  void set_thread_id(pthread_t id) {
-    _thread_id = id;
-  }
-#endif
-#else
-  void set_thread_id(pid_t id) {
-    _thread_id = id;
-  }
-#endif
+
   pthread_t pthread_id() const {
     return _pthread_id;
   }
   void set_pthread_id(pthread_t tid) {
     _pthread_id = tid;
+  }
+
+  void set_unique_thread_id(uint64_t id) {
+    _unique_thread_id = id;
   }
 
   // ***************************************************************
@@ -126,7 +100,7 @@ public:
   // flags that support signal based suspend/resume on Bsd are in a
   // separate class to avoid confusion with many flags in OSThread that
   // are used by VM level suspend/resume.
-  os::Bsd::SuspendResume sr;
+  os::SuspendResume sr;
 
   // _ucontext and _siginfo are used by SR_handler() to save thread context,
   // and they will later be used to walk the stack or reposition thread PC.

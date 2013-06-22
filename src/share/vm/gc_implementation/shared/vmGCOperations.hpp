@@ -150,6 +150,8 @@ class VM_GC_HeapInspection: public VM_GC_Operation {
   virtual bool skip_operation() const;
   virtual bool doit_prologue();
   virtual void doit();
+ protected:
+  bool collect();
 };
 
 

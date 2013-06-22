@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_OOPS_INSTANCEKLASSKLASS_HPP
 #define SHARE_VM_OOPS_INSTANCEKLASSKLASS_HPP
 
+#include "memory/referenceType.hpp"
 #include "oops/klassKlass.hpp"
 
 // An instanceKlassKlass is the klass of an instanceKlass
@@ -46,7 +47,9 @@ class instanceKlassKlass : public klassKlass {
                                    int itable_len,
                                    int static_field_size,
                                    unsigned int nonstatic_oop_map_count,
+                                   AccessFlags access_flags,
                                    ReferenceType rt,
+                                   KlassHandle host_klass,
                                    TRAPS);
 
   // Casting from klassOop

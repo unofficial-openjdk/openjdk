@@ -1284,7 +1284,13 @@ void LIR_Assembler::const2reg(LIR_Opr src, LIR_Opr dest, LIR_PatchCode patch_cod
 
 Address LIR_Assembler::as_Address(LIR_Address* addr) {
   Register reg = addr->base()->as_register();
-  return Address(reg, addr->disp());
+  LIR_Opr index = addr->index();
+  if (index->is_illegal()) {
+    return Address(reg, addr->disp());
+  } else {
+    assert (addr->disp() == 0, "unsupported address mode");
+    return Address(reg, index->as_pointer_register());
+  }
 }
 
 
@@ -2956,6 +2962,7 @@ void LIR_Assembler::emit_lock(LIR_OpLock* op) {
 void LIR_Assembler::emit_profile_call(LIR_OpProfileCall* op) {
   ciMethod* method = op->profiled_method();
   int bci          = op->profiled_bci();
+  ciMethod* callee = op->profiled_callee();
 
   // Update counter for all call types
   ciMethodData* md = method->method_data_or_null();
@@ -2984,9 +2991,11 @@ void LIR_Assembler::emit_profile_call(LIR_OpProfileCall* op) {
 
   Address counter_addr(mdo, md->byte_offset_of_slot(data, CounterData::count_offset()) - mdo_offset_bias);
   Bytecodes::Code bc = method->java_code_at_bci(bci);
+  const bool callee_is_static = callee->is_loaded() && callee->is_static();
   // Perform additional virtual call profiling for invokevirtual and
   // invokeinterface bytecodes
   if ((bc == Bytecodes::_invokevirtual || bc == Bytecodes::_invokeinterface) &&
+      !callee_is_static &&  // required for optimized MH invokes
       C1ProfileVirtualCalls) {
     assert(op->recv()->is_single_cpu(), "recv must be allocated");
     Register recv = op->recv()->as_register();
@@ -3403,7 +3412,28 @@ void LIR_Assembler::peephole(LIR_List* lir) {
   }
 }
 
+void LIR_Assembler::atomic_op(LIR_Code code, LIR_Opr src, LIR_Opr data, LIR_Opr dest, LIR_Opr tmp) {
+  LIR_Address* addr = src->as_address_ptr();
 
+  assert(data == dest, "swap uses only 2 operands");
+  assert (code == lir_xchg, "no xadd on sparc");
 
+  if (data->type() == T_INT) {
+    __ swap(as_Address(addr), data->as_register());
+  } else if (data->is_oop()) {
+    Register obj = data->as_register();
+    Register narrow = tmp->as_register();
+#ifdef _LP64
+    assert(UseCompressedOops, "swap is 32bit only");
+    __ encode_heap_oop(obj, narrow);
+    __ swap(as_Address(addr), narrow);
+    __ decode_heap_oop(narrow, obj);
+#else
+    __ swap(as_Address(addr), obj);
+#endif
+  } else {
+    ShouldNotReachHere();
+  }
+}
 
 #undef __

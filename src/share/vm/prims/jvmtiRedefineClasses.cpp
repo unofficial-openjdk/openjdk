@@ -838,7 +838,7 @@ bool VM_RedefineClasses::is_unresolved_string_mismatch(constantPoolHandle cp1,
 jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
   // For consistency allocate memory using os::malloc wrapper.
   _scratch_classes = (instanceKlassHandle *)
-    os::malloc(sizeof(instanceKlassHandle) * _class_count);
+    os::malloc(sizeof(instanceKlassHandle) * _class_count, mtInternal);
   if (_scratch_classes == NULL) {
     return JVMTI_ERROR_OUT_OF_MEMORY;
   }
@@ -2407,44 +2407,33 @@ void VM_RedefineClasses::set_new_constant_pool(
   // new constant indices as needed. The inner classes info is a
   // quadruple:
   // (inner_class_info, outer_class_info, inner_name, inner_access_flags)
-  typeArrayOop inner_class_list = scratch_class->inner_classes();
-  int icl_length = (inner_class_list == NULL) ? 0 : inner_class_list->length();
-  if (icl_length > 0) {
-    typeArrayHandle inner_class_list_h(THREAD, inner_class_list);
-    for (int i = 0; i < icl_length;
-         i += instanceKlass::inner_class_next_offset) {
-      int cur_index = inner_class_list_h->ushort_at(i
-                        + instanceKlass::inner_class_inner_class_info_offset);
-      if (cur_index == 0) {
-        continue;  // JVM spec. allows null inner class refs so skip it
-      }
-      int new_index = find_new_index(cur_index);
-      if (new_index != 0) {
-        RC_TRACE_WITH_THREAD(0x00080000, THREAD,
-          ("inner_class_info change: %d to %d", cur_index, new_index));
-        inner_class_list_h->ushort_at_put(i
-          + instanceKlass::inner_class_inner_class_info_offset, new_index);
-      }
-      cur_index = inner_class_list_h->ushort_at(i
-                    + instanceKlass::inner_class_outer_class_info_offset);
-      new_index = find_new_index(cur_index);
-      if (new_index != 0) {
-        RC_TRACE_WITH_THREAD(0x00080000, THREAD,
-          ("outer_class_info change: %d to %d", cur_index, new_index));
-        inner_class_list_h->ushort_at_put(i
-          + instanceKlass::inner_class_outer_class_info_offset, new_index);
-      }
-      cur_index = inner_class_list_h->ushort_at(i
-                    + instanceKlass::inner_class_inner_name_offset);
-      new_index = find_new_index(cur_index);
-      if (new_index != 0) {
-        RC_TRACE_WITH_THREAD(0x00080000, THREAD,
-          ("inner_name change: %d to %d", cur_index, new_index));
-        inner_class_list_h->ushort_at_put(i
-          + instanceKlass::inner_class_inner_name_offset, new_index);
-      }
-    } // end for each inner class
-  } // end if we have inner classes
+  InnerClassesIterator iter(scratch_class);
+  for (; !iter.done(); iter.next()) {
+    int cur_index = iter.inner_class_info_index();
+    if (cur_index == 0) {
+      continue;  // JVM spec. allows null inner class refs so skip it
+    }
+    int new_index = find_new_index(cur_index);
+    if (new_index != 0) {
+      RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+        ("inner_class_info change: %d to %d", cur_index, new_index));
+      iter.set_inner_class_info_index(new_index);
+    }
+    cur_index = iter.outer_class_info_index();
+    new_index = find_new_index(cur_index);
+    if (new_index != 0) {
+      RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+        ("outer_class_info change: %d to %d", cur_index, new_index));
+      iter.set_outer_class_info_index(new_index);
+    }
+    cur_index = iter.inner_name_index();
+    new_index = find_new_index(cur_index);
+    if (new_index != 0) {
+      RC_TRACE_WITH_THREAD(0x00080000, THREAD,
+        ("inner_name change: %d to %d", cur_index, new_index));
+      iter.set_inner_name_index(new_index);
+    }
+  } // end for each inner class
 
   // Attach each method in klass to the new constant pool and update
   // to use new constant pool indices as needed:
@@ -2496,23 +2485,17 @@ void VM_RedefineClasses::set_new_constant_pool(
     // to use new constant pool indices as needed. The exception table
     // holds quadruple entries of the form:
     //   (beg_bci, end_bci, handler_bci, klass_index)
-    const int beg_bci_offset     = 0;
-    const int end_bci_offset     = 1;
-    const int handler_bci_offset = 2;
-    const int klass_index_offset = 3;
-    const int entry_size         = 4;
 
-    typeArrayHandle ex_table (THREAD, method->exception_table());
-    int ext_length = ex_table->length();
-    assert(ext_length % entry_size == 0, "exception table format has changed");
+    ExceptionTable ex_table(method());
+    int ext_length = ex_table.length();
 
-    for (int j = 0; j < ext_length; j += entry_size) {
-      int cur_index = ex_table->int_at(j + klass_index_offset);
+    for (int j = 0; j < ext_length; j ++) {
+      int cur_index = ex_table.catch_type_index(j);
       int new_index = find_new_index(cur_index);
       if (new_index != 0) {
         RC_TRACE_WITH_THREAD(0x00080000, THREAD,
           ("ext-klass_index change: %d to %d", cur_index, new_index));
-        ex_table->int_at_put(j + klass_index_offset, new_index);
+        ex_table.set_catch_type_index(j, new_index);
       }
     } // end for each exception table entry
 
@@ -3084,11 +3067,9 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   klassOop the_class_oop = java_lang_Class::as_klassOop(the_class_mirror);
   instanceKlassHandle the_class = instanceKlassHandle(THREAD, the_class_oop);
 
-#ifndef JVMTI_KERNEL
   // Remove all breakpoints in methods of this class
   JvmtiBreakpoints& jvmti_breakpoints = JvmtiCurrentBreakpoints::get_jvmti_breakpoints();
   jvmti_breakpoints.clearall_in_class_at_safepoint(the_class_oop);
-#endif // !JVMTI_KERNEL
 
   if (the_class_oop == Universe::reflect_invoke_cache()->klass()) {
     // We are redefining java.lang.reflect.Method. Method.invoke() is
@@ -3254,7 +3235,9 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
 
   // Copy the "source debug extension" attribute from new class version
   the_class->set_source_debug_extension(
-    scratch_class->source_debug_extension());
+    scratch_class->source_debug_extension(),
+    scratch_class->source_debug_extension() == NULL ? 0 :
+    (int)strlen(scratch_class->source_debug_extension()));
 
   // Use of javac -g could be different in the old and the new
   if (scratch_class->access_flags().has_localvariable_table() !=

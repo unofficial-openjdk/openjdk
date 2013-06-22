@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -131,25 +131,43 @@ endif
 # overridden in some situations, e.g., a BUILD_FLAVOR != product
 # build.
 
-ifeq ($(BUILD_FLAVOR), product)
-  FULL_DEBUG_SYMBOLS ?= 1
-  ENABLE_FULL_DEBUG_SYMBOLS = $(FULL_DEBUG_SYMBOLS)
-else
-  # debug variants always get Full Debug Symbols (if available)
-  ENABLE_FULL_DEBUG_SYMBOLS = 1
-endif
-_JUNK_ := $(shell \
-  echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
-MAKE_ARGS += ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)
+# Due to the multiple sub-make processes that occur this logic gets
+# executed multiple times. We reduce the noise by at least checking that
+# BUILD_FLAVOR has been set.
+ifneq ($(BUILD_FLAVOR),)
+  ifeq ($(BUILD_FLAVOR), product)
+    FULL_DEBUG_SYMBOLS ?= 1
+    ENABLE_FULL_DEBUG_SYMBOLS = $(FULL_DEBUG_SYMBOLS)
+  else
+    # debug variants always get Full Debug Symbols (if available)
+    ENABLE_FULL_DEBUG_SYMBOLS = 1
+  endif
+  _JUNK_ := $(shell \
+    echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
+  MAKE_ARGS += ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)
 
-ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-  ZIP_DEBUGINFO_FILES ?= 1
-else
-  ZIP_DEBUGINFO_FILES=0
+  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+    ZIP_DEBUGINFO_FILES ?= 1
+  else
+    ZIP_DEBUGINFO_FILES=0
+  endif
+  MAKE_ARGS += ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)
 endif
-MAKE_ARGS += ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)
+
 MAKE_ARGS += RM="$(RM)"
 MAKE_ARGS += ZIPEXE=$(ZIPEXE)
+
+# On 32 bit windows we build server and client, on 64 bit just server.
+ifeq ($(JVM_VARIANTS),)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+    JVM_VARIANTS:=client,server
+    JVM_VARIANT_CLIENT:=true
+    JVM_VARIANT_SERVER:=true
+  else
+    JVM_VARIANTS:=server
+    JVM_VARIANT_SERVER:=true
+  endif
+endif
 
 JDK_INCLUDE_SUBDIR=win32
 
@@ -175,13 +193,21 @@ ifdef COOKED_BUILD_NUMBER
   MAKE_ARGS += JDK_BUILD_NUMBER=$(COOKED_BUILD_NUMBER)
 endif
 
-NMAKE= MAKEFLAGS= MFLAGS= nmake /NOLOGO
+NMAKE= MAKEFLAGS= MFLAGS= EXTRA_CFLAGS="$(EXTRA_CFLAGS)" nmake -NOLOGO
+ifndef SYSTEM_UNAME
+  SYSTEM_UNAME := $(shell uname)
+  export SYSTEM_UNAME
+endif
 
 # Check for CYGWIN
-ifneq (,$(findstring CYGWIN,$(shell uname)))
+ifneq (,$(findstring CYGWIN,$(SYSTEM_UNAME)))
   USING_CYGWIN=true
 else
   USING_CYGWIN=false
+endif
+# Check for MinGW
+ifneq (,$(findstring MINGW,$(SYSTEM_UNAME)))
+  USING_MINGW=true
 endif
 # FIXUP: The subdirectory for a debug build is NOT the same on all platforms
 VM_DEBUG=debug
@@ -195,11 +221,16 @@ ifeq ($(USING_CYGWIN), true)
   ABS_BOOTDIR     := $(subst /,\\,$(shell /bin/cygpath -m -a "$(BOOTDIR)"))
   ABS_GAMMADIR    := $(subst /,\\,$(shell /bin/cygpath -m -a "$(GAMMADIR)"))
   ABS_OS_MAKEFILE := $(shell /bin/cygpath -m -a "$(HS_MAKE_DIR)/$(OSNAME)")/build.make
-else
-  ABS_OUTPUTDIR   := $(subst /,\\,$(shell $(CD) $(OUTPUTDIR);$(PWD)))
-  ABS_BOOTDIR     := $(subst /,\\,$(shell $(CD) $(BOOTDIR);$(PWD)))
-  ABS_GAMMADIR    := $(subst /,\\,$(shell $(CD) $(GAMMADIR);$(PWD)))
-  ABS_OS_MAKEFILE := $(subst /,\\,$(shell $(CD) $(HS_MAKE_DIR)/$(OSNAME);$(PWD))/build.make)
+else ifeq ($(USING_MINGW), true)
+    ABS_OUTPUTDIR   := $(shell $(CD) $(OUTPUTDIR);$(PWD))
+    ABS_BOOTDIR     := $(shell $(CD) $(BOOTDIR);$(PWD))
+    ABS_GAMMADIR    := $(shell $(CD) $(GAMMADIR);$(PWD))
+    ABS_OS_MAKEFILE := $(shell $(CD) $(HS_MAKE_DIR)/$(OSNAME);$(PWD))/build.make
+  else
+    ABS_OUTPUTDIR   := $(subst /,\\,$(shell $(CD) $(OUTPUTDIR);$(PWD)))
+    ABS_BOOTDIR     := $(subst /,\\,$(shell $(CD) $(BOOTDIR);$(PWD)))
+    ABS_GAMMADIR    := $(subst /,\\,$(shell $(CD) $(GAMMADIR);$(PWD)))
+    ABS_OS_MAKEFILE := $(subst /,\\,$(shell $(CD) $(HS_MAKE_DIR)/$(OSNAME);$(PWD))/build.make)
 endif
 
 # Disable building SA on windows until we are sure
@@ -219,20 +250,21 @@ endif
 
 EXPORT_SERVER_DIR = $(EXPORT_JRE_BIN_DIR)/server
 EXPORT_CLIENT_DIR = $(EXPORT_JRE_BIN_DIR)/client
-EXPORT_KERNEL_DIR = $(EXPORT_JRE_BIN_DIR)/kernel
 
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.$(LIBRARY_SUFFIX)
-ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-  ifeq ($(ZIP_DEBUGINFO_FILES),1)
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.diz
-  else
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.pdb
-    EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.map
+ifeq ($(JVM_VARIANT_SERVER),true)
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
+  EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.$(LIBRARY_SUFFIX)
+  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+    ifeq ($(ZIP_DEBUGINFO_FILES),1)
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.diz
+    else
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.pdb
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/jvm.map
+    endif
   endif
+  EXPORT_LIST += $(EXPORT_LIB_DIR)/jvm.lib
 endif
-EXPORT_LIST += $(EXPORT_LIB_DIR)/jvm.lib
-ifeq ($(ARCH_DATA_MODEL), 32)
+ifeq ($(JVM_VARIANT_CLIENT),true)
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
   EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.$(LIBRARY_SUFFIX)
   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
@@ -241,17 +273,6 @@ ifeq ($(ARCH_DATA_MODEL), 32)
     else
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.pdb
       EXPORT_LIST += $(EXPORT_CLIENT_DIR)/jvm.map
-    endif
-  endif
-  # kernel vm
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/Xusage.txt
-  EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.$(LIBRARY_SUFFIX)
-  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
-    ifeq ($(ZIP_DEBUGINFO_FILES),1)
-      EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.diz
-    else
-      EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.pdb
-      EXPORT_LIST += $(EXPORT_KERNEL_DIR)/jvm.map
     endif
   endif
 endif
@@ -269,4 +290,20 @@ ifeq ($(BUILD_WIN_SA), 1)
   EXPORT_LIST += $(EXPORT_LIB_DIR)/sa-jdi.jar
   # Must pass this down to nmake.
   MAKE_ARGS += BUILD_WIN_SA=1
+endif
+
+# Propagate compiler and tools paths from configure to nmake. 
+# Need to make sure they contain \\ and not /.
+ifneq ($(SPEC),)
+  ifeq ($(USING_CYGWIN), true)
+    MAKE_ARGS += CXX="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(CXX)))"
+    MAKE_ARGS += LD="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(LD)))"
+    MAKE_ARGS += RC="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(RC)))"
+    MAKE_ARGS += MT="$(subst /,\\,$(shell /bin/cygpath -s -m -a $(MT)))"
+  else
+    MAKE_ARGS += CXX="$(subst /,\\,$(CXX))"
+    MAKE_ARGS += LD="$(subst /,\\,$(LD))"
+    MAKE_ARGS += RC="$(subst /,\\,$(RC))"
+    MAKE_ARGS += MT="$(subst /,\\,$(MT))"
+  endif
 endif

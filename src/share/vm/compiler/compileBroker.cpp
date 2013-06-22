@@ -43,6 +43,7 @@
 #include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/sweeper.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/dtrace.hpp"
 #include "utilities/events.hpp"
 #ifdef COMPILER1
@@ -183,9 +184,11 @@ int CompileBroker::_sum_standard_bytes_compiled  = 0;
 int CompileBroker::_sum_nmethod_size             = 0;
 int CompileBroker::_sum_nmethod_code_size        = 0;
 
-CompileQueue* CompileBroker::_c2_method_queue   = NULL;
-CompileQueue* CompileBroker::_c1_method_queue   = NULL;
-CompileTask*  CompileBroker::_task_free_list = NULL;
+long CompileBroker::_peak_compilation_time       = 0;
+
+CompileQueue* CompileBroker::_c2_method_queue    = NULL;
+CompileQueue* CompileBroker::_c1_method_queue    = NULL;
+CompileTask*  CompileBroker::_task_free_list     = NULL;
 
 GrowableArray<CompilerThread*>* CompileBroker::_method_threads = NULL;
 
@@ -197,9 +200,9 @@ class CompilationLog : public StringEventLog {
 
   void log_compile(JavaThread* thread, CompileTask* task) {
     StringLogMessage lm;
-    stringStream msg = lm.stream();
+    stringStream sstr = lm.stream();
     // msg.time_stamp().update_to(tty->time_stamp().ticks());
-    task->print_compilation(&msg, true);
+    task->print_compilation(&sstr, NULL, true);
     log(thread, "%s", (const char*)lm);
   }
 
@@ -407,7 +410,10 @@ void CompileTask::print_compilation_impl(outputStream* st, methodOop method, int
     if (is_osr_method) {
       st->print(" @ %d", osr_bci);
     }
-    st->print(" (%d bytes)", method->code_size());
+    if (method->is_native())
+      st->print(" (native)");
+    else
+      st->print(" (%d bytes)", method->code_size());
   }
 
   if (msg != NULL) {
@@ -427,12 +433,17 @@ void CompileTask::print_inlining(outputStream* st, ciMethod* method, int inline_
   st->print("     ");        // print compilation number
 
   // method attributes
-  const char sync_char      = method->is_synchronized()        ? 's' : ' ';
-  const char exception_char = method->has_exception_handlers() ? '!' : ' ';
-  const char monitors_char  = method->has_monitor_bytecodes()  ? 'm' : ' ';
+  if (method->is_loaded()) {
+    const char sync_char      = method->is_synchronized()        ? 's' : ' ';
+    const char exception_char = method->has_exception_handlers() ? '!' : ' ';
+    const char monitors_char  = method->has_monitor_bytecodes()  ? 'm' : ' ';
 
-  // print method attributes
-  st->print(" %c%c%c  ", sync_char, exception_char, monitors_char);
+    // print method attributes
+    st->print(" %c%c%c  ", sync_char, exception_char, monitors_char);
+  } else {
+    //         %s!bn
+    st->print("      ");     // print method attributes
+  }
 
   if (TieredCompilation) {
     st->print("  ");
@@ -444,7 +455,10 @@ void CompileTask::print_inlining(outputStream* st, ciMethod* method, int inline_
 
   st->print("@ %d  ", bci);  // print bci
   method->print_short_name(st);
-  st->print(" (%d bytes)", method->code_size());
+  if (method->is_loaded())
+    st->print(" (%d bytes)", method->code_size());
+  else
+    st->print(" (not loaded)");
 
   if (msg != NULL) {
     st->print("   %s", msg);
@@ -471,12 +485,12 @@ void CompileTask::print_inline_indent(int inline_level, outputStream* st) {
 
 // ------------------------------------------------------------------
 // CompileTask::print_compilation
-void CompileTask::print_compilation(outputStream* st, bool short_form) {
+void CompileTask::print_compilation(outputStream* st, const char* msg, bool short_form) {
   oop rem = JNIHandles::resolve(method_handle());
   assert(rem != NULL && rem->is_method(), "must be");
   methodOop method = (methodOop) rem;
   bool is_osr_method = osr_bci() != InvocationEntryBci;
-  print_compilation_impl(st, method, compile_id(), comp_level(), is_osr_method, osr_bci(), is_blocking(), NULL, short_form);
+  print_compilation_impl(st, method, compile_id(), comp_level(), is_osr_method, osr_bci(), is_blocking(), msg, short_form);
 }
 
 // ------------------------------------------------------------------
@@ -488,7 +502,7 @@ void CompileTask::log_task(xmlStream* log) {
   ResourceMark rm(thread);
 
   // <task id='9' method='M' osr_bci='X' level='1' blocking='1' stamp='1.234'>
-  if (_compile_id != 0)   log->print(" compile_id='%d'", _compile_id);
+  log->print(" compile_id='%d'", _compile_id);
   if (_osr_bci != CompileBroker::standard_entry_bci) {
     log->print(" compile_kind='osr'");  // same as nmethod::compile_kind
   } // else compile_kind='c2c'
@@ -951,7 +965,7 @@ void CompileBroker::init_compiler_threads(int c1_compiler_count, int c2_compiler
   int compiler_count = c1_compiler_count + c2_compiler_count;
 
   _method_threads =
-    new (ResourceObj::C_HEAP) GrowableArray<CompilerThread*>(compiler_count, true);
+    new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<CompilerThread*>(compiler_count, true);
 
   char name_buffer[256];
   for (int i = 0; i < c2_compiler_count; i++) {
@@ -1018,6 +1032,7 @@ void CompileBroker::compile_method_base(methodHandle method,
          "sanity check");
   assert(!instanceKlass::cast(method->method_holder())->is_not_initialized(),
          "method holder must be initialized");
+  assert(!method->is_method_handle_intrinsic(), "do not enqueue these guys");
 
   if (CIPrintRequests) {
     tty->print("request: ");
@@ -1213,7 +1228,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
     // We accept a higher level osr method
     nmethod* nm = method->lookup_osr_nmethod_for(osr_bci, comp_level, false);
     if (nm != NULL) return nm;
-    if (method->is_not_osr_compilable()) return NULL;
+    if (method->is_not_osr_compilable(comp_level)) return NULL;
   }
 
   assert(!HAS_PENDING_EXCEPTION, "No exception should be present");
@@ -1231,7 +1246,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
   //
   // Note: A native method implies non-osr compilation which is
   //       checked with an assertion at the entry of this method.
-  if (method->is_native()) {
+  if (method->is_native() && !method->is_method_handle_intrinsic()) {
     bool in_base_library;
     address adr = NativeLookup::lookup(method, in_base_library, THREAD);
     if (HAS_PENDING_EXCEPTION) {
@@ -1264,7 +1279,7 @@ nmethod* CompileBroker::compile_method(methodHandle method, int osr_bci,
 
   // do the compilation
   if (method->is_native()) {
-    if (!PreferInterpreterNativeStubs) {
+    if (!PreferInterpreterNativeStubs || method->is_method_handle_intrinsic()) {
       // Acquire our lock.
       int compile_id;
       {
@@ -1294,7 +1309,7 @@ bool CompileBroker::compilation_is_complete(methodHandle method,
                                             int          comp_level) {
   bool is_osr = (osr_bci != standard_entry_bci);
   if (is_osr) {
-    if (method->is_not_osr_compilable()) {
+    if (method->is_not_osr_compilable(comp_level)) {
       return true;
     } else {
       nmethod* result = method->lookup_osr_nmethod_for(osr_bci, comp_level, true);
@@ -1345,7 +1360,7 @@ bool CompileBroker::compilation_is_prohibited(methodHandle method, int osr_bci, 
   // Some compilers may not support on stack replacement.
   if (is_osr &&
       (!CICompileOSR || !compiler(comp_level)->supports_osr())) {
-    method->set_not_osr_compilable();
+    method->set_not_osr_compilable(comp_level);
     return true;
   }
 
@@ -1361,7 +1376,7 @@ bool CompileBroker::compilation_is_prohibited(methodHandle method, int osr_bci, 
       method->print_short_name(tty);
       tty->cr();
     }
-    method->set_not_compilable_quietly();
+    method->set_not_compilable(CompLevel_all, !quietly, "excluded by CompilerOracle");
   }
 
   return false;
@@ -1535,7 +1550,8 @@ void CompileBroker::compiler_thread_loop() {
   }
   CompileLog* log = thread->log();
   if (log != NULL) {
-    log->begin_elem("start_compile_thread thread='" UINTX_FORMAT "' process='%d'",
+    log->begin_elem("start_compile_thread name='%s' thread='" UINTX_FORMAT "' process='%d'",
+                    thread->name(),
                     os::current_thread_id(),
                     os::current_process_id());
     log->stamp();
@@ -1627,7 +1643,7 @@ void CompileBroker::init_compiler_thread_log() {
       }
       fp = fopen(fileBuf, "at");
       if (fp != NULL) {
-        file = NEW_C_HEAP_ARRAY(char, strlen(fileBuf)+1);
+        file = NEW_C_HEAP_ARRAY(char, strlen(fileBuf)+1, mtCompiler);
         strcpy(file, fileBuf);
         break;
       }
@@ -1637,7 +1653,7 @@ void CompileBroker::init_compiler_thread_log() {
     } else {
       if (LogCompilation && Verbose)
         tty->print_cr("Opening compilation log %s", file);
-      CompileLog* log = new(ResourceObj::C_HEAP) CompileLog(file, fp, thread_id);
+      CompileLog* log = new(ResourceObj::C_HEAP, mtCompiler) CompileLog(file, fp, thread_id);
       thread->init_log(log);
 
       if (xtty != NULL) {
@@ -1756,6 +1772,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     ciMethod* target = ci_env.get_method_from_handle(target_handle);
 
     TraceTime t1("compilation", &time);
+    EventCompilation event;
 
     compiler(task->comp_level())->compile_method(&ci_env, target, osr_bci);
 
@@ -1775,11 +1792,10 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
         _compilation_log->log_failure(thread, task, ci_env.failure_reason(), retry_message);
       }
       if (PrintCompilation) {
-        tty->print("%4d   COMPILE SKIPPED: %s", compile_id, ci_env.failure_reason());
-        if (retry_message != NULL) {
-          tty->print(" (%s)", retry_message);
-        }
-        tty->cr();
+        FormatBufferResource msg = retry_message != NULL ?
+            err_msg_res("COMPILE SKIPPED: %s (%s)", ci_env.failure_reason(), retry_message) :
+            err_msg_res("COMPILE SKIPPED: %s",      ci_env.failure_reason());
+        task->print_compilation(tty, msg);
       }
     } else {
       task->mark_success();
@@ -1790,6 +1806,16 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
           _compilation_log->log_nmethod(thread, code);
         }
       }
+    }
+    if (event.should_commit()) {
+      event.set_method(target->get_methodOop());
+      event.set_compileID(compile_id);
+      event.set_compileLevel(task->comp_level());
+      event.set_succeded(task->is_success());
+      event.set_isOsr(is_osr);
+      event.set_codeSize((task->code() == NULL) ? 0 : task->code()->total_size());
+      event.set_inlinedBytes(task->num_inlined_bytecodes());
+      event.commit();
     }
   }
   pop_jni_handle_block();
@@ -1809,14 +1835,20 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     tty->print_cr("size: %d time: %d inlined: %d bytes", code_size, (int)time.milliseconds(), task->num_inlined_bytecodes());
   }
 
-  if (compilable == ciEnv::MethodCompilable_never) {
-    if (is_osr) {
-      method->set_not_osr_compilable();
-    } else {
+  // Disable compilation, if required.
+  switch (compilable) {
+  case ciEnv::MethodCompilable_never:
+    if (is_osr)
+      method->set_not_osr_compilable_quietly();
+    else
       method->set_not_compilable_quietly();
-    }
-  } else if (compilable == ciEnv::MethodCompilable_not_at_tier) {
-    method->set_not_compilable_quietly(task->comp_level());
+    break;
+  case ciEnv::MethodCompilable_not_at_tier:
+    if (is_osr)
+      method->set_not_osr_compilable_quietly(task->comp_level());
+    else
+      method->set_not_compilable_quietly(task->comp_level());
+    break;
   }
 
   // Note that the queued_for_compilation bits are cleared without
@@ -1861,6 +1893,10 @@ void CompileBroker::handle_full_code_cache() {
     warning("CodeCache is full. Compiler has been disabled.");
     warning("Try increasing the code cache size using -XX:ReservedCodeCacheSize=");
     CodeCache::print_bounds(tty);
+
+    CodeCache::report_codemem_full();
+
+
 #ifndef PRODUCT
     if (CompileTheWorld || ExitOnFullCodeCache) {
       before_exit(JavaThread::current());
@@ -2016,8 +2052,10 @@ void CompileBroker::collect_statistics(CompilerThread* thread, elapsedTimer time
     // java.lang.management.CompilationMBean
     _perf_total_compilation->inc(time.ticks());
 
+    _t_total_compilation.add(time);
+    _peak_compilation_time = time.milliseconds() > _peak_compilation_time ? time.milliseconds() : _peak_compilation_time;
+
     if (CITime) {
-      _t_total_compilation.add(time);
       if (is_osr) {
         _t_osr_compilation.add(time);
         _sum_osr_bytes_compiled += method->code_size() + task->num_inlined_bytecodes();
@@ -2102,7 +2140,6 @@ void CompileBroker::print_times() {
   tty->print_cr("  nmethod code size        : %6d bytes", CompileBroker::_sum_nmethod_code_size);
   tty->print_cr("  nmethod total size       : %6d bytes", CompileBroker::_sum_nmethod_size);
 }
-
 
 // Debugging output for failure
 void CompileBroker::print_last_compile() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ class CallInfo;
 // code in various ways.  Currently they are used by the lock coarsening code
 //
 
-class NamedCounter : public CHeapObj {
+class NamedCounter : public CHeapObj<mtCompiler> {
 public:
     enum CounterTag {
     NoTag,
@@ -174,6 +174,7 @@ private:
   static address handle_exception_C       (JavaThread* thread);
   static address handle_exception_C_helper(JavaThread* thread, nmethod*& nm);
   static address rethrow_C                (oopDesc* exception, JavaThread *thread, address return_pc );
+  static void deoptimize_caller_frame     (JavaThread *thread);
   static void deoptimize_caller_frame     (JavaThread *thread, bool doit);
   static bool is_deoptimized_caller_frame (JavaThread *thread);
 
@@ -268,7 +269,7 @@ private:
   static const TypeFunc* Math_DD_D_Type(); // mod,pow & friends
   static const TypeFunc* modf_Type();
   static const TypeFunc* l2f_Type();
-  static const TypeFunc* current_time_millis_Type();
+  static const TypeFunc* void_long_Type();
 
   static const TypeFunc* flush_windows_Type();
 
@@ -279,6 +280,9 @@ private:
   static const TypeFunc* slow_arraycopy_Type();   // the full routine
 
   static const TypeFunc* array_fill_Type();
+
+  static const TypeFunc* aescrypt_block_Type();
+  static const TypeFunc* cipherBlockChaining_aescrypt_Type();
 
   // leaf on stack replacement interpreter accessor types
   static const TypeFunc* osr_end_Type();

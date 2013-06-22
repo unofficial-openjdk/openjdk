@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include "runtime/java.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/virtualspace.hpp"
+#include "services/memTracker.hpp"
 #ifdef COMPILER1
 #include "c1/c1_LIR.hpp"
 #include "c1/c1_LIRGenerator.hpp"
@@ -90,6 +91,9 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   const size_t rs_align = _page_size == (size_t) os::vm_page_size() ? 0 :
     MAX2(_page_size, (size_t) os::vm_allocation_granularity());
   ReservedSpace heap_rs(_byte_map_size, rs_align, false);
+
+  MemTracker::record_virtual_memory_type((address)heap_rs.base(), mtGC);
+
   os::trace_page_sizes("card table", _guard_index + 1, _guard_index + 1,
                        _page_size, heap_rs.base(), heap_rs.size());
   if (!heap_rs.is_reserved()) {
@@ -109,20 +113,19 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   jbyte* guard_card = &_byte_map[_guard_index];
   uintptr_t guard_page = align_size_down((uintptr_t)guard_card, _page_size);
   _guard_region = MemRegion((HeapWord*)guard_page, _page_size);
-  if (!os::commit_memory((char*)guard_page, _page_size, _page_size)) {
-    // Do better than this for Merlin
-    vm_exit_out_of_memory(_page_size, "card table last card");
-  }
+  os::commit_memory_or_exit((char*)guard_page, _page_size, _page_size,
+                            !ExecMem, "card table last card");
+
   *guard_card = last_card;
 
    _lowest_non_clean =
-    NEW_C_HEAP_ARRAY(CardArr, max_covered_regions);
+    NEW_C_HEAP_ARRAY(CardArr, max_covered_regions, mtGC);
   _lowest_non_clean_chunk_size =
-    NEW_C_HEAP_ARRAY(size_t, max_covered_regions);
+    NEW_C_HEAP_ARRAY(size_t, max_covered_regions, mtGC);
   _lowest_non_clean_base_chunk_index =
-    NEW_C_HEAP_ARRAY(uintptr_t, max_covered_regions);
+    NEW_C_HEAP_ARRAY(uintptr_t, max_covered_regions, mtGC);
   _last_LNC_resizing_collection =
-    NEW_C_HEAP_ARRAY(int, max_covered_regions);
+    NEW_C_HEAP_ARRAY(int, max_covered_regions, mtGC);
   if (_lowest_non_clean == NULL
       || _lowest_non_clean_chunk_size == NULL
       || _lowest_non_clean_base_chunk_index == NULL
@@ -283,12 +286,9 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
         MemRegion(cur_committed.end(), new_end_for_commit);
 
       assert(!new_committed.is_empty(), "Region should not be empty here");
-      if (!os::commit_memory((char*)new_committed.start(),
-                             new_committed.byte_size(), _page_size)) {
-        // Do better than this for Merlin
-        vm_exit_out_of_memory(new_committed.byte_size(),
-                "card table expansion");
-      }
+      os::commit_memory_or_exit((char*)new_committed.start(),
+                                new_committed.byte_size(), _page_size,
+                                !ExecMem, "card table expansion");
     // Use new_end_aligned (as opposed to new_end_for_commit) because
     // the cur_committed region may include the guard region.
     } else if (new_end_aligned < cur_committed.end()) {
@@ -688,7 +688,7 @@ void CardTableModRefBS::verify_region(MemRegion mr,
     if (failed) {
       if (!failures) {
         tty->cr();
-        tty->print_cr("== CT verification failed: ["PTR_FORMAT","PTR_FORMAT"]");
+        tty->print_cr("== CT verification failed: ["PTR_FORMAT","PTR_FORMAT"]", start, end);
         tty->print_cr("==   %sexpecting value: %d",
                       (val_equals) ? "" : "not ", val);
         failures = true;

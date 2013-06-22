@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,21 +46,12 @@ class JvmtiEnv;
 class JvmtiThreadState;
 class AttachOperation;
 
-#ifndef JVMTI_KERNEL
 #define JVMTI_SUPPORT_FLAG(key)                                         \
   private:                                                              \
   static bool  _##key;                                                  \
   public:                                                               \
   inline static void set_##key(bool on)       { _##key = (on != 0); }   \
   inline static bool key()                    { return _##key; }
-#else  // JVMTI_KERNEL
-#define JVMTI_SUPPORT_FLAG(key)                                           \
-  private:                                                                \
-  const static bool _##key = false;                                       \
-  public:                                                                 \
-  inline static void set_##key(bool on)       { report_unsupported(on); } \
-  inline static bool key()                    { return _##key; }
-#endif // JVMTI_KERNEL
 
 
 // This class contains the JVMTI interface for the rest of hotspot.
@@ -120,9 +111,6 @@ class JvmtiExport : public AllStatic {
   JVMTI_SUPPORT_FLAG(should_clean_up_heap_objects)
   JVMTI_SUPPORT_FLAG(should_post_vm_object_alloc)
 
-  // If flag cannot be implemented, give an error if on=true
-  static void report_unsupported(bool on);
-
   // these should only be called by the friend class
   friend class JvmtiManageCapabilities;
   inline static void set_can_modify_any_class(bool on)                 { _can_modify_any_class = (on != 0); }
@@ -144,7 +132,7 @@ class JvmtiExport : public AllStatic {
   // posts a DynamicCodeGenerated event (internal/private implementation).
   // The public post_dynamic_code_generated* functions make use of the
   // internal implementation.  Also called from JvmtiDeferredEvent::post()
-  static void post_dynamic_code_generated_internal(const char *name, const void *code_begin, const void *code_end) KERNEL_RETURN;
+  static void post_dynamic_code_generated_internal(const char *name, const void *code_begin, const void *code_end);
 
  private:
 
@@ -154,9 +142,9 @@ class JvmtiExport : public AllStatic {
 
   static void post_compiled_method_load(JvmtiEnv* env, const jmethodID method, const jint length,
                                         const void *code_begin, const jint map_length,
-                                        const jvmtiAddrLocationMap* map) KERNEL_RETURN;
+                                        const jvmtiAddrLocationMap* map);
   static void post_dynamic_code_generated(JvmtiEnv* env, const char *name, const void *code_begin,
-                                          const void *code_end) KERNEL_RETURN;
+                                          const void *code_end);
 
   // The RedefineClasses() API breaks some invariants in the "regular"
   // system. For example, there are sanity checks when GC'ing nmethods
@@ -236,53 +224,51 @@ class JvmtiExport : public AllStatic {
                                     int * micro);
 
   // single stepping management methods
-  static void at_single_stepping_point(JavaThread *thread, methodOop method, address location) KERNEL_RETURN;
-  static void expose_single_stepping(JavaThread *thread) KERNEL_RETURN;
-  static bool hide_single_stepping(JavaThread *thread) KERNEL_RETURN_(false);
+  static void at_single_stepping_point(JavaThread *thread, methodOop method, address location);
+  static void expose_single_stepping(JavaThread *thread);
+  static bool hide_single_stepping(JavaThread *thread);
 
   // Methods that notify the debugger that something interesting has happened in the VM.
   static void post_vm_start              ();
   static void post_vm_initialized        ();
   static void post_vm_death              ();
 
-  static void post_single_step           (JavaThread *thread, methodOop method, address location) KERNEL_RETURN;
-  static void post_raw_breakpoint        (JavaThread *thread, methodOop method, address location) KERNEL_RETURN;
+  static void post_single_step           (JavaThread *thread, methodOop method, address location);
+  static void post_raw_breakpoint        (JavaThread *thread, methodOop method, address location);
 
-  static void post_exception_throw       (JavaThread *thread, methodOop method, address location, oop exception) KERNEL_RETURN;
-  static void notice_unwind_due_to_exception (JavaThread *thread, methodOop method, address location, oop exception, bool in_handler_frame) KERNEL_RETURN;
+  static void post_exception_throw       (JavaThread *thread, methodOop method, address location, oop exception);
+  static void notice_unwind_due_to_exception (JavaThread *thread, methodOop method, address location, oop exception, bool in_handler_frame);
 
   static oop jni_GetField_probe          (JavaThread *thread, jobject jobj,
-    oop obj, klassOop klass, jfieldID fieldID, bool is_static)
-    KERNEL_RETURN_(NULL);
+    oop obj, klassOop klass, jfieldID fieldID, bool is_static);
   static oop jni_GetField_probe_nh       (JavaThread *thread, jobject jobj,
-    oop obj, klassOop klass, jfieldID fieldID, bool is_static)
-    KERNEL_RETURN_(NULL);
+    oop obj, klassOop klass, jfieldID fieldID, bool is_static);
   static void post_field_access_by_jni   (JavaThread *thread, oop obj,
-    klassOop klass, jfieldID fieldID, bool is_static) KERNEL_RETURN;
+    klassOop klass, jfieldID fieldID, bool is_static);
   static void post_field_access          (JavaThread *thread, methodOop method,
-    address location, KlassHandle field_klass, Handle object, jfieldID field) KERNEL_RETURN;
+    address location, KlassHandle field_klass, Handle object, jfieldID field);
   static oop jni_SetField_probe          (JavaThread *thread, jobject jobj,
     oop obj, klassOop klass, jfieldID fieldID, bool is_static, char sig_type,
-    jvalue *value) KERNEL_RETURN_(NULL);
+    jvalue *value);
   static oop jni_SetField_probe_nh       (JavaThread *thread, jobject jobj,
     oop obj, klassOop klass, jfieldID fieldID, bool is_static, char sig_type,
-    jvalue *value) KERNEL_RETURN_(NULL);
+    jvalue *value);
   static void post_field_modification_by_jni(JavaThread *thread, oop obj,
     klassOop klass, jfieldID fieldID, bool is_static, char sig_type,
     jvalue *value);
   static void post_raw_field_modification(JavaThread *thread, methodOop method,
     address location, KlassHandle field_klass, Handle object, jfieldID field,
-    char sig_type, jvalue *value) KERNEL_RETURN;
+    char sig_type, jvalue *value);
 
-  static void post_method_entry          (JavaThread *thread, methodOop method, frame current_frame) KERNEL_RETURN;
-  static void post_method_exit           (JavaThread *thread, methodOop method, frame current_frame) KERNEL_RETURN;
+  static void post_method_entry          (JavaThread *thread, methodOop method, frame current_frame);
+  static void post_method_exit           (JavaThread *thread, methodOop method, frame current_frame);
 
-  static void post_class_load            (JavaThread *thread, klassOop klass) KERNEL_RETURN;
-  static void post_class_unload          (klassOop klass) KERNEL_RETURN;
-  static void post_class_prepare         (JavaThread *thread, klassOop klass) KERNEL_RETURN;
+  static void post_class_load            (JavaThread *thread, klassOop klass);
+  static void post_class_unload          (klassOop klass);
+  static void post_class_prepare         (JavaThread *thread, klassOop klass);
 
-  static void post_thread_start          (JavaThread *thread) KERNEL_RETURN;
-  static void post_thread_end            (JavaThread *thread) KERNEL_RETURN;
+  static void post_thread_start          (JavaThread *thread);
+  static void post_thread_end            (JavaThread *thread);
 
   // Support for java.lang.instrument agent loading.
   static bool _should_post_class_file_load_hook;
@@ -293,31 +279,31 @@ class JvmtiExport : public AllStatic {
                                         unsigned char **data_ptr, unsigned char **end_ptr,
                                         unsigned char **cached_data_ptr,
                                         jint *cached_length_ptr);
-  static void post_native_method_bind(methodOop method, address* function_ptr) KERNEL_RETURN;
-  static void post_compiled_method_load(nmethod *nm) KERNEL_RETURN;
-  static void post_dynamic_code_generated(const char *name, const void *code_begin, const void *code_end) KERNEL_RETURN;
+  static void post_native_method_bind(methodOop method, address* function_ptr);
+  static void post_compiled_method_load(nmethod *nm);
+  static void post_dynamic_code_generated(const char *name, const void *code_begin, const void *code_end);
 
   // used to post a CompiledMethodUnload event
-  static void post_compiled_method_unload(jmethodID mid, const void *code_begin) KERNEL_RETURN;
+  static void post_compiled_method_unload(jmethodID mid, const void *code_begin);
 
   // similiar to post_dynamic_code_generated except that it can be used to
   // post a DynamicCodeGenerated event while holding locks in the VM. Any event
   // posted using this function is recorded by the enclosing event collector
   // -- JvmtiDynamicCodeEventCollector.
-  static void post_dynamic_code_generated_while_holding_locks(const char* name, address code_begin, address code_end) KERNEL_RETURN;
+  static void post_dynamic_code_generated_while_holding_locks(const char* name, address code_begin, address code_end);
 
-  static void post_garbage_collection_finish() KERNEL_RETURN;
-  static void post_garbage_collection_start() KERNEL_RETURN;
-  static void post_data_dump() KERNEL_RETURN;
-  static void post_monitor_contended_enter(JavaThread *thread, ObjectMonitor *obj_mntr) KERNEL_RETURN;
-  static void post_monitor_contended_entered(JavaThread *thread, ObjectMonitor *obj_mntr) KERNEL_RETURN;
-  static void post_monitor_wait(JavaThread *thread, oop obj, jlong timeout) KERNEL_RETURN;
-  static void post_monitor_waited(JavaThread *thread, ObjectMonitor *obj_mntr, jboolean timed_out) KERNEL_RETURN;
-  static void post_object_free(JvmtiEnv* env, jlong tag) KERNEL_RETURN;
-  static void post_resource_exhausted(jint resource_exhausted_flags, const char* detail) KERNEL_RETURN;
-  static void record_vm_internal_object_allocation(oop object) KERNEL_RETURN;
+  static void post_garbage_collection_finish();
+  static void post_garbage_collection_start();
+  static void post_data_dump();
+  static void post_monitor_contended_enter(JavaThread *thread, ObjectMonitor *obj_mntr);
+  static void post_monitor_contended_entered(JavaThread *thread, ObjectMonitor *obj_mntr);
+  static void post_monitor_wait(JavaThread *thread, oop obj, jlong timeout);
+  static void post_monitor_waited(JavaThread *thread, ObjectMonitor *obj_mntr, jboolean timed_out);
+  static void post_object_free(JvmtiEnv* env, jlong tag);
+  static void post_resource_exhausted(jint resource_exhausted_flags, const char* detail);
+  static void record_vm_internal_object_allocation(oop object);
   // Post objects collected by vm_object_alloc_event_collector.
-  static void post_vm_object_alloc(JavaThread *thread, oop object) KERNEL_RETURN;
+  static void post_vm_object_alloc(JavaThread *thread, oop object);
   // Collects vm internal objects for later event posting.
   inline static void vm_object_alloc_event_collector(oop object) {
     if (should_post_vm_object_alloc()) {
@@ -331,18 +317,16 @@ class JvmtiExport : public AllStatic {
     }
   }
 
-  static void cleanup_thread             (JavaThread* thread) KERNEL_RETURN;
+  static void cleanup_thread             (JavaThread* thread);
 
-  static void oops_do(OopClosure* f) KERNEL_RETURN;
-  static void weak_oops_do(BoolObjectClosure* b, OopClosure* f) KERNEL_RETURN;
-  static void gc_epilogue() KERNEL_RETURN;
+  static void oops_do(OopClosure* f);
+  static void weak_oops_do(BoolObjectClosure* b, OopClosure* f);
+  static void gc_epilogue();
 
-  static void transition_pending_onload_raw_monitors() KERNEL_RETURN;
+  static void transition_pending_onload_raw_monitors();
 
-#ifndef SERVICES_KERNEL
   // attach support
   static jint load_agent_library(AttachOperation* op, outputStream* out);
-#endif // SERVICES_KERNEL
 
   // SetNativeMethodPrefix support
   static char** get_all_native_method_prefixes(int* count_ptr);
@@ -350,7 +334,7 @@ class JvmtiExport : public AllStatic {
 
 // Support class used by JvmtiDynamicCodeEventCollector and others. It
 // describes a single code blob by name and address range.
-class JvmtiCodeBlobDesc : public CHeapObj {
+class JvmtiCodeBlobDesc : public CHeapObj<mtInternal> {
  private:
   char _name[64];
   address _code_begin;
@@ -408,8 +392,8 @@ class JvmtiDynamicCodeEventCollector : public JvmtiEventCollector {
   void register_stub(const char* name, address start, address end);
 
  public:
-  JvmtiDynamicCodeEventCollector()  KERNEL_RETURN;
-  ~JvmtiDynamicCodeEventCollector() KERNEL_RETURN;
+  JvmtiDynamicCodeEventCollector();
+  ~JvmtiDynamicCodeEventCollector();
   bool is_dynamic_code_event()   { return true; }
 
 };
@@ -441,8 +425,8 @@ class JvmtiVMObjectAllocEventCollector : public JvmtiEventCollector {
   static void oops_do_for_all_threads(OopClosure* f);
 
  public:
-  JvmtiVMObjectAllocEventCollector()  KERNEL_RETURN;
-  ~JvmtiVMObjectAllocEventCollector() KERNEL_RETURN;
+  JvmtiVMObjectAllocEventCollector();
+  ~JvmtiVMObjectAllocEventCollector();
   bool is_vm_object_alloc_event()   { return true; }
 
   bool is_enabled()                 { return _enable; }
@@ -472,16 +456,16 @@ class NoJvmtiVMObjectAllocMark : public StackObj {
   bool was_enabled()    { return _collector != NULL; }
 
  public:
-  NoJvmtiVMObjectAllocMark() KERNEL_RETURN;
-  ~NoJvmtiVMObjectAllocMark() KERNEL_RETURN;
+  NoJvmtiVMObjectAllocMark();
+  ~NoJvmtiVMObjectAllocMark();
 };
 
 
 // Base class for reporting GC events to JVMTI.
 class JvmtiGCMarker : public StackObj {
  public:
-  JvmtiGCMarker() KERNEL_RETURN;
-  ~JvmtiGCMarker() KERNEL_RETURN;
+  JvmtiGCMarker();
+  ~JvmtiGCMarker();
 };
 
 // JvmtiHideSingleStepping is a helper class for hiding

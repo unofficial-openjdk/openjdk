@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,12 @@
 #ifndef SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 #define SHARE_VM_GC_IMPLEMENTATION_CONCURRENTMARKSWEEP_CONCURRENTMARKSWEEPGENERATION_HPP
 
-#include "gc_implementation/concurrentMarkSweep/freeBlockDictionary.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
 #include "gc_implementation/shared/gSpaceCounters.hpp"
 #include "gc_implementation/shared/gcStats.hpp"
+#include "gc_implementation/shared/gcWhen.hpp"
 #include "gc_implementation/shared/generationCounters.hpp"
+#include "memory/freeBlockDictionary.hpp"
 #include "memory/generation.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/virtualspace.hpp"
@@ -53,6 +55,8 @@
 class CMSAdaptiveSizePolicy;
 class CMSConcMarkingTask;
 class CMSGCAdaptivePolicyCounters;
+class CMSTracer;
+class ConcurrentGCTimer;
 class ConcurrentMarkSweepGeneration;
 class ConcurrentMarkSweepPolicy;
 class ConcurrentMarkSweepThread;
@@ -60,6 +64,7 @@ class CompactibleFreeListSpace;
 class FreeChunk;
 class PromotionInfo;
 class ScanMarkedObjectsAgainCarefullyClosure;
+class SerialOldTracer;
 
 // A generic CMS bit map. It's the basis for both the CMS marking bit map
 // as well as for the mod union table (in each case only a subset of the
@@ -161,7 +166,7 @@ class CMSBitMap VALUE_OBJ_CLASS_SPEC {
 
 // Represents a marking stack used by the CMS collector.
 // Ideally this should be GrowableArray<> just like MSC's marking stack(s).
-class CMSMarkStack: public CHeapObj  {
+class CMSMarkStack: public CHeapObj<mtGC>  {
   //
   friend class CMSCollector;   // to get at expasion stats further below
   //
@@ -265,7 +270,7 @@ class ModUnionClosurePar: public ModUnionClosure {
 
 // Survivor Chunk Array in support of parallelization of
 // Survivor Space rescan.
-class ChunkArray: public CHeapObj {
+class ChunkArray: public CHeapObj<mtGC> {
   size_t _index;
   size_t _capacity;
   size_t _overflows;
@@ -506,7 +511,7 @@ private:
 };
 
 
-class CMSCollector: public CHeapObj {
+class CMSCollector: public CHeapObj<mtGC> {
   friend class VMStructs;
   friend class ConcurrentMarkSweepThread;
   friend class ConcurrentMarkSweepGeneration;
@@ -553,8 +558,8 @@ class CMSCollector: public CHeapObj {
   // The following array-pair keeps track of mark words
   // displaced for accomodating overflow list above.
   // This code will likely be revisited under RFE#4922830.
-  Stack<oop>     _preserved_oop_stack;
-  Stack<markOop> _preserved_mark_stack;
+  Stack<oop, mtGC>     _preserved_oop_stack;
+  Stack<markOop, mtGC> _preserved_mark_stack;
 
   int*             _hash_seed;
 
@@ -568,8 +573,9 @@ class CMSCollector: public CHeapObj {
   bool _completed_initialization;
 
   // In support of ExplicitGCInvokesConcurrent
-  static   bool _full_gc_requested;
-  unsigned int  _collection_count_start;
+  static bool _full_gc_requested;
+  static GCCause::Cause _full_gc_cause;
+  unsigned int _collection_count_start;
 
   // Should we unload classes this concurrent cycle?
   bool _should_unload_classes;
@@ -607,6 +613,20 @@ class CMSCollector: public CHeapObj {
   // padded decaying average estimates of the above
   AdaptivePaddedAverage _inter_sweep_estimate;
   AdaptivePaddedAverage _intra_sweep_estimate;
+
+  CMSTracer* _gc_tracer_cm;
+  ConcurrentGCTimer* _gc_timer_cm;
+
+  bool _cms_start_registered;
+
+  GCHeapSummary _last_heap_summary;
+  PermGenSummary _last_perm_gen_summary;
+
+  void register_foreground_gc_start(GCCause::Cause cause);
+  void register_gc_start(GCCause::Cause cause);
+  void register_gc_end();
+  void save_heap_summary();
+  void report_heap_summary(GCWhen::Type when);
 
  protected:
   ConcurrentMarkSweepGeneration* _cmsGen;  // old gen (CMS)
@@ -717,7 +737,7 @@ class CMSCollector: public CHeapObj {
     CMS_op_checkpointRootsFinal
   };
 
-  void do_CMS_operation(CMS_op_type op);
+  void do_CMS_operation(CMS_op_type op, GCCause::Cause gc_cause);
   bool stop_world_and_do(CMS_op_type op);
 
   OopTaskQueueSet* task_queues() { return _task_queues; }
@@ -832,6 +852,10 @@ class CMSCollector: public CHeapObj {
   void do_mark_sweep_work(bool clear_all_soft_refs,
     CollectorState first_state, bool should_start_over);
 
+  // Work methods for reporting concurrent mode interruption or failure
+  bool is_external_interruption();
+  void report_concurrent_mode_interruption();
+
   // If the backgrould GC is active, acquire control from the background
   // GC and do the collection.
   void acquire_control_and_collect(bool   full, bool clear_all_soft_refs);
@@ -882,11 +906,11 @@ class CMSCollector: public CHeapObj {
                bool   clear_all_soft_refs,
                size_t size,
                bool   tlab);
-  void collect_in_background(bool clear_all_soft_refs);
-  void collect_in_foreground(bool clear_all_soft_refs);
+  void collect_in_background(bool clear_all_soft_refs, GCCause::Cause cause);
+  void collect_in_foreground(bool clear_all_soft_refs, GCCause::Cause cause);
 
   // In support of ExplicitGCInvokesConcurrent
-  static void request_full_gc(unsigned int full_gc_count);
+  static void request_full_gc(unsigned int full_gc_count, GCCause::Cause cause);
   // Should we unload classes in a particular concurrent cycle?
   bool should_unload_classes() const {
     return _should_unload_classes;
@@ -988,7 +1012,7 @@ class CMSCollector: public CHeapObj {
   CMSGCAdaptivePolicyCounters* gc_adaptive_policy_counters();
 
   // debugging
-  void verify(bool);
+  void verify();
   bool verify_after_remark();
   void verify_ok_to_terminate() const PRODUCT_RETURN;
   void verify_work_stacks_empty() const PRODUCT_RETURN;
@@ -1106,7 +1130,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
   ConcurrentMarkSweepGeneration(ReservedSpace rs, size_t initial_byte_size,
                                 int level, CardTableRS* ct,
                                 bool use_adaptive_freelists,
-                                FreeBlockDictionary::DictionaryChoice);
+                                FreeBlockDictionary<FreeChunk>::DictionaryChoice);
 
   // Accessors
   CMSCollector* collector() const { return _collector; }
@@ -1279,7 +1303,7 @@ class ConcurrentMarkSweepGeneration: public CardGeneration {
 
   // Debugging
   void prepare_for_verify();
-  void verify(bool allow_dirty);
+  void verify();
   void print_statistics()               PRODUCT_RETURN;
 
   // Performance Counters support
@@ -1328,7 +1352,7 @@ class ASConcurrentMarkSweepGeneration : public ConcurrentMarkSweepGeneration {
   ASConcurrentMarkSweepGeneration(ReservedSpace rs, size_t initial_byte_size,
                                   int level, CardTableRS* ct,
                                   bool use_adaptive_freelists,
-                                  FreeBlockDictionary::DictionaryChoice
+                                  FreeBlockDictionary<FreeChunk>::DictionaryChoice
                                     dictionaryChoice) :
     ConcurrentMarkSweepGeneration(rs, initial_byte_size, level, ct,
       use_adaptive_freelists, dictionaryChoice) {}

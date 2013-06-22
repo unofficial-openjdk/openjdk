@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,9 +101,6 @@ void RuntimeService::init() {
     memset((void*) capabilities, '0', len);
     capabilities[len-1] = '\0';
     capabilities[0] = AttachListener::is_attach_supported() ? '1' : '0';
-#ifdef KERNEL
-    capabilities[1] = '1';
-#endif // KERNEL
     PerfDataManager::create_string_constant(SUN_RT, "jvmCapabilities",
                                             capabilities, CHECK);
   }
@@ -118,6 +115,8 @@ void RuntimeService::record_safepoint_begin() {
 
   // Print the time interval in which the app was executing
   if (PrintGCApplicationConcurrentTime) {
+    gclog_or_tty->date_stamp(PrintGCDateStamps);
+    gclog_or_tty->stamp(PrintGCTimeStamps);
     gclog_or_tty->print_cr("Application time: %3.7f seconds",
                                 last_application_time_sec());
   }
@@ -148,6 +147,8 @@ void RuntimeService::record_safepoint_end() {
   // Print the time interval for which the app was stopped
   // during the current safepoint operation.
   if (PrintGCApplicationStoppedTime) {
+    gclog_or_tty->date_stamp(PrintGCDateStamps);
+    gclog_or_tty->stamp(PrintGCTimeStamps);
     gclog_or_tty->print_cr("Total time for which application threads "
                            "were stopped: %3.7f seconds",
                            last_safepoint_time_sec());

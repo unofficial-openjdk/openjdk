@@ -47,6 +47,7 @@
 # flags.make	- with macro settings
 # vm.make	- to support making "$(MAKE) -v vm.make" in makefiles
 # adlc.make	- 
+# trace.make	- generate tracing event and type definitions
 # jvmti.make	- generate JVMTI bindings from the spec (JSR-163)
 # sa.make	- generate SA jar file and natives
 # env.[ck]sh	- environment settings
@@ -55,6 +56,7 @@
 # The makefiles are split this way so that "make foo" will run faster by not
 # having to read the dependency files for the vm.
 
+-include $(SPEC)
 include $(GAMMADIR)/make/scm.make
 include $(GAMMADIR)/make/altsrc.make
 
@@ -65,7 +67,7 @@ QUIETLY$(MAKE_VERBOSE)	= @
 # For now, until the compiler is less wobbly:
 TESTFLAGS	= -Xbatch -showversion
 
-ifeq ($(ZERO_BUILD), true)
+ifeq ($(findstring true, $(JVM_VARIANT_ZERO) $(JVM_VARIANT_ZEROSHARK)), true)
   PLATFORM_FILE = $(shell dirname $(shell dirname $(shell pwd)))/platform_zero
 else
   ifdef USE_SUNCC
@@ -117,7 +119,8 @@ COMPILER	= $(shell sed -n 's/^compiler[ 	]*=[ 	]*//p' $(PLATFORM_FILE))
 SIMPLE_DIRS	= \
 	$(PLATFORM_DIR)/generated/dependencies \
 	$(PLATFORM_DIR)/generated/adfiles \
-	$(PLATFORM_DIR)/generated/jvmtifiles
+	$(PLATFORM_DIR)/generated/jvmtifiles \
+	$(PLATFORM_DIR)/generated/tracefiles
 
 TARGETS      = debug fastdebug jvmg optimized product profiled
 SUBMAKE_DIRS = $(addprefix $(PLATFORM_DIR)/,$(TARGETS))
@@ -125,7 +128,7 @@ SUBMAKE_DIRS = $(addprefix $(PLATFORM_DIR)/,$(TARGETS))
 # For dependencies and recursive makes.
 BUILDTREE_MAKE	= $(GAMMADIR)/make/$(OS_FAMILY)/makefiles/buildtree.make
 
-BUILDTREE_TARGETS = Makefile flags.make flags_vm.make vm.make adlc.make jvmti.make sa.make \
+BUILDTREE_TARGETS = Makefile flags.make flags_vm.make vm.make adlc.make trace.make jvmti.make sa.make \
         env.sh env.csh jdkpath.sh .dbxrc test_gamma
 
 BUILDTREE_VARS	= GAMMADIR=$(GAMMADIR) OS_FAMILY=$(OS_FAMILY) \
@@ -152,6 +155,13 @@ ifndef HOTSPOT_VM_DISTRO
     include $(GAMMADIR)/make/hotspot_distro
   else
     include $(GAMMADIR)/make/openjdk_distro
+  endif
+endif
+
+# if hotspot-only build and/or OPENJDK isn't passed down, need to set OPENJDK
+ifndef OPENJDK
+  ifneq ($(call if-has-altsrc,$(HS_COMMON_SRC)/,true,false),true)
+    OPENJDK=true
   endif
 endif
 
@@ -197,6 +207,7 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	echo "SA_BUILD_VERSION = $(HS_BUILD_VER)"; \
 	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
 	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
+	echo "OPENJDK = $(OPENJDK)"; \
 	echo; \
 	echo "# Used for platform dispatching"; \
 	echo "TARGET_DEFINES  = -DTARGET_OS_FAMILY_\$$(Platform_os_family)"; \
@@ -250,6 +261,8 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	    echo "HOTSPOT_EXTRA_SYSDEFS\$$(HOTSPOT_EXTRA_SYSDEFS) = $(HOTSPOT_EXTRA_SYSDEFS)" && \
 	    echo "SYSDEFS += \$$(HOTSPOT_EXTRA_SYSDEFS)"; \
 	echo; \
+	[ -n "$(SPEC)" ] && \
+	    echo "include $(SPEC)"; \
 	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(VARIANT).make"; \
 	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(COMPILER).make"; \
 	) > $@
@@ -307,6 +320,16 @@ adlc.make: $(BUILDTREE_MAKE)
 	) > $@
 
 jvmti.make: $(BUILDTREE_MAKE)
+	@echo Creating $@ ...
+	$(QUIETLY) ( \
+	$(BUILDTREE_COMMENT); \
+	echo; \
+	echo include flags.make; \
+	echo; \
+	echo "include \$$(GAMMADIR)/make/$(OS_FAMILY)/makefiles/$(@F)"; \
+	) > $@
+
+trace.make: $(BUILDTREE_MAKE)
 	@echo Creating $@ ...
 	$(QUIETLY) ( \
 	$(BUILDTREE_COMMENT); \

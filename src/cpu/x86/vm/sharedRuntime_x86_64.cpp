@@ -116,8 +116,8 @@ class RegisterSaver {
   };
 
  public:
-  static OopMap* save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words);
-  static void restore_live_registers(MacroAssembler* masm);
+  static OopMap* save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_vectors = false);
+  static void restore_live_registers(MacroAssembler* masm, bool restore_vectors = false);
 
   // Offsets into the register save area
   // Used by deoptimization when it is managing result register
@@ -134,7 +134,19 @@ class RegisterSaver {
   static void restore_result_registers(MacroAssembler* masm);
 };
 
-OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words) {
+OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_frame_words, int* total_frame_words, bool save_vectors) {
+  int vect_words = 0;
+#ifdef COMPILER2
+  if (save_vectors) {
+    assert(UseAVX > 0, "256bit vectors are supported only with AVX");
+    assert(MaxVectorSize == 32, "only 256bit vectors are supported now");
+    // Save upper half of YMM registes
+    vect_words = 16 * 16 / wordSize;
+    additional_frame_words += vect_words;
+  }
+#else
+  assert(!save_vectors, "vectors are generated only by C2");
+#endif
 
   // Always make the frame size 16-byte aligned
   int frame_size_in_bytes = round_to(additional_frame_words*wordSize +
@@ -155,6 +167,27 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
 
   __ enter();          // rsp becomes 16-byte aligned here
   __ push_CPU_state(); // Push a multiple of 16 bytes
+
+  if (vect_words > 0) {
+    assert(vect_words*wordSize == 256, "");
+    __ subptr(rsp, 256); // Save upper half of YMM registes
+    __ vextractf128h(Address(rsp,  0),xmm0);
+    __ vextractf128h(Address(rsp, 16),xmm1);
+    __ vextractf128h(Address(rsp, 32),xmm2);
+    __ vextractf128h(Address(rsp, 48),xmm3);
+    __ vextractf128h(Address(rsp, 64),xmm4);
+    __ vextractf128h(Address(rsp, 80),xmm5);
+    __ vextractf128h(Address(rsp, 96),xmm6);
+    __ vextractf128h(Address(rsp,112),xmm7);
+    __ vextractf128h(Address(rsp,128),xmm8);
+    __ vextractf128h(Address(rsp,144),xmm9);
+    __ vextractf128h(Address(rsp,160),xmm10);
+    __ vextractf128h(Address(rsp,176),xmm11);
+    __ vextractf128h(Address(rsp,192),xmm12);
+    __ vextractf128h(Address(rsp,208),xmm13);
+    __ vextractf128h(Address(rsp,224),xmm14);
+    __ vextractf128h(Address(rsp,240),xmm15);
+  }
   if (frame::arg_reg_save_area_bytes != 0) {
     // Allocate argument register save area
     __ subptr(rsp, frame::arg_reg_save_area_bytes);
@@ -167,112 +200,111 @@ OopMap* RegisterSaver::save_live_registers(MacroAssembler* masm, int additional_
 
   OopMapSet *oop_maps = new OopMapSet();
   OopMap* map = new OopMap(frame_size_in_slots, 0);
-  map->set_callee_saved(VMRegImpl::stack2reg( rax_off  + additional_frame_slots), rax->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( rcx_off  + additional_frame_slots), rcx->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( rdx_off  + additional_frame_slots), rdx->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( rbx_off  + additional_frame_slots), rbx->as_VMReg());
+
+#define STACK_OFFSET(x) VMRegImpl::stack2reg((x) + additional_frame_slots)
+
+  map->set_callee_saved(STACK_OFFSET( rax_off ), rax->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( rcx_off ), rcx->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( rdx_off ), rdx->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( rbx_off ), rbx->as_VMReg());
   // rbp location is known implicitly by the frame sender code, needs no oopmap
   // and the location where rbp was saved by is ignored
-  map->set_callee_saved(VMRegImpl::stack2reg( rsi_off  + additional_frame_slots), rsi->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( rdi_off  + additional_frame_slots), rdi->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r8_off   + additional_frame_slots), r8->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r9_off   + additional_frame_slots), r9->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r10_off  + additional_frame_slots), r10->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r11_off  + additional_frame_slots), r11->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r12_off  + additional_frame_slots), r12->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r13_off  + additional_frame_slots), r13->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r14_off  + additional_frame_slots), r14->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg( r15_off  + additional_frame_slots), r15->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm0_off  + additional_frame_slots), xmm0->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm1_off  + additional_frame_slots), xmm1->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm2_off  + additional_frame_slots), xmm2->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm3_off  + additional_frame_slots), xmm3->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm4_off  + additional_frame_slots), xmm4->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm5_off  + additional_frame_slots), xmm5->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm6_off  + additional_frame_slots), xmm6->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm7_off  + additional_frame_slots), xmm7->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm8_off  + additional_frame_slots), xmm8->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm9_off  + additional_frame_slots), xmm9->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm10_off + additional_frame_slots), xmm10->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm11_off + additional_frame_slots), xmm11->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm12_off + additional_frame_slots), xmm12->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm13_off + additional_frame_slots), xmm13->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm14_off + additional_frame_slots), xmm14->as_VMReg());
-  map->set_callee_saved(VMRegImpl::stack2reg(xmm15_off + additional_frame_slots), xmm15->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( rsi_off ), rsi->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( rdi_off ), rdi->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r8_off  ), r8->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r9_off  ), r9->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r10_off ), r10->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r11_off ), r11->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r12_off ), r12->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r13_off ), r13->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r14_off ), r14->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET( r15_off ), r15->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm0_off ), xmm0->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm1_off ), xmm1->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm2_off ), xmm2->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm3_off ), xmm3->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm4_off ), xmm4->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm5_off ), xmm5->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm6_off ), xmm6->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm7_off ), xmm7->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm8_off ), xmm8->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm9_off ), xmm9->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm10_off), xmm10->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm11_off), xmm11->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm12_off), xmm12->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm13_off), xmm13->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm14_off), xmm14->as_VMReg());
+  map->set_callee_saved(STACK_OFFSET(xmm15_off), xmm15->as_VMReg());
 
   // %%% These should all be a waste but we'll keep things as they were for now
   if (true) {
-    map->set_callee_saved(VMRegImpl::stack2reg( raxH_off  + additional_frame_slots),
-                          rax->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( rcxH_off  + additional_frame_slots),
-                          rcx->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( rdxH_off  + additional_frame_slots),
-                          rdx->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( rbxH_off  + additional_frame_slots),
-                          rbx->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( raxH_off ), rax->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( rcxH_off ), rcx->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( rdxH_off ), rdx->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( rbxH_off ), rbx->as_VMReg()->next());
     // rbp location is known implicitly by the frame sender code, needs no oopmap
-    map->set_callee_saved(VMRegImpl::stack2reg( rsiH_off  + additional_frame_slots),
-                          rsi->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( rdiH_off  + additional_frame_slots),
-                          rdi->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r8H_off   + additional_frame_slots),
-                          r8->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r9H_off   + additional_frame_slots),
-                          r9->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r10H_off  + additional_frame_slots),
-                          r10->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r11H_off  + additional_frame_slots),
-                          r11->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r12H_off  + additional_frame_slots),
-                          r12->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r13H_off  + additional_frame_slots),
-                          r13->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r14H_off  + additional_frame_slots),
-                          r14->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg( r15H_off  + additional_frame_slots),
-                          r15->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm0H_off  + additional_frame_slots),
-                          xmm0->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm1H_off  + additional_frame_slots),
-                          xmm1->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm2H_off  + additional_frame_slots),
-                          xmm2->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm3H_off  + additional_frame_slots),
-                          xmm3->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm4H_off  + additional_frame_slots),
-                          xmm4->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm5H_off  + additional_frame_slots),
-                          xmm5->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm6H_off  + additional_frame_slots),
-                          xmm6->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm7H_off  + additional_frame_slots),
-                          xmm7->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm8H_off  + additional_frame_slots),
-                          xmm8->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm9H_off  + additional_frame_slots),
-                          xmm9->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm10H_off + additional_frame_slots),
-                          xmm10->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm11H_off + additional_frame_slots),
-                          xmm11->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm12H_off + additional_frame_slots),
-                          xmm12->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm13H_off + additional_frame_slots),
-                          xmm13->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm14H_off + additional_frame_slots),
-                          xmm14->as_VMReg()->next());
-    map->set_callee_saved(VMRegImpl::stack2reg(xmm15H_off + additional_frame_slots),
-                          xmm15->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( rsiH_off ), rsi->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( rdiH_off ), rdi->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r8H_off  ), r8->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r9H_off  ), r9->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r10H_off ), r10->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r11H_off ), r11->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r12H_off ), r12->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r13H_off ), r13->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r14H_off ), r14->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET( r15H_off ), r15->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm0H_off ), xmm0->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm1H_off ), xmm1->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm2H_off ), xmm2->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm3H_off ), xmm3->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm4H_off ), xmm4->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm5H_off ), xmm5->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm6H_off ), xmm6->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm7H_off ), xmm7->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm8H_off ), xmm8->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm9H_off ), xmm9->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm10H_off), xmm10->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm11H_off), xmm11->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm12H_off), xmm12->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm13H_off), xmm13->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm14H_off), xmm14->as_VMReg()->next());
+    map->set_callee_saved(STACK_OFFSET(xmm15H_off), xmm15->as_VMReg()->next());
   }
 
   return map;
 }
 
-void RegisterSaver::restore_live_registers(MacroAssembler* masm) {
+void RegisterSaver::restore_live_registers(MacroAssembler* masm, bool restore_vectors) {
   if (frame::arg_reg_save_area_bytes != 0) {
     // Pop arg register save area
     __ addptr(rsp, frame::arg_reg_save_area_bytes);
   }
+#ifdef COMPILER2
+  if (restore_vectors) {
+    // Restore upper half of YMM registes.
+    assert(UseAVX > 0, "256bit vectors are supported only with AVX");
+    assert(MaxVectorSize == 32, "only 256bit vectors are supported now");
+    __ vinsertf128h(xmm0, Address(rsp,  0));
+    __ vinsertf128h(xmm1, Address(rsp, 16));
+    __ vinsertf128h(xmm2, Address(rsp, 32));
+    __ vinsertf128h(xmm3, Address(rsp, 48));
+    __ vinsertf128h(xmm4, Address(rsp, 64));
+    __ vinsertf128h(xmm5, Address(rsp, 80));
+    __ vinsertf128h(xmm6, Address(rsp, 96));
+    __ vinsertf128h(xmm7, Address(rsp,112));
+    __ vinsertf128h(xmm8, Address(rsp,128));
+    __ vinsertf128h(xmm9, Address(rsp,144));
+    __ vinsertf128h(xmm10, Address(rsp,160));
+    __ vinsertf128h(xmm11, Address(rsp,176));
+    __ vinsertf128h(xmm12, Address(rsp,192));
+    __ vinsertf128h(xmm13, Address(rsp,208));
+    __ vinsertf128h(xmm14, Address(rsp,224));
+    __ vinsertf128h(xmm15, Address(rsp,240));
+    __ addptr(rsp, 256);
+  }
+#else
+  assert(!restore_vectors, "vectors are generated only by C2");
+#endif
   // Recover CPU state
   __ pop_CPU_state();
   // Get the rbp described implicitly by the calling convention (no oopMap)
@@ -295,6 +327,12 @@ void RegisterSaver::restore_result_registers(MacroAssembler* masm) {
 
   // Pop all of the register save are off the stack except the return address
   __ addptr(rsp, return_offset_in_bytes());
+}
+
+// Is vector's size (in bytes) bigger than a size saved by default?
+// 16 bytes XMM registers are saved by default using fxsave/fxrstor instructions.
+bool SharedRuntime::is_wide_vector(int size) {
+  return size > 16;
 }
 
 // The java_calling_convention describes stack locations as ideal slots on
@@ -590,6 +628,19 @@ static void gen_c2i_adapter(MacroAssembler *masm,
   __ jmp(rcx);
 }
 
+static void range_check(MacroAssembler* masm, Register pc_reg, Register temp_reg,
+                        address code_start, address code_end,
+                        Label& L_ok) {
+  Label L_fail;
+  __ lea(temp_reg, ExternalAddress(code_start));
+  __ cmpptr(pc_reg, temp_reg);
+  __ jcc(Assembler::belowEqual, L_fail);
+  __ lea(temp_reg, ExternalAddress(code_end));
+  __ cmpptr(pc_reg, temp_reg);
+  __ jcc(Assembler::below, L_ok);
+  __ bind(L_fail);
+}
+
 static void gen_i2c_adapter(MacroAssembler *masm,
                             int total_args_passed,
                             int comp_args_on_stack,
@@ -605,8 +656,52 @@ static void gen_i2c_adapter(MacroAssembler *masm,
   // save code can segv when fxsave instructions find improperly
   // aligned stack pointer.
 
+  // Adapters can be frameless because they do not require the caller
+  // to perform additional cleanup work, such as correcting the stack pointer.
+  // An i2c adapter is frameless because the *caller* frame, which is interpreted,
+  // routinely repairs its own stack pointer (from interpreter_frame_last_sp),
+  // even if a callee has modified the stack pointer.
+  // A c2i adapter is frameless because the *callee* frame, which is interpreted,
+  // routinely repairs its caller's stack pointer (from sender_sp, which is set
+  // up via the senderSP register).
+  // In other words, if *either* the caller or callee is interpreted, we can
+  // get the stack pointer repaired after a call.
+  // This is why c2i and i2c adapters cannot be indefinitely composed.
+  // In particular, if a c2i adapter were to somehow call an i2c adapter,
+  // both caller and callee would be compiled methods, and neither would
+  // clean up the stack pointer changes performed by the two adapters.
+  // If this happens, control eventually transfers back to the compiled
+  // caller, but with an uncorrected stack, causing delayed havoc.
+
   // Pick up the return address
   __ movptr(rax, Address(rsp, 0));
+
+  if (VerifyAdapterCalls &&
+      (Interpreter::code() != NULL || StubRoutines::code1() != NULL)) {
+    // So, let's test for cascading c2i/i2c adapters right now.
+    //  assert(Interpreter::contains($return_addr) ||
+    //         StubRoutines::contains($return_addr),
+    //         "i2c adapter must return to an interpreter frame");
+    __ block_comment("verify_i2c { ");
+    Label L_ok;
+    if (Interpreter::code() != NULL)
+      range_check(masm, rax, r11,
+                  Interpreter::code()->code_start(), Interpreter::code()->code_end(),
+                  L_ok);
+    if (StubRoutines::code1() != NULL)
+      range_check(masm, rax, r11,
+                  StubRoutines::code1()->code_begin(), StubRoutines::code1()->code_end(),
+                  L_ok);
+    if (StubRoutines::code2() != NULL)
+      range_check(masm, rax, r11,
+                  StubRoutines::code2()->code_begin(), StubRoutines::code2()->code_end(),
+                  L_ok);
+    const char* msg = "i2c adapter must return to an interpreter frame";
+    __ block_comment(msg);
+    __ stop(msg);
+    __ bind(L_ok);
+    __ block_comment("} verify_i2ce ");
+  }
 
   // Must preserve original SP for loading incoming arguments because
   // we need to align the outgoing SP for compiled code.
@@ -1366,6 +1461,14 @@ static void unpack_array_argument(MacroAssembler* masm, VMRegPair reg, BasicType
 }
 
 
+// Different signatures may require very different orders for the move
+// to avoid clobbering other arguments.  There's no simple way to
+// order them safely.  Compute a safe order for issuing stores and
+// break any cycles in those stores.  This code is fairly general but
+// it's not necessary on the other platforms so we keep it in the
+// platform dependent code instead of moving it into a shared file.
+// (See bugs 7013347 & 7145024.)
+// Note that this code is specific to LP64.
 class ComputeMoveOrder: public StackObj {
   class MoveOperation: public ResourceObj {
     friend class ComputeMoveOrder;
@@ -1532,6 +1635,86 @@ class ComputeMoveOrder: public StackObj {
   }
 };
 
+static void verify_oop_args(MacroAssembler* masm,
+                            methodHandle method,
+                            const BasicType* sig_bt,
+                            const VMRegPair* regs) {
+  Register temp_reg = rbx;  // not part of any compiled calling seq
+  if (VerifyOops) {
+    for (int i = 0; i < method->size_of_parameters(); i++) {
+      if (sig_bt[i] == T_OBJECT ||
+          sig_bt[i] == T_ARRAY) {
+        VMReg r = regs[i].first();
+        assert(r->is_valid(), "bad oop arg");
+        if (r->is_stack()) {
+          __ movptr(temp_reg, Address(rsp, r->reg2stack() * VMRegImpl::stack_slot_size + wordSize));
+          __ verify_oop(temp_reg);
+        } else {
+          __ verify_oop(r->as_Register());
+        }
+      }
+    }
+  }
+}
+
+static void gen_special_dispatch(MacroAssembler* masm,
+                                 methodHandle method,
+                                 const BasicType* sig_bt,
+                                 const VMRegPair* regs) {
+  verify_oop_args(masm, method, sig_bt, regs);
+  vmIntrinsics::ID iid = method->intrinsic_id();
+
+  // Now write the args into the outgoing interpreter space
+  bool     has_receiver   = false;
+  Register receiver_reg   = noreg;
+  int      member_arg_pos = -1;
+  Register member_reg     = noreg;
+  int      ref_kind       = MethodHandles::signature_polymorphic_intrinsic_ref_kind(iid);
+  if (ref_kind != 0) {
+    member_arg_pos = method->size_of_parameters() - 1;  // trailing MemberName argument
+    member_reg = rbx;  // known to be free at this point
+    has_receiver = MethodHandles::ref_kind_has_receiver(ref_kind);
+  } else if (iid == vmIntrinsics::_invokeBasic) {
+    has_receiver = true;
+  } else {
+    fatal(err_msg_res("unexpected intrinsic id %d", iid));
+  }
+
+  if (member_reg != noreg) {
+    // Load the member_arg into register, if necessary.
+    SharedRuntime::check_member_name_argument_is_last_argument(method, sig_bt, regs);
+    VMReg r = regs[member_arg_pos].first();
+    if (r->is_stack()) {
+      __ movptr(member_reg, Address(rsp, r->reg2stack() * VMRegImpl::stack_slot_size + wordSize));
+    } else {
+      // no data motion is needed
+      member_reg = r->as_Register();
+    }
+  }
+
+  if (has_receiver) {
+    // Make sure the receiver is loaded into a register.
+    assert(method->size_of_parameters() > 0, "oob");
+    assert(sig_bt[0] == T_OBJECT, "receiver argument must be an object");
+    VMReg r = regs[0].first();
+    assert(r->is_valid(), "bad receiver arg");
+    if (r->is_stack()) {
+      // Porting note:  This assumes that compiled calling conventions always
+      // pass the receiver oop in a register.  If this is not true on some
+      // platform, pick a temp and load the receiver from stack.
+      fatal("receiver always in a register");
+      receiver_reg = j_rarg0;  // known to be free at this point
+      __ movptr(receiver_reg, Address(rsp, r->reg2stack() * VMRegImpl::stack_slot_size + wordSize));
+    } else {
+      // no data motion is needed
+      receiver_reg = r->as_Register();
+    }
+  }
+
+  // Figure out which address we are really jumping to:
+  MethodHandles::generate_method_handle_dispatch(masm, iid,
+                                                 receiver_reg, member_reg, /*for_compiler_entry:*/ true);
+}
 
 // ---------------------------------------------------------------------------
 // Generate a native wrapper for a given method.  The method takes arguments
@@ -1539,14 +1722,56 @@ class ComputeMoveOrder: public StackObj {
 // convention (handlizes oops, etc), transitions to native, makes the call,
 // returns to java state (possibly blocking), unhandlizes any result and
 // returns.
-nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
+//
+// Critical native functions are a shorthand for the use of
+// GetPrimtiveArrayCritical and disallow the use of any other JNI
+// functions.  The wrapper is expected to unpack the arguments before
+// passing them to the callee and perform checks before and after the
+// native call to ensure that they GC_locker
+// lock_critical/unlock_critical semantics are followed.  Some other
+// parts of JNI setup are skipped like the tear down of the JNI handle
+// block and the check for pending exceptions it's impossible for them
+// to be thrown.
+//
+// They are roughly structured like this:
+//    if (GC_locker::needs_gc())
+//      SharedRuntime::block_for_jni_critical();
+//    tranistion to thread_in_native
+//    unpack arrray arguments and call native entry point
+//    check for safepoint in progress
+//    check if any thread suspend flags are set
+//      call into JVM and possible unlock the JNI critical
+//      if a GC was suppressed while in the critical native.
+//    transition back to thread_in_Java
+//    return to caller
+//
+nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
                                                 methodHandle method,
                                                 int compile_id,
-                                                int total_in_args,
-                                                int comp_args_on_stack,
-                                                BasicType *in_sig_bt,
-                                                VMRegPair *in_regs,
+                                                BasicType* in_sig_bt,
+                                                VMRegPair* in_regs,
                                                 BasicType ret_type) {
+  if (method->is_method_handle_intrinsic()) {
+    vmIntrinsics::ID iid = method->intrinsic_id();
+    intptr_t start = (intptr_t)__ pc();
+    int vep_offset = ((intptr_t)__ pc()) - start;
+    gen_special_dispatch(masm,
+                         method,
+                         in_sig_bt,
+                         in_regs);
+    int frame_complete = ((intptr_t)__ pc()) - start;  // not complete, period
+    __ flush();
+    int stack_slots = SharedRuntime::out_preserve_stack_slots();  // no out slots at all, actually
+    return nmethod::new_native_nmethod(method,
+                                       compile_id,
+                                       masm->code(),
+                                       vep_offset,
+                                       frame_complete,
+                                       stack_slots / VMRegImpl::slots_per_word,
+                                       in_ByteSize(-1),
+                                       in_ByteSize(-1),
+                                       (OopMapSet*)NULL);
+  }
   bool is_critical_native = true;
   address native_func = method->critical_native_function();
   if (native_func == NULL) {
@@ -1565,6 +1790,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   // we convert the java signature to a C signature by inserting
   // the hidden arguments as arg[0] and possibly arg[1] (static method)
 
+  const int total_in_args = method->size_of_parameters();
   int total_c_args = total_in_args;
   if (!is_critical_native) {
     total_c_args += 1;
@@ -1658,7 +1884,7 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
           case T_SHORT:
           case T_CHAR:
           case T_INT:  single_slots++; break;
-          case T_ARRAY:
+          case T_ARRAY:  // specific to LP64 (7145024)
           case T_LONG: double_slots++; break;
           default:  ShouldNotReachHere();
         }
@@ -2094,16 +2320,8 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
 
   __ call(RuntimeAddress(native_func));
 
-    // Either restore the MXCSR register after returning from the JNI Call
-    // or verify that it wasn't changed.
-    if (RestoreMXCSROnJNICalls) {
-      __ ldmxcsr(ExternalAddress(StubRoutines::x86::mxcsr_std()));
-
-    }
-    else if (CheckJNICalls ) {
-      __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::x86::verify_mxcsr_entry())));
-    }
-
+  // Verify or restore cpu control state after JNI call
+  __ restore_cpu_control_state_after_jni();
 
   // Unpack native results.
   switch (ret_type) {
@@ -3052,7 +3270,6 @@ uint SharedRuntime::out_preserve_stack_slots() {
   return 0;
 }
 
-
 //------------------------------generate_deopt_blob----------------------------
 void SharedRuntime::generate_deopt_blob() {
   // Allocate space for the code
@@ -3557,7 +3774,7 @@ void SharedRuntime::generate_uncommon_trap_blob() {
 // Generate a special Compile2Runtime blob that saves all registers,
 // and setup oopmap.
 //
-SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause_return) {
+SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_type) {
   assert(StubRoutines::forward_exception_entry() != NULL,
          "must be generated before");
 
@@ -3572,6 +3789,8 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause
   address start   = __ pc();
   address call_pc = NULL;
   int frame_size_in_words;
+  bool cause_return = (poll_type == POLL_AT_RETURN);
+  bool save_vectors = (poll_type == POLL_AT_VECTOR_LOOP);
 
   // Make room for return address (or push it again)
   if (!cause_return) {
@@ -3579,7 +3798,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause
   }
 
   // Save registers, fpu state, and flags
-  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words);
+  map = RegisterSaver::save_live_registers(masm, 0, &frame_size_in_words, save_vectors);
 
   // The following is basically a call_VM.  However, we need the precise
   // address of the call in order to generate an oopmap. Hence, we do all the
@@ -3616,7 +3835,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause
 
   // Exception pending
 
-  RegisterSaver::restore_live_registers(masm);
+  RegisterSaver::restore_live_registers(masm, save_vectors);
 
   __ jump(RuntimeAddress(StubRoutines::forward_exception_entry()));
 
@@ -3624,7 +3843,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause
   __ bind(noException);
 
   // Normal exit, restore registers and exit.
-  RegisterSaver::restore_live_registers(masm);
+  RegisterSaver::restore_live_registers(masm, save_vectors);
 
   __ ret(0);
 
@@ -3792,8 +4011,12 @@ void OptoRuntime::generate_exception_blob() {
   //
   // address OptoRuntime::handle_exception_C(JavaThread* thread)
 
-  __ set_last_Java_frame(noreg, noreg, NULL);
+  // At a method handle call, the stack may not be properly aligned
+  // when returning with an exception.
+  address the_pc = __ pc();
+  __ set_last_Java_frame(noreg, noreg, the_pc);
   __ mov(c_rarg0, r15_thread);
+  __ andptr(rsp, -(StackAlignmentInBytes));    // Align stack
   __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, OptoRuntime::handle_exception_C)));
 
   // Set an oopmap for the call site.  This oopmap will only be used if we
@@ -3804,9 +4027,9 @@ void OptoRuntime::generate_exception_blob() {
 
   OopMapSet* oop_maps = new OopMapSet();
 
-  oop_maps->add_gc_map( __ pc()-start, new OopMap(SimpleRuntimeFrame::framesize, 0));
+  oop_maps->add_gc_map(the_pc - start, new OopMap(SimpleRuntimeFrame::framesize, 0));
 
-  __ reset_last_Java_frame(false, false);
+  __ reset_last_Java_frame(false, true);
 
   // Restore callee-saved registers
 

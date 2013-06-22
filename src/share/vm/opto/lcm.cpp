@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,6 +139,7 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     int iop = mach->ideal_Opcode();
     switch( iop ) {
     case Op_LoadB:
+    case Op_LoadUB:
     case Op_LoadUS:
     case Op_LoadD:
     case Op_LoadF:
@@ -216,9 +217,9 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
         // cannot reason about it; is probably not implicit null exception
       } else {
         const TypePtr* tptr;
-        if (UseCompressedOops && Universe::narrow_oop_shift() == 0) {
+        if (UseCompressedOops && (Universe::narrow_oop_shift() == 0)) {
           // 32-bits narrow oop can be the base of address expressions
-          tptr = base->bottom_type()->make_ptr();
+          tptr = base->get_ptr_type();
         } else {
           // only regular oops are expected here
           tptr = base->bottom_type()->is_ptr();
@@ -368,7 +369,7 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     Node *tmp2 = _nodes[end_idx()+2];
     _nodes.map(end_idx()+1, tmp2);
     _nodes.map(end_idx()+2, tmp1);
-    Node *tmp = new (C, 1) Node(C->top()); // Use not NULL input
+    Node *tmp = new (C) Node(C->top()); // Use not NULL input
     tmp1->replace_by(tmp);
     tmp2->replace_by(tmp1);
     tmp->replace_by(tmp2);
@@ -443,6 +444,11 @@ Node *Block::select(PhaseCFG *cfg, Node_List &worklist, GrowableArray<int> &read
 
     // Memory op for an implicit null check has to be at the end of the block
     if( e->is_MachNullCheck() && e->in(1) == n )
+      continue;
+
+    // Schedule IV increment last.
+    if (e->is_Mach() && e->as_Mach()->ideal_Opcode() == Op_CountedLoopEnd &&
+        e->in(1)->in(1) == n && n->is_iteratively_computed())
       continue;
 
     uint n_choice  = 2;
@@ -606,7 +612,7 @@ uint Block::sched_call( Matcher &matcher, Block_Array &bbs, uint node_cnt, Node_
   // Set all registers killed and not already defined by the call.
   uint r_cnt = mcall->tf()->range()->cnt();
   int op = mcall->ideal_Opcode();
-  MachProjNode *proj = new (matcher.C, 1) MachProjNode( mcall, r_cnt+1, RegMask::Empty, MachProjNode::fat_proj );
+  MachProjNode *proj = new (matcher.C) MachProjNode( mcall, r_cnt+1, RegMask::Empty, MachProjNode::fat_proj );
   bbs.map(proj->_idx,this);
   _nodes.insert(node_cnt++, proj);
 
@@ -833,7 +839,7 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, GrowableArray<int> &
       regs.Insert(matcher.c_frame_pointer());
       regs.OR(n->out_RegMask());
 
-      MachProjNode *proj = new (matcher.C, 1) MachProjNode( n, 1, RegMask::Empty, MachProjNode::fat_proj );
+      MachProjNode *proj = new (matcher.C) MachProjNode( n, 1, RegMask::Empty, MachProjNode::fat_proj );
       cfg->_bbs.map(proj->_idx,this);
       _nodes.insert(phi_cnt++, proj);
 
@@ -999,7 +1005,7 @@ static void catch_cleanup_inter_block(Node *use, Block *use_blk, Node *def, Bloc
 //------------------------------call_catch_cleanup-----------------------------
 // If we inserted any instructions between a Call and his CatchNode,
 // clone the instructions on all paths below the Catch.
-void Block::call_catch_cleanup(Block_Array &bbs) {
+void Block::call_catch_cleanup(Block_Array &bbs, Compile* C) {
 
   // End of region to clone
   uint end = end_idx();
@@ -1061,7 +1067,7 @@ void Block::call_catch_cleanup(Block_Array &bbs) {
 
   // Remove the now-dead cloned ops
   for(uint i3 = beg; i3 < end; i3++ ) {
-    _nodes[beg]->disconnect_inputs(NULL);
+    _nodes[beg]->disconnect_inputs(NULL, C);
     _nodes.remove(beg);
   }
 
@@ -1074,7 +1080,7 @@ void Block::call_catch_cleanup(Block_Array &bbs) {
       Node *n = sb->_nodes[j];
       if (n->outcnt() == 0 &&
           (!n->is_Proj() || n->as_Proj()->in(0)->outcnt() == 1) ){
-        n->disconnect_inputs(NULL);
+        n->disconnect_inputs(NULL, C);
         sb->_nodes.remove(j);
         new_cnt--;
       }

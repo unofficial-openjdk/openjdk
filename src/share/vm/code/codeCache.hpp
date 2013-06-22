@@ -64,10 +64,14 @@ class CodeCache : AllStatic {
   static void mark_scavenge_root_nmethods() PRODUCT_RETURN;
   static void verify_perm_nmethods(CodeBlobClosure* f_or_null) PRODUCT_RETURN;
 
+  static int _codemem_full_count;
+
  public:
 
   // Initialization
   static void initialize();
+
+  static void report_codemem_full();
 
   // Allocation/administration
   static CodeBlob* allocate(int size);              // allocates a new CodeBlob
@@ -88,6 +92,9 @@ class CodeCache : AllStatic {
   // Lookup that does not fail if you lookup a zombie method (if you call this, be sure to know
   // what you are doing)
   static CodeBlob* find_blob_unsafe(void* start) {
+    // NMT can walk the stack before code cache is created
+    if (_heap == NULL) return NULL;
+
     CodeBlob* result = (CodeBlob*)_heap->find_start(start);
     // this assert is too strong because the heap code will return the
     // heapblock containing start. That block can often be larger than
@@ -153,6 +160,7 @@ class CodeCache : AllStatic {
   // The full limits of the codeCache
   static address  low_bound()                    { return (address) _heap->low_boundary(); }
   static address  high_bound()                   { return (address) _heap->high_boundary(); }
+  static address  high()                         { return (address) _heap->high(); }
 
   // Profiling
   static address first_address();                // first address used for CodeBlobs
@@ -184,6 +192,8 @@ class CodeCache : AllStatic {
 
     // tells how many nmethods have dependencies
   static int number_of_nmethods_with_dependencies();
+
+  static int get_codemem_full_count() { return _codemem_full_count; }
 };
 
 #endif // SHARE_VM_CODE_CODECACHE_HPP

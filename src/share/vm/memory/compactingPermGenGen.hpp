@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,10 +230,10 @@ public:
                                       void* new_vtable_start,
                                       void* obj);
 
-  void verify(bool allow_dirty);
+  void verify();
 
   // Serialization
-  static void initialize_oops() KERNEL_RETURN;
+  static void initialize_oops();
   static void serialize_oops(SerializeOopClosure* soc);
   void serialize_bts(SerializeOopClosure* soc);
 

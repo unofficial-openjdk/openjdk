@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -216,7 +216,7 @@ void ObjectSynchronizer::fast_exit(oop object, BasicLock* lock, TRAPS) {
      }
   }
 
-  ObjectSynchronizer::inflate(THREAD, object)->exit (THREAD) ;
+  ObjectSynchronizer::inflate(THREAD, object)->exit (true, THREAD) ;
 }
 
 // -----------------------------------------------------------------------------
@@ -336,7 +336,9 @@ bool ObjectSynchronizer::jni_try_enter(Handle obj, Thread* THREAD) {
 void ObjectSynchronizer::jni_exit(oop obj, Thread* THREAD) {
   TEVENT (jni_exit) ;
   if (UseBiasedLocking) {
-    BiasedLocking::revoke_and_rebias(obj, false, THREAD);
+    Handle h_obj(THREAD, obj);
+    BiasedLocking::revoke_and_rebias(h_obj, false, THREAD);
+    obj = h_obj();
   }
   assert(!obj->mark()->has_bias_pattern(), "biases should be revoked by now");
 
@@ -344,7 +346,7 @@ void ObjectSynchronizer::jni_exit(oop obj, Thread* THREAD) {
   // If this thread has locked the object, exit the monitor.  Note:  can't use
   // monitor->check(CHECK); must exit even if an exception is pending.
   if (monitor->check(THREAD)) {
-     monitor->exit(THREAD);
+     monitor->exit(true, THREAD);
   }
 }
 

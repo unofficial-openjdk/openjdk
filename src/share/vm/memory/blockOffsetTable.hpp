@@ -100,7 +100,7 @@ public:
 //////////////////////////////////////////////////////////////////////////
 // BlockOffsetSharedArray
 //////////////////////////////////////////////////////////////////////////
-class BlockOffsetSharedArray: public CHeapObj {
+class BlockOffsetSharedArray: public CHeapObj<mtGC> {
   friend class BlockOffsetArray;
   friend class BlockOffsetArrayNonContigSpace;
   friend class BlockOffsetArrayContigSpace;
@@ -289,7 +289,7 @@ class BlockOffsetArray: public BlockOffsetTable {
   };
 
   static size_t power_to_cards_back(uint i) {
-    return (size_t)(1 << (LogBase * i));
+    return (size_t)1 << (LogBase * i);
   }
   static size_t power_to_words_back(uint i) {
     return power_to_cards_back(i) * N_words;

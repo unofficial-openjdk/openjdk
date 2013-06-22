@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@
 #include "shark/shark_globals.hpp"
 #endif
 
-
 RUNTIME_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PD_DEVELOPER_FLAG, \
               MATERIALIZE_PRODUCT_FLAG, MATERIALIZE_PD_PRODUCT_FLAG, \
               MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_EXPERIMENTAL_FLAG, \
@@ -55,6 +54,10 @@ RUNTIME_OS_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PD_DEVELOPER_FLAG, \
                  MATERIALIZE_PRODUCT_FLAG, MATERIALIZE_PD_PRODUCT_FLAG, \
                  MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_NOTPRODUCT_FLAG)
 
+ARCH_FLAGS(MATERIALIZE_DEVELOPER_FLAG, MATERIALIZE_PRODUCT_FLAG, \
+           MATERIALIZE_DIAGNOSTIC_FLAG, MATERIALIZE_EXPERIMENTAL_FLAG, \
+           MATERIALIZE_NOTPRODUCT_FLAG)
+
 MATERIALIZE_FLAGS_EXT
 
 
@@ -65,7 +68,10 @@ bool Flag::is_unlocker() const {
 }
 
 bool Flag::is_unlocked() const {
-  if (strcmp(kind, "{diagnostic}") == 0) {
+  if (strcmp(kind, "{diagnostic}") == 0 ||
+      strcmp(kind, "{C2 diagnostic}") == 0 ||
+      strcmp(kind, "{ARCH diagnostic}") == 0 ||
+      strcmp(kind, "{Shark diagnostic}") == 0) {
     if (strcmp(name, "EnableInvokeDynamic") == 0 && UnlockExperimentalVMOptions && !UnlockDiagnosticVMOptions) {
       // transitional logic to allow tests to run until they are changed
       static int warned;
@@ -74,14 +80,17 @@ bool Flag::is_unlocked() const {
     }
     return UnlockDiagnosticVMOptions;
   } else if (strcmp(kind, "{experimental}") == 0 ||
-             strcmp(kind, "{C2 experimental}") == 0) {
+             strcmp(kind, "{C2 experimental}") == 0 ||
+             strcmp(kind, "{ARCH experimental}") == 0 ||
+             strcmp(kind, "{Shark experimental}") == 0) {
     return UnlockExperimentalVMOptions;
   } else {
     return is_unlocked_ext();
   }
 }
 
-// Get custom message for this locked flag, if any.
+// Get custom message for this locked flag, or return NULL if
+// none is available.
 void Flag::get_locked_message(char* buf, int buflen) const {
   get_locked_message_ext(buf, buflen);
 }
@@ -147,6 +156,8 @@ void Flag::print_as_flag(outputStream* st) {
     st->print("-XX:%s=" UINTX_FORMAT, name, get_uintx());
   } else if (is_uint64_t()) {
     st->print("-XX:%s=" UINT64_FORMAT, name, get_uint64_t());
+  } else if (is_double()) {
+    st->print("-XX:%s=%f", name, get_double());
   } else if (is_ccstr()) {
     st->print("-XX:%s=", name);
     const char* cp = get_ccstr();
@@ -209,7 +220,6 @@ void Flag::print_as_flag(outputStream* st) {
   #define C1_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, doc, "{C1 notproduct}", DEFAULT },
 #endif
 
-
 #define C2_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{C2 product}", DEFAULT },
 #define C2_PD_PRODUCT_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{C2 pd product}", DEFAULT },
 #define C2_DIAGNOSTIC_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{C2 diagnostic}", DEFAULT },
@@ -222,6 +232,17 @@ void Flag::print_as_flag(outputStream* st) {
   #define C2_DEVELOP_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, doc, "{C2}", DEFAULT },
   #define C2_PD_DEVELOP_FLAG_STRUCT(type, name, doc)     { #type, XSTR(name), &name, doc, "{C2 pd}", DEFAULT },
   #define C2_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, doc, "{C2 notproduct}", DEFAULT },
+#endif
+
+#define ARCH_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{ARCH product}", DEFAULT },
+#define ARCH_DIAGNOSTIC_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{ARCH diagnostic}", DEFAULT },
+#define ARCH_EXPERIMENTAL_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{ARCH experimental}", DEFAULT },
+#ifdef PRODUCT
+  #define ARCH_DEVELOP_FLAG_STRUCT(type, name, value, doc) /* flag is constant */
+  #define ARCH_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc)
+#else
+  #define ARCH_DEVELOP_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, doc, "{ARCH}", DEFAULT },
+  #define ARCH_NOTPRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, doc, "{ARCH notproduct}", DEFAULT },
 #endif
 
 #define SHARK_PRODUCT_FLAG_STRUCT(type, name, value, doc) { #type, XSTR(name), &name, NOT_PRODUCT_ARG(doc) "{Shark product}", DEFAULT },
@@ -252,6 +273,7 @@ static Flag flagTable[] = {
 #ifdef SHARK
  SHARK_FLAGS(SHARK_DEVELOP_FLAG_STRUCT, SHARK_PD_DEVELOP_FLAG_STRUCT, SHARK_PRODUCT_FLAG_STRUCT, SHARK_PD_PRODUCT_FLAG_STRUCT, SHARK_DIAGNOSTIC_FLAG_STRUCT, SHARK_NOTPRODUCT_FLAG_STRUCT)
 #endif
+ ARCH_FLAGS(ARCH_DEVELOP_FLAG_STRUCT, ARCH_PRODUCT_FLAG_STRUCT, ARCH_DIAGNOSTIC_FLAG_STRUCT, ARCH_EXPERIMENTAL_FLAG_STRUCT, ARCH_NOTPRODUCT_FLAG_STRUCT)
  FLAGTABLE_EXT
  {0, NULL, NULL}
 };
@@ -462,13 +484,13 @@ bool CommandLineFlags::ccstrAtPut(char* name, size_t len, ccstr* value, FlagValu
   ccstr old_value = result->get_ccstr();
   char* new_value = NULL;
   if (*value != NULL) {
-    new_value = NEW_C_HEAP_ARRAY(char, strlen(*value)+1);
+    new_value = NEW_C_HEAP_ARRAY(char, strlen(*value)+1, mtInternal);
     strcpy(new_value, *value);
   }
   result->set_ccstr(new_value);
   if (result->origin == DEFAULT && old_value != NULL) {
     // Prior value is NOT heap allocated, but was a literal constant.
-    char* old_value_to_free = NEW_C_HEAP_ARRAY(char, strlen(old_value)+1);
+    char* old_value_to_free = NEW_C_HEAP_ARRAY(char, strlen(old_value)+1, mtInternal);
     strcpy(old_value_to_free, old_value);
     old_value = old_value_to_free;
   }
@@ -482,12 +504,12 @@ void CommandLineFlagsEx::ccstrAtPut(CommandLineFlagWithType flag, ccstr value, F
   Flag* faddr = address_of_flag(flag);
   guarantee(faddr != NULL && faddr->is_ccstr(), "wrong flag type");
   ccstr old_value = faddr->get_ccstr();
-  char* new_value = NEW_C_HEAP_ARRAY(char, strlen(value)+1);
+  char* new_value = NEW_C_HEAP_ARRAY(char, strlen(value)+1, mtInternal);
   strcpy(new_value, value);
   faddr->set_ccstr(new_value);
   if (faddr->origin != DEFAULT && old_value != NULL) {
     // Prior value is heap allocated so free it.
-    FREE_C_HEAP_ARRAY(char, old_value);
+    FREE_C_HEAP_ARRAY(char, old_value, mtInternal);
   }
   faddr->origin = origin;
 }
@@ -508,7 +530,7 @@ void CommandLineFlags::printSetFlags(outputStream* out) {
   while (flagTable[length].name != NULL) length++;
 
   // Sort
-  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length);
+  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtInternal);
   for (int index = 0; index < length; index++) {
     array[index] = &flagTable[index];
   }
@@ -522,7 +544,7 @@ void CommandLineFlags::printSetFlags(outputStream* out) {
     }
   }
   out->cr();
-  FREE_C_HEAP_ARRAY(Flag*, array);
+  FREE_C_HEAP_ARRAY(Flag*, array, mtInternal);
 }
 
 #ifndef PRODUCT
@@ -544,7 +566,7 @@ void CommandLineFlags::printFlags(outputStream* out, bool withComments) {
   while (flagTable[length].name != NULL) length++;
 
   // Sort
-  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length);
+  Flag** array = NEW_C_HEAP_ARRAY(Flag*, length, mtInternal);
   for (int index = 0; index < length; index++) {
     array[index] = &flagTable[index];
   }
@@ -557,5 +579,5 @@ void CommandLineFlags::printFlags(outputStream* out, bool withComments) {
       array[i]->print_on(out, withComments);
     }
   }
-  FREE_C_HEAP_ARRAY(Flag*, array);
+  FREE_C_HEAP_ARRAY(Flag*, array, mtInternal);
 }

@@ -709,9 +709,9 @@ const TypeFunc* OptoRuntime::Math_DD_D_Type() {
   return TypeFunc::make(domain, range);
 }
 
-//-------------- currentTimeMillis
+//-------------- currentTimeMillis, currentTimeNanos, etc
 
-const TypeFunc* OptoRuntime::current_time_millis_Type() {
+const TypeFunc* OptoRuntime::void_long_Type() {
   // create input type (domain)
   const Type **fields = TypeTuple::fields(0);
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+0, fields);
@@ -811,6 +811,48 @@ const TypeFunc* OptoRuntime::array_fill_Type() {
   return TypeFunc::make(domain, range);
 }
 
+// for aescrypt encrypt/decrypt operations, just three pointers returning void (length is constant)
+const TypeFunc* OptoRuntime::aescrypt_block_Type() {
+  // create input type (domain)
+  int num_args      = 3;
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // src
+  fields[argp++] = TypePtr::NOTNULL;    // dest
+  fields[argp++] = TypePtr::NOTNULL;    // k array
+  assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = NULL; // void
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
+// for cipherBlockChaining calls of aescrypt encrypt/decrypt, four pointers and a length, returning void
+const TypeFunc* OptoRuntime::cipherBlockChaining_aescrypt_Type() {
+  // create input type (domain)
+  int num_args      = 5;
+  int argcnt = num_args;
+  const Type** fields = TypeTuple::fields(argcnt);
+  int argp = TypeFunc::Parms;
+  fields[argp++] = TypePtr::NOTNULL;    // src
+  fields[argp++] = TypePtr::NOTNULL;    // dest
+  fields[argp++] = TypePtr::NOTNULL;    // k array
+  fields[argp++] = TypePtr::NOTNULL;    // r array
+  fields[argp++] = TypeInt::INT;        // src len
+  assert(argp == TypeFunc::Parms+argcnt, "correct decoding");
+  const TypeTuple* domain = TypeTuple::make(TypeFunc::Parms+argcnt, fields);
+
+  // no result type needed
+  fields = TypeTuple::fields(1);
+  fields[TypeFunc::Parms+0] = NULL; // void
+  const TypeTuple* range = TypeTuple::make(TypeFunc::Parms, fields);
+  return TypeFunc::make(domain, range);
+}
+
 //------------- Interpreter state access for on stack replacement
 const TypeFunc* OptoRuntime::osr_end_Type() {
   // create input type (domain)
@@ -880,46 +922,6 @@ JRT_LEAF(void, OptoRuntime::profile_receiver_type_C(DataLayout* data, oopDesc* r
   }
 JRT_END
 
-//-----------------------------------------------------------------------------
-// implicit exception support.
-
-static void report_null_exception_in_code_cache(address exception_pc) {
-  ResourceMark rm;
-  CodeBlob* n = CodeCache::find_blob(exception_pc);
-  if (n != NULL) {
-    tty->print_cr("#");
-    tty->print_cr("# HotSpot Runtime Error, null exception in generated code");
-    tty->print_cr("#");
-    tty->print_cr("# pc where exception happened = " INTPTR_FORMAT, exception_pc);
-
-    if (n->is_nmethod()) {
-      methodOop method = ((nmethod*)n)->method();
-      tty->print_cr("# Method where it happened %s.%s ", Klass::cast(method->method_holder())->name()->as_C_string(), method->name()->as_C_string());
-      tty->print_cr("#");
-      if (ShowMessageBoxOnError && UpdateHotSpotCompilerFileOnError &&
-          CompilerOracle::has_command_file()) {
-        const char* title    = "HotSpot Runtime Error";
-        const char* question = "Do you want to exclude compilation of this method in future runs?";
-        if (os::message_box(title, question)) {
-          CompilerOracle::append_comment_to_file("");
-          CompilerOracle::append_comment_to_file("Null exception in compiled code resulted in the following exclude");
-          CompilerOracle::append_comment_to_file("");
-          CompilerOracle::append_exclude_to_file(method);
-          tty->print_cr("#");
-          tty->print_cr("# %s has been updated to exclude the specified method", CompileCommandFile);
-          tty->print_cr("#");
-        }
-      }
-      fatal("Implicit null exception happened in compiled method");
-    } else {
-      n->print();
-      fatal("Implicit null exception happened in generated stub");
-    }
-  }
-  fatal("Implicit null exception at wrong place");
-}
-
-
 //-------------------------------------------------------------------------------------
 // register policy
 
@@ -987,7 +989,7 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
       // since we're notifying the VM on every catch.
       // Force deoptimization and the rest of the lookup
       // will be fine.
-      deoptimize_caller_frame(thread, true);
+      deoptimize_caller_frame(thread);
     }
 
     // Check the stack guard pages.  If enabled, look for handler in this frame;
@@ -1141,17 +1143,22 @@ const TypeFunc *OptoRuntime::rethrow_Type() {
 
 
 void OptoRuntime::deoptimize_caller_frame(JavaThread *thread, bool doit) {
-  // Deoptimize frame
-  if (doit) {
-    // Called from within the owner thread, so no need for safepoint
-    RegisterMap reg_map(thread);
-    frame stub_frame = thread->last_frame();
-    assert(stub_frame.is_runtime_frame() || exception_blob()->contains(stub_frame.pc()), "sanity check");
-    frame caller_frame = stub_frame.sender(&reg_map);
-
-    // Deoptimize the caller frame.
-    Deoptimization::deoptimize_frame(thread, caller_frame.id());
+  // Deoptimize the caller before continuing, as the compiled
+  // exception handler table may not be valid.
+  if (!StressCompiledExceptionHandlers && doit) {
+    deoptimize_caller_frame(thread);
   }
+}
+
+void OptoRuntime::deoptimize_caller_frame(JavaThread *thread) {
+  // Called from within the owner thread, so no need for safepoint
+  RegisterMap reg_map(thread);
+  frame stub_frame = thread->last_frame();
+  assert(stub_frame.is_runtime_frame() || exception_blob()->contains(stub_frame.pc()), "sanity check");
+  frame caller_frame = stub_frame.sender(&reg_map);
+
+  // Deoptimize the caller frame.
+  Deoptimization::deoptimize_frame(thread, caller_frame.id());
 }
 
 

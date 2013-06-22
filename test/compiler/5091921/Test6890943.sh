@@ -1,6 +1,6 @@
 #!/bin/sh
 # 
-# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 # 
 # This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,16 @@
 # questions.
 # 
 # 
-
+## some tests require path to find test source dir
 if [ "${TESTSRC}" = "" ]
 then
-  echo "TESTSRC not set.  Test cannot execute.  Failed."
-  exit 1
+  TESTSRC=${PWD}
+  echo "TESTSRC not set.  Using "${TESTSRC}" as default"
 fi
 echo "TESTSRC=${TESTSRC}"
-if [ "${TESTJAVA}" = "" ]
-then
-  echo "TESTJAVA not set.  Test cannot execute.  Failed."
-  exit 1
-fi
-echo "TESTJAVA=${TESTJAVA}"
-if [ "${TESTCLASSES}" = "" ]
-then
-  echo "TESTCLASSES not set.  Test cannot execute.  Failed."
-  exit 1
-fi
-echo "TESTCLASSES=${TESTCLASSES}"
-echo "CLASSPATH=${CLASSPATH}"
+## Adding common setup Variables for running shell tests.
+. ${TESTSRC}/../../test_env.sh
+
 
 set -x
 
@@ -50,9 +40,12 @@ cp ${TESTSRC}/input6890943.txt .
 cp ${TESTSRC}/output6890943.txt .
 cp ${TESTSRC}/Test6890943.sh .
 
-${TESTJAVA}/bin/javac -d . Test6890943.java
+${COMPILEJAVA}/bin/javac ${TESTJAVACOPTS} -d . Test6890943.java
 
-${TESTJAVA}/bin/java -XX:-PrintVMOptions ${TESTVMOPTS} Test6890943 < input6890943.txt > test.out 2>&1
+${TESTJAVA}/bin/java -XX:-PrintVMOptions -XX:+IgnoreUnrecognizedVMOptions ${TESTVMOPTS} Test6890943 < input6890943.txt > pretest.out 2>&1
+
+# This test sometimes tickles an unrelated performance warning that interferes with diff.
+grep -v 'warning: Performance bug: SystemDictionary' pretest.out > test.out
 
 diff output6890943.txt test.out
 

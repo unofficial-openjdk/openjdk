@@ -35,6 +35,7 @@
 #include "oops/fieldStreams.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/objArrayKlass.hpp"
+#include "oops/methodOop.hpp"
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -57,6 +58,7 @@
 #include "services/attachListener.hpp"
 #include "services/management.hpp"
 #include "services/threadService.hpp"
+#include "trace/tracing.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/dtrace.hpp"
@@ -345,9 +347,13 @@ JVM_ENTRY(jobject, JVM_InitProperties(JNIEnv *env, jobject properties))
   // Do this after setting user properties to prevent people
   // from setting the value with a -D option, as requested.
   {
-    char as_chars[256];
-    jio_snprintf(as_chars, sizeof(as_chars), INTX_FORMAT, MaxDirectMemorySize);
-    PUTPROP(props, "sun.nio.MaxDirectMemorySize", as_chars);
+    if (FLAG_IS_DEFAULT(MaxDirectMemorySize)) {
+      PUTPROP(props, "sun.nio.MaxDirectMemorySize", "-1");
+    } else {
+      char as_chars[256];
+      jio_snprintf(as_chars, sizeof(as_chars), UINTX_FORMAT, MaxDirectMemorySize);
+      PUTPROP(props, "sun.nio.MaxDirectMemorySize", as_chars);
+    }
   }
 
   // JVM monitoring and management support
@@ -522,7 +528,7 @@ JVM_ENTRY(void, JVM_MonitorWait(JNIEnv* env, jobject handle, jlong ms))
   if (JvmtiExport::should_post_monitor_wait()) {
     JvmtiExport::post_monitor_wait((JavaThread *)THREAD, (oop)obj(), ms);
   }
-  ObjectSynchronizer::wait(obj, ms, CHECK);
+  ObjectSynchronizer::wait(obj, ms, THREAD);
 JVM_END
 
 
@@ -1158,12 +1164,14 @@ oop create_dummy_access_control_context(TRAPS) {
   return result;
 }
 
+
 JVM_ENTRY(jobject, JVM_DoPrivileged(JNIEnv *env, jclass cls, jobject action, jobject context, jboolean wrapException))
   JVMWrapper("JVM_DoPrivileged");
 
   if (action == NULL) {
     THROW_MSG_0(vmSymbols::java_lang_NullPointerException(), "Null action");
   }
+
 
   // Compute the frame initiating the do privileged operation and setup the privileged stack
   vframeStream vfst(thread);
@@ -1173,7 +1181,7 @@ JVM_ENTRY(jobject, JVM_DoPrivileged(JNIEnv *env, jclass cls, jobject action, job
     THROW_MSG_0(vmSymbols::java_lang_InternalError(), "no caller?");
   }
 
-  methodOop method      = vfst.method();
+  methodOop method = vfst.method();
   instanceKlassHandle klass (THREAD, method->method_holder());
 
   // Check that action object understands "Object run()"
@@ -1203,6 +1211,7 @@ JVM_ENTRY(jobject, JVM_DoPrivileged(JNIEnv *env, jclass cls, jobject action, job
 
   // Stack allocated list of privileged stack elements
   PrivilegedElement pi;
+
   if (!vfst.at_end()) {
     pi.initialize(&vfst, h_context(), thread->privileged_stack_top(), CHECK_NULL);
     thread->set_privileged_stack_top(&pi);
@@ -1370,9 +1379,6 @@ JVM_END
 // Inner class reflection ///////////////////////////////////////////////////////////////////////////////
 
 JVM_ENTRY(jobjectArray, JVM_GetDeclaredClasses(JNIEnv *env, jclass ofClass))
-  const int inner_class_info_index = 0;
-  const int outer_class_info_index = 1;
-
   JvmtiVMObjectAllocEventCollector oam;
   // ofClass is a reference to a java_lang_Class object. The mirror object
   // of an instanceKlass
@@ -1384,26 +1390,26 @@ JVM_ENTRY(jobjectArray, JVM_GetDeclaredClasses(JNIEnv *env, jclass ofClass))
   }
 
   instanceKlassHandle k(thread, java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(ofClass)));
+  InnerClassesIterator iter(k);
 
-  if (k->inner_classes()->length() == 0) {
+  if (iter.length() == 0) {
     // Neither an inner nor outer class
     oop result = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_NULL);
     return (jobjectArray)JNIHandles::make_local(env, result);
   }
 
   // find inner class info
-  typeArrayHandle    icls(thread, k->inner_classes());
   constantPoolHandle cp(thread, k->constants());
-  int length = icls->length();
+  int length = iter.length();
 
   // Allocate temp. result array
   objArrayOop r = oopFactory::new_objArray(SystemDictionary::Class_klass(), length/4, CHECK_NULL);
   objArrayHandle result (THREAD, r);
   int members = 0;
 
-  for(int i = 0; i < length; i += 4) {
-    int ioff = icls->ushort_at(i + inner_class_info_index);
-    int ooff = icls->ushort_at(i + outer_class_info_index);
+  for (; !iter.done(); iter.next()) {
+    int ioff = iter.inner_class_info_index();
+    int ooff = iter.outer_class_info_index();
 
     if (ioff != 0 && ooff != 0) {
       // Check to see if the name matches the class we're looking for
@@ -1461,17 +1467,13 @@ klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle k,
                                                      bool* inner_is_member,
                                                      TRAPS) {
   Thread* thread = THREAD;
-  const int inner_class_info_index = inner_class_inner_class_info_offset;
-  const int outer_class_info_index = inner_class_outer_class_info_offset;
-
-  if (k->inner_classes()->length() == 0) {
+  InnerClassesIterator iter(k);
+  if (iter.length() == 0) {
     // No inner class info => no declaring class
     return NULL;
   }
 
-  typeArrayHandle i_icls(thread, k->inner_classes());
   constantPoolHandle i_cp(thread, k->constants());
-  int i_length = i_icls->length();
 
   bool found = false;
   klassOop ok;
@@ -1479,10 +1481,10 @@ klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle k,
   *inner_is_member = false;
 
   // Find inner_klass attribute
-  for (int i = 0; i < i_length && !found; i += inner_class_next_offset) {
-    int ioff = i_icls->ushort_at(i + inner_class_info_index);
-    int ooff = i_icls->ushort_at(i + outer_class_info_index);
-    int noff = i_icls->ushort_at(i + inner_class_inner_name_offset);
+  for (; !iter.done() && !found; iter.next()) {
+    int ioff = iter.inner_class_info_index();
+    int ooff = iter.outer_class_info_index();
+    int noff = iter.inner_name_index();
     if (ioff != 0) {
       // Check to see if the name matches the class we're looking for
       // before attempting to find the class.
@@ -2255,11 +2257,11 @@ JVM_QUICK_ENTRY(void, JVM_GetMethodIxExceptionTableEntry(JNIEnv *env, jclass cls
   klassOop k = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
   oop method = instanceKlass::cast(k)->methods()->obj_at(method_index);
-  typeArrayOop extable = methodOop(method)->exception_table();
-  entry->start_pc   = extable->int_at(entry_index * 4);
-  entry->end_pc     = extable->int_at(entry_index * 4 + 1);
-  entry->handler_pc = extable->int_at(entry_index * 4 + 2);
-  entry->catchType  = extable->int_at(entry_index * 4 + 3);
+  ExceptionTable extable((methodOop(method)));
+  entry->start_pc   = extable.start_pc(entry_index);
+  entry->end_pc     = extable.end_pc(entry_index);
+  entry->handler_pc = extable.handler_pc(entry_index);
+  entry->catchType  = extable.catch_type_index(entry_index);
 JVM_END
 
 
@@ -2268,7 +2270,7 @@ JVM_QUICK_ENTRY(jint, JVM_GetMethodIxExceptionTableLength(JNIEnv *env, jclass cl
   klassOop k = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
   oop method = instanceKlass::cast(k)->methods()->obj_at(method_index);
-  return methodOop(method)->exception_table()->length() / 4;
+  return methodOop(method)->exception_table_length();
 JVM_END
 
 
@@ -2312,7 +2314,7 @@ JVM_QUICK_ENTRY(jint, JVM_GetMethodIxMaxStack(JNIEnv *env, jclass cls, int metho
   klassOop k = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(cls));
   k = JvmtiThreadState::class_to_verify_considering_redefinition(k, thread);
   oop method = instanceKlass::cast(k)->methods()->obj_at(method_index);
-  return methodOop(method)->max_stack();
+  return methodOop(method)->verifier_max_stack();
 JVM_END
 
 
@@ -2926,6 +2928,8 @@ JVM_ENTRY(void, JVM_Sleep(JNIEnv* env, jclass threadClass, jlong millis))
                              millis);
 #endif /* USDT2 */
 
+  EventThreadSleep event;
+
   if (millis == 0) {
     // When ConvertSleepToYield is on, this matches the classic VM implementation of
     // JVM_Sleep. Critical for similar threading behaviour (Win32)
@@ -2946,6 +2950,10 @@ JVM_ENTRY(void, JVM_Sleep(JNIEnv* env, jclass threadClass, jlong millis))
       // An asynchronous exception (e.g., ThreadDeathException) could have been thrown on
       // us while we were sleeping. We do not overwrite those.
       if (!HAS_PENDING_EXCEPTION) {
+        if (event.should_commit()) {
+          event.set_time(millis);
+          event.commit();
+        }
 #ifndef USDT2
         HS_DTRACE_PROBE1(hotspot, thread__sleep__end,1);
 #else /* USDT2 */
@@ -2958,6 +2966,10 @@ JVM_ENTRY(void, JVM_Sleep(JNIEnv* env, jclass threadClass, jlong millis))
       }
     }
     thread->osthread()->set_state(old_state);
+  }
+  if (event.should_commit()) {
+    event.set_time(millis);
+    event.commit();
   }
 #ifndef USDT2
   HS_DTRACE_PROBE1(hotspot, thread__sleep__end,0);
@@ -4544,10 +4556,5 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
   // consider to expose this new capability in the sun.rt.jvmCapabilities jvmstat
   // counter defined in runtimeService.cpp.
   info->is_attachable = AttachListener::is_attach_supported();
-#ifdef KERNEL
-  info->is_kernel_jvm = 1; // true;
-#else  // KERNEL
-  info->is_kernel_jvm = 0; // false;
-#endif // KERNEL
 }
 JVM_END

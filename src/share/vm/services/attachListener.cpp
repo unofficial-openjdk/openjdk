@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -170,7 +170,6 @@ static jint jcmd(AttachOperation* op, outputStream* out) {
   return JNI_OK;
 }
 
-#ifndef SERVICES_KERNEL   // Heap dumping not supported
 // Implementation of "dumpheap" command.
 // See also: HeapDumpDCmd class
 //
@@ -212,7 +211,6 @@ jint dump_heap(AttachOperation* op, outputStream* out) {
   }
   return JNI_OK;
 }
-#endif // SERVICES_KERNEL
 
 // Implementation of "inspectheap" command
 // See also: ClassHistogramDCmd class
@@ -320,7 +318,7 @@ static jint set_ccstr_flag(const char* name, AttachOperation* op, outputStream* 
   }
   bool res = CommandLineFlags::ccstrAtPut((char*)name, &value, ATTACH_ON_DEMAND);
   if (res) {
-    FREE_C_HEAP_ARRAY(char, value);
+    FREE_C_HEAP_ARRAY(char, value, mtInternal);
   } else {
     out->print_cr("setting flag %s failed", name);
   }
@@ -382,9 +380,7 @@ static jint print_flag(AttachOperation* op, outputStream* out) {
 static AttachOperationFunctionInfo funcs[] = {
   { "agentProperties",  get_agent_properties },
   { "datadump",         data_dump },
-#ifndef SERVICES_KERNEL
   { "dumpheap",         dump_heap },
-#endif  // SERVICES_KERNEL
   { "load",             JvmtiExport::load_agent_library },
   { "properties",       get_system_properties },
   { "threaddump",       thread_dump },
@@ -403,6 +399,8 @@ static AttachOperationFunctionInfo funcs[] = {
 
 static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
   os::set_priority(thread, NearMaxPriority);
+
+  thread->record_stack_base_and_size();
 
   if (AttachListener::pd_init() != 0) {
     return;

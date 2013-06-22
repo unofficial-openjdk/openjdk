@@ -158,6 +158,7 @@ public:
   CmpUNode( Node *in1, Node *in2 ) : CmpNode(in1,in2) {}
   virtual int Opcode() const;
   virtual const Type *sub( const Type *, const Type * ) const;
+  bool is_index_range_check() const;
 };
 
 //------------------------------CmpPNode---------------------------------------
@@ -398,7 +399,10 @@ public:
 // Cosinus of a double
 class CosDNode : public Node {
 public:
-  CosDNode( Node *in1  ) : Node(0, in1) {}
+  CosDNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -409,7 +413,10 @@ public:
 // Sinus of a double
 class SinDNode : public Node {
 public:
-  SinDNode( Node *in1  ) : Node(0, in1) {}
+  SinDNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -421,7 +428,10 @@ public:
 // tangens of a double
 class TanDNode : public Node {
 public:
-  TanDNode(Node *in1  ) : Node(0, in1) {}
+  TanDNode(Compile* C, Node *c,Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -444,7 +454,10 @@ public:
 // square root a double
 class SqrtDNode : public Node {
 public:
-  SqrtDNode(Node *c, Node *in1  ) : Node(c, in1) {}
+  SqrtDNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -455,7 +468,10 @@ public:
 //  Exponentiate a double
 class ExpDNode : public Node {
 public:
-  ExpDNode( Node *c, Node *in1 ) : Node(c, in1) {}
+  ExpDNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -466,7 +482,10 @@ public:
 // Log_e of a double
 class LogDNode : public Node {
 public:
-  LogDNode( Node *in1 ) : Node(0, in1) {}
+  LogDNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -477,7 +496,10 @@ public:
 // Log_10 of a double
 class Log10DNode : public Node {
 public:
-  Log10DNode( Node *in1 ) : Node(0, in1) {}
+  Log10DNode(Compile* C, Node *c, Node *in1) : Node(c, in1) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -488,7 +510,10 @@ public:
 // Raise a double to a double power
 class PowDNode : public Node {
 public:
-  PowDNode(Node *c, Node *in1, Node *in2  ) : Node(c, in1, in2) {}
+  PowDNode(Compile* C, Node *c, Node *in1, Node *in2 ) : Node(c, in1, in2) {
+    init_flags(Flag_is_expensive);
+    C->add_expensive_node(this);
+  }
   virtual int Opcode() const;
   const Type *bottom_type() const { return Type::DOUBLE; }
   virtual uint ideal_reg() const { return Op_RegD; }

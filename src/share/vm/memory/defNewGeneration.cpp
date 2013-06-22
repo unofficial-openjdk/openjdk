@@ -25,6 +25,10 @@
 #include "precompiled.hpp"
 #include "gc_implementation/shared/collectorCounters.hpp"
 #include "gc_implementation/shared/gcPolicyCounters.hpp"
+#include "gc_implementation/shared/gcHeapSummary.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTraceTime.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/spaceDecorator.hpp"
 #include "memory/defNewGeneration.inline.hpp"
 #include "memory/gcLocker.inline.hpp"
@@ -199,6 +203,8 @@ DefNewGeneration::DefNewGeneration(ReservedSpace rs,
   _next_gen = NULL;
   _tenuring_threshold = MaxTenuringThreshold;
   _pretenure_size_threshold_words = PretenureSizeThreshold >> LogHeapWordSize;
+
+  _gc_timer = new (ResourceObj::C_HEAP, mtGC) STWGCTimer();
 }
 
 void DefNewGeneration::compute_space_boundaries(uintx minimum_eden_size,
@@ -529,12 +535,18 @@ void DefNewGeneration::collect(bool   full,
                                size_t size,
                                bool   is_tlab) {
   assert(full || size > 0, "otherwise we don't want to collect");
+
   GenCollectedHeap* gch = GenCollectedHeap::heap();
+
+  _gc_timer->register_gc_start(os::elapsed_counter());
+  DefNewTracer gc_tracer;
+  gc_tracer.report_gc_start(gch->gc_cause(), _gc_timer->gc_start());
+
   _next_gen = gch->next_gen(this);
   assert(_next_gen != NULL,
     "This must be the youngest gen, and not the only gen");
 
-  // If the next generation is too full to accomodate promotion
+  // If the next generation is too full to accommodate promotion
   // from this generation, pass on collection; let the next generation
   // do it.
   if (!collection_attempt_is_safe()) {
@@ -548,9 +560,11 @@ void DefNewGeneration::collect(bool   full,
 
   init_assuming_no_promotion_failure();
 
-  TraceTime t1("GC", PrintGC && !PrintGCDetails, true, gclog_or_tty);
+  GCTraceTime t1(GCCauseString("GC", gch->gc_cause()), PrintGC && !PrintGCDetails, true, NULL);
   // Capture heap used before collection (for printing).
   size_t gch_prev_used = gch->used();
+
+  gch->trace_heap_before_gc(&gc_tracer);
 
   SpecializationStats::clear();
 
@@ -596,9 +610,11 @@ void DefNewGeneration::collect(bool   full,
   FastKeepAliveClosure keep_alive(this, &scan_weak_ref);
   ReferenceProcessor* rp = ref_processor();
   rp->setup_policy(clear_all_soft_refs);
-  rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
-                                    NULL);
-  if (!promotion_failed()) {
+  const ReferenceProcessorStats& stats =
+    rp->process_discovered_references(&is_alive, &keep_alive, &evacuate_followers,
+                                      NULL, _gc_timer);
+  gc_tracer.report_gc_reference_stats(stats);
+  if (!_promotion_failed) {
     // Swap the survivor spaces.
     eden()->clear(SpaceDecorator::Mangle);
     from()->clear(SpaceDecorator::Mangle);
@@ -647,6 +663,7 @@ void DefNewGeneration::collect(bool   full,
 
     // Inform the next generation that a promotion failure occurred.
     _next_gen->promotion_failure_occurred();
+    gc_tracer.report_promotion_failed(_promotion_failed_info);
 
     // Reset the PromotionFailureALot counters.
     NOT_PRODUCT(Universe::heap()->reset_promotion_should_fail();)
@@ -656,11 +673,18 @@ void DefNewGeneration::collect(bool   full,
   to()->set_concurrent_iteration_safe_limit(to()->top());
   SpecializationStats::print();
 
-  // We need to use a monotonically non-deccreasing time in ms
+  // We need to use a monotonically non-decreasing time in ms
   // or we will see time-warp warnings and os::javaTimeMillis()
   // does not guarantee monotonicity.
   jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
   update_time_of_last_gc(now);
+
+  gch->trace_heap_after_gc(&gc_tracer);
+  gc_tracer.report_tenuring_threshold(tenuring_threshold());
+
+  _gc_timer->register_gc_end(os::elapsed_counter());
+
+  gc_tracer.report_gc_end(_gc_timer->gc_end(), _gc_timer->time_partitions());
 }
 
 class RemoveForwardPointerClosure: public ObjectClosure {
@@ -672,6 +696,7 @@ public:
 
 void DefNewGeneration::init_assuming_no_promotion_failure() {
   _promotion_failed = false;
+  _promotion_failed_info.reset();
   from()->set_next_compaction_space(NULL);
 }
 
@@ -693,7 +718,7 @@ void DefNewGeneration::remove_forwarding_pointers() {
 }
 
 void DefNewGeneration::preserve_mark(oop obj, markOop m) {
-  assert(promotion_failed() && m->must_be_preserved_for_promotion_failure(obj),
+  assert(_promotion_failed && m->must_be_preserved_for_promotion_failure(obj),
          "Oversaving!");
   _objs_with_preserved_marks.push(obj);
   _preserved_marks_of_objs.push(m);
@@ -711,6 +736,7 @@ void DefNewGeneration::handle_promotion_failure(oop old) {
                         old->size());
   }
   _promotion_failed = true;
+  _promotion_failed_info.register_copy_failure(old->size());
   preserve_mark_if_necessary(old, old->mark());
   // forward to self
   old->forward_to(old);
@@ -929,6 +955,10 @@ void DefNewGeneration::record_spaces_top() {
   from()->set_top_for_allocations();
 }
 
+void DefNewGeneration::ref_processor_init() {
+  Generation::ref_processor_init();
+}
+
 
 void DefNewGeneration::update_counters() {
   if (UsePerfData) {
@@ -939,10 +969,10 @@ void DefNewGeneration::update_counters() {
   }
 }
 
-void DefNewGeneration::verify(bool allow_dirty) {
-  eden()->verify(allow_dirty);
-  from()->verify(allow_dirty);
-    to()->verify(allow_dirty);
+void DefNewGeneration::verify() {
+  eden()->verify();
+  from()->verify();
+    to()->verify();
 }
 
 void DefNewGeneration::print_on(outputStream* st) const {

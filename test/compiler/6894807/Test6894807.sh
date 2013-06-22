@@ -18,26 +18,23 @@ then
   exit 1
 fi
 
-BIT_FLAG=""
-
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
-  SunOS | Linux )
+  SunOS | Linux | Darwin )
     NULL=/dev/null
     PS=":"
     FS="/"
-    ## for solaris, linux it's HOME
-    FILE_LOCATION=$HOME
-    if [ -f ${FILE_LOCATION}${FS}JDK64BIT -a ${OS} = "SunOS" ]
-    then
-        BIT_FLAG=`cat ${FILE_LOCATION}${FS}JDK64BIT | grep -v '^#'`
-    fi
     ;;
   Windows_* )
     NULL=NUL
     PS=";"
     FS="\\"
+    ;;
+  CYGWIN_* )
+    NULL=/dev/null
+    PS=";"
+    FS="/"
     ;;
   * )
     echo "Unrecognized system!"
@@ -50,9 +47,9 @@ CLASSPATH=.${PS}${TESTCLASSES}${PS}${JEMMYPATH} ; export CLASSPATH
 
 THIS_DIR=`pwd`
 
-${TESTJAVA}${FS}bin${FS}java ${BIT_FLAG} -version
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} -version
 
-${TESTJAVA}${FS}bin${FS}java ${BIT_FLAG} -server IsInstanceTest > test.out 2>&1
+${TESTJAVA}${FS}bin${FS}java ${TESTVMOPTS} IsInstanceTest > test.out 2>&1
 
 cat test.out
 

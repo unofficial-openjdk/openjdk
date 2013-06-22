@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,9 +113,7 @@ jint init_globals() {
   universe2_init();  // dependent on codeCache_init and stubRoutines_init1
   referenceProcessor_init();
   jni_handles_init();
-#ifndef VM_STRUCTS_KERNEL
   vmStructs_init();
-#endif // VM_STRUCTS_KERNEL
 
   vtableStubs_init();
   InlineCacheBuffer_init();
@@ -129,15 +127,6 @@ jint init_globals() {
   }
   javaClasses_init();   // must happen after vtable initialization
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
-
-  // Although we'd like to, we can't easily do a heap verify
-  // here because the main thread isn't yet a JavaThread, so
-  // its TLAB may not be made parseable from the usual interfaces.
-  if (VerifyBeforeGC && !UseTLAB &&
-      Universe::heap()->total_collections() >= VerifyGCStartAt) {
-    Universe::heap()->prepare_for_verify();
-    Universe::verify();   // make sure we're starting with a clean slate
-  }
 
   // All the flags that get adjusted by VM_Version_init and os::init_2
   // have been set so dump the flags now.

@@ -255,6 +255,7 @@ void LIR_Op2::verify() const {
 #ifdef ASSERT
   switch (code()) {
     case lir_cmove:
+    case lir_xchg:
       break;
 
     default:
@@ -621,15 +622,26 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
     case lir_shl:
     case lir_shr:
     case lir_ushr:
+    case lir_xadd:
+    case lir_xchg:
     {
       assert(op->as_Op2() != NULL, "must be");
       LIR_Op2* op2 = (LIR_Op2*)op;
+      assert(op2->_tmp2->is_illegal() && op2->_tmp3->is_illegal() &&
+             op2->_tmp4->is_illegal() && op2->_tmp5->is_illegal(), "not used");
 
       if (op2->_info)                     do_info(op2->_info);
       if (op2->_opr1->is_valid())         do_input(op2->_opr1);
       if (op2->_opr2->is_valid())         do_input(op2->_opr2);
-      if (op2->_tmp->is_valid())          do_temp(op2->_tmp);
+      if (op2->_tmp1->is_valid())         do_temp(op2->_tmp1);
       if (op2->_result->is_valid())       do_output(op2->_result);
+      if (op->code() == lir_xchg || op->code() == lir_xadd) {
+        // on ARM and PPC, return value is loaded first so could
+        // destroy inputs. On other platforms that implement those
+        // (x86, sparc), the extra constrainsts are harmless.
+        if (op2->_opr1->is_valid())       do_temp(op2->_opr1);
+        if (op2->_opr2->is_valid())       do_temp(op2->_opr2);
+      }
 
       break;
     }
@@ -641,7 +653,8 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       assert(op->as_Op2() != NULL, "must be");
       LIR_Op2* op2 = (LIR_Op2*)op;
 
-      assert(op2->_info == NULL && op2->_tmp->is_illegal(), "not used");
+      assert(op2->_info == NULL && op2->_tmp1->is_illegal() && op2->_tmp2->is_illegal() &&
+             op2->_tmp3->is_illegal() && op2->_tmp4->is_illegal() && op2->_tmp5->is_illegal(), "not used");
       assert(op2->_opr1->is_valid() && op2->_opr2->is_valid() && op2->_result->is_valid(), "used");
 
       do_input(op2->_opr1);
@@ -665,10 +678,12 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       assert(op2->_opr1->is_valid(), "used");
       assert(op2->_opr2->is_valid(), "used");
       assert(op2->_result->is_valid(), "used");
+      assert(op2->_tmp2->is_illegal() && op2->_tmp3->is_illegal() &&
+             op2->_tmp4->is_illegal() && op2->_tmp5->is_illegal(), "not used");
 
       do_input(op2->_opr1); do_temp(op2->_opr1);
       do_input(op2->_opr2); do_temp(op2->_opr2);
-      if (op2->_tmp->is_valid()) do_temp(op2->_tmp);
+      if (op2->_tmp1->is_valid()) do_temp(op2->_tmp1);
       do_output(op2->_result);
 
       break;
@@ -682,6 +697,8 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       if (op2->_opr1->is_valid())         do_temp(op2->_opr1);
       if (op2->_opr2->is_valid())         do_input(op2->_opr2); // exception object is input parameter
       assert(op2->_result->is_illegal(), "no result");
+      assert(op2->_tmp2->is_illegal() && op2->_tmp3->is_illegal() &&
+             op2->_tmp4->is_illegal() && op2->_tmp5->is_illegal(), "not used");
 
       break;
     }
@@ -702,7 +719,8 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
     case lir_sin:
     case lir_cos:
     case lir_log:
-    case lir_log10: {
+    case lir_log10:
+    case lir_exp: {
       assert(op->as_Op2() != NULL, "must be");
       LIR_Op2* op2 = (LIR_Op2*)op;
 
@@ -711,16 +729,47 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       // Register input operand as temp to guarantee that it doesn't
       // overlap with the input.
       assert(op2->_info == NULL, "not used");
+      assert(op2->_tmp5->is_illegal(), "not used");
+      assert(op2->_tmp2->is_valid() == (op->code() == lir_exp), "not used");
+      assert(op2->_tmp3->is_valid() == (op->code() == lir_exp), "not used");
+      assert(op2->_tmp4->is_valid() == (op->code() == lir_exp), "not used");
       assert(op2->_opr1->is_valid(), "used");
       do_input(op2->_opr1); do_temp(op2->_opr1);
 
       if (op2->_opr2->is_valid())         do_temp(op2->_opr2);
-      if (op2->_tmp->is_valid())          do_temp(op2->_tmp);
+      if (op2->_tmp1->is_valid())         do_temp(op2->_tmp1);
+      if (op2->_tmp2->is_valid())         do_temp(op2->_tmp2);
+      if (op2->_tmp3->is_valid())         do_temp(op2->_tmp3);
+      if (op2->_tmp4->is_valid())         do_temp(op2->_tmp4);
       if (op2->_result->is_valid())       do_output(op2->_result);
 
       break;
     }
 
+    case lir_pow: {
+      assert(op->as_Op2() != NULL, "must be");
+      LIR_Op2* op2 = (LIR_Op2*)op;
+
+      // On x86 pow needs two temporary fpu stack slots: tmp1 and
+      // tmp2. Register input operands as temps to guarantee that it
+      // doesn't overlap with the temporary slots.
+      assert(op2->_info == NULL, "not used");
+      assert(op2->_opr1->is_valid() && op2->_opr2->is_valid(), "used");
+      assert(op2->_tmp1->is_valid() && op2->_tmp2->is_valid() && op2->_tmp3->is_valid()
+             && op2->_tmp4->is_valid() && op2->_tmp5->is_valid(), "used");
+      assert(op2->_result->is_valid(), "used");
+
+      do_input(op2->_opr1); do_temp(op2->_opr1);
+      do_input(op2->_opr2); do_temp(op2->_opr2);
+      do_temp(op2->_tmp1);
+      do_temp(op2->_tmp2);
+      do_temp(op2->_tmp3);
+      do_temp(op2->_tmp4);
+      do_temp(op2->_tmp5);
+      do_output(op2->_result);
+
+      break;
+    }
 
 // LIR_Op3
     case lir_idiv:
@@ -756,7 +805,7 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
 
       // only visit register parameters
       int n = opJavaCall->_arguments->length();
-      for (int i = 0; i < n; i++) {
+      for (int i = opJavaCall->_receiver->is_valid() ? 1 : 0; i < n; i++) {
         if (!opJavaCall->_arguments->at(i)->is_pointer()) {
           do_input(*opJavaCall->_arguments->adr_at(i));
         }
@@ -1670,6 +1719,8 @@ const char * LIR_Op::name() const {
      case lir_tan:                   s = "tan";           break;
      case lir_log:                   s = "log";           break;
      case lir_log10:                 s = "log10";         break;
+     case lir_exp:                   s = "exp";           break;
+     case lir_pow:                   s = "pow";           break;
      case lir_logic_and:             s = "logic_and";     break;
      case lir_logic_or:              s = "logic_or";      break;
      case lir_logic_xor:             s = "logic_xor";     break;
@@ -1677,6 +1728,8 @@ const char * LIR_Op::name() const {
      case lir_shr:                   s = "shift_right";   break;
      case lir_ushr:                  s = "ushift_right";  break;
      case lir_alloc_array:           s = "alloc_array";   break;
+     case lir_xadd:                  s = "xadd";          break;
+     case lir_xchg:                  s = "xchg";          break;
      // LIR_Op3
      case lir_idiv:                  s = "idiv";          break;
      case lir_irem:                  s = "irem";          break;
@@ -1892,7 +1945,11 @@ void LIR_Op2::print_instr(outputStream* out) const {
   }
   in_opr1()->print(out);    out->print(" ");
   in_opr2()->print(out);    out->print(" ");
-  if (tmp_opr()->is_valid()) { tmp_opr()->print(out);    out->print(" "); }
+  if (tmp1_opr()->is_valid()) { tmp1_opr()->print(out);    out->print(" "); }
+  if (tmp2_opr()->is_valid()) { tmp2_opr()->print(out);    out->print(" "); }
+  if (tmp3_opr()->is_valid()) { tmp3_opr()->print(out);    out->print(" "); }
+  if (tmp4_opr()->is_valid()) { tmp4_opr()->print(out);    out->print(" "); }
+  if (tmp5_opr()->is_valid()) { tmp5_opr()->print(out);    out->print(" "); }
   result_opr()->print(out);
 }
 

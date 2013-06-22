@@ -43,7 +43,7 @@
 
 
 MutableNUMASpace::MutableNUMASpace(size_t alignment) : MutableSpace(alignment) {
-  _lgrp_spaces = new (ResourceObj::C_HEAP) GrowableArray<LGRPSpace*>(0, true);
+  _lgrp_spaces = new (ResourceObj::C_HEAP, mtGC) GrowableArray<LGRPSpace*>(0, true);
   _page_size = os::vm_page_size();
   _adaptation_cycles = 0;
   _samples_count = 0;
@@ -231,7 +231,7 @@ bool MutableNUMASpace::update_layout(bool force) {
   if (force || changed) {
     // Compute lgrp intersection. Add/remove spaces.
     int lgrp_limit = (int)os::numa_get_groups_num();
-    int *lgrp_ids = NEW_C_HEAP_ARRAY(int, lgrp_limit);
+    int *lgrp_ids = NEW_C_HEAP_ARRAY(int, lgrp_limit, mtGC);
     int lgrp_num = (int)os::numa_get_leaf_groups(lgrp_ids, lgrp_limit);
     assert(lgrp_num > 0, "There should be at least one locality group");
     // Add new spaces for the new nodes
@@ -265,7 +265,7 @@ bool MutableNUMASpace::update_layout(bool force) {
       }
     }
 
-    FREE_C_HEAP_ARRAY(int, lgrp_ids);
+    FREE_C_HEAP_ARRAY(int, lgrp_ids, mtGC);
 
     if (changed) {
       for (JavaThread *thread = Threads::first(); thread; thread = thread->next()) {
@@ -891,12 +891,12 @@ void MutableNUMASpace::print_on(outputStream* st) const {
   }
 }
 
-void MutableNUMASpace::verify(bool allow_dirty) {
+void MutableNUMASpace::verify() {
   // This can be called after setting an arbitary value to the space's top,
   // so an object can cross the chunk boundary. We ensure the parsablity
   // of the space and just walk the objects in linear fashion.
   ensure_parsability();
-  MutableSpace::verify(allow_dirty);
+  MutableSpace::verify();
 }
 
 // Scan pages and gather stats about page placement and size.

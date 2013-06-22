@@ -24,23 +24,27 @@
 
 #include "precompiled.hpp"
 #include "compiler/compileBroker.hpp"
+#include "gc_implementation/shared/gcTimer.hpp"
+#include "gc_implementation/shared/gcTrace.hpp"
 #include "gc_implementation/shared/markSweep.inline.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "oops/methodDataOop.hpp"
 #include "oops/objArrayKlass.inline.hpp"
 #include "oops/oop.inline.hpp"
 
-Stack<oop>              MarkSweep::_marking_stack;
-Stack<DataLayout*>      MarkSweep::_revisit_mdo_stack;
-Stack<Klass*>           MarkSweep::_revisit_klass_stack;
-Stack<ObjArrayTask>     MarkSweep::_objarray_stack;
+Stack<oop, mtGC>              MarkSweep::_marking_stack;
+Stack<DataLayout*, mtGC>      MarkSweep::_revisit_mdo_stack;
+Stack<Klass*, mtGC>           MarkSweep::_revisit_klass_stack;
+Stack<ObjArrayTask, mtGC>     MarkSweep::_objarray_stack;
 
-Stack<oop>              MarkSweep::_preserved_oop_stack;
-Stack<markOop>          MarkSweep::_preserved_mark_stack;
+Stack<oop, mtGC>              MarkSweep::_preserved_oop_stack;
+Stack<markOop, mtGC>          MarkSweep::_preserved_mark_stack;
 size_t                  MarkSweep::_preserved_count = 0;
 size_t                  MarkSweep::_preserved_count_max = 0;
 PreservedMark*          MarkSweep::_preserved_marks = NULL;
 ReferenceProcessor*     MarkSweep::_ref_processor   = NULL;
+STWGCTimer*             MarkSweep::_gc_timer        = NULL;
+SerialOldTracer*        MarkSweep::_gc_tracer       = NULL;
 
 #ifdef VALIDATE_MARK_SWEEP
 GrowableArray<void*>*   MarkSweep::_root_refs_stack = NULL;
@@ -166,7 +170,7 @@ void MarkSweep::adjust_marks() {
   }
 
   // deal with the overflow stack
-  StackIterator<oop> iter(_preserved_oop_stack);
+  StackIterator<oop, mtGC> iter(_preserved_oop_stack);
   while (!iter.is_empty()) {
     oop* p = iter.next_addr();
     adjust_pointer(p);
@@ -340,7 +344,10 @@ MarkSweep::KeepAliveClosure MarkSweep::keep_alive;
 void MarkSweep::KeepAliveClosure::do_oop(oop* p)       { MarkSweep::KeepAliveClosure::do_oop_work(p); }
 void MarkSweep::KeepAliveClosure::do_oop(narrowOop* p) { MarkSweep::KeepAliveClosure::do_oop_work(p); }
 
-void marksweep_init() { /* empty */ }
+void marksweep_init() {
+  MarkSweep::_gc_timer = new (ResourceObj::C_HEAP, mtGC) STWGCTimer();
+  MarkSweep::_gc_tracer = new (ResourceObj::C_HEAP, mtGC) SerialOldTracer();
+}
 
 #ifndef PRODUCT
 

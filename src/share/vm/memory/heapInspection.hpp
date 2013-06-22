@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,6 @@
 #include "memory/allocation.inline.hpp"
 #include "oops/oop.inline.hpp"
 
-#ifndef SERVICES_KERNEL
-
 
 // HeapInspection
 
@@ -44,7 +42,7 @@
 // to KlassInfoEntry's and is used to sort
 // the entries.
 
-class KlassInfoEntry: public CHeapObj {
+class KlassInfoEntry: public CHeapObj<mtInternal> {
  private:
   KlassInfoEntry* _next;
   klassOop        _klass;
@@ -57,22 +55,22 @@ class KlassInfoEntry: public CHeapObj {
   {}
   KlassInfoEntry* next()     { return _next; }
   bool is_equal(klassOop k)  { return k == _klass; }
-  klassOop klass()           { return _klass; }
-  long count()               { return _instance_count; }
+  klassOop klass() const     { return _klass; }
+  long count() const         { return _instance_count; }
   void set_count(long ct)    { _instance_count = ct; }
-  size_t words()             { return _instance_words; }
+  size_t words() const       { return _instance_words; }
   void set_words(size_t wds) { _instance_words = wds; }
   int compare(KlassInfoEntry* e1, KlassInfoEntry* e2);
   void print_on(outputStream* st) const;
 };
 
-class KlassInfoClosure: public StackObj {
+class KlassInfoClosure : public StackObj {
  public:
   // Called for each KlassInfoEntry.
   virtual void do_cinfo(KlassInfoEntry* cie) = 0;
 };
 
-class KlassInfoBucket: public CHeapObj {
+class KlassInfoBucket: public CHeapObj<mtInternal> {
  private:
   KlassInfoEntry* _list;
   KlassInfoEntry* list()           { return _list; }
@@ -87,6 +85,8 @@ class KlassInfoBucket: public CHeapObj {
 class KlassInfoTable: public StackObj {
  private:
   int _size;
+  static const int _num_buckets = 20011;
+  size_t _size_of_instances_in_words;
 
   // An aligned reference address (typically the least
   // address in the perm gen) used for hashing klass
@@ -98,15 +98,12 @@ class KlassInfoTable: public StackObj {
   KlassInfoEntry* lookup(const klassOop k);
 
  public:
-  // Table size
-  enum {
-    cit_size = 20011
-  };
-  KlassInfoTable(int size, HeapWord* ref);
+  KlassInfoTable(HeapWord* ref);
   ~KlassInfoTable();
   bool record_instance(const oop obj);
   void iterate(KlassInfoClosure* cic);
   bool allocation_failed() { return _buckets == NULL; }
+  size_t size_of_instances_in_words() const;
 };
 
 class KlassInfoHisto : public StackObj {
@@ -117,24 +114,28 @@ class KlassInfoHisto : public StackObj {
   const char* title() const { return _title; }
   static int sort_helper(KlassInfoEntry** e1, KlassInfoEntry** e2);
   void print_elements(outputStream* st) const;
+  static const int _histo_initial_size = 1000;
  public:
-  enum {
-    histo_initial_size = 1000
-  };
-  KlassInfoHisto(const char* title,
-             int estimatedCount);
+  KlassInfoHisto(const char* title);
   ~KlassInfoHisto();
   void add(KlassInfoEntry* cie);
   void print_on(outputStream* st) const;
   void sort();
 };
 
-#endif // SERVICES_KERNEL
 
 class HeapInspection : public AllStatic {
  public:
-  static void heap_inspection(outputStream* st, bool need_prologue) KERNEL_RETURN;
-  static void find_instances_at_safepoint(klassOop k, GrowableArray<oop>* result) KERNEL_RETURN;
+  static void heap_inspection(outputStream* st, bool need_prologue);
+  static size_t populate_table(KlassInfoTable* cit,
+                               bool need_prologue,
+                               BoolObjectClosure* filter = NULL);
+  static HeapWord* start_of_perm_gen();
+  static void find_instances_at_safepoint(klassOop k, GrowableArray<oop>* result);
+ private:
+  static bool is_shared_heap();
+  static void prologue();
+  static void epilogue();
 };
 
 #endif // SHARE_VM_MEMORY_HEAPINSPECTION_HPP
