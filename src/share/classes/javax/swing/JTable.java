@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3948,7 +3948,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
                     break;
                 case TableModelEvent.INSERT:
                     modelSelection.insertIndexInterval(change.startModelIndex,
-                                                       change.endModelIndex,
+                                                       change.length,
                                                        true);
                     break;
                 default:
@@ -5461,12 +5461,13 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
             // they have the option to replace the value with
             // null or use escape to restore the original.
             // For Strings, return "" for backward compatibility.
+
             try {
                 if ("".equals(s)) {
                     if (constructor.getDeclaringClass() == String.class) {
                         value = s;
                     }
-                    super.stopCellEditing();
+                    return super.stopCellEditing();
                 }
 
                 SwingUtilities2.checkAccess(constructor.getModifiers());
@@ -8588,7 +8589,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
              *    <code>null</code> if this object is not on the screen
              */
             public Point getLocationOnScreen() {
-                if (parent != null) {
+                if (parent != null && parent.isShowing()) {
                     Point parentLocation = parent.getLocationOnScreen();
                     Point componentLocation = getLocation();
                     componentLocation.translate(parentLocation.x, parentLocation.y);
@@ -9389,7 +9390,7 @@ public class JTable extends JComponent implements TableModelListener, Scrollable
              *    <code>null</code> if this object is not on the screen
              */
             public Point getLocationOnScreen() {
-                if (parent != null) {
+                if (parent != null && parent.isShowing()) {
                     Point parentLocation = parent.getLocationOnScreen();
                     Point componentLocation = getLocation();
                     componentLocation.translate(parentLocation.x, parentLocation.y);

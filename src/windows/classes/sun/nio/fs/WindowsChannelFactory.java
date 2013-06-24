@@ -157,7 +157,7 @@ class WindowsChannelFactory {
             throw new IllegalArgumentException("APPEND + TRUNCATE_EXISTING not allowed");
 
         FileDescriptor fdObj = open(pathForWindows, pathToCheck, flags, pSecurityDescriptor);
-        return FileChannelImpl.open(fdObj, flags.read, flags.write, flags.append, null);
+        return FileChannelImpl.open(fdObj, pathForWindows, flags.read, flags.write, flags.append, null);
     }
 
     /**

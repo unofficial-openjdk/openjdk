@@ -87,6 +87,7 @@ public final class CWrapper {
         public static native void exitFullScreenMode(long view);
 
         public static native void setToolTip(long view, String msg);
+        public static native void setHidden(long view, boolean hidden);
     }
 
     public static final class NSObject {

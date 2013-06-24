@@ -117,7 +117,7 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
         Rectangle r = peer.getBounds();
         Image im = null;
         if (!r.isEmpty()) {
-            int transparency = (peer.isOpaque() ? Transparency.OPAQUE : Transparency.TRANSLUCENT);
+            int transparency = peer.isTranslucent() ? Transparency.TRANSLUCENT : Transparency.OPAQUE;
             im = peer.getGraphicsConfiguration().createCompatibleImage(r.width, r.height, transparency);
         }
         return im;
@@ -208,13 +208,17 @@ public class CPlatformEmbeddedFrame implements PlatformWindow {
     }
 
     @Override
-    public boolean isUnderMouse() {
-        return false;
-    }
-
-    @Override
     public void setWindowState(int windowState) {}
 
     @Override
     public void setModalBlocked(boolean blocked) {}
+
+    /*
+     * The method could not be implemented due to CALayer restrictions.
+     * The exeption enforce clients not to use it.
+     */
+    @Override
+    public boolean isUnderMouse() {
+        throw new RuntimeException("Not implemented");
+    }
 }

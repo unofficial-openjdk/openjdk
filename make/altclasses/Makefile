@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ ALTCLASSES_SRCDIR = $(CLOSED_SRC)/share/altclasses
 ALTRT_JAR_FILE = $(LIBDIR)/alt-rt.jar
 ALTRT_JAR_SOURCE_FILE = $(TEMPDIR)/alt-rt.jarsrclist
 ALTRT_JAR_SOURCES = $(wildcard $(ALTCLASSES_SRCDIR)/java/*/*.java)
+ALTRT_JAR_SOURCES += $(wildcard $(ALTCLASSES_SRCDIR)/sun/misc/*.java)
 
 # Use a special file suffix for the file that holds the source list
 

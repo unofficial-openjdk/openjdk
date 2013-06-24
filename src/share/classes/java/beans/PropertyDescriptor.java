@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -210,12 +210,13 @@ public class PropertyDescriptor extends FeatureDescriptor {
                 // The read method was explicitly set to null.
                 return null;
             }
+            String nextMethodName = Introspector.GET_PREFIX + getBaseName();
             if (readMethodName == null) {
                 Class type = getPropertyType0();
                 if (type == boolean.class || type == null) {
                     readMethodName = Introspector.IS_PREFIX + getBaseName();
                 } else {
-                    readMethodName = Introspector.GET_PREFIX + getBaseName();
+                    readMethodName = nextMethodName;
                 }
             }
 
@@ -225,8 +226,8 @@ public class PropertyDescriptor extends FeatureDescriptor {
             // methods.  If an "is" method exists, this is the official
             // reader method so look for this one first.
             readMethod = Introspector.findMethod(cls, readMethodName, 0);
-            if (readMethod == null) {
-                readMethodName = Introspector.GET_PREFIX + getBaseName();
+            if ((readMethod == null) && !readMethodName.equals(nextMethodName)) {
+                readMethodName = nextMethodName;
                 readMethod = Introspector.findMethod(cls, readMethodName, 0);
             }
             try {
@@ -590,7 +591,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
         Method yw = y.getWriteMethod();
 
         try {
-            if (yw != null && yw.getDeclaringClass() == getClass0()) {
+            if (yw != null) {
                 setWriteMethod(yw);
             } else {
                 setWriteMethod(xw);
@@ -669,7 +670,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
                     throw new IntrospectionException("bad write method arg count: "
                                                      + writeMethod);
                 }
-                if (propertyType != null && propertyType != params[0]) {
+                if (propertyType != null && !params[0].isAssignableFrom(propertyType)) {
                     throw new IntrospectionException("type mismatch between read and write methods");
                 }
                 propertyType = params[0];

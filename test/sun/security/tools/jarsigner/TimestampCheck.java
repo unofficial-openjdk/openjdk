@@ -129,6 +129,9 @@ public class TimestampCheck {
 
             DerOutputStream statusInfo = new DerOutputStream();
             statusInfo.putInteger(0);
+            DerOutputStream statusStrings = new DerOutputStream();
+            statusStrings.putUTF8String("Status for " + path);
+            statusInfo.write(DerValue.tag_Sequence, statusStrings);
 
             DerOutputStream token = new DerOutputStream();
             AlgorithmId[] algorithms = {aid};

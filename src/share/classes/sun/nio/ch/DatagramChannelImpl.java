@@ -557,7 +557,7 @@ class DatagramChannelImpl
                     return 0;
                 readerThread = NativeThread.current();
                 do {
-                    n = IOUtil.read(fd, buf, -1, nd, readLock);
+                    n = IOUtil.read(fd, buf, -1, nd);
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -613,7 +613,7 @@ class DatagramChannelImpl
                     return 0;
                 writerThread = NativeThread.current();
                 do {
-                    n = IOUtil.write(fd, buf, -1, nd, writeLock);
+                    n = IOUtil.write(fd, buf, -1, nd);
                 } while ((n == IOStatus.INTERRUPTED) && isOpen());
                 return IOStatus.normalize(n);
             } finally {
@@ -768,7 +768,8 @@ class DatagramChannelImpl
                     if (sm != null)
                         sm.checkConnect(isa.getAddress().getHostAddress(),
                                         isa.getPort());
-                    disconnect0(fd);
+                    boolean isIPv6 = (family == StandardProtocolFamily.INET6);
+                    disconnect0(fd, isIPv6);
                     remoteAddress = null;
                     state = ST_UNCONNECTED;
 
@@ -1103,7 +1104,7 @@ class DatagramChannelImpl
 
     private static native void initIDs();
 
-    private static native void disconnect0(FileDescriptor fd)
+    private static native void disconnect0(FileDescriptor fd, boolean isIPv6)
         throws IOException;
 
     private native int receive0(FileDescriptor fd, long address, int len,

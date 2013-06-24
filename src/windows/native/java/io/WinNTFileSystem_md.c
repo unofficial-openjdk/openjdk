@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,9 +36,7 @@
 #include <windows.h>
 #include <io.h>
 
-#include "jvm.h"
 #include "jni.h"
-#include "jni_util.h"
 #include "io_util.h"
 #include "jlong.h"
 #include "io_util_md.h"
@@ -115,13 +113,15 @@ static WCHAR* getFinalPath(const WCHAR *path)
         DWORD len = (*GetFinalPathNameByHandle_func)(h, result, MAX_PATH, 0);
         if (len >= MAX_PATH) {
             /* retry with a buffer of the right size */
-            result = (WCHAR*)realloc(result, (len+1) * sizeof(WCHAR));
-            if (result != NULL) {
+            WCHAR* newResult = (WCHAR*)realloc(result, (len+1) * sizeof(WCHAR));
+            if (newResult != NULL) {
+                result = newResult;
                 len = (*GetFinalPathNameByHandle_func)(h, result, len, 0);
             } else {
                 len = 0;
             }
         }
+
         if (len > 0) {
             /**
              * Strip prefix (should be \\?\ or \\?\UNC)
@@ -199,7 +199,7 @@ static BOOL getFileInformation(const WCHAR *path,
 
 /**
  * If the given attributes are the attributes of a reparse point, then
- * read and return the attributes of the final target.
+ * read and return the attributes of the special cases.
  */
 DWORD getFinalAttributesIfReparsePoint(WCHAR *path, DWORD a)
 {
@@ -211,6 +211,28 @@ DWORD getFinalAttributesIfReparsePoint(WCHAR *path, DWORD a)
         a = (res) ? finfo.dwFileAttributes : INVALID_FILE_ATTRIBUTES;
     }
     return a;
+}
+
+/**
+ * Take special cases into account when retrieving the attributes
+ * of path
+ */
+DWORD getFinalAttributes(WCHAR *path)
+{
+    DWORD attr = INVALID_FILE_ATTRIBUTES;
+
+    WIN32_FILE_ATTRIBUTE_DATA wfad;
+    WIN32_FIND_DATAW wfd;
+    HANDLE h;
+
+    if (GetFileAttributesExW(path, GetFileExInfoStandard, &wfad)) {
+        attr = getFinalAttributesIfReparsePoint(path, wfad.dwFileAttributes);
+    } else if (GetLastError() == ERROR_SHARING_VIOLATION &&
+               (h = FindFirstFileW(path, &wfd)) != INVALID_HANDLE_VALUE) {
+        attr = getFinalAttributesIfReparsePoint(path, wfd.dwFileAttributes);
+        FindClose(h);
+    }
+    return attr;
 }
 
 JNIEXPORT jstring JNICALL
@@ -337,38 +359,21 @@ JNIEXPORT jint JNICALL
 Java_java_io_WinNTFileSystem_getBooleanAttributes(JNIEnv *env, jobject this,
                                                   jobject file)
 {
-
     jint rv = 0;
     jint pathlen;
 
-    /* both pagefile.sys and hiberfil.sys have length 12 */
-#define SPECIALFILE_NAMELEN 12
-
     WCHAR *pathbuf = fileToNTPath(env, file, ids.path);
-    WIN32_FILE_ATTRIBUTE_DATA wfad;
     if (pathbuf == NULL)
         return rv;
     if (!isReservedDeviceNameW(pathbuf)) {
-        if (GetFileAttributesExW(pathbuf, GetFileExInfoStandard, &wfad)) {
-            DWORD a = getFinalAttributesIfReparsePoint(pathbuf, wfad.dwFileAttributes);
-            if (a != INVALID_FILE_ATTRIBUTES) {
-                rv = (java_io_FileSystem_BA_EXISTS
-                    | ((a & FILE_ATTRIBUTE_DIRECTORY)
-                        ? java_io_FileSystem_BA_DIRECTORY
-                        : java_io_FileSystem_BA_REGULAR)
-                    | ((a & FILE_ATTRIBUTE_HIDDEN)
-                        ? java_io_FileSystem_BA_HIDDEN : 0));
-            }
-        } else { /* pagefile.sys is a special case */
-            if (GetLastError() == ERROR_SHARING_VIOLATION) {
-                rv = java_io_FileSystem_BA_EXISTS;
-                if ((pathlen = (jint)wcslen(pathbuf)) >= SPECIALFILE_NAMELEN &&
-                    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN,
-                              L"pagefile.sys") == 0) ||
-                    (_wcsicmp(pathbuf + pathlen - SPECIALFILE_NAMELEN,
-                              L"hiberfil.sys") == 0))
-                  rv |= java_io_FileSystem_BA_REGULAR;
-            }
+        DWORD a = getFinalAttributes(pathbuf);
+        if (a != INVALID_FILE_ATTRIBUTES) {
+            rv = (java_io_FileSystem_BA_EXISTS
+                | ((a & FILE_ATTRIBUTE_DIRECTORY)
+                    ? java_io_FileSystem_BA_DIRECTORY
+                    : java_io_FileSystem_BA_REGULAR)
+                | ((a & FILE_ATTRIBUTE_HIDDEN)
+                    ? java_io_FileSystem_BA_HIDDEN : 0));
         }
     }
     free(pathbuf);
@@ -536,6 +541,10 @@ Java_java_io_WinNTFileSystem_createFileExclusively(JNIEnv *env, jclass cls,
     WCHAR *pathbuf = pathToNTPath(env, path, JNI_FALSE);
     if (pathbuf == NULL)
         return JNI_FALSE;
+    if (isReservedDeviceNameW(pathbuf)) {
+        free(pathbuf);
+        return JNI_FALSE;
+    }
     h = CreateFileW(
         pathbuf,                              /* Wide char path name */
         GENERIC_READ | GENERIC_WRITE,         /* Read and write permission */
