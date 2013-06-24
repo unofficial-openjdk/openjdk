@@ -340,7 +340,7 @@ class Chunk: CHeapObj<mtChunk> {
   Chunk*       _next;     // Next Chunk in list
   const size_t _len;      // Size of this Chunk
  public:
-  void* operator new(size_t size, size_t length);
+  void* operator new(size_t size, AllocFailType alloc_failmode, size_t length);
   void  operator delete(void* p);
   Chunk(size_t length);
 
@@ -403,10 +403,15 @@ protected:
 
   void signal_out_of_memory(size_t request, const char* whence) const;
 
-  void check_for_overflow(size_t request, const char* whence) const {
+  bool check_for_overflow(size_t request, const char* whence,
+      AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) const {
     if (UINTPTR_MAX - request < (uintptr_t)_hwm) {
+      if (alloc_failmode == AllocFailStrategy::RETURN_NULL) {
+        return false;
+      }
       signal_out_of_memory(request, whence);
     }
+    return true;
  }
 
  public:
@@ -430,7 +435,8 @@ protected:
     assert(is_power_of_2(ARENA_AMALLOC_ALIGNMENT) , "should be a power of 2");
     x = ARENA_ALIGN(x);
     debug_only(if (UseMallocOnly) return malloc(x);)
-    check_for_overflow(x, "Arena::Amalloc");
+    if (!check_for_overflow(x, "Arena::Amalloc", alloc_failmode))
+      return NULL;
     NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
       return grow(x, alloc_failmode);
@@ -444,7 +450,8 @@ protected:
   void *Amalloc_4(size_t x, AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
     assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
     debug_only(if (UseMallocOnly) return malloc(x);)
-    check_for_overflow(x, "Arena::Amalloc_4");
+    if (!check_for_overflow(x, "Arena::Amalloc_4", alloc_failmode))
+      return NULL;
     NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
       return grow(x, alloc_failmode);
@@ -465,7 +472,8 @@ protected:
     size_t delta = (((size_t)_hwm + DALIGN_M1) & ~DALIGN_M1) - (size_t)_hwm;
     x += delta;
 #endif
-    check_for_overflow(x, "Arena::Amalloc_D");
+    if (!check_for_overflow(x, "Arena::Amalloc_D", alloc_failmode))
+      return NULL;
     NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
       return grow(x, alloc_failmode); // grow() returns a result aligned >= 8 bytes.
