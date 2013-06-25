@@ -65,7 +65,7 @@ public class Reflection {
     @Deprecated
     @CallerSensitive
     public static Class getCallerClass(int depth) {
-        return getCallerClass0(depth);
+        return getCallerClass0(depth+1);
     }
 
     // If the VM enforces getting caller class with @CallerSensitive,
