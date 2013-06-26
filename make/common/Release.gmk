@@ -980,6 +980,11 @@ initial-image-jdk-setup:
   endif
 	$(RM) -rf $(JDK_IMAGE_DIR)/jre/man
 	$(CHMOD) a+rx `$(FIND) $(JDK_IMAGE_DIR) -type d`
+  ifneq (,$(findstring $(PLATFORM), linux solaris)) # If linux or solaris 
+	($(CD) $(LIBDIR)/.. && $(TAR) cf - \
+	    `$(FIND) lib -name $(LIB_PREFIX)jli.$(LIB_SUFFIX) -print `) | \
+	    ($(CD) $(JDK_IMAGE_DIR) && $(TAR) xf -)
+  endif # PLATFORM
 
 initial-image-jdk64-bindemos:
 	for dir in bin demo ; do \
@@ -1028,7 +1033,7 @@ initial-image-jdk:: initial-image-jdk-setup \
 		    initial-image-jdk-db \
 		    $(JDK_DOCFILES) \
 		    $(JDK_DEMOS_AND_SAMPLES_DOCFILES)
-	$(MKDIR) $(JDK_IMAGE_DIR)/lib
+	$(MKDIR) -p $(JDK_IMAGE_DIR)/lib
 	@#
 	@# Copy in the jars in lib that only belong in the JDK
 	@#
