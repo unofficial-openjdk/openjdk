@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 /** Helper class for name resolution, used mostly by the attribution phase.
  *
@@ -306,11 +307,11 @@ public class Resolve {
         }
 
     /** Try to instantiate the type of a method so that it fits
-     *  given type arguments and argument types. If succesful, return
+     *  given type arguments and argument types. If successful, return
      *  the method's instantiated type, else return null.
      *  The instantiation will take into account an additional leading
      *  formal parameter if the method is an instance method seen as a member
-     *  of un underdetermined site In this case, we treat site as an additional
+     *  of an undetermined site In this case, we treat site as an additional
      *  parameter and the parameters of the class containing the method as
      *  additional type variables that get instantiated.
      *
@@ -2121,7 +2122,7 @@ public class Resolve {
      */
     class InapplicableSymbolsError extends ResolveError {
 
-        private List<Candidate> candidates = List.nil();
+        private Set<Candidate> candidates = new LinkedHashSet<Candidate>();
 
         InapplicableSymbolsError(Symbol sym) {
             super(WRONG_MTHS, "inapplicable symbols");
@@ -2135,7 +2136,7 @@ public class Resolve {
                 Name name,
                 List<Type> argtypes,
                 List<Type> typeargtypes) {
-            if (candidates.nonEmpty()) {
+            if (!candidates.isEmpty()) {
                 JCDiagnostic err = diags.create(dkind,
                         log.currentSource(),
                         pos,
@@ -2153,24 +2154,26 @@ public class Resolve {
         //where
         List<JCDiagnostic> candidateDetails(Type site) {
             List<JCDiagnostic> details = List.nil();
-            for (Candidate c : candidates)
+            for (Candidate c : candidates) {
                 details = details.prepend(c.getDiagnostic(site));
+            }
             return details.reverse();
         }
 
         Symbol addCandidate(MethodResolutionPhase currentStep, Symbol sym, JCDiagnostic details) {
             Candidate c = new Candidate(currentStep, sym, details);
-            if (c.isValid() && !candidates.contains(c))
-                candidates = candidates.append(c);
+            if (c.isValid() && !candidates.contains(c)) {
+                candidates.add(c);
+            }
             return this;
         }
 
         void clear() {
-            candidates = List.nil();
+            candidates.clear();
         }
 
         private Name getName() {
-            Symbol sym = candidates.head.sym;
+            Symbol sym = candidates.iterator().next().sym;
             return sym.name == names.init ?
                 sym.owner.name :
                 sym.name;
