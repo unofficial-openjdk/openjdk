@@ -48,7 +48,8 @@ inline void inc_stat_counter(volatile julong* dest, julong add_value) {
 #endif
 
 // allocate using malloc; will fail if no memory available
-inline char* AllocateHeap(size_t size, MEMFLAGS flags, address pc = 0) {
+inline char* AllocateHeap(size_t size, MEMFLAGS flags, address pc = 0,
+     AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
   if (pc == 0) {
     pc = CURRENT_PC;
   }
@@ -56,16 +57,19 @@ inline char* AllocateHeap(size_t size, MEMFLAGS flags, address pc = 0) {
   #ifdef ASSERT
   if (PrintMallocFree) trace_heap_malloc(size, "AllocateHeap", p);
   #endif
-  if (p == NULL) vm_exit_out_of_memory(size, "AllocateHeap");
+  if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
+    vm_exit_out_of_memory(size, "AllocateHeap");
   return p;
 }
 
-inline char* ReallocateHeap(char *old, size_t size, MEMFLAGS flags) {
+inline char* ReallocateHeap(char *old, size_t size, MEMFLAGS flags,
+    AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
   char* p = (char*) os::realloc(old, size, flags, CURRENT_PC);
   #ifdef ASSERT
   if (PrintMallocFree) trace_heap_malloc(size, "ReallocateHeap", p);
   #endif
-  if (p == NULL) vm_exit_out_of_memory(size, "ReallocateHeap");
+  if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM)
+    vm_exit_out_of_memory(size, "ReallocateHeap");
   return p;
 }
 
