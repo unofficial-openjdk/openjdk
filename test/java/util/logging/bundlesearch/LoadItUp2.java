@@ -20,30 +20,43 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+import java.util.MissingResourceException;
 import java.util.logging.Logger;
 
 /*
- * This class is loaded onto the call stack when the getLogger methods are
- * called and then the classes classloader can be used to find a bundle in
- * the same directory as the class.  However, Logger is not allowed
- * to find the bundle by looking up the stack for this classloader.
- * We verify that this cannot happen.
+ * This class is loaded onto the call stack by LoadItUp2Invoker from a separate
+ * classloader.  LoadItUp2Invoker was loaded by a class loader that does have
+ * access to the bundle, but the class loader used to load this class does not.
+ * Thus the logging code should not be able to see the resource bundle unless
+ * it has more than a single level stack crawl, which is not allowed.
  *
  * @author Jim Gish
  */
-public class LoadItUp1 {
-    public Logger getAnonymousLogger(String rbName) throws Exception {
+public class LoadItUp2 {
+
+    private final static boolean DEBUG = false;
+
+    public Boolean test(String rbName) throws Exception {
         // we should not be able to find the resource in this directory via
         // getLogger calls.  The only way that would be possible given this setup
         // is that if Logger.getLogger searched up the call stack
-        return Logger.getAnonymousLogger(rbName);
+        return lookupBundle(rbName);
     }
 
-    public Logger getLogger(String loggerName) {
-        return Logger.getLogger(loggerName);
-    }
-
-    public Logger getLogger(String loggerName,String bundleName) {
-        return Logger.getLogger(loggerName, bundleName);
+    private boolean lookupBundle(String rbName) {
+        // See if Logger.getLogger can find the resource in this directory
+        try {
+            Logger aLogger = Logger.getLogger("NestedLogger2", rbName);
+        } catch (MissingResourceException re) {
+            if (DEBUG) {
+                System.out.println(
+                    "As expected, LoadItUp2.lookupBundle() did not find the bundle "
+                    + rbName);
+            }
+            return false;
+        }
+        System.out.println("FAILED: LoadItUp2.lookupBundle() found the bundle "
+                + rbName + " using a stack search.");
+        return true;
     }
 }
