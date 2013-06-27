@@ -138,7 +138,7 @@ static int clock_tics_per_sec = 100;
 
 // For diagnostics to print a message once. see run_periodic_checks
 static sigset_t check_signal_done;
-static bool check_signals = true;;
+static bool check_signals = true;
 
 static pid_t _initial_pid = 0;
 
@@ -256,8 +256,10 @@ static char cpu_arch[] = "i386";
 static char cpu_arch[] = "amd64";
 #elif defined(ARM)
 static char cpu_arch[] = "arm";
-#elif defined(PPC)
+#elif defined(PPC32)
 static char cpu_arch[] = "ppc";
+#elif defined(PPC64)
+static char cpu_arch[] = "ppc64";
 #elif defined(SPARC)
 #  ifdef _LP64
 static char cpu_arch[] = "sparcv9";
@@ -4603,7 +4605,7 @@ jint os::init_2(void)
     // the future if the appropriate cleanup code can be added to the
     // VM_Exit VMOperation's doit method.
     if (atexit(perfMemory_exit_helper) != 0) {
-      warning("os::init2 atexit(perfMemory_exit_helper) failed");
+      warning("os::init_2 atexit(perfMemory_exit_helper) failed");
     }
   }
 
@@ -4614,8 +4616,7 @@ jint os::init_2(void)
 }
 
 // this is called at the end of vm_initialization
-void os::init_3(void)
-{
+void os::init_3(void) {
 #ifdef JAVASE_EMBEDDED
   // Start the MemNotifyThread
   if (LowMemoryProtection) {
