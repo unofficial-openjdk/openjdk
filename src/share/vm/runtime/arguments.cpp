@@ -1500,6 +1500,15 @@ void Arguments::set_g1_gc_flags() {
   }
 }
 
+void Arguments::set_heap_base_min_address() {
+  if (FLAG_IS_DEFAULT(HeapBaseMinAddress) && UseG1GC && HeapBaseMinAddress < 1*G) {
+    // By default HeapBaseMinAddress is 2G on all platforms except Solaris x86.
+    // G1 currently needs a lot of C-heap, so on Solaris we have to give G1
+    // some extra space for the C-heap compared to other collectors.
+    FLAG_SET_ERGO(uintx, HeapBaseMinAddress, 1*G);
+  }
+}
+
 void Arguments::set_heap_size() {
   if (!FLAG_IS_DEFAULT(DefaultMaxRAMFraction)) {
     // Deprecated flag
@@ -1600,8 +1609,12 @@ void Arguments::set_bytecode_flags() {
 void Arguments::set_aggressive_opts_flags() {
 #ifdef COMPILER2
   if (AggressiveOpts || !FLAG_IS_DEFAULT(AutoBoxCacheMax)) {
+    // EliminateAutoBox code is broken in C2
     if (FLAG_IS_DEFAULT(EliminateAutoBox)) {
-      FLAG_SET_DEFAULT(EliminateAutoBox, true);
+      // FLAG_SET_DEFAULT(EliminateAutoBox, true);
+    }
+    if (EliminateAutoBox) {
+      FLAG_SET_DEFAULT(EliminateAutoBox, false);
     }
     if (FLAG_IS_DEFAULT(AutoBoxCacheMax)) {
       FLAG_SET_DEFAULT(AutoBoxCacheMax, 20000);
@@ -3149,6 +3162,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
         "Incompatible compilation policy selected", NULL);
     }
   }
+  set_heap_base_min_address();
   // Set heap size based on available physical memory
   set_heap_size();
   // Set per-collector flags
