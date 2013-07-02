@@ -90,6 +90,11 @@ CXXFLAGS =           \
 # a time and date.
 vm_version.o: CXXFLAGS += ${JRE_VERSION}
 
+# Large File Support
+ifneq ($(LP64), 1)
+ostream.o: CXXFLAGS += -D_FILE_OFFSET_BITS=64
+endif # ifneq ($(LP64), 1)
+
 # CFLAGS_WARN holds compiler options to suppress/enable warnings.
 CFLAGS += $(CFLAGS_WARN)
 
