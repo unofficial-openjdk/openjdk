@@ -599,7 +599,6 @@ CCACHE
 USE_PRECOMPILED_HEADER
 SJAVAC_SERVER_DIR
 ENABLE_SJAVAC
-SJAVAC_SERVER_CORES
 SJAVAC_SERVER_JAVA
 JOBS
 MEMORY_SIZE
@@ -682,6 +681,8 @@ STATIC_LIBRARY
 SHARED_LIBRARY
 OBJ_SUFFIX
 COMPILER_NAME
+JT_HOME
+JTREGEXE
 LIPO
 ac_ct_OBJDUMP
 OBJDUMP
@@ -796,7 +797,9 @@ OS_VERSION_MICRO
 OS_VERSION_MINOR
 OS_VERSION_MAJOR
 PKG_CONFIG
+CODESIGN
 XATTR
+IS_GNU_TIME
 TIME
 STAT
 HG
@@ -899,7 +902,6 @@ TAIL
 SORT
 SH
 RM
-THEPWDCMD
 PRINTF
 MV
 MKTEMP
@@ -987,6 +989,7 @@ enable_hotspot_test_in_build
 with_cacerts_file
 enable_unlimited_crypto
 with_milestone
+with_update_version
 with_build_number
 with_user_release_suffix
 with_boot_jdk
@@ -1005,6 +1008,7 @@ with_msvcr_dll
 with_dxsdk
 with_dxsdk_lib
 with_dxsdk_include
+with_jtreg
 with_extra_cflags
 with_extra_cxxflags
 with_extra_ldflags
@@ -1025,7 +1029,6 @@ with_num_cores
 with_memory_size
 with_jobs
 with_sjavac_server_java
-with_sjavac_server_cores
 enable_sjavac
 enable_precompiled_headers
 enable_ccache
@@ -1726,6 +1729,7 @@ Optional Packages:
                           group
   --with-cacerts-file     specify alternative cacerts file
   --with-milestone        Set milestone value for build [internal]
+  --with-update-version   Set update version value for build [b00]
   --with-build-number     Set build number value for build [b00]
   --with-user-release-suffix
                           Add a custom string to the version string if build
@@ -1764,6 +1768,7 @@ Optional Packages:
                           [probed]
   --with-dxsdk-include    the DirectX SDK include directory (Windows only)
                           [probed]
+  --with-jtreg            Regression Test Harness [probed]
   --with-extra-cflags     extra flags to be used when compiling jdk c-files
   --with-extra-cxxflags   extra flags to be used when compiling jdk c++-files
   --with-extra-ldflags    extra flags to be used when linking jdk
@@ -1796,9 +1801,6 @@ Optional Packages:
   --with-sjavac-server-java
                           use this java binary for running the sjavac
                           background server [Boot JDK java]
-  --with-sjavac-server-cores
-                          use at most this number of concurrent threads on the
-                          sjavac server [probed]
   --with-ccache-dir       where to store ccache files [~/.ccache]
 
 Some influential environment variables:
@@ -3077,6 +3079,12 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 # questions.
 #
 
+# Test if $1 is a valid argument to $3 (often is $JAVA passed as $3)
+# If so, then append $1 to $2\
+# Also set JVM_ARG_OK to true/false depending on outcome.
+
+
+# Appends a string to a path variable, only adding the : when needed.
 
 
 # This will make sure the given variable points to a full and proper
@@ -3725,6 +3733,9 @@ fi
 
 
 
+# Setup the JTREG paths
+
+
 #
 # Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -3775,7 +3786,7 @@ fi
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1367502949
+DATE_WHEN_GENERATED=1372770384
 
 ###############################################################################
 #
@@ -5164,65 +5175,6 @@ $as_echo "$as_me: Could not find $PROG_NAME!" >&6;}
 
 
 
-    for ac_prog in pwd
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_THEPWDCMD+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $THEPWDCMD in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_THEPWDCMD="$THEPWDCMD" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_THEPWDCMD="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-THEPWDCMD=$ac_cv_path_THEPWDCMD
-if test -n "$THEPWDCMD"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $THEPWDCMD" >&5
-$as_echo "$THEPWDCMD" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$THEPWDCMD" && break
-done
-
-
-    if test "x$THEPWDCMD" = x; then
-        if test "xpwd" = x; then
-          PROG_NAME=thepwdcmd
-        else
-          PROG_NAME=pwd
-        fi
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $PROG_NAME!" >&5
-$as_echo "$as_me: Could not find $PROG_NAME!" >&6;}
-        as_fn_error $? "Cannot continue" "$LINENO" 5
-    fi
-
-
-
     for ac_prog in rm
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -6421,6 +6373,10 @@ $as_echo "$as_me: Could not find $PROG_NAME!" >&6;}
 # Always force rm.
 RM="$RM -f"
 
+# pwd behaves differently on various platforms and some don't support the -L flag.
+# Always use the bash builtin pwd to get uniform behavior.
+THEPWDCMD=pwd
+
 # These are not required on all platforms
 # Extract the first word of "cygpath", so it can be a program name with args.
 set dummy cygpath; ac_word=$2
@@ -7128,65 +7084,17 @@ $as_echo "$COMPILE_TYPE" >&6; }
 
 # Locate the directory of this script.
 SCRIPT="$0"
-
-    if test "x$OPENJDK_BUILD_OS" != xwindows; then
-        # Follow a chain of symbolic links. Use readlink
-        # where it exists, else fall back to horribly
-        # complicated shell code.
-        if test "x$READLINK_TESTED" != yes; then
-            # On MacOSX there is a readlink tool with a different
-            # purpose than the GNU readlink tool. Check the found readlink.
-            ISGNU=`$READLINK --version 2>&1 | $GREP GNU`
-            if test "x$ISGNU" = x; then
-                 # A readlink that we do not know how to use.
-                 # Are there other non-GNU readlinks out there?
-                 READLINK_TESTED=yes
-                 READLINK=
-            fi
-        fi
-
-        if test "x$READLINK" != x; then
-            SCRIPT=`$READLINK -f $SCRIPT`
-        else
-            # Save the current directory for restoring afterwards
-            STARTDIR=$PWD
-            COUNTER=0
-            sym_link_dir=`$DIRNAME $SCRIPT`
-            sym_link_file=`$BASENAME $SCRIPT`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
-            cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
-            # Resolve file symlinks
-            while test $COUNTER -lt 20; do
-                ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
-                if test "x$ISLINK" == x; then
-                    # This is not a symbolic link! We are done!
-                    break
-                fi
-                # Again resolve directory symlinks since the target of the just found
-                # link could be in a different directory
-                cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
-                sym_link_file=`$BASENAME $ISLINK`
-                let COUNTER=COUNTER+1
-            done
-            cd $STARTDIR
-            SCRIPT=$sym_link_dir/$sym_link_file
-        fi
-    fi
-
-AUTOCONF_DIR=`cd \`$DIRNAME $SCRIPT\`; $THEPWDCMD`
+AUTOCONF_DIR=`cd \`$DIRNAME $SCRIPT\`; $THEPWDCMD -L`
 
 # Where is the source? It is located two levels above the configure script.
 CURDIR="$PWD"
 cd "$AUTOCONF_DIR/../.."
-SRC_ROOT="`$THEPWDCMD`"
+SRC_ROOT="`$THEPWDCMD -L`"
 
 if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
   PATH_SEP=";"
 
-  SRC_ROOT_LENGTH=`$THEPWDCMD|$WC -m`
+  SRC_ROOT_LENGTH=`$THEPWDCMD -L|$WC -m`
   if test $SRC_ROOT_LENGTH -gt 100; then
       as_fn_error $? "Your base path is too long. It is $SRC_ROOT_LENGTH characters long, but only 100 is supported" "$LINENO" 5
   fi
@@ -7389,17 +7297,20 @@ $as_echo "$as_me: Rewriting SRC_ROOT to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$SRC_ROOT"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of SRC_ROOT, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of SRC_ROOT, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of SRC_ROOT, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of SRC_ROOT, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    SRC_ROOT="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -7508,17 +7419,20 @@ $as_echo "$as_me: Rewriting CURDIR to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$CURDIR"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of CURDIR, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of CURDIR, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of CURDIR, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of CURDIR, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    CURDIR="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -7547,6 +7461,7 @@ fi
 # Check whether --with-tools-dir was given.
 if test "${with_tools_dir+set}" = set; then :
   withval=$with_tools_dir; TOOLS_DIR=$with_tools_dir
+
 fi
 
 
@@ -7557,14 +7472,142 @@ if test "${with_devkit+set}" = set; then :
     if test "x$with_sys_root" != x; then
       as_fn_error $? "Cannot specify both --with-devkit and --with-sys-root at the same time" "$LINENO" 5
     fi
-    if test "x$with_tools_dir" != x; then
-      as_fn_error $? "Cannot specify both --with-devkit and --with-tools-dir at the same time" "$LINENO" 5
+
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$with_devkit"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of with_devkit, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of with_devkit, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of with_devkit" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-stile (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
     fi
-    TOOLS_DIR=$with_devkit/bin
-    SYS_ROOT=$with_devkit/$host_alias/libc
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    with_devkit="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting with_devkit to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting with_devkit to \"$new_path\"" >&6;}
+  fi
+
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$with_devkit"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    with_devkit="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting with_devkit to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting with_devkit to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+  else
+    # We're on a posix platform. Hooray! :)
+    path="$with_devkit"
+    has_space=`$ECHO "$path" | $GREP " "`
+    if test "x$has_space" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: The path of with_devkit, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of with_devkit, which resolves as \"$path\", is invalid." >&6;}
+      as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+    fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of with_devkit, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    with_devkit="`cd "$path"; $THEPWDCMD -L`"
+  fi
+
+
+  if test "x$TOOLS_DIR" = x; then
+    TOOLS_DIR="$with_devkit/bin"
+  else
+    TOOLS_DIR="$TOOLS_DIR:$with_devkit/bin"
+  fi
+
+    if test -d "$with_devkit/$host_alias/libc"; then
+      SYS_ROOT=$with_devkit/$host_alias/libc
+    elif test -d "$with_devkit/$host/sys-root"; then
+      SYS_ROOT=$with_devkit/$host/sys-root
+    fi
 
 fi
-
 
 
 
@@ -7889,60 +7932,9 @@ fi
 
 
 # Test from where we are running configure, in or outside of src root.
-# To enable comparison of directories, CURDIR needs to be symlink free
-# just like SRC_ROOT already is
-NOSYM_CURDIR="$CURDIR"
-
-    if test "x$OPENJDK_BUILD_OS" != xwindows; then
-        # Follow a chain of symbolic links. Use readlink
-        # where it exists, else fall back to horribly
-        # complicated shell code.
-        if test "x$READLINK_TESTED" != yes; then
-            # On MacOSX there is a readlink tool with a different
-            # purpose than the GNU readlink tool. Check the found readlink.
-            ISGNU=`$READLINK --version 2>&1 | $GREP GNU`
-            if test "x$ISGNU" = x; then
-                 # A readlink that we do not know how to use.
-                 # Are there other non-GNU readlinks out there?
-                 READLINK_TESTED=yes
-                 READLINK=
-            fi
-        fi
-
-        if test "x$READLINK" != x; then
-            NOSYM_CURDIR=`$READLINK -f $NOSYM_CURDIR`
-        else
-            # Save the current directory for restoring afterwards
-            STARTDIR=$PWD
-            COUNTER=0
-            sym_link_dir=`$DIRNAME $NOSYM_CURDIR`
-            sym_link_file=`$BASENAME $NOSYM_CURDIR`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
-            cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
-            # Resolve file symlinks
-            while test $COUNTER -lt 20; do
-                ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
-                if test "x$ISLINK" == x; then
-                    # This is not a symbolic link! We are done!
-                    break
-                fi
-                # Again resolve directory symlinks since the target of the just found
-                # link could be in a different directory
-                cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
-                sym_link_file=`$BASENAME $ISLINK`
-                let COUNTER=COUNTER+1
-            done
-            cd $STARTDIR
-            NOSYM_CURDIR=$sym_link_dir/$sym_link_file
-        fi
-    fi
-
-if test "x$NOSYM_CURDIR" = "x$SRC_ROOT" || test "x$NOSYM_CURDIR" = "x$SRC_ROOT/common" \
-        || test "x$NOSYM_CURDIR" = "x$SRC_ROOT/common/autoconf" \
-        || test "x$NOSYM_CURDIR" = "x$SRC_ROOT/common/makefiles" ; then
+if test "x$CURDIR" = "x$SRC_ROOT" || test "x$CURDIR" = "x$SRC_ROOT/common" \
+        || test "x$CURDIR" = "x$SRC_ROOT/common/autoconf" \
+        || test "x$CURDIR" = "x$SRC_ROOT/common/makefiles" ; then
     # We are running configure from the src root.
     # Create a default ./build/target-variant-debuglevel output root.
     if test "x${CONF_NAME}" = x; then
@@ -8104,17 +8096,20 @@ $as_echo "$as_me: Rewriting OUTPUT_ROOT to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$OUTPUT_ROOT"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of OUTPUT_ROOT, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of OUTPUT_ROOT, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of OUTPUT_ROOT, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of OUTPUT_ROOT, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    OUTPUT_ROOT="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -10356,6 +10351,14 @@ $as_echo "no" >&6; }
 fi
 
 
+# Check if it's GNU time
+IS_GNU_TIME=`$TIME --version 2>&1 | $GREP 'GNU time'`
+if test "x$IS_GNU_TIME" != x; then
+  IS_GNU_TIME=yes
+else
+  IS_GNU_TIME=no
+fi
+
 
 if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
 
@@ -10479,6 +10482,62 @@ $as_echo "$as_me: Could not find $PROG_NAME!" >&6;}
     fi
 
 
+  # Extract the first word of "codesign", so it can be a program name with args.
+set dummy codesign; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_CODESIGN+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CODESIGN in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CODESIGN="$CODESIGN" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_CODESIGN="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+CODESIGN=$ac_cv_path_CODESIGN
+if test -n "$CODESIGN"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CODESIGN" >&5
+$as_echo "$CODESIGN" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  if test "x$CODESIGN" != "x"; then
+    # Verify that the openjdk_codesign certificate is present
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking if openjdk_codesign certificate is present" >&5
+$as_echo_n "checking if openjdk_codesign certificate is present... " >&6; }
+    rm -f codesign-testfile
+    touch codesign-testfile
+    codesign -s openjdk_codesign codesign-testfile 2>&5 >&5 || CODESIGN=
+    rm -f codesign-testfile
+    if test "x$CODESIGN" = x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    fi
+  fi
 fi
 
 
@@ -10864,11 +10923,7 @@ fi
 if test "x$with_cacerts_file" != x; then
     CACERTS_FILE=$with_cacerts_file
 else
-    if test "x$OPENJDK" = "xtrue"; then
-        CACERTS_FILE=${SRC_ROOT}/jdk/src/share/lib/security/cacerts
-    else
-        CACERTS_FILE=${SRC_ROOT}/jdk/src/closed/share/lib/security/cacerts.internal
-    fi
+    CACERTS_FILE=${SRC_ROOT}/jdk/src/share/lib/security/cacerts
 fi
 
 
@@ -10922,6 +10977,18 @@ elif test "x$with_milestone" != x; then
 fi
 if test "x$MILESTONE" = x; then
   MILESTONE=internal
+fi
+
+
+# Check whether --with-update-version was given.
+if test "${with_update_version+set}" = set; then :
+  withval=$with_update_version;
+fi
+
+if test "x$with_update_version" = xyes; then
+  as_fn_error $? "Update version must have a value" "$LINENO" 5
+elif test "x$with_update_version" != x; then
+  JDK_UPDATE_VERSION="$with_update_version"
 fi
 
 
@@ -11161,17 +11228,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -11490,17 +11560,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -11633,17 +11706,20 @@ $as_echo "$as_me: Rewriting JAVA_HOME_PROCESSED to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$JAVA_HOME_PROCESSED"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of JAVA_HOME_PROCESSED, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of JAVA_HOME_PROCESSED, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of JAVA_HOME_PROCESSED, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of JAVA_HOME_PROCESSED, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    JAVA_HOME_PROCESSED="`cd "$path"; $THEPWDCMD -L`"
   fi
 
         if test ! -d "$JAVA_HOME_PROCESSED"; then
@@ -11802,17 +11878,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -11987,17 +12066,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -12136,10 +12218,10 @@ fi
             COUNTER=0
             sym_link_dir=`$DIRNAME $BINARY`
             sym_link_file=`$BASENAME $BINARY`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
             cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
+            # Use -P flag to resolve symlinks in directories.
+            cd `$THEPWDCMD -P`
+            sym_link_dir=`$THEPWDCMD -P`
             # Resolve file symlinks
             while test $COUNTER -lt 20; do
                 ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
@@ -12150,7 +12232,7 @@ fi
                 # Again resolve directory symlinks since the target of the just found
                 # link could be in a different directory
                 cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
+                sym_link_dir=`$THEPWDCMD -P`
                 sym_link_file=`$BASENAME $ISLINK`
                 let COUNTER=COUNTER+1
             done
@@ -12312,17 +12394,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -12524,17 +12609,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -12701,17 +12789,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -12906,17 +12997,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -13083,17 +13177,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -13288,17 +13385,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -13465,17 +13565,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -13670,17 +13773,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -13847,17 +13953,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14039,17 +14148,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14214,17 +14326,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14407,17 +14522,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14582,17 +14700,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14774,17 +14895,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -14949,17 +15073,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -15142,17 +15269,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -15317,17 +15447,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -15491,17 +15624,20 @@ $as_echo "$as_me: Rewriting BOOT_JDK to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$BOOT_JDK"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of BOOT_JDK, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of BOOT_JDK, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    BOOT_JDK="`cd "$path"; $THEPWDCMD -L`"
   fi
 
               { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Boot JDK" >&5
@@ -15705,73 +15841,115 @@ if test "x$with_boot_jdk_jvmargs" = x; then
 
     # Minimum amount of heap memory.
 
-    # Test if -Xms64M is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -Xms64M to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -Xms64M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -Xms64M -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xms64M" >&5
+    $ECHO "Command: $JAVA -Xms64M -version" >&5
+    OUTPUT=`$JAVA -Xms64M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -Xms64M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
         # Why does macosx need more heap? Its the huge JDK batch.
 
-    # Test if -Xmx1600M is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -Xmx1600M to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -Xmx1600M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -Xmx1600M -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xmx1600M" >&5
+    $ECHO "Command: $JAVA -Xmx1600M -version" >&5
+    OUTPUT=`$JAVA -Xmx1600M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -Xmx1600M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     else
 
-    # Test if -Xmx1100M is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -Xmx1100M to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -Xmx1100M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -Xmx1100M -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xmx1100M" >&5
+    $ECHO "Command: $JAVA -Xmx1100M -version" >&5
+    OUTPUT=`$JAVA -Xmx1100M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -Xmx1100M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     fi
     # When is adding -client something that speeds up the JVM?
     # ADD_JVM_ARG_IF_OK([-client],boot_jdk_jvmargs,[$JAVA])
 
-    # Test if -XX:PermSize=32m is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -XX:PermSize=32m to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -XX:PermSize=32m -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -XX:PermSize=32m -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -XX:PermSize=32m" >&5
+    $ECHO "Command: $JAVA -XX:PermSize=32m -version" >&5
+    OUTPUT=`$JAVA -XX:PermSize=32m -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:PermSize=32m"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
 
-    # Test if -XX:MaxPermSize=160m is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -XX:MaxPermSize=160m to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -XX:MaxPermSize=160m -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -XX:MaxPermSize=160m -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -XX:MaxPermSize=160m" >&5
+    $ECHO "Command: $JAVA -XX:MaxPermSize=160m -version" >&5
+    OUTPUT=`$JAVA -XX:MaxPermSize=160m -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:MaxPermSize=160m"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
 
-    # Test if -XX:ThreadStackSize=$STACK_SIZE is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -XX:ThreadStackSize=$STACK_SIZE to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -XX:ThreadStackSize=$STACK_SIZE" >&5
+    $ECHO "Command: $JAVA -XX:ThreadStackSize=$STACK_SIZE -version" >&5
+    OUTPUT=`$JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:ThreadStackSize=$STACK_SIZE"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     # Disable special log output when a debug build is used as Boot JDK...
 
-    # Test if -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput to boot_jdk_jvmargs
-    FOUND_WARN=`$JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput" >&5
+    $ECHO "Command: $JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version" >&5
+    OUTPUT=`$JAVA -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         boot_jdk_jvmargs="$boot_jdk_jvmargs -XX:-PrintVMOptions -XX:-UnlockDiagnosticVMOptions -XX:-LogVMOutput"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
 fi
@@ -16132,6 +16310,233 @@ AR_OUT_OPTION='rcs$(SPACE)'
 
 # Locate the actual tools
 
+
+# Check whether --with-jtreg was given.
+if test "${with_jtreg+set}" = set; then :
+  withval=$with_jtreg;
+else
+  with_jtreg=no
+fi
+
+
+  if test "x$with_jtreg" = xno; then
+    # jtreg disabled
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jtreg" >&5
+$as_echo_n "checking for jtreg... " >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  else
+    if test "x$with_jtreg" != xyes; then
+      # with path specified.
+      JT_HOME="$with_jtreg"
+    fi
+
+    if test "x$JT_HOME" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for jtreg" >&5
+$as_echo_n "checking for jtreg... " >&6; }
+
+      # use JT_HOME enviroment var.
+
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+
+  # Input might be given as Windows format, start by converting to
+  # unix format.
+  path="$JT_HOME"
+  new_path=`$CYGPATH -u "$path"`
+
+  # Cygwin tries to hide some aspects of the Windows file system, such that binaries are
+  # named .exe but called without that suffix. Therefore, "foo" and "foo.exe" are considered
+  # the same file, most of the time (as in "test -f"). But not when running cygpath -s, then
+  # "foo.exe" is OK but "foo" is an error.
+  #
+  # This test is therefore slightly more accurate than "test -f" to check for file precense.
+  # It is also a way to make sure we got the proper file name for the real test later on.
+  test_shortpath=`$CYGPATH -s -m "$new_path" 2> /dev/null`
+  if test "x$test_shortpath" = x; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: The path of JT_HOME, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of JT_HOME, which resolves as \"$path\", is invalid." >&6;}
+    as_fn_error $? "Cannot locate the the path of JT_HOME" "$LINENO" 5
+  fi
+
+  # Call helper function which possibly converts this using DOS-style short mode.
+  # If so, the updated path is stored in $new_path.
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-._/a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    shortmode_path=`$CYGPATH -s -m -a "$input_path"`
+    path_after_shortmode=`$CYGPATH -u "$shortmode_path"`
+    if test "x$path_after_shortmode" != "x$input_to_shortpath"; then
+      # Going to short mode and back again did indeed matter. Since short mode is
+      # case insensitive, let's make it lowercase to improve readability.
+      shortmode_path=`$ECHO "$shortmode_path" | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+      # Now convert it back to Unix-stile (cygpath)
+      input_path=`$CYGPATH -u "$shortmode_path"`
+      new_path="$input_path"
+    fi
+  fi
+
+  test_cygdrive_prefix=`$ECHO $input_path | $GREP ^/cygdrive/`
+  if test "x$test_cygdrive_prefix" = x; then
+    # As a simple fix, exclude /usr/bin since it's not a real path.
+    if test "x`$ECHO $new_path | $GREP ^/usr/bin/`" = x; then
+      # The path is in a Cygwin special directory (e.g. /home). We need this converted to
+      # a path prefixed by /cygdrive for fixpath to work.
+      new_path="$CYGWIN_ROOT_PATH$input_path"
+    fi
+  fi
+
+
+  if test "x$path" != "x$new_path"; then
+    JT_HOME="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting JT_HOME to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
+  fi
+
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+
+  path="$JT_HOME"
+  has_colon=`$ECHO $path | $GREP ^.:`
+  new_path="$path"
+  if test "x$has_colon" = x; then
+    # Not in mixed or Windows style, start by that.
+    new_path=`cmd //c echo $path`
+  fi
+
+
+  input_path="$new_path"
+  # Check if we need to convert this using DOS-style short mode. If the path
+  # contains just simple characters, use it. Otherwise (spaces, weird characters),
+  # take no chances and rewrite it.
+  # Note: m4 eats our [], so we need to use [ and ] instead.
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP [^-_/:a-zA-Z0-9]`
+  if test "x$has_forbidden_chars" != x; then
+    # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
+    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+  fi
+
+
+  windows_path="$new_path"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    new_path="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    new_path="$unix_path"
+  fi
+
+  if test "x$path" != "x$new_path"; then
+    JT_HOME="$new_path"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: Rewriting JT_HOME to \"$new_path\"" >&5
+$as_echo "$as_me: Rewriting JT_HOME to \"$new_path\"" >&6;}
+  fi
+
+  # Save the first 10 bytes of this path to the storage, so fixpath can work.
+  all_fixpath_prefixes=("${all_fixpath_prefixes[@]}" "${new_path:0:10}")
+
+  else
+    # We're on a posix platform. Hooray! :)
+    path="$JT_HOME"
+    has_space=`$ECHO "$path" | $GREP " "`
+    if test "x$has_space" != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: The path of JT_HOME, which resolves as \"$path\", is invalid." >&5
+$as_echo "$as_me: The path of JT_HOME, which resolves as \"$path\", is invalid." >&6;}
+      as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
+    fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of JT_HOME, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    JT_HOME="`cd "$path"; $THEPWDCMD -L`"
+  fi
+
+
+      # jtreg win32 script works for everybody
+      JTREGEXE="$JT_HOME/win32/bin/jtreg"
+
+      if test ! -f "$JTREGEXE"; then
+        as_fn_error $? "JTReg executable does not exist: $JTREGEXE" "$LINENO" 5
+      fi
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JTREGEXE" >&5
+$as_echo "$JTREGEXE" >&6; }
+    else
+      # try to find jtreg on path
+
+    for ac_prog in jtreg
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_JTREGEXE+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $JTREGEXE in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_JTREGEXE="$JTREGEXE" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_JTREGEXE="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+JTREGEXE=$ac_cv_path_JTREGEXE
+if test -n "$JTREGEXE"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JTREGEXE" >&5
+$as_echo "$JTREGEXE" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$JTREGEXE" && break
+done
+
+
+    if test "x$JTREGEXE" = x; then
+        if test "xjtreg" = x; then
+          PROG_NAME=jtregexe
+        else
+          PROG_NAME=jtreg
+        fi
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Could not find $PROG_NAME!" >&5
+$as_echo "$as_me: Could not find $PROG_NAME!" >&6;}
+        as_fn_error $? "Cannot continue" "$LINENO" 5
+    fi
+
+
+      JT_HOME="`$DIRNAME $JTREGEXE`"
+    fi
+  fi
+
+
+
+
+
 if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
 
   # Store path to cygwin link.exe to help excluding it when searching for
@@ -16241,6 +16646,123 @@ $as_echo "$as_me: The path given by --with-tools-dir does not contain a valid Vi
 $as_echo "$as_me: Please point to the VC/bin directory within the Visual Studio installation" >&6;}
     as_fn_error $? "Cannot locate a valid Visual Studio installation" "$LINENO" 5
   fi
+
+  if test "x$VS100COMNTOOLS" != x; then
+
+  if test "x$VS_ENV_CMD" = x; then
+    VS100BASE="$VS100COMNTOOLS/../.."
+    METHOD="VS100COMNTOOLS variable"
+
+  windows_path="$VS100BASE"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    VS100BASE="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    VS100BASE="$unix_path"
+  fi
+
+    if test -d "$VS100BASE"; then
+      if test -f "$VS100BASE/$VCVARSFILE"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
+$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
+      fi
+    fi
+  fi
+
+  fi
+  if test "x$PROGRAMFILES" != x; then
+
+  if test "x$VS_ENV_CMD" = x; then
+    VS100BASE="$PROGRAMFILES/Microsoft Visual Studio 10.0"
+    METHOD="well-known name"
+
+  windows_path="$VS100BASE"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    VS100BASE="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    VS100BASE="$unix_path"
+  fi
+
+    if test -d "$VS100BASE"; then
+      if test -f "$VS100BASE/$VCVARSFILE"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
+$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
+      fi
+    fi
+  fi
+
+  fi
+
+  if test "x$VS_ENV_CMD" = x; then
+    VS100BASE="C:/Program Files/Microsoft Visual Studio 10.0"
+    METHOD="well-known name"
+
+  windows_path="$VS100BASE"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    VS100BASE="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    VS100BASE="$unix_path"
+  fi
+
+    if test -d "$VS100BASE"; then
+      if test -f "$VS100BASE/$VCVARSFILE"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
+$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
+      fi
+    fi
+  fi
+
+
+  if test "x$VS_ENV_CMD" = x; then
+    VS100BASE="C:/Program Files (x86)/Microsoft Visual Studio 10.0"
+    METHOD="well-known name"
+
+  windows_path="$VS100BASE"
+  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
+    unix_path=`$CYGPATH -u "$windows_path"`
+    VS100BASE="$unix_path"
+  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
+    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
+    VS100BASE="$unix_path"
+  fi
+
+    if test -d "$VS100BASE"; then
+      if test -f "$VS100BASE/$VCVARSFILE"; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
+      else
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
+$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
+        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
+$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
+      fi
+    fi
+  fi
+
 
   if test "x$ProgramW6432" != x; then
 
@@ -16444,123 +16966,6 @@ $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD"
 $as_echo "$as_me: Found Windows SDK installation at $WIN_SDK_BASE using $METHOD" >&6;}
         { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: Installation is broken, SetEnv.Cmd is missing. Ignoring" >&5
 $as_echo "$as_me: Warning: Installation is broken, SetEnv.Cmd is missing. Ignoring" >&6;}
-      fi
-    fi
-  fi
-
-
-  if test "x$VS100COMNTOOLS" != x; then
-
-  if test "x$VS_ENV_CMD" = x; then
-    VS100BASE="$VS100COMNTOOLS/../.."
-    METHOD="VS100COMNTOOLS variable"
-
-  windows_path="$VS100BASE"
-  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
-    unix_path=`$CYGPATH -u "$windows_path"`
-    VS100BASE="$unix_path"
-  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
-    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
-    VS100BASE="$unix_path"
-  fi
-
-    if test -d "$VS100BASE"; then
-      if test -f "$VS100BASE/$VCVARSFILE"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
-$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
-      fi
-    fi
-  fi
-
-  fi
-  if test "x$PROGRAMFILES" != x; then
-
-  if test "x$VS_ENV_CMD" = x; then
-    VS100BASE="$PROGRAMFILES/Microsoft Visual Studio 10.0"
-    METHOD="well-known name"
-
-  windows_path="$VS100BASE"
-  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
-    unix_path=`$CYGPATH -u "$windows_path"`
-    VS100BASE="$unix_path"
-  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
-    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
-    VS100BASE="$unix_path"
-  fi
-
-    if test -d "$VS100BASE"; then
-      if test -f "$VS100BASE/$VCVARSFILE"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
-$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
-      fi
-    fi
-  fi
-
-  fi
-
-  if test "x$VS_ENV_CMD" = x; then
-    VS100BASE="C:/Program Files/Microsoft Visual Studio 10.0"
-    METHOD="well-known name"
-
-  windows_path="$VS100BASE"
-  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
-    unix_path=`$CYGPATH -u "$windows_path"`
-    VS100BASE="$unix_path"
-  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
-    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
-    VS100BASE="$unix_path"
-  fi
-
-    if test -d "$VS100BASE"; then
-      if test -f "$VS100BASE/$VCVARSFILE"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
-$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
-      fi
-    fi
-  fi
-
-
-  if test "x$VS_ENV_CMD" = x; then
-    VS100BASE="C:/Program Files (x86)/Microsoft Visual Studio 10.0"
-    METHOD="well-known name"
-
-  windows_path="$VS100BASE"
-  if test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.cygwin"; then
-    unix_path=`$CYGPATH -u "$windows_path"`
-    VS100BASE="$unix_path"
-  elif test "x$OPENJDK_BUILD_OS_ENV" = "xwindows.msys"; then
-    unix_path=`$ECHO "$windows_path" | $SED -e 's,^\\(.\\):,/\\1,g' -e 's,\\\\,/,g'`
-    VS100BASE="$unix_path"
-  fi
-
-    if test -d "$VS100BASE"; then
-      if test -f "$VS100BASE/$VCVARSFILE"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        VS_ENV_CMD="$VS100BASE/$VCVARSFILE"
-      else
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Found Visual Studio installation at $VS100BASE using $METHOD" >&5
-$as_echo "$as_me: Found Visual Studio installation at $VS100BASE using $METHOD" >&6;}
-        { $as_echo "$as_me:${as_lineno-$LINENO}: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&5
-$as_echo "$as_me: Warning: $VCVARSFILE is missing, this is probably Visual Studio Express. Ignoring" >&6;}
       fi
     fi
   fi
@@ -16967,11 +17372,25 @@ $as_echo "$as_me: msvcr100.dll found in VCINSTALLDIR: $VCINSTALLDIR" >&6;}
 $as_echo "$as_me: Warning: msvcr100.dll not found in VCINSTALLDIR: $VCINSTALLDIR" >&6;}
       fi
     fi
+    # Try some fallback alternatives
     if test "x$MSVCR_DLL" = x; then
-      if test -f "$SYSTEMROOT/system32/msvcr100.dll"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: msvcr100.dll found in $SYSTEMROOT/system32" >&5
+      # If visual studio express is installed, there is usually one with the debugger
+      if test "x$VS100COMNTOOLS" != x; then
+        if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+          MSVCR_DLL=`find "$VS100COMNTOOLS/.." -name msvcr100.dll | grep -i x64 | head --lines 1`
+          { $as_echo "$as_me:${as_lineno-$LINENO}: msvcr100.dll found in $VS100COMNTOOLS..: $VS100COMNTOOLS.." >&5
+$as_echo "$as_me: msvcr100.dll found in $VS100COMNTOOLS..: $VS100COMNTOOLS.." >&6;}
+        fi
+      fi
+    fi
+    if test "x$MSVCR_DLL" = x; then
+      if test "x$OPENJDK_TARGET_CPU_BITS" = x32; then
+        # Fallback for 32bit builds, look in the windows directory.
+        if test -f "$SYSTEMROOT/system32/msvcr100.dll"; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: msvcr100.dll found in $SYSTEMROOT/system32" >&5
 $as_echo "$as_me: msvcr100.dll found in $SYSTEMROOT/system32" >&6;}
-        MSVCR_DLL="$SYSTEMROOT/system32/msvcr100.dll"
+          MSVCR_DLL="$SYSTEMROOT/system32/msvcr100.dll"
+        fi
       fi
     fi
   fi
@@ -17088,17 +17507,20 @@ $as_echo "$as_me: Rewriting MSVCR_DLL to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$MSVCR_DLL"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of MSVCR_DLL, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of MSVCR_DLL, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of MSVCR_DLL, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of MSVCR_DLL, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    MSVCR_DLL="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -17242,17 +17664,20 @@ $as_echo "$as_me: Rewriting dxsdk_path to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$dxsdk_path"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of dxsdk_path, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of dxsdk_path, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of dxsdk_path, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of dxsdk_path, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    dxsdk_path="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -17377,17 +17802,20 @@ $as_echo "$as_me: Rewriting DXSDK_LIB_PATH to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$DXSDK_LIB_PATH"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of DXSDK_LIB_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of DXSDK_LIB_PATH, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of DXSDK_LIB_PATH, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of DXSDK_LIB_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    DXSDK_LIB_PATH="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -17510,17 +17938,20 @@ $as_echo "$as_me: Rewriting DXSDK_INCLUDE_PATH to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$DXSDK_INCLUDE_PATH"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of DXSDK_INCLUDE_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of DXSDK_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of DXSDK_INCLUDE_PATH, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of DXSDK_INCLUDE_PATH, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    DXSDK_INCLUDE_PATH="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 
@@ -18639,15 +19070,6 @@ $as_echo "$as_me: Downloading build dependency devkit from $with_builddeps_serve
     fi
 
 
-if test "x$SYS_ROOT" != "x/" ; then
-    CFLAGS="--sysroot=$SYS_ROOT $CFLAGS"
-    CXXFLAGS="--sysroot=$SYS_ROOT $CXXFLAGS"
-    OBJCFLAGS="--sysroot=$SYS_ROOT $OBJCFLAGS"
-    OBJCXXFLAGS="--sysroot=$SYS_ROOT $OBJCFLAGS"
-    CPPFLAGS="--sysroot=$SYS_ROOT $CPPFLAGS"
-    LDFLAGS="--sysroot=$SYS_ROOT $LDFLAGS"
-fi
-
 # Store the CFLAGS etal passed to the configure script.
 ORG_CFLAGS="$CFLAGS"
 ORG_CXXFLAGS="$CXXFLAGS"
@@ -19107,10 +19529,10 @@ $as_echo_n "checking resolved symbolic links for CC... " >&6; }
             COUNTER=0
             sym_link_dir=`$DIRNAME $TEST_COMPILER`
             sym_link_file=`$BASENAME $TEST_COMPILER`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
             cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
+            # Use -P flag to resolve symlinks in directories.
+            cd `$THEPWDCMD -P`
+            sym_link_dir=`$THEPWDCMD -P`
             # Resolve file symlinks
             while test $COUNTER -lt 20; do
                 ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
@@ -19121,7 +19543,7 @@ $as_echo_n "checking resolved symbolic links for CC... " >&6; }
                 # Again resolve directory symlinks since the target of the just found
                 # link could be in a different directory
                 cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
+                sym_link_dir=`$THEPWDCMD -P`
                 sym_link_file=`$BASENAME $ISLINK`
                 let COUNTER=COUNTER+1
             done
@@ -19544,10 +19966,10 @@ $as_echo_n "checking for resolved symbolic links for CC... " >&6; }
             COUNTER=0
             sym_link_dir=`$DIRNAME $PROPER_COMPILER_CC`
             sym_link_file=`$BASENAME $PROPER_COMPILER_CC`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
             cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
+            # Use -P flag to resolve symlinks in directories.
+            cd `$THEPWDCMD -P`
+            sym_link_dir=`$THEPWDCMD -P`
             # Resolve file symlinks
             while test $COUNTER -lt 20; do
                 ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
@@ -19558,7 +19980,7 @@ $as_echo_n "checking for resolved symbolic links for CC... " >&6; }
                 # Again resolve directory symlinks since the target of the just found
                 # link could be in a different directory
                 cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
+                sym_link_dir=`$THEPWDCMD -P`
                 sym_link_file=`$BASENAME $ISLINK`
                 let COUNTER=COUNTER+1
             done
@@ -19598,7 +20020,7 @@ $as_echo "$as_me: The result from running with -V was: \"$COMPILER_VERSION_TEST\
   elif test  "x$OPENJDK_TARGET_OS" = xwindows; then
     # First line typically looks something like:
     # Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 16.00.30319.01 for 80x86
-    COMPILER_VERSION_TEST=`$COMPILER 2>&1 | $HEAD -n 1`
+    COMPILER_VERSION_TEST=`$COMPILER 2>&1 | $HEAD -n 1 | $TR -d '\r'`
     COMPILER_VERSION=`$ECHO $COMPILER_VERSION_TEST | $SED -n "s/^.*Version \([1-9][0-9.]*\) .*/\1/p"`
     COMPILER_VENDOR="Microsoft CL.EXE"
     COMPILER_CPU_TEST=`$ECHO $COMPILER_VERSION_TEST | $SED -n "s/^.* for \(.*\)$/\1/p"`
@@ -20680,10 +21102,10 @@ $as_echo_n "checking resolved symbolic links for CXX... " >&6; }
             COUNTER=0
             sym_link_dir=`$DIRNAME $TEST_COMPILER`
             sym_link_file=`$BASENAME $TEST_COMPILER`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
             cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
+            # Use -P flag to resolve symlinks in directories.
+            cd `$THEPWDCMD -P`
+            sym_link_dir=`$THEPWDCMD -P`
             # Resolve file symlinks
             while test $COUNTER -lt 20; do
                 ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
@@ -20694,7 +21116,7 @@ $as_echo_n "checking resolved symbolic links for CXX... " >&6; }
                 # Again resolve directory symlinks since the target of the just found
                 # link could be in a different directory
                 cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
+                sym_link_dir=`$THEPWDCMD -P`
                 sym_link_file=`$BASENAME $ISLINK`
                 let COUNTER=COUNTER+1
             done
@@ -21117,10 +21539,10 @@ $as_echo_n "checking for resolved symbolic links for CXX... " >&6; }
             COUNTER=0
             sym_link_dir=`$DIRNAME $PROPER_COMPILER_CXX`
             sym_link_file=`$BASENAME $PROPER_COMPILER_CXX`
-            # Use the system pwd and not the shell builtin to resolve directory symlinks
             cd $sym_link_dir
-            cd `$THEPWDCMD`
-            sym_link_dir=`$THEPWDCMD`
+            # Use -P flag to resolve symlinks in directories.
+            cd `$THEPWDCMD -P`
+            sym_link_dir=`$THEPWDCMD -P`
             # Resolve file symlinks
             while test $COUNTER -lt 20; do
                 ISLINK=`$LS -l $sym_link_dir/$sym_link_file | $GREP '\->' | $SED -e 's/.*-> \(.*\)/\1/'`
@@ -21131,7 +21553,7 @@ $as_echo_n "checking for resolved symbolic links for CXX... " >&6; }
                 # Again resolve directory symlinks since the target of the just found
                 # link could be in a different directory
                 cd `$DIRNAME $ISLINK`
-                sym_link_dir=`$THEPWDCMD`
+                sym_link_dir=`$THEPWDCMD -P`
                 sym_link_file=`$BASENAME $ISLINK`
                 let COUNTER=COUNTER+1
             done
@@ -21171,7 +21593,7 @@ $as_echo "$as_me: The result from running with -V was: \"$COMPILER_VERSION_TEST\
   elif test  "x$OPENJDK_TARGET_OS" = xwindows; then
     # First line typically looks something like:
     # Microsoft (R) 32-bit C/C++ Optimizing Compiler Version 16.00.30319.01 for 80x86
-    COMPILER_VERSION_TEST=`$COMPILER 2>&1 | $HEAD -n 1`
+    COMPILER_VERSION_TEST=`$COMPILER 2>&1 | $HEAD -n 1 | $TR -d '\r'`
     COMPILER_VERSION=`$ECHO $COMPILER_VERSION_TEST | $SED -n "s/^.*Version \([1-9][0-9.]*\) .*/\1/p"`
     COMPILER_VENDOR="Microsoft CL.EXE"
     COMPILER_CPU_TEST=`$ECHO $COMPILER_VERSION_TEST | $SED -n "s/^.* for \(.*\)$/\1/p"`
@@ -23431,19 +23853,20 @@ $as_echo "$as_me: Rewriting RC to \"$new_complete\"" >&6;}
         RC_FLAGS="$RC_FLAGS -d NDEBUG"
 
 fi
-    JDK_UPDATE_VERSION_NOTNULL=$JDK_UPDATE_VERSION
-    if test "x$JDK_UPDATE_VERSION" = x; then :
 
-        JDK_UPDATE_VERSION_NOTNULL=0
-
-fi
-    RC_FLAGS="$RC_FLAGS -d \"JDK_BUILD_ID=$FULL_VERSION\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_COMPANY=$COMPANY_NAME\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_COMPONENT=$PRODUCT_NAME $JDK_RC_PLATFORM_NAME binary\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_VER=$JDK_MINOR_VERSION.$JDK_MICRO_VERSION.$JDK_UPDATE_VERSION_NOTNULL.$COOKED_BUILD_NUMBER\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_COPYRIGHT=Copyright \xA9 $COPYRIGHT_YEAR\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_NAME=$PRODUCT_NAME $JDK_RC_PLATFORM_NAME $JDK_MINOR_VERSION $JDK_UPDATE_META_TAG\""
-    RC_FLAGS="$RC_FLAGS -d \"JDK_FVER=$JDK_MINOR_VERSION,$JDK_MICRO_VERSION,$JDK_UPDATE_VERSION_NOTNULL,$COOKED_BUILD_NUMBER\""
+    # The version variables used to create RC_FLAGS may be overridden
+    # in a custom configure script, or possibly the command line.
+    # Let those variables be expanded at make time in spec.gmk.
+    # The \$ are escaped to the shell, and the $(...) variables
+    # are evaluated by make.
+    RC_FLAGS="$RC_FLAGS \
+        -d \"JDK_BUILD_ID=\$(FULL_VERSION)\" \
+        -d \"JDK_COMPANY=\$(COMPANY_NAME)\" \
+        -d \"JDK_COMPONENT=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) binary\" \
+        -d \"JDK_VER=\$(JDK_MINOR_VERSION).\$(JDK_MICRO_VERSION).\$(if \$(JDK_UPDATE_VERSION),\$(JDK_UPDATE_VERSION),0).\$(COOKED_BUILD_NUMBER)\" \
+        -d \"JDK_COPYRIGHT=Copyright \xA9 $COPYRIGHT_YEAR\" \
+        -d \"JDK_NAME=\$(PRODUCT_NAME) \$(JDK_RC_PLATFORM_NAME) \$(JDK_MINOR_VERSION) \$(JDK_UPDATE_META_TAG)\" \
+        -d \"JDK_FVER=\$(JDK_MINOR_VERSION),\$(JDK_MICRO_VERSION),\$(if \$(JDK_UPDATE_VERSION),\$(JDK_UPDATE_VERSION),0),\$(COOKED_BUILD_NUMBER)\""
 
     # lib.exe is used to create static libraries.
     # Extract the first word of "lib", so it can be a program name with args.
@@ -28199,6 +28622,8 @@ $as_echo "$as_me: Rewriting LIPO to \"$new_complete\"" >&6;}
 
 fi
 
+
+
 # Restore old path without tools dir
 PATH="$OLD_PATH"
 
@@ -28852,7 +29277,6 @@ CXX_FLAG_DEPS="-MMD -MF"
 
 case $COMPILER_TYPE in
   CC )
-    D_FLAG="-g"
     case $COMPILER_NAME in
       gcc )
       	case $OPENJDK_TARGET_OS in
@@ -28867,17 +29291,17 @@ case $COMPILER_TYPE in
 	    C_O_FLAG_HI="-O3"
 	    C_O_FLAG_NORM="-O2"
 	    C_O_FLAG_NONE="-O0"
-	    CFLAGS_DEBUG_SYMBOLS="-g"
-	    CXXFLAGS_DEBUG_SYMBOLS="-g"
-	    if test "x$OPENJDK_TARGET_CPU_BITS" = "x64" && test "x$DEBUG_LEVEL" = "xfastdebug"; then
-	       CFLAGS_DEBUG_SYMBOLS="-g1"
-	       CXXFLAGS_DEBUG_SYMBOLS="-g1"
-	    fi
 	    ;;
 	esac
         CXX_O_FLAG_HI="$C_O_FLAG_HI"
         CXX_O_FLAG_NORM="$C_O_FLAG_NORM"
         CXX_O_FLAG_NONE="$C_O_FLAG_NONE"
+        CFLAGS_DEBUG_SYMBOLS="-g"
+        CXXFLAGS_DEBUG_SYMBOLS="-g"
+        if test "x$OPENJDK_TARGET_CPU_BITS" = "x64" && test "x$DEBUG_LEVEL" = "xfastdebug"; then
+            CFLAGS_DEBUG_SYMBOLS="-g1"
+            CXXFLAGS_DEBUG_SYMBOLS="-g1"
+        fi
         ;;
       ossc )
         #
@@ -28958,7 +29382,6 @@ case $COMPILER_TYPE in
     esac
     ;;
   CL )
-    D_FLAG=
     C_O_FLAG_HIGHEST="-O2"
     C_O_FLAG_HI="-O1"
     C_O_FLAG_NORM="-O1"
@@ -29096,6 +29519,28 @@ case $COMPILER_NAME in
 esac
 
 ###############################################################################
+
+# Adjust flags according to debug level.
+case $DEBUG_LEVEL in
+      fastdebug )
+              CFLAGS_JDK="$CFLAGS_JDK $CFLAGS_DEBUG_SYMBOLS"
+              CXXFLAGS_JDK="$CXXFLAGS_JDK $CXXFLAGS_DEBUG_SYMBOLS"
+	      C_O_FLAG_HI="$C_O_FLAG_NORM"
+	      C_O_FLAG_NORM="$C_O_FLAG_NORM"
+	      CXX_O_FLAG_HI="$CXX_O_FLAG_NORM"
+	      CXX_O_FLAG_NORM="$CXX_O_FLAG_NORM"
+              JAVAC_FLAGS="$JAVAC_FLAGS -g"
+              ;;
+      slowdebug )
+              CFLAGS_JDK="$CFLAGS_JDK $CFLAGS_DEBUG_SYMBOLS"
+              CXXFLAGS_JDK="$CXXFLAGS_JDK $CXXFLAGS_DEBUG_SYMBOLS"
+	      C_O_FLAG_HI="$C_O_FLAG_NONE"
+	      C_O_FLAG_NORM="$C_O_FLAG_NONE"
+	      CXX_O_FLAG_HI="$CXX_O_FLAG_NONE"
+	      CXX_O_FLAG_NORM="$CXX_O_FLAG_NONE"
+              JAVAC_FLAGS="$JAVAC_FLAGS -g"
+              ;;
+esac
 
 CCXXFLAGS_JDK="$CCXXFLAGS_JDK $ADD_LP64"
 
@@ -29239,23 +29684,6 @@ else
         LDFLAGS_JDKEXE="$LDFLAGS_JDKEXE -Xlinker --allow-shlib-undefined"
     fi
 fi
-
-# Adjust flags according to debug level.
-case $DEBUG_LEVEL in
-      fastdebug )
-              CFLAGS="$CFLAGS $D_FLAG"
-              JAVAC_FLAGS="$JAVAC_FLAGS -g"
-              ;;
-      slowdebug )
-              CFLAGS="$CFLAGS $D_FLAG"
-	      C_O_FLAG_HI="$C_O_FLAG_NONE"
-	      C_O_FLAG_NORM="$C_O_FLAG_NONE"
-	      CXX_O_FLAG_HI="$CXX_O_FLAG_NONE"
-	      CXX_O_FLAG_NORM="$CXX_O_FLAG_NONE"
-              JAVAC_FLAGS="$JAVAC_FLAGS -g"
-              ;;
-esac
-
 
 
 
@@ -29615,11 +30043,17 @@ if test "x$SYS_ROOT" != "x/"; then
   if test "x$x_includes" = xNONE; then
     if test -f "$SYS_ROOT/usr/X11R6/include/X11/Xlib.h"; then
       x_includes="$SYS_ROOT/usr/X11R6/include"
+    elif test -f "$SYS_ROOT/usr/include/X11/Xlib.h"; then
+      x_includes="$SYS_ROOT/usr/include"
     fi
   fi
   if test "x$x_libraries" = xNONE; then
     if test -f "$SYS_ROOT/usr/X11R6/lib/libX11.so"; then
       x_libraries="$SYS_ROOT/usr/X11R6/lib"
+    elif test "$SYS_ROOT/usr/lib64/libX11.so" && test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
+      x_libraries="$SYS_ROOT/usr/lib64"
+    elif test -f "$SYS_ROOT/usr/lib/libX11.so"; then
+      x_libraries="$SYS_ROOT/usr/lib"
     fi
   fi
 fi
@@ -30350,8 +30784,7 @@ fi
 if test "x$OPENJDK_TARGET_OS" = xlinux; then
     if test -d "$SYS_ROOT/usr/X11R6"; then
         OPENWIN_HOME="$SYS_ROOT/usr/X11R6"
-    fi
-    if test -d "$SYS_ROOT/usr/include/X11"; then
+    elif test -d "$SYS_ROOT/usr/include/X11"; then
         OPENWIN_HOME="$SYS_ROOT/usr"
     fi
 fi
@@ -30828,17 +31261,20 @@ $as_echo "$as_me: Rewriting with_freetype to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$with_freetype"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of with_freetype, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of with_freetype, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of with_freetype, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of with_freetype, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    with_freetype="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 	    FREETYPE2_LIBS="-L$with_freetype/lib -lfreetype"
@@ -31127,17 +31563,20 @@ $as_echo "$as_me: Rewriting FREETYPELOCATION to \"$new_path\"" >&6;}
   else
     # We're on a posix platform. Hooray! :)
     path="$FREETYPELOCATION"
-
-    if test ! -f "$path" && test ! -d "$path"; then
-      as_fn_error $? "The path of FREETYPELOCATION, which resolves as \"$path\", is not found." "$LINENO" 5
-    fi
-
     has_space=`$ECHO "$path" | $GREP " "`
     if test "x$has_space" != x; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: The path of FREETYPELOCATION, which resolves as \"$path\", is invalid." >&5
 $as_echo "$as_me: The path of FREETYPELOCATION, which resolves as \"$path\", is invalid." >&6;}
       as_fn_error $? "Spaces are not allowed in this path." "$LINENO" 5
     fi
+
+    # Use eval to expand a potential ~
+    eval path="$path"
+    if test ! -f "$path" && test ! -d "$path"; then
+      as_fn_error $? "The path of FREETYPELOCATION, which resolves as \"$path\", is not found." "$LINENO" 5
+    fi
+
+    FREETYPELOCATION="`cd "$path"; $THEPWDCMD -L`"
   fi
 
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype in some standard windows locations" >&5
@@ -31238,12 +31677,12 @@ fi
 	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for freetype in some standard locations" >&5
 $as_echo_n "checking for freetype in some standard locations... " >&6; }
 
-	    if test -s /usr/X11/include/ft2build.h && test -d /usr/X11/include/freetype2/freetype; then
-	        DEFAULT_FREETYPE_CFLAGS="-I/usr/X11/include/freetype2 -I/usr/X11/include"
-	        DEFAULT_FREETYPE_LIBS="-L/usr/X11/lib -lfreetype"
+	    if test -s $SYS_ROOT/usr/X11/include/ft2build.h && test -d $SYS_ROOT/usr/X11/include/freetype2/freetype; then
+	        DEFAULT_FREETYPE_CFLAGS="-I$SYS_ROOT/usr/X11/include/freetype2 -I$SYS_ROOT/usr/X11/include"
+	        DEFAULT_FREETYPE_LIBS="-L$SYS_ROOT/usr/X11/lib -lfreetype"
 	    fi
-	    if test -s /usr/include/ft2build.h && test -d /usr/include/freetype2/freetype; then
-	        DEFAULT_FREETYPE_CFLAGS="-I/usr/include/freetype2"
+	    if test -s $SYS_ROOT/usr/include/ft2build.h && test -d $SYS_ROOT/usr/include/freetype2/freetype; then
+	        DEFAULT_FREETYPE_CFLAGS="-I$SYS_ROOT/usr/include/freetype2"
 	        DEFAULT_FREETYPE_LIBS="-lfreetype"
 	    fi
 
@@ -32637,6 +33076,9 @@ $as_echo_n "checking for appropriate number of jobs to run in parallel... " >&6;
     if test "$JOBS" -gt "16"; then
       JOBS=16
     fi
+    if test "$JOBS" -eq "0"; then
+      JOBS=1
+    fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $JOBS" >&5
 $as_echo "$JOBS" >&6; }
   else
@@ -32664,192 +33106,183 @@ else
     SJAVAC_SERVER_JAVA=""
     # Hotspot specific options.
 
-    # Test if -verbosegc is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -verbosegc to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$JAVA -verbosegc -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -verbosegc -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -verbosegc" >&5
+    $ECHO "Command: $JAVA -verbosegc -version" >&5
+    OUTPUT=`$JAVA -verbosegc -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -verbosegc"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     # JRockit specific options.
 
-    # Test if -Xverbose:gc is a valid argument to $JAVA (often is $JAVA passed as $JAVA)
-    # If so, then append -Xverbose:gc to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$JAVA -Xverbose:gc -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$JAVA -Xverbose:gc -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xverbose:gc" >&5
+    $ECHO "Command: $JAVA -Xverbose:gc -version" >&5
+    OUTPUT=`$JAVA -Xverbose:gc -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xverbose:gc"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
     SJAVAC_SERVER_JAVA="$JAVA $SJAVAC_SERVER_JAVA"
 fi
 
 
+if test "$MEMORY_SIZE" -gt "2500"; then
 
-# Check whether --with-sjavac-server-cores was given.
-if test "${with_sjavac_server_cores+set}" = set; then :
-  withval=$with_sjavac_server_cores;
-fi
-
-if test "x$with_sjavac_server_cores" != x; then
-    SJAVAC_SERVER_CORES="$with_sjavac_server_cores"
-else
-    if test "$NUM_CORES" -gt 16; then
-        # We set this arbitrary limit because we want to limit the heap
-        # size of the javac server.
-        # In the future we will make the javac compilers in the server
-        # share more and more state, thus enabling us to use more and
-        # more concurrent threads in the server.
-        SJAVAC_SERVER_CORES="16"
-    else
-        SJAVAC_SERVER_CORES="$NUM_CORES"
-    fi
-
-    if test "$MEMORY_SIZE" -gt "17000"; then
-        MAX_HEAP_MEM=10000
-
-    # Test if -d64 is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -d64 to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -d64" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -d64 -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -d64"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
+    if test "$JVM_ARG_OK" = true; then
+        JVM_64BIT=true
+	JVM_ARG_OK=false
+    fi
+    fi
 
-    # Test if -Xms10G -Xmx10G is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms10G -Xmx10G to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms10G -Xmx10G -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms10G -Xmx10G -version 2>&1 | grep " version \""`
+if test "$JVM_64BIT" = true; then
+    if test "$MEMORY_SIZE" -gt "17000"; then
+
+    $ECHO "Check if jvm arg is ok: -Xms10G -Xmx10G" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms10G -Xmx10G -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms10G -Xmx10G -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms10G -Xmx10G"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
-    elif test "$MEMORY_SIZE" -gt "10000"; then
-        MAX_HEAP_MEM=6000
-
-    # Test if -d64 is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -d64 to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -d64"
     fi
+    if test "$MEMORY_SIZE" -gt "10000" && test "$JVM_ARG_OK" = false; then
 
-
-    # Test if -Xms6G -Xmx6G is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms6G -Xmx6G to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms6G -Xmx6G -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms6G -Xmx6G -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xms6G -Xmx6G" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms6G -Xmx6G -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms6G -Xmx6G -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms6G -Xmx6G"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
-    elif test "$MEMORY_SIZE" -gt "5000"; then
-        MAX_HEAP_MEM=3000
-
-    # Test if -d64 is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -d64 to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -d64 -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -d64"
     fi
+    if test "$MEMORY_SIZE" -gt "5000" && test "$JVM_ARG_OK" = false; then
 
-
-    # Test if -Xms1G -Xmx3G is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms1G -Xmx3G to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx3G -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx3G -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xms1G -Xmx3G" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms1G -Xmx3G -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx3G -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms1G -Xmx3G"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
-    elif test "$MEMORY_SIZE" -gt "3800"; then
-        MAX_HEAP_MEM=2500
+    fi
+    if test "$MEMORY_SIZE" -gt "3800" && test "$JVM_ARG_OK" = false; then
 
-    # Test if -Xms1G -Xmx2500M is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms1G -Xmx2500M to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx2500M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx2500M -version 2>&1 | grep " version \""`
+    $ECHO "Check if jvm arg is ok: -Xms1G -Xmx2500M" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms1G -Xmx2500M -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms1G -Xmx2500M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
     if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
         SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms1G -Xmx2500M"
-    fi
-
-    elif test "$MEMORY_SIZE" -gt "1900"; then
-        MAX_HEAP_MEM=1200
-
-    # Test if -Xms700M -Xmx1400M is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms700M -Xmx1400M to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms700M -Xmx1400M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms700M -Xmx1400M -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms700M -Xmx1400M"
-    fi
-
-    elif test "$MEMORY_SIZE" -gt "1000"; then
-        MAX_HEAP_MEM=900
-
-    # Test if -Xms400M -Xmx1100M is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms400M -Xmx1100M to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M"
-    fi
-
+	JVM_ARG_OK=true
     else
-        MAX_HEAP_MEM=512
-
-    # Test if -Xms256M -Xmx512M is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -Xms256M -Xmx512M to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -Xms256M -Xmx512M -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -Xms256M -Xmx512M -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms256M -Xmx512M"
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
     fi
 
-    fi
-
-
-    # Test if -XX:PermSize=32m is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -XX:PermSize=32m to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -XX:PermSize=32m -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -XX:PermSize=32m -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -XX:PermSize=32m"
-    fi
-
-
-    # Test if -XX:MaxPermSize=160m is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -XX:MaxPermSize=160m to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -XX:MaxPermSize=160m -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -XX:MaxPermSize=160m -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -XX:MaxPermSize=160m"
-    fi
-
-
-    # Test if -XX:ThreadStackSize=$STACK_SIZE is a valid argument to $SJAVAC_SERVER_JAVA (often is $JAVA passed as $SJAVAC_SERVER_JAVA)
-    # If so, then append -XX:ThreadStackSize=$STACK_SIZE to SJAVAC_SERVER_JAVA
-    FOUND_WARN=`$SJAVAC_SERVER_JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1 | grep -i warn`
-    FOUND_VERSION=`$SJAVAC_SERVER_JAVA -XX:ThreadStackSize=$STACK_SIZE -version 2>&1 | grep " version \""`
-    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
-        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -XX:ThreadStackSize=$STACK_SIZE"
-    fi
-
-
-    MAX_COMPILERS_IN_HEAP=`expr $MAX_HEAP_MEM / 501`
-    if test "$SJAVAC_SERVER_CORES" -gt "$MAX_COMPILERS_IN_HEAP"; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if number of server cores must be reduced" >&5
-$as_echo_n "checking if number of server cores must be reduced... " >&6; }
-        SJAVAC_SERVER_CORES="$MAX_COMPILERS_IN_HEAP"
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, to $SJAVAC_SERVER_CORES with max heap size $MAX_HEAP_MEM MB" >&5
-$as_echo "yes, to $SJAVAC_SERVER_CORES with max heap size $MAX_HEAP_MEM MB" >&6; }
     fi
 fi
+if test "$MEMORY_SIZE" -gt "2500" && test "$JVM_ARG_OK" = false; then
 
+    $ECHO "Check if jvm arg is ok: -Xms1000M -Xmx1500M" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms1000M -Xmx1500M -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms1000M -Xmx1500M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms1000M -Xmx1500M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
+    fi
+
+fi
+if test "$MEMORY_SIZE" -gt "1000" && test "$JVM_ARG_OK" = false; then
+
+    $ECHO "Check if jvm arg is ok: -Xms400M -Xmx1100M" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms400M -Xmx1100M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
+    fi
+
+fi
+if test "$JVM_ARG_OK" = false; then
+
+    $ECHO "Check if jvm arg is ok: -Xms256M -Xmx512M" >&5
+    $ECHO "Command: $SJAVAC_SERVER_JAVA -Xms256M -Xmx512M -version" >&5
+    OUTPUT=`$SJAVAC_SERVER_JAVA -Xms256M -Xmx512M -version 2>&1`
+    FOUND_WARN=`$ECHO "$OUTPUT" | grep -i warn`
+    FOUND_VERSION=`$ECHO $OUTPUT | grep " version \""`
+    if test "x$FOUND_VERSION" != x && test "x$FOUND_WARN" = x; then
+        SJAVAC_SERVER_JAVA="$SJAVAC_SERVER_JAVA -Xms256M -Xmx512M"
+	JVM_ARG_OK=true
+    else
+	$ECHO "Arg failed:" >&5
+	$ECHO "$OUTPUT" >&5
+	JVM_ARG_OK=false
+    fi
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use sjavac" >&5
 $as_echo_n "checking whether to use sjavac... " >&6; }
@@ -32925,6 +33358,10 @@ else
 fi
 
     if test "x$ENABLE_CCACHE" = xyes; then
+        OLD_PATH="$PATH"
+        if test "x$TOOLS_DIR" != x; then
+          PATH=$TOOLS_DIR:$PATH
+        fi
         # Extract the first word of "ccache", so it can be a program name with args.
 set dummy ccache; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -32965,6 +33402,7 @@ $as_echo "no" >&6; }
 fi
 
 
+        PATH="$OLD_PATH"
     else
         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ccache" >&5
 $as_echo_n "checking for ccache... " >&6; }

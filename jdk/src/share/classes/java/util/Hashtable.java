@@ -26,6 +26,7 @@
 package java.util;
 
 import java.io.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.BiFunction;
@@ -180,13 +181,27 @@ public class Hashtable<K,V>
          */
         static final long HASHSEED_OFFSET;
 
+        static final boolean USE_HASHSEED;
+
         static {
-            try {
-                UNSAFE = sun.misc.Unsafe.getUnsafe();
-                HASHSEED_OFFSET = UNSAFE.objectFieldOffset(
-                    Hashtable.class.getDeclaredField("hashSeed"));
-            } catch (NoSuchFieldException | SecurityException e) {
-                throw new InternalError("Failed to record hashSeed offset", e);
+            String hashSeedProp = java.security.AccessController.doPrivileged(
+                    new sun.security.action.GetPropertyAction(
+                        "jdk.map.useRandomSeed"));
+            boolean localBool = (null != hashSeedProp)
+                    ? Boolean.parseBoolean(hashSeedProp) : false;
+            USE_HASHSEED = localBool;
+
+            if (USE_HASHSEED) {
+                try {
+                    UNSAFE = sun.misc.Unsafe.getUnsafe();
+                    HASHSEED_OFFSET = UNSAFE.objectFieldOffset(
+                        Hashtable.class.getDeclaredField("hashSeed"));
+                } catch (NoSuchFieldException | SecurityException e) {
+                    throw new InternalError("Failed to record hashSeed offset", e);
+                }
+            } else {
+                UNSAFE = null;
+                HASHSEED_OFFSET = 0;
             }
         }
     }
@@ -194,21 +209,25 @@ public class Hashtable<K,V>
     /**
      * A randomizing value associated with this instance that is applied to
      * hash code of keys to make hash collisions harder to find.
+     *
+     * Non-final so it can be set lazily, but be sure not to set more than once.
      */
-    transient final int hashSeed = sun.misc.Hashing.randomHashSeed(this);
+    transient final int hashSeed;
+
+    /**
+     * Return an initial value for the hashSeed, or 0 if the random seed is not
+     * enabled.
+     */
+    final int initHashSeed() {
+        if (sun.misc.VM.isBooted() && Holder.USE_HASHSEED) {
+            int seed = ThreadLocalRandom.current().nextInt();
+            return (seed != 0) ? seed : 1;
+        }
+        return 0;
+    }
 
     private int hash(Object k) {
-        if (k instanceof String) {
-            return ((String)k).hash32();
-        }
-
-        int h = hashSeed ^ k.hashCode();
-
-        // This function ensures that hashCodes that differ only by
-        // constant multiples at each bit position have a bounded
-        // number of collisions (approximately 8 at default load factor).
-        h ^= (h >>> 20) ^ (h >>> 12);
-        return h ^ (h >>> 7) ^ (h >>> 4);
+        return hashSeed ^ k.hashCode();
     }
 
     /**
@@ -232,6 +251,7 @@ public class Hashtable<K,V>
         this.loadFactor = loadFactor;
         table = new Entry<?,?>[initialCapacity];
         threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);
+        hashSeed = initHashSeed();
     }
 
     /**
@@ -912,19 +932,39 @@ public class Hashtable<K,V>
     public synchronized void forEach(BiConsumer<? super K, ? super V> action) {
         Objects.requireNonNull(action);     // explicit check required in case
                                             // table is empty.
-        Entry<?,?>[] tab = table;
-        for (Entry<?,?> entry : tab) {
+        final int expectedModCount = modCount;
+
+        Entry<?, ?>[] tab = table;
+        for (Entry<?, ?> entry : tab) {
             while (entry != null) {
                 action.accept((K)entry.key, (V)entry.value);
                 entry = entry.next;
+
+                if (expectedModCount != modCount) {
+                    throw new ConcurrentModificationException();
+                }
             }
         }
     }
 
     @Override
-    public synchronized void replaceAll(
-            BiFunction<? super K, ? super V, ? extends V> function) {
-        Map.super.replaceAll(function);
+    public synchronized void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        Objects.requireNonNull(function);     // explicit check required in case
+                                              // table is empty.
+        final int expectedModCount = modCount;
+
+        Entry<K, V>[] tab = (Entry<K, V>[])table;
+        for (Entry<K, V> entry : tab) {
+            while (entry != null) {
+                entry.value = Objects.requireNonNull(
+                    function.apply(entry.key, entry.value));
+                entry = entry.next;
+
+                if (expectedModCount != modCount) {
+                    throw new ConcurrentModificationException();
+                }
+            }
+        }
     }
 
     @Override
@@ -1038,7 +1078,7 @@ public class Hashtable<K,V>
     }
 
     @Override
-    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+    public synchronized V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
 
         Entry<?,?> tab[] = table;
@@ -1067,7 +1107,7 @@ public class Hashtable<K,V>
     }
 
     @Override
-    public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+    public synchronized V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
 
         Entry<?,?> tab[] = table;
@@ -1102,7 +1142,7 @@ public class Hashtable<K,V>
     }
 
     @Override
-    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    public synchronized V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
         Objects.requireNonNull(remappingFunction);
 
         Entry<?,?> tab[] = table;
@@ -1187,8 +1227,11 @@ public class Hashtable<K,V>
         s.defaultReadObject();
 
         // set hashMask
-        Holder.UNSAFE.putIntVolatile(this, Holder.HASHSEED_OFFSET,
-                sun.misc.Hashing.randomHashSeed(this));
+        if (Holder.USE_HASHSEED) {
+            int seed = ThreadLocalRandom.current().nextInt();
+            Holder.UNSAFE.putIntVolatile(this, Holder.HASHSEED_OFFSET,
+                                         (seed != 0) ? seed : 1);
+        }
 
         // Read the original length of the array and number of elements
         int origlength = s.readInt();
