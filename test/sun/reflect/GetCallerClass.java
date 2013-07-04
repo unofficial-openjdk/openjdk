@@ -23,29 +23,83 @@
 
 /*
  * @test
- * @bug 8016814
- * @summary Test sun.reflect.Reflection.getCallerClass(int)
+ * @bug 8016814 8014925
+ * @summary Test sun.reflect.Reflection.getCallerClass(int) disabled by default
  * @compile -XDignore.symbol.file GetCallerClass.java
- * @run main GetCallerClass
+ * @run main/othervm GetCallerClass
+ * @run main/othervm -Djdk.reflect.allowGetCallerClass GetCallerClass
+ * @run main/othervm -Djdk.reflect.allowGetCallerClass=true GetCallerClass
+ * @run main/othervm -Djdk.reflect.allowGetCallerClass=false GetCallerClass
  */
 
 public class GetCallerClass {
     public static void main(String[] args) throws Exception {
-        Class<?> c = Temp.test();
-        if (c != GetCallerClass.class) {
-            throw new RuntimeException("Incorrect caller: " + c);
+        String s = System.getProperty("jdk.reflect.allowGetCallerClass");
+        boolean allowed;
+        if (s == null || s.equals("false")) {
+            allowed = false;
+        } else if (s.equals("") || s.equals("true")) {
+            allowed = true;
+        } else {
+            throw new RuntimeException("Unsupported test setting");
+        }
+
+        try {
+            Class<?> c = Test.test();
+            if (!allowed) {
+                throw new RuntimeException("Reflection.getCallerClass should not be allowed");
+            }
+            Class<?> caller = Test.caller();
+            if (c != GetCallerClass.class || caller != c) {
+                throw new RuntimeException("Incorrect caller: " + c);
+            }
+            Test.selfTest();
+        } catch (UnsupportedOperationException e) {
+            if (allowed) throw e;
         }
     }
 
     @sun.reflect.CallerSensitive
     public Class<?> getCallerClass() {
-        // 0: Reflection 1: getCallerClass 2: Temp.test 3: main
+        // 0: Reflection 1: getCallerClass 2: Test.test 3: main
         return sun.reflect.Reflection.getCallerClass(3);
     }
 
-    static class Temp {
+    static class Test {
+        // Returns the caller of this method
         public static Class<?> test() {
             return new GetCallerClass().getCallerClass();
+        }
+        @sun.reflect.CallerSensitive
+        public static Class<?> caller() {
+            return sun.reflect.Reflection.getCallerClass();
+        }
+        @sun.reflect.CallerSensitive
+        public static void selfTest() {
+            // 0: Reflection 1: Test.selfTest
+            Class<?> c = sun.reflect.Reflection.getCallerClass(1);
+            if (c != Test.class || caller() != c) {
+                throw new RuntimeException("Incorrect caller: " + c);
+            }
+            Inner1.deep();
+        }
+
+        static class Inner1 {
+            static void deep() {
+                 deeper();
+            }
+            static void deeper() {
+                 Inner2.deepest();
+            }
+            static class Inner2 {
+                static void deepest() {
+                    // 0: Reflection 1: deepest 2: deeper 3: deep 4: Test.selfTest
+                    Class<?> c = sun.reflect.Reflection.getCallerClass(4);
+                    if (c != Test.class) {
+                        throw new RuntimeException("Incorrect caller: " + c);
+                    }
+                }
+            }
         }
     }
 }
