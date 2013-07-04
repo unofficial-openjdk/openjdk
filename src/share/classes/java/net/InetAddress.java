@@ -213,6 +213,13 @@ class InetAddress implements java.io.Serializable {
             this.family = family;
         }
 
+        void init(String hostName, int family) {
+            this.hostName = hostName;
+            if (family != -1) {
+                this.family = family;
+            }
+        }
+
         String hostName;
 
         String getHostName() {
