@@ -87,7 +87,7 @@ public class MsgAppletViewer_pt_BR extends ListResourceBundle {
             {"appletviewer.main.err.prop.cantsave", "N\u00E3o \u00E9 poss\u00EDvel salvar o arquivo de propriedades do usu\u00E1rio: {0}"},
             {"appletviewer.main.warn.nosecmgr", "Advert\u00EAncia: desativando a seguran\u00E7a."},
             {"appletviewer.main.debug.cantfinddebug", "N\u00E3o \u00E9 poss\u00EDvel localizar o depurador!"},
-            {"appletviewer.main.debug.cantfindmain", "N\u00E3o \u00E9 poss\u00EDvel localizar o m\u00E9todo principal no depurador!"},
+            {"appletviewer.main.debug.cantfindmain", "N\u00E3o \u00E9 poss\u00EDvel localizar o m\u00E9todo main no depurador!"},
             {"appletviewer.main.debug.exceptionindebug", "Exce\u00E7\u00E3o no depurador!"},
             {"appletviewer.main.debug.cantaccess", "N\u00E3o \u00E9 poss\u00EDvel acessar o depurador!"},
             {"appletviewer.main.nosecmgr", "Advert\u00EAncia: SecurityManager n\u00E3o instalado!"},
