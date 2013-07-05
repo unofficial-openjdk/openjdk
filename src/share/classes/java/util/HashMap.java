@@ -431,7 +431,7 @@ public class HashMap<K,V>
      * others.
      */
     private V getForNullKey() {
-        if (isEmpty()) {
+        if (size == 0) {
             return null;
         }
         for (Entry<K,V> e = table[0]; e != null; e = e.next) {
@@ -459,7 +459,7 @@ public class HashMap<K,V>
      * for the key.
      */
     final Entry<K,V> getEntry(Object key) {
-        if (isEmpty()) {
+        if (size == 0) {
             return null;
         }
 
@@ -667,7 +667,7 @@ public class HashMap<K,V>
      * for this key.
      */
     final Entry<K,V> removeEntryForKey(Object key) {
-        if (isEmpty()) {
+        if (size == 0) {
             return null;
         }
         int hash = (key == null) ? 0 : hash(key);
@@ -701,7 +701,7 @@ public class HashMap<K,V>
      * for matching.
      */
     final Entry<K,V> removeMapping(Object o) {
-        if (isEmpty() || !(o instanceof Map.Entry))
+        if (size == 0 || !(o instanceof Map.Entry))
             return null;
 
         Map.Entry<K,V> entry = (Map.Entry<K,V>) o;
