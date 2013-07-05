@@ -555,11 +555,6 @@ public class Attr extends JCTree.Visitor {
                 }
             });
         }
-
-        @Override
-        protected Type check(DiagnosticPosition pos, Type found) {
-            return chk.checkNonVoid(pos, super.check(pos, found));
-        }
     }
 
     final ResultInfo statInfo;
@@ -1697,7 +1692,8 @@ public class Attr extends JCTree.Visitor {
                               diags.fragment("unexpected.ret.val"));
                 }
                 attribTree(tree.expr, env, env.info.returnResult);
-            } else if (!env.info.returnResult.pt.hasTag(VOID)) {
+            } else if (!env.info.returnResult.pt.hasTag(VOID) &&
+                    !env.info.returnResult.pt.hasTag(NONE)) {
                 env.info.returnResult.checkContext.report(tree.pos(),
                               diags.fragment("missing.ret.val"));
             }
@@ -2396,7 +2392,7 @@ public class Attr extends JCTree.Visitor {
 
             ResultInfo bodyResultInfo = lambdaType.getReturnType() == Type.recoveryType ?
                 recoveryInfo :
-                new ResultInfo(VAL, lambdaType.getReturnType(), funcContext);
+                new LambdaResultInfo(lambdaType.getReturnType(), funcContext);
             localEnv.info.returnResult = bodyResultInfo;
 
             Log.DeferredDiagnosticHandler lambdaDeferredHandler = new Log.DeferredDiagnosticHandler(log);
@@ -2585,6 +2581,28 @@ public class Attr extends JCTree.Visitor {
                 //a void return is compatible with an expression statement lambda
                 return TreeInfo.isExpressionStatement(expr) && req.hasTag(VOID) ||
                         super.compatible(found, req, warn);
+            }
+        }
+
+        class LambdaResultInfo extends ResultInfo {
+
+            LambdaResultInfo(Type pt, CheckContext checkContext) {
+                super(VAL, pt, checkContext);
+            }
+
+            @Override
+            protected Type check(DiagnosticPosition pos, Type found) {
+                return super.check(pos, found.baseType());
+            }
+
+            @Override
+            protected ResultInfo dup(CheckContext newContext) {
+                return new LambdaResultInfo(pt, newContext);
+            }
+
+            @Override
+            protected ResultInfo dup(Type newPt) {
+                return new LambdaResultInfo(newPt, checkContext);
             }
         }
 
@@ -4301,7 +4319,7 @@ public class Attr extends JCTree.Visitor {
         if (env.info.lint.isEnabled(LintCategory.SERIAL) &&
             isSerializable(c) &&
             (c.flags() & Flags.ENUM) == 0 &&
-            (c.flags() & ABSTRACT) == 0) {
+            checkForSerial(c)) {
             checkSerialVersionUID(tree, c);
         }
         if (allowTypeAnnos) {
@@ -4313,6 +4331,22 @@ public class Attr extends JCTree.Visitor {
         }
     }
         // where
+        boolean checkForSerial(ClassSymbol c) {
+            if ((c.flags() & ABSTRACT) == 0) {
+                return true;
+            } else {
+                return c.members().anyMatch(anyNonAbstractOrDefaultMethod);
+            }
+        }
+
+        public static final Filter<Symbol> anyNonAbstractOrDefaultMethod = new Filter<Symbol>() {
+            @Override
+            public boolean accepts(Symbol s) {
+                return s.kind == Kinds.MTH &&
+                       (s.flags() & (DEFAULT | ABSTRACT)) != ABSTRACT;
+            }
+        };
+
         /** get a diagnostic position for an attribute of Type t, or null if attribute missing */
         private DiagnosticPosition getDiagnosticPosition(JCClassDecl tree, Type t) {
             for(List<JCAnnotation> al = tree.mods.annotations; !al.isEmpty(); al = al.tail) {
