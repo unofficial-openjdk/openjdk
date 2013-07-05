@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,16 @@
  */
 
 /**
- * @author Peter von der Ah\u00e9
+ * Class to hold annotations for ElementsAnnotatedWithTest.
  */
-class Utf8 {}
+
+@AnnotatedElementInfo(annotationName="TpAnno",
+                      expectedSize=4,
+                      names={"T", "A", "B", "C"})
+public class TypeParameterAnnotations<@TpAnno T>  {
+    private <@TpAnno A> TypeParameterAnnotations(A a) {;}
+
+    public <@TpAnno B> void foo(B b) {return;}
+
+    public static <@TpAnno C> void bar(C b) {return;}
+}
