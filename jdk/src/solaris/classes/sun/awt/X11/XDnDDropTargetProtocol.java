@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,12 +88,12 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
         try {
             Native.putLong(data, 0, XDnDConstants.XDND_PROTOCOL_VERSION);
 
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XDnDConstants.XA_XdndAware.setAtomData(window, XAtom.XA_ATOM, data, 1);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null &&
-                XToolkit.saved_error.get_error_code() != XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 throw new XException("Cannot write XdndAware property");
             }
         } finally {
@@ -205,54 +205,50 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
 
             /* The proxy window must have the XdndAware set, as XDnD protocol
                prescribes to check the proxy window for XdndAware. */
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XDnDConstants.XA_XdndAware.setAtomData(newProxy, XAtom.XA_ATOM,
                                                    data, 1);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null &&
-                XToolkit.saved_error.get_error_code() !=
-                XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 throw new XException("Cannot write XdndAware property");
             }
 
             Native.putLong(data, 0, newProxy);
 
             /* The proxy window must have the XdndProxy set to point to itself.*/
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XDnDConstants.XA_XdndProxy.setAtomData(newProxy, XAtom.XA_WINDOW,
                                                    data, 1);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null &&
-                XToolkit.saved_error.get_error_code() !=
-                XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 throw new XException("Cannot write XdndProxy property");
             }
 
             Native.putLong(data, 0, XDnDConstants.XDND_PROTOCOL_VERSION);
 
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XDnDConstants.XA_XdndAware.setAtomData(embedder, XAtom.XA_ATOM,
                                                    data, 1);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null &&
-                XToolkit.saved_error.get_error_code() !=
-                XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 throw new XException("Cannot write XdndAware property");
             }
 
             Native.putLong(data, 0, newProxy);
 
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XDnDConstants.XA_XdndProxy.setAtomData(embedder, XAtom.XA_WINDOW,
                                                    data, 1);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null &&
-                XToolkit.saved_error.get_error_code() !=
-                XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 throw new XException("Cannot write XdndProxy property");
             }
         } finally {
@@ -278,27 +274,25 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
             try {
                 Native.putLong(data, 0, entry.getVersion());
 
-                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
                 XDnDConstants.XA_XdndAware.setAtomData(embedder, XAtom.XA_ATOM,
                                                        data, 1);
-                XToolkit.RESTORE_XERROR_HANDLER();
+                XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-                if (XToolkit.saved_error != null &&
-                    XToolkit.saved_error.get_error_code() !=
-                    XConstants.Success) {
+                if ((XErrorHandlerUtil.saved_error != null) &&
+                    (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                     throw new XException("Cannot write XdndAware property");
                 }
 
                 Native.putLong(data, 0, (int)entry.getProxy());
 
-                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
                 XDnDConstants.XA_XdndProxy.setAtomData(embedder, XAtom.XA_WINDOW,
                                                        data, 1);
-                XToolkit.RESTORE_XERROR_HANDLER();
+                XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-                if (XToolkit.saved_error != null &&
-                    XToolkit.saved_error.get_error_code() !=
-                    XConstants.Success) {
+                if ((XErrorHandlerUtil.saved_error != null) &&
+                    (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                     throw new XException("Cannot write XdndProxy property");
                 }
             } finally {
@@ -541,15 +535,15 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
          */
         XWindowAttributes wattr = new XWindowAttributes();
         try {
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                           source_win, wattr.pData);
 
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (status == 0 ||
-                (XToolkit.saved_error != null &&
-                 XToolkit.saved_error.get_error_code() != XConstants.Success)) {
+            if ((status == 0) ||
+                ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success))) {
                 throw new XException("XGetWindowAttributes failed");
             }
 
@@ -558,15 +552,15 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
             wattr.dispose();
         }
 
-        XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+        XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
         XlibWrapper.XSelectInput(XToolkit.getDisplay(), source_win,
                                  source_win_mask |
                                  XConstants.StructureNotifyMask);
 
-        XToolkit.RESTORE_XERROR_HANDLER();
+        XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-        if (XToolkit.saved_error != null &&
-            XToolkit.saved_error.get_error_code() != XConstants.Success) {
+        if ((XErrorHandlerUtil.saved_error != null) &&
+            (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
             throw new XException("XSelectInput failed");
         }
 
@@ -963,10 +957,10 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
         if (sourceWindow != 0) {
             XToolkit.awtLock();
             try {
-                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
+                XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.IgnoreBadWindowHandler.getInstance());
                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), sourceWindow,
                                          sourceWindowMask);
-                XToolkit.RESTORE_XERROR_HANDLER();
+                XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
             } finally {
                 XToolkit.awtUnlock();
             }
@@ -999,7 +993,7 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
             if (sourceFormats != null && sourceFormats.length > 3) {
                 data1 |= XDnDConstants.XDND_DATA_TYPES_BIT;
             }
-            if (logger.isLoggable(PlatformLogger.FINEST)) {
+            if (logger.isLoggable(PlatformLogger.Level.FINEST)) {
                 logger.finest("         "
                               + " entryVersion=" + version
                               + " sourceProtocolVersion=" +
@@ -1058,7 +1052,7 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
 
     public boolean forwardEventToEmbedded(long embedded, long ctxt,
                                           int eventID) {
-        if (logger.isLoggable(PlatformLogger.FINEST)) {
+        if (logger.isLoggable(PlatformLogger.Level.FINEST)) {
             logger.finest("        ctxt=" + ctxt +
                           " type=" + (ctxt != 0 ?
                                       getMessageType(new
@@ -1086,7 +1080,7 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
                 long data3 = Native.getLong(ctxt + size + 2 * Native.getLongSize());
                 long data4 = Native.getLong(ctxt + size + 3 * Native.getLongSize());
 
-                if (logger.isLoggable(PlatformLogger.FINEST)) {
+                if (logger.isLoggable(PlatformLogger.Level.FINEST)) {
                     logger.finest("         1 "
                                   + " embedded=" + embedded
                                   + " source=" + xclient.get_data(0)
@@ -1111,16 +1105,16 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
 
                             XToolkit.awtLock();
                             try {
-                                XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+                                XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
                                 XDnDConstants.XA_XdndTypeList.setAtomData(xclient.get_window(),
                                                                           XAtom.XA_ATOM,
                                                                           wpg.getData(),
                                                                           wpg.getNumberOfItems());
-                                XToolkit.RESTORE_XERROR_HANDLER();
+                                XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-                                if (XToolkit.saved_error != null &&
-                                    XToolkit.saved_error.get_error_code() != XConstants.Success) {
-                                    if (logger.isLoggable(PlatformLogger.WARNING)) {
+                                if ((XErrorHandlerUtil.saved_error != null) &&
+                                    (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
+                                    if (logger.isLoggable(PlatformLogger.Level.WARNING)) {
                                         logger.warning("Cannot set XdndTypeList on the proxy window");
                                     }
                                 }
@@ -1128,7 +1122,7 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
                                 XToolkit.awtUnlock();
                             }
                         } else {
-                            if (logger.isLoggable(PlatformLogger.WARNING)) {
+                            if (logger.isLoggable(PlatformLogger.Level.WARNING)) {
                                 logger.warning("Cannot read XdndTypeList from the source window");
                             }
                         }
@@ -1143,7 +1137,7 @@ class XDnDDropTargetProtocol extends XDropTargetProtocol {
                 overXEmbedClient = true;
             }
 
-            if (logger.isLoggable(PlatformLogger.FINEST)) {
+            if (logger.isLoggable(PlatformLogger.Level.FINEST)) {
                 logger.finest("         2 "
                               + " embedded=" + embedded
                               + " xclient=" + xclient);

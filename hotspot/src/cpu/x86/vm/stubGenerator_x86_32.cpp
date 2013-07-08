@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,7 @@ class StubGenerator: public StubCodeGenerator {
  private:
 
 #ifdef PRODUCT
-#define inc_counter_np(counter) (0)
+#define inc_counter_np(counter) ((void)0)
 #else
   void inc_counter_np_(int& counter) {
     __ incrementl(ExternalAddress((address)&counter));
@@ -1498,27 +1498,29 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(elem_klass, elem_klass_addr); // query the object klass
     generate_type_check(elem_klass, ckoff_arg, ckval_arg, temp,
                         &L_store_element, NULL);
-      // (On fall-through, we have failed the element type check.)
+    // (On fall-through, we have failed the element type check.)
     // ======== end loop ========
 
     // It was a real error; we must depend on the caller to finish the job.
     // Register "count" = -1 * number of *remaining* oops, length_arg = *total* oops.
     // Emit GC store barriers for the oops we have copied (length_arg + count),
     // and report their number to the caller.
+    assert_different_registers(to, count, rax);
+    Label L_post_barrier;
     __ addl(count, length_arg);         // transfers = (length - remaining)
     __ movl2ptr(rax, count);            // save the value
-    __ notptr(rax);                     // report (-1^K) to caller
-    __ movptr(to, to_arg);              // reload
-    assert_different_registers(to, count, rax);
-    gen_write_ref_array_post_barrier(to, count);
-    __ jmpb(L_done);
+    __ notptr(rax);                     // report (-1^K) to caller (does not affect flags)
+    __ jccb(Assembler::notZero, L_post_barrier);
+    __ jmp(L_done); // K == 0, nothing was copied, skip post barrier
 
     // Come here on success only.
     __ BIND(L_do_card_marks);
+    __ xorptr(rax, rax);                // return 0 on success
     __ movl2ptr(count, length_arg);
-    __ movptr(to, to_arg);                // reload
+
+    __ BIND(L_post_barrier);
+    __ movptr(to, to_arg);              // reload
     gen_write_ref_array_post_barrier(to, count);
-    __ xorptr(rax, rax);                  // return 0 on success
 
     // Common exit point (success or failure).
     __ BIND(L_done);
@@ -2711,6 +2713,59 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  /**
+   *  Arguments:
+   *
+   * Inputs:
+   *   rsp(4)   - int crc
+   *   rsp(8)   - byte* buf
+   *   rsp(12)  - int length
+   *
+   * Ouput:
+   *       rax   - int crc result
+   */
+  address generate_updateBytesCRC32() {
+    assert(UseCRC32Intrinsics, "need AVX and CLMUL instructions");
+
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", "updateBytesCRC32");
+
+    address start = __ pc();
+
+    const Register crc   = rdx;  // crc
+    const Register buf   = rsi;  // source java byte array address
+    const Register len   = rcx;  // length
+    const Register table = rdi;  // crc_table address (reuse register)
+    const Register tmp   = rbx;
+    assert_different_registers(crc, buf, len, table, tmp, rax);
+
+    BLOCK_COMMENT("Entry:");
+    __ enter(); // required for proper stackwalking of RuntimeStub frame
+    __ push(rsi);
+    __ push(rdi);
+    __ push(rbx);
+
+    Address crc_arg(rbp, 8 + 0);
+    Address buf_arg(rbp, 8 + 4);
+    Address len_arg(rbp, 8 + 8);
+
+    // Load up:
+    __ movl(crc,   crc_arg);
+    __ movptr(buf, buf_arg);
+    __ movl(len,   len_arg);
+
+    __ kernel_crc32(crc, buf, len, table, tmp);
+
+    __ movl(rax, crc);
+    __ pop(rbx);
+    __ pop(rdi);
+    __ pop(rsi);
+    __ leave(); // required for proper stackwalking of RuntimeStub frame
+    __ ret(0);
+
+    return start;
+  }
+
 
  public:
   // Information about frame layout at time of blocking runtime call.
@@ -2885,6 +2940,12 @@ class StubGenerator: public StubCodeGenerator {
 
     // Build this early so it's available for the interpreter
     StubRoutines::_throw_StackOverflowError_entry          = generate_throw_exception("StackOverflowError throw_exception",           CAST_FROM_FN_PTR(address, SharedRuntime::throw_StackOverflowError));
+
+    if (UseCRC32Intrinsics) {
+      // set table address before stub generation which use it
+      StubRoutines::_crc_table_adr = (address)StubRoutines::x86::_crc_table;
+      StubRoutines::_updateBytesCRC32 = generate_updateBytesCRC32();
+    }
   }
 
 

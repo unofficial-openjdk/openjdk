@@ -754,7 +754,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     /**
      * Returns an {@link Optional} describing the first element of this stream
      * (in the encounter order), or an empty {@code Optional} if the stream is
-     * empty.  If the stream has no encounter order, than any element may be
+     * empty.  If the stream has no encounter order, then any element may be
      * returned.
      *
      * <p>This is a <a href="package-summary.html#StreamOps">short-circuiting
@@ -880,14 +880,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      */
     public static<T> Stream<T> generate(Supplier<T> s) {
         Objects.requireNonNull(s);
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
-                new Iterator<T>() {
-                    @Override
-                    public boolean hasNext() { return true; }
-
-                    @Override
-                    public T next() { return s.get(); }
-                },
-                Spliterator.ORDERED | Spliterator.IMMUTABLE));
+        return StreamSupport.stream(
+                new StreamSpliterators.InfiniteSupplyingSpliterator.OfRef<>(Long.MAX_VALUE, s));
     }
 }
