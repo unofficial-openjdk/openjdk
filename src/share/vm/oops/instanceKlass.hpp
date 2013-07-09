@@ -779,13 +779,16 @@ class instanceKlass: public Klass {
 
   int object_size() const
   {
-    return object_size(align_object_offset(vtable_length()) +
-                       align_object_offset(itable_length()) +
-                       ((is_interface() || is_anonymous()) ?
-                         align_object_offset(nonstatic_oop_map_size()) :
-                         nonstatic_oop_map_size()) +
-                       (is_interface() ? (int)sizeof(klassOop)/HeapWordSize : 0) +
-                       (is_anonymous() ? (int)sizeof(klassOop)/HeapWordSize : 0));
+    int vtable_size = align_object_offset(vtable_length());
+    int itable_size = align_object_offset(itable_length());
+    int aligned_nonstatic_oop_map_size = is_interface() || is_anonymous() ?
+                                        align_object_offset(nonstatic_oop_map_size()) :
+                                        nonstatic_oop_map_size();
+    int interface_implementor_size = is_interface() ? (int) sizeof(klassOop) / HeapWordSize : 0;
+    int host_klass_size = is_anonymous() ? (int) sizeof(klassOop) / HeapWordSize : 0;
+
+    return object_size(vtable_size + itable_size + aligned_nonstatic_oop_map_size +
+                       interface_implementor_size + host_klass_size);
   }
   static int vtable_start_offset()    { return header_size(); }
   static int vtable_length_offset()   { return oopDesc::header_size() + offset_of(instanceKlass, _vtable_len) / HeapWordSize; }

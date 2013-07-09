@@ -316,6 +316,7 @@ typedef TwoOopHashtable<Symbol*, mtClass>     SymbolTwoOopHashtable;
   nonstatic_field(instanceKlass,               _static_oop_field_count,                       u2)                                   \
   nonstatic_field(instanceKlass,               _nonstatic_oop_map_size,                       int)                                   \
   nonstatic_field(instanceKlass,               _is_marked_dependent,                          bool)                                  \
+  nonstatic_field(instanceKlass,               _misc_flags,                                   u2)                                    \
   nonstatic_field(instanceKlass,               _minor_version,                                u2)                                    \
   nonstatic_field(instanceKlass,               _major_version,                                u2)                                    \
   nonstatic_field(instanceKlass,               _init_state,                                   u1)                                    \
