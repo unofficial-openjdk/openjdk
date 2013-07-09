@@ -393,9 +393,6 @@ java/text/Bidi/Bug6665028.java                                  linux-x64
 
 # jdk_tools
 
-# 8012474
-sun/tools/jmap/Basic.sh                                         generic-all
-
 # 6461635
 com/sun/tools/attach/BasicTests.sh                              generic-all
 

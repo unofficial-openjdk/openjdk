@@ -597,7 +597,7 @@ public class Resources_zh_CN extends java.util.ListResourceBundle {
         // sun.security.provider.PolicyFile
 
         {"java.security.policy.error.parsing.policy.message",
-                "java.security.policy: \u5BF9{0}\u8FDB\u884C\u8BED\u6CD5\u5206\u6790\u65F6\u51FA\u9519:\n\t{1}"},
+                "java.security.policy: \u89E3\u6790{0}\u65F6\u51FA\u9519:\n\t{1}"},
         {"java.security.policy.error.adding.Permission.perm.message",
                 "java.security.policy: \u6DFB\u52A0\u6743\u9650{0}\u65F6\u51FA\u9519:\n\t{1}"},
         {"java.security.policy.error.adding.Entry.message",

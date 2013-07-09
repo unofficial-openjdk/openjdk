@@ -65,7 +65,15 @@ public class Reflection {
     @Deprecated
     @CallerSensitive
     public static Class getCallerClass(int depth) {
-        return getCallerClass0(depth+1);
+        if (sun.misc.VM.allowGetCallerClass()) {
+            return getCallerClass0(depth+1);
+        }
+        throw new UnsupportedOperationException("This method is in the sun.* " +
+             "namespace so it is not a supported, public interface. " +
+             "The 7u40 release notes describe a temporary mechanism " +
+             "to reenable the historical functionality of this method. " +
+             "Update code to function properly and this method will be " +
+             "removed without further warning in a subsequent 7 update release.");
     }
 
     // If the VM enforces getting caller class with @CallerSensitive,

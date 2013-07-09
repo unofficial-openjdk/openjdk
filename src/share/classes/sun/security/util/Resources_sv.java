@@ -183,7 +183,7 @@ public class Resources_sv extends java.util.ListResourceBundle {
         {"Illegal.value.", "Otill\u00E5tet v\u00E4rde: "},
         {"Unknown.password.type.", "Ok\u00E4nd l\u00F6senordstyp: "},
         {"Cannot.find.environment.variable.",
-                "Kan inte hitta milj\u00F6variabel: "},
+                "Hittar inte milj\u00F6variabel: "},
         {"Cannot.find.file.", "Hittar inte fil: "},
         {"Command.option.flag.needs.an.argument.", "Kommandoalternativet {0} beh\u00F6ver ett argument."},
         {"Warning.Different.store.and.key.passwords.not.supported.for.PKCS12.KeyStores.Ignoring.user.specified.command.value.",
