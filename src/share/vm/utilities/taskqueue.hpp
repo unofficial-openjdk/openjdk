@@ -391,7 +391,14 @@ bool GenericTaskQueue<E, F, N>::pop_local_slow(uint localBot, Age oldAge) {
 template<class E, MEMFLAGS F, unsigned int N>
 bool GenericTaskQueue<E, F, N>::pop_global(E& t) {
   Age oldAge = _age.get();
-  uint localBot = _bottom;
+  // Architectures with weak memory model require a fence here. The
+  // fence has a cumulative effect on getting age and getting bottom.
+  // This way it is guaranteed that bottom is not older than age,
+  // which is crucial for the correctness of the algorithm.
+#if !(defined SPARC || defined IA32 || defined AMD64)
+  OrderAccess::fence();
+#endif
+  uint localBot = OrderAccess::load_acquire((volatile juint*)&_bottom);
   uint n_elems = size(localBot, oldAge.top());
   if (n_elems == 0) {
     return false;
@@ -677,7 +684,7 @@ public:
 template<class E, MEMFLAGS F, unsigned int N> inline bool
 GenericTaskQueue<E, F, N>::push(E t) {
   uint localBot = _bottom;
-  assert((localBot >= 0) && (localBot < N), "_bottom out of range.");
+  assert(localBot < N, "_bottom out of range.");
   idx_t top = _age.top();
   uint dirty_n_elems = dirty_size(localBot, top);
   assert(dirty_n_elems < N, "n_elems out of range.");
