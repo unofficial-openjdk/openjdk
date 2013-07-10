@@ -89,6 +89,7 @@ public class InstanceKlass extends Klass {
     genericSignature     = type.getAddressField("_generic_signature");
     majorVersion         = new CIntField(type.getCIntegerField("_major_version"), Oop.getHeaderSize());
     minorVersion         = new CIntField(type.getCIntegerField("_minor_version"), Oop.getHeaderSize());
+    miscFlags            = new CIntField(type.getCIntegerField("_misc_flags"), Oop.getHeaderSize());
     headerSize           = alignObjectOffset(Oop.getHeaderSize() + type.getSize());
 
     // read field offset constants
@@ -147,6 +148,16 @@ public class InstanceKlass extends Klass {
   private static AddressField  genericSignature;
   private static CIntField majorVersion;
   private static CIntField minorVersion;
+  private static CIntField miscFlags;
+
+  private static final long MISC_REWRITTEN            = 1 << 0; // methods rewritten.
+  private static final long MISC_HAS_NONSTATIC_FIELDS = 1 << 1; // for sizing with UseCompressedOops
+  private static final long MISC_SHOULD_VERIFY_CLASS  = 1 << 1; // allow caching of preverification
+  private static final long MISC_IS_ANONYMOUS         = 1 << 3; // has embedded _inner_classes field
+
+  public boolean isAnonymous() {
+    return (miscFlags.getValue(this) & MISC_IS_ANONYMOUS) != 0;
+  }
 
   // type safe enum for ClassState from instanceKlass.hpp
   public static class ClassState {
@@ -799,9 +810,22 @@ public class InstanceKlass extends Klass {
 
 
   public long getObjectSize() {
-    long bodySize =    alignObjectOffset(getVtableLen() * getHeap().getOopSize())
-                     + alignObjectOffset(getItableLen() * getHeap().getOopSize())
-                     + (getNonstaticOopMapSize()) * getHeap().getOopSize();
+    final long oopSize = getHeap().getOopSize();
+
+    long vtableSize = alignObjectOffset(getVtableLen() * oopSize);
+    long itableSize = alignObjectOffset(getItableLen() * oopSize);
+
+    long nonStaticOopMapSizeBytes = getNonstaticOopMapSize() * oopSize;
+    long alignedNonStaticOopMapSize = isInterface() || isAnonymous() ?
+                                        alignObjectOffset(nonStaticOopMapSizeBytes) :
+                                        nonStaticOopMapSizeBytes;
+
+    long interfaceImplementorSize = isInterface() ? oopSize : 0;
+    long hostKlassSize = isAnonymous() ? oopSize : 0;
+
+    long bodySize = vtableSize + itableSize + nonStaticOopMapSizeBytes +
+                    interfaceImplementorSize + hostKlassSize;
+
     return alignObjectSize(headerSize + bodySize);
   }
 
