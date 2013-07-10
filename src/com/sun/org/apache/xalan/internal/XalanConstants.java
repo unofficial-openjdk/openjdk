@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,45 +73,19 @@ public final class XalanConstants {
      * Default value when FEATURE_SECURE_PROCESSING (FSP) is set to true
      */
     public static final String EXTERNAL_ACCESS_DEFAULT_FSP = "";
-    /**
-     * JDK version by which the default is to restrict external connection
-     */
-    public static final int RESTRICT_BY_DEFAULT_JDK_VERSION = 8;
+
     /**
      * FEATURE_SECURE_PROCESSING (FSP) is false by default
      */
-    public static final String EXTERNAL_ACCESS_DEFAULT = getExternalAccessDefault(false);
+    public static final String EXTERNAL_ACCESS_DEFAULT = ACCESS_EXTERNAL_ALL;
+
+    public static final String XML_SECURITY_PROPERTY_MANAGER =
+            ORACLE_JAXP_PROPERTY_PREFIX + "xmlSecurityPropertyManager";
 
     /**
-     * Determine the default value of the external access properties
-     *
-     * jaxp 1.5 does not require implementations to restrict by default
-     *
-     * For JDK8:
-     * The default value is 'file' (including jar:file); The keyword "all" grants permission
-     * to all protocols. When {@link javax.xml.XMLConstants#FEATURE_SECURE_PROCESSING} is on,
-     * the default value is an empty string indicating no access is allowed.
-     *
-     * For JDK7:
-     * The default value is 'all' granting permission to all protocols. If by default,
-     * {@link javax.xml.XMLConstants#FEATURE_SECURE_PROCESSING} is true, it should
-     * not change the default value. However, if {@link javax.xml.XMLConstants#FEATURE_SECURE_PROCESSING}
-     * is set explicitly, the values of the properties shall be set to an empty string
-     * indicating no access is allowed.
-     *
-     * @param isSecureProcessing indicating if Secure Processing is set
-     * @return default value
+     * Check if we're in jdk8 or above
      */
-    public static String getExternalAccessDefault(boolean isSecureProcessing) {
-        String defaultValue = "all";
-        if (isJDKandAbove(RESTRICT_BY_DEFAULT_JDK_VERSION)) {
-            defaultValue = "file";
-            if (isSecureProcessing) {
-                defaultValue = EXTERNAL_ACCESS_DEFAULT_FSP;
-            }
-        }
-        return defaultValue;
-    }
+    public static final boolean IS_JDK8_OR_ABOVE = isJavaVersionAtLeast(8);
 
     /*
      * Check the version of the current JDK against that specified in the
@@ -125,7 +99,7 @@ public final class XalanConstants {
      * @return true if the current version is the same or above that represented
      * by the parameter
      */
-    public static boolean isJDKandAbove(int compareTo) {
+    public static boolean isJavaVersionAtLeast(int compareTo) {
         String javaVersion = SecuritySupport.getSystemProperty("java.version");
         String versions[] = javaVersion.split("\\.", 3);
         if (Integer.parseInt(versions[0]) >= compareTo ||
@@ -134,5 +108,4 @@ public final class XalanConstants {
         }
         return false;
     }
-
 } // class Constants
