@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,7 @@ import java.rmi.server.RemoteRef;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import java.security.PrivilegedActionException;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collections;
@@ -128,7 +129,6 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
             Map<String, ?> environment) {
         if (rmiServer == null && address == null) throw new
                 IllegalArgumentException("rmiServer and jmxServiceURL both null");
-
         initTransients();
 
         this.rmiServer = rmiServer;
@@ -239,10 +239,21 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
     //--------------------------------------------------------------------
     // implements JMXConnector interface
     //--------------------------------------------------------------------
+
+    /**
+     * @throws IOException if the connection could not be made because of a
+     *   communication problem, or in the case of the {@code iiop} protocol,
+     *   that RMI/IIOP is not supported
+     */
     public void connect() throws IOException {
         connect(null);
     }
 
+    /**
+     * @throws IOException if the connection could not be made because of a
+     *   communication problem, or in the case of the {@code iiop} protocol,
+     *   that RMI/IIOP is not supported
+     */
     public synchronized void connect(Map<String,?> environment)
     throws IOException {
         final boolean tracing = logger.traceOn();
@@ -2359,13 +2370,21 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
         }
     }
 
-    private static RMIConnection shadowIiopStub(Object stub)
+  private static RMIConnection shadowIiopStub(Object stub)
     throws InstantiationException, IllegalAccessException {
-        Object proxyStub = proxyStubClass.newInstance();
+        Object proxyStub = null;
+        try {
+            proxyStub = AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+                public Object run() throws Exception {
+                    return proxyStubClass.newInstance();
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            throw new InternalError();
+        }
         IIOPHelper.setDelegate(proxyStub, IIOPHelper.getDelegate(stub));
         return (RMIConnection) proxyStub;
     }
-
     private static RMIConnection getConnection(RMIServer server,
             Object credentials,
             boolean checkStub)
