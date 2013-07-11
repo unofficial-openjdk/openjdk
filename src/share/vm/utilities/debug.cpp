@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -330,8 +330,8 @@ bool is_error_reported() {
 #ifndef PRODUCT
 #include <signal.h>
 
-void test_error_handler(size_t test_num)
-{
+void test_error_handler() {
+  uintx test_num = ErrorHandlerTest;
   if (test_num == 0) return;
 
   // If asserts are disabled, use the corresponding guarantee instead.
@@ -343,6 +343,8 @@ void test_error_handler(size_t test_num)
 
   const char* const eol = os::line_separator();
   const char* const msg = "this message should be truncated during formatting";
+  char * const dataPtr = NULL;  // bad data pointer
+  const void (*funcPtr)(void) = (const void(*)()) 0xF;  // bad function pointer
 
   // Keep this in sync with test/runtime/6888954/vmerrors.sh.
   switch (n) {
@@ -364,11 +366,16 @@ void test_error_handler(size_t test_num)
     case  9: ShouldNotCallThis();
     case 10: ShouldNotReachHere();
     case 11: Unimplemented();
-    // This is last because it does not generate an hs_err* file on Windows.
-    case 12: os::signal_raise(SIGSEGV);
+    // There's no guarantee the bad data pointer will crash us
+    // so "break" out to the ShouldNotReachHere().
+    case 12: *dataPtr = '\0'; break;
+    // There's no guarantee the bad function pointer will crash us
+    // so "break" out to the ShouldNotReachHere().
+    case 13: (*funcPtr)(); break;
 
-    default: ShouldNotReachHere();
+    default: tty->print_cr("ERROR: %d: unexpected test_num value.", n);
   }
+  ShouldNotReachHere();
 }
 #endif // !PRODUCT
 
