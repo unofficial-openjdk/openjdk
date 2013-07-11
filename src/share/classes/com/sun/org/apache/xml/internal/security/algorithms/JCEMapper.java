@@ -160,7 +160,7 @@ public class JCEMapper {
         );
         algorithmsMap.put(
             XMLCipher.RSA_OAEP,
-            new Algorithm("RSA", "RSA/ECB/OAEPPadding", "KeyTransport")
+            new Algorithm("RSA", "RSA/ECB/OAEPWithSHA1AndMGF1Padding", "KeyTransport")
         );
         algorithmsMap.put(
             XMLCipher.DIFFIE_HELLMAN,
