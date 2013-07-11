@@ -115,6 +115,8 @@ endif
 
 ifeq ($(CROSS_COMPILE_ARCH),)
 RMIC = $(RMIC_JAVA) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
+else
+RMIC = $(BOOT_JAVA_CMD)  $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
 endif  
 
 $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
