@@ -174,12 +174,6 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     private boolean verificationResult;
 
-    // Cached SKID
-    private byte[] subjectKeyId = null;
-
-    // Cached AKID
-    private byte[] issuerKeyId = null;
-
     /**
      * Default constructor.
      */
@@ -1068,25 +1062,25 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public byte[] getIssuerKeyIdentifier()
     {
-        if (issuerKeyId == null) {
-            AuthorityKeyIdentifierExtension aki =
-                getAuthorityKeyIdentifierExtension();
-            if (aki != null) {
+        byte[] issuerKeyId = null;
+        AuthorityKeyIdentifierExtension aki =
+            getAuthorityKeyIdentifierExtension();
 
-                try {
-                    issuerKeyId = ((KeyIdentifier)
-                        aki.get(AuthorityKeyIdentifierExtension.KEY_ID))
-                            .getIdentifier();
-                } catch (IOException e) {
-                    // should never happen (because KEY_ID attr is supported)
+        if (aki != null) {
+
+            try {
+                KeyIdentifier ki =
+                    ((KeyIdentifier) aki.get(
+                        AuthorityKeyIdentifierExtension.KEY_ID));
+                if (ki != null) {
+                    issuerKeyId = ki.getIdentifier();
                 }
-
-            } else {
-                issuerKeyId = new byte[0]; // no AKID present
+            } catch (IOException e) {
+                // should never happen (because KEY_ID attr is supported)
             }
         }
 
-        return issuerKeyId.length != 0 ? issuerKeyId : null;
+        return issuerKeyId;
     }
 
     /**
@@ -1193,25 +1187,24 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public byte[] getSubjectKeyIdentifier()
     {
-        if (subjectKeyId == null) {
-            SubjectKeyIdentifierExtension ski =
-                getSubjectKeyIdentifierExtension();
-            if (ski != null) {
+        byte[] subjectKeyId = null;
+        SubjectKeyIdentifierExtension ski = getSubjectKeyIdentifierExtension();
 
-                try {
-                    subjectKeyId = ((KeyIdentifier)
-                        ski.get(SubjectKeyIdentifierExtension.KEY_ID))
-                            .getIdentifier();
-                } catch (IOException e) {
-                    // should never happen (because KEY_ID attr is supported)
+        if (ski != null) {
+
+            try {
+                KeyIdentifier ki =
+                    ((KeyIdentifier) ski.get(
+                        SubjectKeyIdentifierExtension.KEY_ID));
+                if (ki != null) {
+                    subjectKeyId = ki.getIdentifier();
                 }
-
-            } else {
-                subjectKeyId = new byte[0]; // no SKID present
+            } catch (IOException e) {
+                // should never happen (because KEY_ID attr is supported)
             }
         }
 
-        return subjectKeyId.length != 0 ? subjectKeyId : null;
+        return subjectKeyId;
     }
 
     /**
