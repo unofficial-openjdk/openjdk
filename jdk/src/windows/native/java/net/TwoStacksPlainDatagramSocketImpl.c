@@ -145,7 +145,7 @@ static int getFD1(JNIEnv *env, jobject this) {
 /*
  * This function returns JNI_TRUE if the datagram size exceeds the underlying
  * provider's ability to send to the target address. The following OS
- * oddies have been observed :-
+ * oddities have been observed :-
  *
  * 1. On Windows 95/98 if we try to send a datagram > 12k to an application
  *    on the same machine then the send will fail silently.
@@ -218,7 +218,7 @@ jboolean exceedSizeLimit(JNIEnv *env, jint fd, jint addr, jint size)
 
             /*
              * Step 3: On Windows 95/98 then enumerate the IP addresses on
-             * this machine. This is necesary because we need to check if the
+             * this machine. This is neccesary because we need to check if the
              * datagram is being sent to an application on the same machine.
              */
             if (is95or98) {
@@ -421,7 +421,8 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_init(JNIEnv *env, jclass cls) {
 
 JNIEXPORT void JNICALL
 Java_java_net_TwoStacksPlainDatagramSocketImpl_bind0(JNIEnv *env, jobject this,
-                                           jint port, jobject addressObj) {
+                                           jint port, jobject addressObj,
+                                           jboolean exclBind) {
     jobject fdObj = (*env)->GetObjectField(env, this, pdsi_fdID);
     jobject fd1Obj = (*env)->GetObjectField(env, this, pdsi_fd1ID);
 
@@ -464,7 +465,7 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_bind0(JNIEnv *env, jobject this,
         v6bind.addr = &lcladdr;
         v6bind.ipv4_fd = fd;
         v6bind.ipv6_fd = fd1;
-        if (NET_BindV6(&v6bind) != -1) {
+        if (NET_BindV6(&v6bind, exclBind) != -1) {
             /* check if the fds have changed */
             if (v6bind.ipv4_fd != fd) {
                 fd = v6bind.ipv4_fd;
@@ -491,7 +492,7 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_bind0(JNIEnv *env, jobject this,
             return;
         }
     } else {
-        if (bind(fd, (struct sockaddr *)&lcladdr, lcladdrlen) == -1) {
+        if (NET_WinBind(fd, (struct sockaddr *)&lcladdr, lcladdrlen, exclBind) == -1) {
             if (WSAGetLastError() == WSAEACCES) {
                 WSASetLastError(WSAEADDRINUSE);
             }
@@ -565,8 +566,8 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_connect0(JNIEnv *env, jobject thi
 
     if (xp_or_later) {
         /* SIO_UDP_CONNRESET fixes a bug introduced in Windows 2000, which
-         * returns connection reset errors un connected UDP sockets (as well
-         * as connected sockets. The solution is to only enable this feature
+         * returns connection reset errors on connected UDP sockets (as well
+         * as connected sockets). The solution is to only enable this feature
          * when the socket is connected
          */
         DWORD x1, x2; /* ignored result codes */
@@ -690,6 +691,12 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_send(JNIEnv *env, jobject this,
     fd = (*env)->GetIntField(env, fdObj, IO_fd_fdID);
 
     packetBufferLen = (*env)->GetIntField(env, packet, dp_lengthID);
+    /* Note: the buffer needn't be greater than 65,536 (0xFFFF)...
+     * the maximum size of an IP packet. Anything bigger is truncated anyway.
+     */
+    if (packetBufferLen > MAX_PACKET_LEN) {
+        packetBufferLen = MAX_PACKET_LEN;
+    }
 
     if (connected) {
         addrp = 0; /* arg to JVM_Sendto () null in this case */
@@ -728,7 +735,7 @@ Java_java_net_TwoStacksPlainDatagramSocketImpl_send(JNIEnv *env, jobject this,
         }
 
         /* When JNI-ifying the JDK's IO routines, we turned
-         * read's and write's of byte arrays of size greater
+         * reads and writes of byte arrays of size greater
          * than 2048 bytes into several operations of size 2048.
          * This saves a malloc()/memcpy()/free() for big
          * buffers.  This is OK for file IO and TCP, but that
@@ -1776,11 +1783,11 @@ static void setMulticastInterface(JNIEnv *env, jobject this, int fd, int fd1,
 
 /*
  * Class:     java_net_TwoStacksPlainDatagramSocketImpl
- * Method:    socketSetOption
+ * Method:    socketNativeSetOption
  * Signature: (ILjava/lang/Object;)V
  */
 JNIEXPORT void JNICALL
-Java_java_net_TwoStacksPlainDatagramSocketImpl_socketSetOption(JNIEnv *env,jobject this,
+Java_java_net_TwoStacksPlainDatagramSocketImpl_socketNativeSetOption(JNIEnv *env,jobject this,
                                                       jint opt,jobject value) {
 
     int fd=-1, fd1=-1;
