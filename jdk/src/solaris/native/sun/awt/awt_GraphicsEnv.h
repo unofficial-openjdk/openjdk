@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,11 +47,13 @@
 #include <X11/extensions/shmproto.h>
 #endif
 
+#define MITSHM_PERM_COMMON (0666)
+#define MITSHM_PERM_OWNER  (0600)
+
 extern int XShmQueryExtension();
 
 void TryInitMITShm(JNIEnv *env, jint *shmExt, jint *shmPixmaps);
-void resetXShmAttachFailed();
-jboolean isXShmAttachFailed();
+jboolean TryXShmAttach(JNIEnv *env, Display *display, XShmSegmentInfo *shminfo);
 
 #endif /* MITSHM */
 

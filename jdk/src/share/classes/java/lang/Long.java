@@ -28,6 +28,7 @@ package java.lang;
 import java.lang.annotation.Native;
 import java.math.*;
 
+
 /**
  * The {@code Long} class wraps a value of the primitive type {@code
  * long} in an object. An object of type {@code Long} contains a
@@ -344,18 +345,39 @@ public final class Long extends Number implements Comparable<Long> {
     }
 
     /**
-     * Convert the integer to an unsigned number.
+     * Format a long (treated as unsigned) into a String.
+     * @param val the value to format
+     * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
      */
-    private static String toUnsignedString0(long i, int shift) {
-        char[] buf = new char[64];
-        int charPos = 64;
+    static String toUnsignedString0(long val, int shift) {
+        // assert shift > 0 && shift <=5 : "Illegal shift value";
+        int mag = Long.SIZE - Long.numberOfLeadingZeros(val);
+        int chars = Math.max(((mag + (shift - 1)) / shift), 1);
+        char[] buf = new char[chars];
+
+        formatUnsignedLong(val, shift, buf, 0, chars);
+        return new String(buf, true);
+    }
+
+    /**
+     * Format a long (treated as unsigned) into a character buffer.
+     * @param val the unsigned long to format
+     * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
+     * @param buf the character buffer to write to
+     * @param offset the offset in the destination buffer to start at
+     * @param len the number of characters to write
+     * @return the lowest character location used
+     */
+     static int formatUnsignedLong(long val, int shift, char[] buf, int offset, int len) {
+        int charPos = len;
         int radix = 1 << shift;
-        long mask = radix - 1;
+        int mask = radix - 1;
         do {
-            buf[--charPos] = Integer.digits[(int)(i & mask)];
-            i >>>= shift;
-        } while (i != 0);
-        return new String(buf, charPos, (64 - charPos));
+            buf[offset + --charPos] = Integer.digits[((int) val) & mask];
+            val >>>= shift;
+        } while (val != 0 && charPos > 0);
+
+        return charPos;
     }
 
     /**
@@ -1031,9 +1053,9 @@ public final class Long extends Number implements Comparable<Long> {
      * Returns a hash code for a {@code long} value; compatible with
      * {@code Long.hashCode()}.
      *
-     * @since 1.8
-     *
+     * @param value the value to hash
      * @return a hash code value for a {@code long} value.
+     * @since 1.8
      */
     public static int hashCode(long value) {
         return (int)(value ^ (value >>> 32));
@@ -1335,6 +1357,7 @@ public final class Long extends Number implements Comparable<Long> {
      * one-bits in its two's complement binary representation, that is, if it
      * is equal to zero.
      *
+     * @param i the value whose highest one bit is to be computed
      * @return a {@code long} value with a single one-bit, in the position
      *     of the highest-order one-bit in the specified value, or zero if
      *     the specified value is itself equal to zero.
@@ -1358,6 +1381,7 @@ public final class Long extends Number implements Comparable<Long> {
      * one-bits in its two's complement binary representation, that is, if it
      * is equal to zero.
      *
+     * @param i the value whose lowest one bit is to be computed
      * @return a {@code long} value with a single one-bit, in the position
      *     of the lowest-order one-bit in the specified value, or zero if
      *     the specified value is itself equal to zero.
@@ -1382,6 +1406,7 @@ public final class Long extends Number implements Comparable<Long> {
      * <li>ceil(log<sub>2</sub>(x)) = {@code 64 - numberOfLeadingZeros(x - 1)}
      * </ul>
      *
+     * @param i the value whose number of leading zeros is to be computed
      * @return the number of zero bits preceding the highest-order
      *     ("leftmost") one-bit in the two's complement binary representation
      *     of the specified {@code long} value, or 64 if the value
@@ -1410,6 +1435,7 @@ public final class Long extends Number implements Comparable<Long> {
      * one-bits in its two's complement representation, in other words if it is
      * equal to zero.
      *
+     * @param i the value whose number of trailing zeros is to be computed
      * @return the number of zero bits following the lowest-order ("rightmost")
      *     one-bit in the two's complement binary representation of the
      *     specified {@code long} value, or 64 if the value is equal
@@ -1434,6 +1460,7 @@ public final class Long extends Number implements Comparable<Long> {
      * representation of the specified {@code long} value.  This function is
      * sometimes referred to as the <i>population count</i>.
      *
+     * @param i the value whose bits are to be counted
      * @return the number of one-bits in the two's complement binary
      *     representation of the specified {@code long} value.
      * @since 1.5
@@ -1462,6 +1489,8 @@ public final class Long extends Number implements Comparable<Long> {
      * ignored, even if the distance is negative: {@code rotateLeft(val,
      * distance) == rotateLeft(val, distance & 0x3F)}.
      *
+     * @param i the value whose bits are to be rotated left
+     * @param distance the number of bit positions to rotate left
      * @return the value obtained by rotating the two's complement binary
      *     representation of the specified {@code long} value left by the
      *     specified number of bits.
@@ -1484,6 +1513,8 @@ public final class Long extends Number implements Comparable<Long> {
      * ignored, even if the distance is negative: {@code rotateRight(val,
      * distance) == rotateRight(val, distance & 0x3F)}.
      *
+     * @param i the value whose bits are to be rotated right
+     * @param distance the number of bit positions to rotate right
      * @return the value obtained by rotating the two's complement binary
      *     representation of the specified {@code long} value right by the
      *     specified number of bits.
@@ -1498,6 +1529,7 @@ public final class Long extends Number implements Comparable<Long> {
      * two's complement binary representation of the specified {@code long}
      * value.
      *
+     * @param i the value to be reversed
      * @return the value obtained by reversing order of the bits in the
      *     specified {@code long} value.
      * @since 1.5
@@ -1518,6 +1550,7 @@ public final class Long extends Number implements Comparable<Long> {
      * return value is -1 if the specified value is negative; 0 if the
      * specified value is zero; and 1 if the specified value is positive.)
      *
+     * @param i the value whose signum is to be computed
      * @return the signum function of the specified {@code long} value.
      * @since 1.5
      */
@@ -1530,6 +1563,7 @@ public final class Long extends Number implements Comparable<Long> {
      * Returns the value obtained by reversing the order of the bytes in the
      * two's complement representation of the specified {@code long} value.
      *
+     * @param i the value whose bytes are to be reversed
      * @return the value obtained by reversing the bytes in the specified
      *     {@code long} value.
      * @since 1.5

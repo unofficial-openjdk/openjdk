@@ -44,9 +44,6 @@ class G1CMIsAliveClosure: public BoolObjectClosure {
  public:
   G1CMIsAliveClosure(G1CollectedHeap* g1) : _g1(g1) { }
 
-  void do_object(oop obj) {
-    ShouldNotCallThis();
-  }
   bool do_object_b(oop obj);
 };
 
@@ -572,8 +569,6 @@ protected:
   void clear_has_overflown()     { _has_overflown = false; }
   bool restart_for_overflow()    { return _restart_for_overflow; }
 
-  bool has_aborted()             { return _has_aborted; }
-
   // Methods to enter the two overflow sync barriers
   void enter_first_sync_barrier(uint worker_id);
   void enter_second_sync_barrier(uint worker_id);
@@ -823,6 +818,8 @@ public:
 
   // Called to abort the marking cycle after a Full GC takes palce.
   void abort();
+
+  bool has_aborted()      { return _has_aborted; }
 
   // This prints the global/local fingers. It is used for debugging.
   NOT_PRODUCT(void print_finger();)
