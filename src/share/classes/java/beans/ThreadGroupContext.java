@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
 package java.beans;
 
 import java.awt.GraphicsEnvironment;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -39,7 +38,7 @@ import java.util.WeakHashMap;
  */
 final class ThreadGroupContext {
 
-    private static final Map<ThreadGroup, ThreadGroupContext> contexts = new WeakHashMap<ThreadGroup, ThreadGroupContext>();
+    private static final WeakIdentityMap<ThreadGroupContext> contexts = new WeakIdentityMap<ThreadGroupContext>();
 
     /**
      * Returns the appropriate {@code AppContext} for the caller,
@@ -64,6 +63,8 @@ final class ThreadGroupContext {
 
     private Map<Class<?>, BeanInfo> beanInfoCache;
 
+    private ThreadGroupContext() {
+    }
 
     boolean isDesignTime() {
         return this.isDesignTime;
