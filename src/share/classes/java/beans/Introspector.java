@@ -170,21 +170,24 @@ public class Introspector {
         if (!ReflectUtil.isPackageAccessible(beanClass)) {
             return (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
         }
+        WeakCache<Class<?>, BeanInfo> beanInfoCache;
+        BeanInfo beanInfo;
         synchronized (BEANINFO_CACHE) {
-            WeakCache<Class<?>, BeanInfo> beanInfoCache =
-                    (WeakCache<Class<?>, BeanInfo>) AppContext.getAppContext().get(BEANINFO_CACHE);
+            beanInfoCache = (WeakCache<Class<?>, BeanInfo>) AppContext.getAppContext().get(BEANINFO_CACHE);
 
             if (beanInfoCache == null) {
                 beanInfoCache = new WeakCache<Class<?>, BeanInfo>();
                 AppContext.getAppContext().put(BEANINFO_CACHE, beanInfoCache);
             }
-            BeanInfo beanInfo = beanInfoCache.get(beanClass);
-            if (beanInfo == null) {
-                beanInfo = (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
+            beanInfo = beanInfoCache.get(beanClass);
+	}
+	if (beanInfo == null) {
+	    beanInfo = (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
+            synchronized (BEANINFO_CACHE) {
                 beanInfoCache.put(beanClass, beanInfo);
             }
-            return beanInfo;
         }
+	return beanInfo;
     }
 
     /**
