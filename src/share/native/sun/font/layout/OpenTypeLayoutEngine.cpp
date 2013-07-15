@@ -100,6 +100,14 @@ OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
     const GlyphPositioningTableHeader *gposTable =
         (const GlyphPositioningTableHeader *) getFontTable(gposTableTag);
 
+    applyTypoFlags();
+
+}
+
+void OpenTypeLayoutEngine::applyTypoFlags() {
+    const le_int32& typoFlags = fTypoFlags;
+    const LEFontInstance *fontInstance = fFontInstance;
+
     // todo: switch to more flags and bitfield rather than list of feature tags?
     switch (typoFlags) {
     case 0: break; // default
@@ -109,13 +117,6 @@ OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
     default: break;
     }
 
-    setScriptAndLanguageTags();
-
-    fGDEFTable = (const GlyphDefinitionTableHeader *) getFontTable(gdefTableTag);
-
-    if (gposTable != NULL && gposTable->coversScriptAndLanguage(fScriptTag, fLangSysTag)) {
-        fGPOSTable = gposTable;
-    }
 }
 
 void OpenTypeLayoutEngine::reset()
@@ -133,11 +134,16 @@ OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
     fFeatureOrder(FALSE), fGSUBTable(NULL), fGDEFTable(NULL),
     fGPOSTable(NULL), fSubstitutionFilter(NULL)
 {
+    applyTypoFlags();
     setScriptAndLanguageTags();
 }
 
 OpenTypeLayoutEngine::~OpenTypeLayoutEngine()
 {
+    if (fTypoFlags & LE_CHAR_FILTER_FEATURE_FLAG) {
+        delete fSubstitutionFilter;
+        fSubstitutionFilter = NULL;
+    }
     reset();
 }
 

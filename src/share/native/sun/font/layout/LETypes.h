@@ -208,6 +208,35 @@ typedef le_uint32 LEGlyphID;
 #define LE_CLIENT_SHIFT   24
 
 
+#ifndef LE_ASSERT_BAD_FONT
+#define LE_ASSERT_BAD_FONT 0
+#endif
+
+#if LE_ASSERT_BAD_FONT
+#include <stdio.h>
+#define LE_DEBUG_BAD_FONT(x) fprintf(stderr,"%s:%d: BAD FONT: %s\n", __FILE__, __LINE__, (x));
+#else
+#define LE_DEBUG_BAD_FONT(x)
+#endif
+
+/**
+ * Max value representable by a uintptr
+ */
+#ifndef UINTPTR_MAX
+#ifndef UINT32_MAX
+#define LE_UINTPTR_MAX 0xFFFFFFFFU
+#else
+#define LE_UINTPTR_MAX UINT32_MAX
+#endif
+#else
+#define LE_UINTPTR_MAX UINTPTR_MAX
+#endif
+
+/**
+ * Range check for overflow
+ */
+#define LE_RANGE_CHECK(type, count, ptrfn) (( (LE_UINTPTR_MAX / sizeof(type)) < count ) ? NULL : (ptrfn))
+
 /**
  * A convenience macro to get the Glyph ID part of an LEGlyphID.
  *
@@ -598,6 +627,21 @@ typedef enum LEErrorCode LEErrorCode;
  * @stable ICU 2.4
  */
 #define LE_SUCCESS(code) ((code)<=LE_NO_ERROR)
+
+enum LEFeatureENUMs {
+ LE_Kerning_FEATURE_ENUM = 0,
+ LE_Ligatures_FEATURE_ENUM = 1,
+ LE_CHAR_FILTER_FEATURE_ENUM = 31,
+};
+
+#define LE_Kerning_FEATURE_FLAG (1 << LE_Kerning_FEATURE_ENUM)
+#define LE_Ligatures_FEATURE_FLAG (1 << LE_Ligatures_FEATURE_ENUM)
+
+#define LE_CHAR_FILTER_FEATURE_ENUM 31
+
+#define LE_CHAR_FILTER_FEATURE_FLAG (1 << LE_CHAR_FILTER_FEATURE_ENUM)
+
+#define LE_DEFAULT_FEATURE_FLAG (LE_Kerning_FEATURE_FLAG | LE_Ligatures_FEATURE_FLAG) /**< default features */
 
 /**
  * A convenience macro to test for the failure of a LayoutEngine call.

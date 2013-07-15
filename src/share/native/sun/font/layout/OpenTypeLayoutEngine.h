@@ -150,6 +150,11 @@ private:
      */
     static const LETag languageTags[];
 
+    /**
+     * apply the typoflags. Only called by the c'tors.
+     */
+    void applyTypoFlags();
+
 protected:
     /**
      * A set of "default" features. The default characterProcessing method

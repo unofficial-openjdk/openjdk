@@ -31,6 +31,7 @@
 
 #include "LETypes.h"
 #include "LEScripts.h"
+#include "LESwaps.h"
 #include "LELanguages.h"
 
 #include "LayoutEngine.h"
@@ -387,7 +388,7 @@ void LayoutEngine::adjustGlyphPositions(const LEUnicode chars[], le_int32 offset
 
     adjustMarkGlyphs(&chars[offset], count, reverse, glyphStorage, &filter, success);
 
-    if (fTypoFlags & 0x1) { /* kerning enabled */
+    if (fTypoFlags & LE_Kerning_FEATURE_FLAG) { /* kerning enabled */
       static const le_uint32 kernTableTag = LE_KERN_TABLE_TAG;
 
       KernTable kt(fFontInstance, getFontTable(kernTableTag));
@@ -538,7 +539,7 @@ LayoutEngine *LayoutEngine::layoutEngineFactory(const LEFontInstance *fontInstan
 {
   // 3 -> kerning and ligatures
   return LayoutEngine::layoutEngineFactory(fontInstance, scriptCode,
-        languageCode, 3, success);
+        languageCode, LE_DEFAULT_FEATURE_FLAG, success);
 }
 
 LayoutEngine *LayoutEngine::layoutEngineFactory(const LEFontInstance *fontInstance,
@@ -621,7 +622,7 @@ LayoutEngine *LayoutEngine::layoutEngineFactory(const LEFontInstance *fontInstan
         const MorphTableHeader *morphTable =
           (MorphTableHeader *) fontInstance->getFontTable(mortTableTag);
 
-        if (morphTable != NULL) {
+        if (morphTable != NULL && SWAPL(morphTable->version)==0x00010000) {
             result = new GXLayoutEngine(fontInstance, scriptCode, languageCode, morphTable);
         } else {
             switch (scriptCode) {
