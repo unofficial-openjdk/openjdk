@@ -32,6 +32,7 @@ import com.sun.org.apache.xalan.internal.xsltc.DOM;
 import com.sun.org.apache.xalan.internal.xsltc.TransletException;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import com.sun.org.apache.xml.internal.utils.StringComparable;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 
 /**
  * Base class for sort records containing application specific sort keys
@@ -111,7 +112,7 @@ public abstract class NodeSortRecord {
         try {
             // -- W. Eliot Kimber (eliot@isogen.com)
             colFactClassname =
-                System.getProperty("com.sun.org.apache.xalan.internal.xsltc.COLLATOR_FACTORY");
+                SecuritySupport.getSystemProperty("com.sun.org.apache.xalan.internal.xsltc.COLLATOR_FACTORY");
         }
         catch (SecurityException e) {
             // If we can't read the propery, just use default collator

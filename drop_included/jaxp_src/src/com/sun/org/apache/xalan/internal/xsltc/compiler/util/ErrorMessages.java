@@ -947,7 +947,12 @@ public class ErrorMessages extends ListResourceBundle {
         "Cannot set the feature ''{0}'' on this TransformerFactory."},
 
         {ErrorMsg.JAXP_SECUREPROCESSING_FEATURE,
-        "FEATURE_SECURE_PROCESSING: Cannot set the feature to false when security manager is present."}
+	 "FEATURE_SECURE_PROCESSING: Cannot set the feature to false when security manager is present."},
+
+	{ErrorMsg.DESERIALIZE_TRANSLET_ERR, "When Java security is enabled, " +
+                        "support for deserializing TemplatesImpl is disabled." +
+                        "This can be overridden by setting the jdk.xml.enableTemplatesImplDeserialization" +
+                        " system property to true."}
     };
     }
 }

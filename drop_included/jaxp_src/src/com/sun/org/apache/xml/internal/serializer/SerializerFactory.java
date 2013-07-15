@@ -126,7 +126,7 @@ public final class SerializerFactory
 
 
 
-        ClassLoader loader = ObjectFactory.findClassLoader();
+        ClassLoader loader = com.sun.org.apache.xalan.internal.utils.ObjectFactory.findClassLoader();
 
         Class cls = ObjectFactory.findProviderClass(className, loader, true);
 

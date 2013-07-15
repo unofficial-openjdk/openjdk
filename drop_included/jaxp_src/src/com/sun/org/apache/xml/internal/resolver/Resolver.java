@@ -31,6 +31,7 @@ import java.util.Vector;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.MalformedURLException;
+import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
 import com.sun.org.apache.xml.internal.resolver.readers.SAXCatalogReader;
 import com.sun.org.apache.xml.internal.resolver.readers.OASISXMLCatalogReader;
 import com.sun.org.apache.xml.internal.resolver.readers.TR9401CatalogReader;
@@ -521,7 +522,7 @@ public class Resolver extends Catalog {
      */
     private Vector resolveAllLocalSystem(String systemId) {
         Vector map = new Vector();
-        String osname = System.getProperty("os.name");
+        String osname = SecuritySupport.getSystemProperty("os.name");
         boolean windows = (osname.indexOf("Windows") >= 0);
         Enumeration en = catalogEntries.elements();
         while (en.hasMoreElements()) {
@@ -549,7 +550,7 @@ public class Resolver extends Catalog {
      */
     private Vector resolveLocalSystemReverse(String systemId) {
         Vector map = new Vector();
-        String osname = System.getProperty("os.name");
+        String osname = SecuritySupport.getSystemProperty("os.name");
         boolean windows = (osname.indexOf("Windows") >= 0);
         Enumeration en = catalogEntries.elements();
         while (en.hasMoreElements()) {

@@ -31,6 +31,8 @@ import com.sun.org.apache.xpath.internal.objects.XNumber;
 import com.sun.org.apache.xpath.internal.objects.XObject;
 import com.sun.org.apache.xpath.internal.objects.XString;
 import com.sun.org.apache.xpath.internal.res.XPATHErrorResources;
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 
 /**
  * Execute the SystemProperty() function.
@@ -100,7 +102,7 @@ public class FuncSystemProperty extends FunctionOneArg
 
         try
         {
-          result = System.getProperty(propName);
+          result = SecuritySupport.getSystemProperty(propName);
 
           if (null == result)
           {
@@ -122,7 +124,7 @@ public class FuncSystemProperty extends FunctionOneArg
     {
       try
       {
-        result = System.getProperty(fullName);
+        result = SecuritySupport.getSystemProperty(fullName);
 
         if (null == result)
         {
@@ -163,14 +165,12 @@ public class FuncSystemProperty extends FunctionOneArg
    * should already be fully qualified as path/filename
    * @param target The target property bag the file will be placed into.
    */
-  private void loadPropertyFile(String file, Properties target)
+  public void loadPropertyFile(String file, Properties target)
   {
     try
     {
       // Use SecuritySupport class to provide priveleged access to property file
-      SecuritySupport ss = SecuritySupport.getInstance();
-
-      InputStream is = ss.getResourceAsStream(ObjectFactory.findClassLoader(),
+      InputStream is = SecuritySupport.getResourceAsStream(ObjectFactory.findClassLoader(),
                                               file);
 
       // get a buffered version

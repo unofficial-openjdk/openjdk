@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 
 /**
  * Provides information about encodings. Depends on the Java runtime
@@ -218,7 +219,7 @@ public final class Encodings extends Object
                 // Get the default system character encoding.  This may be
                 // incorrect if they passed in a writer, but right now there
                 // seems to be no way to get the encoding from a writer.
-                encoding = System.getProperty("file.encoding", "UTF8");
+                encoding = SecuritySupport.getSystemProperty("file.encoding", "UTF8");
 
                 if (null != encoding)
                 {
@@ -312,7 +313,7 @@ public final class Encodings extends Object
 
             try
             {
-                urlString = System.getProperty(ENCODINGS_PROP, "");
+                urlString = SecuritySupport.getSystemProperty(ENCODINGS_PROP, "");
             }
             catch (SecurityException e)
             {
@@ -324,9 +325,7 @@ public final class Encodings extends Object
             }
 
             if (is == null) {
-                SecuritySupport ss = SecuritySupport.getInstance();
-                is = ss.getResourceAsStream(ObjectFactory.findClassLoader(),
-                                            ENCODINGS_FILE);
+                is = SecuritySupport.getResourceAsStream(ENCODINGS_FILE);
             }
 
             Properties props = new Properties();

@@ -36,6 +36,8 @@ import java.security.PrivilegedAction;
 
 import javax.xml.transform.TransformerException;
 
+import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
+
 import com.sun.org.apache.xml.internal.serializer.utils.MsgKey;
 import com.sun.org.apache.xml.internal.serializer.utils.SystemIDResolver;
 import com.sun.org.apache.xml.internal.serializer.utils.Utils;

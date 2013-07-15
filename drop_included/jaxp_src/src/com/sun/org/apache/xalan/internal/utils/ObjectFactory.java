@@ -18,10 +18,10 @@
  * limitations under the License.
  */
 /*
- * $Id: ObjectFactory.java,v 1.2.4.1 2005/09/14 20:25:54 jeffsuttor Exp $
+ * $Id: ObjectFactory.java,v 1.2.4.1 2005/09/15 02:39:54 jeffsuttor Exp $
  */
 
-package com.sun.org.apache.xpath.internal.functions;
+package com.sun.org.apache.xalan.internal.utils;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -39,21 +39,23 @@ import java.io.InputStreamReader;
  * <p>
  * This code is designed to implement the JAXP 1.1 spec pluggability
  * feature and is designed to run on JDK version 1.1 and
- * later, and to compile on JDK 1.2 and onward.  
+ * later, and to compile on JDK 1.2 and onward.
  * The code also runs both as part of an unbundled jar file and
  * when bundled as part of the JDK.
  * <p>
  * This class was moved from the <code>javax.xml.parsers.ObjectFactory</code>
- * class and modified to be used as a general utility for creating objects 
+ * class and modified to be used as a general utility for creating objects
  * dynamically.
  *
- * @version $Id: ObjectFactory.java,v 1.7 2008/04/02 00:40:59 joehw Exp $
+ * @version $Id: ObjectFactory.java,v 1.11 2010-11-01 04:34:25 joehw Exp $
  */
-class ObjectFactory {
+public class ObjectFactory {
 
     //
     // Constants
     //
+     private static final String XALAN_INTERNAL = "com.sun.org.apache.xalan.internal";
+     private static final String XERCES_INTERNAL = "com.sun.org.apache.xerces.internal";
 
     // name of default properties file to look for in JDK's jre/lib directory
     private static final String DEFAULT_PROPERTIES_FILENAME =
@@ -100,7 +102,7 @@ class ObjectFactory {
      *
      * @exception ObjectFactory.ConfigurationError
      */
-    static Object createObject(String factoryId, String fallbackClassName)
+    public static Object createObject(String factoryId, String fallbackClassName)
         throws ConfigurationError {
         return createObject(factoryId, null, fallbackClassName);
     } // createObject(String,String):Object
@@ -127,7 +129,7 @@ class ObjectFactory {
      *
      * @exception ObjectFactory.ConfigurationError
      */
-    static Object createObject(String factoryId, 
+    static Object createObject(String factoryId,
                                       String propertiesFilename,
                                       String fallbackClassName)
         throws ConfigurationError
@@ -174,7 +176,7 @@ class ObjectFactory {
      *
      * @exception ObjectFactory.ConfigurationError
      */
-    static Class lookUpFactoryClass(String factoryId) 
+    public static Class lookUpFactoryClass(String factoryId)
         throws ConfigurationError
     {
         return lookUpFactoryClass(factoryId, null, null);
@@ -202,7 +204,7 @@ class ObjectFactory {
      *
      * @exception ObjectFactory.ConfigurationError
      */
-    static Class lookUpFactoryClass(String factoryId,
+    public static Class lookUpFactoryClass(String factoryId,
                                            String propertiesFilename,
                                            String fallbackClassName)
         throws ConfigurationError
@@ -260,11 +262,9 @@ class ObjectFactory {
                                                 String propertiesFilename,
                                                 String fallbackClassName)
     {
-        SecuritySupport ss = SecuritySupport.getInstance();
-
         // Use the system property first
         try {
-            String systemProp = ss.getSystemProperty(factoryId);
+            String systemProp = SecuritySupport.getSystemProperty(factoryId);
             if (systemProp != null) {
                 if (DEBUG) debugPrintln("found system property, value=" + systemProp);
                 return systemProp;
@@ -282,11 +282,11 @@ class ObjectFactory {
             File propertiesFile = null;
             boolean propertiesFileExists = false;
             try {
-                String javah = ss.getSystemProperty("java.home");
+                String javah = SecuritySupport.getSystemProperty("java.home");
                 propertiesFilename = javah + File.separator +
                     "lib" + File.separator + DEFAULT_PROPERTIES_FILENAME;
                 propertiesFile = new File(propertiesFilename);
-                propertiesFileExists = ss.getFileExists(propertiesFile);
+                propertiesFileExists = SecuritySupport.getFileExists(propertiesFile);
             } catch (SecurityException e) {
                 // try again...
                 fLastModified = -1;
@@ -300,7 +300,7 @@ class ObjectFactory {
                     // file existed last time
                     if(fLastModified >= 0) {
                         if(propertiesFileExists &&
-                                (fLastModified < (fLastModified = ss.getLastModified(propertiesFile)))) {
+                                (fLastModified < (fLastModified = SecuritySupport.getLastModified(propertiesFile)))) {
                             loadProperties = true;
                         } else {
                             // file has stopped existing...
@@ -313,23 +313,23 @@ class ObjectFactory {
                         // file has started to exist:
                         if(propertiesFileExists) {
                             loadProperties = true;
-                            fLastModified = ss.getLastModified(propertiesFile);
+                            fLastModified = SecuritySupport.getLastModified(propertiesFile);
                         } // else, nothing's changed
                     }
                     if(loadProperties) {
                         // must never have attempted to read xalan.properties
                         // before (or it's outdeated)
                         fXalanProperties = new Properties();
-                        fis = ss.getFileInputStream(propertiesFile);
+                        fis = SecuritySupport.getFileInputStream(propertiesFile);
                         fXalanProperties.load(fis);
                     }
-	        } catch (Exception x) {
-	            fXalanProperties = null;
-	            fLastModified = -1;
+                } catch (Exception x) {
+                    fXalanProperties = null;
+                    fLastModified = -1;
                     // assert(x instanceof FileNotFoundException
-	            //        || x instanceof SecurityException)
-	            // In both cases, ignore and continue w/ next location
-	        }
+                    //        || x instanceof SecurityException)
+                    // In both cases, ignore and continue w/ next location
+                }
                 finally {
                     // try to close the input stream if one was opened.
                     if (fis != null) {
@@ -339,7 +339,7 @@ class ObjectFactory {
                         // Ignore the exception.
                         catch (IOException exc) {}
                     }
-                }	            
+                }
             }
             if(fXalanProperties != null) {
                 factoryClassName = fXalanProperties.getProperty(factoryId);
@@ -347,7 +347,7 @@ class ObjectFactory {
         } else {
             FileInputStream fis = null;
             try {
-                fis = ss.getFileInputStream(new File(propertiesFilename));
+                fis = SecuritySupport.getFileInputStream(new File(propertiesFilename));
                 Properties props = new Properties();
                 props.load(fis);
                 factoryClassName = props.getProperty(factoryId);
@@ -365,7 +365,7 @@ class ObjectFactory {
                     // Ignore the exception.
                     catch (IOException exc) {}
                 }
-            }               
+            }
         }
         if (factoryClassName != null) {
             if (DEBUG) debugPrintln("found in " + propertiesFilename + ", value="
@@ -392,15 +392,18 @@ class ObjectFactory {
      * Figure out which ClassLoader to use.  For JDK 1.2 and later use
      * the context ClassLoader.
      */
-    static ClassLoader findClassLoader()
+    public static ClassLoader findClassLoader()
         throws ConfigurationError
-    { 
-        SecuritySupport ss = SecuritySupport.getInstance();
+    {
+        if (System.getSecurityManager()!=null) {
+            //this will ensure bootclassloader is used
+            return null;
+        }
 
         // Figure out which ClassLoader to use for loading the provider
         // class.  If there is a Context ClassLoader then use it.
-        ClassLoader context = ss.getContextClassLoader();
-        ClassLoader system = ss.getSystemClassLoader();
+        ClassLoader context = SecuritySupport.getContextClassLoader();
+        ClassLoader system = SecuritySupport.getSystemClassLoader();
 
         ClassLoader chain = system;
         while (true) {
@@ -425,7 +428,7 @@ class ObjectFactory {
                     if (chain == null) {
                         break;
                     }
-                    chain = ss.getParentClassLoader(chain);
+                    chain = SecuritySupport.getParentClassLoader(chain);
                 }
 
                 // Assert: Current ClassLoader not in chain of
@@ -440,8 +443,8 @@ class ObjectFactory {
 
             // Check for any extension ClassLoaders in chain up to
             // boot ClassLoader
-            chain = ss.getParentClassLoader(chain);
-        };
+            chain = SecuritySupport.getParentClassLoader(chain);
+        }
 
         // Assert: Context ClassLoader not in chain of
         // boot/extension/system ClassLoaders
@@ -449,8 +452,23 @@ class ObjectFactory {
     } // findClassLoader():ClassLoader
 
     /**
+     * Create an instance of a class using the same classloader for the ObjectFactory by default
+     * or bootclassloader when Security Manager is in place
+     */
+    public static Object newInstance(String className, boolean doFallback)
+        throws ConfigurationError
+    {
+        if (System.getSecurityManager()!=null) {
+            return newInstance(className, null, doFallback);
+        } else {
+            return newInstance(className,
+                findClassLoader (), doFallback);
+        }
+    }
+
+    /**
      * Create an instance of a class using the specified ClassLoader
-     */ 
+     */
     static Object newInstance(String className, ClassLoader cl,
                                       boolean doFallback)
         throws ConfigurationError
@@ -473,26 +491,46 @@ class ObjectFactory {
     }
 
     /**
+     * Find a Class using the same classloader for the ObjectFactory by default
+     * or bootclassloader when Security Manager is in place
+     */
+    public static Class findProviderClass(String className, boolean doFallback)
+        throws ClassNotFoundException, ConfigurationError
+    {
+        if (System.getSecurityManager()!=null) {
+            return Class.forName(className);
+        } else {
+            return findProviderClass (className,
+                findClassLoader (), doFallback);
+        }
+    }
+
+    /**
      * Find a Class using the specified ClassLoader
-     */ 
+     */
     static Class findProviderClass(String className, ClassLoader cl,
                                            boolean doFallback)
         throws ClassNotFoundException, ConfigurationError
-    {   
+    {
         //throw security exception if the calling thread is not allowed to access the
         //class. Restrict the access to the package classes as specified in java.security policy.
         SecurityManager security = System.getSecurityManager();
         try{
-                if (security != null){
+            if (security != null){
+                if (className.startsWith(XALAN_INTERNAL) ||
+                    className.startsWith(XERCES_INTERNAL)) {
+                    cl = null;
+                } else {
                     final int lastDot = className.lastIndexOf(".");
                     String packageName = className;
                     if (lastDot != -1) packageName = className.substring(0, lastDot);
                     security.checkPackageAccess(packageName);
-                 }   
+                }
+             }
         }catch(SecurityException e){
             throw e;
         }
-        
+
         Class providerClass;
         if (cl == null) {
             // XXX Use the bootstrap ClassLoader.  There is no way to
@@ -536,21 +574,20 @@ class ObjectFactory {
      */
     private static String findJarServiceProviderName(String factoryId)
     {
-        SecuritySupport ss = SecuritySupport.getInstance();
         String serviceId = SERVICES_PATH + factoryId;
         InputStream is = null;
 
         // First try the Context ClassLoader
         ClassLoader cl = findClassLoader();
 
-        is = ss.getResourceAsStream(cl, serviceId);
+        is = SecuritySupport.getResourceAsStream(cl, serviceId);
 
         // If no provider found then try the current ClassLoader
         if (is == null) {
             ClassLoader current = ObjectFactory.class.getClassLoader();
             if (cl != current) {
                 cl = current;
-                is = ss.getResourceAsStream(cl, serviceId);
+                is = SecuritySupport.getResourceAsStream(cl, serviceId);
             }
         }
 
@@ -584,7 +621,7 @@ class ObjectFactory {
         } catch (java.io.UnsupportedEncodingException e) {
             rd = new BufferedReader(new InputStreamReader(is));
         }
-        
+
         String factoryClassName = null;
         try {
             // XXX Does not handle all possible input as specified by the
@@ -601,7 +638,7 @@ class ObjectFactory {
             }
             // Ignore the exception.
             catch (IOException exc) {}
-        }          
+        }
 
         if (factoryClassName != null &&
             ! "".equals(factoryClassName)) {
@@ -618,46 +655,5 @@ class ObjectFactory {
         // No provider found
         return null;
     }
-
-    //
-    // Classes
-    //
-
-    /**
-     * A configuration error.
-     */
-    static class ConfigurationError 
-        extends Error {
-                static final long serialVersionUID = -5782303800588797207L;
-        //
-        // Data
-        //
-
-        /** Exception. */
-        private Exception exception;
-
-        //
-        // Constructors
-        //
-
-        /**
-         * Construct a new instance with the specified detail string and
-         * exception.
-         */
-        ConfigurationError(String msg, Exception x) {
-            super(msg);
-            this.exception = x;
-        } // <init>(String,Exception)
-
-        //
-        // Public methods
-        //
-
-        /** Returns the exception associated to this error. */
-        Exception getException() {
-            return exception;
-        } // getException():Exception
-
-    } // class ConfigurationError
 
 } // class ObjectFactory

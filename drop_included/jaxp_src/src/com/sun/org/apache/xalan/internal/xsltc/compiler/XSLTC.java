@@ -41,10 +41,12 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import com.sun.org.apache.bcel.internal.classfile.JavaClass;
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
 import com.sun.org.apache.xml.internal.dtm.DTM;
 
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -257,7 +259,7 @@ public final class XSLTC {
             return compile(input, _className);
         }
         catch (IOException e) {
-            _parser.reportError(Constants.FATAL, new ErrorMsg(e));
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
             return false;
         }
     }
@@ -276,7 +278,7 @@ public final class XSLTC {
             return compile(input, name);
         }
         catch (IOException e) {
-            _parser.reportError(Constants.FATAL, new ErrorMsg(e));
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
             return false;
         }
     }
@@ -361,11 +363,11 @@ public final class XSLTC {
         }
         catch (Exception e) {
             /*if (_debug)*/ e.printStackTrace();
-            _parser.reportError(Constants.FATAL, new ErrorMsg(e));
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
         }
         catch (Error e) {
             if (_debug) e.printStackTrace();
-            _parser.reportError(Constants.FATAL, new ErrorMsg(e));
+            _parser.reportError(Constants.FATAL, new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR, e));
         }
         finally {
             _reader = null; // reset this here to be sure it is not re-used
@@ -573,7 +575,7 @@ public final class XSLTC {
      */
     public boolean setDestDirectory(String dstDirName) {
         final File dir = new File(dstDirName);
-        if (dir.exists() || dir.mkdirs()) {
+        if (SecuritySupport.getFileExists(dir) || dir.mkdirs()) {
             _destDir = dir;
             return true;
         }
@@ -746,7 +748,7 @@ public final class XSLTC {
             String parentDir = outFile.getParent();
             if (parentDir != null) {
                 File parentFile = new File(parentDir);
-                if (!parentFile.exists())
+                if (!SecuritySupport.getFileExists(parentFile))
                     parentFile.mkdirs();
             }
         }

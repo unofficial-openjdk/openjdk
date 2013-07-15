@@ -23,6 +23,7 @@
 
 package com.sun.org.apache.xalan.internal.xsltc.compiler.util;
 
+import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -45,6 +46,8 @@ public final class ErrorMsg {
     private String _url = null;
     Object[] _params = null;
     private boolean _isWarningError;
+
+    Throwable _cause;
 
     // Compiler error messages
     public static final String MULTIPLE_STYLESHEET_ERR = "MULTIPLE_STYLESHEET_ERR";
@@ -157,6 +160,8 @@ public final class ErrorMsg {
     public static final String INVALID_NCNAME_ERR = "INVALID_NCNAME_ERR";
     public static final String INVALID_METHOD_IN_OUTPUT = "INVALID_METHOD_IN_OUTPUT";
                                                      
+    public static final String DESERIALIZE_TRANSLET_ERR = "DESERIALIZE_TEMPLATES_ERR";
+
     // All error messages are localized and are stored in resource bundles.
     // This array and the following 4 strings are read from that bundle.
     private static ResourceBundle _bundle;
@@ -167,7 +172,7 @@ public final class ErrorMsg {
     public final static String RUNTIME_ERROR_KEY    = "RUNTIME_ERROR_KEY";
 
     static {
-        _bundle = ResourceBundle.getBundle(
+        _bundle = SecuritySupport.getResourceBundle(
                           "com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMessages",
                           Locale.getDefault());
     }
@@ -177,10 +182,11 @@ public final class ErrorMsg {
 	_line = 0;
     }
 	
-    public ErrorMsg(Throwable e) {
-   	_code = null;
+    public ErrorMsg(String code, Throwable e) {
+        _code = code;
 	_message = e.getMessage();
 	_line = 0;
+        _cause = e;
     }
 
     public ErrorMsg(String message, int line) {
@@ -230,6 +236,10 @@ public final class ErrorMsg {
 	_params = new Object[2];
 	_params[0] = param1;
 	_params[1] = param2;
+    }
+
+    public Throwable getCause() {
+        return _cause;
     }
 
     private String getFileName(SyntaxTreeNode node) {
