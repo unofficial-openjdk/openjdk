@@ -50,8 +50,27 @@ import sun.security.util.SecurityConstants;
 
 
 class Trampoline {
+    static {
+        if (Trampoline.class.getClassLoader() == null) {
+            throw new Error(
+                "Trampoline must not be defined by the bootstrap classloader");
+        }
+    }
+
+    private static void ensureInvocableMethod(Method m)
+        throws InvocationTargetException
+    {
+        Class<?> clazz = m.getDeclaringClass();
+        if (clazz.equals(AccessController.class) ||
+            clazz.equals(Method.class))
+            throw new InvocationTargetException(
+                new UnsupportedOperationException("invocation not supported"));
+    }
+
     private static Object invoke(Method m, Object obj, Object[] params)
-        throws InvocationTargetException, IllegalAccessException {
+        throws InvocationTargetException, IllegalAccessException
+    {
+        ensureInvocableMethod(m);
         return m.invoke(obj, params);
     }
 }
@@ -254,10 +273,6 @@ public final class MethodUtil extends SecureClassLoader {
      */
     public static Object invoke(Method m, Object obj, Object[] params)
         throws InvocationTargetException, IllegalAccessException {
-        if (m.getDeclaringClass().equals(AccessController.class) ||
-            m.getDeclaringClass().equals(Method.class))
-            throw new InvocationTargetException(
-                new UnsupportedOperationException("invocation not supported"));
         try {
             return bounce.invoke(null, new Object[] {m, obj, params});
         } catch (InvocationTargetException ie) {
@@ -292,7 +307,7 @@ public final class MethodUtil extends SecureClassLoader {
 
                     types = new Class[] {Method.class, Object.class, Object[].class};
                     b = t.getDeclaredMethod("invoke", types);
-                    ((AccessibleObject)b).setAccessible(true);
+                    b.setAccessible(true);
                     return b;
                 }
             });
