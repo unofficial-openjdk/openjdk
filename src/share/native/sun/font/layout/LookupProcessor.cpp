@@ -42,6 +42,8 @@
 #include "LEGlyphStorage.h"
 #include "LESwaps.h"
 
+U_NAMESPACE_BEGIN
+
 le_uint32 LookupProcessor::applyLookupTable(const LookupTable *lookupTable, GlyphIterator *glyphIterator,
                                          const LEFontInstance *fontInstance) const
 {
@@ -65,10 +67,9 @@ le_uint32 LookupProcessor::applyLookupTable(const LookupTable *lookupTable, Glyp
     return 1;
 }
 
-le_int32 LookupProcessor::process(LEGlyphStorage &glyphStorage,
-    GlyphPositionAdjustments *glyphPositionAdjustments,
-    le_bool rightToLeft, const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
-    const LEFontInstance *fontInstance) const
+le_int32 LookupProcessor::process(LEGlyphStorage &glyphStorage, GlyphPositionAdjustments *glyphPositionAdjustments,
+                              le_bool rightToLeft, const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
+                              const LEFontInstance *fontInstance) const
 {
     le_int32 glyphCount = glyphStorage.getGlyphCount();
 
@@ -140,8 +141,7 @@ le_int32 LookupProcessor::selectLookups(const FeatureTable *featureTable, Featur
 
 LookupProcessor::LookupProcessor(const char *baseAddress,
         Offset scriptListOffset, Offset featureListOffset, Offset lookupListOffset,
-        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap,
-        le_int32 featureMapCount, le_bool orderFeatures)
+        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap, le_int32 featureMapCount, le_bool orderFeatures)
     : lookupListTable(NULL), featureListTable(NULL), lookupSelectArray(NULL), lookupSelectCount(0),
       lookupOrderArray(NULL), lookupOrderCount(0)
 {
@@ -309,3 +309,5 @@ LookupProcessor::~LookupProcessor()
     LE_DELETE_ARRAY(lookupOrderArray);
     LE_DELETE_ARRAY(lookupSelectArray);
 }
+
+U_NAMESPACE_END

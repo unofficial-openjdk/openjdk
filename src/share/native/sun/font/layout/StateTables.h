@@ -32,6 +32,11 @@
 #ifndef __STATETABLES_H
 #define __STATETABLES_H
 
+/**
+ * \file
+ * \internal
+ */
+
 #include "LETypes.h"
 #include "LayoutTables.h"
 
@@ -69,6 +74,8 @@
 #define LE_STATE_PATIENCE_CURR(type,x)  type le_patience_curr=(x)
 #define LE_STATE_PATIENCE_INCR(x)    if((x)!=le_patience_curr) ++le_patience_count;
 
+
+U_NAMESPACE_BEGIN
 
 struct StateTableHeader
 {
@@ -113,4 +120,6 @@ struct StateEntry
     le_int16    flags;
 };
 
+U_NAMESPACE_END
 #endif
+

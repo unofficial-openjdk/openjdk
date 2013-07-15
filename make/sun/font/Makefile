@@ -209,3 +209,7 @@ CPPFLAGS += -I$(PLATFORM_SRC)/native/sun/windows \
 	    -I$(PLATFORM_SRC)/native/sun/java2d/d3d
 endif
 
+# Make the Layout Engine build standalone
+CPPFLAGS += -DLE_STANDALONE
+
+

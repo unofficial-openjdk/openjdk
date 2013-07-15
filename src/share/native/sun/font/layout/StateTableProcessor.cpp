@@ -38,6 +38,8 @@
 #include "LEGlyphStorage.h"
 #include "LESwaps.h"
 
+U_NAMESPACE_BEGIN
+
 StateTableProcessor::StateTableProcessor()
 {
 }
@@ -101,3 +103,5 @@ void StateTableProcessor::process(LEGlyphStorage &glyphStorage)
 
     endStateTable();
 }
+
+U_NAMESPACE_END

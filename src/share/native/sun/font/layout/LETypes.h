@@ -23,7 +23,6 @@
  *
  */
 
-
 /*
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
@@ -33,73 +32,97 @@
 #ifndef __LETYPES_H
 #define __LETYPES_H
 
-#define LE_USE_CMEMORY
+/**
+ * If LE_Standalone is defined, it must exist and contain
+ * definitions for some core ICU defines.
+ */
+#ifdef LE_STANDALONE
+#include "LEStandalone.h"
+#endif
 
+#ifdef LE_STANDALONE
+/* Stand-alone Layout Engine- without ICU. */
+#include "LEStandalone.h"
+#define LE_USE_CMEMORY
+#else
+#if !defined(LE_USE_CMEMORY) && (defined(U_LAYOUT_IMPLEMENTATION) || defined(U_LAYOUTEX_IMPLEMENTATION) || defined(U_STATIC_IMPLEMENTATION) || defined(U_COMBINED_IMPLEMENTATION))
+#define LE_USE_CMEMORY
+#endif
+
+#include "unicode/utypes.h"
+#include "unicode/uobject.h"
 #ifdef LE_USE_CMEMORY
 #include "cmemory.h"
 #endif
+#endif /* not standalone */
 
-#ifndef _LP64
-typedef long le_int32;
-typedef unsigned long le_uint32;
-#else
-typedef int le_int32;
-typedef unsigned int le_uint32;
-#endif
+U_NAMESPACE_BEGIN
 
-typedef short le_int16;
-typedef unsigned short le_uint16;
-typedef signed char le_int8;
-typedef unsigned char le_uint8;
-typedef char le_bool;
+/*!
+ * \file
+ * \brief Basic definitions for the ICU LayoutEngine
+ */
 
-typedef char UClassID;
-
-#if 0
 /**
  * A type used for signed, 32-bit integers.
  *
  * @stable ICU 2.4
  */
+#ifndef HAVE_LE_INT32
 typedef int32_t le_int32;
+#endif
 
 /**
  * A type used for unsigned, 32-bit integers.
  *
  * @stable ICU 2.4
  */
+#ifndef HAVE_LE_UINT32
 typedef uint32_t le_uint32;
+#endif
 
 /**
  * A type used for signed, 16-bit integers.
  *
  * @stable ICU 2.4
  */
+#ifndef HAVE_LE_INT16
 typedef int16_t le_int16;
+#endif
 
+#ifndef HAVE_LE_UINT16
 /**
  * A type used for unsigned, 16-bit integers.
  *
  * @stable ICU 2.4
  */
 typedef uint16_t le_uint16;
+#endif
 
+#ifndef HAVE_LE_INT8
 /**
  * A type used for signed, 8-bit integers.
  *
  * @stable ICU 2.4
  */
 typedef int8_t le_int8;
-
+#endif
+ 
+#ifndef HAVE_LE_UINT8
 /**
  * A type used for unsigned, 8-bit integers.
  *
  * @stable ICU 2.4
  */
 typedef uint8_t le_uint8;
-
-typedef char le_bool;
 #endif
+
+/**
+* A type used for boolean values.
+*
+* @stable ICU 2.4
+*/
+typedef UBool le_bool;
 
 #ifndef TRUE
 /**
@@ -292,21 +315,21 @@ typedef le_uint32 LEGlyphID;
  *
  * @stable ICU 2.4
  */
-typedef le_uint16 LEUnicode16;
+typedef UChar LEUnicode16;
 
 /**
  * Used to represent 32-bit Unicode code points.
  *
  * @stable ICU 2.4
  */
-typedef le_uint32 LEUnicode32;
+typedef UChar32 LEUnicode32;
 
 /**
  * Used to represent 16-bit Unicode code points.
  *
  * @deprecated since ICU 2.4. Use LEUnicode16 instead
  */
-typedef le_uint16 LEUnicode;
+typedef UChar LEUnicode;
 
 /**
  * Used to hold a pair of (x, y) values which represent a point.
@@ -353,7 +376,7 @@ typedef struct LEPoint LEPoint;
  *
  * @internal
  */
-#define LE_ARRAY_COPY(dst, src, count) memcpy((void *) (dst), (void *) (src), (count) * sizeof (src)[0])
+#define LE_ARRAY_COPY(dst, src, count) uprv_memcpy((void *) (dst), (void *) (src), (count) * sizeof (src)[0])
 
 /**
  * Allocate an array of basic types. This is used to isolate the rest of
@@ -361,7 +384,7 @@ typedef struct LEPoint LEPoint;
  *
  * @internal
  */
-#define LE_NEW_ARRAY(type, count) (type *) malloc((count) * sizeof(type))
+#define LE_NEW_ARRAY(type, count) (type *) uprv_malloc((count) * sizeof(type))
 
 /**
  * Re-allocate an array of basic types. This is used to isolate the rest of
@@ -369,7 +392,7 @@ typedef struct LEPoint LEPoint;
  *
  * @internal
  */
-#define LE_GROW_ARRAY(array, newSize) realloc((void *) (array), (newSize) * sizeof (array)[0])
+#define LE_GROW_ARRAY(array, newSize) uprv_realloc((void *) (array), (newSize) * sizeof (array)[0])
 
  /**
  * Free an array of basic types. This is used to isolate the rest of
@@ -377,7 +400,7 @@ typedef struct LEPoint LEPoint;
  *
  * @internal
  */
-#define LE_DELETE_ARRAY(array) free((void *) (array))
+#define LE_DELETE_ARRAY(array) uprv_free((void *) (array))
 #endif
 
 /**
@@ -595,22 +618,24 @@ enum LEFeatureTags {
  *
  * @stable ICU 2.4
  */
+#ifndef HAVE_LEERRORCODE
 enum LEErrorCode {
     /* informational */
-    LE_NO_SUBFONT_WARNING           = -127, // U_USING_DEFAULT_WARNING,
+    LE_NO_SUBFONT_WARNING          = U_USING_DEFAULT_WARNING, /**< The font does not contain subfonts. */
 
     /* success */
-    LE_NO_ERROR                     = 0, // U_ZERO_ERROR,
+    LE_NO_ERROR                     = U_ZERO_ERROR, /**< No error, no warning. */
 
     /* failures */
-    LE_ILLEGAL_ARGUMENT_ERROR       = 1, // U_ILLEGAL_ARGUMENT_ERROR,
-    LE_MEMORY_ALLOCATION_ERROR      = 7, // U_MEMORY_ALLOCATION_ERROR,
-    LE_INDEX_OUT_OF_BOUNDS_ERROR    = 8, //U_INDEX_OUTOFBOUNDS_ERROR,
-    LE_NO_LAYOUT_ERROR              = 16, // U_UNSUPPORTED_ERROR,
-    LE_INTERNAL_ERROR               = 5, // U_INTERNAL_PROGRAM_ERROR,
-    LE_FONT_FILE_NOT_FOUND_ERROR    = 4, // U_FILE_ACCESS_ERROR,
-    LE_MISSING_FONT_TABLE_ERROR     = 2  // U_MISSING_RESOURCE_ERROR
+    LE_ILLEGAL_ARGUMENT_ERROR       = U_ILLEGAL_ARGUMENT_ERROR,  /**< An illegal argument was detected. */
+    LE_MEMORY_ALLOCATION_ERROR      = U_MEMORY_ALLOCATION_ERROR, /**< Memory allocation error. */
+    LE_INDEX_OUT_OF_BOUNDS_ERROR    = U_INDEX_OUTOFBOUNDS_ERROR, /**< Trying to access an index that is out of bounds. */
+    LE_NO_LAYOUT_ERROR              = U_UNSUPPORTED_ERROR,       /**< You must call layoutChars() first. */
+    LE_INTERNAL_ERROR               = U_INTERNAL_PROGRAM_ERROR,  /**< An internal error was encountered. */
+    LE_FONT_FILE_NOT_FOUND_ERROR    = U_FILE_ACCESS_ERROR,       /**< The requested font file cannot be opened. */
+    LE_MISSING_FONT_TABLE_ERROR     = U_MISSING_RESOURCE_ERROR   /**< The requested font table does not exist. */
 };
+#endif
 
 #ifndef XP_CPLUSPLUS
 /**
@@ -626,7 +651,9 @@ typedef enum LEErrorCode LEErrorCode;
  *
  * @stable ICU 2.4
  */
-#define LE_SUCCESS(code) ((code)<=LE_NO_ERROR)
+#ifndef LE_FAILURE
+#define LE_SUCCESS(code) (U_SUCCESS((UErrorCode)code))
+#endif
 
 enum LEFeatureENUMs {
  LE_Kerning_FEATURE_ENUM = 0,
@@ -648,7 +675,11 @@ enum LEFeatureENUMs {
  *
  * @stable ICU 2.4
  */
-#define LE_FAILURE(code) ((code)>LE_NO_ERROR)
-
-#define U_LAYOUT_API
+#ifndef LE_FAILURE
+#define LE_FAILURE(code) (U_FAILURE((UErrorCode)code))
 #endif
+
+U_NAMESPACE_END
+#endif
+
+
