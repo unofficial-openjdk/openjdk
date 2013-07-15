@@ -53,7 +53,6 @@ class x86 {
   static address _float_sign_flip;
   static address _double_sign_mask;
   static address _double_sign_flip;
-  static address _mxcsr_std;
   // shuffle mask for fixing up 128-bit words consisting of big-endian 32-bit integers
   static address _key_shuffle_mask_addr;
 
@@ -112,11 +111,6 @@ class x86 {
   static address double_sign_flip()
   {
     return _double_sign_flip;
-  }
-
-  static address mxcsr_std()
-  {
-    return _mxcsr_std;
   }
 
   static address key_shuffle_mask_addr()                     { return _key_shuffle_mask_addr; }
