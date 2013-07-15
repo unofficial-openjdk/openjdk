@@ -38,7 +38,6 @@ import java.util.Iterator;
 import java.util.EventListener;
 import java.util.List;
 import java.util.TreeMap;
-import sun.awt.AppContext;
 import sun.reflect.misc.ReflectUtil;
 
 /**
@@ -103,10 +102,7 @@ public class Introspector {
     public final static int IGNORE_ALL_BEANINFO        = 3;
 
     // Static Caches to speed up introspection.
-    private static WeakCache<Class<?>, Method[]> declaredMethodCache =
-            new WeakCache<Class<?>, Method[]>();
-
-    private static final Object BEANINFO_CACHE = new Object();
+    private static final WeakCache<Class<?>, Method[]> declaredMethodCache = new WeakCache<Class<?>, Method[]>();
 
     private Class beanClass;
     private BeanInfo explicitBeanInfo;
@@ -170,21 +166,15 @@ public class Introspector {
         if (!ReflectUtil.isPackageAccessible(beanClass)) {
             return (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
         }
-        WeakCache<Class<?>, BeanInfo> beanInfoCache;
+        ThreadGroupContext context = ThreadGroupContext.getContext();
         BeanInfo beanInfo;
-        synchronized (BEANINFO_CACHE) {
-            beanInfoCache = (WeakCache<Class<?>, BeanInfo>) AppContext.getAppContext().get(BEANINFO_CACHE);
-
-            if (beanInfoCache == null) {
-                beanInfoCache = new WeakCache<Class<?>, BeanInfo>();
-                AppContext.getAppContext().put(BEANINFO_CACHE, beanInfoCache);
-            }
-            beanInfo = beanInfoCache.get(beanClass);
+        synchronized (declaredMethodCache) {
+            beanInfo = context.getBeanInfo(beanClass);
 	}
 	if (beanInfo == null) {
 	    beanInfo = (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();
-            synchronized (BEANINFO_CACHE) {
-                beanInfoCache.put(beanClass, beanInfo);
+            synchronized (declaredMethodCache) {
+                context.putBeanInfo(beanClass, beanInfo);
             }
         }
 	return beanInfo;
@@ -334,11 +324,8 @@ public class Introspector {
      */
 
     public static void flushCaches() {
-        synchronized (BEANINFO_CACHE) {
-            WeakCache beanInfoCache = (WeakCache) AppContext.getAppContext().get(BEANINFO_CACHE);
-            if (beanInfoCache != null) {
-                beanInfoCache.clear();
-            }
+        synchronized (declaredMethodCache) {
+            ThreadGroupContext.getContext().clearBeanInfoCache();
             declaredMethodCache.clear();
         }
     }
@@ -362,11 +349,8 @@ public class Introspector {
         if (clz == null) {
             throw new NullPointerException();
         }
-        synchronized (BEANINFO_CACHE) {
-            WeakCache beanInfoCache = (WeakCache) AppContext.getAppContext().get(BEANINFO_CACHE);
-            if (beanInfoCache != null) {
-                beanInfoCache.put(clz, null);
-            }
+        synchronized (declaredMethodCache) {
+            ThreadGroupContext.getContext().removeBeanInfo(clz);
             declaredMethodCache.put(clz, null);
         }
     }
@@ -1313,7 +1297,7 @@ public class Introspector {
         if (!ReflectUtil.isPackageAccessible(clz)) {
             return new Method[0];
         }
-        synchronized (BEANINFO_CACHE) {
+        synchronized (declaredMethodCache) {
             Method[] result = declaredMethodCache.get(clz);
             if (result == null) {
                 result = clz.getMethods();
