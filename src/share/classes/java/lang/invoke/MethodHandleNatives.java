@@ -456,6 +456,7 @@ class MethodHandleNatives {
         case "getDeclaredField":
         case "getDeclaredMethod":
         case "getDeclaredConstructor":
+        case "getDeclaringClass":
         case "getEnclosingClass":
         case "getEnclosingMethod":
         case "getEnclosingConstructor":
