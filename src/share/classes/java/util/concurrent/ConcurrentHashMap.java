@@ -40,6 +40,7 @@ import java.io.Serializable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -1447,7 +1448,23 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     @SuppressWarnings("unchecked")
     private void readObject(java.io.ObjectInputStream s)
         throws IOException, ClassNotFoundException  {
-        s.defaultReadObject();
+        // Don't call defaultReadObject()
+        ObjectInputStream.GetField oisFields = s.readFields();
+        final Segment<K,V>[] oisSegments = (Segment<K,V>[])oisFields.get("segments", null);
+
+        final int ssize = oisSegments.length;
+        if (ssize < 1 || ssize > MAX_SEGMENTS
+            || (ssize & (ssize-1)) != 0 )  // ssize not power of two
+            throw new java.io.InvalidObjectException("Bad number of segments:"
+                                                     + ssize);
+        int sshift = 0, ssizeTmp = ssize;
+        while (ssizeTmp > 1) {
+            ++sshift;
+            ssizeTmp >>>= 1;
+        }
+        UNSAFE.putIntVolatile(this, SEGSHIFT_OFFSET, 32 - sshift);
+        UNSAFE.putIntVolatile(this, SEGMASK_OFFSET, ssize - 1);
+        UNSAFE.putObjectVolatile(this, SEGMENTS_OFFSET, oisSegments);
 
         // Re-initialize segments to be minimally sized, and let grow.
         int cap = MIN_SEGMENT_TABLE_CAPACITY;
@@ -1476,6 +1493,9 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
     private static final int SSHIFT;
     private static final long TBASE;
     private static final int TSHIFT;
+    private static final long SEGSHIFT_OFFSET;
+    private static final long SEGMASK_OFFSET;
+    private static final long SEGMENTS_OFFSET;
 
     static {
         int ss, ts;
@@ -1487,6 +1507,12 @@ public class ConcurrentHashMap<K, V> extends AbstractMap<K, V>
             SBASE = UNSAFE.arrayBaseOffset(sc);
             ts = UNSAFE.arrayIndexScale(tc);
             ss = UNSAFE.arrayIndexScale(sc);
+            SEGSHIFT_OFFSET = UNSAFE.objectFieldOffset(
+                ConcurrentHashMap.class.getDeclaredField("segmentShift"));
+            SEGMASK_OFFSET = UNSAFE.objectFieldOffset(
+                ConcurrentHashMap.class.getDeclaredField("segmentMask"));
+            SEGMENTS_OFFSET = UNSAFE.objectFieldOffset(
+                ConcurrentHashMap.class.getDeclaredField("segments"));
         } catch (Exception e) {
             throw new Error(e);
         }
