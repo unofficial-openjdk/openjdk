@@ -482,7 +482,7 @@ jdk_math: java/math
 # Stable samevm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_misc
 jdk_misc: demo javax/imageio javax/naming javax/print javax/script \
-          javax/smartcardio javax/sound com/sun/java com/sun/jndi \
+          javax/smartcardio javax/xml javax/sound com/sun/java com/sun/jndi \
 	  com/sun/org sun/misc sun/pisces
 	$(call RunSamevmBatch)
 
