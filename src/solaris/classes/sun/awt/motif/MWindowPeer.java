@@ -183,6 +183,10 @@ DisplayChangedListener {
         updateAlwaysOnTop(alwaysOnTop);
     }
 
+    public void updateAlwaysOnTopState() {
+        setAlwaysOnTop(((Window)target).isAlwaysOnTop());
+    }
+
     public void toFront() {
         if (target.isVisible()) {
             updateFocusableWindowState();
