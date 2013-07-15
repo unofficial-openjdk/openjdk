@@ -4051,9 +4051,8 @@ void ClassFileParser::check_final_method_override(instanceKlassHandle this_klass
   for (int index = 0; index < num_methods; index++) {
     methodOop m = (methodOop)methods->obj_at(index);
 
-    // skip private, static and <init> methods
-    if ((!m->is_private()) &&
-        (!m->is_static()) &&
+    // skip static and <init> methods
+    if ((!m->is_static()) &&
         (m->name() != vmSymbols::object_initializer_name())) {
 
       Symbol* name = m->name();
