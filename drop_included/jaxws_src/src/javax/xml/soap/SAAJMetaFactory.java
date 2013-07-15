@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ package javax.xml.soap;
 public abstract class SAAJMetaFactory {
     static private final String META_FACTORY_CLASS_PROPERTY =
         "javax.xml.soap.MetaFactory";
-    static private final String DEFAULT_META_FACTORY_CLASS =
+    static final String DEFAULT_META_FACTORY_CLASS =
         "com.sun.xml.internal.messaging.saaj.soap.SAAJMetaFactoryImpl";
 
     /**

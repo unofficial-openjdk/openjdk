@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package com.sun.xml.internal.ws.client;
 
 import com.sun.istack.internal.NotNull;
@@ -45,8 +44,8 @@ import com.sun.xml.internal.ws.binding.WebServiceFeatureList;
 import com.sun.xml.internal.ws.client.HandlerConfigurator.AnnotationConfigurator;
 import com.sun.xml.internal.ws.client.HandlerConfigurator.HandlerResolverImpl;
 import com.sun.xml.internal.ws.client.sei.SEIStub;
-import com.sun.xml.internal.ws.developer.WSBindingProvider;
 import com.sun.xml.internal.ws.developer.UsesJAXBContextFeature;
+import com.sun.xml.internal.ws.developer.WSBindingProvider;
 import com.sun.xml.internal.ws.model.AbstractSEIModelImpl;
 import com.sun.xml.internal.ws.model.RuntimeModeler;
 import com.sun.xml.internal.ws.model.SOAPSEIModel;
@@ -59,7 +58,6 @@ import com.sun.xml.internal.ws.resources.ProviderApiMessages;
 import com.sun.xml.internal.ws.util.JAXWSUtils;
 import com.sun.xml.internal.ws.util.ServiceConfigurationError;
 import com.sun.xml.internal.ws.util.ServiceFinder;
-import static com.sun.xml.internal.ws.util.xml.XmlUtil.createDefaultCatalogResolver;
 import com.sun.xml.internal.ws.wsdl.parser.RuntimeWSDLParser;
 import org.xml.sax.SAXException;
 
@@ -74,15 +72,17 @@ import javax.xml.ws.*;
 import javax.xml.ws.handler.HandlerResolver;
 import javax.xml.ws.soap.AddressingFeature;
 import java.io.IOException;
+import java.lang.RuntimePermission;
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
+import java.security.*;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+
+import static com.sun.xml.internal.ws.util.xml.XmlUtil.createDefaultCatalogResolver;
 
 /**
  * <code>Service</code> objects provide the client view of a Web service.
@@ -613,7 +613,7 @@ public class WSServiceDelegate extends WSService {
         }
     }
 
-    private <T> T createEndpointIFBaseProxy(@Nullable WSEndpointReference epr,QName portName, Class<T> portInterface,
+    private <T> T createEndpointIFBaseProxy(@Nullable WSEndpointReference epr,QName portName, final Class<T> portInterface,
                                             WebServiceFeature[] webServiceFeatures, SEIPortInfo eif) {
         //fail if service doesnt have WSDL
         if (wsdlService == null)
@@ -627,12 +627,35 @@ public class WSServiceDelegate extends WSService {
         BindingImpl binding = eif.createBinding(webServiceFeatures,portInterface);
         SEIStub pis = new SEIStub(this, binding, eif.model, createPipeline(eif, binding), epr);
 
-        T proxy = portInterface.cast(Proxy.newProxyInstance(portInterface.getClassLoader(),
-                new Class[]{portInterface, WSBindingProvider.class, Closeable.class}, pis));
+        T proxy = createProxy(portInterface, pis);
+
         if (serviceInterceptor != null) {
             serviceInterceptor.postCreateProxy((WSBindingProvider)proxy, portInterface);
         }
         return proxy;
+    }
+
+    private <T> T createProxy(final Class<T> portInterface, final SEIStub pis) {
+
+        // accessClassInPackage privilege needs to be granted ...
+        RuntimePermission perm = new RuntimePermission("accessClassInPackage.com.sun." + "xml.internal.*");
+        PermissionCollection perms = perm.newPermissionCollection();
+        perms.add(perm);
+
+        return AccessController.doPrivileged(
+                new PrivilegedAction<T>() {
+                    @Override
+                    public T run() {
+                        Object proxy = Proxy.newProxyInstance(portInterface.getClassLoader(),
+                                new Class[]{portInterface, WSBindingProvider.class, Closeable.class}, pis);
+                        return portInterface.cast(proxy);
+                    }
+                },
+                new AccessControlContext(
+                        new ProtectionDomain[]{
+                                new ProtectionDomain(null, perms)
+                        })
+        );
     }
 
     /**

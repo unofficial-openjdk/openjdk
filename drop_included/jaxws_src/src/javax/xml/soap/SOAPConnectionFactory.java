@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class SOAPConnectionFactory {
      * A constant representing the default value for a <code>SOAPConnection</code>
      * object. The default is the point-to-point SOAP connection.
      */
-    static private final String DEFAULT_SOAP_CONNECTION_FACTORY
+    static final String DEFAULT_SOAP_CONNECTION_FACTORY
         = "com.sun.xml.internal.messaging.saaj.client.p2p.HttpSOAPConnectionFactory";
 
     /**

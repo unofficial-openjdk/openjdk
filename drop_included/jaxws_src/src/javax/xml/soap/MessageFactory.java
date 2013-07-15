@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ import java.io.InputStream;
  */
 public abstract class MessageFactory {
 
-    static private final String DEFAULT_MESSAGE_FACTORY
+    static final String DEFAULT_MESSAGE_FACTORY
         = "com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl";
 
     static private final String MESSAGE_FACTORY_PROPERTY
@@ -105,11 +105,14 @@ public abstract class MessageFactory {
     public static MessageFactory newInstance()
         throws SOAPException {
         try {
-            MessageFactory factory = (MessageFactory)
-                FactoryFinder.find(MESSAGE_FACTORY_PROPERTY);
+            MessageFactory factory = (MessageFactory) FactoryFinder.find(
+                    MESSAGE_FACTORY_PROPERTY,
+                    DEFAULT_MESSAGE_FACTORY,
+                    false);
 
-            if (factory != null)
+            if (factory != null) {
                 return factory;
+            }
 
             return newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
         } catch (Exception ex) {
