@@ -97,7 +97,6 @@ jfieldID ni_nameID;         /* NetworkInterface.name */
 jfieldID ni_displayNameID;  /* NetworkInterface.displayName */
 jfieldID ni_childsID;       /* NetworkInterface.childs */
 jclass ni_iacls;            /* InetAddress */
-jfieldID ni_iaAddr;         /* InetAddress.address */
 
 jclass ni_ia4cls;           /* Inet4Address */
 jmethodID ni_ia4Ctor;       /* Inet4Address() */
@@ -558,7 +557,6 @@ Java_java_net_NetworkInterface_init(JNIEnv *env, jclass cls)
 
     ni_iacls = (*env)->FindClass(env, "Ljava/net/InetAddress;");
     ni_iacls = (*env)->NewGlobalRef(env, ni_iacls);
-    ni_iaAddr = (*env)->GetFieldID(env, ni_iacls, "address", "I");
 
     ni_ia4cls = (*env)->FindClass(env, "Ljava/net/Inet4Address;");
     ni_ia4cls = (*env)->NewGlobalRef(env, ni_ia4cls);
@@ -645,7 +643,7 @@ jobject createNetworkInterface(JNIEnv *env, netif *ifs, int netaddrCount, netadd
             }
             /* default ctor will set family to AF_INET */
 
-            (*env)->SetIntField(env, iaObj, ni_iaAddr, ntohl(addrs->addr.him4.sin_addr.s_addr));
+            setInetAddress_addr(env, iaObj, ntohl(addrs->addr.him4.sin_addr.s_addr));
             if (addrs->mask != -1) {
               ibObj = (*env)->NewObject(env, ni_ibcls, ni_ibctrID);
               if (ibObj == NULL) {
@@ -658,8 +656,7 @@ jobject createNetworkInterface(JNIEnv *env, netif *ifs, int netaddrCount, netadd
                 free_netaddr(netaddrP);
                 return NULL;
               }
-              (*env)->SetIntField(env, ia2Obj, ni_iaAddr,
-                                  ntohl(addrs->brdcast.him4.sin_addr.s_addr));
+              setInetAddress_addr(env, ia2Obj, ntohl(addrs->brdcast.him4.sin_addr.s_addr));
               (*env)->SetObjectField(env, ibObj, ni_ibbroadcastID, ia2Obj);
               (*env)->SetShortField(env, ibObj, ni_ibmaskID, addrs->mask);
               (*env)->SetObjectArrayElement(env, bindsArr, bind_index++, ibObj);
@@ -811,7 +808,7 @@ JNIEXPORT jobject JNICALL Java_java_net_NetworkInterface_getByInetAddress0
     (JNIEnv *env, jclass cls, jobject iaObj)
 {
     netif *ifList, *curr;
-    jint addr = (*env)->GetIntField(env, iaObj, ni_iaAddr);
+    jint addr = getInetAddress_addr(env, iaObj);
     jobject netifObj = NULL;
 
     if (os_supports_ipv6 && ipv6_available()) {
