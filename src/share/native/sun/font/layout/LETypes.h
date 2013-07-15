@@ -245,12 +245,15 @@ typedef le_uint32 LEGlyphID;
 /**
  * Max value representable by a uintptr
  */
-#ifndef UINTPTR_MAX
+
 #ifndef UINT32_MAX
-#define LE_UINTPTR_MAX 0xFFFFFFFFU
+#define LE_UINT32_MAX 0xFFFFFFFFU
 #else
-#define LE_UINTPTR_MAX UINT32_MAX
+#define LE_UINT32_MAX UINT32_MAX
 #endif
+
+#ifndef UINTPTR_MAX
+#define LE_UINTPTR_MAX LE_UINT32_MAX
 #else
 #define LE_UINTPTR_MAX UINTPTR_MAX
 #endif
