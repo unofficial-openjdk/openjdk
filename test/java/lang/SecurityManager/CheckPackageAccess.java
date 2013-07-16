@@ -34,7 +34,8 @@ public class CheckPackageAccess {
         String[] pkgs = new String[] {
             "com.sun.corba.se.impl.",
             "com.sun.org.apache.xerces.internal.utils.",
-            "com.sun.org.apache.xalan.internal.utils." };
+            "com.sun.org.apache.xalan.internal.utils.",
+            "com.sun.script." };
         SecurityManager sm = new SecurityManager();
         System.setSecurityManager(sm);
         for (String pkg : pkgs) {
