@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import java.util.Hashtable;
 
 import javax.swing.*;
 
+import sun.awt.SunToolkit;
 import sun.lwawt.LWToolkit;
 import sun.lwawt.macosx.*;
 
@@ -139,7 +140,7 @@ class ScreenMenu extends Menu implements ContainerListener, ComponentListener, S
                     updateItems();
                     fItemBounds = new Rectangle[invoker.getMenuComponentCount()];
                 }
-            }, null);
+            }, invoker);
         } catch (final Exception e) {
             System.err.println(e);
             e.printStackTrace();
@@ -167,7 +168,7 @@ class ScreenMenu extends Menu implements ContainerListener, ComponentListener, S
 
             fItemBounds = null;
     }
-            }, null);
+            }, invoker);
         } catch (final Exception e) {
             e.printStackTrace();
         }
@@ -195,7 +196,7 @@ class ScreenMenu extends Menu implements ContainerListener, ComponentListener, S
         if (kind == 0) return;
         if (fItemBounds == null) return;
 
-        SwingUtilities.invokeLater(new Runnable() {
+        SunToolkit.executeOnEventHandlerThread(fInvoker, new Runnable() {
             @Override
             public void run() {
                 Component target = null;
