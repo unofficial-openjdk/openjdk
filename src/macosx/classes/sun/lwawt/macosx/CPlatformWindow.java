@@ -964,25 +964,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
-        final GraphicsConfiguration oldGC = contentView.getGraphicsConfiguration();
-
-        if (peer!= null) {
+        if (peer != null) {
             peer.notifyReshape(x, y, width, height);
-        }
-
-        final GraphicsConfiguration newGC = contentView.getGraphicsConfiguration();
-        // System-dependent appearance optimization.
-        if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
-            || isFullScreenAnimationOn || !Objects.equals(newGC, oldGC)) {
-            flushBuffers();
+            // System-dependent appearance optimization.
+            if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
+                    || isFullScreenAnimationOn) {
+                flushBuffers();
+            }
         }
     }
 
     private void deliverWindowClosingEvent() {
-        if (peer != null) {
-            if (peer.getBlocker() == null)  {
-                peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
-            }
+        if (peer != null && peer.getBlocker() == null) {
+            peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
         }
     }
 
