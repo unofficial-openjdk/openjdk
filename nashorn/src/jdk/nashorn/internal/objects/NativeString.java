@@ -29,7 +29,6 @@ import static jdk.nashorn.internal.lookup.Lookup.MH;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
 import static jdk.nashorn.internal.runtime.JSType.isRepresentableAsInt;
 import static jdk.nashorn.internal.runtime.ScriptRuntime.UNDEFINED;
-import static jdk.nashorn.internal.runtime.arrays.ArrayIndex.getArrayIndexNoThrow;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
@@ -155,7 +155,7 @@ public final class NativeString extends ScriptObject {
     @SuppressWarnings("unused")
     private static Object get(final Object self, final Object key) {
         final CharSequence cs = JSType.toCharSequence(self);
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         if (index >= 0 && index < cs.length()) {
             return String.valueOf(cs.charAt(index));
         }
@@ -190,7 +190,7 @@ public final class NativeString extends ScriptObject {
     // String characters can be accessed with array-like indexing..
     @Override
     public Object get(final Object key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         if (index >= 0 && index < value.length()) {
             return String.valueOf(value.charAt(index));
         }
@@ -283,7 +283,7 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean has(final Object key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.has(key);
     }
 
@@ -294,19 +294,19 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean has(final long key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.has(key);
     }
 
     @Override
     public boolean has(final double key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.has(key);
     }
 
     @Override
     public boolean hasOwnProperty(final Object key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.hasOwnProperty(key);
     }
 
@@ -317,13 +317,13 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean hasOwnProperty(final long key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.hasOwnProperty(key);
     }
 
     @Override
     public boolean hasOwnProperty(final double key) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return isValid(index) || super.hasOwnProperty(key);
     }
 
@@ -334,19 +334,19 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean delete(final long key, final boolean strict) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return checkDeleteIndex(index, strict)? false : super.delete(key, strict);
     }
 
     @Override
     public boolean delete(final double key, final boolean strict) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return checkDeleteIndex(index, strict)? false : super.delete(key, strict);
     }
 
     @Override
     public boolean delete(final Object key, final boolean strict) {
-        final int index = getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         return checkDeleteIndex(index, strict)? false : super.delete(key, strict);
     }
 
@@ -363,7 +363,7 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public Object getOwnPropertyDescriptor(final String key) {
-        final int index = ArrayIndex.getArrayIndexNoThrow(key);
+        final int index = ArrayIndex.getArrayIndex(key);
         if (index >= 0 && index < value.length()) {
             final Global global = Global.instance();
             return global.newDataDescriptor(String.valueOf(value.charAt(index)), false, true, false);
@@ -630,17 +630,24 @@ public final class NativeString extends ScriptObject {
 
         final String str       = checkObjectToString(self);
         final String searchStr = JSType.toString(search);
+        final int length       = str.length();
 
-        int from;
+        int end;
 
         if (pos == UNDEFINED) {
-            from = str.length();
+            end = length;
         } else {
             final double numPos = JSType.toNumber(pos);
-            from = !Double.isNaN(numPos) ? (int)numPos : (int)Double.POSITIVE_INFINITY;
+            end = Double.isNaN(numPos) ? length : (int)numPos;
+            if (end < 0) {
+                end = 0;
+            } else if (end > length) {
+                end = length;
+            }
         }
 
-        return str.lastIndexOf(searchStr, from);
+
+        return str.lastIndexOf(searchStr, end);
     }
 
     /**
@@ -997,7 +1004,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object toLowerCase(final Object self) {
-        return checkObjectToString(self).toLowerCase();
+        return checkObjectToString(self).toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -1017,7 +1024,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object toUpperCase(final Object self) {
-        return checkObjectToString(self).toUpperCase();
+        return checkObjectToString(self).toUpperCase(Locale.ROOT);
     }
 
     /**

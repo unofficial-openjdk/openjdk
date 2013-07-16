@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
  */
 package sun.awt.X11;
 
+import sun.awt.IconInfo;
 import sun.misc.Unsafe;
 import java.awt.Insets;
 import java.awt.Frame;
@@ -148,7 +149,7 @@ final class XWM
     XWM(int WMID) {
         this.WMID = WMID;
         initializeProtocols();
-        if (log.isLoggable(PlatformLogger.FINE)) {
+        if (log.isLoggable(PlatformLogger.Level.FINE)) {
             log.fine("Window manager: " + toString());
         }
     }
@@ -254,7 +255,7 @@ final class XWM
              * having a window manager running. I.e. it does not reparent
              * top level shells.
              */
-            if (insLog.isLoggable(PlatformLogger.FINER)) {
+            if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                 insLog.finer("eXcursion means NO_WM");
             }
             return true;
@@ -272,7 +273,7 @@ final class XWM
             long selection_owner =
                 XlibWrapper.XGetSelectionOwner(XToolkit.getDisplay(),
                                                XAtom.get(selection_name).getAtom());
-            if (insLog.isLoggable(PlatformLogger.FINER)) {
+            if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                 insLog.finer("selection owner of " + selection_name
                              + " is " + selection_owner);
             }
@@ -284,12 +285,12 @@ final class XWM
             winmgr_running = false;
             substruct.set_event_mask(XConstants.SubstructureRedirectMask);
 
-            XToolkit.WITH_XERROR_HANDLER(detectWMHandler);
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(detectWMHandler);
             XlibWrapper.XChangeWindowAttributes(XToolkit.getDisplay(),
                                                 XToolkit.getDefaultRootWindow(),
                                                 XConstants.CWEventMask,
                                                 substruct.pData);
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
             /*
              * If no WM is running then our selection for SubstructureRedirect
@@ -301,7 +302,7 @@ final class XWM
                                                     XToolkit.getDefaultRootWindow(),
                                                     XConstants.CWEventMask,
                                                     substruct.pData);
-                if (insLog.isLoggable(PlatformLogger.FINER)) {
+                if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                     insLog.finer("It looks like there is no WM thus NO_WM");
                 }
             }
@@ -345,7 +346,7 @@ final class XWM
             byte[] bytes = XlibWrapper.getStringBytes(getter.getData());
             String id = new String(bytes);
 
-            if (log.isLoggable(PlatformLogger.FINER)) {
+            if (log.isLoggable(PlatformLogger.Level.FINER)) {
                 log.finer("ENLIGHTENMENT_COMMS is " + id);
             }
 
@@ -354,15 +355,15 @@ final class XWM
             try {
                 Matcher match = winIdPat.matcher(id);
                 if (match.matches()) {
-                    if (log.isLoggable(PlatformLogger.FINEST)) {
+                    if (log.isLoggable(PlatformLogger.Level.FINEST)) {
                         log.finest("Match group count: " + match.groupCount());
                     }
                     String longId = match.group(1);
-                    if (log.isLoggable(PlatformLogger.FINEST)) {
+                    if (log.isLoggable(PlatformLogger.Level.FINEST)) {
                         log.finest("Match group 1 " + longId);
                     }
                     long winid = Long.parseLong(longId, 16);
-                    if (log.isLoggable(PlatformLogger.FINER)) {
+                    if (log.isLoggable(PlatformLogger.Level.FINER)) {
                         log.finer("Enlightenment communication window " + winid);
                     }
                     return winid;
@@ -371,7 +372,7 @@ final class XWM
                     return 0;
                 }
             } catch (Exception e) {
-                if (log.isLoggable(PlatformLogger.FINER)) {
+                if (log.isLoggable(PlatformLogger.Level.FINER)) {
                     e.printStackTrace();
                 }
                 return 0;
@@ -417,7 +418,7 @@ final class XWM
     static boolean isCDE() {
 
         if (!XA_DT_SM_WINDOW_INFO.isInterned()) {
-            if (log.isLoggable(PlatformLogger.FINER)) {
+            if (log.isLoggable(PlatformLogger.Level.FINER)) {
                 log.finer("{0} is not interned", XA_DT_SM_WINDOW_INFO);
             }
             return false;
@@ -450,7 +451,7 @@ final class XWM
 
             /* Now check that this window has _DT_SM_STATE_INFO (ignore contents) */
             if (!XA_DT_SM_STATE_INFO.isInterned()) {
-                if (log.isLoggable(PlatformLogger.FINER)) {
+                if (log.isLoggable(PlatformLogger.Level.FINER)) {
                     log.finer("{0} is not interned", XA_DT_SM_STATE_INFO);
                 }
                 return false;
@@ -624,7 +625,7 @@ final class XWM
          */
 
         if (!XA_ICEWM_WINOPTHINT.isInterned()) {
-            if (log.isLoggable(PlatformLogger.FINER)) {
+            if (log.isLoggable(PlatformLogger.Level.FINER)) {
                 log.finer("{0} is not interned", XA_ICEWM_WINOPTHINT);
             }
             return false;
@@ -632,15 +633,16 @@ final class XWM
 
         XToolkit.awtLock();
         try {
-            XToolkit.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
+            XErrorHandlerUtil.WITH_XERROR_HANDLER(XErrorHandler.VerifyChangePropertyHandler.getInstance());
             XlibWrapper.XChangePropertyS(XToolkit.getDisplay(), XToolkit.getDefaultRootWindow(),
                                          XA_ICEWM_WINOPTHINT.getAtom(),
                                          XA_ICEWM_WINOPTHINT.getAtom(),
                                          8, XConstants.PropModeReplace,
                                          new String(opt));
-            XToolkit.RESTORE_XERROR_HANDLER();
+            XErrorHandlerUtil.RESTORE_XERROR_HANDLER();
 
-            if (XToolkit.saved_error != null && XToolkit.saved_error.get_error_code() != XConstants.Success) {
+            if ((XErrorHandlerUtil.saved_error != null) &&
+                (XErrorHandlerUtil.saved_error.get_error_code() != XConstants.Success)) {
                 log.finer("Erorr getting XA_ICEWM_WINOPTHINT property");
                 return false;
             }
@@ -659,7 +661,7 @@ final class XWM
      */
     static boolean isIceWM() {
         if (!XA_ICEWM_WINOPTHINT.isInterned()) {
-            if (log.isLoggable(PlatformLogger.FINER)) {
+            if (log.isLoggable(PlatformLogger.Level.FINER)) {
                 log.finer("{0} is not interned", XA_ICEWM_WINOPTHINT);
             }
             return false;
@@ -672,7 +674,7 @@ final class XWM
         try {
             int status = getter.execute();
             boolean res = (status == XConstants.Success && getter.getActualType() != 0);
-            if (log.isLoggable(PlatformLogger.FINER)) {
+            if (log.isLoggable(PlatformLogger.Level.FINER)) {
                 log.finer("Status getting XA_ICEWM_WINOPTHINT: " + !res);
             }
             return !res || isNetWMName("IceWM");
@@ -728,7 +730,7 @@ final class XWM
         return wm;
     }
     static int getWMID() {
-        if (insLog.isLoggable(PlatformLogger.FINEST)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINEST)) {
             insLog.finest("awt_wmgr = " + awt_wmgr);
         }
         /*
@@ -752,7 +754,7 @@ final class XWM
             // Later, WM will initialize its own version of protocol
             XNETProtocol l_net_protocol = g_net_protocol = new XNETProtocol();
             l_net_protocol.detect();
-            if (log.isLoggable(PlatformLogger.FINE) && l_net_protocol.active()) {
+            if (log.isLoggable(PlatformLogger.Level.FINE) && l_net_protocol.active()) {
                 log.fine("_NET_WM_NAME is " + l_net_protocol.getWMName());
             }
             XWINProtocol win = g_win_protocol = new XWINProtocol();
@@ -836,7 +838,7 @@ final class XWM
             }
 
             hints.set_flags(hints.get_flags() & ~mask);
-            if (insLog.isLoggable(PlatformLogger.FINER)) {
+            if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                 insLog.finer("Setting hints, flags " + XlibWrapper.hintsToString(hints.get_flags()));
             }
             XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(),
@@ -895,7 +897,7 @@ final class XWM
 
         XAtomList decorDel = new XAtomList();
         decorations = normalizeMotifDecor(decorations);
-        if (insLog.isLoggable(PlatformLogger.FINER)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
             insLog.finer("Setting OL_DECOR to " + Integer.toBinaryString(decorations));
         }
         if ((decorations & MWMConstants.MWM_DECOR_TITLE) == 0) {
@@ -914,7 +916,7 @@ final class XWM
             insLog.finer("Deleting OL_DECOR");
             XA_OL_DECOR_DEL.DeleteProperty(window);
         } else {
-            if (insLog.isLoggable(PlatformLogger.FINER)) {
+            if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
                 insLog.finer("Setting OL_DECOR to " + decorDel);
             }
             XA_OL_DECOR_DEL.setAtomListProperty(window, decorDel);
@@ -944,7 +946,7 @@ final class XWM
         hints.set_functions(functions);
         hints.set_decorations(decorations);
 
-        if (stateLog.isLoggable(PlatformLogger.FINER)) {
+        if (stateLog.isLoggable(PlatformLogger.Level.FINER)) {
             stateLog.finer("Setting MWM_HINTS to " + hints);
         }
         window.setMWMHints(hints);
@@ -1008,7 +1010,7 @@ final class XWM
      * Make specified shell resizable.
      */
     static void setShellResizable(XDecoratedPeer window) {
-        if (insLog.isLoggable(PlatformLogger.FINE)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINE)) {
             insLog.fine("Setting shell resizable " + window);
         }
         XToolkit.awtLock();
@@ -1040,7 +1042,7 @@ final class XWM
     static void setShellNotResizable(XDecoratedPeer window, WindowDimensions newDimensions, Rectangle shellBounds,
                                      boolean justChangeSize)
     {
-        if (insLog.isLoggable(PlatformLogger.FINE)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINE)) {
             insLog.fine("Setting non-resizable shell " + window + ", dimensions " + newDimensions +
                         ", shellBounds " + shellBounds +", just change size: " + justChangeSize);
         }
@@ -1174,7 +1176,7 @@ final class XWM
             stateLog.finer("WithdrawnState");
             return false;
         } else {
-            if (stateLog.isLoggable(PlatformLogger.FINER)) {
+            if (stateLog.isLoggable(PlatformLogger.Level.FINER)) {
                 stateLog.finer("Window WM_STATE is " + wm_state);
             }
         }
@@ -1185,7 +1187,7 @@ final class XWM
 
         for (XStateProtocol proto : getProtocols(XStateProtocol.class)) {
             is_state_change |= proto.isStateChange(e);
-            if (stateLog.isLoggable(PlatformLogger.FINEST)) {
+            if (stateLog.isLoggable(PlatformLogger.Level.FINEST)) {
                 stateLog.finest(proto + ": is state changed = " + is_state_change);
             }
         }
@@ -1339,7 +1341,7 @@ final class XWM
                   res = defaultInsets;
             }
         }
-        if (insLog.isLoggable(PlatformLogger.FINEST)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINEST)) {
             insLog.finest("WM guessed insets: " + res);
         }
         return res;
@@ -1410,7 +1412,7 @@ final class XWM
         XNETProtocol net_protocol = getWM().getNETProtocol();
         if (net_protocol != null && net_protocol.active()) {
             Insets insets = getInsetsFromProp(window, XA_NET_FRAME_EXTENTS);
-            if (insLog.isLoggable(PlatformLogger.FINE)) {
+            if (insLog.isLoggable(PlatformLogger.Level.FINE)) {
                 insLog.fine("_NET_FRAME_EXTENTS: {0}", insets);
             }
 
@@ -1553,7 +1555,7 @@ final class XWM
          *       [mwm, e!, kwin, fvwm2 ... ]
          */
         Insets correctWM = XWM.getInsetsFromExtents(window);
-        if (insLog.isLoggable(PlatformLogger.FINER)) {
+        if (insLog.isLoggable(PlatformLogger.Level.FINER)) {
             insLog.finer("Got insets from property: {0}", correctWM);
         }
 
@@ -1616,7 +1618,7 @@ final class XWM
                   }
                   case XWM.OTHER_WM:
                   default: {                /* this is very similar to the E! case above */
-                      if (insLog.isLoggable(PlatformLogger.FINEST)) {
+                      if (insLog.isLoggable(PlatformLogger.Level.FINEST)) {
                           insLog.finest("Getting correct insets for OTHER_WM/default, parent: {0}", parent);
                       }
                       syncTopLevelPos(parent, lwinAttr);
@@ -1645,7 +1647,7 @@ final class XWM
                           && lwinAttr.get_width()+2*lwinAttr.get_border_width() == pattr.get_width()
                           && lwinAttr.get_height()+2*lwinAttr.get_border_width() == pattr.get_height())
                       {
-                          if (insLog.isLoggable(PlatformLogger.FINEST)) {
+                          if (insLog.isLoggable(PlatformLogger.Level.FINEST)) {
                               insLog.finest("Double reparenting detected, pattr({2})={0}, lwinAttr({3})={1}",
                                         lwinAttr, pattr, parent, window);
                           }
@@ -1675,7 +1677,7 @@ final class XWM
                        * widths and inner/outer distinction, so for the time
                        * being, just ignore it.
                        */
-                      if (insLog.isLoggable(PlatformLogger.FINEST)) {
+                      if (insLog.isLoggable(PlatformLogger.Level.FINEST)) {
                           insLog.finest("Attrs before calculation: pattr({2})={0}, lwinAttr({3})={1}",
                                     lwinAttr, pattr, parent, window);
                       }
@@ -1718,7 +1720,7 @@ final class XWM
      *
      * @return true if hint was modified successfully, false otherwise
      */
-    public boolean setNetWMIcon(XWindowPeer window, java.util.List<XIconInfo> icons) {
+    public boolean setNetWMIcon(XWindowPeer window, java.util.List<IconInfo> icons) {
         if (g_net_protocol != null && g_net_protocol.active()) {
             g_net_protocol.setWMIcons(window, icons);
             return getWMID() != ICE_WM;

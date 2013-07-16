@@ -32,6 +32,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
+import jdk.nashorn.internal.codegen.CompilerConstants;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Constructor;
 import jdk.nashorn.internal.objects.annotations.Function;
@@ -89,7 +90,7 @@ public final class NativeError extends ScriptObject {
         if (msg != UNDEFINED) {
             this.instMessage = JSType.toString(msg);
         } else {
-            this.delete(NativeError.MESSAGE, Global.isStrict());
+            this.delete(NativeError.MESSAGE, false);
         }
     }
 
@@ -165,7 +166,7 @@ public final class NativeError extends ScriptObject {
     public static Object setLineNumber(final Object self, final Object value) {
         Global.checkObject(self);
         final ScriptObject sobj = (ScriptObject)self;
-        sobj.set(LINENUMBER, value, Global.isStrict());
+        sobj.set(LINENUMBER, value, false);
         return value;
     }
 
@@ -193,7 +194,7 @@ public final class NativeError extends ScriptObject {
     public static Object setColumnNumber(final Object self, final Object value) {
         Global.checkObject(self);
         final ScriptObject sobj = (ScriptObject)self;
-        sobj.set(COLUMNNUMBER, value, Global.isStrict());
+        sobj.set(COLUMNNUMBER, value, false);
         return value;
     }
 
@@ -221,7 +222,7 @@ public final class NativeError extends ScriptObject {
     public static Object setFileName(final Object self, final Object value) {
         Global.checkObject(self);
         final ScriptObject sobj = (ScriptObject)self;
-        sobj.set(FILENAME, value, Global.isStrict());
+        sobj.set(FILENAME, value, false);
         return value;
     }
 
@@ -248,7 +249,13 @@ public final class NativeError extends ScriptObject {
             final List<StackTraceElement> filtered = new ArrayList<>();
             for (final StackTraceElement st : frames) {
                 if (ECMAErrors.isScriptFrame(st)) {
-                    filtered.add(st);
+                    final String className = "<" + st.getFileName() + ">";
+                    String methodName = st.getMethodName();
+                    if (methodName.equals(CompilerConstants.RUN_SCRIPT.symbolName())) {
+                        methodName = "<program>";
+                    }
+                    filtered.add(new StackTraceElement(className, methodName,
+                            st.getFileName(), st.getLineNumber()));
                 }
             }
             res = filtered.toArray();
@@ -271,7 +278,7 @@ public final class NativeError extends ScriptObject {
     public static Object setStack(final Object self, final Object value) {
         Global.checkObject(self);
         final ScriptObject sobj = (ScriptObject)self;
-        sobj.set(STACK, value, Global.isStrict());
+        sobj.set(STACK, value, false);
         return value;
     }
 

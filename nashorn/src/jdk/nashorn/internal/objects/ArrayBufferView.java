@@ -33,6 +33,8 @@ import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.ScriptRuntime;
 import jdk.nashorn.internal.runtime.arrays.ArrayData;
 
+import static jdk.nashorn.internal.runtime.ECMAErrors.rangeError;
+
 @ScriptClass("ArrayBufferView")
 abstract class ArrayBufferView extends ScriptObject {
 
@@ -56,11 +58,6 @@ abstract class ArrayBufferView extends ScriptObject {
 
     private int bytesPerElement() {
         return factory().bytesPerElement;
-    }
-
-    @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
-    public static Object BYTES_PER_ELEMENT(final Object self) {
-        return ((ArrayBufferView)self).bytesPerElement();
     }
 
     @Getter(attributes = Attribute.NOT_ENUMERABLE | Attribute.NOT_WRITABLE | Attribute.NOT_CONFIGURABLE)
@@ -310,11 +307,11 @@ abstract class ArrayBufferView extends ScriptObject {
             dst = factory.construct(length);
         } else if (arg0 instanceof NativeArray) {
             // Constructor(type[] array)
-            length = (int) (((NativeArray) arg0).getArray().length() & 0x7fff_ffff);
+            length = lengthToInt(((NativeArray) arg0).getArray().length());
             dst = factory.construct(length);
         } else {
             // Constructor(unsigned long length)
-            length = JSType.toInt32(arg0);
+            length = lengthToInt(JSType.toInt64(arg0));
             return factory.construct(length);
         }
 
@@ -357,6 +354,13 @@ abstract class ArrayBufferView extends ScriptObject {
                 dest.set(j, source.getDouble(i), false);
             }
         }
+    }
+
+    private static int lengthToInt(final long length) {
+        if (length > Integer.MAX_VALUE || length < 0) {
+            throw rangeError("inappropriate.array.buffer.length", JSType.toString(length));
+        }
+        return (int) (length & Integer.MAX_VALUE);
     }
 
     protected static Object subarrayImpl(final Object self, final Object begin0, final Object end0) {

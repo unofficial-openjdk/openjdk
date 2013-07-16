@@ -713,6 +713,23 @@ class SpaceManager : public CHeapObj<mtClass> {
 #ifdef ASSERT
   void verify_allocated_blocks_words();
 #endif
+
+  size_t get_raw_word_size(size_t word_size) {
+    // If only the dictionary is going to be used (i.e., no
+    // indexed free list), then there is a minimum size requirement.
+    // MinChunkSize is a placeholder for the real minimum size JJJ
+    size_t byte_size = word_size * BytesPerWord;
+
+    size_t byte_size_with_overhead = byte_size + Metablock::overhead();
+
+    size_t raw_bytes_size = MAX2(byte_size_with_overhead,
+                                 Metablock::min_block_byte_size());
+    raw_bytes_size = ARENA_ALIGN(raw_bytes_size);
+    size_t raw_word_size = raw_bytes_size / BytesPerWord;
+    assert(raw_word_size * BytesPerWord == raw_bytes_size, "Size problem");
+
+    return raw_word_size;
+  }
 };
 
 uint const SpaceManager::_small_chunk_limit = 4;
@@ -1539,19 +1556,7 @@ bool Metadebug::test_metadata_failure() {
 
 // ChunkManager methods
 
-// Verification of _free_chunks_total and _free_chunks_count does not
-// work with the CMS collector because its use of additional locks
-// complicate the mutex deadlock detection but it can still be useful
-// for detecting errors in the chunk accounting with other collectors.
-
 size_t ChunkManager::free_chunks_total() {
-#ifdef ASSERT
-  if (!UseConcMarkSweepGC && !SpaceManager::expand_lock()->is_locked()) {
-    MutexLockerEx cl(SpaceManager::expand_lock(),
-                     Mutex::_no_safepoint_check_flag);
-    slow_locked_verify_free_chunks_total();
-  }
-#endif
   return _free_chunks_total;
 }
 
@@ -2320,19 +2325,7 @@ Metachunk* SpaceManager::get_new_chunk(size_t word_size,
 MetaWord* SpaceManager::allocate(size_t word_size) {
   MutexLockerEx cl(lock(), Mutex::_no_safepoint_check_flag);
 
-  // If only the dictionary is going to be used (i.e., no
-  // indexed free list), then there is a minimum size requirement.
-  // MinChunkSize is a placeholder for the real minimum size JJJ
-  size_t byte_size = word_size * BytesPerWord;
-
-  size_t byte_size_with_overhead = byte_size + Metablock::overhead();
-
-  size_t raw_bytes_size = MAX2(byte_size_with_overhead,
-                               Metablock::min_block_byte_size());
-  raw_bytes_size = ARENA_ALIGN(raw_bytes_size);
-  size_t raw_word_size = raw_bytes_size / BytesPerWord;
-  assert(raw_word_size * BytesPerWord == raw_bytes_size, "Size problem");
-
+  size_t raw_word_size = get_raw_word_size(word_size);
   BlockFreelist* fl =  block_freelists();
   MetaWord* p = NULL;
   // Allocation from the dictionary is expensive in the sense that
@@ -2603,14 +2596,14 @@ void MetaspaceAux::print_metaspace_change(size_t prev_metadata_used) {
                         "->" SIZE_FORMAT
                         "("  SIZE_FORMAT ")",
                         prev_metadata_used,
-                        allocated_capacity_bytes(),
+                        allocated_used_bytes(),
                         reserved_in_bytes());
   } else {
     gclog_or_tty->print(" "  SIZE_FORMAT "K"
                         "->" SIZE_FORMAT "K"
                         "("  SIZE_FORMAT "K)",
                         prev_metadata_used / K,
-                        allocated_capacity_bytes() / K,
+                        allocated_used_bytes() / K,
                         reserved_in_bytes()/ K);
   }
 
@@ -2896,6 +2889,9 @@ void Metaspace::initialize(Mutex* lock,
   if (class_chunk != NULL) {
     class_vsm()->add_chunk(class_chunk, true);
   }
+
+  _alloc_record_head = NULL;
+  _alloc_record_tail = NULL;
 }
 
 size_t Metaspace::align_word_size_up(size_t word_size) {
@@ -3000,11 +2996,13 @@ void Metaspace::deallocate(MetaWord* ptr, size_t word_size, bool is_class) {
 }
 
 Metablock* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
-                              bool read_only, MetadataType mdtype, TRAPS) {
+                              bool read_only, MetaspaceObj::Type type, TRAPS) {
   if (HAS_PENDING_EXCEPTION) {
     assert(false, "Should not allocate with exception pending");
     return NULL;  // caller does a CHECK_NULL too
   }
+
+  MetadataType mdtype = (type == MetaspaceObj::ClassType) ? ClassType : NonClassType;
 
   // SSS: Should we align the allocations and make sure the sizes are aligned.
   MetaWord* result = NULL;
@@ -3015,13 +3013,13 @@ Metablock* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
   // with the SymbolTable_lock.  Dumping is single threaded for now.  We'll have
   // to revisit this for application class data sharing.
   if (DumpSharedSpaces) {
-    if (read_only) {
-      result = loader_data->ro_metaspace()->allocate(word_size, NonClassType);
-    } else {
-      result = loader_data->rw_metaspace()->allocate(word_size, NonClassType);
-    }
+    assert(type > MetaspaceObj::UnknownType && type < MetaspaceObj::_number_of_types, "sanity");
+    Metaspace* space = read_only ? loader_data->ro_metaspace() : loader_data->rw_metaspace();
+    result = space->allocate(word_size, NonClassType);
     if (result == NULL) {
       report_out_of_shared_space(read_only ? SharedReadOnly : SharedReadWrite);
+    } else {
+      space->record_allocation(result, type, space->vsm()->get_raw_word_size(word_size));
     }
     return Metablock::initialize(result, word_size);
   }
@@ -3054,6 +3052,38 @@ Metablock* Metaspace::allocate(ClassLoaderData* loader_data, size_t word_size,
     }
   }
   return Metablock::initialize(result, word_size);
+}
+
+void Metaspace::record_allocation(void* ptr, MetaspaceObj::Type type, size_t word_size) {
+  assert(DumpSharedSpaces, "sanity");
+
+  AllocRecord *rec = new AllocRecord((address)ptr, type, (int)word_size * HeapWordSize);
+  if (_alloc_record_head == NULL) {
+    _alloc_record_head = _alloc_record_tail = rec;
+  } else {
+    _alloc_record_tail->_next = rec;
+    _alloc_record_tail = rec;
+  }
+}
+
+void Metaspace::iterate(Metaspace::AllocRecordClosure *closure) {
+  assert(DumpSharedSpaces, "unimplemented for !DumpSharedSpaces");
+
+  address last_addr = (address)bottom();
+
+  for (AllocRecord *rec = _alloc_record_head; rec; rec = rec->_next) {
+    address ptr = rec->_ptr;
+    if (last_addr < ptr) {
+      closure->doit(last_addr, MetaspaceObj::UnknownType, ptr - last_addr);
+    }
+    closure->doit(ptr, rec->_type, rec->_byte_size);
+    last_addr = ptr + rec->_byte_size;
+  }
+
+  address top = ((address)bottom()) + used_bytes_slow(Metaspace::NonClassType);
+  if (last_addr < top) {
+    closure->doit(last_addr, MetaspaceObj::UnknownType, top - last_addr);
+  }
 }
 
 void Metaspace::purge() {

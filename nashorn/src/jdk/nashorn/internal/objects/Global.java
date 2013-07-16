@@ -37,6 +37,7 @@ import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,10 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
     /** Nashorn extension: global.load */
     @Property(attributes = Attribute.NOT_ENUMERABLE)
     public Object load;
+
+    /** Nashorn extension: global.loadWithNewGlobal */
+    @Property(attributes = Attribute.NOT_ENUMERABLE)
+    public Object loadWithNewGlobal;
 
     /** Nashorn extension: global.exit */
     @Property(attributes = Attribute.NOT_ENUMERABLE)
@@ -364,11 +369,12 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
     // Used to store the last RegExp result to support deprecated RegExp constructor properties
     private RegExpResult lastRegExpResult;
 
-    private static final MethodHandle EVAL    = findOwnMH("eval",    Object.class, Object.class, Object.class);
-    private static final MethodHandle PRINT   = findOwnMH("print",   Object.class, Object.class, Object[].class);
-    private static final MethodHandle PRINTLN = findOwnMH("println", Object.class, Object.class, Object[].class);
-    private static final MethodHandle LOAD    = findOwnMH("load",    Object.class, Object.class, Object.class);
-    private static final MethodHandle EXIT    = findOwnMH("exit",    Object.class, Object.class, Object.class);
+    private static final MethodHandle EVAL              = findOwnMH("eval",              Object.class, Object.class, Object.class);
+    private static final MethodHandle PRINT             = findOwnMH("print",             Object.class, Object.class, Object[].class);
+    private static final MethodHandle PRINTLN           = findOwnMH("println",           Object.class, Object.class, Object[].class);
+    private static final MethodHandle LOAD              = findOwnMH("load",              Object.class, Object.class, Object.class);
+    private static final MethodHandle LOADWITHNEWGLOBAL = findOwnMH("loadWithNewGlobal", Object.class, Object.class, Object[].class);
+    private static final MethodHandle EXIT              = findOwnMH("exit",              Object.class, Object.class, Object.class);
 
     private final Context context;
 
@@ -422,15 +428,6 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
      */
     static Context getThisContext() {
         return instance().context;
-    }
-
-    /**
-     * Script access check for strict mode
-     *
-     * @return true if strict mode enabled in {@link Global#getThisContext()}
-     */
-    static boolean isStrict() {
-        return getEnv()._strict;
     }
 
     // GlobalObject interface implementation
@@ -610,14 +607,12 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
     public PropertyDescriptor newAccessorDescriptor(final Object get, final Object set, final boolean configurable, final boolean enumerable) {
         final AccessorPropertyDescriptor desc = new AccessorPropertyDescriptor(configurable, enumerable, get == null ? UNDEFINED : get, set == null ? UNDEFINED : set);
 
-        final boolean strict = context.getEnv()._strict;
-
         if (get == null) {
-            desc.delete(PropertyDescriptor.GET, strict);
+            desc.delete(PropertyDescriptor.GET, false);
         }
 
         if (set == null) {
-            desc.delete(PropertyDescriptor.SET, strict);
+            desc.delete(PropertyDescriptor.SET, false);
         }
 
         return desc;
@@ -740,6 +735,26 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
         final Global global = Global.instance();
         final ScriptObject scope = (self instanceof ScriptObject) ? (ScriptObject)self : global;
         return global.context.load(scope, source);
+    }
+
+    /**
+     * Global loadWithNewGlobal implementation - Nashorn extension
+     *
+     * @param self scope
+     * @param args from plus (optional) arguments to be passed to the loaded script
+     *
+     * @return result of load (may be undefined)
+     *
+     * @throws IOException if source could not be read
+     */
+    public static Object loadWithNewGlobal(final Object self, final Object...args) throws IOException {
+        final Global global = Global.instance();
+        final int length = args.length;
+        final boolean hasArgs = 0 < length;
+        final Object from = hasArgs ? args[0] : UNDEFINED;
+        final Object[] arguments = hasArgs ? Arrays.copyOfRange(args, 1, length) : args;
+
+        return global.context.loadWithNewGlobal(from, arguments);
     }
 
     /**
@@ -1387,6 +1402,7 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
         this.unescape           = ScriptFunctionImpl.makeFunction("unescape",   GlobalFunctions.UNESCAPE);
         this.print              = ScriptFunctionImpl.makeFunction("print",      env._print_no_newline ? PRINT : PRINTLN);
         this.load               = ScriptFunctionImpl.makeFunction("load",       LOAD);
+        this.loadWithNewGlobal  = ScriptFunctionImpl.makeFunction("loadWithNewGlobal", LOADWITHNEWGLOBAL);
         this.exit               = ScriptFunctionImpl.makeFunction("exit",       EXIT);
         this.quit               = ScriptFunctionImpl.makeFunction("quit",       EXIT);
 
@@ -1458,7 +1474,6 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
         // Error objects
         this.builtinError = (ScriptFunction)initConstructor("Error");
         final ScriptObject errorProto = getErrorPrototype();
-        final boolean strict = Global.isStrict();
 
         // Nashorn specific accessors on Error.prototype - stack, lineNumber, columnNumber and fileName
         final ScriptFunction getStack = ScriptFunctionImpl.makeFunction("getStack", NativeError.GET_STACK);
@@ -1476,10 +1491,10 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
 
         // ECMA 15.11.4.2 Error.prototype.name
         // Error.prototype.name = "Error";
-        errorProto.set(NativeError.NAME, "Error", strict);
+        errorProto.set(NativeError.NAME, "Error", false);
         // ECMA 15.11.4.3 Error.prototype.message
         // Error.prototype.message = "";
-        errorProto.set(NativeError.MESSAGE, "", strict);
+        errorProto.set(NativeError.MESSAGE, "", false);
 
         this.builtinEvalError = initErrorSubtype("EvalError", errorProto);
         this.builtinRangeError = initErrorSubtype("RangeError", errorProto);
@@ -1492,9 +1507,8 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
     private ScriptFunction initErrorSubtype(final String name, final ScriptObject errorProto) {
         final ScriptObject cons = initConstructor(name);
         final ScriptObject prototype = ScriptFunction.getPrototype(cons);
-        final boolean strict = Global.isStrict();
-        prototype.set(NativeError.NAME, name, strict);
-        prototype.set(NativeError.MESSAGE, "", strict);
+        prototype.set(NativeError.NAME, name, false);
+        prototype.set(NativeError.MESSAGE, "", false);
         prototype.setProto(errorProto);
         return (ScriptFunction)cons;
     }
@@ -1628,20 +1642,21 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
     @SuppressWarnings("resource")
     private static Object printImpl(final boolean newLine, final Object... objects) {
         final PrintWriter out = Global.getEnv().getOut();
+        final StringBuilder sb = new StringBuilder();
 
-        boolean first = true;
         for (final Object object : objects) {
-            if (first) {
-                first = false;
-            } else {
-                out.print(' ');
+            if (sb.length() != 0) {
+                sb.append(' ');
             }
 
-            out.print(JSType.toString(object));
+            sb.append(JSType.toString(object));
         }
 
+        // Print all at once to ensure thread friendly result.
         if (newLine) {
-            out.println();
+            out.println(sb.toString());
+        } else {
+            out.print(sb.toString());
         }
 
         out.flush();
@@ -1702,7 +1717,7 @@ public final class Global extends ScriptObject implements GlobalObject, Scope {
         // <anon-function>
         builtinFunction.setProto(anon);
         builtinFunction.setPrototype(anon);
-        anon.set("constructor", builtinFunction, anon.isStrict());
+        anon.set("constructor", builtinFunction, false);
         anon.deleteOwnProperty(anon.getMap().findProperty("prototype"));
 
         // now initialize Object
