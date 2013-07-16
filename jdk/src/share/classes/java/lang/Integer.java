@@ -26,7 +26,6 @@
 package java.lang;
 
 import java.lang.annotation.Native;
-import java.util.Properties;
 
 /**
  * The {@code Integer} class wraps a value of the primitive type
@@ -185,7 +184,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * @since 1.8
      */
     public static String toUnsignedString(int i, int radix) {
-        return Long.toString(toUnsignedLong(i), radix);
+        return Long.toUnsignedString(toUnsignedLong(i), radix);
     }
 
     /**
@@ -307,19 +306,38 @@ public final class Integer extends Number implements Comparable<Integer> {
     /**
      * Convert the integer to an unsigned number.
      */
-    private static String toUnsignedString0(int i, int shift) {
-        char[] buf = new char[32];
-        int charPos = 32;
+    private static String toUnsignedString0(int val, int shift) {
+        // assert shift > 0 && shift <=5 : "Illegal shift value";
+        int mag = Integer.SIZE - Integer.numberOfLeadingZeros(val);
+        int chars = Math.max(((mag + (shift - 1)) / shift), 1);
+        char[] buf = new char[chars];
+
+        formatUnsignedInt(val, shift, buf, 0, chars);
+
+        // Use special constructor which takes over "buf".
+        return new String(buf, true);
+    }
+
+    /**
+     * Format a long (treated as unsigned) into a character buffer.
+     * @param val the unsigned int to format
+     * @param shift the log2 of the base to format in (4 for hex, 3 for octal, 1 for binary)
+     * @param buf the character buffer to write to
+     * @param offset the offset in the destination buffer to start at
+     * @param len the number of characters to write
+     * @return the lowest character  location used
+     */
+     static int formatUnsignedInt(int val, int shift, char[] buf, int offset, int len) {
+        int charPos = len;
         int radix = 1 << shift;
         int mask = radix - 1;
         do {
-            buf[--charPos] = digits[i & mask];
-            i >>>= shift;
-        } while (i != 0);
+            buf[offset + --charPos] = Integer.digits[val & mask];
+            val >>>= shift;
+        } while (val != 0 && charPos > 0);
 
-        return new String(buf, charPos, (32 - charPos));
+        return charPos;
     }
-
 
     final static char [] DigitTens = {
         '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
@@ -770,10 +788,14 @@ public final class Integer extends Number implements Comparable<Integer> {
             String integerCacheHighPropValue =
                 sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
             if (integerCacheHighPropValue != null) {
-                int i = parseInt(integerCacheHighPropValue);
-                i = Math.max(i, 127);
-                // Maximum array size is Integer.MAX_VALUE
-                h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
+                try {
+                    int i = parseInt(integerCacheHighPropValue);
+                    i = Math.max(i, 127);
+                    // Maximum array size is Integer.MAX_VALUE
+                    h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
+                } catch( NumberFormatException nfe) {
+                    // If the property cannot be parsed into an int, ignore it.
+                }
             }
             high = h;
 
@@ -875,6 +897,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * Returns the value of this {@code Integer} as a {@code long}
      * after a widening primitive conversion.
      * @jls 5.1.2 Widening Primitive Conversions
+     * @see Integer#toUnsignedLong(int)
      */
     public long longValue() {
         return (long)value;
@@ -928,6 +951,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * Returns a hash code for a {@code int} value; compatible with
      * {@code Integer.hashCode()}.
      *
+     * @param value the value to hash
      * @since 1.8
      *
      * @return a hash code value for a {@code int} value.
@@ -1313,6 +1337,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * one-bits in its two's complement binary representation, that is, if it
      * is equal to zero.
      *
+     * @param i the value whose highest one bit is to be computed
      * @return an {@code int} value with a single one-bit, in the position
      *     of the highest-order one-bit in the specified value, or zero if
      *     the specified value is itself equal to zero.
@@ -1335,6 +1360,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * one-bits in its two's complement binary representation, that is, if it
      * is equal to zero.
      *
+     * @param i the value whose lowest one bit is to be computed
      * @return an {@code int} value with a single one-bit, in the position
      *     of the lowest-order one-bit in the specified value, or zero if
      *     the specified value is itself equal to zero.
@@ -1359,6 +1385,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * <li>ceil(log<sub>2</sub>(x)) = {@code 32 - numberOfLeadingZeros(x - 1)}
      * </ul>
      *
+     * @param i the value whose number of leading zeros is to be computed
      * @return the number of zero bits preceding the highest-order
      *     ("leftmost") one-bit in the two's complement binary representation
      *     of the specified {@code int} value, or 32 if the value
@@ -1385,6 +1412,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * one-bits in its two's complement representation, in other words if it is
      * equal to zero.
      *
+     * @param i the value whose number of trailing zeros is to be computed
      * @return the number of zero bits following the lowest-order ("rightmost")
      *     one-bit in the two's complement binary representation of the
      *     specified {@code int} value, or 32 if the value is equal
@@ -1408,6 +1436,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * representation of the specified {@code int} value.  This function is
      * sometimes referred to as the <i>population count</i>.
      *
+     * @param i the value whose bits are to be counted
      * @return the number of one-bits in the two's complement binary
      *     representation of the specified {@code int} value.
      * @since 1.5
@@ -1435,6 +1464,8 @@ public final class Integer extends Number implements Comparable<Integer> {
      * ignored, even if the distance is negative: {@code rotateLeft(val,
      * distance) == rotateLeft(val, distance & 0x1F)}.
      *
+     * @param i the value whose bits are to be rotated left
+     * @param distance the number of bit positions to rotate left
      * @return the value obtained by rotating the two's complement binary
      *     representation of the specified {@code int} value left by the
      *     specified number of bits.
@@ -1457,6 +1488,8 @@ public final class Integer extends Number implements Comparable<Integer> {
      * ignored, even if the distance is negative: {@code rotateRight(val,
      * distance) == rotateRight(val, distance & 0x1F)}.
      *
+     * @param i the value whose bits are to be rotated right
+     * @param distance the number of bit positions to rotate right
      * @return the value obtained by rotating the two's complement binary
      *     representation of the specified {@code int} value right by the
      *     specified number of bits.
@@ -1471,6 +1504,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * two's complement binary representation of the specified {@code int}
      * value.
      *
+     * @param i the value to be reversed
      * @return the value obtained by reversing order of the bits in the
      *     specified {@code int} value.
      * @since 1.5
@@ -1490,6 +1524,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * return value is -1 if the specified value is negative; 0 if the
      * specified value is zero; and 1 if the specified value is positive.)
      *
+     * @param i the value whose signum is to be computed
      * @return the signum function of the specified {@code int} value.
      * @since 1.5
      */
@@ -1502,6 +1537,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * Returns the value obtained by reversing the order of the bytes in the
      * two's complement representation of the specified {@code int} value.
      *
+     * @param i the value whose bytes are to be reversed
      * @return the value obtained by reversing the bytes in the specified
      *     {@code int} value.
      * @since 1.5

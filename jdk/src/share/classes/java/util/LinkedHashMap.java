@@ -25,6 +25,8 @@
 
 package java.util;
 import java.io.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 /**
  * <p>Hash table and linked list implementation of the <tt>Map</tt> interface,
@@ -55,9 +57,9 @@ import java.io.*;
  * order they were presented.)
  *
  * <p>A special {@link #LinkedHashMap(int,float,boolean) constructor} is
- * provided to create a linked hash map whose order of iteration is the order
- * in which its entries were last accessed, from least-recently accessed to
- * most-recently (<i>access-order</i>).  This kind of map is well-suited to
+ * provided to create a <tt>LinkedHashMap</tt> whose order of iteration is the
+ * order in which its entries were last accessed, from least-recently accessed
+ * to most-recently (<i>access-order</i>).  This kind of map is well-suited to
  * building LRU caches.  Invoking the <tt>put</tt> or <tt>get</tt> method
  * results in an access to the corresponding entry (assuming it exists after
  * the invocation completes).  The <tt>putAll</tt> method generates one entry
@@ -243,23 +245,6 @@ public class LinkedHashMap<K,V>
     }
 
     /**
-     * Transfers all entries to new table array.  This method is called
-     * by superclass resize.  It is overridden for performance, as it is
-     * faster to iterate using our linked list.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    void transfer(HashMap.Entry[] newTable) {
-        int newCapacity = newTable.length;
-        for (Entry<K,V> e = header.after; e != header; e = e.after) {
-            int index = indexFor(e.hash, newCapacity);
-            e.next = (HashMap.Entry<K,V>)newTable[index];
-            newTable[index] = e;
-        }
-    }
-
-
-    /**
      * Returns <tt>true</tt> if this map maps one or more keys to the
      * specified value.
      *
@@ -313,6 +298,32 @@ public class LinkedHashMap<K,V>
         header.before = header.after = header;
     }
 
+    @Override
+    public void forEach(BiConsumer<? super K, ? super V> action) {
+        Objects.requireNonNull(action);
+        int expectedModCount = modCount;
+        for (Entry<K, V> entry = header.after; entry != header; entry = entry.after) {
+            action.accept(entry.key, entry.value);
+
+            if (expectedModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
+    @Override
+    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        Objects.requireNonNull(function);
+        int expectedModCount = modCount;
+        for (Entry<K, V> entry = header.after; entry != header; entry = entry.after) {
+            entry.value = function.apply(entry.key, entry.value);
+
+            if (expectedModCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
+        }
+    }
+
     /**
      * LinkedHashMap entry.
      */
@@ -320,7 +331,7 @@ public class LinkedHashMap<K,V>
         // These fields comprise the doubly linked list used for iteration.
         Entry<K,V> before, after;
 
-        Entry(int hash, K key, V value, HashMap.Entry<K,V> next) {
+        Entry(int hash, K key, V value, Object next) {
             super(hash, key, value, next);
         }
 
@@ -344,7 +355,7 @@ public class LinkedHashMap<K,V>
 
         /**
          * This method is invoked by the superclass whenever the value
-         * of a pre-existing entry is read by Map.get or modified by Map.set.
+         * of a pre-existing entry is read by Map.get or modified by Map.put.
          * If the enclosing Map is access-ordered, it moves the entry
          * to the end of the list; otherwise, it does nothing.
          */
@@ -422,8 +433,9 @@ public class LinkedHashMap<K,V>
      * allocated entry to get inserted at the end of the linked list and
      * removes the eldest entry if appropriate.
      */
-    void addEntry(int hash, K key, V value, int bucketIndex) {
-        super.addEntry(hash, key, value, bucketIndex);
+    @Override
+    void addEntry(int hash, K key, V value, int bucketIndex, boolean checkIfNeedTree) {
+        super.addEntry(hash, key, value, bucketIndex, checkIfNeedTree);
 
         // Remove eldest entry if instructed
         Entry<K,V> eldest = header.after;
@@ -432,17 +444,14 @@ public class LinkedHashMap<K,V>
         }
     }
 
-    /**
-     * This override differs from addEntry in that it doesn't resize the
-     * table or remove the eldest entry.
+    /*
+     * Create a new LinkedHashMap.Entry and setup the before/after pointers
      */
-    void createEntry(int hash, K key, V value, int bucketIndex) {
-        @SuppressWarnings("unchecked")
-            HashMap.Entry<K,V> old = (HashMap.Entry<K,V>)table[bucketIndex];
-        Entry<K,V> e = new Entry<>(hash, key, value, old);
-        table[bucketIndex] = e;
-        e.addBefore(header);
-        size++;
+    @Override
+    HashMap.Entry<K,V> newEntry(int hash, K key, V value, Object next) {
+        Entry<K,V> newEntry = new Entry<>(hash, key, value, next);
+        newEntry.addBefore(header);
+        return newEntry;
     }
 
     /**
@@ -456,13 +465,13 @@ public class LinkedHashMap<K,V>
      * <p>Sample use: this override will allow the map to grow up to 100
      * entries and then delete the eldest entry each time a new entry is
      * added, maintaining a steady state of 100 entries.
-     * <pre>
+     * <pre>{@code
      *     private static final int MAX_ENTRIES = 100;
      *
      *     protected boolean removeEldestEntry(Map.Entry eldest) {
      *        return size() > MAX_ENTRIES;
      *     }
-     * </pre>
+     * }</pre>
      *
      * <p>This method typically does not modify the map in any way,
      * instead allowing the map to modify itself as directed by its
