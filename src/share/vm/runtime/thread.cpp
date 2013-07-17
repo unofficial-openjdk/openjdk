@@ -3608,6 +3608,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   // Start Attach Listener if +StartAttachListener or it can't be started lazily
   if (!DisableAttachMechanism) {
+    AttachListener::vm_start();
     if (StartAttachListener || AttachListener::init_at_startup()) {
       AttachListener::init();
     }
