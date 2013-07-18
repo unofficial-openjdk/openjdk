@@ -33,7 +33,6 @@
  * @author zhangshj@linux.vnet.ibm.com
  */
 
-import java.util.function.BiFunction;
 import java.util.HashMap;
 
 public class OverrideIsEmpty {
@@ -66,13 +65,6 @@ public class OverrideIsEmpty {
         Object value = new Object();
         map.get(key);
         map.remove(key);
-        map.replace(key, value, null);
-        map.replace(key, value);
-        map.computeIfPresent(key, new BiFunction<Object, Object, Object>() {
-            public Object apply(Object key, Object oldValue) {
-                return oldValue;
-            }
-        });
     }
 }
 
