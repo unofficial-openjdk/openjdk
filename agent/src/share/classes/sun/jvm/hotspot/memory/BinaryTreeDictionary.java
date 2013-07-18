@@ -40,8 +40,8 @@ public class BinaryTreeDictionary extends VMObject {
    }
 
    private static synchronized void initialize(TypeDataBase db) {
-      Type type = db.lookupType("BinaryTreeDictionary");
-      totalSizeField = type.getCIntegerField("_totalSize");
+      Type type = db.lookupType("BinaryTreeDictionary<FreeChunk>");
+      totalSizeField = type.getCIntegerField("_total_size");
    }
 
    // Fields

@@ -41,7 +41,7 @@ public class FreeList extends VMObject {
    }
 
    private static synchronized void initialize(TypeDataBase db) {
-      Type type = db.lookupType("FreeList");
+      Type type = db.lookupType("FreeList<FreeChunk>");
       sizeField = type.getCIntegerField("_size");
       countField = type.getCIntegerField("_count");
       headerSize = type.getSize();
