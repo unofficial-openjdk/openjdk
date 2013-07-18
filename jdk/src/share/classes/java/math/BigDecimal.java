@@ -2572,6 +2572,9 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * ({@code this} * 10<sup>n</sup>).  The scale of
      * the result is {@code (this.scale() - n)}.
      *
+     * @param n the exponent power of ten to scale by
+     * @return a BigDecimal whose numerical value is equal to
+     * ({@code this} * 10<sup>n</sup>)
      * @throws ArithmeticException if the scale would be
      *         outside the range of a 32-bit integer.
      *
@@ -2589,14 +2592,18 @@ public class BigDecimal extends Number implements Comparable<BigDecimal> {
      * the {@code BigDecimal} value {@code 600.0}, which has
      * [{@code BigInteger}, {@code scale}] components equals to
      * [6000, 1], yields {@code 6E2} with [{@code BigInteger},
-     * {@code scale}] components equals to [6, -2]
+     * {@code scale}] components equals to [6, -2].  If
+     * this BigDecimal is numerically equal to zero, then
+     * {@code BigDecimal.ZERO} is returned.
      *
      * @return a numerically equal {@code BigDecimal} with any
      * trailing zeros removed.
      * @since 1.5
      */
     public BigDecimal stripTrailingZeros() {
-        if(intCompact!=INFLATED) {
+        if (intCompact == 0 || (intVal != null && intVal.signum() == 0)) {
+            return BigDecimal.ZERO;
+        } else if (intCompact != INFLATED) {
             return createAndStripZerosToMatchScale(intCompact, scale, Long.MIN_VALUE);
         } else {
             return createAndStripZerosToMatchScale(intVal, scale, Long.MIN_VALUE);
