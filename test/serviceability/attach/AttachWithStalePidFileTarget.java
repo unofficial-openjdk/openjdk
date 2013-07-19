@@ -1,6 +1,5 @@
 /*
- * @(#)BinaryTreeDictionary.java
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +19,9 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
-
-package sun.jvm.hotspot.memory;
-
-import java.util.*;
-import sun.jvm.hotspot.debugger.*;
-import sun.jvm.hotspot.types.*;
-import sun.jvm.hotspot.runtime.*;
-
-public class BinaryTreeDictionary extends VMObject {
-   static {
-      VM.registerVMInitializedObserver(new Observer() {
-         public void update(Observable o, Object data) {
-            initialize(VM.getVM().getTypeDataBase());
-         }
-      });
-   }
-
-   private static synchronized void initialize(TypeDataBase db) {
-      Type type = db.lookupType("BinaryTreeDictionary<FreeChunk>");
-      totalSizeField = type.getCIntegerField("_total_size");
-   }
-
-   // Fields
-   private static CIntegerField totalSizeField;
-
-   // Accessors
-   public long size() {
-      return totalSizeField.getValue(addr);
-   }
-
-   // Constructor
-   public BinaryTreeDictionary(Address addr) {
-      super(addr);
-   }
+public class AttachWithStalePidFileTarget {
+  public static void main(String... args) throws Exception {
+    Thread.sleep(2*60*1000);
+  }
 }
