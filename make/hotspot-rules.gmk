@@ -105,6 +105,8 @@ ifdef ZIP_DEBUGINFO_FILES
   HOTSPOT_BUILD_ARGUMENTS += ZIP_DEBUGINFO_FILES="$(ZIP_DEBUGINFO_FILES)"
 endif
 
+-include ${JDK_TOPDIR}/make/closed/common/Defs.gmk
+
 hotspot-build::
 	$(MKDIR) -p $(HOTSPOT_OUTPUTDIR)
 	$(MKDIR) -p $(HOTSPOT_EXPORT_PATH)
