@@ -492,6 +492,7 @@ class MethodHandleNatives {
             return defc == java.lang.ClassLoader.class;
         case "registerAsParallelCapable":
             return defc == java.lang.ClassLoader.class;
+        case "getInvocationHandler":
         case "getProxyClass":
         case "newProxyInstance":
             return defc == java.lang.reflect.Proxy.class;
