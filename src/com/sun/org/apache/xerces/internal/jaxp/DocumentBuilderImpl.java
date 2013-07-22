@@ -37,6 +37,9 @@ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
 import com.sun.org.apache.xerces.internal.jaxp.validation.XSGrammarPoolContainer;
 import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.Property;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.State;
 import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
@@ -97,6 +100,10 @@ public class DocumentBuilderImpl extends DocumentBuilder
     private static final String SECURITY_MANAGER =
         Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
 
+    /** Property identifier: Security property manager. */
+    private static final String XML_SECURITY_PROPERTY_MANAGER =
+            Constants.XML_SECURITY_PROPERTY_MANAGER;
+
     /** property identifier: access external dtd. */
     public static final String ACCESS_EXTERNAL_DTD = XMLConstants.ACCESS_EXTERNAL_DTD;
 
@@ -116,6 +123,8 @@ public class DocumentBuilderImpl extends DocumentBuilder
 
     /** Initial EntityResolver */
     private final EntityResolver fInitEntityResolver;
+
+    private XMLSecurityPropertyManager fSecurityPropertyMgr;
 
     DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Hashtable dbfAttrs, Hashtable features)
         throws SAXNotRecognizedException, SAXNotSupportedException {
@@ -160,23 +169,27 @@ public class DocumentBuilderImpl extends DocumentBuilder
             domParser.setFeature(XINCLUDE_FEATURE, true);
         }
 
+        fSecurityPropertyMgr = new XMLSecurityPropertyManager();
+        domParser.setProperty(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
+
         // If the secure processing feature is on set a security manager.
         if (secureProcessing) {
             domParser.setProperty(SECURITY_MANAGER, new XMLSecurityManager());
 
             /**
-             * By default, secure processing is set, no external access is allowed.
-             * However, we need to check if it is actively set on the factory since we
-             * allow the use of the System Property or jaxp.properties to override
-             * the default value
+             * If secure processing is explicitly set on the factory, the
+             * access properties will be set unless the corresponding
+             * System Properties or jaxp.properties are set
              */
             if (features != null) {
                 Object temp = features.get(XMLConstants.FEATURE_SECURE_PROCESSING);
                 if (temp != null) {
                     boolean value = ((Boolean) temp).booleanValue();
-                    if (value) {
-                        domParser.setProperty(ACCESS_EXTERNAL_DTD, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
-                        domParser.setProperty(ACCESS_EXTERNAL_SCHEMA, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                    if (value && Constants.IS_JDK8_OR_ABOVE) {
+                        fSecurityPropertyMgr.setValue(Property.ACCESS_EXTERNAL_DTD,
+                                State.FSP, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                        fSecurityPropertyMgr.setValue(Property.ACCESS_EXTERNAL_SCHEMA,
+                                State.FSP, Constants.EXTERNAL_ACCESS_DEFAULT_FSP);
                     }
                 }
             }
@@ -220,7 +233,7 @@ public class DocumentBuilderImpl extends DocumentBuilder
             setFeatures(features);
         }
 
-        // Set attributes
+        //setAttribute override those that may be set by other means
         setDocumentBuilderFactoryAttributes(dbfAttrs);
 
         // Initial EntityResolver
@@ -289,12 +302,18 @@ public class DocumentBuilderImpl extends DocumentBuilder
                                                 }
                                         }
                 } else {
-                    // Let Xerces code handle the property
-                    domParser.setProperty(name, val);
-                                }
-                        }
+                   int index = fSecurityPropertyMgr.getIndex(name);
+                   if (index > -1) {
+                       fSecurityPropertyMgr.setValue(index,
+                               XMLSecurityPropertyManager.State.APIPROPERTY, (String)val);
+                   } else {
+                       // Let Xerces code handle the property
+                       domParser.setProperty(name, val);
+                   }
                 }
+            }
         }
+    }
 
     /**
      * Non-preferred: use the getDOMImplementation() method instead of this
