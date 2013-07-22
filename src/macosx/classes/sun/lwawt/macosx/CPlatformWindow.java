@@ -923,6 +923,21 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         }
     }
 
+    /**
+     * Helper method to get a pointer to the native view from the PlatformWindow.
+     */
+    static long getNativeViewPtr(PlatformWindow platformWindow) {
+        long nativePeer = 0L;
+        if (platformWindow instanceof CPlatformWindow) {
+            nativePeer = ((CPlatformWindow) platformWindow).getContentView().getAWTView();
+        } else if (platformWindow instanceof CViewPlatformEmbeddedFrame){
+            nativePeer = ((CViewPlatformEmbeddedFrame) platformWindow).getNSViewPtr();
+        } else {
+            throw new IllegalArgumentException("Unsupported platformWindow implementation");
+        }
+        return nativePeer;
+    }
+
     /*************************************************************
      * Callbacks from the AWTWindow and AWTView objc classes.
      *************************************************************/
@@ -949,25 +964,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
-        final GraphicsConfiguration oldGC = contentView.getGraphicsConfiguration();
-
-        if (peer!= null) {
+        if (peer != null) {
             peer.notifyReshape(x, y, width, height);
-        }
-
-        final GraphicsConfiguration newGC = contentView.getGraphicsConfiguration();
-        // System-dependent appearance optimization.
-        if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
-            || isFullScreenAnimationOn || !Objects.equals(newGC, oldGC)) {
-            flushBuffers();
+            // System-dependent appearance optimization.
+            if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
+                    || isFullScreenAnimationOn) {
+                flushBuffers();
+            }
         }
     }
 
     private void deliverWindowClosingEvent() {
-        if (peer != null) {
-            if (peer.getBlocker() == null)  {
-                peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
-            }
+        if (peer != null && peer.getBlocker() == null) {
+            peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
         }
     }
 

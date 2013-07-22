@@ -787,7 +787,8 @@ public class LWWindowPeer
                     Point lp = lastMouseEventPeer.windowToLocal(x, y,
                                                                 lastWindowPeer);
                     Component target = lastMouseEventPeer.getTarget();
-                    postMouseEnteredExitedEvent(target, id, when, modifiers, lp,
+                    postMouseEnteredExitedEvent(target, MouseEvent.MOUSE_EXITED,
+                            when, modifiers, lp,
                             screenX, screenY, clickCount, popupTrigger, button);
                 }
                 lastMouseEventPeer = null;
@@ -805,12 +806,14 @@ public class LWWindowPeer
                         oldp.x += r.x - lr.x;
                         oldp.y += r.y - lr.y;
                         Component target = lastMouseEventPeer.getTarget();
-                        postMouseEnteredExitedEvent(target, id, when, modifiers, oldp,
+                        postMouseEnteredExitedEvent(target, MouseEvent.MOUSE_EXITED,
+                                when, modifiers, oldp,
                                 screenX, screenY, clickCount, popupTrigger, button);
                     } else {
                         Point oldp = lastMouseEventPeer.windowToLocal(x, y, this);
                         Component target = lastMouseEventPeer.getTarget();
-                        postMouseEnteredExitedEvent(target, id, when, modifiers, oldp,
+                        postMouseEnteredExitedEvent(target, MouseEvent.MOUSE_EXITED,
+                                when, modifiers, oldp,
                                 screenX, screenY, clickCount, popupTrigger, button);
                     }
                 }
@@ -818,7 +821,8 @@ public class LWWindowPeer
                 if (targetPeer != null && targetPeer.isEnabled() && id != MouseEvent.MOUSE_ENTERED) {
                     Point newp = targetPeer.windowToLocal(x, y, curWindowPeer);
                     Component target = targetPeer.getTarget();
-                    postMouseEnteredExitedEvent(target, id, when, modifiers, newp,
+                    postMouseEnteredExitedEvent(target, MouseEvent.MOUSE_ENTERED,
+                            when, modifiers, newp,
                             screenX, screenY, clickCount, popupTrigger, button);
                 }
             }
