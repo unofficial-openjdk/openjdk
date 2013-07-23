@@ -264,7 +264,7 @@ generic_debug_build:
 	        DEBUG_NAME=$(DEBUG_NAME) \
 		GENERATE_DOCS=false \
 		BUILD_INSTALL_BUNDLES=true \
-		CREATE_DEBUGINFO_BUNDLES=false \
+		CREATE_DEBUGINFO_BUNDLES=true \
 	        $(BOOT_CYCLE_DEBUG_SETTINGS) \
 		generic_build_repo_series
 
