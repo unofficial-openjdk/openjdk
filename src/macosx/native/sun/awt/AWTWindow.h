@@ -45,6 +45,7 @@
     jint styleBits;
     BOOL isEnabled;
     NSWindow *nsWindow;
+    AWTWindow *ownerWindow;
 }
 
 // An instance of either AWTWindow_Normal or AWTWindow_Panel
@@ -53,12 +54,14 @@
 @property (nonatomic, retain) JNFWeakJObjectWrapper *javaPlatformWindow;
 @property (nonatomic, retain) CMenuBar *javaMenuBar;
 @property (nonatomic, retain) NSWindow *growBoxWindow;
+@property (nonatomic, retain) AWTWindow *ownerWindow;
 @property (nonatomic) NSSize javaMinSize;
 @property (nonatomic) NSSize javaMaxSize;
 @property (nonatomic) jint styleBits;
 @property (nonatomic) BOOL isEnabled;
 
 - (id) initWithPlatformWindow:(JNFWeakJObjectWrapper *)javaPlatformWindow
+                  ownerWindow:owner
                     styleBits:(jint)styleBits
                     frameRect:(NSRect)frameRect
                   contentView:(NSView *)contentView;
