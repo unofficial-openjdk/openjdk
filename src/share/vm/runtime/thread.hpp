@@ -506,6 +506,9 @@ public:
   // Check if address is in the stack of the thread (not just for locks).
   // Warning: the method can only be used on the running thread
   bool is_in_stack(address adr) const;
+  // Check if address is in the usable part of the stack (excludes protected
+  // guard pages)
+  bool is_in_usable_stack(address adr) const;
 
   // Sets this thread as starting thread. Returns failure if thread
   // creation fails due to lack of memory, too many threads etc.
@@ -713,6 +716,8 @@ class WatcherThread: public Thread {
 
   static bool _startable;
   volatile static bool _should_terminate; // updated without holding lock
+
+  os::WatcherThreadCrashProtection* _crash_protection;
  public:
   enum SomeConstants {
     delay_interval = 10                          // interrupt delay in milliseconds
@@ -739,6 +744,14 @@ class WatcherThread: public Thread {
   // Only allow start once the VM is sufficiently initialized
   // Otherwise the first task to enroll will trigger the start
   static void make_startable();
+
+  void set_crash_protection(os::WatcherThreadCrashProtection* crash_protection) {
+    assert(Thread::current()->is_Watcher_thread(), "Can only be set by WatcherThread");
+    _crash_protection = crash_protection;
+  }
+
+  bool has_crash_protection() const { return _crash_protection != NULL; }
+  os::WatcherThreadCrashProtection* crash_protection() const { return _crash_protection; }
 
  private:
   int sleep() const;

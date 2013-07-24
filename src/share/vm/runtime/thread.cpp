@@ -936,6 +936,14 @@ bool Thread::is_in_stack(address adr) const {
 }
 
 
+bool Thread::is_in_usable_stack(address adr) const {
+  size_t stack_guard_size = os::uses_stack_guard_pages() ? (StackYellowPages + StackRedPages) * os::vm_page_size() : 0;
+  size_t usable_stack_size = _stack_size - stack_guard_size;
+
+  return ((adr < stack_base()) && (adr >= stack_base() - usable_stack_size));
+}
+
+
 // We had to move these methods here, because vm threads get into ObjectSynchronizer::enter
 // However, there is a note in JavaThread::is_lock_owned() about the VM threads not being
 // used for compilation in the future. If that change is made, the need for these methods
@@ -1200,7 +1208,7 @@ WatcherThread* WatcherThread::_watcher_thread   = NULL;
 bool WatcherThread::_startable = false;
 volatile bool  WatcherThread::_should_terminate = false;
 
-WatcherThread::WatcherThread() : Thread() {
+WatcherThread::WatcherThread() : Thread(), _crash_protection(NULL) {
   assert(watcher_thread() == NULL, "we can only allocate one WatcherThread");
   if (os::create_thread(this, os::watcher_thread)) {
     _watcher_thread = this;
@@ -3608,6 +3616,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
 
   // Start Attach Listener if +StartAttachListener or it can't be started lazily
   if (!DisableAttachMechanism) {
+    AttachListener::vm_start();
     if (StartAttachListener || AttachListener::init_at_startup()) {
       AttachListener::init();
     }
