@@ -263,7 +263,7 @@ generic_debug_build:
 		ALT_OUTPUTDIR=$(ABS_OUTPUTDIR)/$(REL_JDK_OUTPUTDIR) \
 	        DEBUG_NAME=$(DEBUG_NAME) \
 		GENERATE_DOCS=false \
-		BUILD_INSTALL_BUNDLES=true \
+		$(if $(findstring true,$(BUILD_INSTALL)),BUILD_INSTALL_BUNDLES=true,) \
 		CREATE_DEBUGINFO_BUNDLES=false \
 	        $(BOOT_CYCLE_DEBUG_SETTINGS) \
 		generic_build_repo_series
