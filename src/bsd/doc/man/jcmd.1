@@ -1,0 +1,113 @@
+." Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+."
+." This code is free software; you can redistribute it and/or modify it
+." under the terms of the GNU General Public License version 2 only, as
+." published by the Free Software Foundation.
+."
+." This code is distributed in the hope that it will be useful, but WITHOUT
+." ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+." FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+." version 2 for more details (a copy is included in the LICENSE file that
+." accompanied this code).
+."
+." You should have received a copy of the GNU General Public License version
+." 2 along with this work; if not, write to the Free Software Foundation,
+." Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+."
+." Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+." or visit www.oracle.com if you need additional information or have any
+." questions.
+."
+.TH jcmd 1 "18 Jul 2013"
+
+.LP
+.SH "Name"
+jcmd \- Sends diagnostic command requests to a running Java Virtual Machine
+.LP
+.SH "SYNOPSIS"
+.LP
+.nf
+\f3
+.fl
+\fP\f3jcmd\fP [ \f2options\fP ]
+.fl
+\f3jcmd\fP [ \f2pid\fP | \f2main\-class\fP ] \f3PerfCounter.print\fP
+.fl
+\f3jcmd\fP [ \f2pid\fP | \f2main\-class\fP ] \f2command [arguments]\fP
+.fl
+\f3jcmd\fP [ \f2pid\fP | \f2main\-class\fP ] \f3\-f\fP \f2file\fP
+.fl
+.fi
+
+.LP
+.RS 3
+.TP 3
+options 
+The command\-line options. See Options. 
+.TP 3
+pid 
+Identifies the process that receives the diagnostic command requests. The process must be a Java process. To get a list of Java processes running on a machine, use jps(1) or jcmd(1). 
+.TP 3
+main\-class 
+The main class of the process that receives the diagnostic command requests. When matching processes, any process whose main class name contains the specified string as a substring is matched. If several running Java processes share the same main class, then the diagnostic command request is sent to all these processes. To get a list of Java processes running on a machine, use jps(1) or jcmd(1). 
+.TP 3
+command [arguments] 
+The main class of the process that receives the diagnostic command requests. When matching processes, any process whose main class name contains the specified string as a substring is matched. If several running Java processes share the same main class, then the diagnostic command request is sent to all these processes. To get a list of Java processes running on a machine, use jps(1) or jcmd(1). 
+.TP 3
+Perfcounter.print 
+Print the performance counters available on the targeted Java processes. The list of performance counters might vary with the Java process. 
+.TP 3
+\-f file 
+Read commands from \f2file\fP and call them on the targeted Java processes. In \f2file\fP, each command must be written on a single line. Lines starting with # are ignored. Processing of \f2file\fP ends when all lines have been called or when a line containing the \f3stop\fP keyword is read. 
+.RE
+
+.LP
+.SH "DESCRIPTION"
+.LP
+.LP
+\f3jcmd\fP is a utility to send diagnostic command requests to a Java Virtual Machine supporting this feature.
+.LP
+.LP
+Used without arguments or with the \f3\-l\fP option, \f3jcmd\fP prints the list of running Java processes with their process ID, their main class and their command\-line arguments.
+.LP
+.LP
+When a process ID is specified on the command line, \f3jcmd\fP sends the diagnostic command request to the process with this ID.
+.LP
+.LP
+When a main class is specified on the command line, \f3jcmd\fP sends the diagnostic command request to all Java processes for which the command\-line argument is a substring of the Java process' main class.
+.LP
+.LP
+With the \f3PerfCounter.print\fP argument, \f3jcmd\fP prints the performance counters available on the targeted Java processes.
+.LP
+.LP
+With the \f3\-f\fP option, \f3jcmd\fP sends to the targeted Java processes the diagnostic commands stored in the specified \f3file\fP.
+.LP
+.SH "OPTIONS"
+.LP
+.LP
+Options are mutually exclusive. Options, when used, must immediately follow the command name.
+.LP
+.RS 3
+.TP 3
+\-l 
+Prints the list of running Java processes with their process IDs, their main classes, and their command\-line arguments. 
+.TP 3
+\-h 
+Prints a help message. 
+.TP 3
+\-help 
+Prints a help message. 
+.RE
+
+.LP
+.SH "SEE ALSO"
+.LP
+.RS 3
+.TP 2
+o
+jps 
+.RE
+
+.LP
+ 
