@@ -74,6 +74,9 @@ import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
 import com.sun.org.apache.xalan.internal.utils.ObjectFactory;
 import com.sun.org.apache.xalan.internal.utils.FactoryImpl;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityPropertyManager;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityPropertyManager.Property;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityPropertyManager.State;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
@@ -228,11 +231,13 @@ public class TransformerFactoryImpl
      * protocols allowed for external references set by the stylesheet processing instruction, Import and Include element.
      */
     private String _accessExternalStylesheet = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
+
      /**
      * protocols allowed for external DTD references in source file and/or stylesheet.
      */
     private String _accessExternalDTD = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
 
+    private XMLSecurityPropertyManager _xmlSecurityPropertyMgr;
 
     /**
      * javax.xml.transform.sax.TransformerFactory implementation.
@@ -249,16 +254,16 @@ public class TransformerFactoryImpl
         this.m_DTMManagerClass = XSLTCDTMManager.getDTMManagerClass(useServicesMechanism);
         this._useServicesMechanism = useServicesMechanism;
 
-        String defaultAccess = XalanConstants.EXTERNAL_ACCESS_DEFAULT;
         if (System.getSecurityManager() != null) {
             _isSecureMode = true;
             _isNotSecureProcessing = false;
-            defaultAccess = XalanConstants.getExternalAccessDefault(true);
         }
-        _accessExternalStylesheet =  SecuritySupport.getDefaultAccessProperty(
-                XalanConstants.SP_ACCESS_EXTERNAL_STYLESHEET, defaultAccess);
-        _accessExternalDTD =  SecuritySupport.getDefaultAccessProperty(
-                XalanConstants.SP_ACCESS_EXTERNAL_DTD, defaultAccess);
+
+        _xmlSecurityPropertyMgr = new XMLSecurityPropertyManager();
+        _accessExternalDTD = _xmlSecurityPropertyMgr.getValue(
+                Property.ACCESS_EXTERNAL_DTD);
+        _accessExternalStylesheet = _xmlSecurityPropertyMgr.getValue(
+                Property.ACCESS_EXTERNAL_STYLESHEET);
     }
 
     /**
@@ -318,11 +323,10 @@ public class TransformerFactoryImpl
             else
               return Boolean.FALSE;
         }
-        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_STYLESHEET)) {
-            return _accessExternalStylesheet;
-        }
-        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
-            return _accessExternalDTD;
+
+        int index = _xmlSecurityPropertyMgr.getIndex(name);
+        if (index > -1) {
+            return _xmlSecurityPropertyMgr.getValueByIndex(index);
         }
 
         // Throw an exception for all other attributes
@@ -424,12 +428,15 @@ public class TransformerFactoryImpl
                 return;
             }
         }
-        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_STYLESHEET)) {
-            _accessExternalStylesheet = (String)value;
-            return;
-        }
-        else if (name.equals(XMLConstants.ACCESS_EXTERNAL_DTD)) {
-            _accessExternalDTD = (String)value;
+
+        int index = _xmlSecurityPropertyMgr.getIndex(name);
+        if (index > -1) {
+            _xmlSecurityPropertyMgr.setValue(index,
+                    State.APIPROPERTY, (String)value);
+            _accessExternalDTD = _xmlSecurityPropertyMgr.getValue(
+                    Property.ACCESS_EXTERNAL_DTD);
+            _accessExternalStylesheet = _xmlSecurityPropertyMgr.getValue(
+                    Property.ACCESS_EXTERNAL_STYLESHEET);
             return;
         }
 
@@ -476,11 +483,18 @@ public class TransformerFactoryImpl
             }
             _isNotSecureProcessing = !value;
 
-            // set restriction, allowing no access to external stylesheet
-            if (value) {
-                _accessExternalStylesheet = XalanConstants.EXTERNAL_ACCESS_DEFAULT_FSP;
-                _accessExternalDTD = XalanConstants.EXTERNAL_ACCESS_DEFAULT_FSP;
+            // set external access restriction when FSP is explicitly set
+            if (value && XalanConstants.IS_JDK8_OR_ABOVE) {
+                _xmlSecurityPropertyMgr.setValue(Property.ACCESS_EXTERNAL_DTD,
+                        State.FSP, XalanConstants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                _xmlSecurityPropertyMgr.setValue(Property.ACCESS_EXTERNAL_STYLESHEET,
+                        State.FSP, XalanConstants.EXTERNAL_ACCESS_DEFAULT_FSP);
+                _accessExternalDTD = _xmlSecurityPropertyMgr.getValue(
+                        Property.ACCESS_EXTERNAL_DTD);
+                _accessExternalStylesheet = _xmlSecurityPropertyMgr.getValue(
+                        Property.ACCESS_EXTERNAL_STYLESHEET);
             }
+
             return;
         }
         else if (name.equals(XalanConstants.ORACLE_FEATURE_SERVICE_MECHANISM)) {
