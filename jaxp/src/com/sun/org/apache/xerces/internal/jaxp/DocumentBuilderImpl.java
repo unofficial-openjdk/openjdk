@@ -36,7 +36,7 @@ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
 import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
 import com.sun.org.apache.xerces.internal.jaxp.validation.XSGrammarPoolContainer;
 import com.sun.org.apache.xerces.internal.parsers.DOMParser;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.Property;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.State;
@@ -175,7 +175,7 @@ public class DocumentBuilderImpl extends DocumentBuilder
 
         // If the secure processing feature is on set a security manager.
         if (secureProcessing) {
-            domParser.setProperty(SECURITY_MANAGER, new SecurityManager());
+            domParser.setProperty(SECURITY_MANAGER, new XMLSecurityManager());
 
             /**
              * If secure processing is explicitly set on the factory, the
