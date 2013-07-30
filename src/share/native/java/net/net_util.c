@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ extern jfieldID iac_familyID;
 jobject getInet6Address_scopeifname(JNIEnv *env, jobject iaObj) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, NULL);
     return (*env)->GetObjectField(env, holder, ia6_scopeifnameID);
@@ -111,7 +111,7 @@ jobject getInet6Address_scopeifname(JNIEnv *env, jobject iaObj) {
 int setInet6Address_scopeifname(JNIEnv *env, jobject iaObj, jobject scopeifname) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, JNI_FALSE);
     (*env)->SetObjectField(env, holder, ia6_scopeifnameID, scopeifname);
@@ -121,7 +121,7 @@ int setInet6Address_scopeifname(JNIEnv *env, jobject iaObj, jobject scopeifname)
 int getInet6Address_scopeifname_set(JNIEnv *env, jobject iaObj) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, -1);
     return (*env)->GetBooleanField(env, holder, ia6_scopeifnamesetID);
@@ -130,7 +130,7 @@ int getInet6Address_scopeifname_set(JNIEnv *env, jobject iaObj) {
 int setInet6Address_scopeifname_set(JNIEnv *env, jobject iaObj, int scopeifname_set) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, JNI_FALSE);
     (*env)->SetBooleanField(env, holder, ia6_scopeifnamesetID, scopeifname_set);
@@ -140,7 +140,7 @@ int setInet6Address_scopeifname_set(JNIEnv *env, jobject iaObj, int scopeifname_
 int getInet6Address_scopeid_set(JNIEnv *env, jobject iaObj) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, -1);
     return (*env)->GetBooleanField(env, holder, ia6_scopeidsetID);
@@ -149,7 +149,7 @@ int getInet6Address_scopeid_set(JNIEnv *env, jobject iaObj) {
 int getInet6Address_scopeid(JNIEnv *env, jobject iaObj) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, -1);
     return (*env)->GetIntField(env, holder, ia6_scopeidID);
@@ -158,7 +158,7 @@ int getInet6Address_scopeid(JNIEnv *env, jobject iaObj) {
 int setInet6Address_scopeid(JNIEnv *env, jobject iaObj, int scopeid) {
     jobject holder;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, JNI_FALSE);
     (*env)->SetIntField(env, holder, ia6_scopeidID, scopeid);
@@ -173,7 +173,7 @@ int getInet6Address_ipaddress(JNIEnv *env, jobject iaObj, char *dest) {
     jobject holder, addr;
     jbyteArray barr;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, JNI_FALSE);
     addr =  (*env)->GetObjectField(env, holder, ia6_ipaddressID);
@@ -186,7 +186,7 @@ int setInet6Address_ipaddress(JNIEnv *env, jobject iaObj, char *address) {
     jobject holder;
     jbyteArray addr;
 
-    init(env);
+    initInetAddrs(env);
     holder = (*env)->GetObjectField(env, iaObj, ia6_holder6ID);
     CHECK_NULL_RETURN(holder, JNI_FALSE);
     addr =  (jbyteArray)(*env)->GetObjectField(env, holder, ia6_ipaddressID);
