@@ -131,20 +131,6 @@ public final class P11Util {
         return b;
     }
 
-    // trim leading (most significant) zeroes from the result
-    static byte[] trimZeroes(byte[] b) {
-        int i = 0;
-        while ((i < b.length - 1) && (b[i] == 0)) {
-            i++;
-        }
-        if (i == 0) {
-            return b;
-        }
-        byte[] t = new byte[b.length - i];
-        System.arraycopy(b, i, t, 0, t.length);
-        return t;
-    }
-
     public static byte[] getMagnitude(BigInteger bi) {
         byte[] b = bi.toByteArray();
         if ((b.length > 1) && (b[0] == 0)) {
