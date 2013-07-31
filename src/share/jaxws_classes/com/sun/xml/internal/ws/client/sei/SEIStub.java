@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,17 +28,20 @@ package com.sun.xml.internal.ws.client.sei;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import com.sun.xml.internal.ws.api.SOAPVersion;
-import com.sun.xml.internal.ws.api.client.WSPortInfo;
 import com.sun.xml.internal.ws.api.addressing.WSEndpointReference;
+import com.sun.xml.internal.ws.api.client.WSPortInfo;
 import com.sun.xml.internal.ws.api.message.Header;
 import com.sun.xml.internal.ws.api.message.Headers;
 import com.sun.xml.internal.ws.api.message.Packet;
 import com.sun.xml.internal.ws.api.model.MEP;
 import com.sun.xml.internal.ws.api.model.wsdl.WSDLBoundOperation;
-import com.sun.xml.internal.ws.api.pipe.Tube;
 import com.sun.xml.internal.ws.api.pipe.Fiber;
+import com.sun.xml.internal.ws.api.pipe.Tube;
 import com.sun.xml.internal.ws.binding.BindingImpl;
-import com.sun.xml.internal.ws.client.*;
+import com.sun.xml.internal.ws.client.RequestContext;
+import com.sun.xml.internal.ws.client.ResponseContextReceiver;
+import com.sun.xml.internal.ws.client.Stub;
+import com.sun.xml.internal.ws.client.WSServiceDelegate;
 import com.sun.xml.internal.ws.model.JavaMethodImpl;
 import com.sun.xml.internal.ws.model.SOAPSEIModel;
 import com.sun.xml.internal.ws.wsdl.OperationDispatcher;
@@ -47,6 +50,8 @@ import javax.xml.namespace.QName;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -124,13 +129,14 @@ public final class SEIStub extends Stub implements InvocationHandler {
     private final Map<Method, MethodHandler> methodHandlers = new HashMap<Method, MethodHandler>();
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        validateInputs(proxy, method);
         MethodHandler handler = methodHandlers.get(method);
         if (handler != null) {
             return handler.invoke(proxy, args);
         } else {
             // we handle the other method invocations by ourselves
             try {
-                return method.invoke(this, args);
+                return MethodUtil.invoke(this, method, args);
             } catch (IllegalAccessException e) {
                 // impossible
                 throw new AssertionError(e);
@@ -139,6 +145,17 @@ public final class SEIStub extends Stub implements InvocationHandler {
             } catch (InvocationTargetException e) {
                 throw e.getCause();
             }
+        }
+    }
+
+    private void validateInputs(Object proxy, Method method) {
+        if (proxy == null || !Proxy.isProxyClass(proxy.getClass())) {
+            throw new IllegalStateException("Passed object is not proxy!");
+        }
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (method == null || declaringClass == null
+                || Modifier.isStatic(method.getModifiers())) {
+            throw new IllegalStateException("Invoking static method is not allowed!");
         }
     }
 
