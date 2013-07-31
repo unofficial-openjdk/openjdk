@@ -1,4 +1,4 @@
-." Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
+." Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
 ." DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 ."
 ." This code is free software; you can redistribute it and/or modify it
@@ -19,100 +19,98 @@
 ." or visit www.oracle.com if you need additional information or have any
 ." questions.
 ."
-.TH jcmd 1 "05 Jul 2012"
+.TH jcmd 1 "11 Jul 2013"
 
 .LP
-.SH "名前"
-jcmd \- 診断コマンド
-.LP
-.LP
-\f3jcmd\fPは、実行中のJava仮想マシンに診断コマンド・リクエストを送信するユーティリティです。
-.LP
+.SH "NAME"
+jcmd \- 実行中のJava仮想マシンに診断コマンド・リクエストを送信します。
 .SH "形式"
-.LP
+.sp
+.if n \{\
+.RS 4
+.\}
 .nf
-\f3
-.fl
-    \fP\f3jcmd\fP [ option ] 
-.fl
-    \f3jcmd\fP <\f2pid\fP | \f2main class\fP> PerfCounter.print
-.fl
-    \f3jcmd\fP <\f2pid\fP | \f2main class\fP> \f2command\fP [\f2arguments\fP]
-.fl
-    \f3jcmd\fP <\f2pid\fP | \f2main class\fP> \-f \f2file\fP
-.fl
+java [ \fIoptions\fR ]
+java [ \fIpid\fR | \fImain\-class\fR ] PerfCounter\&.print
+java [ \fIpid\fR | \fImain\-class\fR ] \fIcommand\fR [\fIarguments\fR]
+java [ \fIpid\fR | \fImain\-class\fR ] \-f \fIfile\fR
 .fi
-
-.LP
+.if n \{\
+.RE
+.\}
+.PP
+\fIオプション\fR
+.RS 4
+コマンドライン・\fIオプション\fR。オプションを参照してください。
+.RE
+.PP
+\fIpid\fR
+.RS 4
+診断コマンド・リクエストを受信するプロセスを指定します。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+\fImain class\fR
+.RS 4
+診断コマンド・リクエストを受信するプロセスのメイン・クラスです。プロセスを照合する際には、指定された文字列がメイン・クラス名に部分文字列として含まれているすべてのプロセスが一致したとみなされます。いくつかの実行中のJavaプロセスが同じメイン・クラスを共有している場合は、それらすべてのプロセスに診断コマンド・リクエストが送信されます。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+\fIcommand\fR [arguments]
+.RS 4
+診断コマンド・リクエストを受信するプロセスのメイン・クラスです。プロセスを照合する際には、指定された文字列がメイン・クラス名に部分文字列として含まれているすべてのプロセスが一致したとみなされます。いくつかの実行中のJavaプロセスが同じメイン・クラスを共有している場合は、それらすべてのプロセスに診断コマンド・リクエストが送信されます。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。
+.RE
+.PP
+Perfcounter\&.print
+.RS 4
+ターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。パフォーマンス・カウンタのリストはJavaプロセスによって異なる場合があります。
+.RE
+.PP
+\-f \fIfile\fR
+.RS 4
+\fIfile\fRからコマンドを読み取って、ターゲットのJavaプロセスでコールします。\fIfile\fRでは、各コマンドを1行に記述する必要があります。#で始まる行は無視されます。すべての行がコールされるか、\fIstop\fRキーワードを含む行が読み取られると、\fIfile\fRの処理が終了します。
+.RE
 .SH "説明"
-.LP
-.LP
-\f3jcmd\fPは、この機能をサポートするJava仮想マシンに診断コマンド・リクエストを送信するユーティリティです。
-.LP
-.LP
-引数なしまたは\-lオプションを指定してjcmdを使用すると、実行中のJavaプロセスがプロセスID、メイン・クラスおよびコマンドライン引数とともに表示されます。
-.LP
-.LP
-プロセスIDをコマンドラインに指定すると、jcmdでは、このIDのプロセスに診断コマンド・リクエストが送信されます。
-.LP
-.LP
-メイン・クラスをコマンドラインに指定すると、jcmdでは、コマンドライン引数がJavaプロセスのメイン・クラスの部分文字列であるすべてのJavaプロセスに診断コマンド・リクエストが送信されます。
-.LP
-.LP
-PerfCounter.print引数を指定すると、jcmdでは、ターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。
-.LP
-.LP
-\-f オプションを指定すると、jcmdでは、\f2file\fPに保存されている診断コマンドがターゲットのJavaプロセスに送信されます。
-.LP
+.PP
+\fIjcmd\fRは、この機能をサポートするJava仮想マシンに診断コマンド・リクエストを送信するユーティリティです。
+.PP
+引数なしまたは\fI\-l\fRオプションを指定して\fIjcmd\fRを使用すると、実行中のJavaプロセスがプロセスID、メイン・クラスおよびコマンドライン引数とともに出力されます。
+.PP
+プロセスIDをコマンドラインに指定すると、\fIjcmd\fRでは、このIDのプロセスに診断コマンド・リクエストが送信されます。
+.PP
+メイン・クラスをコマンドラインに指定すると、\fIjcmd\fRでは、コマンドライン引数がJavaプロセスのメイン・クラスの部分文字列であるすべてのJavaプロセスに診断コマンド・リクエストが送信されます。
+.PP
+\fIPerfCounter\&.print\fR引数を指定すると、\fIjcmd\fRではターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。
+.PP
+\fI\-f\fRオプションを指定すると、\fIjcmd\fRでは、指定された\fIfile\fRに格納されている診断コマンドがターゲットのJavaプロセスに送信されます。
 .SH "オプション"
-.LP
-.LP
-各オプションは互いに排他的です。オプションを使用する場合、コマンド名の直後に記述してください。
-.LP
-.RS 3
-.TP 3
-\-l 
-実行中のJavaプロセスの一覧がプロセスID、メイン・クラスおよびコマンドライン引数とともに出力されます。 
-.TP 3
-\-h 
-ヘルプ・メッセージが出力されます。 
-.TP 3
-\-help 
-ヘルプ・メッセージが出力されます。 
+.PP
+各オプションは互いに排他的です。オプションを使用する場合は、コマンド名の直後に記述する必要があります。
+.PP
+\-l
+.RS 4
+実行中のJavaプロセスの一覧がプロセスID、メイン・クラスおよびコマンドライン引数とともに出力されます。
 .RE
-
-.LP
-.SH "パラメータ"
-.LP
-.RS 3
-.TP 3
-pid 
-診断コマンド・リクエストを受信するプロセスを指定します。プロセスはJavaプロセスである必要があります。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。 
-.TP 3
-main class 
-診断コマンド・リクエストを受信するプロセスのメイン・クラスです。プロセスを照合する際には、指定された文字列がメイン・クラス名に部分文字列として含まれているすべてのプロセスが一致したとみなされます。いくつかの実行中のJavaプロセスがこのメイン・クラスを共有している場合は、それらすべてのプロセスに診断コマンド・リクエストが送信されます。マシン上で実行しているJavaプロセスの一覧を取得するには、jps(1)またはjcmd(1)を使用します。 
-.TP 3
-command [arguments] 
-\f2command\fPという名前の診断コマンドをターゲットのJavaプロセスに対して起動します。指定したプロセスで使用できる診断コマンドのリストは、このプロセスに対して\f3help\fPコマンドを呼び出せば表示されます。各診断コマンドには独自の\f2arguments\fPのセットがあり、コマンド名の後に\f3help\fPを指定して呼び出せば表示されます。 
-.TP 3
-PerfCounter.print 
-ターゲットのJavaプロセスで使用可能なパフォーマンス・カウンタが出力されます。パフォーマンス・カウンタのリストはJavaプロセスによって異なる場合があります。 
-.TP 3
-\-f file 
-\f2file\fPからコマンドを読み取って、ターゲットのJavaプロセスで呼び出します。\f2file\fPでは、各コマンドを1行に記述する必要があります。#で始まる行は無視されます。すべての行が呼び出されるか、\f3stop\fPキーワードを含む行が読み取られると、\f2file\fPの処理が終了します。 
+.PP
+\-h
+.RS 4
+ヘルプ・メッセージが出力されます。
 .RE
-
-.LP
+.PP
+\-help
+.RS 4
+ヘルプ・メッセージが出力されます。
+.RE
 .SH "関連項目"
-.LP
-.RS 3
-.TP 2
-o
-jps(1) 
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+jps
 .RE
-
-.LP
-.LP
-jps(1)
-.LP
- 
+.br
+'pl 8.5i
+'bp
