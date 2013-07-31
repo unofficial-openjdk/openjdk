@@ -298,7 +298,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
                     "FeatureNameNull", null));
         }
         if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
-            return (fSecurityManager != null);
+            return (fSecurityManager !=null && fSecurityManager.isSecureProcessing());
         }
         try {
             return fXMLSchemaLoader.getFeature(name);
