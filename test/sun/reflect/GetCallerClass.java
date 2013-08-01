@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8016814 8014925
+ * @bug 8016814 8014925 8021946
  * @summary Test sun.reflect.Reflection.getCallerClass(int) disabled by default
  * @compile -XDignore.symbol.file GetCallerClass.java
  * @run main/othervm GetCallerClass
@@ -36,10 +36,10 @@ public class GetCallerClass {
     public static void main(String[] args) throws Exception {
         String s = System.getProperty("jdk.reflect.allowGetCallerClass");
         boolean allowed;
-        if (s == null || s.equals("false")) {
-            allowed = false;
-        } else if (s.equals("") || s.equals("true")) {
+        if (s == null || s.equals("") || s.equals("true")) {
             allowed = true;
+        } else if (s.equals("false")) {
+            allowed = false;
         } else {
             throw new RuntimeException("Unsupported test setting");
         }

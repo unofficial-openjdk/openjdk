@@ -216,12 +216,13 @@ public class VM {
         return allowArraySyntax;
     }
 
-    private static boolean allowGetCallerClass = false;
+    private static boolean allowGetCallerClass = true;
 
-    // Reflection.getCallerClass(int) is disabled by default.
-    // It can be enabled by setting the system property
-    // "jdk.reflect.allowGetCallerClass" and also used by
-    // logging stack walk of a resource bundle if it is turned on.
+    // Reflection.getCallerClass(int) is enabled by default.
+    // It can be disabled by setting the system property
+    // "jdk.reflect.allowGetCallerClass" to "false". It cannot be
+    // disabled if the logging stack walk (to find resource bundles)
+    // is enabled.
     public static boolean allowGetCallerClass() {
         return allowGetCallerClass;
     }
@@ -290,14 +291,13 @@ public class VM {
                                ? defaultAllowArraySyntax
                                : Boolean.parseBoolean(s));
 
-        // Reflection.getCallerClass(int) is disabled by default.
-        // It can be enabled by setting the system property
-        // "jdk.reflect.allowGetCallerClass" and also used by
-        // logging stack walk of a resource bundle if it is turned on.
+        // Reflection.getCallerClass(int) is enabled by default.
+        // It can be disabled by setting a system property (but only if
+        // the logging stack walk is not enabled)
         s = props.getProperty("jdk.reflect.allowGetCallerClass");
         allowGetCallerClass = (s != null
                                    ? (s.isEmpty() || Boolean.parseBoolean(s))
-                                   : false) ||
+                                   : true) ||
              Boolean.valueOf(props.getProperty("jdk.logging.allowStackWalkSearch"));
 
         // Remove other private system properties
