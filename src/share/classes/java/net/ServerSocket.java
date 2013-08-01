@@ -355,7 +355,15 @@ class ServerSocket {
         if (!isBound())
             return null;
         try {
-            return getImpl().getInetAddress();
+            InetAddress in = getImpl().getInetAddress();
+            if (!NetUtil.doRevealLocalAddress()) {
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null)
+                    sm.checkConnect(in.getHostAddress(), -1);
+            }
+            return in;
+        } catch (SecurityException e) {
+            return InetAddress.impl.loopbackAddress();
         } catch (SocketException e) {
             // nothing
             // If we're bound, the impl has been created
@@ -660,13 +668,20 @@ class ServerSocket {
      *
      * @return  a string representation of this socket.
      */
-    public String toString() {
+   public String toString() {
         if (!isBound())
             return "ServerSocket[unbound]";
-        return "ServerSocket[addr=" + impl.getInetAddress() +
-                ",port=" + impl.getPort() +
+        InetAddress in;
+        if (!NetUtil.doRevealLocalAddress() &&
+                System.getSecurityManager() != null)
+        {
+            in = InetAddress.impl.loopbackAddress();
+        } else {
+            in = impl.getInetAddress();
+        }
+        return "ServerSocket[addr=" + in +
                 ",localport=" + impl.getLocalPort()  + "]";
-    }
+   }
 
     void setBound() {
         bound = true;

@@ -162,7 +162,7 @@ public class SocketAdaptor
     public InetAddress getLocalAddress() {
         if (!sc.isBound())
             return new InetSocketAddress(0).getAddress();
-        return Net.asInetSocketAddress(sc.localAddress()).getAddress();
+        return Net.getRevealedLocalAddress(sc.localAddress()).getAddress();
     }
 
     public int getPort() {

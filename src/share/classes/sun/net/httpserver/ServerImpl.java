@@ -30,6 +30,8 @@ import java.io.*;
 import java.nio.*;
 import java.security.*;
 import java.nio.channels.*;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
@@ -222,7 +224,14 @@ class ServerImpl implements TimeSource {
     }
 
     public InetSocketAddress getAddress() {
-        return (InetSocketAddress)schan.socket().getLocalSocketAddress();
+        return AccessController.doPrivileged(
+                new PrivilegedAction<InetSocketAddress>() {
+                    public InetSocketAddress run() {
+                        return
+                            (InetSocketAddress)schan.socket()
+                                .getLocalSocketAddress();
+                    }
+                });
     }
 
     Selector getSelector () {

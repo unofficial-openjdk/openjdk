@@ -75,7 +75,7 @@ class ServerSocketChannelImpl
     private int state = ST_UNINITIALIZED;
 
     // Binding
-    private SocketAddress localAddress = null; // null => unbound
+    private InetSocketAddress localAddress; // null => unbound
 
     // Options, created on demand
     private SocketOpts.IP.TCP options = null;
@@ -118,9 +118,11 @@ class ServerSocketChannelImpl
         }
     }
 
-    public SocketAddress localAddress() {
+    public InetSocketAddress localAddress() {
         synchronized (stateLock) {
-            return localAddress;
+            return localAddress == null? localAddress
+                    : Net.getRevealedLocalAddress(
+                          Net.asInetSocketAddress(localAddress));
         }
     }
 
@@ -307,14 +309,15 @@ class ServerSocketChannelImpl
         StringBuffer sb = new StringBuffer();
         sb.append(this.getClass().getName());
         sb.append('[');
-        if (!isOpen())
+        if (!isOpen()) {
             sb.append("closed");
-        else {
+        } else {
             synchronized (stateLock) {
-                if (localAddress() == null) {
+                InetSocketAddress addr = localAddress();
+                if (addr == null) {
                     sb.append("unbound");
                 } else {
-                    sb.append(localAddress().toString());
+                    sb.append(Net.getRevealedLocalAddressAsString(addr));
                 }
             }
         }

@@ -656,9 +656,17 @@ class Socket {
         InetAddress in = null;
         try {
             in = (InetAddress) getImpl().getOption(SocketOptions.SO_BINDADDR);
+
+            if (!NetUtil.doRevealLocalAddress()) {
+                SecurityManager sm = System.getSecurityManager();
+                if (sm != null)
+                    sm.checkConnect(in.getHostAddress(), -1);
+            }
             if (in.isAnyLocalAddress()) {
                 in = InetAddress.anyLocalAddress();
             }
+        } catch (SecurityException e) {
+            in = InetAddress.impl.loopbackAddress();
         } catch (Exception e) {
             in = InetAddress.anyLocalAddress(); // "0.0.0.0"
         }
