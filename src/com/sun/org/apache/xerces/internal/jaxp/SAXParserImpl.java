@@ -402,6 +402,7 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
         private XMLSecurityManager fSecurityManager;
         private XMLSecurityPropertyManager fSecurityPropertyMgr;
 
+
         public JAXPSAXParser() {
             this(null, null, null);
         }
@@ -420,16 +421,20 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
                 fSecurityManager = new XMLSecurityManager(true);
                 try {
                     super.setProperty(SECURITY_MANAGER, fSecurityManager);
-                } catch (Exception ex) {
-                    //shall not happen
+                } catch (SAXException e) {
+                    throw new UnsupportedOperationException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "property-not-recognized", new Object [] {SECURITY_MANAGER}), e);
                 }
             }
             if (fSecurityPropertyMgr == null) {
                 fSecurityPropertyMgr = new XMLSecurityPropertyManager();
                 try {
                     super.setProperty(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
-                } catch (Exception ex) {
-                    //shall not happen
+                } catch (SAXException e) {
+                    throw new UnsupportedOperationException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "property-not-recognized", new Object [] {XML_SECURITY_PROPERTY_MANAGER}), e);
                 }
             }
         }
