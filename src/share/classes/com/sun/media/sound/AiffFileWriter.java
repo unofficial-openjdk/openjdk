@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,21 +52,13 @@ import javax.sound.sampled.AudioSystem;
  *
  * @author Jan Borgersen
  */
-public class AiffFileWriter extends SunFileWriter {
-
-    /**
-     * AIFF type
-     */
-    private static final AudioFileFormat.Type aiffTypes[] = {
-        AudioFileFormat.Type.AIFF
-    };
-
+public final class AiffFileWriter extends SunFileWriter {
 
     /**
      * Constructs a new AiffFileWriter object.
      */
     public AiffFileWriter() {
-        super(aiffTypes);
+        super(new AudioFileFormat.Type[]{AudioFileFormat.Type.AIFF});
     }
 
 

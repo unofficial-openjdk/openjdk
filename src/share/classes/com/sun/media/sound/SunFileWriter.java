@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,8 +74,7 @@ abstract class SunFileWriter extends AudioFileWriter {
 
     // new, 10.27.99
 
-    public AudioFileFormat.Type[] getAudioFileTypes(){
-
+    public final AudioFileFormat.Type[] getAudioFileTypes(){
         AudioFileFormat.Type[] localArray = new AudioFileFormat.Type[types.length];
         System.arraycopy(types, 0, localArray, 0, types.length);
         return localArray;
@@ -100,7 +99,7 @@ abstract class SunFileWriter extends AudioFileWriter {
      * @return 32 bits swapped value.
      * @exception IOException
      */
-    protected int rllong(DataInputStream dis) throws IOException {
+    final int rllong(DataInputStream dis) throws IOException {
 
         int b1, b2, b3, b4 ;
         int i = 0;
@@ -123,7 +122,7 @@ abstract class SunFileWriter extends AudioFileWriter {
      * @param int
      * @return 32 bits swapped value
      */
-    protected int big2little(int i) {
+    final int big2little(int i) {
 
         int b1, b2, b3, b4 ;
 
@@ -144,7 +143,7 @@ abstract class SunFileWriter extends AudioFileWriter {
      * @return the swapped value.
      * @exception IOException
      */
-    protected short rlshort(DataInputStream dis)  throws IOException {
+    final short rlshort(DataInputStream dis)  throws IOException {
 
         short s=0;
         short high, low;
@@ -165,7 +164,7 @@ abstract class SunFileWriter extends AudioFileWriter {
      * @param int
      * @return 16 bits swapped value
      */
-    protected short big2littleShort(short i) {
+    final short big2littleShort(short i) {
 
         short high, low;
 
