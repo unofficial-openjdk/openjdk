@@ -50,9 +50,9 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
 import com.sun.org.apache.xerces.internal.xni.Augmentations;
 import com.sun.org.apache.xerces.internal.impl.Constants;
 import com.sun.org.apache.xerces.internal.impl.XMLEntityHandler;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
 import com.sun.org.apache.xerces.internal.util.NamespaceSupport;
 import com.sun.org.apache.xerces.internal.utils.SecuritySupport;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
 import com.sun.org.apache.xerces.internal.xni.NamespaceContext;
 import com.sun.xml.internal.stream.Entity;
@@ -384,7 +384,7 @@ public class XMLDocumentFragmentScannerImpl
 
     protected boolean foundBuiltInRefs = false;
 
-    protected SecurityManager fSecurityManager = null;
+    protected XMLSecurityManager fSecurityManager = null;
 
     //skip element algorithm
     static final short MAX_DEPTH_LIMIT = 5 ;
@@ -571,8 +571,10 @@ public class XMLDocumentFragmentScannerImpl
         // xerces features
         fReportCdataEvent = componentManager.getFeature(Constants.STAX_REPORT_CDATA_EVENT, true);
 
-        fSecurityManager = (SecurityManager)componentManager.getProperty(Constants.SECURITY_MANAGER, null);
-        fElementAttributeLimit = (fSecurityManager != null)?fSecurityManager.getElementAttrLimit():0;
+        fSecurityManager = (XMLSecurityManager)componentManager.getProperty(Constants.SECURITY_MANAGER, null);
+        fElementAttributeLimit = (fSecurityManager != null)?
+                fSecurityManager.getLimit(XMLSecurityManager.Limit.ELEMENT_ATTRIBUTE_LIMIT):0;
+
 
         fNotifyBuiltInRefs = componentManager.getFeature(NOTIFY_BUILTIN_REFS, false);
 
@@ -956,6 +958,7 @@ public class XMLDocumentFragmentScannerImpl
 
         // scan decl
         super.scanXMLDeclOrTextDecl(scanningTextDecl, fStrings);
+
         fMarkupDepth--;
 
         // pseudo-attribute values
