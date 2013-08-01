@@ -207,7 +207,7 @@ public abstract class Canonicalizer20010315Excl extends CanonicalizerBase {
          * @param inclusiveNamespaces
          * @throws CanonicalizationException
          */
-        public byte[] engineCanonicalizeXPathNodeSet(Set xpathNodeSet,
+        public byte[] engineCanonicalizeXPathNodeSet(Set<Node> xpathNodeSet,
                         String inclusiveNamespaces) throws CanonicalizationException {
 
 

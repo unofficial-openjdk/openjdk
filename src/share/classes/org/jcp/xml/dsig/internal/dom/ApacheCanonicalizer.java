@@ -48,6 +48,7 @@ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
 import com.sun.org.apache.xml.internal.security.transforms.Transform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public abstract class ApacheCanonicalizer extends TransformService {
@@ -119,7 +120,7 @@ public abstract class ApacheCanonicalizer extends TransformService {
         }
 
         try {
-            Set nodeSet = null;
+            Set<Node> nodeSet = null;
             if (data instanceof ApacheData) {
                 XMLSignatureInput in =
                     ((ApacheData) data).getXMLSignatureInput();

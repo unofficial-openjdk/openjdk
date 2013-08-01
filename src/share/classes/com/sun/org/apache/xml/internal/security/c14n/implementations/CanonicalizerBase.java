@@ -97,7 +97,7 @@ public abstract class CanonicalizerBase extends CanonicalizerSpi {
    List nodeFilter;
 
    boolean _includeComments;
-   Set _xpathNodeSet = null;
+   Set<Node> _xpathNodeSet = null;
    /**
     * The node to be skiped/excluded from the DOM tree
     * in subtree canonicalizations.
@@ -130,7 +130,7 @@ public abstract class CanonicalizerBase extends CanonicalizerSpi {
     * @param xpathNodeSet
     * @throws CanonicalizationException
     */
-   public byte[] engineCanonicalizeXPathNodeSet(Set xpathNodeSet)
+   public byte[] engineCanonicalizeXPathNodeSet(Set<Node> xpathNodeSet)
            throws CanonicalizationException {
            this._xpathNodeSet = xpathNodeSet;
            return engineCanonicalizeXPathNodeSetInternal(XMLUtils.getOwnerDocument(this._xpathNodeSet));
