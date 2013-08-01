@@ -1,29 +1,28 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * reserved comment block
+ * DO NOT REMOVE OR ALTER!
  */
 /*
- * $Id: DOMManifest.java,v 1.16 2005/05/12 19:28:31 mullan Exp $
+ * Copyright 2005 The Apache Software Foundation.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+/*
+ * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ */
+/*
+ * $Id: DOMManifest.java,v 1.2 2008/07/24 15:20:32 mullan Exp $
  */
 package org.jcp.xml.dsig.internal.dom;
 
@@ -31,6 +30,7 @@ import javax.xml.crypto.*;
 import javax.xml.crypto.dom.DOMCryptoContext;
 import javax.xml.crypto.dsig.*;
 
+import java.security.Provider;
 import java.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -83,13 +83,13 @@ public final class DOMManifest extends DOMStructure implements Manifest {
      *
      * @param manElem a Manifest element
      */
-    public DOMManifest(Element manElem, XMLCryptoContext context)
-        throws MarshalException {
+    public DOMManifest(Element manElem, XMLCryptoContext context,
+        Provider provider) throws MarshalException {
         this.id = DOMUtils.getAttributeValue(manElem, "Id");
         Element refElem = DOMUtils.getFirstChildElement(manElem);
         List refs = new ArrayList();
         while (refElem != null) {
-            refs.add(new DOMReference(refElem, context));
+            refs.add(new DOMReference(refElem, context, provider));
             refElem = DOMUtils.getNextSiblingElement(refElem);
         }
         this.references = Collections.unmodifiableList(refs);
