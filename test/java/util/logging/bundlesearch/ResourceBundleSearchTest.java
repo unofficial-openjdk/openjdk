@@ -29,6 +29,7 @@
  * @build  ResourceBundleSearchTest IndirectlyLoadABundle LoadItUp1 LoadItUp2 TwiceIndirectlyLoadABundle LoadItUp2Invoker
  * @run main/othervm ResourceBundleSearchTest
  * @run main/othervm -Djdk.logging.allowStackWalkSearch=true ResourceBundleSearchTest
+ * @run main/othervm -Djdk.reflect.allowGetCallerClass=false -Djdk.logging.allowStackWalkSearch=true ResourceBundleSearchTest
  */
 import java.net.URL;
 import java.net.URLClassLoader;
