@@ -48,7 +48,7 @@ import com.apple.laf.ClientPropertyApplicator.Property;
 import com.sun.awt.AWTUtilities;
 
 public class CPlatformWindow extends CFRetainedResource implements PlatformWindow {
-    private native long nativeCreateNSWindow(long nsViewPtr, long styleBits, double x, double y, double w, double h);
+    private native long nativeCreateNSWindow(long nsViewPtr,long ownerPtr, long styleBits, double x, double y, double w, double h);
     private static native void nativeSetNSWindowStyleBits(long nsWindowPtr, int mask, int data);
     private static native void nativeSetNSWindowMenuBar(long nsWindowPtr, long menuBarPtr);
     private static native Insets nativeGetNSWindowInsets(long nsWindowPtr);
@@ -234,7 +234,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         contentView = createContentView();
         contentView.initialize(peer, responder);
 
-        final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), styleBits, 0, 0, 0, 0);
+        final long ownerPtr = owner != null ? owner.getNSWindowPtr() : 0L;
+        final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), ownerPtr, styleBits, 0, 0, 0, 0);
         setPtr(nativeWindowPtr);
 
         // TODO: implement on top of JObjC bridged class
@@ -932,8 +933,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             nativePeer = ((CPlatformWindow) platformWindow).getContentView().getAWTView();
         } else if (platformWindow instanceof CViewPlatformEmbeddedFrame){
             nativePeer = ((CViewPlatformEmbeddedFrame) platformWindow).getNSViewPtr();
-        } else {
-            throw new IllegalArgumentException("Unsupported platformWindow implementation");
         }
         return nativePeer;
     }
