@@ -59,8 +59,8 @@ public class Reflection {
     public static native Class getCallerClass();
 
     /**
-     * @deprecated No replacement.  This method will be removed in the next
-     * JDK 7 update release.
+     * @deprecated No replacement. This method will be removed in a future
+     *   release.
      */
     @Deprecated
     @CallerSensitive
@@ -68,12 +68,8 @@ public class Reflection {
         if (sun.misc.VM.allowGetCallerClass()) {
             return getCallerClass0(depth+1);
         }
-        throw new UnsupportedOperationException("This method is in the sun.* " +
-             "namespace so it is not a supported, public interface. " +
-             "The 7u40 release notes describe a temporary mechanism " +
-             "to reenable the historical functionality of this method. " +
-             "Update code to function properly and this method will be " +
-             "removed without further warning in a subsequent 7 update release.");
+        throw new UnsupportedOperationException("This method has been disabled by a " +
+            "system property");
     }
 
     // If the VM enforces getting caller class with @CallerSensitive,

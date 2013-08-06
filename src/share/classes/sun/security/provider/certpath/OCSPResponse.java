@@ -701,8 +701,7 @@ public final class OCSPResponse {
                 singleExtensions = Collections.emptyMap();
             }
 
-            long now = (dateCheckedAgainst == null) ?
-                System.currentTimeMillis() : dateCheckedAgainst.getTime();
+            long now = System.currentTimeMillis();
             Date nowPlusSkew = new Date(now + MAX_CLOCK_SKEW);
             Date nowMinusSkew = new Date(now - MAX_CLOCK_SKEW);
             if (DEBUG != null) {
