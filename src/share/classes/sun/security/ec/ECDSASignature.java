@@ -324,6 +324,7 @@ abstract class ECDSASignature extends SignatureSpi {
 
     // set parameter, not supported. See JCA doc
     @Override
+    @Deprecated
     protected void engineSetParameter(String param, Object value)
             throws InvalidParameterException {
         throw new UnsupportedOperationException("setParameter() not supported");
@@ -331,6 +332,7 @@ abstract class ECDSASignature extends SignatureSpi {
 
     // get parameter, not supported. See JCA doc
     @Override
+    @Deprecated
     protected Object engineGetParameter(String param)
             throws InvalidParameterException {
         throw new UnsupportedOperationException("getParameter() not supported");
