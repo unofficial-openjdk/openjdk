@@ -52,12 +52,12 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
      *
      * @see Group
      */
-    private Map groupPackageMap;
+    private Map<String,List<PackageDoc>> groupPackageMap;
 
     /**
      * List to store the order groups as specified on the command line.
      */
-    private List groupList;
+    private List<String> groupList;
 
     /**
      * Construct the PackageIndexWriter. Also constructs the grouping
@@ -103,8 +103,8 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
      */
     protected void addIndex(Content body) {
         for (int i = 0; i < groupList.size(); i++) {
-        String groupname = (String)groupList.get(i);
-        List list = (List)groupPackageMap.get(groupname);
+        String groupname = groupList.get(i);
+        List<PackageDoc> list = groupPackageMap.get(groupname);
             if (list != null && list.size() > 0) {
                 addIndexContents(list.toArray(new PackageDoc[list.size()]),
                         groupname, configuration.getText("doclet.Member_Table_Summary",

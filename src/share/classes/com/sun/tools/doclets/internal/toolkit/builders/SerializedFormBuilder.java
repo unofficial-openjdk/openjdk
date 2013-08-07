@@ -375,8 +375,7 @@ public class SerializedFormBuilder extends AbstractBuilder {
      */
     public void buildFieldSerializationOverview(ClassDoc classDoc, Content classContentTree) {
         if (classDoc.definesSerializableFields()) {
-            FieldDoc serialPersistentField =
-                Util.asList(classDoc.serializableFields()).get(0);
+            FieldDoc serialPersistentField = classDoc.serializableFields()[0];
             // Check to see if there are inline comments, tags or deprecation
             // information to be printed.
             if (fieldWriter.shouldPrintOverview(serialPersistentField)) {

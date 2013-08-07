@@ -97,7 +97,7 @@ public abstract class AbstractBuilder {
      * @param node the XML element that specifies which component to document.
      * @param contentTree content tree to which the documentation will be added
      */
-    protected void build(XMLNode node) {
+    protected void build(XMLNode node, Content contentTree) {
         String component = node.name;
         try {
             invokeMethod("build" + component,

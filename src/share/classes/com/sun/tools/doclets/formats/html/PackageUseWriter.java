@@ -41,7 +41,7 @@ import com.sun.tools.doclets.internal.toolkit.*;
 public class PackageUseWriter extends SubWriterHolderWriter {
 
     final PackageDoc pkgdoc;
-    final SortedMap usingPackageToUsedClasses = new TreeMap();
+    final SortedMap<String,Set<ClassDoc>> usingPackageToUsedClasses = new TreeMap<String,Set<ClassDoc>>();
 
     /**
      * Constructor.
@@ -64,15 +64,15 @@ public class PackageUseWriter extends SubWriterHolderWriter {
         ClassDoc[] content = pkgdoc.allClasses();
         for (int i = 0; i < content.length; ++i) {
             ClassDoc usedClass = content[i];
-            Set usingClasses = (Set)mapper.classToClass.get(usedClass.qualifiedName());
+            Set<ClassDoc> usingClasses = mapper.classToClass.get(usedClass.qualifiedName());
             if (usingClasses != null) {
-                for (Iterator it = usingClasses.iterator(); it.hasNext(); ) {
-                    ClassDoc usingClass = (ClassDoc)it.next();
+                for (Iterator<ClassDoc> it = usingClasses.iterator(); it.hasNext(); ) {
+                    ClassDoc usingClass = it.next();
                     PackageDoc usingPackage = usingClass.containingPackage();
-                    Set usedClasses = (Set)usingPackageToUsedClasses
+                    Set<ClassDoc> usedClasses = (Set)usingPackageToUsedClasses
                         .get(usingPackage.name());
                     if (usedClasses == null) {
-                        usedClasses = new TreeSet();
+                        usedClasses = new TreeSet<ClassDoc>();
                         usingPackageToUsedClasses.put(Util.getPackageName(usingPackage),
                                                       usedClasses);
                     }
@@ -153,9 +153,9 @@ public class PackageUseWriter extends SubWriterHolderWriter {
                 getPackageLinkString(pkgdoc, Util.getPackageName(pkgdoc), false))));
         table.addContent(getSummaryTableHeader(packageTableHeader, "col"));
         Content tbody = new HtmlTree(HtmlTag.TBODY);
-        Iterator it = usingPackageToUsedClasses.keySet().iterator();
+        Iterator<String> it = usingPackageToUsedClasses.keySet().iterator();
         for (int i = 0; it.hasNext(); i++) {
-            PackageDoc pkg = configuration.root.packageNamed((String)it.next());
+            PackageDoc pkg = configuration.root.packageNamed(it.next());
             HtmlTree tr = new HtmlTree(HtmlTag.TR);
             if (i % 2 == 0) {
                 tr.addStyle(HtmlStyle.altColor);
@@ -181,9 +181,9 @@ public class PackageUseWriter extends SubWriterHolderWriter {
                     configuration.getText("doclet.Class"),
                     configuration.getText("doclet.Description"))
         };
-        Iterator itp = usingPackageToUsedClasses.keySet().iterator();
+        Iterator<String> itp = usingPackageToUsedClasses.keySet().iterator();
         while (itp.hasNext()) {
-            String packageName = (String)itp.next();
+            String packageName = itp.next();
             PackageDoc usingPackage = configuration.root.packageNamed(packageName);
             HtmlTree li = new HtmlTree(HtmlTag.LI);
             li.addStyle(HtmlStyle.blockList);
@@ -199,9 +199,8 @@ public class PackageUseWriter extends SubWriterHolderWriter {
                     getPackageLinkString(usingPackage,Util.getPackageName(usingPackage), false))));
             table.addContent(getSummaryTableHeader(classTableHeader, "col"));
             Content tbody = new HtmlTree(HtmlTag.TBODY);
-            Iterator itc =
-                ((Collection)usingPackageToUsedClasses.get(packageName))
-                .iterator();
+            Iterator<ClassDoc> itc =
+		usingPackageToUsedClasses.get(packageName).iterator();
             for (int i = 0; itc.hasNext(); i++) {
                 HtmlTree tr = new HtmlTree(HtmlTag.TR);
                 if (i % 2 == 0) {

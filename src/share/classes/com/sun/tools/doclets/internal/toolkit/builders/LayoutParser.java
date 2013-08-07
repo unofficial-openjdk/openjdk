@@ -80,7 +80,7 @@ public class LayoutParser extends DefaultHandler {
      */
     public XMLNode parseXML(String root) {
         if (xmlElementsMap.containsKey(root)) {
-            return (List) xmlElementsMap.get(root);
+            return xmlElementsMap.get(root);
         }
         try {
             currentRoot = root;
