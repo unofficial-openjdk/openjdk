@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import javax.lang.model.element.Name;
 import javax.tools.StandardLocation;
@@ -166,8 +165,8 @@ public class DocLint implements Plugin {
     }
 
     void processArgs(String... args) throws BadArgs {
-        javacOpts = new ArrayList<String>();
-        javacFiles = new ArrayList<File>();
+        javacOpts = new ArrayList<>();
+        javacFiles = new ArrayList<>();
 
         if (args.length == 0)
             needHelp = true;
@@ -186,6 +185,8 @@ public class DocLint implements Plugin {
             } else if (arg.equals("-bootclasspath") && i + 1 < args.length) {
                 javacBootClassPath = splitPath(args[++i]);
             } else if (arg.equals("-classpath") && i + 1 < args.length) {
+                javacClassPath = splitPath(args[++i]);
+            } else if (arg.equals("-cp") && i + 1 < args.length) {
                 javacClassPath = splitPath(args[++i]);
             } else if (arg.equals("-sourcepath") && i + 1 < args.length) {
                 javacSourcePath = splitPath(args[++i]);
@@ -212,7 +213,7 @@ public class DocLint implements Plugin {
     }
 
     List<File> splitPath(String path) {
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<>();
         for (String f: path.split(File.pathSeparator)) {
             if (f.length() > 0)
                 files.add(new File(f));
@@ -277,7 +278,6 @@ public class DocLint implements Plugin {
             TaskListener tl = new TaskListener() {
                 @Override
                 public void started(TaskEvent e) {
-                    return;
                 }
 
                 @Override
@@ -324,6 +324,14 @@ public class DocLint implements Plugin {
 
     static abstract class DeclScanner extends TreePathScanner<Void, Void> {
         abstract void visitDecl(Tree tree, Name name);
+
+        @Override
+        public Void visitCompilationUnit(CompilationUnitTree tree, Void ignore) {
+            if (tree.getPackageName() != null) {
+                visitDecl(tree, null);
+            }
+            return super.visitCompilationUnit(tree, ignore);
+        }
 
         @Override
         public Void visitClass(ClassTree tree, Void ignore) {
