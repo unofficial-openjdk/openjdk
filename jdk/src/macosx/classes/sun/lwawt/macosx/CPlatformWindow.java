@@ -47,7 +47,7 @@ import com.apple.laf.ClientPropertyApplicator.Property;
 import com.sun.awt.AWTUtilities;
 
 public class CPlatformWindow extends CFRetainedResource implements PlatformWindow {
-    private native long nativeCreateNSWindow(long nsViewPtr, long styleBits, double x, double y, double w, double h);
+    private native long nativeCreateNSWindow(long nsViewPtr,long ownerPtr, long styleBits, double x, double y, double w, double h);
     private static native void nativeSetNSWindowStyleBits(long nsWindowPtr, int mask, int data);
     private static native void nativeSetNSWindowMenuBar(long nsWindowPtr, long menuBarPtr);
     private static native Insets nativeGetNSWindowInsets(long nsWindowPtr);
@@ -230,7 +230,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         contentView = createContentView();
         contentView.initialize(peer, responder);
 
-        final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), styleBits, 0, 0, 0, 0);
+        final long ownerPtr = owner != null ? owner.getNSWindowPtr() : 0L;
+        final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(), ownerPtr, styleBits, 0, 0, 0, 0);
         setPtr(nativeWindowPtr);
 
         if (target instanceof javax.swing.RootPaneContainer) {
@@ -479,12 +480,14 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             deliverZoom(true);
 
             this.normalBounds = peer.getBounds();
-            long screen = CWrapper.NSWindow.screen(getNSWindowPtr());
-            Rectangle toBounds = CWrapper.NSScreen.visibleFrame(screen).getBounds();
-            // Flip the y coordinate
-            Rectangle frame = CWrapper.NSScreen.frame(screen).getBounds();
-            toBounds.y = frame.height - toBounds.y - toBounds.height;
-            setBounds(toBounds.x, toBounds.y, toBounds.width, toBounds.height);
+
+            GraphicsConfiguration config = getPeer().getGraphicsConfiguration();
+            Insets i = ((CGraphicsDevice)config.getDevice()).getScreenInsets();
+            Rectangle toBounds = config.getBounds();
+            setBounds(toBounds.x + i.left,
+                      toBounds.y + i.top,
+                      toBounds.width - i.left - i.right,
+                      toBounds.height - i.top - i.bottom);
         }
     }
 
@@ -751,13 +754,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         // the move/size notification from the underlying system comes
         // but it contains a bounds smaller than the whole screen
         // and therefore we need to create the synthetic notifications
-        Rectangle screenBounds;
-        final long screenPtr = CWrapper.NSWindow.screen(getNSWindowPtr());
-        try {
-            screenBounds = CWrapper.NSScreen.frame(screenPtr).getBounds();
-        } finally {
-            CWrapper.NSObject.release(screenPtr);
-        }
+        Rectangle screenBounds = getPeer().getGraphicsConfiguration().getBounds();
         peer.notifyReshape(screenBounds.x, screenBounds.y, screenBounds.width,
                            screenBounds.height);
     }
@@ -900,8 +897,6 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             nativePeer = ((CPlatformWindow) platformWindow).getContentView().getAWTView();
         } else if (platformWindow instanceof CViewPlatformEmbeddedFrame){
             nativePeer = ((CViewPlatformEmbeddedFrame) platformWindow).getNSViewPtr();
-        } else {
-            throw new IllegalArgumentException("Unsupported platformWindow implementation");
         }
         return nativePeer;
     }
@@ -932,25 +927,19 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
 
         final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
-        final GraphicsConfiguration oldGC = peer.getGraphicsConfiguration();
-
-        final GraphicsConfiguration newGC = peer.getGraphicsConfiguration();
-        // System-dependent appearance optimization.
         if (peer != null) {
             peer.notifyReshape(x, y, width, height);
-        }
-
-        if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
-            || isFullScreenAnimationOn || !Objects.equals(newGC, oldGC)) {
-            flushBuffers();
+            // System-dependent appearance optimization.
+            if ((byUser && !oldB.getSize().equals(nativeBounds.getSize()))
+                    || isFullScreenAnimationOn) {
+                flushBuffers();
+            }
         }
     }
 
     private void deliverWindowClosingEvent() {
-        if (peer != null) {
-            if (peer.getBlocker() == null)  {
-                peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
-            }
+        if (peer != null && peer.getBlocker() == null) {
+            peer.postEvent(new WindowEvent(target, WindowEvent.WINDOW_CLOSING));
         }
     }
 

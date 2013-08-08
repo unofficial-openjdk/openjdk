@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.AccessControlContext;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -65,12 +68,13 @@ import java.util.NoSuchElementException;
  *
  * <p><a name="format"> A service provider is identified by placing a
  * <i>provider-configuration file</i> in the resource directory
- * <tt>META-INF/services</tt>.  The file's name is the fully-qualified <a
+ * <tt>META-INF/services</tt>.</a>  The file's name is the fully-qualified <a
  * href="../lang/ClassLoader.html#name">binary name</a> of the service's type.
  * The file contains a list of fully-qualified binary names of concrete
  * provider classes, one per line.  Space and tab characters surrounding each
  * name, as well as blank lines, are ignored.  The comment character is
- * <tt>'#'</tt> (<tt>'&#92;u0023'</tt>, <font size="-1">NUMBER SIGN</font>); on
+ * <tt>'#'</tt> (<tt>'&#92;u0023'</tt>,
+ * <font style="font-size:smaller;">NUMBER SIGN</font>); on
  * each line all characters following the first comment character are ignored.
  * The file must be encoded in UTF-8.
  *
@@ -185,10 +189,13 @@ public final class ServiceLoader<S>
     private static final String PREFIX = "META-INF/services/";
 
     // The class or interface representing the service being loaded
-    private Class<S> service;
+    private final Class<S> service;
 
     // The class loader used to locate, load, and instantiate providers
-    private ClassLoader loader;
+    private final ClassLoader loader;
+
+    // The access control context taken when the ServiceLoader is created
+    private final AccessControlContext acc;
 
     // Cached providers, in instantiation order
     private LinkedHashMap<String,S> providers = new LinkedHashMap<>();
@@ -215,6 +222,7 @@ public final class ServiceLoader<S>
     private ServiceLoader(Class<S> svc, ClassLoader cl) {
         service = Objects.requireNonNull(svc, "Service interface cannot be null");
         loader = (cl == null) ? ClassLoader.getSystemClassLoader() : cl;
+        acc = (System.getSecurityManager() != null) ? AccessController.getContext() : null;
         reload();
     }
 
@@ -327,7 +335,7 @@ public final class ServiceLoader<S>
             this.loader = loader;
         }
 
-        public boolean hasNext() {
+        private boolean hasNextService() {
             if (nextName != null) {
                 return true;
             }
@@ -352,10 +360,9 @@ public final class ServiceLoader<S>
             return true;
         }
 
-        public S next() {
-            if (!hasNext()) {
+        private S nextService() {
+            if (!hasNextService())
                 throw new NoSuchElementException();
-            }
             String cn = nextName;
             nextName = null;
             Class<?> c = null;
@@ -379,6 +386,28 @@ public final class ServiceLoader<S>
                      x);
             }
             throw new Error();          // This cannot happen
+        }
+
+        public boolean hasNext() {
+            if (acc == null) {
+                return hasNextService();
+            } else {
+                PrivilegedAction<Boolean> action = new PrivilegedAction<Boolean>() {
+                    public Boolean run() { return hasNextService(); }
+                };
+                return AccessController.doPrivileged(action, acc);
+            }
+        }
+
+        public S next() {
+            if (acc == null) {
+                return nextService();
+            } else {
+                PrivilegedAction<S> action = new PrivilegedAction<S>() {
+                    public S run() { return nextService(); }
+                };
+                return AccessController.doPrivileged(action, acc);
+            }
         }
 
         public void remove() {
@@ -456,6 +485,8 @@ public final class ServiceLoader<S>
      * Creates a new service loader for the given service type and class
      * loader.
      *
+     * @param  <S> the class of the service type
+     *
      * @param  service
      *         The interface or abstract class representing the service
      *
@@ -489,6 +520,8 @@ public final class ServiceLoader<S>
      * ServiceLoader.load(<i>service</i>,
      *                    Thread.currentThread().getContextClassLoader())</pre></blockquote>
      *
+     * @param  <S> the class of the service type
+     *
      * @param  service
      *         The interface or abstract class representing the service
      *
@@ -517,6 +550,8 @@ public final class ServiceLoader<S>
      * desired.  The resulting service will only find and load providers that
      * have been installed into the current Java virtual machine; providers on
      * the application's class path will be ignored.
+     *
+     * @param  <S> the class of the service type
      *
      * @param  service
      *         The interface or abstract class representing the service

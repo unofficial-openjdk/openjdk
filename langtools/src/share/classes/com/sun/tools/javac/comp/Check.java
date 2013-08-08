@@ -897,7 +897,8 @@ public class Check {
                     assertConvertible(arg, arg.type, varArg, warn);
                     args = args.tail;
                 }
-            } else if ((sym.flags() & VARARGS) != 0 && allowVarargs) {
+            } else if ((sym.flags() & (VARARGS | SIGNATURE_POLYMORPHIC)) == VARARGS &&
+                    allowVarargs) {
                 // non-varargs call to varargs method
                 Type varParam = owntype.getParameterTypes().last();
                 Type lastArg = argtypes.last();
@@ -2996,7 +2997,8 @@ public class Check {
         for (Scope.Entry e = a.annotationType.type.tsym.members().elems;
                 e != null;
                 e = e.sibling)
-            if (e.sym.kind == MTH && e.sym.name != names.clinit)
+            if (e.sym.kind == MTH && e.sym.name != names.clinit &&
+                    (e.sym.flags() & SYNTHETIC) == 0)
                 members.add((MethodSymbol) e.sym);
 
         // remove the ones that are assigned values
