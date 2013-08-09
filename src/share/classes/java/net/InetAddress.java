@@ -1586,7 +1586,6 @@ class InetAddress implements java.io.Serializable {
         pf.put("address", holder().address);
         pf.put("family", holder().family);
         s.writeFields();
-        s.flush();
     }
 }
 
