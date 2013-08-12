@@ -456,6 +456,7 @@ class MethodHandleNatives {
         case "getDeclaredField":
         case "getDeclaredMethod":
         case "getDeclaredConstructor":
+        case "getDeclaringClass":
         case "getEnclosingClass":
         case "getEnclosingMethod":
         case "getEnclosingConstructor":
@@ -491,6 +492,7 @@ class MethodHandleNatives {
             return defc == java.lang.ClassLoader.class;
         case "registerAsParallelCapable":
             return defc == java.lang.ClassLoader.class;
+        case "getInvocationHandler":
         case "getProxyClass":
         case "newProxyInstance":
             return defc == java.lang.reflect.Proxy.class;
