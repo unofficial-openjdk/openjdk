@@ -139,6 +139,7 @@ public abstract class XMLInputFactory {
   public static final String ALLOCATOR=
     "javax.xml.stream.allocator";
 
+  static final String JAXPFACTORYID = "javax.xml.stream.XMLInputFactory";
   static final String DEFAULIMPL = "com.sun.xml.internal.stream.XMLInputFactoryImpl";
 
   protected XMLInputFactory(){}
@@ -150,9 +151,7 @@ public abstract class XMLInputFactory {
   public static XMLInputFactory newInstance()
     throws FactoryConfigurationError
   {
-    return (XMLInputFactory) FactoryFinder.find(
-      "javax.xml.stream.XMLInputFactory",
-      DEFAULIMPL);
+    return (XMLInputFactory) FactoryFinder.find(JAXPFACTORYID, DEFAULIMPL, true);
   }
 
   /**
@@ -183,9 +182,7 @@ public abstract class XMLInputFactory {
   public static XMLInputFactory newFactory()
     throws FactoryConfigurationError
   {
-    return (XMLInputFactory) FactoryFinder.find(
-      "javax.xml.stream.XMLInputFactory",
-      DEFAULIMPL);
+    return (XMLInputFactory) FactoryFinder.find(JAXPFACTORYID, DEFAULIMPL, true);
   }
 
   /**
@@ -208,7 +205,8 @@ public abstract class XMLInputFactory {
           throws FactoryConfigurationError {
       try {
           //do not fallback if given classloader can't find the class, throw exception
-          return (XMLInputFactory) FactoryFinder.find(factoryId, classLoader, null);
+          return (XMLInputFactory) FactoryFinder.find(factoryId, classLoader,
+                  null, factoryId.equals(JAXPFACTORYID) ? true : false);
       } catch (FactoryFinder.ConfigurationError e) {
           throw new FactoryConfigurationError(e.getException(),
                   e.getMessage());
@@ -235,7 +233,8 @@ public abstract class XMLInputFactory {
           throws FactoryConfigurationError {
       try {
           //do not fallback if given classloader can't find the class, throw exception
-          return (XMLInputFactory) FactoryFinder.find(factoryId, classLoader, null);
+          return (XMLInputFactory) FactoryFinder.find(factoryId, classLoader,
+                  null, factoryId.equals(JAXPFACTORYID) ? true : false);
       } catch (FactoryFinder.ConfigurationError e) {
           throw new FactoryConfigurationError(e.getException(),
                   e.getMessage());
