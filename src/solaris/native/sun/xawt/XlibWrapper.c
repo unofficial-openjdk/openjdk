@@ -1265,8 +1265,8 @@ static int ToolkitErrorHandler(Display * dpy, XErrorEvent * event) {
     if (jvm != NULL) {
         env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         if (env) {
-            return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XToolkit", "globalErrorHandler", "(JJ)I",
-                                              ptr_to_jlong(dpy), ptr_to_jlong(event)).i;
+            return JNU_CallStaticMethodByName(env, NULL, "sun/awt/X11/XErrorHandlerUtil",
+                "globalErrorHandler", "(JJ)I", ptr_to_jlong(dpy), ptr_to_jlong(event)).i;
         }
     }
     return 0;

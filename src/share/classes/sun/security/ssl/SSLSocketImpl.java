@@ -172,7 +172,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
     /*
      * Drives the protocol state machine.
      */
-    private int                 connectionState;
+    private volatile int        connectionState;
 
     /*
      * Flag indicating if the next record we receive MUST be a Finished
@@ -1443,7 +1443,7 @@ final public class SSLSocketImpl extends BaseSSLSocketImpl {
      * Return whether the socket has been explicitly closed by the application.
      */
     public boolean isClosed() {
-        return getConnectionState() == cs_APP_CLOSED;
+        return connectionState == cs_APP_CLOSED;
     }
 
     /**
