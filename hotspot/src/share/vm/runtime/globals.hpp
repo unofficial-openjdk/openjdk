@@ -167,7 +167,6 @@ define_pd_global(intx, BackEdgeThreshold,            0);
 define_pd_global(intx, OnStackReplacePercentage,     0);
 define_pd_global(bool, ResizeTLAB,                   false);
 define_pd_global(intx, FreqInlineSize,               0);
-define_pd_global(intx, InlineSmallCode,              0);
 define_pd_global(intx, NewSizeThreadIncrease,        4*K);
 define_pd_global(intx, InlineClassNatives,           true);
 define_pd_global(intx, InlineUnsafeOps,              true);
@@ -3160,7 +3159,8 @@ class CommandLineFlags {
           "disable this feature")                                           \
                                                                             \
   /* code cache parameters */                                               \
-  develop(uintx, CodeCacheSegmentSize, 64,                                  \
+  /* ppc64 has large code-entry alignment. */                               \
+  develop(uintx, CodeCacheSegmentSize, 64 PPC64_ONLY(+64),                  \
           "Code cache segment size (in bytes) - smallest unit of "          \
           "allocation")                                                     \
                                                                             \
