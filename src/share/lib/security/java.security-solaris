@@ -154,6 +154,7 @@ package.access=sun.,\
                com.sun.org.apache.xml.internal.utils.,\
                com.sun.org.apache.xml.internal.security.,\
                com.sun.org.glassfish.,\
+               com.sun.naming.internal.,\
                org.jcp.xml.dsig.internal.
 
 #
@@ -191,6 +192,7 @@ package.definition=sun.,\
                    com.sun.org.apache.xml.internal.utils.,\
                    com.sun.org.apache.xml.internal.security.,\
                    com.sun.org.glassfish.,\
+                   com.sun.naming.internal.,\
                    org.jcp.xml.dsig.internal.
 
 #
