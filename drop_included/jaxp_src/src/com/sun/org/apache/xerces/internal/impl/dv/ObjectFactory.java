@@ -49,6 +49,8 @@ final class ObjectFactory {
     //
     // Constants
     //
+    private static final String XALAN_INTERNAL = "com.sun.org.apache.xalan.internal";
+    private static final String XERCES_INTERNAL = "com.sun.org.apache.xerces.internal";
 
     // name of default properties file to look for in JDK's jre/lib directory
     private static final String DEFAULT_PROPERTIES_FILENAME = "xerces.properties";
@@ -376,10 +378,15 @@ final class ObjectFactory {
         //restrict the access to package as speicified in java.security policy
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
-            final int lastDot = className.lastIndexOf(".");
-            String packageName = className;
-            if (lastDot != -1) packageName = className.substring(0, lastDot);
-            security.checkPackageAccess(packageName);
+            if (className.startsWith(XALAN_INTERNAL) ||
+                    className.startsWith(XERCES_INTERNAL)) {
+                cl = null;
+            } else {
+                final int lastDot = className.lastIndexOf(".");
+                String packageName = className;
+                if (lastDot != -1) packageName = className.substring(0, lastDot);
+                security.checkPackageAccess(packageName);
+            }
         }
         Class providerClass;
         if (cl == null) {
