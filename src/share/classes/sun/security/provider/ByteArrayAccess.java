@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,10 +43,8 @@ import sun.misc.Unsafe;
  * These are the only platforms we currently support, but other optimized
  * variants could be added as needed.
  *
- * NOTE that because this code performs unchecked direct memory access, it
- * MUST be restricted to trusted code. It is imperative that the caller protects
- * against out of bounds memory access by performing the necessary bounds
- * checks before calling methods in this class.
+ * NOTE that ArrayIndexOutOfBoundsException will be thrown if the bounds checks
+ * failed.
  *
  * This class may also be helpful in improving the performance of the
  * crypto code in the SunJCE provider. However, for now it is only accessible by
@@ -102,6 +100,10 @@ final class ByteArrayAccess {
      * byte[] to int[] conversion, little endian byte order.
      */
     static void b2iLittle(byte[] in, int inOfs, int[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len) ||
+            (outOfs < 0) || ((out.length - outOfs) < len/4)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             len += inOfs;
@@ -130,6 +132,10 @@ final class ByteArrayAccess {
 
     // Special optimization of b2iLittle(in, inOfs, out, 0, 64)
     static void b2iLittle64(byte[] in, int inOfs, int[] out) {
+        if ((inOfs < 0) || ((in.length - inOfs) < 64) ||
+            (out.length < 16)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             out[ 0] = unsafe.getInt(in, (long)(inOfs     ));
@@ -175,6 +181,10 @@ final class ByteArrayAccess {
      * int[] to byte[] conversion, little endian byte order.
      */
     static void i2bLittle(int[] in, int inOfs, byte[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len/4) ||
+            (outOfs < 0) || ((out.length - outOfs) < len)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             outOfs += byteArrayOfs;
             len += outOfs;
@@ -203,6 +213,9 @@ final class ByteArrayAccess {
 
     // Store one 32-bit value into out[outOfs..outOfs+3] in little endian order.
     static void i2bLittle4(int val, byte[] out, int outOfs) {
+        if ((outOfs < 0) || ((out.length - outOfs) < 4)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             unsafe.putInt(out, (long)(byteArrayOfs + outOfs), val);
         } else if (bigEndian && ((outOfs & 3) == 0)) {
@@ -219,6 +232,10 @@ final class ByteArrayAccess {
      * byte[] to int[] conversion, big endian byte order.
      */
     static void b2iBig(byte[] in, int inOfs, int[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len) ||
+            (outOfs < 0) || ((out.length - outOfs) < len/4)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             len += inOfs;
@@ -247,6 +264,10 @@ final class ByteArrayAccess {
 
     // Special optimization of b2iBig(in, inOfs, out, 0, 64)
     static void b2iBig64(byte[] in, int inOfs, int[] out) {
+        if ((inOfs < 0) || ((in.length - inOfs) < 64) ||
+            (out.length < 16)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             out[ 0] = reverseBytes(unsafe.getInt(in, (long)(inOfs     )));
@@ -292,6 +313,10 @@ final class ByteArrayAccess {
      * int[] to byte[] conversion, big endian byte order.
      */
     static void i2bBig(int[] in, int inOfs, byte[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len/4) ||
+            (outOfs < 0) || ((out.length - outOfs) < len)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             outOfs += byteArrayOfs;
             len += outOfs;
@@ -320,6 +345,9 @@ final class ByteArrayAccess {
 
     // Store one 32-bit value into out[outOfs..outOfs+3] in big endian order.
     static void i2bBig4(int val, byte[] out, int outOfs) {
+        if ((outOfs < 0) || ((out.length - outOfs) < 4)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             unsafe.putInt(out, (long)(byteArrayOfs + outOfs), reverseBytes(val));
         } else if (bigEndian && ((outOfs & 3) == 0)) {
@@ -336,6 +364,10 @@ final class ByteArrayAccess {
      * byte[] to long[] conversion, big endian byte order.
      */
     static void b2lBig(byte[] in, int inOfs, long[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len) ||
+            (outOfs < 0) || ((out.length - outOfs) < len/8)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             len += inOfs;
@@ -377,6 +409,10 @@ final class ByteArrayAccess {
 
     // Special optimization of b2lBig(in, inOfs, out, 0, 128)
     static void b2lBig128(byte[] in, int inOfs, long[] out) {
+        if ((inOfs < 0) || ((in.length - inOfs) < 128) ||
+            (out.length < 16)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         if (littleEndianUnaligned) {
             inOfs += byteArrayOfs;
             out[ 0] = reverseBytes(unsafe.getLong(in, (long)(inOfs      )));
@@ -405,6 +441,10 @@ final class ByteArrayAccess {
      * long[] to byte[] conversion, big endian byte order.
      */
     static void l2bBig(long[] in, int inOfs, byte[] out, int outOfs, int len) {
+        if ((inOfs < 0) || ((in.length - inOfs) < len/8) ||
+            (outOfs < 0) || ((out.length - outOfs) < len)) {
+            throw new ArrayIndexOutOfBoundsException();
+        }
         len += outOfs;
         while (outOfs < len) {
             long i = in[inOfs++];
@@ -418,5 +458,4 @@ final class ByteArrayAccess {
             out[outOfs++] = (byte)(i      );
         }
     }
-
 }
