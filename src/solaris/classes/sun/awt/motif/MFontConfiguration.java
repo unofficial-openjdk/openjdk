@@ -169,7 +169,9 @@ public class MFontConfiguration extends FontConfiguration {
                     osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/redhat-release")).canRead()) {
                     osName = "RedHat";
-                    osVersion = getVersionString(f);
+                    // At this time we don't need to distinguish
+                    // between RHEL 6.0 and RHEL 6.1 for example.
+                    osVersion = getMajorVersionString(f);
                 } else if ((f = new File("/etc/turbolinux-release")).canRead()) {
                     osName = "Turbo";
                     osVersion = getVersionString(f);
@@ -199,6 +201,19 @@ public class MFontConfiguration extends FontConfiguration {
         try {
             Scanner sc  = new Scanner(f);
             return sc.findInLine("(\\d)+((\\.)(\\d)+)*");
+        }
+        catch (Exception e){
+        }
+        return null;
+    }
+
+    /**
+     * Gets the OS major version string from a Linux release-specific file.
+     */
+    private String getMajorVersionString(File f){
+        try {
+            Scanner sc  = new Scanner(f);
+            return sc.findInLine("(\\d)+");
         }
         catch (Exception e){
         }

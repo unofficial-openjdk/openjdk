@@ -387,7 +387,8 @@ _FONTCONFIGS	= \
 	fontconfig.properties				\
 	fontconfig.SuSE.properties                      \
 	fontconfig.Ubuntu.properties                    \
-	fontconfig.Fedora.properties
+	fontconfig.Fedora.properties			\
+	fontconfig.RedHat.6.properties
 else
 
 FONTCONFIGS_SRC	= $(CLOSED_SRC)/solaris/classes/sun/awt/fontconfigs
