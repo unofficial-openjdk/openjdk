@@ -23,23 +23,27 @@
 
 /*
  * @test
- * @bug 8006251 8022173
- * @summary test table tags
- * @library ..
- * @build DocLintTester
- * @run main DocLintTester -Xmsgs TableTagsTest.java
+ * @summary Regression: compiling program with lambda crashed compiler
+ * @bug 8020715
+ * @compile T8020715.java
  */
+class T8020715 {
+    // This crashed.
+    private static  void  makeTask1() {
+        class LocalClass {
+            private Runnable r = () -> {};
+        }
+    }
 
-/** */
-public class TableTagsTest {
-    /**
-     *  <table summary="abc"> <tr> <td> </table>
-     *  <table summary="abc"> <tr> <th> </table>
-     *  <table> <caption> abc </caption> <tr> <td> </table>
-     *  <table summary="abc"> <thead> <tr> </thead> <tr> <td> </table>
-     *  <table summary="abc"> <tbody> <tr> <td> </tbody> </table>
-     *  <table summary="abc"> <tr> <td> <tfoot> <tr> </tfoot></table>
-     *  <table summary="abc" width="50%"> <tr> <td> <tfoot> <tr> </tfoot></table>
-     */
-    public void supportedTags() { }
+    // This crashed, too.
+    private  void  makeTask2() {
+        class LocalClass {
+            private Runnable r = () -> {};
+        }
+    }
+
+    // This is fine.
+    private class InnerClass {
+        private Runnable r = () -> {};
+    }
 }

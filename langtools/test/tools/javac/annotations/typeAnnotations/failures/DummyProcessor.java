@@ -21,25 +21,23 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8006251 8022173
- * @summary test table tags
- * @library ..
- * @build DocLintTester
- * @run main DocLintTester -Xmsgs TableTagsTest.java
- */
+import javax.annotation.processing.*;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.TypeElement;
 
-/** */
-public class TableTagsTest {
-    /**
-     *  <table summary="abc"> <tr> <td> </table>
-     *  <table summary="abc"> <tr> <th> </table>
-     *  <table> <caption> abc </caption> <tr> <td> </table>
-     *  <table summary="abc"> <thead> <tr> </thead> <tr> <td> </table>
-     *  <table summary="abc"> <tbody> <tr> <td> </tbody> </table>
-     *  <table summary="abc"> <tr> <td> <tfoot> <tr> </tfoot></table>
-     *  <table summary="abc" width="50%"> <tr> <td> <tfoot> <tr> </tfoot></table>
-     */
-    public void supportedTags() { }
+import java.util.Set;
+
+/* A simple annotation processor. */
+@SupportedAnnotationTypes("*")
+public class DummyProcessor extends AbstractProcessor {
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latest();
+    }
+
+    @Override
+    public final boolean process(Set<? extends TypeElement> annotations,
+            RoundEnvironment roundEnv) {
+        return false;
+    }
 }
