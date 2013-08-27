@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @param <K> type of child and sibling tasks
  * @since 1.8
  */
+@SuppressWarnings("serial")
 abstract class AbstractShortCircuitTask<P_IN, P_OUT, R,
                                         K extends AbstractShortCircuitTask<P_IN, P_OUT, R, K>>
         extends AbstractTask<P_IN, P_OUT, R, K> {
@@ -92,21 +93,50 @@ abstract class AbstractShortCircuitTask<P_IN, P_OUT, R,
      */
     protected abstract R getEmptyResult();
 
+    /**
+     * Overrides AbstractTask version to include checks for early
+     * exits while splitting or computing.
+     */
     @Override
-    protected boolean canCompute() {
-        // Have we already found an answer?
-        if (sharedResult.get() != null) {
-            tryComplete();
-            return false;
-        } else if (taskCanceled()) {
-            setLocalResult(getEmptyResult());
-            tryComplete();
-            return false;
+    public void compute() {
+        Spliterator<P_IN> rs = spliterator, ls;
+        long sizeEstimate = rs.estimateSize();
+        long sizeThreshold = getTargetSize(sizeEstimate);
+        boolean forkRight = false;
+        @SuppressWarnings("unchecked") K task = (K) this;
+        AtomicReference<R> sr = sharedResult;
+        R result;
+        while ((result = sr.get()) == null) {
+            if (task.taskCanceled()) {
+                result = task.getEmptyResult();
+                break;
+            }
+            if (sizeEstimate <= sizeThreshold || (ls = rs.trySplit()) == null) {
+                result = task.doLeaf();
+                break;
+            }
+            K leftChild, rightChild, taskToFork;
+            task.leftChild  = leftChild = task.makeChild(ls);
+            task.rightChild = rightChild = task.makeChild(rs);
+            task.setPendingCount(1);
+            if (forkRight) {
+                forkRight = false;
+                rs = ls;
+                task = leftChild;
+                taskToFork = rightChild;
+            }
+            else {
+                forkRight = true;
+                task = rightChild;
+                taskToFork = leftChild;
+            }
+            taskToFork.fork();
+            sizeEstimate = rs.estimateSize();
         }
-        else {
-            return true;
-        }
+        task.setLocalResult(result);
+        task.tryComplete();
     }
+
 
     /**
      * Declares that a globally valid result has been found.  If another task has
@@ -190,7 +220,8 @@ abstract class AbstractShortCircuitTask<P_IN, P_OUT, R,
      */
     protected void cancelLaterNodes() {
         // Go up the tree, cancel right siblings of this node and all parents
-        for (K parent = getParent(), node = (K) this; parent != null;
+        for (@SuppressWarnings("unchecked") K parent = getParent(), node = (K) this;
+             parent != null;
              node = parent, parent = parent.getParent()) {
             // If node is a left child of parent, then has a right sibling
             if (parent.leftChild == node) {

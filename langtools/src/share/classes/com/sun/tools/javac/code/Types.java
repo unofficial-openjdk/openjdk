@@ -134,7 +134,7 @@ public class Types {
      * @return the upper bound of the given type
      */
     public Type upperBound(Type t) {
-        return upperBound.visit(t);
+        return upperBound.visit(t).unannotatedType();
     }
     // where
         private final MapVisitor<Void> upperBound = new MapVisitor<Void>() {
@@ -620,7 +620,9 @@ public class Types {
      * (ii) perform functional interface bridge calculation.
      */
     public ClassSymbol makeFunctionalInterfaceClass(Env<AttrContext> env, Name name, List<Type> targets, long cflags) {
-        Assert.check(targets.nonEmpty() && isFunctionalInterface(targets.head));
+        if (targets.isEmpty() || !isFunctionalInterface(targets.head)) {
+            return null;
+        }
         Symbol descSym = findDescriptorSymbol(targets.head.tsym);
         Type descType = findDescriptorType(targets.head);
         ClassSymbol csym = new ClassSymbol(cflags, name, env.enclClass.sym.outermostClass());
@@ -1130,9 +1132,9 @@ public class Types {
 
                     HashSet<UniqueType> set = new HashSet<UniqueType>();
                     for (Type x : interfaces(t))
-                        set.add(new UniqueType(x, Types.this));
+                        set.add(new UniqueType(x.unannotatedType(), Types.this));
                     for (Type x : interfaces(s)) {
-                        if (!set.remove(new UniqueType(x, Types.this)))
+                        if (!set.remove(new UniqueType(x.unannotatedType(), Types.this)))
                             return false;
                     }
                     return (set.isEmpty());
@@ -2330,7 +2332,7 @@ public class Types {
 
             @Override
             public Type visitErrorType(ErrorType t, Void ignored) {
-                return t;
+                return Type.noType;
             }
         };
     // </editor-fold>
@@ -2950,7 +2952,7 @@ public class Types {
             if (elemtype == t.elemtype)
                 return t;
             else
-                return new ArrayType(upperBound(elemtype), t.tsym);
+                return new ArrayType(elemtype, t.tsym);
         }
 
         @Override

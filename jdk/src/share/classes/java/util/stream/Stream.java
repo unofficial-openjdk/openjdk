@@ -651,12 +651,13 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      * }</pre>
      *
      * @param <R> the type of the result
+     * @param <A> the intermediate accumulation type of the {@code Collector}
      * @param collector the {@code Collector} describing the reduction
      * @return the result of the reduction
      * @see #collect(Supplier, BiConsumer, BiConsumer)
      * @see Collectors
      */
-    <R> R collect(Collector<? super T, R> collector);
+    <R, A> R collect(Collector<? super T, A, ? extends R> collector);
 
     /**
      * Returns the minimum element of this stream according to the provided
@@ -794,7 +795,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      * @param <T> type of elements
      * @return a stream builder
      */
-    public static<T> StreamBuilder<T> builder() {
+    public static<T> Builder<T> builder() {
         return new Streams.StreamBuilderImpl<>();
     }
 
@@ -805,7 +806,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      * @return an empty sequential stream
      */
     public static<T> Stream<T> empty() {
-        return StreamSupport.stream(Spliterators.<T>emptySpliterator());
+        return StreamSupport.stream(Spliterators.<T>emptySpliterator(), false);
     }
 
     /**
@@ -816,7 +817,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      * @return a singleton sequential stream
      */
     public static<T> Stream<T> of(T t) {
-        return StreamSupport.stream(new Streams.StreamBuilderImpl<>(t));
+        return StreamSupport.stream(new Streams.StreamBuilderImpl<>(t), false);
     }
 
     /**
@@ -827,6 +828,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
      * @return the new stream
      */
     @SafeVarargs
+    @SuppressWarnings("varargs") // Creating a stream from an array is safe
     public static<T> Stream<T> of(T... values) {
         return Arrays.stream(values);
     }
@@ -866,7 +868,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
         };
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(
                 iterator,
-                Spliterator.ORDERED | Spliterator.IMMUTABLE));
+                Spliterator.ORDERED | Spliterator.IMMUTABLE), false);
     }
 
     /**
@@ -881,6 +883,90 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public static<T> Stream<T> generate(Supplier<T> s) {
         Objects.requireNonNull(s);
         return StreamSupport.stream(
-                new StreamSpliterators.InfiniteSupplyingSpliterator.OfRef<>(Long.MAX_VALUE, s));
+                new StreamSpliterators.InfiniteSupplyingSpliterator.OfRef<>(Long.MAX_VALUE, s), false);
+    }
+
+    /**
+     * Creates a lazy concatenated {@code Stream} whose elements are all the
+     * elements of a first {@code Stream} succeeded by all the elements of the
+     * second {@code Stream}. The resulting stream is ordered if both
+     * of the input streams are ordered, and parallel if either of the input
+     * streams is parallel.
+     *
+     * @param <T> The type of stream elements
+     * @param a the first stream
+     * @param b the second stream to concatenate on to end of the first
+     *        stream
+     * @return the concatenation of the two input streams
+     */
+    public static <T> Stream<T> concat(Stream<? extends T> a, Stream<? extends T> b) {
+        Objects.requireNonNull(a);
+        Objects.requireNonNull(b);
+
+        @SuppressWarnings("unchecked")
+        Spliterator<T> split = new Streams.ConcatSpliterator.OfRef<>(
+                (Spliterator<T>) a.spliterator(), (Spliterator<T>) b.spliterator());
+        return StreamSupport.stream(split, a.isParallel() || b.isParallel());
+    }
+
+    /**
+     * A mutable builder for a {@code Stream}.  This allows the creation of a
+     * {@code Stream} by generating elements individually and adding them to the
+     * {@code Builder} (without the copying overhead that comes from using
+     * an {@code ArrayList} as a temporary buffer.)
+     *
+     * <p>A {@code Stream.Builder} has a lifecycle, where it starts in a building
+     * phase, during which elements can be added, and then transitions to a built
+     * phase, after which elements may not be added.  The built phase begins
+     * when the {@link #build()} method is called, which creates an ordered
+     * {@code Stream} whose elements are the elements that were added to the stream
+     * builder, in the order they were added.
+     *
+     * @param <T> the type of stream elements
+     * @see Stream#builder()
+     * @since 1.8
+     */
+    public interface Builder<T> extends Consumer<T> {
+
+        /**
+         * Adds an element to the stream being built.
+         *
+         * @throws IllegalStateException if the builder has already transitioned to
+         * the built state
+         */
+        @Override
+        void accept(T t);
+
+        /**
+         * Adds an element to the stream being built.
+         *
+         * @implSpec
+         * The default implementation behaves as if:
+         * <pre>{@code
+         *     accept(t)
+         *     return this;
+         * }</pre>
+         *
+         * @param t the element to add
+         * @return {@code this} builder
+         * @throws IllegalStateException if the builder has already transitioned to
+         * the built state
+         */
+        default Builder<T> add(T t) {
+            accept(t);
+            return this;
+        }
+
+        /**
+         * Builds the stream, transitioning this builder to the built state.
+         * An {@code IllegalStateException} is thrown if there are further attempts
+         * to operate on the builder after it has entered the built state.
+         *
+         * @return the built stream
+         * @throws IllegalStateException if the builder has already transitioned to
+         * the built state
+         */
+        Stream<T> build();
+
     }
 }

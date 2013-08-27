@@ -33,10 +33,11 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
 import jdk.nashorn.internal.ir.BinaryNode;
 import jdk.nashorn.internal.ir.Block;
+import jdk.nashorn.internal.ir.Expression;
 import jdk.nashorn.internal.ir.Node;
+import jdk.nashorn.internal.ir.Symbol;
 import jdk.nashorn.internal.ir.TernaryNode;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import jdk.nashorn.internal.ir.annotations.Reference;
@@ -101,7 +102,7 @@ public final class ASTWriter {
             preorder.add(node);
         }
 
-        final boolean isReference = field != null && field.getAnnotation(Reference.class) != null;
+        final boolean isReference = field != null && field.isAnnotationPresent(Reference.class);
 
         Class<?> clazz = node.getClass();
         String   type  = clazz.getName();
@@ -111,8 +112,15 @@ public final class ASTWriter {
             type = "ref: " + type;
         }
         type += "@" + Debug.id(node);
-        if (node.getSymbol() != null) {
-            type += "#" + node.getSymbol();
+        final Symbol symbol;
+        if(node instanceof Expression) {
+            symbol = ((Expression)node).getSymbol();
+        } else {
+            symbol = null;
+        }
+
+        if (symbol != null) {
+            type += "#" + symbol;
         }
 
         if (node instanceof Block && ((Block)node).needsScope()) {
@@ -135,8 +143,8 @@ public final class ASTWriter {
             status += " Goto ";
         }
 
-        if (node.getSymbol() != null) {
-            status += node.getSymbol();
+        if (symbol != null) {
+            status += symbol;
         }
 
         status = status.trim();
@@ -144,8 +152,8 @@ public final class ASTWriter {
             status = " [" + status + "]";
         }
 
-        if (node.getSymbol() != null) {
-            String tname = node.getType().toString();
+        if (symbol != null) {
+            String tname = ((Expression)node).getType().toString();
             if (tname.indexOf('.') != -1) {
                 tname = tname.substring(tname.lastIndexOf('.') + 1, tname.length());
             }
@@ -175,7 +183,7 @@ public final class ASTWriter {
                 append('\n');
 
             for (final Field child : children) {
-                if (child.getAnnotation(Ignore.class) != null) {
+                if (child.isAnnotationPresent(Ignore.class)) {
                     continue;
                 }
 

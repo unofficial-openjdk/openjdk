@@ -550,6 +550,7 @@ final class SliceOps {
      * @param <P_IN> Input element type to the stream pipeline
      * @param <P_OUT> Output element type from the stream pipeline
      */
+    @SuppressWarnings("serial")
     private static final class SliceTask<P_IN, P_OUT>
             extends AbstractShortCircuitTask<P_IN, P_OUT, Node<P_OUT>, SliceTask<P_IN, P_OUT>> {
         private final AbstractPipeline<P_OUT, P_OUT, ?> op;
@@ -598,9 +599,9 @@ final class SliceOps {
                 final Node.Builder<P_OUT> nb = op.makeNodeBuilder(sizeIfKnown, generator);
                 Sink<P_OUT> opSink = op.opWrapSink(helper.getStreamAndOpFlags(), nb);
                 helper.copyIntoWithCancel(helper.wrapSink(opSink), spliterator);
-                // It is necessary to truncate here since the result at the root
-                // can only be set once
-                return doTruncate(nb.build());
+                // There is no need to truncate since the op performs the
+                // skipping and limiting of elements
+                return nb.build();
             }
             else {
                 Node<P_OUT> node = helper.wrapAndCopyInto(helper.makeNodeBuilder(-1, generator),

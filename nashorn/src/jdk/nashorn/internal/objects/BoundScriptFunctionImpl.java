@@ -35,11 +35,11 @@ import jdk.nashorn.internal.runtime.ScriptRuntime;
  * must track their {@code [[TargetFunction]]} property for purposes of correctly implementing {@code [[HasInstance]]};
  * see {@link ScriptFunction#isInstance(ScriptObject)}.
  */
-class BoundScriptFunctionImpl extends ScriptFunctionImpl {
+final class BoundScriptFunctionImpl extends ScriptFunctionImpl {
     private final ScriptFunction targetFunction;
 
     BoundScriptFunctionImpl(ScriptFunctionData data, ScriptFunction targetFunction) {
-        super(data);
+        super(data, Global.instance());
         setPrototype(ScriptRuntime.UNDEFINED);
         this.targetFunction = targetFunction;
     }

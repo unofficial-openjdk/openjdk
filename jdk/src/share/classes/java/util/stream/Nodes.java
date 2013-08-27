@@ -60,6 +60,7 @@ final class Nodes {
      */
     static final long MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
+    @SuppressWarnings("raw")
     private static final Node EMPTY_NODE = new EmptyNode.OfRef();
     private static final Node.OfInt EMPTY_INT_NODE = new EmptyNode.OfInt();
     private static final Node.OfLong EMPTY_LONG_NODE = new EmptyNode.OfLong();
@@ -1786,6 +1787,10 @@ final class Nodes {
         }
     }
 
+    /*
+     * This and subclasses are not intended to be serializable
+     */
+    @SuppressWarnings("serial")
     private static abstract class SizedCollectorTask<P_IN, P_OUT, T_SINK extends Sink<P_OUT>,
                                                      K extends SizedCollectorTask<P_IN, P_OUT, T_SINK, K>>
             extends CountedCompleter<Void>
@@ -1829,25 +1834,20 @@ final class Nodes {
         @Override
         public void compute() {
             SizedCollectorTask<P_IN, P_OUT, T_SINK, K> task = this;
-            while (true) {
-                Spliterator<P_IN> leftSplit;
-                if (!AbstractTask.suggestSplit(task.spliterator, task.targetSize)
-                    || ((leftSplit = task.spliterator.trySplit()) == null)) {
-                    if (task.offset + task.length >= MAX_ARRAY_SIZE)
-                        throw new IllegalArgumentException("Stream size exceeds max array size");
-                    T_SINK sink = (T_SINK) task;
-                    task.helper.wrapAndCopyInto(sink, task.spliterator);
-                    task.propagateCompletion();
-                    return;
-                }
-                else {
-                    task.setPendingCount(1);
-                    long leftSplitSize = leftSplit.estimateSize();
-                    task.makeChild(leftSplit, task.offset, leftSplitSize).fork();
-                    task = task.makeChild(task.spliterator, task.offset + leftSplitSize,
-                                          task.length - leftSplitSize);
-                }
+            Spliterator<P_IN> rightSplit = spliterator, leftSplit;
+            while (rightSplit.estimateSize() > task.targetSize &&
+                   (leftSplit = rightSplit.trySplit()) != null) {
+                task.setPendingCount(1);
+                long leftSplitSize = leftSplit.estimateSize();
+                task.makeChild(leftSplit, task.offset, leftSplitSize).fork();
+                task = task.makeChild(rightSplit, task.offset + leftSplitSize,
+                                      task.length - leftSplitSize);
             }
+            if (task.offset + task.length >= MAX_ARRAY_SIZE)
+                throw new IllegalArgumentException("Stream size exceeds max array size");
+            T_SINK sink = (T_SINK) task;
+            task.helper.wrapAndCopyInto(sink, rightSplit);
+            task.propagateCompletion();
         }
 
         abstract K makeChild(Spliterator<P_IN> spliterator, long offset, long size);
@@ -1860,6 +1860,7 @@ final class Nodes {
             fence = (int) offset + (int) length;
         }
 
+        @SuppressWarnings("serial")
         static final class OfRef<P_IN, P_OUT>
                 extends SizedCollectorTask<P_IN, P_OUT, Sink<P_OUT>, OfRef<P_IN, P_OUT>>
                 implements Sink<P_OUT> {
@@ -1891,6 +1892,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         static final class OfInt<P_IN>
                 extends SizedCollectorTask<P_IN, Integer, Sink.OfInt, OfInt<P_IN>>
                 implements Sink.OfInt {
@@ -1922,6 +1924,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         static final class OfLong<P_IN>
                 extends SizedCollectorTask<P_IN, Long, Sink.OfLong, OfLong<P_IN>>
                 implements Sink.OfLong {
@@ -1953,6 +1956,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         static final class OfDouble<P_IN>
                 extends SizedCollectorTask<P_IN, Double, Sink.OfDouble, OfDouble<P_IN>>
                 implements Sink.OfDouble {
@@ -1985,6 +1989,7 @@ final class Nodes {
         }
     }
 
+    @SuppressWarnings("serial")
     private static abstract class ToArrayTask<T, T_NODE extends Node<T>,
                                               K extends ToArrayTask<T, T_NODE, K>>
             extends CountedCompleter<Void> {
@@ -2030,6 +2035,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfRef<T>
                 extends ToArrayTask<T, Node<T>, OfRef<T>> {
             private final T[] array;
@@ -2055,6 +2061,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static class OfPrimitive<T, T_CONS, T_ARR,
                                          T_SPLITR extends Spliterator.OfPrimitive<T, T_CONS, T_SPLITR>,
                                          T_NODE extends Node.OfPrimitive<T, T_CONS, T_ARR, T_SPLITR, T_NODE>>
@@ -2082,6 +2089,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfInt
                 extends OfPrimitive<Integer, IntConsumer, int[], Spliterator.OfInt, Node.OfInt> {
             private OfInt(Node.OfInt node, int[] array, int offset) {
@@ -2089,6 +2097,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfLong
                 extends OfPrimitive<Long, LongConsumer, long[], Spliterator.OfLong, Node.OfLong> {
             private OfLong(Node.OfLong node, long[] array, int offset) {
@@ -2096,6 +2105,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfDouble
                 extends OfPrimitive<Double, DoubleConsumer, double[], Spliterator.OfDouble, Node.OfDouble> {
             private OfDouble(Node.OfDouble node, double[] array, int offset) {
@@ -2104,6 +2114,7 @@ final class Nodes {
         }
     }
 
+    @SuppressWarnings("serial")
     private static class CollectorTask<P_IN, P_OUT, T_NODE extends Node<P_OUT>, T_BUILDER extends Node.Builder<P_OUT>>
             extends AbstractTask<P_IN, P_OUT, T_NODE, CollectorTask<P_IN, P_OUT, T_NODE, T_BUILDER>> {
         protected final PipelineHelper<P_OUT> helper;
@@ -2140,12 +2151,13 @@ final class Nodes {
         }
 
         @Override
-        public void onCompletion(CountedCompleter caller) {
+        public void onCompletion(CountedCompleter<?> caller) {
             if (!isLeaf())
                 setLocalResult(concFactory.apply(leftChild.getLocalResult(), rightChild.getLocalResult()));
             super.onCompletion(caller);
         }
 
+        @SuppressWarnings("serial")
         private static final class OfRef<P_IN, P_OUT>
                 extends CollectorTask<P_IN, P_OUT, Node<P_OUT>, Node.Builder<P_OUT>> {
             OfRef(PipelineHelper<P_OUT> helper,
@@ -2155,6 +2167,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfInt<P_IN>
                 extends CollectorTask<P_IN, Integer, Node.OfInt, Node.Builder.OfInt> {
             OfInt(PipelineHelper<Integer> helper, Spliterator<P_IN> spliterator) {
@@ -2162,6 +2175,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfLong<P_IN>
                 extends CollectorTask<P_IN, Long, Node.OfLong, Node.Builder.OfLong> {
             OfLong(PipelineHelper<Long> helper, Spliterator<P_IN> spliterator) {
@@ -2169,6 +2183,7 @@ final class Nodes {
             }
         }
 
+        @SuppressWarnings("serial")
         private static final class OfDouble<P_IN>
                 extends CollectorTask<P_IN, Double, Node.OfDouble, Node.Builder.OfDouble> {
             OfDouble(PipelineHelper<Double> helper, Spliterator<P_IN> spliterator) {

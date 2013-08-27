@@ -49,16 +49,17 @@ package java.util;
  * <p>
  * A {@code StringJoiner} may be employed to create formatted output from a
  * {@link java.util.stream.Stream} using
- * {@link java.util.stream.Collectors#toStringJoiner}. For example:
+ * {@link java.util.stream.Collectors#joining(CharSequence)}. For example:
  *
  * <pre> {@code
  * List<Integer> numbers = Arrays.asList(1, 2, 3, 4);
  * String commaSeparatedNumbers = numbers.stream()
  *     .map(i -> i.toString())
- *     .collect(Collectors.toStringJoiner(", ")).toString();
+ *     .collect(Collectors.joining(", "));
  * }</pre>
  *
- * @see java.util.stream.Collectors#toStringJoiner
+ * @see java.util.stream.Collectors#joining(CharSequence)
+ * @see java.util.stream.Collectors#joining(CharSequence, CharSequence, CharSequence)
  * @since  1.8
 */
 public final class StringJoiner {
@@ -114,8 +115,9 @@ public final class StringJoiner {
      * @throws NullPointerException if {@code prefix}, {@code delimiter}, or
      *         {@code suffix} is {@code null}
      */
-    public StringJoiner(CharSequence delimiter, CharSequence prefix,
-            CharSequence suffix) {
+    public StringJoiner(CharSequence delimiter,
+                        CharSequence prefix,
+                        CharSequence suffix) {
         Objects.requireNonNull(prefix, "The prefix must not be null");
         Objects.requireNonNull(delimiter, "The delimiter must not be null");
         Objects.requireNonNull(suffix, "The suffix must not be null");
@@ -172,7 +174,7 @@ public final class StringJoiner {
     }
 
     /**
-     * Add the a copy of the supplied {@code CharSequence} value as the next
+     * Adds a copy of the given {@code CharSequence} value as the next
      * element of the {@code StringJoiner} value. If {@code newElement} is
      * {@code null}, then {@code "null"} is added.
      *
@@ -181,6 +183,38 @@ public final class StringJoiner {
      */
     public StringJoiner add(CharSequence newElement) {
         prepareBuilder().append(newElement);
+        return this;
+    }
+
+    /**
+     * Adds the contents of the given {@code StringJoiner} without prefix and
+     * suffix as the next element if it is non-empty. If the given {@code
+     * StringJoiner} is empty, the call has no effect.
+     *
+     * <p>A {@code StringJoiner} is empty if {@link #add(CharSequence) add()}
+     * has never been called, and if {@code merge()} has never been called
+     * with a non-empty {@code StringJoiner} argument.
+     *
+     * <p>If the other {@code StringJoiner} is using a different delimiter,
+     * then elements from the other {@code StringJoiner} are concatenated with
+     * that delimiter and the result is appended to this {@code StringJoiner}
+     * as a single element.
+     *
+     * @param other The {@code StringJoiner} whose contents should be merged
+     *              into this one
+     * @throws NullPointerException if the other {@code StringJoiner} is null
+     * @return This {@code StringJoiner}
+     */
+    public StringJoiner merge(StringJoiner other) {
+        Objects.requireNonNull(other);
+        if (other.value != null) {
+            final int length = other.value.length();
+            // lock the length so that we can seize the data to be appended
+            // before initiate copying to avoid interference, especially when
+            // merge 'this'
+            StringBuilder builder = prepareBuilder();
+            builder.append(other.value, other.prefix.length(), length);
+        }
         return this;
     }
 

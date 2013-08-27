@@ -33,16 +33,19 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import jdk.nashorn.internal.codegen.Label;
+import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
 import jdk.nashorn.internal.ir.visitor.NodeVisitor;
 
+import static jdk.nashorn.internal.codegen.CompilerConstants.RETURN;
+
 /**
- * IR representation for a list of statements and functions. All provides the
- * basis for script body.
+ * IR representation for a list of statements.
  */
 @Immutable
-public class Block extends BreakableNode implements Flags<Block> {
+public class Block extends Node implements BreakableNode, Flags<Block> {
     /** List of statements */
     protected final List<Statement> statements;
 
@@ -51,6 +54,9 @@ public class Block extends BreakableNode implements Flags<Block> {
 
     /** Entry label. */
     protected final Label entryLabel;
+
+    /** Break label. */
+    private final Label breakLabel;
 
     /** Does the block/function need a new scope? */
     protected final int flags;
@@ -76,30 +82,30 @@ public class Block extends BreakableNode implements Flags<Block> {
     /**
      * Constructor
      *
-     * @param lineNumber line number
      * @param token      token
      * @param finish     finish
      * @param statements statements
      */
-    public Block(final int lineNumber, final long token, final int finish, final Statement... statements) {
-        super(lineNumber, token, finish, new Label("block_break"));
+    public Block(final long token, final int finish, final Statement... statements) {
+        super(token, finish);
 
         this.statements = Arrays.asList(statements);
         this.symbols    = new LinkedHashMap<>();
         this.entryLabel = new Label("block_entry");
-        this.flags     =  0;
+        this.breakLabel = new Label("block_break");
+        final int len = statements.length;
+        this.flags = (len > 0 && statements[len - 1].hasTerminalFlags()) ? IS_TERMINAL : 0;
     }
 
     /**
      * Constructor
      *
-     * @param lineNumber line number
      * @param token      token
      * @param finish     finish
      * @param statements statements
      */
-    public Block(final int lineNumber, final long token, final int finish, final List<Statement> statements) {
-        this(lineNumber, token, finish, statements.toArray(new Statement[statements.size()]));
+    public Block(final long token, final int finish, final List<Statement> statements) {
+        this(token, finish, statements.toArray(new Statement[statements.size()]));
     }
 
     private Block(final Block block, final int finish, final List<Statement> statements, final int flags, final Map<String, Symbol> symbols) {
@@ -108,6 +114,7 @@ public class Block extends BreakableNode implements Flags<Block> {
         this.flags      = flags;
         this.symbols    = new LinkedHashMap<>(symbols); //todo - symbols have no dependencies on any IR node and can as far as we understand it be shallow copied now
         this.entryLabel = new Label(block.entryLabel);
+        this.breakLabel = new Label(block.breakLabel);
         this.finish     = finish;
     }
 
@@ -210,6 +217,19 @@ public class Block extends BreakableNode implements Flags<Block> {
         return isTerminal ? setFlag(lc, IS_TERMINAL) : clearFlag(lc, IS_TERMINAL);
     }
 
+    /**
+     * Set the type of the return symbol in this block if present.
+     * @param returnType the new type
+     * @return this block
+     */
+    public Block setReturnType(final Type returnType) {
+        final Symbol symbol = getExistingSymbol(RETURN.symbolName());
+        if (symbol != null) {
+            symbol.setTypeOverride(returnType);
+        }
+        return this;
+    }
+
     @Override
     public boolean isTerminal() {
         return getFlag(IS_TERMINAL);
@@ -221,6 +241,11 @@ public class Block extends BreakableNode implements Flags<Block> {
      */
     public Label getEntryLabel() {
         return entryLabel;
+    }
+
+    @Override
+    public Label getBreakLabel() {
+        return breakLabel;
     }
 
     /**
@@ -322,7 +347,17 @@ public class Block extends BreakableNode implements Flags<Block> {
     }
 
     @Override
-    protected boolean isBreakableWithoutLabel() {
+    public boolean isBreakableWithoutLabel() {
         return false;
+    }
+
+    @Override
+    public List<Label> getLabels() {
+        return Collections.singletonList(breakLabel);
+    }
+
+    @Override
+    public Node accept(NodeVisitor<? extends LexicalContext> visitor) {
+        return Acceptor.accept(this, visitor);
     }
 }

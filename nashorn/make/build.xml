@@ -47,17 +47,22 @@
     <!-- check if testng.jar is avaiable -->
     <available property="testng.available" file="${file.reference.testng.jar}"/>
 
-	<!-- enable/disable make code coverage -->
-	<condition property="cc.enabled">
-		<istrue value="${make.code.coverage}" />
-	</condition>
+    <!-- enable/disable make code coverage -->
+    <condition property="cc.enabled">
+        <istrue value="${make.code.coverage}" />
+    </condition>
+
+    <!-- exclude tests in exclude lists -->
+    <condition property="exclude.list" value="./exclude/exclude_list_cc.txt" else="./exclude/exclude_list.txt">
+      <istrue value="${make.code.coverage}" />
+    </condition>
   </target>
 
   <target name="init" depends="init-conditions, init-cc">
 
-	<!-- extends jvm args -->
-	<property name="run.test.jvmargs" value="${run.test.jvmargs.main}  ${run.test.cc.jvmargs}"/>
-	<property name="run.test.jvmargs.octane" value="${run.test.jvmargs.octane.main}  ${run.test.cc.jvmargs}" />
+    <!-- extends jvm args -->
+    <property name="run.test.jvmargs" value="${run.test.jvmargs.main}  ${run.test.cc.jvmargs}"/>
+    <property name="run.test.jvmargs.octane" value="${run.test.jvmargs.octane.main}  ${run.test.cc.jvmargs}" />
 
     <echo message="run.test.jvmargs=${run.test.jvmargs}"/>
     <echo message="run.test.jvmargs.octane=${run.test.jvmargs.octane}"/>
@@ -100,7 +105,8 @@
            target="${javac.target}"
            debug="${javac.debug}"
            encoding="${javac.encoding}"
-           includeantruntime="false">
+           includeantruntime="false" fork="true">
+      <compilerarg value="-J-Djava.ext.dirs="/>
       <compilerarg value="-Xlint:unchecked"/>
       <compilerarg value="-Xlint:deprecation"/>
       <compilerarg value="-XDignore.symbol.file"/>
@@ -218,8 +224,10 @@
            target="${javac.target}"
            debug="${javac.debug}"
            encoding="${javac.encoding}"
-           includeantruntime="false">
-        <compilerarg line="-extdirs &quot;&quot;"/>
+           includeantruntime="false" fork="true">
+        <compilerarg value="-J-Djava.ext.dirs="/>
+        <compilerarg value="-Xlint:unchecked"/>
+        <compilerarg value="-Xlint:deprecation"/>
     </javac>
 
     <!-- tests that check nashorn internals and internal API -->
@@ -235,44 +243,36 @@
   </target>
 
   <target name="generate-policy-file" depends="prepare">
-    <!-- Generating nashorn.policy file -->
+    <echo file="${build.dir}/nashorn.policy">
 
-    <!-- nashorn internal tests jar requires AllPermission -->
-    <echo message="grant codeBase &quot;file:/${basedir}/${nashorn.internal.tests.jar}&quot; {" file="${build.dir}/nashorn.policy"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/${nashorn.internal.tests.jar}" {
+    permission java.security.AllPermission;
+};
 
-    <!-- TestNG framework jar needs AllPermission -->
-    <echo message="grant codeBase &quot;file:/${basedir}/${file.reference.testng.jar}&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/${file.reference.testng.jar}" {
+    permission java.security.AllPermission;
+};
 
-    <!-- AllPermission to test/script/trusted tests -->
-    <echo message="grant codeBase &quot;file:/${basedir}/test/script/trusted/*&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.security.AllPermission;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/test/script/trusted/*" {
+    permission java.security.AllPermission;
+};
 
-    <echo message="grant codeBase &quot;file:/${basedir}/test/script/basic/*&quot; {" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <!-- test/script/basic .js scripts load other script tests -->
-    <echo message="    permission java.io.FilePermission &quot;${basedir}/test/script/-&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.io.FilePermission &quot;user.dir&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="    permission java.util.PropertyPermission &quot;user.dir&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <!-- test/script/basic .js scripts can read nashorn.test.* properties -->
-    <echo message="    permission java.util.PropertyPermission &quot;nashorn.test.*&quot;, &quot;read&quot;;" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="};" file="${build.dir}/nashorn.policy" append="true"/>
-    <echo message="" file="${build.dir}/nashorn.policy" append="true"/>
+grant codeBase "file:/${basedir}/test/script/basic/*" {
+    permission java.io.FilePermission "${basedir}/test/script/-", "read";
+    permission java.io.FilePermission "$${user.dir}", "read";
+    permission java.util.PropertyPermission "user.dir", "read";
+    permission java.util.PropertyPermission "nashorn.test.*", "read";
+};
+
+grant codeBase "file:/${basedir}/test/script/basic/JDK-8010946-privileged.js" {
+    permission java.util.PropertyPermission "java.security.policy", "read";
+};
+
+grant codeBase "file:/${basedir}/test/script/basic/classloader.js" {
+    permission java.lang.RuntimePermission "nashorn.JavaReflection";
+};
+
+    </echo>
 
     <replace file="${build.dir}/nashorn.policy"><replacetoken>\</replacetoken><replacevalue>/</replacevalue></replace>    <!--hack for Windows - to make URLs with normal path separators -->
     <replace file="${build.dir}/nashorn.policy"><replacetoken>//</replacetoken><replacevalue>/</replacevalue></replace>   <!--hack for Unix - to avoid leading // in URLs -->
@@ -294,19 +294,6 @@
   </target>
 
   <target name="test" depends="jar, check-testng, check-external-tests, compile-test, generate-policy-file" if="testng.available">
-    <java classname="${nashorn.shell.tool}" fork="true" dir="${test.script.dir}/representations" output="${build.dir}/output1.log" error="${build.dir}/err.log">
-      <jvmarg line="${ext.class.path}"/>
-      <jvmarg line="-Dnashorn.fields.dual=true"/>
-      <arg value="NASHORN-592a.js"/>
-    </java>
-    <java classname="${nashorn.shell.tool}" fork="true" dir="${test.script.dir}/representations" output="${build.dir}/output2.log" error="${build.dir}/err.log">
-      <jvmarg line="${ext.class.path}"/>
-      <arg value="NASHORN-592a.js"/>
-    </java>
-    <condition property="representation-ok">
-      <filesmatch file1="${build.dir}/output1.log" file2="${build.dir}/output2.log"/>
-    </condition>
-    <fail unless="representation-ok">Representation test failed - output differs!</fail>
     <fileset id="test.classes" dir="${build.test.classes.dir}">
       <include name="**/api/javaaccess/*Test.class"/>
       <include name="**/api/scripting/*Test.class"/>
@@ -326,6 +313,7 @@
         <propertyref prefix="test-sys-prop."/>
         <mapper from="test-sys-prop.*" to="*" type="glob"/>
       </propertyset>
+      <sysproperty key="test.js.excludes.file" value="${exclude.list}"/>
       <classpath>
           <pathelement path="${run.test.classpath}"/>
       </classpath>

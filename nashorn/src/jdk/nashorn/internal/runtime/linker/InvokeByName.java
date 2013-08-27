@@ -58,7 +58,7 @@ import java.lang.invoke.MethodHandle;
  * you dynamically invoke a function with the same name from multiple places in your code, it is advisable to create a
  * separate instance of this class for every place.
  */
-public class InvokeByName {
+public final class InvokeByName {
     private final String name;
     private final MethodHandle getter;
     private final MethodHandle invoker;
@@ -83,7 +83,7 @@ public class InvokeByName {
      */
     public InvokeByName(final String name, final Class<?> targetClass, final Class<?> rtype, final Class<?>... ptypes) {
         this.name = name;
-        getter  = Bootstrap.createDynamicInvoker("dyn:getMethod|getProp|getItem:" + name, Object.class, targetClass);
+        getter  = Bootstrap.createDynamicInvoker("dyn:getMethod|getProp|getElem:" + name, Object.class, targetClass);
 
         final Class<?>[] finalPtypes;
         final int plength = ptypes.length;
