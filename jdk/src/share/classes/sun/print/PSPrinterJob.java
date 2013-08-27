@@ -59,6 +59,8 @@ import javax.print.PrintService;
 import javax.print.StreamPrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.PrintServiceAttributeSet;
+import javax.print.attribute.standard.PrinterName;
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
@@ -337,6 +339,8 @@ public class PSPrinterJob extends RasterPrinterJob {
     */
    private static Properties mFontProps = null;
 
+   private static boolean isMac;
+
     /* Class static initialiser block */
     static {
        //enable priviledges so initProps can access system properties,
@@ -345,6 +349,8 @@ public class PSPrinterJob extends RasterPrinterJob {
                             new java.security.PrivilegedAction() {
             public Object run() {
                 mFontProps = initProps();
+                String osName = System.getProperty("os.name");
+                isMac = osName.startsWith("Mac");
                 return null;
             }
         });
@@ -471,6 +477,12 @@ public class PSPrinterJob extends RasterPrinterJob {
                 PrintService pServ = getPrintService();
                 if (pServ != null) {
                     mDestination = pServ.getName();
+                   if (isMac) {
+                        PrintServiceAttributeSet psaSet = pServ.getAttributes() ;
+                        if (psaSet != null) {
+                            mDestination = psaSet.get(PrinterName.class).toString();
+                        }
+                    }
                 }
             }
         }
@@ -766,8 +778,15 @@ public class PSPrinterJob extends RasterPrinterJob {
             }
         }
         if (mDestType == RasterPrinterJob.PRINTER) {
-            if (getPrintService() != null) {
-                mDestination = getPrintService().getName();
+            PrintService pServ = getPrintService();
+            if (pServ != null) {
+                mDestination = pServ.getName();
+               if (isMac) {
+                    PrintServiceAttributeSet psaSet = pServ.getAttributes();
+                    if (psaSet != null) {
+                        mDestination = psaSet.get(PrinterName.class).toString() ;
+                    }
+                }
             }
             PrinterSpooler spooler = new PrinterSpooler();
             java.security.AccessController.doPrivileged(spooler);

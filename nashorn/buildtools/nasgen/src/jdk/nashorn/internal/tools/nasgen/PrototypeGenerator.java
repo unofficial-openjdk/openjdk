@@ -25,16 +25,17 @@
 
 package jdk.nashorn.internal.tools.nasgen;
 
+import static jdk.internal.org.objectweb.asm.Opcodes.ACC_FINAL;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static jdk.internal.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static jdk.internal.org.objectweb.asm.Opcodes.V1_7;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.DEFAULT_INIT_DESC;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.INIT;
-import static jdk.nashorn.internal.tools.nasgen.StringConstants.MAP_DESC;
-import static jdk.nashorn.internal.tools.nasgen.StringConstants.MAP_DUPLICATE;
-import static jdk.nashorn.internal.tools.nasgen.StringConstants.MAP_DUPLICATE_DESC;
-import static jdk.nashorn.internal.tools.nasgen.StringConstants.MAP_FIELD_NAME;
-import static jdk.nashorn.internal.tools.nasgen.StringConstants.MAP_TYPE;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROPERTYMAP_DESC;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROPERTYMAP_DUPLICATE;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROPERTYMAP_DUPLICATE_DESC;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROPERTYMAP_FIELD_NAME;
+import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROPERTYMAP_TYPE;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.OBJECT_DESC;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROTOTYPEOBJECT_TYPE;
 import static jdk.nashorn.internal.tools.nasgen.StringConstants.PROTOTYPE_SUFFIX;
@@ -60,13 +61,14 @@ public class PrototypeGenerator extends ClassGenerator {
 
     byte[] getClassBytes() {
         // new class extensing from ScriptObject
-        cw.visit(V1_7, ACC_PUBLIC | ACC_SUPER, className, null, PROTOTYPEOBJECT_TYPE, null);
+        cw.visit(V1_7, ACC_FINAL | ACC_SUPER, className, null, PROTOTYPEOBJECT_TYPE, null);
         if (memberCount > 0) {
             // add fields
             emitFields();
             // add <clinit>
             emitStaticInitializer();
         }
+
         // add <init>
         emitConstructor();
 
@@ -106,7 +108,7 @@ public class PrototypeGenerator extends ClassGenerator {
 
     private void emitStaticInitializer() {
         final MethodGenerator mi = makeStaticInitializer();
-        emitStaticInitPrefix(mi, className);
+        emitStaticInitPrefix(mi, className, memberCount);
         for (final MemberInfo memInfo : scriptClassInfo.getMembers()) {
             if (memInfo.isPrototypeFunction() || memInfo.isPrototypeProperty()) {
                 linkerAddGetterSetter(mi, className, memInfo);
@@ -124,10 +126,10 @@ public class PrototypeGenerator extends ClassGenerator {
         mi.loadThis();
         if (memberCount > 0) {
             // call "super(map$)"
-            mi.getStatic(className, MAP_FIELD_NAME, MAP_DESC);
+            mi.getStatic(className, PROPERTYMAP_FIELD_NAME, PROPERTYMAP_DESC);
             // make sure we use duplicated PropertyMap so that original map
-            // stays intact and so can be used for many globals in same context
-            mi.invokeVirtual(MAP_TYPE, MAP_DUPLICATE, MAP_DUPLICATE_DESC);
+            // stays intact and so can be used for many global.
+            mi.invokeVirtual(PROPERTYMAP_TYPE, PROPERTYMAP_DUPLICATE, PROPERTYMAP_DUPLICATE_DESC);
             mi.invokeSpecial(PROTOTYPEOBJECT_TYPE, INIT, SCRIPTOBJECT_INIT_DESC);
             // initialize Function type fields
             initFunctionFields(mi);

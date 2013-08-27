@@ -1420,34 +1420,40 @@ static int _locate_module_by_addr(int pid, char * mod_fname, address base_addr,
 
 bool os::dll_address_to_library_name(address addr, char* buf,
                                      int buflen, int* offset) {
+  // buf is not optional, but offset is optional
+  assert(buf != NULL, "sanity check");
+
 // NOTE: the reason we don't use SymGetModuleInfo() is it doesn't always
 //       return the full path to the DLL file, sometimes it returns path
 //       to the corresponding PDB file (debug info); sometimes it only
 //       returns partial path, which makes life painful.
 
-   struct _modinfo mi;
-   mi.addr      = addr;
-   mi.full_path = buf;
-   mi.buflen    = buflen;
-   int pid = os::current_process_id();
-   if (enumerate_modules(pid, _locate_module_by_addr, (void *)&mi)) {
-      // buf already contains path name
-      if (offset) *offset = addr - mi.base_addr;
-      return true;
-   } else {
-      if (buf) buf[0] = '\0';
-      if (offset) *offset = -1;
-      return false;
-   }
+  struct _modinfo mi;
+  mi.addr      = addr;
+  mi.full_path = buf;
+  mi.buflen    = buflen;
+  int pid = os::current_process_id();
+  if (enumerate_modules(pid, _locate_module_by_addr, (void *)&mi)) {
+    // buf already contains path name
+    if (offset) *offset = addr - mi.base_addr;
+    return true;
+  }
+
+  buf[0] = '\0';
+  if (offset) *offset = -1;
+  return false;
 }
 
 bool os::dll_address_to_function_name(address addr, char *buf,
                                       int buflen, int *offset) {
+  // buf is not optional, but offset is optional
+  assert(buf != NULL, "sanity check");
+
   if (Decoder::decode(addr, buf, buflen, offset)) {
     return true;
   }
   if (offset != NULL)  *offset  = -1;
-  if (buf != NULL) buf[0] = '\0';
+  buf[0] = '\0';
   return false;
 }
 
@@ -1636,6 +1642,8 @@ void os::print_os_info(outputStream* st) {
 
 void os::win32::print_windows_version(outputStream* st) {
   OSVERSIONINFOEX osvi;
+  SYSTEM_INFO si;
+
   ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
   osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 
@@ -1645,6 +1653,18 @@ void os::win32::print_windows_version(outputStream* st) {
   }
 
   int os_vers = osvi.dwMajorVersion * 1000 + osvi.dwMinorVersion;
+
+  ZeroMemory(&si, sizeof(SYSTEM_INFO));
+  if (os_vers >= 5002) {
+    // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
+    // find out whether we are running on 64 bit processor or not.
+    if (os::Kernel32Dll::GetNativeSystemInfoAvailable()) {
+      os::Kernel32Dll::GetNativeSystemInfo(&si);
+    } else {
+      GetSystemInfo(&si);
+    }
+  }
+
   if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) {
     switch (os_vers) {
     case 3051: st->print(" Windows NT 3.51"); break;
@@ -1652,57 +1672,48 @@ void os::win32::print_windows_version(outputStream* st) {
     case 5000: st->print(" Windows 2000"); break;
     case 5001: st->print(" Windows XP"); break;
     case 5002:
-    case 6000:
-    case 6001:
-    case 6002: {
-      // Retrieve SYSTEM_INFO from GetNativeSystemInfo call so that we could
-      // find out whether we are running on 64 bit processor or not.
-      SYSTEM_INFO si;
-      ZeroMemory(&si, sizeof(SYSTEM_INFO));
-        if (!os::Kernel32Dll::GetNativeSystemInfoAvailable()){
-          GetSystemInfo(&si);
+      if (osvi.wProductType == VER_NT_WORKSTATION &&
+          si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) {
+        st->print(" Windows XP x64 Edition");
       } else {
-        os::Kernel32Dll::GetNativeSystemInfo(&si);
-      }
-      if (os_vers == 5002) {
-        if (osvi.wProductType == VER_NT_WORKSTATION &&
-            si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-          st->print(" Windows XP x64 Edition");
-        else
-            st->print(" Windows Server 2003 family");
-      } else if (os_vers == 6000) {
-        if (osvi.wProductType == VER_NT_WORKSTATION)
-            st->print(" Windows Vista");
-        else
-            st->print(" Windows Server 2008");
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-            st->print(" , 64 bit");
-      } else if (os_vers == 6001) {
-        if (osvi.wProductType == VER_NT_WORKSTATION) {
-            st->print(" Windows 7");
-        } else {
-            // Unrecognized windows, print out its major and minor versions
-            st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
-        }
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-            st->print(" , 64 bit");
-      } else if (os_vers == 6002) {
-        if (osvi.wProductType == VER_NT_WORKSTATION) {
-            st->print(" Windows 8");
-        } else {
-            st->print(" Windows Server 2012");
-        }
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-            st->print(" , 64 bit");
-      } else { // future os
-        // Unrecognized windows, print out its major and minor versions
-        st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
-        if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
-            st->print(" , 64 bit");
+        st->print(" Windows Server 2003 family");
       }
       break;
-    }
-    default: // future windows, print out its major and minor versions
+
+    case 6000:
+      if (osvi.wProductType == VER_NT_WORKSTATION) {
+        st->print(" Windows Vista");
+      } else {
+        st->print(" Windows Server 2008");
+      }
+      break;
+
+    case 6001:
+      if (osvi.wProductType == VER_NT_WORKSTATION) {
+        st->print(" Windows 7");
+      } else {
+        st->print(" Windows Server 2008 R2");
+      }
+      break;
+
+    case 6002:
+      if (osvi.wProductType == VER_NT_WORKSTATION) {
+        st->print(" Windows 8");
+      } else {
+        st->print(" Windows Server 2012");
+      }
+      break;
+
+    case 6003:
+      if (osvi.wProductType == VER_NT_WORKSTATION) {
+        st->print(" Windows 8.1");
+      } else {
+        st->print(" Windows Server 2012 R2");
+      }
+      break;
+
+    default: // future os
+      // Unrecognized windows, print out its major and minor versions
       st->print(" Windows NT %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
     }
   } else {
@@ -1714,6 +1725,11 @@ void os::win32::print_windows_version(outputStream* st) {
       st->print(" Windows %d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
     }
   }
+
+  if (os_vers >= 6000 && si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) {
+    st->print(" , 64 bit");
+  }
+
   st->print(" Build %d", osvi.dwBuildNumber);
   st->print(" %s", osvi.szCSDVersion);           // service pack
   st->cr();
@@ -2317,6 +2333,11 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
 #endif
   Thread* t = ThreadLocalStorage::get_thread_slow();          // slow & steady
 
+  // Handle SafeFetch32 and SafeFetchN exceptions.
+  if (StubRoutines::is_safefetch_fault(pc)) {
+    return Handle_Exception(exceptionInfo, StubRoutines::continuation_for_safefetch_fault(pc));
+  }
+
 #ifndef _WIN64
   // Execution protection violation - win32 running on AMD64 only
   // Handled first to avoid misdiagnosis as a "normal" access violation;
@@ -2686,6 +2707,19 @@ address os::win32::fast_jni_accessor_wrapper(BasicType type) {
     default:        ShouldNotReachHere();
   }
   return (address)-1;
+}
+#endif
+
+#ifndef PRODUCT
+void os::win32::call_test_func_with_wrapper(void (*funcPtr)(void)) {
+  // Install a win32 structured exception handler around the test
+  // function call so the VM can generate an error dump if needed.
+  __try {
+    (*funcPtr)();
+  } __except(topLevelExceptionFilter(
+             (_EXCEPTION_POINTERS*)_exception_info())) {
+    // Nothing to do.
+  }
 }
 #endif
 
@@ -4663,6 +4697,34 @@ void os::pause() {
     jio_fprintf(stderr,
       "Could not open pause file '%s', continuing immediately.\n", filename);
   }
+}
+
+os::WatcherThreadCrashProtection::WatcherThreadCrashProtection() {
+  assert(Thread::current()->is_Watcher_thread(), "Must be WatcherThread");
+}
+
+/*
+ * See the caveats for this class in os_windows.hpp
+ * Protects the callback call so that raised OS EXCEPTIONS causes a jump back
+ * into this method and returns false. If no OS EXCEPTION was raised, returns
+ * true.
+ * The callback is supposed to provide the method that should be protected.
+ */
+bool os::WatcherThreadCrashProtection::call(os::CrashProtectionCallback& cb) {
+  assert(Thread::current()->is_Watcher_thread(), "Only for WatcherThread");
+  assert(!WatcherThread::watcher_thread()->has_crash_protection(),
+      "crash_protection already set?");
+
+  bool success = true;
+  __try {
+    WatcherThread::watcher_thread()->set_crash_protection(this);
+    cb.call();
+  } __except(EXCEPTION_EXECUTE_HANDLER) {
+    // only for protection, nothing to do
+    success = false;
+  }
+  WatcherThread::watcher_thread()->set_crash_protection(NULL);
+  return success;
 }
 
 // An Event wraps a win32 "CreateEvent" kernel handle.

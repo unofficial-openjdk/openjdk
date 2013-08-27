@@ -29,12 +29,13 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.StringTokenizer;
-
 import jdk.nashorn.internal.codegen.types.Range;
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.Debug;
 import jdk.nashorn.internal.runtime.options.Options;
+
+import static jdk.nashorn.internal.codegen.CompilerConstants.RETURN;
 
 /**
  * Maps a name to specific data.
@@ -443,6 +444,14 @@ public final class Symbol implements Comparable<Symbol> {
     }
 
     /**
+     * Check if this symbol represents a return value with a known non-generic type.
+     * @return true if specialized return value
+     */
+    public boolean isNonGenericReturn() {
+        return getName().equals(RETURN.symbolName()) && type != Type.OBJECT;
+    }
+
+    /**
      * Check if this symbol is a function parameter of known
      * narrowest type
      * @return true if parameter
@@ -705,7 +714,7 @@ public final class Symbol implements Comparable<Symbol> {
     public static void setSymbolIsScope(final LexicalContext lc, final Symbol symbol) {
         symbol.setIsScope();
         if (!symbol.isGlobal()) {
-            lc.setFlag(lc.getDefiningBlock(symbol), Block.NEEDS_SCOPE);
+            lc.setBlockNeedsScope(lc.getDefiningBlock(symbol));
         }
     }
 

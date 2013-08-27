@@ -455,6 +455,7 @@ class Generation: public CHeapObj<mtGC> {
   // expected to be GC worker thread-local, with the worker index
   // indicated by "thr_num".
   virtual void* get_data_recorder(int thr_num) { return NULL; }
+  virtual void sample_eden_chunk() {}
 
   // Some generations may require some cleanup actions before allowing
   // a verification.
@@ -550,12 +551,6 @@ class Generation: public CHeapObj<mtGC> {
   // each.  An object is safe if its references point to other objects in
   // the heap.  This defaults to object_iterate() unless overridden.
   virtual void safe_object_iterate(ObjectClosure* cl);
-
-  // Iterate over all objects allocated in the generation since the last
-  // collection, calling "cl.do_object" on each.  The generation must have
-  // been initialized properly to support this function, or else this call
-  // will fail.
-  virtual void object_iterate_since_last_GC(ObjectClosure* cl) = 0;
 
   // Apply "cl->do_oop" to (the address of) all and only all the ref fields
   // in the current generation that contain pointers to objects in younger
@@ -724,7 +719,6 @@ class OneContigSpaceCardGeneration: public CardGeneration {
   // Iteration
   void object_iterate(ObjectClosure* blk);
   void space_iterate(SpaceClosure* blk, bool usedOnly = false);
-  void object_iterate_since_last_GC(ObjectClosure* cl);
 
   void younger_refs_iterate(OopsInGenClosure* blk);
 

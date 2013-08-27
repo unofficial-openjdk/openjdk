@@ -42,7 +42,6 @@
 #include "memory/space.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "runtime/aprofiler.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/handles.hpp"
@@ -873,12 +872,6 @@ void GenCollectedHeap::safe_object_iterate(ObjectClosure* cl) {
   }
 }
 
-void GenCollectedHeap::object_iterate_since_last_GC(ObjectClosure* cl) {
-  for (int i = 0; i < _n_gens; i++) {
-    _gens[i]->object_iterate_since_last_GC(cl);
-  }
-}
-
 Space* GenCollectedHeap::space_containing(const void* addr) const {
   for (int i = 0; i < _n_gens; i++) {
     Space* res = _gens[i]->space_containing(addr);
@@ -1077,13 +1070,13 @@ GenCollectedHeap* GenCollectedHeap::heap() {
 
 
 void GenCollectedHeap::prepare_for_compaction() {
-  Generation* scanning_gen = _gens[_n_gens-1];
+  guarantee(_n_gens = 2, "Wrong number of generations");
+  Generation* old_gen = _gens[1];
   // Start by compacting into same gen.
-  CompactPoint cp(scanning_gen, NULL, NULL);
-  while (scanning_gen != NULL) {
-    scanning_gen->prepare_for_compaction(&cp);
-    scanning_gen = prev_gen(scanning_gen);
-  }
+  CompactPoint cp(old_gen, NULL, NULL);
+  old_gen->prepare_for_compaction(&cp);
+  Generation* young_gen = _gens[0];
+  young_gen->prepare_for_compaction(&cp);
 }
 
 GCStats* GenCollectedHeap::gc_stats(int level) const {
@@ -1186,8 +1179,6 @@ void GenCollectedHeap::gc_prologue(bool full) {
   CollectedHeap::accumulate_statistics_all_tlabs();
   ensure_parsability(true);   // retire TLABs
 
-  // Call allocation profiler
-  AllocationProfiler::iterate_since_last_gc();
   // Walk generations
   GenGCPrologueClosure blk(full);
   generation_iterate(&blk, false);  // not old-to-young.
@@ -1254,27 +1245,14 @@ void GenCollectedHeap::ensure_parsability(bool retire_tlabs) {
   generation_iterate(&ep_cl, false);
 }
 
-oop GenCollectedHeap::handle_failed_promotion(Generation* gen,
+oop GenCollectedHeap::handle_failed_promotion(Generation* old_gen,
                                               oop obj,
                                               size_t obj_size) {
+  guarantee(old_gen->level() == 1, "We only get here with an old generation");
   assert(obj_size == (size_t)obj->size(), "bad obj_size passed in");
   HeapWord* result = NULL;
 
-  // First give each higher generation a chance to allocate the promoted object.
-  Generation* allocator = next_gen(gen);
-  if (allocator != NULL) {
-    do {
-      result = allocator->allocate(obj_size, false);
-    } while (result == NULL && (allocator = next_gen(allocator)) != NULL);
-  }
-
-  if (result == NULL) {
-    // Then give gen and higher generations a chance to expand and allocate the
-    // object.
-    do {
-      result = gen->expand_and_allocate(obj_size, false);
-    } while (result == NULL && (gen = next_gen(gen)) != NULL);
-  }
+  result = old_gen->expand_and_allocate(obj_size, false);
 
   if (result != NULL) {
     Copy::aligned_disjoint_words((HeapWord*)obj, result, obj_size);

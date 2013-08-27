@@ -60,10 +60,12 @@ public final class NativeJSON extends ScriptObject {
             ScriptFunction.class, ScriptObject.class, Object.class, Object.class);
 
     // initialized by nasgen
+    @SuppressWarnings("unused")
     private static PropertyMap $nasgenmap$;
 
-    NativeJSON() {
-        super(Global.objectPrototype(), $nasgenmap$);
+    private NativeJSON() {
+        // don't create me!!
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -187,7 +189,7 @@ public final class NativeJSON extends ScriptObject {
             if (value instanceof ScriptObject) {
                 final ScriptObject svalue = (ScriptObject)value;
                 final Object toJSON = TO_JSON.getGetter().invokeExact(svalue);
-                if (toJSON instanceof ScriptFunction) {
+                if (Bootstrap.isCallable(toJSON)) {
                     value = TO_JSON.getInvoker().invokeExact(toJSON, svalue, key);
                 }
             }

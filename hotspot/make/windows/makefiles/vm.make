@@ -36,10 +36,6 @@ CXX_FLAGS=$(CXX_FLAGS) /D "PRODUCT"
 CXX_FLAGS=$(CXX_FLAGS) /D "ASSERT"
 !endif
 
-!if "$(Variant)" == "core"
-# No need to define anything, CORE is defined as !COMPILER1 && !COMPILER2
-!endif
-
 !if "$(Variant)" == "compiler1"
 CXX_FLAGS=$(CXX_FLAGS) /D "COMPILER1"
 !endif
@@ -132,6 +128,10 @@ CXX_DONT_USE_PCH=/D DONT_USE_PRECOMPILED_HEADER
 
 !if "$(USE_PRECOMPILED_HEADER)" != "0"
 CXX_USE_PCH=/Fp"vm.pch" /Yu"precompiled.hpp"
+!if "$(COMPILER_NAME)" == "VS2012"
+# VS2012 requires this object file to be listed:
+LD_FLAGS=$(LD_FLAGS) _build_pch_file.obj
+!endif
 !else
 CXX_USE_PCH=$(CXX_DONT_USE_PCH)
 !endif

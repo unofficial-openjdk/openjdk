@@ -29,6 +29,7 @@ import static jdk.nashorn.internal.codegen.CompilerConstants.__DIR__;
 import static jdk.nashorn.internal.codegen.CompilerConstants.__FILE__;
 import static jdk.nashorn.internal.codegen.CompilerConstants.__LINE__;
 import static jdk.nashorn.internal.codegen.ObjectClassGenerator.DEBUG_FIELDS;
+
 import jdk.nashorn.internal.codegen.ObjectClassGenerator;
 import jdk.nashorn.internal.codegen.types.Type;
 import jdk.nashorn.internal.ir.annotations.Immutable;
@@ -38,7 +39,7 @@ import jdk.nashorn.internal.ir.visitor.NodeVisitor;
  * IR representation for an identifier.
  */
 @Immutable
-public final class IdentNode extends Node implements PropertyKey, TypeOverride<IdentNode>, FunctionCall {
+public final class IdentNode extends Expression implements PropertyKey, TypeOverride<IdentNode>, FunctionCall {
     private static final int PROPERTY_NAME    = 1 << 0;
     private static final int INITIALIZED_HERE = 1 << 1;
     private static final int FUNCTION         = 1 << 2;
@@ -152,14 +153,27 @@ public final class IdentNode extends Node implements PropertyKey, TypeOverride<I
     }
 
     /**
-     * We can only override type if the symbol lives in the scope, otherwise
-     * it is strongly determined by the local variable already allocated
+     * We can only override type if the symbol lives in the scope, as otherwise
+     * it is strongly determined by the local variable already allocated.
+     *
+     * <p>We also return true if the symbol represents the return value of a function with a
+     * non-generic return type as in this case we need to propagate the type instead of
+     * converting to object, for example if the symbol is used as the left hand side of an
+     * assignment such as in the code below.</p>
+     *
+     * <pre>{@code
+     *   try {
+     *     return 2;
+     *   } finally {
+     *     return 3;
+     *   }
+     * }</pre>
      *
      * @return true if can have callsite type
      */
     @Override
     public boolean canHaveCallSiteType() {
-        return getSymbol() != null && getSymbol().isScope();
+        return getSymbol() != null && (getSymbol().isScope() || getSymbol().isNonGenericReturn());
     }
 
     /**

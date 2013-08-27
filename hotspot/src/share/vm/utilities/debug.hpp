@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -225,6 +225,22 @@ void report_untested(const char* file, int line, const char* message);
 
 void warning(const char* format, ...);
 
+#ifdef ASSERT
+// Compile-time asserts.
+template <bool> struct StaticAssert;
+template <> struct StaticAssert<true> {};
+
+// Only StaticAssert<true> is defined, so if cond evaluates to false we get
+// a compile time exception when trying to use StaticAssert<false>.
+#define STATIC_ASSERT(cond)                   \
+  do {                                        \
+    StaticAssert<(cond)> DUMMY_STATIC_ASSERT; \
+    (void)DUMMY_STATIC_ASSERT; /* ignore */   \
+  } while (false)
+#else
+#define STATIC_ASSERT(cond)
+#endif
+
 // out of shared space reporting
 enum SharedSpaceType {
   SharedPermGen,
@@ -243,7 +259,7 @@ bool is_error_reported();
 void set_error_reported();
 
 /* Test assert(), fatal(), guarantee(), etc. */
-NOT_PRODUCT(void test_error_handler(size_t test_num);)
+NOT_PRODUCT(void test_error_handler();)
 
 void pd_ps(frame f);
 void pd_obfuscate_location(char *buf, size_t buflen);

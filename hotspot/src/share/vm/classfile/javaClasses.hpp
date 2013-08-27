@@ -234,6 +234,7 @@ class java_lang_Class : AllStatic {
   static GrowableArray<Klass*>* _fixup_mirror_list;
 
   static void set_init_lock(oop java_class, oop init_lock);
+  static void set_protection_domain(oop java_class, oop protection_domain);
  public:
   static void compute_offsets();
 
@@ -272,7 +273,6 @@ class java_lang_Class : AllStatic {
 
   // Support for embedded per-class oops
   static oop  protection_domain(oop java_class);
-  static void set_protection_domain(oop java_class, oop protection_domain);
   static oop  init_lock(oop java_class);
   static objArrayOop  signers(oop java_class);
   static void set_signers(oop java_class, objArrayOop signers);
@@ -974,6 +974,32 @@ class java_lang_invoke_MethodHandle: AllStatic {
   // Accessors for code generation:
   static int type_offset_in_bytes()             { return _type_offset; }
   static int form_offset_in_bytes()             { return _form_offset; }
+};
+
+// Interface to java.lang.invoke.DirectMethodHandle objects
+
+class java_lang_invoke_DirectMethodHandle: AllStatic {
+  friend class JavaClasses;
+
+ private:
+  static int _member_offset;               // the MemberName of this DMH
+
+  static void compute_offsets();
+
+ public:
+  // Accessors
+  static oop  member(oop mh);
+
+  // Testers
+  static bool is_subclass(Klass* klass) {
+    return klass->is_subclass_of(SystemDictionary::DirectMethodHandle_klass());
+  }
+  static bool is_instance(oop obj) {
+    return obj != NULL && is_subclass(obj->klass());
+  }
+
+  // Accessors for code generation:
+  static int member_offset_in_bytes()           { return _member_offset; }
 };
 
 // Interface to java.lang.invoke.LambdaForm objects

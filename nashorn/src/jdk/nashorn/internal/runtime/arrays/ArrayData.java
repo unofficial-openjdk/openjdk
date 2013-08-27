@@ -56,7 +56,7 @@ public abstract class ArrayData {
      * Constructor
      * @param length Virtual length of the array.
      */
-    public ArrayData(final long length) {
+    protected ArrayData(final long length) {
         this.length = length;
     }
 
@@ -75,8 +75,13 @@ public abstract class ArrayData {
      * @return ArrayData
      */
     public static ArrayData allocate(final int length) {
-        final ArrayData arrayData = new IntArrayData(length);
-        return length == 0 ? arrayData : new DeletedRangeArrayFilter(arrayData, 0, length - 1);
+        if (length == 0) {
+            return new IntArrayData();
+        } else if (length >= SparseArrayData.MAX_DENSE_LENGTH) {
+            return new SparseArrayData(EMPTY_ARRAY, length);
+        } else {
+            return new DeletedRangeArrayFilter(new IntArrayData(length), 0, length - 1);
+        }
     }
 
     /**
@@ -176,6 +181,14 @@ public abstract class ArrayData {
     public final long length() {
         return length;
     }
+
+    /**
+     * Return a copy of the array that can be modified without affecting this instance.
+     * It is safe to return themselves for immutable subclasses.
+     *
+     * @return a new array
+     */
+    public abstract ArrayData copy();
 
     /**
      * Return a copy of the array data as an Object array.
