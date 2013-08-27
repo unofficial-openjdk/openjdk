@@ -163,7 +163,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
@@ -180,13 +180,14 @@ abstract class ReferencePipeline<P_IN, P_OUT>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public final <R> Stream<R> map(Function<? super P_OUT, ? extends R> mapper) {
         Objects.requireNonNull(mapper);
         return new StatelessOp<P_OUT, R>(this, StreamShape.REFERENCE,
                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.apply(u));
@@ -203,7 +204,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                               StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsInt(u));
@@ -220,7 +221,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                       StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsLong(u));
@@ -237,7 +238,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                         StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsDouble(u));
@@ -255,7 +256,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
@@ -281,7 +282,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                               StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
                     IntConsumer downstreamAsInt = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -308,7 +309,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
                     DoubleConsumer downstreamAsDouble = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -335,7 +336,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                                    StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
                     LongConsumer downstreamAsLong = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -361,7 +362,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      0) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         tee.accept(u);
@@ -439,6 +440,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
         // The runtime type of U is never checked for equality with the component type of the runtime type of A[].
         // Runtime checking will be performed when an element is stored in A[], thus if A is not a
         // super type of U an ArrayStoreException will be thrown.
+        @SuppressWarnings("rawtypes")
         IntFunction rawGenerator = (IntFunction) generator;
         return (A[]) Nodes.flatten(evaluateToArrayNode(rawGenerator), rawGenerator)
                               .asArray(rawGenerator);
@@ -490,16 +492,22 @@ abstract class ReferencePipeline<P_IN, P_OUT>
     }
 
     @Override
-    public final <R> R collect(Collector<? super P_OUT, R> collector) {
+    @SuppressWarnings("unchecked")
+    public final <R, A> R collect(Collector<? super P_OUT, A, ? extends R> collector) {
+        A container;
         if (isParallel()
                 && (collector.characteristics().contains(Collector.Characteristics.CONCURRENT))
                 && (!isOrdered() || collector.characteristics().contains(Collector.Characteristics.UNORDERED))) {
-            R container = collector.resultSupplier().get();
-            BiFunction<R, ? super P_OUT, R> accumulator = collector.accumulator();
-            forEach(u -> accumulator.apply(container, u));
-            return container;
+            container = collector.supplier().get();
+            BiConsumer<A, ? super P_OUT> accumulator = collector.accumulator();
+            forEach(u -> accumulator.accept(container, u));
         }
-        return evaluate(ReduceOps.makeRef(collector));
+        else {
+            container = evaluate(ReduceOps.makeRef(collector));
+        }
+        return collector.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)
+               ? (R) container
+               : collector.finisher().apply(container);
     }
 
     @Override

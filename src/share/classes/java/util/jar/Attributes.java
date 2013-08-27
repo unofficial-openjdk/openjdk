@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -527,7 +527,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
          * <code>Name</code> object for <code>Manifest-Version</code>
          * manifest attribute. This attribute indicates the version number
          * of the manifest standard to which a JAR file's manifest conforms.
-         * @see <a href="../../../../technotes/guides/jar/jar.html#JAR Manifest">
+         * @see <a href="../../../../technotes/guides/jar/jar.html#JAR_Manifest">
          *      Manifest and Signature Specification</a>
          */
         public static final Name MANIFEST_VERSION = new Name("Manifest-Version");
@@ -535,7 +535,7 @@ public class Attributes implements Map<Object,Object>, Cloneable {
         /**
          * <code>Name</code> object for <code>Signature-Version</code>
          * manifest attribute used when signing JAR files.
-         * @see <a href="../../../../technotes/guides/jar/jar.html#JAR Manifest">
+         * @see <a href="../../../../technotes/guides/jar/jar.html#JAR_Manifest">
          *      Manifest and Signature Specification</a>
          */
         public static final Name SIGNATURE_VERSION = new Name("Signature-Version");
@@ -563,15 +563,6 @@ public class Attributes implements Map<Object,Object>, Cloneable {
          * <tt>java</tt> application launcher.
          */
         public static final Name MAIN_CLASS = new Name("Main-Class");
-
-        /**
-         * {@code Name} object for {@code Profile} manifest attribute used by
-         * applications or libraries packaged as JAR files to indicate the
-         * minimum profile required to execute the application.
-         * @since 1.8
-         * @see UnsupportedProfileException
-         */
-        public static final Name PROFILE = new Name("Profile");
 
         /**
          * <code>Name</code> object for <code>Sealed</code> manifest attribute
