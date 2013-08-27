@@ -60,6 +60,28 @@
 #define DEFAULT_VENDOR_URL_BUG "http://bugreport.sun.com/bugreport/crash.jsp"
 #define DEFAULT_JAVA_LAUNCHER  "generic"
 
+// Disable options not supported in this release, with a warning if they
+// were explicitly requested on the command-line
+#define UNSUPPORTED_OPTION(opt, description)                    \
+do {                                                            \
+  if (opt) {                                                    \
+    if (FLAG_IS_CMDLINE(opt)) {                                 \
+      warning(description " is disabled in this release.");     \
+    }                                                           \
+    FLAG_SET_DEFAULT(opt, false);                               \
+  }                                                             \
+} while(0)
+
+#define UNSUPPORTED_GC_OPTION(gc)                                     \
+do {                                                                  \
+  if (gc) {                                                           \
+    if (FLAG_IS_CMDLINE(gc)) {                                        \
+      warning(#gc " is not supported in this VM.  Using Serial GC."); \
+    }                                                                 \
+    FLAG_SET_DEFAULT(gc, false);                                      \
+  }                                                                   \
+} while(0)
+
 char**  Arguments::_jvm_flags_array             = NULL;
 int     Arguments::_num_jvm_flags               = 0;
 char**  Arguments::_jvm_args_array              = NULL;
@@ -1371,10 +1393,8 @@ bool verify_object_alignment() {
 
 inline uintx max_heap_for_compressed_oops() {
   // Avoid sign flip.
-  if (OopEncodingHeapMax < ClassMetaspaceSize + os::vm_page_size()) {
-    return 0;
-  }
-  LP64_ONLY(return OopEncodingHeapMax - ClassMetaspaceSize - os::vm_page_size());
+  assert(OopEncodingHeapMax > (uint64_t)os::vm_page_size(), "Unusual page size");
+  LP64_ONLY(return OopEncodingHeapMax - os::vm_page_size());
   NOT_LP64(ShouldNotReachHere(); return 0);
 }
 
@@ -1426,6 +1446,35 @@ void Arguments::set_use_compressed_oops() {
 #endif // ZERO
 }
 
+
+// NOTE: set_use_compressed_klass_ptrs() must be called after calling
+// set_use_compressed_oops().
+void Arguments::set_use_compressed_klass_ptrs() {
+#ifndef ZERO
+#ifdef _LP64
+  // UseCompressedOops must be on for UseCompressedKlassPointers to be on.
+  if (!UseCompressedOops) {
+    if (UseCompressedKlassPointers) {
+      warning("UseCompressedKlassPointers requires UseCompressedOops");
+    }
+    FLAG_SET_DEFAULT(UseCompressedKlassPointers, false);
+  } else {
+    // Turn on UseCompressedKlassPointers too
+    if (FLAG_IS_DEFAULT(UseCompressedKlassPointers)) {
+      FLAG_SET_ERGO(bool, UseCompressedKlassPointers, true);
+    }
+    // Check the ClassMetaspaceSize to make sure we use compressed klass ptrs.
+    if (UseCompressedKlassPointers) {
+      if (ClassMetaspaceSize > KlassEncodingMetaspaceMax) {
+        warning("Class metaspace size is too large for UseCompressedKlassPointers");
+        FLAG_SET_DEFAULT(UseCompressedKlassPointers, false);
+      }
+    }
+  }
+#endif // _LP64
+#endif // !ZERO
+}
+
 void Arguments::set_ergonomics_flags() {
 
   if (os::is_server_class_machine()) {
@@ -1448,7 +1497,8 @@ void Arguments::set_ergonomics_flags() {
     // server performance.   On server class machines, keep the default
     // off unless it is asked for.  Future work: either add bytecode rewriting
     // at link time, or rewrite bytecodes in non-shared methods.
-    if (!DumpSharedSpaces && !RequireSharedSpaces) {
+    if (!DumpSharedSpaces && !RequireSharedSpaces &&
+        (FLAG_IS_DEFAULT(UseSharedSpaces) || !UseSharedSpaces)) {
       no_shared_spaces();
     }
   }
@@ -1456,33 +1506,11 @@ void Arguments::set_ergonomics_flags() {
 #ifndef ZERO
 #ifdef _LP64
   set_use_compressed_oops();
-  // UseCompressedOops must be on for UseCompressedKlassPointers to be on.
-  if (!UseCompressedOops) {
-    if (UseCompressedKlassPointers) {
-      warning("UseCompressedKlassPointers requires UseCompressedOops");
-    }
-    FLAG_SET_DEFAULT(UseCompressedKlassPointers, false);
-  } else {
-    // Turn on UseCompressedKlassPointers too
-    if (FLAG_IS_DEFAULT(UseCompressedKlassPointers)) {
-      FLAG_SET_ERGO(bool, UseCompressedKlassPointers, true);
-    }
-    // Set the ClassMetaspaceSize to something that will not need to be
-    // expanded, since it cannot be expanded.
-    if (UseCompressedKlassPointers) {
-      if (ClassMetaspaceSize > KlassEncodingMetaspaceMax) {
-        warning("Class metaspace size is too large for UseCompressedKlassPointers");
-        FLAG_SET_DEFAULT(UseCompressedKlassPointers, false);
-      } else if (FLAG_IS_DEFAULT(ClassMetaspaceSize)) {
-        // 100,000 classes seems like a good size, so 100M assumes around 1K
-        // per klass.   The vtable and oopMap is embedded so we don't have a fixed
-        // size per klass.   Eventually, this will be parameterized because it
-        // would also be useful to determine the optimal size of the
-        // systemDictionary.
-        FLAG_SET_ERGO(uintx, ClassMetaspaceSize, 100*M);
-      }
-    }
-  }
+
+  // set_use_compressed_klass_ptrs() must be called after calling
+  // set_use_compressed_oops().
+  set_use_compressed_klass_ptrs();
+
   // Also checks that certain machines are slower with compressed oops
   // in vm_version initialization code.
 #endif // _LP64
@@ -2131,7 +2159,7 @@ bool Arguments::check_vm_args_consistency() {
 
   status = status && verify_object_alignment();
 
-  status = status && verify_min_value(ClassMetaspaceSize, 1*M,
+  status = status && verify_interval(ClassMetaspaceSize, 1*M, 3*G,
                                       "ClassMetaspaceSize");
 
   status = status && verify_interval(MarkStackSizeMax,
@@ -3128,12 +3156,15 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
     FLAG_SET_DEFAULT(UseLargePages, false);
   }
 
-  // Tiered compilation is undefined with C1.
-  TieredCompilation = false;
 #else
   if (!FLAG_IS_DEFAULT(OptoLoopAlignment) && FLAG_IS_DEFAULT(MaxLoopPad)) {
     FLAG_SET_DEFAULT(MaxLoopPad, OptoLoopAlignment-1);
   }
+#endif
+
+#ifndef TIERED
+  // Tiered compilation is undefined.
+  UNSUPPORTED_OPTION(TieredCompilation, "TieredCompilation");
 #endif
 
   // If we are running in a headless jre, force java.awt.headless property
@@ -3248,58 +3279,24 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 }
 
 void Arguments::set_shared_spaces_flags() {
-#ifdef _LP64
-    const bool must_share = DumpSharedSpaces || RequireSharedSpaces;
-
-    // CompressedOops cannot be used with CDS.  The offsets of oopmaps and
-    // static fields are incorrect in the archive.  With some more clever
-    // initialization, this restriction can probably be lifted.
-    if (UseCompressedOops) {
-      if (must_share) {
-          warning("disabling compressed oops because of %s",
-                  DumpSharedSpaces ? "-Xshare:dump" : "-Xshare:on");
-          FLAG_SET_CMDLINE(bool, UseCompressedOops, false);
-          FLAG_SET_CMDLINE(bool, UseCompressedKlassPointers, false);
-      } else {
-        // Prefer compressed oops to class data sharing
-        if (UseSharedSpaces && Verbose) {
-          warning("turning off use of shared archive because of compressed oops");
-        }
-        no_shared_spaces();
-      }
-    }
-#endif
-
   if (DumpSharedSpaces) {
     if (RequireSharedSpaces) {
       warning("cannot dump shared archive while using shared archive");
     }
     UseSharedSpaces = false;
+#ifdef _LP64
+    if (!UseCompressedOops || !UseCompressedKlassPointers) {
+      vm_exit_during_initialization(
+        "Cannot dump shared archive when UseCompressedOops or UseCompressedKlassPointers is off.", NULL);
+    }
+  } else {
+    // UseCompressedOops and UseCompressedKlassPointers must be on for UseSharedSpaces.
+    if (!UseCompressedOops || !UseCompressedKlassPointers) {
+      no_shared_spaces();
+    }
+#endif
   }
 }
-
-// Disable options not supported in this release, with a warning if they
-// were explicitly requested on the command-line
-#define UNSUPPORTED_OPTION(opt, description)                    \
-do {                                                            \
-  if (opt) {                                                    \
-    if (FLAG_IS_CMDLINE(opt)) {                                 \
-      warning(description " is disabled in this release.");     \
-    }                                                           \
-    FLAG_SET_DEFAULT(opt, false);                               \
-  }                                                             \
-} while(0)
-
-
-#define UNSUPPORTED_GC_OPTION(gc)                                     \
-do {                                                                  \
-  if (gc) {                                                           \
-    if (FLAG_IS_CMDLINE(gc)) {                                        \
-      warning(#gc " is not supported in this VM.  Using Serial GC."); \
-    }                                                                 \
-    FLAG_SET_DEFAULT(gc, false);                                      \
-  }                                                                   \
-} while(0)
 
 #if !INCLUDE_ALL_GCS
 static void force_serial_gc() {
