@@ -37,11 +37,16 @@ import static org.testng.Assert.*;
 public class _View {
 
     private static View build(Consumer<View.Builder> c) {
-        View.Builder vb = new View.Builder().id("foo");
-        c.accept(vb);
-        View v = vb.build();
-        out.println(v);
-        return v;
+        try {
+            View.Builder vb = new View.Builder().id("foo");
+            c.accept(vb);
+            View v = vb.build();
+            out.println(v);
+            return v;
+        } catch (RuntimeException x) {
+            out.println(x);
+            throw x;
+        }
     }
 
     public void id() {

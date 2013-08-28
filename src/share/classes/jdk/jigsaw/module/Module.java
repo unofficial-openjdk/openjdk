@@ -45,6 +45,24 @@ public final class Module
     private final Set<ServiceDependence> serviceDependences;
     private final Set<String> packages;
 
+    // Every exported package must be included in this module
+    //
+    private void checkExportedPackages(Set<String> packages) {
+        for (View v : views) {
+            for (String p : v.exports()) {
+                if (!packages.contains(p)) {
+                    Set<String> ps = new HashSet<>(v.exports());
+                    ps.removeAll(packages);
+                    String msg = String.format("Package%s %s exported by view %s"
+                                               + " but not included in module %s",
+                                               ps.size() > 1 ? "s" : "", ps,
+                                               v.id(), this.id());
+                    throw new IllegalArgumentException(msg);
+                }
+            }
+        }
+    }
+
     private Module(View mainView,
                    Set<View> views,
                    Set<ViewDependence> viewDeps,
@@ -57,6 +75,7 @@ public final class Module
         this.views = Collections.unmodifiableSet(views);
         this.viewDependences = Collections.unmodifiableSet(viewDeps);
         this.serviceDependences = Collections.unmodifiableSet(serviceDeps);
+        checkExportedPackages(packages);
         this.packages = Collections.unmodifiableSet(packages);
     }
 

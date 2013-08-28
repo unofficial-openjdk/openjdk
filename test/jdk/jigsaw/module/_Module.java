@@ -38,12 +38,17 @@ import static org.testng.Assert.*;
 public class _Module {
 
     private static Module build(Consumer<Module.Builder> c) {
-        Module.Builder mb = (new Module.Builder()
-                             .main(new View.Builder().id("foo").build()));
-        c.accept(mb);
-        Module m = mb.build();
-        out.println(m);
-        return m;
+        try {
+            Module.Builder mb = (new Module.Builder()
+                                 .main(new View.Builder().id("foo").build()));
+            c.accept(mb);
+            Module m = mb.build();
+            out.println(m);
+            return m;
+        } catch (RuntimeException x) {
+            out.println(x);
+            throw x;
+        }
     }
 
     public void main() {
@@ -82,6 +87,11 @@ public class _Module {
         Module m = build(b -> b.requires(sd));
         assertEquals(m.serviceDependences(),
                      new HashSet<>(Arrays.asList(sd)));
+    }
+
+    @Test(expectedExceptions = { IllegalArgumentException.class })
+    public void badExport() {
+        build(b -> b.view(new View.Builder().id("bar").export("p.q").build()));
     }
 
 }
