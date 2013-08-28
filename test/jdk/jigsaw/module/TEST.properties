@@ -1,0 +1,1 @@
+TestNG.dirs = .
