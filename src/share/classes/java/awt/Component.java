@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -971,6 +971,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
             public AccessControlContext getAccessControlContext(Component comp) {
                 return comp.getAccessControlContext();
+            }
+
+            public void revalidateSynchronously(Component comp) {
+                comp.revalidateSynchronously();
             }
         });
     }
@@ -2963,6 +2967,13 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @since 1.7
      */
     public void revalidate() {
+        revalidateSynchronously();
+    }
+
+    /**
+     * Revalidates the component synchronously.
+     */
+    final void revalidateSynchronously() {
         synchronized (getTreeLock()) {
             invalidate();
 
