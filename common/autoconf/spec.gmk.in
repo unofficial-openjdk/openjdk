@@ -251,6 +251,8 @@ BOOT_JDK_JVMARGS:=@BOOT_JDK_JVMARGS@
 BOOT_RTJAR:=@BOOT_RTJAR@
 BOOT_TOOLSJAR=$(BOOT_JDK)/lib/tools.jar
 
+BUILD_JDK:=@BUILD_JDK@
+
 # When compiling Java source to be run by the boot jdk
 # use these extra flags, eg -source 6 -target 6
 BOOT_JDK_SOURCETARGET:=@BOOT_JDK_SOURCETARGET@
@@ -454,6 +456,9 @@ RMIC=@FIXPATH@ $(BOOT_JDK)/bin/rmic
 NATIVE2ASCII=@FIXPATH@ $(BOOT_JDK)/bin/native2ascii
 
 JARSIGNER=@FIXPATH@ $(BOOT_JDK)/bin/jarsigner
+
+BUILD_JAVA_FLAGS:=-Xms64M -Xmx1100M
+BUILD_JAVA=@FIXPATH@ $(BUILD_JDK)/bin/java $(BUILD_JAVA_FLAGS)
 
 # You run the new javac using the boot jdk with $(BOOT_JDK)/bin/java $(NEW_JAVAC) ...
 BOOTSTRAP_JAVAC_JAR:=$(LANGTOOLS_OUTPUTDIR)/dist/bootstrap/lib/javac.jar
