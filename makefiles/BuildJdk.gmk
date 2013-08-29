@@ -74,13 +74,19 @@ launchers-only:
 #       Finally compile the launchers.
 	+$(MAKE) -f CompileLaunchers.gmk
 
+genmodules-only:
+#       Generate static module graph
+	+$(MAKE) -f GenerateModules.gmk
+
+genmodules: genmodules-only
+
 genclasses: launchers genclasses-only
 genclasses-only:
 #	Generate classes that have other sources. Needs
 #       to execute launchers.
 	+$(MAKE) -f GenerateClasses.gmk
 
-jdk: genclasses
+jdk: genclasses genmodules
 #       Now we have a complete jdk, which you can run.
 #       It is not yet wrapped up as an installed image.
 

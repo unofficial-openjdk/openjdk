@@ -71,7 +71,8 @@ PROFILE_1_RTJAR_INCLUDE_PACKAGES := \
     sun/usagetracker \
     sun/util
 
-PROFILE_1_RTJAR_INCLUDE_TYPES := 
+PROFILE_1_RTJAR_INCLUDE_TYPES := \
+    jdk/jigsaw/module/resources/modules.ser
 
 PROFILE_1_RTJAR_EXCLUDE_TYPES := 
 
