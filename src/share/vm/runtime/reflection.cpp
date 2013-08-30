@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderExports.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -458,10 +459,13 @@ bool Reflection::verify_class_access(Klass* current_class, Klass* new_class, boo
   // doesn't have a classloader.
   if ((current_class == NULL) ||
       (current_class == new_class) ||
-      (new_class->is_public()) ||
       is_same_class_package(current_class, new_class)) {
     return true;
   }
+  if (new_class->is_public()) {
+    return ClassLoaderExports::verify_package_access(current_class, new_class);
+  }
+
   // New (1.4) reflection implementation. Allow all accesses from
   // sun/reflect/MagicAccessorImpl subclasses to succeed trivially.
   if (   JDK_Version::is_gte_jdk14x_version()

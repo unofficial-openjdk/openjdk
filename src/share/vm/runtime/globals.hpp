@@ -1299,6 +1299,10 @@ class CommandLineFlags {
   product(bool, TraceClassResolution, false,                                \
           "Trace all constant pool resolutions (for debugging)")            \
                                                                             \
+  develop(bool, TracePackageAccess, false,                                  \
+          "Trace access control when set to only allow access from types"   \
+          "in configured runtime packages")                                 \
+                                                                            \
   product(bool, TraceBiasedLocking, false,                                  \
           "Trace biased locking in JVM")                                    \
                                                                             \

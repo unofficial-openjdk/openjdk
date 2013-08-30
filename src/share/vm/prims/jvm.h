@@ -446,6 +446,10 @@ JVM_DefineClassWithSourceCond(JNIEnv *env, const char *name,
                               jsize len, jobject pd, const char *source,
                               jboolean verify);
 
+JNIEXPORT void JNICALL
+JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                     jobjectArray loaders, jobjectArray pkgs);
+
 /*
  * Reflection support functions
  */

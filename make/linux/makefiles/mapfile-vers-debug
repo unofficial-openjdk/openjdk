@@ -222,6 +222,7 @@ SUNWprivate_1.1 {
                 JVM_SetClassSigners;
                 JVM_SetLength;
                 JVM_SetNativeThreadName;
+                JVM_SetPackageAccess;
                 JVM_SetPrimitiveArrayElement;
                 JVM_SetSockOpt;
                 JVM_SetThreadPriority;

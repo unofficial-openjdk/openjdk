@@ -220,6 +220,7 @@
                 _JVM_SetClassSigners
                 _JVM_SetLength
                 _JVM_SetNativeThreadName
+                _JVM_SetPackageAccess
                 _JVM_SetPrimitiveArrayElement
                 _JVM_SetSockOpt
                 _JVM_SetThreadPriority

@@ -132,6 +132,8 @@ Mutex*   JfrBuffer_lock               = NULL;
 Mutex*   JfrStream_lock               = NULL;
 Monitor* PeriodicTask_lock            = NULL;
 
+Mutex*   LoaderTag_lock               = NULL;
+
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];
 static int _num_mutex;
@@ -277,6 +279,8 @@ void mutex_init() {
   def(JfrBuffer_lock               , Mutex,   nonleaf+1,   true);
   def(JfrStream_lock               , Mutex,   nonleaf+2,   true);
   def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
+
+  def(LoaderTag_lock               , Mutex,   leaf,        true);
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {
