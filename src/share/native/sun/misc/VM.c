@@ -116,6 +116,15 @@ Java_sun_misc_VM_latestUserDefinedLoader(JNIEnv *env, jclass cls) {
     return JVM_LatestUserDefinedLoader(env);
 }
 
+JNIEXPORT void JNICALL
+Java_sun_misc_VM_setPackageAccess0(JNIEnv* env, jclass cls,
+                                   jobject loader, jstring pkg,
+                                   jobjectArray loaders, jobjectArray pkgs)
+{
+    JVM_SetPackageAccess(env, loader, pkg, loaders, pkgs);
+}
+
+
 typedef void (JNICALL *GetJvmVersionInfo_fp)(JNIEnv*, jvm_version_info*, size_t);
 
 JNIEXPORT void JNICALL
