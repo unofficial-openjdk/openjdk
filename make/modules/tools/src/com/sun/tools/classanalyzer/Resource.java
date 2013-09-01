@@ -95,7 +95,9 @@ public class Resource implements Comparable<Resource> {
                 (name.endsWith(".RSA") || name.endsWith(".SF"))) {
             return false;
         }
-
+        if (name.startsWith("_the.")) {
+            return false;
+        }
         return true;
     }
 

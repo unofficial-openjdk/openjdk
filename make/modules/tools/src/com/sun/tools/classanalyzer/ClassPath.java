@@ -74,6 +74,7 @@ class ClassPath {
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
                     throws IOException {
                 if (dir.equals(root) || dir.equals(ext)) {
+                    // only look at lib/*.jar and lib/ext/*.jar
                     return FileVisitResult.CONTINUE;
                 } else {
                     // skip other cobundled JAR files

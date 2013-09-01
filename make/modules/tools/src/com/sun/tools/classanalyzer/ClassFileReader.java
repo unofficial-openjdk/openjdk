@@ -103,8 +103,15 @@ public class ClassFileReader {
         }
     }
 
+    private static Resource readResource(Path dir, Path p) throws IOException {
+        String fn = dir.relativize(p).toString();
+        return readResource(p, fn);
+    }
+
     private static Resource readResource(Path p) throws IOException {
-        String fn = p.toFile().getName();
+        return readResource(p, p.toString());
+    }
+    private static Resource readResource(Path p, String fn) throws IOException {
         if (Resource.isResource(fn)) {
             try (InputStream is = Files.newInputStream(p)) {
                 return Resource.getResource(fn, is, p.toFile().length());
@@ -203,11 +210,11 @@ public class ClassFileReader {
                 Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                             throws IOException {
-                        String fn = file.toFile().getName();
+                        String fn = dir.relativize(file).toString();
                         if (fn.endsWith(".class")) {
                             classFiles.add(file);
                         } else if (Resource.isResource(fn)) {
-                            resources.add(readResource(file));
+                            resources.add(readResource(dir, file));
                         }
                         return FileVisitResult.CONTINUE;
                     }

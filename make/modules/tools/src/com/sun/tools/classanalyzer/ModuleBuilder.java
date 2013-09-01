@@ -191,6 +191,10 @@ public class ModuleBuilder {
                     ProviderConfigFile pcf = ProviderConfigFile.class.cast(res);
                     String name = pcf.getName().replace('.', '/');
                     Klass k = classes.get(name);
+                    if (k == null) {
+                        System.out.println("Warning: " + name + " not found");
+                        continue;
+                    }
                     Service s = services.get(k.getClassName());
                     if (s == null) {
                         services.put(k.getClassName(), s = new Service(k));
