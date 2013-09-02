@@ -394,14 +394,7 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
             throw new IOException("Not connected");
         }
 
-        MBeanServerConnection rmbsc = rmbscMap.get(delegationSubject);
-        if (rmbsc != null) {
-            return rmbsc;
-        }
-
-        rmbsc = new RemoteMBeanServerConnection(delegationSubject);
-        rmbscMap.put(delegationSubject, rmbsc);
-        return rmbsc;
+        return getConnectionWithSubject(delegationSubject);
     }
 
     public void
@@ -1820,7 +1813,7 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
 
     // Initialization of transient variables.
     private void initTransients() {
-        rmbscMap = new WeakHashMap<Subject, MBeanServerConnection>();
+        rmbscMap = new WeakHashMap<Subject, WeakReference<MBeanServerConnection>>();
         connected = false;
         terminated = false;
 
@@ -1998,6 +1991,25 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
         }
 
         private final ClassLoader loader;
+    }
+
+    private MBeanServerConnection getConnectionWithSubject(Subject delegationSubject) {
+        MBeanServerConnection conn = null;
+
+        if (delegationSubject == null) {
+            if (nullSubjectConnRef == null
+                    || (conn = nullSubjectConnRef.get()) == null) {
+                conn = new RemoteMBeanServerConnection(null);
+                nullSubjectConnRef = new WeakReference(conn);
+            }
+        } else {
+            WeakReference<MBeanServerConnection> wr = rmbscMap.get(delegationSubject);
+            if (wr == null || (conn = wr.get()) == null) {
+                conn = new RemoteMBeanServerConnection(delegationSubject);
+                rmbscMap.put(delegationSubject, new WeakReference(conn));
+            }
+        }
+        return conn;
     }
 
     /*
@@ -2540,7 +2552,8 @@ public class RMIConnector implements JMXConnector, Serializable, JMXAddressable 
 
     private transient long clientNotifSeqNo = 0;
 
-    private transient WeakHashMap<Subject, MBeanServerConnection> rmbscMap;
+    private transient WeakHashMap<Subject, WeakReference<MBeanServerConnection>> rmbscMap;
+    private transient WeakReference<MBeanServerConnection> nullSubjectConnRef = null;
 
     private transient RMINotifClient rmiNotifClient;
     // = new RMINotifClient(new Integer(0));
