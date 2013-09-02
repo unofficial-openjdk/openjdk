@@ -29,6 +29,7 @@ import com.sun.beans.finder.ClassFinder;
 
 import java.beans.*;
 import java.util.*;
+import java.io.StringReader;
 
 import org.xml.sax.*;
 
@@ -151,6 +152,13 @@ public class ObjectHandler extends HandlerBase {
         e.setTarget(classForName2("java.lang.Object"));
         e.setMethodName("null");
         expStack.add(e);
+    }
+
+    /**
+     * Disables any external entities.
+     */
+    public InputSource resolveEntity(String publicId, String systemId) {
+        return new InputSource(new StringReader(""));
     }
 
     private Object getValue(Expression exp) {
