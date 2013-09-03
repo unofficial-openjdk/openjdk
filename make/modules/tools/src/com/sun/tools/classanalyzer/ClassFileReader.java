@@ -203,7 +203,7 @@ public class ClassFileReader {
                 throw new UnsupportedOperationException("Not supported yet.");
             }
 
-            synchronized void walkTree(Path dir) throws IOException {
+            synchronized void walkTree(final Path dir) throws IOException {
                 if (inited) return;
 
                 inited = true;

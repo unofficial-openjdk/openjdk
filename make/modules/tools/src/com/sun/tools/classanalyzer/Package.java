@@ -47,6 +47,10 @@ public class Package implements Comparable<Package> {
         return pkgName;
     }
 
+    boolean hasClasses() {
+        return classCount > 0;
+    }
+
     boolean hasPublicClasses() {
         return publicClassCount > 0;
     }

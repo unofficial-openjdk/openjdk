@@ -372,7 +372,7 @@ public class Module implements Comparable<Module> {
         // rebuild default view's exports after Package are merged
         boolean all = moduleProperty("exports.all");
         for (Package p : packages.values()) {
-            if (all || p.isExported)
+            if (p.hasClasses() && (all || p.isExported))
                 defaultView.exports.add(p.name());
         }
     }

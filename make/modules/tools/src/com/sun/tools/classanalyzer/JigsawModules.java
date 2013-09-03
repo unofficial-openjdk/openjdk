@@ -69,7 +69,9 @@ public class JigsawModules {
         m.views().stream()
             .filter(v -> !v.isEmpty() && v != m.defaultView())
             .forEach(v -> b.view(build(v)));
-        m.packages().stream().forEach(p -> b.include(p.name()));
+        m.packages().stream()
+            .filter(p -> p.hasClasses())
+            .forEach(p -> b.include(p.name()));
         modules.add(b.build());
     }
 
@@ -187,6 +189,12 @@ public class JigsawModules {
             if (view != m.mainView()) {
                 printView(1, sb, view);
             }
+        }
+
+        // packages included in this module
+        sb.append("\n");
+        for (String pn : new TreeSet<>(m.packages())) {
+            sb.append(format(1, "includes %s;%n", pn));
         }
         sb.append("}\n");
         writer.println(sb.toString());

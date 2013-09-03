@@ -53,6 +53,7 @@ $(MODULES_LIST): $(MODULES_CONFIG) $(MODULES_GROUP) \
                  $(MODULES_PROPERTIES) \
                  $(BUILD_CLASSANALYZER) \
 		 $(CLASSANALYZER_RESOURCES)/classanalyzer.properties
+	$(RM) -rf $(MODULE_CLASSLIST_DIR) $(MODULEINFO_DIR)
 	$(TOOL_CLASSANALYZER) \
                 --config $(MODULES_CONFIG) \
                 --config $(MODULES_GROUP) \
