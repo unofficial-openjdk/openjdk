@@ -728,20 +728,18 @@ abstract public class TimeZone implements Serializable, Cloneable {
     private static TimeZone getDefaultInAppContext() {
         // JavaAWTAccess provides access implementation-private methods without using reflection.
         JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
-        if (javaAWTAccess == null) {
+        if (System.getSecurityManager() == null || javaAWTAccess == null) {
             return mainAppContextDefault;
+        } else if (javaAWTAccess.isDisposed()) {
+            return null;
         } else {
-            if (!javaAWTAccess.isDisposed()) {
-                TimeZone tz = (TimeZone)
-                    javaAWTAccess.get(TimeZone.class);
-                if (tz == null && javaAWTAccess.isMainAppContext()) {
-                    return mainAppContextDefault;
-                } else {
-                    return tz;
-                }
+            TimeZone tz = (TimeZone) javaAWTAccess.get(TimeZone.class);
+            if (tz == null && javaAWTAccess.isMainAppContext()) {
+                return mainAppContextDefault;
+            } else {
+                return tz;
             }
         }
-        return null;
     }
 
     /**
@@ -758,14 +756,12 @@ abstract public class TimeZone implements Serializable, Cloneable {
     private static void setDefaultInAppContext(TimeZone tz) {
         // JavaAWTAccess provides access implementation-private methods without using reflection.
         JavaAWTAccess javaAWTAccess = SharedSecrets.getJavaAWTAccess();
-        if (javaAWTAccess == null) {
+        if (System.getSecurityManager() == null || javaAWTAccess == null) {
             mainAppContextDefault = tz;
-        } else {
-            if (!javaAWTAccess.isDisposed()) {
-                javaAWTAccess.put(TimeZone.class, tz);
-                if (javaAWTAccess.isMainAppContext()) {
-                    mainAppContextDefault = null;
-                }
+        } else if (!javaAWTAccess.isDisposed()) {
+            javaAWTAccess.put(TimeZone.class, tz);
+            if (javaAWTAccess.isMainAppContext()) {
+                mainAppContextDefault = null;
             }
         }
     }
