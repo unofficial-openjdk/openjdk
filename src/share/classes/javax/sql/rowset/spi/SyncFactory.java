@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,8 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import javax.naming.*;
 
@@ -362,7 +364,16 @@ public class SyncFactory {
                 /*
                  * Dependent on application
                  */
-                String strRowsetProperties = System.getProperty("rowset.properties");
+                String strRowsetProperties;
+                try {
+                    strRowsetProperties = AccessController.doPrivileged(new PrivilegedAction<String>() {
+                        public String run() {
+                            return System.getProperty("rowset.properties");
+                        }
+                    });
+                } catch (Exception ex) {
+                    strRowsetProperties = null;
+                }
                 if (strRowsetProperties != null) {
                     // Load user's implementation of SyncProvider
                     // here. -Drowset.properties=/abc/def/pqr.txt
@@ -407,7 +418,16 @@ public class SyncFactory {
              * load additional properties from -D command line
              */
             properties.clear();
-            String providerImpls = System.getProperty(ROWSET_SYNC_PROVIDER);
+            String providerImpls;
+            try {
+                providerImpls = AccessController.doPrivileged(new PrivilegedAction<String>() {
+                    public String run() {
+                        return System.getProperty(ROWSET_SYNC_PROVIDER);
+                    }
+                });
+            } catch (Exception ex) {
+                providerImpls = null;
+            }
 
             if (providerImpls != null) {
                 int i = 0;
