@@ -35,7 +35,7 @@ import java.util.*;
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class ViewDependence
-    implements Serializable
+    implements Comparable<ViewDependence>, Serializable
 {
 
     public static enum Modifier {
@@ -63,6 +63,11 @@ public final class ViewDependence
 
     public ViewIdQuery query() {
         return vidq;
+    }
+
+    @Override
+    public int compareTo(ViewDependence that) {
+        return this.vidq.name().compareTo(that.vidq.name());
     }
 
     @Override

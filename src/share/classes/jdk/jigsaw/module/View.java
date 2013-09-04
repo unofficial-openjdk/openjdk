@@ -36,7 +36,7 @@ import static java.util.Objects.*;
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class View
-    implements Serializable
+    implements Comparable<View>, Serializable
 {
 
     private Module module;
@@ -188,6 +188,11 @@ public final class View
                             exports, services, mainClass);
         }
 
+    }
+
+    @Override
+    public int compareTo(View that) {
+        return this.id().compareTo(that.id());
     }
 
     @Override

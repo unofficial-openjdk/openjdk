@@ -35,7 +35,7 @@ import java.util.*;
 
 @SuppressWarnings("serial")             // serialVersionUID intentionally omitted
 public final class ServiceDependence
-    implements Serializable
+    implements Comparable<ServiceDependence>, Serializable
 {
 
     public static enum Modifier {
@@ -60,6 +60,11 @@ public final class ServiceDependence
 
     public String service() {
         return service;
+    }
+
+    @Override
+    public int compareTo(ServiceDependence that) {
+        return this.service.compareTo(that.service);
     }
 
     @Override
