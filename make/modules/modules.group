@@ -640,3 +640,53 @@ module jdk.tools {
     }
 }
 
+
+module jdk.jre {
+    requires public jdk.tools.jre;
+    requires public jdk.base;
+    requires public jdk.auth;
+    requires public jdk.compat;
+    requires public jdk.compiler;
+    requires public jdk.corba;
+    requires public jdk.cosnaming;
+    requires public jdk.crypto;
+    requires public jdk.deploy;
+    requires public jdk.desktop;
+    requires public jdk.httpserver;
+    requires public jdk.instrument;
+    requires public jdk.jaxp;
+    requires public jdk.jaxws;
+    requires public jdk.jdbc;
+    requires public jdk.jdbc.rowset;
+    requires public jdk.jndi;
+    requires public jdk.jta;
+    requires public jdk.jx.annotations;
+    requires public jdk.kerberos;
+    requires public jdk.logging;
+    requires public jdk.management;
+    requires public jdk.management.iiop;
+    requires public jdk.prefs;
+    requires public jdk.rmi;
+    requires public jdk.scripting;
+    requires public jdk.sctp;
+    requires public jdk.security.acl;
+    requires public jdk.smartcardio;
+    requires public jdk.snmp;
+    requires public jdk.sunec;
+    requires public jdk.sunpkcs11;
+    requires public jdk.sunmscapi;
+    requires public jdk.tls;
+    requires public jdk.ucrypto;
+    requires public jdk.xmldsig;
+    requires jdk.zipfs;
+
+    // charsets, resource bundles and data for other locales 
+    requires sun.charsets;
+    requires sun.resources;
+    requires sun.localedata;
+}
+
+module jdk {
+    requires public jdk.jre;
+    requires public jdk.tools;
+}
