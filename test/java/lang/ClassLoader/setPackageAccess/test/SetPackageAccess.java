@@ -21,13 +21,37 @@
  * questions.
  */
 
-package org.openjdk.jigsaw.accesscontrol.internal;
+package test;
 
-public class Secret {
-    private Secret() { }
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-    public static String get() {
-        return "Project Jigsaw will allow access to sun.* and other " +
-            "JDK internal APIs to be restricted";
+import static org.testng.Assert.*;
+
+import test.internal.Secret;
+import test.p1.C1;
+import test.p2.C2;
+
+public class SetPackageAccess {
+
+    @BeforeClass
+    public void setupAccess() {
+        ClassLoader cl = SetPackageAccess.class.getClassLoader();
+
+        ClassLoader[] loaders = { cl, cl };
+        String[] pkgs = { "test",
+                          "test.p1" };
+
+        cl.setPackageAccess("test.internal", loaders, pkgs);
     }
-};
+
+    @Test
+    public void testAllowed() {
+        assertEquals(new C1().getSecret(), Secret.get());
+    }
+
+    @Test(expectedExceptions=IllegalAccessError.class)
+    public void testDenied () {
+        String s = new C2().getSecret();
+    }
+}

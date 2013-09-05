@@ -41,6 +41,8 @@ package sun.launcher;
  */
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
@@ -53,18 +55,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
 import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+
+import jdk.jigsaw.module.Module;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -753,6 +761,60 @@ public enum LauncherHelper {
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
+        }
+    }
+
+    /**
+     * Temporary list of packages for types defined by the extensions class
+     * loader. This list is needed to map packages to loaders, otherwise
+     * sun.* and other JDK internal APIs will not be accessible to the
+     * extensions.
+     */
+    private static final List<String> EXT_PKGS_LIST = Arrays.asList(
+        "com.sun.crypto.provider",
+        "sun.security.ec",
+        "sun.security.pkcs11"
+    );
+
+    private static final Set<String> EXT_PKGS =
+        Collections.unmodifiableSet(new HashSet<>(EXT_PKGS_LIST));
+
+    private static ClassLoader loaderFor(String pkg) {
+        if (EXT_PKGS.contains(pkg))
+            return sun.misc.Launcher.getExtClassLoader();
+        return null;
+    }
+
+    /**
+     * Module definitions, serialized in modules.ser for now
+     */
+    private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
+
+    private static Module[] readModules() throws IOException, ClassNotFoundException {
+        try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
+           ObjectInputStream ois = new ObjectInputStream(in);
+           Module[] mods = (Module[]) ois.readObject();
+           return mods;
+        }
+    }
+
+    /**
+     * Setup access control to restrict access to the packages that are the keys
+     * in the given map. For each key {@code p} then its value in the map is the
+     * set of packages that have access to {@code p}.
+     */
+    private static void setupPackageAccess(Map<String,Set<String>> restricted) {
+        for (Map.Entry<String,Set<String>> entry: restricted.entrySet()) {
+            String pkg = entry.getKey();
+            ClassLoader loader = loaderFor(pkg);
+            String[] pkgs = entry.getValue().toArray(new String[0]);
+            ClassLoader[] loaders = new ClassLoader[pkgs.length];
+            int i=0;
+            while (i < pkgs.length) {
+                loaders[i] = loaderFor(pkgs[i]);
+                i++;
+            }
+            sun.misc.VM.setPackageAccess(loader, pkg, loaders, pkgs);
         }
     }
 }

@@ -21,9 +21,9 @@
  * questions.
  */
 
-package org.openjdk.jigsaw.accesscontrol.p2;
+package test.p2;
 
-import org.openjdk.jigsaw.accesscontrol.internal.Secret;
+import test.internal.Secret;
 
 public class C2 {
 

@@ -55,6 +55,7 @@ Launcher */
 public class Launcher {
     private static URLStreamHandlerFactory factory = new Factory();
     private static Launcher launcher = new Launcher();
+    private static ClassLoader extcl;
     private static String bootClassPath =
         System.getProperty("sun.boot.class.path");
 
@@ -66,7 +67,6 @@ public class Launcher {
 
     public Launcher() {
         // Create the extension class loader
-        ClassLoader extcl;
         try {
             extcl = ExtClassLoader.getExtClassLoader();
         } catch (IOException e) {
@@ -250,6 +250,14 @@ public class Launcher {
 
             return acc;
         }
+    }
+
+    /**
+     * Returns the extensions class loader
+     */
+    public static ClassLoader getExtClassLoader() {
+        assert extcl != null;
+        return extcl;
     }
 
     /**
