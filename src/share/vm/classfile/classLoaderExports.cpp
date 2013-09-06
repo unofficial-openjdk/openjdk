@@ -105,7 +105,12 @@ bool ClassLoaderExports::set_package_access(Handle loader, const char* pkg,
   entry = new ClassLoaderExportEntry(hash, pkg);
   for (int i = 0; i < loaders->length(); i++) {
     hash = compute_hash(pkgs[i]);
-    entry->add_allow(tag_for(loaders->obj_at(i)), pkgs[i], hash);
+    int tag = tag_for(loaders->obj_at(i));
+    entry->add_allow(tag, pkgs[i], hash);
+    if (TracePackageAccess) {
+        tty->print_cr("setPackageAccess to allow access to %d:%s from %d:%s",
+            tag_for(loader), pkg, tag, pkgs[i]);
+    }
   }
 
   entry->set_next(first);
@@ -124,12 +129,10 @@ bool ClassLoaderExports::verify_package_access(Klass* current_class, Klass* new_
   ResourceMark rm;
   char* name = (char*) new_class->external_name();
   char* last = strrchr(name, '.');
-  if (last == NULL) {
-    // assume can't set access on the unnamed package for now
-    return true;
+  if (last != NULL) {
+    *last = '\0';
   }
-  *last = '\0';
-  const char* pkg = name;
+  const char* pkg = (last == NULL) ? "" : name;
 
   // package access setup for the package?
   ClassLoaderExportEntry* entry = exports->find_entry(pkg);
@@ -143,23 +146,18 @@ bool ClassLoaderExports::verify_package_access(Klass* current_class, Klass* new_
 
   name = (char*) current_class->external_name();
   last = strrchr(name, '.');
-  if (last == NULL) {
-    // assume can't set from unnamed package for now
-    if (TracePackageAccess) {
-        tty->print_cr("%s -> %s illegal access", current_class->external_name(),
-          new_class->external_name());
-    }
-    return false;
+  if (last != NULL) {
+    *last = '\0';
   }
-  *last = '\0';
-  pkg = name;
+  pkg = (last == NULL) ? "" : name;
 
   // check access list to see if access from current_class is allowed
   int tag = tag_for(current_class->class_loader());
   unsigned int hash = compute_hash(pkg);
   bool allowed = entry->can_access(tag, pkg, hash);
   if (TracePackageAccess) {
-    tty->print("%s -> %s", current_class->external_name(), new_class->external_name());
+    tty->print("%d:%s -> %d:%s", tag, current_class->external_name(),
+      tag_for(new_class->class_loader()), new_class->external_name());
     if (allowed) {
       tty->print_cr(" access allowed");
     } else {
