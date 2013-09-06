@@ -181,6 +181,7 @@ package.access=sun.,\
                com.sun.imageio.,\
                com.sun.istack.internal.,\
                com.sun.jmx.,\
+               com.sun.media.sound.,\
                com.sun.naming.internal.,\
                com.sun.proxy.,\
                com.sun.org.apache.bcel.internal.,\
@@ -204,7 +205,7 @@ package.access=sun.,\
                com.sun.org.glassfish.,\
                com.oracle.xmlns.internal.,\
                com.oracle.webservices.internal.,\
-	       oracle.jrockit.jfr.,\
+               oracle.jrockit.jfr.,\
                org.jcp.xml.dsig.internal.,\
                jdk.internal.,\
                jdk.nashorn.internal.,\
@@ -226,6 +227,7 @@ package.definition=sun.,\
                    com.sun.imageio.,\
                    com.sun.istack.internal.,\
                    com.sun.jmx.,\
+                   com.sun.media.sound.,\
                    com.sun.naming.internal.,\
                    com.sun.proxy.,\
                    com.sun.org.apache.bcel.internal.,\
@@ -249,7 +251,7 @@ package.definition=sun.,\
                    com.sun.org.glassfish.,\
                    com.oracle.xmlns.internal.,\
                    com.oracle.webservices.internal.,\
-		   oracle.jrockit.jfr.,\
+                   oracle.jrockit.jfr.,\
                    org.jcp.xml.dsig.internal.,\
                    jdk.internal.,\
                    jdk.nashorn.internal.,\
