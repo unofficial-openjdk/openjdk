@@ -399,8 +399,7 @@ public class VM {
                                         ClassLoader[] loaders, String[] pkgs)
     {
         // check args
-        if (pkg.length() == 0)
-            throw new IllegalArgumentException("Can't set access on the unnamed package");
+        Objects.requireNonNull(pkg);
         loaders = loaders.clone();
         pkgs = pkgs.clone();
         if (loaders.length != pkgs.length)

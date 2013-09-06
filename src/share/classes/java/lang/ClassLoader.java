@@ -521,12 +521,7 @@ public abstract class ClassLoader {
      *
      * @param   pkgs
      *          The named packages. Must be of identical length to the
-     *          {@code laoders} array
-     *
-     * @throws  IllegalArgumentException
-     *          If {@code pkg} is the empty string or any of the elements in
-     *          {@code pkgs} is the empty string (the unnamed package is a
-     *          discussion point)
+     *          {@code loaders} array
      *
      * @throws  IllegalStateException
      *          If access control has alreset been set for this package

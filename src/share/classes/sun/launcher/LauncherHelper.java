@@ -483,6 +483,7 @@ public enum LauncherHelper {
                                             int mode,
                                             String what) {
         initOutput(printToStderr);
+        initModules();
         // get the class name
         String cn = null;
         switch (mode) {
@@ -816,5 +817,21 @@ public enum LauncherHelper {
             }
             sun.misc.VM.setPackageAccess(loader, pkg, loaders, pkgs);
         }
+    }
+
+    /**
+     * Load compiled module graph, resolve the modules specified on the command
+     * line (if any) and setup the access control.
+     */
+    private static void initModules() {
+        String propValue = System.getProperty("jdk.launcher.modules");
+        String[] mods;
+        if (propValue == null) {
+            mods = new String[]{ "jdk" };
+        } else {
+            mods = propValue.split(",");
+        }
+
+        // TBD
     }
 }

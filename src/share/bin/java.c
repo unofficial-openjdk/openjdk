@@ -97,6 +97,7 @@ static int numOptions, maxOptions;
  * Prototypes for functions internal to launcher.
  */
 static void SetClassPath(const char *s);
+static void SetModulesProp(const char *mods);
 static void SelectVersion(int argc, char **argv, char **main_class);
 static jboolean ParseArguments(int *pargc, char ***pargv,
                                int *pmode, char **pwhat,
@@ -741,6 +742,14 @@ SetClassPath(const char *s)
         JLI_MemFree((char *) s);
 }
 
+static void
+SetModulesProp(const char *mods) {
+    size_t buflen = JLI_StrLen(mods) + 40;
+    char *prop = (char *)JLI_MemAlloc(buflen);
+    JLI_Snprintf(prop, buflen, "-Djdk.launcher.modules=%s", mods);
+    AddOption(prop, NULL);
+}
+
 /*
  * The SelectVersion() routine ensures that an appropriate version of
  * the JRE is running.  The specification for the appropriate version
@@ -1010,6 +1019,10 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-jar") == 0) {
             ARG_CHECK (argc, ARG_ERROR2, arg);
             mode = LM_JAR;
+        } else if (JLI_StrCmp(arg, "-mods") == 0 || JLI_StrCmp(arg, "-modules") == 0) {
+            ARG_CHECK (argc, ARG_ERROR4, arg);
+            SetModulesProp(*argv);
+            argv++; --argc;
         } else if (JLI_StrCmp(arg, "-help") == 0 ||
                    JLI_StrCmp(arg, "-h") == 0 ||
                    JLI_StrCmp(arg, "-?") == 0) {
