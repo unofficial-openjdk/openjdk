@@ -192,7 +192,8 @@ final class ServerHandshaker extends Handshaker {
                      */
                     RSAClientKeyExchange pms = new RSAClientKeyExchange(
                             protocolVersion, clientRequestedVersion,
-                            input, message_len, privateKey);
+                            sslContext.getSecureRandom(), input,
+                            message_len, privateKey);
                     preMasterSecret = this.clientKeyExchange(pms);
                     break;
                 case K_KRB5:

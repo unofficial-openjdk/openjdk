@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -762,70 +762,25 @@ abstract class Handshaker {
             // benefit to doing it twice
         }
 
-        SecretKey masterSecret;
         try {
             KeyGenerator kg = JsseJce.getKeyGenerator("SunTlsMasterSecret");
             kg.init(spec);
-            masterSecret = kg.generateKey();
-        } catch (GeneralSecurityException e) {
-            // For RSA premaster secrets, do not signal a protocol error
-            // due to the Bleichenbacher attack. See comments further down.
-            if (!preMasterSecret.getAlgorithm().equals("TlsRsaPremasterSecret")) {
-                throw new ProviderException(e);
-            }
+            return kg.generateKey();
+        } catch (InvalidAlgorithmParameterException e) {
+            // unlikely to happen, otherwise, must be a provider exception
             if (debug != null && Debug.isOn("handshake")) {
                 System.out.println("RSA master secret generation error:");
                 e.printStackTrace(System.out);
             }
-            preMasterSecret =
-                    RSAClientKeyExchange.generateDummySecret(protocolVersion);
-            // recursive call with new premaster secret
-            return calculateMasterSecret(preMasterSecret, null);
+            throw new ProviderException(e);
+        } catch (NoSuchAlgorithmException e) {
+            // unlikely to happen, otherwise, must be a provider exception
+            if (debug != null && Debug.isOn("handshake")) {
+                System.out.println("RSA master secret generation error:");
+                e.printStackTrace(System.out);
+            }
+            throw new ProviderException(e);
         }
-
-        // if no version check requested (client side handshake),
-        // or version information is not available (not an RSA premaster secret),
-        // return master secret immediately.
-        if ((requestedVersion == null) || !(masterSecret instanceof TlsMasterSecret)) {
-            return masterSecret;
-        }
-        TlsMasterSecret tlsKey = (TlsMasterSecret)masterSecret;
-        int major = tlsKey.getMajorVersion();
-        int minor = tlsKey.getMinorVersion();
-        if ((major < 0) || (minor < 0)) {
-            return masterSecret;
-        }
-
-        // check if the premaster secret version is ok
-        // the specification says that it must be the maximum version supported
-        // by the client from its ClientHello message. However, many
-        // implementations send the negotiated version, so accept both
-        // NOTE that we may be comparing two unsupported version numbers in
-        // the second case, which is why we cannot use object reference
-        // equality in this special case
-        ProtocolVersion premasterVersion = ProtocolVersion.valueOf(major, minor);
-        boolean versionMismatch = (premasterVersion != protocolVersion) &&
-                                  (premasterVersion.v != requestedVersion.v);
-
-
-        if (versionMismatch == false) {
-            // check passed, return key
-            return masterSecret;
-        }
-
-        // Due to the Bleichenbacher attack, do not signal a protocol error.
-        // Generate a random premaster secret and continue with the handshake,
-        // which will fail when verifying the finished messages.
-        // For more information, see comments in PreMasterSecret.
-        if (debug != null && Debug.isOn("handshake")) {
-            System.out.println("RSA PreMasterSecret version error: expected"
-                + protocolVersion + " or " + requestedVersion + ", decrypted: "
-                + premasterVersion);
-        }
-        preMasterSecret =
-                RSAClientKeyExchange.generateDummySecret(protocolVersion);
-        // recursive call with new premaster secret
-        return calculateMasterSecret(preMasterSecret, null);
     }
 
     /*
