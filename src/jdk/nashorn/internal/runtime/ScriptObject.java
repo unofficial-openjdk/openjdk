@@ -87,6 +87,8 @@ import jdk.nashorn.internal.runtime.linker.NashornGuards;
  */
 
 public abstract class ScriptObject extends PropertyListenerManager implements PropertyAccess {
+    /** __proto__ special property name */
+    public static final String PROTO_PROPERTY_NAME   = "__proto__";
 
     /** Search fall back routine name for "no such method" */
     static final String NO_SUCH_METHOD_NAME   = "__noSuchMethod__";
@@ -130,6 +132,9 @@ public abstract class ScriptObject extends PropertyListenerManager implements Pr
     /** Indexed array data. */
     private ArrayData arrayData;
 
+    static final MethodHandle GETPROTO           = findOwnMH("getProto", ScriptObject.class);
+    static final MethodHandle SETPROTOCHECK      = findOwnMH("setProtoCheck", void.class, Object.class);
+
     static final MethodHandle SETFIELD           = findOwnMH("setField",         void.class, CallSiteDescriptor.class, PropertyMap.class, PropertyMap.class, MethodHandle.class, Object.class, Object.class);
     static final MethodHandle SETSPILL           = findOwnMH("setSpill",         void.class, CallSiteDescriptor.class, PropertyMap.class, PropertyMap.class, int.class, Object.class, Object.class);
     static final MethodHandle SETSPILLWITHNEW    = findOwnMH("setSpillWithNew",  void.class, CallSiteDescriptor.class, PropertyMap.class, PropertyMap.class, int.class, Object.class, Object.class);
@@ -149,6 +154,9 @@ public abstract class ScriptObject extends PropertyListenerManager implements Pr
 
     /** Method handle for setting the proto of a ScriptObject */
     public static final Call SET_PROTO          = virtualCallNoLookup(ScriptObject.class, "setProto", void.class, ScriptObject.class);
+
+    /** Method handle for setting the proto of a ScriptObject after checking argument */
+    public static final Call SET_PROTO_CHECK    = virtualCallNoLookup(ScriptObject.class, "setProtoCheck", void.class, Object.class);
 
     /** Method handle for setting the user accessors of a ScriptObject */
     public static final Call SET_USER_ACCESSORS = virtualCall(MethodHandles.lookup(), ScriptObject.class, "setUserAccessors", void.class, String.class, ScriptFunction.class, ScriptFunction.class);
@@ -1745,6 +1753,10 @@ public abstract class ScriptObject extends PropertyListenerManager implements Pr
         MethodHandle methodHandle;
 
         if (find == null) {
+            if (PROTO_PROPERTY_NAME.equals(name)) {
+                return new GuardedInvocation(GETPROTO, NashornGuards.getScriptObjectGuard());
+            }
+
             if ("getProp".equals(operator)) {
                 return noSuchProperty(desc, request);
             } else if ("getMethod".equals(operator)) {
@@ -1851,6 +1863,7 @@ public abstract class ScriptObject extends PropertyListenerManager implements Pr
          * toString = function() { print("global toString"); } // don't affect Object.prototype.toString
          */
         FindProperty find = findProperty(name, true, scope, this);
+
         // If it's not a scope search, then we don't want any inherited properties except those with user defined accessors.
         if (!scope && find != null && find.isInherited() && !(find.getProperty() instanceof UserAccessorProperty)) {
             // We should still check if inherited data property is not writable
@@ -1866,9 +1879,12 @@ public abstract class ScriptObject extends PropertyListenerManager implements Pr
                 // Existing, non-writable property
                 return createEmptySetMethod(desc, "property.not.writable", true);
             }
-        } else if (!isExtensible()) {
-            // Non-existing property on a non-extensible object
-            return createEmptySetMethod(desc, "object.non.extensible", false);
+        } else {
+            if (PROTO_PROPERTY_NAME.equals(name)) {
+                return new GuardedInvocation(SETPROTOCHECK, NashornGuards.getScriptObjectGuard());
+            } else if (! isExtensible()) {
+                return createEmptySetMethod(desc, "object.non.extensible", false);
+            }
         }
 
         return new SetMethodCreator(this, find, desc).createGuardedInvocation();
