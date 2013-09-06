@@ -2319,30 +2319,37 @@ public class Attr extends JCTree.Visitor {
         boolean needsRecovery =
                 resultInfo.checkContext.deferredAttrContext().mode == DeferredAttr.AttrMode.CHECK;
         try {
-            Type target = pt();
+            Type currentTarget = pt();
             List<Type> explicitParamTypes = null;
             if (that.paramKind == JCLambda.ParameterKind.EXPLICIT) {
                 //attribute lambda parameters
                 attribStats(that.params, localEnv);
                 explicitParamTypes = TreeInfo.types(that.params);
-                target = infer.instantiateFunctionalInterface(that, target, explicitParamTypes, resultInfo.checkContext);
             }
 
             Type lambdaType;
             if (pt() != Type.recoveryType) {
-                target = targetChecker.visit(target, that);
-                lambdaType = types.findDescriptorType(target);
+                /* We need to adjust the target. If the target is an
+                 * intersection type, for example: SAM & I1 & I2 ...
+                 * the target will be updated to SAM
+                 */
+                currentTarget = targetChecker.visit(currentTarget, that);
+                if (explicitParamTypes != null) {
+                    currentTarget = infer.instantiateFunctionalInterface(that,
+                            currentTarget, explicitParamTypes, resultInfo.checkContext);
+                }
+                lambdaType = types.findDescriptorType(currentTarget);
             } else {
-                target = Type.recoveryType;
+                currentTarget = Type.recoveryType;
                 lambdaType = fallbackDescriptorType(that);
             }
 
-            setFunctionalInfo(localEnv, that, pt(), lambdaType, target, resultInfo.checkContext);
+            setFunctionalInfo(localEnv, that, pt(), lambdaType, currentTarget, resultInfo.checkContext);
 
             if (lambdaType.hasTag(FORALL)) {
                 //lambda expression target desc cannot be a generic method
                 resultInfo.checkContext.report(that, diags.fragment("invalid.generic.lambda.target",
-                        lambdaType, kindName(target.tsym), target.tsym));
+                        lambdaType, kindName(currentTarget.tsym), currentTarget.tsym));
                 result = that.type = types.createErrorType(pt());
                 return;
             }
@@ -2376,7 +2383,7 @@ public class Attr extends JCTree.Visitor {
 
                 if (arityMismatch) {
                     resultInfo.checkContext.report(that, diags.fragment("incompatible.arg.types.in.lambda"));
-                        result = that.type = types.createErrorType(target);
+                        result = that.type = types.createErrorType(currentTarget);
                         return;
                 }
             }
@@ -2396,38 +2403,14 @@ public class Attr extends JCTree.Visitor {
                 new ResultInfo(VAL, lambdaType.getReturnType(), funcContext);
             localEnv.info.returnResult = bodyResultInfo;
 
-            Log.DeferredDiagnosticHandler lambdaDeferredHandler = new Log.DeferredDiagnosticHandler(log);
-            try {
-                if (that.getBodyKind() == JCLambda.BodyKind.EXPRESSION) {
-                    attribTree(that.getBody(), localEnv, bodyResultInfo);
-                } else {
-                    JCBlock body = (JCBlock)that.body;
-                    attribStats(body.stats, localEnv);
-                }
-
-                if (resultInfo.checkContext.deferredAttrContext().mode == AttrMode.SPECULATIVE) {
-                    //check for errors in lambda body
-                    for (JCDiagnostic deferredDiag : lambdaDeferredHandler.getDiagnostics()) {
-                        if (deferredDiag.getKind() == JCDiagnostic.Kind.ERROR) {
-                            resultInfo.checkContext
-                                    .report(that, diags.fragment("bad.arg.types.in.lambda", TreeInfo.types(that.params),
-                                    deferredDiag)); //hidden diag parameter
-                            //we mark the lambda as erroneous - this is crucial in the recovery step
-                            //as parameter-dependent type error won't be reported in that stage,
-                            //meaning that a lambda will be deemed erroeneous only if there is
-                            //a target-independent error (which will cause method diagnostic
-                            //to be skipped).
-                            result = that.type = types.createErrorType(target);
-                            return;
-                        }
-                    }
-                }
-            } finally {
-                lambdaDeferredHandler.reportDeferredDiagnostics();
-                log.popDiagnosticHandler(lambdaDeferredHandler);
+            if (that.getBodyKind() == JCLambda.BodyKind.EXPRESSION) {
+                attribTree(that.getBody(), localEnv, bodyResultInfo);
+            } else {
+                JCBlock body = (JCBlock)that.body;
+                attribStats(body.stats, localEnv);
             }
 
-            result = check(that, target, VAL, resultInfo);
+            result = check(that, currentTarget, VAL, resultInfo);
 
             boolean isSpeculativeRound =
                     resultInfo.checkContext.deferredAttrContext().mode == DeferredAttr.AttrMode.SPECULATIVE;
@@ -2438,9 +2421,9 @@ public class Attr extends JCTree.Visitor {
             checkLambdaCompatible(that, lambdaType, resultInfo.checkContext, isSpeculativeRound);
 
             if (!isSpeculativeRound) {
-                checkAccessibleTypes(that, localEnv, resultInfo.checkContext.inferenceContext(), lambdaType, target);
+                checkAccessibleTypes(that, localEnv, resultInfo.checkContext.inferenceContext(), lambdaType, currentTarget);
             }
-            result = check(that, target, VAL, resultInfo);
+            result = check(that, currentTarget, VAL, resultInfo);
         } catch (Types.FunctionDescriptorLookupError ex) {
             JCDiagnostic cause = ex.getDiagnostic();
             resultInfo.checkContext.report(that, cause);
@@ -2664,6 +2647,13 @@ public class Attr extends JCTree.Visitor {
 
             if (that.getMode() == JCMemberReference.ReferenceMode.NEW) {
                 exprType = chk.checkConstructorRefType(that.expr, exprType);
+                if (!exprType.isErroneous() &&
+                    exprType.isRaw() &&
+                    that.typeargs != null) {
+                    log.error(that.expr.pos(), "invalid.mref", Kinds.kindName(that.getMode()),
+                        diags.fragment("mref.infer.and.explicit.params"));
+                    exprType = types.createErrorType(exprType);
+                }
             }
 
             if (exprType.isErroneous()) {
@@ -3731,7 +3721,7 @@ public class Attr extends JCTree.Visitor {
      * Check that method arguments conform to its instantiation.
      **/
     public Type checkMethod(Type site,
-                            Symbol sym,
+                            final Symbol sym,
                             ResultInfo resultInfo,
                             Env<AttrContext> env,
                             final List<JCExpression> argtrees,
@@ -3820,8 +3810,19 @@ public class Attr extends JCTree.Visitor {
             resultInfo.checkContext.report(env.tree.pos(), ex.getDiagnostic());
             return types.createErrorType(site);
         } catch (Resolve.InapplicableMethodException ex) {
-            Assert.error(ex.getDiagnostic().getMessage(Locale.getDefault()));
-            return null;
+            final JCDiagnostic diag = ex.getDiagnostic();
+            Resolve.InapplicableSymbolError errSym = rs.new InapplicableSymbolError(null) {
+                @Override
+                protected Pair<Symbol, JCDiagnostic> errCandidate() {
+                    return new Pair<Symbol, JCDiagnostic>(sym, diag);
+                }
+            };
+            List<Type> argtypes2 = Type.map(argtypes,
+                    rs.new ResolveDeferredRecoveryMap(AttrMode.CHECK, sym, env.info.pendingResolutionPhase));
+            JCDiagnostic errDiag = errSym.getDiagnostic(JCDiagnostic.DiagnosticType.ERROR,
+                    env.tree, sym, site, sym.name, argtypes2, typeargtypes);
+            log.report(errDiag);
+            return types.createErrorType(site);
         }
     }
 
