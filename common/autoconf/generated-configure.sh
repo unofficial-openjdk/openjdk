@@ -3476,7 +3476,7 @@ apt_help() {
     pulse)
         PKGHANDLER_COMMAND="sudo apt-get install libpulse-dev" ;;
     x11)
-        PKGHANDLER_COMMAND="sudo apt-get install libX11-dev libxext-dev libxrender-dev libxtst-dev" ;;
+        PKGHANDLER_COMMAND="sudo apt-get install libX11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev" ;;
     ccache)
         PKGHANDLER_COMMAND="sudo apt-get install ccache" ;;
     * )
@@ -3495,11 +3495,11 @@ yum_help() {
     cups)
         PKGHANDLER_COMMAND="sudo yum install cups-devel" ;;
     freetype2)
-        PKGHANDLER_COMMAND="sudo yum install freetype2-devel" ;;
+        PKGHANDLER_COMMAND="sudo yum install freetype-devel" ;;
     pulse)
         PKGHANDLER_COMMAND="sudo yum install pulseaudio-libs-devel" ;;
     x11)
-        PKGHANDLER_COMMAND="sudo yum install libXtst-devel" ;;
+        PKGHANDLER_COMMAND="sudo yum install libXtst-devel libXt-devel libXrender-devel" ;;
     ccache)
         PKGHANDLER_COMMAND="sudo yum install ccache" ;;
     * )
@@ -3830,7 +3830,7 @@ fi
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1377801680
+DATE_WHEN_GENERATED=1378539495
 
 ###############################################################################
 #
@@ -30866,7 +30866,7 @@ OLD_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $X_CFLAGS"
 
 # Need to include Xlib.h and Xutil.h to avoid "present but cannot be compiled" warnings on Solaris 10
-for ac_header in X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h
+for ac_header in X11/extensions/shape.h X11/extensions/Xrender.h X11/extensions/XTest.h X11/Intrinsic.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" " # include <X11/Xlib.h>
@@ -30919,7 +30919,7 @@ if test "x$X11_A_OK" = xno && test "x$X11_NOT_NEEDED" != xyes; then
         HELP_MSG="You might be able to fix this by running '$PKGHANDLER_COMMAND'."
     fi
 
-    as_fn_error $? "Could not find all X11 headers (shape.h Xrender.h XTest.h). $HELP_MSG" "$LINENO" 5
+    as_fn_error $? "Could not find all X11 headers (shape.h Xrender.h XTest.h Intrinsic.h). $HELP_MSG" "$LINENO" 5
 fi
 
 
