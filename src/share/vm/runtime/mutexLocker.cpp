@@ -124,15 +124,17 @@ Monitor* GCTaskManager_lock           = NULL;
 
 Mutex*   Management_lock              = NULL;
 Monitor* Service_lock                 = NULL;
-Mutex*   Stacktrace_lock              = NULL;
-
-Monitor* JfrQuery_lock                = NULL;
-Monitor* JfrMsg_lock                  = NULL;
-Mutex*   JfrBuffer_lock               = NULL;
-Mutex*   JfrStream_lock               = NULL;
 Monitor* PeriodicTask_lock            = NULL;
 
 Mutex*   LoaderTag_lock               = NULL;
+
+#ifdef INCLUDE_TRACE
+Mutex*   JfrStacktrace_lock           = NULL;
+Monitor* JfrMsg_lock                  = NULL;
+Mutex*   JfrBuffer_lock               = NULL;
+Mutex*   JfrStream_lock               = NULL;
+Mutex*   JfrThreadGroups_lock         = NULL;
+#endif
 
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];
@@ -208,7 +210,6 @@ void mutex_init() {
   def(Patching_lock                , Mutex  , special,     true ); // used for safepointing and code patching.
   def(ObjAllocPost_lock            , Monitor, special,     false);
   def(Service_lock                 , Monitor, special,     true ); // used for service thread operations
-  def(Stacktrace_lock              , Mutex,   special,     true ); // used for JFR stacktrace database
   def(JmethodIdCreation_lock       , Mutex  , leaf,        true ); // used for creating jmethodIDs.
 
   def(SystemDictionary_lock        , Monitor, leaf,        true ); // lookups done by VM thread
@@ -274,13 +275,18 @@ void mutex_init() {
   def(Debug3_lock                  , Mutex  , nonleaf+4,   true );
   def(ProfileVM_lock               , Monitor, special,   false); // used for profiling of the VMThread
   def(CompileThread_lock           , Monitor, nonleaf+5,   false );
-
-  def(JfrMsg_lock                  , Monitor, leaf,        true);
-  def(JfrBuffer_lock               , Mutex,   nonleaf+1,   true);
-  def(JfrStream_lock               , Mutex,   nonleaf+2,   true);
   def(PeriodicTask_lock            , Monitor, nonleaf+5,   true);
 
   def(LoaderTag_lock               , Mutex,   leaf,        true);
+
+#ifdef INCLUDE_TRACE
+  def(JfrMsg_lock                  , Monitor, leaf,        true);
+  def(JfrBuffer_lock               , Mutex,   nonleaf+1,   true);
+  def(JfrThreadGroups_lock         , Mutex,   nonleaf+1,   true);
+  def(JfrStream_lock               , Mutex,   nonleaf+2,   true);
+  def(JfrStacktrace_lock           , Mutex,   special,     true );
+#endif
+
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {
