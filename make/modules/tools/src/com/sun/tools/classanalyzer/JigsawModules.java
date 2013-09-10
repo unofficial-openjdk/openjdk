@@ -36,9 +36,9 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -51,9 +51,17 @@ import java.util.stream.Collectors;
  * Jigsaw module builder
  */
 public class JigsawModules {
-    private final Set<jdk.jigsaw.module.Module> modules;
+    private final Map<String,jdk.jigsaw.module.Module> modules;
     public JigsawModules() {
-        this.modules = new HashSet<>();
+        this.modules = new HashMap<>();
+    }
+
+    public jdk.jigsaw.module.Module get(String name) {
+        return modules.get(name);
+    }
+
+    public Set<String> modules() {
+        return modules.keySet();
     }
 
     public void build(Module m, Collection<Dependence> requires) {
@@ -72,7 +80,7 @@ public class JigsawModules {
         m.packages().stream()
             .filter(p -> p.hasClasses())
             .forEach(p -> b.include(p.name()));
-        modules.add(b.build());
+        modules.put(m.name(), b.build());
     }
 
     private ViewDependence viewDependence(Dependence d) {
@@ -123,19 +131,23 @@ public class JigsawModules {
      */
     public void store(OutputStream out) throws IOException {
         try (ObjectOutputStream sout = new ObjectOutputStream(out)) {
-            sout.writeObject(modules.toArray(new jdk.jigsaw.module.Module[0]));
+            sout.writeObject(modules.values().toArray(new jdk.jigsaw.module.Module[0]));
         }
     }
 
-    public void load(InputStream in) throws IOException, ClassNotFoundException {
+    public void load(InputStream in) throws IOException {
         int count = 0;
         try (ObjectInputStream sin = new ObjectInputStream(in)) {
-            modules.addAll(Arrays.asList((jdk.jigsaw.module.Module[]) sin.readObject()));
+            for (jdk.jigsaw.module.Module m : (jdk.jigsaw.module.Module[]) sin.readObject()) {
+                modules.put(m.id().name(), m);
+            }
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
     public void printModuleInfos(String minfoDir) throws IOException {
-        for (jdk.jigsaw.module.Module m : modules) {
+        for (jdk.jigsaw.module.Module m : modules.values()) {
             Path mdir = Paths.get(minfoDir, m.id().name());
             mdir.toFile().mkdirs();
             try (PrintWriter writer = new PrintWriter(mdir.resolve("module-info.java").toFile())) {
@@ -189,12 +201,6 @@ public class JigsawModules {
             if (view != m.mainView()) {
                 printView(1, sb, view);
             }
-        }
-
-        // packages included in this module
-        sb.append("\n");
-        for (String pn : new TreeSet<>(m.packages())) {
-            sb.append(format(1, "includes %s;%n", pn));
         }
         sb.append("}\n");
         writer.println(sb.toString());
@@ -280,7 +286,7 @@ public class JigsawModules {
 
         System.out.format("%d modules:%n", graph.modules.size());
         PrintWriter writer = new PrintWriter(System.out);
-        for (jdk.jigsaw.module.Module m : graph.modules) {
+        for (jdk.jigsaw.module.Module m : graph.modules.values()) {
             graph.printModule(writer, m);
         }
         writer.flush();

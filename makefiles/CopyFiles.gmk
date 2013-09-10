@@ -25,6 +25,18 @@
 
 INCLUDEDIR = $(JDK_OUTPUTDIR)/include
 
+#
+# Files are grouped by modules.  The following defines variables
+# for modules containing non-class files.
+#
+BASE_CONF_FILES=
+DESKTOP_CONF_FILES=
+HPROF_CONF_FILES=
+MANAGEMENT_CONF_FILES=
+LOGGING_CONF_FILES=
+SECURITY_PKCS11_CONF_FILES=
+SECURITY_UCRYPTO_CONF_FILES=
+
 OPENJDK_TARGET_OS_INCLUDE = $(INCLUDEDIR)/$(OPENJDK_TARGET_OS)
 
 ifeq ($(OPENJDK_TARGET_OS), windows)
@@ -52,31 +64,25 @@ $(OPENJDK_TARGET_OS_INCLUDE)/%.h: $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)
 	$(call install-file)
 
 COPY_FILES = $(H_TARGET_FILES)
-
-##########################################################################################
-
-ifndef OPENJDK
-ifeq ($(OPENJDK_TARGET_OS), windows)
-    COPY_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
-		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
-		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
-		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
-		  $(JDK_OUTPUTDIR)/lib/accessibility.properties
-
-    $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
-		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
-	$(install-file)
-
-    $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
-		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/accessibility.properties
-	$(install-file)
-
-endif
-endif
-
-##########################################################################################
-
 LIBDIR = $(JDK_OUTPUTDIR)/lib
+
+##########################################################################################
+
+$(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/src/share/lib/net.properties
+	$(ECHO) $(LOG_INFO) Copying $(@F)
+	$(call install-file)
+
+BASE_CONF_FILES = $(JDK_OUTPUTDIR)/lib/net.properties
+
+ifeq ($(OPENJDK_TARGET_OS), solaris)
+$(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template : $(JDK_TOPDIR)/src/${OPENJDK_TARGET_OS_API_DIR}/lib/sdp/sdp.conf.template
+	$(ECHO) $(LOG_INFO) Copying $(@F)
+	$(call install-file)
+
+BASE_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template
+endif
+
+##########################################################################################
 
 MGMT_LIBDIR = $(LIBDIR)/management
 MGMT_LIB_SRC = $(JDK_TOPDIR)/src/share/lib/management
@@ -96,7 +102,7 @@ $(MGMT_LIBDIR)/%: $(MGMT_LIB_SRC)/%
 	$(call install-file)
 	$(CHMOD) 444 $@
 
-COPY_FILES += $(MGMT_TARGET_FILES)
+MANAGEMENT_CONF_FILES = $(MGMT_TARGET_FILES)
 
 ##########################################################################################
 
@@ -105,7 +111,7 @@ LOGGING_LIB_SRC = $(JDK_TOPDIR)/src/share/lib
 $(LIBDIR)/logging.properties: $(LOGGING_LIB_SRC)/logging.properties
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/logging.properties
+LOGGING_CONF_FILES = $(LIBDIR)/logging.properties
 
 ##########################################################################################
 #
@@ -118,7 +124,7 @@ PSFONTPROPFILE_TARGET_FILES = $(subst $(PSFONTPROPFILE_SRC_DIR),$(LIBDIR),$(PSFO
 $(LIBDIR)/%: $(PSFONTPROPFILE_SRC_DIR)/%
 	$(call install-file)
 
-COPY_FILES += $(PSFONTPROPFILE_TARGET_FILES)
+DESKTOP_CONF_FILES = $(PSFONTPROPFILE_TARGET_FILES)
 
 ##########################################################################################
 #
@@ -133,7 +139,7 @@ endif
 $(LIBDIR)/flavormap.properties: $(OPENJDK_TARGET_OS_LIB_SRC)/flavormap.properties
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/flavormap.properties
+DESKTOP_CONF_FILES += $(LIBDIR)/flavormap.properties
 
 CURSORS_DEST_DIR = $(LIBDIR)/images/cursors
 CURSORS_OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib/images/cursors
@@ -141,7 +147,7 @@ CURSORS_OPENJDK_TARGET_OS_LIB_SRC = $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DI
 $(CURSORS_DEST_DIR)/cursors.properties: $(CURSORS_OPENJDK_TARGET_OS_LIB_SRC)/cursors.properties
 	$(call install-file)
 
-COPY_FILES += $(CURSORS_DEST_DIR)/cursors.properties
+DESKTOP_CONF_FILES += $(CURSORS_DEST_DIR)/cursors.properties
 
 CURSORS_LIB_SRC = $(JDK_TOPDIR)/src/share/lib/images/cursors
 ifeq ($(OPENJDK_TARGET_OS), windows)
@@ -154,7 +160,7 @@ CURSORS_TARGET_FILES =  $(subst $(CURSORS_LIB_SRC),$(CURSORS_DEST_DIR),$(CURSORS
 $(CURSORS_DEST_DIR)/%: $(CURSORS_LIB_SRC)/%
 	$(call install-file)
 
-COPY_FILES += $(CURSORS_TARGET_FILES)
+DESKTOP_CONF_FILES += $(CURSORS_TARGET_FILES)
 
 ##########################################################################################
 
@@ -163,7 +169,7 @@ CONTENT_TYPES_SRC=$(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib
 $(LIBDIR)/content-types.properties: $(CONTENT_TYPES_SRC)/content-types.properties
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/content-types.properties
+DESKTOP_CONF_FILES += $(LIBDIR)/content-types.properties
 
 ##########################################################################################
 
@@ -172,14 +178,14 @@ CALENDARS_SRC := $(JDK_TOPDIR)/src/share/lib
 $(LIBDIR)/calendars.properties: $(CALENDARS_SRC)/calendars.properties
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/calendars.properties
+BASE_CONF_FILES += $(LIBDIR)/calendars.properties
 
 $(LIBDIR)/hijrah-config-umalqura.properties: $(CALENDARS_SRC)/hijrah-config-umalqura.properties
 	$(MKDIR) -p $(@D)
 	$(RM) $@
 	$(CP) $< $@
 
-COPY_FILES += $(LIBDIR)/hijrah-config-umalqura.properties
+BASE_CONF_FILES += $(LIBDIR)/hijrah-config-umalqura.properties
 
 ##########################################################################################
 
@@ -190,7 +196,7 @@ TZMAPPINGS_SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/lib
 $(LIBDIR)/tzmappings: $(TZMAPPINGS_SRC)/tzmappings
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/tzmappings
+BASE_CONF_FILES += $(LIBDIR)/tzmappings
 
 endif
 
@@ -211,7 +217,7 @@ $(ICCPROFILE_DEST_DIR)%.pf: $(ICCPROFILE_SRC_DIR)%.pf
 	$(call install-file)
 	$(CHMOD) 444 $@
 
-COPY_FILES += $(ICCPROFILE_TARGET_FILES)
+DESKTOP_CONF_FILES += $(ICCPROFILE_TARGET_FILES)
 
 ##########################################################################################
 
@@ -252,6 +258,28 @@ endif
 
 ##########################################################################################
 
+ifndef OPENJDK
+ifeq ($(OPENJDK_TARGET_OS), windows)
+    DESKTOP_CONF_FILES += $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCallbacks.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgePackages.h \
+		  $(OPENJDK_TARGET_OS_INCLUDE)/bridge/AccessBridgeCalls.c \
+		  $(JDK_OUTPUTDIR)/lib/accessibility.properties
+
+    $(OPENJDK_TARGET_OS_INCLUDE)/bridge/%: \
+		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/%
+	$(install-file)
+
+    $(JDK_OUTPUTDIR)/lib/accessibility.properties: \
+		$(JDK_TOPDIR)/src/closed/windows/native/sun/bridge/accessibility.properties
+	$(install-file)
+
+endif
+endif
+
+
+##########################################################################################
+
 # Copy msvcrXX.dll on windows
 
 ifeq ($(OPENJDK_TARGET_OS),windows)
@@ -271,7 +299,7 @@ HPROF_SRC=$(JDK_TOPDIR)/src/share/demo/jvmti/hprof/jvm.hprof.txt
 $(LIBDIR)/jvm.hprof.txt : $(HPROF_SRC)
 	$(call install-file)
 
-COPY_FILES += $(LIBDIR)/jvm.hprof.txt
+HPROF_CONF_FILES = $(LIBDIR)/jvm.hprof.txt
 
 ##########################################################################################
 
@@ -348,8 +376,6 @@ else
     endif
 endif
 
-COPY_FILES += $(JVMCFG)
-
 ##########################################################################################
 
 PROPS_SRC := $(JDK_TOPDIR)/src/share/lib/security/java.security-$(OPENJDK_TARGET_OS)
@@ -358,7 +384,7 @@ PROPS_DST := $(JDK_OUTPUTDIR)/lib/security/java.security
 $(PROPS_DST): $(PROPS_SRC)
 	$(call install-file)
 
-COPY_FILES += $(PROPS_DST)
+BASE_CONF_FILES += $(PROPS_DST)
 
 ##########################################################################################
 
@@ -368,7 +394,7 @@ POLICY_DST := $(JDK_OUTPUTDIR)/lib/security/java.policy
 $(POLICY_DST): $(POLICY_SRC)
 	$(call install-file)
 
-COPY_FILES += $(POLICY_DST)
+BASE_CONF_FILES += $(POLICY_DST)
 
 ##########################################################################################
 
@@ -378,7 +404,7 @@ CACERTS_DST := $(JDK_OUTPUTDIR)/lib/security/cacerts
 $(CACERTS_DST): $(CACERTS_SRC)
 	$(call install-file)
 
-COPY_FILES += $(CACERTS_DST)
+BASE_CONF_FILES += $(CACERTS_DST)
 
 ##########################################################################################
 
@@ -393,12 +419,12 @@ TRUSTEDLIBS_DST := $(JDK_OUTPUTDIR)/lib/security/trusted.libraries
 $(BLACKLIST_DST): $(BLACKLIST_SRC)
 	$(call install-file)
 
-COPY_FILES += $(BLACKLIST_DST)
+BASE_CONF_FILES += $(BLACKLIST_DST)
 
 $(TRUSTEDLIBS_DST): $(TRUSTEDLIBS_SRC)
 	$(call install-file)
 
-COPY_FILES += $(TRUSTEDLIBS_DST)
+BASE_CONF_FILES += $(TRUSTEDLIBS_DST)
 
 endif
 
@@ -427,10 +453,10 @@ $(SHARED_FONTS_DST_DIR)/%.ttf : $(SHARED_FONTS_SRC_DIR)/%.ttf
 $(SHARED_FONTS_DST_DIR)/fonts.dir : $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.fonts.dir
 	$(call install-file)
 
-COPY_FILES += $(SHARED_FONTS_DST)
+DESKTOP_CONF_FILES += $(SHARED_FONTS_DST)
 
 ifneq ($(OPENJDK_TARGET_OS), windows)
-    COPY_FILES += $(SHARED_FONTS_DST_DIR)/fonts.dir
+    DESKTOP_CONF_FILES += $(SHARED_FONTS_DST_DIR)/fonts.dir
 endif
 
 ifeq ($(OPENJDK_TARGET_OS), linux)
@@ -451,7 +477,7 @@ $(OBL_FONTS_DST_DIR)/%.ttf : $(OBL_FONTS_SRC_DIR)/%.ttf
 $(OBL_FONTS_DST_DIR)/fonts.dir : $(JDK_TOPDIR)/src/solaris/classes/sun/awt/motif/java.oblique-fonts.dir
 	$(call install-file)
 
-COPY_FILES += $(OBL_FONTS_DST) $(OBL_FONTS_DST_DIR)/fonts.dir
+DESKTOP_CONF_FILES += $(OBL_FONTS_DST) $(OBL_FONTS_DST_DIR)/fonts.dir
 
 endif # linux
 endif # OPENJDK
@@ -497,7 +523,7 @@ $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)/libjdgaSUNWafb.so: $(JDK_OUTPUT
 	$(RM) $@
 	$(LN) -s $(<F) $@
 
-COPY_FILES += $(DGALIBS)
+DESKTOP_CONF_FILES += $(DGALIBS)
 
 endif
 
@@ -511,7 +537,7 @@ SUNPKCS11_CFG_DST := $(JDK_OUTPUTDIR)/lib/security/sunpkcs11-solaris.cfg
 $(SUNPKCS11_CFG_DST) : $(SUNPKCS11_CFG_SRC)
 	$(call install-file)
 
-COPY_FILES += $(SUNPKCS11_CFG_DST)
+SECURITY_PKCS11_CONF_FILES = $(SUNPKCS11_CFG_DST)
 
 endif
 
@@ -526,7 +552,7 @@ UCRYPTO_CFG_DST := $(JDK_OUTPUTDIR)/lib/security/ucrypto-solaris.cfg
 $(UCRYPTO_CFG_DST) : $(UCRYPTO_CFG_SRC)
 	$(call install-file)
 
-COPY_FILES += $(UCRYPTO_CFG_DST)
+SECURITY_UCRYPTO_CONF_FILES += $(UCRYPTO_CFG_DST)
 
 endif
 endif
@@ -536,8 +562,16 @@ endif
 $(JDK_OUTPUTDIR)/lib/sound.properties : $(JDK_TOPDIR)/src/share/lib/sound.properties
 	$(call install-file)
 
-COPY_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
+DESKTOP_CONF_FILES += $(JDK_OUTPUTDIR)/lib/sound.properties
 
 ##########################################################################################
+COPY_FILES += $(BASE_CONF_FILES)
+COPY_FILES += $(JVMCFG)
+COPY_FILES += $(DESKTOP_CONF_FILES)
+COPY_FILES += $(HPROF_CONF_FILES)
+COPY_FILES += $(MANAGEMENT_CONF_FILES)
+COPY_FILES += $(LOGGING_CONF_FILES)
+COPY_FILES += $(SECURITY_PKCS11_CONF_FILES)
+COPY_FILES += $(SECURITY_UCRYPTO_CONF_FILES)
 
 -include $(CUSTOM_MAKE_DIR)/CopyFiles.gmk

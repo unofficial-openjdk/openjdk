@@ -23,20 +23,19 @@
 # questions.
 #
 
-# Default target declared first
-default: all
-
 include $(SPEC)
+include MakeBase.gmk
+include JavaCompilation.gmk
+include Setup.gmk
 
-# Most, if not all of this will be moved elsewhere.
-
-# Temporary copy of contents from Defs-modules.gmk. Need to figure out where
-# this should be defined.
+MODULES_SER_OUT      := $(JDK_OUTPUTDIR)/classes/jdk/jigsaw/module/resources/modules.ser
+JMODS_DIR            := $(JDK_OUTPUTDIR)/modules
 GENMODULES_DIR       := $(JDK_OUTPUTDIR)/genmodules
-SUBMODULES_DIR       := $(GENMODULES_DIR)/submodules
 MODULEINFO_DIR       := $(GENMODULES_DIR)/src
 MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist
-MODULES_LIST         := $(MODULE_CLASSLIST_DIR)/modules.list
+CLASSANALYZER_CLASSES  := $(GENMODULES_DIR)/bt_classanalyzer_classes
+CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources
+
 
 # This needs to go into spec at least
 # RELEASE is JDK_VERSION and -MILESTONE if MILESTONE is set
@@ -46,6 +45,13 @@ else
   MODULE_VERSION = ${JDK_MINOR_VERSION}
 endif
 
-TOOL_CLASSANALYZER=$(BUILD_JAVA) -esa -ea -cp $(GENMODULES_DIR)/bt_classanalyzer_classes \
+$(eval $(call SetupJavaCompilation,BUILD_CLASSANALYZER,\
+       SETUP:=GENERATE_JDKBYTECODE,\
+       SRC:=$(JDK_TOPDIR)/make/modules/tools/src,\
+       BIN:=$(CLASSANALYZER_CLASSES)))
+
+TOOL_CLASSANALYZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
         com.sun.tools.classanalyzer.ClassAnalyzer
 
+TOOL_MODULARIZER=$(BUILD_JAVA) -esa -ea -cp $(CLASSANALYZER_CLASSES) \
+        com.sun.tools.classanalyzer.Modularizer

@@ -95,6 +95,28 @@ public class ClassFileReader {
         return Collections.<Resource>emptyList();
     }
 
+    public byte[] readBytes(String name) throws IOException {
+        String n = path.toString().replace(File.separatorChar, '/');
+        if (name.equals(n)) {
+            return load(path.toFile());
+        }
+        return null;
+    }
+
+    private static byte[] load(File f) throws IOException {
+        try (FileInputStream fis = new FileInputStream(f)) {
+            return load(fis, f.length());
+        }
+    }
+
+    private static byte[] load(InputStream is, long n) throws IOException {
+        byte[] bs = new byte[(int)n];
+        try (DataInputStream in = new DataInputStream(is)) {
+            in.readFully(bs);
+            return bs;
+        }
+    }
+
     private static ClassFile readClassFile(Path p) throws IOException {
         try (InputStream is = Files.newInputStream(p)) {
             return ClassFile.read(is);
@@ -116,6 +138,9 @@ public class ClassFileReader {
             try (InputStream is = Files.newInputStream(p)) {
                 return Resource.getResource(fn, is, p.toFile().length());
             }
+        }
+        if (p.toString().contains("META-INF")) {
+            throw new RuntimeException(p + " not a resource");
         }
         return null;
     }
@@ -174,6 +199,15 @@ public class ClassFileReader {
             return iter.resources;
         }
 
+        public byte[] readBytes(String name) throws IOException {
+            String n = name.replace('/', File.separatorChar);
+            Path p = path.resolve(n);
+            if (Files.exists(p)) {
+                return load(p.toFile());
+            }
+            return null;
+        }
+
         class DirectoryIterator implements Iterator<ClassFile> {
             final List<Path> classFiles = new ArrayList<>();
             final List<Resource> resources = new ArrayList<>();
@@ -225,11 +259,13 @@ public class ClassFileReader {
 
     private static class JarFileReader extends ClassFileReader {
         final JarFileIterator iter;
+        final JarFile jarfile;
         JarFileReader(Path path) throws IOException {
             this(path, new JarFile(path.toFile()));
         }
         JarFileReader(Path path, JarFile jf) throws IOException {
             super(path);
+            this.jarfile = jf;
             this.iter = new JarFileIterator(jf);
         }
 
@@ -246,6 +282,16 @@ public class ClassFileReader {
                 throw new RuntimeException("getClassFile must be called first");
             }
             return iter.resources;
+        }
+
+        public byte[] readBytes(String name) throws IOException {
+            JarEntry e = jarfile.getJarEntry(name);
+            if (e != null) {
+                try (InputStream in = jarfile.getInputStream(e)) {
+                    load(in, e.getSize());
+                }
+            }
+            return null;
         }
 
         class JarFileIterator implements Iterator<ClassFile> {

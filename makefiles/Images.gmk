@@ -34,6 +34,7 @@ default: images
 $(eval $(call FillCacheFind,\
     $(wildcard $(JDK_OUTPUTDIR)/bin \
                $(JDK_OUTPUTDIR)/lib \
+               $(JDK_OUTPUTDIR)/modules \
                $(IMAGES_OUTPUTDIR)/lib \
                $(JDK_OUTPUTDIR)/include \
                $(JDK_OUTPUTDIR)/sample \
@@ -268,6 +269,14 @@ ifneq ($(PROFILE),)
 $(foreach f,$(CUSTOM_PROFILE_JARS),\
     $(eval $(call AddFileToCopy,$(IMAGES_OUTPUTDIR)/lib$(PROFILE),$(JRE_IMAGE_DIR)/lib,$f,JRE_LIB_TARGETS)))
 endif
+
+# copy modules
+JMOD_FILES := $(call CacheFind,$(JDK_OUTPUTDIR)/modules)
+
+$(foreach f,$(JMOD_FILES),\
+    $(eval $(call AddFileToCopy,$(JDK_OUTPUTDIR),$(JRE_IMAGE_DIR),$f,JRE_MODULE_TARGETS)))
+$(foreach f,$(JMOD_FILES),\
+    $(eval $(call AddFileToCopy,$(JDK_OUTPUTDIR),$(JDK_IMAGE_DIR)/jre,$f,JDKJRE_MODULE_TARGETS)))
 
 # CTE plugin security change require new empty directory lib/applet
 $(JRE_IMAGE_DIR)/lib/applet: 
@@ -729,11 +738,13 @@ endif
 # Main targets
 
 jre-image: $(JRE_BIN_TARGETS) $(JRE_LIB_TARGETS) $(JRE_IMAGE_DIR)/lib/applet \
+	$(JRE_MODULE_TARGETS) \
 	$(JRE_IMAGE_DIR)/lib/meta-index $(JRE_IMAGE_DIR)/lib/ext/meta-index \
 	$(JRE_MAN_PAGE_LIST) $(JRE_DOC_TARGETS) $(JRE_INFO_FILE) $(JRE_STRIP_LIST)
 
 jdk-image: $(JDK_BIN_TARGETS) $(JDKJRE_BIN_TARGETS) \
 	$(JDK_LIB_TARGETS) $(JDKJRE_LIB_TARGETS) \
+	$(JDKJRE_MODULE_TARGETS) \
 	$(JDK_IMAGE_DIR)/jre/lib/applet \
 	$(JDK_DEMO_TARGETS) \
 	$(JDK_IMAGE_DIR)/jre/lib/meta-index $(JDK_IMAGE_DIR)/jre/lib/ext/meta-index \

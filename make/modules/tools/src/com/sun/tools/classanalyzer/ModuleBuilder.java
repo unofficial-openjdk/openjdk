@@ -427,6 +427,10 @@ public class ModuleBuilder {
             throw new RuntimeException(m.name() + " requires "
                     + d.name() + "not found");
         }
+
+        if (other.isEmpty() && !other.allowsEmpty()) {
+            return;
+        }
         Module.View view = other.getView(d.name());
         addDependence(m, other, view, requires, d.requiresOptional());
     }

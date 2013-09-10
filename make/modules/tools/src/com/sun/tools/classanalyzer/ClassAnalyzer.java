@@ -35,157 +35,65 @@ import java.nio.file.Paths;
 /**
  * Implementation for the ClassAnalyzer tool
  */
-class ClassAnalyzer {
-    static class BadArgs extends Exception {
-        static final long serialVersionUID = 8765093759964640721L;
-        BadArgs(String key, Object... args) {
-            super(ClassAnalyzer.getMessage(key, args));
-            this.key = key;
-            this.args = args;
-        }
-
-        BadArgs showUsage(boolean b) {
-            showUsage = b;
-            return this;
-        }
-        final String key;
-        final Object[] args;
-        boolean showUsage;
+class ClassAnalyzer extends Task {
+    private final Options options = new Options();
+    ClassAnalyzer() {
+        super("ClassAnalyzer");
     }
 
-    static abstract class Option {
-        Option(boolean hasArg, String... aliases) {
-            this.hasArg = hasArg;
-            this.aliases = aliases;
-        }
-
-        boolean isHidden() {
-            return false;
-        }
-
-        boolean matches(String opt) {
-            for (String a : aliases) {
-                if (a.equals(opt))
-                    return true;
-                if (hasArg && a.startsWith("--") && opt.startsWith(a + "="))
-                    return true;
-            }
-            return false;
-        }
-
-        boolean ignoreRest() {
-            return false;
-        }
-
-        abstract void process(ClassAnalyzer task, String opt, String arg) throws BadArgs;
-        final boolean hasArg;
-        final String[] aliases;
-    }
-
-    static abstract class HiddenOption extends Option {
-        HiddenOption(boolean hasArg, String... aliases) {
-            super(hasArg, aliases);
-        }
-
-        boolean isHidden() {
-            return true;
-        }
-    }
-
-    static Option[] recognizedOptions = {
-        new Option(false, "-h", "-?", "--help") {
+    private static List<Option<? extends Task>> recognizedOptions = Arrays.asList(
+        new Option<ClassAnalyzer>(false, "-h", "-?", "--help") {
             void process(ClassAnalyzer task, String opt, String arg) {
-                task.options.help = true;
+                task.showHelp = true;
             }
         },
-        new Option(true, "-j", "--javahome") {
+        new Option<ClassAnalyzer>(true, "-j", "--javahome") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.javahome = arg;
             }
         },
-        new Option(true, "-v", "--version") {
+        new Option<ClassAnalyzer>(true, "-v", "--version") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.version = arg;
             }
         },
-        new Option(true, "-c", "--classlist") {
+        new Option<ClassAnalyzer>(true, "-c", "--classlist") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.classlistDir = arg;
             }
         },
-        new Option(true, "--moduleinfo") {
+        new Option<ClassAnalyzer>(true, "-m", "--moduleinfo") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.moduleInfoDir = arg;
             }
         },
-        new Option(true, "-o", "--out") {
+        new Option<ClassAnalyzer>(true, "-o", "--out") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.outFile = arg;
             }
         },
-        new Option(true, "-f", "--config") {
+        new Option<ClassAnalyzer>(true, "-f", "--config") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.configs.add(arg);
             }
         },
-        new Option(true, "-p", "--properties") {
+        new Option<ClassAnalyzer>(true, "-p", "--properties") {
             void process(ClassAnalyzer task, String opt, String arg) {
                 task.options.props = arg;
             }
-        },
-    };
+        }
+    );
 
-    private static final String PROGNAME = "ClassAnalyzer";
-    private final Options options = new Options();
-
-    private PrintWriter log;
-    void setLog(PrintWriter out) {
-        log = out;
+    protected List<Option<? extends Task>> options() {
+        return recognizedOptions;
     }
 
-    /**
-     * Result codes.
-     */
-    static final int EXIT_OK = 0, // Completed with no errors.
-                     EXIT_ERROR = 1, // Completed but reported errors.
-                     EXIT_CMDERR = 2, // Bad command-line arguments
-                     EXIT_SYSERR = 3, // System error or resource exhaustion.
-                     EXIT_ABNORMAL = 4;// terminated abnormally
 
-    int run(String[] args) {
-        if (log == null) {
-            log = new PrintWriter(System.out);
-        }
-        try {
-            handleOptions(args);
-            if (options.help) {
-                showHelp();
-            }
-            if (options.configs.isEmpty() || options.version == null) {
-                if (options.help) {
-                    return EXIT_OK;
-                } else {
-                    showHelp();
-                    return EXIT_CMDERR;
-                }
-            }
-            boolean ok = run();
-            return ok ? EXIT_OK : EXIT_ERROR;
-        } catch (BadArgs e) {
-            reportError(e.key, e.args);
-            if (e.showUsage) {
-                log.println(getMessage("main.usage.summary", PROGNAME));
-            }
-            return EXIT_CMDERR;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return EXIT_ABNORMAL;
-        } finally {
-            log.flush();
-        }
+    protected boolean validateOptions() {
+        return !options.configs.isEmpty() && options.version != null;
     }
 
-    private boolean run() throws IOException {
+    protected boolean run() throws IOException {
         if (options.props != null) {
             Module.setModuleProperties(options.props);
         }
@@ -197,7 +105,6 @@ class ClassAnalyzer {
         final Path dir = Paths.get(options.classlistDir);
         dir.toFile().mkdirs();
         File list = dir.resolve("modules.list").toFile();
-        int count;
         try (PrintWriter writer = new PrintWriter(list)) {
             builder.visit(new ModuleBuilder.Visitor<Void, Void>() {
                 @Override
@@ -326,72 +233,7 @@ class ClassAnalyzer {
         writer.println();
     }
 
-    public void handleOptions(String[] args) throws BadArgs {
-        // process options
-        for (int i=0; i < args.length; i++) {
-            if (args[i].charAt(0) == '-') {
-                String name = args[i];
-                Option option = getOption(name);
-                String param = null;
-                if (option.hasArg) {
-                    if (name.indexOf('=') > 0) {
-                        param = name.substring(name.indexOf('=') + 1, name.length());
-                    } else if (i + 1 < args.length) {
-                        param = args[++i];
-                    }
-                    if (param == null || param.isEmpty() || param.charAt(0) == '-') {
-                        throw new BadArgs("err.missing.arg", name).showUsage(true);
-                    }
-                }
-                option.process(this, name, param);
-                if (option.ignoreRest()) {
-                    i = args.length;
-                }
-            } else {
-                throw new IllegalArgumentException("Invalid arguments");
-            }
-        }
-    }
-
-    private Option getOption(String name) throws BadArgs {
-        for (Option o : recognizedOptions) {
-            if (o.matches(name)) {
-                return o;
-            }
-        }
-        throw new BadArgs("err.unknown.option", name).showUsage(true);
-    }
-
-    private void reportError(String key, Object... args) {
-        log.println(getMessage("error.prefix") + " " + getMessage(key, args));
-    }
-
-    private void warning(String key, Object... args) {
-        log.println(getMessage("warn.prefix") + " " + getMessage(key, args));
-    }
-
-    private void showHelp() {
-        log.println(getMessage("main.usage", PROGNAME));
-        for (Option o : recognizedOptions) {
-            String name = o.aliases[0].substring(1); // there must always be at least one name
-            name = name.charAt(0) == '-' ? name.substring(1) : name;
-            if (o.isHidden() || name.equals("h")) {
-                continue;
-            }
-            log.println(getMessage("main.opt." + name));
-        }
-    }
-
-    static String getMessage(String key, Object... args) {
-        try {
-            return MessageFormat.format(ResourceBundleHelper.bundle.getString(key), args);
-        } catch (MissingResourceException e) {
-            throw new InternalError("Missing message: " + key);
-        }
-    }
-
     private static class Options {
-        boolean help;
         String outFile;
         String javahome = System.getProperty("java.home");
         String props;
@@ -399,18 +241,6 @@ class ClassAnalyzer {
         String moduleInfoDir;
         List<String> configs = new ArrayList<>();
         String version;
-    }
-
-    private static class ResourceBundleHelper {
-        static final ResourceBundle bundle;
-        static {
-            Locale locale = Locale.getDefault();
-            try {
-                bundle = ResourceBundle.getBundle("com.sun.tools.classanalyzer.resources.classanalyzer", locale);
-            } catch (MissingResourceException e) {
-                throw new InternalError("Cannot find classanalyzer resource bundle for locale " + locale);
-            }
-        }
     }
 
     public static void main(String... args) throws Exception {

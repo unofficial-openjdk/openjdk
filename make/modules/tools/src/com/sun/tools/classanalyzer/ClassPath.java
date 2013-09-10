@@ -39,10 +39,18 @@ import java.util.*;
  * ClassPath for Java SE and JDK
  */
 class ClassPath {
-
-    static List<Archive> getArchives(String jdkhome) throws IOException {
+    /**
+     * Returns a list of JAR files and directories as follows:
+     *    javahome/classes
+     *    javahome/lib/*.jar
+     *    javahome/lib/ext/*.jar
+     *    javahome/../lib/*.jar
+     *
+     * It will filter out the cobundled JAR files such as FX, JMC, JVisualVM
+     */
+    static List<Archive> getArchives(String javahome) throws IOException {
         List<Archive> result = new ArrayList<>();
-        Path home = Paths.get(jdkhome);
+        Path home = Paths.get(javahome);
 
         if (home.endsWith("jre")) {
             // jar files in <javahome>/jre/lib
@@ -120,6 +128,11 @@ class ClassPath {
         public Iterable<Resource> getResources() throws IOException {
             return reader.getResources();
         }
+
+        public byte[] readBytes(String name) throws IOException {
+            return reader.readBytes(name);
+        }
+
         public String toString() {
             return file != null ? file.getPath() : filename;
         }

@@ -44,27 +44,20 @@ module jdk.base {
     provides java.base;
 
     include base;
-    include unpack200-tool;
+    include time;
+    include unpack200;
     include xmlparser;
 
-    // ## Include JSR 310 in the base module (680K + 40K tzdb.jar) due to
-    // ## java.util.Formatter -> java.time API
-    include time;
+    // security provider in compact 1
+    include security-sunjce;
 
-    // Workaround: include the policy files for now.
-    // They have to be bundled in signed jars.
-    include US_export_policy;
-    include local_policy;
+    include net-compat;
 
     // This optional dependency is needed for SecurityManager.checkTopLevelWindows
     // and a few other methods that check for java.awt.AWTPermission which is
     // in the desktop module
     requires optional jdk.desktop;
     requires optional jdk.tls;
-
-    // ## To be converted as services
-    requires optional sun.resources;
-    requires optional sun.localedata;
 
     // no META-INF/services
     requires service java.nio.channels.spi.AsynchronousChannelProvider;
@@ -156,9 +149,9 @@ module jdk.management {
     include management;
 
     requires optional jdk.management.iiop;
+}
 
-    // ## temporary: need discussion with JFR team
-    // ## this adds a dependency on jaxp
+module jdk.jfr {
     include jfr;
 
     view oracle.jfr {
@@ -227,26 +220,18 @@ module jdk.jdbc.rowset {
     exports com.sun.sql.rowset;
 }
 
-module jdk.compat {
-    include private-legacy;
-    include net-compat;
-    include deprecated;
-
-    // ## avoid com.sun.security.auth be splitted among many modules
-    // ## most of the com.sun.security.auth should be deprecated.
-    // ## need to sort out which one is still needed
-    //
-    // include sun.auth.ldap;
-    // include sun.auth.kerberos;
-    // include sun.auth.jndi;
-    // include security-auth;
-
-}
-
 // Deprecated APIs used by snmp
 module jdk.security.acl {
     provides java.security.acl;
     include security-acl;
+}
+
+module jdk.sunec {
+    include security-sunec;
+}
+
+module jdk.sunpkcs11 {
+    include security-sunpkcs11;
 }
 
 module jdk.kerberos {
@@ -272,20 +257,8 @@ module jdk.kerberos {
     }
 }
 
-module jdk.sunec {
-    include security-sunec;
-}
-
-module jdk.sunpkcs11 {
-    include security-sunpkcs11;
-}
-
 module jdk.ucrypto {
     include security-ucrypto;
-}
-
-module jdk.crypto {
-    include security-sunjce;
 }
 
 module jdk.sunmscapi {
@@ -302,25 +275,13 @@ module jdk.smartcardio {
     include security-smartcardio;
 }
 
-module sun.xml {
-    include jaxp-api;
-}
-
-module sun.xalan {
-    include jaxp-xalan;
-}
-
-module sun.xerces {
-    include jaxp-xerces-impl;
-    include jaxp-xerces-resolver;
-}
-
 module jdk.jaxp {
     provides javax.xml;
 
-    include sun.xml;
-    include sun.xalan;
-    include sun.xerces;
+    include jaxp-api;
+    include jaxp-xalan;
+    include jaxp-xerces-impl;
+    include jaxp-xerces-resolver;
 
     requires service javax.xml.datatype.DatatypeFactory;
     requires service javax.xml.parsers.DocumentBuilderFactory;
@@ -374,7 +335,6 @@ module jdk.rmi {
     view jdk.rmid {
         class sun.rmi.server.Activation;
     }
-
 }
 
 module jdk.auth {
@@ -428,21 +388,16 @@ module jdk.logging {
     provides java.logging;
     requires optional jdk.desktop;
     include logging;
-    include tracing;
 }
 
-// ## localedata is loaded by the extension class loader
-// ## for now, in the same connected graph loaded by the bootstrap class loader
-module sun.localedata {
-    include localedata;
-}
 
 module sun.charsets {
     include charsets;
 }
 
-module sun.resources {
-    include resources;
+module sun.localedata {
+    include localedata;
+    include cldr;
 }
 
 // Oracle's platform extension (supported APIs)
@@ -491,7 +446,7 @@ module jdk.devtools {
     }
 }
 
-// developer tools to be included in the jdk-base-image
+// developer tools 
 module jdk.tools.base {
     requires public jdk.devtools;
 
@@ -517,20 +472,20 @@ module jdk.tools.base {
     }
 }
 
-// JRE tools to be included in the jdk-module-image and jre-module-image
+// JRE tools
 module jdk.tools.jre {
-    // tools support
+    // ## part of the runtime - include hprof and jsdt here for now
     include hprof;
-    include servicetag;
+    include tracing;
 
-    // JRE tools
     include tools.policytool;
+
     view jdk.policytool {
          class sun.security.tools.policytool.PolicyTool;
     }
 }
 
-// Other developer tools to be included in the jdk-module-image
+// JDK tools
 module jdk.tools {
     requires public jdk.tools.jre;     // Tools in JRE
     requires public jdk.tools.base;    // developer tools for the base module
@@ -569,7 +524,6 @@ module jdk.tools {
         exports com.sun.tools.attach;
         exports com.sun.tools.attach.spi;
     }
-
 
     view jdk.jconsole {
         class sun.tools.jcmd.JCmd;
@@ -642,14 +596,11 @@ module jdk.tools {
 
 
 module jdk.jre {
-    requires public jdk.tools.jre;
     requires public jdk.base;
     requires public jdk.auth;
-    requires public jdk.compat;
     requires public jdk.compiler;
     requires public jdk.corba;
     requires public jdk.cosnaming;
-    requires public jdk.crypto;
     requires public jdk.deploy;
     requires public jdk.desktop;
     requires public jdk.httpserver;
@@ -671,18 +622,19 @@ module jdk.jre {
     requires public jdk.sctp;
     requires public jdk.security.acl;
     requires public jdk.smartcardio;
-    requires public jdk.snmp;
     requires public jdk.sunec;
-    requires public jdk.sunpkcs11;
     requires public jdk.sunmscapi;
+    requires public jdk.sunpkcs11;
     requires public jdk.tls;
     requires public jdk.ucrypto;
     requires public jdk.xmldsig;
-    requires jdk.zipfs;
 
-    // charsets, resource bundles and data for other locales 
+    // JDK-specific
+    requires public jdk.tools.jre;
+    requires public jdk.snmp;
+
+    requires jdk.zipfs;
     requires sun.charsets;
-    requires sun.resources;
     requires sun.localedata;
 }
 

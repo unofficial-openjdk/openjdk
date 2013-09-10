@@ -27,9 +27,8 @@
 default: all
 
 include $(SPEC)
-include ModulesCommon.gmk
+include Modules.gmk
 include MakeBase.gmk
-include JavaCompilation.gmk
 include Setup.gmk
 
 MODULES_CONFIG      := $(JDK_TOPDIR)/make/modules/modules.config
@@ -37,22 +36,12 @@ MODULES_GROUP       := $(JDK_TOPDIR)/make/modules/modules.group
 MODULES_PROPERTIES  := $(JDK_TOPDIR)/make/modules/modules.properties
 CLASSANALYZER_CLASSES  := $(GENMODULES_DIR)/bt_classanalyzer_classes
 CLASSANALYZER_RESOURCES := $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources
-MODULES_SER_OUT   := $(JDK_OUTPUTDIR)/classes/jdk/jigsaw/module/resources/modules.ser
-
-$(eval $(call SetupJavaCompilation,BUILD_CLASSANALYZER,\
-       SETUP:=GENERATE_JDKBYTECODE,\
-       SRC:=$(JDK_TOPDIR)/make/modules/tools/src,\
-       BIN:=$(CLASSANALYZER_CLASSES)))
-
-all: $(MODULES_LIST)
 
 $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)/make/modules/tools/src/com/sun/tools/classanalyzer/resources/%
 	$(call install-file)
 
-$(MODULES_LIST): $(MODULES_CONFIG) $(MODULES_GROUP) \
-                 $(MODULES_PROPERTIES) \
-                 $(BUILD_CLASSANALYZER) \
-		 $(CLASSANALYZER_RESOURCES)/classanalyzer.properties
+all: $(MODULES_CONFIG) $(MODULES_GROUP) $(MODULES_PROPERTIES) \
+     $(BUILD_CLASSANALYZER) $(CLASSANALYZER_RESOURCES)/classanalyzer.properties
 	$(RM) -rf $(MODULE_CLASSLIST_DIR) $(MODULEINFO_DIR)
 	$(TOOL_CLASSANALYZER) \
                 --config $(MODULES_CONFIG) \
@@ -62,5 +51,8 @@ $(MODULES_LIST): $(MODULES_CONFIG) $(MODULES_GROUP) \
                 --classlist $(MODULE_CLASSLIST_DIR) \
                 --out $(MODULES_SER_OUT) \
                 --moduleinfo $(MODULEINFO_DIR)
+	if [ -f $(MODULE_CLASSLIST_DIR)/other.summary ] ; then \
+	    $(ECHO) "ERROR: Check module \"other\". modules.config possibly requires update." ; \
+	fi
 
-.NOTPARALLEL:
+.PHONY: all

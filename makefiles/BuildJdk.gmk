@@ -96,6 +96,10 @@ demos:
 #	Now copy the sample sources into the jdk.
 	+$(MAKE) -f CopySamples.gmk
 
+jmods:
+#       Generate jmod files 
+	+$(MAKE) -f CreateJmods.gmk
+
 # Create the final jdk and jre images, to be wrapped up
 # into packages, or installed. Ensure PROFILE is not set
 # in these cases.

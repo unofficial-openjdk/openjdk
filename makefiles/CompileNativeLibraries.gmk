@@ -54,6 +54,31 @@ endif
 
 BUILD_LIBRARIES=
 
+#
+# Libraries are grouped by modules.  The following defines
+# variables for modules containing shared libraries.
+#
+ATTACH_LIBRARIES=
+BASE_LIBRARIES=
+DESKTOP_LIBRARIES=
+HPROF_LIBRARIES=
+INSTRUMENT_LIBRARIES=
+JAVA_TRACING_LIBRARIES=
+JDWP_LIBRARIES=
+JFR_LIBRARIES=
+MANAGEMENT_LIBRARIES=
+SCRIPTING_LIBRARIES=
+SCTP_LIBRARIES=
+SECURITY_AUTH_LIBRARIES=
+SECURITY_KERBEROS_LIBRARIES=
+SECURITY_MSCAPI_LIBRARIES=
+SECURITY_PKCS11_LIBRARIES=
+SECURITY_SMARTCARDIO_LIBRARIES=
+SECURITY_SUNEC_LIBRARIES=
+SECURITY_UCRYPTO_LIBRARIES=
+UNPACK_LIBRARIES=
+
+
 # Absolute paths to lib files on windows for use in LDFLAGS. Should figure out a more
 # elegant solution to this.
 WIN_VERIFY_LIB := $(JDK_OUTPUTDIR)/objs/libverify/verify.lib
@@ -161,7 +186,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBVERIFY,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libverify,\
 		DEBUG_SYMBOLS:=true))
 
-BUILD_LIBRARIES += $(BUILD_LIBVERIFY)
+BASE_LIBRARIES += $(BUILD_LIBVERIFY)
 
 ##########################################################################################
 
@@ -266,7 +291,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjava,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJAVA)
+BASE_LIBRARIES += $(BUILD_LIBJAVA)
 
 $(BUILD_LIBJAVA) : $(LIBJLI_BINARY)
 
@@ -319,7 +344,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE,\
 
 $(BUILD_LIBMLIB_IMAGE) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMLIB_IMAGE)
+DESKTOP_LIBRARIES += $(BUILD_LIBMLIB_IMAGE)
 
 ##########################################################################################
 
@@ -443,7 +468,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMLIB_IMAGE_V,\
 
 $(BUILD_LIBMLIB_IMAGE_V): $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMLIB_IMAGE_V)
+DESKTOP_LIBRARIES += $(BUILD_LIBMLIB_IMAGE_V)
 
 endif
 
@@ -755,7 +780,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 $(BUILD_LIBAWT) : $(BUILD_LIBMLIB_IMAGE)
 endif
 
-BUILD_LIBRARIES += $(BUILD_LIBAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBAWT)
 
 ##########################################################################################
 
@@ -920,7 +945,7 @@ $(BUILD_LIBAWT_XAWT) : $(BUILD_LIBJAVA)
 
 $(BUILD_LIBAWT_XAWT) : $(BUILD_LIBAWT)
 
-BUILD_LIBRARIES += $(BUILD_LIBAWT_XAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBAWT_XAWT)
 
 endif
 endif
@@ -979,7 +1004,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP,\
 
 $(BUILD_LIBZIP) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBZIP)
+BASE_LIBRARIES += $(BUILD_LIBZIP)
 
 ##########################################################################################
 
@@ -1009,7 +1034,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBUNPACK,\
 
 $(BUILD_LIBUNPACK) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBUNPACK)
+UNPACK_LIBRARIES += $(BUILD_LIBUNPACK)
 
 ifeq ($(OPENJDK_TARGET_OS),windows)
     $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)unpack.map: $(BUILD_LIBUNPACK)
@@ -1060,7 +1085,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBATTACH,\
 
 $(BUILD_LIBATTACH) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBATTACH)
+ATTACH_LIBRARIES += $(BUILD_LIBATTACH)
 
 ##########################################################################################
 
@@ -1093,7 +1118,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDT_SOCKET,\
 
 $(BUILD_LIBDT_SOCKET) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBDT_SOCKET)
+JDWP_LIBRARIES += $(BUILD_LIBDT_SOCKET)
 
 ##########################################################################################
 
@@ -1123,7 +1148,7 @@ ifeq ($(OPENJDK_TARGET_OS),windows)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libdt_shmem,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-  BUILD_LIBRARIES += $(BUILD_LIBDT_SHMEM)
+  JDWP_LIBRARIES += $(BUILD_LIBDT_SHMEM)
 
 endif # OPENJDK_TARGET_OS
 
@@ -1159,7 +1184,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJDWP,\
 
 $(BUILD_LIBJDWP) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJDWP)
+JDWP_LIBRARIES += $(BUILD_LIBJDWP)
 
 ##########################################################################################
 
@@ -1200,7 +1225,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAAS,\
 
 $(BUILD_LIBJAAS) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJAAS)
+SECURITY_AUTH_LIBRARIES += $(BUILD_LIBJAAS)
 
 ##########################################################################################
 
@@ -1230,7 +1255,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSDT,\
 
 $(BUILD_LIBJSDT) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSDT)
+JAVA_TRACING_LIBRARIES += $(BUILD_LIBJSDT)
 
 ##########################################################################################
 
@@ -1263,7 +1288,7 @@ BUILD_LIBRARIES += $(BUILD_LIBJSDT)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/liblcms,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBLCMS)
+    DESKTOP_LIBRARIES += $(BUILD_LIBLCMS)
 
     $(BUILD_LIBLCMS) : $(BUILD_LIBAWT)
 
@@ -1325,7 +1350,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJPEG,\
 
 $(BUILD_LIBJPEG) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJPEG)
+DESKTOP_LIBRARIES += $(BUILD_LIBJPEG)
 
 ##########################################################################################
 
@@ -1406,7 +1431,7 @@ ifneq (,$(findstring $(OPENJDK_TARGET_OS),solaris macosx))
 $(BUILD_LIBFONTMANAGER) : $(BUILD_LIBAWT_XAWT)
 endif
 
-BUILD_LIBRARIES += $(BUILD_LIBFONTMANAGER)
+DESKTOP_LIBRARIES += $(BUILD_LIBFONTMANAGER)
 
 ##########################################################################################
 
@@ -1460,7 +1485,7 @@ ifndef OPENJDK
     # t2k is linked against fontmanager
     $(BUILD_LIBT2K) : $(BUILD_LIBFONTMANAGER)
 
-    BUILD_LIBRARIES += $(BUILD_LIBT2K)
+    DESKTOP_LIBRARIES += $(BUILD_LIBT2K)
 endif
 
 ##########################################################################################
@@ -1501,7 +1526,7 @@ $(JDK_OUTPUTDIR)/lib/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX): $(BUILD_LIBJ
 	$(ECHO) Copying $(@F)
 	$(CP) $(JDK_OUTPUTDIR)/objs/libjawt/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX) $@
 
-BUILD_LIBRARIES += $(JDK_OUTPUTDIR)/lib/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX)
+DESKTOP_LIBRARIES += $(JDK_OUTPUTDIR)/lib/$(LIBRARY_PREFIX)jawt$(STATIC_LIBRARY_SUFFIX)
 
 else # OPENJDK_TARGET_OS not windows
 
@@ -1557,7 +1582,7 @@ endif
 
 endif # OPENJDK_TARGET_OS
 
-BUILD_LIBRARIES += $(BUILD_LIBJAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBJAWT)
 
 ##########################################################################################
 
@@ -1637,7 +1662,7 @@ $(BUILD_LIBINSTRUMENT) : $(INSTALL_LIBRARIES_HERE)/jli/$(LIBRARY_PREFIX)jli$(SHA
 endif
 $(BUILD_LIBINSTRUMENT) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBINSTRUMENT)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBINSTRUMENT)
 
 ##########################################################################################
 
@@ -1698,7 +1723,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBMANAGEMENT,\
 
 $(BUILD_LIBMANAGEMENT) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBMANAGEMENT)
+MANAGEMENT_LIBRARIES += $(BUILD_LIBMANAGEMENT)
 
 ##########################################################################################
 
@@ -1741,7 +1766,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBHPROF,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libhprof_jvmti,\
 		DEBUG_SYMBOLS:=true))
 
-BUILD_LIBRARIES += $(BUILD_LIBHPROF)
+HPROF_LIBRARIES += $(BUILD_LIBHPROF)
 
 ##########################################################################################
 
@@ -1765,7 +1790,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA_CRW_DEMO,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjava_crw_demo,\
 		DEBUG_SYMBOLS:=true))
 
-BUILD_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBJAVA_CRW_DEMO)
 
 ##########################################################################################
 
@@ -1792,7 +1817,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNPT,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libnpt,\
 		DEBUG_SYMBOLS:=true))
 
-BUILD_LIBRARIES += $(BUILD_LIBNPT)
+INSTRUMENT_LIBRARIES += $(BUILD_LIBNPT)
 
 ##########################################################################################
 
@@ -1854,21 +1879,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNET,\
 
 $(BUILD_LIBNET) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBNET)
-
-$(JDK_OUTPUTDIR)/lib/net.properties: $(JDK_TOPDIR)/src/share/lib/net.properties
-	$(ECHO) $(LOG_INFO) Copying $(@F)
-	$(call install-file)
-
-COPY_FILES += $(JDK_OUTPUTDIR)/lib/net.properties
-
-ifeq ($(OPENJDK_TARGET_OS), solaris)
-$(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template : $(JDK_TOPDIR)/src/${OPENJDK_TARGET_OS_API_DIR}/lib/sdp/sdp.conf.template
-	$(ECHO) $(LOG_INFO) Copying $(@F)
-	$(call install-file)
-
-COPY_FILES += $(JDK_OUTPUTDIR)/lib/sdp/sdp.conf.template
-endif
+BASE_LIBRARIES += $(BUILD_LIBNET)
 
 ##########################################################################################
 
@@ -1989,7 +2000,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBNIO,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libnio,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBNIO)
+BASE_LIBRARIES += $(BUILD_LIBNIO)
 
 $(BUILD_LIBNIO) : $(BUILD_LIBNET)
 
@@ -2027,7 +2038,7 @@ ifeq ($(OPENJDK_TARGET_OS_API),posix)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libsctp,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBSCTP)
+    SCTP_LIBRARIES += $(BUILD_LIBSCTP)
 
     $(BUILD_LIBSCTP) : $(BUILD_LIBNIO)
   endif
@@ -2151,7 +2162,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJLI,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjli,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJLI)
+BASE_LIBRARIES += $(BUILD_LIBJLI)
 
 # On windows, the static library has the same suffix as the import library created by
 # with the shared library, so the static library is given a different name. No harm
@@ -2169,7 +2180,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjli_static,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJLI_STATIC)
+BASE_LIBRARIES += $(BUILD_LIBJLI_STATIC)
 
 else ifeq ($(OPENJDK_TARGET_OS),macosx)
     #
@@ -2219,7 +2230,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJFR,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjfr,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJFR)
+JFR_LIBRARIES += $(BUILD_LIBJFR)
 
 endif
 endif
@@ -2273,7 +2284,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBKCMS,\
 
 $(BUILD_LIBKCMS) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBKCMS)
+DESKTOP_LIBRARIES += $(BUILD_LIBKCMS)
 
 endif
 
@@ -2307,7 +2318,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBSUNWJDGA, \
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libsunwjdga,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBSUNWJDGA)
+DESKTOP_LIBRARIES += $(BUILD_LIBSUNWJDGA)
 
 endif
 endif
@@ -2426,7 +2437,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBAWT_HEADLESS,\
 
 $(BUILD_LIBAWT_HEADLESS) : $(BUILD_LIBAWT)
 
-BUILD_LIBRARIES += $(BUILD_LIBAWT_HEADLESS)
+DESKTOP_LIBRARIES += $(BUILD_LIBAWT_HEADLESS)
 
 endif
 endif
@@ -2517,7 +2528,7 @@ $(eval $(call SetupNativeCompilation,LIBSPLASHSCREEN,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libsplashscreen,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(LIBSPLASHSCREEN)
+DESKTOP_LIBRARIES += $(LIBSPLASHSCREEN)
 
 ifeq ($(OPENJDK_TARGET_OS),macosx)
 $(LIBSPLASHSCREEN) :  $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)osxapp$(SHARED_LIBRARY_SUFFIX)
@@ -2561,7 +2572,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBDCPR,\
 
 $(BUILD_LIBDCPR) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBDCPR)
+DESKTOP_LIBRARIES += $(BUILD_LIBDCPR)
 
 endif
 
@@ -2593,7 +2604,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PCSC,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libj2pcsc,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2PCSC)
+SECURITY_SMARTCARDIO_LIBRARIES += $(BUILD_LIBJ2PCSC)
 
 ##########################################################################################
 
@@ -2616,7 +2627,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2GSS,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libj2gss,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2GSS)
+SECURITY_KERBEROS_LIBRARIES += $(BUILD_LIBJ2GSS)
 endif
 
 ##########################################################################################
@@ -2656,7 +2667,7 @@ ifneq ($(BUILD_CRYPTO),no)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libkrb5,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-    BUILD_LIBRARIES += $(BUILD_LIBKRB5)
+    SECURITY_KERBEROS_LIBRARIES += $(BUILD_LIBKRB5)
   endif
 endif
 
@@ -2683,7 +2694,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBSUNMSCAPI,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libsunmscapi,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBSUNMSCAPI)
+SECURITY_MSCAPI_LIBRARIES += $(BUILD_LIBSUNMSCAPI)
 endif
 
 ##########################################################################################
@@ -2715,7 +2726,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2PKCS11,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libj2pkcs11,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2PKCS11)
+SECURITY_PKCS11_LIBRARIES += $(BUILD_LIBJ2PKCS11)
 
 ##########################################################################################
 
@@ -2761,7 +2772,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBSUNEC,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libsunec,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBSUNEC)
+SECURITY_SUNEC_LIBRARIES += $(BUILD_LIBSUNEC)
 endif
 
 ##########################################################################################
@@ -2907,7 +2918,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSOUND,\
 
 $(BUILD_LIBJSOUND) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSOUND)
+DESKTOP_LIBRARIES += $(BUILD_LIBJSOUND)
 
 ##########################################################################################
 
@@ -2943,7 +2954,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSOUNDALSA,\
 
 $(BUILD_LIBJSOUNDALSA) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSOUNDALSA)
+DESKTOP_LIBRARIES += $(BUILD_LIBJSOUNDALSA)
 
 endif
 
@@ -2976,7 +2987,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJSOUNDDS,\
 
 $(BUILD_LIBJSOUNDDS) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJSOUNDDS)
+DESKTOP_LIBRARIES += $(BUILD_LIBJSOUNDDS)
 
 endif
 
@@ -3002,7 +3013,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJ2UCRYPTO,\
 
 $(BUILD_LIBJ2UCRYPTO) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBJ2UCRYPTO)
+SECURITY_UCRYPTO_LIBRARIES += $(BUILD_LIBJ2UCRYPTO)
 
 endif
 endif
@@ -3033,7 +3044,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBAPPLESCRIPTENGINE,\
 
 $(BUILD_LIBAPPLESCRIPTENGINE) : $(BUILD_LIBJAVA)
 
-BUILD_LIBRARIES += $(BUILD_LIBAPPLESCRIPTENGINE)
+SCRIPTING_LIBRARIES += $(BUILD_LIBAPPLESCRIPTENGINE)
 
 endif
 
@@ -3071,7 +3082,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBOSXAPP,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libosxapp,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBOSXAPP)
+BASE_LIBRARIES += $(BUILD_LIBOSXAPP)
 
 endif
 
@@ -3112,7 +3123,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBOSX,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libosx,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBOSX)
+BASE_LIBRARIES += $(BUILD_LIBOSX)
 
 $(BUILD_LIBOSX) : $(BUILD_LIBOSXAPP)
 
@@ -3246,7 +3257,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBAWT_LWAWT,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libawt_lwawt,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBAWT_LWAWT)
+DESKTOP_LIBRARIES += $(BUILD_LIBAWT_LWAWT)
 
 $(BUILD_LIBAWT_LWAWT) : $(BUILD_LIBAWT)
 
@@ -3287,7 +3298,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBOSXUI,\
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libosxui,\
 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
 
-BUILD_LIBRARIES += $(BUILD_LIBOSXUI)
+DESKTOP_LIBRARIES += $(BUILD_LIBOSXUI)
 
 $(BUILD_LIBOSXUI) : $(BUILD_LIBAWT)
 
@@ -3356,7 +3367,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJOBJC64,\
 $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)JObjC$(SHARED_LIBRARY_SUFFIX): $(BUILD_LIBJOBJC32) $(BUILD_LIBJOBJC64)
 	$(LIPO) -create -output $@ $(BUILD_LIBJOBJC32) $(BUILD_LIBJOBJC64)
 
-BUILD_LIBRARIES += $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)JObjC$(SHARED_LIBRARY_SUFFIX)
+BASE_LIBRARIES += $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)JObjC$(SHARED_LIBRARY_SUFFIX)
 
 endif
 
@@ -3436,7 +3447,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
 		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libwindowsaccessbridge$1,\
 		DEBUG_SYMBOLS:=true)
 
-    BUILD_LIBRARIES += $$(BUILD_JAWTACCESSBRIDGE$1) $$(BUILD_JAVAACCESSBRIDGE$1) \
+    DESKTOP_LIBRARIES += $$(BUILD_JAWTACCESSBRIDGE$1) $$(BUILD_JAVAACCESSBRIDGE$1) \
 		       $$(BUILD_WINDOWSACCESSBRIDGE$1)
 
   endef
@@ -3452,6 +3463,25 @@ endif
 
 
 ##########################################################################################
+BUILD_LIBRARIES += $(BASE_LIBRARIES)
+BUILD_LIBRARIES += $(DESKTOP_LIBRARIES)
+BUILD_LIBRARIES += $(INSTRUMENT_LIBRARIES)
+BUILD_LIBRARIES += $(MANAGEMENT_LIBRARIES)
+BUILD_LIBRARIES += $(SCRIPTING_LIBRARIES)
+BUILD_LIBRARIES += $(SCTP_LIBRARIES)
+BUILD_LIBRARIES += $(JFR_LIBRARIES)
+BUILD_LIBRARIES += $(UNPACK_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_AUTH_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_KERBEROS_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_MSCAPI_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_PKCS11_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_SMARTCARDIO_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_SUNEC_LIBRARIES)
+BUILD_LIBRARIES += $(SECURITY_UCRYPTO_LIBRARIES)
+BUILD_LIBRARIES += $(ATTACH_LIBRARIES)
+BUILD_LIBRARIES += $(HPROF_LIBRARIES)
+BUILD_LIBRARIES += $(JDWP_LIBRARIES)
+BUILD_LIBRARIES += $(JAVA_TRACING_LIBRARIES)
 
 all: $(COPY_FILES) $(BUILD_LIBRARIES)
 
