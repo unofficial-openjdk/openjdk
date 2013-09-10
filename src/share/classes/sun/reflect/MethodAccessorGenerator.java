@@ -65,10 +65,10 @@ class MethodAccessorGenerator extends AccessorGenerator {
     }
 
     /** This routine is not thread-safe */
-    public MethodAccessor generateMethod(Class<?> declaringClass,
-                                         String   name,
-                                         Class<?>[] parameterTypes,
-                                         Class<?>   returnType,
+    public MethodAccessor generateMethod(final Class<?> declaringClass,
+                                         String name,
+                                         final Class<?>[] parameterTypes,
+                                         final Class<?> returnType,
                                          Class<?>[] checkedExceptions,
                                          int modifiers)
     {
@@ -393,19 +393,25 @@ class MethodAccessorGenerator extends AccessorGenerator {
         return AccessController.doPrivileged(
             new PrivilegedAction<MagicAccessorImpl>() {
                 public MagicAccessorImpl run() {
-                        try {
-                        return (MagicAccessorImpl)
-                        ClassDefiner.defineClass
+                    try {
+                        Class<?> c = ClassDefiner.defineClass
                                 (generatedName,
                                  bytes,
                                  0,
                                  bytes.length,
-                                 declaringClass.getClassLoader()).newInstance();
-                        } catch (InstantiationException | IllegalAccessException e) {
-                            throw new InternalError(e);
+                                 declaringClass.getClassLoader());
+
+                        ensureAccess(c, declaringClass);
+                        for (Class<?> param: parameterTypes) {
+                            ensureAccess(c, param);
                         }
+                        ensureAccess(c, returnType);
+
+                        return (MagicAccessorImpl)c.newInstance();
+                    } catch (InstantiationException | IllegalAccessException e) {
+                        throw new InternalError(e);
                     }
-                });
+                }});
     }
 
     /** This emits the code for either invoke() or newInstance() */
@@ -772,5 +778,21 @@ class MethodAccessorGenerator extends AccessorGenerator {
             int num = ++methodSymnum;
             return "sun/reflect/GeneratedMethodAccessor" + num;
         }
+    }
+
+    private static void ensureAccess(Class<?> c, Class<?> target) {
+        ClassLoader loader = target.getClassLoader();
+        ClassLoader[] loaders = new ClassLoader[] { c.getClassLoader() };
+        String[] pkgs = new String[] { packageName(c) };
+        sun.misc.VM.addPackageAccess(target.getClassLoader(),
+                                     packageName(target),
+                                     loaders,
+                                     pkgs);
+    }
+
+    private static String packageName(Class<?> c) {
+        String cn = c.getName();
+        int last = cn.lastIndexOf(".");
+        return (last != -1) ? cn.substring(0, last) : "";
     }
 }

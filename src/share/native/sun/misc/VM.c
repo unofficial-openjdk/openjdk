@@ -124,6 +124,13 @@ Java_sun_misc_VM_setPackageAccess0(JNIEnv* env, jclass cls,
     JVM_SetPackageAccess(env, loader, pkg, loaders, pkgs);
 }
 
+JNIEXPORT jboolean JNICALL
+Java_sun_misc_VM_addPackageAccess0(JNIEnv* env, jclass cls,
+                                   jobject loader, jstring pkg,
+                                   jobjectArray loaders, jobjectArray pkgs)
+{
+    return JVM_AddPackageAccess(env, loader, pkg, loaders, pkgs);
+}
 
 typedef void (JNICALL *GetJvmVersionInfo_fp)(JNIEnv*, jvm_version_info*, size_t);
 

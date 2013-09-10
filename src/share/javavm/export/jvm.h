@@ -421,6 +421,11 @@ JNIEXPORT void JNICALL
 JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
                      jobjectArray loaders, jobjectArray pkgs);
 
+/* Augment access control so that loader/pkg can be acessed by loaders/pkgs */
+JNIEXPORT jboolean JNICALL
+JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                     jobjectArray loaders, jobjectArray pkgs);
+
 /*
  * Reflection support functions
  */

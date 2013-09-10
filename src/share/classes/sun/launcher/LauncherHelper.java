@@ -774,7 +774,8 @@ public enum LauncherHelper {
     private static final List<String> EXT_PKGS_LIST = Arrays.asList(
         "com.sun.crypto.provider",
         "sun.security.ec",
-        "sun.security.pkcs11"
+        "sun.security.pkcs11",
+        "sun.security.wrapper"
     );
 
     private static final Set<String> EXT_PKGS =

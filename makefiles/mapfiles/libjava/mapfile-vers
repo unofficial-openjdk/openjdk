@@ -271,6 +271,7 @@ SUNWprivate_1.1 {
                 Java_sun_misc_Version_getJdkSpecialVersion;
                 Java_sun_misc_Version_getJvmVersionInfo;
                 Java_sun_misc_Version_getJvmSpecialVersion;
+                Java_sun_misc_VM_addPackageAccess0;
                 Java_sun_misc_VM_getThreadStateValues;
 		Java_sun_misc_VM_latestUserDefinedLoader;
                 Java_sun_misc_VM_setPackageAccess0;

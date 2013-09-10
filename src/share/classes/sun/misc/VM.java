@@ -418,8 +418,35 @@ public class VM {
         setPackageAccess0(loader, pkg, loaders, pkgs);
     }
 
+    /**
+     * Augment the access control so thaht types defined by {@code loader}
+     * in package {@code pkg} are accessible to the given set of runtime
+     * packages.
+     *
+     * @return {@code true} if the access control is updated
+     */
+    public static boolean addPackageAccess(ClassLoader loader, String pkg,
+                                           ClassLoader[] loaders, String[] pkgs)
+    {
+        // check args
+        Objects.requireNonNull(pkg);
+        loaders = loaders.clone();
+        pkgs = pkgs.clone();
+        if (loaders.length != pkgs.length)
+            throw new IllegalArgumentException("Arrays are of different length");
+        for (String p: pkgs) {
+            Objects.requireNonNull(p);
+        }
+
+        // augment access to pkg
+        return addPackageAccess0(loader, pkg, loaders, pkgs);
+    }
+
     private static native void setPackageAccess0(ClassLoader loader, String pkg,
                                                  ClassLoader[] loaders, String[] pkgs);
+
+    private static native boolean addPackageAccess0(ClassLoader loader, String pkg,
+                                                    ClassLoader[] loaders, String[] pkgs);
 
 
     static {
