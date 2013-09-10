@@ -132,9 +132,15 @@ demos-only: start-make
 	@($(CD) $(JDK_TOPDIR)/makefiles && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk demos)
 	@$(call TargetExit)
 
+jmods: jdk demos nashorn jmods-only
+jmods-only: start-make
+	@$(call TargetEnter)
+	@($(CD) $(JDK_TOPDIR)/makefiles && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk jmods)
+	@$(call TargetExit)
+
 # Note: This double-colon rule is intentional, to support
 # custom make file integration.
-images:: source-tips demos nashorn images-only
+images:: source-tips demos nashorn jmods images-only
 images-only: start-make
 	@$(call TargetEnter)
 	@($(CD) $(JDK_TOPDIR)/makefiles && $(BUILD_LOG_WRAPPER) $(MAKE) $(MAKE_ARGS) -f BuildJdk.gmk images)
@@ -240,8 +246,8 @@ clean-docs:
 clean-test:
 	$(call CleanComponent,testoutput)
 
-.PHONY: langtools corba jaxp jaxws hotspot jdk nashorn images overlay-images install test docs
-.PHONY: langtools-only corba-only jaxp-only jaxws-only hotspot-only jdk-only nashorn-only images-only overlay-images-only install-only test-only docs-only
+.PHONY: langtools corba jaxp jaxws hotspot jdk nashorn jmods images overlay-images install test docs
+.PHONY: langtools-only corba-only jaxp-only jaxws-only hotspot-only jdk-only nashorn-only jmods-only images-only overlay-images-only install-only test-only docs-only
 .PHONY: default all clean dist-clean bootcycle-images start-make
 .PHONY: clean-langtools clean-corba clean-jaxp clean-jaxws clean-hotspot clean-jdk clean-nashorn clean-images clean-docs clean-test clean-overlay-images clean-bootcycle-build
 .PHONY: profiles profiles-only profiles-oscheck
