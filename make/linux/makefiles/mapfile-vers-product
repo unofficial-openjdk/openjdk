@@ -34,6 +34,7 @@ SUNWprivate_1.1 {
                 # JVM
                 JVM_Accept;
                 JVM_ActiveProcessorCount;
+                JVM_AddPackageAccess;
                 JVM_AllocateNewArray;
                 JVM_AllocateNewObject;
                 JVM_ArrayCopy;

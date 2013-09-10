@@ -77,10 +77,25 @@ class ClassLoaderExportEntry : public CHeapObj<mtInternal> {
   ClassLoaderExportEntry* next()              { return _next; }
   void set_next(ClassLoaderExportEntry* next) { _next = next; }
 
-  void add_allow(int loader_tag, const char* pkg, int hash) {
-    ClassLoaderAllowEntry* entry = new ClassLoaderAllowEntry(loader_tag, pkg, hash);
-    entry->set_next(_allows);
-    _allows = entry;
+  void add_allow(int loader_tag, const char* pkg, unsigned int hash) {
+    ClassLoaderAllowEntry* entry = _allows;
+    ClassLoaderAllowEntry* last = NULL;
+    while (entry != NULL) {
+      if (hash == entry->hash() && loader_tag == entry->loader_tag() &&
+         (strcmp(pkg, entry->package()) == 0))
+        break;
+      last = entry;
+      entry = entry->next();
+    }
+    if (entry == NULL) {
+      entry = new ClassLoaderAllowEntry(loader_tag, pkg, hash);
+      if (last != NULL) {
+        last->set_next(entry);
+      } else {
+        entry->set_next(_allows);
+        _allows = entry;
+      }
+    }
   }
 
   bool can_access(int loader_tag, const char* pkg, unsigned int hash) {
@@ -93,6 +108,16 @@ class ClassLoaderExportEntry : public CHeapObj<mtInternal> {
     }
     return false;
   }
+
+  unsigned int allows_count() {
+    unsigned int n = 0;
+    ClassLoaderAllowEntry* entry = _allows;
+    while (entry != NULL) {
+      n++;
+      entry = entry->next();
+    }
+    return n;
+  }
 };
 
 
@@ -104,7 +129,7 @@ class ClassLoaderExportEntry : public CHeapObj<mtInternal> {
 class ClassLoaderExports : public CHeapObj<mtInternal> {
  private:
   enum Constants {
-    _exports_table_size = 107
+    _exports_table_size = 1009
   };
 
   // special for the null loader
@@ -180,12 +205,26 @@ class ClassLoaderExports : public CHeapObj<mtInternal> {
     return entry;
   }
 
+  // print hash table stats
+  void print_stats();
+
+  // set or augment access control
+  static bool set_package_access_impl(Handle loader, const char* pkg,
+                                     objArrayHandle loaders, const char** pkgs,
+                                     bool adding);
+
  public:
 
   // Set access control so that types defined by loader/pkg are accessible
   // only to the given runtime packages. Returns false if access control
   // is already set for the loader/package.
   static bool set_package_access(Handle loader, const char* pkg,
+                                 objArrayHandle loaders, const char** pkgs);
+
+  // Augment access control so that the types defined by loader/pkg are accessible
+  // to the given runtime packages. Returns true if access control has been
+  // updated.
+  static bool add_package_access(Handle loader, const char* pkg,
                                  objArrayHandle loaders, const char** pkgs);
 
   // Verify that current_class can access new_class.

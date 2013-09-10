@@ -81,13 +81,21 @@ ClassLoaderExports* ClassLoaderExports::exports_for(Handle loader) {
   return exports;
 }
 
-// Set access control so that types defined by loader/pkg are accessible
-// only to the given runtime packages. Returns false if access control
-// is already set for the loader/package.
-bool ClassLoaderExports::set_package_access(Handle loader, const char* pkg,
-                                            objArrayHandle loaders, const char** pkgs)
+// set or augment the access control
+bool ClassLoaderExports::set_package_access_impl(Handle loader, const char* pkg,
+                                                 objArrayHandle loaders, const char** pkgs,
+                                                 bool adding)
 {
-  ClassLoaderExports* exports = exports_for(loader);
+  ClassLoaderExports* exports;
+  if (adding) {
+    exports = exports_for_or_null(loader);
+    if (exports == NULL) {
+      // no package access control
+      return false;
+    }
+  } else {
+    exports = exports_for(loader);
+  }
 
   unsigned int hash = compute_hash(pkg);
   int index = exports->hash_to_index(hash);
@@ -96,13 +104,23 @@ bool ClassLoaderExports::set_package_access(Handle loader, const char* pkg,
   ClassLoaderExportEntry* entry = first;
   while (entry != NULL) {
     if (entry->hash() == hash && strcmp(entry->package(), pkg) == 0) {
-        // already set, error for now
-        return false;
+        if (adding) {
+          // package has access control
+          break;
+        }
+        return false;  // already set
     }
     entry = entry->next();
   }
 
-  entry = new ClassLoaderExportEntry(hash, pkg);
+  if (entry == NULL) {
+    if (adding) {
+      // no restrictions on access to package
+      return false;
+    }
+    entry = new ClassLoaderExportEntry(hash, pkg);
+  }
+
   for (int i = 0; i < loaders->length(); i++) {
     hash = compute_hash(pkgs[i]);
     int tag = tag_for(loaders->obj_at(i));
@@ -110,13 +128,36 @@ bool ClassLoaderExports::set_package_access(Handle loader, const char* pkg,
     if (TracePackageAccess) {
         tty->print_cr("setPackageAccess to allow access to %d:%s from %d:%s",
             tag_for(loader), pkg, tag, pkgs[i]);
+        if (adding) {
+          exports->print_stats();
+        }
     }
   }
 
-  entry->set_next(first);
-  exports->set_first(index, entry);
+  if (!adding) {
+    entry->set_next(first);
+    exports->set_first(index, entry);
+  }
 
   return true;
+}
+
+// Set access control so that types defined by loader/pkg are accessible
+// only to the given runtime packages. Returns false if access control
+// is already set for the loader/package.
+bool ClassLoaderExports::set_package_access(Handle loader, const char* pkg,
+                                            objArrayHandle loaders, const char** pkgs)
+{
+  return set_package_access_impl(loader, pkg, loaders, pkgs, false);
+}
+
+// Augment access control so that the types defined by loader/pkg are accessible
+// to the given runtime packages. Returns true if access control has been
+// updated.
+bool ClassLoaderExports::add_package_access(Handle loader, const char* pkg,
+                                            objArrayHandle loaders, const char** pkgs)
+{
+  return set_package_access_impl(loader, pkg, loaders, pkgs, true);
 }
 
 // Verify that current_class can access new_class.
@@ -166,4 +207,33 @@ bool ClassLoaderExports::verify_package_access(Klass* current_class, Klass* new_
     tty->flush();
   }
   return allowed;
+}
+
+// print hash table stats
+void ClassLoaderExports::print_stats() {
+  unsigned int n_lists = 0;
+  unsigned int longest_list = 0;
+  unsigned int longest_allows = 0;
+
+  int index = 0;
+  while (index < _table_size) {
+    ClassLoaderExportEntry* entry = _table[index++];
+    if (entry != NULL) {
+      n_lists++;
+      unsigned int len = 0;
+      while (entry != NULL) {
+        if (++len > longest_list) {
+          longest_list = len;
+        }
+        unsigned int n_allows = entry->allows_count();
+        if (n_allows > longest_allows) {
+          longest_allows = n_allows;
+        }
+        entry = entry->next();
+      }
+    }
+  }
+
+  tty->print_cr("Used; %d, Longest chain: %d, Longest allows: %d",
+    n_lists, longest_list, longest_allows);
 }

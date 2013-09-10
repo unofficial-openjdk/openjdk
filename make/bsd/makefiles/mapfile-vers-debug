@@ -32,6 +32,7 @@
                 # _JVM
                 _JVM_Accept
                 _JVM_ActiveProcessorCount
+                _JVM_AddPackageAccess
                 _JVM_AllocateNewArray
                 _JVM_AllocateNewObject
                 _JVM_ArrayCopy

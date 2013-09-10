@@ -1001,6 +1001,28 @@ JVM_ENTRY(void, JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
 
 JVM_END
 
+JVM_ENTRY(jboolean, JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                                         jobjectArray loaders, jobjectArray pkgs))
+  JVMWrapper("JVM_AddPackageAccess");
+  ResourceMark rm(THREAD);
+
+  Handle loader_h(THREAD, JNIHandles::resolve(loader));
+  objArrayHandle loaders_h(THREAD, objArrayOop(JNIHandles::resolve_non_null(loaders)));
+
+  const char* pkg_str = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(pkg));
+
+  objArrayOop pkgs_array = objArrayOop(JNIHandles::resolve_non_null(pkgs));
+  assert(loaders_h->length() == pkgs_array->length(), "length should be the same");
+
+  char** pkgs_str_array = NEW_RESOURCE_ARRAY(char*, pkgs_array->length());
+  for (int i = 0; i < pkgs_array->length(); i++) {
+    pkgs_str_array[i] = java_lang_String::as_utf8_string(pkgs_array->obj_at(i));
+  }
+
+  return ClassLoaderExports::add_package_access(loader_h, pkg_str, loaders_h, (const char**) pkgs_str_array);
+
+JVM_END
+
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
 

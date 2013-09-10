@@ -450,6 +450,11 @@ JNIEXPORT void JNICALL
 JVM_SetPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
                      jobjectArray loaders, jobjectArray pkgs);
 
+JNIEXPORT jboolean JNICALL
+JVM_AddPackageAccess(JNIEnv *env, jobject loader, jstring pkg,
+                     jobjectArray loaders, jobjectArray pkgs);
+
+
 /*
  * Reflection support functions
  */
