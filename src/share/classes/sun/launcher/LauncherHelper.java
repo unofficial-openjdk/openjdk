@@ -57,6 +57,7 @@ import java.util.ResourceBundle;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -73,6 +74,9 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import jdk.jigsaw.module.Module;
+import jdk.jigsaw.module.ServiceDependence;
+import jdk.jigsaw.module.View;
+import jdk.jigsaw.module.ViewDependence;
 
 public enum LauncherHelper {
     INSTANCE;
@@ -762,6 +766,96 @@ public enum LauncherHelper {
             // launch appClass via fxLauncherMethod
             fxLauncherMethod.invoke(null,
                     new Object[] {fxLaunchName, fxLaunchMode, args});
+        }
+    }
+
+    private static void formatCommaList(PrintStream out,
+                                        String prefix,
+                                        Collection<?> list)
+    {
+        if (list.isEmpty())
+            return;
+        out.format("  %s", prefix);
+        boolean first = true;
+        for (Object ob : list) {
+            if (first) {
+                out.format(" %s", ob);
+                first = false;
+            } else {
+                out.format(", %s", ob);
+            }
+        }
+        out.format("%n");
+    }
+
+    private static void formatModuleView(PrintStream out,
+                                         View view,
+                                         String indent)
+    {
+        formatCommaList(out, indent + "provides",
+                        view.aliases());
+        formatCommaList(out, indent + "permits",
+                        view.permits());
+        Map<String,Set<String>> services = view.services();
+        for (Map.Entry<String,Set<String>> entry: services.entrySet()) {
+            String sn = entry.getKey();
+            for (String impl: entry.getValue()) {
+                out.format("%s  provides service %s with %s%n", indent, sn, impl);
+            }
+        }
+
+        if (!view.exports().isEmpty()) {
+            out.format("  %sexports%n", indent);
+            Set<String> exports = new TreeSet<>(view.exports());
+            for (String pn : exports) {
+                out.format("  %s  %s%n", indent, pn);
+            }
+        }
+    }
+
+    /**
+     * Called by the launcher to list the installed modules.
+     * If called without any sub-options then it the output is a simple
+     * list of the moduels. If called with the verbose sub-option
+     * (-XlistModules:verbose) then the dependences and other details
+     * are also printed.
+     */
+    static void listModules(boolean printToStderr, String optionFlag)
+        throws IOException, ClassNotFoundException
+    {
+        initOutput(printToStderr);
+
+        boolean verbose = false;
+        int colon = optionFlag.indexOf(':');
+        if (colon >= 0) {
+            String[] subOptions = optionFlag.substring(colon+1).split(",");
+            for (String subOption: subOptions) {
+                 switch (subOption) {
+                     case "verbose" : verbose = true; break;
+                     default : /* do nothing for now */
+                 }
+            }
+        }
+
+        Module[] mods = readModules();
+        Arrays.sort(mods);
+        for (Module m: mods) {
+            ostream.println(m.id().name());
+            if (verbose) {
+                for (ViewDependence d: m.viewDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                for (ServiceDependence d: m.serviceDependences()) {
+                    ostream.format("  %s%n", d);
+                }
+                formatModuleView(ostream, m.mainView(), "");
+                for (View v: m.views()) {
+                    if (v != m.mainView()) {
+                        ostream.format("  view %s%n", v.id().name());
+                        formatModuleView(ostream, v, "  ");
+                    }
+                }
+            }
         }
     }
 

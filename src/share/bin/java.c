@@ -69,6 +69,7 @@ static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static char     *showSettings = NULL;      /* print but continue */
+static char     *listModules = NULL;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -115,6 +116,7 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
+static void ListModules(JNIEnv* env, char *optString);
 
 static void SetPaths(int argc, char **argv);
 
@@ -377,6 +379,12 @@ JavaMain(void * _args)
     if (showSettings != NULL) {
         ShowSettings(env, showSettings);
         CHECK_EXCEPTION_LEAVE(1);
+    }
+
+    if (listModules != NULL) {
+        ListModules(env, listModules);
+        CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
     }
 
     if (printVersion || showVersion) {
@@ -1043,6 +1051,9 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "-XshowSettings") == 0 ||
                 JLI_StrCCmp(arg, "-XshowSettings:") == 0) {
             showSettings = arg;
+        } else if (JLI_StrCmp(arg, "-XlistModules") == 0 |
+                JLI_StrCCmp(arg, "-XlistModules:") == 0) {
+            listModules = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
 /*
@@ -1501,6 +1512,24 @@ ShowSettings(JNIEnv *env, char *optString)
                                  (jlong)maxHeapSize,
                                  (jlong)threadStackSize,
                                  ServerClassMachine());
+}
+
+/**
+ * List modules supported by the runtime
+ */
+static void
+ListModules(JNIEnv *env, char *optString)
+{
+    jmethodID listModulesID;
+    jstring joptString;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listModules", "(ZLjava/lang/String;)V"));
+    joptString = (*env)->NewStringUTF(env, optString);
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID,
+                                 USE_STDERR,
+                                 joptString);
 }
 
 /*
