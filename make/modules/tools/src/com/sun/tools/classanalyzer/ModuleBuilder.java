@@ -432,16 +432,17 @@ public class ModuleBuilder {
             return;
         }
         Module.View view = other.getView(d.name());
-        addDependence(m, other, view, requires, d.requiresOptional());
+        addDependence(m, other, view, requires, d.mods());
     }
 
     private void addDependence(Module from, Module to, Module.View view,
                                Map<String, Dependence> requires) {
-        addDependence(from, to, view, requires, false);
+        addDependence(from, to, view, requires, EnumSet.noneOf(Dependence.Identifier.class));
     }
 
     private void addDependence(Module from, Module to, Module.View view,
-                               Map<String, Dependence> requires, boolean optional) {
+                               Map<String, Dependence> requires,
+                               Set<Dependence.Identifier> mods) {
         assert from.group() != to.group();
         addBackEdge(from, view);
 
@@ -449,8 +450,9 @@ public class ModuleBuilder {
             // if there is an optional dependence on the main view,
             // make this an optional dependence
             Dependence d = requires.get(to.group().name());
-            if (d != null && d.requiresOptional()) {
-                 optional= true;
+            if (d != null && d.requiresOptional() && !mods.contains(OPTIONAL)) {
+                mods = new HashSet<>(mods);
+                mods.add(OPTIONAL);
             }
             view.addPermit(from.group().name());
         }
@@ -458,9 +460,7 @@ public class ModuleBuilder {
         String name = view.name;
         Dependence dep = requires.get(name);
         if (dep == null) {
-            Set<Dependence.Identifier> ids = optional ? EnumSet.of(OPTIONAL)
-                         : EnumSet.noneOf(Dependence.Identifier.class);
-            requires.put(name, dep = new Dependence(name, ids));
+            requires.put(name, dep = new Dependence(name, mods));
         } else {
             assert dep.name().equals(name);
         }

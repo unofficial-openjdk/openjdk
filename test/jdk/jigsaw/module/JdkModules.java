@@ -28,6 +28,8 @@ import java.util.*;
 import static java.lang.System.out;
 
 import jdk.jigsaw.module.*;
+import jdk.jigsaw.module.ViewDependence.Modifier;
+import static jdk.jigsaw.module.ViewDependence.Modifier.*;
 
 import org.testng.annotations.*;
 import static org.testng.Assert.*;
@@ -35,15 +37,25 @@ import static org.testng.Assert.*;
 @Test
 public class JdkModules {
     private static final String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-    private boolean testBase(Module m) throws Exception {
+    private void base(Module m) throws Exception {
         assertEquals(m.mainView().aliases(), Collections.singleton(ViewId.parse("java.base")));
 
-        // base module only has optional dependences
-        m.viewDependences().stream().forEach(vd -> {
-            assertEquals(vd.modifiers(), EnumSet.of(ViewDependence.Modifier.OPTIONAL));
-        });
+        // requires jdk.tls.internal due to the sunjce security provider
+        // - to be revisited
+        ViewDependence[] deps = new ViewDependence[] {
+            viewDep(EnumSet.of(OPTIONAL), "jdk.desktop"),
+            viewDep(EnumSet.of(OPTIONAL), "jdk.tls"),
+            viewDep(EnumSet.of(OPTIONAL), "jdk.tls.internal")
+        };
+        assertEqualsNoOrder(m.viewDependences().toArray(new ViewDependence[0]), deps);
+    }
 
-        return true;
+    private void jdk(Module m) throws Exception {
+        ViewDependence[] deps = new ViewDependence[] {
+            viewDep(EnumSet.of(PUBLIC), "jdk.jre"),
+            viewDep(EnumSet.of(PUBLIC), "jdk.tools")
+        };
+        assertEqualsNoOrder(m.viewDependences().toArray(new ViewDependence[0]), deps);
     }
 
     public void go() throws Exception {
@@ -56,10 +68,17 @@ public class JdkModules {
 
         // do sanity test for the base module for now
         for (Module m : modules) {
-            if (m.id().name().equals("jdk.base")) {
-                testBase(m);
+            switch (m.id().name()) {
+                case "jdk.base":
+                    base(m); break;
+                case "jdk":
+                    jdk(m); break;
             }
         }
+    }
+
+    private static ViewDependence viewDep(Set<Modifier> mods, String vq) {
+        return new ViewDependence(mods, ViewIdQuery.parse(vq));
     }
 
 }

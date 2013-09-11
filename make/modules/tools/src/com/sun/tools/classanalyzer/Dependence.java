@@ -22,6 +22,7 @@
  */
 package com.sun.tools.classanalyzer;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,6 +43,10 @@ public class Dependence implements Comparable<Dependence> {
 
     public String name() {
         return name;
+    }
+
+    public Set<Identifier> mods() {
+        return Collections.unmodifiableSet(identifiers);
     }
 
     public boolean requiresService() {
