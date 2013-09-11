@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 #include "classfile/vmSymbols.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "prims/jni.h"
 #include "prims/jniCheck.hpp"
 #include "prims/jvm_misc.hpp"
@@ -44,6 +44,12 @@
 #endif
 #ifdef TARGET_ARCH_zero
 # include "jniTypes_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "jniTypes_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "jniTypes_ppc.hpp"
 #endif
 
 
@@ -218,8 +224,7 @@ checkStaticFieldID(JavaThread* thr, jfieldID fid, jclass cls, int ftype)
     ReportJNIFatalError(thr, fatal_wrong_static_field);
 
   /* check for proper field type */
-  if (!instanceKlass::cast(f_oop)->find_local_field_from_offset(
-          id->offset(), true, &fd))
+  if (!id->find_local_field(&fd))
     ReportJNIFatalError(thr, fatal_static_field_not_found);
   if ((fd.field_type() != ftype) &&
       !(fd.field_type() == T_ARRAY && ftype == T_OBJECT)) {

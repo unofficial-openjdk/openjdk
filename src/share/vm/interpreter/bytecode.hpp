@@ -37,6 +37,12 @@
 #ifdef TARGET_ARCH_zero
 # include "bytes_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "bytes_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "bytes_ppc.hpp"
+#endif
 
 class ciBytecodeStream;
 
@@ -193,10 +199,10 @@ class Bytecode_member_ref: public Bytecode {
  public:
   int          index() const;                    // cache index (loaded from instruction)
   int          pool_index() const;               // constant pool index
-  symbolOop    name() const;                     // returns the name of the method or field
-  symbolOop    signature() const;                // returns the signature of the method or field
+  Symbol*      name() const;                     // returns the name of the method or field
+  Symbol*      signature() const;                // returns the signature of the method or field
 
-  BasicType    result_type(Thread* thread) const; // returns the result type of the getfield or invoke
+  BasicType    result_type() const;              // returns the result type of the getfield or invoke
 };
 
 // Abstraction for invoke_{virtual, static, interface, special}
@@ -227,6 +233,13 @@ class Bytecode_invoke: public Bytecode_member_ref {
                                                           is_invokestatic()    ||
                                                           is_invokespecial()   ||
                                                           is_invokedynamic(); }
+
+  bool is_method_handle_invoke() const {
+    return (is_invokedynamic() ||
+            (is_invokevirtual() &&
+             method()->constants()->klass_ref_at_noresolve(index()) == vmSymbols::java_lang_invoke_MethodHandle() &&
+             methodOopDesc::is_method_handle_invoke_name(name())));
+  }
 
   // Helper to skip verification.   Used is_valid() to check if the result is really an invoke
   inline friend Bytecode_invoke Bytecode_invoke_check(methodHandle method, int bci);

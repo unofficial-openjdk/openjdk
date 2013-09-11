@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
+ * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,9 @@
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #endif
+#ifdef CC_INTERP
+#include "interpreter/cppInterpreter.hpp"
+#endif
 
 address AbstractInterpreterGenerator::generate_slow_signature_handler() {
   _masm->advance(1);
@@ -64,33 +67,19 @@ address InterpreterGenerator::generate_math_entry(
 }
 
 address InterpreterGenerator::generate_abstract_entry() {
-  return ShouldNotCallThisEntry();
+  return generate_entry((address) ShouldNotCallThisEntry());
 }
 
 address InterpreterGenerator::generate_method_handle_entry() {
-  return ShouldNotCallThisEntry();
+#ifdef CC_INTERP
+  return generate_entry((address) CppInterpreter::method_handle_entry);
+#else
+  return generate_entry((address) ShouldNotCallThisEntry());
+#endif // CC_INTERP
 }
 
 bool AbstractInterpreter::can_be_compiled(methodHandle m) {
   return true;
-}
-
-int AbstractInterpreter::size_activation(methodOop method,
-                                         int tempcount,
-                                         int popframe_extra_args,
-                                         int moncount,
-                                         int callee_param_count,
-                                         int callee_locals,
-                                         bool is_top_frame) {
-  return layout_activation(method,
-                           tempcount,
-                           popframe_extra_args,
-                           moncount,
-                           callee_param_count,
-                           callee_locals,
-                           (frame*) NULL,
-                           (frame*) NULL,
-                           is_top_frame);
 }
 
 void Deoptimization::unwind_callee_save_values(frame* f,

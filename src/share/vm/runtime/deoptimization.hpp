@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,8 @@ class MonitorValue;
 class ObjectValue;
 
 class Deoptimization : AllStatic {
+  friend class VMStructs;
+
  public:
   // What condition caused the deoptimization?
   enum DeoptReason {
@@ -56,6 +58,7 @@ class Deoptimization : AllStatic {
     Reason_div0_check,            // a null_check due to division by zero
     Reason_age,                   // nmethod too old; tier threshold reached
     Reason_predicate,             // compiler generated predicate failed
+    Reason_loop_limit_check,      // compiler generated loop limits check failed
     Reason_LIMIT,
     // Note:  Keep this enum in sync. with _trap_reason_name.
     Reason_RECORDED_LIMIT = Reason_bimorphic  // some are not recorded per bc
@@ -78,7 +81,7 @@ class Deoptimization : AllStatic {
 
   enum {
     _action_bits = 3,
-    _reason_bits = 4,
+    _reason_bits = 5,
     _action_shift = 0,
     _reason_shift = _action_shift+_action_bits,
     BC_CASE_LIMIT = PRODUCT_ONLY(1) NOT_PRODUCT(4) // for _deoptimization_hist
@@ -136,18 +139,22 @@ class Deoptimization : AllStatic {
     address*  _frame_pcs;                 // Array of frame pc's, in bytes, for unrolling the stack
     intptr_t* _register_block;            // Block for storing callee-saved registers.
     BasicType _return_type;               // Tells if we have to restore double or long return value
+    intptr_t  _initial_info;              // Platform dependent data for the sender frame (was FP on x86)
+    int       _caller_actual_parameters;  // The number of actual arguments at the
+                                          // interpreted caller of the deoptimized frame
+
     // The following fields are used as temps during the unpacking phase
     // (which is tight on registers, especially on x86). They really ought
     // to be PD variables but that involves moving this class into its own
     // file to use the pd include mechanism. Maybe in a later cleanup ...
     intptr_t  _counter_temp;              // SHOULD BE PD VARIABLE (x86 frame count temp)
-    intptr_t  _initial_fp;                // SHOULD BE PD VARIABLE (x86/c2 initial ebp)
     intptr_t  _unpack_kind;               // SHOULD BE PD VARIABLE (x86 unpack kind)
     intptr_t  _sender_sp_temp;            // SHOULD BE PD VARIABLE (x86 sender_sp)
    public:
     // Constructor
     UnrollBlock(int  size_of_deoptimized_frame,
                 int  caller_adjustment,
+                int  caller_actual_parameters,
                 int  number_of_frames,
                 intptr_t* frame_sizes,
                 address* frames_pcs,
@@ -165,6 +172,10 @@ class Deoptimization : AllStatic {
     // Returns the total size of frames
     int size_of_frames() const;
 
+    void set_initial_info(intptr_t info) { _initial_info = info; }
+
+    int caller_actual_parameters() const { return _caller_actual_parameters; }
+
     // Accessors used by the code generator for the unpack stub.
     static int size_of_deoptimized_frame_offset_in_bytes() { return offset_of(UnrollBlock, _size_of_deoptimized_frame); }
     static int caller_adjustment_offset_in_bytes()         { return offset_of(UnrollBlock, _caller_adjustment);         }
@@ -175,7 +186,7 @@ class Deoptimization : AllStatic {
     static int register_block_offset_in_bytes()            { return offset_of(UnrollBlock, _register_block);            }
     static int return_type_offset_in_bytes()               { return offset_of(UnrollBlock, _return_type);               }
     static int counter_temp_offset_in_bytes()              { return offset_of(UnrollBlock, _counter_temp);              }
-    static int initial_fp_offset_in_bytes()                { return offset_of(UnrollBlock, _initial_fp);                }
+    static int initial_info_offset_in_bytes()              { return offset_of(UnrollBlock, _initial_info);              }
     static int unpack_kind_offset_in_bytes()               { return offset_of(UnrollBlock, _unpack_kind);               }
     static int sender_sp_temp_offset_in_bytes()            { return offset_of(UnrollBlock, _sender_sp_temp);            }
 

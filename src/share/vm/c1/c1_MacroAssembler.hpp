@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,12 @@
 #ifdef TARGET_ARCH_zero
 # include "assembler_zero.inline.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "assembler_arm.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "assembler_ppc.inline.hpp"
+#endif
 
 class CodeEmitInfo;
 
@@ -60,6 +66,12 @@ class C1_MacroAssembler: public MacroAssembler {
 #endif
 #ifdef TARGET_ARCH_sparc
 # include "c1_MacroAssembler_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "c1_MacroAssembler_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "c1_MacroAssembler_ppc.hpp"
 #endif
 
 };

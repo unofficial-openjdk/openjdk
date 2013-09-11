@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include "oops/methodOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
+#include "prims/methodHandles.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -51,6 +52,12 @@
 #endif
 #ifdef TARGET_ARCH_zero
 # include "nativeInst_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "nativeInst_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "nativeInst_ppc.hpp"
 #endif
 
 RegisterMap::RegisterMap(JavaThread *thread, bool update_map) {
@@ -163,6 +170,11 @@ void frame::set_pc(address   newpc ) {
 }
 
 // type testers
+bool frame::is_ricochet_frame() const {
+  RicochetBlob* rcb = SharedRuntime::ricochet_blob();
+  return (_cb == rcb && rcb != NULL && rcb->returns_to_bounce_addr(_pc));
+}
+
 bool frame::is_deoptimized_frame() const {
   assert(_deopt_state != unknown, "not answerable");
   return _deopt_state == is_deoptimized;
@@ -335,10 +347,16 @@ frame frame::java_sender() const {
 
 frame frame::real_sender(RegisterMap* map) const {
   frame result = sender(map);
-  while (result.is_runtime_frame()) {
+  while (result.is_runtime_frame() ||
+         result.is_ricochet_frame()) {
     result = result.sender(map);
   }
   return result;
+}
+
+frame frame::sender_for_ricochet_frame(RegisterMap* map) const {
+  assert(is_ricochet_frame(), "");
+  return MethodHandles::ricochet_frame_sender(*this, map);
 }
 
 // Note: called by profiler - NOT for current thread
@@ -523,6 +541,7 @@ jint frame::interpreter_frame_expression_stack_size() const {
 const char* frame::print_name() const {
   if (is_native_frame())      return "Native";
   if (is_interpreted_frame()) return "Interpreted";
+  if (is_ricochet_frame())    return "Ricochet";
   if (is_compiled_frame()) {
     if (is_deoptimized_frame()) return "Deoptimized";
     return "Compiled";
@@ -551,7 +570,7 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
     InterpreterCodelet* desc = Interpreter::codelet_containing(pc());
     if (desc != NULL) {
       st->print("~");
-      desc->print();
+      desc->print_on(st);
       NOT_PRODUCT(begin = desc->code_begin(); end = desc->code_end();)
     } else {
       st->print("~interpreter");
@@ -709,6 +728,8 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
       st->print("v  ~RuntimeStub::%s", ((RuntimeStub *)_cb)->name());
     } else if (_cb->is_deoptimization_stub()) {
       st->print("v  ~DeoptimizationBlob");
+    } else if (_cb->is_ricochet_stub()) {
+      st->print("v  ~RichochetBlob");
     } else if (_cb->is_exception_stub()) {
       st->print("v  ~ExceptionBlob");
     } else if (_cb->is_safepoint_stub()) {
@@ -792,7 +813,7 @@ class InterpretedArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  InterpretedArgumentOopFinder(symbolHandle signature, bool has_receiver, frame* fr, OopClosure* f) : SignatureInfo(signature), _has_receiver(has_receiver) {
+  InterpretedArgumentOopFinder(Symbol* signature, bool has_receiver, frame* fr, OopClosure* f) : SignatureInfo(signature), _has_receiver(has_receiver) {
     // compute size of arguments
     int args_size = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
     assert(!fr->is_interpreted_frame() ||
@@ -846,7 +867,7 @@ class EntryFrameOopFinder: public SignatureInfo {
   }
 
  public:
-   EntryFrameOopFinder(frame* frame, symbolHandle signature, bool is_static) : SignatureInfo(signature) {
+   EntryFrameOopFinder(frame* frame, Symbol* signature, bool is_static) : SignatureInfo(signature) {
      _f = NULL; // will be set later
      _fr = frame;
      _is_static = is_static;
@@ -861,7 +882,7 @@ class EntryFrameOopFinder: public SignatureInfo {
 
 };
 
-oop* frame::interpreter_callee_receiver_addr(symbolHandle signature) {
+oop* frame::interpreter_callee_receiver_addr(Symbol* signature) {
   ArgumentSizeComputer asc(signature);
   int size = asc.size();
   return (oop *)interpreter_frame_tos_at(size);
@@ -922,7 +943,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
 
   int max_locals = m->is_native() ? m->size_of_parameters() : m->max_locals();
 
-  symbolHandle signature;
+  Symbol* signature = NULL;
   bool has_receiver = false;
 
   // Process a callee's arguments if we are at a call site
@@ -932,7 +953,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   if (!m->is_native()) {
     Bytecode_invoke call = Bytecode_invoke_check(m, bci);
     if (call.is_valid()) {
-      signature = symbolHandle(thread, call.signature());
+      signature = call.signature();
       has_receiver = call.has_receiver();
       if (map->include_argument_oops() &&
           interpreter_frame_expression_stack_size() > 0) {
@@ -965,13 +986,16 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
 }
 
 
-void frame::oops_interpreted_arguments_do(symbolHandle signature, bool has_receiver, OopClosure* f) {
+void frame::oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f) {
   InterpretedArgumentOopFinder finder(signature, has_receiver, this, f);
   finder.oops_do();
 }
 
 void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* reg_map) {
   assert(_cb != NULL, "sanity check");
+  if (_cb == SharedRuntime::ricochet_blob()) {
+    oops_ricochet_do(f, reg_map);
+  }
   if (_cb->oop_maps() != NULL) {
     OopMapSet::oops_do(this, reg_map, f);
 
@@ -988,6 +1012,11 @@ void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const Register
   // closure decides how it wants nmethods to be traced.
   if (cf != NULL)
     cf->do_code_blob(_cb);
+}
+
+void frame::oops_ricochet_do(OopClosure* f, const RegisterMap* map) {
+  assert(is_ricochet_frame(), "");
+  MethodHandles::ricochet_frame_oops_do(*this, f, map);
 }
 
 class CompiledArgumentOopFinder: public SignatureInfo {
@@ -1014,7 +1043,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   }
 
  public:
-  CompiledArgumentOopFinder(symbolHandle signature, bool has_receiver, OopClosure* f, frame fr,  const RegisterMap* reg_map)
+  CompiledArgumentOopFinder(Symbol* signature, bool has_receiver, OopClosure* f, frame fr,  const RegisterMap* reg_map)
     : SignatureInfo(signature) {
 
     // initialize CompiledArgumentOopFinder
@@ -1026,7 +1055,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
     _arg_size  = ArgumentSizeComputer(signature).size() + (has_receiver ? 1 : 0);
 
     int arg_size;
-    _regs = SharedRuntime::find_callee_arguments(signature(), has_receiver, &arg_size);
+    _regs = SharedRuntime::find_callee_arguments(signature, has_receiver, &arg_size);
     assert(arg_size == _arg_size, "wrong arg size");
   }
 
@@ -1039,7 +1068,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
   }
 };
 
-void frame::oops_compiled_arguments_do(symbolHandle signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f) {
+void frame::oops_compiled_arguments_do(Symbol* signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f) {
   ResourceMark rm;
   CompiledArgumentOopFinder finder(signature, has_receiver, f, *this, reg_map);
   finder.oops_do();
@@ -1099,8 +1128,7 @@ void frame::oops_entry_do(OopClosure* f, const RegisterMap* map) {
     // must collect argument oops, as nobody else is doing it
     Thread *thread = Thread::current();
     methodHandle m (thread, entry_frame_call_wrapper()->callee_method());
-    symbolHandle signature (thread, m->signature());
-    EntryFrameOopFinder finder(this, signature, m->is_static());
+    EntryFrameOopFinder finder(this, m->signature(), m->is_static());
     finder.arguments_do(f);
   }
   // Traverse the Handle Block saved in the entry frame
@@ -1287,7 +1315,6 @@ bool frame::verify_return_pc(address x) {
 }
 #endif
 
-
 #ifdef ASSERT
 void frame::interpreter_frame_verify_monitor(BasicObjectLock* value) const {
   assert(is_interpreted_frame(), "Not an interpreted frame");
@@ -1305,6 +1332,99 @@ void frame::interpreter_frame_verify_monitor(BasicObjectLock* value) const {
 }
 #endif
 
+#ifndef PRODUCT
+void frame::describe(FrameValues& values, int frame_no) {
+  // boundaries: sp and the 'real' frame pointer
+  values.describe(-1, sp(), err_msg("sp for #%d", frame_no), 1);
+  intptr_t* frame_pointer = real_fp(); // Note: may differ from fp()
+
+  // print frame info at the highest boundary
+  intptr_t* info_address = MAX2(sp(), frame_pointer);
+
+  if (info_address != frame_pointer) {
+    // print frame_pointer explicitly if not marked by the frame info
+    values.describe(-1, frame_pointer, err_msg("frame pointer for #%d", frame_no), 1);
+  }
+
+  if (is_entry_frame() || is_compiled_frame() || is_interpreted_frame() || is_native_frame()) {
+    // Label values common to most frames
+    values.describe(-1, unextended_sp(), err_msg("unextended_sp for #%d", frame_no));
+  }
+
+  if (is_interpreted_frame()) {
+    methodOop m = interpreter_frame_method();
+    int bci = interpreter_frame_bci();
+
+    // Label the method and current bci
+    values.describe(-1, info_address,
+                    FormatBuffer<1024>("#%d method %s @ %d", frame_no, m->name_and_sig_as_C_string(), bci), 2);
+    values.describe(-1, info_address,
+                    err_msg("- %d locals %d max stack", m->max_locals(), m->max_stack()), 1);
+    if (m->max_locals() > 0) {
+      intptr_t* l0 = interpreter_frame_local_at(0);
+      intptr_t* ln = interpreter_frame_local_at(m->max_locals() - 1);
+      values.describe(-1, MAX2(l0, ln), err_msg("locals for #%d", frame_no), 1);
+      // Report each local and mark as owned by this frame
+      for (int l = 0; l < m->max_locals(); l++) {
+        intptr_t* l0 = interpreter_frame_local_at(l);
+        values.describe(frame_no, l0, err_msg("local %d", l));
+      }
+    }
+
+    // Compute the actual expression stack size
+    InterpreterOopMap mask;
+    OopMapCache::compute_one_oop_map(m, bci, &mask);
+    intptr_t* tos = NULL;
+    // Report each stack element and mark as owned by this frame
+    for (int e = 0; e < mask.expression_stack_size(); e++) {
+      tos = MAX2(tos, interpreter_frame_expression_stack_at(e));
+      values.describe(frame_no, interpreter_frame_expression_stack_at(e),
+                      err_msg("stack %d", e));
+    }
+    if (tos != NULL) {
+      values.describe(-1, tos, err_msg("expression stack for #%d", frame_no), 1);
+    }
+    if (interpreter_frame_monitor_begin() != interpreter_frame_monitor_end()) {
+      values.describe(frame_no, (intptr_t*)interpreter_frame_monitor_begin(), "monitors begin");
+      values.describe(frame_no, (intptr_t*)interpreter_frame_monitor_end(), "monitors end");
+    }
+  } else if (is_entry_frame()) {
+    // For now just label the frame
+    values.describe(-1, info_address, err_msg("#%d entry frame", frame_no), 2);
+  } else if (is_compiled_frame()) {
+    // For now just label the frame
+    nmethod* nm = cb()->as_nmethod_or_null();
+    values.describe(-1, info_address,
+                    FormatBuffer<1024>("#%d nmethod " INTPTR_FORMAT " for method %s%s", frame_no,
+                                       nm, nm->method()->name_and_sig_as_C_string(),
+                                       (_deopt_state == is_deoptimized) ?
+                                       " (deoptimized)" :
+                                       ((_deopt_state == unknown) ? " (state unknown)" : "")),
+                    2);
+  } else if (is_native_frame()) {
+    // For now just label the frame
+    nmethod* nm = cb()->as_nmethod_or_null();
+    values.describe(-1, info_address,
+                    FormatBuffer<1024>("#%d nmethod " INTPTR_FORMAT " for native method %s", frame_no,
+                                       nm, nm->method()->name_and_sig_as_C_string()), 2);
+  } else if (is_ricochet_frame()) {
+      values.describe(-1, info_address, err_msg("#%d ricochet frame", frame_no), 2);
+  } else {
+    // provide default info if not handled before
+    char *info = (char *) "special frame";
+    if ((_cb != NULL) &&
+        (_cb->name() != NULL)) {
+      info = (char *)_cb->name();
+    }
+    values.describe(-1, info_address, err_msg("#%d <%s>", frame_no, info), 2);
+  }
+
+  // platform dependent additional data
+  describe_pd(values, frame_no);
+}
+
+#endif
+
 
 //-----------------------------------------------------------------------------------
 // StackFrameStream implementation
@@ -1314,3 +1434,94 @@ StackFrameStream::StackFrameStream(JavaThread *thread, bool update) : _reg_map(t
   _fr = thread->last_frame();
   _is_done = false;
 }
+
+
+#ifndef PRODUCT
+
+void FrameValues::describe(int owner, intptr_t* location, const char* description, int priority) {
+  FrameValue fv;
+  fv.location = location;
+  fv.owner = owner;
+  fv.priority = priority;
+  fv.description = NEW_RESOURCE_ARRAY(char, strlen(description) + 1);
+  strcpy(fv.description, description);
+  _values.append(fv);
+}
+
+
+#ifdef ASSERT
+void FrameValues::validate() {
+  _values.sort(compare);
+  bool error = false;
+  FrameValue prev;
+  prev.owner = -1;
+  for (int i = _values.length() - 1; i >= 0; i--) {
+    FrameValue fv = _values.at(i);
+    if (fv.owner == -1) continue;
+    if (prev.owner == -1) {
+      prev = fv;
+      continue;
+    }
+    if (prev.location == fv.location) {
+      if (fv.owner != prev.owner) {
+        tty->print_cr("overlapping storage");
+        tty->print_cr(" " INTPTR_FORMAT ": " INTPTR_FORMAT " %s", prev.location, *prev.location, prev.description);
+        tty->print_cr(" " INTPTR_FORMAT ": " INTPTR_FORMAT " %s", fv.location, *fv.location, fv.description);
+        error = true;
+      }
+    } else {
+      prev = fv;
+    }
+  }
+  assert(!error, "invalid layout");
+}
+#endif // ASSERT
+
+void FrameValues::print(JavaThread* thread) {
+  _values.sort(compare);
+
+  // Sometimes values like the fp can be invalid values if the
+  // register map wasn't updated during the walk.  Trim out values
+  // that aren't actually in the stack of the thread.
+  int min_index = 0;
+  int max_index = _values.length() - 1;
+  intptr_t* v0 = _values.at(min_index).location;
+  intptr_t* v1 = _values.at(max_index).location;
+
+  if (thread == Thread::current()) {
+    while (!thread->is_in_stack((address)v0)) {
+      v0 = _values.at(++min_index).location;
+    }
+    while (!thread->is_in_stack((address)v1)) {
+      v1 = _values.at(--max_index).location;
+    }
+  } else {
+    while (!thread->on_local_stack((address)v0)) {
+      v0 = _values.at(++min_index).location;
+    }
+    while (!thread->on_local_stack((address)v1)) {
+      v1 = _values.at(--max_index).location;
+    }
+  }
+  intptr_t* min = MIN2(v0, v1);
+  intptr_t* max = MAX2(v0, v1);
+  intptr_t* cur = max;
+  intptr_t* last = NULL;
+  for (int i = max_index; i >= min_index; i--) {
+    FrameValue fv = _values.at(i);
+    while (cur > fv.location) {
+      tty->print_cr(" " INTPTR_FORMAT ": " INTPTR_FORMAT, cur, *cur);
+      cur--;
+    }
+    if (last == fv.location) {
+      const char* spacer = "          " LP64_ONLY("        ");
+      tty->print_cr(" %s  %s %s", spacer, spacer, fv.description);
+    } else {
+      tty->print_cr(" " INTPTR_FORMAT ": " INTPTR_FORMAT " %s", fv.location, *fv.location, fv.description);
+      last = fv.location;
+      cur--;
+    }
+  }
+}
+
+#endif // ndef PRODUCT

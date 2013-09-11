@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@
 #include "oops/instanceKlass.hpp"
 #include "oops/methodOop.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "prims/jvm_misc.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/arguments.hpp"
@@ -49,9 +49,12 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 
 
-static void mangle_name_on(outputStream* st, symbolOop name, int begin, int end) {
+static void mangle_name_on(outputStream* st, Symbol* name, int begin, int end) {
   char* bytes = (char*)name->bytes() + begin;
   char* end_bytes = (char*)name->bytes() + end;
   while (bytes < end_bytes) {
@@ -70,7 +73,7 @@ static void mangle_name_on(outputStream* st, symbolOop name, int begin, int end)
 }
 
 
-static void mangle_name_on(outputStream* st, symbolOop name) {
+static void mangle_name_on(outputStream* st, Symbol* name) {
   mangle_name_on(st, name, 0, name->utf8_length());
 }
 
@@ -88,10 +91,23 @@ char* NativeLookup::pure_jni_name(methodHandle method) {
 }
 
 
+char* NativeLookup::critical_jni_name(methodHandle method) {
+  stringStream st;
+  // Prefix
+  st.print("JavaCritical_");
+  // Klass name
+  mangle_name_on(&st, method->klass_name());
+  st.print("_");
+  // Method name
+  mangle_name_on(&st, method->name());
+  return st.as_string();
+}
+
+
 char* NativeLookup::long_jni_name(methodHandle method) {
   // Signature ignore the wrapping parenteses and the trailing return type
   stringStream st;
-  symbolOop signature = method->signature();
+  Symbol* signature = method->signature();
   st.print("__");
   // find ')'
   int end;
@@ -107,29 +123,28 @@ extern "C" {
   void JNICALL JVM_RegisterPerfMethods(JNIEnv *env, jclass perfclass);
 }
 
-static address lookup_special_native(char* jni_name) {
-  // NB: To ignore the jni prefix and jni postfix strstr is used matching.
-  if (!JDK_Version::is_gte_jdk14x_version()) {
-    // These functions only exist for compatibility with 1.3.1 and earlier
-    // Intercept ObjectOutputStream getPrimitiveFieldValues for faster serialization
-    if (strstr(jni_name, "Java_java_io_ObjectOutputStream_getPrimitiveFieldValues") != NULL) {
-      return CAST_FROM_FN_PTR(address, JVM_GetPrimitiveFieldValues);
-    }
-    // Intercept ObjectInputStream setPrimitiveFieldValues for faster serialization
-    if (strstr(jni_name, "Java_java_io_ObjectInputStream_setPrimitiveFieldValues") != NULL) {
-      return CAST_FROM_FN_PTR(address, JVM_SetPrimitiveFieldValues);
-    }
-  }
-  if (strstr(jni_name, "Java_sun_misc_Unsafe_registerNatives") != NULL) {
-    return CAST_FROM_FN_PTR(address, JVM_RegisterUnsafeMethods);
-  }
-  if (strstr(jni_name, "Java_sun_dyn_MethodHandleNatives_registerNatives") != NULL) {
-    return CAST_FROM_FN_PTR(address, JVM_RegisterMethodHandleMethods);
-  }
-  if (strstr(jni_name, "Java_sun_misc_Perf_registerNatives") != NULL) {
-    return CAST_FROM_FN_PTR(address, JVM_RegisterPerfMethods);
-  }
+#define CC (char*)  /* cast a literal from (const char*) */
+#define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
+static JNINativeMethod lookup_special_native_methods[] = {
+  // Next two functions only exist for compatibility with 1.3.1 and earlier.
+  { CC"Java_java_io_ObjectOutputStream_getPrimitiveFieldValues",   NULL, FN_PTR(JVM_GetPrimitiveFieldValues)     },  // intercept ObjectOutputStream getPrimitiveFieldValues for faster serialization
+  { CC"Java_java_io_ObjectInputStream_setPrimitiveFieldValues",    NULL, FN_PTR(JVM_SetPrimitiveFieldValues)     },  // intercept ObjectInputStream setPrimitiveFieldValues for faster serialization
+
+  { CC"Java_sun_misc_Unsafe_registerNatives",                      NULL, FN_PTR(JVM_RegisterUnsafeMethods)       },
+  { CC"Java_java_lang_invoke_MethodHandleNatives_registerNatives", NULL, FN_PTR(JVM_RegisterMethodHandleMethods) },
+  { CC"Java_sun_misc_Perf_registerNatives",                        NULL, FN_PTR(JVM_RegisterPerfMethods)         }
+};
+
+static address lookup_special_native(char* jni_name) {
+  int i = !JDK_Version::is_gte_jdk14x_version() ? 0 : 2;  // see comment in lookup_special_native_methods
+  int count = sizeof(lookup_special_native_methods) / sizeof(JNINativeMethod);
+  for (; i < count; i++) {
+    // NB: To ignore the jni prefix and jni postfix strstr is used matching.
+    if (strstr(jni_name, lookup_special_native_methods[i].name) != NULL) {
+      return CAST_FROM_FN_PTR(address, lookup_special_native_methods[i].fnPtr);
+    }
+  }
   return NULL;
 }
 
@@ -168,8 +183,8 @@ address NativeLookup::lookup_style(methodHandle method, char* pure_name, const c
   JavaValue result(T_LONG);
   JavaCalls::call_static(&result,
                          klass,
-                         vmSymbolHandles::findNative_name(),
-                         vmSymbolHandles::classloader_string_long_signature(),
+                         vmSymbols::findNative_name(),
+                         vmSymbols::classloader_string_long_signature(),
                          // Arguments
                          loader,
                          name_arg,
@@ -188,6 +203,34 @@ address NativeLookup::lookup_style(methodHandle method, char* pure_name, const c
   }
 
   return entry;
+}
+
+
+address NativeLookup::lookup_critical_style(methodHandle method, char* pure_name, const char* long_name, int args_size, bool os_style) {
+  if (!method->has_native_function()) {
+    return NULL;
+  }
+
+  address current_entry = method->native_function();
+
+  char dll_name[JVM_MAXPATHLEN];
+  int offset;
+  if (os::dll_address_to_library_name(current_entry, dll_name, sizeof(dll_name), &offset)) {
+    char ebuf[32];
+    void* dll = os::dll_load(dll_name, ebuf, sizeof(ebuf));
+    if (dll != NULL) {
+      // Compute complete JNI name for style
+      stringStream st;
+      if (os_style) os::print_jni_name_prefix_on(&st, args_size);
+      st.print_raw(pure_name);
+      st.print_raw(long_name);
+      if (os_style) os::print_jni_name_suffix_on(&st, args_size);
+      char* jni_name = st.as_string();
+      return (address)os::dll_lookup(dll, jni_name);
+    }
+  }
+
+  return NULL;
 }
 
 
@@ -226,6 +269,58 @@ address NativeLookup::lookup_entry(methodHandle method, bool& in_base_library, T
   return entry; // NULL indicates not found
 }
 
+// Check all the formats of native implementation name to see if there is one
+// for the specified method.
+address NativeLookup::lookup_critical_entry(methodHandle method) {
+  if (!CriticalJNINatives) return NULL;
+
+  if (method->is_synchronized() ||
+      !method->is_static()) {
+    // Only static non-synchronized methods are allowed
+    return NULL;
+  }
+
+  ResourceMark rm;
+  address entry = NULL;
+
+  Symbol* signature = method->signature();
+  for (int end = 0; end < signature->utf8_length(); end++) {
+    if (signature->byte_at(end) == 'L') {
+      // Don't allow object types
+      return NULL;
+    }
+  }
+
+  // Compute critical name
+  char* critical_name = critical_jni_name(method);
+
+  // Compute argument size
+  int args_size = 1                             // JNIEnv
+                + (method->is_static() ? 1 : 0) // class for static methods
+                + method->size_of_parameters(); // actual parameters
+
+
+  // 1) Try JNI short style
+  entry = lookup_critical_style(method, critical_name, "",        args_size, true);
+  if (entry != NULL) return entry;
+
+  // Compute long name
+  char* long_name = long_jni_name(method);
+
+  // 2) Try JNI long style
+  entry = lookup_critical_style(method, critical_name, long_name, args_size, true);
+  if (entry != NULL) return entry;
+
+  // 3) Try JNI short style without os prefix/suffix
+  entry = lookup_critical_style(method, critical_name, "",        args_size, false);
+  if (entry != NULL) return entry;
+
+  // 4) Try JNI long style without os prefix/suffix
+  entry = lookup_critical_style(method, critical_name, long_name, args_size, false);
+
+  return entry; // NULL indicates not found
+}
+
 // Check if there are any JVM TI prefixes which have been applied to the native method name.
 // If any are found, remove them before attemping the look up of the
 // native implementation again.
@@ -249,10 +344,10 @@ address NativeLookup::lookup_entry_prefixed(methodHandle method, bool& in_base_l
   if (wrapper_name != in_name) {
     // we have a name for a wrapping method
     int wrapper_name_len = (int)strlen(wrapper_name);
-    symbolHandle wrapper_symbol(THREAD, SymbolTable::probe(wrapper_name, wrapper_name_len));
-    if (!wrapper_symbol.is_null()) {
+    TempNewSymbol wrapper_symbol = SymbolTable::probe(wrapper_name, wrapper_name_len);
+    if (wrapper_symbol != NULL) {
       KlassHandle kh(method->method_holder());
-      methodOop wrapper_method = Klass::cast(kh())->lookup_method(wrapper_symbol(),
+      methodOop wrapper_method = Klass::cast(kh())->lookup_method(wrapper_symbol,
                                                                   method->signature());
       if (wrapper_method != NULL && !wrapper_method->is_native()) {
         // we found a wrapper method, use its native entry
@@ -301,9 +396,9 @@ address NativeLookup::lookup(methodHandle method, bool& in_base_library, TRAPS) 
 address NativeLookup::base_library_lookup(const char* class_name, const char* method_name, const char* signature) {
   EXCEPTION_MARK;
   bool in_base_library = true;  // SharedRuntime inits some math methods.
-  symbolHandle c_name = oopFactory::new_symbol_handle(class_name,  CATCH);
-  symbolHandle m_name = oopFactory::new_symbol_handle(method_name, CATCH);
-  symbolHandle s_name = oopFactory::new_symbol_handle(signature,   CATCH);
+  TempNewSymbol c_name = SymbolTable::new_symbol(class_name,  CATCH);
+  TempNewSymbol m_name = SymbolTable::new_symbol(method_name, CATCH);
+  TempNewSymbol s_name = SymbolTable::new_symbol(signature,   CATCH);
 
   // Find the class
   klassOop k = SystemDictionary::resolve_or_fail(c_name, true, CATCH);
@@ -311,7 +406,7 @@ address NativeLookup::base_library_lookup(const char* class_name, const char* me
 
   // Find method and invoke standard lookup
   methodHandle method (THREAD,
-                       klass->uncached_lookup_method(m_name(), s_name()));
+                       klass->uncached_lookup_method(m_name, s_name));
   address result = lookup(method, in_base_library, CATCH);
   assert(in_base_library, "must be in basic library");
   guarantee(result != NULL, "must be non NULL");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -430,6 +430,12 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
 #ifdef TARGET_ARCH_zero
 # include "relocInfo_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "relocInfo_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "relocInfo_ppc.hpp"
+#endif
 
 
  protected:
@@ -697,6 +703,10 @@ class Relocation VALUE_OBJ_CLASS_SPEC {
     assert(datalen()==0 || type()==relocInfo::none, "no data here");
   }
 
+  static bool is_reloc_index(intptr_t index) {
+    return 0 < index && index < os::vm_page_size();
+  }
+
  protected:
   // Helper functions for pack_data_to() and unpack_data().
 
@@ -759,7 +769,8 @@ class Relocation VALUE_OBJ_CLASS_SPEC {
 
  protected:
   // platform-dependent utilities for decoding and patching instructions
-  void       pd_set_data_value       (address x, intptr_t off); // a set or mem-ref
+  void       pd_set_data_value       (address x, intptr_t off, bool verify_only = false); // a set or mem-ref
+  void       pd_verify_data_value    (address x, intptr_t off) { pd_set_data_value(x, off, true); }
   address    pd_call_destination     (address orig_addr = NULL);
   void       pd_set_call_destination (address x);
   void       pd_swap_in_breakpoint   (address x, short* instrs, int instrlen);
@@ -874,6 +885,12 @@ class DataRelocation : public Relocation {
     else
       pd_set_data_value(x, o);
   }
+  void        verify_value(address x) {
+    if (addr_in_const())
+      assert(*(address*)addr() == x, "must agree");
+    else
+      pd_verify_data_value(x, offset());
+  }
 
   // The "o" (displacement) argument is relevant only to split relocations
   // on RISC machines.  In some CPUs (SPARC), the set-hi and set-lo ins'ns
@@ -943,6 +960,8 @@ class oop_Relocation : public DataRelocation {
   void unpack_data();
 
   void fix_oop_relocation();        // reasserts oop value
+
+  void verify_oop_relocation();
 
   address value()  { return (address) *oop_addr(); }
 
@@ -1110,6 +1129,12 @@ class external_word_Relocation : public DataRelocation {
     RelocationHolder rh = newHolder();
     new(rh) external_word_Relocation(NULL);
     return rh;
+  }
+
+  // Some address looking values aren't safe to treat as relocations
+  // and should just be treated as constants.
+  static bool can_be_relocated(address target) {
+    return target != NULL && !is_reloc_index((intptr_t)target);
   }
 
  private:

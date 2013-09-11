@@ -171,7 +171,6 @@ address    TemplateInterpreter::_throw_ArrayIndexOutOfBoundsException_entry = NU
 address    TemplateInterpreter::_throw_ArrayStoreException_entry            = NULL;
 address    TemplateInterpreter::_throw_ArithmeticException_entry            = NULL;
 address    TemplateInterpreter::_throw_ClassCastException_entry             = NULL;
-address    TemplateInterpreter::_throw_WrongMethodType_entry                = NULL;
 address    TemplateInterpreter::_throw_NullPointerException_entry           = NULL;
 address    TemplateInterpreter::_throw_StackOverflowError_entry             = NULL;
 address    TemplateInterpreter::_throw_exception_entry                      = NULL;
@@ -346,7 +345,6 @@ void TemplateInterpreterGenerator::generate_all() {
     Interpreter::_throw_ArrayStoreException_entry            = generate_klass_exception_handler("java/lang/ArrayStoreException"                 );
     Interpreter::_throw_ArithmeticException_entry            = generate_exception_handler("java/lang/ArithmeticException"           , "/ by zero");
     Interpreter::_throw_ClassCastException_entry             = generate_ClassCastException_handler();
-    Interpreter::_throw_WrongMethodType_entry                = generate_WrongMethodType_handler();
     Interpreter::_throw_NullPointerException_entry           = generate_exception_handler("java/lang/NullPointerException"          , NULL       );
     Interpreter::_throw_StackOverflowError_entry             = generate_StackOverflowError_handler();
   }
@@ -372,6 +370,7 @@ void TemplateInterpreterGenerator::generate_all() {
   method_entry(java_lang_math_sqrt )
   method_entry(java_lang_math_log  )
   method_entry(java_lang_math_log10)
+  method_entry(java_lang_ref_reference_get)
 
   // all native method kinds (must be one contiguous block)
   Interpreter::_native_entry_begin = Interpreter::code()->code_end();

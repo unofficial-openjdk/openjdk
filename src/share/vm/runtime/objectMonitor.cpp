@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,10 @@
 # include "os_windows.inline.hpp"
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+# include "thread_bsd.inline.hpp"
+#endif
 
 #if defined(__GNUC__) && !defined(IA64)
   // Need to inhibit inlining for older versions of GCC to avoid build-time failures
@@ -64,6 +68,19 @@
 // Only bother with this argument setup if dtrace is available
 // TODO-FIXME: probes should not fire when caller is _blocked.  assert() accordingly.
 
+
+#define DTRACE_MONITOR_PROBE_COMMON(klassOop, thread)                      \
+  char* bytes = NULL;                                                      \
+  int len = 0;                                                             \
+  jlong jtid = SharedRuntime::get_java_tid(thread);                        \
+  Symbol* klassname = ((oop)(klassOop))->klass()->klass_part()->name();    \
+  if (klassname != NULL) {                                                 \
+    bytes = (char*)klassname->bytes();                                     \
+    len = klassname->utf8_length();                                        \
+  }
+
+#ifndef USDT2
+
 HS_DTRACE_PROBE_DECL4(hotspot, monitor__notify,
   jlong, uintptr_t, char*, int);
 HS_DTRACE_PROBE_DECL4(hotspot, monitor__notifyAll,
@@ -74,16 +91,6 @@ HS_DTRACE_PROBE_DECL4(hotspot, monitor__contended__entered,
   jlong, uintptr_t, char*, int);
 HS_DTRACE_PROBE_DECL4(hotspot, monitor__contended__exit,
   jlong, uintptr_t, char*, int);
-
-#define DTRACE_MONITOR_PROBE_COMMON(klassOop, thread)                      \
-  char* bytes = NULL;                                                      \
-  int len = 0;                                                             \
-  jlong jtid = SharedRuntime::get_java_tid(thread);                        \
-  symbolOop klassname = ((oop)(klassOop))->klass()->klass_part()->name();  \
-  if (klassname != NULL) {                                                 \
-    bytes = (char*)klassname->bytes();                                     \
-    len = klassname->utf8_length();                                        \
-  }
 
 #define DTRACE_MONITOR_WAIT_PROBE(monitor, klassOop, thread, millis)       \
   {                                                                        \
@@ -103,6 +110,33 @@ HS_DTRACE_PROBE_DECL4(hotspot, monitor__contended__exit,
     }                                                                      \
   }
 
+#else /* USDT2 */
+
+#define DTRACE_MONITOR_WAIT_PROBE(monitor, klassOop, thread, millis)       \
+  {                                                                        \
+    if (DTraceMonitorProbes) {                                            \
+      DTRACE_MONITOR_PROBE_COMMON(klassOop, thread);                       \
+      HOTSPOT_MONITOR_WAIT(jtid,                                           \
+                       (monitor), bytes, len, (millis));                   \
+    }                                                                      \
+  }
+
+#define HOTSPOT_MONITOR_contended__enter HOTSPOT_MONITOR_CONTENDED_ENTER
+#define HOTSPOT_MONITOR_contended__entered HOTSPOT_MONITOR_CONTENDED_ENTERED
+#define HOTSPOT_MONITOR_contended__exit HOTSPOT_MONITOR_CONTENDED_EXIT
+#define HOTSPOT_MONITOR_notify HOTSPOT_MONITOR_NOTIFY
+#define HOTSPOT_MONITOR_notifyAll HOTSPOT_MONITOR_NOTIFYALL
+
+#define DTRACE_MONITOR_PROBE(probe, monitor, klassOop, thread)             \
+  {                                                                        \
+    if (DTraceMonitorProbes) {                                            \
+      DTRACE_MONITOR_PROBE_COMMON(klassOop, thread);                       \
+      HOTSPOT_MONITOR_##probe(jtid,                                               \
+                       (uintptr_t)(monitor), bytes, len);                  \
+    }                                                                      \
+  }
+
+#endif /* USDT2 */
 #else //  ndef DTRACE_ENABLED
 
 #define DTRACE_MONITOR_WAIT_PROBE(klassOop, thread, millis, mon)    {;}

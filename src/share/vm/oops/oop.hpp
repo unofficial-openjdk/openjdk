@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,6 +71,11 @@ class oopDesc {
   static BarrierSet* _bs;
 
  public:
+  enum ConcSafeType {
+    IsUnsafeConc = false,
+    IsSafeConc   = true
+  };
+
   markOop  mark() const         { return _mark; }
   markOop* mark_addr() const    { return (markOop*) &_mark; }
 
@@ -124,10 +129,10 @@ class oopDesc {
 
   // type test operations (inlined in oop.inline.h)
   bool is_instance()           const;
+  bool is_instanceMirror()     const;
   bool is_instanceRef()        const;
   bool is_array()              const;
   bool is_objArray()           const;
-  bool is_symbol()             const;
   bool is_klass()              const;
   bool is_thread()             const;
   bool is_method()             const;
@@ -209,8 +214,10 @@ class oopDesc {
 
   // Access to fields in a instanceOop through these methods.
   oop obj_field(int offset) const;
+  volatile oop obj_field_volatile(int offset) const;
   void obj_field_put(int offset, oop value);
-  void obj_field_raw_put(int offset, oop value);
+  void obj_field_put_raw(int offset, oop value);
+  void obj_field_put_volatile(int offset, oop value);
 
   jbyte byte_field(int offset) const;
   void byte_field_put(int offset, jbyte contents);
@@ -318,13 +325,6 @@ class oopDesc {
 
   // Parallel Old
   void update_contents(ParCompactionManager* cm);
-  void update_contents(ParCompactionManager* cm,
-                       HeapWord* begin_limit,
-                       HeapWord* end_limit);
-  void update_contents(ParCompactionManager* cm,
-                       klassOop old_klass,
-                       HeapWord* begin_limit,
-                       HeapWord* end_limit);
 
   void follow_contents(ParCompactionManager* cm);
   void follow_header(ParCompactionManager* cm);
@@ -365,7 +365,6 @@ class oopDesc {
 #ifndef SERIALGC
   // Parallel old
   void update_header();
-  void update_header(HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   // mark-sweep support

@@ -73,7 +73,7 @@ class arrayKlass: public Klass {
   oop* adr_component_mirror()           { return (oop*)&this->_component_mirror;}
 
   // Compiler/Interpreter offset
-  static ByteSize component_mirror_offset() { return byte_offset_of(arrayKlass, _component_mirror); }
+  static ByteSize component_mirror_offset() { return in_ByteSize(sizeof(klassOopDesc) + offset_of(arrayKlass, _component_mirror)); }
 
   virtual klassOop java_super() const;//{ return SystemDictionary::Object_klass(); }
 
@@ -84,7 +84,7 @@ class arrayKlass: public Klass {
   objArrayOop allocate_arrayArray(int n, int length, TRAPS);
 
   // Lookup operations
-  methodOop uncached_lookup_method(symbolOop name, symbolOop signature) const;
+  methodOop uncached_lookup_method(Symbol* name, Symbol* signature) const;
 
   // Casting from klassOop
   static arrayKlass* cast(klassOop k) {

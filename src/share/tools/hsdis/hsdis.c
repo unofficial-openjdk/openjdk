@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,6 @@
  * questions.
  *
  */
-
-#include "precompiled.hpp"
 
 /* hsdis.c -- dump a range of addresses as native instructions
    This implements the plugin protocol required by the
@@ -358,7 +356,7 @@ static void parse_caller_options(struct hsdis_app_data* app_data, const char* ca
       if (plen > mach_size)  plen = mach_size;
       strncpy(mach_option, p, plen);
       mach_option[plen] = '\0';
-    } else if (plen > 6 && strncmp(p, "hsdis-", 6)) {
+    } else if (plen > 6 && strncmp(p, "hsdis-", 6) == 0) {
       // do not pass these to the next level
     } else {
       /* just copy it; {i386,sparc}-dis.c might like to see it  */

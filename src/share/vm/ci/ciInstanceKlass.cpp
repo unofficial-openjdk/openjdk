@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "memory/allocation.hpp"
 #include "memory/allocation.inline.hpp"
 #include "oops/oop.inline.hpp"
+#include "oops/fieldStreams.hpp"
 #include "runtime/fieldDescriptor.hpp"
 
 // ciInstanceKlass
@@ -46,13 +47,14 @@ ciInstanceKlass::ciInstanceKlass(KlassHandle h_k) :
   ciKlass(h_k), _non_static_fields(NULL)
 {
   assert(get_Klass()->oop_is_instance(), "wrong type");
+  assert(get_instanceKlass()->is_loaded(), "must be at least loaded");
   instanceKlass* ik = get_instanceKlass();
 
   AccessFlags access_flags = ik->access_flags();
   _flags = ciFlags(access_flags);
   _has_finalizer = access_flags.has_finalizer();
   _has_subklass = ik->subklass() != NULL;
-  _init_state = (instanceKlass::ClassState)ik->get_init_state();
+  _init_state = ik->init_state();
   _nonstatic_field_size = ik->nonstatic_field_size();
   _has_nonstatic_fields = ik->has_nonstatic_fields();
   _nonstatic_fields = NULL; // initialized lazily by compute_nonstatic_fields:
@@ -84,7 +86,6 @@ ciInstanceKlass::ciInstanceKlass(KlassHandle h_k) :
     if (h_k() != SystemDictionary::Object_klass()) {
       super();
     }
-    java_mirror();
     //compute_nonstatic_fields();  // done outside of constructor
   }
 
@@ -117,7 +118,7 @@ ciInstanceKlass::ciInstanceKlass(ciSymbol* name,
 void ciInstanceKlass::compute_shared_init_state() {
   GUARDED_VM_ENTRY(
     instanceKlass* ik = get_instanceKlass();
-    _init_state = (instanceKlass::ClassState)ik->get_init_state();
+    _init_state = ik->init_state();
   )
 }
 
@@ -319,6 +320,9 @@ ciInstanceKlass* ciInstanceKlass::super() {
 // Get the instance of java.lang.Class corresponding to this klass.
 // Cache it on this->_java_mirror.
 ciInstance* ciInstanceKlass::java_mirror() {
+  if (is_shared()) {
+    return ciKlass::java_mirror();
+  }
   if (_java_mirror == NULL) {
     _java_mirror = ciKlass::java_mirror();
   }
@@ -380,7 +384,7 @@ ciField* ciInstanceKlass::get_field_by_name(ciSymbol* name, ciSymbol* signature,
   VM_ENTRY_MARK;
   instanceKlass* k = get_instanceKlass();
   fieldDescriptor fd;
-  klassOop def = k->find_field(name->get_symbolOop(), signature->get_symbolOop(), is_static, &fd);
+  klassOop def = k->find_field(name->get_symbol(), signature->get_symbol(), is_static, &fd);
   if (def == NULL) {
     return NULL;
   }
@@ -409,7 +413,7 @@ GrowableArray<ciField*>* ciInstanceKlass::non_static_fields() {
     VM_ENTRY_MARK;
     ciEnv* curEnv = ciEnv::current();
     instanceKlass* ik = get_instanceKlass();
-    int max_n_fields = ik->fields()->length()/instanceKlass::next_offset;
+    int max_n_fields = ik->java_fields_count();
 
     Arena* arena = curEnv->arena();
     _non_static_fields =
@@ -473,23 +477,6 @@ int ciInstanceKlass::compute_nonstatic_fields() {
   // Now sort them by offset, ascending.
   // (In principle, they could mix with superclass fields.)
   fields->sort(sort_field_by_offset);
-#ifdef ASSERT
-  int last_offset = instanceOopDesc::base_offset_in_bytes();
-  for (int i = 0; i < fields->length(); i++) {
-    ciField* field = fields->at(i);
-    int offset = field->offset_in_bytes();
-    int size   = (field->_type == NULL) ? heapOopSize : field->size_in_bytes();
-    assert(last_offset <= offset, err_msg("no field overlap: %d <= %d", last_offset, offset));
-    if (last_offset > (int)sizeof(oopDesc))
-      assert((offset - last_offset) < BytesPerLong, "no big holes");
-    // Note:  Two consecutive T_BYTE fields will be separated by wordSize-1
-    // padding bytes if one of them is declared by a superclass.
-    // This is a minor inefficiency classFileParser.cpp.
-    last_offset = offset + size;
-  }
-  assert(last_offset <= (int)instanceOopDesc::base_offset_in_bytes() + fsize, "no overflow");
-#endif
-
   _nonstatic_fields = fields;
   return flen;
 }
@@ -502,33 +489,29 @@ ciInstanceKlass::compute_nonstatic_fields_impl(GrowableArray<ciField*>*
   int flen = 0;
   GrowableArray<ciField*>* fields = NULL;
   instanceKlass* k = get_instanceKlass();
-  typeArrayOop fields_array = k->fields();
-  for (int pass = 0; pass <= 1; pass++) {
-    for (int i = 0, alen = fields_array->length(); i < alen; i += instanceKlass::next_offset) {
-      fieldDescriptor fd;
-      fd.initialize(k->as_klassOop(), i);
-      if (fd.is_static())  continue;
-      if (pass == 0) {
-        flen += 1;
-      } else {
-        ciField* field = new (arena) ciField(&fd);
-        fields->append(field);
-      }
-    }
+  for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
+    if (fs.access_flags().is_static())  continue;
+    flen += 1;
+  }
 
-    // Between passes, allocate the array:
-    if (pass == 0) {
-      if (flen == 0) {
-        return NULL;  // return nothing if none are locally declared
-      }
-      if (super_fields != NULL) {
-        flen += super_fields->length();
-      }
-      fields = new (arena) GrowableArray<ciField*>(arena, flen, 0, NULL);
-      if (super_fields != NULL) {
-        fields->appendAll(super_fields);
-      }
-    }
+  // allocate the array:
+  if (flen == 0) {
+    return NULL;  // return nothing if none are locally declared
+  }
+  if (super_fields != NULL) {
+    flen += super_fields->length();
+  }
+  fields = new (arena) GrowableArray<ciField*>(arena, flen, 0, NULL);
+  if (super_fields != NULL) {
+    fields->appendAll(super_fields);
+  }
+
+  for (JavaFieldStream fs(k); !fs.done(); fs.next()) {
+    if (fs.access_flags().is_static())  continue;
+    fieldDescriptor fd;
+    fd.initialize(k->as_klassOop(), fs.index());
+    ciField* field = new (arena) ciField(&fd);
+    fields->append(field);
   }
   assert(fields->length() == flen, "sanity");
   return fields;
@@ -541,8 +524,8 @@ ciInstanceKlass::compute_nonstatic_fields_impl(GrowableArray<ciField*>*
 ciMethod* ciInstanceKlass::find_method(ciSymbol* name, ciSymbol* signature) {
   VM_ENTRY_MARK;
   instanceKlass* k = get_instanceKlass();
-  symbolOop name_sym = name->get_symbolOop();
-  symbolOop sig_sym= signature->get_symbolOop();
+  Symbol* name_sym = name->get_symbol();
+  Symbol* sig_sym= signature->get_symbol();
 
   methodOop m = k->find_method(name_sym, sig_sym);
   if (m == NULL)  return NULL;

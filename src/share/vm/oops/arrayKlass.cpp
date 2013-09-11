@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ oop arrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   return NULL;
 }
 
-methodOop arrayKlass::uncached_lookup_method(symbolOop name, symbolOop signature) const {
+methodOop arrayKlass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
   // There are no methods in an array klass but the super class (Object) has some
   assert(super(), "super klass must be present");
   return Klass::cast(super())->uncached_lookup_method(name, signature);
@@ -153,6 +153,7 @@ objArrayOop arrayKlass::allocate_arrayArray(int n, int length, TRAPS) {
   }
   if (length > arrayOopDesc::max_array_length(T_ARRAY)) {
     report_java_out_of_memory("Requested array size exceeds VM limit");
+    JvmtiExport::post_array_size_exhausted();
     THROW_OOP_0(Universe::out_of_memory_error_array_size());
   }
   int size = objArrayOopDesc::object_size(length);

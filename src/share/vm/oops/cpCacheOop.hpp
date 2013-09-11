@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -190,9 +190,11 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   );
 
   void set_dynamic_call(
-    Handle call_site,                            // Resolved java.dyn.CallSite (f1)
+    Handle call_site,                            // Resolved java.lang.invoke.CallSite (f1)
     methodHandle signature_invoker               // determines signature information
   );
+
+  methodOop get_method_if_resolved(Bytecodes::Code invoke_code, constantPoolHandle cpool);
 
   // For JVM_CONSTANT_InvokeDynamic cache entries:
   void initialize_bootstrap_method_index_in_cache(int bsm_cache_index);
@@ -287,7 +289,6 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
 #endif // SERIALGC
 
   void update_pointers();
-  void update_pointers(HeapWord* beg_addr, HeapWord* end_addr);
 
   // RedefineClasses() API support:
   // If this constantPoolCacheEntry refers to old_method then update it
@@ -297,6 +298,7 @@ class ConstantPoolCacheEntry VALUE_OBJ_CLASS_SPEC {
   // group don't print the klass name.
   bool adjust_method_entry(methodOop old_method, methodOop new_method,
          bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
   bool is_interesting_method_entry(klassOop k);
   bool is_field_entry() const                    { return (_flags & (1 << hotSwapBit)) == 0; }
   bool is_method_entry() const                   { return (_flags & (1 << hotSwapBit)) != 0; }
@@ -321,9 +323,6 @@ class constantPoolCacheOopDesc: public oopDesc {
  private:
   int             _length;
   constantPoolOop _constant_pool;                // the corresponding constant pool
-  // If true, safe for concurrent GC processing,
-  // Set unconditionally in constantPoolCacheKlass::allocate()
-  volatile bool        _is_conc_safe;
 
   // Sizing
   debug_only(friend class ClassVerifier;)
@@ -390,12 +389,6 @@ class constantPoolCacheOopDesc: public oopDesc {
     return entry_at(primary_index);
   }
 
-  // GC support
-  // If the _length field has not been set, the size of the
-  // constantPoolCache cannot be correctly calculated.
-  bool is_conc_safe()                            { return _is_conc_safe; }
-  void set_is_conc_safe(bool v)                  { _is_conc_safe = v; }
-
   // Code generation
   static ByteSize base_offset()                  { return in_ByteSize(sizeof(constantPoolCacheOopDesc)); }
   static ByteSize entry_offset(int raw_index) {
@@ -413,6 +406,8 @@ class constantPoolCacheOopDesc: public oopDesc {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_cache();
 };
 
 #endif // SHARE_VM_OOPS_CPCACHEOOP_HPP

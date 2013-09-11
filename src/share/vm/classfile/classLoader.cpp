@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@
 #include "oops/instanceKlass.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/compilationPolicy.hpp"
@@ -67,6 +67,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
 #endif
 
 
@@ -752,11 +755,7 @@ void PackageHashtable::copy_table(char** top, char* end,
     }
   }
   if (*top + n + sizeof(intptr_t) >= end) {
-    warning("\nThe shared miscellaneous data space is not large "
-            "enough to \npreload requested classes.  Use "
-            "-XX:SharedMiscDataSize= to increase \nthe initial "
-            "size of the miscellaneous data space.\n");
-    exit(2);
+    report_out_of_shared_space(SharedMiscData);
   }
 
   // Copy the table data (the strings) to the shared space.
@@ -875,9 +874,9 @@ objArrayOop ClassLoader::get_system_packages(TRAPS) {
 }
 
 
-instanceKlassHandle ClassLoader::load_classfile(symbolHandle h_name, TRAPS) {
+instanceKlassHandle ClassLoader::load_classfile(Symbol* h_name, TRAPS) {
   ResourceMark rm(THREAD);
-  EventMark m("loading class " INTPTR_FORMAT, (address)h_name());
+  EventMark m("loading class " INTPTR_FORMAT, (address)h_name);
   ThreadProfilerMark tpm(ThreadProfilerMark::classLoaderRegion);
 
   stringStream st;
@@ -912,7 +911,7 @@ instanceKlassHandle ClassLoader::load_classfile(symbolHandle h_name, TRAPS) {
     ClassFileParser parser(stream);
     Handle class_loader;
     Handle protection_domain;
-    symbolHandle parsed_name;
+    TempNewSymbol parsed_name = NULL;
     instanceKlassHandle result = parser.parseClassFile(h_name,
                                                        class_loader,
                                                        protection_domain,
@@ -1294,6 +1293,15 @@ void ClassLoader::compile_the_world() {
 int ClassLoader::_compile_the_world_counter = 0;
 static int _codecache_sweep_counter = 0;
 
+// Filter out all exceptions except OOMs
+static void clear_pending_exception_if_not_oom(TRAPS) {
+  if (HAS_PENDING_EXCEPTION &&
+      !PENDING_EXCEPTION->is_a(SystemDictionary::OutOfMemoryError_klass())) {
+    CLEAR_PENDING_EXCEPTION;
+  }
+  // The CHECK at the caller will propagate the exception out
+}
+
 void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
   int len = (int)strlen(name);
   if (len > 6 && strcmp(".class", name + len - 6) == 0) {
@@ -1308,7 +1316,7 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
       if (_compile_the_world_counter > CompileTheWorldStopAt) return;
 
       // Construct name without extension
-      symbolHandle sym = oopFactory::new_symbol_handle(buffer, CHECK);
+      TempNewSymbol sym = SymbolTable::new_symbol(buffer, CHECK);
       // Use loader to load and initialize class
       klassOop ik = SystemDictionary::resolve_or_null(sym, loader, Handle(), THREAD);
       instanceKlassHandle k (THREAD, ik);
@@ -1316,18 +1324,18 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
         k->initialize(THREAD);
       }
       bool exception_occurred = HAS_PENDING_EXCEPTION;
-      CLEAR_PENDING_EXCEPTION;
+      clear_pending_exception_if_not_oom(CHECK);
       if (CompileTheWorldPreloadClasses && k.not_null()) {
         constantPoolKlass::preload_and_initialize_all_classes(k->constants(), THREAD);
         if (HAS_PENDING_EXCEPTION) {
           // If something went wrong in preloading we just ignore it
-          CLEAR_PENDING_EXCEPTION;
+          clear_pending_exception_if_not_oom(CHECK);
           tty->print_cr("Preloading failed for (%d) %s", _compile_the_world_counter, buffer);
         }
       }
 
       if (_compile_the_world_counter >= CompileTheWorldStartAt) {
-        if (k.is_null() || (exception_occurred && !CompileTheWorldIgnoreInitErrors)) {
+        if (k.is_null() || exception_occurred) {
           // If something went wrong (e.g. ExceptionInInitializerError) we skip this class
           tty->print_cr("CompileTheWorld (%d) : Skipping %s", _compile_the_world_counter, buffer);
         } else {
@@ -1345,13 +1353,13 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
                 _codecache_sweep_counter = 0;
               }
               // Force compilation
-              CompileBroker::compile_method(m, InvocationEntryBci, CompLevel_initial_compile,
+              CompileBroker::compile_method(m, InvocationEntryBci, CompilationPolicy::policy()->initial_compile_level(),
                                             methodHandle(), 0, "CTW", THREAD);
               if (HAS_PENDING_EXCEPTION) {
-                CLEAR_PENDING_EXCEPTION;
+                clear_pending_exception_if_not_oom(CHECK);
                 tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
               }
-              if (TieredCompilation) {
+              if (TieredCompilation && TieredStopAtLevel >= CompLevel_full_optimization) {
                 // Clobber the first compile and force second tier compilation
                 nmethod* nm = m->code();
                 if (nm != NULL) {
@@ -1362,7 +1370,7 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
                 CompileBroker::compile_method(m, InvocationEntryBci, CompLevel_full_optimization,
                                               methodHandle(), 0, "CTW", THREAD);
                 if (HAS_PENDING_EXCEPTION) {
-                  CLEAR_PENDING_EXCEPTION;
+                  clear_pending_exception_if_not_oom(CHECK);
                   tty->print_cr("CompileTheWorld (%d) : Skipping method: %s", _compile_the_world_counter, m->name()->as_C_string());
                 }
               }

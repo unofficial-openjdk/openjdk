@@ -34,7 +34,7 @@
 // objects.  We don't want to call the synchronizer hash code to install
 // this value because it may safepoint.
 intptr_t object_hash(klassOop k) {
-  intptr_t hc = Klass::cast(k)->java_mirror()->mark()->hash();
+  intptr_t hc = k->java_mirror()->mark()->hash();
   return hc != markOopDesc::no_hash ? hc : os::random();
 }
 

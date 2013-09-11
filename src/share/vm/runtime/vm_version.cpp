@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,18 @@
 #ifdef TARGET_ARCH_zero
 # include "vm_version_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "vm_version_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "vm_version_ppc.hpp"
+#endif
 
 const char* Abstract_VM_Version::_s_vm_release = Abstract_VM_Version::vm_release();
 const char* Abstract_VM_Version::_s_internal_vm_info_string = Abstract_VM_Version::internal_vm_info_string();
 bool Abstract_VM_Version::_supports_cx8 = false;
 unsigned int Abstract_VM_Version::_logical_processors_per_package = 1U;
+int Abstract_VM_Version::_reserve_for_allocation_prefetch = 0;
 
 #ifndef HOTSPOT_RELEASE_VERSION
   #error HOTSPOT_RELEASE_VERSION must be defined
@@ -121,7 +128,7 @@ void Abstract_VM_Version::initialize() {
 #ifndef HOTSPOT_VM_DISTRO
   #error HOTSPOT_VM_DISTRO must be defined
 #endif
-#define VMNAME HOTSPOT_VM_DISTRO " " VMLP VMTYPE " VM"
+#define VMNAME HOTSPOT_VM_DISTRO " " VMLP EMBEDDED_ONLY("Embedded ") VMTYPE " VM"
 
 const char* Abstract_VM_Version::vm_name() {
   return VMNAME;
@@ -158,9 +165,17 @@ const char* Abstract_VM_Version::vm_release() {
   return VM_RELEASE;
 }
 
+// NOTE: do *not* use stringStream. this function is called by
+//       fatal error handlers. if the crash is in native thread,
+//       stringStream cannot get resource allocated and will SEGV.
+const char* Abstract_VM_Version::jre_release_version() {
+  return JRE_RELEASE_VERSION;
+}
+
 #define OS       LINUX_ONLY("linux")             \
                  WINDOWS_ONLY("windows")         \
-                 SOLARIS_ONLY("solaris")
+                 SOLARIS_ONLY("solaris")         \
+                 BSD_ONLY("bsd")
 
 #ifdef ZERO
 #define CPU      ZERO_LIBARCH
@@ -220,10 +235,27 @@ const char* Abstract_VM_Version::internal_vm_info_string() {
     #endif
   #endif
 
+  #ifndef FLOAT_ARCH
+    #if defined(__SOFTFP__)
+      #define FLOAT_ARCH "-sflt"
+    #elif defined(E500V2)
+      #define FLOAT_ARCH "-e500v2"
+    #elif defined(ARM)
+      #define FLOAT_ARCH "-vfp"
+    #elif defined(PPC)
+      #define FLOAT_ARCH "-hflt"
+    #else
+      #define FLOAT_ARCH ""
+    #endif
+  #endif
 
-  return VMNAME " (" VM_RELEASE ") for " OS "-" CPU
+  return VMNAME " (" VM_RELEASE ") for " OS "-" CPU FLOAT_ARCH
          " JRE (" JRE_RELEASE_VERSION "), built on " __DATE__ " " __TIME__
          " by " XSTR(HOTSPOT_BUILD_USER) " with " HOTSPOT_BUILD_COMPILER;
+}
+
+const char *Abstract_VM_Version::vm_build_user() {
+  return HOTSPOT_BUILD_USER;
 }
 
 unsigned int Abstract_VM_Version::jvm_version() {

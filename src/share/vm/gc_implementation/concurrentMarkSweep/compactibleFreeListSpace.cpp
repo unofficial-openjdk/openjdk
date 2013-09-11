@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,8 @@
 int CompactibleFreeListSpace::_lockRank = Mutex::leaf + 3;
 
 // Defaults are 0 so things will break badly if incorrectly initialized.
-int CompactibleFreeListSpace::IndexSetStart  = 0;
-int CompactibleFreeListSpace::IndexSetStride = 0;
+size_t CompactibleFreeListSpace::IndexSetStart  = 0;
+size_t CompactibleFreeListSpace::IndexSetStride = 0;
 
 size_t MinChunkSize = 0;
 
@@ -62,7 +62,7 @@ void CompactibleFreeListSpace::set_cms_values() {
   MinChunkSize = numQuanta(sizeof(FreeChunk), MinObjAlignmentInBytes) * MinObjAlignment;
 
   assert(IndexSetStart == 0 && IndexSetStride == 0, "already set");
-  IndexSetStart  = MinObjAlignment;
+  IndexSetStart  = MinChunkSize;
   IndexSetStride = MinObjAlignment;
 }
 
@@ -138,7 +138,7 @@ CompactibleFreeListSpace::CompactibleFreeListSpace(BlockOffsetSharedArray* bs,
   } else {
     _fitStrategy = FreeBlockStrategyNone;
   }
-  checkFreeListConsistency();
+  check_free_list_consistency();
 
   // Initialize locks for parallel case.
 
@@ -250,7 +250,7 @@ void CompactibleFreeListSpace::initializeIndexedFreeListArray() {
 }
 
 void CompactibleFreeListSpace::resetIndexedFreeListArray() {
-  for (int i = 1; i < IndexSetSize; i++) {
+  for (size_t i = 1; i < IndexSetSize; i++) {
     assert(_indexedFreeList[i].size() == (size_t) i,
       "Indexed free list sizes are incorrect");
     _indexedFreeList[i].reset(IndexSetSize);
@@ -337,7 +337,7 @@ size_t CompactibleFreeListSpace::sumIndexedFreeListArrayReturnedBytes() {
 
 size_t CompactibleFreeListSpace::totalCountInIndexedFreeLists() const {
   size_t count = 0;
-  for (int i = (int)MinChunkSize; i < IndexSetSize; i++) {
+  for (size_t i = IndexSetStart; i < IndexSetSize; i++) {
     debug_only(
       ssize_t total_list_count = 0;
       for (FreeChunk* fc = _indexedFreeList[i].head(); fc != NULL;
@@ -668,12 +668,16 @@ public:
 
 // We de-virtualize the block-related calls below, since we know that our
 // space is a CompactibleFreeListSpace.
+
 #define FreeListSpace_DCTOC__walk_mem_region_with_cl_DEFN(ClosureType)          \
 void FreeListSpace_DCTOC::walk_mem_region_with_cl(MemRegion mr,                 \
                                                  HeapWord* bottom,              \
                                                  HeapWord* top,                 \
                                                  ClosureType* cl) {             \
-   if (SharedHeap::heap()->n_par_threads() > 0) {                               \
+   bool is_par = SharedHeap::heap()->n_par_threads() > 0;                       \
+   if (is_par) {                                                                \
+     assert(SharedHeap::heap()->n_par_threads() ==                              \
+            SharedHeap::heap()->workers()->active_workers(), "Mismatch");       \
      walk_mem_region_with_cl_par(mr, bottom, top, cl);                          \
    } else {                                                                     \
      walk_mem_region_with_cl_nopar(mr, bottom, top, cl);                        \
@@ -1040,9 +1044,10 @@ const {
     } else {
       // must read from what 'p' points to in each loop.
       klassOop k = ((volatile oopDesc*)p)->klass_or_null();
-      if (k != NULL &&
-          ((oopDesc*)p)->is_parsable() &&
-          ((oopDesc*)p)->is_conc_safe()) {
+      // We trust the size of any object that has a non-NULL
+      // klass and (for those in the perm gen) is parsable
+      // -- irrespective of its conc_safe-ty.
+      if (k != NULL && ((oopDesc*)p)->is_parsable()) {
         assert(k->is_oop(), "Should really be klass oop.");
         oop o = (oop)p;
         assert(o->is_oop(), "Should be an oop");
@@ -1051,6 +1056,7 @@ const {
         assert(res != 0, "Block size should not be 0");
         return res;
       } else {
+        // May return 0 if P-bits not present.
         return c->block_size_if_printezis_bits(p);
       }
     }
@@ -1356,17 +1362,29 @@ FreeChunk* CompactibleFreeListSpace::getChunkFromGreater(size_t numWords) {
   ShouldNotReachHere();
 }
 
-bool CompactibleFreeListSpace::verifyChunkInIndexedFreeLists(FreeChunk* fc)
-  const {
+bool CompactibleFreeListSpace::verifyChunkInIndexedFreeLists(FreeChunk* fc) const {
   assert(fc->size() < IndexSetSize, "Size of chunk is too large");
   return _indexedFreeList[fc->size()].verifyChunkInFreeLists(fc);
 }
 
+bool CompactibleFreeListSpace::verify_chunk_is_linear_alloc_block(FreeChunk* fc) const {
+  assert((_smallLinearAllocBlock._ptr != (HeapWord*)fc) ||
+         (_smallLinearAllocBlock._word_size == fc->size()),
+         "Linear allocation block shows incorrect size");
+  return ((_smallLinearAllocBlock._ptr == (HeapWord*)fc) &&
+          (_smallLinearAllocBlock._word_size == fc->size()));
+}
+
+// Check if the purported free chunk is present either as a linear
+// allocation block, the size-indexed table of (smaller) free blocks,
+// or the larger free blocks kept in the binary tree dictionary.
 bool CompactibleFreeListSpace::verifyChunkInFreeLists(FreeChunk* fc) const {
-  if (fc->size() >= IndexSetSize) {
-    return dictionary()->verifyChunkInFreeLists(fc);
-  } else {
+  if (verify_chunk_is_linear_alloc_block(fc)) {
+    return true;
+  } else if (fc->size() < IndexSetSize) {
     return verifyChunkInIndexedFreeLists(fc);
+  } else {
+    return dictionary()->verifyChunkInFreeLists(fc);
   }
 }
 
@@ -1831,8 +1849,6 @@ CompactibleFreeListSpace::removeChunkFromIndexedFreeList(FreeChunk* fc) {
     }
   )
   _indexedFreeList[size].removeChunk(fc);
-  debug_only(fc->clearNext());
-  debug_only(fc->clearPrev());
   NOT_PRODUCT(
     if (FLSVerifyIndexTable) {
       verifyIndexedFreeList(size);
@@ -1913,6 +1929,9 @@ CompactibleFreeListSpace::splitChunkAndReturnRemainder(FreeChunk* chunk,
   if (rem_size < SmallForDictionary) {
     bool is_par = (SharedHeap::heap()->n_par_threads() > 0);
     if (is_par) _indexedFreeListParLocks[rem_size]->lock();
+    assert(!is_par ||
+           (SharedHeap::heap()->n_par_threads() ==
+            SharedHeap::heap()->workers()->active_workers()), "Mismatch");
     returnChunkToFreeList(ffc);
     split(size, rem_size);
     if (is_par) _indexedFreeListParLocks[rem_size]->unlock();
@@ -1961,10 +1980,21 @@ CompactibleFreeListSpace::gc_epilogue() {
 // Iteration support, mostly delegated from a CMS generation
 
 void CompactibleFreeListSpace::save_marks() {
-  // mark the "end" of the used space at the time of this call;
+  assert(Thread::current()->is_VM_thread(),
+         "Global variable should only be set when single-threaded");
+  // Mark the "end" of the used space at the time of this call;
   // note, however, that promoted objects from this point
   // on are tracked in the _promoInfo below.
   set_saved_mark_word(unallocated_block());
+#ifdef ASSERT
+  // Check the sanity of save_marks() etc.
+  MemRegion ur    = used_region();
+  MemRegion urasm = used_region_at_save_marks();
+  assert(ur.contains(urasm),
+         err_msg(" Error at save_marks(): [" PTR_FORMAT "," PTR_FORMAT ")"
+                 " should contain [" PTR_FORMAT "," PTR_FORMAT ")",
+                 ur.start(), ur.end(), urasm.start(), urasm.end()));
+#endif
   // inform allocator that promotions should be tracked.
   assert(_promoInfo.noPromotions(), "_promoInfo inconsistency");
   _promoInfo.startTrackingPromotions();
@@ -2177,7 +2207,7 @@ void CompactibleFreeListSpace::setFLHints() {
 
 void CompactibleFreeListSpace::clearFLCensus() {
   assert_locked();
-  int i;
+  size_t i;
   for (i = IndexSetStart; i < IndexSetSize; i += IndexSetStride) {
     FreeList *fl = &_indexedFreeList[i];
     fl->set_prevSweep(fl->count());
@@ -2471,7 +2501,7 @@ void CompactibleFreeListSpace::verifyFreeLists() const {
 
 void CompactibleFreeListSpace::verifyIndexedFreeLists() const {
   size_t i = 0;
-  for (; i < MinChunkSize; i++) {
+  for (; i < IndexSetStart; i++) {
     guarantee(_indexedFreeList[i].head() == NULL, "should be NULL");
   }
   for (; i < IndexSetSize; i++) {
@@ -2484,7 +2514,8 @@ void CompactibleFreeListSpace::verifyIndexedFreeList(size_t size) const {
   FreeChunk* tail =  _indexedFreeList[size].tail();
   size_t    num = _indexedFreeList[size].count();
   size_t      n = 0;
-  guarantee((size % 2 == 0) || fc == NULL, "Odd slots should be empty");
+  guarantee(((size >= IndexSetStart) && (size % IndexSetStride == 0)) || fc == NULL,
+            "Slot should have been empty");
   for (; fc != NULL; fc = fc->next(), n++) {
     guarantee(fc->size() == size, "Size inconsistency");
     guarantee(fc->isFree(), "!free?");
@@ -2495,15 +2526,15 @@ void CompactibleFreeListSpace::verifyIndexedFreeList(size_t size) const {
 }
 
 #ifndef PRODUCT
-void CompactibleFreeListSpace::checkFreeListConsistency() const {
+void CompactibleFreeListSpace::check_free_list_consistency() const {
   assert(_dictionary->minSize() <= IndexSetSize,
     "Some sizes can't be allocated without recourse to"
     " linear allocation buffers");
   assert(MIN_TREE_CHUNK_SIZE*HeapWordSize == sizeof(TreeChunk),
     "else MIN_TREE_CHUNK_SIZE is wrong");
-  assert((IndexSetStride == 2 && IndexSetStart == 2) ||
-         (IndexSetStride == 1 && IndexSetStart == 1), "just checking");
-  assert((IndexSetStride != 2) || (MinChunkSize % 2 == 0),
+  assert((IndexSetStride == 2 && IndexSetStart == 4) ||                   // 32-bit
+         (IndexSetStride == 1 && IndexSetStart == 3), "just checking");   // 64-bit
+  assert((IndexSetStride != 2) || (IndexSetStart % 2 == 0),
       "Some for-loops may be incorrectly initialized");
   assert((IndexSetStride != 2) || (IndexSetSize % 2 == 1),
       "For-loops that iterate over IndexSet with stride 2 may be wrong");
@@ -2567,7 +2598,7 @@ void CompactibleFreeListSpace::printFLCensus(size_t sweep_count) const {
 AdaptiveWeightedAverage CFLS_LAB::_blocks_to_claim[]    =
   VECTOR_257(AdaptiveWeightedAverage(OldPLABWeight, (float)CMSParPromoteBlocksToClaim));
 size_t CFLS_LAB::_global_num_blocks[]  = VECTOR_257(0);
-int    CFLS_LAB::_global_num_workers[] = VECTOR_257(0);
+uint   CFLS_LAB::_global_num_workers[] = VECTOR_257(0);
 
 CFLS_LAB::CFLS_LAB(CompactibleFreeListSpace* cfls) :
   _cfls(cfls)
@@ -2677,37 +2708,31 @@ void CFLS_LAB::compute_desired_plab_size() {
   }
 }
 
+// If this is changed in the future to allow parallel
+// access, one would need to take the FL locks and,
+// depending on how it is used, stagger access from
+// parallel threads to reduce contention.
 void CFLS_LAB::retire(int tid) {
   // We run this single threaded with the world stopped;
   // so no need for locks and such.
-#define CFLS_LAB_PARALLEL_ACCESS 0
   NOT_PRODUCT(Thread* t = Thread::current();)
   assert(Thread::current()->is_VM_thread(), "Error");
-  assert(CompactibleFreeListSpace::IndexSetStart == CompactibleFreeListSpace::IndexSetStride,
-         "Will access to uninitialized slot below");
-#if CFLS_LAB_PARALLEL_ACCESS
-  for (size_t i = CompactibleFreeListSpace::IndexSetSize - 1;
-       i > 0;
-       i -= CompactibleFreeListSpace::IndexSetStride) {
-#else // CFLS_LAB_PARALLEL_ACCESS
   for (size_t i =  CompactibleFreeListSpace::IndexSetStart;
        i < CompactibleFreeListSpace::IndexSetSize;
        i += CompactibleFreeListSpace::IndexSetStride) {
-#endif // !CFLS_LAB_PARALLEL_ACCESS
     assert(_num_blocks[i] >= (size_t)_indexedFreeList[i].count(),
            "Can't retire more than what we obtained");
     if (_num_blocks[i] > 0) {
       size_t num_retire =  _indexedFreeList[i].count();
       assert(_num_blocks[i] > num_retire, "Should have used at least one");
       {
-#if CFLS_LAB_PARALLEL_ACCESS
-        MutexLockerEx x(_cfls->_indexedFreeListParLocks[i],
-                        Mutex::_no_safepoint_check_flag);
-#endif // CFLS_LAB_PARALLEL_ACCESS
+        // MutexLockerEx x(_cfls->_indexedFreeListParLocks[i],
+        //                Mutex::_no_safepoint_check_flag);
+
         // Update globals stats for num_blocks used
         _global_num_blocks[i] += (_num_blocks[i] - num_retire);
         _global_num_workers[i]++;
-        assert(_global_num_workers[i] <= (ssize_t)ParallelGCThreads, "Too big");
+        assert(_global_num_workers[i] <= ParallelGCThreads, "Too big");
         if (num_retire > 0) {
           _cfls->_indexedFreeList[i].prepend(&_indexedFreeList[i]);
           // Reset this list.

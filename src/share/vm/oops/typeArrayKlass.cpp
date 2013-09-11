@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,16 +53,15 @@ klassOop typeArrayKlass::create_klass(BasicType type, int scale,
                                       const char* name_str, TRAPS) {
   typeArrayKlass o;
 
-  symbolHandle sym(symbolOop(NULL));
-  // bootstrapping: don't create sym if symbolKlass not created yet
-  if (Universe::symbolKlassObj() != NULL && name_str != NULL) {
-    sym = oopFactory::new_symbol_handle(name_str, CHECK_NULL);
+  Symbol* sym = NULL;
+  if (name_str != NULL) {
+    sym = SymbolTable::new_symbol(name_str, CHECK_NULL);
   }
   KlassHandle klassklass (THREAD, Universe::typeArrayKlassKlassObj());
 
   arrayKlassHandle k = base_create_array_klass(o.vtbl_value(), header_size(), klassklass, CHECK_NULL);
   typeArrayKlass* ak = typeArrayKlass::cast(k());
-  ak->set_name(sym());
+  ak->set_name(sym);
   ak->set_layout_helper(array_layout_helper(type));
   assert(scale == (1 << ak->log2_element_size()), "scale must check out");
   assert(ak->oop_is_javaArray(), "sanity");
@@ -77,7 +76,7 @@ klassOop typeArrayKlass::create_klass(BasicType type, int scale,
   return k();
 }
 
-typeArrayOop typeArrayKlass::allocate(int length, TRAPS) {
+typeArrayOop typeArrayKlass::allocate_common(int length, bool do_zero, TRAPS) {
   assert(log2_element_size() >= 0, "bad scale");
   if (length >= 0) {
     if (length <= max_length()) {
@@ -85,15 +84,16 @@ typeArrayOop typeArrayKlass::allocate(int length, TRAPS) {
       KlassHandle h_k(THREAD, as_klassOop());
       typeArrayOop t;
       CollectedHeap* ch = Universe::heap();
-      if (size < ch->large_typearray_limit()) {
+      if (do_zero) {
         t = (typeArrayOop)CollectedHeap::array_allocate(h_k, (int)size, length, CHECK_NULL);
       } else {
-        t = (typeArrayOop)CollectedHeap::large_typearray_allocate(h_k, (int)size, length, CHECK_NULL);
+        t = (typeArrayOop)CollectedHeap::array_allocate_nozero(h_k, (int)size, length, CHECK_NULL);
       }
       assert(t->is_parsable(), "Don't publish unless parsable");
       return t;
     } else {
       report_java_out_of_memory("Requested array size exceeds VM limit");
+      JvmtiExport::post_array_size_exhausted();
       THROW_OOP_0(Universe::out_of_memory_error_array_size());
     }
   } else {
@@ -248,13 +248,6 @@ void typeArrayKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 
 int
 typeArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
-  assert(obj->is_typeArray(),"must be a type array");
-  return typeArrayOop(obj)->object_size();
-}
-
-int
-typeArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                    HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_typeArray(),"must be a type array");
   return typeArrayOop(obj)->object_size();
 }

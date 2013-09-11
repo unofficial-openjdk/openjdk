@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,8 @@ class vframeStream;
 // information, etc.
 
 class SharedRuntime: AllStatic {
+  friend class VMStructs;
+
  private:
   static methodHandle resolve_sub_helper(JavaThread *thread,
                                      bool is_virtual,
@@ -52,26 +54,33 @@ class SharedRuntime: AllStatic {
 
   // Shared stub locations
 
-  static RuntimeStub* _wrong_method_blob;
-  static RuntimeStub* _ic_miss_blob;
-  static RuntimeStub* _resolve_opt_virtual_call_blob;
-  static RuntimeStub* _resolve_virtual_call_blob;
-  static RuntimeStub* _resolve_static_call_blob;
+  static RuntimeStub*        _wrong_method_blob;
+  static RuntimeStub*        _ic_miss_blob;
+  static RuntimeStub*        _resolve_opt_virtual_call_blob;
+  static RuntimeStub*        _resolve_virtual_call_blob;
+  static RuntimeStub*        _resolve_static_call_blob;
 
-  static SafepointBlob* _polling_page_safepoint_handler_blob;
-  static SafepointBlob* _polling_page_return_handler_blob;
+  static DeoptimizationBlob* _deopt_blob;
+  static RicochetBlob*       _ricochet_blob;
+
+  static SafepointBlob*      _polling_page_safepoint_handler_blob;
+  static SafepointBlob*      _polling_page_return_handler_blob;
+
 #ifdef COMPILER2
-  static ExceptionBlob*       _exception_blob;
-  static UncommonTrapBlob*    _uncommon_trap_blob;
+  static UncommonTrapBlob*   _uncommon_trap_blob;
 #endif // COMPILER2
 
 #ifndef PRODUCT
-
   // Counters
   static int     _nof_megamorphic_calls;         // total # of megamorphic calls (through vtable)
-
 #endif // !PRODUCT
+
+ private:
+  static SafepointBlob* generate_handler_blob(address call_ptr, bool cause_return);
+  static RuntimeStub*   generate_resolve_blob(address destination, const char* name);
+
  public:
+  static void generate_stubs(void);
 
   // max bytes for each dtrace string parameter
   enum { max_dtrace_string_size = 256 };
@@ -178,6 +187,7 @@ class SharedRuntime: AllStatic {
   static void    throw_NullPointerException(JavaThread* thread);
   static void    throw_NullPointerException_at_call(JavaThread* thread);
   static void    throw_StackOverflowError(JavaThread* thread);
+  static void    throw_WrongMethodTypeException(JavaThread* thread, oopDesc* required, oopDesc* actual);
   static address continuation_for_implicit_exception(JavaThread* thread,
                                                      address faulting_pc,
                                                      ImplicitExceptionKind exception_kind);
@@ -213,6 +223,16 @@ class SharedRuntime: AllStatic {
     return _resolve_static_call_blob->entry_point();
   }
 
+  static RicochetBlob* ricochet_blob() {
+#ifdef X86
+    // Currently only implemented on x86
+    assert(!EnableInvokeDynamic || _ricochet_blob != NULL, "oops");
+#endif
+    return _ricochet_blob;
+  }
+
+  static void generate_ricochet_blob();
+
   static SafepointBlob* polling_page_return_handler_blob()     { return _polling_page_return_handler_blob; }
   static SafepointBlob* polling_page_safepoint_handler_blob()  { return _polling_page_safepoint_handler_blob; }
 
@@ -223,7 +243,7 @@ class SharedRuntime: AllStatic {
 
   // Helper routine for full-speed JVMTI exception throwing support
   static void throw_and_post_jvmti_exception(JavaThread *thread, Handle h_exception);
-  static void throw_and_post_jvmti_exception(JavaThread *thread, symbolOop name, const char *message = NULL);
+  static void throw_and_post_jvmti_exception(JavaThread *thread, Symbol* name, const char *message = NULL);
 
   // RedefineClasses() tracing support for obsolete method entry
   static int rc_trace_method_entry(JavaThread* thread, methodOopDesc* m);
@@ -237,7 +257,7 @@ class SharedRuntime: AllStatic {
   // Used to back off a spin lock that is under heavy contention
   static void yield_all(JavaThread* thread, int attempts = 0);
 
-  static oop retrieve_receiver( symbolHandle sig, frame caller );
+  static oop retrieve_receiver( Symbol* sig, frame caller );
 
   static void register_finalizer(JavaThread* thread, oopDesc* obj);
 
@@ -314,12 +334,9 @@ class SharedRuntime: AllStatic {
                                      bool is_virtual,
                                      bool is_optimized, TRAPS);
 
-  static void generate_stubs(void);
-
   private:
   // deopt blob
   static void generate_deopt_blob(void);
-  static DeoptimizationBlob* _deopt_blob;
 
   public:
   static DeoptimizationBlob* deopt_blob(void)      { return _deopt_blob; }
@@ -417,7 +434,7 @@ class SharedRuntime: AllStatic {
 
   // Convert a sig into a calling convention register layout
   // and find interesting things about it.
-  static VMRegPair* find_callee_arguments(symbolOop sig, bool has_receiver, int *arg_size);
+  static VMRegPair* find_callee_arguments(Symbol* sig, bool has_receiver, int *arg_size);
   static VMReg     name_for_receiver();
 
   // "Top of Stack" slots that may be unused by the calling convention but must
@@ -438,11 +455,15 @@ class SharedRuntime: AllStatic {
   // returns.
   static nmethod *generate_native_wrapper(MacroAssembler* masm,
                                           methodHandle method,
+                                          int compile_id,
                                           int total_args_passed,
                                           int max_arg,
                                           BasicType *sig_bt,
                                           VMRegPair *regs,
                                           BasicType ret_type );
+
+  // Block before entering a JNI critical method
+  static void block_for_jni_critical(JavaThread* thread);
 
 #ifdef HAVE_DTRACE_H
   // Generate a dtrace wrapper for a given method.  The method takes arguments
@@ -659,7 +680,7 @@ class AdapterHandlerLibrary: public AllStatic {
 
   static AdapterHandlerEntry* new_entry(AdapterFingerPrint* fingerprint,
                                         address i2c_entry, address c2i_entry, address c2i_unverified_entry);
-  static nmethod* create_native_wrapper(methodHandle method);
+  static nmethod* create_native_wrapper(methodHandle method, int compile_id);
   static AdapterHandlerEntry* get_adapter(methodHandle method);
 
 #ifdef HAVE_DTRACE_H

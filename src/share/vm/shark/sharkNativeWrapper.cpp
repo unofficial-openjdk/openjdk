@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * Copyright 2009, 2010 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -101,7 +101,7 @@ void SharkNativeWrapper::initialize(const char *name) {
     builder()->CreateStore(
       builder()->CreateInlineOop(
         JNIHandles::make_local(
-          target()->method_holder()->klass_part()->java_mirror())),
+          target()->method_holder()->java_mirror())),
       oop_tmp_slot());
 
     param_types.push_back(box_type);

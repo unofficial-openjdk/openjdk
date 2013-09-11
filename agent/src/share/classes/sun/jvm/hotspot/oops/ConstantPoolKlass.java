@@ -58,3 +58,4 @@ public class ConstantPoolKlass extends Klass {
 
   private static long headerSize;
 }
+

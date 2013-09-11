@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,15 +26,9 @@
 #define CPU_X86_VM_INTERPRETER_X86_HPP
 
  public:
-
-  // Sentinel placed in the code for interpreter returns so
-  // that i2c adapters and osr code can recognize an interpreter
-  // return address and convert the return to a specialized
-  // block of code to handle compiedl return values and cleaning
-  // the fpu stack.
-  static const int return_sentinel;
-
-  static Address::ScaleFactor stackElementScale() { return Address::times_4; }
+  static Address::ScaleFactor stackElementScale() {
+    return NOT_LP64(Address::times_4) LP64_ONLY(Address::times_8);
+  }
 
   // Offset from rsp (which points to the last stack element)
   static int expr_offset_in_bytes(int i) { return stackElementSize * i; }

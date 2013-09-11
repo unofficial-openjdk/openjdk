@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,17 @@
 #include "opto/c2_globals.hpp"
 #endif
 
+#include <new>
+
 #define ARENA_ALIGN_M1 (((size_t)(ARENA_AMALLOC_ALIGNMENT)) - 1)
 #define ARENA_ALIGN_MASK (~((size_t)ARENA_ALIGN_M1))
 #define ARENA_ALIGN(x) ((((size_t)(x)) + ARENA_ALIGN_M1) & ARENA_ALIGN_MASK)
+
+class AllocFailStrategy {
+public:
+  enum AllocFailEnum { EXIT_OOM, RETURN_NULL };
+};
+typedef AllocFailStrategy::AllocFailEnum AllocFailType;
 
 // All classes in the virtual machine must be subclassed
 // by one of the following allocation classes:
@@ -99,6 +107,7 @@ class AllocatedObj {
 class CHeapObj ALLOCATION_SUPER_CLASS_SPEC {
  public:
   void* operator new(size_t size);
+  void* operator new (size_t size, const std::nothrow_t&  nothrow_constant);
   void  operator delete(void* p);
   void* new_array(size_t size);
 };
@@ -148,11 +157,13 @@ class AllStatic {
 //------------------------------Chunk------------------------------------------
 // Linked list of raw memory chunks
 class Chunk: public CHeapObj {
+  friend class VMStructs;
+
  protected:
   Chunk*       _next;     // Next Chunk in list
   const size_t _len;      // Size of this Chunk
  public:
-  void* operator new(size_t size, size_t length);
+  void* operator new(size_t size, AllocFailType alloc_failmode, size_t length);
   void  operator delete(void* p);
   Chunk(size_t length);
 
@@ -197,23 +208,32 @@ protected:
   friend class ResourceMark;
   friend class HandleMark;
   friend class NoHandleMark;
+  friend class VMStructs;
+
   Chunk *_first;                // First chunk
   Chunk *_chunk;                // current chunk
   char *_hwm, *_max;            // High water mark and max in current chunk
-  void* grow(size_t x);         // Get a new Chunk of at least size x
+  // Get a new Chunk of at least size x
+  void* grow(size_t x, AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM);
   NOT_PRODUCT(size_t _size_in_bytes;) // Size of arena (used for memory usage tracing)
-  NOT_PRODUCT(static size_t _bytes_allocated;) // total #bytes allocated since start
+  NOT_PRODUCT(static julong _bytes_allocated;) // total #bytes allocated since start
   friend class AllocStats;
   debug_only(void* malloc(size_t size);)
   debug_only(void* internal_malloc_4(size_t x);)
+  NOT_PRODUCT(void inc_bytes_allocated(size_t x);)
 
   void signal_out_of_memory(size_t request, const char* whence) const;
 
-  void check_for_overflow(size_t request, const char* whence) const {
+  bool check_for_overflow(size_t request, const char* whence,
+      AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) const {
     if (UINTPTR_MAX - request < (uintptr_t)_hwm) {
+      if (alloc_failmode == AllocFailStrategy::RETURN_NULL) {
+        return false;
+      }
       signal_out_of_memory(request, whence);
     }
-  }
+    return true;
+ }
 
  public:
   Arena();
@@ -224,14 +244,15 @@ protected:
   char* hwm() const             { return _hwm; }
 
   // Fast allocate in the arena.  Common case is: pointer test + increment.
-  void* Amalloc(size_t x) {
+  void* Amalloc(size_t x, AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
     assert(is_power_of_2(ARENA_AMALLOC_ALIGNMENT) , "should be a power of 2");
     x = ARENA_ALIGN(x);
     debug_only(if (UseMallocOnly) return malloc(x);)
-    check_for_overflow(x, "Arena::Amalloc");
-    NOT_PRODUCT(_bytes_allocated += x);
+    if (!check_for_overflow(x, "Arena::Amalloc", alloc_failmode))
+      return NULL;
+    NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
-      return grow(x);
+      return grow(x, alloc_failmode);
     } else {
       char *old = _hwm;
       _hwm += x;
@@ -239,13 +260,14 @@ protected:
     }
   }
   // Further assume size is padded out to words
-  void *Amalloc_4(size_t x) {
+  void *Amalloc_4(size_t x, AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
     assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
     debug_only(if (UseMallocOnly) return malloc(x);)
-    check_for_overflow(x, "Arena::Amalloc_4");
-    NOT_PRODUCT(_bytes_allocated += x);
+    if (!check_for_overflow(x, "Arena::Amalloc_4", alloc_failmode))
+      return NULL;
+    NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
-      return grow(x);
+      return grow(x, alloc_failmode);
     } else {
       char *old = _hwm;
       _hwm += x;
@@ -255,7 +277,7 @@ protected:
 
   // Allocate with 'double' alignment. It is 8 bytes on sparc.
   // In other cases Amalloc_D() should be the same as Amalloc_4().
-  void* Amalloc_D(size_t x) {
+  void* Amalloc_D(size_t x, AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM) {
     assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
     debug_only(if (UseMallocOnly) return malloc(x);)
 #if defined(SPARC) && !defined(_LP64)
@@ -263,10 +285,11 @@ protected:
     size_t delta = (((size_t)_hwm + DALIGN_M1) & ~DALIGN_M1) - (size_t)_hwm;
     x += delta;
 #endif
-    check_for_overflow(x, "Arena::Amalloc_D");
-    NOT_PRODUCT(_bytes_allocated += x);
+    if (!check_for_overflow(x, "Arena::Amalloc_D", alloc_failmode))
+      return NULL;
+    NOT_PRODUCT(inc_bytes_allocated(x);)
     if (_hwm + x > _max) {
-      return grow(x); // grow() returns a result aligned >= 8 bytes.
+      return grow(x, alloc_failmode); // grow() returns a result aligned >= 8 bytes.
     } else {
       char *old = _hwm;
       _hwm += x;
@@ -286,7 +309,8 @@ protected:
     if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;
   }
 
-  void *Arealloc( void *old_ptr, size_t old_size, size_t new_size );
+  void *Arealloc( void *old_ptr, size_t old_size, size_t new_size,
+     AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM);
 
   // Move contents of this arena into an empty arena
   Arena *move_contents(Arena *empty_arena);
@@ -328,9 +352,12 @@ private:
 
 
 //%note allocation_1
-extern char* resource_allocate_bytes(size_t size);
-extern char* resource_allocate_bytes(Thread* thread, size_t size);
-extern char* resource_reallocate_bytes( char *old, size_t old_size, size_t new_size);
+extern char* resource_allocate_bytes(size_t size,
+    AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM);
+extern char* resource_allocate_bytes(Thread* thread, size_t size,
+    AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM);
+extern char* resource_reallocate_bytes( char *old, size_t old_size, size_t new_size,
+    AllocFailType alloc_failmode = AllocFailStrategy::EXIT_OOM);
 extern void resource_free_bytes( char *old, size_t size );
 
 //----------------------------------------------------------------------
@@ -376,6 +403,13 @@ class ResourceObj ALLOCATION_SUPER_CLASS_SPEC {
       DEBUG_ONLY(set_allocation_type(res, RESOURCE_AREA);)
       return res;
   }
+
+  void* operator new(size_t size, const std::nothrow_t& nothrow_constant) {
+    address res = (address)resource_allocate_bytes(size, AllocFailStrategy::RETURN_NULL);
+    DEBUG_ONLY(if (res != NULL) set_allocation_type(res, RESOURCE_AREA);)
+    return res;
+  }
+
   void  operator delete(void* p);
 };
 
@@ -385,6 +419,9 @@ class ResourceObj ALLOCATION_SUPER_CLASS_SPEC {
 
 #define NEW_RESOURCE_ARRAY(type, size)\
   (type*) resource_allocate_bytes((size) * sizeof(type))
+
+#define NEW_RESOURCE_ARRAY_RETURN_NULL(type, size)\
+  (type*) resource_allocate_bytes((size) * sizeof(type), AllocFailStrategy::RETURN_NULL)
 
 #define NEW_RESOURCE_ARRAY_IN_THREAD(thread, type, size)\
   (type*) resource_allocate_bytes(thread, (size) * sizeof(type))
@@ -418,15 +455,16 @@ extern bool warn_new_operator;
 // for statistics
 #ifndef PRODUCT
 class AllocStats : StackObj {
-  int    start_mallocs, start_frees;
-  size_t start_malloc_bytes, start_res_bytes;
+  julong start_mallocs, start_frees;
+  julong start_malloc_bytes, start_mfree_bytes, start_res_bytes;
  public:
   AllocStats();
 
-  int    num_mallocs();    // since creation of receiver
-  size_t alloc_bytes();
-  size_t resource_bytes();
-  int    num_frees();
+  julong num_mallocs();    // since creation of receiver
+  julong alloc_bytes();
+  julong num_frees();
+  julong free_bytes();
+  julong resource_bytes();
   void   print();
 };
 #endif

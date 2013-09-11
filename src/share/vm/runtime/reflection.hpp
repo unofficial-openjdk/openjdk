@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@
 
 #include "oops/oop.hpp"
 #include "runtime/fieldDescriptor.hpp"
-#include "runtime/reflectionCompat.hpp"
 #include "utilities/accessFlags.hpp"
 #include "utilities/growableArray.hpp"
 
@@ -55,7 +54,7 @@ class Reflection: public AllStatic {
   static objArrayHandle get_parameter_types(methodHandle method, int parameter_count, oop* return_type, TRAPS);
   static objArrayHandle get_exception_types(methodHandle method, TRAPS);
   // Creating new java.lang.reflect.xxx wrappers
-  static Handle new_type(symbolHandle signature, KlassHandle k, TRAPS);
+  static Handle new_type(Symbol* signature, KlassHandle k, TRAPS);
 
  public:
   // Constants defined by java reflection api classes
@@ -120,16 +119,6 @@ class Reflection: public AllStatic {
   // Create a java.lang.reflect.Field object based on a field descriptor
   static oop new_field(fieldDescriptor* fd, bool intern_name, TRAPS);
 
-  //---------------------------------------------------------------------------
-  //
-  // Support for old native code-based reflection (pre-JDK 1.4)
-  //
-  // NOTE: the method and constructor invocation code is still used
-  // for startup time reasons; see reflectionCompat.hpp.
-  //
-  //---------------------------------------------------------------------------
-
-#ifdef SUPPORT_OLD_REFLECTION
 private:
   // method resolution for invoke
   static methodHandle resolve_interface_call(instanceKlassHandle klass, methodHandle method, KlassHandle recv_klass, Handle receiver, TRAPS);
@@ -144,35 +133,11 @@ private:
   // Conversion
   static BasicType basic_type_mirror_to_basic_type(oop basic_type_mirror, TRAPS);
 
-  static bool match_parameter_types(methodHandle method, objArrayHandle types, int parameter_count, TRAPS);
-  // Creating new java.lang.reflect.xxx wrappers
-  static oop new_field(FieldStream* st, TRAPS);
-
 public:
-  // Field lookup and verification.
-  static bool      resolve_field(Handle field_mirror, Handle& receiver, fieldDescriptor* fd, bool check_final, TRAPS);
-
-  // Reflective field access. Returns type code. Throws IllegalArgumentException.
-  static BasicType field_get(jvalue* value, fieldDescriptor* fd, Handle receiver);
-  static void      field_set(jvalue* value, fieldDescriptor* fd, Handle receiver, BasicType value_type, TRAPS);
-
-  // Reflective lookup of fields. Returns java.lang.reflect.Field instances.
-  static oop         reflect_field(oop mirror, symbolOop field_name, jint which, TRAPS);
-  static objArrayOop reflect_fields(oop mirror, jint which, TRAPS);
-
-  // Reflective lookup of methods. Returns java.lang.reflect.Method instances.
-  static oop         reflect_method(oop mirror, symbolHandle method_name, objArrayHandle types, jint which, TRAPS);
-  static objArrayOop reflect_methods(oop mirror, jint which, TRAPS);
-
-  // Reflective lookup of constructors. Returns java.lang.reflect.Constructor instances.
-  static oop         reflect_constructor(oop mirror, objArrayHandle types, jint which, TRAPS);
-  static objArrayOop reflect_constructors(oop mirror, jint which, TRAPS);
-
   // Method invokation through java.lang.reflect.Method
   static oop      invoke_method(oop method_mirror, Handle receiver, objArrayHandle args, TRAPS);
   // Method invokation through java.lang.reflect.Constructor
   static oop      invoke_constructor(oop method_mirror, objArrayHandle args, TRAPS);
-#endif /* SUPPORT_OLD_REFLECTION */
 
 };
 

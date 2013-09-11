@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -552,7 +552,7 @@ void javaVFrame::print_value() const {
   tty->print("%s.%s", Klass::cast(k)->internal_name(), m->name()->as_C_string());
 
   if (!m->is_native()) {
-    symbolOop  source_name = instanceKlass::cast(k)->source_file_name();
+    Symbol*  source_name = instanceKlass::cast(k)->source_file_name();
     int        line_number = m->line_number_from_bci(bci());
     if (source_name != NULL && (line_number != -1)) {
       tty->print("(%s:%d)", source_name->as_C_string(), line_number);

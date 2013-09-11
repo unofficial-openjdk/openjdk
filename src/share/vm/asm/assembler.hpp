@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,14 @@
 #ifdef TARGET_ARCH_zero
 # include "register_zero.hpp"
 # include "vm_version_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "register_arm.hpp"
+# include "vm_version_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "register_ppc.hpp"
+# include "vm_version_ppc.hpp"
 #endif
 
 // This file contains platform-independent assembler declarations.
@@ -233,6 +241,33 @@ class AbstractAssembler : public ResourceObj  {
   // Make it return true on platforms which need to verify
   // instruction boundaries for some operations.
   inline static bool pd_check_instruction_mark();
+
+  // Add delta to short branch distance to verify that it still fit into imm8.
+  int _short_branch_delta;
+
+  int  short_branch_delta() const { return _short_branch_delta; }
+  void set_short_branch_delta()   { _short_branch_delta = 32; }
+  void clear_short_branch_delta() { _short_branch_delta = 0; }
+
+  class ShortBranchVerifier: public StackObj {
+   private:
+    AbstractAssembler* _assm;
+
+   public:
+    ShortBranchVerifier(AbstractAssembler* assm) : _assm(assm) {
+      assert(assm->short_branch_delta() == 0, "overlapping instructions");
+      _assm->set_short_branch_delta();
+    }
+    ~ShortBranchVerifier() {
+      _assm->clear_short_branch_delta();
+    }
+  };
+  #else
+  // Dummy in product.
+  class ShortBranchVerifier: public StackObj {
+   public:
+    ShortBranchVerifier(AbstractAssembler* assm) {}
+  };
   #endif
 
   // Label functions
@@ -248,6 +283,29 @@ class AbstractAssembler : public ResourceObj  {
 
   // ensure buf contains all code (call this before using/copying the code)
   void flush();
+
+  // min and max values for signed immediate ranges
+  static int min_simm(int nbits) { return -(intptr_t(1) << (nbits - 1))    ; }
+  static int max_simm(int nbits) { return  (intptr_t(1) << (nbits - 1)) - 1; }
+
+  // Define some:
+  static int min_simm10() { return min_simm(10); }
+  static int min_simm13() { return min_simm(13); }
+  static int min_simm16() { return min_simm(16); }
+
+  // Test if x is within signed immediate range for nbits
+  static bool is_simm(intptr_t x, int nbits) { return min_simm(nbits) <= x && x <= max_simm(nbits); }
+
+  // Define some:
+  static bool is_simm5( intptr_t x) { return is_simm(x, 5 ); }
+  static bool is_simm8( intptr_t x) { return is_simm(x, 8 ); }
+  static bool is_simm10(intptr_t x) { return is_simm(x, 10); }
+  static bool is_simm11(intptr_t x) { return is_simm(x, 11); }
+  static bool is_simm12(intptr_t x) { return is_simm(x, 12); }
+  static bool is_simm13(intptr_t x) { return is_simm(x, 13); }
+  static bool is_simm16(intptr_t x) { return is_simm(x, 16); }
+  static bool is_simm26(intptr_t x) { return is_simm(x, 26); }
+  static bool is_simm32(intptr_t x) { return is_simm(x, 32); }
 
   // Accessors
   CodeBuffer*   code() const;          // _code_section->outer()
@@ -394,6 +452,12 @@ class AbstractAssembler : public ResourceObj  {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "assembler_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "assembler_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "assembler_ppc.hpp"
 #endif
 
 

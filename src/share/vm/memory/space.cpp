@@ -97,6 +97,14 @@ void DirtyCardToOopClosure::walk_mem_region(MemRegion mr,
   }
 }
 
+// We get called with "mr" representing the dirty region
+// that we want to process. Because of imprecise marking,
+// we may need to extend the incoming "mr" to the right,
+// and scan more. However, because we may already have
+// scanned some of that extended region, we may need to
+// trim its right-end back some so we do not scan what
+// we (or another worker thread) may already have scanned
+// or planning to scan.
 void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
 
   // Some collectors need to do special things whenever their dirty
@@ -148,7 +156,7 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
   // e.g. the dirty card region is entirely in a now free object
   // -- something that could happen with a concurrent sweeper.
   bottom = MIN2(bottom, top);
-  mr     = MemRegion(bottom, top);
+  MemRegion extended_mr = MemRegion(bottom, top);
   assert(bottom <= top &&
          (_precision != CardTableModRefBS::ObjHeadPreciseArray ||
           _min_done == NULL ||
@@ -156,8 +164,8 @@ void DirtyCardToOopClosure::do_MemRegion(MemRegion mr) {
          "overlap!");
 
   // Walk the region if it is not empty; otherwise there is nothing to do.
-  if (!mr.is_empty()) {
-    walk_mem_region(mr, bottom_obj, top);
+  if (!extended_mr.is_empty()) {
+    walk_mem_region(extended_mr, bottom_obj, top);
   }
 
   // An idempotent closure might be applied in any order, so we don't
@@ -294,11 +302,6 @@ void ContiguousSpace::clear(bool mangle_space) {
   set_top(bottom());
   set_saved_mark();
   CompactibleSpace::clear(mangle_space);
-}
-
-bool Space::is_in(const void* p) const {
-  HeapWord* b = block_start_const(p);
-  return b != NULL && block_is_obj(b);
 }
 
 bool ContiguousSpace::is_in(const void* p) const {
@@ -818,9 +821,14 @@ size_t ContiguousSpace::block_size(const HeapWord* p) const {
 // This version requires locking.
 inline HeapWord* ContiguousSpace::allocate_impl(size_t size,
                                                 HeapWord* const end_value) {
+  // In G1 there are places where a GC worker can allocates into a
+  // region using this serial allocation code without being prone to a
+  // race with other GC workers (we ensure that no other GC worker can
+  // access the same region at the same time). So the assert below is
+  // too strong in the case of G1.
   assert(Heap_lock->owned_by_self() ||
          (SafepointSynchronize::is_at_safepoint() &&
-          Thread::current()->is_VM_thread()),
+                               (Thread::current()->is_VM_thread() || UseG1GC)),
          "not locked");
   HeapWord* obj = top();
   if (pointer_delta(end_value, obj) >= size) {

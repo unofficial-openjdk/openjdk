@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,11 +41,11 @@ class JvmtiConstantPoolReconstituter : public StackObj {
   instanceKlassHandle  ikh()     { return _ikh; };
   constantPoolHandle   cpool()   { return _cpool; };
 
-  u2 symbol_to_cpool_index(symbolOop sym) {
+  u2 symbol_to_cpool_index(Symbol* sym) {
     return _symmap->symbol_to_value(sym);
   }
 
-  u2 class_symbol_to_cpool_index(symbolOop sym) {
+  u2 class_symbol_to_cpool_index(Symbol* sym) {
     return _classmap->symbol_to_value(sym);
   }
 
@@ -119,6 +119,7 @@ class JvmtiClassFileReconstituter : public JvmtiConstantPoolReconstituter {
   void write_source_debug_extension_attribute();
   u2 line_number_table_entries(methodHandle method);
   void write_line_number_table_attribute(methodHandle method, u2 num_entries);
+  void write_local_variable_table_attribute(methodHandle method, u2 num_entries);
   void write_stackmap_table_attribute(methodHandle method, int stackmap_table_len);
   u2 inner_classes_attribute_length();
   void write_inner_classes_attribute(int length);

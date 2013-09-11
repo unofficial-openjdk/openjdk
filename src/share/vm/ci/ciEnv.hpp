@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,6 @@ private:
   // Distinguished instances of certain ciObjects..
   static ciObject*              _null_object_instance;
   static ciMethodKlass*         _method_klass_instance;
-  static ciSymbolKlass*         _symbol_klass_instance;
   static ciKlassKlass*          _klass_klass_instance;
   static ciInstanceKlassKlass*  _instance_klass_klass_instance;
   static ciTypeArrayKlassKlass* _type_array_klass_klass_instance;
@@ -138,6 +137,7 @@ private:
 
   // Implementation methods for loading and constant pool access.
   ciKlass* get_klass_by_name_impl(ciKlass* accessing_klass,
+                                  constantPoolHandle cpool,
                                   ciSymbol* klass_name,
                                   bool require_local);
   ciKlass*   get_klass_by_index_impl(constantPoolHandle cpool,
@@ -153,15 +153,16 @@ private:
                                       int method_index, Bytecodes::Code bc,
                                       ciInstanceKlass* loading_klass);
   ciMethod*  get_fake_invokedynamic_method_impl(constantPoolHandle cpool,
-                                                int index, Bytecodes::Code bc);
+                                                int index, Bytecodes::Code bc,
+                                                ciInstanceKlass* accessor);
 
   // Helper methods
   bool       check_klass_accessibility(ciKlass* accessing_klass,
                                       klassOop resolved_klassOop);
   methodOop  lookup_method(instanceKlass*  accessor,
                            instanceKlass*  holder,
-                           symbolOop       name,
-                           symbolOop       sig,
+                           Symbol*         name,
+                           Symbol*         sig,
                            Bytecodes::Code bc);
 
   // Get a ciObject from the object factory.  Ensures uniqueness
@@ -174,22 +175,32 @@ private:
     }
   }
 
+  ciSymbol* get_symbol(Symbol* o) {
+    if (o == NULL) {
+      ShouldNotReachHere();
+      return NULL;
+    } else {
+      return _factory->get_symbol(o);
+    }
+  }
+
   ciMethod* get_method_from_handle(jobject method);
 
-  ciInstance* get_or_create_exception(jobject& handle, symbolHandle name);
+  ciInstance* get_or_create_exception(jobject& handle, Symbol* name);
 
   // Get a ciMethod representing either an unfound method or
   // a method with an unloaded holder.  Ensures uniqueness of
   // the result.
   ciMethod* get_unloaded_method(ciInstanceKlass* holder,
                                 ciSymbol*        name,
-                                ciSymbol*        signature) {
-    return _factory->get_unloaded_method(holder, name, signature);
+                                ciSymbol*        signature,
+                                ciInstanceKlass* accessor) {
+    return _factory->get_unloaded_method(holder, name, signature, accessor);
   }
 
   // Get a ciKlass representing an unloaded klass.
   // Ensures uniqueness of the result.
-  ciKlass* get_unloaded_klass(ciKlass* accessing_klass,
+  ciKlass* get_unloaded_klass(ciKlass*  accessing_klass,
                               ciSymbol* name) {
     return _factory->get_unloaded_klass(accessing_klass, name, true);
   }
@@ -215,7 +226,7 @@ private:
 
   // See if we already have an unloaded klass for the given name
   // or return NULL if not.
-  ciKlass *check_get_unloaded_klass(ciKlass* accessing_klass, ciSymbol* name) {
+  ciKlass *check_get_unloaded_klass(ciKlass*  accessing_klass, ciSymbol* name) {
     return _factory->get_unloaded_klass(accessing_klass, name, false);
   }
 
@@ -238,9 +249,9 @@ private:
   // Is this thread currently in the VM state?
   static bool is_in_vm();
 
-  // Helper routine for determining the validity of a compilation
-  // with respect to concurrent class loading.
-  void check_for_system_dictionary_modification(ciMethod* target);
+  // Helper routine for determining the validity of a compilation with
+  // respect to method dependencies (e.g. concurrent class loading).
+  void validate_compile_task_dependencies(ciMethod* target);
 
 public:
   enum {
@@ -272,6 +283,20 @@ public:
 
   // Return state of appropriate compilability
   int compilable() { return _compilable; }
+
+  const char* retry_message() const {
+    switch (_compilable) {
+      case ciEnv::MethodCompilable_not_at_tier:
+        return "retry at different tier";
+      case ciEnv::MethodCompilable_never:
+        return "not retryable";
+      case ciEnv::MethodCompilable:
+        return NULL;
+      default:
+        ShouldNotReachHere();
+        return NULL;
+    }
+  }
 
   bool break_at_compile() { return _break_at_compile; }
   void set_break_at_compile(bool z) { _break_at_compile = z; }
@@ -308,8 +333,7 @@ public:
                        ImplicitExceptionTable*   inc_table,
                        AbstractCompiler*         compiler,
                        int                       comp_level,
-                       bool                      has_debug_info = true,
-                       bool                      has_unsafe_access = false);
+                       bool                      has_unsafe_access);
 
 
   // Access to certain well known ciObjects.

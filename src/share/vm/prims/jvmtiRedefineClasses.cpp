@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 #include "interpreter/rewriter.hpp"
 #include "memory/gcLocker.hpp"
 #include "memory/universe.inline.hpp"
+#include "oops/fieldStreams.hpp"
 #include "oops/klassVtable.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
@@ -128,8 +129,15 @@ void VM_RedefineClasses::doit() {
   // See jvmtiExport.hpp for detailed explanation.
   JvmtiExport::set_has_redefined_a_class();
 
-#ifdef ASSERT
-  SystemDictionary::classes_do(check_class, thread);
+// check_class() is optionally called for product bits, but is
+// always called for non-product bits.
+#ifdef PRODUCT
+  if (RC_TRACE_ENABLED(0x00004000)) {
+#endif
+    RC_TRACE_WITH_THREAD(0x00004000, thread, ("calling check_class"));
+    SystemDictionary::classes_do(check_class, thread);
+#ifdef PRODUCT
+  }
 #endif
 }
 
@@ -235,7 +243,7 @@ void VM_RedefineClasses::append_entry(constantPoolHandle scratch_cp,
     case JVM_CONSTANT_String:      // fall through
 
     // These were indirect CP entries, but they have been changed into
-    // symbolOops so these entries can be directly appended.
+    // Symbol*s so these entries can be directly appended.
     case JVM_CONSTANT_UnresolvedClass:  // fall through
     case JVM_CONSTANT_UnresolvedString:
     {
@@ -551,39 +559,33 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
 
   // Check if the number, names, types and order of fields declared in these classes
   // are the same.
-  typeArrayOop k_old_fields = the_class->fields();
-  typeArrayOop k_new_fields = scratch_class->fields();
-  int n_fields = k_old_fields->length();
-  if (n_fields != k_new_fields->length()) {
-    return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
-  }
-
-  for (i = 0; i < n_fields; i += instanceKlass::next_offset) {
+  JavaFieldStream old_fs(the_class);
+  JavaFieldStream new_fs(scratch_class);
+  for (; !old_fs.done() && !new_fs.done(); old_fs.next(), new_fs.next()) {
     // access
-    old_flags = k_old_fields->ushort_at(i + instanceKlass::access_flags_offset);
-    new_flags = k_new_fields->ushort_at(i + instanceKlass::access_flags_offset);
+    old_flags = old_fs.access_flags().as_short();
+    new_flags = new_fs.access_flags().as_short();
     if ((old_flags ^ new_flags) & JVM_RECOGNIZED_FIELD_MODIFIERS) {
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
     }
     // offset
-    if (k_old_fields->short_at(i + instanceKlass::low_offset) !=
-        k_new_fields->short_at(i + instanceKlass::low_offset) ||
-        k_old_fields->short_at(i + instanceKlass::high_offset) !=
-        k_new_fields->short_at(i + instanceKlass::high_offset)) {
+    if (old_fs.offset() != new_fs.offset()) {
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
     }
     // name and signature
-    jshort name_index = k_old_fields->short_at(i + instanceKlass::name_index_offset);
-    jshort sig_index = k_old_fields->short_at(i +instanceKlass::signature_index_offset);
-    symbolOop name_sym1 = the_class->constants()->symbol_at(name_index);
-    symbolOop sig_sym1 = the_class->constants()->symbol_at(sig_index);
-    name_index = k_new_fields->short_at(i + instanceKlass::name_index_offset);
-    sig_index = k_new_fields->short_at(i + instanceKlass::signature_index_offset);
-    symbolOop name_sym2 = scratch_class->constants()->symbol_at(name_index);
-    symbolOop sig_sym2 = scratch_class->constants()->symbol_at(sig_index);
+    Symbol* name_sym1 = the_class->constants()->symbol_at(old_fs.name_index());
+    Symbol* sig_sym1 = the_class->constants()->symbol_at(old_fs.signature_index());
+    Symbol* name_sym2 = scratch_class->constants()->symbol_at(new_fs.name_index());
+    Symbol* sig_sym2 = scratch_class->constants()->symbol_at(new_fs.signature_index());
     if (name_sym1 != name_sym2 || sig_sym1 != sig_sym2) {
       return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
     }
+  }
+
+  // If both streams aren't done then we have a differing number of
+  // fields.
+  if (!old_fs.done() || !new_fs.done()) {
+    return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
   }
 
   // Do a parallel walk through the old and new methods. Detect
@@ -855,12 +857,13 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     }
     klassOop the_class_oop = java_lang_Class::as_klassOop(mirror);
     instanceKlassHandle the_class = instanceKlassHandle(THREAD, the_class_oop);
-    symbolHandle the_class_sym = symbolHandle(THREAD, the_class->name());
+    Symbol*  the_class_sym = the_class->name();
 
     // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
     RC_TRACE_WITH_THREAD(0x00000001, THREAD,
-      ("loading name=%s (avail_mem=" UINT64_FORMAT "K)",
-      the_class->external_name(), os::available_memory() >> 10));
+      ("loading name=%s kind=%d (avail_mem=" UINT64_FORMAT "K)",
+      the_class->external_name(), _class_load_kind,
+      os::available_memory() >> 10));
 
     ClassFileStream st((u1*) _class_defs[i].class_bytes,
       _class_defs[i].class_byte_count, (char *)"__VM_RedefineClasses__");
@@ -886,7 +889,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     instanceKlassHandle scratch_class (THREAD, k);
 
     if (HAS_PENDING_EXCEPTION) {
-      symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+      Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
       // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
       RC_TRACE_WITH_THREAD(0x00000002, THREAD, ("parse_stream exception: '%s'",
         ex_name->as_C_string()));
@@ -912,7 +915,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     if (!the_class->is_linked()) {
       the_class->link_class(THREAD);
       if (HAS_PENDING_EXCEPTION) {
-        symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+        Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
         // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
         RC_TRACE_WITH_THREAD(0x00000002, THREAD, ("link_class exception: '%s'",
           ex_name->as_C_string()));
@@ -950,7 +953,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     }
 
     if (HAS_PENDING_EXCEPTION) {
-      symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+      Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
       // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
       RC_TRACE_WITH_THREAD(0x00000002, THREAD,
         ("verify_byte_codes exception: '%s'", ex_name->as_C_string()));
@@ -976,7 +979,7 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
       }
 
       if (HAS_PENDING_EXCEPTION) {
-        symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+        Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
         // RC_TRACE_WITH_THREAD macro has an embedded ResourceMark
         RC_TRACE_WITH_THREAD(0x00000002, THREAD,
           ("verify_byte_codes post merge-CP exception: '%s'",
@@ -992,8 +995,11 @@ jvmtiError VM_RedefineClasses::load_new_class_versions(TRAPS) {
     }
 
     Rewriter::rewrite(scratch_class, THREAD);
+    if (!HAS_PENDING_EXCEPTION) {
+      Rewriter::relocate_and_link(scratch_class, THREAD);
+    }
     if (HAS_PENDING_EXCEPTION) {
-      symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+      Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
       CLEAR_PENDING_EXCEPTION;
       if (ex_name == vmSymbols::java_lang_OutOfMemoryError()) {
         return JVMTI_ERROR_OUT_OF_MEMORY;
@@ -1084,7 +1090,10 @@ bool VM_RedefineClasses::merge_constant_pools(constantPoolHandle old_cp,
       jbyte old_tag = old_cp->tag_at(old_i).value();
       switch (old_tag) {
       case JVM_CONSTANT_Class:
+      case JVM_CONSTANT_UnresolvedClass:
         // revert the copy to JVM_CONSTANT_UnresolvedClass
+        // May be resolving while calling this so do the same for
+        // JVM_CONSTANT_UnresolvedClass (klass_name_at() deals with transition)
         (*merge_cp_p)->unresolved_klass_at_put(old_i,
           old_cp->klass_name_at(old_i));
         break;
@@ -1247,12 +1256,12 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
   // Constant pools are not easily reused so we allocate a new one
   // each time.
   // merge_cp is created unsafe for concurrent GC processing.  It
-  // should be marked safe before discarding it because, even if
-  // garbage.  If it crosses a card boundary, it may be scanned
+  // should be marked safe before discarding it. Even though
+  // garbage,  if it crosses a card boundary, it may be scanned
   // in order to find the start of the first complete object on the card.
   constantPoolHandle merge_cp(THREAD,
     oopFactory::new_constantPool(merge_cp_length,
-                                 methodOopDesc::IsUnsafeConc,
+                                 oopDesc::IsUnsafeConc,
                                  THREAD));
   int orig_length = old_cp->orig_length();
   if (orig_length == 0) {
@@ -2343,7 +2352,7 @@ void VM_RedefineClasses::set_new_constant_pool(
     // sized constant pool with the klass to save space.
     constantPoolHandle smaller_cp(THREAD,
       oopFactory::new_constantPool(scratch_cp_length,
-                                   methodOopDesc::IsUnsafeConc,
+                                   oopDesc::IsUnsafeConc,
                                    THREAD));
     // preserve orig_length() value in the smaller copy
     int orig_length = scratch_cp->orig_length();
@@ -2363,38 +2372,34 @@ void VM_RedefineClasses::set_new_constant_pool(
   int i;  // for portability
 
   // update each field in klass to use new constant pool indices as needed
-  typeArrayHandle fields(THREAD, scratch_class->fields());
-  int n_fields = fields->length();
-  for (i = 0; i < n_fields; i += instanceKlass::next_offset) {
-    jshort cur_index = fields->short_at(i + instanceKlass::name_index_offset);
+  for (JavaFieldStream fs(scratch_class); !fs.done(); fs.next()) {
+    jshort cur_index = fs.name_index();
     jshort new_index = find_new_index(cur_index);
     if (new_index != 0) {
       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
         ("field-name_index change: %d to %d", cur_index, new_index));
-      fields->short_at_put(i + instanceKlass::name_index_offset, new_index);
+      fs.set_name_index(new_index);
     }
-    cur_index = fields->short_at(i + instanceKlass::signature_index_offset);
+    cur_index = fs.signature_index();
     new_index = find_new_index(cur_index);
     if (new_index != 0) {
       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
         ("field-signature_index change: %d to %d", cur_index, new_index));
-      fields->short_at_put(i + instanceKlass::signature_index_offset,
-        new_index);
+      fs.set_signature_index(new_index);
     }
-    cur_index = fields->short_at(i + instanceKlass::initval_index_offset);
+    cur_index = fs.initval_index();
     new_index = find_new_index(cur_index);
     if (new_index != 0) {
       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
         ("field-initval_index change: %d to %d", cur_index, new_index));
-      fields->short_at_put(i + instanceKlass::initval_index_offset, new_index);
+      fs.set_initval_index(new_index);
     }
-    cur_index = fields->short_at(i + instanceKlass::generic_signature_offset);
+    cur_index = fs.generic_signature_index();
     new_index = find_new_index(cur_index);
     if (new_index != 0) {
       RC_TRACE_WITH_THREAD(0x00080000, THREAD,
         ("field-generic_signature change: %d to %d", cur_index, new_index));
-      fields->short_at_put(i + instanceKlass::generic_signature_offset,
-        new_index);
+      fs.set_generic_signature_index(new_index);
     }
   } // end for each field
 
@@ -2857,8 +2862,8 @@ class TransferNativeFunctionRegistration {
   //    (2) with the prefix.
   // where 'prefix' is the prefix at that 'depth' (first prefix, second prefix,...)
   methodOop search_prefix_name_space(int depth, char* name_str, size_t name_len,
-                                     symbolOop signature) {
-    symbolOop name_symbol = SymbolTable::probe(name_str, (int)name_len);
+                                     Symbol* signature) {
+    TempNewSymbol name_symbol = SymbolTable::probe(name_str, (int)name_len);
     if (name_symbol != NULL) {
       methodOop method = Klass::cast(the_class())->lookup_method(name_symbol, signature);
       if (method != NULL) {
@@ -2897,7 +2902,7 @@ class TransferNativeFunctionRegistration {
 
   // Return the method name with old prefixes stripped away.
   char* method_name_without_prefixes(methodOop method) {
-    symbolOop name = method->name();
+    Symbol* name = method->name();
     char* name_str = name->as_utf8();
 
     // Old prefixing may be defunct, strip prefixes, if any.
@@ -3208,8 +3213,20 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
   // with them was cached on the scratch class, move to the_class.
   // Note: we still want to do this if nothing needed caching since it
   // should get cleared in the_class too.
-  the_class->set_cached_class_file(scratch_class->get_cached_class_file_bytes(),
-                                   scratch_class->get_cached_class_file_len());
+  if (the_class->get_cached_class_file_bytes() == 0) {
+    // the_class doesn't have a cache yet so copy it
+    the_class->set_cached_class_file(
+      scratch_class->get_cached_class_file_bytes(),
+      scratch_class->get_cached_class_file_len());
+  }
+#ifndef PRODUCT
+  else {
+    assert(the_class->get_cached_class_file_bytes() ==
+      scratch_class->get_cached_class_file_bytes(), "cache ptrs must match");
+    assert(the_class->get_cached_class_file_len() ==
+      scratch_class->get_cached_class_file_len(), "cache lens must match");
+  }
+#endif
 
   // Replace inner_classes
   typeArrayOop old_inner_classes = the_class->inner_classes();
@@ -3347,84 +3364,125 @@ void VM_RedefineClasses::increment_class_counter(instanceKlass *ik, TRAPS) {
 
   for (Klass *subk = ik->subklass(); subk != NULL;
        subk = subk->next_sibling()) {
-    klassOop sub = subk->as_klassOop();
-    instanceKlass *subik = (instanceKlass *)sub->klass_part();
-
-    // recursively do subclasses of the current subclass
-    increment_class_counter(subik, THREAD);
+    if (subk->oop_is_instance()) {
+      // Only update instanceKlasses
+      instanceKlass *subik = (instanceKlass*)subk;
+      // recursively do subclasses of the current subclass
+      increment_class_counter(subik, THREAD);
+    }
   }
 }
 
-#ifndef PRODUCT
 void VM_RedefineClasses::check_class(klassOop k_oop,
        oop initiating_loader, TRAPS) {
   Klass *k = k_oop->klass_part();
   if (k->oop_is_instance()) {
     HandleMark hm(THREAD);
     instanceKlass *ik = (instanceKlass *) k;
+    bool no_old_methods = true;  // be optimistic
+    ResourceMark rm(THREAD);
 
-    if (ik->vtable_length() > 0) {
-      ResourceMark rm(THREAD);
-      if (!ik->vtable()->check_no_old_entries()) {
-        tty->print_cr("klassVtable::check_no_old_entries failure -- OLD method found -- class: %s", ik->signature_name());
+    // a vtable should never contain old or obsolete methods
+    if (ik->vtable_length() > 0 &&
+        !ik->vtable()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("klassVtable::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
         ik->vtable()->dump_vtable();
-        dump_methods();
-        assert(false, "OLD method found");
       }
+      no_old_methods = false;
+    }
+
+    // an itable should never contain old or obsolete methods
+    if (ik->itable_length() > 0 &&
+        !ik->itable()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("klassItable::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
+        ik->itable()->dump_itable();
+      }
+      no_old_methods = false;
+    }
+
+    // the constant pool cache should never contain old or obsolete methods
+    if (ik->constants() != NULL &&
+        ik->constants()->cache() != NULL &&
+        !ik->constants()->cache()->check_no_old_or_obsolete_entries()) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        RC_TRACE_WITH_THREAD(0x00004000, THREAD,
+          ("cp-cache::check_no_old_or_obsolete_entries failure"
+           " -- OLD or OBSOLETE method found -- class: %s",
+           ik->signature_name()));
+        ik->constants()->cache()->dump_cache();
+      }
+      no_old_methods = false;
+    }
+
+    if (!no_old_methods) {
+      if (RC_TRACE_ENABLED(0x00004000)) {
+        dump_methods();
+      } else {
+        tty->print_cr("INFO: use the '-XX:TraceRedefineClasses=16384' option "
+          "to see more info about the following guarantee() failure.");
+      }
+      guarantee(false, "OLD and/or OBSOLETE method(s) found");
     }
   }
 }
 
 void VM_RedefineClasses::dump_methods() {
-        int j;
-        tty->print_cr("_old_methods --");
-        for (j = 0; j < _old_methods->length(); ++j) {
-          methodOop m = (methodOop) _old_methods->obj_at(j);
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_new_methods --");
-        for (j = 0; j < _new_methods->length(); ++j) {
-          methodOop m = (methodOop) _new_methods->obj_at(j);
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_matching_(old/new)_methods --");
-        for (j = 0; j < _matching_methods_length; ++j) {
-          methodOop m = _matching_old_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-          m = _matching_new_methods[j];
-          tty->print("      (%5d)  ", m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->cr();
-        }
-        tty->print_cr("_deleted_methods --");
-        for (j = 0; j < _deleted_methods_length; ++j) {
-          methodOop m = _deleted_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
-        tty->print_cr("_added_methods --");
-        for (j = 0; j < _added_methods_length; ++j) {
-          methodOop m = _added_methods[j];
-          tty->print("%4d  (%5d)  ", j, m->vtable_index());
-          m->access_flags().print_on(tty);
-          tty->print(" --  ");
-          m->print_name(tty);
-          tty->cr();
-        }
+  int j;
+  RC_TRACE(0x00004000, ("_old_methods --"));
+  for (j = 0; j < _old_methods->length(); ++j) {
+    methodOop m = (methodOop) _old_methods->obj_at(j);
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_new_methods --"));
+  for (j = 0; j < _new_methods->length(); ++j) {
+    methodOop m = (methodOop) _new_methods->obj_at(j);
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_matching_(old/new)_methods --"));
+  for (j = 0; j < _matching_methods_length; ++j) {
+    methodOop m = _matching_old_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+    m = _matching_new_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("      (%5d)  ", m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_deleted_methods --"));
+  for (j = 0; j < _deleted_methods_length; ++j) {
+    methodOop m = _deleted_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
+  RC_TRACE(0x00004000, ("_added_methods --"));
+  for (j = 0; j < _added_methods_length; ++j) {
+    methodOop m = _added_methods[j];
+    RC_TRACE_NO_CR(0x00004000, ("%4d  (%5d)  ", j, m->vtable_index()));
+    m->access_flags().print_on(tty);
+    tty->print(" --  ");
+    m->print_name(tty);
+    tty->cr();
+  }
 }
-#endif

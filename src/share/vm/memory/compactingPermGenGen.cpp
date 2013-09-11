@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -95,17 +95,11 @@ class RecursiveAdjustSharedObjectClosure : public OopClosure {
 // their stack to the class without having added the class to the
 // dictionary yet. This means the class will be marked during phase 1
 // but will not be unmarked during the application of the
-// RecursiveAdjustSharedObjectClosure to the SystemDictionary. Note
-// that we must not call find_shared_class with non-read-only symbols
-// as doing so can cause hash codes to be computed, destroying
-// forwarding pointers.
-class TraversePlaceholdersClosure : public OopClosure {
- protected:
-  template <class T> inline void do_oop_work(T* p) {
-    oop obj = oopDesc::load_decode_heap_oop_not_null(p);
-    if (obj->klass() == Universe::symbolKlassObj() &&
-        obj->is_shared_readonly()) {
-      symbolHandle sym((symbolOop) obj);
+// RecursiveAdjustSharedObjectClosure to the SystemDictionary.
+class TraversePlaceholdersClosure {
+ public:
+  static void placeholders_do(Symbol* sym, oop loader) {
+    if (CompactingPermGenGen::is_shared(sym)) {
       oop k = SystemDictionary::find_shared_class(sym);
       if (k != NULL) {
         RecursiveAdjustSharedObjectClosure clo;
@@ -113,12 +107,7 @@ class TraversePlaceholdersClosure : public OopClosure {
       }
     }
   }
- public:
-  virtual void do_oop(oop* p)       { TraversePlaceholdersClosure::do_oop_work(p); }
-  virtual void do_oop(narrowOop* p) { TraversePlaceholdersClosure::do_oop_work(p); }
-
 };
-
 
 void CompactingPermGenGen::initialize_performance_counters() {
 
@@ -251,9 +240,6 @@ CompactingPermGenGen::CompactingPermGenGen(ReservedSpace rs,
     if (_ro_space == NULL || _rw_space == NULL)
       vm_exit_during_initialization("Could not allocate a shared space");
 
-    // Cover both shared spaces entirely with cards.
-    _rs->resize_covered_region(MemRegion(readonly_bottom, readwrite_end));
-
     if (UseSharedSpaces) {
 
       // Map in the regions in the shared file.
@@ -290,8 +276,12 @@ CompactingPermGenGen::CompactingPermGenGen(ReservedSpace rs,
         delete _rw_space;
         _rw_space = NULL;
         shared_end = (HeapWord*)(rs.base() + rs.size());
-        _rs->resize_covered_region(MemRegion(shared_bottom, shared_bottom));
       }
+    }
+
+    if (spec()->enable_shared_spaces()) {
+      // Cover both shared spaces entirely with cards.
+      _rs->resize_covered_region(MemRegion(readonly_bottom, readwrite_end));
     }
 
     // Reserved region includes shared spaces for oop.is_in_reserved().
@@ -335,8 +325,7 @@ void CompactingPermGenGen::pre_adjust_pointers() {
       Universe::oops_do(&blk);
       StringTable::oops_do(&blk);
       SystemDictionary::always_strong_classes_do(&blk);
-      TraversePlaceholdersClosure tpc;
-      SystemDictionary::placeholders_do(&tpc);
+      SystemDictionary::placeholders_do(TraversePlaceholdersClosure::placeholders_do);
     }
   }
 }
@@ -490,5 +479,3 @@ bool CompactingPermGenGen::remap_shared_readonly_as_readwrite() {
   }
   return true;
 }
-
-void** CompactingPermGenGen::_vtbl_list;

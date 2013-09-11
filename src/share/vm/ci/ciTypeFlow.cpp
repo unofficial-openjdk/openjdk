@@ -1589,7 +1589,7 @@ ciTypeFlow::Block::Block(ciTypeFlow* outer,
   _next = NULL;
   _on_work_list = false;
   _backedge_copy = false;
-  _exception_entry = false;
+  _has_monitorenter = false;
   _trap_bci = -1;
   _trap_index = 0;
   df_init();
@@ -1871,7 +1871,8 @@ void ciTypeFlow::Block::print_value_on(outputStream* st) const {
 // ------------------------------------------------------------------
 // ciTypeFlow::Block::print_on
 void ciTypeFlow::Block::print_on(outputStream* st) const {
-  if ((Verbose || WizardMode)) {
+  if ((Verbose || WizardMode) && (limit() >= 0)) {
+    // Don't print 'dummy' blocks (i.e. blocks with limit() '-1')
     outer()->method()->print_codes_on(start(), limit(), st);
   }
   st->print_cr("  ====================================================  ");
@@ -2181,6 +2182,10 @@ bool ciTypeFlow::clone_loop_heads(Loop* lp, StateVector* temp_vector, JsrSet* te
         !head->is_clonable_exit(lp))
       continue;
 
+    // Avoid BoxLock merge.
+    if (EliminateNestedLocks && head->has_monitorenter())
+      continue;
+
     // check not already cloned
     if (head->backedge_copy_count() != 0)
       continue;
@@ -2320,6 +2325,10 @@ void ciTypeFlow::flow_block(ciTypeFlow::Block* block,
 
     // Watch for bailouts.
     if (failing())  return;
+
+    if (str.cur_bc() == Bytecodes::_monitorenter) {
+      block->set_has_monitorenter();
+    }
 
     if (res) {
 

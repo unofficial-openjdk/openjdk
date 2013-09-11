@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,14 @@
 #ifdef TARGET_ARCH_zero
 # include "nativeInst_zero.hpp"
 # include "vmreg_zero.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "nativeInst_arm.hpp"
+# include "vmreg_arm.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "nativeInst_ppc.hpp"
+# include "vmreg_ppc.inline.hpp"
 #endif
 
 
@@ -113,7 +121,7 @@ void LIR_Assembler::append_patching_stub(PatchingStub* stub) {
 
 void LIR_Assembler::check_codespace() {
   CodeSection* cs = _masm->code_section();
-  if (cs->remaining() < (int)(1*K)) {
+  if (cs->remaining() < (int)(NOT_LP64(1*K)LP64_ONLY(2*K))) {
     BAILOUT("CodeBuffer overflow");
   }
 }
@@ -656,6 +664,22 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
       membar_release();
       break;
 
+    case lir_membar_loadload:
+      membar_loadload();
+      break;
+
+    case lir_membar_storestore:
+      membar_storestore();
+      break;
+
+    case lir_membar_loadstore:
+      membar_loadstore();
+      break;
+
+    case lir_membar_storeload:
+      membar_storeload();
+      break;
+
     case lir_get_thread:
       get_thread(op->result_opr());
       break;
@@ -828,6 +852,9 @@ void LIR_Assembler::verify_oop_map(CodeEmitInfo* info) {
           _masm->verify_stack_oop(r->reg2stack() * VMRegImpl::stack_slot_size);
         }
       }
+      check_codespace();
+      CHECK_BAILOUT();
+
       s.next();
     }
     VerifyOops = v;

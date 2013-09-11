@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -191,22 +191,19 @@ address AbstractInterpreterGenerator::generate_slow_signature_handler() {
     // Optimization, see if there are any more args and get out prior to checking
     // all 16 float registers.  My guess is that this is rare.
     // If is_register is false, then we are done the first six integer args.
-      __ tst(G4_scratch);
-      __ brx(Assembler::zero, false, Assembler::pt, done);
-      __ delayed()->nop();
-
+      __ br_null_short(G4_scratch, Assembler::pt, done);
     }
-    __ ba(false, NextArg);
+    __ ba(NextArg);
     __ delayed()->srl( G4_scratch, 2, G4_scratch );
 
     __ bind(LoadFloatArg);
     __ ldf( FloatRegisterImpl::S, a, ldarg.as_float_register(), 4);
-    __ ba(false, NextArg);
+    __ ba(NextArg);
     __ delayed()->srl( G4_scratch, 2, G4_scratch );
 
     __ bind(LoadDoubleArg);
     __ ldf( FloatRegisterImpl::D, a, ldarg.as_double_register() );
-    __ ba(false, NextArg);
+    __ ba(NextArg);
     __ delayed()->srl( G4_scratch, 2, G4_scratch );
 
     __ bind(NextArg);
@@ -234,8 +231,7 @@ void InterpreterGenerator::generate_counter_overflow(Label& Lcontinue) {
   __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::frequency_counter_overflow), O2, O2, true);
   // returns verified_entry_point or NULL
   // we ignore it in any case
-  __ ba(false, Lcontinue);
-  __ delayed()->nop();
+  __ ba_short(Lcontinue);
 
 }
 
@@ -260,9 +256,9 @@ address InterpreterGenerator::generate_abstract_entry(void) {
 
 
 // Method handle invoker
-// Dispatch a method of the form java.dyn.MethodHandles::invoke(...)
+// Dispatch a method of the form java.lang.invoke.MethodHandles::invoke(...)
 address InterpreterGenerator::generate_method_handle_entry(void) {
-  if (!EnableMethodHandles) {
+  if (!EnableInvokeDynamic) {
     return generate_abstract_entry();
   }
 
@@ -407,6 +403,8 @@ address AbstractInterpreterGenerator::generate_method_entry(AbstractInterpreter:
     case Interpreter::java_lang_math_abs     :                                                                             break;
     case Interpreter::java_lang_math_log     :                                                                             break;
     case Interpreter::java_lang_math_log10   :                                                                             break;
+    case Interpreter::java_lang_ref_reference_get
+                                             : entry_point = ((InterpreterGenerator*)this)->generate_Reference_get_entry(); break;
     default                                  : ShouldNotReachHere();                                                       break;
   }
 
@@ -419,25 +417,6 @@ address AbstractInterpreterGenerator::generate_method_entry(AbstractInterpreter:
 bool AbstractInterpreter::can_be_compiled(methodHandle m) {
   // No special entry points that preclude compilation
   return true;
-}
-
-// This method tells the deoptimizer how big an interpreted frame must be:
-int AbstractInterpreter::size_activation(methodOop method,
-                                         int tempcount,
-                                         int popframe_extra_args,
-                                         int moncount,
-                                         int callee_param_count,
-                                         int callee_locals,
-                                         bool is_top_frame) {
-  return layout_activation(method,
-                           tempcount,
-                           popframe_extra_args,
-                           moncount,
-                           callee_param_count,
-                           callee_locals,
-                           (frame*)NULL,
-                           (frame*)NULL,
-                           is_top_frame);
 }
 
 void Deoptimization::unwind_callee_save_values(frame* f, vframeArray* vframe_array) {

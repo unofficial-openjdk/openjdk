@@ -45,6 +45,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 
 
 // Implementation of InterpreterMacroAssembler
@@ -213,7 +216,7 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register index,
   if (index_size == sizeof(u2)) {
     load_unsigned_short(index, Address(r13, bcp_offset));
   } else if (index_size == sizeof(u4)) {
-    assert(EnableInvokeDynamic, "giant index used only for EnableInvokeDynamic");
+    assert(EnableInvokeDynamic, "giant index used only for JSR 292");
     movl(index, Address(r13, bcp_offset));
     // Check if the secondary index definition is still ~x, otherwise
     // we have to change the following assembler code to calculate the
@@ -221,7 +224,7 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register index,
     assert(constantPoolCacheOopDesc::decode_secondary_index(~123) == 123, "else change next line");
     notl(index);  // convert to plain index
   } else if (index_size == sizeof(u1)) {
-    assert(EnableMethodHandles, "tiny index used only for EnableMethodHandles");
+    assert(EnableInvokeDynamic, "tiny index used only for JSR 292");
     load_unsigned_byte(index, Address(r13, bcp_offset));
   } else {
     ShouldNotReachHere();
@@ -233,12 +236,28 @@ void InterpreterMacroAssembler::get_cache_and_index_at_bcp(Register cache,
                                                            Register index,
                                                            int bcp_offset,
                                                            size_t index_size) {
-  assert(cache != index, "must use different registers");
+  assert_different_registers(cache, index);
   get_cache_index_at_bcp(index, bcp_offset, index_size);
   movptr(cache, Address(rbp, frame::interpreter_frame_cache_offset * wordSize));
   assert(sizeof(ConstantPoolCacheEntry) == 4 * wordSize, "adjust code below");
   // convert from field index to ConstantPoolCacheEntry index
   shll(index, 2);
+}
+
+
+void InterpreterMacroAssembler::get_cache_and_index_and_bytecode_at_bcp(Register cache,
+                                                                        Register index,
+                                                                        Register bytecode,
+                                                                        int byte_no,
+                                                                        int bcp_offset,
+                                                                        size_t index_size) {
+  get_cache_and_index_at_bcp(cache, index, bcp_offset, index_size);
+  // We use a 32-bit load here since the layout of 64-bit words on
+  // little-endian machines allow us that.
+  movl(bytecode, Address(cache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
+  const int shift_count = (1 + byte_no) * BitsPerByte;
+  shrl(bytecode, shift_count);
+  andl(bytecode, 0xFF);
 }
 
 
@@ -381,56 +400,6 @@ void InterpreterMacroAssembler::store_ptr(int n, Register val) {
 }
 
 
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point) {
-  MacroAssembler::call_VM_leaf_base(entry_point, 0);
-}
-
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point,
-                                                   Register arg_1) {
-  if (c_rarg0 != arg_1) {
-    mov(c_rarg0, arg_1);
-  }
-  MacroAssembler::call_VM_leaf_base(entry_point, 1);
-}
-
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point,
-                                                   Register arg_1,
-                                                   Register arg_2) {
-  assert(c_rarg0 != arg_2, "smashed argument");
-  assert(c_rarg1 != arg_1, "smashed argument");
-  if (c_rarg0 != arg_1) {
-    mov(c_rarg0, arg_1);
-  }
-  if (c_rarg1 != arg_2) {
-    mov(c_rarg1, arg_2);
-  }
-  MacroAssembler::call_VM_leaf_base(entry_point, 2);
-}
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point,
-                                                   Register arg_1,
-                                                   Register arg_2,
-                                                   Register arg_3) {
-  assert(c_rarg0 != arg_2, "smashed argument");
-  assert(c_rarg0 != arg_3, "smashed argument");
-  assert(c_rarg1 != arg_1, "smashed argument");
-  assert(c_rarg1 != arg_3, "smashed argument");
-  assert(c_rarg2 != arg_1, "smashed argument");
-  assert(c_rarg2 != arg_2, "smashed argument");
-  if (c_rarg0 != arg_1) {
-    mov(c_rarg0, arg_1);
-  }
-  if (c_rarg1 != arg_2) {
-    mov(c_rarg1, arg_2);
-  }
-  if (c_rarg2 != arg_3) {
-    mov(c_rarg2, arg_3);
-  }
-  MacroAssembler::call_VM_leaf_base(entry_point, 3);
-}
-
 void InterpreterMacroAssembler::prepare_to_jump_from_interpreted() {
   // set sender sp
   lea(r13, Address(rsp, wordSize));
@@ -452,7 +421,7 @@ void InterpreterMacroAssembler::jump_from_interpreted(Register method, Register 
     // interp_only is an int, on little endian it is sufficient to test the byte only
     // Is a cmpl faster?
     cmpb(Address(r15_thread, JavaThread::interp_only_mode_offset()), 0);
-    jcc(Assembler::zero, run_compiled_code);
+    jccb(Assembler::zero, run_compiled_code);
     jmp(Address(method, methodOopDesc::interpreter_entry_offset()));
     bind(run_compiled_code);
   }

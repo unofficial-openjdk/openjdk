@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,7 +228,7 @@ public:
     return byte_offset_of(DataLayout, _header._struct._bci);
   }
   static ByteSize cell_offset(int index) {
-    return byte_offset_of(DataLayout, _cells[index]);
+    return byte_offset_of(DataLayout, _cells) + in_ByteSize(index * cell_size);
   }
   // Return a value which, when or-ed as a byte into _flags, sets the flag.
   static int flag_number_to_byte_constant(int flag_number) {
@@ -452,7 +452,6 @@ public:
   // Parallel old support
   virtual void follow_contents(ParCompactionManager* cm) {}
   virtual void update_pointers() {}
-  virtual void update_pointers(HeapWord* beg_addr, HeapWord* end_addr) {}
 #endif // SERIALGC
 
   // CI translation: ProfileData can represent both MethodDataOop data
@@ -601,6 +600,11 @@ public:
   uint taken() {
     return uint_at(taken_off_set);
   }
+
+  void set_taken(uint cnt) {
+    set_uint_at(taken_off_set, cnt);
+  }
+
   // Saturating counter
   uint inc_taken() {
     uint cnt = taken() + 1;
@@ -748,7 +752,6 @@ public:
   // Parallel old support
   virtual void follow_contents(ParCompactionManager* cm);
   virtual void update_pointers();
-  virtual void update_pointers(HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   oop* adr_receiver(uint row) {
@@ -926,6 +929,10 @@ public:
   // Direct accessor
   uint not_taken() {
     return uint_at(not_taken_off_set);
+  }
+
+  void set_not_taken(uint cnt) {
+    set_uint_at(not_taken_off_set, cnt);
   }
 
   uint inc_not_taken() {
@@ -1196,7 +1203,7 @@ private:
   // Whole-method sticky bits and flags
 public:
   enum {
-    _trap_hist_limit    = 16,   // decoupled from Deoptimization::Reason_LIMIT
+    _trap_hist_limit    = 17,   // decoupled from Deoptimization::Reason_LIMIT
     _trap_hist_mask     = max_jubyte,
     _extra_data_count   = 4     // extra DataLayout headers, for trap history
   }; // Public flag values
@@ -1224,6 +1231,9 @@ private:
   InvocationCounter _invocation_counter;
   // Same for backedges.
   InvocationCounter _backedge_counter;
+  // Counter values at the time profiling started.
+  int               _invocation_counter_start;
+  int               _backedge_counter_start;
   // Number of loops and blocks is computed when compiling the first
   // time with C1. It is used to determine if method is trivial.
   short             _num_loops;
@@ -1331,6 +1341,28 @@ public:
       return InvocationCounter::count_limit;
     }
     return backedge_counter()->count();
+  }
+
+  int invocation_count_start() {
+    if (invocation_counter()->carry()) {
+      return 0;
+    }
+    return _invocation_counter_start;
+  }
+
+  int backedge_count_start() {
+    if (backedge_counter()->carry()) {
+      return 0;
+    }
+    return _backedge_counter_start;
+  }
+
+  int invocation_count_delta() { return invocation_count() - invocation_count_start(); }
+  int backedge_count_delta()   { return backedge_count()   - backedge_count_start();   }
+
+  void reset_start_counters() {
+    _invocation_counter_start = invocation_count();
+    _backedge_counter_start = backedge_count();
   }
 
   InvocationCounter* invocation_counter()     { return &_invocation_counter; }

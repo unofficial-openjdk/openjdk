@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@
   template(DeoptimizeFrame)                       \
   template(DeoptimizeAll)                         \
   template(ZombieAll)                             \
+  template(UnlinkSymbols)                         \
   template(HandleFullCodeCache)                   \
   template(Verify)                                \
   template(PrintJNI)                              \
@@ -92,6 +93,7 @@
   template(HeapWalkOperation)                     \
   template(HeapIterateOperation)                  \
   template(ReportJavaOutOfMemory)                 \
+  template(JFRCheckpoint)                         \
   template(Exit)                                  \
 
 class VM_Operation: public CHeapObj {
@@ -287,6 +289,14 @@ class VM_ZombieAll: public VM_Operation {
   bool allow_nested_vm_operations() const        { return true; }
 };
 #endif // PRODUCT
+
+class VM_UnlinkSymbols: public VM_Operation {
+ public:
+  VM_UnlinkSymbols() {}
+  VMOp_Type type() const                         { return VMOp_UnlinkSymbols; }
+  void doit();
+  bool allow_nested_vm_operations() const        { return true; }
+};
 
 class VM_Verify: public VM_Operation {
  private:

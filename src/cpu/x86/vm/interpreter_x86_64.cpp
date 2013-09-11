@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -318,9 +318,9 @@ address InterpreterGenerator::generate_abstract_entry(void) {
 
 
 // Method handle invoker
-// Dispatch a method of the form java.dyn.MethodHandles::invoke(...)
+// Dispatch a method of the form java.lang.invoke.MethodHandles::invoke(...)
 address InterpreterGenerator::generate_method_handle_entry(void) {
-  if (!EnableMethodHandles) {
+  if (!EnableInvokeDynamic) {
     return generate_abstract_entry();
   }
 
@@ -360,20 +360,6 @@ address InterpreterGenerator::generate_empty_entry(void) {
   (void) generate_normal_entry(false);
   return entry_point;
 
-}
-
-// This method tells the deoptimizer how big an interpreted frame must be:
-int AbstractInterpreter::size_activation(methodOop method,
-                                         int tempcount,
-                                         int popframe_extra_args,
-                                         int moncount,
-                                         int callee_param_count,
-                                         int callee_locals,
-                                         bool is_top_frame) {
-  return layout_activation(method,
-                           tempcount, popframe_extra_args, moncount,
-                           callee_param_count, callee_locals,
-                           (frame*) NULL, (frame*) NULL, is_top_frame);
 }
 
 void Deoptimization::unwind_callee_save_values(frame* f, vframeArray* vframe_array) {

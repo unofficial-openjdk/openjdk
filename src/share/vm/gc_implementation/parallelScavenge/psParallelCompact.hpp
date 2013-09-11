@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -832,31 +832,6 @@ class PSParallelCompact : AllStatic {
     virtual void do_code_blob(CodeBlob* cb) const { }
   };
 
-  // Closure for verifying update of pointers.  Does not
-  // have any side effects.
-  class VerifyUpdateClosure: public ParMarkBitMapClosure {
-    const MutableSpace* _space; // Is this ever used?
-
-   public:
-    VerifyUpdateClosure(ParCompactionManager* cm, const MutableSpace* sp) :
-      ParMarkBitMapClosure(PSParallelCompact::mark_bitmap(), cm), _space(sp)
-    { }
-
-    virtual IterationStatus do_addr(HeapWord* addr, size_t words);
-
-    const MutableSpace* space() { return _space; }
-  };
-
-  // Closure for updating objects altered for debug checking
-  class ResetObjectsClosure: public ParMarkBitMapClosure {
-   public:
-    ResetObjectsClosure(ParCompactionManager* cm):
-      ParMarkBitMapClosure(PSParallelCompact::mark_bitmap(), cm)
-    { }
-
-    virtual IterationStatus do_addr(HeapWord* addr, size_t words);
-  };
-
   friend class KeepAliveClosure;
   friend class FollowStackClosure;
   friend class AdjustPointerClosure;
@@ -1027,9 +1002,6 @@ class PSParallelCompact : AllStatic {
                                        ParallelTaskTerminator* terminator_ptr,
                                        uint parallel_gc_threads);
 
-  // For debugging only - compacts the old gen serially
-  static void compact_serial(ParCompactionManager* cm);
-
   // If objects are left in eden after a collection, try to move the boundary
   // and absorb them into the old gen.  Returns true if eden was emptied.
   static bool absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
@@ -1085,7 +1057,7 @@ class PSParallelCompact : AllStatic {
   }
 
   static void invoke(bool maximum_heap_compaction);
-  static void invoke_no_policy(bool maximum_heap_compaction);
+  static bool invoke_no_policy(bool maximum_heap_compaction);
 
   static void post_initialize();
   // Perform initialization for PSParallelCompact that requires
@@ -1186,20 +1158,11 @@ class PSParallelCompact : AllStatic {
   // Update the deferred objects in the space.
   static void update_deferred_objects(ParCompactionManager* cm, SpaceId id);
 
-  // Mark pointer and follow contents.
-  template <class T>
-  static inline void mark_and_follow(ParCompactionManager* cm, T* p);
-
   static ParMarkBitMap* mark_bitmap() { return &_mark_bitmap; }
   static ParallelCompactData& summary_data() { return _summary_data; }
 
   static inline void adjust_pointer(oop* p)       { adjust_pointer(p, false); }
   static inline void adjust_pointer(narrowOop* p) { adjust_pointer(p, false); }
-
-  template <class T>
-  static inline void adjust_pointer(T* p,
-                                    HeapWord* beg_addr,
-                                    HeapWord* end_addr);
 
   // Reference Processing
   static ReferenceProcessor* const ref_processor() { return _ref_processor; }
@@ -1288,20 +1251,6 @@ inline void PSParallelCompact::follow_root(ParCompactionManager* cm, T* p) {
     }
   }
   cm->follow_marking_stacks();
-}
-
-template <class T>
-inline void PSParallelCompact::mark_and_follow(ParCompactionManager* cm,
-                                               T* p) {
-  T heap_oop = oopDesc::load_heap_oop(p);
-  if (!oopDesc::is_null(heap_oop)) {
-    oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
-    if (mark_bitmap()->is_unmarked(obj)) {
-      if (mark_obj(obj)) {
-        obj->follow_contents(cm);
-      }
-    }
-  }
 }
 
 template <class T>
@@ -1406,15 +1355,6 @@ inline ObjectStartArray* PSParallelCompact::start_array(SpaceId id) {
 
 inline bool PSParallelCompact::should_update_klass(klassOop k) {
   return ((HeapWord*) k) >= dense_prefix(perm_space_id);
-}
-
-template <class T>
-inline void PSParallelCompact::adjust_pointer(T* p,
-                                              HeapWord* beg_addr,
-                                              HeapWord* end_addr) {
-  if (is_in((HeapWord*)p, beg_addr, end_addr)) {
-    adjust_pointer(p);
-  }
 }
 
 #ifdef ASSERT

@@ -24,13 +24,15 @@
 
 #include "precompiled.hpp"
 #include "classfile/vmSymbols.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#endif // SERIALGC
 #include "memory/allocation.inline.hpp"
 #include "prims/jni.h"
 #include "prims/jvm.h"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/reflection.hpp"
-#include "runtime/reflectionCompat.hpp"
 #include "runtime/synchronizer.hpp"
 #include "services/threadService.hpp"
 #include "utilities/copy.hpp"
@@ -40,9 +42,11 @@
  *      Implementation of class sun.misc.Unsafe
  */
 
+#ifndef USDT2
 HS_DTRACE_PROBE_DECL3(hotspot, thread__park__begin, uintptr_t, int, long long);
 HS_DTRACE_PROBE_DECL1(hotspot, thread__park__end, uintptr_t);
 HS_DTRACE_PROBE_DECL1(hotspot, thread__unpark, uintptr_t);
+#endif /* !USDT2 */
 
 #define MAX_OBJECT_SIZE \
   ( arrayOopDesc::header_size(T_DOUBLE) * HeapWordSize \
@@ -110,6 +114,8 @@ inline jint invocation_key_to_method_slot(jint key) {
 
 inline void* index_oop_from_field_offset_long(oop p, jlong field_offset) {
   jlong byte_offset = field_offset_to_byte_offset(field_offset);
+  // Don't allow unsafe to be used to read or write the header word of oops
+  assert(p == NULL || field_offset >= oopDesc::header_size(), "offset must be outside of header");
 #ifdef ASSERT
   if (p != NULL) {
     assert(byte_offset >= 0 && byte_offset <= (jlong)MAX_OBJECT_SIZE, "sane offset");
@@ -191,7 +197,32 @@ UNSAFE_ENTRY(jobject, Unsafe_GetObject140(JNIEnv *env, jobject unsafe, jobject o
   UnsafeWrapper("Unsafe_GetObject");
   if (obj == NULL)  THROW_0(vmSymbols::java_lang_NullPointerException());
   GET_OOP_FIELD(obj, offset, v)
-  return JNIHandles::make_local(env, v);
+  jobject ret = JNIHandles::make_local(env, v);
+#ifndef SERIALGC
+  // We could be accessing the referent field in a reference
+  // object. If G1 is enabled then we need to register a non-null
+  // referent with the SATB barrier.
+  if (UseG1GC) {
+    bool needs_barrier = false;
+
+    if (ret != NULL) {
+      if (offset == java_lang_ref_Reference::referent_offset) {
+        oop o = JNIHandles::resolve_non_null(obj);
+        klassOop k = o->klass();
+        if (instanceKlass::cast(k)->reference_type() != REF_NONE) {
+          assert(instanceKlass::cast(k)->is_subclass_of(SystemDictionary::Reference_klass()), "sanity");
+          needs_barrier = true;
+        }
+      }
+    }
+
+    if (needs_barrier) {
+      oop referent = JNIHandles::resolve(ret);
+      G1SATBCardTableModRefBS::enqueue(referent);
+    }
+  }
+#endif // SERIALGC
+  return ret;
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_SetObject140(JNIEnv *env, jobject unsafe, jobject obj, jint offset, jobject x_h))
@@ -224,7 +255,32 @@ UNSAFE_END
 UNSAFE_ENTRY(jobject, Unsafe_GetObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset))
   UnsafeWrapper("Unsafe_GetObject");
   GET_OOP_FIELD(obj, offset, v)
-  return JNIHandles::make_local(env, v);
+  jobject ret = JNIHandles::make_local(env, v);
+#ifndef SERIALGC
+  // We could be accessing the referent field in a reference
+  // object. If G1 is enabled then we need to register non-null
+  // referent with the SATB barrier.
+  if (UseG1GC) {
+    bool needs_barrier = false;
+
+    if (ret != NULL) {
+      if (offset == java_lang_ref_Reference::referent_offset && obj != NULL) {
+        oop o = JNIHandles::resolve(obj);
+        klassOop k = o->klass();
+        if (instanceKlass::cast(k)->reference_type() != REF_NONE) {
+          assert(instanceKlass::cast(k)->is_subclass_of(SystemDictionary::Reference_klass()), "sanity");
+          needs_barrier = true;
+        }
+      }
+    }
+
+    if (needs_barrier) {
+      oop referent = JNIHandles::resolve(ret);
+      G1SATBCardTableModRefBS::enqueue(referent);
+    }
+  }
+#endif // SERIALGC
+  return ret;
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_SetObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject x_h))
@@ -246,6 +302,22 @@ UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_SetObjectVolatile(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject x_h))
   UnsafeWrapper("Unsafe_SetObjectVolatile");
+  {
+    // Catch VolatileCallSite.target stores (via
+    // CallSite.setTargetVolatile) and check call site dependencies.
+    oop p = JNIHandles::resolve(obj);
+    if ((offset == java_lang_invoke_CallSite::target_offset_in_bytes()) && p->is_a(SystemDictionary::CallSite_klass())) {
+      Handle call_site    (THREAD, p);
+      Handle method_handle(THREAD, JNIHandles::resolve(x_h));
+      assert(call_site    ->is_a(SystemDictionary::CallSite_klass()),     "must be");
+      assert(method_handle->is_a(SystemDictionary::MethodHandle_klass()), "must be");
+      {
+        // Walk all nmethods depending on this call site.
+        MutexLocker mu(Compile_lock, thread);
+        Universe::flush_dependents_on(call_site(), method_handle());
+      }
+    }
+  }
   oop x = JNIHandles::resolve(x_h);
   oop p = JNIHandles::resolve(obj);
   void* addr = index_oop_from_field_offset_long(p, offset);
@@ -652,7 +724,7 @@ jint find_field_offset(jobject field, int must_be_static, TRAPS) {
     }
   }
 
-  int offset = instanceKlass::cast(k)->offset_from_fields(slot);
+  int offset = instanceKlass::cast(k)->field_offset(slot);
   return field_offset_from_byte_offset(offset);
 }
 
@@ -686,7 +758,7 @@ UNSAFE_ENTRY(jobject, Unsafe_StaticFieldBaseFromField(JNIEnv *env, jobject unsaf
     THROW_0(vmSymbols::java_lang_IllegalArgumentException());
   }
 
-  return JNIHandles::make_local(env, java_lang_Class::as_klassOop(mirror));
+  return JNIHandles::make_local(env, mirror);
 UNSAFE_END
 
 //@deprecated
@@ -704,7 +776,7 @@ UNSAFE_ENTRY(jobject, Unsafe_StaticFieldBaseFromClass(JNIEnv *env, jobject unsaf
   if (clazz == NULL) {
     THROW_0(vmSymbols::java_lang_NullPointerException());
   }
-  return JNIHandles::make_local(env, java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(clazz)));
+  return JNIHandles::make_local(env, JNIHandles::resolve_non_null(clazz));
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_EnsureClassInitialized(JNIEnv *env, jobject unsafe, jobject clazz))
@@ -991,7 +1063,7 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
 
   instanceKlassHandle anon_klass;
   {
-    symbolHandle no_class_name;
+    Symbol* no_class_name = NULL;
     klassOop anonk = SystemDictionary::parse_stream(no_class_name,
                                                     host_loader, host_domain,
                                                     &st, host_klass, cp_patches,
@@ -1120,10 +1192,20 @@ UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_Park(JNIEnv *env, jobject unsafe, jboolean isAbsolute, jlong time))
   UnsafeWrapper("Unsafe_Park");
+#ifndef USDT2
   HS_DTRACE_PROBE3(hotspot, thread__park__begin, thread->parker(), (int) isAbsolute, time);
+#else /* USDT2 */
+   HOTSPOT_THREAD_PARK_BEGIN(
+                             (uintptr_t) thread->parker(), (int) isAbsolute, time);
+#endif /* USDT2 */
   JavaThreadParkedState jtps(thread, time != 0);
   thread->parker()->park(isAbsolute != 0, time);
+#ifndef USDT2
   HS_DTRACE_PROBE1(hotspot, thread__park__end, thread->parker());
+#else /* USDT2 */
+  HOTSPOT_THREAD_PARK_END(
+                          (uintptr_t) thread->parker());
+#endif /* USDT2 */
 UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_Unpark(JNIEnv *env, jobject unsafe, jobject jthread))
@@ -1155,7 +1237,12 @@ UNSAFE_ENTRY(void, Unsafe_Unpark(JNIEnv *env, jobject unsafe, jobject jthread))
     }
   }
   if (p != NULL) {
+#ifndef USDT2
     HS_DTRACE_PROBE1(hotspot, thread__unpark, p);
+#else /* USDT2 */
+    HOTSPOT_THREAD_UNPARK(
+                          (uintptr_t) p);
+#endif /* USDT2 */
     p->unpark();
   }
 UNSAFE_END
@@ -1558,7 +1645,7 @@ JVM_ENTRY(void, JVM_RegisterUnsafeMethods(JNIEnv *env, jclass unsafecls))
         }
       }
     }
-    if (AnonymousClasses) {
+    if (EnableInvokeDynamic) {
       env->RegisterNatives(unsafecls, anonk_methods, sizeof(anonk_methods)/sizeof(JNINativeMethod));
       if (env->ExceptionOccurred()) {
         if (PrintMiscellaneous && (Verbose || WizardMode)) {

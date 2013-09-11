@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,8 @@
 #include "utilities/debug.hpp"
 #include "utilities/decoder.hpp"
 #include "utilities/defaultStream.hpp"
+#include "utilities/errorReporter.hpp"
+#include "utilities/events.hpp"
 #include "utilities/top.hpp"
 #include "utilities/vmError.hpp"
 
@@ -44,12 +46,17 @@ const char *env_list[] = {
   "JAVA_HOME", "JRE_HOME", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH",
   "JAVA_COMPILER", "PATH", "USERNAME",
 
-  // Env variables that are defined on Solaris/Linux
+  // Env variables that are defined on Solaris/Linux/BSD
   "LD_LIBRARY_PATH", "LD_PRELOAD", "SHELL", "DISPLAY",
   "HOSTTYPE", "OSTYPE", "ARCH", "MACHTYPE",
 
   // defined on Linux
   "LD_ASSUME_KERNEL", "_JAVA_SR_SIGNUM",
+
+  // defined on Darwin
+  "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH",
+  "DYLD_FRAMEWORK_PATH", "DYLD_FALLBACK_FRAMEWORK_PATH",
+  "DYLD_INSERT_LIBRARIES",
 
   // defined on Windows
   "OS", "PROCESSOR_IDENTIFIER", "_ALT_JAVA_HOME_DIR",
@@ -198,6 +205,15 @@ static void print_bug_submit_message(outputStream *out, Thread *thread) {
     }
   }
   out->print_raw_cr("#");
+}
+
+bool VMError::coredump_status;
+char VMError::coredump_message[O_BUFLEN];
+
+void VMError::report_coredump_status(const char* message, bool status) {
+  coredump_status = status;
+  strncpy(coredump_message, message, sizeof(coredump_message));
+  coredump_message[sizeof(coredump_message)-1] = 0;
 }
 
 
@@ -453,6 +469,15 @@ void VMError::report(outputStream* st) {
        st->cr();
        st->print_cr("#");
      }
+  STEP(63, "(printing core file information)")
+    st->print("# ");
+    if (coredump_status) {
+      st->print("Core dump written. Default location: %s", coredump_message);
+    } else {
+      st->print("Failed to write core dump. %s", coredump_message);
+    }
+    st->print_cr("");
+    st->print_cr("#");
 
   STEP(65, "(printing bug submit message)")
 
@@ -547,8 +572,6 @@ void VMError::report(outputStream* st) {
        if (fr.pc()) {
           st->print_cr("Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)");
 
-          // initialize decoder to decode C frames
-          Decoder decoder;
 
           int count = 0;
           while (count++ < StackPrintLimit) {
@@ -656,8 +679,16 @@ void VMError::report(outputStream* st) {
   STEP(190, "(printing heap information)" )
 
      if (_verbose && Universe::is_fully_initialized()) {
-       // print heap information before vm abort
-       Universe::print_on(st);
+       // Print heap information before vm abort. As we'd like as much
+       // information as possible in the report we ask for the
+       // extended (i.e., more detailed) version.
+       Universe::print_on(st, true /* extended */);
+       st->cr();
+
+       Universe::heap()->barrier_set()->print_on(st);
+       st->cr();
+
+       st->print_cr("Polling page: " INTPTR_FORMAT, os::get_polling_page());
        st->cr();
      }
 
@@ -669,7 +700,14 @@ void VMError::report(outputStream* st) {
        st->cr();
      }
 
-  STEP(200, "(printing dynamic libraries)" )
+  STEP(200, "(printing ring buffers)" )
+
+     if (_verbose) {
+       Events::print_all(st);
+       st->cr();
+     }
+
+  STEP(205, "(printing dynamic libraries)" )
 
      if (_verbose) {
        // dynamic libraries, or memory map
@@ -769,6 +807,7 @@ void VMError::report_and_die() {
   // then save detailed information in log file (verbose = true).
   static bool out_done = false;         // done printing to standard out
   static bool log_done = false;         // done saving error log
+  static bool transmit_report_done = false; // done error reporting
   static fdStream log;                  // error log
 
   if (SuppressFatalErrorMessage) {
@@ -782,13 +821,16 @@ void VMError::report_and_die() {
     first_error_tid = mytid;
     set_error_reported();
 
-    if (ShowMessageBoxOnError) {
+    if (ShowMessageBoxOnError || PauseAtExit) {
       show_message_box(buffer, sizeof(buffer));
 
       // User has asked JVM to abort. Reset ShowMessageBoxOnError so the
       // WatcherThread can kill JVM if the error handler hangs.
       ShowMessageBoxOnError = false;
     }
+
+    // Write a minidump on Windows, check core dump limits on Linux/Solaris
+    os::check_or_create_dump(_siginfo, _context, buffer, sizeof(buffer));
 
     // reset signal handlers or exception filter; make sure recursive crashes
     // are handled properly.
@@ -859,7 +901,7 @@ void VMError::report_and_die() {
         bool copy_ok =
           Arguments::copy_expand_pid(ErrorFile, strlen(ErrorFile), buffer, sizeof(buffer));
         if (copy_ok) {
-          fd = open(buffer, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+          fd = open(buffer, O_RDWR | O_CREAT | O_TRUNC, 0666);
         }
       }
 
@@ -870,7 +912,7 @@ void VMError::report_and_die() {
         // so use the default name in the current directory
         jio_snprintf(&buffer[len], sizeof(buffer)-len, "%shs_err_pid%u.log",
                      os::file_separator(), os::current_process_id());
-        fd = open(buffer, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        fd = open(buffer, O_RDWR | O_CREAT | O_TRUNC, 0666);
       }
 
       if (fd == -1) {
@@ -879,7 +921,7 @@ void VMError::report_and_die() {
         if (tmpdir != NULL && tmpdir[0] != '\0') {
           jio_snprintf(buffer, sizeof(buffer), "%s%shs_err_pid%u.log",
                        tmpdir, os::file_separator(), os::current_process_id());
-          fd = open(buffer, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+          fd = open(buffer, O_RDWR | O_CREAT | O_TRUNC, 0666);
         }
       }
 
@@ -892,6 +934,9 @@ void VMError::report_and_die() {
       } else {
         out.print_raw_cr("# Can not save log file, dump to screen..");
         log.set_fd(defaultStream::output_fd());
+        /* Error reporting currently needs dumpfile.
+         * Maybe implement direct streaming in the future.*/
+        transmit_report_done = true;
       }
     }
 
@@ -899,6 +944,16 @@ void VMError::report_and_die() {
     first_error->report(&sbs);
     first_error->_current_step = 0;         // reset current_step
     first_error->_current_step_info = "";   // reset current_step string
+
+    // Run error reporting to determine whether or not to report the crash.
+    if (!transmit_report_done && should_report_bug(first_error->_id)) {
+      transmit_report_done = true;
+      FILE* hs_err = ::fdopen(log.fd(), "r");
+      if (NULL != hs_err) {
+        ErrorReporter er;
+        er.call(hs_err, buffer, O_BUFLEN);
+      }
+    }
 
     if (log.fd() != defaultStream::output_fd()) {
       close(log.fd());
@@ -922,7 +977,7 @@ void VMError::report_and_die() {
     const char* ptr = OnError;
     while ((cmd = next_OnError_command(buffer, sizeof(buffer), &ptr)) != NULL){
       out.print_raw   ("#   Executing ");
-#if defined(LINUX)
+#if defined(LINUX) || defined(_ALLBSD_SOURCE)
       out.print_raw   ("/bin/sh -c ");
 #elif defined(SOLARIS)
       out.print_raw   ("/usr/bin/sh -c ");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,10 @@
 
 #ifndef OS_WINDOWS_VM_OS_WINDOWS_HPP
 #define OS_WINDOWS_VM_OS_WINDOWS_HPP
-
 // Win32_OS defines the interface to windows operating systems
 
 class win32 {
+  friend class os;
 
  protected:
   static int    _vm_page_size;
@@ -38,6 +38,9 @@ class win32 {
   static size_t _default_stack_size;
   static bool   _is_nt;
   static bool   _is_windows_2003;
+  static bool   _is_windows_server;
+
+  static void print_windows_version(outputStream* st);
 
  public:
   // Windows-specific interface:
@@ -54,6 +57,9 @@ class win32 {
   static julong available_memory();
   static julong physical_memory() { return _physical_memory; }
 
+  // load dll from Windows system directory or Windows directory
+  static HINSTANCE load_Windows_dll(const char* name, char *ebuf, int ebuflen);
+
  public:
   // Generic interface:
 
@@ -63,6 +69,9 @@ class win32 {
 
   // Tells whether the platform is NT or Windown95
   static bool is_nt() { return _is_nt; }
+
+  // Tells whether this is a server version of Windows
+  static bool is_windows_server() { return _is_windows_server; }
 
   // Tells whether the platform is Windows 2003
   static bool is_windows_2003() { return _is_windows_2003; }
@@ -127,5 +136,113 @@ class PlatformParker : public CHeapObj {
     }
 
 } ;
+
+// JDK7 requires VS2010
+#if _MSC_VER < 1600
+#define JDK6_OR_EARLIER 1
+#endif
+
+
+
+class WinSock2Dll: AllStatic {
+public:
+  static BOOL WSAStartup(WORD, LPWSADATA);
+  static struct hostent* gethostbyname(const char *name);
+  static BOOL WinSock2Available();
+#ifdef JDK6_OR_EARLIER
+private:
+  static int (PASCAL FAR* _WSAStartup)(WORD, LPWSADATA);
+  static struct hostent *(PASCAL FAR *_gethostbyname)(...);
+  static BOOL initialized;
+
+  static void initialize();
+#endif
+};
+
+class Kernel32Dll: AllStatic {
+public:
+  static BOOL SwitchToThread();
+  static SIZE_T GetLargePageMinimum();
+
+  static BOOL SwitchToThreadAvailable();
+  static BOOL GetLargePageMinimumAvailable();
+
+  // Help tools
+  static BOOL HelpToolsAvailable();
+  static HANDLE CreateToolhelp32Snapshot(DWORD,DWORD);
+  static BOOL Module32First(HANDLE,LPMODULEENTRY32);
+  static BOOL Module32Next(HANDLE,LPMODULEENTRY32);
+
+  static BOOL GetNativeSystemInfoAvailable();
+  static void GetNativeSystemInfo(LPSYSTEM_INFO);
+
+  // NUMA calls
+  static BOOL NumaCallsAvailable();
+  static LPVOID VirtualAllocExNuma(HANDLE, LPVOID, SIZE_T, DWORD, DWORD, DWORD);
+  static BOOL GetNumaHighestNodeNumber(PULONG);
+  static BOOL GetNumaNodeProcessorMask(UCHAR, PULONGLONG);
+
+private:
+  // GetLargePageMinimum available on Windows Vista/Windows Server 2003
+  // and later
+  // NUMA calls available Windows Vista/WS2008 and later
+
+  static SIZE_T (WINAPI *_GetLargePageMinimum)(void);
+  static LPVOID (WINAPI *_VirtualAllocExNuma) (HANDLE, LPVOID, SIZE_T, DWORD, DWORD, DWORD);
+  static BOOL (WINAPI *_GetNumaHighestNodeNumber) (PULONG);
+  static BOOL (WINAPI *_GetNumaNodeProcessorMask) (UCHAR, PULONGLONG);
+  static BOOL initialized;
+
+  static void initialize();
+  static void initializeCommon();
+
+#ifdef JDK6_OR_EARLIER
+private:
+  static BOOL (WINAPI *_SwitchToThread)(void);
+  static HANDLE (WINAPI* _CreateToolhelp32Snapshot)(DWORD,DWORD);
+  static BOOL (WINAPI* _Module32First)(HANDLE,LPMODULEENTRY32);
+  static BOOL (WINAPI* _Module32Next)(HANDLE,LPMODULEENTRY32);
+  static void (WINAPI *_GetNativeSystemInfo)(LPSYSTEM_INFO);
+#endif
+
+};
+
+class Advapi32Dll: AllStatic {
+public:
+  static BOOL AdjustTokenPrivileges(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES, PDWORD);
+  static BOOL OpenProcessToken(HANDLE, DWORD, PHANDLE);
+  static BOOL LookupPrivilegeValue(LPCTSTR, LPCTSTR, PLUID);
+
+  static BOOL AdvapiAvailable();
+
+#ifdef JDK6_OR_EARLIER
+private:
+  static BOOL (WINAPI *_AdjustTokenPrivileges)(HANDLE, BOOL, PTOKEN_PRIVILEGES, DWORD, PTOKEN_PRIVILEGES, PDWORD);
+  static BOOL (WINAPI *_OpenProcessToken)(HANDLE, DWORD, PHANDLE);
+  static BOOL (WINAPI *_LookupPrivilegeValue)(LPCTSTR, LPCTSTR, PLUID);
+  static BOOL initialized;
+
+  static void initialize();
+#endif
+};
+
+class PSApiDll: AllStatic {
+public:
+  static BOOL EnumProcessModules(HANDLE, HMODULE *, DWORD, LPDWORD);
+  static DWORD GetModuleFileNameEx(HANDLE, HMODULE, LPTSTR, DWORD);
+  static BOOL GetModuleInformation(HANDLE, HMODULE, LPMODULEINFO, DWORD);
+
+  static BOOL PSApiAvailable();
+
+#ifdef JDK6_OR_EARLIER
+private:
+  static BOOL (WINAPI *_EnumProcessModules)(HANDLE, HMODULE *, DWORD, LPDWORD);
+  static BOOL (WINAPI *_GetModuleFileNameEx)(HANDLE, HMODULE, LPTSTR, DWORD);;
+  static BOOL (WINAPI *_GetModuleInformation)(HANDLE, HMODULE, LPMODULEINFO, DWORD);
+  static BOOL initialized;
+
+  static void initialize();
+#endif
+};
 
 #endif // OS_WINDOWS_VM_OS_WINDOWS_HPP

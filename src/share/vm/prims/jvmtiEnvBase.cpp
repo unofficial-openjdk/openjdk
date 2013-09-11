@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -565,15 +565,6 @@ JvmtiEnvBase::get_JavaThread(jthread jni_thread) {
 }
 
 
-// update the access_flags for the field in the klass
-void
-JvmtiEnvBase::update_klass_field_access_flag(fieldDescriptor *fd) {
-  instanceKlass* ik = instanceKlass::cast(fd->field_holder());
-  typeArrayOop fields = ik->fields();
-  fields->ushort_at_put(fd->index(), (jushort)fd->access_flags().as_short());
-}
-
-
 // return the vframe on the specified thread and depth, NULL if no such frame
 vframe*
 JvmtiEnvBase::vframeFor(JavaThread* java_thread, jint depth) {
@@ -616,9 +607,7 @@ JvmtiEnvBase::get_field_descriptor(klassOop k, jfieldID field, fieldDescriptor* 
   bool found = false;
   if (jfieldIDWorkaround::is_static_jfieldID(field)) {
     JNIid* id = jfieldIDWorkaround::from_static_jfieldID(field);
-    int offset = id->offset();
-    klassOop holder = id->holder();
-    found = instanceKlass::cast(holder)->find_local_field_from_offset(offset, true, fd);
+    found = id->find_local_field(fd);
   } else {
     // Non-static field. The fieldID is really the offset of the field within the object.
     int offset = jfieldIDWorkaround::from_instance_jfieldID(k, field);
@@ -1355,7 +1344,7 @@ JvmtiEnvBase::check_top_frame(JavaThread* current_thread, JavaThread* java_threa
   }
 
   // Get information about method return type
-  symbolHandle signature(current_thread, jvf->method()->signature());
+  Symbol* signature = jvf->method()->signature();
 
   ResultTypeFinder rtf(signature);
   TosState fr_tos = as_TosState(rtf.type());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,38 @@ import sun.jvm.hotspot.utilities.*;
 // as described in the class file
 
 public class ConstantPool extends Oop implements ClassConstants {
+
+  public class CPSlot {
+    private Address ptr;
+
+    CPSlot(Address ptr) {
+      this.ptr = ptr;
+    }
+    CPSlot(Symbol sym) {
+      this.ptr = sym.getAddress().orWithMask(1);
+    }
+
+    public boolean isOop() {
+      return (ptr.minus(null) & 1) == 0;
+    }
+    public boolean isMetaData() {
+      return (ptr.minus(null) & 1) == 1;
+    }
+
+    public Symbol getSymbol() {
+      if (isMetaData()) {
+        return Symbol.create(ptr.xorWithMask(1));
+      }
+      throw new InternalError("not a symbol");
+    }
+    public Oop getOop() {
+      if (isOop()) {
+        return VM.getVM().getObjectHeap().newOop(ptr.addOffsetToAsOopHandle(0));
+      }
+      throw new InternalError("not an oop");
+    }
+  }
+
   // Used for debugging this code
   private static final boolean DEBUG = false;
 
@@ -110,12 +142,17 @@ public class ConstantPool extends Oop implements ClassConstants {
     return new ConstantTag(getTags().getByteAt((int) index));
   }
 
-  public Oop getObjAt(long index){
+  public CPSlot getSlotAt(long index) {
+    return new CPSlot(getHandle().getAddressAt(indexOffset(index)));
+  }
+
+  public Oop getObjAtRaw(long index){
     return getHeap().newOop(getHandle().getOopHandleAt(indexOffset(index)));
   }
 
   public Symbol getSymbolAt(long index) {
-    return (Symbol) getObjAt(index);
+    CPSlot slot = getSlotAt(index);
+    return slot.getSymbol();
   }
 
   public int getIntAt(long index){
@@ -175,19 +212,66 @@ public class ConstantPool extends Oop implements ClassConstants {
   }
 
   public Symbol getNameRefAt(int which) {
-    int nameIndex = getNameAndTypeAt(getNameAndTypeRefIndexAt(which))[0];
-    return getSymbolAt(nameIndex);
+    return implGetNameRefAt(which, false);
+  }
+
+  private Symbol implGetNameRefAt(int which, boolean uncached) {
+    int signatureIndex = getNameRefIndexAt(implNameAndTypeRefIndexAt(which, uncached));
+    return getSymbolAt(signatureIndex);
   }
 
   public Symbol getSignatureRefAt(int which) {
-    int sigIndex = getNameAndTypeAt(getNameAndTypeRefIndexAt(which))[1];
-    return getSymbolAt(sigIndex);
+    return implGetSignatureRefAt(which, false);
+  }
+
+  private Symbol implGetSignatureRefAt(int which, boolean uncached) {
+    int signatureIndex = getSignatureRefIndexAt(implNameAndTypeRefIndexAt(which, uncached));
+    return getSymbolAt(signatureIndex);
+  }
+
+
+  private int implNameAndTypeRefIndexAt(int which, boolean uncached) {
+    int i = which;
+    if (!uncached && getCache() != null) {
+      if (ConstantPoolCache.isSecondaryIndex(which)) {
+        // Invokedynamic index.
+        int pool_index = getCache().getMainEntryAt(which).getConstantPoolIndex();
+        pool_index = invokeDynamicNameAndTypeRefIndexAt(pool_index);
+        // assert(tagAt(pool_index).isNameAndType(), "");
+        return pool_index;
+      }
+      // change byte-ordering and go via cache
+      i = remapInstructionOperandFromCache(which);
+    } else {
+      if (getTagAt(which).isInvokeDynamic()) {
+        int pool_index = invokeDynamicNameAndTypeRefIndexAt(which);
+        // assert(tag_at(pool_index).is_name_and_type(), "");
+        return pool_index;
+      }
+    }
+    // assert(tag_at(i).is_field_or_method(), "Corrupted constant pool");
+    // assert(!tag_at(i).is_invoke_dynamic(), "Must be handled above");
+    int ref_index = getIntAt(i);
+    return extractHighShortFromInt(ref_index);
+  }
+
+  private int remapInstructionOperandFromCache(int operand) {
+    int cpc_index = operand;
+    // DEBUG_ONLY(cpc_index -= CPCACHE_INDEX_TAG);
+    // assert((int)(u2)cpc_index == cpc_index, "clean u2");
+    int member_index = getCache().getEntryAt(cpc_index).getConstantPoolIndex();
+    return member_index;
+  }
+
+  int invokeDynamicNameAndTypeRefIndexAt(int which) {
+    // assert(tag_at(which).is_invoke_dynamic(), "Corrupted constant pool");
+    return extractHighShortFromInt(getIntAt(which));
   }
 
   // returns null, if not resolved.
   public Klass getKlassRefAt(int which) {
     if( ! getTagAt(which).isKlass()) return null;
-    return (Klass) getObjAt(which);
+    return (Klass) getObjAtRaw(which);
   }
 
   // returns null, if not resolved.
@@ -216,15 +300,7 @@ public class ConstantPool extends Oop implements ClassConstants {
   }
 
   public int getNameAndTypeRefIndexAt(int index) {
-    int refIndex = getFieldOrMethodAt(index);
-    if (DEBUG) {
-      System.err.println("ConstantPool.getNameAndTypeRefIndexAt(" + index + "): refIndex = " + refIndex);
-    }
-    int i = extractHighShortFromInt(refIndex);
-    if (DEBUG) {
-      System.err.println("ConstantPool.getNameAndTypeRefIndexAt(" + index + "): result = " + i);
-    }
-    return i;
+    return implNameAndTypeRefIndexAt(index, false);
   }
 
   /** Lookup for entries consisting of (name_index, signature_index) */
@@ -294,8 +370,6 @@ public class ConstantPool extends Oop implements ClassConstants {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(getTagAt(i).isInvokeDynamic(), "Corrupted constant pool");
     }
-    if (getTagAt(i).value() == JVM_CONSTANT_InvokeDynamicTrans)
-        return null;
     int bsmSpec = extractLowShortFromInt(this.getIntAt(i));
     TypeArray operands = getOperands();
     if (operands == null)  return null;  // safety first
@@ -331,7 +405,6 @@ public class ConstantPool extends Oop implements ClassConstants {
     case JVM_CONSTANT_MethodHandle:       return "JVM_CONSTANT_MethodHandle";
     case JVM_CONSTANT_MethodType:         return "JVM_CONSTANT_MethodType";
     case JVM_CONSTANT_InvokeDynamic:      return "JVM_CONSTANT_InvokeDynamic";
-    case JVM_CONSTANT_InvokeDynamicTrans: return "JVM_CONSTANT_InvokeDynamic/transitional";
     case JVM_CONSTANT_Invalid:            return "JVM_CONSTANT_Invalid";
     case JVM_CONSTANT_UnresolvedClass:    return "JVM_CONSTANT_UnresolvedClass";
     case JVM_CONSTANT_UnresolvedClassInError:    return "JVM_CONSTANT_UnresolvedClassInError";
@@ -391,7 +464,6 @@ public class ConstantPool extends Oop implements ClassConstants {
         case JVM_CONSTANT_MethodHandle:
         case JVM_CONSTANT_MethodType:
         case JVM_CONSTANT_InvokeDynamic:
-        case JVM_CONSTANT_InvokeDynamicTrans:
           visitor.doInt(new IntField(new NamedFieldIdentifier(nameForTag(ctag)), indexOffset(index), true), true);
           break;
         }
@@ -477,7 +549,7 @@ public class ConstantPool extends Oop implements ClassConstants {
               case JVM_CONSTANT_Class: {
                   dos.writeByte(cpConstType);
                   // Klass already resolved. ConstantPool constains klassOop.
-                  Klass refKls = (Klass) getObjAt(ci);
+                  Klass refKls = (Klass) getObjAtRaw(ci);
                   String klassName = refKls.getName().asString();
                   Short s = (Short) utf8ToIndex.get(klassName);
                   dos.writeShort(s.shortValue());
@@ -498,7 +570,7 @@ public class ConstantPool extends Oop implements ClassConstants {
 
               case JVM_CONSTANT_String: {
                   dos.writeByte(cpConstType);
-                  String str = OopUtilities.stringOopToString(getObjAt(ci));
+                  String str = OopUtilities.stringOopToString(getObjAtRaw(ci));
                   Short s = (Short) utf8ToIndex.get(str);
                   dos.writeShort(s.shortValue());
                   if (DEBUG) debugMessage("CP[" + ci + "] = string " + s);
@@ -555,7 +627,6 @@ public class ConstantPool extends Oop implements ClassConstants {
                   break;
               }
 
-              case JVM_CONSTANT_InvokeDynamicTrans:
               case JVM_CONSTANT_InvokeDynamic: {
                   dos.writeByte(cpConstType);
                   int value = getIntAt(ci);

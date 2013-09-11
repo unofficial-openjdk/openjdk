@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@
 #include "oops/methodKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
 
 klassOop methodKlass::create_klass(TRAPS) {
@@ -83,6 +83,7 @@ methodOop methodKlass::allocate(constMethodHandle xconst,
   m->set_max_stack(0);
   m->set_max_locals(0);
   m->set_intrinsic_id(vmIntrinsics::_none);
+  m->set_jfr_towrite(false);
   m->set_method_data(NULL);
   m->set_interpreter_throwout_count(0);
   m->set_vtable_index(methodOopDesc::garbage_vtable_index);
@@ -102,6 +103,12 @@ methodOop methodKlass::allocate(constMethodHandle xconst,
   m->invocation_counter()->init();
   m->backedge_counter()->init();
   m->clear_number_of_breakpoints();
+
+#ifdef TIERED
+  m->set_rate(0);
+  m->set_prev_event_count(0);
+  m->set_prev_time(0);
+#endif
 
   assert(m->is_parsable(), "must be parsable here.");
   assert(m->size() == size, "wrong size for object");
@@ -210,27 +217,6 @@ int methodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 #ifdef COMPILER2
   if (m->method_data() != NULL) {
     PSParallelCompact::adjust_pointer(m->adr_method_data());
-  }
-#endif // COMPILER2
-  return m->object_size();
-}
-
-int methodKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                     HeapWord* beg_addr, HeapWord* end_addr) {
-  assert(obj->is_method(), "should be method");
-
-  oop* p;
-  methodOop m = methodOop(obj);
-
-  p = m->adr_constMethod();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-  p = m->adr_constants();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-
-#ifdef COMPILER2
-  if (m->method_data() != NULL) {
-    p = m->adr_method_data();
-    PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
   }
 #endif // COMPILER2
   return m->object_size();
@@ -353,10 +339,6 @@ void methodKlass::oop_verify_on(oop obj, outputStream* st) {
   if (!obj->partially_loaded()) {
     methodOop m = methodOop(obj);
     guarantee(m->is_perm(),  "should be in permspace");
-    guarantee(m->name()->is_perm(), "should be in permspace");
-    guarantee(m->name()->is_symbol(), "should be symbol");
-    guarantee(m->signature()->is_perm(), "should be in permspace");
-    guarantee(m->signature()->is_symbol(), "should be symbol");
     guarantee(m->constants()->is_perm(), "should be in permspace");
     guarantee(m->constants()->is_constantPool(), "should be constant pool");
     guarantee(m->constMethod()->is_constMethod(), "should be constMethodOop");

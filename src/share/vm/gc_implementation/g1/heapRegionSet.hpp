@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,8 @@
 #include "gc_implementation/g1/heapRegion.hpp"
 
 // Large buffer for some cases where the output might be larger than normal.
-#define HRL_ERR_MSG_BUFSZ 512
-typedef FormatBuffer<HRL_ERR_MSG_BUFSZ> hrl_err_msg;
+#define HRS_ERR_MSG_BUFSZ 512
+typedef FormatBuffer<HRS_ERR_MSG_BUFSZ> hrs_err_msg;
 
 // Set verification will be forced either if someone defines
 // HEAP_REGION_SET_FORCE_VERIFY to be 1, or in builds in which
@@ -45,10 +45,21 @@ typedef FormatBuffer<HRL_ERR_MSG_BUFSZ> hrl_err_msg;
 // (e.g., length, region num, used bytes sum) plus any shared
 // functionality (e.g., verification).
 
-class hrl_ext_msg;
+class hrs_ext_msg;
+
+typedef enum {
+  HRSPhaseNone,
+  HRSPhaseEvacuation,
+  HRSPhaseCleanup,
+  HRSPhaseFullGC
+} HRSPhase;
+
+class HRSPhaseSetter;
 
 class HeapRegionSetBase VALUE_OBJ_CLASS_SPEC {
-  friend class hrl_ext_msg;
+  friend class hrs_ext_msg;
+  friend class HRSPhaseSetter;
+  friend class VMStructs;
 
 protected:
   static size_t calculate_region_num(HeapRegion* hr);
@@ -80,6 +91,15 @@ protected:
   size_t      _calc_total_capacity_bytes;
   size_t      _calc_total_used_bytes;
 
+  // This is here so that it can be used in the subclasses to assert
+  // something different depending on which phase the GC is in. This
+  // can be particularly helpful in the check_mt_safety() methods.
+  static HRSPhase _phase;
+
+  // Only used by HRSPhaseSetter.
+  static void clear_phase();
+  static void set_phase(HRSPhase phase);
+
   // verify_region() is used to ensure that the contents of a region
   // added to / removed from a set are consistent. Different sets
   // make different assumptions about the regions added to them. So
@@ -104,10 +124,10 @@ protected:
   virtual bool check_mt_safety() { return true; }
 
   // fill_in_ext_msg() writes the the values of the set's attributes
-  // in the custom err_msg (hrl_ext_msg). fill_in_ext_msg_extra()
+  // in the custom err_msg (hrs_ext_msg). fill_in_ext_msg_extra()
   // allows subclasses to append further information.
-  virtual void fill_in_ext_msg_extra(hrl_ext_msg* msg) { }
-  void fill_in_ext_msg(hrl_ext_msg* msg, const char* message);
+  virtual void fill_in_ext_msg_extra(hrs_ext_msg* msg) { }
+  void fill_in_ext_msg(hrs_ext_msg* msg, const char* message);
 
   // It updates the fields of the set to reflect hr being added to
   // the set.
@@ -170,35 +190,45 @@ public:
 // the fields of the associated set. This can be very helpful in
 // diagnosing failures.
 
-class hrl_ext_msg : public hrl_err_msg {
+class hrs_ext_msg : public hrs_err_msg {
 public:
-  hrl_ext_msg(HeapRegionSetBase* set, const char* message) : hrl_err_msg("") {
+  hrs_ext_msg(HeapRegionSetBase* set, const char* message) : hrs_err_msg("") {
     set->fill_in_ext_msg(this, message);
+  }
+};
+
+class HRSPhaseSetter {
+public:
+  HRSPhaseSetter(HRSPhase phase) {
+    HeapRegionSetBase::set_phase(phase);
+  }
+  ~HRSPhaseSetter() {
+    HeapRegionSetBase::clear_phase();
   }
 };
 
 // These two macros are provided for convenience, to keep the uses of
 // these two asserts a bit more concise.
 
-#define hrl_assert_mt_safety_ok(_set_)                                        \
+#define hrs_assert_mt_safety_ok(_set_)                                        \
   do {                                                                        \
-    assert((_set_)->check_mt_safety(), hrl_ext_msg((_set_), "MT safety"));    \
+    assert((_set_)->check_mt_safety(), hrs_ext_msg((_set_), "MT safety"));    \
   } while (0)
 
-#define hrl_assert_region_ok(_set_, _hr_, _expected_)                         \
+#define hrs_assert_region_ok(_set_, _hr_, _expected_)                         \
   do {                                                                        \
     assert((_set_)->verify_region((_hr_), (_expected_)),                      \
-           hrl_ext_msg((_set_), "region verification"));                      \
+           hrs_ext_msg((_set_), "region verification"));                      \
   } while (0)
 
 //////////////////// HeapRegionSet ////////////////////
 
-#define hrl_assert_sets_match(_set1_, _set2_)                                 \
+#define hrs_assert_sets_match(_set1_, _set2_)                                 \
   do {                                                                        \
     assert(((_set1_)->regions_humongous() ==                                  \
                                             (_set2_)->regions_humongous()) && \
            ((_set1_)->regions_empty() == (_set2_)->regions_empty()),          \
-           hrl_err_msg("the contents of set %s and set %s should match",      \
+           hrs_err_msg("the contents of set %s and set %s should match",      \
                        (_set1_)->name(), (_set2_)->name()));                  \
   } while (0)
 
@@ -267,7 +297,7 @@ private:
   HeapRegion* tail() { return _tail; }
 
 protected:
-  virtual void fill_in_ext_msg_extra(hrl_ext_msg* msg);
+  virtual void fill_in_ext_msg_extra(hrs_ext_msg* msg);
 
   // See the comment for HeapRegionSetBase::clear()
   virtual void clear();
@@ -277,6 +307,10 @@ protected:
   }
 
 public:
+  // It adds hr to the list as the new head. The region should not be
+  // a member of another set.
+  inline void add_as_head(HeapRegion* hr);
+
   // It adds hr to the list as the new tail. The region should not be
   // a member of another set.
   inline void add_as_tail(HeapRegion* hr);
@@ -287,6 +321,11 @@ public:
 
   // Convenience method.
   inline HeapRegion* remove_head_or_null();
+
+  // It moves the regions from from_list to this list and empties
+  // from_list. The new regions will appear in the same order as they
+  // were in from_list and be linked in the beginning of this list.
+  void add_as_head(HeapRegionLinkedList* from_list);
 
   // It moves the regions from from_list to this list and empties
   // from_list. The new regions will appear in the same order as they
@@ -309,10 +348,10 @@ public:
   virtual void print_on(outputStream* out, bool print_contents = false);
 };
 
-//////////////////// HeapRegionLinkedList ////////////////////
+//////////////////// HeapRegionLinkedListIterator ////////////////////
 
-// Iterator class that provides a convenient way to iterator over the
-// regions in a HeapRegionLinkedList instance.
+// Iterator class that provides a convenient way to iterate over the
+// regions of a HeapRegionLinkedList instance.
 
 class HeapRegionLinkedListIterator : public StackObj {
 private:

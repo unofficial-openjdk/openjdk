@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,9 +127,6 @@ class PSYoungGen : public CHeapObj {
   void adjust_pointers();
   void compact();
 
-  // Parallel Old
-  void move_and_update(ParCompactionManager* cm);
-
   // Called during/after gc
   void swap_spaces();
 
@@ -160,7 +157,7 @@ class PSYoungGen : public CHeapObj {
   }
 
   // Allocation
-  HeapWord* allocate(size_t word_size, bool is_tlab) {
+  HeapWord* allocate(size_t word_size) {
     HeapWord* result = eden_space()->cas_allocate(word_size);
     return result;
   }

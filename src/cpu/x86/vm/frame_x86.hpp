@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@
     // Entry frames
 #ifdef AMD64
 #ifdef _WIN64
-    entry_frame_after_call_words                     =  8,
+    entry_frame_after_call_words                     =  28,
     entry_frame_call_wrapper_offset                  =  2,
 
     arg_reg_save_area_bytes                          = 32, // Register argument save area
@@ -164,6 +164,7 @@
   // original sp we use that convention.
 
   intptr_t*     _unextended_sp;
+  void adjust_unextended_sp();
 
   intptr_t* ptr_at_addr(int offset) const {
     return (intptr_t*) addr_at(offset);
@@ -187,6 +188,7 @@
   frame(intptr_t* sp, intptr_t* fp);
 
   // accessors for the instance variables
+  // Note: not necessarily the real 'frame pointer' (see real_fp)
   intptr_t*   fp() const { return _fp; }
 
   inline address* sender_pc_addr() const;
@@ -196,6 +198,9 @@
 
   // expression stack tos if we are nested in a java call
   intptr_t* interpreter_frame_last_sp() const;
+
+  // helper to update a map with callee-saved RBP
+  static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr);
 
 #ifndef CC_INTERP
   // deoptimization support

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,30 +27,30 @@
 # This is used externally by both batch and IDE builds, so can't
 # reference any of the HOTSPOTWORKSPACE, HOTSPOTBUILDSPACE,
 # HOTSPOTRELEASEBINDEST, or HOTSPOTDEBUGBINDEST environment variables.
-#
-# NOTE: unfortunately the ProjectCreatorSources list must be kept
-# synchronized between this and the Solaris version
-# (make/solaris/makefiles/projectcreator.make).
 
 ProjectCreatorSources=\
         $(WorkSpace)\src\share\tools\ProjectCreator\DirectoryTree.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\DirectoryTreeNode.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\FileFormatException.java \
-        $(WorkSpace)\src\share\tools\ProjectCreator\Macro.java \
-        $(WorkSpace)\src\share\tools\ProjectCreator\MacroDefinitions.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\ProjectCreator.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatform.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatformVC6.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatformVC7.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatformVC8.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatformVC9.java \
+        $(WorkSpace)\src\share\tools\ProjectCreator\WinGammaPlatformVC10.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\Util.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\BuildConfig.java \
         $(WorkSpace)\src\share\tools\ProjectCreator\ArgsParser.java
 
 # This is only used internally
 ProjectCreatorIncludesPRIVATE=\
+        -relativeInclude src\closed\share\vm \
+        -relativeInclude src\closed\os\windows\vm \
+        -relativeInclude src\closed\os_cpu\windows_$(Platform_arch)\vm \
+        -relativeInclude src\closed\cpu\$(Platform_arch)\vm \
         -relativeInclude src\share\vm \
+        -relativeInclude src\share\vm\precompiled \
         -relativeInclude src\share\vm\prims \
         -relativeInclude src\os\windows\vm \
         -relativeInclude src\os_cpu\windows_$(Platform_arch)\vm \
@@ -58,7 +58,8 @@ ProjectCreatorIncludesPRIVATE=\
         -absoluteInclude $(HOTSPOTBUILDSPACE)/%f/generated \
         -ignorePath $(HOTSPOTBUILDSPACE)/%f/generated \
         -ignorePath src\share\vm\adlc \
-        -ignorePath src\share\vm\shark
+        -ignorePath src\share\vm\shark \
+        -ignorePath posix
 
 # This is referenced externally by both the IDE and batch builds
 ProjectCreatorOptions=
@@ -84,11 +85,11 @@ ProjectCreatorIDEOptions=\
         -buildBase $(HOTSPOTBUILDSPACE)\%f\%b \
         -startAt src \
         -compiler $(VcVersion) \
-        -projectFileName $(HOTSPOTBUILDROOT)\$(ProjectFile) \
+        -projectFileName $(HOTSPOTBUILDSPACE)\$(ProjectFile) \
         -jdkTargetRoot $(HOTSPOTJDKDIST) \
         -define ALIGN_STACK_FRAMES \
         -define VM_LITTLE_ENDIAN \
-        -prelink  "" "Generating vm.def..." "cd $(HOTSPOTBUILDSPACE)\%f\%b	set HOTSPOTMKSHOME=$(HOTSPOTMKSHOME)	$(HOTSPOTMKSHOME)\sh $(HOTSPOTWORKSPACE)\make\windows\build_vm_def.sh $(LINK_VER)" \
+        -prelink  "" "Generating vm.def..." "cd $(HOTSPOTBUILDSPACE)\%f\%b	set HOTSPOTMKSHOME=$(HOTSPOTMKSHOME)	set JAVA_HOME=$(HOTSPOTJDKDIST)	$(HOTSPOTMKSHOME)\sh $(HOTSPOTWORKSPACE)\make\windows\build_vm_def.sh $(LD_VER)" \
         -postbuild "" "Building hotspot.exe..." "cd $(HOTSPOTBUILDSPACE)\%f\%b	set HOTSPOTMKSHOME=$(HOTSPOTMKSHOME)	nmake -f $(HOTSPOTWORKSPACE)\make\windows\projectfiles\common\Makefile LOCAL_MAKE=$(HOTSPOTBUILDSPACE)\%f\local.make JAVA_HOME=$(HOTSPOTJDKDIST) launcher" \
         -ignoreFile jsig.c \
         -ignoreFile jvmtiEnvRecommended.cpp \
@@ -106,13 +107,20 @@ ProjectCreatorIDEOptions=\
 # Add in build-specific options
 !if "$(BUILDARCH)" == "i486"
 ProjectCreatorIDEOptions=$(ProjectCreatorIDEOptions) \
+	-platformName Win32 \
         -define IA32 \
         -ignorePath x86_64 \
         -define TARGET_ARCH_MODEL_x86_32
 !else
+!if "$(BUILDARCH)" == "amd64"
 ProjectCreatorIDEOptions=$(ProjectCreatorIDEOptions) \
+	-platformName x64 \
+        -define AMD64 \
+	-define _LP64 \
         -ignorePath x86_32 \
-        -define TARGET_ARCH_MODEL_x86_64
+        -define TARGET_ARCH_MODEL_x86_64 \
+	-define TARGET_OS_ARCH_MODEL_windows_x86_64
+!endif
 !endif
 
 ProjectCreatorIDEOptionsIgnoreCompiler1=\

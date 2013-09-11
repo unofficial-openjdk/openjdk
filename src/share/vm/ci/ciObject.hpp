@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public:
   int hash();
 
   // Tells if this oop has an encoding as a constant.
-  // True if is_scavengable is false.
+  // True if is_perm is true.
   // Also true if ScavengeRootsInCode is non-zero.
   // If it does not have an encoding, the compiler is responsible for
   // making other arrangements for dealing with the oop.
@@ -116,7 +116,7 @@ public:
   bool can_be_constant();
 
   // Tells if this oop should be made a constant.
-  // True if is_scavengable is false or ScavengeRootsInCode > 1.
+  // True if is_perm is true or ScavengeRootsInCode > 1.
   bool should_be_constant();
 
   // Is this object guaranteed to be in the permanent part of the heap?
@@ -267,10 +267,6 @@ public:
   ciTypeArrayKlass*        as_type_array_klass() {
     assert(is_type_array_klass(), "bad cast");
     return (ciTypeArrayKlass*)this;
-  }
-  ciSymbolKlass*           as_symbol_klass() {
-    assert(is_symbol_klass(), "bad cast");
-    return (ciSymbolKlass*)this;
   }
   ciKlassKlass*            as_klass_klass() {
     assert(is_klass_klass(), "bad cast");

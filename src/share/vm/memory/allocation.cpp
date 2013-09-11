@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,20 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 
 void* CHeapObj::operator new(size_t size){
   return (void *) AllocateHeap(size, "CHeapObj-new");
+}
+
+void* CHeapObj::operator new (size_t size, const std::nothrow_t&  nothrow_constant) {
+  char* p = (char*) os::malloc(size);
+#ifdef ASSERT
+  if (PrintMallocFree) trace_heap_malloc(size, "CHeapObj-new", p);
+#endif
+  return p;
 }
 
 void CHeapObj::operator delete(void* p){
@@ -157,7 +168,7 @@ ResourceObj::~ResourceObj() {
 
 void trace_heap_malloc(size_t size, const char* name, void* p) {
   // A lock is not needed here - tty uses a lock internally
-  tty->print_cr("Heap malloc " INTPTR_FORMAT " %7d %s", p, size, name == NULL ? "" : name);
+  tty->print_cr("Heap malloc " INTPTR_FORMAT " " SIZE_FORMAT " %s", p, size, name == NULL ? "" : name);
 }
 
 
@@ -199,7 +210,7 @@ class ChunkPool {
    ChunkPool(size_t size) : _size(size) { _first = NULL; _num_chunks = _num_used = 0; }
 
   // Allocate a new chunk from the pool (might expand the pool)
-  void* allocate(size_t bytes) {
+  void* allocate(size_t bytes, AllocFailType alloc_failmode) {
     assert(bytes == _size, "bad size");
     void* p = NULL;
     { ThreadCritical tc;
@@ -207,9 +218,9 @@ class ChunkPool {
       p = get_first();
       if (p == NULL) p = os::malloc(bytes);
     }
-    if (p == NULL)
+    if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM) {
       vm_exit_out_of_memory(bytes, "ChunkPool::allocate");
-
+    }
     return p;
   }
 
@@ -300,7 +311,7 @@ class ChunkPoolCleaner : public PeriodicTask {
 //--------------------------------------------------------------------------------------
 // Chunk implementation
 
-void* Chunk::operator new(size_t requested_size, size_t length) {
+void* Chunk::operator new(size_t requested_size, AllocFailType alloc_failmode, size_t length) {
   // requested_size is equal to sizeof(Chunk) but in order for the arena
   // allocations to come out aligned as expected the size must be aligned
   // to expected arean alignment.
@@ -308,13 +319,14 @@ void* Chunk::operator new(size_t requested_size, size_t length) {
   assert(ARENA_ALIGN(requested_size) == aligned_overhead_size(), "Bad alignment");
   size_t bytes = ARENA_ALIGN(requested_size) + length;
   switch (length) {
-   case Chunk::size:        return ChunkPool::large_pool()->allocate(bytes);
-   case Chunk::medium_size: return ChunkPool::medium_pool()->allocate(bytes);
-   case Chunk::init_size:   return ChunkPool::small_pool()->allocate(bytes);
+   case Chunk::size:        return ChunkPool::large_pool()->allocate(bytes, alloc_failmode);
+   case Chunk::medium_size: return ChunkPool::medium_pool()->allocate(bytes, alloc_failmode);
+   case Chunk::init_size:   return ChunkPool::small_pool()->allocate(bytes, alloc_failmode);
    default: {
-     void *p =  os::malloc(bytes);
-     if (p == NULL)
+     void* p = os::malloc(bytes);
+     if (p == NULL && alloc_failmode == AllocFailStrategy::EXIT_OOM) {
        vm_exit_out_of_memory(bytes, "Chunk::new");
+     }
      return p;
    }
   }
@@ -367,14 +379,14 @@ void Chunk::start_chunk_pool_cleaner_task() {
 Arena::Arena(size_t init_size) {
   size_t round_size = (sizeof (char *)) - 1;
   init_size = (init_size+round_size) & ~round_size;
-  _first = _chunk = new (init_size) Chunk(init_size);
+  _first = _chunk = new (AllocFailStrategy::EXIT_OOM, init_size) Chunk(init_size);
   _hwm = _chunk->bottom();      // Save the cached hwm, max
   _max = _chunk->top();
   set_size_in_bytes(init_size);
 }
 
 Arena::Arena() {
-  _first = _chunk = new (Chunk::init_size) Chunk(Chunk::init_size);
+  _first = _chunk = new (AllocFailStrategy::EXIT_OOM, Chunk::init_size) Chunk(Chunk::init_size);
   _hwm = _chunk->bottom();      // Save the cached hwm, max
   _max = _chunk->top();
   set_size_in_bytes(Chunk::init_size);
@@ -427,15 +439,15 @@ void Arena::signal_out_of_memory(size_t sz, const char* whence) const {
 }
 
 // Grow a new Chunk
-void* Arena::grow( size_t x ) {
+void* Arena::grow(size_t x, AllocFailType alloc_failmode) {
   // Get minimal required size.  Either real big, or even bigger for giant objs
   size_t len = MAX2(x, (size_t) Chunk::size);
 
   Chunk *k = _chunk;            // Get filled-up chunk address
-  _chunk = new (len) Chunk(len);
+  _chunk = new (alloc_failmode, len) Chunk(len);
 
   if (_chunk == NULL) {
-    signal_out_of_memory(len * Chunk::aligned_overhead_size(), "Arena::grow");
+    return NULL;
   }
 
   if (k) k->set_next(_chunk);   // Append new chunk to end of linked list
@@ -451,13 +463,16 @@ void* Arena::grow( size_t x ) {
 
 
 // Reallocate storage in Arena.
-void *Arena::Arealloc(void* old_ptr, size_t old_size, size_t new_size) {
+void *Arena::Arealloc(void* old_ptr, size_t old_size, size_t new_size, AllocFailType alloc_failmode) {
   assert(new_size >= 0, "bad size");
   if (new_size == 0) return NULL;
 #ifdef ASSERT
   if (UseMallocOnly) {
     // always allocate a new object  (otherwise we'll free this one twice)
-    char* copy = (char*)Amalloc(new_size);
+    char* copy = (char*)Amalloc(new_size, alloc_failmode);
+    if (copy == NULL) {
+      return NULL;
+    }
     size_t n = MIN2(old_size, new_size);
     if (n > 0) memcpy(copy, old_ptr, n);
     Afree(old_ptr,old_size);    // Mostly done to keep stats accurate
@@ -483,7 +498,10 @@ void *Arena::Arealloc(void* old_ptr, size_t old_size, size_t new_size) {
   }
 
   // Oops, got to relocate guts
-  void *new_ptr = Amalloc(new_size);
+  void *new_ptr = Amalloc(new_size, alloc_failmode);
+  if (new_ptr == NULL) {
+    return NULL;
+  }
   memcpy( new_ptr, c_old, old_size );
   Afree(c_old,old_size);        // Mostly done to keep stats accurate
   return new_ptr;
@@ -578,22 +596,27 @@ void AllocatedObj::print_value_on(outputStream* st) const {
   st->print("AllocatedObj(" INTPTR_FORMAT ")", this);
 }
 
-size_t Arena::_bytes_allocated = 0;
+julong Arena::_bytes_allocated = 0;
+
+void Arena::inc_bytes_allocated(size_t x) { inc_stat_counter(&_bytes_allocated, x); }
 
 AllocStats::AllocStats() {
-  start_mallocs = os::num_mallocs;
-  start_frees = os::num_frees;
+  start_mallocs      = os::num_mallocs;
+  start_frees        = os::num_frees;
   start_malloc_bytes = os::alloc_bytes;
-  start_res_bytes = Arena::_bytes_allocated;
+  start_mfree_bytes  = os::free_bytes;
+  start_res_bytes    = Arena::_bytes_allocated;
 }
 
-int     AllocStats::num_mallocs() { return os::num_mallocs - start_mallocs; }
-size_t  AllocStats::alloc_bytes() { return os::alloc_bytes - start_malloc_bytes; }
-size_t  AllocStats::resource_bytes() { return Arena::_bytes_allocated - start_res_bytes; }
-int     AllocStats::num_frees() { return os::num_frees - start_frees; }
+julong  AllocStats::num_mallocs() { return os::num_mallocs - start_mallocs; }
+julong  AllocStats::alloc_bytes() { return os::alloc_bytes - start_malloc_bytes; }
+julong  AllocStats::num_frees()   { return os::num_frees - start_frees; }
+julong  AllocStats::free_bytes()  { return os::free_bytes - start_mfree_bytes; }
+julong  AllocStats::resource_bytes() { return Arena::_bytes_allocated - start_res_bytes; }
 void    AllocStats::print() {
-  tty->print("%d mallocs (%ldK), %d frees, %ldK resrc",
-             num_mallocs(), alloc_bytes()/K, num_frees(), resource_bytes()/K);
+  tty->print_cr(UINT64_FORMAT " mallocs (" UINT64_FORMAT "MB), "
+                UINT64_FORMAT" frees (" UINT64_FORMAT "MB), " UINT64_FORMAT "MB resrc",
+                num_mallocs(), alloc_bytes()/M, num_frees(), free_bytes()/M, resource_bytes()/M);
 }
 
 

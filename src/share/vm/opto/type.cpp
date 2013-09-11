@@ -32,6 +32,7 @@
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/instanceKlass.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/klassKlass.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/typeArrayKlass.hpp"
@@ -2241,43 +2242,49 @@ TypeOopPtr::TypeOopPtr( TYPES t, PTR ptr, ciKlass* k, bool xk, ciObject* o, int 
     } else if (this->isa_aryptr()) {
       _is_ptr_to_narrowoop = (klass()->is_obj_array_klass() &&
                              _offset != arrayOopDesc::length_offset_in_bytes());
-    } else if (klass() == ciEnv::current()->Class_klass() &&
-               (_offset == java_lang_Class::klass_offset_in_bytes() ||
-                _offset == java_lang_Class::array_klass_offset_in_bytes())) {
-      // Special hidden fields from the Class.
-      assert(this->isa_instptr(), "must be an instance ptr.");
-      _is_ptr_to_narrowoop = true;
     } else if (klass()->is_instance_klass()) {
       ciInstanceKlass* ik = klass()->as_instance_klass();
       ciField* field = NULL;
       if (this->isa_klassptr()) {
-        // Perm objects don't use compressed references, except for
-        // static fields which are currently compressed.
-        field = ik->get_field_by_offset(_offset, true);
-        if (field != NULL) {
-          BasicType basic_elem_type = field->layout_type();
-          _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
-                                  basic_elem_type == T_ARRAY);
-        }
+        // Perm objects don't use compressed references
       } else if (_offset == OffsetBot || _offset == OffsetTop) {
         // unsafe access
         _is_ptr_to_narrowoop = true;
       } else { // exclude unsafe ops
         assert(this->isa_instptr(), "must be an instance ptr.");
-        // Field which contains a compressed oop references.
-        field = ik->get_field_by_offset(_offset, false);
-        if (field != NULL) {
+
+        if (klass() == ciEnv::current()->Class_klass() &&
+            (_offset == java_lang_Class::klass_offset_in_bytes() ||
+             _offset == java_lang_Class::array_klass_offset_in_bytes())) {
+          // Special hidden fields from the Class.
+          assert(this->isa_instptr(), "must be an instance ptr.");
+          _is_ptr_to_narrowoop = true;
+        } else if (klass() == ciEnv::current()->Class_klass() &&
+                   _offset >= instanceMirrorKlass::offset_of_static_fields()) {
+          // Static fields
+          assert(o != NULL, "must be constant");
+          ciInstanceKlass* k = o->as_instance()->java_lang_Class_klass()->as_instance_klass();
+          ciField* field = k->get_field_by_offset(_offset, true);
+          assert(field != NULL, "missing field");
           BasicType basic_elem_type = field->layout_type();
           _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
                                   basic_elem_type == T_ARRAY);
-        } else if (klass()->equals(ciEnv::current()->Object_klass())) {
-          // Compile::find_alias_type() cast exactness on all types to verify
-          // that it does not affect alias type.
-          _is_ptr_to_narrowoop = true;
         } else {
-          // Type for the copy start in LibraryCallKit::inline_native_clone().
-          assert(!klass_is_exact(), "only non-exact klass");
-          _is_ptr_to_narrowoop = true;
+          // Instance fields which contains a compressed oop references.
+          field = ik->get_field_by_offset(_offset, false);
+          if (field != NULL) {
+            BasicType basic_elem_type = field->layout_type();
+            _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
+                                    basic_elem_type == T_ARRAY);
+          } else if (klass()->equals(ciEnv::current()->Object_klass())) {
+            // Compile::find_alias_type() cast exactness on all types to verify
+            // that it does not affect alias type.
+            _is_ptr_to_narrowoop = true;
+          } else {
+            // Type for the copy start in LibraryCallKit::inline_native_clone().
+            assert(!klass_is_exact(), "only non-exact klass");
+            _is_ptr_to_narrowoop = true;
+          }
         }
       }
     }
@@ -2465,18 +2472,26 @@ const TypeOopPtr* TypeOopPtr::make_from_klass_common(ciKlass *klass, bool klass_
 //------------------------------make_from_constant-----------------------------
 // Make a java pointer from an oop constant
 const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_constant) {
-  if (o->is_method_data() || o->is_method() || o->is_cpcache()) {
+  if (o->is_method_data() || o->is_method()) {
     // Treat much like a typeArray of bytes, like below, but fake the type...
-    const Type* etype = (Type*)get_const_basic_type(T_BYTE);
+    const BasicType bt = T_BYTE;
+    const Type* etype = get_const_basic_type(bt);
     const TypeAry* arr0 = TypeAry::make(etype, TypeInt::POS);
-    ciKlass *klass = ciTypeArrayKlass::make((BasicType) T_BYTE);
-    assert(o->can_be_constant(), "method data oops should be tenured");
-    const TypeAryPtr* arr = TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
-    return arr;
+    ciKlass* klass = ciArrayKlass::make(ciType::make(bt));
+    assert(o->can_be_constant(), "should be tenured");
+    return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
+  } else if (o->is_cpcache()) {
+    // Treat much like a objArray, like below, but fake the type...
+    const BasicType bt = T_OBJECT;
+    const Type* etype = get_const_basic_type(bt);
+    const TypeAry* arr0 = TypeAry::make(etype, TypeInt::POS);
+    ciKlass* klass = ciArrayKlass::make(ciType::make(bt));
+    assert(o->can_be_constant(), "should be tenured");
+    return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
   } else {
     assert(o->is_java_object(), "must be java language object");
     assert(!o->is_null_object(), "null object not yet handled here.");
-    ciKlass *klass = o->klass();
+    ciKlass* klass = o->klass();
     if (klass->is_instance_klass()) {
       // Element is an instance
       if (require_constant) {
@@ -2487,8 +2502,7 @@ const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_const
       return TypeInstPtr::make(o);
     } else if (klass->is_obj_array_klass()) {
       // Element is an object array. Recursively call ourself.
-      const Type *etype =
-        TypeOopPtr::make_from_klass_raw(klass->as_obj_array_klass()->element_klass());
+      const Type *etype = make_from_klass_raw(klass->as_obj_array_klass()->element_klass());
       const TypeAry* arr0 = TypeAry::make(etype, TypeInt::make(o->as_array()->length()));
       // We used to pass NotNull in here, asserting that the sub-arrays
       // are all not-null.  This is not true in generally, as code can
@@ -2498,12 +2512,10 @@ const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_const
       } else if (!o->should_be_constant()) {
         return TypeAryPtr::make(TypePtr::NotNull, arr0, klass, true, 0);
       }
-      const TypeAryPtr* arr = TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
-      return arr;
+      return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
     } else if (klass->is_type_array_klass()) {
       // Element is an typeArray
-      const Type* etype =
-        (Type*)get_const_basic_type(klass->as_type_array_klass()->element_type());
+      const Type* etype = get_const_basic_type(klass->as_type_array_klass()->element_type());
       const TypeAry* arr0 = TypeAry::make(etype, TypeInt::make(o->as_array()->length()));
       // We used to pass NotNull in here, asserting that the array pointer
       // is not-null. That was not true in general.
@@ -2512,12 +2524,11 @@ const TypeOopPtr* TypeOopPtr::make_from_constant(ciObject* o, bool require_const
       } else if (!o->should_be_constant()) {
         return TypeAryPtr::make(TypePtr::NotNull, arr0, klass, true, 0);
       }
-      const TypeAryPtr* arr = TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
-      return arr;
+      return TypeAryPtr::make(TypePtr::Constant, o, arr0, klass, true, 0);
     }
   }
 
-  ShouldNotReachHere();
+  fatal("unhandled object type");
   return NULL;
 }
 
@@ -3386,7 +3397,22 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
         instance_id = InstanceBot;
         tary = TypeAry::make(Type::BOTTOM, tary->_size);
       }
+    } else // Non integral arrays.
+    // Must fall to bottom if exact klasses in upper lattice
+    // are not equal or super klass is exact.
+    if ( above_centerline(ptr) && klass() != tap->klass() &&
+         // meet with top[] and bottom[] are processed further down:
+         tap ->_klass != NULL  && this->_klass != NULL   &&
+         // both are exact and not equal:
+        ((tap ->_klass_is_exact && this->_klass_is_exact) ||
+         // 'tap'  is exact and super or unrelated:
+         (tap ->_klass_is_exact && !tap->klass()->is_subtype_of(klass())) ||
+         // 'this' is exact and super or unrelated:
+         (this->_klass_is_exact && !klass()->is_subtype_of(tap->klass())))) {
+      tary = TypeAry::make(Type::BOTTOM, tary->_size);
+      return make( NotNull, NULL, tary, lazy_klass, false, off, InstanceBot );
     }
+
     bool xk = false;
     switch (tap->ptr()) {
     case AnyNull:
@@ -3766,7 +3792,7 @@ ciKlass* TypeAryPtr::klass() const {
   // Oops, need to compute _klass and cache it
   ciKlass* k_ary = compute_klass();
 
-  if( this != TypeAryPtr::OOPS ) {
+  if( this != TypeAryPtr::OOPS && this->dual() != TypeAryPtr::OOPS ) {
     // The _klass field acts as a cache of the underlying
     // ciKlass for this array type.  In order to set the field,
     // we need to cast away const-ness.

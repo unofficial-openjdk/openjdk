@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,12 @@
 #ifdef TARGET_ARCH_sparc
 # include "c1_globals_sparc.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "c1_globals_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "c1_globals_ppc.hpp"
+#endif
 #ifdef TARGET_OS_FAMILY_linux
 # include "c1_globals_linux.hpp"
 #endif
@@ -40,6 +46,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "c1_globals_windows.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "c1_globals_bsd.hpp"
 #endif
 
 //
@@ -272,7 +281,7 @@
   product(intx, CompilationRepeat, 0,                                       \
           "Number of times to recompile method before returning result")    \
                                                                             \
-  develop(intx, NMethodSizeLimit, (32*K)*wordSize,                          \
+  develop(intx, NMethodSizeLimit, (64*K)*wordSize,                          \
           "Maximum size of a compiled method.")                             \
                                                                             \
   develop(bool, TraceFPUStack, false,                                       \

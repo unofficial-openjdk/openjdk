@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -330,6 +330,12 @@ class Copy : AllStatic {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "copy_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "copy_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "copy_ppc.hpp"
 #endif
 
 };

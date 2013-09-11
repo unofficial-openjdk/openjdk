@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public class Hashtable extends BasicHashtable {
 
   private static synchronized void initialize(TypeDataBase db) {
     // just to confirm that type exists
-    Type type = db.lookupType("Hashtable");
+    Type type = db.lookupType("Hashtable<intptr_t>");
   }
 
   // derived class may return Class<? extends HashtableEntry>

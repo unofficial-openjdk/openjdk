@@ -833,8 +833,20 @@ Node* Node::uncast() const {
 
 //---------------------------uncast_helper-------------------------------------
 Node* Node::uncast_helper(const Node* p) {
-  uint max_depth = 3;
-  for (uint i = 0; i < max_depth; i++) {
+#ifdef ASSERT
+  uint depth_count = 0;
+  const Node* orig_p = p;
+#endif
+
+  while (true) {
+#ifdef ASSERT
+    if (depth_count >= K) {
+      orig_p->dump(4);
+      if (p != orig_p)
+        p->dump(1);
+    }
+    assert(depth_count++ < K, "infinite loop in Node::uncast_helper");
+#endif
     if (p == NULL || p->req() != 2) {
       break;
     } else if (p->is_ConstraintCast()) {
@@ -1373,12 +1385,12 @@ static inline bool NotANode(const Node* n) {
 //------------------------------find------------------------------------------
 // Find a neighbor of this Node with the given _idx
 // If idx is negative, find its absolute value, following both _in and _out.
-static void find_recur( Node* &result, Node *n, int idx, bool only_ctrl,
-                        VectorSet &old_space, VectorSet &new_space ) {
+static void find_recur(Compile* C,  Node* &result, Node *n, int idx, bool only_ctrl,
+                        VectorSet* old_space, VectorSet* new_space ) {
   int node_idx = (idx >= 0) ? idx : -idx;
   if (NotANode(n))  return;  // Gracefully handle NULL, -1, 0xabababab, etc.
-  // Contained in new_space or old_space?
-  VectorSet *v = Compile::current()->node_arena()->contains(n) ? &new_space : &old_space;
+  // Contained in new_space or old_space?   Check old_arena first since it's mostly empty.
+  VectorSet *v = C->old_arena()->contains(n) ? old_space : new_space;
   if( v->test(n->_idx) ) return;
   if( (int)n->_idx == node_idx
       debug_only(|| n->debug_idx() == node_idx) ) {
@@ -1390,19 +1402,23 @@ static void find_recur( Node* &result, Node *n, int idx, bool only_ctrl,
   v->set(n->_idx);
   for( uint i=0; i<n->len(); i++ ) {
     if( only_ctrl && !(n->is_Region()) && (n->Opcode() != Op_Root) && (i != TypeFunc::Control) ) continue;
-    find_recur( result, n->in(i), idx, only_ctrl, old_space, new_space );
+    find_recur(C, result, n->in(i), idx, only_ctrl, old_space, new_space );
   }
   // Search along forward edges also:
   if (idx < 0 && !only_ctrl) {
     for( uint j=0; j<n->outcnt(); j++ ) {
-      find_recur( result, n->raw_out(j), idx, only_ctrl, old_space, new_space );
+      find_recur(C, result, n->raw_out(j), idx, only_ctrl, old_space, new_space );
     }
   }
 #ifdef ASSERT
-  // Search along debug_orig edges last:
-  for (Node* orig = n->debug_orig(); orig != NULL && n != orig; orig = orig->debug_orig()) {
-    if (NotANode(orig))  break;
-    find_recur( result, orig, idx, only_ctrl, old_space, new_space );
+  // Search along debug_orig edges last, checking for cycles
+  Node* orig = n->debug_orig();
+  if (orig != NULL) {
+    do {
+      if (NotANode(orig))  break;
+      find_recur(C, result, orig, idx, only_ctrl, old_space, new_space );
+      orig = orig->debug_orig();
+    } while (orig != NULL && orig != n->debug_orig());
   }
 #endif //ASSERT
 }
@@ -1417,7 +1433,7 @@ Node* Node::find(int idx) const {
   ResourceArea *area = Thread::current()->resource_area();
   VectorSet old_space(area), new_space(area);
   Node* result = NULL;
-  find_recur( result, (Node*) this, idx, false, old_space, new_space );
+  find_recur(Compile::current(), result, (Node*) this, idx, false, &old_space, &new_space );
   return result;
 }
 
@@ -1427,7 +1443,7 @@ Node* Node::find_ctrl(int idx) const {
   ResourceArea *area = Thread::current()->resource_area();
   VectorSet old_space(area), new_space(area);
   Node* result = NULL;
-  find_recur( result, (Node*) this, idx, true, old_space, new_space );
+  find_recur(Compile::current(), result, (Node*) this, idx, true, &old_space, &new_space );
   return result;
 }
 #endif
@@ -2006,6 +2022,16 @@ void Node_Stack::grow() {
   _inodes = REALLOC_ARENA_ARRAY(_a, INode, _inodes, old_max, max);
   _inode_max = _inodes + max;
   _inode_top = _inodes + old_top;        // restore _top
+}
+
+// Node_Stack is used to map nodes.
+Node* Node_Stack::find(uint idx) const {
+  uint sz = size();
+  for (uint i=0; i < sz; i++) {
+    if (idx == index_at(i) )
+      return node_at(i);
+  }
+  return NULL;
 }
 
 //=============================================================================

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -455,7 +455,7 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     }
 
     protected void writeClass(Instance instance) throws IOException {
-        Klass reflectedKlass = OopUtilities.classOopToKlass(instance);
+        Klass reflectedKlass = java_lang_Class.asKlass(instance);
         // dump instance record only for primitive type Class objects.
         // all other Class objects are covered by writeClassDumpRecords.
         if (reflectedKlass == null) {
@@ -740,13 +740,13 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         for (Iterator itr = fields.iterator(); itr.hasNext();) {
             Field field = (Field) itr.next();
             Symbol name = symTbl.probe(field.getID().getName());
-            writeObjectID(name);
+            writeSymbolID(name);
             char typeCode = (char) field.getSignature().getByteAt(0);
             int kind = signatureToHprofKind(typeCode);
             out.writeByte((byte)kind);
             if (ik != null) {
                 // static field
-                writeField(field, ik);
+                writeField(field, ik.getJavaMirror());
             }
         }
     }
@@ -852,7 +852,7 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
     private void writeSymbol(Symbol sym) throws IOException {
         byte[] buf = sym.asString().getBytes("UTF-8");
         writeHeader(HPROF_UTF8, buf.length + OBJ_ID_SIZE);
-        writeObjectID(sym);
+        writeSymbolID(sym);
         out.write(buf);
     }
 
@@ -869,7 +869,7 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
                         out.writeInt(serialNum);
                         writeObjectID(clazz);
                         out.writeInt(DUMMY_STACK_TRACE_ID);
-                        writeObjectID(k.getName());
+                        writeSymbolID(k.getName());
                         serialNum++;
                     } catch (IOException exp) {
                         throw new RuntimeException(exp);
@@ -899,6 +899,10 @@ public class HeapHprofBinWriter extends AbstractHeapGraphWriter {
         OopHandle handle = (oop != null)? oop.getHandle() : null;
         long address = getAddressValue(handle);
         writeObjectID(address);
+    }
+
+    private void writeSymbolID(Symbol sym) throws IOException {
+        writeObjectID(getAddressValue(sym.getAddress()));
     }
 
     private void writeObjectID(long address) throws IOException {

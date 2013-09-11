@@ -33,10 +33,9 @@
 
 // The following methods are used by the parallel scavenge collector
 VM_ParallelGCFailedAllocation::VM_ParallelGCFailedAllocation(size_t size,
-  bool is_tlab, unsigned int gc_count) :
-  VM_GC_Operation(gc_count),
+                                                      unsigned int gc_count) :
+  VM_GC_Operation(gc_count, GCCause::_allocation_failure),
   _size(size),
-  _is_tlab(is_tlab),
   _result(NULL)
 {
 }
@@ -48,7 +47,7 @@ void VM_ParallelGCFailedAllocation::doit() {
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "must be a ParallelScavengeHeap");
 
   GCCauseSetter gccs(heap, _gc_cause);
-  _result = heap->failed_mem_allocate(_size, _is_tlab);
+  _result = heap->failed_mem_allocate(_size);
 
   if (_result == NULL && GC_locker::is_active_and_needs_gc()) {
     set_gc_locked();
@@ -57,7 +56,7 @@ void VM_ParallelGCFailedAllocation::doit() {
 
 VM_ParallelGCFailedPermanentAllocation::VM_ParallelGCFailedPermanentAllocation(size_t size,
   unsigned int gc_count, unsigned int full_gc_count) :
-  VM_GC_Operation(gc_count, full_gc_count, true /* full */),
+  VM_GC_Operation(gc_count, GCCause::_allocation_failure, full_gc_count, true /* full */),
   _size(size),
   _result(NULL)
 {
@@ -80,9 +79,8 @@ void VM_ParallelGCFailedPermanentAllocation::doit() {
 VM_ParallelGCSystemGC::VM_ParallelGCSystemGC(unsigned int gc_count,
                                              unsigned int full_gc_count,
                                              GCCause::Cause gc_cause) :
-  VM_GC_Operation(gc_count, full_gc_count, true /* full */)
+  VM_GC_Operation(gc_count, gc_cause, full_gc_count, true /* full */)
 {
-  _gc_cause = gc_cause;
 }
 
 void VM_ParallelGCSystemGC::doit() {

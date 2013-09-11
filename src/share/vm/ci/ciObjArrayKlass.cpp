@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,6 +93,7 @@ ciKlass* ciObjArrayKlass::element_klass() {
       // element klass by name.
       _element_klass = CURRENT_THREAD_ENV->get_klass_by_name_impl(
                           this,
+                          constantPoolHandle(),
                           construct_array_name(base_element_klass()->name(),
                                                dimension() - 1),
                           false);
@@ -110,7 +111,7 @@ ciSymbol* ciObjArrayKlass::construct_array_name(ciSymbol* element_name,
   EXCEPTION_CONTEXT;
   int element_len = element_name->utf8_length();
 
-  symbolOop base_name_sym = element_name->get_symbolOop();
+  Symbol* base_name_sym = element_name->get_symbol();
   char* name;
 
   if (base_name_sym->byte_at(0) == '[' ||

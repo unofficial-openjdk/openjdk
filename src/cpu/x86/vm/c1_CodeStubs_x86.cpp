@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -313,10 +313,15 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
     }
     assert(_obj != noreg, "must be a valid register");
     Register tmp = rax;
-    if (_obj == tmp) tmp = rbx;
+    Register tmp2 = rbx;
     __ push(tmp);
+    __ push(tmp2);
+    // Load without verification to keep code size small. We need it because
+    // begin_initialized_entry_offset has to fit in a byte. Also, we know it's not null.
+    __ load_heap_oop_not_null(tmp2, Address(_obj, java_lang_Class::klass_offset_in_bytes()));
     __ get_thread(tmp);
-    __ cmpptr(tmp, Address(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc)));
+    __ cmpptr(tmp, Address(tmp2, instanceKlass::init_thread_offset()));
+    __ pop(tmp2);
     __ pop(tmp);
     __ jcc(Assembler::notEqual, call_patch);
 
@@ -382,9 +387,9 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
 
 void DeoptimizeStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
-  __ call(RuntimeAddress(SharedRuntime::deopt_blob()->unpack_with_reexecution()));
+  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::deoptimize_id)));
   ce->add_call_info_here(_info);
-  debug_only(__ should_not_reach_here());
+  DEBUG_ONLY(__ should_not_reach_here());
 }
 
 
@@ -406,20 +411,6 @@ void SimpleExceptionStub::emit_code(LIR_Assembler* ce) {
     ce->store_parameter(_obj->as_register(), 0);
   }
   __ call(RuntimeAddress(Runtime1::entry_for(_stub)));
-  ce->add_call_info_here(_info);
-  debug_only(__ should_not_reach_here());
-}
-
-
-ArrayStoreExceptionStub::ArrayStoreExceptionStub(CodeEmitInfo* info):
-  _info(info) {
-}
-
-
-void ArrayStoreExceptionStub::emit_code(LIR_Assembler* ce) {
-  assert(__ rsp_offset() == 0, "frame size should be fixed");
-  __ bind(_entry);
-  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::throw_array_store_exception_id)));
   ce->add_call_info_here(_info);
   debug_only(__ should_not_reach_here());
 }
@@ -475,15 +466,19 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
 #ifndef SERIALGC
 
 void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
-
-  // At this point we know that marking is in progress
+  // At this point we know that marking is in progress.
+  // If do_load() is true then we have to emit the
+  // load of the previous value; otherwise it has already
+  // been loaded into _pre_val.
 
   __ bind(_entry);
   assert(pre_val()->is_register(), "Precondition.");
 
   Register pre_val_reg = pre_val()->as_register();
 
-  ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false /*wide*/, false /*unaligned*/);
+  if (do_load()) {
+    ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false /*wide*/, false /*unaligned*/);
+  }
 
   __ cmpptr(pre_val_reg, (int32_t) NULL_WORD);
   __ jcc(Assembler::equal, _continuation);
@@ -491,6 +486,68 @@ void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
   __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::g1_pre_barrier_slow_id)));
   __ jmp(_continuation);
 
+}
+
+void G1UnsafeGetObjSATBBarrierStub::emit_code(LIR_Assembler* ce) {
+  // At this point we know that offset == referent_offset.
+  //
+  // So we might have to emit:
+  //   if (src == null) goto continuation.
+  //
+  // and we definitely have to emit:
+  //   if (klass(src).reference_type == REF_NONE) goto continuation
+  //   if (!marking_active) goto continuation
+  //   if (pre_val == null) goto continuation
+  //   call pre_barrier(pre_val)
+  //   goto continuation
+  //
+  __ bind(_entry);
+
+  assert(src()->is_register(), "sanity");
+  Register src_reg = src()->as_register();
+
+  if (gen_src_check()) {
+    // The original src operand was not a constant.
+    // Generate src == null?
+    __ cmpptr(src_reg, (int32_t) NULL_WORD);
+    __ jcc(Assembler::equal, _continuation);
+  }
+
+  // Generate src->_klass->_reference_type == REF_NONE)?
+  assert(tmp()->is_register(), "sanity");
+  Register tmp_reg = tmp()->as_register();
+
+  __ load_klass(tmp_reg, src_reg);
+
+  Address ref_type_adr(tmp_reg, instanceKlass::reference_type_offset());
+  __ cmpb(ref_type_adr, REF_NONE);
+  __ jcc(Assembler::equal, _continuation);
+
+  // Is marking active?
+  assert(thread()->is_register(), "precondition");
+  Register thread_reg = thread()->as_pointer_register();
+
+  Address in_progress(thread_reg, in_bytes(JavaThread::satb_mark_queue_offset() +
+                                       PtrQueue::byte_offset_of_active()));
+
+  if (in_bytes(PtrQueue::byte_width_of_active()) == 4) {
+    __ cmpl(in_progress, 0);
+  } else {
+    assert(in_bytes(PtrQueue::byte_width_of_active()) == 1, "Assumption");
+    __ cmpb(in_progress, 0);
+  }
+  __ jcc(Assembler::equal, _continuation);
+
+  // val == null?
+  assert(val()->is_register(), "Precondition.");
+  Register val_reg = val()->as_register();
+
+  __ cmpptr(val_reg, (int32_t) NULL_WORD);
+  __ jcc(Assembler::equal, _continuation);
+
+  ce->store_parameter(val()->as_register(), 0);
+  __ call(RuntimeAddress(Runtime1::entry_for(Runtime1::g1_pre_barrier_slow_id)));
+  __ jmp(_continuation);
 }
 
 jbyte* G1PostBarrierStub::_byte_map_base = NULL;

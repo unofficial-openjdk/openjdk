@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@
 #include "runtime/javaCalls.hpp"
 #include "runtime/os.hpp"
 #include "services/attachListener.hpp"
+#include "services/diagnosticCommand.hpp"
 #include "services/heapDumper.hpp"
 
 volatile bool AttachListener::_initialized;
@@ -43,7 +44,7 @@ volatile bool AttachListener::_initialized;
 // Invokes sun.misc.VMSupport.serializePropertiesToByteArray to serialize
 // the system properties into a byte array.
 
-static klassOop load_and_initialize_klass(symbolHandle sh, TRAPS) {
+static klassOop load_and_initialize_klass(Symbol* sh, TRAPS) {
   klassOop k = SystemDictionary::resolve_or_fail(sh, true, CHECK_NULL);
   instanceKlassHandle ik (THREAD, k);
   if (ik->should_be_initialized()) {
@@ -52,12 +53,12 @@ static klassOop load_and_initialize_klass(symbolHandle sh, TRAPS) {
   return ik();
 }
 
-static jint get_properties(AttachOperation* op, outputStream* out, symbolHandle serializePropertiesMethod) {
+static jint get_properties(AttachOperation* op, outputStream* out, Symbol* serializePropertiesMethod) {
   Thread* THREAD = Thread::current();
   HandleMark hm;
 
   // load sun.misc.VMSupport
-  symbolHandle klass = vmSymbolHandles::sun_misc_VMSupport();
+  Symbol* klass = vmSymbols::sun_misc_VMSupport();
   klassOop k = load_and_initialize_klass(klass, THREAD);
   if (HAS_PENDING_EXCEPTION) {
     java_lang_Throwable::print(PENDING_EXCEPTION, out);
@@ -71,7 +72,7 @@ static jint get_properties(AttachOperation* op, outputStream* out, symbolHandle 
   JavaCallArguments args;
 
 
-  symbolHandle signature = vmSymbolHandles::serializePropertiesToByteArray_signature();
+  Symbol* signature = vmSymbols::serializePropertiesToByteArray_signature();
   JavaCalls::call_static(&result,
                            ik,
                            serializePropertiesMethod,
@@ -98,13 +99,14 @@ static jint get_properties(AttachOperation* op, outputStream* out, symbolHandle 
 }
 
 // Implementation of "properties" command.
+// See also: PrintSystemPropertiesDCmd class
 static jint get_system_properties(AttachOperation* op, outputStream* out) {
-  return get_properties(op, out, vmSymbolHandles::serializePropertiesToByteArray_name());
+  return get_properties(op, out, vmSymbols::serializePropertiesToByteArray_name());
 }
 
 // Implementation of "agent_properties" command.
 static jint get_agent_properties(AttachOperation* op, outputStream* out) {
-  return get_properties(op, out, vmSymbolHandles::serializeAgentPropertiesToByteArray_name());
+  return get_properties(op, out, vmSymbols::serializeAgentPropertiesToByteArray_name());
 }
 
 // Implementation of "datadump" command.
@@ -126,6 +128,7 @@ static jint data_dump(AttachOperation* op, outputStream* out) {
 }
 
 // Implementation of "threaddump" command - essentially a remote ctrl-break
+// See also: ThreadDumpDCmd class
 //
 static jint thread_dump(AttachOperation* op, outputStream* out) {
   bool print_concurrent_locks = false;
@@ -148,8 +151,28 @@ static jint thread_dump(AttachOperation* op, outputStream* out) {
   return JNI_OK;
 }
 
+// A jcmd attach operation request was received, which will now
+// dispatch to the diagnostic commands used for serviceability functions.
+static jint jcmd(AttachOperation* op, outputStream* out) {
+  Thread* THREAD = Thread::current();
+  // All the supplied jcmd arguments are stored as a single
+  // string (op->arg(0)). This is parsed by the Dcmd framework.
+  DCmd::parse_and_execute(out, op->arg(0), ' ', THREAD);
+  if (HAS_PENDING_EXCEPTION) {
+    java_lang_Throwable::print(PENDING_EXCEPTION, out);
+    out->cr();
+    CLEAR_PENDING_EXCEPTION;
+    // The exception has been printed on the output stream
+    // If the JVM returns JNI_ERR, the attachAPI throws a generic I/O
+    // exception and the content of the output stream is not processed.
+    // By returning JNI_OK, the exception will be displayed on the client side
+  }
+  return JNI_OK;
+}
+
 #ifndef SERVICES_KERNEL   // Heap dumping not supported
 // Implementation of "dumpheap" command.
+// See also: HeapDumpDCmd class
 //
 // Input arguments :-
 //   arg0: Name of the dump file
@@ -192,6 +215,7 @@ jint dump_heap(AttachOperation* op, outputStream* out) {
 #endif // SERVICES_KERNEL
 
 // Implementation of "inspectheap" command
+// See also: ClassHistogramDCmd class
 //
 // Input arguments :-
 //   arg0: "-live" or "-all"
@@ -335,6 +359,7 @@ static jint set_flag(AttachOperation* op, outputStream* out) {
 }
 
 // Implementation of "printflag" command
+// See also: PrintVMFlagsDCmd class
 static jint print_flag(AttachOperation* op, outputStream* out) {
   const char* name = NULL;
   if ((name = op->arg(0)) == NULL) {
@@ -366,6 +391,7 @@ static AttachOperationFunctionInfo funcs[] = {
   { "inspectheap",      heap_inspection },
   { "setflag",          set_flag },
   { "printflag",        print_flag },
+  { "jcmd",             jcmd },
   { NULL,               NULL }
 };
 
@@ -430,7 +456,7 @@ static void attach_listener_thread_entry(JavaThread* thread, TRAPS) {
 // Starts the Attach Listener thread
 void AttachListener::init() {
   EXCEPTION_MARK;
-  klassOop k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_Thread(), true, CHECK);
+  klassOop k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_Thread(), true, CHECK);
   instanceKlassHandle klass (THREAD, k);
   instanceHandle thread_oop = klass->allocate_instance_handle(CHECK);
 
@@ -442,8 +468,8 @@ void AttachListener::init() {
   JavaValue result(T_VOID);
   JavaCalls::call_special(&result, thread_oop,
                        klass,
-                       vmSymbolHandles::object_initializer_name(),
-                       vmSymbolHandles::threadgroup_string_void_signature(),
+                       vmSymbols::object_initializer_name(),
+                       vmSymbols::threadgroup_string_void_signature(),
                        thread_group,
                        string,
                        CHECK);
@@ -452,8 +478,8 @@ void AttachListener::init() {
   JavaCalls::call_special(&result,
                         thread_group,
                         group,
-                        vmSymbolHandles::add_method_name(),
-                        vmSymbolHandles::thread_void_signature(),
+                        vmSymbols::add_method_name(),
+                        vmSymbols::thread_void_signature(),
                         thread_oop,             // ARG 1
                         CHECK);
 

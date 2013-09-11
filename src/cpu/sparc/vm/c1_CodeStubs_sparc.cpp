@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,27 +127,6 @@ void SimpleExceptionStub::emit_code(LIR_Assembler* ce) {
   __ should_not_reach_here();
 #endif
 }
-
-
-// Implementation of ArrayStoreExceptionStub
-
-ArrayStoreExceptionStub::ArrayStoreExceptionStub(CodeEmitInfo* info):
-  _info(info) {
-}
-
-
-void ArrayStoreExceptionStub::emit_code(LIR_Assembler* ce) {
-  __ bind(_entry);
-  __ call(Runtime1::entry_for(Runtime1::throw_array_store_exception_id), relocInfo::runtime_call_type);
-  __ delayed()->nop();
-  ce->add_call_info_here(_info);
-  ce->verify_oop_map(_info);
-#ifdef ASSERT
-  __ should_not_reach_here();
-#endif
-}
-
-
 
 
 // Implementation of NewInstanceStub
@@ -322,10 +301,9 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
     // thread.
     assert(_obj != noreg, "must be a valid register");
     assert(_oop_index >= 0, "must have oop index");
-    __ ld_ptr(_obj, instanceKlass::init_thread_offset_in_bytes() + sizeof(klassOopDesc), G3);
-    __ cmp(G2_thread, G3);
-    __ br(Assembler::notEqual, false, Assembler::pn, call_patch);
-    __ delayed()->nop();
+    __ load_heap_oop(_obj, java_lang_Class::klass_offset_in_bytes(), G3);
+    __ ld_ptr(G3, in_bytes(instanceKlass::init_thread_offset()), G3);
+    __ cmp_and_brx_short(G2_thread, G3, Assembler::notEqual, Assembler::pn, call_patch);
 
     // load_klass patches may execute the patched code before it's
     // copied back into place so we need to jump back into the main
@@ -389,10 +367,10 @@ void PatchingStub::emit_code(LIR_Assembler* ce) {
 
 void DeoptimizeStub::emit_code(LIR_Assembler* ce) {
   __ bind(_entry);
-  __ call(SharedRuntime::deopt_blob()->unpack_with_reexecution());
+  __ call(Runtime1::entry_for(Runtime1::deoptimize_id), relocInfo::runtime_call_type);
   __ delayed()->nop();
   ce->add_call_info_here(_info);
-  debug_only(__ should_not_reach_here());
+  DEBUG_ONLY(__ should_not_reach_here());
 }
 
 
@@ -428,16 +406,22 @@ void ArrayCopyStub::emit_code(LIR_Assembler* ce) {
 #ifndef SERIALGC
 
 void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
+  // At this point we know that marking is in progress.
+  // If do_load() is true then we have to emit the
+  // load of the previous value; otherwise it has already
+  // been loaded into _pre_val.
+
   __ bind(_entry);
 
   assert(pre_val()->is_register(), "Precondition.");
-
   Register pre_val_reg = pre_val()->as_register();
 
-  ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false /*wide*/, false /*unaligned*/);
+  if (do_load()) {
+    ce->mem2reg(addr(), pre_val(), T_OBJECT, patch_code(), info(), false /*wide*/, false /*unaligned*/);
+  }
+
   if (__ is_in_wdisp16_range(_continuation)) {
-    __ br_on_reg_cond(Assembler::rc_z, /*annul*/false, Assembler::pt,
-                      pre_val_reg, _continuation);
+    __ br_null(pre_val_reg, /*annul*/false, Assembler::pt, _continuation);
   } else {
     __ cmp(pre_val_reg, G0);
     __ brx(Assembler::equal, false, Assembler::pn, _continuation);
@@ -449,6 +433,85 @@ void G1PreBarrierStub::emit_code(LIR_Assembler* ce) {
   __ br(Assembler::always, false, Assembler::pt, _continuation);
   __ delayed()->nop();
 
+}
+
+void G1UnsafeGetObjSATBBarrierStub::emit_code(LIR_Assembler* ce) {
+  // At this point we know that offset == referent_offset.
+  //
+  // So we might have to emit:
+  //   if (src == null) goto continuation.
+  //
+  // and we definitely have to emit:
+  //   if (klass(src).reference_type == REF_NONE) goto continuation
+  //   if (!marking_active) goto continuation
+  //   if (pre_val == null) goto continuation
+  //   call pre_barrier(pre_val)
+  //   goto continuation
+  //
+  __ bind(_entry);
+
+  assert(src()->is_register(), "sanity");
+  Register src_reg = src()->as_register();
+
+  if (gen_src_check()) {
+    // The original src operand was not a constant.
+    // Generate src == null?
+    if (__ is_in_wdisp16_range(_continuation)) {
+      __ br_null(src_reg, /*annul*/false, Assembler::pt, _continuation);
+    } else {
+      __ cmp(src_reg, G0);
+      __ brx(Assembler::equal, false, Assembler::pt, _continuation);
+    }
+    __ delayed()->nop();
+  }
+
+  // Generate src->_klass->_reference_type() == REF_NONE)?
+  assert(tmp()->is_register(), "sanity");
+  Register tmp_reg = tmp()->as_register();
+
+  __ load_klass(src_reg, tmp_reg);
+
+  Address ref_type_adr(tmp_reg, instanceKlass::reference_type_offset());
+  __ ldub(ref_type_adr, tmp_reg);
+
+  // _reference_type field is of type ReferenceType (enum)
+  assert(REF_NONE == 0, "check this code");
+  __ cmp_zero_and_br(Assembler::equal, tmp_reg, _continuation, /*annul*/false, Assembler::pt);
+  __ delayed()->nop();
+
+  // Is marking active?
+  assert(thread()->is_register(), "precondition");
+  Register thread_reg = thread()->as_pointer_register();
+
+  Address in_progress(thread_reg, in_bytes(JavaThread::satb_mark_queue_offset() +
+                                       PtrQueue::byte_offset_of_active()));
+
+  if (in_bytes(PtrQueue::byte_width_of_active()) == 4) {
+    __ ld(in_progress, tmp_reg);
+  } else {
+    assert(in_bytes(PtrQueue::byte_width_of_active()) == 1, "Assumption");
+    __ ldsb(in_progress, tmp_reg);
+  }
+
+  __ cmp_zero_and_br(Assembler::equal, tmp_reg, _continuation, /*annul*/false, Assembler::pt);
+  __ delayed()->nop();
+
+  // val == null?
+  assert(val()->is_register(), "Precondition.");
+  Register val_reg = val()->as_register();
+
+  if (__ is_in_wdisp16_range(_continuation)) {
+    __ br_null(val_reg, /*annul*/false, Assembler::pt, _continuation);
+  } else {
+    __ cmp(val_reg, G0);
+    __ brx(Assembler::equal, false, Assembler::pt, _continuation);
+  }
+  __ delayed()->nop();
+
+  __ call(Runtime1::entry_for(Runtime1::Runtime1::g1_pre_barrier_slow_id));
+  __ delayed()->mov(val_reg, G4);
+  __ br(Assembler::always, false, Assembler::pt, _continuation);
+  __ delayed()->nop();
 }
 
 jbyte* G1PostBarrierStub::_byte_map_base = NULL;
@@ -467,9 +530,9 @@ void G1PostBarrierStub::emit_code(LIR_Assembler* ce) {
   assert(new_val()->is_register(), "Precondition.");
   Register addr_reg = addr()->as_pointer_register();
   Register new_val_reg = new_val()->as_register();
+
   if (__ is_in_wdisp16_range(_continuation)) {
-    __ br_on_reg_cond(Assembler::rc_z, /*annul*/false, Assembler::pt,
-                      new_val_reg, _continuation);
+    __ br_null(new_val_reg, /*annul*/false, Assembler::pt, _continuation);
   } else {
     __ cmp(new_val_reg, G0);
     __ brx(Assembler::equal, false, Assembler::pn, _continuation);

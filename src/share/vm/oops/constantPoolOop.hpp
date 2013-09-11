@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 
 #include "oops/arrayOop.hpp"
 #include "oops/cpCacheOop.hpp"
+#include "oops/symbol.hpp"
 #include "oops/typeArrayOop.hpp"
 #include "utilities/constantTag.hpp"
 #ifdef TARGET_ARCH_x86
@@ -38,6 +39,12 @@
 #ifdef TARGET_ARCH_zero
 # include "bytes_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "bytes_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "bytes_ppc.hpp"
+#endif
 
 // A constantPool is an array containing class constants as described in the
 // class file.
@@ -47,9 +54,31 @@
 // modified when the entry is resolved.  If a klass or string constant pool
 // entry is read without a lock, only the resolved state guarantees that
 // the entry in the constant pool is a klass or String object and
-// not a symbolOop.
+// not a Symbol*.
 
 class SymbolHashMap;
+
+class CPSlot VALUE_OBJ_CLASS_SPEC {
+  intptr_t _ptr;
+ public:
+  CPSlot(intptr_t ptr): _ptr(ptr) {}
+  CPSlot(void* ptr): _ptr((intptr_t)ptr) {}
+  CPSlot(oop ptr): _ptr((intptr_t)ptr) {}
+  CPSlot(Symbol* ptr): _ptr((intptr_t)ptr | 1) {}
+
+  intptr_t value()   { return _ptr; }
+  bool is_oop()      { return (_ptr & 1) == 0; }
+  bool is_metadata() { return (_ptr & 1) == 1; }
+
+  oop get_oop() {
+    assert(is_oop(), "bad call");
+    return oop(_ptr);
+  }
+  Symbol* get_symbol() {
+    assert(is_metadata(), "bad call");
+    return (Symbol*)(_ptr & ~1);
+  }
+};
 
 class constantPoolOopDesc : public oopDesc {
   friend class VMStructs;
@@ -74,7 +103,8 @@ class constantPoolOopDesc : public oopDesc {
 
   enum FlagBit {
     FB_has_invokedynamic = 1,
-    FB_has_pseudo_string = 2
+    FB_has_pseudo_string = 2,
+    FB_has_preresolution = 3
   };
 
   int flags() const                         { return _flags; }
@@ -89,9 +119,39 @@ class constantPoolOopDesc : public oopDesc {
   oop* cache_addr()      { return (oop*)&_cache; }
   oop* operands_addr()   { return (oop*)&_operands; }
 
-  oop* obj_at_addr(int which) const {
+  CPSlot slot_at(int which) {
+    assert(is_within_bounds(which), "index out of bounds");
+    // There's a transitional value of zero when converting from
+    // Symbol->0->Klass for G1 when resolving classes and strings.
+    // wait for the value to be non-zero (this is temporary)
+    volatile intptr_t adr = (intptr_t)OrderAccess::load_ptr_acquire(obj_at_addr_raw(which));
+    if (adr == 0 && which != 0) {
+      constantTag t = tag_at(which);
+      if (t.is_unresolved_klass() || t.is_klass() ||
+          t.is_unresolved_string() || t.is_string()) {
+        while ((adr = (intptr_t)OrderAccess::load_ptr_acquire(obj_at_addr_raw(which))) == 0);
+      }
+    }
+    return CPSlot(adr);
+  }
+
+  void slot_at_put(int which, CPSlot s) const {
+    assert(is_within_bounds(which), "index out of bounds");
+    *(intptr_t*)&base()[which] = s.value();
+  }
+  oop* obj_at_addr_raw(int which) const {
     assert(is_within_bounds(which), "index out of bounds");
     return (oop*) &base()[which];
+  }
+
+  void obj_at_put_without_check(int which, oop o) {
+    assert(is_within_bounds(which), "index out of bounds");
+    oop_store_without_check((volatile oop *)obj_at_addr_raw(which), o);
+  }
+
+  void obj_at_put(int which, oop o) const {
+    assert(is_within_bounds(which), "index out of bounds");
+    oop_store((volatile oop*)obj_at_addr_raw(which), o);
   }
 
   jint* int_at_addr(int which) const {
@@ -120,8 +180,10 @@ class constantPoolOopDesc : public oopDesc {
 
   bool has_pseudo_string() const            { return flag_at(FB_has_pseudo_string); }
   bool has_invokedynamic() const            { return flag_at(FB_has_invokedynamic); }
+  bool has_preresolution() const            { return flag_at(FB_has_preresolution); }
   void set_pseudo_string()                  {    set_flag_at(FB_has_pseudo_string); }
   void set_invokedynamic()                  {    set_flag_at(FB_has_invokedynamic); }
+  void set_preresolution()                  {    set_flag_at(FB_has_preresolution); }
 
   // Klass holding pool
   klassOop pool_holder() const              { return _pool_holder; }
@@ -141,15 +203,20 @@ class constantPoolOopDesc : public oopDesc {
   // Storing constants
 
   void klass_at_put(int which, klassOop k) {
-    oop_store_without_check((volatile oop *)obj_at_addr(which), oop(k));
+    // Overwrite the old index with a GC friendly value so
+    // that if G1 looks during the transition during oop_store it won't
+    // assert the symbol is not an oop.
+    *obj_at_addr_raw(which) = NULL;
+    assert(k != NULL, "resolved class shouldn't be null");
+    obj_at_put_without_check(which, k);
     // The interpreter assumes when the tag is stored, the klass is resolved
-    // and the klassOop is a klass rather than a symbolOop, so we need
+    // and the klassOop is a klass rather than a Symbol*, so we need
     // hardware store ordering here.
     release_tag_at_put(which, JVM_CONSTANT_Class);
     if (UseConcMarkSweepGC) {
       // In case the earlier card-mark was consumed by a concurrent
       // marking thread before the tag was updated, redirty the card.
-      oop_store_without_check((volatile oop *)obj_at_addr(which), oop(k));
+      obj_at_put_without_check(which, k);
     }
   }
 
@@ -160,13 +227,9 @@ class constantPoolOopDesc : public oopDesc {
   }
 
   // Temporary until actual use
-  void unresolved_klass_at_put(int which, symbolOop s) {
-    // Overwrite the old index with a GC friendly value so
-    // that if GC looks during the transition it won't try
-    // to treat a small integer as oop.
-    *obj_at_addr(which) = NULL;
+  void unresolved_klass_at_put(int which, Symbol* s) {
     release_tag_at_put(which, JVM_CONSTANT_UnresolvedClass);
-    oop_store_without_check(obj_at_addr(which), oop(s));
+    slot_at_put(which, s);
   }
 
   void method_handle_index_at_put(int which, int ref_kind, int ref_index) {
@@ -184,17 +247,10 @@ class constantPoolOopDesc : public oopDesc {
     *int_at_addr(which) = ((jint) name_and_type_index<<16) | bootstrap_specifier_index;
   }
 
-  void invoke_dynamic_trans_at_put(int which, int bootstrap_method_index, int name_and_type_index) {
-    tag_at_put(which, JVM_CONSTANT_InvokeDynamicTrans);
-    *int_at_addr(which) = ((jint) name_and_type_index<<16) | bootstrap_method_index;
-    assert(AllowTransitionalJSR292, "");
-  }
-
   // Temporary until actual use
-  void unresolved_string_at_put(int which, symbolOop s) {
-    *obj_at_addr(which) = NULL;
+  void unresolved_string_at_put(int which, Symbol* s) {
     release_tag_at_put(which, JVM_CONSTANT_UnresolvedString);
-    oop_store_without_check(obj_at_addr(which), oop(s));
+    slot_at_put(which, s);
   }
 
   void int_at_put(int which, jint i) {
@@ -220,28 +276,39 @@ class constantPoolOopDesc : public oopDesc {
     Bytes::put_native_u8((address) double_at_addr(which), *((u8*) &d));
   }
 
-  void symbol_at_put(int which, symbolOop s) {
+  Symbol** symbol_at_addr(int which) const {
+    assert(is_within_bounds(which), "index out of bounds");
+    return (Symbol**) &base()[which];
+  }
+
+  void symbol_at_put(int which, Symbol* s) {
+    assert(s->refcount() != 0, "should have nonzero refcount");
     tag_at_put(which, JVM_CONSTANT_Utf8);
-    oop_store_without_check(obj_at_addr(which), oop(s));
+    slot_at_put(which, s);
   }
 
   void string_at_put(int which, oop str) {
-    oop_store((volatile oop*)obj_at_addr(which), str);
+    // Overwrite the old index with a GC friendly value so
+    // that if G1 looks during the transition during oop_store it won't
+    // assert the symbol is not an oop.
+    *obj_at_addr_raw(which) = NULL;
+    assert(str != NULL, "resolved string shouldn't be null");
+    obj_at_put(which, str);
     release_tag_at_put(which, JVM_CONSTANT_String);
     if (UseConcMarkSweepGC) {
       // In case the earlier card-mark was consumed by a concurrent
       // marking thread before the tag was updated, redirty the card.
-      oop_store_without_check((volatile oop *)obj_at_addr(which), str);
+      obj_at_put_without_check(which, str);
     }
   }
 
   void object_at_put(int which, oop str) {
-    oop_store((volatile oop*) obj_at_addr(which), str);
+    obj_at_put(which, str);
     release_tag_at_put(which, JVM_CONSTANT_Object);
     if (UseConcMarkSweepGC) {
       // In case the earlier card-mark was consumed by a concurrent
       // marking thread before the tag was updated, redirty the card.
-      oop_store_without_check((volatile oop*) obj_at_addr(which), str);
+      obj_at_put_without_check(which, str);
     }
   }
 
@@ -279,11 +346,17 @@ class constantPoolOopDesc : public oopDesc {
   bool is_pointer_entry(int which) {
     constantTag tag = tag_at(which);
     return tag.is_klass() ||
-      tag.is_unresolved_klass() ||
-      tag.is_symbol() ||
-      tag.is_unresolved_string() ||
       tag.is_string() ||
       tag.is_object();
+  }
+
+  // Whether the entry points to an object for ldc (resolved or not)
+  bool is_object_entry(int which) {
+    constantTag tag = tag_at(which);
+    return is_pointer_entry(which) ||
+      tag.is_unresolved_klass() ||
+      tag.is_unresolved_string() ||
+      tag.is_symbol();
   }
 
   // Fetching constants
@@ -293,25 +366,25 @@ class constantPoolOopDesc : public oopDesc {
     return klass_at_impl(h_this, which, CHECK_NULL);
   }
 
-  symbolOop klass_name_at(int which);  // Returns the name, w/o resolving.
+  Symbol* klass_name_at(int which);  // Returns the name, w/o resolving.
 
   klassOop resolved_klass_at(int which) {  // Used by Compiler
     guarantee(tag_at(which).is_klass(), "Corrupted constant pool");
     // Must do an acquire here in case another thread resolved the klass
     // behind our back, lest we later load stale values thru the oop.
-    return klassOop((oop)OrderAccess::load_ptr_acquire(obj_at_addr(which)));
+    return klassOop(CPSlot(OrderAccess::load_ptr_acquire(obj_at_addr_raw(which))).get_oop());
   }
 
   // This method should only be used with a cpool lock or during parsing or gc
-  symbolOop unresolved_klass_at(int which) {     // Temporary until actual use
-    symbolOop s = symbolOop((oop)OrderAccess::load_ptr_acquire(obj_at_addr(which)));
+  Symbol* unresolved_klass_at(int which) {     // Temporary until actual use
+    Symbol* s = CPSlot(OrderAccess::load_ptr_acquire(obj_at_addr_raw(which))).get_symbol();
     // check that the klass is still unresolved.
     assert(tag_at(which).is_unresolved_klass(), "Corrupted constant pool");
     return s;
   }
 
   // RedefineClasses() API support:
-  symbolOop klass_at_noresolve(int which) { return klass_name_at(which); }
+  Symbol* klass_at_noresolve(int which) { return klass_name_at(which); }
 
   jint int_at(int which) {
     assert(tag_at(which).is_int(), "Corrupted constant pool");
@@ -336,9 +409,9 @@ class constantPoolOopDesc : public oopDesc {
     return *((jdouble*)&tmp);
   }
 
-  symbolOop symbol_at(int which) {
+  Symbol* symbol_at(int which) {
     assert(tag_at(which).is_utf8(), "Corrupted constant pool");
-    return symbolOop(*obj_at_addr(which));
+    return slot_at(which).get_symbol();
   }
 
   oop string_at(int which, TRAPS) {
@@ -348,12 +421,12 @@ class constantPoolOopDesc : public oopDesc {
 
   oop object_at(int which) {
     assert(tag_at(which).is_object(), "Corrupted constant pool");
-    return *obj_at_addr(which);
+    return slot_at(which).get_oop();
   }
 
   // A "pseudo-string" is an non-string oop that has found is way into
   // a String entry.
-  // Under AnonymousClasses this can happen if the user patches a live
+  // Under EnableInvokeDynamic this can happen if the user patches a live
   // object into a CONSTANT_String entry of an anonymous class.
   // Method oops internally created for method handles may also
   // use pseudo-strings to link themselves to related metaobjects.
@@ -362,11 +435,11 @@ class constantPoolOopDesc : public oopDesc {
 
   oop pseudo_string_at(int which) {
     assert(tag_at(which).is_string(), "Corrupted constant pool");
-    return *obj_at_addr(which);
+    return slot_at(which).get_oop();
   }
 
   void pseudo_string_at_put(int which, oop x) {
-    assert(AnonymousClasses, "");
+    assert(EnableInvokeDynamic, "");
     set_pseudo_string();        // mark header
     assert(tag_at(which).is_string() || tag_at(which).is_unresolved_string(), "Corrupted constant pool");
     string_at_put(which, x);    // this works just fine
@@ -378,12 +451,12 @@ class constantPoolOopDesc : public oopDesc {
     assert(tag_at(which).is_string(), "Corrupted constant pool");
     // Must do an acquire here in case another thread resolved the klass
     // behind our back, lest we later load stale values thru the oop.
-    return (oop)OrderAccess::load_ptr_acquire(obj_at_addr(which));
+    return CPSlot(OrderAccess::load_ptr_acquire(obj_at_addr_raw(which))).get_oop();
   }
 
   // This method should only be used with a cpool lock or during parsing or gc
-  symbolOop unresolved_string_at(int which) {    // Temporary until actual use
-    symbolOop s = symbolOop((oop)OrderAccess::load_ptr_acquire(obj_at_addr(which)));
+  Symbol* unresolved_string_at(int which) {    // Temporary until actual use
+    Symbol* s = CPSlot(OrderAccess::load_ptr_acquire(obj_at_addr_raw(which))).get_symbol();
     // check that the string is still unresolved.
     assert(tag_at(which).is_unresolved_string(), "Corrupted constant pool");
     return s;
@@ -391,7 +464,7 @@ class constantPoolOopDesc : public oopDesc {
 
   // Returns an UTF8 for a CONSTANT_String entry at a given index.
   // UTF8 char* representation was chosen to avoid conversion of
-  // java_lang_Strings at resolved entries into symbolOops
+  // java_lang_Strings at resolved entries into Symbol*s
   // or vice versa.
   // Caller is responsible for checking for pseudo-strings.
   char* string_at_noresolve(int which);
@@ -414,11 +487,11 @@ class constantPoolOopDesc : public oopDesc {
     return *int_at_addr(which);
   }
   // Derived queries:
-  symbolOop method_handle_name_ref_at(int which) {
+  Symbol* method_handle_name_ref_at(int which) {
     int member = method_handle_index_at(which);
     return impl_name_ref_at(member, true);
   }
-  symbolOop method_handle_signature_ref_at(int which) {
+  Symbol* method_handle_signature_ref_at(int which) {
     int member = method_handle_index_at(which);
     return impl_signature_ref_at(member, true);
   }
@@ -426,7 +499,7 @@ class constantPoolOopDesc : public oopDesc {
     int member = method_handle_index_at(which);
     return impl_klass_ref_index_at(member, true);
   }
-  symbolOop method_type_signature_at(int which) {
+  Symbol* method_type_signature_at(int which) {
     int sym = method_type_index_at(which);
     return symbol_at(sym);
   }
@@ -494,15 +567,11 @@ class constantPoolOopDesc : public oopDesc {
   };
   int invoke_dynamic_bootstrap_method_ref_index_at(int which) {
     assert(tag_at(which).is_invoke_dynamic(), "Corrupted constant pool");
-    if (tag_at(which).value() == JVM_CONSTANT_InvokeDynamicTrans)
-      return extract_low_short_from_int(*int_at_addr(which));
     int op_base = invoke_dynamic_operand_base(which);
     return operands()->short_at(op_base + _indy_bsm_offset);
   }
   int invoke_dynamic_argument_count_at(int which) {
     assert(tag_at(which).is_invoke_dynamic(), "Corrupted constant pool");
-    if (tag_at(which).value() == JVM_CONSTANT_InvokeDynamicTrans)
-      return 0;
     int op_base = invoke_dynamic_operand_base(which);
     int argc = operands()->short_at(op_base + _indy_argc_offset);
     DEBUG_ONLY(int end_offset = op_base + _indy_argv_offset + argc;
@@ -534,9 +603,9 @@ class constantPoolOopDesc : public oopDesc {
 
   // Lookup for entries consisting of (klass_index, name_and_type index)
   klassOop klass_ref_at(int which, TRAPS);
-  symbolOop klass_ref_at_noresolve(int which);
-  symbolOop name_ref_at(int which)                { return impl_name_ref_at(which, false); }
-  symbolOop signature_ref_at(int which)           { return impl_signature_ref_at(which, false); }
+  Symbol* klass_ref_at_noresolve(int which);
+  Symbol* name_ref_at(int which)                { return impl_name_ref_at(which, false); }
+  Symbol* signature_ref_at(int which)           { return impl_signature_ref_at(which, false); }
 
   int klass_ref_index_at(int which)               { return impl_klass_ref_index_at(which, false); }
   int name_and_type_ref_index_at(int which)       { return impl_name_and_type_ref_index_at(which, false); }
@@ -597,6 +666,8 @@ class constantPoolOopDesc : public oopDesc {
   friend class SystemDictionary;
 
   // Used by compiler to prevent classloading.
+  static methodOop method_at_if_loaded        (constantPoolHandle this_oop, int which,
+                                               Bytecodes::Code bc = Bytecodes::_illegal);
   static klassOop klass_at_if_loaded          (constantPoolHandle this_oop, int which);
   static klassOop klass_ref_at_if_loaded      (constantPoolHandle this_oop, int which);
   // Same as above - but does LinkResolving.
@@ -605,15 +676,15 @@ class constantPoolOopDesc : public oopDesc {
   // Routines currently used for annotations (only called by jvm.cpp) but which might be used in the
   // future by other Java code. These take constant pool indices rather than
   // constant pool cache indices as do the peer methods above.
-  symbolOop uncached_klass_ref_at_noresolve(int which);
-  symbolOop uncached_name_ref_at(int which)                 { return impl_name_ref_at(which, true); }
-  symbolOop uncached_signature_ref_at(int which)            { return impl_signature_ref_at(which, true); }
+  Symbol* uncached_klass_ref_at_noresolve(int which);
+  Symbol* uncached_name_ref_at(int which)                 { return impl_name_ref_at(which, true); }
+  Symbol* uncached_signature_ref_at(int which)            { return impl_signature_ref_at(which, true); }
   int       uncached_klass_ref_index_at(int which)          { return impl_klass_ref_index_at(which, true); }
   int       uncached_name_and_type_ref_index_at(int which)  { return impl_name_and_type_ref_index_at(which, true); }
 
   // Sharing
   int pre_resolve_shared_klasses(TRAPS);
-  void shared_symbols_iterate(OopClosure* closure0);
+  void shared_symbols_iterate(SymbolClosure* closure0);
   void shared_tags_iterate(OopClosure* closure0);
   void shared_strings_iterate(OopClosure* closure0);
 
@@ -628,8 +699,8 @@ class constantPoolOopDesc : public oopDesc {
 
  private:
 
-  symbolOop impl_name_ref_at(int which, bool uncached);
-  symbolOop impl_signature_ref_at(int which, bool uncached);
+  Symbol* impl_name_ref_at(int which, bool uncached);
+  Symbol* impl_signature_ref_at(int which, bool uncached);
   int       impl_klass_ref_index_at(int which, bool uncached);
   int       impl_name_and_type_ref_index_at(int which, bool uncached);
 
@@ -672,6 +743,9 @@ class constantPoolOopDesc : public oopDesc {
   int  orig_length() const                { return _orig_length; }
   void set_orig_length(int orig_length)   { _orig_length = orig_length; }
 
+  // Decrease ref counts of symbols that are in the constant pool
+  // when the holder class is unloaded
+  void unreference_symbols();
 
   // JVMTI accesss - GetConstantPool, RetransformClasses, ...
   friend class JvmtiConstantPoolReconstituter;
@@ -694,7 +768,7 @@ class SymbolHashMapEntry : public CHeapObj {
  private:
   unsigned int        _hash;   // 32-bit hash for item
   SymbolHashMapEntry* _next;   // Next element in the linked list for this bucket
-  symbolOop           _symbol; // 1-st part of the mapping: symbol => value
+  Symbol*             _symbol; // 1-st part of the mapping: symbol => value
   u2                  _value;  // 2-nd part of the mapping: symbol => value
 
  public:
@@ -704,13 +778,13 @@ class SymbolHashMapEntry : public CHeapObj {
   SymbolHashMapEntry* next() const        { return _next;   }
   void set_next(SymbolHashMapEntry* next) { _next = next;   }
 
-  symbolOop  symbol() const               { return _symbol; }
-  void       set_symbol(symbolOop sym)    { _symbol = sym;  }
+  Symbol*    symbol() const               { return _symbol; }
+  void       set_symbol(Symbol* sym)      { _symbol = sym;  }
 
   u2         value() const                {  return _value; }
   void       set_value(u2 value)          { _value = value; }
 
-  SymbolHashMapEntry(unsigned int hash, symbolOop symbol, u2 value)
+  SymbolHashMapEntry(unsigned int hash, Symbol* symbol, u2 value)
     : _hash(hash), _symbol(symbol), _value(value), _next(NULL) {}
 
 }; // End SymbolHashMapEntry class
@@ -769,10 +843,10 @@ class SymbolHashMap: public CHeapObj {
     return _buckets[i].entry();
   }
 
-  void add_entry(symbolOop sym, u2 value);
-  SymbolHashMapEntry* find_entry(symbolOop sym);
+  void add_entry(Symbol* sym, u2 value);
+  SymbolHashMapEntry* find_entry(Symbol* sym);
 
-  u2 symbol_to_value(symbolOop sym) {
+  u2 symbol_to_value(Symbol* sym) {
     SymbolHashMapEntry *entry = find_entry(sym);
     return (entry == NULL) ? 0 : entry->value();
   }

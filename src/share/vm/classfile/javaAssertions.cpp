@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,7 +93,7 @@ void JavaAssertions::addOption(const char* name, bool enable) {
 }
 
 oop JavaAssertions::createAssertionStatusDirectives(TRAPS) {
-  symbolHandle asd_sym = vmSymbolHandles::java_lang_AssertionStatusDirectives();
+  Symbol* asd_sym = vmSymbols::java_lang_AssertionStatusDirectives();
   klassOop k = SystemDictionary::resolve_or_fail(asd_sym, true, CHECK_NULL);
   instanceKlassHandle asd_klass (THREAD, k);
   asd_klass->initialize(CHECK_NULL);

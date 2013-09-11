@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,8 +192,11 @@ void xmlStream::pop_tag(const char* tag) {
     _element_close_stack_ptr = cur_tag + strlen(cur_tag) + 1;
     _element_depth -= 1;
   }
-  if (bad_tag && !VMThread::should_terminate() && !is_error_reported())
+  if (bad_tag && !VMThread::should_terminate() && !VM_Exit::vm_exited() &&
+      !is_error_reported())
+  {
     assert(false, "bad tag in log");
+  }
 }
 #endif
 
@@ -422,17 +425,17 @@ void xmlStream::klass_text(KlassHandle klass) {
   klass->name()->print_symbol_on(out());
 }
 
-void xmlStream::name(symbolHandle name) {
+void xmlStream::name(const Symbol* name) {
   assert_if_no_error(inside_attrs(), "printing attributes");
-  if (name.is_null())  return;
+  if (name == NULL)  return;
   print_raw(" name='");
   name_text(name);
   print_raw("'");
 }
 
-void xmlStream::name_text(symbolHandle name) {
+void xmlStream::name_text(const Symbol* name) {
   assert_if_no_error(inside_attrs(), "printing attributes");
-  if (name.is_null())  return;
+  if (name == NULL)  return;
   //name->print_short_name(text());
   name->print_symbol_on(text());
 }
@@ -455,8 +458,6 @@ void xmlStream::object_text(Handle x) {
     method_text(methodOop(x()));
   else if (x->is_klass())
     klass_text(klassOop(x()));
-  else if (x->is_symbol())
-    name_text(symbolOop(x()));
   else
     x->print_value_on(text());
 }

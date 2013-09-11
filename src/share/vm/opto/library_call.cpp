@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "compiler/compileBroker.hpp"
 #include "compiler/compileLog.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "opto/addnode.hpp"
@@ -97,7 +98,7 @@ class LibraryCallKit : public GraphKit {
                              RegionNode* region);
   Node* generate_current_thread(Node* &tls_output);
   address basictype2arraycopy(BasicType t, Node *src_offset, Node *dest_offset,
-                              bool disjoint_bases, const char* &name);
+                              bool disjoint_bases, const char* &name, bool dest_uninitialized);
   Node* load_mirror_from_klass(Node* klass);
   Node* load_klass_from_mirror_common(Node* mirror, bool never_see_null,
                                       int nargs,
@@ -146,7 +147,8 @@ class LibraryCallKit : public GraphKit {
     return generate_method_call(method_id, true, false);
   }
 
-  Node* make_string_method_node(int opcode, Node* str1, Node* cnt1, Node* str2, Node* cnt2);
+  Node* make_string_method_node(int opcode, Node* str1_start, Node* cnt1, Node* str2_start, Node* cnt2);
+  Node* make_string_method_node(int opcode, Node* str1, Node* str2);
   bool inline_string_compareTo();
   bool inline_string_indexOf();
   Node* string_indexOf(Node* string_object, ciTypeArray* target_array, jint offset, jint cache_i, jint md2_i);
@@ -165,6 +167,10 @@ class LibraryCallKit : public GraphKit {
   // This returns Type::AnyPtr, RawPtr, or OopPtr.
   int classify_unsafe_addr(Node* &base, Node* &offset);
   Node* make_unsafe_address(Node* base, Node* offset);
+  // Helper for inline_unsafe_access.
+  // Generates the guards that check whether the result of
+  // Unsafe.getObject should be recorded in an SATB log buffer.
+  void insert_g1_pre_barrier(Node* base_oop, Node* offset, Node* pre_val);
   bool inline_unsafe_access(bool is_native_ptr, bool is_store, BasicType type, bool is_volatile);
   bool inline_unsafe_prefetch(bool is_native_ptr, bool is_store, bool is_static);
   bool inline_unsafe_allocate();
@@ -212,26 +218,26 @@ class LibraryCallKit : public GraphKit {
                                 AllocateNode* alloc,
                                 Node* src,  Node* src_offset,
                                 Node* dest, Node* dest_offset,
-                                Node* dest_size);
+                                Node* dest_size, bool dest_uninitialized);
   void generate_slow_arraycopy(const TypePtr* adr_type,
                                Node* src,  Node* src_offset,
                                Node* dest, Node* dest_offset,
-                               Node* copy_length);
+                               Node* copy_length, bool dest_uninitialized);
   Node* generate_checkcast_arraycopy(const TypePtr* adr_type,
                                      Node* dest_elem_klass,
                                      Node* src,  Node* src_offset,
                                      Node* dest, Node* dest_offset,
-                                     Node* copy_length);
+                                     Node* copy_length, bool dest_uninitialized);
   Node* generate_generic_arraycopy(const TypePtr* adr_type,
                                    Node* src,  Node* src_offset,
                                    Node* dest, Node* dest_offset,
-                                   Node* copy_length);
+                                   Node* copy_length, bool dest_uninitialized);
   void generate_unchecked_arraycopy(const TypePtr* adr_type,
                                     BasicType basic_elem_type,
                                     bool disjoint_bases,
                                     Node* src,  Node* src_offset,
                                     Node* dest, Node* dest_offset,
-                                    Node* copy_length);
+                                    Node* copy_length, bool dest_uninitialized);
   bool inline_unsafe_CAS(BasicType type);
   bool inline_unsafe_ordered_store(BasicType type);
   bool inline_fp_conversions(vmIntrinsics::ID id);
@@ -239,6 +245,8 @@ class LibraryCallKit : public GraphKit {
   bool inline_numberOfTrailingZeros(vmIntrinsics::ID id);
   bool inline_bitCount(vmIntrinsics::ID id);
   bool inline_reverseBytes(vmIntrinsics::ID id);
+
+  bool inline_reference_get();
 };
 
 
@@ -335,6 +343,14 @@ CallGenerator* Compile::make_vm_intrinsic(ciMethod* m, bool is_virtual) {
     if (!UsePopCountInstruction)  return NULL;
     break;
 
+  case vmIntrinsics::_Reference_get:
+    // It is only when G1 is enabled that we absolutely
+    // need to use the intrinsic version of Reference.get()
+    // so that the value in the referent field, if necessary,
+    // can be registered by the pre-barrier code.
+    if (!UseG1GC) return NULL;
+    break;
+
  default:
     assert(id <= vmIntrinsics::LAST_COMPILER_INLINE, "caller responsibility");
     assert(id != vmIntrinsics::_Object_init && id != vmIntrinsics::_invoke, "enum out of order?");
@@ -386,13 +402,10 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
     tty->print_cr("Intrinsic %s", str);
   }
 #endif
+
   if (kit.try_to_inline()) {
     if (PrintIntrinsics || PrintInlining NOT_PRODUCT( || PrintOptoInlining) ) {
-      tty->print("Inlining intrinsic %s%s at bci:%d in",
-                 vmIntrinsics::name_at(intrinsic_id()),
-                 (is_virtual() ? " (virtual)" : ""), kit.bci());
-      kit.caller()->print_short_name(tty);
-      tty->print_cr(" (%d bytes)", kit.caller()->code_size());
+      CompileTask::print_inlining(kit.callee(), jvms->depth() - 1, kit.bci(), is_virtual() ? "(intrinsic, virtual)" : "(intrinsic)");
     }
     C->gather_intrinsic_statistics(intrinsic_id(), is_virtual(), Compile::_intrinsic_worked);
     if (C->log()) {
@@ -405,11 +418,19 @@ JVMState* LibraryIntrinsic::generate(JVMState* jvms) {
   }
 
   if (PrintIntrinsics) {
-    tty->print("Did not inline intrinsic %s%s at bci:%d in",
+    if (jvms->has_method()) {
+      // Not a root compile.
+      tty->print("Did not inline intrinsic %s%s at bci:%d in",
+                 vmIntrinsics::name_at(intrinsic_id()),
+                 (is_virtual() ? " (virtual)" : ""), kit.bci());
+      kit.caller()->print_short_name(tty);
+      tty->print_cr(" (%d bytes)", kit.caller()->code_size());
+    } else {
+      // Root compile
+      tty->print("Did not generate intrinsic %s%s at bci:%d in",
                vmIntrinsics::name_at(intrinsic_id()),
                (is_virtual() ? " (virtual)" : ""), kit.bci());
-    kit.caller()->print_short_name(tty);
-    tty->print_cr(" (%d bytes)", kit.caller()->code_size());
+    }
   }
   C->gather_intrinsic_statistics(intrinsic_id(), is_virtual(), Compile::_intrinsic_failed);
   return NULL;
@@ -420,6 +441,14 @@ bool LibraryCallKit::try_to_inline() {
   const bool is_store       = true;
   const bool is_native_ptr  = true;
   const bool is_static      = true;
+
+  if (!jvms()->has_method()) {
+    // Root JVMState has a null method.
+    assert(map()->memory()->Opcode() == Op_Parm, "");
+    // Insert the memory aliasing node
+    set_all_memory(reset_memory());
+  }
+  assert(merged_memory(), "");
 
   switch (intrinsic_id()) {
   case vmIntrinsics::_hashCode:
@@ -661,6 +690,9 @@ bool LibraryCallKit::try_to_inline() {
   case vmIntrinsics::_getCallerClass:
     return inline_native_Reflection_getCallerClass();
 
+  case vmIntrinsics::_Reference_get:
+    return inline_reference_get();
+
   default:
     // If you get here, it may be that someone has added a new intrinsic
     // to the list in vmSymbols.hpp without implementing it here.
@@ -788,7 +820,7 @@ inline Node* LibraryCallKit::generate_limit_guard(Node* offset,
   if (stopped())
     return NULL;                // already stopped
   bool zero_offset = _gvn.type(offset) == TypeInt::ZERO;
-  if (zero_offset && _gvn.eqv_uncast(subseq_length, array_length))
+  if (zero_offset && subseq_length->eqv_uncast(array_length))
     return NULL;                // common case of whole-array copy
   Node* last = subseq_length;
   if (!zero_offset)             // last += offset
@@ -813,50 +845,76 @@ Node* LibraryCallKit::generate_current_thread(Node* &tls_output) {
 
 
 //------------------------------make_string_method_node------------------------
-// Helper method for String intrinsic finctions.
-Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1, Node* cnt1, Node* str2, Node* cnt2) {
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
+// Helper method for String intrinsic functions. This version is called
+// with str1 and str2 pointing to String object nodes.
+//
+Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1, Node* str2) {
   Node* no_ctrl = NULL;
 
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-
-  const TypeAryPtr* value_type =
-        TypeAryPtr::make(TypePtr::NotNull,
-                         TypeAry::make(TypeInt::CHAR,TypeInt::POS),
-                         ciTypeArrayKlass::make(T_CHAR), true, 0);
-
-  // Get start addr of string and substring
-  Node* str1_valuea  = basic_plus_adr(str1, str1, value_offset);
-  Node* str1_value   = make_load(no_ctrl, str1_valuea, value_type, T_OBJECT, string_type->add_offset(value_offset));
-  Node* str1_offseta = basic_plus_adr(str1, str1, offset_offset);
-  Node* str1_offset  = make_load(no_ctrl, str1_offseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
+  // Get start addr of string
+  Node* str1_value   = load_String_value(no_ctrl, str1);
+  Node* str1_offset  = load_String_offset(no_ctrl, str1);
   Node* str1_start   = array_element_address(str1_value, str1_offset, T_CHAR);
 
-  // Pin loads from String::equals() argument since it could be NULL.
-  Node* str2_ctrl = (opcode == Op_StrEquals) ? control() : no_ctrl;
-  Node* str2_valuea  = basic_plus_adr(str2, str2, value_offset);
-  Node* str2_value   = make_load(str2_ctrl, str2_valuea, value_type, T_OBJECT, string_type->add_offset(value_offset));
-  Node* str2_offseta = basic_plus_adr(str2, str2, offset_offset);
-  Node* str2_offset  = make_load(str2_ctrl, str2_offseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
+  // Get length of string 1
+  Node* str1_len  = load_String_length(no_ctrl, str1);
+
+  Node* str2_value   = load_String_value(no_ctrl, str2);
+  Node* str2_offset  = load_String_offset(no_ctrl, str2);
   Node* str2_start   = array_element_address(str2_value, str2_offset, T_CHAR);
+
+  Node* str2_len = NULL;
+  Node* result = NULL;
+
+  switch (opcode) {
+  case Op_StrIndexOf:
+    // Get length of string 2
+    str2_len = load_String_length(no_ctrl, str2);
+
+    result = new (C, 6) StrIndexOfNode(control(), memory(TypeAryPtr::CHARS),
+                                 str1_start, str1_len, str2_start, str2_len);
+    break;
+  case Op_StrComp:
+    // Get length of string 2
+    str2_len = load_String_length(no_ctrl, str2);
+
+    result = new (C, 6) StrCompNode(control(), memory(TypeAryPtr::CHARS),
+                                 str1_start, str1_len, str2_start, str2_len);
+    break;
+  case Op_StrEquals:
+    result = new (C, 5) StrEqualsNode(control(), memory(TypeAryPtr::CHARS),
+                               str1_start, str2_start, str1_len);
+    break;
+  default:
+    ShouldNotReachHere();
+    return NULL;
+  }
+
+  // All these intrinsics have checks.
+  C->set_has_split_ifs(true); // Has chance for split-if optimization
+
+  return _gvn.transform(result);
+}
+
+// Helper method for String intrinsic functions. This version is called
+// with str1 and str2 pointing to char[] nodes, with cnt1 and cnt2 pointing
+// to Int nodes containing the lenghts of str1 and str2.
+//
+Node* LibraryCallKit::make_string_method_node(int opcode, Node* str1_start, Node* cnt1, Node* str2_start, Node* cnt2) {
 
   Node* result = NULL;
   switch (opcode) {
   case Op_StrIndexOf:
     result = new (C, 6) StrIndexOfNode(control(), memory(TypeAryPtr::CHARS),
-                                       str1_start, cnt1, str2_start, cnt2);
+                                 str1_start, cnt1, str2_start, cnt2);
     break;
   case Op_StrComp:
     result = new (C, 6) StrCompNode(control(), memory(TypeAryPtr::CHARS),
-                                    str1_start, cnt1, str2_start, cnt2);
+                                 str1_start, cnt1, str2_start, cnt2);
     break;
   case Op_StrEquals:
     result = new (C, 5) StrEqualsNode(control(), memory(TypeAryPtr::CHARS),
-                                      str1_start, str2_start, cnt1);
+                                 str1_start, str2_start, cnt1);
     break;
   default:
     ShouldNotReachHere();
@@ -874,10 +932,6 @@ bool LibraryCallKit::inline_string_compareTo() {
 
   if (!Matcher::has_match_rule(Op_StrComp)) return false;
 
-  const int value_offset = java_lang_String::value_offset_in_bytes();
-  const int count_offset = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
   _sp += 2;
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
@@ -894,18 +948,7 @@ bool LibraryCallKit::inline_string_compareTo() {
     return true;
   }
 
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-  Node* no_ctrl = NULL;
-
-  // Get counts for string and argument
-  Node* receiver_cnta = basic_plus_adr(receiver, receiver, count_offset);
-  Node* receiver_cnt  = make_load(no_ctrl, receiver_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-
-  Node* argument_cnta = basic_plus_adr(argument, argument, count_offset);
-  Node* argument_cnt  = make_load(no_ctrl, argument_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-
-  Node* compare = make_string_method_node(Op_StrComp, receiver, receiver_cnt, argument, argument_cnt);
+  Node* compare = make_string_method_node(Op_StrComp, receiver, argument);
   push(compare);
   return true;
 }
@@ -914,10 +957,6 @@ bool LibraryCallKit::inline_string_compareTo() {
 bool LibraryCallKit::inline_string_equals() {
 
   if (!Matcher::has_match_rule(Op_StrEquals)) return false;
-
-  const int value_offset = java_lang_String::value_offset_in_bytes();
-  const int count_offset = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
 
   int nargs = 2;
   _sp += nargs;
@@ -972,23 +1011,31 @@ bool LibraryCallKit::inline_string_equals() {
     }
   }
 
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-
-  Node* no_ctrl = NULL;
-  Node* receiver_cnt;
-  Node* argument_cnt;
-
   if (!stopped()) {
+    const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
+
     // Properly cast the argument to String
     argument = _gvn.transform(new (C, 2) CheckCastPPNode(control(), argument, string_type));
+    // This path is taken only when argument's type is String:NotNull.
+    argument = cast_not_null(argument, false);
 
-    // Get counts for string and argument
-    Node* receiver_cnta = basic_plus_adr(receiver, receiver, count_offset);
-    receiver_cnt  = make_load(no_ctrl, receiver_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    Node* no_ctrl = NULL;
 
-    // Pin load from argument string since it could be NULL.
-    Node* argument_cnta = basic_plus_adr(argument, argument, count_offset);
-    argument_cnt  = make_load(control(), argument_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get start addr of receiver
+    Node* receiver_val    = load_String_value(no_ctrl, receiver);
+    Node* receiver_offset = load_String_offset(no_ctrl, receiver);
+    Node* receiver_start = array_element_address(receiver_val, receiver_offset, T_CHAR);
+
+    // Get length of receiver
+    Node* receiver_cnt  = load_String_length(no_ctrl, receiver);
+
+    // Get start addr of argument
+    Node* argument_val   = load_String_value(no_ctrl, argument);
+    Node* argument_offset = load_String_offset(no_ctrl, argument);
+    Node* argument_start = array_element_address(argument_val, argument_offset, T_CHAR);
+
+    // Get length of argument
+    Node* argument_cnt  = load_String_length(no_ctrl, argument);
 
     // Check for receiver count != argument count
     Node* cmp = _gvn.transform( new(C, 3) CmpINode(receiver_cnt, argument_cnt) );
@@ -998,14 +1045,14 @@ bool LibraryCallKit::inline_string_equals() {
       phi->init_req(4, intcon(0));
       region->init_req(4, if_ne);
     }
-  }
 
-  // Check for count == 0 is done by mach node StrEquals.
+    // Check for count == 0 is done by assembler code for StrEquals.
 
-  if (!stopped()) {
-    Node* equals = make_string_method_node(Op_StrEquals, receiver, receiver_cnt, argument, argument_cnt);
-    phi->init_req(1, equals);
-    region->init_req(1, control());
+    if (!stopped()) {
+      Node* equals = make_string_method_node(Op_StrEquals, receiver_start, receiver_cnt, argument_start, argument_cnt);
+      phi->init_req(1, equals);
+      region->init_req(1, control());
+    }
   }
 
   // post merge
@@ -1101,27 +1148,18 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   float likely   = PROB_LIKELY(0.9);
   float unlikely = PROB_UNLIKELY(0.9);
 
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
+  const int nargs = 2; // number of arguments to push back for uncommon trap in predicate
 
-  ciInstanceKlass* klass = env()->String_klass();
-  const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
-  const TypeAryPtr*  source_type = TypeAryPtr::make(TypePtr::NotNull, TypeAry::make(TypeInt::CHAR,TypeInt::POS), ciTypeArrayKlass::make(T_CHAR), true, 0);
+  Node* source        = load_String_value(no_ctrl, string_object);
+  Node* sourceOffset  = load_String_offset(no_ctrl, string_object);
+  Node* sourceCount   = load_String_length(no_ctrl, string_object);
 
-  Node* sourceOffseta = basic_plus_adr(string_object, string_object, offset_offset);
-  Node* sourceOffset  = make_load(no_ctrl, sourceOffseta, TypeInt::INT, T_INT, string_type->add_offset(offset_offset));
-  Node* sourceCounta  = basic_plus_adr(string_object, string_object, count_offset);
-  Node* sourceCount   = make_load(no_ctrl, sourceCounta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
-  Node* sourcea       = basic_plus_adr(string_object, string_object, value_offset);
-  Node* source        = make_load(no_ctrl, sourcea, source_type, T_OBJECT, string_type->add_offset(value_offset));
-
-  Node* target = _gvn.transform( makecon(TypeOopPtr::make_from_constant(target_array)) );
+  Node* target = _gvn.transform( makecon(TypeOopPtr::make_from_constant(target_array, true)) );
   jint target_length = target_array->length();
   const TypeAry* target_array_type = TypeAry::make(TypeInt::CHAR, TypeInt::make(0, target_length, Type::WidenMin));
   const TypeAryPtr* target_type = TypeAryPtr::make(TypePtr::BotPTR, target_array_type, target_array->klass(), true, Type::OffsetBot);
 
-  IdealKit kit(gvn(), control(), merged_memory(), false, true);
+  IdealKit kit(this, false, true);
 #define __ kit.
   Node* zero             = __ ConI(0);
   Node* one              = __ ConI(1);
@@ -1138,12 +1176,12 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   Node* return_    = __ make_label(1);
 
   __ set(rtn,__ ConI(-1));
-  __ loop(i, sourceOffset, BoolTest::lt, sourceEnd); {
+  __ loop(this, nargs, i, sourceOffset, BoolTest::lt, sourceEnd); {
        Node* i2  = __ AddI(__ value(i), targetCountLess1);
        // pin to prohibit loading of "next iteration" value which may SEGV (rare)
        Node* src = load_array_element(__ ctrl(), source, i2, TypeAryPtr::CHARS);
        __ if_then(src, BoolTest::eq, lastChar, unlikely); {
-         __ loop(j, zero, BoolTest::lt, targetCountLess1); {
+         __ loop(this, nargs, j, zero, BoolTest::lt, targetCountLess1); {
               Node* tpj = __ AddI(targetOffset, __ value(j));
               Node* targ = load_array_element(no_ctrl, target, tpj, target_type);
               Node* ipj  = __ AddI(__ value(i), __ value(j));
@@ -1172,7 +1210,7 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
   __ bind(return_);
 
   // Final sync IdealKit and GraphKit.
-  sync_kit(kit);
+  final_sync(kit);
   Node* result = __ value(rtn);
 #undef __
   C->set_has_loops(true);
@@ -1182,10 +1220,6 @@ Node* LibraryCallKit::string_indexOf(Node* string_object, ciTypeArray* target_ar
 //------------------------------inline_string_indexOf------------------------
 bool LibraryCallKit::inline_string_indexOf() {
 
-  const int value_offset  = java_lang_String::value_offset_in_bytes();
-  const int count_offset  = java_lang_String::count_offset_in_bytes();
-  const int offset_offset = java_lang_String::offset_offset_in_bytes();
-
   _sp += 2;
   Node *argument = pop();  // pop non-receiver first:  it was pushed second
   Node *receiver = pop();
@@ -1193,7 +1227,7 @@ bool LibraryCallKit::inline_string_indexOf() {
   Node* result;
   // Disable the use of pcmpestri until it can be guaranteed that
   // the load doesn't cross into the uncommited space.
-  if (false && Matcher::has_match_rule(Op_StrIndexOf) &&
+  if (Matcher::has_match_rule(Op_StrIndexOf) &&
       UseSSE42Intrinsics) {
     // Generate SSE4.2 version of indexOf
     // We currently only have match rules that use SSE4.2
@@ -1211,20 +1245,29 @@ bool LibraryCallKit::inline_string_indexOf() {
       return true;
     }
 
+    ciInstanceKlass* str_klass = env()->String_klass();
+    const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(str_klass);
+
     // Make the merge point
-    RegionNode* result_rgn = new (C, 3) RegionNode(3);
-    Node*       result_phi = new (C, 3) PhiNode(result_rgn, TypeInt::INT);
+    RegionNode* result_rgn = new (C, 4) RegionNode(4);
+    Node*       result_phi = new (C, 4) PhiNode(result_rgn, TypeInt::INT);
     Node* no_ctrl  = NULL;
 
-    ciInstanceKlass* klass = env()->String_klass();
-    const TypeOopPtr* string_type = TypeOopPtr::make_from_klass(klass);
+    // Get start addr of source string
+    Node* source = load_String_value(no_ctrl, receiver);
+    Node* source_offset = load_String_offset(no_ctrl, receiver);
+    Node* source_start = array_element_address(source, source_offset, T_CHAR);
 
-    // Get counts for string and substr
-    Node* source_cnta = basic_plus_adr(receiver, receiver, count_offset);
-    Node* source_cnt  = make_load(no_ctrl, source_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get length of source string
+    Node* source_cnt  = load_String_length(no_ctrl, receiver);
 
-    Node* substr_cnta = basic_plus_adr(argument, argument, count_offset);
-    Node* substr_cnt  = make_load(no_ctrl, substr_cnta, TypeInt::INT, T_INT, string_type->add_offset(count_offset));
+    // Get start addr of substring
+    Node* substr = load_String_value(no_ctrl, argument);
+    Node* substr_offset = load_String_offset(no_ctrl, argument);
+    Node* substr_start = array_element_address(substr, substr_offset, T_CHAR);
+
+    // Get length of source string
+    Node* substr_cnt  = load_String_length(no_ctrl, argument);
 
     // Check for substr count > string count
     Node* cmp = _gvn.transform( new(C, 3) CmpINode(substr_cnt, source_cnt) );
@@ -1236,7 +1279,18 @@ bool LibraryCallKit::inline_string_indexOf() {
     }
 
     if (!stopped()) {
-      result = make_string_method_node(Op_StrIndexOf, receiver, source_cnt, argument, substr_cnt);
+      // Check for substr count == 0
+      cmp = _gvn.transform( new(C, 3) CmpINode(substr_cnt, intcon(0)) );
+      bol = _gvn.transform( new(C, 2) BoolNode(cmp, BoolTest::eq) );
+      Node* if_zero = generate_slow_guard(bol, NULL);
+      if (if_zero != NULL) {
+        result_phi->init_req(3, intcon(0));
+        result_rgn->init_req(3, if_zero);
+      }
+    }
+
+    if (!stopped()) {
+      result = make_string_method_node(Op_StrIndexOf, source_start, source_cnt, substr_start, substr_cnt);
       result_phi->init_req(1, result);
       result_rgn->init_req(1, control());
     }
@@ -1244,8 +1298,8 @@ bool LibraryCallKit::inline_string_indexOf() {
     record_for_igvn(result_rgn);
     result = _gvn.transform(result_phi);
 
-  } else { //Use LibraryCallKit::string_indexOf
-    // don't intrinsify is argument isn't a constant string.
+  } else { // Use LibraryCallKit::string_indexOf
+    // don't intrinsify if argument isn't a constant string.
     if (!argument->is_Con()) {
      return false;
     }
@@ -1261,10 +1315,18 @@ bool LibraryCallKit::inline_string_indexOf() {
     ciInstance* str = str_const->as_instance();
     assert(str != NULL, "must be instance");
 
-    ciObject* v = str->field_value_by_offset(value_offset).as_object();
-    int       o = str->field_value_by_offset(offset_offset).as_int();
-    int       c = str->field_value_by_offset(count_offset).as_int();
+    ciObject* v = str->field_value_by_offset(java_lang_String::value_offset_in_bytes()).as_object();
     ciTypeArray* pat = v->as_type_array(); // pattern (argument) character array
+
+    int o;
+    int c;
+    if (java_lang_String::has_offset_field()) {
+      o = str->field_value_by_offset(java_lang_String::offset_offset_in_bytes()).as_int();
+      c = str->field_value_by_offset(java_lang_String::count_offset_in_bytes()).as_int();
+    } else {
+      o = 0;
+      c = pat->length();
+    }
 
     // constant strings have no offset and count == length which
     // simplifies the resulting code somewhat so lets optimize for that.
@@ -1281,7 +1343,7 @@ bool LibraryCallKit::inline_string_indexOf() {
     // No null check on the argument is needed since it's a constant String oop.
     _sp -= 2;
     if (stopped()) {
-     return true;
+      return true;
     }
 
     // The null string as a pattern always returns 0 (match at beginning of string)
@@ -2066,6 +2128,103 @@ bool LibraryCallKit::inline_reverseBytes(vmIntrinsics::ID id) {
 
 const static BasicType T_ADDRESS_HOLDER = T_LONG;
 
+// Helper that guards and inserts a G1 pre-barrier.
+void LibraryCallKit::insert_g1_pre_barrier(Node* base_oop, Node* offset, Node* pre_val) {
+  assert(UseG1GC, "should not call this otherwise");
+
+  // We could be accessing the referent field of a reference object. If so, when G1
+  // is enabled, we need to log the value in the referent field in an SATB buffer.
+  // This routine performs some compile time filters and generates suitable
+  // runtime filters that guard the pre-barrier code.
+
+  // Some compile time checks.
+
+  // If offset is a constant, is it java_lang_ref_Reference::_reference_offset?
+  const TypeX* otype = offset->find_intptr_t_type();
+  if (otype != NULL && otype->is_con() &&
+      otype->get_con() != java_lang_ref_Reference::referent_offset) {
+    // Constant offset but not the reference_offset so just return
+    return;
+  }
+
+  // We only need to generate the runtime guards for instances.
+  const TypeOopPtr* btype = base_oop->bottom_type()->isa_oopptr();
+  if (btype != NULL) {
+    if (btype->isa_aryptr()) {
+      // Array type so nothing to do
+      return;
+    }
+
+    const TypeInstPtr* itype = btype->isa_instptr();
+    if (itype != NULL) {
+      // Can the klass of base_oop be statically determined
+      // to be _not_ a sub-class of Reference?
+      ciKlass* klass = itype->klass();
+      if (klass->is_subtype_of(env()->Reference_klass()) &&
+          !env()->Reference_klass()->is_subtype_of(klass)) {
+        return;
+      }
+    }
+  }
+
+  // The compile time filters did not reject base_oop/offset so
+  // we need to generate the following runtime filters
+  //
+  // if (offset == java_lang_ref_Reference::_reference_offset) {
+  //   if (base != null) {
+  //     if (instance_of(base, java.lang.ref.Reference)) {
+  //       pre_barrier(_, pre_val, ...);
+  //     }
+  //   }
+  // }
+
+  float likely  = PROB_LIKELY(0.999);
+  float unlikely  = PROB_UNLIKELY(0.999);
+
+  IdealKit ideal(this);
+#define __ ideal.
+
+  Node* referent_off = __ ConX(java_lang_ref_Reference::referent_offset);
+
+  __ if_then(offset, BoolTest::eq, referent_off, unlikely); {
+    __ if_then(base_oop, BoolTest::ne, null(), likely); {
+
+      // Update graphKit memory and control from IdealKit.
+      sync_kit(ideal);
+
+      Node* ref_klass_con = makecon(TypeKlassPtr::make(env()->Reference_klass()));
+      Node* is_instof = gen_instanceof(base_oop, ref_klass_con);
+
+      // Update IdealKit memory and control from graphKit.
+      __ sync_kit(this);
+
+      Node* one = __ ConI(1);
+
+      __ if_then(is_instof, BoolTest::eq, one, unlikely); {
+
+        // Update graphKit from IdeakKit.
+        sync_kit(ideal);
+
+        // Use the pre-barrier to record the value in the referent field
+        pre_barrier(false /* do_load */,
+                    __ ctrl(),
+                    NULL /* obj */, NULL /* adr */, max_juint /* alias_idx */, NULL /* val */, NULL /* val_type */,
+                    pre_val /* pre_val */,
+                    T_OBJECT);
+
+        // Update IdealKit from graphKit.
+        __ sync_kit(this);
+
+      } __ end_if(); // _ref_type != ref_none
+    } __ end_if(); // base  != NULL
+  } __ end_if(); // offset == referent_offset
+
+  // Final sync IdealKit and GraphKit.
+  final_sync(ideal);
+#undef __
+}
+
+
 // Interpret Unsafe.fieldOffset cookies correctly:
 extern jlong Unsafe_field_offset_to_byte_offset(jlong field_offset);
 
@@ -2142,9 +2301,11 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
   // Build address expression.  See the code in inline_unsafe_prefetch.
   Node *adr;
   Node *heap_base_oop = top();
+  Node* offset = top();
+
   if (!is_native_ptr) {
     // The offset is a value produced by Unsafe.staticFieldOffset or Unsafe.objectFieldOffset
-    Node* offset = pop_pair();
+    offset = pop_pair();
     // The base is either a Java object or a value produced by Unsafe.staticFieldBase
     Node* base   = pop();
     // We currently rely on the cookies produced by Unsafe.xxxFieldOffset
@@ -2184,6 +2345,13 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
   // the alias analysis of the rest of the graph, either Compile::can_alias
   // or Compile::must_alias will throw a diagnostic assert.)
   bool need_mem_bar = (alias_type->adr_type() == TypeOopPtr::BOTTOM);
+
+  // If we are reading the value of the referent field of a Reference
+  // object (either by using Unsafe directly or through reflection)
+  // then, if G1 is enabled, we need to record the referent in an
+  // SATB log buffer using the pre-barrier mechanism.
+  bool need_read_barrier = UseG1GC && !is_native_ptr && !is_store &&
+                           offset != top() && heap_base_oop != top();
 
   if (!is_store && type == T_OBJECT) {
     // Attempt to infer a sharper value type from the offset and base type.
@@ -2268,8 +2436,13 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
     case T_SHORT:
     case T_INT:
     case T_FLOAT:
+      push(p);
+      break;
     case T_OBJECT:
-      push( p );
+      if (need_read_barrier) {
+        insert_g1_pre_barrier(heap_base_oop, offset, p);
+      }
+      push(p);
       break;
     case T_ADDRESS:
       // Cast to an int type.
@@ -2308,22 +2481,20 @@ bool LibraryCallKit::inline_unsafe_access(bool is_native_ptr, bool is_store, Bas
         // of it. So we need to emit code to conditionally do the proper type of
         // store.
 
-        IdealKit ideal(gvn(), control(),  merged_memory());
+        IdealKit ideal(this);
 #define __ ideal.
         // QQQ who knows what probability is here??
         __ if_then(heap_base_oop, BoolTest::ne, null(), PROB_UNLIKELY(0.999)); {
           // Sync IdealKit and graphKit.
-          set_all_memory( __ merged_memory());
-          set_control(__ ctrl());
+          sync_kit(ideal);
           Node* st = store_oop_to_unknown(control(), heap_base_oop, adr, adr_type, val, type);
           // Update IdealKit memory.
-          __ set_all_memory(merged_memory());
-          __ set_ctrl(control());
+          __ sync_kit(this);
         } __ else_(); {
           __ store(__ ctrl(), adr, val, type, alias_type->index(), is_volatile);
         } __ end_if();
         // Final sync IdealKit and GraphKit.
-        sync_kit(ideal);
+        final_sync(ideal);
 #undef __
       }
     }
@@ -2524,9 +2695,18 @@ bool LibraryCallKit::inline_unsafe_CAS(BasicType type) {
     cas = _gvn.transform(new (C, 5) CompareAndSwapLNode(control(), mem, adr, newval, oldval));
     break;
   case T_OBJECT:
-     // reference stores need a store barrier.
+    // Transformation of a value which could be NULL pointer (CastPP #NULL)
+    // could be delayed during Parse (for example, in adjust_map_after_if()).
+    // Execute transformation here to avoid barrier generation in such case.
+    if (_gvn.type(newval) == TypePtr::NULL_PTR)
+      newval = _gvn.makecon(TypePtr::NULL_PTR);
+
+    // Reference stores need a store barrier.
     // (They don't if CAS fails, but it isn't worth checking.)
-    pre_barrier(control(), base, adr, alias_idx, newval, value_type->make_oopptr(), T_OBJECT);
+    pre_barrier(true /* do_load*/,
+                control(), base, adr, alias_idx, newval, value_type->make_oopptr(),
+                NULL /* pre_val*/,
+                T_OBJECT);
 #ifdef _LP64
     if (adr->bottom_type()->is_ptr_to_narrowoop()) {
       Node *newval_enc = _gvn.transform(new (C, 2) EncodePNode(newval, newval->bottom_type()->make_narrowoop()));
@@ -2648,8 +2828,10 @@ bool LibraryCallKit::inline_unsafe_allocate() {
   // Note:  The argument might still be an illegal value like
   // Serializable.class or Object[].class.   The runtime will handle it.
   // But we must make an explicit check for initialization.
-  Node* insp = basic_plus_adr(kls, instanceKlass::init_state_offset_in_bytes() + sizeof(oopDesc));
-  Node* inst = make_load(NULL, insp, TypeInt::INT, T_INT);
+  Node* insp = basic_plus_adr(kls, in_bytes(instanceKlass::init_state_offset()));
+  // Use T_BOOLEAN for instanceKlass::_init_state so the compiler
+  // can generate code to load it as unsigned byte.
+  Node* inst = make_load(NULL, insp, TypeInt::UBYTE, T_BOOLEAN);
   Node* bits = intcon(instanceKlass::fully_initialized);
   Node* test = _gvn.transform( new (C, 3) SubINode(inst, bits) );
   // The 'test' is non-zero if we need to take a slow path.
@@ -2796,7 +2978,7 @@ bool LibraryCallKit::inline_native_isInterrupted() {
 //---------------------------load_mirror_from_klass----------------------------
 // Given a klass oop, load its java mirror (a java.lang.Class oop).
 Node* LibraryCallKit::load_mirror_from_klass(Node* klass) {
-  Node* p = basic_plus_adr(klass, Klass::java_mirror_offset_in_bytes() + sizeof(oopDesc));
+  Node* p = basic_plus_adr(klass, in_bytes(Klass::java_mirror_offset()));
   return make_load(NULL, p, TypeInstPtr::MIRROR, T_OBJECT);
 }
 
@@ -2836,7 +3018,7 @@ Node* LibraryCallKit::load_klass_from_mirror_common(Node* mirror,
 Node* LibraryCallKit::generate_access_flags_guard(Node* kls, int modifier_mask, int modifier_bits, RegionNode* region) {
   // Branch around if the given klass has the given modifier bit set.
   // Like generate_guard, adds a new path onto the region.
-  Node* modp = basic_plus_adr(kls, Klass::access_flags_offset_in_bytes() + sizeof(oopDesc));
+  Node* modp = basic_plus_adr(kls, in_bytes(Klass::access_flags_offset()));
   Node* mods = make_load(NULL, modp, TypeInt::INT, T_INT);
   Node* mask = intcon(modifier_mask);
   Node* bits = intcon(modifier_bits);
@@ -2957,7 +3139,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
     break;
 
   case vmIntrinsics::_getModifiers:
-    p = basic_plus_adr(kls, Klass::modifier_flags_offset_in_bytes() + sizeof(oopDesc));
+    p = basic_plus_adr(kls, in_bytes(Klass::modifier_flags_offset()));
     query_value = make_load(NULL, p, TypeInt::INT, T_INT);
     break;
 
@@ -2997,7 +3179,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
       // A guard was added.  If the guard is taken, it was an array.
       phi->add_req(makecon(TypeInstPtr::make(env()->Object_klass()->java_mirror())));
     // If we fall through, it's a plain class.  Get its _super.
-    p = basic_plus_adr(kls, Klass::super_offset_in_bytes() + sizeof(oopDesc));
+    p = basic_plus_adr(kls, in_bytes(Klass::super_offset()));
     kls = _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), p, TypeRawPtr::BOTTOM, TypeKlassPtr::OBJECT_OR_NULL) );
     null_ctl = top();
     kls = null_check_oop(kls, &null_ctl);
@@ -3015,7 +3197,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
     if (generate_array_guard(kls, region) != NULL) {
       // Be sure to pin the oop load to the guard edge just created:
       Node* is_array_ctrl = region->in(region->req()-1);
-      Node* cma = basic_plus_adr(kls, in_bytes(arrayKlass::component_mirror_offset()) + sizeof(oopDesc));
+      Node* cma = basic_plus_adr(kls, in_bytes(arrayKlass::component_mirror_offset()));
       Node* cmo = make_load(is_array_ctrl, cma, TypeInstPtr::MIRROR, T_OBJECT);
       phi->add_req(cmo);
     }
@@ -3023,7 +3205,7 @@ bool LibraryCallKit::inline_native_Class_query(vmIntrinsics::ID id) {
     break;
 
   case vmIntrinsics::_getClassAccessFlags:
-    p = basic_plus_adr(kls, Klass::access_flags_offset_in_bytes() + sizeof(oopDesc));
+    p = basic_plus_adr(kls, in_bytes(Klass::access_flags_offset()));
     query_value = make_load(NULL, p, TypeInt::INT, T_INT);
     break;
 
@@ -3351,8 +3533,10 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
     }
 
     // Bail out if length is negative.
-    // ...Not needed, since the new_array will throw the right exception.
-    //generate_negative_guard(length, bailout, &length);
+    // Without this the new_array would throw
+    // NegativeArraySizeException but IllegalArgumentException is what
+    // should be thrown
+    generate_negative_guard(length, bailout, &length);
 
     if (bailout->req() > 1) {
       PreserveJVMState pjvms(this);
@@ -3368,8 +3552,7 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
       Node* orig_tail = _gvn.transform( new(C, 3) SubINode(orig_length, start) );
       Node* moved = generate_min_max(vmIntrinsics::_min, orig_tail, length);
 
-      const bool raw_mem_only = true;
-      newcopy = new_array(klass_node, length, 0, raw_mem_only);
+      newcopy = new_array(klass_node, length, 0);
 
       // Generate a direct call to the right arraycopy function(s).
       // We know the copy is disjoint but we might not know if the
@@ -3377,7 +3560,9 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
       // Extreme case:  Arrays.copyOf((Integer[])x, 10, String[].class).
       // This will fail a store-check if x contains any non-nulls.
       bool disjoint_bases = true;
-      bool length_never_negative = true;
+      // if start > orig_length then the length of the copy may be
+      // negative.
+      bool length_never_negative = !is_copyOfRange;
       generate_arraycopy(TypeAryPtr::OOPS, T_OBJECT,
                          original, start, newcopy, intcon(0), moved,
                          disjoint_bases, length_never_negative);
@@ -3746,7 +3931,8 @@ bool LibraryCallKit::is_method_invoke_or_aux_frame(JVMState* jvms) {
       }
     }
   }
-  else if (method->is_method_handle_adapter()) {
+
+  if (method->is_method_handle_adapter()) {
     // This is an internal adapter frame from the MethodHandleCompiler -- skip it
     return true;
   }
@@ -4037,12 +4223,17 @@ void LibraryCallKit::copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, b
   Node* raw_obj = alloc_obj->in(1);
   assert(alloc_obj->is_CheckCastPP() && raw_obj->is_Proj() && raw_obj->in(0)->is_Allocate(), "");
 
+  AllocateNode* alloc = NULL;
   if (ReduceBulkZeroing) {
     // We will be completely responsible for initializing this object -
     // mark Initialize node as complete.
-    AllocateNode* alloc = AllocateNode::Ideal_allocation(alloc_obj, &_gvn);
+    alloc = AllocateNode::Ideal_allocation(alloc_obj, &_gvn);
     // The object was just allocated - there should be no any stores!
     guarantee(alloc != NULL && alloc->maybe_set_complete(&_gvn), "");
+    // Mark as complete_with_arraycopy so that on AllocateNode
+    // expansion, we know this AllocateNode is initialized by an array
+    // copy and a StoreStore barrier exists after the array copy.
+    alloc->initialization()->set_complete_with_arraycopy();
   }
 
   // Copy the fastest available way.
@@ -4081,7 +4272,8 @@ void LibraryCallKit::copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, b
   const TypePtr* raw_adr_type = TypeRawPtr::BOTTOM;
   bool disjoint_bases = true;
   generate_unchecked_arraycopy(raw_adr_type, T_LONG, disjoint_bases,
-                               src, NULL, dest, NULL, countx);
+                               src, NULL, dest, NULL, countx,
+                               /*dest_uninitialized*/true);
 
   // If necessary, emit some card marks afterwards.  (Non-arrays only.)
   if (card_mark) {
@@ -4103,7 +4295,18 @@ void LibraryCallKit::copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, b
   }
 
   // Do not let reads from the cloned object float above the arraycopy.
-  insert_mem_bar(Op_MemBarCPUOrder);
+  if (alloc != NULL) {
+    // Do not let stores that initialize this object be reordered with
+    // a subsequent store that would make this object accessible by
+    // other threads.
+    // Record what AllocateNode this StoreStore protects so that
+    // escape analysis can go from the MemBarStoreStoreNode to the
+    // AllocateNode and eliminate the MemBarStoreStoreNode if possible
+    // based on the escape status of the AllocateNode.
+    insert_mem_bar(Op_MemBarStoreStore, alloc->proj_out(AllocateNode::RawAddress));
+  } else {
+    insert_mem_bar(Op_MemBarCPUOrder);
+  }
 }
 
 //------------------------inline_native_clone----------------------------
@@ -4165,8 +4368,6 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
 
     const TypePtr* raw_adr_type = TypeRawPtr::BOTTOM;
     int raw_adr_idx = Compile::AliasIdxRaw;
-    const bool raw_mem_only = true;
-
 
     Node* array_ctl = generate_array_guard(obj_klass, (RegionNode*)NULL);
     if (array_ctl != NULL) {
@@ -4175,8 +4376,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
       set_control(array_ctl);
       Node* obj_length = load_array_length(obj);
       Node* obj_size  = NULL;
-      Node* alloc_obj = new_array(obj_klass, obj_length, 0,
-                                  raw_mem_only, &obj_size);
+      Node* alloc_obj = new_array(obj_klass, obj_length, 0, &obj_size);
 
       if (!use_ReduceInitialCardMarks()) {
         // If it is an oop array, it requires very special treatment,
@@ -4248,7 +4448,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
       // It's an instance, and it passed the slow-path tests.
       PreserveJVMState pjvms(this);
       Node* obj_size  = NULL;
-      Node* alloc_obj = new_instance(obj_klass, NULL, raw_mem_only, &obj_size);
+      Node* alloc_obj = new_instance(obj_klass, NULL, &obj_size);
 
       copy_to_clone(obj, alloc_obj, obj_size, false, !use_ReduceInitialCardMarks());
 
@@ -4283,82 +4483,13 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
   return true;
 }
 
-
-// constants for computing the copy function
-enum {
-  COPYFUNC_UNALIGNED = 0,
-  COPYFUNC_ALIGNED = 1,                 // src, dest aligned to HeapWordSize
-  COPYFUNC_CONJOINT = 0,
-  COPYFUNC_DISJOINT = 2                 // src != dest, or transfer can descend
-};
-
-// Note:  The condition "disjoint" applies also for overlapping copies
-// where an descending copy is permitted (i.e., dest_offset <= src_offset).
-static address
-select_arraycopy_function(BasicType t, bool aligned, bool disjoint, const char* &name) {
-  int selector =
-    (aligned  ? COPYFUNC_ALIGNED  : COPYFUNC_UNALIGNED) +
-    (disjoint ? COPYFUNC_DISJOINT : COPYFUNC_CONJOINT);
-
-#define RETURN_STUB(xxx_arraycopy) { \
-  name = #xxx_arraycopy; \
-  return StubRoutines::xxx_arraycopy(); }
-
-  switch (t) {
-  case T_BYTE:
-  case T_BOOLEAN:
-    switch (selector) {
-    case COPYFUNC_CONJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jbyte_arraycopy);
-    case COPYFUNC_CONJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jbyte_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jbyte_disjoint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jbyte_disjoint_arraycopy);
-    }
-  case T_CHAR:
-  case T_SHORT:
-    switch (selector) {
-    case COPYFUNC_CONJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jshort_arraycopy);
-    case COPYFUNC_CONJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jshort_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jshort_disjoint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jshort_disjoint_arraycopy);
-    }
-  case T_INT:
-  case T_FLOAT:
-    switch (selector) {
-    case COPYFUNC_CONJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jint_arraycopy);
-    case COPYFUNC_CONJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jint_disjoint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jint_disjoint_arraycopy);
-    }
-  case T_DOUBLE:
-  case T_LONG:
-    switch (selector) {
-    case COPYFUNC_CONJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jlong_arraycopy);
-    case COPYFUNC_CONJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jlong_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(jlong_disjoint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_jlong_disjoint_arraycopy);
-    }
-  case T_ARRAY:
-  case T_OBJECT:
-    switch (selector) {
-    case COPYFUNC_CONJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(oop_arraycopy);
-    case COPYFUNC_CONJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_oop_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_UNALIGNED:  RETURN_STUB(oop_disjoint_arraycopy);
-    case COPYFUNC_DISJOINT | COPYFUNC_ALIGNED:    RETURN_STUB(arrayof_oop_disjoint_arraycopy);
-    }
-  default:
-    ShouldNotReachHere();
-    return NULL;
-  }
-
-#undef RETURN_STUB
-}
-
 //------------------------------basictype2arraycopy----------------------------
 address LibraryCallKit::basictype2arraycopy(BasicType t,
                                             Node* src_offset,
                                             Node* dest_offset,
                                             bool disjoint_bases,
-                                            const char* &name) {
+                                            const char* &name,
+                                            bool dest_uninitialized) {
   const TypeInt* src_offset_inttype  = gvn().find_int_type(src_offset);;
   const TypeInt* dest_offset_inttype = gvn().find_int_type(dest_offset);;
 
@@ -4384,7 +4515,7 @@ address LibraryCallKit::basictype2arraycopy(BasicType t,
     disjoint = true;
   }
 
-  return select_arraycopy_function(t, aligned, disjoint, name);
+  return StubRoutines::select_arraycopy_function(t, aligned, disjoint, name, dest_uninitialized);
 }
 
 
@@ -4440,7 +4571,8 @@ bool LibraryCallKit::inline_arraycopy() {
     // The component types are not the same or are not recognized.  Punt.
     // (But, avoid the native method wrapper to JVM_ArrayCopy.)
     generate_slow_arraycopy(TypePtr::BOTTOM,
-                            src, src_offset, dest, dest_offset, length);
+                            src, src_offset, dest, dest_offset, length,
+                            /*dest_uninitialized*/false);
     return true;
   }
 
@@ -4553,7 +4685,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
 
   Node* original_dest      = dest;
   AllocateArrayNode* alloc = NULL;  // used for zeroing, if needed
-  bool  must_clear_dest    = false;
+  bool  dest_uninitialized = false;
 
   // See if this is the initialization of a newly-allocated array.
   // If so, we will take responsibility here for initializing it to zero.
@@ -4563,7 +4695,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
   if (ReduceBulkZeroing
       && !ZeroTLAB              // pointless if already zeroed
       && basic_elem_type != T_CONFLICT // avoid corner case
-      && !_gvn.eqv_uncast(src, dest)
+      && !src->eqv_uncast(dest)
       && ((alloc = tightly_coupled_allocation(dest, slow_region))
           != NULL)
       && _gvn.find_int_con(alloc->in(AllocateNode::ALength), 1) > 0
@@ -4571,17 +4703,20 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     // "You break it, you buy it."
     InitializeNode* init = alloc->initialization();
     assert(init->is_complete(), "we just did this");
+    init->set_complete_with_arraycopy();
     assert(dest->is_CheckCastPP(), "sanity");
     assert(dest->in(0)->in(0) == init, "dest pinned");
     adr_type = TypeRawPtr::BOTTOM;  // all initializations are into raw memory
     // From this point on, every exit path is responsible for
     // initializing any non-copied parts of the object to zero.
-    must_clear_dest = true;
+    // Also, if this flag is set we make sure that arraycopy interacts properly
+    // with G1, eliding pre-barriers. See CR 6627983.
+    dest_uninitialized = true;
   } else {
     // No zeroing elimination here.
     alloc             = NULL;
     //original_dest   = dest;
-    //must_clear_dest = false;
+    //dest_uninitialized = false;
   }
 
   // Results are placed here:
@@ -4613,10 +4748,10 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
   Node* checked_value   = NULL;
 
   if (basic_elem_type == T_CONFLICT) {
-    assert(!must_clear_dest, "");
+    assert(!dest_uninitialized, "");
     Node* cv = generate_generic_arraycopy(adr_type,
                                           src, src_offset, dest, dest_offset,
-                                          copy_length);
+                                          copy_length, dest_uninitialized);
     if (cv == NULL)  cv = intcon(-1);  // failure (no stub available)
     checked_control = control();
     checked_i_o     = i_o();
@@ -4636,9 +4771,9 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     }
 
     // copy_length is 0.
-    if (!stopped() && must_clear_dest) {
+    if (!stopped() && dest_uninitialized) {
       Node* dest_length = alloc->in(AllocateNode::ALength);
-      if (_gvn.eqv_uncast(copy_length, dest_length)
+      if (copy_length->eqv_uncast(dest_length)
           || _gvn.find_int_con(dest_length, 1) <= 0) {
         // There is no zeroing to do. No need for a secondary raw memory barrier.
       } else {
@@ -4662,7 +4797,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     result_memory->init_req(zero_path, memory(adr_type));
   }
 
-  if (!stopped() && must_clear_dest) {
+  if (!stopped() && dest_uninitialized) {
     // We have to initialize the *uncopied* part of the array to zero.
     // The copy destination is the slice dest[off..off+len].  The other slices
     // are dest_head = dest[0..off] and dest_tail = dest[off+len..dest.length].
@@ -4684,7 +4819,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     // with its attendant messy index arithmetic, and upgrade
     // the copy to a more hardware-friendly word size of 64 bits.
     Node* tail_ctl = NULL;
-    if (!stopped() && !_gvn.eqv_uncast(dest_tail, dest_length)) {
+    if (!stopped() && !dest_tail->eqv_uncast(dest_length)) {
       Node* cmp_lt   = _gvn.transform( new(C,3) CmpINode(dest_tail, dest_length) );
       Node* bol_lt   = _gvn.transform( new(C,2) BoolNode(cmp_lt, BoolTest::lt) );
       tail_ctl = generate_slow_guard(bol_lt, NULL);
@@ -4698,7 +4833,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
       { PreserveJVMState pjvms(this);
         didit = generate_block_arraycopy(adr_type, basic_elem_type, alloc,
                                          src, src_offset, dest, dest_offset,
-                                         dest_size);
+                                         dest_size, dest_uninitialized);
         if (didit) {
           // Present the results of the block-copying fast call.
           result_region->init_req(bcopy_path, control());
@@ -4767,14 +4902,14 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
       PreserveJVMState pjvms(this);
       set_control(not_subtype_ctrl);
       // (At this point we can assume disjoint_bases, since types differ.)
-      int ek_offset = objArrayKlass::element_klass_offset_in_bytes() + sizeof(oopDesc);
+      int ek_offset = in_bytes(objArrayKlass::element_klass_offset());
       Node* p1 = basic_plus_adr(dest_klass, ek_offset);
       Node* n1 = LoadKlassNode::make(_gvn, immutable_memory(), p1, TypeRawPtr::BOTTOM);
       Node* dest_elem_klass = _gvn.transform(n1);
       Node* cv = generate_checkcast_arraycopy(adr_type,
                                               dest_elem_klass,
                                               src, src_offset, dest, dest_offset,
-                                              ConvI2X(copy_length));
+                                              ConvI2X(copy_length), dest_uninitialized);
       if (cv == NULL)  cv = intcon(-1);  // failure (no stub available)
       checked_control = control();
       checked_i_o     = i_o();
@@ -4797,7 +4932,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     PreserveJVMState pjvms(this);
     generate_unchecked_arraycopy(adr_type, copy_type, disjoint_bases,
                                  src, src_offset, dest, dest_offset,
-                                 ConvI2X(copy_length));
+                                 ConvI2X(copy_length), dest_uninitialized);
 
     // Present the results of the fast call.
     result_region->init_req(fast_path, control());
@@ -4876,7 +5011,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
     set_memory(slow_mem, adr_type);
     set_i_o(slow_i_o);
 
-    if (must_clear_dest) {
+    if (dest_uninitialized) {
       generate_clear_array(adr_type, dest, basic_elem_type,
                            intcon(0), NULL,
                            alloc->in(AllocateNode::AllocSize));
@@ -4884,7 +5019,7 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
 
     generate_slow_arraycopy(adr_type,
                             src, src_offset, dest, dest_offset,
-                            copy_length);
+                            copy_length, /*dest_uninitialized*/false);
 
     result_region->init_req(slow_call_path, control());
     result_i_o   ->init_req(slow_call_path, i_o());
@@ -4914,7 +5049,16 @@ LibraryCallKit::generate_arraycopy(const TypePtr* adr_type,
   // the membar also.
   //
   // Do not let reads from the cloned object float above the arraycopy.
-  if (InsertMemBarAfterArraycopy || alloc != NULL)
+  if (alloc != NULL) {
+    // Do not let stores that initialize this object be reordered with
+    // a subsequent store that would make this object accessible by
+    // other threads.
+    // Record what AllocateNode this StoreStore protects so that
+    // escape analysis can go from the MemBarStoreStoreNode to the
+    // AllocateNode and eliminate the MemBarStoreStoreNode if possible
+    // based on the escape status of the AllocateNode.
+    insert_mem_bar(Op_MemBarStoreStore, alloc->proj_out(AllocateNode::RawAddress));
+  } else if (InsertMemBarAfterArraycopy)
     insert_mem_bar(Op_MemBarCPUOrder);
 }
 
@@ -5128,7 +5272,7 @@ LibraryCallKit::generate_block_arraycopy(const TypePtr* adr_type,
                                          AllocateNode* alloc,
                                          Node* src,  Node* src_offset,
                                          Node* dest, Node* dest_offset,
-                                         Node* dest_size) {
+                                         Node* dest_size, bool dest_uninitialized) {
   // See if there is an advantage from block transfer.
   int scale = exact_log2(type2aelembytes(basic_elem_type));
   if (scale >= LogBytesPerLong)
@@ -5136,14 +5280,15 @@ LibraryCallKit::generate_block_arraycopy(const TypePtr* adr_type,
 
   // Look at the alignment of the starting offsets.
   int abase = arrayOopDesc::base_offset_in_bytes(basic_elem_type);
-  const intptr_t BIG_NEG = -128;
-  assert(BIG_NEG + 2*abase < 0, "neg enough");
 
-  intptr_t src_off  = abase + ((intptr_t) find_int_con(src_offset, -1)  << scale);
-  intptr_t dest_off = abase + ((intptr_t) find_int_con(dest_offset, -1) << scale);
-  if (src_off < 0 || dest_off < 0)
+  intptr_t src_off_con  = (intptr_t) find_int_con(src_offset, -1);
+  intptr_t dest_off_con = (intptr_t) find_int_con(dest_offset, -1);
+  if (src_off_con < 0 || dest_off_con < 0)
     // At present, we can only understand constants.
     return false;
+
+  intptr_t src_off  = abase + (src_off_con  << scale);
+  intptr_t dest_off = abase + (dest_off_con << scale);
 
   if (((src_off | dest_off) & (BytesPerLong-1)) != 0) {
     // Non-aligned; too bad.
@@ -5173,7 +5318,7 @@ LibraryCallKit::generate_block_arraycopy(const TypePtr* adr_type,
 
   bool disjoint_bases = true;   // since alloc != NULL
   generate_unchecked_arraycopy(adr_type, T_LONG, disjoint_bases,
-                               sptr, NULL, dptr, NULL, countx);
+                               sptr, NULL, dptr, NULL, countx, dest_uninitialized);
 
   return true;
 }
@@ -5186,7 +5331,8 @@ void
 LibraryCallKit::generate_slow_arraycopy(const TypePtr* adr_type,
                                         Node* src,  Node* src_offset,
                                         Node* dest, Node* dest_offset,
-                                        Node* copy_length) {
+                                        Node* copy_length, bool dest_uninitialized) {
+  assert(!dest_uninitialized, "Invariant");
   Node* call = make_runtime_call(RC_NO_LEAF | RC_UNCOMMON,
                                  OptoRuntime::slow_arraycopy_Type(),
                                  OptoRuntime::slow_arraycopy_Java(),
@@ -5204,10 +5350,10 @@ LibraryCallKit::generate_checkcast_arraycopy(const TypePtr* adr_type,
                                              Node* dest_elem_klass,
                                              Node* src,  Node* src_offset,
                                              Node* dest, Node* dest_offset,
-                                             Node* copy_length) {
+                                             Node* copy_length, bool dest_uninitialized) {
   if (stopped())  return NULL;
 
-  address copyfunc_addr = StubRoutines::checkcast_arraycopy();
+  address copyfunc_addr = StubRoutines::checkcast_arraycopy(dest_uninitialized);
   if (copyfunc_addr == NULL) { // Stub was not generated, go slow path.
     return NULL;
   }
@@ -5216,7 +5362,7 @@ LibraryCallKit::generate_checkcast_arraycopy(const TypePtr* adr_type,
   // for the target array.  This is an optimistic check.  It will
   // look in each non-null element's class, at the desired klass's
   // super_check_offset, for the desired klass.
-  int sco_offset = Klass::super_check_offset_offset_in_bytes() + sizeof(oopDesc);
+  int sco_offset = in_bytes(Klass::super_check_offset_offset());
   Node* p3 = basic_plus_adr(dest_elem_klass, sco_offset);
   Node* n3 = new(C, 3) LoadINode(NULL, memory(p3), p3, _gvn.type(p3)->is_ptr());
   Node* check_offset = ConvI2X(_gvn.transform(n3));
@@ -5245,9 +5391,9 @@ Node*
 LibraryCallKit::generate_generic_arraycopy(const TypePtr* adr_type,
                                            Node* src,  Node* src_offset,
                                            Node* dest, Node* dest_offset,
-                                           Node* copy_length) {
+                                           Node* copy_length, bool dest_uninitialized) {
+  assert(!dest_uninitialized, "Invariant");
   if (stopped())  return NULL;
-
   address copyfunc_addr = StubRoutines::generic_arraycopy();
   if (copyfunc_addr == NULL) { // Stub was not generated, go slow path.
     return NULL;
@@ -5268,7 +5414,7 @@ LibraryCallKit::generate_unchecked_arraycopy(const TypePtr* adr_type,
                                              bool disjoint_bases,
                                              Node* src,  Node* src_offset,
                                              Node* dest, Node* dest_offset,
-                                             Node* copy_length) {
+                                             Node* copy_length, bool dest_uninitialized) {
   if (stopped())  return;               // nothing to do
 
   Node* src_start  = src;
@@ -5283,11 +5429,51 @@ LibraryCallKit::generate_unchecked_arraycopy(const TypePtr* adr_type,
   const char* copyfunc_name = "arraycopy";
   address     copyfunc_addr =
       basictype2arraycopy(basic_elem_type, src_offset, dest_offset,
-                          disjoint_bases, copyfunc_name);
+                          disjoint_bases, copyfunc_name, dest_uninitialized);
 
   // Call it.  Note that the count_ix value is not scaled to a byte-size.
   make_runtime_call(RC_LEAF|RC_NO_FP,
                     OptoRuntime::fast_arraycopy_Type(),
                     copyfunc_addr, copyfunc_name, adr_type,
                     src_start, dest_start, copy_length XTOP);
+}
+
+//----------------------------inline_reference_get----------------------------
+
+bool LibraryCallKit::inline_reference_get() {
+  const int nargs = 1; // self
+
+  guarantee(java_lang_ref_Reference::referent_offset > 0,
+            "should have already been set");
+
+  int referent_offset = java_lang_ref_Reference::referent_offset;
+
+  // Restore the stack and pop off the argument
+  _sp += nargs;
+  Node *reference_obj = pop();
+
+  // Null check on self without removing any arguments.
+  _sp += nargs;
+  reference_obj = do_null_check(reference_obj, T_OBJECT);
+  _sp -= nargs;;
+
+  if (stopped()) return true;
+
+  Node *adr = basic_plus_adr(reference_obj, reference_obj, referent_offset);
+
+  ciInstanceKlass* klass = env()->Object_klass();
+  const TypeOopPtr* object_type = TypeOopPtr::make_from_klass(klass);
+
+  Node* no_ctrl = NULL;
+  Node *result = make_load(no_ctrl, adr, object_type, T_OBJECT);
+
+  // Use the pre-barrier to record the value in the referent field
+  pre_barrier(false /* do_load */,
+              control(),
+              NULL /* obj */, NULL /* adr */, max_juint /* alias_idx */, NULL /* val */, NULL /* val_type */,
+              result /* pre_val */,
+              T_OBJECT);
+
+  push(result);
+  return true;
 }

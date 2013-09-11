@@ -27,15 +27,17 @@
 
 #include "gc_implementation/g1/concurrentMark.hpp"
 #include "gc_implementation/g1/g1CollectedHeap.hpp"
+#include "gc_implementation/g1/g1AllocRegion.inline.hpp"
 #include "gc_implementation/g1/g1CollectorPolicy.hpp"
 #include "gc_implementation/g1/heapRegionSeq.inline.hpp"
 #include "utilities/taskqueue.hpp"
 
 // Inline functions for G1CollectedHeap
 
+template <class T>
 inline HeapRegion*
-G1CollectedHeap::heap_region_containing(const void* addr) const {
-  HeapRegion* hr = _hrs->addr_to_region(addr);
+G1CollectedHeap::heap_region_containing(const T addr) const {
+  HeapRegion* hr = _hrs.addr_to_region((HeapWord*) addr);
   // hr can be null if addr in perm_gen
   if (hr != NULL && hr->continuesHumongous()) {
     hr = hr->humongous_start_region();
@@ -43,147 +45,68 @@ G1CollectedHeap::heap_region_containing(const void* addr) const {
   return hr;
 }
 
+template <class T>
 inline HeapRegion*
-G1CollectedHeap::heap_region_containing_raw(const void* addr) const {
-  assert(_g1_reserved.contains(addr), "invariant");
-  size_t index = pointer_delta(addr, _g1_reserved.start(), 1)
-                                        >> HeapRegion::LogOfHRGrainBytes;
-
-  HeapRegion* res = _hrs->at(index);
-  assert(res == _hrs->addr_to_region(addr), "sanity");
+G1CollectedHeap::heap_region_containing_raw(const T addr) const {
+  assert(_g1_reserved.contains((const void*) addr), "invariant");
+  HeapRegion* res = _hrs.addr_to_region_unsafe((HeapWord*) addr);
   return res;
 }
 
 inline bool G1CollectedHeap::obj_in_cs(oop obj) {
-  HeapRegion* r = _hrs->addr_to_region(obj);
+  HeapRegion* r = _hrs.addr_to_region((HeapWord*) obj);
   return r != NULL && r->in_collection_set();
 }
 
-// See the comment in the .hpp file about the locking protocol and
-// assumptions of this method (and other related ones).
 inline HeapWord*
-G1CollectedHeap::allocate_from_cur_alloc_region(HeapRegion* cur_alloc_region,
-                                                size_t word_size,
-                                                bool with_heap_lock) {
-  assert_not_at_safepoint();
-  assert(with_heap_lock == Heap_lock->owned_by_self(),
-         "with_heap_lock and Heap_lock->owned_by_self() should be a tautology");
-  assert(cur_alloc_region != NULL, "pre-condition of the method");
-  assert(cur_alloc_region->is_young(),
-         "we only support young current alloc regions");
-  assert(!isHumongous(word_size), "allocate_from_cur_alloc_region() "
-         "should not be used for humongous allocations");
-  assert(!cur_alloc_region->isHumongous(), "Catch a regression of this bug.");
-
-  assert(!cur_alloc_region->is_empty(),
-         err_msg("region ["PTR_FORMAT","PTR_FORMAT"] should not be empty",
-                 cur_alloc_region->bottom(), cur_alloc_region->end()));
-  HeapWord* result = cur_alloc_region->par_allocate_no_bot_updates(word_size);
-  if (result != NULL) {
-    assert(is_in(result), "result should be in the heap");
-
-    if (with_heap_lock) {
-      Heap_lock->unlock();
-    }
-    assert_heap_not_locked();
-    // Do the dirtying after we release the Heap_lock.
-    dirty_young_block(result, word_size);
-    return result;
-  }
-
-  if (with_heap_lock) {
-    assert_heap_locked();
-  } else {
-    assert_heap_not_locked();
-  }
-  return NULL;
-}
-
-// See the comment in the .hpp file about the locking protocol and
-// assumptions of this method (and other related ones).
-inline HeapWord*
-G1CollectedHeap::attempt_allocation(size_t word_size) {
+G1CollectedHeap::attempt_allocation(size_t word_size,
+                                    unsigned int* gc_count_before_ret) {
   assert_heap_not_locked_and_not_at_safepoint();
-  assert(!isHumongous(word_size), "attempt_allocation() should not be called "
-         "for humongous allocation requests");
+  assert(!isHumongous(word_size), "attempt_allocation() should not "
+         "be called for humongous allocation requests");
 
-  HeapRegion* cur_alloc_region = _cur_alloc_region;
-  if (cur_alloc_region != NULL) {
-    HeapWord* result = allocate_from_cur_alloc_region(cur_alloc_region,
-                                                   word_size,
-                                                   false /* with_heap_lock */);
-    assert_heap_not_locked();
-    if (result != NULL) {
-      return result;
-    }
+  HeapWord* result = _mutator_alloc_region.attempt_allocation(word_size,
+                                                      false /* bot_updates */);
+  if (result == NULL) {
+    result = attempt_allocation_slow(word_size, gc_count_before_ret);
   }
-
-  // Our attempt to allocate lock-free failed as the current
-  // allocation region is either NULL or full. So, we'll now take the
-  // Heap_lock and retry.
-  Heap_lock->lock();
-
-  HeapWord* result = attempt_allocation_locked(word_size);
+  assert_heap_not_locked();
   if (result != NULL) {
-    assert_heap_not_locked();
-    return result;
+    dirty_young_block(result, word_size);
   }
-
-  assert_heap_locked();
-  return NULL;
+  return result;
 }
 
-inline void
-G1CollectedHeap::retire_cur_alloc_region_common(HeapRegion* cur_alloc_region) {
-  assert_heap_locked_or_at_safepoint(true /* should_be_vm_thread */);
-  assert(cur_alloc_region != NULL && cur_alloc_region == _cur_alloc_region,
-         "pre-condition of the call");
-  assert(cur_alloc_region->is_young(),
-         "we only support young current alloc regions");
+inline HeapWord* G1CollectedHeap::survivor_attempt_allocation(size_t
+                                                              word_size) {
+  assert(!isHumongous(word_size),
+         "we should not be seeing humongous-size allocations in this path");
 
-  // The region is guaranteed to be young
-  g1_policy()->add_region_to_incremental_cset_lhs(cur_alloc_region);
-  _summary_bytes_used += cur_alloc_region->used();
-  _cur_alloc_region = NULL;
+  HeapWord* result = _survivor_gc_alloc_region.attempt_allocation(word_size,
+                                                      false /* bot_updates */);
+  if (result == NULL) {
+    MutexLockerEx x(FreeList_lock, Mutex::_no_safepoint_check_flag);
+    result = _survivor_gc_alloc_region.attempt_allocation_locked(word_size,
+                                                      false /* bot_updates */);
+  }
+  if (result != NULL) {
+    dirty_young_block(result, word_size);
+  }
+  return result;
 }
 
-inline HeapWord*
-G1CollectedHeap::attempt_allocation_locked(size_t word_size) {
-  assert_heap_locked_and_not_at_safepoint();
-  assert(!isHumongous(word_size), "attempt_allocation_locked() "
-         "should not be called for humongous allocation requests");
+inline HeapWord* G1CollectedHeap::old_attempt_allocation(size_t word_size) {
+  assert(!isHumongous(word_size),
+         "we should not be seeing humongous-size allocations in this path");
 
-  // First, reread the current alloc region and retry the allocation
-  // in case somebody replaced it while we were waiting to get the
-  // Heap_lock.
-  HeapRegion* cur_alloc_region = _cur_alloc_region;
-  if (cur_alloc_region != NULL) {
-    HeapWord* result = allocate_from_cur_alloc_region(
-                                                  cur_alloc_region, word_size,
-                                                  true /* with_heap_lock */);
-    if (result != NULL) {
-      assert_heap_not_locked();
-      return result;
-    }
-
-    // We failed to allocate out of the current alloc region, so let's
-    // retire it before getting a new one.
-    retire_cur_alloc_region(cur_alloc_region);
+  HeapWord* result = _old_gc_alloc_region.attempt_allocation(word_size,
+                                                       true /* bot_updates */);
+  if (result == NULL) {
+    MutexLockerEx x(FreeList_lock, Mutex::_no_safepoint_check_flag);
+    result = _old_gc_alloc_region.attempt_allocation_locked(word_size,
+                                                       true /* bot_updates */);
   }
-
-  assert_heap_locked();
-  // Try to get a new region and allocate out of it
-  HeapWord* result = replace_cur_alloc_region_and_allocate(word_size,
-                                                     false, /* at_safepoint */
-                                                     true,  /* do_dirtying */
-                                                     false  /* can_expand */);
-  if (result != NULL) {
-    assert_heap_not_locked();
-    return result;
-  }
-
-  assert_heap_locked();
-  return NULL;
+  return result;
 }
 
 // It dirties the cards that cover the block so that so that the post

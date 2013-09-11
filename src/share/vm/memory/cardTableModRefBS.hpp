@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@
 class Generation;
 class OopsInGenClosure;
 class DirtyCardToOopClosure;
+class ClearNoncleanCardWrapper;
 
 class CardTableModRefBS: public ModRefBarrierSet {
   // Some classes get to look at some private stuff.
@@ -149,7 +150,9 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // Mapping from address to card marking array entry
   jbyte* byte_for(const void* p) const {
     assert(_whole_heap.contains(p),
-           "out of bounds access to card marking array");
+           err_msg("Attempt to access p = "PTR_FORMAT" out of bounds of "
+                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
+                   p, _whole_heap.start(), _whole_heap.end()));
     jbyte* result = &byte_map_base[uintptr_t(p) >> card_shift];
     assert(result >= _byte_map && result < _byte_map + _byte_map_size,
            "out of bounds accessor for card marking array");
@@ -165,25 +168,27 @@ class CardTableModRefBS: public ModRefBarrierSet {
 
   // Iterate over the portion of the card-table which covers the given
   // region mr in the given space and apply cl to any dirty sub-regions
-  // of mr. cl and dcto_cl must either be the same closure or cl must
-  // wrap dcto_cl. Both are required - neither may be NULL. Also, dcto_cl
-  // may be modified. Note that this function will operate in a parallel
-  // mode if worker threads are available.
-  void non_clean_card_iterate(Space* sp, MemRegion mr,
-                              DirtyCardToOopClosure* dcto_cl,
-                              MemRegionClosure* cl,
-                              bool clear);
+  // of mr. Dirty cards are _not_ cleared by the iterator method itself,
+  // but closures may arrange to do so on their own should they so wish.
+  void non_clean_card_iterate_serial(MemRegion mr, MemRegionClosure* cl);
 
-  // Utility function used to implement the other versions below.
-  void non_clean_card_iterate_work(MemRegion mr, MemRegionClosure* cl,
-                                   bool clear);
+  // A variant of the above that will operate in a parallel mode if
+  // worker threads are available, and clear the dirty cards as it
+  // processes them.
+  // XXX ??? MemRegionClosure above vs OopsInGenClosure below XXX
+  // XXX some new_dcto_cl's take OopClosure's, plus as above there are
+  // some MemRegionClosures. Clean this up everywhere. XXX
+  void non_clean_card_iterate_possibly_parallel(Space* sp, MemRegion mr,
+                                                OopsInGenClosure* cl, CardTableRS* ct);
 
-  void par_non_clean_card_iterate_work(Space* sp, MemRegion mr,
-                                       DirtyCardToOopClosure* dcto_cl,
-                                       MemRegionClosure* cl,
-                                       bool clear,
-                                       int n_threads);
+ private:
+  // Work method used to implement non_clean_card_iterate_possibly_parallel()
+  // above in the parallel case.
+  void non_clean_card_iterate_parallel_work(Space* sp, MemRegion mr,
+                                            OopsInGenClosure* cl, CardTableRS* ct,
+                                            int n_threads);
 
+ protected:
   // Dirty the bytes corresponding to "mr" (not all of which must be
   // covered.)
   void dirty_MemRegion(MemRegion mr);
@@ -193,11 +198,6 @@ class CardTableModRefBS: public ModRefBarrierSet {
   void clear_MemRegion(MemRegion mr);
 
   // *** Support for parallel card scanning.
-
-  enum SomeConstantsForParallelism {
-    StridesPerThread    = 2,
-    CardsPerStrideChunk = 256
-  };
 
   // This is an array, one element per covered region of the card table.
   // Each entry is itself an array, with one element per chunk in the
@@ -231,7 +231,7 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // covers the given address.
   uintptr_t addr_to_chunk_index(const void* addr) {
     uintptr_t card = (uintptr_t) byte_for(addr);
-    return card / CardsPerStrideChunk;
+    return card / ParGCCardsPerStrideChunk;
   }
 
   // Apply cl, which must either itself apply dcto_cl or be dcto_cl,
@@ -239,9 +239,8 @@ class CardTableModRefBS: public ModRefBarrierSet {
   void process_stride(Space* sp,
                       MemRegion used,
                       jint stride, int n_strides,
-                      DirtyCardToOopClosure* dcto_cl,
-                      MemRegionClosure* cl,
-                      bool clear,
+                      OopsInGenClosure* cl,
+                      CardTableRS* ct,
                       jbyte** lowest_non_clean,
                       uintptr_t lowest_non_clean_base_chunk_index,
                       size_t lowest_non_clean_chunk_size);
@@ -382,6 +381,11 @@ public:
     return (addr_for(pcard) == p);
   }
 
+  HeapWord* align_to_card_boundary(HeapWord* p) {
+    jbyte* pcard = byte_for(p + card_size_in_words - 1);
+    return addr_for(pcard);
+  }
+
   // The kinds of precision a CardTableModRefBS may offer.
   enum PrecisionStyle {
     Precise,
@@ -397,9 +401,6 @@ public:
   virtual void invalidate(MemRegion mr, bool whole_heap = false);
   void clear(MemRegion mr);
   void dirty(MemRegion mr);
-  void mod_oop_in_space_iterate(Space* sp, OopClosure* cl,
-                                bool clear = false,
-                                bool before_save_marks = false);
 
   // *** Card-table-RemSet-specific things.
 
@@ -410,18 +411,15 @@ public:
   // *decreasing* address order.  (This order aids with imprecise card
   // marking, where a dirty card may cause scanning, and summarization
   // marking, of objects that extend onto subsequent cards.)
-  // If "clear" is true, the card is (conceptually) marked unmodified before
-  // applying the closure.
-  void mod_card_iterate(MemRegionClosure* cl, bool clear = false) {
-    non_clean_card_iterate_work(_whole_heap, cl, clear);
+  void mod_card_iterate(MemRegionClosure* cl) {
+    non_clean_card_iterate_serial(_whole_heap, cl);
   }
 
   // Like the "mod_cards_iterate" above, except only invokes the closure
   // for cards within the MemRegion "mr" (which is required to be
   // card-aligned and sized.)
-  void mod_card_iterate(MemRegion mr, MemRegionClosure* cl,
-                        bool clear = false) {
-    non_clean_card_iterate_work(mr, cl, clear);
+  void mod_card_iterate(MemRegion mr, MemRegionClosure* cl) {
+    non_clean_card_iterate_serial(mr, cl);
   }
 
   static uintx ct_max_alignment_constraint();
@@ -436,9 +434,6 @@ public:
   // value.
   MemRegion dirty_card_range_after_reset(MemRegion mr, bool reset,
                                          int reset_val);
-
-  // Set all the dirty cards in the given region to precleaned state.
-  void preclean_dirty_cards(MemRegion mr);
 
   // Provide read-only access to the card table array.
   const jbyte* byte_for_const(const void* p) const {
@@ -455,14 +450,18 @@ public:
     size_t delta = pointer_delta(p, byte_map_base, sizeof(jbyte));
     HeapWord* result = (HeapWord*) (delta << card_shift);
     assert(_whole_heap.contains(result),
-           "out of bounds accessor from card marking array");
+           err_msg("Returning result = "PTR_FORMAT" out of bounds of "
+                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
+                   result, _whole_heap.start(), _whole_heap.end()));
     return result;
   }
 
   // Mapping from address to card marking array index.
   size_t index_for(void* p) {
     assert(_whole_heap.contains(p),
-           "out of bounds access to card marking array");
+           err_msg("Attempt to access p = "PTR_FORMAT" out of bounds of "
+                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
+                   p, _whole_heap.start(), _whole_heap.end()));
     return byte_for(p) - _byte_map;
   }
 
@@ -470,14 +469,20 @@ public:
     return _byte_map + card_index;
   }
 
+  // Print a description of the memory for the barrier set
+  virtual void print_on(outputStream* st) const;
+
   void verify();
   void verify_guard();
 
-  void verify_clean_region(MemRegion mr) PRODUCT_RETURN;
+  // val_equals -> it will check that all cards covered by mr equal val
+  // !val_equals -> it will check that all cards covered by mr do not equal val
+  void verify_region(MemRegion mr, jbyte val, bool val_equals) PRODUCT_RETURN;
+  void verify_not_dirty_region(MemRegion mr) PRODUCT_RETURN;
   void verify_dirty_region(MemRegion mr) PRODUCT_RETURN;
 
   static size_t par_chunk_heapword_alignment() {
-    return CardsPerStrideChunk * card_size_in_words;
+    return ParGCCardsPerStrideChunk * card_size_in_words;
   }
 
 };
@@ -497,5 +502,6 @@ public:
 
   void set_CTRS(CardTableRS* rs) { _rs = rs; }
 };
+
 
 #endif // SHARE_VM_MEMORY_CARDTABLEMODREFBS_HPP

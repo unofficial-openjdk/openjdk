@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ public class PlaceholderEntry extends sun.jvm.hotspot.utilities.HashtableEntry {
   }
 
   public Symbol klass() {
-    return (Symbol) literal();
+    return Symbol.create(literalValue());
   }
 
   /* covariant return type :-(

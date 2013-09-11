@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,12 @@
 #endif
 #ifdef TARGET_ARCH_zero
 # include "jniTypes_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "jniTypes_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "jniTypes_ppc.hpp"
 #endif
 #ifdef ZERO
 #ifdef TARGET_ARCH_zero
@@ -87,6 +93,12 @@ inline bool frame::is_first_frame() const {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "frame_zero.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "frame_arm.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "frame_ppc.inline.hpp"
 #endif
 
 

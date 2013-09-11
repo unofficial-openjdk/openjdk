@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 #include "interpreter/bytecodeStream.hpp"
 #include "oops/generateOopMap.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/relocator.hpp"
@@ -123,7 +123,7 @@ class ComputeCallStack : public SignatureIterator {
                                            set(CellTypeState::value); }
 
 public:
-  ComputeCallStack(symbolOop signature) : SignatureIterator(signature) {};
+  ComputeCallStack(Symbol* signature) : SignatureIterator(signature) {};
 
   // Compute methods
   int compute_for_parameters(bool is_static, CellTypeState *effect) {
@@ -177,7 +177,7 @@ class ComputeEntryStack : public SignatureIterator {
                                           set(CellTypeState::value); }
 
 public:
-  ComputeEntryStack(symbolOop signature) : SignatureIterator(signature) {};
+  ComputeEntryStack(Symbol* signature) : SignatureIterator(signature) {};
 
   // Compute methods
   int compute_for_parameters(bool is_static, CellTypeState *effect) {
@@ -643,11 +643,20 @@ int GenerateOopMap::next_bb_start_pc(BasicBlock *bb) {
 // CellType handling methods
 //
 
+// Allocate memory and throw LinkageError if failure.
+#define ALLOC_RESOURCE_ARRAY(var, type, count) \
+  var = NEW_RESOURCE_ARRAY_RETURN_NULL(type, count);              \
+  if (var == NULL) {                                              \
+    report_error("Cannot reserve enough memory to analyze this method"); \
+    return;                                                       \
+  }
+
 void GenerateOopMap::init_state() {
   _state_len     = _max_locals + _max_stack + _max_monitors;
-  _state         = NEW_RESOURCE_ARRAY(CellTypeState, _state_len);
+  ALLOC_RESOURCE_ARRAY(_state, CellTypeState, _state_len);
   memset(_state, 0, _state_len * sizeof(CellTypeState));
-  _state_vec_buf = NEW_RESOURCE_ARRAY(char, MAX3(_max_locals, _max_stack, _max_monitors) + 1/*for null terminator char */);
+  int count = MAX3(_max_locals, _max_stack, _max_monitors) + 1/*for null terminator char */;
+  ALLOC_RESOURCE_ARRAY(_state_vec_buf, char, count)
 }
 
 void GenerateOopMap::make_context_uninitialized() {
@@ -660,7 +669,7 @@ void GenerateOopMap::make_context_uninitialized() {
   _monitor_top = 0;
 }
 
-int GenerateOopMap::methodsig_to_effect(symbolOop signature, bool is_static, CellTypeState* effect) {
+int GenerateOopMap::methodsig_to_effect(Symbol* signature, bool is_static, CellTypeState* effect) {
   ComputeEntryStack ces(signature);
   return ces.compute_for_parameters(is_static, effect);
 }
@@ -905,7 +914,7 @@ void GenerateOopMap::init_basic_blocks() {
   // But cumbersome since we don't know the stack heights yet.  (Nor the
   // monitor stack heights...)
 
-  _basic_blocks = NEW_RESOURCE_ARRAY(BasicBlock, _bb_count);
+  ALLOC_RESOURCE_ARRAY(_basic_blocks, BasicBlock, _bb_count);
 
   // Make a pass through the bytecodes.  Count the number of monitorenters.
   // This can be used an upper bound on the monitor stack depth in programs
@@ -976,8 +985,8 @@ void GenerateOopMap::init_basic_blocks() {
     return;
   }
 
-  CellTypeState *basicBlockState =
-      NEW_RESOURCE_ARRAY(CellTypeState, bbNo * _state_len);
+  CellTypeState *basicBlockState;
+  ALLOC_RESOURCE_ARRAY(basicBlockState, CellTypeState, bbNo * _state_len);
   memset(basicBlockState, 0, bbNo * _state_len * sizeof(CellTypeState));
 
   // Make a pass over the basicblocks and assign their state vectors.
@@ -1276,7 +1285,7 @@ void GenerateOopMap::print_current_state(outputStream   *os,
         constantPoolOop cp    = method()->constants();
         int nameAndTypeIdx    = cp->name_and_type_ref_index_at(idx);
         int signatureIdx      = cp->signature_ref_index_at(nameAndTypeIdx);
-        symbolOop signature   = cp->symbol_at(signatureIdx);
+        Symbol* signature     = cp->symbol_at(signatureIdx);
         os->print("%s", signature->as_C_string());
     }
     os->cr();
@@ -1308,7 +1317,7 @@ void GenerateOopMap::print_current_state(outputStream   *os,
         constantPoolOop cp    = method()->constants();
         int nameAndTypeIdx    = cp->name_and_type_ref_index_at(idx);
         int signatureIdx      = cp->signature_ref_index_at(nameAndTypeIdx);
-        symbolOop signature   = cp->symbol_at(signatureIdx);
+        Symbol* signature     = cp->symbol_at(signatureIdx);
         os->print("%s", signature->as_C_string());
     }
     os->cr();
@@ -1567,9 +1576,7 @@ void GenerateOopMap::interp1(BytecodeStream *itr) {
     case Bytecodes::_jsr:               do_jsr(itr->dest());         break;
     case Bytecodes::_jsr_w:             do_jsr(itr->dest_w());       break;
 
-    case Bytecodes::_getstatic:         do_field(true,  true,
-                                                 itr->get_index_u2_cpcache(),
-                                                 itr->bci()); break;
+    case Bytecodes::_getstatic:         do_field(true,  true,  itr->get_index_u2_cpcache(), itr->bci()); break;
     case Bytecodes::_putstatic:         do_field(false, true,  itr->get_index_u2_cpcache(), itr->bci()); break;
     case Bytecodes::_getfield:          do_field(true,  false, itr->get_index_u2_cpcache(), itr->bci()); break;
     case Bytecodes::_putfield:          do_field(false, false, itr->get_index_u2_cpcache(), itr->bci()); break;
@@ -1855,7 +1862,7 @@ void GenerateOopMap::do_ldc(int bci) {
   // Make sure bt==T_OBJECT is the same as old code (is_pointer_entry).
   // Note that CONSTANT_MethodHandle entries are u2 index pairs, not pointer-entries,
   // and they are processed by _fast_aldc and the CP cache.
-  assert((ldc.has_cache_index() || cp->is_pointer_entry(ldc.pool_index()))
+  assert((ldc.has_cache_index() || cp->is_object_entry(ldc.pool_index()))
          ? (bt == T_OBJECT) : true, "expected object type");
   ppush1(cts);
 }
@@ -1895,7 +1902,7 @@ void GenerateOopMap::do_field(int is_get, int is_static, int idx, int bci) {
   constantPoolOop cp     = method()->constants();
   int nameAndTypeIdx     = cp->name_and_type_ref_index_at(idx);
   int signatureIdx       = cp->signature_ref_index_at(nameAndTypeIdx);
-  symbolOop signature    = cp->symbol_at(signatureIdx);
+  Symbol* signature      = cp->symbol_at(signatureIdx);
 
   // Parse signature (espcially simple for fields)
   assert(signature->utf8_length() > 0, "field signatures cannot have zero length");
@@ -1923,7 +1930,7 @@ void GenerateOopMap::do_field(int is_get, int is_static, int idx, int bci) {
 void GenerateOopMap::do_method(int is_static, int is_interface, int idx, int bci) {
  // Dig up signature for field in constant pool
   constantPoolOop cp  = _method->constants();
-  symbolOop signature = cp->signature_ref_at(idx);
+  Symbol* signature   = cp->signature_ref_at(idx);
 
   // Parse method signature
   CellTypeState out[4];

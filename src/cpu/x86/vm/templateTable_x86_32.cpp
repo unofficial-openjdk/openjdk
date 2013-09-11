@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "asm/assembler.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
 #include "interpreter/templateTable.hpp"
@@ -139,7 +140,12 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
         }
         __ get_thread(rcx);
         __ save_bcp();
-        __ g1_write_barrier_pre(rdx, rcx, rsi, rbx, val != noreg);
+        __ g1_write_barrier_pre(rdx /* obj */,
+                                rbx /* pre_val */,
+                                rcx /* thread */,
+                                rsi /* tmp */,
+                                val != noreg /* tosca_live */,
+                                false /* expand_call */);
 
         // Do the actual store
         // noreg means NULL
@@ -148,7 +154,11 @@ static void do_oop_store(InterpreterMacroAssembler* _masm,
           // No post barrier for NULL
         } else {
           __ movl(Address(rdx, 0), val);
-          __ g1_write_barrier_post(rdx, rax, rcx, rbx, rsi);
+          __ g1_write_barrier_post(rdx /* store_adr */,
+                                   val /* new_val */,
+                                   rcx /* thread */,
+                                   rbx /* tmp */,
+                                   rsi /* tmp2 */);
         }
         __ restore_bcp();
 
@@ -192,45 +202,74 @@ Address TemplateTable::at_bcp(int offset) {
 }
 
 
-void TemplateTable::patch_bytecode(Bytecodes::Code bytecode, Register bc,
-                                   Register scratch,
-                                   bool load_bc_into_scratch/*=true*/) {
+void TemplateTable::patch_bytecode(Bytecodes::Code bc, Register bc_reg,
+                                   Register temp_reg, bool load_bc_into_bc_reg/*=true*/,
+                                   int byte_no) {
+  if (!RewriteBytecodes)  return;
+  Label L_patch_done;
 
-  if (!RewriteBytecodes) return;
-  // the pair bytecodes have already done the load.
-  if (load_bc_into_scratch) {
-    __ movl(bc, bytecode);
+  switch (bc) {
+  case Bytecodes::_fast_aputfield:
+  case Bytecodes::_fast_bputfield:
+  case Bytecodes::_fast_cputfield:
+  case Bytecodes::_fast_dputfield:
+  case Bytecodes::_fast_fputfield:
+  case Bytecodes::_fast_iputfield:
+  case Bytecodes::_fast_lputfield:
+  case Bytecodes::_fast_sputfield:
+    {
+      // We skip bytecode quickening for putfield instructions when
+      // the put_code written to the constant pool cache is zero.
+      // This is required so that every execution of this instruction
+      // calls out to InterpreterRuntime::resolve_get_put to do
+      // additional, required work.
+      assert(byte_no == f1_byte || byte_no == f2_byte, "byte_no out of range");
+      assert(load_bc_into_bc_reg, "we use bc_reg as temp");
+      __ get_cache_and_index_and_bytecode_at_bcp(bc_reg, temp_reg, temp_reg, byte_no, 1);
+      __ movl(bc_reg, bc);
+      __ cmpl(temp_reg, (int) 0);
+      __ jcc(Assembler::zero, L_patch_done);  // don't patch
+    }
+    break;
+  default:
+    assert(byte_no == -1, "sanity");
+    // the pair bytecodes have already done the load.
+    if (load_bc_into_bc_reg) {
+      __ movl(bc_reg, bc);
+    }
   }
-  Label patch_done;
+
   if (JvmtiExport::can_post_breakpoint()) {
-    Label fast_patch;
+    Label L_fast_patch;
     // if a breakpoint is present we can't rewrite the stream directly
-    __ movzbl(scratch, at_bcp(0));
-    __ cmpl(scratch, Bytecodes::_breakpoint);
-    __ jcc(Assembler::notEqual, fast_patch);
-    __ get_method(scratch);
+    __ movzbl(temp_reg, at_bcp(0));
+    __ cmpl(temp_reg, Bytecodes::_breakpoint);
+    __ jcc(Assembler::notEqual, L_fast_patch);
+    __ get_method(temp_reg);
     // Let breakpoint table handling rewrite to quicker bytecode
-    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::set_original_bytecode_at), scratch, rsi, bc);
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, InterpreterRuntime::set_original_bytecode_at), temp_reg, rsi, bc_reg);
 #ifndef ASSERT
-    __ jmpb(patch_done);
+    __ jmpb(L_patch_done);
 #else
-    __ jmp(patch_done);
+    __ jmp(L_patch_done);
 #endif
-    __ bind(fast_patch);
+    __ bind(L_fast_patch);
   }
+
 #ifdef ASSERT
-  Label okay;
-  __ load_unsigned_byte(scratch, at_bcp(0));
-  __ cmpl(scratch, (int)Bytecodes::java_code(bytecode));
-  __ jccb(Assembler::equal, okay);
-  __ cmpl(scratch, bc);
-  __ jcc(Assembler::equal, okay);
+  Label L_okay;
+  __ load_unsigned_byte(temp_reg, at_bcp(0));
+  __ cmpl(temp_reg, (int)Bytecodes::java_code(bc));
+  __ jccb(Assembler::equal, L_okay);
+  __ cmpl(temp_reg, bc_reg);
+  __ jcc(Assembler::equal, L_okay);
   __ stop("patching the wrong bytecode");
-  __ bind(okay);
+  __ bind(L_okay);
 #endif
+
   // patch bytecode
-  __ movb(at_bcp(0), bc);
-  __ bind(patch_done);
+  __ movb(at_bcp(0), bc_reg);
+  __ bind(L_patch_done);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -363,15 +402,17 @@ void TemplateTable::ldc(bool wide) {
     __ jcc(Assembler::equal, L);
     __ cmpl(rdx, JVM_CONSTANT_String);
     __ jcc(Assembler::equal, L);
+    __ cmpl(rdx, JVM_CONSTANT_Object);
+    __ jcc(Assembler::equal, L);
     __ stop("unexpected tag type in ldc");
     __ bind(L);
   }
 #endif
   Label isOop;
   // atos and itos
-  // String is only oop type we will see here
-  __ cmpl(rdx, JVM_CONSTANT_String);
-  __ jccb(Assembler::equal, isOop);
+  // Integer is only non-oop type we will see here
+  __ cmpl(rdx, JVM_CONSTANT_Integer);
+  __ jccb(Assembler::notEqual, isOop);
   __ movl(rax, Address(rcx, rbx, Address::times_ptr, base_offset));
   __ push(itos);
   __ jmp(Done);
@@ -391,8 +432,8 @@ void TemplateTable::ldc(bool wide) {
 void TemplateTable::fast_aldc(bool wide) {
   transition(vtos, atos);
 
-  if (!EnableMethodHandles) {
-    // We should not encounter this bytecode if !EnableMethodHandles.
+  if (!EnableInvokeDynamic) {
+    // We should not encounter this bytecode if !EnableInvokeDynamic.
     // The verifier will stop it.  However, if we get past the verifier,
     // this will stop the thread in a reasonable way, without crashing the JVM.
     __ call_VM(noreg, CAST_FROM_FN_PTR(address,
@@ -412,7 +453,7 @@ void TemplateTable::fast_aldc(bool wide) {
 
   Label L_done, L_throw_exception;
   const Register con_klass_temp = rcx;  // same as Rcache
-  __ movptr(con_klass_temp, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(con_klass_temp, rax);
   __ cmpptr(con_klass_temp, ExternalAddress((address)Universe::systemObjArrayKlassObj_addr()));
   __ jcc(Assembler::notEqual, L_done);
   __ cmpl(Address(rax, arrayOopDesc::length_offset_in_bytes()), 0);
@@ -422,7 +463,7 @@ void TemplateTable::fast_aldc(bool wide) {
 
   // Load the exception from the system-array which wraps it:
   __ bind(L_throw_exception);
-  __ movptr(rax, Address(rax, arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
+  __ load_heap_oop(rax, Address(rax, arrayOopDesc::base_offset_in_bytes(T_OBJECT)));
   __ jump(ExternalAddress(Interpreter::throw_exception_entry()));
 
   __ bind(L_done);
@@ -936,10 +977,10 @@ void TemplateTable::aastore() {
   __ jcc(Assembler::zero, is_null);
 
   // Move subklass into EBX
-  __ movptr(rbx, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rbx, rax);
   // Move superklass into EAX
-  __ movptr(rax, Address(rdx, oopDesc::klass_offset_in_bytes()));
-  __ movptr(rax, Address(rax, sizeof(oopDesc) + objArrayKlass::element_klass_offset_in_bytes()));
+  __ load_klass(rax, rdx);
+  __ movptr(rax, Address(rax, objArrayKlass::element_klass_offset()));
   // Compress array+index*wordSize+12 into a single register.  Frees ECX.
   __ lea(rdx, element_address);
 
@@ -1710,39 +1751,6 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
       __ pop(rdi);                               // get return address
       __ mov(rsp, rdx);                          // set sp to sender sp
 
-
-      Label skip;
-      Label chkint;
-
-      // The interpreter frame we have removed may be returning to
-      // either the callstub or the interpreter. Since we will
-      // now be returning from a compiled (OSR) nmethod we must
-      // adjust the return to the return were it can handler compiled
-      // results and clean the fpu stack. This is very similar to
-      // what a i2c adapter must do.
-
-      // Are we returning to the call stub?
-
-      __ cmp32(rdi, ExternalAddress(StubRoutines::_call_stub_return_address));
-      __ jcc(Assembler::notEqual, chkint);
-
-      // yes adjust to the specialized call stub  return.
-      assert(StubRoutines::x86::get_call_stub_compiled_return() != NULL, "must be set");
-      __ lea(rdi, ExternalAddress(StubRoutines::x86::get_call_stub_compiled_return()));
-      __ jmp(skip);
-
-      __ bind(chkint);
-
-      // Are we returning to the interpreter? Look for sentinel
-
-      __ cmpl(Address(rdi, -2*wordSize), Interpreter::return_sentinel);
-      __ jcc(Assembler::notEqual, skip);
-
-      // Adjust to compiled return back to interpreter
-
-      __ movptr(rdi, Address(rdi, -wordSize));
-      __ bind(skip);
-
       // Align stack pointer for compiled code (note that caller is
       // responsible for undoing this fixup by remembering the old SP
       // in an rbp,-relative location)
@@ -1972,18 +1980,10 @@ void TemplateTable::fast_binaryswitch() {
     __ movl(temp, Address(array, h, Address::times_8, 0*wordSize));
     __ bswapl(temp);
     __ cmpl(key, temp);
-    if (VM_Version::supports_cmov()) {
-      __ cmovl(Assembler::less        , j, h);   // j = h if (key <  array[h].fast_match())
-      __ cmovl(Assembler::greaterEqual, i, h);   // i = h if (key >= array[h].fast_match())
-    } else {
-      Label set_i, end_of_if;
-      __ jccb(Assembler::greaterEqual, set_i);     // {
-      __ mov(j, h);                                //   j = h;
-      __ jmp(end_of_if);                           // }
-      __ bind(set_i);                              // else {
-      __ mov(i, h);                                //   i = h;
-      __ bind(end_of_if);                          // }
-    }
+    // j = h if (key <  array[h].fast_match())
+    __ cmov32(Assembler::less        , j, h);
+    // i = h if (key >= array[h].fast_match())
+    __ cmov32(Assembler::greaterEqual, i, h);
     // while (i+1 < j)
     __ bind(entry);
     __ leal(h, Address(i, 1));                   // i+1
@@ -2032,8 +2032,8 @@ void TemplateTable::_return(TosState state) {
   if (_desc->bytecode() == Bytecodes::_return_register_finalizer) {
     assert(state == vtos, "only valid state");
     __ movptr(rax, aaddress(0));
-    __ movptr(rdi, Address(rax, oopDesc::klass_offset_in_bytes()));
-    __ movl(rdi, Address(rdi, Klass::access_flags_offset_in_bytes() + sizeof(oopDesc)));
+    __ load_klass(rdi, rax);
+    __ movl(rdi, Address(rdi, Klass::access_flags_offset()));
     __ testl(rdi, JVM_ACC_HAS_FINALIZER);
     Label skip_register_finalizer;
     __ jcc(Assembler::zero, skip_register_finalizer);
@@ -2089,24 +2089,20 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   assert_different_registers(result, Rcache, index, temp);
 
   Label resolved;
-  __ get_cache_and_index_at_bcp(Rcache, index, 1, index_size);
   if (byte_no == f1_oop) {
     // We are resolved if the f1 field contains a non-null object (CallSite, etc.)
     // This kind of CP cache entry does not need to match the flags byte, because
     // there is a 1-1 relation between bytecode type and CP entry type.
     assert(result != noreg, ""); //else do cmpptr(Address(...), (int32_t) NULL_WORD)
+    __ get_cache_and_index_at_bcp(Rcache, index, 1, index_size);
     __ movptr(result, Address(Rcache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::f1_offset()));
     __ testptr(result, result);
     __ jcc(Assembler::notEqual, resolved);
   } else {
     assert(byte_no == f1_byte || byte_no == f2_byte, "byte_no out of range");
     assert(result == noreg, "");  //else change code for setting result
-    const int shift_count = (1 + byte_no)*BitsPerByte;
-    __ movl(temp, Address(Rcache, index, Address::times_4, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
-    __ shrl(temp, shift_count);
-    // have we resolved this bytecode?
-    __ andl(temp, 0xFF);
-    __ cmpl(temp, (int)bytecode());
+    __ get_cache_and_index_and_bytecode_at_bcp(Rcache, index, temp, byte_no, 1, index_size);
+    __ cmpl(temp, (int) bytecode());  // have we resolved this bytecode?
     __ jcc(Assembler::equal, resolved);
   }
 
@@ -2482,138 +2478,153 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static) {
 
   __ shrl(flags, ConstantPoolCacheEntry::tosBits);
   assert(btos == 0, "change code, btos != 0");
-  // btos
   __ andl(flags, 0x0f);
   __ jcc(Assembler::notZero, notByte);
 
-  __ pop(btos);
-  if (!is_static) pop_and_check_object(obj);
-  __ movb(lo, rax );
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_bputfield, rcx, rbx);
+  // btos
+  {
+    __ pop(btos);
+    if (!is_static) pop_and_check_object(obj);
+    __ movb(lo, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_bputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
   __ bind(notByte);
-  // itos
-  __ cmpl(flags, itos );
+  __ cmpl(flags, itos);
   __ jcc(Assembler::notEqual, notInt);
 
-  __ pop(itos);
-  if (!is_static) pop_and_check_object(obj);
-
-  __ movl(lo, rax );
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_iputfield, rcx, rbx);
+  // itos
+  {
+    __ pop(itos);
+    if (!is_static) pop_and_check_object(obj);
+    __ movl(lo, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_iputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
   __ bind(notInt);
-  // atos
-  __ cmpl(flags, atos );
+  __ cmpl(flags, atos);
   __ jcc(Assembler::notEqual, notObj);
 
-  __ pop(atos);
-  if (!is_static) pop_and_check_object(obj);
-
-  do_oop_store(_masm, lo, rax, _bs->kind(), false);
-
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_aputfield, rcx, rbx);
+  // atos
+  {
+    __ pop(atos);
+    if (!is_static) pop_and_check_object(obj);
+    do_oop_store(_masm, lo, rax, _bs->kind(), false);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_aputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-
-  __ jmp(Done);
 
   __ bind(notObj);
-  // ctos
-  __ cmpl(flags, ctos );
+  __ cmpl(flags, ctos);
   __ jcc(Assembler::notEqual, notChar);
 
-  __ pop(ctos);
-  if (!is_static) pop_and_check_object(obj);
-  __ movw(lo, rax );
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_cputfield, rcx, rbx);
+  // ctos
+  {
+    __ pop(ctos);
+    if (!is_static) pop_and_check_object(obj);
+    __ movw(lo, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_cputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
   __ bind(notChar);
-  // stos
-  __ cmpl(flags, stos );
+  __ cmpl(flags, stos);
   __ jcc(Assembler::notEqual, notShort);
 
-  __ pop(stos);
-  if (!is_static) pop_and_check_object(obj);
-  __ movw(lo, rax );
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_sputfield, rcx, rbx);
+  // stos
+  {
+    __ pop(stos);
+    if (!is_static) pop_and_check_object(obj);
+    __ movw(lo, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_sputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
   __ bind(notShort);
-  // ltos
-  __ cmpl(flags, ltos );
+  __ cmpl(flags, ltos);
   __ jcc(Assembler::notEqual, notLong);
 
-  Label notVolatileLong;
-  __ testl(rdx, rdx);
-  __ jcc(Assembler::zero, notVolatileLong);
+  // ltos
+  {
+    Label notVolatileLong;
+    __ testl(rdx, rdx);
+    __ jcc(Assembler::zero, notVolatileLong);
 
-  __ pop(ltos);  // overwrites rdx, do this after testing volatile.
-  if (!is_static) pop_and_check_object(obj);
+    __ pop(ltos);  // overwrites rdx, do this after testing volatile.
+    if (!is_static) pop_and_check_object(obj);
 
-  // Replace with real volatile test
-  __ push(rdx);
-  __ push(rax);                 // Must update atomically with FIST
-  __ fild_d(Address(rsp,0));    // So load into FPU register
-  __ fistp_d(lo);               // and put into memory atomically
-  __ addptr(rsp, 2*wordSize);
-  // volatile_barrier();
-  volatile_barrier(Assembler::Membar_mask_bits(Assembler::StoreLoad |
-                                               Assembler::StoreStore));
-  // Don't rewrite volatile version
-  __ jmp(notVolatile);
+    // Replace with real volatile test
+    __ push(rdx);
+    __ push(rax);                 // Must update atomically with FIST
+    __ fild_d(Address(rsp,0));    // So load into FPU register
+    __ fistp_d(lo);               // and put into memory atomically
+    __ addptr(rsp, 2*wordSize);
+    // volatile_barrier();
+    volatile_barrier(Assembler::Membar_mask_bits(Assembler::StoreLoad |
+                                                 Assembler::StoreStore));
+    // Don't rewrite volatile version
+    __ jmp(notVolatile);
 
-  __ bind(notVolatileLong);
+    __ bind(notVolatileLong);
 
-  __ pop(ltos);  // overwrites rdx
-  if (!is_static) pop_and_check_object(obj);
-  NOT_LP64(__ movptr(hi, rdx));
-  __ movptr(lo, rax);
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_lputfield, rcx, rbx);
+    __ pop(ltos);  // overwrites rdx
+    if (!is_static) pop_and_check_object(obj);
+    NOT_LP64(__ movptr(hi, rdx));
+    __ movptr(lo, rax);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_lputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(notVolatile);
   }
-  __ jmp(notVolatile);
 
   __ bind(notLong);
-  // ftos
-  __ cmpl(flags, ftos );
+  __ cmpl(flags, ftos);
   __ jcc(Assembler::notEqual, notFloat);
 
-  __ pop(ftos);
-  if (!is_static) pop_and_check_object(obj);
-  __ fstp_s(lo);
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_fputfield, rcx, rbx);
+  // ftos
+  {
+    __ pop(ftos);
+    if (!is_static) pop_and_check_object(obj);
+    __ fstp_s(lo);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_fputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
   __ bind(notFloat);
-  // dtos
-  __ cmpl(flags, dtos );
+#ifdef ASSERT
+  __ cmpl(flags, dtos);
   __ jcc(Assembler::notEqual, notDouble);
+#endif
 
-  __ pop(dtos);
-  if (!is_static) pop_and_check_object(obj);
-  __ fstp_d(lo);
-  if (!is_static) {
-    patch_bytecode(Bytecodes::_fast_dputfield, rcx, rbx);
+  // dtos
+  {
+    __ pop(dtos);
+    if (!is_static) pop_and_check_object(obj);
+    __ fstp_d(lo);
+    if (!is_static) {
+      patch_bytecode(Bytecodes::_fast_dputfield, rcx, rbx, true, byte_no);
+    }
+    __ jmp(Done);
   }
-  __ jmp(Done);
 
+#ifdef ASSERT
   __ bind(notDouble);
-
   __ stop("Bad state");
+#endif
 
   __ bind(Done);
 
@@ -2979,7 +2990,7 @@ void TemplateTable::invokevirtual_helper(Register index, Register recv,
   // get receiver klass
   __ null_check(recv, oopDesc::klass_offset_in_bytes());
   // Keep recv in rcx for callee expects it there
-  __ movptr(rax, Address(recv, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rax, recv);
   __ verify_oop(rax);
 
   // profile this call
@@ -3059,7 +3070,7 @@ void TemplateTable::invokeinterface(int byte_no) {
 
   // Get receiver klass into rdx - also a null check
   __ restore_locals();  // restore rdi
-  __ movptr(rdx, Address(rcx, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rdx, rcx);
   __ verify_oop(rdx);
 
   // profile this call
@@ -3114,6 +3125,7 @@ void TemplateTable::invokeinterface(int byte_no) {
 
 void TemplateTable::invokedynamic(int byte_no) {
   transition(vtos, vtos);
+  assert(byte_no == f1_oop, "use this argument");
 
   if (!EnableInvokeDynamic) {
     // We should not encounter this bytecode if !EnableInvokeDynamic.
@@ -3126,7 +3138,6 @@ void TemplateTable::invokedynamic(int byte_no) {
     return;
   }
 
-  assert(byte_no == f1_oop, "use this argument");
   prepare_invoke(rax, rbx, byte_no);
 
   // rax: CallSite object (f1)
@@ -3137,14 +3148,14 @@ void TemplateTable::invokedynamic(int byte_no) {
   Register rax_callsite      = rax;
   Register rcx_method_handle = rcx;
 
-  if (ProfileInterpreter) {
-    // %%% should make a type profile for any invokedynamic that takes a ref argument
-    // profile this call
-    __ profile_call(rsi);
-  }
+  // %%% should make a type profile for any invokedynamic that takes a ref argument
+  // profile this call
+  __ profile_call(rsi);
 
-  __ movptr(rcx_method_handle, Address(rax_callsite, __ delayed_value(java_dyn_CallSite::target_offset_in_bytes, rcx)));
+  __ verify_oop(rax_callsite);
+  __ load_heap_oop(rcx_method_handle, Address(rax_callsite, __ delayed_value(java_lang_invoke_CallSite::target_offset_in_bytes, rdx)));
   __ null_check(rcx_method_handle);
+  __ verify_oop(rcx_method_handle);
   __ prepare_to_jump_from_interpreted();
   __ jump_to_method_handle_entry(rcx_method_handle, rdx);
 }
@@ -3177,11 +3188,11 @@ void TemplateTable::_new() {
 
   // make sure klass is initialized & doesn't have finalizer
   // make sure klass is fully initialized
-  __ cmpl(Address(rcx, instanceKlass::init_state_offset_in_bytes() + sizeof(oopDesc)), instanceKlass::fully_initialized);
+  __ cmpb(Address(rcx, instanceKlass::init_state_offset()), instanceKlass::fully_initialized);
   __ jcc(Assembler::notEqual, slow_case);
 
   // get instance_size in instanceKlass (scaled to a count of bytes)
-  __ movl(rdx, Address(rcx, Klass::layout_helper_offset_in_bytes() + sizeof(oopDesc)));
+  __ movl(rdx, Address(rcx, Klass::layout_helper_offset()));
   // test to see if it has a finalizer or is malformed in some way
   __ testl(rdx, Klass::_lh_instance_slow_path_bit);
   __ jcc(Assembler::notZero, slow_case);
@@ -3282,14 +3293,14 @@ void TemplateTable::_new() {
     __ bind(initialize_header);
     if (UseBiasedLocking) {
       __ pop(rcx);   // get saved klass back in the register.
-      __ movptr(rbx, Address(rcx, Klass::prototype_header_offset_in_bytes() + klassOopDesc::klass_part_offset_in_bytes()));
+      __ movptr(rbx, Address(rcx, Klass::prototype_header_offset()));
       __ movptr(Address(rax, oopDesc::mark_offset_in_bytes ()), rbx);
     } else {
       __ movptr(Address(rax, oopDesc::mark_offset_in_bytes ()),
                 (int32_t)markOopDesc::prototype()); // header
       __ pop(rcx);   // get saved klass back in the register.
     }
-    __ movptr(Address(rax, oopDesc::klass_offset_in_bytes()), rcx);  // klass
+    __ store_klass(rax, rcx);  // klass
 
     {
       SkipIfEqual skip_if(_masm, &DTraceAllocProbes, 0);
@@ -3364,7 +3375,7 @@ void TemplateTable::checkcast() {
   __ movptr(rax, Address(rcx, rbx, Address::times_ptr, sizeof(constantPoolOopDesc)));
 
   __ bind(resolved);
-  __ movptr(rbx, Address(rdx, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rbx, rdx);
 
   // Generate subtype check.  Blows ECX.  Resets EDI.  Object in EDX.
   // Superklass in EAX.  Subklass in EBX.
@@ -3407,12 +3418,12 @@ void TemplateTable::instanceof() {
   __ push(atos);
   call_VM(rax, CAST_FROM_FN_PTR(address, InterpreterRuntime::quicken_io_cc) );
   __ pop_ptr(rdx);
-  __ movptr(rdx, Address(rdx, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rdx, rdx);
   __ jmp(resolved);
 
   // Get superklass in EAX and subklass in EDX
   __ bind(quicked);
-  __ movptr(rdx, Address(rax, oopDesc::klass_offset_in_bytes()));
+  __ load_klass(rdx, rax);
   __ movptr(rax, Address(rcx, rbx, Address::times_ptr, sizeof(constantPoolOopDesc)));
 
   __ bind(resolved);
@@ -3511,22 +3522,14 @@ void TemplateTable::monitorenter() {
 
   // find a free slot in the monitor block (result in rdx)
   { Label entry, loop, exit;
-    __ movptr(rcx, monitor_block_top);            // points to current entry, starting with top-most entry
-    __ lea(rbx, monitor_block_bot);               // points to word before bottom of monitor block
+    __ movptr(rcx, monitor_block_top);           // points to current entry, starting with top-most entry
+
+    __ lea(rbx, monitor_block_bot);              // points to word before bottom of monitor block
     __ jmpb(entry);
 
     __ bind(loop);
     __ cmpptr(Address(rcx, BasicObjectLock::obj_offset_in_bytes()), (int32_t)NULL_WORD);  // check if current entry is used
-
-// TODO - need new func here - kbt
-    if (VM_Version::supports_cmov()) {
-      __ cmov(Assembler::equal, rdx, rcx);       // if not used then remember entry in rdx
-    } else {
-      Label L;
-      __ jccb(Assembler::notEqual, L);
-      __ mov(rdx, rcx);                          // if not used then remember entry in rdx
-      __ bind(L);
-    }
+    __ cmovptr(Assembler::equal, rdx, rcx);      // if not used then remember entry in rdx
     __ cmpptr(rax, Address(rcx, BasicObjectLock::obj_offset_in_bytes()));   // check if current entry is for same object
     __ jccb(Assembler::equal, exit);             // if same object then stop searching
     __ addptr(rcx, entry_size);                  // otherwise advance to next entry

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,9 +58,7 @@ CollectorCounters*  PSMarkSweep::_counters = NULL;
 
 void PSMarkSweep::initialize() {
   MemRegion mr = Universe::heap()->reserved_region();
-  _ref_processor = new ReferenceProcessor(mr,
-                                          true,    // atomic_discovery
-                                          false);  // mt_discovery
+  _ref_processor = new ReferenceProcessor(mr);     // a vanilla ref proc
   _counters = new CollectorCounters("PSMarkSweep", 1);
 }
 
@@ -102,12 +100,12 @@ void PSMarkSweep::invoke(bool maximum_heap_compaction) {
 
 // This method contains no policy. You should probably
 // be calling invoke() instead.
-void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
+bool PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
   assert(ref_processor() != NULL, "Sanity");
 
   if (GC_locker::check_active_before_gc()) {
-    return;
+    return false;
   }
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
@@ -134,9 +132,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
   AdaptiveSizePolicyOutput(size_policy, heap->total_collections());
 
-  if (PrintHeapAtGC) {
-    Universe::print_heap_before_gc();
-  }
+  heap->print_heap_before_gc();
 
   // Fill in TLABs
   heap->accumulate_statistics_all_tlabs();
@@ -175,7 +171,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     TraceCPUTime tcpu(PrintGCDetails, true, gclog_or_tty);
     TraceTime t1(gc_cause_str, PrintGC, !PrintGCDetails, gclog_or_tty);
     TraceCollectorStats tcs(counters());
-    TraceMemoryManagerStats tms(true /* Full GC */);
+    TraceMemoryManagerStats tms(true /* Full GC */,gc_cause);
 
     if (TraceGen1Time) accumulated_time()->start();
 
@@ -200,10 +196,9 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
     allocate_stacks();
 
-    NOT_PRODUCT(ref_processor()->verify_no_references_recorded());
     COMPILER2_PRESENT(DerivedPointerTable::clear());
 
-    ref_processor()->enable_discovery();
+    ref_processor()->enable_discovery(true /*verify_disabled*/, true /*verify_no_refs*/);
     ref_processor()->setup_policy(clear_all_softrefs);
 
     mark_sweep_phase1(clear_all_softrefs);
@@ -380,15 +375,15 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
   NOT_PRODUCT(ref_processor()->verify_no_references_recorded());
 
-  if (PrintHeapAtGC) {
-    Universe::print_heap_after_gc();
-  }
+  heap->print_heap_after_gc();
 
   heap->post_full_gc_dump();
 
 #ifdef TRACESPINNING
   ParallelTaskTerminator::print_termination_counts();
 #endif
+
+  return true;
 }
 
 bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
@@ -507,7 +502,6 @@ void PSMarkSweep::deallocate_stacks() {
 
 void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
   // Recursively traverse all live objects and mark them
-  EventMark m("1 mark object");
   TraceTime tm("phase 1", PrintGCDetails && Verbose, true, gclog_or_tty);
   trace(" 1");
 
@@ -518,7 +512,6 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
   {
     ParallelScavengeHeap::ParStrongRootsScope psrs;
     Universe::oops_do(mark_and_push_closure());
-    ReferenceProcessor::oops_do(mark_and_push_closure());
     JNIHandles::oops_do(mark_and_push_closure());   // Global (strong) JNI handles
     CodeBlobToOopClosure each_active_code_blob(mark_and_push_closure(), /*do_marking=*/ true);
     Threads::oops_do(mark_and_push_closure(), &each_active_code_blob);
@@ -527,7 +520,6 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
     Management::oops_do(mark_and_push_closure());
     JvmtiExport::oops_do(mark_and_push_closure());
     SystemDictionary::always_strong_oops_do(mark_and_push_closure());
-    vmSymbols::oops_do(mark_and_push_closure());
     // Do not treat nmethods as strong roots for mark/sweep, since we can unload them.
     //CodeCache::scavenge_root_nmethods_do(CodeBlobToOopClosure(mark_and_push_closure()));
   }
@@ -558,16 +550,16 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
   follow_mdo_weak_refs();
   assert(_marking_stack.is_empty(), "just drained");
 
-  // Visit symbol and interned string tables and delete unmarked oops
-  SymbolTable::unlink(is_alive_closure());
+  // Visit interned string tables and delete unmarked oops
   StringTable::unlink(is_alive_closure());
+  // Clean up unreferenced symbols in symbol table.
+  SymbolTable::unlink();
 
   assert(_marking_stack.is_empty(), "stack should be empty by now");
 }
 
 
 void PSMarkSweep::mark_sweep_phase2() {
-  EventMark m("2 compute new addresses");
   TraceTime tm("phase 2", PrintGCDetails && Verbose, true, gclog_or_tty);
   trace("2");
 
@@ -612,7 +604,6 @@ static PSAlwaysTrueClosure always_true;
 
 void PSMarkSweep::mark_sweep_phase3() {
   // Adjust the pointers to reflect the new locations
-  EventMark m("3 adjust pointers");
   TraceTime tm("phase 3", PrintGCDetails && Verbose, true, gclog_or_tty);
   trace("3");
 
@@ -625,7 +616,6 @@ void PSMarkSweep::mark_sweep_phase3() {
 
   // General strong roots.
   Universe::oops_do(adjust_root_pointer_closure());
-  ReferenceProcessor::oops_do(adjust_root_pointer_closure());
   JNIHandles::oops_do(adjust_root_pointer_closure());   // Global (strong) JNI handles
   Threads::oops_do(adjust_root_pointer_closure(), NULL);
   ObjectSynchronizer::oops_do(adjust_root_pointer_closure());
@@ -634,7 +624,6 @@ void PSMarkSweep::mark_sweep_phase3() {
   JvmtiExport::oops_do(adjust_root_pointer_closure());
   // SO_AllClasses
   SystemDictionary::oops_do(adjust_root_pointer_closure());
-  vmSymbols::oops_do(adjust_root_pointer_closure());
   //CodeCache::scavenge_root_nmethods_oops_do(adjust_root_pointer_closure());
 
   // Now adjust pointers in remaining weak roots.  (All of which should
@@ -643,7 +632,6 @@ void PSMarkSweep::mark_sweep_phase3() {
   JNIHandles::weak_oops_do(&always_true, adjust_root_pointer_closure());
 
   CodeCache::oops_do(adjust_pointer_closure());
-  SymbolTable::oops_do(adjust_root_pointer_closure());
   StringTable::oops_do(adjust_root_pointer_closure());
   ref_processor()->weak_oops_do(adjust_root_pointer_closure());
   PSScavenge::reference_processor()->weak_oops_do(adjust_root_pointer_closure());
@@ -679,15 +667,20 @@ void PSMarkSweep::mark_sweep_phase4() {
 }
 
 jlong PSMarkSweep::millis_since_last_gc() {
-  jlong ret_val = os::javaTimeMillis() - _time_of_last_gc;
+  // We need a monotonically non-deccreasing time in ms but
+  // os::javaTimeMillis() does not guarantee monotonicity.
+  jlong now = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
+  jlong ret_val = now - _time_of_last_gc;
   // XXX See note in genCollectedHeap::millis_since_last_gc().
   if (ret_val < 0) {
-    NOT_PRODUCT(warning("time warp: %d", ret_val);)
+    NOT_PRODUCT(warning("time warp: "INT64_FORMAT, ret_val);)
     return 0;
   }
   return ret_val;
 }
 
 void PSMarkSweep::reset_millis_since_last_gc() {
-  _time_of_last_gc = os::javaTimeMillis();
+  // We need a monotonically non-deccreasing time in ms but
+  // os::javaTimeMillis() does not guarantee monotonicity.
+  _time_of_last_gc = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
 }

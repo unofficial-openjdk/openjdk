@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,13 +31,14 @@
 #include "memory/gcLocker.hpp"
 #include "oops/constantPoolOop.hpp"
 #include "oops/instanceKlass.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/instanceKlassKlass.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/objArrayKlassKlass.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "oops/typeArrayOop.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/fieldDescriptor.hpp"
@@ -86,7 +87,6 @@ void instanceKlassKlass::oop_follow_contents(oop obj) {
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->follow_static_fields();
   {
     HandleMark hm;
     ik->vtable()->oop_follow_contents();
@@ -101,14 +101,10 @@ void instanceKlassKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(ik->adr_fields());
   MarkSweep::mark_and_push(ik->adr_constants());
   MarkSweep::mark_and_push(ik->adr_class_loader());
-  MarkSweep::mark_and_push(ik->adr_source_file_name());
-  MarkSweep::mark_and_push(ik->adr_source_debug_extension());
   MarkSweep::mark_and_push(ik->adr_inner_classes());
   MarkSweep::mark_and_push(ik->adr_protection_domain());
   MarkSweep::mark_and_push(ik->adr_host_klass());
   MarkSweep::mark_and_push(ik->adr_signers());
-  MarkSweep::mark_and_push(ik->adr_generic_signature());
-  MarkSweep::mark_and_push(ik->adr_bootstrap_method());
   MarkSweep::mark_and_push(ik->adr_class_annotations());
   MarkSweep::mark_and_push(ik->adr_fields_annotations());
   MarkSweep::mark_and_push(ik->adr_methods_annotations());
@@ -130,7 +126,6 @@ void instanceKlassKlass::oop_follow_contents(ParCompactionManager* cm,
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->follow_static_fields(cm);
   ik->vtable()->oop_follow_contents(cm);
   ik->itable()->oop_follow_contents(cm);
 
@@ -142,14 +137,10 @@ void instanceKlassKlass::oop_follow_contents(ParCompactionManager* cm,
   PSParallelCompact::mark_and_push(cm, ik->adr_fields());
   PSParallelCompact::mark_and_push(cm, ik->adr_constants());
   PSParallelCompact::mark_and_push(cm, ik->adr_class_loader());
-  PSParallelCompact::mark_and_push(cm, ik->adr_source_file_name());
-  PSParallelCompact::mark_and_push(cm, ik->adr_source_debug_extension());
   PSParallelCompact::mark_and_push(cm, ik->adr_inner_classes());
   PSParallelCompact::mark_and_push(cm, ik->adr_protection_domain());
   PSParallelCompact::mark_and_push(cm, ik->adr_host_klass());
   PSParallelCompact::mark_and_push(cm, ik->adr_signers());
-  PSParallelCompact::mark_and_push(cm, ik->adr_generic_signature());
-  PSParallelCompact::mark_and_push(cm, ik->adr_bootstrap_method());
   PSParallelCompact::mark_and_push(cm, ik->adr_class_annotations());
   PSParallelCompact::mark_and_push(cm, ik->adr_fields_annotations());
   PSParallelCompact::mark_and_push(cm, ik->adr_methods_annotations());
@@ -174,7 +165,6 @@ int instanceKlassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   // Don't call size() or oop_size() since that is a virtual call.
   int size = ik->object_size();
 
-  ik->iterate_static_fields(blk);
   ik->vtable()->oop_oop_iterate(blk);
   ik->itable()->oop_oop_iterate(blk);
 
@@ -189,14 +179,10 @@ int instanceKlassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   blk->do_oop(ik->adr_protection_domain());
   blk->do_oop(ik->adr_host_klass());
   blk->do_oop(ik->adr_signers());
-  blk->do_oop(ik->adr_source_file_name());
-  blk->do_oop(ik->adr_source_debug_extension());
   blk->do_oop(ik->adr_inner_classes());
   for (int i = 0; i < instanceKlass::implementors_limit; i++) {
     blk->do_oop(&ik->adr_implementors()[i]);
   }
-  blk->do_oop(ik->adr_generic_signature());
-  blk->do_oop(ik->adr_bootstrap_method());
   blk->do_oop(ik->adr_class_annotations());
   blk->do_oop(ik->adr_fields_annotations());
   blk->do_oop(ik->adr_methods_annotations());
@@ -218,7 +204,6 @@ int instanceKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
   // Don't call size() or oop_size() since that is a virtual call.
   int size = ik->object_size();
 
-  ik->iterate_static_fields(blk, mr);
   ik->vtable()->oop_oop_iterate_m(blk, mr);
   ik->itable()->oop_oop_iterate_m(blk, mr);
 
@@ -245,20 +230,12 @@ int instanceKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_signers();
   if (mr.contains(adr)) blk->do_oop(adr);
-  adr = ik->adr_source_file_name();
-  if (mr.contains(adr)) blk->do_oop(adr);
-  adr = ik->adr_source_debug_extension();
-  if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_inner_classes();
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_implementors();
   for (int i = 0; i < instanceKlass::implementors_limit; i++) {
     if (mr.contains(&adr[i])) blk->do_oop(&adr[i]);
   }
-  adr = ik->adr_generic_signature();
-  if (mr.contains(adr)) blk->do_oop(adr);
-  adr = ik->adr_bootstrap_method();
-  if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_class_annotations();
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = ik->adr_fields_annotations();
@@ -281,7 +258,6 @@ int instanceKlassKlass::oop_adjust_pointers(oop obj) {
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->adjust_static_fields();
   ik->vtable()->oop_adjust_pointers();
   ik->itable()->oop_adjust_pointers();
 
@@ -296,14 +272,10 @@ int instanceKlassKlass::oop_adjust_pointers(oop obj) {
   MarkSweep::adjust_pointer(ik->adr_protection_domain());
   MarkSweep::adjust_pointer(ik->adr_host_klass());
   MarkSweep::adjust_pointer(ik->adr_signers());
-  MarkSweep::adjust_pointer(ik->adr_source_file_name());
-  MarkSweep::adjust_pointer(ik->adr_source_debug_extension());
   MarkSweep::adjust_pointer(ik->adr_inner_classes());
   for (int i = 0; i < instanceKlass::implementors_limit; i++) {
     MarkSweep::adjust_pointer(&ik->adr_implementors()[i]);
   }
-  MarkSweep::adjust_pointer(ik->adr_generic_signature());
-  MarkSweep::adjust_pointer(ik->adr_bootstrap_method());
   MarkSweep::adjust_pointer(ik->adr_class_annotations());
   MarkSweep::adjust_pointer(ik->adr_fields_annotations());
   MarkSweep::adjust_pointer(ik->adr_methods_annotations());
@@ -318,7 +290,6 @@ int instanceKlassKlass::oop_adjust_pointers(oop obj) {
 #ifndef SERIALGC
 void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->push_static_fields(pm);
 
   oop* loader_addr = ik->adr_class_loader();
   if (PSScavenge::should_scavenge(loader_addr)) {
@@ -340,11 +311,6 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
     pm->claim_or_forward_depth(sg_addr);
   }
 
-  oop* bsm_addr = ik->adr_bootstrap_method();
-  if (PSScavenge::should_scavenge(bsm_addr)) {
-    pm->claim_or_forward_depth(bsm_addr);
-  }
-
   klassKlass::oop_push_contents(pm, obj);
 }
 
@@ -354,7 +320,6 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
          "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->update_static_fields();
   ik->vtable()->oop_update_pointers(cm);
   ik->itable()->oop_update_pointers(cm);
 
@@ -371,54 +336,31 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   return ik->object_size();
 }
 
-int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                            HeapWord* beg_addr,
-                                            HeapWord* end_addr) {
-  assert(obj->is_klass(),"must be a klass");
-  assert(klassOop(obj)->klass_part()->oop_is_instance_slow(),
-         "must be instance klass");
-
-  instanceKlass* ik = instanceKlass::cast(klassOop(obj));
-  ik->update_static_fields(beg_addr, end_addr);
-  ik->vtable()->oop_update_pointers(cm, beg_addr, end_addr);
-  ik->itable()->oop_update_pointers(cm, beg_addr, end_addr);
-
-  oop* const beg_oop = MAX2((oop*)beg_addr, ik->oop_block_beg());
-  oop* const end_oop = MIN2((oop*)end_addr, ik->oop_block_end());
-  for (oop* cur_oop = beg_oop; cur_oop < end_oop; ++cur_oop) {
-    PSParallelCompact::adjust_pointer(cur_oop);
-  }
-
-  // The oop_map_cache, jni_ids and jni_id_map are allocated from the C heap,
-  // and so don't lie within any 'Chunk' boundaries.  Update them when the
-  // lowest addressed oop in the instanceKlass 'oop_block' is updated.
-  if (beg_oop == ik->oop_block_beg()) {
-    OopClosure* closure = PSParallelCompact::adjust_root_pointer_closure();
-    iterate_c_heap_oops(ik, closure);
-  }
-
-  klassKlass::oop_update_pointers(cm, obj, beg_addr, end_addr);
-  return ik->object_size();
-}
 #endif // SERIALGC
 
 klassOop
-instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
+instanceKlassKlass::allocate_instance_klass(Symbol* name, int vtable_len, int itable_len,
                                             int static_field_size,
                                             unsigned nonstatic_oop_map_count,
                                             ReferenceType rt, TRAPS) {
 
   const int nonstatic_oop_map_size =
     instanceKlass::nonstatic_oop_map_size(nonstatic_oop_map_count);
-  int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + static_field_size + nonstatic_oop_map_size);
+  int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + nonstatic_oop_map_size);
 
   // Allocation
   KlassHandle h_this_klass(THREAD, as_klassOop());
   KlassHandle k;
   if (rt == REF_NONE) {
-    // regular klass
-    instanceKlass o;
-    k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
+    if (name != vmSymbols::java_lang_Class()) {
+      // regular klass
+      instanceKlass o;
+      k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
+    } else {
+      // Class
+      instanceMirrorKlass o;
+      k = base_create_klass(h_this_klass, size, o.vtbl_value(), CHECK_NULL);
+    }
   } else {
     // reference klass
     instanceRefKlass o;
@@ -444,7 +386,7 @@ instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
     ik->set_local_interfaces(NULL);
     ik->set_transitive_interfaces(NULL);
     ik->init_implementor();
-    ik->set_fields(NULL);
+    ik->set_fields(NULL, 0);
     ik->set_constants(NULL);
     ik->set_class_loader(NULL);
     ik->set_protection_domain(NULL);
@@ -452,8 +394,10 @@ instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
     ik->set_signers(NULL);
     ik->set_source_file_name(NULL);
     ik->set_source_debug_extension(NULL);
+    ik->set_source_debug_extension(NULL);
+    ik->set_array_name(NULL);
     ik->set_inner_classes(NULL);
-    ik->set_static_oop_field_size(0);
+    ik->set_static_oop_field_count(0);
     ik->set_nonstatic_field_size(0);
     ik->set_is_marked_dependent(false);
     ik->set_init_state(instanceKlass::allocated);
@@ -465,7 +409,6 @@ instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
     ik->set_breakpoints(NULL);
     ik->init_previous_versions();
     ik->set_generic_signature(NULL);
-    ik->set_bootstrap_method(NULL);
     ik->release_set_methods_jmethod_ids(NULL);
     ik->release_set_methods_cached_itable_indices(NULL);
     ik->set_class_annotations(NULL);
@@ -487,9 +430,6 @@ instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len,
     // To get verify to work - must be set to partial loaded before first GC point.
     k()->set_partially_loaded();
   }
-
-  // GC can happen here
-  java_lang_Class::create_mirror(k, CHECK_NULL); // Allocate mirror
   return k();
 }
 
@@ -590,11 +530,6 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
     } // pvw is cleaned up
   } // rm is cleaned up
 
-  if (ik->bootstrap_method() != NULL) {
-    st->print(BULLET"bootstrap method:  ");
-    ik->bootstrap_method()->print_value_on(st);
-    st->cr();
-  }
   if (ik->generic_signature() != NULL) {
     st->print(BULLET"generic signature: ");
     ik->generic_signature()->print_value_on(st);
@@ -610,13 +545,6 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->print_cr(BULLET"---- non-static fields (%d words):", ik->nonstatic_field_size());
   FieldPrinter print_nonstatic_field(st);
   ik->do_nonstatic_fields(&print_nonstatic_field);
-
-  st->print(BULLET"static oop maps:     ");
-  if (ik->static_oop_field_size() > 0) {
-    int first_offset = ik->offset_of_static_fields();
-    st->print("%d-%d", first_offset, first_offset + ik->static_oop_field_size() - 1);
-  }
-  st->cr();
 
   st->print(BULLET"non-static oop maps: ");
   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
@@ -667,7 +595,7 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
 #endif
     // Verify that klass is present in SystemDictionary
     if (ik->is_loaded() && !ik->is_anonymous()) {
-      symbolHandle h_name (thread, ik->name());
+      Symbol* h_name = ik->name();
       Handle h_loader (thread, ik->class_loader());
       Handle h_obj(thread, obj);
       SystemDictionary::verify_obj_klass_present(h_obj, h_name, h_loader);
@@ -675,7 +603,6 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
 
     // Verify static fields
     VerifyFieldClosure blk;
-    ik->iterate_static_fields(&blk);
 
     // Verify vtables
     if (ik->is_linked()) {
@@ -763,7 +690,8 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     guarantee(method_ordering->is_perm(),              "should be in permspace");
     guarantee(method_ordering->is_typeArray(),         "should be type array");
     int length = method_ordering->length();
-    if (JvmtiExport::can_maintain_original_method_order()) {
+    if (JvmtiExport::can_maintain_original_method_order() ||
+        (UseSharedSpaces && length != 0)) {
       guarantee(length == methods->length(),           "invalid method ordering length");
       jlong sum = 0;
       for (j = 0; j < length; j++) {
@@ -793,14 +721,6 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     guarantee(ik->constants()->is_constantPool(),    "should be constant pool");
     guarantee(ik->inner_classes()->is_perm(),        "should be in permspace");
     guarantee(ik->inner_classes()->is_typeArray(),   "should be type array");
-    if (ik->source_file_name() != NULL) {
-      guarantee(ik->source_file_name()->is_perm(),   "should be in permspace");
-      guarantee(ik->source_file_name()->is_symbol(), "should be symbol");
-    }
-    if (ik->source_debug_extension() != NULL) {
-      guarantee(ik->source_debug_extension()->is_perm(),   "should be in permspace");
-      guarantee(ik->source_debug_extension()->is_symbol(), "should be symbol");
-    }
     if (ik->protection_domain() != NULL) {
       guarantee(ik->protection_domain()->is_oop(),  "should be oop");
     }
@@ -809,10 +729,6 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
     }
     if (ik->signers() != NULL) {
       guarantee(ik->signers()->is_objArray(),       "should be obj array");
-    }
-    if (ik->generic_signature() != NULL) {
-      guarantee(ik->generic_signature()->is_perm(),   "should be in permspace");
-      guarantee(ik->generic_signature()->is_symbol(), "should be symbol");
     }
     if (ik->class_annotations() != NULL) {
       guarantee(ik->class_annotations()->is_typeArray(), "should be type array");

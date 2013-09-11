@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,10 +98,13 @@ bool StackMapTable::match_stackmap(
   bool result = true;
   StackMapFrame *stackmap_frame = _frame_array[frame_index];
   if (match) {
+    // when checking handler target, match == true && update == false
+    bool is_exception_handler = !update;
     // Has direct control flow from last instruction, need to match the two
     // frames.
     result = frame->is_assignable_to(
-      stackmap_frame, CHECK_VERIFY_(frame->verifier(), false));
+      stackmap_frame, is_exception_handler,
+      CHECK_VERIFY_(frame->verifier(), false));
   }
   if (update) {
     // Use the frame in stackmap table as current frame
@@ -184,8 +187,7 @@ VerificationType StackMapReader::parse_verification_type(u1* flags, TRAPS) {
       _stream->stackmap_format_error("bad class index", THREAD);
       return VerificationType::bogus_type();
     }
-    return VerificationType::reference_type(
-      symbolHandle(THREAD, _cp->klass_name_at(class_index)));
+    return VerificationType::reference_type(_cp->klass_name_at(class_index));
   }
   if (tag == ITEM_UninitializedThis) {
     if (flags != NULL) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,10 @@
 #include "runtime/handles.inline.hpp"
 #include "utilities/accessFlags.hpp"
 
+class TempNewSymbol;
+class FieldAllocationCount;
+
+
 // Parser for for .class files
 //
 // The bytes describing the class file structure is read from a Stream object
@@ -42,7 +46,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   bool _relax_verify;
   u2   _major_version;
   u2   _minor_version;
-  symbolHandle _class_name;
+  Symbol* _class_name;
   KlassHandle _host_klass;
   GrowableArray<Handle>* _cp_patches; // overrides for CP entries
 
@@ -73,7 +77,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                                   int length,
                                   Handle class_loader,
                                   Handle protection_domain,
-                                  symbolHandle class_name,
+                                  Symbol* class_name,
                                   TRAPS);
 
   // Field parsing
@@ -83,9 +87,11 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                               bool* is_synthetic_addr,
                               u2* generic_signature_index_addr,
                               typeArrayHandle* field_annotations, TRAPS);
-  typeArrayHandle parse_fields(constantPoolHandle cp, bool is_interface,
-                               struct FieldAllocationCount *fac,
-                               objArrayHandle* fields_annotations, TRAPS);
+  typeArrayHandle parse_fields(Symbol* class_name,
+                               constantPoolHandle cp, bool is_interface,
+                               FieldAllocationCount *fac,
+                               objArrayHandle* fields_annotations,
+                               u2* java_fields_count_ptr, TRAPS);
 
   // Method parsing
   methodHandle parse_method(constantPoolHandle cp, bool is_interface,
@@ -149,24 +155,6 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   objArrayHandle compute_transitive_interfaces(instanceKlassHandle super,
                                                objArrayHandle local_ifs, TRAPS);
 
-  // Special handling for certain classes.
-  // Add the "discovered" field to java.lang.ref.Reference if
-  // it does not exist.
-  void java_lang_ref_Reference_fix_pre(typeArrayHandle* fields_ptr,
-    constantPoolHandle cp, FieldAllocationCount *fac_ptr, TRAPS);
-  // Adjust the field allocation counts for java.lang.Class to add
-  // fake fields.
-  void java_lang_Class_fix_pre(objArrayHandle* methods_ptr,
-    FieldAllocationCount *fac_ptr, TRAPS);
-  // Adjust the next_nonstatic_oop_offset to place the fake fields
-  // before any Java fields.
-  void java_lang_Class_fix_post(int* next_nonstatic_oop_offset);
-  // Adjust the field allocation counts for java.dyn.MethodHandle to add
-  // a fake address (void*) field.
-  void java_dyn_MethodHandle_fix_pre(constantPoolHandle cp,
-                                     typeArrayHandle fields,
-                                     FieldAllocationCount *fac_ptr, TRAPS);
-
   // Format checker methods
   void classfile_parse_error(const char* msg, TRAPS);
   void classfile_parse_error(const char* msg, int index, TRAPS);
@@ -209,31 +197,31 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   }
 
   void throwIllegalSignature(
-      const char* type, symbolHandle name, symbolHandle sig, TRAPS);
+      const char* type, Symbol* name, Symbol* sig, TRAPS);
 
   bool is_supported_version(u2 major, u2 minor);
   bool has_illegal_visibility(jint flags);
 
   void verify_constantvalue(int constantvalue_index, int signature_index, constantPoolHandle cp, TRAPS);
   void verify_legal_utf8(const unsigned char* buffer, int length, TRAPS);
-  void verify_legal_class_name(symbolHandle name, TRAPS);
-  void verify_legal_field_name(symbolHandle name, TRAPS);
-  void verify_legal_method_name(symbolHandle name, TRAPS);
-  void verify_legal_field_signature(symbolHandle fieldname, symbolHandle signature, TRAPS);
-  int  verify_legal_method_signature(symbolHandle methodname, symbolHandle signature, TRAPS);
+  void verify_legal_class_name(Symbol* name, TRAPS);
+  void verify_legal_field_name(Symbol* name, TRAPS);
+  void verify_legal_method_name(Symbol* name, TRAPS);
+  void verify_legal_field_signature(Symbol* fieldname, Symbol* signature, TRAPS);
+  int  verify_legal_method_signature(Symbol* methodname, Symbol* signature, TRAPS);
   void verify_legal_class_modifiers(jint flags, TRAPS);
   void verify_legal_field_modifiers(jint flags, bool is_interface, TRAPS);
-  void verify_legal_method_modifiers(jint flags, bool is_interface, symbolHandle name, TRAPS);
+  void verify_legal_method_modifiers(jint flags, bool is_interface, Symbol* name, TRAPS);
   bool verify_unqualified_name(char* name, unsigned int length, int type);
   char* skip_over_field_name(char* name, bool slash_ok, unsigned int length);
   char* skip_over_field_signature(char* signature, bool void_ok, unsigned int length, TRAPS);
 
   bool is_anonymous() {
-    assert(AnonymousClasses || _host_klass.is_null(), "");
+    assert(EnableInvokeDynamic || _host_klass.is_null(), "");
     return _host_klass.not_null();
   }
   bool has_cp_patch_at(int index) {
-    assert(AnonymousClasses, "");
+    assert(EnableInvokeDynamic, "");
     assert(index >= 0, "oob");
     return (_cp_patches != NULL
             && index < _cp_patches->length()
@@ -256,7 +244,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   // constant pool construction, but in later versions they can.
   // %%% Let's phase out the old is_klass_reference.
   bool is_klass_reference(constantPoolHandle cp, int index) {
-    return ((LinkWellKnownClasses || AnonymousClasses)
+    return ((LinkWellKnownClasses || EnableInvokeDynamic)
             ? cp->tag_at(index).is_klass_or_reference()
             : cp->tag_at(index).is_klass_reference());
   }
@@ -272,21 +260,21 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   //
   // "parsed_name" is updated by this method, and is the name found
   // while parsing the stream.
-  instanceKlassHandle parseClassFile(symbolHandle name,
+  instanceKlassHandle parseClassFile(Symbol* name,
                                      Handle class_loader,
                                      Handle protection_domain,
-                                     symbolHandle& parsed_name,
+                                     TempNewSymbol& parsed_name,
                                      bool verify,
                                      TRAPS) {
     KlassHandle no_host_klass;
     return parseClassFile(name, class_loader, protection_domain, no_host_klass, NULL, parsed_name, verify, THREAD);
   }
-  instanceKlassHandle parseClassFile(symbolHandle name,
+  instanceKlassHandle parseClassFile(Symbol* name,
                                      Handle class_loader,
                                      Handle protection_domain,
                                      KlassHandle host_klass,
                                      GrowableArray<Handle>* cp_patches,
-                                     symbolHandle& parsed_name,
+                                     TempNewSymbol& parsed_name,
                                      bool verify,
                                      TRAPS);
 

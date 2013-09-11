@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,12 @@
 #endif
 #ifdef TARGET_ARCH_zero
 # include "nativeInst_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "nativeInst_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "nativeInst_ppc.hpp"
 #endif
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
@@ -143,6 +149,32 @@ void CodeBlob::set_oop_maps(OopMapSet* p) {
   } else {
     _oop_maps = NULL;
   }
+}
+
+
+void CodeBlob::trace_new_stub(CodeBlob* stub, const char* name1, const char* name2) {
+  // Do not hold the CodeCache lock during name formatting.
+  assert(!CodeCache_lock->owned_by_self(), "release CodeCache before registering the stub");
+
+  if (stub != NULL) {
+    char stub_id[256];
+    assert(strlen(name1) + strlen(name2) < sizeof(stub_id), "");
+    jio_snprintf(stub_id, sizeof(stub_id), "%s%s", name1, name2);
+    if (PrintStubCode) {
+      tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, (intptr_t) stub);
+      Disassembler::decode(stub->code_begin(), stub->code_end());
+    }
+    Forte::register_stub(stub_id, stub->code_begin(), stub->code_end());
+
+    if (JvmtiExport::should_post_dynamic_code_generated()) {
+      const char* stub_name = name2;
+      if (name2[0] == '\0')  stub_name = name1;
+      JvmtiExport::post_dynamic_code_generated(stub_name, stub->code_begin(), stub->code_end());
+    }
+  }
+
+  // Track memory usage statistic after releasing CodeCache_lock
+  MemoryService::track_code_cache_memory_usage();
 }
 
 
@@ -306,23 +338,7 @@ RuntimeStub* RuntimeStub::new_runtime_stub(const char* stub_name,
     stub = new (size) RuntimeStub(stub_name, cb, size, frame_complete, frame_size, oop_maps, caller_must_gc_arguments);
   }
 
-  // Do not hold the CodeCache lock during name formatting.
-  if (stub != NULL) {
-    char stub_id[256];
-    jio_snprintf(stub_id, sizeof(stub_id), "RuntimeStub - %s", stub_name);
-    if (PrintStubCode) {
-      tty->print_cr("Decoding %s " INTPTR_FORMAT, stub_id, stub);
-      Disassembler::decode(stub->code_begin(), stub->code_end());
-    }
-    Forte::register_stub(stub_id, stub->code_begin(), stub->code_end());
-
-    if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated(stub_name, stub->code_begin(), stub->code_end());
-    }
-  }
-
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  trace_new_stub(stub, "RuntimeStub - ", stub_name);
 
   return stub;
 }
@@ -332,6 +348,50 @@ void* RuntimeStub::operator new(size_t s, unsigned size) {
   void* p = CodeCache::allocate(size);
   if (!p) fatal("Initial size of CodeCache is too small");
   return p;
+}
+
+// operator new shared by all singletons:
+void* SingletonBlob::operator new(size_t s, unsigned size) {
+  void* p = CodeCache::allocate(size);
+  if (!p) fatal("Initial size of CodeCache is too small");
+  return p;
+}
+
+
+//----------------------------------------------------------------------------------------------------
+// Implementation of RicochetBlob
+
+RicochetBlob::RicochetBlob(
+  CodeBuffer* cb,
+  int         size,
+  int         bounce_offset,
+  int         exception_offset,
+  int         frame_size
+)
+: SingletonBlob("RicochetBlob", cb, sizeof(RicochetBlob), size, frame_size, (OopMapSet*) NULL)
+{
+  _bounce_offset = bounce_offset;
+  _exception_offset = exception_offset;
+}
+
+
+RicochetBlob* RicochetBlob::create(
+  CodeBuffer* cb,
+  int         bounce_offset,
+  int         exception_offset,
+  int         frame_size)
+{
+  RicochetBlob* blob = NULL;
+  ThreadInVMfromUnknown __tiv;  // get to VM state in case we block on CodeCache_lock
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    unsigned int size = allocation_size(cb, sizeof(RicochetBlob));
+    blob = new (size) RicochetBlob(cb, size, bounce_offset, exception_offset, frame_size);
+  }
+
+  trace_new_stub(blob, "RicochetBlob");
+
+  return blob;
 }
 
 
@@ -380,33 +440,11 @@ DeoptimizationBlob* DeoptimizationBlob::create(
                                          frame_size);
   }
 
-  // Do not hold the CodeCache lock during name formatting.
-  if (blob != NULL) {
-    char blob_id[256];
-    jio_snprintf(blob_id, sizeof(blob_id), "DeoptimizationBlob@" PTR_FORMAT, blob->code_begin());
-    if (PrintStubCode) {
-      tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
-      Disassembler::decode(blob->code_begin(), blob->code_end());
-    }
-    Forte::register_stub(blob_id, blob->code_begin(), blob->code_end());
-
-    if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated("DeoptimizationBlob", blob->code_begin(), blob->code_end());
-    }
-  }
-
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  trace_new_stub(blob, "DeoptimizationBlob");
 
   return blob;
 }
 
-
-void* DeoptimizationBlob::operator new(size_t s, unsigned size) {
-  void* p = CodeCache::allocate(size);
-  if (!p) fatal("Initial size of CodeCache is too small");
-  return p;
-}
 
 //----------------------------------------------------------------------------------------------------
 // Implementation of UncommonTrapBlob
@@ -435,33 +473,12 @@ UncommonTrapBlob* UncommonTrapBlob::create(
     blob = new (size) UncommonTrapBlob(cb, size, oop_maps, frame_size);
   }
 
-  // Do not hold the CodeCache lock during name formatting.
-  if (blob != NULL) {
-    char blob_id[256];
-    jio_snprintf(blob_id, sizeof(blob_id), "UncommonTrapBlob@" PTR_FORMAT, blob->code_begin());
-    if (PrintStubCode) {
-      tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
-      Disassembler::decode(blob->code_begin(), blob->code_end());
-    }
-    Forte::register_stub(blob_id, blob->code_begin(), blob->code_end());
-
-    if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated("UncommonTrapBlob", blob->code_begin(), blob->code_end());
-    }
-  }
-
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  trace_new_stub(blob, "UncommonTrapBlob");
 
   return blob;
 }
 
 
-void* UncommonTrapBlob::operator new(size_t s, unsigned size) {
-  void* p = CodeCache::allocate(size);
-  if (!p) fatal("Initial size of CodeCache is too small");
-  return p;
-}
 #endif // COMPILER2
 
 
@@ -492,33 +509,12 @@ ExceptionBlob* ExceptionBlob::create(
     blob = new (size) ExceptionBlob(cb, size, oop_maps, frame_size);
   }
 
-  // We do not need to hold the CodeCache lock during name formatting
-  if (blob != NULL) {
-    char blob_id[256];
-    jio_snprintf(blob_id, sizeof(blob_id), "ExceptionBlob@" PTR_FORMAT, blob->code_begin());
-    if (PrintStubCode) {
-      tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
-      Disassembler::decode(blob->code_begin(), blob->code_end());
-    }
-    Forte::register_stub(blob_id, blob->code_begin(), blob->code_end());
-
-    if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated("ExceptionBlob", blob->code_begin(), blob->code_end());
-    }
-  }
-
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  trace_new_stub(blob, "ExceptionBlob");
 
   return blob;
 }
 
 
-void* ExceptionBlob::operator new(size_t s, unsigned size) {
-  void* p = CodeCache::allocate(size);
-  if (!p) fatal("Initial size of CodeCache is too small");
-  return p;
-}
 #endif // COMPILER2
 
 
@@ -548,32 +544,9 @@ SafepointBlob* SafepointBlob::create(
     blob = new (size) SafepointBlob(cb, size, oop_maps, frame_size);
   }
 
-  // We do not need to hold the CodeCache lock during name formatting.
-  if (blob != NULL) {
-    char blob_id[256];
-    jio_snprintf(blob_id, sizeof(blob_id), "SafepointBlob@" PTR_FORMAT, blob->code_begin());
-    if (PrintStubCode) {
-      tty->print_cr("Decoding %s " INTPTR_FORMAT, blob_id, blob);
-      Disassembler::decode(blob->code_begin(), blob->code_end());
-    }
-    Forte::register_stub(blob_id, blob->code_begin(), blob->code_end());
-
-    if (JvmtiExport::should_post_dynamic_code_generated()) {
-      JvmtiExport::post_dynamic_code_generated("SafepointBlob", blob->code_begin(), blob->code_end());
-    }
-  }
-
-  // Track memory usage statistic after releasing CodeCache_lock
-  MemoryService::track_code_cache_memory_usage();
+  trace_new_stub(blob, "SafepointBlob");
 
   return blob;
-}
-
-
-void* SafepointBlob::operator new(size_t s, unsigned size) {
-  void* p = CodeCache::allocate(size);
-  if (!p) fatal("Initial size of CodeCache is too small");
-  return p;
 }
 
 

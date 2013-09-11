@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -375,9 +375,9 @@ intptr_t IdealGraphPrinter::get_node_id(Node *n) {
   return (intptr_t)(n);
 }
 
-void IdealGraphPrinter::visit_node(Node *n, void *param) {
+void IdealGraphPrinter::visit_node(Node *n, bool edges, VectorSet* temp_set) {
 
-  if(param) {
+  if (edges) {
 
     // Output edge
     intptr_t dest_id = get_node_id(n);
@@ -426,9 +426,6 @@ void IdealGraphPrinter::visit_node(Node *n, void *param) {
     if (flags & Node::Flag_is_Copy) {
       print_prop("is_copy", "true");
     }
-    if (flags & Node::Flag_is_Call) {
-      print_prop("is_call", "true");
-    }
     if (flags & Node::Flag_rematerialize) {
       print_prop("rematerialize", "true");
     }
@@ -444,26 +441,14 @@ void IdealGraphPrinter::visit_node(Node *n, void *param) {
     if (flags & Node::Flag_is_cisc_alternate) {
       print_prop("is_cisc_alternate", "true");
     }
-    if (flags & Node::Flag_is_Branch) {
-      print_prop("is_branch", "true");
-    }
-    if (flags & Node::Flag_is_block_start) {
-      print_prop("is_block_start", "true");
-    }
-    if (flags & Node::Flag_is_Goto) {
-      print_prop("is_goto", "true");
-    }
     if (flags & Node::Flag_is_dead_loop_safe) {
       print_prop("is_dead_loop_safe", "true");
     }
     if (flags & Node::Flag_may_be_short_branch) {
       print_prop("may_be_short_branch", "true");
     }
-    if (flags & Node::Flag_is_safepoint_node) {
-      print_prop("is_safepoint_node", "true");
-    }
-    if (flags & Node::Flag_is_pc_relative) {
-      print_prop("is_pc_relative", "true");
+    if (flags & Node::Flag_has_call) {
+      print_prop("has_call", "true");
     }
 
     if (C->matcher() != NULL) {
@@ -599,12 +584,33 @@ void IdealGraphPrinter::visit_node(Node *n, void *param) {
 
     if (caller != NULL) {
       stringStream bciStream;
+      ciMethod* last = NULL;
+      int last_bci;
       while(caller) {
+        if (caller->has_method()) {
+          last = caller->method();
+          last_bci = caller->bci();
+        }
         bciStream.print("%d ", caller->bci());
         caller = caller->caller();
       }
       print_prop("bci", bciStream.as_string());
+      if (last != NULL && last->has_linenumber_table() && last_bci >= 0) {
+        print_prop("line", last->line_number_from_bci(last_bci));
+      }
     }
+
+#ifdef ASSERT
+    if (node->debug_orig() != NULL) {
+      temp_set->Clear();
+      stringStream dorigStream;
+      Node* dorig = node->debug_orig();
+      while (dorig && temp_set->test_set(dorig->_idx)) {
+        dorigStream.print("%d ", dorig->_idx);
+      }
+      print_prop("debug_orig", dorigStream.as_string());
+    }
+#endif
 
     if (_chaitin && _chaitin != (PhaseChaitin *)0xdeadbeef) {
       buffer[0] = 0;
@@ -621,17 +627,28 @@ void IdealGraphPrinter::visit_node(Node *n, void *param) {
   }
 }
 
-void IdealGraphPrinter::walk_nodes(Node *start, void *param) {
+void IdealGraphPrinter::walk_nodes(Node *start, bool edges, VectorSet* temp_set) {
 
 
   VectorSet visited(Thread::current()->resource_area());
   GrowableArray<Node *> nodeStack(Thread::current()->resource_area(), 0, 0, NULL);
   nodeStack.push(start);
   visited.test_set(start->_idx);
+  if (C->cfg() != NULL) {
+    // once we have a CFG there are some nodes that aren't really
+    // reachable but are in the CFG so add them here.
+    for (uint i = 0; i < C->cfg()->_blocks.size(); i++) {
+      Block *b = C->cfg()->_blocks[i];
+      for (uint s = 0; s < b->_nodes.size(); s++) {
+        nodeStack.push(b->_nodes[s]);
+      }
+    }
+  }
+
   while(nodeStack.length() > 0) {
 
     Node *n = nodeStack.pop();
-    visit_node(n, param);
+    visit_node(n, edges, temp_set);
 
     if (_traverse_outs) {
       for (DUIterator i = n->outs(); n->has_out(i); i++) {
@@ -670,12 +687,14 @@ void IdealGraphPrinter::print(Compile* compile, const char *name, Node *node, in
   print_attr(GRAPH_NAME_PROPERTY, (const char *)name);
   end_head();
 
+  VectorSet temp_set(Thread::current()->resource_area());
+
   head(NODES_ELEMENT);
-  walk_nodes(node, NULL);
+  walk_nodes(node, false, &temp_set);
   tail(NODES_ELEMENT);
 
   head(EDGES_ELEMENT);
-  walk_nodes(node, (void *)1);
+  walk_nodes(node, true, &temp_set);
   tail(EDGES_ELEMENT);
   if (C->cfg() != NULL) {
     head(CONTROL_FLOW_ELEMENT);
@@ -686,16 +705,23 @@ void IdealGraphPrinter::print(Compile* compile, const char *name, Node *node, in
       end_head();
 
       head(SUCCESSORS_ELEMENT);
-      for (uint s = 0; s < C->cfg()->_blocks[i]->_num_succs; s++) {
+      for (uint s = 0; s < b->_num_succs; s++) {
         begin_elem(SUCCESSOR_ELEMENT);
         print_attr(BLOCK_NAME_PROPERTY, b->_succs[s]->_pre_order);
         end_elem();
       }
       tail(SUCCESSORS_ELEMENT);
 
+      head(NODES_ELEMENT);
+      for (uint s = 0; s < b->_nodes.size(); s++) {
+        begin_elem(NODE_ELEMENT);
+        print_attr(NODE_ID_PROPERTY, get_node_id(b->_nodes[s]));
+        end_elem();
+      }
+      tail(NODES_ELEMENT);
+
       tail(BLOCK_ELEMENT);
     }
-
     tail(CONTROL_FLOW_ELEMENT);
   }
   tail(GRAPH_ELEMENT);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,10 +46,10 @@ PSPermGen::PSPermGen(ReservedSpace rs, size_t alignment,
 
 HeapWord* PSPermGen::allocate_permanent(size_t size) {
   assert_locked_or_safepoint(Heap_lock);
-  HeapWord* obj = allocate_noexpand(size, false);
+  HeapWord* obj = allocate_noexpand(size);
 
   if (obj == NULL) {
-    obj = expand_and_allocate(size, false);
+    obj = expand_and_allocate(size);
   }
 
   return obj;
@@ -119,12 +119,6 @@ void PSPermGen::compute_new_size(size_t used_before_collection) {
                            heap->total_collections(),
                            size_before, _virtual_space->committed_size());
   }
-}
-
-
-
-void PSPermGen::move_and_update(ParCompactionManager* cm) {
-  PSParallelCompact::move_and_update(cm, PSParallelCompact::perm_space_id);
 }
 
 void PSPermGen::precompact() {

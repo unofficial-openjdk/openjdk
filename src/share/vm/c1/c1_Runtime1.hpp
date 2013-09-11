@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@ class StubAssembler;
   stub(new_multi_array)              \
   stub(handle_exception_nofpu)         /* optimized version that does not preserve fpu registers */ \
   stub(handle_exception)             \
+  stub(handle_exception_from_callee) \
   stub(throw_array_store_exception)  \
   stub(throw_class_cast_exception)   \
   stub(throw_incompatible_class_change_error)   \
@@ -62,9 +63,9 @@ class StubAssembler;
   stub(monitorenter_nofpu)             /* optimized version that does not preserve fpu registers */ \
   stub(monitorexit)                  \
   stub(monitorexit_nofpu)              /* optimized version that does not preserve fpu registers */ \
+  stub(deoptimize)                   \
   stub(access_field_patching)        \
   stub(load_klass_patching)          \
-  stub(jvmti_exception_throw)        \
   stub(g1_pre_barrier_slow)          \
   stub(g1_post_barrier_slow)         \
   stub(fpu2long_stub)                \
@@ -93,7 +94,10 @@ class Runtime1: public AllStatic {
   static int _generic_arraycopy_cnt;
   static int _primitive_arraycopy_cnt;
   static int _oop_arraycopy_cnt;
+  static int _generic_arraycopystub_cnt;
   static int _arraycopy_slowcase_cnt;
+  static int _arraycopy_checkcast_cnt;
+  static int _arraycopy_checkcast_attempt_cnt;
   static int _new_type_array_slowcase_cnt;
   static int _new_object_array_slowcase_cnt;
   static int _new_instance_slowcase_cnt;
@@ -116,11 +120,11 @@ class Runtime1: public AllStatic {
   static const char* _blob_names[];
 
   // stub generation
-  static void generate_blob_for(BufferBlob* blob, StubID id);
-  static OopMapSet* generate_code_for(StubID id, StubAssembler* masm);
+  static void       generate_blob_for(BufferBlob* blob, StubID id);
+  static OopMapSet* generate_code_for(StubID id, StubAssembler* sasm);
   static OopMapSet* generate_exception_throw(StubAssembler* sasm, address target, bool has_argument);
-  static void generate_handle_exception(StubAssembler *sasm, OopMapSet* oop_maps, OopMap* oop_map, bool ignore_fpu_registers = false);
-  static void generate_unwind_exception(StubAssembler *sasm);
+  static OopMapSet* generate_handle_exception(StubID id, StubAssembler* sasm);
+  static void       generate_unwind_exception(StubAssembler *sasm);
   static OopMapSet* generate_patching(StubAssembler* sasm, address target);
 
   static OopMapSet* generate_stub_call(StubAssembler* sasm, Register result, address entry,
@@ -137,18 +141,19 @@ class Runtime1: public AllStatic {
   static void unimplemented_entry   (JavaThread* thread, StubID id);
 
   static address exception_handler_for_pc(JavaThread* thread);
-  static void post_jvmti_exception_throw(JavaThread* thread);
 
   static void throw_range_check_exception(JavaThread* thread, int index);
   static void throw_index_exception(JavaThread* thread, int index);
   static void throw_div0_exception(JavaThread* thread);
   static void throw_null_pointer_exception(JavaThread* thread);
-  static void throw_class_cast_exception(JavaThread* thread, oopDesc* obect);
+  static void throw_class_cast_exception(JavaThread* thread, oopDesc* object);
   static void throw_incompatible_class_change_error(JavaThread* thread);
-  static void throw_array_store_exception(JavaThread* thread);
+  static void throw_array_store_exception(JavaThread* thread, oopDesc* object);
 
   static void monitorenter(JavaThread* thread, oopDesc* obj, BasicObjectLock* lock);
   static void monitorexit (JavaThread* thread, BasicObjectLock* lock);
+
+  static void deoptimize(JavaThread* thread);
 
   static int access_field_patching(JavaThread* thread);
   static int move_klass_patching(JavaThread* thread);
@@ -173,7 +178,8 @@ class Runtime1: public AllStatic {
   static void trace_block_entry(jint block_id);
 
 #ifndef PRODUCT
-  static address throw_count_address()       { return (address)&_throw_count;       }
+  static address throw_count_address()               { return (address)&_throw_count;             }
+  static address arraycopy_count_address(BasicType type);
 #endif
 
   // directly accessible leaf routine

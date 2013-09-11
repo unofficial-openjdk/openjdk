@@ -57,7 +57,12 @@ class LoopNode : public RegionNode {
 protected:
   short _loop_flags;
   // Names for flag bitfields
-  enum { pre_post_main=0, inner_loop=8, partial_peel_loop=16, partial_peel_failed=32  };
+  enum { Normal=0, Pre=1, Main=2, Post=3, PreMainPostFlagsMask=3,
+         MainHasNoPreLoop=4,
+         HasExactTripCount=8,
+         InnerLoop=16,
+         PartialPeelLoop=32,
+         PartialPeelFailed=64 };
   char _unswitch_count;
   enum { _unswitch_max=3 };
 
@@ -65,13 +70,13 @@ public:
   // Names for edge indices
   enum { Self=0, EntryControl, LoopBackControl };
 
-  int is_inner_loop() const { return _loop_flags & inner_loop; }
-  void set_inner_loop() { _loop_flags |= inner_loop; }
+  int is_inner_loop() const { return _loop_flags & InnerLoop; }
+  void set_inner_loop() { _loop_flags |= InnerLoop; }
 
-  int is_partial_peel_loop() const { return _loop_flags & partial_peel_loop; }
-  void set_partial_peel_loop() { _loop_flags |= partial_peel_loop; }
-  int partial_peel_has_failed() const { return _loop_flags & partial_peel_failed; }
-  void mark_partial_peel_failed() { _loop_flags |= partial_peel_failed; }
+  int is_partial_peel_loop() const { return _loop_flags & PartialPeelLoop; }
+  void set_partial_peel_loop() { _loop_flags |= PartialPeelLoop; }
+  int partial_peel_has_failed() const { return _loop_flags & PartialPeelFailed; }
+  void mark_partial_peel_failed() { _loop_flags |= PartialPeelFailed; }
 
   int unswitch_max() { return _unswitch_max; }
   int unswitch_count() { return _unswitch_count; }
@@ -93,6 +98,7 @@ public:
       in(1) != NULL && phase->type(in(1)) != Type::TOP &&
       in(2) != NULL && phase->type(in(2)) != Type::TOP;
   }
+  bool is_valid_counted_loop() const;
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
 #endif
@@ -101,9 +107,8 @@ public:
 //------------------------------Counted Loops----------------------------------
 // Counted loops are all trip-counted loops, with exactly 1 trip-counter exit
 // path (and maybe some other exit paths).  The trip-counter exit is always
-// last in the loop.  The trip-counter does not have to stride by a constant,
-// but it does have to stride by a loop-invariant amount; the exit value is
-// also loop invariant.
+// last in the loop.  The trip-counter have to stride by a constant;
+// the exit value is also loop invariant.
 
 // CountedLoopNodes and CountedLoopEndNodes come in matched pairs.  The
 // CountedLoopNode has the incoming loop control and the loop-back-control
@@ -112,7 +117,7 @@ public:
 // CountedLoopNode if there is control flow in the loop), the post-increment
 // trip-counter value, and the limit.  The trip-counter value is always of
 // the form (Op old-trip-counter stride).  The old-trip-counter is produced
-// by a Phi connected to the CountedLoopNode.  The stride is loop invariant.
+// by a Phi connected to the CountedLoopNode.  The stride is constant.
 // The Op is any commutable opcode, including Add, Mul, Xor.  The
 // CountedLoopEndNode also takes in the loop-invariant limit value.
 
@@ -137,8 +142,8 @@ class CountedLoopNode : public LoopNode {
   // the Main CountedLoop.  Used to assert that we understand the graph shape.
   node_idx_t _main_idx;
 
-  // Known trip count calculated by policy_maximally_unroll
-  int   _trip_count;
+  // Known trip count calculated by compute_exact_trip_count()
+  uint  _trip_count;
 
   // Expected trip count from profile data
   float _profile_trip_cnt;
@@ -152,7 +157,7 @@ class CountedLoopNode : public LoopNode {
 
 public:
   CountedLoopNode( Node *entry, Node *backedge )
-    : LoopNode(entry, backedge), _trip_count(max_jint),
+    : LoopNode(entry, backedge), _main_idx(0), _trip_count(max_juint),
       _profile_trip_cnt(COUNT_UNKNOWN), _unrolled_count_log2(0),
       _node_count_before_unroll(0) {
     init_class_id(Class_CountedLoop);
@@ -194,13 +199,12 @@ public:
 
   // A 'main' loop that is ONLY unrolled or peeled, never RCE'd or
   // Aligned, may be missing it's pre-loop.
-  enum { Normal=0, Pre=1, Main=2, Post=3, PrePostFlagsMask=3, Main_Has_No_Pre_Loop=4 };
-  int is_normal_loop() const { return (_loop_flags&PrePostFlagsMask) == Normal; }
-  int is_pre_loop   () const { return (_loop_flags&PrePostFlagsMask) == Pre;    }
-  int is_main_loop  () const { return (_loop_flags&PrePostFlagsMask) == Main;   }
-  int is_post_loop  () const { return (_loop_flags&PrePostFlagsMask) == Post;   }
-  int is_main_no_pre_loop() const { return _loop_flags & Main_Has_No_Pre_Loop; }
-  void set_main_no_pre_loop() { _loop_flags |= Main_Has_No_Pre_Loop; }
+  int is_normal_loop() const { return (_loop_flags&PreMainPostFlagsMask) == Normal; }
+  int is_pre_loop   () const { return (_loop_flags&PreMainPostFlagsMask) == Pre;    }
+  int is_main_loop  () const { return (_loop_flags&PreMainPostFlagsMask) == Main;   }
+  int is_post_loop  () const { return (_loop_flags&PreMainPostFlagsMask) == Post;   }
+  int is_main_no_pre_loop() const { return _loop_flags & MainHasNoPreLoop; }
+  void set_main_no_pre_loop() { _loop_flags |= MainHasNoPreLoop; }
 
   int main_idx() const { return _main_idx; }
 
@@ -208,10 +212,19 @@ public:
   void set_pre_loop  (CountedLoopNode *main) { assert(is_normal_loop(),""); _loop_flags |= Pre ; _main_idx = main->_idx; }
   void set_main_loop (                     ) { assert(is_normal_loop(),""); _loop_flags |= Main;                         }
   void set_post_loop (CountedLoopNode *main) { assert(is_normal_loop(),""); _loop_flags |= Post; _main_idx = main->_idx; }
-  void set_normal_loop(                    ) { _loop_flags &= ~PrePostFlagsMask; }
+  void set_normal_loop(                    ) { _loop_flags &= ~PreMainPostFlagsMask; }
 
-  void set_trip_count(int tc) { _trip_count = tc; }
-  int trip_count()            { return _trip_count; }
+  void set_trip_count(uint tc) { _trip_count = tc; }
+  uint trip_count()            { return _trip_count; }
+
+  bool has_exact_trip_count() const { return (_loop_flags & HasExactTripCount) != 0; }
+  void set_exact_trip_count(uint tc) {
+    _trip_count = tc;
+    _loop_flags |= HasExactTripCount;
+  }
+  void set_nonexact_trip_count() {
+    _loop_flags &= ~HasExactTripCount;
+  }
 
   void set_profile_trip_cnt(float ptc) { _profile_trip_cnt = ptc; }
   float profile_trip_cnt()             { return _profile_trip_cnt; }
@@ -276,6 +289,28 @@ inline Node *CountedLoopNode::limit() const { return loopexit() ? loopexit()->li
 inline Node *CountedLoopNode::incr() const { return loopexit() ? loopexit()->incr() : NULL; }
 inline Node *CountedLoopNode::phi() const { return loopexit() ? loopexit()->phi() : NULL; }
 
+//------------------------------LoopLimitNode-----------------------------
+// Counted Loop limit node which represents exact final iterator value:
+// trip_count = (limit - init_trip + stride - 1)/stride
+// final_value= trip_count * stride + init_trip.
+// Use HW instructions to calculate it when it can overflow in integer.
+// Note, final_value should fit into integer since counted loop has
+// limit check: limit <= max_int-stride.
+class LoopLimitNode : public Node {
+  enum { Init=1, Limit=2, Stride=3 };
+ public:
+  LoopLimitNode( Compile* C, Node *init, Node *limit, Node *stride ) : Node(0,init,limit,stride) {
+    // Put it on the Macro nodes list to optimize during macro nodes expansion.
+    init_flags(Flag_is_macro);
+    C->add_macro_node(this);
+  }
+  virtual int Opcode() const;
+  virtual const Type *bottom_type() const { return TypeInt::INT; }
+  virtual uint ideal_reg() const { return Op_RegI; }
+  virtual const Type *Value( PhaseTransform *phase ) const;
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+  virtual Node *Identity( PhaseTransform *phase );
+};
 
 // -----------------------------IdealLoopTree----------------------------------
 class IdealLoopTree : public ResourceObj {
@@ -384,6 +419,9 @@ public:
   // Micro-benchmark spamming.  Remove empty loops.
   bool policy_do_remove_empty_loop( PhaseIdealLoop *phase );
 
+  // Convert one iteration loop into normal code.
+  bool policy_do_one_iteration_loop( PhaseIdealLoop *phase );
+
   // Return TRUE or FALSE if the loop should be peeled or not.  Peel if we can
   // make some loop-invariant test (usually a null-check) happen before the
   // loop.
@@ -411,6 +449,9 @@ public:
 
   // Return TRUE if "iff" is a range check.
   bool is_range_check_if(IfNode *iff, PhaseIdealLoop *phase, Invariance& invar) const;
+
+  // Compute loop exact trip count if possible
+  void compute_exact_trip_count( PhaseIdealLoop *phase );
 
   // Compute loop trip count from profile data
   void compute_profile_trip_cnt( PhaseIdealLoop *phase );
@@ -696,18 +737,21 @@ private:
   // Is safept not required by an outer loop?
   bool is_deleteable_safept(Node* sfpt);
 
+  // Replace parallel induction variable (parallel to trip counter)
+  void replace_parallel_iv(IdealLoopTree *loop);
+
   // Perform verification that the graph is valid.
   PhaseIdealLoop( PhaseIterGVN &igvn) :
     PhaseTransform(Ideal_Loop),
     _igvn(igvn),
-    _dom_lca_tags(C->comp_arena()),
+    _dom_lca_tags(arena()), // Thread::resource_area
     _verify_me(NULL),
     _verify_only(true) {
     build_and_optimize(false, false);
   }
 
   // build the loop tree and perform any requested optimizations
-  void build_and_optimize(bool do_split_if, bool do_loop_pred);
+  void build_and_optimize(bool do_split_if, bool skip_loop_opts);
 
 public:
   // Dominators for the sea of nodes
@@ -718,20 +762,20 @@ public:
   Node *dom_lca_internal( Node *n1, Node *n2 ) const;
 
   // Compute the Ideal Node to Loop mapping
-  PhaseIdealLoop( PhaseIterGVN &igvn, bool do_split_ifs, bool do_loop_pred) :
+  PhaseIdealLoop( PhaseIterGVN &igvn, bool do_split_ifs, bool skip_loop_opts = false) :
     PhaseTransform(Ideal_Loop),
     _igvn(igvn),
-    _dom_lca_tags(C->comp_arena()),
+    _dom_lca_tags(arena()), // Thread::resource_area
     _verify_me(NULL),
     _verify_only(false) {
-    build_and_optimize(do_split_ifs, do_loop_pred);
+    build_and_optimize(do_split_ifs, skip_loop_opts);
   }
 
   // Verify that verify_me made the same decisions as a fresh run.
   PhaseIdealLoop( PhaseIterGVN &igvn, const PhaseIdealLoop *verify_me) :
     PhaseTransform(Ideal_Loop),
     _igvn(igvn),
-    _dom_lca_tags(C->comp_arena()),
+    _dom_lca_tags(arena()), // Thread::resource_area
     _verify_me(verify_me),
     _verify_only(false) {
     build_and_optimize(false, false);
@@ -751,7 +795,9 @@ public:
   // Per-Node transform
   virtual Node *transform( Node *a_node ) { return 0; }
 
-  Node *is_counted_loop( Node *x, IdealLoopTree *loop );
+  bool is_counted_loop( Node *x, IdealLoopTree *loop );
+
+  Node* exact_limit( IdealLoopTree *loop );
 
   // Return a post-walked LoopNode
   IdealLoopTree *get_loop( Node *n ) const {
@@ -797,7 +843,7 @@ public:
   void insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_new, bool peel_only );
   // If Node n lives in the back_ctrl block, we clone a private version of n
   // in preheader_ctrl block and return that, otherwise return n.
-  Node *clone_up_backedge_goo( Node *back_ctrl, Node *preheader_ctrl, Node *n );
+  Node *clone_up_backedge_goo( Node *back_ctrl, Node *preheader_ctrl, Node *n, VectorSet &visited, Node_Stack &clones );
 
   // Take steps to maximally unroll the loop.  Peel any odd iterations, then
   // unroll to do double iterations.  The next round of major loop transforms
@@ -815,18 +861,37 @@ public:
   bool is_scaled_iv_plus_offset(Node* exp, Node* iv, int* p_scale, Node** p_offset, int depth = 0);
 
   // Return true if proj is for "proj->[region->..]call_uct"
-  static bool is_uncommon_trap_proj(ProjNode* proj, bool must_reason_predicate = false);
+  static bool is_uncommon_trap_proj(ProjNode* proj, Deoptimization::DeoptReason reason);
   // Return true for    "if(test)-> proj -> ...
   //                          |
   //                          V
   //                      other_proj->[region->..]call_uct"
-  bool is_uncommon_trap_if_pattern(ProjNode* proj, bool must_reason_predicate = false);
+  static bool is_uncommon_trap_if_pattern(ProjNode* proj, Deoptimization::DeoptReason reason);
   // Create a new if above the uncommon_trap_if_pattern for the predicate to be promoted
-  ProjNode* create_new_if_for_predicate(ProjNode* cont_proj);
+  ProjNode* create_new_if_for_predicate(ProjNode* cont_proj, Node* new_entry,
+                                        Deoptimization::DeoptReason reason);
+  void register_control(Node* n, IdealLoopTree *loop, Node* pred);
+
+  // Clone loop predicates to cloned loops (peeled, unswitched)
+  static ProjNode* clone_predicate(ProjNode* predicate_proj, Node* new_entry,
+                                   Deoptimization::DeoptReason reason,
+                                   PhaseIdealLoop* loop_phase,
+                                   PhaseIterGVN* igvn);
+
+  static Node* clone_loop_predicates(Node* old_entry, Node* new_entry,
+                                         bool clone_limit_check,
+                                         PhaseIdealLoop* loop_phase,
+                                         PhaseIterGVN* igvn);
+  Node* clone_loop_predicates(Node* old_entry, Node* new_entry, bool clone_limit_check);
+
+  static Node* skip_loop_predicates(Node* entry);
+
   // Find a good location to insert a predicate
-  ProjNode* find_predicate_insertion_point(Node* start_c);
+  static ProjNode* find_predicate_insertion_point(Node* start_c, Deoptimization::DeoptReason reason);
+  // Find a predicate
+  static Node* find_predicate(Node* entry);
   // Construct a range check for a predicate if
-  BoolNode* rc_predicate(Node* ctrl,
+  BoolNode* rc_predicate(IdealLoopTree *loop, Node* ctrl,
                          int scale, Node* offset,
                          Node* init, Node* limit, Node* stride,
                          Node* range, bool upper);
@@ -856,11 +921,13 @@ public:
 
   // Range Check Elimination uses this function!
   // Constrain the main loop iterations so the affine function:
-  //    scale_con * I + offset  <  limit
+  //    low_limit <= scale_con * I + offset  <  upper_limit
   // always holds true.  That is, either increase the number of iterations in
   // the pre-loop or the post-loop until the condition holds true in the main
   // loop.  Scale_con, offset and limit are all loop invariant.
-  void add_constraint( int stride_con, int scale_con, Node *offset, Node *limit, Node *pre_ctrl, Node **pre_limit, Node **main_limit );
+  void add_constraint( int stride_con, int scale_con, Node *offset, Node *low_limit, Node *upper_limit, Node *pre_ctrl, Node **pre_limit, Node **main_limit );
+  // Helper function for add_constraint().
+  Node* adjust_limit( int stride_con, Node * scale, Node *offset, Node *rc_limit, Node *loop_limit, Node *pre_ctrl );
 
   // Partially peel loop up through last_peel node.
   bool partial_peel( IdealLoopTree *loop, Node_List &old_new );
@@ -936,7 +1003,7 @@ public:
   Node *has_local_phi_input( Node *n );
   // Mark an IfNode as being dominated by a prior test,
   // without actually altering the CFG (and hence IDOM info).
-  void dominated_by( Node *prevdom, Node *iff, bool exclude_loop_predicate = false );
+  void dominated_by( Node *prevdom, Node *iff, bool flip = false, bool exclude_loop_predicate = false );
 
   // Split Node 'n' through merge point
   Node *split_thru_region( Node *n, Node *region );
@@ -972,6 +1039,10 @@ public:
   void set_created_loop_node() { _created_loop_node = true; }
   bool created_loop_node()     { return _created_loop_node; }
   void register_new_node( Node *n, Node *blk );
+
+#ifdef ASSERT
+void dump_bad_graph(Node* n, Node* early, Node* LCA);
+#endif
 
 #ifndef PRODUCT
   void dump( ) const;

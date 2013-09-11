@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,8 +89,8 @@ instanceOop MemoryPool::get_memory_pool_instance(TRAPS) {
     args.push_oop(pool_name);           // Argument 1
     args.push_int((int) is_heap());     // Argument 2
 
-    symbolHandle method_name = vmSymbolHandles::createMemoryPool_name();
-    symbolHandle signature = vmSymbolHandles::createMemoryPool_signature();
+    Symbol* method_name = vmSymbols::createMemoryPool_name();
+    Symbol* signature = vmSymbols::createMemoryPool_signature();
 
     args.push_long(usage_threshold_value);    // Argument 3
     args.push_long(gc_usage_threshold_value); // Argument 4

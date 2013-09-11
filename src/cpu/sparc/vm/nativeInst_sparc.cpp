@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,22 @@ void NativeInstruction::set_data64_sethi(address instaddr, intptr_t x) {
   // Generate a the new sequence
   _masm->patchable_sethi(x, destreg);
   ICache::invalidate_range(instaddr, 7 * BytesPerInstWord);
+}
+
+void NativeInstruction::verify_data64_sethi(address instaddr, intptr_t x) {
+  ResourceMark rm;
+  unsigned char buffer[10 * BytesPerInstWord];
+  CodeBuffer buf(buffer, 10 * BytesPerInstWord);
+  MacroAssembler masm(&buf);
+
+  Register destreg = inv_rd(*(unsigned int *)instaddr);
+  // Generate the proper sequence into a temporary buffer and compare
+  // it with the original sequence.
+  masm.patchable_sethi(x, destreg);
+  int len = buffer - masm.pc();
+  for (int i = 0; i < len; i++) {
+    assert(instaddr[i] == buffer[i], "instructions must match");
+  }
 }
 
 void NativeInstruction::verify() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "jvmtifiles/jvmtiEnv.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline2.hpp"
 #include "prims/jvmtiEventController.hpp"
@@ -1646,6 +1647,7 @@ class ObjectMarker : AllStatic {
   // saved headers
   static GrowableArray<oop>* _saved_oop_stack;
   static GrowableArray<markOop>* _saved_mark_stack;
+  static bool _needs_reset;                  // do we need to reset mark bits?
 
  public:
   static void init();                       // initialize
@@ -1653,10 +1655,14 @@ class ObjectMarker : AllStatic {
 
   static inline void mark(oop o);           // mark an object
   static inline bool visited(oop o);        // check if object has been visited
+
+  static inline bool needs_reset()            { return _needs_reset; }
+  static inline void set_needs_reset(bool v)  { _needs_reset = v; }
 };
 
 GrowableArray<oop>* ObjectMarker::_saved_oop_stack = NULL;
 GrowableArray<markOop>* ObjectMarker::_saved_mark_stack = NULL;
+bool ObjectMarker::_needs_reset = true;  // need to reset mark bits by default
 
 // initialize ObjectMarker - prepares for object marking
 void ObjectMarker::init() {
@@ -1679,7 +1685,13 @@ void ObjectMarker::done() {
   // iterate over all objects and restore the mark bits to
   // their initial value
   RestoreMarksClosure blk;
-  Universe::heap()->object_iterate(&blk);
+  if (needs_reset()) {
+    Universe::heap()->object_iterate(&blk);
+  } else {
+    // We don't need to reset mark bits on this call, but reset the
+    // flag to the default for the next call.
+    set_needs_reset(true);
+  }
 
   // When sharing is enabled we need to restore the headers of the objects
   // in the readwrite space too.
@@ -2594,6 +2606,11 @@ class SimpleRootsClosure : public OopClosure {
     if (o->is_klass()) {
       klassOop k = (klassOop)o;
       o = Klass::cast(k)->java_mirror();
+      if (o == NULL) {
+        // Classes without mirrors don't correspond to real Java
+        // classes so just ignore them.
+        return;
+      }
     } else {
 
       // SystemDictionary::always_strong_oops_do reports the application
@@ -2605,7 +2622,7 @@ class SimpleRootsClosure : public OopClosure {
     }
 
     // some objects are ignored - in the case of simple
-    // roots it's mostly symbolOops that we are skipping
+    // roots it's mostly Symbol*s that we are skipping
     // here.
     if (!ServiceUtil::visible_oop(o)) {
       return;
@@ -2834,10 +2851,10 @@ inline bool VM_HeapWalkOperation::iterate_over_type_array(oop o) {
 
 // verify that a static oop field is in range
 static inline bool verify_static_oop(instanceKlass* ik,
-                                     klassOop k, int offset) {
-  address obj_p = (address)k + offset;
-  address start = (address)ik->start_of_static_fields();
-  address end = start + (ik->static_oop_field_size() * heapOopSize);
+                                     oop mirror, int offset) {
+  address obj_p = (address)mirror + offset;
+  address start = (address)instanceMirrorKlass::start_of_static_fields(mirror);
+  address end = start + (java_lang_Class::static_oop_field_count(mirror) * heapOopSize);
   assert(end >= start, "sanity check");
 
   if (obj_p >= start && obj_p < end) {
@@ -2938,8 +2955,8 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
       ClassFieldDescriptor* field = field_map->field_at(i);
       char type = field->field_type();
       if (!is_primitive_field_type(type)) {
-        oop fld_o = k->obj_field(field->field_offset());
-        assert(verify_static_oop(ik, k, field->field_offset()), "sanity check");
+        oop fld_o = mirror->obj_field(field->field_offset());
+        assert(verify_static_oop(ik, mirror, field->field_offset()), "sanity check");
         if (fld_o != NULL) {
           int slot = field->field_index();
           if (!CallbackInvoker::report_static_field_reference(mirror, fld_o, slot)) {
@@ -2948,12 +2965,12 @@ inline bool VM_HeapWalkOperation::iterate_over_class(klassOop k) {
           }
         }
       } else {
-	if (is_reporting_primitive_fields()) {
-	  address addr = (address)k + field->field_offset();
-	  int slot = field->field_index();
-	  if (!CallbackInvoker::report_primitive_static_field(mirror, slot, addr, type)) {
-	    delete field_map;
-	    return false;
+         if (is_reporting_primitive_fields()) {
+           address addr = (address)mirror + field->field_offset();
+           int slot = field->field_index();
+           if (!CallbackInvoker::report_primitive_static_field(mirror, slot, addr, type)) {
+             delete field_map;
+             return false;
           }
         }
       }
@@ -2982,7 +2999,8 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
     char type = field->field_type();
     if (!is_primitive_field_type(type)) {
       oop fld_o = o->obj_field(field->field_offset());
-      if (fld_o != NULL) {
+      // ignore any objects that aren't visible to profiler
+      if (fld_o != NULL && ServiceUtil::visible_oop(fld_o)) {
         // reflection code may have a reference to a klassOop.
         // - see sun.reflect.UnsafeStaticFieldAccessorImpl and sun.misc.Unsafe
         if (fld_o->is_klass()) {
@@ -3017,7 +3035,8 @@ inline bool VM_HeapWalkOperation::iterate_over_object(oop o) {
 }
 
 
-// collects all simple (non-stack) roots.
+// Collects all simple (non-stack) roots except for threads;
+// threads are handled in collect_stack_roots() as an optimization.
 // if there's a heap root callback provided then the callback is
 // invoked for each simple root.
 // if an object reference callback is provided then all simple
@@ -3048,16 +3067,7 @@ inline bool VM_HeapWalkOperation::collect_simple_roots() {
     return false;
   }
 
-  // Threads
-  for (JavaThread* thread = Threads::first(); thread != NULL ; thread = thread->next()) {
-    oop threadObj = thread->threadObj();
-    if (threadObj != NULL && !thread->is_exiting() && !thread->is_hidden_from_external_view()) {
-      bool cont = CallbackInvoker::report_simple_root(JVMTI_HEAP_REFERENCE_THREAD, threadObj);
-      if (!cont) {
-        return false;
-      }
-    }
-  }
+  // threads are now handled in collect_stack_roots()
 
   // Other kinds of roots maintained by HotSpot
   // Many of these won't be visible but others (such as instances of important
@@ -3152,6 +3162,9 @@ inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread,
         if (fr->is_entry_frame()) {
           last_entry_frame = fr;
         }
+        if (fr->is_ricochet_frame()) {
+          fr->oops_ricochet_do(blk, vf->register_map());
+        }
       }
 
       vf = vf->sender();
@@ -3166,13 +3179,20 @@ inline bool VM_HeapWalkOperation::collect_stack_roots(JavaThread* java_thread,
 }
 
 
-// collects all stack roots - for each thread it walks the execution
+// Collects the simple roots for all threads and collects all
+// stack roots - for each thread it walks the execution
 // stack to find all references and local JNI refs.
 inline bool VM_HeapWalkOperation::collect_stack_roots() {
   JNILocalRootsClosure blk;
   for (JavaThread* thread = Threads::first(); thread != NULL ; thread = thread->next()) {
     oop threadObj = thread->threadObj();
     if (threadObj != NULL && !thread->is_exiting() && !thread->is_hidden_from_external_view()) {
+      // Collect the simple root for this thread before we
+      // collect its stack roots
+      if (!CallbackInvoker::report_simple_root(JVMTI_HEAP_REFERENCE_THREAD,
+                                               threadObj)) {
+        return false;
+      }
       if (!collect_stack_roots(thread, &blk)) {
         return false;
       }
@@ -3226,8 +3246,20 @@ void VM_HeapWalkOperation::doit() {
 
   // the heap walk starts with an initial object or the heap roots
   if (initial_object().is_null()) {
-    if (!collect_simple_roots()) return;
+    // If either collect_stack_roots() or collect_simple_roots()
+    // returns false at this point, then there are no mark bits
+    // to reset.
+    ObjectMarker::set_needs_reset(false);
+
+    // Calling collect_stack_roots() before collect_simple_roots()
+    // can result in a big performance boost for an agent that is
+    // focused on analyzing references in the thread stacks.
     if (!collect_stack_roots()) return;
+
+    if (!collect_simple_roots()) return;
+
+    // no early return so enable heap traversal to reset the mark bits
+    ObjectMarker::set_needs_reset(true);
   } else {
     visit_stack()->push(initial_object()());
   }

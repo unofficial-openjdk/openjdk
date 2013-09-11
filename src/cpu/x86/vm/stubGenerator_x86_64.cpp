@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
 #endif
@@ -92,6 +95,7 @@ class StubGenerator: public StubCodeGenerator {
 #define inc_counter_np(counter) (0)
 #else
   void inc_counter_np_(int& counter) {
+    // This can destroy rscratch1 if counter is far from the code cache
     __ incrementl(ExternalAddress((address)&counter));
   }
 #define inc_counter_np(counter) \
@@ -144,8 +148,11 @@ class StubGenerator: public StubCodeGenerator {
   //     [ return_from_Java     ] <--- rsp
   //     [ argument word n      ]
   //      ...
-  //  -8 [ argument word 1      ]
-  //  -7 [ saved r15            ] <--- rsp_after_call
+  // -28 [ argument word 1      ]
+  // -27 [ saved xmm15          ] <--- rsp_after_call
+  //     [ saved xmm7-xmm14     ]
+  //  -9 [ saved xmm6           ] (each xmm register takes 2 slots)
+  //  -7 [ saved r15            ]
   //  -6 [ saved r14            ]
   //  -5 [ saved r13            ]
   //  -4 [ saved r12            ]
@@ -169,8 +176,11 @@ class StubGenerator: public StubCodeGenerator {
   // Call stub stack layout word offsets from rbp
   enum call_stub_layout {
 #ifdef _WIN64
-    rsp_after_call_off = -7,
-    r15_off            = rsp_after_call_off,
+    xmm_save_first     = 6,  // save from xmm6
+    xmm_save_last      = 15, // to xmm15
+    xmm_save_base      = -9,
+    rsp_after_call_off = xmm_save_base - 2 * (xmm_save_last - xmm_save_first), // -27
+    r15_off            = -7,
     r14_off            = -6,
     r13_off            = -5,
     r12_off            = -4,
@@ -207,6 +217,13 @@ class StubGenerator: public StubCodeGenerator {
     thread_off         =  3
 #endif
   };
+
+#ifdef _WIN64
+  Address xmm_save(int reg) {
+    assert(reg >= xmm_save_first && reg <= xmm_save_last, "XMM register number out of range");
+    return Address(rbp, (xmm_save_base - (reg - xmm_save_first) * 2) * wordSize);
+  }
+#endif
 
   address generate_call_stub(address& return_address) {
     assert((int)frame::entry_frame_after_call_words == -(int)rsp_after_call_off + 1 &&
@@ -256,8 +273,11 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(r13_save, r13);
     __ movptr(r14_save, r14);
     __ movptr(r15_save, r15);
-
 #ifdef _WIN64
+    for (int i = 6; i <= 15; i++) {
+      __ movdqu(xmm_save(i), as_XMMRegister(i));
+    }
+
     const Address rdi_save(rbp, rdi_off * wordSize);
     const Address rsi_save(rbp, rsi_off * wordSize);
 
@@ -360,6 +380,11 @@ class StubGenerator: public StubCodeGenerator {
 #endif
 
     // restore regs belonging to calling function
+#ifdef _WIN64
+    for (int i = 15; i >= 6; i--) {
+      __ movdqu(as_XMMRegister(i), xmm_save(i));
+    }
+#endif
     __ movptr(r15, r15_save);
     __ movptr(r14, r14_save);
     __ movptr(r13, r13_save);
@@ -914,6 +939,8 @@ class StubGenerator: public StubCodeGenerator {
     __ pusha();                       // push registers
     Address next_pc(rsp, RegisterImpl::number_of_registers * BytesPerWord);
 
+    // FIXME: this probably needs alignment logic
+
     __ subptr(rsp, frame::arg_reg_save_area_bytes);
     BLOCK_COMMENT("call handle_unsafe_access");
     __ call(RuntimeAddress(CAST_FROM_FN_PTR(address, handle_unsafe_access)));
@@ -1057,20 +1084,6 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
-  static address disjoint_byte_copy_entry;
-  static address disjoint_short_copy_entry;
-  static address disjoint_int_copy_entry;
-  static address disjoint_long_copy_entry;
-  static address disjoint_oop_copy_entry;
-
-  static address byte_copy_entry;
-  static address short_copy_entry;
-  static address int_copy_entry;
-  static address long_copy_entry;
-  static address oop_copy_entry;
-
-  static address checkcast_copy_entry;
-
   //
   // Verify that a register contains clean 32-bits positive value
   // (high 32-bits are 0) so it could be used in 64-bits shifts.
@@ -1173,34 +1186,35 @@ class StubGenerator: public StubCodeGenerator {
   // Generate code for an array write pre barrier
   //
   //     addr    -  starting address
-  //     count    -  element count
+  //     count   -  element count
+  //     tmp     - scratch register
   //
   //     Destroy no registers!
   //
-  void  gen_write_ref_array_pre_barrier(Register addr, Register count) {
+  void  gen_write_ref_array_pre_barrier(Register addr, Register count, bool dest_uninitialized) {
     BarrierSet* bs = Universe::heap()->barrier_set();
     switch (bs->kind()) {
       case BarrierSet::G1SATBCT:
       case BarrierSet::G1SATBCTLogging:
-        {
-          __ pusha();                      // push registers
-          if (count == c_rarg0) {
-            if (addr == c_rarg1) {
-              // exactly backwards!!
-              __ xchgptr(c_rarg1, c_rarg0);
-            } else {
-              __ movptr(c_rarg1, count);
-              __ movptr(c_rarg0, addr);
-            }
-
-          } else {
-            __ movptr(c_rarg0, addr);
-            __ movptr(c_rarg1, count);
-          }
-          __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre), 2);
-          __ popa();
+        // With G1, don't generate the call if we statically know that the target in uninitialized
+        if (!dest_uninitialized) {
+           __ pusha();                      // push registers
+           if (count == c_rarg0) {
+             if (addr == c_rarg1) {
+               // exactly backwards!!
+               __ xchgptr(c_rarg1, c_rarg0);
+             } else {
+               __ movptr(c_rarg1, count);
+               __ movptr(c_rarg0, addr);
+             }
+           } else {
+             __ movptr(c_rarg0, addr);
+             __ movptr(c_rarg1, count);
+           }
+           __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre), 2);
+           __ popa();
         }
-        break;
+         break;
       case BarrierSet::CardTableModRef:
       case BarrierSet::CardTableExtension:
       case BarrierSet::ModRef:
@@ -1255,7 +1269,7 @@ class StubGenerator: public StubCodeGenerator {
            __ subptr(end, start); // number of bytes to copy
 
           intptr_t disp = (intptr_t) ct->byte_map_base;
-          if (__ is_simm32(disp)) {
+          if (Assembler::is_simm32(disp)) {
             Address cardtable(noreg, noreg, Address::no_scale, disp);
             __ lea(scratch, cardtable);
           } else {
@@ -1379,7 +1393,7 @@ class StubGenerator: public StubCodeGenerator {
   //   disjoint_byte_copy_entry is set to the no-overlap entry point
   //   used by generate_conjoint_byte_copy().
   //
-  address generate_disjoint_byte_copy(bool aligned, const char *name) {
+  address generate_disjoint_byte_copy(bool aligned, address* entry, const char *name) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1399,9 +1413,11 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    disjoint_byte_copy_entry = __ pc();
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+    if (entry != NULL) {
+      *entry = __ pc();
+       // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
+    }
 
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
@@ -1451,8 +1467,8 @@ class StubGenerator: public StubCodeGenerator {
     __ movb(Address(end_to, 8), rax);
 
   __ BIND(L_exit);
-    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1479,7 +1495,8 @@ class StubGenerator: public StubCodeGenerator {
   // dwords or qwords that span cache line boundaries will still be loaded
   // and stored atomically.
   //
-  address generate_conjoint_byte_copy(bool aligned, const char *name) {
+  address generate_conjoint_byte_copy(bool aligned, address nooverlap_target,
+                                      address* entry, const char *name) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1494,11 +1511,13 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    byte_copy_entry = __ pc();
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
+    }
 
-    array_overlap_test(disjoint_byte_copy_entry, Address::times_1);
+    array_overlap_test(nooverlap_target, Address::times_1);
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
 
@@ -1537,8 +1556,8 @@ class StubGenerator: public StubCodeGenerator {
     __ decrement(qword_count);
     __ jcc(Assembler::notZero, L_copy_8_bytes);
 
-    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1546,8 +1565,8 @@ class StubGenerator: public StubCodeGenerator {
     // Copy in 32-bytes chunks
     copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
 
-    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jbyte_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1574,7 +1593,7 @@ class StubGenerator: public StubCodeGenerator {
   //   disjoint_short_copy_entry is set to the no-overlap entry point
   //   used by generate_conjoint_short_copy().
   //
-  address generate_disjoint_short_copy(bool aligned, const char *name) {
+  address generate_disjoint_short_copy(bool aligned, address *entry, const char *name) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1593,9 +1612,11 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    disjoint_short_copy_entry = __ pc();
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
+    }
 
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
@@ -1638,8 +1659,8 @@ class StubGenerator: public StubCodeGenerator {
     __ movw(Address(end_to, 8), rax);
 
   __ BIND(L_exit);
-    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1686,7 +1707,8 @@ class StubGenerator: public StubCodeGenerator {
   // or qwords that span cache line boundaries will still be loaded
   // and stored atomically.
   //
-  address generate_conjoint_short_copy(bool aligned, const char *name) {
+  address generate_conjoint_short_copy(bool aligned, address nooverlap_target,
+                                       address *entry, const char *name) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1701,11 +1723,13 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    short_copy_entry = __ pc();
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
+    }
 
-    array_overlap_test(disjoint_short_copy_entry, Address::times_2);
+    array_overlap_test(nooverlap_target, Address::times_2);
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
 
@@ -1736,8 +1760,8 @@ class StubGenerator: public StubCodeGenerator {
     __ decrement(qword_count);
     __ jcc(Assembler::notZero, L_copy_8_bytes);
 
-    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1745,8 +1769,8 @@ class StubGenerator: public StubCodeGenerator {
     // Copy in 32-bytes chunks
     copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
 
-    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jshort_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1773,7 +1797,8 @@ class StubGenerator: public StubCodeGenerator {
   //   disjoint_int_copy_entry is set to the no-overlap entry point
   //   used by generate_conjoint_int_oop_copy().
   //
-  address generate_disjoint_int_oop_copy(bool aligned, bool is_oop, const char *name) {
+  address generate_disjoint_int_oop_copy(bool aligned, bool is_oop, address* entry,
+                                         const char *name, bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1793,21 +1818,17 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    (is_oop ? disjoint_oop_copy_entry : disjoint_int_copy_entry) = __ pc();
-
-    if (is_oop) {
-      // no registers are destroyed by this call
-      gen_write_ref_array_pre_barrier(/* dest */ c_rarg1, /* count */ c_rarg2);
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
     }
-
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
 
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
-
     if (is_oop) {
       __ movq(saved_to, to);
+      gen_write_ref_array_pre_barrier(to, count, dest_uninitialized);
     }
 
     // 'from', 'to' and 'count' are now valid
@@ -1839,8 +1860,8 @@ class StubGenerator: public StubCodeGenerator {
       __ leaq(end_to, Address(saved_to, dword_count, Address::times_4, -4));
       gen_write_ref_array_post_barrier(saved_to, end_to, rax);
     }
-    inc_counter_np(SharedRuntime::_jint_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jint_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1867,7 +1888,9 @@ class StubGenerator: public StubCodeGenerator {
   // the hardware handle it.  The two dwords within qwords that span
   // cache line boundaries will still be loaded and stored atomicly.
   //
-  address generate_conjoint_int_oop_copy(bool aligned, bool is_oop, const char *name) {
+  address generate_conjoint_int_oop_copy(bool aligned, bool is_oop, address nooverlap_target,
+                                         address *entry, const char *name,
+                                         bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1882,19 +1905,20 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    if (is_oop) {
-      // no registers are destroyed by this call
-      gen_write_ref_array_pre_barrier(/* dest */ c_rarg1, /* count */ c_rarg2);
+    if (entry != NULL) {
+      *entry = __ pc();
+       // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
     }
 
-    (is_oop ? oop_copy_entry : int_copy_entry) = __ pc();
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
-
-    array_overlap_test(is_oop ? disjoint_oop_copy_entry : disjoint_int_copy_entry,
-                       Address::times_4);
+    array_overlap_test(nooverlap_target, Address::times_4);
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
+
+    if (is_oop) {
+      // no registers are destroyed by this call
+      gen_write_ref_array_pre_barrier(to, count, dest_uninitialized);
+    }
 
     assert_clean_int(count, rax); // Make sure 'count' is clean int.
     // 'from', 'to' and 'count' are now valid
@@ -1917,11 +1941,11 @@ class StubGenerator: public StubCodeGenerator {
     __ decrement(qword_count);
     __ jcc(Assembler::notZero, L_copy_8_bytes);
 
-    inc_counter_np(SharedRuntime::_jint_array_copy_ctr);
     if (is_oop) {
       __ jmp(L_exit);
     }
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jint_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1929,7 +1953,6 @@ class StubGenerator: public StubCodeGenerator {
     // Copy in 32-bytes chunks
     copy_32_bytes_backward(from, to, qword_count, rax, L_copy_32_bytes, L_copy_8_bytes);
 
-   inc_counter_np(SharedRuntime::_jint_array_copy_ctr);
    __ bind(L_exit);
      if (is_oop) {
        Register end_to = rdx;
@@ -1937,6 +1960,7 @@ class StubGenerator: public StubCodeGenerator {
        gen_write_ref_array_post_barrier(to, end_to, rax);
      }
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_jint_array_copy_ctr); // Update counter after rscratch1 is free
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -1959,7 +1983,8 @@ class StubGenerator: public StubCodeGenerator {
   //   disjoint_oop_copy_entry or disjoint_long_copy_entry is set to the
   //   no-overlap entry point used by generate_conjoint_long_oop_copy().
   //
-  address generate_disjoint_long_oop_copy(bool aligned, bool is_oop, const char *name) {
+  address generate_disjoint_long_oop_copy(bool aligned, bool is_oop, address *entry,
+                                          const char *name, bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1978,20 +2003,19 @@ class StubGenerator: public StubCodeGenerator {
     // Save no-overlap entry point for generate_conjoint_long_oop_copy()
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    if (is_oop) {
-      disjoint_oop_copy_entry  = __ pc();
-      // no registers are destroyed by this call
-      gen_write_ref_array_pre_barrier(/* dest */ c_rarg1, /* count */ c_rarg2);
-    } else {
-      disjoint_long_copy_entry = __ pc();
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
     }
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
 
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
-
     // 'from', 'to' and 'qword_count' are now valid
+    if (is_oop) {
+      // no registers are destroyed by this call
+      gen_write_ref_array_pre_barrier(to, qword_count, dest_uninitialized);
+    }
 
     // Copy from low to high addresses.  Use 'to' as scratch.
     __ lea(end_from, Address(from, qword_count, Address::times_8, -8));
@@ -2009,8 +2033,8 @@ class StubGenerator: public StubCodeGenerator {
     if (is_oop) {
       __ jmp(L_exit);
     } else {
-      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr);
       restore_arg_regs();
+      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr); // Update counter after rscratch1 is free
       __ xorptr(rax, rax); // return 0
       __ leave(); // required for proper stackwalking of RuntimeStub frame
       __ ret(0);
@@ -2022,11 +2046,13 @@ class StubGenerator: public StubCodeGenerator {
     if (is_oop) {
     __ BIND(L_exit);
       gen_write_ref_array_post_barrier(saved_to, end_to, rax);
-      inc_counter_np(SharedRuntime::_oop_array_copy_ctr);
-    } else {
-      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr);
     }
     restore_arg_regs();
+    if (is_oop) {
+      inc_counter_np(SharedRuntime::_oop_array_copy_ctr); // Update counter after rscratch1 is free
+    } else {
+      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr); // Update counter after rscratch1 is free
+    }
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -2045,7 +2071,9 @@ class StubGenerator: public StubCodeGenerator {
   //   c_rarg1   - destination array address
   //   c_rarg2   - element count, treated as ssize_t, can be zero
   //
-  address generate_conjoint_long_oop_copy(bool aligned, bool is_oop, const char *name) {
+  address generate_conjoint_long_oop_copy(bool aligned, bool is_oop,
+                                          address nooverlap_target, address *entry,
+                                          const char *name, bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -2059,31 +2087,21 @@ class StubGenerator: public StubCodeGenerator {
     __ enter(); // required for proper stackwalking of RuntimeStub frame
     assert_clean_int(c_rarg2, rax);    // Make sure 'count' is clean int.
 
-    address disjoint_copy_entry = NULL;
-    if (is_oop) {
-      assert(!UseCompressedOops, "shouldn't be called for compressed oops");
-      disjoint_copy_entry = disjoint_oop_copy_entry;
-      oop_copy_entry  = __ pc();
-      array_overlap_test(disjoint_oop_copy_entry, Address::times_8);
-    } else {
-      disjoint_copy_entry = disjoint_long_copy_entry;
-      long_copy_entry = __ pc();
-      array_overlap_test(disjoint_long_copy_entry, Address::times_8);
+    if (entry != NULL) {
+      *entry = __ pc();
+      // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
+      BLOCK_COMMENT("Entry:");
     }
-    BLOCK_COMMENT("Entry:");
-    // caller can pass a 64-bit byte count here (from Unsafe.copyMemory)
 
-    array_overlap_test(disjoint_copy_entry, Address::times_8);
+    array_overlap_test(nooverlap_target, Address::times_8);
     setup_arg_regs(); // from => rdi, to => rsi, count => rdx
                       // r9 and r10 may be used to save non-volatile registers
-
     // 'from', 'to' and 'qword_count' are now valid
-
     if (is_oop) {
       // Save to and count for store barrier
       __ movptr(saved_count, qword_count);
       // No registers are destroyed by this call
-      gen_write_ref_array_pre_barrier(to, saved_count);
+      gen_write_ref_array_pre_barrier(to, saved_count, dest_uninitialized);
     }
 
     __ jmp(L_copy_32_bytes);
@@ -2098,8 +2116,8 @@ class StubGenerator: public StubCodeGenerator {
     if (is_oop) {
       __ jmp(L_exit);
     } else {
-      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr);
       restore_arg_regs();
+      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr); // Update counter after rscratch1 is free
       __ xorptr(rax, rax); // return 0
       __ leave(); // required for proper stackwalking of RuntimeStub frame
       __ ret(0);
@@ -2112,11 +2130,13 @@ class StubGenerator: public StubCodeGenerator {
     __ BIND(L_exit);
       __ lea(rcx, Address(to, saved_count, Address::times_8, -8));
       gen_write_ref_array_post_barrier(to, rcx, rax);
-      inc_counter_np(SharedRuntime::_oop_array_copy_ctr);
-    } else {
-      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr);
     }
     restore_arg_regs();
+    if (is_oop) {
+      inc_counter_np(SharedRuntime::_oop_array_copy_ctr); // Update counter after rscratch1 is free
+    } else {
+      inc_counter_np(SharedRuntime::_jlong_array_copy_ctr); // Update counter after rscratch1 is free
+    }
     __ xorptr(rax, rax); // return 0
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
@@ -2162,7 +2182,8 @@ class StubGenerator: public StubCodeGenerator {
   //    rax ==  0  -  success
   //    rax == -1^K - failure, where K is partial transfer count
   //
-  address generate_checkcast_copy(const char *name) {
+  address generate_checkcast_copy(const char *name, address *entry,
+                                  bool dest_uninitialized = false) {
 
     Label L_load_element, L_store_element, L_do_card_marks, L_done;
 
@@ -2216,8 +2237,10 @@ class StubGenerator: public StubCodeGenerator {
 #endif
 
     // Caller of this entry point must set up the argument registers.
-    checkcast_copy_entry  = __ pc();
-    BLOCK_COMMENT("Entry:");
+    if (entry != NULL) {
+      *entry = __ pc();
+      BLOCK_COMMENT("Entry:");
+    }
 
     // allocate spill slots for r13, r14
     enum {
@@ -2238,8 +2261,7 @@ class StubGenerator: public StubCodeGenerator {
     // The ckoff and ckval must be mutually consistent,
     // even though caller generates both.
     { Label L;
-      int sco_offset = (klassOopDesc::header_size() * HeapWordSize +
-                        Klass::super_check_offset_offset_in_bytes());
+      int sco_offset = in_bytes(Klass::super_check_offset_offset());
       __ cmpl(ckoff, Address(ckval, sco_offset));
       __ jcc(Assembler::equal, L);
       __ stop("super_check_offset inconsistent");
@@ -2254,7 +2276,7 @@ class StubGenerator: public StubCodeGenerator {
     Address from_element_addr(end_from, count, TIMES_OOP, 0);
     Address   to_element_addr(end_to,   count, TIMES_OOP, 0);
 
-    gen_write_ref_array_pre_barrier(to, count);
+    gen_write_ref_array_pre_barrier(to, count, dest_uninitialized);
 
     // Copy from low to high addresses, indexed from the end of each array.
     __ lea(end_from, end_from_addr);
@@ -2313,8 +2335,8 @@ class StubGenerator: public StubCodeGenerator {
     __ BIND(L_done);
     __ movptr(r13, Address(rsp, saved_r13_offset * wordSize));
     __ movptr(r14, Address(rsp, saved_r14_offset * wordSize));
-    inc_counter_np(SharedRuntime::_checkcast_array_copy_ctr);
     restore_arg_regs();
+    inc_counter_np(SharedRuntime::_checkcast_array_copy_ctr); // Update counter after rscratch1 is free
     __ leave(); // required for proper stackwalking of RuntimeStub frame
     __ ret(0);
 
@@ -2334,7 +2356,9 @@ class StubGenerator: public StubCodeGenerator {
   // Examines the alignment of the operands and dispatches
   // to a long, int, short, or byte copy loop.
   //
-  address generate_unsafe_copy(const char *name) {
+  address generate_unsafe_copy(const char *name,
+                               address byte_copy_entry, address short_copy_entry,
+                               address int_copy_entry, address long_copy_entry) {
 
     Label L_long_aligned, L_int_aligned, L_short_aligned;
 
@@ -2432,7 +2456,10 @@ class StubGenerator: public StubCodeGenerator {
   //    rax ==  0  -  success
   //    rax == -1^K - failure, where K is partial transfer count
   //
-  address generate_generic_copy(const char *name) {
+  address generate_generic_copy(const char *name,
+                                address byte_copy_entry, address short_copy_entry,
+                                address int_copy_entry, address oop_copy_entry,
+                                address long_copy_entry, address checkcast_copy_entry) {
 
     Label L_failed, L_failed_0, L_objArray;
     Label L_copy_bytes, L_copy_shorts, L_copy_ints, L_copy_longs;
@@ -2544,8 +2571,7 @@ class StubGenerator: public StubCodeGenerator {
     //   array_tag: typeArray = 0x3, objArray = 0x2, non-array = 0x0
     //
 
-    const int lh_offset = klassOopDesc::header_size() * HeapWordSize +
-                          Klass::layout_helper_offset_in_bytes();
+    const int lh_offset = in_bytes(Klass::layout_helper_offset());
 
     // Handle objArrays completely differently...
     const jint objArray_lh = Klass::array_layout_helper(T_OBJECT);
@@ -2694,15 +2720,13 @@ class StubGenerator: public StubCodeGenerator {
       assert_clean_int(count, sco_temp);
 
       // Generate the type check.
-      const int sco_offset = (klassOopDesc::header_size() * HeapWordSize +
-                              Klass::super_check_offset_offset_in_bytes());
+      const int sco_offset = in_bytes(Klass::super_check_offset_offset());
       __ movl(sco_temp, Address(r11_dst_klass, sco_offset));
       assert_clean_int(sco_temp, rax);
       generate_type_check(r10_src_klass, sco_temp, r11_dst_klass, L_plain_copy);
 
       // Fetch destination element klass from the objArrayKlass header.
-      int ek_offset = (klassOopDesc::header_size() * HeapWordSize +
-                       objArrayKlass::element_klass_offset_in_bytes());
+      int ek_offset = in_bytes(objArrayKlass::element_klass_offset());
       __ movptr(r11_dst_klass, Address(r11_dst_klass, ek_offset));
       __ movl(  sco_temp,      Address(r11_dst_klass, sco_offset));
       assert_clean_int(sco_temp, rax);
@@ -2725,33 +2749,75 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   void generate_arraycopy_stubs() {
-    // Call the conjoint generation methods immediately after
-    // the disjoint ones so that short branches from the former
-    // to the latter can be generated.
-    StubRoutines::_jbyte_disjoint_arraycopy  = generate_disjoint_byte_copy(false, "jbyte_disjoint_arraycopy");
-    StubRoutines::_jbyte_arraycopy           = generate_conjoint_byte_copy(false, "jbyte_arraycopy");
+    address entry;
+    address entry_jbyte_arraycopy;
+    address entry_jshort_arraycopy;
+    address entry_jint_arraycopy;
+    address entry_oop_arraycopy;
+    address entry_jlong_arraycopy;
+    address entry_checkcast_arraycopy;
 
-    StubRoutines::_jshort_disjoint_arraycopy = generate_disjoint_short_copy(false, "jshort_disjoint_arraycopy");
-    StubRoutines::_jshort_arraycopy          = generate_conjoint_short_copy(false, "jshort_arraycopy");
+    StubRoutines::_jbyte_disjoint_arraycopy  = generate_disjoint_byte_copy(false, &entry,
+                                                                           "jbyte_disjoint_arraycopy");
+    StubRoutines::_jbyte_arraycopy           = generate_conjoint_byte_copy(false, entry, &entry_jbyte_arraycopy,
+                                                                           "jbyte_arraycopy");
 
-    StubRoutines::_jint_disjoint_arraycopy   = generate_disjoint_int_oop_copy(false, false, "jint_disjoint_arraycopy");
-    StubRoutines::_jint_arraycopy            = generate_conjoint_int_oop_copy(false, false, "jint_arraycopy");
+    StubRoutines::_jshort_disjoint_arraycopy = generate_disjoint_short_copy(false, &entry,
+                                                                            "jshort_disjoint_arraycopy");
+    StubRoutines::_jshort_arraycopy          = generate_conjoint_short_copy(false, entry, &entry_jshort_arraycopy,
+                                                                            "jshort_arraycopy");
 
-    StubRoutines::_jlong_disjoint_arraycopy  = generate_disjoint_long_oop_copy(false, false, "jlong_disjoint_arraycopy");
-    StubRoutines::_jlong_arraycopy           = generate_conjoint_long_oop_copy(false, false, "jlong_arraycopy");
+    StubRoutines::_jint_disjoint_arraycopy   = generate_disjoint_int_oop_copy(false, false, &entry,
+                                                                              "jint_disjoint_arraycopy");
+    StubRoutines::_jint_arraycopy            = generate_conjoint_int_oop_copy(false, false, entry,
+                                                                              &entry_jint_arraycopy, "jint_arraycopy");
+
+    StubRoutines::_jlong_disjoint_arraycopy  = generate_disjoint_long_oop_copy(false, false, &entry,
+                                                                               "jlong_disjoint_arraycopy");
+    StubRoutines::_jlong_arraycopy           = generate_conjoint_long_oop_copy(false, false, entry,
+                                                                               &entry_jlong_arraycopy, "jlong_arraycopy");
 
 
     if (UseCompressedOops) {
-      StubRoutines::_oop_disjoint_arraycopy  = generate_disjoint_int_oop_copy(false, true, "oop_disjoint_arraycopy");
-      StubRoutines::_oop_arraycopy           = generate_conjoint_int_oop_copy(false, true, "oop_arraycopy");
+      StubRoutines::_oop_disjoint_arraycopy  = generate_disjoint_int_oop_copy(false, true, &entry,
+                                                                              "oop_disjoint_arraycopy");
+      StubRoutines::_oop_arraycopy           = generate_conjoint_int_oop_copy(false, true, entry,
+                                                                              &entry_oop_arraycopy, "oop_arraycopy");
+      StubRoutines::_oop_disjoint_arraycopy_uninit  = generate_disjoint_int_oop_copy(false, true, &entry,
+                                                                                     "oop_disjoint_arraycopy_uninit",
+                                                                                     /*dest_uninitialized*/true);
+      StubRoutines::_oop_arraycopy_uninit           = generate_conjoint_int_oop_copy(false, true, entry,
+                                                                                     NULL, "oop_arraycopy_uninit",
+                                                                                     /*dest_uninitialized*/true);
     } else {
-      StubRoutines::_oop_disjoint_arraycopy  = generate_disjoint_long_oop_copy(false, true, "oop_disjoint_arraycopy");
-      StubRoutines::_oop_arraycopy           = generate_conjoint_long_oop_copy(false, true, "oop_arraycopy");
+      StubRoutines::_oop_disjoint_arraycopy  = generate_disjoint_long_oop_copy(false, true, &entry,
+                                                                               "oop_disjoint_arraycopy");
+      StubRoutines::_oop_arraycopy           = generate_conjoint_long_oop_copy(false, true, entry,
+                                                                               &entry_oop_arraycopy, "oop_arraycopy");
+      StubRoutines::_oop_disjoint_arraycopy_uninit  = generate_disjoint_long_oop_copy(false, true, &entry,
+                                                                                      "oop_disjoint_arraycopy_uninit",
+                                                                                      /*dest_uninitialized*/true);
+      StubRoutines::_oop_arraycopy_uninit           = generate_conjoint_long_oop_copy(false, true, entry,
+                                                                                      NULL, "oop_arraycopy_uninit",
+                                                                                      /*dest_uninitialized*/true);
     }
 
-    StubRoutines::_checkcast_arraycopy = generate_checkcast_copy("checkcast_arraycopy");
-    StubRoutines::_unsafe_arraycopy    = generate_unsafe_copy("unsafe_arraycopy");
-    StubRoutines::_generic_arraycopy   = generate_generic_copy("generic_arraycopy");
+    StubRoutines::_checkcast_arraycopy        = generate_checkcast_copy("checkcast_arraycopy", &entry_checkcast_arraycopy);
+    StubRoutines::_checkcast_arraycopy_uninit = generate_checkcast_copy("checkcast_arraycopy_uninit", NULL,
+                                                                        /*dest_uninitialized*/true);
+
+    StubRoutines::_unsafe_arraycopy    = generate_unsafe_copy("unsafe_arraycopy",
+                                                              entry_jbyte_arraycopy,
+                                                              entry_jshort_arraycopy,
+                                                              entry_jint_arraycopy,
+                                                              entry_jlong_arraycopy);
+    StubRoutines::_generic_arraycopy   = generate_generic_copy("generic_arraycopy",
+                                                               entry_jbyte_arraycopy,
+                                                               entry_jshort_arraycopy,
+                                                               entry_jint_arraycopy,
+                                                               entry_oop_arraycopy,
+                                                               entry_jlong_arraycopy,
+                                                               entry_checkcast_arraycopy);
 
     StubRoutines::_jbyte_fill = generate_fill(T_BYTE, false, "jbyte_fill");
     StubRoutines::_jshort_fill = generate_fill(T_SHORT, false, "jshort_fill");
@@ -2776,6 +2842,9 @@ class StubGenerator: public StubCodeGenerator {
 
     StubRoutines::_arrayof_oop_disjoint_arraycopy    = StubRoutines::_oop_disjoint_arraycopy;
     StubRoutines::_arrayof_oop_arraycopy             = StubRoutines::_oop_arraycopy;
+
+    StubRoutines::_arrayof_oop_disjoint_arraycopy_uninit    = StubRoutines::_oop_disjoint_arraycopy_uninit;
+    StubRoutines::_arrayof_oop_arraycopy_uninit             = StubRoutines::_oop_arraycopy_uninit;
   }
 
   void generate_math_stubs() {
@@ -2871,7 +2940,8 @@ class StubGenerator: public StubCodeGenerator {
   // caller saved registers were assumed volatile in the compiler.
   address generate_throw_exception(const char* name,
                                    address runtime_entry,
-                                   bool restore_saved_exception_pc) {
+                                   Register arg1 = noreg,
+                                   Register arg2 = noreg) {
     // Information about frame layout at time of blocking runtime call.
     // Note that we only have to preserve callee-saved registers since
     // the compilers are responsible for supplying a continuation point
@@ -2897,12 +2967,6 @@ class StubGenerator: public StubCodeGenerator {
     // which has the ability to fetch the return PC out of
     // thread-local storage and also sets up last_Java_sp slightly
     // differently than the real call_VM
-    if (restore_saved_exception_pc) {
-      __ movptr(rax,
-                Address(r15_thread,
-                        in_bytes(JavaThread::saved_exception_pc_offset())));
-      __ push(rax);
-    }
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
 
@@ -2914,9 +2978,18 @@ class StubGenerator: public StubCodeGenerator {
     int frame_complete = __ pc() - start;
 
     // Set up last_Java_sp and last_Java_fp
-    __ set_last_Java_frame(rsp, rbp, NULL);
+    address the_pc = __ pc();
+    __ set_last_Java_frame(rsp, rbp, the_pc);
+    __ andptr(rsp, -(StackAlignmentInBytes));    // Align stack
 
     // Call runtime
+    if (arg1 != noreg) {
+      assert(arg2 != c_rarg1, "clobbered");
+      __ movptr(c_rarg1, arg1);
+    }
+    if (arg2 != noreg) {
+      __ movptr(c_rarg2, arg2);
+    }
     __ movptr(c_rarg0, r15_thread);
     BLOCK_COMMENT("call runtime_entry");
     __ call(RuntimeAddress(runtime_entry));
@@ -2924,9 +2997,9 @@ class StubGenerator: public StubCodeGenerator {
     // Generate oop map
     OopMap* map = new OopMap(framesize, 0);
 
-    oop_maps->add_gc_map(__ pc() - start, map);
+    oop_maps->add_gc_map(the_pc - start, map);
 
-    __ reset_last_Java_frame(true, false);
+    __ reset_last_Java_frame(true, true);
 
     __ leave(); // required for proper stackwalking of RuntimeStub frame
 
@@ -2989,6 +3062,21 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::x86::_get_previous_fp_entry = generate_get_previous_fp();
 
     StubRoutines::x86::_verify_mxcsr_entry    = generate_verify_mxcsr();
+
+    // Build this early so it's available for the interpreter.  Stub
+    // expects the required and actual types as register arguments in
+    // j_rarg0 and j_rarg1 respectively.
+    StubRoutines::_throw_WrongMethodTypeException_entry =
+      generate_throw_exception("WrongMethodTypeException throw_exception",
+                               CAST_FROM_FN_PTR(address, SharedRuntime::throw_WrongMethodTypeException),
+                               rax, rcx);
+
+    // Build this early so it's available for the interpreter.
+    StubRoutines::_throw_StackOverflowError_entry =
+      generate_throw_exception("StackOverflowError throw_exception",
+                               CAST_FROM_FN_PTR(address,
+                                                SharedRuntime::
+                                                throw_StackOverflowError));
   }
 
   void generate_all() {
@@ -3001,43 +3089,19 @@ class StubGenerator: public StubCodeGenerator {
       generate_throw_exception("AbstractMethodError throw_exception",
                                CAST_FROM_FN_PTR(address,
                                                 SharedRuntime::
-                                                throw_AbstractMethodError),
-                               false);
+                                                throw_AbstractMethodError));
 
     StubRoutines::_throw_IncompatibleClassChangeError_entry =
       generate_throw_exception("IncompatibleClassChangeError throw_exception",
                                CAST_FROM_FN_PTR(address,
                                                 SharedRuntime::
-                                                throw_IncompatibleClassChangeError),
-                               false);
-
-    StubRoutines::_throw_ArithmeticException_entry =
-      generate_throw_exception("ArithmeticException throw_exception",
-                               CAST_FROM_FN_PTR(address,
-                                                SharedRuntime::
-                                                throw_ArithmeticException),
-                               true);
-
-    StubRoutines::_throw_NullPointerException_entry =
-      generate_throw_exception("NullPointerException throw_exception",
-                               CAST_FROM_FN_PTR(address,
-                                                SharedRuntime::
-                                                throw_NullPointerException),
-                               true);
+                                                throw_IncompatibleClassChangeError));
 
     StubRoutines::_throw_NullPointerException_at_call_entry =
       generate_throw_exception("NullPointerException at call throw_exception",
                                CAST_FROM_FN_PTR(address,
                                                 SharedRuntime::
-                                                throw_NullPointerException_at_call),
-                               false);
-
-    StubRoutines::_throw_StackOverflowError_entry =
-      generate_throw_exception("StackOverflowError throw_exception",
-                               CAST_FROM_FN_PTR(address,
-                                                SharedRuntime::
-                                                throw_StackOverflowError),
-                               false);
+                                                throw_NullPointerException_at_call));
 
     // entry points that are platform specific
     StubRoutines::x86::_f2i_fixup = generate_f2i_fixup();
@@ -3068,20 +3132,6 @@ class StubGenerator: public StubCodeGenerator {
     }
   }
 }; // end class declaration
-
-address StubGenerator::disjoint_byte_copy_entry  = NULL;
-address StubGenerator::disjoint_short_copy_entry = NULL;
-address StubGenerator::disjoint_int_copy_entry   = NULL;
-address StubGenerator::disjoint_long_copy_entry  = NULL;
-address StubGenerator::disjoint_oop_copy_entry   = NULL;
-
-address StubGenerator::byte_copy_entry  = NULL;
-address StubGenerator::short_copy_entry = NULL;
-address StubGenerator::int_copy_entry   = NULL;
-address StubGenerator::long_copy_entry  = NULL;
-address StubGenerator::oop_copy_entry   = NULL;
-
-address StubGenerator::checkcast_copy_entry = NULL;
 
 void StubGenerator_generate(CodeBuffer* code, bool all) {
   StubGenerator g(code, all);

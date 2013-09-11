@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 #ifdef COMPILER2
 #include "opto/runtime.hpp"
@@ -240,9 +243,30 @@ class StubGenerator: public StubCodeGenerator {
     BLOCK_COMMENT("call_stub_return_address:");
     return_address = __ pc();
 
-    Label common_return;
+#ifdef COMPILER2
+    {
+      Label L_skip;
+      if (UseSSE >= 2) {
+        __ verify_FPU(0, "call_stub_return");
+      } else {
+        for (int i = 1; i < 8; i++) {
+          __ ffree(i);
+        }
 
-    __ BIND(common_return);
+        // UseSSE <= 1 so double result should be left on TOS
+        __ movl(rsi, result_type);
+        __ cmpl(rsi, T_DOUBLE);
+        __ jcc(Assembler::equal, L_skip);
+        if (UseSSE == 0) {
+          // UseSSE == 0 so float result should be left on TOS
+          __ cmpl(rsi, T_FLOAT);
+          __ jcc(Assembler::equal, L_skip);
+        }
+        __ ffree(0);
+      }
+      __ BIND(L_skip);
+    }
+#endif // COMPILER2
 
     // store result depending on type
     // (everything that is not T_LONG, T_FLOAT or T_DOUBLE is treated as T_INT)
@@ -304,37 +328,6 @@ class StubGenerator: public StubCodeGenerator {
       __ fstp_d(Address(rdi, 0));
     }
     __ jmp(exit);
-
-    // If we call compiled code directly from the call stub we will
-    // need to adjust the return back to the call stub to a specialized
-    // piece of code that can handle compiled results and cleaning the fpu
-    // stack. compiled code will be set to return here instead of the
-    // return above that handles interpreter returns.
-
-    BLOCK_COMMENT("call_stub_compiled_return:");
-    StubRoutines::x86::set_call_stub_compiled_return( __ pc());
-
-#ifdef COMPILER2
-    if (UseSSE >= 2) {
-      __ verify_FPU(0, "call_stub_compiled_return");
-    } else {
-      for (int i = 1; i < 8; i++) {
-        __ ffree(i);
-      }
-
-      // UseSSE <= 1 so double result should be left on TOS
-      __ movl(rsi, result_type);
-      __ cmpl(rsi, T_DOUBLE);
-      __ jcc(Assembler::equal, common_return);
-      if (UseSSE == 0) {
-        // UseSSE == 0 so float result should be left on TOS
-        __ cmpl(rsi, T_FLOAT);
-        __ jcc(Assembler::equal, common_return);
-      }
-      __ ffree(0);
-    }
-#endif /* COMPILER2 */
-    __ jmp(common_return);
 
     return start;
   }
@@ -448,10 +441,6 @@ class StubGenerator: public StubCodeGenerator {
 
     // Verify that there is really a valid exception in RAX.
     __ verify_oop(exception_oop);
-
-    // Restore SP from BP if the exception PC is a MethodHandle call site.
-    __ cmpl(Address(thread, JavaThread::is_method_handle_return_offset()), 0);
-    __ cmovptr(Assembler::notEqual, rsp, rbp);
 
     // continue at exception handler (return address removed)
     // rax: exception
@@ -743,18 +732,19 @@ class StubGenerator: public StubCodeGenerator {
   //  Input:
   //     start   -  starting address
   //     count   -  element count
-  void  gen_write_ref_array_pre_barrier(Register start, Register count) {
+  void  gen_write_ref_array_pre_barrier(Register start, Register count, bool uninitialized_target) {
     assert_different_registers(start, count);
     BarrierSet* bs = Universe::heap()->barrier_set();
     switch (bs->kind()) {
       case BarrierSet::G1SATBCT:
       case BarrierSet::G1SATBCTLogging:
-        {
-          __ pusha();                      // push registers
-          __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre),
-                          start, count);
-          __ popa();
-        }
+        // With G1, don't generate the call if we statically know that the target in uninitialized
+        if (!uninitialized_target) {
+           __ pusha();                      // push registers
+           __ call_VM_leaf(CAST_FROM_FN_PTR(address, BarrierSet::static_write_ref_array_pre),
+                           start, count);
+           __ popa();
+         }
         break;
       case BarrierSet::CardTableModRef:
       case BarrierSet::CardTableExtension:
@@ -933,7 +923,8 @@ class StubGenerator: public StubCodeGenerator {
 
   address generate_disjoint_copy(BasicType t, bool aligned,
                                  Address::ScaleFactor sf,
-                                 address* entry, const char *name) {
+                                 address* entry, const char *name,
+                                 bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -955,15 +946,18 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(from , Address(rsp, 12+ 4));
     __ movptr(to   , Address(rsp, 12+ 8));
     __ movl(count, Address(rsp, 12+ 12));
+
+    if (entry != NULL) {
+      *entry = __ pc(); // Entry point from conjoint arraycopy stub.
+      BLOCK_COMMENT("Entry:");
+    }
+
     if (t == T_OBJECT) {
       __ testl(count, count);
       __ jcc(Assembler::zero, L_0_count);
-      gen_write_ref_array_pre_barrier(to, count);
+      gen_write_ref_array_pre_barrier(to, count, dest_uninitialized);
       __ mov(saved_to, to);          // save 'to'
     }
-
-    *entry = __ pc(); // Entry point from conjoint arraycopy stub.
-    BLOCK_COMMENT("Entry:");
 
     __ subptr(to, from); // to --> to_from
     __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
@@ -1095,7 +1089,8 @@ class StubGenerator: public StubCodeGenerator {
   address generate_conjoint_copy(BasicType t, bool aligned,
                                  Address::ScaleFactor sf,
                                  address nooverlap_target,
-                                 address* entry, const char *name) {
+                                 address* entry, const char *name,
+                                 bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1118,29 +1113,29 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(src  , Address(rsp, 12+ 4));   // from
     __ movptr(dst  , Address(rsp, 12+ 8));   // to
     __ movl2ptr(count, Address(rsp, 12+12)); // count
-    if (t == T_OBJECT) {
-       gen_write_ref_array_pre_barrier(dst, count);
-    }
 
     if (entry != NULL) {
       *entry = __ pc(); // Entry point from generic arraycopy stub.
       BLOCK_COMMENT("Entry:");
     }
 
-    if (t == T_OBJECT) {
-      __ testl(count, count);
-      __ jcc(Assembler::zero, L_0_count);
-    }
+    // nooverlap_target expects arguments in rsi and rdi.
     __ mov(from, src);
     __ mov(to  , dst);
 
-    // arrays overlap test
+    // arrays overlap test: dispatch to disjoint stub if necessary.
     RuntimeAddress nooverlap(nooverlap_target);
     __ cmpptr(dst, src);
     __ lea(end, Address(src, count, sf, 0)); // src + count * elem_size
     __ jump_cc(Assembler::belowEqual, nooverlap);
     __ cmpptr(dst, end);
     __ jump_cc(Assembler::aboveEqual, nooverlap);
+
+    if (t == T_OBJECT) {
+      __ testl(count, count);
+      __ jcc(Assembler::zero, L_0_count);
+      gen_write_ref_array_pre_barrier(dst, count, dest_uninitialized);
+    }
 
     // copy from high to low
     __ cmpl(count, 2<<shift); // Short arrays (< 8 bytes) copy by element
@@ -1379,8 +1374,7 @@ class StubGenerator: public StubCodeGenerator {
     //                                  L_success, L_failure, NULL);
     assert_different_registers(sub_klass, temp);
 
-    int sc_offset = (klassOopDesc::header_size() * HeapWordSize +
-                     Klass::secondary_super_cache_offset_in_bytes());
+    int sc_offset = in_bytes(Klass::secondary_super_cache_offset());
 
     // if the pointers are equal, we are done (e.g., String[] elements)
     __ cmpptr(sub_klass, super_klass_addr);
@@ -1426,7 +1420,7 @@ class StubGenerator: public StubCodeGenerator {
   //    rax, ==  0  -  success
   //    rax, == -1^K - failure, where K is partial transfer count
   //
-  address generate_checkcast_copy(const char *name, address* entry) {
+  address generate_checkcast_copy(const char *name, address* entry, bool dest_uninitialized = false) {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", name);
     address start = __ pc();
@@ -1461,8 +1455,10 @@ class StubGenerator: public StubCodeGenerator {
     __ movptr(to,         to_arg);
     __ movl2ptr(length, length_arg);
 
-    *entry = __ pc(); // Entry point from generic arraycopy stub.
-    BLOCK_COMMENT("Entry:");
+    if (entry != NULL) {
+      *entry = __ pc(); // Entry point from generic arraycopy stub.
+      BLOCK_COMMENT("Entry:");
+    }
 
     //---------------------------------------------------------------
     // Assembler stub will be used for this call to arraycopy
@@ -1485,7 +1481,7 @@ class StubGenerator: public StubCodeGenerator {
     Address elem_klass_addr(elem, oopDesc::klass_offset_in_bytes());
 
     // Copy from low to high addresses, indexed from the end of each array.
-    gen_write_ref_array_pre_barrier(to, count);
+    gen_write_ref_array_pre_barrier(to, count, dest_uninitialized);
     __ lea(end_from, end_from_addr);
     __ lea(end_to,   end_to_addr);
     assert(length == count, "");        // else fix next line:
@@ -1790,8 +1786,7 @@ class StubGenerator: public StubCodeGenerator {
     //   array_tag: typeArray = 0x3, objArray = 0x2, non-array = 0x0
     //
 
-    int lh_offset = klassOopDesc::header_size() * HeapWordSize +
-                    Klass::layout_helper_offset_in_bytes();
+    int lh_offset = in_bytes(Klass::layout_helper_offset());
     Address src_klass_lh_addr(rcx_src_klass, lh_offset);
 
     // Handle objArrays completely differently...
@@ -1917,10 +1912,8 @@ class StubGenerator: public StubCodeGenerator {
     // live at this point:  rcx_src_klass, dst[_pos], src[_pos]
     {
       // Handy offsets:
-      int  ek_offset = (klassOopDesc::header_size() * HeapWordSize +
-                        objArrayKlass::element_klass_offset_in_bytes());
-      int sco_offset = (klassOopDesc::header_size() * HeapWordSize +
-                        Klass::super_check_offset_offset_in_bytes());
+      int  ek_offset = in_bytes(objArrayKlass::element_klass_offset());
+      int sco_offset = in_bytes(Klass::super_check_offset_offset());
 
       Register rsi_dst_klass = rsi;
       Register rdi_temp      = rdi;
@@ -2048,6 +2041,15 @@ class StubGenerator: public StubCodeGenerator {
         generate_conjoint_copy(T_OBJECT, true, Address::times_ptr,  entry,
                                &entry_oop_arraycopy, "oop_arraycopy");
 
+    StubRoutines::_oop_disjoint_arraycopy_uninit =
+        generate_disjoint_copy(T_OBJECT, true, Address::times_ptr, &entry,
+                               "oop_disjoint_arraycopy_uninit",
+                               /*dest_uninitialized*/true);
+    StubRoutines::_oop_arraycopy_uninit =
+        generate_conjoint_copy(T_OBJECT, true, Address::times_ptr,  entry,
+                               NULL, "oop_arraycopy_uninit",
+                               /*dest_uninitialized*/true);
+
     StubRoutines::_jlong_disjoint_arraycopy =
         generate_disjoint_long_copy(&entry, "jlong_disjoint_arraycopy");
     StubRoutines::_jlong_arraycopy =
@@ -2061,20 +2063,20 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_arrayof_jshort_fill = generate_fill(T_SHORT, true, "arrayof_jshort_fill");
     StubRoutines::_arrayof_jint_fill = generate_fill(T_INT, true, "arrayof_jint_fill");
 
-    StubRoutines::_arrayof_jint_disjoint_arraycopy  =
-        StubRoutines::_jint_disjoint_arraycopy;
-    StubRoutines::_arrayof_oop_disjoint_arraycopy   =
-        StubRoutines::_oop_disjoint_arraycopy;
-    StubRoutines::_arrayof_jlong_disjoint_arraycopy =
-        StubRoutines::_jlong_disjoint_arraycopy;
+    StubRoutines::_arrayof_jint_disjoint_arraycopy       = StubRoutines::_jint_disjoint_arraycopy;
+    StubRoutines::_arrayof_oop_disjoint_arraycopy        = StubRoutines::_oop_disjoint_arraycopy;
+    StubRoutines::_arrayof_oop_disjoint_arraycopy_uninit = StubRoutines::_oop_disjoint_arraycopy_uninit;
+    StubRoutines::_arrayof_jlong_disjoint_arraycopy      = StubRoutines::_jlong_disjoint_arraycopy;
 
-    StubRoutines::_arrayof_jint_arraycopy  = StubRoutines::_jint_arraycopy;
-    StubRoutines::_arrayof_oop_arraycopy   = StubRoutines::_oop_arraycopy;
-    StubRoutines::_arrayof_jlong_arraycopy = StubRoutines::_jlong_arraycopy;
+    StubRoutines::_arrayof_jint_arraycopy       = StubRoutines::_jint_arraycopy;
+    StubRoutines::_arrayof_oop_arraycopy        = StubRoutines::_oop_arraycopy;
+    StubRoutines::_arrayof_oop_arraycopy_uninit = StubRoutines::_oop_arraycopy_uninit;
+    StubRoutines::_arrayof_jlong_arraycopy      = StubRoutines::_jlong_arraycopy;
 
     StubRoutines::_checkcast_arraycopy =
-        generate_checkcast_copy("checkcast_arraycopy",
-                                  &entry_checkcast_arraycopy);
+        generate_checkcast_copy("checkcast_arraycopy", &entry_checkcast_arraycopy);
+    StubRoutines::_checkcast_arraycopy_uninit =
+        generate_checkcast_copy("checkcast_arraycopy_uninit", NULL, /*dest_uninitialized*/true);
 
     StubRoutines::_unsafe_arraycopy =
         generate_unsafe_copy("unsafe_arraycopy",
@@ -2148,6 +2150,8 @@ class StubGenerator: public StubCodeGenerator {
   // if they expect all registers to be preserved.
   enum layout {
     thread_off,    // last_java_sp
+    arg1_off,
+    arg2_off,
     rbp_off,       // callee saved register
     ret_pc,
     framesize
@@ -2182,7 +2186,7 @@ class StubGenerator: public StubCodeGenerator {
   // either at call sites or otherwise assume that stack unwinding will be initiated,
   // so caller saved registers were assumed volatile in the compiler.
   address generate_throw_exception(const char* name, address runtime_entry,
-                                   bool restore_saved_exception_pc) {
+                                   Register arg1 = noreg, Register arg2 = noreg) {
 
     int insts_size = 256;
     int locs_size  = 32;
@@ -2199,10 +2203,6 @@ class StubGenerator: public StubCodeGenerator {
     // differently than the real call_VM
     Register java_thread = rbx;
     __ get_thread(java_thread);
-    if (restore_saved_exception_pc) {
-      __ movptr(rax, Address(java_thread, in_bytes(JavaThread::saved_exception_pc_offset())));
-      __ push(rax);
-    }
 
     __ enter(); // required for proper stackwalking of RuntimeStub frame
 
@@ -2215,6 +2215,13 @@ class StubGenerator: public StubCodeGenerator {
 
     // push java thread (becomes first argument of C function)
     __ movptr(Address(rsp, thread_off * wordSize), java_thread);
+    if (arg1 != noreg) {
+      __ movptr(Address(rsp, arg1_off * wordSize), arg1);
+    }
+    if (arg2 != noreg) {
+      assert(arg1 != noreg, "missing reg arg");
+      __ movptr(Address(rsp, arg2_off * wordSize), arg2);
+    }
 
     // Set up last_Java_sp and last_Java_fp
     __ set_last_Java_frame(java_thread, rsp, rbp, NULL);
@@ -2306,6 +2313,15 @@ class StubGenerator: public StubCodeGenerator {
                                                                                    CAST_FROM_FN_PTR(address, SharedRuntime::d2i));
     StubRoutines::_d2l_wrapper                              = generate_d2i_wrapper(T_LONG,
                                                                                    CAST_FROM_FN_PTR(address, SharedRuntime::d2l));
+
+    // Build this early so it's available for the interpreter
+    StubRoutines::_throw_WrongMethodTypeException_entry =
+      generate_throw_exception("WrongMethodTypeException throw_exception",
+                               CAST_FROM_FN_PTR(address, SharedRuntime::throw_WrongMethodTypeException),
+                               rax, rcx);
+
+    // Build this early so it's available for the interpreter
+    StubRoutines::_throw_StackOverflowError_entry          = generate_throw_exception("StackOverflowError throw_exception",           CAST_FROM_FN_PTR(address, SharedRuntime::throw_StackOverflowError));
   }
 
 
@@ -2314,12 +2330,9 @@ class StubGenerator: public StubCodeGenerator {
 
     // These entry points require SharedInfo::stack0 to be set up in non-core builds
     // and need to be relocatable, so they each fabricate a RuntimeStub internally.
-    StubRoutines::_throw_AbstractMethodError_entry         = generate_throw_exception("AbstractMethodError throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_AbstractMethodError),  false);
-    StubRoutines::_throw_IncompatibleClassChangeError_entry= generate_throw_exception("IncompatibleClassChangeError throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_IncompatibleClassChangeError),  false);
-    StubRoutines::_throw_ArithmeticException_entry         = generate_throw_exception("ArithmeticException throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_ArithmeticException),  true);
-    StubRoutines::_throw_NullPointerException_entry        = generate_throw_exception("NullPointerException throw_exception",         CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException), true);
-    StubRoutines::_throw_NullPointerException_at_call_entry= generate_throw_exception("NullPointerException at call throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException_at_call), false);
-    StubRoutines::_throw_StackOverflowError_entry          = generate_throw_exception("StackOverflowError throw_exception",           CAST_FROM_FN_PTR(address, SharedRuntime::throw_StackOverflowError),   false);
+    StubRoutines::_throw_AbstractMethodError_entry         = generate_throw_exception("AbstractMethodError throw_exception",          CAST_FROM_FN_PTR(address, SharedRuntime::throw_AbstractMethodError));
+    StubRoutines::_throw_IncompatibleClassChangeError_entry= generate_throw_exception("IncompatibleClassChangeError throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_IncompatibleClassChangeError));
+    StubRoutines::_throw_NullPointerException_at_call_entry= generate_throw_exception("NullPointerException at call throw_exception", CAST_FROM_FN_PTR(address, SharedRuntime::throw_NullPointerException_at_call));
 
     //------------------------------------------------------------------------------------------------------------------------
     // entry points that are platform specific

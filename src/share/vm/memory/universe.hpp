@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,6 +109,14 @@ struct NarrowOopStruct {
   bool    _use_implicit_null_checks;
 };
 
+enum VerifyOption {
+      VerifyOption_Default = 0,
+
+      // G1
+      VerifyOption_G1UsePrevMarking = VerifyOption_Default,
+      VerifyOption_G1UseNextMarking = VerifyOption_G1UsePrevMarking + 1,
+      VerifyOption_G1UseMarkWord    = VerifyOption_G1UseNextMarking + 1
+};
 
 class Universe: AllStatic {
   // Ugh.  Universe is much too friendly.
@@ -139,7 +147,6 @@ class Universe: AllStatic {
 
   static klassOop _objectArrayKlassObj;
 
-  static klassOop _symbolKlassObj;
   static klassOop _methodKlassObj;
   static klassOop _constMethodKlassObj;
   static klassOop _methodDataKlassObj;
@@ -179,6 +186,7 @@ class Universe: AllStatic {
   static oop          _the_min_jint_string;          // A cache of "-2147483648" as a Java string
   static LatestMethodOopCache* _finalizer_register_cache; // static method for registering finalizable objects
   static LatestMethodOopCache* _loader_addClass_cache;    // method for registering loaded classes in class loader vector
+  static LatestMethodOopCache* _pd_implies_cache;         // method for checking protection domain attributes
   static ActiveMethodOopsCache* _reflect_invoke_cache;    // method for security checks
   static oop          _out_of_memory_error_java_heap; // preallocated error object (no backtrace)
   static oop          _out_of_memory_error_perm_gen;  // preallocated error object (no backtrace)
@@ -197,8 +205,6 @@ class Universe: AllStatic {
   // The object used as an exception dummy when exceptions are thrown for
   // the vm thread.
   static oop          _vm_exception;
-
-  static oop          _emptySymbol;                   // Canonical empty string ("") symbol
 
   // The particular choice of collected heap.
   static CollectedHeap* _collectedHeap;
@@ -268,12 +274,11 @@ class Universe: AllStatic {
   }
 
   static klassOop typeArrayKlassObj(BasicType t) {
-    assert((uint)t < T_VOID+1, "range check");
+    assert((uint)t < T_VOID+1, err_msg("range check for type: %s", type2name(t)));
     assert(_typeArrayKlassObjs[t] != NULL, "domain check");
     return _typeArrayKlassObjs[t];
   }
 
-  static klassOop symbolKlassObj()                    { return _symbolKlassObj;            }
   static klassOop methodKlassObj()                    { return _methodKlassObj;            }
   static klassOop constMethodKlassObj()               { return _constMethodKlassObj;         }
   static klassOop methodDataKlassObj()                { return _methodDataKlassObj;        }
@@ -287,9 +292,8 @@ class Universe: AllStatic {
   static klassOop compiledICHolderKlassObj()          { return _compiledICHolderKlassObj;  }
   static klassOop systemObjArrayKlassObj()            { return _systemObjArrayKlassObj;    }
 
-  // Known objects in tbe VM
-  static oop int_mirror()                   { return check_mirror(_int_mirror);
-}
+  // Known objects in the VM
+  static oop int_mirror()                   { return check_mirror(_int_mirror); }
   static oop float_mirror()                 { return check_mirror(_float_mirror); }
   static oop double_mirror()                { return check_mirror(_double_mirror); }
   static oop byte_mirror()                  { return check_mirror(_byte_mirror); }
@@ -322,12 +326,12 @@ class Universe: AllStatic {
   static oop          the_min_jint_string()          { return _the_min_jint_string;          }
   static methodOop    finalizer_register_method()     { return _finalizer_register_cache->get_methodOop(); }
   static methodOop    loader_addClass_method()        { return _loader_addClass_cache->get_methodOop(); }
+  static methodOop protection_domain_implies_method() { return _pd_implies_cache->get_methodOop(); }
   static ActiveMethodOopsCache* reflect_invoke_cache() { return _reflect_invoke_cache; }
   static oop          null_ptr_exception_instance()   { return _null_ptr_exception_instance;   }
   static oop          arithmetic_exception_instance() { return _arithmetic_exception_instance; }
   static oop          virtual_machine_error_instance() { return _virtual_machine_error_instance; }
   static oop          vm_exception()                  { return _vm_exception; }
-  static oop          emptySymbol()                   { return _emptySymbol; }
 
   // OutOfMemoryError support. Returns an error with the required message. The returned error
   // may or may not have a backtrace. If error has a backtrace then the stack trace is already
@@ -410,15 +414,20 @@ class Universe: AllStatic {
 
   // Debugging
   static bool verify_in_progress() { return _verify_in_progress; }
-  static void verify(bool allow_dirty = true, bool silent = false, bool option = true);
-  static int  verify_count()                  { return _verify_count; }
+  static void verify(bool allow_dirty = true, bool silent = false,
+                     VerifyOption option = VerifyOption_Default );
+  static int  verify_count()       { return _verify_count; }
+  // The default behavior is to call print_on() on gclog_or_tty.
   static void print();
-  static void print_on(outputStream* st);
+  // The extended parameter determines which method on the heap will
+  // be called: print_on() (extended == false) or print_extended_on()
+  // (extended == true).
+  static void print_on(outputStream* st, bool extended = false);
   static void print_heap_at_SIGBREAK();
   static void print_heap_before_gc() { print_heap_before_gc(gclog_or_tty); }
   static void print_heap_after_gc()  { print_heap_after_gc(gclog_or_tty); }
-  static void print_heap_before_gc(outputStream* st);
-  static void print_heap_after_gc(outputStream* st);
+  static void print_heap_before_gc(outputStream* st, bool ignore_extended = false);
+  static void print_heap_after_gc(outputStream* st, bool ignore_extended = false);
 
   // Change the number of dummy objects kept reachable by the full gc dummy
   // array; this should trigger relocation in a sliding compaction collector.
@@ -436,6 +445,7 @@ class Universe: AllStatic {
 
   // Flushing and deoptimization
   static void flush_dependents_on(instanceKlassHandle dependee);
+  static void flush_dependents_on(Handle call_site, Handle method_handle);
 #ifdef HOTSWAP
   // Flushing and deoptimization in case of evolution
   static void flush_evol_dependents_on(instanceKlassHandle dependee);

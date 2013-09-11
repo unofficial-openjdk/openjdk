@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,11 +37,14 @@
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "oops/symbolKlass.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "oops/typeArrayKlass.hpp"
 #include "runtime/handles.inline.hpp"
 #ifndef SERIALGC
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
+#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "memory/cardTableRS.hpp"
 #include "oops/oop.pcgc.inline.hpp"
 #endif
 
@@ -70,7 +73,6 @@ void klassKlass::oop_follow_contents(oop obj) {
   MarkSweep::mark_and_push(k->adr_secondary_super_cache());
   MarkSweep::mark_and_push(k->adr_secondary_supers());
   MarkSweep::mark_and_push(k->adr_java_mirror());
-  MarkSweep::mark_and_push(k->adr_name());
   // We follow the subklass and sibling links at the end of the
   // marking phase, since otherwise following them will prevent
   // class unloading (all classes are transitively linked from
@@ -90,7 +92,6 @@ void klassKlass::oop_follow_contents(ParCompactionManager* cm,
   PSParallelCompact::mark_and_push(cm, k->adr_secondary_super_cache());
   PSParallelCompact::mark_and_push(cm, k->adr_secondary_supers());
   PSParallelCompact::mark_and_push(cm, k->adr_java_mirror());
-  PSParallelCompact::mark_and_push(cm, k->adr_name());
   // We follow the subklass and sibling links at the end of the
   // marking phase, since otherwise following them will prevent
   // class unloading (all classes are transitively linked from
@@ -110,7 +111,6 @@ int klassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   blk->do_oop(k->adr_secondary_super_cache());
   blk->do_oop(k->adr_secondary_supers());
   blk->do_oop(k->adr_java_mirror());
-  blk->do_oop(k->adr_name());
   // The following are in the perm gen and are treated
   // specially in a later phase of a perm gen collection; ...
   assert(oop(k)->is_perm(), "should be in perm");
@@ -144,8 +144,6 @@ int klassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   if (mr.contains(adr)) blk->do_oop(adr);
   adr = k->adr_java_mirror();
   if (mr.contains(adr)) blk->do_oop(adr);
-  adr = k->adr_name();
-  if (mr.contains(adr)) blk->do_oop(adr);
   // The following are "weak links" in the perm gen and are
   // treated specially in a later phase of a perm gen collection.
   assert(oop(k)->is_perm(), "should be in perm");
@@ -174,7 +172,6 @@ int klassKlass::oop_adjust_pointers(oop obj) {
   MarkSweep::adjust_pointer(k->adr_secondary_super_cache());
   MarkSweep::adjust_pointer(k->adr_secondary_supers());
   MarkSweep::adjust_pointer(k->adr_java_mirror());
-  MarkSweep::adjust_pointer(k->adr_name());
   MarkSweep::adjust_pointer(k->adr_subklass());
   MarkSweep::adjust_pointer(k->adr_next_sibling());
   return size;
@@ -182,6 +179,12 @@ int klassKlass::oop_adjust_pointers(oop obj) {
 
 #ifndef SERIALGC
 void klassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
+  Klass* k = Klass::cast(klassOop(obj));
+
+  oop* p = k->adr_java_mirror();
+  if (PSScavenge::should_scavenge(p)) {
+    pm->claim_or_forward_depth(p);
+  }
 }
 
 int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
@@ -189,19 +192,6 @@ int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
   oop* const beg_oop = k->oop_block_beg();
   oop* const end_oop = k->oop_block_end();
-  for (oop* cur_oop = beg_oop; cur_oop < end_oop; ++cur_oop) {
-    PSParallelCompact::adjust_pointer(cur_oop);
-  }
-
-  return oop_size(obj);
-}
-
-int klassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                    HeapWord* beg_addr, HeapWord* end_addr) {
-  Klass* k = Klass::cast(klassOop(obj));
-
-  oop* const beg_oop = MAX2((oop*)beg_addr, k->oop_block_beg());
-  oop* const end_oop = MIN2((oop*)end_addr, k->oop_block_end());
   for (oop* cur_oop = beg_oop; cur_oop < end_oop; ++cur_oop) {
     PSParallelCompact::adjust_pointer(cur_oop);
   }
@@ -253,12 +243,7 @@ void klassKlass::oop_verify_on(oop obj, outputStream* st) {
 
   if (k->java_mirror() != NULL || (k->oop_is_instance() && instanceKlass::cast(klassOop(obj))->is_loaded())) {
     guarantee(k->java_mirror() != NULL,          "should be allocated");
-    guarantee(k->java_mirror()->is_perm(),       "should be in permspace");
+    guarantee(k->java_mirror()->is_perm() || !JavaObjectsInPerm,       "should be in permspace");
     guarantee(k->java_mirror()->is_instance(),   "should be instance");
-  }
-  if (k->name() != NULL) {
-    guarantee(Universe::heap()->is_in_permanent(k->name()),
-              "should be in permspace");
-    guarantee(k->name()->is_symbol(), "should be symbol");
   }
 }

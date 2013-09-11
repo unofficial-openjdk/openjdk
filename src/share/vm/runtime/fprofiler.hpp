@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 
 // a simple flat profiler for Java
@@ -231,13 +234,13 @@ public:
   static void engage(JavaThread* mainThread, bool fullProfile) KERNEL_RETURN ;
   static void disengage() KERNEL_RETURN ;
   static void print(int unused) KERNEL_RETURN ;
-  static bool is_active() KERNEL_RETURN_(return false;) ;
+  static bool is_active() KERNEL_RETURN_(false) ;
 
   // This is NULL if each thread has its own thread profiler,
   // else this is the single thread profiler used by all threads.
   // In particular it makes a difference during garbage collection,
   // where you only want to traverse each thread profiler once.
-  static ThreadProfiler* get_thread_profiler() KERNEL_RETURN_(return NULL;);
+  static ThreadProfiler* get_thread_profiler() KERNEL_RETURN_(NULL);
 
   // Garbage Collection Support
   static void oops_do(OopClosure* f) KERNEL_RETURN ;
@@ -246,13 +249,13 @@ public:
 
   // Returns the start address for a given pc
   // NULL is returned if the PCRecorder is inactive
-  static address bucket_start_for(address pc) KERNEL_RETURN_(return NULL;);
+  static address bucket_start_for(address pc) KERNEL_RETURN_(NULL);
 
   enum { MillisecsPerTick = 10 };   // ms per profiling ticks
 
   // Returns the number of ticks recorded for the bucket
   // pc belongs to.
-  static int bucket_count_for(address pc) KERNEL_RETURN_(return 0;);
+  static int bucket_count_for(address pc) KERNEL_RETURN_(0);
 
 #ifndef FPROF_KERNEL
 

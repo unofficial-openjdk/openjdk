@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -544,11 +544,31 @@ address InterpreterGenerator::generate_accessor_entry(void) {
 
     // Generate regular method entry
     __ bind(slow_path);
-    __ ba(false, fast_accessor_slow_entry_path);
+    __ ba(fast_accessor_slow_entry_path);
     __ delayed()->nop();
     return entry;
   }
   return NULL;
+}
+
+address InterpreterGenerator::generate_Reference_get_entry(void) {
+#ifndef SERIALGC
+  if (UseG1GC) {
+    // We need to generate have a routine that generates code to:
+    //   * load the value in the referent field
+    //   * passes that value to the pre-barrier.
+    //
+    // In the case of G1 this will record the value of the
+    // referent in an SATB buffer if marking is active.
+    // This will cause concurrent marking to mark the referent
+    // field as live.
+    Unimplemented();
+  }
+#endif // SERIALGC
+
+  // If G1 is not enabled then attempt to go through the accessor entry point
+  // Reference.get is an accessor
+  return generate_accessor_entry();
 }
 
 //
@@ -699,8 +719,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
 
     Address exception_addr(G2_thread, 0, in_bytes(Thread::pending_exception_offset()));
     __ ld_ptr(exception_addr, G3_scratch);
-    __ br_notnull(G3_scratch, false, Assembler::pn, pending_exception_present);
-    __ delayed()->nop();
+    __ br_notnull_short(G3_scratch, Assembler::pn, pending_exception_present);
     __ ld_ptr(Address(G5_method, 0, in_bytes(methodOopDesc::signature_handler_offset())), G3_scratch);
     __ bind(L);
   }
@@ -747,7 +766,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
       // get native function entry point(O0 is a good temp until the very end)
        ld_ptr(Address(G5_method, 0, in_bytes(methodOopDesc::native_function_offset())), O0);
     // for static methods insert the mirror argument
-    const int mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
+    const int mirror_offset = in_bytes(Klass::java_mirror_offset());
 
     __ ld_ptr(Address(G5_method, 0, in_bytes(methodOopDesc:: constants_offset())), O1);
     __ ld_ptr(Address(O1, 0, constantPoolOopDesc::pool_holder_offset_in_bytes()), O1);
@@ -1154,7 +1173,7 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
     __ btst(JVM_ACC_SYNCHRONIZED, O1);
     __ br( Assembler::zero, false, Assembler::pt, done);
 
-    const int mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
+    const int mirror_offset = in_bytes(Klass::java_mirror_offset());
     __ delayed()->btst(JVM_ACC_STATIC, O1);
     __ ld_ptr(XXX_STATE(_locals), O1);
     __ br( Assembler::zero, true, Assembler::pt, got_obj);
@@ -1188,8 +1207,8 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
   __ st_ptr(O2, XXX_STATE(_stack));                // PREPUSH
 
   __ lduh(max_stack, O3);                      // Full size expression stack
-  guarantee(!EnableMethodHandles, "no support yet for java.dyn.MethodHandle"); //6815692
-  //6815692//if (EnableMethodHandles)
+  guarantee(!EnableInvokeDynamic, "no support yet for java.lang.invoke.MethodHandle"); //6815692
+  //6815692//if (EnableInvokeDynamic)
   //6815692//  __ inc(O3, methodOopDesc::extra_stack_entries());
   __ sll(O3, LogBytesPerWord, O3);
   __ sub(O2, O3, O3);
@@ -1272,7 +1291,7 @@ void CppInterpreterGenerator::generate_deopt_handling() {
   deopt_frame_manager_return_atos  = __ pc();
 
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_OBJECT), L3_scratch);    // Result stub address array index
 
 
@@ -1280,14 +1299,14 @@ void CppInterpreterGenerator::generate_deopt_handling() {
   deopt_frame_manager_return_btos  = __ pc();
 
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_BOOLEAN), L3_scratch);    // Result stub address array index
 
   // deopt needs to jump to here to enter the interpreter (return a result)
   deopt_frame_manager_return_itos  = __ pc();
 
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_INT), L3_scratch);    // Result stub address array index
 
   // deopt needs to jump to here to enter the interpreter (return a result)
@@ -1307,21 +1326,21 @@ void CppInterpreterGenerator::generate_deopt_handling() {
   __ srlx(G1,32,O0);
 #endif /* !_LP64 && COMPILER2 */
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_LONG), L3_scratch);    // Result stub address array index
 
   // deopt needs to jump to here to enter the interpreter (return a result)
 
   deopt_frame_manager_return_ftos  = __ pc();
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_FLOAT), L3_scratch);    // Result stub address array index
 
   // deopt needs to jump to here to enter the interpreter (return a result)
   deopt_frame_manager_return_dtos  = __ pc();
 
   // O0/O1 live
-  __ ba(false, return_from_deopt_common);
+  __ ba(return_from_deopt_common);
   __ delayed()->set(AbstractInterpreter::BasicType_as_index(T_DOUBLE), L3_scratch);    // Result stub address array index
 
   // deopt needs to jump to here to enter the interpreter (return a result)
@@ -1378,7 +1397,7 @@ void CppInterpreterGenerator::generate_more_monitors() {
   __ ld_ptr(STATE(_stack), L1_scratch);                // Get current stack top
   __ sub(L1_scratch, entry_size, L1_scratch);
   __ st_ptr(L1_scratch, STATE(_stack));
-  __ ba(false, entry);
+  __ ba(entry);
   __ delayed()->add(L1_scratch, wordSize, L1_scratch);        // first real entry (undo prepush)
 
   // 2. move expression stack
@@ -1631,7 +1650,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   __ set((int)BytecodeInterpreter::got_monitors, L1_scratch);
   VALIDATE_STATE(G3_scratch, 5);
-  __ ba(false, call_interpreter);
+  __ ba(call_interpreter);
   __ delayed()->st(L1_scratch, STATE(_msg));
 
   // uncommon trap needs to jump to here to enter the interpreter (re-execute current bytecode)
@@ -1639,7 +1658,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   // QQQ what message do we send
 
-  __ ba(false, call_interpreter);
+  __ ba(call_interpreter);
   __ delayed()->ld_ptr(STATE(_frame_bottom), SP);                  // restore to full stack frame
 
   //=============================================================================
@@ -1655,7 +1674,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   // ready to resume the interpreter
 
   __ set((int)BytecodeInterpreter::deopt_resume, L1_scratch);
-  __ ba(false, call_interpreter);
+  __ ba(call_interpreter);
   __ delayed()->st(L1_scratch, STATE(_msg));
 
   // Current frame has caught an exception we need to dispatch to the
@@ -1743,7 +1762,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   // L1_scratch points to top of stack (prepushed)
 
-  __ ba(false, resume_interpreter);
+  __ ba(resume_interpreter);
   __ delayed()->mov(L1_scratch, O1);
 
   // An exception is being caught on return to a vanilla interpreter frame.
@@ -1753,7 +1772,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   __ ld_ptr(STATE(_frame_bottom), SP);                             // restore to full stack frame
   __ ld_ptr(STATE(_stack_base), O1);                               // empty java expression stack
-  __ ba(false, resume_interpreter);
+  __ ba(resume_interpreter);
   __ delayed()->sub(O1, wordSize, O1);                             // account for prepush
 
   // Return from interpreted method we return result appropriate to the caller (i.e. "recursive"
@@ -1832,7 +1851,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
 
   __ set((int)BytecodeInterpreter::method_resume, L1_scratch);
   __ st(L1_scratch, STATE(_msg));
-  __ ba(false, call_interpreter_2);
+  __ ba(call_interpreter_2);
   __ delayed()->st_ptr(O1, STATE(_stack));
 
 
@@ -1847,8 +1866,8 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
     __ cmp(Gtmp1, O7);                                                // returning to interpreter?
     __ brx(Assembler::equal, true, Assembler::pt, re_dispatch);       // yep
     __ delayed()->nop();
-    __ ba(false, re_dispatch);
-    __ delayed()->mov(G0, prevState);                                   // initial entry
+    __ ba(re_dispatch);
+    __ delayed()->mov(G0, prevState);                                 // initial entry
 
   }
 
@@ -2011,8 +2030,8 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   __ brx(Assembler::zero, false, Assembler::pt, unwind_and_forward);
   __ delayed()->nop();
 
-  __ ld_ptr(STATE(_locals), O1);                                   // get result of popping callee's args
-  __ ba(false, unwind_recursive_activation);
+  __ ld_ptr(STATE(_locals), O1); // get result of popping callee's args
+  __ ba(unwind_recursive_activation);
   __ delayed()->nop();
 
   interpreter_frame_manager = entry_point;
@@ -2156,6 +2175,7 @@ int AbstractInterpreter::layout_activation(methodOop method,
                                            int tempcount, // Number of slots on java expression stack in use
                                            int popframe_extra_args,
                                            int moncount,  // Number of active monitors
+                                           int caller_actual_parameters,
                                            int callee_param_size,
                                            int callee_locals_size,
                                            frame* caller,

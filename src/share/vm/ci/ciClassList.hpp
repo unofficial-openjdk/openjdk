@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,6 @@ class    ciReturnAddress;
 class    ciKlass;
 class     ciInstanceKlass;
 class     ciMethodKlass;
-class     ciSymbolKlass;
 class     ciArrayKlass;
 class       ciObjArrayKlass;
 class       ciTypeArrayKlass;
@@ -78,12 +77,14 @@ class         ciTypeArrayKlassKlass;
 
 // Everyone gives access to ciObjectFactory
 #define CI_PACKAGE_ACCESS \
-friend class ciObjectFactory;
+friend class ciObjectFactory; \
+friend class VMStructs;
 
 // These are the packages that have access to ciEnv
 // Any more access must be given explicitly.
 #define CI_PACKAGE_ACCESS_TO           \
 friend class ciObjectFactory;          \
+friend class VMStructs;                \
 friend class ciCallSite;               \
 friend class ciConstantPoolCache;      \
 friend class ciField;                  \
@@ -112,7 +113,6 @@ friend class ciReturnAddress;          \
 friend class ciKlass;                  \
 friend class ciInstanceKlass;          \
 friend class ciMethodKlass;            \
-friend class ciSymbolKlass;            \
 friend class ciArrayKlass;             \
 friend class ciObjArrayKlass;          \
 friend class ciTypeArrayKlass;         \

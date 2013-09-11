@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,10 @@
 #include "oops/oop.inline2.hpp"
 #include "runtime/atomic.hpp"
 
+void Klass::set_name(Symbol* n) {
+  _name = n;
+  if (_name != NULL) _name->increment_refcount();
+}
 
 bool Klass::is_subclass_of(klassOop k) const {
   // Run up the super chain and check
@@ -115,7 +119,7 @@ bool Klass::compute_is_subtype_of(klassOop k) {
 }
 
 
-methodOop Klass::uncached_lookup_method(symbolOop name, symbolOop signature) const {
+methodOop Klass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
 #ifdef ASSERT
   tty->print_cr("Error: uncached_lookup_method called on a klass oop."
                 " Likely error: reflection method does not correctly"
@@ -140,7 +144,7 @@ klassOop Klass::base_create_klass_oop(KlassHandle& klass, int size,
     }
     kl->set_secondary_supers(NULL);
     oop_store_without_check((oop*) &kl->_primary_supers[0], k);
-    kl->set_super_check_offset(primary_supers_offset_in_bytes() + sizeof(oopDesc));
+    kl->set_super_check_offset(in_bytes(primary_supers_offset()));
   }
 
   kl->set_java_mirror(NULL);
@@ -154,6 +158,7 @@ klassOop Klass::base_create_klass_oop(KlassHandle& klass, int size,
   kl->set_next_sibling(NULL);
   kl->set_alloc_count(0);
   kl->set_alloc_size(0);
+  TRACE_SET_KLASS_TRACE_ID(kl, 0);
 
   kl->set_prototype_header(markOopDesc::prototype());
   kl->set_biased_lock_revocation_count(0);
@@ -449,8 +454,21 @@ void Klass::remove_unshareable_info() {
       ik->unlink_class();
     }
   }
+  // Clear the Java vtable if the oop has one.
+  // The vtable isn't shareable because it's in the wrong order wrt the methods
+  // once the method names get moved and resorted.
+  klassVtable* vt = vtable();
+  if (vt != NULL) {
+    assert(oop_is_instance() || oop_is_array(), "nothing else has vtable");
+    vt->clear_vtable();
+  }
   set_subklass(NULL);
   set_next_sibling(NULL);
+}
+
+
+void Klass::shared_symbols_iterate(SymbolClosure* closure) {
+  closure->do_symbol(&_name);
 }
 
 
@@ -491,7 +509,7 @@ const char* Klass::external_name() const {
   if (oop_is_instance()) {
     instanceKlass* ik = (instanceKlass*) this;
     if (ik->is_anonymous()) {
-      assert(AnonymousClasses, "");
+      assert(EnableInvokeDynamic, "");
       intptr_t hash = ik->java_mirror()->identity_hash();
       char     hash_buf[40];
       sprintf(hash_buf, "/" UINTX_FORMAT, (uintx)hash);

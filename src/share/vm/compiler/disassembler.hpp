@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 
 class decode_env;
 
@@ -69,6 +72,12 @@ class Disassembler {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "disassembler_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "disassembler_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "disassembler_ppc.hpp"
 #endif
 
 

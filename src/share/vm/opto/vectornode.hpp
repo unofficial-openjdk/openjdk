@@ -32,6 +32,7 @@
 //------------------------------VectorNode--------------------------------------
 // Vector Operation
 class VectorNode : public Node {
+  virtual uint size_of() const { return sizeof(*this); }
  protected:
   uint _length; // vector length
   virtual BasicType elt_basic_type() const = 0; // Vector element basic type
@@ -46,10 +47,10 @@ class VectorNode : public Node {
   friend class VectorStoreNode; // ditto.
 
   VectorNode(Node* n1, uint vlen) : Node(NULL, n1), _length(vlen) {
-    init_flags(Flag_is_Vector);
+    init_class_id(Class_Vector);
   }
   VectorNode(Node* n1, Node* n2, uint vlen) : Node(NULL, n1, n2), _length(vlen) {
-    init_flags(Flag_is_Vector);
+    init_class_id(Class_Vector);
   }
   virtual int Opcode() const;
 
@@ -388,7 +389,7 @@ class VectorLoadNode : public LoadNode {
  public:
   VectorLoadNode(Node* c, Node* mem, Node* adr, const TypePtr* at, const Type *rt)
     : LoadNode(c,mem,adr,at,rt) {
-      init_flags(Flag_is_Vector);
+    init_class_id(Class_VectorLoad);
   }
   virtual int Opcode() const;
 
@@ -616,7 +617,7 @@ class VectorStoreNode : public StoreNode {
  public:
   VectorStoreNode(Node* c, Node* mem, Node* adr, const TypePtr* at, Node* val)
     : StoreNode(c,mem,adr,at,val) {
-      init_flags(Flag_is_Vector);
+    init_class_id(Class_VectorStore);
   }
   virtual int Opcode() const;
 
@@ -634,7 +635,7 @@ class VectorStoreNode : public StoreNode {
   static int opcode(int sopc, uint vlen);
 
   static VectorStoreNode* make(Compile* C, int opc, Node* ctl, Node* mem,
-                               Node* adr, const TypePtr* atyp, VectorNode* val,
+                               Node* adr, const TypePtr* atyp, Node* val,
                                uint vlen);
 };
 

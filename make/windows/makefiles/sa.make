@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2009, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -52,12 +52,11 @@ default::  $(GENERATED)\sa-jdi.jar
 # Remove the space between $(SA_BUILD_VERSION_PROP) and > below as it adds a white space
 # at the end of SA version string and causes a version mismatch with the target VM version.
 
-$(GENERATED)\sa-jdi.jar: $(AGENT_FILES1:/=\) $(AGENT_FILES2:/=\)
+$(GENERATED)\sa-jdi.jar: $(AGENT_FILES:/=\)
 	@if not exist $(SA_CLASSDIR) mkdir $(SA_CLASSDIR)
 	@echo ...Building sa-jdi.jar
-	@echo ...$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -d $(SA_CLASSDIR) ....
-	@$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES1:/=\)
-	@$(COMPILE_JAVAC) -source 1.4 -target 1.4 -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES2:/=\)
+	@echo ...$(COMPILE_JAVAC) -classpath $(SA_CLASSPATH) -d $(SA_CLASSDIR) ....
+	@$(COMPILE_JAVAC) -classpath $(SA_CLASSPATH) -sourcepath $(AGENT_SRC_DIR) -d $(SA_CLASSDIR) $(AGENT_FILES:/=\)
 	$(COMPILE_RMIC) -classpath $(SA_CLASSDIR) -d $(SA_CLASSDIR) sun.jvm.hotspot.debugger.remote.RemoteDebuggerServer
 	$(QUIETLY) echo $(SA_BUILD_VERSION_PROP)> $(SA_PROPERTIES)
 	$(QUIETLY) rm -f $(SA_CLASSDIR)/sun/jvm/hotspot/utilities/soql/sa.js
@@ -66,7 +65,7 @@ $(GENERATED)\sa-jdi.jar: $(AGENT_FILES1:/=\) $(AGENT_FILES2:/=\)
 	$(QUIETLY) mkdir $(SA_CLASSDIR)\sun\jvm\hotspot\ui\resources
 	$(QUIETLY) cp $(AGENT_SRC_DIR)/sun/jvm/hotspot/ui/resources/*.png $(SA_CLASSDIR)/sun/jvm/hotspot/ui/resources
 	$(QUIETLY) cp -r $(AGENT_SRC_DIR)/images/* $(SA_CLASSDIR)
-	$(RUN_JAR) cf $@ -C saclasses .
+	$(RUN_JAR) cf $@ -C $(SA_CLASSDIR) .
 	$(RUN_JAR) uf $@ -C $(AGENT_SRC_DIR:/=\) META-INF\services\com.sun.jdi.connect.Connector
 	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.windbg.WindbgDebuggerLocal
 	$(RUN_JAVAH) -classpath $(SA_CLASSDIR) -jni sun.jvm.hotspot.debugger.x86.X86ThreadContext 
@@ -92,16 +91,22 @@ SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN
 !if "$(COMPILER_NAME)" == "VS2005"
 # On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
 # otherwise we get missing __security_check_cookie externals at link time. 
-SA_LINK_FLAGS = bufferoverflowU.lib
+SA_LD_FLAGS = bufferoverflowU.lib
 !endif
 !else
-SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /ZI /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 /Gm $(GX_OPTION) /Od /D "WIN32" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /GZ /c
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+SA_CFLAGS = $(SA_CFLAGS) /ZI
+!endif
 !endif
 !if "$(MT)" != ""
-SA_LINK_FLAGS = /manifest $(SA_LINK_FLAGS)
+SA_LD_FLAGS = /manifest $(SA_LD_FLAGS)
 !endif
 SASRCFILE = $(AGENT_DIR)/src/os/win32/windbg/sawindbg.cpp
-SA_LFLAGS = $(SA_LINK_FLAGS) /nologo /subsystem:console /map /debug /machine:$(MACHINE)
+SA_LFLAGS = $(SA_LD_FLAGS) /nologo /subsystem:console /machine:$(MACHINE)
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+SA_LFLAGS = $(SA_LFLAGS) /map /debug
+!endif
 
 # Note that we do not keep sawindbj.obj around as it would then
 # get included in the dumpbin command in build_vm_def.sh
@@ -111,18 +116,24 @@ SA_LFLAGS = $(SA_LINK_FLAGS) /nologo /subsystem:console /map /debug /machine:$(M
 # Use ";#2" for .dll and ";#1" for .exe in the MT command below:
 $(SAWINDBG): $(SASRCFILE)
 	set INCLUDE=$(SA_INCLUDE)$(INCLUDE)
-	$(CPP) @<<
+	$(CXX) @<<
 	  /I"$(BootStrapDir)/include" /I"$(BootStrapDir)/include/win32" 
 	  /I"$(GENERATED)" $(SA_CFLAGS)
 	  $(SASRCFILE)
-	  /out:sawindbg.obj
+	  /out:$*.obj
 <<
 	set LIB=$(SA_LIB)$(LIB)
-	$(LINK) /out:$@ /DLL sawindbg.obj dbgeng.lib $(SA_LFLAGS)
+	$(LD) /out:$@ /DLL $*.obj dbgeng.lib $(SA_LFLAGS)
 !if "$(MT)" != ""
 	$(MT) /manifest $(@F).manifest /outputresource:$(@F);#2
 !endif
-	-@rm -f sawindbg.obj
+!if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
+!if "$(ZIP_DEBUGINFO_FILES)" == "1"
+	$(ZIPEXE) -q $*.diz $*.map $*.pdb
+	$(RM) $*.map $*.pdb
+!endif
+!endif
+	-@rm -f $*.obj
 
 cleanall :
 	rm -rf $(GENERATED:\=/)/saclasses

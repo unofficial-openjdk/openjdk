@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,16 @@
 # include "atomic_linux_zero.inline.hpp"
 # include "orderAccess_linux_zero.inline.hpp"
 # include "prefetch_linux_zero.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_arm
+# include "atomic_linux_arm.inline.hpp"
+# include "orderAccess_linux_arm.inline.hpp"
+# include "prefetch_linux_arm.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_ppc
+# include "atomic_linux_ppc.inline.hpp"
+# include "orderAccess_linux_ppc.inline.hpp"
+# include "prefetch_linux_ppc.inline.hpp"
 #endif
 
 // Contains inlined functions for class Thread and ThreadLocalStorage

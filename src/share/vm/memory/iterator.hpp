@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -288,6 +288,22 @@ public:
   // for verification that sections of the serialized data are of the
   // correct length.
   virtual void do_tag(int tag) = 0;
+};
+
+class SymbolClosure : public StackObj {
+ public:
+  virtual void do_symbol(Symbol**) = 0;
+
+  // Clear LSB in symbol address; it can be set by CPSlot.
+  static Symbol* load_symbol(Symbol** p) {
+    return (Symbol*)(intptr_t(*p) & ~1);
+  }
+
+  // Store symbol, adjusting new pointer if the original pointer was adjusted
+  // (symbol references in constant pool slots have their LSB set to 1).
+  static void store_symbol(Symbol** p, Symbol* sym) {
+    *p = (Symbol*)(intptr_t(sym) | (intptr_t(*p) & 1));
+  }
 };
 
 #ifdef ASSERT

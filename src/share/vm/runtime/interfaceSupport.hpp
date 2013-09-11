@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 
 // Wrapper for all entry points to the virtual machine.
@@ -97,6 +100,7 @@ class InterfaceSupport: AllStatic {
 # endif
 
   static void zombieAll();
+  static void unlinkSymbols();
   static void deoptimizeAll();
   static void stress_derived_pointers();
   static void verify_stack();
@@ -113,6 +117,9 @@ class InterfaceSupport: AllStatic {
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "interfaceSupport_windows.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "interfaceSupport_bsd.hpp"
 #endif
 
 };
@@ -374,6 +381,9 @@ class VMEntryWrapper {
     }
     if (ZombieALot) {
       InterfaceSupport::zombieAll();
+    }
+    if (UnlinkSymbolsALot) {
+      InterfaceSupport::unlinkSymbols();
     }
     // do verification AFTER potential deoptimization
     if (VerifyStack) {

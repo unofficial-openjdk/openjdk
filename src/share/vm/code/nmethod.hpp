@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@
 class ExceptionCache : public CHeapObj {
   friend class VMStructs;
  private:
-  static address _unwind_handler;
   enum { cache_size = 16 };
   klassOop _exception_type;
   address  _pc[cache_size];
@@ -62,8 +61,6 @@ class ExceptionCache : public CHeapObj {
   bool    match_exception_with_space(Handle exception) ;
   address test_address(address addr);
   bool    add_address_and_handler(address addr, address handler) ;
-
-  static address unwind_handler() { return _unwind_handler; }
 };
 
 
@@ -72,14 +69,13 @@ class PcDescCache VALUE_OBJ_CLASS_SPEC {
   friend class VMStructs;
  private:
   enum { cache_size = 4 };
-  PcDesc* _last_pc_desc;         // most recent pc_desc found
   PcDesc* _pc_descs[cache_size]; // last cache_size pc_descs found
  public:
-  PcDescCache() { debug_only(_last_pc_desc = NULL); }
+  PcDescCache() { debug_only(_pc_descs[0] = NULL); }
   void    reset_to(PcDesc* initial_pc_desc);
   PcDesc* find_pc_desc(int pc_offset, bool approximate);
   void    add_pc_desc(PcDesc* pc_desc);
-  PcDesc* last_pc_desc() { return _last_pc_desc; }
+  PcDesc* last_pc_desc() { return _pc_descs[0]; }
 };
 
 
@@ -113,7 +109,7 @@ class xmlStream;
 class nmethod : public CodeBlob {
   friend class VMStructs;
   friend class NMethodSweeper;
-  friend class CodeCache;  // non-perm oops
+  friend class CodeCache;  // scavengable oops
  private:
   // Shared fields for all nmethod's
   methodOop _method;
@@ -179,9 +175,10 @@ class nmethod : public CodeBlob {
   // set during construction
   unsigned int _has_unsafe_access:1;         // May fault due to unsafe access.
   unsigned int _has_method_handle_invokes:1; // Has this method MethodHandle invokes?
+  unsigned int _lazy_critical_native:1;      // Lazy JNI critical native
 
   // Protected by Patching_lock
-  unsigned char _state;                      // {alive, not_entrant, zombie, unloaded)
+  unsigned char _state;                      // {alive, not_entrant, zombie, unloaded}
 
 #ifdef ASSERT
   bool _oops_are_stale;  // indicates that it's no longer safe to access oops section
@@ -195,9 +192,10 @@ class nmethod : public CodeBlob {
 
   jbyte _scavenge_root_state;
 
-  NOT_PRODUCT(bool _has_debug_info; )
-
-  // Nmethod Flushing lock (if non-zero, then the nmethod is not removed)
+  // Nmethod Flushing lock. If non-zero, then the nmethod is not removed
+  // and is not made into a zombie. However, once the nmethod is made into
+  // a zombie, it will be locked one final time if CompiledMethodUnload
+  // event processing needs to be done.
   jint  _lock_count;
 
   // not_entrant method removal. Each mark_sweep pass will update
@@ -230,6 +228,7 @@ class nmethod : public CodeBlob {
   // For native wrappers
   nmethod(methodOop method,
           int nmethod_size,
+          int compile_id,
           CodeOffsets* offsets,
           CodeBuffer *code_buffer,
           int frame_size,
@@ -300,6 +299,7 @@ class nmethod : public CodeBlob {
                               int comp_level);
 
   static nmethod* new_native_nmethod(methodHandle method,
+                                     int compile_id,
                                      CodeBuffer *code_buffer,
                                      int vep_offset,
                                      int frame_complete,
@@ -327,11 +327,6 @@ class nmethod : public CodeBlob {
   // accessors
   methodOop method() const                        { return _method; }
   AbstractCompiler* compiler() const              { return _compiler; }
-
-#ifndef PRODUCT
-  bool has_debug_info() const                     { return _has_debug_info; }
-  void set_has_debug_info(bool f)                 { _has_debug_info = false; }
-#endif // NOT PRODUCT
 
   // type info
   bool is_nmethod() const                         { return true; }
@@ -436,7 +431,10 @@ class nmethod : public CodeBlob {
   void  set_has_method_handle_invokes(bool z)     { _has_method_handle_invokes = z; }
 
   bool  is_speculatively_disconnected() const     { return _speculatively_disconnected; }
-  void  set_speculatively_disconnected(bool z)     { _speculatively_disconnected = z; }
+  void  set_speculatively_disconnected(bool z)    { _speculatively_disconnected = z; }
+
+  bool  is_lazy_critical_native() const           { return _lazy_critical_native; }
+  void  set_lazy_critical_native(bool z)          { _lazy_critical_native = z; }
 
   int   comp_level() const                        { return _comp_level; }
 
@@ -460,21 +458,22 @@ private:
 public:
   void fix_oop_relocations(address begin, address end) { fix_oop_relocations(begin, end, false); }
   void fix_oop_relocations()                           { fix_oop_relocations(NULL, NULL, false); }
+  void verify_oop_relocations();
 
   bool is_at_poll_return(address pc);
   bool is_at_poll_or_poll_return(address pc);
 
-  // Non-perm oop support
+  // Scavengable oop support
   bool  on_scavenge_root_list() const                  { return (_scavenge_root_state & 1) != 0; }
  protected:
-  enum { npl_on_list = 0x01, npl_marked = 0x10 };
-  void  set_on_scavenge_root_list()                    { _scavenge_root_state = npl_on_list; }
+  enum { sl_on_list = 0x01, sl_marked = 0x10 };
+  void  set_on_scavenge_root_list()                    { _scavenge_root_state = sl_on_list; }
   void  clear_on_scavenge_root_list()                  { _scavenge_root_state = 0; }
   // assertion-checking and pruning logic uses the bits of _scavenge_root_state
 #ifndef PRODUCT
-  void  set_scavenge_root_marked()                     { _scavenge_root_state |= npl_marked; }
-  void  clear_scavenge_root_marked()                   { _scavenge_root_state &= ~npl_marked; }
-  bool  scavenge_root_not_marked()                     { return (_scavenge_root_state &~ npl_on_list) == 0; }
+  void  set_scavenge_root_marked()                     { _scavenge_root_state |= sl_marked; }
+  void  clear_scavenge_root_marked()                   { _scavenge_root_state &= ~sl_marked; }
+  bool  scavenge_root_not_marked()                     { return (_scavenge_root_state &~ sl_on_list) == 0; }
   // N.B. there is no positive marked query, and we only use the not_marked query for asserts.
 #endif //PRODUCT
   nmethod* scavenge_root_link() const                  { return _scavenge_root_link; }
@@ -500,8 +499,8 @@ public:
   address continuation_for_implicit_exception(address pc);
 
   // On-stack replacement support
-  int   osr_entry_bci() const                     { assert(_entry_bci != InvocationEntryBci, "wrong kind of nmethod"); return _entry_bci; }
-  address  osr_entry() const                      { assert(_entry_bci != InvocationEntryBci, "wrong kind of nmethod"); return _osr_entry_point; }
+  int   osr_entry_bci() const                     { assert(is_osr_method(), "wrong kind of nmethod"); return _entry_bci; }
+  address  osr_entry() const                      { assert(is_osr_method(), "wrong kind of nmethod"); return _osr_entry_point; }
   void  invalidate_osr_method();
   nmethod* osr_link() const                       { return _osr_link; }
   void     set_osr_link(nmethod *n)               { _osr_link = n; }
@@ -525,8 +524,9 @@ public:
   void flush();
 
  public:
-  // If returning true, it is unsafe to remove this nmethod even though it is a zombie
-  // nmethod, since the VM might have a reference to it. Should only be called from a  safepoint.
+  // When true is returned, it is unsafe to remove this nmethod even if
+  // it is a zombie, since the VM or the ServiceThread might still be
+  // using it.
   bool is_locked_by_vm() const                    { return _lock_count >0; }
 
   // See comment at definition of _last_seen_on_stack
@@ -607,10 +607,6 @@ public:
   void verify_scopes();
   void verify_interrupt_point(address interrupt_point);
 
-  // print compilation helper
-  static void print_compilation(outputStream *st, const char *method_name, const char *title,
-                                methodOop method, bool is_blocking, int compile_id, int bci, int comp_level);
-
   // printing support
   void print()                          const;
   void print_code();
@@ -626,7 +622,7 @@ public:
 
   // need to re-define this from CodeBlob else the overload hides it
   virtual void print_on(outputStream* st) const { CodeBlob::print_on(st); }
-  void print_on(outputStream* st, const char* title) const;
+  void print_on(outputStream* st, const char* msg) const;
 
   // Logging
   void log_identity(xmlStream* log) const;
@@ -692,14 +688,22 @@ public:
 
 };
 
-// Locks an nmethod so its code will not get removed, even if it is a zombie/not_entrant method
+// Locks an nmethod so its code will not get removed and it will not
+// be made into a zombie, even if it is a not_entrant method. After the
+// nmethod becomes a zombie, if CompiledMethodUnload event processing
+// needs to be done, then lock_nmethod() is used directly to keep the
+// generated code from being reused too early.
 class nmethodLocker : public StackObj {
   nmethod* _nm;
 
-  static void lock_nmethod(nmethod* nm);   // note: nm can be NULL
+ public:
+
+  // note: nm can be NULL
+  // Only JvmtiDeferredEvent::compiled_method_unload_event()
+  // should pass zombie_ok == true.
+  static void lock_nmethod(nmethod* nm, bool zombie_ok = false);
   static void unlock_nmethod(nmethod* nm); // (ditto)
 
- public:
   nmethodLocker(address pc); // derive nm from pc
   nmethodLocker(nmethod *nm) { _nm = nm; lock_nmethod(_nm); }
   nmethodLocker() { _nm = NULL; }

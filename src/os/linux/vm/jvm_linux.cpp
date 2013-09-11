@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,6 @@
 
 #include <signal.h>
 
-/*
- * FIXME: This is temporary hack to keep Linux Runtime.exec()
- * code happy. See $JDK/src/linux/native/java/lang/UnixProcess_md.c
- */
-int _JVM_native_threads = 1;
 
 // sun.misc.Signal ///////////////////////////////////////////////////////////
 // Signal code is mostly copied from classic vm, signals_md.c   1.4 98/08/23

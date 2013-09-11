@@ -86,6 +86,13 @@ class Linux {
 
   static void rebuild_cpu_to_node_map();
   static GrowableArray<int>* cpu_to_node()    { return _cpu_to_node; }
+
+  static bool hugetlbfs_sanity_check(bool warn, size_t page_size);
+
+  static void print_full_memory_info(outputStream* st);
+  static void print_distro_info(outputStream* st);
+  static void print_libversion_info(outputStream* st);
+
  public:
   static void init_thread_fpu_state();
   static int  get_fpu_control_word();
@@ -260,6 +267,7 @@ private:
   static void set_numa_tonode_memory(numa_tonode_memory_func_t func) { _numa_tonode_memory = func; }
   static void set_numa_interleave_memory(numa_interleave_memory_func_t func) { _numa_interleave_memory = func; }
   static void set_numa_all_nodes(unsigned long* ptr) { _numa_all_nodes = ptr; }
+  static int sched_getcpu_syscall(void);
 public:
   static int sched_getcpu()  { return _sched_getcpu != NULL ? _sched_getcpu() : -1; }
   static int numa_node_to_cpus(int node, unsigned long *buffer, int bufferlen) {

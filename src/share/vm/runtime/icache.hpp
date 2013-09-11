@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,6 +76,12 @@ class AbstractICache : AllStatic {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "icache_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "icache_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "icache_ppc.hpp"
 #endif
 
 

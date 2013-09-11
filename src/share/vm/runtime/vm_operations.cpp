@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,13 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
 #include "compiler/compilerOracle.hpp"
 #include "gc_implementation/shared/isGCActiveMark.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -42,6 +44,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 
 #define VM_OP_NAME_INITIALIZE(name) #name,
@@ -169,6 +174,12 @@ void VM_ZombieAll::doit() {
 }
 
 #endif // !PRODUCT
+
+void VM_UnlinkSymbols::doit() {
+  JavaThread *thread = (JavaThread *)calling_thread();
+  assert(thread->is_Java_thread(), "must be a Java thread");
+  SymbolTable::unlink();
+}
 
 void VM_HandleFullCodeCache::doit() {
   NMethodSweeper::speculative_disconnect_nmethods(_is_full);

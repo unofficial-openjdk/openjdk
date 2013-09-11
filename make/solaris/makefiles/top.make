@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@
 # Instead, use "gmake" (or "gnumake") from the command line.  --Rose
 #MAKE = gmake
 
+include $(GAMMADIR)/make/altsrc.make
+
 GENERATED   = ../generated
 VM          = $(GAMMADIR)/src/share/vm
 Plat_File   = $(Platform_file)
@@ -48,8 +50,8 @@ Cached_plat = $(GENERATED)/platform.current
 
 AD_Dir   = $(GENERATED)/adfiles
 ADLC     = $(AD_Dir)/adlc
-AD_Spec  = $(GAMMADIR)/src/cpu/$(Platform_arch)/vm/$(Platform_arch_model).ad
-AD_Src   = $(GAMMADIR)/src/share/vm/adlc
+AD_Spec  = $(call altsrc-replace,$(HS_COMMON_SRC)/cpu/$(Platform_arch)/vm/$(Platform_arch_model).ad)
+AD_Src   = $(call altsrc-replace,$(HS_COMMON_SRC)/share/vm/adlc)
 AD_Names = ad_$(Platform_arch_model).hpp ad_$(Platform_arch_model).cpp
 AD_Files = $(AD_Names:%=$(AD_Dir)/%)
 
@@ -105,8 +107,8 @@ $(adjust-mflags): $(GAMMADIR)/make/$(Platform_os_family)/makefiles/adjust-mflags
 the_vm: vm_build_preliminaries $(adjust-mflags)
 	@$(MAKE) -f vm.make $(MFLAGS-adjusted)
 
-install: the_vm
-	@$(MAKE) -f vm.make install
+install gamma: the_vm
+	@$(MAKE) -f vm.make $@
 
 # next rules support "make foo.[oi]"
 

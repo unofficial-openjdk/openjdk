@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,14 +28,14 @@
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
 #include "oops/objArrayOop.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/java.hpp"
 #include "runtime/reflectionUtils.hpp"
 #include "utilities/hashtable.hpp"
 
 // The system dictionary stores all loaded classes and maps:
 //
-//   [class name,class loader] -> class   i.e.  [symbolOop,oop] -> klassOop
+//   [class name,class loader] -> class   i.e.  [Symbol*,oop] -> klassOop
 //
 // Classes are loaded lazily. The default VM class loader is
 // represented as NULL.
@@ -133,30 +133,33 @@ class SymbolPropertyTable;
   template(reflect_Method_klass,         java_lang_reflect_Method,       Pre) \
   template(reflect_Constructor_klass,    java_lang_reflect_Constructor,  Pre) \
                                                                               \
-  /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */ \
-  /* Universe::is_gte_jdk14x_version() is not set up by this point. */        \
-  /* It's okay if this turns out to be NULL in non-1.4 JDKs. */               \
-  template(reflect_MagicAccessorImpl_klass,          sun_reflect_MagicAccessorImpl,  Opt) \
-  template(reflect_MethodAccessorImpl_klass, sun_reflect_MethodAccessorImpl, Opt_Only_JDK14NewRef) \
-  template(reflect_ConstructorAccessorImpl_klass, sun_reflect_ConstructorAccessorImpl, Opt_Only_JDK14NewRef) \
-  template(reflect_DelegatingClassLoader_klass, sun_reflect_DelegatingClassLoader, Opt) \
-  template(reflect_ConstantPool_klass,  sun_reflect_ConstantPool,       Opt_Only_JDK15) \
-  template(reflect_UnsafeStaticFieldAccessorImpl_klass, sun_reflect_UnsafeStaticFieldAccessorImpl, Opt_Only_JDK15) \
+  /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */                              \
+  /* Universe::is_gte_jdk14x_version() is not set up by this point. */                                                   \
+  /* It's okay if this turns out to be NULL in non-1.4 JDKs. */                                                          \
+  template(reflect_MagicAccessorImpl_klass,             sun_reflect_MagicAccessorImpl,             Opt)                  \
+  template(reflect_MethodAccessorImpl_klass,            sun_reflect_MethodAccessorImpl,            Opt_Only_JDK14NewRef) \
+  template(reflect_ConstructorAccessorImpl_klass,       sun_reflect_ConstructorAccessorImpl,       Opt_Only_JDK14NewRef) \
+  template(reflect_DelegatingClassLoader_klass,         sun_reflect_DelegatingClassLoader,         Opt)                  \
+  template(reflect_ConstantPool_klass,                  sun_reflect_ConstantPool,                  Opt_Only_JDK15)       \
+  template(reflect_UnsafeStaticFieldAccessorImpl_klass, sun_reflect_UnsafeStaticFieldAccessorImpl, Opt_Only_JDK15)       \
                                                                               \
   /* support for dynamic typing; it's OK if these are NULL in earlier JDKs */ \
-  template(MethodHandle_klass,           java_dyn_MethodHandle,          Opt) \
-  template(MemberName_klass,             sun_dyn_MemberName,             Opt) \
-  template(MethodHandleImpl_klass,       sun_dyn_MethodHandleImpl,       Opt) \
-  template(MethodHandleNatives_klass,    sun_dyn_MethodHandleNatives,    Opt) \
-  template(AdapterMethodHandle_klass,    sun_dyn_AdapterMethodHandle,    Opt) \
-  template(BoundMethodHandle_klass,      sun_dyn_BoundMethodHandle,      Opt) \
-  template(DirectMethodHandle_klass,     sun_dyn_DirectMethodHandle,     Opt) \
-  template(MethodType_klass,             java_dyn_MethodType,            Opt) \
-  template(MethodTypeForm_klass,         java_dyn_MethodTypeForm,        Opt) \
-  template(WrongMethodTypeException_klass, java_dyn_WrongMethodTypeException, Opt) \
-  template(Linkage_klass,                java_dyn_Linkage,               Opt) \
-  template(CallSite_klass,               java_dyn_CallSite,              Opt) \
-  /* Note: MethodHandle must be first, and CallSite last in group */          \
+  template(MethodHandle_klass,             java_lang_invoke_MethodHandle,             Pre_JSR292) \
+  template(MemberName_klass,               java_lang_invoke_MemberName,               Pre_JSR292) \
+  template(MethodHandleNatives_klass,      java_lang_invoke_MethodHandleNatives,      Pre_JSR292) \
+  template(AdapterMethodHandle_klass,      java_lang_invoke_AdapterMethodHandle,      Pre_JSR292) \
+  template(BoundMethodHandle_klass,        java_lang_invoke_BoundMethodHandle,        Pre_JSR292) \
+  template(DirectMethodHandle_klass,       java_lang_invoke_DirectMethodHandle,       Pre_JSR292) \
+  template(MethodType_klass,               java_lang_invoke_MethodType,               Pre_JSR292) \
+  template(MethodTypeForm_klass,           java_lang_invoke_MethodTypeForm,           Pre_JSR292) \
+  template(BootstrapMethodError_klass,     java_lang_BootstrapMethodError,            Pre_JSR292) \
+  template(WrongMethodTypeException_klass, java_lang_invoke_WrongMethodTypeException, Pre_JSR292) \
+  template(CallSite_klass,                 java_lang_invoke_CallSite,                 Pre_JSR292) \
+  template(CountingMethodHandle_klass,     java_lang_invoke_CountingMethodHandle,     Opt)        \
+  template(ConstantCallSite_klass,         java_lang_invoke_ConstantCallSite,         Pre_JSR292) \
+  template(MutableCallSite_klass,          java_lang_invoke_MutableCallSite,          Pre_JSR292) \
+  template(VolatileCallSite_klass,         java_lang_invoke_VolatileCallSite,         Pre_JSR292) \
+  /* Note: MethodHandle must be first, and VolatileCallSite last in group */  \
                                                                               \
   template(StringBuffer_klass,           java_lang_StringBuffer,         Pre) \
   template(StringBuilder_klass,          java_lang_StringBuilder,        Pre) \
@@ -165,14 +168,14 @@ class SymbolPropertyTable;
   template(StackTraceElement_klass,      java_lang_StackTraceElement,    Opt) \
   /* Universe::is_gte_jdk14x_version() is not set up by this point. */        \
   /* It's okay if this turns out to be NULL in non-1.4 JDKs. */               \
-  template(java_nio_Buffer_klass,        java_nio_Buffer,                Opt) \
+  template(nio_Buffer_klass,             java_nio_Buffer,                Opt) \
                                                                               \
   /* If this class isn't present, it won't be referenced. */                  \
-  template(sun_misc_AtomicLongCSImpl_klass, sun_misc_AtomicLongCSImpl,   Opt) \
+  template(AtomicLongCSImpl_klass,       sun_misc_AtomicLongCSImpl,   Opt)    \
                                                                               \
-  template(sun_jkernel_DownloadManager_klass, sun_jkernel_DownloadManager, Opt_Kernel) \
+  template(DownloadManager_klass,        sun_jkernel_DownloadManager, Opt_Kernel) \
                                                                               \
-  template(sun_misc_PostVMInitHook_klass, sun_misc_PostVMInitHook, Opt)       \
+  template(PostVMInitHook_klass,         sun_misc_PostVMInitHook, Opt)        \
                                                                               \
   /* Preload boxing klasses */                                                \
   template(Boolean_klass,                java_lang_Boolean,              Pre) \
@@ -196,7 +199,7 @@ class SystemDictionary : AllStatic {
   enum WKID {
     NO_WKID = 0,
 
-    #define WK_KLASS_ENUM(name, ignore_s, ignore_o) WK_KLASS_ENUM_NAME(name),
+    #define WK_KLASS_ENUM(name, symbol, ignore_o) WK_KLASS_ENUM_NAME(name), WK_KLASS_ENUM_NAME(symbol) = WK_KLASS_ENUM_NAME(name),
     WK_KLASSES_DO(WK_KLASS_ENUM)
     #undef WK_KLASS_ENUM
 
@@ -207,6 +210,7 @@ class SystemDictionary : AllStatic {
 
   enum InitOption {
     Pre,                        // preloaded; error if not present
+    Pre_JSR292,                 // preloaded if EnableInvokeDynamic
 
     // Order is significant.  Options before this point require resolve_or_fail.
     // Options after this point will use resolve_or_null instead.
@@ -226,26 +230,26 @@ class SystemDictionary : AllStatic {
   // throw_error flag.  For most uses the throw_error argument should be set
   // to true.
 
-  static klassOop resolve_or_fail(symbolHandle class_name, Handle class_loader, Handle protection_domain, bool throw_error, TRAPS);
+  static klassOop resolve_or_fail(Symbol* class_name, Handle class_loader, Handle protection_domain, bool throw_error, TRAPS);
   // Convenient call for null loader and protection domain.
-  static klassOop resolve_or_fail(symbolHandle class_name, bool throw_error, TRAPS);
+  static klassOop resolve_or_fail(Symbol* class_name, bool throw_error, TRAPS);
 private:
   // handle error translation for resolve_or_null results
-  static klassOop handle_resolution_exception(symbolHandle class_name, Handle class_loader, Handle protection_domain, bool throw_error, KlassHandle klass_h, TRAPS);
+  static klassOop handle_resolution_exception(Symbol* class_name, Handle class_loader, Handle protection_domain, bool throw_error, KlassHandle klass_h, TRAPS);
 
 public:
 
   // Returns a class with a given class name and class loader.
   // Loads the class if needed. If not found NULL is returned.
-  static klassOop resolve_or_null(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
+  static klassOop resolve_or_null(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS);
   // Version with null loader and protection domain
-  static klassOop resolve_or_null(symbolHandle class_name, TRAPS);
+  static klassOop resolve_or_null(Symbol* class_name, TRAPS);
 
   // Resolve a superclass or superinterface. Called from ClassFileParser,
   // parse_interfaces, resolve_instance_class_or_null, load_shared_class
   // "child_name" is the class whose super class or interface is being resolved.
-  static klassOop resolve_super_or_fail(symbolHandle child_name,
-                                        symbolHandle class_name,
+  static klassOop resolve_super_or_fail(Symbol* child_name,
+                                        Symbol* class_name,
                                         Handle class_loader,
                                         Handle protection_domain,
                                         bool is_superclass,
@@ -253,7 +257,7 @@ public:
 
   // Parse new stream. This won't update the system dictionary or
   // class hierarchy, simply parse the stream. Used by JVMTI RedefineClasses.
-  static klassOop parse_stream(symbolHandle class_name,
+  static klassOop parse_stream(Symbol* class_name,
                                Handle class_loader,
                                Handle protection_domain,
                                ClassFileStream* st,
@@ -261,7 +265,7 @@ public:
     KlassHandle nullHandle;
     return parse_stream(class_name, class_loader, protection_domain, st, nullHandle, NULL, THREAD);
   }
-  static klassOop parse_stream(symbolHandle class_name,
+  static klassOop parse_stream(Symbol* class_name,
                                Handle class_loader,
                                Handle protection_domain,
                                ClassFileStream* st,
@@ -270,23 +274,23 @@ public:
                                TRAPS);
 
   // Resolve from stream (called by jni_DefineClass and JVM_DefineClass)
-  static klassOop resolve_from_stream(symbolHandle class_name, Handle class_loader,
+  static klassOop resolve_from_stream(Symbol* class_name, Handle class_loader,
                                       Handle protection_domain,
                                       ClassFileStream* st, bool verify, TRAPS);
 
   // Lookup an already loaded class. If not found NULL is returned.
-  static klassOop find(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
+  static klassOop find(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS);
 
   // Lookup an already loaded instance or array class.
   // Do not make any queries to class loaders; consult only the cache.
   // If not found NULL is returned.
-  static klassOop find_instance_or_array_klass(symbolHandle class_name,
+  static klassOop find_instance_or_array_klass(Symbol* class_name,
                                                Handle class_loader,
                                                Handle protection_domain,
                                                TRAPS);
 
   // If the given name is known to vmSymbols, return the well-know klass:
-  static klassOop find_well_known_klass(symbolOop class_name);
+  static klassOop find_well_known_klass(Symbol* class_name);
 
   // Lookup an instance or array class that has already been loaded
   // either into the given class loader, or else into another class
@@ -309,7 +313,7 @@ public:
   // satisfied, and it is safe for classes in the given class loader
   // to manipulate strongly-typed values of the found class, subject
   // to local linkage and access checks.
-  static klassOop find_constrained_instance_or_array_klass(symbolHandle class_name,
+  static klassOop find_constrained_instance_or_array_klass(Symbol* class_name,
                                                            Handle class_loader,
                                                            TRAPS);
 
@@ -324,7 +328,7 @@ public:
   //   (added for helpers that use HandleMarks and ResourceMarks)
   static void classes_do(void f(klassOop, oop, TRAPS), TRAPS);
   // All entries in the placeholder table and their class loaders
-  static void placeholders_do(void f(symbolOop, oop));
+  static void placeholders_do(void f(Symbol*, oop));
 
   // Iterate over all methods in all klasses in dictionary
   static void methods_do(void f(methodOop));
@@ -341,6 +345,8 @@ public:
   // Unload (that is, break root links to) all unmarked classes and
   // loaders.  Returns "true" iff something was unloaded.
   static bool do_unloading(BoolObjectClosure* is_alive);
+
+  static int calculate_systemdictionary_size(int loadedclasses);
 
   // Applies "f->do_oop" to all root oops in the system dictionary.
   static void oops_do(OopClosure* f);
@@ -383,12 +389,12 @@ public:
   static void verify();
 
 #ifdef ASSERT
-  static bool is_internal_format(symbolHandle class_name);
+  static bool is_internal_format(Symbol* class_name);
 #endif
 
   // Verify class is in dictionary
   static void verify_obj_klass_present(Handle obj,
-                                       symbolHandle class_name,
+                                       Symbol* class_name,
                                        Handle class_loader);
 
   // Initialization
@@ -401,6 +407,7 @@ public:
   }
 
   static klassOop check_klass_Pre(klassOop k) { return check_klass(k); }
+  static klassOop check_klass_Pre_JSR292(klassOop k) { return EnableInvokeDynamic ? check_klass(k) : k; }
   static klassOop check_klass_Opt(klassOop k) { return k; }
   static klassOop check_klass_Opt_Kernel(klassOop k) { return k; } //== Opt
   static klassOop check_klass_Opt_Only_JDK15(klassOop k) {
@@ -421,10 +428,15 @@ public:
   }
 
 public:
-  #define WK_KLASS_DECLARE(name, ignore_symbol, option) \
+  #define WK_KLASS_DECLARE(name, symbol, option) \
     static klassOop name() { return check_klass_##option(_well_known_klasses[WK_KLASS_ENUM_NAME(name)]); }
   WK_KLASSES_DO(WK_KLASS_DECLARE);
   #undef WK_KLASS_DECLARE
+
+  static klassOop well_known_klass(WKID id) {
+    assert(id >= (int)FIRST_WKID && id < (int)WKID_LIMIT, "oob");
+    return _well_known_klasses[id];
+  }
 
   // Local definition for direct access to the private array:
   #define WK_KLASS(name) _well_known_klasses[SystemDictionary::WK_KLASS_ENUM_NAME(name)]
@@ -469,34 +481,34 @@ public:
   // Note:  java_lang_Class::primitive_type is the inverse of java_mirror
 
   // Check class loader constraints
-  static bool add_loader_constraint(symbolHandle name, Handle loader1,
+  static bool add_loader_constraint(Symbol* name, Handle loader1,
                                     Handle loader2, TRAPS);
-  static char* check_signature_loaders(symbolHandle signature, Handle loader1,
+  static char* check_signature_loaders(Symbol* signature, Handle loader1,
                                        Handle loader2, bool is_method, TRAPS);
 
   // JSR 292
-  // find the java.dyn.MethodHandles::invoke method for a given signature
-  static methodOop find_method_handle_invoke(symbolHandle name,
-                                             symbolHandle signature,
+  // find the java.lang.invoke.MethodHandles::invoke method for a given signature
+  static methodOop find_method_handle_invoke(Symbol* name,
+                                             Symbol* signature,
                                              KlassHandle accessing_klass,
                                              TRAPS);
-  // ask Java to compute a java.dyn.MethodType object for a given signature
-  static Handle    find_method_handle_type(symbolHandle signature,
+  // ask Java to compute a java.lang.invoke.MethodType object for a given signature
+  static Handle    find_method_handle_type(Symbol* signature,
                                            KlassHandle accessing_klass,
                                            bool for_invokeGeneric,
                                            bool& return_bcp_flag,
                                            TRAPS);
-  // ask Java to compute a java.dyn.MethodHandle object for a given CP entry
+  // ask Java to compute a java.lang.invoke.MethodHandle object for a given CP entry
   static Handle    link_method_handle_constant(KlassHandle caller,
                                                int ref_kind, //e.g., JVM_REF_invokeVirtual
                                                KlassHandle callee,
-                                               symbolHandle name,
-                                               symbolHandle signature,
+                                               Symbol* name,
+                                               Symbol* signature,
                                                TRAPS);
   // ask Java to create a dynamic call site, while linking an invokedynamic op
   static Handle    make_dynamic_call_site(Handle bootstrap_method,
                                           // Callee information:
-                                          symbolHandle name,
+                                          Symbol* name,
                                           methodHandle signature_invoker,
                                           Handle info,
                                           // Caller information:
@@ -519,8 +531,8 @@ public:
 
   // Record the error when the first attempt to resolve a reference from a constant
   // pool entry to a class fails.
-  static void add_resolution_error(constantPoolHandle pool, int which, symbolHandle error);
-  static symbolOop find_resolution_error(constantPoolHandle pool, int which);
+  static void add_resolution_error(constantPoolHandle pool, int which, Symbol* error);
+  static Symbol* find_resolution_error(constantPoolHandle pool, int which);
 
  private:
 
@@ -528,11 +540,19 @@ public:
     _loader_constraint_size = 107,                     // number of entries in constraint table
     _resolution_error_size  = 107,                     // number of entries in resolution error table
     _invoke_method_size     = 139,                     // number of entries in invoke method table
-    _nof_buckets            = 1009                     // number of buckets in hash table
+    _nof_buckets            = 1009,                    // number of buckets in hash table for placeholders
+    _old_default_sdsize     = 1009,                    // backward compat for system dictionary size
+    _prime_array_size       = 8,                       // array of primes for system dictionary size
+    _average_depth_goal     = 3                        // goal for lookup length
   };
 
 
   // Static variables
+
+  // hashtable sizes for system dictionary to allow growth
+  // prime numbers for system dictionary size
+  static int                     _sdgeneration;
+  static const int               _primelist[_prime_array_size];
 
   // Hashtable holding loaded classes.
   static Dictionary*            _dictionary;
@@ -580,29 +600,29 @@ private:
   static SymbolPropertyTable* invoke_method_table() { return _invoke_method_table; }
 
   // Basic loading operations
-  static klassOop resolve_instance_class_or_null(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
-  static klassOop resolve_array_class_or_null(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
-  static instanceKlassHandle handle_parallel_super_load(symbolHandle class_name, symbolHandle supername, Handle class_loader, Handle protection_domain, Handle lockObject, TRAPS);
+  static klassOop resolve_instance_class_or_null(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS);
+  static klassOop resolve_array_class_or_null(Symbol* class_name, Handle class_loader, Handle protection_domain, TRAPS);
+  static instanceKlassHandle handle_parallel_super_load(Symbol* class_name, Symbol* supername, Handle class_loader, Handle protection_domain, Handle lockObject, TRAPS);
   // Wait on SystemDictionary_lock; unlocks lockObject before
   // waiting; relocks lockObject with correct recursion count
   // after waiting, but before reentering SystemDictionary_lock
   // to preserve lock order semantics.
   static void double_lock_wait(Handle lockObject, TRAPS);
   static void define_instance_class(instanceKlassHandle k, TRAPS);
-  static instanceKlassHandle find_or_define_instance_class(symbolHandle class_name,
+  static instanceKlassHandle find_or_define_instance_class(Symbol* class_name,
                                                 Handle class_loader,
                                                 instanceKlassHandle k, TRAPS);
-  static instanceKlassHandle load_shared_class(symbolHandle class_name,
+  static instanceKlassHandle load_shared_class(Symbol* class_name,
                                                Handle class_loader, TRAPS);
   static instanceKlassHandle load_shared_class(instanceKlassHandle ik,
                                                Handle class_loader, TRAPS);
-  static instanceKlassHandle load_instance_class(symbolHandle class_name, Handle class_loader, TRAPS);
+  static instanceKlassHandle load_instance_class(Symbol* class_name, Handle class_loader, TRAPS);
   static Handle compute_loader_lock_object(Handle class_loader, TRAPS);
   static void check_loader_lock_contention(Handle loader_lock, TRAPS);
   static bool is_parallelCapable(Handle class_loader);
   static bool is_parallelDefine(Handle class_loader);
 
-  static klassOop find_shared_class(symbolHandle class_name);
+  static klassOop find_shared_class(Symbol* class_name);
 
   // Setup link to hierarchy
   static void add_to_hierarchy(instanceKlassHandle k, TRAPS);
@@ -613,34 +633,29 @@ private:
 
   // Basic find on loaded classes
   static klassOop find_class(int index, unsigned int hash,
-                             symbolHandle name, Handle loader);
+                             Symbol* name, Handle loader);
+  static klassOop find_class(Symbol* class_name, Handle class_loader);
 
   // Basic find on classes in the midst of being loaded
-  static symbolOop find_placeholder(int index, unsigned int hash,
-                                    symbolHandle name, Handle loader);
-
-  // Basic find operation of loaded classes and classes in the midst
-  // of loading;  used for assertions and verification only.
-  static oop find_class_or_placeholder(symbolHandle class_name,
-                                       Handle class_loader);
+  static Symbol* find_placeholder(Symbol* name, Handle loader);
 
   // Updating entry in dictionary
   // Add a completely loaded class
-  static void add_klass(int index, symbolHandle class_name,
+  static void add_klass(int index, Symbol* class_name,
                         Handle class_loader, KlassHandle obj);
 
   // Add a placeholder for a class being loaded
   static void add_placeholder(int index,
-                              symbolHandle class_name,
+                              Symbol* class_name,
                               Handle class_loader);
   static void remove_placeholder(int index,
-                                 symbolHandle class_name,
+                                 Symbol* class_name,
                                  Handle class_loader);
 
   // Performs cleanups after resolve_super_or_fail. This typically needs
   // to be called on failure.
   // Won't throw, but can block.
-  static void resolution_cleanups(symbolHandle class_name,
+  static void resolution_cleanups(Symbol* class_name,
                                   Handle class_loader,
                                   TRAPS);
 
@@ -670,7 +685,6 @@ private:
   static bool _has_checkPackageAccess;
 };
 
-// Cf. vmSymbols vs. vmSymbolHandles
 class SystemDictionaryHandles : AllStatic {
 public:
   #define WK_KLASS_HANDLE_DECLARE(name, ignore_symbol, option) \

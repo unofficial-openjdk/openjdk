@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,7 +199,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
          cpuHelper = new SPARCHelper();
       } else if (cpu.equals("x86")) {
          cpuHelper = new X86Helper();
-      } else if (cpu.equals("amd64")) {
+      } else if (cpu.equals("amd64") || cpu.equals("x86_64")) {
          cpuHelper = new AMD64Helper();
       } else if (cpu.equals("ia64")) {
          cpuHelper = new IA64Helper();
@@ -530,7 +530,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
             case JVM_CONSTANT_Class:
                buf.cell("JVM_CONSTANT_Class");
-               Klass klass = (Klass) cpool.getObjAt(index);
+               Klass klass = (Klass) cpool.getObjAtRaw(index);
                if (klass instanceof InstanceKlass) {
                   buf.cell(genKlassLink((InstanceKlass) klass));
                } else {
@@ -555,7 +555,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
             case JVM_CONSTANT_String:
                buf.cell("JVM_CONSTANT_String");
                buf.cell("\"" +
-                 escapeHTMLSpecialChars(OopUtilities.stringOopToString(cpool.getObjAt(index))) + "\"");
+                 escapeHTMLSpecialChars(OopUtilities.stringOopToString(cpool.getObjAtRaw(index))) + "\"");
                break;
 
             case JVM_CONSTANT_Fieldref:
@@ -598,7 +598,6 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                buf.cell(Integer.toString(cpool.getIntAt(index)));
                break;
 
-            case JVM_CONSTANT_InvokeDynamicTrans:
             case JVM_CONSTANT_InvokeDynamic:
                buf.cell("JVM_CONSTANT_InvokeDynamic");
                buf.cell(genLowHighShort(cpool.getIntAt(index)) +
@@ -672,11 +671,11 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
             buf.beginTag("ul");
             for (int exp = 0; exp < exceptions.length; exp++) {
                short cpIndex = (short) exceptions[exp].getClassCPIndex();
-               Oop obj = cpool.getObjAt(cpIndex);
-               if (obj instanceof Symbol) {
-                  buf.li(((Symbol)obj).asString().replace('/', '.'));
+               ConstantPool.CPSlot obj = cpool.getSlotAt(cpIndex);
+               if (obj.isMetaData()) {
+                 buf.li((obj.getSymbol()).asString().replace('/', '.'));
                } else {
-                  buf.li(genKlassLink((InstanceKlass)obj));
+                 buf.li(genKlassLink((InstanceKlass)obj.getOop()));
                }
             }
             buf.endTag("ul");
@@ -756,7 +755,7 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                              } else if (instr instanceof BytecodeLoadConstant) {
                                 BytecodeLoadConstant ldc = (BytecodeLoadConstant) instr;
                                 if (ldc.isKlassConstant()) {
-                                   Oop oop = ldc.getKlass();
+                                   Object oop = ldc.getKlass();
                                    if (oop instanceof Klass) {
                                       buf.append("<a href='");
                                       buf.append(genKlassHref((InstanceKlass) oop));
@@ -803,13 +802,13 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                buf.cell(Integer.toString(exceptionTable.getIntAt(e + 1)));
                buf.cell(Integer.toString(exceptionTable.getIntAt(e + 2)));
                short cpIndex = (short) exceptionTable.getIntAt(e + 3);
-               Oop obj = cpIndex == 0? null : cpool.getObjAt(cpIndex);
+               ConstantPool.CPSlot obj = cpIndex == 0? null : cpool.getSlotAt(cpIndex);
                if (obj == null) {
                   buf.cell("Any");
-               } else if (obj instanceof Symbol) {
-                  buf.cell(((Symbol)obj).asString().replace('/', '.'));
+               } else if (obj.isMetaData()) {
+                 buf.cell(obj.getSymbol().asString().replace('/', '.'));
                } else {
-                  buf.cell(genKlassLink((InstanceKlass)obj));
+                 buf.cell(genKlassLink((InstanceKlass)obj.getOop()));
                }
                buf.endTag("tr");
             }
@@ -1117,20 +1116,15 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
                 InstanceKlass kls = (InstanceKlass) obj;
                 buf.append(" " + kls.getName().asString() + "={");
                 int flen = ov.fieldsSize();
-
-                TypeArray klfields = kls.getFields();
-                int klen = (int) klfields.getLength();
-
-                ConstantPool cp = kls.getConstants();
+                int klen = kls.getJavaFieldsCount();
                 int findex = 0;
-                for (int index = 0; index < klen; index += kls.NEXT_OFFSET) {
-                    int accsFlags = klfields.getShortAt(index + kls.ACCESS_FLAGS_OFFSET);
-                    int nameIndex = klfields.getShortAt(index + kls.NAME_INDEX_OFFSET);
+                for (int index = 0; index < klen; index++) {
+                    int accsFlags = kls.getFieldAccessFlags(index);
+                    Symbol f_name = kls.getFieldName(index);
                     AccessFlags access = new AccessFlags(accsFlags);
                     if (!access.isStatic()) {
                         ScopeValue svf = ov.getFieldAt(findex++);
                         String    fstr = scopeValueAsString(sd, svf);
-                        Symbol f_name  = cp.getSymbolAt(nameIndex);
                         buf.append(" [" + f_name.asString() + " :"+ index + "]=(#" + fstr + ")");
                     }
                 }
@@ -1820,13 +1814,11 @@ public class HTMLGenerator implements /* imports */ ClassConstants {
 
    protected String genHTMLListForFields(InstanceKlass klass) {
       Formatter buf = new Formatter(genHTML);
-      TypeArray fields = klass.getFields();
-      int numFields = (int) fields.getLength();
-      ConstantPool cp = klass.getConstants();
+      int numFields = klass.getJavaFieldsCount();
       if (numFields != 0) {
          buf.h3("Fields");
          buf.beginList();
-         for (int f = 0; f < numFields; f += InstanceKlass.NEXT_OFFSET) {
+         for (int f = 0; f < numFields; f++) {
            sun.jvm.hotspot.oops.Field field = klass.getFieldByIndex(f);
            String f_name = ((NamedFieldIdentifier)field.getID()).getName();
            Symbol f_sig  = field.getSignature();

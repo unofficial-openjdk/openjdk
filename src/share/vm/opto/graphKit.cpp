@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1033,14 +1033,10 @@ bool GraphKit::compute_stack_effects(int& inputs, int& depth) {
       iter.reset_to_bci(bci());
       iter.next();
       ciMethod* method = iter.get_method(ignore);
-      inputs = method->arg_size_no_receiver();
-      // Add a receiver argument, maybe:
-      if (code != Bytecodes::_invokestatic &&
-          code != Bytecodes::_invokedynamic)
-        inputs += 1;
       // (Do not use ciMethod::arg_size(), because
       // it might be an unloaded method, which doesn't
       // know whether it is static or not.)
+      inputs = method->invoke_arg_size(code);
       int size = method->return_type()->size();
       depth = size - inputs;
     }
@@ -1457,19 +1453,22 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
 }
 
 
-void GraphKit::pre_barrier(Node* ctl,
+void GraphKit::pre_barrier(bool do_load,
+                           Node* ctl,
                            Node* obj,
                            Node* adr,
                            uint  adr_idx,
                            Node* val,
                            const TypeOopPtr* val_type,
+                           Node* pre_val,
                            BasicType bt) {
+
   BarrierSet* bs = Universe::heap()->barrier_set();
   set_control(ctl);
   switch (bs->kind()) {
     case BarrierSet::G1SATBCT:
     case BarrierSet::G1SATBCTLogging:
-      g1_write_barrier_pre(obj, adr, adr_idx, val, val_type, bt);
+      g1_write_barrier_pre(do_load, obj, adr, adr_idx, val, val_type, pre_val, bt);
       break;
 
     case BarrierSet::CardTableModRef:
@@ -1523,6 +1522,11 @@ Node* GraphKit::store_oop(Node* ctl,
                           const TypeOopPtr* val_type,
                           BasicType bt,
                           bool use_precise) {
+  // Transformation of a value which could be NULL pointer (CastPP #NULL)
+  // could be delayed during Parse (for example, in adjust_map_after_if()).
+  // Execute transformation here to avoid barrier generation in such case.
+  if (_gvn.type(val) == TypePtr::NULL_PTR)
+    val = _gvn.makecon(TypePtr::NULL_PTR);
 
   set_control(ctl);
   if (stopped()) return top(); // Dead path ?
@@ -1532,7 +1536,11 @@ Node* GraphKit::store_oop(Node* ctl,
   uint adr_idx = C->get_alias_index(adr_type);
   assert(adr_idx != Compile::AliasIdxTop, "use other store_to_memory factory" );
 
-  pre_barrier(control(), obj, adr, adr_idx, val, val_type, bt);
+  pre_barrier(true /* do_load */,
+              control(), obj, adr, adr_idx, val, val_type,
+              NULL /* pre_val */,
+              bt);
+
   Node* store = store_to_memory(control(), adr, val, bt, adr_idx);
   post_barrier(control(), store, obj, adr, adr_idx, val, bt, use_precise);
   return store;
@@ -2301,9 +2309,9 @@ Node* GraphKit::gen_subtype_check(Node* subklass, Node* superklass) {
   // will always succeed.  We could leave a dependency behind to ensure this.
 
   // First load the super-klass's check-offset
-  Node *p1 = basic_plus_adr( superklass, superklass, sizeof(oopDesc) + Klass::super_check_offset_offset_in_bytes() );
+  Node *p1 = basic_plus_adr( superklass, superklass, in_bytes(Klass::super_check_offset_offset()) );
   Node *chk_off = _gvn.transform( new (C, 3) LoadINode( NULL, memory(p1), p1, _gvn.type(p1)->is_ptr() ) );
-  int cacheoff_con = sizeof(oopDesc) + Klass::secondary_super_cache_offset_in_bytes();
+  int cacheoff_con = in_bytes(Klass::secondary_super_cache_offset());
   bool might_be_cache = (find_int_con(chk_off, cacheoff_con) == cacheoff_con);
 
   // Load from the sub-klass's super-class display list, or a 1-word cache of
@@ -2853,7 +2861,7 @@ FastLockNode* GraphKit::shared_lock(Node* obj) {
   // lock has no side-effects, sets few values
   set_predefined_output_for_runtime_call(lock, mem, TypeRawPtr::BOTTOM);
 
-  insert_mem_bar(Op_MemBarAcquire);
+  insert_mem_bar(Op_MemBarAcquireLock);
 
   // Add this to the worklist so that the lock can be eliminated
   record_for_igvn(lock);
@@ -2886,7 +2894,7 @@ void GraphKit::shared_unlock(Node* box, Node* obj) {
   }
 
   // Memory barrier to avoid floating things down past the locked region
-  insert_mem_bar(Op_MemBarRelease);
+  insert_mem_bar(Op_MemBarReleaseLock);
 
   const TypeFunc *tf = OptoRuntime::complete_monitor_exit_Type();
   UnlockNode *unlock = new (C, tf->domain()->cnt()) UnlockNode(C, tf);
@@ -2931,7 +2939,7 @@ Node* GraphKit::get_layout_helper(Node* klass_node, jint& constant_value) {
     }
   }
   constant_value = Klass::_lh_neutral_value;  // put in a known value
-  Node* lhp = basic_plus_adr(klass_node, klass_node, Klass::layout_helper_offset_in_bytes() + sizeof(oopDesc));
+  Node* lhp = basic_plus_adr(klass_node, klass_node, in_bytes(Klass::layout_helper_offset()));
   return make_load(NULL, lhp, TypeInt::INT, T_INT);
 }
 
@@ -2950,8 +2958,7 @@ static void hook_memory_on_init(GraphKit& kit, int alias_idx,
 
 //---------------------------set_output_for_allocation-------------------------
 Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
-                                          const TypeOopPtr* oop_type,
-                                          bool raw_mem_only) {
+                                          const TypeOopPtr* oop_type) {
   int rawidx = Compile::AliasIdxRaw;
   alloc->set_req( TypeFunc::FramePtr, frameptr() );
   add_safepoint_edges(alloc);
@@ -2975,7 +2982,7 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
                                                  rawoop)->as_Initialize();
   assert(alloc->initialization() == init,  "2-way macro link must work");
   assert(init ->allocation()     == alloc, "2-way macro link must work");
-  if (ReduceFieldZeroing && !raw_mem_only) {
+  {
     // Extract memory strands which may participate in the new object's
     // initialization, and source them from the new InitializeNode.
     // This will allow us to observe initializations when they occur,
@@ -3036,11 +3043,9 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
 // the type to a constant.
 // The optional arguments are for specialized use by intrinsics:
 //  - If 'extra_slow_test' if not null is an extra condition for the slow-path.
-//  - If 'raw_mem_only', do not cast the result to an oop.
 //  - If 'return_size_val', report the the total object size to the caller.
 Node* GraphKit::new_instance(Node* klass_node,
                              Node* extra_slow_test,
-                             bool raw_mem_only, // affect only raw memory
                              Node* *return_size_val) {
   // Compute size in doublewords
   // The size is always an integral number of doublewords, represented
@@ -3111,7 +3116,7 @@ Node* GraphKit::new_instance(Node* klass_node,
                      size, klass_node,
                      initial_slow_test);
 
-  return set_output_for_allocation(alloc, oop_type, raw_mem_only);
+  return set_output_for_allocation(alloc, oop_type);
 }
 
 //-------------------------------new_array-------------------------------------
@@ -3121,7 +3126,6 @@ Node* GraphKit::new_instance(Node* klass_node,
 Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
                           Node* length,         // number of array elements
                           int   nargs,          // number of arguments to push back for uncommon trap
-                          bool raw_mem_only,    // affect only raw memory
                           Node* *return_size_val) {
   jint  layout_con = Klass::_lh_neutral_value;
   Node* layout_val = get_layout_helper(klass_node, layout_con);
@@ -3266,7 +3270,7 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
     ary_type = ary_type->is_aryptr()->cast_to_size(length_type);
   }
 
-  Node* javaoop = set_output_for_allocation(alloc, ary_type, raw_mem_only);
+  Node* javaoop = set_output_for_allocation(alloc, ary_type);
 
   // Cast length on remaining path to be as narrow as possible
   if (map()->find_edge(length) >= 0) {
@@ -3338,14 +3342,79 @@ InitializeNode* AllocateNode::initialization() {
   return NULL;
 }
 
+// Trace Allocate -> Proj[Parm] -> MemBarStoreStore
+MemBarStoreStoreNode* AllocateNode::storestore() {
+  ProjNode* rawoop = proj_out(AllocateNode::RawAddress);
+  if (rawoop == NULL)  return NULL;
+  for (DUIterator_Fast imax, i = rawoop->fast_outs(imax); i < imax; i++) {
+    Node* storestore = rawoop->fast_out(i);
+    if (storestore->is_MemBarStoreStore()) {
+      return storestore->as_MemBarStoreStore();
+    }
+  }
+  return NULL;
+}
+
+//----------------------------- loop predicates ---------------------------
+
+//------------------------------add_predicate_impl----------------------------
+void GraphKit::add_predicate_impl(Deoptimization::DeoptReason reason, int nargs) {
+  // Too many traps seen?
+  if (too_many_traps(reason)) {
+#ifdef ASSERT
+    if (TraceLoopPredicate) {
+      int tc = C->trap_count(reason);
+      tty->print("too many traps=%s tcount=%d in ",
+                    Deoptimization::trap_reason_name(reason), tc);
+      method()->print(); // which method has too many predicate traps
+      tty->cr();
+    }
+#endif
+    // We cannot afford to take more traps here,
+    // do not generate predicate.
+    return;
+  }
+
+  Node *cont    = _gvn.intcon(1);
+  Node* opq     = _gvn.transform(new (C, 2) Opaque1Node(C, cont));
+  Node *bol     = _gvn.transform(new (C, 2) Conv2BNode(opq));
+  IfNode* iff   = create_and_map_if(control(), bol, PROB_MAX, COUNT_UNKNOWN);
+  Node* iffalse = _gvn.transform(new (C, 1) IfFalseNode(iff));
+  C->add_predicate_opaq(opq);
+  {
+    PreserveJVMState pjvms(this);
+    set_control(iffalse);
+    _sp += nargs;
+    uncommon_trap(reason, Deoptimization::Action_maybe_recompile);
+  }
+  Node* iftrue = _gvn.transform(new (C, 1) IfTrueNode(iff));
+  set_control(iftrue);
+}
+
+//------------------------------add_predicate---------------------------------
+void GraphKit::add_predicate(int nargs) {
+  if (UseLoopPredicate) {
+    add_predicate_impl(Deoptimization::Reason_predicate, nargs);
+  }
+  // loop's limit check predicate should be near the loop.
+  if (LoopLimitCheck) {
+    add_predicate_impl(Deoptimization::Reason_loop_limit_check, nargs);
+  }
+}
+
 //----------------------------- store barriers ----------------------------
 #define __ ideal.
 
 void GraphKit::sync_kit(IdealKit& ideal) {
+  set_all_memory(__ merged_memory());
+  set_i_o(__ i_o());
+  set_control(__ ctrl());
+}
+
+void GraphKit::final_sync(IdealKit& ideal) {
   // Final sync IdealKit and graphKit.
   __ drain_delay_transform();
-  set_all_memory(__ merged_memory());
-  set_control(__ ctrl());
+  sync_kit(ideal);
 }
 
 // vanilla/CMS post barrier
@@ -3392,7 +3461,7 @@ void GraphKit::write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   // Convert the pointer to an int prior to doing math on it
   Node* cast = __ CastPX(__ ctrl(), adr);
@@ -3407,9 +3476,22 @@ void GraphKit::write_barrier_post(Node* oop_store,
 
   // Get the alias_index for raw card-mark memory
   int adr_type = Compile::AliasIdxRaw;
-  // Smash zero into card
-  Node*   zero = __ ConI(0);
+  Node*   zero = __ ConI(0); // Dirty card value
   BasicType bt = T_BYTE;
+
+  if (UseCondCardMark) {
+    // The classic GC reference write barrier is typically implemented
+    // as a store into the global card mark table.  Unfortunately
+    // unconditional stores can result in false sharing and excessive
+    // coherence traffic as well as false transactional aborts.
+    // UseCondCardMark enables MP "polite" conditional card mark
+    // stores.  In theory we could relax the load from ctrl() to
+    // no_ctrl, but that doesn't buy much latitude.
+    Node* card_val = __ load( __ ctrl(), card_adr, TypeInt::BYTE, bt, adr_type);
+    __ if_then(card_val, BoolTest::ne, zero);
+  }
+
+  // Smash zero into card
   if( !UseConcMarkSweepGC ) {
     __ store(__ ctrl(), card_adr, zero, bt, adr_type);
   } else {
@@ -3417,18 +3499,41 @@ void GraphKit::write_barrier_post(Node* oop_store,
     __ storeCM(__ ctrl(), card_adr, zero, oop_store, adr_idx, bt, adr_type);
   }
 
+  if (UseCondCardMark) {
+    __ end_if();
+  }
+
   // Final sync IdealKit and GraphKit.
-  sync_kit(ideal);
+  final_sync(ideal);
 }
 
 // G1 pre/post barriers
-void GraphKit::g1_write_barrier_pre(Node* obj,
+void GraphKit::g1_write_barrier_pre(bool do_load,
+                                    Node* obj,
                                     Node* adr,
                                     uint alias_idx,
                                     Node* val,
                                     const TypeOopPtr* val_type,
+                                    Node* pre_val,
                                     BasicType bt) {
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+
+  // Some sanity checks
+  // Note: val is unused in this routine.
+
+  if (do_load) {
+    // We need to generate the load of the previous value
+    assert(obj != NULL, "must have a base");
+    assert(adr != NULL, "where are loading from?");
+    assert(pre_val == NULL, "loaded already?");
+    assert(val_type != NULL, "need a type");
+  } else {
+    // In this case both val_type and alias_idx are unused.
+    assert(pre_val != NULL, "must be loaded already");
+    assert(pre_val->bottom_type()->basic_type() == T_OBJECT, "or we shouldn't be here");
+  }
+  assert(bt == T_OBJECT, "or we shouldn't be here");
+
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 
@@ -3449,32 +3554,28 @@ void GraphKit::g1_write_barrier_pre(Node* obj,
                                           PtrQueue::byte_offset_of_index());
   const int buffer_offset  = in_bytes(JavaThread::satb_mark_queue_offset() +  // 652
                                           PtrQueue::byte_offset_of_buf());
+
   // Now the actual pointers into the thread
-
-  // set_control( ctl);
-
   Node* marking_adr = __ AddP(no_base, tls, __ ConX(marking_offset));
   Node* buffer_adr  = __ AddP(no_base, tls, __ ConX(buffer_offset));
   Node* index_adr   = __ AddP(no_base, tls, __ ConX(index_offset));
 
   // Now some of the values
-
   Node* marking = __ load(__ ctrl(), marking_adr, TypeInt::INT, active_type, Compile::AliasIdxRaw);
 
   // if (!marking)
   __ if_then(marking, BoolTest::ne, zero); {
     Node* index   = __ load(__ ctrl(), index_adr, TypeInt::INT, T_INT, Compile::AliasIdxRaw);
 
-    const Type* t1 = adr->bottom_type();
-    const Type* t2 = val->bottom_type();
-
-    Node* orig = __ load(no_ctrl, adr, val_type, bt, alias_idx);
-    // if (orig != NULL)
-    __ if_then(orig, BoolTest::ne, null()); {
-      Node* buffer  = __ load(__ ctrl(), buffer_adr, TypeRawPtr::NOTNULL, T_ADDRESS, Compile::AliasIdxRaw);
-
+    if (do_load) {
       // load original value
       // alias_idx correct??
+      pre_val = __ load(no_ctrl, adr, val_type, bt, alias_idx);
+    }
+
+    // if (pre_val != NULL)
+    __ if_then(pre_val, BoolTest::ne, null()); {
+      Node* buffer  = __ load(__ ctrl(), buffer_adr, TypeRawPtr::NOTNULL, T_ADDRESS, Compile::AliasIdxRaw);
 
       // is the queue for this thread full?
       __ if_then(index, BoolTest::ne, zero, likely); {
@@ -3488,10 +3589,9 @@ void GraphKit::g1_write_barrier_pre(Node* obj,
         next_indexX = _gvn.transform( new (C, 2) ConvI2LNode(next_index, TypeLong::make(0, max_jlong, Type::WidenMax)) );
 #endif
 
-        // Now get the buffer location we will log the original value into and store it
+        // Now get the buffer location we will log the previous value into and store it
         Node *log_addr = __ AddP(no_base, buffer, next_indexX);
-        __ store(__ ctrl(), log_addr, orig, T_OBJECT, Compile::AliasIdxRaw);
-
+        __ store(__ ctrl(), log_addr, pre_val, T_OBJECT, Compile::AliasIdxRaw);
         // update the index
         __ store(__ ctrl(), index_adr, next_index, T_INT, Compile::AliasIdxRaw);
 
@@ -3499,13 +3599,13 @@ void GraphKit::g1_write_barrier_pre(Node* obj,
 
         // logging buffer is full, call the runtime
         const TypeFunc *tf = OptoRuntime::g1_wb_pre_Type();
-        __ make_leaf_call(tf, CAST_FROM_FN_PTR(address, SharedRuntime::g1_wb_pre), "g1_wb_pre", orig, tls);
+        __ make_leaf_call(tf, CAST_FROM_FN_PTR(address, SharedRuntime::g1_wb_pre), "g1_wb_pre", pre_val, tls);
       } __ end_if();  // (!index)
-    } __ end_if();  // (orig != NULL)
+    } __ end_if();  // (pre_val != NULL)
   } __ end_if();  // (!marking)
 
   // Final sync IdealKit and GraphKit.
-  sync_kit(ideal);
+  final_sync(ideal);
 }
 
 //
@@ -3571,7 +3671,7 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
   // (Else it's an array (or unknown), and we want more precise card marks.)
   assert(adr != NULL, "");
 
-  IdealKit ideal(gvn(), control(), merged_memory(), true);
+  IdealKit ideal(this, true);
 
   Node* tls = __ thread(); // ThreadLocalStorage
 
@@ -3645,6 +3745,84 @@ void GraphKit::g1_write_barrier_post(Node* oop_store,
   }
 
   // Final sync IdealKit and GraphKit.
-  sync_kit(ideal);
+  final_sync(ideal);
 }
 #undef __
+
+
+
+Node* GraphKit::load_String_offset(Node* ctrl, Node* str) {
+  if (java_lang_String::has_offset_field()) {
+    int offset_offset = java_lang_String::offset_offset_in_bytes();
+    const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                       false, NULL, 0);
+    const TypePtr* offset_field_type = string_type->add_offset(offset_offset);
+    int offset_field_idx = C->get_alias_index(offset_field_type);
+    return make_load(ctrl,
+                     basic_plus_adr(str, str, offset_offset),
+                     TypeInt::INT, T_INT, offset_field_idx);
+  } else {
+    return intcon(0);
+  }
+}
+
+Node* GraphKit::load_String_length(Node* ctrl, Node* str) {
+  if (java_lang_String::has_count_field()) {
+    int count_offset = java_lang_String::count_offset_in_bytes();
+    const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                       false, NULL, 0);
+    const TypePtr* count_field_type = string_type->add_offset(count_offset);
+    int count_field_idx = C->get_alias_index(count_field_type);
+    return make_load(ctrl,
+                     basic_plus_adr(str, str, count_offset),
+                     TypeInt::INT, T_INT, count_field_idx);
+  } else {
+    return load_array_length(load_String_value(ctrl, str));
+  }
+}
+
+Node* GraphKit::load_String_value(Node* ctrl, Node* str) {
+  int value_offset = java_lang_String::value_offset_in_bytes();
+  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                     false, NULL, 0);
+  const TypePtr* value_field_type = string_type->add_offset(value_offset);
+  const TypeAryPtr*  value_type = TypeAryPtr::make(TypePtr::NotNull,
+                                                   TypeAry::make(TypeInt::CHAR,TypeInt::POS),
+                                                   ciTypeArrayKlass::make(T_CHAR), true, 0);
+  int value_field_idx = C->get_alias_index(value_field_type);
+  return make_load(ctrl, basic_plus_adr(str, str, value_offset),
+                   value_type, T_OBJECT, value_field_idx);
+}
+
+void GraphKit::store_String_offset(Node* ctrl, Node* str, Node* value) {
+  int offset_offset = java_lang_String::offset_offset_in_bytes();
+  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                     false, NULL, 0);
+  const TypePtr* offset_field_type = string_type->add_offset(offset_offset);
+  int offset_field_idx = C->get_alias_index(offset_field_type);
+  store_to_memory(ctrl, basic_plus_adr(str, offset_offset),
+                  value, T_INT, offset_field_idx);
+}
+
+void GraphKit::store_String_value(Node* ctrl, Node* str, Node* value) {
+  int value_offset = java_lang_String::value_offset_in_bytes();
+  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                     false, NULL, 0);
+  const TypePtr* value_field_type = string_type->add_offset(value_offset);
+  const TypeAryPtr*  value_type = TypeAryPtr::make(TypePtr::NotNull,
+                                                   TypeAry::make(TypeInt::CHAR,TypeInt::POS),
+                                                   ciTypeArrayKlass::make(T_CHAR), true, 0);
+  int value_field_idx = C->get_alias_index(value_field_type);
+  store_to_memory(ctrl, basic_plus_adr(str, value_offset),
+                  value, T_OBJECT, value_field_idx);
+}
+
+void GraphKit::store_String_length(Node* ctrl, Node* str, Node* value) {
+  int count_offset = java_lang_String::count_offset_in_bytes();
+  const TypeInstPtr* string_type = TypeInstPtr::make(TypePtr::NotNull, C->env()->String_klass(),
+                                                     false, NULL, 0);
+  const TypePtr* count_field_type = string_type->add_offset(count_offset);
+  int count_field_idx = C->get_alias_index(count_field_type);
+  store_to_memory(ctrl, basic_plus_adr(str, count_offset),
+                  value, T_INT, count_field_idx);
+}

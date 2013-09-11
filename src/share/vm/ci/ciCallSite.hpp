@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,13 +29,17 @@
 
 // ciCallSite
 //
-// The class represents a java.dyn.CallSite object.
+// The class represents a java.lang.invoke.CallSite object.
 class ciCallSite : public ciInstance {
 public:
   ciCallSite(instanceHandle h_i) : ciInstance(h_i) {}
 
   // What kind of ciObject is this?
   bool is_call_site() const { return true; }
+
+  bool is_constant_call_site();
+  bool is_mutable_call_site();
+  bool is_volatile_call_site();
 
   // Return the target MethodHandle of this CallSite.
   ciMethodHandle* get_target() const;

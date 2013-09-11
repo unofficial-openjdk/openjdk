@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -337,7 +337,6 @@ void CodeCache::scavenge_root_nmethods_do(CodeBlobClosure* f) {
     if (is_live) {
       // Perform cur->oops_do(f), maybe just once per nmethod.
       f->do_code_blob(cur);
-      cur->fix_oop_relocations();
     }
   }
 
@@ -549,6 +548,19 @@ void CodeCache::gc_epilogue() {
   set_needs_cache_clean(false);
   prune_scavenge_root_nmethods();
   assert(!nmethod::oops_do_marking_is_active(), "oops_do_marking_prologue must be called");
+}
+
+
+void CodeCache::verify_oops() {
+  MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+  VerifyOopClosure voc;
+  FOR_ALL_ALIVE_BLOBS(cb) {
+    if (cb->is_nmethod()) {
+      nmethod *nm = (nmethod*)cb;
+      nm->oops_do(&voc);
+      nm->verify_oop_relocations();
+    }
+  }
 }
 
 
@@ -784,6 +796,7 @@ void CodeCache::print_internals() {
   int nmethodCount = 0;
   int runtimeStubCount = 0;
   int adapterCount = 0;
+  int ricochetStubCount = 0;
   int deoptimizationStubCount = 0;
   int uncommonTrapStubCount = 0;
   int bufferBlobCount = 0;
@@ -828,6 +841,8 @@ void CodeCache::print_internals() {
       }
     } else if (cb->is_runtime_stub()) {
       runtimeStubCount++;
+    } else if (cb->is_ricochet_stub()) {
+      ricochetStubCount++;
     } else if (cb->is_deoptimization_stub()) {
       deoptimizationStubCount++;
     } else if (cb->is_uncommon_trap_stub()) {
@@ -864,6 +879,7 @@ void CodeCache::print_internals() {
   tty->print_cr("runtime_stubs: %d",runtimeStubCount);
   tty->print_cr("adapters: %d",adapterCount);
   tty->print_cr("buffer blobs: %d",bufferBlobCount);
+  tty->print_cr("ricochet_stubs: %d",ricochetStubCount);
   tty->print_cr("deoptimization_stubs: %d",deoptimizationStubCount);
   tty->print_cr("uncommon_traps: %d",uncommonTrapStubCount);
   tty->print_cr("\nnmethod size distribution (non-zombie java)");
@@ -939,9 +955,27 @@ void CodeCache::print_bounds(outputStream* st) {
                _heap->high(),
                _heap->high_boundary());
   st->print_cr(" total_blobs=" UINT32_FORMAT " nmethods=" UINT32_FORMAT
-               " adapters=" UINT32_FORMAT " free_code_cache=" SIZE_FORMAT
+               " adapters=" UINT32_FORMAT " free_code_cache=" SIZE_FORMAT "Kb"
                " largest_free_block=" SIZE_FORMAT,
-               CodeCache::nof_blobs(), CodeCache::nof_nmethods(),
-               CodeCache::nof_adapters(), CodeCache::unallocated_capacity(),
-               CodeCache::largest_free_block());
+               nof_blobs(), nof_nmethods(), nof_adapters(),
+               unallocated_capacity()/K, largest_free_block());
+}
+
+void CodeCache::log_state(outputStream* st) {
+  st->print(" total_blobs='" UINT32_FORMAT "' nmethods='" UINT32_FORMAT "'"
+            " adapters='" UINT32_FORMAT "' free_code_cache='" SIZE_FORMAT "'"
+            " largest_free_block='" SIZE_FORMAT "'",
+            nof_blobs(), nof_nmethods(), nof_adapters(),
+            unallocated_capacity(), largest_free_block());
+}
+
+size_t CodeCache::largest_free_block() {
+  // This is called both with and without CodeCache_lock held so
+  // handle both cases.
+  if (CodeCache_lock->owned_by_self()) {
+    return _heap->largest_free_block();
+  } else {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    return _heap->largest_free_block();
+  }
 }

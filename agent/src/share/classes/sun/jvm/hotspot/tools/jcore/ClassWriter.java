@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -229,7 +229,7 @@ public class ClassWriter implements /* imports */ ClassConstants
                 case JVM_CONSTANT_Class: {
                      dos.writeByte(cpConstType);
                      // Klass already resolved. ConstantPool constains klassOop.
-                     Klass refKls = (Klass) cpool.getObjAt(ci);
+                     Klass refKls = (Klass) cpool.getObjAtRaw(ci);
                      String klassName = refKls.getName().asString();
 
                      Short s = (Short) utf8ToIndex.get(klassName);
@@ -255,7 +255,7 @@ public class ClassWriter implements /* imports */ ClassConstants
 
                 case JVM_CONSTANT_String: {
                      dos.writeByte(cpConstType);
-                     String str = OopUtilities.stringOopToString(cpool.getObjAt(ci));
+                     String str = OopUtilities.stringOopToString(cpool.getObjAtRaw(ci));
                      Short s = (Short) utf8ToIndex.get(str);
                      dos.writeShort(s.shortValue());
                      if (DEBUG) debugMessage("CP[" + ci + "] = string " + s);
@@ -321,7 +321,6 @@ public class ClassWriter implements /* imports */ ClassConstants
                      break;
                 }
 
-                case JVM_CONSTANT_InvokeDynamicTrans:
                 case JVM_CONSTANT_InvokeDynamic: {
                      dos.writeByte(cpConstType);
                      int value = cpool.getIntAt(ci);
@@ -380,23 +379,21 @@ public class ClassWriter implements /* imports */ ClassConstants
     }
 
     protected void writeFields() throws IOException {
-        TypeArray fields = klass.getFields();
-        final int length = (int) fields.getLength();
+        final int length = klass.getJavaFieldsCount();
 
         // write number of fields
-        dos.writeShort((short) (length / InstanceKlass.NEXT_OFFSET) );
+        dos.writeShort((short) length);
 
-        if (DEBUG) debugMessage("number of fields = "
-                                + length/InstanceKlass.NEXT_OFFSET);
+        if (DEBUG) debugMessage("number of fields = " + length);
 
-        for (int index = 0; index < length; index += InstanceKlass.NEXT_OFFSET) {
-            short accessFlags    = fields.getShortAt(index + InstanceKlass.ACCESS_FLAGS_OFFSET);
+        for (int index = 0; index < length; index++) {
+            short accessFlags    = klass.getFieldAccessFlags(index);
             dos.writeShort(accessFlags & (short) JVM_RECOGNIZED_FIELD_MODIFIERS);
 
-            short nameIndex    = fields.getShortAt(index + InstanceKlass.NAME_INDEX_OFFSET);
+            short nameIndex    = klass.getFieldNameIndex(index);
             dos.writeShort(nameIndex);
 
-            short signatureIndex = fields.getShortAt(index + InstanceKlass.SIGNATURE_INDEX_OFFSET);
+            short signatureIndex = klass.getFieldSignatureIndex(index);
             dos.writeShort(signatureIndex);
             if (DEBUG) debugMessage("\tfield name = " + nameIndex + ", signature = " + signatureIndex);
 
@@ -405,11 +402,11 @@ public class ClassWriter implements /* imports */ ClassConstants
             if (hasSyn)
                 fieldAttributeCount++;
 
-            short initvalIndex = fields.getShortAt(index + InstanceKlass.INITVAL_INDEX_OFFSET);
+            short initvalIndex = klass.getFieldInitialValueIndex(index);
             if (initvalIndex != 0)
                 fieldAttributeCount++;
 
-            short genSigIndex = fields.getShortAt(index + InstanceKlass.GENERIC_SIGNATURE_INDEX_OFFSET);
+            short genSigIndex = klass.getFieldGenericSignatureIndex(index);
             if (genSigIndex != 0)
                 fieldAttributeCount++;
 

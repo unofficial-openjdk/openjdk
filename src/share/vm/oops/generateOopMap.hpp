@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -323,7 +323,7 @@ class GenerateOopMap VALUE_OBJ_CLASS_SPEC {
   // Cell type methods
   void            init_state();
   void            make_context_uninitialized ();
-  int             methodsig_to_effect        (symbolOop signature, bool isStatic, CellTypeState* effect);
+  int             methodsig_to_effect        (Symbol* signature, bool isStatic, CellTypeState* effect);
   bool            merge_local_state_vectors  (CellTypeState* cts, CellTypeState* bbts);
   bool            merge_monitor_state_vectors(CellTypeState* cts, CellTypeState* bbts);
   void            copy_state                 (CellTypeState *dst, CellTypeState *src);

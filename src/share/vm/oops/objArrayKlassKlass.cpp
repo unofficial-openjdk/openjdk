@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,13 @@
 #include "oops/objArrayKlassKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/parNew/parOopClosures.inline.hpp"
+#include "gc_implementation/parallelScavenge/psPromotionManager.inline.hpp"
+#include "gc_implementation/parallelScavenge/psScavenge.inline.hpp"
+#include "memory/cardTableRS.hpp"
+#include "oops/oop.pcgc.inline.hpp"
+#endif
 
 klassOop objArrayKlassKlass::create_klass(TRAPS) {
   objArrayKlassKlass o;
@@ -110,14 +117,11 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
     }
   }
 
-  // Create type name for klass (except for symbol arrays, since symbolKlass
-  // does not have a name).  This will potentially allocate an object, cause
-  // GC, and all other kinds of things.  Hence, this must be done before we
-  // get a handle to the new objArrayKlass we want to construct.  We cannot
-  // block while holding a handling to a partly initialized object.
-  symbolHandle name = symbolHandle();
+  // Create type name for klass.
+  Symbol* name = NULL;
+  if (!element_klass->oop_is_instance() ||
+      (name = instanceKlass::cast(element_klass())->array_name()) == NULL) {
 
-  if (!element_klass->oop_is_symbol()) {
     ResourceMark rm(THREAD);
     char *name_str = element_klass->name()->as_C_string();
     int len = element_klass->name()->utf8_length();
@@ -133,7 +137,11 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
       new_str[idx++] = ';';
     }
     new_str[idx++] = '\0';
-    name = oopFactory::new_symbol_handle(new_str, CHECK_0);
+    name = SymbolTable::new_symbol(new_str, CHECK_0);
+    if (element_klass->oop_is_instance()) {
+      instanceKlass* ik = instanceKlass::cast(element_klass());
+      ik->set_array_name(name);
+    }
   }
 
   objArrayKlass o;
@@ -142,12 +150,15 @@ klassOop objArrayKlassKlass::allocate_objArray_klass_impl(objArrayKlassKlassHand
                                                           this_oop,
                                                            CHECK_0);
 
-
   // Initialize instance variables
   objArrayKlass* oak = objArrayKlass::cast(k());
   oak->set_dimension(n);
   oak->set_element_klass(element_klass());
-  oak->set_name(name());
+  oak->set_name(name);
+  // decrement refcount because object arrays are not explicitly freed.  The
+  // instanceKlass array_name() keeps the name counted while the klass is
+  // loaded.
+  name->decrement_refcount();
 
   klassOop bk;
   if (element_klass->oop_is_objArray()) {
@@ -232,12 +243,23 @@ objArrayKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   addr = oak->bottom_klass_addr();
   if (mr.contains(addr)) blk->do_oop(addr);
 
-  return arrayKlassKlass::oop_oop_iterate(obj, blk);
+  return arrayKlassKlass::oop_oop_iterate_m(obj, blk, mr);
 }
 
 #ifndef SERIALGC
 void objArrayKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   assert(obj->blueprint()->oop_is_objArrayKlass(),"must be an obj array klass");
+  objArrayKlass* oak = objArrayKlass::cast((klassOop)obj);
+  oop* p = oak->element_klass_addr();
+  if (PSScavenge::should_scavenge(p)) {
+    pm->claim_or_forward_depth(p);
+  }
+  p = oak->bottom_klass_addr();
+  if (PSScavenge::should_scavenge(p)) {
+    pm->claim_or_forward_depth(p);
+  }
+
+  arrayKlassKlass::oop_push_contents(pm, obj);
 }
 
 int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
@@ -249,22 +271,6 @@ int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   PSParallelCompact::adjust_pointer(oak->bottom_klass_addr());
 
   return arrayKlassKlass::oop_update_pointers(cm, obj);
-}
-
-int objArrayKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                            HeapWord* beg_addr,
-                                            HeapWord* end_addr) {
-  assert(obj->is_klass(), "must be klass");
-  assert(klassOop(obj)->klass_part()->oop_is_objArray_slow(), "must be obj array");
-
-  oop* p;
-  objArrayKlass* oak = objArrayKlass::cast((klassOop)obj);
-  p = oak->element_klass_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-  p = oak->bottom_klass_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-
-  return arrayKlassKlass::oop_update_pointers(cm, obj, beg_addr, end_addr);
 }
 #endif // SERIALGC
 
@@ -299,7 +305,7 @@ const char* objArrayKlassKlass::internal_name() const {
 // Verification
 
 void objArrayKlassKlass::oop_verify_on(oop obj, outputStream* st) {
-  klassKlass::oop_verify_on(obj, st);
+  arrayKlassKlass::oop_verify_on(obj, st);
   objArrayKlass* oak = objArrayKlass::cast((klassOop)obj);
   guarantee(oak->element_klass()->is_perm(),  "should be in permspace");
   guarantee(oak->element_klass()->is_klass(), "should be klass");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,9 @@ ciKlass::ciKlass(KlassHandle h_k) : ciType(h_k) {
   assert(get_oop()->is_klass(), "wrong type");
   Klass* k = get_Klass();
   _layout_helper = k->layout_helper();
-  symbolOop klass_name = k->name();
+  Symbol* klass_name = k->name();
   assert(klass_name != NULL, "wrong ciKlass constructor");
-  _name = CURRENT_ENV->get_object(klass_name)->as_symbol();
+  _name = CURRENT_ENV->get_symbol(klass_name);
 }
 
 // ------------------------------------------------------------------

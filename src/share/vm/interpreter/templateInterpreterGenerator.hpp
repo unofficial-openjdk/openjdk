@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,6 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
   }
   address generate_exception_handler_common(const char* name, const char* message, bool pass_oop);
   address generate_ClassCastException_handler();
-  address generate_WrongMethodType_handler();
   address generate_ArrayIndexOutOfBounds_handler(const char* name);
   address generate_continuation_for(TosState state);
   address generate_return_entry_for(TosState state, int step);
@@ -95,6 +94,12 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "templateInterpreterGenerator_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "templateInterpreterGenerator_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "templateInterpreterGenerator_ppc.hpp"
 #endif
 
 

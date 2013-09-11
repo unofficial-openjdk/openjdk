@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,17 +132,22 @@ void InstructionPrinter::print_object(Value obj) {
     if (value->is_null_object()) {
       output()->print("null");
     } else if (!value->is_loaded()) {
-      output()->print("<unloaded object 0x%x>", value);
+      output()->print("<unloaded object " PTR_FORMAT ">", value);
     } else if (value->is_method()) {
       ciMethod* m = (ciMethod*)value;
       output()->print("<method %s.%s>", m->holder()->name()->as_utf8(), m->name()->as_utf8());
     } else {
-      output()->print("<object 0x%x>", value->constant_encoding());
+      output()->print("<object " PTR_FORMAT ">", value->constant_encoding());
     }
   } else if (type->as_InstanceConstant() != NULL) {
-    output()->print("<instance 0x%x>", type->as_InstanceConstant()->value()->constant_encoding());
+    ciInstance* value = type->as_InstanceConstant()->value();
+    if (value->is_loaded()) {
+      output()->print("<instance " PTR_FORMAT ">", value->constant_encoding());
+    } else {
+      output()->print("<unloaded instance " PTR_FORMAT ">", value);
+    }
   } else if (type->as_ArrayConstant() != NULL) {
-    output()->print("<array 0x%x>", type->as_ArrayConstant()->value()->constant_encoding());
+    output()->print("<array " PTR_FORMAT ">", type->as_ArrayConstant()->value()->constant_encoding());
   } else if (type->as_ClassConstant() != NULL) {
     ciInstanceKlass* klass = type->as_ClassConstant()->value();
     if (!klass->is_loaded()) {
@@ -839,6 +844,31 @@ void InstructionPrinter::do_ProfileInvoke(ProfileInvoke* x) {
   output()->print(" %s.%s", x->inlinee()->holder()->name()->as_utf8(), x->inlinee()->name()->as_utf8());
   output()->put(')');
 
+}
+
+void InstructionPrinter::do_RuntimeCall(RuntimeCall* x) {
+  output()->print("call_rt %s(", x->entry_name());
+  for (int i = 0; i < x->number_of_arguments(); i++) {
+    if (i > 0) output()->print(", ");
+    print_value(x->argument_at(i));
+  }
+  output()->put(')');
+}
+
+void InstructionPrinter::do_MemBar(MemBar* x) {
+  if (os::is_MP()) {
+    LIR_Code code = x->code();
+    switch (code) {
+      case lir_membar_acquire   : output()->print("membar_acquire"); break;
+      case lir_membar_release   : output()->print("membar_release"); break;
+      case lir_membar           : output()->print("membar"); break;
+      case lir_membar_loadload  : output()->print("membar_loadload"); break;
+      case lir_membar_storestore: output()->print("membar_storestore"); break;
+      case lir_membar_loadstore : output()->print("membar_loadstore"); break;
+      case lir_membar_storeload : output()->print("membar_storeload"); break;
+      default                   : ShouldNotReachHere(); break;
+    }
+  }
 }
 
 #endif // PRODUCT

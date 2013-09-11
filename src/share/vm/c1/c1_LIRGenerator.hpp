@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -246,6 +246,7 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   void do_AttemptUpdate(Intrinsic* x);
   void do_NIOCheckIndex(Intrinsic* x);
   void do_FPIntrinsics(Intrinsic* x);
+  void do_Reference_get(Intrinsic* x);
 
   void do_UnsafePrefetch(UnsafePrefetch* x, bool is_store);
 
@@ -260,13 +261,14 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
 
   // generic interface
 
-  void pre_barrier(LIR_Opr addr_opr, bool patch,  CodeEmitInfo* info);
+  void pre_barrier(LIR_Opr addr_opr, LIR_Opr pre_val, bool do_load, bool patch, CodeEmitInfo* info);
   void post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val);
 
   // specific implementations
   // pre barriers
 
-  void G1SATBCardTableModRef_pre_barrier(LIR_Opr addr_opr, bool patch,  CodeEmitInfo* info);
+  void G1SATBCardTableModRef_pre_barrier(LIR_Opr addr_opr, LIR_Opr pre_val,
+                                         bool do_load, bool patch, CodeEmitInfo* info);
 
   // post barriers
 
@@ -522,6 +524,8 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   virtual void do_UnsafePrefetchWrite(UnsafePrefetchWrite* x);
   virtual void do_ProfileCall    (ProfileCall*     x);
   virtual void do_ProfileInvoke  (ProfileInvoke*   x);
+  virtual void do_RuntimeCall    (RuntimeCall*     x);
+  virtual void do_MemBar         (MemBar*          x);
 };
 
 

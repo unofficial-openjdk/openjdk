@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,13 @@
  * questions.
  */
 
-#define JNIEXPORT
-#define JNIIMPORT
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+  #define JNIEXPORT     __attribute__((visibility("default")))
+  #define JNIIMPORT     __attribute__((visibility("default")))
+#else
+  #define JNIEXPORT
+  #define JNIIMPORT
+#endif
 #define JNICALL
 
 typedef int jint;

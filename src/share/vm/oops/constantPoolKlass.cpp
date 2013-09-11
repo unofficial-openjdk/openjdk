@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
 #include "oops/constantPoolOop.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/handles.inline.hpp"
 #ifdef TARGET_OS_FAMILY_linux
 # include "thread_linux.inline.hpp"
@@ -43,6 +43,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 #ifndef SERIALGC
 #include "gc_implementation/parNew/parOopClosures.inline.hpp"
@@ -55,26 +58,35 @@
 constantPoolOop constantPoolKlass::allocate(int length, bool is_conc_safe, TRAPS) {
   int size = constantPoolOopDesc::object_size(length);
   KlassHandle klass (THREAD, as_klassOop());
-  constantPoolOop c =
-    (constantPoolOop)CollectedHeap::permanent_obj_allocate(klass, size, CHECK_NULL);
+  assert(klass()->is_oop(), "Can't be null, else handlizing of c below won't work");
+  constantPoolHandle pool;
+  {
+    constantPoolOop c =
+      (constantPoolOop)CollectedHeap::permanent_obj_allocate(klass, size, CHECK_NULL);
+    assert(c->klass_or_null() != NULL, "Handlizing below won't work");
+    pool = constantPoolHandle(THREAD, c);
+  }
 
-  c->set_length(length);
-  c->set_tags(NULL);
-  c->set_cache(NULL);
-  c->set_operands(NULL);
-  c->set_pool_holder(NULL);
-  c->set_flags(0);
+  pool->set_length(length);
+  pool->set_tags(NULL);
+  pool->set_cache(NULL);
+  pool->set_operands(NULL);
+  pool->set_pool_holder(NULL);
+  pool->set_flags(0);
   // only set to non-zero if constant pool is merged by RedefineClasses
-  c->set_orig_length(0);
+  pool->set_orig_length(0);
   // if constant pool may change during RedefineClasses, it is created
   // unsafe for GC concurrent processing.
-  c->set_is_conc_safe(is_conc_safe);
+  pool->set_is_conc_safe(is_conc_safe);
   // all fields are initialized; needed for GC
 
+  // Note: because we may be in this "conc_unsafe" state when allocating
+  // t_oop below, which may in turn cause a GC, it is imperative that our
+  // size be correct, consistent and henceforth stable, at this stage.
+  assert(pool->is_oop() && pool->is_parsable(), "Else size() below is unreliable");
+  assert(size == pool->size(), "size() is wrong");
+
   // initialize tag array
-  // Note: cannot introduce constant pool handle before since it is not
-  //       completely initialized (no class) -> would cause assertion failure
-  constantPoolHandle pool (THREAD, c);
   typeArrayOop t_oop = oopFactory::new_permanent_byteArray(length, CHECK_NULL);
   typeArrayHandle tags (THREAD, t_oop);
   for (int index = 0; index < length; index++) {
@@ -82,6 +94,8 @@ constantPoolOop constantPoolKlass::allocate(int length, bool is_conc_safe, TRAPS
   }
   pool->set_tags(tags());
 
+  // Check that our size was stable at its old value.
+  assert(size == pool->size(), "size() changed");
   return pool();
 }
 
@@ -234,13 +248,13 @@ int constantPoolKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr)
   }
   oop* addr;
   addr = cp->tags_addr();
-  blk->do_oop(addr);
+  if (mr.contains(addr)) blk->do_oop(addr);
   addr = cp->cache_addr();
-  blk->do_oop(addr);
+  if (mr.contains(addr)) blk->do_oop(addr);
   addr = cp->operands_addr();
-  blk->do_oop(addr);
+  if (mr.contains(addr)) blk->do_oop(addr);
   addr = cp->pool_holder_addr();
-  blk->do_oop(addr);
+  if (mr.contains(addr)) blk->do_oop(addr);
   return size;
 }
 
@@ -271,47 +285,13 @@ int constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   return cp->object_size();
 }
 
-int
-constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                       HeapWord* beg_addr, HeapWord* end_addr) {
-  assert (obj->is_constantPool(), "obj must be constant pool");
-  constantPoolOop cp = (constantPoolOop) obj;
-
-  // If the tags array is null we are in the middle of allocating this constant
-  // pool.
-  if (cp->tags() != NULL) {
-    oop* base = (oop*)cp->base();
-    oop* const beg_oop = MAX2((oop*)beg_addr, base);
-    oop* const end_oop = MIN2((oop*)end_addr, base + cp->length());
-    const size_t beg_idx = pointer_delta(beg_oop, base, sizeof(oop*));
-    const size_t end_idx = pointer_delta(end_oop, base, sizeof(oop*));
-    for (size_t cur_idx = beg_idx; cur_idx < end_idx; ++cur_idx, ++base) {
-      if (cp->is_pointer_entry(int(cur_idx))) {
-        PSParallelCompact::adjust_pointer(base);
-      }
-    }
-  }
-
-  oop* p;
-  p = cp->tags_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-  p = cp->cache_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-  p = cp->operands_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-  p = cp->pool_holder_addr();
-  PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
-
-  return cp->object_size();
-}
-
 void constantPoolKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   assert(obj->is_constantPool(), "should be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
-  if (AnonymousClasses && cp->has_pseudo_string() && cp->tags() != NULL) {
-    oop* base = (oop*)cp->base();
-    for (int i = 0; i < cp->length(); ++i, ++base) {
-      if (cp->tag_at(i).is_string()) {
+  if (cp->tags() != NULL) {
+    for (int i = 1; i < cp->length(); ++i) {
+      if (cp->is_pointer_entry(i)) {
+        oop* base = cp->obj_at_addr_raw(i);
         if (PSScavenge::should_scavenge(base)) {
           pm->claim_or_forward_depth(base);
         }
@@ -333,10 +313,14 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
     st->print(" - flags: 0x%x", cp->flags());
     if (cp->has_pseudo_string()) st->print(" has_pseudo_string");
     if (cp->has_invokedynamic()) st->print(" has_invokedynamic");
+    if (cp->has_preresolution()) st->print(" has_preresolution");
     st->cr();
   }
+  if (cp->pool_holder() != NULL) {
+    bool extra = (instanceKlass::cast(cp->pool_holder())->constants() != cp);
+    st->print_cr(" - holder: " INTPTR_FORMAT "%s", cp->pool_holder(), (extra? " (extra)" : ""));
+  }
   st->print_cr(" - cache: " INTPTR_FORMAT, cp->cache());
-
   for (int index = 1; index < cp->length(); index++) {      // Index 0 is unused
     st->print(" - %3d : ", index);
     cp->tag_at(index).print_on(st);
@@ -364,6 +348,11 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
         anObj->print_value_on(st);
         st->print(" {0x%lx}", (address)anObj);
         break;
+      case JVM_CONSTANT_Object :
+        anObj = cp->object_at(index);
+        anObj->print_value_on(st);
+        st->print(" {0x%lx}", (address)anObj);
+        break;
       case JVM_CONSTANT_Integer :
         st->print("%d", cp->int_at(index));
         break;
@@ -388,8 +377,12 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
       case JVM_CONSTANT_UnresolvedClass :               // fall-through
       case JVM_CONSTANT_UnresolvedClassInError: {
         // unresolved_klass_at requires lock or safe world.
-        oop entry = *cp->obj_at_addr(index);
-        entry->print_value_on(st);
+        CPSlot entry = cp->slot_at(index);
+        if (entry.is_oop()) {
+          entry.get_oop()->print_value_on(st);
+        } else {
+          entry.get_symbol()->print_value_on(st);
+        }
         }
         break;
       case JVM_CONSTANT_MethodHandle :
@@ -399,7 +392,6 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
       case JVM_CONSTANT_MethodType :
         st->print("signature_index=%d", cp->method_type_index_at(index));
         break;
-      case JVM_CONSTANT_InvokeDynamicTrans :
       case JVM_CONSTANT_InvokeDynamic :
         {
           st->print("bootstrap_method_index=%d", cp->invoke_dynamic_bootstrap_method_ref_index_at(index));
@@ -429,10 +421,15 @@ void constantPoolKlass::oop_print_value_on(oop obj, outputStream* st) {
   st->print("constant pool [%d]", cp->length());
   if (cp->has_pseudo_string()) st->print("/pseudo_string");
   if (cp->has_invokedynamic()) st->print("/invokedynamic");
+  if (cp->has_preresolution()) st->print("/preresolution");
   if (cp->operands() != NULL)  st->print("/operands[%d]", cp->operands()->length());
   cp->print_address_on(st);
   st->print(" for ");
   cp->pool_holder()->print_value_on(st);
+  if (cp->pool_holder() != NULL) {
+    bool extra = (instanceKlass::cast(cp->pool_holder())->constants() != cp);
+    if (extra)  st->print(" (extra)");
+  }
   if (cp->cache() != NULL) {
     st->print(" cache=" PTR_FORMAT, cp->cache());
   }
@@ -450,36 +447,44 @@ void constantPoolKlass::oop_verify_on(oop obj, outputStream* st) {
   constantPoolOop cp = constantPoolOop(obj);
   guarantee(cp->is_perm(), "should be in permspace");
   if (!cp->partially_loaded()) {
-    oop* base = (oop*)cp->base();
     for (int i = 0; i< cp->length();  i++) {
-      if (cp->tag_at(i).is_klass()) {
-        guarantee((*base)->is_perm(),     "should be in permspace");
-        guarantee((*base)->is_klass(),    "should be klass");
-      }
-      if (cp->tag_at(i).is_unresolved_klass()) {
-        guarantee((*base)->is_perm(),     "should be in permspace");
-        guarantee((*base)->is_symbol() || (*base)->is_klass(),
-                  "should be symbol or klass");
-      }
-      if (cp->tag_at(i).is_symbol()) {
-        guarantee((*base)->is_perm(),     "should be in permspace");
-        guarantee((*base)->is_symbol(),   "should be symbol");
-      }
-      if (cp->tag_at(i).is_unresolved_string()) {
-        guarantee((*base)->is_perm(),     "should be in permspace");
-        guarantee((*base)->is_symbol() || (*base)->is_instance(),
-                  "should be symbol or instance");
-      }
-      if (cp->tag_at(i).is_string()) {
+      constantTag tag = cp->tag_at(i);
+      CPSlot entry = cp->slot_at(i);
+      if (tag.is_klass()) {
+        if (entry.is_oop()) {
+          guarantee(entry.get_oop()->is_perm(),     "should be in permspace");
+          guarantee(entry.get_oop()->is_klass(),    "should be klass");
+        }
+      } else if (tag.is_unresolved_klass()) {
+        if (entry.is_oop()) {
+          guarantee(entry.get_oop()->is_perm(),     "should be in permspace");
+          guarantee(entry.get_oop()->is_klass(),    "should be klass");
+        }
+      } else if (tag.is_symbol()) {
+        guarantee(entry.get_symbol()->refcount() != 0, "should have nonzero reference count");
+      } else if (tag.is_unresolved_string()) {
+        if (entry.is_oop()) {
+          guarantee(entry.get_oop()->is_perm(),     "should be in permspace");
+          guarantee(entry.get_oop()->is_instance(), "should be instance");
+        }
+        else {
+          guarantee(entry.get_symbol()->refcount() != 0, "should have nonzero reference count");
+        }
+      } else if (tag.is_string()) {
         if (!cp->has_pseudo_string()) {
-          guarantee((*base)->is_perm(),   "should be in permspace");
-          guarantee((*base)->is_instance(), "should be instance");
+          if (entry.is_oop()) {
+            guarantee(!JavaObjectsInPerm || entry.get_oop()->is_perm(),
+                      "should be in permspace");
+            guarantee(entry.get_oop()->is_instance(), "should be instance");
+          }
         } else {
           // can be non-perm, can be non-instance (array)
         }
+      } else if (tag.is_object()) {
+        assert(entry.get_oop()->is_oop(), "should be some valid oop");
+      } else {
+        assert(!cp->is_pointer_entry(i), "unhandled oop type in constantPoolKlass::verify_on");
       }
-      // FIXME: verify JSR 292 tags JVM_CONSTANT_MethodHandle, etc.
-      base++;
     }
     guarantee(cp->tags()->is_perm(),         "should be in permspace");
     guarantee(cp->tags()->is_typeArray(),    "should be type array");
@@ -527,7 +532,7 @@ void constantPoolKlass::preload_and_initialize_all_classes(oop obj, TRAPS) {
     if (cp->tag_at(i).is_unresolved_klass()) {
       // This will force loading of the class
       klassOop klass = cp->klass_at(i, CHECK);
-      if (klass->is_instance()) {
+      if (klass->klass_part()->oop_is_instance()) {
         // Force initialization of class
         instanceKlass::cast(klass)->initialize(CHECK);
       }

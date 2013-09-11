@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -114,7 +114,111 @@ ifeq ($(ARCH), ppc)
   HS_ARCH          = ppc
 endif
 
+# determine if HotSpot is being built in JDK6 or earlier version
+JDK6_OR_EARLIER=0
+ifeq "$(shell expr \( '$(JDK_MAJOR_VERSION)' != '' \& '$(JDK_MINOR_VERSION)' != '' \& '$(JDK_MICRO_VERSION)' != '' \))" "1"
+  # if the longer variable names (newer build style) are set, then check those
+  ifeq "$(shell expr \( $(JDK_MAJOR_VERSION) = 1 \& $(JDK_MINOR_VERSION) \< 7 \))" "1"
+    JDK6_OR_EARLIER=1
+  endif
+else
+  # the longer variables aren't set so check the shorter variable names
+  ifeq "$(shell expr \( '$(JDK_MAJOR_VER)' = 1 \& '$(JDK_MINOR_VER)' \< 7 \))" "1"
+    JDK6_OR_EARLIER=1
+  endif
+endif
+
+ifeq ($(JDK6_OR_EARLIER),0)
+  # Full Debug Symbols is supported on JDK7 or newer.
+  # The Full Debug Symbols (FDS) default for BUILD_FLAVOR == product
+  # builds is enabled with debug info files ZIP'ed to save space. For
+  # BUILD_FLAVOR != product builds, FDS is always enabled, after all a
+  # debug build without debug info isn't very useful.
+  # The ZIP_DEBUGINFO_FILES option only has meaning when FDS is enabled.
+  #
+  # If you invoke a build with FULL_DEBUG_SYMBOLS=0, then FDS will be
+  # disabled for a BUILD_FLAVOR == product build.
+  #
+  # Note: Use of a different variable name for the FDS override option
+  # versus the FDS enabled check is intentional (FULL_DEBUG_SYMBOLS
+  # versus ENABLE_FULL_DEBUG_SYMBOLS). For auto build systems that pass
+  # in options via environment variables, use of distinct variables
+  # prevents strange behaviours. For example, in a BUILD_FLAVOR !=
+  # product build, the FULL_DEBUG_SYMBOLS environment variable will be
+  # 0, but the ENABLE_FULL_DEBUG_SYMBOLS make variable will be 1. If
+  # the same variable name is used, then different values can be picked
+  # up by different parts of the build. Just to be clear, we only need
+  # two variable names because the incoming option value can be
+  # overridden in some situations, e.g., a BUILD_FLAVOR != product
+  # build.
+
+  ifeq ($(BUILD_FLAVOR), product)
+    FULL_DEBUG_SYMBOLS ?= 1
+    ENABLE_FULL_DEBUG_SYMBOLS = $(FULL_DEBUG_SYMBOLS)
+  else
+    # debug variants always get Full Debug Symbols (if available)
+    ENABLE_FULL_DEBUG_SYMBOLS = 1
+  endif
+  _JUNK_ := $(shell \
+    echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
+  # since objcopy is optional, we set ZIP_DEBUGINFO_FILES later
+
+  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+    # Default OBJCOPY comes from GNU Binutils on Linux:
+    DEF_OBJCOPY=/usr/bin/objcopy
+    ifdef CROSS_COMPILE_ARCH
+      # don't try to generate .debuginfo files when cross compiling
+      _JUNK_ := $(shell \
+        echo >&2 "INFO: cross compiling for ARCH $(CROSS_COMPILE_ARCH)," \
+          "skipping .debuginfo generation.")
+      OBJCOPY=
+    else
+      OBJCOPY=$(shell test -x $(DEF_OBJCOPY) && echo $(DEF_OBJCOPY))
+      ifneq ($(ALT_OBJCOPY),)
+        _JUNK_ := $(shell echo >&2 "INFO: ALT_OBJCOPY=$(ALT_OBJCOPY)")
+        OBJCOPY=$(shell test -x $(ALT_OBJCOPY) && echo $(ALT_OBJCOPY))
+      endif
+    endif
+  else
+    OBJCOPY=
+  endif
+
+  ifeq ($(OBJCOPY),)
+    _JUNK_ := $(shell \
+      echo >&2 "INFO: no objcopy cmd found so cannot create .debuginfo files.")
+    ENABLE_FULL_DEBUG_SYMBOLS=0
+    _JUNK_ := $(shell \
+      echo >&2 "INFO: ENABLE_FULL_DEBUG_SYMBOLS=$(ENABLE_FULL_DEBUG_SYMBOLS)")
+  else
+    _JUNK_ := $(shell \
+      echo >&2 "INFO: $(OBJCOPY) cmd found so will create .debuginfo files.")
+
+    # Library stripping policies for .debuginfo configs:
+    #   all_strip - strips everything from the library
+    #   min_strip - strips most stuff from the library; leaves minimum symbols
+    #   no_strip  - does not strip the library at all
+    #
+    # Oracle security policy requires "all_strip". A waiver was granted on
+    # 2011.09.01 that permits using "min_strip" in the Java JDK and Java JRE.
+    #
+    # Currently, STRIP_POLICY is only used when Full Debug Symbols is enabled.
+    #
+    STRIP_POLICY ?= min_strip
+
+    _JUNK_ := $(shell \
+      echo >&2 "INFO: STRIP_POLICY=$(STRIP_POLICY)")
+
+    ZIP_DEBUGINFO_FILES ?= 1
+
+    _JUNK_ := $(shell \
+      echo >&2 "INFO: ZIP_DEBUGINFO_FILES=$(ZIP_DEBUGINFO_FILES)")
+  endif
+endif
+
 JDK_INCLUDE_SUBDIR=linux
+
+# Library suffix
+LIBRARY_SUFFIX=so
 
 # FIXUP: The subdirectory for a debug build is NOT the same on all platforms
 VM_DEBUG=jvmg
@@ -122,28 +226,58 @@ VM_DEBUG=jvmg
 EXPORT_LIST += $(EXPORT_DOCS_DIR)/platform/jvmti/jvmti.html
 
 # client and server subdirectories have symbolic links to ../libjsig.so
-EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.so
+EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.$(LIBRARY_SUFFIX)
+ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+    EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.diz
+  else
+    EXPORT_LIST += $(EXPORT_JRE_LIB_ARCH_DIR)/libjsig.debuginfo
+  endif
+endif
 EXPORT_SERVER_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/server
+EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
 
 ifndef BUILD_CLIENT_ONLY
 EXPORT_LIST += $(EXPORT_SERVER_DIR)/Xusage.txt
-EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.so
+EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.$(LIBRARY_SUFFIX)
+  ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+    ifeq ($(ZIP_DEBUGINFO_FILES),1)
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.diz
+    else
+      EXPORT_LIST += $(EXPORT_SERVER_DIR)/libjvm.debuginfo
+    endif
+  endif
 endif
 
 ifneq ($(ZERO_BUILD), true)
   ifeq ($(ARCH_DATA_MODEL), 32)
-    EXPORT_CLIENT_DIR = $(EXPORT_JRE_LIB_ARCH_DIR)/client
     EXPORT_LIST += $(EXPORT_CLIENT_DIR)/Xusage.txt
-    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.so 
+    EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.$(LIBRARY_SUFFIX)
+    ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+      ifeq ($(ZIP_DEBUGINFO_FILES),1)
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.diz
+      else
+        EXPORT_LIST += $(EXPORT_CLIENT_DIR)/libjvm.debuginfo
+      endif
+    endif
   endif
 endif
 
 # Serviceability Binaries
 # No SA Support for PPC, IA64, ARM or zero
-ADD_SA_BINARIES/x86   = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so \
+ADD_SA_BINARIES/x86   = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
                         $(EXPORT_LIB_DIR)/sa-jdi.jar 
-ADD_SA_BINARIES/sparc = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.so \
+ADD_SA_BINARIES/sparc = $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.$(LIBRARY_SUFFIX) \
                         $(EXPORT_LIB_DIR)/sa-jdi.jar 
+ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
+    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.diz
+  else
+    ADD_SA_BINARIES/x86   += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
+    ADD_SA_BINARIES/sparc += $(EXPORT_JRE_LIB_ARCH_DIR)/libsaproc.debuginfo
+  endif
+endif
 ADD_SA_BINARIES/ppc   = 
 ADD_SA_BINARIES/ia64  = 
 ADD_SA_BINARIES/arm   = 

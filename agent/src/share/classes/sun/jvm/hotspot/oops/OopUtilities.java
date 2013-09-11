@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,9 +74,6 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
     private static int THREAD_STATUS_TERMINATED;
   */
 
-  // java.lang.Class fields
-  private static OopField hcKlassField;
-
   // java.util.concurrent.locks.AbstractOwnableSynchronizer fields
   private static OopField absOwnSyncOwnerThreadField;
 
@@ -115,21 +112,52 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
     return buf.toString();
   }
 
+  public static String escapeString(String s) {
+    StringBuilder sb = null;
+    for (int index = 0; index < s.length(); index++) {
+      char value = s.charAt(index);
+      if (value >= 32 && value < 127 || value == '\'' || value == '\\') {
+        if (sb != null) {
+          sb.append(value);
+        }
+      } else {
+        if (sb == null) {
+          sb = new StringBuilder(s.length() * 2);
+          sb.append(s, 0, index);
+        }
+        sb.append("\\u");
+        if (value < 0x10) sb.append("000");
+        else if (value < 0x100) sb.append("00");
+        else if (value < 0x1000) sb.append("0");
+        sb.append(Integer.toHexString(value));
+      }
+    }
+    if (sb != null) {
+      return sb.toString();
+    }
+    return s;
+  }
+
   public static String stringOopToString(Oop stringOop) {
     if (offsetField == null) {
       InstanceKlass k = (InstanceKlass) stringOop.getKlass();
-      offsetField = (IntField) k.findField("offset", "I");
-      countField  = (IntField) k.findField("count",  "I");
+      offsetField = (IntField) k.findField("offset", "I");   // optional
+      countField  = (IntField) k.findField("count",  "I");   // optional
       valueField  = (OopField) k.findField("value",  "[C");
       if (Assert.ASSERTS_ENABLED) {
-        Assert.that(offsetField != null &&
-                    countField != null &&
-                    valueField != null, "must find all java.lang.String fields");
+         Assert.that(valueField != null, "Field \'value\' of java.lang.String not found");
       }
     }
-    return charArrayToString((TypeArray) valueField.getValue(stringOop),
-                             offsetField.getValue(stringOop),
-                             countField.getValue(stringOop));
+    if (offsetField != null && countField != null) {
+      return charArrayToString((TypeArray) valueField.getValue(stringOop),
+                               offsetField.getValue(stringOop),
+                               countField.getValue(stringOop));
+    }
+    return  charArrayToString((TypeArray) valueField.getValue(stringOop));
+  }
+
+  public static String stringOopToEscapedString(Oop stringOop) {
+    return escapeString(stringOopToString(stringOop));
   }
 
   private static void initThreadGroupFields() {
@@ -266,33 +294,6 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
       return threadParkBlockerField.getValue(threadOop);
     }
     return null;
-  }
-
-  // initialize fields for java.lang.Class
-  private static void initClassFields() {
-    if (hcKlassField == null) {
-       // hc_klass is a HotSpot magic field and hence we can't
-       // find it from InstanceKlass for java.lang.Class.
-       TypeDataBase db = VM.getVM().getTypeDataBase();
-       int hcKlassOffset = (int) Instance.getHeaderSize();
-       try {
-          hcKlassOffset += (db.lookupIntConstant("java_lang_Class::hc_klass_offset").intValue() *
-                           VM.getVM().getHeapOopSize());
-       } catch (RuntimeException re) {
-          // ignore, currently java_lang_Class::hc_klass_offset is zero
-       }
-       if (VM.getVM().isCompressedOopsEnabled()) {
-         hcKlassField = new NarrowOopField(new NamedFieldIdentifier("hc_klass"), hcKlassOffset, true);
-       } else {
-         hcKlassField = new OopField(new NamedFieldIdentifier("hc_klass"), hcKlassOffset, true);
-       }
-    }
-  }
-
-  /** get klassOop field at offset hc_klass_offset from a java.lang.Class object */
-  public static Klass classOopToKlass(Oop aClass) {
-    initClassFields();
-    return (Klass) hcKlassField.getValue(aClass);
   }
 
   // initialize fields for j.u.c.l AbstractOwnableSynchornizer class

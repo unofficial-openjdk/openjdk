@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,14 +107,22 @@ void CompactingPermGenGen::initialize_oops() {
   // Skip over (reserve space for) a list of addresses of C++ vtables
   // for Klass objects.  They get filled in later.
 
+  void** vtbl_list = (void**)buffer;
+  buffer += vtbl_list_size * sizeof(void*);
+  Universe::init_self_patching_vtbl_list(vtbl_list, vtbl_list_size);
+
   // Skip over (reserve space for) dummy C++ vtables Klass objects.
   // They are used as is.
 
-  void** vtbl_list = (void**)buffer;
-  buffer += vtbl_list_size * sizeof(void*);
   intptr_t vtable_size = *(intptr_t*)buffer;
   buffer += sizeof(intptr_t);
   buffer += vtable_size;
+
+  // Skip the recorded symbols.
+
+  intptr_t total_symbol_size = *(intptr_t*)buffer;
+  buffer += sizeof(intptr_t) * 2;
+  buffer += total_symbol_size;
 
   // Create the symbol table using the bucket array at this spot in the
   // misc data space.  Since the symbol table is often modified, this

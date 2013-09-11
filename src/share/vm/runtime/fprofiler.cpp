@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@
 #include "memory/universe.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/oop.inline2.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fprofiler.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -318,7 +318,7 @@ class ProfilerNode {
     int limit;
     int i;
     methodOop m = method();
-    symbolOop k = m->klass_name();
+    Symbol* k = m->klass_name();
     // Print the class name with dots instead of slashes
     limit = k->utf8_length();
     for (i = 0 ; i < limit ; i += 1) {
@@ -331,7 +331,7 @@ class ProfilerNode {
     if (limit > 0) {
       st->print(".");
     }
-    symbolOop n = m->name();
+    Symbol* n = m->name();
     limit = n->utf8_length();
     for (i = 0 ; i < limit ; i += 1) {
       char c = (char) n->byte_at(i);
@@ -339,7 +339,7 @@ class ProfilerNode {
     }
     if( Verbose ) {
       // Disambiguate overloaded methods
-      symbolOop sig = m->signature();
+      Symbol* sig = m->signature();
       sig->print_symbol_on(st);
     }
   }

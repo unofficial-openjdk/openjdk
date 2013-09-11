@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -673,7 +673,7 @@ void PhaseChaitin::gather_lrg_masks( bool after_aggressive ) {
         case Op_RegD:
           lrg.set_num_regs(2);
           // Define platform specific register pressure
-#ifdef SPARC
+#if defined(SPARC) || defined(ARM)
           lrg.set_reg_pressure(2);
 #elif defined(IA32)
           if( ireg == Op_RegL ) {
@@ -1483,7 +1483,7 @@ Node *PhaseChaitin::find_base_for_derived( Node **derived_base_map, Node *derive
 
   // Check for AddP-related opcodes
   if( !derived->is_Phi() ) {
-    assert( derived->as_Mach()->ideal_Opcode() == Op_AddP, "" );
+    assert(derived->as_Mach()->ideal_Opcode() == Op_AddP, err_msg("but is: %s", derived->Name()));
     Node *base = derived->in(AddPNode::Base);
     derived_base_map[derived->_idx] = base;
     return base;
@@ -1946,18 +1946,29 @@ void PhaseChaitin::dump_frame() const {
     reg2offset_unchecked(OptoReg::add(_matcher._old_SP,-1)) - reg2offset_unchecked(_matcher._new_SP)+jintSize);
 
   // Preserve area dump
+  int fixed_slots = C->fixed_slots();
+  OptoReg::Name begin_in_preserve = OptoReg::add(_matcher._old_SP, -(int)C->in_preserve_stack_slots());
+  OptoReg::Name return_addr = _matcher.return_addr();
+
   reg = OptoReg::add(reg, -1);
-  while( OptoReg::is_stack(reg)) {
+  while (OptoReg::is_stack(reg)) {
     tty->print("#r%3.3d %s+%2d: ",reg,fp,reg2offset_unchecked(reg));
-    if( _matcher.return_addr() == reg )
+    if (return_addr == reg) {
       tty->print_cr("return address");
-    else if( _matcher.return_addr() == OptoReg::add(reg,1) &&
-             VerifyStackAtCalls )
-      tty->print_cr("0xBADB100D   +VerifyStackAtCalls");
-    else if ((int)OptoReg::reg2stack(reg) < C->fixed_slots())
+    } else if (reg >= begin_in_preserve) {
+      // Preserved slots are present on x86
+      if (return_addr == OptoReg::add(reg, VMRegImpl::slots_per_word))
+        tty->print_cr("saved fp register");
+      else if (return_addr == OptoReg::add(reg, 2*VMRegImpl::slots_per_word) &&
+               VerifyStackAtCalls)
+        tty->print_cr("0xBADB100D   +VerifyStackAtCalls");
+      else
+        tty->print_cr("in_preserve");
+    } else if ((int)OptoReg::reg2stack(reg) < fixed_slots) {
       tty->print_cr("Fixed slot %d", OptoReg::reg2stack(reg));
-    else
-      tty->print_cr("pad2, in_preserve");
+    } else {
+      tty->print_cr("pad2, stack alignment");
+    }
     reg = OptoReg::add(reg, -1);
   }
 

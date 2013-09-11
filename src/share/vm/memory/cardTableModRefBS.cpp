@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -455,36 +455,78 @@ bool CardTableModRefBS::mark_card_deferred(size_t card_index) {
   return true;
 }
 
-
-void CardTableModRefBS::non_clean_card_iterate(Space* sp,
-                                               MemRegion mr,
-                                               DirtyCardToOopClosure* dcto_cl,
-                                               MemRegionClosure* cl,
-                                               bool clear) {
+void CardTableModRefBS::non_clean_card_iterate_possibly_parallel(Space* sp,
+                                                                 MemRegion mr,
+                                                                 OopsInGenClosure* cl,
+                                                                 CardTableRS* ct) {
   if (!mr.is_empty()) {
-    int n_threads = SharedHeap::heap()->n_par_threads();
-    if (n_threads > 0) {
+    // Caller (process_strong_roots()) claims that all GC threads
+    // execute this call.  With UseDynamicNumberOfGCThreads now all
+    // active GC threads execute this call.  The number of active GC
+    // threads needs to be passed to par_non_clean_card_iterate_work()
+    // to get proper partitioning and termination.
+    //
+    // This is an example of where n_par_threads() is used instead
+    // of workers()->active_workers().  n_par_threads can be set to 0 to
+    // turn off parallelism.  For example when this code is called as
+    // part of verification and SharedHeap::process_strong_roots() is being
+    // used, then n_par_threads() may have been set to 0.  active_workers
+    // is not overloaded with the meaning that it is a switch to disable
+    // parallelism and so keeps the meaning of the number of
+    // active gc workers.  If parallelism has not been shut off by
+    // setting n_par_threads to 0, then n_par_threads should be
+    // equal to active_workers.  When a different mechanism for shutting
+    // off parallelism is used, then active_workers can be used in
+    // place of n_par_threads.
+    //  This is an example of a path where n_par_threads is
+    // set to 0 to turn off parallism.
+    //  [7] CardTableModRefBS::non_clean_card_iterate()
+    //  [8] CardTableRS::younger_refs_in_space_iterate()
+    //  [9] Generation::younger_refs_in_space_iterate()
+    //  [10] OneContigSpaceCardGeneration::younger_refs_iterate()
+    //  [11] CompactingPermGenGen::younger_refs_iterate()
+    //  [12] CardTableRS::younger_refs_iterate()
+    //  [13] SharedHeap::process_strong_roots()
+    //  [14] G1CollectedHeap::verify()
+    //  [15] Universe::verify()
+    //  [16] G1CollectedHeap::do_collection_pause_at_safepoint()
+    //
+    int n_threads =  SharedHeap::heap()->n_par_threads();
+    bool is_par = n_threads > 0;
+    if (is_par) {
 #ifndef SERIALGC
-      par_non_clean_card_iterate_work(sp, mr, dcto_cl, cl, clear, n_threads);
+      assert(SharedHeap::heap()->n_par_threads() ==
+             SharedHeap::heap()->workers()->active_workers(), "Mismatch");
+      non_clean_card_iterate_parallel_work(sp, mr, cl, ct, n_threads);
 #else  // SERIALGC
       fatal("Parallel gc not supported here.");
 #endif // SERIALGC
     } else {
-      non_clean_card_iterate_work(mr, cl, clear);
+      // We do not call the non_clean_card_iterate_serial() version below because
+      // we want to clear the cards (which non_clean_card_iterate_serial() does not
+      // do for us): clear_cl here does the work of finding contiguous dirty ranges
+      // of cards to process and clear.
+
+      DirtyCardToOopClosure* dcto_cl = sp->new_dcto_cl(cl, precision(),
+                                                       cl->gen_boundary());
+      ClearNoncleanCardWrapper clear_cl(dcto_cl, ct);
+
+      clear_cl.do_MemRegion(mr);
     }
   }
 }
 
-// NOTE: For this to work correctly, it is important that
-// we look for non-clean cards below (so as to catch those
-// marked precleaned), rather than look explicitly for dirty
-// cards (and miss those marked precleaned). In that sense,
-// the name precleaned is currently somewhat of a misnomer.
-void CardTableModRefBS::non_clean_card_iterate_work(MemRegion mr,
-                                                    MemRegionClosure* cl,
-                                                    bool clear) {
-  // Figure out whether we have to worry about parallelism.
-  bool is_par = (SharedHeap::heap()->n_par_threads() > 1);
+// The iterator itself is not MT-aware, but
+// MT-aware callers and closures can use this to
+// accomplish dirty card iteration in parallel. The
+// iterator itself does not clear the dirty cards, or
+// change their values in any manner.
+void CardTableModRefBS::non_clean_card_iterate_serial(MemRegion mr,
+                                                      MemRegionClosure* cl) {
+  bool is_par = (SharedHeap::heap()->n_par_threads() > 0);
+  assert(!is_par ||
+          (SharedHeap::heap()->n_par_threads() ==
+          SharedHeap::heap()->workers()->active_workers()), "Mismatch");
   for (int i = 0; i < _cur_covered_regions; i++) {
     MemRegion mri = mr.intersection(_covered[i]);
     if (mri.word_size() > 0) {
@@ -506,44 +548,12 @@ void CardTableModRefBS::non_clean_card_iterate_work(MemRegion mr,
           MemRegion cur_cards(addr_for(cur_entry),
                               non_clean_cards * card_size_in_words);
           MemRegion dirty_region = cur_cards.intersection(mri);
-          if (clear) {
-            for (size_t i = 0; i < non_clean_cards; i++) {
-              // Clean the dirty cards (but leave the other non-clean
-              // alone.)  If parallel, do the cleaning atomically.
-              jbyte cur_entry_val = cur_entry[i];
-              if (card_is_dirty_wrt_gen_iter(cur_entry_val)) {
-                if (is_par) {
-                  jbyte res = Atomic::cmpxchg(clean_card, &cur_entry[i], cur_entry_val);
-                  assert(res != clean_card,
-                         "Dirty card mysteriously cleaned");
-                } else {
-                  cur_entry[i] = clean_card;
-                }
-              }
-            }
-          }
           cl->do_MemRegion(dirty_region);
         }
         cur_entry = next_entry;
       }
     }
   }
-}
-
-void CardTableModRefBS::mod_oop_in_space_iterate(Space* sp,
-                                                 OopClosure* cl,
-                                                 bool clear,
-                                                 bool before_save_marks) {
-  // Note that dcto_cl is resource-allocated, so there is no
-  // corresponding "delete".
-  DirtyCardToOopClosure* dcto_cl = sp->new_dcto_cl(cl, precision());
-  MemRegion used_mr;
-  if (before_save_marks) {
-    used_mr = sp->used_region_at_save_marks();
-  } else {
-    used_mr = sp->used_region();
-  }
-  non_clean_card_iterate(sp, used_mr, dcto_cl, dcto_cl, clear);
 }
 
 void CardTableModRefBS::dirty_MemRegion(MemRegion mr) {
@@ -593,9 +603,8 @@ void CardTableModRefBS::dirty(MemRegion mr) {
   memset(first, dirty_card, last-first);
 }
 
-// NOTES:
-// (1) Unlike mod_oop_in_space_iterate() above, dirty_card_iterate()
-//     iterates over dirty cards ranges in increasing address order.
+// Unlike several other card table methods, dirty_card_iterate()
+// iterates over dirty cards ranges in increasing address order.
 void CardTableModRefBS::dirty_card_iterate(MemRegion mr,
                                            MemRegionClosure* cl) {
   for (int i = 0; i < _cur_covered_regions; i++) {
@@ -653,23 +662,6 @@ MemRegion CardTableModRefBS::dirty_card_range_after_reset(MemRegion mr,
   return MemRegion(mr.end(), mr.end());
 }
 
-// Set all the dirty cards in the given region to "precleaned" state.
-void CardTableModRefBS::preclean_dirty_cards(MemRegion mr) {
-  for (int i = 0; i < _cur_covered_regions; i++) {
-    MemRegion mri = mr.intersection(_covered[i]);
-    if (!mri.is_empty()) {
-      jbyte *cur_entry, *limit;
-      for (cur_entry = byte_for(mri.start()), limit = byte_for(mri.last());
-           cur_entry <= limit;
-           cur_entry++) {
-        if (*cur_entry == dirty_card) {
-          *cur_entry = precleaned_card;
-        }
-      }
-    }
-  }
-}
-
 uintx CardTableModRefBS::ct_max_alignment_constraint() {
   return card_size * os::vm_page_size();
 }
@@ -685,45 +677,44 @@ void CardTableModRefBS::verify() {
 }
 
 #ifndef PRODUCT
-class GuaranteeNotModClosure: public MemRegionClosure {
-  CardTableModRefBS* _ct;
-public:
-  GuaranteeNotModClosure(CardTableModRefBS* ct) : _ct(ct) {}
-  void do_MemRegion(MemRegion mr) {
-    jbyte* entry = _ct->byte_for(mr.start());
-    guarantee(*entry != CardTableModRefBS::clean_card,
-              "Dirty card in region that should be clean");
+void CardTableModRefBS::verify_region(MemRegion mr,
+                                      jbyte val, bool val_equals) {
+  jbyte* start    = byte_for(mr.start());
+  jbyte* end      = byte_for(mr.last());
+  bool   failures = false;
+  for (jbyte* curr = start; curr <= end; ++curr) {
+    jbyte curr_val = *curr;
+    bool failed = (val_equals) ? (curr_val != val) : (curr_val == val);
+    if (failed) {
+      if (!failures) {
+        tty->cr();
+        tty->print_cr("== CT verification failed: ["PTR_FORMAT","PTR_FORMAT"]");
+        tty->print_cr("==   %sexpecting value: %d",
+                      (val_equals) ? "" : "not ", val);
+        failures = true;
+      }
+      tty->print_cr("==   card "PTR_FORMAT" ["PTR_FORMAT","PTR_FORMAT"], "
+                    "val: %d", curr, addr_for(curr),
+                    (HeapWord*) (((size_t) addr_for(curr)) + card_size),
+                    (int) curr_val);
+    }
   }
-};
-
-void CardTableModRefBS::verify_clean_region(MemRegion mr) {
-  GuaranteeNotModClosure blk(this);
-  non_clean_card_iterate_work(mr, &blk, false);
+  guarantee(!failures, "there should not have been any failures");
 }
 
-// To verify a MemRegion is entirely dirty this closure is passed to
-// dirty_card_iterate. If the region is dirty do_MemRegion will be
-// invoked only once with a MemRegion equal to the one being
-// verified.
-class GuaranteeDirtyClosure: public MemRegionClosure {
-  CardTableModRefBS* _ct;
-  MemRegion _mr;
-  bool _result;
-public:
-  GuaranteeDirtyClosure(CardTableModRefBS* ct, MemRegion mr)
-    : _ct(ct), _mr(mr), _result(false) {}
-  void do_MemRegion(MemRegion mr) {
-    _result = _mr.equals(mr);
-  }
-  bool result() const { return _result; }
-};
+void CardTableModRefBS::verify_not_dirty_region(MemRegion mr) {
+  verify_region(mr, dirty_card, false /* val_equals */);
+}
 
 void CardTableModRefBS::verify_dirty_region(MemRegion mr) {
-  GuaranteeDirtyClosure blk(this, mr);
-  dirty_card_iterate(mr, &blk);
-  guarantee(blk.result(), "Non-dirty cards in region that should be dirty");
+  verify_region(mr, dirty_card, true /* val_equals */);
 }
 #endif
+
+void CardTableModRefBS::print_on(outputStream* st) const {
+  st->print_cr("Card table byte_map: [" INTPTR_FORMAT "," INTPTR_FORMAT "] byte_map_base: " INTPTR_FORMAT,
+               _byte_map, _byte_map + _byte_map_size, byte_map_base);
+}
 
 bool CardTableModRefBSForCTRS::card_will_be_scanned(jbyte cv) {
   return

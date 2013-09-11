@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,8 @@ class SwitchRange;
 
 //------------------------------InlineTree-------------------------------------
 class InlineTree : public ResourceObj {
+  friend class VMStructs;
+
   Compile*    C;                  // cache
   JVMState*   _caller_jvms;       // state of caller
   ciMethod*   _method;            // method being called by the caller_jvms
@@ -50,11 +52,12 @@ class InlineTree : public ResourceObj {
   // Always between 0.0 and 1.0.  Represents the percentage of the method's
   // total execution time used at this call site.
   const float _site_invoke_ratio;
-  const int   _site_depth_adjust;
+  const int   _max_inline_level;  // the maximum inline level for this sub-tree (may be adjusted)
   float compute_callee_frequency( int caller_bci ) const;
 
   GrowableArray<InlineTree*> _subtrees;
-  friend class Compile;
+
+  void print_impl(outputStream* stj, int indent) const PRODUCT_RETURN;
 
 protected:
   InlineTree(Compile* C,
@@ -63,26 +66,28 @@ protected:
              JVMState* caller_jvms,
              int caller_bci,
              float site_invoke_ratio,
-             int site_depth_adjust);
+             int max_inline_level);
   InlineTree *build_inline_tree_for_callee(ciMethod* callee_method,
                                            JVMState* caller_jvms,
                                            int caller_bci);
   const char* try_to_inline(ciMethod* callee_method, ciMethod* caller_method, int caller_bci, ciCallProfile& profile, WarmCallInfo* wci_result);
-  const char* shouldInline(ciMethod* callee_method, ciMethod* caller_method, int caller_bci, ciCallProfile& profile, WarmCallInfo* wci_result) const;
-  const char* shouldNotInline(ciMethod* callee_method, ciMethod* caller_method, WarmCallInfo* wci_result) const;
-  void        print_inlining(ciMethod *callee_method, int caller_bci, const char *failure_msg) const PRODUCT_RETURN;
+  const char* should_inline(ciMethod* callee_method, ciMethod* caller_method, int caller_bci, ciCallProfile& profile, WarmCallInfo* wci_result) const;
+  const char* should_not_inline(ciMethod* callee_method, ciMethod* caller_method, WarmCallInfo* wci_result) const;
+  void        print_inlining(ciMethod *callee_method, int caller_bci, const char *failure_msg) const;
 
   InlineTree *caller_tree()       const { return _caller_tree;  }
   InlineTree* callee_at(int bci, ciMethod* m) const;
-  int         inline_depth()      const { return stack_depth() + _site_depth_adjust; }
+  int         inline_level()      const { return stack_depth(); }
   int         stack_depth()       const { return _caller_jvms ? _caller_jvms->depth() : 0; }
 
 public:
+  static const char* check_can_parse(ciMethod* callee);
+
   static InlineTree* build_inline_tree_root();
   static InlineTree* find_subtree_from_root(InlineTree* root, JVMState* jvms, ciMethod* callee, bool create_if_not_found = false);
 
   // For temporary (stack-allocated, stateless) ilts:
-  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int site_depth_adjust);
+  InlineTree(Compile* c, ciMethod* callee_method, JVMState* caller_jvms, float site_invoke_ratio, int max_inline_level);
 
   // InlineTree enum
   enum InlineStyle {
@@ -119,6 +124,8 @@ public:
   uint        count_inlines()     const { return _count_inlines; };
 #endif
   GrowableArray<InlineTree*> subtrees() { return _subtrees; }
+
+  void print_value_on(outputStream* st) const PRODUCT_RETURN;
 };
 
 
@@ -136,6 +143,7 @@ class Parse : public GraphKit {
     uint               _count;          // how many times executed?  Currently only set by _goto's
     bool               _is_parsed;      // has this block been parsed yet?
     bool               _is_handler;     // is this block an exception handler?
+    bool               _has_merged_backedge; // does this block have merged backedge?
     SafePointNode*     _start_map;      // all values flowing into this block
     MethodLivenessResult _live_locals;  // lazily initialized liveness bitmap
 
@@ -167,6 +175,18 @@ class Parse : public GraphKit {
 
     // True after any predecessor flows control into this block
     bool is_merged() const                 { return _start_map != NULL; }
+
+#ifdef ASSERT
+    // True after backedge predecessor flows control into this block
+    bool has_merged_backedge() const       { return _has_merged_backedge; }
+    void mark_merged_backedge(Block* pred) {
+      assert(is_SEL_head(), "should be loop head");
+      if (pred != NULL && is_SEL_backedge(pred)) {
+        assert(is_parsed(), "block should be parsed before merging backedges");
+        _has_merged_backedge = true;
+      }
+    }
+#endif
 
     // True when all non-exception predecessors have been parsed.
     bool is_ready() const                  { return preds_parsed() == pred_count(); }
@@ -441,11 +461,6 @@ class Parse : public GraphKit {
     }
   }
 
-  // Return true if the parser should add a loop predicate
-  bool should_add_predicate(int target_bci);
-  // Insert a loop predicate into the graph
-  void add_predicate();
-
   // Note:  Intrinsic generation routines may be found in library_call.cpp.
 
   // Helper function to setup Ideal Call nodes
@@ -483,8 +498,8 @@ class Parse : public GraphKit {
   bool static_field_ok_in_clinit(ciField *field, ciMethod *method);
 
   // common code for actually performing the load or store
-  void do_get_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field);
-  void do_put_xxx(const TypePtr* obj_type, Node* obj, ciField* field, bool is_field);
+  void do_get_xxx(Node* obj, ciField* field, bool is_field);
+  void do_put_xxx(Node* obj, ciField* field, bool is_field);
 
   // loading from a constant field or the constant pool
   // returns false if push failed (non-perm field constants only, not ldcs)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,15 +38,8 @@ inline HeapWord* G1OffsetTableContigSpace::allocate(size_t size) {
 // this is used for larger LAB allocations only.
 inline HeapWord* G1OffsetTableContigSpace::par_allocate(size_t size) {
   MutexLocker x(&_par_alloc_lock);
-  // This ought to be just "allocate", because of the lock above, but that
-  // ContiguousSpace::allocate asserts that either the allocating thread
-  // holds the heap lock or it is the VM thread and we're at a safepoint.
-  // The best I (dld) could figure was to put a field in ContiguousSpace
-  // meaning "locking at safepoint taken care of", and set/reset that
-  // here.  But this will do for now, especially in light of the comment
-  // above.  Perhaps in the future some lock-free manner of keeping the
-  // coordination.
-  HeapWord* res = ContiguousSpace::par_allocate(size);
+  // Given that we take the lock no need to use par_allocate() here.
+  HeapWord* res = ContiguousSpace::allocate(size);
   if (res != NULL) {
     _offsets.alloc_block(res, size);
   }
@@ -60,6 +53,65 @@ inline HeapWord* G1OffsetTableContigSpace::block_start(const void* p) {
 inline HeapWord*
 G1OffsetTableContigSpace::block_start_const(const void* p) const {
   return _offsets.block_start_const(p);
+}
+
+inline void HeapRegion::note_start_of_marking() {
+  init_top_at_conc_mark_count();
+  _next_marked_bytes = 0;
+  _next_top_at_mark_start = top();
+}
+
+inline void HeapRegion::note_end_of_marking() {
+  _prev_top_at_mark_start = _next_top_at_mark_start;
+  _prev_marked_bytes = _next_marked_bytes;
+  _next_marked_bytes = 0;
+
+  assert(_prev_marked_bytes <=
+         (size_t) pointer_delta(prev_top_at_mark_start(), bottom()) *
+         HeapWordSize, "invariant");
+}
+
+inline void HeapRegion::note_start_of_copying(bool during_initial_mark) {
+  if (is_survivor()) {
+    // This is how we always allocate survivors.
+    assert(_next_top_at_mark_start == bottom(), "invariant");
+  } else {
+    if (during_initial_mark) {
+      // During initial-mark we'll explicitly mark any objects on old
+      // regions that are pointed to by roots. Given that explicit
+      // marks only make sense under NTAMS it'd be nice if we could
+      // check that condition if we wanted to. Given that we don't
+      // know where the top of this region will end up, we simply set
+      // NTAMS to the end of the region so all marks will be below
+      // NTAMS. We'll set it to the actual top when we retire this region.
+      _next_top_at_mark_start = end();
+    } else {
+      // We could have re-used this old region as to-space over a
+      // couple of GCs since the start of the concurrent marking
+      // cycle. This means that [bottom,NTAMS) will contain objects
+      // copied up to and including initial-mark and [NTAMS, top)
+      // will contain objects copied during the concurrent marking cycle.
+      assert(top() >= _next_top_at_mark_start, "invariant");
+    }
+  }
+}
+
+inline void HeapRegion::note_end_of_copying(bool during_initial_mark) {
+  if (is_survivor()) {
+    // This is how we always allocate survivors.
+    assert(_next_top_at_mark_start == bottom(), "invariant");
+  } else {
+    if (during_initial_mark) {
+      // See the comment for note_start_of_copying() for the details
+      // on this.
+      assert(_next_top_at_mark_start == end(), "pre-condition");
+      _next_top_at_mark_start = top();
+    } else {
+      // See the comment for note_start_of_copying() for the details
+      // on this.
+      assert(top() >= _next_top_at_mark_start, "invariant");
+    }
+  }
 }
 
 #endif // SHARE_VM_GC_IMPLEMENTATION_G1_HEAPREGION_INLINE_HPP

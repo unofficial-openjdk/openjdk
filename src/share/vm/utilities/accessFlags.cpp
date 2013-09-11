@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 
 
 void AccessFlags::atomic_set_bits(jint bits) {
@@ -56,8 +59,6 @@ void AccessFlags::atomic_clear_bits(jint bits) {
   } while(f != old_flags);
 }
 
-#ifndef PRODUCT
-
 void AccessFlags::print_on(outputStream* st) const {
   if (is_public      ()) st->print("public "      );
   if (is_private     ()) st->print("private "     );
@@ -75,8 +76,6 @@ void AccessFlags::print_on(outputStream* st) const {
   if (is_old         ()) st->print("{old} "       );
   if (is_obsolete    ()) st->print("{obsolete} "  );
 }
-
-#endif
 
 void accessFlags_init() {
   assert(sizeof(AccessFlags) == sizeof(jint), "just checking size of flags");

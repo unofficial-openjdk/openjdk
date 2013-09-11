@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,12 +36,14 @@
 #include "memory/genOopClosures.inline.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/permGen.hpp"
+#include "oops/fieldStreams.hpp"
 #include "oops/instanceKlass.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/instanceOop.hpp"
 #include "oops/methodOop.hpp"
 #include "oops/objArrayKlassKlass.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
 #include "runtime/fieldDescriptor.hpp"
@@ -59,6 +61,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 #ifndef SERIALGC
 #include "gc_implementation/g1/g1CollectedHeap.inline.hpp"
 #include "gc_implementation/g1/g1OopClosures.inline.hpp"
@@ -74,6 +79,8 @@
 #endif
 
 #ifdef DTRACE_ENABLED
+
+#ifndef USDT2
 
 HS_DTRACE_PROBE_DECL4(hotspot, class__initialization__required,
   char*, intptr_t, oop, intptr_t);
@@ -96,7 +103,7 @@ HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
   {                                                              \
     char* data = NULL;                                           \
     int len = 0;                                                 \
-    symbolOop name = (clss)->name();                             \
+    Symbol* name = (clss)->name();                               \
     if (name != NULL) {                                          \
       data = (char*)name->bytes();                               \
       len = name->utf8_length();                                 \
@@ -109,7 +116,7 @@ HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
   {                                                              \
     char* data = NULL;                                           \
     int len = 0;                                                 \
-    symbolOop name = (clss)->name();                             \
+    Symbol* name = (clss)->name();                               \
     if (name != NULL) {                                          \
       data = (char*)name->bytes();                               \
       len = name->utf8_length();                                 \
@@ -117,6 +124,42 @@ HS_DTRACE_PROBE_DECL5(hotspot, class__initialization__end,
     HS_DTRACE_PROBE5(hotspot, class__initialization__##type,     \
       data, len, (clss)->class_loader(), thread_type, wait);     \
   }
+#else /* USDT2 */
+
+#define HOTSPOT_CLASS_INITIALIZATION_required HOTSPOT_CLASS_INITIALIZATION_REQUIRED
+#define HOTSPOT_CLASS_INITIALIZATION_recursive HOTSPOT_CLASS_INITIALIZATION_RECURSIVE
+#define HOTSPOT_CLASS_INITIALIZATION_concurrent HOTSPOT_CLASS_INITIALIZATION_CONCURRENT
+#define HOTSPOT_CLASS_INITIALIZATION_erroneous HOTSPOT_CLASS_INITIALIZATION_ERRONEOUS
+#define HOTSPOT_CLASS_INITIALIZATION_super__failed HOTSPOT_CLASS_INITIALIZATION_SUPER_FAILED
+#define HOTSPOT_CLASS_INITIALIZATION_clinit HOTSPOT_CLASS_INITIALIZATION_CLINIT
+#define HOTSPOT_CLASS_INITIALIZATION_error HOTSPOT_CLASS_INITIALIZATION_ERROR
+#define HOTSPOT_CLASS_INITIALIZATION_end HOTSPOT_CLASS_INITIALIZATION_END
+#define DTRACE_CLASSINIT_PROBE(type, clss, thread_type)          \
+  {                                                              \
+    char* data = NULL;                                           \
+    int len = 0;                                                 \
+    Symbol* name = (clss)->name();                               \
+    if (name != NULL) {                                          \
+      data = (char*)name->bytes();                               \
+      len = name->utf8_length();                                 \
+    }                                                            \
+    HOTSPOT_CLASS_INITIALIZATION_##type(                         \
+      data, len, (clss)->class_loader(), thread_type);           \
+  }
+
+#define DTRACE_CLASSINIT_PROBE_WAIT(type, clss, thread_type, wait) \
+  {                                                              \
+    char* data = NULL;                                           \
+    int len = 0;                                                 \
+    Symbol* name = (clss)->name();                               \
+    if (name != NULL) {                                          \
+      data = (char*)name->bytes();                               \
+      len = name->utf8_length();                                 \
+    }                                                            \
+    HOTSPOT_CLASS_INITIALIZATION_##type(                         \
+      data, len, (clss)->class_loader(), thread_type, wait);     \
+  }
+#endif /* USDT2 */
 
 #else //  ndef DTRACE_ENABLED
 
@@ -165,7 +208,7 @@ void instanceKlass::eager_initialize_impl(instanceKlassHandle this_oop) {
   // abort if someone beat us to the initialization
   if (!this_oop->is_not_initialized()) return;  // note: not equivalent to is_initialized()
 
-  ClassState old_state = this_oop->_init_state;
+  ClassState old_state = this_oop->init_state();
   link_class_impl(this_oop, true, THREAD);
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
@@ -266,7 +309,7 @@ bool instanceKlass::link_class_impl(
       ResourceMark rm(THREAD);
       Exceptions::fthrow(
         THREAD_AND_LOCATION,
-        vmSymbolHandles::java_lang_IncompatibleClassChangeError(),
+        vmSymbols::java_lang_IncompatibleClassChangeError(),
         "class %s has interface %s as super class",
         this_oop->external_name(),
         super->external_name()
@@ -334,6 +377,9 @@ bool instanceKlass::link_class_impl(
         this_oop->rewrite_class(CHECK_false);
       }
 
+      // relocate jsrs and link methods after they are all rewritten
+      this_oop->relocate_and_link_methods(CHECK_false);
+
       // Initialize the vtable and interface table after
       // methods have been rewritten since rewrite may
       // fabricate new methodOops.
@@ -364,17 +410,8 @@ bool instanceKlass::link_class_impl(
 
 
 // Rewrite the byte codes of all of the methods of a class.
-// Three cases:
-//    During the link of a newly loaded class.
-//    During the preloading of classes to be written to the shared spaces.
-//      - Rewrite the methods and update the method entry points.
-//
-//    During the link of a class in the shared spaces.
-//      - The methods were already rewritten, update the metho entry points.
-//
 // The rewriter must be called exactly once. Rewriting must happen after
 // verification but before the first method of the class is executed.
-
 void instanceKlass::rewrite_class(TRAPS) {
   assert(is_loaded(), "must be loaded");
   instanceKlassHandle this_oop(THREAD, this->as_klassOop());
@@ -382,8 +419,17 @@ void instanceKlass::rewrite_class(TRAPS) {
     assert(this_oop()->is_shared(), "rewriting an unshared class?");
     return;
   }
-  Rewriter::rewrite(this_oop, CHECK); // No exception can happen here
+  Rewriter::rewrite(this_oop, CHECK);
   this_oop->set_rewritten();
+}
+
+// Now relocate and link method entry points after class is rewritten.
+// This is outside is_rewritten flag. In case of an exception, it can be
+// executed more than once.
+void instanceKlass::relocate_and_link_methods(TRAPS) {
+  assert(is_loaded(), "must be loaded");
+  instanceKlassHandle this_oop(THREAD, this->as_klassOop());
+  Rewriter::relocate_and_link(this_oop, CHECK);
 }
 
 
@@ -500,8 +546,8 @@ void instanceKlass::initialize_impl(instanceKlassHandle this_oop, TRAPS) {
       THROW_OOP(e());
     } else {
       JavaCallArguments args(e);
-      THROW_ARG(vmSymbolHandles::java_lang_ExceptionInInitializerError(),
-                vmSymbolHandles::throwable_void_signature(),
+      THROW_ARG(vmSymbols::java_lang_ExceptionInInitializerError(),
+                vmSymbols::throwable_void_signature(),
                 &args);
     }
   }
@@ -623,6 +669,7 @@ objArrayOop instanceKlass::allocate_objArray(int n, int length, TRAPS) {
   if (length < 0) THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
   if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
     report_java_out_of_memory("Requested array size exceeds VM limit");
+    JvmtiExport::post_array_size_exhausted();
     THROW_OOP_0(Universe::out_of_memory_error_array_size());
   }
   int size = objArrayOopDesc::object_size(length);
@@ -649,6 +696,7 @@ instanceOop instanceKlass::register_finalizer(instanceOop i, TRAPS) {
 }
 
 instanceOop instanceKlass::allocate_instance(TRAPS) {
+  assert(!oop_is_instanceMirror(), "wrong allocation path");
   bool has_finalizer_flag = has_finalizer(); // Query before possible GC
   int size = size_helper();  // Query before forming handle.
 
@@ -669,6 +717,7 @@ instanceOop instanceKlass::allocate_permanent_instance(TRAPS) {
   // instances so simply disallow finalizable perm objects.  This can
   // be relaxed if a need for it is found.
   assert(!has_finalizer(), "perm objects not allowed to have finalizers");
+  assert(!oop_is_instanceMirror(), "wrong allocation path");
   int size = size_helper();  // Query before forming handle.
   KlassHandle h_k(THREAD, as_klassOop());
   instanceOop i = (instanceOop)
@@ -735,7 +784,12 @@ void instanceKlass::call_class_initializer(TRAPS) {
 static int call_class_initializer_impl_counter = 0;   // for debugging
 
 methodOop instanceKlass::class_initializer() {
-  return find_method(vmSymbols::class_initializer_name(), vmSymbols::void_method_signature());
+  methodOop clinit = find_method(
+      vmSymbols::class_initializer_name(), vmSymbols::void_method_signature());
+  if (clinit != NULL && clinit->has_valid_initializer_flags()) {
+    return clinit;
+  }
+  return NULL;
 }
 
 void instanceKlass::call_class_initializer_impl(instanceKlassHandle this_oop, TRAPS) {
@@ -770,15 +824,12 @@ void instanceKlass::mask_for(methodHandle method, int bci,
 }
 
 
-bool instanceKlass::find_local_field(symbolOop name, symbolOop sig, fieldDescriptor* fd) const {
-  const int n = fields()->length();
-  for (int i = 0; i < n; i += next_offset ) {
-    int name_index = fields()->ushort_at(i + name_index_offset);
-    int sig_index  = fields()->ushort_at(i + signature_index_offset);
-    symbolOop f_name = constants()->symbol_at(name_index);
-    symbolOop f_sig  = constants()->symbol_at(sig_index);
+bool instanceKlass::find_local_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
+  for (JavaFieldStream fs(as_klassOop()); !fs.done(); fs.next()) {
+    Symbol* f_name = fs.name();
+    Symbol* f_sig  = fs.signature();
     if (f_name == name && f_sig == sig) {
-      fd->initialize(as_klassOop(), i);
+      fd->initialize(as_klassOop(), fs.index());
       return true;
     }
   }
@@ -786,21 +837,22 @@ bool instanceKlass::find_local_field(symbolOop name, symbolOop sig, fieldDescrip
 }
 
 
-void instanceKlass::field_names_and_sigs_iterate(OopClosure* closure) {
-  const int n = fields()->length();
-  for (int i = 0; i < n; i += next_offset ) {
-    int name_index = fields()->ushort_at(i + name_index_offset);
-    symbolOop name = constants()->symbol_at(name_index);
-    closure->do_oop((oop*)&name);
+void instanceKlass::shared_symbols_iterate(SymbolClosure* closure) {
+  Klass::shared_symbols_iterate(closure);
+  closure->do_symbol(&_generic_signature);
+  closure->do_symbol(&_source_file_name);
+  closure->do_symbol(&_source_debug_extension);
 
-    int sig_index  = fields()->ushort_at(i + signature_index_offset);
-    symbolOop sig = constants()->symbol_at(sig_index);
-    closure->do_oop((oop*)&sig);
+  for (JavaFieldStream fs(this); !fs.done(); fs.next()) {
+    int name_index = fs.name_index();
+    closure->do_symbol(constants()->symbol_at_addr(name_index));
+    int sig_index  = fs.signature_index();
+    closure->do_symbol(constants()->symbol_at_addr(sig_index));
   }
 }
 
 
-klassOop instanceKlass::find_interface_field(symbolOop name, symbolOop sig, fieldDescriptor* fd) const {
+klassOop instanceKlass::find_interface_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
   const int n = local_interfaces()->length();
   for (int i = 0; i < n; i++) {
     klassOop intf1 = klassOop(local_interfaces()->obj_at(i));
@@ -819,7 +871,7 @@ klassOop instanceKlass::find_interface_field(symbolOop name, symbolOop sig, fiel
 }
 
 
-klassOop instanceKlass::find_field(symbolOop name, symbolOop sig, fieldDescriptor* fd) const {
+klassOop instanceKlass::find_field(Symbol* name, Symbol* sig, fieldDescriptor* fd) const {
   // search order according to newest JVM spec (5.4.3.2, p.167).
   // 1) search for field in current klass
   if (find_local_field(name, sig, fd)) {
@@ -838,7 +890,7 @@ klassOop instanceKlass::find_field(symbolOop name, symbolOop sig, fieldDescripto
 }
 
 
-klassOop instanceKlass::find_field(symbolOop name, symbolOop sig, bool is_static, fieldDescriptor* fd) const {
+klassOop instanceKlass::find_field(Symbol* name, Symbol* sig, bool is_static, fieldDescriptor* fd) const {
   // search order according to newest JVM spec (5.4.3.2, p.167).
   // 1) search for field in current klass
   if (find_local_field(name, sig, fd)) {
@@ -859,10 +911,9 @@ klassOop instanceKlass::find_field(symbolOop name, symbolOop sig, bool is_static
 
 
 bool instanceKlass::find_local_field_from_offset(int offset, bool is_static, fieldDescriptor* fd) const {
-  int length = fields()->length();
-  for (int i = 0; i < length; i += next_offset) {
-    if (offset_from_fields( i ) == offset) {
-      fd->initialize(as_klassOop(), i);
+  for (JavaFieldStream fs(as_klassOop()); !fs.done(); fs.next()) {
+    if (fs.offset() == offset) {
+      fd->initialize(as_klassOop(), fs.index());
       if (fd->is_static() == is_static) return true;
     }
   }
@@ -891,12 +942,14 @@ void instanceKlass::methods_do(void f(methodOop method)) {
   }
 }
 
+
 void instanceKlass::do_local_static_fields(FieldClosure* cl) {
-  fieldDescriptor fd;
-  int length = fields()->length();
-  for (int i = 0; i < length; i += next_offset) {
-    fd.initialize(as_klassOop(), i);
-    if (fd.is_static()) cl->do_field(&fd);
+  for (JavaFieldStream fs(this); !fs.done(); fs.next()) {
+    if (fs.access_flags().is_static()) {
+      fieldDescriptor fd;
+      fd.initialize(as_klassOop(), fs.index());
+      cl->do_field(&fd);
+    }
   }
 }
 
@@ -908,11 +961,12 @@ void instanceKlass::do_local_static_fields(void f(fieldDescriptor*, TRAPS), TRAP
 
 
 void instanceKlass::do_local_static_fields_impl(instanceKlassHandle this_oop, void f(fieldDescriptor* fd, TRAPS), TRAPS) {
-  fieldDescriptor fd;
-  int length = this_oop->fields()->length();
-  for (int i = 0; i < length; i += next_offset) {
-    fd.initialize(this_oop(), i);
-    if (fd.is_static()) { f(&fd, CHECK); } // Do NOT remove {}! (CHECK macro expands into several statements)
+  for (JavaFieldStream fs(this_oop()); !fs.done(); fs.next()) {
+    if (fs.access_flags().is_static()) {
+      fieldDescriptor fd;
+      fd.initialize(this_oop(), fs.index());
+      f(&fd, CHECK);
+    }
   }
 }
 
@@ -927,11 +981,11 @@ void instanceKlass::do_nonstatic_fields(FieldClosure* cl) {
     super->do_nonstatic_fields(cl);
   }
   fieldDescriptor fd;
-  int length = fields()->length();
+  int length = java_fields_count();
   // In DebugInfo nonstatic fields are sorted by offset.
   int* fields_sorted = NEW_C_HEAP_ARRAY(int, 2*(length+1));
   int j = 0;
-  for (int i = 0; i < length; i += next_offset) {
+  for (int i = 0; i < length; i += 1) {
     fd.initialize(as_klassOop(), i);
     if (!fd.is_static()) {
       fields_sorted[j + 0] = fd.offset();
@@ -965,7 +1019,7 @@ void instanceKlass::with_array_klasses_do(void f(klassOop k)) {
 }
 
 #ifdef ASSERT
-static int linear_search(objArrayOop methods, symbolOop name, symbolOop signature) {
+static int linear_search(objArrayOop methods, Symbol* name, Symbol* signature) {
   int len = methods->length();
   for (int index = 0; index < len; index++) {
     methodOop m = (methodOop)(methods->obj_at(index));
@@ -978,11 +1032,11 @@ static int linear_search(objArrayOop methods, symbolOop name, symbolOop signatur
 }
 #endif
 
-methodOop instanceKlass::find_method(symbolOop name, symbolOop signature) const {
+methodOop instanceKlass::find_method(Symbol* name, Symbol* signature) const {
   return instanceKlass::find_method(methods(), name, signature);
 }
 
-methodOop instanceKlass::find_method(objArrayOop methods, symbolOop name, symbolOop signature) {
+methodOop instanceKlass::find_method(objArrayOop methods, Symbol* name, Symbol* signature) {
   int len = methods->length();
   // methods are sorted, so do binary search
   int l = 0;
@@ -1030,7 +1084,7 @@ methodOop instanceKlass::find_method(objArrayOop methods, symbolOop name, symbol
   return NULL;
 }
 
-methodOop instanceKlass::uncached_lookup_method(symbolOop name, symbolOop signature) const {
+methodOop instanceKlass::uncached_lookup_method(Symbol* name, Symbol* signature) const {
   klassOop klass = as_klassOop();
   while (klass != NULL) {
     methodOop method = instanceKlass::cast(klass)->find_method(name, signature);
@@ -1041,8 +1095,8 @@ methodOop instanceKlass::uncached_lookup_method(symbolOop name, symbolOop signat
 }
 
 // lookup a method in all the interfaces that this class implements
-methodOop instanceKlass::lookup_method_in_all_interfaces(symbolOop name,
-                                                         symbolOop signature) const {
+methodOop instanceKlass::lookup_method_in_all_interfaces(Symbol* name,
+                                                         Symbol* signature) const {
   objArrayOop all_ifs = instanceKlass::cast(as_klassOop())->transitive_interfaces();
   int num_ifs = all_ifs->length();
   instanceKlass *ik = NULL;
@@ -1308,8 +1362,8 @@ void instanceKlass::set_cached_itable_index(size_t idnum, int index) {
     if (indices == NULL || (length = (size_t)indices[0]) <= idnum) {
       size_t size = MAX2(idnum+1, (size_t)idnum_allocated_count());
       int* new_indices = NEW_C_HEAP_ARRAY(int, size+1);
-      new_indices[0] =(int)size;  // array size held in the first element
-      // Copy the existing entries, if any
+      new_indices[0] = (int)size;
+      // copy any existing entries
       size_t i;
       for (i = 0; i < length; i++) {
         new_indices[i+1] = indices[i+1];
@@ -1360,39 +1414,8 @@ int instanceKlass::cached_itable_index(size_t idnum) {
 
 
 //
-// nmethodBucket is used to record dependent nmethods for
-// deoptimization.  nmethod dependencies are actually <klass, method>
-// pairs but we really only care about the klass part for purposes of
-// finding nmethods which might need to be deoptimized.  Instead of
-// recording the method, a count of how many times a particular nmethod
-// was recorded is kept.  This ensures that any recording errors are
-// noticed since an nmethod should be removed as many times are it's
-// added.
-//
-class nmethodBucket {
- private:
-  nmethod*       _nmethod;
-  int            _count;
-  nmethodBucket* _next;
-
- public:
-  nmethodBucket(nmethod* nmethod, nmethodBucket* next) {
-    _nmethod = nmethod;
-    _next = next;
-    _count = 1;
-  }
-  int count()                             { return _count; }
-  int increment()                         { _count += 1; return _count; }
-  int decrement()                         { _count -= 1; assert(_count >= 0, "don't underflow"); return _count; }
-  nmethodBucket* next()                   { return _next; }
-  void set_next(nmethodBucket* b)         { _next = b; }
-  nmethod* get_nmethod()                  { return _nmethod; }
-};
-
-
-//
 // Walk the list of dependent nmethods searching for nmethods which
-// are dependent on the klassOop that was passed in and mark them for
+// are dependent on the changes that were passed in and mark them for
 // deoptimization.  Returns the number of nmethods found.
 //
 int instanceKlass::mark_dependent_nmethods(DepChange& changes) {
@@ -1602,36 +1625,6 @@ template <class T> void assert_nothing(T *p) {}
 // The following macros call specialized macros, passing either oop or
 // narrowOop as the specialization type.  These test the UseCompressedOops
 // flag.
-#define InstanceKlass_OOP_ITERATE(start_p, count,    \
-                                  do_oop, assert_fn) \
-{                                                    \
-  if (UseCompressedOops) {                           \
-    InstanceKlass_SPECIALIZED_OOP_ITERATE(narrowOop, \
-      start_p, count,                                \
-      do_oop, assert_fn)                             \
-  } else {                                           \
-    InstanceKlass_SPECIALIZED_OOP_ITERATE(oop,       \
-      start_p, count,                                \
-      do_oop, assert_fn)                             \
-  }                                                  \
-}
-
-#define InstanceKlass_BOUNDED_OOP_ITERATE(start_p, count, low, high,    \
-                                          do_oop, assert_fn) \
-{                                                            \
-  if (UseCompressedOops) {                                   \
-    InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(narrowOop, \
-      start_p, count,                                        \
-      low, high,                                             \
-      do_oop, assert_fn)                                     \
-  } else {                                                   \
-    InstanceKlass_SPECIALIZED_BOUNDED_OOP_ITERATE(oop,       \
-      start_p, count,                                        \
-      low, high,                                             \
-      do_oop, assert_fn)                                     \
-  }                                                          \
-}
-
 #define InstanceKlass_OOP_MAP_ITERATE(obj, do_oop, assert_fn)            \
 {                                                                        \
   /* Compute oopmap block range. The common case                         \
@@ -1703,46 +1696,6 @@ template <class T> void assert_nothing(T *p) {}
     }                                                                    \
   }                                                                      \
 }
-
-void instanceKlass::follow_static_fields() {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    MarkSweep::mark_and_push(p), \
-    assert_is_in_closed_subset)
-}
-
-#ifndef SERIALGC
-void instanceKlass::follow_static_fields(ParCompactionManager* cm) {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    PSParallelCompact::mark_and_push(cm, p), \
-    assert_is_in)
-}
-#endif // SERIALGC
-
-void instanceKlass::adjust_static_fields() {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    MarkSweep::adjust_pointer(p), \
-    assert_nothing)
-}
-
-#ifndef SERIALGC
-void instanceKlass::update_static_fields() {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    PSParallelCompact::adjust_pointer(p), \
-    assert_nothing)
-}
-
-void instanceKlass::update_static_fields(HeapWord* beg_addr, HeapWord* end_addr) {
-  InstanceKlass_BOUNDED_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    beg_addr, end_addr, \
-    PSParallelCompact::adjust_pointer(p), \
-    assert_nothing )
-}
-#endif // SERIALGC
 
 void instanceKlass::oop_follow_contents(oop obj) {
   assert(obj != NULL, "can't follow the content of NULL object");
@@ -1830,22 +1783,6 @@ ALL_OOP_OOP_ITERATE_CLOSURES_1(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN)
 ALL_OOP_OOP_ITERATE_CLOSURES_2(InstanceKlass_OOP_OOP_ITERATE_BACKWARDS_DEFN)
 #endif // !SERIALGC
 
-void instanceKlass::iterate_static_fields(OopClosure* closure) {
-    InstanceKlass_OOP_ITERATE( \
-      start_of_static_fields(), static_oop_field_size(), \
-      closure->do_oop(p), \
-      assert_is_in_reserved)
-}
-
-void instanceKlass::iterate_static_fields(OopClosure* closure,
-                                          MemRegion mr) {
-  InstanceKlass_BOUNDED_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    mr.start(), mr.end(), \
-    (closure)->do_oop_v(p), \
-    assert_is_in_closed_subset)
-}
-
 int instanceKlass::oop_adjust_pointers(oop obj) {
   int size = size_helper();
   InstanceKlass_OOP_MAP_ITERATE( \
@@ -1874,30 +1811,6 @@ int instanceKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   return size_helper();
 }
 
-int instanceKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                       HeapWord* beg_addr, HeapWord* end_addr) {
-  InstanceKlass_BOUNDED_OOP_MAP_ITERATE( \
-    obj, beg_addr, end_addr, \
-    PSParallelCompact::adjust_pointer(p), \
-    assert_nothing)
-  return size_helper();
-}
-
-void instanceKlass::push_static_fields(PSPromotionManager* pm) {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    if (PSScavenge::should_scavenge(p)) { \
-      pm->claim_or_forward_depth(p); \
-    }, \
-    assert_nothing )
-}
-
-void instanceKlass::copy_static_fields(ParCompactionManager* cm) {
-  InstanceKlass_OOP_ITERATE( \
-    start_of_static_fields(), static_oop_field_size(), \
-    PSParallelCompact::adjust_pointer(p), \
-    assert_is_in)
-}
 #endif // SERIALGC
 
 // This klass is alive but the implementor link is not followed/updated.
@@ -1990,7 +1903,32 @@ void instanceKlass::release_C_heap_structures() {
     _cached_class_file_bytes = NULL;
     _cached_class_file_len = 0;
   }
+
+  // Decrement symbol reference counts associated with the unloaded class.
+  if (_name != NULL) _name->decrement_refcount();
+  // unreference array name derived from this class name (arrays of an unloaded
+  // class can't be referenced anymore).
+  if (_array_name != NULL)  _array_name->decrement_refcount();
+  if (_source_file_name != NULL) _source_file_name->decrement_refcount();
+  if (_source_debug_extension != NULL) _source_debug_extension->decrement_refcount();
+  // walk constant pool and decrement symbol reference counts
+  _constants->unreference_symbols();
 }
+
+void instanceKlass::set_source_file_name(Symbol* n) {
+  _source_file_name = n;
+  if (_source_file_name != NULL) _source_file_name->increment_refcount();
+}
+
+void instanceKlass::set_source_debug_extension(Symbol* n) {
+  _source_debug_extension = n;
+  if (_source_debug_extension != NULL) _source_debug_extension->increment_refcount();
+}
+
+address instanceKlass::static_field_addr(int offset) {
+  return (address)(offset + instanceMirrorKlass::offset_of_static_fields() + (intptr_t)java_mirror());
+}
+
 
 const char* instanceKlass::signature_name() const {
   const char* src = (const char*) (name()->as_C_string());
@@ -2011,7 +1949,7 @@ const char* instanceKlass::signature_name() const {
 bool instanceKlass::is_same_class_package(klassOop class2) {
   klassOop class1 = as_klassOop();
   oop classloader1 = instanceKlass::cast(class1)->class_loader();
-  symbolOop classname1 = Klass::cast(class1)->name();
+  Symbol* classname1 = Klass::cast(class1)->name();
 
   if (Klass::cast(class2)->oop_is_objArray()) {
     class2 = objArrayKlass::cast(class2)->bottom_klass();
@@ -2023,16 +1961,16 @@ bool instanceKlass::is_same_class_package(klassOop class2) {
     assert(Klass::cast(class2)->oop_is_typeArray(), "should be type array");
     classloader2 = NULL;
   }
-  symbolOop classname2 = Klass::cast(class2)->name();
+  Symbol* classname2 = Klass::cast(class2)->name();
 
   return instanceKlass::is_same_class_package(classloader1, classname1,
                                               classloader2, classname2);
 }
 
-bool instanceKlass::is_same_class_package(oop classloader2, symbolOop classname2) {
+bool instanceKlass::is_same_class_package(oop classloader2, Symbol* classname2) {
   klassOop class1 = as_klassOop();
   oop classloader1 = instanceKlass::cast(class1)->class_loader();
-  symbolOop classname1 = Klass::cast(class1)->name();
+  Symbol* classname1 = Klass::cast(class1)->name();
 
   return instanceKlass::is_same_class_package(classloader1, classname1,
                                               classloader2, classname2);
@@ -2040,8 +1978,8 @@ bool instanceKlass::is_same_class_package(oop classloader2, symbolOop classname2
 
 // return true if two classes are in the same package, classloader
 // and classname information is enough to determine a class's package
-bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_name1,
-                                          oop class_loader2, symbolOop class_name2) {
+bool instanceKlass::is_same_class_package(oop class_loader1, Symbol* class_name1,
+                                          oop class_loader2, Symbol* class_name2) {
   if (class_loader1 != class_loader2) {
     return false;
   } else if (class_name1 == class_name2) {
@@ -2049,14 +1987,14 @@ bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_nam
   } else {
     ResourceMark rm;
 
-    // The symbolOop's are in UTF8 encoding. Since we only need to check explicitly
+    // The Symbol*'s are in UTF8 encoding. Since we only need to check explicitly
     // for ASCII characters ('/', 'L', '['), we can keep them in UTF8 encoding.
     // Otherwise, we just compare jbyte values between the strings.
-    jbyte *name1 = class_name1->base();
-    jbyte *name2 = class_name2->base();
+    const jbyte *name1 = class_name1->base();
+    const jbyte *name2 = class_name2->base();
 
-    jbyte *last_slash1 = UTF8::strrchr(name1, class_name1->utf8_length(), '/');
-    jbyte *last_slash2 = UTF8::strrchr(name2, class_name2->utf8_length(), '/');
+    const jbyte *last_slash1 = UTF8::strrchr(name1, class_name1->utf8_length(), '/');
+    const jbyte *last_slash2 = UTF8::strrchr(name2, class_name2->utf8_length(), '/');
 
     if ((last_slash1 == NULL) || (last_slash2 == NULL)) {
       // One of the two doesn't have a package.  Only return true
@@ -2097,7 +2035,7 @@ bool instanceKlass::is_same_class_package(oop class_loader1, symbolOop class_nam
 // Assumes name-signature match
 // "this" is instanceKlass of super_method which must exist
 // note that the instanceKlass of the method in the targetclassname has not always been created yet
-bool instanceKlass::is_override(methodHandle super_method, Handle targetclassloader, symbolHandle targetclassname, TRAPS) {
+bool instanceKlass::is_override(methodHandle super_method, Handle targetclassloader, Symbol* targetclassname, TRAPS) {
    // Private methods can not be overridden
    if (super_method->is_private()) {
      return false;
@@ -2109,12 +2047,12 @@ bool instanceKlass::is_override(methodHandle super_method, Handle targetclassloa
    }
    // Package-private methods are not inherited outside of package
    assert(super_method->is_package_private(), "must be package private");
-   return(is_same_class_package(targetclassloader(), targetclassname()));
+   return(is_same_class_package(targetclassloader(), targetclassname));
 }
 
 /* defined for now in jvm.cpp, for historical reasons *--
 klassOop instanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
-                                                     symbolOop& simple_name_result, TRAPS) {
+                                                     Symbol*& simple_name_result, TRAPS) {
   ...
 }
 */
@@ -2185,7 +2123,7 @@ jint instanceKlass::compute_modifier_flags(TRAPS) const {
 
       // only look at classes that are already loaded
       // since we are looking for the flags for our self.
-      symbolOop inner_name = ik->constants()->klass_name_at(ioff);
+      Symbol* inner_name = ik->constants()->klass_name_at(ioff);
       if ((ik->name() == inner_name)) {
         // This is really a member class.
         access = inner_class_list_h->ushort_at(i + instanceKlass::inner_class_access_flags_offset);
@@ -2224,7 +2162,7 @@ methodOop instanceKlass::method_at_itable(klassOop holder, int index, TRAPS) {
     // If the interface isn't implemented by the receiver class,
     // the VM should throw IncompatibleClassChangeError.
     if (cnt >= nof_interfaces) {
-      THROW_OOP_0(vmSymbols::java_lang_IncompatibleClassChangeError());
+      THROW_0(vmSymbols::java_lang_IncompatibleClassChangeError());
     }
 
     klassOop ik = ioe->interface_klass();
@@ -2234,7 +2172,7 @@ methodOop instanceKlass::method_at_itable(klassOop holder, int index, TRAPS) {
   itableMethodEntry* ime = ioe->first_method_entry(as_klassOop());
   methodOop m = ime[index].method();
   if (m == NULL) {
-    THROW_OOP_0(vmSymbols::java_lang_AbstractMethodError());
+    THROW_0(vmSymbols::java_lang_AbstractMethodError());
   }
   return m;
 }
@@ -2359,7 +2297,7 @@ nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci, int comp_
 
 void FieldPrinter::do_field(fieldDescriptor* fd) {
   _st->print(BULLET);
-   if (fd->is_static() || (_obj == NULL)) {
+   if (_obj == NULL) {
      fd->print_on(_st);
      _st->cr();
    } else {
@@ -2389,8 +2327,8 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
   }
 
   st->print_cr(BULLET"---- fields (total size %d words):", oop_size(obj));
-  FieldPrinter print_nonstatic_field(st, obj);
-  do_nonstatic_fields(&print_nonstatic_field);
+  FieldPrinter print_field(st, obj);
+  do_nonstatic_fields(&print_field);
 
   if (as_klassOop() == SystemDictionary::Class_klass()) {
     st->print(BULLET"signature: ");
@@ -2408,9 +2346,15 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
     st->print(BULLET"fake entry for array: ");
     array_klass->print_value_on(st);
     st->cr();
+    st->print_cr(BULLET"fake entry for oop_size: %d", java_lang_Class::oop_size(obj));
+    st->print_cr(BULLET"fake entry for static_oop_field_count: %d", java_lang_Class::static_oop_field_count(obj));
+    klassOop real_klass = java_lang_Class::as_klassOop(obj);
+    if (real_klass != NULL && real_klass->klass_part()->oop_is_instance()) {
+      instanceKlass::cast(real_klass)->do_local_static_fields(&print_field);
+    }
   } else if (as_klassOop() == SystemDictionary::MethodType_klass()) {
     st->print(BULLET"signature: ");
-    java_dyn_MethodType::print_signature(obj, st);
+    java_lang_invoke_MethodType::print_signature(obj, st);
     st->cr();
   }
 }
@@ -2441,7 +2385,7 @@ void instanceKlass::oop_print_value_on(oop obj, outputStream* st) {
     }
   } else if (as_klassOop() == SystemDictionary::MethodType_klass()) {
     st->print(" = ");
-    java_dyn_MethodType::print_signature(obj, st);
+    java_lang_invoke_MethodType::print_signature(obj, st);
   } else if (java_lang_boxing_object::is_instance(obj)) {
     st->print(" = ");
     java_lang_boxing_object::print(obj, st);
@@ -2475,43 +2419,6 @@ void instanceKlass::oop_verify_on(oop obj, outputStream* st) {
   VerifyFieldClosure blk;
   oop_oop_iterate(obj, &blk);
 }
-
-#ifndef PRODUCT
-
-void instanceKlass::verify_class_klass_nonstatic_oop_maps(klassOop k) {
-  // This verification code is disabled.  JDK_Version::is_gte_jdk14x_version()
-  // cannot be called since this function is called before the VM is
-  // able to determine what JDK version is running with.
-  // The check below always is false since 1.4.
-  return;
-
-  // This verification code temporarily disabled for the 1.4
-  // reflection implementation since java.lang.Class now has
-  // Java-level instance fields. Should rewrite this to handle this
-  // case.
-  if (!(JDK_Version::is_gte_jdk14x_version() && UseNewReflection)) {
-    // Verify that java.lang.Class instances have a fake oop field added.
-    instanceKlass* ik = instanceKlass::cast(k);
-
-    // Check that we have the right class
-    static bool first_time = true;
-    guarantee(k == SystemDictionary::Class_klass() && first_time, "Invalid verify of maps");
-    first_time = false;
-    const int extra = java_lang_Class::number_of_fake_oop_fields;
-    guarantee(ik->nonstatic_field_size() == extra, "just checking");
-    guarantee(ik->nonstatic_oop_map_count() == 1, "just checking");
-    guarantee(ik->size_helper() == align_object_size(instanceOopDesc::header_size() + extra), "just checking");
-
-    // Check that the map is (2,extra)
-    int offset = java_lang_Class::klass_offset;
-
-    OopMapBlock* map = ik->start_of_nonstatic_oop_maps();
-    guarantee(map->offset() == offset && map->count() == (unsigned int) extra,
-              "sanity");
-  }
-}
-
-#endif // ndef PRODUCT
 
 // JNIid class for jfieldIDs only
 // Note to reviewers:
@@ -2550,7 +2457,7 @@ void JNIid::deallocate(JNIid* current) {
 
 
 void JNIid::verify(klassOop holder) {
-  int first_field_offset  = instanceKlass::cast(holder)->offset_of_static_fields();
+  int first_field_offset  = instanceMirrorKlass::offset_of_static_fields();
   int end_field_offset;
   end_field_offset = first_field_offset + (instanceKlass::cast(holder)->static_field_size() * wordSize);
 
@@ -2573,7 +2480,7 @@ void instanceKlass::set_init_state(ClassState state) {
   bool good_state = as_klassOop()->is_shared() ? (_init_state <= state)
                                                : (_init_state < state);
   assert(good_state || state == allocated, "illegal state transition");
-  _init_state = state;
+  _init_state = (u1)state;
 }
 #endif
 
@@ -2721,8 +2628,8 @@ void instanceKlass::add_previous_version(instanceKlassHandle ikh,
       if (!emcp_methods->at(i)) {
         // only obsolete methods are interesting
         methodOop old_method = (methodOop) old_methods->obj_at(i);
-        symbolOop m_name = old_method->name();
-        symbolOop m_signature = old_method->signature();
+        Symbol* m_name = old_method->name();
+        Symbol* m_signature = old_method->signature();
 
         // skip the last entry since we just added it
         for (int j = _previous_versions->length() - 2; j >= 0; j--) {

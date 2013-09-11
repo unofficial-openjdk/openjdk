@@ -79,15 +79,15 @@ ciField::ciField(ciInstanceKlass* klass, int index): _known_to_link_with_put(NUL
   constantPoolHandle cpool(thread, klass->get_instanceKlass()->constants());
 
   // Get the field's name, signature, and type.
-  symbolHandle name  (thread, cpool->name_ref_at(index));
-  _name = ciEnv::current(thread)->get_object(name())->as_symbol();
+  Symbol* name  = cpool->name_ref_at(index);
+  _name = ciEnv::current(thread)->get_symbol(name);
 
   int nt_index = cpool->name_and_type_ref_index_at(index);
   int sig_index = cpool->signature_ref_index_at(nt_index);
-  symbolHandle signature (thread, cpool->symbol_at(sig_index));
-  _signature = ciEnv::current(thread)->get_object(signature())->as_symbol();
+  Symbol* signature = cpool->symbol_at(sig_index);
+  _signature = ciEnv::current(thread)->get_symbol(signature);
 
-  BasicType field_type = FieldType::basic_type(signature());
+  BasicType field_type = FieldType::basic_type(signature);
 
   // If the field is a pointer type, get the klass of the
   // field.
@@ -100,7 +100,7 @@ ciField::ciField(ciInstanceKlass* klass, int index): _known_to_link_with_put(NUL
     _type = ciType::make(field_type);
   }
 
-  _name = (ciSymbol*)ciEnv::current(thread)->get_object(name());
+  _name = (ciSymbol*)ciEnv::current(thread)->get_symbol(name);
 
   // Get the field's declared holder.
   //
@@ -130,7 +130,7 @@ ciField::ciField(ciInstanceKlass* klass, int index): _known_to_link_with_put(NUL
   // Perform the field lookup.
   fieldDescriptor field_desc;
   klassOop canonical_holder =
-    loaded_decl_holder->find_field(name(), signature(), &field_desc);
+    loaded_decl_holder->find_field(name, signature, &field_desc);
   if (canonical_holder == NULL) {
     // Field lookup failed.  Will be detected by will_link.
     _holder = declared_holder;
@@ -150,8 +150,8 @@ ciField::ciField(fieldDescriptor *fd): _known_to_link_with_put(NULL), _known_to_
 
   // Get the field's name, signature, and type.
   ciEnv* env = CURRENT_ENV;
-  _name = env->get_object(fd->name())->as_symbol();
-  _signature = env->get_object(fd->signature())->as_symbol();
+  _name = env->get_symbol(fd->name());
+  _signature = env->get_symbol(fd->signature());
 
   BasicType field_type = fd->field_type();
 
@@ -177,7 +177,7 @@ static bool trust_final_non_static_fields(ciInstanceKlass* holder) {
     // Never trust strangely unstable finals:  System.out, etc.
     return false;
   // Even if general trusting is disabled, trust system-built closures in these packages.
-  if (holder->is_in_package("java/dyn") || holder->is_in_package("sun/dyn"))
+  if (holder->is_in_package("java/lang/invoke") || holder->is_in_package("sun/invoke"))
     return true;
   return TrustFinalNonStaticFields;
 }
@@ -191,8 +191,9 @@ void ciField::initialize_from(fieldDescriptor* fd) {
   // Check to see if the field is constant.
   if (_holder->is_initialized() && this->is_final()) {
     if (!this->is_static()) {
-      // A field can be constant if it's a final static field or if it's
-      // a final non-static field of a trusted class ({java,sun}.dyn).
+      // A field can be constant if it's a final static field or if
+      // it's a final non-static field of a trusted class (classes in
+      // java.lang.invoke and sun.invoke packages and subpackages).
       if (trust_final_non_static_fields(_holder)) {
         _is_constant = true;
         return;
@@ -212,9 +213,9 @@ void ciField::initialize_from(fieldDescriptor* fd) {
     //    may change.  The three examples are java.lang.System.in,
     //    java.lang.System.out, and java.lang.System.err.
 
-    klassOop k = _holder->get_klassOop();
+    KlassHandle k = _holder->get_klassOop();
     assert( SystemDictionary::System_klass() != NULL, "Check once per vm");
-    if( k == SystemDictionary::System_klass() ) {
+    if( k() == SystemDictionary::System_klass() ) {
       // Check offsets for case 2: System.in, System.out, or System.err
       if( _offset == java_lang_System::in_offset_in_bytes()  ||
           _offset == java_lang_System::out_offset_in_bytes() ||
@@ -224,36 +225,38 @@ void ciField::initialize_from(fieldDescriptor* fd) {
       }
     }
 
+    Handle mirror = k->java_mirror();
+
     _is_constant = true;
     switch(type()->basic_type()) {
     case T_BYTE:
-      _constant_value = ciConstant(type()->basic_type(), k->byte_field(_offset));
+      _constant_value = ciConstant(type()->basic_type(), mirror->byte_field(_offset));
       break;
     case T_CHAR:
-      _constant_value = ciConstant(type()->basic_type(), k->char_field(_offset));
+      _constant_value = ciConstant(type()->basic_type(), mirror->char_field(_offset));
       break;
     case T_SHORT:
-      _constant_value = ciConstant(type()->basic_type(), k->short_field(_offset));
+      _constant_value = ciConstant(type()->basic_type(), mirror->short_field(_offset));
       break;
     case T_BOOLEAN:
-      _constant_value = ciConstant(type()->basic_type(), k->bool_field(_offset));
+      _constant_value = ciConstant(type()->basic_type(), mirror->bool_field(_offset));
       break;
     case T_INT:
-      _constant_value = ciConstant(type()->basic_type(), k->int_field(_offset));
+      _constant_value = ciConstant(type()->basic_type(), mirror->int_field(_offset));
       break;
     case T_FLOAT:
-      _constant_value = ciConstant(k->float_field(_offset));
+      _constant_value = ciConstant(mirror->float_field(_offset));
       break;
     case T_DOUBLE:
-      _constant_value = ciConstant(k->double_field(_offset));
+      _constant_value = ciConstant(mirror->double_field(_offset));
       break;
     case T_LONG:
-      _constant_value = ciConstant(k->long_field(_offset));
+      _constant_value = ciConstant(mirror->long_field(_offset));
       break;
     case T_OBJECT:
     case T_ARRAY:
       {
-        oop o = k->obj_field(_offset);
+        oop o = mirror->obj_field(_offset);
 
         // A field will be "constant" if it is known always to be
         // a non-null reference to an instance of a particular class,
@@ -284,7 +287,7 @@ ciType* ciField::compute_type() {
 }
 
 ciType* ciField::compute_type_impl() {
-  ciKlass* type = CURRENT_ENV->get_klass_by_name_impl(_holder, _signature, false);
+  ciKlass* type = CURRENT_ENV->get_klass_by_name_impl(_holder, constantPoolHandle(), _signature, false);
   if (!type->is_primitive_type() && is_shared()) {
     // We must not cache a pointer to an unshared type, in a shared field.
     bool type_is_also_shared = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
 #endif
 
 extern "C" void jio_print(const char* s); // Declarationtion of jvm method
@@ -314,6 +317,11 @@ fileStream::fileStream(const char* file_name) {
   _need_close = true;
 }
 
+fileStream::fileStream(const char* file_name, const char* opentype) {
+  _file = fopen(file_name, opentype);
+  _need_close = true;
+}
+
 void fileStream::write(const char* s, size_t len) {
   if (_file != NULL)  {
     // Make an unused local variable to avoid warning from gcc 4.x compiler.
@@ -322,10 +330,29 @@ void fileStream::write(const char* s, size_t len) {
   update_position(s, len);
 }
 
+long fileStream::fileSize() {
+  long size = -1;
+  if (_file != NULL) {
+    long pos  = ::ftell(_file);
+    if (::fseek(_file, 0, SEEK_END) == 0) {
+      size = ::ftell(_file);
+    }
+    ::fseek(_file, pos, SEEK_SET);
+  }
+  return size;
+}
+
+char* fileStream::readln(char *data, int count ) {
+  char * ret = ::fgets(data, count, _file);
+  //Get rid of annoying \n char
+  data[::strlen(data)-1] = '\0';
+  return ret;
+}
+
 fileStream::~fileStream() {
   if (_file != NULL) {
     if (_need_close) fclose(_file);
-    _file = NULL;
+    _file      = NULL;
   }
 }
 
@@ -351,6 +378,86 @@ void fdStream::write(const char* s, size_t len) {
     size_t count = ::write(_fd, s, (int)len);
   }
   update_position(s, len);
+}
+
+rotatingFileStream::~rotatingFileStream() {
+  if (_file != NULL) {
+    if (_need_close) fclose(_file);
+    _file      = NULL;
+    FREE_C_HEAP_ARRAY(char, _file_name);
+    _file_name = NULL;
+  }
+}
+
+rotatingFileStream::rotatingFileStream(const char* file_name) {
+  _cur_file_num = 0;
+  _bytes_writen = 0L;
+  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10);
+  jio_snprintf(_file_name, strlen(file_name)+10, "%s.%d", file_name, _cur_file_num);
+  _file = fopen(_file_name, "w");
+  _need_close = true;
+}
+
+rotatingFileStream::rotatingFileStream(const char* file_name, const char* opentype) {
+  _cur_file_num = 0;
+  _bytes_writen = 0L;
+  _file_name = NEW_C_HEAP_ARRAY(char, strlen(file_name)+10);
+  jio_snprintf(_file_name, strlen(file_name)+10, "%s.%d", file_name, _cur_file_num);
+  _file = fopen(_file_name, opentype);
+  _need_close = true;
+}
+
+void rotatingFileStream::write(const char* s, size_t len) {
+  if (_file != NULL)  {
+    // Make an unused local variable to avoid warning from gcc 4.x compiler.
+    size_t count = fwrite(s, 1, len, _file);
+    Atomic::add((jlong)count, &_bytes_writen);
+  }
+  update_position(s, len);
+}
+
+// rotate_log must be called from VMThread at safepoint. In case need change parameters
+// for gc log rotation from thread other than VMThread, a sub type of VM_Operation
+// should be created and be submitted to VMThread's operation queue. DO NOT call this
+// function directly. Currently, it is safe to rotate log at safepoint through VMThread.
+// That is, no mutator threads and concurrent GC threads run parallel with VMThread to
+// write to gc log file at safepoint. If in future, changes made for mutator threads or
+// concurrent GC threads to run parallel with VMThread at safepoint, write and rotate_log
+// must be synchronized.
+void rotatingFileStream::rotate_log() {
+  if (_bytes_writen < (jlong)GCLogFileSize) return;
+#ifdef ASSERT
+  Thread *thread = Thread::current();
+  assert(thread == NULL ||
+         (thread->is_VM_thread() && SafepointSynchronize::is_at_safepoint()),
+         "Must be VMThread at safepoint");
+#endif
+  if (NumberOfGCLogFiles == 1) {
+    // rotate in same file
+    rewind();
+    _bytes_writen = 0L;
+    return;
+  }
+
+  // rotate file in names file.0, file.1, file.2, ..., file.<MaxGCLogFileNumbers-1>
+  // close current file, rotate to next file
+  if (_file != NULL) {
+    _cur_file_num ++;
+    if (_cur_file_num >= NumberOfGCLogFiles) _cur_file_num = 0;
+    jio_snprintf(_file_name, strlen(Arguments::gc_log_filename()) + 10, "%s.%d",
+             Arguments::gc_log_filename(), _cur_file_num);
+    fclose(_file);
+    _file = NULL;
+  }
+  _file = fopen(_file_name, "w");
+  if (_file != NULL) {
+    _bytes_writen = 0L;
+    _need_close = true;
+  } else {
+    tty->print_cr("failed to open rotation log file %s due to %s\n",
+                  _file_name, strerror(errno));
+    _need_close = false;
+  }
 }
 
 defaultStream* defaultStream::instance = NULL;
@@ -400,6 +507,15 @@ static const char* make_log_name(const char* log_name, const char* force_directo
 
   const char* star = strchr(basename, '*');
   int star_pos = (star == NULL) ? -1 : (star - nametail);
+  int skip = 1;
+  if (star == NULL) {
+    // Try %p
+    star = strstr(basename, "%p");
+    if (star != NULL) {
+      skip = 2;
+    }
+  }
+  star_pos = (star == NULL) ? -1 : (star - nametail);
 
   char pid[32];
   if (star_pos >= 0) {
@@ -418,11 +534,11 @@ static const char* make_log_name(const char* log_name, const char* force_directo
   }
 
   if (star_pos >= 0) {
-    // convert foo*bar.log to foo123bar.log
+    // convert foo*bar.log or foo%pbar.log to foo123bar.log
     int buf_pos = (int) strlen(buf);
     strncpy(&buf[buf_pos], nametail, star_pos);
     strcpy(&buf[buf_pos + star_pos], pid);
-    nametail += star_pos + 1;  // skip prefix and star
+    nametail += star_pos + skip;  // skip prefix and pid format
   }
 
   strcat(buf, nametail);      // append rest of name, or all of name
@@ -442,7 +558,7 @@ void defaultStream::init_log() {
     // Note:  This feature is for maintainer use only.  No need for L10N.
     jio_print(warnbuf);
     FREE_C_HEAP_ARRAY(char, try_name);
-    try_name = make_log_name("hs_pid*.log", os::get_temp_directory());
+    try_name = make_log_name("hs_pid%p.log", os::get_temp_directory());
     jio_snprintf(warnbuf, sizeof(warnbuf),
                  "Warning:  Forcing option -XX:LogFile=%s\n", try_name);
     jio_print(warnbuf);
@@ -675,6 +791,17 @@ void ttyLocker::release_tty(intx holder) {
   defaultStream::instance->release(holder);
 }
 
+bool ttyLocker::release_tty_if_locked() {
+  intx thread_id = os::current_thread_id();
+  if (defaultStream::instance->writer() == thread_id) {
+    // release the lock and return true so callers know if was
+    // previously held.
+    release_tty(thread_id);
+    return true;
+  }
+  return false;
+}
+
 void ttyLocker::break_tty_lock_for_safepoint(intx holder) {
   if (defaultStream::instance != NULL &&
       defaultStream::instance->writer() == holder) {
@@ -705,14 +832,17 @@ void ostream_init_log() {
 
   gclog_or_tty = tty; // default to tty
   if (Arguments::gc_log_filename() != NULL) {
-    fileStream * gclog = new(ResourceObj::C_HEAP)
-                           fileStream(Arguments::gc_log_filename());
+    fileStream * gclog  = UseGCLogFileRotation ?
+                          new(ResourceObj::C_HEAP)
+                             rotatingFileStream(Arguments::gc_log_filename()) :
+                          new(ResourceObj::C_HEAP)
+                             fileStream(Arguments::gc_log_filename());
     if (gclog->is_open()) {
       // now we update the time stamp of the GC log to be synced up
       // with tty.
       gclog->time_stamp().update_to(tty->time_stamp().ticks());
-      gclog_or_tty = gclog;
     }
+    gclog_or_tty = gclog;
   }
 
   // If we haven't lazily initialized the logfile yet, do it now,
@@ -766,6 +896,8 @@ staticBufferStream::staticBufferStream(char* buffer, size_t buflen,
   _buffer = buffer;
   _buflen = buflen;
   _outer_stream = outer_stream;
+  // compile task prints time stamp relative to VM start
+  _stamp.update_to(1);
 }
 
 void staticBufferStream::write(const char* c, size_t len) {
@@ -863,7 +995,7 @@ bufferedStream::~bufferedStream() {
 
 #ifndef PRODUCT
 
-#if defined(SOLARIS) || defined(LINUX)
+#if defined(SOLARIS) || defined(LINUX) || defined(_ALLBSD_SOURCE)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -889,7 +1021,7 @@ int networkStream::read(char *buf, size_t len) {
 
 void networkStream::flush() {
   if (size() != 0) {
-    int result = os::raw_send(_socket, (char *)base(), (int)size(), 0);
+    int result = os::raw_send(_socket, (char *)base(), size(), 0);
     assert(result != -1, "connection error");
     assert(result == (int)size(), "didn't send enough data");
   }

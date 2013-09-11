@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,12 @@
 #ifdef TARGET_ARCH_zero
 # include "depChecker_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "depChecker_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "depChecker_ppc.hpp"
+#endif
 #ifdef SHARK
 #include "shark/sharkEntry.hpp"
 #endif
@@ -72,21 +78,46 @@ bool Disassembler::load_library() {
   char buf[JVM_MAXPATHLEN];
   os::jvm_path(buf, sizeof(buf));
   int jvm_offset = -1;
+  int lib_offset = -1;
   {
     // Match "jvm[^/]*" in jvm_path.
     const char* base = buf;
     const char* p = strrchr(buf, '/');
+    if (p != NULL) lib_offset = p - base + 1;
     p = strstr(p ? p : base, "jvm");
     if (p != NULL)  jvm_offset = p - base;
   }
+  // Find the disassembler shared library.
+  // Search for several paths derived from libjvm, in this order:
+  // 1. <home>/jre/lib/<arch>/<vm>/libhsdis-<arch>.so  (for compatibility)
+  // 2. <home>/jre/lib/<arch>/<vm>/hsdis-<arch>.so
+  // 3. <home>/jre/lib/<arch>/hsdis-<arch>.so
+  // 4. hsdis-<arch>.so  (using LD_LIBRARY_PATH)
   if (jvm_offset >= 0) {
-    // Find the disassembler next to libjvm.so.
+    // 1. <home>/jre/lib/<arch>/<vm>/libhsdis-<arch>.so
     strcpy(&buf[jvm_offset], hsdis_library_name);
     strcat(&buf[jvm_offset], os::dll_file_extension());
     _library = os::dll_load(buf, ebuf, sizeof ebuf);
+    if (_library == NULL) {
+      // 2. <home>/jre/lib/<arch>/<vm>/hsdis-<arch>.so
+      strcpy(&buf[lib_offset], hsdis_library_name);
+      strcat(&buf[lib_offset], os::dll_file_extension());
+      _library = os::dll_load(buf, ebuf, sizeof ebuf);
+    }
+    if (_library == NULL) {
+      // 3. <home>/jre/lib/<arch>/hsdis-<arch>.so
+      buf[lib_offset - 1] = '\0';
+      const char* p = strrchr(buf, '/');
+      if (p != NULL) {
+        lib_offset = p - buf + 1;
+        strcpy(&buf[lib_offset], hsdis_library_name);
+        strcat(&buf[lib_offset], os::dll_file_extension());
+        _library = os::dll_load(buf, ebuf, sizeof ebuf);
+      }
+    }
   }
   if (_library == NULL) {
-    // Try a free-floating lookup.
+    // 4. hsdis-<arch>.so  (using LD_LIBRARY_PATH)
     strcpy(&buf[0], hsdis_library_name);
     strcat(&buf[0], os::dll_file_extension());
     _library = os::dll_load(buf, ebuf, sizeof ebuf);
@@ -243,7 +274,13 @@ address decode_env::handle_event(const char* event, address arg) {
       return arg;
     }
   } else if (match(event, "mach")) {
-   output()->print_cr("[Disassembling for mach='%s']", arg);
+    static char buffer[32] = { 0, };
+    if (strcmp(buffer, (const char*)arg) != 0 ||
+        strlen((const char*)arg) > sizeof(buffer) - 1) {
+      // Only print this when the mach changes
+      strncpy(buffer, (const char*)arg, sizeof(buffer) - 1);
+      output()->print_cr("[Disassembling for mach='%s']", arg);
+    }
   } else if (match(event, "format bytes-per-line")) {
     _bytes_per_line = (int) (intptr_t) arg;
   } else {
@@ -277,10 +314,10 @@ void decode_env::print_address(address adr) {
         st->print("Stub::%s", desc->name());
         if (desc->begin() != adr)
           st->print("%+d 0x%p",adr - desc->begin(), adr);
-        else if (WizardMode) st->print(" " INTPTR_FORMAT, adr);
+        else if (WizardMode) st->print(" " PTR_FORMAT, adr);
         return;
       }
-      st->print("Stub::<unknown> " INTPTR_FORMAT, adr);
+      st->print("Stub::<unknown> " PTR_FORMAT, adr);
       return;
     }
 
@@ -308,8 +345,8 @@ void decode_env::print_address(address adr) {
     }
   }
 
-  // Fall through to a simple numeral.
-  st->print(INTPTR_FORMAT, (intptr_t)adr);
+  // Fall through to a simple (hexadecimal) numeral.
+  st->print(PTR_FORMAT, adr);
 }
 
 void decode_env::print_insn_labels() {
@@ -320,7 +357,7 @@ void decode_env::print_insn_labels() {
     cb->print_block_comment(st, p);
   }
   if (_print_pc) {
-    st->print("  " INTPTR_FORMAT ": ", (intptr_t) p);
+    st->print("  " PTR_FORMAT ": ", p);
   }
 }
 
@@ -426,7 +463,7 @@ address decode_env::decode_instructions(address start, address end) {
 void Disassembler::decode(CodeBlob* cb, outputStream* st) {
   if (!load_library())  return;
   decode_env env(cb, st);
-  env.output()->print_cr("Decoding CodeBlob " INTPTR_FORMAT, cb);
+  env.output()->print_cr("Decoding CodeBlob " PTR_FORMAT, cb);
   env.decode_instructions(cb->code_begin(), cb->code_end());
 }
 
@@ -440,7 +477,7 @@ void Disassembler::decode(address start, address end, outputStream* st) {
 void Disassembler::decode(nmethod* nm, outputStream* st) {
   if (!load_library())  return;
   decode_env env(nm, st);
-  env.output()->print_cr("Decoding compiled method " INTPTR_FORMAT ":", nm);
+  env.output()->print_cr("Decoding compiled method " PTR_FORMAT ":", nm);
   env.output()->print_cr("Code:");
 
 #ifdef SHARK
@@ -472,9 +509,9 @@ void Disassembler::decode(nmethod* nm, outputStream* st) {
     int offset = 0;
     for (address p = nm->consts_begin(); p < nm->consts_end(); p += 4, offset += 4) {
       if ((offset % 8) == 0) {
-        env.output()->print_cr("  " INTPTR_FORMAT " (offset: %4d): " PTR32_FORMAT "   " PTR64_FORMAT, (intptr_t) p, offset, *((int32_t*) p), *((int64_t*) p));
+        env.output()->print_cr("  " PTR_FORMAT " (offset: %4d): " PTR32_FORMAT "   " PTR64_FORMAT, p, offset, *((int32_t*) p), *((int64_t*) p));
       } else {
-        env.output()->print_cr("  " INTPTR_FORMAT " (offset: %4d): " PTR32_FORMAT,                    (intptr_t) p, offset, *((int32_t*) p));
+        env.output()->print_cr("  " PTR_FORMAT " (offset: %4d): " PTR32_FORMAT,                    p, offset, *((int32_t*) p));
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -263,14 +263,6 @@ public class VirtualMachineImpl extends MirrorImpl implements PathSearchingVirtu
                                             this.hashCode() + "]");
 
         ((com.sun.tools.jdi.VirtualMachineManagerImpl)mgr).addVirtualMachine(this);
-
-        // By default SA agent classes prefer dbx debugger to proc debugger
-        // and Windows process debugger to windbg debugger. SA expects
-        // special properties to be set to choose other debuggers. We will set
-        // those here before attaching to SA agent.
-
-        System.setProperty("sun.jvm.hotspot.debugger.useProcDebugger", "true");
-        System.setProperty("sun.jvm.hotspot.debugger.useWindbgDebugger", "true");
     }
 
     // we reflectively use newly spec'ed class because our ALT_BOOTDIR
@@ -798,12 +790,11 @@ public class VirtualMachineImpl extends MirrorImpl implements PathSearchingVirtu
     }
 
     public String description() {
-        String[] versionParts = {"" + vmmgr.majorInterfaceVersion(),
-                                 "" + vmmgr.minorInterfaceVersion(),
-                                 name()};
         return java.text.MessageFormat.format(java.util.ResourceBundle.
                                               getBundle("com.sun.tools.jdi.resources.jdi").getString("version_format"),
-                                              versionParts);
+                                              "" + vmmgr.majorInterfaceVersion(),
+                                              "" + vmmgr.minorInterfaceVersion(),
+                                              name());
     }
 
     public String version() {

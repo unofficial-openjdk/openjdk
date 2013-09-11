@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,6 @@
   develop(intx, G1MarkingOverheadPercent, 0,                                \
           "Overhead of concurrent marking")                                 \
                                                                             \
-  develop(bool, G1Gen, true,                                                \
-          "If true, it will enable the generational G1")                    \
-                                                                            \
-  develop(intx, G1PolicyVerbose, 0,                                         \
-          "The verbosity level on G1 policy decisions")                     \
-                                                                            \
   develop(intx, G1MarkingVerboseLevel, 0,                                   \
           "Level (0-4) of verboseness of the marking code")                 \
                                                                             \
@@ -59,9 +53,6 @@
                                                                             \
   develop(bool, G1TraceMarkStackOverflow, false,                            \
           "If true, extra debugging code for CM restart for ovflw.")        \
-                                                                            \
-  develop(intx, G1PausesBtwnConcMark, -1,                                   \
-          "If positive, fixed number of pauses between conc markings")      \
                                                                             \
   diagnostic(bool, G1SummarizeConcMark, false,                              \
           "Summarize concurrent mark info")                                 \
@@ -81,13 +72,17 @@
   product(intx, G1MarkRegionStackSize, 1024 * 1024,                         \
           "Size of the region stack for concurrent marking.")               \
                                                                             \
-  experimental(bool, G1UseConcMarkReferenceProcessing, false,               \
-          "If true, enable reference discovery during concurrent "          \
-          "marking and reference processing at the end of remark "          \
-          "(unsafe).")                                                      \
+  product(double, G1ConcMarkStepDurationMillis, 10.0,                       \
+          "Target duration of individual concurrent marking steps "         \
+          "in milliseconds.")                                               \
                                                                             \
-  develop(bool, G1SATBBarrierPrintNullPreVals, false,                       \
-          "If true, count frac of ptr writes with null pre-vals.")          \
+  product(intx, G1RefProcDrainInterval, 10,                                 \
+          "The number of discovered reference objects to process before "   \
+          "draining concurrent marking work queues.")                       \
+                                                                            \
+  experimental(bool, G1UseConcMarkReferenceProcessing, true,                \
+          "If true, enable reference discovery during concurrent "          \
+          "marking and reference processing at the end of remark.")         \
                                                                             \
   product(intx, G1SATBBufferSize, 1*K,                                      \
           "Number of entries in an SATB log buffer.")                       \
@@ -122,9 +117,6 @@
   develop(bool, G1RSBarrierNullFilter, true,                                \
           "If true, generate null-pointer filtering code in RS barrier")    \
                                                                             \
-  develop(bool, G1PrintCTFilterStats, false,                                \
-          "If true, print stats on RS filtering effectiveness")             \
-                                                                            \
   develop(bool, G1DeferredRSUpdate, true,                                   \
           "If true, use deferred RS updates")                               \
                                                                             \
@@ -135,18 +127,12 @@
   develop(bool, G1RSCountHisto, false,                                      \
           "If true, print a histogram of RS occupancies after each pause")  \
                                                                             \
-  develop(intx, G1PrintRegionLivenessInfo, 0,                               \
-          "When > 0, print the occupancies of the <n> best and worst"       \
-          "regions.")                                                       \
+  diagnostic(bool, G1PrintRegionLivenessInfo, false,                        \
+            "Prints the liveness information for all regions in the heap "  \
+            "at the end of a marking cycle.")                               \
                                                                             \
   develop(bool, G1PrintParCleanupStats, false,                              \
           "When true, print extra stats about parallel cleanup.")           \
-                                                                            \
-  develop(bool, G1DisablePreBarrier, false,                                 \
-          "Disable generation of pre-barrier (i.e., marking barrier)   ")   \
-                                                                            \
-  develop(bool, G1DisablePostBarrier, false,                                \
-          "Disable generation of post-barrier (i.e., RS barrier)   ")       \
                                                                             \
   product(intx, G1UpdateBufferSize, 256,                                    \
           "Size of an update buffer")                                       \
@@ -190,6 +176,10 @@
   develop(intx, G1ConcRSHotCardLimit, 4,                                    \
           "The threshold that defines (>=) a hot card.")                    \
                                                                             \
+  develop(intx, G1MaxHotCardCountSizePercent, 25,                           \
+          "The maximum size of the hot card count cache as a "              \
+          "percentage of the number of cards for the maximum heap.")        \
+                                                                            \
   develop(bool, G1PrintOopAppls, false,                                     \
           "When true, print applications of closures to external locs.")    \
                                                                             \
@@ -231,7 +221,7 @@
           "the number of regions for which we'll print a surv rate "        \
           "summary.")                                                       \
                                                                             \
-  product(intx, G1ReservePercent, 10,                                       \
+  product(uintx, G1ReservePercent, 10,                                      \
           "It determines the minimum reserve we should have in the heap "   \
           "to minimize the probability of promotion failure.")              \
                                                                             \
@@ -248,16 +238,6 @@
   develop(bool, G1FailOnFPError, false,                                     \
           "When set, G1 will fail when it encounters an FP 'error', "       \
           "so as to allow debugging")                                       \
-                                                                            \
-  develop(bool, G1FixedTenuringThreshold, false,                            \
-          "When set, G1 will not adjust the tenuring threshold")            \
-                                                                            \
-  develop(bool, G1FixedEdenSize, false,                                     \
-          "When set, G1 will not allocate unused survivor space regions")   \
-                                                                            \
-  develop(uintx, G1FixedSurvivorSpaceSize, 0,                               \
-          "If non-0 is the size of the G1 survivor space, "                 \
-          "otherwise SurvivorRatio is used to determine the size")          \
                                                                             \
   product(uintx, G1HeapRegionSize, 0,                                       \
           "Size of the G1 regions.")                                        \
@@ -298,9 +278,42 @@
   develop(uintx, G1StressConcRegionFreeingDelayMillis, 0,                   \
           "Artificial delay during concurrent region freeing")              \
                                                                             \
-   develop(bool, ReduceInitialCardMarksForG1, false,                        \
-          "When ReduceInitialCardMarks is true, this flag setting "         \
-          " controls whether G1 allows the RICM optimization")
+  develop(uintx, G1DummyRegionsPerGC, 0,                                    \
+          "The number of dummy regions G1 will allocate at the end of "     \
+          "each evacuation pause in order to artificially fill up the "     \
+          "heap and stress the marking implementation.")                    \
+                                                                            \
+  develop(bool, G1ExitOnExpansionFailure, false,                            \
+          "Raise a fatal VM exit out of memory failure in the event "       \
+          " that heap expansion fails due to running out of swap.")         \
+                                                                            \
+  develop(uintx, G1ConcMarkForceOverflow, 0,                                \
+          "The number of times we'll force an overflow during "             \
+          "concurrent marking")                                             \
+                                                                            \
+  develop(uintx, G1DefaultMinNewGenPercent, 20,                             \
+          "Percentage (0-100) of the heap size to use as minimum "          \
+          "young gen size.")                                                \
+                                                                            \
+  develop(uintx, G1DefaultMaxNewGenPercent, 80,                             \
+          "Percentage (0-100) of the heap size to use as maximum "          \
+          "young gen size.")                                                \
+                                                                            \
+  develop(uintx, G1OldCSetRegionLiveThresholdPercent, 95,                   \
+          "Threshold for regions to be added to the collection set. "       \
+          "Regions with more live bytes that this will not be collected.")  \
+                                                                            \
+  develop(uintx, G1OldReclaimableThresholdPercent, 1,                       \
+          "Threshold for the remaining old reclaimable bytes, expressed "   \
+          "as a percentage of the heap size. If the old reclaimable bytes " \
+          "are under this we will not collect them with more mixed GCs.")   \
+                                                                            \
+  develop(uintx, G1MaxMixedGCNum, 4,                                        \
+          "The maximum desired number of mixed GCs after a marking cycle.") \
+                                                                            \
+  develop(uintx, G1OldCSetRegionThresholdPercent, 10,                       \
+          "An upper bound for the number of old CSet regions expressed "    \
+          "as a percentage of the heap size.")
 
 G1_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_EXPERIMENTAL_FLAG, DECLARE_NOTPRODUCT_FLAG, DECLARE_MANAGEABLE_FLAG, DECLARE_PRODUCT_RW_FLAG)
 

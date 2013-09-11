@@ -346,7 +346,6 @@ void Compilation::install_code(int frame_size) {
     implicit_exception_table(),
     compiler(),
     _env->comp_level(),
-    true,
     has_unsafe_access()
   );
 }
@@ -491,10 +490,11 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
       // to start profiling on its own.
       _method->ensure_method_data();
     }
-  } else if (is_profiling() && _would_profile) {
+  } else if (is_profiling()) {
     ciMethodData *md = method->method_data_or_null();
-    assert(md != NULL, "Sanity");
-    md->set_would_profile(_would_profile);
+    if (md != NULL) {
+      md->set_would_profile(_would_profile);
+    }
   }
 }
 

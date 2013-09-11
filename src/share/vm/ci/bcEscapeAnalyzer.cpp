@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,11 +150,23 @@ void BCEscapeAnalyzer::set_method_escape(ArgumentMap vars) {
   clear_bits(vars, _arg_local);
 }
 
-void BCEscapeAnalyzer::set_global_escape(ArgumentMap vars) {
+void BCEscapeAnalyzer::set_global_escape(ArgumentMap vars, bool merge) {
   clear_bits(vars, _arg_local);
   clear_bits(vars, _arg_stack);
   if (vars.contains_allocated())
     _allocated_escapes = true;
+
+  if (merge && !vars.is_empty()) {
+    // Merge new state into already processed block.
+    // New state is not taken into account and
+    // it may invalidate set_returned() result.
+    if (vars.contains_unknown() || vars.contains_allocated()) {
+      _return_local = false;
+    }
+    if (vars.contains_unknown() || vars.contains_vars()) {
+      _return_allocated = false;
+    }
+  }
 }
 
 void BCEscapeAnalyzer::set_dirty(ArgumentMap vars) {
@@ -232,10 +244,7 @@ void BCEscapeAnalyzer::invoke(StateInfo &state, Bytecodes::Code code, ciMethod* 
   }
 
   // compute size of arguments
-  int arg_size = target->arg_size();
-  if (!target->is_loaded() && code == Bytecodes::_invokestatic) {
-    arg_size--;
-  }
+  int arg_size = target->invoke_arg_size(code);
   int arg_base = MAX2(state._stack_height - arg_size, 0);
 
   // direct recursive calls are skipped if they can be bound statically without introducing
@@ -249,6 +258,10 @@ void BCEscapeAnalyzer::invoke(StateInfo &state, Bytecodes::Code code, ciMethod* 
   for (i = state._stack_height - 1; i >= arg_base && skip_callee; i--) {
     ArgumentMap arg = state._stack[i];
     skip_callee = !is_argument(arg) || !is_arg_stack(arg) || (directly_recursive && arg.is_singleton(i - arg_base));
+  }
+  // For now we conservatively skip invokedynamic.
+  if (code == Bytecodes::_invokedynamic) {
+    skip_callee = true;
   }
   if (skip_callee) {
     TRACE_BCEA(3, tty->print_cr("[EA] skipping method %s::%s", holder->name()->as_utf8(), target->name()->as_utf8()));
@@ -346,7 +359,7 @@ void BCEscapeAnalyzer::iterate_one_block(ciBlock *blk, StateInfo &state, Growabl
       case Bytecodes::_nop:
         break;
       case Bytecodes::_aconst_null:
-        state.apush(empty_map);
+        state.apush(unknown_obj);
         break;
       case Bytecodes::_iconst_m1:
       case Bytecodes::_iconst_0:
@@ -379,6 +392,8 @@ void BCEscapeAnalyzer::iterate_one_block(ciBlock *blk, StateInfo &state, Growabl
         if (tag.is_long() || tag.is_double()) {
           // Only longs and doubles use 2 stack slots.
           state.lpush();
+        } else if (tag.basic_type() == T_OBJECT) {
+          state.apush(unknown_obj);
         } else {
           state.spush();
         }
@@ -998,7 +1013,7 @@ void BCEscapeAnalyzer::merge_block_states(StateInfo *blockstates, ciBlock *dest,
       t.set_difference(d_state->_stack[i]);
       extra_vars.set_union(t);
     }
-    set_global_escape(extra_vars);
+    set_global_escape(extra_vars, true);
   }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,17 +25,15 @@
 #ifndef SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
 #define SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
 
-#include "oops/symbolOop.hpp"
+#include "oops/symbol.hpp"
+#include "memory/iterator.hpp"
 
-// The classes vmSymbols and vmSymbolHandles are a name spaces for fast lookup of
-// symbols commonly used in the VM. The first class return a symbolOop, while the
-// second class returns a SymbolHandle. The underlying data structure is shared
-// between the two classes.
+// The class vmSymbols is a name space for fast lookup of
+// symbols commonly used in the VM.
 //
 // Sample usage:
 //
-//   symbolOop obj       = vmSymbols::java_lang_Object()();
-//   SymbolHandle handle = vmSymbolHandles::java_lang_Object();
+//   Symbol* obj       = vmSymbols::java_lang_Object();
 
 
 // Useful sub-macros exported by this header file:
@@ -93,6 +91,7 @@
   template(java_lang_CharSequence,                    "java/lang/CharSequence")                   \
   template(java_security_AccessControlContext,        "java/security/AccessControlContext")       \
   template(java_security_ProtectionDomain,            "java/security/ProtectionDomain")           \
+  template(impliesCreateAccessControlContext_name,    "impliesCreateAccessControlContext")        \
   template(java_io_OutputStream,                      "java/io/OutputStream")                     \
   template(java_io_Reader,                            "java/io/Reader")                           \
   template(java_io_BufferedReader,                    "java/io/BufferedReader")                   \
@@ -110,7 +109,6 @@
   template(java_lang_AssertionStatusDirectives,       "java/lang/AssertionStatusDirectives")      \
   template(sun_jkernel_DownloadManager,               "sun/jkernel/DownloadManager")              \
   template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
-  template(setBootClassLoaderHook_name,               "setBootClassLoaderHook")                   \
   template(sun_misc_PostVMInitHook,                   "sun/misc/PostVMInitHook")                  \
                                                                                                   \
   /* class file format tags */                                                                    \
@@ -151,6 +149,7 @@
   template(java_lang_InstantiationException,          "java/lang/InstantiationException")         \
   template(java_lang_InstantiationError,              "java/lang/InstantiationError")             \
   template(java_lang_InterruptedException,            "java/lang/InterruptedException")           \
+  template(java_lang_BootstrapMethodError,            "java/lang/BootstrapMethodError")           \
   template(java_lang_LinkageError,                    "java/lang/LinkageError")                   \
   template(java_lang_NegativeArraySizeException,      "java/lang/NegativeArraySizeException")     \
   template(java_lang_NoSuchFieldException,            "java/lang/NoSuchFieldException")           \
@@ -220,6 +219,7 @@
   template(returnType_name,                           "returnType")                               \
   template(signature_name,                            "signature")                                \
   template(slot_name,                                 "slot")                                     \
+  template(selectAlternative_name,                    "selectAlternative")                        \
                                                                                                   \
   /* Support for annotations (JDK 1.5 and above) */                                               \
                                                                                                   \
@@ -232,35 +232,42 @@
   template(base_name,                                 "base")                                     \
                                                                                                   \
   /* Support for JSR 292 & invokedynamic (JDK 1.7 and above) */                                   \
-  template(java_dyn_InvokeDynamic,                    "java/dyn/InvokeDynamic")                   \
-  template(java_dyn_Linkage,                          "java/dyn/Linkage")                         \
-  template(java_dyn_CallSite,                         "java/dyn/CallSite")                        \
-  template(java_dyn_MethodHandle,                     "java/dyn/MethodHandle")                    \
-  template(java_dyn_MethodType,                       "java/dyn/MethodType")                      \
-  template(java_dyn_WrongMethodTypeException,         "java/dyn/WrongMethodTypeException")        \
-  template(java_dyn_MethodType_signature,             "Ljava/dyn/MethodType;")                    \
-  template(java_dyn_MethodHandle_signature,           "Ljava/dyn/MethodHandle;")                  \
+  template(java_lang_invoke_InvokeDynamic,            "java/lang/invoke/InvokeDynamic")           \
+  template(java_lang_invoke_Linkage,                  "java/lang/invoke/Linkage")                 \
+  template(java_lang_invoke_CallSite,                 "java/lang/invoke/CallSite")                \
+  template(java_lang_invoke_ConstantCallSite,         "java/lang/invoke/ConstantCallSite")        \
+  template(java_lang_invoke_MutableCallSite,          "java/lang/invoke/MutableCallSite")         \
+  template(java_lang_invoke_VolatileCallSite,         "java/lang/invoke/VolatileCallSite")        \
+  template(java_lang_invoke_MethodHandle,             "java/lang/invoke/MethodHandle")            \
+  template(java_lang_invoke_MethodType,               "java/lang/invoke/MethodType")              \
+  template(java_lang_invoke_WrongMethodTypeException, "java/lang/invoke/WrongMethodTypeException") \
+  template(java_lang_invoke_MethodType_signature,     "Ljava/lang/invoke/MethodType;")            \
+  template(java_lang_invoke_MethodHandle_signature,   "Ljava/lang/invoke/MethodHandle;")          \
   /* internal classes known only to the JVM: */                                                   \
-  template(java_dyn_MethodTypeForm,                   "java/dyn/MethodTypeForm")                  \
-  template(java_dyn_MethodTypeForm_signature,         "Ljava/dyn/MethodTypeForm;")                \
-  template(sun_dyn_MemberName,                        "sun/dyn/MemberName")                       \
-  template(sun_dyn_MemberName_signature,              "Lsun/dyn/MemberName;")                     \
-  template(sun_dyn_MethodHandleImpl,                  "sun/dyn/MethodHandleImpl")                 \
-  template(sun_dyn_MethodHandleNatives,               "sun/dyn/MethodHandleNatives")              \
-  template(sun_dyn_AdapterMethodHandle,               "sun/dyn/AdapterMethodHandle")              \
-  template(sun_dyn_BoundMethodHandle,                 "sun/dyn/BoundMethodHandle")                \
-  template(sun_dyn_DirectMethodHandle,                "sun/dyn/DirectMethodHandle")               \
-  /* internal up-calls made only by the JVM, via class sun.dyn.MethodHandleNatives: */            \
+  template(java_lang_invoke_MethodTypeForm,           "java/lang/invoke/MethodTypeForm")          \
+  template(java_lang_invoke_MethodTypeForm_signature, "Ljava/lang/invoke/MethodTypeForm;")        \
+  template(java_lang_invoke_MemberName,               "java/lang/invoke/MemberName")              \
+  template(java_lang_invoke_MethodHandleNatives,      "java/lang/invoke/MethodHandleNatives")     \
+  template(java_lang_invoke_MethodHandleImpl,         "java/lang/invoke/MethodHandleImpl")        \
+  template(java_lang_invoke_AdapterMethodHandle,      "java/lang/invoke/AdapterMethodHandle")     \
+  template(java_lang_invoke_BoundMethodHandle,        "java/lang/invoke/BoundMethodHandle")       \
+  template(java_lang_invoke_DirectMethodHandle,       "java/lang/invoke/DirectMethodHandle")      \
+  template(java_lang_invoke_CountingMethodHandle,     "java/lang/invoke/CountingMethodHandle")    \
+  /* internal up-calls made only by the JVM, via class sun.invoke.MethodHandleNatives: */         \
   template(findMethodHandleType_name,                 "findMethodHandleType")                     \
-  template(findMethodHandleType_signature, "(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/dyn/MethodType;") \
+  template(findMethodHandleType_signature,       "(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;") \
   template(notifyGenericMethodType_name,              "notifyGenericMethodType")                  \
-  template(notifyGenericMethodType_signature,         "(Ljava/dyn/MethodType;)V")                 \
+  template(notifyGenericMethodType_signature,         "(Ljava/lang/invoke/MethodType;)V")         \
   template(linkMethodHandleConstant_name,             "linkMethodHandleConstant")                 \
-  template(linkMethodHandleConstant_signature, "(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Ljava/dyn/MethodHandle;") \
+  template(linkMethodHandleConstant_signature, "(Ljava/lang/Class;ILjava/lang/Class;Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;") \
   template(makeDynamicCallSite_name,                  "makeDynamicCallSite")                      \
-  template(makeDynamicCallSite_signature, "(Ljava/dyn/MethodHandle;Ljava/lang/String;Ljava/dyn/MethodType;Ljava/lang/Object;Lsun/dyn/MemberName;I)Ljava/dyn/CallSite;") \
-  NOT_LP64(  do_alias(machine_word_signature,         int_signature)  )                           \
-  LP64_ONLY( do_alias(machine_word_signature,         long_signature) )                           \
+  template(makeDynamicCallSite_signature, "(Ljava/lang/invoke/MethodHandle;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/Object;Ljava/lang/invoke/MemberName;I)Ljava/lang/invoke/CallSite;") \
+  template(setTargetNormal_name,                      "setTargetNormal")                          \
+  template(setTargetVolatile_name,                    "setTargetVolatile")                        \
+  template(setTarget_signature,                       "(Ljava/lang/invoke/MethodHandle;)V")       \
+  NOT_LP64(  do_alias(intptr_signature,               int_signature)  )                           \
+  LP64_ONLY( do_alias(intptr_signature,               long_signature) )                           \
+  template(selectAlternative_signature, "(ZLjava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodHandle;)Ljava/lang/invoke/MethodHandle;") \
                                                                                                   \
   /* common method and field names */                                                             \
   template(object_initializer_name,                   "<init>")                                   \
@@ -278,6 +285,7 @@
   template(run_method_name,                           "run")                                      \
   template(exit_method_name,                          "exit")                                     \
   template(add_method_name,                           "add")                                      \
+  template(remove_method_name,                        "remove")                                   \
   template(parent_name,                               "parent")                                   \
   template(threads_name,                              "threads")                                  \
   template(groups_name,                               "groups")                                   \
@@ -290,6 +298,7 @@
   template(finalize_method_name,                      "finalize")                                 \
   template(reference_lock_name,                       "lock")                                     \
   template(reference_discovered_name,                 "discovered")                               \
+  template(run_finalization_name,                     "runFinalization")                          \
   template(run_finalizers_on_exit_name,               "runFinalizersOnExit")                      \
   template(uncaughtException_name,                    "uncaughtException")                        \
   template(dispatchUncaughtException_name,            "dispatchUncaughtException")                \
@@ -306,6 +315,7 @@
   template(dispatch_name,                             "dispatch")                                 \
   template(getSystemClassLoader_name,                 "getSystemClassLoader")                     \
   template(fillInStackTrace_name,                     "fillInStackTrace")                         \
+  template(fillInStackTrace0_name,                    "fillInStackTrace0")                        \
   template(getCause_name,                             "getCause")                                 \
   template(initCause_name,                            "initCause")                                \
   template(setProperty_name,                          "setProperty")                              \
@@ -315,6 +325,7 @@
   template(contextClassLoader_name,                   "contextClassLoader")                       \
   template(inheritedAccessControlContext_name,        "inheritedAccessControlContext")            \
   template(isPrivileged_name,                         "isPrivileged")                             \
+  template(isAuthorized_name,                         "isAuthorized")                             \
   template(wait_name,                                 "wait")                                     \
   template(checkPackageAccess_name,                   "checkPackageAccess")                       \
   template(stackSize_name,                            "stackSize")                                \
@@ -330,6 +341,9 @@
   template(park_event_name,                           "nativeParkEventPointer")                   \
   template(cache_field_name,                          "cache")                                    \
   template(value_name,                                "value")                                    \
+  template(offset_name,                               "offset")                                   \
+  template(count_name,                                "count")                                    \
+  template(hash_name,                                 "hash")                                     \
   template(frontCacheEnabled_name,                    "frontCacheEnabled")                        \
   template(stringCacheEnabled_name,                   "stringCacheEnabled")                       \
   template(numberOfLeadingZeros_name,                 "numberOfLeadingZeros")                     \
@@ -344,7 +358,9 @@
   template(vmmethod_name,                             "vmmethod")                                 \
   template(vmtarget_name,                             "vmtarget")                                 \
   template(vmentry_name,                              "vmentry")                                  \
+  template(vmcount_name,                              "vmcount")                                  \
   template(vmslots_name,                              "vmslots")                                  \
+  template(vmlayout_name,                             "vmlayout")                                 \
   template(vmindex_name,                              "vmindex")                                  \
   template(vmargslot_name,                            "vmargslot")                                \
   template(flags_name,                                "flags")                                    \
@@ -356,6 +372,11 @@
   template(erasedType_name,                           "erasedType")                               \
   template(genericInvoker_name,                       "genericInvoker")                           \
   template(append_name,                               "append")                                   \
+  template(klass_name,                                "klass")                                    \
+  template(resolved_constructor_name,                 "resolved_constructor")                     \
+  template(array_klass_name,                          "array_klass")                              \
+  template(oop_size_name,                             "oop_size")                                 \
+  template(static_oop_field_count_name,               "static_oop_field_count")                   \
                                                                                                   \
   /* non-intrinsic name/signature pairs: */                                                       \
   template(register_method_name,                      "register")                                 \
@@ -397,6 +418,7 @@
   template(void_signature,                            "V")                                        \
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
+  template(int_array_signature,                       "[I")                                       \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \
@@ -459,7 +481,7 @@
   VM_INTRINSICS_DO(VM_INTRINSIC_IGNORE, VM_SYMBOL_IGNORE, VM_SYMBOL_IGNORE, VM_SYMBOL_IGNORE, do_alias)           \
                                                                                                                   \
   /* returned by the C1 compiler in case there's not enough memory to allocate a new symbol*/                     \
-  template(dummy_symbol_oop,                          "illegal symbol")                                           \
+  template(dummy_symbol,                              "illegal symbol")                                           \
                                                                                                                   \
   /* used by ClassFormatError when class name is not known yet */                                                 \
   template(unknown_class_name,                        "<Unknown>")                                                \
@@ -475,6 +497,13 @@
   template(sun_management_ManagementFactory,           "sun/management/ManagementFactory")                        \
   template(sun_management_Sensor,                      "sun/management/Sensor")                                   \
   template(sun_management_Agent,                       "sun/management/Agent")                                    \
+  template(sun_management_GarbageCollectorImpl,        "sun/management/GarbageCollectorImpl")                     \
+  template(getGcInfoBuilder_name,                      "getGcInfoBuilder")                                        \
+  template(getGcInfoBuilder_signature,                 "()Lsun/management/GcInfoBuilder;")                        \
+  template(com_sun_management_GcInfo,                  "com/sun/management/GcInfo")                               \
+  template(com_sun_management_GcInfo_constructor_signature, "(Lsun/management/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V") \
+  template(createGCNotification_name,                  "createGCNotification")                                    \
+  template(createGCNotification_signature,             "(JLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/sun/management/GcInfo;)V") \
   template(createMemoryPoolMBean_name,                 "createMemoryPoolMBean")                                   \
   template(createMemoryManagerMBean_name,              "createMemoryManagerMBean")                                \
   template(createGarbageCollectorMBean_name,           "createGarbageCollectorMBean")                             \
@@ -485,6 +514,9 @@
   template(clear_name,                                 "clear")                                                   \
   template(trigger_method_signature,                   "(ILjava/lang/management/MemoryUsage;)V")                                                 \
   template(startAgent_name,                            "startAgent")                                              \
+  template(startRemoteAgent_name,                      "startRemoteManagementAgent")                              \
+  template(startLocalAgent_name,                       "startLocalManagementAgent")                               \
+  template(stopRemoteAgent_name,                       "stopRemoteManagementAgent")                               \
   template(java_lang_management_ThreadInfo_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;)V") \
   template(java_lang_management_ThreadInfo_with_locks_constructor_signature, "(Ljava/lang/Thread;ILjava/lang/Object;Ljava/lang/Thread;JJJJ[Ljava/lang/StackTraceElement;[Ljava/lang/Object;[I[Ljava/lang/Object;)V") \
   template(long_long_long_long_void_signature,         "(JJJJ)V")                                                 \
@@ -492,6 +524,7 @@
   template(java_lang_management_MemoryPoolMXBean,      "java/lang/management/MemoryPoolMXBean")                   \
   template(java_lang_management_MemoryManagerMXBean,   "java/lang/management/MemoryManagerMXBean")                \
   template(java_lang_management_GarbageCollectorMXBean,"java/lang/management/GarbageCollectorMXBean")             \
+  template(gcInfoBuilder_name,                         "gcInfoBuilder")                                           \
   template(createMemoryPool_name,                      "createMemoryPool")                                        \
   template(createMemoryManager_name,                   "createMemoryManager")                                     \
   template(createGarbageCollector_name,                "createGarbageCollector")                                  \
@@ -681,6 +714,10 @@
   do_class(java_nio_Buffer,               "java/nio/Buffer")                                                            \
   do_intrinsic(_checkIndex,               java_nio_Buffer,        checkIndex_name, int_int_signature,            F_R)   \
    do_name(     checkIndex_name,                                 "checkIndex")                                          \
+                                                                                                                        \
+  /* java/lang/ref/Reference */                                                                                         \
+  do_intrinsic(_Reference_get,            java_lang_ref_Reference, get_name,    void_object_signature, F_R)             \
+                                                                                                                        \
                                                                                                                         \
   do_class(sun_misc_AtomicLongCSImpl,     "sun/misc/AtomicLongCSImpl")                                                  \
   do_intrinsic(_get_AtomicLong,           sun_misc_AtomicLongCSImpl, get_name, void_long_signature,              F_R)   \
@@ -885,13 +922,15 @@
                                                                                                                           \
   do_intrinsic(_invoke,                   java_lang_reflect_Method, invoke_name, object_object_array_object_signature, F_R) \
   /*   (symbols invoke_name and invoke_signature defined above) */                                                      \
-  do_intrinsic(_checkSpreadArgument,      sun_dyn_MethodHandleImpl, checkSpreadArgument_name, checkSpreadArgument_signature, F_S) \
+  do_intrinsic(_checkSpreadArgument,      java_lang_invoke_MethodHandleNatives, checkSpreadArgument_name, checkSpreadArgument_signature, F_S) \
    do_name(    checkSpreadArgument_name,       "checkSpreadArgument")                                                   \
    do_name(    checkSpreadArgument_signature,  "(Ljava/lang/Object;I)V")                                                \
-  do_intrinsic(_invokeExact,              java_dyn_MethodHandle, invokeExact_name,   object_array_object_signature, F_RN) \
-  do_intrinsic(_invokeGeneric,            java_dyn_MethodHandle, invokeGeneric_name, object_array_object_signature, F_RN) \
-  do_intrinsic(_invokeVarargs,            java_dyn_MethodHandle, invokeVarargs_name, object_array_object_signature, F_R)  \
-  do_intrinsic(_invokeDynamic,            java_dyn_InvokeDynamic, star_name,         object_array_object_signature, F_SN) \
+  do_intrinsic(_invokeExact,              java_lang_invoke_MethodHandle, invokeExact_name,   object_array_object_signature, F_RN) \
+  do_intrinsic(_invokeGeneric,            java_lang_invoke_MethodHandle, invokeGeneric_name, object_array_object_signature, F_RN) \
+  do_intrinsic(_invokeVarargs,            java_lang_invoke_MethodHandle, invokeVarargs_name, object_array_object_signature, F_R)  \
+  do_intrinsic(_invokeDynamic,            java_lang_invoke_InvokeDynamic, star_name,         object_array_object_signature, F_SN) \
+                                                                                                                        \
+  do_intrinsic(_selectAlternative,        java_lang_invoke_MethodHandleImpl, selectAlternative_name, selectAlternative_signature, F_S)  \
                                                                                                                         \
   /* unboxing methods: */                                                                                               \
   do_intrinsic(_booleanValue,             java_lang_Boolean,      booleanValue_name, void_boolean_signature, F_R)       \
@@ -938,10 +977,10 @@
 // Class vmSymbols
 
 class vmSymbols: AllStatic {
- friend class vmSymbolHandles;
- friend class vmIntrinsics;
+  friend class vmIntrinsics;
+  friend class VMStructs;
  public:
-  // enum for figuring positions and size of array holding symbolOops
+  // enum for figuring positions and size of array holding Symbol*s
   enum SID {
     NO_SID = 0,
 
@@ -963,72 +1002,48 @@ class vmSymbols: AllStatic {
 
  private:
   // The symbol array
-  static symbolOop _symbols[];
+  static Symbol* _symbols[];
 
   // Field signatures indexed by BasicType.
-  static symbolOop _type_signatures[T_VOID+1];
+  static Symbol* _type_signatures[T_VOID+1];
 
  public:
   // Initialization
   static void initialize(TRAPS);
   // Accessing
-  #define VM_SYMBOL_DECLARE(name, ignore) \
-    static symbolOop name() { return _symbols[VM_SYMBOL_ENUM_NAME(name)]; }
+  #define VM_SYMBOL_DECLARE(name, ignore)                 \
+    static Symbol* name() {                               \
+      return _symbols[VM_SYMBOL_ENUM_NAME(name)];         \
+    }
   VM_SYMBOLS_DO(VM_SYMBOL_DECLARE, VM_SYMBOL_DECLARE)
   #undef VM_SYMBOL_DECLARE
 
-  // GC support
-  static void oops_do(OopClosure* f, bool do_all = false);
+  // Sharing support
+  static void symbols_do(SymbolClosure* f);
+  static void serialize(SerializeOopClosure* soc);
 
-  static symbolOop type_signature(BasicType t) {
+  static Symbol* type_signature(BasicType t) {
     assert((uint)t < T_VOID+1, "range check");
     assert(_type_signatures[t] != NULL, "domain check");
     return _type_signatures[t];
   }
   // inverse of type_signature; returns T_OBJECT if s is not recognized
-  static BasicType signature_type(symbolOop s);
+  static BasicType signature_type(Symbol* s);
 
-  static symbolOop symbol_at(SID id) {
+  static Symbol* symbol_at(SID id) {
     assert(id >= FIRST_SID && id < SID_LIMIT, "oob");
     assert(_symbols[id] != NULL, "init");
     return _symbols[id];
   }
 
   // Returns symbol's SID if one is assigned, else NO_SID.
-  static SID find_sid(symbolOop symbol);
+  static SID find_sid(Symbol* symbol);
+  static SID find_sid(const char* symbol_name);
 
 #ifndef PRODUCT
   // No need for this in the product:
   static const char* name_for(SID sid);
 #endif //PRODUCT
-};
-
-
-// Class vmSymbolHandles
-
-class vmSymbolHandles: AllStatic {
-  friend class vmIntrinsics;
-  friend class ciObjectFactory;
-
- public:
-  // Accessing
-  #define VM_SYMBOL_HANDLE_DECLARE(name, ignore) \
-    static symbolHandle name() { return symbol_handle_at(vmSymbols::VM_SYMBOL_ENUM_NAME(name)); }
-  VM_SYMBOLS_DO(VM_SYMBOL_HANDLE_DECLARE, VM_SYMBOL_HANDLE_DECLARE)
-  #undef VM_SYMBOL_HANDLE_DECLARE
-
-  static symbolHandle symbol_handle_at(vmSymbols::SID id) {
-    return symbolHandle(&vmSymbols::_symbols[(int)id], false);
-  }
-
-  static symbolHandle type_signature(BasicType t) {
-    assert(vmSymbols::type_signature(t) != NULL, "domain check");
-    return symbolHandle(&vmSymbols::_type_signatures[t], false);
-  }
-  // inverse of type_signature; returns T_OBJECT if s is not recognized
-  static BasicType signature_type(symbolHandle s) {
-    return vmSymbols::signature_type(s());
-  }
 };
 
 // VM Intrinsic ID's uniquely identify some very special methods

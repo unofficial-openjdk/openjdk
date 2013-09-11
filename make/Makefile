@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@
 #  ALT_OUTPUTDIR              Output directory to use for hotspot build
 #  ALT_EXPORT_PATH            Directory to export hotspot build to
 #  ALT_JDK_IMPORT_PATH        Current JDK build (only for create_jdk rules)
+#  ALT_JDK_TARGET_IMPORT_PATH Current JDK build when cross-compiling
 #  ALT_BUILD_WIN_SA           Building SA on Windows is disabled by default.
 #                             Set ALT_BUILD_WIN_SA=1 to enable building SA on
 #                             Windows.
@@ -73,6 +74,7 @@ else
   include defs.make
 endif
 
+include $(GAMMADIR)/make/altsrc.make
 
 ifneq ($(ALT_OUTPUTDIR),)
   ALT_OUT=ALT_OUTPUTDIR=$(ALT_OUTPUTDIR)
@@ -87,19 +89,31 @@ KERNEL_VM_TARGETS=productkernel fastdebugkernel optimizedkernel jvmgkernel
 ZERO_VM_TARGETS=productzero fastdebugzero optimizedzero jvmgzero
 SHARK_VM_TARGETS=productshark fastdebugshark optimizedshark jvmgshark
 
+COMMON_VM_PRODUCT_TARGETS=product product1 productkernel docs export_product
+COMMON_VM_FASTDEBUG_TARGETS=fastdebug fastdebug1 fastdebugkernel docs export_fastdebug
+COMMON_VM_DEBUG_TARGETS=jvmg jvmg1 jvmgkernel docs export_debug
+
 # JDK directory list
 JDK_DIRS=bin include jre lib demo
 
 all:           all_product all_fastdebug
-ifndef BUILD_CLIENT_ONLY
-all_product:   product product1 productkernel docs export_product
-all_fastdebug: fastdebug fastdebug1 fastdebugkernel docs export_fastdebug
-all_debug:     jvmg jvmg1 jvmgkernel docs export_debug
-else
+
+ifdef BUILD_CLIENT_ONLY
 all_product:   product1 docs export_product
 all_fastdebug: fastdebug1 docs export_fastdebug
 all_debug:     jvmg1 docs export_debug
+else
+ifeq ($(MACOSX_UNIVERSAL),true)
+all_product:   universal_product
+all_fastdebug: universal_fastdebug
+all_debug:     universal_debug
+else
+all_product:   $(COMMON_VM_PRODUCT_TARGETS)
+all_fastdebug: $(COMMON_VM_FASTDEBUG_TARGETS)
+all_debug:     $(COMMON_VM_DEBUG_TARGETS)
 endif
+endif
+
 all_optimized: optimized optimized1 optimizedkernel docs export_optimized
 
 allzero:           all_productzero all_fastdebugzero
@@ -122,31 +136,36 @@ docs:
 ifeq ($(OSNAME),windows)
 	@$(ECHO) "No docs ($(VM_TARGET)) for windows"
 else
+# We specify 'BUILD_FLAVOR=product' so that the proper
+# ENABLE_FULL_DEBUG_SYMBOLS value is used.
 	$(CD) $(OUTPUTDIR); \
 	    $(MAKE) -f $(ABS_OS_MAKEFILE) \
-		      $(MAKE_ARGS) docs
+		      $(MAKE_ARGS) BUILD_FLAVOR=product docs
 endif
 
 # Build variation of hotspot
 $(C1_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
-	$(MAKE) VM_TARGET=$@ generic_build1 $(ALT_OUT)
+	$(MAKE) BUILD_FLAVOR=$(@:%1=%) VM_TARGET=$@ generic_build1 $(ALT_OUT)
 
 $(C2_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
-	$(MAKE) VM_TARGET=$@ generic_build2 $(ALT_OUT)
+	$(MAKE) BUILD_FLAVOR=$@ VM_TARGET=$@ generic_build2 $(ALT_OUT)
 
 $(KERNEL_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
-	$(MAKE) VM_TARGET=$@ generic_buildkernel $(ALT_OUT)
+	$(MAKE) BUILD_FLAVOR=$(@:%kernel=%) VM_TARGET=$@ \
+	  generic_buildkernel $(ALT_OUT)
 
 $(ZERO_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
-	$(MAKE) VM_TARGET=$@ generic_buildzero $(ALT_OUT)
+	$(MAKE) BUILD_FLAVOR=$(@:%zero=%) VM_TARGET=$@ \
+	  generic_buildzero $(ALT_OUT)
 
 $(SHARK_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
-	$(MAKE) VM_TARGET=$@ generic_buildshark $(ALT_OUT)
+	$(MAKE) BUILD_FLAVOR=$(@:%shark=%) VM_TARGET=$@ \
+	  generic_buildshark $(ALT_OUT)
 
 # Build compiler1 (client) rule, different for platforms
 generic_build1:
@@ -223,26 +242,37 @@ generic_buildshark:
 # Export file rule
 generic_export: $(EXPORT_LIST)
 export_product:
-	$(MAKE) VM_SUBDIR=product                            generic_export
+	$(MAKE) BUILD_FLAVOR=$(@:export_%=%) VM_SUBDIR=$(@:export_%=%) \
+          generic_export
 export_fastdebug:
-	$(MAKE) VM_SUBDIR=fastdebug EXPORT_SUBDIR=/fastdebug generic_export
+	$(MAKE) BUILD_FLAVOR=$(@:export_%=%) VM_SUBDIR=$(@:export_%=%) \
+	  EXPORT_SUBDIR=/$(@:export_%=%) \
+	  generic_export
 export_debug:
-	$(MAKE) VM_SUBDIR=${VM_DEBUG} EXPORT_SUBDIR=/debug   generic_export
+	$(MAKE) BUILD_FLAVOR=$(@:export_%=%) VM_SUBDIR=${VM_DEBUG} \
+	  EXPORT_SUBDIR=/$(@:export_%=%) \
+	  generic_export
 export_optimized:
-	$(MAKE) VM_SUBDIR=optimized EXPORT_SUBDIR=/optimized generic_export
-export_product_jdk:
-	$(MAKE) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) \
-		VM_SUBDIR=product                            generic_export
-export_optimized_jdk:
-	$(MAKE) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) \
-		VM_SUBDIR=optimized                          generic_export
-export_fastdebug_jdk:
-	$(MAKE) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/fastdebug \
-		VM_SUBDIR=fastdebug                          generic_export
-export_debug_jdk:
-	$(MAKE) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/debug \
-		VM_SUBDIR=${VM_DEBUG}                        generic_export
-
+	$(MAKE) BUILD_FLAVOR=$(@:export_%=%) VM_SUBDIR=$(@:export_%=%) \
+	  EXPORT_SUBDIR=/$(@:export_%=%) \
+	  generic_export
+export_product_jdk::
+	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) \
+	  VM_SUBDIR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) \
+	  generic_export
+export_optimized_jdk::
+	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) \
+	  VM_SUBDIR=$(@:export_%_jdk=%) ALT_EXPORT_PATH=$(JDK_IMAGE_DIR) \
+	  generic_export
+export_fastdebug_jdk::
+	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) \
+	  VM_SUBDIR=$(@:export_%_jdk=%)  \
+	  ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/$(@:export_%_jdk=%) \
+	  generic_export
+export_debug_jdk::
+	$(MAKE) BUILD_FLAVOR=$(@:export_%_jdk=%) VM_SUBDIR=${VM_DEBUG} \
+	  ALT_EXPORT_PATH=$(JDK_IMAGE_DIR)/$(@:export_%_jdk=%) \
+	  generic_export
 
 # Export file copy rules
 XUSAGE=$(HS_SRC_DIR)/share/vm/Xusage.txt
@@ -285,6 +315,8 @@ $(EXPORT_LIB_DIR)/%.lib:  $(MISC_DIR)/%.lib
 	$(install-file)
 
 # Other libraries (like SA)
+$(EXPORT_JRE_BIN_DIR)/%.diz: $(MISC_DIR)/%.diz
+	$(install-file)
 $(EXPORT_JRE_BIN_DIR)/%.dll: $(MISC_DIR)/%.dll
 	$(install-file)
 $(EXPORT_JRE_BIN_DIR)/%.pdb: $(MISC_DIR)/%.pdb
@@ -293,6 +325,8 @@ $(EXPORT_JRE_BIN_DIR)/%.map: $(MISC_DIR)/%.map
 	$(install-file)
 
 # Client files always come from C1 area
+$(EXPORT_CLIENT_DIR)/%.diz:  $(C1_DIR)/%.diz
+	$(install-file)
 $(EXPORT_CLIENT_DIR)/%.dll:  $(C1_DIR)/%.dll
 	$(install-file)
 $(EXPORT_CLIENT_DIR)/%.pdb:  $(C1_DIR)/%.pdb
@@ -301,6 +335,8 @@ $(EXPORT_CLIENT_DIR)/%.map:  $(C1_DIR)/%.map
 	$(install-file)
 
 # Server files always come from C2 area
+$(EXPORT_SERVER_DIR)/%.diz:  $(C2_DIR)/%.diz
+	$(install-file)
 $(EXPORT_SERVER_DIR)/%.dll:  $(C2_DIR)/%.dll
 	$(install-file)
 $(EXPORT_SERVER_DIR)/%.pdb:  $(C2_DIR)/%.pdb
@@ -309,6 +345,8 @@ $(EXPORT_SERVER_DIR)/%.map:  $(C2_DIR)/%.map
 	$(install-file)
 
 # Kernel files always come from kernel area
+$(EXPORT_KERNEL_DIR)/%.diz:  $(KERNEL_DIR)/%.diz
+	$(install-file)
 $(EXPORT_KERNEL_DIR)/%.dll:  $(KERNEL_DIR)/%.dll
 	$(install-file)
 $(EXPORT_KERNEL_DIR)/%.pdb:  $(KERNEL_DIR)/%.pdb
@@ -321,28 +359,56 @@ endif
 ifneq ($(OSNAME),windows)
   ifeq ($(ZERO_BUILD), true)
     ifeq ($(SHARK_BUILD), true)
-$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(SHARK_DIR)/%.so
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.$(LIBRARY_SUFFIX): $(SHARK_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_SERVER_DIR)/%.so:       $(SHARK_DIR)/%.so
+$(EXPORT_SERVER_DIR)/%.$(LIBRARY_SUFFIX):       $(SHARK_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
     else
-$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(ZERO_DIR)/%.so
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.$(LIBRARY_SUFFIX): $(ZERO_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_SERVER_DIR)/%.so:       $(ZERO_DIR)/%.so
+$(EXPORT_SERVER_DIR)/%.$(LIBRARY_SUFFIX):       $(ZERO_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
     endif
   else
-$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(C1_DIR)/%.so
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.$(LIBRARY_SUFFIX): $(C1_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_JRE_LIB_ARCH_DIR)/%.so: $(C2_DIR)/%.so
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.$(LIBRARY_SUFFIX): $(C2_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_CLIENT_DIR)/%.so:       $(C1_DIR)/%.so
+$(EXPORT_CLIENT_DIR)/%.$(LIBRARY_SUFFIX):       $(C1_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_CLIENT_DIR)/64/%.so:    $(C1_DIR)/%.so
+$(EXPORT_CLIENT_DIR)/64/%.$(LIBRARY_SUFFIX):    $(C1_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_SERVER_DIR)/%.so:       $(C2_DIR)/%.so
+$(EXPORT_SERVER_DIR)/%.$(LIBRARY_SUFFIX):       $(C2_DIR)/%.$(LIBRARY_SUFFIX)
 	$(install-file)
-$(EXPORT_SERVER_DIR)/64/%.so:    $(C2_DIR)/%.so
+$(EXPORT_SERVER_DIR)/64/%.$(LIBRARY_SUFFIX):    $(C2_DIR)/%.$(LIBRARY_SUFFIX)
+	$(install-file)
+
+# Debug info for shared library
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.debuginfo: $(C1_DIR)/%.debuginfo
+	$(install-file)
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.debuginfo: $(C2_DIR)/%.debuginfo
+	$(install-file)
+$(EXPORT_CLIENT_DIR)/%.debuginfo:       $(C1_DIR)/%.debuginfo
+	$(install-file)
+$(EXPORT_CLIENT_DIR)/64/%.debuginfo:    $(C1_DIR)/%.debuginfo
+	$(install-file)
+$(EXPORT_SERVER_DIR)/%.debuginfo:       $(C2_DIR)/%.debuginfo
+	$(install-file)
+$(EXPORT_SERVER_DIR)/64/%.debuginfo:    $(C2_DIR)/%.debuginfo
+	$(install-file)
+
+# ZIP'ed debug info for shared library
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.diz: $(C1_DIR)/%.diz
+	$(install-file)
+$(EXPORT_JRE_LIB_ARCH_DIR)/%.diz: $(C2_DIR)/%.diz
+	$(install-file)
+$(EXPORT_CLIENT_DIR)/%.diz:       $(C1_DIR)/%.diz
+	$(install-file)
+$(EXPORT_CLIENT_DIR)/64/%.diz:    $(C1_DIR)/%.diz
+	$(install-file)
+$(EXPORT_SERVER_DIR)/%.diz:       $(C2_DIR)/%.diz
+	$(install-file)
+$(EXPORT_SERVER_DIR)/64/%.diz:    $(C2_DIR)/%.diz
 	$(install-file)
   endif
 endif
@@ -351,7 +417,7 @@ endif
 $(EXPORT_LIB_DIR)/%.jar: $(GEN_DIR)/%.jar
 	$(install-file)
 
-# Include files (jvmti.h, jvmticmlr.h, jni.h, $(JDK_INCLUDE_SUBDIR)/jni_md.h, jmm.h)
+# Include files (jvmti.h, jvmticmlr.h, jni.h, $(JDK_INCLUDE_SUBDIR)/jni_md.h, jmm.h, jfr.h)
 $(EXPORT_INCLUDE_DIR)/%: $(GEN_DIR)/jvmtifiles/%
 	$(install-file)
 
@@ -361,11 +427,21 @@ $(EXPORT_INCLUDE_DIR)/%: $(HS_SRC_DIR)/share/vm/code/%
 $(EXPORT_INCLUDE_DIR)/%: $(HS_SRC_DIR)/share/vm/prims/%
 	$(install-file)
 
-$(EXPORT_INCLUDE_DIR)/$(JDK_INCLUDE_SUBDIR)/jni_md.h:  $(HS_SRC_DIR)/cpu/$(HS_ARCH)/vm/jni_$(HS_ARCH).h
+HS_JNI_ARCH_SRC=$(call altsrc-replace,$(HS_COMMON_SRC)/cpu/$(HS_ARCH)/vm/jni_$(HS_ARCH).h)
+$(EXPORT_INCLUDE_DIR)/$(JDK_INCLUDE_SUBDIR)/jni_md.h: $(HS_JNI_ARCH_SRC)
 	$(install-file)
 
 $(EXPORT_INCLUDE_DIR)/%: $(HS_SRC_DIR)/share/vm/services/%
 	$(install-file)
+
+JFR_EXISTS=$(shell if [ -d $(HS_ALT_SRC) ]; then echo 1; else echo 0; fi)
+# export jfr.h
+ifeq ($JFR_EXISTS,1)
+$(EXPORT_INCLUDE_DIR)/%: $(HS_ALT_SRC)/share/vm/jfr/agent/%
+	$(install-file)
+else
+$(EXPORT_INCLUDE_DIR)/jfr.h:
+endif
 
 # Doc files (jvmti.html)
 $(EXPORT_DOCS_DIR)/platform/jvmti/%: $(DOCS_DIR)/%
@@ -410,21 +486,27 @@ $(JDK_IMAGE_DIR)/jre/lib/rt.jar:
 	 ($(CD) $(JDK_IMAGE_DIR) && $(TAR) -xf -)
 
 test_jdk:
-  ifneq ($(ZERO_BUILD), true)
     ifeq ($(ARCH_DATA_MODEL), 32)
-	$(JDK_IMAGE_DIR)/bin/java -client -version
+      ifneq ($(ZERO_BUILD), true)
+	$(JDK_IMAGE_DIR)/bin/java -d32 -client -Xinternalversion
+	$(JDK_IMAGE_DIR)/bin/java -d32 -client -version
+      endif
+	$(JDK_IMAGE_DIR)/bin/java -d32 -server -Xinternalversion
+	$(JDK_IMAGE_DIR)/bin/java -d32 -server -version
     endif
-  endif
-	$(JDK_IMAGE_DIR)/bin/java -server -version
+    ifeq ($(ARCH_DATA_MODEL), 64)
+	$(JDK_IMAGE_DIR)/bin/java -d64 -server -Xinternalversion
+	$(JDK_IMAGE_DIR)/bin/java -d64 -server -version
+    endif
 
-copy_product_jdk:
+copy_product_jdk::
 	$(RM) -r $(JDK_IMAGE_DIR)
 	$(MKDIR) -p $(JDK_IMAGE_DIR)
 	($(CD) $(JDK_IMPORT_PATH) && \
 	 $(TAR) -cf - $(JDK_DIRS)) | \
 	 ($(CD) $(JDK_IMAGE_DIR) && $(TAR) -xf -)
 
-copy_fastdebug_jdk:
+copy_fastdebug_jdk::
 	$(RM) -r $(JDK_IMAGE_DIR)/fastdebug
 	$(MKDIR) -p $(JDK_IMAGE_DIR)/fastdebug
 	if [ -d $(JDK_IMPORT_PATH)/fastdebug ] ; then \
@@ -437,7 +519,7 @@ copy_fastdebug_jdk:
 	   ($(CD) $(JDK_IMAGE_DIR)/fastdebug && $(TAR) -xf -) ; \
 	fi
 
-copy_debug_jdk:
+copy_debug_jdk::
 	$(RM) -r $(JDK_IMAGE_DIR)/debug
 	$(MKDIR) -p $(JDK_IMAGE_DIR)/debug
 	if [ -d $(JDK_IMPORT_PATH)/debug ] ; then \
@@ -507,6 +589,7 @@ SLASH_JAVA.desc            = Root of all build tools, e.g. /java or J:
 OUTPUTDIR.desc             = Output directory, default is build/<osname>
 BOOTDIR.desc               = JDK used to compile agent java source and test with
 JDK_IMPORT_PATH.desc       = Promoted JDK to copy for 'create_jdk'
+JDK_IMAGE_DIR.desc         = Directory to place JDK to copy
 EXPORT_PATH.desc           = Directory to place files to export for JDK build
 
 # Make variables to print out (description and value)
@@ -515,6 +598,7 @@ VARIABLE_PRINTVAL_LIST +=       \
     OUTPUTDIR                   \
     BOOTDIR                     \
     JDK_IMPORT_PATH             \
+    JDK_IMAGE_DIR               \
     EXPORT_PATH
 
 # Make variables that should refer to directories that exist
@@ -573,6 +657,13 @@ examples_help:
 	@$(ECHO) \
 "  $(MAKE) ALT_JDK_IMPORT_PATH=/opt/java/jdk$(JDK_VERSION)"
 
+# Universal build support
+ifeq ($(OS_VENDOR), Darwin)
+ifeq ($(MACOSX_UNIVERSAL),true)
+include $(GAMMADIR)/make/$(OSNAME)/makefiles/universal.gmk
+endif
+endif
+
 # JPRT rule to build this workspace
 include $(GAMMADIR)/make/jprt.gmk
 
@@ -582,5 +673,4 @@ include $(GAMMADIR)/make/jprt.gmk
 	export_product export_fastdebug export_debug export_optimized \
 	export_jdk_product export_jdk_fastdebug export_jdk_debug \
 	create_jdk copy_jdk update_jdk test_jdk \
-	copy_product_jdk copy_fastdebug_jdk copy_debug_jdk
-
+	copy_product_jdk copy_fastdebug_jdk copy_debug_jdk 

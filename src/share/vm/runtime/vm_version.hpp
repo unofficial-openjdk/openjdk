@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ class Abstract_VM_Version: AllStatic {
   static bool         _initialized;
   static int          _parallel_worker_threads;
   static bool         _parallel_worker_threads_initialized;
+  static int          _reserve_for_allocation_prefetch;
 
   static unsigned int nof_parallel_worker_threads(unsigned int num,
                                                   unsigned int dem,
@@ -59,6 +60,7 @@ class Abstract_VM_Version: AllStatic {
   static const char* vm_info_string();
   static const char* vm_release();
   static const char* vm_platform_string();
+  static const char* vm_build_user();
 
   static int vm_major_version()               { assert(_initialized, "not initialized"); return _vm_major_version; }
   static int vm_minor_version()               { assert(_initialized, "not initialized"); return _vm_minor_version; }
@@ -69,11 +71,18 @@ class Abstract_VM_Version: AllStatic {
 
   // Internal version providing additional build information
   static const char* internal_vm_info_string();
+  static const char* jre_release_version();
 
   // does HW support an 8-byte compare-exchange operation?
   static bool supports_cx8()  {return _supports_cx8;}
   static unsigned int logical_processors_per_package() {
     return _logical_processors_per_package;
+  }
+
+  // Need a space at the end of TLAB for prefetch instructions
+  // which may fault when accessing memory outside of heap.
+  static int reserve_for_allocation_prefetch() {
+    return _reserve_for_allocation_prefetch;
   }
 
   // ARCH specific policy for the BiasedLocking

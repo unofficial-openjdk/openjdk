@@ -47,6 +47,11 @@ then
   exit 1
 fi
 
+# Jtreg sets TESTVMOPTS which may include -d64 which is
+# required to test a 64-bit JVM on some platforms.
+# If another test harness still creates HOME/JDK64BIT,
+# we can recognise that.
+
 # set platform-dependent variables
 OS=`uname -s`
 case "$OS" in
@@ -55,6 +60,12 @@ case "$OS" in
     RM=/bin/rm
     CP=/bin/cp
     MV=/bin/mv
+    ## for solaris, linux it's HOME
+    FILE_LOCATION=$HOME
+    if [ -f ${FILE_LOCATION}${FS}JDK64BIT -a ${OS} = "SunOS" ]
+    then
+        TESTVMOPTS=`cat ${FILE_LOCATION}${FS}JDK64BIT`
+    fi
     ;;
   Windows_* )
     FS="\\"

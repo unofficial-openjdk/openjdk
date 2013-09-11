@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,8 +51,8 @@ class UTF8 : AllStatic {
   static char* next_character(const char* str, jint* value);
 
   // Utility methods
-  static jbyte* strrchr(jbyte* base, int length, jbyte c);
-  static bool   equal(jbyte* base1, int length1, jbyte* base2, int length2);
+  static const jbyte* strrchr(const jbyte* base, int length, jbyte c);
+  static bool   equal(const jbyte* base1, int length1, const jbyte* base2,int length2);
   static bool   is_supplementary_character(const unsigned char* str);
   static jint   get_supplementary_character(const unsigned char* str);
 };

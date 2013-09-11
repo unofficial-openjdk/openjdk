@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -524,10 +524,12 @@ name_for_methodOop(jvm_agent_t* J, uint64_t methodOopPtr, char * result, size_t 
   CHECK_FAIL(err);
   err = read_pointer(J, constantPool + nameIndex * POINTER_SIZE + SIZE_constantPoolOopDesc, &nameSymbol);
   CHECK_FAIL(err);
-  err = ps_pread(J->P, nameSymbol + OFFSET_symbolOopDesc_length, &nameSymbolLength, 2);
+  // The symbol is a CPSlot and has lower bit set to indicate metadata
+  nameSymbol &= (~1); // remove metadata lsb
+  err = ps_pread(J->P, nameSymbol + OFFSET_Symbol_length, &nameSymbolLength, 2);
   CHECK_FAIL(err);
   nameString = (char*)calloc(nameSymbolLength + 1, 1);
-  err = ps_pread(J->P, nameSymbol + OFFSET_symbolOopDesc_body, nameString, nameSymbolLength);
+  err = ps_pread(J->P, nameSymbol + OFFSET_Symbol_body, nameString, nameSymbolLength);
   CHECK_FAIL(err);
 
   /* To get signature string */
@@ -535,10 +537,11 @@ name_for_methodOop(jvm_agent_t* J, uint64_t methodOopPtr, char * result, size_t 
   CHECK_FAIL(err);
   err = read_pointer(J, constantPool + signatureIndex * POINTER_SIZE + SIZE_constantPoolOopDesc, &signatureSymbol);
   CHECK_FAIL(err);
-  err = ps_pread(J->P, signatureSymbol + OFFSET_symbolOopDesc_length, &signatureSymbolLength, 2);
+  signatureSymbol &= (~1);  // remove metadata lsb
+  err = ps_pread(J->P, signatureSymbol + OFFSET_Symbol_length, &signatureSymbolLength, 2);
   CHECK_FAIL(err);
   signatureString = (char*)calloc(signatureSymbolLength + 1, 1);
-  err = ps_pread(J->P, signatureSymbol + OFFSET_symbolOopDesc_body, signatureString, signatureSymbolLength);
+  err = ps_pread(J->P, signatureSymbol + OFFSET_Symbol_body, signatureString, signatureSymbolLength);
   CHECK_FAIL(err);
 
   /* To get klass string */
@@ -546,10 +549,10 @@ name_for_methodOop(jvm_agent_t* J, uint64_t methodOopPtr, char * result, size_t 
   CHECK_FAIL(err);
   err = read_pointer(J, klassPtr + OFFSET_Klass_name + SIZE_oopDesc, &klassSymbol);
   CHECK_FAIL(err);
-  err = ps_pread(J->P, klassSymbol + OFFSET_symbolOopDesc_length, &klassSymbolLength, 2);
+  err = ps_pread(J->P, klassSymbol + OFFSET_Symbol_length, &klassSymbolLength, 2);
   CHECK_FAIL(err);
   klassString = (char*)calloc(klassSymbolLength + 1, 1);
-  err = ps_pread(J->P, klassSymbol + OFFSET_symbolOopDesc_body, klassString, klassSymbolLength);
+  err = ps_pread(J->P, klassSymbol + OFFSET_Symbol_body, klassString, klassSymbolLength);
   CHECK_FAIL(err);
 
   result[0] = '\0';

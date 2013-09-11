@@ -37,15 +37,6 @@
 #include "services/management.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/taskqueue.hpp"
-#ifdef TARGET_ARCH_x86
-# include "vm_version_x86.hpp"
-#endif
-#ifdef TARGET_ARCH_sparc
-# include "vm_version_sparc.hpp"
-#endif
-#ifdef TARGET_ARCH_zero
-# include "vm_version_zero.hpp"
-#endif
 #ifdef TARGET_OS_FAMILY_linux
 # include "os_linux.inline.hpp"
 #endif
@@ -55,11 +46,15 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "os_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+#endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.hpp"
 #endif
 
-#define DEFAULT_VENDOR_URL_BUG "http://java.sun.com/webapps/bugreport/crash.jsp"
+// Note: This is a special bug reporting site for the JVM
+#define DEFAULT_VENDOR_URL_BUG "http://bugreport.sun.com/bugreport/crash.jsp"
 #define DEFAULT_JAVA_LAUNCHER  "generic"
 
 char**  Arguments::_jvm_flags_array             = NULL;
@@ -78,6 +73,7 @@ bool   Arguments::_xdebug_mode                  = false;
 const char*  Arguments::_java_vendor_url_bug    = DEFAULT_VENDOR_URL_BUG;
 const char*  Arguments::_sun_java_launcher      = DEFAULT_JAVA_LAUNCHER;
 int    Arguments::_sun_java_launcher_pid        = -1;
+bool   Arguments::_created_by_gamma_launcher    = false;
 
 // These parameters are reset in method parse_vm_init_args(JavaVMInitArgs*)
 bool   Arguments::_AlwaysCompileLoopMethods     = AlwaysCompileLoopMethods;
@@ -105,8 +101,6 @@ SystemProperty *Arguments::_sun_boot_class_path = NULL;
 
 char* Arguments::_meta_index_path = NULL;
 char* Arguments::_meta_index_dir = NULL;
-
-static bool force_client_mode = false;
 
 // Check if head of 'option' matches 'name', and sets 'tail' remaining part of option string
 
@@ -242,6 +236,18 @@ static ObsoleteFlag obsolete_jvm_flags[] = {
   { "MaxLiveObjectEvacuationRatio",
                            JDK_Version::jdk_update(6,24), JDK_Version::jdk(8) },
   { "ForceSharedSpaces",   JDK_Version::jdk_update(6,25), JDK_Version::jdk(8) },
+  { "UseParallelOldGCCompacting",
+                           JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
+  { "UseParallelDensePrefixUpdate",
+                           JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
+  { "UseParallelOldGCDensePrefix",
+                           JDK_Version::jdk_update(6,27), JDK_Version::jdk(8) },
+  { "AllowTransitionalJSR292",       JDK_Version::jdk(7), JDK_Version::jdk(8) },
+  { "UseCompressedStrings",          JDK_Version::jdk(7), JDK_Version::jdk(8) },
+#ifdef PRODUCT
+  { "DesiredMethodLimit",
+                           JDK_Version::jdk_update(7, 2), JDK_Version::jdk(8) },
+#endif // PRODUCT
   { NULL, JDK_Version(0), JDK_Version(0) }
 };
 
@@ -798,26 +804,38 @@ bool Arguments::process_argument(const char* arg,
 
   JDK_Version since = JDK_Version();
 
-  if (parse_argument(arg, origin)) {
-    // do nothing
-  } else if (is_newly_obsolete(arg, &since)) {
-    enum { bufsize = 256 };
-    char buffer[bufsize];
-    since.to_string(buffer, bufsize);
-    jio_fprintf(defaultStream::error_stream(),
-      "Warning: The flag %s has been EOL'd as of %s and will"
-      " be ignored\n", arg, buffer);
-  } else {
-    if (!ignore_unrecognized) {
-      jio_fprintf(defaultStream::error_stream(),
-                  "Unrecognized VM option '%s'\n", arg);
-      // allow for commandline "commenting out" options like -XX:#+Verbose
-      if (strlen(arg) == 0 || arg[0] != '#') {
-        return false;
-      }
-    }
+  if (parse_argument(arg, origin) || ignore_unrecognized) {
+    return true;
   }
-  return true;
+
+  const char * const argname = *arg == '+' || *arg == '-' ? arg + 1 : arg;
+  if (is_newly_obsolete(arg, &since)) {
+    char version[256];
+    since.to_string(version, sizeof(version));
+    warning("ignoring option %s; support was removed in %s", argname, version);
+    return true;
+  }
+
+  // For locked flags, report a custom error message if available.
+  // Otherwise, report the standard unrecognized VM option.
+
+  Flag* locked_flag = Flag::find_flag((char*)argname, strlen(argname), true);
+  if (locked_flag != NULL) {
+    char locked_message_buf[BUFLEN];
+    locked_flag->get_locked_message(locked_message_buf, BUFLEN);
+    if (strlen(locked_message_buf) == 0) {
+      jio_fprintf(defaultStream::error_stream(),
+        "Unrecognized VM option '%s'\n", argname);
+    } else {
+      jio_fprintf(defaultStream::error_stream(), "%s", locked_message_buf);
+    }
+  } else {
+    jio_fprintf(defaultStream::error_stream(),
+                "Unrecognized VM option '%s'\n", argname);
+  }
+
+  // allow for commandline "commenting out" options like -XX:#+Verbose
+  return arg[0] == '#';
 }
 
 bool Arguments::process_settings_file(const char* file_name, bool should_exist, jboolean ignore_unrecognized) {
@@ -955,11 +973,21 @@ void Arguments::set_mode_flags(Mode mode) {
   // Ensure Agent_OnLoad has the correct initial values.
   // This may not be the final mode; mode may change later in onload phase.
   PropertyList_unique_add(&_system_properties, "java.vm.info",
-                          (char*)Abstract_VM_Version::vm_info_string(), false);
+                          (char*)VM_Version::vm_info_string(), false);
 
   UseInterpreter             = true;
   UseCompiler                = true;
   UseLoopCounter             = true;
+
+#ifndef ZERO
+  // Turn these off for mixed and comp.  Leave them on for Zero.
+  if (FLAG_IS_DEFAULT(UseFastAccessorMethods)) {
+    UseFastAccessorMethods = (mode == _int);
+  }
+  if (FLAG_IS_DEFAULT(UseFastEmptyMethods)) {
+    UseFastEmptyMethods = (mode == _int);
+  }
+#endif
 
   // Default values may be platform/compiler dependent -
   // use the saved values
@@ -986,6 +1014,13 @@ void Arguments::set_mode_flags(Mode mode) {
     UseInterpreter           = false;
     BackgroundCompilation    = false;
     ClipInlining             = false;
+    // Be much more aggressive in tiered mode with -Xcomp and exercise C2 more.
+    // We will first compile a level 3 version (C1 with full profiling), then do one invocation of it and
+    // compile a level 4 (C2) and then continue executing it.
+    if (TieredCompilation) {
+      Tier3InvokeNotifyFreqLog = 0;
+      Tier4InvocationThreshold = 0;
+    }
     break;
   }
 }
@@ -1004,8 +1039,9 @@ static void no_shared_spaces() {
 }
 
 void Arguments::set_tiered_flags() {
+  // With tiered, set default policy to AdvancedThresholdPolicy, which is 3.
   if (FLAG_IS_DEFAULT(CompilationPolicyChoice)) {
-    FLAG_SET_DEFAULT(CompilationPolicyChoice, 2);
+    FLAG_SET_DEFAULT(CompilationPolicyChoice, 3);
   }
   if (CompilationPolicyChoice < 2) {
     vm_exit_during_initialization(
@@ -1018,6 +1054,16 @@ void Arguments::set_tiered_flags() {
 }
 
 #ifndef KERNEL
+static void disable_adaptive_size_policy(const char* collector_name) {
+  if (UseAdaptiveSizePolicy) {
+    if (FLAG_IS_CMDLINE(UseAdaptiveSizePolicy)) {
+      warning("disabling UseAdaptiveSizePolicy; it is incompatible with %s.",
+              collector_name);
+    }
+    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
+  }
+}
+
 // If the user has chosen ParallelGCThreads > 0, we set UseParNewGC
 // if it's not explictly set or unset. If the user has chosen
 // UseParNewGC and not explicitly set ParallelGCThreads we
@@ -1027,11 +1073,8 @@ void Arguments::set_parnew_gc_flags() {
          "control point invariant");
   assert(UseParNewGC, "Error");
 
-  // Turn off AdaptiveSizePolicy by default for parnew until it is
-  // complete.
-  if (FLAG_IS_DEFAULT(UseAdaptiveSizePolicy)) {
-    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
-  }
+  // Turn off AdaptiveSizePolicy for parnew until it is complete.
+  disable_adaptive_size_policy("UseParNewGC");
 
   if (ParallelGCThreads == 0) {
     FLAG_SET_DEFAULT(ParallelGCThreads,
@@ -1088,11 +1131,8 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     FLAG_SET_ERGO(bool, UseParNewGC, true);
   }
 
-  // Turn off AdaptiveSizePolicy by default for cms until it is
-  // complete.
-  if (FLAG_IS_DEFAULT(UseAdaptiveSizePolicy)) {
-    FLAG_SET_DEFAULT(UseAdaptiveSizePolicy, false);
-  }
+  // Turn off AdaptiveSizePolicy for CMS until it is complete.
+  disable_adaptive_size_policy("UseConcMarkSweepGC");
 
   // In either case, adjust ParallelGCThreads and/or UseParNewGC
   // as needed.
@@ -1100,40 +1140,28 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     set_parnew_gc_flags();
   }
 
-  // Now make adjustments for CMS
-  size_t young_gen_per_worker;
-  intx new_ratio;
-  size_t min_new_default;
-  intx tenuring_default;
-  if (CMSUseOldDefaults) {  // old defaults: "old" as of 6.0
-    if FLAG_IS_DEFAULT(CMSYoungGenPerWorker) {
-      FLAG_SET_ERGO(intx, CMSYoungGenPerWorker, 4*M);
-    }
-    young_gen_per_worker = 4*M;
-    new_ratio = (intx)15;
-    min_new_default = 4*M;
-    tenuring_default = (intx)0;
-  } else { // new defaults: "new" as of 6.0
-    young_gen_per_worker = CMSYoungGenPerWorker;
-    new_ratio = (intx)7;
-    min_new_default = 16*M;
-    tenuring_default = (intx)4;
-  }
+  // MaxHeapSize is aligned down in collectorPolicy
+  size_t max_heap = align_size_down(MaxHeapSize,
+                                    CardTableRS::ct_max_alignment_constraint());
 
-  // Preferred young gen size for "short" pauses
+  // Now make adjustments for CMS
+  intx   tenuring_default = (intx)6;
+  size_t young_gen_per_worker = CMSYoungGenPerWorker;
+
+  // Preferred young gen size for "short" pauses:
+  // upper bound depends on # of threads and NewRatio.
   const uintx parallel_gc_threads =
     (ParallelGCThreads == 0 ? 1 : ParallelGCThreads);
   const size_t preferred_max_new_size_unaligned =
-    ScaleForWordSize(young_gen_per_worker * parallel_gc_threads);
-  const size_t preferred_max_new_size =
+    MIN2(max_heap/(NewRatio+1), ScaleForWordSize(young_gen_per_worker * parallel_gc_threads));
+  size_t preferred_max_new_size =
     align_size_up(preferred_max_new_size_unaligned, os::vm_page_size());
 
   // Unless explicitly requested otherwise, size young gen
-  // for "short" pauses ~ 4M*ParallelGCThreads
+  // for "short" pauses ~ CMSYoungGenPerWorker*ParallelGCThreads
 
   // If either MaxNewSize or NewRatio is set on the command line,
   // assume the user is trying to set the size of the young gen.
-
   if (FLAG_IS_DEFAULT(MaxNewSize) && FLAG_IS_DEFAULT(NewRatio)) {
 
     // Set MaxNewSize to our calculated preferred_max_new_size unless
@@ -1146,49 +1174,13 @@ void Arguments::set_cms_and_parnew_gc_flags() {
     }
     if (PrintGCDetails && Verbose) {
       // Too early to use gclog_or_tty
-      tty->print_cr("Ergo set MaxNewSize: " SIZE_FORMAT, MaxNewSize);
+      tty->print_cr("CMS ergo set MaxNewSize: " SIZE_FORMAT, MaxNewSize);
     }
-
-    // Unless explicitly requested otherwise, prefer a large
-    // Old to Young gen size so as to shift the collection load
-    // to the old generation concurrent collector
-
-    // If this is only guarded by FLAG_IS_DEFAULT(NewRatio)
-    // then NewSize and OldSize may be calculated.  That would
-    // generally lead to some differences with ParNewGC for which
-    // there was no obvious reason.  Also limit to the case where
-    // MaxNewSize has not been set.
-
-    FLAG_SET_ERGO(intx, NewRatio, MAX2(NewRatio, new_ratio));
 
     // Code along this path potentially sets NewSize and OldSize
 
-    // Calculate the desired minimum size of the young gen but if
-    // NewSize has been set on the command line, use it here since
-    // it should be the final value.
-    size_t min_new;
-    if (FLAG_IS_DEFAULT(NewSize)) {
-      min_new = align_size_up(ScaleForWordSize(min_new_default),
-                              os::vm_page_size());
-    } else {
-      min_new = NewSize;
-    }
-    size_t prev_initial_size = InitialHeapSize;
-    if (prev_initial_size != 0 && prev_initial_size < min_new + OldSize) {
-      FLAG_SET_ERGO(uintx, InitialHeapSize, min_new + OldSize);
-      // Currently minimum size and the initial heap sizes are the same.
-      set_min_heap_size(InitialHeapSize);
-      if (PrintGCDetails && Verbose) {
-        warning("Initial heap size increased to " SIZE_FORMAT " M from "
-                SIZE_FORMAT " M; use -XX:NewSize=... for finer control.",
-                InitialHeapSize/M, prev_initial_size/M);
-      }
-    }
-
-    // MaxHeapSize is aligned down in collectorPolicy
-    size_t max_heap =
-      align_size_down(MaxHeapSize,
-                      CardTableRS::ct_max_alignment_constraint());
+    assert(max_heap >= InitialHeapSize, "Error");
+    assert(max_heap >= NewSize, "Error");
 
     if (PrintGCDetails && Verbose) {
       // Too early to use gclog_or_tty
@@ -1197,7 +1189,11 @@ void Arguments::set_cms_and_parnew_gc_flags() {
            " max_heap: " SIZE_FORMAT,
            min_heap_size(), InitialHeapSize, max_heap);
     }
-    if (max_heap > min_new) {
+    size_t min_new = preferred_max_new_size;
+    if (FLAG_IS_CMDLINE(NewSize)) {
+      min_new = NewSize;
+    }
+    if (max_heap > min_new && min_heap_size() > min_new) {
       // Unless explicitly requested otherwise, make young gen
       // at least min_new, and at most preferred_max_new_size.
       if (FLAG_IS_DEFAULT(NewSize)) {
@@ -1205,18 +1201,17 @@ void Arguments::set_cms_and_parnew_gc_flags() {
         FLAG_SET_ERGO(uintx, NewSize, MIN2(preferred_max_new_size, NewSize));
         if (PrintGCDetails && Verbose) {
           // Too early to use gclog_or_tty
-          tty->print_cr("Ergo set NewSize: " SIZE_FORMAT, NewSize);
+          tty->print_cr("CMS ergo set NewSize: " SIZE_FORMAT, NewSize);
         }
       }
       // Unless explicitly requested otherwise, size old gen
-      // so that it's at least 3X of NewSize to begin with;
-      // later NewRatio will decide how it grows; see above.
+      // so it's NewRatio x of NewSize.
       if (FLAG_IS_DEFAULT(OldSize)) {
         if (max_heap > NewSize) {
-          FLAG_SET_ERGO(uintx, OldSize, MIN2(3*NewSize, max_heap - NewSize));
+          FLAG_SET_ERGO(uintx, OldSize, MIN2(NewRatio*NewSize, max_heap - NewSize));
           if (PrintGCDetails && Verbose) {
             // Too early to use gclog_or_tty
-            tty->print_cr("Ergo set OldSize: " SIZE_FORMAT, OldSize);
+            tty->print_cr("CMS ergo set OldSize: " SIZE_FORMAT, OldSize);
           }
         }
       }
@@ -1364,7 +1359,7 @@ void Arguments::set_ergonomics_flags() {
     return;
   }
 
-  if (os::is_server_class_machine() && !force_client_mode ) {
+  if (os::is_server_class_machine()) {
     // If no other collector is requested explicitly,
     // let the VM select the collector based on
     // machine class and automatic selection policy.
@@ -1389,7 +1384,7 @@ void Arguments::set_ergonomics_flags() {
   // by ergonomics.
   if (MaxHeapSize <= max_heap_for_compressed_oops()) {
 #if !defined(COMPILER1) || defined(TIERED)
-    if (FLAG_IS_DEFAULT(UseCompressedOops) && !UseG1GC) {
+    if (FLAG_IS_DEFAULT(UseCompressedOops)) {
       FLAG_SET_ERGO(bool, UseCompressedOops, true);
     }
 #endif
@@ -1416,16 +1411,17 @@ void Arguments::set_ergonomics_flags() {
 
 void Arguments::set_parallel_gc_flags() {
   assert(UseParallelGC || UseParallelOldGC, "Error");
-  // If parallel old was requested, automatically enable parallel scavenge.
-  if (UseParallelOldGC && !UseParallelGC && FLAG_IS_DEFAULT(UseParallelGC)) {
-    FLAG_SET_DEFAULT(UseParallelGC, true);
+  // Enable ParallelOld unless it was explicitly disabled (cmd line or rc file).
+  if (FLAG_IS_DEFAULT(UseParallelOldGC)) {
+    FLAG_SET_DEFAULT(UseParallelOldGC, true);
   }
+  FLAG_SET_DEFAULT(UseParallelGC, true);
 
   // If no heap maximum was requested explicitly, use some reasonable fraction
   // of the physical memory, up to a maximum of 1GB.
   if (UseParallelGC) {
-    FLAG_SET_ERGO(uintx, ParallelGCThreads,
-                  Abstract_VM_Version::parallel_worker_threads());
+    FLAG_SET_DEFAULT(ParallelGCThreads,
+                     Abstract_VM_Version::parallel_worker_threads());
 
     // If InitialSurvivorRatio or MinSurvivorRatio were not specified, but the
     // SurvivorRatio has been set, reset their default values to SurvivorRatio +
@@ -1451,6 +1447,14 @@ void Arguments::set_parallel_gc_flags() {
         FLAG_SET_DEFAULT(PermMarkSweepDeadRatio, 5);
       }
     }
+  }
+  if (UseNUMA) {
+    if (FLAG_IS_DEFAULT(MinHeapDeltaBytes)) {
+      FLAG_SET_DEFAULT(MinHeapDeltaBytes, 64*M);
+    }
+    // For those collectors or operating systems (eg, Windows) that do
+    // not support full UseNUMA, we will map to UseNUMAInterleaving for now
+    UseNUMAInterleaving = true;
   }
 }
 
@@ -1599,17 +1603,8 @@ void Arguments::set_aggressive_opts_flags() {
     sprintf(buffer, "java.lang.Integer.IntegerCache.high=" INTX_FORMAT, AutoBoxCacheMax);
     add_property(buffer);
   }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
-    FLAG_SET_DEFAULT(DoEscapeAnalysis, true);
-  }
   if (AggressiveOpts && FLAG_IS_DEFAULT(BiasedLockingStartupDelay)) {
     FLAG_SET_DEFAULT(BiasedLockingStartupDelay, 500);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeStringConcat)) {
-    FLAG_SET_DEFAULT(OptimizeStringConcat, true);
-  }
-  if (AggressiveOpts && FLAG_IS_DEFAULT(OptimizeFill)) {
-    FLAG_SET_DEFAULT(OptimizeFill, true);
   }
 #endif
 
@@ -1635,11 +1630,18 @@ void Arguments::process_java_compiler_argument(char* arg) {
 
 void Arguments::process_java_launcher_argument(const char* launcher, void* extra_info) {
   _sun_java_launcher = strdup(launcher);
+  if (strcmp("gamma", _sun_java_launcher) == 0) {
+    _created_by_gamma_launcher = true;
+  }
 }
 
 bool Arguments::created_by_java_launcher() {
   assert(_sun_java_launcher != NULL, "property must have value");
   return strcmp(DEFAULT_JAVA_LAUNCHER, _sun_java_launcher) != 0;
+}
+
+bool Arguments::created_by_gamma_launcher() {
+  return _created_by_gamma_launcher;
 }
 
 //===========================================================================================================
@@ -1660,13 +1662,13 @@ bool Arguments::verify_interval(uintx val, uintx min,
 }
 
 bool Arguments::verify_min_value(intx val, intx min, const char* name) {
-  // Returns true if given value is greater than specified min threshold
+  // Returns true if given value is at least specified min threshold
   // false, otherwise.
   if (val >= min ) {
       return true;
   }
   jio_fprintf(defaultStream::error_stream(),
-              "%s of " INTX_FORMAT " is invalid; must be greater than " INTX_FORMAT "\n",
+              "%s of " INTX_FORMAT " is invalid; must be at least " INTX_FORMAT "\n",
               name, val, min);
   return false;
 }
@@ -1697,8 +1699,33 @@ static bool verify_serial_gc_flags() {
           UseParallelGC || UseParallelOldGC));
 }
 
+// check if do gclog rotation
+// +UseGCLogFileRotation is a must,
+// no gc log rotation when log file not supplied or
+// NumberOfGCLogFiles is 0, or GCLogFileSize is 0
+void check_gclog_consistency() {
+  if (UseGCLogFileRotation) {
+    if ((Arguments::gc_log_filename() == NULL) ||
+        (NumberOfGCLogFiles == 0)  ||
+        (GCLogFileSize == 0)) {
+      jio_fprintf(defaultStream::output_stream(),
+                  "To enable GC log rotation, use -Xloggc:<filename> -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=<num_of_files> -XX:GCLogFileSize=<num_of_size>\n"
+                  "where num_of_file > 0 and num_of_size > 0\n"
+                  "GC log rotation is turned off\n");
+      UseGCLogFileRotation = false;
+    }
+  }
+
+  if (UseGCLogFileRotation && GCLogFileSize < 8*K) {
+        FLAG_SET_CMDLINE(uintx, GCLogFileSize, 8*K);
+        jio_fprintf(defaultStream::output_stream(),
+                    "GCLogFileSize changed to minimum 8K\n");
+  }
+}
+
 // Check consistency of GC selection
 bool Arguments::check_gc_consistency() {
+  check_gclog_consistency();
   bool status = true;
   // Ensure that the user has not selected conflicting sets
   // of collectors. [Note: this check is merely a user convenience;
@@ -1893,10 +1920,18 @@ bool Arguments::check_vm_args_consistency() {
     status = false;
   }
 
+  status = status && verify_min_value(ParGCArrayScanChunk, 1, "ParGCArrayScanChunk");
+
+#ifndef SERIALGC
   if (UseG1GC) {
     status = status && verify_percentage(InitiatingHeapOccupancyPercent,
                                          "InitiatingHeapOccupancyPercent");
+    status = status && verify_min_value(G1RefProcDrainInterval, 1,
+                                        "G1RefProcDrainInterval");
+    status = status && verify_min_value((intx)G1ConcMarkStepDurationMillis, 1,
+                                        "G1ConcMarkStepDurationMillis");
   }
+#endif
 
   status = status && verify_interval(RefDiscoveryPolicy,
                                      ReferenceProcessor::DiscoveryPolicyMin,
@@ -2000,6 +2035,9 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs* args) {
   Arguments::_UseOnStackReplacement    = UseOnStackReplacement;
   Arguments::_ClipInlining             = ClipInlining;
   Arguments::_BackgroundCompilation    = BackgroundCompilation;
+
+  // Setup flags for mixed which is the default
+  set_mode_flags(_mixed);
 
   // Parse JAVA_TOOL_OPTIONS environment variable (if present)
   jint result = parse_java_tool_options_environment_variable(&scp, &scp_assembly_required);
@@ -2308,7 +2346,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
 #ifndef PRODUCT
     // -Xprintflags
     } else if (match_option(option, "-Xprintflags", &tail)) {
-      CommandLineFlags::printFlags();
+      CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
 #endif
     // -D
@@ -2390,7 +2428,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       _gc_log_filename = strdup(tail);
       FLAG_SET_CMDLINE(bool, PrintGC, true);
       FLAG_SET_CMDLINE(bool, PrintGCTimeStamps, true);
-      FLAG_SET_CMDLINE(bool, TraceClassUnloading, true);
 
     // JNI hooks
     } else if (match_option(option, "-Xcheck", &tail)) {
@@ -2489,15 +2526,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       // was arrived at by experimenting with specjbb.
       FLAG_SET_CMDLINE(uintx, OldPLABSize, 8*K);  // Note: this is in words
 
-      // CompilationPolicyChoice=0 causes the server compiler to adopt
-      // a more conservative which-method-do-I-compile policy when one
-      // of the counters maintained by the interpreter trips.  The
-      // result is reduced startup time and improved specjbb and
-      // alacrity performance.  Zero is the default, but we set it
-      // explicitly here in case the default changes.
-      // See runtime/compilationPolicy.*.
-      FLAG_SET_CMDLINE(intx, CompilationPolicyChoice, 0);
-
       // Enable parallel GC and adaptive generation sizing
       FLAG_SET_CMDLINE(bool, UseParallelGC, true);
       FLAG_SET_DEFAULT(ParallelGCThreads,
@@ -2582,16 +2610,16 @@ SOLARIS_ONLY(
       FLAG_SET_CMDLINE(bool, DisplayVMOutputToStderr, false);
       FLAG_SET_CMDLINE(bool, DisplayVMOutputToStdout, true);
     } else if (match_option(option, "-XX:+ExtendedDTraceProbes", &tail)) {
-#ifdef SOLARIS
+#if defined(DTRACE_ENABLED)
       FLAG_SET_CMDLINE(bool, ExtendedDTraceProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceMethodProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceAllocProbes, true);
       FLAG_SET_CMDLINE(bool, DTraceMonitorProbes, true);
-#else // ndef SOLARIS
+#else // defined(DTRACE_ENABLED)
       jio_fprintf(defaultStream::error_stream(),
-                  "ExtendedDTraceProbes flag is only applicable on Solaris\n");
+                  "ExtendedDTraceProbes flag is not applicable for this configuration\n");
       return JNI_EINVAL;
-#endif // ndef SOLARIS
+#endif // defined(DTRACE_ENABLED)
 #ifdef ASSERT
     } else if (match_option(option, "-XX:+FullGCALot", &tail)) {
       FLAG_SET_CMDLINE(bool, FullGCALot, true);
@@ -2679,6 +2707,7 @@ SOLARIS_ONLY(
       return JNI_ERR;
     }
   }
+
   // Change the default value for flags  which have different default values
   // when working with older JDKs.
   if (JDK_Version::current().compare_major(6) <= 0 &&
@@ -2732,10 +2761,6 @@ jint Arguments::finalize_vm_init_args(SysClassPath* scp_p, bool scp_assembly_req
 #else
   if (!FLAG_IS_DEFAULT(OptoLoopAlignment) && FLAG_IS_DEFAULT(MaxLoopPad)) {
     FLAG_SET_DEFAULT(MaxLoopPad, OptoLoopAlignment-1);
-  }
-  // Temporary disable bulk zeroing reduction with G1. See CR 6627983.
-  if (UseG1GC) {
-    FLAG_SET_DEFAULT(ReduceBulkZeroing, false);
   }
 #endif
 
@@ -2851,22 +2876,38 @@ jint Arguments::parse_options_environment_variable(const char* name, SysClassPat
 }
 
 void Arguments::set_shared_spaces_flags() {
+  const bool must_share = DumpSharedSpaces || RequireSharedSpaces;
+  const bool might_share = must_share || UseSharedSpaces;
+
+  // The string table is part of the shared archive so the size must match.
+  if (!FLAG_IS_DEFAULT(StringTableSize)) {
+    // Disable sharing.
+    if (must_share) {
+      warning("disabling shared archive %s because of non-default "
+              "StringTableSize", DumpSharedSpaces ? "creation" : "use");
+    }
+    if (might_share) {
+      FLAG_SET_DEFAULT(DumpSharedSpaces, false);
+      FLAG_SET_DEFAULT(RequireSharedSpaces, false);
+      FLAG_SET_DEFAULT(UseSharedSpaces, false);
+    }
+    return;
+  }
+
   // Check whether class data sharing settings conflict with GC, compressed oops
   // or page size, and fix them up.  Explicit sharing options override other
   // settings.
   const bool cannot_share = UseConcMarkSweepGC || CMSIncrementalMode ||
     UseG1GC || UseParNewGC || UseParallelGC || UseParallelOldGC ||
     UseCompressedOops || UseLargePages && FLAG_IS_CMDLINE(UseLargePages);
-  const bool must_share = DumpSharedSpaces || RequireSharedSpaces;
-  const bool might_share = must_share || UseSharedSpaces;
   if (cannot_share) {
     if (must_share) {
-      warning("selecting serial gc and disabling large pages %s"
-              "because of %s", "" LP64_ONLY("and compressed oops "),
-              DumpSharedSpaces ? "-Xshare:dump" : "-Xshare:on");
-      force_serial_gc();
-      FLAG_SET_CMDLINE(bool, UseLargePages, false);
-      LP64_ONLY(FLAG_SET_CMDLINE(bool, UseCompressedOops, false));
+        warning("selecting serial gc and disabling large pages %s"
+                "because of %s", "" LP64_ONLY("and compressed oops "),
+                DumpSharedSpaces ? "-Xshare:dump" : "-Xshare:on");
+        force_serial_gc();
+        FLAG_SET_CMDLINE(bool, UseLargePages, false);
+        LP64_ONLY(FLAG_SET_CMDLINE(bool, UseCompressedOops, false));
     } else {
       if (UseSharedSpaces && Verbose) {
         warning("turning off use of shared archive because of "
@@ -2881,6 +2922,18 @@ void Arguments::set_shared_spaces_flags() {
   }
 }
 
+// Disable options not supported in this release, with a warning if they
+// were explicitly requested on the command-line
+#define UNSUPPORTED_OPTION(opt, description)                    \
+do {                                                            \
+  if (opt) {                                                    \
+    if (FLAG_IS_CMDLINE(opt)) {                                 \
+      warning(description " is disabled in this release.");     \
+    }                                                           \
+    FLAG_SET_DEFAULT(opt, false);                               \
+  }                                                             \
+} while(0)
+
 // Parse entry point called from JNI_CreateJavaVM
 
 jint Arguments::parse(const JavaVMInitArgs* args) {
@@ -2889,11 +2942,6 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   // Construct the path to the archive
   char jvm_path[JVM_MAXPATHLEN];
   os::jvm_path(jvm_path, sizeof(jvm_path));
-#ifdef TIERED
-  if (strstr(jvm_path, "client") != NULL) {
-    force_client_mode = true;
-  }
-#endif // TIERED
   char *end = strrchr(jvm_path, *os::file_separator());
   if (end != NULL) *end = '\0';
   char *shared_archive_path = NEW_C_HEAP_ARRAY(char, strlen(jvm_path) +
@@ -2910,7 +2958,10 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   const char* tail;
 
   // If flag "-XX:Flags=flags-file" is used it will be the first option to be processed.
+  const char* hotspotrc = ".hotspotrc";
   bool settings_file_specified = false;
+  bool needs_hotspotrc_warning = false;
+
   const char* flags_file;
   int index;
   for (index = 0; index < args->nOptions; index++) {
@@ -2932,13 +2983,13 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
       IgnoreUnrecognizedVMOptions = false;
     }
     if (match_option(option, "-XX:+PrintFlagsInitial", &tail)) {
-      CommandLineFlags::printFlags();
+      CommandLineFlags::printFlags(tty, false);
       vm_exit(0);
     }
 
 #ifndef PRODUCT
     if (match_option(option, "-XX:+PrintFlagsWithComments", &tail)) {
-      CommandLineFlags::printFlags(true);
+      CommandLineFlags::printFlags(tty, true);
       vm_exit(0);
     }
 #endif
@@ -2954,16 +3005,19 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     if (!process_settings_file(flags_file, true, args->ignoreUnrecognized)) {
       return JNI_EINVAL;
     }
-  }
-
+  } else {
 #ifdef ASSERT
-  // Parse default .hotspotrc settings file
-  if (!settings_file_specified) {
+    // Parse default .hotspotrc settings file
     if (!process_settings_file(".hotspotrc", false, args->ignoreUnrecognized)) {
       return JNI_EINVAL;
     }
-  }
+#else
+    struct stat buf;
+    if (os::stat(hotspotrc, &buf) == 0) {
+      needs_hotspotrc_warning = true;
+    }
 #endif
+  }
 
   if (PrintVMOptions) {
     for (index = 0; index < args->nOptions; index++) {
@@ -2980,6 +3034,18 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     return result;
   }
 
+  // Delay warning until here so that we've had a chance to process
+  // the -XX:-PrintWarnings flag
+  if (needs_hotspotrc_warning) {
+    warning("%s file is present but has been ignored.  "
+            "Run with -XX:Flags=%s to load the file.",
+            hotspotrc, hotspotrc);
+  }
+
+#if (defined JAVASE_EMBEDDED || defined ARM)
+  UNSUPPORTED_OPTION(UseG1GC, "G1 GC");
+#endif
+
 #ifndef PRODUCT
   if (TraceBytecodesAt != 0) {
     TraceBytecodes = true;
@@ -2992,33 +3058,37 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
 #endif // PRODUCT
 
-  if (EnableInvokeDynamic && !EnableMethodHandles) {
-    if (!FLAG_IS_DEFAULT(EnableMethodHandles)) {
-      warning("forcing EnableMethodHandles true because EnableInvokeDynamic is true");
+  // Transitional
+  if (EnableMethodHandles || AnonymousClasses) {
+    if (!EnableInvokeDynamic && !FLAG_IS_DEFAULT(EnableInvokeDynamic)) {
+      warning("EnableMethodHandles and AnonymousClasses are obsolete.  Keeping EnableInvokeDynamic disabled.");
+    } else {
+      EnableInvokeDynamic = true;
     }
-    EnableMethodHandles = true;
   }
-  if (EnableMethodHandles && !AnonymousClasses) {
-    if (!FLAG_IS_DEFAULT(AnonymousClasses)) {
-      warning("forcing AnonymousClasses true because EnableMethodHandles is true");
+
+  // JSR 292 is not supported before 1.7
+  if (!JDK_Version::is_gte_jdk17x_version()) {
+    if (EnableInvokeDynamic) {
+      if (!FLAG_IS_DEFAULT(EnableInvokeDynamic)) {
+        warning("JSR 292 is not supported before 1.7.  Disabling support.");
+      }
+      EnableInvokeDynamic = false;
     }
-    AnonymousClasses = true;
   }
-  if ((EnableMethodHandles || AnonymousClasses) && ScavengeRootsInCode == 0) {
+
+  if (EnableInvokeDynamic && ScavengeRootsInCode == 0) {
     if (!FLAG_IS_DEFAULT(ScavengeRootsInCode)) {
-      warning("forcing ScavengeRootsInCode non-zero because EnableMethodHandles or AnonymousClasses is true");
+      warning("forcing ScavengeRootsInCode non-zero because EnableInvokeDynamic is true");
     }
     ScavengeRootsInCode = 1;
   }
-#ifdef COMPILER2
-  if (EnableInvokeDynamic && DoEscapeAnalysis) {
-    // TODO: We need to find rules for invokedynamic and EA.  For now,
-    // simply disable EA by default.
-    if (FLAG_IS_DEFAULT(DoEscapeAnalysis)) {
-      DoEscapeAnalysis = false;
+  if (!JavaObjectsInPerm && ScavengeRootsInCode == 0) {
+    if (!FLAG_IS_DEFAULT(ScavengeRootsInCode)) {
+      warning("forcing ScavengeRootsInCode non-zero because JavaObjectsInPerm is false");
     }
+    ScavengeRootsInCode = 1;
   }
-#endif
 
   if (PrintGCDetails) {
     // Turn on -verbose:gc options as well
@@ -3056,22 +3126,17 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   }
 
 #ifndef KERNEL
-  if (UseConcMarkSweepGC) {
-    // Set flags for CMS and ParNew.  Check UseConcMarkSweep first
-    // to ensure that when both UseConcMarkSweepGC and UseParNewGC
-    // are true, we don't call set_parnew_gc_flags() as well.
+  // Set heap size based on available physical memory
+  set_heap_size();
+  // Set per-collector flags
+  if (UseParallelGC || UseParallelOldGC) {
+    set_parallel_gc_flags();
+  } else if (UseConcMarkSweepGC) { // should be done before ParNew check below
     set_cms_and_parnew_gc_flags();
-  } else {
-    // Set heap size based on available physical memory
-    set_heap_size();
-    // Set per-collector flags
-    if (UseParallelGC || UseParallelOldGC) {
-      set_parallel_gc_flags();
-    } else if (UseParNewGC) {
-      set_parnew_gc_flags();
-    } else if (UseG1GC) {
-      set_g1_gc_flags();
-    }
+  } else if (UseParNewGC) {  // skipped if CMS is set above
+    set_parnew_gc_flags();
+  } else if (UseG1GC) {
+    set_g1_gc_flags();
   }
 #endif // KERNEL
 
@@ -3085,6 +3150,23 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
   // Set flags if Aggressive optimization flags (-XX:+AggressiveOpts) enabled.
   set_aggressive_opts_flags();
 
+  // Turn off biased locking for locking debug mode flags,
+  // which are subtlely different from each other but neither works with
+  // biased locking.
+  if (UseHeavyMonitors
+#ifdef COMPILER1
+      || !UseFastLocking
+#endif // COMPILER1
+    ) {
+    if (!FLAG_IS_DEFAULT(UseBiasedLocking) && UseBiasedLocking) {
+      // flag set to true on command line; warn the user that they
+      // can't enable biased locking here
+      warning("Biased Locking is not supported with locking debug flags"
+              "; ignoring UseBiasedLocking flag." );
+    }
+    UseBiasedLocking = false;
+  }
+
 #ifdef CC_INTERP
   // Clear flags not supported by the C++ interpreter
   FLAG_SET_DEFAULT(ProfileInterpreter, false);
@@ -3095,6 +3177,9 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 #ifdef COMPILER2
   if (!UseBiasedLocking || EmitSync != 0) {
     UseOptoBiasInlining = false;
+  }
+  if (!EliminateLocks) {
+    EliminateNestedLocks = false;
   }
 #endif
 
@@ -3113,7 +3198,7 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
 #endif
 
   if (PrintCommandLineFlags) {
-    CommandLineFlags::printSetFlags();
+    CommandLineFlags::printSetFlags(tty);
   }
 
   // Apply CPU specific policy for the BiasedLocking
@@ -3121,6 +3206,16 @@ jint Arguments::parse(const JavaVMInitArgs* args) {
     if (!VM_Version::use_biased_locking() &&
         !(FLAG_IS_CMDLINE(UseBiasedLocking))) {
       UseBiasedLocking = false;
+    }
+  }
+
+  // set PauseAtExit if the gamma launcher was used and a debugger is attached
+  // but only if not already set on the commandline
+  if (Arguments::created_by_gamma_launcher() && os::is_debugger_attached()) {
+    bool set = false;
+    CommandLineFlags::wasSetOnCmdline("PauseAtExit", &set);
+    if (!set) {
+      FLAG_SET_DEFAULT(PauseAtExit, true);
     }
   }
 

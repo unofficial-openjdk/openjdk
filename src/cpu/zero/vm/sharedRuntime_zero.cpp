@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
- * Copyright 2007, 2008, 2009, 2010 Red Hat, Inc.
+ * Copyright 2007, 2008, 2009, 2010, 2011 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,14 +46,6 @@
 #include "shark/sharkCompiler.hpp"
 #endif
 
-DeoptimizationBlob *SharedRuntime::_deopt_blob;
-SafepointBlob      *SharedRuntime::_polling_page_safepoint_handler_blob;
-SafepointBlob      *SharedRuntime::_polling_page_return_handler_blob;
-RuntimeStub        *SharedRuntime::_wrong_method_blob;
-RuntimeStub        *SharedRuntime::_ic_miss_blob;
-RuntimeStub        *SharedRuntime::_resolve_opt_virtual_call_blob;
-RuntimeStub        *SharedRuntime::_resolve_virtual_call_blob;
-RuntimeStub        *SharedRuntime::_resolve_static_call_blob;
 
 int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
                                            VMRegPair *regs,
@@ -78,15 +70,17 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(
 
 nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                                                 methodHandle method,
-                                                int total_in_args,
-                                                int comp_args_on_stack,
-                                                BasicType *in_sig_bt,
-                                                VMRegPair *in_regs,
+                                                int compile_id,
+                                                int total_args_passed,
+                                                int max_arg,
+                                                BasicType *sig_bt,
+                                                VMRegPair *regs,
                                                 BasicType ret_type) {
 #ifdef SHARK
   return SharkCompiler::compiler()->generate_native_wrapper(masm,
                                                             method,
-                                                            in_sig_bt,
+                                                            compile_id,
+                                                            sig_bt,
                                                             ret_type);
 #else
   ShouldNotCallThis();
@@ -112,22 +106,22 @@ static SafepointBlob* generate_empty_safepoint_blob() {
   return SafepointBlob::create(&buffer, NULL, 0);
 }
 
-void SharedRuntime::generate_stubs() {
-  _wrong_method_blob =
-    generate_empty_runtime_stub("wrong_method_stub");
-  _ic_miss_blob =
-    generate_empty_runtime_stub("ic_miss_stub");
-  _resolve_opt_virtual_call_blob =
-    generate_empty_runtime_stub("resolve_opt_virtual_call");
-  _resolve_virtual_call_blob =
-    generate_empty_runtime_stub("resolve_virtual_call");
-  _resolve_static_call_blob =
-    generate_empty_runtime_stub("resolve_static_call");
+static DeoptimizationBlob* generate_empty_deopt_blob() {
+  CodeBuffer buffer("handler_blob", 0, 0);
+  return DeoptimizationBlob::create(&buffer, NULL, 0, 0, 0, 0);
+}
 
-  _polling_page_safepoint_handler_blob =
-    generate_empty_safepoint_blob();
-  _polling_page_return_handler_blob =
-    generate_empty_safepoint_blob();
+
+void SharedRuntime::generate_deopt_blob() {
+  _deopt_blob = generate_empty_deopt_blob();
+}
+
+SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, bool cause_return) {
+  return generate_empty_safepoint_blob();
+}
+
+RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const char* name) {
+  return generate_empty_runtime_stub("resolve_blob");
 }
 
 int SharedRuntime::c_calling_convention(const BasicType *sig_bt,

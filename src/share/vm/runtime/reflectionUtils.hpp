@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,17 +100,15 @@ class MethodStream : public KlassStream {
 // Usage:
 //
 //    for (FieldStream st(k, false, false); !st.eos(); st.next()) {
-//      symbolOop field_name = st.name();
+//      Symbol* field_name = st.name();
 //      ...
 //    }
 
 
 class FieldStream : public KlassStream {
  private:
-  int length() const                { return fields()->length(); }
-  constantPoolOop constants() const { return _klass->constants(); }
- protected:
-  typeArrayOop fields() const       { return _klass->fields(); }
+  int length() const                { return _klass->java_fields_count(); }
+
  public:
   FieldStream(instanceKlassHandle klass, bool local_only, bool classes_only)
     : KlassStream(klass, local_only, classes_only) {
@@ -118,26 +116,23 @@ class FieldStream : public KlassStream {
     next();
   }
 
-  void next() { _index -= instanceKlass::next_offset; }
+  void next() { _index -= 1; }
 
   // Accessors for current field
   AccessFlags access_flags() const {
     AccessFlags flags;
-    flags.set_flags(fields()->ushort_at(index() + instanceKlass::access_flags_offset));
+    flags.set_flags(_klass->field_access_flags(_index));
     return flags;
   }
-  symbolOop name() const {
-    int name_index = fields()->ushort_at(index() + instanceKlass::name_index_offset);
-    return constants()->symbol_at(name_index);
+  Symbol* name() const {
+    return _klass->field_name(_index);
   }
-  symbolOop signature() const {
-    int signature_index = fields()->ushort_at(index() +
-                                       instanceKlass::signature_index_offset);
-    return constants()->symbol_at(signature_index);
+  Symbol* signature() const {
+    return _klass->field_signature(_index);
   }
   // missing: initval()
   int offset() const {
-    return _klass->offset_from_fields( index() );
+    return _klass->field_offset( index() );
   }
 };
 
@@ -197,7 +192,7 @@ class FilteredFieldsMap : AllStatic {
 // Usage:
 //
 //    for (FilteredFieldStream st(k, false, false); !st.eos(); st.next()) {
-//      symbolOop field_name = st.name();
+//      Symbol* field_name = st.name();
 //      ...
 //    }
 
@@ -213,10 +208,10 @@ class FilteredFieldStream : public FieldStream {
   }
   int field_count();
   void next() {
-    _index -= instanceKlass::next_offset;
+    _index -= 1;
     if (has_filtered_field()) {
       while (_index >=0 && FilteredFieldsMap::is_filtered_field((klassOop)_klass(), offset())) {
-        _index -= instanceKlass::next_offset;
+        _index -= 1;
       }
     }
   }

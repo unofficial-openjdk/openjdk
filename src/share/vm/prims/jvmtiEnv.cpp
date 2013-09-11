@@ -68,6 +68,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 
 
 
@@ -264,7 +267,10 @@ JvmtiEnv::RetransformClasses(jint class_count, const jclass* classes) {
 
     instanceKlassHandle ikh(current_thread, k_oop);
     if (ikh->get_cached_class_file_bytes() == NULL) {
-      // not cached, we need to reconstitute the class file from VM representation
+      // Not cached, we need to reconstitute the class file from the
+      // VM representation. We don't attach the reconstituted class
+      // bytes to the instanceKlass here because they have not been
+      // validated and we're not at a safepoint.
       constantPoolHandle  constants(current_thread, ikh->constants());
       ObjectLocker ol(constants, current_thread);    // lock constant pool while we query it
 
@@ -525,7 +531,7 @@ JvmtiEnv::AddToSystemClassLoaderSearch(const char* segment) {
     ObjectLocker ol(loader, THREAD);
 
     // need the path as java.lang.String
-    Handle path = java_lang_String::create_from_str(segment, THREAD);
+    Handle path = java_lang_String::create_from_platform_dependent_str(segment, THREAD);
     if (HAS_PENDING_EXCEPTION) {
       CLEAR_PENDING_EXCEPTION;
       return JVMTI_ERROR_INTERNAL;
@@ -541,12 +547,12 @@ JvmtiEnv::AddToSystemClassLoaderSearch(const char* segment) {
       JavaCalls::call_special(&res,
                               loader,
                               loader_ik,
-                              vmSymbolHandles::appendToClassPathForInstrumentation_name(),
-                              vmSymbolHandles::appendToClassPathForInstrumentation_signature(),
+                              vmSymbols::appendToClassPathForInstrumentation_name(),
+                              vmSymbols::appendToClassPathForInstrumentation_signature(),
                               path,
                               THREAD);
       if (HAS_PENDING_EXCEPTION) {
-        symbolOop ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
+        Symbol* ex_name = PENDING_EXCEPTION->klass()->klass_part()->name();
         CLEAR_PENDING_EXCEPTION;
 
         if (ex_name == vmSymbols::java_lang_NoSuchMethodError()) {
@@ -2044,7 +2050,6 @@ JvmtiEnv::SetFieldAccessWatch(fieldDescriptor* fdesc_ptr) {
   // make sure we haven't set this watch before
   if (fdesc_ptr->is_field_access_watched()) return JVMTI_ERROR_DUPLICATE;
   fdesc_ptr->set_is_field_access_watched(true);
-  update_klass_field_access_flag(fdesc_ptr);
 
   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_ACCESS, true);
 
@@ -2057,7 +2062,6 @@ JvmtiEnv::ClearFieldAccessWatch(fieldDescriptor* fdesc_ptr) {
   // make sure we have a watch to clear
   if (!fdesc_ptr->is_field_access_watched()) return JVMTI_ERROR_NOT_FOUND;
   fdesc_ptr->set_is_field_access_watched(false);
-  update_klass_field_access_flag(fdesc_ptr);
 
   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_ACCESS, false);
 
@@ -2070,7 +2074,6 @@ JvmtiEnv::SetFieldModificationWatch(fieldDescriptor* fdesc_ptr) {
   // make sure we haven't set this watch before
   if (fdesc_ptr->is_field_modification_watched()) return JVMTI_ERROR_DUPLICATE;
   fdesc_ptr->set_is_field_modification_watched(true);
-  update_klass_field_access_flag(fdesc_ptr);
 
   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_MODIFICATION, true);
 
@@ -2083,7 +2086,6 @@ JvmtiEnv::ClearFieldModificationWatch(fieldDescriptor* fdesc_ptr) {
    // make sure we have a watch to clear
   if (!fdesc_ptr->is_field_modification_watched()) return JVMTI_ERROR_NOT_FOUND;
   fdesc_ptr->set_is_field_modification_watched(false);
-  update_klass_field_access_flag(fdesc_ptr);
 
   JvmtiEventController::change_field_watch(JVMTI_EVENT_FIELD_MODIFICATION, false);
 
@@ -2124,7 +2126,7 @@ JvmtiEnv::GetClassSignature(oop k_mirror, char** signature_ptr, char** generic_p
   if (generic_ptr != NULL) {
     *generic_ptr = NULL;
     if (!isPrimitive && Klass::cast(k)->oop_is_instance()) {
-      symbolOop soo = instanceKlass::cast(k)->generic_signature();
+      Symbol* soo = instanceKlass::cast(k)->generic_signature();
       if (soo != NULL) {
         const char *gen_sig = soo->as_C_string();
         if (gen_sig != NULL) {
@@ -2176,7 +2178,7 @@ JvmtiEnv::GetSourceFileName(oop k_mirror, char** source_name_ptr) {
     return JVMTI_ERROR_ABSENT_INFORMATION;
   }
 
-  symbolOop sfnOop = instanceKlass::cast(k_klass)->source_file_name();
+  Symbol* sfnOop = instanceKlass::cast(k_klass)->source_file_name();
   NULL_CHECK(sfnOop, JVMTI_ERROR_ABSENT_INFORMATION);
   {
     JavaThread* current_thread  = JavaThread::current();
@@ -2539,7 +2541,7 @@ JvmtiEnv::GetSourceDebugExtension(oop k_mirror, char** source_debug_extension_pt
     if (!Klass::cast(k)->oop_is_instance()) {
       return JVMTI_ERROR_ABSENT_INFORMATION;
     }
-    symbolOop sdeOop = instanceKlass::cast(k)->source_debug_extension();
+    Symbol* sdeOop = instanceKlass::cast(k)->source_debug_extension();
     NULL_CHECK(sdeOop, JVMTI_ERROR_ABSENT_INFORMATION);
 
     {
@@ -2619,7 +2621,7 @@ JvmtiEnv::GetFieldName(fieldDescriptor* fdesc_ptr, char** name_ptr, char** signa
   }
   if (generic_ptr != NULL) {
     *generic_ptr = NULL;
-    symbolOop soop = fdesc_ptr->generic_signature();
+    Symbol* soop = fdesc_ptr->generic_signature();
     if (soop != NULL) {
       const char* gen_sig = soop->as_C_string();
       if (gen_sig != NULL) {
@@ -2695,7 +2697,7 @@ JvmtiEnv::GetMethodName(methodOop method_oop, char** name_ptr, char** signature_
 
   if (generic_ptr != NULL) {
     *generic_ptr = NULL;
-    symbolOop soop = method_oop->generic_signature();
+    Symbol* soop = method_oop->generic_signature();
     if (soop != NULL) {
       const char* gen_sig = soop->as_C_string();
       if (gen_sig != NULL) {

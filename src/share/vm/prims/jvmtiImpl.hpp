@@ -433,6 +433,106 @@ public:
 
 #endif // !JVMTI_KERNEL
 
+/**
+ * When a thread (such as the compiler thread or VM thread) cannot post a
+ * JVMTI event itself because the event needs to be posted from a Java
+ * thread, then it can defer the event to the Service thread for posting.
+ * The information needed to post the event is encapsulated into this class
+ * and then enqueued onto the JvmtiDeferredEventQueue, where the Service
+ * thread will pick it up and post it.
+ *
+ * This is currently only used for posting compiled-method-load and unload
+ * events, which we don't want posted from the compiler thread.
+ */
+class JvmtiDeferredEvent VALUE_OBJ_CLASS_SPEC {
+  friend class JvmtiDeferredEventQueue;
+ private:
+  typedef enum {
+    TYPE_NONE,
+    TYPE_COMPILED_METHOD_LOAD,
+    TYPE_COMPILED_METHOD_UNLOAD,
+    TYPE_DYNAMIC_CODE_GENERATED
+  } Type;
+
+  Type _type;
+  union {
+    nmethod* compiled_method_load;
+    struct {
+      nmethod* nm;
+      jmethodID method_id;
+      const void* code_begin;
+    } compiled_method_unload;
+    struct {
+      const char* name;
+      const void* code_begin;
+      const void* code_end;
+    } dynamic_code_generated;
+  } _event_data;
+
+  JvmtiDeferredEvent(Type t) : _type(t) {}
+
+ public:
+
+  JvmtiDeferredEvent() : _type(TYPE_NONE) {}
+
+  // Factory methods
+  static JvmtiDeferredEvent compiled_method_load_event(nmethod* nm)
+    KERNEL_RETURN_(JvmtiDeferredEvent());
+  static JvmtiDeferredEvent compiled_method_unload_event(nmethod* nm,
+      jmethodID id, const void* code) KERNEL_RETURN_(JvmtiDeferredEvent());
+  static JvmtiDeferredEvent dynamic_code_generated_event(
+      const char* name, const void* begin, const void* end)
+          KERNEL_RETURN_(JvmtiDeferredEvent());
+
+  // Actually posts the event.
+  void post() KERNEL_RETURN;
+};
+
+/**
+ * Events enqueued on this queue wake up the Service thread which dequeues
+ * and posts the events.  The Service_lock is required to be held
+ * when operating on the queue (except for the "pending" events).
+ */
+class JvmtiDeferredEventQueue : AllStatic {
+  friend class JvmtiDeferredEvent;
+ private:
+  class QueueNode : public CHeapObj {
+   private:
+    JvmtiDeferredEvent _event;
+    QueueNode* _next;
+
+   public:
+    QueueNode(const JvmtiDeferredEvent& event)
+      : _event(event), _next(NULL) {}
+
+    const JvmtiDeferredEvent& event() const { return _event; }
+    QueueNode* next() const { return _next; }
+
+    void set_next(QueueNode* next) { _next = next; }
+  };
+
+  static QueueNode* _queue_head;             // Hold Service_lock to access
+  static QueueNode* _queue_tail;             // Hold Service_lock to access
+  static volatile QueueNode* _pending_list;  // Uses CAS for read/update
+
+  // Transfers events from the _pending_list to the _queue.
+  static void process_pending_events() KERNEL_RETURN;
+
+ public:
+  // Must be holding Service_lock when calling these
+  static bool has_events() KERNEL_RETURN_(false);
+  static void enqueue(const JvmtiDeferredEvent& event) KERNEL_RETURN;
+  static JvmtiDeferredEvent dequeue() KERNEL_RETURN_(JvmtiDeferredEvent());
+
+  // Used to enqueue events without using a lock, for times (such as during
+  // safepoint) when we can't or don't want to lock the Service_lock.
+  //
+  // Events will be held off to the side until there's a call to
+  // dequeue(), enqueue(), or process_pending_events() (all of which require
+  // the holding of the Service_lock), and will be enqueued at that time.
+  static void add_pending_event(const JvmtiDeferredEvent&) KERNEL_RETURN;
+};
+
 // Utility macro that checks for NULL pointers:
 #define NULL_CHECK(X, Y) if ((X) == NULL) { return (Y); }
 

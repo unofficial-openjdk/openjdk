@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,6 @@
  * questions.
  *
  */
-
-# define __STDC_FORMAT_MACROS
 
 // no precompiled headers
 #include "classfile/classLoader.hpp"
@@ -76,6 +74,14 @@
 # include "assembler_zero.inline.hpp"
 # include "nativeInst_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "assembler_arm.inline.hpp"
+# include "nativeInst_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "assembler_ppc.inline.hpp"
+# include "nativeInst_ppc.hpp"
+#endif
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #endif
@@ -121,8 +127,8 @@
 
 // for timer info max values which include all bits
 #define ALL_64_BITS CONST64(0xFFFFFFFFFFFFFFFF)
-#define SEC_IN_NANOSECS  1000000000LL
 
+#define LARGEPAGES_BIT (1 << 6)
 ////////////////////////////////////////////////////////////////////////////////
 // global variables
 julong os::Linux::_physical_memory = 0;
@@ -160,7 +166,35 @@ sigset_t SR_sigset;
 /* Used to protect dlsym() calls */
 static pthread_mutex_t dl_mutex;
 
-////////////////////////////////////////////////////////////////////////////////
+#ifdef JAVASE_EMBEDDED
+class MemNotifyThread: public Thread {
+  friend class VMStructs;
+ public:
+  virtual void run();
+
+ private:
+  static MemNotifyThread* _memnotify_thread;
+  int _fd;
+
+ public:
+
+  // Constructor
+  MemNotifyThread(int fd);
+
+  // Tester
+  bool is_memnotify_thread() const { return true; }
+
+  // Printing
+  char* name() const { return (char*)"Linux MemNotify Thread"; }
+
+  // Returns the single instance of the MemNotifyThread
+  static MemNotifyThread* memnotify_thread() { return _memnotify_thread; }
+
+  // Create and start the single instance of MemNotifyThread
+  static void start();
+};
+#endif // JAVASE_EMBEDDED
+
 // utility functions
 
 static int SR_initialize();
@@ -1698,7 +1732,7 @@ bool os::dll_address_to_function_name(address addr, char *buf,
     return true;
   } else if (dlinfo.dli_fname != NULL && dlinfo.dli_fbase != 0) {
     if (Decoder::decode((address)(addr - (address)dlinfo.dli_fbase),
-       dlinfo.dli_fname, buf, buflen, offset) == Decoder::no_error) {
+        buf, buflen, offset, dlinfo.dli_fname)) {
        return true;
     }
   }
@@ -1986,15 +2020,43 @@ void os::print_dll_info(outputStream *st) {
    }
 }
 
+void os::print_os_info_brief(outputStream* st) {
+  os::Linux::print_distro_info(st);
+
+  os::Posix::print_uname_info(st);
+
+  os::Linux::print_libversion_info(st);
+
+}
 
 void os::print_os_info(outputStream* st) {
   st->print("OS:");
 
-  // Try to identify popular distros.
-  // Most Linux distributions have /etc/XXX-release file, which contains
-  // the OS version string. Some have more than one /etc/XXX-release file
-  // (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
-  // so the order is important.
+  os::Linux::print_distro_info(st);
+
+  os::Posix::print_uname_info(st);
+
+  // Print warning if unsafe chroot environment detected
+  if (unsafe_chroot_detected) {
+    st->print("WARNING!! ");
+    st->print_cr(unstable_chroot_error);
+  }
+
+  os::Linux::print_libversion_info(st);
+
+  os::Posix::print_rlimit_info(st);
+
+  os::Posix::print_load_average(st);
+
+  os::Linux::print_full_memory_info(st);
+}
+
+// Try to identify popular distros.
+// Most Linux distributions have /etc/XXX-release file, which contains
+// the OS version string. Some have more than one /etc/XXX-release file
+// (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
+// so the order is important.
+void os::Linux::print_distro_info(outputStream* st) {
   if (!_print_ascii_file("/etc/mandrake-release", st) &&
       !_print_ascii_file("/etc/sun-release", st) &&
       !_print_ascii_file("/etc/redhat-release", st) &&
@@ -2007,23 +2069,9 @@ void os::print_os_info(outputStream* st) {
       st->print("Linux");
   }
   st->cr();
+}
 
-  // kernel
-  st->print("uname:");
-  struct utsname name;
-  uname(&name);
-  st->print(name.sysname); st->print(" ");
-  st->print(name.release); st->print(" ");
-  st->print(name.version); st->print(" ");
-  st->print(name.machine);
-  st->cr();
-
-  // Print warning if unsafe chroot environment detected
-  if (unsafe_chroot_detected) {
-    st->print("WARNING!! ");
-    st->print_cr(unstable_chroot_error);
-  }
-
+void os::Linux::print_libversion_info(outputStream* st) {
   // libc, pthread
   st->print("libc:");
   st->print(os::Linux::glibc_version()); st->print(" ");
@@ -2032,48 +2080,12 @@ void os::print_os_info(outputStream* st) {
      st->print("(%s stack)", os::Linux::is_floating_stack() ? "floating" : "fixed");
   }
   st->cr();
+}
 
-  // rlimit
-  st->print("rlimit:");
-  struct rlimit rlim;
-
-  st->print(" STACK ");
-  getrlimit(RLIMIT_STACK, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", CORE ");
-  getrlimit(RLIMIT_CORE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-
-  st->print(", NPROC ");
-  getrlimit(RLIMIT_NPROC, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-  st->print(", NOFILE ");
-  getrlimit(RLIMIT_NOFILE, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%d", rlim.rlim_cur);
-
-  st->print(", AS ");
-  getrlimit(RLIMIT_AS, &rlim);
-  if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");
-  else st->print("%uk", rlim.rlim_cur >> 10);
-  st->cr();
-
-  // load average
-  st->print("load average:");
-  double loadavg[3];
-  os::loadavg(loadavg, 3);
-  st->print("%0.02f %0.02f %0.02f", loadavg[0], loadavg[1], loadavg[2]);
-  st->cr();
-
-  // meminfo
-  st->print("\n/proc/meminfo:\n");
-  _print_ascii_file("/proc/meminfo", st);
-  st->cr();
+void os::Linux::print_full_memory_info(outputStream* st) {
+   st->print("\n/proc/meminfo:\n");
+   _print_ascii_file("/proc/meminfo", st);
+   st->cr();
 }
 
 void os::print_memory_info(outputStream* st) {
@@ -2093,6 +2105,14 @@ void os::print_memory_info(outputStream* st) {
             ((jlong)si.totalswap * si.mem_unit) >> 10);
   st->print("(" UINT64_FORMAT "k free)",
             ((jlong)si.freeswap * si.mem_unit) >> 10);
+  st->cr();
+}
+
+void os::pd_print_cpu_info(outputStream* st) {
+  st->print("\n/proc/cpuinfo:\n");
+  if (!_print_ascii_file("/proc/cpuinfo", st)) {
+    st->print("  <Not Available>");
+  }
   st->cr();
 }
 
@@ -2204,7 +2224,7 @@ void os::jvm_path(char *buf, jint buflen) {
   if (rp == NULL)
     return;
 
-  if (strcmp(Arguments::sun_java_launcher(), "gamma") == 0) {
+  if (Arguments::created_by_gamma_launcher()) {
     // Support for the gamma launcher.  Typical value for buf is
     // "<JAVA_HOME>/jre/lib/<arch>/<vmtype>/libjvm.so".  If "/jre/lib/" appears at
     // the right place in the string, then assume we are installed in a JDK and
@@ -2453,19 +2473,59 @@ bool os::commit_memory(char* addr, size_t size, bool exec) {
   int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
   uintptr_t res = (uintptr_t) ::mmap(addr, size, prot,
                                    MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-  return res != (uintptr_t) MAP_FAILED;
+  if (res != (uintptr_t) MAP_FAILED) {
+    if (UseNUMAInterleaving) {
+      numa_make_global(addr, size);
+    }
+    return true;
+  }
+  return false;
 }
+
+// Define MAP_HUGETLB here so we can build HotSpot on old systems.
+#ifndef MAP_HUGETLB
+#define MAP_HUGETLB 0x40000
+#endif
+
+// Define MADV_HUGEPAGE here so we can build HotSpot on old systems.
+#ifndef MADV_HUGEPAGE
+#define MADV_HUGEPAGE 14
+#endif
 
 bool os::commit_memory(char* addr, size_t size, size_t alignment_hint,
                        bool exec) {
-  return commit_memory(addr, size, exec);
+  if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
+    int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
+    uintptr_t res =
+      (uintptr_t) ::mmap(addr, size, prot,
+                         MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS|MAP_HUGETLB,
+                         -1, 0);
+    if (res != (uintptr_t) MAP_FAILED) {
+      if (UseNUMAInterleaving) {
+        numa_make_global(addr, size);
+      }
+      return true;
+    }
+    // Fall through and try to use small pages
+  }
+
+  if (commit_memory(addr, size, exec)) {
+    realign_memory(addr, size, alignment_hint);
+    return true;
+  }
+  return false;
 }
 
-void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) { }
+void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
+  if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
+    // We don't check the return value: madvise(MADV_HUGEPAGE) may not
+    // be supported or the memory may already be backed by huge pages.
+    ::madvise(addr, bytes, MADV_HUGEPAGE);
+  }
+}
 
-void os::free_memory(char *addr, size_t bytes) {
-  ::mmap(addr, bytes, PROT_READ | PROT_WRITE,
-         MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
+void os::free_memory(char *addr, size_t bytes, size_t alignment_hint) {
+  commit_memory(addr, bytes, alignment_hint, false);
 }
 
 void os::numa_make_global(char *addr, size_t bytes) {
@@ -2509,8 +2569,35 @@ char *os::scan_pages(char *start, char* end, page_info* page_expected, page_info
   return end;
 }
 
-extern "C" void numa_warn(int number, char *where, ...) { }
-extern "C" void numa_error(char *where) { }
+
+int os::Linux::sched_getcpu_syscall(void) {
+  unsigned int cpu;
+  int retval = -1;
+
+#if defined(IA32)
+# ifndef SYS_getcpu
+# define SYS_getcpu 318
+# endif
+  retval = syscall(SYS_getcpu, &cpu, NULL, NULL);
+#elif defined(AMD64)
+// Unfortunately we have to bring all these macros here from vsyscall.h
+// to be able to compile on old linuxes.
+# define __NR_vgetcpu 2
+# define VSYSCALL_START (-10UL << 20)
+# define VSYSCALL_SIZE 1024
+# define VSYSCALL_ADDR(vsyscall_nr) (VSYSCALL_START+VSYSCALL_SIZE*(vsyscall_nr))
+  typedef long (*vgetcpu_t)(unsigned int *cpu, unsigned int *node, unsigned long *tcache);
+  vgetcpu_t vgetcpu = (vgetcpu_t)VSYSCALL_ADDR(__NR_vgetcpu);
+  retval = vgetcpu(&cpu, NULL, NULL);
+#endif
+
+  return (retval == -1) ? retval : cpu;
+}
+
+// Something to do with the numa-aware allocator needs these symbols
+extern "C" JNIEXPORT void numa_warn(int number, char *where, ...) { }
+extern "C" JNIEXPORT void numa_error(char *where) { }
+extern "C" JNIEXPORT int fork1() { return fork(); }
 
 
 // If we are running with libnuma version > 2, then we should
@@ -2529,6 +2616,10 @@ bool os::Linux::libnuma_init() {
   // sched_getcpu() should be in libc.
   set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t,
                                   dlsym(RTLD_DEFAULT, "sched_getcpu")));
+
+  // If it's not, try a direct syscall.
+  if (sched_getcpu() == -1)
+    set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t, (void*)&sched_getcpu_syscall));
 
   if (sched_getcpu() != -1) { // Does it work?
     void *handle = dlopen("libnuma.so.1", RTLD_LAZY);
@@ -2637,6 +2728,7 @@ bool os::uncommit_memory(char* addr, size_t size) {
 // writing thread stacks don't use growable mappings (i.e. those
 // creeated with MAP_GROWSDOWN), and aren't marked "[stack]", so this
 // only applies to the main thread.
+
 static bool
 get_stack_bounds(uintptr_t *bottom, uintptr_t *top)
 {
@@ -2677,6 +2769,7 @@ get_stack_bounds(uintptr_t *bottom, uintptr_t *top)
   fclose(f);
   return false;
 }
+
 
 // If the (growable) stack mapping already extends beyond the point
 // where we're going to put our guard pages, truncate the mapping at
@@ -2809,12 +2902,100 @@ bool os::unguard_memory(char* addr, size_t size) {
   return linux_mprotect(addr, size, PROT_READ|PROT_WRITE);
 }
 
+bool os::Linux::hugetlbfs_sanity_check(bool warn, size_t page_size) {
+  bool result = false;
+  void *p = mmap (NULL, page_size, PROT_READ|PROT_WRITE,
+                  MAP_ANONYMOUS|MAP_PRIVATE|MAP_HUGETLB,
+                  -1, 0);
+
+  if (p != (void *) -1) {
+    // We don't know if this really is a huge page or not.
+    FILE *fp = fopen("/proc/self/maps", "r");
+    if (fp) {
+      while (!feof(fp)) {
+        char chars[257];
+        long x = 0;
+        if (fgets(chars, sizeof(chars), fp)) {
+          if (sscanf(chars, "%lx-%*x", &x) == 1
+              && x == (long)p) {
+            if (strstr (chars, "hugepage")) {
+              result = true;
+              break;
+            }
+          }
+        }
+      }
+      fclose(fp);
+    }
+    munmap (p, page_size);
+    if (result)
+      return true;
+  }
+
+  if (warn) {
+    warning("HugeTLBFS is not supported by the operating system.");
+  }
+
+  return result;
+}
+
+/*
+* Set the coredump_filter bits to include largepages in core dump (bit 6)
+*
+* From the coredump_filter documentation:
+*
+* - (bit 0) anonymous private memory
+* - (bit 1) anonymous shared memory
+* - (bit 2) file-backed private memory
+* - (bit 3) file-backed shared memory
+* - (bit 4) ELF header pages in file-backed private memory areas (it is
+*           effective only if the bit 2 is cleared)
+* - (bit 5) hugetlb private memory
+* - (bit 6) hugetlb shared memory
+*/
+static void set_coredump_filter(void) {
+  FILE *f;
+  long cdm;
+
+  if ((f = fopen("/proc/self/coredump_filter", "r+")) == NULL) {
+    return;
+  }
+
+  if (fscanf(f, "%lx", &cdm) != 1) {
+    fclose(f);
+    return;
+  }
+
+  rewind(f);
+
+  if ((cdm & LARGEPAGES_BIT) == 0) {
+    cdm |= LARGEPAGES_BIT;
+    fprintf(f, "%#lx", cdm);
+  }
+
+  fclose(f);
+}
+
 // Large page support
 
 static size_t _large_page_size = 0;
 
-bool os::large_page_init() {
-  if (!UseLargePages) return false;
+void os::large_page_init() {
+  if (!UseLargePages) {
+    UseHugeTLBFS = false;
+    UseSHM = false;
+    return;
+  }
+
+  if (FLAG_IS_DEFAULT(UseHugeTLBFS) && FLAG_IS_DEFAULT(UseSHM)) {
+    // If UseLargePages is specified on the command line try both methods,
+    // if it's default, then try only HugeTLBFS.
+    if (FLAG_IS_DEFAULT(UseLargePages)) {
+      UseHugeTLBFS = true;
+    } else {
+      UseHugeTLBFS = UseSHM = true;
+    }
+  }
 
   if (LargePageSizeInBytes) {
     _large_page_size = LargePageSizeInBytes;
@@ -2859,18 +3040,24 @@ bool os::large_page_init() {
     }
   }
 
+  // print a warning if any large page related flag is specified on command line
+  bool warn_on_failure = !FLAG_IS_DEFAULT(UseHugeTLBFS);
+
   const size_t default_page_size = (size_t)Linux::page_size();
   if (_large_page_size > default_page_size) {
     _page_sizes[0] = _large_page_size;
     _page_sizes[1] = default_page_size;
     _page_sizes[2] = 0;
   }
+  UseHugeTLBFS = UseHugeTLBFS &&
+                 Linux::hugetlbfs_sanity_check(warn_on_failure, _large_page_size);
 
-  // Large page support is available on 2.6 or newer kernel, some vendors
-  // (e.g. Redhat) have backported it to their 2.4 based distributions.
-  // We optimistically assume the support is available. If later it turns out
-  // not true, VM will automatically switch to use regular page size.
-  return true;
+  if (UseHugeTLBFS)
+    UseSHM = false;
+
+  UseLargePages = UseHugeTLBFS || UseSHM;
+
+  set_coredump_filter();
 }
 
 #ifndef SHM_HUGETLB
@@ -2880,7 +3067,7 @@ bool os::large_page_init() {
 char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
-  assert(UseLargePages, "only for large pages");
+  assert(UseLargePages && UseSHM, "only for SHM large pages");
 
   key_t key = IPC_PRIVATE;
   char *addr;
@@ -2934,6 +3121,10 @@ char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
      return NULL;
   }
 
+  if ((addr != NULL) && UseNUMAInterleaving) {
+    numa_make_global(addr, bytes);
+  }
+
   return addr;
 }
 
@@ -2947,16 +3138,15 @@ size_t os::large_page_size() {
   return _large_page_size;
 }
 
-// Linux does not support anonymous mmap with large page memory. The only way
-// to reserve large page memory without file backing is through SysV shared
-// memory API. The entire memory region is committed and pinned upfront.
-// Hopefully this will change in the future...
+// HugeTLBFS allows application to commit large page memory on demand;
+// with SysV SHM the entire memory region must be allocated as shared
+// memory.
 bool os::can_commit_large_page_memory() {
-  return false;
+  return UseHugeTLBFS;
 }
 
 bool os::can_execute_large_page_memory() {
-  return false;
+  return UseHugeTLBFS;
 }
 
 // Reserve memory at an arbitrary address, only if that area is
@@ -3056,8 +3246,6 @@ size_t os::read(int fd, void *buf, unsigned int nBytes) {
 // generates a SIGUSRx signal. Note that SIGUSR1 can interfere with
 // SIGSEGV, see 4355769.
 
-const int NANOSECS_PER_MILLISECS = 1000000;
-
 int os::sleep(Thread* thread, jlong millis, bool interruptible) {
   assert(thread == Thread::current(),  "thread consistency check");
 
@@ -3080,7 +3268,7 @@ int os::sleep(Thread* thread, jlong millis, bool interruptible) {
         // not a guarantee() because JVM should not abort on kernel/glibc bugs
         assert(!Linux::supports_monotonic_clock(), "time moving backwards");
       } else {
-        millis -= (newtime - prevtime) / NANOSECS_PER_MILLISECS;
+        millis -= (newtime - prevtime) / NANOSECS_PER_MILLISEC;
       }
 
       if(millis <= 0) {
@@ -3119,7 +3307,7 @@ int os::sleep(Thread* thread, jlong millis, bool interruptible) {
         // not a guarantee() because JVM should not abort on kernel/glibc bugs
         assert(!Linux::supports_monotonic_clock(), "time moving backwards");
       } else {
-        millis -= (newtime - prevtime) / NANOSECS_PER_MILLISECS;
+        millis -= (newtime - prevtime) / NANOSECS_PER_MILLISEC;
       }
 
       if(millis <= 0) break ;
@@ -3183,7 +3371,7 @@ void os::loop_breaker(int attempts) {
 // this reason, the code should not be used as default (ThreadPriorityPolicy=0).
 // It is only used when ThreadPriorityPolicy=1 and requires root privilege.
 
-int os::java_to_os_priority[MaxPriority + 1] = {
+int os::java_to_os_priority[CriticalPriority + 1] = {
   19,              // 0 Entry should never be used
 
    4,              // 1 MinPriority
@@ -3198,7 +3386,9 @@ int os::java_to_os_priority[MaxPriority + 1] = {
   -3,              // 8
   -4,              // 9 NearMaxPriority
 
-  -5               // 10 MaxPriority
+  -5,              // 10 MaxPriority
+
+  -5               // 11 CriticalPriority
 };
 
 static int prio_init() {
@@ -3212,6 +3402,9 @@ static int prio_init() {
       }
       ThreadPriorityPolicy = 0;
     }
+  }
+  if (UseCriticalJavaThreadPriority) {
+    os::java_to_os_priority[MaxPriority] = os::java_to_os_priority[CriticalPriority];
   }
   return 0;
 }
@@ -3485,7 +3678,7 @@ bool os::is_interrupted(Thread* thread, bool clear_interrupted) {
 // Note that the VM will print warnings if it detects conflicting signal
 // handlers, unless invoked with the option "-XX:+AllowUserSignalHandlers".
 //
-extern "C" int
+extern "C" JNIEXPORT int
 JVM_handle_linux_signal(int signo, siginfo_t* siginfo,
                         void* ucontext, int abort_if_unrecognized);
 
@@ -3690,14 +3883,19 @@ void os::Linux::install_signal_handlers() {
     }
 
     // We don't activate signal checker if libjsig is in place, we trust ourselves
-    // and if UserSignalHandler is installed all bets are off
+    // and if UserSignalHandler is installed all bets are off.
+    // Log that signal checking is off only if -verbose:jni is specified.
     if (CheckJNICalls) {
       if (libjsig_is_loaded) {
-        tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+        if (PrintJNIResolving) {
+          tty->print_cr("Info: libjsig is activated, all active signal checking is disabled");
+        }
         check_signals = false;
       }
       if (AllowUserSignalHandlers) {
-        tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+        if (PrintJNIResolving) {
+          tty->print_cr("Info: AllowUserSignalHandlers is activated, all active signal checking is disabled");
+        }
         check_signals = false;
       }
     }
@@ -3716,7 +3914,7 @@ jlong os::Linux::fast_thread_cpu_time(clockid_t clockid) {
   int rc = os::Linux::clock_gettime(clockid, &tp);
   assert(rc == 0, "clock_gettime is expected to return 0 code");
 
-  return (tp.tv_sec * SEC_IN_NANOSECS) + tp.tv_nsec;
+  return (tp.tv_sec * NANOSECS_PER_SEC) + tp.tv_nsec;
 }
 
 /////
@@ -3996,7 +4194,7 @@ jint os::init_2(void)
 #endif
   }
 
-  FLAG_SET_DEFAULT(UseLargePages, os::large_page_init());
+  os::large_page_init();
 
   // initialize suspend/resume support - must do this before signal_sets_init()
   if (SR_initialize() != 0) {
@@ -4045,6 +4243,23 @@ jint os::init_2(void)
     } else {
       if ((Linux::numa_max_node() < 1)) {
         // There's only one node(they start from 0), disable NUMA.
+        UseNUMA = false;
+      }
+    }
+    // With SHM large pages we cannot uncommit a page, so there's not way
+    // we can make the adaptive lgrp chunk resizing work. If the user specified
+    // both UseNUMA and UseLargePages (or UseSHM) on the command line - warn and
+    // disable adaptive resizing.
+    if (UseNUMA && UseLargePages && UseSHM) {
+      if (!FLAG_IS_DEFAULT(UseNUMA)) {
+        if (FLAG_IS_DEFAULT(UseLargePages) && FLAG_IS_DEFAULT(UseSHM)) {
+          UseLargePages = false;
+        } else {
+          warning("UseNUMA is not fully compatible with SHM large pages, disabling adaptive resizing");
+          UseAdaptiveSizePolicy = false;
+          UseAdaptiveNUMAChunkSizing = false;
+        }
+      } else {
         UseNUMA = false;
       }
     }
@@ -4100,7 +4315,16 @@ jint os::init_2(void)
 }
 
 // this is called at the end of vm_initialization
-void os::init_3(void) { }
+void os::init_3(void)
+{
+#ifdef JAVASE_EMBEDDED
+  // Start the MemNotifyThread
+  if (LowMemoryProtection) {
+    MemNotifyThread::start();
+  }
+  return;
+#endif
+}
 
 // Mark the polling page as unreadable
 void os::make_polling_page_unreadable(void) {
@@ -4121,6 +4345,11 @@ int os::active_processor_count() {
   int online_cpus = ::sysconf(_SC_NPROCESSORS_ONLN);
   assert(online_cpus > 0 && online_cpus <= processor_count(), "sanity check");
   return online_cpus;
+}
+
+void os::set_native_thread_name(const char *name) {
+  // Not yet implemented.
+  return;
 }
 
 bool os::distribute_processes(uint length, uint* distribution) {
@@ -4449,14 +4678,12 @@ char* os::map_memory(int fd, const char* file_name, size_t file_offset,
                      char *addr, size_t bytes, bool read_only,
                      bool allow_exec) {
   int prot;
-  int flags;
+  int flags = MAP_PRIVATE;
 
   if (read_only) {
     prot = PROT_READ;
-    flags = MAP_SHARED;
   } else {
     prot = PROT_READ | PROT_WRITE;
-    flags = MAP_PRIVATE;
   }
 
   if (allow_exec) {
@@ -4680,44 +4907,6 @@ void os::pause() {
   }
 }
 
-extern "C" {
-
-/**
- * NOTE: the following code is to keep the green threads code
- * in the libjava.so happy. Once the green threads is removed,
- * these code will no longer be needed.
- */
-int
-jdk_waitpid(pid_t pid, int* status, int options) {
-    return waitpid(pid, status, options);
-}
-
-int
-fork1() {
-    return fork();
-}
-
-int
-jdk_sem_init(sem_t *sem, int pshared, unsigned int value) {
-    return sem_init(sem, pshared, value);
-}
-
-int
-jdk_sem_post(sem_t *sem) {
-    return sem_post(sem);
-}
-
-int
-jdk_sem_wait(sem_t *sem) {
-    return sem_wait(sem);
-}
-
-int
-jdk_pthread_sigmask(int how , const sigset_t* newmask, sigset_t* oldmask) {
-    return pthread_sigmask(how , newmask, oldmask);
-}
-
-}
 
 // Refer to the comments in os_solaris.cpp park-unpark.
 //
@@ -4964,9 +5153,6 @@ void os::PlatformEvent::unpark() {
  * is no need to track notifications.
  */
 
-
-#define NANOSECS_PER_SEC 1000000000
-#define NANOSECS_PER_MILLISEC 1000000
 #define MAX_SECS 100000000
 /*
  * This code is common to linux and solaris and will be moved to a
@@ -5224,15 +5410,18 @@ int os::fork_and_exec(char* cmd) {
 
 // is_headless_jre()
 //
-// Test for the existence of libmawt in motif21 or xawt directories
+// Test for the existence of xawt/libmawt.so or libawt_xawt.so
 // in order to report if we are running in a headless jre
+//
+// Since JDK8 xawt/libmawt.so was moved into the same directory
+// as libawt.so, and renamed libawt_xawt.so
 //
 bool os::is_headless_jre() {
     struct stat statbuf;
     char buf[MAXPATHLEN];
     char libmawtpath[MAXPATHLEN];
     const char *xawtstr  = "/xawt/libmawt.so";
-    const char *motifstr = "/motif21/libmawt.so";
+    const char *new_xawtstr = "/libawt_xawt.so";
     char *p;
 
     // Get path to libjvm.so
@@ -5253,11 +5442,86 @@ bool os::is_headless_jre() {
     strcat(libmawtpath, xawtstr);
     if (::stat(libmawtpath, &statbuf) == 0) return false;
 
-    // check motif21/libmawt.so
+    // check libawt_xawt.so
     strcpy(libmawtpath, buf);
-    strcat(libmawtpath, motifstr);
+    strcat(libmawtpath, new_xawtstr);
     if (::stat(libmawtpath, &statbuf) == 0) return false;
 
     return true;
 }
 
+
+#ifdef JAVASE_EMBEDDED
+//
+// A thread to watch the '/dev/mem_notify' device, which will tell us when the OS is running low on memory.
+//
+MemNotifyThread* MemNotifyThread::_memnotify_thread = NULL;
+
+// ctor
+//
+MemNotifyThread::MemNotifyThread(int fd): Thread() {
+  assert(memnotify_thread() == NULL, "we can only allocate one MemNotifyThread");
+  _fd = fd;
+
+  if (os::create_thread(this, os::os_thread)) {
+    _memnotify_thread = this;
+    os::set_priority(this, NearMaxPriority);
+    os::start_thread(this);
+  }
+}
+
+// Where all the work gets done
+//
+void MemNotifyThread::run() {
+  assert(this == memnotify_thread(), "expected the singleton MemNotifyThread");
+
+  // Set up the select arguments
+  fd_set rfds;
+  if (_fd != -1) {
+    FD_ZERO(&rfds);
+    FD_SET(_fd, &rfds);
+  }
+
+  // Now wait for the mem_notify device to wake up
+  while (1) {
+    // Wait for the mem_notify device to signal us..
+    int rc = select(_fd+1, _fd != -1 ? &rfds : NULL, NULL, NULL, NULL);
+    if (rc == -1) {
+      perror("select!\n");
+      break;
+    } else if (rc) {
+      //ssize_t free_before = os::available_memory();
+      //tty->print ("Notified: Free: %dK \n",os::available_memory()/1024);
+
+      // The kernel is telling us there is not much memory left...
+      // try to do something about that
+
+      // If we are not already in a GC, try one.
+      if (!Universe::heap()->is_gc_active()) {
+        Universe::heap()->collect(GCCause::_allocation_failure);
+
+        //ssize_t free_after = os::available_memory();
+        //tty->print ("Post-Notify: Free: %dK\n",free_after/1024);
+        //tty->print ("GC freed: %dK\n", (free_after - free_before)/1024);
+      }
+      // We might want to do something like the following if we find the GC's are not helping...
+      // Universe::heap()->size_policy()->set_gc_time_limit_exceeded(true);
+    }
+  }
+}
+
+//
+// See if the /dev/mem_notify device exists, and if so, start a thread to monitor it.
+//
+void MemNotifyThread::start() {
+  int    fd;
+  fd = open ("/dev/mem_notify", O_RDONLY, 0);
+  if (fd < 0) {
+      return;
+  }
+
+  if (memnotify_thread() == NULL) {
+    new MemNotifyThread(fd);
+  }
+}
+#endif // JAVASE_EMBEDDED

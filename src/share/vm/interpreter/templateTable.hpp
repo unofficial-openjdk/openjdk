@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,12 @@
 #endif
 #ifdef TARGET_ARCH_MODEL_zero
 # include "interp_masm_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_arm
+# include "interp_masm_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc
+# include "interp_masm_ppc.hpp"
 #endif
 
 #ifndef CC_INTERP
@@ -114,8 +120,8 @@ class TemplateTable: AllStatic {
 
   // helpers
   static void unimplemented_bc();
-  static void patch_bytecode(Bytecodes::Code bc, Register scratch1,
-                             Register scratch2, bool load_bc_in_scratch = true);
+  static void patch_bytecode(Bytecodes::Code bc, Register bc_reg,
+                             Register temp_reg, bool load_bc_into_bc_reg = true, int byte_no = -1);
 
   // C calls
   static void call_VM(Register oop_result, address entry_point);
@@ -363,6 +369,12 @@ class TemplateTable: AllStatic {
 #endif
 #ifdef TARGET_ARCH_MODEL_zero
 # include "templateTable_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_arm
+# include "templateTable_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc
+# include "templateTable_ppc.hpp"
 #endif
 
 };

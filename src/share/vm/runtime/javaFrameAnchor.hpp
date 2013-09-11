@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,19 @@
 #ifdef TARGET_OS_ARCH_windows_x86
 # include "orderAccess_windows_x86.inline.hpp"
 #endif
+#ifdef TARGET_OS_ARCH_linux_arm
+# include "orderAccess_linux_arm.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_ppc
+# include "orderAccess_linux_ppc.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_bsd_x86
+# include "orderAccess_bsd_x86.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_bsd_zero
+# include "orderAccess_bsd_zero.inline.hpp"
+#endif
+
 //
 // An object for encapsulating the machine/os dependent part of a JavaThread frame state
 //
@@ -101,6 +114,12 @@ friend class JavaCallWrapper;
 #endif
 #ifdef TARGET_ARCH_zero
 # include "javaFrameAnchor_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "javaFrameAnchor_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "javaFrameAnchor_ppc.hpp"
 #endif
 
 

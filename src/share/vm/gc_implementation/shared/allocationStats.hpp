@@ -76,7 +76,7 @@ class AllocationStats VALUE_OBJ_CLASS_SPEC {
     _beforeSweep = 0;
     _coalBirths = 0;
     _coalDeaths = 0;
-    _splitBirths = split_birth? 1 : 0;
+    _splitBirths = (split_birth ? 1 : 0);
     _splitDeaths = 0;
     _returnedBytes = 0;
   }
@@ -99,14 +99,16 @@ class AllocationStats VALUE_OBJ_CLASS_SPEC {
     // vulnerable to noisy glitches. In such cases, we
     // ignore the current sample and use currently available
     // historical estimates.
-    // XXX NEEDS TO BE FIXED
-    // assert(prevSweep() + splitBirths() >= splitDeaths() + (ssize_t)count, "Conservation Principle");
-    //     ^^^^^^^^^^^^^^^^^^^^^^^^^^^    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //     "Total Stock"                  "Not used at this block size"
+    assert(prevSweep() + splitBirths() + coalBirths()        // "Total Production Stock"
+           >= splitDeaths() + coalDeaths() + (ssize_t)count, // "Current stock + depletion"
+           "Conservation Principle");
     if (inter_sweep_current > _threshold) {
-      ssize_t demand = prevSweep() - (ssize_t)count + splitBirths() - splitDeaths();
-      // XXX NEEDS TO BE FIXED
-      // assert(demand >= 0, "Demand should be non-negative");
+      ssize_t demand = prevSweep() - (ssize_t)count + splitBirths() + coalBirths()
+                       - splitDeaths() - coalDeaths();
+      assert(demand >= 0,
+             err_msg("Demand (" SSIZE_FORMAT ") should be non-negative for "
+                     PTR_FORMAT " (size=" SIZE_FORMAT ")",
+                     demand, this, count));
       // Defensive: adjust for imprecision in event counting
       if (demand < 0) {
         demand = 0;
@@ -116,10 +118,8 @@ class AllocationStats VALUE_OBJ_CLASS_SPEC {
       _demand_rate_estimate.sample(rate);
       float new_rate = _demand_rate_estimate.padded_average();
       ssize_t old_desired = _desired;
-
       float delta_ise = (CMSExtrapolateSweep ? intra_sweep_estimate : 0.0);
       _desired = (ssize_t)(new_rate * (inter_sweep_estimate + delta_ise));
-
       if (PrintFLSStatistics > 1) {
         gclog_or_tty->print_cr("demand: %d, old_rate: %f, current_rate: %f, new_rate: %f, old_desired: %d, new_desired: %d",
                                 demand,     old_rate,     rate,             new_rate,     old_desired,     _desired);

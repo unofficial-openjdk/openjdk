@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,11 +160,11 @@ class LinearScan : public CompilationResourceObj {
   // TODO: cached scope values for registers could be static
   ScopeValueArray           _scope_value_cache;
 
-  static ConstantOopWriteValue _oop_null_scope_value;
-  static ConstantIntValue    _int_m1_scope_value;
-  static ConstantIntValue    _int_0_scope_value;
-  static ConstantIntValue    _int_1_scope_value;
-  static ConstantIntValue    _int_2_scope_value;
+  static ConstantOopWriteValue* _oop_null_scope_value;
+  static ConstantIntValue*    _int_m1_scope_value;
+  static ConstantIntValue*    _int_0_scope_value;
+  static ConstantIntValue*    _int_1_scope_value;
+  static ConstantIntValue*    _int_2_scope_value;
 
   // accessors
   IR*           ir() const                       { return _ir; }
@@ -352,6 +352,13 @@ class LinearScan : public CompilationResourceObj {
 
   MonitorValue*  location_for_monitor_index(int monitor_index);
   LocationValue* location_for_name(int name, Location::Type loc_type);
+  void set_oop(OopMap* map, VMReg name) {
+    if (map->legal_vm_reg_name(name)) {
+      map->set_oop(name);
+    } else {
+      bailout("illegal oopMap register name");
+    }
+  }
 
   int append_scope_value_for_constant(LIR_Opr opr, GrowableArray<ScopeValue*>* scope_values);
   int append_scope_value_for_operand(LIR_Opr opr, GrowableArray<ScopeValue*>* scope_values);
@@ -971,6 +978,12 @@ class LinearScanTimers : public StackObj {
 #endif
 #ifdef TARGET_ARCH_sparc
 # include "c1_LinearScan_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "c1_LinearScan_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "c1_LinearScan_ppc.hpp"
 #endif
 
 

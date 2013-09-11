@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -118,13 +118,23 @@ endif
 # Windows should have OS predefined
 ifeq ($(OS),)
   OS   := $(shell uname -s)
+  ifneq ($(findstring BSD,$(OS)),)
+    OS=bsd
+  endif
+  ifeq ($(OS), Darwin)
+    OS=bsd
+  endif
   HOST := $(shell uname -n)
 endif
 
-# If not SunOS and not Linux, assume Windows
+# If not SunOS, not Linux and not BSD, assume Windows
 ifneq ($(OS), Linux)
   ifneq ($(OS), SunOS)
-    OSNAME=windows
+    ifneq ($(OS), bsd)
+      OSNAME=windows
+    else
+      OSNAME=bsd
+    endif
   else
     OSNAME=solaris
   endif
@@ -162,10 +172,29 @@ ifneq ($(ALT_JDK_IMPORT_PATH),)
   JDK_IMPORT_PATH=$(ALT_JDK_IMPORT_PATH)
 endif
 
+# Other parts of JDK build may require an import JDK that can be executed
+# on the build host. For cross-compile builds we also need an import JDK
+# that matches the target arch, so for that we set ALT_JDK_TARGET_IMPORT_PATH
+ifneq ($(ALT_JDK_TARGET_IMPORT_PATH),)
+  JDK_IMPORT_PATH=$(ALT_JDK_TARGET_IMPORT_PATH)
+endif
+
 # Find JDK used for javac compiles
 BOOTDIR=$(SLASH_JAVA)/re/j2se/$(PREVIOUS_JDK_VERSION)/latest/binaries/$(PLATFORM)
 ifneq ($(ALT_BOOTDIR),)
   BOOTDIR=$(ALT_BOOTDIR)
+endif
+
+# Select name of the export directory and honor ALT overrides
+EXPORT_PATH=$(OUTPUTDIR)/export-$(PLATFORM)$(EXPORT_SUBDIR)
+ifneq ($(ALT_EXPORT_PATH),)
+  EXPORT_PATH=$(ALT_EXPORT_PATH)
+endif
+
+# Default jdk image if one is created for you with create_jdk
+JDK_IMAGE_DIR=$(OUTPUTDIR)/jdk-$(PLATFORM)
+ifneq ($(ALT_JDK_IMAGE_DIR),)
+  JDK_IMAGE_DIR=$(ALT_JDK_IMAGE_DIR)
 endif
 
 # The platform dependent defs.make defines platform specific variable such 
@@ -246,15 +275,6 @@ MAKE_ARGS += JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
 # includes this make/defs.make file.
 MAKE_ARGS += HOTSPOT_BUILD_VERSION=$(HOTSPOT_BUILD_VERSION)
 
-# Select name of export directory
-EXPORT_PATH=$(OUTPUTDIR)/export-$(PLATFORM)$(EXPORT_SUBDIR)
-ifneq ($(ALT_EXPORT_PATH),)
-  EXPORT_PATH=$(ALT_EXPORT_PATH)
-endif
-
-# Default jdk image if one is created for you with create_jdk
-JDK_IMAGE_DIR=$(OUTPUTDIR)/jdk-$(PLATFORM)
-
 # Various export sub directories
 EXPORT_INCLUDE_DIR = $(EXPORT_PATH)/include
 EXPORT_DOCS_DIR = $(EXPORT_PATH)/docs
@@ -264,9 +284,20 @@ EXPORT_JRE_BIN_DIR = $(EXPORT_JRE_DIR)/bin
 EXPORT_JRE_LIB_DIR = $(EXPORT_JRE_DIR)/lib
 EXPORT_JRE_LIB_ARCH_DIR = $(EXPORT_JRE_LIB_DIR)/$(LIBARCH)
 
+# non-universal macosx builds need to appear universal
+ifeq ($(OS_VENDOR), Darwin)
+  ifneq ($(MACOSX_UNIVERSAL), true)
+    EXPORT_JRE_LIB_ARCH_DIR = $(EXPORT_JRE_LIB_DIR)
+  endif
+endif
+
 # Common export list of files
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jvmti.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jvmticmlr.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jni.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/$(JDK_INCLUDE_SUBDIR)/jni_md.h
 EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jmm.h
+
+ifndef JAVASE_EMBEDDED
+EXPORT_LIST += $(EXPORT_INCLUDE_DIR)/jfr.h
+endif

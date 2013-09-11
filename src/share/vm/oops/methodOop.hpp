@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,12 +77,17 @@
 // | method_size             | max_stack                  |
 // | max_locals              | size_of_parameters         |
 // |------------------------------------------------------|
-// | intrinsic_id, (unused)  |  throwout_count            |
+// |intrinsic_id|   flags    |  throwout_count            |
 // |------------------------------------------------------|
 // | num_breakpoints         |  (unused)                  |
 // |------------------------------------------------------|
 // | invocation_counter                                   |
 // | backedge_counter                                     |
+// |------------------------------------------------------|
+// |           prev_time (tiered only, 64 bit wide)       |
+// |                                                      |
+// |------------------------------------------------------|
+// |                  rate (tiered)                       |
 // |------------------------------------------------------|
 // | code                           (pointer)             |
 // | i2i                            (pointer)             |
@@ -119,10 +124,17 @@ class methodOopDesc : public oopDesc {
   u2                _max_locals;                 // Number of local variables used by this method
   u2                _size_of_parameters;         // size of the parameter block (receiver + arguments) in words
   u1                _intrinsic_id;               // vmSymbols::intrinsic_id (0 == _none)
+  u1                _jfr_towrite : 1,            // Flags
+                                 : 7;
   u2                _interpreter_throwout_count; // Count of times method was exited via exception while interpreting
   u2                _number_of_breakpoints;      // fullspeed debugging support
   InvocationCounter _invocation_counter;         // Incremented before each activation of the method - used to trigger frequency-based optimizations
   InvocationCounter _backedge_counter;           // Incremented before each backedge taken - used to trigger frequencey-based optimizations
+
+#ifdef TIERED
+  jlong             _prev_time;                   // Previous time the rate was acquired
+  float             _rate;                        // Events (invocation and backedge counter increments) per millisecond
+#endif
 
 #ifndef PRODUCT
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
@@ -144,9 +156,6 @@ class methodOopDesc : public oopDesc {
 
  public:
 
-  static const bool IsUnsafeConc         = false;
-  static const bool IsSafeConc           = true;
-
   // accessors for instance variables
   constMethodOop constMethod() const             { return _constMethod; }
   void set_constMethod(constMethodOop xconst)    { oop_store_without_check((oop*)&_constMethod, (oop)xconst); }
@@ -161,17 +170,17 @@ class methodOopDesc : public oopDesc {
   void set_access_flags(AccessFlags flags)       { _access_flags = flags; }
 
   // name
-  symbolOop name() const                         { return _constants->symbol_at(name_index()); }
+  Symbol* name() const                           { return _constants->symbol_at(name_index()); }
   int name_index() const                         { return constMethod()->name_index();         }
   void set_name_index(int index)                 { constMethod()->set_name_index(index);       }
 
   // signature
-  symbolOop signature() const                    { return _constants->symbol_at(signature_index()); }
+  Symbol* signature() const                      { return _constants->symbol_at(signature_index()); }
   int signature_index() const                    { return constMethod()->signature_index();         }
   void set_signature_index(int index)            { constMethod()->set_signature_index(index);       }
 
   // generics support
-  symbolOop generic_signature() const            { int idx = generic_signature_index(); return ((idx != 0) ? _constants->symbol_at(idx) : (symbolOop)NULL); }
+  Symbol* generic_signature() const              { int idx = generic_signature_index(); return ((idx != 0) ? _constants->symbol_at(idx) : (Symbol*)NULL); }
   int generic_signature_index() const            { return constMethod()->generic_signature_index(); }
   void set_generic_signature_index(int index)    { constMethod()->set_generic_signature_index(index); }
 
@@ -189,12 +198,12 @@ class methodOopDesc : public oopDesc {
   // C string, for the purpose of providing more useful NoSuchMethodErrors
   // and fatal error handling. The string is allocated in resource
   // area if a buffer is not provided by the caller.
-  char* name_and_sig_as_C_string();
-  char* name_and_sig_as_C_string(char* buf, int size);
+  char* name_and_sig_as_C_string() const;
+  char* name_and_sig_as_C_string(char* buf, int size) const;
 
   // Static routine in the situations we don't have a methodOop
-  static char* name_and_sig_as_C_string(Klass* klass, symbolOop method_name, symbolOop signature);
-  static char* name_and_sig_as_C_string(Klass* klass, symbolOop method_name, symbolOop signature, char* buf, int size);
+  static char* name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol* signature);
+  static char* name_and_sig_as_C_string(Klass* klass, Symbol* method_name, Symbol* signature, char* buf, int size);
 
   Bytecodes::Code java_code_at(int bci) const {
     return Bytecodes::java_code_at(this, bcp_from(bci));
@@ -218,6 +227,7 @@ class methodOopDesc : public oopDesc {
   void clear_number_of_breakpoints()             { _number_of_breakpoints = 0; }
 
   // index into instanceKlass methods() array
+  // note: also used by jfr
   u2 method_idnum() const           { return constMethod()->method_idnum(); }
   void set_method_idnum(u2 idnum)   { constMethod()->set_method_idnum(idnum); }
 
@@ -307,6 +317,17 @@ class methodOopDesc : public oopDesc {
   InvocationCounter* invocation_counter() { return &_invocation_counter; }
   InvocationCounter* backedge_counter()   { return &_backedge_counter; }
 
+#ifdef TIERED
+  // We are reusing interpreter_invocation_count as a holder for the previous event count!
+  // We can do that since interpreter_invocation_count is not used in tiered.
+  int prev_event_count() const                   { return _interpreter_invocation_count;  }
+  void set_prev_event_count(int count)           { _interpreter_invocation_count = count; }
+  jlong prev_time() const                        { return _prev_time; }
+  void set_prev_time(jlong time)                 { _prev_time = time; }
+  float rate() const                             { return _rate; }
+  void set_rate(float rate)                      { _rate = rate; }
+#endif
+
   int invocation_count();
   int backedge_count();
 
@@ -382,6 +403,8 @@ class methodOopDesc : public oopDesc {
     native_bind_event_is_interesting = true
   };
   address native_function() const                { return *(native_function_addr()); }
+  address critical_native_function();
+
   // Must specify a real function (not NULL).
   // Use clear_native_function() to unregister.
   void set_native_function(address function, bool post_event_flag);
@@ -433,7 +456,7 @@ class methodOopDesc : public oopDesc {
   klassOop method_holder() const                 { return _constants->pool_holder(); }
 
   void compute_size_of_parameters(Thread *thread); // word size of parameters (receiver if any + arguments)
-  symbolOop klass_name() const;                  // returns the name of the method holder
+  Symbol* klass_name() const;                    // returns the name of the method holder
   BasicType result_type() const;                 // type of the method result
   int result_type_index() const;                 // type index of the method result
   bool is_returning_oop() const                  { BasicType r = result_type(); return (r == T_OBJECT || r == T_ARRAY); }
@@ -500,6 +523,13 @@ class methodOopDesc : public oopDesc {
   // returns true if the method is an initializer (<init> or <clinit>).
   bool is_initializer() const;
 
+  // returns true if the method is static OR if the classfile version < 51
+  bool has_valid_initializer_flags() const;
+
+  // returns true if the method name is <clinit> and the method has
+  // valid static initializer flags.
+  bool is_static_initializer() const;
+
   // compiled code support
   // NOTE: code() is inherently racy as deopt can be clearing code
   // simultaneously. Use with caution.
@@ -564,17 +594,18 @@ class methodOopDesc : public oopDesc {
   // JSR 292 support
   bool is_method_handle_invoke() const              { return access_flags().is_method_handle_invoke(); }
   static bool is_method_handle_invoke_name(vmSymbols::SID name_sid);
-  static bool is_method_handle_invoke_name(symbolOop name) {
+  static bool is_method_handle_invoke_name(Symbol* name) {
     return is_method_handle_invoke_name(vmSymbols::find_sid(name));
   }
   // Tests if this method is an internal adapter frame from the
   // MethodHandleCompiler.
   bool is_method_handle_adapter() const;
   static methodHandle make_invoke_method(KlassHandle holder,
-                                         symbolHandle name, //invokeExact or invokeGeneric
-                                         symbolHandle signature, //anything at all
+                                         Symbol* name, //invokeExact or invokeGeneric
+                                         Symbol* signature, //anything at all
                                          Handle method_type,
                                          TRAPS);
+  static klassOop check_non_bcp_klass(klassOop klass);
   // these operate only on invoke methods:
   oop method_handle_type() const;
   static jint* method_type_offsets_chain();  // series of pointer-offsets, terminated by -1
@@ -582,7 +613,7 @@ class methodOopDesc : public oopDesc {
   // method handles want to be able to push a few extra values (e.g., a bound receiver), and
   // invokedynamic sometimes needs to push a bootstrap method, call site, and arglist,
   // all without checking for a stack overflow
-  static int extra_stack_entries() { return (EnableMethodHandles ? (int)MethodHandlePushLimit : 0) + (EnableInvokeDynamic ? 3 : 0); }
+  static int extra_stack_entries() { return EnableInvokeDynamic ? (int) MethodHandlePushLimit + 3 : 0; }
   static int extra_stack_words();  // = extra_stack_entries() * Interpreter::stackElementSize()
 
   // RedefineClasses() support:
@@ -623,6 +654,9 @@ class methodOopDesc : public oopDesc {
   // Helper routines for intrinsic_id() and vmIntrinsics::method().
   void init_intrinsic_id();     // updates from _none if a match
   static vmSymbols::SID klass_id_for_intrinsics(klassOop holder);
+
+  bool jfr_towrite()                 { return _jfr_towrite; }
+  void set_jfr_towrite(bool towrite) { _jfr_towrite = towrite; }
 
   // On-stack replacement support
   bool has_osr_nmethod(int level, bool match_level) {
@@ -669,8 +703,8 @@ class methodOopDesc : public oopDesc {
   static bool has_unloaded_classes_in_signature(methodHandle m, TRAPS);
 
   // Printing
-  void print_short_name(outputStream* st)        /*PRODUCT_RETURN*/; // prints as klassname::methodname; Exposed so field engineers can debug VM
-  void print_name(outputStream* st)              PRODUCT_RETURN; // prints as "virtual void foo(int)"
+  void print_short_name(outputStream* st); // prints as klassname::methodname; Exposed so field engineers can debug VM
+  void print_name(outputStream* st); // prints as "virtual void foo(int)"; exposed for TraceRedefineClasses
 
   // Helper routine used for method sorting
   static void sort_methods(objArrayOop methods,
@@ -732,8 +766,8 @@ class CompressedLineNumberWriteStream: public CompressedWriteStream {
 // Disabling optimization doesn't work for methods in header files
 // so we force it to call through the non-optimized version in the .cpp.
 // It's gross, but it's the only way we can ensure that all callers are
-// fixed.  MSC_VER is defined in build/windows/makefiles/compile.make.
-#if defined(_M_AMD64) && MSC_VER >= 1400
+// fixed.  _MSC_VER is defined by the windows compiler
+#if defined(_M_AMD64) && _MSC_VER >= 1400
   void write_pair(int bci, int line);
 #else
   void write_pair(int bci, int line) { write_pair_inline(bci, line); }

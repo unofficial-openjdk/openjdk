@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,15 +71,23 @@ class klassVtable : public ResourceObj {
 
   // searching; all methods return -1 if not found
   int index_of(methodOop m) const                         { return index_of(m, _length); }
-  int index_of_miranda(symbolOop name, symbolOop signature);
+  int index_of_miranda(Symbol* name, Symbol* signature);
 
   void initialize_vtable(bool checkconstraints, TRAPS);   // initialize vtable of a new klass
 
-  // conputes vtable length (in words) and the number of miranda methods
+  // CDS/RedefineClasses support - clear vtables so they can be reinitialized
+  // at dump time.  Clearing gives us an easy way to tell if the vtable has
+  // already been reinitialized at dump time (see dump.cpp).  Vtables can
+  // be initialized at run time by RedefineClasses so dumping the right order
+  // is necessary.
+  void clear_vtable();
+  bool is_initialized();
+
+  // computes vtable length (in words) and the number of miranda methods
   static void compute_vtable_size_and_num_mirandas(int &vtable_length, int &num_miranda_methods,
                                                    klassOop super, objArrayOop methods,
                                                    AccessFlags class_flags, Handle classloader,
-                                                   symbolHandle classname, objArrayOop local_interfaces,
+                                                   Symbol* classname, objArrayOop local_interfaces,
                                                    TRAPS);
 
   // RedefineClasses() API support:
@@ -90,6 +98,8 @@ class klassVtable : public ResourceObj {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_vtable();
 
   // Garbage collection
   void oop_follow_contents();
@@ -99,8 +109,6 @@ class klassVtable : public ResourceObj {
   // Parallel Old
   void oop_follow_contents(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm);
-  void oop_update_pointers(ParCompactionManager* cm,
-                           HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   // Iterators
@@ -112,11 +120,6 @@ class klassVtable : public ResourceObj {
   void verify(outputStream* st, bool force = false);
   static void print_statistics()                            PRODUCT_RETURN;
 
-#ifndef PRODUCT
-  bool check_no_old_entries();
-  void dump_vtable();
-#endif
-
  protected:
   friend class vtableEntry;
  private:
@@ -125,11 +128,11 @@ class klassVtable : public ResourceObj {
   int  initialize_from_super(KlassHandle super);
   int  index_of(methodOop m, int len) const; // same as index_of, but search only up to len
   void put_method_at(methodOop m, int index);
-  static bool needs_new_vtable_entry(methodHandle m, klassOop super, Handle classloader, symbolHandle classname, AccessFlags access_flags, TRAPS);
+  static bool needs_new_vtable_entry(methodHandle m, klassOop super, Handle classloader, Symbol* classname, AccessFlags access_flags, TRAPS);
 
   bool update_inherited_vtable(instanceKlass* klass, methodHandle target_method, int super_vtable_len, bool checkconstraints, TRAPS);
  instanceKlass* find_transitive_override(instanceKlass* initialsuper, methodHandle target_method, int vtable_index,
-                                         Handle target_loader, symbolHandle target_classname, Thread* THREAD);
+                                         Handle target_loader, Symbol* target_classname, Thread* THREAD);
 
   // support for miranda methods
   bool is_miranda_entry_at(int i);
@@ -286,6 +289,8 @@ class klassItable : public ResourceObj {
   // group don't print the klass name.
   void adjust_method_entries(methodOop* old_methods, methodOop* new_methods,
                              int methods_length, bool * trace_name_printed);
+  bool check_no_old_or_obsolete_entries();
+  void dump_itable();
 
   // Garbage collection
   void oop_follow_contents();
@@ -295,8 +300,6 @@ class klassItable : public ResourceObj {
   // Parallel Old
   void oop_follow_contents(ParCompactionManager* cm);
   void oop_update_pointers(ParCompactionManager* cm);
-  void oop_update_pointers(ParCompactionManager* cm,
-                           HeapWord* beg_addr, HeapWord* end_addr);
 #endif // SERIALGC
 
   // Iterators

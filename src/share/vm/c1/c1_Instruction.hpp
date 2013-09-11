@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,6 +106,8 @@ class         UnsafePrefetchRead;
 class         UnsafePrefetchWrite;
 class   ProfileCall;
 class   ProfileInvoke;
+class   RuntimeCall;
+class   MemBar;
 
 // A Value is a reference to the instruction creating the value
 typedef Instruction* Value;
@@ -202,6 +204,8 @@ class InstructionVisitor: public StackObj {
   virtual void do_UnsafePrefetchWrite(UnsafePrefetchWrite* x) = 0;
   virtual void do_ProfileCall    (ProfileCall*     x) = 0;
   virtual void do_ProfileInvoke  (ProfileInvoke*   x) = 0;
+  virtual void do_RuntimeCall    (RuntimeCall*     x) = 0;
+  virtual void do_MemBar         (MemBar*          x) = 0;
 };
 
 
@@ -314,13 +318,13 @@ class Instruction: public CompilationResourceObj {
     return res;
   }
 
+  static const int no_bci = -99;
+
   enum InstructionFlag {
     NeedsNullCheckFlag = 0,
     CanTrapFlag,
     DirectCompareFlag,
     IsEliminatedFlag,
-    IsInitializedFlag,
-    IsLoadedFlag,
     IsSafepointFlag,
     IsStaticFlag,
     IsStrictfpFlag,
@@ -499,6 +503,7 @@ class Instruction: public CompilationResourceObj {
   virtual RoundFP*          as_RoundFP()         { return NULL; }
   virtual ExceptionObject*  as_ExceptionObject() { return NULL; }
   virtual UnsafeOp*         as_UnsafeOp()        { return NULL; }
+  virtual ProfileInvoke*    as_ProfileInvoke()   { return NULL; }
 
   virtual void visit(InstructionVisitor* v)      = 0;
 
@@ -619,15 +624,20 @@ LEAF(Phi, Instruction)
 LEAF(Local, Instruction)
  private:
   int      _java_index;                          // the local index within the method to which the local belongs
+  ciType*  _declared_type;
  public:
   // creation
-  Local(ValueType* type, int index)
+  Local(ciType* declared, ValueType* type, int index)
     : Instruction(type)
     , _java_index(index)
+    , _declared_type(declared)
   {}
 
   // accessors
   int java_index() const                         { return _java_index; }
+
+  ciType* declared_type() const                  { return _declared_type; }
+  ciType* exact_type() const;
 
   // generic
   virtual void input_values_do(ValueVisitor* f)   { /* no values */ }
@@ -689,7 +699,7 @@ BASE(AccessField, Instruction)
  public:
   // creation
   AccessField(Value obj, int offset, ciField* field, bool is_static,
-              ValueStack* state_before, bool is_loaded, bool is_initialized)
+              ValueStack* state_before, bool needs_patching)
   : Instruction(as_ValueType(field->type()->basic_type()), state_before)
   , _obj(obj)
   , _offset(offset)
@@ -697,16 +707,9 @@ BASE(AccessField, Instruction)
   , _explicit_null_check(NULL)
   {
     set_needs_null_check(!is_static);
-    set_flag(IsLoadedFlag, is_loaded);
-    set_flag(IsInitializedFlag, is_initialized);
     set_flag(IsStaticFlag, is_static);
+    set_flag(NeedsPatchingFlag, needs_patching);
     ASSERT_VALUES
-      if (!is_loaded || (PatchALot && !field->is_volatile())) {
-      // need to patch if the holder wasn't loaded or we're testing
-      // using PatchALot.  Don't allow PatchALot for fields which are
-      // known to be volatile they aren't patchable.
-      set_flag(NeedsPatchingFlag, true);
-    }
     // pin of all instructions with memory access
     pin();
   }
@@ -717,10 +720,13 @@ BASE(AccessField, Instruction)
   ciField* field() const                         { return _field; }
   BasicType field_type() const                   { return _field->type()->basic_type(); }
   bool is_static() const                         { return check_flag(IsStaticFlag); }
-  bool is_loaded() const                         { return check_flag(IsLoadedFlag); }
-  bool is_initialized() const                    { return check_flag(IsInitializedFlag); }
   NullCheck* explicit_null_check() const         { return _explicit_null_check; }
   bool needs_patching() const                    { return check_flag(NeedsPatchingFlag); }
+
+  // Unresolved getstatic and putstatic can cause initialization.
+  // Technically it occurs at the Constant that materializes the base
+  // of the static fields but it's simpler to model it here.
+  bool is_init_point() const                     { return is_static() && (needs_patching() || !_field->holder()->is_initialized()); }
 
   // manipulation
 
@@ -741,15 +747,15 @@ LEAF(LoadField, AccessField)
  public:
   // creation
   LoadField(Value obj, int offset, ciField* field, bool is_static,
-            ValueStack* state_before, bool is_loaded, bool is_initialized)
-  : AccessField(obj, offset, field, is_static, state_before, is_loaded, is_initialized)
+            ValueStack* state_before, bool needs_patching)
+  : AccessField(obj, offset, field, is_static, state_before, needs_patching)
   {}
 
   ciType* declared_type() const;
   ciType* exact_type() const;
 
   // generic
-  HASHING2(LoadField, is_loaded() && !field()->is_volatile(), obj()->subst(), offset())  // cannot be eliminated if not yet loaded or if volatile
+  HASHING2(LoadField, !needs_patching() && !field()->is_volatile(), obj()->subst(), offset())  // cannot be eliminated if needs patching or if volatile
 };
 
 
@@ -760,8 +766,8 @@ LEAF(StoreField, AccessField)
  public:
   // creation
   StoreField(Value obj, int offset, ciField* field, Value value, bool is_static,
-             ValueStack* state_before, bool is_loaded, bool is_initialized)
-  : AccessField(obj, offset, field, is_static, state_before, is_loaded, is_initialized)
+             ValueStack* state_before, bool needs_patching)
+  : AccessField(obj, offset, field, is_static, state_before, needs_patching)
   , _value(value)
   {
     set_flag(NeedsWriteBarrierFlag, as_ValueType(field_type())->is_object());
@@ -1148,6 +1154,8 @@ LEAF(Invoke, StateSplit)
   BasicTypeList* signature() const               { return _signature; }
   ciMethod* target() const                       { return _target; }
 
+  ciType* declared_type() const;
+
   // Returns false if target is not loaded
   bool target_is_final() const                   { return check_flag(TargetIsFinalFlag); }
   bool target_is_loaded() const                  { return check_flag(TargetIsLoadedFlag); }
@@ -1189,6 +1197,7 @@ LEAF(NewInstance, StateSplit)
   // generic
   virtual bool can_trap() const                  { return true; }
   ciType* exact_type() const;
+  ciType* declared_type() const;
 };
 
 
@@ -1209,6 +1218,8 @@ BASE(NewArray, StateSplit)
   Value length() const                           { return _length; }
 
   virtual bool needs_exception_state() const     { return false; }
+
+  ciType* declared_type() const;
 
   // generic
   virtual bool can_trap() const                  { return true; }
@@ -1399,6 +1410,7 @@ LEAF(Intrinsic, StateSplit)
   vmIntrinsics::ID _id;
   Values*          _args;
   Value            _recv;
+  int              _nonnull_state; // mask identifying which args are nonnull
 
  public:
   // preserves_state can be set to true for Intrinsics
@@ -1419,6 +1431,7 @@ LEAF(Intrinsic, StateSplit)
   , _id(id)
   , _args(args)
   , _recv(NULL)
+  , _nonnull_state(AllBits)
   {
     assert(args != NULL, "args must exist");
     ASSERT_VALUES
@@ -1443,6 +1456,23 @@ LEAF(Intrinsic, StateSplit)
   bool has_receiver() const                      { return (_recv != NULL); }
   Value receiver() const                         { assert(has_receiver(), "must have receiver"); return _recv; }
   bool preserves_state() const                   { return check_flag(PreservesStateFlag); }
+
+  bool arg_needs_null_check(int i) {
+    if (i >= 0 && i < (int)sizeof(_nonnull_state) * BitsPerByte) {
+      return is_set_nth_bit(_nonnull_state, i);
+    }
+    return true;
+  }
+
+  void set_arg_needs_null_check(int i, bool check) {
+    if (i >= 0 && i < (int)sizeof(_nonnull_state) * BitsPerByte) {
+      if (check) {
+        _nonnull_state |= nth_bit(i);
+      } else {
+        _nonnull_state &= ~(nth_bit(i));
+      }
+    }
+  }
 
   // generic
   virtual bool can_trap() const                  { return check_flag(CanTrapFlag); }
@@ -1574,6 +1604,7 @@ LEAF(BlockBegin, StateSplit)
   void set_depth_first_number(int dfn)           { _depth_first_number = dfn; }
   void set_linear_scan_number(int lsn)           { _linear_scan_number = lsn; }
   void set_end(BlockEnd* end);
+  void clear_end();
   void disconnect_from_graph();
   static void disconnect_edge(BlockBegin* from, BlockBegin* to);
   BlockBegin* insert_block_between(BlockBegin* sux);
@@ -2267,6 +2298,38 @@ LEAF(ProfileCall, Instruction)
   virtual void input_values_do(ValueVisitor* f)   { if (_recv != NULL) f->visit(&_recv); }
 };
 
+
+// Call some C runtime function that doesn't safepoint,
+// optionally passing the current thread as the first argument.
+LEAF(RuntimeCall, Instruction)
+ private:
+  const char* _entry_name;
+  address     _entry;
+  Values*     _args;
+  bool        _pass_thread;  // Pass the JavaThread* as an implicit first argument
+
+ public:
+  RuntimeCall(ValueType* type, const char* entry_name, address entry, Values* args, bool pass_thread = true)
+    : Instruction(type)
+    , _entry(entry)
+    , _args(args)
+    , _entry_name(entry_name)
+    , _pass_thread(pass_thread) {
+    ASSERT_VALUES
+    pin();
+  }
+
+  const char* entry_name() const  { return _entry_name; }
+  address entry() const           { return _entry; }
+  int number_of_arguments() const { return _args->length(); }
+  Value argument_at(int i) const  { return _args->at(i); }
+  bool pass_thread() const        { return _pass_thread; }
+
+  virtual void input_values_do(ValueVisitor* f)   {
+    for (int i = 0; i < _args->length(); i++) f->visit(_args->adr_at(i));
+  }
+};
+
 // Use to trip invocation counter of an inlined method
 
 LEAF(ProfileInvoke, Instruction)
@@ -2288,6 +2351,23 @@ LEAF(ProfileInvoke, Instruction)
   ValueStack* state()      { return _state; }
   virtual void input_values_do(ValueVisitor*)   {}
   virtual void state_values_do(ValueVisitor*);
+};
+
+LEAF(MemBar, Instruction)
+ private:
+  LIR_Code _code;
+
+ public:
+  MemBar(LIR_Code code)
+    : Instruction(voidType)
+    , _code(code)
+  {
+    pin();
+  }
+
+  LIR_Code code()           { return _code; }
+
+  virtual void input_values_do(ValueVisitor*)   {}
 };
 
 class BlockPair: public CompilationResourceObj {

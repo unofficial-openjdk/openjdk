@@ -88,7 +88,7 @@ class ciMethod : public ciObject {
 #endif
 
   ciMethod(methodHandle h_m);
-  ciMethod(ciInstanceKlass* holder, ciSymbol* name, ciSymbol* signature);
+  ciMethod(ciInstanceKlass* holder, ciSymbol* name, ciSymbol* signature, ciInstanceKlass* accessor);
 
   methodOop get_methodOop() const {
     methodOop m = (methodOop)get_oop();
@@ -127,7 +127,24 @@ class ciMethod : public ciObject {
   ciSignature* signature() const                 { return _signature; }
   ciType*      return_type() const               { return _signature->return_type(); }
   int          arg_size_no_receiver() const      { return _signature->size(); }
-  int          arg_size() const                  { return _signature->size() + (_flags.is_static() ? 0 : 1); }
+  // Can only be used on loaded ciMethods
+  int          arg_size() const                  {
+    check_is_loaded();
+    return _signature->size() + (_flags.is_static() ? 0 : 1);
+  }
+  // Report the number of elements on stack when invoking this method.
+  // This is different than the regular arg_size because invokdynamic
+  // has an implicit receiver.
+  int invoke_arg_size(Bytecodes::Code code) const {
+    int arg_size = _signature->size();
+    // Add a receiver argument, maybe:
+    if (code != Bytecodes::_invokestatic &&
+        code != Bytecodes::_invokedynamic) {
+      arg_size++;
+    }
+    return arg_size;
+  }
+
 
   // Method code and related information.
   address code()                                 { if (_code == NULL) load_code(); return _code; }
@@ -140,7 +157,11 @@ class ciMethod : public ciObject {
   int interpreter_invocation_count() const       { check_is_loaded(); return _interpreter_invocation_count; }
   int interpreter_throwout_count() const         { check_is_loaded(); return _interpreter_throwout_count; }
 
+  // Code size for inlining decisions.
+  int code_size_for_inlining();
+
   int comp_level();
+  int highest_osr_comp_level();
 
   Bytecodes::Code java_code_at_bci(int bci) {
     address bcp = code() + bci;
@@ -274,12 +295,6 @@ class ciMethod : public ciObject {
   // Print the name of this method in various incarnations.
   void print_name(outputStream* st = tty);
   void print_short_name(outputStream* st = tty);
-
-  methodOop get_method_handle_target() {
-    klassOop receiver_limit_oop = NULL;
-    int flags = 0;
-    return MethodHandles::decode_method(get_oop(), receiver_limit_oop, flags);
-  }
 };
 
 #endif // SHARE_VM_CI_CIMETHOD_HPP

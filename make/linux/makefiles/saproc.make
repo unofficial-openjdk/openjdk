@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,11 @@ LIBSAPROC = lib$(SAPROC).so
 SAPROC_G = $(SAPROC)$(G_SUFFIX)
 LIBSAPROC_G = lib$(SAPROC_G).so
 
+LIBSAPROC_DEBUGINFO   = lib$(SAPROC).debuginfo
+LIBSAPROC_DIZ         = lib$(SAPROC).diz
+LIBSAPROC_G_DEBUGINFO = lib$(SAPROC_G).debuginfo
+LIBSAPROC_G_DIZ       = lib$(SAPROC_G).diz
+
 AGENT_DIR = $(GAMMADIR)/agent
 
 SASRCDIR = $(AGENT_DIR)/src/os/$(Platform_os_family)
@@ -45,7 +50,9 @@ SASRCFILES = $(SASRCDIR)/salibelf.c                   \
 
 SAMAPFILE = $(SASRCDIR)/mapfile
 
-DEST_SAPROC = $(JDK_LIBDIR)/$(LIBSAPROC)
+DEST_SAPROC           = $(JDK_LIBDIR)/$(LIBSAPROC)
+DEST_SAPROC_DEBUGINFO = $(JDK_LIBDIR)/$(LIBSAPROC_DEBUGINFO)
+DEST_SAPROC_DIZ       = $(JDK_LIBDIR)/$(LIBSAPROC_DIZ)
 
 # DEBUG_BINARIES overrides everything, use full -g debug information
 ifeq ($(DEBUG_BINARIES), true)
@@ -71,6 +78,7 @@ $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	fi
 	@echo Making SA debugger back-end...
 	$(QUIETLY) $(CC) -D$(BUILDARCH) -D_GNU_SOURCE                   \
+		   -D_FILE_OFFSET_BITS=64                               \
                    $(SYMFLAG) $(ARCHFLAG) $(SHARED_FLAG) $(PICFLAG)     \
 	           -I$(SASRCDIR)                                        \
 	           -I$(GENERATED)                                       \
@@ -82,10 +90,32 @@ $(LIBSAPROC): $(SASRCFILES) $(SAMAPFILE)
 	           -o $@                                                \
 	           -lthread_db
 	$(QUIETLY) [ -f $(LIBSAPROC_G) ] || { ln -s $@ $(LIBSAPROC_G); }
+ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+	$(QUIETLY) $(OBJCOPY) --only-keep-debug $@ $(LIBSAPROC_DEBUGINFO)
+	$(QUIETLY) $(OBJCOPY) --add-gnu-debuglink=$(LIBSAPROC_DEBUGINFO) $@
+  ifeq ($(STRIP_POLICY),all_strip)
+	$(QUIETLY) $(STRIP) $@
+  else
+    ifeq ($(STRIP_POLICY),min_strip)
+	$(QUIETLY) $(STRIP) -g $@
+    # implied else here is no stripping at all
+    endif
+  endif
+	[ -f $(LIBSAPROC_G_DEBUGINFO) ] || { ln -s $(LIBSAPROC_DEBUGINFO) $(LIBSAPROC_G_DEBUGINFO); }
+  ifeq ($(ZIP_DEBUGINFO_FILES),1)
+	$(ZIPEXE) -q -y $(LIBSAPROC_DIZ) $(LIBSAPROC_DEBUGINFO) $(LIBSAPROC_G_DEBUGINFO)
+	$(RM) $(LIBSAPROC_DEBUGINFO) $(LIBSAPROC_G_DEBUGINFO)
+	[ -f $(LIBSAPROC_G_DIZ) ] || { ln -s $(LIBSAPROC_DIZ) $(LIBSAPROC_G_DIZ); }
+  endif
+endif
 
 install_saproc: $(BUILDLIBSAPROC)
 	$(QUIETLY) if [ -e $(LIBSAPROC) ] ; then             \
 	  echo "Copying $(LIBSAPROC) to $(DEST_SAPROC)";     \
+	  test -f $(LIBSAPROC_DEBUGINFO) &&                  \
+	    cp -f $(LIBSAPROC_DEBUGINFO) $(DEST_SAPROC_DEBUGINFO); \
+	  test -f $(LIBSAPROC_DIZ) &&                  \
+	    cp -f $(LIBSAPROC_DIZ) $(DEST_SAPROC_DIZ); \
 	  cp -f $(LIBSAPROC) $(DEST_SAPROC) && echo "Done";  \
 	fi
 

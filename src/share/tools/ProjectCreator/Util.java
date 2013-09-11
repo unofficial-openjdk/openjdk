@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,18 +47,6 @@ public class Util {
         return sb.toString();
     }
 
-     static String join(String padder, String v[]) {
-        StringBuffer sb = new StringBuffer();
-
-        for (int i=0; i<v.length; i++) {
-            sb.append(v[i]);
-            if (i < (v.length  - 1)) sb.append(padder);
-        }
-
-        return sb.toString();
-    }
-
-
 
     static String prefixed_join(String padder, Vector v, boolean quoted) {
         StringBuffer sb = new StringBuffer();
@@ -80,9 +68,16 @@ public class Util {
 
 
     static String normalize(String file) {
-        return file.replace('\\', '/');
+        file = file.replace('\\', '/');
+        if (file.length() > 2) {
+            if (file.charAt(1) == ':' && file.charAt(2) == '/') {
+                // convert drive letter to uppercase
+                String drive = file.substring(0, 1).toUpperCase();
+                return drive + file.substring(1);
+            }
+        }
+        return file;
     }
 
     static String sep = File.separator;
-    static String os = "Win32"; //System.getProperty("os.name");
 }

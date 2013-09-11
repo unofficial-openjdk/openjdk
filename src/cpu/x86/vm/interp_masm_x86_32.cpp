@@ -45,6 +45,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 
 
 // Implementation of InterpreterMacroAssembler
@@ -215,7 +218,7 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register reg, int bcp_off
   if (index_size == sizeof(u2)) {
     load_unsigned_short(reg, Address(rsi, bcp_offset));
   } else if (index_size == sizeof(u4)) {
-    assert(EnableInvokeDynamic, "giant index used only for EnableInvokeDynamic");
+    assert(EnableInvokeDynamic, "giant index used only for JSR 292");
     movl(reg, Address(rsi, bcp_offset));
     // Check if the secondary index definition is still ~x, otherwise
     // we have to change the following assembler code to calculate the
@@ -223,7 +226,7 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register reg, int bcp_off
     assert(constantPoolCacheOopDesc::decode_secondary_index(~123) == 123, "else change next line");
     notl(reg);  // convert to plain index
   } else if (index_size == sizeof(u1)) {
-    assert(EnableMethodHandles, "tiny index used only for EnableMethodHandles");
+    assert(EnableInvokeDynamic, "tiny index used only for JSR 292");
     load_unsigned_byte(reg, Address(rsi, bcp_offset));
   } else {
     ShouldNotReachHere();
@@ -233,11 +236,25 @@ void InterpreterMacroAssembler::get_cache_index_at_bcp(Register reg, int bcp_off
 
 void InterpreterMacroAssembler::get_cache_and_index_at_bcp(Register cache, Register index,
                                                            int bcp_offset, size_t index_size) {
-  assert(cache != index, "must use different registers");
+  assert_different_registers(cache, index);
   get_cache_index_at_bcp(index, bcp_offset, index_size);
   movptr(cache, Address(rbp, frame::interpreter_frame_cache_offset * wordSize));
   assert(sizeof(ConstantPoolCacheEntry) == 4*wordSize, "adjust code below");
   shlptr(index, 2); // convert from field index to ConstantPoolCacheEntry index
+}
+
+
+void InterpreterMacroAssembler::get_cache_and_index_and_bytecode_at_bcp(Register cache,
+                                                                        Register index,
+                                                                        Register bytecode,
+                                                                        int byte_no,
+                                                                        int bcp_offset,
+                                                                        size_t index_size) {
+  get_cache_and_index_at_bcp(cache, index, bcp_offset, index_size);
+  movptr(bytecode, Address(cache, index, Address::times_ptr, constantPoolCacheOopDesc::base_offset() + ConstantPoolCacheEntry::indices_offset()));
+  const int shift_count = (1 + byte_no) * BitsPerByte;
+  shrptr(bytecode, shift_count);
+  andptr(bytecode, 0xFF);
 }
 
 
@@ -383,32 +400,6 @@ void InterpreterMacroAssembler::store_ptr(int n, Register val) {
   movptr(Address(rsp, Interpreter::expr_offset_in_bytes(n)), val);
 }
 
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point) {
-  MacroAssembler::call_VM_leaf_base(entry_point, 0);
-}
-
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point, Register arg_1) {
-  push(arg_1);
-  MacroAssembler::call_VM_leaf_base(entry_point, 1);
-}
-
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point, Register arg_1, Register arg_2) {
-  push(arg_2);
-  push(arg_1);
-  MacroAssembler::call_VM_leaf_base(entry_point, 2);
-}
-
-
-void InterpreterMacroAssembler::super_call_VM_leaf(address entry_point, Register arg_1, Register arg_2, Register arg_3) {
-  push(arg_3);
-  push(arg_2);
-  push(arg_1);
-  MacroAssembler::call_VM_leaf_base(entry_point, 3);
-}
-
-
 void InterpreterMacroAssembler::prepare_to_jump_from_interpreted() {
   // set sender sp
   lea(rsi, Address(rsp, wordSize));
@@ -429,9 +420,9 @@ void InterpreterMacroAssembler::jump_from_interpreted(Register method, Register 
     // interp_only_mode if these events CAN be enabled.
     get_thread(temp);
     // interp_only is an int, on little endian it is sufficient to test the byte only
-    // Is a cmpl faster (ce
+    // Is a cmpl faster?
     cmpb(Address(temp, JavaThread::interp_only_mode_offset()), 0);
-    jcc(Assembler::zero, run_compiled_code);
+    jccb(Assembler::zero, run_compiled_code);
     jmp(Address(method, methodOopDesc::interpreter_entry_offset()));
     bind(run_compiled_code);
   }
@@ -1170,7 +1161,7 @@ void InterpreterMacroAssembler::record_klass_in_profile_helper(
   int recvr_offset = in_bytes(VirtualCallData::receiver_offset(start_row));
   set_mdp_data_at(mdp, recvr_offset, receiver);
   int count_offset = in_bytes(VirtualCallData::receiver_count_offset(start_row));
-  movptr(reg2, (int32_t)DataLayout::counter_increment);
+  movptr(reg2, (intptr_t)DataLayout::counter_increment);
   set_mdp_data_at(mdp, count_offset, reg2);
   if (start_row > 0) {
     jmp(done);
@@ -1313,7 +1304,7 @@ void InterpreterMacroAssembler::profile_switch_case(Register index, Register mdp
     test_method_data_pointer(mdp, profile_continue);
 
     // Build the base (index * per_case_size_in_bytes()) + case_array_offset_in_bytes()
-    movptr(reg2, (int32_t)in_bytes(MultiBranchData::per_case_size()));
+    movptr(reg2, (intptr_t)in_bytes(MultiBranchData::per_case_size()));
     // index is positive and so should have correct value if this code were
     // used on 64bits
     imulptr(index, reg2);

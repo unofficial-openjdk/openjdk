@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@
 #include "oops/cpCacheKlass.hpp"
 #include "oops/cpCacheOop.hpp"
 #include "oops/instanceKlass.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/instanceKlassKlass.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/klassKlass.hpp"
@@ -59,7 +60,6 @@
 #include "oops/methodKlass.hpp"
 #include "oops/objArrayKlassKlass.hpp"
 #include "oops/oop.inline.hpp"
-#include "oops/symbolKlass.hpp"
 #include "oops/typeArrayKlass.hpp"
 #include "oops/typeArrayKlassKlass.hpp"
 #include "prims/jvmtiRedefineClassesTrace.hpp"
@@ -89,6 +89,9 @@
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
+#endif
 #ifndef SERIALGC
 #include "gc_implementation/concurrentMarkSweep/cmsAdaptiveSizePolicy.hpp"
 #include "gc_implementation/concurrentMarkSweep/cmsCollectorPolicy.hpp"
@@ -108,7 +111,6 @@ klassOop Universe::_singleArrayKlassObj               = NULL;
 klassOop Universe::_doubleArrayKlassObj               = NULL;
 klassOop Universe::_typeArrayKlassObjs[T_VOID+1]      = { NULL /*, NULL...*/ };
 klassOop Universe::_objectArrayKlassObj               = NULL;
-klassOop Universe::_symbolKlassObj                    = NULL;
 klassOop Universe::_methodKlassObj                    = NULL;
 klassOop Universe::_constMethodKlassObj               = NULL;
 klassOop Universe::_methodDataKlassObj                = NULL;
@@ -143,6 +145,7 @@ oop Universe::_the_null_string                        = NULL;
 oop Universe::_the_min_jint_string                   = NULL;
 LatestMethodOopCache* Universe::_finalizer_register_cache = NULL;
 LatestMethodOopCache* Universe::_loader_addClass_cache    = NULL;
+LatestMethodOopCache* Universe::_pd_implies_cache         = NULL;
 ActiveMethodOopsCache* Universe::_reflect_invoke_cache    = NULL;
 oop Universe::_out_of_memory_error_java_heap          = NULL;
 oop Universe::_out_of_memory_error_perm_gen           = NULL;
@@ -155,7 +158,6 @@ oop Universe::_null_ptr_exception_instance            = NULL;
 oop Universe::_arithmetic_exception_instance          = NULL;
 oop Universe::_virtual_machine_error_instance         = NULL;
 oop Universe::_vm_exception                           = NULL;
-oop Universe::_emptySymbol                            = NULL;
 
 // These variables are guarded by FullGCALot_lock.
 debug_only(objArrayOop Universe::_fullgc_alot_dummy_array = NULL;)
@@ -190,7 +192,6 @@ void Universe::basic_type_classes_do(void f(klassOop)) {
 
 
 void Universe::system_classes_do(void f(klassOop)) {
-  f(symbolKlassObj());
   f(methodKlassObj());
   f(constMethodKlassObj());
   f(methodDataKlassObj());
@@ -242,7 +243,6 @@ void Universe::oops_do(OopClosure* f, bool do_all) {
       }
     }
   }
-  f->do_oop((oop*)&_symbolKlassObj);
   f->do_oop((oop*)&_methodKlassObj);
   f->do_oop((oop*)&_constMethodKlassObj);
   f->do_oop((oop*)&_methodDataKlassObj);
@@ -265,6 +265,7 @@ void Universe::oops_do(OopClosure* f, bool do_all) {
   f->do_oop((oop*)&_the_min_jint_string);
   _finalizer_register_cache->oops_do(f);
   _loader_addClass_cache->oops_do(f);
+  _pd_implies_cache->oops_do(f);
   _reflect_invoke_cache->oops_do(f);
   f->do_oop((oop*)&_out_of_memory_error_java_heap);
   f->do_oop((oop*)&_out_of_memory_error_perm_gen);
@@ -279,7 +280,6 @@ void Universe::oops_do(OopClosure* f, bool do_all) {
   f->do_oop((oop*)&_main_thread_group);
   f->do_oop((oop*)&_system_thread_group);
   f->do_oop((oop*)&_vm_exception);
-  f->do_oop((oop*)&_emptySymbol);
   debug_only(f->do_oop((oop*)&_fullgc_alot_dummy_array);)
 }
 
@@ -311,10 +311,6 @@ void Universe::genesis(TRAPS) {
         _objArrayKlassKlassObj  = objArrayKlassKlass::create_klass(CHECK);
         _instanceKlassKlassObj  = instanceKlassKlass::create_klass(CHECK);
         _typeArrayKlassKlassObj = typeArrayKlassKlass::create_klass(CHECK);
-
-        _symbolKlassObj         = symbolKlass::create_klass(CHECK);
-
-        _emptySymbol            = oopFactory::new_symbol("", CHECK);
 
         _boolArrayKlassObj      = typeArrayKlass::create_klass(T_BOOLEAN, sizeof(jboolean), CHECK);
         _charArrayKlassObj      = typeArrayKlass::create_klass(T_CHAR,    sizeof(jchar),    CHECK);
@@ -349,13 +345,6 @@ void Universe::genesis(TRAPS) {
         _the_empty_system_obj_array = oopFactory::new_system_objArray(0, CHECK);
 
         _the_array_interfaces_array = oopFactory::new_system_objArray(2, CHECK);
-        _vm_exception               = oopFactory::new_symbol("vm exception holder", CHECK);
-      } else {
-        FileMapInfo *mapinfo = FileMapInfo::current_info();
-        char* buffer = mapinfo->region_base(CompactingPermGenGen::md);
-        void** vtbl_list = (void**)buffer;
-        init_self_patching_vtbl_list(vtbl_list,
-                                     CompactingPermGenGen::vtbl_list_size);
       }
     }
 
@@ -449,15 +438,15 @@ void Universe::genesis(TRAPS) {
   if (JDK_Version::is_partially_initialized()) {
     uint8_t jdk_version;
     klassOop k = SystemDictionary::resolve_or_null(
-        vmSymbolHandles::java_lang_management_MemoryUsage(), THREAD);
+        vmSymbols::java_lang_management_MemoryUsage(), THREAD);
     CLEAR_PENDING_EXCEPTION; // ignore exceptions
     if (k == NULL) {
       k = SystemDictionary::resolve_or_null(
-          vmSymbolHandles::java_lang_CharSequence(), THREAD);
+          vmSymbols::java_lang_CharSequence(), THREAD);
       CLEAR_PENDING_EXCEPTION; // ignore exceptions
       if (k == NULL) {
         k = SystemDictionary::resolve_or_null(
-            vmSymbolHandles::java_lang_Shutdown(), THREAD);
+            vmSymbols::java_lang_Shutdown(), THREAD);
         CLEAR_PENDING_EXCEPTION; // ignore exceptions
         if (k == NULL) {
           jdk_version = 2;
@@ -520,11 +509,16 @@ void Universe::genesis(TRAPS) {
 }
 
 
-static inline void add_vtable(void** list, int* n, Klass* o, int count) {
-  list[(*n)++] = *(void**)&o->vtbl_value();
-  guarantee((*n) <= count, "vtable list too small.");
+static inline void* dereference(void* addr) {
+  return *(void**)addr;
 }
 
+static inline void add_vtable(void** list, int* n, void* o, int count) {
+  guarantee((*n) < count, "vtable list too small");
+  void* vtable = dereference(o);
+  assert(dereference(vtable) != NULL, "invalid vtable");
+  list[(*n)++] = vtable;
+}
 
 void Universe::init_self_patching_vtbl_list(void** list, int count) {
   int n = 0;
@@ -533,9 +527,9 @@ void Universe::init_self_patching_vtbl_list(void** list, int count) {
   { objArrayKlassKlass o;     add_vtable(list, &n, &o, count); }
   { instanceKlassKlass o;     add_vtable(list, &n, &o, count); }
   { instanceKlass o;          add_vtable(list, &n, &o, count); }
+  { instanceMirrorKlass o;    add_vtable(list, &n, &o, count); }
   { instanceRefKlass o;       add_vtable(list, &n, &o, count); }
   { typeArrayKlassKlass o;    add_vtable(list, &n, &o, count); }
-  { symbolKlass o;            add_vtable(list, &n, &o, count); }
   { typeArrayKlass o;         add_vtable(list, &n, &o, count); }
   { methodKlass o;            add_vtable(list, &n, &o, count); }
   { constMethodKlass o;       add_vtable(list, &n, &o, count); }
@@ -544,6 +538,11 @@ void Universe::init_self_patching_vtbl_list(void** list, int count) {
   { objArrayKlass o;          add_vtable(list, &n, &o, count); }
   { methodDataKlass o;        add_vtable(list, &n, &o, count); }
   { compiledICHolderKlass o;  add_vtable(list, &n, &o, count); }
+#ifndef PRODUCT
+  // In non-product builds CHeapObj is derived from AllocatedObj,
+  // so symbols in CDS archive should have their vtable pointer patched.
+  { Symbol o;                 add_vtable(list, &n, &o, count); }
+#endif
 }
 
 
@@ -555,7 +554,7 @@ class FixupMirrorClosure: public ObjectClosure {
       KlassHandle k(THREAD, klassOop(obj));
       // We will never reach the CATCH below since Exceptions::_throw will cause
       // the VM to exit if an exception is thrown during initialization
-      java_lang_Class::create_mirror(k, CATCH);
+      java_lang_Class::fixup_mirror(k, CATCH);
       // This call unconditionally creates a new mirror for k,
       // and links in k's component_mirror field if k is an array.
       // If k is an objArray, k's element type must already have
@@ -613,6 +612,10 @@ void Universe::fixup_mirrors(TRAPS) {
   // walk over permanent objects created so far (mostly classes) and fixup their mirrors. Note
   // that the number of objects allocated at this point is very small.
   assert(SystemDictionary::Class_klass_loaded(), "java.lang.Class should be loaded");
+
+  // Cache the start of the static fields
+  instanceMirrorKlass::init_offset_of_static_fields();
+
   FixupMirrorClosure blk;
   Universe::heap()->permanent_object_iterate(&blk);
 }
@@ -633,8 +636,8 @@ void Universe::run_finalizers_on_exit() {
     JavaCalls::call_static(
       &result,
       finalizer_klass,
-      vmSymbolHandles::run_finalizers_on_exit_name(),
-      vmSymbolHandles::void_method_signature(),
+      vmSymbols::run_finalizers_on_exit_name(),
+      vmSymbols::void_method_signature(),
       THREAD
     );
     // Ignore any pending exceptions
@@ -787,6 +790,7 @@ jint universe_init() {
   // CompactingPermGenGen::initialize_oops() tries to populate them.
   Universe::_finalizer_register_cache = new LatestMethodOopCache();
   Universe::_loader_addClass_cache    = new LatestMethodOopCache();
+  Universe::_pd_implies_cache         = new LatestMethodOopCache();
   Universe::_reflect_invoke_cache     = new ActiveMethodOopsCache();
 
   if (UseSharedSpaces) {
@@ -892,7 +896,7 @@ jint Universe::initialize_heap() {
 
   } else if (UseG1GC) {
 #ifndef SERIALGC
-    G1CollectorPolicy* g1p = new G1CollectorPolicy_BestRegionsFirst();
+    G1CollectorPolicy* g1p = new G1CollectorPolicy();
     G1CollectedHeap* g1h = new G1CollectedHeap(g1p);
     Universe::_collectedHeap = g1h;
 #else  // SERIALGC
@@ -1037,7 +1041,7 @@ bool universe_post_init() {
     // Setup preallocated empty java.lang.Class array
     Universe::_the_empty_class_klass_array = oopFactory::new_objArray(SystemDictionary::Class_klass(), 0, CHECK_false);
     // Setup preallocated OutOfMemoryError errors
-    k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_OutOfMemoryError(), true, CHECK_false);
+    k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_OutOfMemoryError(), true, CHECK_false);
     k_h = instanceKlassHandle(THREAD, k);
     Universe::_out_of_memory_error_java_heap = k_h->allocate_permanent_instance(CHECK_false);
     Universe::_out_of_memory_error_perm_gen = k_h->allocate_permanent_instance(CHECK_false);
@@ -1047,15 +1051,15 @@ bool universe_post_init() {
 
     // Setup preallocated NullPointerException
     // (this is currently used for a cheap & dirty solution in compiler exception handling)
-    k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_NullPointerException(), true, CHECK_false);
+    k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_NullPointerException(), true, CHECK_false);
     Universe::_null_ptr_exception_instance = instanceKlass::cast(k)->allocate_permanent_instance(CHECK_false);
     // Setup preallocated ArithmeticException
     // (this is currently used for a cheap & dirty solution in compiler exception handling)
-    k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_ArithmeticException(), true, CHECK_false);
+    k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_ArithmeticException(), true, CHECK_false);
     Universe::_arithmetic_exception_instance = instanceKlass::cast(k)->allocate_permanent_instance(CHECK_false);
     // Virtual Machine Error for when we get into a situation we can't resolve
     k = SystemDictionary::resolve_or_fail(
-      vmSymbolHandles::java_lang_VirtualMachineError(), true, CHECK_false);
+      vmSymbols::java_lang_VirtualMachineError(), true, CHECK_false);
     bool linked = instanceKlass::cast(k)->link_class_or_fail(CHECK_false);
     if (!linked) {
       tty->print_cr("Unable to link/verify VirtualMachineError class");
@@ -1063,6 +1067,9 @@ bool universe_post_init() {
     }
     Universe::_virtual_machine_error_instance =
       instanceKlass::cast(k)->allocate_permanent_instance(CHECK_false);
+
+    Universe::_vm_exception               = instanceKlass::cast(k)->allocate_permanent_instance(CHECK_false);
+
   }
   if (!DumpSharedSpaces) {
     // These are the only Java fields that are currently set during shared space dumping.
@@ -1117,7 +1124,7 @@ bool universe_post_init() {
   // Note: No race-condition here, since a resolve will always return the same result
 
   // Setup method for security checks
-  k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_reflect_Method(), true, CHECK_false);
+  k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_reflect_Method(), true, CHECK_false);
   k_h = instanceKlassHandle(THREAD, k);
   k_h->link_class(CHECK_false);
   m = k_h->find_method(vmSymbols::invoke_name(), vmSymbols::object_object_array_object_signature());
@@ -1136,6 +1143,23 @@ bool universe_post_init() {
   }
   Universe::_loader_addClass_cache->init(
     SystemDictionary::ClassLoader_klass(), m, CHECK_false);
+
+  // Setup method for checking protection domain
+  instanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->link_class(CHECK_false);
+  m = instanceKlass::cast(SystemDictionary::ProtectionDomain_klass())->
+            find_method(vmSymbols::impliesCreateAccessControlContext_name(),
+                        vmSymbols::void_boolean_signature());
+  // Allow NULL which should only happen with bootstrapping.
+  if (m != NULL) {
+    if (m->is_static()) {
+      // NoSuchMethodException doesn't actually work because it tries to run the
+      // <init> function before java_lang_Class is linked. Print error and exit.
+      tty->print_cr("ProtectionDomain.impliesCreateAccessControlContext() has the wrong linkage");
+      return false; // initialization failed
+    }
+    Universe::_pd_implies_cache->init(
+      SystemDictionary::ProtectionDomain_klass(), m, CHECK_false);;
+  }
 
   // The folowing is initializing converter functions for serialization in
   // JVM.cpp. If we clean up the StrictMath code above we may want to find
@@ -1176,10 +1200,41 @@ void Universe::flush_dependents_on(instanceKlassHandle dependee) {
   // stopped dring the safepoint so CodeCache will be safe to update without
   // holding the CodeCache_lock.
 
-  DepChange changes(dependee);
+  KlassDepChange changes(dependee);
 
   // Compute the dependent nmethods
   if (CodeCache::mark_for_deoptimization(changes) > 0) {
+    // At least one nmethod has been marked for deoptimization
+    VM_Deoptimize op;
+    VMThread::execute(&op);
+  }
+}
+
+// Flushes compiled methods dependent on a particular CallSite
+// instance when its target is different than the given MethodHandle.
+void Universe::flush_dependents_on(Handle call_site, Handle method_handle) {
+  assert_lock_strong(Compile_lock);
+
+  if (CodeCache::number_of_nmethods_with_dependencies() == 0) return;
+
+  // CodeCache can only be updated by a thread_in_VM and they will all be
+  // stopped dring the safepoint so CodeCache will be safe to update without
+  // holding the CodeCache_lock.
+
+  CallSiteDepChange changes(call_site(), method_handle());
+
+  // Compute the dependent nmethods that have a reference to a
+  // CallSite object.  We use instanceKlass::mark_dependent_nmethod
+  // directly instead of CodeCache::mark_for_deoptimization because we
+  // want dependents on the call site class only not all classes in
+  // the ContextStream.
+  int marked = 0;
+  {
+    MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+    instanceKlass* call_site_klass = instanceKlass::cast(call_site->klass());
+    marked = call_site_klass->mark_dependent_nmethods(changes);
+  }
+  if (marked > 0) {
     // At least one nmethod has been marked for deoptimization
     VM_Deoptimize op;
     VMThread::execute(&op);
@@ -1246,11 +1301,17 @@ void Universe::flush_dependents_on_method(methodHandle m_h) {
   }
 }
 
-void Universe::print() { print_on(gclog_or_tty); }
+void Universe::print() {
+  print_on(gclog_or_tty);
+}
 
-void Universe::print_on(outputStream* st) {
+void Universe::print_on(outputStream* st, bool extended) {
   st->print_cr("Heap");
-  heap()->print_on(st);
+  if (!extended) {
+    heap()->print_on(st);
+  } else {
+    heap()->print_extended_on(st);
+  }
 }
 
 void Universe::print_heap_at_SIGBREAK() {
@@ -1262,22 +1323,30 @@ void Universe::print_heap_at_SIGBREAK() {
   }
 }
 
-void Universe::print_heap_before_gc(outputStream* st) {
+void Universe::print_heap_before_gc(outputStream* st, bool ignore_extended) {
   st->print_cr("{Heap before GC invocations=%u (full %u):",
                heap()->total_collections(),
                heap()->total_full_collections());
-  heap()->print_on(st);
+  if (!PrintHeapAtGCExtended || ignore_extended) {
+    heap()->print_on(st);
+  } else {
+    heap()->print_extended_on(st);
+  }
 }
 
-void Universe::print_heap_after_gc(outputStream* st) {
+void Universe::print_heap_after_gc(outputStream* st, bool ignore_extended) {
   st->print_cr("Heap after GC invocations=%u (full %u):",
                heap()->total_collections(),
                heap()->total_full_collections());
-  heap()->print_on(st);
+  if (!PrintHeapAtGCExtended || ignore_extended) {
+    heap()->print_on(st);
+  } else {
+    heap()->print_extended_on(st);
+  }
   st->print_cr("}");
 }
 
-void Universe::verify(bool allow_dirty, bool silent, bool option) {
+void Universe::verify(bool allow_dirty, bool silent, VerifyOption option) {
   if (SharedSkipVerify) {
     return;
   }
@@ -1318,6 +1387,8 @@ void Universe::verify(bool allow_dirty, bool silent, bool option) {
   JNIHandles::verify();
   if (!silent) gclog_or_tty->print("C-heap ");
   os::check_heap();
+  if (!silent) gclog_or_tty->print("code cache ");
+  CodeCache::verify_oops();
   if (!silent) gclog_or_tty->print_cr("]");
 
   _verify_in_progress = false;
@@ -1570,6 +1641,7 @@ bool ActiveMethodOopsCache::is_same_method(const methodOop method) const {
 
 
 methodOop LatestMethodOopCache::get_methodOop() {
+  if (klass() == NULL) return NULL;
   instanceKlass* ik = instanceKlass::cast(klass());
   methodOop m = ik->method_with_idnum(method_idnum());
   assert(m != NULL, "sanity check");

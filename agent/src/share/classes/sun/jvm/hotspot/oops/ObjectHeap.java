@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import java.util.*;
 
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.gc_interface.*;
+import sun.jvm.hotspot.gc_implementation.g1.*;
 import sun.jvm.hotspot.gc_implementation.parallelScavenge.*;
 import sun.jvm.hotspot.memory.*;
 import sun.jvm.hotspot.runtime.*;
@@ -47,7 +48,6 @@ public class ObjectHeap {
     DEBUG = System.getProperty("sun.jvm.hotspot.oops.ObjectHeap.DEBUG") != null;
   }
 
-  private OopHandle              symbolKlassHandle;
   private OopHandle              methodKlassHandle;
   private OopHandle              constMethodKlassHandle;
   private OopHandle              methodDataKlassHandle;
@@ -68,7 +68,6 @@ public class ObjectHeap {
   private OopHandle              arrayKlassKlassHandle;
   private OopHandle              compiledICHolderKlassHandle;
 
-  private SymbolKlass            symbolKlassObj;
   private MethodKlass            methodKlassObj;
   private ConstMethodKlass       constMethodKlassObj;
   private MethodDataKlass        methodDataKlassObj;
@@ -92,9 +91,6 @@ public class ObjectHeap {
   public void initialize(TypeDataBase db) throws WrongTypeException {
     // Lookup the roots in the object hierarchy.
     Type universeType = db.lookupType("Universe");
-
-    symbolKlassHandle         = universeType.getOopField("_symbolKlassObj").getValue();
-    symbolKlassObj            = new SymbolKlass(symbolKlassHandle, this);
 
     methodKlassHandle         = universeType.getOopField("_methodKlassObj").getValue();
     methodKlassObj            = new MethodKlass(methodKlassHandle, this);
@@ -199,7 +195,6 @@ public class ObjectHeap {
   public long getDoubleSize()  { return doubleSize;  }
 
   // Accessors for well-known system classes (from Universe)
-  public SymbolKlass            getSymbolKlassObj()            { return symbolKlassObj; }
   public MethodKlass            getMethodKlassObj()            { return methodKlassObj; }
   public ConstMethodKlass       getConstMethodKlassObj()       { return constMethodKlassObj; }
   public MethodDataKlass        getMethodDataKlassObj()        { return methodDataKlassObj; }
@@ -337,7 +332,6 @@ public class ObjectHeap {
     // First check if handle is one of the root objects
     if (handle.equals(methodKlassHandle))              return getMethodKlassObj();
     if (handle.equals(constMethodKlassHandle))         return getConstMethodKlassObj();
-    if (handle.equals(symbolKlassHandle))              return getSymbolKlassObj();
     if (handle.equals(constantPoolKlassHandle))        return getConstantPoolKlassObj();
     if (handle.equals(constantPoolCacheKlassHandle))   return getConstantPoolCacheKlassObj();
     if (handle.equals(instanceKlassKlassHandle))       return getInstanceKlassKlassObj();
@@ -363,14 +357,22 @@ public class ObjectHeap {
     if (klass != null) {
       if (klass.equals(methodKlassHandle))              return new Method(handle, this);
       if (klass.equals(constMethodKlassHandle))         return new ConstMethod(handle, this);
-      if (klass.equals(symbolKlassHandle))              return new Symbol(handle, this);
       if (klass.equals(constantPoolKlassHandle))        return new ConstantPool(handle, this);
       if (klass.equals(constantPoolCacheKlassHandle))   return new ConstantPoolCache(handle, this);
       if (!VM.getVM().isCore()) {
         if (klass.equals(compiledICHolderKlassHandle))  return new CompiledICHolder(handle, this);
         if (klass.equals(methodDataKlassHandle))        return new MethodData(handle, this);
       }
-      if (klass.equals(instanceKlassKlassHandle))       return new InstanceKlass(handle, this);
+      if (klass.equals(instanceKlassKlassHandle)) {
+          InstanceKlass ik = new InstanceKlass(handle, this);
+          if (ik.getName().asString().equals("java/lang/Class")) {
+              // We would normally do this using the vtable style
+              // lookup but since it's not used for these currently
+              // it's simpler to just check for the name.
+              return new InstanceMirrorKlass(handle, this);
+          }
+          return ik;
+      }
       if (klass.equals(objArrayKlassKlassHandle))       return new ObjArrayKlass(handle, this);
       if (klass.equals(typeArrayKlassKlassHandle))      return new TypeArrayKlass(handle, this);
 
@@ -513,9 +515,16 @@ public class ObjectHeap {
 
   private void addPermGenLiveRegions(List output, CollectedHeap heap) {
     LiveRegionsCollector lrc = new LiveRegionsCollector(output);
-    if (heap instanceof GenCollectedHeap) {
-       GenCollectedHeap genHeap = (GenCollectedHeap) heap;
-       Generation gen = genHeap.permGen();
+    if (heap instanceof SharedHeap) {
+       if (Assert.ASSERTS_ENABLED) {
+          Assert.that(heap instanceof GenCollectedHeap ||
+                      heap instanceof G1CollectedHeap,
+                      "Expecting GenCollectedHeap or G1CollectedHeap, " +
+                      "but got " + heap.getClass().getName());
+       }
+       // Handles both GenCollectedHeap and G1CollectedHeap
+       SharedHeap sharedHeap = (SharedHeap) heap;
+       Generation gen = sharedHeap.permGen();
        gen.spaceIterate(lrc, true);
     } else if (heap instanceof ParallelScavengeHeap) {
        ParallelScavengeHeap psh = (ParallelScavengeHeap) heap;
@@ -523,8 +532,9 @@ public class ObjectHeap {
        addLiveRegions(permGen.objectSpace().getLiveRegions(), output);
     } else {
        if (Assert.ASSERTS_ENABLED) {
-          Assert.that(false, "Expecting GenCollectedHeap or ParallelScavengeHeap, but got " +
-                             heap.getClass().getName());
+          Assert.that(false,
+                      "Expecting SharedHeap or ParallelScavengeHeap, " +
+                      "but got " + heap.getClass().getName());
        }
     }
   }
@@ -587,10 +597,14 @@ public class ObjectHeap {
        addLiveRegions(youngGen.fromSpace().getLiveRegions(), liveRegions);
        PSOldGen oldGen = psh.oldGen();
        addLiveRegions(oldGen.objectSpace().getLiveRegions(), liveRegions);
+    } else if (heap instanceof G1CollectedHeap) {
+        G1CollectedHeap g1h = (G1CollectedHeap) heap;
+        g1h.heapRegionIterate(lrc);
     } else {
        if (Assert.ASSERTS_ENABLED) {
-          Assert.that(false, "Expecting GenCollectedHeap or ParallelScavengeHeap, but got " +
-                              heap.getClass().getName());
+          Assert.that(false, "Expecting GenCollectedHeap, G1CollectedHeap, " +
+                      "or ParallelScavengeHeap, but got " +
+                      heap.getClass().getName());
        }
     }
 

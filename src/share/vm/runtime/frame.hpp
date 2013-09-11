@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,12 @@
 #ifdef TARGET_ARCH_MODEL_zero
 # include "adfiles/adGlobals_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_MODEL_arm
+# include "adfiles/adGlobals_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc
+# include "adfiles/adGlobals_ppc.hpp"
+#endif
 #endif
 #ifdef ZERO
 #ifdef TARGET_ARCH_zero
@@ -54,6 +60,7 @@
 typedef class BytecodeInterpreter* interpreterState;
 
 class CodeBlob;
+class FrameValues;
 class vframeArray;
 
 
@@ -128,6 +135,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   bool is_interpreted_frame()    const;
   bool is_java_frame()           const;
   bool is_entry_frame()          const;             // Java frame called from C?
+  bool is_ricochet_frame()       const;
   bool is_native_frame()         const;
   bool is_runtime_frame()        const;
   bool is_compiled_frame()       const;
@@ -168,6 +176,7 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // Helper methods for better factored code in frame::sender
   frame sender_for_compiled_frame(RegisterMap* map) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
+  frame sender_for_ricochet_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
 
@@ -212,6 +221,19 @@ class frame VALUE_OBJ_CLASS_SPEC {
   // returns the stack pointer of the calling frame
   intptr_t* sender_sp() const;
 
+  // Returns the real 'frame pointer' for the current frame.
+  // This is the value expected by the platform ABI when it defines a
+  // frame pointer register. It may differ from the effective value of
+  // the FP register when that register is used in the JVM for other
+  // purposes (like compiled frames on some platforms).
+  // On other platforms, it is defined so that the stack area used by
+  // this frame goes from real_fp() to sp().
+  intptr_t* real_fp() const;
+
+  // Deoptimization info, if needed (platform dependent).
+  // Stored in the initial_info field of the unroll info, to be used by
+  // the platform dependent deoptimization blobs.
+  intptr_t *initial_deoptimization_info();
 
   // Interpreter frames:
 
@@ -261,10 +283,10 @@ class frame VALUE_OBJ_CLASS_SPEC {
 
   // Find receiver for an invoke when arguments are just pushed on stack (i.e., callee stack-frame is
   // not setup)
-  oop interpreter_callee_receiver(symbolHandle signature)     { return *interpreter_callee_receiver_addr(signature); }
+  oop interpreter_callee_receiver(Symbol* signature)     { return *interpreter_callee_receiver_addr(signature); }
 
 
-  oop* interpreter_callee_receiver_addr(symbolHandle signature);
+  oop* interpreter_callee_receiver_addr(Symbol* signature);
 
 
   // expression stack (may go up or down, direction == 1 or -1)
@@ -375,6 +397,8 @@ class frame VALUE_OBJ_CLASS_SPEC {
  private:
   const char* print_name() const;
 
+  void describe_pd(FrameValues& values, int frame_no);
+
  public:
   void print_value() const { print_value_on(tty,NULL); }
   void print_value_on(outputStream* st, JavaThread *thread) const;
@@ -382,15 +406,19 @@ class frame VALUE_OBJ_CLASS_SPEC {
   void interpreter_frame_print_on(outputStream* st) const;
   void print_on_error(outputStream* st, char* buf, int buflen, bool verbose = false) const;
 
+  // Add annotated descriptions of memory locations belonging to this frame to values
+  void describe(FrameValues& values, int frame_no);
+
   // Conversion from an VMReg to physical stack location
   oop* oopmapreg_to_location(VMReg reg, const RegisterMap* regmap) const;
 
   // Oops-do's
-  void oops_compiled_arguments_do(symbolHandle signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f);
+  void oops_compiled_arguments_do(Symbol* signature, bool has_receiver, const RegisterMap* reg_map, OopClosure* f);
   void oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool query_oop_map_cache = true);
+  void oops_ricochet_do(OopClosure* f, const RegisterMap* map);
 
  private:
-  void oops_interpreted_arguments_do(symbolHandle signature, bool has_receiver, OopClosure* f);
+  void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
 
   // Iteration of oops
   void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache);
@@ -457,9 +485,52 @@ class frame VALUE_OBJ_CLASS_SPEC {
 #ifdef TARGET_ARCH_zero
 # include "frame_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "frame_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "frame_ppc.hpp"
+#endif
 
 };
 
+#ifndef PRODUCT
+// A simple class to describe a location on the stack
+class FrameValue VALUE_OBJ_CLASS_SPEC {
+ public:
+  intptr_t* location;
+  char* description;
+  int owner;
+  int priority;
+};
+
+
+// A collection of described stack values that can print a symbolic
+// description of the stack memory.  Interpreter frame values can be
+// in the caller frames so all the values are collected first and then
+// sorted before being printed.
+class FrameValues {
+ private:
+  GrowableArray<FrameValue> _values;
+
+  static int compare(FrameValue* a, FrameValue* b) {
+    if (a->location == b->location) {
+      return a->priority - b->priority;
+    }
+    return a->location - b->location;
+  }
+
+ public:
+  // Used by frame functions to describe locations.
+  void describe(int owner, intptr_t* location, const char* description, int priority = 0);
+
+#ifdef ASSERT
+  void validate();
+#endif
+  void print(JavaThread* thread);
+};
+
+#endif
 
 //
 // StackFrameStream iterates through the frames of a thread starting from

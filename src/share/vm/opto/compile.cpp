@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,6 +73,12 @@
 #endif
 #ifdef TARGET_ARCH_MODEL_zero
 # include "adfiles/ad_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_arm
+# include "adfiles/ad_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc
+# include "adfiles/ad_ppc.hpp"
 #endif
 
 
@@ -340,15 +346,15 @@ void Compile::identify_useful_nodes(Unique_Node_List &useful) {
 // Disconnect all useless nodes by disconnecting those at the boundary.
 void Compile::remove_useless_nodes(Unique_Node_List &useful) {
   uint next = 0;
-  while( next < useful.size() ) {
+  while (next < useful.size()) {
     Node *n = useful.at(next++);
     // Use raw traversal of out edges since this code removes out edges
     int max = n->outcnt();
-    for (int j = 0; j < max; ++j ) {
+    for (int j = 0; j < max; ++j) {
       Node* child = n->raw_out(j);
-      if( ! useful.member(child) ) {
-        assert( !child->is_top() || child != top(),
-                "If top is cached in Compile object it is in useful list");
+      if (! useful.member(child)) {
+        assert(!child->is_top() || child != top(),
+               "If top is cached in Compile object it is in useful list");
         // Only need to remove this out-edge to the useless node
         n->raw_del_out(j);
         --j;
@@ -356,7 +362,14 @@ void Compile::remove_useless_nodes(Unique_Node_List &useful) {
       }
     }
     if (n->outcnt() == 1 && n->has_special_unique_user()) {
-      record_for_igvn( n->unique_out() );
+      record_for_igvn(n->unique_out());
+    }
+  }
+  // Remove useless macro and predicate opaq nodes
+  for (int i = C->macro_count()-1; i >= 0; i--) {
+    Node* n = C->macro_node(i);
+    if (!useful.member(n)) {
+      remove_macro_node(n);
     }
   }
   debug_only(verify_graph_edges(true/*check for no_dead_code*/);)
@@ -511,7 +524,20 @@ uint Compile::scratch_emit_size(const Node* n) {
   buf.stubs()->initialize_shared_locs( &locs_buf[lsize * 2], lsize);
 
   // Do the emission.
+
+  Label fakeL; // Fake label for branch instructions.
+  Label*   saveL = NULL;
+  uint save_bnum = 0;
+  bool is_branch = n->is_MachBranch();
+  if (is_branch) {
+    MacroAssembler masm(&buf);
+    masm.bind(fakeL);
+    n->as_MachBranch()->save_label(&saveL, &save_bnum);
+    n->as_MachBranch()->label_set(&fakeL, 0);
+  }
   n->emit(buf, this->regalloc());
+  if (is_branch) // Restore label.
+    n->as_MachBranch()->label_set(saveL, save_bnum);
 
   // End scratch_emit_size section.
   set_in_scratch_emit_size(false);
@@ -623,7 +649,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
     initial_gvn()->transform_no_reclaim(top());
 
     // Set up tf(), start(), and find a CallGenerator.
-    CallGenerator* cg;
+    CallGenerator* cg = NULL;
     if (is_osr_compilation()) {
       const TypeTuple *domain = StartOSRNode::osr_domain();
       const TypeTuple *range = TypeTuple::make_range(method()->signature());
@@ -638,9 +664,24 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       StartNode* s = new (this, 2) StartNode(root(), tf()->domain());
       initial_gvn()->set_type_bottom(s);
       init_start(s);
-      float past_uses = method()->interpreter_invocation_count();
-      float expected_uses = past_uses;
-      cg = CallGenerator::for_inline(method(), expected_uses);
+      if (method()->intrinsic_id() == vmIntrinsics::_Reference_get && UseG1GC) {
+        // With java.lang.ref.reference.get() we must go through the
+        // intrinsic when G1 is enabled - even when get() is the root
+        // method of the compile - so that, if necessary, the value in
+        // the referent field of the reference object gets recorded by
+        // the pre-barrier code.
+        // Specifically, if G1 is enabled, the value in the referent
+        // field is recorded by the G1 SATB pre barrier. This will
+        // result in the referent being marked live and the reference
+        // object removed from the list of discovered references during
+        // reference processing.
+        cg = find_intrinsic(method(), false);
+      }
+      if (cg == NULL) {
+        float past_uses = method()->interpreter_invocation_count();
+        float expected_uses = past_uses;
+        cg = CallGenerator::for_inline(method(), expected_uses);
+      }
     }
     if (failing())  return;
     if (cg == NULL) {
@@ -685,6 +726,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
       while (_late_inlines.length() > 0) {
         CallGenerator* cg = _late_inlines.pop();
         cg->do_late_inline();
+        if (failing())  return;
       }
     }
     assert(_late_inlines.length() == 0, "should have been processed");
@@ -783,7 +825,6 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            &_handler_table, &_inc_table,
                            compiler,
                            env()->comp_level(),
-                           true, /*has_debug_info*/
                            has_unsafe_access()
                            );
   }
@@ -1185,22 +1226,22 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
     // Make sure the Bottom and NotNull variants alias the same.
     // Also, make sure exact and non-exact variants alias the same.
     if( ptr == TypePtr::NotNull || ta->klass_is_exact() ) {
-      if (ta->const_oop()) {
-        tj = ta = TypeAryPtr::make(TypePtr::Constant,ta->const_oop(),ta->ary(),ta->klass(),false,offset);
-      } else {
-        tj = ta = TypeAryPtr::make(TypePtr::BotPTR,ta->ary(),ta->klass(),false,offset);
-      }
+      tj = ta = TypeAryPtr::make(TypePtr::BotPTR,ta->ary(),ta->klass(),false,offset);
     }
   }
 
   // Oop pointers need some flattening
   const TypeInstPtr *to = tj->isa_instptr();
   if( to && _AliasLevel >= 2 && to != TypeOopPtr::BOTTOM ) {
+    ciInstanceKlass *k = to->klass()->as_instance_klass();
     if( ptr == TypePtr::Constant ) {
-      // No constant oop pointers (such as Strings); they alias with
-      // unknown strings.
-      assert(!is_known_inst, "not scalarizable allocation");
-      tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
+      if (to->klass() != ciEnv::current()->Class_klass() ||
+          offset < k->size_helper() * wordSize) {
+        // No constant oop pointers (such as Strings); they alias with
+        // unknown strings.
+        assert(!is_known_inst, "not scalarizable allocation");
+        tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
+      }
     } else if( is_known_inst ) {
       tj = to; // Keep NotNull and klass_is_exact for instance type
     } else if( ptr == TypePtr::NotNull || to->klass_is_exact() ) {
@@ -1210,7 +1251,6 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
       tj = to = TypeInstPtr::make(TypePtr::BotPTR,to->klass(),false,0,offset);
     }
     // Canonicalize the holder of this field
-    ciInstanceKlass *k = to->klass()->as_instance_klass();
     if (offset >= 0 && offset < instanceOopDesc::base_offset_in_bytes()) {
       // First handle header references such as a LoadKlassNode, even if the
       // object's klass is unloaded at compile time (4965979).
@@ -1218,9 +1258,13 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
         tj = to = TypeInstPtr::make(TypePtr::BotPTR, env()->Object_klass(), false, NULL, offset);
       }
     } else if (offset < 0 || offset >= k->size_helper() * wordSize) {
-      to = NULL;
-      tj = TypeOopPtr::BOTTOM;
-      offset = tj->offset();
+      // Static fields are in the space above the normal instance
+      // fields in the java.lang.Class instance.
+      if (to->klass() != ciEnv::current()->Class_klass()) {
+        to = NULL;
+        tj = TypeOopPtr::BOTTOM;
+        offset = tj->offset();
+      }
     } else {
       ciInstanceKlass *canonical_holder = k->get_canonical_holder(offset);
       if (!k->equals(canonical_holder) || tj->offset() != offset) {
@@ -1238,12 +1282,11 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
   if( tk ) {
     // If we are referencing a field within a Klass, we need
     // to assume the worst case of an Object.  Both exact and
-    // inexact types must flatten to the same alias class.
-    // Since the flattened result for a klass is defined to be
-    // precisely java.lang.Object, use a constant ptr.
+    // inexact types must flatten to the same alias class so
+    // use NotNull as the PTR.
     if ( offset == Type::OffsetBot || (offset >= 0 && (size_t)offset < sizeof(Klass)) ) {
 
-      tj = tk = TypeKlassPtr::make(TypePtr::Constant,
+      tj = tk = TypeKlassPtr::make(TypePtr::NotNull,
                                    TypeKlassPtr::OBJECT->klass(),
                                    offset);
     }
@@ -1263,10 +1306,12 @@ const TypePtr *Compile::flatten_alias_type( const TypePtr *tj ) const {
     // these 2 disparate memories into the same alias class.  Since the
     // primary supertype array is read-only, there's no chance of confusion
     // where we bypass an array load and an array store.
-    uint off2 = offset - Klass::primary_supers_offset_in_bytes();
-    if( offset == Type::OffsetBot ||
-        off2 < Klass::primary_super_limit()*wordSize ) {
-      offset = sizeof(oopDesc) +Klass::secondary_super_cache_offset_in_bytes();
+    int primary_supers_offset = in_bytes(Klass::primary_supers_offset());
+    if (offset == Type::OffsetBot ||
+        (offset >= primary_supers_offset &&
+         offset < (int)(primary_supers_offset + Klass::primary_super_limit() * wordSize)) ||
+        offset == (int)in_bytes(Klass::secondary_super_cache_offset())) {
+      offset = in_bytes(Klass::secondary_super_cache_offset());
       tj = tk = TypeKlassPtr::make( TypePtr::NotNull, tk->klass(), offset );
     }
   }
@@ -1393,7 +1438,7 @@ void Compile::grow_alias_types() {
 
 
 //--------------------------------find_alias_type------------------------------
-Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_create) {
+Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_create, ciField* original_field) {
   if (_AliasLevel == 0)
     return alias_type(AliasIdxBot);
 
@@ -1445,34 +1490,40 @@ Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_cr
         alias_type(idx)->set_rewritable(false);
     }
     if (flat->isa_klassptr()) {
-      if (flat->offset() == Klass::super_check_offset_offset_in_bytes() + (int)sizeof(oopDesc))
+      if (flat->offset() == in_bytes(Klass::super_check_offset_offset()))
         alias_type(idx)->set_rewritable(false);
-      if (flat->offset() == Klass::modifier_flags_offset_in_bytes() + (int)sizeof(oopDesc))
+      if (flat->offset() == in_bytes(Klass::modifier_flags_offset()))
         alias_type(idx)->set_rewritable(false);
-      if (flat->offset() == Klass::access_flags_offset_in_bytes() + (int)sizeof(oopDesc))
+      if (flat->offset() == in_bytes(Klass::access_flags_offset()))
         alias_type(idx)->set_rewritable(false);
-      if (flat->offset() == Klass::java_mirror_offset_in_bytes() + (int)sizeof(oopDesc))
+      if (flat->offset() == in_bytes(Klass::java_mirror_offset()))
         alias_type(idx)->set_rewritable(false);
     }
     // %%% (We would like to finalize JavaThread::threadObj_offset(),
     // but the base pointer type is not distinctive enough to identify
     // references into JavaThread.)
 
-    // Check for final instance fields.
+    // Check for final fields.
     const TypeInstPtr* tinst = flat->isa_instptr();
     if (tinst && tinst->offset() >= instanceOopDesc::base_offset_in_bytes()) {
-      ciInstanceKlass *k = tinst->klass()->as_instance_klass();
-      ciField* field = k->get_field_by_offset(tinst->offset(), false);
+      ciField* field;
+      if (tinst->const_oop() != NULL &&
+          tinst->klass() == ciEnv::current()->Class_klass() &&
+          tinst->offset() >= (tinst->klass()->as_instance_klass()->size_helper() * wordSize)) {
+        // static field
+        ciInstanceKlass* k = tinst->const_oop()->as_instance()->java_lang_Class_klass()->as_instance_klass();
+        field = k->get_field_by_offset(tinst->offset(), true);
+      } else {
+        ciInstanceKlass *k = tinst->klass()->as_instance_klass();
+        field = k->get_field_by_offset(tinst->offset(), false);
+      }
+      assert(field == NULL ||
+             original_field == NULL ||
+             (field->holder() == original_field->holder() &&
+              field->offset() == original_field->offset() &&
+              field->is_static() == original_field->is_static()), "wrong field?");
       // Set field() and is_rewritable() attributes.
       if (field != NULL)  alias_type(idx)->set_field(field);
-    }
-    const TypeKlassPtr* tklass = flat->isa_klassptr();
-    // Check for final static fields.
-    if (tklass && tklass->klass()->is_instance_klass()) {
-      ciInstanceKlass *k = tklass->klass()->as_instance_klass();
-      ciField* field = k->get_field_by_offset(tklass->offset(), true);
-      // Set field() and is_rewritable() attributes.
-      if (field != NULL)   alias_type(idx)->set_field(field);
     }
   }
 
@@ -1496,10 +1547,10 @@ Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_cr
 Compile::AliasType* Compile::alias_type(ciField* field) {
   const TypeOopPtr* t;
   if (field->is_static())
-    t = TypeKlassPtr::make(field->holder());
+    t = TypeInstPtr::make(field->holder()->java_mirror());
   else
     t = TypeOopPtr::make_from_klass_raw(field->holder());
-  AliasType* atp = alias_type(t->add_offset(field->offset_in_bytes()));
+  AliasType* atp = alias_type(t->add_offset(field->offset_in_bytes()), field);
   assert(field->is_final() == !atp->is_rewritable(), "must get the rewritable bits correct");
   return atp;
 }
@@ -1516,7 +1567,7 @@ bool Compile::have_alias_type(const TypePtr* adr_type) {
   if (adr_type == NULL)             return true;
   if (adr_type == TypePtr::BOTTOM)  return true;
 
-  return find_alias_type(adr_type, true) != NULL;
+  return find_alias_type(adr_type, true, NULL) != NULL;
 }
 
 //-----------------------------must_alias--------------------------------------
@@ -1613,7 +1664,6 @@ void Compile::cleanup_loop_predicates(PhaseIterGVN &igvn) {
     igvn.replace_node(n, n->in(1));
   }
   assert(predicate_count()==0, "should be clean!");
-  igvn.optimize();
 }
 
 //------------------------------Optimize---------------------------------------
@@ -1650,16 +1700,34 @@ void Compile::Optimize() {
 
   // Perform escape analysis
   if (_do_escape_analysis && ConnectionGraph::has_candidates(this)) {
+    if (has_loops()) {
+      // Cleanup graph (remove dead nodes).
+      TracePhase t2("idealLoop", &_t_idealLoop, true);
+      PhaseIdealLoop ideal_loop( igvn, false, true );
+      if (major_progress()) print_method("PhaseIdealLoop before EA", 2);
+      if (failing())  return;
+    }
     TracePhase t2("escapeAnalysis", &_t_escapeAnalysis, true);
     ConnectionGraph::do_analysis(this, &igvn);
 
     if (failing())  return;
 
+    // Optimize out fields loads from scalar replaceable allocations.
     igvn.optimize();
-    print_method("Iter GVN 3", 2);
+    print_method("Iter GVN after EA", 2);
 
     if (failing())  return;
 
+    if (congraph() != NULL && macro_count() > 0) {
+      PhaseMacroExpand mexp(igvn);
+      mexp.eliminate_macro_nodes();
+      igvn.set_delay_transform(false);
+
+      igvn.optimize();
+      print_method("Iter GVN after eliminating allocations and locks", 2);
+
+      if (failing())  return;
+    }
   }
 
   // Loop transforms on the ideal graph.  Range Check Elimination,
@@ -1670,7 +1738,7 @@ void Compile::Optimize() {
   if((loop_opts_cnt > 0) && (has_loops() || has_split_ifs())) {
     {
       TracePhase t2("idealLoop", &_t_idealLoop, true);
-      PhaseIdealLoop ideal_loop( igvn, true, UseLoopPredicate);
+      PhaseIdealLoop ideal_loop( igvn, true );
       loop_opts_cnt--;
       if (major_progress()) print_method("PhaseIdealLoop 1", 2);
       if (failing())  return;
@@ -1678,7 +1746,7 @@ void Compile::Optimize() {
     // Loop opts pass if partial peeling occurred in previous pass
     if(PartialPeelLoop && major_progress() && (loop_opts_cnt > 0)) {
       TracePhase t3("idealLoop", &_t_idealLoop, true);
-      PhaseIdealLoop ideal_loop( igvn, false, UseLoopPredicate);
+      PhaseIdealLoop ideal_loop( igvn, false );
       loop_opts_cnt--;
       if (major_progress()) print_method("PhaseIdealLoop 2", 2);
       if (failing())  return;
@@ -1686,7 +1754,7 @@ void Compile::Optimize() {
     // Loop opts pass for loop-unrolling before CCP
     if(major_progress() && (loop_opts_cnt > 0)) {
       TracePhase t4("idealLoop", &_t_idealLoop, true);
-      PhaseIdealLoop ideal_loop( igvn, false, UseLoopPredicate);
+      PhaseIdealLoop ideal_loop( igvn, false );
       loop_opts_cnt--;
       if (major_progress()) print_method("PhaseIdealLoop 3", 2);
     }
@@ -1724,21 +1792,13 @@ void Compile::Optimize() {
   // peeling, unrolling, etc.
   if(loop_opts_cnt > 0) {
     debug_only( int cnt = 0; );
-    bool loop_predication = UseLoopPredicate;
     while(major_progress() && (loop_opts_cnt > 0)) {
       TracePhase t2("idealLoop", &_t_idealLoop, true);
       assert( cnt++ < 40, "infinite cycle in loop optimization" );
-      PhaseIdealLoop ideal_loop( igvn, true, loop_predication);
+      PhaseIdealLoop ideal_loop( igvn, true);
       loop_opts_cnt--;
       if (major_progress()) print_method("PhaseIdealLoop iterations", 2);
       if (failing())  return;
-      // Perform loop predication optimization during first iteration after CCP.
-      // After that switch it off and cleanup unused loop predicates.
-      if (loop_predication) {
-        loop_predication = false;
-        cleanup_loop_predicates(igvn);
-        if (failing())  return;
-      }
     }
   }
 
@@ -2031,6 +2091,52 @@ static bool oop_offset_is_sane(const TypeInstPtr* tp) {
   // Note that OffsetBot and OffsetTop are very negative.
 }
 
+// Eliminate trivially redundant StoreCMs and accumulate their
+// precedence edges.
+static void eliminate_redundant_card_marks(Node* n) {
+  assert(n->Opcode() == Op_StoreCM, "expected StoreCM");
+  if (n->in(MemNode::Address)->outcnt() > 1) {
+    // There are multiple users of the same address so it might be
+    // possible to eliminate some of the StoreCMs
+    Node* mem = n->in(MemNode::Memory);
+    Node* adr = n->in(MemNode::Address);
+    Node* val = n->in(MemNode::ValueIn);
+    Node* prev = n;
+    bool done = false;
+    // Walk the chain of StoreCMs eliminating ones that match.  As
+    // long as it's a chain of single users then the optimization is
+    // safe.  Eliminating partially redundant StoreCMs would require
+    // cloning copies down the other paths.
+    while (mem->Opcode() == Op_StoreCM && mem->outcnt() == 1 && !done) {
+      if (adr == mem->in(MemNode::Address) &&
+          val == mem->in(MemNode::ValueIn)) {
+        // redundant StoreCM
+        if (mem->req() > MemNode::OopStore) {
+          // Hasn't been processed by this code yet.
+          n->add_prec(mem->in(MemNode::OopStore));
+        } else {
+          // Already converted to precedence edge
+          for (uint i = mem->req(); i < mem->len(); i++) {
+            // Accumulate any precedence edges
+            if (mem->in(i) != NULL) {
+              n->add_prec(mem->in(i));
+            }
+          }
+          // Everything above this point has been processed.
+          done = true;
+        }
+        // Eliminate the previous StoreCM
+        prev->set_req(MemNode::Memory, mem->in(MemNode::Memory));
+        assert(mem->outcnt() == 0, "should be dead");
+        mem->disconnect_inputs(NULL);
+      } else {
+        prev = mem;
+      }
+      mem = prev->in(MemNode::Memory);
+    }
+  }
+}
+
 //------------------------------final_graph_reshaping_impl----------------------
 // Implement items 1-5 from final_graph_reshaping below.
 static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
@@ -2157,9 +2263,19 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
     frc.inc_float_count();
     goto handle_mem;
 
+  case Op_StoreCM:
+    {
+      // Convert OopStore dependence into precedence edge
+      Node* prec = n->in(MemNode::OopStore);
+      n->del_req(MemNode::OopStore);
+      n->add_prec(prec);
+      eliminate_redundant_card_marks(n);
+    }
+
+    // fall through
+
   case Op_StoreB:
   case Op_StoreC:
-  case Op_StoreCM:
   case Op_StorePConditional:
   case Op_StoreI:
   case Op_StoreL:
@@ -2406,7 +2522,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
             break;
           }
         }
-        assert(p != NULL, "must be found");
+        assert(proj != NULL, "must be found");
         p->subsume_by(proj);
       }
     }
@@ -2523,6 +2639,36 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc ) {
   case Op_CountedLoop:
     if (n->as_Loop()->is_inner_loop()) {
       frc.inc_inner_loop_count();
+    }
+    break;
+  case Op_LShiftI:
+  case Op_RShiftI:
+  case Op_URShiftI:
+  case Op_LShiftL:
+  case Op_RShiftL:
+  case Op_URShiftL:
+    if (Matcher::need_masked_shift_count) {
+      // The cpu's shift instructions don't restrict the count to the
+      // lower 5/6 bits. We need to do the masking ourselves.
+      Node* in2 = n->in(2);
+      juint mask = (n->bottom_type() == TypeInt::INT) ? (BitsPerInt - 1) : (BitsPerLong - 1);
+      const TypeInt* t = in2->find_int_type();
+      if (t != NULL && t->is_con()) {
+        juint shift = t->get_con();
+        if (shift > mask) { // Unsigned cmp
+          Compile* C = Compile::current();
+          n->set_req(2, ConNode::make(C, TypeInt::make(shift & mask)));
+        }
+      } else {
+        if (t == NULL || t->_lo < 0 || t->_hi > (int)mask) {
+          Compile* C = Compile::current();
+          Node* shift = new (C, 3) AndINode(in2, ConNode::make(C, TypeInt::make(mask)));
+          n->set_req(2, shift);
+        }
+      }
+      if (in2->outcnt() == 0) { // Remove dead node
+        in2->disconnect_inputs(NULL);
+      }
     }
     break;
   default:
@@ -2918,24 +3064,13 @@ bool Compile::Constant::operator==(const Constant& other) {
   return false;
 }
 
-// Emit constants grouped in the following order:
-static BasicType type_order[] = {
-  T_FLOAT,    // 32-bit
-  T_OBJECT,   // 32 or 64-bit
-  T_ADDRESS,  // 32 or 64-bit
-  T_DOUBLE,   // 64-bit
-  T_LONG,     // 64-bit
-  T_VOID,     // 32 or 64-bit (jump-tables are at the end of the constant table for code emission reasons)
-  T_ILLEGAL
-};
-
 static int type_to_size_in_bytes(BasicType t) {
   switch (t) {
   case T_LONG:    return sizeof(jlong  );
   case T_FLOAT:   return sizeof(jfloat );
   case T_DOUBLE:  return sizeof(jdouble);
     // We use T_VOID as marker for jump-table entries (labels) which
-    // need an interal word relocation.
+    // need an internal word relocation.
   case T_VOID:
   case T_ADDRESS:
   case T_OBJECT:  return sizeof(jobject);
@@ -2945,87 +3080,92 @@ static int type_to_size_in_bytes(BasicType t) {
   return -1;
 }
 
+int Compile::ConstantTable::qsort_comparator(Constant* a, Constant* b) {
+  // sort descending
+  if (a->freq() > b->freq())  return -1;
+  if (a->freq() < b->freq())  return  1;
+  return 0;
+}
+
 void Compile::ConstantTable::calculate_offsets_and_size() {
-  int size = 0;
-  for (int t = 0; type_order[t] != T_ILLEGAL; t++) {
-    BasicType type = type_order[t];
+  // First, sort the array by frequencies.
+  _constants.sort(qsort_comparator);
 
-    for (int i = 0; i < _constants.length(); i++) {
-      Constant con = _constants.at(i);
-      if (con.type() != type)  continue;  // Skip other types.
+#ifdef ASSERT
+  // Make sure all jump-table entries were sorted to the end of the
+  // array (they have a negative frequency).
+  bool found_void = false;
+  for (int i = 0; i < _constants.length(); i++) {
+    Constant con = _constants.at(i);
+    if (con.type() == T_VOID)
+      found_void = true;  // jump-tables
+    else
+      assert(!found_void, "wrong sorting");
+  }
+#endif
 
-      // Align size for type.
-      int typesize = type_to_size_in_bytes(con.type());
-      size = align_size_up(size, typesize);
+  int offset = 0;
+  for (int i = 0; i < _constants.length(); i++) {
+    Constant* con = _constants.adr_at(i);
 
-      // Set offset.
-      con.set_offset(size);
-      _constants.at_put(i, con);
+    // Align offset for type.
+    int typesize = type_to_size_in_bytes(con->type());
+    offset = align_size_up(offset, typesize);
+    con->set_offset(offset);   // set constant's offset
 
-      // Add type size.
-      size = size + typesize;
+    if (con->type() == T_VOID) {
+      MachConstantNode* n = (MachConstantNode*) con->get_jobject();
+      offset = offset + typesize * n->outcnt();  // expand jump-table
+    } else {
+      offset = offset + typesize;
     }
   }
 
   // Align size up to the next section start (which is insts; see
   // CodeBuffer::align_at_start).
   assert(_size == -1, "already set?");
-  _size = align_size_up(size, CodeEntryAlignment);
-
-  if (Matcher::constant_table_absolute_addressing) {
-    set_table_base_offset(0);  // No table base offset required
-  } else {
-    if (UseRDPCForConstantTableBase) {
-      // table base offset is set in MachConstantBaseNode::emit
-    } else {
-      // When RDPC is not used, the table base is set into the middle of
-      // the constant table.
-      int half_size = _size / 2;
-      assert(half_size * 2 == _size, "sanity");
-      set_table_base_offset(-half_size);
-    }
-  }
+  _size = align_size_up(offset, CodeEntryAlignment);
 }
 
 void Compile::ConstantTable::emit(CodeBuffer& cb) {
   MacroAssembler _masm(&cb);
-  for (int t = 0; type_order[t] != T_ILLEGAL; t++) {
-    BasicType type = type_order[t];
-
-    for (int i = 0; i < _constants.length(); i++) {
-      Constant con = _constants.at(i);
-      if (con.type() != type)  continue;  // Skip other types.
-
-      address constant_addr;
-      switch (con.type()) {
-      case T_LONG:   constant_addr = _masm.long_constant(  con.get_jlong()  ); break;
-      case T_FLOAT:  constant_addr = _masm.float_constant( con.get_jfloat() ); break;
-      case T_DOUBLE: constant_addr = _masm.double_constant(con.get_jdouble()); break;
-      case T_OBJECT: {
-        jobject obj = con.get_jobject();
-        int oop_index = _masm.oop_recorder()->find_index(obj);
-        constant_addr = _masm.address_constant((address) obj, oop_Relocation::spec(oop_index));
-        break;
-      }
-      case T_ADDRESS: {
-        address addr = (address) con.get_jobject();
-        constant_addr = _masm.address_constant(addr);
-        break;
-      }
-      // We use T_VOID as marker for jump-table entries (labels) which
-      // need an interal word relocation.
-      case T_VOID: {
-        // Write a dummy word.  The real value is filled in later
-        // in fill_jump_table_in_constant_table.
-        address addr = (address) con.get_jobject();
-        constant_addr = _masm.address_constant(addr);
-        break;
-      }
-      default: ShouldNotReachHere();
-      }
-      assert(constant_addr != NULL, "consts section too small");
-      assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
+  for (int i = 0; i < _constants.length(); i++) {
+    Constant con = _constants.at(i);
+    address constant_addr;
+    switch (con.type()) {
+    case T_LONG:   constant_addr = _masm.long_constant(  con.get_jlong()  ); break;
+    case T_FLOAT:  constant_addr = _masm.float_constant( con.get_jfloat() ); break;
+    case T_DOUBLE: constant_addr = _masm.double_constant(con.get_jdouble()); break;
+    case T_OBJECT: {
+      jobject obj = con.get_jobject();
+      int oop_index = _masm.oop_recorder()->find_index(obj);
+      constant_addr = _masm.address_constant((address) obj, oop_Relocation::spec(oop_index));
+      break;
     }
+    case T_ADDRESS: {
+      address addr = (address) con.get_jobject();
+      constant_addr = _masm.address_constant(addr);
+      break;
+    }
+    // We use T_VOID as marker for jump-table entries (labels) which
+    // need an internal word relocation.
+    case T_VOID: {
+      MachConstantNode* n = (MachConstantNode*) con.get_jobject();
+      // Fill the jump-table with a dummy word.  The real value is
+      // filled in later in fill_jump_table.
+      address dummy = (address) n;
+      constant_addr = _masm.address_constant(dummy);
+      // Expand jump-table
+      for (uint i = 1; i < n->outcnt(); i++) {
+        address temp_addr = _masm.address_constant(dummy + i);
+        assert(temp_addr, "consts section too small");
+      }
+      break;
+    }
+    default: ShouldNotReachHere();
+    }
+    assert(constant_addr, "consts section too small");
+    assert((constant_addr - _masm.code()->consts()->start()) == con.offset(), err_msg("must be: %d == %d", constant_addr - _masm.code()->consts()->start(), con.offset()));
   }
 }
 
@@ -3041,19 +3181,21 @@ void Compile::ConstantTable::add(Constant& con) {
   if (con.can_be_reused()) {
     int idx = _constants.find(con);
     if (idx != -1 && _constants.at(idx).can_be_reused()) {
+      _constants.adr_at(idx)->inc_freq(con.freq());  // increase the frequency by the current value
       return;
     }
   }
   (void) _constants.append(con);
 }
 
-Compile::Constant Compile::ConstantTable::add(BasicType type, jvalue value) {
-  Constant con(type, value);
+Compile::Constant Compile::ConstantTable::add(MachConstantNode* n, BasicType type, jvalue value) {
+  Block* b = Compile::current()->cfg()->_bbs[n->_idx];
+  Constant con(type, value, b->_freq);
   add(con);
   return con;
 }
 
-Compile::Constant Compile::ConstantTable::add(MachOper* oper) {
+Compile::Constant Compile::ConstantTable::add(MachConstantNode* n, MachOper* oper) {
   jvalue value;
   BasicType type = oper->type()->basic_type();
   switch (type) {
@@ -3064,20 +3206,18 @@ Compile::Constant Compile::ConstantTable::add(MachOper* oper) {
   case T_ADDRESS: value.l = (jobject) oper->constant(); break;
   default: ShouldNotReachHere();
   }
-  return add(type, value);
+  return add(n, type, value);
 }
 
-Compile::Constant Compile::ConstantTable::allocate_jump_table(MachConstantNode* n) {
+Compile::Constant Compile::ConstantTable::add_jump_table(MachConstantNode* n) {
   jvalue value;
   // We can use the node pointer here to identify the right jump-table
   // as this method is called from Compile::Fill_buffer right before
   // the MachNodes are emitted and the jump-table is filled (means the
   // MachNode pointers do not change anymore).
   value.l = (jobject) n;
-  Constant con(T_VOID, value, false);  // Labels of a jump-table cannot be reused.
-  for (uint i = 0; i < n->outcnt(); i++) {
-    add(con);
-  }
+  Constant con(T_VOID, value, next_jump_table_freq(), false);  // Labels of a jump-table cannot be reused.
+  add(con);
   return con;
 }
 
@@ -3096,9 +3236,9 @@ void Compile::ConstantTable::fill_jump_table(CodeBuffer& cb, MachConstantNode* n
   MacroAssembler _masm(&cb);
   address* jump_table_base = (address*) (_masm.code()->consts()->start() + offset);
 
-  for (int i = 0; i < labels.length(); i++) {
+  for (uint i = 0; i < n->outcnt(); i++) {
     address* constant_addr = &jump_table_base[i];
-    assert(*constant_addr == (address) n, "all jump-table entries must contain node pointer");
+    assert(*constant_addr == (((address) n) + i), err_msg("all jump-table entries must contain adjusted node pointer: " INTPTR_FORMAT " == " INTPTR_FORMAT, *constant_addr, (((address) n) + i)));
     *constant_addr = cb.consts()->target(*labels.at(i), (address) constant_addr);
     cb.consts()->relocate((address) constant_addr, relocInfo::internal_word_type);
   }

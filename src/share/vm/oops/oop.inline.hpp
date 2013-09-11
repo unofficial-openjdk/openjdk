@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,12 @@
 #endif
 #ifdef TARGET_ARCH_zero
 # include "bytes_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "bytes_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "bytes_ppc.hpp"
 #endif
 
 // Implementation of all inlined member functions defined in oop.hpp
@@ -135,12 +141,12 @@ inline Klass* oopDesc::blueprint()           const { return klass()->klass_part(
 inline bool oopDesc::is_a(klassOop k)        const { return blueprint()->is_subtype_of(k); }
 
 inline bool oopDesc::is_instance()           const { return blueprint()->oop_is_instance(); }
+inline bool oopDesc::is_instanceMirror()     const { return blueprint()->oop_is_instanceMirror(); }
 inline bool oopDesc::is_instanceRef()        const { return blueprint()->oop_is_instanceRef(); }
 inline bool oopDesc::is_array()              const { return blueprint()->oop_is_array(); }
 inline bool oopDesc::is_objArray()           const { return blueprint()->oop_is_objArray(); }
 inline bool oopDesc::is_typeArray()          const { return blueprint()->oop_is_typeArray(); }
 inline bool oopDesc::is_javaArray()          const { return blueprint()->oop_is_javaArray(); }
-inline bool oopDesc::is_symbol()             const { return blueprint()->oop_is_symbol(); }
 inline bool oopDesc::is_klass()              const { return blueprint()->oop_is_klass(); }
 inline bool oopDesc::is_thread()             const { return blueprint()->oop_is_thread(); }
 inline bool oopDesc::is_method()             const { return blueprint()->oop_is_method(); }
@@ -315,14 +321,24 @@ inline oop oopDesc::obj_field(int offset) const {
     load_decode_heap_oop(obj_field_addr<narrowOop>(offset)) :
     load_decode_heap_oop(obj_field_addr<oop>(offset));
 }
+inline volatile oop oopDesc::obj_field_volatile(int offset) const {
+  volatile oop value = obj_field(offset);
+  OrderAccess::acquire();
+  return value;
+}
 inline void oopDesc::obj_field_put(int offset, oop value) {
   UseCompressedOops ? oop_store(obj_field_addr<narrowOop>(offset), value) :
                       oop_store(obj_field_addr<oop>(offset),       value);
 }
-inline void oopDesc::obj_field_raw_put(int offset, oop value) {
+inline void oopDesc::obj_field_put_raw(int offset, oop value) {
   UseCompressedOops ?
     encode_store_heap_oop(obj_field_addr<narrowOop>(offset), value) :
     encode_store_heap_oop(obj_field_addr<oop>(offset),       value);
+}
+inline void oopDesc::obj_field_put_volatile(int offset, oop value) {
+  OrderAccess::release();
+  obj_field_put(offset, value);
+  OrderAccess::fence();
 }
 
 inline jbyte oopDesc::byte_field(int offset) const                  { return (jbyte) *byte_field_addr(offset);    }
@@ -394,7 +410,7 @@ inline void oopDesc::release_address_field_put(int offset, address contents) { O
 
 inline int oopDesc::size_given_klass(Klass* klass)  {
   int lh = klass->layout_helper();
-  int s  = lh >> LogHeapWordSize;  // deliver size scaled by wordSize
+  int s;
 
   // lh is now a value computed at class initialization that may hint
   // at the size.  For instances, this is positive and equal to the
@@ -407,7 +423,13 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
   // alive or dead.  So the speed here is equal in importance to the
   // speed of allocation.
 
-  if (lh <= Klass::_lh_neutral_value) {
+  if (lh > Klass::_lh_neutral_value) {
+    if (!Klass::layout_helper_needs_slow_path(lh)) {
+      s = lh >> LogHeapWordSize;  // deliver size scaled by wordSize
+    } else {
+      s = klass->oop_size(this);
+    }
+  } else if (lh <= Klass::_lh_neutral_value) {
     // The most common case is instances; fall through if so.
     if (lh < Klass::_lh_neutral_value) {
       // Second most common case is arrays.  We have to fetch the

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -362,10 +362,8 @@ class CodeBuffer: public StackObj {
   // helper for CodeBuffer::expand()
   void take_over_code_from(CodeBuffer* cs);
 
-#ifdef ASSERT
   // ensure sections are disjoint, ordered, and contained in the blob
-  bool verify_section_allocation();
-#endif
+  void verify_section_allocation();
 
   // copies combined relocations to the blob, returns bytes copied
   // (if target is null, it is a dry run only, just for sizing)
@@ -393,7 +391,7 @@ class CodeBuffer: public StackObj {
     assert(code_start != NULL, "sanity");
     initialize_misc("static buffer");
     initialize(code_start, code_size);
-    assert(verify_section_allocation(), "initial use of buffer OK");
+    verify_section_allocation();
   }
 
   // (2) CodeBuffer referring to pre-allocated CodeBlob.
@@ -545,6 +543,9 @@ class CodeBuffer: public StackObj {
 
   void block_comment(intptr_t offset, const char * comment) PRODUCT_RETURN;
 
+  // Log a little info about section usage in the CodeBuffer
+  void log_section_sizes(const char* name);
+
 #ifndef PRODUCT
  public:
   // Printing / Decoding
@@ -565,6 +566,12 @@ class CodeBuffer: public StackObj {
 #endif
 #ifdef TARGET_ARCH_zero
 # include "codeBuffer_zero.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "codeBuffer_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "codeBuffer_ppc.hpp"
 #endif
 
 };

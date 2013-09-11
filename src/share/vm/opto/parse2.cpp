@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -293,11 +293,6 @@ void Parse::do_tableswitch() {
   if (len < 1) {
     // If this is a backward branch, add safepoint
     maybe_add_safepoint(default_dest);
-    if (should_add_predicate(default_dest)){
-      _sp += 1; // set original stack for use by uncommon_trap
-      add_predicate();
-      _sp -= 1;
-    }
     merge(default_dest);
     return;
   }
@@ -344,11 +339,6 @@ void Parse::do_lookupswitch() {
 
   if (len < 1) {    // If this is a backward branch, add safepoint
     maybe_add_safepoint(default_dest);
-    if (should_add_predicate(default_dest)){
-      _sp += 1; // set original stack for use by uncommon_trap
-      add_predicate();
-      _sp -= 1;
-    }
     merge(default_dest);
     return;
   }
@@ -756,29 +746,18 @@ void Parse::do_jsr() {
   push(_gvn.makecon(ret_addr));
 
   // Flow to the jsr.
-  if (should_add_predicate(jsr_bci)){
-    add_predicate();
-  }
   merge(jsr_bci);
 }
 
 // Handle ret bytecode
 void Parse::do_ret() {
   // Find to whom we return.
-#if 0 // %%%% MAKE THIS WORK
-  Node* con = local();
-  const TypePtr* tp = con->bottom_type()->isa_ptr();
-  assert(tp && tp->singleton(), "");
-  int return_bci = (int) tp->get_con();
-  merge(return_bci);
-#else
   assert(block()->num_successors() == 1, "a ret can only go one place now");
   Block* target = block()->successor_at(0);
   assert(!target->is_ready(), "our arrival must be expected");
   profile_ret(target->flow()->start());
   int pnum = target->next_path_num();
   merge_common(target, pnum);
-#endif
 }
 
 //--------------------------dynamic_branch_prediction--------------------------
@@ -808,8 +787,9 @@ float Parse::dynamic_branch_prediction(float &cnt) {
   taken = method()->scale_count(taken);
   not_taken = method()->scale_count(not_taken);
 
-  // Give up if too few counts to be meaningful
-  if (taken + not_taken < 40) {
+  // Give up if too few (or too many, in which case the sum will overflow) counts to be meaningful.
+  // We also check that individual counters are positive first, overwise the sum can become positive.
+  if (taken < 0 || not_taken < 0 || taken + not_taken < 40) {
     if (C->log() != NULL) {
       C->log()->elem("branch target_bci='%d' taken='%d' not_taken='%d'", iter().get_dest(), taken, not_taken);
     }
@@ -817,13 +797,13 @@ float Parse::dynamic_branch_prediction(float &cnt) {
   }
 
   // Compute frequency that we arrive here
-  int sum = taken + not_taken;
+  float sum = taken + not_taken;
   // Adjust, if this block is a cloned private block but the
   // Jump counts are shared.  Taken the private counts for
   // just this path instead of the shared counts.
   if( block()->count() > 0 )
     sum = block()->count();
-  cnt = (float)sum / (float)FreqCountInvocations;
+  cnt = sum / FreqCountInvocations;
 
   // Pin probability to sane limits
   float prob;
@@ -1040,11 +1020,6 @@ void Parse::do_ifnull(BoolTest::mask btest, Node *c) {
       profile_taken_branch(target_bci);
       adjust_map_after_if(btest, c, prob, branch_block, next_block);
       if (!stopped()) {
-        if (should_add_predicate(target_bci)){ // add a predicate if it branches to a loop
-          int nargs = repush_if_args(); // set original stack for uncommon_trap
-          add_predicate();
-          _sp -= nargs;
-        }
         merge(target_bci);
       }
     }
@@ -1168,11 +1143,6 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
       profile_taken_branch(target_bci);
       adjust_map_after_if(taken_btest, c, prob, branch_block, next_block);
       if (!stopped()) {
-        if (should_add_predicate(target_bci)){ // add a predicate if it branches to a loop
-          int nargs = repush_if_args(); // set original stack for the uncommon_trap
-          add_predicate();
-          _sp -= nargs;
-        }
         merge(target_bci);
       }
     }
@@ -2166,10 +2136,6 @@ void Parse::do_one_bytecode() {
     // Update method data
     profile_taken_branch(target_bci);
 
-    // Add loop predicate if it goes to a loop
-    if (should_add_predicate(target_bci)){
-      add_predicate();
-    }
     // Merge the current control into the target basic block
     merge(target_bci);
 

@@ -59,6 +59,18 @@
 #ifdef TARGET_OS_ARCH_windows_x86
 # include "orderAccess_windows_x86.inline.hpp"
 #endif
+#ifdef TARGET_OS_ARCH_linux_arm
+# include "orderAccess_linux_arm.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_linux_ppc
+# include "orderAccess_linux_ppc.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_bsd_x86
+# include "orderAccess_bsd_x86.inline.hpp"
+#endif
+#ifdef TARGET_OS_ARCH_bsd_zero
+# include "orderAccess_bsd_zero.inline.hpp"
+#endif
 
 
 // no precompiled headers
@@ -548,7 +560,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 
 /* 0xB0 */ &&opc_areturn,     &&opc_return,         &&opc_getstatic,    &&opc_putstatic,
 /* 0xB4 */ &&opc_getfield,    &&opc_putfield,       &&opc_invokevirtual,&&opc_invokespecial,
-/* 0xB8 */ &&opc_invokestatic,&&opc_invokeinterface,&&opc_default,      &&opc_new,
+/* 0xB8 */ &&opc_invokestatic,&&opc_invokeinterface,&&opc_invokedynamic,&&opc_new,
 /* 0xBC */ &&opc_newarray,    &&opc_anewarray,      &&opc_arraylength,  &&opc_athrow,
 
 /* 0xC0 */ &&opc_checkcast,   &&opc_instanceof,     &&opc_monitorenter, &&opc_monitorexit,
@@ -562,7 +574,7 @@ BytecodeInterpreter::run(interpreterState istate) {
 /* 0xDC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
 /* 0xE0 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
-/* 0xE4 */ &&opc_default,     &&opc_return_register_finalizer,        &&opc_default,      &&opc_default,
+/* 0xE4 */ &&opc_default,     &&opc_fast_aldc,      &&opc_fast_aldc_w,  &&opc_return_register_finalizer,
 /* 0xE8 */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 /* 0xEC */ &&opc_default,     &&opc_default,        &&opc_default,      &&opc_default,
 
@@ -650,7 +662,7 @@ BytecodeInterpreter::run(interpreterState istate) {
           // oop rcvr = locals[0].j.r;
           oop rcvr;
           if (METHOD->is_static()) {
-            rcvr = METHOD->constants()->pool_holder()->klass_part()->java_mirror();
+            rcvr = METHOD->constants()->pool_holder()->java_mirror();
           } else {
             rcvr = LOCALS_OBJECT(0);
             VERIFY_OOP(rcvr);
@@ -1712,8 +1724,7 @@ run:
         }
         // Need to throw illegal monitor state exception
         CALL_VM(InterpreterRuntime::throw_illegal_monitor_state_exception(THREAD), handle_exception);
-        // Should never reach here...
-        assert(false, "Should have thrown illegal monitor exception");
+        ShouldNotReachHere();
       }
 
       /* All of the non-quick opcodes. */
@@ -1936,7 +1947,7 @@ run:
         constantPoolOop constants = istate->method()->constants();
         if (!constants->tag_at(index).is_unresolved_klass()) {
           // Make sure klass is initialized and doesn't have a finalizer
-          oop entry = (klassOop) *constants->obj_at_addr(index);
+          oop entry = constants->slot_at(index).get_oop();
           assert(entry->is_klass(), "Should be resolved klass");
           klassOop k_entry = (klassOop) entry;
           assert(k_entry->klass_part()->oop_is_instance(), "Should be instanceKlass");
@@ -2026,7 +2037,7 @@ run:
             if (METHOD->constants()->tag_at(index).is_unresolved_klass()) {
               CALL_VM(InterpreterRuntime::quicken_io_cc(THREAD), handle_exception);
             }
-            klassOop klassOf = (klassOop) *(METHOD->constants()->obj_at_addr(index));
+            klassOop klassOf = (klassOop) METHOD->constants()->slot_at(index).get_oop();
             klassOop objKlassOop = STACK_OBJECT(-1)->klass(); //ebx
             //
             // Check for compatibilty. This check must not GC!!
@@ -2061,7 +2072,7 @@ run:
             if (METHOD->constants()->tag_at(index).is_unresolved_klass()) {
               CALL_VM(InterpreterRuntime::quicken_io_cc(THREAD), handle_exception);
             }
-            klassOop klassOf = (klassOop) *(METHOD->constants()->obj_at_addr(index));
+            klassOop klassOf = (klassOop) METHOD->constants()->slot_at(index).get_oop();
             klassOop objKlassOop = STACK_OBJECT(-1)->klass();
             //
             // Check for compatibilty. This check must not GC!!
@@ -2105,8 +2116,8 @@ run:
             break;
 
           case JVM_CONSTANT_Class:
-            VERIFY_OOP(constants->resolved_klass_at(index)->klass_part()->java_mirror());
-            SET_STACK_OBJECT(constants->resolved_klass_at(index)->klass_part()->java_mirror(), 0);
+            VERIFY_OOP(constants->resolved_klass_at(index)->java_mirror());
+            SET_STACK_OBJECT(constants->resolved_klass_at(index)->java_mirror(), 0);
             break;
 
           case JVM_CONSTANT_UnresolvedString:
@@ -2140,6 +2151,74 @@ run:
           }
           UPDATE_PC_AND_TOS_AND_CONTINUE(3, 2);
         }
+
+      CASE(_fast_aldc_w):
+      CASE(_fast_aldc): {
+        if (!EnableInvokeDynamic) {
+          // We should not encounter this bytecode if !EnableInvokeDynamic.
+          // The verifier will stop it.  However, if we get past the verifier,
+          // this will stop the thread in a reasonable way, without crashing the JVM.
+          CALL_VM(InterpreterRuntime::throw_IncompatibleClassChangeError(THREAD),
+                  handle_exception);
+          ShouldNotReachHere();
+        }
+
+        u2 index;
+        int incr;
+        if (opcode == Bytecodes::_fast_aldc) {
+          index = pc[1];
+          incr = 2;
+        } else {
+          index = Bytes::get_native_u2(pc+1);
+          incr = 3;
+        }
+
+        // We are resolved if the f1 field contains a non-null object (CallSite, etc.)
+        // This kind of CP cache entry does not need to match the flags byte, because
+        // there is a 1-1 relation between bytecode type and CP entry type.
+        ConstantPoolCacheEntry* cache = cp->entry_at(index);
+        if (cache->is_f1_null()) {
+          CALL_VM(InterpreterRuntime::resolve_ldc(THREAD, (Bytecodes::Code) opcode),
+                  handle_exception);
+        }
+
+        VERIFY_OOP(cache->f1());
+        SET_STACK_OBJECT(cache->f1(), 0);
+        UPDATE_PC_AND_TOS_AND_CONTINUE(incr, 1);
+      }
+
+      CASE(_invokedynamic): {
+        if (!EnableInvokeDynamic) {
+          // We should not encounter this bytecode if !EnableInvokeDynamic.
+          // The verifier will stop it.  However, if we get past the verifier,
+          // this will stop the thread in a reasonable way, without crashing the JVM.
+          CALL_VM(InterpreterRuntime::throw_IncompatibleClassChangeError(THREAD),
+                  handle_exception);
+          ShouldNotReachHere();
+        }
+
+        int index = Bytes::get_native_u4(pc+1);
+
+        // We are resolved if the f1 field contains a non-null object (CallSite, etc.)
+        // This kind of CP cache entry does not need to match the flags byte, because
+        // there is a 1-1 relation between bytecode type and CP entry type.
+        assert(constantPoolCacheOopDesc::is_secondary_index(index), "incorrect format");
+        ConstantPoolCacheEntry* cache = cp->secondary_entry_at(index);
+        if (cache->is_f1_null()) {
+          CALL_VM(InterpreterRuntime::resolve_invokedynamic(THREAD),
+                  handle_exception);
+        }
+
+        VERIFY_OOP(cache->f1());
+        oop method_handle = java_lang_invoke_CallSite::target(cache->f1());
+        CHECK_NULL(method_handle);
+
+        istate->set_msg(call_method_handle);
+        istate->set_callee((methodOop) method_handle);
+        istate->set_bcp_advance(5);
+
+        UPDATE_PC_AND_RETURN(0); // I'll be back...
+      }
 
       CASE(_invokeinterface): {
         u2 index = Bytes::get_native_u2(pc+1);
@@ -2377,17 +2456,6 @@ run:
       }
 
       DEFAULT:
-#ifdef ZERO
-          // Some zero configurations use the C++ interpreter as a
-          // fallback interpreter and have support for platform
-          // specific fast bytecodes which aren't supported here, so
-          // redispatch to the equivalent non-fast bytecode when they
-          // are encountered.
-          if (Bytecodes::is_defined((Bytecodes::Code)opcode)) {
-              opcode = (jubyte)Bytecodes::java_code((Bytecodes::Code)opcode);
-              goto opcode_switch;
-          }
-#endif
           fatal(err_msg("Unimplemented opcode %d = %s", opcode,
                         Bytecodes::name((Bytecodes::Code)opcode)));
           goto finish;

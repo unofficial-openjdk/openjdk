@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,29 +110,48 @@ class outputStream : public ResourceObj {
    // flushing
    virtual void flush() {}
    virtual void write(const char* str, size_t len) = 0;
-   virtual ~outputStream() {}  // close properly on deletion
+   virtual void rotate_log() {} // GC log rotation
+   virtual ~outputStream() {}   // close properly on deletion
 
    void dec_cr() { dec(); cr(); }
    void inc_cr() { inc(); cr(); }
 };
 
 // standard output
-                                // ANSI C++ name collision
+// ANSI C++ name collision
 extern outputStream* tty;           // tty output
 extern outputStream* gclog_or_tty;  // stream for gc log if -Xloggc:<f>, or tty
 
 // advisory locking for the shared tty stream:
 class ttyLocker: StackObj {
+  friend class ttyUnlocker;
  private:
   intx _holder;
 
  public:
   static intx  hold_tty();                // returns a "holder" token
   static void  release_tty(intx holder);  // must witness same token
+  static bool  release_tty_if_locked();   // returns true if lock was released
   static void  break_tty_lock_for_safepoint(intx holder);
 
   ttyLocker()  { _holder = hold_tty(); }
   ~ttyLocker() { release_tty(_holder); }
+};
+
+// Release the tty lock if it's held and reacquire it if it was
+// locked.  Used to avoid lock ordering problems.
+class ttyUnlocker: StackObj {
+ private:
+  bool _was_locked;
+ public:
+  ttyUnlocker()  {
+    _was_locked = ttyLocker::release_tty_if_locked();
+  }
+  ~ttyUnlocker() {
+    if (_was_locked) {
+      ttyLocker::hold_tty();
+    }
+  }
 };
 
 // for writing to strings; buffer will expand automatically
@@ -158,11 +177,19 @@ class fileStream : public outputStream {
   FILE* _file;
   bool  _need_close;
  public:
+  fileStream() { _file = NULL; _need_close = false; }
   fileStream(const char* file_name);
+  fileStream(const char* file_name, const char* opentype);
   fileStream(FILE* file) { _file = file; _need_close = false; }
   ~fileStream();
   bool is_open() const { return _file != NULL; }
+  void set_need_close(bool b) { _need_close = b;}
   virtual void write(const char* c, size_t len);
+  size_t read(void *data, size_t size, size_t count) { return ::fread(data, size, count, _file); }
+  char* readln(char *data, int count);
+  int eof() { return feof(_file); }
+  long fileSize();
+  void rewind() { ::rewind(_file); }
   void flush();
 };
 
@@ -183,6 +210,20 @@ class fdStream : public outputStream {
   int fd() const { return _fd; }
   virtual void write(const char* c, size_t len);
   void flush() {};
+};
+
+class rotatingFileStream : public fileStream {
+ protected:
+  char*  _file_name;
+  jlong  _bytes_writen;
+  uintx  _cur_file_num;             // current logfile rotation number, from 0 to MaxGCLogFileNumbers-1
+ public:
+  rotatingFileStream(const char* file_name);
+  rotatingFileStream(const char* file_name, const char* opentype);
+  rotatingFileStream(FILE* file) : fileStream(file) {}
+  ~rotatingFileStream();
+  virtual void write(const char* c, size_t len);
+  virtual void rotate_log();
 };
 
 void ostream_init();

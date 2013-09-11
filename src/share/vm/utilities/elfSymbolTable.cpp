@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 
 #include "precompiled.hpp"
 
-#ifndef _WINDOWS
+#if !defined(_WINDOWS) && !defined(__APPLE__)
 
 #include "memory/allocation.inline.hpp"
 #include "utilities/elfSymbolTable.hpp"
@@ -34,32 +34,33 @@ ElfSymbolTable::ElfSymbolTable(FILE* file, Elf_Shdr shdr) {
   m_symbols = NULL;
   m_next = NULL;
   m_file = file;
-  m_status = Decoder::no_error;
+  m_status = NullDecoder::no_error;
 
   // try to load the string table
   long cur_offset = ftell(file);
   if (cur_offset != -1) {
-    m_symbols = (Elf_Sym*)NEW_C_HEAP_ARRAY(char, shdr.sh_size);
+    // call malloc so we can back up if memory allocation fails.
+    m_symbols = (Elf_Sym*)os::malloc(shdr.sh_size);
     if (m_symbols) {
       if (fseek(file, shdr.sh_offset, SEEK_SET) ||
         fread((void*)m_symbols, shdr.sh_size, 1, file) != 1 ||
         fseek(file, cur_offset, SEEK_SET)) {
-        m_status = Decoder::file_invalid;
-        FREE_C_HEAP_ARRAY(char, m_symbols);
+        m_status = NullDecoder::file_invalid;
+        os::free(m_symbols);
         m_symbols = NULL;
       }
     }
-    if (m_status == Decoder::no_error) {
+    if (!NullDecoder::is_error(m_status)) {
       memcpy(&m_shdr, &shdr, sizeof(Elf_Shdr));
     }
   } else {
-    m_status = Decoder::file_invalid;
+    m_status = NullDecoder::file_invalid;
   }
 }
 
 ElfSymbolTable::~ElfSymbolTable() {
   if (m_symbols != NULL) {
-    FREE_C_HEAP_ARRAY(char, m_symbols);
+    os::free(m_symbols);
   }
 
   if (m_next != NULL) {
@@ -67,13 +68,13 @@ ElfSymbolTable::~ElfSymbolTable() {
   }
 }
 
-Decoder::decoder_status ElfSymbolTable::lookup(address addr, int* stringtableIndex, int* posIndex, int* offset) {
+bool ElfSymbolTable::lookup(address addr, int* stringtableIndex, int* posIndex, int* offset) {
   assert(stringtableIndex, "null string table index pointer");
   assert(posIndex, "null string table offset pointer");
   assert(offset, "null offset pointer");
 
-  if (m_status != Decoder::no_error) {
-    return m_status;
+  if (NullDecoder::is_error(m_status)) {
+    return false;
   }
 
   address pc = 0;
@@ -96,8 +97,8 @@ Decoder::decoder_status ElfSymbolTable::lookup(address addr, int* stringtableInd
     long cur_pos;
     if ((cur_pos = ftell(m_file)) == -1 ||
       fseek(m_file, m_shdr.sh_offset, SEEK_SET)) {
-      m_status = Decoder::file_invalid;
-      return m_status;
+      m_status = NullDecoder::file_invalid;
+      return false;
     }
 
     Elf_Sym sym;
@@ -113,13 +114,13 @@ Decoder::decoder_status ElfSymbolTable::lookup(address addr, int* stringtableInd
           }
         }
       } else {
-        m_status = Decoder::file_invalid;
-        return m_status;
+        m_status = NullDecoder::file_invalid;
+        return false;
       }
     }
     fseek(m_file, cur_pos, SEEK_SET);
   }
-  return m_status;
+  return true;
 }
 
 #endif // _WINDOWS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,18 +122,32 @@ void CE_Eliminator::block_do(BlockBegin* block) {
   if (sux != f_goto->default_sux()) return;
 
   // check if at least one word was pushed on sux_state
+  // inlining depths must match
+  ValueStack* if_state = if_->state();
   ValueStack* sux_state = sux->state();
-  if (sux_state->stack_size() <= if_->state()->stack_size()) return;
+  if (if_state->scope()->level() > sux_state->scope()->level()) {
+    while (sux_state->scope() != if_state->scope()) {
+      if_state = if_state->caller_state();
+      assert(if_state != NULL, "states do not match up");
+    }
+  } else if (if_state->scope()->level() < sux_state->scope()->level()) {
+    while (sux_state->scope() != if_state->scope()) {
+      sux_state = sux_state->caller_state();
+      assert(sux_state != NULL, "states do not match up");
+    }
+  }
+
+  if (sux_state->stack_size() <= if_state->stack_size()) return;
 
   // check if phi function is present at end of successor stack and that
   // only this phi was pushed on the stack
-  Value sux_phi = sux_state->stack_at(if_->state()->stack_size());
+  Value sux_phi = sux_state->stack_at(if_state->stack_size());
   if (sux_phi == NULL || sux_phi->as_Phi() == NULL || sux_phi->as_Phi()->block() != sux) return;
-  if (sux_phi->type()->size() != sux_state->stack_size() - if_->state()->stack_size()) return;
+  if (sux_phi->type()->size() != sux_state->stack_size() - if_state->stack_size()) return;
 
   // get the values that were pushed in the true- and false-branch
-  Value t_value = t_goto->state()->stack_at(if_->state()->stack_size());
-  Value f_value = f_goto->state()->stack_at(if_->state()->stack_size());
+  Value t_value = t_goto->state()->stack_at(if_state->stack_size());
+  Value f_value = f_goto->state()->stack_at(if_state->stack_size());
 
   // backend does not support floats
   assert(t_value->type()->base() == f_value->type()->base(), "incompatible types");
@@ -180,11 +194,7 @@ void CE_Eliminator::block_do(BlockBegin* block) {
   Goto* goto_ = new Goto(sux, state_before, if_->is_safepoint() || t_goto->is_safepoint() || f_goto->is_safepoint());
 
   // prepare state for Goto
-  ValueStack* goto_state = if_->state();
-  while (sux_state->scope() != goto_state->scope()) {
-    goto_state = goto_state->caller_state();
-    assert(goto_state != NULL, "states do not match up");
-  }
+  ValueStack* goto_state = if_state;
   goto_state = goto_state->copy(ValueStack::StateAfter, goto_state->bci());
   goto_state->push(result->type(), result);
   assert(goto_state->is_same(sux_state), "states must match now");
@@ -252,26 +262,28 @@ Value CE_Eliminator::make_ifop(Value x, Instruction::Condition cond, Value y, Va
         Constant::CompareResult t_compare_res = x_tval_const->compare(cond, y_const);
         Constant::CompareResult f_compare_res = x_fval_const->compare(cond, y_const);
 
-        guarantee(t_compare_res != Constant::not_comparable && f_compare_res != Constant::not_comparable, "incomparable constants in IfOp");
+        // not_comparable here is a valid return in case we're comparing unloaded oop constants
+        if (t_compare_res != Constant::not_comparable && f_compare_res != Constant::not_comparable) {
+          Value new_tval = t_compare_res == Constant::cond_true ? tval : fval;
+          Value new_fval = f_compare_res == Constant::cond_true ? tval : fval;
 
-        Value new_tval = t_compare_res == Constant::cond_true ? tval : fval;
-        Value new_fval = f_compare_res == Constant::cond_true ? tval : fval;
-
-        _ifop_count++;
-        if (new_tval == new_fval) {
-          return new_tval;
-        } else {
-          return new IfOp(x_ifop->x(), x_ifop_cond, x_ifop->y(), new_tval, new_fval);
+          _ifop_count++;
+          if (new_tval == new_fval) {
+            return new_tval;
+          } else {
+            return new IfOp(x_ifop->x(), x_ifop_cond, x_ifop->y(), new_tval, new_fval);
+          }
         }
       }
     } else {
       Constant* x_const = x->as_Constant();
       if (x_const != NULL) {         // x and y are constants
         Constant::CompareResult x_compare_res = x_const->compare(cond, y_const);
-        guarantee(x_compare_res != Constant::not_comparable, "incomparable constants in IfOp");
-
-        _ifop_count++;
-        return x_compare_res == Constant::cond_true ? tval : fval;
+        // not_comparable here is a valid return in case we're comparing unloaded oop constants
+        if (x_compare_res != Constant::not_comparable) {
+          _ifop_count++;
+          return x_compare_res == Constant::cond_true ? tval : fval;
+        }
       }
     }
   }
@@ -496,6 +508,8 @@ public:
   void do_UnsafePrefetchWrite(UnsafePrefetchWrite* x);
   void do_ProfileCall    (ProfileCall*     x);
   void do_ProfileInvoke  (ProfileInvoke*   x);
+  void do_RuntimeCall    (RuntimeCall*     x);
+  void do_MemBar         (MemBar*          x);
 };
 
 
@@ -639,11 +653,11 @@ void NullCheckVisitor::do_NewInstance    (NewInstance*     x) { nce()->handle_Ne
 void NullCheckVisitor::do_NewTypeArray   (NewTypeArray*    x) { nce()->handle_NewArray(x); }
 void NullCheckVisitor::do_NewObjectArray (NewObjectArray*  x) { nce()->handle_NewArray(x); }
 void NullCheckVisitor::do_NewMultiArray  (NewMultiArray*   x) { nce()->handle_NewArray(x); }
-void NullCheckVisitor::do_CheckCast      (CheckCast*       x) {}
+void NullCheckVisitor::do_CheckCast      (CheckCast*       x) { nce()->clear_last_explicit_null_check(); }
 void NullCheckVisitor::do_InstanceOf     (InstanceOf*      x) {}
 void NullCheckVisitor::do_MonitorEnter   (MonitorEnter*    x) { nce()->handle_AccessMonitor(x); }
 void NullCheckVisitor::do_MonitorExit    (MonitorExit*     x) { nce()->handle_AccessMonitor(x); }
-void NullCheckVisitor::do_Intrinsic      (Intrinsic*       x) { nce()->clear_last_explicit_null_check(); }
+void NullCheckVisitor::do_Intrinsic      (Intrinsic*       x) { nce()->handle_Intrinsic(x);     }
 void NullCheckVisitor::do_BlockBegin     (BlockBegin*      x) {}
 void NullCheckVisitor::do_Goto           (Goto*            x) {}
 void NullCheckVisitor::do_If             (If*              x) {}
@@ -664,6 +678,8 @@ void NullCheckVisitor::do_UnsafePrefetchRead (UnsafePrefetchRead*  x) {}
 void NullCheckVisitor::do_UnsafePrefetchWrite(UnsafePrefetchWrite* x) {}
 void NullCheckVisitor::do_ProfileCall    (ProfileCall*     x) { nce()->clear_last_explicit_null_check(); }
 void NullCheckVisitor::do_ProfileInvoke  (ProfileInvoke*   x) {}
+void NullCheckVisitor::do_RuntimeCall    (RuntimeCall*     x) {}
+void NullCheckVisitor::do_MemBar         (MemBar*          x) {}
 
 
 void NullCheckEliminator::visit(Value* p) {
@@ -1021,6 +1037,12 @@ void NullCheckEliminator::handle_AccessMonitor(AccessMonitor* x) {
 
 void NullCheckEliminator::handle_Intrinsic(Intrinsic* x) {
   if (!x->has_receiver()) {
+    if (x->id() == vmIntrinsics::_arraycopy) {
+      for (int i = 0; i < x->number_of_arguments(); i++) {
+        x->set_arg_needs_null_check(i, !set_contains(x->argument_at(i)));
+      }
+    }
+
     // Be conservative
     clear_last_explicit_null_check();
     return;

@@ -1,4 +1,5 @@
-/* * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+/*
+ * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +34,11 @@
 #include "utilities/hashtable.hpp"
 #include "utilities/hashtable.inline.hpp"
 
+
+#ifndef USDT2
 HS_DTRACE_PROBE_DECL4(hs_private, hashtable__new_entry,
-  void*, unsigned int, oop, void*);
+  void*, unsigned int, void*, void*);
+#endif /* !USDT2 */
 
 // This is a generic hashtable, designed to be used for the symbol
 // and string tables.
@@ -69,64 +73,19 @@ BasicHashtableEntry* BasicHashtable::new_entry(unsigned int hashValue) {
 }
 
 
-HashtableEntry* Hashtable::new_entry(unsigned int hashValue, oop obj) {
-  HashtableEntry* entry;
-  entry = (HashtableEntry*)BasicHashtable::new_entry(hashValue);
-  entry->set_literal(obj);   // clears literal string field
+template <class T> HashtableEntry<T>* Hashtable<T>::new_entry(unsigned int hashValue, T obj) {
+  HashtableEntry<T>* entry;
+
+  entry = (HashtableEntry<T>*)BasicHashtable::new_entry(hashValue);
+  entry->set_literal(obj);
+#ifndef USDT2
   HS_DTRACE_PROBE4(hs_private, hashtable__new_entry,
     this, hashValue, obj, entry);
+#else /* USDT2 */
+  HS_PRIVATE_HASHTABLE_NEW_ENTRY(
+    this, hashValue, (uintptr_t) obj, entry);
+#endif /* USDT2 */
   return entry;
-}
-
-
-// GC support
-
-void Hashtable::unlink(BoolObjectClosure* is_alive) {
-  // Readers of the table are unlocked, so we should only be removing
-  // entries at a safepoint.
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
-  for (int i = 0; i < table_size(); ++i) {
-    HashtableEntry** p = bucket_addr(i);
-    HashtableEntry* entry = bucket(i);
-    while (entry != NULL) {
-      // Shared entries are normally at the end of the bucket and if we run into
-      // a shared entry, then there is nothing more to remove. However, if we
-      // have rehashed the table, then the shared entries are no longer at the
-      // end of the bucket.
-      if (entry->is_shared() && !use_alternate_hashcode()) {
-        break;
-      }
-      assert(entry->literal() != NULL, "just checking");
-      if (entry->is_shared() || is_alive->do_object_b(entry->literal())) {
-        p = entry->next_addr();
-      } else {
-        *p = entry->next();
-        free_entry(entry);
-      }
-      entry = (HashtableEntry*)HashtableEntry::make_ptr(*p);
-    }
-  }
-}
-
-
-void Hashtable::oops_do(OopClosure* f) {
-  for (int i = 0; i < table_size(); ++i) {
-    HashtableEntry** p = bucket_addr(i);
-    HashtableEntry* entry = bucket(i);
-    while (entry != NULL) {
-      f->do_oop(entry->literal_addr());
-
-      // Did the closure remove the literal from the table?
-      if (entry->literal() == NULL) {
-        assert(!entry->is_shared(), "immutable hashtable entry?");
-        *p = entry->next();
-        free_entry(entry);
-      } else {
-        p = entry->next_addr();
-      }
-      entry = (HashtableEntry*)HashtableEntry::make_ptr(*p);
-    }
-  }
 }
 
 
@@ -146,38 +105,39 @@ bool BasicHashtable::check_rehash_table(int count) {
   return false;
 }
 
-unsigned int Hashtable::new_hash(oop string) {
+template <class T> jint Hashtable<T>::_seed = 0;
+
+template <class T> unsigned int Hashtable<T>::new_hash(Symbol* sym) {
+  ResourceMark rm;
+  // Use alternate hashing algorithm on this symbol.
+  return AltHashing::murmur3_32(seed(), (const jbyte*)sym->as_C_string(), sym->utf8_length());
+}
+
+template <class T> unsigned int Hashtable<T>::new_hash(oop string) {
   ResourceMark rm;
   int length;
-  if (java_lang_String::is_instance(string)) {
-    jchar* chars = java_lang_String::as_unicode_string(string, length);
-    // Use alternate hashing algorithm on the string
-    return AltHashing::murmur3_32(seed(), chars, length);
-  } else {
-    // Use alternate hashing algorithm on this symbol.
-    symbolOop symOop = (symbolOop) string;
-    return AltHashing::murmur3_32(seed(), (const jbyte*)symOop->bytes(), symOop->utf8_length());
-  }
+  jchar* chars = java_lang_String::as_unicode_string(string, length);
+  // Use alternate hashing algorithm on the string
+  return AltHashing::murmur3_32(seed(), chars, length);
 }
 
 // Create a new table and using alternate hash code, populate the new table
 // with the existing elements.   This can be used to change the hash code
 // and could in the future change the size of the table.
 
-void Hashtable::move_to(Hashtable* new_table) {
+template <class T> void Hashtable<T>::move_to(Hashtable<T>* new_table) {
+
   // Initialize the global seed for hashing.
-  assert(new_table->seed() == 0, "should be zero");
   _seed = AltHashing::compute_seed();
   assert(seed() != 0, "shouldn't be zero");
-  new_table->set_seed(_seed);
 
   int saved_entry_count = this->number_of_entries();
-  
+
   // Iterate through the table and create a new entry for the new table
   for (int i = 0; i < new_table->table_size(); ++i) {
-    for (HashtableEntry* p = bucket(i); p != NULL; ) {
-      HashtableEntry* next = p->next();
-      oop string = p->literal();
+    for (HashtableEntry<T>* p = bucket(i); p != NULL; ) {
+      HashtableEntry<T>* next = p->next();
+      T string = p->literal();
       // Use alternate hashing algorithm on the symbol in the first table
       unsigned int hashValue = new_hash(string);
       // Get a new index relative to the new table (can also change size)
@@ -253,11 +213,7 @@ void BasicHashtable::copy_table(char** top, char* end) {
                               *p != NULL;
                                p = (*p)->next_addr()) {
       if (*top + entry_size() > end) {
-        warning("\nThe shared miscellaneous data space is not large "
-                "enough to \npreload requested classes.  Use "
-                "-XX:SharedMiscDataSize= to increase \nthe initial "
-                "size of the miscellaneous data space.\n");
-        exit(2);
+        report_out_of_shared_space(SharedMiscData);
       }
       *p = (BasicHashtableEntry*)memcpy(*top, *p, entry_size());
       *top += entry_size();
@@ -278,15 +234,15 @@ void BasicHashtable::copy_table(char** top, char* end) {
 
 // Reverse the order of elements in the hash buckets.
 
-void Hashtable::reverse(void* boundary) {
+template <class T> void Hashtable<T>::reverse(void* boundary) {
 
   for (int i = 0; i < table_size(); ++i) {
-    HashtableEntry* high_list = NULL;
-    HashtableEntry* low_list = NULL;
-    HashtableEntry* last_low_entry = NULL;
-    HashtableEntry* p = bucket(i);
+    HashtableEntry<T>* high_list = NULL;
+    HashtableEntry<T>* low_list = NULL;
+    HashtableEntry<T>* last_low_entry = NULL;
+    HashtableEntry<T>* p = bucket(i);
     while (p != NULL) {
-      HashtableEntry* next = p->next();
+      HashtableEntry<T>* next = p->next();
       if ((void*)p->literal() >= boundary) {
         p->set_next(high_list);
         high_list = p;
@@ -320,11 +276,7 @@ void BasicHashtable::copy_buckets(char** top, char* end) {
   *top += sizeof(intptr_t);
 
   if (*top + len > end) {
-    warning("\nThe shared miscellaneous data space is not large "
-            "enough to \npreload requested classes.  Use "
-            "-XX:SharedMiscDataSize= to increase \nthe initial "
-            "size of the miscellaneous data space.\n");
-    exit(2);
+    report_out_of_shared_space(SharedMiscData);
   }
   _buckets = (HashtableBucket*)memcpy(*top, _buckets, len);
   *top += len;
@@ -333,11 +285,11 @@ void BasicHashtable::copy_buckets(char** top, char* end) {
 
 #ifndef PRODUCT
 
-void Hashtable::print() {
+template <class T> void Hashtable<T>::print() {
   ResourceMark rm;
 
   for (int i = 0; i < table_size(); i++) {
-    HashtableEntry* entry = bucket(i);
+    HashtableEntry<T>* entry = bucket(i);
     while(entry != NULL) {
       tty->print("%d : ", i);
       entry->literal()->print();
@@ -374,3 +326,10 @@ void BasicHashtable::verify_lookup_length(double load) {
 }
 
 #endif
+
+// Explicitly instantiate these types
+template class Hashtable<constantPoolOop>;
+template class Hashtable<Symbol*>;
+template class Hashtable<klassOop>;
+template class Hashtable<oop>;
+

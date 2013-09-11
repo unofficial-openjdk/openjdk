@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -866,6 +866,10 @@ enum LIR_Code {
       , lir_membar
       , lir_membar_acquire
       , lir_membar_release
+      , lir_membar_loadload
+      , lir_membar_storestore
+      , lir_membar_loadstore
+      , lir_membar_storeload
       , lir_get_thread
   , end_op0
   , begin_op1
@@ -1156,7 +1160,7 @@ class LIR_OpJavaCall: public LIR_OpCall {
     return
       is_invokedynamic()  // An invokedynamic is always a MethodHandle call site.
       ||
-      (method()->holder()->name() == ciSymbol::java_dyn_MethodHandle() &&
+      (method()->holder()->name() == ciSymbol::java_lang_invoke_MethodHandle() &&
        methodOopDesc::is_method_handle_invoke_name(method()->name()->sid()));
   }
 
@@ -1215,7 +1219,11 @@ public:
     src_range_check        = 1 << 5,
     dst_range_check        = 1 << 6,
     type_check             = 1 << 7,
-    all_flags              = (1 << 8) - 1
+    overlapping            = 1 << 8,
+    unaligned              = 1 << 9,
+    src_objarray           = 1 << 10,
+    dst_objarray           = 1 << 11,
+    all_flags              = (1 << 12) - 1
   };
 
   LIR_OpArrayCopy(LIR_Opr src, LIR_Opr src_pos, LIR_Opr dst, LIR_Opr dst_pos, LIR_Opr length, LIR_Opr tmp,
@@ -1350,9 +1358,10 @@ class LIR_OpBranch: public LIR_Op {
   CodeStub*     _stub;   // if this is a branch to a stub, this is the stub
 
  public:
-  LIR_OpBranch(LIR_Condition cond, Label* lbl)
+  LIR_OpBranch(LIR_Condition cond, BasicType type, Label* lbl)
     : LIR_Op(lir_branch, LIR_OprFact::illegalOpr, (CodeEmitInfo*) NULL)
     , _cond(cond)
+    , _type(type)
     , _label(lbl)
     , _block(NULL)
     , _ublock(NULL)
@@ -1913,6 +1922,10 @@ class LIR_List: public CompilationResourceObj {
   void membar()                                  { append(new LIR_Op0(lir_membar)); }
   void membar_acquire()                          { append(new LIR_Op0(lir_membar_acquire)); }
   void membar_release()                          { append(new LIR_Op0(lir_membar_release)); }
+  void membar_loadload()                         { append(new LIR_Op0(lir_membar_loadload)); }
+  void membar_storestore()                       { append(new LIR_Op0(lir_membar_storestore)); }
+  void membar_loadstore()                        { append(new LIR_Op0(lir_membar_loadstore)); }
+  void membar_storeload()                        { append(new LIR_Op0(lir_membar_storeload)); }
 
   void nop()                                     { append(new LIR_Op0(lir_nop)); }
   void build_frame()                             { append(new LIR_Op0(lir_build_frame)); }
@@ -2049,7 +2062,7 @@ class LIR_List: public CompilationResourceObj {
   void jump(CodeStub* stub) {
     append(new LIR_OpBranch(lir_cond_always, T_ILLEGAL, stub));
   }
-  void branch(LIR_Condition cond, Label* lbl)        { append(new LIR_OpBranch(cond, lbl)); }
+  void branch(LIR_Condition cond, BasicType type, Label* lbl)        { append(new LIR_OpBranch(cond, type, lbl)); }
   void branch(LIR_Condition cond, BasicType type, BlockBegin* block) {
     assert(type != T_FLOAT && type != T_DOUBLE, "no fp comparisons");
     append(new LIR_OpBranch(cond, type, block));
@@ -2096,7 +2109,7 @@ class LIR_List: public CompilationResourceObj {
   void fpop_raw()                                { append(new LIR_Op0(lir_fpop_raw)); }
 
   void instanceof(LIR_Opr result, LIR_Opr object, ciKlass* klass, LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3, bool fast_check, CodeEmitInfo* info_for_patch, ciMethod* profiled_method, int profiled_bci);
-  void store_check(LIR_Opr object, LIR_Opr array, LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3, CodeEmitInfo* info_for_exception);
+  void store_check(LIR_Opr object, LIR_Opr array, LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3, CodeEmitInfo* info_for_exception, ciMethod* profiled_method, int profiled_bci);
 
   void checkcast (LIR_Opr result, LIR_Opr object, ciKlass* klass,
                   LIR_Opr tmp1, LIR_Opr tmp2, LIR_Opr tmp3, bool fast_check,

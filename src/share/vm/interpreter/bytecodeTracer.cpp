@@ -92,7 +92,7 @@ class BytecodePrinter: public BytecodeClosure {
       // the incoming method.  We could lose a line of trace output.
       // This is acceptable in a debug-only feature.
       st->cr();
-      st->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
+      st->print("[%ld] ", (long) Thread::current()->osthread()->thread_id());
       method->print_name(st);
       st->cr();
       _current_method = method();
@@ -106,7 +106,7 @@ class BytecodePrinter: public BytecodeClosure {
     }
     _code = code;
      int bci = bcp - method->code_base();
-    st->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
+    st->print("[%ld] ", (long) Thread::current()->osthread()->thread_id());
     if (Verbose) {
       st->print("%8d  %4d  " INTPTR_FORMAT " " INTPTR_FORMAT " %s",
            BytecodeCounter::counter_value(), bci, tos, tos2, Bytecodes::name(code));
@@ -188,7 +188,7 @@ void BytecodeTracer::trace(methodHandle method, address bcp, outputStream* st) {
   _closure->trace(method, bcp, st);
 }
 
-void print_symbol(symbolOop sym, outputStream* st) {
+void print_symbol(Symbol* sym, outputStream* st) {
   char buf[40];
   int len = sym->utf8_length();
   if (len >= (int)sizeof(buf)) {
@@ -203,12 +203,14 @@ void print_oop(oop value, outputStream* st) {
   if (value == NULL) {
     st->print_cr(" NULL");
   } else if (java_lang_String::is_instance(value)) {
-    EXCEPTION_MARK;
-    Handle h_value (THREAD, value);
-    symbolHandle sym = java_lang_String::as_symbol(h_value, CATCH);
-    print_symbol(sym(), st);
-  } else if (value->is_symbol()) {
-    print_symbol(symbolOop(value), st);
+    char buf[40];
+    int len = java_lang_String::utf8_length(value);
+    java_lang_String::as_utf8_string(value, buf, sizeof(buf));
+    if (len >= (int)sizeof(buf)) {
+      st->print_cr(" %s...[%d]", buf, len);
+    } else {
+      st->print_cr(" %s", buf);
+    }
   } else {
     st->print_cr(" " PTR_FORMAT, (intptr_t) value);
   }
@@ -239,7 +241,7 @@ bool BytecodePrinter::check_index(int i, int& cp_index, outputStream* st) {
         st->print_cr(" not secondary entry?", i);
         return false;
       }
-      i = cache->entry_at(i)->main_entry_index();
+      i = cache->entry_at(i)->main_entry_index() + constantPoolOopDesc::CPCACHE_INDEX_TAG;
       goto check_cache_index;
     } else {
       st->print_cr(" not in cache[*]?", i);
@@ -316,7 +318,7 @@ void BytecodePrinter::print_constant(int i, outputStream* st) {
   } else if (tag.is_method_type()) {
     int i2 = constants->method_type_index_at(i);
     st->print(" <MethodType> %d", i2);
-    print_oop(constants->symbol_at(i2), st);
+    print_symbol(constants->symbol_at(i2), st);
   } else if (tag.is_method_handle()) {
     int kind = constants->method_handle_ref_kind_at(i);
     int i2 = constants->method_handle_index_at(i);
@@ -346,7 +348,6 @@ void BytecodePrinter::print_field_or_method(int orig_i, int i, outputStream* st)
     break;
   case JVM_CONSTANT_NameAndType:
   case JVM_CONSTANT_InvokeDynamic:
-  case JVM_CONSTANT_InvokeDynamicTrans:
     has_klass = false;
     break;
   default:
@@ -354,11 +355,11 @@ void BytecodePrinter::print_field_or_method(int orig_i, int i, outputStream* st)
     return;
   }
 
-  symbolOop name = constants->uncached_name_ref_at(i);
-  symbolOop signature = constants->uncached_signature_ref_at(i);
+  Symbol* name = constants->uncached_name_ref_at(i);
+  Symbol* signature = constants->uncached_signature_ref_at(i);
   const char* sep = (tag.is_field() ? "/" : "");
   if (has_klass) {
-    symbolOop klass = constants->klass_name_at(constants->uncached_klass_ref_index_at(i));
+    Symbol* klass = constants->klass_name_at(constants->uncached_klass_ref_index_at(i));
     st->print_cr(" %d <%s.%s%s%s> ", i, klass->as_C_string(), name->as_C_string(), sep, signature->as_C_string());
   } else {
     if (tag.is_invoke_dynamic()) {
@@ -438,7 +439,7 @@ void BytecodePrinter::print_attributes(int bci, outputStream* st) {
     case Bytecodes::_anewarray: {
         int klass_index = get_index_u2();
         constantPoolOop constants = method()->constants();
-        symbolOop name = constants->klass_name_at(klass_index);
+        Symbol* name = constants->klass_name_at(klass_index);
         st->print_cr(" %s ", name->as_C_string());
       }
       break;
@@ -446,7 +447,7 @@ void BytecodePrinter::print_attributes(int bci, outputStream* st) {
         int klass_index = get_index_u2();
         int nof_dims = get_index_u1();
         constantPoolOop constants = method()->constants();
-        symbolOop name = constants->klass_name_at(klass_index);
+        Symbol* name = constants->klass_name_at(klass_index);
         st->print_cr(" %s %d", name->as_C_string(), nof_dims);
       }
       break;
@@ -552,7 +553,7 @@ void BytecodePrinter::print_attributes(int bci, outputStream* st) {
     case Bytecodes::_instanceof:
       { int i = get_index_u2();
         constantPoolOop constants = method()->constants();
-        symbolOop name = constants->klass_name_at(i);
+        Symbol* name = constants->klass_name_at(i);
         st->print_cr(" %d <%s>", i, name->as_C_string());
       }
       break;

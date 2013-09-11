@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,14 +40,20 @@
 #ifdef TARGET_ARCH_MODEL_zero
 # include "adfiles/ad_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_MODEL_arm
+# include "adfiles/ad_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc
+# include "adfiles/ad_ppc.hpp"
+#endif
 
 //------------------------------BoxLockNode------------------------------------
 class BoxLockNode : public Node {
-public:
-  const int _slot;
-  RegMask   _inmask;
-  bool _is_eliminated;    // indicates this lock was safely eliminated
+  const int     _slot; // stack slot
+  RegMask     _inmask; // OptoReg corresponding to stack slot
+  bool _is_eliminated; // Associated locks were safely eliminated
 
+public:
   BoxLockNode( int lock );
   virtual int Opcode() const;
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
@@ -60,11 +66,19 @@ public:
   virtual const class Type *bottom_type() const { return TypeRawPtr::BOTTOM; }
   virtual uint ideal_reg() const { return Op_RegP; }
 
-  static OptoReg::Name stack_slot(Node* box_node);
+  static OptoReg::Name reg(Node* box_node);
+  static BoxLockNode* box_node(Node* box_node);
+  static bool same_slot(Node* box1, Node* box2) {
+    return box1->as_BoxLock()->_slot == box2->as_BoxLock()->_slot;
+  }
+  int stack_slot() const { return _slot; }
 
-  bool is_eliminated()  { return _is_eliminated; }
+  bool is_eliminated() const { return _is_eliminated; }
   // mark lock as eliminated.
-  void set_eliminated() { _is_eliminated = true; }
+  void set_eliminated()      { _is_eliminated = true; }
+
+  // Is BoxLock node used for one simple lock region?
+  bool is_simple_lock_region(LockNode** unique_lock, Node* obj);
 
 #ifndef PRODUCT
   virtual void format( PhaseRegAlloc *, outputStream *st ) const;
@@ -85,6 +99,7 @@ public:
   }
   Node* obj_node() const { return in(1); }
   Node* box_node() const { return in(2); }
+  void  set_box_node(Node* box) { set_req(2, box); }
 
   // FastLock and FastUnlockNode do not hash, we need one for each correspoding
   // LockNode/UnLockNode to avoid creating Phi's.

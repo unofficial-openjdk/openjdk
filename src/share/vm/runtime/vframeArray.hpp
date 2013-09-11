@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,8 @@ class StackValueCollection;
 // represent an interpreter frame which will eventually be created.
 
 class vframeArrayElement : public _ValueObj {
+  friend class VMStructs;
+
   private:
 
     frame _frame;                                                // the interpreter frame we will unpack into
@@ -83,13 +85,15 @@ class vframeArrayElement : public _ValueObj {
 
   // Returns the on stack word size for this frame
   // callee_parameters is the number of callee locals residing inside this frame
-  int on_stack_size(int callee_parameters,
+  int on_stack_size(int caller_actual_parameters,
+                    int callee_parameters,
                     int callee_locals,
                     bool is_top_frame,
                     int popframe_extra_stack_expression_els) const;
 
   // Unpacks the element to skeletal interpreter frame
-  void unpack_on_stack(int callee_parameters,
+  void unpack_on_stack(int caller_actual_parameters,
+                       int callee_parameters,
                        int callee_locals,
                        frame* caller,
                        bool is_top_frame,
@@ -105,6 +109,8 @@ class vframeArrayElement : public _ValueObj {
 // at the data in each vframeElement
 
 class vframeArray: public CHeapObj {
+  friend class VMStructs;
+
  private:
 
 
@@ -190,7 +196,7 @@ class vframeArray: public CHeapObj {
   int frame_size() const { return _frame_size; }
 
   // Unpack the array on the stack passed in stack interval
-  void unpack_to_stack(frame &unpack_frame, int exec_mode);
+  void unpack_to_stack(frame &unpack_frame, int exec_mode, int caller_actual_parameters);
 
   // Deallocates monitor chunks allocated during deoptimization.
   // This should be called when the array is not used anymore.

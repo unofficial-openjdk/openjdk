@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,10 @@
 # include "os_windows.inline.hpp"
 # include "thread_windows.inline.hpp"
 #endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "os_bsd.inline.hpp"
+# include "thread_bsd.inline.hpp"
+#endif
 
 # include <signal.h>
 
@@ -72,10 +76,17 @@ int               os::_processor_count    = 0;
 size_t            os::_page_sizes[os::page_sizes_max];
 
 #ifndef PRODUCT
-int os::num_mallocs = 0;            // # of calls to malloc/realloc
-size_t os::alloc_bytes = 0;         // # of bytes allocated
-int os::num_frees = 0;              // # of calls to free
+julong os::num_mallocs = 0;         // # of calls to malloc/realloc
+julong os::alloc_bytes = 0;         // # of bytes allocated
+julong os::num_frees = 0;           // # of calls to free
+julong os::free_bytes = 0;          // # of bytes freed
 #endif
+
+void os_init_globals() {
+  // Called from init_globals().
+  // See Threads::create_vm() in thread.cpp, and init.cpp.
+  os::init_globals();
+}
 
 // Fill in buffer with current local time as an ISO-8601 string.
 // E.g., yyyy-mm-ddThh:mm:ss-zzzz.
@@ -115,7 +126,11 @@ char* os::iso8601_time(char* buffer, size_t buffer_length) {
     assert(false, "Failed localtime_pd");
     return NULL;
   }
+#if defined(_ALLBSD_SOURCE)
+  const time_t zone = (time_t) time_struct.tm_gmtoff;
+#else
   const time_t zone = timezone;
+#endif
 
   // If daylight savings time is in effect,
   // we are 1 hour East of our time zone
@@ -255,7 +270,7 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
       default: {
         // Dispatch the signal to java
         HandleMark hm(THREAD);
-        klassOop k = SystemDictionary::resolve_or_null(vmSymbolHandles::sun_misc_Signal(), THREAD);
+        klassOop k = SystemDictionary::resolve_or_null(vmSymbols::sun_misc_Signal(), THREAD);
         KlassHandle klass (THREAD, k);
         if (klass.not_null()) {
           JavaValue result(T_VOID);
@@ -264,8 +279,8 @@ static void signal_thread_entry(JavaThread* thread, TRAPS) {
           JavaCalls::call_static(
             &result,
             klass,
-            vmSymbolHandles::dispatch_name(),
-            vmSymbolHandles::int_void_signature(),
+            vmSymbols::dispatch_name(),
+            vmSymbols::int_void_signature(),
             &args,
             THREAD
           );
@@ -298,7 +313,7 @@ void os::signal_init() {
   if (!ReduceSignalUsage) {
     // Setup JavaThread for processing signals
     EXCEPTION_MARK;
-    klassOop k = SystemDictionary::resolve_or_fail(vmSymbolHandles::java_lang_Thread(), true, CHECK);
+    klassOop k = SystemDictionary::resolve_or_fail(vmSymbols::java_lang_Thread(), true, CHECK);
     instanceKlassHandle klass (THREAD, k);
     instanceHandle thread_oop = klass->allocate_instance_handle(CHECK);
 
@@ -310,8 +325,8 @@ void os::signal_init() {
     JavaValue result(T_VOID);
     JavaCalls::call_special(&result, thread_oop,
                            klass,
-                           vmSymbolHandles::object_initializer_name(),
-                           vmSymbolHandles::threadgroup_string_void_signature(),
+                           vmSymbols::object_initializer_name(),
+                           vmSymbols::threadgroup_string_void_signature(),
                            thread_group,
                            string,
                            CHECK);
@@ -320,8 +335,8 @@ void os::signal_init() {
     JavaCalls::call_special(&result,
                             thread_group,
                             group,
-                            vmSymbolHandles::add_method_name(),
-                            vmSymbolHandles::thread_void_signature(),
+                            vmSymbols::add_method_name(),
+                            vmSymbols::thread_void_signature(),
                             thread_oop,         // ARG 1
                             CHECK);
 
@@ -383,6 +398,13 @@ void* os::native_java_library() {
     if (_native_java_library == NULL) {
       vm_exit_during_initialization("Unable to load native library", ebuf);
     }
+
+#if defined(__OpenBSD__)
+    // Work-around OpenBSD's lack of $ORIGIN support by pre-loading libnet.so
+    // ignore errors
+    dll_build_name(buffer, sizeof(buffer), Arguments::get_dll_dir(), "net");
+    dll_load(buffer, ebuf, sizeof(ebuf));
+#endif
   }
   static jboolean onLoaded = JNI_FALSE;
   if (onLoaded) {
@@ -490,9 +512,9 @@ void print_neighbor_blocks(void* ptr) {
   }
 
   if (start_of_prev_block + space_before + size + space_after == start_of_this_block) {
-    tty->print_cr("### previous object: %p (%ld bytes)", obj, size);
+    tty->print_cr("### previous object: " PTR_FORMAT " (" SSIZE_FORMAT " bytes)", obj, size);
   } else {
-    tty->print_cr("### previous object (not sure if correct): %p (%ld bytes)", obj, size);
+    tty->print_cr("### previous object (not sure if correct): " PTR_FORMAT " (" SSIZE_FORMAT " bytes)", obj, size);
   }
 
   // now find successor block
@@ -504,16 +526,16 @@ void print_neighbor_blocks(void* ptr) {
       start_of_next_block[1] == badResourceValue &&
       start_of_next_block[2] == badResourceValue &&
       start_of_next_block[3] == badResourceValue) {
-    tty->print_cr("### next object: %p (%ld bytes)", next_obj, next_size);
+    tty->print_cr("### next object: " PTR_FORMAT " (" SSIZE_FORMAT " bytes)", next_obj, next_size);
   } else {
-    tty->print_cr("### next object (not sure if correct): %p (%ld bytes)", next_obj, next_size);
+    tty->print_cr("### next object (not sure if correct): " PTR_FORMAT " (" SSIZE_FORMAT " bytes)", next_obj, next_size);
   }
 }
 
 
 void report_heap_error(void* memblock, void* bad, const char* where) {
-  tty->print_cr("## nof_mallocs = %d, nof_frees = %d", os::num_mallocs, os::num_frees);
-  tty->print_cr("## memory stomp: byte at %p %s object %p", bad, where, memblock);
+  tty->print_cr("## nof_mallocs = " UINT64_FORMAT ", nof_frees = " UINT64_FORMAT, os::num_mallocs, os::num_frees);
+  tty->print_cr("## memory stomp: byte at " PTR_FORMAT " %s object " PTR_FORMAT, bad, where, memblock);
   print_neighbor_blocks(memblock);
   fatal("memory stomping error");
 }
@@ -538,8 +560,8 @@ void verify_block(void* memblock) {
 #endif
 
 void* os::malloc(size_t size) {
-  NOT_PRODUCT(num_mallocs++);
-  NOT_PRODUCT(alloc_bytes += size);
+  NOT_PRODUCT(inc_stat_counter(&num_mallocs, 1));
+  NOT_PRODUCT(inc_stat_counter(&alloc_bytes, size));
 
   if (size == 0) {
     // return a valid pointer if size is zero
@@ -562,26 +584,26 @@ void* os::malloc(size_t size) {
 #endif
   u_char* memblock = ptr + space_before;
   if ((intptr_t)memblock == (intptr_t)MallocCatchPtr) {
-    tty->print_cr("os::malloc caught, %lu bytes --> %p", size, memblock);
+    tty->print_cr("os::malloc caught, " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, memblock);
     breakpoint();
   }
   debug_only(if (paranoid) verify_block(memblock));
-  if (PrintMalloc && tty != NULL) tty->print_cr("os::malloc %lu bytes --> %p", size, memblock);
+  if (PrintMalloc && tty != NULL) tty->print_cr("os::malloc " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, memblock);
   return memblock;
 }
 
 
 void* os::realloc(void *memblock, size_t size) {
-  NOT_PRODUCT(num_mallocs++);
-  NOT_PRODUCT(alloc_bytes += size);
 #ifndef ASSERT
+  NOT_PRODUCT(inc_stat_counter(&num_mallocs, 1));
+  NOT_PRODUCT(inc_stat_counter(&alloc_bytes, size));
   return ::realloc(memblock, size);
 #else
   if (memblock == NULL) {
-    return os::malloc(size);
+    return malloc(size);
   }
   if ((intptr_t)memblock == (intptr_t)MallocCatchPtr) {
-    tty->print_cr("os::realloc caught %p", memblock);
+    tty->print_cr("os::realloc caught " PTR_FORMAT, memblock);
     breakpoint();
   }
   verify_block(memblock);
@@ -589,13 +611,13 @@ void* os::realloc(void *memblock, size_t size) {
   if (size == 0) return NULL;
   // always move the block
   void* ptr = malloc(size);
-  if (PrintMalloc) tty->print_cr("os::remalloc %lu bytes, %p --> %p", size, memblock, ptr);
+  if (PrintMalloc) tty->print_cr("os::remalloc " SIZE_FORMAT " bytes, " PTR_FORMAT " --> " PTR_FORMAT, size, memblock, ptr);
   // Copy to new memory if malloc didn't fail
   if ( ptr != NULL ) {
     memcpy(ptr, memblock, MIN2(size, get_size(memblock)));
     if (paranoid) verify_block(ptr);
     if ((intptr_t)ptr == (intptr_t)MallocCatchPtr) {
-      tty->print_cr("os::realloc caught, %lu bytes --> %p", size, ptr);
+      tty->print_cr("os::realloc caught, " SIZE_FORMAT " bytes --> " PTR_FORMAT, size, ptr);
       breakpoint();
     }
     free(memblock);
@@ -606,17 +628,14 @@ void* os::realloc(void *memblock, size_t size) {
 
 
 void  os::free(void *memblock) {
-  NOT_PRODUCT(num_frees++);
+  NOT_PRODUCT(inc_stat_counter(&num_frees, 1));
 #ifdef ASSERT
   if (memblock == NULL) return;
   if ((intptr_t)memblock == (intptr_t)MallocCatchPtr) {
-    if (tty != NULL) tty->print_cr("os::free caught %p", memblock);
+    if (tty != NULL) tty->print_cr("os::free caught " PTR_FORMAT, memblock);
     breakpoint();
   }
   verify_block(memblock);
-  if (PrintMalloc && tty != NULL)
-    // tty->print_cr("os::free %p", memblock);
-    fprintf(stderr, "os::free %p\n", memblock);
   NOT_PRODUCT(if (MallocVerifyInterval > 0) check_heap());
   // Added by detlefs.
   if (MallocCushion) {
@@ -627,12 +646,18 @@ void  os::free(void *memblock) {
       *p = (u_char)freeBlockPad;
     }
     size_t size = get_size(memblock);
+    inc_stat_counter(&free_bytes, size);
     u_char* end = ptr + space_before + size;
     for (u_char* q = end; q < end + MallocCushion; q++) {
       guarantee(*q == badResourceValue,
                 "Thing freed should be malloc result.");
       *q = (u_char)freeBlockPad;
     }
+    if (PrintMalloc && tty != NULL)
+      fprintf(stderr, "os::free " SIZE_FORMAT " bytes --> " PTR_FORMAT "\n", size, (uintptr_t)memblock);
+  } else if (PrintMalloc && tty != NULL) {
+    // tty->print_cr("os::free %p", memblock);
+    fprintf(stderr, "os::free " PTR_FORMAT "\n", (uintptr_t)memblock);
   }
 #endif
   ::free((char*)memblock - space_before);
@@ -757,6 +782,7 @@ void os::print_cpu_info(outputStream* st) {
   // st->print("(active %d)", os::active_processor_count());
   st->print(" %s", VM_Version::cpu_features());
   st->cr();
+  pd_print_cpu_info(st);
 }
 
 void os::print_date_and_time(outputStream *st) {
@@ -1075,11 +1101,10 @@ bool os::set_boot_path(char fileSep, char pathSep) {
         "%/lib/jsse.jar:"
         "%/lib/jce.jar:"
         "%/lib/charsets.jar:"
-
-        // ## TEMPORARY hack to keep the legacy launcher working when
-        // ## only the boot module is installed (cf. j.l.ClassLoader)
-        "%/lib/modules/jdk.boot.jar:"
-
+        "%/lib/jfr.jar:"
+#ifdef __APPLE__
+        "%/lib/JObjC.jar:"
+#endif
         "%/classes";
     char* sysclasspath = format_boot_path(classpath_format, home, home_len, fileSep, pathSep);
     if (sysclasspath == NULL) return false;
@@ -1232,6 +1257,17 @@ size_t os::page_size_for_region(size_t region_min_size, size_t region_max_size,
 }
 
 #ifndef PRODUCT
+void os::trace_page_sizes(const char* str, const size_t* page_sizes, int count)
+{
+  if (TracePageSizes) {
+    tty->print("%s: ", str);
+    for (int i = 0; i < count; ++i) {
+      tty->print(" " SIZE_FORMAT, page_sizes[i]);
+    }
+    tty->cr();
+  }
+}
+
 void os::trace_page_sizes(const char* str, const size_t region_min_size,
                           const size_t region_max_size, const size_t page_size,
                           const char* base, const size_t size)
@@ -1291,4 +1327,42 @@ bool os::is_server_class_machine() {
     }
   }
   return result;
+}
+
+// Read file line by line, if line is longer than bsize,
+// skip rest of line.
+int os::get_line_chars(int fd, char* buf, const size_t bsize){
+  size_t sz, i = 0;
+
+  // read until EOF, EOL or buf is full
+  while ((sz = (int) read(fd, &buf[i], 1)) == 1 && i < (bsize-2) && buf[i] != '\n') {
+     ++i;
+  }
+
+  if (buf[i] == '\n') {
+    // EOL reached so ignore EOL character and return
+
+    buf[i] = 0;
+    return (int) i;
+  }
+
+  buf[i+1] = 0;
+
+  if (sz != 1) {
+    // EOF reached. if we read chars before EOF return them and
+    // return EOF on next call otherwise return EOF
+
+    return (i == 0) ? -1 : (int) i;
+  }
+
+  // line is longer than size of buf, skip to EOL
+  char ch;
+  while (read(fd, &ch, 1) == 1 && ch != '\n') {
+    // Do nothing
+  }
+
+  // return initial part of line that fits in buf.
+  // If we reached EOF, it will be returned on next call.
+
+  return (int) i;
 }

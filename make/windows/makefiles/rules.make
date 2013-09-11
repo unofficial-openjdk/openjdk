@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ ProjectFile=jvm.vcproj
 !if "$(MSC_VER)" == "1200"
 
 VcVersion=VC6
-ProjectFile=vm.dsp
+ProjectFile=jvm.dsp
 
 !elseif "$(MSC_VER)" == "1400"
 
@@ -65,8 +65,8 @@ VcVersion=VC9
 
 !elseif "$(MSC_VER)" == "1600"
 
-# for compatibility - we don't yet have a ProjectCreator for VC10
-VcVersion=VC9
+VcVersion=VC10
+ProjectFile=jvm.vcxproj
 
 !else
 

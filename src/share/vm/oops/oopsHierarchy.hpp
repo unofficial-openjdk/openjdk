@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,6 @@ typedef class     objArrayOopDesc*            objArrayOop;
 typedef class     typeArrayOopDesc*            typeArrayOop;
 typedef class   constantPoolOopDesc*            constantPoolOop;
 typedef class   constantPoolCacheOopDesc*   constantPoolCacheOop;
-typedef class   symbolOopDesc*                    symbolOop;
 typedef class   klassOopDesc*                    klassOop;
 typedef class   markOopDesc*                    markOop;
 typedef class   compiledICHolderOopDesc*    compiledICHolderOop;
@@ -166,7 +165,6 @@ DEF_OOP(constantPool);
 DEF_OOP(constantPoolCache);
 DEF_OOP(objArray);
 DEF_OOP(typeArray);
-DEF_OOP(symbol);
 DEF_OOP(klass);
 DEF_OOP(compiledICHolder);
 
@@ -176,6 +174,7 @@ DEF_OOP(compiledICHolder);
 
 class Klass;
 class   instanceKlass;
+class     instanceMirrorKlass;
 class     instanceRefKlass;
 class   methodKlass;
 class   constMethodKlass;
@@ -190,7 +189,6 @@ class     objArrayKlass;
 class     typeArrayKlass;
 class   constantPoolKlass;
 class   constantPoolCacheKlass;
-class   symbolKlass;
 class   compiledICHolderKlass;
 
 #endif // SHARE_VM_OOPS_OOPSHIERARCHY_HPP

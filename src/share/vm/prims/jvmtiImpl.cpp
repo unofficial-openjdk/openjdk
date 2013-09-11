@@ -32,11 +32,14 @@
 #include "prims/jvmtiEventController.inline.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "prims/jvmtiRedefineClasses.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/handles.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/javaCalls.hpp"
+#include "runtime/os.hpp"
+#include "runtime/serviceThread.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/vframe.hpp"
 #include "runtime/vframe_hp.hpp"
@@ -50,6 +53,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "thread_windows.inline.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_bsd
+# include "thread_bsd.inline.hpp"
 #endif
 
 //
@@ -285,8 +291,8 @@ void JvmtiBreakpoint::each_method_version_do(method_action meth_act) {
   // not saved in the PreviousVersionInfo.
   Thread *thread = Thread::current();
   instanceKlassHandle ikh = instanceKlassHandle(thread, _method->method_holder());
-  symbolOop m_name = _method->name();
-  symbolOop m_signature = _method->signature();
+  Symbol* m_name = _method->name();
+  Symbol* m_signature = _method->signature();
 
   {
     ResourceMark rm(thread);
@@ -628,22 +634,22 @@ bool VM_GetOrSetLocal::is_assignable(const char* ty_sign, Klass* klass, Thread* 
     ty_sign++;
     len -= 2;
   }
-  symbolHandle ty_sym = oopFactory::new_symbol_handle(ty_sign, len, thread);
-  if (klass->name() == ty_sym()) {
+  TempNewSymbol ty_sym = SymbolTable::new_symbol(ty_sign, len, thread);
+  if (klass->name() == ty_sym) {
     return true;
   }
   // Compare primary supers
   int super_depth = klass->super_depth();
   int idx;
   for (idx = 0; idx < super_depth; idx++) {
-    if (Klass::cast(klass->primary_super_of_depth(idx))->name() == ty_sym()) {
+    if (Klass::cast(klass->primary_super_of_depth(idx))->name() == ty_sym) {
       return true;
     }
   }
   // Compare secondary supers
   objArrayOop sec_supers = klass->secondary_supers();
   for (idx = 0; idx < sec_supers->length(); idx++) {
-    if (Klass::cast((klassOop) sec_supers->obj_at(idx))->name() == ty_sym()) {
+    if (Klass::cast((klassOop) sec_supers->obj_at(idx))->name() == ty_sym) {
       return true;
     }
   }
@@ -690,7 +696,7 @@ bool VM_GetOrSetLocal::check_slot_type(javaVFrame* jvf) {
     _result = JVMTI_ERROR_INVALID_SLOT;
     return false;       // Incorrect slot index
   }
-  symbolOop   sign_sym  = method_oop->constants()->symbol_at(signature_idx);
+  Symbol*   sign_sym  = method_oop->constants()->symbol_at(signature_idx);
   const char* signature = (const char *) sign_sym->as_utf8();
   BasicType slot_type = char2type(signature[0]);
 
@@ -910,3 +916,199 @@ void JvmtiSuspendControl::print() {
   tty->print_cr("]");
 #endif
 }
+
+#ifndef KERNEL
+
+JvmtiDeferredEvent JvmtiDeferredEvent::compiled_method_load_event(
+    nmethod* nm) {
+  JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_COMPILED_METHOD_LOAD);
+  event._event_data.compiled_method_load = nm;
+  // Keep the nmethod alive until the ServiceThread can process
+  // this deferred event.
+  nmethodLocker::lock_nmethod(nm);
+  return event;
+}
+
+JvmtiDeferredEvent JvmtiDeferredEvent::compiled_method_unload_event(
+    nmethod* nm, jmethodID id, const void* code) {
+  JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_COMPILED_METHOD_UNLOAD);
+  event._event_data.compiled_method_unload.nm = nm;
+  event._event_data.compiled_method_unload.method_id = id;
+  event._event_data.compiled_method_unload.code_begin = code;
+  // Keep the nmethod alive until the ServiceThread can process
+  // this deferred event. This will keep the memory for the
+  // generated code from being reused too early. We pass
+  // zombie_ok == true here so that our nmethod that was just
+  // made into a zombie can be locked.
+  nmethodLocker::lock_nmethod(nm, true /* zombie_ok */);
+  return event;
+}
+
+JvmtiDeferredEvent JvmtiDeferredEvent::dynamic_code_generated_event(
+      const char* name, const void* code_begin, const void* code_end) {
+  JvmtiDeferredEvent event = JvmtiDeferredEvent(TYPE_DYNAMIC_CODE_GENERATED);
+  // Need to make a copy of the name since we don't know how long
+  // the event poster will keep it around after we enqueue the
+  // deferred event and return. strdup() failure is handled in
+  // the post() routine below.
+  event._event_data.dynamic_code_generated.name = os::strdup(name);
+  event._event_data.dynamic_code_generated.code_begin = code_begin;
+  event._event_data.dynamic_code_generated.code_end = code_end;
+  return event;
+}
+
+void JvmtiDeferredEvent::post() {
+  assert(ServiceThread::is_service_thread(Thread::current()),
+         "Service thread must post enqueued events");
+  switch(_type) {
+    case TYPE_COMPILED_METHOD_LOAD: {
+      nmethod* nm = _event_data.compiled_method_load;
+      JvmtiExport::post_compiled_method_load(nm);
+      // done with the deferred event so unlock the nmethod
+      nmethodLocker::unlock_nmethod(nm);
+      break;
+    }
+    case TYPE_COMPILED_METHOD_UNLOAD: {
+      nmethod* nm = _event_data.compiled_method_unload.nm;
+      JvmtiExport::post_compiled_method_unload(
+        _event_data.compiled_method_unload.method_id,
+        _event_data.compiled_method_unload.code_begin);
+      // done with the deferred event so unlock the nmethod
+      nmethodLocker::unlock_nmethod(nm);
+      break;
+    }
+    case TYPE_DYNAMIC_CODE_GENERATED: {
+      JvmtiExport::post_dynamic_code_generated_internal(
+        // if strdup failed give the event a default name
+        (_event_data.dynamic_code_generated.name == NULL)
+          ? "unknown_code" : _event_data.dynamic_code_generated.name,
+        _event_data.dynamic_code_generated.code_begin,
+        _event_data.dynamic_code_generated.code_end);
+      if (_event_data.dynamic_code_generated.name != NULL) {
+        // release our copy
+        os::free((void *)_event_data.dynamic_code_generated.name);
+      }
+      break;
+    }
+    default:
+      ShouldNotReachHere();
+  }
+}
+
+JvmtiDeferredEventQueue::QueueNode* JvmtiDeferredEventQueue::_queue_tail = NULL;
+JvmtiDeferredEventQueue::QueueNode* JvmtiDeferredEventQueue::_queue_head = NULL;
+
+volatile JvmtiDeferredEventQueue::QueueNode*
+    JvmtiDeferredEventQueue::_pending_list = NULL;
+
+bool JvmtiDeferredEventQueue::has_events() {
+  assert(Service_lock->owned_by_self(), "Must own Service_lock");
+  return _queue_head != NULL || _pending_list != NULL;
+}
+
+void JvmtiDeferredEventQueue::enqueue(const JvmtiDeferredEvent& event) {
+  assert(Service_lock->owned_by_self(), "Must own Service_lock");
+
+  process_pending_events();
+
+  // Events get added to the end of the queue (and are pulled off the front).
+  QueueNode* node = new QueueNode(event);
+  if (_queue_tail == NULL) {
+    _queue_tail = _queue_head = node;
+  } else {
+    assert(_queue_tail->next() == NULL, "Must be the last element in the list");
+    _queue_tail->set_next(node);
+    _queue_tail = node;
+  }
+
+  Service_lock->notify_all();
+  assert((_queue_head == NULL) == (_queue_tail == NULL),
+         "Inconsistent queue markers");
+}
+
+JvmtiDeferredEvent JvmtiDeferredEventQueue::dequeue() {
+  assert(Service_lock->owned_by_self(), "Must own Service_lock");
+
+  process_pending_events();
+
+  assert(_queue_head != NULL, "Nothing to dequeue");
+
+  if (_queue_head == NULL) {
+    // Just in case this happens in product; it shouldn't but let's not crash
+    return JvmtiDeferredEvent();
+  }
+
+  QueueNode* node = _queue_head;
+  _queue_head = _queue_head->next();
+  if (_queue_head == NULL) {
+    _queue_tail = NULL;
+  }
+
+  assert((_queue_head == NULL) == (_queue_tail == NULL),
+         "Inconsistent queue markers");
+
+  JvmtiDeferredEvent event = node->event();
+  delete node;
+  return event;
+}
+
+void JvmtiDeferredEventQueue::add_pending_event(
+    const JvmtiDeferredEvent& event) {
+
+  QueueNode* node = new QueueNode(event);
+
+  bool success = false;
+  QueueNode* prev_value = (QueueNode*)_pending_list;
+  do {
+    node->set_next(prev_value);
+    prev_value = (QueueNode*)Atomic::cmpxchg_ptr(
+        (void*)node, (volatile void*)&_pending_list, (void*)node->next());
+  } while (prev_value != node->next());
+}
+
+// This method transfers any events that were added by someone NOT holding
+// the lock into the mainline queue.
+void JvmtiDeferredEventQueue::process_pending_events() {
+  assert(Service_lock->owned_by_self(), "Must own Service_lock");
+
+  if (_pending_list != NULL) {
+    QueueNode* head =
+        (QueueNode*)Atomic::xchg_ptr(NULL, (volatile void*)&_pending_list);
+
+    assert((_queue_head == NULL) == (_queue_tail == NULL),
+           "Inconsistent queue markers");
+
+    if (head != NULL) {
+      // Since we've treated the pending list as a stack (with newer
+      // events at the beginning), we need to join the bottom of the stack
+      // with the 'tail' of the queue in order to get the events in the
+      // right order.  We do this by reversing the pending list and appending
+      // it to the queue.
+
+      QueueNode* new_tail = head;
+      QueueNode* new_head = NULL;
+
+      // This reverses the list
+      QueueNode* prev = new_tail;
+      QueueNode* node = new_tail->next();
+      new_tail->set_next(NULL);
+      while (node != NULL) {
+        QueueNode* next = node->next();
+        node->set_next(prev);
+        prev = node;
+        node = next;
+      }
+      new_head = prev;
+
+      // Now append the new list to the queue
+      if (_queue_tail != NULL) {
+        _queue_tail->set_next(new_head);
+      } else { // _queue_head == NULL
+        _queue_head = new_head;
+      }
+      _queue_tail = new_tail;
+    }
+  }
+}
+
+#endif // ndef KERNEL

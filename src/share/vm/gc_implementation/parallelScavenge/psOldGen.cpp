@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,22 +176,18 @@ void PSOldGen::compact() {
   object_mark_sweep()->compact(ZapUnusedHeapArea);
 }
 
-void PSOldGen::move_and_update(ParCompactionManager* cm) {
-  PSParallelCompact::move_and_update(cm, PSParallelCompact::old_space_id);
-}
-
 size_t PSOldGen::contiguous_available() const {
   return object_space()->free_in_bytes() + virtual_space()->uncommitted_size();
 }
 
 // Allocation. We report all successful allocations to the size policy
 // Note that the perm gen does not use this method, and should not!
-HeapWord* PSOldGen::allocate(size_t word_size, bool is_tlab) {
+HeapWord* PSOldGen::allocate(size_t word_size) {
   assert_locked_or_safepoint(Heap_lock);
-  HeapWord* res = allocate_noexpand(word_size, is_tlab);
+  HeapWord* res = allocate_noexpand(word_size);
 
   if (res == NULL) {
-    res = expand_and_allocate(word_size, is_tlab);
+    res = expand_and_allocate(word_size);
   }
 
   // Allocations in the old generation need to be reported
@@ -203,13 +199,12 @@ HeapWord* PSOldGen::allocate(size_t word_size, bool is_tlab) {
   return res;
 }
 
-HeapWord* PSOldGen::expand_and_allocate(size_t word_size, bool is_tlab) {
-  assert(!is_tlab, "TLAB's are not supported in PSOldGen");
+HeapWord* PSOldGen::expand_and_allocate(size_t word_size) {
   expand(word_size*HeapWordSize);
   if (GCExpandToAllocateDelayMillis > 0) {
     os::sleep(Thread::current(), GCExpandToAllocateDelayMillis, false);
   }
-  return allocate_noexpand(word_size, is_tlab);
+  return allocate_noexpand(word_size);
 }
 
 HeapWord* PSOldGen::expand_and_cas_allocate(size_t word_size) {
@@ -228,6 +223,12 @@ void PSOldGen::expand(size_t bytes) {
   const size_t alignment = virtual_space()->alignment();
   size_t aligned_bytes  = align_size_up(bytes, alignment);
   size_t aligned_expand_bytes = align_size_up(MinHeapDeltaBytes, alignment);
+
+  if (UseNUMA) {
+    // With NUMA we use round-robin page allocation for the old gen. Expand by at least
+    // providing a page per lgroup. Alignment is larger or equal to the page size.
+    aligned_expand_bytes = MAX2(aligned_expand_bytes, alignment * os::numa_get_groups_num());
+  }
   if (aligned_bytes == 0){
     // The alignment caused the number of bytes to wrap.  An expand_by(0) will
     // return true with the implication that and expansion was done when it

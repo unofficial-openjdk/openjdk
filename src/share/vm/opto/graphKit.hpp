@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -544,8 +544,10 @@ class GraphKit : public Phase {
                              BasicType bt);
 
   // For the few case where the barriers need special help
-  void pre_barrier(Node* ctl, Node* obj, Node* adr, uint adr_idx,
-                   Node* val, const TypeOopPtr* val_type, BasicType bt);
+  void pre_barrier(bool do_load, Node* ctl,
+                   Node* obj, Node* adr, uint adr_idx, Node* val, const TypeOopPtr* val_type,
+                   Node* pre_val,
+                   BasicType bt);
 
   void post_barrier(Node* ctl, Node* store, Node* obj, Node* adr, uint adr_idx,
                     Node* val, BasicType bt, bool use_precise);
@@ -662,18 +664,22 @@ class GraphKit : public Phase {
             && Universe::heap()->can_elide_tlab_store_barriers());
   }
 
+  // Sync Ideal and Graph kits.
   void sync_kit(IdealKit& ideal);
+  void final_sync(IdealKit& ideal);
 
   // vanilla/CMS post barrier
   void write_barrier_post(Node *store, Node* obj,
                           Node* adr,  uint adr_idx, Node* val, bool use_precise);
 
   // G1 pre/post barriers
-  void g1_write_barrier_pre(Node* obj,
+  void g1_write_barrier_pre(bool do_load,
+                            Node* obj,
                             Node* adr,
                             uint alias_idx,
                             Node* val,
                             const TypeOopPtr* val_type,
+                            Node* pre_val,
                             BasicType bt);
 
   void g1_write_barrier_post(Node* store,
@@ -767,15 +773,21 @@ class GraphKit : public Phase {
 
   // implementation of object creation
   Node* set_output_for_allocation(AllocateNode* alloc,
-                                  const TypeOopPtr* oop_type,
-                                  bool raw_mem_only);
+                                  const TypeOopPtr* oop_type);
   Node* get_layout_helper(Node* klass_node, jint& constant_value);
   Node* new_instance(Node* klass_node,
                      Node* slow_test = NULL,
-                     bool raw_mem_only = false,
                      Node* *return_size_val = NULL);
   Node* new_array(Node* klass_node, Node* count_val, int nargs,
-                  bool raw_mem_only = false, Node* *return_size_val = NULL);
+                  Node* *return_size_val = NULL);
+
+  // java.lang.String helpers
+  Node* load_String_offset(Node* ctrl, Node* str);
+  Node* load_String_length(Node* ctrl, Node* str);
+  Node* load_String_value(Node* ctrl, Node* str);
+  void store_String_offset(Node* ctrl, Node* str, Node* value);
+  void store_String_length(Node* ctrl, Node* str, Node* value);
+  void store_String_value(Node* ctrl, Node* str, Node* value);
 
   // Handy for making control flow
   IfNode* create_and_map_if(Node* ctrl, Node* tst, float prob, float cnt) {
@@ -793,6 +805,10 @@ class GraphKit : public Phase {
     if (!tst->is_Con())  record_for_igvn(iff);     // Range-check and Null-check removal is later
     return iff;
   }
+
+  // Insert a loop predicate into the graph
+  void add_predicate(int nargs = 0);
+  void add_predicate_impl(Deoptimization::DeoptReason reason, int nargs);
 };
 
 // Helper class to support building of control flow branches. Upon

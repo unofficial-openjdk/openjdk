@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "ci/ciCallSite.hpp"
 #include "ci/ciMethodHandle.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "compiler/compileBroker.hpp"
 #include "compiler/compileLog.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "opto/addnode.hpp"
@@ -43,17 +44,17 @@
 #ifndef PRODUCT
 void trace_type_profile(ciMethod *method, int depth, int bci, ciMethod *prof_method, ciKlass *prof_klass, int site_count, int receiver_count) {
   if (TraceTypeProfile || PrintInlining || PrintOptoInlining) {
-    tty->print("   ");
-    for( int i = 0; i < depth; i++ ) tty->print("  ");
-    if (!PrintOpto) {
-      method->print_short_name();
-      tty->print(" ->");
+    if (!PrintInlining) {
+      if (!PrintOpto && !PrintCompilation) {
+        method->print_short_name();
+        tty->cr();
+      }
+      CompileTask::print_inlining(prof_method, depth, bci);
     }
-    tty->print(" @ %d  ", bci);
-    prof_method->print_short_name();
-    tty->print("  >>TypeProfile (%d/%d counts) = ", receiver_count, site_count);
+    CompileTask::print_inline_indent(depth);
+    tty->print(" \\-> TypeProfile (%d/%d counts) = ", receiver_count, site_count);
     prof_klass->name()->print_symbol();
-    tty->print_cr(" (%d bytes)", prof_method->code_size());
+    tty->cr();
   }
 }
 #endif
@@ -61,7 +62,10 @@ void trace_type_profile(ciMethod *method, int depth, int bci, ciMethod *prof_met
 CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, bool call_is_virtual,
                                        JVMState* jvms, bool allow_inline,
                                        float prof_factor) {
-  CallGenerator* cg;
+  ciMethod*       caller   = jvms->method();
+  int             bci      = jvms->bci();
+  Bytecodes::Code bytecode = caller->java_code_at_bci(bci);
+  guarantee(call_method != NULL, "failed method resolution");
 
   // Dtrace currently doesn't work unless all calls are vanilla
   if (env()->dtrace_method_probes()) {
@@ -71,7 +75,7 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
   // Note: When we get profiling during stage-1 compiles, we want to pull
   // from more specific profile data which pertains to this inlining.
   // Right now, ignore the information in jvms->caller(), and do method[bci].
-  ciCallProfile profile = jvms->method()->call_profile_at_bci(jvms->bci());
+  ciCallProfile profile = caller->call_profile_at_bci(bci);
 
   // See how many times this site has been invoked.
   int site_count = profile.count();
@@ -105,67 +109,27 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
   // We do this before the strict f.p. check below because the
   // intrinsics handle strict f.p. correctly.
   if (allow_inline) {
-    cg = find_intrinsic(call_method, call_is_virtual);
+    CallGenerator* cg = find_intrinsic(call_method, call_is_virtual);
     if (cg != NULL)  return cg;
   }
 
-  // Do MethodHandle calls.
+  // Do method handle calls.
   // NOTE: This must happen before normal inlining logic below since
   // MethodHandle.invoke* are native methods which obviously don't
   // have bytecodes and so normal inlining fails.
   if (call_method->is_method_handle_invoke()) {
-    if (jvms->method()->java_code_at_bci(jvms->bci()) != Bytecodes::_invokedynamic) {
+    if (bytecode != Bytecodes::_invokedynamic) {
       GraphKit kit(jvms);
-      Node* n = kit.argument(0);
-
-      if (n->Opcode() == Op_ConP) {
-        const TypeOopPtr* oop_ptr = n->bottom_type()->is_oopptr();
-        ciObject* const_oop = oop_ptr->const_oop();
-        ciMethodHandle* method_handle = const_oop->as_method_handle();
-
-        // Set the actually called method to have access to the class
-        // and signature in the MethodHandleCompiler.
-        method_handle->set_callee(call_method);
-
-        // Get an adapter for the MethodHandle.
-        ciMethod* target_method = method_handle->get_method_handle_adapter();
-
-        CallGenerator* hit_cg = this->call_generator(target_method, vtable_index, false, jvms, true, prof_factor);
-        if (hit_cg != NULL && hit_cg->is_inline())
-          return hit_cg;
-      }
-
-      return CallGenerator::for_direct_call(call_method);
+      Node* method_handle = kit.argument(0);
+      return CallGenerator::for_method_handle_call(method_handle, jvms, caller, call_method, profile);
     }
     else {
-      // Get the MethodHandle from the CallSite.
-      ciMethod* caller_method = jvms->method();
-      ciBytecodeStream str(caller_method);
-      str.force_bci(jvms->bci());  // Set the stream to the invokedynamic bci.
-      ciCallSite*     call_site     = str.get_call_site();
-      ciMethodHandle* method_handle = call_site->get_target();
-
-      // Set the actually called method to have access to the class
-      // and signature in the MethodHandleCompiler.
-      method_handle->set_callee(call_method);
-
-      // Get an adapter for the MethodHandle.
-      ciMethod* target_method = method_handle->get_invokedynamic_adapter();
-
-      CallGenerator* hit_cg = this->call_generator(target_method, vtable_index, false, jvms, true, prof_factor);
-      if (hit_cg != NULL && hit_cg->is_inline()) {
-        CallGenerator* miss_cg = CallGenerator::for_dynamic_call(call_method);
-        return CallGenerator::for_predicted_dynamic_call(method_handle, miss_cg, hit_cg, prof_factor);
-      }
-
-      // If something failed, generate a normal dynamic call.
-      return CallGenerator::for_dynamic_call(call_method);
+      return CallGenerator::for_invokedynamic_call(jvms, caller, call_method, profile);
     }
   }
 
   // Do not inline strict fp into non-strict code, or the reverse
-  bool caller_method_is_strict = jvms->method()->is_strict();
-  if( caller_method_is_strict ^ call_method->is_strict() ) {
+  if (caller->is_strict() ^ call_method->is_strict()) {
     allow_inline = false;
   }
 
@@ -187,7 +151,7 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
         // TO DO:  When UseOldInlining is removed, copy the ILT code elsewhere.
         float site_invoke_ratio = prof_factor;
         // Note:  ilt is for the root of this parse, not the present call site.
-        ilt = new InlineTree(this, jvms->method(), jvms->caller(), site_invoke_ratio, 0);
+        ilt = new InlineTree(this, jvms->method(), jvms->caller(), site_invoke_ratio, MaxInlineLevel);
       }
       WarmCallInfo scratch_ci;
       if (!UseOldInlining)
@@ -269,14 +233,14 @@ CallGenerator* Compile::call_generator(ciMethod* call_method, int vtable_index, 
           }
           if (miss_cg != NULL) {
             if (next_hit_cg != NULL) {
-              NOT_PRODUCT(trace_type_profile(jvms->method(), jvms->depth(), jvms->bci(), next_receiver_method, profile.receiver(1), site_count, profile.receiver_count(1)));
+              NOT_PRODUCT(trace_type_profile(jvms->method(), jvms->depth() - 1, jvms->bci(), next_receiver_method, profile.receiver(1), site_count, profile.receiver_count(1)));
               // We don't need to record dependency on a receiver here and below.
               // Whenever we inline, the dependency is added by Parse::Parse().
               miss_cg = CallGenerator::for_predicted_call(profile.receiver(1), miss_cg, next_hit_cg, PROB_MAX);
             }
             if (miss_cg != NULL) {
-              NOT_PRODUCT(trace_type_profile(jvms->method(), jvms->depth(), jvms->bci(), receiver_method, profile.receiver(0), site_count, receiver_count));
-              cg = CallGenerator::for_predicted_call(profile.receiver(0), miss_cg, hit_cg, profile.receiver_prob(0));
+              NOT_PRODUCT(trace_type_profile(jvms->method(), jvms->depth() - 1, jvms->bci(), receiver_method, profile.receiver(0), site_count, receiver_count));
+              CallGenerator* cg = CallGenerator::for_predicted_call(profile.receiver(0), miss_cg, hit_cg, profile.receiver_prob(0));
               if (cg != NULL)  return cg;
             }
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,17 +68,91 @@
 # include "nativeInst_zero.hpp"
 # include "vmreg_zero.inline.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "nativeInst_arm.hpp"
+# include "vmreg_arm.inline.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "nativeInst_ppc.hpp"
+# include "vmreg_ppc.inline.hpp"
+#endif
 #ifdef COMPILER1
 #include "c1/c1_Runtime1.hpp"
 #endif
 
+// Shared stub locations
+RuntimeStub*        SharedRuntime::_wrong_method_blob;
+RuntimeStub*        SharedRuntime::_ic_miss_blob;
+RuntimeStub*        SharedRuntime::_resolve_opt_virtual_call_blob;
+RuntimeStub*        SharedRuntime::_resolve_virtual_call_blob;
+RuntimeStub*        SharedRuntime::_resolve_static_call_blob;
+
+DeoptimizationBlob* SharedRuntime::_deopt_blob;
+RicochetBlob*       SharedRuntime::_ricochet_blob;
+
+SafepointBlob*      SharedRuntime::_polling_page_safepoint_handler_blob;
+SafepointBlob*      SharedRuntime::_polling_page_return_handler_blob;
+
+#ifdef COMPILER2
+UncommonTrapBlob*   SharedRuntime::_uncommon_trap_blob;
+#endif // COMPILER2
+
+
+//----------------------------generate_stubs-----------------------------------
+void SharedRuntime::generate_stubs() {
+  _wrong_method_blob                   = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::handle_wrong_method),         "wrong_method_stub");
+  _ic_miss_blob                        = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::handle_wrong_method_ic_miss), "ic_miss_stub");
+  _resolve_opt_virtual_call_blob       = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_opt_virtual_call_C),  "resolve_opt_virtual_call");
+  _resolve_virtual_call_blob           = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_virtual_call_C),      "resolve_virtual_call");
+  _resolve_static_call_blob            = generate_resolve_blob(CAST_FROM_FN_PTR(address, SharedRuntime::resolve_static_call_C),       "resolve_static_call");
+
+  _polling_page_safepoint_handler_blob = generate_handler_blob(CAST_FROM_FN_PTR(address, SafepointSynchronize::handle_polling_page_exception), false);
+  _polling_page_return_handler_blob    = generate_handler_blob(CAST_FROM_FN_PTR(address, SafepointSynchronize::handle_polling_page_exception), true);
+
+  generate_ricochet_blob();
+  generate_deopt_blob();
+
+#ifdef COMPILER2
+  generate_uncommon_trap_blob();
+#endif // COMPILER2
+}
+
+//----------------------------generate_ricochet_blob---------------------------
+void SharedRuntime::generate_ricochet_blob() {
+  if (!EnableInvokeDynamic)  return;  // leave it as a null
+
+  // allocate space for the code
+  ResourceMark rm;
+  // setup code generation tools
+  CodeBuffer buffer("ricochet_blob", 256 LP64_ONLY(+ 256), 256);  // XXX x86 LP64L: 512, 512
+  MacroAssembler* masm = new MacroAssembler(&buffer);
+
+  int bounce_offset = -1, exception_offset = -1, frame_size_in_words = -1;
+  MethodHandles::RicochetFrame::generate_ricochet_blob(masm, &bounce_offset, &exception_offset, &frame_size_in_words);
+
+  // -------------
+  // make sure all code is generated
+  masm->flush();
+
+  // failed to generate?
+  if (bounce_offset < 0 || exception_offset < 0 || frame_size_in_words < 0) {
+    assert(false, "bad ricochet blob");
+    return;
+  }
+
+  _ricochet_blob = RicochetBlob::create(&buffer, bounce_offset, exception_offset, frame_size_in_words);
+}
+
+
 #include <math.h>
 
+#ifndef USDT2
 HS_DTRACE_PROBE_DECL4(hotspot, object__alloc, Thread*, char*, int, size_t);
 HS_DTRACE_PROBE_DECL7(hotspot, method__entry, int,
                       char*, int, char*, int, char*, int);
 HS_DTRACE_PROBE_DECL7(hotspot, method__return, int,
                       char*, int, char*, int, char*, int);
+#endif /* !USDT2 */
 
 // Implementation of SharedRuntime
 
@@ -132,6 +206,7 @@ int SharedRuntime::_rethrow_ctr=0;
 int     SharedRuntime::_ICmiss_index                    = 0;
 int     SharedRuntime::_ICmiss_count[SharedRuntime::maxICmiss_count];
 address SharedRuntime::_ICmiss_at[SharedRuntime::maxICmiss_count];
+
 
 void SharedRuntime::trace_ic_miss(address at) {
   for (int i = 0; i < _ICmiss_index; i++) {
@@ -423,25 +498,24 @@ JRT_END
 // previous frame depending on the return address.
 
 address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thread, address return_address) {
-  assert(frame::verify_return_pc(return_address), "must be a return pc");
+  assert(frame::verify_return_pc(return_address), err_msg("must be a return address: " INTPTR_FORMAT, return_address));
 
-  // Reset MethodHandle flag.
+  // Reset method handle flag.
   thread->set_is_method_handle_return(false);
 
-  // the fastest case first
+  // The fastest case first
   CodeBlob* blob = CodeCache::find_blob(return_address);
-  if (blob != NULL && blob->is_nmethod()) {
-    nmethod* code = (nmethod*)blob;
-    assert(code != NULL, "nmethod must be present");
-    // Check if the return address is a MethodHandle call site.
-    thread->set_is_method_handle_return(code->is_method_handle_return(return_address));
+  nmethod* nm = (blob != NULL) ? blob->as_nmethod_or_null() : NULL;
+  if (nm != NULL) {
+    // Set flag if return address is a method handle call site.
+    thread->set_is_method_handle_return(nm->is_method_handle_return(return_address));
     // native nmethods don't have exception handlers
-    assert(!code->is_native_method(), "no exception handler");
-    assert(code->header_begin() != code->exception_begin(), "no exception handler");
-    if (code->is_deopt_pc(return_address)) {
+    assert(!nm->is_native_method(), "no exception handler");
+    assert(nm->header_begin() != nm->exception_begin(), "no exception handler");
+    if (nm->is_deopt_pc(return_address)) {
       return SharedRuntime::deopt_blob()->unpack_with_exception();
     } else {
-      return code->exception_begin();
+      return nm->exception_begin();
     }
   }
 
@@ -453,23 +527,14 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
   if (Interpreter::contains(return_address)) {
     return Interpreter::rethrow_exception_entry();
   }
-
-  // Compiled code
-  if (CodeCache::contains(return_address)) {
-    CodeBlob* blob = CodeCache::find_blob(return_address);
-    if (blob->is_nmethod()) {
-      nmethod* code = (nmethod*)blob;
-      assert(code != NULL, "nmethod must be present");
-      // Check if the return address is a MethodHandle call site.
-      thread->set_is_method_handle_return(code->is_method_handle_return(return_address));
-      assert(code->header_begin() != code->exception_begin(), "no exception handler");
-      return code->exception_begin();
-    }
-    if (blob->is_runtime_stub()) {
-      ShouldNotReachHere();   // callers are responsible for skipping runtime stub frames
-    }
+  // Ricochet frame unwind code
+  if (SharedRuntime::ricochet_blob() != NULL && SharedRuntime::ricochet_blob()->returns_to_bounce_addr(return_address)) {
+    return SharedRuntime::ricochet_blob()->exception_addr();
   }
+
+  guarantee(blob == NULL || !blob->is_runtime_stub(), "caller should have skipped stub");
   guarantee(!VtableStubs::contains(return_address), "NULL exceptions in vtables should have been handled already!");
+
 #ifndef PRODUCT
   { ResourceMark rm;
     tty->print_cr("No exception handler found for exception at " INTPTR_FORMAT " - potential problems:", return_address);
@@ -477,6 +542,7 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
     tty->print_cr("b) other problem");
   }
 #endif // PRODUCT
+
   ShouldNotReachHere();
   return NULL;
 }
@@ -527,7 +593,7 @@ address SharedRuntime::get_poll_stub(address pc) {
 }
 
 
-oop SharedRuntime::retrieve_receiver( symbolHandle sig, frame caller ) {
+oop SharedRuntime::retrieve_receiver( Symbol* sig, frame caller ) {
   assert(caller.is_interpreted_frame(), "");
   int args_size = ArgumentSizeComputer(sig).size() + 1;
   assert(args_size <= caller.interpreter_frame_expression_stack_size(), "receiver must be on interpreter stack");
@@ -547,7 +613,7 @@ void SharedRuntime::throw_and_post_jvmti_exception(JavaThread *thread, Handle h_
   Exceptions::_throw(thread, __FILE__, __LINE__, h_exception);
 }
 
-void SharedRuntime::throw_and_post_jvmti_exception(JavaThread *thread, symbolOop name, const char *message) {
+void SharedRuntime::throw_and_post_jvmti_exception(JavaThread *thread, Symbol* name, const char *message) {
   Handle h_exception = Exceptions::new_exception(thread, name, message);
   throw_and_post_jvmti_exception(thread, h_exception);
 }
@@ -593,12 +659,14 @@ address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc,
   int scope_depth = 0;
   if (!force_unwind) {
     int bci = sd->bci();
+    bool recursive_exception = false;
     do {
       bool skip_scope_increment = false;
       // exception handler lookup
       KlassHandle ek (THREAD, exception->klass());
       handler_bci = sd->method()->fast_exception_handler_bci_for(ek, bci, THREAD);
       if (HAS_PENDING_EXCEPTION) {
+        recursive_exception = true;
         // We threw an exception while trying to find the exception handler.
         // Transfer the new exception to the exception handle which will
         // be set into thread local storage, and do another lookup for an
@@ -614,6 +682,9 @@ address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc,
           skip_scope_increment = true;
         }
       }
+      else {
+        recursive_exception = false;
+      }
       if (!top_frame_only && handler_bci < 0 && !skip_scope_increment) {
         sd = sd->sender();
         if (sd != NULL) {
@@ -621,7 +692,7 @@ address SharedRuntime::compute_compiled_exc_handler(nmethod* nm, address ret_pc,
         }
         ++scope_depth;
       }
-    } while (!top_frame_only && handler_bci < 0 && sd != NULL);
+    } while (recursive_exception || (!top_frame_only && handler_bci < 0 && sd != NULL));
   }
 
   // found handling method => lookup exception handler
@@ -697,6 +768,13 @@ JRT_ENTRY(void, SharedRuntime::throw_StackOverflowError(JavaThread* thread))
   throw_and_post_jvmti_exception(thread, exception);
 JRT_END
 
+JRT_ENTRY(void, SharedRuntime::throw_WrongMethodTypeException(JavaThread* thread, oopDesc* required, oopDesc* actual))
+  assert(thread == JavaThread::current() && required->is_oop() && actual->is_oop(), "bad args");
+  ResourceMark rm;
+  char* message = SharedRuntime::generate_wrong_method_type_message(thread, required, actual);
+  throw_and_post_jvmti_exception(thread, vmSymbols::java_lang_invoke_WrongMethodTypeException(), message);
+JRT_END
+
 address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
                                                            address pc,
                                                            SharedRuntime::ImplicitExceptionKind exception_kind)
@@ -726,6 +804,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
         if (thread->deopt_mark() != NULL) {
           Deoptimization::cleanup_deopt_info(thread, NULL);
         }
+        Events::log_exception(thread, "StackOverflowError at " INTPTR_FORMAT, pc);
         return StubRoutines::throw_StackOverflowError_entry();
       }
 
@@ -742,8 +821,10 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
 
           if (vt_stub->is_abstract_method_error(pc)) {
             assert(!vt_stub->is_vtable_stub(), "should never see AbstractMethodErrors from vtable-type VtableStubs");
+            Events::log_exception(thread, "AbstractMethodError at " INTPTR_FORMAT, pc);
             return StubRoutines::throw_AbstractMethodError_entry();
           } else {
+            Events::log_exception(thread, "NullPointerException at vtable entry " INTPTR_FORMAT, pc);
             return StubRoutines::throw_NullPointerException_at_call_entry();
           }
         } else {
@@ -760,6 +841,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
           if (!cb->is_nmethod()) {
             guarantee(cb->is_adapter_blob() || cb->is_method_handles_adapter_blob(),
                       "exception happened outside interpreter, nmethods and vtable stubs (1)");
+            Events::log_exception(thread, "NullPointerException in code blob at " INTPTR_FORMAT, pc);
             // There is no handler here, so we will simply unwind.
             return StubRoutines::throw_NullPointerException_at_call_entry();
           }
@@ -771,6 +853,7 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
             // => the nmethod is not yet active (i.e., the frame
             // is not set up yet) => use return address pushed by
             // caller => don't push another return address
+            Events::log_exception(thread, "NullPointerException in IC check " INTPTR_FORMAT, pc);
             return StubRoutines::throw_NullPointerException_at_call_entry();
           }
 
@@ -808,9 +891,9 @@ address SharedRuntime::continuation_for_implicit_exception(JavaThread* thread,
     // for AbortVMOnException flag
     NOT_PRODUCT(Exceptions::debug_check_abort("java.lang.NullPointerException"));
     if (exception_kind == IMPLICIT_NULL) {
-      Events::log("Implicit null exception at " INTPTR_FORMAT " to " INTPTR_FORMAT, pc, target_pc);
+      Events::log_exception(thread, "Implicit null exception at " INTPTR_FORMAT " to " INTPTR_FORMAT, pc, target_pc);
     } else {
-      Events::log("Implicit division by zero exception at " INTPTR_FORMAT " to " INTPTR_FORMAT, pc, target_pc);
+      Events::log_exception(thread, "Implicit division by zero exception at " INTPTR_FORMAT " to " INTPTR_FORMAT, pc, target_pc);
     }
     return target_pc;
   }
@@ -880,35 +963,57 @@ int SharedRuntime::dtrace_object_alloc_base(Thread* thread, oopDesc* o) {
   assert(DTraceAllocProbes, "wrong call");
   Klass* klass = o->blueprint();
   int size = o->size();
-  symbolOop name = klass->name();
+  Symbol* name = klass->name();
+#ifndef USDT2
   HS_DTRACE_PROBE4(hotspot, object__alloc, get_java_tid(thread),
                    name->bytes(), name->utf8_length(), size * HeapWordSize);
+#else /* USDT2 */
+  HOTSPOT_OBJECT_ALLOC(
+                   get_java_tid(thread),
+                   (char *) name->bytes(), name->utf8_length(), size * HeapWordSize);
+#endif /* USDT2 */
   return 0;
 }
 
 JRT_LEAF(int, SharedRuntime::dtrace_method_entry(
     JavaThread* thread, methodOopDesc* method))
   assert(DTraceMethodProbes, "wrong call");
-  symbolOop kname = method->klass_name();
-  symbolOop name = method->name();
-  symbolOop sig = method->signature();
+  Symbol* kname = method->klass_name();
+  Symbol* name = method->name();
+  Symbol* sig = method->signature();
+#ifndef USDT2
   HS_DTRACE_PROBE7(hotspot, method__entry, get_java_tid(thread),
       kname->bytes(), kname->utf8_length(),
       name->bytes(), name->utf8_length(),
       sig->bytes(), sig->utf8_length());
+#else /* USDT2 */
+  HOTSPOT_METHOD_ENTRY(
+      get_java_tid(thread),
+      (char *) kname->bytes(), kname->utf8_length(),
+      (char *) name->bytes(), name->utf8_length(),
+      (char *) sig->bytes(), sig->utf8_length());
+#endif /* USDT2 */
   return 0;
 JRT_END
 
 JRT_LEAF(int, SharedRuntime::dtrace_method_exit(
     JavaThread* thread, methodOopDesc* method))
   assert(DTraceMethodProbes, "wrong call");
-  symbolOop kname = method->klass_name();
-  symbolOop name = method->name();
-  symbolOop sig = method->signature();
+  Symbol* kname = method->klass_name();
+  Symbol* name = method->name();
+  Symbol* sig = method->signature();
+#ifndef USDT2
   HS_DTRACE_PROBE7(hotspot, method__return, get_java_tid(thread),
       kname->bytes(), kname->utf8_length(),
       name->bytes(), name->utf8_length(),
       sig->bytes(), sig->utf8_length());
+#else /* USDT2 */
+  HOTSPOT_METHOD_RETURN(
+      get_java_tid(thread),
+      (char *) kname->bytes(), kname->utf8_length(),
+      (char *) name->bytes(), name->utf8_length(),
+      (char *) sig->bytes(), sig->utf8_length());
+#endif /* USDT2 */
   return 0;
 JRT_END
 
@@ -1179,6 +1284,7 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::handle_wrong_method_ic_miss(JavaThread* 
   assert(stub_frame.is_runtime_frame(), "sanity check");
   frame caller_frame = stub_frame.sender(&reg_map);
   assert(!caller_frame.is_interpreted_frame() && !caller_frame.is_entry_frame(), "unexpected frame");
+  assert(!caller_frame.is_ricochet_frame(), "unexpected frame");
 #endif /* ASSERT */
 
   methodHandle callee_method;
@@ -1227,6 +1333,7 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::handle_wrong_method(JavaThread* thread))
 
   if (caller_frame.is_interpreted_frame() ||
       caller_frame.is_entry_frame()       ||
+      caller_frame.is_ricochet_frame()    ||
       is_mh_invoke_via_adapter) {
     methodOop callee = thread->callee_target();
     guarantee(callee != NULL && callee->is_method(), "bad handshake");
@@ -1439,7 +1546,6 @@ methodHandle SharedRuntime::reresolve_call_site(JavaThread *thread, TRAPS) {
   if (caller.is_compiled_frame() && !caller.is_deoptimized_frame()) {
 
     address pc = caller.pc();
-    Events::log("update call-site at pc " INTPTR_FORMAT, pc);
 
     // Default call_addr is the location of the "basic" call.
     // Determine the address of the call we a reresolving. With
@@ -1568,9 +1674,12 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(methodOopDesc* method, addr
   nmethod* nm = cb->as_nmethod_or_null();
   assert(nm, "must be");
 
-  // Don't fixup MethodHandle call sites as c2i/i2c adapters are used
-  // to implement MethodHandle actions.
-  if (nm->is_method_handle_return(caller_pc)) {
+  // Get the return PC for the passed caller PC.
+  address return_pc = caller_pc + frame::pc_return_offset;
+
+  // Don't fixup method handle call sites as the executed method
+  // handle adapters are doing the required MethodHandle chain work.
+  if (nm->is_method_handle_return(return_pc)) {
     return;
   }
 
@@ -1589,8 +1698,8 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(methodOopDesc* method, addr
 
     // Expect to find a native call there (unless it was no-inline cache vtable dispatch)
     MutexLockerEx ml_patch(Patching_lock, Mutex::_no_safepoint_check_flag);
-    if (NativeCall::is_call_before(caller_pc + frame::pc_return_offset)) {
-      NativeCall *call = nativeCall_before(caller_pc + frame::pc_return_offset);
+    if (NativeCall::is_call_before(return_pc)) {
+      NativeCall *call = nativeCall_before(return_pc);
       //
       // bug 6281185. We might get here after resolving a call site to a vanilla
       // virtual call. Because the resolvee uses the verified entry it may then
@@ -1640,7 +1749,6 @@ IRT_LEAF(void, SharedRuntime::fixup_callers_callsite(methodOopDesc* method, addr
       }
     }
   }
-
 IRT_END
 
 
@@ -1687,7 +1795,7 @@ char* SharedRuntime::generate_wrong_method_type_message(JavaThread* thread,
     tty->print_cr("WrongMethodType thread="PTR_FORMAT" req="PTR_FORMAT" act="PTR_FORMAT"",
                   thread, required, actual);
   }
-  assert(EnableMethodHandles, "");
+  assert(EnableInvokeDynamic, "");
   oop singleKlass = wrong_method_type_is_for_single_argument(thread, required);
   char* message = NULL;
   if (singleKlass != NULL) {
@@ -1705,9 +1813,11 @@ char* SharedRuntime::generate_wrong_method_type_message(JavaThread* thread,
     message = generate_class_cast_message(objName, targetKlass->external_name());
   } else {
     // %%% need to get the MethodType string, without messing around too much
+    const char* desc = NULL;
     // Get a signature from the invoke instruction
     const char* mhName = "method handle";
     const char* targetType = "the required signature";
+    int targetArity = -1, mhArity = -1;
     vframeStream vfst(thread, true);
     if (!vfst.at_end()) {
       Bytecode_invoke call(vfst.method(), vfst.bci());
@@ -1721,20 +1831,35 @@ char* SharedRuntime::generate_wrong_method_type_message(JavaThread* thread,
           && target->is_method_handle_invoke()
           && required == target->method_handle_type()) {
         targetType = target->signature()->as_C_string();
+        targetArity = ArgumentCount(target->signature()).size();
       }
     }
-    klassOop kignore; int fignore;
-    methodOop actual_method = MethodHandles::decode_method(actual,
-                                                          kignore, fignore);
-    if (actual_method != NULL) {
-      if (methodOopDesc::is_method_handle_invoke_name(actual_method->name()))
-        mhName = "$";
+    KlassHandle kignore; int dmf_flags = 0;
+    methodHandle actual_method = MethodHandles::decode_method(actual, kignore, dmf_flags);
+    if ((dmf_flags & ~(MethodHandles::_dmf_has_receiver |
+                       MethodHandles::_dmf_does_dispatch |
+                       MethodHandles::_dmf_from_interface)) != 0)
+      actual_method = methodHandle();  // MH does extra binds, drops, etc.
+    bool has_receiver = ((dmf_flags & MethodHandles::_dmf_has_receiver) != 0);
+    if (actual_method.not_null()) {
+      mhName = actual_method->signature()->as_C_string();
+      mhArity = ArgumentCount(actual_method->signature()).size();
+      if (!actual_method->is_static())  mhArity += 1;
+    } else if (java_lang_invoke_MethodHandle::is_instance(actual)) {
+      oopDesc* mhType = java_lang_invoke_MethodHandle::type(actual);
+      mhArity = java_lang_invoke_MethodType::ptype_count(mhType);
+      stringStream st;
+      java_lang_invoke_MethodType::print_signature(mhType, &st);
+      mhName = st.as_string();
+    }
+    if (targetArity != -1 && targetArity != mhArity) {
+      if (has_receiver && targetArity == mhArity-1)
+        desc = " cannot be called without a receiver argument as ";
       else
-        mhName = actual_method->signature()->as_C_string();
-      if (mhName[0] == '$')
-        mhName = actual_method->signature()->as_C_string();
+        desc = " cannot be called with a different arity as ";
     }
     message = generate_class_cast_message(mhName, targetType,
+                                          desc != NULL ? desc :
                                           " cannot be called as ");
   }
   if (TraceMethodHandles) {
@@ -2038,9 +2163,9 @@ class AdapterFingerPrint : public CHeapObj {
  public:
   AdapterFingerPrint(int total_args_passed, BasicType* sig_bt) {
     // The fingerprint is based on the BasicType signature encoded
-    // into an array of ints with four entries per int.
+    // into an array of ints with eight entries per int.
     int* ptr;
-    int len = (total_args_passed + 3) >> 2;
+    int len = (total_args_passed + 7) >> 3;
     if (len <= (int)(sizeof(_value._compact) / sizeof(int))) {
       _value._compact[0] = _value._compact[1] = _value._compact[2] = 0;
       // Storing the signature encoded as signed chars hits about 98%
@@ -2053,11 +2178,11 @@ class AdapterFingerPrint : public CHeapObj {
       ptr = _value._fingerprint;
     }
 
-    // Now pack the BasicTypes with 4 per int
+    // Now pack the BasicTypes with 8 per int
     int sig_index = 0;
     for (int index = 0; index < len; index++) {
       int value = 0;
-      for (int byte = 0; byte < 4; byte++) {
+      for (int byte = 0; byte < 8; byte++) {
         if (sig_index < total_args_passed) {
           value = (value << 4) | adapter_encoding(sig_bt[sig_index++]);
         }
@@ -2098,8 +2223,9 @@ class AdapterFingerPrint : public CHeapObj {
 
   const char* as_string() {
     stringStream st;
+    st.print("0x");
     for (int i = 0; i < length(); i++) {
-      st.print(PTR_FORMAT, value(i));
+      st.print("%08x", value(i));
     }
     return st.as_string();
   }
@@ -2484,19 +2610,9 @@ bool AdapterHandlerEntry::compare_code(unsigned char* buffer, int length, int to
 // java compiled calling convention to the native convention, handlizes
 // arguments, and transitions to native.  On return from the native we transition
 // back to java blocking if a safepoint is in progress.
-nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
+nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method, int compile_id) {
   ResourceMark rm;
   nmethod* nm = NULL;
-
-  if (PrintCompilation) {
-    ttyLocker ttyl;
-    tty->print("---   n%s ", (method->is_synchronized() ? "s" : " "));
-    method->print_short_name(tty);
-    if (method->is_static()) {
-      tty->print(" (static)");
-    }
-    tty->cr();
-  }
 
   assert(method->has_native_function(), "must have something valid to call!");
 
@@ -2542,6 +2658,7 @@ nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
       // Generate the compiled-to-native wrapper code
       nm = SharedRuntime::generate_native_wrapper(&_masm,
                                                   method,
+                                                  compile_id,
                                                   total_args_passed,
                                                   comp_args_on_stack,
                                                   sig_bt,regs,
@@ -2553,6 +2670,10 @@ nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
 
   // Install the generated code.
   if (nm != NULL) {
+    if (PrintCompilation) {
+      ttyLocker ttyl;
+      CompileTask::print_compilation(tty, nm, method->is_static() ? "(static)" : "");
+    }
     method->set_code(method, nm);
     nm->post_compiled_method_load_event();
   } else {
@@ -2561,6 +2682,20 @@ nmethod *AdapterHandlerLibrary::create_native_wrapper(methodHandle method) {
   }
   return nm;
 }
+
+JRT_ENTRY_NO_ASYNC(void, SharedRuntime::block_for_jni_critical(JavaThread* thread))
+  assert(thread == JavaThread::current(), "must be");
+  // The code is about to enter a JNI lazy critical native method and
+  // _needs_gc is true, so if this thread is already in a critical
+  // section then just return, otherwise this thread should block
+  // until needs_gc has been cleared.
+  if (thread->in_critical()) {
+    return;
+  }
+  // Lock and unlock a critical section to give the system a chance to block
+  GC_locker::lock_critical(thread);
+  GC_locker::unlock_critical(thread);
+JRT_END
 
 #ifdef HAVE_DTRACE_H
 // Create a dtrace nmethod for this method.  The wrapper converts the
@@ -2618,6 +2753,7 @@ void SharedRuntime::get_utf(oopDesc* src, address dst) {
   int          jlsLen    = java_lang_String::length(src);
   jchar*       jlsPos    = (jlsLen == 0) ? NULL :
                                            jlsValue->char_at_addr(jlsOffset);
+  assert(typeArrayKlass::cast(jlsValue->klass())->element_type() == T_CHAR, "compressed string");
   (void) UNICODE::as_utf8(jlsPos, jlsLen, (char *)dst, max_dtrace_string_size);
 }
 #endif // ndef HAVE_DTRACE_H
@@ -2637,7 +2773,7 @@ VMReg SharedRuntime::name_for_receiver() {
   return regs.first();
 }
 
-VMRegPair *SharedRuntime::find_callee_arguments(symbolOop sig, bool has_receiver, int* arg_size) {
+VMRegPair *SharedRuntime::find_callee_arguments(Symbol* sig, bool has_receiver, int* arg_size) {
   // This method is returning a data structure allocating as a
   // ResourceObject, so do not put any ResourceMarks in here.
   char *s = sig->as_C_string();

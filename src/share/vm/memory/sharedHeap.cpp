@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,8 +46,6 @@ enum SH_process_strong_roots_tasks {
   SH_PS_Management_oops_do,
   SH_PS_SystemDictionary_oops_do,
   SH_PS_jvmti_oops_do,
-  SH_PS_vmSymbols_oops_do,
-  SH_PS_SymbolTable_oops_do,
   SH_PS_StringTable_oops_do,
   SH_PS_CodeCache_oops_do,
   // Leave this one last.
@@ -60,7 +58,6 @@ SharedHeap::SharedHeap(CollectorPolicy* policy_) :
   _perm_gen(NULL), _rem_set(NULL),
   _strong_roots_parity(0),
   _process_strong_tasks(new SubTasksDone(SH_PS_NumElements)),
-  _n_par_threads(0),
   _workers(NULL)
 {
   if (_process_strong_tasks == NULL || !_process_strong_tasks->valid()) {
@@ -82,6 +79,14 @@ SharedHeap::SharedHeap(CollectorPolicy* policy_) :
   }
 }
 
+int SharedHeap::n_termination() {
+  return _process_strong_tasks->n_threads();
+}
+
+void SharedHeap::set_n_termination(int t) {
+  _process_strong_tasks->set_n_threads(t);
+}
+
 bool SharedHeap::heap_lock_held_for_gc() {
   Thread* t = Thread::current();
   return    Heap_lock->owned_by_self()
@@ -89,7 +94,7 @@ bool SharedHeap::heap_lock_held_for_gc() {
              && _thread_holds_heap_lock_for_gc);
 }
 
-void SharedHeap::set_par_threads(int t) {
+void SharedHeap::set_par_threads(uint t) {
   assert(t == 0 || !UseSerialGC, "Cannot have parallel threads");
   _n_par_threads = t;
   _process_strong_tasks->set_n_threads(t);
@@ -103,6 +108,17 @@ public:
   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 static AssertIsPermClosure assert_is_perm_closure;
+
+#ifdef ASSERT
+class AssertNonScavengableClosure: public OopClosure {
+public:
+  virtual void do_oop(oop* p) {
+    assert(!Universe::heap()->is_in_partial_collection(*p),
+      "Referent should not be scavengable.");  }
+  virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
+};
+static AssertNonScavengableClosure assert_is_non_scavengable_closure;
+#endif
 
 void SharedHeap::change_strong_roots_parity() {
   // Also set the new collection parity.
@@ -135,9 +151,12 @@ void SharedHeap::process_strong_roots(bool activate_scope,
   StrongRootsScope srs(this, activate_scope);
   // General strong roots.
   assert(_strong_roots_parity != 0, "must have called prologue code");
+  // _n_termination for _process_strong_tasks should be set up stream
+  // in a method not running in a GC worker.  Otherwise the GC worker
+  // could be trying to change the termination condition while the task
+  // is executing in another GC worker.
   if (!_process_strong_tasks->is_task_claimed(SH_PS_Universe_oops_do)) {
     Universe::oops_do(roots);
-    ReferenceProcessor::oops_do(roots);
     // Consider perm-gen discovered lists to be strong.
     perm_gen()->ref_processor()->weak_oops_do(roots);
   }
@@ -162,26 +181,19 @@ void SharedHeap::process_strong_roots(bool activate_scope,
   if (!_process_strong_tasks->is_task_claimed(SH_PS_SystemDictionary_oops_do)) {
     if (so & SO_AllClasses) {
       SystemDictionary::oops_do(roots);
-    } else
-      if (so & SO_SystemClasses) {
-        SystemDictionary::always_strong_oops_do(roots);
-      }
-  }
-
-  if (!_process_strong_tasks->is_task_claimed(SH_PS_SymbolTable_oops_do)) {
-    if (so & SO_Symbols) {
-      SymbolTable::oops_do(roots);
+    } else if (so & SO_SystemClasses) {
+      SystemDictionary::always_strong_oops_do(roots);
     }
-    // Verify if the symbol table contents are in the perm gen
-    NOT_PRODUCT(SymbolTable::oops_do(&assert_is_perm_closure));
   }
 
   if (!_process_strong_tasks->is_task_claimed(SH_PS_StringTable_oops_do)) {
-     if (so & SO_Strings) {
-       StringTable::oops_do(roots);
-     }
-    // Verify if the string table contents are in the perm gen
-    NOT_PRODUCT(StringTable::oops_do(&assert_is_perm_closure));
+    if (so & SO_Strings || (!collecting_perm_gen && !JavaObjectsInPerm)) {
+      StringTable::oops_do(roots);
+    }
+    if (JavaObjectsInPerm) {
+      // Verify the string table contents are in the perm gen
+      NOT_PRODUCT(StringTable::oops_do(&assert_is_perm_closure));
+    }
   }
 
   if (!_process_strong_tasks->is_task_claimed(SH_PS_CodeCache_oops_do)) {
@@ -205,23 +217,10 @@ void SharedHeap::process_strong_roots(bool activate_scope,
         CodeCache::scavenge_root_nmethods_do(code_roots);
       }
     }
-    // Verify if the code cache contents are in the perm gen
-    NOT_PRODUCT(CodeBlobToOopClosure assert_code_is_perm(&assert_is_perm_closure, /*do_marking=*/ false));
-    NOT_PRODUCT(CodeCache::asserted_non_scavengable_nmethods_do(&assert_code_is_perm));
-  }
-
-  // Roots that should point only into permanent generation.
-  {
-    OopClosure* blk = NULL;
-    if (collecting_perm_gen) {
-      blk = roots;
-    } else {
-      debug_only(blk = &assert_is_perm_closure);
-    }
-    if (blk != NULL) {
-      if (!_process_strong_tasks->is_task_claimed(SH_PS_vmSymbols_oops_do))
-        vmSymbols::oops_do(blk);
-    }
+    // Verify that the code cache contents are not subject to
+    // movement by a scavenging collection.
+    DEBUG_ONLY(CodeBlobToOopClosure assert_code_is_non_scavengable(&assert_is_non_scavengable_closure, /*do_marking=*/ false));
+    DEBUG_ONLY(CodeCache::asserted_non_scavengable_nmethods_do(&assert_code_is_non_scavengable));
   }
 
   if (!collecting_perm_gen) {
@@ -273,7 +272,6 @@ void SharedHeap::process_weak_roots(OopClosure* root_closure,
   JNIHandles::weak_oops_do(&always_true, root_closure);
 
   CodeCache::blobs_do(code_roots);
-  SymbolTable::oops_do(root_closure);
   if (UseSharedSpaces && !DumpSharedSpaces) {
     SkipAdjustingSharedStrings skip_closure(root_closure);
     StringTable::oops_do(&skip_closure);

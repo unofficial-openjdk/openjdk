@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,10 @@ private:
   static klassOop           _memoryManagerMXBean_klass;
   static klassOop           _garbageCollectorMXBean_klass;
   static klassOop           _managementFactory_klass;
+  static klassOop           _garbageCollectorImpl_klass;
+  static klassOop           _gcInfo_klass;
 
-  static klassOop load_and_initialize_klass(symbolHandle sh, TRAPS);
+  static klassOop load_and_initialize_klass(Symbol* sh, TRAPS);
 
 public:
   static void init();
@@ -74,6 +76,9 @@ public:
     _stamp.update();
   }
 
+  static jlong begin_vm_creation_time() {
+    return _begin_vm_creation_time->get_value();
+  }
   static jlong vm_init_done_time() {
     return _vm_init_done_time->get_value();
   }
@@ -86,6 +91,8 @@ public:
   static klassOop java_lang_management_GarbageCollectorMXBean_klass(TRAPS);
   static klassOop sun_management_Sensor_klass(TRAPS);
   static klassOop sun_management_ManagementFactory_klass(TRAPS);
+  static klassOop sun_management_GarbageCollectorImpl_klass(TRAPS);
+  static klassOop com_sun_management_GcInfo_klass(TRAPS);
 
   static instanceOop create_thread_info_instance(ThreadSnapshot* snapshot, TRAPS);
   static instanceOop create_thread_info_instance(ThreadSnapshot* snapshot, objArrayHandle monitors_array, typeArrayHandle depths_array, objArrayHandle synchronizers_array, TRAPS);

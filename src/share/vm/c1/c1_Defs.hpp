@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,12 @@
 #ifdef TARGET_ARCH_zero
 # include "register_zero.hpp"
 #endif
+#ifdef TARGET_ARCH_arm
+# include "register_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "register_ppc.hpp"
+#endif
 
 // set frame size and return address offset to these values in blobs
 // (if the compiled frame uses ebp as link pointer on IA; otherwise,
@@ -49,6 +55,12 @@ enum {
 #endif
 #ifdef TARGET_ARCH_sparc
 # include "c1_Defs_sparc.hpp"
+#endif
+#ifdef TARGET_ARCH_arm
+# include "c1_Defs_arm.hpp"
+#endif
+#ifdef TARGET_ARCH_ppc
+# include "c1_Defs_ppc.hpp"
 #endif
 
 

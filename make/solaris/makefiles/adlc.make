@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 # It knows how to compile, link, and run the adlc.
 
 include $(GAMMADIR)/make/$(Platform_os_family)/makefiles/rules.make
+include $(GAMMADIR)/make/altsrc.make
 
 # #########################################################################
 
@@ -39,8 +40,16 @@ OS = $(Platform_os_family)
 
 SOURCE.AD = $(OUTDIR)/$(OS)_$(Platform_arch_model).ad 
 
-SOURCES.AD = $(GAMMADIR)/src/cpu/$(ARCH)/vm/$(Platform_arch_model).ad \
-	     $(GAMMADIR)/src/os_cpu/$(OS)_$(ARCH)/vm/$(OS)_$(Platform_arch_model).ad 
+ifeq ("${Platform_arch_model}", "${Platform_arch}")
+  SOURCES.AD = \
+  $(call altsrc-replace,$(HS_COMMON_SRC)/cpu/$(ARCH)/vm/$(Platform_arch_model).ad) \
+  $(call altsrc-replace,$(HS_COMMON_SRC)/os_cpu/$(OS)_$(ARCH)/vm/$(OS)_$(Platform_arch_model).ad)
+else
+  SOURCES.AD = \
+  $(call altsrc-replace,$(HS_COMMON_SRC)/cpu/$(ARCH)/vm/$(Platform_arch_model).ad) \
+  $(call altsrc-replace,$(HS_COMMON_SRC)/cpu/$(ARCH)/vm/$(Platform_arch).ad) \
+  $(call altsrc-replace,$(HS_COMMON_SRC)/os_cpu/$(OS)_$(ARCH)/vm/$(OS)_$(Platform_arch_model).ad)
+endif
 
 EXEC	= $(OUTDIR)/adlc
 
@@ -53,10 +62,10 @@ Src_Dirs_I += $(GAMMADIR)/src/share/vm/adlc $(GENERATED)
 INCLUDES += $(Src_Dirs_I:%=-I%)
 
 # set flags for adlc compilation
-CPPFLAGS = $(SYSDEFS) $(INCLUDES)
+CXXFLAGS = $(SYSDEFS) $(INCLUDES)
 
 # Force assertions on.
-CPPFLAGS += -DASSERT
+CXXFLAGS += -DASSERT
 
 ifndef USE_GCC
   # We need libCstd.so for adlc 
@@ -121,7 +130,7 @@ all: $(EXEC)
 
 $(EXEC) : $(OBJECTS)
 	@echo Making adlc
-	$(QUIETLY) $(LINK_NOPROF.CC) -o $(EXEC) $(OBJECTS)
+	$(QUIETLY) $(LINK_NOPROF.CXX) -o $(EXEC) $(OBJECTS)
 
 # Random dependencies:
 $(OBJECTS): opcodes.hpp classes.hpp adlc.hpp adlcVMDeps.hpp adlparse.hpp archDesc.hpp arena.hpp dict2.hpp filebuff.hpp forms.hpp formsopt.hpp formssel.hpp
@@ -219,14 +228,14 @@ PROCESS_AD_FILES = awk '{ \
 $(OUTDIR)/%.o: %.cpp
 	@echo Compiling $<
 	$(QUIETLY) $(REMOVE_TARGET)
-	$(QUIETLY) $(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
+	$(QUIETLY) $(COMPILE.CXX) -o $@ $< $(COMPILE_DONE)
 
 # Some object files are given a prefix, to disambiguate
 # them from objects of the same name built for the VM.
 $(OUTDIR)/adlc-%.o: %.cpp
 	@echo Compiling $<
 	$(QUIETLY) $(REMOVE_TARGET)
-	$(QUIETLY) $(COMPILE.CC) -o $@ $< $(COMPILE_DONE)
+	$(QUIETLY) $(COMPILE.CXX) -o $@ $< $(COMPILE_DONE)
 
 # #########################################################################
 

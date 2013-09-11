@@ -74,7 +74,7 @@ public class Test7160757 {
             0x00, 0x05, 0x2a, b(0xb7), 0x00, 0x01, b(0xb1), 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00
         };
-    
+
         public Class findClass(String name) throws ClassNotFoundException {
             return defineClass(name, S_class, 0, S_class.length);
         }

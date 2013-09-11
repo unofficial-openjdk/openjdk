@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,10 +122,11 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
 
   // generating _signature may allow GC and therefore move m.
   // These fields are always filled in.
-  _name = env->get_object(h_m()->name())->as_symbol();
+  _name = env->get_symbol(h_m()->name());
   _holder = env->get_object(h_m()->method_holder())->as_instance_klass();
-  ciSymbol* sig_symbol = env->get_object(h_m()->signature())->as_symbol();
-  _signature = new (env->arena()) ciSignature(_holder, sig_symbol);
+  ciSymbol* sig_symbol = env->get_symbol(h_m()->signature());
+  constantPoolHandle cpool = h_m()->constants();
+  _signature = new (env->arena()) ciSignature(_holder, cpool, sig_symbol);
   _method_data = NULL;
   // Take a snapshot of these values, so they will be commensurate with the MDO.
   if (ProfileInterpreter || TieredCompilation) {
@@ -147,21 +148,27 @@ ciMethod::ciMethod(methodHandle h_m) : ciObject(h_m) {
 //
 // Unloaded method.
 ciMethod::ciMethod(ciInstanceKlass* holder,
-                   ciSymbol* name,
-                   ciSymbol* signature) : ciObject(ciMethodKlass::make()) {
-  // These fields are always filled in.
-  _name = name;
-  _holder = holder;
-  _signature = new (CURRENT_ENV->arena()) ciSignature(_holder, signature);
-  _intrinsic_id = vmIntrinsics::_none;
-  _liveness = NULL;
-  _can_be_statically_bound = false;
-  _method_blocks = NULL;
-  _method_data = NULL;
+                   ciSymbol*        name,
+                   ciSymbol*        signature,
+                   ciInstanceKlass* accessor) :
+  ciObject(ciMethodKlass::make()),
+  _name(                   name),
+  _holder(                 holder),
+  _intrinsic_id(           vmIntrinsics::_none),
+  _liveness(               NULL),
+  _can_be_statically_bound(false),
+  _method_blocks(          NULL),
+  _method_data(            NULL)
 #if defined(COMPILER2) || defined(SHARK)
-  _flow = NULL;
-  _bcea = NULL;
+  ,
+  _flow(                   NULL),
+  _bcea(                   NULL)
 #endif // COMPILER2 || SHARK
+{
+  // Usually holder and accessor are the same type but in some cases
+  // the holder has the wrong class loader (e.g. invokedynamic call
+  // sites) so we pass the accessor.
+  _signature = new (CURRENT_ENV->arena()) ciSignature(accessor, constantPoolHandle(), signature);
 }
 
 
@@ -649,8 +656,8 @@ ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver) {
    KlassHandle caller_klass (THREAD, caller->get_klassOop());
    KlassHandle h_recv       (THREAD, exact_receiver->get_klassOop());
    KlassHandle h_resolved   (THREAD, holder()->get_klassOop());
-   symbolHandle h_name      (THREAD, name()->get_symbolOop());
-   symbolHandle h_signature (THREAD, signature()->get_symbolOop());
+   Symbol* h_name      = name()->get_symbol();
+   Symbol* h_signature = signature()->get_symbol();
 
    methodHandle m;
    // Only do exact lookup if receiver klass has been linked.  Otherwise,
@@ -702,8 +709,8 @@ int ciMethod::resolve_vtable_index(ciKlass* caller, ciKlass* receiver) {
 
      KlassHandle caller_klass (THREAD, caller->get_klassOop());
      KlassHandle h_recv       (THREAD, receiver->get_klassOop());
-     symbolHandle h_name      (THREAD, name()->get_symbolOop());
-     symbolHandle h_signature (THREAD, signature()->get_symbolOop());
+     Symbol* h_name = name()->get_symbol();
+     Symbol* h_signature = signature()->get_symbol();
 
      vtable_index = LinkResolver::resolve_virtual_vtable_index(h_recv, h_recv, h_name, h_signature, caller_klass);
      if (vtable_index == methodOopDesc::nonvirtual_vtable_index) {
@@ -769,7 +776,7 @@ int ciMethod::scale_count(int count, float prof_factor) {
 // signature-polymorphic MethodHandle methods, invokeExact or invokeGeneric.
 bool ciMethod::is_method_handle_invoke() const {
   if (!is_loaded()) {
-    bool flag = (holder()->name() == ciSymbol::java_dyn_MethodHandle() &&
+    bool flag = (holder()->name() == ciSymbol::java_lang_invoke_MethodHandle() &&
                  methodOopDesc::is_method_handle_invoke_name(name()->sid()));
     return flag;
   }
@@ -1007,6 +1014,40 @@ int ciMethod::comp_level() {
   nmethod* nm = get_methodOop()->code();
   if (nm != NULL) return nm->comp_level();
   return 0;
+}
+
+int ciMethod::highest_osr_comp_level() {
+  check_is_loaded();
+  VM_ENTRY_MARK;
+  return get_methodOop()->highest_osr_comp_level();
+}
+
+// ------------------------------------------------------------------
+// ciMethod::code_size_for_inlining
+//
+// Code size for inlining decisions.
+//
+// Don't fully count method handle adapters against inlining budgets:
+// the metric we use here is the number of call sites in the adapter
+// as they are probably the instructions which generate some code.
+int ciMethod::code_size_for_inlining() {
+  check_is_loaded();
+
+  // Method handle adapters
+  if (is_method_handle_adapter()) {
+    // Count call sites
+    int call_site_count = 0;
+    ciBytecodeStream iter(this);
+    while (iter.next() != ciBytecodeStream::EOBC()) {
+      if (Bytecodes::is_invoke(iter.cur_bc())) {
+        call_site_count++;
+      }
+    }
+    return call_site_count;
+  }
+
+  // Normal method
+  return code_size();
 }
 
 // ------------------------------------------------------------------

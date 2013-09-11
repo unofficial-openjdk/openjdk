@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -511,7 +511,7 @@ void CppInterpreterGenerator::generate_compute_interpreter_state(const Register 
     // get synchronization object
 
     Label done;
-    const int mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
+    const int mirror_offset = in_bytes(Klass::java_mirror_offset());
     __ movl(rax, access_flags);
     __ testl(rax, JVM_ACC_STATIC);
     __ movptr(rax, Address(locals, 0));                   // get receiver (assume this is frequent case)
@@ -763,7 +763,7 @@ void InterpreterGenerator::lock_method(void) {
 #endif // ASSERT
   // get synchronization object
   { Label done;
-    const int mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
+    const int mirror_offset = in_bytes(Klass::java_mirror_offset());
     __ movl(rax, access_flags);
     __ movptr(rdi, STATE(_locals));                                     // prepare to get receiver (assume common case)
     __ testl(rax, JVM_ACC_STATIC);
@@ -934,6 +934,26 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     return NULL;
   }
 
+}
+
+address InterpreterGenerator::generate_Reference_get_entry(void) {
+#ifndef SERIALGC
+  if (UseG1GC) {
+    // We need to generate have a routine that generates code to:
+    //   * load the value in the referent field
+    //   * passes that value to the pre-barrier.
+    //
+    // In the case of G1 this will record the value of the
+    // referent in an SATB buffer if marking is active.
+    // This will cause concurrent marking to mark the referent
+    // field as live.
+    Unimplemented();
+  }
+#endif // SERIALGC
+
+  // If G1 is not enabled then attempt to go through the accessor entry point
+  // Reference.get is an accessor
+  return generate_accessor_entry();
 }
 
 //
@@ -1160,7 +1180,7 @@ address InterpreterGenerator::generate_native_entry(bool synchronized) {
 
   // pass mirror handle if static call
   { Label L;
-    const int mirror_offset = klassOopDesc::klass_part_offset_in_bytes() + Klass::java_mirror_offset_in_bytes();
+    const int mirror_offset = in_bytes(Klass::java_mirror_offset());
     __ movl(t, Address(method, methodOopDesc::access_flags_offset()));
     __ testl(t, JVM_ACC_STATIC);
     __ jcc(Assembler::zero, L);
@@ -1899,8 +1919,6 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
   Label do_double;
   Label done_conv;
 
-  address compiled_entry = __ pc();
-
   // The FPU stack is clean if UseSSE >= 2 but must be cleaned in other cases
   if (UseSSE < 2) {
     __ lea(state, Address(rbp,  -(int)sizeof(BytecodeInterpreter)));
@@ -1934,15 +1952,7 @@ address InterpreterGenerator::generate_normal_entry(bool synchronized) {
     __ jmp(done_conv);
   }
 
-#if 0
-  // emit a sentinel we can test for when converting an interpreter
-  // entry point to a compiled entry point.
-  __ a_long(Interpreter::return_sentinel);
-  __ a_long((int)compiled_entry);
-#endif
-
   // Return point to interpreter from compiled/native method
-
   InternalAddress return_from_native_method(__ pc());
 
   __ bind(done_conv);
@@ -2220,6 +2230,8 @@ address AbstractInterpreterGenerator::generate_method_entry(AbstractInterpreter:
     case Interpreter::java_lang_math_log     : // fall thru
     case Interpreter::java_lang_math_log10   : // fall thru
     case Interpreter::java_lang_math_sqrt    : entry_point = ((InterpreterGenerator*)this)->generate_math_entry(kind);     break;
+    case Interpreter::java_lang_ref_reference_get
+                                             : entry_point = ((InterpreterGenerator*)this)->generate_Reference_get_entry(); break;
     default                                  : ShouldNotReachHere();                                                       break;
   }
 
@@ -2327,14 +2339,15 @@ void BytecodeInterpreter::layout_interpreterState(interpreterState to_fill,
 }
 
 int AbstractInterpreter::layout_activation(methodOop method,
-                                                int tempcount,  //
-                                                int popframe_extra_args,
-                                                int moncount,
-                                                int callee_param_count,
-                                                int callee_locals,
-                                                frame* caller,
-                                                frame* interpreter_frame,
-                                                bool is_top_frame) {
+                                           int tempcount,  //
+                                           int popframe_extra_args,
+                                           int moncount,
+                                           int caller_actual_parameters,
+                                           int callee_param_count,
+                                           int callee_locals,
+                                           frame* caller,
+                                           frame* interpreter_frame,
+                                           bool is_top_frame) {
 
   assert(popframe_extra_args == 0, "FIX ME");
   // NOTE this code must exactly mimic what InterpreterGenerator::generate_compute_interpreter_state()
