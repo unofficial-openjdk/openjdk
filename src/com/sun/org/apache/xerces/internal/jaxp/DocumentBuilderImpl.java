@@ -36,7 +36,7 @@ import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
 import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
 import com.sun.org.apache.xerces.internal.jaxp.validation.XSGrammarPoolContainer;
 import com.sun.org.apache.xerces.internal.parsers.DOMParser;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.Property;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager.State;
@@ -46,7 +46,6 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentSource;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
-import javax.xml.XMLConstants;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -110,7 +109,6 @@ public class DocumentBuilderImpl extends DocumentBuilder
     /** Property identifier: access to external schema */
     public static final String ACCESS_EXTERNAL_SCHEMA = XMLConstants.ACCESS_EXTERNAL_SCHEMA;
 
-
     private final DOMParser domParser;
     private final Schema grammar;
 
@@ -125,6 +123,7 @@ public class DocumentBuilderImpl extends DocumentBuilder
     /** Initial EntityResolver */
     private final EntityResolver fInitEntityResolver;
 
+    private XMLSecurityManager fSecurityManager;
     private XMLSecurityPropertyManager fSecurityPropertyMgr;
 
     DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Hashtable dbfAttrs, Hashtable features)
@@ -173,10 +172,10 @@ public class DocumentBuilderImpl extends DocumentBuilder
         fSecurityPropertyMgr = new XMLSecurityPropertyManager();
         domParser.setProperty(XML_SECURITY_PROPERTY_MANAGER, fSecurityPropertyMgr);
 
-        // If the secure processing feature is on set a security manager.
-        if (secureProcessing) {
-            domParser.setProperty(SECURITY_MANAGER, new SecurityManager());
+        fSecurityManager = new XMLSecurityManager(secureProcessing);
+        domParser.setProperty(SECURITY_MANAGER, fSecurityManager);
 
+        if (secureProcessing) {
             /**
              * If secure processing is explicitly set on the factory, the
              * access properties will be set unless the corresponding
@@ -250,8 +249,8 @@ public class DocumentBuilderImpl extends DocumentBuilder
                 String feature = (String) entry.getKey();
                 boolean value = ((Boolean) entry.getValue()).booleanValue();
                 domParser.setFeature(feature, value);
-            }
         }
+    }
     }
 
     /**
@@ -289,30 +288,33 @@ public class DocumentBuilderImpl extends DocumentBuilder
                             // spec when schema validation is enabled
                             domParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
                         }
-                     }
-                 } else if(JAXP_SCHEMA_SOURCE.equals(name)){
-                    if( isValidating() ) {
-                        String value=(String)dbfAttrs.get(JAXP_SCHEMA_LANGUAGE);
-                        if(value !=null && W3C_XML_SCHEMA.equals(value)){
-                            domParser.setProperty(name, val);
-                        }else{
+                    }
+                        } else if(JAXP_SCHEMA_SOURCE.equals(name)){
+                        if( isValidating() ) {
+                                                String value=(String)dbfAttrs.get(JAXP_SCHEMA_LANGUAGE);
+                                                if(value !=null && W3C_XML_SCHEMA.equals(value)){
+                                        domParser.setProperty(name, val);
+                                                }else{
                             throw new IllegalArgumentException(
                                 DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
                                 "jaxp-order-not-supported",
                                 new Object[] {JAXP_SCHEMA_LANGUAGE, JAXP_SCHEMA_SOURCE}));
+                                                }
+                                        }
+                } else {
+                    //check if the property is managed by security manager
+                    if (fSecurityManager == null ||
+                            !fSecurityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, val)) {
+                        //check if the property is managed by security property manager
+                        if (fSecurityPropertyMgr == null ||
+                                !fSecurityPropertyMgr.setValue(name, XMLSecurityPropertyManager.State.APIPROPERTY, val)) {
+                            //fall back to the existing property manager
+                            domParser.setProperty(name, val);
                         }
-                     }
-                  } else {
-                    int index = fSecurityPropertyMgr.getIndex(name);
-                    if (index > -1) {
-                        fSecurityPropertyMgr.setValue(index,
-                                XMLSecurityPropertyManager.State.APIPROPERTY, (String)val);
-                    } else {
-                        // Let Xerces code handle the property
-                        domParser.setProperty(name, val);
                     }
-                  }
-             }
+
+                }
+            }
         }
     }
 
