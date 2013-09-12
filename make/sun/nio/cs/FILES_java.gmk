@@ -329,6 +329,7 @@ FILES_gen_extcs = \
 	sun/nio/cs/ext/IBM280.java \
 	sun/nio/cs/ext/IBM284.java \
 	sun/nio/cs/ext/IBM285.java \
+	sun/nio/cs/ext/IBM290.java \
 	sun/nio/cs/ext/IBM297.java \
 	sun/nio/cs/ext/IBM420.java \
 	sun/nio/cs/ext/IBM424.java \
