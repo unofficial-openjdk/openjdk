@@ -34,7 +34,7 @@ default: images
 $(eval $(call FillCacheFind,\
     $(wildcard $(JDK_OUTPUTDIR)/bin \
                $(JDK_OUTPUTDIR)/lib \
-               $(JDK_OUTPUTDIR)/modules \
+               $(JDK_OUTPUTDIR)/jmods \
                $(IMAGES_OUTPUTDIR)/lib \
                $(JDK_OUTPUTDIR)/include \
                $(JDK_OUTPUTDIR)/sample \
@@ -270,13 +270,13 @@ $(foreach f,$(CUSTOM_PROFILE_JARS),\
     $(eval $(call AddFileToCopy,$(IMAGES_OUTPUTDIR)/lib$(PROFILE),$(JRE_IMAGE_DIR)/lib,$f,JRE_LIB_TARGETS)))
 endif
 
-# copy modules
-JMOD_FILES := $(call CacheFind,$(JDK_OUTPUTDIR)/modules)
+# copy jmod files
+JMOD_FILES := $(call CacheFind,$(JDK_OUTPUTDIR)/jmods)
 
 $(foreach f,$(JMOD_FILES),\
     $(eval $(call AddFileToCopy,$(JDK_OUTPUTDIR),$(JRE_IMAGE_DIR),$f,JRE_MODULE_TARGETS)))
 $(foreach f,$(JMOD_FILES),\
-    $(eval $(call AddFileToCopy,$(JDK_OUTPUTDIR),$(JDK_IMAGE_DIR)/jre,$f,JDKJRE_MODULE_TARGETS)))
+    $(eval $(call AddFileToCopy,$(JDK_OUTPUTDIR),$(JDK_IMAGE_DIR),$f,JDKJRE_MODULE_TARGETS)))
 
 # CTE plugin security change require new empty directory lib/applet
 $(JRE_IMAGE_DIR)/lib/applet: 

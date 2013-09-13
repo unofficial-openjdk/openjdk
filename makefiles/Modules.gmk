@@ -29,7 +29,7 @@ include JavaCompilation.gmk
 include Setup.gmk
 
 MODULES_SER_OUT      := $(JDK_OUTPUTDIR)/classes/jdk/jigsaw/module/resources/modules.ser
-JMODS_DIR            := $(JDK_OUTPUTDIR)/modules
+JMODS_DIR            := $(JDK_OUTPUTDIR)/jmods
 GENMODULES_DIR       := $(JDK_OUTPUTDIR)/genmodules
 MODULEINFO_DIR       := $(GENMODULES_DIR)/src
 MODULE_CLASSLIST_DIR := $(GENMODULES_DIR)/classlist
