@@ -557,8 +557,8 @@ SplashEventLoop(Splash * splash) {
         SplashUnlock(splash);
         rc = select(n, fds, NULL, NULL, ptv);
         SplashLock(splash);
-        if (splash->isVisible>0 && SplashTime() >= splash->time +
-                splash->frames[splash->currentFrame].delay) {
+        if (splash->isVisible > 0 && splash->currentFrame >= 0 &&
+                SplashTime() >= splash->time + splash->frames[splash->currentFrame].delay) {
             SplashNextFrame(splash);
             SplashUpdateShape(splash);
             SplashRedrawWindow(splash);
