@@ -66,6 +66,22 @@ class Modularizer extends Task {
                 task.options.classlistDir = arg;
             }
         },
+        new Option<Modularizer>(true, "-b", "--cmds") {
+            void process(Modularizer task, String opt, String arg) {
+                Path dir = Paths.get(task.options.javahome).resolve("bin");
+                for (String s : arg.split("\\s+")) {
+                    if (s.isEmpty())
+                        continue;
+                    try {
+                        Path p = dir.relativize(Paths.get(s));
+                        task.options.module.cmds.put(p.toString(), s);
+                    } catch (IllegalArgumentException e) {
+                        System.err.format("%s \"%s\"%n", task.options.module.modulename, s);
+                        throw e;
+                    }
+                }
+            }
+        },
         new Option<Modularizer>(true, "-g", "--graph") {
             void process(Modularizer task, String opt, String arg) {
                 task.options.moduleGraphPath = arg;
@@ -83,7 +99,7 @@ class Modularizer extends Task {
         },
         new Option<Modularizer>(true, "-n", "--native") {
             void process(Modularizer task, String opt, String arg) {
-                Path dir = Paths.get(task.options.javahome);
+                Path dir = Paths.get(task.options.javahome).resolve("lib");
                 for (String s : arg.split("\\s+")) {
                     if (s.isEmpty())
                         continue;
@@ -99,7 +115,7 @@ class Modularizer extends Task {
         },
         new Option<Modularizer>(true, "-f", "--conf") {
             void process(Modularizer task, String opt, String arg) {
-                Path dir = Paths.get(task.options.javahome);
+                Path dir = Paths.get(task.options.javahome).resolve("lib");
                 for (String s : arg.split("\\s+")) {
                     if (s.isEmpty())
                         continue;
@@ -189,6 +205,7 @@ class Modularizer extends Task {
     private class ModuleContent {
         final String modulename;
         final Map<String,String> natives = new TreeMap<>();
+        final Map<String,String> cmds = new TreeMap<>();
         final Map<String,String> confs = new TreeMap<>();
         final Set<String> classes = new TreeSet<>();
         final Map<String,Set<String>> services = new TreeMap<>();
@@ -212,6 +229,7 @@ class Modularizer extends Task {
             try (ZipOutputStream zos = new ZipOutputStream(os)) {
                 // jmod file layout
                 //   classes/            All the module's classes and resources
+                //   bin/                native commands
                 //   native/             .so files
                 //   module/name         A file "name" containing the module's name
                 //   module/services/    Like META-INF/services
@@ -232,6 +250,12 @@ class Modularizer extends Task {
                     }
                 }
 
+                for (Map.Entry<String,String> e : cmds.entrySet()) {
+                    Path p = Paths.get(e.getValue());
+                    byte[] data = Files.readAllBytes(p);
+                    Path entry = Paths.get("bin", e.getKey());
+                    writeZipEntry(zos, entry.toString(), data);
+                }
                 for (Map.Entry<String,String> e : natives.entrySet()) {
                     Path p = Paths.get(e.getValue());
                     byte[] data = Files.readAllBytes(p);

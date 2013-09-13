@@ -34,6 +34,7 @@ include Modules.gmk
 # these defines the per-module libraries and conf files
 #
 include CompileNativeLibraries.gmk
+include CompileLaunchers.gmk
 include HotspotSetup.gmk
 include PolicyJars.gmk
 
@@ -75,6 +76,7 @@ all: $(BUILD_CLASSANALYZER) $(BASE_POLICY_JAR_FILES)
                 --native="$(SECURITY_AUTH_LIBRARIES)" \
             --module jdk.base \
                 --native="$(BASE_LIBRARIES) $(MSVCR_TARGET) $(HOTSPOT_LIBRARIES) $(JVMCFG)" \
+                --cmds="$(BASE_LAUNCHERS)" \
                 --conf="$(BASE_CONF_FILES) $(GENDATA_TZDB) $(GENDATA_CURDATA)" \
 		--conf="$(BASE_POLICY_JAR_FILES)" \
             --module jdk.desktop \

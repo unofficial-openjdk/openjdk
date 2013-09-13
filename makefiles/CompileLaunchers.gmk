@@ -38,6 +38,8 @@ $(eval $(call FillCacheFind,$(JDK_TOPDIR)/src/share/bin))
 # Build tools
 include Tools.gmk
 
+BASE_LAUNCHERS=
+
 BUILD_LAUNCHERS=
 
 # When building a legacy overlay image (on solaris 64 bit), the launchers
@@ -219,6 +221,7 @@ $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX): $(BUILD_LAUNCHER_java)
 	$(RM) $@
 	$(CP) $(JDK_OUTPUTDIR)/objs/java_objs$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX) $@
 
+BASE_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX)
 BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX)
 
 ifeq ($(OPENJDK_TARGET_OS),windows)
@@ -278,6 +281,11 @@ $(eval $(call SetupLauncher,jdeps,\
     -DEXPAND_CLASSPATH_WILDCARDS \
     -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
     -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jdeps.Main"$(COMMA) }'))
+
+$(eval $(call SetupLauncher,jlink,\
+    -DEXPAND_CLASSPATH_WILDCARDS \
+    -DNEVER_ACT_AS_SERVER_CLASS_MACHINE \
+    -DJAVA_ARGS='{ "-J-ms8m"$(COMMA) "com.sun.tools.jlink.Main"$(COMMA) }'))
 
 BUILD_LAUNCHER_jconsole_CFLAGS_windows:=-DJAVAW
 BUILD_LAUNCHER_jconsole_LDFLAGS_windows:=user32.lib

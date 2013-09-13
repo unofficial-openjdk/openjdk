@@ -170,6 +170,39 @@ static jlong threadStackSize    = 0;  /* stack size of the new thread */
 static jlong maxHeapSize        = 0;  /* max heap size */
 static jlong initialHeapSize    = 0;  /* inital heap size */
 
+// Read the main app class name, if it exists, and set the classpath.
+// This will only be the case if the image was created by jlink.
+static void
+AddModuleAppOptions(int *pmode, char **pwhat, const char* jrepath)
+{
+    FILE *file;
+    char* cn;
+    char* read;
+    char appCls[MAXPATHLEN];
+    char jarPath[MAXPATHLEN];
+
+    JLI_StrCpy(appCls, jrepath);
+    JLI_StrCat(appCls, APP_CLASS);
+    if ((file = fopen(appCls, "r")) == NULL)
+        return;
+
+    cn = (char *)JLI_MemAlloc(256);
+    memset(cn, 0, sizeof(cn));
+    read = fgets(cn, 256, file);
+    fclose(file);
+    if (read == NULL || JLI_StrLen(cn) < 1) {
+        JLI_MemFree(cn);
+        return;
+    }
+
+    *pwhat = cn;
+    *pmode = LM_CLASS;
+
+    JLI_StrCpy(jarPath, jrepath);
+    JLI_StrCat(jarPath, APP_JAR);
+    SetClassPath(jarPath);
+}
+
 /*
  * Entry point.
  */
@@ -283,6 +316,10 @@ JLI_Launch(int argc, char ** argv,              /* main argc, argc */
     if (!ParseArguments(&argc, &argv, &mode, &what, &ret, jrepath))
     {
         return(ret);
+    }
+
+    if (ret == 1) {
+        AddModuleAppOptions(&mode, &what, jrepath);
     }
 
     /* Override class path if -jar flag was specified */
