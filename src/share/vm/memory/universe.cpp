@@ -872,6 +872,9 @@ jint Universe::initialize_heap() {
 
 // Reserve the Java heap, which is now the same for all GCs.
 ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
+  assert(alignment <= Arguments::conservative_max_heap_alignment(),
+      err_msg("actual alignment "SIZE_FORMAT" must be within maximum heap alignment "SIZE_FORMAT,
+          alignment, Arguments::conservative_max_heap_alignment()));
   size_t total_reserved = align_size_up(heap_size, alignment);
   assert(!UseCompressedOops || (total_reserved <= (OopEncodingHeapMax - os::vm_page_size())),
       "heap size is too big for compressed oops");
@@ -1028,7 +1031,7 @@ bool universe_post_init() {
 
     msg = java_lang_String::create_from_str("Metadata space", CHECK_false);
     java_lang_Throwable::set_message(Universe::_out_of_memory_error_metaspace, msg());
-    msg = java_lang_String::create_from_str("Class Metadata space", CHECK_false);
+    msg = java_lang_String::create_from_str("Compressed class space", CHECK_false);
     java_lang_Throwable::set_message(Universe::_out_of_memory_error_class_metaspace, msg());
 
     msg = java_lang_String::create_from_str("Requested array size exceeds VM limit", CHECK_false);
