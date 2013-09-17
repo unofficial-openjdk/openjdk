@@ -98,11 +98,11 @@ all: $(BUILD_CLASSANALYZER) $(BASE_POLICY_JAR_FILES)
                 --native="$(SCTP_LIBRARIES)" \
             --module jdk.smartcardio \
                 --native="$(SECURITY_SMARTCARDIO_LIBRARIES)" \
-            --module jdk.sunec \
+            --module jdk.crypto.ec \
                 --native="$(SECURITY_SUNEC_LIBRARIES)" \
-            --module jdk.sunmscapi \
+            --module jdk.crypto.mscapi \
                 --native="$(SECURITY_MSCAPI_LIBRARIES)" \
-            --module jdk.sunpkcs11 \
+            --module jdk.crypto.pkcs11 \
                 --native="$(SECURITY_PKCS11_LIBRARIES)" \
 		--conf="$(SECURITY_PKCS11_CONF_FILES)" \
             --module jdk.ucrytpo \

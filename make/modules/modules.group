@@ -48,9 +48,6 @@ module jdk.base {
     include unpack200;
     include xmlparser;
 
-    // security provider in compact 1
-    include security-sunjce;
-
     include net-compat;
 
     // This optional dependency is needed for SecurityManager.checkTopLevelWindows
@@ -224,11 +221,15 @@ module jdk.security.acl {
     include security-acl;
 }
 
-module jdk.sunec {
+module jdk.crypto {
+    include security-sunjce;
+}
+
+module jdk.crypto.ec {
     include security-sunec;
 }
 
-module jdk.sunpkcs11 {
+module jdk.crypto.pkcs11 {
     include security-sunpkcs11;
 }
 
@@ -259,7 +260,7 @@ module jdk.ucrypto {
     include security-ucrypto;
 }
 
-module jdk.sunmscapi {
+module jdk.crypto.mscapi {
     include security-sunmscapi;
 }
 
@@ -364,10 +365,9 @@ module jdk.jx.annotations {
 }
 
 // standalone technology (JSR-223)
-module jdk.scripting {
+module jdk.script {
     provides javax.script;
     include scripting;
-    include scripting-rhino;
 
     requires optional service javax.script.ScriptEngineFactory;
 }
@@ -602,7 +602,7 @@ module java.compact1 {
     requires public jdk.base;
     requires public jdk.tls;
     requires public jdk.logging;
-    requires public jdk.scripting;
+    requires public jdk.script;
 }
 
 module java.compact2 {
@@ -617,6 +617,7 @@ module java.compact3 {
     requires public java.compact1;
     requires public java.compact2;
 
+    // SE APIs
     requires public jdk.auth;
     requires public jdk.compiler;
     requires public jdk.httpserver;
@@ -626,14 +627,16 @@ module java.compact3 {
     requires public jdk.kerberos;
     requires public jdk.management;
     requires public jdk.prefs;
-    requires public jdk.sctp;
     requires public jdk.security.acl;
     requires public jdk.smartcardio;
-    requires public jdk.sunec;
-    requires public jdk.sunmscapi;
-    requires public jdk.sunpkcs11;
-    requires public jdk.ucrypto;
     requires public jdk.xmldsig;
+
+    // JDK-specific
+    requires public jdk.crypto.ec;
+    requires public jdk.crypto.mscapi;
+    requires public jdk.crypto.pkcs11;
+    requires public jdk.sctp;
+    requires public jdk.ucrypto;
 }
 
 module jdk.jre {
@@ -647,20 +650,23 @@ module jdk.jre {
     requires public jdk.jx.annotations;
     requires public jdk.management.iiop;
 
-    // JDK-specific
+    // tools API
     requires public jdk.tools.jre;
+
+    // JDK-specific providers
+    requires public jdk.nashorn;
+    requires public jdk.zipfs;
     requires public jdk.snmp;
 
-    include sdp;
-    view oracle.sdp {
+    requires sun.charsets;
+    requires sun.localedata;
+
+    include oracle-api;
+    view oracle.private {
         exports com.oracle.nio;
         exports com.oracle.net;
         exports com.oracle.util;
     }
-
-    requires jdk.zipfs;
-    requires sun.charsets;
-    requires sun.localedata;
 }
 
 module jdk {
