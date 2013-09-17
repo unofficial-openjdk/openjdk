@@ -191,6 +191,10 @@ class Modularizer extends Task {
             if (Files.exists(path = dir.resolve(name + ".resources"))) {
                 mc.classes.addAll(readFile(path));
             }
+            if (name.equals("jdk.base")) {
+                // add module graph to the base module
+                mc.classes.add(JigsawModules.MODULE_GRAPH);
+            }
             Path jmodfile = options.compression ? dst.resolve(name + ".jmod.gz")
                                                 : dst.resolve(name + ".jmod");
             mc.store(jmodfile, options.compression);

@@ -51,6 +51,7 @@ import java.util.stream.Collectors;
  * Jigsaw module builder
  */
 public class JigsawModules {
+    public static final String MODULE_GRAPH = "jdk/jigsaw/module/resources/modules.ser";
     private final Map<String,jdk.jigsaw.module.Module> modules;
     public JigsawModules() {
         this.modules = new HashMap<>();
@@ -273,8 +274,7 @@ public class JigsawModules {
         JigsawModules graph = new JigsawModules();
         if (argv.length == 0) {
             // default path
-            String MODULES_SER = "jdk/jigsaw/module/resources/modules.ser";
-            try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULES_SER)) {
+            try (InputStream in = ClassLoader.getSystemResourceAsStream(MODULE_GRAPH)) {
                 graph.load(in);
             }
         } else {

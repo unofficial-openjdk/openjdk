@@ -85,11 +85,6 @@ module jdk.base {
     // ## the defining loader of the declaring class
     exports sun.reflect;
 
-    view jdk.base.oracle {
-        exports com.oracle.nio;
-        exports com.oracle.net;
-        exports com.oracle.util;
-    }
 
 }
 
@@ -103,6 +98,9 @@ module jdk.desktop {
 
     include beans;
     include client;
+
+    // include the DialogCallbackHandler
+    include dialog-callback;
 
     // jndi and corba have a dependency on Applet but
     // applet can't be separated from client due to circular dependency
@@ -306,7 +304,6 @@ module jdk.jndi {
     include sun.auth.ldap;
     include sun.auth.jndi;
 
-    requires optional jdk.desktop;
     requires service javax.naming.ldap.StartTlsResponse;
 }
 
@@ -371,9 +368,12 @@ module jdk.scripting {
     provides javax.script;
     include scripting;
     include scripting-rhino;
-    include nashorn;
 
     requires optional service javax.script.ScriptEngineFactory;
+}
+
+module jdk.nashorn {
+    include nashorn;
 }
 
 // ## corba and jdbc depends on javax.transaction.
@@ -598,44 +598,65 @@ module jdk.tools {
     }
 }
 
-
-module jdk.jre {
+module java.compact1 {
     requires public jdk.base;
+    requires public jdk.tls;
+    requires public jdk.logging;
+    requires public jdk.scripting;
+}
+
+module java.compact2 {
+    requires public java.compact1;
+    requires public jdk.jaxp;
+    requires public jdk.jdbc;
+    requires public jdk.jta;
+    requires public jdk.rmi;
+}
+
+module java.compact3 {
+    requires public java.compact1;
+    requires public java.compact2;
+
     requires public jdk.auth;
     requires public jdk.compiler;
-    requires public jdk.corba;
-    requires public jdk.cosnaming;
-    requires public jdk.deploy;
-    requires public jdk.desktop;
     requires public jdk.httpserver;
     requires public jdk.instrument;
-    requires public jdk.jaxp;
-    requires public jdk.jaxws;
-    requires public jdk.jdbc;
     requires public jdk.jdbc.rowset;
     requires public jdk.jndi;
-    requires public jdk.jta;
-    requires public jdk.jx.annotations;
     requires public jdk.kerberos;
-    requires public jdk.logging;
     requires public jdk.management;
-    requires public jdk.management.iiop;
     requires public jdk.prefs;
-    requires public jdk.rmi;
-    requires public jdk.scripting;
     requires public jdk.sctp;
     requires public jdk.security.acl;
     requires public jdk.smartcardio;
     requires public jdk.sunec;
     requires public jdk.sunmscapi;
     requires public jdk.sunpkcs11;
-    requires public jdk.tls;
     requires public jdk.ucrypto;
     requires public jdk.xmldsig;
+}
+
+module jdk.jre {
+    requires public java.compact3;
+
+    requires public jdk.corba;
+    requires public jdk.cosnaming;
+    requires public jdk.deploy;
+    requires public jdk.desktop;
+    requires public jdk.jaxws;
+    requires public jdk.jx.annotations;
+    requires public jdk.management.iiop;
 
     // JDK-specific
     requires public jdk.tools.jre;
     requires public jdk.snmp;
+
+    include sdp;
+    view oracle.sdp {
+        exports com.oracle.nio;
+        exports com.oracle.net;
+        exports com.oracle.util;
+    }
 
     requires jdk.zipfs;
     requires sun.charsets;
@@ -646,3 +667,4 @@ module jdk {
     requires public jdk.jre;
     requires public jdk.tools;
 }
+

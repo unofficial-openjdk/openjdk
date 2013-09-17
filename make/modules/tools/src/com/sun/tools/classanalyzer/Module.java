@@ -86,8 +86,10 @@ public class Module implements Comparable<Module> {
 
     // update during the analysis
     private Module group;
+    private Profile profile;
     protected Module(ModuleConfig config) {
         this.name = config.module;
+        this.profile = Profile.profileForModule(this.name);
         this.version = config.version;
         this.classes = new HashSet<>();
         this.resources = new HashSet<>();
@@ -124,6 +126,10 @@ public class Module implements Comparable<Module> {
 
     Module group() {
         return group;
+    }
+
+    Profile profile() {
+        return profile;
     }
 
     Collection<Package> packages() {
@@ -248,6 +254,17 @@ public class Module implements Comparable<Module> {
     void addKlass(Klass k) {
         classes.add(k);
         k.setModule(this);
+
+        Package pkg = getPackage(k.getPackageName());
+        if (pkg.isExported) {
+            // ## TODO: handle implementation classes
+            if (profile == null) {
+                profile = pkg.profile;
+            } else if (pkg.profile != null && profile != pkg.profile) {
+                throw new RuntimeException("module " + name + " in profile " +
+                      profile + " but class " + k + " in " + pkg.profile);
+            }
+        }
     }
 
     void addPackage(Package p) {
@@ -365,6 +382,16 @@ public class Module implements Comparable<Module> {
             } else {
                 views.put(v.name, v);
             }
+        }
+
+        // propagate profile
+        if (profile == null) {
+            profile = m.profile;
+        } else if (m.profile != null && m.profile.requires(profile)) {
+            // a member must be in the same profile as its group's profile
+            // or a member is in a profile smaller than its group's profile
+            // if there is a split package
+            profile = m.profile;
         }
     }
 

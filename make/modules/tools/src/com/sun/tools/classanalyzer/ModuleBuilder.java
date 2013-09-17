@@ -117,6 +117,7 @@ public class ModuleBuilder {
         factory().buildModuleMembers();
 
         // analyze cross-module dependencies
+        Set<Profile> profiles = new HashSet<>(Arrays.asList(Profile.values()));
         for (Module m : factory().getAllModules()) {
             if (m.group() == m) {
                 // module with no class is not included except the base module
@@ -125,10 +126,25 @@ public class ModuleBuilder {
                 for (Dependence d : m.config().requires().values()) {
                     reexports = reexports || d.requiresPublic();
                 }
+
                 if (isBaseModule(m) || !m.isEmpty() || m.allowsEmpty() || reexports) {
-                    dependencesForModule.put(m, buildModuleDependences(m));
+                    Map<String, Dependence> requires = buildModuleDependences(m);
+                    dependencesForModule.put(m, requires);
+
+                    String profile = m.profile() != null
+                                        ? m.profile().modulename
+                                        : null;
+                    if (m.name().equals(profile)) {
+                        // an aggregate module for profile
+                        validateProfile(m, requires);
+                        profiles.remove(m.profile());
+                    }
                 }
             }
+        }
+
+        if (!profiles.isEmpty()) {
+            throw new RuntimeException("Profile module missing: " + profiles);
         }
 
         // fixup permits after dependences are found
@@ -307,6 +323,20 @@ public class ModuleBuilder {
     private static List<String> baseModules = Arrays.asList("base", "jdk.base", "java.base");
     private boolean isBaseModule(Module m) {
         return baseModules.contains(m.name());
+    }
+
+    private void validateProfile(Module m, Map<String, Dependence> requires) {
+       Profile profile = m.profile();
+        for (Dependence d : requires.values()) {
+            Profile p = factory().getModuleForView(d.name()).profile();
+            if (p != null && p != profile && !profile.requires(p)) {
+                // dependence is a module in this profile
+                // or requires a smaller profile
+                throw new RuntimeException(m.name() + " requires "
+                        + d.name() + " in profile " + p);
+            }
+        }
+        return;
     }
 
     private void fixupPermits() {

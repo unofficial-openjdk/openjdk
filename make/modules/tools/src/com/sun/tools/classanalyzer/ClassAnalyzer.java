@@ -26,7 +26,6 @@ package com.sun.tools.classanalyzer;
 
 import com.sun.tools.classanalyzer.Module.ModuleVisitor;
 import java.io.*;
-import java.text.MessageFormat;
 import java.util.*;
 
 import java.nio.file.Path;

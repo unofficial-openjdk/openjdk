@@ -22,8 +22,8 @@
  */
 package com.sun.tools.classanalyzer;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Package Information
@@ -37,10 +37,12 @@ public class Package implements Comparable<Package> {
     int  resourceCount;
     long resourceBytes;
     private int publicClassCount;
+    Profile profile;
     Package(String name, Module m) {
         this.pkgName = name;
         this.module = m;
         this.isExported = isExportedPackage(name);
+        this.profile = isExported ? exportedPackages.get(name) : null;
     }
 
     String name() {
@@ -110,19 +112,22 @@ public class Package implements Comparable<Package> {
     public String toString() {
         return pkgName + " : " + module.name();
     }
-    private final static Set<String> exportedPackages = new HashSet<String>();
+    private final static Map<String, Profile> exportedPackages = new HashMap<>();
     static {
         // if exported.packages property is not set,
         // exports all packages
-        String apis = Module.getModuleProperty("exported.packages");
-        if (apis != null) {
-            for (String s : apis.split("\\s+")) {
-                exportedPackages.add(s.trim());
+        for (Profile p : Profile.values()) {
+            String apis = Module.getModuleProperty("profile_" + p.profile + "_exported.packages");
+            if (apis != null) {
+                for (String s : apis.split("\\s+")) {
+                    String pn = s.trim();
+                    exportedPackages.put(pn, p);
+                }
             }
         }
     }
 
     static boolean isExportedPackage(String pkg) {
-        return exportedPackages.isEmpty() || exportedPackages.contains(pkg);
+        return exportedPackages.isEmpty() || exportedPackages.containsKey(pkg);
     }
 }
