@@ -28,6 +28,11 @@
 #include "memory/universe.inline.hpp"
 #include "oops/oop.hpp"
 
+/* http://stackoverflow.com/questions/3472311/what-is-a-portable-method-to-find-the-maximum-value-of-size-t */
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t)-1)
+#endif /* SIZE_MAX */
+
 // arrayOopDesc is the abstract baseclass for all arrays.  It doesn't
 // declare pure virtual to enforce this because that would allocate a vtbl
 // in each instance, which we don't want.
