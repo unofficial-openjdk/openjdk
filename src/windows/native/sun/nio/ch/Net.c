@@ -85,7 +85,7 @@ Java_sun_nio_ch_Net_isExclusiveBindAvailable(JNIEnv *env, jclass clazz) {
 
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_Net_bind0(JNIEnv *env, jclass clazz,
-                         jobject fdo, jboolean exclBind, jobject iao, jint port)
+                         jobject fdo, jboolean isExclBind, jobject iao, jint port)
 {
     SOCKETADDRESS sa;
     int rv;
