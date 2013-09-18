@@ -27,7 +27,11 @@
 
 #define EVENT_BEGIN(type, name)
 #define EVENT_SET(name, field, value)
+#ifndef _WIN32
 #define EVENT_COMMIT(name, ...)
+#else /* _WIN32 */
+#define EVENT_COMMIT(name, var)
+#endif /* _WIN32 */
 #define EVENT_STARTED(name, time)
 #define EVENT_ENDED(name, time)
 #define EVENT_THREAD_EXIT(thread)
