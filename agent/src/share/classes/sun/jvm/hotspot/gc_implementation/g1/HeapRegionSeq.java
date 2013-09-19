@@ -77,13 +77,10 @@ public class HeapRegionSeq extends VMObject {
         private long index;
         private long length;
 
-        @Override
         public boolean hasNext() { return index < length; }
 
-        @Override
         public HeapRegion next() { return at(index++);    }
 
-        @Override
         public void remove()     { /* not supported */    }
 
         HeapRegionIterator(Address addr) {
