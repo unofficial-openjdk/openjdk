@@ -38,6 +38,7 @@ include CompileLaunchers.gmk
 include HotspotSetup.gmk
 include PolicyJars.gmk
 
+include GendataFontConfig.gmk
 GENDATA_TZDB    = $(JDK_OUTPUTDIR)/lib/tzdb.dat
 GENDATA_CURDATA = $(JDK_OUTPUTDIR)/lib/currency.data
 
@@ -82,6 +83,7 @@ all: $(BUILD_CLASSANALYZER) $(BASE_POLICY_JAR_FILES)
             --module jdk.desktop \
                 --native="$(DESKTOP_LIBRARIES) $(FREETYPE_LIB)" \
                 --conf="$(DESKTOP_CONF_FILES)" \
+                --conf="$(GENDATA_FONT_CONFIG)" \
             --module jdk.logging \
                 --native="$(LOGGING_LIBRARIES)" \
                 --conf="$(LOGGING_CONF_FILES)" \
