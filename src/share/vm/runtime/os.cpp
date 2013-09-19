@@ -1251,6 +1251,7 @@ bool os::set_boot_path(char fileSep, char pathSep) {
     // aligned with install/install/make/common/Pack.gmk. Note: boot class
     // path class JARs, are stripped for StackMapTable to reduce download size.
     static const char classpath_format[] =
+        "%/lib/jake.jar:"
         "%/lib/resources.jar:"
         "%/lib/rt.jar:"
         "%/lib/sunrsasign.jar:"
