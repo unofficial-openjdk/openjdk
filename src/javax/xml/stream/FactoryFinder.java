@@ -204,13 +204,15 @@ class FactoryFinder {
      *                              a property name
      * @param fallbackClassName     Implementation class name, if nothing else
      *                              is found.  Use null to mean no fallback.
+     * @param standardId            Indicate whether the factoryId is standard
+     *                              or user specified.
      *
      * Package private so this code can be shared.
      */
-    static Object find(String factoryId, String fallbackClassName)
+    static Object find(String factoryId, String fallbackClassName, boolean standardId)
         throws ConfigurationError
     {
-        return find(factoryId, null, fallbackClassName);
+        return find(factoryId, null, fallbackClassName, standardId);
     }
 
     /**
@@ -227,23 +229,34 @@ class FactoryFinder {
      * @param fallbackClassName     Implementation class name, if nothing else
      *                              is found.  Use null to mean no fallback.
      *
+     * @param standardId            Indicate whether the factoryId is standard
+     *                              or user specified.
+     *
      * Package private so this code can be shared.
      */
-    static Object find(String factoryId, ClassLoader cl, String fallbackClassName)
+    static Object find(String factoryId, ClassLoader cl, String fallbackClassName,
+            boolean standardId)
         throws ConfigurationError
     {
         dPrint("find factoryId =" + factoryId);
 
         // Use the system property first
         try {
-            String systemProp = ss.getSystemProperty(factoryId);
+            String systemProp;
+            if (standardId) {
+                systemProp = ss.getSystemProperty(factoryId);
+            } else {
+                systemProp = System.getProperty(factoryId);
+            }
+
             if (systemProp != null) {
                 dPrint("found system property, value=" + systemProp);
                 return newInstance(systemProp, null, true);
             }
         }
         catch (SecurityException se) {
-            if (debug) se.printStackTrace();
+            throw new ConfigurationError(
+                "Failed to read factoryId '" + factoryId + "'", se);
         }
 
         // Try read $java.home/lib/stax.properties followed by
