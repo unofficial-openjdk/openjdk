@@ -36,6 +36,8 @@ import java.util.*;
 
 /**
  * Implementation for the jlink tool.
+ *
+ * ## this should belong to the jdk repo and use jdk.joptsimple some day.
  */
 class JlinkTask {
     static class BadArgs extends Exception {
@@ -151,8 +153,7 @@ class JlinkTask {
                     throw new BadArgs("err.invalid.arg.for.option", opt);
                 String name = arg.substring(0, index);
                 String main = arg.substring(index+1, arg.length());
-                task.options.commandName = name;
-                task.options.commandClass = main;
+                task.options.launchers.put(name, main);
             }
         },
         new Option(true, "--config") {
@@ -242,8 +243,7 @@ class JlinkTask {
         List<Path> jmods;
         Format format;
         Path output;
-        String commandName;
-        String commandClass;
+        Map<String,String> launchers = new HashMap<>();
         String moduleName;
     }
 
@@ -270,7 +270,8 @@ class JlinkTask {
                 if (path == null)
                     throw new BadArgs("err.output.must.be.specified").showUsage(true);
                 if (Files.notExists(path))
-                    throw new BadArgs("err.dir.not.found", path);
+                    // ## throw new BadArgs("err.dir.not.found", path);
+                    Files.createDirectories(path);
                 try {
                     BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
                     if (!attrs.isDirectory())
@@ -285,11 +286,13 @@ class JlinkTask {
                     throw new BadArgs("err.mods.must.be.specified").showUsage(true);
 
                 if (options.classpath != null) {
-                    if (options.commandName == null || options.commandClass == null)
+                    if (options.launchers.isEmpty())
                         throw new BadArgs("err.cmds.must.be.specified").showUsage(true);
                 } else {
-                    if (options.commandName != null || options.commandClass != null)
-                        throw new BadArgs("err.cp.must.be.specified").showUsage(true);
+                    // support launchers with main entry point in the JDK
+                    // if (options.commandName != null || options.commandClass != null)
+                    //    throw new BadArgs("err.cp.must.be.specified").showUsage(true);
+
                 }
             } else if (options.format.equals(Format.JMOD)) {
                 Path path = options.output;
@@ -336,8 +339,6 @@ class JlinkTask {
         final List<Path> jmods = options.jmods;
         final List<Path> jars = options.classpath;
         final Path output = options.output;
-        final String commandClass = options.commandClass;
-        final String commandName = options.commandName;
 
         //assert hasZipFileProvider(): "Zip File System Provider not available";
         if (!hasZipFileProvider())
@@ -355,23 +356,30 @@ class JlinkTask {
                 unzip(jmod, output, classesfs);
         }
 
+        Path appJar = output.resolve(APP_DIR).resolve("app.jar");
         if (jars != null) {
-            Path appDir = output.resolve(APP_DIR);
-            Files.createDirectory(appDir);
+            if (Files.notExists(appJar.getParent()))
+                Files.createDirectory(appJar.getParent());
             //for (Path jar : jars)     // ## support multiple jars
             //    Files.copy(jar, appDir.resolve(jar.getFileName()));
-            Files.copy(jars.get(0), appDir.resolve("app.jar"));
+            Files.copy(jars.get(0), appJar);
+        }
 
-            appDir = appDir.resolve("cmdClass");
-            try (BufferedWriter writer = Files.newBufferedWriter(appDir,
-                                                                 StandardCharsets.ISO_8859_1,
-                                                                 StandardOpenOption.CREATE_NEW)) {
-                writer.write(commandClass, 0, commandClass.length());
+        for (Map.Entry<String,String> e : options.launchers.entrySet()) {
+            // create a script to launch main class to support multiple commands
+            // before the proper launcher support is added.
+            StringBuilder sb = new StringBuilder();
+            sb.append("#!/bin/sh").append("\n");
+            sb.append("DIR=`dirname $0`").append("\n");
+            sb.append("$DIR/java -cp $DIR/../lib/app/app.jar ");
+            sb.append(e.getValue()).append(" $@\n");
+            Path cmd = output.resolve("bin").resolve(e.getKey());
+            try (BufferedWriter writer = Files.newBufferedWriter(cmd,
+                                                            StandardCharsets.ISO_8859_1,
+                                                            StandardOpenOption.CREATE_NEW)) {
+                writer.write(sb.toString());
             }
-
-            Path java = output.resolve("bin/java");
-            Path launcher = output.resolve("bin/" + commandName);
-            Files.move(java, launcher);
+            Files.setPosixFilePermissions(cmd, PosixFilePermissions.fromString("r-xr-xr-x"));
         }
     }
 
@@ -474,13 +482,13 @@ class JlinkTask {
         }
     }
 
+    private static final String CLASSES_JAR = "jake.jar";
     private static enum Section {
         NATIVE_LIBS("native", "lib"),
         NATIVE_CMDS("bin", "bin"),
-        //CLASSES("classes", "classes.jar"),
-        CLASSES("classes", "rt.jar"),   // ## replace with classes.jar
+        CLASSES("classes", CLASSES_JAR),
         CONFIG("conf", "lib"),
-        MODULE_SERVICES("module/services", "classes.jar"),
+        MODULE_SERVICES("module/services", CLASSES_JAR),
         MODULE_NAME("module", "lib/module"),
         UNKNOWN("unknown", "unknown");
 
@@ -536,11 +544,16 @@ class JlinkTask {
 
                     Path dstFile;
                     String filename = file.subpath(1, file.getNameCount()).toString();
-                    if (Section.CLASSES.equals(section)) {
-                        dstFile = classes.getPath(filename);
-                    } else {
-                        Path path = Paths.get(section.imageDir()).resolve(filename);
-                        dstFile = dstDir.resolve(path);
+                    switch (section) {
+                        case CLASSES:
+                            dstFile = classes.getPath(filename);
+                            break;
+                        case MODULE_SERVICES:
+                            dstFile = classes.getPath("META-INF").resolve(filename);
+                            break;
+                        default:
+                            Path path = Paths.get(section.imageDir()).resolve(filename);
+                            dstFile = dstDir.resolve(path);
                     }
 
                     if (Files.exists(dstFile) && Section.MODULE_NAME.equals(section))
@@ -562,18 +575,29 @@ class JlinkTask {
                         return FileVisitResult.CONTINUE; // skip unknown data
 
                     Path dirToCreate;
-                    if (Section.CLASSES.equals(section)) {
-                        if (dir.getNameCount() <= 1)
-                            return FileVisitResult.CONTINUE;
-                        dirToCreate = classes.getPath(dir.subpath(1, dir.getNameCount()).toString());
-                    } else {
-                        Path path = Paths.get(section.imageDir());
-                        if (dir.getNameCount() > 1)
-                            path = path.resolve(dir.subpath(1, dir.getNameCount()).toString());
-                        dirToCreate = dstDir.resolve(path);
+                    String subdir = dir.getNameCount() > 1
+                                        ? dir.subpath(1, dir.getNameCount()).toString()
+                                        : "";
+                    switch (section) {
+                        case CLASSES:
+                            if (dir.getNameCount() <= 1)
+                                return FileVisitResult.CONTINUE;
+                            dirToCreate = classes.getPath(subdir);
+                            break;
+                        case MODULE_SERVICES:
+                            if (dir.getNameCount() <= 1)
+                                return FileVisitResult.CONTINUE;
+                            dirToCreate = classes.getPath("META-INF").resolve(subdir);
+                            break;
+                        default:
+                            Path path = Paths.get(section.imageDir());
+                            if (dir.getNameCount() > 1)
+                                path = path.resolve(subdir);
+                            dirToCreate = dstDir.resolve(path);
+                            break;
                     }
                     if (Files.notExists(dirToCreate))
-                        Files.createDirectory(dirToCreate);
+                        Files.createDirectories(dirToCreate);
                     return FileVisitResult.CONTINUE;
                 }
             });
