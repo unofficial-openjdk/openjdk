@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -115,6 +115,8 @@ endif
 
 ifeq ($(CROSS_COMPILE_ARCH),)
 RMIC = $(RMIC_JAVA) $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
+else
+RMIC = $(BOOT_JAVA_CMD)  $(JAVA_TOOLS_FLAGS) -cp $(OUTPUTDIR)/classes sun.rmi.rmic.Main
 endif  
 
 $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
@@ -130,11 +132,13 @@ $(CLASSDESTDIR)/%_Stub.class: $(CLASSDESTDIR)/%.class
 	$(RMIC) -classpath "$(CLASSDESTDIR)"    \
                 -d $(CLASSDESTDIR)              \
                 -iiop -v1.2                     \
+                -emitPermissionCheck            \
                 $(subst /,.,$(<:$(CLASSDESTDIR)/%.class=%))
 	$(RMIC) $(HOTSPOT_INTERPRETER_FLAG) -classpath "$(CLASSDESTDIR)"    \
                 -d $(CLASSDESTDIR)              \
                 -iiop -v1.2                     \
                 -standardPackage                \
+                -emitPermissionCheck            \
                 $(subst /,.,$(<:$(CLASSDESTDIR)/%.class=%))
 	@$(java-vm-cleanup)
 

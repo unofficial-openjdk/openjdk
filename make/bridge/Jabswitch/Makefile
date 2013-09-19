@@ -53,7 +53,7 @@ all: buildexe copyfilejab
 buildexe : 
 	$(CD) $(TEMPDIR)  
 	$(RC) $(RC_FLAGS) $(VERSIONINFO_RESOURCE) 
-	$(CC) $(CPPFLAGS) $(JAB_SRC) $(LDDFLAGS) $(VERSIONRES) -o $(JAB_EXE) 
+	$(CC) $(CPPFLAGS) $(JAB_SRC) $(VERSIONRES) /link $(LDDFLAGS) -out:$(JAB_EXE)
 	$(MT) /nologo /verbose /manifest $(JAB_MANIFEST_INP) /outputresource:$(JAB_EXE)  
 
 copyfilejab : 

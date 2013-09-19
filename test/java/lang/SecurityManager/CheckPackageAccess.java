@@ -74,6 +74,7 @@ public class CheckPackageAccess {
         "com.sun.org.apache.xml.internal.serializer.utils.",
         "com.sun.org.apache.xml.internal.utils.",
         "com.sun.org.glassfish.",
+        "com.sun.script.",
         "oracle.jrockit.jfr.",
         "org.jcp.xml.dsig.internal.",
     };

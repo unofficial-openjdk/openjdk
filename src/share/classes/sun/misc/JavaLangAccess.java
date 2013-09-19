@@ -25,6 +25,7 @@
 
 package sun.misc;
 
+import java.security.AccessControlContext;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -88,4 +89,10 @@ public interface JavaLangAccess {
      * Returns the murmur hash value for the specified String.
      */
     int getStringHash32(String string);
+
+    /**
+     * Returns a new Thread with the given Runnable and an
+     * inherited AccessControlContext.
+     */
+    Thread newThreadWithAcc(Runnable target, AccessControlContext acc);
 }

@@ -28,6 +28,7 @@ package com.sun.script.util;
 import javax.script.*;
 import java.lang.reflect.*;
 import java.security.*;
+import sun.reflect.misc.ReflectUtil;
 
 /*
  * java.lang.reflect.Proxy based interface implementor. This is meant
@@ -85,8 +86,18 @@ public class InterfaceImplementor {
         if (! isImplemented(thiz, iface)) {
             return null;
         }
+
+        if (System.getSecurityManager() != null &&
+           !Modifier.isPublic(iface.getModifiers())) {
+            throw new SecurityException("attempt to implement non-public interface");
+        }
+
+        // make sure restricted package interfaces are not attempted.
+        ReflectUtil.checkPackageAccess(iface.getName());
+
         AccessControlContext accCtxt = AccessController.getContext();
-        return iface.cast(Proxy.newProxyInstance(iface.getClassLoader(),
+        return iface.cast(Proxy.newProxyInstance(
+            getLoaderForProxy(iface),
             new Class[]{iface},
             new InterfaceImplementorInvocationHandler(thiz, accCtxt)));
     }
@@ -107,5 +118,21 @@ public class InterfaceImplementor {
                                       throws ScriptException {
         // default is identity conversion
         return args;
+    }
+
+    // get appropriate ClassLoader for generated Proxy class
+    private static ClassLoader getLoaderForProxy(Class<?> iface) {
+        ClassLoader loader = iface.getClassLoader();
+
+        // if bootstrap class, try TCCL
+        if (loader == null) {
+            loader = Thread.currentThread().getContextClassLoader();
+        }
+
+        // if TCCL is also null, try System class loader
+        if (loader == null) {
+            loader = ClassLoader.getSystemClassLoader();
+        }
+        return loader;
     }
 }
