@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,11 +21,15 @@
  * questions.
  */
 
+package pkg;
+
+import java.lang.annotation.*;
 
 /**
- * Testing en\u00e7\u00f4ded string.
- * In the encoded comment string, Unicode U+00E7 is "Latin small letter C with cedilla"
- * and Unicode U+00F4 is "Latin small letter O with circumflex"
+ * This is just a test for annotation type fields.
  */
-public class EncodeTest {
+@Documented public @interface AnnotationTypeField {
+    String DEFAULT_NAME = "test";
+
+    String name() default DEFAULT_NAME;
 }
