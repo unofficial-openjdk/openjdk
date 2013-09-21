@@ -92,9 +92,6 @@ module jdk.desktop {
     include beans;
     include client;
 
-    // include the DialogCallbackHandler
-    include dialog-callback;
-
     // jndi and corba have a dependency on Applet but
     // applet can't be separated from client due to circular dependency
     include applet;
@@ -230,9 +227,8 @@ module jdk.crypto.pkcs11 {
 }
 
 module jdk.kerberos {
-    provides java.auth.kerberos;
+    provides java.kerberos;
     include security-kerberos;
-    include sun.auth.kerberos;
 
     // kerberos-related tools (windows only)
     include tools.kinit;
@@ -298,8 +294,6 @@ module jdk.jndi {
     include jndi-ldap;
     include jndi-dns;
     include jndi-rmiregistry;
-    include sun.auth.ldap;
-    include sun.auth.jndi;
 
     requires service javax.naming.ldap.StartTlsResponse;
 }
