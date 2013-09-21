@@ -50,10 +50,6 @@ module jdk.base {
 
     include net-compat;
 
-    // This optional dependency is needed for SecurityManager.checkTopLevelWindows
-    // and a few other methods that check for java.awt.AWTPermission which is
-    // in the desktop module
-    requires optional jdk.desktop;
     requires optional jdk.tls;
 
     // no META-INF/services
@@ -386,7 +382,6 @@ module jdk.jta {
 
 module jdk.logging {
     provides java.logging;
-    requires optional jdk.desktop;
     include logging;
 }
 

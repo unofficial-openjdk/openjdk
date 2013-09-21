@@ -34,7 +34,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.beans.PropertyChangeListener;
 import sun.misc.JavaAWTAccess;
 import sun.misc.SharedSecrets;
 
@@ -306,85 +305,6 @@ public class LogManager {
                     } catch (Exception ex) {
                         // System.err.println("Can't read logging configuration:");
                         // ex.printStackTrace();
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds an event listener to be invoked when the logging
-     * properties are re-read. Adding multiple instances of
-     * the same event Listener results in multiple entries
-     * in the property event listener table.
-     *
-     * <p><b>WARNING:</b> This method is omitted from this class in all subset
-     * Profiles of Java SE that do not include the {@code java.beans} package.
-     * </p>
-     *
-     * @param l  event listener
-     * @exception  SecurityException  if a security manager exists and if
-     *             the caller does not have LoggingPermission("control").
-     * @exception NullPointerException if the PropertyChangeListener is null.
-     * @deprecated The dependency on {@code PropertyChangeListener} creates a
-     *             significant impediment to future modularization of the Java
-     *             platform. This method will be removed in a future release.
-     *             The global {@code LogManager} can detect changes to the
-     *             logging configuration by overridding the {@link
-     *             #readConfiguration readConfiguration} method.
-     */
-    @Deprecated
-    public void addPropertyChangeListener(PropertyChangeListener l) throws SecurityException {
-        PropertyChangeListener listener = Objects.requireNonNull(l);
-        checkPermission();
-        synchronized (listenerMap) {
-            // increment the registration count if already registered
-            Integer value = listenerMap.get(listener);
-            value = (value == null) ? 1 : (value + 1);
-            listenerMap.put(listener, value);
-        }
-    }
-
-    /**
-     * Removes an event listener for property change events.
-     * If the same listener instance has been added to the listener table
-     * through multiple invocations of <CODE>addPropertyChangeListener</CODE>,
-     * then an equivalent number of
-     * <CODE>removePropertyChangeListener</CODE> invocations are required to remove
-     * all instances of that listener from the listener table.
-     * <P>
-     * Returns silently if the given listener is not found.
-     *
-     * <p><b>WARNING:</b> This method is omitted from this class in all subset
-     * Profiles of Java SE that do not include the {@code java.beans} package.
-     * </p>
-     *
-     * @param l  event listener (can be null)
-     * @exception  SecurityException  if a security manager exists and if
-     *             the caller does not have LoggingPermission("control").
-     * @deprecated The dependency on {@code PropertyChangeListener} creates a
-     *             significant impediment to future modularization of the Java
-     *             platform. This method will be removed in a future release.
-     *             The global {@code LogManager} can detect changes to the
-     *             logging configuration by overridding the {@link
-     *             #readConfiguration readConfiguration} method.
-     */
-    @Deprecated
-    public void removePropertyChangeListener(PropertyChangeListener l) throws SecurityException {
-        checkPermission();
-        if (l != null) {
-            PropertyChangeListener listener = l;
-            synchronized (listenerMap) {
-                Integer value = listenerMap.get(listener);
-                if (value != null) {
-                    // remove from map if registration count is 1, otherwise
-                    // just decrement its count
-                    int i = value.intValue();
-                    if (i == 1) {
-                        listenerMap.remove(listener);
-                    } else {
-                        assert i > 1;
-                        listenerMap.put(listener, i - 1);
                     }
                 }
             }
