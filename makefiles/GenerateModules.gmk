@@ -42,7 +42,9 @@ $(CLASSANALYZER_CLASSES)/com/sun/tools/classanalyzer/resources/% : $(JDK_TOPDIR)
 
 all: $(MODULES_CONFIG) $(MODULES_GROUP) $(MODULES_PROPERTIES) \
      $(BUILD_CLASSANALYZER) $(CLASSANALYZER_RESOURCES)/classanalyzer.properties
-	$(RM) -rf $(MODULE_CLASSLIST_DIR) $(MODULEINFO_DIR)
+	$(RM) -rf $(MODULE_CLASSLIST_DIR) \
+		  $(MODULEINFO_DIR) \
+                  $(MODULES_SER_OUT)
 	$(TOOL_CLASSANALYZER) \
                 --config $(MODULES_CONFIG) \
                 --config $(MODULES_GROUP) \

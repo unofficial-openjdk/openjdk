@@ -227,6 +227,11 @@ $(eval $(call add_properties_to_compile,COM_SUN_TOOLS_JDI,\
 	$(call CacheFind,$(JDK_TOPDIR)/src/share/classes/com/sun/tools/jdi/resources)),\
 	ListResourceBundle))
 
+#jdk/jigsaw/tools/jlink/resources
+$(eval $(call add_properties_to_clean,JIGSAW_TOOLS_JLINK,\
+	$(filter %.properties,\
+	$(call CacheFind,$(JDK_TOPDIR)/src/share/classes/jdk/jigsaw/tools/jlink/resources))))
+
 #com/sun/tools/script/shell
 #java/util
 #javax/sql/rowset

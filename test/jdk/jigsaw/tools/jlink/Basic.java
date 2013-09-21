@@ -122,7 +122,7 @@ public class Basic {
     // run jlink <args>
     static void jlink(String... args) {
         debug("Running: jlink " + Arrays.toString(args));
-        if (com.sun.tools.jlink.Main.run(args, new PrintWriter(System.out)) != 0) {
+        if (jdk.jigsaw.tools.jlink.Main.run(args, new PrintWriter(System.out)) != 0) {
              throw new RuntimeException("jlink failed: args=" + Arrays.toString(args));
         }
     }
