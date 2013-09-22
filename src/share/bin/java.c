@@ -1102,6 +1102,8 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_FALSE;
         } else if (JLI_StrCmp(arg, "-verbosegc") == 0) {
             AddOption("-verbose:gc", NULL);
+        } else if (JLI_StrCmp(arg, "-verbose:mods") == 0) {
+            AddOption("-Djdk.launcher.modules.verbose=true", NULL);
         } else if (JLI_StrCmp(arg, "-t") == 0) {
             AddOption("-Xt", NULL);
         } else if (JLI_StrCmp(arg, "-tm") == 0) {

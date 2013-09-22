@@ -99,16 +99,16 @@ public final class SimpleResolver {
                     stack.offer(m2);
             }
             for (ServiceDependence d: m.serviceDependences()) {
-                Set<String> providers = serviceProviders.get(d.service());
-                 // ## FIXME should check is dependency is optional
-                if (providers != null) {
-                    for (String provider: providers) {
-                        Module m2 = namesToModules.get(provider);
-                        if (m2 == null)
-                            throw new RuntimeException(provider + " not found!!");
-
-                        if (!selected.contains(m2))
-                            stack.offer(m2);
+                if (!d.modifiers().contains(ServiceDependence.Modifier.OPTIONAL)) {
+                    Set<String> providers = serviceProviders.get(d.service());
+                    if (providers != null) {
+                        for (String provider: providers) {
+                            Module m2 = namesToModules.get(provider);
+                            if (m2 == null)
+                                throw new RuntimeException(provider + " not found!!");
+                            if (!selected.contains(m2))
+                                stack.offer(m2);
+                        }
                     }
                 }
             }

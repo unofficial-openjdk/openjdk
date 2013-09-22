@@ -1015,9 +1015,18 @@ public enum LauncherHelper {
             requested = propValue.split(",");
         }
 
+        boolean verbose = false;
+        propValue = System.getProperty("jdk.launcher.modules.verbose");
+        if (propValue != null)
+            verbose = Boolean.parseBoolean(propValue);
+
         // find set of modules required
         SimpleResolver resolver = new SimpleResolver(modules);
         Set<Module> modulesNeeded = resolver.resolve(requested);
+        if (verbose) {
+            Set<Module> sorted = new TreeSet<>(modulesNeeded);
+            sorted.forEach(m -> System.out.println(m.id().name()));
+        }
 
         // compute and set the access control
         Map<String,Set<String>> restricted = computePackageAccess(modules, modulesNeeded);
