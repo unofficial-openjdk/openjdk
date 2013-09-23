@@ -314,7 +314,7 @@ else
   FULL_VERSION = $(RELEASE)-$(USER_RELEASE_SUFFIX)-$(BUILD_NUMBER)
 endif
 
-># Promoted build location
+# Promoted build location
 PROMOTED_RE_AREA = $(SLASH_JAVA)/re/jdk/$(JDK_VERSION)/promoted
 PROMOTED_BUILD_LATEST = latest
 PROMOTED_BUILD_BASEDIR = $(PROMOTED_RE_AREA)/$(PROMOTED_BUILD_LATEST)
