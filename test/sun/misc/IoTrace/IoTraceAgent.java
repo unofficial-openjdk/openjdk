@@ -27,6 +27,7 @@ import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.ACC_STATIC;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.ACC_SUPER;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.ILOAD;
+import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.ALOAD;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.INVOKESPECIAL;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static com.sun.xml.internal.ws.org.objectweb.asm.Opcodes.IRETURN;
@@ -165,6 +166,7 @@ public class IoTraceAgent {
 
             // return the value from the called method
             mv.visitInsn(retType.getOpcode(IRETURN));
+            mv.visitMaxs(0, 0);
             mv.visitEnd();
         }
 
@@ -172,8 +174,10 @@ public class IoTraceAgent {
         MethodVisitor mv = cw.visitMethod(ACC_PRIVATE, "<init>", "()V", null,
                 null);
         mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
         mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V");
         mv.visitInsn(RETURN);
+        mv.visitMaxs(0, 0);
         mv.visitEnd();
 
         cw.visitEnd();
