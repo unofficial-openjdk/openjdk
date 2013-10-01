@@ -101,17 +101,14 @@ ifneq (,$(findstring $(PLATFORM), linux solaris)) # UNIX systems
   ifeq ($(PLATFORM), solaris)
     ifeq ($(ARCH_DATA_MODEL), 32)
       LDFLAGS += -R \$$ORIGIN/../lib/$(LIBARCH)/jli
-      LDFLAGS += -R \$$ORIGIN/../jre/lib/$(LIBARCH)/jli
     else # ! ARCH_DATA_MODEL 64-bit
       LDFLAGS += -R \$$ORIGIN/../../lib/$(LIBARCH)/jli
-      LDFLAGS += -R \$$ORIGIN/../../jre/lib/$(LIBARCH)/jli
     endif # ARCH_DATA_MODEL
   endif # PLATFORM SOLARIS
   ifeq ($(PLATFORM), linux)
     LDFLAGS += $(LDFLAG_Z_ORIGIN)
     LDFLAGS += -Wl,--allow-shlib-undefined
     LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../lib/$(LIBARCH)/jli
-    LDFLAGS += -Wl,-rpath -Wl,\$$ORIGIN/../jre/lib/$(LIBARCH)/jli
   endif # PLATFORM LINUX
 endif # PLATFORM linux solaris
 
