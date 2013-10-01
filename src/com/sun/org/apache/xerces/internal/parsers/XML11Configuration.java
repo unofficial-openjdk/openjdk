@@ -52,6 +52,7 @@ import com.sun.org.apache.xerces.internal.util.FeatureState;
 import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
 import com.sun.org.apache.xerces.internal.util.PropertyState;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager;
 import com.sun.org.apache.xerces.internal.xni.XMLDTDContentModelHandler;
 import com.sun.org.apache.xerces.internal.xni.XMLDTDHandler;
@@ -279,6 +280,8 @@ public class XML11Configuration extends ParserConfigurationSettings
     private static final String XML_SECURITY_PROPERTY_MANAGER =
             Constants.XML_SECURITY_PROPERTY_MANAGER;
 
+    /** Property identifier: Security manager. */
+    private static final String SECURITY_MANAGER = Constants.SECURITY_MANAGER;
 
     // debugging
 
@@ -289,33 +292,33 @@ public class XML11Configuration extends ParserConfigurationSettings
     // Data
     //
 
-        protected SymbolTable fSymbolTable;
+    protected SymbolTable fSymbolTable;
     protected XMLInputSource fInputSource;
     protected ValidationManager fValidationManager;
-        protected XMLVersionDetector fVersionDetector;
+    protected XMLVersionDetector fVersionDetector;
     protected XMLLocator fLocator;
-        protected Locale fLocale;
+    protected Locale fLocale;
 
-        /** XML 1.0 Components. */
-        protected ArrayList fComponents;
+    /** XML 1.0 Components. */
+    protected ArrayList fComponents;
 
-        /** XML 1.1. Components. */
-        protected ArrayList fXML11Components = null;
+    /** XML 1.1. Components. */
+    protected ArrayList fXML11Components = null;
 
-        /** Common components: XMLEntityManager, XMLErrorReporter, XMLSchemaValidator */
-        protected ArrayList fCommonComponents = null;
+    /** Common components: XMLEntityManager, XMLErrorReporter, XMLSchemaValidator */
+    protected ArrayList fCommonComponents = null;
 
-        /** The document handler. */
-        protected XMLDocumentHandler fDocumentHandler;
+    /** The document handler. */
+    protected XMLDocumentHandler fDocumentHandler;
 
-        /** The DTD handler. */
-        protected XMLDTDHandler fDTDHandler;
+    /** The DTD handler. */
+    protected XMLDTDHandler fDTDHandler;
 
-        /** The DTD content model handler. */
-        protected XMLDTDContentModelHandler fDTDContentModelHandler;
+    /** The DTD content model handler. */
+    protected XMLDTDContentModelHandler fDTDContentModelHandler;
 
-        /** Last component in the document pipeline */
-        protected XMLDocumentSource fLastComponent;
+    /** Last component in the document pipeline */
+    protected XMLDocumentSource fLastComponent;
 
     /**
      * True if a parse is in progress. This state is needed because
@@ -495,31 +498,31 @@ public class XML11Configuration extends ParserConfigurationSettings
                 fFeatures.put(SCHEMA_ELEMENT_DEFAULT, Boolean.TRUE);
                 fFeatures.put(NORMALIZE_DATA, Boolean.TRUE);
                 fFeatures.put(SCHEMA_AUGMENT_PSVI, Boolean.TRUE);
-                fFeatures.put(GENERATE_SYNTHETIC_ANNOTATIONS, Boolean.FALSE);
-                fFeatures.put(VALIDATE_ANNOTATIONS, Boolean.FALSE);
-                fFeatures.put(HONOUR_ALL_SCHEMALOCATIONS, Boolean.FALSE);
-                fFeatures.put(NAMESPACE_GROWTH, Boolean.FALSE);
-                fFeatures.put(TOLERATE_DUPLICATES, Boolean.FALSE);
-                fFeatures.put(USE_GRAMMAR_POOL_ONLY, Boolean.FALSE);
+        fFeatures.put(GENERATE_SYNTHETIC_ANNOTATIONS, Boolean.FALSE);
+        fFeatures.put(VALIDATE_ANNOTATIONS, Boolean.FALSE);
+        fFeatures.put(HONOUR_ALL_SCHEMALOCATIONS, Boolean.FALSE);
+        fFeatures.put(NAMESPACE_GROWTH, Boolean.FALSE);
+        fFeatures.put(TOLERATE_DUPLICATES, Boolean.FALSE);
+        fFeatures.put(USE_GRAMMAR_POOL_ONLY, Boolean.FALSE);
                 fFeatures.put(PARSER_SETTINGS, Boolean.TRUE);
                 fFeatures.put(XMLConstants.FEATURE_SECURE_PROCESSING, Boolean.TRUE);
 
         // add default recognized properties
         final String[] recognizedProperties =
             {
-                SYMBOL_TABLE,
-                ERROR_HANDLER,
-                ENTITY_RESOLVER,
+                                SYMBOL_TABLE,
+                                ERROR_HANDLER,
+                                ENTITY_RESOLVER,
                 ERROR_REPORTER,
                 ENTITY_MANAGER,
                 DOCUMENT_SCANNER,
                 DTD_SCANNER,
                 DTD_PROCESSOR,
                 DTD_VALIDATOR,
-                DATATYPE_VALIDATOR_FACTORY,
-                VALIDATION_MANAGER,
-                SCHEMA_VALIDATOR,
-                XML_STRING,
+                                DATATYPE_VALIDATOR_FACTORY,
+                                VALIDATION_MANAGER,
+                                SCHEMA_VALIDATOR,
+                                XML_STRING,
                 XMLGRAMMAR_POOL,
                 JAXP_SCHEMA_SOURCE,
                 JAXP_SCHEMA_LANGUAGE,
@@ -531,19 +534,20 @@ public class XML11Configuration extends ParserConfigurationSettings
                 SCHEMA_NONS_LOCATION,
                 LOCALE,
                 SCHEMA_DV_FACTORY,
+                SECURITY_MANAGER,
                 XML_SECURITY_PROPERTY_MANAGER
         };
         addRecognizedProperties(recognizedProperties);
 
-        if (symbolTable == null) {
-                symbolTable = new SymbolTable();
-        }
-        fSymbolTable = symbolTable;
-        fProperties.put(SYMBOL_TABLE, fSymbolTable);
+                if (symbolTable == null) {
+                        symbolTable = new SymbolTable();
+                }
+                fSymbolTable = symbolTable;
+                fProperties.put(SYMBOL_TABLE, fSymbolTable);
 
         fGrammarPool = grammarPool;
         if (fGrammarPool != null) {
-            fProperties.put(XMLGRAMMAR_POOL, fGrammarPool);
+                        fProperties.put(XMLGRAMMAR_POOL, fGrammarPool);
         }
 
         fEntityManager = new XMLEntityManager();
@@ -578,8 +582,6 @@ public class XML11Configuration extends ParserConfigurationSettings
                 fProperties.put(VALIDATION_MANAGER, fValidationManager);
 
         fVersionDetector = new XMLVersionDetector();
-
-        fProperties.put(XML_SECURITY_PROPERTY_MANAGER, new XMLSecurityPropertyManager());
 
         // add message formatters
         if (fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN) == null) {
