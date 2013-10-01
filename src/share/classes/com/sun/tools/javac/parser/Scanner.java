@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -501,11 +501,10 @@ public class Scanner implements Lexer {
     private void scanIdent() {
         boolean isJavaIdentifierPart;
         char high;
+        if (sp == sbuf.length) putChar(ch); else sbuf[sp++] = ch;
+        // optimization, was: putChar(ch);
+        scanChar();
         do {
-            if (sp == sbuf.length) putChar(ch); else sbuf[sp++] = ch;
-            // optimization, was: putChar(ch);
-
-            scanChar();
             switch (ch) {
             case 'A': case 'B': case 'C': case 'D': case 'E':
             case 'F': case 'G': case 'H': case 'I': case 'J':
@@ -522,6 +521,7 @@ public class Scanner implements Lexer {
             case '$': case '_':
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
+                break;
             case '\u0000': case '\u0001': case '\u0002': case '\u0003':
             case '\u0004': case '\u0005': case '\u0006': case '\u0007':
             case '\u0008': case '\u000E': case '\u000F': case '\u0010':
@@ -529,30 +529,37 @@ public class Scanner implements Lexer {
             case '\u0015': case '\u0016': case '\u0017':
             case '\u0018': case '\u0019': case '\u001B':
             case '\u007F':
-                break;
+                scanChar();
+                continue;
             case '\u001A': // EOI is also a legal identifier part
                 if (bp >= buflen) {
                     name = names.fromChars(sbuf, 0, sp);
                     token = keywords.key(name);
                     return;
                 }
-                break;
+                scanChar();
+                continue;
             default:
                 if (ch < '\u0080') {
                     // all ASCII range chars already handled, above
                     isJavaIdentifierPart = false;
                 } else {
-                    high = scanSurrogates();
-                    if (high != 0) {
-                        if (sp == sbuf.length) {
-                            putChar(high);
-                        } else {
-                            sbuf[sp++] = high;
-                        }
-                        isJavaIdentifierPart = Character.isJavaIdentifierPart(
-                            Character.toCodePoint(high, ch));
+                    if (Character.isIdentifierIgnorable(ch)) {
+                        scanChar();
+                        continue;
                     } else {
-                        isJavaIdentifierPart = Character.isJavaIdentifierPart(ch);
+                        high = scanSurrogates();
+                        if (high != 0) {
+                            if (sp == sbuf.length) {
+                                putChar(high);
+                            } else {
+                                sbuf[sp++] = high;
+                            }
+                            isJavaIdentifierPart = Character.isJavaIdentifierPart(
+                                Character.toCodePoint(high, ch));
+                        } else {
+                            isJavaIdentifierPart = Character.isJavaIdentifierPart(ch);
+                        }
                     }
                 }
                 if (!isJavaIdentifierPart) {
@@ -561,6 +568,9 @@ public class Scanner implements Lexer {
                     return;
                 }
             }
+            if (sp == sbuf.length) putChar(ch); else sbuf[sp++] = ch;
+            // optimization, was: putChar(ch);
+            scanChar();
         } while (true);
     }
 
