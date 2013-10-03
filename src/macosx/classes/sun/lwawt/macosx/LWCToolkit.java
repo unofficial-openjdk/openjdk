@@ -44,6 +44,8 @@ import sun.lwawt.*;
 import sun.lwawt.LWWindowPeer.PeerType;
 import sun.security.action.GetBooleanAction;
 
+import sun.util.CoreResourceBundleControl;
+
 
 class NamedCursor extends Cursor {
     NamedCursor(String name) {
@@ -68,13 +70,26 @@ public final class LWCToolkit extends LWToolkit {
 
     static {
         System.err.flush();
-        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction<Object>() {
-            public Object run() {
+        ResourceBundle platformResources = java.security.AccessController.doPrivileged(
+                new java.security.PrivilegedAction<ResourceBundle>() {
+            public ResourceBundle run() {
+                ResourceBundle platformResources = null;
+                try {
+                    platformResources =
+                            ResourceBundle.getBundle("sun.awt.resources.awtosx",
+                                    CoreResourceBundleControl.getRBControlInstance());
+                } catch (MissingResourceException e) {
+                    // No resource file; defaults will be used.
+                }
+
                 System.loadLibrary("awt");
                 System.loadLibrary("fontmanager");
-                return null;
+                return platformResources;
             }
         });
+
+        AWTAccessor.getToolkitAccessor().setPlatformResources(platformResources);
+
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
