@@ -39,13 +39,10 @@ import java.lang.Throwable;
 import java.util.Hashtable;
 
 /*
-@test
-@bug 8010009
-@summary [macosx] Unable type into online word games on MacOSX
-@author petr.pchelko : area=awt.keyboard
-@run clean *
-@run build TestApplet
-@run applet/manual=yesno KeyReleasedInAppletTest.html
+ This is a part of test KeyReleasedInAppletTest.html. Do not add any JTREG tags here
+ bug 8010009
+ summary [macosx] Unable type into online word games on MacOSX
+ author petr.pchelko : area=awt.keyboard
 */
 
 public class KeyReleasedInAppletTest extends JApplet {

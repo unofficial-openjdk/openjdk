@@ -70,6 +70,15 @@ public class FloatingDecimal{
     static final int    minDecimalExponent = -324;
     static final int    bigDecimalExponent = 324; // i.e. abs(minDecimalExponent)
 
+    //
+    // The value below is chosen as a conservative threshold. It
+    // can be demonstrated that a decimal ulp less than 10^(-1075)
+    // is enough to guarantee correctness. Compensation is also made
+    // for the binary mantissa which takes 53 binary digits, or
+    // 17 decimal ones. Hence 1075 + 17 =~ 1100.
+    //
+    static final int    MAX_NDIGITS = 1100;
+
     static final long   highbyte = 0xff00000000000000L;
     static final long   highbit  = 0x8000000000000000L;
     static final long   lowbytes = ~highbyte;
@@ -1468,6 +1477,10 @@ public class FloatingDecimal{
              * Formulate the EXACT big-number result as
              * bigD0 * 10^exp
              */
+            if (nDigits > MAX_NDIGITS) {
+                nDigits = MAX_NDIGITS + 1;
+                digits[MAX_NDIGITS] = '1';
+            }
             FDBigInt bigD0 = new FDBigInt( lValue, digits, kDigits, nDigits );
             exp   = decExponent - nDigits;
 
