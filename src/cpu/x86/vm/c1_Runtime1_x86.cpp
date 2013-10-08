@@ -37,6 +37,9 @@
 #include "runtime/signature.hpp"
 #include "runtime/vframeArray.hpp"
 #include "vmreg_x86.inline.hpp"
+#ifndef SERIALGC
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
+#endif
 
 
 // Implementation of StubAssembler
@@ -1743,13 +1746,17 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
         __ leal(card_addr, __ as_Address(ArrayAddress(cardtable, index)));
 #endif
 
-        __ cmpb(Address(card_addr, 0), 0);
+        __ cmpb(Address(card_addr, 0), (int)G1SATBCardTableModRefBS::g1_young_card_val());
+        __ jcc(Assembler::equal, done);
+
+        __ membar(Assembler::Membar_mask_bits(Assembler::StoreLoad));
+        __ cmpb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
         __ jcc(Assembler::equal, done);
 
         // storing region crossing non-NULL, card is clean.
         // dirty card and log.
 
-        __ movb(Address(card_addr, 0), 0);
+        __ movb(Address(card_addr, 0), (int)CardTableModRefBS::dirty_card_val());
 
         __ cmpl(queue_index, 0);
         __ jcc(Assembler::equal, runtime);
