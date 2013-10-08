@@ -135,20 +135,26 @@ void PhaseChaitin::new_lrg( const Node *x, uint lrg ) {
 // After cloning some rematerialized instruction, clone any MachProj's that
 // follow it.  Example: Intel zero is XOR, kills flags.  Sparc FP constants
 // use G3 as an address temp.
-int PhaseChaitin::clone_projs( Block *b, uint idx, Node *con, Node *copy, uint &maxlrg ) {
-  Block *bcon = _cfg._bbs[con->_idx];
-  uint cindex = bcon->find_node(con);
-  Node *con_next = bcon->_nodes[cindex+1];
-  if( con_next->in(0) != con || !con_next->is_MachProj() )
-    return false;               // No MachProj's follow
-
-  // Copy kills after the cloned constant
-  Node *kills = con_next->clone();
-  kills->set_req( 0, copy );
-  b->_nodes.insert( idx, kills );
-  _cfg._bbs.map( kills->_idx, b );
-  new_lrg( kills, maxlrg++ );
-  return true;
+int PhaseChaitin::clone_projs(Block* b, uint idx, Node* orig, Node* copy, uint& max_lrg_id) {
+  assert(b->find_node(copy) == (idx - 1), "incorrect insert index for copy kill projections");
+  DEBUG_ONLY( Block* borig = _cfg._bbs[orig->_idx]; )
+  int found_projs = 0;
+  uint cnt = orig->outcnt();
+  for (uint i = 0; i < cnt; i++) {
+    Node* proj = orig->raw_out(i);
+    if (proj->is_MachProj()) {
+      assert(proj->outcnt() == 0, "only kill projections are expected here");
+      assert(_cfg._bbs[proj->_idx] == borig, "incorrect block for kill projections");
+      found_projs++;
+      // Copy kill projections after the cloned node
+      Node* kills = proj->clone();
+      kills->set_req(0, copy);
+      b->_nodes.insert(idx++, kills);
+      _cfg._bbs.map(kills->_idx, b);
+      new_lrg(kills, max_lrg_id++);
+    }
+  }
+  return found_projs;
 }
 
 //------------------------------compact----------------------------------------
@@ -464,8 +470,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
               copy = m->clone();
               // Insert the copy in the basic block, just before us
               b->_nodes.insert( l++, copy );
-              if( _phc.clone_projs( b, l, m, copy, _phc._maxlrg ) )
-                l++;
+              l += _phc.clone_projs(b, l, m, copy, _phc._maxlrg);
             } else {
               const RegMask *rm = C->matcher()->idealreg2spillmask[m->ideal_reg()];
               copy = new (C) MachSpillCopyNode( m, *rm, *rm );
