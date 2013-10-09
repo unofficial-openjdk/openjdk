@@ -128,6 +128,7 @@ package.access=sun.,\
                com.sun.imageio.,\
                com.sun.istack.internal.,\
                com.sun.jmx.,\
+               com.sun.naming.internal.,\
                com.sun.proxy.,\
                com.sun.script.,\
                com.sun.org.apache.bcel.internal.,\
@@ -166,6 +167,7 @@ package.definition=sun.,\
                    com.sun.imageio.,\
                    com.sun.istack.internal.,\
                    com.sun.jmx.,\
+                   com.sun.naming.internal.,\
                    com.sun.proxy.,\
                    com.sun.script.,\
                    com.sun.org.apache.bcel.internal.,\
