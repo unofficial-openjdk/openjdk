@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 7024172
+ * @bug 7024172 7067691
  * @summary Test if proxy for PlatformLoggingMXBean is equivalent
  *          to proxy for LoggingMXBean
  *
@@ -36,12 +36,21 @@ import javax.management.MBeanServer;
 import java.util.logging.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class LoggingMXBeanTest
 {
-    static String LOGGER_NAME_1 = "com.sun.management.Logger";
-    static String LOGGER_NAME_2 = "com.sun.management.Logger.Logger2";
-    static String UNKNOWN_LOGGER_NAME = "com.sun.management.Unknown";
+    static final String LOGGER_NAME_1 = "com.sun.management.Logger";
+    static final String LOGGER_NAME_2 = "com.sun.management.Logger.Logger2";
+    static final String UNKNOWN_LOGGER_NAME = "com.sun.management.Unknown";
+
+    // These instance variables prevent premature logger garbage collection
+    // See getLogger() weak reference warnings.
+    Logger logger1;
+    Logger logger2;
+
+    static LoggingMXBeanTest test;
 
     public static void main(String[] argv) throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -51,7 +60,7 @@ public class LoggingMXBeanTest
                 LoggingMXBean.class);
 
         // test LoggingMXBean proxy
-        LoggingMXBeanTest p = new LoggingMXBeanTest(proxy);
+        test = new LoggingMXBeanTest(proxy);
 
         // check if the attributes implemented by PlatformLoggingMXBean
         // and LoggingMXBean return the same value
@@ -64,9 +73,9 @@ public class LoggingMXBeanTest
     // same verification as in java/util/logging/LoggingMXBeanTest2
     public LoggingMXBeanTest(LoggingMXBean mbean) throws Exception {
 
-        Logger logger1 = Logger.getLogger( LOGGER_NAME_1 );
+        logger1 = Logger.getLogger( LOGGER_NAME_1 );
         logger1.setLevel(Level.FINE);
-        Logger logger2 = Logger.getLogger( LOGGER_NAME_2 );
+        logger2 = Logger.getLogger( LOGGER_NAME_2 );
         logger2.setLevel(null);
 
         /*
@@ -206,20 +215,36 @@ public class LoggingMXBeanTest
                                         PlatformLoggingMXBean mxbean2) {
         // verify logger names
         List<String> loggers1 = mxbean1.getLoggerNames();
+        System.out.println("Loggers: " + loggers1);
+
+        // Retrieve the named loggers to prevent them from being
+        // spontaneously gc'ed.
+        Map<String, Logger> loggersMap = new HashMap<>();
+        for (String n : loggers1) {
+            loggersMap.put(n, Logger.getLogger(n));
+        }
+
         List<String> loggers2 = mxbean2.getLoggerNames();
+
+        // loggers1 and loggers2 should be identical - no new logger should
+        // have been created in between (at least no new logger name)
+        //
         if (loggers1.size() != loggers2.size())
             throw new RuntimeException("LoggerNames: unmatched number of entries");
-        List<String> loggers3 = new ArrayList<>(loggers1);
-        loggers3.removeAll(loggers2);
-        if (loggers3.size() != 0)
+        if (!loggers2.containsAll(loggersMap.keySet()))
             throw new RuntimeException("LoggerNames: unmatched loggers");
+
 
         // verify logger's level  and parent
         for (String logger : loggers1) {
-            if (!mxbean1.getLoggerLevel(logger)
-                    .equals(mxbean2.getLoggerLevel(logger)))
+            String level1 = mxbean1.getLoggerLevel(logger);
+            String level2 = mxbean2.getLoggerLevel(logger);
+            if (!java.util.Objects.equals(level1, level2)) {
                 throw new RuntimeException(
-                    "LoggerLevel: unmatched level for " + logger);
+                        "LoggerLevel: unmatched level for " + logger
+                        + ", " + level1 + ", " + level2);
+            }
+
             if (!mxbean1.getParentLoggerName(logger)
                     .equals(mxbean2.getParentLoggerName(logger)))
                 throw new RuntimeException(
