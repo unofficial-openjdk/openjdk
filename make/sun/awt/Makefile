@@ -193,6 +193,10 @@ ifeq ($(PLATFORM), windows)
 	sun/awt/windows/awtLocalization.properties
 endif
 
+ifeq ($(PLATFORM), macosx)
+  NEW_RESOURCE_BUNDLES_COMPILED_PROPERTIES += \
+        sun/awt/resources/awtosx.properties
+endif
 #
 # Rules
 #

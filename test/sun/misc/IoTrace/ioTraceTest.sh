@@ -31,4 +31,4 @@ cd ${TESTCLASSES}
 ${TESTJAVA}/bin/jar cfm iotraceagent.jar ${TESTSRC}/iotraceagent.mf IoTraceAgent.class IoTraceListener.class
 
 cd ${PWD}
-${TESTJAVA}/bin/java ${TESTVMOPTS} -javaagent:${TESTCLASSES}/iotraceagent.jar -cp ${TESTCLASSES} $*
+${TESTJAVA}/bin/java -Xverify:all ${TESTVMOPTS} -javaagent:${TESTCLASSES}/iotraceagent.jar -cp ${TESTCLASSES} $*
