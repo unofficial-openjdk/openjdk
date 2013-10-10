@@ -47,6 +47,9 @@ import java.util.Iterator;
  * @since 1.6
  */
 public abstract class XMLEventFactory {
+
+  static final String JAXPFACTORYID = "javax.xml.stream.XMLEventFactory";
+
   protected XMLEventFactory(){}
 
   /**
@@ -57,8 +60,7 @@ public abstract class XMLEventFactory {
     throws FactoryConfigurationError
   {
     return (XMLEventFactory) FactoryFinder.find(
-      "javax.xml.stream.XMLEventFactory",
-      "com.sun.xml.internal.stream.events.XMLEventFactoryImpl");
+      JAXPFACTORYID, "com.sun.xml.internal.stream.events.XMLEventFactoryImpl", true);
   }
 
   /**
@@ -91,7 +93,7 @@ public abstract class XMLEventFactory {
   {
     return (XMLEventFactory) FactoryFinder.find(
       "javax.xml.stream.XMLEventFactory",
-      "com.sun.xml.internal.stream.events.XMLEventFactoryImpl");
+      "com.sun.xml.internal.stream.events.XMLEventFactoryImpl", true);
   }
 
   /**
@@ -114,7 +116,8 @@ public abstract class XMLEventFactory {
           throws FactoryConfigurationError {
       try {
           //do not fallback if given classloader can't find the class, throw exception
-          return (XMLEventFactory) FactoryFinder.newInstance(factoryId, classLoader, false);
+            return (XMLEventFactory) FactoryFinder.find(factoryId, classLoader,
+                    null, factoryId.equals(JAXPFACTORYID) ? true : false);
       } catch (FactoryFinder.ConfigurationError e) {
           throw new FactoryConfigurationError(e.getException(),
                   e.getMessage());
@@ -141,7 +144,8 @@ public abstract class XMLEventFactory {
           throws FactoryConfigurationError {
       try {
           //do not fallback if given classloader can't find the class, throw exception
-          return (XMLEventFactory) FactoryFinder.newInstance(factoryId, classLoader, false);
+            return (XMLEventFactory) FactoryFinder.find(factoryId, classLoader,
+                    null, factoryId.equals(JAXPFACTORYID) ? true : false);
       } catch (FactoryFinder.ConfigurationError e) {
           throw new FactoryConfigurationError(e.getException(),
                   e.getMessage());
