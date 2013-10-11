@@ -379,7 +379,7 @@ class SymbolPropertyEntry : public HashtableEntry<Symbol*, mtSymbol> {
     }
     if (method_type() != NULL) {
       if (printed)  st->print(" and ");
-      st->print(INTPTR_FORMAT, method_type());
+      st->print(INTPTR_FORMAT, (void *)method_type());
       printed = true;
     }
     st->print_cr(printed ? "" : "(empty)");
