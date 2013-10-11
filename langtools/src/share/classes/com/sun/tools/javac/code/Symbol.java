@@ -46,6 +46,7 @@ import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.code.TypeTag.FORALL;
 import static com.sun.tools.javac.code.TypeTag.TYPEVAR;
+import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
 
 /** Root class for Java symbols. It contains subclasses
  *  for specific sorts of symbols, such as variables, methods and operators,
@@ -98,9 +99,9 @@ public abstract class Symbol implements Element {
     // <editor-fold defaultstate="collapsed" desc="annotations">
 
     /** The attributes of this symbol are contained in this
-     * Annotations. The Annotations instance is NOT immutable.
+     * SymbolMetadata. The SymbolMetadata instance is NOT immutable.
      */
-    protected Annotations annotations;
+    protected SymbolMetadata annotations;
 
     /** An accessor method for the attributes of this symbol.
      *  Attributes of class symbols should be accessed through the accessor
@@ -217,19 +218,19 @@ public abstract class Symbol implements Element {
     public void setTypeAttributes(List<Attribute.TypeCompound> a) {
         if (annotations != null || a.nonEmpty()) {
             if (annotations == null)
-                annotations = new Annotations(this);
+                annotations = new SymbolMetadata(this);
             annotations.setTypeAttributes(a);
         }
     }
 
-    private Annotations initedAnnos() {
+    private SymbolMetadata initedAnnos() {
         if (annotations == null)
-            annotations = new Annotations(this);
+            annotations = new SymbolMetadata(this);
         return annotations;
     }
 
     /** This method is intended for debugging only. */
-    public Annotations getAnnotations() {
+    public SymbolMetadata getAnnotations() {
         return annotations;
     }
 
@@ -463,26 +464,34 @@ public abstract class Symbol implements Element {
         return false;
     }
 
-    /** Check for hiding.  Note that this doesn't handle multiple
-     *  (interface) inheritance. */
     private boolean hiddenIn(ClassSymbol clazz, Types types) {
-        if (kind == MTH && (flags() & STATIC) == 0) return false;
-        while (true) {
-            if (owner == clazz) return false;
-            Scope.Entry e = clazz.members().lookup(name);
-            while (e.scope != null) {
-                if (e.sym == this) return false;
-                if (e.sym.kind == kind &&
+        Symbol sym = hiddenInInternal(clazz, types);
+        return sym != null && sym != this;
+    }
+
+    private Symbol hiddenInInternal(ClassSymbol c, Types types) {
+        Scope.Entry e = c.members().lookup(name);
+        while (e.scope != null) {
+            if (e.sym.kind == kind &&
                     (kind != MTH ||
-                     (e.sym.flags() & STATIC) != 0 &&
-                     types.isSubSignature(e.sym.type, type)))
-                    return true;
-                e = e.next();
+                    (e.sym.flags() & STATIC) != 0 &&
+                    types.isSubSignature(e.sym.type, type))) {
+                return e.sym;
             }
-            Type superType = types.supertype(clazz.type);
-            if (!superType.hasTag(CLASS)) return false;
-            clazz = (ClassSymbol)superType.tsym;
+            e = e.next();
         }
+        List<Symbol> hiddenSyms = List.nil();
+        for (Type st : types.interfaces(c.type).prepend(types.supertype(c.type))) {
+            if (st != null && (st.hasTag(CLASS))) {
+                Symbol sym = hiddenInInternal((ClassSymbol)st.tsym, types);
+                if (sym != null) {
+                    hiddenSyms = hiddenSyms.prepend(hiddenInInternal((ClassSymbol)st.tsym, types));
+                }
+            }
+        }
+        return hiddenSyms.contains(this) ?
+                this :
+                (hiddenSyms.isEmpty() ? null : hiddenSyms.head);
     }
 
     /** Is this symbol inherited into a given class?
@@ -605,7 +614,7 @@ public abstract class Symbol implements Element {
     }
 
     public List<TypeVariableSymbol> getTypeParameters() {
-        ListBuffer<TypeVariableSymbol> l = ListBuffer.lb();
+        ListBuffer<TypeVariableSymbol> l = new ListBuffer<>();
         for (Type t : type.getTypeArguments()) {
             Assert.check(t.tsym.getKind() == ElementKind.TYPE_PARAMETER);
             l.append((TypeVariableSymbol)t.tsym);
@@ -844,7 +853,7 @@ public abstract class Symbol implements Element {
         private void mergeAttributes() {
             if (annotations == null &&
                 package_info.annotations != null) {
-                annotations = new Annotations(this);
+                annotations = new SymbolMetadata(this);
                 annotations.setAttributes(package_info.annotations);
             }
         }
@@ -1159,11 +1168,11 @@ public abstract class Symbol implements Element {
 
         public void setLazyConstValue(final Env<AttrContext> env,
                                       final Attr attr,
-                                      final JCTree.JCExpression initializer)
+                                      final JCVariableDecl variable)
         {
             setData(new Callable<Object>() {
                 public Object call() {
-                    return attr.attribLazyConstantValue(env, initializer, type);
+                    return attr.attribLazyConstantValue(env, variable, type);
                 }
             });
         }
@@ -1171,7 +1180,7 @@ public abstract class Symbol implements Element {
         /**
          * The variable's constant value, if this is a constant.
          * Before the constant value is evaluated, it points to an
-         * initalizer environment.  If this is not a constant, it can
+         * initializer environment.  If this is not a constant, it can
          * be used for other stuff.
          */
         private Object data;
@@ -1222,6 +1231,9 @@ public abstract class Symbol implements Element {
 
         /** The extra (synthetic/mandated) parameters of the method. */
         public List<VarSymbol> extraParams = List.nil();
+
+        /** The captured local variables in an anonymous class */
+        public List<VarSymbol> capturedLocals = List.nil();
 
         /** The parameters of the method. */
         public List<VarSymbol> params = null;

@@ -288,10 +288,12 @@ public class Enter extends JCTree.Visitor {
                                                              JavaFileObject.Kind.SOURCE);
         if (tree.pid != null) {
             tree.packge = reader.enterPackage(TreeInfo.fullName(tree.pid));
-            if (tree.packageAnnotations.nonEmpty() || pkginfoOpt == PkgInfo.ALWAYS) {
+            if (tree.packageAnnotations.nonEmpty()
+                    || pkginfoOpt == PkgInfo.ALWAYS
+                    || tree.docComments != null) {
                 if (isPkgInfo) {
                     addEnv = true;
-                } else {
+                } else if (tree.packageAnnotations.nonEmpty()){
                     log.error(tree.packageAnnotations.head.pos(),
                               "pkg.annotations.sb.in.package-info.java");
                 }

@@ -83,7 +83,9 @@ G1RemSet::G1RemSet(G1CollectedHeap* g1, CardTableModRefBS* ct_bs)
   for (uint i = 0; i < n_workers(); i++) {
     _cset_rs_update_cl[i] = NULL;
   }
-  _prev_period_summary.initialize(this, n_workers());
+  if (G1SummarizeRSetStats) {
+    _prev_period_summary.initialize(this);
+  }
 }
 
 G1RemSet::~G1RemSet() {
@@ -104,15 +106,25 @@ void CountNonCleanMemRegionClosure::do_MemRegion(MemRegion mr) {
 class ScanRSClosure : public HeapRegionClosure {
   size_t _cards_done, _cards;
   G1CollectedHeap* _g1h;
+
   OopsInHeapRegionClosure* _oc;
+  CodeBlobToOopClosure* _code_root_cl;
+
   G1BlockOffsetSharedArray* _bot_shared;
-  CardTableModRefBS *_ct_bs;
-  int _worker_i;
-  int _block_size;
-  bool _try_claimed;
+  G1SATBCardTableModRefBS *_ct_bs;
+
+  double _strong_code_root_scan_time_sec;
+  int    _worker_i;
+  int    _block_size;
+  bool   _try_claimed;
+
 public:
-  ScanRSClosure(OopsInHeapRegionClosure* oc, int worker_i) :
+  ScanRSClosure(OopsInHeapRegionClosure* oc,
+                CodeBlobToOopClosure* code_root_cl,
+                int worker_i) :
     _oc(oc),
+    _code_root_cl(code_root_cl),
+    _strong_code_root_scan_time_sec(0.0),
     _cards(0),
     _cards_done(0),
     _worker_i(worker_i),
@@ -120,7 +132,7 @@ public:
   {
     _g1h = G1CollectedHeap::heap();
     _bot_shared = _g1h->bot_shared();
-    _ct_bs = (CardTableModRefBS*) (_g1h->barrier_set());
+    _ct_bs = _g1h->g1_barrier_set();
     _block_size = MAX2<int>(G1RSetScanBlockSize, 1);
   }
 
@@ -160,6 +172,12 @@ public:
                            card_start, card_start + G1BlockOffsetSharedArray::N_words);
   }
 
+  void scan_strong_code_roots(HeapRegion* r) {
+    double scan_start = os::elapsedTime();
+    r->strong_code_roots_do(_code_root_cl);
+    _strong_code_root_scan_time_sec += (os::elapsedTime() - scan_start);
+  }
+
   bool doHeapRegion(HeapRegion* r) {
     assert(r->in_collection_set(), "should only be called on elements of CS.");
     HeapRegionRemSet* hrrs = r->rem_set();
@@ -173,6 +191,7 @@ public:
     //   _try_claimed || r->claim_iter()
     // is true: either we're supposed to work on claimed-but-not-complete
     // regions, or we successfully claimed the region.
+
     HeapRegionRemSetIterator iter(hrrs);
     size_t card_index;
 
@@ -205,30 +224,43 @@ public:
       }
     }
     if (!_try_claimed) {
+      // Scan the strong code root list attached to the current region
+      scan_strong_code_roots(r);
+
       hrrs->set_iter_complete();
     }
     return false;
   }
+
+  double strong_code_root_scan_time_sec() {
+    return _strong_code_root_scan_time_sec;
+  }
+
   size_t cards_done() { return _cards_done;}
   size_t cards_looked_up() { return _cards;}
 };
 
-void G1RemSet::scanRS(OopsInHeapRegionClosure* oc, int worker_i) {
+void G1RemSet::scanRS(OopsInHeapRegionClosure* oc,
+                      CodeBlobToOopClosure* code_root_cl,
+                      int worker_i) {
   double rs_time_start = os::elapsedTime();
   HeapRegion *startRegion = _g1->start_cset_region_for_worker(worker_i);
 
-  ScanRSClosure scanRScl(oc, worker_i);
+  ScanRSClosure scanRScl(oc, code_root_cl, worker_i);
 
   _g1->collection_set_iterate_from(startRegion, &scanRScl);
   scanRScl.set_try_claimed();
   _g1->collection_set_iterate_from(startRegion, &scanRScl);
 
-  double scan_rs_time_sec = os::elapsedTime() - rs_time_start;
+  double scan_rs_time_sec = (os::elapsedTime() - rs_time_start)
+                            - scanRScl.strong_code_root_scan_time_sec();
 
-  assert( _cards_scanned != NULL, "invariant" );
+  assert(_cards_scanned != NULL, "invariant");
   _cards_scanned[worker_i] = scanRScl.cards_done();
 
   _g1p->phase_times()->record_scan_rs_time(worker_i, scan_rs_time_sec * 1000.0);
+  _g1p->phase_times()->record_strong_code_root_scan_time(worker_i,
+                                                         scanRScl.strong_code_root_scan_time_sec() * 1000.0);
 }
 
 // Closure used for updating RSets and recording references that
@@ -288,7 +320,8 @@ void G1RemSet::cleanupHRRS() {
 }
 
 void G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
-                                             int worker_i) {
+                                           CodeBlobToOopClosure* code_root_cl,
+                                           int worker_i) {
 #if CARD_REPEAT_HISTO
   ct_freq_update_histo_and_reset();
 #endif
@@ -328,7 +361,7 @@ void G1RemSet::oops_into_collection_set_do(OopsInHeapRegionClosure* oc,
     _g1p->phase_times()->record_update_rs_time(worker_i, 0.0);
   }
   if (G1UseParallelRSetScanning || (worker_i == 0)) {
-    scanRS(oc, worker_i);
+    scanRS(oc, code_root_cl, worker_i);
   } else {
     _g1p->phase_times()->record_scan_rs_time(worker_i, 0.0);
   }
@@ -474,12 +507,7 @@ public:
   ScrubRSClosure(BitMap* region_bm, BitMap* card_bm) :
     _g1h(G1CollectedHeap::heap()),
     _region_bm(region_bm), _card_bm(card_bm),
-    _ctbs(NULL)
-  {
-    ModRefBarrierSet* bs = _g1h->mr_bs();
-    guarantee(bs->is_a(BarrierSet::CardTableModRef), "Precondition");
-    _ctbs = (CardTableModRefBS*)bs;
-  }
+    _ctbs(_g1h->g1_barrier_set()) {}
 
   bool doHeapRegion(HeapRegion* r) {
     if (!r->continuesHumongous()) {
@@ -700,19 +728,19 @@ bool G1RemSet::refine_card(jbyte* card_ptr, int worker_i,
   return has_refs_into_cset;
 }
 
-void G1RemSet::print_periodic_summary_info() {
+void G1RemSet::print_periodic_summary_info(const char* header) {
   G1RemSetSummary current;
-  current.initialize(this, n_workers());
+  current.initialize(this);
 
   _prev_period_summary.subtract_from(&current);
-  print_summary_info(&_prev_period_summary);
+  print_summary_info(&_prev_period_summary, header);
 
   _prev_period_summary.set(&current);
 }
 
 void G1RemSet::print_summary_info() {
   G1RemSetSummary current;
-  current.initialize(this, n_workers());
+  current.initialize(this);
 
   print_summary_info(&current, " Cumulative RS summary");
 }

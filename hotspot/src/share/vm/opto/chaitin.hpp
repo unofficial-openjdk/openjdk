@@ -283,8 +283,8 @@ private:
 
   // Straight out of Tarjan's union-find algorithm
   uint find_compress(const Node *node) {
-    uint lrg_id = find_compress(_names[node->_idx]);
-    _names.map(node->_idx, lrg_id);
+    uint lrg_id = find_compress(_names.at(node->_idx));
+    _names.at_put(node->_idx, lrg_id);
     return lrg_id;
   }
 
@@ -305,40 +305,40 @@ public:
   }
 
   uint size() const {
-    return _names.Size();
+    return _names.length();
   }
 
   uint live_range_id(uint idx) const {
-    return _names[idx];
+    return _names.at(idx);
   }
 
   uint live_range_id(const Node *node) const {
-    return _names[node->_idx];
+    return _names.at(node->_idx);
   }
 
   uint uf_live_range_id(uint lrg_id) const {
-    return _uf_map[lrg_id];
+    return _uf_map.at(lrg_id);
   }
 
   void map(uint idx, uint lrg_id) {
-    _names.map(idx, lrg_id);
+    _names.at_put(idx, lrg_id);
   }
 
   void uf_map(uint dst_lrg_id, uint src_lrg_id) {
-    _uf_map.map(dst_lrg_id, src_lrg_id);
+    _uf_map.at_put(dst_lrg_id, src_lrg_id);
   }
 
   void extend(uint idx, uint lrg_id) {
-    _names.extend(idx, lrg_id);
+    _names.at_put_grow(idx, lrg_id);
   }
 
   void uf_extend(uint dst_lrg_id, uint src_lrg_id) {
-    _uf_map.extend(dst_lrg_id, src_lrg_id);
+    _uf_map.at_put_grow(dst_lrg_id, src_lrg_id);
   }
 
-  LiveRangeMap(uint unique)
-  : _names(unique)
-  , _uf_map(unique)
+  LiveRangeMap(Arena* arena, uint unique)
+  : _names(arena, unique, unique, 0)
+  , _uf_map(arena, unique, unique, 0)
   , _max_lrg_id(0) {}
 
   uint find_id( const Node *n ) {
@@ -355,14 +355,14 @@ public:
   void compress_uf_map_for_nodes();
 
   uint find(uint lidx) {
-    uint uf_lidx = _uf_map[lidx];
+    uint uf_lidx = _uf_map.at(lidx);
     return (uf_lidx == lidx) ? uf_lidx : find_compress(lidx);
   }
 
   // Convert a Node into a Live Range Index - a lidx
   uint find(const Node *node) {
     uint lidx = live_range_id(node);
-    uint uf_lidx = _uf_map[lidx];
+    uint uf_lidx = _uf_map.at(lidx);
     return (uf_lidx == lidx) ? uf_lidx : find_compress(node);
   }
 
@@ -371,10 +371,10 @@ public:
 
   // Like Find above, but no path compress, so bad asymptotic behavior
   uint find_const(const Node *node) const {
-    if(node->_idx >= _names.Size()) {
+    if(node->_idx >= (uint)_names.length()) {
       return 0; // not mapped, usual for debug dump
     }
-    return find_const(_names[node->_idx]);
+    return find_const(_names.at(node->_idx));
   }
 };
 
@@ -412,32 +412,21 @@ class PhaseChaitin : public PhaseRegAlloc {
   uint split_DEF( Node *def, Block *b, int loc, uint max, Node **Reachblock, Node **debug_defs, GrowableArray<uint> splits, int slidx );
   uint split_USE( Node *def, Block *b, Node *use, uint useidx, uint max, bool def_down, bool cisc_sp, GrowableArray<uint> splits, int slidx );
 
-  bool clone_projs(Block *b, uint idx, Node *con, Node *copy, LiveRangeMap &lrg_map) {
-    bool found_projs = clone_projs_shared(b, idx, con, copy, lrg_map.max_lrg_id());
-
-    if(found_projs) {
-      uint max_lrg_id = lrg_map.max_lrg_id();
-      lrg_map.set_max_lrg_id(max_lrg_id + 1);
-    }
-
-    return found_projs;
-  }
-
   //------------------------------clone_projs------------------------------------
   // After cloning some rematerialized instruction, clone any MachProj's that
   // follow it.  Example: Intel zero is XOR, kills flags.  Sparc FP constants
   // use G3 as an address temp.
-  bool clone_projs(Block *b, uint idx, Node *con, Node *copy, uint &max_lrg_id) {
-    bool found_projs = clone_projs_shared(b, idx, con, copy, max_lrg_id);
+  int clone_projs(Block* b, uint idx, Node* orig, Node* copy, uint& max_lrg_id);
 
-    if(found_projs) {
-      max_lrg_id++;
+  int clone_projs(Block* b, uint idx, Node* orig, Node* copy, LiveRangeMap& lrg_map) {
+    uint max_lrg_id = lrg_map.max_lrg_id();
+    int found_projs = clone_projs(b, idx, orig, copy, max_lrg_id);
+    if (found_projs > 0) {
+      // max_lrg_id is updated during call above
+      lrg_map.set_max_lrg_id(max_lrg_id);
     }
-
     return found_projs;
   }
-
-  bool clone_projs_shared(Block *b, uint idx, Node *con, Node *copy, uint max_lrg_id);
 
   Node *split_Rematerialize(Node *def, Block *b, uint insidx, uint &maxlrg, GrowableArray<uint> splits,
                             int slidx, uint *lrg2reach, Node **Reachblock, bool walkThru);

@@ -179,7 +179,7 @@ class Klass : public Metadata {
   // Constructor
   Klass();
 
-  void* operator new(size_t size, ClassLoaderData* loader_data, size_t word_size, TRAPS);
+  void* operator new(size_t size, ClassLoaderData* loader_data, size_t word_size, TRAPS) throw();
 
  public:
   bool is_klass() const volatile { return true; }
@@ -352,7 +352,8 @@ class Klass : public Metadata {
   static int layout_helper_log2_element_size(jint lh) {
     assert(lh < (jint)_lh_neutral_value, "must be array");
     int l2esz = (lh >> _lh_log2_element_size_shift) & _lh_log2_element_size_mask;
-    assert(l2esz <= LogBitsPerLong, "sanity");
+    assert(l2esz <= LogBitsPerLong,
+        err_msg("sanity. l2esz: 0x%x for lh: 0x%x", (uint)l2esz, (uint)lh));
     return l2esz;
   }
   static jint array_layout_helper(jint tag, int hsize, BasicType etype, int log2_esize) {
@@ -698,10 +699,21 @@ class Klass : public Metadata {
   void verify(bool check_dictionary = true) { verify_on(tty, check_dictionary); }
 
 #ifndef PRODUCT
-  void verify_vtable_index(int index);
+  bool verify_vtable_index(int index);
+  bool verify_itable_index(int index);
 #endif
 
   virtual void oop_verify_on(oop obj, outputStream* st);
+
+  static bool is_null(narrowKlass obj);
+  static bool is_null(Klass* obj);
+
+  // klass encoding for klass pointer in objects.
+  static narrowKlass encode_klass_not_null(Klass* v);
+  static narrowKlass encode_klass(Klass* v);
+
+  static Klass* decode_klass_not_null(narrowKlass v);
+  static Klass* decode_klass(narrowKlass v);
 
  private:
   // barriers used by klass_oop_store

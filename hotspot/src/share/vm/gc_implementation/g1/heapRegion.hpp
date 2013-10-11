@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,7 @@ class HeapRegionRemSet;
 class HeapRegionRemSetIterator;
 class HeapRegion;
 class HeapRegionSetBase;
+class nmethod;
 
 #define HR_FORMAT "%u:(%s)["PTR_FORMAT","PTR_FORMAT","PTR_FORMAT"]"
 #define HR_FORMAT_PARAMS(_hr_) \
@@ -354,13 +355,15 @@ class HeapRegion: public G1OffsetTableContigSpace {
                                       ~((1 << (size_t) LogOfHRGrainBytes) - 1);
   }
 
+  static size_t max_region_size();
+
   // It sets up the heap region size (GrainBytes / GrainWords), as
   // well as other related fields that are based on the heap region
   // size (LogOfHRGrainBytes / LogOfHRGrainWords /
   // CardsPerRegion). All those fields are considered constant
   // throughout the JVM's execution, therefore they should only be set
   // up once during initialization time.
-  static void setup_heap_region_size(uintx min_heap_size);
+  static void setup_heap_region_size(size_t initial_heap_size, size_t max_heap_size);
 
   enum ClaimValues {
     InitialClaimValue          = 0,
@@ -371,7 +374,8 @@ class HeapRegion: public G1OffsetTableContigSpace {
     RebuildRSClaimValue        = 5,
     ParEvacFailureClaimValue   = 6,
     AggregateCountClaimValue   = 7,
-    VerifyCountClaimValue      = 8
+    VerifyCountClaimValue      = 8,
+    ParMarkRootClaimValue      = 9
   };
 
   inline HeapWord* par_allocate_no_bot_updates(size_t word_size) {
@@ -795,6 +799,25 @@ class HeapRegion: public G1OffsetTableContigSpace {
   virtual CompactibleSpace* next_compaction_space() const;
 
   virtual void reset_after_compaction();
+
+  // Routines for managing a list of code roots (attached to the
+  // this region's RSet) that point into this heap region.
+  void add_strong_code_root(nmethod* nm);
+  void remove_strong_code_root(nmethod* nm);
+
+  // During a collection, migrate the successfully evacuated
+  // strong code roots that referenced into this region to the
+  // new regions that they now point into. Unsuccessfully
+  // evacuated code roots are not migrated.
+  void migrate_strong_code_roots();
+
+  // Applies blk->do_code_blob() to each of the entries in
+  // the strong code roots list for this region
+  void strong_code_roots_do(CodeBlobClosure* blk) const;
+
+  // Verify that the entries on the strong code root list for this
+  // region are live and include at least one pointer into this region.
+  void verify_strong_code_roots(VerifyOption vo, bool* failures) const;
 
   void print() const;
   void print_on(outputStream* st) const;

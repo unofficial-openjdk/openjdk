@@ -161,13 +161,14 @@ public final class IdentNode extends Expression implements PropertyKey, TypeOver
      * converting to object, for example if the symbol is used as the left hand side of an
      * assignment such as in the code below.</p>
      *
-     * <pre>{@code
+     * <pre>
      *   try {
      *     return 2;
      *   } finally {
      *     return 3;
      *   }
-     * }</pre>
+     * }
+     * </pre>
      *
      * @return true if can have callsite type
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -77,7 +78,7 @@ class PathDocFileFactory extends DocFileFactory {
                 Path dir = fileManager.getDefaultFileSystem().getPath(dirName);
                 fileManager.setLocation(DocumentationTool.Location.DOCUMENTATION_OUTPUT, Arrays.asList(dir));
             } catch (IOException e) {
-                throw new DocletAbortException();
+                throw new DocletAbortException(e);
             }
         }
 
@@ -221,8 +222,10 @@ class PathDocFileFactory extends DocFileFactory {
         /** If the file is a directory, list its contents. */
         public Iterable<DocFile> list() throws IOException {
             List<DocFile> files = new ArrayList<DocFile>();
-            for (Path f: Files.newDirectoryStream(file)) {
-                files.add(new StandardDocFile(f));
+            try (DirectoryStream<Path> ds = Files.newDirectoryStream(file)) {
+                for (Path f: ds) {
+                    files.add(new StandardDocFile(f));
+                }
             }
             return files;
         }

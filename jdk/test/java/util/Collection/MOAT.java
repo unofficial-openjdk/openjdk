@@ -30,7 +30,6 @@
  * @summary Run many tests on many Collection and Map implementations
  * @author  Martin Buchholz
  * @run main MOAT
- * @run main/othervm -XX:+AggressiveOpts MOAT
  */
 
 /* Mother Of All (Collection) Tests
@@ -401,8 +400,6 @@ public class MOAT {
     // If add(null) succeeds, contains(null) & remove(null) should succeed
     //----------------------------------------------------------------
     private static void testNullElement(Collection<Integer> c) {
-        // !!!! 5018849: (coll) TreeSet.contains(null) does not agree with Javadoc
-        if (c instanceof TreeSet) return;
 
         try {
             check(c.add(null));

@@ -80,7 +80,7 @@ ifeq ($(SPEC),)
     HOSTCC  = $(CC)
   endif
 
-  AS   = $(CC) -c -x assembler-with-cpp
+  AS   = $(CC) -c 
 endif
 
 
@@ -129,16 +129,21 @@ ifeq ($(USE_CLANG), true)
   
     # We only use precompiled headers for the JVM build
     CFLAGS += $(VM_PCH_FLAG)
-  
-    # There are some files which don't like precompiled headers
-    # The following files are build with 'OPT_CFLAGS/NOOPT' (-O0) in the opt build.
-    # But Clang doesn't support a precompiled header which was compiled with -O3
-    # to be used in a compilation unit which uses '-O0'. We could also prepare an
-    # extra '-O0' PCH file for the opt build and use it here, but it's probably
-    # not worth the effort as long as only two files need this special handling.
+ 
+    # The following files are compiled at various optimization
+    # levels due to optimization issues encountered at the
+    # 'OPT_CFLAGS_DEFAULT' level. The Clang compiler issues a compile
+    # time error if there is an optimization level specification
+    # skew between the PCH file and the C++ file.  Especially if the
+    # PCH file is compiled at a higher optimization level than
+    # the C++ file.  One solution might be to prepare extra optimization
+    # level specific PCH files for the opt build and use them here, but
+    # it's probably not worth the effort as long as only a few files
+    # need this special handling.
     PCH_FLAG/loopTransform.o = $(PCH_FLAG/NO_PCH)
     PCH_FLAG/sharedRuntimeTrig.o = $(PCH_FLAG/NO_PCH)
     PCH_FLAG/sharedRuntimeTrans.o = $(PCH_FLAG/NO_PCH)
+    PCH_FLAG/unsafe.o = $(PCH_FLAG/NO_PCH)
   
   endif
 else # ($(USE_CLANG), true)
@@ -242,12 +247,12 @@ endif
 
 ifeq ($(USE_CLANG), true)
   # However we need to clean the code up before we can unrestrictedly enable this option with Clang
-  WARNINGS_ARE_ERRORS += -Wno-unused-value -Wno-logical-op-parentheses -Wno-parentheses-equality -Wno-parentheses
+  WARNINGS_ARE_ERRORS += -Wno-logical-op-parentheses -Wno-parentheses-equality -Wno-parentheses
   WARNINGS_ARE_ERRORS += -Wno-switch -Wno-tautological-compare
 # Not yet supported by clang in Xcode 4.6.2
 #  WARNINGS_ARE_ERRORS += -Wno-tautological-constant-out-of-range-compare
   WARNINGS_ARE_ERRORS += -Wno-delete-non-virtual-dtor -Wno-deprecated -Wno-format -Wno-dynamic-class-memaccess
-  WARNINGS_ARE_ERRORS += -Wno-return-type -Wno-empty-body
+  WARNINGS_ARE_ERRORS += -Wno-empty-body
 endif
 
 WARNING_FLAGS = -Wpointer-arith -Wsign-compare -Wundef
@@ -257,7 +262,7 @@ ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \&
   # conversions which might affect the values. Only enable it in earlier versions.
   WARNING_FLAGS = -Wunused-function
   ifeq ($(USE_CLANG),)
-    WARNINGS_FLAGS += -Wconversion
+    WARNING_FLAGS += -Wconversion
   endif
 endif
 
@@ -306,6 +311,7 @@ OPT_CFLAGS/NOOPT=-O0
 ifeq ($(USE_CLANG), true)
   ifeq ($(shell expr $(CC_VER_MAJOR) = 4 \& $(CC_VER_MINOR) = 2), 1)
     OPT_CFLAGS/loopTransform.o += $(OPT_CFLAGS/NOOPT)
+    OPT_CFLAGS/unsafe.o += -O1
   endif
 else
   # 6835796. Problem in GCC 4.3.0 with mulnode.o optimized compilation.
@@ -340,6 +346,13 @@ ifeq ($(OS_VENDOR), Darwin)
             -mmacosx-version-min=$(MACOSX_VERSION_MIN)
   LDFLAGS += -mmacosx-version-min=$(MACOSX_VERSION_MIN)
 endif
+
+
+#------------------------------------------------------------------------
+# Assembler flags
+
+# Enforce prerpocessing of .s files
+ASFLAGS += -x assembler-with-cpp
 
 #------------------------------------------------------------------------
 # Linker flags

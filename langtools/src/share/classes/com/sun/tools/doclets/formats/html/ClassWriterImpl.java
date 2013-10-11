@@ -126,7 +126,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         if (prev != null) {
             Content prevLink = getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.Kind.CLASS, prev)
-                    .label(configuration.getText("doclet.Prev_Class")).strong(true));
+                    .label(prevclassLabel).strong(true));
             li = HtmlTree.LI(prevLink);
         }
         else
@@ -144,7 +144,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
         if (next != null) {
             Content nextLink = getLink(new LinkInfoImpl(configuration,
                     LinkInfoImpl.Kind.CLASS, next)
-                    .label(configuration.getText("doclet.Next_Class")).strong(true));
+                    .label(nextclassLabel).strong(true));
             li = HtmlTree.LI(nextLink);
         }
         else
@@ -610,7 +610,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter
             subDiv.addContent(div);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new DocletAbortException();
+            throw new DocletAbortException(e);
         }
     }
 

@@ -176,7 +176,9 @@ AC_DEFUN([TOOLCHAIN_SETUP_PATHS],
 [
 if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
   TOOLCHAIN_SETUP_VISUAL_STUDIO_ENV
-  TOOLCHAIN_SETUP_DXSDK
+  BASIC_DEPRECATED_ARG_WITH([dxsdk])
+  BASIC_DEPRECATED_ARG_WITH([dxsdk-lib])
+  BASIC_DEPRECATED_ARG_WITH([dxsdk-include])
 fi
 
 AC_SUBST(MSVCR_DLL)
@@ -905,7 +907,7 @@ if test "x$OPENJDK_TARGET_OS" = xsolaris; then
     CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DSOLARIS"
 fi
 if test "x$OPENJDK_TARGET_OS" = xmacosx; then
-    CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DMACOSX -D_ALLBSD_SOURCE"
+    CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DMACOSX -D_ALLBSD_SOURCE -D_DARWIN_UNLIMITED_SELECT"
     # Setting these parameters makes it an error to link to macosx APIs that are
     # newer than the given OS version and makes the linked binaries compatible even
     # if built on a newer version of the OS.

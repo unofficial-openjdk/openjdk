@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "compiler/abstractCompiler.hpp"
 #include "compiler/disassembler.hpp"
 #include "gc_interface/collectedHeap.inline.hpp"
 #include "interpreter/interpreter.hpp"
@@ -559,7 +560,7 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
 
   st->print("%s frame (sp=" INTPTR_FORMAT " unextended sp=" INTPTR_FORMAT, print_name(), sp(), unextended_sp());
   if (sp() != NULL)
-    st->print(", fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT, fp(), pc());
+    st->print(", fp=" INTPTR_FORMAT ", real_fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT, fp(), real_fp(), pc());
 
   if (StubRoutines::contains(pc())) {
     st->print_cr(")");
@@ -651,7 +652,7 @@ void frame::interpreter_frame_print_on(outputStream* st) const {
 // Return whether the frame is in the VM or os indicating a Hotspot problem.
 // Otherwise, it's likely a bug in the native library that the Java code calls,
 // hopefully indicating where to submit bugs.
-static void print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
+void frame::print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
   // C/C++ frame
   bool in_vm = os::address_is_in_vm(pc);
   st->print(in_vm ? "V" : "C");
@@ -720,11 +721,14 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
     } else if (_cb->is_buffer_blob()) {
       st->print("v  ~BufferBlob::%s", ((BufferBlob *)_cb)->name());
     } else if (_cb->is_nmethod()) {
-      Method* m = ((nmethod *)_cb)->method();
+      nmethod* nm = (nmethod*)_cb;
+      Method* m = nm->method();
       if (m != NULL) {
         m->name_and_sig_as_C_string(buf, buflen);
-        st->print("J  %s @ " PTR_FORMAT " [" PTR_FORMAT "+" SIZE_FORMAT "]",
-                  buf, _pc, _cb->code_begin(), _pc - _cb->code_begin());
+        st->print("J %d%s %s %s (%d bytes) @ " PTR_FORMAT " [" PTR_FORMAT "+0x%x]",
+                  nm->compile_id(), (nm->is_osr_method() ? "%" : ""),
+                  ((nm->compiler() != NULL) ? nm->compiler()->name() : ""),
+                  buf, m->code_size(), _pc, _cb->code_begin(), _pc - _cb->code_begin());
       } else {
         st->print("J  " PTR_FORMAT, pc());
       }
@@ -1093,7 +1097,7 @@ oop frame::retrieve_receiver(RegisterMap* reg_map) {
     return NULL;
   }
   oop r = *oop_adr;
-  assert(Universe::heap()->is_in_or_null(r), err_msg("bad receiver: " INTPTR_FORMAT " (" INTX_FORMAT ")", (intptr_t) r, (intptr_t) r));
+  assert(Universe::heap()->is_in_or_null(r), err_msg("bad receiver: " INTPTR_FORMAT " (" INTX_FORMAT ")", (void *) r, (void *) r));
   return r;
 }
 
@@ -1224,9 +1228,7 @@ void frame::check_derived_oop(oop* base, oop* derived) {
 
 void frame::ZapDeadClosure::do_oop(oop* p) {
   if (TraceZapDeadLocals) tty->print_cr("zapping @ " INTPTR_FORMAT " containing " INTPTR_FORMAT, p, (address)*p);
-  // Need cast because on _LP64 the conversion to oop is ambiguous.  Constant
-  // can be either long or int.
-  *p = (oop)(int)0xbabebabe;
+  *p = cast_to_oop<intptr_t>(0xbabebabe);
 }
 frame::ZapDeadClosure frame::_zap_dead;
 

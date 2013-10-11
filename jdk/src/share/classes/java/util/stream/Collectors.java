@@ -62,37 +62,35 @@ import java.util.function.ToLongFunction;
  * operations, such as accumulating elements into collections, summarizing
  * elements according to various criteria, etc.
  *
- * <p>The following are examples of using the predefined {@code Collector}
- * implementations in {@link Collectors} with the {@code Stream} API to perform
- * mutable reduction tasks:
+ * <p>The following are examples of using the predefined collectors to perform
+ * common mutable reduction tasks:
  *
  * <pre>{@code
  *     // Accumulate names into a List
  *     List<String> list = people.stream().map(Person::getName).collect(Collectors.toList());
  *
  *     // Accumulate names into a TreeSet
- *     Set<String> list = people.stream().map(Person::getName).collect(Collectors.toCollection(TreeSet::new));
+ *     Set<String> set = people.stream().map(Person::getName).collect(Collectors.toCollection(TreeSet::new));
  *
  *     // Convert elements to strings and concatenate them, separated by commas
  *     String joined = things.stream()
  *                           .map(Object::toString)
  *                           .collect(Collectors.joining(", "));
  *
- *     // Find highest-paid employee
- *     Employee highestPaid = employees.stream()
- *                                     .collect(Collectors.maxBy(Comparator.comparing(Employee::getSalary)))
- *                                     .get();
+ *     // Compute sum of salaries of employee
+ *     int total = employees.stream()
+ *                          .collect(Collectors.summingInt(Employee::getSalary)));
  *
  *     // Group employees by department
  *     Map<Department, List<Employee>> byDept
  *         = employees.stream()
  *                    .collect(Collectors.groupingBy(Employee::getDepartment));
  *
- *     // Find highest-paid employee by department
- *     Map<Department, Optional<Employee>> highestPaidByDept
+ *     // Compute sum of salaries by department
+ *     Map<Department, Integer> totalByDept
  *         = employees.stream()
  *                    .collect(Collectors.groupingBy(Employee::getDepartment,
- *                                                   Collectors.maxBy(Comparator.comparing(Employee::getSalary))));
+ *                                                   Collectors.summingInt(Employee::getSalary)));
  *
  *     // Partition students into passing and failing
  *     Map<Boolean, List<Student>> passingFailing =
@@ -100,8 +98,6 @@ import java.util.function.ToLongFunction;
  *                 .collect(Collectors.partitioningBy(s -> s.getGrade() >= PASS_THRESHOLD));
  *
  * }</pre>
- *
- * TODO explanation of parallel collection
  *
  * @since 1.8
  */
@@ -137,6 +133,11 @@ public final class Collectors {
         return (u,v) -> { throw new IllegalStateException(String.format("Duplicate key %s", u)); };
     }
 
+    @SuppressWarnings("unchecked")
+    private static <I, R> Function<I, R> castingIdentity() {
+        return i -> (R) i;
+    }
+
     /**
      * Simple implementation class for {@code Collector}.
      *
@@ -166,7 +167,7 @@ public final class Collectors {
                       BiConsumer<A, T> accumulator,
                       BinaryOperator<A> combiner,
                       Set<Characteristics> characteristics) {
-            this(supplier, accumulator, combiner, i -> (R) i, characteristics);
+            this(supplier, accumulator, combiner, castingIdentity(), characteristics);
         }
 
         @Override
@@ -209,7 +210,7 @@ public final class Collectors {
      */
     public static <T, C extends Collection<T>>
     Collector<T, ?, C> toCollection(Supplier<C> collectionFactory) {
-        return new CollectorImpl<>(collectionFactory, Collection::add,
+        return new CollectorImpl<>(collectionFactory, Collection<T>::add,
                                    (r1, r2) -> { r1.addAll(r2); return r1; },
                                    CH_ID);
     }
@@ -217,7 +218,8 @@ public final class Collectors {
     /**
      * Returns a {@code Collector} that accumulates the input elements into a
      * new {@code List}. There are no guarantees on the type, mutability,
-     * serializability, or thread-safety of the {@code List} returned.
+     * serializability, or thread-safety of the {@code List} returned; if more
+     * control over the returned {@code List} is required, use {@link #toCollection(Supplier)}.
      *
      * @param <T> the type of the input elements
      * @return a {@code Collector} which collects all the input elements into a
@@ -233,7 +235,9 @@ public final class Collectors {
     /**
      * Returns a {@code Collector} that accumulates the input elements into a
      * new {@code Set}. There are no guarantees on the type, mutability,
-     * serializability, or thread-safety of the {@code Set} returned.
+     * serializability, or thread-safety of the {@code Set} returned; if more
+     * control over the returned {@code Set} is required, use
+     * {@link #toCollection(Supplier)}.
      *
      * <p>This is an {@link Collector.Characteristics#UNORDERED unordered}
      * Collector.
@@ -351,6 +355,43 @@ public final class Collectors {
                                    (r, t) -> downstreamAccumulator.accept(r, mapper.apply(t)),
                                    downstream.combiner(), downstream.finisher(),
                                    downstream.characteristics());
+    }
+
+    /**
+     * Adapts a {@code Collector} to perform an additional finishing
+     * transformation.  For example, one could adapt the {@link #toList()}
+     * collector to always produce an immutable list with:
+     * <pre>{@code
+     *     List<String> people
+     *         = people.stream().collect(collectingAndThen(toList(), Collections::unmodifiableList));
+     * }</pre>
+     *
+     * @param <T> the type of the input elements
+     * @param <A> intermediate accumulation type of the downstream collector
+     * @param <R> result type of the downstream collector
+     * @param <RR> result type of the resulting collector
+     * @param downstream a collector
+     * @param finisher a function to be applied to the final result of the downstream collector
+     * @return a collector which performs the action of the downstream collector,
+     * followed by an additional finishing step
+     */
+    public static<T,A,R,RR> Collector<T,A,RR> collectingAndThen(Collector<T,A,R> downstream,
+                                                                Function<R,RR> finisher) {
+        Set<Collector.Characteristics> characteristics = downstream.characteristics();
+        if (characteristics.contains(Collector.Characteristics.IDENTITY_FINISH)) {
+            if (characteristics.size() == 1)
+                characteristics = Collectors.CH_NOID;
+            else {
+                characteristics = EnumSet.copyOf(characteristics);
+                characteristics.remove(Collector.Characteristics.IDENTITY_FINISH);
+                characteristics = Collections.unmodifiableSet(characteristics);
+            }
+        }
+        return new CollectorImpl<>(downstream.supplier(),
+                                   downstream.accumulator(),
+                                   downstream.combiner(),
+                                   downstream.finisher().andThen(finisher),
+                                   characteristics);
     }
 
     /**
@@ -861,7 +902,7 @@ public final class Collectors {
      * where the city names are sorted:
      * <pre>{@code
      *     ConcurrentMap<City, Set<String>> namesByCity
-     *         = people.stream().collect(groupingByConcurrent(Person::getCity, ConcurrentSkipListMap::new,
+     *         = people.stream().collect(groupingByConcurrent(Person::getCity,
      *                                                        mapping(Person::getLastName, toSet())));
      * }</pre>
      *
@@ -1009,30 +1050,23 @@ public final class Collectors {
     public static <T, D, A>
     Collector<T, ?, Map<Boolean, D>> partitioningBy(Predicate<? super T> predicate,
                                                     Collector<? super T, A, D> downstream) {
-        @SuppressWarnings("unchecked")
-        BiConsumer<D, ? super T> downstreamAccumulator = (BiConsumer<D, ? super T>) downstream.accumulator();
-        BiConsumer<Map<Boolean, A>, T> accumulator = (result, t) -> {
-            Partition<D> asPartition = ((Partition<D>) result);
-            downstreamAccumulator.accept(predicate.test(t) ? asPartition.forTrue : asPartition.forFalse, t);
-        };
+        BiConsumer<A, ? super T> downstreamAccumulator = downstream.accumulator();
+        BiConsumer<Partition<A>, T> accumulator = (result, t) ->
+                downstreamAccumulator.accept(predicate.test(t) ? result.forTrue : result.forFalse, t);
         BinaryOperator<A> op = downstream.combiner();
-        BinaryOperator<Map<Boolean, A>> merger = (m1, m2) -> {
-            Partition<A> left = (Partition<A>) m1;
-            Partition<A> right = (Partition<A>) m2;
-            return new Partition<>(op.apply(left.forTrue, right.forTrue),
-                                   op.apply(left.forFalse, right.forFalse));
-        };
-        Supplier<Map<Boolean, A>> supplier = () -> new Partition<>(downstream.supplier().get(),
-                                                                   downstream.supplier().get());
+        BinaryOperator<Partition<A>> merger = (left, right) ->
+                new Partition<>(op.apply(left.forTrue, right.forTrue),
+                                op.apply(left.forFalse, right.forFalse));
+        Supplier<Partition<A>> supplier = () ->
+                new Partition<>(downstream.supplier().get(),
+                                downstream.supplier().get());
         if (downstream.characteristics().contains(Collector.Characteristics.IDENTITY_FINISH)) {
             return new CollectorImpl<>(supplier, accumulator, merger, CH_ID);
         }
         else {
-            Function<Map<Boolean, A>, Map<Boolean, D>> finisher = (Map<Boolean, A> par) -> {
-                Partition<A> asAPartition = (Partition<A>) par;
-                return new Partition<>(downstream.finisher().apply(asAPartition.forTrue),
-                                       downstream.finisher().apply(asAPartition.forFalse));
-            };
+            Function<Partition<A>, Map<Boolean, D>> finisher = par ->
+                    new Partition<>(downstream.finisher().apply(par.forTrue),
+                                    downstream.finisher().apply(par.forFalse));
             return new CollectorImpl<>(supplier, accumulator, merger, finisher, CH_NOID);
         }
     }

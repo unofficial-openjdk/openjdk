@@ -28,84 +28,101 @@ package jdk.nashorn.internal.runtime;
 import static jdk.nashorn.internal.codegen.CompilerConstants.staticCall;
 import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
 
-import java.util.Locale;
-import jdk.internal.dynalink.beans.BeansLinker;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Array;
 import jdk.internal.dynalink.beans.StaticClass;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.codegen.CompilerConstants.Call;
 import jdk.nashorn.internal.parser.Lexer;
+import jdk.nashorn.internal.runtime.arrays.ArrayLikeIterator;
+import jdk.nashorn.internal.runtime.linker.Bootstrap;
 
 /**
  * Representation for ECMAScript types - this maps directly to the ECMA script standard
  */
 public enum JSType {
     /** The undefined type */
-    UNDEFINED,
+    UNDEFINED("undefined"),
 
     /** The null type */
-    NULL,
+    NULL("object"),
 
     /** The boolean type */
-    BOOLEAN,
+    BOOLEAN("boolean"),
 
     /** The number type */
-    NUMBER,
+    NUMBER("number"),
 
     /** The string type */
-    STRING,
+    STRING("string"),
 
     /** The object type */
-    OBJECT,
+    OBJECT("object"),
 
     /** The function type */
-    FUNCTION;
+    FUNCTION("function");
+
+    /** The type name as returned by ECMAScript "typeof" operator*/
+    private final String typeName;
 
     /** Max value for an uint32 in JavaScript */
     public static final long MAX_UINT = 0xFFFF_FFFFL;
 
+    private static final MethodHandles.Lookup myLookup = MethodHandles.lookup();
+
     /** JavaScript compliant conversion function from Object to boolean */
-    public static final Call TO_BOOLEAN = staticCall(JSType.class, "toBoolean", boolean.class, Object.class);
+    public static final Call TO_BOOLEAN = staticCall(myLookup, JSType.class, "toBoolean", boolean.class, Object.class);
 
     /** JavaScript compliant conversion function from number to boolean */
-    public static final Call TO_BOOLEAN_D = staticCall(JSType.class, "toBoolean", boolean.class, double.class);
+    public static final Call TO_BOOLEAN_D = staticCall(myLookup, JSType.class, "toBoolean", boolean.class, double.class);
 
     /** JavaScript compliant conversion function from Object to integer */
-    public static final Call TO_INTEGER = staticCall(JSType.class, "toInteger", int.class, Object.class);
+    public static final Call TO_INTEGER = staticCall(myLookup, JSType.class, "toInteger", int.class, Object.class);
 
     /** JavaScript compliant conversion function from Object to long */
-    public static final Call TO_LONG = staticCall(JSType.class, "toLong", long.class, Object.class);
+    public static final Call TO_LONG = staticCall(myLookup, JSType.class, "toLong", long.class, Object.class);
 
     /** JavaScript compliant conversion function from Object to number */
-    public static final Call TO_NUMBER = staticCall(JSType.class, "toNumber", double.class, Object.class);
+    public static final Call TO_NUMBER = staticCall(myLookup, JSType.class, "toNumber", double.class, Object.class);
 
     /** JavaScript compliant conversion function from Object to int32 */
-    public static final Call TO_INT32 = staticCall(JSType.class, "toInt32", int.class, Object.class);
+    public static final Call TO_INT32 = staticCall(myLookup, JSType.class, "toInt32", int.class, Object.class);
 
     /** JavaScript compliant conversion function from double to int32 */
-    public static final Call TO_INT32_D = staticCall(JSType.class, "toInt32", int.class, double.class);
+    public static final Call TO_INT32_D = staticCall(myLookup, JSType.class, "toInt32", int.class, double.class);
 
     /** JavaScript compliant conversion function from Object to uint32 */
-    public static final Call TO_UINT32 = staticCall(JSType.class, "toUint32", long.class, Object.class);
+    public static final Call TO_UINT32 = staticCall(myLookup, JSType.class, "toUint32", long.class, Object.class);
 
     /** JavaScript compliant conversion function from number to uint32 */
-    public static final Call TO_UINT32_D = staticCall(JSType.class, "toUint32", long.class, double.class);
+    public static final Call TO_UINT32_D = staticCall(myLookup, JSType.class, "toUint32", long.class, double.class);
 
     /** JavaScript compliant conversion function from Object to int64 */
-    public static final Call TO_INT64 = staticCall(JSType.class, "toInt64", long.class, Object.class);
+    public static final Call TO_INT64 = staticCall(myLookup, JSType.class, "toInt64", long.class, Object.class);
 
     /** JavaScript compliant conversion function from number to int64 */
-    public static final Call TO_INT64_D = staticCall(JSType.class, "toInt64", long.class, double.class);
+    public static final Call TO_INT64_D = staticCall(myLookup, JSType.class, "toInt64", long.class, double.class);
 
     /** JavaScript compliant conversion function from Object to String */
-    public static final Call TO_STRING = staticCall(JSType.class, "toString", String.class, Object.class);
+    public static final Call TO_STRING = staticCall(myLookup, JSType.class, "toString", String.class, Object.class);
 
     /** JavaScript compliant conversion function from number to String */
-    public static final Call TO_STRING_D = staticCall(JSType.class, "toString", String.class, double.class);
+    public static final Call TO_STRING_D = staticCall(myLookup, JSType.class, "toString", String.class, double.class);
 
     /** JavaScript compliant conversion function from Object to primitive */
-    public static final Call TO_PRIMITIVE = staticCall(JSType.class, "toPrimitive", Object.class,  Object.class);
+    public static final Call TO_PRIMITIVE = staticCall(myLookup, JSType.class, "toPrimitive", Object.class,  Object.class);
 
     private static final double INT32_LIMIT = 4294967296.0;
+
+    /**
+     * Constructor
+     *
+     * @param typeName the type name
+     */
+    private JSType(final String typeName) {
+        this.typeName = typeName;
+    }
 
     /**
      * The external type name as returned by ECMAScript "typeof" operator
@@ -113,8 +130,7 @@ public enum JSType {
      * @return type name for this type
      */
     public final String typeName() {
-        // For NULL, "object" has to be returned!
-        return ((this == NULL) ? OBJECT : this).name().toLowerCase(Locale.ENGLISH);
+        return this.typeName;
     }
 
     /**
@@ -125,43 +141,32 @@ public enum JSType {
      * @return the JSType for the object
      */
     public static JSType of(final Object obj) {
-        if (obj == ScriptRuntime.UNDEFINED) {
-            return JSType.UNDEFINED;
-        }
-
+        // Order of these statements is tuned for performance (see JDK-8024476)
         if (obj == null) {
             return JSType.NULL;
-        }
-
-        if (obj instanceof Boolean) {
-            return JSType.BOOLEAN;
-        }
-
-        if (obj instanceof Number) {
-            return JSType.NUMBER;
-        }
-
-        if (obj instanceof String || obj instanceof ConsString) {
-            return JSType.STRING;
         }
 
         if (obj instanceof ScriptObject) {
             return (obj instanceof ScriptFunction) ? JSType.FUNCTION : JSType.OBJECT;
         }
 
-        if (obj instanceof StaticClass) {
-            return JSType.FUNCTION;
+        if (obj instanceof Boolean) {
+            return JSType.BOOLEAN;
         }
 
-        if (BeansLinker.isDynamicMethod(obj)) {
-            return JSType.FUNCTION;
+        if (obj instanceof String || obj instanceof ConsString) {
+            return JSType.STRING;
         }
 
-        if (obj instanceof ScriptObjectMirror) {
-            return ((ScriptObjectMirror)obj).isFunction()? JSType.FUNCTION : JSType.OBJECT;
+        if (obj instanceof Number) {
+            return JSType.NUMBER;
         }
 
-        return JSType.OBJECT;
+        if (obj == ScriptRuntime.UNDEFINED) {
+            return JSType.UNDEFINED;
+        }
+
+        return Bootstrap.isCallable(obj) ? JSType.FUNCTION : JSType.OBJECT;
     }
 
     /**
@@ -859,6 +864,53 @@ public enum JSType {
     }
 
     /**
+     * Script object to Java array conversion.
+     *
+     * @param obj script object to be converted to Java array
+     * @param componentType component type of the destination array required
+     * @return converted Java array
+     */
+    public static Object toJavaArray(final Object obj, final Class<?> componentType) {
+        if (obj instanceof ScriptObject) {
+            return convertArray(((ScriptObject)obj).getArray().asObjectArray(), componentType);
+        } else if (obj instanceof JSObject) {
+            final ArrayLikeIterator itr = ArrayLikeIterator.arrayLikeIterator(obj);
+            final int len = (int) itr.getLength();
+            final Object[] res = new Object[len];
+            int idx = 0;
+            while (itr.hasNext()) {
+                res[idx++] = itr.next();
+            }
+            return convertArray(res, componentType);
+        } else {
+            throw new IllegalArgumentException("not a script object");
+        }
+    }
+
+    /**
+     * Java array to java array conversion - but using type conversions implemented by linker.
+     *
+     * @param src source array
+     * @param componentType component type of the destination array required
+     * @return converted Java array
+     */
+    public static Object convertArray(final Object[] src, final Class<?> componentType) {
+        final int l = src.length;
+        final Object dst = Array.newInstance(componentType, l);
+        final MethodHandle converter = Bootstrap.getLinkerServices().getTypeConverter(Object.class, componentType);
+        try {
+            for (int i = 0; i < src.length; i++) {
+                Array.set(dst, i, invoke(converter, src[i]));
+            }
+        } catch (final RuntimeException | Error e) {
+            throw e;
+        } catch (final Throwable t) {
+            throw new RuntimeException(t);
+        }
+        return dst;
+    }
+
+    /**
      * Check if an object is null or undefined
      *
      * @param obj object to check
@@ -963,4 +1015,13 @@ public enum JSType {
         return Double.NaN;
     }
 
+    private static Object invoke(final MethodHandle mh, final Object arg) {
+        try {
+            return mh.invoke(arg);
+        } catch (final RuntimeException | Error e) {
+            throw e;
+        } catch (final Throwable t) {
+            throw new RuntimeException(t);
+        }
+    }
 }

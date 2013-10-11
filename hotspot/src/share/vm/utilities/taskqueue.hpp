@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,6 +132,8 @@ void TaskQueueStats::reset() {
 }
 #endif // TASKQUEUE_STATS
 
+// TaskQueueSuper collects functionality common to all GenericTaskQueue instances.
+
 template <unsigned int N, MEMFLAGS F>
 class TaskQueueSuper: public CHeapObj<F> {
 protected:
@@ -249,7 +251,36 @@ public:
   TASKQUEUE_STATS_ONLY(TaskQueueStats stats;)
 };
 
-
+//
+// GenericTaskQueue implements an ABP, Aurora-Blumofe-Plaxton, double-
+// ended-queue (deque), intended for use in work stealing. Queue operations
+// are non-blocking.
+//
+// A queue owner thread performs push() and pop_local() operations on one end
+// of the queue, while other threads may steal work using the pop_global()
+// method.
+//
+// The main difference to the original algorithm is that this
+// implementation allows wrap-around at the end of its allocated
+// storage, which is an array.
+//
+// The original paper is:
+//
+// Arora, N. S., Blumofe, R. D., and Plaxton, C. G.
+// Thread scheduling for multiprogrammed multiprocessors.
+// Theory of Computing Systems 34, 2 (2001), 115-144.
+//
+// The following paper provides an correctness proof and an
+// implementation for weakly ordered memory models including (pseudo-)
+// code containing memory barriers for a Chase-Lev deque. Chase-Lev is
+// similar to ABP, with the main difference that it allows resizing of the
+// underlying storage:
+//
+// Le, N. M., Pop, A., Cohen A., and Nardell, F. Z.
+// Correct and efficient work-stealing for weak memory models
+// Proceedings of the 18th ACM SIGPLAN symposium on Principles and
+// practice of parallel programming (PPoPP 2013), 69-80
+//
 
 template <class E, MEMFLAGS F, unsigned int N = TASKQUEUE_SIZE>
 class GenericTaskQueue: public TaskQueueSuper<N, F> {
@@ -291,11 +322,11 @@ public:
   // Attempts to claim a task from the "local" end of the queue (the most
   // recently pushed).  If successful, returns true and sets t to the task;
   // otherwise, returns false (the queue is empty).
-  inline bool pop_local(E& t);
+  inline bool pop_local(volatile E& t);
 
   // Like pop_local(), but uses the "global" end of the queue (the least
   // recently pushed).
-  bool pop_global(E& t);
+  bool pop_global(volatile E& t);
 
   // Delete any resource associated with the queue.
   ~GenericTaskQueue();
@@ -393,7 +424,7 @@ bool GenericTaskQueue<E, F, N>::pop_local_slow(uint localBot, Age oldAge) {
 }
 
 template<class E, MEMFLAGS F, unsigned int N>
-bool GenericTaskQueue<E, F, N>::pop_global(E& t) {
+bool GenericTaskQueue<E, F, N>::pop_global(volatile E& t) {
   Age oldAge = _age.get();
   // Architectures with weak memory model require a barrier here
   // to guarantee that bottom is not older than age,
@@ -670,7 +701,7 @@ GenericTaskQueue<E, F, N>::push(E t) {
 }
 
 template<class E, MEMFLAGS F, unsigned int N> inline bool
-GenericTaskQueue<E, F, N>::pop_local(E& t) {
+GenericTaskQueue<E, F, N>::pop_local(volatile E& t) {
   uint localBot = _bottom;
   // This value cannot be N-1.  That can only occur as a result of
   // the assignment to bottom in this method.  If it does, this method
@@ -768,7 +799,7 @@ public:
   }
   volatile ObjArrayTask&
   operator =(const volatile ObjArrayTask& t) volatile {
-    _obj = t._obj;
+    (void)const_cast<oop&>(_obj = t._obj);
     _index = t._index;
     return *this;
   }

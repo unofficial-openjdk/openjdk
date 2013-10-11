@@ -1643,15 +1643,15 @@ void PhasePeephole::do_transform() {
   bool method_name_not_printed = true;
 
   // Examine each basic block
-  for( uint block_number = 1; block_number < _cfg._num_blocks; ++block_number ) {
-    Block *block = _cfg._blocks[block_number];
+  for (uint block_number = 1; block_number < _cfg.number_of_blocks(); ++block_number) {
+    Block* block = _cfg.get_block(block_number);
     bool block_not_printed = true;
 
     // and each instruction within a block
-    uint end_index = block->_nodes.size();
+    uint end_index = block->number_of_nodes();
     // block->end_idx() not valid after PhaseRegAlloc
     for( uint instruction_index = 1; instruction_index < end_index; ++instruction_index ) {
-      Node     *n = block->_nodes.at(instruction_index);
+      Node     *n = block->get_node(instruction_index);
       if( n->is_Mach() ) {
         MachNode *m = n->as_Mach();
         int deleted_count = 0;
@@ -1673,7 +1673,7 @@ void PhasePeephole::do_transform() {
             }
             // Print instructions being deleted
             for( int i = (deleted_count - 1); i >= 0; --i ) {
-              block->_nodes.at(instruction_index-i)->as_Mach()->format(_regalloc); tty->cr();
+              block->get_node(instruction_index-i)->as_Mach()->format(_regalloc); tty->cr();
             }
             tty->print_cr("replaced with");
             // Print new instruction
@@ -1687,11 +1687,11 @@ void PhasePeephole::do_transform() {
           //  the node index to live range mappings.)
           uint safe_instruction_index = (instruction_index - deleted_count);
           for( ; (instruction_index > safe_instruction_index); --instruction_index ) {
-            block->_nodes.remove( instruction_index );
+            block->remove_node( instruction_index );
           }
           // install new node after safe_instruction_index
-          block->_nodes.insert( safe_instruction_index + 1, m2 );
-          end_index = block->_nodes.size() - 1; // Recompute new block size
+          block->insert_node(m2, safe_instruction_index + 1);
+          end_index = block->number_of_nodes() - 1; // Recompute new block size
           NOT_PRODUCT( inc_peepholes(); )
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -366,17 +366,6 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
     return awtFont;
 }
 
-int CALLBACK FindFamilyName (ENUMLOGFONTEX *lpelfe,
-          NEWTEXTMETRICEX *lpntme, int FontType, LPARAM lParam)
-{
-    if(_tcsstr((LPTSTR)lParam, lpelfe->elfLogFont.lfFaceName)) {
-        _tcscpy((LPTSTR)lParam, lpelfe->elfLogFont.lfFaceName);
-        return 0;
-    } else {
-        return 1;
-    }
-}
-
 static void strip_tail(wchar_t* text, wchar_t* tail) { // strips tail and any possible whitespace before it from the end of text
     if (wcslen(text)<=wcslen(tail)) {
         return;
@@ -509,6 +498,11 @@ void AwtFont::LoadMetrics(JNIEnv *env, jobject fontMetrics)
     }
     jobject font = env->GetObjectField(fontMetrics, AwtFont::fontID);
     AwtFont* awtFont = AwtFont::GetFont(env, font);
+
+    if (!awtFont) {
+        /* failed to get font */
+        return;
+    }
 
     HDC hDC = ::GetDC(0);
     DASSERT(hDC != NULL);

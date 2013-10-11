@@ -34,8 +34,6 @@
 #include "opto/matcher.hpp"
 #include "opto/regmask.hpp"
 
-//=============================================================================
-//------------------------------Dump-------------------------------------------
 #ifndef PRODUCT
 void PhaseCoalesce::dump(Node *n) const {
   // Being a const function means I cannot use 'Find'
@@ -43,12 +41,11 @@ void PhaseCoalesce::dump(Node *n) const {
   tty->print("L%d/N%d ",r,n->_idx);
 }
 
-//------------------------------dump-------------------------------------------
 void PhaseCoalesce::dump() const {
   // I know I have a block layout now, so I can print blocks in a loop
-  for( uint i=0; i<_phc._cfg._num_blocks; i++ ) {
+  for( uint i=0; i<_phc._cfg.number_of_blocks(); i++ ) {
     uint j;
-    Block *b = _phc._cfg._blocks[i];
+    Block* b = _phc._cfg.get_block(i);
     // Print a nice block header
     tty->print("B%d: ",b->_pre_order);
     for( j=1; j<b->num_preds(); j++ )
@@ -57,9 +54,9 @@ void PhaseCoalesce::dump() const {
     for( j=0; j<b->_num_succs; j++ )
       tty->print("B%d ",b->_succs[j]->_pre_order);
     tty->print(" IDom: B%d/#%d\n", b->_idom ? b->_idom->_pre_order : 0, b->_dom_depth);
-    uint cnt = b->_nodes.size();
+    uint cnt = b->number_of_nodes();
     for( j=0; j<cnt; j++ ) {
-      Node *n = b->_nodes[j];
+      Node *n = b->get_node(j);
       dump( n );
       tty->print("\t%s\t",n->Name());
 
@@ -85,7 +82,6 @@ void PhaseCoalesce::dump() const {
 }
 #endif
 
-//------------------------------combine_these_two------------------------------
 // Combine the live ranges def'd by these 2 Nodes.  N2 is an input to N1.
 void PhaseCoalesce::combine_these_two(Node *n1, Node *n2) {
   uint lr1 = _phc._lrg_map.find(n1);
@@ -127,18 +123,15 @@ void PhaseCoalesce::combine_these_two(Node *n1, Node *n2) {
   }
 }
 
-//------------------------------coalesce_driver--------------------------------
 // Copy coalescing
-void PhaseCoalesce::coalesce_driver( ) {
-
+void PhaseCoalesce::coalesce_driver() {
   verify();
   // Coalesce from high frequency to low
-  for( uint i=0; i<_phc._cfg._num_blocks; i++ )
-    coalesce( _phc._blks[i] );
-
+  for (uint i = 0; i < _phc._cfg.number_of_blocks(); i++) {
+    coalesce(_phc._blks[i]);
+  }
 }
 
-//------------------------------insert_copy_with_overlap-----------------------
 // I am inserting copies to come out of SSA form.  In the general case, I am
 // doing a parallel renaming.  I'm in the Named world now, so I can't do a
 // general parallel renaming.  All the copies now use  "names" (live-ranges)
@@ -159,7 +152,7 @@ void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, ui
   // after the last use.  Last use is really first-use on a backwards scan.
   uint i = b->end_idx()-1;
   while(1) {
-    Node *n = b->_nodes[i];
+    Node *n = b->get_node(i);
     // Check for end of virtual copies; this is also the end of the
     // parallel renaming effort.
     if (n->_idx < _unique) {
@@ -181,7 +174,7 @@ void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, ui
   // the last kill.  Thus it is the first kill on a backwards scan.
   i = b->end_idx()-1;
   while (1) {
-    Node *n = b->_nodes[i];
+    Node *n = b->get_node(i);
     // Check for end of virtual copies; this is also the end of the
     // parallel renaming effort.
     if (n->_idx < _unique) {
@@ -207,16 +200,15 @@ void PhaseAggressiveCoalesce::insert_copy_with_overlap( Block *b, Node *copy, ui
     tmp ->set_req(idx,copy->in(idx));
     copy->set_req(idx,tmp);
     // Save source in temp early, before source is killed
-    b->_nodes.insert(kill_src_idx,tmp);
+    b->insert_node(tmp, kill_src_idx);
     _phc._cfg.map_node_to_block(tmp, b);
     last_use_idx++;
   }
 
   // Insert just after last use
-  b->_nodes.insert(last_use_idx+1,copy);
+  b->insert_node(copy, last_use_idx + 1);
 }
 
-//------------------------------insert_copies----------------------------------
 void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
   // We do LRGs compressing and fix a liveout data only here since the other
   // place in Split() is guarded by the assert which we never hit.
@@ -225,8 +217,8 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
   for (uint lrg = 1; lrg < _phc._lrg_map.max_lrg_id(); lrg++) {
     uint compressed_lrg = _phc._lrg_map.find(lrg);
     if (lrg != compressed_lrg) {
-      for (uint bidx = 0; bidx < _phc._cfg._num_blocks; bidx++) {
-        IndexSet *liveout = _phc._live->live(_phc._cfg._blocks[bidx]);
+      for (uint bidx = 0; bidx < _phc._cfg.number_of_blocks(); bidx++) {
+        IndexSet *liveout = _phc._live->live(_phc._cfg.get_block(bidx));
         if (liveout->member(lrg)) {
           liveout->remove(lrg);
           liveout->insert(compressed_lrg);
@@ -239,14 +231,14 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
   // Nodes with index less than '_unique' are original, non-virtual Nodes.
   _unique = C->unique();
 
-  for( uint i=0; i<_phc._cfg._num_blocks; i++ ) {
+  for (uint i = 0; i < _phc._cfg.number_of_blocks(); i++) {
     C->check_node_count(NodeLimitFudgeFactor, "out of nodes in coalesce");
     if (C->failing()) return;
-    Block *b = _phc._cfg._blocks[i];
+    Block *b = _phc._cfg.get_block(i);
     uint cnt = b->num_preds();  // Number of inputs to the Phi
 
-    for( uint l = 1; l<b->_nodes.size(); l++ ) {
-      Node *n = b->_nodes[l];
+    for( uint l = 1; l<b->number_of_nodes(); l++ ) {
+      Node *n = b->get_node(l);
 
       // Do not use removed-copies, use copied value instead
       uint ncnt = n->req();
@@ -268,7 +260,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
         if (_phc._lrg_map.find(n) == _phc._lrg_map.find(def)) {
           n->replace_by(def);
           n->set_req(cidx,NULL);
-          b->_nodes.remove(l);
+          b->remove_node(l);
           l--;
           continue;
         }
@@ -329,15 +321,13 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
                m->as_Mach()->rematerialize()) {
               copy = m->clone();
               // Insert the copy in the basic block, just before us
-              b->_nodes.insert(l++, copy);
-              if(_phc.clone_projs(b, l, m, copy, _phc._lrg_map)) {
-                l++;
-              }
+              b->insert_node(copy, l++);
+              l += _phc.clone_projs(b, l, m, copy, _phc._lrg_map);
             } else {
               const RegMask *rm = C->matcher()->idealreg2spillmask[m->ideal_reg()];
               copy = new (C) MachSpillCopyNode(m, *rm, *rm);
               // Insert the copy in the basic block, just before us
-              b->_nodes.insert(l++, copy);
+              b->insert_node(copy, l++);
             }
             // Insert the copy in the use-def chain
             n->set_req(idx, copy);
@@ -349,7 +339,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
         } // End of is two-adr
 
         // Insert a copy at a debug use for a lrg which has high frequency
-        if (b->_freq < OPTO_DEBUG_SPLIT_FREQ || b->is_uncommon(&_phc._cfg)) {
+        if (b->_freq < OPTO_DEBUG_SPLIT_FREQ || _phc._cfg.is_uncommon(b)) {
           // Walk the debug inputs to the node and check for lrg freq
           JVMState* jvms = n->jvms();
           uint debug_start = jvms ? jvms->debug_start() : 999999;
@@ -386,7 +376,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
               // Insert the copy in the use-def chain
               n->set_req(inpidx, copy );
               // Insert the copy in the basic block, just before us
-              b->_nodes.insert( l++, copy );
+              b->insert_node(copy,  l++);
               // Extend ("register allocate") the names array for the copy.
               uint max_lrg_id = _phc._lrg_map.max_lrg_id();
               _phc.new_lrg(copy, max_lrg_id);
@@ -403,8 +393,7 @@ void PhaseAggressiveCoalesce::insert_copies( Matcher &matcher ) {
   } // End of for all blocks
 }
 
-//=============================================================================
-//------------------------------coalesce---------------------------------------
+
 // Aggressive (but pessimistic) copy coalescing of a single block
 
 // The following coalesce pass represents a single round of aggressive
@@ -442,8 +431,8 @@ void PhaseAggressiveCoalesce::coalesce( Block *b ) {
     }
 
     // Visit all the Phis in successor block
-    for( uint k = 1; k<bs->_nodes.size(); k++ ) {
-      Node *n = bs->_nodes[k];
+    for( uint k = 1; k<bs->number_of_nodes(); k++ ) {
+      Node *n = bs->get_node(k);
       if( !n->is_Phi() ) break;
       combine_these_two( n, n->in(j) );
     }
@@ -453,7 +442,7 @@ void PhaseAggressiveCoalesce::coalesce( Block *b ) {
   // Check _this_ block for 2-address instructions and copies.
   uint cnt = b->end_idx();
   for( i = 1; i<cnt; i++ ) {
-    Node *n = b->_nodes[i];
+    Node *n = b->get_node(i);
     uint idx;
     // 2-address instructions have a virtual Copy matching their input
     // to their output
@@ -464,20 +453,16 @@ void PhaseAggressiveCoalesce::coalesce( Block *b ) {
   } // End of for all instructions in block
 }
 
-//=============================================================================
-//------------------------------PhaseConservativeCoalesce----------------------
 PhaseConservativeCoalesce::PhaseConservativeCoalesce(PhaseChaitin &chaitin) : PhaseCoalesce(chaitin) {
   _ulr.initialize(_phc._lrg_map.max_lrg_id());
 }
 
-//------------------------------verify-----------------------------------------
 void PhaseConservativeCoalesce::verify() {
 #ifdef ASSERT
   _phc.set_was_low();
 #endif
 }
 
-//------------------------------union_helper-----------------------------------
 void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, uint lr1, uint lr2, Node *src_def, Node *dst_copy, Node *src_copy, Block *b, uint bindex ) {
   // Join live ranges.  Merge larger into smaller.  Union lr2 into lr1 in the
   // union-find tree
@@ -505,10 +490,10 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   dst_copy->set_req( didx, src_def );
   // Add copy to free list
   // _phc.free_spillcopy(b->_nodes[bindex]);
-  assert( b->_nodes[bindex] == dst_copy, "" );
+  assert( b->get_node(bindex) == dst_copy, "" );
   dst_copy->replace_by( dst_copy->in(didx) );
   dst_copy->set_req( didx, NULL);
-  b->_nodes.remove(bindex);
+  b->remove_node(bindex);
   if( bindex < b->_ihrp_index ) b->_ihrp_index--;
   if( bindex < b->_fhrp_index ) b->_fhrp_index--;
 
@@ -520,7 +505,6 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   }
 }
 
-//------------------------------compute_separating_interferences---------------
 // Factored code from copy_copy that computes extra interferences from
 // lengthening a live range by double-coalescing.
 uint PhaseConservativeCoalesce::compute_separating_interferences(Node *dst_copy, Node *src_copy, Block *b, uint bindex, RegMask &rm, uint reg_degree, uint rm_size, uint lr1, uint lr2 ) {
@@ -539,8 +523,8 @@ uint PhaseConservativeCoalesce::compute_separating_interferences(Node *dst_copy,
       bindex2 = b2->end_idx()-1;
     }
     // Get prior instruction
-    assert(bindex2 < b2->_nodes.size(), "index out of bounds");
-    Node *x = b2->_nodes[bindex2];
+    assert(bindex2 < b2->number_of_nodes(), "index out of bounds");
+    Node *x = b2->get_node(bindex2);
     if( x == prev_copy ) {      // Previous copy in copy chain?
       if( prev_copy == src_copy)// Found end of chain and all interferences
         break;                  // So break out of loop
@@ -586,7 +570,6 @@ uint PhaseConservativeCoalesce::compute_separating_interferences(Node *dst_copy,
   return reg_degree;
 }
 
-//------------------------------update_ifg-------------------------------------
 void PhaseConservativeCoalesce::update_ifg(uint lr1, uint lr2, IndexSet *n_lr1, IndexSet *n_lr2) {
   // Some original neighbors of lr1 might have gone away
   // because the constrained register mask prevented them.
@@ -616,7 +599,6 @@ void PhaseConservativeCoalesce::update_ifg(uint lr1, uint lr2, IndexSet *n_lr1, 
       lrgs(neighbor).inc_degree( lrg1.compute_degree(lrgs(neighbor)) );
 }
 
-//------------------------------record_bias------------------------------------
 static void record_bias( const PhaseIFG *ifg, int lr1, int lr2 ) {
   // Tag copy bias here
   if( !ifg->lrgs(lr1)._copy_bias )
@@ -625,7 +607,6 @@ static void record_bias( const PhaseIFG *ifg, int lr1, int lr2 ) {
     ifg->lrgs(lr2)._copy_bias = lr1;
 }
 
-//------------------------------copy_copy--------------------------------------
 // See if I can coalesce a series of multiple copies together.  I need the
 // final dest copy and the original src copy.  They can be the same Node.
 // Compute the compatible register masks.
@@ -785,18 +766,17 @@ bool PhaseConservativeCoalesce::copy_copy(Node *dst_copy, Node *src_copy, Block 
   return true;
 }
 
-//------------------------------coalesce---------------------------------------
 // Conservative (but pessimistic) copy coalescing of a single block
 void PhaseConservativeCoalesce::coalesce( Block *b ) {
   // Bail out on infrequent blocks
-  if (b->is_uncommon(&_phc._cfg)) {
+  if (_phc._cfg.is_uncommon(b)) {
     return;
   }
   // Check this block for copies.
   for( uint i = 1; i<b->end_idx(); i++ ) {
     // Check for actual copies on inputs.  Coalesce a copy into its
     // input if use and copy's input are compatible.
-    Node *copy1 = b->_nodes[i];
+    Node *copy1 = b->get_node(i);
     uint idx1 = copy1->is_Copy();
     if( !idx1 ) continue;       // Not a copy
 

@@ -191,7 +191,7 @@ abstract class DoublePipeline<E_IN>
                                        StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
                     @Override
                     public void accept(double t) {
                         downstream.accept(mapper.applyAsDouble(t));
@@ -208,9 +208,8 @@ abstract class DoublePipeline<E_IN>
                                                             StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<U> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<U>(sink) {
                     @Override
-                    @SuppressWarnings("unchecked")
                     public void accept(double t) {
                         downstream.accept(mapper.apply(t));
                     }
@@ -226,7 +225,7 @@ abstract class DoublePipeline<E_IN>
                                                    StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Integer> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Integer>(sink) {
                     @Override
                     public void accept(double t) {
                         downstream.accept(mapper.applyAsInt(t));
@@ -243,7 +242,7 @@ abstract class DoublePipeline<E_IN>
                                                     StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Long> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Long>(sink) {
                     @Override
                     public void accept(double t) {
                         downstream.accept(mapper.applyAsLong(t));
@@ -259,7 +258,7 @@ abstract class DoublePipeline<E_IN>
                                         StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
@@ -267,10 +266,11 @@ abstract class DoublePipeline<E_IN>
 
                     @Override
                     public void accept(double t) {
-                        // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
-                        DoubleStream result = mapper.apply(t);
-                        if (result != null)
-                            result.sequential().forEach(i -> downstream.accept(i));
+                        try (DoubleStream result = mapper.apply(t)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(i -> downstream.accept(i));
+                        }
                     }
                 };
             }
@@ -296,7 +296,7 @@ abstract class DoublePipeline<E_IN>
                                        StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
@@ -313,16 +313,16 @@ abstract class DoublePipeline<E_IN>
     }
 
     @Override
-    public final DoubleStream peek(DoubleConsumer consumer) {
-        Objects.requireNonNull(consumer);
+    public final DoubleStream peek(DoubleConsumer action) {
+        Objects.requireNonNull(action);
         return new StatelessOp<Double>(this, StreamShape.DOUBLE_VALUE,
                                        0) {
             @Override
             Sink<Double> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedDouble(sink) {
+                return new Sink.ChainedDouble<Double>(sink) {
                     @Override
                     public void accept(double t) {
-                        consumer.accept(t);
+                        action.accept(t);
                         downstream.accept(t);
                     }
                 };
@@ -436,14 +436,14 @@ abstract class DoublePipeline<E_IN>
     }
 
     @Override
-    public final <R> R collect(Supplier<R> resultFactory,
+    public final <R> R collect(Supplier<R> supplier,
                                ObjDoubleConsumer<R> accumulator,
                                BiConsumer<R, R> combiner) {
         BinaryOperator<R> operator = (left, right) -> {
             combiner.accept(left, right);
             return left;
         };
-        return evaluate(ReduceOps.makeDouble(resultFactory, accumulator, operator));
+        return evaluate(ReduceOps.makeDouble(supplier, accumulator, operator));
     }
 
     @Override

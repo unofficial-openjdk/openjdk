@@ -62,8 +62,8 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   bool       _synthetic_flag;
   int        _sde_length;
   char*      _sde_buffer;
-  Symbol*    _sourcefile;
-  Symbol*    _generic_signature;
+  u2         _sourcefile_index;
+  u2         _generic_signature_index;
 
   // Metadata created before the instance klass is created.  Must be deallocated
   // if not transferred to the InstanceKlass upon successful class loading
@@ -81,16 +81,16 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   Array<AnnotationArray*>* _fields_type_annotations;
   InstanceKlass*   _klass;  // InstanceKlass once created.
 
-  void set_class_synthetic_flag(bool x)           { _synthetic_flag = x; }
-  void set_class_sourcefile(Symbol* x)            { _sourcefile = x; }
-  void set_class_generic_signature(Symbol* x)     { _generic_signature = x; }
-  void set_class_sde_buffer(char* x, int len)     { _sde_buffer = x; _sde_length = len; }
+  void set_class_synthetic_flag(bool x)        { _synthetic_flag = x; }
+  void set_class_sourcefile_index(u2 x)        { _sourcefile_index = x; }
+  void set_class_generic_signature_index(u2 x) { _generic_signature_index = x; }
+  void set_class_sde_buffer(char* x, int len)  { _sde_buffer = x; _sde_length = len; }
 
   void init_parsed_class_attributes(ClassLoaderData* loader_data) {
     _loader_data = loader_data;
     _synthetic_flag = false;
-    _sourcefile = NULL;
-    _generic_signature = NULL;
+    _sourcefile_index = 0;
+    _generic_signature_index = 0;
     _sde_buffer = NULL;
     _sde_length = 0;
     // initialize the other flags too:
@@ -125,6 +125,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
       _method_LambdaForm_Compiled,
       _method_LambdaForm_Hidden,
       _sun_misc_Contended,
+      _field_Stable,
       _annotation_LIMIT
     };
     const Location _location;
@@ -143,14 +144,23 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
       assert((int)id >= 0 && (int)id < (int)_annotation_LIMIT, "oob");
       _annotations_present |= nth_bit((int)id);
     }
+
+    void remove_annotation(ID id) {
+      assert((int)id >= 0 && (int)id < (int)_annotation_LIMIT, "oob");
+      _annotations_present &= ~nth_bit((int)id);
+    }
+
     // Report if the annotation is present.
-    bool has_any_annotations() { return _annotations_present != 0; }
-    bool has_annotation(ID id) { return (nth_bit((int)id) & _annotations_present) != 0; }
+    bool has_any_annotations() const { return _annotations_present != 0; }
+    bool has_annotation(ID id) const { return (nth_bit((int)id) & _annotations_present) != 0; }
 
     void set_contended_group(u2 group) { _contended_group = group; }
-    u2 contended_group() { return _contended_group; }
+    u2 contended_group() const { return _contended_group; }
 
-    bool is_contended() { return has_annotation(_sun_misc_Contended); }
+    bool is_contended() const { return has_annotation(_sun_misc_Contended); }
+
+    void set_stable(bool stable) { set_annotation(_field_Stable); }
+    bool is_stable() const { return has_annotation(_field_Stable); }
   };
 
   // This class also doubles as a holder for metadata cleanup.

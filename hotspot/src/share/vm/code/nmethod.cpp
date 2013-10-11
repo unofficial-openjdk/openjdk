@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -93,18 +93,21 @@ HS_DTRACE_PROBE_DECL6(hotspot, compiled__method__unload,
 #endif
 
 bool nmethod::is_compiled_by_c1() const {
-  if (compiler() == NULL || method() == NULL)  return false;  // can happen during debug printing
-  if (is_native_method()) return false;
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_c1();
 }
 bool nmethod::is_compiled_by_c2() const {
-  if (compiler() == NULL || method() == NULL)  return false;  // can happen during debug printing
-  if (is_native_method()) return false;
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_c2();
 }
 bool nmethod::is_compiled_by_shark() const {
-  if (is_native_method()) return false;
-  assert(compiler() != NULL, "must be");
+  if (compiler() == NULL) {
+    return false;
+  }
   return compiler()->is_shark();
 }
 
@@ -459,7 +462,6 @@ void nmethod::init_defaults() {
   _state                      = alive;
   _marked_for_reclamation     = 0;
   _has_flushed_dependencies   = 0;
-  _speculatively_disconnected = 0;
   _has_unsafe_access          = 0;
   _has_method_handle_invokes  = 0;
   _lazy_critical_native       = 0;
@@ -478,7 +480,6 @@ void nmethod::init_defaults() {
   _osr_link                = NULL;
   _scavenge_root_link      = NULL;
   _scavenge_root_state     = 0;
-  _saved_nmethod_link      = NULL;
   _compiler                = NULL;
 
 #ifdef HAVE_DTRACE_H
@@ -683,10 +684,12 @@ nmethod::nmethod(
     _osr_entry_point         = NULL;
     _exception_cache         = NULL;
     _pc_desc_cache.reset_to(NULL);
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     code_buffer->copy_values_to(this);
     if (ScavengeRootsInCode && detect_scavenge_root_oops()) {
       CodeCache::add_scavenge_root_nmethod(this);
+      Universe::heap()->register_nmethod(this);
     }
     debug_only(verify_scavenge_root_oops());
     CodeCache::commit(this);
@@ -766,6 +769,7 @@ nmethod::nmethod(
     _osr_entry_point         = NULL;
     _exception_cache         = NULL;
     _pc_desc_cache.reset_to(NULL);
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     code_buffer->copy_values_to(this);
     debug_only(verify_scavenge_root_oops());
@@ -799,7 +803,7 @@ nmethod::nmethod(
 }
 #endif // def HAVE_DTRACE_H
 
-void* nmethod::operator new(size_t size, int nmethod_size) throw () {
+void* nmethod::operator new(size_t size, int nmethod_size) throw() {
   // Not critical, may return null if there is too little continuous memory
   return CodeCache::allocate(nmethod_size);
 }
@@ -838,6 +842,7 @@ nmethod::nmethod(
     _comp_level              = comp_level;
     _compiler                = compiler;
     _orig_pc_offset          = orig_pc_offset;
+    _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     // Section offsets
     _consts_offset           = content_offset()      + code_buffer->total_offset_of(code_buffer->consts());
@@ -881,6 +886,7 @@ nmethod::nmethod(
     dependencies->copy_to(this);
     if (ScavengeRootsInCode && detect_scavenge_root_oops()) {
       CodeCache::add_scavenge_root_nmethod(this);
+      Universe::heap()->register_nmethod(this);
     }
     debug_only(verify_scavenge_root_oops());
 
@@ -1171,7 +1177,7 @@ void nmethod::cleanup_inline_caches() {
 
 // This is a private interface with the sweeper.
 void nmethod::mark_as_seen_on_stack() {
-  assert(is_not_entrant(), "must be a non-entrant method");
+  assert(is_alive(), "Must be an alive method");
   // Set the traversal mark to ensure that the sweeper does 2
   // cleaning passes before moving to zombie.
   set_stack_traversal_mark(NMethodSweeper::traversal_count());
@@ -1256,7 +1262,7 @@ void nmethod::make_unloaded(BoolObjectClosure* is_alive, oop cause) {
 
   set_osr_link(NULL);
   //set_scavenge_root_link(NULL); // done by prune_scavenge_root_nmethods
-  NMethodSweeper::notify(this);
+  NMethodSweeper::notify();
 }
 
 void nmethod::invalidate_osr_method() {
@@ -1300,6 +1306,13 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
   methodHandle the_method(method());
   No_Safepoint_Verifier nsv;
 
+  // during patching, depending on the nmethod state we must notify the GC that
+  // code has been unloaded, unregistering it. We cannot do this right while
+  // holding the Patching_lock because we need to use the CodeCache_lock. This
+  // would be prone to deadlocks.
+  // This flag is used to remember whether we need to later lock and unregister.
+  bool nmethod_needs_unregister = false;
+
   {
     // invalidate osr nmethod before acquiring the patching lock since
     // they both acquire leaf locks and we don't want a deadlock.
@@ -1332,6 +1345,22 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
       inc_decompile_count();
     }
 
+    // If the state is becoming a zombie, signal to unregister the nmethod with
+    // the heap.
+    // This nmethod may have already been unloaded during a full GC.
+    if ((state == zombie) && !is_unloaded()) {
+      nmethod_needs_unregister = true;
+    }
+
+    // Must happen before state change. Otherwise we have a race condition in
+    // nmethod::can_not_entrant_be_converted(). I.e., a method can immediately
+    // transition its state from 'not_entrant' to 'zombie' without having to wait
+    // for stack scanning.
+    if (state == not_entrant) {
+      mark_as_seen_on_stack();
+      OrderAccess::storestore();
+    }
+
     // Change state
     _state = state;
 
@@ -1350,11 +1379,6 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
       HandleMark hm;
       method()->clear_code();
     }
-
-    if (state == not_entrant) {
-      mark_as_seen_on_stack();
-    }
-
   } // leave critical region under Patching_lock
 
   // When the nmethod becomes zombie it is no longer alive so the
@@ -1367,6 +1391,9 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
       // safepoint can sneak in, otherwise the oops used by the
       // dependency logic could have become stale.
       MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
+      if (nmethod_needs_unregister) {
+        Universe::heap()->unregister_nmethod(this);
+      }
       flush_dependencies(NULL);
     }
 
@@ -1382,6 +1409,9 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
     // nmethods aren't scanned for GC.
     _oops_are_stale = true;
 #endif
+     // the Method may be reclaimed by class unloading now that the
+     // nmethod is in zombie state
+    set_method(NULL);
   } else {
     assert(state == not_entrant, "other cases may need to be handled differently");
   }
@@ -1391,7 +1421,7 @@ bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
   }
 
   // Make sweeper aware that there is a zombie method that needs to be removed
-  NMethodSweeper::notify(this);
+  NMethodSweeper::notify();
 
   return true;
 }
@@ -1424,10 +1454,6 @@ void nmethod::flush() {
 
   if (on_scavenge_root_list()) {
     CodeCache::drop_scavenge_root_nmethod(this);
-  }
-
-  if (is_speculatively_disconnected()) {
-    CodeCache::remove_saved_code(this);
   }
 
 #ifdef SHARK
@@ -1817,21 +1843,10 @@ void nmethod::metadata_do(void f(Metadata*)) {
   if (_method != NULL) f(_method);
 }
 
-
-// This method is called twice during GC -- once while
-// tracing the "active" nmethods on thread stacks during
-// the (strong) marking phase, and then again when walking
-// the code cache contents during the weak roots processing
-// phase. The two uses are distinguished by means of the
-// 'do_strong_roots_only' flag, which is true in the first
-// case. We want to walk the weak roots in the nmethod
-// only in the second case. The weak roots in the nmethod
-// are the oops in the ExceptionCache and the InlineCache
-// oops.
-void nmethod::oops_do(OopClosure* f, bool do_strong_roots_only) {
+void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
   // make sure the oops ready to receive visitors
-  assert(!is_zombie() && !is_unloaded(),
-         "should not call follow on zombie or unloaded nmethod");
+  assert(allow_zombie || !is_zombie(), "should not call follow on zombie nmethod");
+  assert(!is_unloaded(), "should not call follow on unloaded nmethod");
 
   // If the method is not entrant or zombie then a JMP is plastered over the
   // first few bytes.  If an oop in the old code was there, that oop
@@ -1951,7 +1966,7 @@ public:
     if (!_detected_scavenge_root)  _print_nm->print_on(tty, "new scavenge root");
     tty->print_cr(""PTR_FORMAT"[offset=%d] detected scavengable oop "PTR_FORMAT" (found at "PTR_FORMAT")",
                   _print_nm, (int)((intptr_t)p - (intptr_t)_print_nm),
-                  (intptr_t)(*p), (intptr_t)p);
+                  (void *)(*p), (intptr_t)p);
     (*p)->print();
   }
 #endif //PRODUCT
@@ -2331,7 +2346,7 @@ public:
       _ok = false;
     }
     tty->print_cr("*** non-oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
-                  (intptr_t)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+                  (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
   }
   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
@@ -2452,7 +2467,7 @@ public:
       _ok = false;
     }
     tty->print_cr("*** scavengable oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
-                  (intptr_t)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+                  (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
     (*p)->print();
   }
   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }

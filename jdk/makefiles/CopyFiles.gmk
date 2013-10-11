@@ -292,8 +292,11 @@ endif
 JVMCFG_DIR := $(JDK_OUTPUTDIR)/lib$(OPENJDK_TARGET_CPU_LIBDIR)
 JVMCFG := $(JVMCFG_DIR)/jvm.cfg
 
+# To do: should this also support -zeroshark?
 
-ifeq ($(OPENJDK_TARGET_CPU_BITS),32)
+ifeq ($(OPENJDK_TARGET_CPU_BITS),64)
+  COPY_JVM_CFG_FILE := true
+else
   # On 32-bit machines we have three potential VMs: client, server and minimal.
   # Historically we usually have both client and server and so that is what the
   # committed jvm.cfg expects (including platform specific ergonomics switches
@@ -302,16 +305,21 @@ ifeq ($(OPENJDK_TARGET_CPU_BITS),32)
   # The main problem is deciding whether to use aliases for the VMs that are not
   # present and the current position is that we add aliases for client and server, but
   # not for minimal.
-  # To do: should this also support, -zero and -zeroshark?
-
   CLIENT_AND_SERVER := $(and $(findstring true,$(JVM_VARIANT_SERVER)),$(findstring true,$(JVM_VARIANT_CLIENT)))
-
   ifeq ($(CLIENT_AND_SERVER), true)
-    # Use the committed jvm.cfg for this 32 bit setup (the minimal
-    # VM is already KNOWN on platforms that potentially support it)
+    COPY_JVM_CFG_FILE := true
+  else
+    # For zero, the default jvm.cfg file is sufficient
+    ifeq ($(JVM_VARIANT_ZERO), true)
+      COPY_JVM_CFG_FILE := true
+    endif
+  endif
+endif
+
+ifeq ($(COPY_JVM_CFG_FILE), true)
     $(JVMCFG): $(JVMCFG_SRC)
 	$(call install-file)
-  else
+else
     $(JVMCFG):
 	$(MKDIR) -p $(@D)
 	$(RM) $(@)
@@ -338,12 +346,6 @@ ifeq ($(OPENJDK_TARGET_CPU_BITS),32)
             endif
         endif
     endif
-  endif
-
-else
-    # Use the default jvm.cfg for this 64 bit setup.
-    $(JVMCFG): $(JVMCFG_SRC)
-	$(call install-file)
 endif
 
 COPY_FILES += $(JVMCFG)
@@ -380,10 +382,15 @@ COPY_FILES += $(CACERTS_DST)
 
 ##########################################################################################
 
+BLACKLISTED_CERTS_SRC := $(JDK_TOPDIR)/src/share/lib/security/blacklisted.certs
+BLACKLISTED_CERTS_DST := $(JDK_OUTPUTDIR)/lib/security/blacklisted.certs
+
 ifndef OPENJDK
 
 BLACKLIST_SRC   := $(JDK_TOPDIR)/src/closed/share/lib/security/blacklist
 BLACKLIST_DST   := $(JDK_OUTPUTDIR)/lib/security/blacklist
+
+BLACKLISTED_CERTS_SRC += $(wildcard $(JDK_TOPDIR)/src/closed/share/lib/security/blacklisted.certs)
 
 TRUSTEDLIBS_SRC := $(JDK_TOPDIR)/src/closed/share/lib/security/trusted.libraries
 TRUSTEDLIBS_DST := $(JDK_OUTPUTDIR)/lib/security/trusted.libraries
@@ -399,6 +406,20 @@ $(TRUSTEDLIBS_DST): $(TRUSTEDLIBS_SRC)
 COPY_FILES += $(TRUSTEDLIBS_DST)
 
 endif
+
+$(BLACKLISTED_CERTS_DST): $(BLACKLISTED_CERTS_SRC)
+	$(MKDIR) -p $(@D)
+	$(CAT) $^ | $(SED) '/^$$/d' | $(SORT) | $(UNIQ) > $@.tmp
+	$(GREP) -i Algorithm $@.tmp > $@
+	if [ `$(SED) -n -e "$$=" $@` != 1 ]; then \
+	   $(ECHO) "Different algorithms defined in $^"; \
+	   $(RM) $@ $@.tmp; \
+	   false; \
+	fi
+	$(GREP) -iv Algorithm $@.tmp >> $@
+	$(RM) $@.tmp
+
+COPY_FILES += $(BLACKLISTED_CERTS_DST)
 
 ##########################################################################################
 

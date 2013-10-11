@@ -25,12 +25,9 @@
 
 package jdk.nashorn.internal.runtime;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
 import jdk.nashorn.api.scripting.NashornException;
 import jdk.nashorn.internal.scripts.JS;
 
@@ -40,16 +37,9 @@ import jdk.nashorn.internal.scripts.JS;
 public final class ECMAErrors {
     private static final String MESSAGES_RESOURCE = "jdk.nashorn.internal.runtime.resources.Messages";
 
-    // Without do privileged, under security manager messages can not be loaded.
     private static final ResourceBundle MESSAGES_BUNDLE;
     static {
-        MESSAGES_BUNDLE = AccessController.doPrivileged(
-        new PrivilegedAction<ResourceBundle>() {
-            @Override
-            public ResourceBundle run() {
-                return ResourceBundle.getBundle(MESSAGES_RESOURCE, Locale.getDefault());
-            }
-        });
+        MESSAGES_BUNDLE = ResourceBundle.getBundle(MESSAGES_RESOURCE, Locale.getDefault());
     }
 
     /** We assume that compiler generates script classes into the known package. */

@@ -113,11 +113,18 @@ public final class IDN {
         int p = 0, q = 0;
         StringBuffer out = new StringBuffer();
 
+        if (isRootLabel(input)) {
+            return ".";
+        }
+
         while (p < input.length()) {
             q = searchDots(input, p);
             out.append(toASCIIInternal(input.substring(p, q),  flag));
+            if (q != (input.length())) {
+               // has more labels, or keep the trailing dot as at present
+               out.append('.');
+            }
             p = q + 1;
-            if (p < input.length()) out.append('.');
         }
 
         return out.toString();
@@ -167,11 +174,18 @@ public final class IDN {
         int p = 0, q = 0;
         StringBuffer out = new StringBuffer();
 
+        if (isRootLabel(input)) {
+            return ".";
+        }
+
         while (p < input.length()) {
             q = searchDots(input, p);
             out.append(toUnicodeInternal(input.substring(p, q),  flag));
+            if (q != (input.length())) {
+               // has more labels, or keep the trailing dot as at present
+               out.append('.');
+            }
             p = q + 1;
-            if (p < input.length()) out.append('.');
         }
 
         return out.toString();
@@ -263,6 +277,13 @@ public final class IDN {
             dest = new StringBuffer(label);
         }
 
+        // step 8, move forward to check the smallest number of the code points
+        // the length must be inside 1..63
+        if (dest.length() == 0) {
+            throw new IllegalArgumentException(
+                        "Empty label is not a legal name");
+        }
+
         // step 3
         // Verify the absence of non-LDH ASCII code points
         //   0..0x2c, 0x2e..0x2f, 0x3a..0x40, 0x5b..0x60, 0x7b..0x7f
@@ -271,13 +292,17 @@ public final class IDN {
         if (useSTD3ASCIIRules) {
             for (int i = 0; i < dest.length(); i++) {
                 int c = dest.charAt(i);
-                if (!isLDHChar(c)) {
-                    throw new IllegalArgumentException("Contains non-LDH characters");
+                if (isNonLDHAsciiCodePoint(c)) {
+                    throw new IllegalArgumentException(
+                        "Contains non-LDH ASCII characters");
                 }
             }
 
-            if (dest.charAt(0) == '-' || dest.charAt(dest.length() - 1) == '-') {
-                throw new IllegalArgumentException("Has leading or trailing hyphen");
+            if (dest.charAt(0) == '-' ||
+                dest.charAt(dest.length() - 1) == '-') {
+
+                throw new IllegalArgumentException(
+                        "Has leading or trailing hyphen");
             }
         }
 
@@ -311,7 +336,7 @@ public final class IDN {
 
         // step 8
         // the length must be inside 1..63
-        if(dest.length() > MAX_LABEL_LENGTH){
+        if (dest.length() > MAX_LABEL_LENGTH) {
             throw new IllegalArgumentException("The label in the input is too long");
         }
 
@@ -380,25 +405,19 @@ public final class IDN {
     //
     // LDH stands for "letter/digit/hyphen", with characters restricted to the
     // 26-letter Latin alphabet <A-Z a-z>, the digits <0-9>, and the hyphen
-    // <->
-    // non-LDH = 0..0x2C, 0x2E..0x2F, 0x3A..0x40, 0x56..0x60, 0x7B..0x7F
+    // <->.
+    // Non LDH refers to characters in the ASCII range, but which are not
+    // letters, digits or the hypen.
     //
-    private static boolean isLDHChar(int ch){
-        // high runner case
-        if(ch > 0x007A){
-            return false;
-        }
-        //['-' '0'..'9' 'A'..'Z' 'a'..'z']
-        if((ch == 0x002D) ||
-           (0x0030 <= ch && ch <= 0x0039) ||
-           (0x0041 <= ch && ch <= 0x005A) ||
-           (0x0061 <= ch && ch <= 0x007A)
-          ){
-            return true;
-        }
-        return false;
+    // non-LDH = 0..0x2C, 0x2E..0x2F, 0x3A..0x40, 0x5B..0x60, 0x7B..0x7F
+    //
+    private static boolean isNonLDHAsciiCodePoint(int ch){
+        return (0x0000 <= ch && ch <= 0x002C) ||
+               (0x002E <= ch && ch <= 0x002F) ||
+               (0x003A <= ch && ch <= 0x0040) ||
+               (0x005B <= ch && ch <= 0x0060) ||
+               (0x007B <= ch && ch <= 0x007F);
     }
-
 
     //
     // search dots in a string and return the index of that character;
@@ -409,8 +428,7 @@ public final class IDN {
     private static int searchDots(String s, int start) {
         int i;
         for (i = start; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '.' || c == '\u3002' || c == '\uFF0E' || c == '\uFF61') {
+            if (isLabelSeparator(s.charAt(i))) {
                 break;
             }
         }
@@ -418,6 +436,19 @@ public final class IDN {
         return i;
     }
 
+    //
+    // to check if a string is a root label, ".".
+    //
+    private static boolean isRootLabel(String s) {
+        return (s.length() == 1 && isLabelSeparator(s.charAt(0)));
+    }
+
+    //
+    // to check if a character is a label separator, i.e. a dot character.
+    //
+    private static boolean isLabelSeparator(char c) {
+        return (c == '.' || c == '\u3002' || c == '\uFF0E' || c == '\uFF61');
+    }
 
     //
     // to check if a string only contains US-ASCII code point

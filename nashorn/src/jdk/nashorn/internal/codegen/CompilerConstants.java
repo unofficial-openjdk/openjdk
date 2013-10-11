@@ -102,8 +102,12 @@ public enum CompilerConstants {
     /** the varargs variable when necessary */
     VARARGS(":varargs", Object[].class),
 
-    /** the arguments vector when necessary and the slot */
-    ARGUMENTS("arguments", ScriptObject.class, 2),
+    /** the arguments variable (visible to function body). Initially set to ARGUMENTS, but can be reassigned by code in
+     * the function body.*/
+    ARGUMENTS_VAR("arguments", Object.class),
+
+    /** the internal arguments object, when necessary (not visible to scripts, can't be reassigned). */
+    ARGUMENTS(":arguments", ScriptObject.class),
 
     /** prefix for iterators for for (x in ...) */
     ITERATOR_PREFIX(":i", Iterator.class),
@@ -489,20 +493,6 @@ public enum CompilerConstants {
     }
 
     /**
-     * Create a static call, looking up the method handle for it at the same time
-     *
-     * @param clazz  the class
-     * @param name   the name of the method
-     * @param rtype  the return type of the method
-     * @param ptypes the parameter types of the method
-     *
-     * @return the call object representing the static call
-     */
-    public static Call staticCall(final Class<?> clazz, final String name, final Class<?> rtype, final Class<?>... ptypes) {
-        return staticCall(MethodHandles.publicLookup(), clazz, name, rtype, ptypes);
-    }
-
-    /**
      * Create a static call, given an explicit lookup, looking up the method handle for it at the same time
      *
      * @param lookup the lookup
@@ -520,20 +510,6 @@ public enum CompilerConstants {
                 return method.invokestatic(className, name, descriptor);
             }
         };
-    }
-
-    /**
-     * Create a virtual call, looking up the method handle for it at the same time
-     *
-     * @param clazz  the class
-     * @param name   the name of the method
-     * @param rtype  the return type of the method
-     * @param ptypes the parameter types of the method
-     *
-     * @return the call object representing the virtual call
-     */
-    public static Call virtualCall(final Class<?> clazz, final String name, final Class<?> rtype, final Class<?>... ptypes) {
-        return virtualCall(MethodHandles.publicLookup(), clazz, name, rtype, ptypes);
     }
 
     /**

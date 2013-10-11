@@ -23,6 +23,7 @@
 
 /*
  * @test DeoptimizeMethodTest
+ * @bug 8006683 8007288 8022832
  * @library /testlibrary /testlibrary/whitebox
  * @build DeoptimizeMethodTest
  * @run main ClassFileInstaller sun.hotspot.WhiteBox
@@ -52,9 +53,15 @@ public class DeoptimizeMethodTest extends CompilerWhiteBoxTest {
      */
     @Override
     protected void test() throws Exception {
+        if (testCase.isOsr && CompilerWhiteBoxTest.MODE.startsWith(
+                "compiled ")) {
+          System.err.printf("Warning: %s is not applicable in %s%n",
+                testCase.name(), CompilerWhiteBoxTest.MODE);
+          return;
+        }
         compile();
         checkCompiled();
-        WHITE_BOX.deoptimizeMethod(method);
+        deoptimize();
         checkNotCompiled();
     }
 }

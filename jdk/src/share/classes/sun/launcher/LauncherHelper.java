@@ -51,6 +51,7 @@ import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Normalizer;
 import java.util.ResourceBundle;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -65,13 +66,10 @@ import java.util.TreeSet;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import sun.misc.Version;
-import sun.misc.URLClassPath;
 
 public enum LauncherHelper {
     INSTANCE;
     private static final String MAIN_CLASS = "Main-Class";
-    private static final String PROFILE    = "Profile";
 
     private static StringBuilder outBuf = new StringBuilder();
 
@@ -415,27 +413,6 @@ public enum LauncherHelper {
             }
 
             /*
-             * If this is not a full JRE then the Profile attribute must be
-             * present with the Main-Class attribute so as to indicate the minimum
-             * profile required. Note that we need to suppress checking of the Profile
-             * attribute after we detect an error. This is because the abort may
-             * need to lookup resources and this may involve opening additional JAR
-             * files that would result in errors that suppress the main error.
-             */
-            String profile = mainAttrs.getValue(PROFILE);
-            if (profile == null) {
-                if (!Version.isFullJre()) {
-                    URLClassPath.suppressProfileCheckForLauncher();
-                    abort(null, "java.launcher.jar.error4", jarname);
-                }
-            } else {
-                if (!Version.supportsProfile(profile)) {
-                    URLClassPath.suppressProfileCheckForLauncher();
-                    abort(null, "java.launcher.jar.error5", profile, jarname);
-                }
-            }
-
-            /*
              * Hand off to FXHelper if it detects a JavaFX application
              * This must be done after ensuring a Main-Class entry
              * exists to enforce compliance with the jar specification
@@ -517,7 +494,19 @@ public enum LauncherHelper {
         try {
             mainClass = scloader.loadClass(cn);
         } catch (NoClassDefFoundError | ClassNotFoundException cnfe) {
-            abort(cnfe, "java.launcher.cls.error1", cn);
+            if (System.getProperty("os.name", "").contains("OS X")
+                && Normalizer.isNormalized(cn, Normalizer.Form.NFD)) {
+                try {
+                    // On Mac OS X since all names with diacretic symbols are given as decomposed it
+                    // is possible that main class name comes incorrectly from the command line
+                    // and we have to re-compose it
+                    mainClass = scloader.loadClass(Normalizer.normalize(cn, Normalizer.Form.NFC));
+                } catch (NoClassDefFoundError | ClassNotFoundException cnfe1) {
+                    abort(cnfe, "java.launcher.cls.error1", cn);
+                }
+            } else {
+                abort(cnfe, "java.launcher.cls.error1", cn);
+            }
         }
         // set to mainClass
         appClass = mainClass;

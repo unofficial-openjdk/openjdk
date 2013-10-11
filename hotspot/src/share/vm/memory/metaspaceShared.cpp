@@ -52,7 +52,6 @@ void MetaspaceShared::serialize(SerializeClosure* soc) {
   int tag = 0;
   soc->do_tag(--tag);
 
-  assert(!UseCompressedOops, "UseCompressedOops doesn't work with shared archive");
   // Verify the sizes of various metadata in the system.
   soc->do_tag(sizeof(Method));
   soc->do_tag(sizeof(ConstMethod));
@@ -104,9 +103,10 @@ static void calculate_fingerprints() {
     if (k->oop_is_instance()) {
       InstanceKlass* ik = InstanceKlass::cast(k);
       for (int i = 0; i < ik->methods()->length(); i++) {
-        ResourceMark rm;
         Method* m = ik->methods()->at(i);
-        (new Fingerprinter(m))->fingerprint();
+        Fingerprinter fp(m);
+        // The side effect of this call sets method's fingerprint field.
+        fp.fingerprint();
       }
     }
   }

@@ -32,9 +32,9 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
-
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.internal.dynalink.support.TypeUtilities;
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Function;
 import jdk.nashorn.internal.objects.annotations.ScriptClass;
@@ -44,6 +44,8 @@ import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.ListAdapter;
 import jdk.nashorn.internal.runtime.PropertyMap;
 import jdk.nashorn.internal.runtime.ScriptObject;
+import jdk.nashorn.internal.runtime.ScriptRuntime;
+import jdk.nashorn.internal.runtime.linker.Bootstrap;
 import jdk.nashorn.internal.runtime.linker.JavaAdapterFactory;
 
 /**
@@ -288,7 +290,9 @@ public final class NativeJava {
             return null;
         }
 
-        Global.checkObject(obj);
+        if (!(obj instanceof ScriptObject) && !(obj instanceof JSObject)) {
+            throw typeError("not.an.object", ScriptRuntime.safeToString(obj));
+        }
 
         final Class<?> targetClass;
         if(objType == UNDEFINED) {
@@ -304,11 +308,11 @@ public final class NativeJava {
         }
 
         if(targetClass.isArray()) {
-            return ((ScriptObject)obj).getArray().asArrayOfType(targetClass.getComponentType());
+            return JSType.toJavaArray(obj, targetClass.getComponentType());
         }
 
         if(targetClass == List.class || targetClass == Deque.class) {
-            return new ListAdapter((ScriptObject)obj);
+            return ListAdapter.create(obj);
         }
 
         throw typeError("unsupported.java.to.type", targetClass.getName());
@@ -538,5 +542,26 @@ public final class NativeJava {
             throw typeError("extend.expects.java.types");
         }
         return JavaAdapterFactory.getAdapterClassFor(stypes, classOverrides);
+    }
+
+    /**
+     * When given an object created using {@code Java.extend()} or equivalent mechanism (that is, any JavaScript-to-Java
+     * adapter), returns an object that can be used to invoke superclass methods on that object. E.g.:
+     * <pre>
+     * var cw = new FilterWriterAdapter(sw) {
+     *     write: function(s, off, len) {
+     *         s = capitalize(s, off, len)
+     *         cw_super.write(s, 0, s.length())
+     *     }
+     * }
+     * var cw_super = Java.super(cw)
+     * </pre>
+     * @param self the {@code Java} object itself - not used.
+     * @param adapter the original Java adapter instance for which the super adapter is created.
+     * @return a super adapter for the original adapter
+     */
+    @Function(attributes = Attribute.NOT_ENUMERABLE, where = Where.CONSTRUCTOR, name="super")
+    public static Object _super(final Object self, final Object adapter) {
+        return Bootstrap.createSuperAdapter(adapter);
     }
 }

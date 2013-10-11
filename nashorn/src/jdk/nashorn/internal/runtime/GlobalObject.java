@@ -26,14 +26,28 @@
 package jdk.nashorn.internal.runtime;
 
 import java.lang.invoke.MethodHandle;
+import java.util.concurrent.Callable;
 import jdk.internal.dynalink.linker.GuardedInvocation;
 import jdk.internal.dynalink.linker.LinkRequest;
+import jdk.nashorn.internal.runtime.linker.InvokeByName;
 
 /**
  * Runtime interface to the global scope objects.
  */
 
 public interface GlobalObject {
+    /**
+     * Is this global of the given Context?
+     * @return true if this global belongs to the given Context
+     */
+    public boolean isOfContext(Context context);
+
+    /**
+     * Does this global belong to a strict Context?
+     * @return true if this global belongs to a strict Context
+     */
+    public boolean isStrictContext();
+
     /**
      * Initialize standard builtin objects like "Object", "Array", "Function" etc.
      * as well as our extension builtin objects like "Java", "JSAdapter" as properties
@@ -210,4 +224,20 @@ public interface GlobalObject {
      * @param clazz compiled Class object for the source
      */
     public void cacheClass(Source source, Class<?> clazz);
+
+    /**
+     * Get cached InvokeByName object for the given key
+     * @param key key to be associated with InvokeByName object
+     * @param creator if InvokeByName is absent 'creator' is called to make one (lazy init)
+     * @return InvokeByName object associated with the key.
+     */
+    public InvokeByName getInvokeByName(final Object key, final Callable<InvokeByName> creator);
+
+    /**
+     * Get cached dynamic method handle for the given key
+     * @param key key to be associated with dynamic method handle
+     * @param creator if method handle is absent 'creator' is called to make one (lazy init)
+     * @return dynamic method handle associated with the key.
+     */
+    public MethodHandle getDynamicInvoker(final Object key, final Callable<MethodHandle> creator);
 }

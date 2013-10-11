@@ -876,8 +876,6 @@ JVM_ENTRY(jobject, jmm_GetMemoryUsage(JNIEnv* env, jboolean heap))
       total_used += u.used();
       total_committed += u.committed();
 
-      // if any one of the memory pool has undefined init_size or max_size,
-      // set it to -1
       if (u.init_size() == (size_t)-1) {
         has_undefined_init_size = true;
       }
@@ -892,6 +890,15 @@ JVM_ENTRY(jobject, jmm_GetMemoryUsage(JNIEnv* env, jboolean heap))
         total_max += u.max_size();
       }
     }
+  }
+
+  // if any one of the memory pool has undefined init_size or max_size,
+  // set it to -1
+  if (has_undefined_init_size) {
+    total_init = (size_t)-1;
+  }
+  if (has_undefined_max_size) {
+    total_max = (size_t)-1;
   }
 
   MemoryUsage usage((heap ? InitialHeapSize : total_init),
@@ -1636,9 +1643,13 @@ JVM_ENTRY(jobjectArray, jmm_GetVMGlobalNames(JNIEnv *env))
   int num_entries = 0;
   for (int i = 0; i < nFlags; i++) {
     Flag* flag = &Flag::flags[i];
+    // Exclude notproduct and develop flags in product builds.
+    if (flag->is_constant_in_binary()) {
+      continue;
+    }
     // Exclude the locked (experimental, diagnostic) flags
     if (flag->is_unlocked() || flag->is_unlocker()) {
-      Handle s = java_lang_String::create_from_str(flag->name, CHECK_0);
+      Handle s = java_lang_String::create_from_str(flag->_name, CHECK_0);
       flags_ah->obj_at_put(num_entries, s());
       num_entries++;
     }
@@ -1662,7 +1673,7 @@ JVM_END
 bool add_global_entry(JNIEnv* env, Handle name, jmmVMGlobal *global, Flag *flag, TRAPS) {
   Handle flag_name;
   if (name() == NULL) {
-    flag_name = java_lang_String::create_from_str(flag->name, CHECK_false);
+    flag_name = java_lang_String::create_from_str(flag->_name, CHECK_false);
   } else {
     flag_name = name;
   }
@@ -1691,23 +1702,23 @@ bool add_global_entry(JNIEnv* env, Handle name, jmmVMGlobal *global, Flag *flag,
 
   global->writeable = flag->is_writeable();
   global->external = flag->is_external();
-  switch (flag->origin) {
-    case DEFAULT:
+  switch (flag->get_origin()) {
+    case Flag::DEFAULT:
       global->origin = JMM_VMGLOBAL_ORIGIN_DEFAULT;
       break;
-    case COMMAND_LINE:
+    case Flag::COMMAND_LINE:
       global->origin = JMM_VMGLOBAL_ORIGIN_COMMAND_LINE;
       break;
-    case ENVIRON_VAR:
+    case Flag::ENVIRON_VAR:
       global->origin = JMM_VMGLOBAL_ORIGIN_ENVIRON_VAR;
       break;
-    case CONFIG_FILE:
+    case Flag::CONFIG_FILE:
       global->origin = JMM_VMGLOBAL_ORIGIN_CONFIG_FILE;
       break;
-    case MANAGEMENT:
+    case Flag::MANAGEMENT:
       global->origin = JMM_VMGLOBAL_ORIGIN_MANAGEMENT;
       break;
-    case ERGONOMIC:
+    case Flag::ERGONOMIC:
       global->origin = JMM_VMGLOBAL_ORIGIN_ERGONOMIC;
       break;
     default:
@@ -1774,6 +1785,10 @@ JVM_ENTRY(jint, jmm_GetVMGlobals(JNIEnv *env,
     int num_entries = 0;
     for (int i = 0; i < nFlags && num_entries < count;  i++) {
       Flag* flag = &Flag::flags[i];
+      // Exclude notproduct and develop flags in product builds.
+      if (flag->is_constant_in_binary()) {
+        continue;
+      }
       // Exclude the locked (diagnostic, experimental) flags
       if ((flag->is_unlocked() || flag->is_unlocker()) &&
           add_global_entry(env, null_h, &globals[num_entries], flag, THREAD)) {
@@ -1806,23 +1821,23 @@ JVM_ENTRY(void, jmm_SetVMGlobal(JNIEnv *env, jstring flag_name, jvalue new_value
   bool succeed;
   if (flag->is_bool()) {
     bool bvalue = (new_value.z == JNI_TRUE ? true : false);
-    succeed = CommandLineFlags::boolAtPut(name, &bvalue, MANAGEMENT);
+    succeed = CommandLineFlags::boolAtPut(name, &bvalue, Flag::MANAGEMENT);
   } else if (flag->is_intx()) {
     intx ivalue = (intx)new_value.j;
-    succeed = CommandLineFlags::intxAtPut(name, &ivalue, MANAGEMENT);
+    succeed = CommandLineFlags::intxAtPut(name, &ivalue, Flag::MANAGEMENT);
   } else if (flag->is_uintx()) {
     uintx uvalue = (uintx)new_value.j;
-    succeed = CommandLineFlags::uintxAtPut(name, &uvalue, MANAGEMENT);
+    succeed = CommandLineFlags::uintxAtPut(name, &uvalue, Flag::MANAGEMENT);
   } else if (flag->is_uint64_t()) {
     uint64_t uvalue = (uint64_t)new_value.j;
-    succeed = CommandLineFlags::uint64_tAtPut(name, &uvalue, MANAGEMENT);
+    succeed = CommandLineFlags::uint64_tAtPut(name, &uvalue, Flag::MANAGEMENT);
   } else if (flag->is_ccstr()) {
     oop str = JNIHandles::resolve_external_guard(new_value.l);
     if (str == NULL) {
       THROW(vmSymbols::java_lang_NullPointerException());
     }
     ccstr svalue = java_lang_String::as_utf8_string(str);
-    succeed = CommandLineFlags::ccstrAtPut(name, &svalue, MANAGEMENT);
+    succeed = CommandLineFlags::ccstrAtPut(name, &svalue, Flag::MANAGEMENT);
   }
   assert(succeed, "Setting flag should succeed");
 JVM_END

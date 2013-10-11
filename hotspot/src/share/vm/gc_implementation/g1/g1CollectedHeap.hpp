@@ -31,6 +31,7 @@
 #include "gc_implementation/g1/g1HRPrinter.hpp"
 #include "gc_implementation/g1/g1MonitoringSupport.hpp"
 #include "gc_implementation/g1/g1RemSet.hpp"
+#include "gc_implementation/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc_implementation/g1/g1YCTypes.hpp"
 #include "gc_implementation/g1/heapRegionSeq.hpp"
 #include "gc_implementation/g1/heapRegionSets.hpp"
@@ -46,6 +47,7 @@
 // may combine concurrent marking with parallel, incremental compaction of
 // heap subsets that will yield large amounts of garbage.
 
+// Forward declarations
 class HeapRegion;
 class HRRSCleanupTask;
 class GenerationSpec;
@@ -69,6 +71,7 @@ class STWGCTimer;
 class G1NewTracer;
 class G1OldTracer;
 class EvacuationFailedInfo;
+class nmethod;
 
 typedef OverflowTaskQueue<StarTask, mtGC>         RefToScanQueue;
 typedef GenericTaskQueueSet<RefToScanQueue, mtGC> RefToScanQueueSet;
@@ -163,18 +166,6 @@ public:
     : G1AllocRegion("Mutator Alloc Region", false /* bot_updates */) { }
 };
 
-// The G1 STW is alive closure.
-// An instance is embedded into the G1CH and used as the
-// (optional) _is_alive_non_header closure in the STW
-// reference processor. It is also extensively used during
-// reference processing during STW evacuation pauses.
-class G1STWIsAliveClosure: public BoolObjectClosure {
-  G1CollectedHeap* _g1;
-public:
-  G1STWIsAliveClosure(G1CollectedHeap* g1) : _g1(g1) {}
-  bool do_object_b(oop p);
-};
-
 class SurvivorGCAllocRegion : public G1AllocRegion {
 protected:
   virtual HeapRegion* allocate_new_region(size_t word_size, bool force);
@@ -191,6 +182,18 @@ protected:
 public:
   OldGCAllocRegion()
   : G1AllocRegion("Old GC Alloc Region", true /* bot_updates */) { }
+};
+
+// The G1 STW is alive closure.
+// An instance is embedded into the G1CH and used as the
+// (optional) _is_alive_non_header closure in the STW
+// reference processor. It is also extensively used during
+// reference processing during STW evacuation pauses.
+class G1STWIsAliveClosure: public BoolObjectClosure {
+  G1CollectedHeap* _g1;
+public:
+  G1STWIsAliveClosure(G1CollectedHeap* g1) : _g1(g1) {}
+  bool do_object_b(oop p);
 };
 
 class RefineCardTableEntryClosure;
@@ -701,7 +704,7 @@ public:
     if (_g1_committed.contains((HeapWord*) obj)) {
       // no need to subtract the bottom of the heap from obj,
       // _in_cset_fast_test is biased
-      uintx index = (uintx) obj >> HeapRegion::LogOfHRGrainBytes;
+      uintx index = cast_from_oop<uintx>(obj) >> HeapRegion::LogOfHRGrainBytes;
       bool ret = _in_cset_fast_test[index];
       // let's make sure the result is consistent with what the slower
       // test returns
@@ -774,9 +777,10 @@ protected:
   // it has to be read while holding the Heap_lock. Currently, both
   // methods that call do_collection_pause() release the Heap_lock
   // before the call, so it's easy to read gc_count_before just before.
-  HeapWord* do_collection_pause(size_t       word_size,
-                                unsigned int gc_count_before,
-                                bool*        succeeded);
+  HeapWord* do_collection_pause(size_t         word_size,
+                                unsigned int   gc_count_before,
+                                bool*          succeeded,
+                                GCCause::Cause gc_cause);
 
   // The guts of the incremental collection pause, executed by the vm
   // thread. It returns false if it is unable to do the collection due
@@ -788,8 +792,6 @@ protected:
 
   // The g1 remembered set of the heap.
   G1RemSet* _g1_rem_set;
-  // And it's mod ref barrier set, used to track updates for the above.
-  ModRefBarrierSet* _mr_bs;
 
   // A set of cards that cover the objects for which the Rsets should be updated
   // concurrently after the collection.
@@ -1089,6 +1091,9 @@ public:
   // specified by the policy object.
   jint initialize();
 
+  // Return the (conservative) maximum heap alignment for any G1 heap
+  static size_t conservative_max_heap_alignment();
+
   // Initialize weak reference processing.
   virtual void ref_processing_init();
 
@@ -1121,7 +1126,6 @@ public:
 
   // The rem set and barrier set.
   G1RemSet* g1_rem_set() const { return _g1_rem_set; }
-  ModRefBarrierSet* mr_bs() const { return _mr_bs; }
 
   unsigned get_gc_time_stamp() {
     return _gc_time_stamp;
@@ -1340,6 +1344,10 @@ public:
 
   virtual bool is_in_closed_subset(const void* p) const;
 
+  G1SATBCardTableModRefBS* g1_barrier_set() {
+    return (G1SATBCardTableModRefBS*) barrier_set();
+  }
+
   // This resets the card table to all zeros.  It is used after
   // a collection pause which used the card table to claim cards.
   void cleanUpCardTable();
@@ -1549,42 +1557,6 @@ public:
 
   virtual jlong millis_since_last_gc();
 
-  // Perform any cleanup actions necessary before allowing a verification.
-  virtual void prepare_for_verify();
-
-  // Perform verification.
-
-  // vo == UsePrevMarking  -> use "prev" marking information,
-  // vo == UseNextMarking -> use "next" marking information
-  // vo == UseMarkWord    -> use the mark word in the object header
-  //
-  // NOTE: Only the "prev" marking information is guaranteed to be
-  // consistent most of the time, so most calls to this should use
-  // vo == UsePrevMarking.
-  // Currently, there is only one case where this is called with
-  // vo == UseNextMarking, which is to verify the "next" marking
-  // information at the end of remark.
-  // Currently there is only one place where this is called with
-  // vo == UseMarkWord, which is to verify the marking during a
-  // full GC.
-  void verify(bool silent, VerifyOption vo);
-
-  // Override; it uses the "prev" marking information
-  virtual void verify(bool silent);
-
-  virtual void print_on(outputStream* st) const;
-  virtual void print_extended_on(outputStream* st) const;
-  virtual void print_on_error(outputStream* st) const;
-
-  virtual void print_gc_threads_on(outputStream* st) const;
-  virtual void gc_threads_do(ThreadClosure* tc) const;
-
-  // Override
-  void print_tracing_info() const;
-
-  // The following two methods are helpful for debugging RSet issues.
-  void print_cset_rsets() PRODUCT_RETURN;
-  void print_all_rsets() PRODUCT_RETURN;
 
   // Convenience function to be used in situations where the heap type can be
   // asserted to be this type.
@@ -1661,13 +1633,86 @@ public:
     else return is_obj_ill(obj, hr);
   }
 
+  bool allocated_since_marking(oop obj, HeapRegion* hr, VerifyOption vo);
+  HeapWord* top_at_mark_start(HeapRegion* hr, VerifyOption vo);
+  bool is_marked(oop obj, VerifyOption vo);
+  const char* top_at_mark_start_str(VerifyOption vo);
+
+  ConcurrentMark* concurrent_mark() const { return _cm; }
+
+  // Refinement
+
+  ConcurrentG1Refine* concurrent_g1_refine() const { return _cg1r; }
+
+  // The dirty cards region list is used to record a subset of regions
+  // whose cards need clearing. The list if populated during the
+  // remembered set scanning and drained during the card table
+  // cleanup. Although the methods are reentrant, population/draining
+  // phases must not overlap. For synchronization purposes the last
+  // element on the list points to itself.
+  HeapRegion* _dirty_cards_region_list;
+  void push_dirty_cards_region(HeapRegion* hr);
+  HeapRegion* pop_dirty_cards_region();
+
+  // Optimized nmethod scanning support routines
+
+  // Register the given nmethod with the G1 heap
+  virtual void register_nmethod(nmethod* nm);
+
+  // Unregister the given nmethod from the G1 heap
+  virtual void unregister_nmethod(nmethod* nm);
+
+  // Migrate the nmethods in the code root lists of the regions
+  // in the collection set to regions in to-space. In the event
+  // of an evacuation failure, nmethods that reference objects
+  // that were not successfullly evacuated are not migrated.
+  void migrate_strong_code_roots();
+
+  // During an initial mark pause, mark all the code roots that
+  // point into regions *not* in the collection set.
+  void mark_strong_code_roots(uint worker_id);
+
+  // Rebuild the stong code root lists for each region
+  // after a full GC
+  void rebuild_strong_code_roots();
+
+  // Verification
+
+  // The following is just to alert the verification code
+  // that a full collection has occurred and that the
+  // remembered sets are no longer up to date.
+  bool _full_collection;
+  void set_full_collection() { _full_collection = true;}
+  void clear_full_collection() {_full_collection = false;}
+  bool full_collection() {return _full_collection;}
+
+  // Perform any cleanup actions necessary before allowing a verification.
+  virtual void prepare_for_verify();
+
+  // Perform verification.
+
+  // vo == UsePrevMarking  -> use "prev" marking information,
+  // vo == UseNextMarking -> use "next" marking information
+  // vo == UseMarkWord    -> use the mark word in the object header
+  //
+  // NOTE: Only the "prev" marking information is guaranteed to be
+  // consistent most of the time, so most calls to this should use
+  // vo == UsePrevMarking.
+  // Currently, there is only one case where this is called with
+  // vo == UseNextMarking, which is to verify the "next" marking
+  // information at the end of remark.
+  // Currently there is only one place where this is called with
+  // vo == UseMarkWord, which is to verify the marking during a
+  // full GC.
+  void verify(bool silent, VerifyOption vo);
+
+  // Override; it uses the "prev" marking information
+  virtual void verify(bool silent);
+
   // The methods below are here for convenience and dispatch the
   // appropriate method depending on value of the given VerifyOption
-  // parameter. The options for that parameter are:
-  //
-  // vo == UsePrevMarking -> use "prev" marking information,
-  // vo == UseNextMarking -> use "next" marking information,
-  // vo == UseMarkWord    -> use mark word from object header
+  // parameter. The values for that parameter, and their meanings,
+  // are the same as those above.
 
   bool is_obj_dead_cond(const oop obj,
                         const HeapRegion* hr,
@@ -1692,31 +1737,21 @@ public:
     return false; // keep some compilers happy
   }
 
-  bool allocated_since_marking(oop obj, HeapRegion* hr, VerifyOption vo);
-  HeapWord* top_at_mark_start(HeapRegion* hr, VerifyOption vo);
-  bool is_marked(oop obj, VerifyOption vo);
-  const char* top_at_mark_start_str(VerifyOption vo);
+  // Printing
 
-  // The following is just to alert the verification code
-  // that a full collection has occurred and that the
-  // remembered sets are no longer up to date.
-  bool _full_collection;
-  void set_full_collection() { _full_collection = true;}
-  void clear_full_collection() {_full_collection = false;}
-  bool full_collection() {return _full_collection;}
+  virtual void print_on(outputStream* st) const;
+  virtual void print_extended_on(outputStream* st) const;
+  virtual void print_on_error(outputStream* st) const;
 
-  ConcurrentMark* concurrent_mark() const { return _cm; }
-  ConcurrentG1Refine* concurrent_g1_refine() const { return _cg1r; }
+  virtual void print_gc_threads_on(outputStream* st) const;
+  virtual void gc_threads_do(ThreadClosure* tc) const;
 
-  // The dirty cards region list is used to record a subset of regions
-  // whose cards need clearing. The list if populated during the
-  // remembered set scanning and drained during the card table
-  // cleanup. Although the methods are reentrant, population/draining
-  // phases must not overlap. For synchronization purposes the last
-  // element on the list points to itself.
-  HeapRegion* _dirty_cards_region_list;
-  void push_dirty_cards_region(HeapRegion* hr);
-  HeapRegion* pop_dirty_cards_region();
+  // Override
+  void print_tracing_info() const;
+
+  // The following two methods are helpful for debugging RSet issues.
+  void print_cset_rsets() PRODUCT_RETURN;
+  void print_all_rsets() PRODUCT_RETURN;
 
 public:
   void stop_conc_gc_threads();
@@ -1842,7 +1877,7 @@ protected:
   G1CollectedHeap* _g1h;
   RefToScanQueue*  _refs;
   DirtyCardQueue   _dcq;
-  CardTableModRefBS* _ct_bs;
+  G1SATBCardTableModRefBS* _ct_bs;
   G1RemSet* _g1_rem;
 
   G1ParGCAllocBufferContainer  _surviving_alloc_buffer;
@@ -1881,7 +1916,7 @@ protected:
   void   add_to_undo_waste(size_t waste)         { _undo_waste += waste; }
 
   DirtyCardQueue& dirty_card_queue()             { return _dcq;  }
-  CardTableModRefBS* ctbs()                      { return _ct_bs; }
+  G1SATBCardTableModRefBS* ctbs()                { return _ct_bs; }
 
   template <class T> void immediate_rs_update(HeapRegion* from, T* p, int tid) {
     if (!from->is_survivor()) {

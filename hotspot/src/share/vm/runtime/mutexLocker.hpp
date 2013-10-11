@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,6 @@ extern Mutex*   InlineCacheBuffer_lock;          // a lock used to guard the Inl
 extern Mutex*   VMStatistic_lock;                // a lock used to guard statistics count increment
 extern Mutex*   JNIGlobalHandle_lock;            // a lock on creating JNI global handles
 extern Mutex*   JNIHandleBlockFreeList_lock;     // a lock on the JNI handle block free list
-extern Mutex*   JNICachedItableIndex_lock;       // a lock on caching an itable index during JNI invoke
 extern Mutex*   MemberNameTable_lock;            // a lock on the MemberNameTable updates
 extern Mutex*   JmethodIdCreation_lock;          // a lock on creating JNI method identifiers
 extern Mutex*   JfieldIdCreation_lock;           // a lock on creating JNI static field identifiers
@@ -137,13 +136,15 @@ extern Mutex*   HotCardCache_lock;               // protects the hot card cache
 
 extern Mutex*   Management_lock;                 // a lock used to serialize JVM management
 extern Monitor* Service_lock;                    // a lock used for service thread operation
-extern Mutex*   Stacktrace_lock;                 // used to guard access to the stacktrace table
+extern Monitor* PeriodicTask_lock;               // protects the periodic task structure
 
-extern Monitor* JfrQuery_lock;                   // protects JFR use
+#ifdef INCLUDE_TRACE
+extern Mutex*   JfrStacktrace_lock;              // used to guard access to the JFR stacktrace table
 extern Monitor* JfrMsg_lock;                     // protects JFR messaging
 extern Mutex*   JfrBuffer_lock;                  // protects JFR buffer operations
 extern Mutex*   JfrStream_lock;                  // protects JFR stream access
-extern Monitor* PeriodicTask_lock;               // protects the periodic task structure
+extern Mutex*   JfrThreadGroups_lock;            // protects JFR access to Thread Groups
+#endif
 
 // A MutexLocker provides mutual exclusion with respect to a given mutex
 // for the scope which contains the locker.  The lock is an OS lock, not

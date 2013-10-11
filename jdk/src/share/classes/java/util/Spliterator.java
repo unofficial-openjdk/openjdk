@@ -74,7 +74,11 @@ import java.util.function.LongConsumer;
  * source prior to binding are reflected when the Spliterator is traversed.
  * After binding a Spliterator should, on a best-effort basis, throw
  * {@link ConcurrentModificationException} if structural interference is
- * detected.  Spliterators that do this are called <em>fail-fast</em>.
+ * detected.  Spliterators that do this are called <em>fail-fast</em>.  The
+ * bulk traversal method ({@link #forEachRemaining forEachRemaining()}) of a
+ * Spliterator may optimize traversal and check for structural interference
+ * after all elements have been traversed, rather than checking per-element and
+ * failing immediately.
  *
  * <p>Spliterators can provide an estimate of the number of remaining elements
  * via the {@link #estimateSize} method.  Ideally, as reflected in characteristic
@@ -535,7 +539,7 @@ public interface Spliterator<T> {
      * Spliterator is expected to have a documented policy concerning the impact
      * of modifications during traversal.
      *
-     * <p>A top-level Spliterator should not report {@code CONCURRENT} and
+     * <p>A top-level Spliterator should not report both {@code CONCURRENT} and
      * {@code SIZED}, since the finite size, if known, may change if the source
      * is concurrently modified during traversal. Such a Spliterator is
      * inconsistent and no guarantees can be made about any computation using
