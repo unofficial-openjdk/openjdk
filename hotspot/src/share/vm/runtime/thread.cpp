@@ -333,6 +333,8 @@ Thread::~Thread() {
   // Reclaim the objectmonitors from the omFreeList of the moribund thread.
   ObjectSynchronizer::omFlush (this) ;
 
+  EVENT_THREAD_DESTRUCT(this);
+
   // stack_base can be NULL if the thread is never started or exited before
   // record_stack_base_and_size called. Although, we would like to ensure
   // that all started threads do call record_stack_base_and_size(), there is
@@ -1442,7 +1444,7 @@ void JavaThread::initialize() {
   _in_deopt_handler = 0;
   _doing_unsafe_access = false;
   _stack_guard_state = stack_guard_unused;
-  _exception_oop = NULL;
+  (void)const_cast<oop&>(_exception_oop = NULL);
   _exception_pc  = 0;
   _exception_handler_pc = 0;
   _is_method_handle_return = 0;
@@ -3329,6 +3331,11 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   jint parse_result = Arguments::parse(args);
   if (parse_result != JNI_OK) return parse_result;
 
+  os::init_before_ergo();
+
+  jint ergo_result = Arguments::apply_ergo();
+  if (ergo_result != JNI_OK) return ergo_result;
+
   if (PauseAtStartup) {
     os::pause();
   }
@@ -3636,6 +3643,16 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   CompileBroker::compilation_init();
 #endif
 
+  if (EnableInvokeDynamic) {
+    // Pre-initialize some JSR292 core classes to avoid deadlock during class loading.
+    // It is done after compilers are initialized, because otherwise compilations of
+    // signature polymorphic MH intrinsics can be missed
+    // (see SystemDictionary::find_method_handle_intrinsic).
+    initialize_class(vmSymbols::java_lang_invoke_MethodHandle(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_invoke_MemberName(), CHECK_0);
+    initialize_class(vmSymbols::java_lang_invoke_MethodHandleNatives(), CHECK_0);
+  }
+
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);
 #endif // INCLUDE_MANAGEMENT
@@ -3696,15 +3713,18 @@ extern "C" {
 // num_symbol_entries must be passed-in since only the caller knows the number of symbols in the array.
 static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_symbols[], size_t num_symbol_entries) {
   OnLoadEntry_t on_load_entry = NULL;
-  void *library = agent->os_lib();  // check if we have looked it up before
+  void *library = NULL;
 
-  if (library == NULL) {
+  if (!agent->valid()) {
     char buffer[JVM_MAXPATHLEN];
     char ebuf[1024];
     const char *name = agent->name();
     const char *msg = "Could not find agent library ";
 
-    if (agent->is_absolute_path()) {
+    // First check to see if agent is statically linked into executable
+    if (os::find_builtin_agent(agent, on_load_symbols, num_symbol_entries)) {
+      library = agent->os_lib();
+    } else if (agent->is_absolute_path()) {
       library = os::dll_load(name, ebuf, sizeof ebuf);
       if (library == NULL) {
         const char *sub_msg = " in absolute path, with error: ";
@@ -3738,13 +3758,15 @@ static OnLoadEntry_t lookup_on_load(AgentLibrary* agent, const char *on_load_sym
       }
     }
     agent->set_os_lib(library);
+    agent->set_valid();
   }
 
   // Find the OnLoad function.
-  for (size_t symbol_index = 0; symbol_index < num_symbol_entries; symbol_index++) {
-    on_load_entry = CAST_TO_FN_PTR(OnLoadEntry_t, os::dll_lookup(library, on_load_symbols[symbol_index]));
-    if (on_load_entry != NULL) break;
-  }
+  on_load_entry =
+    CAST_TO_FN_PTR(OnLoadEntry_t, os::find_agent_function(agent,
+                                                          false,
+                                                          on_load_symbols,
+                                                          num_symbol_entries));
   return on_load_entry;
 }
 
@@ -3819,22 +3841,23 @@ extern "C" {
 void Threads::shutdown_vm_agents() {
   // Send any Agent_OnUnload notifications
   const char *on_unload_symbols[] = AGENT_ONUNLOAD_SYMBOLS;
+  size_t num_symbol_entries = ARRAY_SIZE(on_unload_symbols);
   extern struct JavaVM_ main_vm;
   for (AgentLibrary* agent = Arguments::agents(); agent != NULL; agent = agent->next()) {
 
     // Find the Agent_OnUnload function.
-    for (uint symbol_index = 0; symbol_index < ARRAY_SIZE(on_unload_symbols); symbol_index++) {
-      Agent_OnUnload_t unload_entry = CAST_TO_FN_PTR(Agent_OnUnload_t,
-               os::dll_lookup(agent->os_lib(), on_unload_symbols[symbol_index]));
+    Agent_OnUnload_t unload_entry = CAST_TO_FN_PTR(Agent_OnUnload_t,
+      os::find_agent_function(agent,
+      false,
+      on_unload_symbols,
+      num_symbol_entries));
 
-      // Invoke the Agent_OnUnload function
-      if (unload_entry != NULL) {
-        JavaThread* thread = JavaThread::current();
-        ThreadToNativeFromVM ttn(thread);
-        HandleMark hm(thread);
-        (*unload_entry)(&main_vm);
-        break;
-      }
+    // Invoke the Agent_OnUnload function
+    if (unload_entry != NULL) {
+      JavaThread* thread = JavaThread::current();
+      ThreadToNativeFromVM ttn(thread);
+      HandleMark hm(thread);
+      (*unload_entry)(&main_vm);
     }
   }
 }

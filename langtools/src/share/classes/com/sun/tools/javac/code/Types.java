@@ -51,7 +51,6 @@ import static com.sun.tools.javac.code.Symbol.*;
 import static com.sun.tools.javac.code.Type.*;
 import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.jvm.ClassFile.externalize;
-import static com.sun.tools.javac.util.ListBuffer.lb;
 
 /**
  * Utility class containing various operations on types.
@@ -411,7 +410,7 @@ public class Types {
                 throw failure("not.a.functional.intf", origin);
             }
 
-            final ListBuffer<Symbol> abstracts = ListBuffer.lb();
+            final ListBuffer<Symbol> abstracts = new ListBuffer<>();
             for (Symbol sym : membersCache.getElements(new DescriptorFilter(origin))) {
                 Type mtype = memberType(origin.type, sym);
                 if (abstracts.isEmpty() ||
@@ -434,7 +433,7 @@ public class Types {
                 FunctionDescriptor descRes = mergeDescriptors(origin, abstracts.toList());
                 if (descRes == null) {
                     //we can get here if the functional interface is ill-formed
-                    ListBuffer<JCDiagnostic> descriptors = ListBuffer.lb();
+                    ListBuffer<JCDiagnostic> descriptors = new ListBuffer<>();
                     for (Symbol desc : abstracts) {
                         String key = desc.type.getThrownTypes().nonEmpty() ?
                                 "descriptor.throws" : "descriptor";
@@ -505,12 +504,27 @@ public class Types {
 
             //merge thrown types - form the intersection of all the thrown types in
             //all the signatures in the list
+            boolean toErase = !bestSoFar.type.hasTag(FORALL);
             List<Type> thrown = null;
-            for (Symbol msym1 : methodSyms) {
-                Type mt1 = memberType(origin.type, msym1);
+            Type mt1 = memberType(origin.type, bestSoFar);
+            for (Symbol msym2 : methodSyms) {
+                Type mt2 = memberType(origin.type, msym2);
+                List<Type> thrown_mt2 = mt2.getThrownTypes();
+                if (toErase) {
+                    thrown_mt2 = erasure(thrown_mt2);
+                } else {
+                    /* If bestSoFar is generic then all the methods are generic.
+                     * The opposite is not true: a non generic method can override
+                     * a generic method (raw override) so it's safe to cast mt1 and
+                     * mt2 to ForAll.
+                     */
+                    ForAll fa1 = (ForAll)mt1;
+                    ForAll fa2 = (ForAll)mt2;
+                    thrown_mt2 = subst(thrown_mt2, fa2.tvars, fa1.tvars);
+                }
                 thrown = (thrown == null) ?
-                    mt1.getThrownTypes() :
-                    chk.intersect(mt1.getThrownTypes(), thrown);
+                    thrown_mt2 :
+                    chk.intersect(thrown_mt2, thrown);
             }
 
             final List<Type> thrown1 = thrown;
@@ -581,7 +595,7 @@ public class Types {
         Type capturedSite = capture(site);
         if (capturedSite != site) {
             Type formalInterface = site.tsym.type;
-            ListBuffer<Type> typeargs = ListBuffer.lb();
+            ListBuffer<Type> typeargs = new ListBuffer<>();
             List<Type> actualTypeargs = site.getTypeArguments();
             List<Type> capturedTypeargs = capturedSite.getTypeArguments();
             //simply replace the wildcards with its bound
@@ -647,7 +661,7 @@ public class Types {
         Assert.check(isFunctionalInterface(origin));
         Symbol descSym = findDescriptorSymbol(origin);
         CompoundScope members = membersClosure(origin.type, false);
-        ListBuffer<Symbol> overridden = ListBuffer.lb();
+        ListBuffer<Symbol> overridden = new ListBuffer<>();
         outer: for (Symbol m2 : members.getElementsByName(descSym.name, bridgeFilter)) {
             if (m2 == descSym) continue;
             else if (descSym.overrides(m2, origin, Types.this, false)) {
@@ -870,12 +884,12 @@ public class Types {
             private Type rewriteSupers(Type t) {
                 if (!t.isParameterized())
                     return t;
-                ListBuffer<Type> from = lb();
-                ListBuffer<Type> to = lb();
+                ListBuffer<Type> from = new ListBuffer<>();
+                ListBuffer<Type> to = new ListBuffer<>();
                 adaptSelf(t, from, to);
                 if (from.isEmpty())
                     return t;
-                ListBuffer<Type> rewrite = lb();
+                ListBuffer<Type> rewrite = new ListBuffer<>();
                 boolean changed = false;
                 for (Type orig : to.toList()) {
                     Type s = rewriteSupers(orig);
@@ -2400,6 +2414,29 @@ public class Types {
             }
         };
 
+    public List<Type> directSupertypes(Type t) {
+        return directSupertypes.visit(t);
+    }
+    // where
+        private final UnaryVisitor<List<Type>> directSupertypes = new UnaryVisitor<List<Type>>() {
+
+            public List<Type> visitType(final Type type, final Void ignored) {
+                if (!type.isCompound()) {
+                    final Type sup = supertype(type);
+                    return (sup == Type.noType || sup == type || sup == null)
+                        ? interfaces(type)
+                        : interfaces(type).prepend(sup);
+                } else {
+                    return visitIntersectionType((IntersectionClassType) type);
+                }
+            }
+
+            private List<Type> visitIntersectionType(final IntersectionClassType it) {
+                return it.getExplicitComponents();
+            }
+
+        };
+
     public boolean isDirectSuperInterface(TypeSymbol isym, TypeSymbol origin) {
         for (Type i2 : interfaces(origin.type)) {
             if (isym == i2.tsym) return true;
@@ -2729,7 +2766,7 @@ public class Types {
         }
 
     public List<MethodSymbol> prune(List<MethodSymbol> methods) {
-        ListBuffer<MethodSymbol> methodsMin = ListBuffer.lb();
+        ListBuffer<MethodSymbol> methodsMin = new ListBuffer<>();
         for (MethodSymbol m1 : methods) {
             boolean isMin_m1 = true;
             for (MethodSymbol m2 : methods) {
@@ -2986,7 +3023,7 @@ public class Types {
                                   List<Type> to) {
         if (tvars.isEmpty())
             return tvars;
-        ListBuffer<Type> newBoundsBuf = lb();
+        ListBuffer<Type> newBoundsBuf = new ListBuffer<>();
         boolean changed = false;
         // calculate new bounds
         for (Type t : tvars) {
@@ -2998,7 +3035,7 @@ public class Types {
         }
         if (!changed)
             return tvars;
-        ListBuffer<Type> newTvars = lb();
+        ListBuffer<Type> newTvars = new ListBuffer<>();
         // create new type variables without bounds
         for (Type t : tvars) {
             newTvars.append(new TypeVar(t.tsym, null, syms.botType));
@@ -3040,7 +3077,7 @@ public class Types {
     /**
      * Does t have the same bounds for quantified variables as s?
      */
-    boolean hasSameBounds(ForAll t, ForAll s) {
+    public boolean hasSameBounds(ForAll t, ForAll s) {
         List<Type> l1 = t.tvars;
         List<Type> l2 = s.tvars;
         while (l1.nonEmpty() && l2.nonEmpty() &&
@@ -3425,15 +3462,15 @@ public class Types {
      * compoundMin or glb.
      */
     private List<Type> closureMin(List<Type> cl) {
-        ListBuffer<Type> classes = lb();
-        ListBuffer<Type> interfaces = lb();
+        ListBuffer<Type> classes = new ListBuffer<>();
+        ListBuffer<Type> interfaces = new ListBuffer<>();
         while (!cl.isEmpty()) {
             Type current = cl.head;
             if (current.isInterface())
                 interfaces.append(current);
             else
                 classes.append(current);
-            ListBuffer<Type> candidates = lb();
+            ListBuffer<Type> candidates = new ListBuffer<>();
             for (Type t : cl.tail) {
                 if (!isSubtypeNoCapture(current, t))
                     candidates.append(t);
@@ -3549,7 +3586,7 @@ public class Types {
     }
     // where
         List<Type> erasedSupertypes(Type t) {
-            ListBuffer<Type> buf = lb();
+            ListBuffer<Type> buf = new ListBuffer<>();
             for (Type sup : closure(t)) {
                 if (sup.hasTag(TYPEVAR)) {
                     buf.append(sup);
@@ -3899,7 +3936,7 @@ public class Types {
     }
     // where
         public List<Type> freshTypeVariables(List<Type> types) {
-            ListBuffer<Type> result = lb();
+            ListBuffer<Type> result = new ListBuffer<>();
             for (Type t : types) {
                 if (t.hasTag(WILDCARD)) {
                     t = t.unannotatedType();

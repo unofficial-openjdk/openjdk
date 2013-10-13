@@ -128,7 +128,14 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             try {
                 return clazz.flags();
             } catch (CompletionFailure ex) {
-                // quietly ignore completion failures
+                /* Quietly ignore completion failures.
+                 * Note that a CompletionFailure can only
+                 * occur as a result of calling complete(),
+                 * which will always remove the current
+                 * completer, leaving it to be null or
+                 * follow-up completer. Thus the loop
+                 * is guaranteed to eventually terminate.
+                 */
             }
         }
     }
@@ -282,7 +289,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     }
 
     public boolean isFunctionalInterface() {
-        return env.types.isFunctionalInterface(tsym);
+        return env.types.isFunctionalInterface(tsym) && env.source.allowLambda();
     }
 
     /**

@@ -37,10 +37,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import jdk.internal.dynalink.beans.StaticClass;
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.codegen.CompilerConstants.Call;
 import jdk.nashorn.internal.ir.debug.JSONWriter;
@@ -188,6 +191,8 @@ public final class ScriptRuntime {
         case FUNCTION:
             if (self instanceof ScriptObject) {
                 className = ((ScriptObject)self).getClassName();
+            } else if (self instanceof JSObject) {
+                className = ((JSObject)self).getClassName();
             } else {
                 className = self.getClass().getName();
             }
@@ -221,49 +226,71 @@ public final class ScriptRuntime {
     }
 
     /**
-     * Used to determine property iterator used in for in.
-     * @param obj Object to iterate on.
-     * @return Iterator.
+     * Returns an iterator over property identifiers used in the {@code for...in} statement. Note that the ECMAScript
+     * 5.1 specification, chapter 12.6.4. uses the terminology "property names", which seems to imply that the property
+     * identifiers are expected to be strings, but this is not actually spelled out anywhere, and Nashorn will in some
+     * cases deviate from this. Namely, we guarantee to always return an iterator over {@link String} values for any
+     * built-in JavaScript object. We will however return an iterator over {@link Integer} objects for native Java
+     * arrays and {@link List} objects, as well as arbitrary objects representing keys of a {@link Map}. Therefore, the
+     * expression {@code typeof i} within a {@code for(i in obj)} statement can return something other than
+     * {@code string} when iterating over native Java arrays, {@code List}, and {@code Map} objects.
+     * @param obj object to iterate on.
+     * @return iterator over the object's property names.
      */
-    public static Iterator<String> toPropertyIterator(final Object obj) {
+    public static Iterator<?> toPropertyIterator(final Object obj) {
         if (obj instanceof ScriptObject) {
             return ((ScriptObject)obj).propertyIterator();
         }
 
         if (obj != null && obj.getClass().isArray()) {
-            final int length = Array.getLength(obj);
-
-            return new Iterator<String>() {
-                private int index = 0;
-
-                @Override
-                public boolean hasNext() {
-                    return index < length;
-                }
-
-                @Override
-                public String next() {
-                    return "" + index++; //TODO numeric property iterator?
-                }
-
-                @Override
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
+            return new RangeIterator(Array.getLength(obj));
         }
 
-        if (obj instanceof ScriptObjectMirror) {
-            return ((ScriptObjectMirror)obj).keySet().iterator();
+        if (obj instanceof JSObject) {
+            return ((JSObject)obj).keySet().iterator();
+        }
+
+        if (obj instanceof List) {
+            return new RangeIterator(((List<?>)obj).size());
+        }
+
+        if (obj instanceof Map) {
+            return ((Map<?,?>)obj).keySet().iterator();
         }
 
         return Collections.emptyIterator();
     }
 
+    private static final class RangeIterator implements Iterator<Integer> {
+        private final int length;
+        private int index;
+
+        RangeIterator(int length) {
+            this.length = length;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index < length;
+        }
+
+        @Override
+        public Integer next() {
+            return index++;
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
     /**
-     * Used to determine property value iterator used in for each in.
-     * @param obj Object to iterate on.
-     * @return Iterator.
+     * Returns an iterator over property values used in the {@code for each...in} statement. Aside from built-in JS
+     * objects, it also operates on Java arrays, any {@link Iterable}, as well as on {@link Map} objects, iterating over
+     * map values.
+     * @param obj object to iterate on.
+     * @return iterator over the object's property values.
      */
     public static Iterator<?> toValueIterator(final Object obj) {
         if (obj instanceof ScriptObject) {
@@ -297,8 +324,12 @@ public final class ScriptRuntime {
             };
         }
 
-        if (obj instanceof ScriptObjectMirror) {
-            return ((ScriptObjectMirror)obj).values().iterator();
+        if (obj instanceof JSObject) {
+            return ((JSObject)obj).values().iterator();
+        }
+
+        if (obj instanceof Map) {
+            return ((Map<?,?>)obj).values().iterator();
         }
 
         if (obj instanceof Iterable) {
@@ -322,35 +353,6 @@ public final class ScriptRuntime {
     }
 
     /**
-     * Check that the target function is associated with current Context. And also make sure that 'self', if
-     * ScriptObject, is from current context.
-     *
-     * Call a function given self and args. If the number of the arguments is known in advance, you can likely achieve
-     * better performance by {@link Bootstrap#createDynamicInvoker(String, Class, Class...) creating a dynamic invoker}
-     * for operation {@code "dyn:call"}, then using its {@link MethodHandle#invokeExact(Object...)} method instead.
-     *
-     * @param target ScriptFunction object.
-     * @param self   Receiver in call.
-     * @param args   Call arguments.
-     * @return Call result.
-     */
-    public static Object checkAndApply(final ScriptFunction target, final Object self, final Object... args) {
-        final ScriptObject global = Context.getGlobalTrusted();
-        assert (global instanceof GlobalObject): "No current global set";
-
-        if (target.getContext() != global.getContext()) {
-            throw new IllegalArgumentException("'target' function is not from current Context");
-        }
-
-        if (self instanceof ScriptObject && ((ScriptObject)self).getContext() != global.getContext()) {
-            throw new IllegalArgumentException("'self' object is not from current Context");
-        }
-
-        // all in order - call real 'apply'
-        return apply(target, self, args);
-    }
-
-    /**
      * Call a function given self and args. If the number of the arguments is known in advance, you can likely achieve
      * better performance by {@link Bootstrap#createDynamicInvoker(String, Class, Class...) creating a dynamic invoker}
      * for operation {@code "dyn:call"}, then using its {@link MethodHandle#invokeExact(Object...)} method instead.
@@ -368,28 +370,6 @@ public final class ScriptRuntime {
         } catch (final Throwable t) {
             throw new RuntimeException(t);
         }
-    }
-
-    /**
-     * Check that the target function is associated with current Context.
-     * And also make sure that 'self', if ScriptObject, is from current context.
-     *
-     * Call a function as a constructor given args.
-     *
-     * @param target ScriptFunction object.
-     * @param args   Call arguments.
-     * @return Constructor call result.
-     */
-    public static Object checkAndConstruct(final ScriptFunction target, final Object... args) {
-        final ScriptObject global = Context.getGlobalTrusted();
-        assert (global instanceof GlobalObject): "No current global set";
-
-        if (target.getContext() != global.getContext()) {
-            throw new IllegalArgumentException("'target' function is not from current Context");
-        }
-
-        // all in order - call real 'construct'
-        return construct(target, args);
     }
 
     /**
@@ -490,9 +470,12 @@ public final class ScriptRuntime {
             throw typeError(global, "cant.apply.with.to.null");
         }
 
-        final ScriptObject withObject = new WithObject(scope, JSType.toScriptObject(global, expression));
+        final Object wrappedExpr = JSType.toScriptObject(global, expression);
+        if (wrappedExpr instanceof ScriptObject) {
+            return new WithObject(scope, (ScriptObject)wrappedExpr);
+        }
 
-        return withObject;
+        throw typeError(global, "cant.apply.with.to.non.scriptobject");
     }
 
     /**
@@ -504,7 +487,7 @@ public final class ScriptRuntime {
      */
     public static ScriptObject closeWith(final ScriptObject scope) {
         if (scope instanceof WithObject) {
-            return scope.getProto();
+            return ((WithObject)scope).getParentScope();
         }
         return scope;
     }
@@ -589,8 +572,8 @@ public final class ScriptRuntime {
                 throw typeError("cant.get.property", safeToString(property), "null");
             } else if (JSType.isPrimitive(obj)) {
                 obj = ((ScriptObject)JSType.toScriptObject(obj)).get(property);
-            } else if (obj instanceof ScriptObjectMirror) {
-                obj = ((ScriptObjectMirror)obj).getMember(property.toString());
+            } else if (obj instanceof JSObject) {
+                obj = ((JSObject)obj).getMember(property.toString());
             } else {
                 obj = UNDEFINED;
             }
@@ -640,6 +623,11 @@ public final class ScriptRuntime {
 
         if (JSType.isPrimitive(obj)) {
             return ((ScriptObject) JSType.toScriptObject(obj)).delete(property, Boolean.TRUE.equals(strict));
+        }
+
+        if (obj instanceof JSObject) {
+            ((JSObject)obj).removeMember(Objects.toString(property));
+            return true;
         }
 
         // if object is not reference type, vacuously delete is successful.
@@ -833,6 +821,10 @@ public final class ScriptRuntime {
                 return ((ScriptObject)obj).has(property);
             }
 
+            if (obj instanceof JSObject) {
+                return ((JSObject)obj).hasMember(Objects.toString(property));
+            }
+
             return false;
         }
 
@@ -859,11 +851,13 @@ public final class ScriptRuntime {
             return ((StaticClass)clazz).getRepresentedClass().isInstance(obj);
         }
 
-        if (clazz instanceof ScriptObjectMirror) {
-            if (obj instanceof ScriptObjectMirror) {
-                return ((ScriptObjectMirror)clazz).isInstance((ScriptObjectMirror)obj);
-            }
-            return false;
+        if (clazz instanceof JSObject) {
+            return ((JSObject)clazz).isInstance(obj);
+        }
+
+        // provide for reverse hook
+        if (obj instanceof JSObject) {
+            return ((JSObject)obj).isInstanceOf(clazz);
         }
 
         throw typeError("instanceof.on.non.object");

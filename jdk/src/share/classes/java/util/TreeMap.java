@@ -973,6 +973,27 @@ public class TreeMap<K,V>
     }
 
     @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+        Entry<K,V> p = getEntry(key);
+        if (p!=null && Objects.equals(oldValue, p.value)) {
+            p.value = newValue;
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public V replace(K key, V value) {
+        Entry<K,V> p = getEntry(key);
+        if (p!=null) {
+            V oldValue = p.value;
+            p.value = value;
+            return oldValue;
+        }
+        return null;
+    }
+
+    @Override
     public void forEach(BiConsumer<? super K, ? super V> action) {
         Objects.requireNonNull(action);
         int expectedModCount = modCount;
@@ -991,7 +1012,7 @@ public class TreeMap<K,V>
         int expectedModCount = modCount;
 
         for (Entry<K, V> e = getFirstEntry(); e != null; e = successor(e)) {
-            e.value = Objects.requireNonNull(function.apply(e.key, e.value));
+            e.value = function.apply(e.key, e.value);
 
             if (expectedModCount != modCount) {
                 throw new ConcurrentModificationException();

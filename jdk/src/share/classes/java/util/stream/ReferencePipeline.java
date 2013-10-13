@@ -163,17 +163,16 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
                     public void accept(P_OUT u) {
                         if (predicate.test(u))
-                            downstream.accept((Object) u);
+                            downstream.accept(u);
                     }
                 };
             }
@@ -188,7 +187,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.apply(u));
@@ -205,7 +204,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                               StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsInt(u));
@@ -222,7 +221,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                       StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsLong(u));
@@ -239,7 +238,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                         StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
                     @Override
                     public void accept(P_OUT u) {
                         downstream.accept(mapper.applyAsDouble(u));
@@ -257,19 +256,19 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<R> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, R>(sink) {
                     @Override
                     public void begin(long size) {
                         downstream.begin(-1);
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
                     public void accept(P_OUT u) {
-                        // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
-                        Stream<? extends R> result = mapper.apply(u);
-                        if (result != null)
-                            result.sequential().forEach(downstream);
+                        try (Stream<? extends R> result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstream);
+                        }
                     }
                 };
             }
@@ -284,7 +283,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                               StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Integer> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Integer>(sink) {
                     IntConsumer downstreamAsInt = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -293,10 +292,11 @@ abstract class ReferencePipeline<P_IN, P_OUT>
 
                     @Override
                     public void accept(P_OUT u) {
-                        // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
-                        IntStream result = mapper.apply(u);
-                        if (result != null)
-                            result.sequential().forEach(downstreamAsInt);
+                        try (IntStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsInt);
+                        }
                     }
                 };
             }
@@ -311,7 +311,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                                      StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Double> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Double>(sink) {
                     DoubleConsumer downstreamAsDouble = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -320,10 +320,11 @@ abstract class ReferencePipeline<P_IN, P_OUT>
 
                     @Override
                     public void accept(P_OUT u) {
-                        // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
-                        DoubleStream result = mapper.apply(u);
-                        if (result != null)
-                            result.sequential().forEach(downstreamAsDouble);
+                        try (DoubleStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsDouble);
+                        }
                     }
                 };
             }
@@ -338,7 +339,7 @@ abstract class ReferencePipeline<P_IN, P_OUT>
                                                    StreamOpFlag.NOT_SORTED | StreamOpFlag.NOT_DISTINCT | StreamOpFlag.NOT_SIZED) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<Long> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, Long>(sink) {
                     LongConsumer downstreamAsLong = downstream::accept;
                     @Override
                     public void begin(long size) {
@@ -347,10 +348,11 @@ abstract class ReferencePipeline<P_IN, P_OUT>
 
                     @Override
                     public void accept(P_OUT u) {
-                        // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
-                        LongStream result = mapper.apply(u);
-                        if (result != null)
-                            result.sequential().forEach(downstreamAsLong);
+                        try (LongStream result = mapper.apply(u)) {
+                            // We can do better that this too; optimize for depth=0 case and just grab spliterator and forEach it
+                            if (result != null)
+                                result.sequential().forEach(downstreamAsLong);
+                        }
                     }
                 };
             }
@@ -358,17 +360,16 @@ abstract class ReferencePipeline<P_IN, P_OUT>
     }
 
     @Override
-    public final Stream<P_OUT> peek(Consumer<? super P_OUT> tee) {
-        Objects.requireNonNull(tee);
+    public final Stream<P_OUT> peek(Consumer<? super P_OUT> action) {
+        Objects.requireNonNull(action);
         return new StatelessOp<P_OUT, P_OUT>(this, StreamShape.REFERENCE,
                                      0) {
             @Override
             Sink<P_OUT> opWrapSink(int flags, Sink<P_OUT> sink) {
-                return new Sink.ChainedReference<P_OUT>(sink) {
+                return new Sink.ChainedReference<P_OUT, P_OUT>(sink) {
                     @Override
-                    @SuppressWarnings("unchecked")
                     public void accept(P_OUT u) {
-                        tee.accept(u);
+                        action.accept(u);
                         downstream.accept(u);
                     }
                 };
@@ -495,7 +496,8 @@ abstract class ReferencePipeline<P_IN, P_OUT>
     }
 
     @Override
-    public final <R, A> R collect(Collector<? super P_OUT, A, ? extends R> collector) {
+    @SuppressWarnings("unchecked")
+    public final <R, A> R collect(Collector<? super P_OUT, A, R> collector) {
         A container;
         if (isParallel()
                 && (collector.characteristics().contains(Collector.Characteristics.CONCURRENT))
@@ -513,10 +515,10 @@ abstract class ReferencePipeline<P_IN, P_OUT>
     }
 
     @Override
-    public final <R> R collect(Supplier<R> resultFactory,
+    public final <R> R collect(Supplier<R> supplier,
                                BiConsumer<R, ? super P_OUT> accumulator,
                                BiConsumer<R, R> combiner) {
-        return evaluate(ReduceOps.makeRef(resultFactory, accumulator, combiner));
+        return evaluate(ReduceOps.makeRef(supplier, accumulator, combiner));
     }
 
     @Override

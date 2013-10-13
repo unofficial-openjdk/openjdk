@@ -30,7 +30,7 @@
 ###############################################################################
 
 
-AC_PREREQ([2.61])
+AC_PREREQ([2.69])
 AC_INIT(OpenJDK, jdk8, build-dev@openjdk.java.net,,http://openjdk.java.net)
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -232,8 +232,14 @@ CUSTOM_LATE_HOOK
 # We're messing a bit with internal autoconf variables to put the config.status
 # in the output directory instead of the current directory.
 CONFIG_STATUS="$OUTPUT_ROOT/config.status"
+
 # Create the actual output files. Now the main work of configure is done.
 AC_OUTPUT
+
+# Try to move the config.log file to the output directory. 
+if test -e ./config.log; then
+  $MV -f ./config.log "$OUTPUT_ROOT/config.log" 2> /dev/null
+fi
 
 # Make the compare script executable
 $CHMOD +x $OUTPUT_ROOT/compare.sh

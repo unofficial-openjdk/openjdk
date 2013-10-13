@@ -3385,7 +3385,7 @@ bool os::Solaris::setup_large_pages(caddr_t start, size_t bytes, size_t align) {
   return true;
 }
 
-char* os::reserve_memory_special(size_t size, char* addr, bool exec) {
+char* os::reserve_memory_special(size_t size, size_t alignment, char* addr, bool exec) {
   fatal("os::reserve_memory_special should not be called on Solaris.");
   return NULL;
 }
@@ -5178,9 +5178,7 @@ jint os::init_2(void) {
     if(Verbose && PrintMiscellaneous)
       tty->print("[Memory Serialize  Page address: " INTPTR_FORMAT "]\n", (intptr_t)mem_serialize_page);
 #endif
-}
-
-  os::large_page_init();
+  }
 
   // Check minimum allowable stack size for thread creation and to initialize
   // the java system classes, including StackOverflowError - depends on page
@@ -6601,3 +6599,9 @@ int os::get_core_path(char* buffer, size_t bufferSize) {
 
   return strlen(buffer);
 }
+
+#ifndef PRODUCT
+void TestReserveMemorySpecial_test() {
+  // No tests available for this platform
+}
+#endif

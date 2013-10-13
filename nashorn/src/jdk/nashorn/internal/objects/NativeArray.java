@@ -40,7 +40,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+
+import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.objects.annotations.Attribute;
 import jdk.nashorn.internal.objects.annotations.Constructor;
 import jdk.nashorn.internal.objects.annotations.Function;
@@ -373,7 +374,7 @@ public final class NativeArray extends ScriptObject {
     public static Object isArray(final Object self, final Object arg) {
         return isArray(arg) || (arg == Global.instance().getArrayPrototype())
                 || (arg instanceof NativeRegExpExecResult)
-                || (arg instanceof ScriptObjectMirror && ((ScriptObjectMirror)arg).isArray());
+                || (arg instanceof JSObject && ((JSObject)arg).isArray());
     }
 
     /**
@@ -632,6 +633,7 @@ public final class NativeArray extends ScriptObject {
         return new NativeArray(list.toArray());
     }
 
+    @SuppressWarnings("null")
     private static void concatToList(final ArrayList<Object> list, final Object obj) {
         final boolean isScriptArray = isArray(obj);
         final boolean isScriptObject = isScriptArray || obj instanceof ScriptObject;
