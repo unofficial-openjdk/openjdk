@@ -131,6 +131,7 @@ bool os::Linux::_is_NPTL = false;
 bool os::Linux::_supports_fast_thread_cpu_time = false;
 const char * os::Linux::_glibc_version = NULL;
 const char * os::Linux::_libpthread_version = NULL;
+pthread_condattr_t os::Linux::_condattr[1];
 
 static jlong initial_time_count=0;
 
@@ -1399,12 +1400,15 @@ void os::Linux::clock_init() {
           clock_gettime_func(CLOCK_MONOTONIC, &tp)  == 0) {
         // yes, monotonic clock is supported
         _clock_gettime = clock_gettime_func;
+        return;
       } else {
         // close librt if there is no monotonic clock
         dlclose(handle);
       }
     }
   }
+  warning("No monotonic clock was available - timed services may " \
+          "be adversely affected if the time-of-day clock changes");
 }
 
 #ifndef SYS_clock_getres
@@ -2165,23 +2169,49 @@ void os::print_os_info(outputStream* st) {
 }
 
 // Try to identify popular distros.
-// Most Linux distributions have /etc/XXX-release file, which contains
-// the OS version string. Some have more than one /etc/XXX-release file
-// (e.g. Mandrake has both /etc/mandrake-release and /etc/redhat-release.),
-// so the order is important.
+// Most Linux distributions have a /etc/XXX-release file, which contains
+// the OS version string. Newer Linux distributions have a /etc/lsb-release
+// file that also contains the OS version string. Some have more than one
+// /etc/XXX-release file (e.g. Mandrake has both /etc/mandrake-release and
+// /etc/redhat-release.), so the order is important.
+// Any Linux that is based on Redhat (i.e. Oracle, Mandrake, Sun JDS...) have
+// their own specific XXX-release file as well as a redhat-release file.
+// Because of this the XXX-release file needs to be searched for before the
+// redhat-release file.
+// Since Red Hat has a lsb-release file that is not very descriptive the
+// search for redhat-release needs to be before lsb-release.
+// Since the lsb-release file is the new standard it needs to be searched
+// before the older style release files.
+// Searching system-release (Red Hat) and os-release (other Linuxes) are a
+// next to last resort.  The os-release file is a new standard that contains
+// distribution information and the system-release file seems to be an old
+// standard that has been replaced by the lsb-release and os-release files.
+// Searching for the debian_version file is the last resort.  It contains
+// an informative string like "6.0.6" or "wheezy/sid". Because of this
+// "Debian " is printed before the contents of the debian_version file.
 void os::Linux::print_distro_info(outputStream* st) {
-  if (!_print_ascii_file("/etc/mandrake-release", st) &&
-      !_print_ascii_file("/etc/sun-release", st) &&
-      !_print_ascii_file("/etc/redhat-release", st) &&
-      !_print_ascii_file("/etc/SuSE-release", st) &&
-      !_print_ascii_file("/etc/turbolinux-release", st) &&
-      !_print_ascii_file("/etc/gentoo-release", st) &&
-      !_print_ascii_file("/etc/debian_version", st) &&
-      !_print_ascii_file("/etc/ltib-release", st) &&
-      !_print_ascii_file("/etc/angstrom-version", st)) {
-      st->print("Linux");
-  }
-  st->cr();
+   if (!_print_ascii_file("/etc/oracle-release", st) &&
+       !_print_ascii_file("/etc/mandriva-release", st) &&
+       !_print_ascii_file("/etc/mandrake-release", st) &&
+       !_print_ascii_file("/etc/sun-release", st) &&
+       !_print_ascii_file("/etc/redhat-release", st) &&
+       !_print_ascii_file("/etc/lsb-release", st) &&
+       !_print_ascii_file("/etc/SuSE-release", st) &&
+       !_print_ascii_file("/etc/turbolinux-release", st) &&
+       !_print_ascii_file("/etc/gentoo-release", st) &&
+       !_print_ascii_file("/etc/ltib-release", st) &&
+       !_print_ascii_file("/etc/angstrom-version", st) &&
+       !_print_ascii_file("/etc/system-release", st) &&
+       !_print_ascii_file("/etc/os-release", st)) {
+
+       if (file_exists("/etc/debian_version")) {
+         st->print("Debian ");
+         _print_ascii_file("/etc/debian_version", st);
+       } else {
+         st->print("Linux");
+       }
+   }
+   st->cr();
 }
 
 void os::Linux::print_libversion_info(outputStream* st) {
@@ -2720,36 +2750,7 @@ void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
 
 int os::Linux::commit_memory_impl(char* addr, size_t size,
                                   size_t alignment_hint, bool exec) {
-  int err;
-  if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
-    int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
-    uintptr_t res =
-      (uintptr_t) ::mmap(addr, size, prot,
-                         MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS|MAP_HUGETLB,
-                         -1, 0);
-    if (res != (uintptr_t) MAP_FAILED) {
-      if (UseNUMAInterleaving) {
-        numa_make_global(addr, size);
-      }
-      return 0;
-    }
-
-    err = errno;  // save errno from mmap() call above
-
-    if (!recoverable_mmap_error(err)) {
-      // However, it is not clear that this loss of our reserved mapping
-      // happens with large pages on Linux or that we cannot recover
-      // from the loss. For now, we just issue a warning and we don't
-      // call vm_exit_out_of_memory(). This issue is being tracked by
-      // JBS-8007074.
-      warn_fail_commit_memory(addr, size, alignment_hint, exec, err);
-//    vm_exit_out_of_memory(size, OOM_MMAP_ERROR,
-//                          "committing reserved memory.");
-    }
-    // Fall through and try to use small pages
-  }
-
-  err = os::Linux::commit_memory_impl(addr, size, exec);
+  int err = os::Linux::commit_memory_impl(addr, size, exec);
   if (err == 0) {
     realign_memory(addr, size, alignment_hint);
   }
@@ -2774,7 +2775,7 @@ void os::pd_commit_memory_or_exit(char* addr, size_t size,
 }
 
 void os::pd_realign_memory(char *addr, size_t bytes, size_t alignment_hint) {
-  if (UseHugeTLBFS && alignment_hint > (size_t)vm_page_size()) {
+  if (UseTransparentHugePages && alignment_hint > (size_t)vm_page_size()) {
     // We don't check the return value: madvise(MADV_HUGEPAGE) may not
     // be supported or the memory may already be backed by huge pages.
     ::madvise(addr, bytes, MADV_HUGEPAGE);
@@ -2787,7 +2788,7 @@ void os::pd_free_memory(char *addr, size_t bytes, size_t alignment_hint) {
   // uncommitted at all. We don't do anything in this case to avoid creating a segment with
   // small pages on top of the SHM segment. This method always works for small pages, so we
   // allow that in any case.
-  if (alignment_hint <= (size_t)os::vm_page_size() || !UseSHM) {
+  if (alignment_hint <= (size_t)os::vm_page_size() || can_commit_large_page_memory()) {
     commit_memory(addr, bytes, alignment_hint, !ExecMem);
   }
 }
@@ -2796,7 +2797,19 @@ void os::numa_make_global(char *addr, size_t bytes) {
   Linux::numa_interleave_memory(addr, bytes);
 }
 
+// Define for numa_set_bind_policy(int). Setting the argument to 0 will set the
+// bind policy to MPOL_PREFERRED for the current thread.
+#define USE_MPOL_PREFERRED 0
+
 void os::numa_make_local(char *addr, size_t bytes, int lgrp_hint) {
+  // To make NUMA and large pages more robust when both enabled, we need to ease
+  // the requirements on where the memory should be allocated. MPOL_BIND is the
+  // default policy and it will force memory to be allocated on the specified
+  // node. Changing this to MPOL_PREFERRED will prefer to allocate the memory on
+  // the specified node, but will not force it. Using this policy will prevent
+  // getting SIGBUS when trying to allocate large pages on NUMA nodes with no
+  // free large pages.
+  Linux::numa_set_bind_policy(USE_MPOL_PREFERRED);
   Linux::numa_tonode_memory(addr, bytes, lgrp_hint);
 }
 
@@ -2898,6 +2911,8 @@ bool os::Linux::libnuma_init() {
                                             libnuma_dlsym(handle, "numa_tonode_memory")));
       set_numa_interleave_memory(CAST_TO_FN_PTR(numa_interleave_memory_func_t,
                                             libnuma_dlsym(handle, "numa_interleave_memory")));
+      set_numa_set_bind_policy(CAST_TO_FN_PTR(numa_set_bind_policy_func_t,
+                                            libnuma_dlsym(handle, "numa_set_bind_policy")));
 
 
       if (numa_available() != -1) {
@@ -2964,6 +2979,7 @@ os::Linux::numa_max_node_func_t os::Linux::_numa_max_node;
 os::Linux::numa_available_func_t os::Linux::_numa_available;
 os::Linux::numa_tonode_memory_func_t os::Linux::_numa_tonode_memory;
 os::Linux::numa_interleave_memory_func_t os::Linux::_numa_interleave_memory;
+os::Linux::numa_set_bind_policy_func_t os::Linux::_numa_set_bind_policy;
 unsigned long* os::Linux::_numa_all_nodes;
 
 bool os::pd_uncommit_memory(char* addr, size_t size) {
@@ -2971,6 +2987,53 @@ bool os::pd_uncommit_memory(char* addr, size_t size) {
                 MAP_PRIVATE|MAP_FIXED|MAP_NORESERVE|MAP_ANONYMOUS, -1, 0);
   return res  != (uintptr_t) MAP_FAILED;
 }
+
+static
+address get_stack_commited_bottom(address bottom, size_t size) {
+  address nbot = bottom;
+  address ntop = bottom + size;
+
+  size_t page_sz = os::vm_page_size();
+  unsigned pages = size / page_sz;
+
+  unsigned char vec[1];
+  unsigned imin = 1, imax = pages + 1, imid;
+  int mincore_return_value;
+
+  while (imin < imax) {
+    imid = (imax + imin) / 2;
+    nbot = ntop - (imid * page_sz);
+
+    // Use a trick with mincore to check whether the page is mapped or not.
+    // mincore sets vec to 1 if page resides in memory and to 0 if page
+    // is swapped output but if page we are asking for is unmapped
+    // it returns -1,ENOMEM
+    mincore_return_value = mincore(nbot, page_sz, vec);
+
+    if (mincore_return_value == -1) {
+      // Page is not mapped go up
+      // to find first mapped page
+      if (errno != EAGAIN) {
+        assert(errno == ENOMEM, "Unexpected mincore errno");
+        imax = imid;
+      }
+    } else {
+      // Page is mapped go down
+      // to find first not mapped page
+      imin = imid + 1;
+    }
+  }
+
+  nbot = nbot + page_sz;
+
+  // Adjust stack bottom one page up if last checked page is not mapped
+  if (mincore_return_value == -1) {
+    nbot = nbot + page_sz;
+  }
+
+  return nbot;
+}
+
 
 // Linux uses a growable mapping for the stack, and if the mapping for
 // the stack guard pages is not removed when we detach a thread the
@@ -2986,59 +3049,37 @@ bool os::pd_uncommit_memory(char* addr, size_t size) {
 // So, we need to know the extent of the stack mapping when
 // create_stack_guard_pages() is called.
 
-// Find the bounds of the stack mapping.  Return true for success.
-//
 // We only need this for stacks that are growable: at the time of
 // writing thread stacks don't use growable mappings (i.e. those
 // creeated with MAP_GROWSDOWN), and aren't marked "[stack]", so this
 // only applies to the main thread.
 
-static
-bool get_stack_bounds(uintptr_t *bottom, uintptr_t *top) {
-
-  char buf[128];
-  int fd, sz;
-
-  if ((fd = ::open("/proc/self/maps", O_RDONLY)) < 0) {
-    return false;
-  }
-
-  const char kw[] = "[stack]";
-  const int kwlen = sizeof(kw)-1;
-
-  // Address part of /proc/self/maps couldn't be more than 128 bytes
-  while ((sz = os::get_line_chars(fd, buf, sizeof(buf))) > 0) {
-     if (sz > kwlen && ::memcmp(buf+sz-kwlen, kw, kwlen) == 0) {
-        // Extract addresses
-        if (sscanf(buf, "%" SCNxPTR "-%" SCNxPTR, bottom, top) == 2) {
-           uintptr_t sp = (uintptr_t) __builtin_frame_address(0);
-           if (sp >= *bottom && sp <= *top) {
-              ::close(fd);
-              return true;
-           }
-        }
-     }
-  }
-
- ::close(fd);
-  return false;
-}
-
-
 // If the (growable) stack mapping already extends beyond the point
 // where we're going to put our guard pages, truncate the mapping at
 // that point by munmap()ping it.  This ensures that when we later
 // munmap() the guard pages we don't leave a hole in the stack
-// mapping. This only affects the main/initial thread, but guard
-// against future OS changes
+// mapping. This only affects the main/initial thread
+
 bool os::pd_create_stack_guard_pages(char* addr, size_t size) {
-  uintptr_t stack_extent, stack_base;
-  bool chk_bounds = NOT_DEBUG(os::Linux::is_initial_thread()) DEBUG_ONLY(true);
-  if (chk_bounds && get_stack_bounds(&stack_extent, &stack_base)) {
-      assert(os::Linux::is_initial_thread(),
-           "growable stack in non-initial thread");
-    if (stack_extent < (uintptr_t)addr)
-      ::munmap((void*)stack_extent, (uintptr_t)addr - stack_extent);
+
+  if (os::Linux::is_initial_thread()) {
+    // As we manually grow stack up to bottom inside create_attached_thread(),
+    // it's likely that os::Linux::initial_thread_stack_bottom is mapped and
+    // we don't need to do anything special.
+    // Check it first, before calling heavy function.
+    uintptr_t stack_extent = (uintptr_t) os::Linux::initial_thread_stack_bottom();
+    unsigned char vec[1];
+
+    if (mincore((address)stack_extent, os::vm_page_size(), vec) == -1) {
+      // Fallback to slow path on all errors, including EAGAIN
+      stack_extent = (uintptr_t) get_stack_commited_bottom(
+                                    os::Linux::initial_thread_stack_bottom(),
+                                    (size_t)addr - stack_extent);
+    }
+
+    if (stack_extent < (uintptr_t)addr) {
+      ::munmap((void*)stack_extent, (uintptr_t)(addr - stack_extent));
+    }
   }
 
   return os::commit_memory(addr, size, !ExecMem);
@@ -3047,13 +3088,13 @@ bool os::pd_create_stack_guard_pages(char* addr, size_t size) {
 // If this is a growable mapping, remove the guard pages entirely by
 // munmap()ping them.  If not, just call uncommit_memory(). This only
 // affects the main/initial thread, but guard against future OS changes
+// It's safe to always unmap guard pages for initial thread because we
+// always place it right after end of the mapped region
+
 bool os::remove_stack_guard_pages(char* addr, size_t size) {
   uintptr_t stack_extent, stack_base;
-  bool chk_bounds = NOT_DEBUG(os::Linux::is_initial_thread()) DEBUG_ONLY(true);
-  if (chk_bounds && get_stack_bounds(&stack_extent, &stack_base)) {
-      assert(os::Linux::is_initial_thread(),
-           "growable stack in non-initial thread");
 
+  if (os::Linux::is_initial_thread()) {
     return ::munmap(addr, size) == 0;
   }
 
@@ -3157,11 +3198,31 @@ bool os::unguard_memory(char* addr, size_t size) {
   return linux_mprotect(addr, size, PROT_READ|PROT_WRITE);
 }
 
+bool os::Linux::transparent_huge_pages_sanity_check(bool warn, size_t page_size) {
+  bool result = false;
+  void *p = mmap(NULL, page_size * 2, PROT_READ|PROT_WRITE,
+                 MAP_ANONYMOUS|MAP_PRIVATE,
+                 -1, 0);
+  if (p != MAP_FAILED) {
+    void *aligned_p = align_ptr_up(p, page_size);
+
+    result = madvise(aligned_p, page_size, MADV_HUGEPAGE) == 0;
+
+    munmap(p, page_size * 2);
+  }
+
+  if (warn && !result) {
+    warning("TransparentHugePages is not supported by the operating system.");
+  }
+
+  return result;
+}
+
 bool os::Linux::hugetlbfs_sanity_check(bool warn, size_t page_size) {
   bool result = false;
-  void *p = mmap (NULL, page_size, PROT_READ|PROT_WRITE,
-                  MAP_ANONYMOUS|MAP_PRIVATE|MAP_HUGETLB,
-                  -1, 0);
+  void *p = mmap(NULL, page_size, PROT_READ|PROT_WRITE,
+                 MAP_ANONYMOUS|MAP_PRIVATE|MAP_HUGETLB,
+                 -1, 0);
 
   if (p != MAP_FAILED) {
     // We don't know if this really is a huge page or not.
@@ -3182,12 +3243,10 @@ bool os::Linux::hugetlbfs_sanity_check(bool warn, size_t page_size) {
       }
       fclose(fp);
     }
-    munmap (p, page_size);
-    if (result)
-      return true;
+    munmap(p, page_size);
   }
 
-  if (warn) {
+  if (warn && !result) {
     warning("HugeTLBFS is not supported by the operating system.");
   }
 
@@ -3235,82 +3294,114 @@ static void set_coredump_filter(void) {
 
 static size_t _large_page_size = 0;
 
-void os::large_page_init() {
-  if (!UseLargePages) {
-    UseHugeTLBFS = false;
-    UseSHM = false;
-    return;
-  }
+size_t os::Linux::find_large_page_size() {
+  size_t large_page_size = 0;
 
-  if (FLAG_IS_DEFAULT(UseHugeTLBFS) && FLAG_IS_DEFAULT(UseSHM)) {
-    // If UseLargePages is specified on the command line try both methods,
-    // if it's default, then try only HugeTLBFS.
-    if (FLAG_IS_DEFAULT(UseLargePages)) {
-      UseHugeTLBFS = true;
-    } else {
-      UseHugeTLBFS = UseSHM = true;
-    }
-  }
-
-  if (LargePageSizeInBytes) {
-    _large_page_size = LargePageSizeInBytes;
-  } else {
-    // large_page_size on Linux is used to round up heap size. x86 uses either
-    // 2M or 4M page, depending on whether PAE (Physical Address Extensions)
-    // mode is enabled. AMD64/EM64T uses 2M page in 64bit mode. IA64 can use
-    // page as large as 256M.
-    //
-    // Here we try to figure out page size by parsing /proc/meminfo and looking
-    // for a line with the following format:
-    //    Hugepagesize:     2048 kB
-    //
-    // If we can't determine the value (e.g. /proc is not mounted, or the text
-    // format has been changed), we'll use the largest page size supported by
-    // the processor.
+  // large_page_size on Linux is used to round up heap size. x86 uses either
+  // 2M or 4M page, depending on whether PAE (Physical Address Extensions)
+  // mode is enabled. AMD64/EM64T uses 2M page in 64bit mode. IA64 can use
+  // page as large as 256M.
+  //
+  // Here we try to figure out page size by parsing /proc/meminfo and looking
+  // for a line with the following format:
+  //    Hugepagesize:     2048 kB
+  //
+  // If we can't determine the value (e.g. /proc is not mounted, or the text
+  // format has been changed), we'll use the largest page size supported by
+  // the processor.
 
 #ifndef ZERO
-    _large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M)
-                       ARM_ONLY(2 * M) PPC_ONLY(4 * M);
+  large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M)
+                     ARM_ONLY(2 * M) PPC_ONLY(4 * M);
 #endif // ZERO
 
-    FILE *fp = fopen("/proc/meminfo", "r");
-    if (fp) {
-      while (!feof(fp)) {
-        int x = 0;
-        char buf[16];
-        if (fscanf(fp, "Hugepagesize: %d", &x) == 1) {
-          if (x && fgets(buf, sizeof(buf), fp) && strcmp(buf, " kB\n") == 0) {
-            _large_page_size = x * K;
-            break;
-          }
-        } else {
-          // skip to next line
-          for (;;) {
-            int ch = fgetc(fp);
-            if (ch == EOF || ch == (int)'\n') break;
-          }
+  FILE *fp = fopen("/proc/meminfo", "r");
+  if (fp) {
+    while (!feof(fp)) {
+      int x = 0;
+      char buf[16];
+      if (fscanf(fp, "Hugepagesize: %d", &x) == 1) {
+        if (x && fgets(buf, sizeof(buf), fp) && strcmp(buf, " kB\n") == 0) {
+          large_page_size = x * K;
+          break;
+        }
+      } else {
+        // skip to next line
+        for (;;) {
+          int ch = fgetc(fp);
+          if (ch == EOF || ch == (int)'\n') break;
         }
       }
-      fclose(fp);
     }
+    fclose(fp);
   }
 
-  // print a warning if any large page related flag is specified on command line
-  bool warn_on_failure = !FLAG_IS_DEFAULT(UseHugeTLBFS);
+  if (!FLAG_IS_DEFAULT(LargePageSizeInBytes) && LargePageSizeInBytes != large_page_size) {
+    warning("Setting LargePageSizeInBytes has no effect on this OS. Large page size is "
+        SIZE_FORMAT "%s.", byte_size_in_proper_unit(large_page_size),
+        proper_unit_for_byte_size(large_page_size));
+  }
 
+  return large_page_size;
+}
+
+size_t os::Linux::setup_large_page_size() {
+  _large_page_size = Linux::find_large_page_size();
   const size_t default_page_size = (size_t)Linux::page_size();
   if (_large_page_size > default_page_size) {
     _page_sizes[0] = _large_page_size;
     _page_sizes[1] = default_page_size;
     _page_sizes[2] = 0;
   }
-  UseHugeTLBFS = UseHugeTLBFS &&
-                 Linux::hugetlbfs_sanity_check(warn_on_failure, _large_page_size);
 
-  if (UseHugeTLBFS)
+  return _large_page_size;
+}
+
+bool os::Linux::setup_large_page_type(size_t page_size) {
+  if (FLAG_IS_DEFAULT(UseHugeTLBFS) &&
+      FLAG_IS_DEFAULT(UseSHM) &&
+      FLAG_IS_DEFAULT(UseTransparentHugePages)) {
+    // If UseLargePages is specified on the command line try all methods,
+    // if it's default, then try only UseTransparentHugePages.
+    if (FLAG_IS_DEFAULT(UseLargePages)) {
+      UseTransparentHugePages = true;
+    } else {
+      UseHugeTLBFS = UseTransparentHugePages = UseSHM = true;
+    }
+  }
+
+  if (UseTransparentHugePages) {
+    bool warn_on_failure = !FLAG_IS_DEFAULT(UseTransparentHugePages);
+    if (transparent_huge_pages_sanity_check(warn_on_failure, page_size)) {
+      UseHugeTLBFS = false;
+      UseSHM = false;
+      return true;
+    }
+    UseTransparentHugePages = false;
+  }
+
+  if (UseHugeTLBFS) {
+    bool warn_on_failure = !FLAG_IS_DEFAULT(UseHugeTLBFS);
+    if (hugetlbfs_sanity_check(warn_on_failure, page_size)) {
+      UseSHM = false;
+      return true;
+    }
+    UseHugeTLBFS = false;
+  }
+
+  return UseSHM;
+}
+
+void os::large_page_init() {
+  if (!UseLargePages) {
+    UseHugeTLBFS = false;
+    UseTransparentHugePages = false;
     UseSHM = false;
+    return;
+  }
 
-  UseLargePages = UseHugeTLBFS || UseSHM;
+  size_t large_page_size = Linux::setup_large_page_size();
+  UseLargePages          = Linux::setup_large_page_type(large_page_size);
 
   set_coredump_filter();
 }
@@ -3319,16 +3410,22 @@ void os::large_page_init() {
 #define SHM_HUGETLB 04000
 #endif
 
-char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
+char* os::Linux::reserve_memory_special_shm(size_t bytes, size_t alignment, char* req_addr, bool exec) {
   // "exec" is passed in but not used.  Creating the shared image for
   // the code cache doesn't have an SHM_X executable permission to check.
   assert(UseLargePages && UseSHM, "only for SHM large pages");
+  assert(is_ptr_aligned(req_addr, os::large_page_size()), "Unaligned address");
+
+  if (!is_size_aligned(bytes, os::large_page_size()) || alignment > os::large_page_size()) {
+    return NULL; // Fallback to small pages.
+  }
 
   key_t key = IPC_PRIVATE;
   char *addr;
 
   bool warn_on_failure = UseLargePages &&
                         (!FLAG_IS_DEFAULT(UseLargePages) ||
+                         !FLAG_IS_DEFAULT(UseSHM) ||
                          !FLAG_IS_DEFAULT(LargePageSizeInBytes)
                         );
   char msg[128];
@@ -3376,42 +3473,219 @@ char* os::reserve_memory_special(size_t bytes, char* req_addr, bool exec) {
      return NULL;
   }
 
-  if ((addr != NULL) && UseNUMAInterleaving) {
-    numa_make_global(addr, bytes);
+  return addr;
+}
+
+static void warn_on_large_pages_failure(char* req_addr, size_t bytes, int error) {
+  assert(error == ENOMEM, "Only expect to fail if no memory is available");
+
+  bool warn_on_failure = UseLargePages &&
+      (!FLAG_IS_DEFAULT(UseLargePages) ||
+       !FLAG_IS_DEFAULT(UseHugeTLBFS) ||
+       !FLAG_IS_DEFAULT(LargePageSizeInBytes));
+
+  if (warn_on_failure) {
+    char msg[128];
+    jio_snprintf(msg, sizeof(msg), "Failed to reserve large pages memory req_addr: "
+        PTR_FORMAT " bytes: " SIZE_FORMAT " (errno = %d).", req_addr, bytes, error);
+    warning(msg);
+  }
+}
+
+char* os::Linux::reserve_memory_special_huge_tlbfs_only(size_t bytes, char* req_addr, bool exec) {
+  assert(UseLargePages && UseHugeTLBFS, "only for Huge TLBFS large pages");
+  assert(is_size_aligned(bytes, os::large_page_size()), "Unaligned size");
+  assert(is_ptr_aligned(req_addr, os::large_page_size()), "Unaligned address");
+
+  int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
+  char* addr = (char*)::mmap(req_addr, bytes, prot,
+                             MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB,
+                             -1, 0);
+
+  if (addr == MAP_FAILED) {
+    warn_on_large_pages_failure(req_addr, bytes, errno);
+    return NULL;
   }
 
-  // The memory is committed
-  MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, mtNone, CALLER_PC);
+  assert(is_ptr_aligned(addr, os::large_page_size()), "Must be");
 
   return addr;
 }
 
+char* os::Linux::reserve_memory_special_huge_tlbfs_mixed(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  size_t large_page_size = os::large_page_size();
+
+  assert(bytes >= large_page_size, "Shouldn't allocate large pages for small sizes");
+
+  // Allocate small pages.
+
+  char* start;
+  if (req_addr != NULL) {
+    assert(is_ptr_aligned(req_addr, alignment), "Must be");
+    assert(is_size_aligned(bytes, alignment), "Must be");
+    start = os::reserve_memory(bytes, req_addr);
+    assert(start == NULL || start == req_addr, "Must be");
+  } else {
+    start = os::reserve_memory_aligned(bytes, alignment);
+  }
+
+  if (start == NULL) {
+    return NULL;
+  }
+
+  assert(is_ptr_aligned(start, alignment), "Must be");
+
+  // os::reserve_memory_special will record this memory area.
+  // Need to release it here to prevent overlapping reservations.
+  MemTracker::record_virtual_memory_release((address)start, bytes);
+
+  char* end = start + bytes;
+
+  // Find the regions of the allocated chunk that can be promoted to large pages.
+  char* lp_start = (char*)align_ptr_up(start, large_page_size);
+  char* lp_end   = (char*)align_ptr_down(end, large_page_size);
+
+  size_t lp_bytes = lp_end - lp_start;
+
+  assert(is_size_aligned(lp_bytes, large_page_size), "Must be");
+
+  if (lp_bytes == 0) {
+    // The mapped region doesn't even span the start and the end of a large page.
+    // Fall back to allocate a non-special area.
+    ::munmap(start, end - start);
+    return NULL;
+  }
+
+  int prot = exec ? PROT_READ|PROT_WRITE|PROT_EXEC : PROT_READ|PROT_WRITE;
+
+
+  void* result;
+
+  if (start != lp_start) {
+    result = ::mmap(start, lp_start - start, prot,
+                    MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,
+                    -1, 0);
+    if (result == MAP_FAILED) {
+      ::munmap(lp_start, end - lp_start);
+      return NULL;
+    }
+  }
+
+  result = ::mmap(lp_start, lp_bytes, prot,
+                  MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED|MAP_HUGETLB,
+                  -1, 0);
+  if (result == MAP_FAILED) {
+    warn_on_large_pages_failure(req_addr, bytes, errno);
+    // If the mmap above fails, the large pages region will be unmapped and we
+    // have regions before and after with small pages. Release these regions.
+    //
+    // |  mapped  |  unmapped  |  mapped  |
+    // ^          ^            ^          ^
+    // start      lp_start     lp_end     end
+    //
+    ::munmap(start, lp_start - start);
+    ::munmap(lp_end, end - lp_end);
+    return NULL;
+  }
+
+  if (lp_end != end) {
+      result = ::mmap(lp_end, end - lp_end, prot,
+                      MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED,
+                      -1, 0);
+    if (result == MAP_FAILED) {
+      ::munmap(start, lp_end - start);
+      return NULL;
+    }
+  }
+
+  return start;
+}
+
+char* os::Linux::reserve_memory_special_huge_tlbfs(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  assert(UseLargePages && UseHugeTLBFS, "only for Huge TLBFS large pages");
+  assert(is_ptr_aligned(req_addr, alignment), "Must be");
+  assert(is_power_of_2(alignment), "Must be");
+  assert(is_power_of_2(os::large_page_size()), "Must be");
+  assert(bytes >= os::large_page_size(), "Shouldn't allocate large pages for small sizes");
+
+  if (is_size_aligned(bytes, os::large_page_size()) && alignment <= os::large_page_size()) {
+    return reserve_memory_special_huge_tlbfs_only(bytes, req_addr, exec);
+  } else {
+    return reserve_memory_special_huge_tlbfs_mixed(bytes, alignment, req_addr, exec);
+  }
+}
+
+char* os::reserve_memory_special(size_t bytes, size_t alignment, char* req_addr, bool exec) {
+  assert(UseLargePages, "only for large pages");
+
+  char* addr;
+  if (UseSHM) {
+    addr = os::Linux::reserve_memory_special_shm(bytes, alignment, req_addr, exec);
+  } else {
+    assert(UseHugeTLBFS, "must be");
+    addr = os::Linux::reserve_memory_special_huge_tlbfs(bytes, alignment, req_addr, exec);
+  }
+
+  if (addr != NULL) {
+    if (UseNUMAInterleaving) {
+      numa_make_global(addr, bytes);
+    }
+
+    // The memory is committed
+    MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, mtNone, CALLER_PC);
+  }
+
+  return addr;
+}
+
+bool os::Linux::release_memory_special_shm(char* base, size_t bytes) {
+  // detaching the SHM segment will also delete it, see reserve_memory_special_shm()
+  return shmdt(base) == 0;
+}
+
+bool os::Linux::release_memory_special_huge_tlbfs(char* base, size_t bytes) {
+  return pd_release_memory(base, bytes);
+}
+
 bool os::release_memory_special(char* base, size_t bytes) {
+  assert(UseLargePages, "only for large pages");
+
   MemTracker::Tracker tkr = MemTracker::get_virtual_memory_release_tracker();
-  // detaching the SHM segment will also delete it, see reserve_memory_special()
-  int rslt = shmdt(base);
-  if (rslt == 0) {
+
+  bool res;
+  if (UseSHM) {
+    res = os::Linux::release_memory_special_shm(base, bytes);
+  } else {
+    assert(UseHugeTLBFS, "must be");
+    res = os::Linux::release_memory_special_huge_tlbfs(base, bytes);
+  }
+
+  if (res) {
     tkr.record((address)base, bytes);
-    return true;
   } else {
     tkr.discard();
-    return false;
   }
+
+  return res;
 }
 
 size_t os::large_page_size() {
   return _large_page_size;
 }
 
-// HugeTLBFS allows application to commit large page memory on demand;
-// with SysV SHM the entire memory region must be allocated as shared
+// With SysV SHM the entire memory region must be allocated as shared
 // memory.
+// HugeTLBFS allows application to commit large page memory on demand.
+// However, when committing memory with HugeTLBFS fails, the region
+// that was supposed to be committed will lose the old reservation
+// and allow other threads to steal that memory region. Because of this
+// behavior we can't commit HugeTLBFS memory.
 bool os::can_commit_large_page_memory() {
-  return UseHugeTLBFS;
+  return UseTransparentHugePages;
 }
 
 bool os::can_execute_large_page_memory() {
-  return UseHugeTLBFS;
+  return UseTransparentHugePages || UseHugeTLBFS;
 }
 
 // Reserve memory at an arbitrary address, only if that area is
@@ -4465,6 +4739,26 @@ void os::init(void) {
 
   Linux::clock_init();
   initial_time_count = os::elapsed_counter();
+
+  // pthread_condattr initialization for monotonic clock
+  int status;
+  pthread_condattr_t* _condattr = os::Linux::condAttr();
+  if ((status = pthread_condattr_init(_condattr)) != 0) {
+    fatal(err_msg("pthread_condattr_init: %s", strerror(status)));
+  }
+  // Only set the clock if CLOCK_MONOTONIC is available
+  if (Linux::supports_monotonic_clock()) {
+    if ((status = pthread_condattr_setclock(_condattr, CLOCK_MONOTONIC)) != 0) {
+      if (status == EINVAL) {
+        warning("Unable to use monotonic clock with relative timed-waits" \
+                " - changes to the time-of-day clock may have adverse affects");
+      } else {
+        fatal(err_msg("pthread_condattr_setclock: %s", strerror(status)));
+      }
+    }
+  }
+  // else it defaults to CLOCK_REALTIME
+
   pthread_mutex_init(&dl_mutex, NULL);
 
   // If the pagesize of the VM is greater than 8K determine the appropriate
@@ -4511,8 +4805,6 @@ jint os::init_2(void)
 #endif
   }
 
-  os::large_page_init();
-
   // initialize suspend/resume support - must do this before signal_sets_init()
   if (SR_initialize() != 0) {
     perror("SR_initialize failed");
@@ -4547,6 +4839,10 @@ jint os::init_2(void)
 
   Linux::capture_initial_stack(JavaThread::stack_size_at_create());
 
+#if defined(IA32)
+  workaround_expand_exec_shield_cs_limit();
+#endif
+
   Linux::libpthread_init();
   if (PrintMiscellaneous && (Verbose || WizardMode)) {
      tty->print_cr("[HotSpot is running with %s, %s(%s)]\n",
@@ -4563,21 +4859,23 @@ jint os::init_2(void)
         UseNUMA = false;
       }
     }
-    // With SHM large pages we cannot uncommit a page, so there's not way
+    // With SHM and HugeTLBFS large pages we cannot uncommit a page, so there's no way
     // we can make the adaptive lgrp chunk resizing work. If the user specified
-    // both UseNUMA and UseLargePages (or UseSHM) on the command line - warn and
+    // both UseNUMA and UseLargePages (or UseSHM/UseHugeTLBFS) on the command line - warn and
     // disable adaptive resizing.
-    if (UseNUMA && UseLargePages && UseSHM) {
-      if (!FLAG_IS_DEFAULT(UseNUMA)) {
-        if (FLAG_IS_DEFAULT(UseLargePages) && FLAG_IS_DEFAULT(UseSHM)) {
+    if (UseNUMA && UseLargePages && !can_commit_large_page_memory()) {
+      if (FLAG_IS_DEFAULT(UseNUMA)) {
+        UseNUMA = false;
+      } else {
+        if (FLAG_IS_DEFAULT(UseLargePages) &&
+            FLAG_IS_DEFAULT(UseSHM) &&
+            FLAG_IS_DEFAULT(UseHugeTLBFS)) {
           UseLargePages = false;
         } else {
-          warning("UseNUMA is not fully compatible with SHM large pages, disabling adaptive resizing");
+          warning("UseNUMA is not fully compatible with SHM/HugeTLBFS large pages, disabling adaptive resizing");
           UseAdaptiveSizePolicy = false;
           UseAdaptiveNUMAChunkSizing = false;
         }
-      } else {
-        UseNUMA = false;
       }
     }
     if (!UseNUMA && ForceNUMA) {
@@ -5273,21 +5571,36 @@ void os::pause() {
 
 static struct timespec* compute_abstime(timespec* abstime, jlong millis) {
   if (millis < 0)  millis = 0;
-  struct timeval now;
-  int status = gettimeofday(&now, NULL);
-  assert(status == 0, "gettimeofday");
+
   jlong seconds = millis / 1000;
   millis %= 1000;
   if (seconds > 50000000) { // see man cond_timedwait(3T)
     seconds = 50000000;
   }
-  abstime->tv_sec = now.tv_sec  + seconds;
-  long       usec = now.tv_usec + millis * 1000;
-  if (usec >= 1000000) {
-    abstime->tv_sec += 1;
-    usec -= 1000000;
+
+  if (os::Linux::supports_monotonic_clock()) {
+    struct timespec now;
+    int status = os::Linux::clock_gettime(CLOCK_MONOTONIC, &now);
+    assert_status(status == 0, status, "clock_gettime");
+    abstime->tv_sec = now.tv_sec  + seconds;
+    long nanos = now.tv_nsec + millis * NANOSECS_PER_MILLISEC;
+    if (nanos >= NANOSECS_PER_SEC) {
+      abstime->tv_sec += 1;
+      nanos -= NANOSECS_PER_SEC;
+    }
+    abstime->tv_nsec = nanos;
+  } else {
+    struct timeval now;
+    int status = gettimeofday(&now, NULL);
+    assert(status == 0, "gettimeofday");
+    abstime->tv_sec = now.tv_sec  + seconds;
+    long usec = now.tv_usec + millis * 1000;
+    if (usec >= 1000000) {
+      abstime->tv_sec += 1;
+      usec -= 1000000;
+    }
+    abstime->tv_nsec = usec * 1000;
   }
-  abstime->tv_nsec = usec * 1000;
   return abstime;
 }
 
@@ -5379,7 +5692,7 @@ int os::PlatformEvent::park(jlong millis) {
     status = os::Linux::safe_cond_timedwait(_cond, _mutex, &abst);
     if (status != 0 && WorkAroundNPTLTimedWaitHang) {
       pthread_cond_destroy (_cond);
-      pthread_cond_init (_cond, NULL) ;
+      pthread_cond_init (_cond, os::Linux::condAttr()) ;
     }
     assert_status(status == 0 || status == EINTR ||
                   status == ETIME || status == ETIMEDOUT,
@@ -5480,32 +5793,50 @@ void os::PlatformEvent::unpark() {
 
 static void unpackTime(timespec* absTime, bool isAbsolute, jlong time) {
   assert (time > 0, "convertTime");
+  time_t max_secs = 0;
 
-  struct timeval now;
-  int status = gettimeofday(&now, NULL);
-  assert(status == 0, "gettimeofday");
+  if (!os::Linux::supports_monotonic_clock() || isAbsolute) {
+    struct timeval now;
+    int status = gettimeofday(&now, NULL);
+    assert(status == 0, "gettimeofday");
 
-  time_t max_secs = now.tv_sec + MAX_SECS;
+    max_secs = now.tv_sec + MAX_SECS;
 
-  if (isAbsolute) {
-    jlong secs = time / 1000;
-    if (secs > max_secs) {
-      absTime->tv_sec = max_secs;
+    if (isAbsolute) {
+      jlong secs = time / 1000;
+      if (secs > max_secs) {
+        absTime->tv_sec = max_secs;
+      } else {
+        absTime->tv_sec = secs;
+      }
+      absTime->tv_nsec = (time % 1000) * NANOSECS_PER_MILLISEC;
+    } else {
+      jlong secs = time / NANOSECS_PER_SEC;
+      if (secs >= MAX_SECS) {
+        absTime->tv_sec = max_secs;
+        absTime->tv_nsec = 0;
+      } else {
+        absTime->tv_sec = now.tv_sec + secs;
+        absTime->tv_nsec = (time % NANOSECS_PER_SEC) + now.tv_usec*1000;
+        if (absTime->tv_nsec >= NANOSECS_PER_SEC) {
+          absTime->tv_nsec -= NANOSECS_PER_SEC;
+          ++absTime->tv_sec; // note: this must be <= max_secs
+        }
+      }
     }
-    else {
-      absTime->tv_sec = secs;
-    }
-    absTime->tv_nsec = (time % 1000) * NANOSECS_PER_MILLISEC;
-  }
-  else {
+  } else {
+    // must be relative using monotonic clock
+    struct timespec now;
+    int status = os::Linux::clock_gettime(CLOCK_MONOTONIC, &now);
+    assert_status(status == 0, status, "clock_gettime");
+    max_secs = now.tv_sec + MAX_SECS;
     jlong secs = time / NANOSECS_PER_SEC;
     if (secs >= MAX_SECS) {
       absTime->tv_sec = max_secs;
       absTime->tv_nsec = 0;
-    }
-    else {
+    } else {
       absTime->tv_sec = now.tv_sec + secs;
-      absTime->tv_nsec = (time % NANOSECS_PER_SEC) + now.tv_usec*1000;
+      absTime->tv_nsec = (time % NANOSECS_PER_SEC) + now.tv_nsec;
       if (absTime->tv_nsec >= NANOSECS_PER_SEC) {
         absTime->tv_nsec -= NANOSECS_PER_SEC;
         ++absTime->tv_sec; // note: this must be <= max_secs
@@ -5585,15 +5916,19 @@ void Parker::park(bool isAbsolute, jlong time) {
   jt->set_suspend_equivalent();
   // cleared by handle_special_suspend_equivalent_condition() or java_suspend_self()
 
+  assert(_cur_index == -1, "invariant");
   if (time == 0) {
-    status = pthread_cond_wait (_cond, _mutex) ;
+    _cur_index = REL_INDEX; // arbitrary choice when not timed
+    status = pthread_cond_wait (&_cond[_cur_index], _mutex) ;
   } else {
-    status = os::Linux::safe_cond_timedwait (_cond, _mutex, &absTime) ;
+    _cur_index = isAbsolute ? ABS_INDEX : REL_INDEX;
+    status = os::Linux::safe_cond_timedwait (&_cond[_cur_index], _mutex, &absTime) ;
     if (status != 0 && WorkAroundNPTLTimedWaitHang) {
-      pthread_cond_destroy (_cond) ;
-      pthread_cond_init    (_cond, NULL);
+      pthread_cond_destroy (&_cond[_cur_index]) ;
+      pthread_cond_init    (&_cond[_cur_index], isAbsolute ? NULL : os::Linux::condAttr());
     }
   }
+  _cur_index = -1;
   assert_status(status == 0 || status == EINTR ||
                 status == ETIME || status == ETIMEDOUT,
                 status, "cond_timedwait");
@@ -5622,17 +5957,24 @@ void Parker::unpark() {
   s = _counter;
   _counter = 1;
   if (s < 1) {
-     if (WorkAroundNPTLTimedWaitHang) {
-        status = pthread_cond_signal (_cond) ;
-        assert (status == 0, "invariant") ;
+    // thread might be parked
+    if (_cur_index != -1) {
+      // thread is definitely parked
+      if (WorkAroundNPTLTimedWaitHang) {
+        status = pthread_cond_signal (&_cond[_cur_index]);
+        assert (status == 0, "invariant");
         status = pthread_mutex_unlock(_mutex);
-        assert (status == 0, "invariant") ;
-     } else {
+        assert (status == 0, "invariant");
+      } else {
         status = pthread_mutex_unlock(_mutex);
-        assert (status == 0, "invariant") ;
-        status = pthread_cond_signal (_cond) ;
-        assert (status == 0, "invariant") ;
-     }
+        assert (status == 0, "invariant");
+        status = pthread_cond_signal (&_cond[_cur_index]);
+        assert (status == 0, "invariant");
+      }
+    } else {
+      pthread_mutex_unlock(_mutex);
+      assert (status == 0, "invariant") ;
+    }
   } else {
     pthread_mutex_unlock(_mutex);
     assert (status == 0, "invariant") ;
@@ -5848,3 +6190,149 @@ void MemNotifyThread::start() {
 }
 
 #endif // JAVASE_EMBEDDED
+
+
+/////////////// Unit tests ///////////////
+
+#ifndef PRODUCT
+
+#define test_log(...) \
+  do {\
+    if (VerboseInternalVMTests) { \
+      tty->print_cr(__VA_ARGS__); \
+      tty->flush(); \
+    }\
+  } while (false)
+
+class TestReserveMemorySpecial : AllStatic {
+ public:
+  static void small_page_write(void* addr, size_t size) {
+    size_t page_size = os::vm_page_size();
+
+    char* end = (char*)addr + size;
+    for (char* p = (char*)addr; p < end; p += page_size) {
+      *p = 1;
+    }
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs_only(size_t size) {
+    if (!UseHugeTLBFS) {
+      return;
+    }
+
+    test_log("test_reserve_memory_special_huge_tlbfs_only(" SIZE_FORMAT ")", size);
+
+    char* addr = os::Linux::reserve_memory_special_huge_tlbfs_only(size, NULL, false);
+
+    if (addr != NULL) {
+      small_page_write(addr, size);
+
+      os::Linux::release_memory_special_huge_tlbfs(addr, size);
+    }
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs_only() {
+    if (!UseHugeTLBFS) {
+      return;
+    }
+
+    size_t lp = os::large_page_size();
+
+    for (size_t size = lp; size <= lp * 10; size += lp) {
+      test_reserve_memory_special_huge_tlbfs_only(size);
+    }
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs_mixed(size_t size, size_t alignment) {
+    if (!UseHugeTLBFS) {
+        return;
+    }
+
+    test_log("test_reserve_memory_special_huge_tlbfs_mixed(" SIZE_FORMAT ", " SIZE_FORMAT ")",
+        size, alignment);
+
+    assert(size >= os::large_page_size(), "Incorrect input to test");
+
+    char* addr = os::Linux::reserve_memory_special_huge_tlbfs_mixed(size, alignment, NULL, false);
+
+    if (addr != NULL) {
+      small_page_write(addr, size);
+
+      os::Linux::release_memory_special_huge_tlbfs(addr, size);
+    }
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(size_t size) {
+    size_t lp = os::large_page_size();
+    size_t ag = os::vm_allocation_granularity();
+
+    for (size_t alignment = ag; is_size_aligned(size, alignment); alignment *= 2) {
+      test_reserve_memory_special_huge_tlbfs_mixed(size, alignment);
+    }
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs_mixed() {
+    size_t lp = os::large_page_size();
+    size_t ag = os::vm_allocation_granularity();
+
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp + ag);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp + lp / 2);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 2);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 2 + ag);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 2 - ag);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 2 + lp / 2);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 10);
+    test_reserve_memory_special_huge_tlbfs_mixed_all_alignments(lp * 10 + lp / 2);
+  }
+
+  static void test_reserve_memory_special_huge_tlbfs() {
+    if (!UseHugeTLBFS) {
+      return;
+    }
+
+    test_reserve_memory_special_huge_tlbfs_only();
+    test_reserve_memory_special_huge_tlbfs_mixed();
+  }
+
+  static void test_reserve_memory_special_shm(size_t size, size_t alignment) {
+    if (!UseSHM) {
+      return;
+    }
+
+    test_log("test_reserve_memory_special_shm(" SIZE_FORMAT ", " SIZE_FORMAT ")", size, alignment);
+
+    char* addr = os::Linux::reserve_memory_special_shm(size, alignment, NULL, false);
+
+    if (addr != NULL) {
+      assert(is_ptr_aligned(addr, alignment), "Check");
+      assert(is_ptr_aligned(addr, os::large_page_size()), "Check");
+
+      small_page_write(addr, size);
+
+      os::Linux::release_memory_special_shm(addr, size);
+    }
+  }
+
+  static void test_reserve_memory_special_shm() {
+    size_t lp = os::large_page_size();
+    size_t ag = os::vm_allocation_granularity();
+
+    for (size_t size = ag; size < lp * 3; size += ag) {
+      for (size_t alignment = ag; is_size_aligned(size, alignment); alignment *= 2) {
+        test_reserve_memory_special_shm(size, alignment);
+      }
+    }
+  }
+
+  static void test() {
+    test_reserve_memory_special_huge_tlbfs();
+    test_reserve_memory_special_shm();
+  }
+};
+
+void TestReserveMemorySpecial_test() {
+  TestReserveMemorySpecial::test();
+}
+
+#endif

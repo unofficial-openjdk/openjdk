@@ -3156,7 +3156,12 @@ bool os::can_execute_large_page_memory() {
   return true;
 }
 
-char* os::reserve_memory_special(size_t bytes, char* addr, bool exec) {
+char* os::reserve_memory_special(size_t bytes, size_t alignment, char* addr, bool exec) {
+  assert(UseLargePages, "only for large pages");
+
+  if (!is_size_aligned(bytes, os::large_page_size()) || alignment > os::large_page_size()) {
+    return NULL; // Fallback to small pages.
+  }
 
   const DWORD prot = exec ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
   const DWORD flags = MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES;
@@ -3184,9 +3189,12 @@ char* os::reserve_memory_special(size_t bytes, char* addr, bool exec) {
     return p_buf;
 
   } else {
+    if (TracePageSizes && Verbose) {
+       tty->print_cr("Reserving large pages in a single large chunk.");
+    }
     // normal policy just allocate it all at once
     DWORD flag = MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES;
-    char * res = (char *)VirtualAlloc(NULL, bytes, flag, prot);
+    char * res = (char *)VirtualAlloc(addr, bytes, flag, prot);
     if (res != NULL) {
       address pc = CALLER_PC;
       MemTracker::record_virtual_memory_reserve_and_commit((address)res, bytes, mtNone, pc);
@@ -3911,8 +3919,6 @@ jint os::init_2(void) {
       tty->print("[Memory Serialize  Page address: " INTPTR_FORMAT "]\n", (intptr_t)mem_serialize_page);
 #endif
   }
-
-  os::large_page_init();
 
   // Setup Windows Exceptions
 
@@ -5394,6 +5400,75 @@ inline BOOL os::Advapi32Dll::AdvapiAvailable() {
   return true;
 }
 
+void* os::get_default_process_handle() {
+  return (void*)GetModuleHandle(NULL);
+}
+
+// Builds a platform dependent Agent_OnLoad_<lib_name> function name
+// which is used to find statically linked in agents.
+// Additionally for windows, takes into account __stdcall names.
+// Parameters:
+//            sym_name: Symbol in library we are looking for
+//            lib_name: Name of library to look in, NULL for shared libs.
+//            is_absolute_path == true if lib_name is absolute path to agent
+//                                     such as "C:/a/b/L.dll"
+//            == false if only the base name of the library is passed in
+//               such as "L"
+char* os::build_agent_function_name(const char *sym_name, const char *lib_name,
+                                    bool is_absolute_path) {
+  char *agent_entry_name;
+  size_t len;
+  size_t name_len;
+  size_t prefix_len = strlen(JNI_LIB_PREFIX);
+  size_t suffix_len = strlen(JNI_LIB_SUFFIX);
+  const char *start;
+
+  if (lib_name != NULL) {
+    len = name_len = strlen(lib_name);
+    if (is_absolute_path) {
+      // Need to strip path, prefix and suffix
+      if ((start = strrchr(lib_name, *os::file_separator())) != NULL) {
+        lib_name = ++start;
+      } else {
+        // Need to check for drive prefix
+        if ((start = strchr(lib_name, ':')) != NULL) {
+          lib_name = ++start;
+        }
+      }
+      if (len <= (prefix_len + suffix_len)) {
+        return NULL;
+      }
+      lib_name += prefix_len;
+      name_len = strlen(lib_name) - suffix_len;
+    }
+  }
+  len = (lib_name != NULL ? name_len : 0) + strlen(sym_name) + 2;
+  agent_entry_name = NEW_C_HEAP_ARRAY_RETURN_NULL(char, len, mtThread);
+  if (agent_entry_name == NULL) {
+    return NULL;
+  }
+  if (lib_name != NULL) {
+    const char *p = strrchr(sym_name, '@');
+    if (p != NULL && p != sym_name) {
+      // sym_name == _Agent_OnLoad@XX
+      strncpy(agent_entry_name, sym_name, (p - sym_name));
+      agent_entry_name[(p-sym_name)] = '\0';
+      // agent_entry_name == _Agent_OnLoad
+      strcat(agent_entry_name, "_");
+      strncat(agent_entry_name, lib_name, name_len);
+      strcat(agent_entry_name, p);
+      // agent_entry_name == _Agent_OnLoad_lib_name@XX
+    } else {
+      strcpy(agent_entry_name, sym_name);
+      strcat(agent_entry_name, "_");
+      strncat(agent_entry_name, lib_name, name_len);
+    }
+  } else {
+    strcpy(agent_entry_name, sym_name);
+  }
+  return agent_entry_name;
+}
+
 #else
 // Kernel32 API
 typedef BOOL (WINAPI* SwitchToThread_Fn)(void);
@@ -5638,3 +5713,68 @@ BOOL os::Advapi32Dll::AdvapiAvailable() {
 }
 
 #endif
+
+#ifndef PRODUCT
+
+// test the code path in reserve_memory_special() that tries to allocate memory in a single
+// contiguous memory block at a particular address.
+// The test first tries to find a good approximate address to allocate at by using the same
+// method to allocate some memory at any address. The test then tries to allocate memory in
+// the vicinity (not directly after it to avoid possible by-chance use of that location)
+// This is of course only some dodgy assumption, there is no guarantee that the vicinity of
+// the previously allocated memory is available for allocation. The only actual failure
+// that is reported is when the test tries to allocate at a particular location but gets a
+// different valid one. A NULL return value at this point is not considered an error but may
+// be legitimate.
+// If -XX:+VerboseInternalVMTests is enabled, print some explanatory messages.
+void TestReserveMemorySpecial_test() {
+  if (!UseLargePages) {
+    if (VerboseInternalVMTests) {
+      gclog_or_tty->print("Skipping test because large pages are disabled");
+    }
+    return;
+  }
+  // save current value of globals
+  bool old_use_large_pages_individual_allocation = UseLargePagesIndividualAllocation;
+  bool old_use_numa_interleaving = UseNUMAInterleaving;
+
+  // set globals to make sure we hit the correct code path
+  UseLargePagesIndividualAllocation = UseNUMAInterleaving = false;
+
+  // do an allocation at an address selected by the OS to get a good one.
+  const size_t large_allocation_size = os::large_page_size() * 4;
+  char* result = os::reserve_memory_special(large_allocation_size, os::large_page_size(), NULL, false);
+  if (result == NULL) {
+    if (VerboseInternalVMTests) {
+      gclog_or_tty->print("Failed to allocate control block with size "SIZE_FORMAT". Skipping remainder of test.",
+        large_allocation_size);
+    }
+  } else {
+    os::release_memory_special(result, large_allocation_size);
+
+    // allocate another page within the recently allocated memory area which seems to be a good location. At least
+    // we managed to get it once.
+    const size_t expected_allocation_size = os::large_page_size();
+    char* expected_location = result + os::large_page_size();
+    char* actual_location = os::reserve_memory_special(expected_allocation_size, os::large_page_size(), expected_location, false);
+    if (actual_location == NULL) {
+      if (VerboseInternalVMTests) {
+        gclog_or_tty->print("Failed to allocate any memory at "PTR_FORMAT" size "SIZE_FORMAT". Skipping remainder of test.",
+          expected_location, large_allocation_size);
+      }
+    } else {
+      // release memory
+      os::release_memory_special(actual_location, expected_allocation_size);
+      // only now check, after releasing any memory to avoid any leaks.
+      assert(actual_location == expected_location,
+        err_msg("Failed to allocate memory at requested location "PTR_FORMAT" of size "SIZE_FORMAT", is "PTR_FORMAT" instead",
+          expected_location, expected_allocation_size, actual_location));
+    }
+  }
+
+  // restore globals
+  UseLargePagesIndividualAllocation = old_use_large_pages_individual_allocation;
+  UseNUMAInterleaving = old_use_numa_interleaving;
+}
+#endif // PRODUCT
+

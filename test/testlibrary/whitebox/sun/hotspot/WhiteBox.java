@@ -61,6 +61,8 @@ public class WhiteBox {
     registerNatives();
   }
 
+  // Get the maximum heap size supporting COOPs
+  public native long getCompressedOopsMaxHeapSize();
   // Arguments
   public native void printHeapSizes();
 
@@ -90,6 +92,7 @@ public class WhiteBox {
   public native void NMTUncommitMemory(long addr, long size);
   public native void NMTReleaseMemory(long addr, long size);
   public native boolean NMTWaitForDataMerge();
+  public native boolean NMTIsDetailSupported();
 
   // Compiler
   public native void    deoptimizeAll();

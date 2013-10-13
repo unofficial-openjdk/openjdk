@@ -509,24 +509,31 @@ bool Method::compute_has_loops_flag() {
   return _access_flags.has_loops();
 }
 
+bool Method::is_final_method(AccessFlags class_access_flags) const {
+  // or "does_not_require_vtable_entry"
+  // overpass can occur, is not final (reuses vtable entry)
+  // private methods get vtable entries for backward class compatibility.
+  if (is_overpass())  return false;
+  return is_final() || class_access_flags.is_final();
+}
 
 bool Method::is_final_method() const {
-  // %%% Should return true for private methods also,
-  // since there is no way to override them.
-  return is_final() || method_holder()->is_final();
+  return is_final_method(method_holder()->access_flags());
 }
 
-
-bool Method::is_strict_method() const {
-  return is_strict();
-}
-
-
-bool Method::can_be_statically_bound() const {
-  if (is_final_method())  return true;
+bool Method::can_be_statically_bound(AccessFlags class_access_flags) const {
+  if (is_final_method(class_access_flags))  return true;
+#ifdef ASSERT
+  bool is_nonv = (vtable_index() == nonvirtual_vtable_index);
+  if (class_access_flags.is_interface())  assert(is_nonv == is_static(), err_msg("is_nonv=%s", is_nonv));
+#endif
+  assert(valid_vtable_index() || valid_itable_index(), "method must be linked before we ask this question");
   return vtable_index() == nonvirtual_vtable_index;
 }
 
+bool Method::can_be_statically_bound() const {
+  return can_be_statically_bound(method_holder()->access_flags());
+}
 
 bool Method::is_accessor() const {
   if (code_size() != 5) return false;
@@ -720,11 +727,22 @@ void Method::print_made_not_compilable(int comp_level, bool is_osr, bool report,
   }
 }
 
+bool Method::is_always_compilable() const {
+  // Generated adapters must be compiled
+  if (is_method_handle_intrinsic() && is_synthetic()) {
+    assert(!is_not_c1_compilable(), "sanity check");
+    assert(!is_not_c2_compilable(), "sanity check");
+    return true;
+  }
+
+  return false;
+}
+
 bool Method::is_not_compilable(int comp_level) const {
   if (number_of_breakpoints() > 0)
     return true;
-  if (is_method_handle_intrinsic())
-    return !is_synthetic();  // the generated adapters must be compiled
+  if (is_always_compilable())
+    return false;
   if (comp_level == CompLevel_any)
     return is_not_c1_compilable() || is_not_c2_compilable();
   if (is_c1_compile(comp_level))
@@ -736,6 +754,10 @@ bool Method::is_not_compilable(int comp_level) const {
 
 // call this when compiler finds that this method is not compilable
 void Method::set_not_compilable(int comp_level, bool report, const char* reason) {
+  if (is_always_compilable()) {
+    // Don't mark a method which should be always compilable
+    return;
+  }
   print_made_not_compilable(comp_level, /*is_osr*/ false, report, reason);
   if (comp_level == CompLevel_all) {
     set_not_c1_compilable();
@@ -879,16 +901,6 @@ address Method::make_adapters(methodHandle mh, TRAPS) {
 // This function must not hit a safepoint!
 address Method::verified_code_entry() {
   debug_only(No_Safepoint_Verifier nsv;)
-  nmethod *code = (nmethod *)OrderAccess::load_ptr_acquire(&_code);
-  if (code == NULL && UseCodeCacheFlushing) {
-    nmethod *saved_code = CodeCache::reanimate_saved_code(this);
-    if (saved_code != NULL) {
-      methodHandle method(this);
-      assert( ! saved_code->is_osr_method(), "should not get here for osr" );
-      set_code( method, saved_code );
-    }
-  }
-
   assert(_from_compiled_entry != NULL, "must be set");
   return _from_compiled_entry;
 }
@@ -952,7 +964,7 @@ bool Method::is_overridden_in(Klass* k) const {
 
   assert(ik->is_subclass_of(method_holder()), "should be subklass");
   assert(ik->vtable() != NULL, "vtable should exist");
-  if (vtable_index() == nonvirtual_vtable_index) {
+  if (!has_vtable_index()) {
     return false;
   } else {
     Method* vt_m = ik->method_at_vtable(vtable_index());
@@ -1944,7 +1956,7 @@ void Method::print_on(outputStream* st) const {
 
 void Method::print_value_on(outputStream* st) const {
   assert(is_method(), "must be method");
-  st->print_cr(internal_name());
+  st->print(internal_name());
   print_address_on(st);
   st->print(" ");
   name()->print_value_on(st);
@@ -1952,6 +1964,7 @@ void Method::print_value_on(outputStream* st) const {
   signature()->print_value_on(st);
   st->print(" in ");
   method_holder()->print_value_on(st);
+  if (WizardMode) st->print("#%d", _vtable_index);
   if (WizardMode) st->print("[%d,%d]", size_of_parameters(), max_locals());
   if (WizardMode && code() != NULL) st->print(" ((nmethod*)%p)", code());
 }

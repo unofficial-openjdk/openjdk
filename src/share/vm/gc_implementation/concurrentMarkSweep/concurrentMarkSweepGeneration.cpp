@@ -230,7 +230,7 @@ ConcurrentMarkSweepGeneration::ConcurrentMarkSweepGeneration(
   // depends on this property.
   debug_only(
     FreeChunk* junk = NULL;
-    assert(UseCompressedKlassPointers ||
+    assert(UseCompressedClassPointers ||
            junk->prev_addr() == (void*)(oop(junk)->klass_addr()),
            "Offset of FreeChunk::_prev within FreeChunk must match"
            "  that of OopDesc::_klass within OopDesc");
@@ -1407,7 +1407,7 @@ ConcurrentMarkSweepGeneration::par_promote(int thread_num,
   assert(!((FreeChunk*)obj_ptr)->is_free(), "Error, block will look free but show wrong size");
   OrderAccess::storestore();
 
-  if (UseCompressedKlassPointers) {
+  if (UseCompressedClassPointers) {
     // Copy gap missed by (aligned) header size calculation below
     obj->set_klass_gap(old->klass_gap());
   }
@@ -3460,7 +3460,9 @@ void ConcurrentMarkSweepGeneration::shrink_by(size_t bytes) {
 void ConcurrentMarkSweepGeneration::shrink(size_t bytes) {
   assert_locked_or_safepoint(Heap_lock);
   size_t size = ReservedSpace::page_align_size_down(bytes);
-  if (size > 0) {
+  // Only shrink if a compaction was done so that all the free space
+  // in the generation is in a contiguous block at the end.
+  if (size > 0 && did_compact()) {
     shrink_by(size);
   }
 }
@@ -8696,9 +8698,10 @@ void SweepClosure::lookahead_and_flush(FreeChunk* fc, size_t chunk_size) {
   assert(inFreeRange(), "Should only be called if currently in a free range.");
   HeapWord* const eob = ((HeapWord*)fc) + chunk_size;
   assert(_sp->used_region().contains(eob - 1),
-         err_msg("eob = " PTR_FORMAT " out of bounds wrt _sp = [" PTR_FORMAT "," PTR_FORMAT ")"
+         err_msg("eob = " PTR_FORMAT " eob-1 = " PTR_FORMAT " _limit = " PTR_FORMAT
+                 " out of bounds wrt _sp = [" PTR_FORMAT "," PTR_FORMAT ")"
                  " when examining fc = " PTR_FORMAT "(" SIZE_FORMAT ")",
-                 _limit, _sp->bottom(), _sp->end(), fc, chunk_size));
+                 eob, eob-1, _limit, _sp->bottom(), _sp->end(), fc, chunk_size));
   if (eob >= _limit) {
     assert(eob == _limit || fc->is_free(), "Only a free chunk should allow us to cross over the limit");
     if (CMSTraceSweeper) {
@@ -9062,7 +9065,7 @@ bool CMSCollector::take_from_overflow_list(size_t num, CMSMarkStack* stack) {
   return !stack->isEmpty();
 }
 
-#define BUSY  (oop(0x1aff1aff))
+#define BUSY  (cast_to_oop<intptr_t>(0x1aff1aff))
 // (MT-safe) Get a prefix of at most "num" from the list.
 // The overflow list is chained through the mark word of
 // each object in the list. We fetch the entire list,
@@ -9095,7 +9098,7 @@ bool CMSCollector::par_take_from_overflow_list(size_t num,
     return false;
   }
   // Grab the entire list; we'll put back a suffix
-  oop prefix = (oop)Atomic::xchg_ptr(BUSY, &_overflow_list);
+  oop prefix = cast_to_oop(Atomic::xchg_ptr(BUSY, &_overflow_list));
   Thread* tid = Thread::current();
   // Before "no_of_gc_threads" was introduced CMSOverflowSpinCount was
   // set to ParallelGCThreads.
@@ -9110,7 +9113,7 @@ bool CMSCollector::par_take_from_overflow_list(size_t num,
       return false;
     } else if (_overflow_list != BUSY) {
       // Try and grab the prefix
-      prefix = (oop)Atomic::xchg_ptr(BUSY, &_overflow_list);
+      prefix = cast_to_oop(Atomic::xchg_ptr(BUSY, &_overflow_list));
     }
   }
   // If the list was found to be empty, or we spun long
