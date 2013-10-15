@@ -235,6 +235,9 @@ public class DefaultPersistenceDelegate extends PersistenceDelegate {
                     for(int i = 0; i < a.length; i = i + 3) {
                         try {
                            Field f = type.getField((String)a[i]);
+			   if (!ReflectUtil.isPackageAccessible(f.getDeclaringClass())) {
+			     continue;
+			   }
                            if (f.get(null).equals(oldValue)) {
                                out.remove(oldValue);
                                out.writeExpression(new Expression(oldValue, f, "get", new Object[]{null}));

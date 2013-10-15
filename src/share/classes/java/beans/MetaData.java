@@ -40,6 +40,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -47,6 +48,7 @@ import java.security.PrivilegedAction;
 import java.sql.Timestamp;
 
 import java.util.*;
+import static sun.reflect.misc.ReflectUtil.isPackageAccessible;
 
 import javax.swing.Box;
 import javax.swing.JLayeredPane;
@@ -907,13 +909,15 @@ final class java_awt_AWTKeyStroke_PersistenceDelegate extends PersistenceDelegat
 
 class StaticFieldsPersistenceDelegate extends PersistenceDelegate {
     protected void installFields(Encoder out, Class<?> cls) {
-        Field fields[] = cls.getFields();
-        for(int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
-            // Don't install primitives, their identity will not be preserved
-            // by wrapping.
-            if (Object.class.isAssignableFrom(field.getType())) {
-                out.writeExpression(new Expression(field, "get", new Object[]{null}));
+        if (Modifier.isPublic(cls.getModifiers()) && isPackageAccessible(cls)) {
+            Field fields[] = cls.getFields();
+            for(int i = 0; i < fields.length; i++) {
+                Field field = fields[i];
+                // Don't install primitives, their identity will not be preserved
+                // by wrapping.
+                if (Object.class.isAssignableFrom(field.getType())) {
+                    out.writeExpression(new Expression(field, "get", new Object[]{null}));
+                }
             }
         }
     }
