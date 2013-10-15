@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -542,27 +542,6 @@ abstract class P11Key implements Key, Length {
             fetchValues();
             return coeff;
         }
-        public String toString() {
-            fetchValues();
-            StringBuilder sb = new StringBuilder(super.toString());
-            sb.append("\n  modulus:          ");
-            sb.append(n);
-            sb.append("\n  public exponent:  ");
-            sb.append(e);
-            sb.append("\n  private exponent: ");
-            sb.append(d);
-            sb.append("\n  prime p:          ");
-            sb.append(p);
-            sb.append("\n  prime q:          ");
-            sb.append(q);
-            sb.append("\n  prime exponent p: ");
-            sb.append(pe);
-            sb.append("\n  prime exponent q: ");
-            sb.append(qe);
-            sb.append("\n  crt coefficient:  ");
-            sb.append(coeff);
-            return sb.toString();
-        }
     }
 
     // RSA non-CRT private key
@@ -615,15 +594,6 @@ abstract class P11Key implements Key, Length {
         public BigInteger getPrivateExponent() {
             fetchValues();
             return d;
-        }
-        public String toString() {
-            fetchValues();
-            StringBuilder sb = new StringBuilder(super.toString());
-            sb.append("\n  modulus:          ");
-            sb.append(n);
-            sb.append("\n  private exponent: ");
-            sb.append(d);
-            return sb.toString();
         }
     }
 
@@ -794,11 +764,6 @@ abstract class P11Key implements Key, Length {
             fetchValues();
             return params;
         }
-        public String toString() {
-            fetchValues();
-            return super.toString() +  "\n  x: " + x + "\n  p: " + params.getP()
-                + "\n  q: " + params.getQ() + "\n  g: " + params.getG();
-        }
     }
 
     private static final class P11DHPrivateKey extends P11Key
@@ -855,11 +820,6 @@ abstract class P11Key implements Key, Length {
         public DHParameterSpec getParams() {
             fetchValues();
             return params;
-        }
-        public String toString() {
-            fetchValues();
-            return super.toString() +  "\n  x: " + x + "\n  p: " + params.getP()
-                + "\n  g: " + params.getG();
         }
     }
 
@@ -976,12 +936,6 @@ abstract class P11Key implements Key, Length {
         public ECParameterSpec getParams() {
             fetchValues();
             return params;
-        }
-        public String toString() {
-            fetchValues();
-        return super.toString()
-            + "\n  private value:  " + s
-            + "\n  parameters: " + params;
         }
     }
 
