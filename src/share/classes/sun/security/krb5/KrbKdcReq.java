@@ -151,11 +151,15 @@ public abstract class KrbKdcReq {
                 savedException = e;
             }
         }
-        if (ibuf == null && savedException != null) {
-            if (savedException instanceof IOException) {
-                throw (IOException) savedException;
+        if (ibuf == null) {
+            if (savedException != null) {
+                if (savedException instanceof IOException) {
+                    throw (IOException) savedException;
+                } else {
+                    throw (KrbException) savedException;
+                }
             } else {
-                throw (KrbException) savedException;
+                throw new IOException("Cannot get a KDC reply");
             }
         }
         return tempKdc;
