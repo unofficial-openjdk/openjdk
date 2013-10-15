@@ -25,7 +25,6 @@
 
 # Cache all finds needed for this file. Only used on windows.
 $(eval $(call FillCacheFind,$(JDK_TOPDIR)/make/tools \
-    $(JDK_TOPDIR)/src/solaris/classes \
     $(JDK_TOPDIR)/makefiles/sun))
 
 TOOLS_SRC:=$(JDK_TOPDIR)/make/tools/src \
@@ -150,6 +149,9 @@ TOOL_REMOVEMETHODS=$(JAVA) -Xbootclasspath/p:$(LANGTOOLS_OUTPUTDIR)/dist/bootstr
 TOOL_CHECKDEPS=$(JAVA) -Xbootclasspath/p:$(LANGTOOLS_OUTPUTDIR)/dist/bootstrap/lib/javac.jar \
     -cp $(JDK_OUTPUTDIR)/btclasses:$(JDK_OUTPUTDIR) \
         build.tools.deps.CheckDeps
+
+TOOL_ADDTORESTRICTEDPKGS=$(JAVA) -cp $(JDK_OUTPUTDIR)/btclasses \
+ 	build.tools.addtorestrictedpkgs.AddToRestrictedPkgs
 
 ##########################################################################################
 
