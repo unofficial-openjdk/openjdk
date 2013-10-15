@@ -559,6 +559,9 @@ public class TrueTypeFont extends FileFont {
         if (head_Table != null && head_Table.capacity() >= 18) {
             ShortBuffer sb = head_Table.asShortBuffer();
             upem = sb.get(9) & 0xffff;
+            if (upem < 16 || upem > 16384) {
+                upem = 2048;
+            }
         }
         setStrikethroughMetrics(os2_Table, upem);
 
