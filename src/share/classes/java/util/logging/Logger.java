@@ -26,9 +26,17 @@
 
 package java.util.logging;
 
-import java.util.*;
-import java.security.*;
 import java.lang.ref.WeakReference;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 
 /**
  * A Logger object is used to log messages for a specific
@@ -97,14 +105,8 @@ import java.lang.ref.WeakReference;
  * <p>
  * When mapping ResourceBundle names to ResourceBundles, the Logger
  * will first try to use the Thread's ContextClassLoader.  If that
- * is null it will try the SystemClassLoader instead.  As a temporary
- * transition feature in the initial implementation, if the Logger is
- * unable to locate a ResourceBundle from the ContextClassLoader or
- * SystemClassLoader the Logger will also search up the class stack
- * and use successive calling ClassLoaders to try to locate a ResourceBundle.
- * (This call stack search is to allow containers to transition to
- * using ContextClassLoaders and is likely to be removed in future
- * versions.)
+ * is null it will try the
+ * {@linkplain java.lang.ClassLoader#getSystemClassLoader() system ClassLoader} instead.
  * <p>
  * Formatting (including localization) is the responsibility of
  * the output Handler, which will typically call a Formatter.
@@ -1297,12 +1299,6 @@ public class Logger {
         return useParentHandlers;
     }
 
-    // Private utility method to map a resource bundle name to an
-    // actual resource bundle, using a simple one-entry cache.
-    // Returns null for a null name.
-    // May also return null if we can't find the resource bundle and
-    // there is no suitable previous cached value.
-
     static final String SYSTEM_LOGGER_RB_NAME = "sun.util.logging.resources.logging";
 
     private static ResourceBundle findSystemResourceBundle(final Locale locale) {
@@ -1320,6 +1316,16 @@ public class Logger {
         });
     }
 
+    /**
+     * Private utility method to map a resource bundle name to an
+     * actual resource bundle, using a simple one-entry cache.
+     * Returns null for a null name.
+     * May also return null if we can't find the resource bundle and
+     * there is no suitable previous cached value.
+     *
+     * @param name the ResourceBundle to locate
+     * @return ResourceBundle specified by name or null if not found
+     */
     private synchronized ResourceBundle findResourceBundle(String name) {
         // Return a null bundle for a null name.
         if (name == null) {
@@ -1329,8 +1335,8 @@ public class Logger {
         Locale currentLocale = Locale.getDefault();
 
         // Normally we should hit on our simple one entry cache.
-        if (catalog != null && currentLocale == catalogLocale
-                                        && name == catalogName) {
+        if (catalog != null && currentLocale.equals(catalogLocale)
+                && name.equals(catalogName)) {
             return catalog;
         }
 
@@ -1341,8 +1347,8 @@ public class Logger {
             return catalog;
         }
 
-        // Use the thread's context ClassLoader.  If there isn't one,
-        // use the SystemClassloader.
+        // Use the thread's context ClassLoader.  If there isn't one, use the
+        // {@linkplain java.lang.ClassLoader#getSystemClassLoader() system ClassLoader}.
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
             cl = ClassLoader.getSystemClassLoader();
@@ -1353,45 +1359,8 @@ public class Logger {
             catalogLocale = currentLocale;
             return catalog;
         } catch (MissingResourceException ex) {
-            // Woops.  We can't find the ResourceBundle in the default
-            // ClassLoader.  Drop through.
+            return null;
         }
-
-
-        // Fall back to searching up the call stack and trying each
-        // calling ClassLoader.
-        for (int ix = 0; ; ix++) {
-            Class clz = sun.reflect.Reflection.getCallerClass(ix);
-            if (clz == null) {
-                break;
-            }
-            ClassLoader cl2 = clz.getClassLoader();
-            if (cl2 == null) {
-                cl2 = ClassLoader.getSystemClassLoader();
-            }
-            if (cl == cl2) {
-                // We've already checked this classloader.
-                continue;
-            }
-            cl = cl2;
-            try {
-                catalog = ResourceBundle.getBundle(name, currentLocale, cl);
-                catalogName = name;
-                catalogLocale = currentLocale;
-                return catalog;
-            } catch (MissingResourceException ex) {
-                // Ok, this one didn't work either.
-                // Drop through, and try the next one.
-            }
-        }
-
-        if (name.equals(catalogName)) {
-            // Return the previous cached value for that name.
-            // This may be null.
-            return catalog;
-        }
-        // Sorry, we're out of luck.
-        return null;
     }
 
     // Private utility method to initialize our one entry
@@ -1403,8 +1372,7 @@ public class Logger {
         if (name == null) {
             return;
         }
-        ResourceBundle rb = findResourceBundle(name);
-        if (rb == null) {
+        if (findResourceBundle(name) == null) {
             // We've failed to find an expected ResourceBundle.
             throw new MissingResourceException("Can't find " + name + " bundle", name, "");
         }
