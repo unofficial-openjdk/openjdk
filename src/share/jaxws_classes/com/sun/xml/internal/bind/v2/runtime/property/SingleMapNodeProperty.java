@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@ import com.sun.xml.internal.bind.api.AccessorException;
 import com.sun.xml.internal.bind.v2.ClassFactory;
 import com.sun.xml.internal.bind.v2.util.QNameMap;
 import com.sun.xml.internal.bind.v2.model.core.PropertyKind;
-import com.sun.xml.internal.bind.v2.model.nav.ReflectionNavigator;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeMapPropertyInfo;
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
 import com.sun.xml.internal.bind.v2.runtime.JaxBeanInfo;
@@ -98,7 +97,8 @@ final class SingleMapNodeProperty<BeanT,ValueT extends Map> extends PropertyImpl
         this.valueBeanInfo = context.getOrCreate(prop.getValueType());
 
         // infer the implementation class
-        Class<ValueT> sig = ReflectionNavigator.REFLECTION.erasure(prop.getRawType());
+        //noinspection unchecked
+        Class<ValueT> sig = (Class<ValueT>) Utils.REFLECTION_NAVIGATOR.erasure(prop.getRawType());
         mapImplClass = ClassFactory.inferImplClass(sig,knownImplClasses);
         // TODO: error check for mapImplClass==null
         // what is the error reporting path for this part of the code?

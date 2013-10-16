@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -240,10 +240,6 @@ public interface Navigator<T,C,F,M> {
      */
     T getComponentType(T t);
 
-
-    /** The singleton instance. */
-    public static final ReflectionNavigator REFLECTION = new ReflectionNavigator();
-
     /**
      * Gets the i-th type argument from a parameterized type.
      *
@@ -357,14 +353,14 @@ public interface Navigator<T,C,F,M> {
     String getPackageName(C clazz);
 
     /**
-     * Finds the class/interface/enum/annotation of the given name.
+     * Finds ObjectFactory for the given referencePoint.
      *
      * @param referencePoint
      *      The class that refers to the specified class.
      * @return
      *      null if not found.
      */
-    C findClass(String className, C referencePoint);
+    C loadObjectFactory(C referencePoint, String packageName);
 
     /**
      * Returns true if this method is a bridge method as defined in JLS.

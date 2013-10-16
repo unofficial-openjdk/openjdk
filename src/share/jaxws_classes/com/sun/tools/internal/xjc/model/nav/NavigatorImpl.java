@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ public final class NavigatorImpl implements Navigator<NType,NClass,Void,Void> {
             EagerNType ent = (EagerNType) nt;
             if (base instanceof EagerNClass) {
                 EagerNClass enc = (EagerNClass) base;
-                return create(REFLECTION.getBaseClass(ent.t, enc.c));
+                return create(Utils.REFLECTION_NAVIGATOR.getBaseClass(ent.t, enc.c));
             }
             // lazy class can never be a base type of an eager type
             return null;
@@ -176,7 +176,7 @@ public final class NavigatorImpl implements Navigator<NType,NClass,Void,Void> {
     public NType getTypeArgument(NType nt, int i) {
         if (nt instanceof EagerNType) {
             EagerNType ent = (EagerNType) nt;
-            return create(REFLECTION.getTypeArgument(ent.t,i));
+            return create(Utils.REFLECTION_NAVIGATOR.getTypeArgument(ent.t,i));
         }
         if (nt instanceof NClassByJClass) {
             NClassByJClass nnt = (NClassByJClass) nt;
@@ -189,7 +189,7 @@ public final class NavigatorImpl implements Navigator<NType,NClass,Void,Void> {
     public boolean isParameterizedType(NType nt) {
         if (nt instanceof EagerNType) {
             EagerNType ent = (EagerNType) nt;
-            return REFLECTION.isParameterizedType(ent.t);
+            return Utils.REFLECTION_NAVIGATOR.isParameterizedType(ent.t);
         }
         if (nt instanceof NClassByJClass) {
             NClassByJClass nnt = (NClassByJClass) nt;
@@ -303,8 +303,8 @@ public final class NavigatorImpl implements Navigator<NType,NClass,Void,Void> {
         throw new UnsupportedOperationException();
     }
 
-    public NClass findClass(String className, NClass referencePoint) {
-        // TODO: implement this method later
+    @Override
+    public NClass loadObjectFactory(NClass referencePoint, String pkg) {
         throw new UnsupportedOperationException();
     }
 

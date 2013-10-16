@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,17 +44,21 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
  * {@link Navigator} implementation for {@code java.lang.reflect}.
  *
  */
-public final class ReflectionNavigator implements Navigator<Type, Class, Field, Method> {
+/*package*/final class ReflectionNavigator implements Navigator<Type, Class, Field, Method> {
 
-    /**
-     * Singleton.
-     *
-     * Use {@link Navigator#REFLECTION}
-     */
-    ReflectionNavigator() {
+//  ----------  Singleton -----------------
+    private static final ReflectionNavigator INSTANCE = new ReflectionNavigator();
+
+    /*package*/static ReflectionNavigator getInstance() { // accessible through reflection from Utils classes
+        return INSTANCE;
     }
 
+    private ReflectionNavigator() {
+    }
+//  ---------------------------------------
+
     public Class getSuperClass(Class clazz) {
+        checkPackageAccess(clazz.getName());
         if (clazz == Object.class) {
             return null;
         }
@@ -64,6 +68,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         }
         return sc;
     }
+
     private static final TypeVisitor<Type, Class> baseClassFinder = new TypeVisitor<Type, Class>() {
 
         public Type onClass(Class c, Class sup) {
@@ -261,10 +266,12 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
     }
 
     public Collection<? extends Field> getDeclaredFields(Class clazz) {
+        checkPackageAccess(clazz.getName());
         return Arrays.asList(clazz.getDeclaredFields());
     }
 
     public Field getDeclaredField(Class clazz, String fieldName) {
+        checkPackageAccess(clazz.getName());
         try {
             return clazz.getDeclaredField(fieldName);
         } catch (NoSuchFieldException e) {
@@ -273,6 +280,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
     }
 
     public Collection<? extends Method> getDeclaredMethods(Class clazz) {
+        checkPackageAccess(clazz.getName());
         return Arrays.asList(clazz.getDeclaredMethods());
     }
 
@@ -496,7 +504,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
             c.getDeclaredConstructor();
             return true;
         } catch (NoSuchMethodException e) {
-            return false;
+            return false; // todo: do this WITHOUT exception throw
         }
     }
 
@@ -517,6 +525,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
     }
 
     public Field[] getEnumConstants(Class clazz) {
+        checkPackageAccess(clazz.getName());
         try {
             Object[] values = clazz.getEnumConstants();
             Field[] fields = new Field[values.length];
@@ -544,13 +553,16 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         }
     }
 
-    public Class findClass(String className, Class referencePoint) {
+    @Override
+    public Class loadObjectFactory(Class referencePoint, String pkg) {
+        String clName = pkg + ".ObjectFactory";
+        checkPackageAccess(clName);
+        ClassLoader cl = referencePoint.getClassLoader();
+        if (cl == null)
+            cl = ClassLoader.getSystemClassLoader();
+
         try {
-            ClassLoader cl = referencePoint.getClassLoader();
-            if (cl == null) {
-                cl = ClassLoader.getSystemClassLoader();
-            }
-            return cl.loadClass(className);
+            return cl.loadClass(clName);
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -619,5 +631,25 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         }
 
         return t;
+    }
+
+    /**
+     * Checking if current thread can access class.
+     *
+     * @param clName name of the class to be checked
+     * @throws SecurityException is thrown if thread doesn't have privileges
+     */
+     static void  checkPackageAccess(String clName) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm == null)
+            return;
+        if (clName.startsWith("[")) { // array
+            int nameStart = clName.lastIndexOf('[') + 2;
+            if (nameStart > 1 && nameStart < clName.length())
+                clName = clName.substring(nameStart);
+        }
+        int packageEnd = clName.lastIndexOf('.');
+        if (packageEnd != -1)
+            sm.checkPackageAccess(clName.substring(0, packageEnd));
     }
 }

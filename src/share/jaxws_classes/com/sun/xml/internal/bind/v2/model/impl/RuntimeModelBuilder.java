@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,6 @@ import com.sun.xml.internal.bind.api.AccessorException;
 import com.sun.xml.internal.bind.v2.model.annotation.Locatable;
 import com.sun.xml.internal.bind.v2.model.annotation.RuntimeAnnotationReader;
 import com.sun.xml.internal.bind.v2.model.core.ID;
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
-import com.sun.xml.internal.bind.v2.model.nav.ReflectionNavigator;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeNonElement;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeNonElementRef;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimePropertyInfo;
@@ -75,7 +73,7 @@ public class RuntimeModelBuilder extends ModelBuilder<Type,Class,Field,Method> {
     public final @Nullable JAXBContextImpl context;
 
     public RuntimeModelBuilder(JAXBContextImpl context, RuntimeAnnotationReader annotationReader, Map<Class, Class> subclassReplacements, String defaultNamespaceRemap) {
-        super(annotationReader, Navigator.REFLECTION, subclassReplacements, defaultNamespaceRemap);
+        super(annotationReader, Utils.REFLECTION_NAVIGATOR, subclassReplacements, defaultNamespaceRemap);
         this.context = context;
     }
 
@@ -107,10 +105,6 @@ public class RuntimeModelBuilder extends ModelBuilder<Type,Class,Field,Method> {
     @Override
     public RuntimeArrayInfoImpl createArrayInfo(Locatable upstream, Type arrayType) {
         return new RuntimeArrayInfoImpl(this, upstream, (Class)arrayType);
-    }
-
-    public ReflectionNavigator getNavigator() {
-        return (ReflectionNavigator)nav;
     }
 
     @Override
