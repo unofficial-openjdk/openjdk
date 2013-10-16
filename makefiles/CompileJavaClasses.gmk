@@ -308,19 +308,6 @@ $(eval $(call SetupJavaCompilation,BUILD_JDK, \
 
 ##########################################################################################
 
-ifndef OPENJDK
-
-  $(eval $(call SetupJavaCompilation,BUILD_ALTCLASSES, \
-      SETUP := GENERATE_JDKBYTECODE, \
-      SRC := $(JDK_TOPDIR)/src/closed/share/altclasses, \
-      BIN := $(JDK_OUTPUTDIR)/altclasses_classes))
-
-  $(BUILD_ALTCLASSES): $(BUILD_JDK)
-
-endif
-
-##########################################################################################
-
 $(JDK_OUTPUTDIR)/classes/META-INF/services/com.sun.tools.xjc.Plugin:
 	$(MKDIR) -p $(@D)
 	$(TOUCH) $@
@@ -403,7 +390,7 @@ endif
 
 ##########################################################################################
 
-all: $(BUILD_JDK) $(BUILD_ALTCLASSES) $(BUILD_JOBJC) $(BUILD_JOBJC_HEADERS) $(COPY_EXTRA) \
+all: $(BUILD_JDK) $(BUILD_JOBJC) $(BUILD_JOBJC_HEADERS) $(COPY_EXTRA) \
     $(JDK_OUTPUTDIR)/classes/META-INF/services/com.sun.tools.xjc.Plugin \
     $(BUILD_ACCESSBRIDGE_32) $(BUILD_ACCESSBRIDGE_64) \
     $(BUILD_ACCESSBRIDGE_LEGACY)

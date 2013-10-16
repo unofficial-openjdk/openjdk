@@ -171,7 +171,6 @@ FULL_JRE_LIB_FILES := \
     $(OPENJDK_TARGET_CPU_LEGACY_LIB)/$(LIBRARY_PREFIX)splashscreen$(SHARED_LIBRARY_SUFFIX) \
     $(OPENJDK_TARGET_CPU_LEGACY_LIB)/$(LIBRARY_PREFIX)t2k$(SHARED_LIBRARY_SUFFIX) \
     $(OPENJDK_TARGET_CPU_LEGACY_LIB)/$(LIBRARY_PREFIX)unpack$(SHARED_LIBRARY_SUFFIX) \
-    alt-rt.jar \
     charsets.jar \
     cmm/CIEXYZ.pf \
     cmm/GRAY.pf \
@@ -248,7 +247,6 @@ FULL_JRE_OTHER_FILES := \
     man/man1/unpack200.1
 
 FULL_JRE_JAR_FILES := \
-    alt-rt.jar \
     charsets.jar \
     ext/cldrdata.jar \
     ext/dnsns.jar \
