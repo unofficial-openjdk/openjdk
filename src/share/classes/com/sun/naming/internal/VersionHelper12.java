@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,11 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import javax.naming.*;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * VersionHelper was used by JNDI to accommodate differences between
@@ -54,21 +54,37 @@ import javax.naming.*;
 
 final class VersionHelper12 extends VersionHelper {
 
-    private boolean getSystemPropsFailed = false;
+    // workaround to disable additional package access control with
+    // Thread Context Class Loader (TCCL).
+    private final static boolean noPackageAccessWithTCCL = "true".equals(
+        AccessController.doPrivileged(
+            new PrivilegedAction<String>() {
+                public String run() {
+                    return System.getProperty(
+                        "com.sun.naming.untieAccessContextWithTCCL");
+                }
+            }
+        ));
 
-    VersionHelper12() {} // Disallow external from creating one of these.
+    // Disallow external from creating one of these.
+    VersionHelper12() {
+    }
 
     public Class loadClass(String className) throws ClassNotFoundException {
-        ClassLoader cl = getContextClassLoader();
-        return Class.forName(className, true, cl);
+        return loadClass(className, getContextClassLoader());
     }
 
     /**
-      * Package private.
-      */
+     * Package private.
+     *
+     * This internal method is used with Thread Context Class Loader (TCCL),
+     * please don't expose this method as public.
+     */
     Class loadClass(String className, ClassLoader cl)
         throws ClassNotFoundException {
-        return Class.forName(className, true, cl);
+        Class<?> cls = Class.forName(className, true, cl);
+        checkPackageAccess(cls);
+        return cls;
     }
 
     /**
@@ -77,12 +93,45 @@ final class VersionHelper12 extends VersionHelper {
      */
     public Class loadClass(String className, String codebase)
         throws ClassNotFoundException, MalformedURLException {
-        ClassLoader cl;
 
         ClassLoader parent = getContextClassLoader();
-        cl = URLClassLoader.newInstance(getUrlArray(codebase), parent);
+        ClassLoader cl =
+                 URLClassLoader.newInstance(getUrlArray(codebase), parent);
 
-        return Class.forName(className, true, cl);
+        return loadClass(className, cl);
+    }
+
+    /**
+     * check package access of a class that is loaded with Thread Context
+     * Class Loader (TCCL).
+     *
+     * Similar to java.lang.ClassLoader.checkPackageAccess()
+     */
+    static void checkPackageAccess(Class<?> cls) {
+        if (noPackageAccessWithTCCL) {
+            return;
+        }
+
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            if (ReflectUtil.isNonPublicProxyClass(cls)) {
+                for (Class<?> intf: cls.getInterfaces()) {
+                    checkPackageAccess(intf);
+                }
+                return;
+            }
+
+            final String name = cls.getName();
+            final int i = name.lastIndexOf('.');
+            if (i != -1) {
+                AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    public Void run() {
+                        sm.checkPackageAccess(name.substring(0, i));
+                        return null;
+                    }
+                }, AccessController.getContext());
+            }
+        }
     }
 
     String getJndiProperty(final int i) {
@@ -100,16 +149,12 @@ final class VersionHelper12 extends VersionHelper {
     }
 
     String[] getJndiProperties() {
-        if (getSystemPropsFailed) {
-            return null;        // after one failure, don't bother trying again
-        }
         Properties sysProps = (Properties) AccessController.doPrivileged(
             new PrivilegedAction() {
                 public Object run() {
                     try {
                         return System.getProperties();
                     } catch (SecurityException e) {
-                        getSystemPropsFailed = true;
                         return null;
                     }
                 }
@@ -175,6 +220,15 @@ final class VersionHelper12 extends VersionHelper {
         return new InputStreamEnumeration(urls);
     }
 
+    /**
+     * Package private.
+     *
+     * This internal method makes use of Thread Context Class Loader (TCCL),
+     * please don't expose this method as public.
+     *
+     * Please take care of package access control on the current context
+     * whenever using TCCL.
+     */
     ClassLoader getContextClassLoader() {
         return (ClassLoader) AccessController.doPrivileged(
             new PrivilegedAction() {
@@ -184,7 +238,6 @@ final class VersionHelper12 extends VersionHelper {
             }
         );
     }
-
 
     /**
      * Given an enumeration of URLs, an instance of this class represents
