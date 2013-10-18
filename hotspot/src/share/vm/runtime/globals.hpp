@@ -1979,13 +1979,6 @@ class CommandLineFlags {
   develop(uintx, MetadataAllocationFailALotInterval, 1000,                  \
           "Metadata allocation failure a lot interval")                     \
                                                                             \
-  develop(bool, MetaDataDeallocateALot, false,                              \
-          "Deallocation bunches of metadata at intervals controlled by "    \
-          "MetaDataAllocateALotInterval")                                   \
-                                                                            \
-  develop(uintx, MetaDataDeallocateALotInterval, 100,                       \
-          "Metadata deallocation alot interval")                            \
-                                                                            \
   develop(bool, TraceMetadataChunkAllocation, false,                        \
           "Trace chunk metadata allocations")                               \
                                                                             \
@@ -2175,7 +2168,7 @@ class CommandLineFlags {
           "Minimum ratio of young generation/survivor space size")          \
                                                                             \
   product(uintx, InitialSurvivorRatio, 8,                                   \
-          "Initial ratio of eden/survivor space size")                      \
+          "Initial ratio of young generation/survivor space size")          \
                                                                             \
   product(uintx, BaseFootPrintEstimate, 256*M,                              \
           "Estimate of footprint other than Java Heap")                     \
@@ -3133,10 +3126,14 @@ class CommandLineFlags {
           "class pointers are used")                                        \
                                                                             \
   product(uintx, MinHeapFreeRatio,    40,                                   \
-          "The minimum percentage of heap free after GC to avoid expansion")\
+          "The minimum percentage of heap free after GC to avoid expansion."\
+          " For most GCs this applies to the old generation. In G1 it"      \
+          " applies to the whole heap. Not supported by ParallelGC.")       \
                                                                             \
   product(uintx, MaxHeapFreeRatio,    70,                                   \
-          "The maximum percentage of heap free after GC to avoid shrinking")\
+          "The maximum percentage of heap free after GC to avoid shrinking."\
+          " For most GCs this applies to the old generation. In G1 it"      \
+          " applies to the whole heap. Not supported by ParallelGC.")       \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \
           "Number of milliseconds per MB of free space in the heap")        \
