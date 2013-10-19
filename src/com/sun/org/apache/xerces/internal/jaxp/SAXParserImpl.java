@@ -20,15 +20,6 @@
 
 package com.sun.org.apache.xerces.internal.jaxp;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-
-import javax.xml.XMLConstants;
-import javax.xml.validation.Schema;
-
 import com.sun.org.apache.xerces.internal.impl.Constants;
 import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
 import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
@@ -46,6 +37,14 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
 import com.sun.org.apache.xerces.internal.xs.AttributePSVI;
 import com.sun.org.apache.xerces.internal.xs.ElementPSVI;
 import com.sun.org.apache.xerces.internal.xs.PSVIProvider;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.HandlerBase;
@@ -185,7 +184,7 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
         // validation errors with a warning telling the user to set an
         // ErrorHandler.
         if (spf.isValidating()) {
-            fInitErrorHandler = new DefaultValidationErrorHandler();
+            fInitErrorHandler = new DefaultValidationErrorHandler(xmlReader.getLocale());
             xmlReader.setErrorHandler(fInitErrorHandler);
         }
         else {
@@ -662,6 +661,10 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
         Object getProperty0(String name)
             throws SAXNotRecognizedException, SAXNotSupportedException {
             return super.getProperty(name);
+        }
+
+        Locale getLocale() {
+            return fConfiguration.getLocale();
         }
 
         private void setSchemaValidatorFeature(String name, boolean value)
