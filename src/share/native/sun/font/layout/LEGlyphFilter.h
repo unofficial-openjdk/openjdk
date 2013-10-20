@@ -61,7 +61,7 @@ public:
      *
      * @internal
      */
-    virtual le_bool accept(LEGlyphID glyph) const = 0;
+    virtual le_bool accept(LEGlyphID glyph, LEErrorCode &success) const = 0;
 };
 
 U_NAMESPACE_END

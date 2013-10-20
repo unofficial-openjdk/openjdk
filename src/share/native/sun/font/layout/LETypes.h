@@ -312,6 +312,20 @@ typedef le_uint32 LEGlyphID;
  */
 #define LE_SET_CLIENT(gid, client) ((gid & ~LE_CLIENT_MASK) | ((client << LE_CLIENT_SHIFT) & LE_CLIENT_MASK))
 
+/**
+ * \def LE_TRACE
+ * @internal
+ */
+#ifndef LE_TRACE
+# define LE_TRACE 0
+#endif
+
+#if LE_TRACE
+# include <stdio.h>
+# define _LETRACE printf("\n%s:%d: LE: ", __FILE__, __LINE__),printf
+#else
+# define _LETRACE 0&&
+#endif
 
 /**
  * Used to represent 16-bit Unicode code points.
@@ -656,7 +670,7 @@ typedef enum LEErrorCode LEErrorCode;
  *
  * @stable ICU 2.4
  */
-#ifndef LE_FAILURE
+#ifndef LE_SUCCESS
 #define LE_SUCCESS(code) (U_SUCCESS((UErrorCode)code))
 #endif
 
@@ -666,12 +680,21 @@ enum LEFeatureENUMs {
  LE_CHAR_FILTER_FEATURE_ENUM = 31,
 };
 
+
+/**
+ * Flags for typographic features.
+ * @internal
+ * @{
+ */
 #define LE_Kerning_FEATURE_FLAG (1 << LE_Kerning_FEATURE_ENUM)
 #define LE_Ligatures_FEATURE_FLAG (1 << LE_Ligatures_FEATURE_ENUM)
 
 #define LE_CHAR_FILTER_FEATURE_ENUM 31
 
 #define LE_CHAR_FILTER_FEATURE_FLAG (1 << LE_CHAR_FILTER_FEATURE_ENUM)
+/**
+ * @}
+ */
 
 #define LE_DEFAULT_FEATURE_FLAG (LE_Kerning_FEATURE_FLAG | LE_Ligatures_FEATURE_FLAG) /**< default features */
 
