@@ -140,7 +140,7 @@ public class DocumentBuilderImpl extends DocumentBuilder
         // validation errors with a warning telling the user to set an
         // ErrorHandler
         if (dbf.isValidating()) {
-            fInitErrorHandler = new DefaultValidationErrorHandler();
+            fInitErrorHandler = new DefaultValidationErrorHandler(domParser.getXMLParserConfiguration().getLocale());
             setErrorHandler(fInitErrorHandler);
         }
         else {
