@@ -457,8 +457,10 @@ final class ProcessImpl extends Process {
 
     /**
      * Create a process using the win32 function CreateProcess.
+     * The method is synchronized due to MS kb315939 problem.
+     * All native handles should restore the inherit flag at the end of call.
      *
-     * @param cmdstr the Windows commandline
+     * @param cmdstr the Windows command line
      * @param envblock NUL-separated, double-NUL-terminated list of
      *        environment strings in VAR=VALUE form
      * @param dir the working directory of the process, or null if
@@ -474,7 +476,7 @@ final class ProcessImpl extends Process {
      * @param redirectErrorStream redirectErrorStream attribute
      * @return the native subprocess HANDLE returned by CreateProcess
      */
-    private static native long create(String cmdstr,
+    private static synchronized native long create(String cmdstr,
                                       String envblock,
                                       String dir,
                                       long[] stdHandles,
