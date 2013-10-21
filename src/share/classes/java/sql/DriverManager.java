@@ -30,6 +30,8 @@ import java.sql.Driver;
 import java.util.ServiceLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 
 
 /**
@@ -159,14 +161,10 @@ public class DriverManager {
      * @return a Connection to the URL
      * @exception SQLException if a database access error occurs
      */
+    @CallerSensitive
     public static Connection getConnection(String url,
         java.util.Properties info) throws SQLException {
-
-        // Gets the classloader of the code that called this method, may
-        // be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
-
-        return (getConnection(url, info, callerCL));
+        return (getConnection(url, info, Reflection.getCallerClass()));
     }
 
     /**
@@ -182,13 +180,10 @@ public class DriverManager {
      * @return a connection to the URL
      * @exception SQLException if a database access error occurs
      */
+    @CallerSensitive
     public static Connection getConnection(String url,
         String user, String password) throws SQLException {
         java.util.Properties info = new java.util.Properties();
-
-        // Gets the classloader of the code that called this method, may
-        // be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
 
         if (user != null) {
             info.put("user", user);
@@ -197,7 +192,7 @@ public class DriverManager {
             info.put("password", password);
         }
 
-        return (getConnection(url, info, callerCL));
+        return (getConnection(url, info, Reflection.getCallerClass()));
     }
 
     /**
@@ -210,16 +205,12 @@ public class DriverManager {
      * @return a connection to the URL
      * @exception SQLException if a database access error occurs
      */
+    @CallerSensitive
     public static Connection getConnection(String url)
         throws SQLException {
 
         java.util.Properties info = new java.util.Properties();
-
-        // Gets the classloader of the code that called this method, may
-        // be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
-
-        return (getConnection(url, info, callerCL));
+        return (getConnection(url, info, Reflection.getCallerClass()));
     }
 
     /**
@@ -233,6 +224,7 @@ public class DriverManager {
      * that can connect to the given URL
      * @exception SQLException if a database access error occurs
      */
+    @CallerSensitive
     public static Driver getDriver(String url)
         throws SQLException {
         java.util.Vector drivers = null;
@@ -248,9 +240,7 @@ public class DriverManager {
             drivers = readDrivers;
         }
 
-        // Gets the classloader of the code that called this method, may
-        // be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
+        Class<?> callerClass = Reflection.getCallerClass();
 
         // Walk through the loaded drivers attempting to locate someone
         // who understands the given URL.
@@ -258,7 +248,7 @@ public class DriverManager {
             DriverInfo di = (DriverInfo)drivers.elementAt(i);
             // If the caller does not have permission to load the driver then
             // skip it.
-            if ( getCallerClass(callerCL, di.driverClassName ) !=
+            if ( getCallerClass(callerClass, di.driverClassName ) !=
                  di.driverClass ) {
                 println("    skipping: " + di);
                 continue;
@@ -319,11 +309,10 @@ public class DriverManager {
      * @param driver the JDBC Driver to drop
      * @exception SQLException if a database access error occurs
      */
+    @CallerSensitive
     public static synchronized void deregisterDriver(Driver driver)
         throws SQLException {
-        // Gets the classloader of the code that called this method,
-        // may be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
+        Class<?> callerClass = Reflection.getCallerClass();
         println("DriverManager.deregisterDriver: " + driver);
 
         // Walk through the loaded drivers.
@@ -343,7 +332,7 @@ public class DriverManager {
 
         // If the caller does not have permission to load the driver then
         // throw a security exception.
-        if (getCallerClass(callerCL, di.driverClassName ) != di.driverClass ) {
+        if (getCallerClass(callerClass, di.driverClassName ) != di.driverClass) {
             throw new SecurityException();
         }
 
@@ -363,6 +352,7 @@ public class DriverManager {
      *
      * @return the list of JDBC Drivers loaded by the caller's class loader
      */
+    @CallerSensitive
     public static java.util.Enumeration<Driver> getDrivers() {
         java.util.Vector<Driver> result = new java.util.Vector<Driver>();
         java.util.Vector drivers = null;
@@ -376,16 +366,14 @@ public class DriverManager {
             drivers  = readDrivers;
        }
 
-        // Gets the classloader of the code that called this method, may
-        // be null.
-        ClassLoader callerCL = DriverManager.getCallerClassLoader();
+        Class<?> callerClass = Reflection.getCallerClass();
 
         // Walk through the loaded drivers.
         for (int i = 0; i < drivers.size(); i++) {
             DriverInfo di = (DriverInfo)drivers.elementAt(i);
             // If the caller does not have permission to load the driver then
             // skip it.
-            if ( getCallerClass(callerCL, di.driverClassName ) != di.driverClass ) {
+            if ( getCallerClass(callerClass, di.driverClassName) != di.driverClass ) {
                 println("    skipping: " + di);
                 continue;
             }
@@ -481,6 +469,12 @@ public class DriverManager {
 
     //------------------------------------------------------------------------
 
+    private static Class getCallerClass(Class<?> caller,
+                                        String driverClassName) {
+        ClassLoader callerCL = caller != null ? caller.getClassLoader() : null;
+        return getCallerClass(callerCL, driverClassName);
+    }
+
     // Returns the class object that would be created if the code calling the
     // driver manager had loaded the driver class, or null if the class
     // is inaccessible.
@@ -573,7 +567,7 @@ public class DriverManager {
 
     //  Worker method called by the public getConnection() methods.
     private static Connection getConnection(
-        String url, java.util.Properties info, ClassLoader callerCL) throws SQLException {
+        String url, java.util.Properties info, Class<?> caller) throws SQLException {
         java.util.Vector drivers = null;
         /*
          * When callerCl is null, we should check the application's
@@ -581,11 +575,12 @@ public class DriverManager {
          * classloader, so that the JDBC driver class outside rt.jar
          * can be loaded from here.
          */
-        synchronized(DriverManager.class) {
-          // synchronize loading of the correct classloader.
-          if(callerCL == null) {
-              callerCL = Thread.currentThread().getContextClassLoader();
-           }
+        ClassLoader callerCL = caller != null ? caller.getClassLoader() : null;
+        synchronized (DriverManager.class) {
+            // synchronize loading of the correct classloader.
+            if (callerCL == null) {
+                callerCL = Thread.currentThread().getContextClassLoader();
+            }
         }
 
         if(url == null) {
@@ -666,10 +661,6 @@ public class DriverManager {
     private static boolean initialized = false;
 
     private static Object logSync = new Object();
-
-    /* Returns the caller's class loader, or null if none */
-    private static native ClassLoader getCallerClassLoader();
-
 }
 
 // DriverInfo is a package-private support class.

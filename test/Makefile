@@ -455,7 +455,7 @@ jdk_io: java/io
 
 # Stable samevm testruns (minus items from PROBLEM_LIST)
 JDK_ALL_TARGETS += jdk_lang
-jdk_lang: java/lang
+jdk_lang: java/lang sun/reflect
 	$(call RunSamevmBatch)
 
 # Stable othervm testruns (minus items from PROBLEM_LIST)

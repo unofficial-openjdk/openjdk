@@ -298,13 +298,10 @@ public class Logger {
         }
     }
 
-    private static Logger demandLogger(String name, String resourceBundleName) {
+    private static Logger demandLogger(String name, String resourceBundleName, Class<?> caller) {
         LogManager manager = LogManager.getLogManager();
         SecurityManager sm = System.getSecurityManager();
         if (sm != null && !SystemLoggerHelper.disableCallerCheck) {
-            // 0: Reflection 1: Logger.getLoggerContext 2: Logger.getLogger 3: caller
-            final int SKIP_FRAMES = 3;
-            Class<?> caller = sun.reflect.Reflection.getCallerClass(SKIP_FRAMES);
             if (caller.getClassLoader() == null) {
                 return manager.demandSystemLogger(name, resourceBundleName);
             }
@@ -339,8 +336,9 @@ public class Logger {
      * @return a suitable Logger
      * @throws NullPointerException if the name is null.
      */
+    @CallerSensitive
     public static synchronized Logger getLogger(String name) {
-        return demandLogger(name, null);
+        return demandLogger(name, null, Reflection.getCallerClass());
     }
 
     /**
@@ -382,8 +380,9 @@ public class Logger {
      *             a different resource bundle name.
      * @throws NullPointerException if the name is null.
      */
+    @CallerSensitive
     public static synchronized Logger getLogger(String name, String resourceBundleName) {
-        Logger result = demandLogger(name, resourceBundleName);
+        Logger result = demandLogger(name, resourceBundleName, Reflection.getCallerClass());
         if (result.resourceBundleName == null) {
             // Note: we may get a MissingResourceException here.
             result.setupResourceInfo(resourceBundleName);

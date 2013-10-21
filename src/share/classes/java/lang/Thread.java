@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.concurrent.locks.LockSupport;
 import sun.misc.SoftCache;
 import sun.nio.ch.Interruptible;
+import sun.reflect.CallerSensitive;
+import sun.reflect.Reflection;
 import sun.security.util.SecurityConstants;
 
 
@@ -1370,16 +1372,15 @@ class Thread implements Runnable {
      *
      * @since 1.2
      */
+    @CallerSensitive
     public ClassLoader getContextClassLoader() {
         if (contextClassLoader == null)
             return null;
+
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            ClassLoader ccl = ClassLoader.getCallerClassLoader();
-            if (ccl != null && ccl != contextClassLoader &&
-                    !contextClassLoader.isAncestor(ccl)) {
-                sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
-            }
+            ClassLoader.checkClassLoaderPermission(contextClassLoader,
+                                                   Reflection.getCallerClass());
         }
         return contextClassLoader;
     }

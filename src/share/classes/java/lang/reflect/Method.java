@@ -25,6 +25,7 @@
 
 package java.lang.reflect;
 
+import sun.reflect.CallerSensitive;
 import sun.reflect.MethodAccessor;
 import sun.reflect.Reflection;
 import sun.reflect.generics.repository.MethodRepository;
@@ -587,13 +588,18 @@ public final
      * @exception ExceptionInInitializerError if the initialization
      * provoked by this method fails.
      */
+    @CallerSensitive
     public Object invoke(Object obj, Object... args)
         throws IllegalAccessException, IllegalArgumentException,
            InvocationTargetException
     {
         if (!override) {
             if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
-                Class caller = Reflection.getCallerClass(1);
+                // Until there is hotspot @CallerSensitive support
+                // can't call Reflection.getCallerClass() here
+                // Workaround for now: add a frame getCallerClass to
+                // make the caller at stack depth 2
+                Class<?> caller = getCallerClass();
                 Class targetClass = ((obj == null || !Modifier.isProtected(modifiers))
                                      ? clazz
                                      : obj.getClass());
@@ -614,6 +620,16 @@ public final
         }
         if (methodAccessor == null) acquireMethodAccessor();
         return methodAccessor.invoke(obj, args);
+    }
+
+    /*
+     * This method makes the frame count to be 2 to find the caller
+     */
+    @CallerSensitive
+    private Class<?> getCallerClass() {
+        // Reflection.getCallerClass() currently returns the frame at depth 2
+        // before the hotspot support is in.
+        return Reflection.getCallerClass();
     }
 
     /**

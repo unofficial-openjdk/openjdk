@@ -30,6 +30,8 @@ import java.io.*;
 import java.util.Map;
 import java.lang.reflect.*;
 import javax.sql.rowset.RowSetWarning;
+import sun.reflect.CallerSensitive;
+import sun.reflect.misc.ReflectUtil;
 
 /**
  * A serializable mapping in the Java programming language of an SQL
@@ -137,6 +139,7 @@ public class SerialJavaObject implements Serializable, Cloneable {
      * @throws SerialException if an error is encountered accessing
      * the serialized object
      */
+    @CallerSensitive
     public Field[] getFields() throws SerialException {
         if (fields != null) {
             Class c = this.obj.getClass();

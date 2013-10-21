@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,19 +23,19 @@
  * questions.
  */
 
-#include "jvm.h"
-#include "sun_reflect_Reflection.h"
+package sun.reflect;
 
-JNIEXPORT jclass JNICALL Java_sun_reflect_Reflection_getCallerClass
-(JNIEnv *env, jclass unused)
-{
-    // Until there is hotspot @CallerSensitive support,
-    // depth must always be 2 to get the immediate caller
-    return JVM_GetCallerClass(env, 2);
-}
+import java.lang.annotation.*;
+import static java.lang.annotation.ElementType.*;
 
-JNIEXPORT jint JNICALL Java_sun_reflect_Reflection_getClassAccessFlags
-(JNIEnv *env, jclass unused, jclass cls)
-{
-    return JVM_GetClassAccessFlags(env, cls);
+/**
+ * A method annotated @CallerSensitive is sensitive to its calling class,
+ * via {@link sun.reflect.Reflection#getCallerClass Reflection.getCallerClass},
+ * or via some equivalent.
+ *
+ * @author John R. Rose
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({METHOD})
+public @interface CallerSensitive {
 }
