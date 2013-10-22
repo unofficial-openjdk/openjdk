@@ -26,6 +26,10 @@
 package javax.security.auth;
 
 import java.security.Security;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 import sun.security.util.Debug;
 
 /**
@@ -160,20 +164,13 @@ import sun.security.util.Debug;
 public abstract class Policy {
 
     private static Policy policy;
-    private static ClassLoader contextClassLoader;
+
+    private final java.security.AccessControlContext acc =
+            java.security.AccessController.getContext();
 
     // true if a custom (not com.sun.security.auth.PolicyFile) system-wide
     // policy object is set
     private static boolean isCustomPolicy;
-
-    static {
-        contextClassLoader = java.security.AccessController.doPrivileged
-                (new java.security.PrivilegedAction<ClassLoader>() {
-                public ClassLoader run() {
-                    return Thread.currentThread().getContextClassLoader();
-                }
-        });
-    };
 
     /**
      * Sole constructor.  (For invocation by subclass constructors, typically
@@ -217,8 +214,8 @@ public abstract class Policy {
 
                 if (policy == null) {
                     String policy_class = null;
-                    policy_class = java.security.AccessController.doPrivileged
-                        (new java.security.PrivilegedAction<String>() {
+                    policy_class = AccessController.doPrivileged
+                        (new PrivilegedAction<String>() {
                         public String run() {
                             return java.security.Security.getProperty
                                 ("auth.policy.provider");
@@ -230,19 +227,28 @@ public abstract class Policy {
 
                     try {
                         final String finalClass = policy_class;
-                        policy = java.security.AccessController.doPrivileged
-                            (new java.security.PrivilegedExceptionAction<Policy>() {
-                            public Policy run() throws ClassNotFoundException,
-                                                InstantiationException,
-                                                IllegalAccessException {
-                                return (Policy) Class.forName
-                                        (finalClass,
-                                        true,
-                                        contextClassLoader).newInstance();
-                            }
-                        });
-                        isCustomPolicy =
-                            !finalClass.equals("com.sun.security.auth.PolicyFile");
+                        final Policy untrustedImpl = AccessController.doPrivileged(
+                                new PrivilegedExceptionAction<Policy>() {
+                                    public Policy run() throws ClassNotFoundException,
+                                            InstantiationException,
+                                            IllegalAccessException {
+                                        Class<? extends Policy> implClass = Class.forName(
+                                                finalClass, false,
+                                                Thread.currentThread().getContextClassLoader()
+                                        ).asSubclass(Policy.class);
+                                        return implClass.newInstance();
+                                    }
+                                });
+                        AccessController.doPrivileged(
+                                new PrivilegedExceptionAction<Void>() {
+                                    public Void run() {
+                                        setPolicy(untrustedImpl);
+                                        isCustomPolicy =
+                                            !finalClass.equals("com.sun.security.auth.PolicyFile");
+                                        return null;
+                                    }
+                                }, Objects.requireNonNull(untrustedImpl.acc)
+                        );
                     } catch (Exception e) {
                         throw new SecurityException
                                 (sun.security.util.ResourcesMgr.getString

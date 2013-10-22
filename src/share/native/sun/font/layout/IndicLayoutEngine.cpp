@@ -44,7 +44,7 @@
 #include "LEGlyphStorage.h"
 
 #include "IndicReordering.h"
-#include <stdio.h>
+
 U_NAMESPACE_BEGIN
 
 UOBJECT_DEFINE_RTTI_IMPLEMENTATION(IndicOpenTypeLayoutEngine)
@@ -90,6 +90,7 @@ le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], le_
         return 0;
     }
 
+    _LETRACE("IOTLE::gp, calling parent");
     le_int32 retCount = OpenTypeLayoutEngine::glyphProcessing(chars, offset, count, max, rightToLeft, glyphStorage, success);
 
     if (LE_FAILURE(success)) {
@@ -97,10 +98,14 @@ le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], le_
     }
 
     if (fVersion2) {
+      _LETRACE("IOTLE::gp, v2 final,");
         IndicReordering::finalReordering(glyphStorage,retCount);
+      _LETRACE("IOTLE::gp, v2 pres");
         IndicReordering::applyPresentationForms(glyphStorage,retCount);
+      _LETRACE("IOTLE::gp, parent gsub");
         OpenTypeLayoutEngine::glyphSubstitution(count,max, rightToLeft, glyphStorage, success);
     } else {
+      _LETRACE("IOTLE::gp, adjust mpres");
         IndicReordering::adjustMPres(fMPreFixups, glyphStorage, success);
     }
     return retCount;
@@ -115,6 +120,8 @@ le_int32 IndicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
     if (LE_FAILURE(success)) {
         return 0;
     }
+
+    _LETRACE("IOTLE: charProc");
 
     if (chars == NULL || offset < 0 || count < 0 || max < 0 || offset >= max || offset + count > max) {
         success = LE_ILLEGAL_ARGUMENT_ERROR;
@@ -143,8 +150,10 @@ le_int32 IndicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
 
     le_int32 outCharCount;
     if (fVersion2) {
+        _LETRACE("v2process");
         outCharCount = IndicReordering::v2process(&chars[offset], count, fScriptCode, outChars, glyphStorage);
     } else {
+        _LETRACE("reorder");
         outCharCount = IndicReordering::reorder(&chars[offset], count, fScriptCode, outChars, glyphStorage, &fMPreFixups, success);
     }
 
