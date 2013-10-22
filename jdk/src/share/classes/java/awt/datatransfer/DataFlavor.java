@@ -30,6 +30,9 @@ import java.nio.*;
 import java.util.*;
 
 import sun.awt.datatransfer.DataTransferer;
+import sun.reflect.misc.ReflectUtil;
+
+import static sun.security.util.SecurityConstants.GET_CLASSLOADER_PERMISSION;
 
 /**
  * A {@code DataFlavor} provides meta information about data. {@code DataFlavor}
@@ -90,7 +93,7 @@ import sun.awt.datatransfer.DataTransferer;
  * the same results.
  * <p>
  * For more information on the using data transfer with Swing see
- * the <a href="http://java.sun.com/docs/books/tutorial/uiswing/misc/dnd.html">
+ * the <a href="http://docs.oracle.com/javase/tutorial/uiswing/dnd/index.html">
  * How to Use Drag and Drop and Data Transfer</a>,
  * section in <em>Java Tutorial</em>.
  *
@@ -116,27 +119,33 @@ public class DataFlavor implements Externalizable, Cloneable {
                                                    ClassLoader fallback)
         throws ClassNotFoundException
     {
-        ClassLoader systemClassLoader = (ClassLoader)
-            java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                    public Object run() {
-                        ClassLoader cl = Thread.currentThread().
-                            getContextClassLoader();
-                        return (cl != null)
-                            ? cl
-                            : ClassLoader.getSystemClassLoader();
-                    }
-                    });
-
+        ReflectUtil.checkPackageAccess(className);
         try {
-            return Class.forName(className, true, systemClassLoader);
-        } catch (ClassNotFoundException e2) {
-            if (fallback != null) {
-                return Class.forName(className, true, fallback);
-            } else {
-                throw new ClassNotFoundException(className);
+            SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(GET_CLASSLOADER_PERMISSION);
             }
+            ClassLoader loader = ClassLoader.getSystemClassLoader();
+            try {
+                // bootstrap class loader and system class loader if present
+                return Class.forName(className, true, loader);
+            }
+            catch (ClassNotFoundException exception) {
+                // thread context class loader if and only if present
+                loader = Thread.currentThread().getContextClassLoader();
+                if (loader != null) {
+                    try {
+                        return Class.forName(className, true, loader);
+                    }
+                    catch (ClassNotFoundException e) {
+                        // fallback to user's class loader
+                    }
+                }
+            }
+        } catch (SecurityException exception) {
+            // ignore secured class loaders
         }
+        return Class.forName(className, true, fallback);
     }
 
     /*
@@ -454,7 +463,7 @@ public class DataFlavor implements Externalizable, Cloneable {
 
     /**
      * Constructs a <code>DataFlavor</code> from a <code>mimeType</code> string.
-     * The string can specify a "class=<fully specified Java class name>"
+     * The string can specify a "class=&lt;fully specified Java class name&gt;"
      * parameter to create a <code>DataFlavor</code> with the desired
      * representation class. If the string does not contain "class=" parameter,
      * <code>java.io.InputStream</code> is used as default.
