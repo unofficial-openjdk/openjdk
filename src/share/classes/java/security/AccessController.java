@@ -465,8 +465,18 @@ public final class AccessController {
                       AccessControlContext parent, AccessControlContext context,
                       Permission[] perms)
     {
-        return new AccessControlContext(getCallerPD(caller), combiner, parent,
-                                        context, perms);
+        ProtectionDomain callerPD = getCallerPD(caller);
+        // check if caller is authorized to create context
+        if (context != null && !context.isAuthorized() &&
+            System.getSecurityManager() != null &&
+            !callerPD.impliesCreateAccessControlContext())
+        {
+            ProtectionDomain nullPD = new ProtectionDomain(null, null);
+            return new AccessControlContext(new ProtectionDomain[] { nullPD });
+        } else {
+            return new AccessControlContext(callerPD, combiner, parent,
+                                            context, perms);
+        }
     }
 
     private static ProtectionDomain getCallerPD(final Class <?> caller) {
