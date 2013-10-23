@@ -2002,10 +2002,12 @@ jint G1CollectedHeap::initialize() {
 
   size_t init_byte_size = collector_policy()->initial_heap_byte_size();
   size_t max_byte_size = collector_policy()->max_heap_byte_size();
+  size_t heap_alignment = collector_policy()->max_alignment();
 
   // Ensure that the sizes are properly aligned.
   Universe::check_alignment(init_byte_size, HeapRegion::GrainBytes, "g1 heap");
   Universe::check_alignment(max_byte_size, HeapRegion::GrainBytes, "g1 heap");
+  Universe::check_alignment(max_byte_size, heap_alignment, "g1 heap");
 
   _cg1r = new ConcurrentG1Refine(this);
 
@@ -2029,14 +2031,14 @@ jint G1CollectedHeap::initialize() {
   size_t total_reserved = 0;
 
   total_reserved = add_and_check_overflow(total_reserved, max_byte_size);
-  size_t pg_max_size = (size_t) align_size_up(pgs->max_size(), HeapRegion::GrainBytes);
+  size_t pg_max_size = (size_t) align_size_up(pgs->max_size(), heap_alignment);
   total_reserved = add_and_check_overflow(total_reserved, pg_max_size);
 
   Universe::check_alignment(total_reserved, HeapRegion::GrainBytes, "g1 heap and perm");
 
-  char* addr = Universe::preferred_heap_base(total_reserved, Universe::UnscaledNarrowOop);
+  char* addr = Universe::preferred_heap_base(total_reserved, heap_alignment, Universe::UnscaledNarrowOop);
 
-  ReservedHeapSpace heap_rs(total_reserved, HeapRegion::GrainBytes,
+  ReservedHeapSpace heap_rs(total_reserved, heap_alignment,
                             UseLargePages, addr);
 
   if (UseCompressedOops) {
@@ -2044,17 +2046,17 @@ jint G1CollectedHeap::initialize() {
       // Failed to reserve at specified address - the requested memory
       // region is taken already, for example, by 'java' launcher.
       // Try again to reserver heap higher.
-      addr = Universe::preferred_heap_base(total_reserved, Universe::ZeroBasedNarrowOop);
+      addr = Universe::preferred_heap_base(total_reserved, heap_alignment, Universe::ZeroBasedNarrowOop);
 
-      ReservedHeapSpace heap_rs0(total_reserved, HeapRegion::GrainBytes,
+      ReservedHeapSpace heap_rs0(total_reserved, heap_alignment,
                                  UseLargePages, addr);
 
       if (addr != NULL && !heap_rs0.is_reserved()) {
         // Failed to reserve at specified address again - give up.
-        addr = Universe::preferred_heap_base(total_reserved, Universe::HeapBasedNarrowOop);
+        addr = Universe::preferred_heap_base(total_reserved, heap_alignment, Universe::HeapBasedNarrowOop);
         assert(addr == NULL, "");
 
-        ReservedHeapSpace heap_rs1(total_reserved, HeapRegion::GrainBytes,
+        ReservedHeapSpace heap_rs1(total_reserved, heap_alignment,
                                    UseLargePages, addr);
         heap_rs = heap_rs1;
       } else {
