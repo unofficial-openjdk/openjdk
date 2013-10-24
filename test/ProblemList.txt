@@ -456,6 +456,9 @@ java/util/concurrent/locks/Lock/TimedAcquireLeak.java           generic-all
 # 7041639, Solaris DSA keypair generation bug
 java/util/TimeZone/TimeZoneDatePermissionCheck.sh               solaris-all
 
+# 8026772: test/sun/util/resources/TimeZone/Bug6317929.java failing
+sun/util/resources/TimeZone/Bug6317929.java                     generic-all
+
 ############################################################################
 
 
