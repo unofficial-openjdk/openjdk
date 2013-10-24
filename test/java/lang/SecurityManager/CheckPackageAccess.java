@@ -56,6 +56,7 @@ public class CheckPackageAccess {
         "com.sun.jmx.",
         "com.sun.naming.internal.",
         "com.sun.proxy.",
+        "com.sun.corba.se.",
         "com.sun.org.apache.bcel.internal.",
         "com.sun.org.apache.regexp.internal.",
         "com.sun.org.apache.xerces.internal.",
