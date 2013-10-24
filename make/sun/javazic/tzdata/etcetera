@@ -1,22 +1,22 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-#  
+#
 # This code is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License version 2 only, as
 # published by the Free Software Foundation.  Oracle designates this
 # particular file as subject to the "Classpath" exception as provided
 # by Oracle in the LICENSE file that accompanied this code.
-#  
+#
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # version 2 for more details (a copy is included in the LICENSE file that
 # accompanied this code).
-#  
+#
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-#  
+#
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
@@ -54,9 +54,9 @@ Link	Etc/GMT				Etc/GMT0
 # even though this is the opposite of what many people expect.
 # POSIX has positive signs west of Greenwich, but many people expect
 # positive signs east of Greenwich.  For example, TZ='Etc/GMT+4' uses
-# the abbreviation "GMT+4" and corresponds to 4 hours behind UTC
+# the abbreviation "GMT+4" and corresponds to 4 hours behind UT
 # (i.e. west of Greenwich) even though many people would expect it to
-# mean 4 hours ahead of UTC (i.e. east of Greenwich).
+# mean 4 hours ahead of UT (i.e. east of Greenwich).
 #
 # In the draft 5 of POSIX 1003.1-200x, the angle bracket notation allows for
 # TZ='<GMT-4>+4'; if you want time zone abbreviations conforming to
