@@ -43,8 +43,6 @@ package sun.util.resources;
 public final class TimeZoneNames extends TimeZoneNamesBundle {
 
     protected final Object[][] getContents() {
-        String ACT[] = new String[] {"Acre Time", "ACT",
-                                     "Acre Summer Time", "ACST"};
         String ADELAIDE[] = new String[] {"Central Standard Time (South Australia)", "CST",
                                           "Central Summer Time (South Australia)", "CST"};
         String AGT[] = new String[] {"Argentine Time", "ART",
@@ -79,7 +77,7 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
                                       "Chamorro Daylight Time", "ChDT"};
         String CHUT[] = new String[] {"Chuuk Time", "CHUT",
                                       "Chuuk Summer Time", "CHUST"};
-        String CIT[] = new String[] {"Central Indonesia Time", "CIT",
+        String CIT[] = new String[] {"Central Indonesia Time", "WITA",
                                      "Central Indonesia Summer Time", "CIST"};
         String CLT[] = new String[] {"Chile Time", "CLT",
                                      "Chile Summer Time", "CLST"};
@@ -193,7 +191,7 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
                                      "Western African Summer Time", "WAST"};
         String WET[] = new String[] {"Western European Time", "WET",
                                      "Western European Summer Time", "WEST"};
-        String WIT[] = new String[] {"West Indonesia Time", "WIT",
+        String WIT[] = new String[] {"West Indonesia Time", "WIB",
                                      "West Indonesia Summer Time", "WIST"};
         String WST_AUS[] = new String[] {"Western Standard Time (Australia)", "WST",
                                          "Western Summer Time (Australia)", "WST"};
@@ -308,7 +306,7 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
             {"America/Argentina/Rio_Gallegos", AGT},
             {"America/Argentina/Salta", AGT},
             {"America/Argentina/San_Juan", AGT},
-            {"America/Argentina/San_Luis", WART},
+            {"America/Argentina/San_Luis", AGT},
             {"America/Argentina/Tucuman", AGT},
             {"America/Argentina/Ushuaia", AGT},
             {"America/Aruba", AST},
@@ -483,7 +481,7 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
             {"Asia/Aden", ARAST},
             {"Asia/Almaty", new String[] {"Alma-Ata Time", "ALMT",
                                           "Alma-Ata Summer Time", "ALMST"}},
-            {"Asia/Amman", EET},
+            {"Asia/Amman", ARAST},
             {"Asia/Anadyr", new String[] {"Anadyr Time", "ANAT",
                                           "Anadyr Summer Time", "ANAST"}},
             {"Asia/Aqtau", new String[] {"Aqtau Time", "AQTT",
@@ -527,7 +525,7 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
                                            "Irkutsk Summer Time", "IRKST"}},
             {"Asia/Istanbul", EET},
             {"Asia/Jakarta", WIT},
-            {"Asia/Jayapura", new String[] {"East Indonesia Time", "EIT",
+            {"Asia/Jayapura", new String[] {"East Indonesia Time", "WIT",
                                             "East Indonesia Summer Time", "EIST"}},
             {"Asia/Kabul", new String[] {"Afghanistan Time", "AFT",
                                          "Afghanistan Summer Time", "AFST"}},
@@ -537,7 +535,8 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
             {"Asia/Kashgar", CTT},
             {"Asia/Kathmandu", NPT},
             {"Asia/Katmandu", NPT},
-            {"Asia/Khandyga", YAKT},
+            {"Asia/Khandyga", new String[] {"Khandyga Time", "YAKT",
+                                            "Khandyga Summer Time", "YAKST"}},
             {"Asia/Kolkata", IST},
             {"Asia/Krasnoyarsk", new String[] {"Krasnoyarsk Time", "KRAT",
                                                "Krasnoyarsk Summer Time", "KRAST"}},
@@ -586,7 +585,8 @@ public final class TimeZoneNames extends TimeZoneNamesBundle {
             {"Asia/Ulaanbaatar", ULAT},
             {"Asia/Ulan_Bator", ULAT},
             {"Asia/Urumqi", CTT},
-            {"Asia/Ust-Nera", VLAT},
+            {"Asia/Ust-Nera", new String[] {"Ust-Nera Time", "VLAT",
+                                            "Ust-Nera Summer Time", "VLAST"}},
             {"Asia/Vientiane", ICT},
             {"Asia/Vladivostok", VLAT},
             {"Asia/Yakutsk", YAKT},

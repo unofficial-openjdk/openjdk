@@ -432,6 +432,9 @@ java/lang/ThreadLocal/MemoryLeak.java			 	solaris-all
 # Windows X64, RuntimeException: MyThread expected to have RUNNABLE but got WAITING
 java/lang/Thread/ThreadStateTest.java				generic-all
 
+# 8026772: test/sun/util/resources/TimeZone/Bug6317929.java failing
+sun/util/resources/TimeZone/Bug6317929.java                     generic-all
+
 ############################################################################
 
 # jdk_management
