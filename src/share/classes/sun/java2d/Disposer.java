@@ -147,8 +147,7 @@ public class Disposer implements Runnable {
                 obj = null;
                 rec = null;
             } catch (Exception e) {
-                System.out.println("Exception while removing reference: " + e);
-                e.printStackTrace();
+                System.out.println("Exception while removing reference.");
             }
         }
     }
