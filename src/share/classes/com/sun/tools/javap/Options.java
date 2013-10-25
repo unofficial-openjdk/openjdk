@@ -79,6 +79,8 @@ public class Options {
     public boolean showAllAttrs;
     public boolean showConstants;
     public boolean sysInfo;
+    public int indentWidth = 2;   // #spaces per indentWidth level
+    public int tabColumn = 40;    // column number for comments
 
     public boolean compat;             // bug-for-bug compatibility mode with old javap
     public boolean jsr277;

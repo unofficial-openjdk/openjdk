@@ -239,6 +239,38 @@ public class JavapTask implements DisassemblerTool.DisassemblerTask {
             void process(JavapTask task, String opt, String arg) {
                 task.options.showConstants = true;
             }
+        },
+
+        new Option(false, "-XDindent:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                try {
+                    task.options.indentWidth = Integer.valueOf(opt.substring(sep + 1));
+                } catch (NumberFormatException e) {
+                }
+            }
+        },
+
+        new Option(false, "-XDtab:") {
+            @Override
+            boolean matches(String opt) {
+                int sep = opt.indexOf(":");
+                return sep != -1 && super.matches(opt.substring(0, sep + 1));
+            }
+
+            void process(JavapTask task, String opt, String arg) throws BadArgs {
+                int sep = opt.indexOf(":");
+                try {
+                    task.options.tabColumn = Integer.valueOf(opt.substring(sep + 1));
+                } catch (NumberFormatException e) {
+                }
+            }
         }
 
     };
