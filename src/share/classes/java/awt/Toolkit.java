@@ -48,8 +48,6 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import java.util.*;
-import java.util.logging.*;
-
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import sun.awt.AppContext;
@@ -1922,7 +1920,7 @@ public abstract class Toolkit {
      */
     public abstract boolean isModalExclusionTypeSupported(Dialog.ModalExclusionType modalExclusionType);
 
-    private static final Logger log = Logger.getLogger("java.awt.Toolkit");
+    // 8014736: logging has been removed from Toolkit
 
     private static final int LONG_BITS = 64;
     private int[] calls = new int[LONG_BITS];
@@ -2089,12 +2087,6 @@ public abstract class Toolkit {
         }
 
     synchronized int countAWTEventListeners(long eventMask) {
-        if (log.isLoggable(Level.FINE)) {
-            if (eventMask == 0) {
-                log.log(Level.FINE, "Assertion (eventMask != 0) failed");
-            }
-        }
-
         int ci = 0;
         for (; eventMask != 0; eventMask >>>= 1, ci++) {
         }
