@@ -141,6 +141,7 @@ package.access=sun.,\
                com.sun.org.apache.xalan.internal.lib.,\
                com.sun.org.apache.xalan.internal.res.,\
                com.sun.org.apache.xalan.internal.templates.,\
+	       com.sun.org.apache.xalan.internal.utils.\
                com.sun.org.apache.xalan.internal.xslt.,\
                com.sun.org.apache.xalan.internal.xsltc.cmdline.,\
                com.sun.org.apache.xalan.internal.xsltc.compiler.,\
