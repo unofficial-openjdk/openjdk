@@ -569,6 +569,11 @@ public class ConstantPool {
             return visitor.visitNameAndType(this, data);
         }
 
+        @Override
+        public String toString() {
+            return "CONSTANT_NameAndType_info[name_index: " + name_index + ", type_index: " + type_index + "]";
+        }
+
         public final int name_index;
         public final int type_index;
     }
@@ -596,6 +601,11 @@ public class ConstantPool {
             return visitor.visitString(this, data);
         }
 
+        @Override
+        public String toString() {
+            return "CONSTANT_String_info[class_index: " + string_index + "]";
+        }
+
         public final int string_index;
     }
 
@@ -614,7 +624,19 @@ public class ConstantPool {
 
         @Override
         public String toString() {
-            return "CONSTANT_Utf8_info[value: " + value + "]";
+            if (value.length() < 32 && isPrintableAscii(value))
+                return "CONSTANT_Utf8_info[value: \"" + value + "\"]";
+            else
+                return "CONSTANT_Utf8_info[value: (" + value.length() + " chars)]";
+        }
+
+        static boolean isPrintableAscii(String s) {
+            for (int i = 0; i < s.length(); i++) {
+                char c = s.charAt(i);
+                if (c < 32 || c >= 127)
+                    return false;
+            }
+            return true;
         }
 
         public <R, D> R accept(Visitor<R, D> visitor, D data) {
