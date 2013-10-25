@@ -30,14 +30,13 @@
  * @run main/othervm MissingCallerSensitive
  */
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.File;
 import java.util.*;
 public class MissingCallerSensitive {
     public static void main(String[] args) throws Exception {
         String testclasses = System.getProperty("test.classes", ".");
-        List<Path> classes = new ArrayList<>();
-        classes.add(Paths.get(testclasses, "MissingCallerSensitive.class"));
+        List<File> classes = new ArrayList<File>();
+        classes.add(new File(testclasses, "MissingCallerSensitive.class"));
 
         final String method = "sun/reflect/Reflection.getCallerClass";
         CallerSensitiveFinder csfinder = new CallerSensitiveFinder(method);

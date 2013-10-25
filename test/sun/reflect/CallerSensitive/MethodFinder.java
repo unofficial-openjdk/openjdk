@@ -121,23 +121,11 @@ public abstract class MethodFinder {
             return false;
         }
 
-        public Boolean visitInvokeDynamic(CONSTANT_InvokeDynamic_info info, Void p) {
-            return false;
-        }
-
         public Boolean visitLong(CONSTANT_Long_info info, Void p) {
             return false;
         }
 
         public Boolean visitNameAndType(CONSTANT_NameAndType_info info, Void p) {
-            return false;
-        }
-
-        public Boolean visitMethodHandle(CONSTANT_MethodHandle_info info, Void p) {
-            return false;
-        }
-
-        public Boolean visitMethodType(CONSTANT_MethodType_info info, Void p) {
             return false;
         }
 
@@ -198,4 +186,3 @@ public abstract class MethodFinder {
         }
     };
 }
-

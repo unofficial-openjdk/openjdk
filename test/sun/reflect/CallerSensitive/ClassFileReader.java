@@ -23,12 +23,8 @@
 
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
+
 import java.io.*;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -47,28 +43,28 @@ public class ClassFileReader {
         }
 
         if (path.isDirectory()) {
-            return new DirectoryReader(path.toPath());
+            return new DirectoryReader(path);
         } else if (path.getName().endsWith(".jar")) {
-            return new JarFileReader(path.toPath());
+            return new JarFileReader(path);
         } else {
-            return new ClassFileReader(path.toPath());
+            return new ClassFileReader(path);
         }
     }
 
     /**
      * Returns a ClassFileReader instance of a given JarFile.
      */
-    public static ClassFileReader newInstance(Path path, JarFile jf) throws IOException {
+    public static ClassFileReader newInstance(File path, JarFile jf) throws IOException {
         return new JarFileReader(path, jf);
     }
 
-    protected final Path path;
+    protected final File path;
     protected final String baseFileName;
-    private ClassFileReader(Path path) {
+    private ClassFileReader(File path) {
         this.path = path;
-        this.baseFileName = path.getFileName() != null
-                                ? path.getFileName().toString()
-                                : path.toString();
+        this.baseFileName = path.getName().equals("")
+                                ? path.toString()
+                                : path.getName();
     }
 
     public String getFileName() {
@@ -104,10 +100,10 @@ public class ClassFileReader {
         };
     }
 
-    protected ClassFile readClassFile(Path p) throws IOException {
+    protected ClassFile readClassFile(File p) throws IOException {
         InputStream is = null;
         try {
-            is = Files.newInputStream(p);
+            is = new FileInputStream(p);
             return ClassFile.read(is);
         } catch (ConstantPoolException e) {
             throw new ClassFileError(e);
@@ -150,7 +146,7 @@ public class ClassFileReader {
     }
 
     private static class DirectoryReader extends ClassFileReader {
-        DirectoryReader(Path path) throws IOException {
+        DirectoryReader(File path) throws IOException {
             super(path);
         }
 
@@ -158,17 +154,17 @@ public class ClassFileReader {
             if (name.indexOf('.') > 0) {
                 int i = name.lastIndexOf('.');
                 String pathname = name.replace('.', File.separatorChar) + ".class";
-                Path p = path.resolve(pathname);
-                if (!p.toFile().exists()) {
-                    p = path.resolve(pathname.substring(0, i) + "$" +
-                                     pathname.substring(i+1, pathname.length()));
+                File p = new File(path, pathname);
+                if (!p.exists()) {
+                    p = new File(path, pathname.substring(0, i) + "$" +
+                                 pathname.substring(i+1, pathname.length()));
                 }
-                if (p.toFile().exists()) {
+                if (p.exists()) {
                     return readClassFile(p);
                 }
             } else {
-                Path p = path.resolve(name + ".class");
-                if (p.toFile().exists()) {
+                File p = new File(path, name + ".class");
+                if (p.exists()) {
                     return readClassFile(p);
                 }
             }
@@ -184,22 +180,24 @@ public class ClassFileReader {
             };
         }
 
-        private List<Path> walkTree(Path dir) throws IOException {
-            final List<Path> files = new ArrayList<Path>();
-            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                        throws IOException {
-                    if (file.toFile().getName().endsWith(".class")) {
-                        files.add(file);
+        private List<File> walkTree(File dir) throws IOException {
+            final List<File> files = new ArrayList<File>();
+            final List<String> dirContents = Arrays.asList(dir.list());
+            for (String file : dirContents) {
+                File f = new File(dir, file);
+                if (f.isDirectory())
+                    files.addAll(walkTree(f));
+                else {
+                    if (f.getName().endsWith(".class")) {
+                        files.add(f);
                     }
-                    return FileVisitResult.CONTINUE;
                 }
-            });
+            }
             return files;
         }
 
         class DirectoryIterator implements Iterator<ClassFile> {
-            private List<Path> entries;
+            private List<File> entries;
             private int index = 0;
             DirectoryIterator() throws IOException {
                 entries = walkTree(path);
@@ -214,7 +212,7 @@ public class ClassFileReader {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                Path path = entries.get(index++);
+                File path = entries.get(index++);
                 try {
                     return readClassFile(path);
                 } catch (IOException e) {
@@ -230,10 +228,10 @@ public class ClassFileReader {
 
     private static class JarFileReader extends ClassFileReader {
         final JarFile jarfile;
-        JarFileReader(Path path) throws IOException {
-            this(path, new JarFile(path.toFile()));
+        JarFileReader(File path) throws IOException {
+            this(path, new JarFile(path));
         }
-        JarFileReader(Path path, JarFile jf) throws IOException {
+        JarFileReader(File path, JarFile jf) throws IOException {
             super(path);
             this.jarfile = jf;
         }
