@@ -33,8 +33,10 @@ import java.io.FilePermission;
 import java.lang.reflect.Constructor;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.LinkedHashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.PropertyPermission;
+import java.util.Set;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -126,7 +128,6 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      *                       should implement.
      * @param additionalBridges Method types for additional signatures to be
      *                          bridged to the implementation method
-     * @throws ReflectiveOperationException
      * @throws LambdaConversionException If any of the meta-factory protocol
      * invariants are violated
      */
@@ -139,7 +140,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                                        boolean isSerializable,
                                        Class<?>[] markerInterfaces,
                                        MethodType[] additionalBridges)
-            throws ReflectiveOperationException, LambdaConversionException {
+            throws LambdaConversionException {
         super(caller, invokedType, samMethodName, samMethodType,
               implMethod, instantiatedMethodType,
               isSerializable, markerInterfaces, additionalBridges);
@@ -177,7 +178,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      * is not found
      */
     @Override
-    CallSite buildCallSite() throws ReflectiveOperationException, LambdaConversionException {
+    CallSite buildCallSite() throws LambdaConversionException {
         final Class<?> innerClass = spinInnerClass();
         if (invokedType.parameterCount() == 0) {
             final Constructor[] ctrs = AccessController.doPrivileged(
@@ -188,7 +189,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                 }
             });
             if (ctrs.length != 1) {
-                throw new ReflectiveOperationException("Expected one lambda constructor for "
+                throw new LambdaConversionException("Expected one lambda constructor for "
                         + innerClass.getCanonicalName() + ", got " + ctrs.length);
             }
             // The lambda implementing inner class constructor is private, set
@@ -200,13 +201,23 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
                     return null;
                 }
             });
-            Object inst = ctrs[0].newInstance();
-            return new ConstantCallSite(MethodHandles.constant(samBase, inst));
+            try {
+                Object inst = ctrs[0].newInstance();
+                return new ConstantCallSite(MethodHandles.constant(samBase, inst));
+            }
+            catch (ReflectiveOperationException e) {
+                throw new LambdaConversionException("Exception instantiating lambda object", e);
+            }
         } else {
-            return new ConstantCallSite(
-                    MethodHandles.Lookup.IMPL_LOOKUP
-                         .findConstructor(innerClass, constructorType)
-                         .asType(constructorType.changeReturnType(samBase)));
+            try {
+                return new ConstantCallSite(
+                        MethodHandles.Lookup.IMPL_LOOKUP
+                             .findConstructor(innerClass, constructorType)
+                             .asType(constructorType.changeReturnType(samBase)));
+            }
+            catch (ReflectiveOperationException e) {
+                throw new LambdaConversionException("Exception finding constructor", e);
+            }
         }
     }
 
@@ -226,11 +237,20 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      * is not found
      */
     private Class<?> spinInnerClass() throws LambdaConversionException {
-        String[] interfaces = new String[markerInterfaces.length + 1];
-        interfaces[0] = samBase.getName().replace('.', '/');
-        for (int i=0; i<markerInterfaces.length; i++) {
-            interfaces[i+1] = markerInterfaces[i].getName().replace('.', '/');
+        String[] interfaces;
+        String samIntf = samBase.getName().replace('.', '/');
+        if (markerInterfaces.length == 0) {
+            interfaces = new String[]{samIntf};
+        } else {
+            // Assure no duplicate interfaces (ClassFormatError)
+            Set<String> itfs = new LinkedHashSet<>(markerInterfaces.length + 1);
+            itfs.add(samIntf);
+            for (int i = 0; i < markerInterfaces.length; i++) {
+                itfs.add(markerInterfaces[i].getName().replace('.', '/'));
+            }
+            interfaces = itfs.toArray(new String[itfs.size()]);
         }
+
         cw.visit(CLASSFILE_VERSION, ACC_SUPER + ACC_FINAL + ACC_SYNTHETIC,
                  lambdaClassName, null,
                  JAVA_LANG_OBJECT, interfaces);

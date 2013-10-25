@@ -91,7 +91,7 @@ import sun.reflect.misc.ReflectUtil;
  * <p> The following example uses a {@code Class} object to print the
  * class name of an object:
  *
- * <p> <blockquote><pre>
+ * <blockquote><pre>
  *     void printClassName(Object obj) {
  *         System.out.println("The class of " + obj +
  *                            " is " + obj.getClass().getName());
@@ -103,7 +103,7 @@ import sun.reflect.misc.ReflectUtil;
  * <cite>The Java&trade; Language Specification</cite>.
  * For example:
  *
- * <p> <blockquote>
+ * <blockquote>
  *     {@code System.out.println("The name of class Foo is: "+Foo.class.getName());}
  * </blockquote>
  *
@@ -3316,7 +3316,7 @@ public final class Class<T> implements java.io.Serializable,
 
         AnnotationData annotationData = annotationData();
         return AnnotationSupport.getAssociatedAnnotations(annotationData.declaredAnnotations,
-                                                          annotationData.annotations,
+                                                          this,
                                                           annotationClass);
     }
 
@@ -3440,6 +3440,10 @@ public final class Class<T> implements java.io.Serializable,
 
     AnnotationType getAnnotationType() {
         return annotationType;
+    }
+
+    Map<Class<? extends Annotation>, Annotation> getDeclaredAnnotationMap() {
+        return annotationData().declaredAnnotations;
     }
 
     /* Backing store of user-defined values pertaining to this class.
