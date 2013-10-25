@@ -230,7 +230,14 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         contentView.initialize(peer, responder);
 
         final long ownerPtr = owner != null ? owner.getNSWindowPtr() : 0L;
-        Rectangle bounds = _peer.constrainBounds(_target.getBounds());
+        Rectangle bounds;
+        if (!IS(DECORATED, styleBits)) {
+            // For undecorated frames the move/resize event does not come if the frame is centered on the screen
+            // so we need to set a stub location to force an initial move/resize. Real bounds would be set later.
+            bounds = new Rectangle(0, 0, 1, 1);
+        } else {
+            bounds = _peer.constrainBounds(_target.getBounds());
+        }
         final long nativeWindowPtr = nativeCreateNSWindow(contentView.getAWTView(),
                 ownerPtr, styleBits, bounds.x, bounds.y, bounds.width, bounds.height);
         setPtr(nativeWindowPtr);
@@ -538,6 +545,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         updateIconImages();
         updateFocusabilityForAutoRequestFocus(false);
 
+        boolean wasMaximized = isMaximized();
+
         // Actually show or hide the window
         LWWindowPeer blocker = (peer == null)? null : peer.getBlocker();
         if (blocker == null || !visible) {
@@ -571,16 +580,21 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
         if (visible) {
             // Apply the extended state as expected in shared code
             if (target instanceof Frame) {
-                switch (((Frame)target).getExtendedState()) {
-                    case Frame.ICONIFIED:
-                        CWrapper.NSWindow.miniaturize(nsWindowPtr);
-                        break;
-                    case Frame.MAXIMIZED_BOTH:
-                        maximize();
-                        break;
-                    default: // NORMAL
-                        unmaximize(); // in case it was maximized, otherwise this is a no-op
-                        break;
+                if (!wasMaximized && isMaximized()) {
+                    // setVisible could have changed the native maximized state
+                    deliverZoom(true);
+                } else {
+                    switch (((Frame)target).getExtendedState()) {
+                        case Frame.ICONIFIED:
+                            CWrapper.NSWindow.miniaturize(nsWindowPtr);
+                            break;
+                        case Frame.MAXIMIZED_BOTH:
+                            maximize();
+                            break;
+                        default: // NORMAL
+                            unmaximize(); // in case it was maximized, otherwise this is a no-op
+                            break;
+                    }
                 }
             }
         }
@@ -884,7 +898,7 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
                         //Posting an empty to flush the EventQueue without blocking the main thread
                     }
                 }, target);
-            } catch (InterruptedException | InvocationTargetException e) {
+            } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }
         }
@@ -927,6 +941,8 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
             return;
         }
 
+        checkZoom();
+
         final Rectangle oldB = nativeBounds;
         nativeBounds = new Rectangle(x, y, width, height);
         if (peer != null) {
@@ -954,6 +970,17 @@ public class CPlatformWindow extends CFRetainedResource implements PlatformWindo
     private void deliverZoom(final boolean isZoomed) {
         if (peer != null) {
             peer.notifyZoom(isZoomed);
+        }
+    }
+
+    private void checkZoom() {
+        if (target instanceof Frame && isVisible()) {
+            Frame targetFrame = (Frame)target;
+            if (targetFrame.getExtendedState() != Frame.MAXIMIZED_BOTH && isMaximized()) {
+                deliverZoom(true);
+            } else if (targetFrame.getExtendedState() == Frame.MAXIMIZED_BOTH && !isMaximized()) {
+                deliverZoom(false);
+            }
         }
     }
 
