@@ -246,7 +246,7 @@ public final class ReflectUtil {
         }
     }
 
-    public static final String PROXY_PACKAGE = "sun.proxy";
+    public static final String PROXY_PACKAGE = "com.sun.proxy";
 
     /**
      * Test if the given class is a proxy class that implements
