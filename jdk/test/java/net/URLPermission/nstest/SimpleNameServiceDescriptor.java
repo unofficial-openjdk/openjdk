@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,18 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package java.lang.invoke;
 
-/** <P> MagicLambdaImpl (named for similarity to MagicAccessorImpl and
- others, not because it actually implements an interface) is a
- marker class in the hierarchy. All subclasses of this class are
- "magically" granted access by the VM to otherwise inaccessible
- fields and methods of other classes. It is distinct from MagicAccessorImpl
- because, while we want to bypass accessibility checks, we do not want to
- bypass verification.</P>
+/*
+ * Descriptor for the simple name service
+ */
+import sun.net.spi.nameservice.*;
 
- <P> Do not change the name of this class without also changing the
- VM's code. </P> */
+public final class SimpleNameServiceDescriptor implements NameServiceDescriptor {
+    /**
+     * Create a new instance of the corresponding name service.
+     */
+    public NameService createNameService() throws Exception {
+        return new SimpleNameService();
+    }
 
-class MagicLambdaImpl {
+    /**
+     * Returns this service provider's name
+     *
+     */
+    public String getProviderName() {
+        return "sun";
+    }
+
+    /**
+     * Returns this name service type
+     * "dns" "nis" etc
+     */
+    public String getType() {
+        return "simple";
+    }
 }
