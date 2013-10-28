@@ -25,6 +25,7 @@
 
 package sun.misc;
 
+import java.security.AccessControlContext;
 import sun.reflect.ConstantPool;
 import sun.reflect.annotation.AnnotationType;
 import sun.nio.ch.Interruptible;
@@ -54,4 +55,10 @@ public interface JavaLangAccess {
 
     /** Set thread's blocker field. */
     void blockedOn(Thread t, Interruptible b);
+
+    /**
+     * Returns a new Thread with the given Runnable and an
+     * inherited AccessControlContext.
+     */
+    Thread newThreadWithAcc(Runnable target, AccessControlContext acc);
 }
