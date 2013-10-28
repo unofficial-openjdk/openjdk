@@ -22,27 +22,45 @@
  */
 
 /**
- * NASHORN-397 : typeof on certain member access expressions computes to undefined wrongly
+ * JDK-8026858: Array length does not handle defined properties correctly
  *
  * @test
  * @run
  */
 
-Object.defineProperty(Number.prototype, 'x',
-    { get : function() { return 42; } });
+var arr = [];
 
-if (typeof (5).x !== 'number') {
-    fail("typeof(5).x is not 'number'");
+Object.defineProperty(arr, "3", {value: 1 /* configurable: false */});
+
+if (arr[3] != 1) {
+    throw new Error("arr[3] not defined");
 }
 
-if (typeof (java.net.Proxy.NO_PROXY) != 'object') {
-    fail("typeof java.net.Proxy.NO_PROXY is not 'object'");
+if (arr.length !== 4) {
+    throw new Error("Array length not updated to 4");
 }
 
-if (typeof (java.lang.Math.PI) != 'number') {
-    fail("typeof java.lang.Math.PI is not 'number'");
+Object.defineProperty(arr, "5", {value: 1, configurable: true});
+
+if (arr[5] != 1) {
+    throw new Error("arr[5] not defined");
 }
 
-if (typeof (java.io.File.separator) != 'string') {
-    fail("typeof java.io.File.separator is not 'string'");
+if (arr.length !== 6) {
+    throw new Error("Array length not updated to 4");
 }
+
+arr.length = 0;
+
+if (5 in arr) {
+    throw new Error("configurable element was not deleted");
+}
+
+if (arr[3] != 1) {
+    throw new Error("non-configurable element was deleted");
+}
+
+if (arr.length !== 4) {
+    throw new Error("Array length not set");
+}
+

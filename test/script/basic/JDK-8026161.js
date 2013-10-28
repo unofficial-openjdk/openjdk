@@ -22,27 +22,11 @@
  */
 
 /**
- * NASHORN-397 : typeof on certain member access expressions computes to undefined wrongly
+ * JDK-8026161: Don't narrow floating-point literals in the lexer
  *
  * @test
  * @run
  */
 
-Object.defineProperty(Number.prototype, 'x',
-    { get : function() { return 42; } });
-
-if (typeof (5).x !== 'number') {
-    fail("typeof(5).x is not 'number'");
-}
-
-if (typeof (java.net.Proxy.NO_PROXY) != 'object') {
-    fail("typeof java.net.Proxy.NO_PROXY is not 'object'");
-}
-
-if (typeof (java.lang.Math.PI) != 'number') {
-    fail("typeof java.lang.Math.PI is not 'number'");
-}
-
-if (typeof (java.io.File.separator) != 'string') {
-    fail("typeof java.io.File.separator is not 'string'");
-}
+print(new java.awt.Color(1, 1, 1)) // creates Color[r=1,g=1,b=1]
+print(new java.awt.Color(1.0, 1.0, 1.0)) // Color[r=255,g=255,b=255]
