@@ -76,8 +76,11 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import static java.lang.Character.*;
+
+import sun.java2d.SunGraphicsEnvironment;
 
 public final class GlyphLayout {
     // data for glyph vector
@@ -461,7 +464,12 @@ public final class GlyphLayout {
                     break;
                 }
                 catch (IndexOutOfBoundsException e) {
-                    _gvdata.grow();
+                    if (_gvdata._count >=0) {
+                        _gvdata.grow();
+                    }
+                }
+                if (_gvdata._count < 0) {
+                    break;
                 }
             }
         }
@@ -470,7 +478,19 @@ public final class GlyphLayout {
         //            _gvdata.adjustPositions(txinfo.invdtx);
         //        }
 
-        StandardGlyphVector gv = _gvdata.createGlyphVector(font, frc, result);
+        // If layout fails (negative glyph count) create an un-laid out GV instead.
+        // ie default positions. This will be a lot better than the alternative of
+        // a complete blank layout.
+        StandardGlyphVector gv;
+        if (_gvdata._count < 0) {
+            gv = new StandardGlyphVector(font, text, offset, count, frc);
+            if (SunGraphicsEnvironment.debugFonts) {
+               Logger.getLogger("sun.java2d").warning("OpenType layout failed on font: " +
+						      font);
+            }
+        } else {
+            gv = _gvdata.createGlyphVector(font, frc, result);
+        }
         //        System.err.println("Layout returns: " + gv);
         return gv;
     }
