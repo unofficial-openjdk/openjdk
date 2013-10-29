@@ -283,6 +283,14 @@ public class TransformerFactoryImpl
 	} else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
             return _xmlSecurityManager;
 	}
+
+        /** Check to see if the property is managed by the security manager **/
+        String propertyValue = (_xmlSecurityManager != null) ?
+                _xmlSecurityManager.getLimitAsString(name) : null;
+        if (propertyValue != null) {
+            return propertyValue;
+	}
+
 	// Throw an exception for all other attributes
 	ErrorMsg err = new ErrorMsg(ErrorMsg.JAXP_INVALID_ATTR_ERR, name);
 	throw new IllegalArgumentException(err.toString());
@@ -382,6 +390,11 @@ public class TransformerFactoryImpl
 		return;
 	    }
 	}
+
+        if (_xmlSecurityManager != null &&
+                _xmlSecurityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, value)) {
+            return;
+        }
 
 	// Throw an exception for all other attributes
 	final ErrorMsg err 
@@ -856,7 +869,13 @@ public class TransformerFactoryImpl
         } else {
             err = new ErrorMsg(ErrorMsg.JAXP_COMPILE_ERR);
         }
-        TransformerConfigurationException exc =  new TransformerConfigurationException(err.toString(), err.getCause());
+        Throwable cause = err.getCause();
+        TransformerConfigurationException exc;
+        if (cause != null) {
+            exc =  new TransformerConfigurationException(cause.getMessage(), cause);
+        } else {
+            exc =  new TransformerConfigurationException(err.toString());
+        }
         
         // Pass compiler errors to the error listener
         if (_errorListener != null) {

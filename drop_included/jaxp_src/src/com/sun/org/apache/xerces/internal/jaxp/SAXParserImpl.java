@@ -344,8 +344,10 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
                 fSecurityManager = new XMLSecurityManager(true);
                 try {
                     super.setProperty(SECURITY_MANAGER, fSecurityManager);
-                } catch (Exception ex) {
-                    //shall not happen
+                } catch (SAXException e) {
+                    throw new UnsupportedOperationException(
+                        SAXMessageFormatter.formatMessage(fConfiguration.getLocale(),
+                        "property-not-recognized", new Object [] {SECURITY_MANAGER}), e);
                 }
             }
         }
@@ -475,14 +477,21 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
                     return;
                 }
             }
-            if (!fInitProperties.containsKey(name)) {
-                fInitProperties.put(name, super.getProperty(name));
-            }
             /** Forward property to the schema validator if there is one. **/
             if (fSAXParser != null && fSAXParser.fSchemaValidator != null) {
                 setSchemaValidatorProperty(name, value);
             }
-            super.setProperty(name, value);
+
+            //check if the property is managed by security manager
+            if (fSecurityManager == null ||
+                    !fSecurityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, value)) {
+		//fall back to the existing property manager
+		if (!fInitProperties.containsKey(name)) {
+		    fInitProperties.put(name, super.getProperty(name));
+		}
+		super.setProperty(name, value);
+	    }
+
         }
 
         public synchronized Object getProperty(String name)
@@ -495,6 +504,14 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
                 // JAXP 1.2 support
                 return fSAXParser.schemaLanguage;
             }
+
+            /** Check to see if the property is managed by the security manager **/
+            String propertyValue = (fSecurityManager != null) ?
+                    fSecurityManager.getLimitAsString(name) : null;
+            if (propertyValue != null) {
+                return propertyValue;
+	    }
+
             return super.getProperty(name);
         }
 

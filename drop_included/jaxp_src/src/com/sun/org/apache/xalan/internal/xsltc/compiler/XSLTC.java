@@ -157,6 +157,25 @@ public final class XSLTC {
     }
 
     /**
+     * Return allowed protocols for accessing external stylesheet.
+     */
+    public Object getProperty(String name) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            return _xmlSecurityManager;
+        }
+        return null;
+    }
+
+    /**
+     * Set allowed protocols for accessing external stylesheet.
+     */
+    public void setProperty(String name, Object value) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            _xmlSecurityManager = (XMLSecurityManager)value;
+        }
+    }
+
+    /**
      * Only for user by the internal TrAX implementation.
      */
     public Parser getParser() {
@@ -899,25 +918,6 @@ public final class XSLTC {
         currData.append(newData);
 
         return newDataOffset;
-    }
-
-     /**
-      * Return allowed protocols for accessing external stylesheet.
-      */
-    public Object getProperty(String name) {
-        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
-            return _xmlSecurityManager;
-	}
-	return null;
-    }
-
-    /**
-     * Set allowed protocols for accessing external stylesheet.
-     */
-    public void setProperty(String name, Object value) {
-        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
-            _xmlSecurityManager = (XMLSecurityManager)value;
-	}
     }
 
 }

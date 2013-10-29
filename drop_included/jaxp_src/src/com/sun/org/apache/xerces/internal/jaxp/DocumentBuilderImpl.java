@@ -253,12 +253,16 @@ public class DocumentBuilderImpl extends DocumentBuilder
 						}
 					}
             	} else {
-                    // Let Xerces code handle the property
-                    domParser.setProperty(name, val);
-				}
-			}
+                    //check if the property is managed by security manager
+                    if (fSecurityManager == null ||
+                            !fSecurityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, val)) {
+                            //fall back to the existing property manager
+                            domParser.setProperty(name, val);
+		    }
 		}
+	    }
 	}
+    }
 
     /**
      * Non-preferred: use the getDOMImplementation() method instead of this

@@ -239,6 +239,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
         else {
             schema = new EmptyXMLSchema();
         }
+        propagateProperties(schema);
         propagateFeatures(schema);
         return schema;
     }
@@ -247,6 +248,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
         // Use a Schema that uses the system id as the equality source.
         AbstractXMLSchema schema = new WeakReferenceXMLSchema();
         propagateFeatures(schema);
+        propagateProperties(schema);
         return schema;
     }
     
@@ -322,7 +324,6 @@ public final class XMLSchemaFactory extends SchemaFactory {
                         "jaxp-secureprocessing-feature", null));
             }
 
-            fSecurityManager = value ? new XMLSecurityManager() : null;
             fSecurityManager.setSecureProcessing(value);
             fXMLSchemaLoader.setProperty(SECURITY_MANAGER, fSecurityManager);
             return;
@@ -362,7 +363,12 @@ public final class XMLSchemaFactory extends SchemaFactory {
                     "property-not-supported", new Object [] {name}));
         }
         try {
-            fXMLSchemaLoader.setProperty(name, object);
+            //check if the property is managed by security manager
+            if (fSecurityManager == null ||
+                    !fSecurityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, object)) {
+		//fall back to the existing property manager
+		fXMLSchemaLoader.setProperty(name, object);
+	    }
         }
         catch (XMLConfigurationException e) {
             String identifier = e.getIdentifier();
@@ -388,6 +394,15 @@ public final class XMLSchemaFactory extends SchemaFactory {
         }
     }
     
+    private void propagateProperties(AbstractXMLSchema schema) {
+        String[] properties = fXMLSchemaLoader.getRecognizedProperties();
+        for (int i = 0; i < properties.length; ++i) {
+            Object state = fXMLSchemaLoader.getProperty(properties[i]);
+            schema.setProperty(properties[i], state);
+        }
+    }
+
+
     /** 
      * Extension of XMLGrammarPoolImpl which exposes the number of
      * grammars stored in the grammar pool.

@@ -25,6 +25,8 @@ import com.sun.org.apache.xerces.internal.util.SymbolTable;
 import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
 
 /**
  * This is the main Xerces SAX parser class. It uses the abstract SAX
@@ -125,4 +127,31 @@ public class SAXParser
 
     } // <init>(SymbolTable,XMLGrammarPool)
 
+    /**
+     * Sets the particular property in the underlying implementation of
+     * org.xml.sax.XMLReader.
+     */
+    public void setProperty(String name, Object value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
+        /**
+         * It's possible for users to set a security manager through the interface.
+         * If it's the old SecurityManager, convert it to the new XMLSecurityManager
+         */
+        if (name.equals(Constants.SECURITY_MANAGER)) {
+            securityManager = XMLSecurityManager.convert(value, securityManager);
+            super.setProperty(Constants.SECURITY_MANAGER, securityManager);
+            return;
+        }
+
+        if (securityManager == null) {
+            securityManager = new XMLSecurityManager(true);
+            super.setProperty(Constants.SECURITY_MANAGER, securityManager);
+        }
+
+	//check if the property is managed by security manager
+	if (!securityManager.setLimit(name, XMLSecurityManager.State.APIPROPERTY, value)) {
+	    //fall back to the default configuration to handle the property
+	    super.setProperty(name, value);
+	}
+    }
 } // class SAXParser

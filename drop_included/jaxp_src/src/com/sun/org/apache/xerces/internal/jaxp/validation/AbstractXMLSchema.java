@@ -85,8 +85,7 @@ abstract class AbstractXMLSchema extends Schema implements
     /*
      * Other methods
      */
-
-    final void setFeature(String featureId, boolean state) {
+    public final void setFeature(String featureId, boolean state) {
         fFeatures.put(featureId, state ? Boolean.TRUE : Boolean.FALSE);
     }
 

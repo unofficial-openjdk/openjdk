@@ -368,11 +368,15 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
             return;
         }
 
-	//fall back to the existing property manager
-	if (!fInitProperties.containsKey(propertyId)) {
-	    fInitProperties.put(propertyId, super.getProperty(propertyId));
+        //check if the property is managed by security manager
+        if (fInitSecurityManager == null ||
+                !fInitSecurityManager.setLimit(propertyId, XMLSecurityManager.State.APIPROPERTY, value)) {
+	    //fall back to the existing property manager
+	    if (!fInitProperties.containsKey(propertyId)) {
+		fInitProperties.put(propertyId, super.getProperty(propertyId));
+	    }
+	    super.setProperty(propertyId, value);
 	}
-	super.setProperty(propertyId, value);
     }
     
     /**

@@ -179,6 +179,13 @@ public class PropertyManager {
             return;
         }
 
+        //check if the property is managed by security manager
+        if (fSecurityManager == null ||
+                !fSecurityManager.setLimit(property, XMLSecurityManager.State.APIPROPERTY, value)) {
+	    //fall back to the existing property manager
+	    supportedProps.put(property, value);
+        }
+
         supportedProps.put(property, value ) ;
         if(equivalentProperty != null){
             supportedProps.put(equivalentProperty, value ) ;
