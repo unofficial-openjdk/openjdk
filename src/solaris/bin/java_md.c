@@ -46,6 +46,10 @@
 #define JVM_DLL "libjvm.so"
 #define JAVA_DLL "libjava.so"
 
+#define JRE_ERROR1      "Error: Could not find Java SE Runtime Environment."
+#define JRE_ERROR11     "Error: Path length exceeds maximum length (PATH_MAX)"
+#define JRE_ERROR13     "Error: String processing operation failed"
+
 /*
  * If a processor / os combination has the ability to run binaries of
  * two data models and cohabitation of jre/jdk bits with both data
@@ -1700,7 +1704,28 @@ static void* hSplashLib = NULL;
 
 void* SplashProcAddress(const char* name) {
     if (!hSplashLib) {
-        hSplashLib = dlopen(SPLASHSCREEN_SO, RTLD_LAZY | RTLD_GLOBAL);
+        int ret;
+        char jrePath[MAXPATHLEN];
+        char splashPath[MAXPATHLEN];
+
+        if (!GetJREPath(jrePath, sizeof(jrePath), GetArch(), JNI_FALSE)) {
+            ReportErrorMessage(JRE_ERROR1, JNI_TRUE);
+            return NULL;
+        }
+        ret = snprintf(splashPath, sizeof(splashPath), "%s/lib/%s/%s",
+		       jrePath, GetArch(), SPLASHSCREEN_SO);
+
+        if (ret >= (int) sizeof(splashPath)) {
+            ReportErrorMessage(JRE_ERROR11, JNI_TRUE);
+            return NULL;
+        }
+        if (ret < 0) {
+            ReportErrorMessage(JRE_ERROR13, JNI_TRUE);
+            return NULL;
+        }
+        hSplashLib = dlopen(splashPath, RTLD_LAZY | RTLD_GLOBAL);
+	if (_launcher_debug)
+	  printf("Info: loaded %s\n", splashPath);
     }
     if (hSplashLib) {
         void* sym = dlsym(hSplashLib, name);
