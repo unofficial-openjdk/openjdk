@@ -64,12 +64,14 @@ import javax.xml.transform.stax.*;
 import com.sun.org.apache.xml.internal.utils.StylesheetPIHandler;
 import com.sun.org.apache.xml.internal.utils.StopParseException;
 
+import com.sun.org.apache.xalan.internal.XalanConstants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.SourceLoader;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.XSLTC;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.dom.XSLTCDTMManager;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLFilter;
@@ -221,7 +223,12 @@ public class TransformerFactoryImpl
             _isSecureMode = true;
             _isNotSecureProcessing = false;
         }
+
+        //Parser's security manager
+        _xmlSecurityManager = new XMLSecurityManager(true);
     }
+
+    private XMLSecurityManager _xmlSecurityManager;
 
     /**
      * javax.xml.transform.sax.TransformerFactory implementation.
@@ -273,8 +280,9 @@ public class TransformerFactoryImpl
 	}
 	else if (name.equals(AUTO_TRANSLET)) {
 	    return new Boolean(_autoTranslet);
+	} else if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            return _xmlSecurityManager;
 	}
-
 	// Throw an exception for all other attributes
 	ErrorMsg err = new ErrorMsg(ErrorMsg.JAXP_INVALID_ATTR_ERR, name);
 	throw new IllegalArgumentException(err.toString());
@@ -417,6 +425,7 @@ public class TransformerFactoryImpl
                 throw new TransformerConfigurationException(err.toString());
             }
 	    _isNotSecureProcessing = !value;
+            _xmlSecurityManager.setSecureProcessing(value);
 	    // all done processing feature
 	    return;
 	}
@@ -757,6 +766,7 @@ public class TransformerFactoryImpl
 	if (_debug) xsltc.setDebug(true);
 	if (_enableInlining) xsltc.setTemplateInlining(true);
 	if (!_isNotSecureProcessing) xsltc.setSecureProcessing(true);
+        xsltc.setProperty(XalanConstants.SECURITY_MANAGER, _xmlSecurityManager);
 	xsltc.init();
 
 	// Set a document loader (for xsl:include/import) if defined

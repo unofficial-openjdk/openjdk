@@ -156,8 +156,110 @@ public final class Constants {
     /** JAXP schemaSource language: when used internally may include DTD namespace (DOM) */
     public static final String SCHEMA_LANGUAGE = "schemaLanguage";
 
-    public static final String SYSTEM_PROPERTY_ELEMENT_ATTRIBUTE_LIMIT = "elementAttributeLimit" ;
+    /** Oracle JAXP property prefix ("http://www.oracle.com/xml/jaxp/properties/"). */
+    public static final String ORACLE_JAXP_PROPERTY_PREFIX =
+        "http://www.oracle.com/xml/jaxp/properties/";
 
+    //
+    // Implementation limits: corresponding System Properties of the above
+    // API properties
+    //
+    /**
+     * JDK entity expansion limit; Note that the existing system property
+     * "entityExpansionLimit" with no prefix is still observed
+     */
+    public static final String JDK_ENTITY_EXPANSION_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "entityExpansionLimit";
+
+    /**
+     * JDK element attribute limit; Note that the existing system property
+     * "elementAttributeLimit" with no prefix is still observed
+     */
+    public static final String JDK_ELEMENT_ATTRIBUTE_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "elementAttributeLimit";
+
+    /**
+     * JDK maxOccur limit; Note that the existing system property
+     * "maxOccurLimit" with no prefix is still observed
+     */
+    public static final String JDK_MAX_OCCUR_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "maxOccurLimit";
+
+    /**
+     * JDK total entity size limit
+     */
+    public static final String JDK_TOTAL_ENTITY_SIZE_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "totalEntitySizeLimit";
+
+    /**
+     * JDK maximum general entity size limit
+     */
+    public static final String JDK_GENEAL_ENTITY_SIZE_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "maxGeneralEntitySizeLimit";
+    /**
+     * JDK maximum parameter entity size limit
+     */
+    public static final String JDK_PARAMETER_ENTITY_SIZE_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "maxParameterEntitySizeLimit";
+    /**
+     * JDK maximum XML name limit
+     */
+    public static final String JDK_XML_NAME_LIMIT =
+            ORACLE_JAXP_PROPERTY_PREFIX + "maxXMLNameLimit";
+    /**
+     * JDK property to allow printing out information from the limit analyzer
+     */
+    public static final String JDK_ENTITY_COUNT_INFO =
+            ORACLE_JAXP_PROPERTY_PREFIX + "getEntityCountInfo";
+
+    //
+    // Implementation limits: API properties
+    //
+    /**
+     * JDK entity expansion limit; Note that the existing system property
+     * "entityExpansionLimit" with no prefix is still observed
+     */
+    public static final String SP_ENTITY_EXPANSION_LIMIT = "jdk.xml.entityExpansionLimit";
+
+    /**
+     * JDK element attribute limit; Note that the existing system property
+     * "elementAttributeLimit" with no prefix is still observed
+     */
+    public static final String SP_ELEMENT_ATTRIBUTE_LIMIT =  "jdk.xml.elementAttributeLimit";
+
+    /**
+     * JDK maxOccur limit; Note that the existing system property
+     * "maxOccurLimit" with no prefix is still observed
+     */
+    public static final String SP_MAX_OCCUR_LIMIT = "jdk.xml.maxOccurLimit";
+
+    /**
+     * JDK total entity size limit
+     */
+    public static final String SP_TOTAL_ENTITY_SIZE_LIMIT = "jdk.xml.totalEntitySizeLimit";
+
+    /**
+     * JDK maximum general entity size limit
+     */
+    public static final String SP_GENEAL_ENTITY_SIZE_LIMIT = "jdk.xml.maxGeneralEntitySizeLimit";
+    /**
+     * JDK maximum parameter entity size limit
+     */
+    public static final String SP_PARAMETER_ENTITY_SIZE_LIMIT = "jdk.xml.maxParameterEntitySizeLimit";
+    /**
+     * JDK maximum XML name limit
+     */
+    public static final String SP_XML_NAME_LIMIT = "jdk.xml.maxXMLNameLimit";
+
+    //legacy System Properties
+    public final static String ENTITY_EXPANSION_LIMIT = "entityExpansionLimit";
+    public static final String ELEMENT_ATTRIBUTE_LIMIT = "elementAttributeLimit" ;
+    public final static String MAX_OCCUR_LIMIT = "maxOccurLimit";
+
+    /**
+     * A string "yes" that can be used for properties such as getEntityCountInfo
+     */
+    public static final String JDK_YES = "yes";
     //
     // DOM features
     //
@@ -387,7 +489,7 @@ public final class Constants {
     public static final String LOCALE_PROPERTY = "locale";
 
     /** property identifier: security manager. */
-    protected static final String SECURITY_MANAGER =
+    public static final String SECURITY_MANAGER =
         Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
     
 
@@ -452,9 +554,6 @@ public final class Constants {
      */
     public final static String ATTRIBUTE_DECLARED = "ATTRIBUTE_DECLARED";
     
-	public final static String ENTITY_EXPANSION_LIMIT = "entityExpansionLimit";
-	
-	public final static String MAX_OCCUR_LIMIT = "maxOccurLimit";
 
     /**
      * {@link org.w3c.dom.TypeInfo} associated with current element/attribute

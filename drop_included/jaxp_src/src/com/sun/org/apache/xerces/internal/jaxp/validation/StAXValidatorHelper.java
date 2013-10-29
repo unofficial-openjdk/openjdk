@@ -25,6 +25,9 @@
 
 package com.sun.org.apache.xerces.internal.jaxp.validation;
 
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
+
 import java.io.IOException;
 
 import javax.xml.transform.Result;
@@ -68,6 +71,19 @@ public final class StAXValidatorHelper implements ValidatorHelper {
             if( identityTransformer1==null ) {
                 try {
                     SAXTransformerFactory tf = (SAXTransformerFactory)SAXTransformerFactory.newInstance();
+                    XMLSecurityManager securityManager = (XMLSecurityManager)fComponentManager.getProperty(Constants.SECURITY_MANAGER);
+                    if (securityManager != null) {
+                        for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
+                            if (securityManager.isSet(limit.ordinal())){
+                                tf.setAttribute(limit.apiProperty(),
+                                        securityManager.getLimitValueAsString(limit));
+                            }
+                        }
+                        if (securityManager.printEntityCountInfo()) {
+                            tf.setAttribute(Constants.JDK_ENTITY_COUNT_INFO, "yes");
+                        }
+                    }
+
                     identityTransformer1 = tf.newTransformer();
                     identityTransformer2 = tf.newTransformerHandler();
                 } catch (TransformerConfigurationException e) {

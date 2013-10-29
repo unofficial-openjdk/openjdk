@@ -23,6 +23,7 @@ package com.sun.org.apache.xerces.internal.utils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 import java.security.AccessController;
@@ -31,6 +32,7 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
@@ -194,6 +196,56 @@ public final class SecuritySupport {
                     }
                 })).longValue();
     }
+
+     /**
+     * Read from $java.home/lib/jaxp.properties for the specified property
+     * The program
+     *
+     * @param propertyId the Id of the property
+     * @return the value of the property
+     */
+    static String readJAXPProperty(String propertyId) {
+        String value = null;
+        InputStream is = null;
+        try {
+            if (firstTime) {
+                synchronized (cacheProps) {
+                    if (firstTime) {
+                        String configFile = getSystemProperty("java.home") + File.separator +
+                            "lib" + File.separator + "jaxp.properties";
+                        File f = new File(configFile);
+                        if (getFileExists(f)) {
+                            is = getFileInputStream(f);
+                            cacheProps.load(is);
+                        }
+                        firstTime = false;
+                    }
+                }
+            }
+            value = cacheProps.getProperty(propertyId);
+
+        }
+        catch (Exception ex) {}
+        finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ex) {}
+            }
+        }
+
+        return value;
+    }
+
+   /**
+     * Cache for properties in java.home/lib/jaxp.properties
+     */
+    static final Properties cacheProps = new Properties();
+
+    /**
+     * Flag indicating if the program has tried reading java.home/lib/jaxp.properties
+     */
+    static volatile boolean firstTime = true;
 
     private SecuritySupport () {}
 }

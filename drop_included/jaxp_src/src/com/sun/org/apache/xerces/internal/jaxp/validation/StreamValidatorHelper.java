@@ -184,6 +184,8 @@ final class StreamValidatorHelper implements ValidatorHelper {
         config.setDocumentHandler(fSchemaValidator);
         config.setDTDHandler(null);
         config.setDTDContentModelHandler(null);
+        config.setProperty(Constants.SECURITY_MANAGER,
+                fComponentManager.getProperty(Constants.SECURITY_MANAGER));
         fConfiguration = new SoftReference(config);
         return config;
     }

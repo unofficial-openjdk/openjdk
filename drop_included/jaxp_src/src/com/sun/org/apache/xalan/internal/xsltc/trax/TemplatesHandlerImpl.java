@@ -29,7 +29,7 @@ import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.sax.TemplatesHandler;
-
+import com.sun.org.apache.xalan.internal.XalanConstants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.CompilerException;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.Parser;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.SourceLoader;
@@ -98,6 +98,8 @@ public class TemplatesHandlerImpl
         XSLTC xsltc = new XSLTC();
         if (tfactory.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING))
             xsltc.setSecureProcessing(true);
+        xsltc.setProperty(XalanConstants.SECURITY_MANAGER,
+                tfactory.getAttribute(XalanConstants.SECURITY_MANAGER));
 
         _parser = xsltc.getParser();
     }

@@ -41,12 +41,13 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import com.sun.org.apache.bcel.internal.classfile.JavaClass;
+import com.sun.org.apache.xalan.internal.XalanConstants;
 import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Util;
 import com.sun.org.apache.xml.internal.dtm.DTM;
 
-import com.sun.org.apache.xalan.internal.utils.SecuritySupport;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
@@ -105,6 +106,7 @@ public final class XSLTC {
     public static final int BYTEARRAY_AND_FILE_OUTPUT = 4;
     public static final int BYTEARRAY_AND_JAR_OUTPUT  = 5;
 
+    private XMLSecurityManager _xmlSecurityManager;
 
     // Compiler options (passed from command line or XSLTC client)
     private boolean _debug = false;      // -x
@@ -898,4 +900,24 @@ public final class XSLTC {
 
         return newDataOffset;
     }
+
+     /**
+      * Return allowed protocols for accessing external stylesheet.
+      */
+    public Object getProperty(String name) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            return _xmlSecurityManager;
+	}
+	return null;
+    }
+
+    /**
+     * Set allowed protocols for accessing external stylesheet.
+     */
+    public void setProperty(String name, Object value) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            _xmlSecurityManager = (XMLSecurityManager)value;
+	}
+    }
+
 }

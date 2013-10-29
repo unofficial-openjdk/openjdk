@@ -173,7 +173,7 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
     private final HashMap fInitProperties = new HashMap();
 
     /** Stores the initial security manager. */
-    private final XMLSecurityManager fInitSecurityManager;
+    private XMLSecurityManager fInitSecurityManager;
     
     //
     // User Objects
@@ -210,12 +210,6 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
         fComponents.put(ENTITY_RESOLVER, null);
         fComponents.put(ERROR_HANDLER, null);
 
-        if (System.getSecurityManager() != null) {
-            _isSecureMode = true;
-            setProperty(SECURITY_MANAGER, new XMLSecurityManager());
-        } else {        
-            fComponents.put(SECURITY_MANAGER, null);
-        }
         fComponents.put(SYMBOL_TABLE, new SymbolTable());
         
         // setup grammar pool
@@ -230,15 +224,21 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
         addRecognizedParamsAndSetDefaults(fErrorReporter, grammarContainer);
         addRecognizedParamsAndSetDefaults(fSchemaValidator, grammarContainer);
 
-        // if the secure processing feature is set to true, add a security manager to the configuration
-        Boolean secureProcessing = grammarContainer.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING);
-        if (Boolean.TRUE.equals(secureProcessing)) {
-            fInitSecurityManager = new XMLSecurityManager();
+        boolean secureProcessing = grammarContainer.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING);
+        if (System.getSecurityManager() != null) {
+            _isSecureMode = true;
+            secureProcessing = true;
         }
-        else {
-            fInitSecurityManager = null;
+
+        fInitSecurityManager = (XMLSecurityManager)
+                grammarContainer.getProperty(SECURITY_MANAGER);
+        if (fInitSecurityManager != null ) {
+            fInitSecurityManager.setSecureProcessing(secureProcessing);
+        } else {
+            fInitSecurityManager = new XMLSecurityManager(secureProcessing);
         }
-        fComponents.put(SECURITY_MANAGER, fInitSecurityManager);
+
+        setProperty(SECURITY_MANAGER, fInitSecurityManager);
 
     }
 
@@ -266,7 +266,7 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
             return fUseGrammarPoolOnly;
         }
         else if (XMLConstants.FEATURE_SECURE_PROCESSING.equals(featureId)) {
-            return getProperty(SECURITY_MANAGER) != null;
+            return fInitSecurityManager.isSecureProcessing();
         }
         else if (SCHEMA_ELEMENT_DEFAULT.equals(featureId)) {
             return true; //pre-condition: VALIDATION and SCHEMA_VALIDATION are always true
@@ -296,7 +296,8 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
             if (_isSecureMode && !value) {
                 throw new XMLConfigurationException(XMLConfigurationException.NOT_ALLOWED, XMLConstants.FEATURE_SECURE_PROCESSING);
             }
-            setProperty(SECURITY_MANAGER, value ? new XMLSecurityManager() : null);
+            fInitSecurityManager.setSecureProcessing(value);
+            setProperty(SECURITY_MANAGER, fInitSecurityManager);
             return;
         }
         fConfigUpdated = true;
@@ -366,10 +367,12 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
             fComponents.put(propertyId, value);
             return;
         }
-        if (!fInitProperties.containsKey(propertyId)) {
-            fInitProperties.put(propertyId, super.getProperty(propertyId));
-        }
-        super.setProperty(propertyId, value);
+
+	//fall back to the existing property manager
+	if (!fInitProperties.containsKey(propertyId)) {
+	    fInitProperties.put(propertyId, super.getProperty(propertyId));
+	}
+	super.setProperty(propertyId, value);
     }
     
     /**

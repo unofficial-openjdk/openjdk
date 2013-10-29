@@ -108,6 +108,8 @@ public class DocumentBuilderImpl extends DocumentBuilder
     /** Initial EntityResolver */
     private final EntityResolver fInitEntityResolver;
     
+    private XMLSecurityManager fSecurityManager;
+
     DocumentBuilderImpl(DocumentBuilderFactoryImpl dbf, Hashtable dbfAttrs, Hashtable features)
         throws SAXNotRecognizedException, SAXNotSupportedException {
         this(dbf, dbfAttrs, features, false);
@@ -151,10 +153,8 @@ public class DocumentBuilderImpl extends DocumentBuilder
             domParser.setFeature(XINCLUDE_FEATURE, true);
         }
         
-        // If the secure processing feature is on set a security manager.
-        if (secureProcessing) {
-            domParser.setProperty(SECURITY_MANAGER, new XMLSecurityManager());
-        }
+        fSecurityManager = new XMLSecurityManager(secureProcessing);
+        domParser.setProperty(SECURITY_MANAGER, fSecurityManager);
         
         this.grammar = dbf.getSchema();
         if (grammar != null) {
@@ -202,8 +202,8 @@ public class DocumentBuilderImpl extends DocumentBuilder
                 String feature = (String)e.nextElement();
                 boolean value = ((Boolean)features.get(feature)).booleanValue();
                 domParser.setFeature(feature, value);
-            }
         }
+    }
     }
 
     /**

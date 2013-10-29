@@ -22,6 +22,9 @@
  */
 package com.sun.org.apache.xml.internal.utils;
 
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
+
 import java.util.HashMap;
 
 import javax.xml.XMLConstants;
@@ -64,6 +67,8 @@ public class XMLReaderManager {
 
 
     private boolean _secureProcessing;
+
+    private XMLSecurityManager _xmlSecurityManager;
     /**
      * Hidden constructor
      */
@@ -156,6 +161,21 @@ public class XMLReaderManager {
             }
         } 
 
+        try {
+            if (_xmlSecurityManager != null) {
+                for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
+                    reader.setProperty(limit.apiProperty(),
+                            _xmlSecurityManager.getLimitValueAsString(limit));
+                }
+                if (_xmlSecurityManager.printEntityCountInfo()) {
+                    reader.setProperty(XalanConstants.JDK_ENTITY_COUNT_INFO, XalanConstants.JDK_YES);
+                }
+            }
+        } catch (SAXException se) {
+            System.err.println("Warning:  " + reader.getClass().getName() + ": "
+                        + se.getMessage());
+        }
+
         return reader;
     }
 
@@ -168,6 +188,24 @@ public class XMLReaderManager {
         }
     }
 
+     /**
+      * Get property value
+      */
+    public Object getProperty(String name) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+	    return _xmlSecurityManager;
+	}
+	return null;
+    }
+
+     /**
+      * Set property.
+      */
+    public void setProperty(String name, Object value) {
+        if (name.equals(XalanConstants.SECURITY_MANAGER)) {
+            _xmlSecurityManager = (XMLSecurityManager)value;
+	}
+    }
     /**
      * Mark the cached XMLReader as available.  If the reader was not
      * actually in the cache, do nothing.

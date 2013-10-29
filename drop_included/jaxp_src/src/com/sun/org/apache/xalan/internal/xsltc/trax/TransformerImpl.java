@@ -64,6 +64,8 @@ import javax.xml.transform.stream.StreamSource;
 
 import com.sun.org.apache.xml.internal.utils.SystemIDResolver;
 
+import com.sun.org.apache.xalan.internal.XalanConstants;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xalan.internal.xsltc.DOM;
 import com.sun.org.apache.xalan.internal.xsltc.DOMCache;
 import com.sun.org.apache.xalan.internal.xsltc.DOMEnhancedForDTM;
@@ -208,6 +210,7 @@ public final class TransformerImpl extends Transformer
      */
     private Hashtable _parameters = null;
 
+    private XMLSecurityManager _securityManager;
     /**
      * This class wraps an ErrorListener into a MessageHandler in order to
      * capture messages reported via xsl:message.
@@ -252,7 +255,9 @@ public final class TransformerImpl extends Transformer
 	_propertiesClone = (Properties) _properties.clone();
 	_indentNumber = indentNumber;
 	_tfactory = tfactory;
+        _securityManager = (XMLSecurityManager)_tfactory.getAttribute(XalanConstants.SECURITY_MANAGER);
         _readerManager.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, _isSecureProcessing);
+        _readerManager.setProperty(XalanConstants.SECURITY_MANAGER, _securityManager);
 	//_isIncremental = tfactory._incremental;
     }
 

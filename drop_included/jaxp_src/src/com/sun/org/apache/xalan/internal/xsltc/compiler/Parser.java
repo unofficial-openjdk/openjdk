@@ -40,10 +40,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import com.sun.org.apache.xalan.internal.XalanConstants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MethodType;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.TypeCheckError;
+import com.sun.org.apache.xalan.internal.utils.XMLSecurityManager;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.ContentHandler;
@@ -466,6 +468,20 @@ public class Parser implements Constants, ContentHandler {
             }
             final SAXParser parser = factory.newSAXParser();
             final XMLReader reader = parser.getXMLReader();
+            try {
+                XMLSecurityManager securityManager =
+                        (XMLSecurityManager)_xsltc.getProperty(XalanConstants.SECURITY_MANAGER);
+                for (XMLSecurityManager.Limit limit : XMLSecurityManager.Limit.values()) {
+                    reader.setProperty(limit.apiProperty(), securityManager.getLimitValueAsString(limit));
+                }
+                if (securityManager.printEntityCountInfo()) {
+                    parser.setProperty(XalanConstants.JDK_ENTITY_COUNT_INFO, XalanConstants.JDK_YES);
+                }
+            } catch (SAXException se) {
+                System.err.println("Warning:  " + reader.getClass().getName() + ": "
+                            + se.getMessage());
+            }
+
             return(parse(reader, input));
         }
         catch (ParserConfigurationException e) {

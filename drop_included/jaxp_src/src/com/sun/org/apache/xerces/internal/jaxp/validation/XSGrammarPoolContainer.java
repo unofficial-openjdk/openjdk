@@ -54,4 +54,11 @@ public interface XSGrammarPoolContainer {
      */
     public Boolean getFeature(String featureId);
 
+    /**
+     * Returns the initial value of a property for validators created
+     * using this grammar pool container or null if the validators
+     * should use the default value.
+     */
+    public Object getProperty(String propertyId);
+
 }

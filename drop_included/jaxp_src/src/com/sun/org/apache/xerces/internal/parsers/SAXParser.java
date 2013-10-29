@@ -22,6 +22,7 @@ package com.sun.org.apache.xerces.internal.parsers;
 
 import com.sun.org.apache.xerces.internal.impl.Constants;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
 
@@ -73,6 +74,7 @@ public class SAXParser
         XMLGRAMMAR_POOL,
     };
 
+    XMLSecurityManager securityManager;
     //
     // Constructors
     //

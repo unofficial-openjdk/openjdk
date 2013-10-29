@@ -97,7 +97,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
     /** The ErrorHandlerWrapper */
     private ErrorHandlerWrapper fErrorHandlerWrapper;
     
-    /** The XMLSecurityManager. */
+    /** The SecurityManager. */
     private XMLSecurityManager fSecurityManager;
     
     /** The container for the real grammar pool. */ 
@@ -113,7 +113,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
         fXMLSchemaLoader.setErrorHandler(fErrorHandlerWrapper);
 
         // Enable secure processing feature by default
-        fSecurityManager = new XMLSecurityManager();
+        fSecurityManager = new XMLSecurityManager(true);
         fXMLSchemaLoader.setProperty(SECURITY_MANAGER, fSecurityManager);
     }
     
@@ -292,7 +292,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
                     "property-not-supported", new Object [] {name}));
         }
         try {
-            return fXMLSchemaLoader.getProperty(name);
+	    return fXMLSchemaLoader.getProperty(name);
         }
         catch (XMLConfigurationException e) {
             String identifier = e.getIdentifier();
@@ -321,7 +321,9 @@ public final class XMLSchemaFactory extends SchemaFactory {
                         SAXMessageFormatter.formatMessage(null, 
                         "jaxp-secureprocessing-feature", null));
             }
+
             fSecurityManager = value ? new XMLSecurityManager() : null;
+            fSecurityManager.setSecureProcessing(value);
             fXMLSchemaLoader.setProperty(SECURITY_MANAGER, fSecurityManager);
             return;
         }

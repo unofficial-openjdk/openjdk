@@ -53,6 +53,7 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.ls.LSResourceResolver;
 
@@ -189,6 +190,9 @@ public class DOMConfigurationImpl extends ParserConfigurationSettings
     private DOMStringList fRecognizedParameters;
 
 
+    /** Property identifier: Security manager. */
+    private static final String SECURITY_MANAGER = Constants.SECURITY_MANAGER;
+
     //
     // Constructors
     //
@@ -259,7 +263,8 @@ public class DOMConfigurationImpl extends ParserConfigurationSettings
             GRAMMAR_POOL,
             JAXP_SCHEMA_SOURCE,
             JAXP_SCHEMA_LANGUAGE,
-                        DTD_VALIDATOR_FACTORY_PROPERTY
+	    DTD_VALIDATOR_FACTORY_PROPERTY,
+            SECURITY_MANAGER,
         };
         addRecognizedProperties(recognizedProperties);
 
@@ -292,6 +297,8 @@ public class DOMConfigurationImpl extends ParserConfigurationSettings
 
         fValidationManager = createValidationManager();
         setProperty(VALIDATION_MANAGER, fValidationManager);
+
+        setProperty(SECURITY_MANAGER, new XMLSecurityManager(true));
 
 
         // add message formatters

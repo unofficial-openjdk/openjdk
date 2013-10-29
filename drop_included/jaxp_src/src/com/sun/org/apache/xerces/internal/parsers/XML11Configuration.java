@@ -20,6 +20,12 @@
 
 package com.sun.org.apache.xerces.internal.parsers;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Locale;
+import javax.xml.XMLConstants;
+
 import com.sun.org.apache.xerces.internal.impl.Constants;
 import com.sun.org.apache.xerces.internal.impl.XML11DTDScannerImpl;
 import com.sun.org.apache.xerces.internal.impl.XML11DocumentScannerImpl;
@@ -44,6 +50,7 @@ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
 import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
 import com.sun.org.apache.xerces.internal.util.ParserConfigurationSettings;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.XMLDTDContentModelHandler;
 import com.sun.org.apache.xerces.internal.xni.XMLDTDHandler;
 import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
@@ -60,11 +67,6 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLEntityResolver;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLErrorHandler;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLPullParserConfiguration;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import javax.xml.XMLConstants;
 
 /**
  * This class is the configuration used to parse XML 1.0 and XML 1.1 documents.
@@ -259,6 +261,9 @@ public class XML11Configuration extends ParserConfigurationSettings
     protected static final String LOCALE =
         Constants.XERCES_PROPERTY_PREFIX + Constants.LOCALE_PROPERTY;
 
+    /** Property identifier: Security manager. */
+    private static final String SECURITY_MANAGER = Constants.SECURITY_MANAGER;
+
     // debugging
 
     /** Set to true and recompile to print exception stack trace. */
@@ -268,33 +273,33 @@ public class XML11Configuration extends ParserConfigurationSettings
     // Data
     //
 
-	protected SymbolTable fSymbolTable;
+    protected SymbolTable fSymbolTable;
     protected XMLInputSource fInputSource;
     protected ValidationManager fValidationManager;
-	protected XMLVersionDetector fVersionDetector;
+    protected XMLVersionDetector fVersionDetector;
     protected XMLLocator fLocator;
-	protected Locale fLocale;
+    protected Locale fLocale;
 
-	/** XML 1.0 Components. */
-	protected ArrayList fComponents;
+    /** XML 1.0 Components. */
+    protected ArrayList fComponents;
     
-	/** XML 1.1. Components. */
-	protected ArrayList fXML11Components = null;
-	
-	/** Common components: XMLEntityManager, XMLErrorReporter, XMLSchemaValidator */
-	protected ArrayList fCommonComponents = null;
+    /** XML 1.1. Components. */
+    protected ArrayList fXML11Components = null;
+    
+    /** Common components: XMLEntityManager, XMLErrorReporter, XMLSchemaValidator */
+    protected ArrayList fCommonComponents = null;
 
-	/** The document handler. */
-	protected XMLDocumentHandler fDocumentHandler;
+    /** The document handler. */
+    protected XMLDocumentHandler fDocumentHandler;
 
-	/** The DTD handler. */
-	protected XMLDTDHandler fDTDHandler;
+    /** The DTD handler. */
+    protected XMLDTDHandler fDTDHandler;
+    
+    /** The DTD content model handler. */
+    protected XMLDTDContentModelHandler fDTDContentModelHandler;
 
-	/** The DTD content model handler. */
-	protected XMLDTDContentModelHandler fDTDContentModelHandler;
-
-	/** Last component in the document pipeline */     
-	protected XMLDocumentSource fLastComponent;
+    /** Last component in the document pipeline */     
+    protected XMLDocumentSource fLastComponent;
 
     /** 
      * True if a parse is in progress. This state is needed because
@@ -510,6 +515,7 @@ public class XML11Configuration extends ParserConfigurationSettings
             	SCHEMA_LOCATION,
                 SCHEMA_NONS_LOCATION,
                 LOCALE,
+                SECURITY_MANAGER,
         };
         addRecognizedProperties(recognizedProperties);
 		
@@ -557,6 +563,8 @@ public class XML11Configuration extends ParserConfigurationSettings
         
         fVersionDetector = new XMLVersionDetector();
         
+        fProperties.put(SECURITY_MANAGER, new XMLSecurityManager(true));
+
         // add message formatters
         if (fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN) == null) {
             XMLMessageFormatter xmft = new XMLMessageFormatter();

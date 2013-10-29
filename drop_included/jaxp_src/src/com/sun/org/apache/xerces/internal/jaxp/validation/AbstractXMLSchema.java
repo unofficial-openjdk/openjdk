@@ -40,8 +40,15 @@ abstract class AbstractXMLSchema extends Schema implements
      */
     private final HashMap fFeatures;
 
+    /**
+     * Map containing the initial values of properties for
+     * validators created using this grammar pool container.
+     */
+    private final HashMap<String,Object> fProperties;
+
     public AbstractXMLSchema() {
         fFeatures = new HashMap();
+        fProperties = new HashMap<String,Object>();
     }
 
     /*
@@ -81,6 +88,22 @@ abstract class AbstractXMLSchema extends Schema implements
 
     final void setFeature(String featureId, boolean state) {
         fFeatures.put(featureId, state ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /**
+     * Returns the initial value of a property for validators created
+     * using this grammar pool container or null if the validators
+     * should use the default value.
+     */
+    public final Object getProperty(String propertyId) {
+        return fProperties.get(propertyId);
+    }
+
+    /*
+     * Set a property on the schema
+     */
+    public final void setProperty(String propertyId, Object state) {
+        fProperties.put(propertyId, state);
     }
 
 } // AbstractXMLSchema
