@@ -1801,7 +1801,11 @@ public class File
         } else {
             n = Math.abs(n);
         }
-        return new File(dir, prefix + Long.toString(n) + suffix);
+            String name = prefix + Long.toString(n) + suffix;
+            File f = new File(dir, name);
+            if (!name.equals(f.getName()))
+                throw new IOException("Unable to create temporary file");
+            return f;
     }
 
     private static boolean checkAndCreate(String filename, SecurityManager sm,
