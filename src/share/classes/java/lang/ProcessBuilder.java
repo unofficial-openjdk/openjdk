@@ -490,6 +490,15 @@ public final class ProcessBuilder
                 + (dir == null ? "" : " (in directory \"" + dir + "\")")
                 + exceptionInfo,
                 cause);
+        } catch (IllegalArgumentException e) {
+            String exceptionInfo = ": " + e.getMessage();
+            // It's much easier for us to create a high-quality error
+            // message than the low-level C code which found the problem.
+            throw new IOException(
+                "Cannot run program \"" + prog + "\""
+                + (dir == null ? "" : " (in directory \"" + dir + "\")")
+                + exceptionInfo,
+                e);
         }
     }
 }
