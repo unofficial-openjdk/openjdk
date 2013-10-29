@@ -40,6 +40,7 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import java.lang.reflect.Constructor;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -251,6 +252,7 @@ public final class TransformerImpl extends Transformer
 	_propertiesClone = (Properties) _properties.clone();
 	_indentNumber = indentNumber;
 	_tfactory = tfactory;
+        _readerManager.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, _isSecureProcessing);
 	//_isIncremental = tfactory._incremental;
     }
 
@@ -266,6 +268,7 @@ public final class TransformerImpl extends Transformer
      */
     public void setSecureProcessing(boolean flag) {
         _isSecureProcessing = flag;
+        _readerManager.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, _isSecureProcessing);
     }
 
     /**

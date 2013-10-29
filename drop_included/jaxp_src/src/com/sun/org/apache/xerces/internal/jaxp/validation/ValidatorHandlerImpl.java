@@ -672,6 +672,8 @@ final class ValidatorHandlerImpl extends ValidatorHandler implements
                     SAXParserFactory spf = SAXParserFactory.newInstance();
                     spf.setNamespaceAware(true);
                     try {
+                        spf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING,
+                                fComponentManager.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING));
                         reader = spf.newSAXParser().getXMLReader();
                         // If this is a Xerces SAX parser, set the security manager if there is one
                         if (reader instanceof com.sun.org.apache.xerces.internal.parsers.SAXParser) {

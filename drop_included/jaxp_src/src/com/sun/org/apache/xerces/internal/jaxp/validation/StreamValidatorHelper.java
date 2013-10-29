@@ -20,9 +20,18 @@
 
 package com.sun.org.apache.xerces.internal.jaxp.validation;
 
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
+import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
+import com.sun.org.apache.xerces.internal.parsers.XML11Configuration;
+import com.sun.org.apache.xerces.internal.util.SecurityManager;
+import com.sun.org.apache.xerces.internal.xni.XNIException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
+import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
 import java.lang.ref.SoftReference;
 import java.io.IOException;
-
+import javax.xml.XMLConstants;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXTransformerFactory;
@@ -32,15 +41,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactoryConfigurationError;
-
-import com.sun.org.apache.xerces.internal.impl.Constants;
-import com.sun.org.apache.xerces.internal.impl.XMLErrorReporter;
-import com.sun.org.apache.xerces.internal.impl.msg.XMLMessageFormatter;
-import com.sun.org.apache.xerces.internal.parsers.XML11Configuration;
-import com.sun.org.apache.xerces.internal.xni.XNIException;
-import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
-import com.sun.org.apache.xerces.internal.xni.parser.XMLParseException;
-import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
 import org.xml.sax.SAXException;
 
 /**
@@ -84,6 +84,11 @@ final class StreamValidatorHelper implements ValidatorHelper {
     private static final String VALIDATION_MANAGER =
         Constants.XERCES_PROPERTY_PREFIX + Constants.VALIDATION_MANAGER_PROPERTY;
     
+
+    /** Property id: security manager. */
+    private static final String SECURITY_MANAGER =
+        Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY;
+
     //
     // Data
     //
@@ -161,6 +166,9 @@ final class StreamValidatorHelper implements ValidatorHelper {
     
     private XMLParserConfiguration initialize() {
         XML11Configuration config = new XML11Configuration();
+        if (fComponentManager.getFeature(XMLConstants.FEATURE_SECURE_PROCESSING)) {
+            config.setProperty(SECURITY_MANAGER, new SecurityManager());
+        }
         config.setProperty(ENTITY_RESOLVER, fComponentManager.getProperty(ENTITY_RESOLVER));
         config.setProperty(ERROR_HANDLER, fComponentManager.getProperty(ERROR_HANDLER));
         XMLErrorReporter errorReporter = (XMLErrorReporter) fComponentManager.getProperty(ERROR_REPORTER);
