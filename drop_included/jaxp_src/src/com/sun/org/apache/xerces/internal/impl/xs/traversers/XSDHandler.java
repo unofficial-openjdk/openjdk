@@ -56,10 +56,10 @@ import com.sun.org.apache.xerces.internal.parsers.XML11Configuration;
 import com.sun.org.apache.xerces.internal.util.DOMInputSource;
 import com.sun.org.apache.xerces.internal.util.DefaultErrorHandler;
 import com.sun.org.apache.xerces.internal.util.SAXInputSource;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
 import com.sun.org.apache.xerces.internal.util.XMLSymbols;
 import com.sun.org.apache.xerces.internal.util.URI.MalformedURIException;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.QName;
 import com.sun.org.apache.xerces.internal.xni.grammars.Grammar;
 import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarDescription;
@@ -210,7 +210,7 @@ public class XSDHandler {
      * 
      * <p>Protected to allow access by any traverser.</p>
      */
-    protected SecurityManager fSecureProcessing = null;
+    protected XMLSecurityManager fSecureProcessing = null;
 
     
     // These tables correspond to the symbol spaces defined in the
@@ -1963,7 +1963,7 @@ public class XSDHandler {
         fSecureProcessing = null;
         if( componentManager!=null ) {
             try {
-                fSecureProcessing = (SecurityManager) componentManager.getProperty(SECURE_PROCESSING);
+		fSecureProcessing = (XMLSecurityManager) componentManager.getProperty(SECURE_PROCESSING);
             } catch (XMLConfigurationException xmlConfigurationException) {
                 ;
             }

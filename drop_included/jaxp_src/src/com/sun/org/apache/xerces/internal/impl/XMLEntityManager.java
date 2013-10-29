@@ -64,8 +64,8 @@ import com.sun.org.apache.xerces.internal.util.HTTPInputSource;
 import com.sun.org.apache.xerces.internal.xinclude.XIncludeHandler;
 
 import com.sun.org.apache.xerces.internal.impl.validation.ValidationManager;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
 import com.sun.org.apache.xerces.internal.util.URI;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 
 
 /**
@@ -321,7 +321,7 @@ protected static final String PARSER_SETTINGS =
 
     // stores defaults for entity expansion limit if it has
     // been set on the configuration.
-    protected SecurityManager fSecurityManager = null;
+    protected XMLSecurityManager fSecurityManager = null;
     
     /**
      * True if the document entity is standalone. This should really
@@ -1531,7 +1531,7 @@ protected static final String PARSER_SETTINGS =
             fValidationManager = null;
         }
         try {
-            fSecurityManager = (SecurityManager)componentManager.getProperty(SECURITY_MANAGER);
+	    fSecurityManager = (XMLSecurityManager)componentManager.getProperty(SECURITY_MANAGER);
         }
         catch (XMLConfigurationException e) {
             fSecurityManager = null;
@@ -1549,7 +1549,9 @@ protected static final String PARSER_SETTINGS =
     // a class acting as a component manager but not
     // implementing that interface for whatever reason.
     public void reset() {
-        fEntityExpansionLimit = (fSecurityManager != null)?fSecurityManager.getEntityExpansionLimit():0;
+        fEntityExpansionLimit = (fSecurityManager != null)?
+                fSecurityManager.getLimit(XMLSecurityManager.Limit.ENTITY_EXPANSION_LIMIT):0;
+
                 
         // initialize state
         fStandalone = false;
@@ -1689,8 +1691,9 @@ protected static final String PARSER_SETTINGS =
             }
             if (suffixLength == Constants.SECURITY_MANAGER_PROPERTY.length() && 
                 propertyId.endsWith(Constants.SECURITY_MANAGER_PROPERTY)) {
-                fSecurityManager = (SecurityManager)value; 
-                fEntityExpansionLimit = (fSecurityManager != null)?fSecurityManager.getEntityExpansionLimit():0;
+                fSecurityManager = (XMLSecurityManager)value;
+                fEntityExpansionLimit = (fSecurityManager != null)?
+                        fSecurityManager.getLimit(XMLSecurityManager.Limit.ENTITY_EXPANSION_LIMIT):0;
             }
         }
         

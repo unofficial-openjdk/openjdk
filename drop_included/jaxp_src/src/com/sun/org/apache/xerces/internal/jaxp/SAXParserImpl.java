@@ -36,7 +36,7 @@ import com.sun.org.apache.xerces.internal.impl.xs.XMLSchemaValidator;
 import com.sun.org.apache.xerces.internal.impl.xs.XSMessageFormatter;
 import com.sun.org.apache.xerces.internal.jaxp.validation.XSGrammarPoolContainer;
 import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
-import com.sun.org.apache.xerces.internal.util.SecurityManager;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.XMLDocumentHandler;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLComponent;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLComponentManager;
@@ -143,7 +143,7 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
 
         // If the secure processing feature is on set a security manager.
         if (secureProcessing) {
-            xmlReader.setProperty0(SECURITY_MANAGER, new SecurityManager());
+            xmlReader.setProperty0(SECURITY_MANAGER, new XMLSecurityManager());
         }
 
         // Set application's features, followed by validation features.
@@ -349,7 +349,7 @@ public class SAXParserImpl extends javax.xml.parsers.SAXParser
             }
             if (name.equals(XMLConstants.FEATURE_SECURE_PROCESSING)) {
                 try {
-                    setProperty(SECURITY_MANAGER, value ? new SecurityManager() : null);
+                    setProperty(SECURITY_MANAGER, value ? new XMLSecurityManager() : null);
                 }
                 catch (SAXNotRecognizedException exc) {
                     // If the property is not supported
