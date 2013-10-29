@@ -28,6 +28,7 @@ import com.sun.org.apache.xerces.internal.util.EntityResolver2Wrapper;
 import com.sun.org.apache.xerces.internal.util.ErrorHandlerWrapper;
 import com.sun.org.apache.xerces.internal.util.SAXMessageFormatter;
 import com.sun.org.apache.xerces.internal.util.SymbolTable;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.XNIException;
 import com.sun.org.apache.xerces.internal.xni.grammars.XMLGrammarPool;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLConfigurationException;
@@ -528,7 +529,30 @@ public class DOMParser
      */
     public void setProperty(String propertyId, Object value)
         throws SAXNotRecognizedException, SAXNotSupportedException {
+        /**
+         * It's possible for users to set a security manager through the interface.
+         * If it's the old SecurityManager, convert it to the new XMLSecurityManager
+         */
+        if (propertyId.equals(Constants.SECURITY_MANAGER)) {
+            securityManager = XMLSecurityManager.convert(value, securityManager);
+            setProperty0(Constants.SECURITY_MANAGER, securityManager);
+            return;
+        }
 
+        if (securityManager == null) {
+            securityManager = new XMLSecurityManager(true);
+            setProperty0(Constants.SECURITY_MANAGER, securityManager);
+        }
+
+	//check if the property is managed by security manager
+	if (!securityManager.setLimit(propertyId, XMLSecurityManager.State.APIPROPERTY, value)) {
+	    //fall back to the default configuration to handle the property
+	    setProperty0(propertyId, value);
+	}
+    }
+
+    public void setProperty0(String propertyId, Object value)
+        throws SAXNotRecognizedException, SAXNotSupportedException {
         try {
             fConfiguration.setProperty(propertyId, value);
         }

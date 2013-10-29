@@ -168,6 +168,17 @@ public class PropertyManager {
             //add internal stax property
             supportedProps.put( Constants.XERCES_PROPERTY_PREFIX + Constants.STAX_ENTITY_RESOLVER_PROPERTY , new StaxEntityResolverWrapper((XMLResolver)value)) ;
         }
+
+        /**
+         * It's possible for users to set a security manager through the interface.
+         * If it's the old SecurityManager, convert it to the new XMLSecurityManager
+         */
+        if (property.equals(Constants.SECURITY_MANAGER)) {
+            fSecurityManager = XMLSecurityManager.convert(value, fSecurityManager);
+            supportedProps.put(Constants.SECURITY_MANAGER, fSecurityManager);
+            return;
+        }
+
         supportedProps.put(property, value ) ;
         if(equivalentProperty != null){
             supportedProps.put(equivalentProperty, value ) ;

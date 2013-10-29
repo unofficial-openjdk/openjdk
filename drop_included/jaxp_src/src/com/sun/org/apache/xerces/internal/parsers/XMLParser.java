@@ -23,6 +23,7 @@ package com.sun.org.apache.xerces.internal.parsers;
 import java.io.IOException;
 
 import com.sun.org.apache.xerces.internal.impl.Constants;
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager;
 import com.sun.org.apache.xerces.internal.xni.XNIException;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLInputSource;
 import com.sun.org.apache.xerces.internal.xni.parser.XMLParserConfiguration;
@@ -78,6 +79,10 @@ public abstract class XMLParser {
     /** The parser configuration. */
     protected XMLParserConfiguration fConfiguration;
 
+    /** The XML Security Manager. */
+    XMLSecurityManager securityManager;
+
+
     //
     // Constructors
     //
@@ -118,6 +123,11 @@ public abstract class XMLParser {
      */
     public void parse(XMLInputSource inputSource) 
         throws XNIException, IOException {
+        // null indicates that the parser is called directly, initialize them
+        if (securityManager == null) {
+            securityManager = new XMLSecurityManager(true);
+            fConfiguration.setProperty(Constants.SECURITY_MANAGER, securityManager);
+        }
 
         reset();
         fConfiguration.parse(inputSource);

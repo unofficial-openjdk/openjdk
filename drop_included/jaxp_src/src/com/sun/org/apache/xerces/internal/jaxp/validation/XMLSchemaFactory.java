@@ -352,7 +352,7 @@ public final class XMLSchemaFactory extends SchemaFactory {
                     "ProperyNameNull", null));
         }
         if (name.equals(SECURITY_MANAGER)) {
-            fSecurityManager = (XMLSecurityManager) object;
+            fSecurityManager = XMLSecurityManager.convert(object, fSecurityManager);
             fXMLSchemaLoader.setProperty(SECURITY_MANAGER, fSecurityManager);
             return;
         }

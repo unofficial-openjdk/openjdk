@@ -74,7 +74,7 @@ public class SAXParser
         XMLGRAMMAR_POOL,
     };
 
-    XMLSecurityManager securityManager;
+
     //
     // Constructors
     //

@@ -563,8 +563,6 @@ public class XML11Configuration extends ParserConfigurationSettings
         
         fVersionDetector = new XMLVersionDetector();
         
-        fProperties.put(SECURITY_MANAGER, new XMLSecurityManager(true));
-
         // add message formatters
         if (fErrorReporter.getMessageFormatter(XMLMessageFormatter.XML_DOMAIN) == null) {
             XMLMessageFormatter xmft = new XMLMessageFormatter();
