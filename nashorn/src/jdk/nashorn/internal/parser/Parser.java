@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import jdk.internal.dynalink.support.NameCodec;
 import jdk.nashorn.internal.codegen.CompilerConstants;
 import jdk.nashorn.internal.codegen.Namespace;
 import jdk.nashorn.internal.ir.AccessNode;
@@ -907,6 +908,10 @@ loop:
                 throw error(AbstractParser.message("strict.name", ident.getName(), contextString), ident.getToken());
             default:
                 break;
+            }
+
+            if (ident.isFutureStrictName()) {
+                throw error(AbstractParser.message("strict.name", ident.getName(), contextString), ident.getToken());
             }
         }
     }
@@ -2102,13 +2107,13 @@ loop:
             final String ident = (String)expectValue(IDENT);
 
             if (type != COLON) {
-                final long getSetToken = token;
+                final long getSetToken = propertyToken;
 
                 switch (ident) {
                 case "get":
                     final PropertyKey getIdent = propertyName();
                     final String getterName = getIdent.getPropertyName();
-                    final IdentNode getNameNode = new IdentNode(((Node)getIdent).getToken(), finish, "get " + getterName);
+                    final IdentNode getNameNode = new IdentNode(((Node)getIdent).getToken(), finish, NameCodec.encode("get " + getterName));
                     expect(LPAREN);
                     expect(RPAREN);
                     functionNode = functionBody(getSetToken, getNameNode, new ArrayList<IdentNode>(), FunctionNode.Kind.GETTER);
@@ -2117,7 +2122,7 @@ loop:
                 case "set":
                     final PropertyKey setIdent = propertyName();
                     final String setterName = setIdent.getPropertyName();
-                    final IdentNode setNameNode = new IdentNode(((Node)setIdent).getToken(), finish, "set " + setterName);
+                    final IdentNode setNameNode = new IdentNode(((Node)setIdent).getToken(), finish, NameCodec.encode("set " + setterName));
                     expect(LPAREN);
                     final IdentNode argIdent = getIdent();
                     verifyStrictIdent(argIdent, "setter argument");
@@ -2435,7 +2440,7 @@ loop:
         // name is null, generate anonymous name
         boolean isAnonymous = false;
         if (name == null) {
-            final String tmpName = "_L" + source.getLine(Token.descPosition(token));
+            final String tmpName = "_L" + functionLine;
             name = new IdentNode(functionToken, Token.descPosition(functionToken), tmpName);
             isAnonymous = true;
         }
