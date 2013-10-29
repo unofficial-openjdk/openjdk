@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -151,6 +151,32 @@ public class File
      * @serial
      */
     private String path;
+
+    /**
+     * Enum type that indicates the status of a file path.
+     */
+    private static enum PathStatus { INVALID, CHECKED };
+
+    /**
+     * The flag indicating whether the file path is invalid.
+     */
+    private transient PathStatus status = null;
+
+    /**
+     * Check if the file has an invalid path. Currently, the inspection of
+     * a file path is very limited, and it only covers Nul character check.
+     * Returning true means the path is definitely invalid/garbage. But
+     * returning false does not guarantee that the path is valid.
+     *
+     * @return true if the file path is invalid.
+     */
+    final boolean isInvalid() {
+        if (status == null) {
+            status = (this.path.indexOf('\u0000') < 0) ? PathStatus.CHECKED
+                                                       : PathStatus.INVALID;
+        }
+        return status == PathStatus.INVALID;
+    }
 
     /**
      * The length of this abstract pathname's prefix, or zero if it has no
@@ -573,6 +599,9 @@ public class File
      * @since   JDK1.1
      */
     public String getCanonicalPath() throws IOException {
+        if (isInvalid()) {
+            throw new IOException("Invalid file path");
+        }
         return fs.canonicalize(fs.resolve(this));
     }
 
@@ -637,6 +666,9 @@ public class File
      */
     @Deprecated
     public URL toURL() throws MalformedURLException {
+        if (isInvalid()) {
+            throw new MalformedURLException("Invalid file path");
+        }
         return new URL("file", "", slashify(getAbsolutePath(), isDirectory()));
     }
 
@@ -705,6 +737,9 @@ public class File
         if (security != null) {
             security.checkRead(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return fs.checkAccess(this, FileSystem.ACCESS_READ);
     }
 
@@ -727,6 +762,9 @@ public class File
         if (security != null) {
             security.checkWrite(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return fs.checkAccess(this, FileSystem.ACCESS_WRITE);
     }
 
@@ -746,6 +784,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return ((fs.getBooleanAttributes(this) & FileSystem.BA_EXISTS) != 0);
     }
@@ -767,6 +808,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return ((fs.getBooleanAttributes(this) & FileSystem.BA_DIRECTORY)
                 != 0);
@@ -791,6 +835,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return ((fs.getBooleanAttributes(this) & FileSystem.BA_REGULAR) != 0);
     }
@@ -818,6 +865,9 @@ public class File
         if (security != null) {
             security.checkRead(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return ((fs.getBooleanAttributes(this) & FileSystem.BA_HIDDEN) != 0);
     }
 
@@ -840,6 +890,9 @@ public class File
         if (security != null) {
             security.checkRead(path);
         }
+        if (isInvalid()) {
+            return 0L;
+        }
         return fs.getLastModifiedTime(this);
     }
 
@@ -861,6 +914,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(path);
+        }
+        if (isInvalid()) {
+            return 0L;
         }
         return fs.getLength(this);
     }
@@ -897,6 +953,9 @@ public class File
     public boolean createNewFile() throws IOException {
         SecurityManager security = System.getSecurityManager();
         if (security != null) security.checkWrite(path);
+        if (isInvalid()) {
+            throw new IOException("Invalid file path");
+        }
         return fs.createFileExclusively(path, false);
     }
 
@@ -917,6 +976,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkDelete(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return fs.delete(this);
     }
@@ -953,6 +1015,9 @@ public class File
         if (security != null) {
             security.checkDelete(path);
         }
+        if (isInvalid()) {
+            return;
+        }
         DeleteOnExitHook.add(path);
     }
 
@@ -986,6 +1051,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkRead(path);
+        }
+        if (isInvalid()) {
+            return null;
         }
         return fs.list(this);
     }
@@ -1168,6 +1236,9 @@ public class File
         if (security != null) {
             security.checkWrite(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return fs.createDirectory(this);
     }
 
@@ -1239,6 +1310,12 @@ public class File
             security.checkWrite(path);
             security.checkWrite(dest.path);
         }
+        if (dest == null) {
+            throw new NullPointerException();
+        }
+        if (this.isInvalid() || dest.isInvalid()) {
+            return false;
+        }
         return fs.rename(this, dest);
     }
 
@@ -1274,6 +1351,9 @@ public class File
         if (security != null) {
             security.checkWrite(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return fs.setLastModifiedTime(this, time);
     }
 
@@ -1298,6 +1378,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return fs.setReadOnly(this);
     }
@@ -1332,6 +1415,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return fs.setPermission(this, FileSystem.ACCESS_WRITE, writable, ownerOnly);
     }
@@ -1398,6 +1484,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkWrite(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return fs.setPermission(this, FileSystem.ACCESS_READ, readable, ownerOnly);
     }
@@ -1468,6 +1557,9 @@ public class File
         if (security != null) {
             security.checkWrite(path);
         }
+        if (isInvalid()) {
+            return false;
+        }
         return fs.setPermission(this, FileSystem.ACCESS_EXECUTE, executable, ownerOnly);
     }
 
@@ -1521,6 +1613,9 @@ public class File
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
             security.checkExec(path);
+        }
+        if (isInvalid()) {
+            return false;
         }
         return fs.checkAccess(this, FileSystem.ACCESS_EXECUTE);
     }
@@ -1597,6 +1692,9 @@ public class File
             sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
             sm.checkRead(path);
         }
+        if (isInvalid()) {
+            return 0L;
+        }
         return fs.getSpace(this, FileSystem.SPACE_TOTAL);
     }
 
@@ -1613,7 +1711,7 @@ public class File
      * makes no guarantee that write operations to this file system
      * will succeed.
      *
-     * @return  The number of unallocated bytes on the partition <tt>0L</tt>
+     * @return  The number of unallocated bytes on the partition or <tt>0L</tt>
      *          if the abstract pathname does not name a partition.  This
      *          value will be less than or equal to the total file system size
      *          returned by {@link #getTotalSpace}.
@@ -1631,6 +1729,9 @@ public class File
         if (sm != null) {
             sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
             sm.checkRead(path);
+        }
+        if (isInvalid()) {
+            return 0L;
         }
         return fs.getSpace(this, FileSystem.SPACE_FREE);
     }
@@ -1670,6 +1771,9 @@ public class File
             sm.checkPermission(new RuntimePermission("getFileSystemAttributes"));
             sm.checkRead(path);
         }
+        if (isInvalid()) {
+            return 0L;
+        }
         return fs.getSpace(this, FileSystem.SPACE_USABLE);
     }
 
@@ -1682,9 +1786,9 @@ public class File
 
         static final String temporaryDirectory = temporaryDirectory();
         static String temporaryDirectory() {
-            return fs.normalize(
+            return 
                 AccessController.doPrivileged(
-                    new GetPropertyAction("java.io.tmpdir")));
+                    new GetPropertyAction("java.io.tmpdir"));
         }
     }
 
@@ -1735,6 +1839,9 @@ public class File
         File f;
         do {
             f = generateFile(prefix, s, directory);
+            if (f.isInvalid()) {
+                throw new IOException("Unable to create temporary file");
+            }
         } while (!checkAndCreate(f.getPath(), sm, restrictive));
         return f;
     }

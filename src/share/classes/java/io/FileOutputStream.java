@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,6 +199,9 @@ class FileOutputStream extends OutputStream
         }
         if (name == null) {
             throw new NullPointerException();
+        }
+        if (file.isInvalid()) {
+            throw new FileNotFoundException("Invalid file path");
         }
         fd = new FileDescriptor();
         fd.incrementAndGetUseCount();
