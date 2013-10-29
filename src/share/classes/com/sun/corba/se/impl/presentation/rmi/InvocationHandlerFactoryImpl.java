@@ -130,7 +130,6 @@ public class InvocationHandlerFactoryImpl implements InvocationHandlerFactory
             new CustomCompositeInvocationHandlerImpl( stub ) ;
 
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
-            @Override
             public Void run() {
         handler.addInvocationHandler( DynamicStub.class,
             dynamicStubHandler ) ;
