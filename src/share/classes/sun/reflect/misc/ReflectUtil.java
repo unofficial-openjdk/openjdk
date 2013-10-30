@@ -26,9 +26,13 @@
 
 package sun.reflect.misc;
 
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
 import sun.reflect.Reflection;
+import sun.security.util.SecurityConstants;
 
 public final class ReflectUtil {
 
@@ -113,6 +117,40 @@ public final class ReflectUtil {
             queryClass = queryClass.getSuperclass();
         }
         return false;
+    }
+
+    /**
+     * Does a conservative approximation of member access check. Use this if
+     * you don't have an actual 'userland' caller Class/ClassLoader available.
+     * This might be more restrictive than a precise member access check where
+     * you have a caller, but should never allow a member access that is
+     * forbidden.
+     *
+     * @param m the {@code Member} about to be accessed
+     */
+    public static void conservativeCheckMemberAccess(Member m) throws SecurityException{
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm == null)
+            return;
+
+        // Check for package access on the declaring class.
+        //
+        // In addition, unless the member and the declaring class are both
+        // public check for access declared member permissions.
+        //
+        // This is done regardless of ClassLoader relations between the {@code
+        // Member m} and any potential caller.
+
+        final Class<?> declaringClass = m.getDeclaringClass();
+
+        checkPackageAccess(declaringClass);
+
+        if (Modifier.isPublic(m.getModifiers()) &&
+                Modifier.isPublic(declaringClass.getModifiers()))
+            return;
+
+        // Check for declared member access.
+        sm.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
     }
 
     /**
@@ -249,5 +287,51 @@ public final class ReflectUtil {
         int i = name.lastIndexOf('.');
         String pkg = (i != -1) ? name.substring(0, i) : "";
         return Proxy.isProxyClass(cls) && !pkg.equals(PROXY_PACKAGE);
+    }
+
+    /**
+     * Check if the given method is a method declared in the proxy interface
+     * implemented by the given proxy instance.
+     *
+     * @param proxy a proxy instance
+     * @param method an interface method dispatched to a InvocationHandler
+     *
+     * @throws IllegalArgumentException if the given proxy or method is invalid.
+     */
+    public static void checkProxyMethod(Object proxy, Method method) {
+        // check if it is a valid proxy instance
+        if (proxy == null || !Proxy.isProxyClass(proxy.getClass())) {
+            throw new IllegalArgumentException("Not a Proxy instance");
+}
+        if (Modifier.isStatic(method.getModifiers())) {
+            throw new IllegalArgumentException("Can't handle static method");
+        }
+
+        Class<?> c = method.getDeclaringClass();
+        if (c == Object.class) {
+            String name = method.getName();
+            if (name.equals("hashCode") || name.equals("equals") || name.equals("toString")) {
+                return;
+            }
+        }
+
+        if (isSuperInterface(proxy.getClass(), c)) {
+            return;
+        }
+
+        // disallow any method not declared in one of the proxy intefaces
+        throw new IllegalArgumentException("Can't handle: " + method);
+    }
+
+    private static boolean isSuperInterface(Class<?> c, Class<?> intf) {
+        for (Class<?> i : c.getInterfaces()) {
+            if (i == intf) {
+                return true;
+            }
+            if (isSuperInterface(i, intf)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
