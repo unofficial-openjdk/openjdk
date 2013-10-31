@@ -100,6 +100,7 @@ class Linux {
 
  public:
   static bool _stack_is_executable;
+  static volatile jint num_largepage_commit_fails;
   static void *dlopen_helper(const char *name, char *ebuf, int ebuflen);
   static void *dll_load_in_vmthread(const char *name, char *ebuf, int ebuflen);
 

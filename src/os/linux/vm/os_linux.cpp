@@ -2696,6 +2696,14 @@ static void warn_fail_commit_memory(char* addr, size_t size,
           alignment_hint, exec, strerror(err), err);
 }
 
+static void warn_fail_commit_memory(char* addr, size_t size,
+                                    size_t alignment_hint, bool exec,
+                                    int err, const char* msg) {
+  warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
+          ", " SIZE_FORMAT ", %d) failed; error='%s' (errno=%d); %s", addr, size,
+          alignment_hint, exec, strerror(err), err, msg);
+}
+
 // NOTE: Linux kernel does not really reserve the pages for us.
 //       All it does is to check if there are enough free pages
 //       left at the time of mmap(). This could be a potential
@@ -2746,6 +2754,8 @@ void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
 #define MADV_HUGEPAGE 14
 #endif
 
+volatile jint os::Linux::num_largepage_commit_fails = 0;
+
 int os::Linux::commit_memory_impl(char* addr, size_t size,
                                   size_t alignment_hint, bool exec) {
   int err;
@@ -2770,7 +2780,9 @@ int os::Linux::commit_memory_impl(char* addr, size_t size,
       // from the loss. For now, we just issue a warning and we don't
       // call vm_exit_out_of_memory(). This issue is being tracked by
       // JBS-8007074.
-      warn_fail_commit_memory(addr, size, alignment_hint, exec, err);
+      Atomic::inc(&os::Linux::num_largepage_commit_fails);
+      warn_fail_commit_memory(addr, size, alignment_hint, exec, err,
+        "Cannot allocate large pages, falling back to regular pages");
 //    vm_exit_out_of_memory(size, "committing reserved memory.");
     }
     // Fall through and try to use small pages
