@@ -698,6 +698,18 @@ void VMError::report(outputStream* st) {
        st->cr();
      }
 
+#ifdef LINUX
+  STEP(193, "(printing large pages allocation errors)")
+
+     if (_verbose) {
+       jint largepage_failures = os::Linux::num_largepage_commit_fails;
+       if (largepage_failures > 0) {
+         st->print_cr("Large page allocation failures have occurred " INT32_FORMAT " times", largepage_failures);
+         st->cr();
+       }
+     }
+#endif
+
   STEP(195, "(printing code cache information)" )
 
      if (_verbose && Universe::is_fully_initialized()) {
