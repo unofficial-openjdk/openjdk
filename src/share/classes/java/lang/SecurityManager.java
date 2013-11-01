@@ -1131,12 +1131,8 @@ class SecurityManager {
      * @see        #checkPermission(java.security.Permission) checkPermission
      */
     public void checkListen(int port) {
-        if (port == 0) {
-            checkPermission(SecurityConstants.LOCAL_LISTEN_PERMISSION);
-        } else {
-            checkPermission(new SocketPermission("localhost:"+port,
-                SecurityConstants.SOCKET_LISTEN_ACTION));
-        }
+        checkPermission(new SocketPermission("localhost:"+port,
+            SecurityConstants.SOCKET_LISTEN_ACTION));
     }
 
     /**
