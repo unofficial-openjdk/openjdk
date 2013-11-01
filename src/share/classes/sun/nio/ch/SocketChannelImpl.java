@@ -470,6 +470,10 @@ class SocketChannelImpl
                     if (localAddress != null)
                         throw new AlreadyBoundException();
                     InetSocketAddress isa = Net.checkAddress(local);
+                    SecurityManager sm = System.getSecurityManager();
+                    if (sm != null) {
+                        sm.checkListen(isa.getPort());
+                    }
                     Net.bind(fd, isa.getAddress(), isa.getPort());
                     localAddress = Net.localAddress(fd);
                 }

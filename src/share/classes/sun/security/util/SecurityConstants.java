@@ -184,7 +184,7 @@ public final class SecurityConstants {
 
     // java.lang.SecurityManager
     public static final SocketPermission LOCAL_LISTEN_PERMISSION =
-        new SocketPermission("localhost:1024-", SOCKET_LISTEN_ACTION);
+        new SocketPermission("localhost:0", SOCKET_LISTEN_ACTION);
 
     // javax.security.auth.Subject
     public static final AuthPermission DO_AS_PERMISSION =
