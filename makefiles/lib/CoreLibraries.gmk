@@ -43,6 +43,7 @@ ifneq ($(OPENJDK_TARGET_OS), macosx)
       CFLAGS := $(CFLAGS_JDKLIB) \
           -I$(JDK_TOPDIR)/src/share/native/java/lang/fdlibm/include, \
       CFLAGS_windows_debug := -DLOGGING, \
+      CFLAGS_aix := -qfloat=nomaf, \
       ARFLAGS := $(ARFLAGS), \
       OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libfdlibm, \
       DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
@@ -199,6 +200,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBJAVA, \
     LDFLAGS_SUFFIX_posix := -ljvm -lverify, \
     LDFLAGS_SUFFIX_solaris := -lsocket -lnsl -lscf $(LIBDL) $(BUILD_LIBFDLIBM) -lc, \
     LDFLAGS_SUFFIX_linux := $(LIBDL) $(BUILD_LIBFDLIBM), \
+    LDFLAGS_SUFFIX_aix := $(LIBDL) $(BUILD_LIBFDLIBM) -lm,\
     LDFLAGS_SUFFIX_macosx := -L$(JDK_OUTPUTDIR)/objs/ -lfdlibm \
         -framework CoreFoundation \
         -framework Foundation \
@@ -267,6 +269,7 @@ $(eval $(call SetupNativeCompilation,BUILD_LIBZIP, \
         $(WIN_JAVA_LIB), \
     LDFLAGS_SUFFIX_linux := -ljvm -ljava $(LIBZ), \
     LDFLAGS_SUFFIX_solaris := -ljvm -ljava $(LIBZ) -lc, \
+    LDFLAGS_SUFFIX_aix: = -ljvm -ljava $(LIBZ),\
     LDFLAGS_SUFFIX_macosx := $(LIBZ) -ljava -ljvm, \
     VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
     RC_FLAGS := $(RC_FLAGS) \
