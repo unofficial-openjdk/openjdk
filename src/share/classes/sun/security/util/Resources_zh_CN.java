@@ -310,7 +310,7 @@ public class Resources_zh_CN extends java.util.ListResourceBundle {
                 "\u60A8\u7684\u5BC6\u94A5\u5E93\u5305\u542B {0,number,integer} \u4E2A\u6761\u76EE"},
         {"Your.keystore.contains.keyStore.size.entries",
                 "\u60A8\u7684\u5BC6\u94A5\u5E93\u5305\u542B {0,number,integer} \u4E2A\u6761\u76EE"},
-        {"Failed.to.parse.input", "\u65E0\u6CD5\u5BF9\u8F93\u5165\u8FDB\u884C\u8BED\u6CD5\u5206\u6790"},
+        {"Failed.to.parse.input", "\u65E0\u6CD5\u89E3\u6790\u8F93\u5165"},
         {"Empty.input", "\u7A7A\u8F93\u5165"},
         {"Not.X.509.certificate", "\u975E X.509 \u8BC1\u4E66"},
         {"alias.has.no.public.key", "{0}\u6CA1\u6709\u516C\u5171\u5BC6\u94A5"},
