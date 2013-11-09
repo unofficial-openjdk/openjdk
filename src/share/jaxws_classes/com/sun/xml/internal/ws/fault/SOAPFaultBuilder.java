@@ -59,12 +59,6 @@ import javax.xml.ws.soap.SOAPFaultException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.ReflectPermission;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.Permissions;
-import java.security.PrivilegedAction;
-import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Level;
@@ -552,40 +546,10 @@ public abstract class SOAPFaultBuilder {
             // ignore
         }
 
-        JAXB_CONTEXT = createJAXBContext();
-    }
-
-    private static JAXBRIContext createJAXBContext() {
-
-        // in jdk runtime doPrivileged is necessary since JAX-WS internal classes are in restricted packages
-        if (isJDKRuntime()) {
-            Permissions permissions = new Permissions();
-            permissions.add(new RuntimePermission("accessClassInPackage.com.sun." + "xml.internal.ws.fault"));
-            permissions.add(new ReflectPermission("suppressAccessChecks"));
-            return AccessController.doPrivileged(
-                    new PrivilegedAction<JAXBRIContext>() {
-                        @Override
-                        public JAXBRIContext run() {
-                            try {
-                                return (JAXBRIContext) JAXBContext.newInstance(SOAP11Fault.class, SOAP12Fault.class);
-                            } catch (JAXBException e) {
-                                throw new Error(e);
-                            }
-                        }
-                    },
-                    new AccessControlContext(new ProtectionDomain[]{new ProtectionDomain(null, permissions)})
-            );
-
-        } else {
-            try {
-                return (JAXBRIContext) JAXBContext.newInstance(SOAP11Fault.class, SOAP12Fault.class);
-            } catch (JAXBException e) {
-                throw new Error(e);
-            }
+        try {
+            JAXB_CONTEXT = (JAXBRIContext)JAXBContext.newInstance(SOAP11Fault.class, SOAP12Fault.class);
+        } catch (JAXBException e) {
+            throw new Error(e); // this must be a bug in our code
         }
-    }
-
-    private static boolean isJDKRuntime() {
-        return SOAPFaultBuilder.class.getName().contains("internal");
     }
 }
