@@ -34,6 +34,9 @@ import java.util.StringTokenizer;
 import java.net.InetAddress;
 import java.security.Permission;
 import java.security.PermissionCollection;
+import java.security.PrivilegedAction;
+import java.security.AccessController;
+import java.security.Security;
 import java.io.Serializable;
 import java.io.ObjectStreamField;
 import java.io.ObjectOutputStream;
@@ -176,6 +179,7 @@ implements java.io.Serializable
     private static final int PORT_MIN = 0;
     private static final int PORT_MAX = 65535;
     private static final int PRIV_PORT_MAX = 1023;
+    private static final int DEF_EPH_LOW = 49152;
 
     // the actions mask
     private transient int mask;
@@ -225,6 +229,14 @@ implements java.io.Serializable
 
     private static Debug debug = null;
     private static boolean debugInit = false;
+
+    // ephemeral port range for this system
+    private static final int ephemeralLow = initEphemeralPorts(
+        "low", DEF_EPH_LOW
+    );
+    private static final int ephemeralHigh = initEphemeralPorts(
+        "high", PORT_MAX
+    );
 
     static {
         Boolean tmp = java.security.AccessController.doPrivileged(
@@ -359,6 +371,14 @@ implements java.io.Serializable
 
             return new int[] {l, h};
         }
+    }
+
+    /**
+     * Returns true if the permission has specified zero
+     * as its value (or lower bound) signifying the ephemeral range
+     */
+    private boolean includesEphemerals() {
+        return portrange[0] == 0;
     }
 
     /**
@@ -853,10 +873,21 @@ implements java.io.Serializable
         int i,j;
 
         if ((that.mask & RESOLVE) != that.mask) {
-            // check port range
+
+            // check simple port range
             if ((that.portrange[0] < this.portrange[0]) ||
                     (that.portrange[1] > this.portrange[1])) {
+
+                // if either includes the ephemeral range, do full check
+                if (this.includesEphemerals() || that.includesEphemerals()) {
+                    if (!inRange(this.portrange[0], this.portrange[1],
+                                     that.portrange[0], that.portrange[1]))
+                    {
+                                return false;
+                    }
+                } else {
                     return false;
+                }
             }
         }
 
@@ -1165,6 +1196,86 @@ implements java.io.Serializable
         init(getName(),getMask(actions));
     }
 
+    /**
+     * Check the system/security property for the ephemeral port range
+     * for this system. The suffix is either "high" or "low"
+     */
+    private static int initEphemeralPorts(
+        final String suffix, final int defval
+    )
+    {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<Integer>(){
+                public Integer run() {
+                    int val = Integer.getInteger(
+                            "jdk.net.ephemeralPortRange."+suffix, -1
+                    );
+                    if (val != -1) {
+                        return val;
+                    } else {
+                        String prop = Security.getProperty(
+                            "network.ephemeralPortRange."+suffix
+                        );
+                        try {
+                                val = Integer.parseInt(prop);
+                        } catch (NumberFormatException e) {
+                            // shouldn't happen
+                            return defval;
+                        }
+                    }
+                    return val;
+                }
+            }
+        );
+    }
+
+    /**
+     * Check if the target range is within the policy range
+     * together with the ephemeral range for this platform
+     * (if policy includes ephemeral range)
+     */
+    private static boolean inRange(
+        int policyLow, int policyHigh, int targetLow, int targetHigh
+    )
+    {
+        if (targetLow == 0) {
+            // check policy includes ephemeral range
+            if (!inRange(policyLow, policyHigh, ephemeralLow, ephemeralHigh)) {
+                return false;
+            }
+            if (targetHigh == 0) {
+                // nothing left to do
+                return true;
+            }
+            // continue check with first real port number
+            targetLow = 1;
+        }
+
+        if (policyLow == 0 && policyHigh == 0) {
+            // ephemeral range only
+            return targetLow >= ephemeralLow && targetHigh <= ephemeralHigh;
+        }
+
+        if (policyLow != 0) {
+            // simple check of policy only
+            return targetLow >= policyLow && targetHigh <= policyHigh;
+        }
+
+        // policyLow == 0 which means possibly two ranges to check
+
+        // first check if policy and ephem range overlap/contiguous
+
+        if (policyHigh >= ephemeralLow - 1) {
+            return targetHigh <= ephemeralHigh;
+        }
+
+        // policy and ephem range do not overlap
+
+        // target range must lie entirely inside policy range or eph range
+
+        return  (targetLow <= policyHigh && targetHigh <= policyHigh) ||
+                (targetLow >= ephemeralLow && targetHigh <= ephemeralHigh);
+    }
     /*
     public String toString()
     {
