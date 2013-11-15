@@ -1097,6 +1097,9 @@ class Compile : public Phase {
   // Print bytecodes, including the scope inlining tree
   void print_codes();
 
+  // Verify GC barrier patterns
+  void verify_barriers() PRODUCT_RETURN;
+
   // End-of-run dumps.
   static void print_statistics() PRODUCT_RETURN;
 
