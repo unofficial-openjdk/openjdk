@@ -134,6 +134,10 @@ void MachNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   ShouldNotCallThis();
 }
 
+//---------------------------postalloc_expand----------------------------------
+// Expand node after register allocation.
+void MachNode::postalloc_expand(GrowableArray <Node *> *nodes, PhaseRegAlloc *ra_) {}
+
 //------------------------------size-------------------------------------------
 // Size of instruction in bytes
 uint MachNode::size(PhaseRegAlloc *ra_) const {
@@ -501,6 +505,9 @@ int MachConstantNode::constant_offset() {
   return _constant.offset();
 }
 
+int MachConstantNode::constant_offset_unchecked() const {
+  return _constant.offset();
+}
 
 //=============================================================================
 #ifndef PRODUCT
@@ -641,10 +648,15 @@ bool MachCallNode::return_value_is_used() const {
 
 
 //------------------------------Registers--------------------------------------
-const RegMask &MachCallNode::in_RegMask( uint idx ) const {
+const RegMask &MachCallNode::in_RegMask(uint idx) const {
   // Values in the domain use the users calling convention, embodied in the
   // _in_rms array of RegMasks.
-  if (idx < tf()->domain()->cnt())  return _in_rms[idx];
+  if (idx < tf()->domain()->cnt()) {
+    return _in_rms[idx];
+  }
+  if (idx == mach_constant_base_node_input()) {
+    return MachConstantBaseNode::static_out_RegMask();
+  }
   // Values outside the domain represent debug info
   return *Compile::current()->matcher()->idealreg2debugmask[in(idx)->ideal_reg()];
 }
@@ -671,7 +683,12 @@ void MachCallJavaNode::dump_spec(outputStream *st) const {
 const RegMask &MachCallJavaNode::in_RegMask(uint idx) const {
   // Values in the domain use the users calling convention, embodied in the
   // _in_rms array of RegMasks.
-  if (idx < tf()->domain()->cnt())  return _in_rms[idx];
+  if (idx < tf()->domain()->cnt()) {
+    return _in_rms[idx];
+  }
+  if (idx == mach_constant_base_node_input()) {
+    return MachConstantBaseNode::static_out_RegMask();
+  }
   // Values outside the domain represent debug info
   Matcher* m = Compile::current()->matcher();
   // If this call is a MethodHandle invoke we have to use a different

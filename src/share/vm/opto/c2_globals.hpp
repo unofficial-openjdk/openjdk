@@ -35,6 +35,9 @@
 #ifdef TARGET_ARCH_arm
 # include "c2_globals_arm.hpp"
 #endif
+#ifdef TARGET_ARCH_ppc
+# include "c2_globals_ppc.hpp"
+#endif
 #ifdef TARGET_OS_FAMILY_linux
 # include "c2_globals_linux.hpp"
 #endif
@@ -43,6 +46,9 @@
 #endif
 #ifdef TARGET_OS_FAMILY_windows
 # include "c2_globals_windows.hpp"
+#endif
+#ifdef TARGET_OS_FAMILY_aix
+# include "c2_globals_aix.hpp"
 #endif
 #ifdef TARGET_OS_FAMILY_bsd
 # include "c2_globals_bsd.hpp"
@@ -456,6 +462,9 @@
                                                                             \
   experimental(bool, AggressiveUnboxing, false,                             \
           "Control optimizations for aggressive boxing elimination")        \
+                                                                            \
+  develop(bool, TracePostallocExpand, false, "Trace expanding nodes after"  \
+          " register allocation.")                                          \
                                                                             \
   product(bool, DoEscapeAnalysis, true,                                     \
           "Perform escape analysis")                                        \

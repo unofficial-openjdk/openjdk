@@ -81,8 +81,11 @@
 #ifdef TARGET_ARCH_MODEL_arm
 # include "adfiles/ad_arm.hpp"
 #endif
-#ifdef TARGET_ARCH_MODEL_ppc
-# include "adfiles/ad_ppc.hpp"
+#ifdef TARGET_ARCH_MODEL_ppc_32
+# include "adfiles/ad_ppc_32.hpp"
+#endif
+#ifdef TARGET_ARCH_MODEL_ppc_64
+# include "adfiles/ad_ppc_64.hpp"
 #endif
 
 
@@ -2246,6 +2249,12 @@ void Compile::Code_Gen() {
     NOT_PRODUCT( TracePhase t2("peephole", &_t_peephole, TimeCompiler); )
     PhasePeephole peep( _regalloc, cfg);
     peep.do_transform();
+  }
+
+  // Do late expand if CPU requires this.
+  if (Matcher::require_postalloc_expand) {
+    NOT_PRODUCT(TracePhase t2c("postalloc_expand", &_t_postalloc_expand, true));
+    cfg.postalloc_expand(_regalloc);
   }
 
   // Convert Nodes to instruction bits in a buffer

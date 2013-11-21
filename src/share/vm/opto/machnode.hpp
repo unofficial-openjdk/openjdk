@@ -155,7 +155,15 @@ public:
   virtual void ext_format(PhaseRegAlloc *,const MachNode *node,int idx, outputStream *st) const=0;
 
   virtual void dump_spec(outputStream *st) const; // Print per-operand info
-#endif
+
+  // Check whether o is a valid oper.
+  static bool notAnOper(const MachOper *o) {
+    if (o == NULL)                   return true;
+    if (((intptr_t)o & 1) != 0)      return true;
+    if (*(address*)o == badAddress)  return true;  // kill by Node::destruct
+    return false;
+  }
+#endif // !PRODUCT
 };
 
 //------------------------------MachNode---------------------------------------
@@ -173,6 +181,9 @@ public:
   // Number of inputs which come before the first operand.
   // Generally at least 1, to skip the Control input
   virtual uint oper_input_base() const { return 1; }
+  // Position of constant base node in node's inputs. -1 if
+  // no constant base node input.
+  virtual uint mach_constant_base_node_input() const { return (uint)-1; }
 
   // Copy inputs and operands to new node of instruction.
   // Called from cisc_version() and short_branch_version().
@@ -220,6 +231,12 @@ public:
 
   // Emit bytes into cbuf
   virtual void  emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
+  // Expand node after register allocation.
+  // Node is replaced by several nodes in the postalloc expand phase.
+  // Corresponding methods are generated for nodes if they specify
+  // postalloc_expand. See block.cpp for more documentation.
+  virtual bool requires_postalloc_expand() const { return false; }
+  virtual void postalloc_expand(GrowableArray <Node *> *nodes, PhaseRegAlloc *ra_);
   // Size of instruction in bytes
   virtual uint  size(PhaseRegAlloc *ra_) const;
   // Helper function that computes size by emitting code
@@ -235,6 +252,9 @@ public:
 
   // Return number of relocatable values contained in this instruction
   virtual int   reloc() const { return 0; }
+
+  // Return number of words used for double constants in this instruction
+  virtual int   ins_num_consts() const { return 0; }
 
   // Hash and compare over operands.  Used to do GVN on machine Nodes.
   virtual uint  hash() const;
@@ -356,6 +376,9 @@ public:
   virtual uint ideal_reg() const { return Op_RegP; }
   virtual uint oper_input_base() const { return 1; }
 
+  virtual bool requires_postalloc_expand() const;
+  virtual void postalloc_expand(GrowableArray <Node *> *nodes, PhaseRegAlloc *ra_);
+
   virtual void emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const;
   virtual uint size(PhaseRegAlloc* ra_) const;
   virtual bool pinned() const { return UseRDPCForConstantTableBase; }
@@ -395,10 +418,12 @@ public:
   }
 
   // Input edge of MachConstantBaseNode.
-  uint mach_constant_base_node_input() const { return req() - 1; }
+  virtual uint mach_constant_base_node_input() const { return req() - 1; }
 
   int  constant_offset();
   int  constant_offset() const { return ((MachConstantNode*) this)->constant_offset(); }
+  // Unchecked version to avoid assertions in debug output.
+  int  constant_offset_unchecked() const;
 };
 
 //------------------------------MachUEPNode-----------------------------------

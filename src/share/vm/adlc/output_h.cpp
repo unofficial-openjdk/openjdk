@@ -1551,7 +1551,20 @@ void ArchDesc::declareClasses(FILE *fp) {
     if ( instr->is_ideal_jump() ) {
       fprintf(fp, "  GrowableArray<Label*> _index2label;\n");
     }
-    fprintf(fp,"public:\n");
+
+    fprintf(fp, "public:\n");
+
+    Attribute *att = instr->_attribs;
+    // Fields of the node specified in the ad file.
+    while (att != NULL) {
+      if (strncmp(att->_ident, "ins_field_", 10) == 0) {
+        const char *field_name = att->_ident+10;
+        const char *field_type = att->_val;
+        fprintf(fp, "  %s _%s;\n", field_type, field_name);
+      }
+      att = (Attribute *)att->_next;
+    }
+
     fprintf(fp,"  MachOper *opnd_array(uint operand_index) const {\n");
     fprintf(fp,"    assert(operand_index < _num_opnds, \"invalid _opnd_array index\");\n");
     fprintf(fp,"    return _opnd_array[operand_index];\n");
@@ -1598,9 +1611,10 @@ void ArchDesc::declareClasses(FILE *fp) {
     Attribute *attr = instr->_attribs;
     bool avoid_back_to_back = false;
     while (attr != NULL) {
-      if (strcmp(attr->_ident,"ins_cost") &&
-          strcmp(attr->_ident,"ins_short_branch")) {
-        fprintf(fp,"          int            %s() const { return %s; }\n",
+      if (strcmp (attr->_ident,"ins_cost") &&
+          strncmp(attr->_ident,"ins_field_", 10) != 0 &&
+          strcmp (attr->_ident,"ins_short_branch")) {
+        fprintf(fp,"  virtual int            %s() const { return %s; }\n",
                 attr->_ident, attr->_val);
       }
       // Check value for ins_avoid_back_to_back, and if it is true (1), set the flag
@@ -1619,7 +1633,12 @@ void ArchDesc::declareClasses(FILE *fp) {
     // Output the opcode function and the encode function here using the
     // encoding class information in the _insencode slot.
     if ( instr->_insencode ) {
-      fprintf(fp,"  virtual void           emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;\n");
+      if (instr->postalloc_expands()) {
+        fprintf(fp,"  virtual bool           requires_postalloc_expand() const { return true; }\n");
+        fprintf(fp,"  virtual void           postalloc_expand(GrowableArray <Node *> *nodes, PhaseRegAlloc *ra_);\n");
+      } else {
+        fprintf(fp,"  virtual void           emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;\n");
+      }
     }
 
     // virtual function for getting the size of an instruction
@@ -1634,6 +1653,11 @@ void ArchDesc::declareClasses(FILE *fp) {
          strcmp("MachNode", instr->mach_base_class(_globalNames)) != 0 ) {
       fprintf(fp,"  virtual int            ideal_Opcode() const { return Op_%s; }\n",
             instr->ideal_Opcode(_globalNames) );
+    }
+
+    if (instr->needs_constant_base() &&
+        !instr->is_mach_constant()) {  // These inherit the funcion from MachConstantNode.
+      fprintf(fp,"  virtual uint           mach_constant_base_node_input() const { return req()-1; }\n");
     }
 
     // Allow machine-independent optimization, invert the sense of the IF test
@@ -1804,6 +1828,7 @@ void ArchDesc::declareClasses(FILE *fp) {
     if( instr->expands() || instr->needs_projections() ||
         instr->has_temps() ||
         instr->is_mach_constant() ||
+        instr->needs_constant_base() ||
         instr->_matrule != NULL &&
         instr->num_opnds() != instr->num_unique_opnds() ) {
       fprintf(fp,"  virtual MachNode      *Expand(State *state, Node_List &proj_list, Node* mem);\n");
