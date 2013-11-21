@@ -67,11 +67,11 @@ public class GetInterfaceTest {
         foo2.bar2();
     }
 
-    interface Foo {
+    public interface Foo {
         public void bar();
     }
 
-    interface Foo2 extends Foo {
+    public interface Foo2 extends Foo {
         public void bar2();
     }
 }
