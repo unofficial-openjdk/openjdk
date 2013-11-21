@@ -150,6 +150,9 @@ public abstract class XMLParser {
      * reset all components before parsing
      */
     protected void reset() throws XNIException {
+        if (securityManager != null) {
+            securityManager.resetLimits();
+        }
     } // reset()
 
 } // class XMLParser
