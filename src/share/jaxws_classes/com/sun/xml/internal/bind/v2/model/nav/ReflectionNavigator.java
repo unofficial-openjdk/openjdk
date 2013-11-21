@@ -58,7 +58,6 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
 //  ---------------------------------------
 
     public Class getSuperClass(Class clazz) {
-        checkPackageAccess(clazz.getName());
         if (clazz == Object.class) {
             return null;
         }
@@ -266,12 +265,10 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
     }
 
     public Collection<? extends Field> getDeclaredFields(Class clazz) {
-        checkPackageAccess(clazz.getName());
         return Arrays.asList(clazz.getDeclaredFields());
     }
 
     public Field getDeclaredField(Class clazz, String fieldName) {
-        checkPackageAccess(clazz.getName());
         try {
             return clazz.getDeclaredField(fieldName);
         } catch (NoSuchFieldException e) {
@@ -280,7 +277,6 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
     }
 
     public Collection<? extends Method> getDeclaredMethods(Class clazz) {
-        checkPackageAccess(clazz.getName());
         return Arrays.asList(clazz.getDeclaredMethods());
     }
 
@@ -525,7 +521,6 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
     }
 
     public Field[] getEnumConstants(Class clazz) {
-        checkPackageAccess(clazz.getName());
         try {
             Object[] values = clazz.getEnumConstants();
             Field[] fields = new Field[values.length];
@@ -556,7 +551,6 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
     @Override
     public Class loadObjectFactory(Class referencePoint, String pkg) {
         String clName = pkg + ".ObjectFactory";
-        checkPackageAccess(clName);
         ClassLoader cl = referencePoint.getClassLoader();
         if (cl == null)
             cl = ClassLoader.getSystemClassLoader();
@@ -581,7 +575,7 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
         // class Base<T> {
         //   T getX() { ... }
         // }
-        // to be overrided. Handling this correctly needs a careful implementation
+        // to be overriden. Handling this correctly needs a careful implementation
 
         String name = method.getName();
         Class[] params = method.getParameterTypes();
@@ -631,25 +625,5 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
         }
 
         return t;
-    }
-
-    /**
-     * Checking if current thread can access class.
-     *
-     * @param clName name of the class to be checked
-     * @throws SecurityException is thrown if thread doesn't have privileges
-     */
-     static void  checkPackageAccess(String clName) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm == null)
-            return;
-        if (clName.startsWith("[")) { // array
-            int nameStart = clName.lastIndexOf('[') + 2;
-            if (nameStart > 1 && nameStart < clName.length())
-                clName = clName.substring(nameStart);
-        }
-        int packageEnd = clName.lastIndexOf('.');
-        if (packageEnd != -1)
-            sm.checkPackageAccess(clName.substring(0, packageEnd));
     }
 }
