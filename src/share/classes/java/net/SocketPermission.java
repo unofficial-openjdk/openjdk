@@ -44,6 +44,7 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import sun.net.util.IPAddressUtil;
 import sun.net.RegisteredDomain;
+import sun.net.PortConfig;
 import sun.security.util.SecurityConstants;
 import sun.security.util.Debug;
 
@@ -1213,17 +1214,9 @@ implements java.io.Serializable
                     if (val != -1) {
                         return val;
                     } else {
-                        String prop = Security.getProperty(
-                            "network.ephemeralPortRange."+suffix
-                        );
-                        try {
-                                val = Integer.parseInt(prop);
-                        } catch (NumberFormatException e) {
-                            // shouldn't happen
-                            return defval;
-                        }
+                        return suffix.equals("low") ?
+                            PortConfig.getLower() : PortConfig.getUpper();
                     }
-                    return val;
                 }
             }
         );
