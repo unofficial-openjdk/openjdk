@@ -352,7 +352,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
                         public RegistryImpl run() throws RemoteException {
                             return new RegistryImpl(regPort);
                         }
-                    }, getAccessControlContext());
+                    }, getAccessControlContext(regPort));
             } catch (PrivilegedActionException ex) {
                 throw (RemoteException) ex.getException();
             }
@@ -382,7 +382,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      * The approach used here is taken from the similar method
      * getAccessControlContext() in the sun.applet.AppletPanel class.
      */
-    private static AccessControlContext getAccessControlContext() {
+    private static AccessControlContext getAccessControlContext(int port) {
         // begin with permissions granted to all code in current policy
         PermissionCollection perms = AccessController.doPrivileged(
             new java.security.PrivilegedAction<PermissionCollection>() {
@@ -404,6 +404,7 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
          * related classes themselves are more tightly limited by RMI.
          */
         perms.add(new SocketPermission("*", "connect,accept"));
+        perms.add(new SocketPermission("localhost:"+port, "listen,accept"));
 
         perms.add(new RuntimePermission("accessClassInPackage.sun.jvmstat.*"));
         perms.add(new RuntimePermission("accessClassInPackage.sun.jvm.hotspot.*"));
