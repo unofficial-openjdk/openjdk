@@ -69,7 +69,7 @@ FILES_export = \
     java/net/ProtocolException.java \
     sun/net/spi/DefaultProxySelector.java
 
-ifeq ($(PLATFORM), windows)
+ifeq ($(PLATFORM), windows) 
     FILES_export += java/net/TwoStacksPlainSocketImpl.java
     FILES_export += java/net/DualStackPlainSocketImpl.java
     FILES_export += java/net/TwoStacksPlainDatagramSocketImpl.java
@@ -121,17 +121,17 @@ LOCALE_SET_DEFINITION = jre
 MISC_FILES = $(LIBDIR) $(LIBDIR)/net.properties
 
 $(LIBDIR)/net.properties: $(SHARE_SRC)/lib/net.properties
-        $(install-file)
+	$(install-file)
 
-#
+# 
 # SDP configuration template
 #
 ifeq ($(PLATFORM), solaris)
 SDP_PATH = sdp/sdp.conf.template
 SDP_CONF = $(LIBDIR)/$(SDP_PATH)
 $(SDP_CONF): $(PLATFORM_SRC)/lib/$(SDP_PATH)
-        @$(RM) $*
-        $(install-file)
+	@$(RM) $*
+	$(install-file)
 
 MISC_FILES += $(SDP_CONF)
 endif
