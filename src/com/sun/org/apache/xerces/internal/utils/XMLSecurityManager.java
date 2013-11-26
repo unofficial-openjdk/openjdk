@@ -132,7 +132,7 @@ public final class XMLSecurityManager {
     /**
      * Values of the properties
      */
-    private int[] values;
+    private final int[] values;
     /**
      * States of the settings for each property
      */
@@ -148,7 +148,6 @@ public final class XMLSecurityManager {
     private boolean[] isSet;
 
 
-    private XMLLimitAnalyzer limitAnalyzer;
     /**
      * Index of the special entityCountInfo property
      */
@@ -169,7 +168,9 @@ public final class XMLSecurityManager {
      * @param secureProcessing
      */
     public XMLSecurityManager(boolean secureProcessing) {
-        init();
+        values = new int[Limit.values().length];
+        states = new State[Limit.values().length];
+        isSet = new boolean[Limit.values().length];
         this.secureProcessing = secureProcessing;
         for (Limit limit : Limit.values()) {
             if (secureProcessing) {
@@ -182,39 +183,6 @@ public final class XMLSecurityManager {
         }
         //read system properties or jaxp.properties
         readSystemProperties();
-    }
-
-    /**
-     * Clone a security manager
-     * @param securityManager a base security manager
-     */
-    public XMLSecurityManager(XMLSecurityManager securityManager) {
-        init();
-        if (securityManager != null) {
-            this.secureProcessing = securityManager.isSecureProcessing();
-            for (Limit limit : Limit.values()) {
-                values[limit.ordinal()] = securityManager.getLimit(limit);
-                states[limit.ordinal()] = securityManager.getState(limit);
-            }
-        }
-    }
-
-    /**
-     * Initialize values
-     */
-    private void init() {
-        limitAnalyzer = new XMLLimitAnalyzer(this);
-        int numOfElements = Limit.values().length;
-        values = new int[numOfElements];
-        states = new State[numOfElements];
-        isSet = new boolean[numOfElements];
-    }
-
-    /**
-     * Reset all limits to their default status
-     */
-    public void resetLimits() {
-        limitAnalyzer.reset();
     }
 
     /**
@@ -279,13 +247,15 @@ public final class XMLSecurityManager {
         if (index == indexEntityCountInfo) {
             printEntityCountInfo = (String)value;
         } else {
-            int temp = 0;
-            try {
+            int temp;
+            if (Integer.class.isAssignableFrom(value.getClass())) {
+                temp = ((Integer)value).intValue();
+            } else {
                 temp = Integer.parseInt((String) value);
                 if (temp < 0) {
                     temp = 0;
                 }
-            } catch (NumberFormatException e) {}
+            }
             setLimit(index, state, temp);
         }
     }
@@ -417,8 +387,9 @@ public final class XMLSecurityManager {
      * @param size the size (count or length) of the entity
      * @return true if the size is over the limit, false otherwise
      */
-    public boolean isOverLimit(Limit limit, String entityName, int size) {
-        return isOverLimit(limit.ordinal(), entityName, size);
+    public boolean isOverLimit(Limit limit, String entityName, int size,
+            XMLLimitAnalyzer limitAnalyzer) {
+        return isOverLimit(limit.ordinal(), entityName, size, limitAnalyzer);
     }
 
     /**
@@ -430,7 +401,8 @@ public final class XMLSecurityManager {
      * @param size the size (count or length) of the entity
      * @return true if the size is over the limit, false otherwise
      */
-    public boolean isOverLimit(int index, String entityName, int size) {
+    public boolean isOverLimit(int index, String entityName, int size,
+            XMLLimitAnalyzer limitAnalyzer) {
         if (values[index] == NO_LIMIT) {
             return false;
         }
@@ -448,11 +420,11 @@ public final class XMLSecurityManager {
      * @param size the size (count or length) of the entity
      * @return true if the size is over the limit, false otherwise
      */
-    public boolean isOverLimit(Limit limit) {
-        return isOverLimit(limit.ordinal());
+    public boolean isOverLimit(Limit limit, XMLLimitAnalyzer limitAnalyzer) {
+        return isOverLimit(limit.ordinal(), limitAnalyzer);
     }
 
-    public boolean isOverLimit(int index) {
+    public boolean isOverLimit(int index, XMLLimitAnalyzer limitAnalyzer) {
         if (values[index] == NO_LIMIT) {
             return false;
         }
@@ -466,29 +438,12 @@ public final class XMLSecurityManager {
         }
     }
 
-    public void debugPrint() {
+    public void debugPrint(XMLLimitAnalyzer limitAnalyzer) {
         if (printEntityCountInfo.equals(Constants.JDK_YES)) {
-            limitAnalyzer.debugPrint();
+            limitAnalyzer.debugPrint(this);
         }
     }
 
-    /**
-     * Return the limit analyzer
-     *
-     * @return the limit analyzer
-     */
-    public XMLLimitAnalyzer getLimitAnalyzer() {
-        return limitAnalyzer;
-    }
-
-    /**
-     * Set limit analyzer
-     *
-     * @param analyzer a limit analyzer
-     */
-    public void setLimitAnalyzer(XMLLimitAnalyzer analyzer) {
-        limitAnalyzer = analyzer;
-    }
 
     /**
      * Indicate if a property is set explicitly

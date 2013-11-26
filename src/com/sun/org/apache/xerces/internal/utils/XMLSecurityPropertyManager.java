@@ -91,19 +91,6 @@ public final class XMLSecurityPropertyManager {
         readSystemProperties();
     }
 
-    /**
-     * Clone a XMLSecurityPropertyManager
-     * @param propertyManager the base XMLSecurityPropertyManager
-     */
-    public XMLSecurityPropertyManager(XMLSecurityPropertyManager propertyManager) {
-        values = new String[Property.values().length];
-        if (propertyManager != null) {
-            for (Property property : Property.values()) {
-                values[property.ordinal()] = propertyManager.getValue(property);
-                states[property.ordinal()] = propertyManager.getState(property);
-            }
-        }
-    }
 
     /**
      * Set limit by property name and state
@@ -199,15 +186,6 @@ public final class XMLSecurityPropertyManager {
             }
         }
         return -1;
-    }
-
-    /**
-     * Return the state of a property
-     * @param property
-     * @return return the state of the property
-     */
-    public State getState(Property property) {
-        return states[property.ordinal()];
     }
 
     /**

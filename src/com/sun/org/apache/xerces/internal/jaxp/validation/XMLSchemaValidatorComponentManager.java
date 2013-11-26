@@ -440,9 +440,6 @@ final class XMLSchemaValidatorComponentManager extends ParserConfigurationSettin
         fSchemaValidator.reset(this);
         // Mark configuration as fixed.
         fConfigUpdated = false;
-        if (fInitSecurityManager != null) {
-            fInitSecurityManager.resetLimits();
-        }
     }
 
     void setErrorHandler(ErrorHandler errorHandler) {

@@ -687,7 +687,6 @@ final class ValidatorHandlerImpl extends ValidatorHandler implements
                            XMLSecurityManager securityManager = (XMLSecurityManager) fComponentManager.getProperty(SECURITY_MANAGER);
                            if (securityManager != null) {
                                try {
-                                   securityManager.resetLimits();
                                    reader.setProperty(SECURITY_MANAGER, securityManager);
                                }
                                // Ignore the exception if the security manager cannot be set.
