@@ -1303,8 +1303,8 @@ protected static final String PARSER_SETTINGS =
         if(fLimitAnalyzer != null) {
            fLimitAnalyzer.addValue(entityExpansionIndex, name, 1);
         }
-        if( fSecurityManager != null && fSecurityManager.isOverLimit(entityExpansionIndex)){
-            fSecurityManager.debugPrint();
+        if( fSecurityManager != null && fSecurityManager.isOverLimit(entityExpansionIndex, fLimitAnalyzer)){
+            fSecurityManager.debugPrint(fLimitAnalyzer);
             fErrorReporter.reportError(XMLMessageFormatter.XML_DOMAIN,"EntityExpansionLimitExceeded",
                     new Object[]{fSecurityManager.getLimitValueByIndex(entityExpansionIndex)},
                                              XMLErrorReporter.SEVERITY_FATAL_ERROR );
@@ -1390,7 +1390,7 @@ protected static final String PARSER_SETTINGS =
                 if (fLimitAnalyzer != null) {
                     fLimitAnalyzer.endEntity(XMLSecurityManager.Limit.GENEAL_ENTITY_SIZE_LIMIT, fCurrentEntity.name);
                     if (fCurrentEntity.name.equals("[xml]")) {
-                        fSecurityManager.debugPrint();
+                        fSecurityManager.debugPrint(fLimitAnalyzer);
                     }
                 }
                 fCurrentEntity.close();
@@ -1438,7 +1438,6 @@ protected static final String PARSER_SETTINGS =
         }
         
         fSecurityManager = (XMLSecurityManager)propertyManager.getProperty(SECURITY_MANAGER);
-        fLimitAnalyzer = fSecurityManager.getLimitAnalyzer();
 
         // initialize state
         //fStandalone = false;
@@ -1551,7 +1550,6 @@ protected static final String PARSER_SETTINGS =
         catch (XMLConfigurationException e) {
             fSecurityManager = null;
         }
-        fLimitAnalyzer = fSecurityManager.getLimitAnalyzer();
         entityExpansionIndex = fSecurityManager.getIndex(Constants.JDK_ENTITY_EXPANSION_LIMIT);
 
         //reset general state
@@ -1706,11 +1704,15 @@ protected static final String PARSER_SETTINGS =
             if (suffixLength == Constants.SECURITY_MANAGER_PROPERTY.length() && 
                 propertyId.endsWith(Constants.SECURITY_MANAGER_PROPERTY)) {
                 fSecurityManager = (XMLSecurityManager)value;
-                fLimitAnalyzer = fSecurityManager.getLimitAnalyzer();
             }
         }
         
     }
+
+    public void setLimitAnalyzer(XMLLimitAnalyzer fLimitAnalyzer) {
+        this.fLimitAnalyzer = fLimitAnalyzer;
+    }
+
     /**
      * Returns a list of property identifiers that are recognized by
      * this component. This method may return null if no properties

@@ -82,12 +82,7 @@ public class PropertyManager {
         
         HashMap properties = propertyManager.getProperties();
         supportedProps.putAll(properties);
-        Object temp = getProperty(SECURITY_MANAGER);
-        //writers have no need for the managers
-        if (temp != null) {
-            fSecurityManager = new XMLSecurityManager((XMLSecurityManager)temp);
-            supportedProps.put(SECURITY_MANAGER, fSecurityManager);
-        }
+        fSecurityManager = (XMLSecurityManager)getProperty(SECURITY_MANAGER);
     }
     
     private HashMap getProperties(){
@@ -178,9 +173,9 @@ public class PropertyManager {
          * It's possible for users to set a security manager through the interface.
          * If it's the old SecurityManager, convert it to the new XMLSecurityManager
          */
-        if (property.equals(SECURITY_MANAGER)) {
+        if (property.equals(Constants.SECURITY_MANAGER)) {
             fSecurityManager = XMLSecurityManager.convert(value, fSecurityManager);
-            supportedProps.put(SECURITY_MANAGER, fSecurityManager);
+            supportedProps.put(Constants.SECURITY_MANAGER, fSecurityManager);
             return;
         }
 
