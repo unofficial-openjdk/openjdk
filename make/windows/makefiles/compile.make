@@ -140,7 +140,6 @@ COMPILER_NAME=VS2008
 !if "$(MSC_VER)" == "1600"
 COMPILER_NAME=VS2010
 !endif
-SAFESEH_FLAG = /SAFESEH
 !endif
 
 # By default, we do not want to use the debug version of the msvcrt.dll file
@@ -200,6 +199,7 @@ LD_FLAGS = /manifest $(LD_FLAGS)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
 MT=mt.exe
+SAFESEH_FLAG = /SAFESEH
 !endif
 
 !if "$(COMPILER_NAME)" == "VS2010"
@@ -211,8 +211,6 @@ LD_FLAGS = /manifest $(LD_FLAGS)
 # Manifest Tool - used in VS2005 and later to adjust manifests stored
 # as resources inside build artifacts.
 MT=mt.exe
-!if "$(BUILDARCH)" == "i486"
-LD_FLAGS = $(SAFESEH_FLAG) $(LD_FLAGS)
 SAFESEH_FLAG = /SAFESEH
 !endif
 
@@ -237,6 +235,9 @@ LD_FLAGS= $(LD_FLAGS) kernel32.lib user32.lib gdi32.lib winspool.lib \
  /opt:ICF,8
 !if "$(ENABLE_FULL_DEBUG_SYMBOLS)" == "1"
 LD_FLAGS= $(LD_FLAGS) /map /debug
+!endif
+!if "$(BUILDARCH)" == "i486"
+LD_FLAGS = $(SAFESEH_FLAG) $(LD_FLAGS)
 !endif
 
 
