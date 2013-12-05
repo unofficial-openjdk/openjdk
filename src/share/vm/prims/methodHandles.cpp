@@ -175,30 +175,32 @@ oop MethodHandles::init_MemberName(oop mname_oop, oop target_oop) {
 }
 
 oop MethodHandles::init_method_MemberName(oop mname_oop, methodOop m, bool do_dispatch,
-                                          klassOop receiver_limit) {
+                                          klassOop resolved_klass) {
   AccessFlags mods = m->access_flags();
   int flags = (jushort)( mods.as_short() & JVM_RECOGNIZED_METHOD_MODIFIERS );
   int vmindex = methodOopDesc::nonvirtual_vtable_index; // implies never any dispatch
-  klassOop mklass = m->method_holder();
-  if (receiver_limit == NULL)
-    receiver_limit = mklass;
+  bool is_itable_call = false;
+  klassOop m_klass = m->method_holder();
+  // resolved_klass is a copy of CallInfo::resolved_klass, if available
+  if (resolved_klass == NULL)
+    resolved_klass = m_klass;
   if (m->is_initializer()) {
     flags |= IS_CONSTRUCTOR | (JVM_REF_invokeSpecial << REFERENCE_KIND_SHIFT);
   } else if (mods.is_static()) {
     flags |= IS_METHOD | (JVM_REF_invokeStatic << REFERENCE_KIND_SHIFT);
-  } else if (receiver_limit != mklass &&
-             !Klass::cast(receiver_limit)->is_subtype_of(mklass)) {
+  } else if (resolved_klass != m_klass &&
+             !Klass::cast(resolved_klass)->is_subtype_of(m_klass)) {
     return NULL;  // bad receiver limit
-  } else if (Klass::cast(receiver_limit)->is_interface() &&
-             Klass::cast(mklass)->is_interface()) {
+  } else if (Klass::cast(resolved_klass)->is_interface() &&
+             Klass::cast(m_klass)->is_interface()) {
     flags |= IS_METHOD | (JVM_REF_invokeInterface << REFERENCE_KIND_SHIFT);
-    receiver_limit = mklass;  // ignore passed-in limit; interfaces are interconvertible
     vmindex = klassItable::compute_itable_index(m);
-  } else if (mklass != receiver_limit && Klass::cast(mklass)->is_interface()) {
+    is_itable_call = true;
+  } else if (m_klass != resolved_klass && Klass::cast(m_klass)->is_interface()) {
     flags |= IS_METHOD | (JVM_REF_invokeVirtual << REFERENCE_KIND_SHIFT);
     // it is a miranda method, so m->vtable_index is not what we want
     ResourceMark rm;
-    klassVtable* vt = instanceKlass::cast(receiver_limit)->vtable();
+    klassVtable* vt = instanceKlass::cast(resolved_klass)->vtable();
     vmindex = vt->index_of_miranda(m->name(), m->signature());
   } else if (!do_dispatch || m->can_be_statically_bound()) {
     flags |= IS_METHOD | (JVM_REF_invokeSpecial << REFERENCE_KIND_SHIFT);
@@ -207,10 +209,36 @@ oop MethodHandles::init_method_MemberName(oop mname_oop, methodOop m, bool do_di
     vmindex = m->vtable_index();
   }
 
+  if (vmindex >= 0 && !is_itable_call) {
+    if (Klass::cast(m_klass)->is_interface()) {
+      // This is a vtable call to an interface method (abstract "miranda method").
+      // The vtable index is meaningless without a class (not interface) receiver type, so get one.
+      // (LinkResolver should help us figure this out.)
+      KlassHandle m_klass_non_interface = resolved_klass;
+      if (m_klass_non_interface->is_interface()) {
+        m_klass_non_interface = SystemDictionary::Object_klass();
+#ifdef ASSERT
+        { ResourceMark rm;
+          methodOop m2 = m_klass_non_interface->vtable()->method_at(vmindex);
+          assert(m->name() == m2->name() && m->signature() == m2->signature(),
+                 err_msg("at %d, %s != %s", vmindex,
+                         m->name_and_sig_as_C_string(), m2->name_and_sig_as_C_string()));
+        }
+#endif //ASSERT
+      }
+      if (!m->is_public()) {
+        assert(m->is_public(), "virtual call must be to public interface method");
+        return NULL;  // elicit an error later in product build
+      }
+      assert(Klass::cast(resolved_klass)->is_subtype_of(m_klass_non_interface()), "virtual call must be type-safe");
+      m_klass = m_klass_non_interface();
+    }
+  }
+
   java_lang_invoke_MemberName::set_flags(mname_oop,    flags);
   java_lang_invoke_MemberName::set_vmtarget(mname_oop, m);
   java_lang_invoke_MemberName::set_vmindex(mname_oop,  vmindex);   // vtable/itable index
-  java_lang_invoke_MemberName::set_clazz(mname_oop,    Klass::cast(receiver_limit)->java_mirror());
+  java_lang_invoke_MemberName::set_clazz(mname_oop,    Klass::cast(m_klass)->java_mirror());
   // Note:  name and type can be lazily computed by resolve_MemberName,
   // if Java code needs them as resolved String and MethodType objects.
   // The clazz must be eagerly stored, because it provides a GC
@@ -571,7 +599,7 @@ static oop field_signature_type_or_null(Symbol* s) {
 // An unresolved member name is a mere symbolic reference.
 // Resolving it plants a vmtarget/vmindex in it,
 // which refers dirctly to JVM internals.
-Handle MethodHandles::resolve_MemberName(Handle mname, TRAPS) {
+Handle MethodHandles::resolve_MemberName(Handle mname, KlassHandle caller, TRAPS) {
   Handle empty;
   assert(java_lang_invoke_MemberName::is_instance(mname()), "");
 
@@ -650,21 +678,49 @@ Handle MethodHandles::resolve_MemberName(Handle mname, TRAPS) {
         if (ref_kind == JVM_REF_invokeStatic) {
           //do_dispatch = false;  // no need, since statics are never dispatched
           LinkResolver::resolve_static_call(result,
-                        defc, name, type, KlassHandle(), false, false, THREAD);
+                        defc, name, type, caller, caller.not_null(), false, THREAD);
         } else if (ref_kind == JVM_REF_invokeInterface) {
           LinkResolver::resolve_interface_call(result, Handle(), defc,
-                        defc, name, type, KlassHandle(), false, false, THREAD);
+                        defc, name, type, caller, caller.not_null(), false, THREAD);
         } else if (mh_invoke_id != vmIntrinsics::_none) {
           assert(!is_signature_polymorphic_static(mh_invoke_id), "");
           LinkResolver::resolve_handle_call(result,
-                        defc, name, type, KlassHandle(), THREAD);
+                        defc, name, type, caller, THREAD);
         } else if (ref_kind == JVM_REF_invokeSpecial) {
           do_dispatch = false;  // force non-virtual linkage
           LinkResolver::resolve_special_call(result,
-                        defc, name, type, KlassHandle(), false, THREAD);
+                        defc, name, type, caller, caller.not_null(), THREAD);
+          // CR 8029533:
+          // As a corner case, invokespecial can return a method *below* its resolved_klass.
+          // Since method search *starts* at the resolved_klass, the eventual
+          // method is almost always in a supertype *above* the resolved_klass.
+          // This pattern breaks when an invokespecial "over-reaches" beyond an
+          // immediate super to a method overridden by a super class.
+          // In that case, the selected method will be below the resolved_klass.
+          // (This is the behavior enabled by the famous ACC_SUPER classfile flag.)
+          //
+          // Downstream of this code, we make assumptions about resolved_klass being below m.
+          // (See init_method_MemberName, the comment "bad receiver limit".)
+          // We basically want to patch result._resolved_klass to be m.method_holder().
+          // The simplest way to get this happier outcome is to re-resolve.
+          if (!HAS_PENDING_EXCEPTION &&
+              caller.not_null() &&
+              result.resolved_method().not_null()) {
+            // this is the m_klass value that will be checked later:
+            klassOop m_klass = result.resolved_method()->method_holder();
+            if (m_klass != result.resolved_klass()() &&
+                Klass::cast(m_klass)->is_subtype_of(result.resolved_klass()())) {
+              KlassHandle adjusted_defc(THREAD, m_klass);
+              LinkResolver::resolve_special_call(result,
+                            adjusted_defc, name, type, caller, caller.not_null(), THREAD);
+              assert(HAS_PENDING_EXCEPTION  // if there is something like an OOM, pass it up to caller
+                     || result.resolved_method()->method_holder() == adjusted_defc(),
+                     "same method, different resolved_klass");
+            }
+          }
         } else if (ref_kind == JVM_REF_invokeVirtual) {
           LinkResolver::resolve_virtual_call(result, Handle(), defc,
-                        defc, name, type, KlassHandle(), false, false, THREAD);
+                        defc, name, type, caller, caller.not_null(), false, THREAD);
         } else {
           assert(false, err_msg("ref_kind=%d", ref_kind));
         }
@@ -681,7 +737,7 @@ Handle MethodHandles::resolve_MemberName(Handle mname, TRAPS) {
         assert(!HAS_PENDING_EXCEPTION, "");
         if (name == vmSymbols::object_initializer_name()) {
           LinkResolver::resolve_special_call(result,
-                        defc, name, type, KlassHandle(), false, THREAD);
+                        defc, name, type, caller, caller.not_null(), THREAD);
         } else {
           break;                // will throw after end of switch
         }
@@ -1025,7 +1081,12 @@ JVM_ENTRY(jobject, MHN_resolve_Mem(JNIEnv *env, jobject igcls, jobject mname_jh,
   if (VerifyMethodHandles && caller_jh != NULL &&
       java_lang_invoke_MemberName::clazz(mname()) != NULL) {
     klassOop reference_klass = java_lang_Class::as_klassOop(java_lang_invoke_MemberName::clazz(mname()));
-    if (reference_klass != NULL) {
+    if (reference_klass != NULL && Klass::cast(reference_klass)->oop_is_objArray()) {
+      reference_klass = objArrayKlass::cast(reference_klass)->bottom_klass();
+    }
+
+    // Reflection::verify_class_access can only handle instance classes.
+    if (reference_klass != NULL && Klass::cast(reference_klass)->oop_is_instance()) {
       // Emulate LinkResolver::check_klass_accessability.
       klassOop caller = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(caller_jh));
       if (!Reflection::verify_class_access(caller,
@@ -1036,7 +1097,11 @@ JVM_ENTRY(jobject, MHN_resolve_Mem(JNIEnv *env, jobject igcls, jobject mname_jh,
     }
   }
 
-  Handle resolved = MethodHandles::resolve_MemberName(mname, CHECK_NULL);
+  KlassHandle caller(THREAD,
+                     caller_jh == NULL ? (klassOop) NULL :
+                     java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(caller_jh)));
+  Handle resolved = MethodHandles::resolve_MemberName(mname, caller, CHECK_NULL);
+
   if (resolved.is_null()) {
     int flags = java_lang_invoke_MemberName::flags(mname());
     int ref_kind = (flags >> REFERENCE_KIND_SHIFT) & REFERENCE_KIND_MASK;

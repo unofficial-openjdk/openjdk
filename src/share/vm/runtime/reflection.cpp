@@ -460,7 +460,7 @@ bool Reflection::verify_class_access(klassOop current_class, klassOop new_class,
   // doesn't have a classloader.
   if ((current_class == NULL) ||
       (current_class == new_class) ||
-      (instanceKlass::cast(new_class)->is_public()) ||
+      (Klass::cast(new_class)->is_public()) ||
       is_same_class_package(current_class, new_class)) {
     return true;
   }
