@@ -51,12 +51,12 @@ class MethodHandles: AllStatic {
 
  public:
   // working with member names
-  static Handle resolve_MemberName(Handle mname, TRAPS); // compute vmtarget/vmindex from name/type
+  static Handle resolve_MemberName(Handle mname, KlassHandle caller, TRAPS); // compute vmtarget/vmindex from name/type
   static void expand_MemberName(Handle mname, int suppress, TRAPS);  // expand defc/name/type if missing
   static Handle new_MemberName(TRAPS);  // must be followed by init_MemberName
   static oop init_MemberName(oop mname_oop, oop target_oop); // compute vmtarget/vmindex from target
   static oop init_method_MemberName(oop mname_oop, methodOop m, bool do_dispatch,
-                                    klassOop receiver_limit);
+                                    klassOop resolved_klass);
   static oop init_field_MemberName(oop mname_oop, klassOop field_holder,
                                    AccessFlags mods, oop type, oop name,
                                    intptr_t offset, bool is_setter = false);
