@@ -70,7 +70,12 @@ sub print_bugs() {
  foreach(@bugs) {
    ($bugid, $desc) = split ':',$_, 2; # limit the number of splits to 2
    $bugid =~ s/^\s+//;         #remove leading white spaces
-   $url = "http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=$bugid";
+
+   if ($bugid =~ /^OPENJDK6-/) { # use different urls for different bugs
+     $url = "http:/java.net/jira/browse/$bugid";
+   } else {
+     $url = "http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=$bugid";
+   }
 
    if($firstbug) {
      $firstbug = 0;
@@ -108,7 +113,7 @@ ould not run hg log for $i \n";
      chomp($changeset); #remove end of line
    }
 
-   if(/^\d+:/) { #match lines that start with numbers (bugids)
+   if(/^(OPENJDK6-)?\d+:/) { #match lines that start with bugids
      push(@bugs, $_);
    }
  }
