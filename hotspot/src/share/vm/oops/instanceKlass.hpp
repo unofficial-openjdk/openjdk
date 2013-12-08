@@ -777,6 +777,7 @@ class InstanceKlass: public Klass {
 
   // subclass/subinterface checks
   bool implements_interface(Klass* k) const;
+  bool is_same_or_direct_interface(Klass* k) const;
 
   // Access to the implementor of an interface.
   Klass* implementor() const
@@ -1023,6 +1024,7 @@ public:
   // It has to be an object not a Mutex because it's held through java calls.
   oop init_lock() const;
 private:
+  void fence_and_clear_init_lock();
 
   // Static methods that are used to implement member methods where an exposed this pointer
   // is needed due to possible GCs

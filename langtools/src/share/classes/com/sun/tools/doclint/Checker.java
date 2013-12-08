@@ -71,6 +71,8 @@ import com.sun.source.doctree.SinceTree;
 import com.sun.source.doctree.StartElementTree;
 import com.sun.source.doctree.TextTree;
 import com.sun.source.doctree.ThrowsTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
+import com.sun.source.doctree.UnknownInlineTagTree;
 import com.sun.source.doctree.ValueTree;
 import com.sun.source.doctree.VersionTree;
 import com.sun.source.util.DocTreePath;
@@ -213,6 +215,7 @@ public class Checker extends DocTreePathScanner<Void, Void> {
     public Void visitDocComment(DocCommentTree tree, Void ignore) {
         super.visitDocComment(tree, ignore);
         for (TagStackItem tsi: tagStack) {
+            warnIfEmpty(tsi, null);
             if (tsi.tree.getKind() == DocTree.Kind.START_ELEMENT
                     && tsi.tag.endKind == HtmlTag.EndKind.REQUIRED) {
                 StartElementTree t = (StartElementTree) tsi.tree;
@@ -270,7 +273,6 @@ public class Checker extends DocTreePathScanner<Void, Void> {
 
     @Override
     public Void visitStartElement(StartElementTree tree, Void ignore) {
-        markEnclosingTag(Flag.HAS_ELEMENT);
         final Name treeName = tree.getName();
         final HtmlTag t = HtmlTag.get(treeName);
         if (t == null) {
@@ -279,7 +281,10 @@ public class Checker extends DocTreePathScanner<Void, Void> {
             boolean done = false;
             for (TagStackItem tsi: tagStack) {
                 if (tsi.tag.accepts(t)) {
-                    while (tagStack.peek() != tsi) tagStack.pop();
+                    while (tagStack.peek() != tsi) {
+                        warnIfEmpty(tagStack.peek(), null);
+                        tagStack.pop();
+                    }
                     done = true;
                     break;
                 } else if (tsi.tag.endKind != HtmlTag.EndKind.OPTIONAL) {
@@ -288,9 +293,13 @@ public class Checker extends DocTreePathScanner<Void, Void> {
                 }
             }
             if (!done && HtmlTag.BODY.accepts(t)) {
-                tagStack.clear();
+                while (!tagStack.isEmpty()) {
+                    warnIfEmpty(tagStack.peek(), null);
+                    tagStack.pop();
+                }
             }
 
+            markEnclosingTag(Flag.HAS_ELEMENT);
             checkStructure(tree, t);
 
             // tag specific checks
@@ -447,12 +456,7 @@ public class Checker extends DocTreePathScanner<Void, Void> {
                                         "dc.no.summary.or.caption.for.table");
                             }
                     }
-                    if (t.flags.contains(HtmlTag.Flag.EXPECT_CONTENT)
-                            && !top.flags.contains(Flag.HAS_TEXT)
-                            && !top.flags.contains(Flag.HAS_ELEMENT)
-                            && !top.flags.contains(Flag.HAS_INLINE_TAG)) {
-                        env.messages.warning(HTML, tree, "dc.tag.empty", treeName);
-                    }
+                    warnIfEmpty(top, tree);
                     tagStack.pop();
                     done = true;
                     break;
@@ -485,6 +489,20 @@ public class Checker extends DocTreePathScanner<Void, Void> {
 
         return super.visitEndElement(tree, ignore);
     }
+
+    void warnIfEmpty(TagStackItem tsi, DocTree endTree) {
+        if (tsi.tag != null && tsi.tree instanceof StartElementTree) {
+            if (tsi.tag.flags.contains(HtmlTag.Flag.EXPECT_CONTENT)
+                    && !tsi.flags.contains(Flag.HAS_TEXT)
+                    && !tsi.flags.contains(Flag.HAS_ELEMENT)
+                    && !tsi.flags.contains(Flag.HAS_INLINE_TAG)) {
+                DocTree tree = (endTree != null) ? endTree : tsi.tree;
+                Name treeName = ((StartElementTree) tsi.tree).getName();
+                env.messages.warning(HTML, tree, "dc.tag.empty", treeName);
+            }
+        }
+    }
+
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc="HTML attributes">
@@ -823,6 +841,23 @@ public class Checker extends DocTreePathScanner<Void, Void> {
             if (isCheckedException(tl) && !foundThrows.contains(tl))
                 reportMissing("dc.missing.throws", tl);
         }
+    }
+
+    @Override
+    public Void visitUnknownBlockTag(UnknownBlockTagTree tree, Void ignore) {
+        checkUnknownTag(tree, tree.getTagName());
+        return super.visitUnknownBlockTag(tree, ignore);
+    }
+
+    @Override
+    public Void visitUnknownInlineTag(UnknownInlineTagTree tree, Void ignore) {
+        checkUnknownTag(tree, tree.getTagName());
+        return super.visitUnknownInlineTag(tree, ignore);
+    }
+
+    private void checkUnknownTag(DocTree tree, String tagName) {
+        if (env.customTags != null && !env.customTags.contains(tagName))
+            env.messages.error(SYNTAX, tree, "dc.tag.unknown", tagName);
     }
 
     @Override

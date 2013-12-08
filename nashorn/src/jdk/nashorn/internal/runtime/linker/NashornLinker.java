@@ -30,6 +30,10 @@ import static jdk.nashorn.internal.lookup.Lookup.MH;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import javax.script.Bindings;
 import jdk.internal.dynalink.CallSiteDescriptor;
 import jdk.internal.dynalink.linker.ConversionComparator;
 import jdk.internal.dynalink.linker.GuardedInvocation;
@@ -38,6 +42,12 @@ import jdk.internal.dynalink.linker.LinkRequest;
 import jdk.internal.dynalink.linker.LinkerServices;
 import jdk.internal.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.internal.dynalink.support.Guards;
+import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.api.scripting.ScriptUtils;
+import jdk.nashorn.internal.objects.NativeArray;
+import jdk.nashorn.internal.runtime.Context;
+import jdk.nashorn.internal.runtime.JSType;
 import jdk.nashorn.internal.runtime.ScriptFunction;
 import jdk.nashorn.internal.runtime.ScriptObject;
 import jdk.nashorn.internal.runtime.Undefined;
@@ -47,6 +57,13 @@ import jdk.nashorn.internal.runtime.Undefined;
  * includes {@link ScriptFunction} and its subclasses) as well as {@link Undefined}.
  */
 final class NashornLinker implements TypeBasedGuardingDynamicLinker, GuardingTypeConverterFactory, ConversionComparator {
+    private static final ClassValue<MethodHandle> ARRAY_CONVERTERS = new ClassValue<MethodHandle>() {
+        @Override
+        protected MethodHandle computeValue(Class<?> type) {
+            return createArrayConverter(type);
+        }
+    };
+
     /**
      * Returns true if {@code ScriptObject} is assignable from {@code type}, or it is {@code Undefined}.
      */
@@ -103,6 +120,17 @@ final class NashornLinker implements TypeBasedGuardingDynamicLinker, GuardingTyp
         if (mh != null) {
             return new GuardedInvocation(mh, canLinkTypeStatic(sourceType) ? null : IS_NASHORN_OR_UNDEFINED_TYPE);
         }
+
+        final GuardedInvocation arrayConverter = getArrayConverter(sourceType, targetType);
+        if(arrayConverter != null) {
+            return arrayConverter;
+        }
+
+        final GuardedInvocation mirrorConverter = getMirrorConverter(sourceType, targetType);
+        if(mirrorConverter != null) {
+            return mirrorConverter;
+        }
+
         return getSamTypeConverter(sourceType, targetType);
     }
 
@@ -129,6 +157,53 @@ final class NashornLinker implements TypeBasedGuardingDynamicLinker, GuardingTyp
         return null;
     }
 
+    /**
+     * Returns a guarded invocation that converts from a source type that is NativeArray to a Java array or List or
+     * Deque type.
+     * @param sourceType the source type (presumably NativeArray a superclass of it)
+     * @param targetType the target type (presumably an array type, or List or Deque)
+     * @return a guarded invocation that converts from the source type to the target type. null is returned if
+     * either the source type is neither NativeArray, nor a superclass of it, or if the target type is not an array
+     * type, List, or Deque.
+     */
+    private static GuardedInvocation getArrayConverter(final Class<?> sourceType, final Class<?> targetType) {
+        final boolean isSourceTypeNativeArray = sourceType == NativeArray.class;
+        // If source type is more generic than ScriptFunction class, we'll need to use a guard
+        final boolean isSourceTypeGeneric = !isSourceTypeNativeArray && sourceType.isAssignableFrom(NativeArray.class);
+
+        if (isSourceTypeNativeArray || isSourceTypeGeneric) {
+            final MethodHandle guard = isSourceTypeGeneric ? IS_NATIVE_ARRAY : null;
+            if(targetType.isArray()) {
+                return new GuardedInvocation(ARRAY_CONVERTERS.get(targetType), guard);
+            }
+            if(targetType == List.class) {
+                return new GuardedInvocation(JSType.TO_JAVA_LIST.methodHandle(), guard);
+            }
+            if(targetType == Deque.class) {
+                return new GuardedInvocation(JSType.TO_JAVA_DEQUE.methodHandle(), guard);
+            }
+        }
+        return null;
+    }
+
+    private static MethodHandle createArrayConverter(final Class<?> type) {
+        assert type.isArray();
+        final MethodHandle converter = MH.insertArguments(JSType.TO_JAVA_ARRAY.methodHandle(), 1, type.getComponentType());
+        return MH.asType(converter, converter.type().changeReturnType(type));
+    }
+
+    private static GuardedInvocation getMirrorConverter(Class<?> sourceType, Class<?> targetType) {
+        // Could've also used (targetType.isAssignableFrom(ScriptObjectMirror.class) && targetType != Object.class) but
+        // it's probably better to explicitly spell out the supported target types
+        if (targetType == Map.class || targetType == Bindings.class || targetType == JSObject.class || targetType == ScriptObjectMirror.class) {
+            if(ScriptObject.class.isAssignableFrom(sourceType)) {
+                return new GuardedInvocation(CREATE_MIRROR, null);
+            }
+            return new GuardedInvocation(CREATE_MIRROR, IS_SCRIPT_OBJECT);
+        }
+        return null;
+    }
+
     private static boolean isAutoConvertibleFromFunction(final Class<?> clazz) {
         return isAbstractClass(clazz) && !ScriptObject.class.isAssignableFrom(clazz) &&
                 JavaAdapterFactory.isAutoConvertibleFromFunction(clazz);
@@ -148,7 +223,26 @@ final class NashornLinker implements TypeBasedGuardingDynamicLinker, GuardingTyp
 
     @Override
     public Comparison compareConversion(final Class<?> sourceType, final Class<?> targetType1, final Class<?> targetType2) {
+        if(sourceType == NativeArray.class) {
+            // Prefer lists, as they're less costly to create than arrays.
+            if(isList(targetType1)) {
+                if(!isList(targetType2)) {
+                    return Comparison.TYPE_1_BETTER;
+                }
+            } else if(isList(targetType2)) {
+                return Comparison.TYPE_2_BETTER;
+            }
+            // Then prefer arrays
+            if(targetType1.isArray()) {
+                if(!targetType2.isArray()) {
+                    return Comparison.TYPE_1_BETTER;
+                }
+            } else if(targetType2.isArray()) {
+                return Comparison.TYPE_2_BETTER;
+            }
+        }
         if(ScriptObject.class.isAssignableFrom(sourceType)) {
+            // Prefer interfaces
             if(targetType1.isInterface()) {
                 if(!targetType2.isInterface()) {
                     return Comparison.TYPE_1_BETTER;
@@ -160,14 +254,25 @@ final class NashornLinker implements TypeBasedGuardingDynamicLinker, GuardingTyp
         return Comparison.INDETERMINATE;
     }
 
-    private static final MethodHandle IS_SCRIPT_FUNCTION = Guards.isInstance(ScriptFunction.class, MH.type(Boolean.TYPE, Object.class));
+    private static boolean isList(Class<?> clazz) {
+        return clazz == List.class || clazz == Deque.class;
+    }
 
-    private static final MethodHandle IS_NASHORN_OR_UNDEFINED_TYPE = findOwnMH("isNashornTypeOrUndefined",
-            Boolean.TYPE, Object.class);
+    private static final MethodHandle IS_SCRIPT_OBJECT = Guards.isInstance(ScriptObject.class, MH.type(Boolean.TYPE, Object.class));
+    private static final MethodHandle IS_SCRIPT_FUNCTION = Guards.isInstance(ScriptFunction.class, MH.type(Boolean.TYPE, Object.class));
+    private static final MethodHandle IS_NATIVE_ARRAY = Guards.isOfClass(NativeArray.class, MH.type(Boolean.TYPE, Object.class));
+
+    private static final MethodHandle IS_NASHORN_OR_UNDEFINED_TYPE = findOwnMH("isNashornTypeOrUndefined", Boolean.TYPE, Object.class);
+    private static final MethodHandle CREATE_MIRROR = findOwnMH("createMirror", Object.class, Object.class);
 
     @SuppressWarnings("unused")
     private static boolean isNashornTypeOrUndefined(final Object obj) {
         return obj instanceof ScriptObject || obj instanceof Undefined;
+    }
+
+    @SuppressWarnings("unused")
+    private static Object createMirror(final Object obj) {
+        return ScriptUtils.wrap(obj);
     }
 
     private static MethodHandle findOwnMH(final String name, final Class<?> rtype, final Class<?>... types) {

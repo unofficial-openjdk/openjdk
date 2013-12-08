@@ -1979,13 +1979,6 @@ class CommandLineFlags {
   develop(uintx, MetadataAllocationFailALotInterval, 1000,                  \
           "Metadata allocation failure a lot interval")                     \
                                                                             \
-  develop(bool, MetaDataDeallocateALot, false,                              \
-          "Deallocation bunches of metadata at intervals controlled by "    \
-          "MetaDataAllocateALotInterval")                                   \
-                                                                            \
-  develop(uintx, MetaDataDeallocateALotInterval, 100,                       \
-          "Metadata deallocation alot interval")                            \
-                                                                            \
   develop(bool, TraceMetadataChunkAllocation, false,                        \
           "Trace chunk metadata allocations")                               \
                                                                             \
@@ -2175,7 +2168,7 @@ class CommandLineFlags {
           "Minimum ratio of young generation/survivor space size")          \
                                                                             \
   product(uintx, InitialSurvivorRatio, 8,                                   \
-          "Initial ratio of eden/survivor space size")                      \
+          "Initial ratio of young generation/survivor space size")          \
                                                                             \
   product(uintx, BaseFootPrintEstimate, 256*M,                              \
           "Estimate of footprint other than Java Heap")                     \
@@ -2677,6 +2670,19 @@ class CommandLineFlags {
   product(bool, AggressiveOpts, false,                                      \
           "Enable aggressive optimizations - see arguments.cpp")            \
                                                                             \
+  product_pd(uintx, TypeProfileLevel,                                       \
+          "=XYZ, with Z: Type profiling of arguments at call; "             \
+                     "Y: Type profiling of return value at call; "          \
+                     "X: Type profiling of parameters to methods; "         \
+          "X, Y and Z in 0=off ; 1=jsr292 only; 2=all methods")             \
+                                                                            \
+  product(intx, TypeProfileArgsLimit,     2,                                \
+          "max number of call arguments to consider for type profiling")    \
+                                                                            \
+  product(intx, TypeProfileParmsLimit,    2,                                \
+          "max number of incoming parameters to consider for type profiling"\
+          ", -1 for all")                                                   \
+                                                                            \
   /* statistics */                                                          \
   develop(bool, CountCompiledCalls, false,                                  \
           "Count method invocations")                                       \
@@ -2948,6 +2954,9 @@ class CommandLineFlags {
   product(intx, MaxRecursiveInlineLevel, 1,                                 \
           "maximum number of nested recursive calls that are inlined")      \
                                                                             \
+  develop(intx, MaxForceInlineLevel, 100,                                   \
+          "maximum number of nested @ForceInline calls that are inlined")   \
+                                                                            \
   product_pd(intx, InlineSmallCode,                                         \
           "Only inline already compiled methods if their code size is "     \
           "less than this")                                                 \
@@ -3012,9 +3021,6 @@ class CommandLineFlags {
                                                                             \
   notproduct(intx, ZombieALotInterval,     5,                               \
           "Number of exits until ZombieALot kicks in")                      \
-                                                                            \
-  develop(bool, StressNonEntrant, false,                                    \
-          "Mark nmethods non-entrant at registration")                      \
                                                                             \
   diagnostic(intx, MallocVerifyInterval,     0,                             \
           "If non-zero, verify C heap after every N calls to "              \
@@ -3125,10 +3131,14 @@ class CommandLineFlags {
           "class pointers are used")                                        \
                                                                             \
   product(uintx, MinHeapFreeRatio,    40,                                   \
-          "The minimum percentage of heap free after GC to avoid expansion")\
+          "The minimum percentage of heap free after GC to avoid expansion."\
+          " For most GCs this applies to the old generation. In G1 it"      \
+          " applies to the whole heap. Not supported by ParallelGC.")       \
                                                                             \
   product(uintx, MaxHeapFreeRatio,    70,                                   \
-          "The maximum percentage of heap free after GC to avoid shrinking")\
+          "The maximum percentage of heap free after GC to avoid shrinking."\
+          " For most GCs this applies to the old generation. In G1 it"      \
+          " applies to the whole heap. Not supported by ParallelGC.")       \
                                                                             \
   product(intx, SoftRefLRUPolicyMSPerMB, 1000,                              \
           "Number of milliseconds per MB of free space in the heap")        \
@@ -3279,7 +3289,7 @@ class CommandLineFlags {
           "Exit the VM if we fill the code cache")                          \
                                                                             \
   product(bool, UseCodeCacheFlushing, true,                                 \
-          "Attempt to clean the code cache before shutting off compiler")   \
+          "Remove cold/old nmethods from the code cache")                   \
                                                                             \
   /* interpreter debugging */                                               \
   develop(intx, BinarySwitchThreshold, 5,                                   \
@@ -3612,9 +3622,6 @@ class CommandLineFlags {
           "Temporary flag for transition to AbstractMethodError wrapped "   \
           "in InvocationTargetException. See 6531596")                      \
                                                                             \
-  develop(bool, VerifyLambdaBytecodes, false,                               \
-          "Force verification of jdk 8 lambda metafactory bytecodes")       \
-                                                                            \
   develop(intx, FastSuperclassLimit, 8,                                     \
           "Depth of hardwired instanceof accelerator array")                \
                                                                             \
@@ -3822,7 +3829,6 @@ class CommandLineFlags {
                                                                             \
   product(bool, UseLockedTracing, false,                                    \
           "Use locked-tracing when doing event-based tracing")
-
 
 /*
  *  Macros for factoring of globals

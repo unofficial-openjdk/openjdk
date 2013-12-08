@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      4973609 8015249
+ * @bug      4973609 8015249 8025633 8026567
  * @summary  Make sure that annotation types with 0 members does not have
  *           extra HR tags.
  * @author   jamieh
@@ -45,17 +45,17 @@ public class TestAnnotationTypes extends JavadocTester {
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",
-            "<li>Summary:&nbsp;</li>" + NL + "<li><a href=\"#annotation_type_" +
-            "field_summary\">Field</a>&nbsp;|&nbsp;</li>"},
+            "<li>Summary:&nbsp;</li>" + NL + "<li><a href=\"#annotation.type." +
+            "field.summary\">Field</a>&nbsp;|&nbsp;</li>"},
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",
-            "<li>Detail:&nbsp;</li>" + NL + "<li><a href=\"#annotation_type_" +
-            "field_detail\">Field</a>&nbsp;|&nbsp;</li>"},
+            "<li>Detail:&nbsp;</li>" + NL + "<li><a href=\"#annotation.type." +
+            "field.detail\">Field</a>&nbsp;|&nbsp;</li>"},
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",
             "<!-- =========== ANNOTATION TYPE FIELD SUMMARY =========== -->"},
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",
             "<h3>Field Summary</h3>"},
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",
-            "<td class=\"colLast\"><code><span class=\"strong\"><a href=\"../" +
+            "<td class=\"colLast\"><code><span class=\"memberNameLink\"><a href=\"../" +
             "pkg/AnnotationTypeField.html#DEFAULT_NAME\">DEFAULT_NAME</a></span>" +
             "</code>&nbsp;</td>"},
         {BUG_ID + FS + "pkg" + FS + "AnnotationTypeField.html",

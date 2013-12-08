@@ -325,7 +325,6 @@ public abstract class FileSystem
      *   <td>Matches file names containing a dot</td>
      * </tr>
      * <tr>
-     * <tr>
      *   <td>{@code *.{java,class}}</td>
      *   <td>Matches file names ending with {@code .java} or {@code .class}</td>
      * </tr>
@@ -355,7 +354,7 @@ public abstract class FileSystem
      *
      * <p> The following rules are used to interpret glob patterns:
      *
-     * <p> <ul>
+     * <ul>
      *   <li><p> The {@code *} character matches zero or more {@link Character
      *   characters} of a {@link Path#getName(int) name} component without
      *   crossing directory boundaries. </p></li>

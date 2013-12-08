@@ -594,9 +594,9 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   _verification_mark_bm(0, Mutex::leaf + 1, "CMS_verification_mark_bm_lock"),
   _completed_initialization(false),
   _collector_policy(cp),
-  _should_unload_classes(false),
+  _should_unload_classes(CMSClassUnloadingEnabled),
   _concurrent_cycles_since_last_unload(0),
-  _roots_scanning_options(0),
+  _roots_scanning_options(SharedHeap::SO_None),
   _inter_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
   _intra_sweep_estimate(CMS_SweepWeight, CMS_SweepPadding),
   _gc_tracer_cm(new (ResourceObj::C_HEAP, mtGC) CMSTracer()),
@@ -787,14 +787,6 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
          || (   _survivor_chunk_capacity == 0
              && _survivor_chunk_index == 0),
          "Error");
-
-  // Choose what strong roots should be scanned depending on verification options
-  if (!CMSClassUnloadingEnabled) {
-    // If class unloading is disabled we want to include all classes into the root set.
-    add_root_scanning_option(SharedHeap::SO_AllClasses);
-  } else {
-    add_root_scanning_option(SharedHeap::SO_SystemClasses);
-  }
 
   NOT_PRODUCT(_overflow_counter = CMSMarkStackOverflowInterval;)
   _gc_counters = new CollectorCounters("CMS", 1);
@@ -2001,7 +1993,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
 
   STWGCTimer* gc_timer = GenMarkSweep::gc_timer();
-  gc_timer->register_gc_start(os::elapsed_counter());
+  gc_timer->register_gc_start();
 
   SerialOldTracer* gc_tracer = GenMarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gch->gc_cause(), gc_timer->gc_start());
@@ -2097,7 +2089,7 @@ void CMSCollector::do_compaction_work(bool clear_all_soft_refs) {
     size_policy()->msc_collection_end(gch->gc_cause());
   }
 
-  gc_timer->register_gc_end(os::elapsed_counter());
+  gc_timer->register_gc_end();
 
   gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
 
@@ -2483,7 +2475,7 @@ void CMSCollector::register_foreground_gc_start(GCCause::Cause cause) {
 
 void CMSCollector::register_gc_start(GCCause::Cause cause) {
   _cms_start_registered = true;
-  _gc_timer_cm->register_gc_start(os::elapsed_counter());
+  _gc_timer_cm->register_gc_start();
   _gc_tracer_cm->report_gc_start(cause, _gc_timer_cm->gc_start());
 }
 
@@ -2491,7 +2483,7 @@ void CMSCollector::register_gc_end() {
   if (_cms_start_registered) {
     report_heap_summary(GCWhen::AfterGC);
 
-    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_timer_cm->register_gc_end();
     _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
     _cms_start_registered = false;
   }
@@ -2531,6 +2523,9 @@ void CMSCollector::collect_in_foreground(bool clear_all_soft_refs, GCCause::Caus
 
   // Snapshot the soft reference policy to be used in this collection cycle.
   ref_processor()->setup_policy(clear_all_soft_refs);
+
+  // Decide if class unloading should be done
+  update_should_unload_classes();
 
   bool init_mark_was_synchronous = false; // until proven otherwise
   while (_collectorState != Idling) {
@@ -3310,7 +3305,10 @@ void CMSCollector::setup_cms_unloading_and_verification_state() {
                              || VerifyBeforeExit;
   const  int  rso           =   SharedHeap::SO_Strings | SharedHeap::SO_CodeCache;
 
+  // We set the proper root for this CMS cycle here.
   if (should_unload_classes()) {   // Should unload classes this cycle
+    remove_root_scanning_option(SharedHeap::SO_AllClasses);
+    add_root_scanning_option(SharedHeap::SO_SystemClasses);
     remove_root_scanning_option(rso);  // Shrink the root set appropriately
     set_verifying(should_verify);    // Set verification state for this cycle
     return;                            // Nothing else needs to be done at this time
@@ -3318,6 +3316,9 @@ void CMSCollector::setup_cms_unloading_and_verification_state() {
 
   // Not unloading classes this cycle
   assert(!should_unload_classes(), "Inconsitency!");
+  remove_root_scanning_option(SharedHeap::SO_SystemClasses);
+  add_root_scanning_option(SharedHeap::SO_AllClasses);
+
   if ((!verifying() || unloaded_classes_last_cycle()) && should_verify) {
     // Include symbols, strings and code cache elements to prevent their resurrection.
     add_root_scanning_option(rso);

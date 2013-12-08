@@ -37,6 +37,7 @@ import com.sun.tools.javac.tree.JCTree.*;
 import static com.sun.tools.javac.code.TypeTag.ARRAY;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
+import javax.lang.model.type.ErrorType;
 
 /** Enter annotations on symbols.  Annotations accumulate in a queue,
  *  which is processed at the top level of any set of recursive calls
@@ -87,29 +88,34 @@ public class Annotate {
 
     private int enterCount = 0;
 
-    ListBuffer<Annotator> q = new ListBuffer<Annotator>();
-    ListBuffer<Annotator> typesQ = new ListBuffer<Annotator>();
-    ListBuffer<Annotator> repeatedQ = new ListBuffer<Annotator>();
-    ListBuffer<Annotator> afterRepeatedQ = new ListBuffer<Annotator>();
+    ListBuffer<Worker> q = new ListBuffer<Worker>();
+    ListBuffer<Worker> typesQ = new ListBuffer<Worker>();
+    ListBuffer<Worker> repeatedQ = new ListBuffer<Worker>();
+    ListBuffer<Worker> afterRepeatedQ = new ListBuffer<Worker>();
+    ListBuffer<Worker> validateQ = new ListBuffer<Worker>();
 
-    public void earlier(Annotator a) {
+    public void earlier(Worker a) {
         q.prepend(a);
     }
 
-    public void normal(Annotator a) {
+    public void normal(Worker a) {
         q.append(a);
     }
 
-    public void typeAnnotation(Annotator a) {
+    public void typeAnnotation(Worker a) {
         typesQ.append(a);
     }
 
-    public void repeated(Annotator a) {
+    public void repeated(Worker a) {
         repeatedQ.append(a);
     }
 
-    public void afterRepeated(Annotator a) {
+    public void afterRepeated(Worker a) {
         afterRepeatedQ.append(a);
+    }
+
+    public void validate(Worker a) {
+        validateQ.append(a);
     }
 
     /** Called when the Enter phase starts. */
@@ -123,34 +129,45 @@ public class Annotate {
         flush();
     }
 
+    /** Variant which allows for a delayed flush of annotations.
+     * Needed by ClassReader */
+    public void enterDoneWithoutFlush() {
+        enterCount--;
+    }
+
     public void flush() {
         if (enterCount != 0) return;
         enterCount++;
         try {
             while (q.nonEmpty()) {
-                q.next().enterAnnotation();
+                q.next().run();
             }
             while (typesQ.nonEmpty()) {
-                typesQ.next().enterAnnotation();
+                typesQ.next().run();
             }
             while (repeatedQ.nonEmpty()) {
-                repeatedQ.next().enterAnnotation();
+                repeatedQ.next().run();
             }
             while (afterRepeatedQ.nonEmpty()) {
-                afterRepeatedQ.next().enterAnnotation();
+                afterRepeatedQ.next().run();
+            }
+            while (validateQ.nonEmpty()) {
+                validateQ.next().run();
             }
         } finally {
             enterCount--;
         }
     }
 
-    /** A client that has annotations to add registers an annotator,
-     *  the method it will use to add the annotation.  There are no
-     *  parameters; any needed data should be captured by the
-     *  Annotator.
+    /** A client that needs to run during {@link #flush()} registers an worker
+     *  into one of the queues defined in this class. The queues are: {@link #earlier(Worker)},
+     *  {@link #normal(Worker)}, {@link #typeAnnotation(Worker)}, {@link #repeated(Worker)},
+     *  {@link #afterRepeated(Worker)}, {@link #validate(Worker)}.
+     *  The {@link Worker#run()} method will called inside the {@link #flush()}
+     *  call. Queues are empties in the abovementioned order.
      */
-    public interface Annotator {
-        void enterAnnotation();
+    public interface Worker {
+        void run();
         String toString();
     }
 
@@ -195,12 +212,12 @@ public class Annotate {
         }
 
         /**
-         * Queue the Annotator a on the repeating annotations queue of the
+         * Queue the Worker a on the repeating annotations queue of the
          * Annotate instance this context belongs to.
          *
-         * @param a the Annotator to enqueue for repeating annotation annotating
+         * @param a the Worker to enqueue for repeating annotation annotating
          */
-        public void annotateRepeated(Annotator a) {
+        public void annotateRepeated(Worker a) {
             Annotate.this.repeated(a);
         }
     }
@@ -238,8 +255,12 @@ public class Annotate {
                   : attr.attribType(a.annotationType, env));
         a.type = chk.checkType(a.annotationType.pos(), at, expected);
         if (a.type.isErroneous()) {
+            // Need to make sure nested (anno)trees does not have null as .type
+            attr.postAttr(a);
+
             if (typeAnnotation) {
-                return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(), null);
+                return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(),
+                        new TypeAnnotationPosition());
             } else {
                 return new Attribute.Compound(a.type, List.<Pair<MethodSymbol,Attribute>>nil());
             }
@@ -247,6 +268,10 @@ public class Annotate {
         if ((a.type.tsym.flags() & Flags.ANNOTATION) == 0) {
             log.error(a.annotationType.pos(),
                       "not.annotation.type", a.type.toString());
+
+            // Need to make sure nested (anno)trees does not have null as .type
+            attr.postAttr(a);
+
             if (typeAnnotation) {
                 return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(), null);
             } else {
@@ -260,7 +285,7 @@ public class Annotate {
                 Assign(make.Ident(names.value), args.head);
         }
         ListBuffer<Pair<MethodSymbol,Attribute>> buf =
-            new ListBuffer<Pair<MethodSymbol,Attribute>>();
+            new ListBuffer<>();
         for (List<JCExpression> tl = args; tl.nonEmpty(); tl = tl.tail) {
             JCExpression t = tl.head;
             if (!t.hasTag(ASSIGN)) {
@@ -286,8 +311,7 @@ public class Annotate {
             Type result = method.type.getReturnType();
             Attribute value = enterAttributeValue(result, assign.rhs, env);
             if (!method.type.isErroneous())
-                buf.append(new Pair<MethodSymbol,Attribute>
-                           ((MethodSymbol)method, value));
+                buf.append(new Pair<>((MethodSymbol)method, value));
             t.type = result;
         }
         if (typeAnnotation) {
@@ -310,7 +334,6 @@ public class Annotate {
     Attribute enterAttributeValue(Type expected,
                                   JCExpression tree,
                                   Env<AttrContext> env) {
-        Type original = expected;
         //first, try completing the attribution value sym - if a completion
         //error is thrown, we should recover gracefully, and display an
         //ordinary resolution diagnostic.
@@ -351,7 +374,7 @@ public class Annotate {
                                     l.head,
                                     env);
             }
-            return new Attribute.Error(original);
+            return new Attribute.Error(syms.errType);
         }
         if ((expected.tsym.flags() & Flags.ANNOTATION) != 0) {
             if (tree.hasTag(ANNOTATION)) {
@@ -365,12 +388,12 @@ public class Annotate {
             if (!expected.isErroneous())
                 log.error(tree.pos(), "annotation.not.valid.for.type", expected);
             enterAnnotation((JCAnnotation)tree, syms.errType, env);
-            return new Attribute.Error(original);
+            return new Attribute.Error(((JCAnnotation)tree).annotationType.type);
         }
         if (expected.isPrimitive() || types.isSameType(expected, syms.stringType)) {
             Type result = attr.attribExpr(tree, env, expected);
             if (result.isErroneous())
-                return new Attribute.Error(expected);
+                return new Attribute.Error(result.getOriginalType());
             if (result.constValue() == null) {
                 log.error(tree.pos(), "attribute.value.must.be.constant");
                 return new Attribute.Error(expected);
@@ -381,14 +404,15 @@ public class Annotate {
         if (expected.tsym == syms.classType.tsym) {
             Type result = attr.attribExpr(tree, env, expected);
             if (result.isErroneous()) {
-                // Does it look like a class literal?
-                if (TreeInfo.name(tree) == names._class) {
+                // Does it look like an unresolved class literal?
+                if (TreeInfo.name(tree) == names._class &&
+                    ((JCFieldAccess) tree).selected.type.isErroneous()) {
                     Name n = (((JCFieldAccess) tree).selected).type.tsym.flatName();
                     return new Attribute.UnresolvedClass(expected,
                             types.createErrorType(n,
                                     syms.unknownSymbol, syms.classType));
                 } else {
-                    return new Attribute.Error(expected);
+                    return new Attribute.Error(result.getOriginalType());
                 }
             }
 
@@ -396,21 +420,21 @@ public class Annotate {
             // at the tree level
             if (TreeInfo.name(tree) != names._class) {
                 log.error(tree.pos(), "annotation.value.must.be.class.literal");
-                return new Attribute.Error(expected);
+                return new Attribute.Error(syms.errType);
             }
             return new Attribute.Class(types,
                                        (((JCFieldAccess) tree).selected).type);
         }
         if (expected.hasTag(CLASS) &&
             (expected.tsym.flags() & Flags.ENUM) != 0) {
-            attr.attribExpr(tree, env, expected);
+            Type result = attr.attribExpr(tree, env, expected);
             Symbol sym = TreeInfo.symbol(tree);
             if (sym == null ||
                 TreeInfo.nonstaticSelect(tree) ||
                 sym.kind != Kinds.VAR ||
                 (sym.flags() & Flags.ENUM) == 0) {
                 log.error(tree.pos(), "enum.annotation.must.be.enum.constant");
-                return new Attribute.Error(expected);
+                return new Attribute.Error(result.getOriginalType());
             }
             VarSymbol enumerator = (VarSymbol) sym;
             return new Attribute.Enum(expected, enumerator);

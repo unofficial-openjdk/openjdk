@@ -167,11 +167,12 @@ public final class NativeString extends ScriptObject {
     @SuppressWarnings("unused")
     private static Object get(final Object self, final Object key) {
         final CharSequence cs = JSType.toCharSequence(self);
-        final int index = ArrayIndex.getArrayIndex(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
         if (index >= 0 && index < cs.length()) {
             return String.valueOf(cs.charAt(index));
         }
-        return ((ScriptObject) Global.toObject(self)).get(key);
+        return ((ScriptObject) Global.toObject(self)).get(primitiveKey);
     }
 
     @SuppressWarnings("unused")
@@ -202,11 +203,12 @@ public final class NativeString extends ScriptObject {
     // String characters can be accessed with array-like indexing..
     @Override
     public Object get(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
         if (index >= 0 && index < value.length()) {
             return String.valueOf(value.charAt(index));
         }
-        return super.get(key);
+        return super.get(primitiveKey);
     }
 
     @Override
@@ -295,8 +297,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean has(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return isValid(index) || super.has(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return isValid(index) || super.has(primitiveKey);
     }
 
     @Override
@@ -318,8 +321,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean hasOwnProperty(final Object key) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return isValid(index) || super.hasOwnProperty(key);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return isValid(index) || super.hasOwnProperty(primitiveKey);
     }
 
     @Override
@@ -358,8 +362,9 @@ public final class NativeString extends ScriptObject {
 
     @Override
     public boolean delete(final Object key, final boolean strict) {
-        final int index = ArrayIndex.getArrayIndex(key);
-        return checkDeleteIndex(index, strict)? false : super.delete(key, strict);
+        final Object primitiveKey = JSType.toPrimitive(key, String.class);
+        final int index = ArrayIndex.getArrayIndex(primitiveKey);
+        return checkDeleteIndex(index, strict)? false : super.delete(primitiveKey, strict);
     }
 
     private boolean checkDeleteIndex(final int index, final boolean strict) {
@@ -505,7 +510,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object charAt(final Object self, final Object pos) {
-        return charAt(self, JSType.toInteger(pos));
+        return charAtImpl(checkObjectToString(self), JSType.toInteger(pos));
     }
 
     /**
@@ -527,7 +532,10 @@ public final class NativeString extends ScriptObject {
      */
     @SpecializedFunction
     public static String charAt(final Object self, final int pos) {
-        final String str = checkObjectToString(self);
+        return charAtImpl(checkObjectToString(self), pos);
+    }
+
+    private static String charAtImpl(final String str, final int pos) {
         return (pos < 0 || pos >= str.length()) ? "" : String.valueOf(str.charAt(pos));
     }
 
@@ -539,7 +547,7 @@ public final class NativeString extends ScriptObject {
      */
     @Function(attributes = Attribute.NOT_ENUMERABLE)
     public static Object charCodeAt(final Object self, final Object pos) {
-        return charCodeAt(self, JSType.toInteger(pos));
+        return charCodeAtImpl(checkObjectToString(self), JSType.toInteger(pos));
     }
 
     /**
@@ -561,7 +569,10 @@ public final class NativeString extends ScriptObject {
      */
     @SpecializedFunction
     public static double charCodeAt(final Object self, final int pos) {
-        final String str = checkObjectToString(self);
+        return charCodeAtImpl(checkObjectToString(self), pos);
+    }
+
+    private static double charCodeAtImpl(final String str, final int pos) {
         return (pos < 0 || pos >= str.length()) ? Double.NaN :  str.charAt(pos);
     }
 

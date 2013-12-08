@@ -159,9 +159,21 @@ julong os::available_memory() {
   return Bsd::available_memory();
 }
 
+// available here means free
 julong os::Bsd::available_memory() {
-  // XXXBSD: this is just a stopgap implementation
-  return physical_memory() >> 2;
+  uint64_t available = physical_memory() >> 2;
+#ifdef __APPLE__
+  mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+  vm_statistics64_data_t vmstat;
+  kern_return_t kerr = host_statistics64(mach_host_self(), HOST_VM_INFO64,
+                                         (host_info64_t)&vmstat, &count);
+  assert(kerr == KERN_SUCCESS,
+         "host_statistics64 failed - check mach_host_self() and count");
+  if (kerr == KERN_SUCCESS) {
+    available = vmstat.free_count * os::vm_page_size();
+  }
+#endif
+  return available;
 }
 
 julong os::physical_memory() {
@@ -933,17 +945,15 @@ extern "C" Thread* get_thread() {
 // Used by VMSelfDestructTimer and the MemProfiler.
 double os::elapsedTime() {
 
-  return (double)(os::elapsed_counter()) * 0.000001;
+  return ((double)os::elapsed_counter()) / os::elapsed_frequency();
 }
 
 jlong os::elapsed_counter() {
-  timeval time;
-  int status = gettimeofday(&time, NULL);
-  return jlong(time.tv_sec) * 1000 * 1000 + jlong(time.tv_usec) - initial_time_count;
+  return javaTimeNanos() - initial_time_count;
 }
 
 jlong os::elapsed_frequency() {
-  return (1000 * 1000);
+  return NANOSECS_PER_SEC; // nanosecond resolution
 }
 
 bool os::supports_vtime() { return true; }
@@ -3570,7 +3580,7 @@ void os::init(void) {
   Bsd::_main_thread = pthread_self();
 
   Bsd::clock_init();
-  initial_time_count = os::elapsed_counter();
+  initial_time_count = javaTimeNanos();
 
 #ifdef __APPLE__
   // XXXDARWIN
@@ -4734,6 +4744,10 @@ int os::fork_and_exec(char* cmd) {
 // as libawt.so, and renamed libawt_xawt.so
 //
 bool os::is_headless_jre() {
+#ifdef __APPLE__
+    // We no longer build headless-only on Mac OS X
+    return false;
+#else
     struct stat statbuf;
     char buf[MAXPATHLEN];
     char libmawtpath[MAXPATHLEN];
@@ -4765,6 +4779,7 @@ bool os::is_headless_jre() {
     if (::stat(libmawtpath, &statbuf) == 0) return false;
 
     return true;
+#endif
 }
 
 // Get the default path to the core file

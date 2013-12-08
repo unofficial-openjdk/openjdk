@@ -39,6 +39,7 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.ClassType;
 import com.sun.tools.javac.comp.Check;
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.*;
 import com.sun.tools.javac.util.Context;
@@ -146,6 +147,9 @@ public class DocEnv {
         chk = Check.instance(context);
         types = Types.instance(context);
         fileManager = context.get(JavaFileManager.class);
+        if (fileManager instanceof JavacFileManager) {
+            ((JavacFileManager)fileManager).setSymbolFileEnabled(false);
+        }
 
         // Default.  Should normally be reset with setLocale.
         this.doclocale = new DocLocale(this, "", breakiterator);
@@ -800,7 +804,7 @@ public class DocEnv {
         return result;
     }
 
-    void initDoclint(Collection<String> opts) {
+    void initDoclint(Collection<String> opts, Collection<String> customTagNames) {
         ArrayList<String> doclintOpts = new ArrayList<String>();
 
         for (String opt: opts) {
@@ -813,6 +817,15 @@ public class DocEnv {
                 && doclintOpts.get(0).equals(DocLint.XMSGS_CUSTOM_PREFIX + "none")) {
             return;
         }
+
+        String sep = "";
+        StringBuilder customTags = new StringBuilder();
+        for (String customTag : customTagNames) {
+            customTags.append(sep);
+            customTags.append(customTag);
+            sep = DocLint.TAGS_SEPARATOR;
+        }
+        doclintOpts.add(DocLint.XCUSTOM_TAGS_PREFIX + customTags.toString());
 
         JavacTask t = BasicJavacTask.instance(context);
         doclint = new DocLint();

@@ -55,12 +55,12 @@
 #include "runtime/signature.hpp"
 #include "services/classLoadingService.hpp"
 #include "services/threadService.hpp"
+#include "utilities/macros.hpp"
+#include "utilities/ticks.hpp"
 
 #if INCLUDE_TRACE
  #include "trace/tracing.hpp"
- #include "trace/traceMacros.hpp"
 #endif
-
 
 Dictionary*            SystemDictionary::_dictionary          = NULL;
 PlaceholderTable*      SystemDictionary::_placeholders        = NULL;
@@ -598,7 +598,7 @@ Klass* SystemDictionary::resolve_instance_class_or_null(Symbol* name,
   assert(name != NULL && !FieldType::is_array(name) &&
          !FieldType::is_obj(name), "invalid class name");
 
-  TracingTime class_load_start_time = Tracing::time();
+  Ticks class_load_start_time = Ticks::now();
 
   // UseNewReflection
   // Fix for 4474172; see evaluation for more details
@@ -1006,7 +1006,7 @@ Klass* SystemDictionary::parse_stream(Symbol* class_name,
                                       TRAPS) {
   TempNewSymbol parsed_name = NULL;
 
-  TracingTime class_load_start_time = Tracing::time();
+  Ticks class_load_start_time = Ticks::now();
 
   ClassLoaderData* loader_data;
   if (host_klass.not_null()) {
@@ -2360,6 +2360,11 @@ methodHandle SystemDictionary::find_method_handle_invoker(Symbol* name,
   objArrayHandle appendix_box = oopFactory::new_objArray(SystemDictionary::Object_klass(), 1, CHECK_(empty));
   assert(appendix_box->obj_at(0) == NULL, "");
 
+  // This should not happen.  JDK code should take care of that.
+  if (accessing_klass.is_null() || method_type.is_null()) {
+    THROW_MSG_(vmSymbols::java_lang_InternalError(), "bad invokehandle", empty);
+  }
+
   // call java.lang.invoke.MethodHandleNatives::linkMethod(... String, MethodType) -> MemberName
   JavaCallArguments args;
   args.push_oop(accessing_klass()->java_mirror());
@@ -2485,6 +2490,9 @@ Handle SystemDictionary::link_method_handle_constant(KlassHandle caller,
   Handle type;
   if (signature->utf8_length() > 0 && signature->byte_at(0) == '(') {
     type = find_method_handle_type(signature, caller, CHECK_(empty));
+  } else if (caller.is_null()) {
+    // This should not happen.  JDK code should take care of that.
+    THROW_MSG_(vmSymbols::java_lang_InternalError(), "bad MH constant", empty);
   } else {
     ResourceMark rm(THREAD);
     SignatureStream ss(signature, false);
@@ -2547,6 +2555,11 @@ methodHandle SystemDictionary::find_dynamic_call_site_invoker(KlassHandle caller
 
   Handle method_name = java_lang_String::create_from_symbol(name, CHECK_(empty));
   Handle method_type = find_method_handle_type(type, caller, CHECK_(empty));
+
+  // This should not happen.  JDK code should take care of that.
+  if (caller.is_null() || method_type.is_null()) {
+    THROW_MSG_(vmSymbols::java_lang_InternalError(), "bad invokedynamic", empty);
+  }
 
   objArrayHandle appendix_box = oopFactory::new_objArray(SystemDictionary::Object_klass(), 1, CHECK_(empty));
   assert(appendix_box->obj_at(0) == NULL, "");
@@ -2652,13 +2665,12 @@ void SystemDictionary::verify_obj_klass_present(Symbol* class_name,
 }
 
 // utility function for class load event
-void SystemDictionary::post_class_load_event(TracingTime start_time,
+void SystemDictionary::post_class_load_event(const Ticks& start_time,
                                              instanceKlassHandle k,
                                              Handle initiating_loader) {
 #if INCLUDE_TRACE
   EventClassLoad event(UNTIMED);
   if (event.should_commit()) {
-    event.set_endtime(Tracing::time());
     event.set_starttime(start_time);
     event.set_loadedClass(k());
     oop defining_class_loader = k->class_loader();

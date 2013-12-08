@@ -213,8 +213,12 @@ class CompileQueue : public CHeapObj<mtCompiler> {
 
   // Redefine Classes support
   void mark_on_stack();
-
+  void delete_all();
   void         print();
+
+  ~CompileQueue() {
+    assert (is_empty(), " Compile Queue must be empty");
+  }
 };
 
 // CompileTaskWrapper
@@ -266,7 +270,7 @@ class CompileBroker: AllStatic {
   static CompileQueue* _c1_method_queue;
   static CompileTask* _task_free_list;
 
-  static GrowableArray<CompilerThread*>* _method_threads;
+  static GrowableArray<CompilerThread*>* _compiler_threads;
 
   // performance counters
   static PerfCounter* _perf_total_compilation;
@@ -311,7 +315,9 @@ class CompileBroker: AllStatic {
   static int _sum_nmethod_code_size;
   static long _peak_compilation_time;
 
-  static CompilerThread* make_compiler_thread(const char* name, CompileQueue* queue, CompilerCounters* counters, TRAPS);
+  static volatile jint _print_compilation_warning;
+
+  static CompilerThread* make_compiler_thread(const char* name, CompileQueue* queue, CompilerCounters* counters, AbstractCompiler* comp, TRAPS);
   static void init_compiler_threads(int c1_compiler_count, int c2_compiler_count);
   static bool compilation_is_complete  (methodHandle method, int osr_bci, int comp_level);
   static bool compilation_is_prohibited(methodHandle method, int osr_bci, int comp_level);
@@ -351,6 +357,9 @@ class CompileBroker: AllStatic {
     if (is_c1_compile(comp_level)) return _c1_method_queue;
     return NULL;
   }
+  static bool init_compiler_runtime();
+  static void shutdown_compiler_runtime(AbstractCompiler* comp, CompilerThread* thread);
+
  public:
   enum {
     // The entry bci used for non-OSR compilations.
@@ -378,9 +387,7 @@ class CompileBroker: AllStatic {
                                  const char* comment, Thread* thread);
 
   static void compiler_thread_loop();
-
   static uint get_compilation_id() { return _compilation_id; }
-  static bool is_idle();
 
   // Set _should_block.
   // Call this from the VM, with Threads_lock held and a safepoint requested.
@@ -391,8 +398,9 @@ class CompileBroker: AllStatic {
 
   enum {
     // Flags for toggling compiler activity
-    stop_compilation = 0,
-    run_compilation  = 1
+    stop_compilation    = 0,
+    run_compilation     = 1,
+    shutdown_compilaton = 2
   };
 
   static bool should_compile_new_jobs() { return UseCompiler && (_should_compile_new_jobs == run_compilation); }
@@ -401,8 +409,22 @@ class CompileBroker: AllStatic {
     jint old = Atomic::cmpxchg(new_state, &_should_compile_new_jobs, 1-new_state);
     return (old == (1-new_state));
   }
-  static void handle_full_code_cache();
 
+  static void disable_compilation_forever() {
+    UseCompiler               = false;
+    AlwaysCompileLoopMethods  = false;
+    Atomic::xchg(shutdown_compilaton, &_should_compile_new_jobs);
+  }
+
+  static bool is_compilation_disabled_forever() {
+    return _should_compile_new_jobs == shutdown_compilaton;
+  }
+  static void handle_full_code_cache();
+  // Ensures that warning is only printed once.
+  static bool should_print_compiler_warning() {
+    jint old = Atomic::cmpxchg(1, &_print_compilation_warning, 0);
+    return old == 0;
+  }
   // Return total compilation ticks
   static jlong total_compilation_ticks() {
     return _perf_total_compilation != NULL ? _perf_total_compilation->get_value() : 0;

@@ -118,10 +118,10 @@ import sun.security.action.GetPropertyAction;
  * {@link java.io.InputStreamReader#getEncoding InputStreamReader} and {@link
  * java.io.OutputStreamWriter#getEncoding OutputStreamWriter} classes.
  *
- * <p><a name="iana">If a charset listed in the <a
+ * <p><a name="iana"> </a>If a charset listed in the <a
  * href="http://www.iana.org/assignments/character-sets"><i>IANA Charset
  * Registry</i></a> is supported by an implementation of the Java platform then
- * its canonical name must be the name listed in the registry.</a>  Many charsets
+ * its canonical name must be the name listed in the registry. Many charsets
  * are given more than one name in the registry, in which case the registry
  * identifies one of the names as <i>MIME-preferred</i>.  If a charset has more
  * than one registry name then its canonical name must be the MIME-preferred
@@ -201,7 +201,7 @@ import sun.security.action.GetPropertyAction;
  *
  * </ul>
  *
- * In any case, byte order marks occuring after the first element of an
+ * In any case, byte order marks occurring after the first element of an
  * input sequence are not omitted since the same code is used to represent
  * <small>ZERO-WIDTH NON-BREAKING SPACE</small>.
  *

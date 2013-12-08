@@ -47,16 +47,16 @@ import java.util.regex.PatternSyntaxException;
  * Strings are constant; their values cannot be changed after they
  * are created. String buffers support mutable strings.
  * Because String objects are immutable they can be shared. For example:
- * <p><blockquote><pre>
+ * <blockquote><pre>
  *     String str = "abc";
  * </pre></blockquote><p>
  * is equivalent to:
- * <p><blockquote><pre>
+ * <blockquote><pre>
  *     char data[] = {'a', 'b', 'c'};
  *     String str = new String(data);
  * </pre></blockquote><p>
  * Here are some more examples of how strings can be used:
- * <p><blockquote><pre>
+ * <blockquote><pre>
  *     System.out.println("abc");
  *     String cde = "cde";
  *     System.out.println("abc" + cde);
@@ -122,14 +122,9 @@ public final class String
     /**
      * Class String is special cased within the Serialization Stream Protocol.
      *
-     * A String instance is written initially into an ObjectOutputStream in the
-     * following format:
-     * <pre>
-     *      {@code TC_STRING} (utf String)
-     * </pre>
-     * The String is written by method {@code DataOutput.writeUTF}.
-     * A new handle is generated to  refer to all future references to the
-     * string instance within the stream.
+     * A String instance is written into an ObjectOutputStream according to
+     * <a href="{@docRoot}/../platform/serialization/spec/output.html">
+     * Object Serialization Specification, Section 6.2, "Stream Elements"</a>
      */
     private static final ObjectStreamField[] serialPersistentFields =
         new ObjectStreamField[0];
@@ -786,7 +781,7 @@ public final class String
      * {@code srcEnd-srcBegin}). The characters are copied into the
      * subarray of {@code dst} starting at index {@code dstBegin}
      * and ending at index:
-     * <p><blockquote><pre>
+     * <blockquote><pre>
      *     dstbegin + (srcEnd-srcBegin) - 1
      * </pre></blockquote>
      *
@@ -1898,7 +1893,7 @@ public final class String
     }
 
     /**
-     * Returns a new string that is a substring of this string. The
+     * Returns a string that is a substring of this string. The
      * substring begins with the character at the specified index and
      * extends to the end of this string. <p>
      * Examples:
@@ -1926,7 +1921,7 @@ public final class String
     }
 
     /**
-     * Returns a new string that is a substring of this string. The
+     * Returns a string that is a substring of this string. The
      * substring begins at the specified {@code beginIndex} and
      * extends to the character at index {@code endIndex - 1}.
      * Thus the length of the substring is {@code endIndex-beginIndex}.
@@ -1975,6 +1970,7 @@ public final class String
      * <blockquote><pre>
      * str.substring(begin,&nbsp;end)</pre></blockquote>
      *
+     * @apiNote
      * This method is defined so that the {@code String} class can implement
      * the {@link CharSequence} interface.
      *
@@ -1998,8 +1994,8 @@ public final class String
      * Concatenates the specified string to the end of this string.
      * <p>
      * If the length of the argument string is {@code 0}, then this
-     * {@code String} object is returned. Otherwise, a new
-     * {@code String} object is created, representing a character
+     * {@code String} object is returned. Otherwise, a
+     * {@code String} object is returned that represents a character
      * sequence that is the concatenation of the character sequence
      * represented by this {@code String} object and the character
      * sequence represented by the argument string.<p>
@@ -2026,13 +2022,13 @@ public final class String
     }
 
     /**
-     * Returns a new string resulting from replacing all occurrences of
+     * Returns a string resulting from replacing all occurrences of
      * {@code oldChar} in this string with {@code newChar}.
      * <p>
      * If the character {@code oldChar} does not occur in the
      * character sequence represented by this {@code String} object,
      * then a reference to this {@code String} object is returned.
-     * Otherwise, a new {@code String} object is created that
+     * Otherwise, a {@code String} object is returned that
      * represents a character sequence identical to the character sequence
      * represented by this {@code String} object, except that every
      * occurrence of {@code oldChar} is replaced by an occurrence
@@ -2241,6 +2237,11 @@ public final class String
      * the array are in the order in which they occur in this string.  If the
      * expression does not match any part of the input then the resulting array
      * has just one element, namely this string.
+     *
+     * <p> When there is a positive-width match at the beginning of this
+     * string then an empty leading substring is included at the beginning
+     * of the resulting array. A zero-width match at the beginning however
+     * never produces such empty leading substring.
      *
      * <p> The {@code limit} parameter controls the number of times the
      * pattern is applied and therefore affects the length of the resulting
@@ -2662,7 +2663,7 @@ public final class String
      * {@code String} may be a different length than the original {@code String}.
      * <p>
      * Examples of locale-sensitive and 1:M case mappings are in the following table.
-     * <p>
+     *
      * <table border="1" summary="Examples of locale-sensitive and 1:M case mappings. Shows Language code of locale, lower case, upper case, and description.">
      * <tr>
      *   <th>Language Code of Locale</th>
@@ -2818,8 +2819,8 @@ public final class String
     }
 
     /**
-     * Returns a copy of the string, with leading and trailing whitespace
-     * omitted.
+     * Returns a string whose value is this string, with any leading and trailing
+     * whitespace removed.
      * <p>
      * If this {@code String} object represents an empty character
      * sequence, or the first and last characters of character sequence
@@ -2828,15 +2829,15 @@ public final class String
      * reference to this {@code String} object is returned.
      * <p>
      * Otherwise, if there is no character with a code greater than
-     * {@code '\u005Cu0020'} in the string, then a new
-     * {@code String} object representing an empty string is created
-     * and returned.
+     * {@code '\u005Cu0020'} in the string, then a
+     * {@code String} object representing an empty string is
+     * returned.
      * <p>
      * Otherwise, let <i>k</i> be the index of the first character in the
      * string whose code is greater than {@code '\u005Cu0020'}, and let
      * <i>m</i> be the index of the last character in the string whose code
-     * is greater than {@code '\u005Cu0020'}. A new {@code String}
-     * object is created, representing the substring of this string that
+     * is greater than {@code '\u005Cu0020'}. A {@code String}
+     * object is returned, representing the substring of this string that
      * begins with the character at index <i>k</i> and ends with the
      * character at index <i>m</i>-that is, the result of
      * {@code this.substring(k, m + 1)}.
@@ -2844,7 +2845,7 @@ public final class String
      * This method may be used to trim whitespace (as defined above) from
      * the beginning and end of a string.
      *
-     * @return  A copy of this string with leading and trailing white
+     * @return  A string whose value is this string, with any leading and trailing white
      *          space removed, or this string if it has no leading or
      *          trailing white space.
      */
@@ -2981,12 +2982,12 @@ public final class String
     /**
      * Returns the string representation of the {@code char} array
      * argument. The contents of the character array are copied; subsequent
-     * modification of the character array does not affect the newly
-     * created string.
+     * modification of the character array does not affect the returned
+     * string.
      *
-     * @param   data   a {@code char} array.
-     * @return  a newly allocated string representing the same sequence of
-     *          characters contained in the character array argument.
+     * @param   data     the character array.
+     * @return  a {@code String} that contains the characters of the
+     *          character array.
      */
     public static String valueOf(char data[]) {
         return new String(data);
@@ -3000,14 +3001,13 @@ public final class String
      * character of the subarray. The {@code count} argument
      * specifies the length of the subarray. The contents of the subarray
      * are copied; subsequent modification of the character array does not
-     * affect the newly created string.
+     * affect the returned string.
      *
      * @param   data     the character array.
-     * @param   offset   the initial offset into the value of the
-     *                  {@code String}.
-     * @param   count    the length of the value of the {@code String}.
-     * @return  a string representing the sequence of characters contained
-     *          in the subarray of the character array argument.
+     * @param   offset   initial offset of the subarray.
+     * @param   count    length of the subarray.
+     * @return  a {@code String} that contains the characters of the
+     *          specified subarray of the character array.
      * @exception IndexOutOfBoundsException if {@code offset} is
      *          negative, or {@code count} is negative, or
      *          {@code offset+count} is larger than
@@ -3018,23 +3018,24 @@ public final class String
     }
 
     /**
-     * Returns a String that represents the character sequence in the
-     * array specified.
+     * Equivalent to {@link #valueOf(char[], int, int)}.
      *
      * @param   data     the character array.
      * @param   offset   initial offset of the subarray.
      * @param   count    length of the subarray.
      * @return  a {@code String} that contains the characters of the
      *          specified subarray of the character array.
+     * @exception IndexOutOfBoundsException if {@code offset} is
+     *          negative, or {@code count} is negative, or
+     *          {@code offset+count} is larger than
+     *          {@code data.length}.
      */
     public static String copyValueOf(char data[], int offset, int count) {
-        // All public String constructors now copy the data.
         return new String(data, offset, count);
     }
 
     /**
-     * Returns a String that represents the character sequence in the
-     * array specified.
+     * Equivalent to {@link #valueOf(char[])}.
      *
      * @param   data   the character array.
      * @return  a {@code String} that contains the characters of the

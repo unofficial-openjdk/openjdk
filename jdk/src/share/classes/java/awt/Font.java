@@ -71,7 +71,7 @@ import static sun.font.EAttribute.*;
  * and to render sequences of glyphs on <code>Graphics</code> and
  * <code>Component</code> objects.
  *
- * <h4>Characters and Glyphs</h4>
+ * <h3>Characters and Glyphs</h3>
  *
  * A <em>character</em> is a symbol that represents an item such as a letter,
  * a digit, or punctuation in an abstract way. For example, <code>'g'</code>,
@@ -192,7 +192,7 @@ import static sun.font.EAttribute.*;
  * not serializable.  See {@link java.awt.im.InputMethodHighlight}.</li>
  * </ul>
  *
- * Clients who create custom subclasses of <code>Paint</code> and
+ * <p>Clients who create custom subclasses of <code>Paint</code> and
  * <code>GraphicAttribute</code> can make them serializable and
  * avoid this problem.  Clients who use input method highlights can
  * convert these to the platform-specific attributes for that
@@ -1334,7 +1334,7 @@ public class Font implements java.io.Serializable
      * Indicates whether or not this <code>Font</code> object's style is
      * PLAIN.
      * @return    <code>true</code> if this <code>Font</code> has a
-     *            PLAIN sytle;
+     *            PLAIN style;
      *            <code>false</code> otherwise.
      * @see       java.awt.Font#getStyle
      * @since     JDK1.0

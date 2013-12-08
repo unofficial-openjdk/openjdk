@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 /*
- * $Id: ErrorMessages_zh_CN.java,v 1.2.4.1 2005/09/14 05:52:21 pvedula Exp $
+ * $Id: ErrorMessages_zh_CN.java /st_wptg_1.8.0.0.0jdk/3 2013/11/11 11:39:28 gmolloy Exp $
  */
 
 package com.sun.org.apache.xalan.internal.xsltc.runtime;
@@ -81,7 +81,13 @@ public class ErrorMessages_zh_CN extends ListResourceBundle {
  */
 
     // These message should be read from a locale-specific resource bundle
-    private static final Object[][] _contents =  new Object[][] {
+    /** Get the lookup table for error messages.
+     *
+     * @return The message lookup table.
+     */
+    public Object[][] getContents()
+    {
+        return new Object[][] {
 
         /*
          * Note to translators:  the substitution text in the following message
@@ -206,7 +212,7 @@ public class ErrorMessages_zh_CN extends ListResourceBundle {
          * DTD.
          */
         {BasisLibrary.PARSER_DTD_SUPPORT_ERR,
-        "\u4F7F\u7528\u7684 SAX \u8BED\u6CD5\u5206\u6790\u5668\u4E0D\u4F1A\u5904\u7406 DTD \u58F0\u660E\u4E8B\u4EF6\u3002"},
+        "\u4F7F\u7528\u7684 SAX \u89E3\u6790\u5668\u4E0D\u4F1A\u5904\u7406 DTD \u58F0\u660E\u4E8B\u4EF6\u3002"},
 
         /*
          * Note to translators:  The following message indicates that the XML
@@ -215,7 +221,7 @@ public class ErrorMessages_zh_CN extends ListResourceBundle {
          * declarations.
          */
         {BasisLibrary.NAMESPACES_SUPPORT_ERR,
-        "\u4F7F\u7528\u7684 SAX \u8BED\u6CD5\u5206\u6790\u5668\u4E0D\u652F\u6301 XML \u540D\u79F0\u7A7A\u95F4\u3002"},
+        "\u4F7F\u7528\u7684 SAX \u89E3\u6790\u5668\u4E0D\u652F\u6301 XML \u540D\u79F0\u7A7A\u95F4\u3002"},
 
         /*
          * Note to translators:  The substitution text is the URI that was in
@@ -276,13 +282,6 @@ public class ErrorMessages_zh_CN extends ListResourceBundle {
         {BasisLibrary.UNALLOWED_EXTENSION_ELEMENT_ERR,
         "\u5F53\u5B89\u5168\u5904\u7406\u529F\u80FD\u8BBE\u7F6E\u4E3A\u201C\u771F\u201D\u65F6, \u4E0D\u5141\u8BB8\u4F7F\u7528\u6269\u5C55\u5143\u7D20 ''{0}''\u3002"},
     };
-    /** Get the lookup table for error messages.
-     *
-     * @return The message lookup table.
-     */
-    public Object[][] getContents()
-    {
-        return _contents;
     }
 
 }

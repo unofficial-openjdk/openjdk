@@ -50,7 +50,7 @@ import org.testng.annotations.Test;
  *
  * @test
  * @build jdk.nashorn.api.scripting.Window jdk.nashorn.api.scripting.WindowEventHandler jdk.nashorn.api.scripting.VariableArityTestInterface jdk.nashorn.api.scripting.ScriptEngineTest
- * @run testng jdk.nashorn.api.scripting.ScriptEngineTest
+ * @run testng/othervm jdk.nashorn.api.scripting.ScriptEngineTest
  */
 public class ScriptEngineTest {
 
@@ -521,6 +521,18 @@ public class ScriptEngineTest {
         }
 
         assertEquals(sw.toString(), println("34 true hello"));
+    }
+
+    @Test
+    public void scriptObjectAutoConversionTest() throws ScriptException {
+        final ScriptEngineManager m = new ScriptEngineManager();
+        final ScriptEngine e = m.getEngineByName("nashorn");
+        e.eval("obj = { foo: 'hello' }");
+        e.put("Window", e.eval("Packages.jdk.nashorn.api.scripting.Window"));
+        assertEquals(e.eval("Window.funcJSObject(obj)"), "hello");
+        assertEquals(e.eval("Window.funcScriptObjectMirror(obj)"), "hello");
+        assertEquals(e.eval("Window.funcMap(obj)"), "hello");
+        assertEquals(e.eval("Window.funcJSObject(obj)"), "hello");
     }
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");

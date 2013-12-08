@@ -31,6 +31,8 @@ import static jdk.nashorn.internal.runtime.ECMAErrors.typeError;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Array;
+import java.util.Deque;
+import java.util.List;
 import jdk.internal.dynalink.beans.StaticClass;
 import jdk.nashorn.api.scripting.JSObject;
 import jdk.nashorn.internal.codegen.CompilerConstants.Call;
@@ -86,6 +88,9 @@ public enum JSType {
     /** JavaScript compliant conversion function from Object to number */
     public static final Call TO_NUMBER = staticCall(myLookup, JSType.class, "toNumber", double.class, Object.class);
 
+    /** JavaScript compliant conversion function from Object to String */
+    public static final Call TO_STRING = staticCall(myLookup, JSType.class, "toString", String.class, Object.class);
+
     /** JavaScript compliant conversion function from Object to int32 */
     public static final Call TO_INT32 = staticCall(myLookup, JSType.class, "toInt32", int.class, Object.class);
 
@@ -104,14 +109,20 @@ public enum JSType {
     /** JavaScript compliant conversion function from number to int64 */
     public static final Call TO_INT64_D = staticCall(myLookup, JSType.class, "toInt64", long.class, double.class);
 
-    /** JavaScript compliant conversion function from Object to String */
-    public static final Call TO_STRING = staticCall(myLookup, JSType.class, "toString", String.class, Object.class);
-
     /** JavaScript compliant conversion function from number to String */
     public static final Call TO_STRING_D = staticCall(myLookup, JSType.class, "toString", String.class, double.class);
 
-    /** JavaScript compliant conversion function from Object to primitive */
-    public static final Call TO_PRIMITIVE = staticCall(myLookup, JSType.class, "toPrimitive", Object.class,  Object.class);
+    /** Combined call to toPrimitive followed by toString. */
+    public static final Call TO_PRIMITIVE_TO_STRING = staticCall(myLookup, JSType.class, "toPrimitiveToString", String.class,  Object.class);
+
+    /** Method handle to convert a JS Object to a Java array. */
+    public static final Call TO_JAVA_ARRAY = staticCall(myLookup, JSType.class, "toJavaArray", Object.class, Object.class, Class.class);
+
+    /** Method handle to convert a JS Object to a Java List. */
+    public static final Call TO_JAVA_LIST = staticCall(myLookup, JSType.class, "toJavaList", List.class, Object.class);
+
+    /** Method handle to convert a JS Object to a Java deque. */
+   public static final Call TO_JAVA_DEQUE = staticCall(myLookup, JSType.class, "toJavaDeque", Deque.class, Object.class);
 
     private static final double INT32_LIMIT = 4294967296.0;
 
@@ -202,26 +213,6 @@ public enum JSType {
     }
 
     /**
-     * Get the smallest integer representation of a number. Returns an Integer
-     * for something that is int representable, and Long for something that
-     * is long representable. If the number needs to be a double, this is an
-     * identity function
-     *
-     * @param number number to check
-     *
-     * @return Number instanceof the narrowest possible integer representation for number
-     */
-    public static Number narrowestIntegerRepresentation(final double number) {
-        if (isRepresentableAsInt(number)) {
-            return (int)number;
-        } else if (isRepresentableAsLong(number)) {
-            return (long)number;
-        } else {
-            return number;
-        }
-    }
-
-    /**
      * Check whether an object is primitive
      *
      * @param obj an object
@@ -258,18 +249,28 @@ public enum JSType {
      * @return the primitive form of the object
      */
     public static Object toPrimitive(final Object obj, final Class<?> hint) {
-        if (!(obj instanceof ScriptObject)) {
-            return obj;
-        }
+        return obj instanceof ScriptObject ? toPrimitive((ScriptObject)obj, hint) : obj;
+    }
 
-        final ScriptObject sobj   = (ScriptObject)obj;
-        final Object       result = sobj.getDefaultValue(hint);
+    private static Object toPrimitive(final ScriptObject sobj, final Class<?> hint) {
+        final Object result = sobj.getDefaultValue(hint);
 
         if (!isPrimitive(result)) {
             throw typeError("bad.default.value", result.toString());
         }
 
         return result;
+    }
+
+    /**
+     * Combines a hintless toPrimitive and a toString call.
+     *
+     * @param obj  an object
+     *
+     * @return the string form of the primitive form of the object
+     */
+    public static String toPrimitiveToString(Object obj) {
+        return toString(toPrimitive(obj));
     }
 
     /**
@@ -474,6 +475,19 @@ public enum JSType {
             return ((Number)obj).doubleValue();
         }
         return toNumberGeneric(obj);
+    }
+
+
+    /**
+     * JavaScript compliant conversion of Object to number
+     * See ECMA 9.3 ToNumber
+     *
+     * @param obj  an object
+     *
+     * @return a number
+     */
+    public static double toNumber(final ScriptObject obj) {
+        return toNumber(toPrimitive(obj, Number.class));
     }
 
     /**
@@ -872,9 +886,9 @@ public enum JSType {
      */
     public static Object toJavaArray(final Object obj, final Class<?> componentType) {
         if (obj instanceof ScriptObject) {
-            return convertArray(((ScriptObject)obj).getArray().asObjectArray(), componentType);
+            return ((ScriptObject)obj).getArray().asArrayOfType(componentType);
         } else if (obj instanceof JSObject) {
-            final ArrayLikeIterator itr = ArrayLikeIterator.arrayLikeIterator(obj);
+            final ArrayLikeIterator<?> itr = ArrayLikeIterator.arrayLikeIterator(obj);
             final int len = (int) itr.getLength();
             final Object[] res = new Object[len];
             int idx = 0;
@@ -882,6 +896,8 @@ public enum JSType {
                 res[idx++] = itr.next();
             }
             return convertArray(res, componentType);
+        } else if(obj == null) {
+            return null;
         } else {
             throw new IllegalArgumentException("not a script object");
         }
@@ -895,6 +911,15 @@ public enum JSType {
      * @return converted Java array
      */
     public static Object convertArray(final Object[] src, final Class<?> componentType) {
+        if(componentType == Object.class) {
+            for(int i = 0; i < src.length; ++i) {
+                final Object e = src[i];
+                if(e instanceof ConsString) {
+                    src[i] = e.toString();
+                }
+            }
+        }
+
         final int l = src.length;
         final Object dst = Array.newInstance(componentType, l);
         final MethodHandle converter = Bootstrap.getLinkerServices().getTypeConverter(Object.class, componentType);
@@ -908,6 +933,24 @@ public enum JSType {
             throw new RuntimeException(t);
         }
         return dst;
+    }
+
+    /**
+     * Converts a JavaScript object to a Java List. See {@link ListAdapter} for details.
+     * @param obj the object to convert. Can be any array-like object.
+     * @return a List that is live-backed by the JavaScript object.
+     */
+    public static List<?> toJavaList(final Object obj) {
+        return ListAdapter.create(obj);
+    }
+
+    /**
+     * Converts a JavaScript object to a Java Deque. See {@link ListAdapter} for details.
+     * @param obj the object to convert. Can be any array-like object.
+     * @return a Deque that is live-backed by the JavaScript object.
+     */
+    public static Deque<?> toJavaDeque(final Object obj) {
+        return ListAdapter.create(obj);
     }
 
     /**
@@ -1009,7 +1052,11 @@ public enum JSType {
         }
 
         if (obj instanceof ScriptObject) {
-            return toNumber(toPrimitive(obj, Number.class));
+            return toNumber((ScriptObject)obj);
+        }
+
+        if (obj instanceof JSObject) {
+            return ((JSObject)obj).toNumber();
         }
 
         return Double.NaN;

@@ -25,10 +25,11 @@
 package sun.jvm.hotspot.tools;
 
 import java.io.PrintStream;
-import java.util.Hashtable;
-import sun.jvm.hotspot.*;
-import sun.jvm.hotspot.runtime.*;
-import sun.jvm.hotspot.debugger.*;
+
+import sun.jvm.hotspot.HotSpotAgent;
+import sun.jvm.hotspot.debugger.DebuggerException;
+import sun.jvm.hotspot.debugger.JVMDebugger;
+import sun.jvm.hotspot.runtime.VM;
 
 // generic command line or GUI tool.
 // override run & code main as shown below.
@@ -105,29 +106,48 @@ public abstract class Tool implements Runnable {
 
       public static void main(String[] args) {
          <derived class> obj = new <derived class>;
-         obj.start(args);
+         obj.execute(args);
       }
 
    */
 
-   protected void stop() {
+   protected void execute(String[] args) {
+       int returnStatus = 1;
+
+       try {
+           returnStatus = start(args);
+       } finally {
+           stop();
+       }
+
+       // Exit with 0 or 1
+       System.exit(returnStatus);
+   }
+
+   public void stop() {
       if (agent != null) {
          agent.detach();
       }
    }
 
-   protected void start(String[] args) {
+   private int start(String[] args) {
+
       if ((args.length < 1) || (args.length > 2)) {
          usage();
-         return;
+         return 1;
       }
 
       // Attempt to handle -h or -help or some invalid flag
-      if (args[0].startsWith("-")) {
+      if (args[0].startsWith("-h")) {
           usage();
+          return 0;
+      } else if (args[0].startsWith("-")) {
+          usage();
+          return 1;
       }
 
       PrintStream err = System.err;
+      PrintStream out = System.out;
 
       int pid = 0;
       String coreFileName   = null;
@@ -154,24 +174,25 @@ public abstract class Tool implements Runnable {
 
         default:
            usage();
+           return 1;
       }
 
       agent = new HotSpotAgent();
       try {
         switch (debugeeType) {
           case DEBUGEE_PID:
-             err.println("Attaching to process ID " + pid + ", please wait...");
+             out.println("Attaching to process ID " + pid + ", please wait...");
              agent.attach(pid);
              break;
 
           case DEBUGEE_CORE:
-             err.println("Attaching to core " + coreFileName +
+             out.println("Attaching to core " + coreFileName +
                          " from executable " + executableName + ", please wait...");
              agent.attach(executableName, coreFileName);
              break;
 
           case DEBUGEE_REMOTE:
-             err.println("Attaching to remote server " + remoteServer + ", please wait...");
+             out.println("Attaching to remote server " + remoteServer + ", please wait...");
              agent.attach(remoteServer);
              break;
         }
@@ -191,15 +212,16 @@ public abstract class Tool implements Runnable {
              break;
         }
         if (e.getMessage() != null) {
-          err.print(e.getMessage());
+          err.println(e.getMessage());
           e.printStackTrace();
         }
         err.println();
-        return;
+        return 1;
       }
 
-      err.println("Debugger attached successfully.");
+      out.println("Debugger attached successfully.");
       startInternal();
+      return 0;
    }
 
    // When using an existing JVMDebugger.
@@ -216,14 +238,14 @@ public abstract class Tool implements Runnable {
    // Remains of the start mechanism, common to both start methods.
    private void startInternal() {
 
-      PrintStream err = System.err;
+      PrintStream out = System.out;
       VM vm = VM.getVM();
       if (vm.isCore()) {
-        err.println("Core build detected.");
+        out.println("Core build detected.");
       } else if (vm.isClientCompiler()) {
-        err.println("Client compiler detected.");
+        out.println("Client compiler detected.");
       } else if (vm.isServerCompiler()) {
-        err.println("Server compiler detected.");
+        out.println("Server compiler detected.");
       } else {
         throw new RuntimeException("Fatal error: "
             + "should have been able to detect core/C1/C2 build");
@@ -231,8 +253,8 @@ public abstract class Tool implements Runnable {
 
       String version = vm.getVMRelease();
       if (version != null) {
-        err.print("JVM version is ");
-        err.println(version);
+        out.print("JVM version is ");
+        out.println(version);
       }
 
       run();

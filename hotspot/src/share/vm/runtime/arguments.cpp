@@ -1132,9 +1132,6 @@ void Arguments::set_tiered_flags() {
     Tier3InvokeNotifyFreqLog = 0;
     Tier4InvocationThreshold = 0;
   }
-  if (FLAG_IS_DEFAULT(NmethodSweepFraction)) {
-    FLAG_SET_DEFAULT(NmethodSweepFraction, 1 + ReservedCodeCacheSize / (16 * M));
-  }
 }
 
 #if INCLUDE_ALL_GCS
@@ -1408,7 +1405,7 @@ uintx Arguments::max_heap_for_compressed_oops() {
   // NULL page is located before the heap, we pad the NULL page to the conservative
   // maximum alignment that the GC may ever impose upon the heap.
   size_t displacement_due_to_null_page = align_size_up_(os::vm_page_size(),
-    Arguments::conservative_max_heap_alignment());
+                                                        _conservative_max_heap_alignment);
 
   LP64_ONLY(return OopEncodingHeapMax - displacement_due_to_null_page);
   NOT_LP64(ShouldNotReachHere(); return 0);
@@ -1505,7 +1502,7 @@ void Arguments::set_conservative_max_heap_alignment() {
   }
 #endif // INCLUDE_ALL_GCS
   _conservative_max_heap_alignment = MAX3(heap_alignment, os::max_page_size(),
-    CollectorPolicy::compute_max_alignment());
+    CollectorPolicy::compute_heap_alignment());
 }
 
 void Arguments::set_ergonomics_flags() {
@@ -1957,12 +1954,6 @@ bool Arguments::check_gc_consistency() {
                 "please refer to the release notes for the combinations "
                 "allowed\n");
     status = false;
-  } else if (ReservedCodeCacheSize > 2*G) {
-    // Code cache size larger than MAXINT is not supported.
-    jio_fprintf(defaultStream::error_stream(),
-                "Invalid ReservedCodeCacheSize=%dM. Must be at most %uM.\n", ReservedCodeCacheSize/M,
-                (2*G)/M);
-    status = false;
   }
   return status;
 }
@@ -1993,6 +1984,15 @@ void Arguments::check_deprecated_gc_flags() {
   if (FLAG_IS_CMDLINE(DefaultMaxRAMFraction)) {
     warning("DefaultMaxRAMFraction is deprecated and will likely be removed in a future release. "
         "Use MaxRAMFraction instead.");
+  }
+  if (FLAG_IS_CMDLINE(UseCMSCompactAtFullCollection)) {
+    warning("UseCMSCompactAtFullCollection is deprecated and will likely be removed in a future release.");
+  }
+  if (FLAG_IS_CMDLINE(CMSFullGCsBeforeCompaction)) {
+    warning("CMSFullGCsBeforeCompaction is deprecated and will likely be removed in a future release.");
+  }
+  if (FLAG_IS_CMDLINE(UseCMSCollectionPassing)) {
+    warning("UseCMSCollectionPassing is deprecated and will likely be removed in a future release.");
   }
 }
 
@@ -2162,6 +2162,10 @@ bool Arguments::check_vm_args_consistency() {
 
 #if INCLUDE_ALL_GCS
   if (UseG1GC) {
+    status = status && verify_percentage(G1NewSizePercent, "G1NewSizePercent");
+    status = status && verify_percentage(G1MaxNewSizePercent, "G1MaxNewSizePercent");
+    status = status && verify_interval(G1NewSizePercent, 0, G1MaxNewSizePercent, "G1NewSizePercent");
+
     status = status && verify_percentage(InitiatingHeapOccupancyPercent,
                                          "InitiatingHeapOccupancyPercent");
     status = status && verify_min_value(G1RefProcDrainInterval, 1,
@@ -2678,9 +2682,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
         describe_range_error(errcode);
         return JNI_EINVAL;
       }
-      FLAG_SET_CMDLINE(uintx, InitialHeapSize, (uintx)long_initial_heap_size);
+      set_min_heap_size((uintx)long_initial_heap_size);
       // Currently the minimum size and the initial heap sizes are the same.
-      set_min_heap_size(InitialHeapSize);
+      // Can be overridden with -XX:InitialHeapSize.
+      FLAG_SET_CMDLINE(uintx, InitialHeapSize, (uintx)long_initial_heap_size);
     // -Xmx
     } else if (match_option(option, "-Xmx", &tail) || match_option(option, "-XX:MaxHeapSize=", &tail)) {
       julong long_max_heap_size = 0;
@@ -2694,8 +2699,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       FLAG_SET_CMDLINE(uintx, MaxHeapSize, (uintx)long_max_heap_size);
     // Xmaxf
     } else if (match_option(option, "-Xmaxf", &tail)) {
-      int maxf = (int)(atof(tail) * 100);
-      if (maxf < 0 || maxf > 100) {
+      char* err;
+      int maxf = (int)(strtod(tail, &err) * 100);
+      if (*err != '\0' || maxf < 0 || maxf > 100) {
         jio_fprintf(defaultStream::error_stream(),
                     "Bad max heap free percentage size: %s\n",
                     option->optionString);
@@ -2705,8 +2711,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args,
       }
     // Xminf
     } else if (match_option(option, "-Xminf", &tail)) {
-      int minf = (int)(atof(tail) * 100);
-      if (minf < 0 || minf > 100) {
+      char* err;
+      int minf = (int)(strtod(tail, &err) * 100);
+      if (*err != '\0' || minf < 0 || minf > 100) {
         jio_fprintf(defaultStream::error_stream(),
                     "Bad min heap free percentage size: %s\n",
                     option->optionString);
@@ -3638,6 +3645,11 @@ jint Arguments::apply_ergo() {
         "Incompatible compilation policy selected", NULL);
     }
   }
+  // Set NmethodSweepFraction after the size of the code cache is adapted (in case of tiered)
+  if (FLAG_IS_DEFAULT(NmethodSweepFraction)) {
+    FLAG_SET_DEFAULT(NmethodSweepFraction, 1 + ReservedCodeCacheSize / (16 * M));
+  }
+
 
   // Set heap size based on available physical memory
   set_heap_size();
@@ -3719,6 +3731,18 @@ jint Arguments::apply_ergo() {
     // incremental inlining: bump MaxNodeLimit
     FLAG_SET_DEFAULT(MaxNodeLimit, (intx)75000);
   }
+  if (!UseTypeSpeculation && FLAG_IS_DEFAULT(TypeProfileLevel)) {
+    // nothing to use the profiling, turn if off
+    FLAG_SET_DEFAULT(TypeProfileLevel, 0);
+  }
+  if (UseTypeSpeculation && FLAG_IS_DEFAULT(ReplaceInParentMaps)) {
+    // Doing the replace in parent maps helps speculation
+    FLAG_SET_DEFAULT(ReplaceInParentMaps, true);
+  }
+#ifndef X86
+  // Only on x86 for now
+  FLAG_SET_DEFAULT(TypeProfileLevel, 0);
+#endif
 #endif
 
   if (PrintAssembly && FLAG_IS_DEFAULT(DebugNonSafepoints)) {

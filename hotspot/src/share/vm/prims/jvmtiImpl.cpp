@@ -210,6 +210,14 @@ void GrowableCache::oops_do(OopClosure* f) {
   }
 }
 
+void GrowableCache::metadata_do(void f(Metadata*)) {
+  int len = _elements->length();
+  for (int i=0; i<len; i++) {
+    GrowableElement *e = _elements->at(i);
+    e->metadata_do(f);
+  }
+}
+
 void GrowableCache::gc_epilogue() {
   int len = _elements->length();
   for (int i=0; i<len; i++) {
@@ -224,19 +232,21 @@ void GrowableCache::gc_epilogue() {
 JvmtiBreakpoint::JvmtiBreakpoint() {
   _method = NULL;
   _bci    = 0;
-  _class_loader = NULL;
-#ifdef CHECK_UNHANDLED_OOPS
-  // This one is always allocated with new, but check it just in case.
-  Thread *thread = Thread::current();
-  if (thread->is_in_stack((address)&_method)) {
-    thread->allow_unhandled_oop((oop*)&_method);
-  }
-#endif // CHECK_UNHANDLED_OOPS
+  _class_holder = NULL;
 }
 
 JvmtiBreakpoint::JvmtiBreakpoint(Method* m_method, jlocation location) {
   _method        = m_method;
-  _class_loader  = _method->method_holder()->class_loader_data()->class_loader();
+  _class_holder  = _method->method_holder()->klass_holder();
+#ifdef CHECK_UNHANDLED_OOPS
+  // _class_holder can't be wrapped in a Handle, because JvmtiBreakpoints are
+  // sometimes allocated on the heap.
+  //
+  // The code handling JvmtiBreakpoints allocated on the stack can't be
+  // interrupted by a GC until _class_holder is reachable by the GC via the
+  // oops_do method.
+  Thread::current()->allow_unhandled_oop(&_class_holder);
+#endif // CHECK_UNHANDLED_OOPS
   assert(_method != NULL, "_method != NULL");
   _bci           = (int) location;
   assert(_bci >= 0, "_bci >= 0");
@@ -245,7 +255,7 @@ JvmtiBreakpoint::JvmtiBreakpoint(Method* m_method, jlocation location) {
 void JvmtiBreakpoint::copy(JvmtiBreakpoint& bp) {
   _method   = bp._method;
   _bci      = bp._bci;
-  _class_loader = bp._class_loader;
+  _class_holder = bp._class_holder;
 }
 
 bool JvmtiBreakpoint::lessThan(JvmtiBreakpoint& bp) {
@@ -363,6 +373,13 @@ void VM_ChangeBreakpoints::oops_do(OopClosure* f) {
   }
 }
 
+void VM_ChangeBreakpoints::metadata_do(void f(Metadata*)) {
+  // Walk metadata in breakpoints to keep from being deallocated with RedefineClasses
+  if (_bp != NULL) {
+    _bp->metadata_do(f);
+  }
+}
+
 //
 // class JvmtiBreakpoints
 //
@@ -377,6 +394,10 @@ JvmtiBreakpoints:: ~JvmtiBreakpoints() {}
 
 void  JvmtiBreakpoints::oops_do(OopClosure* f) {
   _bps.oops_do(f);
+}
+
+void  JvmtiBreakpoints::metadata_do(void f(Metadata*)) {
+  _bps.metadata_do(f);
 }
 
 void JvmtiBreakpoints::gc_epilogue() {
@@ -494,6 +515,12 @@ void  JvmtiCurrentBreakpoints::listener_fun(void *this_obj, address *cache) {
 void JvmtiCurrentBreakpoints::oops_do(OopClosure* f) {
   if (_jvmti_breakpoints != NULL) {
     _jvmti_breakpoints->oops_do(f);
+  }
+}
+
+void JvmtiCurrentBreakpoints::metadata_do(void f(Metadata*)) {
+  if (_jvmti_breakpoints != NULL) {
+    _jvmti_breakpoints->metadata_do(f);
   }
 }
 

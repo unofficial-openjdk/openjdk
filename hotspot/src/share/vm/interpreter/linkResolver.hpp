@@ -130,13 +130,12 @@ class LinkResolver: AllStatic {
   static void lookup_polymorphic_method         (methodHandle& result, KlassHandle klass, Symbol* name, Symbol* signature,
                                                  KlassHandle current_klass, Handle *appendix_result_or_null, Handle *method_type_result, TRAPS);
 
-  static int vtable_index_of_interface_method(KlassHandle klass, methodHandle resolved_method, TRAPS);
   static void resolve_klass           (KlassHandle& result, constantPoolHandle  pool, int index, TRAPS);
 
   static void resolve_pool  (KlassHandle& resolved_klass, Symbol*& method_name, Symbol*& method_signature, KlassHandle& current_klass, constantPoolHandle pool, int index, TRAPS);
 
   static void resolve_interface_method(methodHandle& resolved_method, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass, bool check_access, TRAPS);
-  static void resolve_method          (methodHandle& resolved_method, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass, bool check_access, TRAPS);
+  static void resolve_method          (methodHandle& resolved_method, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass, bool check_access, bool require_methodref, TRAPS);
 
   static void linktime_resolve_static_method    (methodHandle& resolved_method, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass, bool check_access, TRAPS);
   static void linktime_resolve_special_method   (methodHandle& resolved_method, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass, bool check_access, TRAPS);
@@ -186,6 +185,7 @@ class LinkResolver: AllStatic {
   static methodHandle resolve_interface_call_or_null(KlassHandle receiver_klass, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass);
   static methodHandle resolve_static_call_or_null   (KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass);
   static methodHandle resolve_special_call_or_null  (KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass);
+  static int vtable_index_of_interface_method(KlassHandle klass, methodHandle resolved_method);
 
   // same as above for compile-time resolution; returns vtable_index if current_klass if linked
   static int resolve_virtual_vtable_index  (KlassHandle receiver_klass, KlassHandle resolved_klass, Symbol* method_name, Symbol* method_signature, KlassHandle current_klass);

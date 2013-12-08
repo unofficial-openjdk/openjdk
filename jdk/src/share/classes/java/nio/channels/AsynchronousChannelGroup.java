@@ -66,7 +66,6 @@ import java.util.concurrent.TimeUnit;
  *     <th>Description</th>
  *   </tr>
  *   <tr>
- *   <tr>
  *     <td> {@code java.nio.channels.DefaultThreadPool.threadFactory} </td>
  *     <td> The value of this property is taken to be the fully-qualified name
  *     of a concrete {@link java.util.concurrent.ThreadFactory ThreadFactory}
@@ -199,7 +198,7 @@ public abstract class AsynchronousChannelGroup {
      *
      * <p> The {@code initialSize} parameter may be used by the implementation
      * as a <em>hint</em> as to the initial number of tasks it may submit. For
-     * example, it may be used to indictae the initial number of threads that
+     * example, it may be used to indicate the initial number of threads that
      * wait on I/O events.
      *
      * <p> The executor is intended to be used exclusively by the resulting

@@ -42,6 +42,13 @@ Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
     // so disable this for now
     return NULL;
   }
+
+  if (n->is_MathExact()) {
+    // MathExact has projections that are not correctly handled in the code
+    // below.
+    return NULL;
+  }
+
   int wins = 0;
   assert(!n->is_CFG(), "");
   assert(region->is_Region(), "");
@@ -238,7 +245,7 @@ void PhaseIdealLoop::dominated_by( Node *prevdom, Node *iff, bool flip, bool exc
   ProjNode* dp_proj  = dp->as_Proj();
   ProjNode* unc_proj = iff->as_If()->proj_out(1 - dp_proj->_con)->as_Proj();
   if (exclude_loop_predicate &&
-      is_uncommon_trap_proj(unc_proj, Deoptimization::Reason_predicate))
+      unc_proj->is_uncommon_trap_proj(Deoptimization::Reason_predicate))
     return; // Let IGVN transformation change control dependence.
 
   IdealLoopTree *old_loop = get_loop(dp);
