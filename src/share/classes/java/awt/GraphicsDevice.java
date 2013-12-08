@@ -46,7 +46,7 @@ import sun.awt.SunToolkit;
  * following code sample demonstrates how to create a <code>JFrame</code>
  * object for each <code>GraphicsConfiguration</code> on each screen
  * device in the <code>GraphicsEnvironment</code>:
- * <pre>
+ * <pre>{@code
  *   GraphicsEnvironment ge = GraphicsEnvironment.
  *   getLocalGraphicsEnvironment();
  *   GraphicsDevice[] gs = ge.getScreenDevices();
@@ -66,7 +66,7 @@ import sun.awt.SunToolkit;
  *         f.show();
  *      }
  *   }
- * </pre>
+ * }</pre>
  * <p>
  * For more information on full-screen exclusive mode API, see the
  * <a href="http://docs.oracle.com/javase/tutorial/extra/fullscreen/index.html">
@@ -162,7 +162,7 @@ public abstract class GraphicsDevice {
      * <code>GraphicsEnvironment</code>.  Although there is
      * no public method to set this <code>String</code>, a programmer can
      * use the <code>String</code> for debugging purposes.  Vendors of
-     * the Java<sup><font size=-2>TM</font></sup> Runtime Environment can
+     * the Java&trade; Runtime Environment can
      * format the return value of the <code>String</code>.  To determine
      * how to interpret the value of the <code>String</code>, contact the
      * vendor of your Java Runtime.  To find out who the vendor is, from
@@ -325,7 +325,14 @@ public abstract class GraphicsDevice {
             // Note that we use the graphics configuration of the device,
             // not the window's, because we're setting the fs window for
             // this device.
-            Rectangle screenBounds = getDefaultConfiguration().getBounds();
+            final GraphicsConfiguration gc = getDefaultConfiguration();
+            final Rectangle screenBounds = gc.getBounds();
+            if (SunToolkit.isDispatchThreadForAppContext(fullScreenWindow)) {
+                // Update graphics configuration here directly and do not wait
+                // asynchronous notification from the peer. Note that
+                // setBounds() will reset a GC, if it was set incorrectly.
+                fullScreenWindow.setGraphicsConfiguration(gc);
+            }
             fullScreenWindow.setBounds(screenBounds.x, screenBounds.y,
                                        screenBounds.width, screenBounds.height);
             fullScreenWindow.setVisible(true);
@@ -334,12 +341,11 @@ public abstract class GraphicsDevice {
     }
 
     /**
-     * Returns the {@code Window} object representing the
+     * Returns the <code>Window</code> object representing the
      * full-screen window if the device is in full-screen mode.
      *
-     * @return the full-screen window, or {@code null} if the device is
-     * not in full-screen mode. The {@code Window} object can differ
-     * from the object previously set by {@code setFullScreenWindow}.
+     * @return the full-screen window, or <code>null</code> if the device is
+     * not in full-screen mode.
      * @see #setFullScreenWindow(Window)
      * @since 1.4
      */

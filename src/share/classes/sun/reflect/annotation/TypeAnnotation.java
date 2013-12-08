@@ -40,7 +40,7 @@ import java.util.List;
  * distinguish between '@A Inner.@B Outer' in for example nested types),
  * target info and the declaration the TypeAnnotaiton was parsed from.
  */
-public class TypeAnnotation {
+public final class TypeAnnotation {
     private final TypeAnnotationTargetInfo targetInfo;
     private final LocationInfo loc;
     private final Annotation annotation;
@@ -92,7 +92,8 @@ public class TypeAnnotation {
         METHOD_FORMAL_PARAMETER,
         THROWS;
     }
-    public static class TypeAnnotationTargetInfo {
+
+    public static final class TypeAnnotationTargetInfo {
         private final TypeAnnotationTarget target;
         private final int count;
         private final int secondaryIndex;
@@ -131,7 +132,7 @@ public class TypeAnnotation {
         }
     }
 
-    public static class LocationInfo {
+    public static final class LocationInfo {
         private final int depth;
         private final Location[] locations;
 
@@ -146,13 +147,13 @@ public class TypeAnnotation {
         public static final LocationInfo BASE_LOCATION = new LocationInfo();
 
         public static LocationInfo parseLocationInfo(ByteBuffer buf) {
-            int depth = buf.get();
+            int depth = buf.get() & 0xFF;
             if (depth == 0)
                 return BASE_LOCATION;
             Location[] locations = new Location[depth];
             for (int i = 0; i < depth; i++) {
                 byte tag = buf.get();
-                byte index = buf.get();
+                short index = (short)(buf.get() & 0xFF);
                 if (!(tag == 0 || tag == 1 | tag == 2 || tag == 3))
                     throw new AnnotationFormatError("Bad Location encoding in Type Annotation");
                 if (tag != 3 && index != 0)
@@ -163,26 +164,26 @@ public class TypeAnnotation {
         }
 
         public LocationInfo pushArray() {
-            return pushLocation((byte)0, (byte)0);
+            return pushLocation((byte)0, (short)0);
         }
 
         public LocationInfo pushInner() {
-            return pushLocation((byte)1, (byte)0);
+            return pushLocation((byte)1, (short)0);
         }
 
         public LocationInfo pushWildcard() {
-            return pushLocation((byte) 2, (byte) 0);
+            return pushLocation((byte) 2, (short) 0);
         }
 
-        public LocationInfo pushTypeArg(byte index) {
+        public LocationInfo pushTypeArg(short index) {
             return pushLocation((byte) 3, index);
         }
 
-        public LocationInfo pushLocation(byte tag, byte index) {
+        public LocationInfo pushLocation(byte tag, short index) {
             int newDepth = this.depth + 1;
             Location[] res = new Location[newDepth];
             System.arraycopy(this.locations, 0, res, 0, depth);
-            res[newDepth - 1] = new Location(tag, index);
+            res[newDepth - 1] = new Location(tag, (short)(index & 0xFF));
             return new LocationInfo(newDepth, res);
         }
 
@@ -204,15 +205,15 @@ public class TypeAnnotation {
             return true;
         }
 
-        public static class Location {
+        public static final class Location {
             public final byte tag;
-            public final byte index;
+            public final short index;
 
             boolean isSameLocation(Location other) {
                 return tag == other.tag && index == other.index;
             }
 
-            public Location(byte tag, byte index) {
+            public Location(byte tag, short index) {
                 this.tag = tag;
                 this.index = index;
             }

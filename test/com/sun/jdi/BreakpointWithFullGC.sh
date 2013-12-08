@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2013 Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -60,8 +60,9 @@ public class $1 {
     public static void main(String[] args) {
         for (int i = 0; i < 10; i++) {
             System.out.println("top of loop");     // @1 breakpoint
-            init(1000000);
+            init(500000);
             objList.clear();
+            System.gc();
             System.out.println("bottom of loop");  // @1 breakpoint
         }
         System.out.println("end of test");         // @1 breakpoint

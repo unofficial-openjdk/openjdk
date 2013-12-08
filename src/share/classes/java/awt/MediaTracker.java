@@ -66,7 +66,7 @@ import java.awt.image.ImageObserver;
  * <p>
  * Here is an example of using <code>MediaTracker</code>:
  * <p>
- * <hr><blockquote><pre>
+ * <hr><blockquote><pre>{@code
  * import java.applet.Applet;
  * import java.awt.Color;
  * import java.awt.Image;
@@ -160,7 +160,7 @@ import java.awt.image.ImageObserver;
  *          }
  *      }
  * }
- * </pre></blockquote><hr>
+ * } </pre></blockquote><hr>
  *
  * @author      Jim Graham
  * @since       JDK1.0
@@ -744,7 +744,7 @@ public class MediaTracker implements java.io.Serializable {
      * All instances of <code>Image</code> being tracked
      * under the specified ID are removed regardless of scale.
      * @param      image the image to be removed
-     * @param      id the tracking ID frrom which to remove the image
+     * @param      id the tracking ID from which to remove the image
      * @see        java.awt.MediaTracker#removeImage(java.awt.Image)
      * @see        java.awt.MediaTracker#removeImage(java.awt.Image, int, int, int)
      * @since      JDK1.1
