@@ -4080,7 +4080,7 @@ instanceKlassHandle ClassFileParser::parseClassFile(Symbol* name,
 
     // Generate any default methods - default methods are interface methods
     // that have a default implementation.  This is new with Lambda project.
-    if (has_default_methods && !access_flags.is_interface() ) {
+    if (has_default_methods ) {
       DefaultMethods::generate_default_methods(
           this_klass(), &all_mirandas, CHECK_(nullHandle));
     }
@@ -4483,8 +4483,8 @@ void ClassFileParser::check_final_method_override(instanceKlassHandle this_klass
   for (int index = 0; index < num_methods; index++) {
     Method* m = methods->at(index);
 
-    // skip static and <init> methods
-    if ((!m->is_static()) &&
+    // skip private, static, and <init> methods
+    if ((!m->is_private() && !m->is_static()) &&
         (m->name() != vmSymbols::object_initializer_name())) {
 
       Symbol* name = m->name();

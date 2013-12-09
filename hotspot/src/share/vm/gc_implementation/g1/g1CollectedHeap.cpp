@@ -56,6 +56,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/oop.pcgc.inline.hpp"
 #include "runtime/vmThread.hpp"
+#include "utilities/ticks.hpp"
 
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
@@ -1284,7 +1285,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
   }
 
   STWGCTimer* gc_timer = G1MarkSweep::gc_timer();
-  gc_timer->register_gc_start(os::elapsed_counter());
+  gc_timer->register_gc_start();
 
   SerialOldTracer* gc_tracer = G1MarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gc_cause(), gc_timer->gc_start());
@@ -1552,7 +1553,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
 
     post_full_gc_dump(gc_timer);
 
-    gc_timer->register_gc_end(os::elapsed_counter());
+    gc_timer->register_gc_end();
     gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
   }
 
@@ -2008,7 +2009,7 @@ jint G1CollectedHeap::initialize() {
 
   size_t init_byte_size = collector_policy()->initial_heap_byte_size();
   size_t max_byte_size = collector_policy()->max_heap_byte_size();
-  size_t heap_alignment = collector_policy()->max_alignment();
+  size_t heap_alignment = collector_policy()->heap_alignment();
 
   // Ensure that the sizes are properly aligned.
   Universe::check_alignment(init_byte_size, HeapRegion::GrainBytes, "g1 heap");
@@ -2482,7 +2483,7 @@ void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
   FullGCCount_lock->notify_all();
 }
 
-void G1CollectedHeap::register_concurrent_cycle_start(jlong start_time) {
+void G1CollectedHeap::register_concurrent_cycle_start(const Ticks& start_time) {
   _concurrent_cycle_started = true;
   _gc_timer_cm->register_gc_start(start_time);
 
@@ -2496,7 +2497,7 @@ void G1CollectedHeap::register_concurrent_cycle_end() {
       _gc_tracer_cm->report_concurrent_mode_failure();
     }
 
-    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_timer_cm->register_gc_end();
     _gc_tracer_cm->report_gc_end(_gc_timer_cm->gc_end(), _gc_timer_cm->time_partitions());
 
     _concurrent_cycle_started = false;
@@ -3887,7 +3888,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     return false;
   }
 
-  _gc_timer_stw->register_gc_start(os::elapsed_counter());
+  _gc_timer_stw->register_gc_start();
 
   _gc_tracer_stw->report_gc_start(gc_cause(), _gc_timer_stw->gc_start());
 
@@ -4265,7 +4266,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     _gc_tracer_stw->report_evacuation_info(&evacuation_info);
     _gc_tracer_stw->report_tenuring_threshold(_g1_policy->tenuring_threshold());
-    _gc_timer_stw->register_gc_end(os::elapsed_counter());
+    _gc_timer_stw->register_gc_end();
     _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());
   }
   // It should now be safe to tell the concurrent mark thread to start
@@ -6656,13 +6657,18 @@ class RegisterNMethodOopClosure: public OopClosure {
     if (!oopDesc::is_null(heap_oop)) {
       oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
       HeapRegion* hr = _g1h->heap_region_containing(obj);
-      assert(!hr->isHumongous(), "code root in humongous region?");
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to add code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
 
       // HeapRegion::add_strong_code_root() avoids adding duplicate
       // entries but having duplicates is  OK since we "mark" nmethods
       // as visited when we scan the strong code root lists during the GC.
       hr->add_strong_code_root(_nm);
-      assert(hr->rem_set()->strong_code_roots_list_contains(_nm), "add failed?");
+      assert(hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to add code root "PTR_FORMAT" to remembered set of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));
     }
   }
 
@@ -6683,9 +6689,15 @@ class UnregisterNMethodOopClosure: public OopClosure {
     if (!oopDesc::is_null(heap_oop)) {
       oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
       HeapRegion* hr = _g1h->heap_region_containing(obj);
-      assert(!hr->isHumongous(), "code root in humongous region?");
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to remove code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
       hr->remove_strong_code_root(_nm);
-      assert(!hr->rem_set()->strong_code_roots_list_contains(_nm), "remove failed?");
+      assert(!hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to remove code root "PTR_FORMAT" of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));
     }
   }
 
@@ -6716,7 +6728,9 @@ void G1CollectedHeap::unregister_nmethod(nmethod* nm) {
 class MigrateCodeRootsHeapRegionClosure: public HeapRegionClosure {
 public:
   bool doHeapRegion(HeapRegion *hr) {
-    assert(!hr->isHumongous(), "humongous region in collection set?");
+    assert(!hr->isHumongous(),
+           err_msg("humongous region "HR_FORMAT" should not have been added to collection set",
+                   HR_FORMAT_PARAMS(hr)));
     hr->migrate_strong_code_roots();
     return false;
   }
@@ -6796,9 +6810,13 @@ public:
 
   bool doHeapRegion(HeapRegion *hr) {
     HeapRegionRemSet* hrrs = hr->rem_set();
-    if (hr->isHumongous()) {
-      // Code roots should never be attached to a humongous region
-      assert(hrrs->strong_code_roots_list_length() == 0, "sanity");
+    if (hr->continuesHumongous()) {
+      // Code roots should never be attached to a continuation of a humongous region
+      assert(hrrs->strong_code_roots_list_length() == 0,
+             err_msg("code roots should never be attached to continuations of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT", but has "INT32_FORMAT,
+                     HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region()),
+                     hrrs->strong_code_roots_list_length()));
       return false;
     }
 

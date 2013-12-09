@@ -204,7 +204,7 @@ DefNewGeneration::DefNewGeneration(ReservedSpace rs,
   // Compute the maximum eden and survivor space sizes. These sizes
   // are computed assuming the entire reserved space is committed.
   // These values are exported as performance counters.
-  uintx alignment = GenCollectedHeap::heap()->collector_policy()->min_alignment();
+  uintx alignment = GenCollectedHeap::heap()->collector_policy()->space_alignment();
   uintx size = _virtual_space.reserved_size();
   _max_survivor_size = compute_survivor_size(size, alignment);
   _max_eden_size = size - (2*_max_survivor_size);
@@ -235,7 +235,7 @@ void DefNewGeneration::compute_space_boundaries(uintx minimum_eden_size,
                                                 bool clear_space,
                                                 bool mangle_space) {
   uintx alignment =
-    GenCollectedHeap::heap()->collector_policy()->min_alignment();
+    GenCollectedHeap::heap()->collector_policy()->space_alignment();
 
   // If the spaces are being cleared (only done at heap initialization
   // currently), the survivor spaces need not be empty.
@@ -473,7 +473,7 @@ size_t DefNewGeneration::free() const {
 }
 
 size_t DefNewGeneration::max_capacity() const {
-  const size_t alignment = GenCollectedHeap::heap()->collector_policy()->min_alignment();
+  const size_t alignment = GenCollectedHeap::heap()->collector_policy()->space_alignment();
   const size_t reserved_bytes = reserved().byte_size();
   return reserved_bytes - compute_survivor_size(reserved_bytes, alignment);
 }
@@ -562,7 +562,7 @@ void DefNewGeneration::collect(bool   full,
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
 
-  _gc_timer->register_gc_start(os::elapsed_counter());
+  _gc_timer->register_gc_start();
   DefNewTracer gc_tracer;
   gc_tracer.report_gc_start(gch->gc_cause(), _gc_timer->gc_start());
 
@@ -709,7 +709,7 @@ void DefNewGeneration::collect(bool   full,
   gch->trace_heap_after_gc(&gc_tracer);
   gc_tracer.report_tenuring_threshold(tenuring_threshold());
 
-  _gc_timer->register_gc_end(os::elapsed_counter());
+  _gc_timer->register_gc_end();
 
   gc_tracer.report_gc_end(_gc_timer->gc_end(), _gc_timer->time_partitions());
 }

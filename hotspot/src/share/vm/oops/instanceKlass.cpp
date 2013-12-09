@@ -1051,6 +1051,18 @@ bool InstanceKlass::implements_interface(Klass* k) const {
   return false;
 }
 
+bool InstanceKlass::is_same_or_direct_interface(Klass *k) const {
+  // Verify direct super interface
+  if (this == k) return true;
+  assert(k->is_interface(), "should be an interface class");
+  for (int i = 0; i < local_interfaces()->length(); i++) {
+    if (local_interfaces()->at(i) == k) {
+      return true;
+    }
+  }
+  return false;
+}
+
 objArrayOop InstanceKlass::allocate_objArray(int n, int length, TRAPS) {
   if (length < 0) THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
   if (length > arrayOopDesc::max_array_length(T_OBJECT)) {
@@ -2210,6 +2222,10 @@ void InstanceKlass::clean_method_data(BoolObjectClosure* is_alive) {
            mdo->is_valid(data);
            data = mdo->next_data(data)) {
         data->clean_weak_klass_links(is_alive);
+      }
+      ParametersTypeData* parameters = mdo->parameters_type_data();
+      if (parameters != NULL) {
+        parameters->clean_weak_klass_links(is_alive);
       }
     }
   }

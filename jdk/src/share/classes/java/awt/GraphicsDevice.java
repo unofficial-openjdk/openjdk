@@ -46,7 +46,7 @@ import sun.awt.SunToolkit;
  * following code sample demonstrates how to create a <code>JFrame</code>
  * object for each <code>GraphicsConfiguration</code> on each screen
  * device in the <code>GraphicsEnvironment</code>:
- * <pre>
+ * <pre>{@code
  *   GraphicsEnvironment ge = GraphicsEnvironment.
  *   getLocalGraphicsEnvironment();
  *   GraphicsDevice[] gs = ge.getScreenDevices();
@@ -66,7 +66,7 @@ import sun.awt.SunToolkit;
  *         f.show();
  *      }
  *   }
- * </pre>
+ * }</pre>
  * <p>
  * For more information on full-screen exclusive mode API, see the
  * <a href="http://docs.oracle.com/javase/tutorial/extra/fullscreen/index.html">
@@ -341,12 +341,11 @@ public abstract class GraphicsDevice {
     }
 
     /**
-     * Returns the {@code Window} object representing the
+     * Returns the <code>Window</code> object representing the
      * full-screen window if the device is in full-screen mode.
      *
-     * @return the full-screen window, or {@code null} if the device is
-     * not in full-screen mode. The {@code Window} object can differ
-     * from the object previously set by {@code setFullScreenWindow}.
+     * @return the full-screen window, or <code>null</code> if the device is
+     * not in full-screen mode.
      * @see #setFullScreenWindow(Window)
      * @since 1.4
      */
