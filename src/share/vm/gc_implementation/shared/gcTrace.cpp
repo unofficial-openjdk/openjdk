@@ -33,6 +33,7 @@
 #include "memory/referenceProcessorStats.hpp"
 #include "runtime/os.hpp"
 #include "utilities/globalDefinitions.hpp"
+#include "utilities/ticks.inline.hpp"
 
 #ifndef SERIALGC
 #include "gc_implementation/g1/evacuationInfo.hpp"
@@ -46,7 +47,7 @@ static GCId create_new_gc_id() {
   return GCTracer_next_gc_id++;
 }
 
-void GCTracer::report_gc_start_impl(GCCause::Cause cause, jlong timestamp) {
+void GCTracer::report_gc_start_impl(GCCause::Cause cause, const Ticks& timestamp) {
   assert_unset_gc_id();
 
   GCId gc_id = create_new_gc_id();
@@ -55,7 +56,7 @@ void GCTracer::report_gc_start_impl(GCCause::Cause cause, jlong timestamp) {
   _shared_gc_info.set_start_timestamp(timestamp);
 }
 
-void GCTracer::report_gc_start(GCCause::Cause cause, jlong timestamp) {
+void GCTracer::report_gc_start(GCCause::Cause cause, const Ticks& timestamp) {
   assert_unset_gc_id();
 
   report_gc_start_impl(cause, timestamp);
@@ -65,7 +66,7 @@ bool GCTracer::has_reported_gc_start() const {
   return _shared_gc_info.id() != SharedGCInfo::UNSET_GCID;
 }
 
-void GCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
+void GCTracer::report_gc_end_impl(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
 
   _shared_gc_info.set_sum_of_pauses(time_partitions->sum_of_pauses());
@@ -76,7 +77,7 @@ void GCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitio
   send_garbage_collection_event();
 }
 
-void GCTracer::report_gc_end(jlong timestamp, TimePartitions* time_partitions) {
+void GCTracer::report_gc_end(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
 
   report_gc_end_impl(timestamp, time_partitions);
@@ -97,10 +98,10 @@ class ObjectCountEventSenderClosure : public KlassInfoClosure {
   const GCId _gc_id;
   const double _size_threshold_percentage;
   const size_t _total_size_in_words;
-  const jlong _timestamp;
+  const Ticks _timestamp;
 
  public:
-  ObjectCountEventSenderClosure(GCId gc_id, size_t total_size_in_words, jlong timestamp) :
+  ObjectCountEventSenderClosure(GCId gc_id, size_t total_size_in_words, const Ticks& timestamp) :
     _gc_id(gc_id),
     _size_threshold_percentage(ObjectCountCutOffPercent / 100),
     _total_size_in_words(total_size_in_words),
@@ -154,8 +155,7 @@ void GCTracer::report_object_count_after_gc(BoolObjectClosure *is_alive_cl) {
       ObjectCountFilter object_filter(is_alive_cl);
       HeapInspection::populate_table(&cit, false, &object_filter);
 
-      jlong timestamp = os::elapsed_counter();
-      ObjectCountEventSenderClosure event_sender(_shared_gc_info.id(), cit.size_of_instances_in_words(), timestamp);
+      ObjectCountEventSenderClosure event_sender(_shared_gc_info.id(), cit.size_of_instances_in_words(), Ticks::now());
       cit.iterate(&event_sender);
     }
   }
@@ -168,7 +168,7 @@ void GCTracer::report_gc_heap_summary(GCWhen::Type when, const GCHeapSummary& he
   send_perm_gen_summary_event(when, perm_gen_summary);
 }
 
-void YoungGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
+void YoungGCTracer::report_gc_end_impl(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
   assert(_tenuring_threshold != UNSET_TENURING_THRESHOLD, "Tenuring threshold has not been reported");
 
@@ -188,14 +188,14 @@ void YoungGCTracer::report_tenuring_threshold(const uint tenuring_threshold) {
   _tenuring_threshold = tenuring_threshold;
 }
 
-void OldGCTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
+void OldGCTracer::report_gc_end_impl(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
 
   GCTracer::report_gc_end_impl(timestamp, time_partitions);
   send_old_gc_event();
 }
 
-void ParallelOldTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
+void ParallelOldTracer::report_gc_end_impl(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
 
   OldGCTracer::report_gc_end_impl(timestamp, time_partitions);
@@ -221,7 +221,7 @@ void G1NewTracer::report_yc_type(G1YCType type) {
   _g1_young_gc_info.set_type(type);
 }
 
-void G1NewTracer::report_gc_end_impl(jlong timestamp, TimePartitions* time_partitions) {
+void G1NewTracer::report_gc_end_impl(const Ticks& timestamp, TimePartitions* time_partitions) {
   assert_set_gc_id();
 
   YoungGCTracer::report_gc_end_impl(timestamp, time_partitions);

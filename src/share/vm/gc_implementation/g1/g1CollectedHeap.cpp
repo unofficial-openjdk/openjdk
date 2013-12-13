@@ -56,6 +56,7 @@
 #include "oops/oop.pcgc.inline.hpp"
 #include "runtime/aprofiler.hpp"
 #include "runtime/vmThread.hpp"
+#include "utilities/ticks.hpp"
 
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
@@ -1286,7 +1287,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
   }
 
   STWGCTimer* gc_timer = G1MarkSweep::gc_timer();
-  gc_timer->register_gc_start(os::elapsed_counter());
+  gc_timer->register_gc_start();
 
   SerialOldTracer* gc_tracer = G1MarkSweep::gc_tracer();
   gc_tracer->report_gc_start(gc_cause(), gc_timer->gc_start());
@@ -1546,8 +1547,7 @@ bool G1CollectedHeap::do_collection(bool explicit_gc,
     post_full_gc_dump(gc_timer);
   }
 
-  gc_timer->register_gc_end(os::elapsed_counter());
-
+  gc_timer->register_gc_end();
   gc_tracer->report_gc_end(gc_timer->gc_end(), gc_timer->time_partitions());
 
   return true;
@@ -2519,7 +2519,7 @@ void G1CollectedHeap::increment_old_marking_cycles_completed(bool concurrent) {
   FullGCCount_lock->notify_all();
 }
 
-void G1CollectedHeap::register_concurrent_cycle_start(jlong start_time) {
+void G1CollectedHeap::register_concurrent_cycle_start(const Ticks& start_time) {
   _concurrent_cycle_started = true;
   _gc_timer_cm->register_gc_start(start_time);
 
@@ -2529,7 +2529,7 @@ void G1CollectedHeap::register_concurrent_cycle_start(jlong start_time) {
 
 void G1CollectedHeap::register_concurrent_cycle_end() {
   if (_concurrent_cycle_started) {
-    _gc_timer_cm->register_gc_end(os::elapsed_counter());
+    _gc_timer_cm->register_gc_end();
 
     if (_cm->has_aborted()) {
       _gc_tracer_cm->report_concurrent_mode_failure();
@@ -3817,7 +3817,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     return false;
   }
 
-  _gc_timer_stw->register_gc_start(os::elapsed_counter());
+  _gc_timer_stw->register_gc_start();
 
   _gc_tracer_stw->report_gc_start(gc_cause(), _gc_timer_stw->gc_start());
 
@@ -4195,7 +4195,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
     _gc_tracer_stw->report_evacuation_info(&evacuation_info);
     _gc_tracer_stw->report_tenuring_threshold(_g1_policy->tenuring_threshold());
-    _gc_timer_stw->register_gc_end(os::elapsed_counter());
+    _gc_timer_stw->register_gc_end();
     _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());
   }
 

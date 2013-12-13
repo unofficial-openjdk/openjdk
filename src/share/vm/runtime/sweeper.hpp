@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 #ifndef SHARE_VM_RUNTIME_SWEEPER_HPP
 #define SHARE_VM_RUNTIME_SWEEPER_HPP
 
+#include "utilities/ticks.hpp"
 // An NmethodSweeper is an incremental cleaner for:
 //    - cleanup inline caches
 //    - reclamation of unreferences zombie nmethods
@@ -56,12 +57,12 @@ class NMethodSweeper : public AllStatic {
   // Stat counters
   static int       _number_of_flushes;            // Total of full traversals caused by full cache
   static int       _total_nof_methods_reclaimed;  // Accumulated nof methods flushed
-  static jlong     _total_time_sweeping;          // Accumulated time sweeping
-  static jlong     _total_time_this_sweep;        // Total time this sweep
-  static jlong     _peak_sweep_time;              // Peak time for a full sweep
-  static jlong     _peak_sweep_fraction_time;     // Peak time sweeping one fraction
-  static jlong     _total_disconnect_time;        // Total time cleaning code mem
-  static jlong     _peak_disconnect_time;         // Peak time cleaning code mem
+  static Tickspan     _total_time_sweeping;          // Accumulated time sweeping
+  static Tickspan     _total_time_this_sweep;        // Total time this sweep
+  static Tickspan     _peak_sweep_time;              // Peak time for a full sweep
+  static Tickspan     _peak_sweep_fraction_time;     // Peak time sweeping one fraction
+  static Tickspan     _total_disconnect_time;        // Total time cleaning code mem
+  static Tickspan     _peak_disconnect_time;         // Peak time cleaning code mem
 
   static void process_nmethod(nmethod *nm);
 
@@ -71,11 +72,11 @@ class NMethodSweeper : public AllStatic {
   static long traversal_count()              { return _traversals; }
   static int  number_of_flushes()            { return _number_of_flushes; }
   static int  total_nof_methods_reclaimed()  { return _total_nof_methods_reclaimed; }
-  static jlong total_time_sweeping()         { return _total_time_sweeping; }
-  static jlong peak_sweep_time()             { return _peak_sweep_time; }
-  static jlong peak_sweep_fraction_time()    { return _peak_sweep_fraction_time; }
-  static jlong total_disconnect_time()       { return _total_disconnect_time; }
-  static jlong peak_disconnect_time()        { return _peak_disconnect_time; }
+  static const Tickspan total_time_sweeping()         { return _total_time_sweeping; }
+  static const Tickspan peak_sweep_time()             { return _peak_sweep_time; }
+  static const Tickspan peak_sweep_fraction_time()    { return _peak_sweep_fraction_time; }
+  static const Tickspan total_disconnect_time()       { return _total_disconnect_time; }
+  static const Tickspan peak_disconnect_time()        { return _peak_disconnect_time; }
 
 #ifdef ASSERT
   // Keep track of sweeper activity in the ring buffer

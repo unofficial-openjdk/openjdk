@@ -585,7 +585,7 @@ klassOop SystemDictionary::resolve_instance_class_or_null(Symbol* name, Handle c
   assert(name != NULL && !FieldType::is_array(name) &&
          !FieldType::is_obj(name), "invalid class name");
 
-  TracingTime class_load_start_time = Tracing::time();
+  const Ticks class_load_start_time = Ticks::now();
 
   // UseNewReflection
   // Fix for 4474172; see evaluation for more details
@@ -946,7 +946,7 @@ klassOop SystemDictionary::parse_stream(Symbol* class_name,
                                         TRAPS) {
   TempNewSymbol parsed_name = NULL;
 
-  TracingTime class_load_start_time = Tracing::time();
+  const Ticks class_load_start_time = Ticks::now();
 
   // Parse the stream. Note that we do this even though this klass might
   // already be present in the SystemDictionary, otherwise we would not
@@ -2607,13 +2607,12 @@ void SystemDictionary::verify_obj_klass_present(Handle obj,
 }
 
 // utility function for posting class load event
-void SystemDictionary::post_class_load_event(TracingTime start_time,
+void SystemDictionary::post_class_load_event(const Ticks& start_time,
                                              instanceKlassHandle k,
                                              Handle initiating_loader) {
 #if INCLUDE_TRACE
   EventClassLoad event(UNTIMED);
   if (event.should_commit()) {
-    event.set_endtime(Tracing::time());
     event.set_starttime(start_time);
     event.set_loadedClass(k());
     oop defining_class_loader = k->class_loader();
@@ -2632,7 +2631,7 @@ void SystemDictionary::post_class_unload_events(BoolObjectClosure* is_alive) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
   if (Tracing::enabled()) {
     _should_write_unload_events = Tracing::is_event_enabled(TraceClassUnloadEvent);
-    _class_unload_time = Tracing::time();
+    _class_unload_time = Ticks::now();
     _is_alive = is_alive;
     classes_do(&class_unload_event);
 
@@ -2648,7 +2647,7 @@ void SystemDictionary::post_class_unload_events(BoolObjectClosure* is_alive) {
 
 #if INCLUDE_TRACE
 
-TracingTime SystemDictionary::_class_unload_time;
+Ticks SystemDictionary::_class_unload_time;
 BoolObjectClosure* SystemDictionary::_is_alive = NULL;
 int SystemDictionary::_no_of_classes_unloading = 0;
 bool SystemDictionary::_should_write_unload_events = false;

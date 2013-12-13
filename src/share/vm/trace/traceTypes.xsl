@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 <xsl:import href="xsl_util.xsl"/>
+<xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
 
 <xsl:template match="/">
   <xsl:call-template name="file-header"/>
@@ -32,11 +32,13 @@
 #ifndef TRACEFILES_JFRTYPES_HPP
 #define TRACEFILES_JFRTYPES_HPP
 
-#include "trace/traceDataTypes.hpp"
-#include "utilities/globalDefinitions.hpp"
-#include "oops/symbol.hpp"
+
 #include "oops/klassOop.hpp"
 #include "oops/methodOop.hpp"
+#include "oops/symbol.hpp"
+#include "trace/traceDataTypes.hpp"
+#include "utilities/globalDefinitions.hpp"
+#include "utilities/ticks.hpp"
 
 enum JVMContentType {
   _not_a_content_type = (JVM_CONTENT_TYPES_START - 1),
