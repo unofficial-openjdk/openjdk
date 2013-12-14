@@ -95,4 +95,9 @@ public interface JavaLangAccess {
      * inherited AccessControlContext.
      */
     Thread newThreadWithAcc(Runnable target, AccessControlContext acc);
+
+    /**
+     * Invokes the finalize method of the given object.
+     */
+    void invokeFinalize(Object o) throws Throwable;
 }
