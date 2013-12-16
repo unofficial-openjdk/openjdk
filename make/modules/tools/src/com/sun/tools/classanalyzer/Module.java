@@ -558,18 +558,13 @@ public class Module implements Comparable<Module> {
             if (m != null)
                 return m;
 
-            String[] suffices = getModuleProperty("module.view.suffix", "").split("\\s+");
-            for (String s : suffices) {
-                int i = name.lastIndexOf("." + s);
-                if (i != -1 && name.endsWith("." + s)) {
-                    String mn = name.substring(0, i);
-                    if ((m = findModule(mn)) != null) {
-                        if (m.getView(name) == null)
-                            throw new RuntimeException("module view " + name + " doesn't exist");
-                        return m;
-                    }
-                }
+            // Fallback to search views
+            for (Map.Entry<String, Module> e: modules.entrySet()) {
+                m = e.getValue();
+                if (m.getView(name) != null)
+                    return m;
             }
+
             throw new RuntimeException("module " + name + " doesn't exist");
         }
 

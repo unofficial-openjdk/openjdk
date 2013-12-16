@@ -47,10 +47,9 @@ module jdk.base {
     include time;
     include unpack200;
     include xmlparser;
+    include security-jsse;
 
     include net-compat;
-
-    requires optional jdk.tls;
 
     // no META-INF/services
     requires service java.nio.channels.spi.AsynchronousChannelProvider;
@@ -226,9 +225,33 @@ module jdk.crypto.pkcs11 {
     include security-sunpkcs11;
 }
 
-module jdk.kerberos {
-    provides java.kerberos;
+
+// Aggregator module for authentication protocols and APIs
+module jdk.auth {
     include security-kerberos;
+    include security-auth;
+    include security-sasl;
+    include security-sasl-ntlm;
+
+    view jdk.kerberos {
+        // provides java.kerberos
+        exports javax.security.auth.kerberos;
+        exports org.ietf.jgss;
+        exports com.sun.security.jgss;
+    }
+
+    view jdk.sasl {
+        // provides java.sasl
+        exports javax.security.sasl;
+    }
+
+    // JDK-specific API for JAAS
+    view jdk.jaas {
+        exports com.sun.security.auth;
+        exports com.sun.security.auth.callback;
+        exports com.sun.security.auth.login;
+        exports com.sun.security.auth.module;
+    }
 
     // kerberos-related tools (windows only)
     include tools.kinit;
@@ -323,20 +346,6 @@ module jdk.rmi {
     view jdk.rmid {
         class sun.rmi.server.Activation;
     }
-}
-
-module jdk.auth {
-    provides java.auth;
-    include security-auth;
-
-    // combine SASL with JAAS
-    include security-sasl;
-    include security-sasl-ntlm;
-}
-
-module jdk.tls {
-    provides java.tls;
-    include security-jsse;
 }
 
 module jdk.deploy {
@@ -589,7 +598,6 @@ module jdk.tools {
 
 module java.compact1 {
     requires public jdk.base;
-    requires public jdk.tls;
     requires public jdk.logging;
     requires public jdk.script;
 }
@@ -607,7 +615,6 @@ module java.compact3 {
     requires public java.compact2;
 
     // SE APIs
-    requires public jdk.auth;
     requires public jdk.compiler;
     requires public jdk.httpserver;
     requires public jdk.instrument;
@@ -616,6 +623,7 @@ module java.compact3 {
     requires public jdk.kerberos;
     requires public jdk.management;
     requires public jdk.prefs;
+    requires public jdk.sasl;
     requires public jdk.security.acl;
     requires public jdk.smartcardio;
     requires public jdk.xmldsig;
@@ -624,6 +632,7 @@ module java.compact3 {
     requires public jdk.crypto.ec;
     requires public jdk.crypto.mscapi;
     requires public jdk.crypto.pkcs11;
+    requires public jdk.jaas;
     requires public jdk.sctp;
     requires public jdk.ucrypto;
 }
