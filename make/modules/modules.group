@@ -193,9 +193,6 @@ module jdk.jdbc {
     provides java.jdbc;
     include jdbc;
 
-    requires optional jdk.jaxp;
-    requires optional jdk.jta;
-    requires optional jdk.logging;
     requires service java.sql.Driver;
 }
 
