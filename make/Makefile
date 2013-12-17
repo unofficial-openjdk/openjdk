@@ -160,7 +160,7 @@ $(BIN_ZIP): $(BIN_ZIP_FILES)
 #
 # CORBA
 #
-SUBDIRS = tools javax org sun com
+SUBDIRS = tools sun/rmi javax org sun com
 
 build:
 	$(SUBDIRS-loop)
