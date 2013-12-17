@@ -43,6 +43,9 @@ RMIC_GENSRC_DIR := $(JDK_OUTPUTDIR)/gendocsrc_rmic
 
 GENCLASSES :=
 
+# Set to true to generate IIOP stub and tie classes for RMI Connector
+GENRMIIIOPCLASSES :=
+
 ##########################################################################################
 #
 # Generate RMI stubs
@@ -75,8 +78,8 @@ $(eval $(call SetupRMICompilation,RMI_IIOP,\
 		CLASSES_DIR:=$(CLASSES_DIR),\
 		STUB_CLASSES_DIR:=$(STUB_CLASSES_DIR),\
 		RUN_V12:=true,\
-		RUN_IIOP:=true,\
-		RUN_IIOP_STDPKG:=true))
+		RUN_IIOP:=$(GENRMIIIOPCLASSES),\
+		RUN_IIOP_STDPKG:=$(GENRMIIIOPCLASSES)))
 GENCLASSES += $(RMI_IIOP)
 
 # Keep generated RMI/JRMP Stub source files and copy them to RMIC_GENSRC_DIR
