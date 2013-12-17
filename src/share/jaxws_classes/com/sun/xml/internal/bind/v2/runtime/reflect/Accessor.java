@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import com.sun.xml.internal.bind.api.AccessorException;
 import com.sun.xml.internal.bind.api.JAXBRIContext;
 import com.sun.xml.internal.bind.v2.model.core.Adapter;
 import com.sun.xml.internal.bind.v2.model.impl.RuntimeModelBuilder;
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
 import com.sun.xml.internal.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.Loader;
@@ -193,7 +192,7 @@ public abstract class Accessor<BeanT, ValueT> implements Receiver {
 
     public final <T> Accessor<BeanT, T> adapt(Adapter<Type, Class> adapter) {
         return new AdaptedAccessor<BeanT, ValueT, T>(
-                (Class<T>) Navigator.REFLECTION.erasure(adapter.defaultType),
+                (Class<T>) Utils.REFLECTION_NAVIGATOR.erasure(adapter.defaultType),
                 this,
                 adapter.adapterType);
     }

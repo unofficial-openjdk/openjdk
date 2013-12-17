@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ public class WrapperBeanGenerator {
 
     private static final AbstractWrapperBeanGenerator RUNTIME_GENERATOR =
             new RuntimeWrapperBeanGenerator(new RuntimeInlineAnnotationReader(),
-                    Navigator.REFLECTION, FIELD_FACTORY);
+                    Utils.REFLECTION_NAVIGATOR, FIELD_FACTORY);
 
     private static final class RuntimeWrapperBeanGenerator extends AbstractWrapperBeanGenerator<java.lang.reflect.Type, Class, java.lang.reflect.Method, Field> {
 

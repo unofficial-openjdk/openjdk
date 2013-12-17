@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.xml.internal.bind.v2.model.impl;
 
 import java.lang.reflect.Type;
 
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeNonElement;
 import com.sun.xml.internal.bind.v2.runtime.Transducer;
 
@@ -36,7 +35,7 @@ import com.sun.xml.internal.bind.v2.runtime.Transducer;
  */
 final class RuntimeAnyTypeImpl extends AnyTypeImpl<Type,Class> implements RuntimeNonElement {
     private RuntimeAnyTypeImpl() {
-        super(Navigator.REFLECTION);
+        super(Utils.REFLECTION_NAVIGATOR);
     }
 
     public <V> Transducer<V> getTransducer() {

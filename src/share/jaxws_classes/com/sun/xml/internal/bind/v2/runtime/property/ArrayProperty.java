@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ package com.sun.xml.internal.bind.v2.runtime.property;
 
 
 import com.sun.xml.internal.bind.api.AccessorException;
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimePropertyInfo;
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
 import com.sun.xml.internal.bind.v2.runtime.reflect.Accessor;
@@ -49,7 +48,7 @@ abstract class ArrayProperty<BeanT,ListT,ItemT> extends PropertyImpl<BeanT> {
 
         assert prop.isCollection();
         lister = Lister.create(
-            Navigator.REFLECTION.erasure(prop.getRawType()),prop.id(),prop.getAdapter());
+            Utils.REFLECTION_NAVIGATOR.erasure(prop.getRawType()),prop.id(),prop.getAdapter());
         assert lister!=null;
         acc = prop.getAccessor().optimize(context);
         assert acc!=null;

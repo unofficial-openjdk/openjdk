@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,6 @@ import java.util.Map;
 import javax.xml.namespace.QName;
 
 import com.sun.xml.internal.bind.v2.model.core.TypeInfoSet;
-import com.sun.xml.internal.bind.v2.model.core.NonElement;
-import com.sun.xml.internal.bind.v2.model.nav.ReflectionNavigator;
 
 /**
  * {@link TypeInfoSet} refined for runtime.
@@ -52,5 +50,4 @@ public interface RuntimeTypeInfoSet extends TypeInfoSet<Type,Class,Field,Method>
     RuntimeElementInfo getElementInfo( Class scope, QName name );
     Map<QName,? extends RuntimeElementInfo> getElementMappings( Class scope );
     Iterable<? extends RuntimeElementInfo> getAllElements();
-    ReflectionNavigator getNavigator();
 }

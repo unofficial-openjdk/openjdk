@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@ import com.sun.istack.internal.Nullable;
 import com.sun.xml.internal.bind.api.impl.NameConverter;
 import com.sun.xml.internal.bind.v2.ContextFactory;
 import com.sun.xml.internal.bind.v2.model.annotation.RuntimeAnnotationReader;
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
 import com.sun.xml.internal.bind.v2.model.runtime.RuntimeTypeInfoSet;
 
 /**
@@ -404,7 +403,7 @@ public abstract class JAXBRIContext extends JAXBContext {
      * @since 2.0 FCS
      */
     public static @Nullable Type getBaseType(@NotNull Type type, @NotNull Class baseType) {
-        return Navigator.REFLECTION.getBaseClass(type,baseType);
+        return Utils.REFLECTION_NAVIGATOR.getBaseClass(type, baseType);
     }
 
 

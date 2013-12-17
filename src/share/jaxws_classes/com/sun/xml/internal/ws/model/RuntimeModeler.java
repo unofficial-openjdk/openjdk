@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ package com.sun.xml.internal.ws.model;
 import com.sun.istack.internal.NotNull;
 import com.sun.xml.internal.bind.api.CompositeStructure;
 import com.sun.xml.internal.bind.api.TypeReference;
-import com.sun.xml.internal.bind.v2.model.nav.Navigator;
 import com.sun.xml.internal.ws.api.BindingID;
 import com.sun.xml.internal.ws.api.SOAPVersion;
 import com.sun.xml.internal.ws.api.model.ExceptionType;
@@ -735,7 +734,7 @@ public class RuntimeModeler {
             //set the actual type argument of Holder in the TypeReference
             if (isHolder) {
                 if(clazzType==Holder.class){
-                    clazzType = Navigator.REFLECTION.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
+                    clazzType = (Class) Utils.REFLECTION_NAVIGATOR.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
                 }
             }
             Mode paramMode = isHolder ? Mode.INOUT : Mode.IN;
@@ -932,7 +931,7 @@ public class RuntimeModeler {
             //set the actual type argument of Holder in the TypeReference
             if (isHolder) {
                 if (clazzType==Holder.class)
-                    clazzType = Navigator.REFLECTION.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
+                    clazzType = (Class) Utils.REFLECTION_NAVIGATOR.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
             }
             Mode paramMode = isHolder ? Mode.INOUT : Mode.IN;
             for (Annotation annotation : pannotations[pos]) {
@@ -1172,7 +1171,7 @@ public class RuntimeModeler {
             //set the actual type argument of Holder in the TypeReference
             if (isHolder) {
                 if (clazzType==Holder.class)
-                    clazzType = Navigator.REFLECTION.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
+                    clazzType = (Class) Utils.REFLECTION_NAVIGATOR.erasure(((ParameterizedType)genericParameterTypes[pos]).getActualTypeArguments()[0]);
             }
 
             Mode paramMode = isHolder ? Mode.INOUT : Mode.IN;
@@ -1258,14 +1257,14 @@ public class RuntimeModeler {
     private Class getAsyncReturnType(Method method, Class returnType) {
         if(Response.class.isAssignableFrom(returnType)){
             Type ret = method.getGenericReturnType();
-            return Navigator.REFLECTION.erasure(((ParameterizedType)ret).getActualTypeArguments()[0]);
+            return (Class) Utils.REFLECTION_NAVIGATOR.erasure(((ParameterizedType)ret).getActualTypeArguments()[0]);
         }else{
             Type[] types = method.getGenericParameterTypes();
             Class[] params = method.getParameterTypes();
             int i = 0;
             for(Class cls : params){
                 if(AsyncHandler.class.isAssignableFrom(cls)){
-                    return Navigator.REFLECTION.erasure(((ParameterizedType)types[i]).getActualTypeArguments()[0]);
+                    return (Class) Utils.REFLECTION_NAVIGATOR.erasure(((ParameterizedType)types[i]).getActualTypeArguments()[0]);
                 }
                 i++;
             }

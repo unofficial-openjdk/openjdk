@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,15 +44,18 @@ import com.sun.xml.internal.bind.v2.runtime.Location;
  * {@link Navigator} implementation for {@code java.lang.reflect}.
  *
  */
-public final class ReflectionNavigator implements Navigator<Type, Class, Field, Method> {
+/*package*/final class ReflectionNavigator implements Navigator<Type, Class, Field, Method> {
 
-    /**
-     * Singleton.
-     *
-     * Use {@link Navigator#REFLECTION}
-     */
-    ReflectionNavigator() {
+//  ----------  Singleton -----------------
+    private static final ReflectionNavigator INSTANCE = new ReflectionNavigator();
+
+    /*package*/static ReflectionNavigator getInstance() { // accessible through reflection from Utils classes
+        return INSTANCE;
     }
+
+    private ReflectionNavigator() {
+    }
+//  ---------------------------------------
 
     public Class getSuperClass(Class clazz) {
         if (clazz == Object.class) {
@@ -64,6 +67,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         }
         return sc;
     }
+
     private static final TypeVisitor<Type, Class> baseClassFinder = new TypeVisitor<Type, Class>() {
 
         public Type onClass(Class c, Class sup) {
@@ -496,7 +500,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
             c.getDeclaredConstructor();
             return true;
         } catch (NoSuchMethodException e) {
-            return false;
+            return false; // todo: do this WITHOUT exception throw
         }
     }
 
@@ -544,13 +548,15 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         }
     }
 
-    public Class findClass(String className, Class referencePoint) {
+    @Override
+    public Class loadObjectFactory(Class referencePoint, String pkg) {
+        String clName = pkg + ".ObjectFactory";
+        ClassLoader cl = referencePoint.getClassLoader();
+        if (cl == null)
+            cl = ClassLoader.getSystemClassLoader();
+
         try {
-            ClassLoader cl = referencePoint.getClassLoader();
-            if (cl == null) {
-                cl = ClassLoader.getSystemClassLoader();
-            }
-            return cl.loadClass(className);
+            return cl.loadClass(clName);
         } catch (ClassNotFoundException e) {
             return null;
         }
@@ -569,7 +575,7 @@ public final class ReflectionNavigator implements Navigator<Type, Class, Field, 
         // class Base<T> {
         //   T getX() { ... }
         // }
-        // to be overrided. Handling this correctly needs a careful implementation
+        // to be overriden. Handling this correctly needs a careful implementation
 
         String name = method.getName();
         Class[] params = method.getParameterTypes();

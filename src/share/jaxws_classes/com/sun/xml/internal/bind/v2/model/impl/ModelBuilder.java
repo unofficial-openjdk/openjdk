@@ -235,7 +235,7 @@ public class ModelBuilder<T,C,F,M> {
                         String pkg = nav.getPackageName(ci.getClazz());
                         if(!registries.containsKey(pkg)) {
                             // insert the package's object factory
-                            C c = loadObjectFactory(ci, pkg);
+                            C c = nav.loadObjectFactory(clazz, pkg);
                             if(c!=null)
                                 addRegistry(c,(Locatable)p);
                         }
@@ -262,15 +262,6 @@ public class ModelBuilder<T,C,F,M> {
 
 
         return r;
-    }
-
-    private C loadObjectFactory(ClassInfoImpl<T, C, F, M> ci, String pkg) {
-        try {
-            return nav.findClass(pkg + ".ObjectFactory", ci.getClazz());
-        } catch (SecurityException ignored) {
-            // treat SecurityException in same way as ClassNotFoundException in this case
-            return null;
-        }
     }
 
     /**
