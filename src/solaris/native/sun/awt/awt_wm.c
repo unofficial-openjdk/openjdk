@@ -372,6 +372,21 @@ awt_wm_dtraceStateJava(jint java_state)
 \*****************************************************************************/
 
 /*
+ * Instead of validating window id, we simply call XGetWindowProperty,
+ * but temporary install this function as the error handler to ignore
+ * BadWindow error.
+ */
+int /* but ingored */
+xerror_ignore_bad_window(Display *dpy, XErrorEvent *err)
+{
+    XERROR_SAVE(err);
+    if (err->error_code == BadWindow) {
+        DTRACE_PRINTLN("IGNORING BadWindow");
+    }
+    return 0; /* ok to fail */
+}
+
+/*
  * Convenience wrapper for XGetWindowProperty for XA_ATOM properties.
  * E.g. WM_PROTOCOLS, _NET_WM_STATE, _OL_DECOR_DEL.
  * It's up to caller to XFree returned value.
@@ -439,19 +454,16 @@ awt_getProperty8(Window w, Atom property, Atom property_type)
     unsigned long nitems;
     unsigned long bytes_after;
     unsigned char *string;
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
 
     /* BadWindow is ok and will be blocked by our special handler */
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$IgnoreBadWindowHandler",
-        "()Lsun/awt/X11/XErrorHandler$IgnoreBadWindowHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_ignore_bad_window);
+    {
         status = XGetWindowProperty(awt_display, w,
                      property, 0, 0xFFFF, False, property_type,
                      &actual_type, &actual_format, &nitems, &bytes_after,
-                     &string));
+                     &string);
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (status != Success || string == NULL) {
         return NULL;
@@ -486,19 +498,16 @@ awt_getProperty32(Window w, Atom property, Atom property_type)
     unsigned long nitems;
     unsigned long bytes_after;
     long *data;                 /* NB: 64 bit: Format 32 props are 'long' */
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
 
     /* BadWindow is ok and will be blocked by our special handler */
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$IgnoreBadWindowHandler",
-        "()Lsun/awt/X11/XErrorHandler$IgnoreBadWindowHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_ignore_bad_window);
+    {
         status = XGetWindowProperty(awt_display, w,
                      property, 0, 1, False, property_type,
                      &actual_type, &actual_format, &nitems, &bytes_after,
-                     (unsigned char **)&data));
+                     (unsigned char **)&data);
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (status != Success || data == NULL) {
         return 0;
@@ -699,23 +708,20 @@ awt_getECommsWindowIDProperty(Window w)
     unsigned long nitems;
     unsigned long bytes_after;
     unsigned char *data;
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
 
     if (!awt_wm_atomInterned(&XA_ENLIGHTENMENT_COMMS, "ENLIGHTENMENT_COMMS")) {
         return False;
     }
 
     /* BadWindow is ok and will be blocked by our special handler */
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$IgnoreBadWindowHandler",
-        "()Lsun/awt/X11/XErrorHandler$IgnoreBadWindowHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_ignore_bad_window);
+    {
         status = XGetWindowProperty(awt_display, w,
                      XA_ENLIGHTENMENT_COMMS, 0, 14, False, XA_STRING,
                      &actual_type, &actual_format, &nitems, &bytes_after,
-                     &data));
+                     &data);
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (status != Success || data == NULL) {
         DTRACE_PRINTLN("no ENLIGHTENMENT_COMMS");
@@ -795,9 +801,6 @@ awt_wm_isCDE(void)
     unsigned long nitems;
     unsigned long bytes_after;
     long *data;                 /* NB: 64 bit: Format 32 props are 'long' */
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
 
     DTRACE_PRINT("WM: checking for CDE ...  ");
 
@@ -833,14 +836,14 @@ awt_wm_isCDE(void)
     }
 
     /* BadWindow is ok and will be blocked by our special handler */
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$IgnoreBadWindowHandler",
-        "()Lsun/awt/X11/XErrorHandler$IgnoreBadWindowHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_ignore_bad_window);
+    {
         status = XGetWindowProperty(awt_display, wmwin,
                      _XA_DT_SM_STATE_INFO, 0, 1, False, _XA_DT_SM_STATE_INFO,
                      &actual_type, &actual_format, &nitems, &bytes_after,
-                     (unsigned char **)&data));
+                     (unsigned char **)&data);
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (status != Success || data == NULL) {
         DTRACE_PRINTLN("no _DT_SM_STATE_INFO");
@@ -1005,6 +1008,18 @@ awt_wm_isMetacity(void)
 }
 
 /*
+ * Temporary error handler that ensures that we know if
+ * XChangeProperty succeeded or not.
+ */
+static int /* but ignored */
+xerror_verify_change_property(Display *dpy, XErrorEvent *err)
+{
+    XERROR_SAVE(err);
+    if (err->request_code == X_ChangeProperty) { }
+    return 0;
+}
+
+/*
  * Prepare IceWM check.
  *
  * The only way to detect IceWM, seems to be by setting
@@ -1031,11 +1046,6 @@ awt_wm_prepareIsIceWM(void)
         'a','l','l','W','o','r','k','s','p','a','c','e','s','\0',
         '0','\0'
     };
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
-    jobject savedError;
-    unsigned char xerror_code;
 
     DTRACE_PRINT("WM: scheduling check for IceWM ...  ");
 
@@ -1043,14 +1053,13 @@ awt_wm_prepareIsIceWM(void)
         return False;
     }
 
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$VerifyChangePropertyHandler",
-        "()Lsun/awt/X11/XErrorHandler$VerifyChangePropertyHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_verify_change_property);
+    {
         XChangeProperty(awt_display, DefaultRootWindow(awt_display),
                         _XA_ICEWM_WINOPTHINT, _XA_ICEWM_WINOPTHINT, 8,
-                        PropModeReplace, opt, sizeof(opt)));
-    xerror_code = GET_XERROR_CODE(env, savedError);
+                        PropModeReplace, opt, sizeof(opt));
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (xerror_code != Success) {
         DTRACE_PRINTLN1("can't set _ICEWM_WINOPTHINT, error = %d",
@@ -1140,6 +1149,25 @@ awt_wm_isOpenLook(void)
     return True;
 }
 
+static Boolean winmgr_running = False;
+
+/*
+ * Temporary error handler that checks if selecting for
+ * SubstructureRedirect failed.
+ */
+static int /* but ignored */
+xerror_detect_wm(Display *dpy, XErrorEvent *err)
+{
+    XERROR_SAVE(err);
+    if (err->request_code == X_ChangeWindowAttributes
+        && err->error_code == BadAccess)
+    {
+        DTRACE_PRINTLN("some WM is running (hmm, we'll see)");
+        winmgr_running = True;
+    }
+    return 0;
+}
+
 /*
  * Make an educated guess about running window manager.
  * XXX: ideally, we should detect wm restart.
@@ -1156,9 +1184,6 @@ awt_wm_getRunningWM(void)
     XSetWindowAttributes substruct;
     const char *vendor_string;
     Boolean doIsIceWM;
-    JNIEnv* env;
-    jboolean errorOccurredFlag = JNI_FALSE;
-    jobject errorHandlerRef;
 
     if (awt_wmgr != UNDETERMINED_WM) {
         return awt_wmgr;
@@ -1186,21 +1211,22 @@ awt_wm_getRunningWM(void)
      * can select for, and if the request fails, than some other WM is
      * already running.
      */
+    winmgr_running = 0;
     substruct.event_mask = SubstructureRedirectMask;
 
     DTRACE_PRINT("WM: trying SubstructureRedirect ...  ");
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$XChangeWindowAttributesHandler",
-        "()Lsun/awt/X11/XErrorHandler$XChangeWindowAttributesHandler;", JNI_TRUE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_detect_wm);
+    {
         XChangeWindowAttributes(awt_display, DefaultRootWindow(awt_display),
-                                CWEventMask, &substruct));
+                                CWEventMask, &substruct);
+    }
+    RESTORE_XERROR_HANDLER;
 
     /*
      * If no WM is running than our selection for SubstructureRedirect
      * succeeded and needs to be undone (hey we are *not* a WM ;-).
      */
-    if (errorOccurredFlag == JNI_FALSE) {
+    if (!winmgr_running) {
         DTRACE_PRINTLN("no WM is running");
         awt_wmgr = NO_WM;
         substruct.event_mask = 0;
@@ -2687,11 +2713,6 @@ awt_wm_unshadeKludgeNet(struct FrameData *wdata)
     Boolean shaded;
     unsigned long nitems;
     unsigned long i;
-    JNIEnv* env;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
-    jobject savedError;
-    unsigned char xerror_code;
 
     net_wm_state = awt_getAtomListProperty(shell_win,
                                            _XA_NET_WM_STATE, &nitems);
@@ -2733,14 +2754,13 @@ awt_wm_unshadeKludgeNet(struct FrameData *wdata)
     awt_wm_dtraceStateNet(net_wm_state, nitems);
 #endif
 
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$VerifyChangePropertyHandler",
-        "()Lsun/awt/X11/XErrorHandler$VerifyChangePropertyHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
+    WITH_XERROR_HANDLER(xerror_verify_change_property);
+    {
         XChangeProperty(dpy, shell_win,
                         _XA_NET_WM_STATE, XA_ATOM, 32, PropModeReplace,
-                        (unsigned char *)net_wm_state, nitems));
-    xerror_code = GET_XERROR_CODE(env, savedError);
+                        (unsigned char *)net_wm_state, nitems);
+    }
+    RESTORE_XERROR_HANDLER;
 
     if (xerror_code != Success) {
         DTRACE_PRINTLN1("WM:     XChangeProperty failed, error = %d",

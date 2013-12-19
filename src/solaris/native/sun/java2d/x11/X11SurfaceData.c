@@ -68,6 +68,7 @@ static ReleasePixmapBgFunc X11SD_ReleasePixmapWithBg;
 #ifndef XAWT
 extern struct MComponentPeerIDs mComponentPeerIDs;
 #endif
+extern int XShmAttachXErrHandler(Display *display, XErrorEvent *xerr);
 extern AwtGraphicsConfigDataPtr
     getGraphicsConfigFromComponentPeer(JNIEnv *env, jobject this);
 extern struct X11GraphicsConfigIDs x11GraphicsConfigIDs;
@@ -550,8 +551,6 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
 {
     XImage *img = NULL;
     XShmSegmentInfo *shminfo;
-    JNIEnv* env;
-    jboolean xShmAttachResult;
 
     shminfo = malloc(sizeof(XShmSegmentInfo));
     if (shminfo == NULL) {
@@ -591,8 +590,9 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
 
     shminfo->readOnly = False;
 
-    env = (JNIEnv*)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-    xShmAttachResult = TryXShmAttach(env, awt_display, shminfo);
+    resetXShmAttachFailed();
+    EXEC_WITH_XERROR_HANDLER(XShmAttachXErrHandler,
+                             XShmAttach(awt_display, shminfo));
 
     /*
      * Once the XSync round trip has finished then we
@@ -601,7 +601,7 @@ XImage* X11SD_CreateSharedImage(X11SDOps *xsdo,
      */
     shmctl(shminfo->shmid, IPC_RMID, 0);
 
-    if (xShmAttachResult == JNI_FALSE) {
+    if (isXShmAttachFailed() == JNI_TRUE) {
         J2dRlsTraceLn1(J2D_TRACE_ERROR,
                        "X11SD_SetupSharedSegment XShmAttach has failed: %s",
                        strerror(errno));

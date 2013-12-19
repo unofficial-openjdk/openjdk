@@ -644,19 +644,12 @@ createDimension(JNIEnv* env, int width, int height) {
     return dim;
 }
 
-Boolean isMapped(JNIEnv* env, Window w) {
+Boolean isMapped(Window w) {
     XWindowAttributes attr;
     Status status = 0;
-    jboolean errorOccurredFlag;
-    jobject errorHandlerRef;
-    jobject savedError;
-    unsigned char xerror_code;
-
-    EXEC_WITH_XERROR_HANDLER(env, "sun/awt/X11/XErrorHandler$IgnoreBadWindowHandler",
-        "()Lsun/awt/X11/XErrorHandler$IgnoreBadWindowHandler;", JNI_FALSE,
-        errorHandlerRef, errorOccurredFlag,
-        status = XGetWindowAttributes(awt_display, w, &attr));
-    xerror_code = GET_XERROR_CODE(env, savedError);
+    WITH_XERROR_HANDLER(xerror_ignore_bad_window);
+    status = XGetWindowAttributes(awt_display, w, &attr);
+    RESTORE_XERROR_HANDLER;
     if (status == 0 || xerror_code != Success) {
         return False;
     }
@@ -692,7 +685,7 @@ processXEmbedInfo(JNIEnv * env, jobject this) {
             sdata->version = *data;
             flags = *(data+1);
             new_mapped = (flags & XEMBED_MAPPED) != 0;
-            currently_mapped = isMapped(env, sdata->handle);
+            currently_mapped = isMapped(sdata->handle);
             if (new_mapped != currently_mapped) {
                 if (new_mapped) {
                     XMapWindow(awt_display, sdata->handle);
