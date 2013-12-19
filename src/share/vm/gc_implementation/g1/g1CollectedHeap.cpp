@@ -3704,6 +3704,11 @@ void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
   AllocationProfiler::iterate_since_last_gc();
   // Fill TLAB's and such
   ensure_parsability(true);
+
+  if (G1SummarizeRSetStats && (G1SummarizeRSetStatsPeriod > 0) &&
+      (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
+    g1_rem_set()->print_periodic_summary_info("Before GC RS summary");
+  }
 }
 
 void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
@@ -3712,7 +3717,7 @@ void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
       (G1SummarizeRSetStatsPeriod > 0) &&
       // we are at the end of the GC. Total collections has already been increased.
       ((total_collections() - 1) % G1SummarizeRSetStatsPeriod == 0)) {
-    g1_rem_set()->print_periodic_summary_info();
+    g1_rem_set()->print_periodic_summary_info("After GC RS summary");
   }
 
   // FIXME: what is this about?
