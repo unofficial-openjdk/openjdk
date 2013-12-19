@@ -6653,13 +6653,18 @@ class RegisterNMethodOopClosure: public OopClosure {
         assert(_g1h->is_in_permanent(obj), "must be a reference into perm gen");
         return;
       }
-      assert(!hr->isHumongous(), "code root in humongous region?");
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to add code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
 
       // HeapRegion::add_strong_code_root() avoids adding duplicate
       // entries but having duplicates is  OK since we "mark" nmethods
       // as visited when we scan the strong code root lists during the GC.
       hr->add_strong_code_root(_nm);
-      assert(hr->rem_set()->strong_code_roots_list_contains(_nm), "add failed?");
+      assert(hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to add code root "PTR_FORMAT" to remembered set of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));
     }
   }
 
@@ -6685,10 +6690,15 @@ class UnregisterNMethodOopClosure: public OopClosure {
         assert(_g1h->is_in_permanent(obj), "must be a reference into perm gen");
         return;
       }
-      assert(!hr->isHumongous(), "code root in humongous region?");
+      assert(!hr->continuesHumongous(),
+             err_msg("trying to remove code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
       hr->remove_strong_code_root(_nm);
-      assert(!hr->rem_set()->strong_code_roots_list_contains(_nm), "remove failed?");
-    }
+      assert(!hr->rem_set()->strong_code_roots_list_contains(_nm),
+             err_msg("failed to remove code root "PTR_FORMAT" of region "HR_FORMAT,
+                     _nm, HR_FORMAT_PARAMS(hr)));    }
   }
 
 public:
@@ -6718,7 +6728,9 @@ void G1CollectedHeap::unregister_nmethod(nmethod* nm) {
 class MigrateCodeRootsHeapRegionClosure: public HeapRegionClosure {
 public:
   bool doHeapRegion(HeapRegion *hr) {
-    assert(!hr->isHumongous(), "humongous region in collection set?");
+    assert(!hr->isHumongous(),
+           err_msg("humongous region "HR_FORMAT" should not have been added to collection set",
+                   HR_FORMAT_PARAMS(hr)));
     hr->migrate_strong_code_roots();
     return false;
   }
@@ -6798,9 +6810,13 @@ public:
 
   bool doHeapRegion(HeapRegion *hr) {
     HeapRegionRemSet* hrrs = hr->rem_set();
-    if (hr->isHumongous()) {
-      // Code roots should never be attached to a humongous region
-      assert(hrrs->strong_code_roots_list_length() == 0, "sanity");
+    if (hr->continuesHumongous()) {
+      // Code roots should never be attached to a continuation of a humongous region
+      assert(hrrs->strong_code_roots_list_length() == 0,
+             err_msg("code roots should never be attached to continuations of humongous region "HR_FORMAT
+                     " starting at "HR_FORMAT", but has "INT32_FORMAT,
+                     HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region()),
+                     hrrs->strong_code_roots_list_length()));
       return false;
     }
 
