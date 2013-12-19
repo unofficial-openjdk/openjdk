@@ -3620,6 +3620,14 @@ void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
 }
 
 void G1CollectedHeap::gc_epilogue(bool full /* Ignored */) {
+
+  if (G1SummarizeRSetStats &&
+      (G1SummarizeRSetStatsPeriod > 0) &&
+      // we are at the end of the GC. Total collections has already been increased.
+      ((total_collections() - 1) % G1SummarizeRSetStatsPeriod == 0)) {
+    g1_rem_set()->print_periodic_summary_info();
+  }
+
   // FIXME: what is this about?
   // I'm ignoring the "fill_newgen()" call if "alloc_event_enabled"
   // is set.
@@ -4198,11 +4206,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
     _gc_tracer_stw->report_gc_end(_gc_timer_stw->gc_end(), _gc_timer_stw->time_partitions());
   }
 
-  if (G1SummarizeRSetStats &&
-      (G1SummarizeRSetStatsPeriod > 0) &&
-      (total_collections() % G1SummarizeRSetStatsPeriod == 0)) {
-    g1_rem_set()->print_summary_info();
-  }
   // It should now be safe to tell the concurrent mark thread to start
   // without its logging output interfering with the logging output
   // that came from the pause.
