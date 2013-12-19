@@ -121,6 +121,7 @@ SUNWprivate_1.1 {
 		Java_java_io_UnixFileSystem_setReadOnly;
 		Java_java_io_UnixFileSystem_setPermission;
 		Java_java_lang_Class_forName0;
+                Java_java_lang_Class_getCheckMemberAccessMethod;
 		Java_java_lang_Class_getPrimitiveClass;
 		Java_java_lang_Class_isAssignableFrom;
 		Java_java_lang_Class_isInstance;
