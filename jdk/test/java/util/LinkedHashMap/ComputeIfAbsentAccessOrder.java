@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,27 @@
  * questions.
  */
 
-/* @test
- * @summary Invoke getDeclaredMethods on Packer and Unpacker to ensure
- *    that all types referenced in the method signatures is present.
+/**
+ * @test
+ * @bug 8030016
+ * @summary computeIfAbsent would generate spurious access
  */
 
-import java.util.jar.Pack200;
-import java.util.jar.Pack200.Packer;
-import java.util.jar.Pack200.Unpacker;
-import java.lang.reflect.Method;
+import java.util.*;
 
-public class Reflect {
-    static void printMethods(Class<?> c) {
-        System.out.println(c);
-        for (Method m: c.getDeclaredMethods()) {
-            System.out.println("    " + m);
+public class ComputeIfAbsentAccessOrder {
+    public static void main(String args[]) throws Throwable {
+        LinkedHashMap<String,Object> map = new LinkedHashMap<>(2, 0.75f, true);
+        map.put("first", null);
+        map.put("second", null);
+
+        map.computeIfAbsent("first", l -> null); // should do nothing
+
+        String key = map.keySet().stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("no value"));
+        if(!"first".equals(key)) {
+            throw new RuntimeException("not expected value " + "first" + "!=" + key);
         }
-    }
-    public static void main(String[] args) {
-        printMethods(Pack200.Packer.class);
-        printMethods(Pack200.Unpacker.class);
-        printMethods(Pack200.newPacker().getClass());
-        printMethods(Pack200.newUnpacker().getClass());
     }
 }
