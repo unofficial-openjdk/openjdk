@@ -29,6 +29,7 @@
  *      4947220 7018606 7034570
  * @summary Basic tests for Process and Environment Variable code
  * @run main/othervm/timeout=300 Basic
+ * @run main/othervm/timeout=300 -Djdk.lang.Process.launchMechanism=fork Basic
  * @author Martin Buchholz
  */
 

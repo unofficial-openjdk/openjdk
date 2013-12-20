@@ -26,6 +26,8 @@
 package sun.awt;
 
 import java.awt.AWTEvent;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -328,7 +330,14 @@ public final class AWTAutoShutdown implements Runnable {
      * the new blocker thread starts.
      */
     private void activateBlockerThread() {
-        Thread thread = new Thread(this, "AWT-Shutdown");
+        final Thread thread = new Thread(SunToolkit.getRootThreadGroup(), this, "AWT-Shutdown");
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                thread.setContextClassLoader(null);
+                return null;
+            }
+        });
         thread.setDaemon(false);
         blockerThread = thread;
         thread.start();
