@@ -80,9 +80,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public Content getDocRootOutput() {
         String path;
-        if (configuration.docrootparent.length() > 0)
-            path = configuration.docrootparent;
-        else if (htmlWriter.pathToRoot.isEmpty())
+        if (htmlWriter.pathToRoot.isEmpty())
             path = ".";
         else
             path = htmlWriter.pathToRoot.getPath();
@@ -97,7 +95,7 @@ public class TagletWriterImpl extends TagletWriter {
         Tag[] deprs = doc.tags("deprecated");
         if (doc instanceof ClassDoc) {
             if (Util.isDeprecated((ProgramElementDoc) doc)) {
-                result.addContent(HtmlTree.SPAN(HtmlStyle.strong,
+                result.addContent(HtmlTree.SPAN(HtmlStyle.deprecatedLabel,
                         new StringContent(configuration.getText("doclet.Deprecated"))));
                 result.addContent(RawHtml.nbsp);
                 if (deprs.length > 0) {
@@ -112,17 +110,18 @@ public class TagletWriterImpl extends TagletWriter {
         } else {
             MemberDoc member = (MemberDoc) doc;
             if (Util.isDeprecated((ProgramElementDoc) doc)) {
-                result.addContent(HtmlTree.SPAN(HtmlStyle.strong,
+                result.addContent(HtmlTree.SPAN(HtmlStyle.deprecatedLabel,
                         new StringContent(configuration.getText("doclet.Deprecated"))));
                 result.addContent(RawHtml.nbsp);
                 if (deprs.length > 0) {
                     Content body = commentTagsToOutput(null, doc,
                         deprs[0].inlineTags(), false);
-                    result.addContent(HtmlTree.SPAN(HtmlStyle.italic, body));
+                    if (!body.isEmpty())
+                        result.addContent(HtmlTree.SPAN(HtmlStyle.deprecationComment, body));
                 }
             } else {
                 if (Util.isDeprecated(member.containingClass())) {
-                    result.addContent(HtmlTree.SPAN(HtmlStyle.strong,
+                    result.addContent(HtmlTree.SPAN(HtmlStyle.deprecatedLabel,
                             new StringContent(configuration.getText("doclet.Deprecated"))));
                     result.addContent(RawHtml.nbsp);
                 }
@@ -150,7 +149,7 @@ public class TagletWriterImpl extends TagletWriter {
      * {@inheritDoc}
      */
     public Content getParamHeader(String header) {
-        HtmlTree result = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong,
+        HtmlTree result = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.paramLabel,
                 new StringContent(header)));
         return result;
     }
@@ -185,7 +184,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public Content returnTagOutput(Tag returnTag) {
         ContentBuilder result = new ContentBuilder();
-        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong,
+        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.returnLabel,
                 new StringContent(configuration.getText("doclet.Returns")))));
         result.addContent(HtmlTree.DD(htmlWriter.commentTagsToContent(
                 returnTag, null, returnTag.inlineTags(), false)));
@@ -230,7 +229,7 @@ public class TagletWriterImpl extends TagletWriter {
             return body;
 
         ContentBuilder result = new ContentBuilder();
-        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong,
+        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.seeLabel,
                 new StringContent(configuration.getText("doclet.See_Also")))));
         result.addContent(HtmlTree.DD(body));
         return result;
@@ -249,7 +248,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public Content simpleTagOutput(Tag[] simpleTags, String header) {
         ContentBuilder result = new ContentBuilder();
-        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong, new RawHtml(header))));
+        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.simpleTagLabel, new RawHtml(header))));
         ContentBuilder body = new ContentBuilder();
         for (int i = 0; i < simpleTags.length; i++) {
             if (i > 0) {
@@ -267,7 +266,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public Content simpleTagOutput(Tag simpleTag, String header) {
         ContentBuilder result = new ContentBuilder();
-        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong, new RawHtml(header))));
+        result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.simpleTagLabel, new RawHtml(header))));
         Content body = htmlWriter.commentTagsToContent(
                 simpleTag, null, simpleTag.inlineTags(), false);
         result.addContent(HtmlTree.DD(body));
@@ -278,7 +277,7 @@ public class TagletWriterImpl extends TagletWriter {
      * {@inheritDoc}
      */
     public Content getThrowsHeader() {
-        HtmlTree result = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong,
+        HtmlTree result = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.throwsLabel,
                 new StringContent(configuration.getText("doclet.Throws"))));
         return result;
     }

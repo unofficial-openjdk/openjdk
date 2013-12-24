@@ -85,6 +85,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected boolean printedAnnotationHeading = false;
 
     /**
+     * To check whether annotation field heading is printed or not.
+     */
+    protected boolean printedAnnotationFieldHeading = false;
+
+    /**
      * To check whether the repeated annotations is documented or not.
      */
     private boolean isAnnotationDocumented = false;
@@ -143,43 +148,28 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         StringBuilder buf = new StringBuilder();
         int previndex = 0;
         while (true) {
-            if (configuration.docrootparent.length() > 0) {
-                final String docroot_parent = "{@docroot}/..";
-                // Search for lowercase version of {@docRoot}/..
-                index = lowerHtml.indexOf(docroot_parent, previndex);
-                // If next {@docRoot}/.. pattern not found, append rest of htmlstr and exit loop
-                if (index < 0) {
-                    buf.append(htmlstr.substring(previndex));
-                    break;
-                }
-                // If next {@docroot}/.. pattern found, append htmlstr up to start of tag
-                buf.append(htmlstr.substring(previndex, index));
-                previndex = index + docroot_parent.length();
-                // Insert docrootparent absolute path where {@docRoot}/.. was located
-
+            final String docroot = "{@docroot}";
+            // Search for lowercase version of {@docRoot}
+            index = lowerHtml.indexOf(docroot, previndex);
+            // If next {@docRoot} tag not found, append rest of htmlstr and exit loop
+            if (index < 0) {
+                buf.append(htmlstr.substring(previndex));
+                break;
+            }
+            // If next {@docroot} tag found, append htmlstr up to start of tag
+            buf.append(htmlstr.substring(previndex, index));
+            previndex = index + docroot.length();
+            if (configuration.docrootparent.length() > 0 && htmlstr.startsWith("/..", previndex)) {
+                // Insert the absolute link if {@docRoot} is followed by "/..".
                 buf.append(configuration.docrootparent);
-                // Append slash if next character is not a slash
-                if (previndex < htmlstr.length() && htmlstr.charAt(previndex) != '/') {
-                    buf.append('/');
-                }
+                previndex += 3;
             } else {
-                final String docroot = "{@docroot}";
-                // Search for lowercase version of {@docRoot}
-                index = lowerHtml.indexOf(docroot, previndex);
-                // If next {@docRoot} tag not found, append rest of htmlstr and exit loop
-                if (index < 0) {
-                    buf.append(htmlstr.substring(previndex));
-                    break;
-                }
-                // If next {@docroot} tag found, append htmlstr up to start of tag
-                buf.append(htmlstr.substring(previndex, index));
-                previndex = index + docroot.length();
                 // Insert relative path where {@docRoot} was located
                 buf.append(pathToRoot.isEmpty() ? "." : pathToRoot.getPath());
-                // Append slash if next character is not a slash
-                if (previndex < htmlstr.length() && htmlstr.charAt(previndex) != '/') {
-                    buf.append('/');
-                }
+            }
+            // Append slash if next character is not a slash
+            if (previndex < htmlstr.length() && htmlstr.charAt(previndex) != '/') {
+                buf.append('/');
             }
         }
         return buf.toString();
@@ -351,7 +341,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         if(classes.length > 0) {
             Arrays.sort(classes);
             Content caption = getTableCaption(new RawHtml(label));
-            Content table = HtmlTree.TABLE(HtmlStyle.packageSummary, 0, 3, 0,
+            Content table = HtmlTree.TABLE(HtmlStyle.typeSummary, 0, 3, 0,
                     tableSummary, caption);
             table.addContent(getSummaryTableHeader(tableHeader, "col"));
             Content tbody = new HtmlTree(HtmlTag.TBODY);
@@ -386,8 +376,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 tbody.addContent(tr);
             }
             table.addContent(tbody);
-            Content li = HtmlTree.LI(HtmlStyle.blockList, table);
-            summaryContentTree.addContent(li);
+            summaryContentTree.addContent(table);
         }
     }
 
@@ -406,10 +395,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         Content htmlDocType = DocType.TRANSITIONAL;
         Content htmlComment = new Comment(configuration.getText("doclet.New_Page"));
         Content head = new HtmlTree(HtmlTag.HEAD);
-        if (!configuration.notimestamp) {
-            Content headComment = new Comment(getGeneratedByString());
-            head.addContent(headComment);
-        }
+        head.addContent(getGeneratedBy(!configuration.notimestamp));
         if (configuration.charset.length() > 0) {
             Content meta = HtmlTree.META("Content-Type", CONTENT_TYPE,
                     configuration.charset);
@@ -502,33 +488,33 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         if (!configuration.nonavbar) {
             String allClassesId = "allclasses_";
             HtmlTree navDiv = new HtmlTree(HtmlTag.DIV);
+            Content skipNavLinks = configuration.getResource("doclet.Skip_navigation_links");
             if (header) {
                 body.addContent(HtmlConstants.START_OF_TOP_NAVBAR);
                 navDiv.addStyle(HtmlStyle.topNav);
                 allClassesId += "navbar_top";
-                Content a = getMarkerAnchor("navbar_top");
+                Content a = getMarkerAnchor(SectionName.NAVBAR_TOP);
+                //WCAG - Hyperlinks should contain text or an image with alt text - for AT tools
                 navDiv.addContent(a);
-                Content skipLinkContent = getHyperLink(DocLink.fragment("skip-navbar_top"),
-                        HtmlTree.EMPTY,
-                        configuration.getText("doclet.Skip_navigation_links"),
-                        "");
+                Content skipLinkContent = HtmlTree.DIV(HtmlStyle.skipNav, getHyperLink(
+                    getDocLink(SectionName.SKIP_NAVBAR_TOP), skipNavLinks,
+                    skipNavLinks.toString(), ""));
                 navDiv.addContent(skipLinkContent);
             } else {
                 body.addContent(HtmlConstants.START_OF_BOTTOM_NAVBAR);
                 navDiv.addStyle(HtmlStyle.bottomNav);
                 allClassesId += "navbar_bottom";
-                Content a = getMarkerAnchor("navbar_bottom");
+                Content a = getMarkerAnchor(SectionName.NAVBAR_BOTTOM);
                 navDiv.addContent(a);
-                Content skipLinkContent = getHyperLink(DocLink.fragment("skip-navbar_bottom"),
-                        HtmlTree.EMPTY,
-                        configuration.getText("doclet.Skip_navigation_links"),
-                        "");
+                Content skipLinkContent = HtmlTree.DIV(HtmlStyle.skipNav, getHyperLink(
+                    getDocLink(SectionName.SKIP_NAVBAR_BOTTOM), skipNavLinks,
+                    skipNavLinks.toString(), ""));
                 navDiv.addContent(skipLinkContent);
             }
             if (header) {
-                navDiv.addContent(getMarkerAnchor("navbar_top_firstrow"));
+                navDiv.addContent(getMarkerAnchor(SectionName.NAVBAR_TOP_FIRSTROW));
             } else {
-                navDiv.addContent(getMarkerAnchor("navbar_bottom_firstrow"));
+                navDiv.addContent(getMarkerAnchor(SectionName.NAVBAR_BOTTOM_FIRSTROW));
             }
             HtmlTree navList = new HtmlTree(HtmlTag.UL);
             navList.addStyle(HtmlStyle.navList);
@@ -575,11 +561,11 @@ public class HtmlDocletWriter extends HtmlDocWriter {
             subDiv.addContent(getAllClassesLinkScript(allClassesId.toString()));
             addSummaryDetailLinks(subDiv);
             if (header) {
-                subDiv.addContent(getMarkerAnchor("skip-navbar_top"));
+                subDiv.addContent(getMarkerAnchor(SectionName.SKIP_NAVBAR_TOP));
                 body.addContent(subDiv);
                 body.addContent(HtmlConstants.END_OF_TOP_NAVBAR);
             } else {
-                subDiv.addContent(getMarkerAnchor("skip-navbar_bottom"));
+                subDiv.addContent(getMarkerAnchor(SectionName.SKIP_NAVBAR_BOTTOM));
                 body.addContent(subDiv);
                 body.addContent(HtmlConstants.END_OF_BOTTOM_NAVBAR);
             }
@@ -884,7 +870,28 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the marker anchor
      */
     public Content getMarkerAnchor(String anchorName) {
-        return getMarkerAnchor(anchorName, null);
+        return getMarkerAnchor(getName(anchorName), null);
+    }
+
+    /**
+     * Get the marker anchor which will be added to the documentation tree.
+     *
+     * @param sectionName the section name anchor attribute for page
+     * @return a content tree for the marker anchor
+     */
+    public Content getMarkerAnchor(SectionName sectionName) {
+        return getMarkerAnchor(sectionName.getName(), null);
+    }
+
+    /**
+     * Get the marker anchor which will be added to the documentation tree.
+     *
+     * @param sectionName the section name anchor attribute for page
+     * @param anchorName the anchor name combined with section name attribute for the page
+     * @return a content tree for the marker anchor
+     */
+    public Content getMarkerAnchor(SectionName sectionName, String anchorName) {
+        return getMarkerAnchor(sectionName.getName() + getName(anchorName), null);
     }
 
     /**
@@ -935,7 +942,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     protected void addPackageDeprecatedAPI(List<Doc> deprPkgs, String headingKey,
             String tableSummary, String[] tableHeader, Content contentTree) {
         if (deprPkgs.size() > 0) {
-            Content table = HtmlTree.TABLE(0, 3, 0, tableSummary,
+            Content table = HtmlTree.TABLE(HtmlStyle.deprecatedSummary, 0, 3, 0, tableSummary,
                     getTableCaption(configuration.getResource(headingKey)));
             table.addContent(getSummaryTableHeader(tableHeader, "col"));
             Content tbody = new HtmlTree(HtmlTag.TBODY);
@@ -1028,7 +1035,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
 
     public Content italicsClassName(ClassDoc cd, boolean qual) {
         Content name = new StringContent((qual)? cd.qualifiedName(): cd.name());
-        return (cd.isInterface())?  HtmlTree.SPAN(HtmlStyle.italic, name): name;
+        return (cd.isInterface())?  HtmlTree.SPAN(HtmlStyle.interfaceName, name): name;
     }
 
     /**
@@ -1289,10 +1296,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         } else if (doc instanceof ExecutableMemberDoc) {
             ExecutableMemberDoc emd = (ExecutableMemberDoc)doc;
             return getLink(new LinkInfoImpl(configuration, context, classDoc)
-                .label(label).where(getAnchor(emd, isProperty)).strong(strong));
+                .label(label).where(getName(getAnchor(emd, isProperty))).strong(strong));
         } else if (doc instanceof MemberDoc) {
             return getLink(new LinkInfoImpl(configuration, context, classDoc)
-                .label(label).where(doc.name()).strong(strong));
+                .label(label).where(getName(doc.name())).strong(strong));
         } else {
             return label;
         }
@@ -1317,10 +1324,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         } else if (doc instanceof ExecutableMemberDoc) {
             ExecutableMemberDoc emd = (ExecutableMemberDoc) doc;
             return getLink(new LinkInfoImpl(configuration, context, classDoc)
-                .label(label).where(getAnchor(emd)));
+                .label(label).where(getName(getAnchor(emd))));
         } else if (doc instanceof MemberDoc) {
             return getLink(new LinkInfoImpl(configuration, context, classDoc)
-                .label(label).where(doc.name()));
+                .label(label).where(getName(doc.name())));
         } else {
             return label;
         }
@@ -1544,7 +1551,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         Content div;
         Content result = commentTagsToContent(null, doc, tags, first);
         if (depr) {
-            Content italic = HtmlTree.SPAN(HtmlStyle.italic, result);
+            Content italic = HtmlTree.SPAN(HtmlStyle.deprecationComment, result);
             div = HtmlTree.DIV(HtmlStyle.block, italic);
             htmltree.addContent(div);
         }
@@ -1582,26 +1589,30 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 result.addContent(seeTagToContent((SeeTag) tagelem));
             } else if (! tagName.equals("Text")) {
                 boolean wasEmpty = result.isEmpty();
-                Content output = TagletWriter.getInlineTagOuput(
-                    configuration.tagletManager, holderTag,
-                    tagelem, getTagletWriterInstance(isFirstSentence));
+                Content output;
+                if (configuration.docrootparent.length() > 0
+                        && tagelem.name().equals("@docRoot")
+                        && ((tags[i + 1]).text()).startsWith("/..")) {
+                    // If Xdocrootparent switch ON, set the flag to remove the /.. occurrence after
+                    // {@docRoot} tag in the very next Text tag.
+                    textTagChange = true;
+                    // Replace the occurrence of {@docRoot}/.. with the absolute link.
+                    output = new StringContent(configuration.docrootparent);
+                } else {
+                    output = TagletWriter.getInlineTagOuput(
+                            configuration.tagletManager, holderTag,
+                            tagelem, getTagletWriterInstance(isFirstSentence));
+                }
                 if (output != null)
                     result.addContent(output);
                 if (wasEmpty && isFirstSentence && tagelem.name().equals("@inheritDoc") && !result.isEmpty()) {
                     break;
-                } else if (configuration.docrootparent.length() > 0 &&
-                        tagelem.name().equals("@docRoot") &&
-                        ((tags[i + 1]).text()).startsWith("/..")) {
-                    //If Xdocrootparent switch ON, set the flag to remove the /.. occurance after
-                    //{@docRoot} tag in the very next Text tag.
-                    textTagChange = true;
-                    continue;
                 } else {
                     continue;
                 }
             } else {
                 String text = tagelem.text();
-                //If Xdocrootparent switch ON, remove the /.. occurance after {@docRoot} tag.
+                //If Xdocrootparent switch ON, remove the /.. occurrence after {@docRoot} tag.
                 if (textTagChange) {
                     text = text.replaceFirst("/..", "");
                     textTagChange = false;
